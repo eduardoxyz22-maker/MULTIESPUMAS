@@ -2,7 +2,7 @@ name: Actualizar Dashboard Diario
 
 on:
   schedule:
-    - cron: '0 16 * * *'
+    - cron: '0 15 * * *'
   workflow_dispatch:
 
 jobs:
