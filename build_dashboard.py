@@ -11,7 +11,7 @@ import calendar
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
 SUBDOMAIN = "eanez"
-TOKEN     = os.environ.get("KOMMO_TOKEN", (
+TOKEN     = os.environ.get("KOMMO_TOKEN") or (
     "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVm"
     "ODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFh"
     "ZDJhNDQ0OGFhMWZhIn0.eyJhdWQiOiJhYmQ5OThhNi0wMjcwLTRkODAtYjE5Ni0xMmRm"
@@ -28,7 +28,7 @@ TOKEN     = os.environ.get("KOMMO_TOKEN", (
     "w04OqX7lkDtioGJPqQUO5TdEanLdCihudNXqVhNv7XbtaUABolI28wZ7PamQ8BYqSI6js"
     "AJZHYn9MroTQcbrDrbBjtL3-WTl2H9yPnmikHykS47PUIaX-BWMCXuT2f9RgOpPQiShYo"
     "0tzxP8N9jji3qMKtIlgK72BG8M2ouz8g0aLxqWE1Sk3wE1_9fp_iENV7FcV4Q"
-))
+)
 BASE = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 HDR  = {"Authorization": f"Bearer {TOKEN}", "User-Agent": "HeavenDashboard/2.0"}
 
@@ -238,10 +238,10 @@ etapas_json    = json.dumps(ETAPAS_ORDER,   ensure_ascii=False, separators=(",",
 
 # ── HTML ──────────────────────────────────────────────────────────────────────
 HTML = f"""<!DOCTYPE html>
-<html lang=\"es\">
+<html lang="es">
 <head>
-<meta charset=\"UTF-8\">
-<meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Pipeline {mes_short} &ndash; Colchones Heaven</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
@@ -361,116 +361,116 @@ a:hover{{text-decoration:underline;color:var(--teal)}}
 </head>
 <body>
 
-<div class=\"header\">
-  <div class=\"hl\">
-    <div class=\"logo\">
-      <div class=\"logo-h\">HEAVEN</div>
-      <div class=\"logo-s\">colchones &#10011;</div>
+<div class="header">
+  <div class="hl">
+    <div class="logo">
+      <div class="logo-h">HEAVEN</div>
+      <div class="logo-s">colchones &#10011;</div>
     </div>
-    <div class=\"htitle\">
+    <div class="htitle">
       <h1>Pipeline de Ventas &mdash; {mes_label}</h1>
       <p>Generado: {gen_date} &nbsp;&bull;&nbsp; Actualizacion diaria 11:00 AM</p>
     </div>
   </div>
-  <div class=\"hr\">
-    <div class=\"hstat\"><div class=\"hstat-v\">{total}</div><div class=\"hstat-l\">Leads del mes</div></div>
-    <div class=\"hstat\"><div class=\"hstat-v\">{fmt_val(valor_total)}</div><div class=\"hstat-l\">Valor total</div></div>
-    <div class=\"hstat\"><div class=\"hstat-v\">{stag_any}</div><div class=\"hstat-l\">Estancados</div></div>
+  <div class="hr">
+    <div class="hstat"><div class="hstat-v">{total}</div><div class="hstat-l">Leads del mes</div></div>
+    <div class="hstat"><div class="hstat-v">{fmt_val(valor_total)}</div><div class="hstat-l">Valor total</div></div>
+    <div class="hstat"><div class="hstat-v">{stag_any}</div><div class="hstat-l">Estancados</div></div>
   </div>
 </div>
 
-<div class=\"container\">
+<div class="container">
 
-  <div class=\"metrics\">
-    <div class=\"mc c-teal\"><div class=\"mc-bar\"></div>
-      <div class=\"mc-lbl\">Leads del Mes</div>
-      <div class=\"mc-val\">{total}</div>
-      <div class=\"mc-sub\">creados en {mes_label}</div>
+  <div class="metrics">
+    <div class="mc c-teal"><div class="mc-bar"></div>
+      <div class="mc-lbl">Leads del Mes</div>
+      <div class="mc-val">{total}</div>
+      <div class="mc-sub">creados en {mes_label}</div>
     </div>
-    <div class=\"mc c-gray\"><div class=\"mc-bar\"></div>
-      <div class=\"mc-lbl\">Valor Total Pipeline</div>
-      <div class=\"mc-val\">{fmt_val(valor_total)}</div>
-      <div class=\"mc-sub\">deals con valor asignado</div>
+    <div class="mc c-gray"><div class="mc-bar"></div>
+      <div class="mc-lbl">Valor Total Pipeline</div>
+      <div class="mc-val">{fmt_val(valor_total)}</div>
+      <div class="mc-sub">deals con valor asignado</div>
     </div>
-    <div class=\"mc c-amber\"><div class=\"mc-bar\"></div>
-      <div class=\"mc-lbl\">Estancados 7-14 dias</div>
-      <div class=\"mc-val\">{stag_7_14}</div>
-      <div class=\"mc-sub\">sin actividad reciente</div>
+    <div class="mc c-amber"><div class="mc-bar"></div>
+      <div class="mc-lbl">Estancados 7-14 dias</div>
+      <div class="mc-val">{stag_7_14}</div>
+      <div class="mc-sub">sin actividad reciente</div>
     </div>
-    <div class=\"mc c-red\"><div class=\"mc-bar\"></div>
-      <div class=\"mc-lbl\">Estancados +14 dias</div>
-      <div class=\"mc-val\">{stag_14}</div>
-      <div class=\"mc-sub\">atencion urgente</div>
+    <div class="mc c-red"><div class="mc-bar"></div>
+      <div class="mc-lbl">Estancados +14 dias</div>
+      <div class="mc-val">{stag_14}</div>
+      <div class="mc-sub">atencion urgente</div>
     </div>
   </div>
 
-  <div class=\"sec\">Embudo del Mes</div>
-  <div id=\"funnel\" class=\"funnel\"></div>
-  <div class=\"sg\" id=\"stages-grid\"></div>
+  <div class="sec">Embudo del Mes</div>
+  <div id="funnel" class="funnel"></div>
+  <div class="sg" id="stages-grid"></div>
 
-  <div class=\"alert\"><span>&#9888;</span><div><b>{stag_any} deals ({stag_pct}%)</b> llevan mas de 7 dias sin actividad &mdash; <b>{stag_14}</b> superan los 14 dias.</div></div>
+  <div class="alert"><span>&#9888;</span><div><b>{stag_any} deals ({stag_pct}%)</b> llevan mas de 7 dias sin actividad &mdash; <b>{stag_14}</b> superan los 14 dias.</div></div>
 
-  <div class=\"sec\">KPIs del Equipo &mdash; {mes_label}</div>
-  <div class=\"team-kpis\">
-    <div class=\"tk c-teal\">
-      <div class=\"tk-val\">{conv_pct}%</div>
-      <div class=\"tk-lbl\">Tasa de Conversion</div>
-      <div class=\"tk-sub\">{compradores} compradores / {total} leads</div>
+  <div class="sec">KPIs del Equipo &mdash; {mes_label}</div>
+  <div class="team-kpis">
+    <div class="tk c-teal">
+      <div class="tk-val">{conv_pct}%</div>
+      <div class="tk-lbl">Tasa de Conversion</div>
+      <div class="tk-sub">{compradores} compradores / {total} leads</div>
     </div>
-    <div class=\"tk c-red\">
-      <div class=\"tk-val\">{noresp_pct}%</div>
-      <div class=\"tk-lbl\">Sin Respuesta del Cliente</div>
-      <div class=\"tk-sub\">{no_resp_n} el cliente no responde</div>
+    <div class="tk c-red">
+      <div class="tk-val">{noresp_pct}%</div>
+      <div class="tk-lbl">Sin Respuesta del Cliente</div>
+      <div class="tk-sub">{no_resp_n} el cliente no responde</div>
     </div>
-    <div class=\"tk c-amber\">
-      <div class=\"tk-val\">{calif_pct}%</div>
-      <div class=\"tk-lbl\">Leads Calificados</div>
-      <div class=\"tk-sub\">{calificados} en etapas avanzadas</div>
+    <div class="tk c-amber">
+      <div class="tk-val">{calif_pct}%</div>
+      <div class="tk-lbl">Leads Calificados</div>
+      <div class="tk-sub">{calificados} en etapas avanzadas</div>
     </div>
-    <div class=\"tk c-purple\">
-      <div class=\"tk-val\">{fmt_val(ticket_avg)}</div>
-      <div class=\"tk-lbl\">Ticket Promedio</div>
-      <div class=\"tk-sub\">valor / compradores cerrados</div>
+    <div class="tk c-purple">
+      <div class="tk-val">{fmt_val(ticket_avg)}</div>
+      <div class="tk-lbl">Ticket Promedio</div>
+      <div class="tk-sub">valor / compradores cerrados</div>
     </div>
-    <div class=\"tk c-gray\">
-      <div class=\"tk-val\">{stag_pct}%</div>
-      <div class=\"tk-lbl\">Estancados</div>
-      <div class=\"tk-sub\">{stag_any} sin actividad &gt;7d</div>
-    </div>
-  </div>
-
-  <div class=\"sec\">Rendimiento por Vendedora</div>
-  <div class=\"vg\" id=\"vendors-grid\"></div>
-
-  <div class=\"tab-row\">
-    <div class=\"sec\" style=\"margin:0;flex:1\">Todos los Deals del Mes</div>
-    <div class=\"tabs\">
-      <button class=\"tab active\" onclick=\"setView('all')\">Todos ({total})</button>
-      <button class=\"tab\" onclick=\"setView('stagnant')\">Estancados ({stag_any})</button>
+    <div class="tk c-gray">
+      <div class="tk-val">{stag_pct}%</div>
+      <div class="tk-lbl">Estancados</div>
+      <div class="tk-sub">{stag_any} sin actividad &gt;7d</div>
     </div>
   </div>
 
-  <div class=\"controls\">
-    <select id=\"f-stage\"  onchange=\"render()\"><option value=\"\">Todas las etapas</option></select>
-    <select id=\"f-user\"   onchange=\"render()\"><option value=\"\">Todos los responsables</option></select>
-    <select id=\"f-suc\"    onchange=\"render()\"><option value=\"\">Todas las sucursales</option></select>
-    <input  id=\"f-days\"   type=\"number\" placeholder=\"Dias min. estancado\" oninput=\"render()\" style=\"width:190px\">
-    <span   id=\"rc\"       class=\"rc\"></span>
+  <div class="sec">Rendimiento por Vendedora</div>
+  <div class="vg" id="vendors-grid"></div>
+
+  <div class="tab-row">
+    <div class="sec" style="margin:0;flex:1">Todos los Deals del Mes</div>
+    <div class="tabs">
+      <button class="tab active" onclick="setView('all')">Todos ({total})</button>
+      <button class="tab" onclick="setView('stagnant')">Estancados ({stag_any})</button>
+    </div>
   </div>
 
-  <div class=\"tw\"><div class=\"ts\">
+  <div class="controls">
+    <select id="f-stage"  onchange="render()"><option value="">Todas las etapas</option></select>
+    <select id="f-user"   onchange="render()"><option value="">Todos los responsables</option></select>
+    <select id="f-suc"    onchange="render()"><option value="">Todas las sucursales</option></select>
+    <input  id="f-days"   type="number" placeholder="Dias min. estancado" oninput="render()" style="width:190px">
+    <span   id="rc"       class="rc"></span>
+  </div>
+
+  <div class="tw"><div class="ts">
     <table>
       <thead><tr>
         <th>#</th><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th>
         <th>Responsable</th><th>Creado</th><th>Dias sin act.</th><th>Valor</th><th>Estado</th>
       </tr></thead>
-      <tbody id=\"tbl\"></tbody>
+      <tbody id="tbl"></tbody>
     </table>
   </div></div>
 
 </div>
 
-<div class=\"footer\">HEAVEN Colchones &nbsp;&bull;&nbsp; Pipeline {mes_label} &nbsp;&bull;&nbsp; {SUBDOMAIN}.kommo.com &nbsp;&bull;&nbsp; {gen_date}</div>
+<div class="footer">HEAVEN Colchones &nbsp;&bull;&nbsp; Pipeline {mes_label} &nbsp;&bull;&nbsp; {SUBDOMAIN}.kommo.com &nbsp;&bull;&nbsp; {gen_date}</div>
 
 <script>
 const allRows={all_rows_json};
@@ -494,42 +494,42 @@ vendors.forEach(v=>{{
   const stageRows=v.stages.filter(s=>s.count>0).map(s=>{{
     const pct=Math.round(s.count/v.total*100);
     const w=Math.round(s.count/maxStage*100);
-    return `<div class=\"vc-row\">
-      <div class=\"vc-dot\" style=\"background:${{SC[s.stage]||'#808080'}}\"></div>
-      <div class=\"vc-sname\">${{s.stage}}</div>
-      <div class=\"vc-bwrap\"><div class=\"vc-bfill\" style=\"background:${{SC[s.stage]||'#808080'}};width:${{w}}%\"></div></div>
-      <div class=\"vc-cnt\">${{s.count}}</div>
-      <div class=\"vc-pct\">${{pct}}%</div>
+    return `<div class="vc-row">
+      <div class="vc-dot" style="background:${{SC[s.stage]||'#808080'}}"></div>
+      <div class="vc-sname">${{s.stage}}</div>
+      <div class="vc-bwrap"><div class="vc-bfill" style="background:${{SC[s.stage]||'#808080'}};width:${{w}}%"></div></div>
+      <div class="vc-cnt">${{s.count}}</div>
+      <div class="vc-pct">${{pct}}%</div>
     </div>`;
   }}).join('');
-  vg.innerHTML+=`<div class=\"vc\">
-    <div class=\"vc-head\">
-      <div class=\"vc-name\">${{v.name}}</div>
-      <div><div class=\"vc-total\">${{v.total}}</div><div class=\"vc-total-lbl\">leads del mes</div></div>
+  vg.innerHTML+=`<div class="vc">
+    <div class="vc-head">
+      <div class="vc-name">${{v.name}}</div>
+      <div><div class="vc-total">${{v.total}}</div><div class="vc-total-lbl">leads del mes</div></div>
     </div>
-    <div class=\"vc-kpis\">
-      <div class=\"vk ${{kpiClass(k.conv_pct,5,2)}}\">
-        <div class=\"vk-val\">${{k.conv_pct}}%</div>
-        <div class=\"vk-lbl\">Conversion</div>
-        <div class=\"vk-hint\">${{k.compradores}} compradores</div>
+    <div class="vc-kpis">
+      <div class="vk ${{kpiClass(k.conv_pct,5,2)}}">
+        <div class="vk-val">${{k.conv_pct}}%</div>
+        <div class="vk-lbl">Conversion</div>
+        <div class="vk-hint">${{k.compradores}} compradores</div>
       </div>
-      <div class=\"vk ${{kpiClassInv(k.no_resp_pct,30,15)}}\">
-        <div class=\"vk-val\">${{k.no_resp_pct}}%</div>
-        <div class=\"vk-lbl\">Sin Respuesta del Cliente</div>
-        <div class=\"vk-hint\">${{k.no_resp}} clientes no responden</div>
+      <div class="vk ${{kpiClassInv(k.no_resp_pct,30,15)}}">
+        <div class="vk-val">${{k.no_resp_pct}}%</div>
+        <div class="vk-lbl">Sin Respuesta del Cliente</div>
+        <div class="vk-hint">${{k.no_resp}} clientes no responden</div>
       </div>
-      <div class=\"vk ${{kpiClass(k.calif_pct,40,20)}}\">
-        <div class=\"vk-val\">${{k.calif_pct}}%</div>
-        <div class=\"vk-lbl\">Calificados</div>
-        <div class=\"vk-hint\">${{k.calificados}} en embudo</div>
+      <div class="vk ${{kpiClass(k.calif_pct,40,20)}}">
+        <div class="vk-val">${{k.calif_pct}}%</div>
+        <div class="vk-lbl">Calificados</div>
+        <div class="vk-hint">${{k.calificados}} en embudo</div>
       </div>
     </div>
-    <div class=\"vc-kpis2\">
-      <div class=\"vk2\"><div class=\"vk2-val\">${{ticket}}</div><div class=\"vk2-lbl\">Ticket promedio</div></div>
-      <div class=\"vk2\"><div class=\"vk2-val\" style=\"color:${{k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)}}\">${{k.stagnant_pct}}%</div><div class=\"vk2-lbl\">% Estancados</div></div>
-      <div class=\"vk2\"><div class=\"vk2-val\">${{val}}</div><div class=\"vk2-lbl\">Valor total</div></div>
+    <div class="vc-kpis2">
+      <div class="vk2"><div class="vk2-val">${{ticket}}</div><div class="vk2-lbl">Ticket promedio</div></div>
+      <div class="vk2"><div class="vk2-val" style="color:${{k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)}}">${{k.stagnant_pct}}%</div><div class="vk2-lbl">% Estancados</div></div>
+      <div class="vk2"><div class="vk2-val">${{val}}</div><div class="vk2-lbl">Valor total</div></div>
     </div>
-    <div class=\"vc-rows\">${{stageRows||'<div style=\"padding:12px 16px;font-size:.74rem;color:var(--muted)\">Sin leads en etapas activas</div>'}}</div>
+    <div class="vc-rows">${{stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads en etapas activas</div>'}}</div>
   </div>`;
 }});
 
@@ -537,7 +537,7 @@ const fEl=document.getElementById('funnel');
 stages.forEach(s=>{{const g=document.createElement('div');g.className='fs';g.style.background=SC[s.name]||'#808080';g.style.flex=Math.max(s.count,1);g.title=s.name+': '+s.count+' deals';if(s.count>5)g.textContent=s.count;fEl.appendChild(g);}});
 
 const grid=document.getElementById('stages-grid');
-stages.forEach(s=>{{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'—';grid.innerHTML+=`<div class=\"sc\"><div class=\"sc-bar\" style=\"background:${{c}}\"></div><div class=\"sc-nm\">${{s.name}}</div><div class=\"sc-n\">${{s.count}}</div><div class=\"sc-d\">${{v}} &middot; ${{s.pct}}%</div></div>`;}});
+stages.forEach(s=>{{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'—';grid.innerHTML+=`<div class="sc"><div class="sc-bar" style="background:${{c}}"></div><div class="sc-nm">${{s.name}}</div><div class="sc-n">${{s.count}}</div><div class="sc-d">${{v}} &middot; ${{s.pct}}%</div></div>`;}});
 
 stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+=`<option>${{v}}</option>`);
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+=`<option>${{v}}</option>`);
@@ -554,14 +554,14 @@ function render(){{
   const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc));
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
-  if(!f.length){{tbody.innerHTML='<tr><td colspan=\"9\" class=\"nd\">Sin deals con estos filtros</td></tr>';return;}}
+  if(!f.length){{tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}}
   tbody.innerHTML=f.map((r,i)=>{{
     const c=SC[r.stage]||'#808080';
-    const badge=r.days_int>14?'<span class=\"badge b-red\">+14 dias</span>':r.days_int>=7?'<span class=\"badge b-amber\">7-14 dias</span>':'<span class=\"badge b-teal\">Al dia</span>';
+    const badge=r.days_int>14?'<span class="badge b-red">+14 dias</span>':r.days_int>=7?'<span class="badge b-amber">7-14 dias</span>':'<span class="badge b-teal">Al dia</span>';
     const dc=r.days_int>14?'var(--red)':r.days_int>=7?'var(--amber)':'var(--teal)';
     const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'—';
     const nm=r.contact||r.name;
-    return `<tr><td style=\"color:var(--muted);width:36px\">${{i+1}}</td><td><a href=\"https://{SUBDOMAIN}.kommo.com/leads/detail/${{r.id}}\" target=\"_blank\">${{nm}}</a>${{r.contact?'<br><span style=\"font-size:.66rem;color:var(--muted)\">#'+r.id+'</span>':''}}</td><td><span style=\"color:${{c}};font-weight:700\">${{r.stage}}</span></td><td style=\"color:var(--muted)\">${{r.sucursal||'—'}}</td><td style=\"color:var(--muted);font-size:.75rem\">${{r.user}}</td><td style=\"color:var(--muted)\">${{r.created}}</td><td style=\"font-weight:800;color:${{dc}}\">${{r.days_int}}d</td><td style=\"color:var(--teal-dk);font-weight:600\">${{val}}</td><td>${{badge}}</td></tr>`;
+    return `<tr><td style="color:var(--muted);width:36px">${{i+1}}</td><td><a href="https://{SUBDOMAIN}.kommo.com/leads/detail/${{r.id}}" target="_blank">${{nm}}</a>${{r.contact?'<br><span style="font-size:.66rem;color:var(--muted)">#'+r.id+'</span>':''}}</td><td><span style="color:${{c}};font-weight:700">${{r.stage}}</span></td><td style="color:var(--muted)">${{r.sucursal||'—'}}</td><td style="color:var(--muted);font-size:.75rem">${{r.user}}</td><td style="color:var(--muted)">${{r.created}}</td><td style="font-weight:800;color:${{dc}}">${{r.days_int}}d</td><td style="color:var(--teal-dk);font-weight:600">${{val}}</td><td>${{badge}}</td></tr>`;
   }}).join('');
 }}
 render();
