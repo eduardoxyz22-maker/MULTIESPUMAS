@@ -10,7 +10,7 @@ from collections import defaultdict
 import calendar
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
-BASE = "https://api-c.kommo.com/api/v4"
+BASE = "https://eanez.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN") or (
     "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVm"
     "ODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFh"
