@@ -10,7 +10,7 @@ from collections import defaultdict
 import calendar
 
 # ── CONFIG ────────────────────────────────────────────────────────────────────
-SUBDOMAIN = "eanez"
+BASE = "https://api-c.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN") or (
     "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVm"
     "ODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFh"
@@ -28,8 +28,6 @@ TOKEN     = os.environ.get("KOMMO_TOKEN") or (
     "w04OqX7lkDtioGJPqQUO5TdEanLdCihudNXqVhNv7XbtaUABolI28wZ7PamQ8BYqSI6js"
     "AJZHYn9MroTQcbrDrbBjtL3-WTl2H9yPnmikHykS47PUIaX-BWMCXuT2f9RgOpPQiShYo"
     "0tzxP8N9jji3qMKtIlgK72BG8M2ouz8g0aLxqWE1Sk3wE1_9fp_iENV7FcV4Q"
-)
-BASE = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 HDR  = {"Authorization": f"Bearer {TOKEN}", "User-Agent": "HeavenDashboard/2.0"}
 
 # ── API ───────────────────────────────────────────────────────────────────────
