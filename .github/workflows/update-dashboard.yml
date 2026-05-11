@@ -2,7 +2,7 @@ name: Actualizar Dashboard Diario
 
 on:
   schedule:
-    - cron: '0 15 * * *'
+    - cron: '0 17 * * *'
   workflow_dispatch:
 
 jobs:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-h
+
     steps:
       - uses: actions/checkout@v4
 
