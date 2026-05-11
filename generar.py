@@ -82,7 +82,7 @@ print("Obteniendo pipelines...")
 pipelines = fetch_pipelines()
 stage_map = {}
 for pl in pipelines:
-    for st in pl.get("_embedded", {}).get("statuses", {}).values():
+    for st in pl.get("_embedded", {}).get("statuses", []):
         stage_map[st["id"]] = st["name"]
 
 print("Obteniendo usuarios...")
