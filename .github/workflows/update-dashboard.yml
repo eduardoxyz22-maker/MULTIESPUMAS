@@ -2,8 +2,8 @@ name: Actualizar Dashboard Diario
 
 on:
   schedule:
-    - cron: '0 17 * * *'   # 11:00 AM Mexico City (UTC-6)
-  workflow_dispatch:        # ejecutar manualmente desde GitHub Actions
+    - cron: '0 17 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
@@ -12,19 +12,15 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Generar dashboard desde Kommo API
-        env:
-          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
-        run: python3 build_dashboard.py
+      - name: Generar dashboard
+        run: python3 generar.py
 
-      - name: Commit y push
+      - name: Publicar
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          FECHA=$(TZ='America/Mexico_City' date '+%d/%m/%Y %H:%M')
           git add index.html
-          git diff --staged --quiet || git commit -m "Dashboard actualizado - $FECHA"
+          git diff --staged --quiet || git commit -m "Dashboard $(TZ='America/Mexico_City' date '+%d/%m/%Y %H:%M')"
           git push
