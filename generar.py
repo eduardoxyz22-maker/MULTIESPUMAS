@@ -14,13 +14,30 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
+class KommoBlockedError(Exception):
+    pass
+
 def api_get(path, params=None):
     url = BASE_URL + path
     if params:
         url += "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode())
+    try:
+        with urllib.request.urlopen(req) as resp:
+            return json.loads(resp.read().decode())
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode()
+        except Exception:
+            pass
+        if e.code == 403 and "allowlist" in body.lower():
+            raise KommoBlockedError(
+                "La IP del servidor no esta en la lista blanca de Kommo. "
+                "Ve a Kommo → Configuracion → Integraciones → tu app → "
+                "desactiva la restriccion de IP o agrega las IPs de GitHub Actions."
+            )
+        raise
 
 def fetch_all_leads(from_ts):
     leads = []
@@ -78,20 +95,103 @@ fecha_str = now_dt.strftime("%d/%m/%Y %H:%M")
 inicio_mes = datetime.datetime(now_dt.year, now_dt.month, 1)
 from_ts = int(inicio_mes.timestamp())
 
-print("Obteniendo pipelines...")
-pipelines = fetch_pipelines()
-stage_map = {}
-for pl in pipelines:
-    for st in pl.get("_embedded", {}).get("statuses", []):
-        stage_map[st["id"]] = st["name"]
+def main():
+    global stage_map, user_map, leads
+    print("Obteniendo pipelines...")
+    pipelines = fetch_pipelines()
+    stage_map = {}
+    for pl in pipelines:
+        for st in pl.get("_embedded", {}).get("statuses", []):
+            stage_map[st["id"]] = st["name"]
 
-print("Obteniendo usuarios...")
-users_raw = fetch_users()
-user_map = {u["id"]: u.get("name", "Desconocido") for u in users_raw}
+    print("Obteniendo usuarios...")
+    users_raw = fetch_users()
+    user_map = {u["id"]: u.get("name", "Desconocido") for u in users_raw}
 
-print("Obteniendo leads...")
-leads = fetch_all_leads(from_ts)
-print("Total leads:", len(leads))
+    print("Obteniendo leads...")
+    leads = fetch_all_leads(from_ts)
+    print("Total leads:", len(leads))
+
+try:
+    stage_map = {}
+    user_map = {}
+    leads = []
+    main()
+except KommoBlockedError as e:
+    print("ERROR:", e)
+    runner_ip = "desconocida"
+    try:
+        req = urllib.request.Request("https://api.ipify.org", headers={"User-Agent": "curl/7"})
+        with urllib.request.urlopen(req, timeout=5) as r:
+            runner_ip = r.read().decode().strip()
+    except Exception:
+        pass
+    error_html = """<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard — Error de Acceso Kommo</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#F5F6F7;color:#2D2D2D;font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:flex;flex-direction:column}}
+.header{{background:#00B5AD;padding:16px 36px;display:flex;align-items:center;gap:24px;box-shadow:0 3px 16px rgba(0,181,173,.35)}}
+.logo-h{{font-size:1.75rem;font-weight:800;color:#fff;letter-spacing:.14em}}
+.logo-s{{font-size:.68rem;color:rgba(255,255,255,.8);letter-spacing:.04em}}
+h1{{font-size:.98rem;font-weight:600;color:#fff}}
+.wrap{{max-width:720px;margin:60px auto;padding:0 24px}}
+.card{{background:#fff;border-radius:14px;padding:36px 40px;border:1px solid #E2E2E2;box-shadow:0 2px 12px rgba(0,0,0,.08)}}
+.icon{{font-size:3rem;margin-bottom:16px}}
+h2{{font-size:1.4rem;font-weight:800;color:#CE2939;margin-bottom:10px}}
+p{{color:#555;line-height:1.6;margin-bottom:12px;font-size:.9rem}}
+.ip-box{{background:#FFF3E0;border:1px solid #FCD34D;border-left:4px solid #D97706;border-radius:8px;padding:14px 18px;margin:20px 0;font-size:.9rem}}
+.ip-box code{{font-family:monospace;font-weight:700;font-size:1rem;color:#92400E;background:#FEF3E2;padding:2px 8px;border-radius:4px}}
+.steps{{background:#E6F7F6;border:1px solid #99DDD9;border-radius:8px;padding:18px 22px;margin-top:20px}}
+.steps h3{{color:#008F88;font-size:.85rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}}
+ol{{padding-left:18px;color:#444;font-size:.86rem;line-height:1.9}}
+.footer{{text-align:center;padding:18px;font-size:.68rem;color:#808080;border-top:1px solid #E2E2E2;background:#fff;margin-top:auto}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <div class="logo-h">HEAVEN</div>
+    <div class="logo-s">colchones &#10011;</div>
+  </div>
+  <h1>Pipeline de Ventas &mdash; {mes}</h1>
+</div>
+<div class="wrap">
+  <div class="card">
+    <div class="icon">&#128274;</div>
+    <h2>Acceso bloqueado por Kommo</h2>
+    <p>El servidor de actualizacion automatica tiene su IP bloqueada por la configuracion de lista blanca (allowlist) de la cuenta Kommo <strong>eanez</strong>.</p>
+    <p>El token JWT es valido (expira 2026-12-30). El DNS resuelve correctamente. El unico problema es la restriccion de IP activa en Kommo.</p>
+    <div class="ip-box">
+      <strong>IP del servidor bloqueada:</strong><br>
+      <code>{ip}</code><br>
+      <small style="color:#92400E">Esta es la IP que debes agregar al allowlist en Kommo, o puedes deshabilitar la restriccion.</small>
+    </div>
+    <div class="steps">
+      <h3>Como solucionar</h3>
+      <ol>
+        <li>Inicia sesion en <strong>eanez.kommo.com</strong></li>
+        <li>Ve a <strong>Configuracion</strong> (icono de engranaje)</li>
+        <li>Selecciona <strong>Integraciones</strong> &rarr; tu aplicacion</li>
+        <li>Busca la seccion <strong>Lista blanca de IP</strong> o <strong>IP restrictions</strong></li>
+        <li>Agrega la IP <code>{ip}</code> &mdash; o <strong>desactiva</strong> la restriccion completamente</li>
+        <li>Vuelve a ejecutar el workflow en GitHub Actions</li>
+      </ol>
+    </div>
+    <p style="margin-top:20px;font-size:.78rem;color:#808080">Ultima actualizacion intentada: {fecha}</p>
+  </div>
+</div>
+<div class="footer">HEAVEN Colchones &bull; eanez.kommo.com &bull; {fecha}</div>
+</body>
+</html>""".format(mes=mes_label, ip=runner_ip, fecha=fecha_str)
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(error_html)
+    print("Pagina de error generada en index.html (IP del runner:", runner_ip, ")")
+    raise SystemExit(1)
 
 STAGE_ORDER = [
     "Incoming leads",
