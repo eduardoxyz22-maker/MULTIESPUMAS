@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0">
+<title>Fichas de Producto — Heaven Colchones</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --teal:#00B5AD;--teal-dk:#008F88;--teal-lt:#E6F7F6;
+  --gray-lt:#F5F6F7;--gray-md:#E2E2E2;--gray-dk:#6B6B6B;
+  --red:#CE2939;--amber:#D97706;--green:#16A34A;
+  --black:#1A1A1A;--white:#FFFFFF;--text:#2D2D2D;
+}
+body{background:var(--gray-lt);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+.header{background:var(--teal);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,181,173,.4)}
+.logo-wrap{display:flex;flex-direction:column}
+.logo-h{font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:.12em;line-height:1}
+.logo-s{font-size:.6rem;color:rgba(255,255,255,.8);letter-spacing:.04em;margin-top:2px}
+.header-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 12px;font-size:.7rem;font-weight:600;color:#fff;letter-spacing:.04em}
+
+/* SEARCH BAR */
+.search-wrap{padding:12px 16px 8px;background:#fff;border-bottom:1px solid var(--gray-md);position:sticky;top:58px;z-index:99}
+.search-box{display:flex;align-items:center;gap:8px;background:var(--gray-lt);border-radius:10px;padding:8px 12px}
+.search-box svg{flex-shrink:0;color:var(--gray-dk)}
+.search-box input{border:none;background:none;outline:none;font-size:.9rem;color:var(--text);width:100%;font-family:inherit}
+.search-box input::placeholder{color:#aaa}
+
+/* FILTROS */
+.filtros{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;background:#fff;border-bottom:1px solid var(--gray-md)}
+.filtros::-webkit-scrollbar{display:none}
+.filtro-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:1.5px solid var(--gray-md);background:#fff;font-size:.78rem;font-weight:500;color:var(--gray-dk);cursor:pointer;transition:all .15s}
+.filtro-btn.active{background:var(--teal);border-color:var(--teal);color:#fff}
+
+/* GRID DE FICHAS */
+.grid{padding:12px 12px 80px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:360px){.grid{grid-template-columns:1fr}}
+@media(min-width:600px){.grid{grid-template-columns:repeat(3,1fr)}}
+
+/* FICHA CARD */
+.ficha{background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.08);cursor:pointer;transition:transform .15s,box-shadow .15s;-webkit-user-select:none;user-select:none}
+.ficha:active{transform:scale(.97);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.ficha-img{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--teal-lt);display:flex;align-items:center;justify-content:center;font-size:3rem;position:relative}
+.ficha-img-emoji{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3.5rem}
+.ficha-badge{position:absolute;top:8px;left:8px;background:var(--red);color:#fff;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:20px;letter-spacing:.04em}
+.ficha-badge.nuevo{background:var(--green)}
+.ficha-badge.top{background:var(--amber)}
+.ficha-body{padding:10px 10px 12px}
+.ficha-cat{font-size:.6rem;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.08em;margin-bottom:3px}
+.ficha-nombre{font-size:.85rem;font-weight:700;color:var(--black);line-height:1.25;margin-bottom:4px}
+.ficha-medidas{font-size:.68rem;color:var(--gray-dk);margin-bottom:6px}
+.precio-wrap{display:flex;align-items:baseline;gap:5px}
+.precio-actual{font-size:1rem;font-weight:800;color:var(--teal)}
+.precio-antes{font-size:.7rem;color:#aaa;text-decoration:line-through}
+
+/* MODAL DETALLE */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;opacity:0;pointer-events:none;transition:opacity .2s;display:flex;align-items:flex-end}
+.overlay.open{opacity:1;pointer-events:all}
+.modal{background:#fff;border-radius:20px 20px 0 0;width:100%;max-height:92vh;overflow-y:auto;transform:translateY(100%);transition:transform .25s cubic-bezier(.32,0,.67,0);padding-bottom:env(safe-area-inset-bottom,16px)}
+.overlay.open .modal{transform:translateY(0)}
+.modal-drag{width:36px;height:4px;background:var(--gray-md);border-radius:99px;margin:10px auto 0}
+.modal-img{width:100%;height:200px;object-fit:cover;background:var(--teal-lt);display:flex;align-items:center;justify-content:center;font-size:5rem;flex-shrink:0}
+.modal-body{padding:18px 18px 24px}
+.modal-cat{font-size:.65rem;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.modal-nombre{font-size:1.3rem;font-weight:800;color:var(--black);line-height:1.2;margin-bottom:8px}
+.modal-precio-wrap{display:flex;align-items:baseline;gap:8px;margin-bottom:14px}
+.modal-precio{font-size:1.6rem;font-weight:800;color:var(--teal)}
+.modal-antes{font-size:.9rem;color:#aaa;text-decoration:line-through}
+.modal-desc{font-size:.85rem;color:#555;line-height:1.6;margin-bottom:16px}
+.specs-titulo{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-dk);margin-bottom:8px}
+.specs-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.spec-item{background:var(--gray-lt);border-radius:10px;padding:10px 12px}
+.spec-label{font-size:.62rem;color:var(--gray-dk);margin-bottom:2px}
+.spec-val{font-size:.85rem;font-weight:700;color:var(--black)}
+.colores-titulo{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--gray-dk);margin-bottom:8px}
+.colores{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap}
+.color-dot{width:28px;height:28px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1.5px var(--gray-md);cursor:pointer;transition:box-shadow .15s}
+.color-dot.active{box-shadow:0 0 0 2.5px var(--teal)}
+.color-label{font-size:.7rem;color:var(--gray-dk);display:flex;align-items:center;gap:6px;width:100%;flex-basis:100%}
+.btn-cotizar{width:100%;background:var(--teal);color:#fff;border:none;border-radius:12px;padding:15px;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-cotizar:active{background:var(--teal-dk)}
+.btn-cotizar svg{flex-shrink:0}
+
+/* CLOSE BTN */
+.modal-close{position:absolute;top:14px;right:16px;width:32px;height:32px;background:rgba(0,0,0,.08);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10}
+.modal-header-rel{position:relative}
+
+/* EMPTY */
+.empty{grid-column:1/-1;text-align:center;padding:60px 16px;color:var(--gray-dk)}
+.empty-icon{font-size:3rem;margin-bottom:12px}
+.empty p{font-size:.9rem}
+
+/* WHATSAPP FLOAT */
+.wa-float{position:fixed;bottom:20px;right:16px;z-index:150;background:#25D366;color:#fff;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.45);cursor:pointer;text-decoration:none}
+.wa-float:active{transform:scale(.93)}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo-wrap">
+    <div class="logo-h">HEAVEN</div>
+    <div class="logo-s">COLCHONES · CATÁLOGO</div>
+  </div>
+  <div class="header-badge">Impulsadoras</div>
+</div>
+
+<!-- BÚSQUEDA -->
+<div class="search-wrap">
+  <div class="search-box">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" id="searchInput" placeholder="Buscar colchón, base, almohada…" oninput="filtrar()">
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="filtros">
+  <button class="filtro-btn active" onclick="setFiltro(this,'todos')">Todos</button>
+  <button class="filtro-btn" onclick="setFiltro(this,'colchon')">Colchones</button>
+  <button class="filtro-btn" onclick="setFiltro(this,'base')">Bases</button>
+  <button class="filtro-btn" onclick="setFiltro(this,'almohada')">Almohadas</button>
+  <button class="filtro-btn" onclick="setFiltro(this,'accesorio')">Accesorios</button>
+</div>
+
+<!-- GRID -->
+<div class="grid" id="grid"></div>
+
+<!-- WHATSAPP FLOAT -->
+<a class="wa-float" id="waFloat" href="#" onclick="return false" title="Compartir por WhatsApp">
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.561 4.14 1.533 5.873L.057 23.887a.5.5 0 0 0 .613.644l6.207-1.627A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.848 9.848 0 0 1-5.022-1.374l-.36-.214-3.733.979.999-3.64-.234-.374A9.855 9.855 0 0 1 2.118 12C2.118 6.55 6.55 2.118 12 2.118S21.882 6.55 21.882 12 17.45 21.882 12 21.882z"/></svg>
+</a>
+
+<!-- MODAL OVERLAY -->
+<div class="overlay" id="overlay" onclick="cerrarModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-drag"></div>
+    <div class="modal-header-rel">
+      <div class="modal-img" id="modalImg"></div>
+      <div class="modal-close" onclick="overlay.classList.remove('open')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+/* ───────── CATÁLOGO ───────── */
+const CATALOGO = [
+  {
+    id:1, cat:'colchon', nombre:'Heaven Comfort', emoji:'🛏️',
+    badge:'TOP VENTAS', badgeClass:'top',
+    precio:'$4,990', antes:'$5,800',
+    desc:'Colchón de espuma de alta densidad con tecnología Comfort Foam. Ideal para descanso profundo y alivio de presión. Cubierta antiácaros, lavable.',
+    medidas:'Individual · Matrimonial · Queen · King',
+    specs:[
+      {label:'Firmeza',val:'Media'},
+      {label:'Altura',val:'22 cm'},
+      {label:'Tecnología',val:'Comfort Foam'},
+      {label:'Garantía',val:'5 años'},
+    ],
+    colores:[{hex:'#D4C5A9',nombre:'Marfil'},{hex:'#8B7355',nombre:'Camel'},{hex:'#4A4A4A',nombre:'Gris'}],
+  },
+  {
+    id:2, cat:'colchon', nombre:'Heaven Ortopédico Pro', emoji:'💎',
+    badge:'NUEVO', badgeClass:'nuevo',
+    precio:'$7,490', antes:'$8,500',
+    desc:'Sistema ortopédico de resortes individuales ensacados con capa de memory foam. Soporte lumbar superior. Recomendado por especialistas.',
+    medidas:'Matrimonial · Queen · King',
+    specs:[
+      {label:'Firmeza',val:'Firme'},
+      {label:'Altura',val:'28 cm'},
+      {label:'Tecnología',val:'Pocket Spring + Memory Foam'},
+      {label:'Garantía',val:'10 años'},
+    ],
+    colores:[{hex:'#2C3E50',nombre:'Azul noche'},{hex:'#ECF0F1',nombre:'Blanco perla'}],
+  },
+  {
+    id:3, cat:'colchon', nombre:'Heaven Suave Plus', emoji:'☁️',
+    badge:'', badgeClass:'',
+    precio:'$3,490', antes:'$4,200',
+    desc:'Espuma viscoelástica de baja densidad para quienes prefieren sensación suave. Perfecto para niños y personas de complexión ligera.',
+    medidas:'Individual · Matrimonial',
+    specs:[
+      {label:'Firmeza',val:'Suave'},
+      {label:'Altura',val:'18 cm'},
+      {label:'Tecnología',val:'Viscoelástica'},
+      {label:'Garantía',val:'3 años'},
+    ],
+    colores:[{hex:'#E8D5C4',nombre:'Rosa palo'},{hex:'#B8D4E8',nombre:'Celeste'}],
+  },
+  {
+    id:4, cat:'colchon', nombre:'Heaven Premium King', emoji:'👑',
+    badge:'PREMIUM', badgeClass:'top',
+    precio:'$12,990', antes:'$15,000',
+    desc:'El mejor de nuestra línea. Resortes de bolsillo + gel memory foam + pillow top removible. Temperatura regulada toda la noche.',
+    medidas:'Queen · King · Super King',
+    specs:[
+      {label:'Firmeza',val:'Media-Firme'},
+      {label:'Altura',val:'35 cm'},
+      {label:'Tecnología',val:'Hybrid Gel + Pillow Top'},
+      {label:'Garantía',val:'15 años'},
+    ],
+    colores:[{hex:'#F5F5F5',nombre:'Blanco'},{hex:'#1A1A2E',nombre:'Azul real'}],
+  },
+  {
+    id:5, cat:'base', nombre:'Base Tapizada Heaven', emoji:'🪵',
+    badge:'', badgeClass:'',
+    precio:'$2,490', antes:'$2,900',
+    desc:'Base box spring tapizada en tela anti-polvo. Incluye patas cromadas regulables. Refuerzo central para mayor duración.',
+    medidas:'Individual · Matrimonial · Queen · King',
+    specs:[
+      {label:'Altura',val:'38 cm'},
+      {label:'Material',val:'Madera + Tapiz'},
+      {label:'Patas',val:'Cromadas'},
+      {label:'Garantía',val:'3 años'},
+    ],
+    colores:[{hex:'#8B7355',nombre:'Camel'},{hex:'#4A4A4A',nombre:'Gris'},{hex:'#2C1810',nombre:'Chocolate'}],
+  },
+  {
+    id:6, cat:'base', nombre:'Base Nórdica con Cajones', emoji:'📦',
+    badge:'NUEVO', badgeClass:'nuevo',
+    precio:'$3,990', antes:'$4,800',
+    desc:'Base estilo nórdico con 2 cajones de almacenamiento. Tablillas de madera laminada. Cabecera incluida. Fácil armado.',
+    medidas:'Matrimonial · Queen',
+    specs:[
+      {label:'Cajones',val:'2 cajones'},
+      {label:'Material',val:'MDF laminado'},
+      {label:'Cabecera',val:'Incluida'},
+      {label:'Garantía',val:'2 años'},
+    ],
+    colores:[{hex:'#F5F5F0',nombre:'Blanco roto'},{hex:'#D4C5A9',nombre:'Roble'},{hex:'#1A1A1A',nombre:'Negro'}],
+  },
+  {
+    id:7, cat:'almohada', nombre:'Almohada Memory Foam', emoji:'😴',
+    badge:'', badgeClass:'',
+    precio:'$690', antes:'$850',
+    desc:'Almohada de memory foam recortable. Se adapta a la posición de tu cuello. Funda de bambú antiácaros y antibacteriana.',
+    medidas:'45×65 cm · 50×70 cm',
+    specs:[
+      {label:'Material',val:'Memory Foam'},
+      {label:'Funda',val:'Bambú premium'},
+      {label:'Altura',val:'12 cm ajustable'},
+      {label:'Lavable',val:'Funda sí'},
+    ],
+    colores:[{hex:'#FFFFFF',nombre:'Blanco'},{hex:'#E8E8E8',nombre:'Gris claro'}],
+  },
+  {
+    id:8, cat:'almohada', nombre:'Almohada Viscoelástica Cool', emoji:'❄️',
+    badge:'TOP VENTAS', badgeClass:'top',
+    precio:'$890', antes:'$1,100',
+    desc:'Gel infusionado para regular la temperatura. Alivio de puntos de presión. Ideal para quienes transpiran de noche.',
+    medidas:'45×65 cm · 50×70 cm',
+    specs:[
+      {label:'Material',val:'Gel + Visco'},
+      {label:'Efecto',val:'Refrescante'},
+      {label:'Funda',val:'Microfibra'},
+      {label:'Garantía',val:'2 años'},
+    ],
+    colores:[{hex:'#B8D4E8',nombre:'Azul hielo'},{hex:'#FFFFFF',nombre:'Blanco'}],
+  },
+  {
+    id:9, cat:'accesorio', nombre:'Protector de Colchón', emoji:'🛡️',
+    badge:'', badgeClass:'',
+    precio:'$490', antes:'$650',
+    desc:'Protector impermeable de colchón. Transpirable, silencioso, lavable a máquina. Compatible con todos los colchones Heaven.',
+    medidas:'Individual · Matrimonial · Queen · King',
+    specs:[
+      {label:'Material',val:'Terry + PU'},
+      {label:'Impermeable',val:'100%'},
+      {label:'Lavado',val:'Máquina 30°'},
+      {label:'Silencioso',val:'Sí'},
+    ],
+    colores:[{hex:'#FFFFFF',nombre:'Blanco'}],
+  },
+  {
+    id:10, cat:'accesorio', nombre:'Kit Sábanas Premium', emoji:'✨',
+    badge:'NUEVO', badgeClass:'nuevo',
+    precio:'$890', antes:'$1,200',
+    desc:'Juego de sábanas 100% algodón percal 300 hilos. Incluye: sábana ajustable, sábana encimera y 2 fundas de almohada.',
+    medidas:'Individual · Matrimonial · Queen · King',
+    specs:[
+      {label:'Material',val:'Algodón 300h'},
+      {label:'Piezas',val:'4 piezas'},
+      {label:'Lavado',val:'Máquina 40°'},
+      {label:'Colores',val:'10 disponibles'},
+    ],
+    colores:[{hex:'#FFFFFF',nombre:'Blanco'},{hex:'#F5DEB3',nombre:'Trigo'},{hex:'#B0C4DE',nombre:'Azul acero'},{hex:'#E8D5C4',nombre:'Rosa'}],
+  },
+];
+
+/* ───────── ESTADO ───────── */
+let filtroActivo = 'todos';
+let busqueda = '';
+let modalActivo = null;
+
+/* ───────── RENDER ───────── */
+function render() {
+  const grid = document.getElementById('grid');
+  const items = CATALOGO.filter(p => {
+    const matchCat = filtroActivo === 'todos' || p.cat === filtroActivo;
+    const q = busqueda.toLowerCase();
+    const matchQ = !q || p.nombre.toLowerCase().includes(q) || p.cat.includes(q) || p.desc.toLowerCase().includes(q);
+    return matchCat && matchQ;
+  });
+
+  if (!items.length) {
+    grid.innerHTML = '<div class="empty"><div class="empty-icon">🔍</div><p>No se encontraron productos.<br>Intenta con otro término.</p></div>';
+    return;
+  }
+
+  grid.innerHTML = items.map(p => `
+    <div class="ficha" onclick="abrirModal(${p.id})">
+      <div class="ficha-img" style="background:${colorBg(p.emoji)}">
+        <div class="ficha-img-emoji">${p.emoji}</div>
+        ${p.badge ? `<span class="ficha-badge ${p.badgeClass}">${p.badge}</span>` : ''}
+      </div>
+      <div class="ficha-body">
+        <div class="ficha-cat">${labelCat(p.cat)}</div>
+        <div class="ficha-nombre">${p.nombre}</div>
+        <div class="ficha-medidas">${p.medidas.split('·')[0].trim()}</div>
+        <div class="precio-wrap">
+          <span class="precio-actual">${p.precio}</span>
+          ${p.antes ? `<span class="precio-antes">${p.antes}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function colorBg(e) {
+  const map = {'🛏️':'#E6F7F6','💎':'#EEF2FF','☁️':'#F0F9FF','👑':'#FEF9E7','🪵':'#FEF3E2','📦':'#F0FDF4','😴':'#FDF4FF','❄️':'#EFF6FF','🛡️':'#F0FDF4','✨':'#FEF3E2'};
+  return map[e] || '#F5F6F7';
+}
+function labelCat(c) {
+  return {colchon:'Colchón',base:'Base',almohada:'Almohada',accesorio:'Accesorio'}[c] || c;
+}
+
+/* ───────── FILTRO / BÚSQUEDA ───────── */
+function setFiltro(btn, cat) {
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filtroActivo = cat;
+  render();
+}
+function filtrar() {
+  busqueda = document.getElementById('searchInput').value;
+  render();
+}
+
+/* ───────── MODAL ───────── */
+function abrirModal(id) {
+  const p = CATALOGO.find(x => x.id === id);
+  modalActivo = p;
+  document.getElementById('modalImg').innerHTML = `<span style="font-size:5rem">${p.emoji}</span>`;
+  document.getElementById('modalImg').style.background = colorBg(p.emoji);
+
+  const dotsHTML = p.colores.map((c,i) => `<div class="color-dot${i===0?' active':''}" style="background:${c.hex}" title="${c.nombre}" onclick="selectColor(this)"></div>`).join('');
+  const nombreColor = p.colores[0]?.nombre || '';
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="modal-cat">${labelCat(p.cat)}</div>
+    <div class="modal-nombre">${p.nombre}</div>
+    <div class="modal-precio-wrap">
+      <span class="modal-precio">${p.precio}</span>
+      ${p.antes ? `<span class="modal-antes">${p.antes}</span>` : ''}
+    </div>
+    <p class="modal-desc">${p.desc}</p>
+    <div class="specs-titulo">Características</div>
+    <div class="specs-grid">
+      ${p.specs.map(s => `<div class="spec-item"><div class="spec-label">${s.label}</div><div class="spec-val">${s.val}</div></div>`).join('')}
+    </div>
+    <div class="colores-titulo">Medidas disponibles</div>
+    <p class="modal-desc" style="margin-bottom:14px">${p.medidas}</p>
+    <div class="colores-titulo">Colores</div>
+    <div class="colores" id="coloresWrap">
+      ${dotsHTML}
+      <div class="color-label" id="colorLabel">• ${nombreColor}</div>
+    </div>
+    <button class="btn-cotizar" onclick="cotizar()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.136.561 4.14 1.533 5.873L.057 23.887a.5.5 0 0 0 .613.644l6.207-1.627A11.93 11.93 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.882a9.848 9.848 0 0 1-5.022-1.374l-.36-.214-3.733.979.999-3.64-.234-.374A9.855 9.855 0 0 1 2.118 12C2.118 6.55 6.55 2.118 12 2.118S21.882 6.55 21.882 12 17.45 21.882 12 21.882z"/></svg>
+      Cotizar por WhatsApp
+    </button>
+  `;
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function cerrarModal(e) {
+  if (e.target === document.getElementById('overlay')) {
+    document.getElementById('overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+}
+
+function selectColor(dot) {
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+  dot.classList.add('active');
+  document.getElementById('colorLabel').textContent = '• ' + dot.title;
+}
+
+function cotizar() {
+  if (!modalActivo) return;
+  const colorActivo = document.querySelector('.color-dot.active');
+  const color = colorActivo ? colorActivo.title : '';
+  const msg = `Hola, me interesa cotizar:\n*${modalActivo.nombre}*\nPrecio: ${modalActivo.precio}${color ? '\nColor: ' + color : ''}\n\n¿Pueden darme más información?`;
+  window.open('https://wa.me/521' + '?text=' + encodeURIComponent(msg), '_blank');
+}
+
+/* ───────── INIT ───────── */
+render();
+</script>
+</body>
+</html>
