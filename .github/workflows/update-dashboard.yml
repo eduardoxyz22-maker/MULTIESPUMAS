@@ -16,14 +16,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Generar dashboard
-        run: python3 generar.py
-
-      - name: Publicar
+      - name: Generar y publicar dashboard
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git pull origin main
+          python3 generar.py
           git add index.html
           git diff --staged --quiet || git commit -m "Dashboard $(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')"
-          git pull --rebase origin main
           git push origin main
