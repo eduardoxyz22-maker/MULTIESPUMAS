@@ -3,6 +3,7 @@ import urllib.parse
 import json
 import time
 import datetime
+import calendar
 from collections import defaultdict
 
 TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVmODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFhZDJhNDQ0OGFhMWZhIn0.eyJhdWQiOiJhYmQ5OThhNi0wMjcwLTRkODAtYjE5Ni0xMmRmOTE3ZjQxYzciLCJqdGkiOiIwMjkzZjEyOTFkOWM1ZTk1Zjg3YmE2YTQxZTI1Y2JkNGE2OTc5ZTNmY2JjY2I0MmU2NmU4MWQyMTEyZjUyOGVlMTRhYWQyYTQ0NDhhYTFmYSIsImlhdCI6MTc3ODA0MDczNCwibmJmIjoxNzc4MDQwNzM0LCJleHAiOjE3OTg1ODg4MDAsInN1YiI6IjE0OTYyMjcxIiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM2MjEyNjIzLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiODZmZmE4NzQtNDQ0My00ZjcyLWFjZmQtZWM3MDg5YTVjZjRmIiwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.n5PGBBmLgdOndg-M2oy2bRDtGx1MeO39vkVXW7Tq-wlBkQ2ts1wGJArctkigI-JRXYcyraRprfFY3jAkDRYTAqIwrXuhW6N14DRTZJQ7xVsXjqYfJp_xeaAziDKlyX_aSymVb7xzdioDAHRw04OqX7lkDtioGJPqQUO5TdEanLdCihudNXqVhNv7XbtaUABolI28wZ7PamQ8BYqSI6jsAJZHYn9MroTQcbrDrbBjtL3-WTl2H9yPnmikHykS47PUIaX-BWMCXuT2f9RgOpPQiShYo0tzxP8N9jji3qMKtIlgK72BG8M2ouz8g0aLxqWE1Sk3wE1_9fp_iENV7FcV4Q"
@@ -22,7 +23,7 @@ def api_get(path, params=None):
     with urllib.request.urlopen(req) as resp:
         return json.loads(resp.read().decode())
 
-def fetch_all_leads(from_ts):
+def fetch_all_leads(from_ts, to_ts=None):
     leads = []
     page = 1
     while True:
@@ -32,6 +33,8 @@ def fetch_all_leads(from_ts):
             "with": "contacts",
             "filter[created_at][from]": from_ts,
         }
+        if to_ts:
+            params["filter[created_at][to]"] = to_ts
         try:
             data = api_get("/leads", params)
         except Exception:
@@ -89,9 +92,36 @@ print("Obteniendo usuarios...")
 users_raw = fetch_users()
 user_map = {u["id"]: u.get("name", "Desconocido") for u in users_raw}
 
-print("Obteniendo leads...")
+print("Obteniendo leads del mes actual...")
 leads = fetch_all_leads(from_ts)
 print("Total leads:", len(leads))
+
+# Leads del mes anterior (mismo rango de dias)
+if now_dt.month == 1:
+    prev_month = 12
+    prev_year = now_dt.year - 1
+else:
+    prev_month = now_dt.month - 1
+    prev_year = now_dt.year
+
+last_day_prev = calendar.monthrange(prev_year, prev_month)[1]
+prev_day = min(now_dt.day, last_day_prev)
+inicio_mes_prev = datetime.datetime(prev_year, prev_month, 1)
+fin_mes_prev = datetime.datetime(prev_year, prev_month, prev_day, 23, 59, 59)
+from_ts_prev = int(inicio_mes_prev.timestamp())
+to_ts_prev = int(fin_mes_prev.timestamp())
+
+print("Obteniendo leads del mes anterior...")
+leads_prev = fetch_all_leads(from_ts_prev, to_ts_prev)
+total_leads_prev = len(leads_prev)
+prev_mes_short = mes_label_map[prev_month][:3]
+cur_mes_short = mes_label_map[now_dt.month][:3]
+dia_hoy = now_dt.day
+diff_leads = len(leads) - total_leads_prev
+diff_sign = "+" if diff_leads >= 0 else ""
+diff_arrow = "&#9650;" if diff_leads > 0 else ("&#9660;" if diff_leads < 0 else "&mdash;")
+diff_color = "#7FFFB0" if diff_leads >= 0 else "#FFB3B3"
+print("Leads mes anterior:", total_leads_prev)
 
 STAGE_ORDER = [
     "Incoming leads",
@@ -393,7 +423,13 @@ a:hover{text-decoration:underline;color:var(--teal)}
     </div>
   </div>
   <div class="hr">
-    <div class="hstat"><div class="hstat-v">__TOTAL__</div><div class="hstat-l">Leads del mes</div></div>
+    <div class="hstat">
+      <div style="display:flex;align-items:baseline;gap:10px;justify-content:center">
+        <div class="hstat-v">__TOTAL__</div>
+        <div style="font-size:1rem;font-weight:800;color:__DIFF_COLOR__">__DIFF_ARROW__ __DIFF_SIGN____DIFF_ABS__</div>
+      </div>
+      <div class="hstat-l">1-__DIA__ __CUR_MES_SHORT__ &nbsp;vs&nbsp; __PREV_TOTAL__ en __PREV_MES_SHORT__</div>
+    </div>
     <div class="hstat"><div class="hstat-v">__VALOR__</div><div class="hstat-l">Valor total</div></div>
     <div class="hstat"><div class="hstat-v">__ESTANCADOS__</div><div class="hstat-l">Estancados</div></div>
   </div>
@@ -533,6 +569,14 @@ html = html.replace("__CALIF_N__", str(total_calificados))
 html = html.replace("__TICKET__", fmt_money(ticket_avg))
 html = html.replace("__STAG_PCT__", str(stag_pct))
 html = html.replace("__MES_LABEL__", mes_label)
+html = html.replace("__PREV_TOTAL__", str(total_leads_prev))
+html = html.replace("__PREV_MES_SHORT__", prev_mes_short)
+html = html.replace("__CUR_MES_SHORT__", cur_mes_short)
+html = html.replace("__DIA__", str(dia_hoy))
+html = html.replace("__DIFF_ARROW__", diff_arrow)
+html = html.replace("__DIFF_SIGN__", diff_sign)
+html = html.replace("__DIFF_ABS__", str(abs(diff_leads)))
+html = html.replace("__DIFF_COLOR__", diff_color)
 html = html.replace("__ALL_ROWS_JSON__", json.dumps(all_rows, ensure_ascii=False))
 html = html.replace("__STAGES_JSON__", json.dumps(stages_json_list, ensure_ascii=False))
 html = html.replace("__SUC_OPTS_JSON__", json.dumps(suc_opts, ensure_ascii=False))
