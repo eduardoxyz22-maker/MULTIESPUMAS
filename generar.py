@@ -84,9 +84,29 @@ from_ts = int(inicio_mes.timestamp())
 print("Obteniendo pipelines...")
 pipelines = fetch_pipelines()
 stage_map = {}
-for pl in pipelines:
-    for st in pl.get("_embedded", {}).get("statuses", []):
-        stage_map[st["id"]] = st["name"]
+STAGE_ORDER = []
+_seen = set()
+for pl in sorted(pipelines, key=lambda p: p.get("sort", 0)):
+    for st in sorted(pl.get("_embedded", {}).get("statuses", []), key=lambda s: s.get("sort", 0)):
+        sid, sname = st["id"], st["name"]
+        stage_map[sid] = sname
+        if sname not in _seen:
+            STAGE_ORDER.append(sname)
+            _seen.add(sname)
+print("Etapas encontradas:", STAGE_ORDER)
+
+def _find_stage(candidates, keywords, default):
+    for s in candidates:
+        if any(k.lower() in s.lower() for k in keywords):
+            return s
+    return default
+
+COMPRADORES_STAGE  = _find_stage(STAGE_ORDER, ["compra","venta","cerr","buyer","won","sale","close"], "Compradores")
+NO_RESP_STAGE      = _find_stage(STAGE_ORDER, ["no respond","sin resp","no answer","inactiv","perdid","lost"], "No Responden")
+_q1 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
+_q2 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
+QUALIFIED_STAGES   = set(filter(None, [_q1, _q2, COMPRADORES_STAGE]))
+print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
 
 print("Obteniendo usuarios...")
 users_raw = fetch_users()
@@ -127,21 +147,9 @@ compradores_prev = 0
 valor_prev = 0.0
 for _l in leads_prev:
     _sn = stage_map.get(_l.get("status_id"), "")
-    if _sn == "Compradores":
+    if _sn == COMPRADORES_STAGE:
         compradores_prev += 1
     valor_prev += float(_l.get("price", 0) or 0)
-
-STAGE_ORDER = [
-    "Incoming leads",
-    "Nueva consulta",
-    "Interesado",
-    "Cotizacion enviada",
-    "Agendado / Visita",
-    "Compradores",
-    "No Responden",
-]
-
-QUALIFIED_STAGES = {"Cotizacion enviada", "Agendado / Visita", "Compradores"}
 
 stage_counts = defaultdict(int)
 stage_values = defaultdict(float)
@@ -193,9 +201,9 @@ for lead in leads:
     stage_values[stage_name] += value
     total_value += value
 
-    if stage_name == "Compradores":
+    if stage_name == COMPRADORES_STAGE:
         total_compradores += 1
-    if stage_name == "No Responden":
+    if stage_name == NO_RESP_STAGE:
         total_no_resp += 1
     if stage_name in QUALIFIED_STAGES:
         total_calificados += 1
@@ -215,9 +223,9 @@ for lead in leads:
     vd["total"] += 1
     vd["value"] += value
     vd["stages"][stage_name] += 1
-    if stage_name == "Compradores":
+    if stage_name == COMPRADORES_STAGE:
         vd["compradores"] += 1
-    if stage_name == "No Responden":
+    if stage_name == NO_RESP_STAGE:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
         vd["calificados"] += 1
