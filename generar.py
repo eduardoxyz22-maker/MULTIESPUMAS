@@ -123,6 +123,14 @@ diff_arrow = "&#9650;" if diff_leads > 0 else ("&#9660;" if diff_leads < 0 else 
 diff_color = "#7FFFB0" if diff_leads >= 0 else "#FFB3B3"
 print("Leads mes anterior:", total_leads_prev)
 
+compradores_prev = 0
+valor_prev = 0.0
+for _l in leads_prev:
+    _sn = stage_map.get(_l.get("status_id"), "")
+    if _sn == "Compradores":
+        compradores_prev += 1
+    valor_prev += float(_l.get("price", 0) or 0)
+
 STAGE_ORDER = [
     "Incoming leads",
     "Nueva consulta",
@@ -250,6 +258,36 @@ calif_pct = round(total_calificados / total_leads * 100) if total_leads > 0 else
 stag_pct = round(total_stagnant_7 / total_leads * 100) if total_leads > 0 else 0
 ticket_avg = int(total_value / total_compradores) if total_compradores > 0 else 0
 
+# --- KPIs comparativos MoM ---
+conv_prev   = round(compradores_prev / total_leads_prev * 100) if total_leads_prev > 0 else 0
+ticket_prev = int(valor_prev / compradores_prev) if compradores_prev > 0 else 0
+
+def _delta(cur, prev):
+    d = cur - prev
+    return d, ("+" if d >= 0 else ""), ("&#9650;" if d > 0 else ("&#9660;" if d < 0 else "&mdash;")), ("#7FFFB0" if d >= 0 else "#FFB3B3")
+
+_dv, diff_valor_sign, diff_valor_arrow, diff_valor_color = _delta(int(total_value), int(valor_prev))
+diff_valor = _dv
+_dc, diff_conv_sign, diff_conv_arrow, diff_conv_color = _delta(conv_pct, conv_prev)
+diff_conv = _dc
+_dt, diff_ticket_sign, diff_ticket_arrow, diff_ticket_color = _delta(ticket_avg, ticket_prev)
+diff_ticket = _dt
+
+# --- Cuadrantes ---
+_avg_conv_q  = sum(round(vd["compradores"]/vd["total"]*100) if vd["total"]>0 else 0 for vd in vendor_data.values()) / max(len(vendor_data), 1)
+_avg_total_q = total_leads / max(len(vendor_data), 1)
+
+# --- Proyeccion al cierre ---
+dias_del_mes       = calendar.monthrange(now_dt.year, now_dt.month)[1]
+dias_transcurridos = now_dt.day
+_pace              = total_compradores / dias_transcurridos if dias_transcurridos > 0 else 0
+base_proj          = int(_pace * dias_del_mes)
+base_proj_val      = fmt_money(int(ticket_avg * base_proj))
+mid_proj           = int(total_leads * dias_del_mes / dias_transcurridos * 0.04) if dias_transcurridos > 0 else 0
+mid_proj_val       = fmt_money(int(ticket_avg * mid_proj))
+rescue_extra       = int(total_stagnant_7 * 0.30)
+rescue_val_extra   = fmt_money(int(ticket_avg * rescue_extra))
+
 vendors_json_list = []
 for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
     vt = vd["total"]
@@ -268,11 +306,18 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
     for sname in vd["stages"]:
         if sname not in STAGE_ORDER:
             stages_list.append({"stage": sname, "count": vd["stages"][sname]})
+    if vconv >= _avg_conv_q and vt >= _avg_total_q:
+        _quadrant = "star"
+    elif vconv >= _avg_conv_q:
+        _quadrant = "potential"
+    else:
+        _quadrant = "critical"
     vendors_json_list.append({
         "name": vname,
         "total": vt,
         "value": int(vd["value"]),
         "stages": stages_list,
+        "quadrant": _quadrant,
         "kpis": {
             "conv_pct": vconv,
             "compradores": vc,
@@ -289,6 +334,11 @@ suc_opts = sorted(suc_set)
 usr_opts = sorted(usr_set)
 stg_opts = sorted(stg_set)
 etapas_json = STAGE_ORDER[:]
+
+_top = max(vendors_json_list, key=lambda v: v["kpis"]["compradores"]) if vendors_json_list else {"name":"N/A","kpis":{"compradores":0,"conv_pct":0}}
+top_vendor_name = _top["name"]
+top_vendor_pct  = round(_top["kpis"]["compradores"] / total_compradores * 100) if total_compradores > 0 else 0
+extra_conv      = max(0, int(total_leads * _top["kpis"]["conv_pct"] / 100) - total_compradores)
 
 TEMPLATE = """<!DOCTYPE html>
 <html lang="es">
@@ -411,6 +461,34 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .vc-cnt{font-size:.78rem;font-weight:700;color:var(--black);min-width:22px;text-align:right}
 .vc-pct{font-size:.65rem;color:var(--muted);min-width:32px;text-align:right}
 .footer{text-align:center;padding:18px;font-size:.68rem;color:var(--muted);border-top:1px solid var(--gray-md);background:#fff;margin-top:28px}
+/* Analisis ejecutivo */
+.exec-summary{border-left:4px solid var(--teal);padding:15px 20px;margin:12px 0 22px;background:#fff;border-radius:0 10px 10px 0;border:1px solid var(--gray-md)}
+.quadrant-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 22px}
+.quadrant{border-radius:10px;padding:14px;background:#fff;border:1px solid var(--gray-md);display:flex;flex-direction:column;gap:7px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.q-star{border-left:4px solid #22c55e} .q-potential{border-left:4px solid #eab308} .q-critical{border-left:4px solid var(--red)}
+.q-label{font-weight:700;font-size:.78rem} .q-axis{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.q-person{font-size:.8rem;line-height:1.5} .q-action{font-size:.7rem;color:var(--muted);font-style:italic}
+.actions-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:18px;margin-bottom:24px}
+.action-card{border-radius:10px;padding:13px;background:#fff;border:1px solid var(--gray-md);font-size:.75rem;line-height:1.55}
+.action-card h4{margin:0 0 7px;font-size:.78rem} .action-card ol{margin:0;padding-left:16px} .action-card li{margin-bottom:5px}
+.action-card.immediate{border-top:3px solid #22c55e} .action-card.short-term{border-top:3px solid #3b82f6}
+.action-card.insight{border-top:3px solid #7C3AED} .action-card.risk{border-top:3px solid var(--red)}
+/* Badges cuadrante */
+.badge-q{position:absolute;top:10px;right:10px;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none}
+.badge-q.star{background:rgba(34,197,94,.12);color:#16a34a;border:1px solid rgba(34,197,94,.3)}
+.badge-q.potential{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.3)}
+.badge-q.critical{background:rgba(206,41,57,.12);color:var(--red);border:1px solid rgba(206,41,57,.3)}
+/* Proyeccion */
+.scenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 24px}
+.scenario{background:#fff;border-radius:10px;padding:16px;text-align:center;border:1px solid var(--gray-md);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.scenario-base{border-top:3px solid var(--gray)} .scenario-mid{border-top:3px solid #3b82f6} .scenario-top{border-top:3px solid #22c55e}
+.scenario h4{margin:0 0 6px;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.scenario-num{font-size:1.9rem;font-weight:800;color:var(--black);line-height:1}
+.scenario-val{font-size:.95rem;font-weight:700;color:var(--teal);margin:3px 0 7px} .scenario p{font-size:.68rem;color:var(--muted);margin:0}
+/* Delta MoM */
+.delta-mom{font-size:.65rem;font-weight:700;margin-left:4px;vertical-align:middle}
+.delta-mom.up{color:#16a34a} .delta-mom.down{color:var(--red)} .delta-mom.flat{color:var(--gray)}
+@media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -447,14 +525,78 @@ a:hover{text-decoration:underline;color:var(--teal)}
   <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 7 dias sin actividad &mdash; <b>__STAG14__</b> superan los 14 dias.</div></div>
   <div class="sec">KPIs del Equipo &mdash; __MES_LABEL__</div>
   <div class="team-kpis">
-    <div class="tk c-teal"><div class="tk-val">__CONV_PCT__%</div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
+    <div class="tk c-teal"><div class="tk-val">__CONV_PCT__% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
     <div class="tk c-red"><div class="tk-val">__NORESP_PCT__%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
-    <div class="tk c-purple"><div class="tk-val">__TICKET__</div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
+    <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Estancados</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;7d</div></div>
+  </div>
+  <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
+  <div class="exec-summary">
+    <div style="font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Diagnóstico del Mes</div>
+    <p style="font-size:.82rem;line-height:1.65;color:var(--text)">
+      El equipo generó <strong>__TOTAL__ leads</strong> con <strong>__COMPRADORES__ cierres</strong> (__CONV_PCT__% conversión)
+      y <strong>__VALOR__</strong> en pipeline.
+      <strong>__TOP_VENDOR__ concentra el __TOP_VENDOR_PCT__% de los cierres</strong> &mdash;
+      la palanca principal de mejora es <strong>conversión y disciplina de seguimiento</strong>.
+      Hay <strong>__ESTANCADOS__ deals estancados</strong> (__STAG_PCT__%) que representan oportunidades latentes.
+    </p>
+  </div>
+  <div class="sec" style="margin-top:4px">Matriz de Rendimiento</div>
+  <div class="quadrant-grid" id="quadrant-grid"></div>
+  <div class="actions-row">
+    <div class="action-card immediate">
+      <h4>✅ Esta Semana</h4>
+      <ol>
+        <li>Llamar top 50 cotizaciones por valor &mdash; meta <strong>+10 cierres</strong></li>
+        <li>Acompañar visitas de vendedoras CRÍTICO &mdash; ticket <strong>__TICKET__</strong></li>
+        <li>Documentar playbook de <strong>__TOP_VENDOR__</strong> para replicarlo</li>
+      </ol>
+    </div>
+    <div class="action-card short-term">
+      <h4>📅 Este Mes</h4>
+      <ol>
+        <li>Activar los <strong>__STAG14__</strong> leads con +14 días sin contacto</li>
+        <li>Revisar pipeline &ldquo;No Responden&rdquo; (<strong>__NORESP_N__</strong> leads)</li>
+        <li>Etiquetar sucursal en leads sin clasificar</li>
+      </ol>
+    </div>
+    <div class="action-card insight">
+      <h4>💡 Insight</h4>
+      <p>Con <strong>__TOTAL__ leads</strong> el cuello de botella <strong>no es captación</strong> &mdash; es conversión.
+      Si todas las vendedoras igualaran a <strong>__TOP_VENDOR__</strong> habría
+      <strong>~__EXTRA_CONV__ cierres extra</strong> solo este mes.</p>
+    </div>
+    <div class="action-card risk">
+      <h4>⚠️ Riesgo</h4>
+      <p><strong>Concentración en __TOP_VENDOR__</strong> (__TOP_VENDOR_PCT__% de cierres).
+      Dependencia estructural alta &mdash; replicar su método al equipo es prioridad #1.</p>
+    </div>
   </div>
   <div class="sec">Rendimiento por Vendedora</div>
   <div class="vg" id="vendors-grid"></div>
+  <div class="sec">Proyección al Cierre de __MES_LABEL__</div>
+  <p style="font-size:.72rem;color:var(--muted);margin-bottom:0">Días transcurridos: <strong>__DIAS_TRANS__ / __DIAS_MES__</strong> &nbsp;&bull;&nbsp; Pace lineal basado en datos actuales.</p>
+  <div class="scenarios-grid">
+    <div class="scenario scenario-base">
+      <h4>Escenario Base</h4>
+      <div class="scenario-num">~__BASE_PROJ__</div>
+      <div class="scenario-val">~__BASE_PROJ_VAL__</div>
+      <p>Mantiene tendencia actual sin intervenciones</p>
+    </div>
+    <div class="scenario scenario-mid">
+      <h4>+1pp Conversión (4%)</h4>
+      <div class="scenario-num">~__MID_PROJ__</div>
+      <div class="scenario-val">~__MID_PROJ_VAL__</div>
+      <p>Coaching dirigido a vendedoras CRÍTICO</p>
+    </div>
+    <div class="scenario scenario-top">
+      <h4>Rescate Estancados (30%)</h4>
+      <div class="scenario-num">+__RESCUE_EXTRA__</div>
+      <div class="scenario-val">+__RESCUE_VAL_EXTRA__</div>
+      <p>Llamada/WhatsApp a los __ESTANCADOS__ estancados</p>
+    </div>
+  </div>
   <div class="tab-row">
     <div class="sec" style="margin:0;flex:1">Todos los Deals del Mes</div>
     <div class="tabs">
@@ -467,6 +609,8 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <select id="f-user" onchange="render()"><option value="">Todos los responsables</option></select>
     <select id="f-suc" onchange="render()"><option value="">Todas las sucursales</option></select>
     <input id="f-days" type="number" placeholder="Dias min. estancado" oninput="render()" style="width:190px">
+    <button onclick="document.getElementById('f-days').value=14;render()" style="background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit">🔴 Solo críticos +14d</button>
+    <button onclick="exportCSV()" style="background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:inherit">⬇ Exportar CSV</button>
     <span id="rc" class="rc"></span>
   </div>
   <div class="tw"><div class="ts">
@@ -488,6 +632,20 @@ const etapas=__ETAPAS_JSON__;
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
+const QL={'star':'🟢 ESTRELLA','potential':'🟡 POTENCIAL','critical':'🔴 CRÍTICO'};
+const QC={'star':'star','potential':'potential','critical':'critical'};
+const qDesc={'star':'Alto volumen · Alta conversión','potential':'Buen ratio · Potencial de escala','critical':'Conversión por debajo del promedio'};
+// Quadrant grid
+const qg=document.getElementById('quadrant-grid');
+[...vendors].sort((a,b)=>{const o={star:0,potential:1,critical:2};return (o[a.quadrant]||2)-(o[b.quadrant]||2);}).forEach(v=>{
+  const cls=v.quadrant||'critical';
+  const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
+  const k=v.kpis;
+  qg.innerHTML+='<div class="quadrant q-'+cls+'"><span class="q-label">'+QL[cls]+'</span><span class="q-axis">'+qDesc[cls]+'</span>'
+    +'<div class="q-person"><strong>'+v.name+'</strong><br>'+v.total+' leads &middot; '+k.conv_pct+'% conv &middot; '+val+'</div>'
+    +'<p class="q-action">'+(cls==='star'?'→ Documentar playbook y replicarlo al equipo':cls==='potential'?'→ Aumentar volumen y aplicar playbook top vendedora':'→ Auditar cotizaciones y acompañar visitas')+'</p></div>';
+});
+// Vendor cards
 const vg=document.getElementById('vendors-grid');
 vendors.forEach(v=>{
   const k=v.kpis;
@@ -499,7 +657,9 @@ vendors.forEach(v=>{
     const w=Math.round(s.count/maxStage*100);
     return '<div class="vc-row"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
   }).join('');
-  vg.innerHTML+='<div class="vc"><div class="vc-head"><div class="vc-name">'+v.name+'</div><div><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div></div>'
+  const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'🔴 CRÍTICO')+'</span>';
+  vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\''+v.name+'\')">'
+    +'<div class="vc-head" style="position:relative"><div class="vc-name">'+v.name+'</div><div><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div>'+badge+'</div>'
     +'<div class="vc-kpis">'
     +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
     +'<div class="vk '+kpiClassInv(k.no_resp_pct,30,15)+'"><div class="vk-val">'+k.no_resp_pct+'%</div><div class="vk-lbl">Sin Respuesta</div><div class="vk-hint">'+k.no_resp+' no responden</div></div>'
@@ -521,12 +681,24 @@ usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
 function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?7:'';render();}
+function filterByVendor(name){document.getElementById('f-user').value=name;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
+function exportCSV(){
+  const stage=document.getElementById('f-stage').value;
+  const user=document.getElementById('f-user').value;
+  const suc=document.getElementById('f-suc').value;
+  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
+  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
+  const header='ID,Contacto,Deal,Etapa,Sucursal,Responsable,Creado,Dias sin act.,Valor';
+  const lines=rows.map(r=>[r.id,(r.contact||r.name).replace(/,/g,' '),r.name.replace(/,/g,' '),r.stage,r.sucursal,r.user,r.created,r.days_int,r.value].join(','));
+  const blob=new Blob([header+'\\n'+lines.join('\\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='deals_heaven.csv';a.click();
+}
 function render(){
   const stage=document.getElementById('f-stage').value;
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc));
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
@@ -534,9 +706,10 @@ function render(){
     const c=SC[r.stage]||'#808080';
     const badge=r.days_int>14?'<span class="badge b-red">+14 dias</span>':r.days_int>=7?'<span class="badge b-amber">7-14 dias</span>':'<span class="badge b-teal">Al dia</span>';
     const dc=r.days_int>14?'var(--red)':r.days_int>=7?'var(--amber)':'var(--teal)';
+    const rowBg=r.days_int>14?'background:rgba(206,41,57,.04)':r.days_int>=7?'background:rgba(217,119,6,.04)':'';
     const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'--';
     const nm=r.contact||r.name;
-    return '<tr><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
+    return '<tr style="'+rowBg+'"><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
       +'<td><a href="https://eanez.kommo.com/leads/detail/'+r.id+'" target="_blank">'+nm+'</a>'+(r.contact?'<br><span style="font-size:.66rem;color:var(--muted)">#'+r.id+'</span>':'')+'</td>'
       +'<td><span style="color:'+c+';font-weight:700">'+r.stage+'</span></td>'
       +'<td style="color:var(--muted)">'+r.sucursal+'</td>'
@@ -569,6 +742,23 @@ html = html.replace("__CALIF_N__", str(total_calificados))
 html = html.replace("__TICKET__", fmt_money(ticket_avg))
 html = html.replace("__STAG_PCT__", str(stag_pct))
 html = html.replace("__MES_LABEL__", mes_label)
+html = html.replace("__TOP_VENDOR__", top_vendor_name)
+html = html.replace("__TOP_VENDOR_PCT__", str(top_vendor_pct))
+html = html.replace("__EXTRA_CONV__", str(extra_conv))
+html = html.replace("__DIFF_CONV_CLASS__", "up" if diff_conv >= 0 else "down")
+html = html.replace("__DIFF_CONV_ARROW__", diff_conv_arrow)
+html = html.replace("__DIFF_CONV_SIGN__", diff_conv_sign)
+html = html.replace("__DIFF_CONV__", str(abs(diff_conv)))
+html = html.replace("__DIFF_TICKET_CLASS__", "up" if diff_ticket >= 0 else "down")
+html = html.replace("__DIFF_TICKET_ARROW__", diff_ticket_arrow)
+html = html.replace("__DIAS_TRANS__", str(dias_transcurridos))
+html = html.replace("__DIAS_MES__", str(dias_del_mes))
+html = html.replace("__BASE_PROJ__", str(base_proj))
+html = html.replace("__BASE_PROJ_VAL__", base_proj_val)
+html = html.replace("__MID_PROJ__", str(mid_proj))
+html = html.replace("__MID_PROJ_VAL__", mid_proj_val)
+html = html.replace("__RESCUE_EXTRA__", str(rescue_extra))
+html = html.replace("__RESCUE_VAL_EXTRA__", rescue_val_extra)
 html = html.replace("__PREV_TOTAL__", str(total_leads_prev))
 html = html.replace("__PREV_MES_SHORT__", prev_mes_short)
 html = html.replace("__CUR_MES_SHORT__", cur_mes_short)
