@@ -5,6 +5,10 @@ on:
     - cron: '0 15 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: dashboard-update
+  cancel-in-progress: true
+
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -13,25 +17,18 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Generar y publicar dashboard
+      - name: Generar dashboard
+        run: python3 generar.py
+
+      - name: Publicar via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git config user.name  'github-actions[bot]'
-          git config user.email 'github-actions[bot]@users.noreply.github.com'
-
-          # Asegurar que estamos en el HEAD exacto del remoto
-          git fetch origin
-          git reset --hard origin/main
-
-          # Generar dashboard con datos frescos
-          python3 generar.py
-          git add index.html
-          git diff --staged --quiet && echo "Sin cambios" && exit 0
-
-          git commit -m "Dashboard $(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')"
-
-          # Push con reintento si llega un commit nuevo entre el fetch y el push
-          git push origin HEAD:main || \
-            (git pull --rebase origin main && git push origin HEAD:main)
+          SHA=$(gh api repos/${{ github.repository }}/contents/index.html --jq '.sha')
+          CONTENT=$(base64 -w 0 < index.html)
+          TIMESTAMP=$(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')
+          gh api --method PUT repos/${{ github.repository }}/contents/index.html \
+            -f message="Dashboard $TIMESTAMP" \
+            -f content="$CONTENT" \
+            -f sha="$SHA"
