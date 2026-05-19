@@ -666,7 +666,7 @@ vendors.forEach(v=>{
     return '<div class="vc-row"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
   }).join('');
   const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
-  vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\''+v.name+'\')">'
+  vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\\x27'+v.name+'\\x27)">'
     +'<div class="vc-head" style="position:relative"><div class="vc-name">'+v.name+'</div><div><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div>'+badge+'</div>'
     +'<div class="vc-kpis">'
     +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
