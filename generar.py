@@ -640,7 +640,7 @@ const etapas=__ETAPAS_JSON__;
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
-const QL={'star':'🟢 ESTRELLA','potential':'🟡 POTENCIAL','critical':'🔴 CRÍTICO'};
+const QL={'star':'&#9679; ESTRELLA','potential':'&#9670; POTENCIAL','critical':'&#9675; CRÍTICO'};
 const QC={'star':'star','potential':'potential','critical':'critical'};
 const qDesc={'star':'Alto volumen · Alta conversión','potential':'Buen ratio · Potencial de escala','critical':'Conversión por debajo del promedio'};
 // Quadrant grid
@@ -665,7 +665,7 @@ vendors.forEach(v=>{
     const w=Math.round(s.count/maxStage*100);
     return '<div class="vc-row"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
   }).join('');
-  const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'🔴 CRÍTICO')+'</span>';
+  const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
   vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\''+v.name+'\')">'
     +'<div class="vc-head" style="position:relative"><div class="vc-name">'+v.name+'</div><div><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div>'+badge+'</div>'
     +'<div class="vc-kpis">'
