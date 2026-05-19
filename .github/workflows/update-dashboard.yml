@@ -20,7 +20,8 @@ jobs:
         run: |
           git config user.name  'github-actions[bot]'
           git config user.email 'github-actions[bot]@users.noreply.github.com'
-          git pull origin main
+          git fetch origin main
+          git reset --hard FETCH_HEAD
           python3 generar.py
           git add index.html
           git diff --staged --quiet || git commit -m "Dashboard $(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')"
