@@ -25,28 +25,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: |
-          SHA=$(gh api "repos/$GITHUB_REPOSITORY/contents/index.html" --jq '.sha')
-          TIMESTAMP=$(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')
-          SHA="$SHA" TIMESTAMP="$TIMESTAMP" python3 -c "
-import json, base64, os, urllib.request
-
-sha       = os.environ['SHA']
-timestamp = os.environ['TIMESTAMP']
-repo      = os.environ['GITHUB_REPOSITORY']
-token     = os.environ['GH_TOKEN']
-
-with open('index.html', 'rb') as f:
-    content = base64.b64encode(f.read()).decode()
-
-payload = json.dumps({'message': f'Dashboard {timestamp}', 'content': content, 'sha': sha}).encode()
-
-req = urllib.request.Request(
-    f'https://api.github.com/repos/{repo}/contents/index.html',
-    data=payload, method='PUT'
-)
-req.add_header('Authorization', f'token {token}')
-req.add_header('Content-Type', 'application/json')
-with urllib.request.urlopen(req) as r:
-    print('Publicado OK, status:', r.status)
-"
+        run: python3 publish.py
