@@ -442,7 +442,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .tk-sub{font-size:.62rem;color:var(--muted);margin-top:3px}
 .vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:26px}
 .vc{background:#fff;border:1px solid var(--gray-md);border-radius:12px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
-.vc-head{background:var(--black);padding:13px 18px;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--teal)}
+.vc-head{background:var(--black);padding:13px 18px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--teal)}
 .vc-name{font-size:.9rem;font-weight:700;color:#fff}
 .vc-total{font-size:1.5rem;font-weight:800;color:var(--teal);line-height:1}
 .vc-total-lbl{font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;text-align:right}
@@ -482,7 +482,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .action-card.immediate{border-top:3px solid #22c55e} .action-card.short-term{border-top:3px solid #3b82f6}
 .action-card.insight{border-top:3px solid #7C3AED} .action-card.risk{border-top:3px solid var(--red)}
 /* Badges cuadrante */
-.badge-q{position:absolute;top:10px;right:10px;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none}
+.badge-q{display:inline-block;margin-top:5px;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none}
 .badge-q.star{background:rgba(34,197,94,.12);color:#16a34a;border:1px solid rgba(34,197,94,.3)}
 .badge-q.potential{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.3)}
 .badge-q.critical{background:rgba(206,41,57,.12);color:var(--red);border:1px solid rgba(206,41,57,.3)}
@@ -667,7 +667,7 @@ vendors.forEach(v=>{
   }).join('');
   const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
   vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\\x27'+v.name+'\\x27)">'
-    +'<div class="vc-head" style="position:relative"><div class="vc-name">'+v.name+'</div><div><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div>'+badge+'</div>'
+    +'<div class="vc-head"><div><div class="vc-name">'+v.name+'</div>'+badge+'</div><div style="text-align:right"><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div></div>'
     +'<div class="vc-kpis">'
     +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
     +'<div class="vk '+kpiClassInv(k.no_resp_pct,30,15)+'"><div class="vk-val">'+k.no_resp_pct+'%</div><div class="vk-lbl">Sin Respuesta</div><div class="vk-hint">'+k.no_resp+' no responden</div></div>'
