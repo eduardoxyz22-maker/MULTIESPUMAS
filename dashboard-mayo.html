@@ -322,40 +322,47 @@ td.bold{font-weight:800;color:#111827}
       <div class="ch-toggle" id="global-arrow">&#9660;</div>
     </div>
   </div>
-  <div class="channel-body" id="global-body" style="background:#1e293b;border-radius:0 0 14px 14px;padding:0 20px 18px">
-    <div class="global-strip">
-      <div class="gs-item"><div class="gs-val">Bs 679K</div><div class="gs-lbl">Venta Total</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Bs 678,786</div></div>
-      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">45.0%</div><div class="gs-lbl">% Meta Global</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Meta: Bs 1,509,220</div></div>
-      <div class="gs-item"><div class="gs-val" style="color:#fcd34d">Bs 1.0M</div><div class="gs-lbl">Proyecci&oacute;n</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">66.4% de meta</div></div>
-      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">Bs 83,043</div><div class="gs-lbl">Ritmo Nec./d&iacute;a</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Actual: Bs 32,323</div></div>
-      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">Bs 830K</div><div class="gs-lbl">Brecha Meta</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">10 d&iacute;as restantes</div></div>
+  <div class="channel-body" id="global-body">
+    <div class="metrics-row" style="grid-template-columns:repeat(5,1fr)">
+      <div class="metric"><div class="metric-val c-blue">Bs 679K</div><div class="metric-lbl">Venta Total</div><div class="metric-sub">Bs 678,786</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-red">45.0%</div><div class="metric-lbl">% Meta Global</div><div class="metric-sub">Meta: Bs 1,509,220</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-yellow">Bs 1.0M</div><div class="metric-lbl">Proyecci&oacute;n</div><div class="metric-sub">66.4% de meta</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-red">83,043</div><div class="metric-lbl">Ritmo Nec./d&iacute;a</div><div class="metric-sub">Actual: 32,323</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-red">Bs 830K</div><div class="metric-lbl">Brecha Meta</div><div class="metric-sub">10 d&iacute;as restantes</div></div>
     </div>
-    <div class="prog-section" style="border-top:1px solid #334155">
-      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
-        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">HEAVEN</div>
-        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:66%;background:#3b82f6"></div></div></div>
-        <div class="prog-pct" style="color:#93c5fd;width:90px;text-align:right">66.0%</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 306,974</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">&#8594; Bs 453K</div>
+    <div class="prog-section">
+      <div class="prog-row prog-header" style="display:grid;grid-template-columns:140px 1fr 90px 90px 90px;gap:12px">
+        <span>Canal</span><span>Avance</span><span style="text-align:right">%</span><span style="text-align:right">Acumulado</span><span style="text-align:right">Proyecci&oacute;n</span>
       </div>
-      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
-        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">SUE&Ntilde;A</div>
-        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:57%;background:#a78bfa"></div></div></div>
-        <div class="prog-pct" style="color:#c4b5fd;width:90px;text-align:right">57.0%</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 114,040</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">&#8594; Bs 168K</div>
+      <div class="prog-row">
+        <div class="prog-name">HEAVEN</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:66%;background:#1d4ed8"></div></div></div>
+        <div class="prog-pct c-yellow">66.0%</div>
+        <div class="prog-num">Bs 306,974</div>
+        <div class="prog-num">&#8594; Bs 453K</div>
       </div>
-      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
-        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">EXTERNOS</div>
-        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:100%;background:#34d399"></div></div></div>
-        <div class="prog-pct" style="color:#6ee7b7;width:90px;text-align:right">&mdash;</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 257,772</div>
-        <div class="prog-num" style="color:#94a3b8;width:90px">Sin meta</div>
+      <div class="prog-row">
+        <div class="prog-name">SUE&Ntilde;A</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:57%;background:#7c3aed"></div></div></div>
+        <div class="prog-pct c-yellow">57.0%</div>
+        <div class="prog-num">Bs 114,040</div>
+        <div class="prog-num">&#8594; Bs 168K</div>
       </div>
-      <div style="padding:14px 0 6px;display:flex;gap:12px;flex-wrap:wrap">
-        <span style="font-size:.72rem;background:rgba(255,255,255,.08);color:#e2e8f0;padding:3px 12px;border-radius:99px;font-weight:600">&#128176; Comisiones totales: Bs 9,686</span>
-        <span style="font-size:.72rem;background:rgba(239,68,68,.2);color:#fca5a5;padding:3px 12px;border-radius:99px;font-weight:600">&#9888;&#65039; Todos los canales MoM negativo vs Abril</span>
-        <span style="font-size:.72rem;background:rgba(16,185,129,.15);color:#6ee7b7;padding:3px 12px;border-radius:99px;font-weight:600">&#9989; HEAVEN puede cumplir su meta (10 d&iacute;as)</span>
+      <div class="prog-row">
+        <div class="prog-name">EXTERNOS</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:100%;background:#059669"></div></div></div>
+        <div class="prog-pct c-green">&mdash;</div>
+        <div class="prog-num">Bs 257,772</div>
+        <div class="prog-num">Sin meta</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.72rem;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:99px;font-weight:600">&#128176; Comisiones totales: Bs 9,686</span>
+        <span style="font-size:.72rem;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:99px;font-weight:600">&#9888;&#65039; Todos los canales MoM negativo vs Abril</span>
+        <span style="font-size:.72rem;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:99px;font-weight:600">&#9989; HEAVEN puede cumplir su meta (10 d&iacute;as)</span>
       </div>
     </div>
   </div>
