@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Mayo 2026 — Multiespumas</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+<style>
+:root{color-scheme:light;--blue:#1d4ed8;--blueL:#dbeafe;--purple:#5b21b6;--purpleL:#ede9fe;--green:#059669;--greenL:#d1fae5;--slate:#1e293b;--slateL:#f1f5f9}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0f2f5;color:#1e293b;min-height:100vh}
+.header{background:linear-gradient(135deg,#0f172a,#1e3a5f);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+.header h1{font-size:1.25rem;font-weight:800;letter-spacing:-.3px}
+.header p{font-size:.75rem;color:#94a3b8;margin-top:2px}
+.header-pills{display:flex;gap:8px}
+.pill{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:4px 13px;font-size:.73rem;color:#e2e8f0}
+.pill-red{background:rgba(239,68,68,.2);border-color:rgba(239,68,68,.4);color:#fca5a5}
+.tab-bar{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;display:flex;gap:0;position:sticky;top:0;z-index:10;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.tab-btn{padding:13px 18px;border:none;background:transparent;cursor:pointer;font-size:.82rem;font-weight:600;color:#64748b;border-bottom:3px solid transparent;transition:all .2s;white-space:nowrap}
+.tab-btn.active{color:#1d4ed8;border-bottom-color:#1d4ed8}
+.tab-btn:hover:not(.active){color:#374151;background:#f8fafc}
+.content{padding:20px 28px 40px}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.channel-grid{display:flex;flex-direction:column;gap:16px}
+.channel-card{background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,.08);overflow:hidden}
+.channel-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;cursor:pointer;user-select:none}
+.channel-header:hover{opacity:.92}
+.ch-heaven{background:linear-gradient(135deg,#1d4ed8,#2563eb)}
+.ch-suena{background:linear-gradient(135deg,#5b21b6,#7c3aed)}
+.ch-otros{background:linear-gradient(135deg,#047857,#059669)}
+.ch-global{background:linear-gradient(135deg,#0f172a,#1e293b)}
+.ch-name{font-size:1rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:10px}
+.ch-sub{font-size:.73rem;color:rgba(255,255,255,.7);margin-top:2px}
+.ch-badge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:4px 12px;font-size:.75rem;color:#fff;font-weight:700}
+.ch-toggle{color:rgba(255,255,255,.8);font-size:1rem;transition:transform .3s}
+.ch-toggle.open{transform:rotate(180deg)}
+.channel-body{padding:0 20px 18px}
+.ch-body-hidden{display:none}
+.metrics-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;padding:16px 0 12px}
+.metric{text-align:center}
+.metric-val{font-size:1.15rem;font-weight:800;color:#111827;line-height:1}
+.metric-lbl{font-size:.65rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.metric-sub{font-size:.68rem;color:#94a3b8;margin-top:2px}
+.metric-divider{width:1px;background:#e2e8f0}
+.prog-section{border-top:1px solid #f1f5f9;padding-top:12px}
+.prog-row{display:grid;grid-template-columns:140px 1fr 90px 90px 90px;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid #f8fafc}
+.prog-row:last-child{border-bottom:none}
+.prog-name{font-size:.8rem;font-weight:700;color:#374151}
+.prog-bar-wrap{height:8px;background:#f1f5f9;border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px}
+.prog-pct{font-size:.8rem;font-weight:800;text-align:right}
+.prog-num{font-size:.73rem;color:#64748b;text-align:right;font-variant-numeric:tabular-nums}
+.prog-header{font-size:.65rem;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.4px;padding:6px 0 2px}
+.otros-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:14px 0 4px}
+.otro-card{background:#f0fdf4;border-radius:10px;padding:12px;border-left:3px solid #059669}
+.otro-name{font-size:.72rem;font-weight:700;color:#065f46;margin-bottom:4px}
+.otro-val{font-size:1rem;font-weight:800;color:#047857}
+.otro-sub{font-size:.66rem;color:#6b7280;margin-top:2px}
+.global-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:0;padding:16px 0 8px}
+.gs-item{text-align:center;padding:0 12px;border-right:1px solid #334155}
+.gs-item:last-child{border-right:none}
+.gs-val{font-size:1.3rem;font-weight:800;color:#fff}
+.gs-lbl{font-size:.67rem;color:#94a3b8;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:3px}
+.section-card{background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.08);padding:18px;margin-bottom:16px}
+.section-title{font-size:.78rem;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px}
+.chart-box{position:relative;height:260px}
+.chart-box-sm{position:relative;height:200px}
+table{width:100%;border-collapse:collapse;font-size:.78rem}
+thead th{background:#f8fafc;font-size:.67rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748b;padding:9px 12px;text-align:left;border-bottom:2px solid #e2e8f0}
+tbody tr{border-bottom:1px solid #f1f5f9;transition:background .15s}
+tbody tr:hover{background:#f8fafc}
+tbody td{padding:9px 12px;color:#374151}
+td.num{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+td.bold{font-weight:800;color:#111827}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;font-weight:800;font-size:.73rem}
+.r1{background:#fef3c7;color:#92400e}.r2{background:#e2e8f0;color:#374151}.r3{background:#fde68a;color:#78350f}.rn{background:#f1f5f9;color:#6b7280}
+.chip{display:inline-block;font-size:.63rem;font-weight:700;padding:2px 8px;border-radius:99px}
+.chip-h{background:#dbeafe;color:#1d4ed8}.chip-s{background:#ede9fe;color:#5b21b6}
+.alert-item{display:flex;gap:12px;padding:11px 15px;border-radius:10px;margin-bottom:9px}
+.a-red{background:#fef2f2;border-left:4px solid #ef4444}
+.a-yellow{background:#fffbeb;border-left:4px solid #f59e0b}
+.a-green{background:#f0fdf4;border-left:4px solid #10b981}
+.alert-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.d-red{background:#ef4444}.d-yellow{background:#f59e0b}.d-green{background:#10b981}
+.at{font-size:.81rem;font-weight:700;color:#111827}
+.ad{font-size:.73rem;color:#6b7280;margin-top:2px}
+.alerts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.alert-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#64748b;margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}
+.mom-badge{font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:99px}
+.mom-neg{background:#fef2f2;color:#dc2626}.mom-pos{background:#f0fdf4;color:#16a34a}
+.c-red{color:#dc2626}.c-yellow{color:#d97706}.c-green{color:#059669}.c-blue{color:#1d4ed8}
+.fw8{font-weight:800}
+@media(max-width:900px){
+  .metrics-row{grid-template-columns:repeat(3,1fr)}
+  .otros-grid{grid-template-columns:repeat(2,1fr)}
+  .global-strip{grid-template-columns:repeat(3,1fr)}
+  .alerts-grid{grid-template-columns:1fr}
+  .prog-row{grid-template-columns:110px 1fr 70px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>&#128202; Dashboard Comercial &#8212; Mayo 2026</h1>
+    <p>Multiespumas &middot; HEAVEN &middot; SUE&Ntilde;A &middot; Externos &middot; D&iacute;a 21 de 31</p>
+  </div>
+  <div class="header-pills">
+    <div class="pill">&#128197; 10 d&iacute;as restantes</div>
+    <div class="pill-red">&#9888;&#65039; Meta global: riesgo alto</div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('resumen',this)">&#128203; Resumen</button>
+  <button class="tab-btn" onclick="switchTab('ranking',this)">&#127942; Ranking</button>
+  <button class="tab-btn" onclick="switchTab('proyeccion',this)">&#128200; Proyecci&oacute;n</button>
+  <button class="tab-btn" onclick="switchTab('conversion',this)">&#127919; Conversi&oacute;n</button>
+  <button class="tab-btn" onclick="switchTab('alertas',this)">&#9888;&#65039; Alertas</button>
+</div>
+
+<div class="content">
+
+<!-- RESUMEN -->
+<div id="tab-resumen" class="tab-panel active">
+<div class="channel-grid">
+
+<!-- HEAVEN -->
+<div class="channel-card">
+  <div class="channel-header ch-heaven" onclick="toggle('heaven-body','heaven-arrow')">
+    <div>
+      <div class="ch-name">&#128309; HEAVEN <span style="font-size:.75rem;font-weight:400;opacity:.8">Tienda Premium</span></div>
+      <div class="ch-sub">Maria &middot; Mirian &middot; Carola &middot; Isabel &nbsp;|&nbsp; 1,030 leads</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ch-badge">Bs 306,974 acumulado</div>
+      <div class="ch-toggle" id="heaven-arrow">&#9660;</div>
+    </div>
+  </div>
+  <div class="channel-body" id="heaven-body">
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val c-blue">Bs 307K</div><div class="metric-lbl">Venta Mayo</div><div class="metric-sub">Bs 306,974</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-yellow">66.0%</div><div class="metric-lbl">Meta M&iacute;nima</div><div class="metric-sub">Meta: Bs 465K</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val" style="color:#0891b2">Bs 453K</div><div class="metric-lbl">Proyecci&oacute;n</div><div class="metric-sub">97.5% de meta</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-green">116 vtas</div><div class="metric-lbl">Ventas</div><div class="metric-sub">202 productos</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val">Bs 2,646</div><div class="metric-lbl">Ticket Prom.</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-yellow">14,618</div><div class="metric-lbl">Ritmo/d&iacute;a</div><div class="metric-sub">Necesita: 15,803</div></div>
+    </div>
+    <div class="prog-section">
+      <div class="prog-row prog-header" style="display:grid;grid-template-columns:140px 1fr 90px 90px 90px;gap:12px">
+        <span>Vendedor</span><span>% Meta M&iacute;n.</span><span style="text-align:right">Venta</span><span style="text-align:right">Proyecci&oacute;n</span><span style="text-align:right">Crec. MoM</span>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Maria</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:86.6%;background:#10b981"></div></div></div>
+        <div class="prog-pct c-green">86.6%</div>
+        <div class="prog-num">Bs 108,690</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;41.1%</div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Carola</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:72.2%;background:#f59e0b"></div></div></div>
+        <div class="prog-pct c-yellow">72.2%</div>
+        <div class="prog-num">Bs 149,258</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;53.3%</div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Isabel</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:68.6%;background:#f59e0b"></div></div></div>
+        <div class="prog-pct c-yellow">68.6%</div>
+        <div class="prog-num">Bs 121,431</div>
+        <div class="prog-num mom-badge mom-pos">&#9650;42.1%</div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Mirian</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:41.7%;background:#ef4444"></div></div></div>
+        <div class="prog-pct c-red">41.7%</div>
+        <div class="prog-num">Bs 73,773</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;41.3%</div>
+      </div>
+      <div class="prog-row" style="background:#f8fafc;border-radius:8px;padding:8px 0">
+        <div class="prog-name fw8">TOTAL HEAVEN</div>
+        <div><div class="prog-bar-wrap" style="height:11px"><div class="prog-fill" style="width:66%;background:#1d4ed8"></div></div></div>
+        <div class="prog-pct c-blue fw8">66.0%</div>
+        <div class="prog-num fw8">Bs 453,152</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;177,482</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.72rem;background:#dbeafe;color:#1d4ed8;padding:3px 10px;border-radius:99px;font-weight:600">&#128176; Comisiones: Bs 5,564</span>
+        <span style="font-size:.72rem;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-weight:600">&#127885; Bonos Titanio: Bs 1,342</span>
+        <span style="font-size:.72rem;background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:99px;font-weight:600">&#9989; HEAVEN proyecta cumplir meta (97.5%)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SUEÑA -->
+<div class="channel-card">
+  <div class="channel-header ch-suena" onclick="toggle('suena-body','suena-arrow')">
+    <div>
+      <div class="ch-name">&#128992; SUE&Ntilde;A <span style="font-size:.75rem;font-weight:400;opacity:.8">Tienda Est&aacute;ndar</span></div>
+      <div class="ch-sub">Juan Pablo &middot; Fernando &middot; Mauricio &nbsp;|&nbsp; 1,320 leads</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ch-badge">Bs 114,040 acumulado</div>
+      <div class="ch-toggle" id="suena-arrow">&#9660;</div>
+    </div>
+  </div>
+  <div class="channel-body" id="suena-body">
+    <div class="metrics-row">
+      <div class="metric"><div class="metric-val" style="color:#7c3aed">Bs 114K</div><div class="metric-lbl">Venta Mayo</div><div class="metric-sub">Bs 114,040</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-yellow">57.0%</div><div class="metric-lbl">Meta M&iacute;nima</div><div class="metric-sub">Meta: Bs 200K</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val" style="color:#0891b2">Bs 168K</div><div class="metric-lbl">Proyecci&oacute;n</div><div class="metric-sub">84.2% de meta</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-green">90 vtas</div><div class="metric-lbl">Ventas</div><div class="metric-sub">98 productos</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val">Bs 1,118</div><div class="metric-lbl">Ticket Prom.</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-red">5,430</div><div class="metric-lbl">Ritmo/d&iacute;a</div><div class="metric-sub">Necesita: 8,596</div></div>
+    </div>
+    <div class="prog-section">
+      <div class="prog-row prog-header" style="display:grid;grid-template-columns:140px 1fr 90px 90px 90px;gap:12px">
+        <span>Vendedor</span><span>% Meta M&iacute;n.</span><span style="text-align:right">Venta</span><span style="text-align:right">Proyecci&oacute;n</span><span style="text-align:right">Crec. MoM</span>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Fernando</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:74.1%;background:#f59e0b"></div></div></div>
+        <div class="prog-pct c-yellow">74.1%</div>
+        <div class="prog-num">Bs 87,497</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;35.7%</div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Juan Pablo</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:46%;background:#ef4444"></div></div></div>
+        <div class="prog-pct c-red">46.0%</div>
+        <div class="prog-num">Bs 47,533</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;59.8%</div>
+      </div>
+      <div class="prog-row">
+        <div class="prog-name">Mauricio &#127942;</div>
+        <div><div class="prog-bar-wrap"><div class="prog-fill" style="width:45.2%;background:#ef4444"></div></div></div>
+        <div class="prog-pct c-red">45.2%</div>
+        <div class="prog-num">Bs 33,390</div>
+        <div class="prog-num mom-badge mom-pos">&#9650;21.1%</div>
+      </div>
+      <div class="prog-row" style="background:#f8fafc;border-radius:8px;padding:8px 0">
+        <div class="prog-name fw8">TOTAL SUE&Ntilde;A</div>
+        <div><div class="prog-bar-wrap" style="height:11px"><div class="prog-fill" style="width:57%;background:#7c3aed"></div></div></div>
+        <div class="prog-pct fw8" style="color:#7c3aed">57.0%</div>
+        <div class="prog-num fw8">Bs 168,345</div>
+        <div class="prog-num mom-badge mom-neg">&#9660;76,735</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.72rem;background:#ede9fe;color:#5b21b6;padding:3px 10px;border-radius:99px;font-weight:600">&#128176; Comisiones: Bs 2,281</span>
+        <span style="font-size:.72rem;background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:99px;font-weight:600">&#127942; Mauricio &mdash; Nuevo R&eacute;cord Hist&oacute;rico</span>
+        <span style="font-size:.72rem;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:99px;font-weight:600">&#9888;&#65039; 2 de 3 vendedores bajo 50% de meta</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OTROS -->
+<div class="channel-card">
+  <div class="channel-header ch-otros" onclick="toggle('otros-body','otros-arrow')">
+    <div>
+      <div class="ch-name">&#129001; OTROS <span style="font-size:.75rem;font-weight:400;opacity:.8">Canal Externo</span></div>
+      <div class="ch-sub">ROHO &middot; Tienda Amiga &middot; Multicenter &middot; Karina Torrico &middot; Copacaba &middot; Luis Franco &middot; CAMSA</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ch-badge">Bs 257,772 acumulado</div>
+      <div class="ch-toggle" id="otros-arrow">&#9660;</div>
+    </div>
+  </div>
+  <div class="channel-body" id="otros-body">
+    <div class="metrics-row" style="grid-template-columns:repeat(4,1fr)">
+      <div class="metric"><div class="metric-val c-green">Bs 258K</div><div class="metric-lbl">Total Externos</div><div class="metric-sub">Bs 257,772</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val">Bs 91,793</div><div class="metric-lbl">ROHO</div><div class="metric-sub">35.6% del canal</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val">Bs 165,980</div><div class="metric-lbl">Sin ROHO</div><div class="metric-sub">Distribuci&oacute;n + otros</div></div>
+      <div class="metric-divider"></div>
+      <div class="metric"><div class="metric-val c-red">&#9660; 135K</div><div class="metric-lbl">Ca&iacute;da vs Abril</div><div class="metric-sub">MoM negativo</div></div>
+    </div>
+    <div class="prog-section">
+      <div class="otros-grid">
+        <div class="otro-card"><div class="otro-name">ROHO</div><div class="otro-val">Bs 91,793</div><div class="otro-sub">3 productos &middot; 35.6%</div></div>
+        <div class="otro-card"><div class="otro-name">TIENDA AMIGA</div><div class="otro-val">Bs 86,026</div><div class="otro-sub">73 productos &middot; 33.4%</div></div>
+        <div class="otro-card"><div class="otro-name">OTROS</div><div class="otro-val">Bs 26,330</div><div class="otro-sub">16 productos &middot; 10.2%</div></div>
+        <div class="otro-card"><div class="otro-name">MULTICENTER</div><div class="otro-val">Bs 21,434</div><div class="otro-sub">9 productos &middot; 8.3%</div></div>
+        <div class="otro-card"><div class="otro-name">KARINA TORRICO</div><div class="otro-val">Bs 16,310</div><div class="otro-sub">5 productos &middot; 6.3%</div></div>
+        <div class="otro-card"><div class="otro-name">COPACABA</div><div class="otro-val">Bs 8,530</div><div class="otro-sub">5 productos &middot; 3.3%</div></div>
+        <div class="otro-card"><div class="otro-name">LUIS FRANCO</div><div class="otro-val">Bs 7,350</div><div class="otro-sub">10 productos &middot; 2.9%</div></div>
+        <div class="otro-card"><div class="otro-name">CAMSA</div><div class="otro-val">Bs 0</div><div class="otro-sub">Sin ventas este mes</div></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+        <span style="font-size:.72rem;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:99px;font-weight:600">&#9888;&#65039; MoM Externos: &#9660; Bs 135,009 vs Abril</span>
+        <span style="font-size:.72rem;background:#fef2f2;color:#dc2626;padding:3px 10px;border-radius:99px;font-weight:600">&#9888;&#65039; MoM ROHO: &#9660; Bs 5,626 vs Abril</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GLOBAL -->
+<div class="channel-card">
+  <div class="channel-header ch-global" onclick="toggle('global-body','global-arrow')">
+    <div>
+      <div class="ch-name">&#9899; GLOBAL <span style="font-size:.75rem;font-weight:400;opacity:.8">Consolidado Mayo 2026</span></div>
+      <div class="ch-sub">HEAVEN + SUE&Ntilde;A + Externos &middot; Meta mensual: Bs 1,509,220</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="ch-badge" style="background:rgba(239,68,68,.25);border-color:rgba(239,68,68,.4)">45.0% de meta &middot; Bs 678,786</div>
+      <div class="ch-toggle" id="global-arrow">&#9660;</div>
+    </div>
+  </div>
+  <div class="channel-body" id="global-body">
+    <div class="global-strip">
+      <div class="gs-item"><div class="gs-val">Bs 679K</div><div class="gs-lbl">Venta Total</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Bs 678,786</div></div>
+      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">45.0%</div><div class="gs-lbl">% Meta Global</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Meta: Bs 1,509,220</div></div>
+      <div class="gs-item"><div class="gs-val" style="color:#fcd34d">Bs 1.0M</div><div class="gs-lbl">Proyecci&oacute;n</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">66.4% de meta</div></div>
+      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">Bs 83,043</div><div class="gs-lbl">Ritmo Nec./d&iacute;a</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">Actual: Bs 32,323</div></div>
+      <div class="gs-item"><div class="gs-val" style="color:#fca5a5">Bs 830K</div><div class="gs-lbl">Brecha Meta</div><div style="font-size:.68rem;color:#94a3b8;margin-top:2px">10 d&iacute;as restantes</div></div>
+    </div>
+    <div class="prog-section">
+      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
+        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">HEAVEN</div>
+        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:66%;background:#3b82f6"></div></div></div>
+        <div class="prog-pct" style="color:#93c5fd;width:90px;text-align:right">66.0%</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 306,974</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">&#8594; Bs 453K</div>
+      </div>
+      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
+        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">SUE&Ntilde;A</div>
+        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:57%;background:#a78bfa"></div></div></div>
+        <div class="prog-pct" style="color:#c4b5fd;width:90px;text-align:right">57.0%</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 114,040</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">&#8594; Bs 168K</div>
+      </div>
+      <div class="prog-row" style="border-bottom:1px solid #334155;padding:10px 0">
+        <div class="prog-name" style="color:#e2e8f0;font-weight:700;width:140px">EXTERNOS</div>
+        <div style="flex:1"><div class="prog-bar-wrap" style="background:#334155"><div class="prog-fill" style="width:100%;background:#34d399"></div></div></div>
+        <div class="prog-pct" style="color:#6ee7b7;width:90px;text-align:right">&mdash;</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">Bs 257,772</div>
+        <div class="prog-num" style="color:#94a3b8;width:90px">Sin meta</div>
+      </div>
+      <div style="padding:14px 0 6px;display:flex;gap:12px;flex-wrap:wrap">
+        <span style="font-size:.72rem;background:rgba(255,255,255,.08);color:#e2e8f0;padding:3px 12px;border-radius:99px;font-weight:600">&#128176; Comisiones totales: Bs 9,686</span>
+        <span style="font-size:.72rem;background:rgba(239,68,68,.2);color:#fca5a5;padding:3px 12px;border-radius:99px;font-weight:600">&#9888;&#65039; Todos los canales MoM negativo vs Abril</span>
+        <span style="font-size:.72rem;background:rgba(16,185,129,.15);color:#6ee7b7;padding:3px 12px;border-radius:99px;font-weight:600">&#9989; HEAVEN puede cumplir su meta (10 d&iacute;as)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- RANKING -->
+<div id="tab-ranking" class="tab-panel">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="section-card">
+      <div class="section-title">Monto vendido mayo (Bs)</div>
+      <div class="chart-box"><canvas id="chartRanking"></canvas></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">% Cumplimiento meta m&iacute;nima</div>
+      <div class="chart-box"><canvas id="chartCumpl"></canvas></div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">Tabla completa &mdash; Ranking Mayo 2026</div>
+    <table>
+      <thead><tr><th>#</th><th>Vendedor</th><th>Tienda</th><th class="num">Venta (Bs)</th><th class="num">Meta M&iacute;n.</th><th class="num">% M&iacute;n.</th><th class="num">Proyecci&oacute;n</th><th class="num">Mejor Mes</th><th>Crec.</th><th>R&eacute;cord</th></tr></thead>
+      <tbody id="rankingTbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PROYECCION -->
+<div id="tab-proyeccion" class="tab-panel">
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:16px">
+    <div class="section-card" style="border-top:4px solid #1d4ed8">
+      <div class="section-title">&#128309; HEAVEN</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#1d4ed8">Bs 453,152</div>
+      <div style="font-size:.73rem;color:#64748b;margin:4px 0 10px">Proyecci&oacute;n al 31 de mayo</div>
+      <div style="height:8px;background:#dbeafe;border-radius:99px"><div style="height:100%;width:97.5%;background:#1d4ed8;border-radius:99px"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;margin-top:4px"><span>97.5% de meta</span><span>Meta: Bs 465K</span></div>
+      <div style="margin-top:10px;font-size:.72rem;color:#059669;font-weight:700">&#9989; Muy cerca de cumplir &mdash; ritmo casi suficiente</div>
+    </div>
+    <div class="section-card" style="border-top:4px solid #7c3aed">
+      <div class="section-title">&#128992; SUE&Ntilde;A</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#7c3aed">Bs 168,345</div>
+      <div style="font-size:.73rem;color:#64748b;margin:4px 0 10px">Proyecci&oacute;n al 31 de mayo</div>
+      <div style="height:8px;background:#ede9fe;border-radius:99px"><div style="height:100%;width:84.2%;background:#7c3aed;border-radius:99px"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;margin-top:4px"><span>84.2% de meta</span><span>Meta: Bs 200K</span></div>
+      <div style="margin-top:10px;font-size:.72rem;color:#d97706;font-weight:700">&#9888;&#65039; Posible si acelera &mdash; faltan Bs 31,655</div>
+    </div>
+    <div class="section-card" style="border-top:4px solid #dc2626">
+      <div class="section-title">&#9899; GLOBAL (todas las l&iacute;neas)</div>
+      <div style="font-size:1.6rem;font-weight:800;color:#dc2626">Bs 1,002,018</div>
+      <div style="font-size:.73rem;color:#64748b;margin:4px 0 10px">Proyecci&oacute;n al 31 de mayo</div>
+      <div style="height:8px;background:#fee2e2;border-radius:99px"><div style="height:100%;width:66.4%;background:#dc2626;border-radius:99px"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:.7rem;color:#64748b;margin-top:4px"><span>66.4% de meta</span><span>Meta: Bs 1,509,220</span></div>
+      <div style="margin-top:10px;font-size:.72rem;color:#dc2626;font-weight:700">&#128308; D&eacute;ficit proyectado: Bs 507,202</div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="section-card">
+      <div class="section-title">Proyecci&oacute;n por vendedor (Bs)</div>
+      <div class="chart-box"><canvas id="chartProyec"></canvas></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Proyecci&oacute;n vs Meta M&iacute;nima</div>
+      <div id="proyTableDiv"></div>
+    </div>
+  </div>
+  <div class="section-card">
+    <div class="section-title">An&aacute;lisis de velocidad &mdash; 10 d&iacute;as restantes</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:8px">
+      <div style="background:#fef2f2;padding:14px;border-radius:10px;text-align:center">
+        <div style="font-size:.7rem;color:#dc2626;font-weight:700;margin-bottom:4px">RITMO NECESARIO GLOBAL</div>
+        <div style="font-size:1.35rem;font-weight:800;color:#dc2626">Bs 83,043/d&iacute;a</div>
+        <div style="font-size:.68rem;color:#6b7280;margin-top:2px">para alcanzar Bs 1,509,220</div>
+      </div>
+      <div style="background:#fffbeb;padding:14px;border-radius:10px;text-align:center">
+        <div style="font-size:.7rem;color:#d97706;font-weight:700;margin-bottom:4px">RITMO ACTUAL GLOBAL</div>
+        <div style="font-size:1.35rem;font-weight:800;color:#d97706">Bs 32,323/d&iacute;a</div>
+        <div style="font-size:.68rem;color:#6b7280;margin-top:2px">promedio &uacute;ltimos 21 d&iacute;as</div>
+      </div>
+      <div style="background:#fdf4ff;padding:14px;border-radius:10px;text-align:center">
+        <div style="font-size:.7rem;color:#7c3aed;font-weight:700;margin-bottom:4px">GAP DIARIO A CUBRIR</div>
+        <div style="font-size:1.35rem;font-weight:800;color:#7c3aed">Bs 50,720/d&iacute;a</div>
+        <div style="font-size:.68rem;color:#6b7280;margin-top:2px">extra por d&iacute;a (&times;2.57 ritmo actual)</div>
+      </div>
+      <div style="background:#f0fdf4;padding:14px;border-radius:10px;text-align:center">
+        <div style="font-size:.7rem;color:#059669;font-weight:700;margin-bottom:4px">GAP HEAVEN vs NECESARIO</div>
+        <div style="font-size:1.35rem;font-weight:800;color:#059669">Bs 1,185/d&iacute;a</div>
+        <div style="font-size:.68rem;color:#6b7280;margin-top:2px">brecha m&iacute;nima &mdash; HEAVEN casi lo logra</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CONVERSION -->
+<div id="tab-conversion" class="tab-panel">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div class="section-card">
+      <div class="section-title">Tasa conversi&oacute;n por vendedor (%)</div>
+      <div class="chart-box"><canvas id="chartConv"></canvas></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">Ingreso por lead (Bs)</div>
+      <div class="chart-box"><canvas id="chartLeads"></canvas></div>
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+    <div class="section-card">
+      <div class="section-title">Ventas por cliente externo</div>
+      <div class="chart-box"><canvas id="chartClientes"></canvas></div>
+    </div>
+    <div class="section-card">
+      <div class="section-title">KPIs detallados por vendedor</div>
+      <table>
+        <thead><tr><th>Vendedor</th><th>Tienda</th><th class="num">Conv %</th><th class="num">Ing/Lead</th><th class="num">Ticket</th><th class="num">MoM</th></tr></thead>
+        <tbody id="convTbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ALERTAS -->
+<div id="tab-alertas" class="tab-panel">
+  <div class="alerts-grid">
+    <div>
+      <div class="alert-section-title">&#128308; Alertas Cr&iacute;ticas</div>
+      <div id="alertRed"></div>
+      <div class="alert-section-title" style="margin-top:18px">&#129000; Alertas de Atenci&oacute;n</div>
+      <div id="alertYellow"></div>
+    </div>
+    <div>
+      <div class="alert-section-title">&#128994; Destacados Positivos</div>
+      <div id="alertGreen"></div>
+      <div class="alert-section-title" style="margin-top:18px">&#128202; Sem&aacute;foro por Vendedor</div>
+      <div id="semaforo"></div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const ranking=[
+  {pos:1,nombre:"Carola",   tienda:"HEAVEN",monto:101110,meta_min:140000,pct_min:72.22,proy:149258,mejor_mes:247500,record:false,cre:-53.30,conv:18.30,ingLead:430.26,ticket:2351},
+  {pos:2,nombre:"Isabel",   tienda:"HEAVEN",monto:82260, meta_min:120000,pct_min:68.55,proy:121431,mejor_mes:220930,record:false,cre:42.10, conv:10.19,ingLead:310.42,ticket:3047},
+  {pos:3,nombre:"Maria",    tienda:"HEAVEN",monto:73629, meta_min:85000, pct_min:86.62,proy:108690, mejor_mes:124984,record:false,cre:-41.09,conv:7.55, ingLead:277.84,ticket:3681},
+  {pos:4,nombre:"Fernando", tienda:"SUEÑA", monto:59240, meta_min:80000, pct_min:74.05,proy:87497,  mejor_mes:182785,record:false,cre:-35.67,conv:12.95,ingLead:134.64,ticket:1039},
+  {pos:5,nombre:"Mirian",   tienda:"HEAVEN",monto:49975, meta_min:120000,pct_min:41.65,proy:73773,  mejor_mes:150433,record:false,cre:-41.25,conv:9.81, ingLead:188.58,ticket:1922},
+  {pos:6,nombre:"Juan Pablo",tienda:"SUEÑA",monto:32200, meta_min:70000, pct_min:46.00,proy:47533,  mejor_mes:159600,record:false,cre:-59.76,conv:6.14, ingLead:73.18, ticket:1193},
+  {pos:7,nombre:"Mauricio", tienda:"SUEÑA", monto:22600, meta_min:50000, pct_min:45.20,proy:33390,  mejor_mes:18670, record:true, cre:21.05, conv:4.09, ingLead:51.36, ticket:1256},
+];
+const clientes=[
+  {c:"ROHO",          m:91792.5, p:3},
+  {c:"TIENDA AMIGA",  m:86026,   p:73},
+  {c:"OTROS",         m:26330,   p:16},
+  {c:"MULTICENTER",   m:21433.8, p:9},
+  {c:"KARINA TORRICO",m:16310,   p:5},
+  {c:"COPACABA",      m:8530,    p:5},
+  {c:"LUIS FRANCO",   m:7350,    p:10},
+];
+const fmt=n=>'Bs '+Math.round(n).toLocaleString('es-BO');
+const pct=n=>n.toFixed(1)+'%';
+
+function toggle(bodyId,arrowId){
+  const body=document.getElementById(bodyId),arrow=document.getElementById(arrowId);
+  if(body.classList.contains('ch-body-hidden')){body.classList.remove('ch-body-hidden');arrow.classList.add('open');}
+  else{body.classList.add('ch-body-hidden');arrow.classList.remove('open');}
+}
+
+const chartsDone={};
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(()=>renderTab(id),60);
+}
+
+function buildRankingTable(){
+  const tb=document.getElementById('rankingTbody');
+  ranking.forEach(r=>{
+    const col=r.pct_min>=80?'#10b981':r.pct_min>=50?'#d97706':'#dc2626';
+    const rc=r.pos===1?'r1':r.pos===2?'r2':r.pos===3?'r3':'rn';
+    const chip=r.tienda==='HEAVEN'?'chip-h':'chip-s';
+    const cre=r.cre>0?`<span style="color:#10b981">&#9650;${Math.abs(r.cre).toFixed(1)}%</span>`:`<span style="color:#dc2626">&#9660;${Math.abs(r.cre).toFixed(1)}%</span>`;
+    tb.innerHTML+=`<tr>
+      <td><span class="rank-badge ${rc}">${r.pos}</span></td>
+      <td class="bold">${r.nombre}${r.record?' &#127942;':''}</td>
+      <td><span class="chip ${chip}">${r.tienda}</span></td>
+      <td class="num bold">${fmt(r.monto)}</td>
+      <td class="num">${fmt(r.meta_min)}</td>
+      <td class="num fw8" style="color:${col}">${pct(r.pct_min)}</td>
+      <td class="num">${fmt(r.proy)}</td>
+      <td class="num">${fmt(r.mejor_mes)}</td>
+      <td>${cre}</td>
+      <td>${r.record?'<span style="color:#d97706;font-weight:700">&#127942; S&Iacute;</span>':'&mdash;'}</td>
+    </tr>`;
+  });
+}
+
+function buildProyTable(){
+  const el=document.getElementById('proyTableDiv');
+  ranking.forEach(r=>{
+    const pp=(r.proy/r.meta_min*100);
+    const col=pp>=100?'#10b981':pp>=80?'#d97706':'#dc2626';
+    el.innerHTML+=`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:.78rem;margin-bottom:3px">
+        <span style="font-weight:700">${r.nombre}</span>
+        <span style="font-weight:800;color:${col}">${pp.toFixed(1)}%</span>
+      </div>
+      <div style="height:7px;background:#f1f5f9;border-radius:99px"><div style="height:100%;width:${Math.min(pp,100)}%;background:${col};border-radius:99px"></div></div>
+      <div style="font-size:.67rem;color:#9ca3af;margin-top:2px">${fmt(r.proy)} &rarr; Meta: ${fmt(r.meta_min)}</div>
+    </div>`;
+  });
+}
+
+function buildConvTable(){
+  const tb=document.getElementById('convTbody');
+  [...ranking].sort((a,b)=>b.conv-a.conv).forEach(r=>{
+    const chip=r.tienda==='HEAVEN'?'chip-h':'chip-s';
+    const cre=r.cre>0?`<span style="color:#10b981">&#9650;${Math.abs(r.cre).toFixed(1)}%</span>`:`<span style="color:#dc2626">&#9660;${Math.abs(r.cre).toFixed(1)}%</span>`;
+    const cc=r.conv>=15?'#10b981':r.conv>=8?'#d97706':'#dc2626';
+    tb.innerHTML+=`<tr>
+      <td class="bold">${r.nombre}</td>
+      <td><span class="chip ${chip}">${r.tienda}</span></td>
+      <td class="num fw8" style="color:${cc}">${pct(r.conv)}</td>
+      <td class="num">Bs ${r.ingLead.toFixed(0)}</td>
+      <td class="num">Bs ${r.ticket.toLocaleString('es-BO')}</td>
+      <td>${cre}</td>
+    </tr>`;
+  });
+}
+
+function buildAlertas(){
+  const reds=[
+    {t:"Brecha cr&iacute;tica vs meta global",d:"El ritmo actual (Bs 32,323/d&iacute;a) necesita ser &times;2.57 para llegar a meta. Con 10 d&iacute;as, el d&eacute;ficit proyectado es Bs 507,202."},
+    {t:"Mirian &mdash; solo 41.7% de meta m&iacute;nima",d:"Bs 49,975 de Bs 120,000. Proyecci&oacute;n fin de mes: Bs 73,773 (61.5% de meta). Ca&iacute;da del 41.3% vs Abril."},
+    {t:"Juan Pablo &mdash; solo 46% de meta m&iacute;nima",d:"Bs 32,200 de Bs 70,000. Proyecci&oacute;n: Bs 47,533 (67.9% de meta). Ca&iacute;da del 59.8% vs Abril."},
+    {t:"Mauricio &mdash; 45.2% de meta m&iacute;nima",d:"Bs 22,600 de Bs 50,000. Proyecci&oacute;n: Bs 33,390 (66.8%). Aunque tiene r&eacute;cord hist&oacute;rico y +21% MoM, sigue lejos."},
+    {t:"Todos los canales caen vs Abril",d:"HEAVEN &#9660;Bs 177,482 &middot; SUE&Ntilde;A &#9660;Bs 76,735 &middot; Externos &#9660;Bs 135,009 &middot; ROHO &#9660;Bs 5,626. Tendencia bajista generalizada."},
+  ];
+  const yellows=[
+    {t:"Carola &mdash; 72.2% meta m&iacute;nima",d:"L&iacute;der en monto (Bs 101,110) pero cay&oacute; 53.3% vs Abril. Proyecci&oacute;n Bs 149,258 &mdash; 106.6% de meta m&iacute;nima."},
+    {t:"Isabel &mdash; 68.6% meta m&iacute;nima",d:"Bs 82,260 &mdash; crece +42.1% MoM. Proyecci&oacute;n Bs 121,431 &mdash; superar&aacute; meta m&iacute;nima."},
+    {t:"Fernando &mdash; 74.1% meta m&iacute;nima",d:"Proyecci&oacute;n Bs 87,497 &mdash; supera meta m&iacute;nima (109.4%). Con push puede llegar a presupuesto de Bs 110K."},
+    {t:"Proyecci&oacute;n global (66.4% de meta)",d:"Incluso con esfuerzo m&aacute;ximo, la meta global de Bs 1,509,220 parece fuera de alcance en 10 d&iacute;as."},
+  ];
+  const greens=[
+    {t:"&#127942; Mauricio &mdash; Nuevo R&eacute;cord Hist&oacute;rico",d:"Bs 22,600 supera su mejor mes anterior (Bs 18,670). &Uacute;nico vendedor con MoM positivo en SUE&Ntilde;A (+21.1%)."},
+    {t:"&#9989; HEAVEN proyecta 97.5% de meta m&iacute;nima",d:"Proyecci&oacute;n Bs 453,152 vs meta Bs 465,000. Brecha de solo Bs 11,848 &mdash; alcanzable en 10 d&iacute;as."},
+    {t:"&#11088; Carola &mdash; Mayor conversi&oacute;n (18.3%)",d:"1 de cada 5.5 leads se convierte. Ingreso/lead: Bs 430 &mdash; el m&aacute;s alto del equipo."},
+    {t:"&#11088; Isabel &mdash; Mayor crecimiento MoM (+42.1%)",d:"&Uacute;nica con crecimiento significativo vs Abril. Ticket Bs 3,047 y conversi&oacute;n del 10.2%."},
+    {t:"&#9989; Maria &mdash; M&aacute;s cerca de su meta (86.6%)",d:"Bs 73,629 de Bs 85,000 &mdash; proyecci&oacute;n 127.9%. Ya supera ampliamente su meta m&iacute;nima proyectada."},
+    {t:"&#9989; SUE&Ntilde;A proyecta 84.2% de meta",d:"Bs 168,345 de Bs 200,000 proyectado. Bs 31,655 faltantes en 10 d&iacute;as = Bs 3,166/d&iacute;a extra."},
+  ];
+  const fill=(id,arr,cls,dcls)=>{
+    const el=document.getElementById(id);
+    arr.forEach(a=>{el.innerHTML+=`<div class="alert-item ${cls}"><div class="alert-dot ${dcls}"></div><div><div class="at">${a.t}</div><div class="ad">${a.d}</div></div></div>`;});
+  };
+  fill('alertRed',reds,'a-red','d-red');
+  fill('alertYellow',yellows,'a-yellow','d-yellow');
+  fill('alertGreen',greens,'a-green','d-green');
+  const sem=document.getElementById('semaforo');
+  sem.innerHTML='<div style="background:#f8fafc;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0">'+
+    ranking.map(r=>{
+      const col=r.pct_min>=80?'#10b981':r.pct_min>=50?'#d97706':'#dc2626';
+      const bg=r.pct_min>=80?'#f0fdf4':r.pct_min>=50?'#fffbeb':'#fef2f2';
+      const em=r.pct_min>=80?'&#128994;':r.pct_min>=50?'&#129000;':'&#128308;';
+      return `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;background:${bg};border-bottom:1px solid rgba(0,0,0,.04)">
+        <span style="font-size:.81rem;font-weight:600">${em} ${r.nombre}${r.record?' &#127942;':''} <span style="font-size:.68rem;color:#9ca3af">${r.tienda}</span></span>
+        <span style="font-weight:800;color:${col}">${pct(r.pct_min)}</span>
+      </div>`;
+    }).join('')+'</div>';
+}
+
+function renderTab(tab){
+  if(chartsDone[tab])return;
+  chartsDone[tab]=true;
+  const hColor='#3b82f6',sColor='#7c3aed';
+  const colors=ranking.map(r=>r.tienda==='HEAVEN'?hColor:sColor);
+  if(tab==='ranking'){
+    new Chart(document.getElementById('chartRanking'),{
+      type:'bar',
+      data:{labels:ranking.map(r=>r.nombre),datasets:[{data:ranking.map(r=>r.monto),backgroundColor:colors,borderRadius:7}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>fmt(c.raw)}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>'Bs '+(v/1000).toFixed(0)+'K',font:{size:10}}}}}
+    });
+    new Chart(document.getElementById('chartCumpl'),{
+      type:'bar',
+      data:{labels:ranking.map(r=>r.nombre),datasets:[{data:ranking.map(r=>r.pct_min),backgroundColor:ranking.map(r=>r.pct_min>=80?'#10b981':r.pct_min>=50?'#f59e0b':'#ef4444'),borderRadius:7}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+'%'}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f1f5f9'},max:110,ticks:{callback:v=>v+'%',font:{size:10}}}}}
+    });
+  }
+  if(tab==='proyeccion'){
+    new Chart(document.getElementById('chartProyec'),{
+      type:'bar',
+      data:{labels:ranking.map(r=>r.nombre),datasets:[
+        {label:'Venta actual',data:ranking.map(r=>r.monto),backgroundColor:colors.map(c=>c+'70'),borderRadius:4},
+        {label:'Proyección',data:ranking.map(r=>r.proy),backgroundColor:colors,borderRadius:4},
+        {label:'Meta mín.',data:ranking.map(r=>r.meta_min),type:'line',borderColor:'#374151',borderDash:[5,3],pointRadius:4,backgroundColor:'transparent',borderWidth:2},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:c=>c.dataset.label+': '+fmt(c.raw)}}},
+        scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{grid:{color:'#f1f5f9'},ticks:{callback:v=>'Bs '+(v/1000).toFixed(0)+'K',font:{size:10}}}}}
+    });
+  }
+  if(tab==='conversion'){
+    const byConv=[...ranking].sort((a,b)=>b.conv-a.conv);
+    const byLead=[...ranking].sort((a,b)=>b.ingLead-a.ingLead);
+    const convColors=byConv.map(r=>r.tienda==='HEAVEN'?hColor:sColor);
+    const leadColors=byLead.map(r=>r.tienda==='HEAVEN'?hColor:sColor);
+    new Chart(document.getElementById('chartConv'),{
+      type:'bar',data:{labels:byConv.map(r=>r.nombre),datasets:[{data:byConv.map(r=>r.conv),backgroundColor:convColors,borderRadius:6}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(2)+'%'}}},
+        scales:{x:{grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%',font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+    });
+    new Chart(document.getElementById('chartLeads'),{
+      type:'bar',data:{labels:byLead.map(r=>r.nombre),datasets:[{data:byLead.map(r=>r.ingLead),backgroundColor:leadColors,borderRadius:6}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>'Bs '+c.raw.toFixed(0)}}},
+        scales:{x:{grid:{color:'#f1f5f9'},ticks:{callback:v=>'Bs '+v,font:{size:10}}},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+    });
+    new Chart(document.getElementById('chartClientes'),{
+      type:'doughnut',
+      data:{labels:clientes.map(c=>c.c),datasets:[{data:clientes.map(c=>c.m),backgroundColor:['#3b82f6','#6366f1','#10b981','#f59e0b','#ef4444','#8b5cf6','#06b6d4'],borderWidth:2,borderColor:'white'}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{font:{size:10},boxWidth:12}},tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.raw)+' ('+((c.raw/257772.3)*100).toFixed(1)+'%)' }}}}
+    });
+  }
+}
+
+buildRankingTable();
+buildProyTable();
+buildConvTable();
+buildAlertas();
+setTimeout(()=>renderTab('resumen'),100);
+</script>
+</body>
+</html>
