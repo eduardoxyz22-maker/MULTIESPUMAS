@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Reporte Semanal ATC — Heaven Colchones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F5F6F7;font-family:'Inter',system-ui,sans-serif;color:#2D2D2D}
+.header{background:#00B5AD;padding:20px 36px;display:flex;justify-content:space-between;
+  align-items:center;box-shadow:0 3px 16px rgba(0,181,173,.35)}
+.logo-h{font-size:1.6rem;font-weight:800;color:#fff;letter-spacing:.12em}
+.logo-s{font-size:.65rem;color:rgba(255,255,255,.8);letter-spacing:.04em}
+.htitle h1{font-size:1rem;font-weight:600;color:#fff}
+.htitle p{font-size:.7rem;color:rgba(255,255,255,.75);margin-top:3px}
+.hbadge{background:rgba(255,255,255,.2);border-radius:8px;padding:8px 18px;text-align:center}
+.hbadge-v{font-size:1.8rem;font-weight:800;color:#fff;line-height:1}
+.hbadge-l{font-size:.6rem;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.06em}
+.container{padding:28px 36px;max-width:1400px;margin:0 auto}
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:28px}
+.kpi{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #E2E2E2;
+  box-shadow:0 1px 5px rgba(0,0,0,.06);position:relative;overflow:hidden}
+.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+.kpi.teal::before{background:#00B5AD} .kpi.green::before{background:#22A06B}
+.kpi.red::before{background:#CE2939}  .kpi.amber::before{background:#D97706}
+.kpi.purple::before{background:#7C3AED}
+.kpi-v{font-size:2rem;font-weight:800;line-height:1;margin-bottom:4px}
+.kpi.teal .kpi-v{color:#00B5AD} .kpi.green .kpi-v{color:#22A06B}
+.kpi.red .kpi-v{color:#CE2939}  .kpi.amber .kpi-v{color:#D97706}
+.kpi.purple .kpi-v{color:#7C3AED}
+.kpi-l{font-size:.65rem;font-weight:700;color:#6B6B6B;text-transform:uppercase;letter-spacing:.07em}
+.sec{font-size:.68rem;font-weight:700;color:#00B5AD;text-transform:uppercase;
+  letter-spacing:.1em;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:#E2E2E2}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:28px}
+.card{background:#fff;border-radius:12px;padding:22px;border:1px solid #E2E2E2;
+  box-shadow:0 1px 5px rgba(0,0,0,.06)}
+table{width:100%;border-collapse:collapse;font-size:.8rem}
+thead th{background:#1A1A1A;color:rgba(255,255,255,.75);padding:10px 13px;text-align:left;
+  font-size:.67rem;font-weight:600;text-transform:uppercase;letter-spacing:.07em;
+  border-bottom:3px solid #00B5AD}
+tbody tr{border-bottom:1px solid #F5F6F7;transition:background .12s}
+tbody tr:hover{background:#E6F7F6}
+tbody td{padding:9px 13px;vertical-align:middle}
+.tw{background:#fff;border:1px solid #E2E2E2;border-radius:12px;
+  overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.ts{max-height:500px;overflow-y:auto}
+.ts::-webkit-scrollbar{width:5px}
+.ts::-webkit-scrollbar-thumb{background:#00B5AD;border-radius:3px}
+a{color:#00B5AD;text-decoration:none;font-weight:500}
+a:hover{text-decoration:underline}
+#export-btn{position:fixed;bottom:28px;right:28px;z-index:9999;
+  background:#00B5AD;color:#fff;border:none;border-radius:10px;
+  padding:12px 22px;font-size:.85rem;font-weight:700;font-family:inherit;
+  cursor:pointer;box-shadow:0 4px 18px rgba(0,181,173,.45);
+  display:flex;align-items:center;gap:8px;transition:background .15s,transform .1s}
+#export-btn:hover{background:#008F88;transform:translateY(-2px)}
+.footer{text-align:center;padding:18px;font-size:.68rem;color:#6B6B6B;
+  border-top:1px solid #E2E2E2;background:#fff;margin-top:28px}
+@media(max-width:768px){.kpis,.grid2{grid-template-columns:1fr}
+  .container{padding:16px} .header{flex-direction:column;gap:12px;text-align:center}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div style="display:flex;align-items:center;gap:20px">
+    <div style="border-right:1px solid rgba(255,255,255,.3);padding-right:20px;margin-right:4px">
+      <div class="logo-h">HEAVEN</div>
+      <div class="logo-s">colchones ✚</div>
+    </div>
+    <div class="htitle">
+      <h1>Reporte Semanal ATC</h1>
+      <p>Semana 18/05 – 24/05/2026 &nbsp;·&nbsp; Generado: 22/05/2026 21:36</p>
+    </div>
+  </div>
+  <div style="display:flex;gap:12px">
+    <div class="hbadge"><div class="hbadge-v">51</div><div class="hbadge-l">Activas</div></div>
+    <div class="hbadge"><div class="hbadge-v">14</div><div class="hbadge-l">Completadas</div></div>
+    <div class="hbadge"><div class="hbadge-v">27</div><div class="hbadge-l">Críticas</div></div>
+  </div>
+</div>
+
+<div class="container">
+  <div class="kpis">
+    <div class="kpi teal"><div class="kpi-v">55</div><div class="kpi-l">Total tarjetas</div></div>
+    <div class="kpi green"><div class="kpi-v">14</div><div class="kpi-l">Completadas</div></div>
+    <div class="kpi red"><div class="kpi-v">27</div><div class="kpi-l">Críticas</div></div>
+    <div class="kpi amber"><div class="kpi-v">4</div><div class="kpi-l">Archivadas</div></div>
+    <div class="kpi purple"><div class="kpi-v">25%</div><div class="kpi-l">% Resueltas</div></div>
+  </div>
+
+  <div class="sec">Estado por Lista</div>
+  <div class="tw" style="margin-bottom:28px"><table>
+    <thead><tr><th>Lista</th><th>Activas</th><th>Completadas</th><th>Archivadas</th></tr></thead>
+    <tbody><tr>
+      <td style="font-weight:600">ATC SOLICITADAS COM</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">3</td>
+      <td style="text-align:center;color:#22A06B">1</td>
+      <td style="text-align:center;color:#808080">2</td>
+    </tr><tr>
+      <td style="font-weight:600">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">9</td>
+      <td style="text-align:center;color:#22A06B">2</td>
+      <td style="text-align:center;color:#808080">1</td>
+    </tr><tr>
+      <td style="font-weight:600">ATC EN PRODUCCION</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">0</td>
+      <td style="text-align:center;color:#22A06B">0</td>
+      <td style="text-align:center;color:#808080">1</td>
+    </tr><tr>
+      <td style="font-weight:600">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">38</td>
+      <td style="text-align:center;color:#22A06B">11</td>
+      <td style="text-align:center;color:#808080">0</td>
+    </tr><tr>
+      <td style="font-weight:600">POST VENT (COMERCIAL)</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">1</td>
+      <td style="text-align:center;color:#22A06B">0</td>
+      <td style="text-align:center;color:#808080">0</td>
+    </tr></tbody>
+  </table></div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="sec">Casos por Vendedora</div>
+      
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Mirian</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:100%;background:#00B5AD;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">18</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Otras</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:67%;background:#808080;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">12</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Maria</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:44%;background:#7C3AED;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">8</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Norma</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:28%;background:#3B9ECB;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">5</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Isabel</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:22%;background:#D97706;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">4</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:90px;font-size:.8rem;font-weight:600;color:#2D2D2D">Carola</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:22%;background:#22A06B;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">4</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="sec">Problemas más frecuentes</div>
+      
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Hundimiento</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:100%;background:#00B5AD;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">21</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Resortes</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:33%;background:#7C3AED;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">7</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Retapizado</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:33%;background:#D97706;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">7</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Ruido</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:29%;background:#CE2939;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">6</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Patas/Sómier</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:29%;background:#22A06B;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">6</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Sin garantía</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:24%;background:#3B9ECB;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">5</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div style="width:110px;font-size:.78rem;font-weight:600;color:#2D2D2D">Descosturado</div>
+        <div style="flex:1;background:#F0F0F0;border-radius:4px;height:22px;overflow:hidden">
+          <div style="width:19%;background:#808080;height:100%;border-radius:4px;
+               display:flex;align-items:center;padding-left:8px;
+               font-size:.72rem;font-weight:700;color:#fff;min-width:28px">4</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">Tarjetas Críticas</div>
+  <div class="tw" style="margin-bottom:28px"><table>
+    <thead><tr><th>Tarjeta</th><th>Lista</th><th>Estado</th></tr></thead>
+    <tbody><tr>
+      <td><a href="https://trello.com/c/F61B4I9O" target="_blank" style="color:#00B5AD;font-weight:600">ARC MIRIAN - ERIKA VARGAS</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/eo1WhRQ1" target="_blank" style="color:#00B5AD;font-weight:600">ATC-MIRIAN--ELIZABETH CAYOJA</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/3bhmqnUp" target="_blank" style="color:#00B5AD;font-weight:600">ATC-MIRIAN-ORLANDO LANDIVAR</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/Xp6RGhM1" target="_blank" style="color:#00B5AD;font-weight:600">ATCMARIA - KATTY LIJERON</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/LFih8V91" target="_blank" style="color:#00B5AD;font-weight:600">ATC JULIA ALVAREZ</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/4tHx35qg" target="_blank" style="color:#00B5AD;font-weight:600">ATC ROHO - PABLO URIONA</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/0Kxjfh2z" target="_blank" style="color:#00B5AD;font-weight:600">ATC TATIANA AMUSQUIVAR</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/oZNx9ntO" target="_blank" style="color:#00B5AD;font-weight:600">ATC VALENTINA ROESSLER</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/pPSqaIpI" target="_blank" style="color:#00B5AD;font-weight:600">ATC-MIRIAN-DANIEL VALVERDE</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/16cY8JGj" target="_blank" style="color:#00B5AD;font-weight:600">ATC- RICARDO FERNANDEZ BEJARANO</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/U5vNseI1" target="_blank" style="color:#00B5AD;font-weight:600">ATC -MOIRA CRISTINA CASTEDO</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/jyAyedfw" target="_blank" style="color:#00B5AD;font-weight:600">ATC SAMUEL CUELLAR</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/pG7SOO72" target="_blank" style="color:#00B5AD;font-weight:600">ATC LEIDY ALCOBA CAMPOS</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/KK668J1D" target="_blank" style="color:#00B5AD;font-weight:600">ATC - ARTURO TELLERIA</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/BonocdY1" target="_blank" style="color:#00B5AD;font-weight:600">ATC 03-03 CAROLA - ENRIQUE URENDA</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/8wY4lw50" target="_blank" style="color:#00B5AD;font-weight:600">ATC MIRIAN--MAURICIO OLEA</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/iRKHpg7N" target="_blank" style="color:#00B5AD;font-weight:600">ATC CHARCAS - Cambio por hundimiento</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/hNenIlDI" target="_blank" style="color:#00B5AD;font-weight:600">ATC - ELDER ARAUZ</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/jyQ4bOCf" target="_blank" style="color:#00B5AD;font-weight:600">ATC JAVIER GUTIERREZ VALLE</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr><tr>
+      <td><a href="https://trello.com/c/LS791aHp" target="_blank" style="color:#00B5AD;font-weight:600">ATC ESTHER ALVAN TORREZ</a></td>
+      <td style="font-size:.75rem;color:#666">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td><span style="background:#FDEAEC;color:#CE2939;padding:2px 8px;border-radius:20px;font-size:.72rem;font-weight:700">Pendiente</span></td>
+    </tr></tbody>
+  </table></div>
+
+  <div class="sec">Todas las Tarjetas (55)</div>
+  <div class="tw"><div class="ts"><table>
+    <thead><tr><th>#</th><th>Tarjeta</th><th>Lista</th><th>Vendedora</th><th>Vencimiento</th><th>Estado</th></tr></thead>
+    <tbody><tr style="">
+      <td style="color:#999;font-size:.72rem">1</td>
+      <td><a href="https://trello.com/c/IxwNAVwG" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN-RUBEN DARIO CALLE</a></td>
+      <td style="font-size:.75rem;color:#444">ATC SOLICITADAS COM</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">2</td>
+      <td><a href="https://trello.com/c/gwyGDiyR" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATCMARIA-MARIA LOURDES CAMPBELL</a></td>
+      <td style="font-size:.75rem;color:#444">ATC SOLICITADAS COM</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">3</td>
+      <td><a href="https://trello.com/c/Nl4RjOfg" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MIRIAN--JUAN FERNANDO MENDEZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC SOLICITADAS COM</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">4</td>
+      <td><a href="https://trello.com/c/khYWZywS" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">LINEA titanio MODELO ICE plaza 3,5plz medidas 200x200cm</a></td>
+      <td style="font-size:.75rem;color:#444">ATC SOLICITADAS COM</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">5</td>
+      <td><a href="https://trello.com/c/6FnAZutE" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">WhatsApp Image 2026-04-25 at 3.57.43 PM.jpeg</a></td>
+      <td style="font-size:.75rem;color:#444">ATC SOLICITADAS COM</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#F0F0F0;color:#808080;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Archivada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">6</td>
+      <td><a href="https://trello.com/c/I7ceXJ8r" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATCMARIA - VIVIANA DELGADILLO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">7</td>
+      <td><a href="https://trello.com/c/gcOX2HPX" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MARIA - SUSANA VARGAS</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">8</td>
+      <td><a href="https://trello.com/c/7M5PULcU" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-ISABEL-MORONI SALAZAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Isabel</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">9</td>
+      <td><a href="https://trello.com/c/XGcgUbCk" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATCMARIA - KATTY LIJERON</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">10</td>
+      <td><a href="https://trello.com/c/lEq6gOAq" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MARIA - VICTOR HUGO SALVARIERRA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">11</td>
+      <td><a href="https://trello.com/c/MjNCI7bK" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC TIENDA AMIGA - CRISTHIAN DIAZ CONDORI</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">12</td>
+      <td><a href="https://trello.com/c/v2AMLeUj" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC TIENDA AMIGA - CRISTHIAN DIAZ CONDORI (archivada)</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#F0F0F0;color:#808080;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Archivada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">13</td>
+      <td><a href="https://trello.com/c/nsyNdAWy" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MARIA CLIENTE ARIEL ARANIBAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">14</td>
+      <td><a href="https://trello.com/c/g5GmuG0h" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MORENO - JOSE CARLOS PIZARRO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">15</td>
+      <td><a href="https://trello.com/c/UwqPyBdW" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MARIA - ROSA MARIA LIMA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC PROGRAMADAS PARA RECOJO LOG</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">16</td>
+      <td><a href="https://trello.com/c/xJsWJHHO" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">Cliente Alberto Pareja (Ejemplo)</a></td>
+      <td style="font-size:.75rem;color:#444">ATC EN PRODUCCION</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#F0F0F0;color:#808080;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Archivada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">17</td>
+      <td><a href="https://trello.com/c/JSoSgwHw" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC ALEXIS GUARANA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Isabel</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">18</td>
+      <td><a href="https://trello.com/c/C2GDcnzV" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN--VIVIAN ESCALANTE PANIAGUA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">19</td>
+      <td><a href="https://trello.com/c/F61B4I9O" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ARC MIRIAN - ERIKA VARGAS</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">20</td>
+      <td><a href="https://trello.com/c/9u5NgCHS" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN - RUBENS</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">21</td>
+      <td><a href="https://trello.com/c/eo1WhRQ1" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN--ELIZABETH CAYOJA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">22</td>
+      <td><a href="https://trello.com/c/3bhmqnUp" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN-ORLANDO LANDIVAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">23</td>
+      <td><a href="https://trello.com/c/UvJdrvZT" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MIRIAN---ROCIO ZELAYA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">24</td>
+      <td><a href="https://trello.com/c/Xp6RGhM1" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATCMARIA - KATTY LIJERON</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">25</td>
+      <td><a href="https://trello.com/c/VffAOaMy" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN--JUAN PABLO BEJARANO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">26</td>
+      <td><a href="https://trello.com/c/LFih8V91" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC JULIA ALVAREZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Norma</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">27</td>
+      <td><a href="https://trello.com/c/4tHx35qg" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC ROHO - PABLO URIONA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">28</td>
+      <td><a href="https://trello.com/c/0Kxjfh2z" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC TATIANA AMUSQUIVAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Isabel</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">29</td>
+      <td><a href="https://trello.com/c/oZNx9ntO" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC VALENTINA ROESSLER</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Norma</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">30</td>
+      <td><a href="https://trello.com/c/pPSqaIpI" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN-DANIEL VALVERDE</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">31</td>
+      <td><a href="https://trello.com/c/16cY8JGj" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC- RICARDO FERNANDEZ BEJARANO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">32</td>
+      <td><a href="https://trello.com/c/U5vNseI1" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC -MOIRA CRISTINA CASTEDO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Isabel</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">33</td>
+      <td><a href="https://trello.com/c/jyAyedfw" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC SAMUEL CUELLAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">34</td>
+      <td><a href="https://trello.com/c/pG7SOO72" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC LEIDY ALCOBA CAMPOS</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Carola</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">35</td>
+      <td><a href="https://trello.com/c/KK668J1D" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC - ARTURO TELLERIA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Norma</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">36</td>
+      <td><a href="https://trello.com/c/BonocdY1" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC 03-03 CAROLA - ENRIQUE URENDA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Carola</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">37</td>
+      <td><a href="https://trello.com/c/8wY4lw50" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MIRIAN--MAURICIO OLEA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">38</td>
+      <td><a href="https://trello.com/c/iRKHpg7N" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC CHARCAS - Cambio por hundimiento</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">39</td>
+      <td><a href="https://trello.com/c/hNenIlDI" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC - ELDER ARAUZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">40</td>
+      <td><a href="https://trello.com/c/5Kw3pLXd" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MARIA - ELDER ARAUZ (cotización)</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Maria</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">41</td>
+      <td><a href="https://trello.com/c/jyQ4bOCf" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC JAVIER GUTIERREZ VALLE</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Norma</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">42</td>
+      <td><a href="https://trello.com/c/LS791aHp" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC ESTHER ALVAN TORREZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">43</td>
+      <td><a href="https://trello.com/c/BnL7wOEy" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN WILLIAN ESCOBAR</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">44</td>
+      <td><a href="https://trello.com/c/qRFronOD" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">INI GERALDINE FEENEY SUAREZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Carola</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">45</td>
+      <td><a href="https://trello.com/c/IWUPT4VU" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN-ELIZABETH CAYOYA (patas)</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">46</td>
+      <td><a href="https://trello.com/c/RQgYCRty" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC 03-11 MILENKA MENACHO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Carola</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">47</td>
+      <td><a href="https://trello.com/c/zxcsrICW" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC MARCELO JOHNSON MUÑIZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">48</td>
+      <td><a href="https://trello.com/c/HHqZGztf" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC-MIRIAN--LY MASSIEL CASTEDO SORIA</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">49</td>
+      <td><a href="https://trello.com/c/HRj17cqp" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC TIENDA AMIGA - Reparación colchón 2.5 PLZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">50</td>
+      <td><a href="https://trello.com/c/zAKCujUF" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC PAOLA SILVANA GUZMAN</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">51</td>
+      <td><a href="https://trello.com/c/7sPUh44C" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC CESAR SANCHEZ - ROHO</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">52</td>
+      <td><a href="https://trello.com/c/VqB7dIeN" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC ROBERTO CARLOS GUTIERREZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Norma</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">53</td>
+      <td><a href="https://trello.com/c/OIMNEOdy" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC JOSELIN CHAVEZ SUAREZ</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#E6F9F0;color:#22A06B;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Completada</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">54</td>
+      <td><a href="https://trello.com/c/LLuGpnYn" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC PAOLA SILVANA GUZMAN (duplicado)</a></td>
+      <td style="font-size:.75rem;color:#444">ATC LISTAS PARA DEVOLVER PROD</td>
+      <td style="font-size:.75rem;color:#666">Otras</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr><tr style="">
+      <td style="color:#999;font-size:.72rem">55</td>
+      <td><a href="https://trello.com/c/HjYKHCiL" target="_blank" style="color:#00B5AD;font-weight:600;font-size:.8rem">ATC RUTH MONTECINOS</a></td>
+      <td style="font-size:.75rem;color:#444">POST VENT (COMERCIAL)</td>
+      <td style="font-size:.75rem;color:#666">Mirian</td>
+      <td style="font-size:.75rem;color:#666"></td>
+      <td><span style="background:#FEF3E2;color:#D97706;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:700">Pendiente</span></td>
+    </tr></tbody>
+  </table></div></div>
+</div>
+
+<div class="footer">HEAVEN Colchones · Reporte ATC Semanal · 22/05/2026</div>
+
+<button id="export-btn" onclick="exportCSV()">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+       stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+    <polyline points="7 10 12 15 17 10"/>
+    <line x1="12" y1="15" x2="12" y2="3"/>
+  </svg>
+  Exportar CSV
+</button>
+
+<script>
+const CSV_DATA = `Tablero,Lista,Tarjeta,Descripcion,Vencimiento,Estado,Completada,Etiquetas,Asignado_a,Archivada,URL\nATC,ATC SOLICITADAS COM,ATC-MIRIAN-RUBEN DARIO CALLE,"ATC-MIRIAN-RUBEN DARIO CALLE-CLAUDIA NOGALES | 73513535 | ORO ORTOPEDICO 3.5 PLZ | ESTA DESCOSTURADO Y UNDIDO, SUENAN SUS RESORTES | LLEVAR COMODIN",,Pendiente,No,,,No,https://trello.com/c/IxwNAVwG\nATC,ATC SOLICITADAS COM,ATCMARIA-MARIA LOURDES CAMPBELL,"CLIENTE: MARIA LOURDES CAMPBELL | TEL: 7846-4681 | DIR: ZONA NORTE 7MO ANILLO | VENDEDORA: Muebles Libertad | LINEA 2,0plz 140x190 - Ribete descosturado",,Pendiente,No,,,No,https://trello.com/c/gwyGDiyR\nATC,ATC SOLICITADAS COM,ATC MIRIAN--JUAN FERNANDO MENDEZ,"ATC-MIRIAN-JUAN FERNANDO MENDEZ | 78198725 | SEMI ORTOPEDICO 160X200 CM | ESTA UNDIDO | Dir: Barrio San Martín calle Nor Lipez #12, séptimo al octavo anillo entre av. Alemana y 2 de agosto",,Pendiente,No,,,No,https://trello.com/c/Nl4RjOfg\nATC,ATC SOLICITADAS COM,"LINEA titanio MODELO ICE plaza 3,5plz medidas 200x200cm",,,Completada,Sí,,,Sí,https://trello.com/c/khYWZywS\nATC,ATC SOLICITADAS COM,WhatsApp Image 2026-04-25 at 3.57.43 PM.jpeg,,,Archivada,No,,,Sí,https://trello.com/c/6FnAZutE\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATCMARIA - VIVIANA DELGADILLO,CLIENTE: VIVIANA DELGADILLO | TEL: 7217-6832 | VENDEDORA: MARIA | comodín,,Pendiente,No,,,No,https://trello.com/c/I7ceXJ8r\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC MARIA - SUSANA VARGAS,"CLIENTE: Susana Vargas | TEL: 7703-8555 | VENDEDORA: Susana Vargas | TITANIO ICE 140x190 2,0plz - Cotización retapizado (no cubre garantía)",,Completada,Sí,,,No,https://trello.com/c/gcOX2HPX\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC-ISABEL-MORONI SALAZAR,ATC ISABEL-MORONI SALAZAR | CELULAR: 67974848 | TITANIO LATEX 3.5 PLZ - ESTA UNDIDO | Dir: CALLE YAPACI 309 VILLA BONITA ZONA URUBO,,Pendiente,No,,,No,https://trello.com/c/7M5PULcU\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATCMARIA - KATTY LIJERON,"CLIENTE: Katty Lijeron | TEL: 7317-0103 | VENDEDORA: MARIA | PLATA SEMIORTOPEDICO 200X200 3,5plz - Hundimientos en orilla (sin garantía)",,Pendiente,No,,,No,https://trello.com/c/XGcgUbCk\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC MARIA - VICTOR HUGO SALVARIERRA,"CLIENTE: Victor Hugo Salvarierra | TEL: 7532-4238 | VENDEDORA: Maria | ORO BAMBU AMAZON 200x200 3,5plz - Hundimiento en caderas (sin garantía)",,Completada,Sí,,,No,https://trello.com/c/lEq6gOAq\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC TIENDA AMIGA - CRISTHIAN DIAZ CONDORI,RECOGER COLCHON BAHIA 2 PLAZAS / LLEVA COMODIN - COSTURA DE RIBETE | Contacto: 61338663-73610419 | Dir: AV. MAPAISO KM9 BARRIO VALPARAÍSO,,Pendiente,No,,,No,https://trello.com/c/MjNCI7bK\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC TIENDA AMIGA - CRISTHIAN DIAZ CONDORI (archivada),RECOGER COLCHON BAHIA 2 PLAZAS / LLEVA COMODIN - COSTURA DE RIBETE | Contacto: 61338663-73610419 | Dir: AV. MAPAISO KM9 BARRIO VALPARAÍSO,,Archivada,No,,,Sí,https://trello.com/c/v2AMLeUj\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC-MARIA CLIENTE ARIEL ARANIBAR,"CLIENTE: Ariel Aranibar | TEL: 7268-6220 | VENDEDORA: DABEIBA | SOMIER TITANIO ICE 160x190 2,5plz - Pata no ajusta, revisión a domicilio (con garantía, solo después de las 4:00)",,Pendiente,No,,,No,https://trello.com/c/nsyNdAWy\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC MORENO - JOSE CARLOS PIZARRO,"Reparacion de OAV 1.5, verificar hundimiento",,Pendiente,No,,,No,https://trello.com/c/g5GmuG0h\nATC,ATC PROGRAMADAS PARA RECOJO LOG,ATC MARIA - ROSA MARIA LIMA,"CLIENTE: ROSA MARIA LIMA | TEL: 7567-8775 | VENDEDORA: MIRIAN | ORO BAMBU AMAZON 160X200 - Hundimiento en ambos lados (con garantía, compra 11-05-2021) PRESTAR COMODIN",,Pendiente,No,,,No,https://trello.com/c/UwqPyBdW\nATC,ATC EN PRODUCCION,Cliente Alberto Pareja (Ejemplo),Fecha solicitada / Vendedora / Adjuntar solicitud de Garantía / Fecha Programada para recojo,,Archivada,No,,,Sí,https://trello.com/c/xJsWJHHO\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC ALEXIS GUARANA,"CLIENTE: ALEXIS GUARANA | TEL: 7310-2866 | Compra: 09/01/2024 | Dir: Calle quruyuqui 430 | VENDEDORA: MARIA ISABEL ROBLEDO | ORO ANATOMICO VISCOLASTICO 200X200 3,5plz - Descosturado y orillas sin consistencia (30 de abril)",,Completada,Sí,,,No,https://trello.com/c/JSoSgwHw\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN--VIVIAN ESCALANTE PANIAGUA,CLIENTE: VIVIAN ESCALANTE PANIAGUA | TEL: 76650610 | VENDEDORA: NANCY KOMORY | Dir: BARRIO CONVIFAG SUR CALLE BARTOLOME DIAZ N 4105 | SEMI ORTOPEDICO 140X210 2plz - Se sienten los resortes laterales (con garantía 2023),,Completada,Sí,,,No,https://trello.com/c/C2GDcnzV\nATC,ATC LISTAS PARA DEVOLVER PROD,ARC MIRIAN - ERIKA VARGAS,"ATC-MIRIAN-ERIKA VARGAS | CEL: 69000087 | TITANIO ICE 2021 - Lote de tela salió mal, se hicieron hoyitos, retapizado",,Pendiente,No,,,No,https://trello.com/c/F61B4I9O\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN - RUBENS,ATC-MIRIAN - RUBENS | CELLULAR: 73513535 | RETAPIZADO ORO ORTOPEDICO 3.5 PLZ COMPLETO,,Completada,Sí,,,No,https://trello.com/c/9u5NgCHS\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN--ELIZABETH CAYOJA,"ATC MIRIAN-ELIZABETH CAYOJA | CEL: 72646033 | Compra: 26-03-2026 | ORO BI RELAX 200X200 - Presenta sonido, solicita técnico",,Pendiente,No,,,No,https://trello.com/c/eo1WhRQ1\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN-ORLANDO LANDIVAR,ATC MIRIAN-ORLANDO LANDIVAR | SEMI PEDIC 1.5 PLZ compró en ROHO - Resortes salidos,,Pendiente,No,,,No,https://trello.com/c/3bhmqnUp\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC MIRIAN---ROCIO ZELAYA,"CLIENTE: ROCIO ZELAYA | TEL: 60861514 | Dir: COTOCA-2DO ANILLO | VENDEDORA: MIRIAN | TITANIO ICE 160X190 2,5plz - Se siente muy caliente en espalda baja (entrega 23-02-2026)",,Completada,Sí,,,No,https://trello.com/c/UvJdrvZT\nATC,ATC LISTAS PARA DEVOLVER PROD,ATCMARIA - KATTY LIJERON,"CLIENTE: Katty Lijeron | TEL: 7317-0103 | VENDEDORA: MARIA | PLATA SEMIORTOPEDICO 200X200 3,5plz - Hundimientos en orilla (sin garantía)",,Pendiente,No,,,No,https://trello.com/c/Xp6RGhM1\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN--JUAN PABLO BEJARANO,"CLIENTE: Juan Pablo Bejarano | TEL: 70860506 | Dir: B-PETROLERO C/TOBOROCHI N 256 | VENDEDORA: MIRIAN | SEMI ORTOPEDICO 160X190 2,5plz - Cotizar retapizado completo",,Completada,Sí,,,No,https://trello.com/c/VffAOaMy\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC JULIA ALVAREZ,"CLIENTE: JULIA ALVAREZ | TEL: 7263-2522 | VENDEDORA: NORMA | TITANIO ICE 140x190 2,0plz - Sonido raro, no descansa bien, compró colchón y sómier, pide solución o cambio",,Pendiente,No,,,No,https://trello.com/c/LFih8V91\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC ROHO - PABLO URIONA,NOTA 167238 | Dynamipedic 3 plz | TEL: 76302063 | Cliente indica colchón muy duro comparado con el que probó. Solicita revisión y cambio.,,Pendiente,No,,,No,https://trello.com/c/4tHx35qg\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC TATIANA AMUSQUIVAR,"CLIENTE: TATIANA AMUSQUIVAR | TEL: 7310-2866 | Compra: 09/12/2022 | VENDEDORA: MARIA ISABEL | Dir: AV. MUTUALISTA ENTRE 3ER Y 4TO ANILO C/39 N-3660 | PLATA SEMIORTOPEDICO 140x190 2plz - Hundimientos y resortes, arreglado antes pero quedó mal con bolas, quiere cambio",,Pendiente,No,,,No,https://trello.com/c/0Kxjfh2z\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC VALENTINA ROESSLER,CLIENTE: VALENTINA ROESSLER | TEL: 7852-0120 | Compra: 12/05/2022 | VENDEDORA: NORMA | Dir: EQUIPETROL CON NOMAD PISO 5 DPTO 514 | TITANIO LATEX 180X200 3plz - Bulto/bolita en el pillow (con garantía),,Pendiente,No,,,No,https://trello.com/c/oZNx9ntO\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN-DANIEL VALVERDE,FACTURA: DANIEL VALVERDE CI 3822117 | Compra: 2021 | ORO ORTOPEDICO 3 PLZ (sin garantía) | Dir: AV GOBERNADOR VIDELA ENTRE CALLE CURUYUQUI Y CHORETI | LLEVAR COMODIN,,Pendiente,No,,,No,https://trello.com/c/pPSqaIpI\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC- RICARDO FERNANDEZ BEJARANO,"CLIENTE: RICARDO FERNANDEZ BEJARANO | TEL: 56 9 6699 4565 | Compra: 29/07/2023 | VENDEDORA: (no especificada) | Dir: 5TO ANILLO ZONA SANTOS DUMONT | PLATA TROPICAL 140x190 2plz - Orilla muy flexible (con garantía, llevar comodín)",,Pendiente,No,,,No,https://trello.com/c/16cY8JGj\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC -MOIRA CRISTINA CASTEDO,"CLIENTE: MOIRA CRISTINA CASTEDO | TEL: 7731-2767 | Compra: 18/05/2023 | VENDEDORA: MARIA ISABEL | Dir: RADIAL 26, ENTRE 4TO Y 5TO ANILLO, COND. El Bosque casa 55 | ESPECIAL TROPICAL 105X190 1,5plz - 5 colchones tropicales, uno con resortes desproporcionados y sobresalidos",,Pendiente,No,,,No,https://trello.com/c/U5vNseI1\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC SAMUEL CUELLAR,"CLIENTE: SAMUEL CUELLAR | TEL: 7785-9684 | VENDEDORA: MIRIAN | Dir: RADIAL 13 6TO ANILLO | SOMIER 200X200 3,5plz - Pata con rueda rota, cambiar 4 patas por fijas",,Pendiente,No,,,No,https://trello.com/c/jyAyedfw\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC LEIDY ALCOBA CAMPOS,"CLIENTE: LEIDY ALCOBA CAMPOS | TEL: 7083-3394 | Compra: 05/02/2022 | ASESORA: CAROLA CHAVEZ | Dir: Av. los chacos entrando sobre el canal, 3er casa portón de madera | TITANIO LATEX 180X190 3plz - Desprendimiento del edredonado (garantía a nombre de Juan Carlos Palavecino Morales)",,Pendiente,No,,,No,https://trello.com/c/pG7SOO72\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC - ARTURO TELLERIA,"CLIENTE: ARTURO TELLERIA | TEL: 7040-0927 | Compra: 19/04/2021 | VENDEDORA: NORMA | Dir: COND. FONTANA FAMILY CLUB ZONA NORTE KM8 CALLE 12 CASA 2A | PLATA SEMIORTOPEDICO 105x190 1,5plz - Hundimiento (con garantía)",,Pendiente,No,,,No,https://trello.com/c/KK668J1D\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC 03-03 CAROLA - ENRIQUE URENDA,,,Pendiente,No,,,No,https://trello.com/c/BonocdY1\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC MIRIAN--MAURICIO OLEA,"CLIENTE: Mauricio René Olea Reque | TEL: 70960666 | Dir: Cond. La Riviera del Remanzo B casa 15 | ORO ORTOPEDICO 160x190 2,5plz - Historial: compra 15-09-2020, ATC 07-09-2022 (cambio), ATC 24-10-2024, ATC feb-2026. Sigue con hundimiento, ruido. Inconforme.",,Pendiente,No,,,No,https://trello.com/c/8wY4lw50\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC CHARCAS - Cambio por hundimiento,"25/4/26: Cambio de colchón por hundimiento. Ortopedico 2.0 plz. Cliente dejó colchón hundido en tienda Charcas, se le dio uno nuevo por garantía.",,Pendiente,No,,,No,https://trello.com/c/iRKHpg7N\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC - ELDER ARAUZ,"CLIENTE: ELDER ARAUZ | TEL: 7781-3441 | Dir: 5TO-6TO ANILLO AV San Pablo casa 2 | ORO ANATOMICO VISCOLASTICO 160x190 2,5plz - Hundimiento y ruido de resortes (compra 26/07/2021, con garantía). Cotizar retapizado también.",,Pendiente,No,,,No,https://trello.com/c/hNenIlDI\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MARIA - ELDER ARAUZ (cotización),"CLIENTE: ELDER ARAUZ | TEL: 7781-3441 | Dir: 5TO-6TO ANILLO AV San Pablo 2 | VENDEDOR: CRISTIAN | ORO ANATOMICO VISCOLASTICO 160x190 2,5plz - Hundimiento y ruido, cotización retapizado",,Completada,Sí,,,No,https://trello.com/c/5Kw3pLXd\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC JAVIER GUTIERREZ VALLE,"CLIENTE: JAVIER GUTIERREZ VALLE | TEL: 7500-4885 | VENDEDORA: NORMA | Dir: AV. PIRAI CALLE MUTUN 101 PORTON CAFE | PLATA SEMIORTOPEDICO 180x190 3plz - Sin garantía, reparación interna BS 1842",,Pendiente,No,,,No,https://trello.com/c/jyQ4bOCf\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC ESTHER ALVAN TORREZ,"CLIENTE: ESTHER ALVAN TORREZ | TEL: 7800-0564 | VENDEDORA: MIRIAN | Dir: ZONA NORTE 8 ANILLO ENTRE CALLE 2 Y 3 CASA 176 | ESPECIAL ORTOPEDICO 180X190 3plz - Hundido, llevar comodín",,Pendiente,No,,,No,https://trello.com/c/LS791aHp\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN WILLIAN ESCOBAR,"CLIENTE: Willian Albert Escobar | TEL: 75015430 | VENDEDORA: MIRIAN | Dir: 1er anillo c/ingavi | TITANIO ICE 200x200 3,5plz - Hundido (con garantía, llevar comodín)",,Pendiente,No,,,No,https://trello.com/c/BnL7wOEy\nATC,ATC LISTAS PARA DEVOLVER PROD,INI GERALDINE FEENEY SUAREZ,"VENDEDORA: CAROLA CHAVEZ | Dir: AVENIDA MELCHOR PINTO CALLE BAHIA NO. 237 | TITANIO ICE 200x200 3,5plz - Se bajó en las orillas. Enviar 2+ personas (bajar por balcón)",,Completada,Sí,,,No,https://trello.com/c/qRFronOD\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN-ELIZABETH CAYOYA (patas),ATC-MIRIAN-ELIZABETH CAYOJA | NIT: 3287605 | CEL: 72646033 | Tiene 3 camas Heaven. 2 patas rotas en cada cama = 6 patas en total. | Dir: RADIAL 12-13 4TO ANILLO CALLE 10,,Pendiente,No,,,No,https://trello.com/c/IWUPT4VU\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC 03-11 MILENKA MENACHO,"CLIENTE: MILENKA MENACHO | ATC 03-11/25 | Factura 93 | TEL: 7503-4633 | Compra: 27/05/2024 | VENDEDORA: CAROLA CHAVEZ | Dir: AV. PARAGUA ENTRE 3 Y 4TO ANILLO CALLE B JUAN BARTELEMI NO. 3085 | TITANIO ICE 180x190 3,0plz - Bolitas en la tela del edredonado",,Pendiente,No,,,No,https://trello.com/c/RQgYCRty\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC MARCELO JOHNSON MUÑIZ,"CLIENTE: MARCELO JOHNSON MUÑIZ | TEL: 7210-0758 | PLATA SEMIORTOPEDICO 2plz + PLATA JUNIOR 1,5plz - Hundimiento en ambos (sin garantía). Cotizar cambio de panel y retapizado por separado.",,Completada,Sí,,,No,https://trello.com/c/zxcsrICW\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC-MIRIAN--LY MASSIEL CASTEDO SORIA,"CLIENTE: LY MASSIEL CASTEDO SORIA | TEL: 7858-5813 | VENDEDORA: MIRIAN | Dir: AV LA SALLE 3ER ANILLO EDIF GOLD DPTO B-106 | ESPECIAL SEMI ORTOPEDICO 160X190 2,5plz - Madera rota en esquina de pata, cotizar trabajo",,Pendiente,No,,,No,https://trello.com/c/HHqZGztf\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC TIENDA AMIGA - Reparación colchón 2.5 PLZ,,,Completada,Sí,,,No,https://trello.com/c/HRj17cqp\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC PAOLA SILVANA GUZMAN,"CLIENTE: PAOLA SILVANA GUZMAN VARGAS | TEL: 7850-1760 | Factura 04/11/2025 | Dir: CALLE ADRIAN Y MELGAR NRO 500 ZONA MARIO FLORES | PLATA SEMIORTOPEDICO 140x190 2plz - Hundimiento y resortes lastiman (con garantía, vence fin de mes - URGENTE)",,Completada,Sí,,,No,https://trello.com/c/zAKCujUF\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC CESAR SANCHEZ - ROHO,"CLIENTE: CESAR SANCHEZ | TEL: 7260-8237 | Compra: 29/06/2022 | VENDEDORA: (no especificada) | Dir: EQUIPETROL CALLE NRO 5 OESTE COND STANZA DPTO 4F PISO 4 | ROHO PILLOW PEDIC 140x190 2plz - Cajón de espuma aplastado (con garantía). Recoger 3-5pm, avisar 1h antes.",,Pendiente,No,,,No,https://trello.com/c/7sPUh44C\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC ROBERTO CARLOS GUTIERREZ,"CLIENTE: ROBERTO CARLOS GUTIERREZ | TEL: 6878-4033 | Compra: 13/02/2023 | VENDEDORA: NORMA | Dir: BARRIO CORDECRUZ CALLE K21 | PLATA SEMIORTOPEDICO 160X190 2,5plz - Hundimiento (con garantía, no requiere comodín)",,Pendiente,No,,,No,https://trello.com/c/VqB7dIeN\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC JOSELIN CHAVEZ SUAREZ,CLIENTE: JOSELIN CHAVEZ SUAREZ | TEL: 65029201 | Dir: COND CURUPAU 3 TORRE 1 DPTO 6A | ORO ORTOPEDICO+SOMIER ORO 180X190 3plz - Cambiar 6 patas disparejas del sómier + colchón undido (llevar comodín),,Completada,Sí,,,No,https://trello.com/c/OIMNEOdy\nATC,ATC LISTAS PARA DEVOLVER PROD,ATC PAOLA SILVANA GUZMAN (duplicado),,,Pendiente,No,,,No,https://trello.com/c/LLuGpnYn\nATC,POST VENT (COMERCIAL),ATC RUTH MONTECINOS,"CLIENTE: RUTH MONTECINOS | TEL: 541128328425 | VENDEDORA: MIRIAN | Dir: AV CRISTOBAL DE MENDOZA 246 COND LA CASONA PISO 6 DPTO 609 | Colchón muy undido + cama box con caja salida y patas con ruedas sueltas (sin garantía, cotizar trabajo)",,Pendiente,No,,,No,https://trello.com/c/HjYKHCiL`;
+function exportCSV() {
+  var blob = new Blob([CSV_DATA], {type:'text/csv;charset=utf-8;'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ATC_Semanal_20260522.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
