@@ -1,0 +1,31 @@
+name: Reporte Semanal ATC
+
+on:
+  schedule:
+    - cron: '0 14 * * 1'   # Cada lunes 10:00 AM Bolivia (UTC-4)
+  workflow_dispatch:         # Ejecución manual desde GitHub → Actions
+
+concurrency:
+  group: reporte-atc
+  cancel-in-progress: true
+
+jobs:
+  generar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Generar reporte-semanal-atc.html
+        env:
+          TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
+          TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
+        run: python3 generar_reporte_atc.py
+
+      - name: Publicar en main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 publish_atc.py
