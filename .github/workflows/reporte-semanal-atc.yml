@@ -24,8 +24,16 @@ jobs:
           TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
         run: python3 generar_reporte_atc.py
 
-      - name: Publicar en main
+      - name: Publicar HTML en main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
+          PUBLISH_FILE: reporte-semanal-atc.html
+        run: python3 publish_atc.py
+
+      - name: Publicar CSV en main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PUBLISH_FILE: atc-semanal.csv
         run: python3 publish_atc.py

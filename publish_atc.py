@@ -1,9 +1,10 @@
-"""publish_atc.py — commit reporte-semanal-atc.html via GitHub API"""
+"""publish_atc.py — commit a file to main via GitHub API.
+FILE env var overrides the default filename."""
 import os, base64, json, urllib.request, urllib.parse
 
 TOKEN = os.environ["GH_TOKEN"]
 REPO  = os.environ["GITHUB_REPOSITORY"]
-FILE  = "reporte-semanal-atc.html"
+FILE  = os.environ.get("PUBLISH_FILE", "reporte-semanal-atc.html")
 API   = f"https://api.github.com/repos/{REPO}/contents/{FILE}"
 
 with open(FILE, "rb") as f:

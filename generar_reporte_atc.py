@@ -357,4 +357,14 @@ function exportCSV() {{
 with open("reporte-semanal-atc.html", "w", encoding="utf-8") as f:
     f.write(HTML)
 
+import csv as _csv
+CSV_OUT = "atc-semanal.csv"
+with open(CSV_OUT, "w", newline="", encoding="utf-8-sig") as f:
+    fields = ["Tablero","Lista","Tarjeta","Descripcion","Vencimiento","Estado",
+              "Completada","Etiquetas","Asignado_a","Archivada","URL"]
+    w = _csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
+    w.writeheader()
+    w.writerows(rows)
+
 print(f"reporte-semanal-atc.html generado — {len(rows)} tarjetas")
+print(f"atc-semanal.csv generado — {len(rows)} filas")
