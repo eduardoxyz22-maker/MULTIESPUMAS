@@ -181,10 +181,9 @@ for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]
         leads_t = heaven_leads
         conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
     c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
-    display = nombre_t
     tiendas.append({
         'id': nombre_t.lower(),
-        'nombre': display,
+        'nombre': nombre_t,
         'monto': round(monto_t, 2),
         'metaMin': round(sf(gv(ds, r, 2)), 2),
         'presupuesto': round(sf(gv(ds, r, 4)), 2),
@@ -265,16 +264,16 @@ window.parseXlsxFile = async function(file) {
   var diasTot=new Date(anio,ahora.getMonth()+1,0).getDate();
   var dia=Math.min(ahora.getDate(),diasTot);
   var vends=[];
-  for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||(""+r[0]).toUpperCase().startsWith("TOTAL"))continue;
+  for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||("" +r[0]).toUpperCase().startsWith("TOTAL"))continue;
     var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
-    vends.push({id:(""+r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"HEAVEN",monto:m,
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"HEAVEN",monto:m,
       metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
       conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
       bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:null,nuevoRecord:false,
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
   for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
     var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
-    vends.push({id:(""+r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"SUE\xd1A",monto:m,
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"SUE\xd1A",monto:m,
       metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
       conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
       bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:null,nuevoRecord:false,
