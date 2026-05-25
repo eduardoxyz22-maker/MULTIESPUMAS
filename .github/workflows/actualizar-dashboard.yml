@@ -27,9 +27,17 @@ jobs:
       - name: Descargar Excel desde Google Drive
         run: |
           FILE_ID="11zVfvcNXa3v0bmOL5J4OWNHMcU7R-C56"
-          curl -L "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
+          curl -fL "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
                -o datos.xlsx
           ls -lh datos.xlsx
+          # Verificar que sea un .xlsx valido (firma ZIP "PK"), no una pagina de error HTML
+          if [ "$(head -c 2 datos.xlsx)" != "PK" ]; then
+            echo "ERROR: la descarga no es un .xlsx valido."
+            echo "Verifica que el archivo de Drive sea publico (cualquiera con el enlace puede ver)."
+            head -c 300 datos.xlsx
+            exit 1
+          fi
+          echo "Excel descargado y validado correctamente."
 
       - name: Generar dashboard-comercial.html
         run: python3 generar_dashboard.py
