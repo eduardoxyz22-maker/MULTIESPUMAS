@@ -14,11 +14,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generar dashboard
-        run: python3 generar.py
+      - name: Descargar Excel desde Google Drive
+        run: |
+          FILE_ID="11zVfvcNXa3v0bmOL5J4OWNHMcU7R-C56"
+          curl -L "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
+               -o datos.xlsx
+          ls -lh datos.xlsx
+
+      - name: Generar dashboard-comercial.html
+        run: python3 generar_dashboard.py
 
       - name: Publicar en main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python3 publish.py
+        run: python3 publish_comercial.py
