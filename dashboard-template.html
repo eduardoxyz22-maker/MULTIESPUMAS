@@ -709,7 +709,10 @@ th.num { text-align: right; }
 .num.good { color: var(--good); }
 .num.bad { color: var(--bad); }
 .rank { color: var(--muted); font-weight: 500; font-size: 11px; }
-.vend-cell { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+.vend-cell { font-weight: 500; white-space: nowrap; }
+.vend-cell > * { vertical-align: middle; }
+.vend-cell > * + * { margin-left: 8px; }
+.vend-cell .swatch { display: inline-block; }
 .vend-cell .tag {
   font-size: 10px; padding: 2px 6px; background: var(--bg-elev);
   border-radius: 3px; color: var(--ink-700); letter-spacing: 0.06em;
