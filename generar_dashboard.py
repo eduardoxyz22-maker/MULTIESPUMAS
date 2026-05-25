@@ -315,6 +315,7 @@ window.parseXlsxFile = async function(file) {
   function sh(n){var ws=wb.Sheets[n];return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:""}):null;}
   function sf(v){var n=parseFloat(v);return isNaN(n)?0:n;}
   function si(v){return Math.round(sf(v));}
+  function title(s){return (""+s).trim().toLowerCase().split(" ").map(function(w){return w?w.charAt(0).toUpperCase()+w.slice(1):w;}).join(" ");}
   function shFind(names){for(var k=0;k<names.length;k++){var r=sh(names[k]);if(r)return r;}
     var keys=Object.keys(wb.Sheets);for(var k=0;k<keys.length;k++){var kn=keys[k].toUpperCase().replace(/\xd1/g,"N");
       for(var j=0;j<names.length;j++){if(kn===names[j].toUpperCase().replace(/\xd1/g,"N"))return sh(keys[k]);}}
@@ -329,14 +330,14 @@ window.parseXlsxFile = async function(file) {
   var vends=[];
   for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||("" +r[0]).toUpperCase().startsWith("TOTAL"))continue;
     var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
-    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"HEAVEN",monto:m,
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"HEAVEN",monto:m,
       metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
       conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
       bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:null,nuevoRecord:false,
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
   for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
     var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
-    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"SUE\xd1A",monto:m,
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"SUE\xd1A",monto:m,
       metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
       conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
       bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:null,nuevoRecord:false,
