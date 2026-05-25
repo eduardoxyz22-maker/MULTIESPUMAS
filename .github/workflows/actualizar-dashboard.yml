@@ -14,6 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Obtener dashboard-template.html
+        run: |
+          if [ ! -f dashboard-template.html ]; then
+            git fetch origin claude/trello-board-cards-api-K5JwL
+            git checkout origin/claude/trello-board-cards-api-K5JwL -- dashboard-template.html
+            echo "Template obtenido desde rama de desarrollo"
+          else
+            echo "Template ya existe en main"
+          fi
+
       - name: Descargar Excel desde Google Drive
         run: |
           FILE_ID="11zVfvcNXa3v0bmOL5J4OWNHMcU7R-C56"
@@ -24,8 +34,14 @@ jobs:
       - name: Generar dashboard-comercial.html
         run: python3 generar_dashboard.py
 
-      - name: Publicar en main
+      - name: Publicar dashboard en main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python3 publish_comercial.py
+
+      - name: Publicar template en main (primera vez)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 publish_template.py

@@ -1,11 +1,5 @@
 #!/usr/bin/env python3
-"""
-Lee datos.xlsx (descargado desde Google Drive) y genera dashboard-comercial.html
-stdlib pura — sin dependencias externas.
-"""
-import zipfile, xml.etree.ElementTree as ET, datetime, re, sys
-
-# ── Utilidades Excel ───────────────────────────────────────────────────────────
+import zipfile, xml.etree.ElementTree as ET, re, sys, json, calendar, datetime
 
 def col_to_num(col_str):
     n = 0
@@ -28,8 +22,7 @@ def read_sheet(z, sheet_num, ss):
         for c in row.findall(f'{{{ns}}}c'):
             ref = c.get('r', '')
             m = re.match(r'([A-Z]+)', ref)
-            if not m:
-                continue
+            if not m: continue
             col_num = col_to_num(m.group(1))
             v = c.find(f'{{{ns}}}v')
             t = c.get('t', '')
@@ -50,265 +43,280 @@ def sf(s, d=0.0):
     try: return float(s)
     except: return d
 
-def fmt_m(v):
-    if v <= 0: return '$0'
-    return '$' + f'{int(v):,}'.replace(',', '.')
+def si(s, d=0):
+    try: return int(float(s))
+    except: return d
 
-# ── Leer datos ─────────────────────────────────────────────────────────────────
 print('Leyendo datos.xlsx...')
 try:
     with zipfile.ZipFile('datos.xlsx') as z:
         ss = get_shared_strings(z)
-
-        # HEAVEN: sheet6  — cols: 0=Nombre,1=Ventas,2=Productos,3=Monto,4=MetaMin,5=%Min,6=MetaPres,7=%Pres,8=Ticket,9=PromProds,10=VxDia,11=Leads
         hv = read_sheet(z, 6, ss)
-        heaven_rows = []
-        for row in [3, 4, 5, 6]:
-            nombre = gv(hv, row, 0).strip()
-            if not nombre or nombre.upper().startswith('TOTAL'):
-                continue
-            ventas = int(sf(gv(hv, row, 1)))
-            leads  = int(sf(gv(hv, row, 11)))
-            heaven_rows.append({
-                'nombre':    nombre,
-                'ventas':    ventas,
-                'productos': int(sf(gv(hv, row, 2))),
-                'monto':     sf(gv(hv, row, 3)),
-                'meta_min':  sf(gv(hv, row, 4)),
-                'pct_min':   sf(gv(hv, row, 5)),
-                'meta_pres': sf(gv(hv, row, 6)),
-                'pct_pres':  sf(gv(hv, row, 7)),
-                'ticket':    sf(gv(hv, row, 8)),
-                'leads':     leads,
-                'conv':      round(ventas / leads * 100) if leads > 0 else 0,
-            })
-        # fila de TOTAL Heaven
-        for row in [7, 8]:
-            if gv(hv, row, 0).upper().startswith('TOTAL'):
-                hv_tot = row; break
-        else:
-            hv_tot = None
-        heaven_total_ventas = int(sf(gv(hv, hv_tot, 1))) if hv_tot else sum(r['ventas'] for r in heaven_rows)
-        heaven_total_monto  = sf(gv(hv, hv_tot, 3))      if hv_tot else sum(r['monto']  for r in heaven_rows)
-        heaven_total_meta   = sf(gv(hv, hv_tot, 4))      if hv_tot else sum(r['meta_min'] for r in heaven_rows)
-        heaven_pct_min      = sf(gv(hv, hv_tot, 5))      if hv_tot else (heaven_total_monto / heaven_total_meta if heaven_total_meta else 0)
-
-        # SUEÑA: sheet5  — cols: 0=Nombre,1=Visitas,2=Ventas,3=Online,4=Prods,5=Monto,6=MetaMin,7=%Min,8=MetaPres,9=%Pres
         sv = read_sheet(z, 5, ss)
-        suena_rows = []
-        for row in [3, 4, 5]:
-            nombre = gv(sv, row, 0).strip()
-            if not nombre:
-                continue
-            ventas  = sf(gv(sv, row, 2))
-            online  = sf(gv(sv, row, 3))
-            monto   = sf(gv(sv, row, 5))
-            tot_v   = ventas + online
-            suena_rows.append({
-                'nombre':       nombre,
-                'visitas':      int(sf(gv(sv, row, 1))),
-                'ventas':       int(ventas),
-                'online':       int(online),
-                'ventas_total': int(tot_v),
-                'productos':    int(sf(gv(sv, row, 4))),
-                'monto':        monto,
-                'meta_min':     sf(gv(sv, row, 6)),
-                'pct_min':      sf(gv(sv, row, 7)),
-                'meta_pres':    sf(gv(sv, row, 8)),
-                'pct_pres':     sf(gv(sv, row, 9)),
-                'ticket':       monto / tot_v if tot_v > 0 else 0,
-            })
-        for row in [6, 7]:
-            if gv(sv, row, 0).upper().startswith('TOTAL'):
-                sv_tot = row; break
-        else:
-            sv_tot = None
-        suena_total_ventas = (int(sf(gv(sv, sv_tot, 2))) + int(sf(gv(sv, sv_tot, 3)))) if sv_tot else sum(r['ventas_total'] for r in suena_rows)
-        suena_total_monto  = sf(gv(sv, sv_tot, 5)) if sv_tot else sum(r['monto'] for r in suena_rows)
-        suena_total_meta   = sf(gv(sv, sv_tot, 6)) if sv_tot else sum(r['meta_min'] for r in suena_rows)
-        suena_pct_min      = sf(gv(sv, sv_tot, 7)) if sv_tot else (suena_total_monto / suena_total_meta if suena_total_meta else 0)
-
+        mg = read_sheet(z, 4, ss)
+        ds = read_sheet(z, 3, ss)
 except FileNotFoundError:
-    print('ERROR: datos.xlsx no encontrado. Ejecutar el workflow que lo descarga de Google Drive.', file=sys.stderr)
+    print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
     sys.exit(1)
-
-# ── KPIs globales ──────────────────────────────────────────────────────────────
-gran_total_monto  = heaven_total_monto + suena_total_monto
-gran_total_ventas = heaven_total_ventas + suena_total_ventas
-gran_total_meta   = heaven_total_meta + suena_total_meta
-gran_pct          = gran_total_monto / gran_total_meta if gran_total_meta else 0
 
 now = datetime.datetime.now()
 mes_map = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
            7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
-mes_label = mes_map[now.month] + ' ' + str(now.year)
-fecha_gen = now.strftime('%d/%m/%Y %H:%M')
+mes = mes_map[now.month]
+anio = now.year
+diasTot = calendar.monthrange(anio, now.month)[1]
+dia_actual = min(now.day, diasTot)
 
-# ── Helpers HTML ───────────────────────────────────────────────────────────────
-def bar_color(pct):
-    return '#00B5AD' if pct >= 1.0 else ('#D97706' if pct >= 0.7 else '#CE2939')
+crec_lookup = {}
+for r in list(range(53, 57)) + list(range(60, 65)):
+    nombre_raw = gv(mg, r, 0).strip()
+    crec_val = gv(mg, r, 4)
+    if nombre_raw and crec_val != '':
+        crec_lookup[nombre_raw.lower()] = sf(crec_val)
 
-def badge_cls(pct):
-    return 'b-teal' if pct >= 1.0 else ('b-amber' if pct >= 0.7 else 'b-red')
+record_lookup = {}
+for r in range(70, 80):
+    nombre_raw = gv(mg, r, 1).strip()
+    record_val = gv(mg, r, 5).strip()
+    if nombre_raw:
+        record_lookup[nombre_raw.lower()] = bool(record_val)
 
-def card_heaven(v):
-    pct  = v['pct_min']
-    bc   = bar_color(pct)
-    bw   = round(min(pct, 1.5) / 1.5 * 100)
-    pstr = f"{round(pct*100)}%"
-    return f'''<div class="vc">
-      <div class="vc-head">
-        <div><div class="vc-name">{v['nombre']}</div><span class="badge {badge_cls(pct)}">{pstr} meta mín.</span></div>
-        <div style="text-align:right"><div class="vc-monto">{fmt_m(v['monto'])}</div><div class="vc-monto-lbl">vendido</div></div>
-      </div>
-      <div class="vc-kpis">
-        <div class="vk"><div class="vk-val">{v['ventas']}</div><div class="vk-lbl">Ventas</div></div>
-        <div class="vk"><div class="vk-val">{fmt_m(v['ticket'])}</div><div class="vk-lbl">Ticket Prom.</div></div>
-        <div class="vk"><div class="vk-val">{v['conv']}%</div><div class="vk-lbl">Conversión</div></div>
-      </div>
-      <div class="vc-bar-wrap">
-        <div class="bar-lbl"><span>Meta mín: {fmt_m(v['meta_min'])}</span><span style="color:{bc};font-weight:800">{pstr}</span></div>
-        <div class="bar-bg"><div class="bar-fg" style="width:{bw}%;background:{bc}"></div></div>
-        <div class="bar-lbl" style="margin-top:4px"><span>Meta pres: {fmt_m(v['meta_pres'])}</span><span>{round(v['pct_pres']*100)}%</span></div>
-      </div>
-    </div>'''
+vendedores = []
 
-def card_suena(v):
-    pct  = v['pct_min']
-    bc   = bar_color(pct)
-    bw   = round(min(pct, 1.5) / 1.5 * 100)
-    pstr = f"{round(pct*100)}%"
-    return f'''<div class="vc">
-      <div class="vc-head">
-        <div><div class="vc-name">{v['nombre']}</div><span class="badge {badge_cls(pct)}">{pstr} meta mín.</span></div>
-        <div style="text-align:right"><div class="vc-monto">{fmt_m(v['monto'])}</div><div class="vc-monto-lbl">vendido</div></div>
-      </div>
-      <div class="vc-kpis">
-        <div class="vk"><div class="vk-val">{v['ventas_total']}</div><div class="vk-lbl">Ventas</div><div class="vk-hint">{v['online']} online</div></div>
-        <div class="vk"><div class="vk-val">{fmt_m(v['ticket'])}</div><div class="vk-lbl">Ticket Prom.</div></div>
-        <div class="vk"><div class="vk-val">{v['visitas']}</div><div class="vk-lbl">Visitas</div></div>
-      </div>
-      <div class="vc-bar-wrap">
-        <div class="bar-lbl"><span>Meta mín: {fmt_m(v['meta_min'])}</span><span style="color:{bc};font-weight:800">{pstr}</span></div>
-        <div class="bar-bg"><div class="bar-fg" style="width:{bw}%;background:{bc}"></div></div>
-        <div class="bar-lbl" style="margin-top:4px"><span>Meta pres: {fmt_m(v['meta_pres'])}</span><span>{round(v['pct_pres']*100)}%</span></div>
-      </div>
-    </div>'''
+for row in [3, 4, 5, 6]:
+    nombre = gv(hv, row, 0).strip()
+    if not nombre or nombre.upper().startswith('TOTAL'): continue
+    ventas = si(gv(hv, row, 1))
+    productos = si(gv(hv, row, 2))
+    monto = sf(gv(hv, row, 3))
+    leads = si(gv(hv, row, 11))
+    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
+    nombre_key = nombre.lower()
+    vendedores.append({
+        'id': nombre_key.replace(' ', '_'),
+        'nombre': nombre.title(),
+        'tienda': 'HEAVEN',
+        'monto': round(monto, 2),
+        'metaMin': round(sf(gv(hv, row, 4)), 2),
+        'presupuesto': round(sf(gv(hv, row, 6)), 2),
+        'ticketProm': round(sf(gv(hv, row, 8)), 2),
+        'leads': leads,
+        'ventasConcretadas': ventas,
+        'productos': productos,
+        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
+        'pctMin': round(sf(gv(hv, row, 5)), 6),
+        'pctPres': round(sf(gv(hv, row, 7)), 6),
+        'pctTotal': 0,
+        'comision': round(sf(gv(hv, row, 12)), 4),
+        'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
+        'pctComision': round(sf(gv(hv, row, 13)), 6),
+        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'nuevoRecord': record_lookup.get(nombre_key, False),
+        'ritmoDiario': round(ritmoDiario, 4),
+        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
+        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
+        'prodPorVenta': round(sf(gv(hv, row, 9)), 4),
+    })
 
-def store_bar(pct, total_monto, total_meta):
-    bc = bar_color(pct)
-    bw = round(min(pct, 1.5) / 1.5 * 100)
-    return f'''<div class="summary-bar">
-    <div class="bar-lbl"><span>Meta mínima: {fmt_m(total_meta)}</span><span style="color:{bc};font-weight:800">{round(pct*100)}% cumplido</span></div>
-    <div class="bar-bg"><div class="bar-fg" style="width:{bw}%;background:{bc}"></div></div>
-  </div>'''
+for row in [3, 4, 5]:
+    nombre = gv(sv, row, 0).strip()
+    if not nombre: continue
+    ventas = si(gv(sv, row, 2))
+    monto = sf(gv(sv, row, 5))
+    leads = si(gv(sv, row, 13))
+    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
+    nombre_key = nombre.lower()
+    vendedores.append({
+        'id': nombre_key.replace(' ', '_'),
+        'nombre': nombre.title(),
+        'tienda': 'SUENA',
+        'monto': round(monto, 2),
+        'metaMin': round(sf(gv(sv, row, 6)), 2),
+        'presupuesto': round(sf(gv(sv, row, 8)), 2),
+        'ticketProm': round(sf(gv(sv, row, 10)), 2),
+        'leads': leads,
+        'ventasConcretadas': ventas,
+        'productos': si(gv(sv, row, 4)),
+        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
+        'pctMin': round(sf(gv(sv, row, 7)), 6),
+        'pctPres': round(sf(gv(sv, row, 9)), 6),
+        'pctTotal': 0,
+        'comision': round(sf(gv(sv, row, 14)), 4),
+        'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
+        'pctComision': round(sf(gv(sv, row, 15)), 6),
+        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'nuevoRecord': record_lookup.get(nombre_key, False),
+        'ritmoDiario': round(ritmoDiario, 4),
+        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
+        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
+        'prodPorVenta': round(sf(gv(sv, row, 11)), 4),
+    })
 
-hv_cards = '\n'.join(card_heaven(v) for v in heaven_rows)
-sv_cards = '\n'.join(card_suena(v) for v in suena_rows)
-mc_cumpl_cls = 'c-teal' if gran_pct >= 1.0 else 'c-red'
+tot_vend = sum(v['monto'] for v in vendedores)
+for v in vendedores:
+    v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
 
-HTML = f'''<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Dashboard Comercial — {mes_label}</title>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-*{{box-sizing:border-box;margin:0;padding:0}}
-:root{{--teal:#00B5AD;--teal-dk:#008F88;--teal-lt:#E6F7F6;--gray:#808080;--gray-lt:#F5F6F7;--gray-md:#E2E2E2;--red:#CE2939;--red-lt:#FDEAEC;--amber:#D97706;--amber-lt:#FEF3E2;--black:#1A1A1A;--white:#FFFFFF;--text:#2D2D2D;--muted:#6B6B6B}}
-body{{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}}
-.header{{background:var(--teal);padding:0 36px;display:flex;justify-content:space-between;align-items:stretch;box-shadow:0 3px 16px rgba(0,181,173,.35)}}
-.hl{{display:flex;align-items:center;padding:16px 0}}
-.logo{{border-right:1px solid rgba(255,255,255,.3);padding-right:24px;margin-right:24px}}
-.logo-h{{font-size:1.75rem;font-weight:800;color:#fff;letter-spacing:.14em;line-height:1}}
-.logo-s{{font-size:.68rem;color:rgba(255,255,255,.8);letter-spacing:.04em;margin-top:1px}}
-.htitle h1{{font-size:.98rem;font-weight:600;color:#fff}}
-.htitle p{{font-size:.7rem;color:rgba(255,255,255,.7);margin-top:3px}}
-.hr{{display:flex;align-items:center;padding:16px 0;border-left:1px solid rgba(255,255,255,.25);margin-left:auto}}
-.hstat{{text-align:center;padding:0 24px;border-right:1px solid rgba(255,255,255,.2)}}
-.hstat:last-child{{border-right:none}}
-.hstat-v{{font-size:1.5rem;font-weight:800;color:#fff;line-height:1}}
-.hstat-l{{font-size:.62rem;color:rgba(255,255,255,.7);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}}
-.container{{padding:26px 36px;max-width:1400px;margin:0 auto}}
-.metrics{{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}}
-.mc{{background:#fff;border-radius:12px;padding:20px 22px;border:1px solid var(--gray-md);position:relative;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}}
-.mc-bar{{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}}
-.mc.c-teal .mc-bar{{background:var(--teal)}}.mc.c-gray .mc-bar{{background:var(--gray)}}.mc.c-amber .mc-bar{{background:var(--amber)}}.mc.c-red .mc-bar{{background:var(--red)}}
-.mc-lbl{{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}}
-.mc-val{{font-size:2rem;font-weight:800;line-height:1}}
-.mc.c-teal .mc-val{{color:var(--teal)}}.mc.c-gray .mc-val{{color:var(--gray)}}.mc.c-amber .mc-val{{color:var(--amber)}}.mc.c-red .mc-val{{color:var(--red)}}
-.mc-sub{{font-size:.68rem;color:var(--muted);margin-top:5px}}
-.sec{{font-size:.68rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:10px}}
-.sec::after{{content:'';flex:1;height:1px;background:var(--gray-md)}}
-.summary-bar{{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:14px 20px;margin-bottom:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}}
-.bar-lbl{{display:flex;justify-content:space-between;margin-bottom:5px;font-size:.7rem;font-weight:600;color:var(--muted)}}
-.bar-bg{{height:10px;background:var(--gray-lt);border-radius:5px;overflow:hidden}}
-.bar-fg{{height:100%;border-radius:5px}}
-.vg{{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:26px}}
-.vc{{background:#fff;border:1px solid var(--gray-md);border-radius:12px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}}
-.vc-head{{background:var(--black);padding:13px 18px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--teal)}}
-.vc-name{{font-size:.9rem;font-weight:700;color:#fff}}
-.vc-monto{{font-size:1.4rem;font-weight:800;color:var(--teal);line-height:1}}
-.vc-monto-lbl{{font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;text-align:right}}
-.vc-kpis{{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:1px solid var(--gray-lt)}}
-.vk{{padding:10px 8px;text-align:center;border-right:1px solid var(--gray-lt)}}
-.vk:last-child{{border-right:none}}
-.vk-val{{font-size:1.05rem;font-weight:800;color:var(--black);line-height:1}}
-.vk-lbl{{font-size:.58rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}}
-.vk-hint{{font-size:.57rem;color:var(--muted);margin-top:1px}}
-.vc-bar-wrap{{padding:12px 16px}}
-.badge{{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.66rem;font-weight:700;margin-top:4px}}
-.b-teal{{background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9}}
-.b-amber{{background:var(--amber-lt);color:var(--amber);border:1px solid #FCD34D}}
-.b-red{{background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5}}
-.footer{{text-align:center;padding:18px;font-size:.68rem;color:var(--muted);border-top:1px solid var(--gray-md);background:#fff;margin-top:28px}}
-@media(max-width:768px){{.metrics{{grid-template-columns:repeat(2,1fr)}}.hr{{display:none}}}}
-</style>
-</head>
-<body>
-<div class="header">
-  <div class="hl">
-    <div class="logo"><div class="logo-h">HEAVEN</div><div class="logo-s">colchones &#10011;</div></div>
-    <div class="htitle">
-      <h1>Dashboard Comercial &mdash; {mes_label}</h1>
-      <p>Generado: {fecha_gen} &nbsp;&bull;&nbsp; Datos desde Excel (Google Drive)</p>
-    </div>
-  </div>
-  <div class="hr">
-    <div class="hstat"><div class="hstat-v">{gran_total_ventas}</div><div class="hstat-l">Ventas totales</div></div>
-    <div class="hstat"><div class="hstat-v">{fmt_m(gran_total_monto)}</div><div class="hstat-l">Monto total</div></div>
-    <div class="hstat"><div class="hstat-v">{round(gran_pct*100)}%</div><div class="hstat-l">Cumpl. meta mín.</div></div>
-  </div>
-</div>
-<div class="container">
-  <div class="metrics">
-    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Monto Total Vendido</div><div class="mc-val">{fmt_m(gran_total_monto)}</div><div class="mc-sub">Heaven + Sueña</div></div>
-    <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Ventas Concretadas</div><div class="mc-val">{gran_total_ventas}</div><div class="mc-sub">ambas tiendas</div></div>
-    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Meta Mínima Total</div><div class="mc-val">{fmt_m(gran_total_meta)}</div><div class="mc-sub">combinada</div></div>
-    <div class="mc {mc_cumpl_cls}"><div class="mc-bar"></div><div class="mc-lbl">Cumplimiento</div><div class="mc-val">{round(gran_pct*100)}%</div><div class="mc-sub">vs meta mínima</div></div>
-  </div>
+comm = {
+    'SUENA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
+              'totalPagado': sf(gv(ds, 27, 3)), 'comisionados': si(gv(ds, 27, 4))},
+    'HEAVEN': {'comisiones': sf(gv(ds, 28, 1)), 'bonos': sf(gv(ds, 28, 2)),
+               'totalPagado': sf(gv(ds, 28, 3)), 'comisionados': si(gv(ds, 28, 4))},
+}
+suena_leads = si(gv(sv, 6, 13))
+suena_ventas = si(gv(sv, 6, 2)) + si(gv(sv, 6, 3))
+heaven_leads = si(gv(hv, 7, 11))
+heaven_ventas = si(gv(hv, 7, 1))
 
-  <div class="sec">Tienda Heaven &mdash; {fmt_m(heaven_total_monto)} vendido &bull; {heaven_total_ventas} ventas</div>
-  {store_bar(heaven_pct_min, heaven_total_monto, heaven_total_meta)}
-  <div class="vg">
-    {hv_cards}
-  </div>
+tiendas = []
+for r, nombre_t in [(19, 'SUENA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
+    monto_t = sf(gv(ds, r, 1))
+    diferencia = sf(gv(ds, r, 9))
+    mes_pasado = round(monto_t - diferencia, 2) if diferencia != 0 else None
+    leads_t = None
+    conv_t = None
+    if nombre_t == 'SUENA':
+        leads_t = suena_leads
+        conv_t = round(suena_ventas / suena_leads, 6) if suena_leads > 0 else None
+    elif nombre_t == 'HEAVEN':
+        leads_t = heaven_leads
+        conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
+    c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
+    display = 'SUENA' if nombre_t == 'SUENA' else nombre_t
+    tiendas.append({
+        'id': nombre_t.lower(),
+        'nombre': display,
+        'monto': round(monto_t, 2),
+        'metaMin': round(sf(gv(ds, r, 2)), 2),
+        'presupuesto': round(sf(gv(ds, r, 4)), 2),
+        'pctMin': round(sf(gv(ds, r, 3)), 6),
+        'pctPres': round(sf(gv(ds, r, 5)), 6),
+        'leads': leads_t,
+        'conversion': conv_t,
+        'comisiones': round(c['comisiones'], 4),
+        'bonos': round(c['bonos'], 4),
+        'totalPagado': round(c['totalPagado'], 4),
+        'comisionados': c['comisionados'],
+        'crecimientoVsAbril': round(diferencia / mes_pasado, 6) if mes_pasado else None,
+        'mesPasadoMonto': mes_pasado,
+    })
 
-  <div class="sec">Tienda Sueña &mdash; {fmt_m(suena_total_monto)} vendido &bull; {suena_total_ventas} ventas</div>
-  {store_bar(suena_pct_min, suena_total_monto, suena_total_meta)}
-  <div class="vg">
-    {sv_cards}
-  </div>
-</div>
-<div class="footer">HEAVEN Colchones &bull; Dashboard Comercial {mes_label} &bull; datos Google Drive &bull; {fecha_gen}</div>
-</body>
-</html>'''
+global_data = {
+    'leadsTotal': si(gv(ds, 27, 10)),
+    'ventasConcretadas': si(gv(ds, 28, 10)),
+    'conversionGlobal': round(sf(gv(ds, 29, 10)), 8),
+    'ticketPromGlobal': round(sf(gv(ds, 30, 10)), 2),
+    'productosVendidos': si(gv(ds, 31, 10)),
+}
+
+clientes = []
+for r in range(29, 38):
+    nombre_c = gv(mg, r, 0).strip()
+    if nombre_c and nombre_c.upper() != 'TOTAL':
+        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, r, 2)), 'monto': round(sf(gv(mg, r, 3)), 2)})
+
+data = {
+    'periodo': {'mes': mes, 'anio': anio, 'diasTotales': diasTot},
+    'vendedores': vendedores,
+    'tiendas': tiendas,
+    'global': global_data,
+    'clientes': clientes,
+}
+
+print('Leyendo dashboard-template.html...')
+try:
+    with open('dashboard-template.html', 'r', encoding='utf-8') as f:
+        html = f.read()
+except FileNotFoundError:
+    print('ERROR: dashboard-template.html no encontrado.', file=sys.stderr)
+    sys.exit(1)
+
+data_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+html = html.replace(
+    '<script>window.__resources = {};</script>',
+    '<script>window.__resources = {};</script>\n  <script>window.__DATA__ = ' + data_json + ';</script>'
+)
+
+CDN_REACT    = 'https://unpkg.com/react@18/umd/react.production.min.js'
+CDN_REACTDOM = 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'
+CDN_BABEL    = 'https://unpkg.com/@babel/standalone/babel.min.js'
+CDN_XLSX     = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+
+blob_map = {
+    'blob:https://eduardoxyz22-maker.github.io/74e3f041-15e9-4c0c-b45a-f79ff8e00abc': CDN_REACT,
+    'blob:https://eduardoxyz22-maker.github.io/beb4c7e9-0eca-4dbd-8d28-313b39065fef': CDN_REACTDOM,
+    'blob:https://eduardoxyz22-maker.github.io/665418e3-42cc-4466-82fa-a60648dad3e7': CDN_BABEL,
+    'blob:https://eduardoxyz22-maker.github.io/173704d7-2551-49a7-a5b8-0b23512e0f10': CDN_XLSX,
+}
+for blob_url, cdn_url in blob_map.items():
+    html = html.replace(f'src="{blob_url}"', f'src="{cdn_url}"')
+
+PARSE_INLINE = '''<script>
+window.parseXlsxFile = async function(file) {
+  var buf = await file.arrayBuffer();
+  var wb = XLSX.read(buf, {type:"array"});
+  function sh(n){var ws=wb.Sheets[n];return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:""}):null;}
+  function sf(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+  function si(v){return Math.round(sf(v));}
+  var hv=sh("HEAVEN"),sv=sh("SUENA")||sh("Sue\xf1a"),mg=sh("MAYO GLOBAL"),ds=sh("Dashboard");
+  if(!hv||!sv||!mg||!ds) throw new Error("Hojas no encontradas. Verifica que el Excel tenga: HEAVEN, SUENA, MAYO GLOBAL, Dashboard.");
+  var ahora=new Date();
+  var meses=["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var mes=meses[ahora.getMonth()+1],anio=ahora.getFullYear();
+  var diasTot=new Date(anio,ahora.getMonth()+1,0).getDate();
+  var dia=Math.min(ahora.getDate(),diasTot);
+  var vends=[];
+  for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||("" +r[0]).toUpperCase().startsWith("TOTAL"))continue;
+    var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"HEAVEN",monto:m,
+      metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
+      conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
+      bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:null,nuevoRecord:false,
+      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
+  for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
+    var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
+    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"SUE\xd1A",monto:m,
+      metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
+      conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
+      bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:null,nuevoRecord:false,
+      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[11])});}
+  var tot=vends.reduce(function(s,v){return s+v.monto;},0);
+  vends.forEach(function(v){v.pctTotal=tot?v.monto/tot:0;});
+  var tiendas=[];var tn=["SUE\xd1A","HEAVEN","OTROS","ROHO"];
+  for(var ti=0;ti<4;ti++){var r=ds[18+ti];if(!r)continue;
+    var mn=sf(r[1]),dif=sf(r[9]||0),mp=dif?mn-dif:null;
+    var l=ti===0?si((sv[5]||[])[13]):ti===1?si((hv[6]||[])[11]):null;
+    tiendas.push({id:tn[ti].toLowerCase().replace("\xf1","n"),nombre:tn[ti],monto:mn,metaMin:sf(r[2]),
+      presupuesto:sf(r[4]),pctMin:sf(r[3]),pctPres:sf(r[5]),leads:l,conversion:null,
+      comisiones:0,bonos:0,totalPagado:0,comisionados:0,
+      crecimientoVsAbril:mp?dif/mp:null,mesPasadoMonto:mp});}
+  if(ds[26]){tiendas[0].comisiones=sf(ds[26][1]);tiendas[0].bonos=sf(ds[26][2]);tiendas[0].totalPagado=sf(ds[26][3]);tiendas[0].comisionados=si(ds[26][4]);}
+  if(ds[27]){tiendas[1].comisiones=sf(ds[27][1]);tiendas[1].bonos=sf(ds[27][2]);tiendas[1].totalPagado=sf(ds[27][3]);tiendas[1].comisionados=si(ds[27][4]);}
+  var g={leadsTotal:si((ds[26]||[])[10]),ventasConcretadas:si((ds[27]||[])[10]),
+    conversionGlobal:sf((ds[28]||[])[10]),ticketPromGlobal:sf((ds[29]||[])[10]),
+    productosVendidos:si((ds[30]||[])[10])};
+  var cli=[];
+  for(var i=28;i<=36;i++){var r=mg[i];if(r&&r[0]&&(""+r[0]).toUpperCase()!=="TOTAL")cli.push({nombre:""+r[0],productos:si(r[2]),monto:sf(r[3])});}
+  return {periodo:{mes:mes,anio:anio,diasTotales:diasTot},vendedores:vends,tiendas:tiendas,global:g,clientes:cli};
+};
+</script>'''
+
+html = html.replace(
+    '  <script src="blob:https://eduardoxyz22-maker.github.io/1e6e7d73-36a9-4931-bc01-cada16e587e4"></script>',
+    '  ' + PARSE_INLINE
+)
+
+html = html.replace(
+    'ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));\n//# sourceMappingURL',
+    '// Rendering handled by Babel JSX scripts in body\n//# sourceMappingURL'
+)
+
+html = html.replace('Dashboard Comercial \xb7 Mayo 2025', f'Dashboard Comercial \xb7 {mes} {anio}')
+html = re.sub(r'ltima actualizaci\xf3n:.*?</span>',
+              f'ltima actualizaci\xf3n: {now.strftime("%d/%m/%Y %H:%M")}</span>', html)
 
 with open('dashboard-comercial.html', 'w', encoding='utf-8') as f:
-    f.write(HTML)
+    f.write(html)
 
-print(f'dashboard-comercial.html generado.')
-print(f'Heaven: {heaven_total_ventas} ventas | {fmt_m(heaven_total_monto)} | {round(heaven_pct_min*100)}% meta mín.')
-print(f'Sueña:  {suena_total_ventas} ventas | {fmt_m(suena_total_monto)} | {round(suena_pct_min*100)}% meta mín.')
-print(f'Total:  {gran_total_ventas} ventas | {fmt_m(gran_total_monto)} | {round(gran_pct*100)}% meta mín.')
+print(f'dashboard-comercial.html generado — {mes} {anio}')
+print(f'Vendedores: {len(vendedores)} | Tiendas: {len(tiendas)} | Clientes: {len(clientes)}')
+print(f'Total global: Bs {sum(t["monto"] for t in tiendas):,.0f}')
