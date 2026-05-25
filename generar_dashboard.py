@@ -12,6 +12,61 @@ def get_shared_strings(z):
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
     return [''.join(t.text or '' for t in si.iter(f'{{{ns}}}t')) for si in root]
 
+def build_sheet_map(z):
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    rns = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
+    pns = 'http://schemas.openxmlformats.org/package/2006/relationships'
+    wb = ET.fromstring(z.read('xl/workbook.xml'))
+    rels = ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
+    rid_to_target = {rel.get('Id'): rel.get('Target') for rel in rels.findall(f'{{{pns}}}Relationship')}
+    name_to_file = {}
+    for sheet in wb.findall(f'.//{{{ns}}}sheet'):
+        name = sheet.get('name')
+        rid = sheet.get(f'{{{rns}}}id')
+        target = rid_to_target.get(rid, '')
+        if target:
+            name_to_file[name] = target.split('/')[-1]
+    return name_to_file
+
+def find_sheet_file(name_map, *candidates):
+    def norm(s):
+        return s.upper().replace('Ñ', 'N').strip()
+    for c in candidates:
+        if c in name_map:
+            return name_map[c]
+    targets = {norm(c) for c in candidates}
+    for name, fil in name_map.items():
+        if norm(name) in targets:
+            return fil
+    return None
+
+def read_sheet_by_name(z, name_map, ss, *candidates):
+    fil = find_sheet_file(name_map, *candidates)
+    if not fil:
+        raise KeyError(f'Hoja no encontrada: {candidates}')
+    root = ET.fromstring(z.read(f'xl/worksheets/{fil}'))
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    data = {}
+    for row in root.findall(f'.//{{{ns}}}row'):
+        r_num = int(row.get('r', 0))
+        data[r_num] = {}
+        for c in row.findall(f'{{{ns}}}c'):
+            ref = c.get('r', '')
+            m = re.match(r'([A-Z]+)', ref)
+            if not m: continue
+            col_num = col_to_num(m.group(1))
+            v = c.find(f'{{{ns}}}v')
+            t = c.get('t', '')
+            val = ''
+            if v is not None and v.text is not None:
+                if t == 's':
+                    idx = int(v.text)
+                    val = ss[idx] if idx < len(ss) else v.text
+                else:
+                    val = v.text
+            data[r_num][col_num] = val
+    return data
+
 def read_sheet(z, sheet_num, ss):
     root = ET.fromstring(z.read(f'xl/worksheets/sheet{sheet_num}.xml'))
     ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
@@ -51,12 +106,16 @@ print('Leyendo datos.xlsx...')
 try:
     with zipfile.ZipFile('datos.xlsx') as z:
         ss = get_shared_strings(z)
-        hv = read_sheet(z, 6, ss)
-        sv = read_sheet(z, 5, ss)
-        mg = read_sheet(z, 4, ss)
-        ds = read_sheet(z, 3, ss)
+        name_map = build_sheet_map(z)
+        hv = read_sheet_by_name(z, name_map, ss, 'HEAVEN')
+        sv = read_sheet_by_name(z, name_map, ss, 'SUEÑA', 'SUENA', 'Sueña')
+        mg = read_sheet_by_name(z, name_map, ss, 'MAYO GLOBAL')
+        ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD')
 except FileNotFoundError:
     print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
+    sys.exit(1)
+except KeyError as e:
+    print(f'ERROR: hoja faltante en el Excel: {e}', file=sys.stderr)
     sys.exit(1)
 
 now = datetime.datetime.now()
@@ -256,8 +315,12 @@ window.parseXlsxFile = async function(file) {
   function sh(n){var ws=wb.Sheets[n];return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:""}):null;}
   function sf(v){var n=parseFloat(v);return isNaN(n)?0:n;}
   function si(v){return Math.round(sf(v));}
-  var hv=sh("HEAVEN"),sv=sh("SUENA")||sh("Sue\xf1a"),mg=sh("MAYO GLOBAL"),ds=sh("Dashboard");
-  if(!hv||!sv||!mg||!ds) throw new Error("Hojas no encontradas. Verifica que el Excel tenga: HEAVEN, SUENA, MAYO GLOBAL, Dashboard.");
+  function shFind(names){for(var k=0;k<names.length;k++){var r=sh(names[k]);if(r)return r;}
+    var keys=Object.keys(wb.Sheets);for(var k=0;k<keys.length;k++){var kn=keys[k].toUpperCase().replace(/\xd1/g,"N");
+      for(var j=0;j<names.length;j++){if(kn===names[j].toUpperCase().replace(/\xd1/g,"N"))return sh(keys[k]);}}
+    return null;}
+  var hv=shFind(["HEAVEN"]),sv=shFind(["SUE\xd1A","SUENA","Sue\xf1a"]),mg=shFind(["MAYO GLOBAL"]),ds=shFind(["Dashboard"]);
+  if(!hv||!sv||!mg||!ds) throw new Error("Hojas no encontradas. Verifica que el Excel tenga: HEAVEN, SUE\xd1A, MAYO GLOBAL, Dashboard.");
   var ahora=new Date();
   var meses=["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
   var mes=meses[ahora.getMonth()+1],anio=ahora.getFullYear();
