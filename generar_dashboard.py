@@ -327,20 +327,28 @@ window.parseXlsxFile = async function(file) {
   var mes=meses[ahora.getMonth()+1],anio=ahora.getFullYear();
   var diasTot=new Date(anio,ahora.getMonth()+1,0).getDate();
   var dia=Math.min(ahora.getDate(),diasTot);
+  var crecLookup={};
+  function addCrec(a,b){for(var i=a;i<=b;i++){var r=mg[i];if(r&&(""+(r[0]||"")).trim()&&(""+(r[4]||""))!==""){crecLookup[(""+r[0]).trim().toLowerCase()]=sf(r[4]);}}}
+  addCrec(52,55);addCrec(59,63);
+  var recordLookup={};
+  for(var ri=69;ri<=78;ri++){var rr=mg[ri];if(rr&&(""+(rr[1]||"")).trim()){recordLookup[(""+rr[1]).trim().toLowerCase()]=!!(""+(rr[5]||"")).trim();}}
+  function nk(x){return (""+x).trim().toLowerCase();}
   var vends=[];
   for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||("" +r[0]).toUpperCase().startsWith("TOTAL"))continue;
     var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
+    var hk=nk(r[0]);
     vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"HEAVEN",monto:m,
       metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
       conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
-      bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:null,nuevoRecord:false,
+      bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:(hk in crecLookup)?crecLookup[hk]:null,nuevoRecord:!!recordLookup[hk],
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
   for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
     var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
+    var sk=nk(r[0]);
     vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"SUE\xd1A",monto:m,
       metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
       conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
-      bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:null,nuevoRecord:false,
+      bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:(sk in crecLookup)?crecLookup[sk]:null,nuevoRecord:!!recordLookup[sk],
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[11])});}
   var tot=vends.reduce(function(s,v){return s+v.monto;},0);
   vends.forEach(function(v){v.pctTotal=tot?v.monto/tot:0;});
