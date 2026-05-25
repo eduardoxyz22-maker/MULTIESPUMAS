@@ -1,426 +1,322 @@
-"""
-Regenera dashboard-comercial.html desde datos.xlsx (descargado de Google Drive).
-Llamado por .github/workflows/actualizar-dashboard.yml
-"""
-import sys, re, json, base64, gzip, io, math, warnings
-warnings.filterwarnings("ignore")
+#!/usr/bin/env python3
+import zipfile, xml.etree.ElementTree as ET, re, sys, json, calendar, datetime
 
-XLSX = "datos.xlsx"
-HTML = "dashboard-comercial.html"
+def col_to_num(col_str):
+    n = 0
+    for c in col_str.upper():
+        n = n * 26 + (ord(c) - ord('A') + 1)
+    return n - 1
 
-# ── helpers bundler ──────────────────────────────────────────────────────────
+def get_shared_strings(z):
+    root = ET.fromstring(z.read('xl/sharedStrings.xml'))
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    return [''.join(t.text or '' for t in si.iter(f'{{{ns}}}t')) for si in root]
 
-def decompress(entry):
-    raw = base64.b64decode(entry["data"])
-    if entry.get("compressed"):
-        raw = gzip.decompress(raw)
-    return raw.decode("utf-8")
+def read_sheet(z, sheet_num, ss):
+    root = ET.fromstring(z.read(f'xl/worksheets/sheet{sheet_num}.xml'))
+    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
+    data = {}
+    for row in root.findall(f'.//{{{ns}}}row'):
+        r_num = int(row.get('r', 0))
+        data[r_num] = {}
+        for c in row.findall(f'{{{ns}}}c'):
+            ref = c.get('r', '')
+            m = re.match(r'([A-Z]+)', ref)
+            if not m: continue
+            col_num = col_to_num(m.group(1))
+            v = c.find(f'{{{ns}}}v')
+            t = c.get('t', '')
+            val = ''
+            if v is not None and v.text is not None:
+                if t == 's':
+                    idx = int(v.text)
+                    val = ss[idx] if idx < len(ss) else v.text
+                else:
+                    val = v.text
+            data[r_num][col_num] = val
+    return data
 
-def compress_encode(text):
-    raw = text.encode("utf-8")
-    buf = io.BytesIO()
-    with gzip.GzipFile(fileobj=buf, mode="wb", mtime=0) as gz:
-        gz.write(raw)
-    return base64.b64encode(buf.getvalue()).decode("ascii")
+def gv(data, row, col, default=''):
+    return data.get(row, {}).get(col, default)
 
-def safe(v, default=0):
-    if v is None:
-        return default
-    if isinstance(v, float) and math.isnan(v):
-        return default
-    if isinstance(v, str):
-        try:
-            return float(v)
-        except ValueError:
-            return default
-    return v
+def sf(s, d=0.0):
+    try: return float(s)
+    except: return d
 
-def pct(a, b):
-    a, b = safe(a), safe(b)
-    return a / b if b else 0
+def si(s, d=0):
+    try: return int(float(s))
+    except: return d
 
-# ── leer Excel ───────────────────────────────────────────────────────────────
-
+print('Leyendo datos.xlsx...')
 try:
-    import openpyxl
-except ImportError:
-    print("Instalando openpyxl...")
-    import subprocess
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "openpyxl", "-q"])
-    import openpyxl
-
-wb = openpyxl.load_workbook(XLSX, data_only=True)
-d  = wb["Dashboard"]
-mg = wb["MAYO GLOBAL"]
-
-def dc(row, col):
-    return safe(d.cell(row, col).value)
-
-def mc(row, col):
-    return safe(mg.cell(row, col).value)
-
-def mc_raw(row, col):
-    return mg.cell(row, col).value
-
-# ── período ──────────────────────────────────────────────────────────────────
-# Dashboard R36 col M=13: días transcurridos  /  R37 col M=13: días totales
-dias_trans   = int(dc(36, 13))
-dias_totales = int(dc(37, 13))
-dias_rest    = dias_totales - dias_trans
-
-titulo = str(d.cell(1, 1).value or "")
-MESES = {"ENERO":1,"FEBRERO":2,"MARZO":3,"ABRIL":4,"MAYO":5,"JUNIO":6,
-         "JULIO":7,"AGOSTO":8,"SEPTIEMBRE":9,"OCTUBRE":10,"NOVIEMBRE":11,"DICIEMBRE":12}
-MES_NOMBRE = {v:k.capitalize() for k,v in MESES.items()}
-mes_num, anio = 5, 2025
-for nombre, num in MESES.items():
-    if nombre in titulo.upper():
-        mes_num = num
-        break
-for tok in titulo.split():
-    if tok.isdigit() and len(tok) == 4:
-        anio = int(tok)
-        break
-mes_nombre = MES_NOMBRE[mes_num]
-
-# ── global KPIs ───────────────────────────────────────────────────────────────
-# Dashboard R5: (ventaTotal, -, metaMensual, -, %cumpl, -, ventaTiendas, -, externos, -, comisiones)
-venta_total    = dc(5, 1)
-meta_mensual   = dc(5, 3)
-ventas_tiendas = dc(5, 7)
-externos_total = dc(5, 9)
-
-# Dashboard R29 TOTAL comisiones: col B=comis, C=bonos, D=total
-comisiones_tot = dc(29, 2)
-bonos_tot      = dc(29, 3)
-
-# Dashboard col K (11): R27=leads, R28=ventas conc, R29=conv, R30=ticket, R31=productos, R32=falta
-leads_total    = int(dc(27, 11))
-ventas_conc    = int(dc(28, 11))
-conv_global    = dc(29, 11)
-ticket_prom    = dc(30, 11)
-productos_vend = int(dc(31, 11))
-falta_meta     = dc(32, 11)
-
-ritmo_diario_g  = venta_total / dias_trans if dias_trans else 0
-proyeccion_g    = ritmo_diario_g * dias_totales
-porc_proyeccion = pct(proyeccion_g, meta_mensual)
-porc_presup     = pct(venta_total, meta_mensual)
-meta_min_total  = dc(23, 3)   # TOTAL row meta mínima
-porc_meta_min   = pct(venta_total, meta_min_total)
-
-# ── tiendas ───────────────────────────────────────────────────────────────────
-# Dashboard R19-22: (nombre, monto, metaMin, %min, presupuesto, %pres)
-tienda_names_dash = ["SUEÑA","HEAVEN","OTROS","ROHO"]
-tienda_rows_dash  = [19, 20, 21, 22]
-
-# Diferencias vs Abril: MAYO GLOBAL R42-45 col F=6 nombre, G=7 diferencia
-mom_diffs = {}
-for r in range(42, 46):
-    nombre_mom = str(mc_raw(r, 6) or "").strip().upper()
-    diff_val   = mc(r, 7)
-    if nombre_mom:
-        mom_diffs[nombre_mom] = diff_val
-
-# Comisiones por tienda: Dashboard R27=SUEÑA, R28=HEAVEN
-comisiones_tiendas = {
-    "SUEÑA":  {"comis": dc(27,2), "bonos": dc(27,3), "total": dc(27,4), "comisionados": int(dc(27,5))},
-    "HEAVEN": {"comis": dc(28,2), "bonos": dc(28,3), "total": dc(28,4), "comisionados": int(dc(28,5))},
-}
-
-# Proyección por tienda: Dashboard R37=SUEÑA, R38=HEAVEN (col D=4)
-tienda_proyecciones = {
-    "SUEÑA":  dc(37, 4),
-    "HEAVEN": dc(38, 4),
-    "EXTERNOS": dc(39, 4),
-    "OTROS": dc(39, 4),
-}
-
-tiendas_data = []
-for nombre, row in zip(tienda_names_dash, tienda_rows_dash):
-    monto      = dc(row, 2)
-    meta_min   = dc(row, 3)
-    pct_min_v  = dc(row, 4)
-    presup     = dc(row, 5)
-    pct_pres_v = dc(row, 6)
-
-    diff_key      = {"SUEÑA":"SUEÑA","HEAVEN":"HEAVEN","OTROS":"EXTERNOS","ROHO":"ROHO"}.get(nombre, nombre)
-    diferencia        = mom_diffs.get(diff_key, 0)
-    mes_pasado_monto  = monto - diferencia if diferencia else 0
-    crec_abril        = pct(diferencia, mes_pasado_monto)
-
-    ct   = comisiones_tiendas.get(nombre, {"comis":0,"bonos":0,"total":0,"comisionados":0})
-    proj = tienda_proyecciones.get(nombre)
-    ritmo = monto / dias_trans if dias_trans else 0
-
-    t_leads = None
-    if nombre == "HEAVEN":
-        t_leads = leads_total - (leads_total * 1320 // 2350)  # rough split
-    elif nombre == "SUEÑA":
-        t_leads = leads_total * 1320 // 2350
-
-    tiendas_data.append({
-        "nombre": nombre,
-        "monto": monto,
-        "metaMin": meta_min,
-        "pctMin": pct_min_v,
-        "presupuesto": presup,
-        "pctPres": pct_pres_v,
-        "proyeccion": proj if proj else None,
-        "ritmoDiario": ritmo,
-        "pctProyeccionMeta": pct(proj, meta_min) if proj and meta_min else None,
-        "leads": t_leads,
-        "conversion": None,
-        "comisiones": ct["comis"],
-        "bonos": ct["bonos"],
-        "totalPagado": ct["total"],
-        "comisionados": ct["comisionados"],
-        "mesPasadoMonto": mes_pasado_monto if mes_pasado_monto else None,
-        "crecimientoVsAbril": crec_abril if mes_pasado_monto else None,
-    })
-
-# ── vendedores ────────────────────────────────────────────────────────────────
-# Dashboard R9-15: (rank, nombre, monto, pct, proyeccion, ritmo)
-# MAYO GLOBAL R5-7: SUEÑA (nombre, visitas, ventas, online, productos, monto, metaMin, %min, metaPres, %pres)
-# MAYO GLOBAL R16-19: HEAVEN (nombre, -, ventas, -, productos, monto, metaMin, %min, metaPres, %pres)
-# MAYO GLOBAL R53-55: SUEÑA KPIs (nombre, tasaCierre, ingresoLead, comPct, crecAbril, proyeccion)
-# MAYO GLOBAL R60-63: HEAVEN KPIs (nombre, conversion, ingresoLead, comPct, crecAbril, proyeccion)
-# MAYO GLOBAL R70-76: Ranking (rank, nombre, monto, pctTotal, mejorMes, nuevoRecord)
-
-sueña_detail = {}
-for r in range(5, 8):
-    n = str(mc_raw(r,1) or "").strip()
-    if not n or "TOTAL" in n.upper():
-        continue
-    sueña_detail[n.upper()] = {
-        "visitas":   int(safe(mc(r,2))),
-        "ventas":    int(safe(mc(r,3))),
-        "online":    int(safe(mc(r,4))),
-        "productos": int(safe(mc(r,5))),
-        "monto":     mc(r,6),
-        "metaMin":   mc(r,7),
-        "pctMin":    mc(r,8),
-        "metaPres":  mc(r,9),
-        "pctPres":   mc(r,10),
-    }
-
-heaven_detail = {}
-for r in range(16, 20):
-    n = str(mc_raw(r,1) or "").strip()
-    if not n or "TOTAL" in n.upper():
-        continue
-    heaven_detail[n.upper()] = {
-        "ventas_conc": int(safe(mc(r,3))),
-        "productos":   int(safe(mc(r,5))),
-        "monto":       mc(r,6),
-        "metaMin":     mc(r,7),
-        "pctMin":      mc(r,8),
-        "metaPres":    mc(r,9),
-        "pctPres":     mc(r,10),
-    }
-
-sueña_kpi = {}
-for r in range(53, 56):
-    n = str(mc_raw(r,1) or "").strip()
-    if not n:
-        continue
-    sueña_kpi[n.upper()] = {
-        "tasaCierre":       mc(r,2),
-        "ingresoLead":      mc(r,3),
-        "pctComision":      mc(r,4),
-        "crecimientoAbril": mc(r,5),
-        "proyeccion":       mc(r,6),
-    }
-
-heaven_kpi = {}
-for r in range(60, 64):
-    n = str(mc_raw(r,1) or "").strip()
-    if not n:
-        continue
-    heaven_kpi[n.upper()] = {
-        "conversion":       mc(r,2),
-        "ingresoLead":      mc(r,3),
-        "pctComision":      mc(r,4),
-        "crecimientoAbril": mc(r,5),
-        "proyeccion":       mc(r,6),
-    }
-
-ranking = {}
-for r in range(70, 77):
-    n = str(mc_raw(r,2) or "").strip()
-    if not n:
-        continue
-    rec_raw = mc_raw(r,6)
-    ranking[n.upper()] = {
-        "mejorMes":   int(safe(mc(r,5))),
-        "nuevoRecord": bool(rec_raw and str(rec_raw).strip()),
-    }
-
-# Build vendedores list
-SUEÑA_NAMES  = {"JUAN PABLO","FERNANDO","MAURICIO"}
-HEAVEN_NAMES = {"MARIA","ISABEL","CAROLA","MIRIAN"}
-TIENDA_MAP   = {**{n:"SUEÑA" for n in SUEÑA_NAMES}, **{n:"HEAVEN" for n in HEAVEN_NAMES}}
-
-sueña_leads_per = 440   # ~1320/3 (constant unless sheet changes)
-
-vendedores_data = []
-for r in range(9, 16):
-    rank = d.cell(r,1).value
-    if not isinstance(rank, (int, float)):
-        continue
-    nombre    = str(d.cell(r,2).value or "").strip()
-    nom_up    = nombre.upper()
-    tienda    = TIENDA_MAP.get(nom_up, "HEAVEN")
-    monto     = safe(d.cell(r,3).value)
-    pct_total = safe(d.cell(r,4).value)
-
-    if tienda == "SUEÑA":
-        det = sueña_detail.get(nom_up, {})
-        kpi = sueña_kpi.get(nom_up, {})
-        rnk = ranking.get(nom_up, {})
-        leads        = sueña_leads_per
-        visitas      = det.get("visitas")
-        ventas       = det.get("ventas")
-        online       = det.get("online")
-        productos    = det.get("productos")
-        meta_min     = det.get("metaMin", 0)
-        pct_min_v    = det.get("pctMin", 0)
-        meta_pres    = det.get("metaPres", 0)
-        pct_pres_v   = det.get("pctPres", 0)
-        pct_comision = kpi.get("pctComision", 0)
-        ingreso_lead = kpi.get("ingresoLead", 0)
-        crec_abril   = kpi.get("crecimientoAbril", 0)
-        comision     = round(monto * pct_comision, 4) if pct_comision else 0
-        ticket_v     = monto / ventas if ventas else 0
-        prod_venta   = productos / ventas if (productos and ventas) else 0
-        venta_dia    = monto / dias_trans if dias_trans else 0
-        vend = {
-            "nombre": nombre, "tienda": tienda,
-            "monto": monto, "pctTotal": pct_total,
-            "proyeccion": kpi.get("proyeccion") or safe(d.cell(r,5).value),
-            "ritmoDiario": safe(d.cell(r,6).value),
-            "visitas": visitas, "ventas": ventas, "online": online, "productos": productos,
-            "leads": leads, "conversion": kpi.get("tasaCierre", 0), "conversionVisita": kpi.get("tasaCierre"),
-            "metaMin": meta_min, "pctMin": pct_min_v, "metaPres": meta_pres, "pctPres": pct_pres_v,
-            "ticketProm": ticket_v, "prodPorVenta": prod_venta, "ventasPorDia": venta_dia,
-            "ingresoLead": ingreso_lead, "comision": comision, "pctComision": pct_comision,
-            "bonoTitanio": 0,
-            "crecimientoVsAbril": crec_abril,
-            "mejorMes": rnk.get("mejorMes", 0), "nuevoRecord": rnk.get("nuevoRecord", False),
-            "tasaCierre": kpi.get("tasaCierre"),
-        }
-    else:  # HEAVEN
-        det = heaven_detail.get(nom_up, {})
-        kpi = heaven_kpi.get(nom_up, {})
-        rnk = ranking.get(nom_up, {})
-        ingreso_lead = kpi.get("ingresoLead", 0)
-        leads        = round(monto / ingreso_lead) if ingreso_lead else 265
-        visitas      = det.get("ventas_conc")
-        online       = det.get("productos")
-        meta_min     = det.get("metaMin", 0)
-        pct_min_v    = det.get("pctMin", 0)
-        meta_pres    = det.get("metaPres", 0)
-        pct_pres_v   = det.get("pctPres", 0)
-        pct_comision = kpi.get("pctComision", 0)
-        crec_abril   = kpi.get("crecimientoAbril", 0)
-        ventas_c     = det.get("ventas_conc", 0)
-        productos_v  = det.get("productos", 0)
-        comision     = round(monto * pct_comision, 4) if pct_comision else 0
-        ticket_v     = monto / ventas_c if ventas_c else 0
-        prod_venta   = productos_v / ventas_c if ventas_c else 0
-        venta_dia    = monto / dias_trans if dias_trans else 0
-        vend = {
-            "nombre": nombre, "tienda": tienda,
-            "monto": monto, "pctTotal": pct_total,
-            "proyeccion": kpi.get("proyeccion") or safe(d.cell(r,5).value),
-            "ritmoDiario": safe(d.cell(r,6).value),
-            "visitas": visitas, "ventas": None, "online": online, "productos": None,
-            "leads": leads, "conversion": kpi.get("conversion", 0), "conversionVisita": None,
-            "metaMin": meta_min, "pctMin": pct_min_v, "metaPres": meta_pres, "pctPres": pct_pres_v,
-            "ticketProm": ticket_v, "prodPorVenta": prod_venta, "ventasPorDia": venta_dia,
-            "ingresoLead": ingreso_lead, "comision": comision, "pctComision": pct_comision,
-            "bonoTitanio": 0,
-            "crecimientoVsAbril": crec_abril,
-            "mejorMes": rnk.get("mejorMes", 0), "nuevoRecord": rnk.get("nuevoRecord", False),
-        }
-    vendedores_data.append(vend)
-
-# ── clientes externos ─────────────────────────────────────────────────────────
-# MAYO GLOBAL R29-36: (nombre, -, productos, monto)
-clientes_raw = []
-total_ext = externos_total or 1
-for r in range(29, 37):
-    nombre_c = str(mc_raw(r, 1) or "").strip()
-    if not nombre_c or nombre_c.upper() in ("TOTAL","VENDEDOR"):
-        continue
-    monto_c  = mc(r, 4)
-    ventas_c = int(safe(mc(r, 3)))
-    clientes_raw.append({
-        "nombre": nombre_c,
-        "ventas": ventas_c,
-        "monto":  monto_c,
-        "pct":    pct(monto_c, total_ext),
-    })
-
-# ── armar __DATA__ ────────────────────────────────────────────────────────────
-
-data_js = f"""// Datos extraídos de "{XLSX}" — hoja Dashboard + MAYO GLOBAL
-// {mes_nombre} {anio} — Día {dias_trans} de {dias_totales}
-
-window.__DATA__ = {{
-  periodo: {{ mes: "{mes_nombre}", anio: {anio}, diasTranscurridos: {dias_trans}, diasTotales: {dias_totales}, diasRestantes: {dias_rest} }},
-
-  global: {{
-    ventaTotal: {venta_total},
-    presupuesto: {meta_mensual},
-    porcPresupuesto: {porc_presup},
-    metaMinTotal: {meta_min_total},
-    porcMetaMin: {porc_meta_min},
-    leadsTotal: {leads_total},
-    ventasConcretadas: {ventas_conc},
-    conversionGlobal: {conv_global},
-    ticketPromGlobal: {ticket_prom},
-    productosVendidos: {productos_vend},
-    faltaParaMeta: {falta_meta},
-    comisionesTotales: {comisiones_tot},
-    bonosTotales: {bonos_tot},
-    ritmoDiario: {ritmo_diario_g},
-    proyeccionCierre: {proyeccion_g},
-    porcProyeccion: {porc_proyeccion},
-  }},
-
-  vendedores: {json.dumps(vendedores_data, ensure_ascii=False, indent=4)},
-
-  tiendas: {json.dumps(tiendas_data, ensure_ascii=False, indent=4)},
-
-  clientes: {json.dumps(clientes_raw, ensure_ascii=False, indent=4)},
-}};"""
-
-# ── actualizar dashboard-comercial.html ──────────────────────────────────────
-
-content = open(HTML, encoding="utf-8").read()
-manifest_m = re.search(r'<script type="__bundler/manifest">(.*?)</script>', content, re.DOTALL)
-if not manifest_m:
-    print("ERROR: no se encontró el manifest en el HTML")
+    with zipfile.ZipFile('datos.xlsx') as z:
+        ss = get_shared_strings(z)
+        hv = read_sheet(z, 6, ss)
+        sv = read_sheet(z, 5, ss)
+        mg = read_sheet(z, 4, ss)
+        ds = read_sheet(z, 3, ss)
+except FileNotFoundError:
+    print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
     sys.exit(1)
 
-manifest = json.loads(manifest_m.group(1).strip())
+now = datetime.datetime.now()
+mes_map = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
+           7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
+mes = mes_map[now.month]
+anio = now.year
+diasTot = calendar.monthrange(anio, now.month)[1]
+dia_actual = min(now.day, diasTot)
 
-data_uuid = next((k for k in manifest if k.startswith("eb1309ec")), None)
-if not data_uuid:
-    print("ERROR: no se encontró el asset eb1309ec en el manifest")
+crec_lookup = {}
+for r in list(range(53, 57)) + list(range(60, 65)):
+    nombre_raw = gv(mg, r, 0).strip()
+    crec_val = gv(mg, r, 4)
+    if nombre_raw and crec_val != '':
+        crec_lookup[nombre_raw.lower()] = sf(crec_val)
+
+record_lookup = {}
+for r in range(70, 80):
+    nombre_raw = gv(mg, r, 1).strip()
+    record_val = gv(mg, r, 5).strip()
+    if nombre_raw:
+        record_lookup[nombre_raw.lower()] = bool(record_val)
+
+vendedores = []
+
+for row in [3, 4, 5, 6]:
+    nombre = gv(hv, row, 0).strip()
+    if not nombre or nombre.upper().startswith('TOTAL'): continue
+    ventas = si(gv(hv, row, 1))
+    productos = si(gv(hv, row, 2))
+    monto = sf(gv(hv, row, 3))
+    leads = si(gv(hv, row, 11))
+    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
+    nombre_key = nombre.lower()
+    vendedores.append({
+        'id': nombre_key.replace(' ', '_'),
+        'nombre': nombre.title(),
+        'tienda': 'HEAVEN',
+        'monto': round(monto, 2),
+        'metaMin': round(sf(gv(hv, row, 4)), 2),
+        'presupuesto': round(sf(gv(hv, row, 6)), 2),
+        'ticketProm': round(sf(gv(hv, row, 8)), 2),
+        'leads': leads,
+        'ventasConcretadas': ventas,
+        'productos': productos,
+        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
+        'pctMin': round(sf(gv(hv, row, 5)), 6),
+        'pctPres': round(sf(gv(hv, row, 7)), 6),
+        'pctTotal': 0,
+        'comision': round(sf(gv(hv, row, 12)), 4),
+        'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
+        'pctComision': round(sf(gv(hv, row, 13)), 6),
+        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'nuevoRecord': record_lookup.get(nombre_key, False),
+        'ritmoDiario': round(ritmoDiario, 4),
+        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
+        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
+        'prodPorVenta': round(sf(gv(hv, row, 9)), 4),
+    })
+
+for row in [3, 4, 5]:
+    nombre = gv(sv, row, 0).strip()
+    if not nombre: continue
+    ventas = si(gv(sv, row, 2))
+    monto = sf(gv(sv, row, 5))
+    leads = si(gv(sv, row, 13))
+    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
+    nombre_key = nombre.lower()
+    vendedores.append({
+        'id': nombre_key.replace(' ', '_'),
+        'nombre': nombre.title(),
+        'tienda': 'SUENA',
+        'monto': round(monto, 2),
+        'metaMin': round(sf(gv(sv, row, 6)), 2),
+        'presupuesto': round(sf(gv(sv, row, 8)), 2),
+        'ticketProm': round(sf(gv(sv, row, 10)), 2),
+        'leads': leads,
+        'ventasConcretadas': ventas,
+        'productos': si(gv(sv, row, 4)),
+        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
+        'pctMin': round(sf(gv(sv, row, 7)), 6),
+        'pctPres': round(sf(gv(sv, row, 9)), 6),
+        'pctTotal': 0,
+        'comision': round(sf(gv(sv, row, 14)), 4),
+        'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
+        'pctComision': round(sf(gv(sv, row, 15)), 6),
+        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'nuevoRecord': record_lookup.get(nombre_key, False),
+        'ritmoDiario': round(ritmoDiario, 4),
+        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
+        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
+        'prodPorVenta': round(sf(gv(sv, row, 11)), 4),
+    })
+
+tot_vend = sum(v['monto'] for v in vendedores)
+for v in vendedores:
+    v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
+
+comm = {
+    'SUENA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
+              'totalPagado': sf(gv(ds, 27, 3)), 'comisionados': si(gv(ds, 27, 4))},
+    'HEAVEN': {'comisiones': sf(gv(ds, 28, 1)), 'bonos': sf(gv(ds, 28, 2)),
+               'totalPagado': sf(gv(ds, 28, 3)), 'comisionados': si(gv(ds, 28, 4))},
+}
+suena_leads = si(gv(sv, 6, 13))
+suena_ventas = si(gv(sv, 6, 2)) + si(gv(sv, 6, 3))
+heaven_leads = si(gv(hv, 7, 11))
+heaven_ventas = si(gv(hv, 7, 1))
+
+tiendas = []
+for r, nombre_t in [(19, 'SUENA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
+    monto_t = sf(gv(ds, r, 1))
+    diferencia = sf(gv(ds, r, 9))
+    mes_pasado = round(monto_t - diferencia, 2) if diferencia != 0 else None
+    leads_t = None
+    conv_t = None
+    if nombre_t == 'SUENA':
+        leads_t = suena_leads
+        conv_t = round(suena_ventas / suena_leads, 6) if suena_leads > 0 else None
+    elif nombre_t == 'HEAVEN':
+        leads_t = heaven_leads
+        conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
+    c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
+    display = 'SUENA' if nombre_t == 'SUENA' else nombre_t
+    tiendas.append({
+        'id': nombre_t.lower(),
+        'nombre': display,
+        'monto': round(monto_t, 2),
+        'metaMin': round(sf(gv(ds, r, 2)), 2),
+        'presupuesto': round(sf(gv(ds, r, 4)), 2),
+        'pctMin': round(sf(gv(ds, r, 3)), 6),
+        'pctPres': round(sf(gv(ds, r, 5)), 6),
+        'leads': leads_t,
+        'conversion': conv_t,
+        'comisiones': round(c['comisiones'], 4),
+        'bonos': round(c['bonos'], 4),
+        'totalPagado': round(c['totalPagado'], 4),
+        'comisionados': c['comisionados'],
+        'crecimientoVsAbril': round(diferencia / mes_pasado, 6) if mes_pasado else None,
+        'mesPasadoMonto': mes_pasado,
+    })
+
+global_data = {
+    'leadsTotal': si(gv(ds, 27, 10)),
+    'ventasConcretadas': si(gv(ds, 28, 10)),
+    'conversionGlobal': round(sf(gv(ds, 29, 10)), 8),
+    'ticketPromGlobal': round(sf(gv(ds, 30, 10)), 2),
+    'productosVendidos': si(gv(ds, 31, 10)),
+}
+
+clientes = []
+for r in range(29, 38):
+    nombre_c = gv(mg, r, 0).strip()
+    if nombre_c and nombre_c.upper() != 'TOTAL':
+        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, r, 2)), 'monto': round(sf(gv(mg, r, 3)), 2)})
+
+data = {
+    'periodo': {'mes': mes, 'anio': anio, 'diasTotales': diasTot},
+    'vendedores': vendedores,
+    'tiendas': tiendas,
+    'global': global_data,
+    'clientes': clientes,
+}
+
+print('Leyendo dashboard-template.html...')
+try:
+    with open('dashboard-template.html', 'r', encoding='utf-8') as f:
+        html = f.read()
+except FileNotFoundError:
+    print('ERROR: dashboard-template.html no encontrado.', file=sys.stderr)
     sys.exit(1)
 
-manifest[data_uuid]["data"] = compress_encode(data_js)
-manifest[data_uuid]["compressed"] = True
+data_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+html = html.replace(
+    '<script>window.__resources = {};</script>',
+    '<script>window.__resources = {};</script>\n  <script>window.__DATA__ = ' + data_json + ';</script>'
+)
 
-new_manifest_json = json.dumps(manifest, separators=(",", ":"))
-new_content = (content[:manifest_m.start(1)] + "\n" +
-               new_manifest_json + "\n  " + content[manifest_m.end(1):])
+CDN_REACT    = 'https://unpkg.com/react@18/umd/react.production.min.js'
+CDN_REACTDOM = 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'
+CDN_BABEL    = 'https://unpkg.com/@babel/standalone/babel.min.js'
+CDN_XLSX     = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
 
-with open(HTML, "w", encoding="utf-8") as f:
-    f.write(new_content)
+blob_map = {
+    'blob:https://eduardoxyz22-maker.github.io/74e3f041-15e9-4c0c-b45a-f79ff8e00abc': CDN_REACT,
+    'blob:https://eduardoxyz22-maker.github.io/beb4c7e9-0eca-4dbd-8d28-313b39065fef': CDN_REACTDOM,
+    'blob:https://eduardoxyz22-maker.github.io/665418e3-42cc-4466-82fa-a60648dad3e7': CDN_BABEL,
+    'blob:https://eduardoxyz22-maker.github.io/173704d7-2551-49a7-a5b8-0b23512e0f10': CDN_XLSX,
+}
+for blob_url, cdn_url in blob_map.items():
+    html = html.replace(f'src="{blob_url}"', f'src="{cdn_url}"')
 
-print(f"OK — Dashboard actualizado: {mes_nombre} {anio}, día {dias_trans}/{dias_totales}")
-print(f"     Venta total: {venta_total:,.0f} / Meta: {meta_mensual:,.0f} ({porc_presup*100:.1f}%)")
-print(f"     Vendedores: {len(vendedores_data)} | Tiendas: {len(tiendas_data)} | Clientes: {len(clientes_raw)}")
+PARSE_INLINE = '''<script>
+window.parseXlsxFile = async function(file) {
+  var buf = await file.arrayBuffer();
+  var wb = XLSX.read(buf, {type:"array"});
+  function sh(n){var ws=wb.Sheets[n];return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:""}):null;}
+  function sf(v){var n=parseFloat(v);return isNaN(n)?0:n;}
+  function si(v){return Math.round(sf(v));}
+  var hv=sh("HEAVEN"),sv=sh("SUENA")||sh("Sue\xf1a"),mg=sh("MAYO GLOBAL"),ds=sh("Dashboard");
+  if(!hv||!sv||!mg||!ds) throw new Error("Hojas no encontradas. Verifica que el Excel tenga: HEAVEN, SUENA, MAYO GLOBAL, Dashboard.");
+  var ahora=new Date();
+  var meses=["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  var mes=meses[ahora.getMonth()+1],anio=ahora.getFullYear();
+  var diasTot=new Date(anio,ahora.getMonth()+1,0).getDate();
+  var dia=Math.min(ahora.getDate(),diasTot);
+  var vends=[];
+  for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||(""+r[0]).toUpperCase().startsWith("TOTAL"))continue;
+    var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
+    vends.push({id:(""+r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"HEAVEN",monto:m,
+      metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
+      conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
+      bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:null,nuevoRecord:false,
+      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
+  for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
+    var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
+    vends.push({id:(""+r[0]).toLowerCase().replace(/ /g,"_"),nombre:""+r[0],tienda:"SUE\xd1A",monto:m,
+      metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
+      conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
+      bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:null,nuevoRecord:false,
+      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[11])});}
+  var tot=vends.reduce(function(s,v){return s+v.monto;},0);
+  vends.forEach(function(v){v.pctTotal=tot?v.monto/tot:0;});
+  var tiendas=[];var tn=["SUE\xd1A","HEAVEN","OTROS","ROHO"];
+  for(var ti=0;ti<4;ti++){var r=ds[18+ti];if(!r)continue;
+    var mn=sf(r[1]),dif=sf(r[9]||0),mp=dif?mn-dif:null;
+    var l=ti===0?si((sv[5]||[])[13]):ti===1?si((hv[6]||[])[11]):null;
+    tiendas.push({id:tn[ti].toLowerCase().replace("\xf1","n"),nombre:tn[ti],monto:mn,metaMin:sf(r[2]),
+      presupuesto:sf(r[4]),pctMin:sf(r[3]),pctPres:sf(r[5]),leads:l,conversion:null,
+      comisiones:0,bonos:0,totalPagado:0,comisionados:0,
+      crecimientoVsAbril:mp?dif/mp:null,mesPasadoMonto:mp});}
+  if(ds[26]){tiendas[0].comisiones=sf(ds[26][1]);tiendas[0].bonos=sf(ds[26][2]);tiendas[0].totalPagado=sf(ds[26][3]);tiendas[0].comisionados=si(ds[26][4]);}
+  if(ds[27]){tiendas[1].comisiones=sf(ds[27][1]);tiendas[1].bonos=sf(ds[27][2]);tiendas[1].totalPagado=sf(ds[27][3]);tiendas[1].comisionados=si(ds[27][4]);}
+  var g={leadsTotal:si((ds[26]||[])[10]),ventasConcretadas:si((ds[27]||[])[10]),
+    conversionGlobal:sf((ds[28]||[])[10]),ticketPromGlobal:sf((ds[29]||[])[10]),
+    productosVendidos:si((ds[30]||[])[10])};
+  var cli=[];
+  for(var i=28;i<=36;i++){var r=mg[i];if(r&&r[0]&&(""+r[0]).toUpperCase()!=="TOTAL")cli.push({nombre:""+r[0],productos:si(r[2]),monto:sf(r[3])});}
+  return {periodo:{mes:mes,anio:anio,diasTotales:diasTot},vendedores:vends,tiendas:tiendas,global:g,clientes:cli};
+};
+</script>'''
+
+html = html.replace(
+    '  <script src="blob:https://eduardoxyz22-maker.github.io/1e6e7d73-36a9-4931-bc01-cada16e587e4"></script>',
+    '  ' + PARSE_INLINE
+)
+
+html = html.replace(
+    'ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));\n//# sourceMappingURL',
+    '// Rendering handled by Babel JSX scripts in body\n//# sourceMappingURL'
+)
+
+html = html.replace('Dashboard Comercial \xb7 Mayo 2025', f'Dashboard Comercial \xb7 {mes} {anio}')
+html = re.sub(r'ltima actualizaci\xf3n:.*?</span>',
+              f'ltima actualizaci\xf3n: {now.strftime("%d/%m/%Y %H:%M")}</span>', html)
+
+with open('dashboard-comercial.html', 'w', encoding='utf-8') as f:
+    f.write(html)
+
+print(f'dashboard-comercial.html generado — {mes} {anio}')
+print(f'Vendedores: {len(vendedores)} | Tiendas: {len(tiendas)} | Clientes: {len(clientes)}')
+print(f'Total global: Bs {sum(t["monto"] for t in tiendas):,.0f}')
