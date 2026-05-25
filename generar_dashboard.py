@@ -129,7 +129,7 @@ for row in [3, 4, 5]:
     vendedores.append({
         'id': nombre_key.replace(' ', '_'),
         'nombre': nombre.title(),
-        'tienda': 'SUENA',
+        'tienda': 'SUEÑA',
         'monto': round(monto, 2),
         'metaMin': round(sf(gv(sv, row, 6)), 2),
         'presupuesto': round(sf(gv(sv, row, 8)), 2),
@@ -157,7 +157,7 @@ for v in vendedores:
     v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
 
 comm = {
-    'SUENA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
+    'SUEÑA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
               'totalPagado': sf(gv(ds, 27, 3)), 'comisionados': si(gv(ds, 27, 4))},
     'HEAVEN': {'comisiones': sf(gv(ds, 28, 1)), 'bonos': sf(gv(ds, 28, 2)),
                'totalPagado': sf(gv(ds, 28, 3)), 'comisionados': si(gv(ds, 28, 4))},
@@ -168,23 +168,22 @@ heaven_leads = si(gv(hv, 7, 11))
 heaven_ventas = si(gv(hv, 7, 1))
 
 tiendas = []
-for r, nombre_t in [(19, 'SUENA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
+for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
     monto_t = sf(gv(ds, r, 1))
     diferencia = sf(gv(ds, r, 9))
     mes_pasado = round(monto_t - diferencia, 2) if diferencia != 0 else None
     leads_t = None
     conv_t = None
-    if nombre_t == 'SUENA':
+    if nombre_t == 'SUEÑA':
         leads_t = suena_leads
         conv_t = round(suena_ventas / suena_leads, 6) if suena_leads > 0 else None
     elif nombre_t == 'HEAVEN':
         leads_t = heaven_leads
         conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
     c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
-    display = 'SUENA' if nombre_t == 'SUENA' else nombre_t
     tiendas.append({
         'id': nombre_t.lower(),
-        'nombre': display,
+        'nombre': nombre_t,
         'monto': round(monto_t, 2),
         'metaMin': round(sf(gv(ds, r, 2)), 2),
         'presupuesto': round(sf(gv(ds, r, 4)), 2),
