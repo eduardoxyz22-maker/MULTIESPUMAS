@@ -1,0 +1,64 @@
+name: Actualizar Dashboard desde Google Drive
+
+on:
+  workflow_dispatch:        # Manual desde GitHub → Actions → Run workflow
+  schedule:
+    - cron: '0 15 * * 1-5' # Lunes a Viernes 11:00 AM Bolivia (15:00 UTC)
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Descargar Excel desde Google Drive
+        run: |
+          FILE_ID="11zVfvcNXa3v0bmOL5J4OWNHMcU7R-C56"
+          curl -L "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
+               -o datos.xlsx
+          ls -lh datos.xlsx
+
+      - name: Generar dashboard-comercial.html
+        run: python3 generar_dashboard.py
+
+      - name: Publicar en main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python3 -c "
+import os, base64, json, urllib.request
+
+TOKEN = os.environ['GH_TOKEN']
+REPO  = os.environ['GITHUB_REPOSITORY']
+FILE  = 'dashboard-comercial.html'
+API   = f'https://api.github.com/repos/{REPO}/contents/{FILE}'
+
+with open(FILE, 'rb') as f:
+    content = base64.b64encode(f.read()).decode()
+
+headers = {
+    'Authorization': f'token {TOKEN}',
+    'Accept': 'application/vnd.github+json',
+    'Content-Type': 'application/json',
+}
+
+sha = None
+try:
+    req = urllib.request.Request(API, headers=headers)
+    with urllib.request.urlopen(req) as r:
+        sha = json.loads(r.read())['sha']
+except: pass
+
+import datetime
+fecha = datetime.datetime.now().strftime('%d/%m/%Y %H:%M')
+body = {'message': f'Dashboard actualizado {fecha}', 'content': content, 'branch': 'main'}
+if sha: body['sha'] = sha
+
+req = urllib.request.Request(API, data=json.dumps(body).encode(), headers=headers, method='PUT')
+with urllib.request.urlopen(req) as r:
+    print('Publicado:', json.loads(r.read())['content']['html_url'])
+"
