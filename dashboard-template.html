@@ -4614,12 +4614,12 @@ function RankingTable({ rows, dia, diasTotales }) {
         </tr>
       </thead>
       <tbody>
-        {rows.map((v) => {
+        {rows.map((v, idx) => {
           // Proyección recalculada
           const proy = dia > 0 ? (v.monto / dia) * diasTotales : v.monto;
           return (
           <tr key={v.nombre}>
-            <td className="rank">{D.vendedores.findIndex((x) => x.nombre === v.nombre) + 1}</td>
+            <td className="rank">{idx + 1}</td>
             <td className="vend-cell">
               <span className="swatch" style={{ background: VENDOR_COLOR[v.nombre] }} />
               <span>{v.nombre}</span>
