@@ -3,7 +3,7 @@ name: Actualizar Dashboard desde Google Drive
 on:
   workflow_dispatch:        # Manual desde GitHub → Actions → Run workflow
   schedule:
-    - cron: '0 15 * * 1-5' # Lunes a Viernes 11:00 AM Bolivia (15:00 UTC)
+    - cron: '0 21 * * *' # Todos los días 17:00 Bolivia (21:00 UTC)
 
 jobs:
   actualizar:
