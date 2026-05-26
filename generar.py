@@ -145,11 +145,14 @@ print("Leads mes anterior:", total_leads_prev)
 
 compradores_prev = 0
 valor_prev = 0.0
+vendor_leads_prev = defaultdict(int)
 for _l in leads_prev:
     _sn = stage_map.get(_l.get("status_id"), "")
     if _sn == COMPRADORES_STAGE:
         compradores_prev += 1
     valor_prev += float(_l.get("price", 0) or 0)
+    _rid = _l.get("responsible_user_id")
+    vendor_leads_prev[user_map.get(_rid, "Desconocido")] += 1
 
 stage_counts = defaultdict(int)
 stage_values = defaultdict(float)
@@ -323,6 +326,7 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
     vendors_json_list.append({
         "name": vname,
         "total": vt,
+        "prev_total": vendor_leads_prev.get(vname, 0),
         "value": int(vd["value"]),
         "stages": stages_list,
         "quadrant": _quadrant,
@@ -637,6 +641,7 @@ const usrOpts=__USR_OPTS_JSON__;
 const stgOpts=__STG_OPTS_JSON__;
 const vendors=__VENDORS_JSON__;
 const etapas=__ETAPAS_JSON__;
+const prevMesShort='__PREV_MES_SHORT__';
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
@@ -666,8 +671,13 @@ vendors.forEach(v=>{
     return '<div class="vc-row"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
   }).join('');
   const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
+  const prevT=v.prev_total||0;
+  const diffV=v.total-prevT;
+  const diffVColor=diffV>0?'#16a34a':(diffV<0?'var(--red)':'var(--gray)');
+  const diffVArrow=diffV>0?'&#9650;':(diffV<0?'&#9660;':'&mdash;');
+  const diffVSign=diffV>0?'+':'';
   vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\\x27'+v.name+'\\x27)">'
-    +'<div class="vc-head"><div><div class="vc-name">'+v.name+'</div>'+badge+'</div><div style="text-align:right"><div class="vc-total">'+v.total+'</div><div class="vc-total-lbl">leads del mes</div></div></div>'
+    +'<div class="vc-head"><div><div class="vc-name">'+v.name+'</div>'+badge+'</div><div style="text-align:right"><div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end"><div class="vc-total">'+v.total+'</div><div style="font-size:.95rem;font-weight:800;color:'+diffVColor+'">'+diffVArrow+' '+diffVSign+diffV+'</div></div><div class="vc-total-lbl">vs '+prevT+' en '+prevMesShort+'</div></div></div>'
     +'<div class="vc-kpis">'
     +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
     +'<div class="vk '+kpiClassInv(k.no_resp_pct,30,15)+'"><div class="vk-val">'+k.no_resp_pct+'%</div><div class="vk-lbl">Sin Respuesta</div><div class="vk-hint">'+k.no_resp+' no responden</div></div>'
