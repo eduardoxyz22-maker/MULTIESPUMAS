@@ -75,7 +75,7 @@ mes_label_map = {
     9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
 }
 mes_label = mes_label_map[now_dt.month] + " " + str(now_dt.year)
-titulo = "Pipeline de Ventas — " + mes_label
+titulo = "Dashboard CRM Diario — " + mes_label
 fecha_str = now_dt.strftime("%d/%m/%Y %H:%M")
 
 inicio_mes = datetime.datetime(now_dt.year, now_dt.month, 1)
