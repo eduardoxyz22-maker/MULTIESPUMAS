@@ -309,17 +309,20 @@ const QC={'star':'star','potential':'potential','volume':'volume','critical':'cr
 const qDesc={'star':'Alto volumen · Conversión superior','potential':'Buena conversión · Poco volumen','volume':'Mucho volumen · Conversión promedio','critical':'Bajo volumen · Baja conversión'};
 const qAction={'star':'→ Documentar playbook y replicarlo al equipo','potential':'→ Aumentar volumen de leads asignados','volume':'→ Mejorar cierre: auditar cotizaciones y acompañar visitas','critical':'→ Coaching intensivo y revisión de pipeline'};
 // Quadrant grid
+const superStarName=vendors.reduce((best,v)=>v.kpis.conv_pct>best.kpis.conv_pct?v:best,vendors[0]).name;
 const qg=document.getElementById('quadrant-grid');
 [...vendors].sort((a,b)=>{const o={star:0,potential:1,volume:2,critical:3};return (o[a.quadrant]||3)-(o[b.quadrant]||3);}).forEach(v=>{
   const cls=v.quadrant||'critical';
   const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
   const k=v.kpis;
-  qg.innerHTML+='<div class="quadrant q-'+cls+'"><span class="q-label">'+QL[cls]+'</span><span class="q-axis">'+qDesc[cls]+'</span>'
+  const isQStar=v.name===superStarName&&v.kpis.conv_pct>0;
+  const qStarBanner=isQStar?'<div class="super-star-banner" style="margin:-14px -14px 6px -14px;border-radius:9px 9px 0 0">&#9819; SUPER ESTRELLA &mdash; MEJOR CONVERSIÓN &#9819;</div>':'';
+  qg.innerHTML+='<div class="quadrant q-'+cls+(isQStar?' is-super-star':'')+'" style="'+(isQStar?'border:2px solid #a855f7;box-shadow:0 0 16px rgba(168,85,247,.25)':'')+'">'+qStarBanner
+    +'<span class="q-label">'+QL[cls]+'</span><span class="q-axis">'+qDesc[cls]+'</span>'
     +'<div class="q-person"><strong>'+v.name+'</strong><br>'+v.total+' leads &middot; '+k.conv_pct+'% conv &middot; '+val+'</div>'
     +'<p class="q-action">'+(qAction[cls]||qAction['critical'])+'</p></div>';
 });
 // Vendor cards
-const superStarName=vendors.reduce((best,v)=>v.kpis.conv_pct>best.kpis.conv_pct?v:best,vendors[0]).name;
 const vg=document.getElementById('vendors-grid');
 vendors.forEach(v=>{
   const isSuperStar=v.name===superStarName&&v.kpis.conv_pct>0;
