@@ -731,7 +731,7 @@ vendors.forEach(v=>{
     +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">Sin Seguimiento</div><div class="vk2-hint">'+k.stagnant+' leads</div></div>'
     +'<div class="vk2"><div class="vk2-val">'+val+'</div><div class="vk2-lbl">Valor total</div></div>'
     +'</div>'
-    +'<div style="padding:6px 16px;font-size:.66rem;color:var(--muted);border-bottom:1px solid var(--gray-lt)">&#9997; <strong style="color:var(--text)">'+k.created_manual+'</strong> leads creados por ella &middot; el resto asignados automáticamente</div>'
+    +'<div style="padding:6px 16px;font-size:.66rem;color:var(--muted);border-bottom:1px solid var(--gray-lt)">&#9997; <strong style="color:var(--text)">'+k.created_manual+'</strong> leads creados por ella &middot; <strong style="color:var(--text)">'+(v.total-k.created_manual)+'</strong> asignados automáticamente</div>'
     +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
 });
 const fEl=document.getElementById('funnel');
