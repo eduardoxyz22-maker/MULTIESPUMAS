@@ -211,7 +211,7 @@ for lead in leads:
     if stage_name in QUALIFIED_STAGES:
         total_calificados += 1
 
-    if days_int >= 7:
+    if days_int >= 7 and stage_name != NO_RESP_STAGE:
         total_stagnant_7 += 1
         if days_int >= 14:
             total_stagnant_14 += 1
@@ -232,7 +232,7 @@ for lead in leads:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
         vd["calificados"] += 1
-    if days_int >= 7:
+    if days_int >= 7 and stage_name != NO_RESP_STAGE:
         vd["stagnant"] += 1
 
     all_rows.append({
@@ -521,27 +521,27 @@ a:hover{text-decoration:underline;color:var(--teal)}
       <div class="hstat-l">1-__DIA__ __CUR_MES_SHORT__ &nbsp;vs&nbsp; __PREV_TOTAL__ en __PREV_MES_SHORT__</div>
     </div>
     <div class="hstat"><div class="hstat-v">__VALOR__</div><div class="hstat-l">Valor total</div></div>
-    <div class="hstat"><div class="hstat-v">__ESTANCADOS__</div><div class="hstat-l">Estancados</div></div>
+    <div class="hstat"><div class="hstat-v">__ESTANCADOS__</div><div class="hstat-l">Sin Seguimiento</div></div>
   </div>
 </div>
 <div class="container">
   <div class="metrics">
     <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Leads del Mes</div><div class="mc-val">__TOTAL__</div><div class="mc-sub">creados en __MES_LABEL__</div></div>
     <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Valor Total Pipeline</div><div class="mc-val">__VALOR__</div><div class="mc-sub">deals con valor asignado</div></div>
-    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Estancados 7-14 dias</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
-    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Estancados +14 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
+    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento 7-14 dias</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
+    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +14 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
   <div class="sec">Embudo del Mes</div>
   <div id="funnel" class="funnel"></div>
   <div class="sg" id="stages-grid"></div>
-  <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 7 dias sin actividad &mdash; <b>__STAG14__</b> superan los 14 dias.</div></div>
+  <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 7 dias sin seguimiento &mdash; <b>__STAG14__</b> superan los 14 dias.</div></div>
   <div class="sec">KPIs del Equipo &mdash; __MES_LABEL__</div>
   <div class="team-kpis">
     <div class="tk c-teal"><div class="tk-val">__CONV_PCT__% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
     <div class="tk c-red"><div class="tk-val">__NORESP_PCT__%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
-    <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Estancados</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;7d</div></div>
+    <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;7d</div></div>
   </div>
   <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
   <div class="exec-summary">
@@ -551,7 +551,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
       y <strong>__VALOR__</strong> en pipeline.
       <strong>__TOP_VENDOR__ concentra el __TOP_VENDOR_PCT__% de los cierres</strong> &mdash;
       la palanca principal de mejora es <strong>conversión y disciplina de seguimiento</strong>.
-      Hay <strong>__ESTANCADOS__ deals estancados</strong> (__STAG_PCT__%) que representan oportunidades latentes.
+      Hay <strong>__ESTANCADOS__ deals sin seguimiento</strong> (__STAG_PCT__%) que representan oportunidades latentes.
     </p>
   </div>
   <div class="sec" style="margin-top:4px">Matriz de Rendimiento</div>
@@ -603,24 +603,24 @@ a:hover{text-decoration:underline;color:var(--teal)}
       <p>Coaching dirigido a vendedoras CRÍTICO</p>
     </div>
     <div class="scenario scenario-top">
-      <h4>Rescate Estancados (30%)</h4>
+      <h4>Rescate Sin Seguimiento (30%)</h4>
       <div class="scenario-num">+__RESCUE_EXTRA__</div>
       <div class="scenario-val">+__RESCUE_VAL_EXTRA__</div>
-      <p>Llamada/WhatsApp a los __ESTANCADOS__ estancados</p>
+      <p>Llamada/WhatsApp a los __ESTANCADOS__ sin seguimiento</p>
     </div>
   </div>
   <div class="tab-row">
     <div class="sec" style="margin:0;flex:1">Todos los Deals del Mes</div>
     <div class="tabs">
       <button class="tab active" onclick="setView('all')">Todos (__TOTAL__)</button>
-      <button class="tab" onclick="setView('stagnant')">Estancados (__ESTANCADOS__)</button>
+      <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (__ESTANCADOS__)</button>
     </div>
   </div>
   <div class="controls">
     <select id="f-stage" onchange="render()"><option value="">Todas las etapas</option></select>
     <select id="f-user" onchange="render()"><option value="">Todos los responsables</option></select>
     <select id="f-suc" onchange="render()"><option value="">Todas las sucursales</option></select>
-    <input id="f-days" type="number" placeholder="Dias min. estancado" oninput="render()" style="width:190px">
+    <input id="f-days" type="number" placeholder="Dias min. sin seguimiento" oninput="render()" style="width:190px">
     <button onclick="document.getElementById('f-days').value=14;render()" style="background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit">🔴 Solo críticos +14d</button>
     <button onclick="exportCSV()" style="background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:inherit">⬇ Exportar CSV</button>
     <span id="rc" class="rc"></span>
@@ -685,7 +685,7 @@ vendors.forEach(v=>{
     +'</div>'
     +'<div class="vc-kpis2">'
     +'<div class="vk2"><div class="vk2-val">'+ticket+'</div><div class="vk2-lbl">Ticket promedio</div></div>'
-    +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">% Estancados</div></div>'
+    +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">% Sin Seguimiento</div></div>'
     +'<div class="vk2"><div class="vk2-val">'+val+'</div><div class="vk2-lbl">Valor total</div></div>'
     +'</div>'
     +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
@@ -797,4 +797,4 @@ with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
 
 print("index.html generado correctamente.")
-print("Leads:", total_leads, "| Valor:", fmt_money(total_value), "| Estancados:", total_stagnant_7)
+print("Leads:", total_leads, "| Valor:", fmt_money(total_value), "| Sin Seguimiento:", total_stagnant_7)
