@@ -213,10 +213,10 @@ for lead in leads:
 
     if days_int >= 3 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
         total_stagnant_7 += 1
+        if days_int >= 7:
+            total_stagnant_7_14 += 1
         if days_int >= 14:
             total_stagnant_14 += 1
-        else:
-            total_stagnant_7_14 += 1
 
     suc_set.add(sucursal)
     usr_set.add(user_name)
@@ -530,13 +530,13 @@ a:hover{text-decoration:underline;color:var(--teal)}
   <div class="metrics">
     <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Leads del Mes</div><div class="mc-val">__TOTAL__</div><div class="mc-sub">creados en __MES_LABEL__</div></div>
     <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Valor Total Pipeline</div><div class="mc-val">__VALOR__</div><div class="mc-sub">deals con valor asignado</div></div>
-    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento 7-14 dias</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
-    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +14 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
+    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
+    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
   <div class="sec">Embudo del Mes</div>
   <div id="funnel" class="funnel"></div>
   <div class="sg" id="stages-grid"></div>
-  <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 7 dias sin seguimiento &mdash; <b>__STAG14__</b> superan los 14 dias.</div></div>
+  <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 72h sin seguimiento &mdash; <b>__STAG14__</b> superan los 7 dias.</div></div>
   <div class="sec">KPIs del Equipo &mdash; __MES_LABEL__</div>
   <div class="team-kpis">
     <div class="tk c-teal"><div class="tk-val">__CONV_PCT__% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
@@ -756,8 +756,8 @@ html = html.replace("__FECHA__", fecha_str)
 html = html.replace("__TOTAL__", str(total_leads))
 html = html.replace("__VALOR__", fmt_money(total_value))
 html = html.replace("__ESTANCADOS__", str(total_stagnant_7))
-html = html.replace("__STAG714__", str(total_stagnant_7_14))
-html = html.replace("__STAG14__", str(total_stagnant_14))
+html = html.replace("__STAG714__", str(total_stagnant_7))    # +72h (3+ dias)
+html = html.replace("__STAG14__", str(total_stagnant_7_14))  # +7 dias
 html = html.replace("__CONV_PCT__", str(conv_pct))
 html = html.replace("__COMPRADORES__", str(total_compradores))
 html = html.replace("__NORESP_PCT__", str(noresp_pct))
