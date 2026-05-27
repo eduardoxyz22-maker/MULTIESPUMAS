@@ -107,7 +107,7 @@ _q1 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _q2 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
 QUALIFIED_STAGES   = set(filter(None, [_q1, _q2, COMPRADORES_STAGE]))
 # Etapas donde las vendedoras deben hacer seguimiento activo
-_fs1 = _find_stage(STAGE_ORDER, ["nueva","new","consult","incom"], None)
+_fs1 = _find_stage(STAGE_ORDER, ["nueva consulta","nueva","consult"], None)
 _fs2 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _fs3 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
 _fs4 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
@@ -185,7 +185,6 @@ total_no_resp = 0
 total_calificados = 0
 total_stagnant_7 = 0
 total_stagnant_7_14 = 0
-total_stagnant_14 = 0
 
 for lead in leads:
     lid = lead.get("id", 0)
@@ -516,7 +515,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="logo"><div class="logo-h">HEAVEN</div><div class="logo-s">colchones &#10011;</div></div>
     <div class="htitle">
       <h1>__TITULO__</h1>
-      <p>Generado: __FECHA__ &nbsp;&bull;&nbsp; Actualizacion diaria 11:00 AM</p>
+      <p>Generado: __FECHA__ &nbsp;&bull;&nbsp; Actualizacion diaria 10:00 AM y 17:00 PM</p>
     </div>
   </div>
   <div class="hr">
@@ -548,7 +547,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="tk c-red"><div class="tk-val">__NORESP_PCT__%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
-    <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;7d</div></div>
+    <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
   </div>
   <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
   <div class="exec-summary">
@@ -575,7 +574,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="action-card short-term">
       <h4>📅 Este Mes</h4>
       <ol>
-        <li>Activar los <strong>__STAG14__</strong> leads con +14 días sin contacto</li>
+        <li>Activar los <strong>__STAG14__</strong> leads con +7 días sin contacto</li>
         <li>Revisar pipeline &ldquo;No Responden&rdquo; (<strong>__NORESP_N__</strong> leads)</li>
         <li>Etiquetar sucursal en leads sin clasificar</li>
       </ol>
@@ -628,7 +627,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <select id="f-user" onchange="render()"><option value="">Todos los responsables</option></select>
     <select id="f-suc" onchange="render()"><option value="">Todas las sucursales</option></select>
     <input id="f-days" type="number" placeholder="Dias min. sin seguimiento" oninput="render()" style="width:190px">
-    <button onclick="document.getElementById('f-days').value=14;render()" style="background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit">🔴 Solo críticos +14d</button>
+    <button onclick="document.getElementById('f-days').value=7;render()" style="background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit">🔴 Solo críticos +7d</button>
     <button onclick="exportCSV()" style="background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:inherit">⬇ Exportar CSV</button>
     <span id="rc" class="rc"></span>
   </div>
@@ -735,9 +734,10 @@ function render(){
     const c=SC[r.stage]||'#808080';
     const isWon=r.stage===COMPRADORES_STAGE;
     const isNoResp=r.stage===NO_RESP_STAGE_JS;
-    const badge=isWon?'<span class="badge b-teal">Ganado</span>':isNoResp?'<span class="badge b-gray">Sin respuesta</span>':r.days_int>14?'<span class="badge b-red">+14 dias</span>':r.days_int>=7?'<span class="badge b-amber">7-14 dias</span>':'<span class="badge b-teal">Al dia</span>';
-    const dc=isWon||isNoResp?'var(--muted)':r.days_int>14?'var(--red)':r.days_int>=7?'var(--amber)':'var(--teal)';
-    const rowBg=isWon?'':isNoResp?'':r.days_int>14?'background:rgba(206,41,57,.04)':r.days_int>=7?'background:rgba(217,119,6,.04)':'';
+    const inFollowup=FOLLOWUP_STAGES.includes(r.stage);
+    const badge=isWon?'<span class="badge b-teal">Ganado</span>':isNoResp?'<span class="badge b-gray">Sin respuesta</span>':(inFollowup&&r.days_int>=7)?'<span class="badge b-red">+7 dias</span>':(inFollowup&&r.days_int>=3)?'<span class="badge b-amber">+72h</span>':'<span class="badge b-teal">Al dia</span>';
+    const dc=(isWon||isNoResp||!inFollowup)?'var(--muted)':r.days_int>=7?'var(--red)':r.days_int>=3?'var(--amber)':'var(--teal)';
+    const rowBg=(isWon||isNoResp||!inFollowup)?'':r.days_int>=7?'background:rgba(206,41,57,.04)':r.days_int>=3?'background:rgba(217,119,6,.04)':'';
     const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'--';
     const nm=r.contact||r.name;
     return '<tr style="'+rowBg+'"><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
