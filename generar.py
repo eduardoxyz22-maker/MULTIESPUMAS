@@ -211,7 +211,7 @@ for lead in leads:
     if stage_name in QUALIFIED_STAGES:
         total_calificados += 1
 
-    if days_int >= 7 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
+    if days_int >= 3 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
         total_stagnant_7 += 1
         if days_int >= 14:
             total_stagnant_14 += 1
@@ -232,7 +232,7 @@ for lead in leads:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
         vd["calificados"] += 1
-    if days_int >= 7 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
+    if days_int >= 3 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
         vd["stagnant"] += 1
 
     all_rows.append({
@@ -702,13 +702,13 @@ stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'<
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
-function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?7:'';render();}
+function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
 function filterByVendor(name){document.getElementById('f-user').value=name;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function exportCSV(){
   const stage=document.getElementById('f-stage').value;
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
-  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
+  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
   const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
   const header='ID,Contacto,Deal,Etapa,Sucursal,Responsable,Creado,Dias sin act.,Valor';
   const lines=rows.map(r=>[r.id,(r.contact||r.name).replace(/,/g,' '),r.name.replace(/,/g,' '),r.stage,r.sucursal,r.user,r.created,r.days_int,r.value].join(','));
@@ -719,7 +719,7 @@ function render(){
   const stage=document.getElementById('f-stage').value;
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
-  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
+  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
   const excludeStagnant=(minD>0||view==='stagnant')?[COMPRADORES_STAGE,NO_RESP_STAGE_JS]:[];
   const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&!excludeStagnant.includes(r.stage)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
