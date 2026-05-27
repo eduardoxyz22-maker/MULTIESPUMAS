@@ -103,9 +103,9 @@ def _find_stage(candidates, keywords, default):
 
 COMPRADORES_STAGE  = _find_stage(STAGE_ORDER, ["compra","venta","cerr","buyer","won","sale","close"], "Compradores")
 NO_RESP_STAGE      = _find_stage(STAGE_ORDER, ["no respond","sin resp","no answer","inactiv","perdid","lost"], "No Responden")
-_q1 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
+_q1 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _q2 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
-QUALIFIED_STAGES   = set(filter(None, [_q1, _q2, COMPRADORES_STAGE]))
+QUALIFIED_STAGES   = set(filter(None, [_q1, _q2]))
 print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
 
 print("Obteniendo usuarios...")
