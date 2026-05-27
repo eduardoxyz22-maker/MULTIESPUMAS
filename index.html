@@ -333,7 +333,7 @@ vendors.forEach(v=>{
   const stageRows=v.stages.filter(s=>s.count>0).map(s=>{
     const pct=Math.round(s.count/v.total*100);
     const w=Math.round(s.count/maxStage*100);
-    return '<div class="vc-row"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
+    return '<div class="vc-row" style="cursor:pointer" title="Ver '+s.stage+' de '+v.name+'" onclick="filterByVendorStage(\x27'+v.name+'\x27,\x27'+s.stage+'\x27,event)"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
   }).join('');
   const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
   const prevT=v.prev_total||0;
@@ -367,7 +367,8 @@ usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
 function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
-function filterByVendor(name){document.getElementById('f-user').value=name;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
+function filterByVendor(name){document.getElementById('f-user').value=name;document.getElementById('f-stage').value='';view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
+function filterByVendorStage(name,stage,ev){if(ev)ev.stopPropagation();document.getElementById('f-user').value=name;document.getElementById('f-stage').value=stage;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function exportCSV(){
   const stage=document.getElementById('f-stage').value;
   const user=document.getElementById('f-user').value;
