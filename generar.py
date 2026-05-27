@@ -211,7 +211,7 @@ for lead in leads:
     if stage_name in QUALIFIED_STAGES:
         total_calificados += 1
 
-    if days_int >= 7 and stage_name != NO_RESP_STAGE:
+    if days_int >= 7 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
         total_stagnant_7 += 1
         if days_int >= 14:
             total_stagnant_14 += 1
@@ -232,7 +232,7 @@ for lead in leads:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
         vd["calificados"] += 1
-    if days_int >= 7 and stage_name != NO_RESP_STAGE:
+    if days_int >= 7 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
         vd["stagnant"] += 1
 
     all_rows.append({
