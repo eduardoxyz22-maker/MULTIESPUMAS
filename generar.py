@@ -105,8 +105,15 @@ COMPRADORES_STAGE  = _find_stage(STAGE_ORDER, ["compra","venta","cerr","buyer","
 NO_RESP_STAGE      = _find_stage(STAGE_ORDER, ["no respond","sin resp","no answer","inactiv","perdid","lost"], "No Responden")
 _q1 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _q2 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
-QUALIFIED_STAGES   = set(filter(None, [_q1, _q2]))
+QUALIFIED_STAGES   = set(filter(None, [_q1, _q2, COMPRADORES_STAGE]))
+# Etapas donde las vendedoras deben hacer seguimiento activo
+_fs1 = _find_stage(STAGE_ORDER, ["nueva","new","consult","incom"], None)
+_fs2 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
+_fs3 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
+_fs4 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
+FOLLOWUP_STAGES    = set(filter(None, [_fs1, _fs2, _fs3, _fs4]))
 print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
+print("Etapas seguimiento:", FOLLOWUP_STAGES)
 
 print("Obteniendo usuarios...")
 users_raw = fetch_users()
@@ -211,12 +218,10 @@ for lead in leads:
     if stage_name in QUALIFIED_STAGES:
         total_calificados += 1
 
-    if days_int >= 3 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
+    if days_int >= 3 and stage_name in FOLLOWUP_STAGES:
         total_stagnant_7 += 1
         if days_int >= 7:
             total_stagnant_7_14 += 1
-        if days_int >= 14:
-            total_stagnant_14 += 1
 
     suc_set.add(sucursal)
     usr_set.add(user_name)
@@ -232,7 +237,7 @@ for lead in leads:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
         vd["calificados"] += 1
-    if days_int >= 3 and stage_name != NO_RESP_STAGE and stage_name != COMPRADORES_STAGE:
+    if days_int >= 3 and stage_name in FOLLOWUP_STAGES:
         vd["stagnant"] += 1
 
     all_rows.append({
@@ -646,6 +651,7 @@ const etapas=__ETAPAS_JSON__;
 const prevMesShort='__PREV_MES_SHORT__';
 const COMPRADORES_STAGE='__COMPRADORES_STAGE__';
 const NO_RESP_STAGE_JS='__NO_RESP_STAGE__';
+const FOLLOWUP_STAGES=__FOLLOWUP_STAGES_JSON__;
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
@@ -720,8 +726,8 @@ function render(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
-  const excludeStagnant=(minD>0||view==='stagnant')?[COMPRADORES_STAGE,NO_RESP_STAGE_JS]:[];
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&!excludeStagnant.includes(r.stage)).sort((a,b)=>b.value-a.value);
+  const onlyFollowup=(minD>0||view==='stagnant');
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
@@ -801,6 +807,7 @@ html = html.replace("__VENDORS_JSON__", json.dumps(vendors_json_list, ensure_asc
 html = html.replace("__ETAPAS_JSON__", json.dumps(etapas_json, ensure_ascii=False))
 html = html.replace("__COMPRADORES_STAGE__", COMPRADORES_STAGE)
 html = html.replace("__NO_RESP_STAGE__", NO_RESP_STAGE)
+html = html.replace("__FOLLOWUP_STAGES_JSON__", json.dumps(list(FOLLOWUP_STAGES), ensure_ascii=False))
 
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
