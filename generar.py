@@ -338,6 +338,7 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
             "calif_pct": vcalif,
             "calificados": vq,
             "stagnant_pct": vstag,
+            "stagnant": vs,
             "ticket_avg": vtick,
         },
     })
@@ -463,6 +464,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .vk2:last-child{border-right:none}
 .vk2-val{font-size:.88rem;font-weight:700;color:var(--black);line-height:1}
 .vk2-lbl{font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.vk2-hint{font-size:.57rem;color:var(--muted);margin-top:1px}
 .vc-rows{padding:8px 0}
 .vc-row{display:flex;align-items:center;padding:5px 16px;transition:background .12s;gap:8px}
 .vc-row:hover{background:var(--teal-lt)}
@@ -642,6 +644,8 @@ const stgOpts=__STG_OPTS_JSON__;
 const vendors=__VENDORS_JSON__;
 const etapas=__ETAPAS_JSON__;
 const prevMesShort='__PREV_MES_SHORT__';
+const COMPRADORES_STAGE='__COMPRADORES_STAGE__';
+const NO_RESP_STAGE_JS='__NO_RESP_STAGE__';
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
@@ -685,7 +689,7 @@ vendors.forEach(v=>{
     +'</div>'
     +'<div class="vc-kpis2">'
     +'<div class="vk2"><div class="vk2-val">'+ticket+'</div><div class="vk2-lbl">Ticket promedio</div></div>'
-    +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">% Sin Seguimiento</div></div>'
+    +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">Sin Seguimiento</div><div class="vk2-hint">'+k.stagnant+' leads</div></div>'
     +'<div class="vk2"><div class="vk2-val">'+val+'</div><div class="vk2-lbl">Valor total</div></div>'
     +'</div>'
     +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
@@ -716,15 +720,18 @@ function render(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
+  const excludeStagnant=view==='stagnant'?[COMPRADORES_STAGE,NO_RESP_STAGE_JS]:[];
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&!excludeStagnant.includes(r.stage)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
   tbody.innerHTML=f.map((r,i)=>{
     const c=SC[r.stage]||'#808080';
-    const badge=r.days_int>14?'<span class="badge b-red">+14 dias</span>':r.days_int>=7?'<span class="badge b-amber">7-14 dias</span>':'<span class="badge b-teal">Al dia</span>';
-    const dc=r.days_int>14?'var(--red)':r.days_int>=7?'var(--amber)':'var(--teal)';
-    const rowBg=r.days_int>14?'background:rgba(206,41,57,.04)':r.days_int>=7?'background:rgba(217,119,6,.04)':'';
+    const isWon=r.stage===COMPRADORES_STAGE;
+    const isNoResp=r.stage===NO_RESP_STAGE_JS;
+    const badge=isWon?'<span class="badge b-teal">Ganado</span>':isNoResp?'<span class="badge b-gray">Sin respuesta</span>':r.days_int>14?'<span class="badge b-red">+14 dias</span>':r.days_int>=7?'<span class="badge b-amber">7-14 dias</span>':'<span class="badge b-teal">Al dia</span>';
+    const dc=isWon||isNoResp?'var(--muted)':r.days_int>14?'var(--red)':r.days_int>=7?'var(--amber)':'var(--teal)';
+    const rowBg=isWon?'':isNoResp?'':r.days_int>14?'background:rgba(206,41,57,.04)':r.days_int>=7?'background:rgba(217,119,6,.04)':'';
     const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'--';
     const nm=r.contact||r.name;
     return '<tr style="'+rowBg+'"><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
@@ -792,6 +799,8 @@ html = html.replace("__USR_OPTS_JSON__", json.dumps(usr_opts, ensure_ascii=False
 html = html.replace("__STG_OPTS_JSON__", json.dumps(stg_opts, ensure_ascii=False))
 html = html.replace("__VENDORS_JSON__", json.dumps(vendors_json_list, ensure_ascii=False))
 html = html.replace("__ETAPAS_JSON__", json.dumps(etapas_json, ensure_ascii=False))
+html = html.replace("__COMPRADORES_STAGE__", COMPRADORES_STAGE)
+html = html.replace("__NO_RESP_STAGE__", NO_RESP_STAGE)
 
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
