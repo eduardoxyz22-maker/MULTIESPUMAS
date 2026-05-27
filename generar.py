@@ -185,6 +185,9 @@ total_no_resp = 0
 total_calificados = 0
 total_stagnant_7 = 0
 total_stagnant_7_14 = 0
+total_auto = 0
+total_manual = 0
+created_by_count = defaultdict(int)
 
 for lead in leads:
     lid = lead.get("id", 0)
@@ -239,6 +242,13 @@ for lead in leads:
     if days_int >= 3 and stage_name in FOLLOWUP_STAGES:
         vd["stagnant"] += 1
 
+    created_by_id = lead.get("created_by", 0)
+    if created_by_id == 0:
+        total_auto += 1
+    else:
+        total_manual += 1
+        created_by_count[user_map.get(created_by_id, "Desconocido")] += 1
+
     all_rows.append({
         "id": lid,
         "name": lname,
@@ -271,6 +281,8 @@ conv_pct = round(total_compradores / total_leads * 100) if total_leads > 0 else 
 noresp_pct = round(total_no_resp / total_leads * 100) if total_leads > 0 else 0
 calif_pct = round(total_calificados / total_leads * 100) if total_leads > 0 else 0
 stag_pct = round(total_stagnant_7 / total_leads * 100) if total_leads > 0 else 0
+auto_pct = round(total_auto / total_leads * 100) if total_leads > 0 else 0
+manual_pct = round(total_manual / total_leads * 100) if total_leads > 0 else 0
 ticket_avg = int(total_value / total_compradores) if total_compradores > 0 else 0
 
 # --- KPIs comparativos MoM ---
@@ -348,6 +360,7 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
             "stagnant_pct": vstag,
             "stagnant": vs,
             "ticket_avg": vtick,
+            "created_manual": created_by_count.get(vname, 0),
         },
     })
 
@@ -392,6 +405,7 @@ body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,s
 .hstat-l{font-size:.62rem;color:rgba(255,255,255,.7);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
 .container{padding:26px 36px;max-width:1500px;margin:0 auto}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.origin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:12px 0 22px}
 .mc{background:#fff;border-radius:12px;padding:20px 22px;border:1px solid var(--gray-md);position:relative;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}
 .mc.c-teal .mc-bar{background:var(--teal)} .mc.c-gray .mc-bar{background:var(--gray)}
@@ -543,6 +557,11 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Valor Total Pipeline</div><div class="mc-val">__VALOR__</div><div class="mc-sub">deals con valor asignado</div></div>
     <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
     <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
+  </div>
+  <div class="sec">Origen de Leads &mdash; __MES_LABEL__</div>
+  <div class="origin-grid">
+    <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">&#9881; Automáticos</div><div class="mc-val">__AUTO_N__</div><div class="mc-sub">__AUTO_PCT__% &mdash; anuncios, web, integraciones</div></div>
+    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">&#9997; Creados por vendedoras</div><div class="mc-val">__MANUAL_N__</div><div class="mc-sub">__MANUAL_PCT__% &mdash; carga manual</div></div>
   </div>
   <div class="sec">Embudo del Mes</div>
   <div id="funnel" class="funnel"></div>
@@ -709,6 +728,7 @@ vendors.forEach(v=>{
     +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">Sin Seguimiento</div><div class="vk2-hint">'+k.stagnant+' leads</div></div>'
     +'<div class="vk2"><div class="vk2-val">'+val+'</div><div class="vk2-lbl">Valor total</div></div>'
     +'</div>'
+    +'<div style="padding:6px 16px;font-size:.66rem;color:var(--muted);border-bottom:1px solid var(--gray-lt)">&#9997; <strong style="color:var(--text)">'+k.created_manual+'</strong> leads creados por ella &middot; el resto asignados automáticamente</div>'
     +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
 });
 const fEl=document.getElementById('funnel');
@@ -784,6 +804,10 @@ html = html.replace("__CALIF_PCT__", str(calif_pct))
 html = html.replace("__CALIF_N__", str(total_calificados))
 html = html.replace("__TICKET__", fmt_money(ticket_avg))
 html = html.replace("__STAG_PCT__", str(stag_pct))
+html = html.replace("__AUTO_N__", str(total_auto))
+html = html.replace("__AUTO_PCT__", str(auto_pct))
+html = html.replace("__MANUAL_N__", str(total_manual))
+html = html.replace("__MANUAL_PCT__", str(manual_pct))
 html = html.replace("__MES_LABEL__", mes_label)
 html = html.replace("__TOP_VENDOR__", top_vendor_name)
 html = html.replace("__TOP_VENDOR_PCT__", str(top_vendor_pct))
