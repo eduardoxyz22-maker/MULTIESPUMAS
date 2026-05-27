@@ -501,6 +501,8 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .badge-q.potential{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.3)}
 .badge-q.volume{background:rgba(59,130,246,.12);color:#2563eb;border:1px solid rgba(59,130,246,.3)}
 .badge-q.critical{background:rgba(206,41,57,.12);color:var(--red);border:1px solid rgba(206,41,57,.3)}
+.super-star-banner{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;font-size:.65rem;font-weight:800;padding:4px 10px;letter-spacing:.08em;text-transform:uppercase;border-radius:0 0 8px 8px;text-align:center;margin:-1px -1px 0 -1px}
+.vc.is-super-star{border:2px solid #a855f7;box-shadow:0 0 16px rgba(168,85,247,.25)}
 /* Proyeccion */
 .scenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 24px}
 .scenario{background:#fff;border-radius:10px;padding:16px;text-align:center;border:1px solid var(--gray-md);box-shadow:0 1px 4px rgba(0,0,0,.05)}
@@ -674,8 +676,10 @@ const qg=document.getElementById('quadrant-grid');
     +'<p class="q-action">'+(qAction[cls]||qAction['critical'])+'</p></div>';
 });
 // Vendor cards
+const superStarName=vendors.reduce((best,v)=>v.kpis.conv_pct>best.kpis.conv_pct?v:best,vendors[0]).name;
 const vg=document.getElementById('vendors-grid');
 vendors.forEach(v=>{
+  const isSuperStar=v.name===superStarName&&v.kpis.conv_pct>0;
   const k=v.kpis;
   const maxStage=Math.max(...v.stages.map(s=>s.count),1);
   const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
@@ -691,7 +695,9 @@ vendors.forEach(v=>{
   const diffVColor=diffV>0?'#16a34a':(diffV<0?'var(--red)':'var(--gray)');
   const diffVArrow=diffV>0?'&#9650;':(diffV<0?'&#9660;':'&mdash;');
   const diffVSign=diffV>0?'+':'';
-  vg.innerHTML+='<div class="vc" style="cursor:pointer" onclick="filterByVendor(\\x27'+v.name+'\\x27)">'
+  const superBanner=isSuperStar?'<div class="super-star-banner">&#9819; SUPER ESTRELLA &mdash; MEJOR CONVERSIÓN &#9819;</div>':'';
+  vg.innerHTML+='<div class="vc'+(isSuperStar?' is-super-star':'')+'" style="cursor:pointer" onclick="filterByVendor(\\x27'+v.name+'\\x27)">'
+    +superBanner
     +'<div class="vc-head"><div><div class="vc-name">'+v.name+'</div>'+badge+'</div><div style="text-align:right"><div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end"><div class="vc-total">'+v.total+'</div><div style="font-size:.95rem;font-weight:800;color:'+diffVColor+'">'+diffVArrow+' '+diffVSign+diffV+'</div></div><div class="vc-total-lbl">vs '+prevT+' en '+prevMesShort+'</div></div></div>'
     +'<div class="vc-kpis">'
     +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
@@ -706,9 +712,9 @@ vendors.forEach(v=>{
     +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
 });
 const fEl=document.getElementById('funnel');
-stages.forEach(s=>{const g=document.createElement('div');g.className='fs';g.style.background=SC[s.name]||'#808080';g.style.flex=Math.max(s.count,1);g.title=s.name+': '+s.count+' deals';if(s.count>5)g.textContent=s.count;fEl.appendChild(g);});
+stages.filter(s=>s.count>0).forEach(s=>{const g=document.createElement('div');g.className='fs';g.style.background=SC[s.name]||'#808080';g.style.flex=Math.max(s.count,1);g.title=s.name+': '+s.count+' deals';if(s.count>5)g.textContent=s.count;fEl.appendChild(g);});
 const grid=document.getElementById('stages-grid');
-stages.forEach(s=>{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'--';grid.innerHTML+='<div class="sc"><div class="sc-bar" style="background:'+c+'"></div><div class="sc-nm">'+s.name+'</div><div class="sc-n">'+s.count+'</div><div class="sc-d">'+v+' &middot; '+s.pct+'%</div></div>';});
+stages.filter(s=>s.count>0).forEach(s=>{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'--';grid.innerHTML+='<div class="sc"><div class="sc-bar" style="background:'+c+'"></div><div class="sc-nm">'+s.name+'</div><div class="sc-n">'+s.count+'</div><div class="sc-d">'+v+' &middot; '+s.pct+'%</div></div>';});
 stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'</option>');
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
