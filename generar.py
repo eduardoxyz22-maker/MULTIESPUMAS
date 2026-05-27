@@ -321,10 +321,14 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
     for sname in vd["stages"]:
         if sname not in STAGE_ORDER:
             stages_list.append({"stage": sname, "count": vd["stages"][sname]})
-    if vconv >= _avg_conv_q and vt >= _avg_total_q:
+    _hi_conv = vconv > _avg_conv_q
+    _hi_vol  = vt >= _avg_total_q
+    if _hi_conv and _hi_vol:
         _quadrant = "star"
-    elif vconv >= _avg_conv_q:
+    elif _hi_conv:
         _quadrant = "potential"
+    elif _hi_vol:
+        _quadrant = "volume"
     else:
         _quadrant = "critical"
     vendors_json_list.append({
@@ -483,7 +487,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .exec-summary{border-left:4px solid var(--teal);padding:15px 20px;margin:12px 0 22px;background:#fff;border-radius:0 10px 10px 0;border:1px solid var(--gray-md)}
 .quadrant-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 22px}
 .quadrant{border-radius:10px;padding:14px;background:#fff;border:1px solid var(--gray-md);display:flex;flex-direction:column;gap:7px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.q-star{border-left:4px solid #22c55e} .q-potential{border-left:4px solid #eab308} .q-critical{border-left:4px solid var(--red)}
+.q-star{border-left:4px solid #22c55e} .q-potential{border-left:4px solid #eab308} .q-volume{border-left:4px solid #3b82f6} .q-critical{border-left:4px solid var(--red)}
 .q-label{font-weight:700;font-size:.78rem} .q-axis{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .q-person{font-size:.8rem;line-height:1.5} .q-action{font-size:.7rem;color:var(--muted);font-style:italic}
 .actions-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:18px;margin-bottom:24px}
@@ -495,6 +499,7 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .badge-q{display:inline-block;margin-top:5px;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none}
 .badge-q.star{background:rgba(34,197,94,.12);color:#16a34a;border:1px solid rgba(34,197,94,.3)}
 .badge-q.potential{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.3)}
+.badge-q.volume{background:rgba(59,130,246,.12);color:#2563eb;border:1px solid rgba(59,130,246,.3)}
 .badge-q.critical{background:rgba(206,41,57,.12);color:var(--red);border:1px solid rgba(206,41,57,.3)}
 /* Proyeccion */
 .scenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 24px}
@@ -654,18 +659,19 @@ const FOLLOWUP_STAGES=__FOLLOWUP_STAGES_JSON__;
 const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
 function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
 function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
-const QL={'star':'&#9679; ESTRELLA','potential':'&#9670; POTENCIAL','critical':'&#9675; CRÍTICO'};
-const QC={'star':'star','potential':'potential','critical':'critical'};
-const qDesc={'star':'Alto volumen · Alta conversión','potential':'Buen ratio · Potencial de escala','critical':'Conversión por debajo del promedio'};
+const QL={'star':'&#9679; ESTRELLA','potential':'&#9670; POTENCIAL','volume':'&#9632; ALTO VOLUMEN','critical':'&#9675; CRÍTICO'};
+const QC={'star':'star','potential':'potential','volume':'volume','critical':'critical'};
+const qDesc={'star':'Alto volumen · Conversión superior','potential':'Buena conversión · Poco volumen','volume':'Mucho volumen · Conversión promedio','critical':'Bajo volumen · Baja conversión'};
+const qAction={'star':'→ Documentar playbook y replicarlo al equipo','potential':'→ Aumentar volumen de leads asignados','volume':'→ Mejorar cierre: auditar cotizaciones y acompañar visitas','critical':'→ Coaching intensivo y revisión de pipeline'};
 // Quadrant grid
 const qg=document.getElementById('quadrant-grid');
-[...vendors].sort((a,b)=>{const o={star:0,potential:1,critical:2};return (o[a.quadrant]||2)-(o[b.quadrant]||2);}).forEach(v=>{
+[...vendors].sort((a,b)=>{const o={star:0,potential:1,volume:2,critical:3};return (o[a.quadrant]||3)-(o[b.quadrant]||3);}).forEach(v=>{
   const cls=v.quadrant||'critical';
   const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
   const k=v.kpis;
   qg.innerHTML+='<div class="quadrant q-'+cls+'"><span class="q-label">'+QL[cls]+'</span><span class="q-axis">'+qDesc[cls]+'</span>'
     +'<div class="q-person"><strong>'+v.name+'</strong><br>'+v.total+' leads &middot; '+k.conv_pct+'% conv &middot; '+val+'</div>'
-    +'<p class="q-action">'+(cls==='star'?'→ Documentar playbook y replicarlo al equipo':cls==='potential'?'→ Aumentar volumen y aplicar playbook top vendedora':'→ Auditar cotizaciones y acompañar visitas')+'</p></div>';
+    +'<p class="q-action">'+(qAction[cls]||qAction['critical'])+'</p></div>';
 });
 // Vendor cards
 const vg=document.getElementById('vendors-grid');
