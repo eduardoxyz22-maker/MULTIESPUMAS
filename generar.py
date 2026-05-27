@@ -720,7 +720,7 @@ function render(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?7:0);
-  const excludeStagnant=view==='stagnant'?[COMPRADORES_STAGE,NO_RESP_STAGE_JS]:[];
+  const excludeStagnant=(minD>0||view==='stagnant')?[COMPRADORES_STAGE,NO_RESP_STAGE_JS]:[];
   const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&!excludeStagnant.includes(r.stage)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
