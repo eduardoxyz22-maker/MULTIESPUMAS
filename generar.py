@@ -67,6 +67,65 @@ def fmt_money(v):
 def fmt_date(ts):
     return datetime.datetime.fromtimestamp(ts).strftime("%d/%m/%Y")
 
+# --- Taxonomía de canales de origen ---
+_CH_TAXONOMY = [
+    (["facebook","instagram","meta","fb ads","fb_ads","fb "], "Facebook Ads"),
+    (["google","adwords","sem","gads"], "Google Ads"),
+    (["whatsapp","wpp","ws ","ws_"], "WhatsApp directo"),
+    (["web","formulario","form","landing","online","sitio"], "Web / Formulario"),
+    (["tienda","walk","presencial","local","fisic","visita directa"], "Walk-in (Tienda)"),
+    (["llamada","call","telefono","tel ","tel_"], "Llamada entrante"),
+    (["referido","referral","recomend","boca"], "Referidos"),
+    (["manual","vendedor","carga","agente"], "Carga manual vendedora"),
+]
+_CH_ICONS = {
+    "Facebook Ads": "&#128248;", "Google Ads": "&#128269;",
+    "WhatsApp directo": "&#128172;", "Walk-in (Tienda)": "&#128694;",
+    "Web / Formulario": "&#127760;", "Llamada entrante": "&#128222;",
+    "Carga manual vendedora": "&#9997;", "Referidos": "&#128205;",
+    "Automático": "&#9881;", "Otros": "&#128101;",
+}
+
+def _norm_channel(raw):
+    """Normaliza un valor crudo al nombre de canal canónico."""
+    if not raw:
+        return None
+    low = str(raw).lower().strip()
+    for keys, name in _CH_TAXONOMY:
+        if any(k in low for k in keys):
+            return name
+    return None
+
+def _detect_channel(lead, sf_id):
+    """Detecta el canal de origen de un lead (custom field > tags > created_by)."""
+    # 1. Campo custom de fuente/origen
+    if sf_id:
+        for cf in lead.get("custom_fields_values") or []:
+            if cf.get("field_id") == sf_id:
+                vals = cf.get("values", [])
+                if vals:
+                    ch = _norm_channel(str(vals[0].get("value", "")))
+                    if ch:
+                        return ch
+    # 2. Tags adicionales (el primero es sucursal, los siguientes podrían ser fuente)
+    tags = lead.get("_embedded", {}).get("tags", [])
+    for tag in tags[1:]:
+        ch = _norm_channel(tag.get("name", ""))
+        if ch:
+            return ch
+    # 3. Fallback: created_by 0 = automatico (integración), >0 = manual
+    if lead.get("created_by", 0) == 0:
+        return "Automático"
+    return "Carga manual vendedora"
+
+def _fmt_resp(m):
+    """Formatea minutos a string legible."""
+    if m < 60:
+        return f"{int(m)} min"
+    if m < 1440:
+        return f"{m/60:.1f} h"
+    return f"{int(m/1440)} d"
+
 now = time.time()
 now_dt = datetime.datetime.now()
 mes_label_map = {
@@ -122,6 +181,67 @@ user_map = {u["id"]: u.get("name", "Desconocido") for u in users_raw}
 print("Obteniendo leads del mes actual...")
 leads = fetch_all_leads(from_ts)
 print("Total leads:", len(leads))
+
+# --- Mejora #2: buscar custom field de origen/fuente ---
+print("Buscando campo de origen en custom fields...")
+source_field_id = None
+try:
+    _cf_resp = api_get("/leads/custom_fields")
+    for _cf in _cf_resp.get("_embedded", {}).get("custom_fields", []):
+        _fn = _cf.get("name", "").lower()
+        _fc = (_cf.get("code") or "").lower()
+        if any(k in _fn or k in _fc for k in ["fuente","origen","source","canal","utm","procedencia","origin"]):
+            source_field_id = _cf["id"]
+            print(f"  Campo origen: '{_cf['name']}' id={source_field_id}")
+            break
+    if not source_field_id:
+        print("  Sin campo de origen específico — usando created_by para clasificar.")
+except Exception as _e:
+    print("  ⚠ Error custom fields:", _e)
+
+# --- Mejora #1: obtener eventos del mes para tiempo de primera respuesta ---
+print("Obteniendo eventos del mes...")
+_events_all = []
+_ev_page = 1
+while True:
+    try:
+        _ev_data = api_get("/events", {
+            "limit": 100, "page": _ev_page,
+            "filter[entity][]": "lead",
+            "filter[created_at][from]": from_ts,
+        })
+    except Exception as _e:
+        print(f"  ⚠ Error eventos pág {_ev_page}:", _e)
+        break
+    _ev_batch = _ev_data.get("_embedded", {}).get("events", [])
+    if not _ev_batch:
+        break
+    _events_all.extend(_ev_batch)
+    if "next" not in _ev_data.get("_links", {}):
+        break
+    _ev_page += 1
+    time.sleep(0.15)
+    if _ev_page > 400:
+        print("  ⚠ Límite paginación eventos alcanzado")
+        break
+print(f"  Eventos obtenidos: {len(_events_all)}")
+
+# Construir diccionario lead_id -> timestamp primer evento humano
+_lead_created_ts = {lead["id"]: lead.get("created_at", 0) for lead in leads}
+_first_human_ev = {}
+for _ev in _events_all:
+    _ev_by = _ev.get("created_by", 0)
+    if _ev_by == 0:
+        continue  # evento de sistema/bot
+    _eid = _ev.get("entity_id")
+    if _eid not in _lead_created_ts:
+        continue  # lead fuera del rango del mes
+    _ets = _ev.get("created_at", 0)
+    _lts = _lead_created_ts[_eid]
+    if _ets <= _lts:
+        continue  # evento anterior o simultáneo a la creación
+    if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
+        _first_human_ev[_eid] = _ets
 
 # Leads del mes anterior (mismo rango de dias)
 if now_dt.month == 1:
@@ -314,6 +434,125 @@ mid_proj           = int(total_leads * dias_del_mes / dias_transcurridos * 0.04)
 mid_proj_val       = fmt_money(int(ticket_avg * mid_proj))
 rescue_extra       = int(total_stagnant_7 * 0.30)
 rescue_val_extra   = fmt_money(int(ticket_avg * rescue_extra))
+
+# === Canal de Origen — datos reales ===
+channel_data = defaultdict(lambda: {"leads": 0, "compradores": 0, "value": 0.0})
+for lead in leads:
+    ch = _detect_channel(lead, source_field_id)
+    channel_data[ch]["leads"] += 1
+    if stage_map.get(lead.get("status_id"), "") == COMPRADORES_STAGE:
+        channel_data[ch]["compradores"] += 1
+    channel_data[ch]["value"] += float(lead.get("price", 0) or 0)
+
+_ch_rows_data = sorted(channel_data.items(), key=lambda x: -x[1]["compradores"])
+_ch_eligible = [(n, d) for n, d in _ch_rows_data if d["leads"] >= 5]
+_max_conv = max((round(d["compradores"]/d["leads"]*100) for _, d in _ch_rows_data if d["leads"] > 0), default=1) or 1
+_ch_best_name = max(_ch_eligible, key=lambda x: round(x[1]["compradores"]/x[1]["leads"]*100) if x[1]["leads"] else 0, default=(None, {}))[0] if _ch_eligible else None
+_ch_worst_name = min(_ch_eligible, key=lambda x: round(x[1]["compradores"]/x[1]["leads"]*100) if x[1]["leads"] else 0, default=(None, {}))[0] if _ch_eligible else None
+
+_ch_rows_html = ""
+for ch_name, ch_d in _ch_rows_data:
+    ch_leads = ch_d["leads"]
+    ch_comp = ch_d["compradores"]
+    ch_val = ch_d["value"]
+    ch_pct = round(ch_leads / total_leads * 100) if total_leads > 0 else 0
+    ch_conv = round(ch_comp / ch_leads * 100) if ch_leads > 0 else 0
+    ch_ticket = int(ch_val / ch_comp) if ch_comp > 0 else 0
+    bar_w = round(ch_conv / _max_conv * 100)
+    is_best = ch_name == _ch_best_name
+    is_worst = ch_name == _ch_worst_name
+    bar_color = "#22c55e" if is_best else ("var(--red)" if is_worst else "var(--teal)")
+    row_cls = ' class="ch-best"' if is_best else (' class="ch-worst"' if is_worst else "")
+    icon = _CH_ICONS.get(ch_name, "&#128101;")
+    ticket_str = fmt_money(ch_ticket) if ch_ticket > 0 else "&mdash;"
+    val_str = fmt_money(int(ch_val)) if ch_val > 0 else "&mdash;"
+    _ch_rows_html += f'        <tr{row_cls}><td>{icon} {ch_name}</td><td>{ch_leads:,}</td><td>{ch_pct}%</td><td>{ch_comp}</td><td>{ch_conv}%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:{bar_w}%;background:{bar_color}"></div></div></td><td>{ticket_str}</td><td>{val_str}</td></tr>\n'
+
+_otros_n = channel_data.get("Otros", {"leads": 0})["leads"]
+_otros_pct = round(_otros_n / total_leads * 100) if total_leads > 0 else 0
+if _otros_pct >= 10:
+    _unclassified_alert = f'<div class="ch-alert"><span>&#9888;</span><div><b>{_otros_n} leads ({_otros_pct}%)</b> sin canal clasificado &mdash; etiqueta el origen en Kommo para mejorar la anal&iacute;tica.</div></div>'
+else:
+    _unclassified_alert = ""
+
+if _ch_best_name and _ch_worst_name and _ch_best_name != _ch_worst_name:
+    _b = channel_data[_ch_best_name]
+    _w = channel_data[_ch_worst_name]
+    _b_conv = round(_b["compradores"]/_b["leads"]*100) if _b["leads"] else 0
+    _w_conv = round(_w["compradores"]/_w["leads"]*100) if _w["leads"] else 0
+    _mult = round(_b_conv / max(_w_conv, 1), 1)
+    _b_tick = fmt_money(int(_b["value"]/_b["compradores"])) if _b["compradores"] > 0 else ""
+    _channel_insight = f'&#128161; <strong>{_ch_best_name} convierte {_mult}&times; m&aacute;s que {_ch_worst_name}</strong> ({_b_conv}% vs {_w_conv}%).'
+    if _b_tick:
+        _channel_insight += f' Ticket promedio en {_ch_best_name}: <strong>{_b_tick}</strong> &mdash; priorizar este canal tiene mayor retorno por lead captado.'
+elif _ch_best_name:
+    _b = channel_data[_ch_best_name]
+    _b_conv = round(_b["compradores"]/_b["leads"]*100) if _b["leads"] else 0
+    _channel_insight = f'&#128161; <strong>{_ch_best_name}</strong> es el canal con mayor tasa de conversi&oacute;n ({_b_conv}%).'
+else:
+    _channel_insight = '&#128161; Clasifica el origen de los leads en Kommo para obtener insights por canal.'
+
+# === Velocidad de Respuesta — estadísticas reales ===
+_resp_times_all = []  # (minutes, responsible_user_id)
+for lead in leads:
+    lid = lead["id"]
+    uid = lead.get("responsible_user_id")
+    if lid in _first_human_ev:
+        dm = (_first_human_ev[lid] - lead.get("created_at", 0)) / 60.0
+        if dm < 0:
+            dm = 0.0
+        _resp_times_all.append((dm, uid))
+
+_resp_n = len(_resp_times_all)
+_resp_avg = sum(t[0] for t in _resp_times_all) / _resp_n if _resp_n > 0 else 0
+_resp_lt5_n = sum(1 for t in _resp_times_all if t[0] < 5)
+_resp_lt1h_n = sum(1 for t in _resp_times_all if t[0] < 60)
+_resp_lt5_pct = round(_resp_lt5_n / total_leads * 100) if total_leads > 0 else 0
+_resp_lt1h_pct = round(_resp_lt1h_n / total_leads * 100) if total_leads > 0 else 0
+_resp_cold_n = sum(
+    1 for lead in leads
+    if lead["id"] not in _first_human_ev
+    or (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 1440
+)
+_resp_cold_pct = round(_resp_cold_n / total_leads * 100) if total_leads > 0 else 0
+_resp_avg_str = _fmt_resp(_resp_avg) if _resp_n > 0 else "N/A"
+_resp_avg_color = "c-teal" if _resp_avg < 15 else ("c-amber" if _resp_avg < 60 else "c-red")
+_resp_lt5_color = "c-teal" if _resp_lt5_pct >= 40 else ("c-amber" if _resp_lt5_pct >= 20 else "c-red")
+_resp_lt1h_color = "c-teal" if _resp_lt1h_pct >= 70 else ("c-amber" if _resp_lt1h_pct >= 40 else "c-red")
+
+_vresp = defaultdict(lambda: {"times": [], "cold": 0})
+for (dm, uid) in _resp_times_all:
+    uname = user_map.get(uid, "Desconocido")
+    _vresp[uname]["times"].append(dm)
+for lead in leads:
+    lid = lead["id"]
+    uname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
+    if lid not in _first_human_ev or (_first_human_ev[lid] - lead.get("created_at", 0)) / 60.0 > 1440:
+        _vresp[uname]["cold"] += 1
+
+_vresp_list = []
+for vname, vrd in _vresp.items():
+    vtimes = vrd["times"]
+    vavg = sum(vtimes) / len(vtimes) if vtimes else None
+    vlt5_pct = round(sum(1 for t in vtimes if t < 5) / len(vtimes) * 100) if vtimes else 0
+    _vresp_list.append((vname, vavg, vlt5_pct, vrd["cold"]))
+_vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
+
+_vendor_resp_html = ""
+for (vname, vavg, vlt5_pct, vcold) in _vresp_list:
+    if vavg is None:
+        avg_str = "Sin datos"
+        badge = '<span class="badge b-gray">Sin datos</span>'
+    elif vavg < 15:
+        avg_str = f"<strong>{_fmt_resp(vavg)}</strong>"
+        badge = '<span class="badge b-teal">&#128994; Excelente</span>'
+    elif vavg < 60:
+        avg_str = _fmt_resp(vavg)
+        badge = '<span class="badge b-amber">&#128993; Aceptable</span>'
+    else:
+        avg_str = _fmt_resp(vavg)
+        badge = '<span class="badge b-red">&#128308; Cr&iacute;tico</span>'
+    _vendor_resp_html += f'        <tr><td><strong>{vname}</strong></td><td>{vlt5_pct}%</td><td>{avg_str}</td><td>{vcold}</td><td>{badge}</td></tr>\n'
 
 vendors_json_list = []
 for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
@@ -524,6 +763,19 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .scenario h4{margin:0 0 6px;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .scenario-num{font-size:1.9rem;font-weight:800;color:var(--black);line-height:1}
 .scenario-val{font-size:.95rem;font-weight:700;color:var(--teal);margin:3px 0 7px} .scenario p{font-size:.68rem;color:var(--muted);margin:0}
+/* Fila global automático vs manual */
+.lead-origin-row{display:flex;align-items:center;gap:0;background:#fff;border:1px solid var(--gray-md);border-radius:12px;padding:0;margin-bottom:22px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06);position:relative}
+.lo-card{display:flex;align-items:center;gap:16px;flex:1;padding:18px 24px}
+.lo-auto{border-right:1px solid var(--gray-md)}
+.lo-auto .lo-val{color:var(--gray)}
+.lo-manual .lo-val{color:var(--teal)}
+.lo-icon{font-size:2rem;opacity:.7;flex-shrink:0}
+.lo-val{font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:3px}
+.lo-lbl{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.4;max-width:200px}
+.lo-pct{font-size:.66rem;color:var(--muted);margin-top:2px;font-weight:600}
+.lo-vs{font-size:.72rem;font-weight:800;color:var(--muted);padding:0 4px;flex-shrink:0;letter-spacing:.04em}
+.lo-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--teal-lt)}
+.lo-bar-fill{height:100%;background:var(--gray);border-radius:0}
 /* Delta MoM */
 .delta-mom{font-size:.65rem;font-weight:700;margin-left:4px;vertical-align:middle}
 .delta-mom.up{color:#16a34a} .delta-mom.down{color:var(--red)} .delta-mom.flat{color:var(--gray)}
@@ -543,6 +795,8 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .ch-worst td{background:rgba(206,41,57,.05)} .ch-worst td:nth-child(5){color:var(--red);font-weight:800}
 .ch-insight{background:var(--teal-lt);border-top:1px solid #99DDD9;padding:12px 18px;font-size:.78rem;line-height:1.65;color:var(--text)}
 .mock-badge{display:inline-block;font-size:.58rem;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 6px;border-radius:20px;vertical-align:middle;margin-left:6px;letter-spacing:.02em}
+.ch-alert{background:var(--amber-lt);border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:8px;padding:11px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:.8rem;color:#7C4B00}
+.ch-alert span{font-size:1.1rem} .ch-alert b{color:var(--amber);font-weight:700}
 @media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid,.resp-kpis{grid-template-columns:1fr}}
 </style>
 </head>
@@ -574,23 +828,38 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
     <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
-  <div class="sec">Origen de Leads &mdash; __MES_LABEL__ <span class="mock-badge">DATOS ESTIMADOS</span></div>
+  <div class="lead-origin-row">
+    <div class="lo-card lo-auto">
+      <div class="lo-icon">&#9881;</div>
+      <div class="lo-body">
+        <div class="lo-val">__AUTO_N__</div>
+        <div class="lo-lbl">Leads asignados autom&aacute;ticamente por el sistema</div>
+        <div class="lo-pct">__AUTO_PCT__% del total</div>
+      </div>
+    </div>
+    <div class="lo-vs">VS</div>
+    <div class="lo-card lo-manual">
+      <div class="lo-icon">&#9997;</div>
+      <div class="lo-body">
+        <div class="lo-val">__MANUAL_N__</div>
+        <div class="lo-lbl">Leads ingresados manualmente por vendedoras</div>
+        <div class="lo-pct">__MANUAL_PCT__% del total</div>
+      </div>
+    </div>
+    <div class="lo-bar-wrap">
+      <div class="lo-bar-fill" style="width:__AUTO_PCT__%"></div>
+    </div>
+  </div>
+  <div class="sec">Origen de Leads &mdash; __MES_LABEL__</div>
+  __UNCLASSIFIED_ALERT__
   <div class="ch-wrap">
     <table class="ch-table">
-      <thead><tr><th>Canal</th><th>Leads</th><th>% Total</th><th>Cierres</th><th>Conversión</th><th>Conv. relativa</th><th>Ticket prom.</th><th>Pipeline</th></tr></thead>
+      <thead><tr><th>Canal</th><th>Leads</th><th>% Total</th><th>Cierres</th><th>Conversi&oacute;n</th><th>Conv. relativa</th><th>Ticket prom.</th><th>Pipeline</th></tr></thead>
       <tbody>
-        <tr><td>&#128248; Facebook Ads</td><td>1,102</td><td>38.7%</td><td>32</td><td>2.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:20%;background:var(--teal)"></div></div></td><td>$4,200</td><td>$134,400</td></tr>
-        <tr><td>&#128269; Google Ads</td><td>587</td><td>20.6%</td><td>21</td><td>3.6%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:25%;background:var(--teal)"></div></div></td><td>$4,800</td><td>$100,800</td></tr>
-        <tr><td>&#128172; WhatsApp directo</td><td>265</td><td>9.3%</td><td>18</td><td>6.8%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:48%;background:var(--teal)"></div></div></td><td>$5,100</td><td>$91,800</td></tr>
-        <tr class="ch-best"><td>&#128694; Walk-in (Tienda)</td><td>98</td><td>3.4%</td><td>14</td><td>14.3%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:100%;background:#22c55e"></div></div></td><td>$6,200</td><td>$86,800</td></tr>
-        <tr><td>&#127760; Web / Formulario</td><td>180</td><td>6.3%</td><td>11</td><td>6.1%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:43%;background:var(--teal)"></div></div></td><td>$4,900</td><td>$53,900</td></tr>
-        <tr><td>&#128222; Llamada entrante</td><td>63</td><td>2.2%</td><td>8</td><td>12.7%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:89%;background:#22c55e"></div></div></td><td>$5,800</td><td>$46,400</td></tr>
-        <tr class="ch-worst"><td>&#9997; Carga manual vendedora</td><td>491</td><td>17.3%</td><td>9</td><td>1.8%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:13%;background:var(--red)"></div></div></td><td>$4,100</td><td>$36,900</td></tr>
-        <tr><td>&#128205; Referidos</td><td>42</td><td>1.5%</td><td>5</td><td>11.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:83%;background:#22c55e"></div></div></td><td>$5,500</td><td>$27,500</td></tr>
-        <tr><td>&#128101; Otros</td><td>17</td><td>0.6%</td><td>1</td><td>5.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:41%;background:var(--teal)"></div></div></td><td>$4,000</td><td>$4,000</td></tr>
+__CHANNELS_ROWS__
       </tbody>
     </table>
-    <div class="ch-insight">&#128161; <strong>Walk-in convierte 4.9&times; m&aacute;s que Facebook Ads</strong> (14.3% vs 2.9%). El ticket promedio en tienda ($6,200) supera en <strong>+$2,000 por cierre</strong> al lead digital. Referidos (11.9%) y Llamada (12.7%) tambi&eacute;n superan ampliamente la media &mdash; invertir en estos canales tiene mayor retorno por lead captado.</div>
+    <div class="ch-insight">__CHANNEL_INSIGHT__</div>
   </div>
   <div class="sec">Embudo del Mes</div>
   <div id="funnel" class="funnel"></div>
@@ -604,22 +873,18 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
   </div>
-  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__ <span class="mock-badge">DATOS ESTIMADOS</span></div>
+  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__</div>
   <div class="resp-kpis">
-    <div class="tk c-amber"><div class="tk-val">38 min</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min &mdash; nivel aceptable</div></div>
-    <div class="tk c-amber"><div class="tk-val">22%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">538 leads &mdash; ventana de oro</div></div>
-    <div class="tk c-gray"><div class="tk-val">51%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">1,246 leads contactados a tiempo</div></div>
-    <div class="tk c-red"><div class="tk-val">220</div><div class="tk-lbl">Leads Fríos +24h</div><div class="tk-sub">9% &mdash; requieren reactivación urgente</div></div>
+    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
+    <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
+    <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads contactados a tiempo</div></div>
+    <div class="tk c-red"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Leads Fr&iacute;os +24h / Sin Respuesta</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; requieren reactivaci&oacute;n</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>Sucursal</th><th>Tiempo prom. 1&ordf; respuesta</th><th>% en &lt;5 min</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. 1&ordf; respuesta</th><th>Fr&iacute;os / Sin contacto</th><th>Status</th></tr></thead>
       <tbody>
-        <tr><td><strong>Isabel Robledo</strong></td><td>Mia Plaza</td><td><strong>18 min</strong></td><td>34%</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
-        <tr><td><strong>Maria Flores</strong></td><td>Buenos Aires</td><td><strong>28 min</strong></td><td>27%</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
-        <tr><td>Carola Chavez</td><td>Central</td><td>42 min</td><td>19%</td><td><span class="badge b-amber">&#128993; Aceptable</span></td></tr>
-        <tr><td>Mirian Salazar</td><td>Mia Plaza</td><td>55 min</td><td>15%</td><td><span class="badge b-amber">&#128993; Aceptable</span></td></tr>
-        <tr><td>Jonathan Monje</td><td>Central</td><td>85 min</td><td>11%</td><td><span class="badge b-red">&#128308; Cr&iacute;tico</span></td></tr>
+__VENDOR_RESP_ROWS__
       </tbody>
     </table>
   </div>
@@ -896,6 +1161,22 @@ html = html.replace("__ETAPAS_JSON__", json.dumps(etapas_json, ensure_ascii=Fals
 html = html.replace("__COMPRADORES_STAGE__", COMPRADORES_STAGE)
 html = html.replace("__NO_RESP_STAGE__", NO_RESP_STAGE)
 html = html.replace("__FOLLOWUP_STAGES_JSON__", json.dumps(list(FOLLOWUP_STAGES), ensure_ascii=False))
+# Canal de Origen
+html = html.replace("__CHANNELS_ROWS__", _ch_rows_html)
+html = html.replace("__CHANNEL_INSIGHT__", _channel_insight)
+html = html.replace("__UNCLASSIFIED_ALERT__", _unclassified_alert)
+# Velocidad de Respuesta
+html = html.replace("__RESP_AVG_STR__", _resp_avg_str)
+html = html.replace("__RESP_AVG_COLOR__", _resp_avg_color)
+html = html.replace("__RESP_LT5_PCT__", str(_resp_lt5_pct))
+html = html.replace("__RESP_LT5_N__", str(_resp_lt5_n))
+html = html.replace("__RESP_LT5_COLOR__", _resp_lt5_color)
+html = html.replace("__RESP_LT1H_PCT__", str(_resp_lt1h_pct))
+html = html.replace("__RESP_LT1H_N__", str(_resp_lt1h_n))
+html = html.replace("__RESP_LT1H_COLOR__", _resp_lt1h_color)
+html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
+html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
+html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
 
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
