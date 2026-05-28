@@ -763,6 +763,19 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .scenario h4{margin:0 0 6px;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .scenario-num{font-size:1.9rem;font-weight:800;color:var(--black);line-height:1}
 .scenario-val{font-size:.95rem;font-weight:700;color:var(--teal);margin:3px 0 7px} .scenario p{font-size:.68rem;color:var(--muted);margin:0}
+/* Fila global automático vs manual */
+.lead-origin-row{display:flex;align-items:center;gap:0;background:#fff;border:1px solid var(--gray-md);border-radius:12px;padding:0;margin-bottom:22px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06);position:relative}
+.lo-card{display:flex;align-items:center;gap:16px;flex:1;padding:18px 24px}
+.lo-auto{border-right:1px solid var(--gray-md)}
+.lo-auto .lo-val{color:var(--gray)}
+.lo-manual .lo-val{color:var(--teal)}
+.lo-icon{font-size:2rem;opacity:.7;flex-shrink:0}
+.lo-val{font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:3px}
+.lo-lbl{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.4;max-width:200px}
+.lo-pct{font-size:.66rem;color:var(--muted);margin-top:2px;font-weight:600}
+.lo-vs{font-size:.72rem;font-weight:800;color:var(--muted);padding:0 4px;flex-shrink:0;letter-spacing:.04em}
+.lo-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--teal-lt)}
+.lo-bar-fill{height:100%;background:var(--gray);border-radius:0}
 /* Delta MoM */
 .delta-mom{font-size:.65rem;font-weight:700;margin-left:4px;vertical-align:middle}
 .delta-mom.up{color:#16a34a} .delta-mom.down{color:var(--red)} .delta-mom.flat{color:var(--gray)}
@@ -815,11 +828,29 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
     <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
-  <div class="sec">Origen de Leads &mdash; __MES_LABEL__</div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:0 0 10px">
-    <div class="tk c-gray" style="text-align:left;padding:12px 18px"><div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">&#9881; Leads Autom&aacute;ticos (integraci&oacute;n)</div><div style="font-size:1.6rem;font-weight:800;color:var(--gray);line-height:1">__AUTO_N__ <span style="font-size:.85rem;font-weight:600">(__AUTO_PCT__%)</span></div></div>
-    <div class="tk c-teal" style="text-align:left;padding:12px 18px"><div style="font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">&#9997; Creados por Vendedoras</div><div style="font-size:1.6rem;font-weight:800;color:var(--teal);line-height:1">__MANUAL_N__ <span style="font-size:.85rem;font-weight:600">(__MANUAL_PCT__%)</span></div></div>
+  <div class="lead-origin-row">
+    <div class="lo-card lo-auto">
+      <div class="lo-icon">&#9881;</div>
+      <div class="lo-body">
+        <div class="lo-val">__AUTO_N__</div>
+        <div class="lo-lbl">Leads asignados autom&aacute;ticamente por el sistema</div>
+        <div class="lo-pct">__AUTO_PCT__% del total</div>
+      </div>
+    </div>
+    <div class="lo-vs">VS</div>
+    <div class="lo-card lo-manual">
+      <div class="lo-icon">&#9997;</div>
+      <div class="lo-body">
+        <div class="lo-val">__MANUAL_N__</div>
+        <div class="lo-lbl">Leads ingresados manualmente por vendedoras</div>
+        <div class="lo-pct">__MANUAL_PCT__% del total</div>
+      </div>
+    </div>
+    <div class="lo-bar-wrap">
+      <div class="lo-bar-fill" style="width:__AUTO_PCT__%"></div>
+    </div>
   </div>
+  <div class="sec">Origen de Leads &mdash; __MES_LABEL__</div>
   __UNCLASSIFIED_ALERT__
   <div class="ch-wrap">
     <table class="ch-table">
