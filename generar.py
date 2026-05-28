@@ -527,7 +527,23 @@ a:hover{text-decoration:underline;color:var(--teal)}
 /* Delta MoM */
 .delta-mom{font-size:.65rem;font-weight:700;margin-left:4px;vertical-align:middle}
 .delta-mom.up{color:#16a34a} .delta-mom.down{color:var(--red)} .delta-mom.flat{color:var(--gray)}
-@media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid{grid-template-columns:1fr}}
+/* Velocidad de Respuesta */
+.resp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 16px}
+.resp-ranking{background:#fff;border-radius:10px;border:1px solid var(--gray-md);overflow:hidden;margin-bottom:22px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+/* Canal de Origen */
+.ch-wrap{background:#fff;border-radius:12px;border:1px solid var(--gray-md);overflow:hidden;margin:12px 0 4px;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.ch-table{width:100%;border-collapse:collapse;font-size:.79rem}
+.ch-table th{background:var(--black);color:rgba(255,255,255,.75);padding:9px 13px;text-align:left;font-weight:600;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:3px solid var(--teal)}
+.ch-table td{padding:9px 13px;border-bottom:1px solid var(--gray-lt);vertical-align:middle}
+.ch-table tr:last-child td{border-bottom:none}
+.ch-table tr:hover td{background:var(--teal-lt)}
+.ch-bar-wrap{width:80px;height:6px;background:var(--gray-lt);border-radius:3px;display:inline-block;vertical-align:middle}
+.ch-bar-fill{height:100%;border-radius:3px}
+.ch-best td{background:rgba(34,197,94,.07)} .ch-best td:nth-child(5){color:#15803d;font-weight:800}
+.ch-worst td{background:rgba(206,41,57,.05)} .ch-worst td:nth-child(5){color:var(--red);font-weight:800}
+.ch-insight{background:var(--teal-lt);border-top:1px solid #99DDD9;padding:12px 18px;font-size:.78rem;line-height:1.65;color:var(--text)}
+.mock-badge{display:inline-block;font-size:.58rem;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 6px;border-radius:20px;vertical-align:middle;margin-left:6px;letter-spacing:.02em}
+@media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid,.resp-kpis{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -558,10 +574,23 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
     <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
-  <div class="sec">Origen de Leads &mdash; __MES_LABEL__</div>
-  <div class="origin-grid">
-    <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">&#9881; Automáticos</div><div class="mc-val">__AUTO_N__</div><div class="mc-sub">__AUTO_PCT__% &mdash; anuncios, web, integraciones</div></div>
-    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">&#9997; Creados por vendedoras</div><div class="mc-val">__MANUAL_N__</div><div class="mc-sub">__MANUAL_PCT__% &mdash; carga manual</div></div>
+  <div class="sec">Origen de Leads &mdash; __MES_LABEL__ <span class="mock-badge">DATOS ESTIMADOS</span></div>
+  <div class="ch-wrap">
+    <table class="ch-table">
+      <thead><tr><th>Canal</th><th>Leads</th><th>% Total</th><th>Cierres</th><th>Conversión</th><th>Conv. relativa</th><th>Ticket prom.</th><th>Pipeline</th></tr></thead>
+      <tbody>
+        <tr><td>&#128248; Facebook Ads</td><td>1,102</td><td>38.7%</td><td>32</td><td>2.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:20%;background:var(--teal)"></div></div></td><td>$4,200</td><td>$134,400</td></tr>
+        <tr><td>&#128269; Google Ads</td><td>587</td><td>20.6%</td><td>21</td><td>3.6%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:25%;background:var(--teal)"></div></div></td><td>$4,800</td><td>$100,800</td></tr>
+        <tr><td>&#128172; WhatsApp directo</td><td>265</td><td>9.3%</td><td>18</td><td>6.8%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:48%;background:var(--teal)"></div></div></td><td>$5,100</td><td>$91,800</td></tr>
+        <tr class="ch-best"><td>&#128694; Walk-in (Tienda)</td><td>98</td><td>3.4%</td><td>14</td><td>14.3%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:100%;background:#22c55e"></div></div></td><td>$6,200</td><td>$86,800</td></tr>
+        <tr><td>&#127760; Web / Formulario</td><td>180</td><td>6.3%</td><td>11</td><td>6.1%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:43%;background:var(--teal)"></div></div></td><td>$4,900</td><td>$53,900</td></tr>
+        <tr><td>&#128222; Llamada entrante</td><td>63</td><td>2.2%</td><td>8</td><td>12.7%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:89%;background:#22c55e"></div></div></td><td>$5,800</td><td>$46,400</td></tr>
+        <tr class="ch-worst"><td>&#9997; Carga manual vendedora</td><td>491</td><td>17.3%</td><td>9</td><td>1.8%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:13%;background:var(--red)"></div></div></td><td>$4,100</td><td>$36,900</td></tr>
+        <tr><td>&#128205; Referidos</td><td>42</td><td>1.5%</td><td>5</td><td>11.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:83%;background:#22c55e"></div></div></td><td>$5,500</td><td>$27,500</td></tr>
+        <tr><td>&#128101; Otros</td><td>17</td><td>0.6%</td><td>1</td><td>5.9%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:41%;background:var(--teal)"></div></div></td><td>$4,000</td><td>$4,000</td></tr>
+      </tbody>
+    </table>
+    <div class="ch-insight">&#128161; <strong>Walk-in convierte 4.9&times; m&aacute;s que Facebook Ads</strong> (14.3% vs 2.9%). El ticket promedio en tienda ($6,200) supera en <strong>+$2,000 por cierre</strong> al lead digital. Referidos (11.9%) y Llamada (12.7%) tambi&eacute;n superan ampliamente la media &mdash; invertir en estos canales tiene mayor retorno por lead captado.</div>
   </div>
   <div class="sec">Embudo del Mes</div>
   <div id="funnel" class="funnel"></div>
@@ -574,6 +603,25 @@ a:hover{text-decoration:underline;color:var(--teal)}
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
+  </div>
+  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__ <span class="mock-badge">DATOS ESTIMADOS</span></div>
+  <div class="resp-kpis">
+    <div class="tk c-amber"><div class="tk-val">38 min</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min &mdash; nivel aceptable</div></div>
+    <div class="tk c-amber"><div class="tk-val">22%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">538 leads &mdash; ventana de oro</div></div>
+    <div class="tk c-gray"><div class="tk-val">51%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">1,246 leads contactados a tiempo</div></div>
+    <div class="tk c-red"><div class="tk-val">220</div><div class="tk-lbl">Leads Fríos +24h</div><div class="tk-sub">9% &mdash; requieren reactivación urgente</div></div>
+  </div>
+  <div class="resp-ranking">
+    <table class="ch-table">
+      <thead><tr><th>Vendedora</th><th>Sucursal</th><th>Tiempo prom. 1&ordf; respuesta</th><th>% en &lt;5 min</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Isabel Robledo</strong></td><td>Mia Plaza</td><td><strong>18 min</strong></td><td>34%</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td><strong>Maria Flores</strong></td><td>Buenos Aires</td><td><strong>28 min</strong></td><td>27%</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td>Carola Chavez</td><td>Central</td><td>42 min</td><td>19%</td><td><span class="badge b-amber">&#128993; Aceptable</span></td></tr>
+        <tr><td>Mirian Salazar</td><td>Mia Plaza</td><td>55 min</td><td>15%</td><td><span class="badge b-amber">&#128993; Aceptable</span></td></tr>
+        <tr><td>Jonathan Monje</td><td>Central</td><td>85 min</td><td>11%</td><td><span class="badge b-red">&#128308; Cr&iacute;tico</span></td></tr>
+      </tbody>
+    </table>
   </div>
   <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
   <div class="exec-summary">
