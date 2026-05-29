@@ -281,13 +281,30 @@ try:
             and (_first_human_ev[_lid] - _lts) / 60.0 <= 1440
         )
         if _has_human_action:
-            _diag["1_gestionado_ok"] += 1
+            _diag["1_gestionado_<=24h"] += 1
             continue
-        # es frío -> clasificar causa
-        if not _evs:
-            _diag["2_sin_ningun_evento"] += 1
+        # es frío -> ¿hubo gestión humana EN ALGÚN MOMENTO (aunque sea >24h)?
+        _human_actions = [
+            e for e in _evs
+            if e.get("type") in _ACTION_EV_TYPES
+            and e.get("created_by", 0) != 0
+            and e.get("created_at", 0) > _lts
+        ]
+        if _human_actions:
+            # sí lo tocó una persona, pero tarde -> LENTO, no abandonado
+            _diag["2_humano_pero_>24h"] += 1
+            _first_late = min(e.get("created_at", 0) for e in _human_actions)
+            _horas = (_first_late - _lts) / 3600.0
+            if _horas <= 72:
+                _diag["2a_entre_24h_y_72h"] += 1
+            elif _horas <= 168:
+                _diag["2b_entre_3_y_7_dias"] += 1
+            else:
+                _diag["2c_mas_de_7_dias"] += 1
+        elif not _evs:
+            _diag["3_sin_ningun_evento"] += 1
         else:
-            # ¿hay acciones reales pero atribuidas al bot (created_by==0)?
+            # ¿hay acciones reales pero SOLO atribuidas al bot (created_by==0)?
             _action_bot = [
                 e for e in _evs
                 if e.get("type") in _ACTION_EV_TYPES
@@ -295,11 +312,11 @@ try:
                 and e.get("created_at", 0) > _lts
             ]
             if _action_bot:
-                _diag["3_accion_atribuida_al_bot"] += 1
+                _diag["4_solo_accion_del_bot_nunca_humano"] += 1
                 for e in _action_bot:
                     _diag_action_by_bot_types[e.get("type")] += 1
             else:
-                _diag["4_solo_eventos_no_gestion"] += 1
+                _diag["5_solo_eventos_no_gestion"] += 1
             for e in _evs:
                 _diag_only_types[e.get("type")] += 1
         if len(_cold_sample) < 5:
