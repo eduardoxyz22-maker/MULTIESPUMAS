@@ -308,12 +308,12 @@ try:
         # ¿tuvo gestión humana válida (lo que cuenta como NO frío)?
         _has_human_action = (
             _lid in _first_human_ev
-            and (_first_human_ev[_lid] - _lts) / 60.0 <= 1440
+            and (_first_human_ev[_lid] - _lts) / 60.0 <= 4320
         )
         if _has_human_action:
-            _diag["1_gestionado_<=24h"] += 1
+            _diag["1_gestionado_<=72h"] += 1
             continue
-        # es frío -> ¿hubo gestión humana EN ALGÚN MOMENTO (aunque sea >24h)?
+        # es frío -> ¿hubo gestión humana EN ALGÚN MOMENTO (aunque sea >72h)?
         _human_actions = [
             e for e in _evs
             if e.get("type") in _ACTION_EV_TYPES
@@ -322,15 +322,15 @@ try:
         ]
         if _human_actions:
             # sí lo tocó una persona, pero tarde -> LENTO, no abandonado
-            _diag["2_humano_pero_>24h"] += 1
+            _diag["2_humano_pero_>72h"] += 1
             _first_late = min(e.get("created_at", 0) for e in _human_actions)
             _horas = (_first_late - _lts) / 3600.0
-            if _horas <= 72:
-                _diag["2a_entre_24h_y_72h"] += 1
-            elif _horas <= 168:
-                _diag["2b_entre_3_y_7_dias"] += 1
+            if _horas <= 168:
+                _diag["2a_entre_72h_y_7_dias"] += 1
+            elif _horas <= 336:
+                _diag["2b_entre_7_y_14_dias"] += 1
             else:
-                _diag["2c_mas_de_7_dias"] += 1
+                _diag["2c_mas_de_14_dias"] += 1
         elif not _evs:
             _diag["3_sin_ningun_evento"] += 1
         else:
@@ -381,7 +381,7 @@ try:
             continue
         _fts = _first_human_ev[_lid]
         _lts = _lead_created_ts.get(_lid, 0)
-        if (_fts - _lts) / 60.0 <= 1440:
+        if (_fts - _lts) / 60.0 <= 4320:
             continue  # no es lento
         # ¿qué tipo de evento marcó esa primera acción humana?
         for _ev in _ev_by_entity.get(_lid, []):
@@ -395,7 +395,7 @@ try:
                     and _lts < _ev.get("created_at", 0) < _fts):
                 _slow_dm_exists_as_bot += 1
                 break
-    print("===== DIAGNÓSTICO LEADS LENTOS (+24h) =====")
+    print("===== DIAGNÓSTICO LEADS TARDÍOS (+72h) =====")
     print(f"  Atribución de TODOS los mensajes directos: {dict(_dm_attribution)}")
     print(f"  Tipo de evento que marca la 1ª acción humana en leads lentos: {dict(_slow_first_type)}")
     print(f"  Leads lentos que tenían un mensaje directo (del bot) ANTES de la 1ª acción humana: {_slow_dm_exists_as_bot}")
@@ -809,7 +809,7 @@ for _r in all_rows:
 _resp_slow_n = sum(
     1 for lead in _auto_leads
     if lead["id"] in _first_human_ev
-    and (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 1440
+    and (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 4320
 )
 _resp_cold_n = _resp_never_n  # para el tile de alerta crítica usamos solo los abandonados
 _resp_cold_pct = round(_resp_cold_n / _resp_base * 100)
@@ -823,7 +823,7 @@ _vresp = defaultdict(lambda: {"times": [], "slow": 0, "never": 0})
 for (dm, uid) in _resp_times_all:
     uname = user_map.get(uid, "Desconocido")
     _vresp[uname]["times"].append(dm)
-    if dm > 1440:
+    if dm > 4320:
         _vresp[uname]["slow"] += 1
 for lead in _auto_leads:
     lid = lead["id"]
@@ -834,9 +834,9 @@ for lead in _auto_leads:
 _vresp_list = []
 for vname, vrd in _vresp.items():
     vtimes = vrd["times"]
-    # Para el promedio y ranking: excluir tiempos >1440 min para no distorsionar
-    # (los lentos se muestran en columna separada; el promedio refleja respuestas reales)
-    vtimes_fast = [t for t in vtimes if t <= 1440]
+    # Para el promedio y ranking: excluir tiempos >4320 min (>72h) para no distorsionar
+    # (las tardías se muestran en columna separada; el promedio refleja actualizaciones ágiles)
+    vtimes_fast = [t for t in vtimes if t <= 4320]
     vavg = sum(vtimes_fast) / len(vtimes_fast) if vtimes_fast else None
     vlt5_pct = round(sum(1 for t in vtimes_fast if t < 5) / len(vtimes_fast) * 100) if vtimes_fast else 0
     _vresp_list.append((vname, vavg, vlt5_pct, vrd["slow"], vrd["never"]))
@@ -1192,12 +1192,12 @@ __CHANNELS_ROWS__
     <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">hasta actualizar el CRM</div></div>
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Actualizados en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; reflejados al instante</div></div>
     <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Actualizados en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads reflejados a tiempo</div></div>
-    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+24 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;24h despu&eacute;s</div></div>
+    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
     <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin actualizar nunca &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, sin acci&oacute;n manual ni avance &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;24h)</th><th>Tard&iacute;as (+24h)</th><th>Sin actualizar</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;72h)</th><th>Tard&iacute;as (+72h)</th><th>Sin actualizar</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
       </tbody>
