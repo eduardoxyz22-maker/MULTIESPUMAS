@@ -714,37 +714,47 @@ _resp_lt1h_n = sum(1 for t in _resp_times_all if t[0] < 60)
 _resp_base = _total_auto_resp_base or 1
 _resp_lt5_pct = round(_resp_lt5_n / _resp_base * 100)
 _resp_lt1h_pct = round(_resp_lt1h_n / _resp_base * 100)
-_resp_cold_n = sum(
+# Abandono real: nunca hubo acción humana registrada en el lead
+_resp_never_n = sum(1 for lead in _auto_leads if lead["id"] not in _first_human_ev)
+# Lentos: sí hubo acción humana, pero después de 24h
+_resp_slow_n = sum(
     1 for lead in _auto_leads
-    if lead["id"] not in _first_human_ev
-    or (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 1440
+    if lead["id"] in _first_human_ev
+    and (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 1440
 )
+_resp_cold_n = _resp_never_n  # para el tile de alerta crítica usamos solo los abandonados
 _resp_cold_pct = round(_resp_cold_n / _resp_base * 100)
+_resp_slow_pct = round(_resp_slow_n / _resp_base * 100)
 _resp_avg_str = _fmt_resp(_resp_avg) if _resp_n > 0 else "N/A"
 _resp_avg_color = "c-teal" if _resp_avg < 15 else ("c-amber" if _resp_avg < 60 else "c-red")
 _resp_lt5_color = "c-teal" if _resp_lt5_pct >= 40 else ("c-amber" if _resp_lt5_pct >= 20 else "c-red")
 _resp_lt1h_color = "c-teal" if _resp_lt1h_pct >= 70 else ("c-amber" if _resp_lt1h_pct >= 40 else "c-red")
 
-_vresp = defaultdict(lambda: {"times": [], "cold": 0})
+_vresp = defaultdict(lambda: {"times": [], "slow": 0, "never": 0})
 for (dm, uid) in _resp_times_all:
     uname = user_map.get(uid, "Desconocido")
     _vresp[uname]["times"].append(dm)
+    if dm > 1440:
+        _vresp[uname]["slow"] += 1
 for lead in _auto_leads:
     lid = lead["id"]
     uname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
-    if lid not in _first_human_ev or (_first_human_ev[lid] - lead.get("created_at", 0)) / 60.0 > 1440:
-        _vresp[uname]["cold"] += 1
+    if lid not in _first_human_ev:
+        _vresp[uname]["never"] += 1
 
 _vresp_list = []
 for vname, vrd in _vresp.items():
     vtimes = vrd["times"]
-    vavg = sum(vtimes) / len(vtimes) if vtimes else None
-    vlt5_pct = round(sum(1 for t in vtimes if t < 5) / len(vtimes) * 100) if vtimes else 0
-    _vresp_list.append((vname, vavg, vlt5_pct, vrd["cold"]))
+    # Para el promedio y ranking: excluir tiempos >1440 min para no distorsionar
+    # (los lentos se muestran en columna separada; el promedio refleja respuestas reales)
+    vtimes_fast = [t for t in vtimes if t <= 1440]
+    vavg = sum(vtimes_fast) / len(vtimes_fast) if vtimes_fast else None
+    vlt5_pct = round(sum(1 for t in vtimes_fast if t < 5) / len(vtimes_fast) * 100) if vtimes_fast else 0
+    _vresp_list.append((vname, vavg, vlt5_pct, vrd["slow"], vrd["never"]))
 _vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
 
 _vendor_resp_html = ""
-for (vname, vavg, vlt5_pct, vcold) in _vresp_list:
+for (vname, vavg, vlt5_pct, vslow, vnever) in _vresp_list:
     if vavg is None:
         avg_str = "Sin datos"
         badge = '<span class="badge b-gray">Sin datos</span>'
@@ -757,7 +767,15 @@ for (vname, vavg, vlt5_pct, vcold) in _vresp_list:
     else:
         avg_str = _fmt_resp(vavg)
         badge = '<span class="badge b-red">&#128308; Cr&iacute;tico</span>'
-    _vendor_resp_html += f'        <tr><td><strong>{vname}</strong></td><td>{vlt5_pct}%</td><td>{avg_str}</td><td>{vcold}</td><td>{badge}</td></tr>\n'
+    never_cls = ' style="color:var(--red);font-weight:700"' if vnever > 10 else ""
+    _vendor_resp_html += (
+        f'        <tr><td><strong>{vname}</strong></td>'
+        f'<td>{vlt5_pct}%</td>'
+        f'<td>{avg_str}</td>'
+        f'<td>{vslow}</td>'
+        f'<td{never_cls}>{vnever}</td>'
+        f'<td>{badge}</td></tr>\n'
+    )
 
 vendors_json_list = []
 for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
@@ -1084,11 +1102,12 @@ __CHANNELS_ROWS__
     <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
     <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads contactados a tiempo</div></div>
-    <div class="tk c-red"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Leads Fr&iacute;os +24h / Sin Respuesta</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; requieren reactivaci&oacute;n</div></div>
+    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Respondidos lento (+24 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; s&iacute; hubo contacto, pero tard&iacute;o</div></div>
+    <div class="tk c-red"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin gesti&oacute;n humana</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna vendedora los toc&oacute;</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. 1&ordf; respuesta</th><th>Fr&iacute;os / Sin contacto</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (respuestas &le;24h)</th><th>Lentas (+24h)</th><th>Sin gesti&oacute;n humana</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
       </tbody>
@@ -1392,6 +1411,8 @@ html = html.replace("__RESP_LT1H_N__", str(_resp_lt1h_n))
 html = html.replace("__RESP_LT1H_COLOR__", _resp_lt1h_color)
 html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
 html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
+html = html.replace("__RESP_SLOW_N__", str(_resp_slow_n))
+html = html.replace("__RESP_SLOW_PCT__", str(_resp_slow_pct))
 html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
 # Fichas duplicadas (mismo teléfono en contactos distintos)
 _dup_color = "c-red" if total_dup_groups >= 10 else ("c-amber" if total_dup_groups >= 1 else "c-teal")
