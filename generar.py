@@ -1186,17 +1186,18 @@ __CHANNELS_ROWS__
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
     <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
   </div>
-  <div class="sec">Velocidad de Primera Gesti&oacute;n &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta 1&ordf; acci&oacute;n (mensaje, nota, etiqueta o cambio de etapa) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
+  <div class="sec">Velocidad de Actualizaci&oacute;n del CRM &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta la 1&ordf; acci&oacute;n registrada en Kommo (mover etapa, etiqueta o nota) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
+  <div style="background:#FEF9E7;border:1px solid #F4D03F;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.74rem;color:#7D6608;line-height:1.5"><b>&#9888; Importante:</b> Esta secci&oacute;n NO mide la respuesta real al cliente por WhatsApp &mdash; la integraci&oacute;n no registra esos mensajes de forma confiable en Kommo. Mide cu&aacute;nto tarda la vendedora en <b>actualizar la ficha en el CRM</b> (mover de etapa, etiquetar o dejar nota). Un n&uacute;mero alto puede significar que atendi&oacute; al cliente pero tard&oacute; en reflejarlo en el sistema.</div>
   <div class="resp-kpis">
-    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
-    <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
-    <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads contactados a tiempo</div></div>
-    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Respondidos lento (+24 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; s&iacute; hubo contacto, pero tard&iacute;o</div></div>
-    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin gesti&oacute;n humana &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna vendedora los toc&oacute; &middot; clic para ver</div></div>
+    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">hasta actualizar el CRM</div></div>
+    <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Actualizados en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; reflejados al instante</div></div>
+    <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Actualizados en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads reflejados a tiempo</div></div>
+    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+24 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;24h despu&eacute;s</div></div>
+    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin actualizar nunca &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, sin acci&oacute;n manual ni avance &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (respuestas &le;24h)</th><th>Lentas (+24h)</th><th>Sin gesti&oacute;n humana</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;24h)</th><th>Tard&iacute;as (+24h)</th><th>Sin actualizar</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
       </tbody>
@@ -1273,7 +1274,7 @@ __VENDOR_RESP_ROWS__
     <div class="tabs">
       <button class="tab active" onclick="setView('all')">Todos (__TOTAL__)</button>
       <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (__ESTANCADOS__)</button>
-      <button class="tab" onclick="setView('nohuman')">Sin gesti&oacute;n (__RESP_COLD_N__)</button>
+      <button class="tab" onclick="setView('nohuman')">Sin actualizar (__RESP_COLD_N__)</button>
       <button class="tab" onclick="setView('dup')">Duplicados (__DUP_LEADS_N__)</button>
     </div>
   </div>
