@@ -226,18 +226,35 @@ while True:
         break
 print(f"  Eventos obtenidos: {len(_events_all)}")
 
-# Construir diccionario lead_id -> timestamp primer evento humano
+# Solo los leads creados automáticamente (bot/ads) necesitan medición de primera respuesta.
+# Los creados manualmente por una vendedora ya estaban en contacto con el cliente.
+_auto_lead_ids = {lead["id"] for lead in leads if lead.get("created_by", 0) == 0}
 _lead_created_ts = {lead["id"]: lead.get("created_at", 0) for lead in leads}
+
+# Tipos de evento que son acciones internas del CRM (no comunicación con el cliente).
+# Se excluyen para no contar "cambio de etapa" o "asignación" como primera respuesta.
+_INTERNAL_EV_TYPES = {
+    "lead_added", "lead_created", "lead_status_changed", "lead_field_changed",
+    "lead_linked", "lead_unlinked", "lead_responsible_user_changed",
+    "pipeline_changed", "contact_linked", "contact_unlinked",
+    "tag_added", "tag_deleted", "task_added", "task_completed",
+    # tipos numéricos equivalentes que usa Kommo internamente
+    1, 2, 3, 12, 13,
+}
+
 _first_human_ev = {}
 for _ev in _events_all:
     _ev_by = _ev.get("created_by", 0)
     if _ev_by == 0:
         continue  # evento de sistema/bot
     _eid = _ev.get("entity_id")
-    if _eid not in _lead_created_ts:
-        continue  # lead fuera del rango del mes
+    if _eid not in _auto_lead_ids:
+        continue  # solo leads automáticos (entrantes)
+    _ev_type = _ev.get("type")
+    if _ev_type in _INTERNAL_EV_TYPES:
+        continue  # acción interna del CRM, no una respuesta al cliente
     _ets = _ev.get("created_at", 0)
-    _lts = _lead_created_ts[_eid]
+    _lts = _lead_created_ts.get(_eid, 0)
     if _ets <= _lts:
         continue  # evento anterior o simultáneo a la creación
     if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
@@ -384,6 +401,38 @@ for lead in leads:
 
 total_leads = len(leads)
 
+# === Detección de leads duplicados (mismo nombre de contacto) ===
+_dup_map = defaultdict(list)
+for row in all_rows:
+    cname = (row["contact"] or row["name"]).strip().lower()
+    # Ignorar nombres vacíos, muy cortos o genéricos
+    if len(cname) < 4 or cname in {"sin nombre", "lead", "nuevo lead", "cliente", "contacto"}:
+        continue
+    _dup_map[cname].append(row)
+
+_dup_groups = sorted(
+    [(name, rows) for name, rows in _dup_map.items() if len(rows) >= 2],
+    key=lambda x: -len(x[1])
+)
+total_dup_leads = sum(len(r) for _, r in _dup_groups)
+total_dup_groups = len(_dup_groups)
+
+_dup_rows_html = ""
+for cname, rows in _dup_groups[:50]:  # máximo 50 grupos en el dashboard
+    display_name = (rows[0]["contact"] or rows[0]["name"])
+    vendors_involved = ", ".join(sorted({r["user"] for r in rows}))
+    stages_involved = ", ".join(sorted({r["stage"] for r in rows}))
+    dates = " / ".join(r["created"] for r in rows)
+    _dup_rows_html += (
+        f'        <tr>'
+        f'<td><strong>{display_name}</strong></td>'
+        f'<td style="text-align:center"><span class="badge {"b-red" if len(rows)>=3 else "b-amber"}">{len(rows)} leads</span></td>'
+        f'<td style="color:var(--muted);font-size:.74rem">{vendors_involved}</td>'
+        f'<td style="color:var(--muted);font-size:.74rem">{stages_involved}</td>'
+        f'<td style="color:var(--muted);font-size:.72rem">{dates}</td>'
+        f'</tr>\n'
+    )
+
 stages_json_list = []
 for sname in STAGE_ORDER:
     cnt = stage_counts.get(sname, 0)
@@ -492,9 +541,13 @@ elif _ch_best_name:
 else:
     _channel_insight = '&#128161; Clasifica el origen de los leads en Kommo para obtener insights por canal.'
 
-# === Velocidad de Respuesta — estadísticas reales ===
+# === Velocidad de Respuesta — solo leads automáticos (entrantes) ===
+# Base: leads con created_by==0. Los manuales no necesitan "primera respuesta".
+_auto_leads = [lead for lead in leads if lead["id"] in _auto_lead_ids]
+_total_auto_resp_base = len(_auto_leads)
+
 _resp_times_all = []  # (minutes, responsible_user_id)
-for lead in leads:
+for lead in _auto_leads:
     lid = lead["id"]
     uid = lead.get("responsible_user_id")
     if lid in _first_human_ev:
@@ -507,14 +560,16 @@ _resp_n = len(_resp_times_all)
 _resp_avg = sum(t[0] for t in _resp_times_all) / _resp_n if _resp_n > 0 else 0
 _resp_lt5_n = sum(1 for t in _resp_times_all if t[0] < 5)
 _resp_lt1h_n = sum(1 for t in _resp_times_all if t[0] < 60)
-_resp_lt5_pct = round(_resp_lt5_n / total_leads * 100) if total_leads > 0 else 0
-_resp_lt1h_pct = round(_resp_lt1h_n / total_leads * 100) if total_leads > 0 else 0
+# Porcentajes sobre base automática (no total del mes)
+_resp_base = _total_auto_resp_base or 1
+_resp_lt5_pct = round(_resp_lt5_n / _resp_base * 100)
+_resp_lt1h_pct = round(_resp_lt1h_n / _resp_base * 100)
 _resp_cold_n = sum(
-    1 for lead in leads
+    1 for lead in _auto_leads
     if lead["id"] not in _first_human_ev
     or (_first_human_ev[lead["id"]] - lead.get("created_at", 0)) / 60.0 > 1440
 )
-_resp_cold_pct = round(_resp_cold_n / total_leads * 100) if total_leads > 0 else 0
+_resp_cold_pct = round(_resp_cold_n / _resp_base * 100)
 _resp_avg_str = _fmt_resp(_resp_avg) if _resp_n > 0 else "N/A"
 _resp_avg_color = "c-teal" if _resp_avg < 15 else ("c-amber" if _resp_avg < 60 else "c-red")
 _resp_lt5_color = "c-teal" if _resp_lt5_pct >= 40 else ("c-amber" if _resp_lt5_pct >= 20 else "c-red")
@@ -524,7 +579,7 @@ _vresp = defaultdict(lambda: {"times": [], "cold": 0})
 for (dm, uid) in _resp_times_all:
     uname = user_map.get(uid, "Desconocido")
     _vresp[uname]["times"].append(dm)
-for lead in leads:
+for lead in _auto_leads:
     lid = lead["id"]
     uname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
     if lid not in _first_human_ev or (_first_human_ev[lid] - lead.get("created_at", 0)) / 60.0 > 1440:
@@ -694,7 +749,7 @@ tbody td{padding:9px 13px;color:var(--text);vertical-align:middle}
 a{color:var(--teal-dk);text-decoration:none;font-weight:500}
 a:hover{text-decoration:underline;color:var(--teal)}
 .nd{text-align:center;padding:38px;color:var(--muted);font-size:.82rem}
-.team-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:26px}
+.team-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:26px}
 .tk{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;overflow:hidden}
 .tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .tk.c-teal::before{background:var(--teal)} .tk.c-red::before{background:var(--red)}
@@ -872,8 +927,9 @@ __CHANNELS_ROWS__
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
+    <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Posibles Duplicados</div><div class="tk-sub">__DUP_GROUPS__ contactos con 2+ leads</div></div>
   </div>
-  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__</div>
+  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Solo leads entrantes autom&aacute;ticos (__AUTO_N__ leads)</span></div>
   <div class="resp-kpis">
     <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
@@ -885,6 +941,16 @@ __CHANNELS_ROWS__
       <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. 1&ordf; respuesta</th><th>Fr&iacute;os / Sin contacto</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
+      </tbody>
+    </table>
+  </div>
+  <div class="sec">Posibles Leads Duplicados &mdash; __MES_LABEL__</div>
+  __DUP_ALERT__
+  <div class="ch-wrap">
+    <table class="ch-table">
+      <thead><tr><th>Contacto</th><th>Duplicados</th><th>Vendedoras involucradas</th><th>Etapas</th><th>Fechas de creaci&oacute;n</th></tr></thead>
+      <tbody>
+__DUP_ROWS__
       </tbody>
     </table>
   </div>
@@ -1177,6 +1243,17 @@ html = html.replace("__RESP_LT1H_COLOR__", _resp_lt1h_color)
 html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
 html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
 html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
+# Duplicados
+_dup_color = "c-red" if total_dup_groups >= 20 else ("c-amber" if total_dup_groups >= 5 else "c-teal")
+if total_dup_groups > 0:
+    _dup_alert_html = f'<div class="ch-alert"><span>&#9888;</span><div><b>{total_dup_leads} leads ({total_dup_groups} contactos)</b> aparecen m&aacute;s de una vez &mdash; posibles registros duplicados. Revisar y unificar en Kommo para evitar que dos vendedoras trabajen el mismo cliente.</div></div>'
+else:
+    _dup_alert_html = '<div style="padding:10px 0;font-size:.78rem;color:var(--muted)">&#10003; Sin duplicados detectados este mes.</div>'
+html = html.replace("__DUP_ALERT__", _dup_alert_html)
+html = html.replace("__DUP_N__", str(total_dup_leads))
+html = html.replace("__DUP_GROUPS__", str(total_dup_groups))
+html = html.replace("__DUP_COLOR__", _dup_color)
+html = html.replace("__DUP_ROWS__", _dup_rows_html)
 
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
