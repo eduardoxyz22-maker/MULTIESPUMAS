@@ -260,6 +260,36 @@ for _ev in _events_all:
     if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
         _first_human_ev[_eid] = _ets
 
+# === DEBUG: volcar estructura real de eventos y contactos para diagnóstico ===
+try:
+    import os
+    os.makedirs("data", exist_ok=True)
+    _ev_type_counts = defaultdict(int)
+    for _ev in _events_all:
+        _ev_type_counts[str(_ev.get("type"))] += 1
+    _sample_events = _events_all[:8]
+    # Buscar un lead automático con sus eventos para inspeccionar
+    _sample_auto_id = next(iter(_auto_lead_ids), None)
+    _sample_lead_events = [
+        {"type": e.get("type"), "created_by": e.get("created_by"),
+         "created_at": e.get("created_at"), "value_after": e.get("value_after")}
+        for e in _events_all if e.get("entity_id") == _sample_auto_id
+    ][:15]
+    _sample_lead_raw = leads[0] if leads else {}
+    _debug = {
+        "total_eventos": len(_events_all),
+        "tipos_de_evento": dict(sorted(_ev_type_counts.items(), key=lambda x: -x[1])),
+        "muestra_eventos": _sample_events,
+        "lead_automatico_id": _sample_auto_id,
+        "eventos_de_ese_lead": _sample_lead_events,
+        "estructura_lead_completa": _sample_lead_raw,
+    }
+    with open("data/debug.json", "w", encoding="utf-8") as _df:
+        json.dump(_debug, _df, ensure_ascii=False, indent=2, default=str)
+    print("  DEBUG escrito en data/debug.json — tipos:", dict(_ev_type_counts))
+except Exception as _e:
+    print("  ⚠ Error debug:", _e)
+
 # Leads del mes anterior (mismo rango de dias)
 if now_dt.month == 1:
     prev_month = 12
