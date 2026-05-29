@@ -259,6 +259,65 @@ for _ev in _events_all:
     if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
         _first_human_ev[_eid] = _ets
 
+# --- DIAGNÓSTICO de leads fríos (solo a los logs de Actions, NO al HTML público) ---
+# Clasifica POR QUÉ un lead automático aparece como "frío" para entender si es
+# un problema real de seguimiento o si la integración registra las acciones como bot.
+try:
+    from collections import Counter as _Counter
+    _ev_by_entity = {}
+    for _ev in _events_all:
+        _ev_by_entity.setdefault(_ev.get("entity_id"), []).append(_ev)
+
+    _diag = _Counter()
+    _diag_action_by_bot_types = _Counter()  # tipos de acción real pero created_by=0
+    _diag_only_types = _Counter()           # qué tipos tienen los leads sin gestión humana
+    _cold_sample = []
+    for _lid in _auto_lead_ids:
+        _evs = _ev_by_entity.get(_lid, [])
+        _lts = _lead_created_ts.get(_lid, 0)
+        # ¿tuvo gestión humana válida (lo que cuenta como NO frío)?
+        _has_human_action = (
+            _lid in _first_human_ev
+            and (_first_human_ev[_lid] - _lts) / 60.0 <= 1440
+        )
+        if _has_human_action:
+            _diag["1_gestionado_ok"] += 1
+            continue
+        # es frío -> clasificar causa
+        if not _evs:
+            _diag["2_sin_ningun_evento"] += 1
+        else:
+            # ¿hay acciones reales pero atribuidas al bot (created_by==0)?
+            _action_bot = [
+                e for e in _evs
+                if e.get("type") in _ACTION_EV_TYPES
+                and e.get("created_by", 0) == 0
+                and e.get("created_at", 0) > _lts
+            ]
+            if _action_bot:
+                _diag["3_accion_atribuida_al_bot"] += 1
+                for e in _action_bot:
+                    _diag_action_by_bot_types[e.get("type")] += 1
+            else:
+                _diag["4_solo_eventos_no_gestion"] += 1
+            for e in _evs:
+                _diag_only_types[e.get("type")] += 1
+        if len(_cold_sample) < 5:
+            _cold_sample.append((_lid, [(e.get("type"), e.get("created_by")) for e in _evs]))
+
+    print("\n===== DIAGNÓSTICO LEADS FRÍOS =====")
+    print(f"  Total leads automáticos: {len(_auto_lead_ids)}")
+    for k in sorted(_diag):
+        print(f"  {k}: {_diag[k]}")
+    print(f"  Tipos de acción real atribuidos al BOT (created_by=0): {dict(_diag_action_by_bot_types)}")
+    print(f"  Tipos de evento presentes en leads fríos: {dict(_diag_only_types)}")
+    print("  Muestra de 5 leads fríos (lead_id -> [(tipo, created_by)...]):")
+    for _lid, _types in _cold_sample:
+        print(f"    {_lid}: {_types}")
+    print("===================================\n")
+except Exception as _e:
+    print("  ⚠ Error diagnóstico fríos:", _e)
+
 # Leads del mes anterior (mismo rango de dias)
 if now_dt.month == 1:
     prev_month = 12
