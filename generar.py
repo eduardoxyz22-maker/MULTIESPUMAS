@@ -343,6 +343,40 @@ try:
     for _lid, _types in _cold_sample:
         print(f"    {_lid}: {_types}")
     print("===================================\n")
+
+    # --- DIAGNÓSTICO LEADS LENTOS (+24h): ¿qué evento cuenta como 1ª acción? ---
+    # Hipótesis: los mensajes de WhatsApp se registran como created_by=0 (integración),
+    # así que la "1ª acción humana" termina siendo un cambio de etapa días después.
+    _slow_first_type = _Counter()       # tipo del evento que marcó la 1ª acción humana
+    _slow_dm_exists_as_bot = 0          # leads lentos que SÍ tienen un mensaje directo, pero del bot, ANTES de la 1ª acción humana
+    _dm_attribution = _Counter()        # cómo se atribuyen TODOS los entity_direct_message
+    for _ev in _events_all:
+        if _ev.get("type") == "entity_direct_message":
+            _dm_attribution["bot(0)" if _ev.get("created_by", 0) == 0 else "humano"] += 1
+    for _lid in _auto_lead_ids:
+        if _lid not in _first_human_ev:
+            continue
+        _fts = _first_human_ev[_lid]
+        _lts = _lead_created_ts.get(_lid, 0)
+        if (_fts - _lts) / 60.0 <= 1440:
+            continue  # no es lento
+        # ¿qué tipo de evento marcó esa primera acción humana?
+        for _ev in _ev_by_entity.get(_lid, []):
+            if (_ev.get("created_by", 0) != 0 and _ev.get("type") in _ACTION_EV_TYPES
+                    and _ev.get("created_at", 0) == _fts):
+                _slow_first_type[_ev.get("type")] += 1
+                break
+        # ¿hubo un mensaje directo (aunque sea del bot) ANTES de esa primera acción humana?
+        for _ev in _ev_by_entity.get(_lid, []):
+            if (_ev.get("type") == "entity_direct_message"
+                    and _lts < _ev.get("created_at", 0) < _fts):
+                _slow_dm_exists_as_bot += 1
+                break
+    print("===== DIAGNÓSTICO LEADS LENTOS (+24h) =====")
+    print(f"  Atribución de TODOS los mensajes directos: {dict(_dm_attribution)}")
+    print(f"  Tipo de evento que marca la 1ª acción humana en leads lentos: {dict(_slow_first_type)}")
+    print(f"  Leads lentos que tenían un mensaje directo (del bot) ANTES de la 1ª acción humana: {_slow_dm_exists_as_bot}")
+    print("===========================================\n")
 except Exception as _e:
     print("  ⚠ Error diagnóstico fríos:", _e)
 
