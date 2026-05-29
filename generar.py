@@ -741,6 +741,13 @@ _resp_never_n = sum(
     1 for lead in _auto_leads
     if lead["id"] not in _first_human_ev and not _reached_advanced(lead)
 )
+# IDs de los leads abandonados (para marcarlos en la tabla -> pestaña "Sin gestión")
+_abandoned_ids = {
+    lead["id"] for lead in _auto_leads
+    if lead["id"] not in _first_human_ev and not _reached_advanced(lead)
+}
+for _r in all_rows:
+    _r["nohuman"] = _r["id"] in _abandoned_ids
 # Lentos: sí hubo acción humana, pero después de 24h
 _resp_slow_n = sum(
     1 for lead in _auto_leads
@@ -1128,7 +1135,7 @@ __CHANNELS_ROWS__
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
     <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads contactados a tiempo</div></div>
     <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Respondidos lento (+24 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; s&iacute; hubo contacto, pero tard&iacute;o</div></div>
-    <div class="tk c-red"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin gesti&oacute;n humana</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna vendedora los toc&oacute;</div></div>
+    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin gesti&oacute;n humana &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna vendedora los toc&oacute; &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
@@ -1219,6 +1226,7 @@ __DUP_ROWS__
     <div class="tabs">
       <button class="tab active" onclick="setView('all')">Todos (__TOTAL__)</button>
       <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (__ESTANCADOS__)</button>
+      <button class="tab" onclick="setView('nohuman')">Sin gesti&oacute;n (__RESP_COLD_N__)</button>
       <button class="tab" onclick="setView('dup')">Duplicados (__DUP_LEADS_N__)</button>
     </div>
   </div>
@@ -1316,7 +1324,7 @@ stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'<
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
-function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')||(i===2&&v==='dup')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
+function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')||(i===2&&v==='nohuman')||(i===3&&v==='dup')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
 function filterByVendor(name){document.getElementById('f-user').value=name;document.getElementById('f-stage').value='';view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function filterByVendorStage(name,stage,ev){if(ev)ev.stopPropagation();document.getElementById('f-user').value=name;document.getElementById('f-stage').value=stage;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function exportCSV(){
@@ -1324,7 +1332,7 @@ function exportCSV(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
-  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
+  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(view!=='dup'||r.dup)&&(view!=='nohuman'||r.nohuman)).sort((a,b)=>b.value-a.value);
   const header='ID,Contacto,Deal,Etapa,Sucursal,Responsable,Creado,Dias sin act.,Valor';
   const lines=rows.map(r=>[r.id,(r.contact||r.name).replace(/,/g,' '),r.name.replace(/,/g,' '),r.stage,r.sucursal,r.user,r.created,r.days_int,r.value].join(','));
   const blob=new Blob([header+'\\n'+lines.join('\\n')],{type:'text/csv;charset=utf-8;'});
@@ -1337,7 +1345,8 @@ function render(){
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
   const onlyFollowup=(minD>0||view==='stagnant');
   const onlyDup=(view==='dup');
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)).sort((a,b)=>b.value-a.value);
+  const onlyNohuman=(view==='nohuman');
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)&&(!onlyNohuman||r.nohuman)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
