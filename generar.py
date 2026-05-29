@@ -414,15 +414,20 @@ for lead in leads:
 
 total_leads = len(leads)
 
-# === Detección de leads duplicados (mismo contacto con varios leads en el mes) ===
-# Agrupamos por contact_id (identidad real del cliente). Para los grupos con 2+
-# leads, traemos el nombre/teléfono del contacto desde Kommo para mostrarlos.
-_dup_cids = [cid for cid, rws in contact_to_leads.items() if len(rws) >= 2]
-print(f"Contactos con 2+ leads este mes: {len(_dup_cids)}")
+# === Detección de fichas duplicadas (mismo teléfono en contactos distintos) ===
+# Un duplicado real = la misma persona cargada como 2+ fichas de contacto diferentes.
+# Traemos el teléfono de TODOS los contactos del mes y agrupamos por teléfono normalizado.
+def _norm_phone(raw):
+    """Deja solo dígitos y toma los últimos 8 (ignora prefijos país/área variables)."""
+    digits = "".join(ch for ch in str(raw) if ch.isdigit())
+    return digits[-8:] if len(digits) >= 8 else digits
 
-_contact_info = {}  # cid -> {"name":..., "phone":...}
-for _i in range(0, len(_dup_cids), 50):
-    _batch = _dup_cids[_i:_i + 50]
+_all_cids = list(contact_to_leads.keys())
+print(f"Contactos del mes a verificar: {len(_all_cids)}")
+
+_contact_info = {}  # cid -> {"name":..., "phone":..., "phone_norm":...}
+for _i in range(0, len(_all_cids), 50):
+    _batch = _all_cids[_i:_i + 50]
     _qs = urllib.parse.urlencode([("filter[id][]", c) for c in _batch], doseq=True)
     try:
         _cdata = api_get("/contacts?" + _qs + "&limit=250")
@@ -437,42 +442,68 @@ for _i in range(0, len(_dup_cids), 50):
                 if _vals:
                     _phone = str(_vals[0].get("value", ""))
                 break
-        _contact_info[_c["id"]] = {"name": _c.get("name", ""), "phone": _phone}
+        _contact_info[_c["id"]] = {
+            "name": _c.get("name", ""),
+            "phone": _phone,
+            "phone_norm": _norm_phone(_phone),
+        }
     time.sleep(0.15)
 
-# Construir grupos de duplicados ordenados por cantidad de leads
-_dup_groups = []
-for _cid in _dup_cids:
-    _rws = contact_to_leads[_cid]
-    _info = _contact_info.get(_cid, {})
-    _disp = _info.get("name") or (_rws[0]["contact"] or f"Contacto #{_cid}")
-    _dup_groups.append({
-        "cid": _cid,
-        "name": _disp,
-        "phone": _info.get("phone", ""),
-        "rows": _rws,
-    })
-_dup_groups.sort(key=lambda g: -len(g["rows"]))
+# Agrupar contactos por teléfono normalizado
+_phone_to_cids = defaultdict(set)
+for _cid, _info in _contact_info.items():
+    _pn = _info.get("phone_norm")
+    if _pn and len(_pn) >= 7:  # teléfono válido
+        _phone_to_cids[_pn].add(_cid)
 
+# Duplicado = teléfono presente en 2+ fichas DISTINTAS
+_dup_groups = []
+for _pn, _cids in _phone_to_cids.items():
+    if len(_cids) < 2:
+        continue
+    _fichas = []
+    _all_g_rows = []
+    for _cid in _cids:
+        _info = _contact_info.get(_cid, {})
+        _rws = contact_to_leads.get(_cid, [])
+        _all_g_rows.extend(_rws)
+        _fichas.append({
+            "cid": _cid,
+            "name": _info.get("name") or f"Contacto #{_cid}",
+            "phone": _info.get("phone", ""),
+            "rows": _rws,
+        })
+    _dup_groups.append({
+        "phone": next((f["phone"] for f in _fichas if f["phone"]), _pn),
+        "fichas": _fichas,
+        "n_fichas": len(_cids),
+        "rows": _all_g_rows,
+    })
+_dup_groups.sort(key=lambda g: -g["n_fichas"])
+
+total_dup_groups = len(_dup_groups)       # personas duplicadas (teléfonos repetidos)
+total_dup_fichas = sum(g["n_fichas"] for g in _dup_groups)  # fichas involucradas
 total_dup_leads = sum(len(g["rows"]) for g in _dup_groups)
-total_dup_groups = len(_dup_groups)
+print(f"Teléfonos repetidos en fichas distintas: {total_dup_groups}")
 
 _dup_rows_html = ""
 for _g in _dup_groups[:50]:
-    _rws = _g["rows"]
-    _vend = ", ".join(sorted({r["user"] for r in _rws}))
-    _stgs = ", ".join(sorted({r["stage"] for r in _rws}))
-    _dates = " / ".join(r["created"] for r in _rws)
-    _phone_str = f' &middot; {_g["phone"]}' if _g["phone"] else ""
-    _link = f'https://eanez.kommo.com/contacts/detail/{_g["cid"]}'
+    # Listar cada ficha: nombre (link) con su cantidad de leads
+    _fichas_html = "<br>".join(
+        f'<a href="https://eanez.kommo.com/contacts/detail/{f["cid"]}" target="_blank">'
+        f'<strong>{f["name"]}</strong></a> '
+        f'<span style="color:var(--muted);font-size:.7rem">({len(f["rows"])} lead{"s" if len(f["rows"])!=1 else ""})</span>'
+        for f in _g["fichas"]
+    )
+    _vend = ", ".join(sorted({r["user"] for r in _g["rows"]}))
+    _stgs = ", ".join(sorted({r["stage"] for r in _g["rows"]}))
     _dup_rows_html += (
         f'        <tr>'
-        f'<td><a href="{_link}" target="_blank"><strong>{_g["name"]}</strong></a>'
-        f'<span style="color:var(--muted);font-size:.7rem">{_phone_str}</span></td>'
-        f'<td style="text-align:center"><span class="badge {"b-red" if len(_rws)>=3 else "b-amber"}">{len(_rws)} leads</span></td>'
+        f'<td style="font-weight:700">{_g["phone"]}</td>'
+        f'<td style="text-align:center"><span class="badge b-red">{_g["n_fichas"]} fichas</span></td>'
+        f'<td style="font-size:.78rem">{_fichas_html}</td>'
         f'<td style="color:var(--muted);font-size:.74rem">{_vend}</td>'
         f'<td style="color:var(--muted);font-size:.74rem">{_stgs}</td>'
-        f'<td style="color:var(--muted);font-size:.72rem">{_dates}</td>'
         f'</tr>\n'
     )
 
@@ -970,7 +1001,7 @@ __CHANNELS_ROWS__
     <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
-    <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Posibles Duplicados</div><div class="tk-sub">__DUP_GROUPS__ contactos con 2+ leads</div></div>
+    <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
   </div>
   <div class="sec">Velocidad de Primera Gesti&oacute;n &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta 1&ordf; acci&oacute;n (mensaje, nota, etiqueta o cambio de etapa) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
   <div class="resp-kpis">
@@ -987,11 +1018,11 @@ __VENDOR_RESP_ROWS__
       </tbody>
     </table>
   </div>
-  <div class="sec">Posibles Leads Duplicados &mdash; __MES_LABEL__</div>
+  <div class="sec">Fichas Duplicadas &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Mismo tel&eacute;fono cargado en 2+ fichas de contacto distintas</span></div>
   __DUP_ALERT__
   <div class="ch-wrap">
     <table class="ch-table">
-      <thead><tr><th>Contacto</th><th>Duplicados</th><th>Vendedoras involucradas</th><th>Etapas</th><th>Fechas de creaci&oacute;n</th></tr></thead>
+      <thead><tr><th>Tel&eacute;fono</th><th>Fichas</th><th>Contactos duplicados (cada uno enlaza a Kommo)</th><th>Vendedoras involucradas</th><th>Etapas</th></tr></thead>
       <tbody>
 __DUP_ROWS__
       </tbody>
@@ -1286,14 +1317,14 @@ html = html.replace("__RESP_LT1H_COLOR__", _resp_lt1h_color)
 html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
 html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
 html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
-# Duplicados
-_dup_color = "c-red" if total_dup_groups >= 20 else ("c-amber" if total_dup_groups >= 5 else "c-teal")
+# Fichas duplicadas (mismo teléfono en contactos distintos)
+_dup_color = "c-red" if total_dup_groups >= 10 else ("c-amber" if total_dup_groups >= 1 else "c-teal")
 if total_dup_groups > 0:
-    _dup_alert_html = f'<div class="ch-alert"><span>&#9888;</span><div><b>{total_dup_leads} leads ({total_dup_groups} contactos)</b> aparecen m&aacute;s de una vez &mdash; posibles registros duplicados. Revisar y unificar en Kommo para evitar que dos vendedoras trabajen el mismo cliente.</div></div>'
+    _dup_alert_html = f'<div class="ch-alert"><span>&#9888;</span><div><b>{total_dup_groups} tel&eacute;fonos</b> est&aacute;n cargados en <b>{total_dup_fichas} fichas de contacto distintas</b> ({total_dup_leads} leads en total) &mdash; la misma persona registrada m&aacute;s de una vez. Unificar las fichas en Kommo para evitar que dos vendedoras trabajen el mismo cliente.</div></div>'
 else:
-    _dup_alert_html = '<div style="padding:10px 0;font-size:.78rem;color:var(--muted)">&#10003; Sin duplicados detectados este mes.</div>'
+    _dup_alert_html = '<div style="padding:10px 0;font-size:.78rem;color:var(--muted)">&#10003; Sin fichas duplicadas detectadas este mes (no hay tel&eacute;fonos repetidos en contactos distintos).</div>'
 html = html.replace("__DUP_ALERT__", _dup_alert_html)
-html = html.replace("__DUP_N__", str(total_dup_leads))
+html = html.replace("__DUP_N__", str(total_dup_fichas))
 html = html.replace("__DUP_GROUPS__", str(total_dup_groups))
 html = html.replace("__DUP_COLOR__", _dup_color)
 html = html.replace("__DUP_ROWS__", _dup_rows_html)
