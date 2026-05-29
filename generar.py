@@ -1193,11 +1193,11 @@ __CHANNELS_ROWS__
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Actualizados en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; reflejados al instante</div></div>
     <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Actualizados en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads reflejados a tiempo</div></div>
     <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
-    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Sin actualizar nunca &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, sin acci&oacute;n manual ni avance &middot; clic para ver</div></div>
+    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;72h)</th><th>Tard&iacute;as (+72h)</th><th>Sin actualizar</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;72h)</th><th>Tard&iacute;as (+72h)</th><th>Nunca tocados</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
       </tbody>
@@ -1274,7 +1274,7 @@ __VENDOR_RESP_ROWS__
     <div class="tabs">
       <button class="tab active" onclick="setView('all')">Todos (__TOTAL__)</button>
       <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (__ESTANCADOS__)</button>
-      <button class="tab" onclick="setView('nohuman')">Sin actualizar (__RESP_COLD_N__)</button>
+      <button class="tab" onclick="setView('nohuman')">Nunca tocados (__RESP_COLD_N__)</button>
       <button class="tab" onclick="setView('dup')">Duplicados (__DUP_LEADS_N__)</button>
     </div>
   </div>
