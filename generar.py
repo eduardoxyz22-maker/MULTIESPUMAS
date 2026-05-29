@@ -171,8 +171,14 @@ _fs2 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _fs3 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
 _fs4 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
 FOLLOWUP_STAGES    = set(filter(None, [_fs1, _fs2, _fs3, _fs4]))
+# Etapas "avanzadas": si un lead llegó aquí, ALGUIEN lo trabajó (lo movió de etapa),
+# aunque Kommo registre el cambio como hecho por el bot (created_by=0). Por eso un
+# lead en estas etapas NO se considera "sin gestión humana" aunque no tenga evento
+# humano explícito.
+ADVANCED_STAGES    = set(filter(None, [_q1, _fs3, _q2, COMPRADORES_STAGE]))
 print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
 print("Etapas seguimiento:", FOLLOWUP_STAGES)
+print("Etapas avanzadas (=gestionado):", ADVANCED_STAGES)
 
 print("Obteniendo usuarios...")
 users_raw = fetch_users()
@@ -267,6 +273,7 @@ try:
     _ev_by_entity = {}
     for _ev in _events_all:
         _ev_by_entity.setdefault(_ev.get("entity_id"), []).append(_ev)
+    _lead_stage_now = {l["id"]: stage_map.get(l.get("status_id"), "") for l in leads}
 
     _diag = _Counter()
     _diag_action_by_bot_types = _Counter()  # tipos de acción real pero created_by=0
@@ -311,12 +318,16 @@ try:
                 and e.get("created_by", 0) == 0
                 and e.get("created_at", 0) > _lts
             ]
-            if _action_bot:
-                _diag["4_solo_accion_del_bot_nunca_humano"] += 1
+            # ¿llegó a una etapa avanzada? -> alguien lo trabajó (atribución perdida al bot)
+            _stage_now = _lead_stage_now.get(_lid, "")
+            if _stage_now in ADVANCED_STAGES:
+                _diag["4a_avanzo_etapa_SIN_evento_humano(=trabajado)"] += 1
+            elif _action_bot:
+                _diag["4b_solo_accion_del_bot_estancado(=abandono)"] += 1
                 for e in _action_bot:
                     _diag_action_by_bot_types[e.get("type")] += 1
             else:
-                _diag["5_solo_eventos_no_gestion"] += 1
+                _diag["5_solo_eventos_no_gestion(=abandono)"] += 1
             for e in _evs:
                 _diag_only_types[e.get("type")] += 1
         if len(_cold_sample) < 5:
@@ -483,6 +494,7 @@ for lead in leads:
         "days": round(days_float, 1),
         "days_int": days_int,
         "value": int(value),
+        "dup": False,
     }
     all_rows.append(_row)
     if _main_cid:
@@ -556,6 +568,11 @@ for _pn, _cids in _phone_to_cids.items():
         "rows": _all_g_rows,
     })
 _dup_groups.sort(key=lambda g: -g["n_fichas"])
+
+# Marcar las filas que pertenecen a una ficha duplicada (para la pestaña "Duplicados")
+for _g in _dup_groups:
+    for _r in _g["rows"]:
+        _r["dup"] = True
 
 total_dup_groups = len(_dup_groups)       # personas duplicadas (teléfonos repetidos)
 total_dup_fichas = sum(g["n_fichas"] for g in _dup_groups)  # fichas involucradas
@@ -714,8 +731,16 @@ _resp_lt1h_n = sum(1 for t in _resp_times_all if t[0] < 60)
 _resp_base = _total_auto_resp_base or 1
 _resp_lt5_pct = round(_resp_lt5_n / _resp_base * 100)
 _resp_lt1h_pct = round(_resp_lt1h_n / _resp_base * 100)
-# Abandono real: nunca hubo acción humana registrada en el lead
-_resp_never_n = sum(1 for lead in _auto_leads if lead["id"] not in _first_human_ev)
+# Abandono real: nunca hubo acción humana registrada Y el lead sigue estancado en
+# una etapa inicial (no llegó a Interesado/Cotización/Agendado/Compradores). Si llegó
+# a una etapa avanzada, ALGUIEN lo movió aunque Kommo lo registre como bot.
+def _reached_advanced(lead):
+    return stage_map.get(lead.get("status_id"), "") in ADVANCED_STAGES
+
+_resp_never_n = sum(
+    1 for lead in _auto_leads
+    if lead["id"] not in _first_human_ev and not _reached_advanced(lead)
+)
 # Lentos: sí hubo acción humana, pero después de 24h
 _resp_slow_n = sum(
     1 for lead in _auto_leads
@@ -739,7 +764,7 @@ for (dm, uid) in _resp_times_all:
 for lead in _auto_leads:
     lid = lead["id"]
     uname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
-    if lid not in _first_human_ev:
+    if lid not in _first_human_ev and not _reached_advanced(lead):
         _vresp[uname]["never"] += 1
 
 _vresp_list = []
@@ -1194,6 +1219,7 @@ __DUP_ROWS__
     <div class="tabs">
       <button class="tab active" onclick="setView('all')">Todos (__TOTAL__)</button>
       <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (__ESTANCADOS__)</button>
+      <button class="tab" onclick="setView('dup')">Duplicados (__DUP_LEADS_N__)</button>
     </div>
   </div>
   <div class="controls">
@@ -1290,7 +1316,7 @@ stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'<
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
-function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
+function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')||(i===2&&v==='dup')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
 function filterByVendor(name){document.getElementById('f-user').value=name;document.getElementById('f-stage').value='';view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function filterByVendorStage(name,stage,ev){if(ev)ev.stopPropagation();document.getElementById('f-user').value=name;document.getElementById('f-stage').value=stage;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function exportCSV(){
@@ -1310,7 +1336,8 @@ function render(){
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
   const onlyFollowup=(minD>0||view==='stagnant');
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))).sort((a,b)=>b.value-a.value);
+  const onlyDup=(view==='dup');
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
@@ -1423,6 +1450,7 @@ else:
 html = html.replace("__DUP_ALERT__", _dup_alert_html)
 html = html.replace("__DUP_N__", str(total_dup_fichas))
 html = html.replace("__DUP_GROUPS__", str(total_dup_groups))
+html = html.replace("__DUP_LEADS_N__", str(total_dup_leads))
 html = html.replace("__DUP_COLOR__", _dup_color)
 html = html.replace("__DUP_ROWS__", _dup_rows_html)
 
