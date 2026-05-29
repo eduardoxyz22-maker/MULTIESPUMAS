@@ -231,64 +231,33 @@ print(f"  Eventos obtenidos: {len(_events_all)}")
 _auto_lead_ids = {lead["id"] for lead in leads if lead.get("created_by", 0) == 0}
 _lead_created_ts = {lead["id"]: lead.get("created_at", 0) for lead in leads}
 
-# Tipos de evento que son acciones internas del CRM (no comunicación con el cliente).
-# Se excluyen para no contar "cambio de etapa" o "asignación" como primera respuesta.
-_INTERNAL_EV_TYPES = {
-    "lead_added", "lead_created", "lead_status_changed", "lead_field_changed",
-    "lead_linked", "lead_unlinked", "lead_responsible_user_changed",
-    "pipeline_changed", "contact_linked", "contact_unlinked",
-    "tag_added", "tag_deleted", "task_added", "task_completed",
-    # tipos numéricos equivalentes que usa Kommo internamente
-    1, 2, 3, 12, 13,
+# Tipos de evento que SÍ representan gestión real de la vendedora sobre el lead
+# (no automatización de creación/vínculo/asignación). Basado en los tipos reales
+# de este Kommo: la integración hace entity_linked a los segundos de crear el lead,
+# por eso solo contamos acciones genuinas de la persona.
+_ACTION_EV_TYPES = {
+    "lead_status_changed",    # movió el lead de etapa
+    "entity_tag_added",       # lo marcó (ej. tag "Atendido")
+    "entity_direct_message",  # mensaje directo al cliente
+    "common_note_added",      # nota / registro de llamada
+    "geo_note_added",         # nota con ubicación (visita)
 }
 
 _first_human_ev = {}
 for _ev in _events_all:
-    _ev_by = _ev.get("created_by", 0)
-    if _ev_by == 0:
-        continue  # evento de sistema/bot
+    if _ev.get("created_by", 0) == 0:
+        continue  # automatización del sistema/bot
+    if _ev.get("type") not in _ACTION_EV_TYPES:
+        continue  # creación, vínculo, cambio de campo... no es gestión real
     _eid = _ev.get("entity_id")
     if _eid not in _auto_lead_ids:
-        continue  # solo leads automáticos (entrantes)
-    _ev_type = _ev.get("type")
-    if _ev_type in _INTERNAL_EV_TYPES:
-        continue  # acción interna del CRM, no una respuesta al cliente
+        continue  # solo leads entrantes automáticos
     _ets = _ev.get("created_at", 0)
     _lts = _lead_created_ts.get(_eid, 0)
     if _ets <= _lts:
         continue  # evento anterior o simultáneo a la creación
     if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
         _first_human_ev[_eid] = _ets
-
-# === DEBUG: volcar estructura real de eventos y contactos para diagnóstico ===
-try:
-    import os
-    os.makedirs("data", exist_ok=True)
-    _ev_type_counts = defaultdict(int)
-    for _ev in _events_all:
-        _ev_type_counts[str(_ev.get("type"))] += 1
-    _sample_events = _events_all[:8]
-    # Buscar un lead automático con sus eventos para inspeccionar
-    _sample_auto_id = next(iter(_auto_lead_ids), None)
-    _sample_lead_events = [
-        {"type": e.get("type"), "created_by": e.get("created_by"),
-         "created_at": e.get("created_at"), "value_after": e.get("value_after")}
-        for e in _events_all if e.get("entity_id") == _sample_auto_id
-    ][:15]
-    _sample_lead_raw = leads[0] if leads else {}
-    _debug = {
-        "total_eventos": len(_events_all),
-        "tipos_de_evento": dict(sorted(_ev_type_counts.items(), key=lambda x: -x[1])),
-        "muestra_eventos": _sample_events,
-        "lead_automatico_id": _sample_auto_id,
-        "eventos_de_ese_lead": _sample_lead_events,
-        "estructura_lead_completa": _sample_lead_raw,
-    }
-    with open("data/debug.json", "w", encoding="utf-8") as _df:
-        json.dump(_debug, _df, ensure_ascii=False, indent=2, default=str)
-    print("  DEBUG escrito en data/debug.json — tipos:", dict(_ev_type_counts))
-except Exception as _e:
-    print("  ⚠ Error debug:", _e)
 
 # Leads del mes anterior (mismo rango de dias)
 if now_dt.month == 1:
@@ -330,6 +299,9 @@ for _l in leads_prev:
 
 stage_counts = defaultdict(int)
 stage_values = defaultdict(float)
+
+# Agrupar leads por contacto principal para detectar duplicados (mismo cliente, varios leads)
+contact_to_leads = defaultdict(list)
 
 all_rows = []
 vendor_data = defaultdict(lambda: {
@@ -375,6 +347,14 @@ for lead in leads:
 
     contacts_emb = lead.get("_embedded", {}).get("contacts", [])
     contact_name = contacts_emb[0].get("name", "") if contacts_emb else ""
+    # ID del contacto principal (para agrupar duplicados del mismo cliente)
+    _main_cid = None
+    for _c in contacts_emb:
+        if _c.get("is_main"):
+            _main_cid = _c.get("id")
+            break
+    if _main_cid is None and contacts_emb:
+        _main_cid = contacts_emb[0].get("id")
 
     stage_counts[stage_name] += 1
     stage_values[stage_name] += value
@@ -416,7 +396,7 @@ for lead in leads:
         total_manual += 1
         created_by_count[user_map.get(created_by_id, "Desconocido")] += 1
 
-    all_rows.append({
+    _row = {
         "id": lid,
         "name": lname,
         "contact": contact_name,
@@ -427,39 +407,72 @@ for lead in leads:
         "days": round(days_float, 1),
         "days_int": days_int,
         "value": int(value),
-    })
+    }
+    all_rows.append(_row)
+    if _main_cid:
+        contact_to_leads[_main_cid].append(_row)
 
 total_leads = len(leads)
 
-# === Detección de leads duplicados (mismo nombre de contacto) ===
-_dup_map = defaultdict(list)
-for row in all_rows:
-    cname = (row["contact"] or row["name"]).strip().lower()
-    # Ignorar nombres vacíos, muy cortos o genéricos
-    if len(cname) < 4 or cname in {"sin nombre", "lead", "nuevo lead", "cliente", "contacto"}:
-        continue
-    _dup_map[cname].append(row)
+# === Detección de leads duplicados (mismo contacto con varios leads en el mes) ===
+# Agrupamos por contact_id (identidad real del cliente). Para los grupos con 2+
+# leads, traemos el nombre/teléfono del contacto desde Kommo para mostrarlos.
+_dup_cids = [cid for cid, rws in contact_to_leads.items() if len(rws) >= 2]
+print(f"Contactos con 2+ leads este mes: {len(_dup_cids)}")
 
-_dup_groups = sorted(
-    [(name, rows) for name, rows in _dup_map.items() if len(rows) >= 2],
-    key=lambda x: -len(x[1])
-)
-total_dup_leads = sum(len(r) for _, r in _dup_groups)
+_contact_info = {}  # cid -> {"name":..., "phone":...}
+for _i in range(0, len(_dup_cids), 50):
+    _batch = _dup_cids[_i:_i + 50]
+    _qs = urllib.parse.urlencode([("filter[id][]", c) for c in _batch], doseq=True)
+    try:
+        _cdata = api_get("/contacts?" + _qs + "&limit=250")
+    except Exception as _e:
+        print("  ⚠ Error contactos:", _e)
+        continue
+    for _c in _cdata.get("_embedded", {}).get("contacts", []):
+        _phone = ""
+        for _cf in _c.get("custom_fields_values") or []:
+            if (_cf.get("field_code") or "").upper() == "PHONE":
+                _vals = _cf.get("values") or []
+                if _vals:
+                    _phone = str(_vals[0].get("value", ""))
+                break
+        _contact_info[_c["id"]] = {"name": _c.get("name", ""), "phone": _phone}
+    time.sleep(0.15)
+
+# Construir grupos de duplicados ordenados por cantidad de leads
+_dup_groups = []
+for _cid in _dup_cids:
+    _rws = contact_to_leads[_cid]
+    _info = _contact_info.get(_cid, {})
+    _disp = _info.get("name") or (_rws[0]["contact"] or f"Contacto #{_cid}")
+    _dup_groups.append({
+        "cid": _cid,
+        "name": _disp,
+        "phone": _info.get("phone", ""),
+        "rows": _rws,
+    })
+_dup_groups.sort(key=lambda g: -len(g["rows"]))
+
+total_dup_leads = sum(len(g["rows"]) for g in _dup_groups)
 total_dup_groups = len(_dup_groups)
 
 _dup_rows_html = ""
-for cname, rows in _dup_groups[:50]:  # máximo 50 grupos en el dashboard
-    display_name = (rows[0]["contact"] or rows[0]["name"])
-    vendors_involved = ", ".join(sorted({r["user"] for r in rows}))
-    stages_involved = ", ".join(sorted({r["stage"] for r in rows}))
-    dates = " / ".join(r["created"] for r in rows)
+for _g in _dup_groups[:50]:
+    _rws = _g["rows"]
+    _vend = ", ".join(sorted({r["user"] for r in _rws}))
+    _stgs = ", ".join(sorted({r["stage"] for r in _rws}))
+    _dates = " / ".join(r["created"] for r in _rws)
+    _phone_str = f' &middot; {_g["phone"]}' if _g["phone"] else ""
+    _link = f'https://eanez.kommo.com/contacts/detail/{_g["cid"]}'
     _dup_rows_html += (
         f'        <tr>'
-        f'<td><strong>{display_name}</strong></td>'
-        f'<td style="text-align:center"><span class="badge {"b-red" if len(rows)>=3 else "b-amber"}">{len(rows)} leads</span></td>'
-        f'<td style="color:var(--muted);font-size:.74rem">{vendors_involved}</td>'
-        f'<td style="color:var(--muted);font-size:.74rem">{stages_involved}</td>'
-        f'<td style="color:var(--muted);font-size:.72rem">{dates}</td>'
+        f'<td><a href="{_link}" target="_blank"><strong>{_g["name"]}</strong></a>'
+        f'<span style="color:var(--muted);font-size:.7rem">{_phone_str}</span></td>'
+        f'<td style="text-align:center"><span class="badge {"b-red" if len(_rws)>=3 else "b-amber"}">{len(_rws)} leads</span></td>'
+        f'<td style="color:var(--muted);font-size:.74rem">{_vend}</td>'
+        f'<td style="color:var(--muted);font-size:.74rem">{_stgs}</td>'
+        f'<td style="color:var(--muted);font-size:.72rem">{_dates}</td>'
         f'</tr>\n'
     )
 
@@ -959,7 +972,7 @@ __CHANNELS_ROWS__
     <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
     <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Posibles Duplicados</div><div class="tk-sub">__DUP_GROUPS__ contactos con 2+ leads</div></div>
   </div>
-  <div class="sec">Velocidad de Respuesta &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Solo leads entrantes autom&aacute;ticos (__AUTO_N__ leads)</span></div>
+  <div class="sec">Velocidad de Primera Gesti&oacute;n &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta 1&ordf; acci&oacute;n (mensaje, nota, etiqueta o cambio de etapa) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
   <div class="resp-kpis">
     <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
     <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; ventana de oro</div></div>
