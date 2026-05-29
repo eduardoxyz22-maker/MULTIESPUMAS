@@ -1,5 +1,6 @@
 import urllib.request
 import urllib.parse
+import urllib.error
 import json
 import time
 import datetime
@@ -15,13 +16,35 @@ HEADERS = {
     "Content-Type": "application/json",
 }
 
-def api_get(path, params=None):
+def api_get(path, params=None, _retries=4):
     url = BASE_URL + path
     if params:
         url += "?" + urllib.parse.urlencode(params)
     req = urllib.request.Request(url, headers=HEADERS)
-    with urllib.request.urlopen(req) as resp:
-        return json.loads(resp.read().decode())
+    _last = None
+    for _attempt in range(_retries):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            # 429 (rate limit) y 5xx son transitorios -> reintentar con backoff
+            if e.code in (429, 500, 502, 503, 504) and _attempt < _retries - 1:
+                _wait = 2 ** _attempt  # 1s, 2s, 4s, 8s
+                print(f"  ⚠ {path} HTTP {e.code}, reintento en {_wait}s...")
+                time.sleep(_wait)
+                _last = e
+                continue
+            raise
+        except (urllib.error.URLError, TimeoutError) as e:
+            if _attempt < _retries - 1:
+                _wait = 2 ** _attempt
+                print(f"  ⚠ {path} error de red ({e}), reintento en {_wait}s...")
+                time.sleep(_wait)
+                _last = e
+                continue
+            raise
+    if _last:
+        raise _last
 
 def fetch_all_leads(from_ts, to_ts=None):
     leads = []
