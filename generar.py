@@ -1145,16 +1145,6 @@ __VENDOR_RESP_ROWS__
       </tbody>
     </table>
   </div>
-  <div class="sec">Fichas Duplicadas &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Mismo tel&eacute;fono cargado en 2+ fichas de contacto distintas</span></div>
-  __DUP_ALERT__
-  <div class="ch-wrap">
-    <table class="ch-table">
-      <thead><tr><th>Tel&eacute;fono</th><th>Fichas</th><th>Contactos duplicados (cada uno enlaza a Kommo)</th><th>Vendedoras involucradas</th><th>Etapas</th></tr></thead>
-      <tbody>
-__DUP_ROWS__
-      </tbody>
-    </table>
-  </div>
   <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
   <div class="exec-summary">
     <div style="font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Diagnóstico del Mes</div>
@@ -1240,15 +1230,20 @@ __DUP_ROWS__
     <span id="rc" class="rc"></span>
   </div>
   <div class="tw"><div class="ts">
-    <table>
+    <table id="main-tbl">
       <thead><tr><th>#</th><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th>Creado</th><th>Dias sin act.</th><th>Valor</th><th>Estado</th></tr></thead>
       <tbody id="tbl"></tbody>
+    </table>
+    <table id="dup-tbl" style="display:none" class="ch-table">
+      <thead><tr><th>Tel&eacute;fono</th><th>Fichas</th><th>Contactos duplicados (clic enlaza a Kommo)</th><th>Vendedoras involucradas</th><th>Etapas</th></tr></thead>
+      <tbody id="dup-tbl-body"></tbody>
     </table>
   </div></div>
 </div>
 <div class="footer">HEAVEN Colchones &bull; Pipeline __MES_LABEL__ &bull; eanez.kommo.com &bull; __FECHA__</div>
 <script>
 const allRows=__ALL_ROWS_JSON__;
+const dupGroups=__DUP_GROUPS_JSON__;
 const stages=__STAGES_JSON__;
 const sucOpts=__SUC_OPTS_JSON__;
 const usrOpts=__USR_OPTS_JSON__;
@@ -1324,7 +1319,30 @@ stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'<
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
 let view='all';
-function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')||(i===2&&v==='nohuman')||(i===3&&v==='dup')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
+function renderDups(){
+  const stage=document.getElementById('f-stage').value;
+  const user=document.getElementById('f-user').value;
+  const tbody=document.getElementById('dup-tbl-body');
+  let filtered=dupGroups;
+  if(stage||user){filtered=dupGroups.filter(g=>g.rows.some(r=>(!stage||r.stage===stage)&&(!user||r.user===user)));}
+  document.getElementById('rc').textContent=filtered.length+' grupos';
+  if(!filtered.length){tbody.innerHTML='<tr><td colspan="5" class="nd">Sin duplicados con estos filtros</td></tr>';return;}
+  tbody.innerHTML=filtered.map(g=>{
+    const fichasHtml=g.fichas.map(f=>'<a href="https://eanez.kommo.com/contacts/detail/'+f.cid+'" target="_blank"><strong>'+f.name+'</strong></a> <span style="color:var(--muted);font-size:.7rem">('+f.n_leads+' lead'+(f.n_leads!==1?'s':'')+')</span>').join('<br>');
+    const vend=[...new Set(g.rows.map(r=>r.user))].join(', ');
+    const stgs=[...new Set(g.rows.map(r=>r.stage))].join(', ');
+    return '<tr><td style="font-weight:700">'+g.phone+'</td><td style="text-align:center"><span class="badge b-red">'+g.n_fichas+' fichas</span></td><td style="font-size:.78rem">'+fichasHtml+'</td><td style="color:var(--muted);font-size:.74rem">'+vend+'</td><td style="color:var(--muted);font-size:.74rem">'+stgs+'</td></tr>';
+  }).join('');
+}
+function setView(v){
+  view=v;
+  document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')||(i===2&&v==='nohuman')||(i===3&&v==='dup')));
+  document.getElementById('f-days').value=v==='stagnant'?3:'';
+  const isDup=(v==='dup');
+  document.getElementById('main-tbl').style.display=isDup?'none':'';
+  document.getElementById('dup-tbl').style.display=isDup?'':'none';
+  if(isDup){renderDups();}else{render();}
+}
 function filterByVendor(name){document.getElementById('f-user').value=name;document.getElementById('f-stage').value='';view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function filterByVendorStage(name,stage,ev){if(ev)ev.stopPropagation();document.getElementById('f-user').value=name;document.getElementById('f-stage').value=stage;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
 function exportCSV(){
@@ -1432,6 +1450,17 @@ html = html.replace("__ETAPAS_JSON__", json.dumps(etapas_json, ensure_ascii=Fals
 html = html.replace("__COMPRADORES_STAGE__", COMPRADORES_STAGE)
 html = html.replace("__NO_RESP_STAGE__", NO_RESP_STAGE)
 html = html.replace("__FOLLOWUP_STAGES_JSON__", json.dumps(list(FOLLOWUP_STAGES), ensure_ascii=False))
+# Grupos de duplicados para la pestaña JS
+_dup_groups_js = [
+    {
+        "phone": g["phone"],
+        "n_fichas": g["n_fichas"],
+        "fichas": [{"cid": f["cid"], "name": f["name"], "n_leads": len(f["rows"])} for f in g["fichas"]],
+        "rows": [{"stage": r["stage"], "user": r["user"]} for r in g["rows"]],
+    }
+    for g in _dup_groups
+]
+html = html.replace("__DUP_GROUPS_JSON__", json.dumps(_dup_groups_js, ensure_ascii=False))
 # Canal de Origen
 html = html.replace("__CHANNELS_ROWS__", _ch_rows_html)
 html = html.replace("__CHANNEL_INSIGHT__", _channel_insight)
@@ -1456,12 +1485,10 @@ if total_dup_groups > 0:
     _dup_alert_html = f'<div class="ch-alert"><span>&#9888;</span><div><b>{total_dup_groups} tel&eacute;fonos</b> est&aacute;n cargados en <b>{total_dup_fichas} fichas de contacto distintas</b> ({total_dup_leads} leads en total) &mdash; la misma persona registrada m&aacute;s de una vez. Unificar las fichas en Kommo para evitar que dos vendedoras trabajen el mismo cliente.</div></div>'
 else:
     _dup_alert_html = '<div style="padding:10px 0;font-size:.78rem;color:var(--muted)">&#10003; Sin fichas duplicadas detectadas este mes (no hay tel&eacute;fonos repetidos en contactos distintos).</div>'
-html = html.replace("__DUP_ALERT__", _dup_alert_html)
 html = html.replace("__DUP_N__", str(total_dup_fichas))
 html = html.replace("__DUP_GROUPS__", str(total_dup_groups))
 html = html.replace("__DUP_LEADS_N__", str(total_dup_leads))
 html = html.replace("__DUP_COLOR__", _dup_color)
-html = html.replace("__DUP_ROWS__", _dup_rows_html)
 
 with open("index.html", "w", encoding="utf-8") as f:
     f.write(html)
