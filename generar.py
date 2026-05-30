@@ -974,12 +974,15 @@ body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,s
 .funnel{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--gray-md);height:40px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
 .fs{flex:1;display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:700;color:#fff;cursor:default;transition:opacity .15s}
 .fs:hover{opacity:.82}
-.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;margin-bottom:26px}
-.sc{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:15px 17px 13px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.sc-bar{position:absolute;top:0;left:0;right:0;height:4px}
-.sc-nm{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.sc-n{font-size:1.75rem;font-weight:800;color:var(--black);line-height:1}
-.sc-d{font-size:.68rem;color:var(--muted);margin-top:4px}
+.sg{display:flex;flex-direction:column;gap:6px;margin-bottom:26px;background:#fff;border:1px solid var(--gray-md);border-radius:12px;padding:18px 22px;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.sb-row{display:grid;grid-template-columns:190px 1fr 72px 96px;align-items:center;gap:14px;padding:4px 0}
+.sb-label{display:flex;align-items:center;gap:9px;font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sb-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.sb-bar-wrap{background:var(--gray-lt);border-radius:20px;height:15px;overflow:hidden}
+.sb-bar-fill{height:100%;border-radius:20px;min-width:2px}
+.sb-count{font-size:.82rem;font-weight:800;color:var(--black);text-align:right;white-space:nowrap}
+.sb-pct{font-size:.67rem;font-weight:500;color:var(--muted)}
+.sb-val{font-size:.72rem;color:var(--muted);text-align:right;white-space:nowrap}
 .alert{background:var(--red-lt);border:1px solid #F5C0C5;border-left:4px solid var(--red);border-radius:8px;padding:13px 18px;margin-bottom:22px;display:flex;align-items:center;gap:12px;font-size:.82rem;color:#8B0012}
 .alert span{font-size:1.2rem}
 .alert b{color:var(--red);font-weight:700}
@@ -1375,7 +1378,8 @@ vendors.forEach(v=>{
 const fEl=document.getElementById('funnel');
 stages.filter(s=>s.count>0).forEach(s=>{const g=document.createElement('div');g.className='fs';g.style.background=SC[s.name]||'#808080';g.style.flex=Math.max(s.count,1);g.title=s.name+': '+s.count+' deals';if(s.count>5)g.textContent=s.count;fEl.appendChild(g);});
 const grid=document.getElementById('stages-grid');
-stages.filter(s=>s.count>0).forEach(s=>{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'--';grid.innerHTML+='<div class="sc"><div class="sc-bar" style="background:'+c+'"></div><div class="sc-nm">'+s.name+'</div><div class="sc-n">'+s.count+'</div><div class="sc-d">'+v+' &middot; '+s.pct+'%</div></div>';});
+const _stgTot=stages.reduce((s,x)=>s+x.count,0);
+stages.filter(s=>s.count>0).forEach(s=>{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'--';const bw=_stgTot>0?(s.count/_stgTot*100).toFixed(1):0;grid.innerHTML+='<div class="sb-row"><div class="sb-label"><span class="sb-dot" style="background:'+c+'"></span>'+s.name+'</div><div class="sb-bar-wrap"><div class="sb-bar-fill" style="width:'+bw+'%;background:'+c+'"></div></div><div class="sb-count">'+s.count+' <span class="sb-pct">'+s.pct+'%</span></div><div class="sb-val">'+v+'</div></div>';});
 stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'</option>');
 usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
 sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
@@ -1436,7 +1440,7 @@ function render(){
     const inFollowup=FOLLOWUP_STAGES.includes(r.stage);
     const badge=isWon?'<span class="badge b-teal">Ganado</span>':isNoResp?'<span class="badge b-gray">Sin respuesta</span>':(inFollowup&&r.days_int>=7)?'<span class="badge b-red">+7 dias</span>':(inFollowup&&r.days_int>=3)?'<span class="badge b-amber">+72h</span>':'<span class="badge b-teal">Al dia</span>';
     const dc=(isWon||isNoResp||!inFollowup)?'var(--muted)':r.days_int>=7?'var(--red)':r.days_int>=3?'var(--amber)':'var(--teal)';
-    const rowBg=(isWon||isNoResp||!inFollowup)?'':r.days_int>=7?'background:rgba(206,41,57,.04)':r.days_int>=3?'background:rgba(217,119,6,.04)':'';
+    const rowBg=(isWon||isNoResp||!inFollowup)?'':r.days_int>=14?'background:rgba(206,41,57,.11);box-shadow:inset 4px 0 0 rgba(206,41,57,.65)':r.days_int>=7?'background:rgba(206,41,57,.06);box-shadow:inset 3px 0 0 rgba(206,41,57,.35)':r.days_int>=3?'background:rgba(217,119,6,.07);box-shadow:inset 3px 0 0 rgba(217,119,6,.5)':'';
     const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'--';
     const nm=r.contact||r.name;
     return '<tr style="'+rowBg+'"><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
