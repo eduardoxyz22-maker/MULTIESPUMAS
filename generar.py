@@ -1434,7 +1434,7 @@ function render(){
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
   const srch=(document.getElementById('f-search').value||'').trim().toLowerCase();
-  const onlyFollowup=(minD>0||view==='stagnant');
+  const onlyFollowup=(view==='stagnant');
   const onlyDup=(view==='dup');
   const onlyNohuman=(view==='nohuman');
   const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)&&(!onlyNohuman||r.nohuman)&&(!srch||(r.name||'').toLowerCase().includes(srch)||(r.contact||'').toLowerCase().includes(srch))).sort((a,b)=>b.value-a.value);
