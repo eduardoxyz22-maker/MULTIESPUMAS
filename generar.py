@@ -959,7 +959,7 @@ body{background:linear-gradient(135deg,#e6fffe 0%,#f4f7ff 45%,#eef2ff 100%);colo
 .hstat:last-child{border-right:none}
 .hstat-v{font-size:1.5rem;font-weight:800;color:#fff;line-height:1}
 .hstat-l{font-size:.62rem;color:rgba(255,255,255,.7);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
-.container{padding:36px 36px 26px;max-width:1500px;margin:-22px auto 0;background:rgba(240,253,252,.55);border-radius:28px 28px 0 0;position:relative;z-index:1;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.container{padding:36px 36px 26px;max-width:1500px;margin:-18px auto 0;background:#f4fffe;border-radius:28px 28px 0 0;position:relative;z-index:1}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
 .origin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:12px 0 22px}
 .mc{background:rgba(255,255,255,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:20px 22px;border:1px solid rgba(255,255,255,.7);position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease}
