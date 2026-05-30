@@ -1116,6 +1116,11 @@ a:hover{text-decoration:underline;color:var(--teal)}
 .ch-alert{background:var(--amber-lt);border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:8px;padding:11px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:.8rem;color:#7C4B00}
 .ch-alert span{font-size:1.1rem} .ch-alert b{color:var(--amber);font-weight:700}
 @media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid,.resp-kpis{grid-template-columns:1fr}}
+@keyframes rp{0%,100%{box-shadow:0 0 0 0 rgba(206,41,57,.5)}65%{box-shadow:0 0 0 7px rgba(206,41,57,0)}}
+.b-red{animation:rp 2.4s ease-out infinite}
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(12,18,28,.93);color:#fff;padding:9px 14px;border-radius:9px;font-size:.69rem;line-height:1.55;text-align:center;pointer-events:none;z-index:300;max-width:240px;font-weight:400;box-shadow:0 5px 18px rgba(0,0,0,.28);white-space:normal}
+[data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(12,18,28,.93);pointer-events:none;z-index:300}
 </style>
 </head>
 <body>
@@ -1185,20 +1190,20 @@ __CHANNELS_ROWS__
   <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 72h sin seguimiento &mdash; <b>__STAG14__</b> superan los 7 dias.</div></div>
   <div class="sec">KPIs del Equipo &mdash; __MES_LABEL__</div>
   <div class="team-kpis">
-    <div class="tk c-teal"><div class="tk-val"><span class="c-num" data-v="__CONV_PCT__">__CONV_PCT__</span>% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
-    <div class="tk c-red"><div class="tk-val"><span class="c-num" data-v="__NORESP_PCT__">__NORESP_PCT__</span>%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
-    <div class="tk c-amber"><div class="tk-val"><span class="c-num" data-v="__CALIF_PCT__">__CALIF_PCT__</span>%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
-    <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
-    <div class="tk c-gray"><div class="tk-val"><span class="c-num" data-v="__STAG_PCT__">__STAG_PCT__</span>%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
-    <div class="tk __DUP_COLOR__"><div class="tk-val"><span class="c-num" data-v="__DUP_N__">__DUP_N__</span></div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
+    <div class="tk c-teal" data-tip="Leads que llegaron a etapa Compradores vs. total del mes"><div class="tk-val"><span class="c-num" data-v="__CONV_PCT__">__CONV_PCT__</span>% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
+    <div class="tk c-red" data-tip="Leads en etapa 'No Responden' — el cliente dejó de contestar"><div class="tk-val"><span class="c-num" data-v="__NORESP_PCT__">__NORESP_PCT__</span>%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
+    <div class="tk c-amber" data-tip="En etapas Interesado, Cotización enviada, Agendado/Visita o Compradores"><div class="tk-val"><span class="c-num" data-v="__CALIF_PCT__">__CALIF_PCT__</span>%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
+    <div class="tk c-purple" data-tip="Valor promedio de los cierres registrados en el mes"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
+    <div class="tk c-gray" data-tip="Leads en etapas activas sin ninguna actividad en Kommo en las últimas 72h"><div class="tk-val"><span class="c-num" data-v="__STAG_PCT__">__STAG_PCT__</span>%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
+    <div class="tk __DUP_COLOR__" data-tip="Contactos con el mismo teléfono registrado en 2 o más fichas de Kommo"><div class="tk-val"><span class="c-num" data-v="__DUP_N__">__DUP_N__</span></div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
   </div>
   <div class="sec">Velocidad de Actualizaci&oacute;n del CRM &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta la 1&ordf; acci&oacute;n registrada en Kommo (mover etapa, etiqueta o nota) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
   <div style="background:#FEF9E7;border:1px solid #F4D03F;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.74rem;color:#7D6608;line-height:1.5"><b>&#9888; Importante:</b> Esta secci&oacute;n NO mide la respuesta real al cliente por WhatsApp &mdash; la integraci&oacute;n no registra esos mensajes de forma confiable en Kommo. Mide cu&aacute;nto tarda la vendedora en <b>actualizar la ficha en el CRM</b> (mover de etapa, etiquetar o dejar nota). Un n&uacute;mero alto puede significar que atendi&oacute; al cliente pero tard&oacute; en reflejarlo en el sistema.</div>
   <div class="resp-kpis">
-    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">leads actualizados en &le;72h</div></div>
-    <div class="tk __RESP_LT24_COLOR__"><div class="tk-val"><span class="c-num" data-v="__RESP_LT24_PCT__">__RESP_LT24_PCT__</span>%</div><div class="tk-lbl">Actualizados en &lt;24h</div><div class="tk-sub">__RESP_LT24_N__ leads &mdash; reflejados a tiempo</div></div>
-    <div class="tk c-amber"><div class="tk-val"><span class="c-num" data-v="__RESP_SLOW_N__">__RESP_SLOW_N__</span></div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
-    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val"><span class="c-num" data-v="__RESP_COLD_N__">__RESP_COLD_N__</span></div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
+    <div class="tk __RESP_AVG_COLOR__" data-tip="Promedio de tiempo hasta la 1ª acción en Kommo — considera solo leads automáticos actualizados en ≤72h para excluir outliers"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">leads actualizados en &le;72h</div></div>
+    <div class="tk __RESP_LT24_COLOR__" data-tip="% de leads automáticos donde la vendedora registró la primera acción en Kommo en menos de 24 horas"><div class="tk-val"><span class="c-num" data-v="__RESP_LT24_PCT__">__RESP_LT24_PCT__</span>%</div><div class="tk-lbl">Actualizados en &lt;24h</div><div class="tk-sub">__RESP_LT24_N__ leads &mdash; reflejados a tiempo</div></div>
+    <div class="tk c-amber" data-tip="Leads automáticos donde la primera acción en Kommo tardó más de 72 horas desde que llegó el lead"><div class="tk-val"><span class="c-num" data-v="__RESP_SLOW_N__">__RESP_SLOW_N__</span></div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
+    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" data-tip="Leads asignados por el bot sin ninguna acción humana ni avance de etapa — clic para ver en la tabla"><div class="tk-val"><span class="c-num" data-v="__RESP_COLD_N__">__RESP_COLD_N__</span></div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
@@ -1285,6 +1290,7 @@ __VENDOR_RESP_ROWS__
     </div>
   </div>
   <div class="controls">
+    <input id="f-search" type="search" placeholder="&#128269; Buscar nombre o contacto..." oninput="render()" style="width:230px">
     <select id="f-stage" onchange="render()"><option value="">Todas las etapas</option></select>
     <select id="f-user" onchange="render()"><option value="">Todos los responsables</option></select>
     <select id="f-suc" onchange="render()"><option value="">Todas las sucursales</option></select>
@@ -1415,7 +1421,8 @@ function exportCSV(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
-  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(view!=='dup'||r.dup)&&(view!=='nohuman'||r.nohuman)).sort((a,b)=>b.value-a.value);
+  const srch=(document.getElementById('f-search').value||'').trim().toLowerCase();
+  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(view!=='dup'||r.dup)&&(view!=='nohuman'||r.nohuman)&&(!srch||(r.name||'').toLowerCase().includes(srch)||(r.contact||'').toLowerCase().includes(srch))).sort((a,b)=>b.value-a.value);
   const header='ID,Contacto,Deal,Etapa,Sucursal,Responsable,Creado,Dias sin act.,Valor';
   const lines=rows.map(r=>[r.id,(r.contact||r.name).replace(/,/g,' '),r.name.replace(/,/g,' '),r.stage,r.sucursal,r.user,r.created,r.days_int,r.value].join(','));
   const blob=new Blob([header+'\\n'+lines.join('\\n')],{type:'text/csv;charset=utf-8;'});
@@ -1426,10 +1433,11 @@ function render(){
   const user=document.getElementById('f-user').value;
   const suc=document.getElementById('f-suc').value;
   const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
+  const srch=(document.getElementById('f-search').value||'').trim().toLowerCase();
   const onlyFollowup=(minD>0||view==='stagnant');
   const onlyDup=(view==='dup');
   const onlyNohuman=(view==='nohuman');
-  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)&&(!onlyNohuman||r.nohuman)).sort((a,b)=>b.value-a.value);
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))&&(!onlyDup||r.dup)&&(!onlyNohuman||r.nohuman)&&(!srch||(r.name||'').toLowerCase().includes(srch)||(r.contact||'').toLowerCase().includes(srch))).sort((a,b)=>b.value-a.value);
   document.getElementById('rc').textContent=f.length+' deals';
   const tbody=document.getElementById('tbl');
   if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
