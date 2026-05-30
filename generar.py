@@ -967,7 +967,7 @@ body{background:linear-gradient(135deg,#e6fffe 0%,#f4f7ff 45%,#eef2ff 100%);colo
 .container{padding:36px 36px 26px;max-width:1500px;margin:0 auto 0;background:#f4fffe;border-radius:0;position:relative;z-index:1}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
 .origin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:12px 0 22px}
-.mc{background:rgba(255,255,255,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:20px 22px;border:1px solid rgba(255,255,255,.7);position:relative;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease}
+.mc{background:rgba(255,255,255,.75);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-radius:12px;padding:20px 22px;border:1px solid rgba(255,255,255,.7);position:relative;box-shadow:0 2px 10px rgba(0,0,0,.08);transition:transform .18s ease,box-shadow .18s ease}
 .mc:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.13)}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}
 .mc.c-teal .mc-bar{background:var(--teal)} .mc.c-gray .mc-bar{background:var(--gray)}
@@ -1022,7 +1022,7 @@ a{color:var(--teal-dk);text-decoration:none;font-weight:500}
 a:hover{text-decoration:underline;color:var(--teal)}
 .nd{text-align:center;padding:38px;color:var(--muted);font-size:.82rem}
 .team-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:26px}
-.tk{background:rgba(255,255,255,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.65);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);position:relative;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease}
+.tk{background:rgba(255,255,255,.72);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.65);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,.07);position:relative;transition:transform .18s ease,box-shadow .18s ease}
 .tk:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.13)}
 .tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .tk.c-teal::before{background:var(--teal)} .tk.c-red::before{background:var(--red)}
