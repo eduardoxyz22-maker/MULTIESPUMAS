@@ -781,13 +781,14 @@ for lead in _auto_leads:
         _resp_times_all.append((dm, uid))
 
 _resp_n = len(_resp_times_all)
-_resp_avg = sum(t[0] for t in _resp_times_all) / _resp_n if _resp_n > 0 else 0
-_resp_lt5_n = sum(1 for t in _resp_times_all if t[0] < 5)
-_resp_lt1h_n = sum(1 for t in _resp_times_all if t[0] < 60)
+# Promedio global: solo tiempos ≤72h (consistente con la tabla por vendedora)
+_resp_times_fast = [t[0] for t in _resp_times_all if t[0] <= 4320]
+_resp_avg = sum(_resp_times_fast) / len(_resp_times_fast) if _resp_times_fast else 0
+# % actualizados en <24h sobre base automática total
+_resp_lt24_n = sum(1 for t in _resp_times_all if t[0] < 1440)
 # Porcentajes sobre base automática (no total del mes)
 _resp_base = _total_auto_resp_base or 1
-_resp_lt5_pct = round(_resp_lt5_n / _resp_base * 100)
-_resp_lt1h_pct = round(_resp_lt1h_n / _resp_base * 100)
+_resp_lt24_pct = round(_resp_lt24_n / _resp_base * 100)
 # Abandono real: nunca hubo acción humana registrada Y el lead sigue estancado en
 # una etapa inicial (no llegó a Interesado/Cotización/Agendado/Compradores). Si llegó
 # a una etapa avanzada, ALGUIEN lo movió aunque Kommo lo registre como bot.
@@ -814,10 +815,10 @@ _resp_slow_n = sum(
 _resp_cold_n = _resp_never_n  # para el tile de alerta crítica usamos solo los abandonados
 _resp_cold_pct = round(_resp_cold_n / _resp_base * 100)
 _resp_slow_pct = round(_resp_slow_n / _resp_base * 100)
-_resp_avg_str = _fmt_resp(_resp_avg) if _resp_n > 0 else "N/A"
-_resp_avg_color = "c-teal" if _resp_avg < 15 else ("c-amber" if _resp_avg < 60 else "c-red")
-_resp_lt5_color = "c-teal" if _resp_lt5_pct >= 40 else ("c-amber" if _resp_lt5_pct >= 20 else "c-red")
-_resp_lt1h_color = "c-teal" if _resp_lt1h_pct >= 70 else ("c-amber" if _resp_lt1h_pct >= 40 else "c-red")
+_resp_avg_str = _fmt_resp(_resp_avg) if _resp_avg > 0 else "N/A"
+# Promedio en horas para el color: verde <24h, ámbar 24-72h, rojo >72h
+_resp_avg_color = "c-teal" if _resp_avg < 1440 else ("c-amber" if _resp_avg < 4320 else "c-red")
+_resp_lt24_color = "c-teal" if _resp_lt24_pct >= 70 else ("c-amber" if _resp_lt24_pct >= 40 else "c-red")
 
 _vresp = defaultdict(lambda: {"times": [], "slow": 0, "never": 0})
 for (dm, uid) in _resp_times_all:
@@ -1191,9 +1192,8 @@ __CHANNELS_ROWS__
   <div class="sec">Velocidad de Actualizaci&oacute;n del CRM &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta la 1&ordf; acci&oacute;n registrada en Kommo (mover etapa, etiqueta o nota) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
   <div style="background:#FEF9E7;border:1px solid #F4D03F;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.74rem;color:#7D6608;line-height:1.5"><b>&#9888; Importante:</b> Esta secci&oacute;n NO mide la respuesta real al cliente por WhatsApp &mdash; la integraci&oacute;n no registra esos mensajes de forma confiable en Kommo. Mide cu&aacute;nto tarda la vendedora en <b>actualizar la ficha en el CRM</b> (mover de etapa, etiquetar o dejar nota). Un n&uacute;mero alto puede significar que atendi&oacute; al cliente pero tard&oacute; en reflejarlo en el sistema.</div>
   <div class="resp-kpis">
-    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">hasta actualizar el CRM</div></div>
-    <div class="tk __RESP_LT5_COLOR__"><div class="tk-val">__RESP_LT5_PCT__%</div><div class="tk-lbl">Actualizados en &lt;5 min</div><div class="tk-sub">__RESP_LT5_N__ leads &mdash; reflejados al instante</div></div>
-    <div class="tk __RESP_LT1H_COLOR__"><div class="tk-val">__RESP_LT1H_PCT__%</div><div class="tk-lbl">Actualizados en &lt;1 hora</div><div class="tk-sub">__RESP_LT1H_N__ leads reflejados a tiempo</div></div>
+    <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">leads actualizados en &le;72h</div></div>
+    <div class="tk __RESP_LT24_COLOR__"><div class="tk-val">__RESP_LT24_PCT__%</div><div class="tk-lbl">Actualizados en &lt;24h</div><div class="tk-sub">__RESP_LT24_N__ leads &mdash; reflejados a tiempo</div></div>
     <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
     <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
   </div>
@@ -1529,12 +1529,9 @@ html = html.replace("__UNCLASSIFIED_ALERT__", _unclassified_alert)
 # Velocidad de Respuesta
 html = html.replace("__RESP_AVG_STR__", _resp_avg_str)
 html = html.replace("__RESP_AVG_COLOR__", _resp_avg_color)
-html = html.replace("__RESP_LT5_PCT__", str(_resp_lt5_pct))
-html = html.replace("__RESP_LT5_N__", str(_resp_lt5_n))
-html = html.replace("__RESP_LT5_COLOR__", _resp_lt5_color)
-html = html.replace("__RESP_LT1H_PCT__", str(_resp_lt1h_pct))
-html = html.replace("__RESP_LT1H_N__", str(_resp_lt1h_n))
-html = html.replace("__RESP_LT1H_COLOR__", _resp_lt1h_color)
+html = html.replace("__RESP_LT24_PCT__", str(_resp_lt24_pct))
+html = html.replace("__RESP_LT24_N__", str(_resp_lt24_n))
+html = html.replace("__RESP_LT24_COLOR__", _resp_lt24_color)
 html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
 html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
 html = html.replace("__RESP_SLOW_N__", str(_resp_slow_n))
