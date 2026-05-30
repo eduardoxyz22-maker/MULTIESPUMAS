@@ -961,7 +961,8 @@ body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,s
 .container{padding:26px 36px;max-width:1500px;margin:0 auto}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
 .origin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:12px 0 22px}
-.mc{background:#fff;border-radius:12px;padding:20px 22px;border:1px solid var(--gray-md);position:relative;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.mc{background:#fff;border-radius:12px;padding:20px 22px;border:1px solid var(--gray-md);position:relative;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06);transition:transform .18s ease,box-shadow .18s ease}
+.mc:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.11)}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}
 .mc.c-teal .mc-bar{background:var(--teal)} .mc.c-gray .mc-bar{background:var(--gray)}
 .mc.c-amber .mc-bar{background:var(--amber)} .mc.c-red .mc-bar{background:var(--red)}
@@ -1014,7 +1015,8 @@ a{color:var(--teal-dk);text-decoration:none;font-weight:500}
 a:hover{text-decoration:underline;color:var(--teal)}
 .nd{text-align:center;padding:38px;color:var(--muted);font-size:.82rem}
 .team-kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:26px}
-.tk{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;overflow:hidden}
+.tk{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;overflow:hidden;transition:transform .18s ease,box-shadow .18s ease}
+.tk:hover{transform:translateY(-3px);box-shadow:0 6px 18px rgba(0,0,0,.11)}
 .tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
 .tk.c-teal::before{background:var(--teal)} .tk.c-red::before{background:var(--red)}
 .tk.c-amber::before{background:var(--amber)} .tk.c-gray::before{background:var(--gray)}
@@ -1134,6 +1136,7 @@ body.pres .container{max-width:100%;padding:28px 48px}
 </style>
 </head>
 <body>
+<div id="scroll-bar" style="position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--teal),#3b82f6);z-index:9999;transition:width .1s linear;pointer-events:none"></div>
 <button class="pres-btn" onclick="togglePres()" title="Modo presentación para reuniones de equipo">&#9654; Presentaci&oacute;n</button>
 <div class="header">
   <div class="hl">
@@ -1474,6 +1477,7 @@ function render(){
   }).join('');
 }
 render();
+window.addEventListener('scroll',function(){var el=document.getElementById('scroll-bar');var pct=(document.documentElement.scrollTop||document.body.scrollTop)/(document.documentElement.scrollHeight-document.documentElement.clientHeight)*100;el.style.width=Math.min(pct,100)+'%';});
 function togglePres(){
   var on=document.body.classList.toggle('pres');
   document.querySelector('.pres-btn').innerHTML=on?'&#10005; Salir':'&#9654; Presentaci&oacute;n';
