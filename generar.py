@@ -845,16 +845,14 @@ _vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
 
 _vendor_resp_html = ""
 for (vname, vavg, vlt24_pct, vslow, vnever) in _vresp_list:
-    # Status combinado: pesa el tiempo de actualización del CRM (en horas) Y los
-    # leads que nunca tocó. Crítico si tarda demasiado O abandona muchos leads.
-    # Umbrales en minutos: 4h=240, 12h=720.
+    # Umbrales: Excelente <24h (1440 min), Aceptable 24h-72h, Crítico ≥72h o >10 nunca tocados
     if vavg is None:
         avg_str = "Sin datos"
         badge = '<span class="badge b-gray">Sin datos</span>'
-    elif vavg >= 720 or vnever > 10:
+    elif vavg >= 4320 or vnever > 10:
         avg_str = _fmt_resp(vavg)
         badge = '<span class="badge b-red">&#128308; Cr&iacute;tico</span>'
-    elif vavg >= 240:
+    elif vavg >= 1440:
         avg_str = _fmt_resp(vavg)
         badge = '<span class="badge b-amber">&#128993; Aceptable</span>'
     else:
@@ -1206,7 +1204,7 @@ __CHANNELS_ROWS__
 __VENDOR_RESP_ROWS__
       </tbody>
     </table>
-    <div style="font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5"><b>Criterio del Status:</b> &#128994; <b>Excelente</b> = actualiza el CRM en menos de 4h en promedio &middot; &#128993; <b>Aceptable</b> = entre 4h y 12h &middot; &#128308; <b>Cr&iacute;tico</b> = tarda m&aacute;s de 12h en promedio <u>o</u> tiene m&aacute;s de 10 leads nunca tocados. El tiempo promedio considera solo los leads actualizados dentro de las 72h.</div>
+    <div style="font-size:.7rem;color:var(--muted);margin-top:8px;line-height:1.5"><b>Criterio del Status:</b> &#128994; <b>Excelente</b> = actualiza el CRM en menos de 24h en promedio &middot; &#128993; <b>Aceptable</b> = entre 24h y 72h &middot; &#128308; <b>Cr&iacute;tico</b> = tarda m&aacute;s de 72h en promedio <u>o</u> tiene m&aacute;s de 10 leads nunca tocados. El tiempo promedio considera solo los leads actualizados dentro de las 72h.</div>
   </div>
   <div class="sec">Análisis Ejecutivo &mdash; __MES_LABEL__</div>
   <div class="exec-summary">
