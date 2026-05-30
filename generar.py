@@ -1000,7 +1000,7 @@ body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,s
 .ts::-webkit-scrollbar{width:5px} .ts::-webkit-scrollbar-track{background:var(--gray-lt)}
 .ts::-webkit-scrollbar-thumb{background:var(--teal);border-radius:3px}
 table{width:100%;border-collapse:collapse;font-size:.79rem}
-thead th{background:var(--black);color:rgba(255,255,255,.75);padding:10px 13px;text-align:left;font-weight:600;font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:3px solid var(--teal)}
+thead th{background:var(--black);color:rgba(255,255,255,.75);padding:10px 13px;text-align:left;font-weight:600;font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:10}
 tbody tr{border-bottom:1px solid var(--gray-lt);transition:background .12s}
 tbody tr:hover{background:var(--teal-lt)}
 tbody td{padding:9px 13px;color:var(--text);vertical-align:middle}
