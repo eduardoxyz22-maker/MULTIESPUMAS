@@ -806,7 +806,7 @@ _abandoned_ids = {
 }
 for _r in all_rows:
     _r["nohuman"] = _r["id"] in _abandoned_ids
-# Lentos: sí hubo acción humana, pero después de 24h
+# Tardías: sí hubo acción humana, pero después de 72h
 _resp_slow_n = sum(
     1 for lead in _auto_leads
     if lead["id"] in _first_human_ev
