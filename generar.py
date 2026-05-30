@@ -1122,9 +1122,19 @@ a:hover{text-decoration:underline;color:var(--teal)}
 [data-tip]{position:relative}
 [data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);background:rgba(12,18,28,.93);color:#fff;padding:9px 14px;border-radius:9px;font-size:.69rem;line-height:1.55;text-align:center;pointer-events:none;z-index:300;max-width:240px;font-weight:400;box-shadow:0 5px 18px rgba(0,0,0,.28);white-space:normal}
 [data-tip]:hover::before{content:'';position:absolute;bottom:calc(100% + 4px);left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:rgba(12,18,28,.93);pointer-events:none;z-index:300}
+.pres-btn{position:fixed;bottom:22px;right:22px;background:var(--teal);color:#fff;border:none;border-radius:50px;padding:11px 22px;font-size:.78rem;font-weight:700;cursor:pointer;z-index:1000;box-shadow:0 4px 16px rgba(0,181,173,.45);transition:all .2s;font-family:inherit;letter-spacing:.03em}
+.pres-btn:hover{background:var(--teal-dk);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,181,173,.5)}
+body.pres .ch-wrap,body.pres .ch-alert,body.pres .lead-origin-row,body.pres .tab-row,body.pres .controls,body.pres .rc,body.pres .tw,body.pres #dup-tbl,body.pres .resp-ranking,body.pres .exec-summary{display:none!important}
+body.pres .tk{padding:20px 22px}
+body.pres .tk-val{font-size:2.1rem}
+body.pres .metrics{grid-template-columns:repeat(4,1fr)}
+body.pres .mc-val{font-size:2.6rem}
+body.pres .team-kpis{grid-template-columns:repeat(6,1fr)}
+body.pres .container{max-width:100%;padding:28px 48px}
 </style>
 </head>
 <body>
+<button class="pres-btn" onclick="togglePres()" title="Modo presentación para reuniones de equipo">&#9654; Presentaci&oacute;n</button>
 <div class="header">
   <div class="hl">
     <div class="logo"><div class="logo-h">HEAVEN</div><div class="logo-s">colchones &#10011;</div></div>
@@ -1464,6 +1474,12 @@ function render(){
   }).join('');
 }
 render();
+function togglePres(){
+  var on=document.body.classList.toggle('pres');
+  document.querySelector('.pres-btn').innerHTML=on?'&#10005; Salir':'&#9654; Presentaci&oacute;n';
+  if(on&&document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(function(){});
+  else if(!on&&document.fullscreenElement) document.exitFullscreen().catch(function(){});
+}
 function countUp(el,end){var dur=900,s=performance.now();(function step(now){var p=Math.min((now-s)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(e*end);if(p<1)requestAnimationFrame(step);else el.textContent=end;})(s);}
 window.addEventListener('load',function(){document.querySelectorAll('[data-v]').forEach(function(el){var v=parseInt(el.getAttribute('data-v'),10);if(!isNaN(v)&&v>0)countUp(el,v);});});
 </script>
