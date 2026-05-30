@@ -1130,21 +1130,21 @@ a:hover{text-decoration:underline;color:var(--teal)}
   <div class="hr">
     <div class="hstat">
       <div style="display:flex;align-items:baseline;gap:10px;justify-content:center">
-        <div class="hstat-v">__TOTAL__</div>
+        <div class="hstat-v" data-v="__TOTAL__">__TOTAL__</div>
         <div style="font-size:1rem;font-weight:800;color:__DIFF_COLOR__">__DIFF_ARROW__ __DIFF_SIGN____DIFF_ABS__</div>
       </div>
       <div class="hstat-l">1-__DIA__ __CUR_MES_SHORT__ &nbsp;vs&nbsp; __PREV_TOTAL__ en __PREV_MES_SHORT__</div>
     </div>
     <div class="hstat"><div class="hstat-v">__VALOR__</div><div class="hstat-l">Valor total</div></div>
-    <div class="hstat"><div class="hstat-v">__ESTANCADOS__</div><div class="hstat-l">Sin Seguimiento</div></div>
+    <div class="hstat"><div class="hstat-v" data-v="__ESTANCADOS__">__ESTANCADOS__</div><div class="hstat-l">Sin Seguimiento</div></div>
   </div>
 </div>
 <div class="container">
   <div class="metrics">
-    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Leads del Mes</div><div class="mc-val">__TOTAL__</div><div class="mc-sub">creados en __MES_LABEL__</div></div>
+    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Leads del Mes</div><div class="mc-val" data-v="__TOTAL__">__TOTAL__</div><div class="mc-sub">creados en __MES_LABEL__</div></div>
     <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Valor Total Pipeline</div><div class="mc-val">__VALOR__</div><div class="mc-sub">deals con valor asignado</div></div>
-    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
-    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
+    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val" data-v="__STAG714__">__STAG714__</div><div class="mc-sub">sin actividad reciente</div></div>
+    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val" data-v="__STAG14__">__STAG14__</div><div class="mc-sub">atencion urgente</div></div>
   </div>
   <div class="lead-origin-row">
     <div class="lo-card lo-auto">
@@ -1185,20 +1185,20 @@ __CHANNELS_ROWS__
   <div class="alert"><span>&#9888;</span><div><b>__ESTANCADOS__ deals (__STAG_PCT__%)</b> llevan mas de 72h sin seguimiento &mdash; <b>__STAG14__</b> superan los 7 dias.</div></div>
   <div class="sec">KPIs del Equipo &mdash; __MES_LABEL__</div>
   <div class="team-kpis">
-    <div class="tk c-teal"><div class="tk-val">__CONV_PCT__% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
-    <div class="tk c-red"><div class="tk-val">__NORESP_PCT__%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
-    <div class="tk c-amber"><div class="tk-val">__CALIF_PCT__%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
+    <div class="tk c-teal"><div class="tk-val"><span class="c-num" data-v="__CONV_PCT__">__CONV_PCT__</span>% <span class="delta-mom __DIFF_CONV_CLASS__">__DIFF_CONV_ARROW__ __DIFF_CONV_SIGN____DIFF_CONV__pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">__COMPRADORES__ compradores / __TOTAL__ leads</div></div>
+    <div class="tk c-red"><div class="tk-val"><span class="c-num" data-v="__NORESP_PCT__">__NORESP_PCT__</span>%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">__NORESP_N__ el cliente no responde</div></div>
+    <div class="tk c-amber"><div class="tk-val"><span class="c-num" data-v="__CALIF_PCT__">__CALIF_PCT__</span>%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">__CALIF_N__ en etapas avanzadas</div></div>
     <div class="tk c-purple"><div class="tk-val">__TICKET__ <span class="delta-mom __DIFF_TICKET_CLASS__">__DIFF_TICKET_ARROW__</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
-    <div class="tk c-gray"><div class="tk-val">__STAG_PCT__%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
-    <div class="tk __DUP_COLOR__"><div class="tk-val">__DUP_N__</div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
+    <div class="tk c-gray"><div class="tk-val"><span class="c-num" data-v="__STAG_PCT__">__STAG_PCT__</span>%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">__ESTANCADOS__ sin actividad &gt;72h</div></div>
+    <div class="tk __DUP_COLOR__"><div class="tk-val"><span class="c-num" data-v="__DUP_N__">__DUP_N__</span></div><div class="tk-lbl">Fichas Duplicadas</div><div class="tk-sub">__DUP_GROUPS__ tel&eacute;fonos en 2+ fichas</div></div>
   </div>
   <div class="sec">Velocidad de Actualizaci&oacute;n del CRM &mdash; __MES_LABEL__ <span style="font-size:.6rem;font-weight:500;color:var(--muted);text-transform:none;letter-spacing:0">Tiempo hasta la 1&ordf; acci&oacute;n registrada en Kommo (mover etapa, etiqueta o nota) &middot; solo leads entrantes autom&aacute;ticos (__AUTO_N__)</span></div>
   <div style="background:#FEF9E7;border:1px solid #F4D03F;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:.74rem;color:#7D6608;line-height:1.5"><b>&#9888; Importante:</b> Esta secci&oacute;n NO mide la respuesta real al cliente por WhatsApp &mdash; la integraci&oacute;n no registra esos mensajes de forma confiable en Kommo. Mide cu&aacute;nto tarda la vendedora en <b>actualizar la ficha en el CRM</b> (mover de etapa, etiquetar o dejar nota). Un n&uacute;mero alto puede significar que atendi&oacute; al cliente pero tard&oacute; en reflejarlo en el sistema.</div>
   <div class="resp-kpis">
     <div class="tk __RESP_AVG_COLOR__"><div class="tk-val">__RESP_AVG_STR__</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">leads actualizados en &le;72h</div></div>
-    <div class="tk __RESP_LT24_COLOR__"><div class="tk-val">__RESP_LT24_PCT__%</div><div class="tk-lbl">Actualizados en &lt;24h</div><div class="tk-sub">__RESP_LT24_N__ leads &mdash; reflejados a tiempo</div></div>
-    <div class="tk c-amber"><div class="tk-val">__RESP_SLOW_N__</div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
-    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val">__RESP_COLD_N__</div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
+    <div class="tk __RESP_LT24_COLOR__"><div class="tk-val"><span class="c-num" data-v="__RESP_LT24_PCT__">__RESP_LT24_PCT__</span>%</div><div class="tk-lbl">Actualizados en &lt;24h</div><div class="tk-sub">__RESP_LT24_N__ leads &mdash; reflejados a tiempo</div></div>
+    <div class="tk c-amber"><div class="tk-val"><span class="c-num" data-v="__RESP_SLOW_N__">__RESP_SLOW_N__</span></div><div class="tk-lbl">Actualizados tarde (+72 h)</div><div class="tk-sub">__RESP_SLOW_PCT__% &mdash; CRM actualizado &gt;72h despu&eacute;s</div></div>
+    <div class="tk c-red" style="cursor:pointer" onclick="setView('nohuman');document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'})" title="Ver estos leads en la tabla"><div class="tk-val"><span class="c-num" data-v="__RESP_COLD_N__">__RESP_COLD_N__</span></div><div class="tk-lbl">Nunca tocados &#128269;</div><div class="tk-sub">__RESP_COLD_PCT__% &mdash; el bot los movi&oacute;, ninguna acci&oacute;n humana ni avance &middot; clic para ver</div></div>
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
@@ -1455,6 +1455,8 @@ function render(){
   }).join('');
 }
 render();
+function countUp(el,end){var dur=900,s=performance.now();(function step(now){var p=Math.min((now-s)/dur,1),e=1-Math.pow(1-p,3);el.textContent=Math.round(e*end);if(p<1)requestAnimationFrame(step);else el.textContent=end;})(s);}
+window.addEventListener('load',function(){document.querySelectorAll('[data-v]').forEach(function(el){var v=parseInt(el.getAttribute('data-v'),10);if(!isNaN(v)&&v>0)countUp(el,v);});});
 </script>
 </body>
 </html>"""
