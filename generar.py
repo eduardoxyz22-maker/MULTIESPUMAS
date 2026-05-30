@@ -946,7 +946,7 @@ TEMPLATE = """<!DOCTYPE html>
   --black:#1A1A1A;--white:#FFFFFF;--text:#2D2D2D;--muted:#6B6B6B;
 }
 body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
-.header{background:var(--teal);padding:0 36px;display:flex;justify-content:space-between;align-items:stretch;box-shadow:0 3px 16px rgba(0,181,173,.35)}
+.header{background:linear-gradient(135deg,#00B5AD 0%,#0f766e 55%,#1e3a5f 100%);padding:0 36px;display:flex;justify-content:space-between;align-items:stretch;box-shadow:0 4px 20px rgba(0,0,0,.25)}
 .hl{display:flex;align-items:center;gap:0;padding:16px 0}
 .logo{border-right:1px solid rgba(255,255,255,.3);padding-right:24px;margin-right:24px}
 .logo-h{font-size:1.75rem;font-weight:800;color:#fff;letter-spacing:.14em;line-height:1}
