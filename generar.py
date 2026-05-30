@@ -848,10 +848,15 @@ _vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
 _vendor_resp_html = ""
 for (vname, vavg, vlt24_pct, vslow, vnever) in _vresp_list:
     # Umbrales: Excelente <24h (1440 min), Aceptable 24h-72h, Crítico ≥72h o >10 nunca tocados
-    if vavg is None:
+    # vnever>10 se verifica ANTES de vavg is None: una vendedora con todos sus leads abandonados
+    # (vavg=None) pero >10 nunca tocados debe mostrar Crítico, no "Sin datos".
+    if vnever > 10:
+        avg_str = _fmt_resp(vavg) if vavg is not None else "Sin datos"
+        badge = '<span class="badge b-red">&#128308; Cr&iacute;tico</span>'
+    elif vavg is None:
         avg_str = "Sin datos"
         badge = '<span class="badge b-gray">Sin datos</span>'
-    elif vavg >= 4320 or vnever > 10:
+    elif vavg >= 4320:
         avg_str = _fmt_resp(vavg)
         badge = '<span class="badge b-red">&#128308; Cr&iacute;tico</span>'
     elif vavg >= 1440:
@@ -1581,10 +1586,6 @@ html = html.replace("__RESP_SLOW_PCT__", str(_resp_slow_pct))
 html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
 # Fichas duplicadas (mismo teléfono en contactos distintos)
 _dup_color = "c-red" if total_dup_groups >= 10 else ("c-amber" if total_dup_groups >= 1 else "c-teal")
-if total_dup_groups > 0:
-    _dup_alert_html = f'<div class="ch-alert"><span>&#9888;</span><div><b>{total_dup_groups} tel&eacute;fonos</b> est&aacute;n cargados en <b>{total_dup_fichas} fichas de contacto distintas</b> ({total_dup_leads} leads en total) &mdash; la misma persona registrada m&aacute;s de una vez. Unificar las fichas en Kommo para evitar que dos vendedoras trabajen el mismo cliente.</div></div>'
-else:
-    _dup_alert_html = '<div style="padding:10px 0;font-size:.78rem;color:var(--muted)">&#10003; Sin fichas duplicadas detectadas este mes (no hay tel&eacute;fonos repetidos en contactos distintos).</div>'
 html = html.replace("__DUP_N__", str(total_dup_fichas))
 html = html.replace("__DUP_GROUPS__", str(total_dup_groups))
 html = html.replace("__DUP_LEADS_N__", str(total_dup_leads))
