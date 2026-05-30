@@ -838,12 +838,13 @@ for vname, vrd in _vresp.items():
     # (las tardías se muestran en columna separada; el promedio refleja actualizaciones ágiles)
     vtimes_fast = [t for t in vtimes if t <= 4320]
     vavg = sum(vtimes_fast) / len(vtimes_fast) if vtimes_fast else None
-    vlt5_pct = round(sum(1 for t in vtimes_fast if t < 5) / len(vtimes_fast) * 100) if vtimes_fast else 0
-    _vresp_list.append((vname, vavg, vlt5_pct, vrd["slow"], vrd["never"]))
+    # % de leads que actualizó en menos de 24h (sobre todos los que tocó)
+    vlt24_pct = round(sum(1 for t in vtimes if t < 1440) / len(vtimes) * 100) if vtimes else 0
+    _vresp_list.append((vname, vavg, vlt24_pct, vrd["slow"], vrd["never"]))
 _vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
 
 _vendor_resp_html = ""
-for (vname, vavg, vlt5_pct, vslow, vnever) in _vresp_list:
+for (vname, vavg, vlt24_pct, vslow, vnever) in _vresp_list:
     # Status combinado: pesa el tiempo de actualización del CRM (en horas) Y los
     # leads que nunca tocó. Crítico si tarda demasiado O abandona muchos leads.
     # Umbrales en minutos: 4h=240, 12h=720.
@@ -862,7 +863,7 @@ for (vname, vavg, vlt5_pct, vslow, vnever) in _vresp_list:
     never_cls = ' style="color:var(--red);font-weight:700"' if vnever > 10 else ""
     _vendor_resp_html += (
         f'        <tr><td><strong>{vname}</strong></td>'
-        f'<td>{vlt5_pct}%</td>'
+        f'<td>{vlt24_pct}%</td>'
         f'<td>{avg_str}</td>'
         f'<td>{vslow}</td>'
         f'<td{never_cls}>{vnever}</td>'
@@ -1200,7 +1201,7 @@ __CHANNELS_ROWS__
   </div>
   <div class="resp-ranking">
     <table class="ch-table">
-      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. (&le;72h)</th><th>Tard&iacute;as (+72h)</th><th>Nunca tocados</th><th>Status</th></tr></thead>
+      <thead><tr><th>Vendedora</th><th>% en &lt;24h</th><th>Tiempo prom. (&le;72h)</th><th>Tard&iacute;as (+72h)</th><th>Nunca tocados</th><th>Status</th></tr></thead>
       <tbody>
 __VENDOR_RESP_ROWS__
       </tbody>
