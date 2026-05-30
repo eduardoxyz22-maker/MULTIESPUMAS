@@ -703,7 +703,8 @@ dias_transcurridos = now_dt.day
 _pace              = total_compradores / dias_transcurridos if dias_transcurridos > 0 else 0
 base_proj          = int(_pace * dias_del_mes)
 base_proj_val      = fmt_money(int(ticket_avg * base_proj))
-mid_proj           = int(total_leads * dias_del_mes / dias_transcurridos * 0.04) if dias_transcurridos > 0 else 0
+mid_proj           = int(total_leads * dias_del_mes / dias_transcurridos * (conv_pct / 100 + 0.01)) if dias_transcurridos > 0 else 0
+_mid_conv_pct_lbl  = conv_pct + 1
 mid_proj_val       = fmt_money(int(ticket_avg * mid_proj))
 rescue_extra       = int(total_stagnant_7 * 0.30)
 rescue_val_extra   = fmt_money(int(ticket_avg * rescue_extra))
@@ -1268,7 +1269,7 @@ __VENDOR_RESP_ROWS__
       <p>Mantiene tendencia actual sin intervenciones</p>
     </div>
     <div class="scenario scenario-mid">
-      <h4>+1pp Conversión (4%)</h4>
+      <h4>+1pp Conversi&oacute;n (__MID_CONV_PCT_LBL__%)</h4>
       <div class="scenario-num">~__MID_PROJ__</div>
       <div class="scenario-val">~__MID_PROJ_VAL__</div>
       <p>Coaching dirigido a vendedoras CRÍTICO</p>
@@ -1505,6 +1506,7 @@ html = html.replace("__BASE_PROJ__", str(base_proj))
 html = html.replace("__BASE_PROJ_VAL__", base_proj_val)
 html = html.replace("__MID_PROJ__", str(mid_proj))
 html = html.replace("__MID_PROJ_VAL__", mid_proj_val)
+html = html.replace("__MID_CONV_PCT_LBL__", str(_mid_conv_pct_lbl))
 html = html.replace("__RESCUE_EXTRA__", str(rescue_extra))
 html = html.replace("__RESCUE_VAL_EXTRA__", rescue_val_extra)
 html = html.replace("__PREV_TOTAL__", str(total_leads_prev))
