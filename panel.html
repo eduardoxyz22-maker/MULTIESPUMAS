@@ -79,7 +79,8 @@ body{
 
 .scroll{flex:1;overflow-y:auto;padding:26px 30px 60px}
 .view{display:none;opacity:1}
-.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+.view.active{display:block;animation:viewIn .22s ease-out}
 
 /* ============ GENERIC ============ */
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin:30px 0 14px;gap:16px}
@@ -145,7 +146,7 @@ body{
 
 /* team cards */
 .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:14px}
-.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line)}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line);position:relative}
 .tcard.v-green{border-top-color:var(--green)} .tcard.v-amber{border-top-color:var(--amber)} .tcard.v-red{border-top-color:var(--red)}
 .tcard-h{padding:15px 17px 13px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .avatar{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.92rem;flex-shrink:0}
@@ -172,11 +173,13 @@ body{
 .insight .d{font-size:.8rem;color:#2C5C58;margin-top:3px;line-height:1.5}
 
 /* funnel */
-.funnel{display:flex;flex-direction:column;gap:7px}
-.fstep{display:grid;grid-template-columns:160px 1fr 90px;align-items:center;gap:14px}
-.fstep .fn{font-size:.8rem;font-weight:700}
-.fbar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;font-size:.82rem;min-width:54px}
-.fstep .fp{text-align:right;font-size:.78rem;color:var(--muted);font-weight:600}
+.funnel{display:flex;flex-direction:column;gap:3px}
+.fstep{display:flex;align-items:center;gap:12px}
+.fstep .fn{font-size:.78rem;font-weight:700;width:148px;text-align:right;flex-shrink:0}
+.fbar-wrap{flex:1;display:flex;justify-content:center}
+.fbar{height:38px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:#fff;font-weight:800;font-size:.82rem;transition:width .5s cubic-bezier(.4,0,.2,1);min-width:50px;white-space:nowrap}
+.fstep .fp{width:52px;text-align:right;font-size:.76rem;color:var(--muted);font-weight:700;flex-shrink:0}
+.fconn{height:3px;margin:0 auto;background:var(--line-2);width:40%;border-radius:2px}
 
 /* scenario cards */
 .scen{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:var(--card);box-shadow:var(--sh);position:relative;overflow:hidden}
@@ -265,6 +268,19 @@ body{
   .scroll{padding:18px 16px 50px}
   .topbar{padding:14px 16px}
 }
+/* ── shimmer en cards ── */
+.tcard::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.22) 50%,transparent 64%);transform:translateX(-120%);transition:transform .55s ease;pointer-events:none;z-index:1}
+.tcard:hover::before{transform:translateX(120%)}
+/* ── gradiente en números del hero ── */
+.diag-stat .v.bad{background:linear-gradient(135deg,#FF8A8E,#FFC0C2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.diag-stat .v.good{background:linear-gradient(135deg,#46D6A6,#80EEC6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* ── badge sin datos ── */
+.zero{color:var(--faint)!important;font-style:italic}
+/* ── filas backlog por urgencia ── */
+.bk-crit{background:#FFF2F2!important}.bk-crit:hover{background:#FFE4E4!important}
+.bk-warn{background:#FFFBF0!important}.bk-warn:hover{background:#FEF3D0!important}
+/* ── medallas ── */
+.medal{position:absolute;top:9px;right:11px;font-size:1.1rem;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.18));z-index:2}
 </style>
 </head>
 <body>
@@ -1034,7 +1050,8 @@ function renderBacklog(){
   if(bkSuc) rows=rows.filter(r=>r.s===bkSuc);
   const body=rows.slice(0,30).map(r=>{
     const danger=r.d>=7;
-    return `<tr>
+    const rowCls=r.d>=7?'bk-crit':r.d>=4?'bk-warn':'';
+    return `<tr class="${rowCls}">
       <td><span class="mono" style="font-size:.78rem">${r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
@@ -1079,11 +1096,11 @@ function vSeguimiento(){
 
 function vConversion(){
   const max = FUNNEL[0].v;
-  const funnel = FUNNEL.map(f=>{
-    const w = Math.max(8, f.v/max*100);
+  const funnel = FUNNEL.map((f,i)=>{
+    const w = Math.max(14, Math.round(f.v/max*100));
     return `<div class="fstep"><div class="fn">${f.n}</div>
-      <div class="fbar" style="width:${w}%;background:${f.c}">${f.v.toLocaleString('en-US')}</div>
-      <div class="fp">${(f.v/max*100).toFixed(0)}%</div></div>`;
+      <div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:${f.c}">${f.v.toLocaleString('en-US')}</div></div>
+      <div class="fp">${Math.round(f.v/max*100)}%</div></div>${i<FUNNEL.length-1?'<div class="fconn"></div>':''}`;
   }).join('');
   const rows = CHANNELS.map(c=>{
     const col = c.cls==='green'?'var(--green)':c.cls==='red'?'var(--red)':'var(--faint)';
@@ -1173,12 +1190,16 @@ function renderTeamMini(){
 
 function renderTeamGrid(){
   const g=document.getElementById('teamGrid'); if(!g)return;
+  const medals=['🥇','🥈','🥉'];
+  const byC=[...TEAM].sort((a,b)=>(b.cierres||0)-(a.cierres||0)).map(v=>v.name);
   g.innerHTML = [...TEAM].sort((a,b)=>order(a.status)-order(b.status)).map(v=>{
-    const col = v.status==='green'?'var(--green)':v.status==='amber'?'var(--amber)':'var(--red)';
+    const rank=byC.indexOf(v.name);
+    const medal=rank<3&&(v.cierres||0)>0?medals[rank]:'';
     return `<div class="tcard v-${v.status}" onclick="openPerfil('${v.name}')">
+      ${medal?`<div class="medal">${medal}</div>`:''}
       <div class="tcard-h">
         <div style="display:flex;gap:11px;align-items:center;min-width:0;flex:1">
-          <div class="avatar" style="background:${col}">${v.ini}</div>
+          <div class="avatar" style="background:${avatarColor(v.name)}">${v.ini}</div>
           <div style="min-width:0;display:flex;flex-direction:column"><div class="tcard-name">${v.name}</div><div class="tcard-where">${v.sucursal}</div></div>
         </div>
         ${stPill(v.status)}
@@ -1243,11 +1264,12 @@ function renderTeamPerf(){
   const t=document.getElementById('teamPerf'); if(!t)return;
   // ordenado por cierres desc
   const sorted=[...TEAM].sort((a,b)=>b.cierres-a.cierres);
-  const body=sorted.map(v=>{
+  const trophies=['🥇','🥈','🥉'];
+  const body=sorted.map((v,i)=>{
     const cc = v.conv>=6?'var(--green)':v.conv>=4?'var(--amber)':'var(--red)';
-    const isStar = v.cierres===MAX_CIERRES && MAX_CIERRES>0;
+    const prefix = i<3&&(v.cierres||0)>0 ? trophies[i]+' ' : '';
     return `<tr class="clickable" onclick="openPerfil('${v.name}')">
-      <td><div class="who">${v.name}${isStar?' <span class="st st-green" style="font-size:.6rem;padding:1px 7px">★ top</span>':''}${v.nuevo?' <span class="st st-amber" style="font-size:.6rem;padding:1px 7px">nuevo</span>':''}</div><div class="where">${v.sucursal}</div></td>
+      <td><div class="who">${prefix}${v.name}${v.nuevo?' <span class="st st-amber" style="font-size:.6rem;padding:1px 7px">nuevo</span>':''}</div><div class="where">${v.sucursal}</div></td>
       <td class="r num">${v.leads}</td>
       <td class="r">${momBadge(v.leads, v.prevLeads)}</td>
       <td class="r num" style="color:${cc};font-weight:800">${v.conv}%</td>
@@ -1300,6 +1322,35 @@ function bindBacklog(){
     renderBacklog();
   });
 }
+/* ── avatar color único por vendedora ── */
+function avatarColor(name){
+  const p=['#C0392B','#D35400','#B7950B','#1E8449','#1A5276','#6C3483','#C0392B','#117A65','#2471A3','#784212'];
+  let h=0; for(const c of (name||'')) h=(h*31+c.charCodeAt(0))%p.length;
+  return p[Math.abs(h)%p.length];
+}
+/* ── contadores animados ── */
+function countUp(el,dur=540){
+  const orig=el.textContent;
+  const m=orig.match(/^([^0-9]*)(\d[\d,.]*)(.*)/);
+  if(!m) return;
+  const num=parseFloat(m[2].replace(/,/g,''));
+  if(!num||num<=0) return;
+  const t0=performance.now();
+  (function step(ts){
+    const p=Math.min((ts-t0)/dur,1), ease=1-Math.pow(1-p,3), v=num*ease;
+    const d=num>=1000?Math.round(v).toLocaleString('en-US'):num>=10?String(Math.round(v)):v.toFixed(1);
+    el.textContent=m[1]+d+m[3];
+    if(p<1)requestAnimationFrame(step); else el.textContent=orig;
+  })(performance.now());
+}
+function runCountUps(){requestAnimationFrame(()=>document.querySelectorAll('.kpi-val,.diag-stat .v').forEach(el=>countUp(el)));}
+/* ── badge cero/nulo ── */
+function markZeros(){
+  document.querySelectorAll('.kpi-val,.tmetric .v').forEach(el=>{
+    const t=el.textContent.trim();
+    el.classList.toggle('zero',t==='0'||t==='—'||t==='0%'||t==='$0');
+  });
+}
 function go(view){
   const v=VIEWS[view]; if(!v)return;
   const scroll=document.getElementById('scroll');
@@ -1309,6 +1360,8 @@ function go(view){
   document.getElementById('crumb').textContent=v.c;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
   if(v.after)v.after();
+  runCountUps();
+  markZeros();
 }
 document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>go(n.dataset.view));
 loadMetas();
