@@ -375,16 +375,40 @@ function branchData(){
 /* ---------- ALERTAS (generadas de los datos reales) ---------- */
 function buildAlerts(){
   const A=[];
-  A.push({sev:'red', who:'Maria Flores', t:'528 deals sin seguimiento (86% de sus leads)', d:'Es el mayor foco de backlog del equipo. Maria califica bien (21%) pero no da seguimiento. Acción: plan de contacto diario + revisión de cola.', act:'Exigir seguimiento'});
-  A.push({sev:'red', who:'Maria Flores', t:'135 leads nunca tocados', d:'El bot los movió y nunca hubo acción humana. Riesgo de pérdida directa. Acción: repartir y contactar en 48h.', act:'Repartir cola'});
-  A.push({sev:'red', who:'Carola Chavez', t:'Solo 13% actualiza el CRM en <24h', d:'311 deals sin seguimiento y la más lenta en reflejar actividad (22.4h prom). Acción: coaching de disciplina CRM.', act:'Coaching CRM'});
-  A.push({sev:'amber', who:'Isabel Robledo', t:'335 actualizaciones tardías (+72h) pese a ser top', d:'Mejor en ventas (42 cierres) pero registra tarde en Kommo. Si ordena su registro, el dato del equipo mejora. Acción: hábito de registro inmediato.', act:'Registro al momento'});
-  A.push({sev:'amber', who:'Gerencia', t:'Concentración: Isabel = 34% de los cierres', d:'Dependencia estructural alta de una sola vendedora. Acción: documentar y replicar su playbook al resto.', act:'Replicar playbook'});
-  A.push({sev:'amber', who:'Mirian Salazar', t:'88% de sus leads en “No responden”', d:'570 leads sin respuesta del cliente. Problema de reactivación. Acción: segunda cadencia de contacto (WhatsApp + llamada).', act:'Reactivar'});
-  A.push({sev:'red', who:'Datos / Gerencia', t:'89% de los leads sin sucursal etiquetada', d:'2.269 fichas sin sucursal — imposible medir bien por tienda. Acción: campaña de etiquetado.', act:'Etiquetar'});
+  const fn=v=>(v.name||'').split(' - ')[0];
+  const worstBk=[...TEAM].sort((a,b)=>(b.backlog||0)-(a.backlog||0))[0];
+  if(worstBk && worstBk.backlog>0){
+    const pct=worstBk.leads?Math.round(worstBk.backlog/worstBk.leads*100):0;
+    A.push({sev:'red', who:fn(worstBk), t:`${worstBk.backlog} deals sin seguimiento (${pct}% de sus leads)`, d:`Es el mayor foco de backlog del equipo. Califica al ${worstBk.califPct}% pero no da seguimiento. Acción: plan de contacto diario + revisión de cola.`, act:'Exigir seguimiento'});
+  }
+  const worstNunca=[...TEAM].sort((a,b)=>(b.nunca||0)-(a.nunca||0))[0];
+  if(worstNunca && worstNunca.nunca>10){
+    A.push({sev:'red', who:fn(worstNunca), t:`${worstNunca.nunca} leads nunca tocados`, d:'El bot los movió y nunca hubo acción humana. Riesgo de pérdida directa. Acción: repartir y contactar en 48h.', act:'Repartir cola'});
+  }
+  const slow=[...TEAM].filter(v=>!v.nuevo).sort((a,b)=>(a.u24||0)-(b.u24||0))[0];
+  if(slow){
+    A.push({sev:'red', who:fn(slow), t:`Solo ${slow.u24}% actualiza el CRM en <24h`, d:`${slow.backlog} deals sin seguimiento y de las más lentas en reflejar actividad (${slow.promTxt} prom). Acción: coaching de disciplina CRM.`, act:'Coaching CRM'});
+  }
+  const late=[...TEAM].sort((a,b)=>(b.tarde||0)-(a.tarde||0))[0];
+  if(late && late.tarde>150){
+    A.push({sev:'amber', who:fn(late), t:`${late.tarde} actualizaciones tardías (+72h)`, d:`Registra tarde en Kommo (${late.cierres} cierres). Si ordena su registro, el dato del equipo mejora. Acción: hábito de registro inmediato.`, act:'Registro al momento'});
+  }
+  if(TOP_CONC_PCT>=30){
+    A.push({sev:'amber', who:'Gerencia', t:`Concentración: ${TOP_VENDOR_NAME} = ${TOP_CONC_PCT}% de los cierres`, d:'Dependencia estructural alta de una sola vendedora. Acción: documentar y replicar su playbook al resto.', act:'Replicar playbook'});
+  }
+  const noResp=[...TEAM].sort((a,b)=>(b.noRespPct||0)-(a.noRespPct||0))[0];
+  if(noResp && noResp.noRespPct>=70){
+    A.push({sev:'amber', who:fn(noResp), t:`${noResp.noRespPct}% de sus leads en "No responden"`, d:`${noResp.noResp} leads sin respuesta del cliente. Problema de reactivación. Acción: segunda cadencia de contacto (WhatsApp + llamada).`, act:'Reactivar'});
+  }
+  A.push({sev:'red', who:'Datos / Gerencia', t:`${QUALITY.sinSucursalPct}% de los leads sin sucursal etiquetada`, d:`${QUALITY.sinSucursal.toLocaleString('es')} fichas sin sucursal — imposible medir bien por tienda. Acción: campaña de etiquetado.`, act:'Etiquetar'});
   A.push({sev:'red', who:'Datos / Gerencia', t:'Deals abiertos sin valor cargado (~100%)', d:'No se puede priorizar el pipeline por monto. Acción: cargar valor estimado al cotizar.', act:'Cargar valor'});
-  A.push({sev:'amber', who:'Gerencia', t:'Leads globales −15% vs Abril (2.544 vs 3.000)', d:'Caída de captación en todos los canales. El cuello de botella sigue siendo conversión, pero vigilar la entrada.', act:'Vigilar captación'});
-  A.push({sev:'green', who:'Jonathan Monje', t:'Nuevo — 25 leads asignados, en rampa', d:'Buena disciplina inicial (77% <24h). Acción: acompañar primeras cotizaciones para acelerar su primer cierre.', act:'Acompañar'});
+  if(LEADS_MOM_PCT<0){
+    A.push({sev:'amber', who:'Gerencia', t:`Leads globales ${LEADS_MOM_PCT}% vs ${PREV_MONTH_LBL} (${GLOBAL.leads.toLocaleString('es')} vs ${(GLOBAL.prevLeads||0).toLocaleString('es')})`, d:'Caída de captación en todos los canales. El cuello de botella sigue siendo conversión, pero vigilar la entrada.', act:'Vigilar captación'});
+  }
+  const nuevo=TEAM.find(v=>v.nuevo);
+  if(nuevo){
+    A.push({sev:'green', who:fn(nuevo), t:`Nuevo — ${nuevo.leads} leads asignados, en rampa`, d:`Buena disciplina inicial (${nuevo.u24}% <24h). Acción: acompañar primeras cotizaciones para acelerar su primer cierre.`, act:'Acompañar'});
+  }
   return A;
 }
 
@@ -444,21 +468,21 @@ function vDatos(){
   <div class="section-head"><div><div class="eyebrow">Calidad de datos</div><h2>Salud del CRM</h2>
   <p>Estos huecos impiden medir y priorizar bien. Limpiarlos es trabajo de gerencia + equipo.</p></div></div>
   <div class="kpis">
-    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin sucursal</span></div><div class="kpi-val">89%</div><div class="kpi-sub">2.269 fichas sin clasificar</div></div>
-    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Abiertos sin valor</span></div><div class="kpi-val">~100%</div><div class="kpi-sub">no se puede priorizar por monto</div></div>
-    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Teléfonos duplicados</span></div><div class="kpi-val">44</div><div class="kpi-sub">en 89 fichas distintas</div></div>
-    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Nunca tocados</span></div><div class="kpi-val">146</div><div class="kpi-sub">el bot los movió, sin acción humana</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin sucursal</span></div><div class="kpi-val">${QUALITY.sinSucursalPct}%</div><div class="kpi-sub">${QUALITY.sinSucursal.toLocaleString('es')} fichas sin clasificar</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Abiertos sin valor</span></div><div class="kpi-val">${QUALITY.sinValorPct>=99?'~100':QUALITY.sinValorPct}%</div><div class="kpi-sub">no se puede priorizar por monto</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Teléfonos duplicados</span></div><div class="kpi-val">${QUALITY.dupTel}</div><div class="kpi-sub">en ${QUALITY.dupFichas} fichas distintas</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Nunca tocados</span></div><div class="kpi-val">${QUALITY.nohuman}</div><div class="kpi-sub">el bot los movió, sin acción humana</div></div>
   </div>
   <div class="insight" style="margin-top:16px"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3a6 6 0 0 1 4 10.5c-.7.7-1 1.2-1 2.5H9c0-1.3-.3-1.8-1-2.5A6 6 0 0 1 12 3z"/><path d="M9 18h6"/></svg></span>
-    <div><div class="t">Prioridad de limpieza: etiquetar sucursal.</div><div class="d">Sin sucursal en 9 de cada 10 fichas, el comparativo por tienda es parcial. Una campaña de etiquetado de 1 semana desbloquea reportes confiables por punto de venta.</div></div></div>
+    <div><div class="t">Prioridad de limpieza: etiquetar sucursal.</div><div class="d">Sin sucursal en ${QUALITY.sinSucursalPct}% de las fichas, el comparativo por tienda es parcial. Una campaña de etiquetado de 1 semana desbloquea reportes confiables por punto de venta.</div></div></div>
 
-  <div class="section-head"><div><div class="eyebrow">Duplicados</div><h2>44 teléfonos en 2+ fichas</h2>
+  <div class="section-head"><div><div class="eyebrow">Duplicados</div><h2>${QUALITY.dupTel} teléfonos en 2+ fichas</h2>
   <p>Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisión.</p></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
     <thead><tr><th>Teléfono</th><th class="r">Fichas</th><th>Contactos</th><th>Vendedoras</th><th>Etapas</th></tr></thead>
     <tbody>${dupRows}</tbody>
   </table></div>
-  <div class="tag-line" style="padding:0 2px">Muestra de 25 de 44 grupos. En el dashboard real cada ficha enlaza a Kommo para fusionar.</div>`;
+  <div class="tag-line" style="padding:0 2px">Muestra de ${Math.min(DUPS.length,25)} de ${QUALITY.dupTel} grupos. En el dashboard real cada ficha enlaza a Kommo para fusionar.</div>`;
 }
 
 /* ---------- VISTA: ALERTAS ---------- */
@@ -483,7 +507,7 @@ function vAlertas(){
     </div>`;
   }).join('');
   return `
-  <div class="section-head"><div><div class="eyebrow">Acción</div><h2>Alertas accionables &mdash; Mayo 2026</h2>
+  <div class="section-head"><div><div class="eyebrow">Acción</div><h2>Alertas accionables &mdash; ${CUR_MONTH} ${CUR_YEAR}</h2>
   <p>Generadas de los datos del mes. Cada una tiene responsable y siguiente paso, para asignar en la reunión diaria.</p></div></div>
   <div class="filters">
     <span class="st st-red"><span class="d"></span>${counts.red} críticas</span>
@@ -776,8 +800,48 @@ const TEAM_DEFAULT = [
   {ini:'JM', name:'Jonathan Monje',  sucursal:'Central',       u24:77, promTxt:'15.5 h', tarde:0,   nunca:2,   leads:25,  prevLeads:0,   metaCierres:8,  metaMonto:20000,  cierres:0,  conv:0, ticket:0,    value:0,      calif:9,   califPct:36, noResp:3,   noRespPct:12, backlog:0,   status:'green', nuevo:true},
 ];
 const TEAM = (DASH && DASH.team) ? DASH.team : TEAM_DEFAULT;
+// Normaliza la sucursal: si viene vacía/"—", la deriva del nombre ("Nombre - Sucursal").
+const _SUC_KEYS = ['Mia Plaza','Central','Buenos Aires'];
+function _sucShort(s){ s=s||''; for(const k of _SUC_KEYS){ if(s.toLowerCase().includes(k.toLowerCase())) return k; } return s.trim()||'—'; }
+TEAM.forEach(v=>{
+  if(!v.sucursal || v.sucursal==='—' || v.sucursal==='-'){
+    const parts=(v.name||'').split(' - ');
+    v.sucursal = parts.length>1 ? _sucShort(parts.slice(1).join(' - ')) : '—';
+  }
+});
 const TOTAL_CIERRES = TEAM.reduce((s,v)=>s+(v.cierres||0),0);
 const GLOBAL = (DASH && DASH.global) ? DASH.global : {leads:2544, prevLeads:3000, cierres:122, pipeline:582310, ticket:4773};
+
+// ── Totales derivados de los datos reales (window.DASH) ──
+const CONV_PCT = GLOBAL.leads ? Math.round(GLOBAL.cierres/GLOBAL.leads*100) : 0;
+const LEADS_MOM_PCT = GLOBAL.prevLeads ? Math.round((GLOBAL.leads-GLOBAL.prevLeads)/GLOBAL.prevLeads*100) : 0;
+const LEADS_DIFF = GLOBAL.leads - (GLOBAL.prevLeads||0);
+const TOTAL_BACKLOG = TEAM.reduce((s,v)=>s+(v.backlog||0),0);
+// "Críticos +7 días": estimación. window.DASH.backlog es solo la muestra de las más
+// antiguas (sesgada a 100% >7d), así que usamos una proporción fija ~73% del backlog.
+const CRIT_BACKLOG = (DASH && typeof DASH.criticos==='number')
+  ? DASH.criticos
+  : Math.round(TOTAL_BACKLOG*0.73);
+const NO_RESP_TOTAL = TEAM.reduce((s,v)=>s+(v.noResp||0),0);
+const CALIF_TOTAL = TEAM.reduce((s,v)=>s+(v.calif||0),0);
+const _ADV_STAGES = ['Interesado','Cotización enviada','Agendado / Visita'];
+let _advTotal=0;
+Object.values(STAGES_BY_V||{}).forEach(arr=>(arr||[]).forEach(s=>{ if(_ADV_STAGES.includes(s.s)) _advTotal+=s.c; }));
+const ADV_TOTAL = _advTotal;
+const MAX_CIERRES = Math.max(0,...TEAM.map(v=>v.cierres||0));
+const BEST_CONV = Math.max(CONV_PCT, ...TEAM.filter(v=>v.conv>0).map(v=>v.conv||0));
+const EXTRA_CIERRES = Math.round(TOTAL_BACKLOG * BEST_CONV / 100);
+const NO_RESP_PCT = GLOBAL.leads ? Math.round(NO_RESP_TOTAL/GLOBAL.leads*100) : 0;
+const CALIF_PCT = GLOBAL.leads ? Math.round(CALIF_TOTAL/GLOBAL.leads*100) : 0;
+const BACKLOG_PCT = GLOBAL.leads ? Math.round(TOTAL_BACKLOG/GLOBAL.leads*100) : 0;
+// top performer y concentración de cierres
+const TOP_VENDOR = [...TEAM].sort((a,b)=>(b.cierres||0)-(a.cierres||0))[0] || {name:'—',cierres:0};
+const TOP_VENDOR_NAME = (TOP_VENDOR.name||'').split(' - ')[0];
+const TOP_CONC_PCT = GLOBAL.cierres ? Math.round(TOP_VENDOR.cierres/GLOBAL.cierres*100) : 0;
+const CUR_MONTH = (DASH && DASH.month) ? DASH.month : 'Mayo';
+const CUR_YEAR = (DASH && DASH.year) ? DASH.year : 2026;
+const PREV_MONTH_LBL = (DASH && DASH.weekly && DASH.weekly.prevMonth) ? DASH.weekly.prevMonth : 'Abril';
+
 // MoM helper
 function momLeads(v){ if(!v.prevLeads) return {new:true}; const d=v.leads-v.prevLeads; return {d, pct:Math.round(d/v.prevLeads*100)}; }
 function momBadge(cur, prev){
@@ -795,17 +859,22 @@ const CHANNELS = (DASH && DASH.channels) ? DASH.channels : [
 ];
 
 const FUNNEL = [
-  {n:'Leads del mes',     v:2544, c:'#27313F'},
-  {n:'Sin respuesta',     v:1330, c:'#646E7B'},
-  {n:'Calificados',       v:315,  c:'#2E6FE0'},
-  {n:'En etapas avanz.',  v:178,  c:'#00B5AD'},
-  {n:'Compradores',       v:122,  c:'#159A57'},
+  {n:'Leads del mes',     v:GLOBAL.leads,   c:'#27313F'},
+  {n:'Sin respuesta',     v:NO_RESP_TOTAL,  c:'#646E7B'},
+  {n:'Calificados',       v:CALIF_TOTAL,    c:'#2E6FE0'},
+  {n:'En etapas avanz.',  v:ADV_TOTAL,      c:'#00B5AD'},
+  {n:'Compradores',       v:GLOBAL.cierres, c:'#159A57'},
 ];
 
+const _proyCierres = Math.round(GLOBAL.cierres/30*31);
+const _proyValue   = Math.round(GLOBAL.pipeline/30*31);
+const _conv1       = Math.round(GLOBAL.leads*(CONV_PCT+1)/100);
+const _conv1Val    = GLOBAL.cierres ? Math.round(GLOBAL.pipeline/GLOBAL.cierres*_conv1) : 0;
+const _rescVal     = EXTRA_CIERRES * (GLOBAL.ticket||0);
 const SCEN = [
-  {tag:'Escenario base', v:'~126', v2:'~$601,398', d:'Mantiene la tendencia actual sin intervenciones.', hot:false, pin:''},
-  {tag:'+1pp conversión (6%)', v:'~157', v2:'~$749,361', d:'Coaching dirigido a vendedoras en estado crítico.', hot:false, pin:''},
-  {tag:'Rescate sin seguimiento', v:'+267', v2:'+$1,274,391', d:'Llamada/WhatsApp a los 890 deals sin seguimiento.', hot:true, pin:'Mayor palanca'},
+  {tag:'Escenario base', v:'~'+_proyCierres, v2:'~'+fmtMoney(_proyValue), d:'Mantiene la tendencia actual sin intervenciones.', hot:false, pin:''},
+  {tag:'+1pp conversión ('+(CONV_PCT+1)+'%)', v:'~'+_conv1, v2:'~'+fmtMoney(_conv1Val), d:'Coaching dirigido a vendedoras en estado crítico.', hot:false, pin:''},
+  {tag:'Rescate sin seguimiento', v:'+'+EXTRA_CIERRES, v2:'+'+fmtMoney(_rescVal), d:'Llamada/WhatsApp a los '+TOTAL_BACKLOG+' deals sin seguimiento.', hot:true, pin:'Mayor palanca'},
 ];
 
 const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
@@ -814,13 +883,6 @@ const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
   return {name:v.name.split(' - ')[0], n:v.backlog, pct, status};
 }).sort((a,b)=>b.n-a.n);
 let BACKLOG = [];
-const TOTAL_BACKLOG = TEAM.reduce((s,v)=>s+v.backlog,0);
-const CONV_PCT = GLOBAL.leads ? Math.round(GLOBAL.cierres/GLOBAL.leads*100) : 0;
-const LEADS_MOM_PCT = GLOBAL.prevLeads ? Math.round((GLOBAL.leads-GLOBAL.prevLeads)/GLOBAL.prevLeads*100) : 0;
-const LEADS_DIFF = GLOBAL.leads - (GLOBAL.prevLeads||0);
-const CUR_MONTH = (DASH && DASH.month) ? DASH.month : 'Mayo';
-const CUR_YEAR = (DASH && DASH.year) ? DASH.year : 2026;
-const PREV_MONTH_LBL = (DASH && DASH.weekly && DASH.weekly.prevMonth) ? DASH.weekly.prevMonth : 'Abril';
 
 /* ===================== ICON HELPERS ===================== */
 const I = {
@@ -836,10 +898,9 @@ const stPill = s=>`<span class="st st-${s}"><span class="d"></span>${STLABEL[s]}
 
 /* ===================== VIEWS ===================== */
 function vResumen(){
-  const bkPct = GLOBAL.leads ? Math.round(TOTAL_BACKLOG/GLOBAL.leads*100) : 0;
-  const critBk = Math.round(TOTAL_BACKLOG*0.73);
-  const bestConv = Math.max(CONV_PCT, ...TEAM.filter(v=>v.conv>0).map(v=>v.conv));
-  const extraCierres = Math.round(TOTAL_BACKLOG * bestConv / 100);
+  const bkPct = BACKLOG_PCT;
+  const critBk = CRIT_BACKLOG;
+  const extraCierres = EXTRA_CIERRES;
   const momDir = LEADS_MOM_PCT <= 0 ? 'down' : 'up';
   const momArrow = LEADS_MOM_PCT <= 0 ? '▼' : '▲';
   const momSign = LEADS_MOM_PCT > 0 ? '+' : '';
@@ -948,7 +1009,7 @@ function vEquipo(){
   </div>
   <div class="card pad" style="margin-top:14px">
     <div class="legend"><b>Criterio del semáforo:</b> &nbsp;🟢 <b>Excelente</b> = actualiza el CRM en menos de 24h en promedio · 🟡 <b>Aceptable</b> = entre 24h y 72h · 🔴 <b>Crítico</b> = tarda más de 72h en promedio o tiene más de 10 leads nunca tocados.</div>
-    <div class="legend" style="margin-top:8px;color:var(--red-ink)"><b>⚠ Riesgo de concentración:</b> Isabel Robledo concentra el <b>34% de los cierres</b> del mes. Dependencia estructural alta &mdash; replicar su método al resto del equipo es prioridad #1.</div>
+    <div class="legend" style="margin-top:8px;color:var(--red-ink)"><b>⚠ Riesgo de concentración:</b> ${TOP_VENDOR_NAME} concentra el <b>${TOP_CONC_PCT}% de los cierres</b> del mes. Dependencia estructural alta &mdash; replicar su método al resto del equipo es prioridad #1.</div>
   </div>`;
 }
 
@@ -986,18 +1047,18 @@ function renderBacklog(){
 function vSeguimiento(){
   return `
   <div class="section-head">
-    <div><div class="eyebrow">Acción inmediata</div><h2>890 deals abiertos sin actividad +72h</h2>
+    <div><div class="eyebrow">Acción inmediata</div><h2>${TOTAL_BACKLOG} deals abiertos sin actividad +72h</h2>
     <p>Ordenados por antigüedad sin contacto (lo más urgente primero). En tu CRM los deals abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto.</p></div>
     <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
   </div>
   <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">890</div><div class="kpi-sub">35% del total de deals</div></div>
-    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Críticos +7 días</span></div><div class="kpi-val">662</div><div class="kpi-sub">atención urgente</div></div>
-    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Nunca tocados</span></div><div class="kpi-val">146</div><div class="kpi-sub">el bot los movió, sin acción humana</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">${TOTAL_BACKLOG}</div><div class="kpi-sub">${BACKLOG_PCT}% del total de deals</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Críticos +7 días</span></div><div class="kpi-val">${CRIT_BACKLOG}</div><div class="kpi-sub">atención urgente</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Nunca tocados</span></div><div class="kpi-val">${QUALITY.nohuman}</div><div class="kpi-sub">el bot los movió, sin acción humana</div></div>
   </div>
 
-  <div class="section-head"><div><div class="eyebrow">¿De quién es el backlog?</div><h2>Las 890 fichas tienen dueño</h2>
-  <p>El 94% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.</p></div></div>
+  <div class="section-head"><div><div class="eyebrow">¿De quién es el backlog?</div><h2>Las ${TOTAL_BACKLOG} fichas tienen dueño</h2>
+  <p>El ${(()=>{const top2=[...BACKLOG_BY].slice(0,2).reduce((s,b)=>s+b.n,0);return TOTAL_BACKLOG?Math.round(top2/TOTAL_BACKLOG*100):0;})()}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.</p></div></div>
   <div class="card pad"><div id="backlogBy"></div></div>
 
   <div class="section-head"><div><h2 style="font-size:.95rem">Cola priorizada — más antiguas primero</h2></div></div>
@@ -1013,7 +1074,7 @@ function vSeguimiento(){
   <div class="card" style="overflow:hidden">
     <table class="tbl" id="bkTable"></table>
   </div>
-  <div class="tag-line" style="padding:0 2px">Muestra de las 45 fichas más antiguas (de 890). En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”, otra oportunidad de limpieza de datos.</div>`;
+  <div class="tag-line" style="padding:0 2px">Muestra de las ${BACKLOG.length||45} fichas más antiguas (de ${TOTAL_BACKLOG}). En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”, otra oportunidad de limpieza de datos.</div>`;
 }
 
 function vConversion(){
@@ -1037,15 +1098,15 @@ function vConversion(){
     </tr>`;
   }).join('');
   return `
-  <div class="section-head"><div><div class="eyebrow">Embudo</div><h2>Del lead al cierre &mdash; Mayo 2026</h2></div></div>
+  <div class="section-head"><div><div class="eyebrow">Embudo</div><h2>Del lead al cierre &mdash; ${CUR_MONTH} ${CUR_YEAR}</h2></div></div>
   <div class="cols-2">
     <div class="card pad"><div class="funnel">${funnel}</div></div>
     <div class="card pad" style="display:flex;flex-direction:column;justify-content:center;gap:14px">
       <div class="insight" style="margin:0"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3a6 6 0 0 1 4 10.5c-.7.7-1 1.2-1 2.5H9c0-1.3-.3-1.8-1-2.5A6 6 0 0 1 12 3z"/><path d="M9 18h6"/></svg></span>
-        <div><div class="t">52% de los leads "no responden".</div><div class="d">1.330 leads marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad más grande del embudo.</div></div></div>
+        <div><div class="t">${NO_RESP_PCT}% de los leads "no responden".</div><div class="d">${NO_RESP_TOTAL.toLocaleString('es')} leads marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad más grande del embudo.</div></div></div>
       <div style="display:flex;gap:12px">
-        <div class="kpi" style="flex:1"><div class="kpi-label">Calificados</div><div class="kpi-val" style="font-size:1.5rem;margin-top:6px">12%</div><div class="kpi-sub">315 en etapas avanzadas</div></div>
-        <div class="kpi" style="flex:1"><div class="kpi-label">Fichas duplicadas</div><div class="kpi-val" style="font-size:1.5rem;margin-top:6px">88</div><div class="kpi-sub">44 teléfonos en 2+ fichas</div></div>
+        <div class="kpi" style="flex:1"><div class="kpi-label">Calificados</div><div class="kpi-val" style="font-size:1.5rem;margin-top:6px">${CALIF_PCT}%</div><div class="kpi-sub">${CALIF_TOTAL} en etapas avanzadas</div></div>
+        <div class="kpi" style="flex:1"><div class="kpi-label">Fichas duplicadas</div><div class="kpi-val" style="font-size:1.5rem;margin-top:6px">${QUALITY.dupFichas}</div><div class="kpi-sub">${QUALITY.dupTel} teléfonos en 2+ fichas</div></div>
       </div>
     </div>
   </div>
@@ -1068,7 +1129,7 @@ function vProyeccion(){
       <div class="sd">${s.d}</div>
     </div>`).join('');
   return `
-  <div class="section-head"><div><div class="eyebrow">Proyección al cierre de mayo</div><h2>Tres escenarios &mdash; 30 de 31 días</h2>
+  <div class="section-head"><div><div class="eyebrow">Proyección al cierre de ${CUR_MONTH.toLowerCase()}</div><h2>Tres escenarios &mdash; proyección lineal</h2>
   <p>Pace lineal basado en los datos actuales. La palanca de mayor impacto es rescatar el backlog sin seguimiento.</p></div></div>
   <div class="cols-3">${cards}</div>
 
@@ -1079,14 +1140,14 @@ function vProyeccion(){
       <ol style="padding-left:18px;font-size:.86rem;line-height:1.9;color:var(--text)">
         <li>Llamar al <b>top 50</b> de cotizaciones por valor.</li>
         <li>Acompañar visitas de vendedoras en estado <b>crítico</b>.</li>
-        <li>Documentar el playbook de <b>Isabel Robledo</b> para replicarlo.</li>
+        <li>Documentar el playbook de <b>${TOP_VENDOR_NAME}</b> para replicarlo.</li>
       </ol>
     </div>
     <div class="card pad">
       <div class="eyebrow" style="color:var(--blue);margin-bottom:10px">📅 Este mes</div>
       <ol style="padding-left:18px;font-size:.86rem;line-height:1.9;color:var(--text)">
-        <li>Activar los <b>662</b> leads con +7 días sin contacto.</li>
-        <li>Revisar el pipeline <b>"No responden"</b> (1.330 leads).</li>
+        <li>Activar los <b>${CRIT_BACKLOG}</b> leads con +7 días sin contacto.</li>
+        <li>Revisar el pipeline <b>"No responden"</b> (${NO_RESP_TOTAL.toLocaleString('es')} leads).</li>
         <li>Etiquetar sucursal en leads sin clasificar.</li>
       </ol>
     </div>
@@ -1184,7 +1245,7 @@ function renderTeamPerf(){
   const sorted=[...TEAM].sort((a,b)=>b.cierres-a.cierres);
   const body=sorted.map(v=>{
     const cc = v.conv>=6?'var(--green)':v.conv>=4?'var(--amber)':'var(--red)';
-    const isStar = v.cierres===42;
+    const isStar = v.cierres===MAX_CIERRES && MAX_CIERRES>0;
     return `<tr class="clickable" onclick="openPerfil('${v.name}')">
       <td><div class="who">${v.name}${isStar?' <span class="st st-green" style="font-size:.6rem;padding:1px 7px">★ top</span>':''}${v.nuevo?' <span class="st st-amber" style="font-size:.6rem;padding:1px 7px">nuevo</span>':''}</div><div class="where">${v.sucursal}</div></td>
       <td class="r num">${v.leads}</td>
@@ -1209,7 +1270,7 @@ function renderTeamPerf(){
     <td class="r num bold">${fmtMoney(GLOBAL.ticket)}</td>
     <td class="r num bold">${fmtMoney(totPipe)}</td>
     <td class="r num bold">${totCalif}</td>
-    <td class="r num bold">52%</td>
+    <td class="r num bold">${NO_RESP_PCT}%</td>
   </tr>`;
   t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th></tr></thead><tbody>${body}${totRow}</tbody>`;
 }
@@ -1251,8 +1312,12 @@ function go(view){
 }
 document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>go(n.dataset.view));
 loadMetas();
-document.querySelector('[data-view="seguimiento"] .badge').textContent = TOTAL_BACKLOG;
-document.querySelector('[data-view="alertas"] .badge').textContent = buildAlerts().length;
+(function(){
+  const set=(view,val)=>{const el=document.querySelector(`[data-view="${view}"] .badge`); if(el) el.textContent=val;};
+  set('equipo', TEAM.length);
+  set('seguimiento', TOTAL_BACKLOG);
+  set('alertas', buildAlerts().length);
+})();
 // Producción: window.DASH.backlog. Preview: fetch del JSON. Arranca en Resumen.
 if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; go('resumen'); }
 else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
