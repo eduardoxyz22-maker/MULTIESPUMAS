@@ -1152,7 +1152,7 @@ function vEquipo(){
   </div>`;
 }
 
-let bkFilter='all', bkSuc=null;
+let bkFilter='all', bkVend=null;
 function renderBacklogBy(){
   const el=document.getElementById('backlogBy'); if(!el)return;
   const max=Math.max(...BACKLOG_BY.map(b=>b.n));
@@ -1170,7 +1170,7 @@ function renderBacklog(){
   let rows=BACKLOG;
   if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
-  if(bkSuc) rows=rows.filter(r=>r.s===bkSuc);
+  if(bkVend) rows=rows.filter(r=>r.r===bkVend);
   const body=rows.slice(0,30).map(r=>{
     const danger=r.d>=7;
     const rowCls=r.d>=7?'bk-crit':r.d>=4?'bk-warn':'';
@@ -1207,9 +1207,7 @@ function vSeguimiento(){
     <button class="chipf danger" data-f="crit">🔴 Críticos +7d</button>
     <button class="chipf" data-f="nh">🔍 Nunca tocados</button>
     <span class="spacer"></span>
-    <button class="chipf" data-s="Mia Plaza">Mia Plaza</button>
-    <button class="chipf" data-s="Central">Central</button>
-    <button class="chipf" data-s="Buenos Aires">Buenos Aires</button>
+    ${TEAM.map(v=>`<button class="chipf" data-v="${v.name}">${v.name.split(' ')[0]}</button>`).join('')}
   </div>
   <div class="card" style="overflow:hidden">
     <table class="tbl" id="bkTable"></table>
@@ -1474,16 +1472,16 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
-  bkFilter='all'; bkSuc=null;
+  bkFilter='all'; bkVend=null;
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#bkFilters [data-f]').forEach(x=>x.classList.remove('active'));
     b.classList.add('active'); bkFilter=b.dataset.f; renderBacklog();
   });
-  document.querySelectorAll('#bkFilters [data-s]').forEach(b=>b.onclick=()=>{
-    if(bkSuc===b.dataset.s){bkSuc=null;b.classList.remove('active');}
-    else{document.querySelectorAll('#bkFilters [data-s]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkSuc=b.dataset.s;}
+  document.querySelectorAll('#bkFilters [data-v]').forEach(b=>b.onclick=()=>{
+    if(bkVend===b.dataset.v){bkVend=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkFilters [data-v]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkVend=b.dataset.v;}
     renderBacklog();
   });
 }
