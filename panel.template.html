@@ -80,6 +80,8 @@ body{
 .scroll{flex:1;overflow-y:auto;padding:26px 30px 60px}
 .view{display:none;opacity:1}
 @keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn svg.spin{animation:spin .8s linear infinite;}
 .view.active{display:block;animation:viewIn .22s ease-out}
 
 /* ============ GENERIC ============ */
@@ -369,7 +371,7 @@ body{
     </div>
     <div class="topbar-right">
       <div class="meta-chip">Actualizado 30/05 &middot; 05:49</div>
-      <button class="btn" onclick="location.reload()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
+      <button class="btn" id="btnActualizar" onclick="triggerWorkflow()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
       <button class="btn btn-primary" onclick="exportarCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar</button>
     </div>
   </header>
@@ -1544,6 +1546,39 @@ loadMetas();
 if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; go('resumen'); }
 else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
 
+async function triggerWorkflow(){
+  const btn=document.getElementById('btnActualizar');
+  const svgIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>';
+  const setBtn=(txt,disabled)=>{if(btn){btn.disabled=!!disabled;btn.innerHTML=txt;}};
+  let tok=localStorage.getItem('gh_wf_pat');
+  if(!tok){
+    tok=prompt('Para actualizar desde el dashboard necesitas un token de GitHub.\n\nCrea uno en:\ngithub.com → Settings → Developer settings\n→ Personal access tokens → Fine-grained tokens\n→ Solo permiso "Actions: Read and write" para el repo MULTIESPUMAS\n\nPega el token aquí:');
+    if(!tok)return;
+    localStorage.setItem('gh_wf_pat',tok.trim());
+  }
+  setBtn(svgIcon.replace('><path','><path class="spin"')+' Iniciando...',true);
+  try{
+    const r=await fetch('https://api.github.com/repos/eduardoxyz22-maker/MULTIESPUMAS/actions/workflows/update-crm-dashboard.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+tok.trim(),'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},
+      body:JSON.stringify({ref:'main'})
+    });
+    if(r.status===204){
+      setBtn('✓ Actualizando (~2 min)...',true);
+      setTimeout(()=>location.reload(),110000);
+    } else if(r.status===401||r.status===403){
+      localStorage.removeItem('gh_wf_pat');
+      setBtn(svgIcon+' Token inválido — toca de nuevo',false);
+      setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+    } else {
+      setBtn(svgIcon+' Error '+r.status,false);
+      setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+    }
+  }catch(e){
+    setBtn(svgIcon+' Sin conexión',false);
+    setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+  }
+}
 function _csvDownload(filename, rows){
   const csv = rows.map(r=>r.map(c=>{
     const s = String(c==null?'':c);
