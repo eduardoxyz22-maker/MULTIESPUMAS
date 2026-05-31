@@ -1154,7 +1154,7 @@ function vEquipo(){
   </div>`;
 }
 
-let bkFilter='all', bkVend=null;
+let bkFilter='all', bkVend=null, bkStage=null;
 function renderBacklogBy(){
   const el=document.getElementById('backlogBy'); if(!el)return;
   const max=Math.max(...BACKLOG_BY.map(b=>b.n));
@@ -1173,7 +1173,8 @@ function renderBacklog(){
   if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
   if(bkVend) rows=rows.filter(r=>r.r===bkVend);
-  const filtered = bkFilter!=='all' || bkVend;
+  if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+  const filtered = bkFilter!=='all' || bkVend || bkStage;
   const display = filtered ? rows : rows.slice(0,50);
   const note=document.getElementById('bkNote');
   if(note) note.textContent = filtered
@@ -1216,6 +1217,9 @@ function vSeguimiento(){
     <button class="chipf" data-f="nh">🔍 Nunca tocados</button>
     <span class="spacer"></span>
     ${TEAM.map(v=>`<button class="chipf" data-v="${v.name}">${v.name.split(' ')[0]}</button>`).join('')}
+  </div>
+  <div class="filters" id="bkStageFilters" style="margin-top:6px">
+    ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');})()}
   </div>
   <div class="card" style="overflow:hidden">
     <table class="tbl" id="bkTable"></table>
@@ -1480,7 +1484,7 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
-  bkFilter='all'; bkVend=null;
+  bkFilter='all'; bkVend=null; bkStage=null;
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{
@@ -1490,6 +1494,11 @@ function bindBacklog(){
   document.querySelectorAll('#bkFilters [data-v]').forEach(b=>b.onclick=()=>{
     if(bkVend===b.dataset.v){bkVend=null;b.classList.remove('active');}
     else{document.querySelectorAll('#bkFilters [data-v]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkVend=b.dataset.v;}
+    renderBacklog();
+  });
+  document.querySelectorAll('#bkStageFilters [data-e]').forEach(b=>b.onclick=()=>{
+    if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
     renderBacklog();
   });
 }
