@@ -877,6 +877,20 @@ const SCEN = [
   {tag:'Rescate sin seguimiento', v:'+'+EXTRA_CIERRES, v2:'+'+fmtMoney(_rescVal), d:'Llamada/WhatsApp a los '+TOTAL_BACKLOG+' deals sin seguimiento.', hot:true, pin:'Mayor palanca'},
 ];
 
+const STAGE_ORDER = ['Incoming leads','Nueva consulta','Interesado','Cotización enviada','Agendado / Visita','Compradores','No Responden'];
+const STAGE_COLORS = {
+  'Incoming leads':'#7B8794','Nueva consulta':'#27313F','Interesado':'#2E6FE0',
+  'Cotización enviada':'#7A4AD9','Agendado / Visita':'#D98300','Compradores':'#159A57','No Responden':'#646E7B',
+};
+const STAGES_GLOBAL = (()=>{
+  if(DASH && Array.isArray(DASH.stages) && DASH.stages.length) return DASH.stages.slice();
+  const acc={};
+  Object.values(STAGES_BY_V||{}).forEach(arr=>(arr||[]).forEach(s=>{ acc[s.s]=(acc[s.s]||0)+(s.c||0); }));
+  const tot=Object.values(acc).reduce((a,b)=>a+b,0)||1;
+  return Object.entries(acc).map(([name,count])=>({name,count,value:0,pct:Math.round(count/tot*100)}));
+})();
+function stageColor(n){ return STAGE_COLORS[n] || '#9AA3AF'; }
+
 const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
   const pct=Math.round(v.backlog/v.leads*100);
   const status=v.backlog>100?'red':v.backlog>40?'amber':'green';
