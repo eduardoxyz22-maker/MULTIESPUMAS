@@ -1043,6 +1043,23 @@ function vResumen(){
     <table class="tbl" id="teamMini"></table>
   </div>
 
+  <div class="section-head"><div><div class="eyebrow">Pipeline completo</div><h2>Las ${GLOBAL.leads.toLocaleString('en-US')} fichas por etapa</h2>
+  <p>Dónde están parados los leads del mes. <button class="btn" style="padding:2px 8px;font-size:.72rem" onclick="go('conversion')">Ver embudo →</button></p></div></div>
+  <div class="stage-grid">${stageCards()}</div>
+
+  <div class="section-head"><div><div class="eyebrow">Origen de carga</div><h2>Manual vs Automático</h2>
+  <p>${ORIGIN.manual.toLocaleString('en-US')} cargados a mano por vendedoras · ${ORIGIN.auto.toLocaleString('en-US')} por el bot.</p></div></div>
+  <div class="card pad">
+    <div class="origin-split">
+      <div class="os os-manual" style="flex:${Math.max(ORIGIN.manual,1)}">✍ ${ORIGIN.manualPct}%</div>
+      <div class="os os-auto" style="flex:${Math.max(ORIGIN.auto,1)}">⚙ ${ORIGIN.autoPct}%</div>
+    </div>
+    <div class="origin-legend">
+      <div class="ol"><span class="sw" style="background:var(--green)"></span><b style="color:var(--text)">${ORIGIN.manual.toLocaleString('en-US')}</b>&nbsp;manual (vendedora)</div>
+      <div class="ol"><span class="sw" style="background:var(--ink-3)"></span><b style="color:var(--text)">${ORIGIN.auto.toLocaleString('en-US')}</b>&nbsp;automático (bot)</div>
+    </div>
+  </div>
+
   <div class="section-head"><div><div class="eyebrow">Hallazgo clave</div><h2>El canal manual rinde ${_ratio}× más</h2></div></div>
   <div class="insight">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.7-1 1.2-1 2.5H9c0-1.3-.3-1.8-1-2.5A6 6 0 0 1 12 3z"/></svg></span>
