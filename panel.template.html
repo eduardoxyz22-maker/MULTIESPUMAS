@@ -333,6 +333,35 @@ html[data-theme="dark"] img{opacity:.92}
 .chipf.danger{animation:pulseRed 2.2s ease-in-out infinite}
 html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-name:pulseRedDark}
 @keyframes pulseRedDark{0%,100%{box-shadow:0 0 0 0 rgba(232,88,93,.8)}60%{box-shadow:0 0 0 6px rgba(232,88,93,0)}}
+/* ── tooltip KPI ── */
+.kpi-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--line-2);color:var(--faint);font-size:.6rem;font-weight:800;cursor:default;flex-shrink:0;vertical-align:middle;margin-left:4px}
+.kpi-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:var(--ink);color:#E6EAEF;padding:8px 12px;border-radius:9px;font-size:.71rem;font-weight:500;white-space:normal;width:210px;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .15s;z-index:200;box-shadow:var(--sh-lg);text-transform:none;letter-spacing:0}
+.kpi-tip:hover::after{opacity:1}
+/* ── sticky headers ── */
+.tbl thead th{position:sticky;top:0;z-index:2;background:var(--card)}
+/* ── global search ── */
+.gs-wrap{position:relative}
+.gs-input{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 12px 7px 30px;font-family:inherit;font-size:.8rem;color:var(--text);width:175px;transition:width .2s,border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239AA3AF' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:9px center}
+.gs-input:focus{outline:none;width:240px;border-color:var(--brand);background-color:var(--card)}
+.gs-results{position:absolute;top:calc(100% + 5px);left:0;min-width:260px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-lg);z-index:50;max-height:280px;overflow-y:auto;display:none}
+.gs-results.show{display:block}
+.gs-item{padding:9px 14px;cursor:pointer;font-size:.82rem;border-bottom:1px solid var(--line-2);transition:background .1s}
+.gs-item:last-child{border-bottom:none}
+.gs-item:hover{background:var(--hover)}
+.gs-tag{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin-right:5px;vertical-align:middle}
+/* ── scroll-to-top ── */
+#btnTop{position:fixed;bottom:26px;right:26px;width:40px;height:40px;border-radius:50%;background:var(--ink-3);color:var(--text);border:1px solid var(--line);cursor:pointer;font-size:1rem;font-weight:800;box-shadow:var(--sh-lg);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s,background .15s;display:grid;place-items:center;line-height:1}
+#btnTop.show{opacity:1;pointer-events:auto}
+#btnTop:hover{background:var(--brand);color:#fff;border-color:var(--brand);transform:translateY(-2px)}
+/* ── dark mode row highlights ── */
+html[data-theme="dark"] .bk-crit{background:rgba(232,88,93,.07)!important}
+html[data-theme="dark"] .bk-crit:hover{background:rgba(232,88,93,.13)!important}
+html[data-theme="dark"] .bk-warn{background:rgba(232,154,28,.06)!important}
+html[data-theme="dark"] .bk-warn:hover{background:rgba(232,154,28,.1)!important}
+/* ── meta progress bar ── */
+.meta-prog{padding:10px 17px 12px;border-top:1px solid var(--line-2)}
+.meta-prog-bar{height:5px;background:var(--line-2);border-radius:99px;overflow:hidden;margin:5px 0 4px}
+.meta-prog-bar i{display:block;height:100%;border-radius:99px;transition:width .6s ease}
 </style>
 <script>(function(){try{if(localStorage.getItem('dash_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 </head>
@@ -402,7 +431,11 @@ html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-
       <h1 id="title">Resumen ejecutivo &mdash; Mayo 2026</h1>
     </div>
     <div class="topbar-right">
-      <div class="meta-chip">Actualizado 30/05 &middot; 05:49</div>
+      <div class="gs-wrap">
+        <input id="gsInput" class="gs-input" type="text" placeholder="Buscar…" oninput="gsSearch(this.value)" autocomplete="off" spellcheck="false">
+        <div id="gsResults" class="gs-results"></div>
+      </div>
+      <div class="meta-chip" id="metaChip">Actualizado 30/05 &middot; 05:49</div>
       <button class="btn" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema"></button>
       <button class="btn" id="btnActualizar" onclick="triggerWorkflow()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
       <button class="btn btn-primary" onclick="exportarCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar</button>
@@ -417,6 +450,7 @@ html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-
 <!-- ===== Drawer: perfil de vendedora ===== -->
 <div class="drawer-scrim" id="drawerScrim" onclick="closePerfil()"></div>
 <aside class="drawer" id="drawer"></aside>
+<button id="btnTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
 
 <!-- generar.py inyecta los datos reales del mes aquí -->
 <script>window.DASH = __DASH_JSON__;</script>
@@ -1067,6 +1101,8 @@ function vResumen(){
   const _mCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('manual'))||{conv:21,ticket:5076,cierres:111,pct:20};
   const _aCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('auto'))||{conv:1,ticket:2944,cierres:15,pct:80};
   const _ratio = _aCh.conv > 0 ? Math.round(_mCh.conv/_aCh.conv) : 21;
+  const _tip = txt=>`<span class="kpi-tip" data-tip="${txt}">i</span>`;
+  const _momDelta = LEADS_MOM_PCT!==0?`<span class="delta ${LEADS_MOM_PCT>0?'up':'down'}">${LEADS_MOM_PCT>0?'▲':'▼'} ${LEADS_MOM_PCT>0?'+':''}${LEADS_MOM_PCT}% leads</span>`:'';
   return `
   <div class="diag">
     <div>
@@ -1083,37 +1119,37 @@ function vResumen(){
 
   <div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
-      <div class="kpi-top"><span class="kpi-label">Conversión</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Leads que compraron ÷ total leads del mes. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
-      <div class="kpi-sub"><span class="delta up">▲ +2pp</span> ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
+      <div class="kpi-sub">${_momDelta||`<span class="delta up">▲</span>`} ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--brand)"></span>
-      <div class="kpi-top"><span class="kpi-label">Pipeline total</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Pipeline total ${_tip('Suma de valor ($) de todos los deals abiertos con monto asignado.')}</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
       <div class="kpi-val">${fmtK(GLOBAL.pipeline)}</div>
       <div class="kpi-sub">deals con valor asignado</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--red)"></span>
-      <div class="kpi-top"><span class="kpi-label">Sin seguimiento</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Sin seguimiento ${_tip('Deals abiertos sin ninguna actividad registrada en Kommo en más de 72 horas.')}</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
       <div class="kpi-val">${bkPct}%</div>
       <div class="kpi-sub"><b style="color:var(--red-ink)">${TOTAL_BACKLOG} deals</b> sin actividad +72h</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--amber)"></span>
-      <div class="kpi-top"><span class="kpi-label">Ticket promedio</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Ticket promedio ${_tip('Pipeline total ÷ número de compradores del mes.')}</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
       <div class="kpi-val">${fmtMoney(GLOBAL.ticket)}</div>
-      <div class="kpi-sub"><span class="delta down">▼</span> valor / compradores</div>
+      <div class="kpi-sub"><span class="delta ${GLOBAL.ticket>4000?'up':'down'}">${GLOBAL.ticket>4000?'▲':'▼'}</span> valor / compradores</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#2E6FE0"></span>
-      <div class="kpi-top"><span class="kpi-label">Interesado</span>${ico(I.eye,'#EAF1FC','#2E6FE0')}</div>
+      <div class="kpi-top"><span class="kpi-label">Interesado ${_tip('Leads actualmente en etapa "Interesado" — clientes que mostraron interés activo.')}</span>${ico(I.eye,'#EAF1FC','#2E6FE0')}</div>
       <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Interesado')||{count:0}).count}</div>
       <div class="kpi-sub">leads en etapa de interés</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#D98300"></span>
-      <div class="kpi-top"><span class="kpi-label">Agendado / Visita</span>${ico(I.calendar,'#FFF4E0','#D98300')}</div>
+      <div class="kpi-top"><span class="kpi-label">Agendado / Visita ${_tip('Leads con visita a tienda o cita agendada — mayor probabilidad de cierre.')}</span>${ico(I.calendar,'#FFF4E0','#D98300')}</div>
       <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Agendado / Visita')||{count:0}).count}</div>
       <div class="kpi-sub">visitas programadas</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
-      <div class="kpi-top"><span class="kpi-label">Compradores</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
+      <div class="kpi-top"><span class="kpi-label">Compradores ${_tip('Leads que cerraron como venta confirmada en Kommo durante este mes.')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
       <div class="kpi-val">${GLOBAL.cierres}</div>
       <div class="kpi-sub">cierres del mes</div>
     </div>
@@ -1188,6 +1224,17 @@ function vEquipo(){
 }
 
 let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog', bkSearch='', bkSort={k:'d',dir:-1};
+function bkSavePref(){try{localStorage.setItem('bk_pref',JSON.stringify({f:bkFilter,v:bkVend,m:bkMode,st:bkStage}));}catch(e){}}
+function bkLoadPref(){
+  try{
+    const p=JSON.parse(localStorage.getItem('bk_pref')||'null');
+    if(!p)return;
+    if(p.m==='stage') setBkMode('stage',p.st||null);
+    if(p.f&&p.f!=='all'){bkFilter=p.f;document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===p.f));}
+    if(p.v){bkVend=p.v;document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===p.v));}
+    renderBacklog();
+  }catch(e){}
+}
 function bkSetSearch(v){ bkSearch=(v||'').trim().toLowerCase(); renderBacklog(); }
 function bkSortBy(k){ if(bkSort.k===k){bkSort.dir*=-1;} else {bkSort={k,dir:(k==='d'||k==='v')?-1:1};} renderBacklog(); }
 function bkApply(rows){
@@ -1215,6 +1262,7 @@ function renderBacklogBy(){
 function leadId(r){ return r.id || ((r.c||'').match(/^Lead #(\d+)$/)||[])[1] || ''; }
 function renderBacklog(){
   const t=document.getElementById('bkTable'); if(!t)return;
+  bkSavePref();
   if(bkMode==='stage'){
     let rows=STAGE_LEADS;
     if(bkVend) rows=rows.filter(r=>r.r===bkVend);
@@ -1609,6 +1657,7 @@ function bindBacklog(){
     else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=stg;}
     renderBacklog();
   });
+  bkLoadPref();
 }
 /* ── avatar color único por vendedora ── */
 function avatarColor(name){
@@ -1655,9 +1704,39 @@ document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>go(n.dataset.vie
 loadMetas();
 (function(){
   const set=(view,val)=>{const el=document.querySelector(`[data-view="${view}"] .badge`); if(el) el.textContent=val;};
-  set('equipo', TEAM.length);
-  set('seguimiento', TOTAL_BACKLOG);
+  const _critTeam=TEAM.filter(v=>v.status==='red'||v.status==='amber').length;
+  set('equipo', _critTeam||TEAM.length);
+  set('seguimiento', CRIT_BACKLOG);
   set('alertas', buildAlerts().length);
+})();
+/* ── scroll al tope ── */
+(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop');if(scr&&btn)scr.addEventListener('scroll',()=>btn.classList.toggle('show',scr.scrollTop>250),{passive:true});})();
+/* ── búsqueda global ── */
+let _gsAct=[];
+function gsSearch(q){
+  const res=document.getElementById('gsResults');if(!res)return;
+  q=(q||'').trim().toLowerCase();
+  res.classList.toggle('show',q.length>=2);
+  if(q.length<2){res.innerHTML='';_gsAct=[];return;}
+  const items=[];
+  TEAM.forEach(v=>{if((v.name||'').toLowerCase().includes(q)||(v.sucursal||'').toLowerCase().includes(q))items.push({tag:'Vendedora',lbl:(v.name||'').split(' - ')[0],sub:v.sucursal,fn:()=>{go('equipo');setTimeout(()=>openPerfil(v.name),80);}});});
+  const seen=new Set();
+  [...(STAGE_LEADS.slice(0,300)||[]),...(BACKLOG.slice(0,200)||[])].forEach(r=>{const c=r.c||'';if(!c||!c.toLowerCase().includes(q)||seen.has(c))return;seen.add(c);const id=leadId(r),url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';items.push({tag:'Lead',lbl:c,sub:(r.r||'')+' · '+(r.e||''),fn:()=>{if(url)window.open(url,'_blank');else go('seguimiento');}});});
+  _gsAct=items.slice(0,7).map(it=>it.fn);
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  res.innerHTML=items.slice(0,7).map((it,i)=>`<div class="gs-item" onclick="gsRun(${i})"><span class="gs-tag">${esc(it.tag)}</span><b>${esc(it.lbl)}</b>${it.sub?`<div style="font-size:.71rem;color:var(--muted);margin-top:1px">${esc(it.sub)}</div>`:''}</div>`).join('');
+}
+function gsRun(i){_gsAct[i]&&_gsAct[i]();const inp=document.getElementById('gsInput');if(inp)inp.value='';const r=document.getElementById('gsResults');if(r){r.innerHTML='';r.classList.remove('show');}}
+document.addEventListener('click',e=>{const r=document.getElementById('gsResults'),inp=document.getElementById('gsInput');if(r&&inp&&!r.contains(e.target)&&!inp.contains(e.target))r.classList.remove('show');});
+/* ── timestamp relativo ── */
+(function(){
+  const chip=document.getElementById('metaChip');if(!chip)return;
+  const iso=DASH&&DASH.updated_at?DASH.updated_at:null;if(!iso)return;
+  try{
+    const dt=new Date(iso),now=new Date(),diff=Math.floor((now-dt)/1000);
+    const rel=diff<60?'hace unos segundos':diff<3600?'hace '+Math.floor(diff/60)+' min':diff<86400?'hace '+Math.floor(diff/3600)+' h':'hace '+Math.floor(diff/86400)+' d';
+    chip.textContent='Actualizado '+rel;chip.title=dt.toLocaleString('es-BO');
+  }catch(e){}
 })();
 // Producción: window.DASH.backlog. Preview: fetch del JSON. Arranca en Resumen.
 if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; if(DASH.stage_leads) STAGE_LEADS=DASH.stage_leads; go('resumen'); }

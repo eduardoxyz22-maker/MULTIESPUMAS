@@ -246,6 +246,7 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
 
     dash = {
         "month": MES_ES[cur_month], "year": cur_year,
+        "updated_at": datetime.datetime.now().isoformat(timespec='seconds'),
         "global": {
             "leads": totals.get("leads", 0),
             "prevLeads": totals.get("prev_leads", 0),
