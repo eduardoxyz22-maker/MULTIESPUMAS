@@ -991,7 +991,7 @@ function vResumen(){
     </div>
   </div>
 
-  <div class="kpis">
+  <div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
       <div class="kpi-top"><span class="kpi-label">Conversión</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
@@ -1011,6 +1011,21 @@ function vResumen(){
       <div class="kpi-top"><span class="kpi-label">Ticket promedio</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
       <div class="kpi-val">${fmtMoney(GLOBAL.ticket)}</div>
       <div class="kpi-sub"><span class="delta down">▼</span> valor / compradores</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#2E6FE0"></span>
+      <div class="kpi-top"><span class="kpi-label">Interesado</span></div>
+      <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Interesado')||{count:0}).count}</div>
+      <div class="kpi-sub">leads en etapa de interés</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#D98300"></span>
+      <div class="kpi-top"><span class="kpi-label">Agendado / Visita</span></div>
+      <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Agendado / Visita')||{count:0}).count}</div>
+      <div class="kpi-sub">visitas programadas</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#159A57"></span>
+      <div class="kpi-top"><span class="kpi-label">Compradores</span></div>
+      <div class="kpi-val">${GLOBAL.cierres}</div>
+      <div class="kpi-sub">cierres del mes</div>
     </div>
   </div>
 
@@ -1041,23 +1056,6 @@ function vResumen(){
   </div>
   <div class="card" style="overflow:hidden">
     <table class="tbl" id="teamMini"></table>
-  </div>
-
-  <div class="section-head"><div><div class="eyebrow">Pipeline completo</div><h2>Las ${GLOBAL.leads.toLocaleString('en-US')} fichas por etapa</h2>
-  <p>Dónde están parados los leads del mes. <button class="btn" style="padding:2px 8px;font-size:.72rem" onclick="go('conversion')">Ver embudo →</button></p></div></div>
-  <div class="stage-grid">${stageCards()}</div>
-
-  <div class="section-head"><div><div class="eyebrow">Origen de carga</div><h2>Manual vs Automático</h2>
-  <p>${ORIGIN.manual.toLocaleString('en-US')} cargados a mano por vendedoras · ${ORIGIN.auto.toLocaleString('en-US')} por el bot.</p></div></div>
-  <div class="card pad">
-    <div class="origin-split">
-      <div class="os os-manual" style="flex:${Math.max(ORIGIN.manual,1)}">✍ ${ORIGIN.manualPct}%</div>
-      <div class="os os-auto" style="flex:${Math.max(ORIGIN.auto,1)}">⚙ ${ORIGIN.autoPct}%</div>
-    </div>
-    <div class="origin-legend">
-      <div class="ol"><span class="sw" style="background:var(--green)"></span><b style="color:var(--text)">${ORIGIN.manual.toLocaleString('en-US')}</b>&nbsp;manual (vendedora)</div>
-      <div class="ol"><span class="sw" style="background:var(--ink-3)"></span><b style="color:var(--text)">${ORIGIN.auto.toLocaleString('en-US')}</b>&nbsp;automático (bot)</div>
-    </div>
   </div>
 
   <div class="section-head"><div><div class="eyebrow">Hallazgo clave</div><h2>El canal manual rinde ${_ratio}× más</h2></div></div>
