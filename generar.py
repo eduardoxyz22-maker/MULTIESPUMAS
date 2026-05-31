@@ -1679,8 +1679,38 @@ with open("panel.template.html", encoding="utf-8") as _pf:
     _panel = _pf.read()
 _panel = _panel.replace("__DASH_JSON__", json.dumps(dash, ensure_ascii=False))
 _panel = _panel.replace("__MES_LABEL__", mes_label)
-with open("panel.html", "w", encoding="utf-8") as _pf:
+
+# Archivo histórico: si el panel.html existente pertenece a un mes distinto,
+# guardamos una copia con el nombre del mes antes de sobreescribir.
+import os as _os, re as _re
+_archive_saved = None
+_panel_path = "panel.html"
+if _os.path.exists(_panel_path):
+    try:
+        with open(_panel_path, encoding="utf-8") as _ef:
+            _existing = _ef.read()
+        _m = _re.search(r'window\.DASH\s*=\s*(\{.*?\});', _existing, _re.DOTALL)
+        if _m:
+            _old_dash = json.loads(_m.group(1))
+            _old_year  = _old_dash.get("year")
+            _old_month_name = _old_dash.get("month", "")
+            _MES_NUM = {"Enero":1,"Febrero":2,"Marzo":3,"Abril":4,"Mayo":5,"Junio":6,
+                        "Julio":7,"Agosto":8,"Septiembre":9,"Octubre":10,"Noviembre":11,"Diciembre":12}
+            _old_month = _MES_NUM.get(_old_month_name, 0)
+            if _old_year and _old_month and (_old_year != now_dt.year or _old_month != now_dt.month):
+                _archive_name = f"panel_{_old_year}_{_old_month:02d}.html"
+                if not _os.path.exists(_archive_name):
+                    with open(_archive_name, "w", encoding="utf-8") as _af:
+                        _af.write(_existing)
+                    _archive_saved = _archive_name
+                    print(f"Histórico guardado: {_archive_name}")
+    except Exception as _e:
+        print(f"Aviso: no se pudo archivar panel anterior ({_e})")
+
+with open(_panel_path, "w", encoding="utf-8") as _pf:
     _pf.write(_panel)
 
 print("panel.html (dashboard rediseñado) generado correctamente.")
+if _archive_saved:
+    print(f"  → Archivo histórico disponible en GitHub Pages como panel_{_old_year}_{_old_month:02d}.html")
 # ============================================================================
