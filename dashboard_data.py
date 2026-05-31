@@ -326,4 +326,26 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
         bk.sort(key=lambda x: -x["d"])
         dash["backlog"] = bk  # all items; JS caps display when unfiltered
 
+        # stage_leads: all pipeline leads for stage/kanban view (no activity threshold)
+        kanban_stages = set(followup_stages or []) | ({comprador_stage} if comprador_stage else set())
+        sl = []
+        for r in all_rows:
+            stg = r.get("stage", "")
+            if stg not in kanban_stages:
+                continue
+            uname = r.get("user", "")
+            ubase = uname.split(" - ")[0] if uname else ""
+            suc = _sucursal_short(r.get("sucursal", ""))
+            if suc == "—":
+                suc = vendor_suc.get(ubase, "—")
+            sl.append({
+                "c": (r.get("contact") or r.get("name") or "").strip() or ("Lead #" + str(r.get("id", ""))),
+                "e": stg,
+                "s": suc,
+                "r": ubase or "—",
+                "v": int(r.get("value") or 0),
+                "d": int(r.get("days_int") or 0),
+            })
+        dash["stage_leads"] = sl
+
     return dash
