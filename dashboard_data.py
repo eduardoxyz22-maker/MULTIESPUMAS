@@ -324,6 +324,6 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
                 "nh": bool(r.get("nohuman")),
             })
         bk.sort(key=lambda x: -x["d"])
-        dash["backlog"] = bk[:45]
+        dash["backlog"] = bk  # all items; JS caps display when unfiltered
 
     return dash

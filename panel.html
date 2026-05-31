@@ -1171,7 +1171,13 @@ function renderBacklog(){
   if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
   if(bkVend) rows=rows.filter(r=>r.r===bkVend);
-  const body=rows.slice(0,30).map(r=>{
+  const filtered = bkFilter!=='all' || bkVend;
+  const display = filtered ? rows : rows.slice(0,50);
+  const note=document.getElementById('bkNote');
+  if(note) note.textContent = filtered
+    ? `${display.length} fichas que coinciden con el filtro (de ${TOTAL_BACKLOG} en backlog).`
+    : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
+  const body=display.map(r=>{
     const danger=r.d>=7;
     const rowCls=r.d>=7?'bk-crit':r.d>=4?'bk-warn':'';
     return `<tr class="${rowCls}">
@@ -1181,7 +1187,7 @@ function renderBacklog(){
       <td>${r.r}</td>
       <td class="r"><span class="st ${danger?'st-red':'st-amber'}"><span class="d"></span>${r.d} d</span></td>
     </tr>`;}).join('');
-  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body}</tbody>`;
+  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
 }
 
 function vSeguimiento(){
@@ -1212,7 +1218,7 @@ function vSeguimiento(){
   <div class="card" style="overflow:hidden">
     <table class="tbl" id="bkTable"></table>
   </div>
-  <div class="tag-line" style="padding:0 2px">Muestra de las ${BACKLOG.length||45} fichas más antiguas (de ${TOTAL_BACKLOG}). En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”, otra oportunidad de limpieza de datos.</div>`;
+  <div id=”bkNote” class=”tag-line” style=”padding:0 2px”>Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”.</div>`;
 }
 
 function vConversion(){
