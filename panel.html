@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard CRM — HEAVEN Colchones · Mayo 2026</title>
+<title>Dashboard CRM — HEAVEN Colchones · HEAVEN Colchones · Mayo 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -327,6 +327,12 @@ html[data-theme="dark"] img{opacity:.92}
 .bk-search:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
 .tbl th[data-sk]{cursor:pointer;user-select:none;white-space:nowrap}
 .tbl th[data-sk]:hover{color:var(--brand-d)}
+/* ── pulso crítico ── */
+@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(220,64,70,.75)}60%{box-shadow:0 0 0 5px rgba(220,64,70,0)}}
+.st-red{animation:pulseRed 1.8s ease-in-out infinite}
+.chipf.danger{animation:pulseRed 2.2s ease-in-out infinite}
+html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-name:pulseRedDark}
+@keyframes pulseRedDark{0%,100%{box-shadow:0 0 0 0 rgba(232,88,93,.8)}60%{box-shadow:0 0 0 6px rgba(232,88,93,0)}}
 </style>
 <script>(function(){try{if(localStorage.getItem('dash_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 </head>
