@@ -1059,8 +1059,7 @@ function renderBacklog(){
     : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
   const body=display.map(r=>{
     const danger=r.d>=7;
-    const rowCls=r.d>=7?'bk-crit':r.d>=4?'bk-warn':'';
-    return `<tr class="${rowCls}">
+    return `<tr>
       <td><span class="mono" style="font-size:.78rem">${r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
