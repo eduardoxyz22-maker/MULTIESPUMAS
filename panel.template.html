@@ -1176,14 +1176,16 @@ function renderBacklog(){
     if(bkStage) rows=rows.filter(r=>r.e===bkStage);
     const note=document.getElementById('bkNote');
     if(note) note.textContent=`${rows.length} leads en el pipeline activo (de ${STAGE_LEADS.length} total).`;
-    const body=rows.map(r=>`<tr>
-      <td><span class="mono" style="font-size:.78rem">${r.c}</span></td>
+    const body=rows.map(r=>{
+      const url=r.id?`https://eanez.kommo.com/leads/detail/${r.id}`:'';
+      return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
+      <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span></td>
       <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[r.e]||'var(--muted)'};margin-right:5px;vertical-align:middle"></span>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
       <td>${r.r}</td>
       <td class="r">${r.v?fmtMoney(r.v):'—'}</td>
       <td class="r"><span class="st st-amber"><span class="d"></span>${r.d} d</span></td>
-    </tr>`).join('');
+    </tr>`;}).join('');
     t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Valor</th><th class="r">Días</th></tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
     return;
   }
@@ -1200,8 +1202,9 @@ function renderBacklog(){
     : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
   const body=display.map(r=>{
     const danger=r.d>=7;
-    return `<tr>
-      <td><span class="mono" style="font-size:.78rem">${r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
+    const url=r.id?`https://eanez.kommo.com/leads/detail/${r.id}`:'';
+    return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
+      <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
       <td>${r.r}</td>
@@ -1260,7 +1263,7 @@ function vSeguimiento(){
     <button class="chipf danger" data-f="crit">🔴 Críticos +7d</button>
     <button class="chipf" data-f="nh">🔍 Nunca tocados</button>
     <span class="spacer"></span>
-    ${TEAM.map(v=>`<button class="chipf" data-v="${v.name}">${v.name.split(' ')[0]}</button>`).join('')}
+    ${TEAM.map(v=>`<button class="chipf" data-v="${v.name.split(' - ')[0]}">${v.name.split(' ')[0]}</button>`).join('')}
   </div>
   <div class="filters" id="bkStageFilters" style="margin-top:6px">
     ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');})()}

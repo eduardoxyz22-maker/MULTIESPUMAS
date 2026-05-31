@@ -322,6 +322,7 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
                 "r": ubase or "—",
                 "d": r.get("days_int", 0),
                 "nh": bool(r.get("nohuman")),
+                "id": r.get("id", ""),
             })
         bk.sort(key=lambda x: -x["d"])
         dash["backlog"] = bk  # all items; JS caps display when unfiltered
@@ -345,6 +346,7 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
                 "r": ubase or "—",
                 "v": int(r.get("value") or 0),
                 "d": int(r.get("days_int") or 0),
+                "id": r.get("id", ""),
             })
         dash["stage_leads"] = sl
 
