@@ -1596,3 +1596,91 @@ with open("index.html", "w", encoding="utf-8") as f:
 
 print("index.html generado correctamente.")
 print("Leads:", total_leads, "| Valor:", fmt_money(total_value), "| Sin Seguimiento:", total_stagnant_7)
+
+
+# ============================================================================
+#  BLOQUE DE INTEGRACIÓN — pegar al FINAL de generar.py
+#  (después de:  print("index.html generado correctamente.")  ... )
+#
+#  No toca nada de tu lógica actual. Solo lee los datos que ya calculaste y
+#  escribe un SEGUNDO archivo: panel.html (el dashboard rediseñado).
+#  Tu index.html clásico sigue intacto.
+# ============================================================================
+import json
+from dashboard_data import build_dash
+
+# Metas por monto ($) por vendedora — persistentes entre corridas.
+# Si no existe metas.json, build_dash pone un default razonable (~110% del valor del mes).
+try:
+    with open("metas.json", encoding="utf-8") as _mf:
+        _metas_monto = json.load(_mf)
+except Exception:
+    _metas_monto = {}
+
+# Calidad de datos (usa números que ya tienes; ajusta si cambian de nombre).
+_sin_suc = sum(1 for r in all_rows if not (r.get("sucursal") or "").strip()
+               or (r.get("sucursal") or "").strip().lower() == "sin sucursal")
+_open_rows = [r for r in all_rows if r.get("stage") in FOLLOWUP_STAGES]
+_open_sin_valor = sum(1 for r in _open_rows if not r.get("value"))
+_quality = {
+    "sinSucursalPct": round(_sin_suc / total_leads * 100) if total_leads else 0,
+    "sinSucursal": _sin_suc,
+    "sinValorPct": round(_open_sin_valor / len(_open_rows) * 100) if _open_rows else 0,
+    "sinValorOpen": _open_sin_valor,
+    "openTotal": len(_open_rows),
+    "dupTel": total_dup_groups,
+    "dupFichas": total_dup_fichas,
+    "nohuman": sum(1 for r in all_rows if r.get("nohuman")),
+    "total": total_leads,
+}
+
+# Duplicados en el formato que consume el panel.
+_dups_panel = [
+    {
+        "phone": g["phone"],
+        "n": g["n_fichas"],
+        "fichas": [f["name"] for f in g["fichas"] if f.get("name")],
+        "vends": sorted({(r["user"] or "").split(" - ")[0] for r in g["rows"] if r.get("user")}),
+        "etapas": sorted({r["stage"] for r in g["rows"] if r.get("stage")}),
+    }
+    for g in _dup_groups[:40]
+]
+
+# Canales: pasa la lista (nombre, dict) tal como la tienes en channel_data.
+_channels = list(channel_data.items()) if "channel_data" in dir() else None
+
+dash = build_dash(
+    vendors_json_list=vendors_json_list,
+    vresp_list=_vresp_list,
+    leads=leads,
+    leads_prev=leads_prev,
+    user_map=user_map,
+    stage_map=stage_map,
+    comprador_stage=COMPRADORES_STAGE,
+    now_dt=now_dt,
+    prev_year=prev_year,
+    prev_month=prev_month,
+    totals=dict(
+        leads=total_leads,
+        prev_leads=total_leads_prev,
+        compradores=total_compradores,
+        value=total_value,
+        ticket=ticket_avg,
+    ),
+    all_rows=all_rows,
+    followup_stages=FOLLOWUP_STAGES,
+    channels=_channels,
+    dups=_dups_panel,
+    quality=_quality,
+    metas_monto=_metas_monto,
+)
+
+with open("panel.template.html", encoding="utf-8") as _pf:
+    _panel = _pf.read()
+_panel = _panel.replace("__DASH_JSON__", json.dumps(dash, ensure_ascii=False))
+_panel = _panel.replace("__MES_LABEL__", mes_label)
+with open("panel.html", "w", encoding="utf-8") as _pf:
+    _pf.write(_panel)
+
+print("panel.html (dashboard rediseñado) generado correctamente.")
+# ============================================================================
