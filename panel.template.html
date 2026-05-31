@@ -1210,8 +1210,8 @@ function renderBacklog(){
   t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
 }
 
-function setBkMode(mode){
-  bkMode=mode; bkStage=null;
+function setBkMode(mode, initialStage){
+  bkMode=mode; bkStage=initialStage||null;
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===mode));
   const bkF=document.getElementById('bkFilters');
   if(bkF) bkF.querySelectorAll('[data-f],[data-v]').forEach(b=>b.style.display=mode==='stage'?'none':'');
@@ -1221,7 +1221,7 @@ function setBkMode(mode){
   if(sf){
     const source=mode==='stage'?STAGE_LEADS:BACKLOG;
     const ord=STAGE_ORDER.filter(s=>source.some(r=>r.e===s));
-    sf.innerHTML=ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');
+    sf.innerHTML=ord.map(s=>`<button class="chipf${bkStage===s?' active':''}" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');
     sf.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{
       if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
       else{sf.querySelectorAll('[data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
@@ -1542,8 +1542,13 @@ function bindBacklog(){
     renderBacklog();
   });
   document.querySelectorAll('#bkStageFilters [data-e]').forEach(b=>b.onclick=()=>{
-    if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
-    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
+    const stg=b.dataset.e;
+    if(bkMode==='backlog'){
+      const hasInBk=BACKLOG.some(r=>r.e===stg&&(!bkVend||r.r===bkVend));
+      if(!hasInBk){setBkMode('stage',stg);return;}
+    }
+    if(bkStage===stg){bkStage=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=stg;}
     renderBacklog();
   });
 }
