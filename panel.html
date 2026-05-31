@@ -1474,6 +1474,7 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
+  bkFilter='all'; bkSuc=null;
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{

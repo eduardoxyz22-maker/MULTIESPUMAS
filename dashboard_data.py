@@ -301,6 +301,8 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
     # backlog: deals abiertos sin actividad +72h, ordenados por antigüedad (top 45)
     if all_rows is not None:
         open_stages = set(followup_stages) if followup_stages else None
+        # Fallback: derive sucursal from the vendedora's known branch when the row lacks it
+        vendor_suc = {t["name"].split(" - ")[0]: t["sucursal"] for t in team}
         bk = []
         for r in all_rows:
             stg = r.get("stage", "")
@@ -309,11 +311,15 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
             if r.get("days_int", 0) < 3:
                 continue
             uname = r.get("user", "")
+            ubase = uname.split(" - ")[0] if uname else ""
+            suc = _sucursal_short(r.get("sucursal", ""))
+            if suc == "—":
+                suc = vendor_suc.get(ubase, "—")
             bk.append({
                 "c": (r.get("contact") or r.get("name") or "").strip() or ("Lead #" + str(r.get("id", ""))),
                 "e": stg,
-                "s": _sucursal_short(r.get("sucursal", "")),
-                "r": uname.split(" - ")[0] if uname else "—",
+                "s": suc,
+                "r": ubase or "—",
                 "d": r.get("days_int", 0),
                 "nh": bool(r.get("nohuman")),
             })
