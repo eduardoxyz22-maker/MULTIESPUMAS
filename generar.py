@@ -455,6 +455,8 @@ vendor_data = defaultdict(lambda: {
     "no_resp": 0,
     "calificados": 0,
     "stagnant": 0,
+    "auto": 0,
+    "manual": 0,
     "stages": defaultdict(int),
 })
 
@@ -536,8 +538,10 @@ for lead in leads:
     created_by_id = lead.get("created_by", 0)
     if created_by_id == 0:
         total_auto += 1
+        vd["auto"] += 1
     else:
         total_manual += 1
+        vd["manual"] += 1
         created_by_count[user_map.get(created_by_id, "Desconocido")] += 1
 
     _row = {
@@ -921,6 +925,10 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
             "stagnant": vs,
             "ticket_avg": vtick,
             "created_manual": created_by_count.get(vname, 0),
+            "auto": vd["auto"],
+            "manual": vd["manual"],
+            "auto_pct": round(vd["auto"] / vt * 100) if vt > 0 else 0,
+            "manual_pct": round(vd["manual"] / vt * 100) if vt > 0 else 0,
         },
     })
 
@@ -1673,6 +1681,9 @@ dash = build_dash(
     dups=_dups_panel,
     quality=_quality,
     metas_monto=_metas_monto,
+    stages_global=stages_json_list,
+    origin=dict(auto=total_auto, manual=total_manual,
+                auto_pct=auto_pct, manual_pct=manual_pct),
 )
 
 with open("panel.template.html", encoding="utf-8") as _pf:

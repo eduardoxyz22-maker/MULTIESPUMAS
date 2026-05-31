@@ -281,6 +281,22 @@ body{
 .bk-warn{background:#FFFBF0!important}.bk-warn:hover{background:#FEF3D0!important}
 /* ── medallas ── */
 .medal{position:absolute;top:9px;right:11px;font-size:1.1rem;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.18));z-index:2}
+/* ── fichas de etapas globales ── */
+.stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.stage-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.stage-card .sc-top{width:100%;height:3px;border-radius:99px;position:absolute;top:0;left:0}
+.stage-card .sc-name{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;line-height:1.3;min-height:2.1em}
+.stage-card .sc-val{font-size:1.7rem;font-weight:800;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums}
+.stage-card .sc-pct{font-size:.74rem;color:var(--faint);font-weight:600;margin-top:5px}
+.stage-card .sc-bar{height:5px;background:var(--line-2);border-radius:99px;overflow:hidden;margin-top:9px}
+.stage-card .sc-bar i{display:block;height:100%;border-radius:99px}
+/* ── barra de origen manual vs auto ── */
+.origin-split{display:flex;height:46px;border-radius:10px;overflow:hidden;border:1px solid var(--line);font-weight:800;font-size:.84rem}
+.origin-split .os{display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;transition:flex .5s ease;min-width:62px;white-space:nowrap}
+.os-manual{background:var(--green)}.os-auto{background:var(--ink-3)}
+.origin-legend{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap}
+.origin-legend .ol{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--muted);font-weight:600}
+.origin-legend .ol .sw{width:11px;height:11px;border-radius:3px}
 </style>
 </head>
 <body>
@@ -594,6 +610,12 @@ function openPerfil(name){
         <div class="dr-k"><div class="v" style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</div><div class="l">Sin seguimiento</div></div>
       </div>
 
+      <div class="dr-sec">Origen de sus leads</div>
+      <div class="dr-kpis">
+        <div class="dr-k"><div class="v" style="color:var(--green-ink)">${v.manual||0} <span style="font-size:.7rem;color:var(--muted)">(${v.manualPct||0}%)</span></div><div class="l">✍ Carga manual</div></div>
+        <div class="dr-k"><div class="v">${v.auto||0} <span style="font-size:.7rem;color:var(--muted)">(${v.autoPct||0}%)</span></div><div class="l">⚙ Automático (bot)</div></div>
+      </div>
+
       <div class="dr-sec">Disciplina del CRM</div>
       <div class="dr-kpis">
         <div class="dr-k"><div class="v">${v.promTxt}</div><div class="l">Tiempo prom.</div></div>
@@ -874,6 +896,37 @@ const CHANNELS = (DASH && DASH.channels) ? DASH.channels : [
   {ic:'🚶', name:'Walk-in (Tienda)',        leads:1,    pct:0,  cierres:1,   conv:100,ticket:0,    pipeline:0,      cls:'muted'},
 ];
 
+// ── Etapas globales del pipeline (todas las fichas por etapa) ──
+// Fuente: DASH.stages (real). Fallback: suma de STAGES_BY_V.
+const STAGE_ORDER = ['Incoming leads','Nueva consulta','Interesado','Cotización enviada','Agendado / Visita','Compradores','No Responden'];
+const STAGE_COLORS = {
+  'Incoming leads':'#7B8794','Nueva consulta':'#27313F','Interesado':'#2E6FE0',
+  'Cotización enviada':'#7A4AD9','Agendado / Visita':'#D98300','Compradores':'#159A57','No Responden':'#646E7B',
+};
+const STAGES_GLOBAL = (()=>{
+  if(DASH && Array.isArray(DASH.stages) && DASH.stages.length) return DASH.stages.slice();
+  const acc={};
+  Object.values(STAGES_BY_V||{}).forEach(arr=>(arr||[]).forEach(s=>{ acc[s.s]=(acc[s.s]||0)+(s.c||0); }));
+  const tot=Object.values(acc).reduce((a,b)=>a+b,0)||1;
+  return Object.entries(acc).map(([name,count])=>({name,count,value:0,pct:Math.round(count/tot*100)}));
+})();
+function stageColor(n){ return STAGE_COLORS[n] || '#9AA3AF'; }
+
+// ── Origen de carga: manual (vendedora) vs automático (bot) ──
+// Fuente: DASH.origin (real). Fallback: suma de TEAM o de CHANNELS.
+const ORIGIN = (()=>{
+  if(DASH && DASH.origin && (DASH.origin.auto||DASH.origin.manual)) return DASH.origin;
+  let auto=0, manual=0;
+  TEAM.forEach(v=>{ auto+=(v.auto||0); manual+=(v.manual||0); });
+  if(!auto && !manual){
+    const a=CHANNELS.find(c=>(c.name||'').toLowerCase().includes('auto'));
+    const m=CHANNELS.find(c=>(c.name||'').toLowerCase().includes('manual'));
+    auto=a?a.leads:0; manual=m?m.leads:0;
+  }
+  const tot=auto+manual||1;
+  return {auto, manual, autoPct:Math.round(auto/tot*100), manualPct:Math.round(manual/tot*100)};
+})();
+
 const FUNNEL = [
   {n:'Leads del mes',     v:GLOBAL.leads,   c:'#27313F'},
   {n:'Sin respuesta',     v:NO_RESP_TOTAL,  c:'#646E7B'},
@@ -1127,6 +1180,23 @@ function vConversion(){
       </div>
     </div>
   </div>
+  <div class="section-head"><div><div class="eyebrow">Pipeline completo</div><h2>Leads por etapa &mdash; las ${GLOBAL.leads.toLocaleString('en-US')} fichas del mes</h2>
+  <p>Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido. Cada ficha cuenta los leads actualmente en esa etapa.</p></div></div>
+  <div class="stage-grid">${stageCards()}</div>
+
+  <div class="section-head"><div><div class="eyebrow">Origen de carga</div><h2>Manual vs Automático &mdash; global</h2>
+  <p>Cuántos leads cargó manualmente una vendedora y cuántos entraron por el bot/automatización. La carga manual convierte mucho mejor.</p></div></div>
+  <div class="card pad">
+    <div class="origin-split">
+      <div class="os os-manual" style="flex:${Math.max(ORIGIN.manual,1)}">✍ ${ORIGIN.manualPct}%</div>
+      <div class="os os-auto" style="flex:${Math.max(ORIGIN.auto,1)}">⚙ ${ORIGIN.autoPct}%</div>
+    </div>
+    <div class="origin-legend">
+      <div class="ol"><span class="sw" style="background:var(--green)"></span><b style="color:var(--text)">${ORIGIN.manual.toLocaleString('en-US')}</b>&nbsp;manual (vendedora)</div>
+      <div class="ol"><span class="sw" style="background:var(--ink-3)"></span><b style="color:var(--text)">${ORIGIN.auto.toLocaleString('en-US')}</b>&nbsp;automático (bot)</div>
+    </div>
+  </div>
+
   <div class="section-head"><div><div class="eyebrow">Por canal</div><h2>Origen de leads &mdash; rendimiento</h2></div></div>
   <div class="card" style="overflow:hidden">
     <table class="tbl">
@@ -1134,6 +1204,26 @@ function vConversion(){
       <tbody>${rows}</tbody>
     </table>
   </div>`;
+}
+
+// Fichas de todas las etapas globales del pipeline (ordenadas por STAGE_ORDER)
+function stageCards(){
+  const max = Math.max(1, ...STAGES_GLOBAL.map(s=>s.count||0));
+  const ordered = [...STAGES_GLOBAL].sort((a,b)=>{
+    const ia=STAGE_ORDER.indexOf(a.name), ib=STAGE_ORDER.indexOf(b.name);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+  return ordered.map(s=>{
+    const c = stageColor(s.name);
+    const w = Math.max(3, Math.round((s.count||0)/max*100));
+    return `<div class="stage-card">
+      <span class="sc-top" style="background:${c}"></span>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-val" style="color:${c}">${(s.count||0).toLocaleString('en-US')}</div>
+      <div class="sc-pct">${s.pct||0}% del total${s.value?` · ${fmtK(s.value)}`:''}</div>
+      <div class="sc-bar"><i style="width:${w}%;background:${c}"></i></div>
+    </div>`;
+  }).join('');
 }
 
 function vProyeccion(){
@@ -1278,6 +1368,8 @@ function renderTeamPerf(){
       <td class="r num">${v.value?fmtMoney(v.value):'—'}</td>
       <td class="r num">${v.calif} <span class="where">(${v.califPct}%)</span></td>
       <td class="r num" style="${v.noRespPct>=70?'color:var(--red-ink);font-weight:800':''}">${v.noRespPct}%</td>
+      <td class="r num" style="color:var(--green-ink);font-weight:800">${v.manual||0} <span class="where">(${v.manualPct||0}%)</span></td>
+      <td class="r num">${v.auto||0} <span class="where">(${v.autoPct||0}%)</span></td>
     </tr>`;}).join('');
   // fila total
   const totLeads=TEAM.reduce((s,v)=>s+v.leads,0);
@@ -1293,8 +1385,10 @@ function renderTeamPerf(){
     <td class="r num bold">${fmtMoney(totPipe)}</td>
     <td class="r num bold">${totCalif}</td>
     <td class="r num bold">${NO_RESP_PCT}%</td>
+    <td class="r num bold" style="color:var(--green-ink)">${ORIGIN.manual.toLocaleString('en-US')} (${ORIGIN.manualPct}%)</td>
+    <td class="r num bold">${ORIGIN.auto.toLocaleString('en-US')} (${ORIGIN.autoPct}%)</td>
   </tr>`;
-  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th></tr></thead><tbody>${body}${totRow}</tbody>`;
+  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th><th class="r">✍ Manual</th><th class="r">⚙ Auto</th></tr></thead><tbody>${body}${totRow}</tbody>`;
 }
 
 /* ===================== ROUTER ===================== */

@@ -161,7 +161,7 @@ def _sucursal_short(s):
 def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage_map,
                comprador_stage, now_dt, prev_year, prev_month, totals,
                channels=None, dups=None, quality=None, metas_monto=None,
-               all_rows=None, followup_stages=None):
+               all_rows=None, followup_stages=None, stages_global=None, origin=None):
 
     # velocidad por vendedora -> dict por nombre
     vel = {}
@@ -206,6 +206,10 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
             "califPct": k.get("calif_pct", 0),
             "noResp": k.get("no_resp", 0),
             "noRespPct": k.get("no_resp_pct", 0),
+            "auto": k.get("auto", 0),
+            "manual": k.get("manual", 0),
+            "autoPct": k.get("auto_pct", 0),
+            "manualPct": k.get("manual_pct", 0),
             "backlog": k.get("stagnant", 0),
             "status": _status_from_velocity(vv.get("avg"), vv.get("nunca", 0), nuevo),
             "nuevo": nuevo,
@@ -263,6 +267,26 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
         dash["dups"] = dups
     if quality is not None:
         dash["quality"] = quality
+
+    # etapas globales del pipeline: [{name, count, value, pct}]
+    if stages_global is not None:
+        total_leads = totals.get("leads", 0) or 1
+        dash["stages"] = [
+            {"name": s.get("name", ""),
+             "count": s.get("count", 0),
+             "value": int(s.get("value", 0)),
+             "pct": s.get("pct", round(s.get("count", 0) / total_leads * 100))}
+            for s in stages_global
+        ]
+
+    # origen de carga: manual (vendedora) vs automático (bot)
+    if origin is not None:
+        dash["origin"] = {
+            "auto": origin.get("auto", 0),
+            "manual": origin.get("manual", 0),
+            "autoPct": origin.get("auto_pct", 0),
+            "manualPct": origin.get("manual_pct", 0),
+        }
 
     # stagesByV: embudo por vendedora (para el drill-down)
     stages_by_v = {}
