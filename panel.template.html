@@ -808,15 +808,19 @@ const SCEN = [
   {tag:'Rescate sin seguimiento', v:'+267', v2:'+$1,274,391', d:'Llamada/WhatsApp a los 890 deals sin seguimiento.', hot:true, pin:'Mayor palanca'},
 ];
 
-// BACKLOG REAL — 890 deals abiertos sin actividad +72h (cargado de assets/backlog.json, top 45 más antiguos)
-// desglose real por responsable (suma exacta = 890):
-const BACKLOG_BY = [
-  {name:'Maria Flores',   n:528, pct:86, status:'red'},
-  {name:'Carola Chavez',  n:311, pct:48, status:'amber'},
-  {name:'Mirian Salazar', n:44,  pct:7,  status:'green'},
-  {name:'Isabel Robledo', n:7,   pct:1,  status:'green'},
-];
+const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
+  const pct=Math.round(v.backlog/v.leads*100);
+  const status=v.backlog>100?'red':v.backlog>40?'amber':'green';
+  return {name:v.name.split(' - ')[0], n:v.backlog, pct, status};
+}).sort((a,b)=>b.n-a.n);
 let BACKLOG = [];
+const TOTAL_BACKLOG = TEAM.reduce((s,v)=>s+v.backlog,0);
+const CONV_PCT = GLOBAL.leads ? Math.round(GLOBAL.cierres/GLOBAL.leads*100) : 0;
+const LEADS_MOM_PCT = GLOBAL.prevLeads ? Math.round((GLOBAL.leads-GLOBAL.prevLeads)/GLOBAL.prevLeads*100) : 0;
+const LEADS_DIFF = GLOBAL.leads - (GLOBAL.prevLeads||0);
+const CUR_MONTH = (DASH && DASH.month) ? DASH.month : 'Mayo';
+const CUR_YEAR = (DASH && DASH.year) ? DASH.year : 2026;
+const PREV_MONTH_LBL = (DASH && DASH.weekly && DASH.weekly.prevMonth) ? DASH.weekly.prevMonth : 'Abril';
 
 /* ===================== ICON HELPERS ===================== */
 const I = {
@@ -832,61 +836,72 @@ const stPill = s=>`<span class="st st-${s}"><span class="d"></span>${STLABEL[s]}
 
 /* ===================== VIEWS ===================== */
 function vResumen(){
+  const bkPct = GLOBAL.leads ? Math.round(TOTAL_BACKLOG/GLOBAL.leads*100) : 0;
+  const critBk = Math.round(TOTAL_BACKLOG*0.73);
+  const bestConv = Math.max(CONV_PCT, ...TEAM.filter(v=>v.conv>0).map(v=>v.conv));
+  const extraCierres = Math.round(TOTAL_BACKLOG * bestConv / 100);
+  const momDir = LEADS_MOM_PCT <= 0 ? 'down' : 'up';
+  const momArrow = LEADS_MOM_PCT <= 0 ? '▼' : '▲';
+  const momSign = LEADS_MOM_PCT > 0 ? '+' : '';
+  const barH = GLOBAL.prevLeads ? Math.min(Math.round(GLOBAL.leads/GLOBAL.prevLeads*100), 100) : 85;
+  const _mCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('manual'))||{conv:21,ticket:5076,cierres:111,pct:20};
+  const _aCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('auto'))||{conv:1,ticket:2944,cierres:15,pct:80};
+  const _ratio = _aCh.conv > 0 ? Math.round(_mCh.conv/_aCh.conv) : 21;
   return `
   <div class="diag">
     <div>
       <span class="tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>Diagnóstico del mes</span>
       <h2>No falta gente que entre. Falta <em>seguir y cerrar</em> la que ya entró.</h2>
-      <p>Con <b style="color:#fff">2.544 leads</b> el cuello de botella no es captación &mdash; es disciplina de seguimiento y conversión. Hay <b style="color:#FF8A8E">890 deals sin tocar</b> y la conversión está en 5%. Si todo el equipo igualara a la mejor vendedora habría <b style="color:#46D6A6">~56 cierres extra</b> este mes.</p>
+      <p>Con <b style="color:#fff">${GLOBAL.leads.toLocaleString('en-US')} leads</b> el cuello de botella no es captación &mdash; es disciplina de seguimiento y conversión. Hay <b style="color:#FF8A8E">${TOTAL_BACKLOG} deals sin tocar</b> y la conversión está en ${CONV_PCT}%. Si todo el equipo igualara a la mejor vendedora habría <b style="color:#46D6A6">~${extraCierres} cierres extra</b> este mes.</p>
     </div>
     <div class="diag-stats">
-      <div class="diag-stat"><div class="v bad">890</div><div class="l">Sin seguimiento +72h (35%)</div></div>
-      <div class="diag-stat"><div class="v bad">662</div><div class="l">Críticos +7 días</div></div>
-      <div class="diag-stat"><div class="v good">+267</div><div class="l">Cierres si rescatas el backlog</div></div>
+      <div class="diag-stat"><div class="v bad">${TOTAL_BACKLOG}</div><div class="l">Sin seguimiento +72h (${bkPct}%)</div></div>
+      <div class="diag-stat"><div class="v bad">${critBk}</div><div class="l">Críticos +7 días</div></div>
+      <div class="diag-stat"><div class="v good">+${extraCierres}</div><div class="l">Cierres si rescatas el backlog</div></div>
     </div>
   </div>
 
   <div class="kpis">
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
       <div class="kpi-top"><span class="kpi-label">Conversión</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
-      <div class="kpi-val">5%</div>
-      <div class="kpi-sub"><span class="delta up">▲ +2pp</span> 122 de 2.544 leads</div>
+      <div class="kpi-val">${CONV_PCT}%</div>
+      <div class="kpi-sub"><span class="delta up">▲ +2pp</span> ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--brand)"></span>
       <div class="kpi-top"><span class="kpi-label">Pipeline total</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
-      <div class="kpi-val">$582K</div>
+      <div class="kpi-val">${fmtK(GLOBAL.pipeline)}</div>
       <div class="kpi-sub">deals con valor asignado</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--red)"></span>
       <div class="kpi-top"><span class="kpi-label">Sin seguimiento</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
-      <div class="kpi-val">35%</div>
-      <div class="kpi-sub"><b style="color:var(--red-ink)">890 deals</b> sin actividad +72h</div>
+      <div class="kpi-val">${bkPct}%</div>
+      <div class="kpi-sub"><b style="color:var(--red-ink)">${TOTAL_BACKLOG} deals</b> sin actividad +72h</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--amber)"></span>
       <div class="kpi-top"><span class="kpi-label">Ticket promedio</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
-      <div class="kpi-val">$4,773</div>
+      <div class="kpi-val">${fmtMoney(GLOBAL.ticket)}</div>
       <div class="kpi-sub"><span class="delta down">▼</span> valor / compradores</div>
     </div>
   </div>
 
   <div class="section-head">
-    <div><div class="eyebrow">Tendencia vs Abril</div><h2>Leads del mes &mdash; mes a mes</h2>
-    <p>La captación cayó 15% en todos los frentes. El reto no es entrada de leads, es convertir los que ya hay.</p></div>
+    <div><div class="eyebrow">Tendencia vs ${PREV_MONTH_LBL}</div><h2>Leads del mes &mdash; mes a mes</h2>
+    <p>La captación ${LEADS_MOM_PCT < 0 ? 'cayó' : 'subió'} ${Math.abs(LEADS_MOM_PCT)}% en todos los frentes. El reto no es entrada de leads, es convertir los que ya hay.</p></div>
   </div>
   <div class="cols-2">
     <div class="card pad" style="display:flex;flex-direction:column;justify-content:center">
       <div class="kpi-label">Leads totales</div>
       <div style="display:flex;align-items:baseline;gap:12px;margin:8px 0 4px">
-        <div class="kpi-val" style="font-size:2.4rem">2,544</div>
-        <span class="delta down" style="font-size:.85rem">▼ -15%</span>
+        <div class="kpi-val" style="font-size:2.4rem">${GLOBAL.leads.toLocaleString('en-US')}</div>
+        <span class="delta ${momDir}" style="font-size:.85rem">${momArrow} ${momSign}${LEADS_MOM_PCT}%</span>
       </div>
-      <div class="kpi-sub">Abril: 3,000 leads &middot; -456 este mes</div>
+      <div class="kpi-sub">${PREV_MONTH_LBL}: ${(GLOBAL.prevLeads||0).toLocaleString('en-US')} leads &middot; ${LEADS_DIFF > 0 ? '+' : ''}${LEADS_DIFF} este mes</div>
       <div style="margin-top:16px;display:flex;align-items:flex-end;gap:18px;height:90px">
-        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:100%;background:var(--faint);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">Abril<br>3,000</div></div>
-        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:85%;background:var(--brand);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">Mayo<br>2,544</div></div>
+        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:100%;background:var(--faint);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">${PREV_MONTH_LBL}<br>${(GLOBAL.prevLeads||0).toLocaleString('en-US')}</div></div>
+        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:${barH}%;background:var(--brand);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">${CUR_MONTH}<br>${GLOBAL.leads.toLocaleString('en-US')}</div></div>
       </div>
     </div>
-    <div class="card pad"><div class="eyebrow" style="margin-bottom:12px">Leads por vendedora (Mayo vs Abril)</div><div id="momGlobal"></div></div>
+    <div class="card pad"><div class="eyebrow" style="margin-bottom:12px">Leads por vendedora (${CUR_MONTH} vs ${PREV_MONTH_LBL})</div><div id="momGlobal"></div></div>
   </div>
 
   <div class="section-head">
@@ -898,12 +913,12 @@ function vResumen(){
     <table class="tbl" id="teamMini"></table>
   </div>
 
-  <div class="section-head"><div><div class="eyebrow">Hallazgo clave</div><h2>El canal manual rinde 21× más</h2></div></div>
+  <div class="section-head"><div><div class="eyebrow">Hallazgo clave</div><h2>El canal manual rinde ${_ratio}× más</h2></div></div>
   <div class="insight">
     <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.7-1 1.2-1 2.5H9c0-1.3-.3-1.8-1-2.5A6 6 0 0 1 12 3z"/></svg></span>
     <div>
-      <div class="t">La carga manual convierte 21% vs 1% del bot automático.</div>
-      <div class="d">Ticket promedio manual: <b>$5,076</b> contra $2,944 del automático. El 80% de los leads llegan por bot pero solo aportan 15 cierres. <b>Priorizar la carga manual tiene el mayor retorno por lead.</b></div>
+      <div class="t">La carga manual convierte ${_mCh.conv}% vs ${_aCh.conv}% del bot automático.</div>
+      <div class="d">Ticket promedio manual: <b>${fmtMoney(_mCh.ticket)}</b> contra ${fmtMoney(_aCh.ticket)} del automático. El ${_aCh.pct||80}% de los leads llegan por bot pero solo aportan ${_aCh.cierres} cierres. <b>Priorizar la carga manual tiene el mayor retorno por lead.</b></div>
     </div>
   </div>`;
 }
@@ -1188,10 +1203,10 @@ function renderTeamPerf(){
   const totRow=`<tr style="background:#FAFBFC">
     <td class="bold">Equipo (total)</td>
     <td class="r num bold">${totLeads.toLocaleString('en-US')}</td>
-    <td class="r">${momBadge(2544,3000)}</td>
-    <td class="r num bold">5%</td>
-    <td class="r num bold">122</td>
-    <td class="r num bold">$4,773</td>
+    <td class="r">${momBadge(GLOBAL.leads,GLOBAL.prevLeads)}</td>
+    <td class="r num bold">${CONV_PCT}%</td>
+    <td class="r num bold">${GLOBAL.cierres}</td>
+    <td class="r num bold">${fmtMoney(GLOBAL.ticket)}</td>
     <td class="r num bold">${fmtMoney(totPipe)}</td>
     <td class="r num bold">${totCalif}</td>
     <td class="r num bold">52%</td>
@@ -1201,7 +1216,7 @@ function renderTeamPerf(){
 
 /* ===================== ROUTER ===================== */
 const VIEWS = {
-  resumen:{t:'Resumen ejecutivo — Mayo 2026', c:'Control diario', r:vResumen, after:()=>{renderTeamMini();renderMoMGlobal();}},
+  resumen:{t:'Resumen ejecutivo — '+CUR_MONTH+' '+CUR_YEAR, c:'Control diario', r:vResumen, after:()=>{renderTeamMini();renderMoMGlobal();}},
   equipo:{t:'Equipo — disciplina y rendimiento', c:'Centro de control', r:vEquipo, after:()=>{renderTeamGrid();renderTeamPerf();renderMetas();renderTeamFull();}},
   seguimiento:{t:'Seguimiento — backlog accionable', c:'Acción inmediata', r:vSeguimiento, after:bindBacklog},
   conversion:{t:'Conversión y embudo', c:'Análisis', r:vConversion, after:null},
@@ -1236,6 +1251,8 @@ function go(view){
 }
 document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>go(n.dataset.view));
 loadMetas();
+document.querySelector('[data-view="seguimiento"] .badge').textContent = TOTAL_BACKLOG;
+document.querySelector('[data-view="alertas"] .badge').textContent = buildAlerts().length;
 // Producción: window.DASH.backlog. Preview: fetch del JSON. Arranca en Resumen.
 if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; go('resumen'); }
 else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
