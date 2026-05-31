@@ -218,6 +218,9 @@ body{
 .dr-k{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 14px}
 .dr-k .v{font-size:1.22rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .dr-k .l{font-size:.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:6px}
+.suc-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;margin-bottom:10px}
+.suc-vcard:hover{border-color:var(--brand);box-shadow:0 2px 8px rgba(0,181,173,.12)}
+.suc-vcard:last-child{margin-bottom:0}
 .tcard{cursor:pointer;transition:box-shadow .15s,transform .15s}
 .tcard:hover{box-shadow:var(--sh-lg);transform:translateY(-2px)}
 .tbl tbody tr.clickable{cursor:pointer}
@@ -450,7 +453,7 @@ function vSucursales(){
   const cards = branches.map(b=>{
     const mom=momBadge(b.leads,b.prevLeads);
     const conv=(b.cierres/b.leads*100).toFixed(1);
-    return `<div class="card pad">
+    return `<div class="card pad" style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div><div style="font-weight:800;font-size:1.05rem">${b.sucursal}</div>
         <div class="where">${b.vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div></div>
@@ -475,7 +478,7 @@ function vSucursales(){
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
     <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Cierres</th><th class="r">Conversión</th><th class="r">Pipeline</th><th class="r">Sin seguimiento</th></tr></thead>
-    <tbody>${branches.map(b=>`<tr>
+    <tbody>${branches.map(b=>`<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <td class="who">${b.sucursal}</td>
       <td class="r num">${b.leads.toLocaleString('en-US')}</td>
       <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
@@ -631,6 +634,55 @@ function openPerfil(name){
 function closePerfil(){
   document.getElementById('drawerScrim').classList.remove('show');
   document.getElementById('drawer').classList.remove('show');
+}
+function openSucursal(sucName){
+  const vends=TEAM.filter(v=>v.sucursal===sucName);
+  if(!vends.length)return;
+  const tot=vends.reduce((a,v)=>({leads:a.leads+v.leads,cierres:a.cierres+v.cierres,value:a.value+v.value,backlog:a.backlog+v.backlog}),{leads:0,cierres:0,value:0,backlog:0});
+  const totConv=tot.leads?(tot.cierres/tot.leads*100).toFixed(1):'0.0';
+  const vcards=vends.map(v=>{
+    const col=v.status==='green'?'var(--green)':v.status==='amber'?'var(--amber)':'var(--red)';
+    const conv=v.leads?(v.cierres/v.leads*100).toFixed(1):'0.0';
+    const lPct=tot.leads?Math.round(v.leads/tot.leads*100):0;
+    return `<div class="suc-vcard" onclick="openPerfil('${v.name}')">
+      <div style="display:flex;gap:11px;align-items:center;margin-bottom:12px">
+        <div class="avatar" style="width:36px;height:36px;font-size:.9rem;background:${col}">${v.ini}</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.93rem">${v.name}</div>${stPill(v.status)}</div>
+        <div style="font-size:.7rem;color:var(--muted);white-space:nowrap">${lPct}% · ver perfil →</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div><div class="kpi-val" style="font-size:1.2rem">${v.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:3px">Leads</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem">${v.cierres}</div><div class="kpi-label" style="margin-top:3px">Cierres</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem;color:var(--brand-d)">${fmtMoney(v.value)}</div><div class="kpi-label" style="margin-top:3px">Pipeline</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem;color:${parseFloat(conv)>=6?'var(--green)':parseFloat(conv)>=4?'var(--amber)':'var(--red)'}">${conv}%</div><div class="kpi-label" style="margin-top:3px">Conv.</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const ini=sucName.slice(0,2).toUpperCase();
+  const body=`
+    <div class="drawer-head">
+      <div style="display:flex;gap:13px;align-items:center;min-width:0">
+        <div class="avatar" style="width:46px;height:46px;font-size:1.1rem;background:var(--brand)">${ini}</div>
+        <div><div style="font-weight:800;font-size:1.15rem">${sucName}</div>
+          <div class="where" style="margin-top:3px">${vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div>
+        </div>
+      </div>
+      <button class="drawer-close" onclick="closePerfil()">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <div class="dr-sec">Global de la sucursal</div>
+      <div class="dr-kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="dr-k"><div class="v">${tot.leads.toLocaleString('en-US')}</div><div class="l">Leads</div></div>
+        <div class="dr-k"><div class="v">${tot.cierres}</div><div class="l">Cierres</div></div>
+        <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(tot.value)}</div><div class="l">Pipeline</div></div>
+        <div class="dr-k"><div class="v">${totConv}%</div><div class="l">Conversión</div></div>
+      </div>
+      <div class="dr-sec">Por vendedora &mdash; toca para ver perfil completo</div>
+      ${vcards}
+    </div>`;
+  document.getElementById('drawer').innerHTML=body;
+  document.getElementById('drawerScrim').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
 }
 
 /* ---------- METAS POR MONTO ($) (editables en línea + persistencia) ---------- */
