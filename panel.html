@@ -1168,6 +1168,7 @@ function renderBacklogBy(){
     </div>`;
   }).join('');
 }
+function leadId(r){ return r.id || ((r.c||'').match(/^Lead #(\d+)$/)||[])[1] || ''; }
 function renderBacklog(){
   const t=document.getElementById('bkTable'); if(!t)return;
   if(bkMode==='stage'){
@@ -1175,9 +1176,10 @@ function renderBacklog(){
     if(bkVend) rows=rows.filter(r=>r.r===bkVend);
     if(bkStage) rows=rows.filter(r=>r.e===bkStage);
     const note=document.getElementById('bkNote');
-    if(note) note.textContent=`${rows.length} leads en el pipeline activo (de ${STAGE_LEADS.length} total).`;
+    if(note) note.textContent=`${rows.length} leads ${bkVend||bkStage?'con este filtro (de '+STAGE_LEADS.length+' en el pipeline)':'en el pipeline activo'}.`;
     const body=rows.map(r=>{
-      const url=r.id?`https://eanez.kommo.com/leads/detail/${r.id}`:'';
+      const id=leadId(r);
+      const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
       return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
       <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span></td>
       <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[r.e]||'var(--muted)'};margin-right:5px;vertical-align:middle"></span>${r.e}</td>
@@ -1202,7 +1204,8 @@ function renderBacklog(){
     : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
   const body=display.map(r=>{
     const danger=r.d>=7;
-    const url=r.id?`https://eanez.kommo.com/leads/detail/${r.id}`:'';
+    const id=leadId(r);
+    const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
     return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
       <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
