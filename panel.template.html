@@ -961,6 +961,9 @@ const I = {
   alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/>',
   bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
 };
 const ico = (p,bg,col)=>`<span class="kpi-ico" style="background:${bg};color:${col}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${p}</svg></span>`;
 const stPill = s=>`<span class="st st-${s}"><span class="d"></span>${STLABEL[s]}</span>`;
@@ -1013,17 +1016,17 @@ function vResumen(){
       <div class="kpi-sub"><span class="delta down">▼</span> valor / compradores</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#2E6FE0"></span>
-      <div class="kpi-top"><span class="kpi-label">Interesado</span></div>
+      <div class="kpi-top"><span class="kpi-label">Interesado</span>${ico(I.eye,'#EAF1FC','#2E6FE0')}</div>
       <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Interesado')||{count:0}).count}</div>
       <div class="kpi-sub">leads en etapa de interés</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#D98300"></span>
-      <div class="kpi-top"><span class="kpi-label">Agendado / Visita</span></div>
+      <div class="kpi-top"><span class="kpi-label">Agendado / Visita</span>${ico(I.calendar,'#FFF4E0','#D98300')}</div>
       <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Agendado / Visita')||{count:0}).count}</div>
       <div class="kpi-sub">visitas programadas</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
-      <div class="kpi-top"><span class="kpi-label">Compradores</span></div>
+      <div class="kpi-top"><span class="kpi-label">Compradores</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
       <div class="kpi-val">${GLOBAL.cierres}</div>
       <div class="kpi-sub">cierres del mes</div>
     </div>
