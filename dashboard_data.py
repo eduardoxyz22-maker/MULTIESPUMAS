@@ -82,12 +82,21 @@ def _stage_count(stages_list, stage_name):
 
 
 def _sucursal_for_vendor(vname, all_rows):
-    """Sucursal dominante de la vendedora = la más frecuente entre sus filas en all_rows
-    (usa la misma detección de sucursal que ya hace generar.py)."""
+    """Sucursal de la vendedora.
+    1) En Kommo el nombre del usuario suele venir como "Nombre - Sucursal";
+       si es así, esa es la fuente más confiable.
+    2) Fallback: sucursal dominante entre sus leads en all_rows."""
     from collections import Counter
+    # 1) sucursal embebida en el propio nombre ("Mirian Salazar - Mia Plaza")
+    if " - " in (vname or ""):
+        suc = _sucursal_short(vname.split(" - ", 1)[1])
+        if suc and suc != "—":
+            return suc
+    # 2) sucursal dominante entre las filas de la vendedora
+    base = (vname or "").split(" - ")[0]
     c = Counter()
     for r in all_rows or []:
-        if (r.get("user") or "").split(" - ")[0] != vname:
+        if (r.get("user") or "").split(" - ")[0] != base:
             continue
         suc = (r.get("sucursal") or "").strip()
         if suc and suc.lower() not in ("sin sucursal", "—", "-"):
