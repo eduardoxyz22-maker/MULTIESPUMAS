@@ -193,7 +193,7 @@ _fs1 = _find_stage(STAGE_ORDER, ["nueva consulta","nueva","consult"], None)
 _fs2 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _fs3 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
 _fs4 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
-FOLLOWUP_STAGES    = set(filter(None, [_fs1, _fs2, _fs3, _fs4]))
+FOLLOWUP_STAGES    = set(filter(None, [_fs1, _fs2, _fs3, _fs4, COMPRADORES_STAGE]))
 # Etapas "avanzadas": si un lead llegó aquí, ALGUIEN lo trabajó (lo movió de etapa),
 # aunque Kommo registre el cambio como hecho por el bot (created_by=0). Por eso un
 # lead en estas etapas NO se considera "sin gestión humana" aunque no tenga evento
