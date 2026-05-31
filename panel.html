@@ -883,6 +883,7 @@ const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
   return {name:v.name.split(' - ')[0], n:v.backlog, pct, status};
 }).sort((a,b)=>b.n-a.n);
 let BACKLOG = [];
+let STAGE_LEADS = (window.DASH && window.DASH.stage_leads) || [];
 
 /* ===================== ICON HELPERS ===================== */
 const I = {
@@ -1013,7 +1014,7 @@ function vEquipo(){
   </div>`;
 }
 
-let bkFilter='all', bkSuc=null;
+let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog';
 function renderBacklogBy(){
   const el=document.getElementById('backlogBy'); if(!el)return;
   const max=Math.max(...BACKLOG_BY.map(b=>b.n));
@@ -1028,20 +1029,65 @@ function renderBacklogBy(){
 }
 function renderBacklog(){
   const t=document.getElementById('bkTable'); if(!t)return;
+  if(bkMode==='stage'){
+    let rows=STAGE_LEADS;
+    if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+    if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+    const note=document.getElementById('bkNote');
+    if(note) note.textContent=`${rows.length} leads${bkStage?' en "'+bkStage+'"':''}${bkVend?' · '+bkVend:''} (de ${STAGE_LEADS.length} en el pipeline activo).`;
+    const body=rows.map(r=>`<tr>
+      <td><span class="mono" style="font-size:.78rem">${r.c}</span></td>
+      <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[r.e]||'var(--muted)'};margin-right:5px;vertical-align:middle"></span>${r.e}</td>
+      <td class="where" style="color:var(--muted)">${r.s}</td>
+      <td>${r.r}</td>
+      <td class="r">${r.v?fmtMoney(r.v):'—'}</td>
+      <td class="r"><span class="st st-amber"><span class="d"></span>${r.d} d</span></td>
+    </tr>`).join('');
+    t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Valor</th><th class="r">Días</th></tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+    return;
+  }
   let rows=BACKLOG;
   if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
-  if(bkSuc) rows=rows.filter(r=>r.s===bkSuc);
-  const body=rows.slice(0,30).map(r=>{
+  if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+  if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+  const filtered = bkFilter!=='all' || bkVend || bkStage;
+  const display = filtered ? rows : rows.slice(0,50);
+  const note=document.getElementById('bkNote');
+  if(note) note.textContent = filtered
+    ? `${display.length} fichas que coinciden con el filtro (de ${TOTAL_BACKLOG} en backlog).`
+    : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
+  const body=display.map(r=>{
     const danger=r.d>=7;
-    return `<tr>
+    const rowCls=r.d>=7?'bk-crit':r.d>=4?'bk-warn':'';
+    return `<tr class="${rowCls}">
       <td><span class="mono" style="font-size:.78rem">${r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
       <td>${r.r}</td>
       <td class="r"><span class="st ${danger?'st-red':'st-amber'}"><span class="d"></span>${r.d} d</span></td>
     </tr>`;}).join('');
-  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body}</tbody>`;
+  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+}
+function setBkMode(mode){
+  bkMode=mode; bkStage=null;
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===mode));
+  const bkF=document.getElementById('bkFilters');
+  if(bkF) bkF.querySelectorAll('[data-f]').forEach(b=>b.style.display=mode==='stage'?'none':'');
+  const title=document.getElementById('bkSectionTitle');
+  if(title) title.textContent=mode==='stage'?'Todos los leads activos — filtrar por etapa':'Cola priorizada — más antiguas primero';
+  const sf=document.getElementById('bkStageFilters');
+  if(sf){
+    const source=mode==='stage'?STAGE_LEADS:BACKLOG;
+    const ord=STAGE_ORDER.filter(s=>source.some(r=>r.e===s));
+    sf.innerHTML=ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');
+    sf.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{
+      if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
+      else{sf.querySelectorAll('[data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
+      renderBacklog();
+    });
+  }
+  renderBacklog();
 }
 
 function vSeguimiento(){
@@ -1061,20 +1107,27 @@ function vSeguimiento(){
   <p>El ${(()=>{const top2=[...BACKLOG_BY].slice(0,2).reduce((s,b)=>s+b.n,0);return TOTAL_BACKLOG?Math.round(top2/TOTAL_BACKLOG*100):0;})()}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.</p></div></div>
   <div class="card pad"><div id="backlogBy"></div></div>
 
-  <div class="section-head"><div><h2 style="font-size:.95rem">Cola priorizada — más antiguas primero</h2></div></div>
+  <div class="section-head" style="margin-top:8px">
+    <div><h2 style="font-size:.95rem" id="bkSectionTitle">Cola priorizada — más antiguas primero</h2></div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="chipf active" data-m="backlog" onclick="setBkMode('backlog')">📋 Sin seguimiento</button>
+      <button class="chipf" data-m="stage" onclick="setBkMode('stage')">📌 Todos por etapa</button>
+    </div>
+  </div>
   <div class="filters" id="bkFilters">
     <button class="chipf active" data-f="all">Todos</button>
     <button class="chipf danger" data-f="crit">🔴 Críticos +7d</button>
     <button class="chipf" data-f="nh">🔍 Nunca tocados</button>
-    <span class="spacer"></span>
-    <button class="chipf" data-s="Mia Plaza">Mia Plaza</button>
-    <button class="chipf" data-s="Central">Central</button>
-    <button class="chipf" data-s="Buenos Aires">Buenos Aires</button>
+    <span class=”spacer”></span>
+    ${TEAM.map(v=>`<button class=”chipf” data-v=”${v.name}”>${v.name.split(' ')[0]}</button>`).join('')}
   </div>
-  <div class="card" style="overflow:hidden">
-    <table class="tbl" id="bkTable"></table>
+  <div class=”filters” id=”bkStageFilters” style=”margin-top:6px”>
+    ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class=”chipf” data-e=”${s}”><span style=”display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0”></span>${s}</button>`).join('');})()}
   </div>
-  <div class="tag-line" style="padding:0 2px">Muestra de las ${BACKLOG.length||45} fichas más antiguas (de ${TOTAL_BACKLOG}). En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”, otra oportunidad de limpieza de datos.</div>`;
+  <div class=”card” style=”overflow:hidden”>
+    <table class=”tbl” id=”bkTable”></table>
+  </div>
+  <div id=”bkNote” class=”tag-line” style=”padding:0 2px”>Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”.</div>`;
 }
 
 function vConversion(){
@@ -1288,15 +1341,21 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
+  bkFilter='all'; bkVend=null; bkStage=null; bkMode='backlog';
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{
     document.querySelectorAll('#bkFilters [data-f]').forEach(x=>x.classList.remove('active'));
     b.classList.add('active'); bkFilter=b.dataset.f; renderBacklog();
   });
-  document.querySelectorAll('#bkFilters [data-s]').forEach(b=>b.onclick=()=>{
-    if(bkSuc===b.dataset.s){bkSuc=null;b.classList.remove('active');}
-    else{document.querySelectorAll('#bkFilters [data-s]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkSuc=b.dataset.s;}
+  document.querySelectorAll('#bkFilters [data-v]').forEach(b=>b.onclick=()=>{
+    if(bkVend===b.dataset.v){bkVend=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkFilters [data-v]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkVend=b.dataset.v;}
+    renderBacklog();
+  });
+  document.querySelectorAll('#bkStageFilters [data-e]').forEach(b=>b.onclick=()=>{
+    if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
     renderBacklog();
   });
 }
@@ -1319,8 +1378,11 @@ loadMetas();
   set('alertas', buildAlerts().length);
 })();
 // Producción: window.DASH.backlog. Preview: fetch del JSON. Arranca en Resumen.
-if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; go('resumen'); }
-else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
+if (DASH && DASH.backlog) {
+  BACKLOG = DASH.backlog;
+  if (DASH.stage_leads) STAGE_LEADS = DASH.stage_leads;
+  go('resumen');
+} else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
 
 function _csvDownload(filename, rows){
   const csv = rows.map(r=>r.map(c=>{
