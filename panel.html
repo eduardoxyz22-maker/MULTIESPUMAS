@@ -22,6 +22,21 @@
   --sh:0 1px 2px rgba(15,22,32,.04),0 4px 16px rgba(15,22,32,.05);
   --sh-lg:0 8px 32px rgba(15,22,32,.10);
   --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --hover:#FAFBFC;
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#0B0F14; --ink-2:#11161D; --ink-3:#212A36;
+  --bg:#0E131A; --card:#161D27; --line:#28313D; --line-2:#1F2731;
+  --text:#E6EAEF; --muted:#9AA6B2; --faint:#6E7986;
+  --brand:#16C8BF; --brand-d:#3FD9D1; --brand-bg:#0C3633; --brand-ink:#8BEAE4;
+  --green:#2BB56E; --green-bg:#10301F; --green-ink:#74D9A4;
+  --amber:#E89A1C; --amber-bg:#3A2A0C; --amber-ink:#F0C173;
+  --red:#E8585D; --red-bg:#3A1719; --red-ink:#F0989B;
+  --blue:#4A86F0; --blue-bg:#14223A;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
+  --sh-lg:0 8px 32px rgba(0,0,0,.5);
+  --hover:#1C2530;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -136,7 +151,7 @@ body{
 .tbl tbody td{padding:12px 14px;border-bottom:1px solid var(--line-2);color:var(--text)}
 .tbl tbody tr:last-child td{border-bottom:none}
 .tbl tbody tr{transition:background .12s}
-.tbl tbody tr:hover{background:#FAFBFC}
+.tbl tbody tr:hover{background:var(--hover)}
 .tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
 .tbl td.bold{font-weight:800}
 .tbl .who{font-weight:700}
@@ -158,7 +173,7 @@ body{
 .tmetrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line-2);padding-top:13px}
 .tmetric .v{font-size:1.18rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .tmetric .l{font-size:.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
-.tcard-bar{padding:11px 17px;background:#FAFBFC;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.tcard-bar{padding:11px 17px;background:var(--hover);border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--muted)}
 .tcard-bar b{color:var(--text);font-weight:800}
 
 /* two-col */
@@ -302,7 +317,18 @@ body{
 .origin-legend{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap}
 .origin-legend .ol{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--muted);font-weight:600}
 .origin-legend .ol .sw{width:11px;height:11px;border-radius:3px}
+/* ============ DARK MODE EXTRAS ============ */
+html[data-theme="dark"] .diag{background:linear-gradient(120deg,#0A0E13,#1A222E)}
+html[data-theme="dark"] .seg{background:var(--line-2)}
+html[data-theme="dark"] img{opacity:.92}
+#btnTheme{padding:8px 10px}
+#btnTheme svg{width:16px;height:16px}
+.bk-search{width:100%;padding:9px 13px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);font-family:inherit;font-size:.82rem;transition:.15s}
+.bk-search:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+.tbl th[data-sk]{cursor:pointer;user-select:none;white-space:nowrap}
+.tbl th[data-sk]:hover{color:var(--brand-d)}
 </style>
+<script>(function(){try{if(localStorage.getItem('dash_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 </head>
 <body>
 
@@ -371,6 +397,7 @@ body{
     </div>
     <div class="topbar-right">
       <div class="meta-chip">Actualizado 30/05 &middot; 05:49</div>
+      <button class="btn" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema"></button>
       <button class="btn" id="btnActualizar" onclick="triggerWorkflow()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
       <button class="btn btn-primary" onclick="exportarCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar</button>
     </div>
@@ -866,7 +893,7 @@ function renderSemanal(){
     }).join('');
     const tC=data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
     const tP=data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
-    const totRow=`<tr style="background:#FAFBFC"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
+    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
     tb.innerHTML = head+`<tbody>${rows}${totRow}</tbody>`;
   }
 }
@@ -1154,7 +1181,18 @@ function vEquipo(){
   </div>`;
 }
 
-let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog';
+let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog', bkSearch='', bkSort={k:'d',dir:-1};
+function bkSetSearch(v){ bkSearch=(v||'').trim().toLowerCase(); renderBacklog(); }
+function bkSortBy(k){ if(bkSort.k===k){bkSort.dir*=-1;} else {bkSort={k,dir:(k==='d'||k==='v')?-1:1};} renderBacklog(); }
+function bkApply(rows){
+  let r=rows;
+  if(bkSearch){ r=r.filter(x=>((x.c||'')+' '+(x.r||'')+' '+(x.e||'')+' '+(x.s||'')).toLowerCase().includes(bkSearch)); }
+  const k=bkSort.k, dir=bkSort.dir, txt=(k==='c'||k==='e'||k==='s'||k==='r');
+  r=[...r].sort((a,b)=>{ let av=a[k],bv=b[k]; if(txt) return dir*String(av||'').localeCompare(String(bv||'')); return dir*(((av||0)>(bv||0))?1:((av||0)<(bv||0))?-1:0); });
+  return r;
+}
+function bkTh(k,label,right){ const a=bkSort.k===k; return `<th class="${right?'r':''}" data-sk="${k}">${label}${a?` <span style="font-size:.72em">${bkSort.dir>0?'▲':'▼'}</span>`:''}</th>`; }
+function bkBindSort(t){ t.querySelectorAll('th[data-sk]').forEach(th=>th.onclick=()=>bkSortBy(th.dataset.sk)); }
 let STAGE_LEADS = (window.DASH && window.DASH.stage_leads) || [];
 function renderBacklogBy(){
   const el=document.getElementById('backlogBy'); if(!el)return;
@@ -1175,8 +1213,9 @@ function renderBacklog(){
     let rows=STAGE_LEADS;
     if(bkVend) rows=rows.filter(r=>r.r===bkVend);
     if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+    rows=bkApply(rows);
     const note=document.getElementById('bkNote');
-    if(note) note.textContent=`${rows.length} leads ${bkVend||bkStage?'con este filtro (de '+STAGE_LEADS.length+' en el pipeline)':'en el pipeline activo'}.`;
+    if(note) note.textContent=`${rows.length} leads ${bkVend||bkStage||bkSearch?'con este filtro (de '+STAGE_LEADS.length+' en el pipeline)':'en el pipeline activo'}.`;
     const body=rows.map(r=>{
       const id=leadId(r);
       const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
@@ -1188,7 +1227,8 @@ function renderBacklog(){
       <td class="r">${r.v?fmtMoney(r.v):'—'}</td>
       <td class="r"><span class="st st-amber"><span class="d"></span>${r.d} d</span></td>
     </tr>`;}).join('');
-    t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Valor</th><th class="r">Días</th></tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+    t.innerHTML=`<thead><tr>${bkTh('c','Contacto / Deal',false)}${bkTh('e','Etapa',false)}${bkTh('s','Sucursal',false)}${bkTh('r','Responsable',false)}${bkTh('v','Valor',true)}${bkTh('d','Días',true)}</tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+    bkBindSort(t);
     return;
   }
   let rows=BACKLOG;
@@ -1196,7 +1236,8 @@ function renderBacklog(){
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
   if(bkVend) rows=rows.filter(r=>r.r===bkVend);
   if(bkStage) rows=rows.filter(r=>r.e===bkStage);
-  const filtered = bkFilter!=='all' || bkVend || bkStage;
+  rows=bkApply(rows);
+  const filtered = bkFilter!=='all' || bkVend || bkStage || bkSearch;
   const display = filtered ? rows : rows.slice(0,50);
   const note=document.getElementById('bkNote');
   if(note) note.textContent = filtered
@@ -1213,11 +1254,12 @@ function renderBacklog(){
       <td>${r.r}</td>
       <td class="r"><span class="st ${danger?'st-red':'st-amber'}"><span class="d"></span>${r.d} d</span></td>
     </tr>`;}).join('');
-  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+  t.innerHTML=`<thead><tr>${bkTh('c','Contacto / Deal',false)}${bkTh('e','Etapa',false)}${bkTh('s','Sucursal',false)}${bkTh('r','Responsable',false)}${bkTh('d','Días sin act.',true)}</tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+  bkBindSort(t);
 }
 
 function setBkMode(mode, initialStage){
-  bkMode=mode; bkStage=initialStage||null;
+  bkMode=mode; bkStage=initialStage||null; bkSort={k:'d',dir:-1};
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===mode));
   const bkF=document.getElementById('bkFilters');
   if(bkF) bkF.querySelectorAll('[data-f],[data-v]').forEach(b=>b.style.display=mode==='stage'?'none':'');
@@ -1271,10 +1313,13 @@ function vSeguimiento(){
   <div class="filters" id="bkStageFilters" style="margin-top:6px">
     ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');})()}
   </div>
-  <div class="card" style="overflow:hidden">
+  <div style="margin-top:8px">
+    <input id="bkSearchInput" class="bk-search" type="text" placeholder="🔍 Buscar por contacto, Lead #, etapa o responsable…" oninput="bkSetSearch(this.value)" autocomplete="off">
+  </div>
+  <div class="card" style="overflow:hidden;margin-top:8px">
     <table class="tbl" id="bkTable"></table>
   </div>
-  <div id=”bkNote” class=”tag-line” style=”padding:0 2px”>Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”.</div>`;
+  <div id="bkNote" class="tag-line" style="padding:0 2px">Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #". Clic en cualquier encabezado para ordenar.</div>`;
 }
 
 function vConversion(){
@@ -1505,7 +1550,7 @@ function renderTeamPerf(){
   const totLeads=TEAM.reduce((s,v)=>s+v.leads,0);
   const totPipe=TEAM.reduce((s,v)=>s+v.value,0);
   const totCalif=TEAM.reduce((s,v)=>s+v.calif,0);
-  const totRow=`<tr style="background:#FAFBFC">
+  const totRow=`<tr style="background:var(--hover)">
     <td class="bold">Equipo (total)</td>
     <td class="r num bold">${totLeads.toLocaleString('en-US')}</td>
     <td class="r">${momBadge(GLOBAL.leads,GLOBAL.prevLeads)}</td>
@@ -1534,8 +1579,9 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
-  bkFilter='all'; bkVend=null; bkStage=null; bkMode='backlog';
+  bkFilter='all'; bkVend=null; bkStage=null; bkMode='backlog'; bkSearch=''; bkSort={k:'d',dir:-1};
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m==='backlog'));
+  const si=document.getElementById('bkSearchInput'); if(si) si.value='';
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{
@@ -1681,12 +1727,46 @@ function exportarCSV(){
 
 function exportarBacklog(){
   const mes = (DASH&&DASH.month?DASH.month:'')+(DASH&&DASH.year?'_'+DASH.year:'');
-  const header = ['Contacto','Etapa','Sucursal','Responsable','Días sin contacto','Sin acción humana'];
-  const rows = [header, ...(BACKLOG||[]).map(b=>[
-    b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.d||0, b.nh?'Sí':'No'
-  ])];
-  _csvDownload('backlog_seguimiento'+(mes?'_'+mes:'')+'.csv', rows);
+  if(bkMode==='stage'){
+    let rows=STAGE_LEADS;
+    if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+    if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+    rows=bkApply(rows);
+    const header=['Contacto','Etapa','Sucursal','Responsable','Valor','Días','Link Kommo'];
+    const out=[header, ...rows.map(b=>{ const id=leadId(b); return [
+      b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.v||0, b.d||0, id?'https://eanez.kommo.com/leads/detail/'+id:''
+    ];})];
+    _csvDownload('pipeline_por_etapa'+(mes?'_'+mes:'')+'.csv', out);
+    return;
+  }
+  let rows=BACKLOG;
+  if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
+  if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
+  if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+  if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+  rows=bkApply(rows);
+  const header = ['Contacto','Etapa','Sucursal','Responsable','Días sin contacto','Sin acción humana','Link Kommo'];
+  const out = [header, ...rows.map(b=>{ const id=leadId(b); return [
+    b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.d||0, b.nh?'Sí':'No', id?'https://eanez.kommo.com/leads/detail/'+id:''
+  ];})];
+  _csvDownload('backlog_seguimiento'+(mes?'_'+mes:'')+'.csv', out);
 }
+
+/* ===================== TEMA CLARO / OSCURO ===================== */
+const _MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+const _SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+function applyTheme(t){
+  const dark=t==='dark';
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  try{localStorage.setItem('dash_theme', dark?'dark':'light');}catch(e){}
+  const btn=document.getElementById('btnTheme');
+  if(btn){ btn.innerHTML = dark?_SUN:_MOON; btn.title = dark?'Cambiar a tema claro':'Cambiar a tema oscuro'; }
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
+  applyTheme(cur==='dark'?'light':'dark');
+}
+applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light');
 
 </script>
 </body>
