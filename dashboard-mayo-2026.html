@@ -4735,8 +4735,8 @@ function ProyeccionList({ derived, filterTienda }) {
           <div className="proy-arrow">→</div>
           <div className="proy-value">Bs {fmtMoney(p.proy)}</div>
           <div className="proy-meta">
-            {p.meta ? <span className={p.proy >= p.meta ? "good" : "bad"} title="Proyección vs meta mínima">{fmtPct(p.proy / p.meta)}<small> mín</small></span> : <span className="muted">—</span>}
-            {p.pres ? <span className="proy-pres" title="Proyección vs presupuesto">{fmtPct(p.proy / p.pres)}<small> pres</small></span> : null}
+            {p.pres ? <span className={p.proy >= p.pres ? "good" : "bad"} title="Proyección vs presupuesto">{fmtPct(p.proy / p.pres)}<small> pres</small></span> : <span className="muted">—</span>}
+            {p.meta ? <span className="proy-pres" title="Proyección vs meta mínima">{fmtPct(p.proy / p.meta)}<small> mín</small></span> : null}
           </div>
         </div>
       ))}
