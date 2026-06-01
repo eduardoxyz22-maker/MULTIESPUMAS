@@ -1766,7 +1766,7 @@ function renderTeamGrid(){
       <div class="tcard-bar">
         ${v.nuevo
           ? `<span style="color:var(--blue);font-weight:700">Nuevo · ${v.leads} leads asignados</span>`
-          : `<span><b>${v.conv}%</b> conv · <b>${v.cierres}</b> cierres · ${fmtMoney(v.ticket)} ticket</span><span>sin seg. <b style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</b></span>`}
+          : `<span><b>${v.leads}</b> leads · <b>${v.conv}%</b> conv · <b>${v.cierres}</b> cierres · ${fmtMoney(v.ticket)} ticket</span><span>sin seg. <b style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</b></span>`}
       </div>
       ${sparkline(v)}
       ${(()=>{const meta=v.metaMonto||0,vC=weeklyFor(v).cur.totM,pct=meta>0?Math.min(Math.round(vC/meta*100),100):0,col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';return meta>0&&!v.nuevo?`<div class="meta-prog"><div style="display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--muted)"><span>Meta ${fmtMoney(meta)}</span><span style="color:${col}">${pct}%</span></div><div class="meta-prog-bar"><i style="width:${pct}%;background:${col}"></i></div><div style="font-size:.66rem;color:var(--faint)">${fmtMoney(vC)} cerrado &middot; falta ${fmtMoney(Math.max(0,meta-vC))}</div></div>`:'';})()}
