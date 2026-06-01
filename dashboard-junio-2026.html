@@ -737,7 +737,7 @@ th.sortable:hover { color: var(--ink); }
 .proy-list { display: flex; flex-direction: column; gap: 8px; }
 .proy-row {
   display: grid;
-  grid-template-columns: 80px 1fr 18px 1fr 60px;
+  grid-template-columns: 80px 1fr 18px 1fr 96px;
   align-items: center; gap: 8px;
   padding: 10px 4px;
   border-bottom: 1px solid var(--hairline);
@@ -749,7 +749,9 @@ th.sortable:hover { color: var(--ink); }
 .proy-actual { color: var(--ink-500); font-variant-numeric: tabular-nums; }
 .proy-arrow { color: var(--muted); text-align: center; }
 .proy-value { color: var(--ink); font-variant-numeric: tabular-nums; font-weight: 600; }
-.proy-meta { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.proy-meta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; line-height: 1.2; text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+.proy-meta small { font-size: 9px; color: var(--muted); font-weight: 600; letter-spacing: .03em; }
+.proy-pres { font-size: 11px; color: var(--ink-500); font-weight: 600; }
 .proy-meta .good { color: var(--good); }
 .proy-meta .bad { color: var(--bad); }
 
@@ -4715,13 +4717,14 @@ function ProyeccionList({ derived, filterTienda }) {
   const tiendas = derived.tiendas;
   const rows = tiendas.map((t) => {
     const proy = derived.dia > 0 ? (t.monto / derived.dia) * derived.diasTotales : t.monto;
-    return { label: t.nombre, actual: t.monto, proy, meta: t.metaMin };
+    return { label: t.nombre, actual: t.monto, proy, meta: t.metaMin, pres: t.presupuesto };
   });
   // total
   const totActual = rows.reduce((s, r) => s + r.actual, 0);
   const totProy = rows.reduce((s, r) => s + r.proy, 0);
   const totMeta = rows.reduce((s, r) => s + (r.meta || 0), 0);
-  rows.push({ label: filterTienda === "Todas" ? "Total" : "Total scope", actual: totActual, proy: totProy, meta: totMeta, isTotal: true });
+  const totPres = rows.reduce((s, r) => s + (r.pres || 0), 0);
+  rows.push({ label: filterTienda === "Todas" ? "Total" : "Total scope", actual: totActual, proy: totProy, meta: totMeta, pres: totPres, isTotal: true });
 
   return (
     <div className="proy-list">
@@ -4732,7 +4735,8 @@ function ProyeccionList({ derived, filterTienda }) {
           <div className="proy-arrow">→</div>
           <div className="proy-value">Bs {fmtMoney(p.proy)}</div>
           <div className="proy-meta">
-            {p.meta ? <span className={p.proy >= p.meta ? "good" : "bad"}>{fmtPct(p.proy / p.meta)}</span> : <span className="muted">—</span>}
+            {p.meta ? <span className={p.proy >= p.meta ? "good" : "bad"} title="Proyección vs meta mínima">{fmtPct(p.proy / p.meta)}<small> mín</small></span> : <span className="muted">—</span>}
+            {p.pres ? <span className="proy-pres" title="Proyección vs presupuesto">{fmtPct(p.proy / p.pres)}<small> pres</small></span> : null}
           </div>
         </div>
       ))}
