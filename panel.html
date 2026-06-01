@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard CRM — HEAVEN Colchones · HEAVEN Colchones · Mayo 2026</title>
+<title>Dashboard CRM — HEAVEN Colchones · Mayo 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -362,6 +362,29 @@ html[data-theme="dark"] .bk-warn:hover{background:rgba(232,154,28,.1)!important}
 .meta-prog{padding:10px 17px 12px;border-top:1px solid var(--line-2)}
 .meta-prog-bar{height:5px;background:var(--line-2);border-radius:99px;overflow:hidden;margin:5px 0 4px}
 .meta-prog-bar i{display:block;height:100%;border-radius:99px;transition:width .6s ease}
+/* ── 1. entrada escalonada tarjetas ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.team-grid .tcard{animation:cardIn .38s ease-out both}
+/* ── 2. hover escala KPI y stage-card ── */
+.kpi{transition:transform .18s ease,box-shadow .18s ease}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);z-index:1}
+.stage-card{transition:transform .2s ease,box-shadow .2s ease}
+.stage-card:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);z-index:1}
+/* ── 3. ripple chips ── */
+.chipf{position:relative;overflow:hidden}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+.ripple-wave{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rippleAnim .45s linear;pointer-events:none;z-index:0}
+/* ── 4. sparkline ── */
+.tcard-spark{padding:5px 17px 9px;border-top:1px solid var(--line-2);display:flex;align-items:flex-end;gap:3px}
+/* ── 7. topbar blur al scroll ── */
+.topbar{transition:background .25s,box-shadow .25s}
+.topbar.tb-scrolled{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.76)!important;box-shadow:0 2px 20px rgba(15,22,32,.09)}
+html[data-theme="dark"] .topbar.tb-scrolled{background:rgba(22,29,39,.86)!important}
+/* ── 8. backlog border izquierdo ── */
+.bk-crit{border-left:3px solid var(--red)!important}
+.bk-warn{border-left:3px solid var(--amber)!important}
+/* ── 10. modo focus ── */
+body.focus-mode .rail{display:none}
 </style>
 <script>(function(){try{if(localStorage.getItem('dash_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 </head>
@@ -1056,15 +1079,27 @@ const FUNNEL = [
   {n:'Compradores',       v:GLOBAL.cierres, c:'#159A57'},
 ];
 
-const _proyCierres = Math.round(GLOBAL.cierres/30*31);
-const _proyValue   = Math.round(GLOBAL.pipeline/30*31);
+// Fecha de referencia: prefiere updated_at; si no disponible usa el último día del mes del DASH
+const _updAt = (()=>{
+  if(DASH&&DASH.updated_at){const d=new Date(DASH.updated_at);if(!isNaN(d.getTime()))return d;}
+  const MES_NUM={enero:0,febrero:1,marzo:2,abril:3,mayo:4,junio:5,julio:6,agosto:7,septiembre:8,octubre:9,noviembre:10,diciembre:11};
+  const mn=(DASH&&DASH.month)?MES_NUM[(DASH.month||'').toLowerCase()]:undefined;
+  const yr=(DASH&&DASH.year)?parseInt(DASH.year):new Date().getFullYear();
+  return mn!==undefined?new Date(yr,mn+1,0):new Date();
+})();
+const _curDay = Math.max(1, _updAt.getDate());
+const _daysInMonth = new Date(_updAt.getFullYear(), _updAt.getMonth()+1, 0).getDate();
+const _daysLeft = _daysInMonth - _curDay;
+const _proyCierres = Math.round(GLOBAL.cierres / _curDay * _daysInMonth);
+const _proyValue   = Math.round(_proyCierres * (GLOBAL.ticket||0));
 const _conv1       = Math.round(GLOBAL.leads*(CONV_PCT+1)/100);
-const _conv1Val    = GLOBAL.cierres ? Math.round(GLOBAL.pipeline/GLOBAL.cierres*_conv1) : 0;
-const _rescVal     = EXTRA_CIERRES * (GLOBAL.ticket||0);
+const _conv1Val    = Math.round(_conv1 * (GLOBAL.ticket||0));
+const _rescTotal   = _proyCierres + EXTRA_CIERRES;
+const _rescTotalVal = Math.round(_rescTotal * (GLOBAL.ticket||0));
 const SCEN = [
-  {tag:'Escenario base', v:'~'+_proyCierres, v2:'~'+fmtMoney(_proyValue), d:'Mantiene la tendencia actual sin intervenciones.', hot:false, pin:''},
-  {tag:'+1pp conversión ('+(CONV_PCT+1)+'%)', v:'~'+_conv1, v2:'~'+fmtMoney(_conv1Val), d:'Coaching dirigido a vendedoras en estado crítico.', hot:false, pin:''},
-  {tag:'Rescate sin seguimiento', v:'+'+EXTRA_CIERRES, v2:'+'+fmtMoney(_rescVal), d:'Llamada/WhatsApp a los '+TOTAL_BACKLOG+' deals sin seguimiento.', hot:true, pin:'Mayor palanca'},
+  {tag:'Escenario base', v:'~'+_proyCierres, v2:'~'+fmtMoney(_proyValue), delta:'+'+Math.max(0,_proyCierres-GLOBAL.cierres), d:'Pace lineal. '+_daysLeft+' días restantes. Sin cambios en la operación actual.', hot:false, pin:''},
+  {tag:'+1pp conversión ('+(CONV_PCT+1)+'%)', v:'~'+_conv1, v2:'~'+fmtMoney(_conv1Val), delta:'+'+Math.max(0,_conv1-GLOBAL.cierres), d:'Si cada vendedora mejora 1pp su tasa de cierre con coaching.', hot:false, pin:''},
+  {tag:'Rescate sin seguimiento', v:'~'+_rescTotal, v2:'~'+fmtMoney(_rescTotalVal), delta:'+'+EXTRA_CIERRES+' sobre base', d:'Base (~'+_proyCierres+') + rescate de '+TOTAL_BACKLOG+' deals sin seguimiento (+'+EXTRA_CIERRES+' cierres adicionales).', hot:true, pin:'Mayor palanca'},
 ];
 
 const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
@@ -1301,7 +1336,7 @@ function renderBacklog(){
     const danger=r.d>=7;
     const id=leadId(r);
     const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
-    return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
+    return `<tr class="${danger?'bk-crit':r.d>=3?'bk-warn':''}" style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
       <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
@@ -1338,7 +1373,10 @@ function vSeguimiento(){
   <div class="section-head">
     <div><div class="eyebrow">Acción inmediata</div><h2>${TOTAL_BACKLOG} deals abiertos sin actividad +72h</h2>
     <p>Ordenados por antigüedad sin contacto (lo más urgente primero). En tu CRM los deals abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto.</p></div>
-    <button class="btn" onclick="exportarBacklog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" onclick="exportarBacklog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
+      <button class="btn" id="btnFocus" onclick="toggleFocus()" title="Ocultar menú lateral y expandir tabla">${_focusMode?'✕ Salir':'⛶ Focus'}</button>
+    </div>
   </div>
   <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">${TOTAL_BACKLOG}</div><div class="kpi-sub">${BACKLOG_PCT}% del total de deals</div></div>
@@ -1381,7 +1419,7 @@ function vConversion(){
   const funnel = FUNNEL.map((f,i)=>{
     const w = Math.max(14, Math.round(f.v/max*100));
     return `<div class="fstep"><div class="fn">${f.n}</div>
-      <div class="fbar-wrap"><div class="fbar" style="width:${w}%;background:${f.c}">${f.v.toLocaleString('en-US')}</div></div>
+      <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}" data-fw="${w}">${f.v.toLocaleString('en-US')}</div></div>
       <div class="fp">${Math.round(f.v/max*100)}%</div></div>${i<FUNNEL.length-1?'<div class="fconn"></div>':''}`;
   }).join('');
   const rows = CHANNELS.map(c=>{
@@ -1456,17 +1494,39 @@ function stageCards(){
 }
 
 function vProyeccion(){
+  const progPct = Math.round(_curDay/_daysInMonth*100);
+  const paceDay = (_curDay>0 ? (GLOBAL.cierres/_curDay).toFixed(1) : '—');
+  const onTrack = _proyCierres >= GLOBAL.cierres;
   const cards = SCEN.map(s=>`
     <div class="scen ${s.hot?'hot':''}">
-      ${s.pin?`<span class="pin">${s.pin}</span>`:''}
-      <div class="stag">${s.tag}</div>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;margin-bottom:8px">
+        <div class="stag" style="flex:1">${s.tag}</div>
+        ${s.pin?`<span class="pin" style="position:static;flex-shrink:0">${s.pin}</span>`:''}
+      </div>
       <div class="sv">${s.v} <span style="font-size:.9rem;color:var(--muted);font-weight:700">cierres</span></div>
       <div class="sv2">${s.v2}</div>
-      <div class="sd">${s.d}</div>
+      <div style="margin-top:7px;font-size:.7rem;font-weight:700;color:var(--green-ink);background:var(--green-bg);display:inline-block;padding:2px 9px;border-radius:6px">${s.delta} vs hoy (${GLOBAL.cierres})</div>
+      <div class="sd" style="margin-top:8px">${s.d}</div>
     </div>`).join('');
   return `
-  <div class="section-head"><div><div class="eyebrow">Proyección al cierre de ${CUR_MONTH.toLowerCase()}</div><h2>Tres escenarios &mdash; proyección lineal</h2>
-  <p>Pace lineal basado en los datos actuales. La palanca de mayor impacto es rescatar el backlog sin seguimiento.</p></div></div>
+  <div class="section-head"><div><div class="eyebrow">Proyección al cierre de ${CUR_MONTH.toLowerCase()}</div><h2>Tres escenarios &mdash; ¿a cuánto podemos llegar?</h2>
+  <p>Proyección al cierre del mes basada en la tasa de cierres por día y el ticket promedio actual (${fmtMoney(GLOBAL.ticket)}). La palanca de mayor impacto es rescatar el backlog.</p></div></div>
+
+  <div class="card" style="padding:16px 20px;margin-bottom:16px;display:flex;align-items:center;gap:24px;flex-wrap:wrap">
+    <div style="flex:1;min-width:180px">
+      <div class="eyebrow" style="margin-bottom:6px">Avance del mes</div>
+      <div style="height:8px;background:var(--line-2);border-radius:99px;overflow:hidden;position:relative">
+        <div style="height:100%;width:${progPct}%;background:var(--brand);border-radius:99px;transition:width .5s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--faint);font-weight:600;margin-top:4px"><span>Día ${_curDay}</span><span>${_daysLeft} días restantes</span><span>Día ${_daysInMonth}</span></div>
+    </div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div><div class="eyebrow">Cierres hoy</div><div style="font-size:1.4rem;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums">${GLOBAL.cierres}</div><div style="font-size:.68rem;color:var(--muted)">${paceDay}/día en promedio</div></div>
+      <div><div class="eyebrow">Proyección base</div><div style="font-size:1.4rem;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums">~${_proyCierres}</div><div style="font-size:.68rem;color:var(${onTrack?'--green':'--amber'})">${onTrack?'▲ buen ritmo':'▼ por debajo'}</div></div>
+      <div><div class="eyebrow">Ticket promedio</div><div style="font-size:1.4rem;font-weight:800;line-height:1.2">${fmtMoney(GLOBAL.ticket)}</div><div style="font-size:.68rem;color:var(--muted)">valor / cierre</div></div>
+    </div>
+  </div>
+
   <div class="cols-3">${cards}</div>
 
   <div class="section-head"><div><div class="eyebrow">Plan</div><h2>Matriz de acción</h2></div></div>
@@ -1511,10 +1571,10 @@ function renderTeamGrid(){
   const g=document.getElementById('teamGrid'); if(!g)return;
   const medals=['🥇','🥈','🥉'];
   const byC=[...TEAM].sort((a,b)=>(b.cierres||0)-(a.cierres||0)).map(v=>v.name);
-  g.innerHTML = [...TEAM].sort((a,b)=>order(a.status)-order(b.status)).map(v=>{
+  g.innerHTML = [...TEAM].sort((a,b)=>order(a.status)-order(b.status)).map((v,i)=>{
     const rank=byC.indexOf(v.name);
     const medal=rank<3&&(v.cierres||0)>0?medals[rank]:'';
-    return `<div class="tcard v-${v.status}" onclick="openPerfil('${v.name}')">
+    return `<div class="tcard v-${v.status}" onclick="openPerfil('${v.name}')" style="animation-delay:${i*0.07}s">
       ${medal?`<div class="medal">${medal}</div>`:''}
       <div class="tcard-h">
         <div style="display:flex;gap:11px;align-items:center;min-width:0;flex:1">
@@ -1536,9 +1596,15 @@ function renderTeamGrid(){
           ? `<span style="color:var(--blue);font-weight:700">Nuevo · ${v.leads} leads asignados</span>`
           : `<span><b>${v.conv}%</b> conv · <b>${v.cierres}</b> cierres · ${fmtMoney(v.ticket)} ticket</span><span>sin seg. <b style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</b></span>`}
       </div>
+      ${sparkline(v)}
       ${(()=>{const meta=v.metaMonto||0,pct=meta>0?Math.min(Math.round(v.value/meta*100),100):0,col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';return meta>0&&!v.nuevo?`<div class="meta-prog"><div style="display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--muted)"><span>Meta ${fmtMoney(meta)}</span><span style="color:${col}">${pct}%</span></div><div class="meta-prog-bar"><i style="width:${pct}%;background:${col}"></i></div><div style="font-size:.66rem;color:var(--faint)">${fmtMoney(v.value)} vendido &middot; falta ${fmtMoney(Math.max(0,meta-v.value))}</div></div>`:'';})()}
     </div>`;
   }).join('');
+}
+function sparkline(v){
+  const wk=weeklyFor(v).cur.cierres;
+  const mx=Math.max(1,...wk);
+  return `<div class="tcard-spark">${wk.map(n=>`<span style="display:inline-block;width:10px;height:${Math.round(n/mx*20)+2}px;border-radius:2px 2px 0 0;background:${n===mx&&mx>1?'var(--brand)':'var(--line-2)'}"></span>`).join('')}<span style="font-size:.6rem;color:var(--faint);margin-left:4px;align-self:center">semanas</span></div>`;
 }
 
 let sortKey='status', sortDir=1;
@@ -1626,7 +1692,7 @@ const VIEWS = {
   resumen:{t:'Resumen ejecutivo — '+CUR_MONTH+' '+CUR_YEAR, c:'Control diario', r:vResumen, after:()=>{renderTeamMini();renderMoMGlobal();}},
   equipo:{t:'Equipo — disciplina y rendimiento', c:'Centro de control', r:vEquipo, after:()=>{renderTeamGrid();renderTeamPerf();renderMetas();renderTeamFull();}},
   seguimiento:{t:'Seguimiento — backlog accionable', c:'Acción inmediata', r:vSeguimiento, after:bindBacklog},
-  conversion:{t:'Conversión y embudo', c:'Análisis', r:vConversion, after:null},
+  conversion:{t:'Conversión y embudo', c:'Análisis', r:vConversion, after:()=>{requestAnimationFrame(()=>requestAnimationFrame(()=>{document.querySelectorAll('.fbar[data-fw]').forEach(el=>{el.style.width=el.dataset.fw+'%';});}));}},
   semanal:{t:'Ritmo semanal', c:'Análisis', r:vSemanal, after:renderSemanal},
   sucursales:{t:'Sucursales — comparativo', c:'Análisis', r:vSucursales, after:null},
   proyeccion:{t:'Proyección al cierre', c:'Planeación', r:vProyeccion, after:null},
@@ -1662,9 +1728,10 @@ function bindBacklog(){
 }
 /* ── avatar color único por vendedora ── */
 function avatarColor(name){
-  const p=['#C0392B','#D35400','#B7950B','#1E8449','#1A5276','#6C3483','#C0392B','#117A65','#2471A3','#784212'];
-  let h=0; for(const c of (name||'')) h=(h*31+c.charCodeAt(0))%p.length;
-  return p[Math.abs(h)%p.length];
+  const g=[['#C0392B','#D35400'],['#D35400','#E67E22'],['#B7950B','#D4AC0D'],['#1E8449','#1ABC9C'],['#1A5276','#2E86C1'],['#6C3483','#9B59B6'],['#117A65','#1ABC9C'],['#2471A3','#5DADE2'],['#784212','#D35400'],['#C0392B','#E74C3C']];
+  let h=0; for(const c of (name||'')) h=(h*31+c.charCodeAt(0))%g.length;
+  const [a,b]=g[Math.abs(h)%g.length];
+  return `linear-gradient(135deg,${a},${b})`;
 }
 /* ── contadores animados ── */
 function countUp(el,dur=540){
@@ -1710,8 +1777,13 @@ loadMetas();
   set('seguimiento', CRIT_BACKLOG);
   set('alertas', buildAlerts().length);
 })();
-/* ── scroll al tope ── */
-(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop');if(scr&&btn)scr.addEventListener('scroll',()=>btn.classList.toggle('show',scr.scrollTop>250),{passive:true});})();
+/* ── scroll al tope + topbar blur ── */
+(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop'),topbar=document.querySelector('.topbar');if(scr)scr.addEventListener('scroll',()=>{if(btn)btn.classList.toggle('show',scr.scrollTop>250);if(topbar)topbar.classList.toggle('tb-scrolled',scr.scrollTop>10);},{passive:true});})();
+/* ── ripple en chips ── */
+document.addEventListener('click',function(e){const ch=e.target.closest('.chipf');if(!ch)return;const rp=document.createElement('span');const d=Math.max(ch.offsetWidth,ch.offsetHeight);const rect=ch.getBoundingClientRect();rp.className='ripple-wave';rp.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-rect.left-d/2)+'px;top:'+(e.clientY-rect.top-d/2)+'px';ch.appendChild(rp);rp.addEventListener('animationend',function(){rp.remove();});});
+/* ── focus mode ── */
+let _focusMode=false;
+function toggleFocus(){_focusMode=!_focusMode;document.body.classList.toggle('focus-mode',_focusMode);const btn=document.getElementById('btnFocus');if(btn)btn.textContent=_focusMode?'✕ Salir':'⛶ Focus';}
 /* ── búsqueda global ── */
 let _gsAct=[];
 function gsSearch(q){
