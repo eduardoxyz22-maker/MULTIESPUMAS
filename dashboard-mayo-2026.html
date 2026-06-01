@@ -3014,7 +3014,7 @@ function TiendasView(_ref2) {
     }, /*#__PURE__*/React.createElement("div", {
       className: "big"
     }, "Bs ", fmtMoney(t.monto)), /*#__PURE__*/React.createElement("div", {
-      className: "pace " + (t.pctMin >= 1 ? "good" : t.pctMin >= 0.7 ? "warn" : "bad")
+      className: "pace " + (t.pctPres >= 1 ? "good" : t.pctPres >= 0.7 ? "warn" : "bad")
     }, fmtPct(t.pctMin), " ", /*#__PURE__*/React.createElement("span", {
       className: "muted"
     }, "de meta m\xEDn")))), /*#__PURE__*/React.createElement("div", {
@@ -5019,8 +5019,8 @@ function TiendasView({ filterTienda, dia }) {
               </div>
               <div className="tienda-headline">
                 <div className="big">Bs {fmtMoney(t.monto)}</div>
-                <div className={"pace " + (t.pctMin >= 1 ? "good" : t.pctMin >= 0.7 ? "warn" : "bad")}>
-                  {fmtPct(t.pctMin)} <span className="muted">de meta mín</span>
+                <div className={"pace " + (t.pctPres >= 1 ? "good" : t.pctPres >= 0.7 ? "warn" : "bad")}>
+                  {fmtPct(t.pctPres)} <span className="muted">de presupuesto</span>
                 </div>
               </div>
             </header>
