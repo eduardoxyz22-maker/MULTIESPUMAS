@@ -1012,11 +1012,18 @@ const GLOBAL_CERRADO = (()=>{
   if(bv && Object.keys(bv).length) return Object.values(bv).reduce((s,v)=>s+(v.curM||[]).reduce((a,b)=>a+b,0),0);
   return GLOBAL.pipeline; // fallback: sin byVendor usa pipeline total
 })();
-
 // ── Totales derivados de los datos reales (window.DASH) ──
 const CONV_PCT = GLOBAL.leads ? Math.round(GLOBAL.cierres/GLOBAL.leads*100) : 0;
 const LEADS_MOM_PCT = GLOBAL.prevLeads ? Math.round((GLOBAL.leads-GLOBAL.prevLeads)/GLOBAL.prevLeads*100) : 0;
 const LEADS_DIFF = GLOBAL.leads - (GLOBAL.prevLeads||0);
+// Cierres y conversión del mes anterior (de byVendor.prevC)
+const GLOBAL_PREV_CIERRES = (()=>{
+  const bv = DASH && DASH.weekly && DASH.weekly.byVendor;
+  if(bv && Object.keys(bv).length) return Object.values(bv).reduce((s,v)=>s+(v.prevC||[]).reduce((a,b)=>a+b,0),0);
+  return 0;
+})();
+const PREV_CONV_PCT = GLOBAL.prevLeads && GLOBAL_PREV_CIERRES ? Math.round(GLOBAL_PREV_CIERRES/GLOBAL.prevLeads*100) : 0;
+const CONV_DELTA_PP = CONV_PCT - PREV_CONV_PCT;
 const TOTAL_BACKLOG = TEAM.reduce((s,v)=>s+(v.backlog||0),0);
 // "Críticos +7 días": estimación. window.DASH.backlog es solo la muestra de las más
 // antiguas (sesgada a 100% >7d), así que usamos una proporción fija ~73% del backlog.
@@ -1172,10 +1179,15 @@ function vResumen(){
   </div>
 
   <div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">
+    <div class="kpi"><span class="accent" style="background:var(--muted)"></span>
+      <div class="kpi-top"><span class="kpi-label">Total leads ${_tip('Leads ingresados este mes vs el mes anterior.')}</span>${ico(I.eye,'var(--hover)','var(--muted)')}</div>
+      <div class="kpi-val">${GLOBAL.leads.toLocaleString('en-US')}</div>
+      <div class="kpi-sub"><span class="delta ${LEADS_MOM_PCT>=0?'up':'down'}">${LEADS_MOM_PCT>=0?'▲':'▼'} ${LEADS_MOM_PCT>=0?'+':''}${LEADS_MOM_PCT}%</span> vs ${PREV_MONTH_LBL} (${(GLOBAL.prevLeads||0).toLocaleString('en-US')})</div>
+    </div>
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
-      <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Leads que compraron ÷ total leads del mes. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Compradores ÷ leads. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
-      <div class="kpi-sub">${_momDelta||`<span class="delta up">▲</span>`} ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
+      <div class="kpi-sub"><span class="delta ${CONV_DELTA_PP>=0?'up':'down'}">${CONV_DELTA_PP>=0?'▲':'▼'} ${CONV_DELTA_PP>=0?'+':''}${CONV_DELTA_PP}pp</span> vs ${PREV_MONTH_LBL} (${PREV_CONV_PCT}%)</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
       <div class="kpi-top"><span class="kpi-label">Cerrado en el mes ${_tip('Monto de deals que llegaron a etapa Compradores este mes (revenue real confirmado).')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
