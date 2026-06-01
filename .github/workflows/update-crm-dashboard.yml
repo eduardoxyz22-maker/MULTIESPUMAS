@@ -2,8 +2,6 @@ name: Actualizar Dashboard CRM Diario
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 17 * * *' # 11:00 AM hora México (17:00 UTC)
 
 jobs:
   actualizar:

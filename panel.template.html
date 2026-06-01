@@ -1680,7 +1680,7 @@ function renderTeamGrid(){
           : `<span><b>${v.conv}%</b> conv · <b>${v.cierres}</b> cierres · ${fmtMoney(v.ticket)} ticket</span><span>sin seg. <b style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</b></span>`}
       </div>
       ${sparkline(v)}
-      ${(()=>{const meta=v.metaMonto||0,pct=meta>0?Math.min(Math.round(v.value/meta*100),100):0,col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';return meta>0&&!v.nuevo?`<div class="meta-prog"><div style="display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--muted)"><span>Meta ${fmtMoney(meta)}</span><span style="color:${col}">${pct}%</span></div><div class="meta-prog-bar"><i style="width:${pct}%;background:${col}"></i></div><div style="font-size:.66rem;color:var(--faint)">${fmtMoney(v.value)} vendido &middot; falta ${fmtMoney(Math.max(0,meta-v.value))}</div></div>`:'';})()}
+      ${(()=>{const meta=v.metaMonto||0,vC=weeklyFor(v).cur.totM,pct=meta>0?Math.min(Math.round(vC/meta*100),100):0,col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';return meta>0&&!v.nuevo?`<div class="meta-prog"><div style="display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--muted)"><span>Meta ${fmtMoney(meta)}</span><span style="color:${col}">${pct}%</span></div><div class="meta-prog-bar"><i style="width:${pct}%;background:${col}"></i></div><div style="font-size:.66rem;color:var(--faint)">${fmtMoney(vC)} cerrado &middot; falta ${fmtMoney(Math.max(0,meta-vC))}</div></div>`:'';})()}
     </div>`;
   }).join('');
 }
@@ -1767,7 +1767,7 @@ function renderTeamPerf(){
     <td class="r num bold" style="color:var(--green-ink)">${ORIGIN.manual.toLocaleString('en-US')} (${ORIGIN.manualPct}%)</td>
     <td class="r num bold">${ORIGIN.auto.toLocaleString('en-US')} (${ORIGIN.autoPct}%)</td>
   </tr>`;
-  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th><th class="r">✍ Manual</th><th class="r">⚙ Auto</th></tr></thead><tbody>${body}${totRow}</tbody>`;
+  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Conv.</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline total</th><th class="r">Calificados</th><th class="r">No resp.</th><th class="r">✍ Manual</th><th class="r">⚙ Auto</th></tr></thead><tbody>${body}${totRow}</tbody>`;
 }
 
 /* ===================== ROUTER ===================== */
