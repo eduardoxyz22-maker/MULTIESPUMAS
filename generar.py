@@ -1691,6 +1691,18 @@ with open("panel.template.html", encoding="utf-8") as _pf:
 _panel = _panel.replace("__DASH_JSON__", json.dumps(dash, ensure_ascii=False))
 _panel = _panel.replace("__MES_LABEL__", mes_label)
 
+# Build archive list for history dropdown (populated after possible archive step below)
+import glob as _glob
+_MESES_ES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+def _build_archive_list():
+    lst = []
+    for _f in sorted(_glob.glob("panel_????_??.html"), reverse=True):
+        _mm = _re.match(r'panel_(\d{4})_(\d{2})\.html', _f)
+        if _mm:
+            _ay, _am = int(_mm.group(1)), int(_mm.group(2))
+            lst.append({"label": f"{_MESES_ES[_am-1]} {_ay}", "url": _f})
+    return lst
+
 # Archivo histórico: si el panel.html existente pertenece a un mes distinto,
 # guardamos una copia con el nombre del mes antes de sobreescribir.
 import os as _os, re as _re
@@ -1718,6 +1730,7 @@ if _os.path.exists(_panel_path):
     except Exception as _e:
         print(f"Aviso: no se pudo archivar panel anterior ({_e})")
 
+_panel = _panel.replace("__ARCHIVE_LIST__", json.dumps(_build_archive_list(), ensure_ascii=False))
 with open(_panel_path, "w", encoding="utf-8") as _pf:
     _pf.write(_panel)
 
