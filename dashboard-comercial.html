@@ -373,10 +373,10 @@ html, body {
 
 /* ===== top bar ===== */
 .topbar {
-  display: grid;
-  grid-template-columns: 1fr auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 18px 24px;
+  gap: 14px 24px;
   padding: 14px 20px;
   background: var(--surface);
   border: 1px solid var(--hairline);
@@ -385,8 +385,8 @@ html, body {
   position: static;
   backdrop-filter: blur(6px);
 }
-.topbar-left { display: flex; align-items: center; gap: 18px; min-width: 0; flex-wrap: wrap; }
-.topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.topbar-left { display: flex; align-items: center; gap: 18px; min-width: 0; flex-wrap: wrap; flex: 1 1 340px; }
+.topbar-right { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; justify-content: flex-end; flex: 1 1 auto; }
 
 @media (max-width: 1200px) {
   .topbar { grid-template-columns: 1fr; }
@@ -431,7 +431,7 @@ html, body {
   background: var(--bg-elev);
   border-radius: var(--r-pill);
   color: var(--muted);
-  width: 200px;
+  width: 200px; flex: 0 1 200px;
 }
 .search input {
   border: 0; background: transparent; font: inherit; font-size: 13px;
