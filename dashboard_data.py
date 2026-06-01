@@ -299,6 +299,22 @@ def build_dash(vendors_json_list, vresp_list, leads, leads_prev, user_map, stage
         ]
     dash["stagesByV"] = stages_by_v
 
+    # stagesByVPrev: etapa ACTUAL de los leads del mes anterior, por vendedora.
+    # Misma definición que stagesByV (leads del mes X en su etapa actual) → permite
+    # comparar mes a mes etapas como "Agendado / Visita".
+    stages_by_v_prev = {}
+    for lead in (leads_prev or []):
+        vname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
+        stg = stage_map.get(lead.get("status_id"), "")
+        if not stg:
+            continue
+        counts = stages_by_v_prev.setdefault(vname, {})
+        counts[stg] = counts.get(stg, 0) + 1
+    dash["stagesByVPrev"] = {
+        name: [{"s": s, "c": c} for s, c in counts.items()]
+        for name, counts in stages_by_v_prev.items()
+    }
+
     # backlog: deals abiertos sin actividad +72h, ordenados por antigüedad (top 45)
     if all_rows is not None:
         open_stages = set(followup_stages) if followup_stages else None

@@ -501,18 +501,23 @@ const QUALITY=(window.DASH&&window.DASH.quality)||{"sinSucursalPct":89,"sinSucur
    ============================================================ */
 
 /* ---------- BRANCHES (roll-up por sucursal, derivado de TEAM) ---------- */
-// Conteo de una etapa para una vendedora desde STAGES_BY_V (prueba nombre completo y sin sucursal).
-function stageCountFor(name, stage){
-  const arr = (STAGES_BY_V&&(STAGES_BY_V[name]||STAGES_BY_V[(name||'').split(' - ')[0]]))||[];
+// Conteo de una etapa para una vendedora (prueba nombre completo y sin sucursal).
+const STAGES_BY_V_PREV = (window.DASH && window.DASH.stagesByVPrev) || {};
+function _stageCount(src, name, stage){
+  const arr = (src&&(src[name]||src[(name||'').split(' - ')[0]]))||[];
   const s = arr.find(x=>x.s===stage);
   return s ? (s.c||0) : 0;
 }
+function stageCountFor(name, stage){ return _stageCount(STAGES_BY_V, name, stage); }
+function stageCountForPrev(name, stage){ return _stageCount(STAGES_BY_V_PREV, name, stage); }
+const HAS_PREV_STAGES = Object.keys(STAGES_BY_V_PREV).length>0;
 function branchData(){
   const map={};
   TEAM.forEach(v=>{
-    const b = map[v.sucursal] || (map[v.sucursal]={sucursal:v.sucursal, leads:0, prevLeads:0, cierres:0, value:0, backlog:0, agendado:0, vends:[]});
+    const b = map[v.sucursal] || (map[v.sucursal]={sucursal:v.sucursal, leads:0, prevLeads:0, cierres:0, value:0, backlog:0, agendado:0, agendadoPrev:0, vends:[]});
     b.leads+=v.leads; b.prevLeads+=v.prevLeads; b.cierres+=v.cierres; b.value+=v.value; b.backlog+=v.backlog;
     b.agendado+=stageCountFor(v.name,'Agendado / Visita');
+    b.agendadoPrev+=stageCountForPrev(v.name,'Agendado / Visita');
     b.vends.push(v);
   });
   return Object.values(map).sort((a,b)=>b.cierres-a.cierres);
@@ -596,13 +601,13 @@ function vSucursales(){
     <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Agendado / Visita</th><th class="r">Cerrado</th><th class="r">Pipeline</th><th class="r">Sin seg.</th></tr></thead>
     <tbody>${(()=>{
       const maxAg=Math.max(1,...branches.map(b=>b.agendado));
-      const rows=branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); const topAg=b.agendado===maxAg&&b.agendado>0; return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
+      const rows=branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); const topAg=b.agendado===maxAg&&b.agendado>0; const agBadge=HAS_PREV_STAGES?`<div style="margin-top:2px">${momBadge(b.agendado,b.agendadoPrev)}</div>`:''; return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
         <td class="who">${b.sucursal}</td>
         <td class="r num">${b.leads.toLocaleString('en-US')}</td>
         <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
         <td class="r num bold">${b.cierres}</td>
         <td class="r num">${(b.cierres/b.leads*100).toFixed(1)}%</td>
-        <td class="r num" style="color:#D98300;font-weight:${topAg?'800':'600'}">${b.agendado}${topAg?' 🏆':''}</td>
+        <td class="r num" style="color:#D98300;font-weight:${topAg?'800':'600'}">${b.agendado}${topAg?' 🏆':''}${agBadge}</td>
         <td class="r num" style="color:var(--green-ink);font-weight:700">${fmtMoney(bCerrado)}</td>
         <td class="r num" style="color:var(--muted)">${fmtMoney(b.value)}</td>
         <td class="r num" style="${b.backlog>100?'color:var(--red-ink);font-weight:800':''}">${b.backlog}</td>
@@ -611,6 +616,7 @@ function vSucursales(){
       const tPrevLeads=branches.reduce((s,b)=>s+b.prevLeads,0);
       const tCierres=branches.reduce((s,b)=>s+b.cierres,0);
       const tAgendado=branches.reduce((s,b)=>s+b.agendado,0);
+      const tAgendadoPrev=branches.reduce((s,b)=>s+b.agendadoPrev,0);
       const tCerrado=branches.reduce((s,b)=>s+b.vends.reduce((x,v)=>x+weeklyFor(v).cur.totM,0),0);
       const tPipe=branches.reduce((s,b)=>s+b.value,0);
       const tBk=branches.reduce((s,b)=>s+b.backlog,0);
@@ -621,7 +627,7 @@ function vSucursales(){
         <td class="r">${momBadge(tLeads,tPrevLeads)}</td>
         <td class="r num bold">${tCierres}</td>
         <td class="r num bold">${tConv}%</td>
-        <td class="r num bold" style="color:#D98300">${tAgendado}</td>
+        <td class="r num bold" style="color:#D98300">${tAgendado}${HAS_PREV_STAGES?`<div style="margin-top:2px">${momBadge(tAgendado,tAgendadoPrev)}</div>`:''}</td>
         <td class="r num bold" style="color:var(--green-ink)">${fmtMoney(tCerrado)}</td>
         <td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>
         <td class="r num bold" style="${tBk>100?'color:var(--red-ink)':''}">${tBk}</td>
@@ -757,6 +763,7 @@ function openPerfil(name){
       <div class="dr-kpis">
         <div class="dr-k"><div class="v" style="color:${v.conv>=6?'var(--green)':v.conv>=4?'var(--amber)':'var(--red)'}">${v.conv}%</div><div class="l">Conversión</div></div>
         <div class="dr-k"><div class="v">${v.ticket?fmtMoney(v.ticket):'—'}</div><div class="l">Ticket prom.</div></div>
+        <div class="dr-k"><div class="v" style="color:#D98300">${stageCountFor(v.name,'Agendado / Visita')}${HAS_PREV_STAGES?` <span style="font-size:.65rem;font-weight:700">${momBadge(stageCountFor(v.name,'Agendado / Visita'),stageCountForPrev(v.name,'Agendado / Visita'))}</span>`:''}</div><div class="l">Agendado / Visita</div></div>
         <div class="dr-k"><div class="v">${v.calif} <span style="font-size:.7rem;color:var(--muted)">(${v.califPct}%)</span></div><div class="l">Calificados</div></div>
         <div class="dr-k"><div class="v" style="${v.noRespPct>=70?'color:var(--red)':''}">${v.noRespPct}%</div><div class="l">No responden</div></div>
         <div class="dr-k"><div class="v" style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</div><div class="l">Sin seguimiento</div></div>
@@ -806,6 +813,10 @@ function openSucursal(sucName){
         <div><div class="kpi-val" style="font-size:1.05rem;color:var(--muted)">${fmtMoney(v.value)}</div><div class="kpi-label" style="margin-top:3px;font-size:.6rem">Pipeline</div></div>
         <div><div class="kpi-val" style="font-size:1.05rem;color:${parseFloat(conv)>=6?'var(--green)':parseFloat(conv)>=4?'var(--amber)':'var(--red)'}">${conv}%</div><div class="kpi-label" style="margin-top:3px;font-size:.6rem">Conv.</div></div>
       </div>
+      <div style="margin-top:10px;padding-top:9px;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;font-size:.72rem">
+        <span style="color:var(--muted);font-weight:600">📅 Agendado / Visita</span>
+        <span style="display:flex;align-items:center;gap:7px"><b style="color:#D98300;font-size:.92rem">${stageCountFor(v.name,'Agendado / Visita')}</b>${HAS_PREV_STAGES?momBadge(stageCountFor(v.name,'Agendado / Visita'),stageCountForPrev(v.name,'Agendado / Visita')):''}</span>
+      </div>
     </div>`;
   }).join('');
   const ini=sucName.slice(0,2).toUpperCase();
@@ -826,6 +837,9 @@ function openSucursal(sucName){
         <div class="dr-k"><div class="v">${tot.cierres}</div><div class="l">Cierres</div></div>
         <div class="dr-k"><div class="v" style="color:var(--green-ink)">${fmtMoney(vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</div><div class="l">Cerrado mes</div></div>
         <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(tot.value)}</div><div class="l">Pipeline total</div></div>
+      </div>
+      <div class="dr-kpis" style="grid-template-columns:1fr;margin-top:8px">
+        <div class="dr-k" style="display:flex;align-items:center;justify-content:space-between"><div class="l" style="margin:0">📅 Agendado / Visita</div><div class="v" style="color:#D98300">${vends.reduce((s,v)=>s+stageCountFor(v.name,'Agendado / Visita'),0)}${HAS_PREV_STAGES?` <span style="font-size:.65rem;font-weight:700">${momBadge(vends.reduce((s,v)=>s+stageCountFor(v.name,'Agendado / Visita'),0),vends.reduce((s,v)=>s+stageCountForPrev(v.name,'Agendado / Visita'),0))}</span>`:''}</div></div>
       </div>
       <div class="dr-sec">Por vendedora &mdash; toca para ver perfil completo</div>
       ${vcards}
