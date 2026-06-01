@@ -1,13 +1,19 @@
-name: Actualizar Dashboard desde Google Drive
+name: Actualizar Junio 2026
 
 on:
-  workflow_dispatch:        # Manual desde GitHub → Actions → Run workflow
+  workflow_dispatch:        # Manual desde GitHub -> Actions -> Run workflow
 
 jobs:
   actualizar:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+
+    env:
+      GLOBAL_SHEET: "JUNIO GLOBAL"            # pestana GLOBAL del mes en el Excel
+      OUT_FILE: "dashboard-junio-2026.html"   # archivo que se genera y publica
+      MES_NOMBRE: "Junio"
+      ANIO: "2026"
 
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +34,6 @@ jobs:
           curl -fL "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
                -o datos.xlsx
           ls -lh datos.xlsx
-          # Verificar que sea un .xlsx valido (firma ZIP "PK"), no una pagina de error HTML
           if [ "$(head -c 2 datos.xlsx)" != "PK" ]; then
             echo "ERROR: la descarga no es un .xlsx valido."
             echo "Verifica que el archivo de Drive sea publico (cualquiera con el enlace puede ver)."
@@ -37,17 +42,11 @@ jobs:
           fi
           echo "Excel descargado y validado correctamente."
 
-      - name: Generar dashboard-comercial.html
+      - name: Generar dashboard-junio-2026.html
         run: python3 generar_dashboard.py
 
-      - name: Publicar dashboard en main
+      - name: Publicar en main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: python3 publish_comercial.py
-
-      - name: Publicar template en main (primera vez)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-        run: python3 publish_template.py

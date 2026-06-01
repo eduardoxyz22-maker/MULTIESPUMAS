@@ -8,7 +8,7 @@ if not token:
     print("Error: GH_TOKEN no definido", file=sys.stderr)
     sys.exit(1)
 
-FILE = "dashboard-comercial.html"
+FILE = os.environ.get("OUT_FILE", "dashboard-comercial.html")
 api  = f"https://api.github.com/repos/{repo}/contents/{FILE}"
 hdrs = {"Authorization": f"token {token}", "Content-Type": "application/json"}
 
@@ -26,7 +26,7 @@ with open(FILE, "rb") as f:
 now = datetime.now(timezone(timedelta(hours=-4)))
 timestamp = now.strftime("%d/%m/%Y %H:%M")
 
-payload = {"message": f"Dashboard comercial {timestamp}", "content": content}
+payload = {"message": f"{FILE} actualizado {timestamp}", "content": content}
 if sha:
     payload["sha"] = sha
 

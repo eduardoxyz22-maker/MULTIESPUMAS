@@ -1,0 +1,51 @@
+name: Actualizar Mayo 2026 (cerrado)
+
+# OJO: Mayo ya esta cerrado y archivado en dashboard-mayo-2026.html.
+# Solo corre este workflow si necesitas regenerar Mayo Y el Excel todavia
+# tiene los datos de Mayo en HEAVEN / SUENA / Dashboard. Si ya cargaste
+# datos de Junio en esas pestanas, NO lo corras (mezclaria meses).
+
+on:
+  workflow_dispatch:
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    env:
+      GLOBAL_SHEET: "MAYO GLOBAL"
+      OUT_FILE: "dashboard-mayo-2026.html"
+      MES_NOMBRE: "Mayo"
+      ANIO: "2026"
+      CERRADO: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Obtener dashboard-template.html
+        run: |
+          if [ ! -f dashboard-template.html ]; then
+            git fetch origin claude/trello-board-cards-api-K5JwL
+            git checkout origin/claude/trello-board-cards-api-K5JwL -- dashboard-template.html
+          fi
+
+      - name: Descargar Excel desde Google Drive
+        run: |
+          FILE_ID="11zVfvcNXa3v0bmOL5J4OWNHMcU7R-C56"
+          curl -fL "https://docs.google.com/spreadsheets/d/${FILE_ID}/export?format=xlsx" \
+               -o datos.xlsx
+          if [ "$(head -c 2 datos.xlsx)" != "PK" ]; then
+            echo "ERROR: la descarga no es un .xlsx valido."
+            exit 1
+          fi
+
+      - name: Generar dashboard-mayo-2026.html
+        run: python3 generar_dashboard.py
+
+      - name: Publicar en main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: python3 publish_comercial.py

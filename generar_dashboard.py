@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-import zipfile, xml.etree.ElementTree as ET, re, sys, json, calendar, datetime
+import zipfile, xml.etree.ElementTree as ET, re, sys, json, calendar, datetime, os
+
+# ── Parametros por mes (via variables de entorno; defaults = comportamiento Mayo) ──
+GLOBAL_SHEET  = os.environ.get('GLOBAL_SHEET', 'MAYO GLOBAL')   # pestana GLOBAL del mes
+OUT_FILE      = os.environ.get('OUT_FILE', 'dashboard-comercial.html')  # archivo de salida
+MES_NOMBRE_ENV = os.environ.get('MES_NOMBRE', '').strip()       # ej. "Junio" (opcional)
+ANIO_ENV       = os.environ.get('ANIO', '').strip()             # ej. "2026" (opcional)
+CERRADO_ENV    = os.environ.get('CERRADO', '').strip().lower() in ('1', 'true', 'yes', 'si', 'sí')
 
 def col_to_num(col_str):
     n = 0
@@ -109,7 +116,7 @@ try:
         name_map = build_sheet_map(z)
         hv = read_sheet_by_name(z, name_map, ss, 'HEAVEN')
         sv = read_sheet_by_name(z, name_map, ss, 'SUEÑA', 'SUENA', 'Sueña')
-        mg = read_sheet_by_name(z, name_map, ss, 'MAYO GLOBAL')
+        mg = read_sheet_by_name(z, name_map, ss, GLOBAL_SHEET)
         ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD')
 except FileNotFoundError:
     print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
@@ -121,10 +128,22 @@ except KeyError as e:
 now = datetime.datetime.now()
 mes_map = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
            7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
-mes = mes_map[now.month]
-anio = now.year
-diasTot = calendar.monthrange(anio, now.month)[1]
-dia_actual = min(now.day, diasTot)
+mes_num = {v.lower(): k for k, v in mes_map.items()}
+
+# Mes: 1) variable MES_NOMBRE, 2) derivado de la hoja GLOBAL (ej. "JUNIO GLOBAL"), 3) fecha del sistema
+if MES_NOMBRE_ENV:
+    mes = MES_NOMBRE_ENV.title()
+else:
+    derivado = re.sub(r'\s*GLOBAL\s*$', '', GLOBAL_SHEET, flags=re.I).strip().title()
+    mes = derivado if derivado.lower() in mes_num else mes_map[now.month]
+
+anio = int(ANIO_ENV) if ANIO_ENV.isdigit() else now.year
+mnum = mes_num.get(mes.lower(), now.month)
+diasTot = calendar.monthrange(anio, mnum)[1]
+# Mes en curso -> dia de hoy; mes cerrado o pasado -> mes completo
+es_mes_actual = (anio == now.year and mnum == now.month)
+dia_actual = diasTot if (CERRADO_ENV or not es_mes_actual) else min(now.day, diasTot)
+print(f'Configuracion: mes={mes} {anio}, hoja_global={GLOBAL_SHEET!r}, salida={OUT_FILE!r}, dia={dia_actual}/{diasTot}, cerrado={CERRADO_ENV}')
 
 crec_lookup = {}
 for r in list(range(53, 57)) + list(range(60, 65)):
@@ -272,8 +291,11 @@ for r in range(29, 38):
     if nombre_c and nombre_c.upper() != 'TOTAL':
         clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, r, 2)), 'monto': round(sf(gv(mg, r, 3)), 2)})
 
+periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot}
+if CERRADO_ENV:
+    periodo['cerrado'] = True
 data = {
-    'periodo': {'mes': mes, 'anio': anio, 'diasTotales': diasTot},
+    'periodo': periodo,
     'vendedores': vendedores,
     'tiendas': tiendas,
     'global': global_data,
@@ -385,9 +407,9 @@ html = html.replace('Dashboard Comercial \xb7 Mayo 2025', f'Dashboard Comercial 
 html = re.sub(r'ltima actualizaci\xf3n:.*?</span>',
               f'ltima actualizaci\xf3n: {now.strftime("%d/%m/%Y %H:%M")}</span>', html)
 
-with open('dashboard-comercial.html', 'w', encoding='utf-8') as f:
+with open(OUT_FILE, 'w', encoding='utf-8') as f:
     f.write(html)
 
-print(f'dashboard-comercial.html generado — {mes} {anio}')
+print(f'{OUT_FILE} generado — {mes} {anio}')
 print(f'Vendedores: {len(vendedores)} | Tiendas: {len(tiendas)} | Clientes: {len(clientes)}')
 print(f'Total global: Bs {sum(t["monto"] for t in tiendas):,.0f}')
