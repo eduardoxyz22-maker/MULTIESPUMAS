@@ -1842,7 +1842,7 @@ loadMetas();
   set('alertas', buildAlerts().length);
 })();
 /* ── scroll al tope + topbar blur ── */
-(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop'),topbar=document.querySelector('.topbar');if(scr)scr.addEventListener('scroll',()=>{if(btn)btn.classList.toggle('show',scr.scrollTop>250);if(topbar)topbar.classList.toggle('tb-scrolled',scr.scrollTop>10);},{passive:true});})();
+(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop'),topbar=document.querySelector('.topbar');if(scr)scr.addEventListener('scroll',()=>{if(btn)btn.classList.toggle('show',scr.scrollTop>250);if(topbar)topbar.classList.toggle('tb-scrolled',scr.scrollTop>10);},{passive:true});if(btn)btn.addEventListener('click',()=>{const scr=document.getElementById('scroll');if(scr)scr.scrollTo({top:0,behavior:'smooth'});});})();
 /* ── ripple en chips ── */
 document.addEventListener('click',function(e){const ch=e.target.closest('.chipf');if(!ch)return;const rp=document.createElement('span');const d=Math.max(ch.offsetWidth,ch.offsetHeight);const rect=ch.getBoundingClientRect();rp.className='ripple-wave';rp.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-rect.left-d/2)+'px;top:'+(e.clientY-rect.top-d/2)+'px';ch.appendChild(rp);rp.addEventListener('animationend',function(){rp.remove();});});
 /* ── focus mode ── */
