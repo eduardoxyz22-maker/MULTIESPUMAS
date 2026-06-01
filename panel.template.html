@@ -851,16 +851,22 @@ function renderMoMGlobal(){
   const el=document.getElementById('momGlobal'); if(!el)return;
   const max=Math.max(...TEAM.map(v=>Math.max(v.leads,v.prevLeads)));
   el.innerHTML = TEAM.map(v=>{
-    const m=momLeads(v);
-    return `<div style="display:grid;grid-template-columns:120px 1fr 96px;align-items:center;gap:12px;padding:7px 0;border-bottom:1px solid var(--line-2)">
+    return `<div style="display:grid;grid-template-columns:110px 1fr;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-2)">
       <div class="who" style="font-size:.82rem">${v.name.split(' ')[0]} ${v.name.split(' ')[1][0]}.</div>
-      <div style="display:flex;flex-direction:column;gap:3px">
-        <div class="mbar" style="height:7px"><i style="width:${v.prevLeads/max*100}%;background:var(--faint)"></i></div>
-        <div class="mbar" style="height:7px"><i style="width:${v.leads/max*100}%;background:var(--brand)"></i></div>
+      <div>
+        <div style="display:grid;grid-template-columns:52px 1fr 70px;align-items:center;gap:6px;margin-bottom:4px">
+          <div style="font-size:.7rem;color:var(--muted);text-align:right">${v.prevLeads.toLocaleString('en-US')}</div>
+          <div class="mbar" style="height:7px"><i style="width:${v.prevLeads/max*100}%;background:var(--faint)"></i></div>
+          <div style="font-size:.65rem;color:var(--muted)">${PREV_MONTH_LBL}</div>
+        </div>
+        <div style="display:grid;grid-template-columns:52px 1fr 70px;align-items:center;gap:6px">
+          <div style="font-size:.75rem;font-weight:700;text-align:right">${v.leads.toLocaleString('en-US')}</div>
+          <div class="mbar" style="height:7px"><i style="width:${v.leads/max*100}%;background:var(--brand)"></i></div>
+          <div>${momBadge(v.leads,v.prevLeads)}</div>
+        </div>
       </div>
-      <div style="text-align:right">${momBadge(v.leads,v.prevLeads)}</div>
     </div>`;
-  }).join('') + `<div class="tag-line" style="display:flex;gap:14px"><span><span style="display:inline-block;width:10px;height:7px;background:var(--faint);border-radius:2px"></span> Abril</span><span><span style="display:inline-block;width:10px;height:7px;background:var(--brand);border-radius:2px"></span> Mayo</span></div>`;
+  }).join('');
 }
 
 /* ============================================================
@@ -966,7 +972,13 @@ function renderSemanal(){
       const tot  = isC ? d.w.cur.totC : d.w.cur.totM;
       const ptot = isC ? d.w.prev.totC : d.w.prev.totM;
       const rowMx=Math.max(1,...arr,...arrP);
-      const pipeCol = !isC ? `<td class="r num" style="color:var(--muted);font-size:.8rem">${fmtMoney(d.v.value)}</td>` : '';
+      const gap = d.v.value - d.w.cur.totM;
+      const pipeCol = !isC ? `<td class="r" style="color:var(--muted);font-size:.8rem">
+        <div class="num">${fmtMoney(d.v.value)}</div>
+        ${gap>500
+          ? `<div style="font-size:.6rem;color:var(--amber-d,#b45309);font-weight:700;margin-top:2px">+${fmtMoney(gap)} en proceso</div>`
+          : `<div style="font-size:.6rem;color:var(--green-ink);margin-top:2px">= cerrado</div>`}
+      </td>` : '';
       return `<tr>
         <td><div class="who">${d.v.name}</div><div class="where">${d.v.sucursal}</div></td>
         ${arr.map((n,i)=>{
@@ -986,7 +998,12 @@ function renderSemanal(){
     const tC  =data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
     const tP  =data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
     const tPipe=data.reduce((s,d)=>s+d.v.value,0);
-    const pipeEq = !isC ? `<td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>` : '';
+    const tCerrado=data.reduce((s,d)=>s+d.w.cur.totM,0);
+    const tGap=tPipe-tCerrado;
+    const pipeEq = !isC ? `<td class="r" style="color:var(--muted)">
+      <div class="num bold">${fmtMoney(tPipe)}</div>
+      ${tGap>500?`<div style="font-size:.6rem;color:var(--amber-d,#b45309);font-weight:700;margin-top:2px">+${fmtMoney(tGap)} en proceso</div>`:`<div style="font-size:.6rem;color:var(--green-ink);margin-top:2px">= cerrado</div>`}
+    </td>` : '';
     const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map((n,i)=>{
       const p=prevTot[i]||0; const pct=p>0?Math.round((n-p)/p*100):null;
       const pb=pct!==null?`<div style="font-size:.58rem;font-weight:700;color:${pct>=0?'var(--green-ink)':'var(--red-ink)'}">${pct>=0?'▲':'▼'} ${Math.abs(pct)}%</div>`:'';
@@ -1255,21 +1272,7 @@ function vResumen(){
     <div><div class="eyebrow">Tendencia vs ${PREV_MONTH_LBL}</div><h2>Leads del mes &mdash; mes a mes</h2>
     <p>La captación ${LEADS_MOM_PCT < 0 ? 'cayó' : 'subió'} ${Math.abs(LEADS_MOM_PCT)}% en todos los frentes. El reto no es entrada de leads, es convertir los que ya hay.</p></div>
   </div>
-  <div class="cols-2">
-    <div class="card pad" style="display:flex;flex-direction:column;justify-content:center">
-      <div class="kpi-label">Leads totales</div>
-      <div style="display:flex;align-items:baseline;gap:12px;margin:8px 0 4px">
-        <div class="kpi-val" style="font-size:2.4rem">${GLOBAL.leads.toLocaleString('en-US')}</div>
-        <span class="delta ${momDir}" style="font-size:.85rem">${momArrow} ${momSign}${LEADS_MOM_PCT}%</span>
-      </div>
-      <div class="kpi-sub">${PREV_MONTH_LBL}: ${(GLOBAL.prevLeads||0).toLocaleString('en-US')} leads &middot; ${LEADS_DIFF > 0 ? '+' : ''}${LEADS_DIFF} este mes</div>
-      <div style="margin-top:16px;display:flex;align-items:flex-end;gap:18px;height:90px">
-        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:100%;background:var(--faint);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">${PREV_MONTH_LBL}<br>${(GLOBAL.prevLeads||0).toLocaleString('en-US')}</div></div>
-        <div style="text-align:center;flex:1"><div class="mbar" style="height:64px;width:100%;background:var(--line-2);border-radius:8px;display:flex;align-items:flex-end"><i style="width:100%;height:${barH}%;background:var(--brand);border-radius:8px"></i></div><div class="kpi-label" style="margin-top:6px">${CUR_MONTH}<br>${GLOBAL.leads.toLocaleString('en-US')}</div></div>
-      </div>
-    </div>
-    <div class="card pad"><div class="eyebrow" style="margin-bottom:12px">Leads por vendedora (${CUR_MONTH} vs ${PREV_MONTH_LBL})</div><div id="momGlobal"></div></div>
-  </div>
+  <div class="card pad"><div class="eyebrow" style="margin-bottom:14px">Leads por vendedora — ${CUR_MONTH} vs ${PREV_MONTH_LBL}</div><div id="momGlobal"></div></div>
 
   <div class="section-head">
     <div><div class="eyebrow">Control del equipo</div><h2>Tablero de responsabilidad</h2>
