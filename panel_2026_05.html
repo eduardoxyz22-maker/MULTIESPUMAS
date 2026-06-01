@@ -932,11 +932,26 @@ function renderMetas(){
         <span title="Proyección" style="position:absolute;top:-3px;bottom:-3px;left:${Math.min(proyPct,100)}%;width:2px;background:var(--ink)"></span>
       </div>
     </div>`;
-  }).join('') + `<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;font-size:.84rem">
-      <span class="who">Equipo (total)</span>
-      <span>cerrado <b class="num">${fmtMoney(TEAM.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</b> · pipeline <b class="num">${fmtMoney(totVal)}</b> / meta <b class="num">${fmtMoney(totMeta)}</b> · proy. <b class="num">${fmtMoney(totProy)}</b></span>
-    </div>
-    <div class="tag-line">Meta en monto de ventas ($). Edita con −/+ (pasos de $5.000) o escribe el monto. Se guarda en tu navegador · línea negra = proyección al cierre del mes.</div>`;
+  }).join('') + (()=>{
+    const totC=TEAM.reduce((s,v)=>s+weeklyFor(v).cur.totM,0);
+    const tPct=totMeta>0?Math.min(Math.round(totC/totMeta*100),100):0;
+    const tProyPct=totMeta>0?Math.min(Math.round(totProy/totMeta*100),100):0;
+    const tCol=tPct>=100?'var(--green)':tPct>=70?'var(--amber)':'var(--red)';
+    return `<div style="border-top:2px solid var(--line);padding-top:14px;margin-top:6px">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:.84rem;margin-bottom:8px;gap:10px;flex-wrap:wrap">
+        <span class="who" style="font-weight:800">Equipo (total)</span>
+        <span style="display:flex;align-items:center;gap:8px">
+          <b style="color:${tCol};font-size:1rem" class="num">${fmtMoney(totC)}</b>
+          <span class="where">/ pipeline ${fmtMoney(totVal)} / meta <b class="num">${fmtMoney(totMeta)}</b></span>
+          <span class="where">· proy. ${fmtMoney(totProy)} <b style="color:${tCol}">(${tPct}%)</b></span>
+        </span>
+      </div>
+      <div class="mbar" style="height:11px;position:relative;overflow:hidden">
+        <i style="width:${tPct}%;background:${tCol}"></i>
+        <span title="Proyección" style="position:absolute;top:-3px;bottom:-3px;left:${tProyPct}%;width:2px;background:var(--ink)"></span>
+      </div>
+    </div>`;
+  })() + `<div class="tag-line" style="margin-top:10px">Meta en monto de ventas ($). Edita con −/+ (pasos de $5.000) o escribe el monto. Se guarda en tu navegador · línea negra = proyección al cierre del mes.</div>`;
 }
 
 /* ---------- TENDENCIA MoM (sección global en Resumen) ---------- */
