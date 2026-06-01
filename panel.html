@@ -501,11 +501,19 @@ const QUALITY=(window.DASH&&window.DASH.quality)||{"sinSucursalPct":89,"sinSucur
    ============================================================ */
 
 /* ---------- BRANCHES (roll-up por sucursal, derivado de TEAM) ---------- */
+// Conteo de una etapa para una vendedora desde STAGES_BY_V (prueba nombre completo y sin sucursal).
+function stageCountFor(name, stage){
+  const arr = (STAGES_BY_V&&(STAGES_BY_V[name]||STAGES_BY_V[(name||'').split(' - ')[0]]))||[];
+  const s = arr.find(x=>x.s===stage);
+  return s ? (s.c||0) : 0;
+}
 function branchData(){
   const map={};
   TEAM.forEach(v=>{
-    const b = map[v.sucursal] || (map[v.sucursal]={sucursal:v.sucursal, leads:0, prevLeads:0, cierres:0, value:0, backlog:0, vends:[]});
-    b.leads+=v.leads; b.prevLeads+=v.prevLeads; b.cierres+=v.cierres; b.value+=v.value; b.backlog+=v.backlog; b.vends.push(v);
+    const b = map[v.sucursal] || (map[v.sucursal]={sucursal:v.sucursal, leads:0, prevLeads:0, cierres:0, value:0, backlog:0, agendado:0, vends:[]});
+    b.leads+=v.leads; b.prevLeads+=v.prevLeads; b.cierres+=v.cierres; b.value+=v.value; b.backlog+=v.backlog;
+    b.agendado+=stageCountFor(v.name,'Agendado / Visita');
+    b.vends.push(v);
   });
   return Object.values(map).sort((a,b)=>b.cierres-a.cierres);
 }
@@ -585,14 +593,16 @@ function vSucursales(){
 
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
-    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Cerrado</th><th class="r">Pipeline</th><th class="r">Sin seg.</th></tr></thead>
+    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Agendado / Visita</th><th class="r">Cerrado</th><th class="r">Pipeline</th><th class="r">Sin seg.</th></tr></thead>
     <tbody>${(()=>{
-      const rows=branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
+      const maxAg=Math.max(1,...branches.map(b=>b.agendado));
+      const rows=branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); const topAg=b.agendado===maxAg&&b.agendado>0; return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
         <td class="who">${b.sucursal}</td>
         <td class="r num">${b.leads.toLocaleString('en-US')}</td>
         <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
         <td class="r num bold">${b.cierres}</td>
         <td class="r num">${(b.cierres/b.leads*100).toFixed(1)}%</td>
+        <td class="r num" style="color:#D98300;font-weight:${topAg?'800':'600'}">${b.agendado}${topAg?' 🏆':''}</td>
         <td class="r num" style="color:var(--green-ink);font-weight:700">${fmtMoney(bCerrado)}</td>
         <td class="r num" style="color:var(--muted)">${fmtMoney(b.value)}</td>
         <td class="r num" style="${b.backlog>100?'color:var(--red-ink);font-weight:800':''}">${b.backlog}</td>
@@ -600,6 +610,7 @@ function vSucursales(){
       const tLeads=branches.reduce((s,b)=>s+b.leads,0);
       const tPrevLeads=branches.reduce((s,b)=>s+b.prevLeads,0);
       const tCierres=branches.reduce((s,b)=>s+b.cierres,0);
+      const tAgendado=branches.reduce((s,b)=>s+b.agendado,0);
       const tCerrado=branches.reduce((s,b)=>s+b.vends.reduce((x,v)=>x+weeklyFor(v).cur.totM,0),0);
       const tPipe=branches.reduce((s,b)=>s+b.value,0);
       const tBk=branches.reduce((s,b)=>s+b.backlog,0);
@@ -610,6 +621,7 @@ function vSucursales(){
         <td class="r">${momBadge(tLeads,tPrevLeads)}</td>
         <td class="r num bold">${tCierres}</td>
         <td class="r num bold">${tConv}%</td>
+        <td class="r num bold" style="color:#D98300">${tAgendado}</td>
         <td class="r num bold" style="color:var(--green-ink)">${fmtMoney(tCerrado)}</td>
         <td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>
         <td class="r num bold" style="${tBk>100?'color:var(--red-ink)':''}">${tBk}</td>
@@ -1250,7 +1262,7 @@ function vResumen(){
     <div>
       <span class="tag"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></svg>Diagnóstico del mes</span>
       <h2>No falta gente que entre. Falta <em>seguir y cerrar</em> la que ya entró.</h2>
-      <p>Con <b style="color:#fff">${GLOBAL.leads.toLocaleString('en-US')} leads</b> el cuello de botella no es captación &mdash; es disciplina de seguimiento y conversión. Hay <b style="color:#FF8A8E">${TOTAL_BACKLOG} deals sin tocar</b> y la conversión está en ${CONV_PCT}%. Si todo el equipo igualara a la mejor vendedora habría <b style="color:#46D6A6">~${extraCierres} cierres extra</b> este mes.</p>
+      <p>Con <b style="color:#fff">${GLOBAL.leads.toLocaleString('en-US')} leads</b> el cuello de botella no es captación &mdash; es disciplina de seguimiento y conversión. Hay <b style="color:#FF8A8E">${TOTAL_BACKLOG} leads sin tocar</b> y la conversión está en ${CONV_PCT}%. Si todo el equipo igualara a la mejor vendedora habría <b style="color:#46D6A6">~${extraCierres} cierres extra</b> este mes.</p>
     </div>
     <div class="diag-stats">
       <div class="diag-stat"><div class="v bad">${TOTAL_BACKLOG}</div><div class="l">Sin seguimiento +72h (${bkPct}%)</div></div>
@@ -1283,7 +1295,7 @@ function vResumen(){
     <div class="kpi"><span class="accent" style="background:var(--red)"></span>
       <div class="kpi-top"><span class="kpi-label">Sin seguimiento ${_tip('Deals abiertos sin ninguna actividad registrada en Kommo en más de 72 horas.')}</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
       <div class="kpi-val">${bkPct}%</div>
-      <div class="kpi-sub"><b style="color:var(--red-ink)">${TOTAL_BACKLOG} deals</b> sin actividad +72h</div>
+      <div class="kpi-sub"><b style="color:var(--red-ink)">${TOTAL_BACKLOG} leads</b> sin actividad +72h</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--amber)"></span>
       <div class="kpi-top"><span class="kpi-label">Ticket promedio ${_tip('Pipeline total ÷ número de compradores del mes.')}</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
@@ -1474,15 +1486,15 @@ function setBkMode(mode, initialStage){
 function vSeguimiento(){
   return `
   <div class="section-head">
-    <div><div class="eyebrow">Acción inmediata</div><h2>${TOTAL_BACKLOG} deals abiertos sin actividad +72h</h2>
-    <p>Ordenados por antigüedad sin contacto (lo más urgente primero). En tu CRM los deals abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto.</p></div>
+    <div><div class="eyebrow">Acción inmediata</div><h2>${TOTAL_BACKLOG} leads abiertos sin actividad +72h</h2>
+    <p>Ordenados por antigüedad sin contacto (lo más urgente primero). En tu CRM los leads abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto.</p></div>
     <div style="display:flex;gap:8px;flex-shrink:0">
       <button class="btn" onclick="exportarBacklog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
       <button class="btn" id="btnFocus" onclick="toggleFocus()" title="Ocultar menú lateral y expandir tabla">${_focusMode?'✕ Salir':'⛶ Focus'}</button>
     </div>
   </div>
   <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
-    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">${TOTAL_BACKLOG}</div><div class="kpi-sub">${BACKLOG_PCT}% del total de deals</div></div>
+    <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">${TOTAL_BACKLOG}</div><div class="kpi-sub">${BACKLOG_PCT}% del total de leads</div></div>
     <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Críticos +7 días</span></div><div class="kpi-val">${CRIT_BACKLOG}</div><div class="kpi-sub">atención urgente</div></div>
     <div class="kpi"><span class="accent" style="background:var(--amber)"></span><div class="kpi-top"><span class="kpi-label">Nunca tocados</span></div><div class="kpi-val">${QUALITY.nohuman}</div><div class="kpi-sub">el bot los movió, sin acción humana</div></div>
   </div>
