@@ -900,11 +900,17 @@ function weeklyFor(v){
     prev:{ cierres:_splitInt(prevCierres,_jit(prevW,seed+2)), monto:_splitMoney(prevValue,_jit(prevW,seed+3)), totC:prevCierres, totM:prevValue },
   };
 }
+let semChartMetric='clientes';
+function setSemChartMetric(m){ semChartMetric=m; renderSemanal(); }
 function vSemanal(){
   return `
   <div class="section-head">
     <div><div class="eyebrow">Ritmo semanal</div><h2>Cierres y ventas por semana &mdash; ${SEM.curMonth} vs ${SEM.prevMonth}</h2>
     <p>Comparativa semana a semana por vendedora. Número grande = ${SEM.curMonth} · número pequeño = ${SEM.prevMonth}.</p></div>
+    <div class="seg" id="semToggle">
+      <button class="seg-btn" data-m="clientes" onclick="setSemChartMetric('clientes')">Compradores</button>
+      <button class="seg-btn" data-m="monto" onclick="setSemChartMetric('monto')">Monto</button>
+    </div>
   </div>
   <div class="card pad"><div class="eyebrow" style="margin-bottom:12px" id="semChartTitle"></div><div id="semChart"></div></div>
 
@@ -916,22 +922,28 @@ function vSemanal(){
   <div class="tag-line" style="padding:0 2px"><b>Cerrado ${SEM.curMonth}</b> = monto de deals en etapa Compradores. <b>Pipeline total</b> = valor de todos los deals en todas las etapas (= Resumen). La diferencia representa deals aún en proceso.</div>`;
 }
 function renderSemanal(){
+  // toggle active state
+  document.querySelectorAll('#semToggle .seg-btn').forEach(b=>{
+    b.classList.toggle('active', b.dataset.m===semChartMetric);
+  });
+  const isChartC = semChartMetric==='clientes';
   const weeks = SEM.curWeeks;
   const data = TEAM.map(v=>({v, w:weeklyFor(v)}));
 
-  // chart (cierres, equipo)
-  const curTotC = weeks.map((_,i)=> data.reduce((s,d)=>s+d.w.cur.cierres[i],0));
-  const prevTotC= weeks.map((_,i)=> data.reduce((s,d)=>s+d.w.prev.cierres[i],0));
+  // chart — controlled by toggle
+  const curTotC = weeks.map((_,i)=> data.reduce((s,d)=>s+(isChartC?d.w.cur.cierres[i]:d.w.cur.monto[i]),0));
+  const prevTotC= weeks.map((_,i)=> data.reduce((s,d)=>s+(isChartC?d.w.prev.cierres[i]:d.w.prev.monto[i]),0));
   const mxC=Math.max(1,...curTotC,...prevTotC);
-  const ct=document.getElementById('semChartTitle'); if(ct) ct.textContent = `Clientes cerrados por semana — equipo completo`;
+  const fmtChart = n => isChartC ? n : fmtK(n);
+  const ct=document.getElementById('semChartTitle'); if(ct) ct.textContent = (isChartC?'Compradores cerrados':'Monto cerrado ($)')+' por semana — equipo completo';
   const ch=document.getElementById('semChart');
   if(ch) ch.innerHTML = `<div class="wk-chart">${weeks.map((wk,i)=>`
       <div class="wk-col">
         <div class="wk-bars">
-          <div class="wk-bar" style="height:${prevTotC[i]/mxC*100}%;background:var(--faint)" title="${SEM.prevMonth}: ${prevTotC[i]}"></div>
-          <div class="wk-bar" style="height:${curTotC[i]/mxC*100}%;background:var(--brand)" title="${SEM.curMonth}: ${curTotC[i]}"></div>
+          <div class="wk-bar" style="height:${prevTotC[i]/mxC*100}%;background:var(--faint)" title="${SEM.prevMonth}: ${fmtChart(prevTotC[i])}"></div>
+          <div class="wk-bar" style="height:${curTotC[i]/mxC*100}%;background:var(--brand)" title="${SEM.curMonth}: ${fmtChart(curTotC[i])}"></div>
         </div>
-        <div class="wk-val">${curTotC[i]}</div>
+        <div class="wk-val">${fmtChart(curTotC[i])}</div>
         <div class="wk-lbl">${wk[0]}<br><span class="where">${wk[1]}</span></div>
       </div>`).join('')}</div>
     <div class="tag-line" style="display:flex;gap:16px;margin-top:10px"><span><span class="lg" style="background:var(--faint)"></span> ${SEM.prevMonth}</span><span><span class="lg" style="background:var(--brand)"></span> ${SEM.curMonth}</span></div>`;
