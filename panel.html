@@ -556,20 +556,24 @@ function vSucursales(){
   const cards = branches.map(b=>{
     const mom=momBadge(b.leads,b.prevLeads);
     const conv=(b.cierres/b.leads*100).toFixed(1);
+    const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0);
     return `<div class="card pad" style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div><div style="font-weight:800;font-size:1.05rem">${b.sucursal}</div>
         <div class="where">${b.vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div></div>
         <div>${mom}</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
-        <div><div class="kpi-val" style="font-size:1.3rem">${b.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:4px">Leads</div></div>
-        <div><div class="kpi-val" style="font-size:1.3rem">${b.cierres}</div><div class="kpi-label" style="margin-top:4px">Cierres</div></div>
-        <div><div class="kpi-val" style="font-size:1.3rem;color:var(--green-ink)">${fmtMoney(b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</div><div class="kpi-label" style="margin-top:4px">Cerrado mes</div></div>
-        <div><div class="kpi-val" style="font-size:1.3rem;color:var(--brand-d)">${fmtMoney(b.value)}</div><div class="kpi-label" style="margin-top:4px">Pipeline total</div></div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:12px">
+        <div><div class="kpi-val" style="font-size:1.4rem">${b.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:4px">Leads</div></div>
+        <div><div class="kpi-val" style="font-size:1.4rem">${b.cierres}</div><div class="kpi-label" style="margin-top:4px">Cierres</div></div>
+        <div><div class="kpi-val" style="font-size:1.4rem">${conv}%</div><div class="kpi-label" style="margin-top:4px">Conversión</div></div>
       </div>
-      <div style="margin-top:14px;border-top:1px solid var(--line-2);padding-top:12px">
-        <div style="display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-bottom:5px"><span>Conversión ${conv}%</span><span>Sin seg.: <b style="color:${b.backlog>100?'var(--red)':'var(--amber)'}">${b.backlog}</b></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--hover);border-radius:var(--r-sm);padding:10px 12px;margin-bottom:12px">
+        <div><div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px">Cerrado mes</div><div style="font-size:1.05rem;font-weight:800;color:var(--green-ink)">${fmtMoney(bCerrado)}</div></div>
+        <div><div style="font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:3px">Pipeline total</div><div style="font-size:1.05rem;font-weight:800;color:var(--muted)">${fmtMoney(b.value)}</div></div>
+      </div>
+      <div style="border-top:1px solid var(--line-2);padding-top:10px">
+        <div style="display:flex;justify-content:space-between;font-size:.73rem;color:var(--muted);margin-bottom:5px"><span>Barra conversión</span><span>Sin seg.: <b style="color:${b.backlog>100?'var(--red)':'var(--amber)'}">${b.backlog}</b></span></div>
         <div class="mbar"><i style="width:${Math.min(b.cierres/b.leads*100*8,100)}%;background:var(--brand)"></i></div>
       </div>
     </div>`;
@@ -581,7 +585,7 @@ function vSucursales(){
 
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
-    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Cerrado mes</th><th class="r">Pipeline total</th><th class="r">Sin seg.</th></tr></thead>
+    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Cerrado</th><th class="r">Pipeline</th><th class="r">Sin seg.</th></tr></thead>
     <tbody>${branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <td class="who">${b.sucursal}</td>
       <td class="r num">${b.leads.toLocaleString('en-US')}</td>
