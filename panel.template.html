@@ -562,10 +562,11 @@ function vSucursales(){
         <div class="where">${b.vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div></div>
         <div>${mom}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
-        <div><div class="kpi-val" style="font-size:1.5rem">${b.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:4px">Leads</div></div>
-        <div><div class="kpi-val" style="font-size:1.5rem">${b.cierres}</div><div class="kpi-label" style="margin-top:4px">Cierres</div></div>
-        <div><div class="kpi-val" style="font-size:1.5rem;color:var(--brand-d)">${fmtMoney(b.value)}</div><div class="kpi-label" style="margin-top:4px">Pipeline</div></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div><div class="kpi-val" style="font-size:1.3rem">${b.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:4px">Leads</div></div>
+        <div><div class="kpi-val" style="font-size:1.3rem">${b.cierres}</div><div class="kpi-label" style="margin-top:4px">Cierres</div></div>
+        <div><div class="kpi-val" style="font-size:1.3rem;color:var(--green-ink)">${fmtMoney(b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</div><div class="kpi-label" style="margin-top:4px">Cerrado mes</div></div>
+        <div><div class="kpi-val" style="font-size:1.3rem;color:var(--brand-d)">${fmtMoney(b.value)}</div><div class="kpi-label" style="margin-top:4px">Pipeline total</div></div>
       </div>
       <div style="margin-top:14px;border-top:1px solid var(--line-2);padding-top:12px">
         <div style="display:flex;justify-content:space-between;font-size:.74rem;color:var(--muted);margin-bottom:5px"><span>Conversión ${conv}%</span><span>Sin seg.: <b style="color:${b.backlog>100?'var(--red)':'var(--amber)'}">${b.backlog}</b></span></div>
@@ -580,16 +581,17 @@ function vSucursales(){
 
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
-    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Cierres</th><th class="r">Conversión</th><th class="r">Pipeline</th><th class="r">Sin seguimiento</th></tr></thead>
-    <tbody>${branches.map(b=>`<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
+    <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Cerrado mes</th><th class="r">Pipeline total</th><th class="r">Sin seg.</th></tr></thead>
+    <tbody>${branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <td class="who">${b.sucursal}</td>
       <td class="r num">${b.leads.toLocaleString('en-US')}</td>
       <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
       <td class="r num bold">${b.cierres}</td>
       <td class="r num">${(b.cierres/b.leads*100).toFixed(1)}%</td>
-      <td class="r num">${fmtMoney(b.value)}</td>
+      <td class="r num" style="color:var(--green-ink);font-weight:700">${fmtMoney(bCerrado)}</td>
+      <td class="r num" style="color:var(--muted)">${fmtMoney(b.value)}</td>
       <td class="r num" style="${b.backlog>100?'color:var(--red-ink);font-weight:800':''}">${b.backlog}</td>
-    </tr>`).join('')}</tbody>
+    </tr>`}).join('')}</tbody>
   </table></div>`;
 }
 
@@ -764,7 +766,7 @@ function openSucursal(sucName){
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
         <div><div class="kpi-val" style="font-size:1.2rem">${v.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:3px">Leads</div></div>
         <div><div class="kpi-val" style="font-size:1.2rem">${v.cierres}</div><div class="kpi-label" style="margin-top:3px">Cierres</div></div>
-        <div><div class="kpi-val" style="font-size:1.2rem;color:var(--brand-d)">${fmtMoney(v.value)}</div><div class="kpi-label" style="margin-top:3px">Pipeline</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem;color:var(--green-ink)">${fmtMoney(weeklyFor(v).cur.totM)}</div><div class="kpi-label" style="margin-top:3px">Cerrado</div></div>
         <div><div class="kpi-val" style="font-size:1.2rem;color:${parseFloat(conv)>=6?'var(--green)':parseFloat(conv)>=4?'var(--amber)':'var(--red)'}">${conv}%</div><div class="kpi-label" style="margin-top:3px">Conv.</div></div>
       </div>
     </div>`;
