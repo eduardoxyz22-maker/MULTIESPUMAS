@@ -873,7 +873,7 @@ const SEM = (typeof window!=='undefined' && window.DASH && window.DASH.weekly) ?
   curWeeks:[['S1','1–7'],['S2','8–14'],['S3','15–21'],['S4','22–28'],['S5','29–31']],
   prevWeeks:[['S1','1–7'],['S2','8–14'],['S3','15–21'],['S4','22–28'],['S5','29–30']],
 };
-let semMetric='clientes'; // 'clientes' | 'monto'
+
 const CUR_W=[0.18,0.22,0.23,0.25,0.12];
 const PREV_W=[0.21,0.23,0.22,0.20,0.14];
 function _seed(name){ let s=0; for(const c of name) s=(s*31+c.charCodeAt(0))%99991; return s||7; }
@@ -900,78 +900,83 @@ function weeklyFor(v){
     prev:{ cierres:_splitInt(prevCierres,_jit(prevW,seed+2)), monto:_splitMoney(prevValue,_jit(prevW,seed+3)), totC:prevCierres, totM:prevValue },
   };
 }
-function setSemMetric(m){ semMetric=m; renderSemanal(); }
 function vSemanal(){
   return `
   <div class="section-head">
     <div><div class="eyebrow">Ritmo semanal</div><h2>Cierres y ventas por semana &mdash; ${SEM.curMonth} vs ${SEM.prevMonth}</h2>
-    <p>Cómo avanza cada vendedora semana a semana. Cambia entre clientes cerrados y monto ingresado.</p></div>
-    <div class="seg" id="semToggle">
-      <button class="seg-btn" data-m="clientes">Clientes cerrados</button>
-      <button class="seg-btn" data-m="monto">Monto ingresado</button>
-    </div>
+    <p>Comparativa semana a semana por vendedora. Número grande = ${SEM.curMonth} · número pequeño = ${SEM.prevMonth}.</p></div>
   </div>
   <div class="card pad"><div class="eyebrow" style="margin-bottom:12px" id="semChartTitle"></div><div id="semChart"></div></div>
 
-  <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Por vendedora y semana</h2></div>
-  <span class="tag-line" id="semTblNote"></span></div>
-  <div class="card" style="overflow-x:auto"><table class="tbl" id="semTable"></table></div>
-  <div class="tag-line" style="padding:0 2px"><b>Cerrado Mayo</b> = monto de deals que llegaron a etapa Compradores este mes. <b>Pipeline total</b> = valor de todos los deals en todas las etapas (= Resumen). La diferencia por vendedora representa deals aún en proceso que no han cerrado.</div>`;
+  <div class="section-head" style="margin-top:24px"><div><div class="eyebrow">Tabla 1 — Clientes cerrados</div><h2>Compradores por semana — ${SEM.curMonth} vs ${SEM.prevMonth}</h2></div></div>
+  <div class="card" style="overflow-x:auto"><table class="tbl" id="semTableC"></table></div>
+
+  <div class="section-head" style="margin-top:24px"><div><div class="eyebrow">Tabla 2 — Monto cerrado ($)</div><h2>Monto Compradores por semana — ${SEM.curMonth} vs ${SEM.prevMonth}</h2></div></div>
+  <div class="card" style="overflow-x:auto"><table class="tbl" id="semTableM"></table></div>
+  <div class="tag-line" style="padding:0 2px"><b>Cerrado ${SEM.curMonth}</b> = monto de deals en etapa Compradores. <b>Pipeline total</b> = valor de todos los deals en todas las etapas (= Resumen). La diferencia representa deals aún en proceso.</div>`;
 }
 function renderSemanal(){
-  // toggle active
-  document.querySelectorAll('#semToggle .seg-btn').forEach(b=>{
-    b.classList.toggle('active', b.dataset.m===semMetric);
-    b.onclick=()=>setSemMetric(b.dataset.m);
-  });
-  const isC = semMetric==='clientes';
   const weeks = SEM.curWeeks;
   const data = TEAM.map(v=>({v, w:weeklyFor(v)}));
-  const fmtCell = n => isC ? (n||0) : fmtK(n);
-  // team weekly totals
-  const curTot = weeks.map((_,i)=> data.reduce((s,d)=> s + (isC? d.w.cur.cierres[i]: d.w.cur.monto[i]),0));
-  const prevTot= weeks.map((_,i)=> data.reduce((s,d)=> s + (isC? d.w.prev.cierres[i]: d.w.prev.monto[i]),0));
-  const mx=Math.max(1,...curTot,...prevTot);
-  // chart
-  const ct=document.getElementById('semChartTitle'); if(ct) ct.textContent = (isC?'Clientes cerrados':'Monto ingresado')+' por semana — equipo completo';
+
+  // chart (cierres, equipo)
+  const curTotC = weeks.map((_,i)=> data.reduce((s,d)=>s+d.w.cur.cierres[i],0));
+  const prevTotC= weeks.map((_,i)=> data.reduce((s,d)=>s+d.w.prev.cierres[i],0));
+  const mxC=Math.max(1,...curTotC,...prevTotC);
+  const ct=document.getElementById('semChartTitle'); if(ct) ct.textContent = `Clientes cerrados por semana — equipo completo`;
   const ch=document.getElementById('semChart');
   if(ch) ch.innerHTML = `<div class="wk-chart">${weeks.map((wk,i)=>`
       <div class="wk-col">
         <div class="wk-bars">
-          <div class="wk-bar" style="height:${prevTot[i]/mx*100}%;background:var(--faint)" title="${SEM.prevMonth}: ${isC?prevTot[i]:fmtMoney(prevTot[i])}"></div>
-          <div class="wk-bar" style="height:${curTot[i]/mx*100}%;background:var(--brand)" title="${SEM.curMonth}: ${isC?curTot[i]:fmtMoney(curTot[i])}"></div>
+          <div class="wk-bar" style="height:${prevTotC[i]/mxC*100}%;background:var(--faint)" title="${SEM.prevMonth}: ${prevTotC[i]}"></div>
+          <div class="wk-bar" style="height:${curTotC[i]/mxC*100}%;background:var(--brand)" title="${SEM.curMonth}: ${curTotC[i]}"></div>
         </div>
-        <div class="wk-val">${fmtCell(curTot[i])}</div>
+        <div class="wk-val">${curTotC[i]}</div>
         <div class="wk-lbl">${wk[0]}<br><span class="where">${wk[1]}</span></div>
       </div>`).join('')}</div>
     <div class="tag-line" style="display:flex;gap:16px;margin-top:10px"><span><span class="lg" style="background:var(--faint)"></span> ${SEM.prevMonth}</span><span><span class="lg" style="background:var(--brand)"></span> ${SEM.curMonth}</span></div>`;
-  // table
-  const tb=document.getElementById('semTable');
-  const note=document.getElementById('semTblNote'); if(note) note.textContent = isC? 'Clientes cerrados por semana':'Monto cerrado por semana ($) — solo deals en etapa Compradores';
-  if(tb){
-    const totalLabel = isC ? `Total ${SEM.curMonth}` : `Cerrado ${SEM.curMonth}`;
-    const head = `<thead><tr><th>Vendedora</th>${weeks.map(w=>`<th class="r">${w[0]}<br><span class="where" style="font-weight:500">${w[1]}</span></th>`).join('')}<th class="r">${totalLabel}</th><th class="r">vs ${SEM.prevMonth}</th>${!isC?'<th class="r" style="color:var(--muted);font-size:.7rem">Pipeline<br>total</th>':''}</tr></thead>`;
-    const rows = data.sort((a,b)=> (isC? b.w.cur.totC-a.w.cur.totC : b.w.cur.totM-a.w.cur.totM)).map(d=>{
-      const arr = isC? d.w.cur.cierres : d.w.cur.monto;
-      const tot = isC? d.w.cur.totC : d.w.cur.totM;
-      const ptot= isC? d.w.prev.totC: d.w.prev.totM;
-      const rowMx=Math.max(1,...arr);
+
+  // helper: render one table (isC=cierres count, else monto)
+  function buildTable(isC, tbId){
+    const tb=document.getElementById(tbId); if(!tb) return;
+    const fmt = n => isC ? (n||0) : fmtK(n);
+    const fmtFull = n => isC ? (n||0) : fmtMoney(n);
+    const curTot = weeks.map((_,i)=> data.reduce((s,d)=>s+(isC?d.w.cur.cierres[i]:d.w.cur.monto[i]),0));
+    const prevTot= weeks.map((_,i)=> data.reduce((s,d)=>s+(isC?d.w.prev.cierres[i]:d.w.prev.monto[i]),0));
+    const wkHead = weeks.map(w=>`<th class="r">${w[0]}<br><span class="where" style="font-weight:500">${w[1]}</span></th>`).join('');
+    const totalCol = isC ? `Total ${SEM.curMonth}` : `Cerrado ${SEM.curMonth}`;
+    const pipeHead = !isC ? `<th class="r" style="color:var(--muted);font-size:.7rem">Pipeline<br>total</th>` : '';
+    const head = `<thead><tr><th>Vendedora</th>${wkHead}<th class="r">${totalCol}</th><th class="r">Total ${SEM.prevMonth}</th><th class="r">vs</th>${pipeHead}</tr></thead>`;
+    const sorted = [...data].sort((a,b)=> isC ? b.w.cur.totC-a.w.cur.totC : b.w.cur.totM-a.w.cur.totM);
+    const rows = sorted.map(d=>{
+      const arr  = isC ? d.w.cur.cierres : d.w.cur.monto;
+      const arrP = isC ? d.w.prev.cierres : d.w.prev.monto;
+      const tot  = isC ? d.w.cur.totC : d.w.cur.totM;
+      const ptot = isC ? d.w.prev.totC : d.w.prev.totM;
+      const rowMx=Math.max(1,...arr,...arrP);
       const pipeCol = !isC ? `<td class="r num" style="color:var(--muted);font-size:.8rem">${fmtMoney(d.v.value)}</td>` : '';
       return `<tr>
         <td><div class="who">${d.v.name}</div><div class="where">${d.v.sucursal}</div></td>
-        ${arr.map(n=>`<td class="r"><div class="num" style="font-weight:600">${fmtCell(n)}</div><div class="mbar" style="height:4px;margin-top:3px"><i style="width:${n/rowMx*100}%;background:var(--brand)"></i></div></td>`).join('')}
-        <td class="r num bold">${isC?tot:fmtMoney(tot)}</td>
+        ${arr.map((n,i)=>{
+          const p=arrP[i]||0;
+          return `<td class="r"><div class="num" style="font-weight:700">${fmt(n)}</div><div style="font-size:.65rem;color:var(--muted);margin-top:1px">${fmt(p)} <span style="opacity:.7">${SEM.prevMonth.slice(0,3)}</span></div><div class="mbar" style="height:3px;margin-top:3px"><i style="width:${n/rowMx*100}%;background:var(--brand)"></i><i style="width:${p/rowMx*100}%;background:var(--faint);position:absolute;left:0"></i></div></td>`;
+        }).join('')}
+        <td class="r num bold">${fmtFull(tot)}</td>
+        <td class="r num" style="color:var(--muted)">${fmtFull(ptot)}</td>
         <td class="r">${ptot?momBadge(tot,ptot):'<span class="delta up">nuevo</span>'}</td>
         ${pipeCol}
       </tr>`;
     }).join('');
-    const tC=data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
-    const tP=data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
+    const tC  =data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
+    const tP  =data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
     const tPipe=data.reduce((s,d)=>s+d.v.value,0);
-    const pipeEquipoCol = !isC ? `<td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>` : '';
-    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td>${pipeEquipoCol}</tr>`;
+    const pipeEq = !isC ? `<td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>` : '';
+    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map((n,i)=>`<td class="r num bold">${fmt(n)}<div style="font-size:.65rem;color:var(--muted);font-weight:400">${fmt(prevTot[i])} ${SEM.prevMonth.slice(0,3)}</div></td>`).join('')}<td class="r num bold">${fmtFull(tC)}</td><td class="r num bold" style="color:var(--muted)">${fmtFull(tP)}</td><td class="r">${momBadge(tC,tP)}</td>${pipeEq}</tr>`;
     tb.innerHTML = head+`<tbody>${rows}${totRow}</tbody>`;
   }
+
+  buildTable(true,  'semTableC');
+  buildTable(false, 'semTableM');
 }
 
 </script>
@@ -1187,7 +1192,7 @@ function vResumen(){
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
       <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Compradores ÷ leads. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
-      <div class="kpi-sub"><span class="delta ${CONV_DELTA_PP>=0?'up':'down'}">${CONV_DELTA_PP>=0?'▲':'▼'} ${CONV_DELTA_PP>=0?'+':''}${CONV_DELTA_PP}pp</span> vs ${PREV_MONTH_LBL} (${PREV_CONV_PCT}%)</div>
+      <div class="kpi-sub"><span class="delta ${CONV_DELTA_PP>=0?'up':'down'}">${CONV_DELTA_PP>=0?'▲':'▼'} ${CONV_DELTA_PP>=0?'+':''}${CONV_DELTA_PP}pp</span> vs ${PREV_MONTH_LBL} (${PREV_CONV_PCT}%) · ${GLOBAL.cierres} vs ${GLOBAL_PREV_CIERRES} compradores</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
       <div class="kpi-top"><span class="kpi-label">Cerrado en el mes ${_tip('Monto de deals que llegaron a etapa Compradores este mes (revenue real confirmado).')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
