@@ -4890,7 +4890,7 @@ function VendedoresView({ filtered, filterTienda }) {
               size={380}
               max={1}
               axes={[
-                { label: "% Meta mín",   get: (s) => Math.min(s.pctMin / 1.3, 1) },
+                { label: "% Presup", get: (s) => Math.min(s.pctPres / 1.5, 1) },
                 { label: "Conv. leads",  get: (s) => Math.min(s.conversion / 0.2, 1) },
                 { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / 4000, 1) },
                 { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / 500, 1) },
@@ -4904,7 +4904,7 @@ function VendedoresView({ filtered, filterTienda }) {
             <div className="radar-key">
               <div className="key-title">Métricas comparadas</div>
               <ul>
-                <li><span>% Meta mín</span><i>0 — 130%</i></li>
+                <li><span>% Presup</span><i>0 — 150%</i></li>
                 <li><span>Conv. leads</span><i>0 — 20%</i></li>
                 <li><span>Ticket prom</span><i>0 — Bs 4 000</i></li>
                 <li><span>Ingreso / lead</span><i>0 — Bs 500</i></li>
