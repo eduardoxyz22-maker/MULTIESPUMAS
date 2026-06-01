@@ -166,7 +166,7 @@ body{
 .tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line);position:relative}
 .tcard.v-green{border-top-color:var(--green)} .tcard.v-amber{border-top-color:var(--amber)} .tcard.v-red{border-top-color:var(--red)}
 .tcard-h{padding:15px 17px 13px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.avatar{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.92rem;flex-shrink:0}
+.avatar{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.92rem;flex-shrink:0;text-shadow:0 1px 3px rgba(0,0,0,.45)}
 .tcard-name{font-weight:800;font-size:.9rem;line-height:1.2}
 .tcard-where{font-size:.7rem;color:var(--faint);font-weight:600;margin-top:2px}
 .tcard-body{padding:0 17px 16px}
@@ -200,7 +200,7 @@ body{
 
 /* scenario cards */
 .scen{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:var(--card);box-shadow:var(--sh);position:relative;overflow:hidden}
-.scen.hot{border-color:var(--brand);box-shadow:0 0 0 1px var(--brand),var(--sh)}
+.scen.hot{border:2px solid var(--brand);box-shadow:var(--sh)}
 .scen .stag{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
 .scen .sv{font-size:2rem;font-weight:800;letter-spacing:-.5px;margin:8px 0 2px}
 .scen .sv2{font-size:.92rem;font-weight:700;color:var(--brand-d)}
@@ -288,6 +288,12 @@ body{
   .scroll{padding:18px 16px 50px}
   .topbar{padding:14px 16px}
 }
+@media(max-width:480px){
+  .drawer{width:100vw;max-width:100vw}
+  .drawer-body{padding:16px 14px 40px}
+  .drawer-head{padding:14px 16px}
+  .dr-kpis{grid-template-columns:repeat(2,1fr)}
+}
 /* ── shimmer en cards ── */
 .tcard::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.22) 50%,transparent 64%);transform:translateX(-120%);transition:transform .55s ease;pointer-events:none;z-index:1}
 .tcard:hover::before{transform:translateX(120%)}
@@ -324,7 +330,7 @@ html[data-theme="dark"] img{opacity:.92}
 #btnTheme{padding:8px 10px}
 #btnTheme svg{width:16px;height:16px}
 .bk-search{width:100%;padding:9px 13px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);font-family:inherit;font-size:.82rem;transition:.15s}
-.bk-search:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+.bk-search:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
 .tbl th[data-sk]{cursor:pointer;user-select:none;white-space:nowrap}
 .tbl th[data-sk]:hover{color:var(--brand-d)}
 /* ── pulso crítico ── */
@@ -339,6 +345,11 @@ html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-
 .kpi-tip:hover::after,.kpi-tip.tipped::after{opacity:1}
 /* ── sticky headers ── */
 .tbl thead th{position:sticky;top:0;z-index:2;background:var(--card)}
+/* ── sticky first column in semanal tables ── */
+#semTableC td:first-child,#semTableM td:first-child,
+#semTableC th:first-child,#semTableM th:first-child{position:sticky;left:0;z-index:3;background:var(--card);border-right:1px solid var(--line-2)}
+#semTableC tbody tr:hover td:first-child,#semTableM tbody tr:hover td:first-child{background:var(--hover)}
+#semTableC tbody tr[style*="background"] td:first-child,#semTableM tbody tr[style*="background"] td:first-child{background:var(--hover)}
 /* ── global search ── */
 .gs-wrap{position:relative}
 .gs-input{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 12px 7px 30px;font-family:inherit;font-size:.8rem;color:var(--text);width:175px;transition:width .2s,border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239AA3AF' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:9px center}
@@ -818,30 +829,31 @@ function renderMetas(){
   const sorted=[...TEAM].sort((a,b)=>(b.value/(b.metaMonto||1))-(a.value/(a.metaMonto||1)));
   const totMeta=TEAM.reduce((s,v)=>s+v.metaMonto,0);
   const totVal=TEAM.reduce((s,v)=>s+v.value,0);
-  const totProy=TEAM.reduce((s,v)=>s+Math.round(v.value/30*31),0);
+  const totProy=TEAM.reduce((s,v)=>s+Math.round(weeklyFor(v).cur.totM/_curDay*_daysInMonth),0);
   el.innerHTML=sorted.map(v=>{
-    const pct = v.metaMonto? Math.round(v.value/v.metaMonto*100) : 0;
-    const proy=Math.round(v.value/30*31);
+    const vCerrado=weeklyFor(v).cur.totM;
+    const pct = v.metaMonto? Math.round(vCerrado/v.metaMonto*100) : 0;
+    const proy=Math.round(vCerrado/_curDay*_daysInMonth);
     const proyPct = v.metaMonto? Math.round(proy/v.metaMonto*100) : 0;
     const col=pct>=100?'var(--green)':pct>=70?'var(--amber)':'var(--red)';
     return `<div style="margin-bottom:16px">
       <div style="display:flex;justify-content:space-between;align-items:center;font-size:.82rem;margin-bottom:6px;gap:10px;flex-wrap:wrap">
         <span class="who">${v.name}${v.nuevo?' <span class="where">(nuevo)</span>':''}</span>
         <span style="display:flex;align-items:center;gap:8px">
-          <b style="color:${col};font-size:1rem" class="num">${fmtMoney(v.value)}</b>
+          <b style="color:${col};font-size:1rem" class="num">${fmtMoney(vCerrado)}</b>
           <span class="where">/</span>
           ${metaInput(v)}
           <span class="where">· proy. ${fmtMoney(proy)} (${proyPct}%)</span>
         </span>
       </div>
-      <div class="mbar" style="height:11px;position:relative">
+      <div class="mbar" style="height:11px;position:relative;overflow:hidden">
         <i style="width:${Math.min(pct,100)}%;background:${col}"></i>
         <span title="Proyección" style="position:absolute;top:-3px;bottom:-3px;left:${Math.min(proyPct,100)}%;width:2px;background:var(--ink)"></span>
       </div>
     </div>`;
   }).join('') + `<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--line);padding-top:12px;margin-top:4px;font-size:.84rem">
       <span class="who">Equipo (total)</span>
-      <span>ventas <b class="num">${fmtMoney(totVal)}</b> / meta <b class="num">${fmtMoney(totMeta)}</b> · proy. <b class="num">${fmtMoney(totProy)}</b></span>
+      <span>cerrado <b class="num">${fmtMoney(TEAM.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</b> · pipeline <b class="num">${fmtMoney(totVal)}</b> / meta <b class="num">${fmtMoney(totMeta)}</b> · proy. <b class="num">${fmtMoney(totProy)}</b></span>
     </div>
     <div class="tag-line">Meta en monto de ventas ($). Edita con −/+ (pasos de $5.000) o escribe el monto. Se guarda en tu navegador · línea negra = proyección al cierre del mes.</div>`;
 }
@@ -1080,7 +1092,7 @@ Object.values(STAGES_BY_V||{}).forEach(arr=>(arr||[]).forEach(s=>{ if(_ADV_STAGE
 const ADV_TOTAL = _advTotal;
 const MAX_CIERRES = Math.max(0,...TEAM.map(v=>v.cierres||0));
 const BEST_CONV = Math.max(CONV_PCT, ...TEAM.filter(v=>v.conv>0).map(v=>v.conv||0));
-const EXTRA_CIERRES = Math.round(TOTAL_BACKLOG * BEST_CONV / 100);
+const EXTRA_CIERRES = Math.round(TOTAL_BACKLOG * CONV_PCT / 100);
 const NO_RESP_PCT = GLOBAL.leads ? Math.round(NO_RESP_TOTAL/GLOBAL.leads*100) : 0;
 const CALIF_PCT = GLOBAL.leads ? Math.round(CALIF_TOTAL/GLOBAL.leads*100) : 0;
 const BACKLOG_PCT = GLOBAL.leads ? Math.round(TOTAL_BACKLOG/GLOBAL.leads*100) : 0;
@@ -1229,7 +1241,7 @@ function vResumen(){
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
       <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Compradores ÷ leads. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
-      <div class="kpi-sub"><span class="delta ${CONV_DELTA_PP>=0?'up':'down'}">${CONV_DELTA_PP>=0?'▲':'▼'} ${CONV_DELTA_PP>=0?'+':''}${CONV_DELTA_PP}pp</span> vs ${PREV_MONTH_LBL} (${PREV_CONV_PCT}%) · ${GLOBAL.cierres} vs ${GLOBAL_PREV_CIERRES} compradores</div>
+      <div class="kpi-sub">${GLOBAL_PREV_CIERRES>0?`<span class="delta ${CONV_DELTA_PP>=0?'up':'down'}">${CONV_DELTA_PP>=0?'▲':'▼'} ${CONV_DELTA_PP>=0?'+':''}${CONV_DELTA_PP}pp</span> vs ${PREV_MONTH_LBL} (${PREV_CONV_PCT}%) · `:'<span class="zero">sin datos mes anterior ·</span> '}${GLOBAL.cierres}${GLOBAL_PREV_CIERRES>0?' vs '+GLOBAL_PREV_CIERRES:''} compradores</div>
     </div>
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
       <div class="kpi-top"><span class="kpi-label">Cerrado en el mes ${_tip('Monto de deals que llegaron a etapa Compradores este mes (revenue real confirmado).')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
