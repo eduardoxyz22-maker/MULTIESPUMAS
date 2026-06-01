@@ -975,7 +975,7 @@ function renderSemanal(){
           const pctBadge = pct!==null
             ? `<div style="font-size:.58rem;font-weight:700;color:${pct>=0?'var(--green-ink)':'var(--red-ink)'};margin-top:1px">${pct>=0?'▲':'▼'} ${Math.abs(pct)}%</div>`
             : (n>0?'<div style="font-size:.58rem;color:var(--muted);margin-top:1px">nuevo</div>':'');
-          return `<td class="r"><div class="num" style="font-weight:700">${fmt(n)}</div><div style="font-size:.6rem;color:var(--muted);margin-top:1px">${fmt(p)} <span style="opacity:.7">${SEM.prevMonth.slice(0,3)}</span></div>${pctBadge}<div class="mbar" style="height:3px;margin-top:3px"><i style="width:${n/rowMx*100}%;background:var(--brand)"></i><i style="width:${p/rowMx*100}%;background:var(--faint);position:absolute;left:0"></i></div></td>`;
+          return `<td class="r"><div class="num" style="font-weight:700">${fmt(n)}</div><div style="font-size:.6rem;color:var(--muted);margin-top:1px">${fmt(p)} <span style="opacity:.7">${SEM.prevMonth.slice(0,3)}</span></div>${pctBadge}<div class="mbar" style="height:3px;margin-top:3px;overflow:hidden"><i style="width:${n/rowMx*100}%;background:var(--brand)"></i></div></td>`;
         }).join('')}
         <td class="r num bold">${fmtFull(tot)}</td>
         <td class="r num" style="color:var(--muted)">${fmtFull(ptot)}</td>
