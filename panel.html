@@ -908,7 +908,7 @@ function vSemanal(){
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Por vendedora y semana</h2></div>
   <span class="tag-line" id="semTblNote"></span></div>
   <div class="card" style="overflow-x:auto"><table class="tbl" id="semTable"></table></div>
-  <div class="tag-line" style="padding:0 2px">Total por vendedora = suma del valor de todos sus deals en Kommo. El total Equipo = suma de las vendedoras. Distribución semanal es representativa de los totales reales del mes; en producción usa la fecha real de cierre.</div>`;
+  <div class="tag-line" style="padding:0 2px"><b>Cerrado Mayo</b> = monto de deals que llegaron a etapa Compradores este mes. <b>Pipeline total</b> = valor de todos los deals en todas las etapas (= Resumen). La diferencia por vendedora representa deals aún en proceso que no han cerrado.</div>`;
 }
 function renderSemanal(){
   // toggle active
@@ -939,24 +939,29 @@ function renderSemanal(){
     <div class="tag-line" style="display:flex;gap:16px;margin-top:10px"><span><span class="lg" style="background:var(--faint)"></span> ${SEM.prevMonth}</span><span><span class="lg" style="background:var(--brand)"></span> ${SEM.curMonth}</span></div>`;
   // table
   const tb=document.getElementById('semTable');
-  const note=document.getElementById('semTblNote'); if(note) note.textContent = isC? 'Clientes cerrados por semana':'Monto ingresado por semana ($)';
+  const note=document.getElementById('semTblNote'); if(note) note.textContent = isC? 'Clientes cerrados por semana':'Monto cerrado por semana ($) — solo deals en etapa Compradores';
   if(tb){
-    const head = `<thead><tr><th>Vendedora</th>${weeks.map(w=>`<th class="r">${w[0]}<br><span class="where" style="font-weight:500">${w[1]}</span></th>`).join('')}<th class="r">Total ${SEM.curMonth}</th><th class="r">vs ${SEM.prevMonth}</th></tr></thead>`;
+    const totalLabel = isC ? `Total ${SEM.curMonth}` : `Cerrado ${SEM.curMonth}`;
+    const head = `<thead><tr><th>Vendedora</th>${weeks.map(w=>`<th class="r">${w[0]}<br><span class="where" style="font-weight:500">${w[1]}</span></th>`).join('')}<th class="r">${totalLabel}</th><th class="r">vs ${SEM.prevMonth}</th>${!isC?'<th class="r" style="color:var(--muted);font-size:.7rem">Pipeline<br>total</th>':''}</tr></thead>`;
     const rows = data.sort((a,b)=> (isC? b.w.cur.totC-a.w.cur.totC : b.w.cur.totM-a.w.cur.totM)).map(d=>{
       const arr = isC? d.w.cur.cierres : d.w.cur.monto;
       const tot = isC? d.w.cur.totC : d.w.cur.totM;
       const ptot= isC? d.w.prev.totC: d.w.prev.totM;
       const rowMx=Math.max(1,...arr);
+      const pipeCol = !isC ? `<td class="r num" style="color:var(--muted);font-size:.8rem">${fmtMoney(d.v.value)}</td>` : '';
       return `<tr>
         <td><div class="who">${d.v.name}</div><div class="where">${d.v.sucursal}</div></td>
         ${arr.map(n=>`<td class="r"><div class="num" style="font-weight:600">${fmtCell(n)}</div><div class="mbar" style="height:4px;margin-top:3px"><i style="width:${n/rowMx*100}%;background:var(--brand)"></i></div></td>`).join('')}
         <td class="r num bold">${isC?tot:fmtMoney(tot)}</td>
         <td class="r">${ptot?momBadge(tot,ptot):'<span class="delta up">nuevo</span>'}</td>
+        ${pipeCol}
       </tr>`;
     }).join('');
     const tC=data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
     const tP=data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
-    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
+    const tPipe=data.reduce((s,d)=>s+d.v.value,0);
+    const pipeEquipoCol = !isC ? `<td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>` : '';
+    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td>${pipeEquipoCol}</tr>`;
     tb.innerHTML = head+`<tbody>${rows}${totRow}</tbody>`;
   }
 }
