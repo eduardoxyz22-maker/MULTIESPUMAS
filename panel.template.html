@@ -998,6 +998,12 @@ TEAM.forEach(v=>{
 });
 const TOTAL_CIERRES = TEAM.reduce((s,v)=>s+(v.cierres||0),0);
 const GLOBAL = (DASH && DASH.global) ? DASH.global : {leads:2544, prevLeads:3000, cierres:122, pipeline:582310, ticket:4773};
+// Monto efectivamente cerrado en el mes (etapa Compradores, fecha real de cierre)
+const GLOBAL_CERRADO = (()=>{
+  const bv = DASH && DASH.weekly && DASH.weekly.byVendor;
+  if(bv && Object.keys(bv).length) return Object.values(bv).reduce((s,v)=>s+(v.curM||[]).reduce((a,b)=>a+b,0),0);
+  return GLOBAL.pipeline; // fallback: sin byVendor usa pipeline total
+})();
 
 // ── Totales derivados de los datos reales (window.DASH) ──
 const CONV_PCT = GLOBAL.leads ? Math.round(GLOBAL.cierres/GLOBAL.leads*100) : 0;
@@ -1163,10 +1169,15 @@ function vResumen(){
       <div class="kpi-val">${CONV_PCT}%</div>
       <div class="kpi-sub">${_momDelta||`<span class="delta up">▲</span>`} ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
     </div>
+    <div class="kpi"><span class="accent" style="background:#159A57"></span>
+      <div class="kpi-top"><span class="kpi-label">Cerrado en el mes ${_tip('Monto de deals que llegaron a etapa Compradores este mes (revenue real confirmado).')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
+      <div class="kpi-val">${fmtK(GLOBAL_CERRADO)}</div>
+      <div class="kpi-sub">${GLOBAL.cierres} compradores cerrados</div>
+    </div>
     <div class="kpi"><span class="accent" style="background:var(--brand)"></span>
-      <div class="kpi-top"><span class="kpi-label">Pipeline total ${_tip('Suma de valor ($) de todos los deals abiertos con monto asignado.')}</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Pipeline total ${_tip('Valor de todos los deals en todas las etapas (incluye deals en proceso, no solo cerrados).')}</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
       <div class="kpi-val">${fmtK(GLOBAL.pipeline)}</div>
-      <div class="kpi-sub">deals con valor asignado</div>
+      <div class="kpi-sub">todas las etapas · cerrado ${fmtK(GLOBAL_CERRADO)}</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--red)"></span>
       <div class="kpi-top"><span class="kpi-label">Sin seguimiento ${_tip('Deals abiertos sin ninguna actividad registrada en Kommo en más de 72 horas.')}</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
@@ -1191,7 +1202,7 @@ function vResumen(){
     <div class="kpi"><span class="accent" style="background:#159A57"></span>
       <div class="kpi-top"><span class="kpi-label">Compradores ${_tip('Leads que cerraron como venta confirmada en Kommo durante este mes.')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
       <div class="kpi-val">${GLOBAL.cierres}</div>
-      <div class="kpi-sub">cierres del mes</div>
+      <div class="kpi-sub">cierres · ${fmtK(GLOBAL_CERRADO)} cerrado</div>
     </div>
   </div>
 
