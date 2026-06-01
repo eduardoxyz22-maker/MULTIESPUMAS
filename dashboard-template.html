@@ -4535,7 +4535,7 @@ function ResumenView({ filtered, derived, filterTienda }) {
         )}
         <footer className="card-foot">
           <span>Total {filterTienda === "Todas" ? "tiendas + externos" : "scope"}:&nbsp;<b>Bs {fmtMoney(derived.ventaTotal)}</b></span>
-          {derived.metaMin > 0 && <span>· Cumplimiento mín.:&nbsp;<b>{fmtPct(derived.pctMeta)}</b></span>}
+          {derived.metaMin > 0 && <span>· Cumplimiento:&nbsp;<b>{derived.presupuesto > 0 ? fmtPct(derived.ventaTotal / derived.presupuesto) : "—"}</b> presup · <b>{fmtPct(derived.pctMeta)}</b> mín</span>}
         </footer>
       </section>
 
