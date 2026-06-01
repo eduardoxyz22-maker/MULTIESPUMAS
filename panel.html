@@ -586,16 +586,36 @@ function vSucursales(){
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
     <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Cierres</th><th class="r">Conv.</th><th class="r">Cerrado</th><th class="r">Pipeline</th><th class="r">Sin seg.</th></tr></thead>
-    <tbody>${branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
-      <td class="who">${b.sucursal}</td>
-      <td class="r num">${b.leads.toLocaleString('en-US')}</td>
-      <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
-      <td class="r num bold">${b.cierres}</td>
-      <td class="r num">${(b.cierres/b.leads*100).toFixed(1)}%</td>
-      <td class="r num" style="color:var(--green-ink);font-weight:700">${fmtMoney(bCerrado)}</td>
-      <td class="r num" style="color:var(--muted)">${fmtMoney(b.value)}</td>
-      <td class="r num" style="${b.backlog>100?'color:var(--red-ink);font-weight:800':''}">${b.backlog}</td>
-    </tr>`}).join('')}</tbody>
+    <tbody>${(()=>{
+      const rows=branches.map(b=>{const bCerrado=b.vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0); return `<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
+        <td class="who">${b.sucursal}</td>
+        <td class="r num">${b.leads.toLocaleString('en-US')}</td>
+        <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
+        <td class="r num bold">${b.cierres}</td>
+        <td class="r num">${(b.cierres/b.leads*100).toFixed(1)}%</td>
+        <td class="r num" style="color:var(--green-ink);font-weight:700">${fmtMoney(bCerrado)}</td>
+        <td class="r num" style="color:var(--muted)">${fmtMoney(b.value)}</td>
+        <td class="r num" style="${b.backlog>100?'color:var(--red-ink);font-weight:800':''}">${b.backlog}</td>
+      </tr>`;}).join('');
+      const tLeads=branches.reduce((s,b)=>s+b.leads,0);
+      const tPrevLeads=branches.reduce((s,b)=>s+b.prevLeads,0);
+      const tCierres=branches.reduce((s,b)=>s+b.cierres,0);
+      const tCerrado=branches.reduce((s,b)=>s+b.vends.reduce((x,v)=>x+weeklyFor(v).cur.totM,0),0);
+      const tPipe=branches.reduce((s,b)=>s+b.value,0);
+      const tBk=branches.reduce((s,b)=>s+b.backlog,0);
+      const tConv=tLeads?(tCierres/tLeads*100).toFixed(1):'0.0';
+      const totRow=`<tr style="background:var(--hover)">
+        <td class="bold">Total equipo</td>
+        <td class="r num bold">${tLeads.toLocaleString('en-US')}</td>
+        <td class="r">${momBadge(tLeads,tPrevLeads)}</td>
+        <td class="r num bold">${tCierres}</td>
+        <td class="r num bold">${tConv}%</td>
+        <td class="r num bold" style="color:var(--green-ink)">${fmtMoney(tCerrado)}</td>
+        <td class="r num bold" style="color:var(--muted)">${fmtMoney(tPipe)}</td>
+        <td class="r num bold" style="${tBk>100?'color:var(--red-ink)':''}">${tBk}</td>
+      </tr>`;
+      return rows+totRow;
+    })()}</tbody>
   </table></div>`;
 }
 
