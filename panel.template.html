@@ -22,6 +22,21 @@
   --sh:0 1px 2px rgba(15,22,32,.04),0 4px 16px rgba(15,22,32,.05);
   --sh-lg:0 8px 32px rgba(15,22,32,.10);
   --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --hover:#FAFBFC;
+}
+html[data-theme="dark"]{
+  color-scheme:dark;
+  --ink:#0B0F14; --ink-2:#11161D; --ink-3:#212A36;
+  --bg:#0E131A; --card:#161D27; --line:#28313D; --line-2:#1F2731;
+  --text:#E6EAEF; --muted:#9AA6B2; --faint:#6E7986;
+  --brand:#16C8BF; --brand-d:#3FD9D1; --brand-bg:#0C3633; --brand-ink:#8BEAE4;
+  --green:#2BB56E; --green-bg:#10301F; --green-ink:#74D9A4;
+  --amber:#E89A1C; --amber-bg:#3A2A0C; --amber-ink:#F0C173;
+  --red:#E8585D; --red-bg:#3A1719; --red-ink:#F0989B;
+  --blue:#4A86F0; --blue-bg:#14223A;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.35);
+  --sh-lg:0 8px 32px rgba(0,0,0,.5);
+  --hover:#1C2530;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
@@ -79,7 +94,10 @@ body{
 
 .scroll{flex:1;overflow-y:auto;padding:26px 30px 60px}
 .view{display:none;opacity:1}
-.view.active{display:block}
+@keyframes viewIn{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn svg.spin{animation:spin .8s linear infinite;}
+.view.active{display:block;animation:viewIn .22s ease-out}
 
 /* ============ GENERIC ============ */
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin:30px 0 14px;gap:16px}
@@ -133,7 +151,7 @@ body{
 .tbl tbody td{padding:12px 14px;border-bottom:1px solid var(--line-2);color:var(--text)}
 .tbl tbody tr:last-child td{border-bottom:none}
 .tbl tbody tr{transition:background .12s}
-.tbl tbody tr:hover{background:#FAFBFC}
+.tbl tbody tr:hover{background:var(--hover)}
 .tbl td.r{text-align:right;font-variant-numeric:tabular-nums}
 .tbl td.bold{font-weight:800}
 .tbl .who{font-weight:700}
@@ -145,7 +163,7 @@ body{
 
 /* team cards */
 .team-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:14px;margin-top:14px}
-.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line)}
+.tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line);position:relative}
 .tcard.v-green{border-top-color:var(--green)} .tcard.v-amber{border-top-color:var(--amber)} .tcard.v-red{border-top-color:var(--red)}
 .tcard-h{padding:15px 17px 13px;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .avatar{width:38px;height:38px;border-radius:10px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.92rem;flex-shrink:0}
@@ -155,7 +173,7 @@ body{
 .tmetrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;border-top:1px solid var(--line-2);padding-top:13px}
 .tmetric .v{font-size:1.18rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .tmetric .l{font-size:.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-top:4px}
-.tcard-bar{padding:11px 17px;background:#FAFBFC;border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.tcard-bar{padding:11px 17px;background:var(--hover);border-top:1px solid var(--line-2);display:flex;align-items:center;justify-content:space-between;font-size:.72rem;color:var(--muted)}
 .tcard-bar b{color:var(--text);font-weight:800}
 
 /* two-col */
@@ -172,11 +190,13 @@ body{
 .insight .d{font-size:.8rem;color:#2C5C58;margin-top:3px;line-height:1.5}
 
 /* funnel */
-.funnel{display:flex;flex-direction:column;gap:7px}
-.fstep{display:grid;grid-template-columns:160px 1fr 90px;align-items:center;gap:14px}
-.fstep .fn{font-size:.8rem;font-weight:700}
-.fbar{height:34px;border-radius:8px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;font-size:.82rem;min-width:54px}
-.fstep .fp{text-align:right;font-size:.78rem;color:var(--muted);font-weight:600}
+.funnel{display:flex;flex-direction:column;gap:3px}
+.fstep{display:flex;align-items:center;gap:12px}
+.fstep .fn{font-size:.78rem;font-weight:700;width:148px;text-align:right;flex-shrink:0}
+.fbar-wrap{flex:1;display:flex;justify-content:center}
+.fbar{height:38px;border-radius:7px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;color:#fff;font-weight:800;font-size:.82rem;transition:width .5s cubic-bezier(.4,0,.2,1);min-width:50px;white-space:nowrap}
+.fstep .fp{width:52px;text-align:right;font-size:.76rem;color:var(--muted);font-weight:700;flex-shrink:0}
+.fconn{height:3px;margin:0 auto;background:var(--line-2);width:40%;border-radius:2px}
 
 /* scenario cards */
 .scen{border:1px solid var(--line);border-radius:var(--r);padding:20px;background:var(--card);box-shadow:var(--sh);position:relative;overflow:hidden}
@@ -215,6 +235,9 @@ body{
 .dr-k{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:13px 14px}
 .dr-k .v{font-size:1.22rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
 .dr-k .l{font-size:.64rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.3px;margin-top:6px}
+.suc-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;margin-bottom:10px}
+.suc-vcard:hover{border-color:var(--brand);box-shadow:0 2px 8px rgba(0,181,173,.12)}
+.suc-vcard:last-child{margin-bottom:0}
 .tcard{cursor:pointer;transition:box-shadow .15s,transform .15s}
 .tcard:hover{box-shadow:var(--sh-lg);transform:translateY(-2px)}
 .tbl tbody tr.clickable{cursor:pointer}
@@ -265,7 +288,105 @@ body{
   .scroll{padding:18px 16px 50px}
   .topbar{padding:14px 16px}
 }
+/* ── shimmer en cards ── */
+.tcard::before{content:'';position:absolute;inset:0;background:linear-gradient(105deg,transparent 36%,rgba(255,255,255,.22) 50%,transparent 64%);transform:translateX(-120%);transition:transform .55s ease;pointer-events:none;z-index:1}
+.tcard:hover::before{transform:translateX(120%)}
+/* ── gradiente en números del hero ── */
+.diag-stat .v.bad{background:linear-gradient(135deg,#FF8A8E,#FFC0C2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.diag-stat .v.good{background:linear-gradient(135deg,#46D6A6,#80EEC6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* ── badge sin datos ── */
+.zero{color:var(--faint)!important;font-style:italic}
+/* ── filas backlog por urgencia ── */
+.bk-crit{background:#FFF2F2!important}.bk-crit:hover{background:#FFE4E4!important}
+.bk-warn{background:#FFFBF0!important}.bk-warn:hover{background:#FEF3D0!important}
+/* ── medallas ── */
+.medal{position:absolute;top:9px;right:11px;font-size:1.1rem;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,.18));z-index:2}
+/* ── fichas de etapas globales ── */
+.stage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:14px}
+.stage-card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 16px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.stage-card .sc-top{width:100%;height:3px;border-radius:99px;position:absolute;top:0;left:0}
+.stage-card .sc-name{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;line-height:1.3;min-height:2.1em}
+.stage-card .sc-val{font-size:1.7rem;font-weight:800;line-height:1;margin-top:8px;font-variant-numeric:tabular-nums}
+.stage-card .sc-pct{font-size:.74rem;color:var(--faint);font-weight:600;margin-top:5px}
+.stage-card .sc-bar{height:5px;background:var(--line-2);border-radius:99px;overflow:hidden;margin-top:9px}
+.stage-card .sc-bar i{display:block;height:100%;border-radius:99px}
+/* ── barra de origen manual vs auto ── */
+.origin-split{display:flex;height:46px;border-radius:10px;overflow:hidden;border:1px solid var(--line);font-weight:800;font-size:.84rem}
+.origin-split .os{display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;transition:flex .5s ease;min-width:62px;white-space:nowrap}
+.os-manual{background:var(--green)}.os-auto{background:var(--ink-3)}
+.origin-legend{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap}
+.origin-legend .ol{display:flex;align-items:center;gap:7px;font-size:.78rem;color:var(--muted);font-weight:600}
+.origin-legend .ol .sw{width:11px;height:11px;border-radius:3px}
+/* ============ DARK MODE EXTRAS ============ */
+html[data-theme="dark"] .diag{background:linear-gradient(120deg,#0A0E13,#1A222E)}
+html[data-theme="dark"] .seg{background:var(--line-2)}
+html[data-theme="dark"] img{opacity:.92}
+#btnTheme{padding:8px 10px}
+#btnTheme svg{width:16px;height:16px}
+.bk-search{width:100%;padding:9px 13px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--text);font-family:inherit;font-size:.82rem;transition:.15s}
+.bk-search:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+.tbl th[data-sk]{cursor:pointer;user-select:none;white-space:nowrap}
+.tbl th[data-sk]:hover{color:var(--brand-d)}
+/* ── pulso crítico ── */
+@keyframes pulseRed{0%,100%{box-shadow:0 0 0 0 rgba(220,64,70,.75)}60%{box-shadow:0 0 0 5px rgba(220,64,70,0)}}
+.st-red{animation:pulseRed 1.8s ease-in-out infinite}
+.chipf.danger{animation:pulseRed 2.2s ease-in-out infinite}
+html[data-theme="dark"] .st-red,html[data-theme="dark"] .chipf.danger{animation-name:pulseRedDark}
+@keyframes pulseRedDark{0%,100%{box-shadow:0 0 0 0 rgba(232,88,93,.8)}60%{box-shadow:0 0 0 6px rgba(232,88,93,0)}}
+/* ── tooltip KPI ── */
+.kpi-tip{position:relative;display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--line-2);color:var(--faint);font-size:.6rem;font-weight:800;cursor:default;flex-shrink:0;vertical-align:middle;margin-left:4px}
+.kpi-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:var(--ink);color:#E6EAEF;padding:8px 12px;border-radius:9px;font-size:.71rem;font-weight:500;white-space:normal;width:210px;line-height:1.45;pointer-events:none;opacity:0;transition:opacity .15s;z-index:200;box-shadow:var(--sh-lg);text-transform:none;letter-spacing:0}
+.kpi-tip:hover::after{opacity:1}
+/* ── sticky headers ── */
+.tbl thead th{position:sticky;top:0;z-index:2;background:var(--card)}
+/* ── global search ── */
+.gs-wrap{position:relative}
+.gs-input{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:7px 12px 7px 30px;font-family:inherit;font-size:.8rem;color:var(--text);width:175px;transition:width .2s,border-color .15s;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239AA3AF' stroke-width='2.5'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:9px center}
+.gs-input:focus{outline:none;width:240px;border-color:var(--brand);background-color:var(--card)}
+.gs-results{position:absolute;top:calc(100% + 5px);left:0;min-width:260px;background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:var(--sh-lg);z-index:50;max-height:280px;overflow-y:auto;display:none}
+.gs-results.show{display:block}
+.gs-item{padding:9px 14px;cursor:pointer;font-size:.82rem;border-bottom:1px solid var(--line-2);transition:background .1s}
+.gs-item:last-child{border-bottom:none}
+.gs-item:hover{background:var(--hover)}
+.gs-tag{font-size:.6rem;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--faint);margin-right:5px;vertical-align:middle}
+/* ── scroll-to-top ── */
+#btnTop{position:fixed;bottom:26px;right:26px;width:40px;height:40px;border-radius:50%;background:var(--ink-3);color:var(--text);border:1px solid var(--line);cursor:pointer;font-size:1rem;font-weight:800;box-shadow:var(--sh-lg);z-index:30;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s,background .15s;display:grid;place-items:center;line-height:1}
+#btnTop.show{opacity:1;pointer-events:auto}
+#btnTop:hover{background:var(--brand);color:#fff;border-color:var(--brand);transform:translateY(-2px)}
+/* ── dark mode row highlights ── */
+html[data-theme="dark"] .bk-crit{background:rgba(232,88,93,.07)!important}
+html[data-theme="dark"] .bk-crit:hover{background:rgba(232,88,93,.13)!important}
+html[data-theme="dark"] .bk-warn{background:rgba(232,154,28,.06)!important}
+html[data-theme="dark"] .bk-warn:hover{background:rgba(232,154,28,.1)!important}
+/* ── meta progress bar ── */
+.meta-prog{padding:10px 17px 12px;border-top:1px solid var(--line-2)}
+.meta-prog-bar{height:5px;background:var(--line-2);border-radius:99px;overflow:hidden;margin:5px 0 4px}
+.meta-prog-bar i{display:block;height:100%;border-radius:99px;transition:width .6s ease}
+/* ── 1. entrada escalonada tarjetas ── */
+@keyframes cardIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.team-grid .tcard{animation:cardIn .38s ease-out both}
+/* ── 2. hover escala KPI y stage-card ── */
+.kpi{transition:transform .18s ease,box-shadow .18s ease}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);z-index:1}
+.stage-card{transition:transform .2s ease,box-shadow .2s ease}
+.stage-card:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);z-index:1}
+/* ── 3. ripple chips ── */
+.chipf{position:relative;overflow:hidden}
+@keyframes rippleAnim{to{transform:scale(4);opacity:0}}
+.ripple-wave{position:absolute;border-radius:50%;background:rgba(255,255,255,.45);transform:scale(0);animation:rippleAnim .45s linear;pointer-events:none;z-index:0}
+/* ── 4. sparkline ── */
+.tcard-spark{padding:5px 17px 9px;border-top:1px solid var(--line-2);display:flex;align-items:flex-end;gap:3px}
+/* ── 7. topbar blur al scroll ── */
+.topbar{transition:background .25s,box-shadow .25s}
+.topbar.tb-scrolled{backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);background:rgba(255,255,255,.76)!important;box-shadow:0 2px 20px rgba(15,22,32,.09)}
+html[data-theme="dark"] .topbar.tb-scrolled{background:rgba(22,29,39,.86)!important}
+/* ── 8. backlog border izquierdo ── */
+.bk-crit{border-left:3px solid var(--red)!important}
+.bk-warn{border-left:3px solid var(--amber)!important}
+/* ── 10. modo focus ── */
+body.focus-mode .rail{display:none}
 </style>
+<script>(function(){try{if(localStorage.getItem('dash_theme')==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();</script>
 </head>
 <body>
 
@@ -333,8 +454,13 @@ body{
       <h1 id="title">Resumen ejecutivo &mdash; Mayo 2026</h1>
     </div>
     <div class="topbar-right">
-      <div class="meta-chip">Actualizado 30/05 &middot; 05:49</div>
-      <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
+      <div class="gs-wrap">
+        <input id="gsInput" class="gs-input" type="text" placeholder="Buscar…" oninput="gsSearch(this.value)" autocomplete="off" spellcheck="false">
+        <div id="gsResults" class="gs-results"></div>
+      </div>
+      <div class="meta-chip" id="metaChip">Actualizado 30/05 &middot; 05:49</div>
+      <button class="btn" id="btnTheme" onclick="toggleTheme()" title="Cambiar tema claro/oscuro" aria-label="Cambiar tema"></button>
+      <button class="btn" id="btnActualizar" onclick="triggerWorkflow()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>Actualizar</button>
       <button class="btn btn-primary" onclick="exportarCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar</button>
     </div>
   </header>
@@ -347,6 +473,7 @@ body{
 <!-- ===== Drawer: perfil de vendedora ===== -->
 <div class="drawer-scrim" id="drawerScrim" onclick="closePerfil()"></div>
 <aside class="drawer" id="drawer"></aside>
+<button id="btnTop" title="Volver arriba" aria-label="Volver arriba">↑</button>
 
 <!-- generar.py inyecta los datos reales del mes aquí -->
 <script>window.DASH = __DASH_JSON__;</script>
@@ -418,7 +545,7 @@ function vSucursales(){
   const cards = branches.map(b=>{
     const mom=momBadge(b.leads,b.prevLeads);
     const conv=(b.cierres/b.leads*100).toFixed(1);
-    return `<div class="card pad">
+    return `<div class="card pad" style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
         <div><div style="font-weight:800;font-size:1.05rem">${b.sucursal}</div>
         <div class="where">${b.vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div></div>
@@ -443,7 +570,7 @@ function vSucursales(){
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Tabla por sucursal</h2></div></div>
   <div class="card" style="overflow-x:auto"><table class="tbl">
     <thead><tr><th>Sucursal</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Cierres</th><th class="r">Conversión</th><th class="r">Pipeline</th><th class="r">Sin seguimiento</th></tr></thead>
-    <tbody>${branches.map(b=>`<tr>
+    <tbody>${branches.map(b=>`<tr style="cursor:pointer" onclick="openSucursal('${b.sucursal}')">
       <td class="who">${b.sucursal}</td>
       <td class="r num">${b.leads.toLocaleString('en-US')}</td>
       <td class="r">${momBadge(b.leads,b.prevLeads)}</td>
@@ -578,6 +705,12 @@ function openPerfil(name){
         <div class="dr-k"><div class="v" style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</div><div class="l">Sin seguimiento</div></div>
       </div>
 
+      <div class="dr-sec">Origen de sus leads</div>
+      <div class="dr-kpis">
+        <div class="dr-k"><div class="v" style="color:var(--green-ink)">${v.manual||0} <span style="font-size:.7rem;color:var(--muted)">(${v.manualPct||0}%)</span></div><div class="l">✍ Carga manual</div></div>
+        <div class="dr-k"><div class="v">${v.auto||0} <span style="font-size:.7rem;color:var(--muted)">(${v.autoPct||0}%)</span></div><div class="l">⚙ Automático (bot)</div></div>
+      </div>
+
       <div class="dr-sec">Disciplina del CRM</div>
       <div class="dr-kpis">
         <div class="dr-k"><div class="v">${v.promTxt}</div><div class="l">Tiempo prom.</div></div>
@@ -593,6 +726,55 @@ function openPerfil(name){
 function closePerfil(){
   document.getElementById('drawerScrim').classList.remove('show');
   document.getElementById('drawer').classList.remove('show');
+}
+function openSucursal(sucName){
+  const vends=TEAM.filter(v=>v.sucursal===sucName);
+  if(!vends.length)return;
+  const tot=vends.reduce((a,v)=>({leads:a.leads+v.leads,cierres:a.cierres+v.cierres,value:a.value+v.value,backlog:a.backlog+v.backlog}),{leads:0,cierres:0,value:0,backlog:0});
+  const totConv=tot.leads?(tot.cierres/tot.leads*100).toFixed(1):'0.0';
+  const vcards=vends.map(v=>{
+    const col=v.status==='green'?'var(--green)':v.status==='amber'?'var(--amber)':'var(--red)';
+    const conv=v.leads?(v.cierres/v.leads*100).toFixed(1):'0.0';
+    const lPct=tot.leads?Math.round(v.leads/tot.leads*100):0;
+    return `<div class="suc-vcard" onclick="openPerfil('${v.name}')">
+      <div style="display:flex;gap:11px;align-items:center;margin-bottom:12px">
+        <div class="avatar" style="width:36px;height:36px;font-size:.9rem;background:${col}">${v.ini}</div>
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:.93rem">${v.name}</div>${stPill(v.status)}</div>
+        <div style="font-size:.7rem;color:var(--muted);white-space:nowrap">${lPct}% · ver perfil →</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+        <div><div class="kpi-val" style="font-size:1.2rem">${v.leads.toLocaleString('en-US')}</div><div class="kpi-label" style="margin-top:3px">Leads</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem">${v.cierres}</div><div class="kpi-label" style="margin-top:3px">Cierres</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem;color:var(--brand-d)">${fmtMoney(v.value)}</div><div class="kpi-label" style="margin-top:3px">Pipeline</div></div>
+        <div><div class="kpi-val" style="font-size:1.2rem;color:${parseFloat(conv)>=6?'var(--green)':parseFloat(conv)>=4?'var(--amber)':'var(--red)'}">${conv}%</div><div class="kpi-label" style="margin-top:3px">Conv.</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  const ini=sucName.slice(0,2).toUpperCase();
+  const body=`
+    <div class="drawer-head">
+      <div style="display:flex;gap:13px;align-items:center;min-width:0">
+        <div class="avatar" style="width:46px;height:46px;font-size:1.1rem;background:var(--brand)">${ini}</div>
+        <div><div style="font-weight:800;font-size:1.15rem">${sucName}</div>
+          <div class="where" style="margin-top:3px">${vends.map(v=>v.name.split(' ')[0]).join(' · ')}</div>
+        </div>
+      </div>
+      <button class="drawer-close" onclick="closePerfil()">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <div class="dr-sec">Global de la sucursal</div>
+      <div class="dr-kpis" style="grid-template-columns:repeat(4,1fr)">
+        <div class="dr-k"><div class="v">${tot.leads.toLocaleString('en-US')}</div><div class="l">Leads</div></div>
+        <div class="dr-k"><div class="v">${tot.cierres}</div><div class="l">Cierres</div></div>
+        <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(tot.value)}</div><div class="l">Pipeline</div></div>
+        <div class="dr-k"><div class="v">${totConv}%</div><div class="l">Conversión</div></div>
+      </div>
+      <div class="dr-sec">Por vendedora &mdash; toca para ver perfil completo</div>
+      ${vcards}
+    </div>`;
+  document.getElementById('drawer').innerHTML=body;
+  document.getElementById('drawerScrim').classList.add('show');
+  document.getElementById('drawer').classList.add('show');
 }
 
 /* ---------- METAS POR MONTO ($) (editables en línea + persistencia) ---------- */
@@ -774,7 +956,7 @@ function renderSemanal(){
     }).join('');
     const tC=data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
     const tP=data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
-    const totRow=`<tr style="background:#FAFBFC"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
+    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
     tb.innerHTML = head+`<tbody>${rows}${totRow}</tbody>`;
   }
 }
@@ -858,6 +1040,37 @@ const CHANNELS = (DASH && DASH.channels) ? DASH.channels : [
   {ic:'🚶', name:'Walk-in (Tienda)',        leads:1,    pct:0,  cierres:1,   conv:100,ticket:0,    pipeline:0,      cls:'muted'},
 ];
 
+// ── Etapas globales del pipeline (todas las fichas por etapa) ──
+// Fuente: DASH.stages (real). Fallback: suma de STAGES_BY_V.
+const STAGE_ORDER = ['Incoming leads','Nueva consulta','Interesado','Cotización enviada','Agendado / Visita','Compradores','No Responden'];
+const STAGE_COLORS = {
+  'Incoming leads':'#7B8794','Nueva consulta':'#27313F','Interesado':'#2E6FE0',
+  'Cotización enviada':'#7A4AD9','Agendado / Visita':'#D98300','Compradores':'#159A57','No Responden':'#646E7B',
+};
+const STAGES_GLOBAL = (()=>{
+  if(DASH && Array.isArray(DASH.stages) && DASH.stages.length) return DASH.stages.slice();
+  const acc={};
+  Object.values(STAGES_BY_V||{}).forEach(arr=>(arr||[]).forEach(s=>{ acc[s.s]=(acc[s.s]||0)+(s.c||0); }));
+  const tot=Object.values(acc).reduce((a,b)=>a+b,0)||1;
+  return Object.entries(acc).map(([name,count])=>({name,count,value:0,pct:Math.round(count/tot*100)}));
+})();
+function stageColor(n){ return STAGE_COLORS[n] || '#9AA3AF'; }
+
+// ── Origen de carga: manual (vendedora) vs automático (bot) ──
+// Fuente: DASH.origin (real). Fallback: suma de TEAM o de CHANNELS.
+const ORIGIN = (()=>{
+  if(DASH && DASH.origin && (DASH.origin.auto||DASH.origin.manual)) return DASH.origin;
+  let auto=0, manual=0;
+  TEAM.forEach(v=>{ auto+=(v.auto||0); manual+=(v.manual||0); });
+  if(!auto && !manual){
+    const a=CHANNELS.find(c=>(c.name||'').toLowerCase().includes('auto'));
+    const m=CHANNELS.find(c=>(c.name||'').toLowerCase().includes('manual'));
+    auto=a?a.leads:0; manual=m?m.leads:0;
+  }
+  const tot=auto+manual||1;
+  return {auto, manual, autoPct:Math.round(auto/tot*100), manualPct:Math.round(manual/tot*100)};
+})();
+
 const FUNNEL = [
   {n:'Leads del mes',     v:GLOBAL.leads,   c:'#27313F'},
   {n:'Sin respuesta',     v:NO_RESP_TOTAL,  c:'#646E7B'},
@@ -883,7 +1096,6 @@ const BACKLOG_BY = TEAM.filter(v=>v.backlog>0).map(v=>{
   return {name:v.name.split(' - ')[0], n:v.backlog, pct, status};
 }).sort((a,b)=>b.n-a.n);
 let BACKLOG = [];
-let STAGE_LEADS = (window.DASH && window.DASH.stage_leads) || [];
 
 /* ===================== ICON HELPERS ===================== */
 const I = {
@@ -893,6 +1105,9 @@ const I = {
   alert:'<path d="M12 4l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/>',
   bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
   target:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="0.5"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  calendar:'<rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>',
+  check:'<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>',
 };
 const ico = (p,bg,col)=>`<span class="kpi-ico" style="background:${bg};color:${col}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor">${p}</svg></span>`;
 const stPill = s=>`<span class="st st-${s}"><span class="d"></span>${STLABEL[s]}</span>`;
@@ -909,6 +1124,8 @@ function vResumen(){
   const _mCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('manual'))||{conv:21,ticket:5076,cierres:111,pct:20};
   const _aCh = CHANNELS.find(c=>(c.name||'').toLowerCase().includes('auto'))||{conv:1,ticket:2944,cierres:15,pct:80};
   const _ratio = _aCh.conv > 0 ? Math.round(_mCh.conv/_aCh.conv) : 21;
+  const _tip = txt=>`<span class="kpi-tip" data-tip="${txt}">i</span>`;
+  const _momDelta = LEADS_MOM_PCT!==0?`<span class="delta ${LEADS_MOM_PCT>0?'up':'down'}">${LEADS_MOM_PCT>0?'▲':'▼'} ${LEADS_MOM_PCT>0?'+':''}${LEADS_MOM_PCT}% leads</span>`:'';
   return `
   <div class="diag">
     <div>
@@ -923,26 +1140,41 @@ function vResumen(){
     </div>
   </div>
 
-  <div class="kpis">
+  <div class="kpis" style="grid-template-columns:repeat(auto-fill,minmax(148px,1fr))">
     <div class="kpi"><span class="accent" style="background:var(--blue)"></span>
-      <div class="kpi-top"><span class="kpi-label">Conversión</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Conversión ${_tip('Leads que compraron ÷ total leads del mes. Meta del sector: 5–8%.')}</span>${ico(I.target,'var(--blue-bg)','var(--blue)')}</div>
       <div class="kpi-val">${CONV_PCT}%</div>
-      <div class="kpi-sub"><span class="delta up">▲ +2pp</span> ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
+      <div class="kpi-sub">${_momDelta||`<span class="delta up">▲</span>`} ${GLOBAL.cierres} de ${GLOBAL.leads.toLocaleString('en-US')} leads</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--brand)"></span>
-      <div class="kpi-top"><span class="kpi-label">Pipeline total</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Pipeline total ${_tip('Suma de valor ($) de todos los deals abiertos con monto asignado.')}</span>${ico(I.money,'var(--brand-bg)','var(--brand-d)')}</div>
       <div class="kpi-val">${fmtK(GLOBAL.pipeline)}</div>
       <div class="kpi-sub">deals con valor asignado</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--red)"></span>
-      <div class="kpi-top"><span class="kpi-label">Sin seguimiento</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Sin seguimiento ${_tip('Deals abiertos sin ninguna actividad registrada en Kommo en más de 72 horas.')}</span>${ico(I.clock,'var(--red-bg)','var(--red)')}</div>
       <div class="kpi-val">${bkPct}%</div>
       <div class="kpi-sub"><b style="color:var(--red-ink)">${TOTAL_BACKLOG} deals</b> sin actividad +72h</div>
     </div>
     <div class="kpi"><span class="accent" style="background:var(--amber)"></span>
-      <div class="kpi-top"><span class="kpi-label">Ticket promedio</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
+      <div class="kpi-top"><span class="kpi-label">Ticket promedio ${_tip('Pipeline total ÷ número de compradores del mes.')}</span>${ico(I.bolt,'var(--amber-bg)','var(--amber)')}</div>
       <div class="kpi-val">${fmtMoney(GLOBAL.ticket)}</div>
-      <div class="kpi-sub"><span class="delta down">▼</span> valor / compradores</div>
+      <div class="kpi-sub"><span class="delta ${GLOBAL.ticket>4000?'up':'down'}">${GLOBAL.ticket>4000?'▲':'▼'}</span> valor / compradores</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#2E6FE0"></span>
+      <div class="kpi-top"><span class="kpi-label">Interesado ${_tip('Leads actualmente en etapa "Interesado" — clientes que mostraron interés activo.')}</span>${ico(I.eye,'#EAF1FC','#2E6FE0')}</div>
+      <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Interesado')||{count:0}).count}</div>
+      <div class="kpi-sub">leads en etapa de interés</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#D98300"></span>
+      <div class="kpi-top"><span class="kpi-label">Agendado / Visita ${_tip('Leads con visita a tienda o cita agendada — mayor probabilidad de cierre.')}</span>${ico(I.calendar,'#FFF4E0','#D98300')}</div>
+      <div class="kpi-val">${(STAGES_GLOBAL.find(s=>s.name==='Agendado / Visita')||{count:0}).count}</div>
+      <div class="kpi-sub">visitas programadas</div>
+    </div>
+    <div class="kpi"><span class="accent" style="background:#159A57"></span>
+      <div class="kpi-top"><span class="kpi-label">Compradores ${_tip('Leads que cerraron como venta confirmada en Kommo durante este mes.')}</span>${ico(I.check,'#E3F7EC','#159A57')}</div>
+      <div class="kpi-val">${GLOBAL.cierres}</div>
+      <div class="kpi-sub">cierres del mes</div>
     </div>
   </div>
 
@@ -1014,7 +1246,30 @@ function vEquipo(){
   </div>`;
 }
 
-let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog';
+let bkFilter='all', bkVend=null, bkStage=null, bkMode='backlog', bkSearch='', bkSort={k:'d',dir:-1};
+function bkSavePref(){try{localStorage.setItem('bk_pref',JSON.stringify({f:bkFilter,v:bkVend,m:bkMode,st:bkStage}));}catch(e){}}
+function bkLoadPref(){
+  try{
+    const p=JSON.parse(localStorage.getItem('bk_pref')||'null');
+    if(!p)return;
+    if(p.m==='stage') setBkMode('stage',p.st||null);
+    if(p.f&&p.f!=='all'){bkFilter=p.f;document.querySelectorAll('[data-f]').forEach(b=>b.classList.toggle('active',b.dataset.f===p.f));}
+    if(p.v){bkVend=p.v;document.querySelectorAll('[data-v]').forEach(b=>b.classList.toggle('active',b.dataset.v===p.v));}
+    renderBacklog();
+  }catch(e){}
+}
+function bkSetSearch(v){ bkSearch=(v||'').trim().toLowerCase(); renderBacklog(); }
+function bkSortBy(k){ if(bkSort.k===k){bkSort.dir*=-1;} else {bkSort={k,dir:(k==='d'||k==='v')?-1:1};} renderBacklog(); }
+function bkApply(rows){
+  let r=rows;
+  if(bkSearch){ r=r.filter(x=>((x.c||'')+' '+(x.r||'')+' '+(x.e||'')+' '+(x.s||'')).toLowerCase().includes(bkSearch)); }
+  const k=bkSort.k, dir=bkSort.dir, txt=(k==='c'||k==='e'||k==='s'||k==='r');
+  r=[...r].sort((a,b)=>{ let av=a[k],bv=b[k]; if(txt) return dir*String(av||'').localeCompare(String(bv||'')); return dir*(((av||0)>(bv||0))?1:((av||0)<(bv||0))?-1:0); });
+  return r;
+}
+function bkTh(k,label,right){ const a=bkSort.k===k; return `<th class="${right?'r':''}" data-sk="${k}">${label}${a?` <span style="font-size:.72em">${bkSort.dir>0?'▲':'▼'}</span>`:''}</th>`; }
+function bkBindSort(t){ t.querySelectorAll('th[data-sk]').forEach(th=>th.onclick=()=>bkSortBy(th.dataset.sk)); }
+let STAGE_LEADS = (window.DASH && window.DASH.stage_leads) || [];
 function renderBacklogBy(){
   const el=document.getElementById('backlogBy'); if(!el)return;
   const max=Math.max(...BACKLOG_BY.map(b=>b.n));
@@ -1027,23 +1282,30 @@ function renderBacklogBy(){
     </div>`;
   }).join('');
 }
+function leadId(r){ return r.id || ((r.c||'').match(/^Lead #(\d+)$/)||[])[1] || ''; }
 function renderBacklog(){
   const t=document.getElementById('bkTable'); if(!t)return;
+  bkSavePref();
   if(bkMode==='stage'){
     let rows=STAGE_LEADS;
     if(bkVend) rows=rows.filter(r=>r.r===bkVend);
     if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+    rows=bkApply(rows);
     const note=document.getElementById('bkNote');
-    if(note) note.textContent=`${rows.length} leads${bkStage?' en "'+bkStage+'"':''}${bkVend?' · '+bkVend:''} (de ${STAGE_LEADS.length} en el pipeline activo).`;
-    const body=rows.map(r=>`<tr>
-      <td><span class="mono" style="font-size:.78rem">${r.c}</span></td>
+    if(note) note.textContent=`${rows.length} leads ${bkVend||bkStage||bkSearch?'con este filtro (de '+STAGE_LEADS.length+' en el pipeline)':'en el pipeline activo'}.`;
+    const body=rows.map(r=>{
+      const id=leadId(r);
+      const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
+      return `<tr style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
+      <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span></td>
       <td><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[r.e]||'var(--muted)'};margin-right:5px;vertical-align:middle"></span>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
       <td>${r.r}</td>
       <td class="r">${r.v?fmtMoney(r.v):'—'}</td>
       <td class="r"><span class="st st-amber"><span class="d"></span>${r.d} d</span></td>
-    </tr>`).join('');
-    t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Valor</th><th class="r">Días</th></tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+    </tr>`;}).join('');
+    t.innerHTML=`<thead><tr>${bkTh('c','Contacto / Deal',false)}${bkTh('e','Etapa',false)}${bkTh('s','Sucursal',false)}${bkTh('r','Responsable',false)}${bkTh('v','Valor',true)}${bkTh('d','Días',true)}</tr></thead><tbody>${body||'<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+    bkBindSort(t);
     return;
   }
   let rows=BACKLOG;
@@ -1051,7 +1313,8 @@ function renderBacklog(){
   if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
   if(bkVend) rows=rows.filter(r=>r.r===bkVend);
   if(bkStage) rows=rows.filter(r=>r.e===bkStage);
-  const filtered = bkFilter!=='all' || bkVend || bkStage;
+  rows=bkApply(rows);
+  const filtered = bkFilter!=='all' || bkVend || bkStage || bkSearch;
   const display = filtered ? rows : rows.slice(0,50);
   const note=document.getElementById('bkNote');
   if(note) note.textContent = filtered
@@ -1059,27 +1322,31 @@ function renderBacklog(){
     : `Mostrando las ${display.length} fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #".`;
   const body=display.map(r=>{
     const danger=r.d>=7;
-    return `<tr>
-      <td><span class="mono" style="font-size:.78rem">${r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
+    const id=leadId(r);
+    const url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';
+    return `<tr class="${danger?'bk-crit':r.d>=3?'bk-warn':''}" style="${url?'cursor:pointer':''}" ${url?`onclick="window.open('${url}','_blank')"`:''}>
+      <td><span class="mono" style="font-size:.78rem">${url?`<a href="${url}" target="_blank" style="color:inherit;text-decoration:none" onclick="event.stopPropagation()">${r.c}</a>`:r.c}</span>${r.nh?' <span class="st st-amber" style="font-size:.62rem;padding:1px 7px">🔍 nunca tocado</span>':''}</td>
       <td>${r.e}</td>
       <td class="where" style="color:var(--muted)">${r.s}</td>
       <td>${r.r}</td>
       <td class="r"><span class="st ${danger?'st-red':'st-amber'}"><span class="d"></span>${r.d} d</span></td>
     </tr>`;}).join('');
-  t.innerHTML=`<thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th class="r">Días sin act.</th></tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+  t.innerHTML=`<thead><tr>${bkTh('c','Contacto / Deal',false)}${bkTh('e','Etapa',false)}${bkTh('s','Sucursal',false)}${bkTh('r','Responsable',false)}${bkTh('d','Días sin act.',true)}</tr></thead><tbody>${body||'<tr><td colspan="5" style="text-align:center;padding:24px;color:var(--muted)">Sin fichas con este filtro</td></tr>'}</tbody>`;
+  bkBindSort(t);
 }
-function setBkMode(mode){
-  bkMode=mode; bkStage=null;
+
+function setBkMode(mode, initialStage){
+  bkMode=mode; bkStage=initialStage||null; bkSort={k:'d',dir:-1};
   document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m===mode));
   const bkF=document.getElementById('bkFilters');
-  if(bkF) bkF.querySelectorAll('[data-f]').forEach(b=>b.style.display=mode==='stage'?'none':'');
+  if(bkF) bkF.querySelectorAll('[data-f],[data-v]').forEach(b=>b.style.display=mode==='stage'?'none':'');
   const title=document.getElementById('bkSectionTitle');
   if(title) title.textContent=mode==='stage'?'Todos los leads activos — filtrar por etapa':'Cola priorizada — más antiguas primero';
   const sf=document.getElementById('bkStageFilters');
   if(sf){
     const source=mode==='stage'?STAGE_LEADS:BACKLOG;
     const ord=STAGE_ORDER.filter(s=>source.some(r=>r.e===s));
-    sf.innerHTML=ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');
+    sf.innerHTML=ord.map(s=>`<button class="chipf${bkStage===s?' active':''}" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');
     sf.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{
       if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
       else{sf.querySelectorAll('[data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
@@ -1094,7 +1361,10 @@ function vSeguimiento(){
   <div class="section-head">
     <div><div class="eyebrow">Acción inmediata</div><h2>${TOTAL_BACKLOG} deals abiertos sin actividad +72h</h2>
     <p>Ordenados por antigüedad sin contacto (lo más urgente primero). En tu CRM los deals abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto.</p></div>
-    <button class="btn" onclick="exportarBacklog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" onclick="exportarBacklog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></svg>Exportar CSV</button>
+      <button class="btn" id="btnFocus" onclick="toggleFocus()" title="Ocultar menú lateral y expandir tabla">${_focusMode?'✕ Salir':'⛶ Focus'}</button>
+    </div>
   </div>
   <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
     <div class="kpi"><span class="accent" style="background:var(--red)"></span><div class="kpi-top"><span class="kpi-label">Sin seguimiento +72h</span></div><div class="kpi-val">${TOTAL_BACKLOG}</div><div class="kpi-sub">${BACKLOG_PCT}% del total de deals</div></div>
@@ -1106,36 +1376,39 @@ function vSeguimiento(){
   <p>El ${(()=>{const top2=[...BACKLOG_BY].slice(0,2).reduce((s,b)=>s+b.n,0);return TOTAL_BACKLOG?Math.round(top2/TOTAL_BACKLOG*100):0;})()}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.</p></div></div>
   <div class="card pad"><div id="backlogBy"></div></div>
 
-  <div class=”section-head” style=”margin-top:8px”>
-    <div><h2 style=”font-size:.95rem” id=”bkSectionTitle”>Cola priorizada — más antiguas primero</h2></div>
-    <div style=”display:flex;gap:6px;flex-shrink:0”>
-      <button class=”chipf active” data-m=”backlog” onclick=”setBkMode('backlog')”>📋 Sin seguimiento</button>
-      <button class=”chipf” data-m=”stage” onclick=”setBkMode('stage')”>📌 Todos por etapa</button>
+  <div class="section-head" style="margin-top:8px">
+    <div><h2 style="font-size:.95rem" id="bkSectionTitle">Cola priorizada — más antiguas primero</h2></div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="chipf active" data-m="backlog" onclick="setBkMode('backlog')">📋 Sin seguimiento</button>
+      <button class="chipf" data-m="stage" onclick="setBkMode('stage')">📌 Todos por etapa</button>
     </div>
   </div>
-  <div class=”filters” id=”bkFilters”>
-    <button class=”chipf active” data-f=”all”>Todos</button>
-    <button class=”chipf danger” data-f=”crit”>🔴 Críticos +7d</button>
-    <button class=”chipf” data-f=”nh”>🔍 Nunca tocados</button>
-    <span class=”spacer”></span>
-    ${TEAM.map(v=>`<button class=”chipf” data-v=”${v.name}”>${v.name.split(' ')[0]}</button>`).join('')}
+  <div class="filters" id="bkFilters">
+    <button class="chipf active" data-f="all">Todos</button>
+    <button class="chipf danger" data-f="crit">🔴 Críticos +7d</button>
+    <button class="chipf" data-f="nh">🔍 Nunca tocados</button>
+    <span class="spacer"></span>
+    ${TEAM.map(v=>`<button class="chipf" data-v="${v.name.split(' - ')[0]}">${v.name.split(' ')[0]}</button>`).join('')}
   </div>
-  <div class=”filters” id=”bkStageFilters” style=”margin-top:6px”>
-    ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class=”chipf” data-e=”${s}”><span style=”display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0”></span>${s}</button>`).join('');})()}
+  <div class="filters" id="bkStageFilters" style="margin-top:6px">
+    ${(()=>{const ord=STAGE_ORDER.filter(s=>BACKLOG.some(r=>r.e===s));return ord.map(s=>`<button class="chipf" data-e="${s}"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${STAGE_COLORS[s]||'var(--muted)'};margin-right:4px;vertical-align:middle;flex-shrink:0"></span>${s}</button>`).join('');})()}
   </div>
-  <div class=”card” style=”overflow:hidden”>
-    <table class=”tbl” id=”bkTable”></table>
+  <div style="margin-top:8px">
+    <input id="bkSearchInput" class="bk-search" type="text" placeholder="🔍 Buscar por contacto, Lead #, etapa o responsable…" oninput="bkSetSearch(this.value)" autocomplete="off">
   </div>
-  <div id=”bkNote” class=”tag-line” style=”padding:0 2px”>Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como “Lead #”.</div>`;
+  <div class="card" style="overflow-x:auto;margin-top:8px">
+    <table class="tbl" id="bkTable"></table>
+  </div>
+  <div id="bkNote" class="tag-line" style="padding:0 2px">Mostrando las 50 fichas más antiguas de ${TOTAL_BACKLOG} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #". Clic en cualquier encabezado para ordenar.</div>`;
 }
 
 function vConversion(){
   const max = FUNNEL[0].v;
-  const funnel = FUNNEL.map(f=>{
-    const w = Math.max(8, f.v/max*100);
+  const funnel = FUNNEL.map((f,i)=>{
+    const w = Math.max(14, Math.round(f.v/max*100));
     return `<div class="fstep"><div class="fn">${f.n}</div>
-      <div class="fbar" style="width:${w}%;background:${f.c}">${f.v.toLocaleString('en-US')}</div>
-      <div class="fp">${(f.v/max*100).toFixed(0)}%</div></div>`;
+      <div class="fbar-wrap"><div class="fbar" style="width:0;background:${f.c}" data-fw="${w}">${f.v.toLocaleString('en-US')}</div></div>
+      <div class="fp">${Math.round(f.v/max*100)}%</div></div>${i<FUNNEL.length-1?'<div class="fconn"></div>':''}`;
   }).join('');
   const rows = CHANNELS.map(c=>{
     const col = c.cls==='green'?'var(--green)':c.cls==='red'?'var(--red)':'var(--faint)';
@@ -1162,6 +1435,23 @@ function vConversion(){
       </div>
     </div>
   </div>
+  <div class="section-head"><div><div class="eyebrow">Pipeline completo</div><h2>Leads por etapa &mdash; las ${GLOBAL.leads.toLocaleString('en-US')} fichas del mes</h2>
+  <p>Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido. Cada ficha cuenta los leads actualmente en esa etapa.</p></div></div>
+  <div class="stage-grid">${stageCards()}</div>
+
+  <div class="section-head"><div><div class="eyebrow">Origen de carga</div><h2>Manual vs Automático &mdash; global</h2>
+  <p>Cuántos leads cargó manualmente una vendedora y cuántos entraron por el bot/automatización. La carga manual convierte mucho mejor.</p></div></div>
+  <div class="card pad">
+    <div class="origin-split">
+      <div class="os os-manual" style="flex:${Math.max(ORIGIN.manual,1)}">✍ ${ORIGIN.manualPct}%</div>
+      <div class="os os-auto" style="flex:${Math.max(ORIGIN.auto,1)}">⚙ ${ORIGIN.autoPct}%</div>
+    </div>
+    <div class="origin-legend">
+      <div class="ol"><span class="sw" style="background:var(--green)"></span><b style="color:var(--text)">${ORIGIN.manual.toLocaleString('en-US')}</b>&nbsp;manual (vendedora)</div>
+      <div class="ol"><span class="sw" style="background:var(--ink-3)"></span><b style="color:var(--text)">${ORIGIN.auto.toLocaleString('en-US')}</b>&nbsp;automático (bot)</div>
+    </div>
+  </div>
+
   <div class="section-head"><div><div class="eyebrow">Por canal</div><h2>Origen de leads &mdash; rendimiento</h2></div></div>
   <div class="card" style="overflow:hidden">
     <table class="tbl">
@@ -1169,6 +1459,26 @@ function vConversion(){
       <tbody>${rows}</tbody>
     </table>
   </div>`;
+}
+
+// Fichas de todas las etapas globales del pipeline (ordenadas por STAGE_ORDER)
+function stageCards(){
+  const max = Math.max(1, ...STAGES_GLOBAL.map(s=>s.count||0));
+  const ordered = [...STAGES_GLOBAL].sort((a,b)=>{
+    const ia=STAGE_ORDER.indexOf(a.name), ib=STAGE_ORDER.indexOf(b.name);
+    return (ia<0?99:ia)-(ib<0?99:ib);
+  });
+  return ordered.map(s=>{
+    const c = stageColor(s.name);
+    const w = Math.max(3, Math.round((s.count||0)/max*100));
+    return `<div class="stage-card">
+      <span class="sc-top" style="background:${c}"></span>
+      <div class="sc-name">${s.name}</div>
+      <div class="sc-val" style="color:${c}">${(s.count||0).toLocaleString('en-US')}</div>
+      <div class="sc-pct">${s.pct||0}% del total${s.value?` · ${fmtK(s.value)}`:''}</div>
+      <div class="sc-bar"><i style="width:${w}%;background:${c}"></i></div>
+    </div>`;
+  }).join('');
 }
 
 function vProyeccion(){
@@ -1225,12 +1535,16 @@ function renderTeamMini(){
 
 function renderTeamGrid(){
   const g=document.getElementById('teamGrid'); if(!g)return;
-  g.innerHTML = [...TEAM].sort((a,b)=>order(a.status)-order(b.status)).map(v=>{
-    const col = v.status==='green'?'var(--green)':v.status==='amber'?'var(--amber)':'var(--red)';
-    return `<div class="tcard v-${v.status}" onclick="openPerfil('${v.name}')">
+  const medals=['🥇','🥈','🥉'];
+  const byC=[...TEAM].sort((a,b)=>(b.cierres||0)-(a.cierres||0)).map(v=>v.name);
+  g.innerHTML = [...TEAM].sort((a,b)=>order(a.status)-order(b.status)).map((v,i)=>{
+    const rank=byC.indexOf(v.name);
+    const medal=rank<3&&(v.cierres||0)>0?medals[rank]:'';
+    return `<div class="tcard v-${v.status}" onclick="openPerfil('${v.name}')" style="animation-delay:${i*0.07}s">
+      ${medal?`<div class="medal">${medal}</div>`:''}
       <div class="tcard-h">
         <div style="display:flex;gap:11px;align-items:center;min-width:0;flex:1">
-          <div class="avatar" style="background:${col}">${v.ini}</div>
+          <div class="avatar" style="background:${avatarColor(v.name)}">${v.ini}</div>
           <div style="min-width:0;display:flex;flex-direction:column"><div class="tcard-name">${v.name}</div><div class="tcard-where">${v.sucursal}</div></div>
         </div>
         ${stPill(v.status)}
@@ -1248,8 +1562,15 @@ function renderTeamGrid(){
           ? `<span style="color:var(--blue);font-weight:700">Nuevo · ${v.leads} leads asignados</span>`
           : `<span><b>${v.conv}%</b> conv · <b>${v.cierres}</b> cierres · ${fmtMoney(v.ticket)} ticket</span><span>sin seg. <b style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</b></span>`}
       </div>
+      ${sparkline(v)}
+      ${(()=>{const meta=v.metaMonto||0,pct=meta>0?Math.min(Math.round(v.value/meta*100),100):0,col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';return meta>0&&!v.nuevo?`<div class="meta-prog"><div style="display:flex;justify-content:space-between;font-size:.68rem;font-weight:700;color:var(--muted)"><span>Meta ${fmtMoney(meta)}</span><span style="color:${col}">${pct}%</span></div><div class="meta-prog-bar"><i style="width:${pct}%;background:${col}"></i></div><div style="font-size:.66rem;color:var(--faint)">${fmtMoney(v.value)} vendido &middot; falta ${fmtMoney(Math.max(0,meta-v.value))}</div></div>`:'';})()}
     </div>`;
   }).join('');
+}
+function sparkline(v){
+  const wk=weeklyFor(v).cur.cierres;
+  const mx=Math.max(1,...wk);
+  return `<div class="tcard-spark">${wk.map(n=>`<span style="display:inline-block;width:10px;height:${Math.round(n/mx*20)+2}px;border-radius:2px 2px 0 0;background:${n===mx&&mx>1?'var(--brand)':'var(--line-2)'}"></span>`).join('')}<span style="font-size:.6rem;color:var(--faint);margin-left:4px;align-self:center">semanas</span></div>`;
 }
 
 let sortKey='status', sortDir=1;
@@ -1295,11 +1616,12 @@ function renderTeamPerf(){
   const t=document.getElementById('teamPerf'); if(!t)return;
   // ordenado por cierres desc
   const sorted=[...TEAM].sort((a,b)=>b.cierres-a.cierres);
-  const body=sorted.map(v=>{
+  const trophies=['🥇','🥈','🥉'];
+  const body=sorted.map((v,i)=>{
     const cc = v.conv>=6?'var(--green)':v.conv>=4?'var(--amber)':'var(--red)';
-    const isStar = v.cierres===MAX_CIERRES && MAX_CIERRES>0;
+    const prefix = i<3&&(v.cierres||0)>0 ? trophies[i]+' ' : '';
     return `<tr class="clickable" onclick="openPerfil('${v.name}')">
-      <td><div class="who">${v.name}${isStar?' <span class="st st-green" style="font-size:.6rem;padding:1px 7px">★ top</span>':''}${v.nuevo?' <span class="st st-amber" style="font-size:.6rem;padding:1px 7px">nuevo</span>':''}</div><div class="where">${v.sucursal}</div></td>
+      <td><div class="who">${prefix}${v.name}${v.nuevo?' <span class="st st-amber" style="font-size:.6rem;padding:1px 7px">nuevo</span>':''}</div><div class="where">${v.sucursal}</div></td>
       <td class="r num">${v.leads}</td>
       <td class="r">${momBadge(v.leads, v.prevLeads)}</td>
       <td class="r num" style="color:${cc};font-weight:800">${v.conv}%</td>
@@ -1308,12 +1630,14 @@ function renderTeamPerf(){
       <td class="r num">${v.value?fmtMoney(v.value):'—'}</td>
       <td class="r num">${v.calif} <span class="where">(${v.califPct}%)</span></td>
       <td class="r num" style="${v.noRespPct>=70?'color:var(--red-ink);font-weight:800':''}">${v.noRespPct}%</td>
+      <td class="r num" style="color:var(--green-ink);font-weight:800">${v.manual||0} <span class="where">(${v.manualPct||0}%)</span></td>
+      <td class="r num">${v.auto||0} <span class="where">(${v.autoPct||0}%)</span></td>
     </tr>`;}).join('');
   // fila total
   const totLeads=TEAM.reduce((s,v)=>s+v.leads,0);
   const totPipe=TEAM.reduce((s,v)=>s+v.value,0);
   const totCalif=TEAM.reduce((s,v)=>s+v.calif,0);
-  const totRow=`<tr style="background:#FAFBFC">
+  const totRow=`<tr style="background:var(--hover)">
     <td class="bold">Equipo (total)</td>
     <td class="r num bold">${totLeads.toLocaleString('en-US')}</td>
     <td class="r">${momBadge(GLOBAL.leads,GLOBAL.prevLeads)}</td>
@@ -1323,8 +1647,10 @@ function renderTeamPerf(){
     <td class="r num bold">${fmtMoney(totPipe)}</td>
     <td class="r num bold">${totCalif}</td>
     <td class="r num bold">${NO_RESP_PCT}%</td>
+    <td class="r num bold" style="color:var(--green-ink)">${ORIGIN.manual.toLocaleString('en-US')} (${ORIGIN.manualPct}%)</td>
+    <td class="r num bold">${ORIGIN.auto.toLocaleString('en-US')} (${ORIGIN.autoPct}%)</td>
   </tr>`;
-  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs Abril</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th></tr></thead><tbody>${body}${totRow}</tbody>`;
+  t.innerHTML=`<thead><tr><th>Vendedora</th><th class="r">Leads</th><th class="r">vs ${PREV_MONTH_LBL}</th><th class="r">Conversión</th><th class="r">Cierres</th><th class="r">Ticket prom.</th><th class="r">Pipeline</th><th class="r">Calificados</th><th class="r">No responden</th><th class="r">✍ Manual</th><th class="r">⚙ Auto</th></tr></thead><tbody>${body}${totRow}</tbody>`;
 }
 
 /* ===================== ROUTER ===================== */
@@ -1332,7 +1658,7 @@ const VIEWS = {
   resumen:{t:'Resumen ejecutivo — '+CUR_MONTH+' '+CUR_YEAR, c:'Control diario', r:vResumen, after:()=>{renderTeamMini();renderMoMGlobal();}},
   equipo:{t:'Equipo — disciplina y rendimiento', c:'Centro de control', r:vEquipo, after:()=>{renderTeamGrid();renderTeamPerf();renderMetas();renderTeamFull();}},
   seguimiento:{t:'Seguimiento — backlog accionable', c:'Acción inmediata', r:vSeguimiento, after:bindBacklog},
-  conversion:{t:'Conversión y embudo', c:'Análisis', r:vConversion, after:null},
+  conversion:{t:'Conversión y embudo', c:'Análisis', r:vConversion, after:()=>{requestAnimationFrame(()=>requestAnimationFrame(()=>{document.querySelectorAll('.fbar[data-fw]').forEach(el=>{el.style.width=el.dataset.fw+'%';});}));}},
   semanal:{t:'Ritmo semanal', c:'Análisis', r:vSemanal, after:renderSemanal},
   sucursales:{t:'Sucursales — comparativo', c:'Análisis', r:vSucursales, after:null},
   proyeccion:{t:'Proyección al cierre', c:'Planeación', r:vProyeccion, after:null},
@@ -1340,7 +1666,9 @@ const VIEWS = {
   datos:{t:'Calidad de datos del CRM', c:'Análisis & datos', r:vDatos, after:null},
 };
 function bindBacklog(){
-  bkFilter='all'; bkVend=null; bkStage=null; bkMode='backlog';
+  bkFilter='all'; bkVend=null; bkStage=null; bkMode='backlog'; bkSearch=''; bkSort={k:'d',dir:-1};
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('active',b.dataset.m==='backlog'));
+  const si=document.getElementById('bkSearchInput'); if(si) si.value='';
   renderBacklogBy();
   renderBacklog();
   document.querySelectorAll('#bkFilters [data-f]').forEach(b=>b.onclick=()=>{
@@ -1353,9 +1681,45 @@ function bindBacklog(){
     renderBacklog();
   });
   document.querySelectorAll('#bkStageFilters [data-e]').forEach(b=>b.onclick=()=>{
-    if(bkStage===b.dataset.e){bkStage=null;b.classList.remove('active');}
-    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=b.dataset.e;}
+    const stg=b.dataset.e;
+    if(bkMode==='backlog'){
+      const hasInBk=BACKLOG.some(r=>r.e===stg&&(!bkVend||r.r===bkVend));
+      if(!hasInBk){setBkMode('stage',stg);return;}
+    }
+    if(bkStage===stg){bkStage=null;b.classList.remove('active');}
+    else{document.querySelectorAll('#bkStageFilters [data-e]').forEach(x=>x.classList.remove('active'));b.classList.add('active');bkStage=stg;}
     renderBacklog();
+  });
+  bkLoadPref();
+}
+/* ── avatar color único por vendedora ── */
+function avatarColor(name){
+  const g=[['#C0392B','#D35400'],['#D35400','#E67E22'],['#B7950B','#D4AC0D'],['#1E8449','#1ABC9C'],['#1A5276','#2E86C1'],['#6C3483','#9B59B6'],['#117A65','#1ABC9C'],['#2471A3','#5DADE2'],['#784212','#D35400'],['#C0392B','#E74C3C']];
+  let h=0; for(const c of (name||'')) h=(h*31+c.charCodeAt(0))%g.length;
+  const [a,b]=g[Math.abs(h)%g.length];
+  return `linear-gradient(135deg,${a},${b})`;
+}
+/* ── contadores animados ── */
+function countUp(el,dur=540){
+  const orig=el.textContent;
+  const m=orig.match(/^([^0-9]*)(\d[\d,.]*)(.*)/);
+  if(!m) return;
+  const num=parseFloat(m[2].replace(/,/g,''));
+  if(!num||num<=0) return;
+  const t0=performance.now();
+  (function step(ts){
+    const p=Math.min((ts-t0)/dur,1), ease=1-Math.pow(1-p,3), v=num*ease;
+    const d=num>=1000?Math.round(v).toLocaleString('en-US'):num>=10?String(Math.round(v)):v.toFixed(1);
+    el.textContent=m[1]+d+m[3];
+    if(p<1)requestAnimationFrame(step); else el.textContent=orig;
+  })(performance.now());
+}
+function runCountUps(){requestAnimationFrame(()=>document.querySelectorAll('.kpi-val,.diag-stat .v').forEach(el=>countUp(el)));}
+/* ── badge cero/nulo ── */
+function markZeros(){
+  document.querySelectorAll('.kpi-val,.tmetric .v').forEach(el=>{
+    const t=el.textContent.trim();
+    el.classList.toggle('zero',t==='0'||t==='—'||t==='0%'||t==='$0');
   });
 }
 function go(view){
@@ -1367,22 +1731,89 @@ function go(view){
   document.getElementById('crumb').textContent=v.c;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.view===view));
   if(v.after)v.after();
+  runCountUps();
+  markZeros();
 }
 document.querySelectorAll('.nav-item').forEach(n=>n.onclick=()=>go(n.dataset.view));
 loadMetas();
 (function(){
   const set=(view,val)=>{const el=document.querySelector(`[data-view="${view}"] .badge`); if(el) el.textContent=val;};
-  set('equipo', TEAM.length);
-  set('seguimiento', TOTAL_BACKLOG);
+  const _critTeam=TEAM.filter(v=>v.status==='red'||v.status==='amber').length;
+  set('equipo', _critTeam||TEAM.length);
+  set('seguimiento', CRIT_BACKLOG);
   set('alertas', buildAlerts().length);
 })();
+/* ── scroll al tope + topbar blur ── */
+(function(){const scr=document.getElementById('scroll'),btn=document.getElementById('btnTop'),topbar=document.querySelector('.topbar');if(scr)scr.addEventListener('scroll',()=>{if(btn)btn.classList.toggle('show',scr.scrollTop>250);if(topbar)topbar.classList.toggle('tb-scrolled',scr.scrollTop>10);},{passive:true});})();
+/* ── ripple en chips ── */
+document.addEventListener('click',function(e){const ch=e.target.closest('.chipf');if(!ch)return;const rp=document.createElement('span');const d=Math.max(ch.offsetWidth,ch.offsetHeight);const rect=ch.getBoundingClientRect();rp.className='ripple-wave';rp.style.cssText='width:'+d+'px;height:'+d+'px;left:'+(e.clientX-rect.left-d/2)+'px;top:'+(e.clientY-rect.top-d/2)+'px';ch.appendChild(rp);rp.addEventListener('animationend',function(){rp.remove();});});
+/* ── focus mode ── */
+let _focusMode=false;
+function toggleFocus(){_focusMode=!_focusMode;document.body.classList.toggle('focus-mode',_focusMode);const btn=document.getElementById('btnFocus');if(btn)btn.textContent=_focusMode?'✕ Salir':'⛶ Focus';}
+/* ── búsqueda global ── */
+let _gsAct=[];
+function gsSearch(q){
+  const res=document.getElementById('gsResults');if(!res)return;
+  q=(q||'').trim().toLowerCase();
+  res.classList.toggle('show',q.length>=2);
+  if(q.length<2){res.innerHTML='';_gsAct=[];return;}
+  const items=[];
+  TEAM.forEach(v=>{if((v.name||'').toLowerCase().includes(q)||(v.sucursal||'').toLowerCase().includes(q))items.push({tag:'Vendedora',lbl:(v.name||'').split(' - ')[0],sub:v.sucursal,fn:()=>{go('equipo');setTimeout(()=>openPerfil(v.name),80);}});});
+  const seen=new Set();
+  [...(STAGE_LEADS.slice(0,300)||[]),...(BACKLOG.slice(0,200)||[])].forEach(r=>{const c=r.c||'';if(!c||!c.toLowerCase().includes(q)||seen.has(c))return;seen.add(c);const id=leadId(r),url=id?`https://eanez.kommo.com/leads/detail/${id}`:'';items.push({tag:'Lead',lbl:c,sub:(r.r||'')+' · '+(r.e||''),fn:()=>{if(url)window.open(url,'_blank');else go('seguimiento');}});});
+  _gsAct=items.slice(0,7).map(it=>it.fn);
+  const esc=s=>(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  res.innerHTML=items.slice(0,7).map((it,i)=>`<div class="gs-item" onclick="gsRun(${i})"><span class="gs-tag">${esc(it.tag)}</span><b>${esc(it.lbl)}</b>${it.sub?`<div style="font-size:.71rem;color:var(--muted);margin-top:1px">${esc(it.sub)}</div>`:''}</div>`).join('');
+}
+function gsRun(i){_gsAct[i]&&_gsAct[i]();const inp=document.getElementById('gsInput');if(inp)inp.value='';const r=document.getElementById('gsResults');if(r){r.innerHTML='';r.classList.remove('show');}}
+document.addEventListener('click',e=>{const r=document.getElementById('gsResults'),inp=document.getElementById('gsInput');if(r&&inp&&!r.contains(e.target)&&!inp.contains(e.target))r.classList.remove('show');});
+/* ── timestamp relativo ── */
+(function(){
+  const chip=document.getElementById('metaChip');if(!chip)return;
+  const iso=DASH&&DASH.updated_at?DASH.updated_at:null;if(!iso)return;
+  try{
+    const dt=new Date(iso),now=new Date(),diff=Math.floor((now-dt)/1000);
+    const rel=diff<60?'hace unos segundos':diff<3600?'hace '+Math.floor(diff/60)+' min':diff<86400?'hace '+Math.floor(diff/3600)+' h':'hace '+Math.floor(diff/86400)+' d';
+    chip.textContent='Actualizado '+rel;chip.title=dt.toLocaleString('es-BO');
+  }catch(e){}
+})();
 // Producción: window.DASH.backlog. Preview: fetch del JSON. Arranca en Resumen.
-if (DASH && DASH.backlog) {
-  BACKLOG = DASH.backlog;
-  if (DASH.stage_leads) STAGE_LEADS = DASH.stage_leads;
-  go('resumen');
-} else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
+if (DASH && DASH.backlog) { BACKLOG = DASH.backlog; if(DASH.stage_leads) STAGE_LEADS=DASH.stage_leads; go('resumen'); }
+else { fetch('assets/backlog.json').then(r=>r.json()).then(data=>{BACKLOG=data;}).catch(()=>{}).finally(()=>go('resumen')); }
 
+async function triggerWorkflow(){
+  const btn=document.getElementById('btnActualizar');
+  const svgIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg>';
+  const setBtn=(txt,disabled)=>{if(btn){btn.disabled=!!disabled;btn.innerHTML=txt;}};
+  let tok=localStorage.getItem('gh_wf_pat');
+  if(!tok){
+    tok=prompt('Para actualizar desde el dashboard necesitas un token de GitHub.\n\nCrea uno en:\ngithub.com → Settings → Developer settings\n→ Personal access tokens → Fine-grained tokens\n→ Solo permiso "Actions: Read and write" para el repo MULTIESPUMAS\n\nPega el token aquí:');
+    if(!tok)return;
+    localStorage.setItem('gh_wf_pat',tok.trim());
+  }
+  setBtn(svgIcon.replace('><path','><path class="spin"')+' Iniciando...',true);
+  try{
+    const r=await fetch('https://api.github.com/repos/eduardoxyz22-maker/MULTIESPUMAS/actions/workflows/update-crm-dashboard.yml/dispatches',{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+tok.trim(),'Accept':'application/vnd.github+json','Content-Type':'application/json','X-GitHub-Api-Version':'2022-11-28'},
+      body:JSON.stringify({ref:'main'})
+    });
+    if(r.status===204){
+      setBtn('✓ Actualizando (~2 min)...',true);
+      setTimeout(()=>location.reload(),110000);
+    } else if(r.status===401||r.status===403){
+      localStorage.removeItem('gh_wf_pat');
+      setBtn(svgIcon+' Token inválido — toca de nuevo',false);
+      setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+    } else {
+      setBtn(svgIcon+' Error '+r.status,false);
+      setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+    }
+  }catch(e){
+    setBtn(svgIcon+' Sin conexión',false);
+    setTimeout(()=>setBtn(svgIcon+' Actualizar',false),3000);
+  }
+}
 function _csvDownload(filename, rows){
   const csv = rows.map(r=>r.map(c=>{
     const s = String(c==null?'':c);
@@ -1420,12 +1851,46 @@ function exportarCSV(){
 
 function exportarBacklog(){
   const mes = (DASH&&DASH.month?DASH.month:'')+(DASH&&DASH.year?'_'+DASH.year:'');
-  const header = ['Contacto','Etapa','Sucursal','Responsable','Días sin contacto','Sin acción humana'];
-  const rows = [header, ...(BACKLOG||[]).map(b=>[
-    b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.d||0, b.nh?'Sí':'No'
-  ])];
-  _csvDownload('backlog_seguimiento'+(mes?'_'+mes:'')+'.csv', rows);
+  if(bkMode==='stage'){
+    let rows=STAGE_LEADS;
+    if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+    if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+    rows=bkApply(rows);
+    const header=['Contacto','Etapa','Sucursal','Responsable','Valor','Días','Link Kommo'];
+    const out=[header, ...rows.map(b=>{ const id=leadId(b); return [
+      b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.v||0, b.d||0, id?'https://eanez.kommo.com/leads/detail/'+id:''
+    ];})];
+    _csvDownload('pipeline_por_etapa'+(mes?'_'+mes:'')+'.csv', out);
+    return;
+  }
+  let rows=BACKLOG;
+  if(bkFilter==='crit') rows=rows.filter(r=>r.d>=7);
+  if(bkFilter==='nh') rows=rows.filter(r=>r.nh);
+  if(bkVend) rows=rows.filter(r=>r.r===bkVend);
+  if(bkStage) rows=rows.filter(r=>r.e===bkStage);
+  rows=bkApply(rows);
+  const header = ['Contacto','Etapa','Sucursal','Responsable','Días sin contacto','Sin acción humana','Link Kommo'];
+  const out = [header, ...rows.map(b=>{ const id=leadId(b); return [
+    b.c||'—', b.e||'—', b.s||'—', b.r||'—', b.d||0, b.nh?'Sí':'No', id?'https://eanez.kommo.com/leads/detail/'+id:''
+  ];})];
+  _csvDownload('backlog_seguimiento'+(mes?'_'+mes:'')+'.csv', out);
 }
+
+/* ===================== TEMA CLARO / OSCURO ===================== */
+const _MOON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
+const _SUN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
+function applyTheme(t){
+  const dark=t==='dark';
+  document.documentElement.setAttribute('data-theme', dark?'dark':'light');
+  try{localStorage.setItem('dash_theme', dark?'dark':'light');}catch(e){}
+  const btn=document.getElementById('btnTheme');
+  if(btn){ btn.innerHTML = dark?_SUN:_MOON; btn.title = dark?'Cambiar a tema claro':'Cambiar a tema oscuro'; }
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light';
+  applyTheme(cur==='dark'?'light':'dark');
+}
+applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'dark':'light');
 
 </script>
 </body>
