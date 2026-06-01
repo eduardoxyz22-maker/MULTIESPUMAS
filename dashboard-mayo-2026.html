@@ -4854,6 +4854,7 @@ function VendedoresView({ filtered, filterTienda }) {
     { key: "proyeccion", label: "Proyección", fmt: (v) => "Bs " + fmtMoney(v, { short: true }) },
     { key: "crecimientoVsAbril", label: "vs mes ant.", fmt: (v) => fmtPctSign(v), kind: "delta" },
     { key: "comision", label: "Comisión", fmt: (v) => "Bs " + fmtMoney(v + 0) },
+    { key: "pctPres", label: "% Presup", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.5 },
     { key: "pctMin", label: "% Meta mín", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.3 },
   ];
 
