@@ -908,7 +908,7 @@ function vSemanal(){
   <div class="section-head"><div><div class="eyebrow">Detalle</div><h2>Por vendedora y semana</h2></div>
   <span class="tag-line" id="semTblNote"></span></div>
   <div class="card" style="overflow-x:auto"><table class="tbl" id="semTable"></table></div>
-  <div class="tag-line" style="padding:0 2px">Total por vendedora = valor de sus deals cerrados (Compradores). El total Equipo muestra el pipeline completo desde Kommo — la diferencia son deals sin vendedora asignada. Distribución semanal es representativa; en producción usa la fecha real de cierre.</div>`;
+  <div class="tag-line" style="padding:0 2px">Total por vendedora = suma del valor de todos sus deals en Kommo. El total Equipo = suma de las vendedoras. Distribución semanal es representativa de los totales reales del mes; en producción usa la fecha real de cierre.</div>`;
 }
 function renderSemanal(){
   // toggle active
@@ -956,11 +956,7 @@ function renderSemanal(){
     }).join('');
     const tC=data.reduce((s,d)=>s+(isC?d.w.cur.totC:d.w.cur.totM),0);
     const tP=data.reduce((s,d)=>s+(isC?d.w.prev.totC:d.w.prev.totM),0);
-    // Para monto: total autorizado = GLOBAL.pipeline; tC es suma de v.value por vendedora
-    const equipoTotal=isC?tC:GLOBAL.pipeline;
-    const gapVal=isC?0:Math.max(0,GLOBAL.pipeline-tC);
-    const gapNote=(!isC&&gapVal>1000)?`<div style="font-size:.6rem;color:var(--faint);margin-top:2px">${fmtMoney(gapVal)} sin asignar</div>`:'';
-    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo${gapNote}</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?equipoTotal:fmtMoney(equipoTotal)}</td><td class="r">${momBadge(equipoTotal,tP)}</td></tr>`;
+    const totRow=`<tr style="background:var(--hover)"><td class="bold">Equipo</td>${curTot.map(n=>`<td class="r num bold">${fmtCell(n)}</td>`).join('')}<td class="r num bold">${isC?tC:fmtMoney(tC)}</td><td class="r">${momBadge(tC,tP)}</td></tr>`;
     tb.innerHTML = head+`<tbody>${rows}${totRow}</tbody>`;
   }
 }
