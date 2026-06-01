@@ -661,13 +661,14 @@ function embudoHTML(name){
 function openPerfil(name){
   const v=TEAM.find(x=>x.name===name); if(!v)return;
   const col=v.status==='green'?'var(--green)':v.status==='amber'?'var(--amber)':'var(--red)';
-  const proy=Math.round(v.value/30*31);
-  const metaPct=v.metaMonto?Math.round(v.value/v.metaMonto*100):0;
+  const vCerrado = weeklyFor(v).cur.totM;
+  const proy=Math.round(vCerrado / _curDay * _daysInMonth);
+  const metaPct=v.metaMonto?Math.round(vCerrado/v.metaMonto*100):0;
   const metaCol=metaPct>=100?'var(--green)':metaPct>=70?'var(--amber)':'var(--red)';
   const body=`
     <div class="drawer-head">
       <div style="display:flex;gap:13px;align-items:center;min-width:0">
-        <div class="avatar" style="width:46px;height:46px;font-size:1.1rem;background:${col}">${v.ini}</div>
+        <div class="avatar" style="width:46px;height:46px;font-size:1.1rem;background:${avatarColor(v.name)}">${v.ini}</div>
         <div style="min-width:0"><div style="font-weight:800;font-size:1.15rem">${v.name}</div>
         <div class="where" style="display:flex;align-items:center;gap:6px;margin-top:3px">${v.sucursal} ${stPill(v.status)}</div></div>
       </div>
@@ -685,7 +686,11 @@ function openPerfil(name){
         </div>
         <div class="dr-mom">
           <div class="kpi-label">Meta de ventas ($) <span class="tag-line" style="font-style:normal">(editable)</span></div>
-          <div style="margin:6px 0 6px"><div class="kpi-val" style="font-size:1.7rem;color:var(--brand-d)">${fmtMoney(v.value)}</div></div>
+          <div style="margin:6px 0 4px;display:flex;align-items:baseline;gap:10px">
+            <div class="kpi-val" style="font-size:1.7rem;color:var(--green-ink)">${fmtMoney(vCerrado)}</div>
+            <span class="tag-line">cerrado</span>
+          </div>
+          <div style="font-size:.72rem;color:var(--muted);margin-bottom:6px">Pipeline total: ${fmtMoney(v.value)}</div>
           <div style="display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--muted);margin-bottom:9px">/ ${metaInput(v)}</div>
           <div class="mbar" style="height:9px"><i style="width:${Math.min(metaPct,100)}%;background:${metaCol}"></i></div>
           <div class="kpi-sub" style="color:${metaCol};font-weight:700">${metaPct}% de su meta · proy. ${fmtMoney(proy)}</div>
@@ -696,10 +701,13 @@ function openPerfil(name){
       <div class="funnel">${embudoHTML(v.name)}</div>
 
       <div class="dr-sec">KPIs comerciales</div>
+      <div class="dr-kpis" style="grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:8px">
+        <div class="dr-k" style="border-left:3px solid var(--green)"><div class="v" style="color:var(--green-ink)">${fmtMoney(vCerrado)}</div><div class="l">Cerrado mes (Compradores)</div></div>
+        <div class="dr-k" style="border-left:3px solid var(--brand)"><div class="v" style="color:var(--brand-d)">${fmtMoney(v.value)}</div><div class="l">Pipeline total (todas etapas)</div></div>
+      </div>
       <div class="dr-kpis">
         <div class="dr-k"><div class="v" style="color:${v.conv>=6?'var(--green)':v.conv>=4?'var(--amber)':'var(--red)'}">${v.conv}%</div><div class="l">Conversión</div></div>
         <div class="dr-k"><div class="v">${v.ticket?fmtMoney(v.ticket):'—'}</div><div class="l">Ticket prom.</div></div>
-        <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(v.value)}</div><div class="l">Pipeline</div></div>
         <div class="dr-k"><div class="v">${v.calif} <span style="font-size:.7rem;color:var(--muted)">(${v.califPct}%)</span></div><div class="l">Calificados</div></div>
         <div class="dr-k"><div class="v" style="${v.noRespPct>=70?'color:var(--red)':''}">${v.noRespPct}%</div><div class="l">No responden</div></div>
         <div class="dr-k"><div class="v" style="color:${v.backlog>100?'var(--red)':v.backlog>40?'var(--amber)':'var(--green)'}">${v.backlog}</div><div class="l">Sin seguimiento</div></div>
@@ -766,8 +774,8 @@ function openSucursal(sucName){
       <div class="dr-kpis" style="grid-template-columns:repeat(4,1fr)">
         <div class="dr-k"><div class="v">${tot.leads.toLocaleString('en-US')}</div><div class="l">Leads</div></div>
         <div class="dr-k"><div class="v">${tot.cierres}</div><div class="l">Cierres</div></div>
-        <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(tot.value)}</div><div class="l">Pipeline</div></div>
-        <div class="dr-k"><div class="v">${totConv}%</div><div class="l">Conversión</div></div>
+        <div class="dr-k"><div class="v" style="color:var(--green-ink)">${fmtMoney(vends.reduce((s,v)=>s+weeklyFor(v).cur.totM,0))}</div><div class="l">Cerrado mes</div></div>
+        <div class="dr-k"><div class="v" style="color:var(--brand-d)">${fmtMoney(tot.value)}</div><div class="l">Pipeline total</div></div>
       </div>
       <div class="dr-sec">Por vendedora &mdash; toca para ver perfil completo</div>
       ${vcards}
