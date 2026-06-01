@@ -2176,9 +2176,9 @@ function TopBar(_ref) {
   }, /*#__PURE__*/React.createElement("span", null, "D\xEDa del mes"), /*#__PURE__*/React.createElement("button", {
     className: "pop-reset",
     onClick: function onClick() {
-      return setDia(Math.min(new Date().getDate(), D.periodo.diasTotales));
+      return setDia((D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales)));
     }
-  }, "Restablecer \xB7 ", Math.min(new Date().getDate(), D.periodo.diasTotales))), /*#__PURE__*/React.createElement("input", {
+  }, "Restablecer \xB7 ", (D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales)))), /*#__PURE__*/React.createElement("input", {
     type: "range",
     min: 1,
     max: D.periodo.diasTotales,
@@ -3312,7 +3312,7 @@ function App() {
     _us7 = _slicedToArray(_us6, 2),
     search = _us7[0],
     setSearch = _us7[1];
-  var _us8 = _us(Math.min(new Date().getDate(), D.periodo.diasTotales)),
+  var _us8 = _us((D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales))),
     _us9 = _slicedToArray(_us8, 2),
     dia = _us9[0],
     setDia = _us9[1];
@@ -3376,7 +3376,7 @@ function App() {
             parsed = _context.v;
             // Mutate in place so module-level `D` references stay valid
             Object.assign(window.__DATA__, parsed);
-            setDia(Math.min(new Date().getDate(), parsed.periodo.diasTotales));
+            setDia((parsed.periodo.cerrado?parsed.periodo.diasTotales:Math.min(new Date().getDate(),parsed.periodo.diasTotales)));
             setSearch("");
             setFilterTienda("Todas");
             setDataVersion(function (v) {
@@ -4396,7 +4396,7 @@ function TopBar({ view, setView, filterTienda, setFilterTienda, search, setSearc
             <div className="period-popover">
               <div className="pop-head">
                 <span>Día del mes</span>
-                <button className="pop-reset" onClick={() => setDia(Math.min(new Date().getDate(), D.periodo.diasTotales))}>Restablecer · {Math.min(new Date().getDate(), D.periodo.diasTotales)}</button>
+                <button className="pop-reset" onClick={() => setDia((D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales)))}>Restablecer · {(D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales))}</button>
               </div>
               <input
                 type="range"
@@ -5150,7 +5150,7 @@ function App() {
   const [view, setView] = _us("resumen");
   const [filterTienda, setFilterTienda] = _us("Todas");
   const [search, setSearch] = _us("");
-  const [dia, setDia] = _us(Math.min(new Date().getDate(), D.periodo.diasTotales));
+  const [dia, setDia] = _us((D.periodo.cerrado?D.periodo.diasTotales:Math.min(new Date().getDate(),D.periodo.diasTotales)));
   const [dataVersion, setDataVersion] = _us(0); // bump to force re-render
   const [toast, setToast] = _us(null);
 
@@ -5183,7 +5183,7 @@ function App() {
       const parsed = await window.parseXlsxFile(file);
       // Mutate in place so module-level `D` references stay valid
       Object.assign(window.__DATA__, parsed);
-      setDia(Math.min(new Date().getDate(), parsed.periodo.diasTotales));
+      setDia((parsed.periodo.cerrado?parsed.periodo.diasTotales:Math.min(new Date().getDate(),parsed.periodo.diasTotales)));
       setSearch("");
       setFilterTienda("Todas");
       setDataVersion((v) => v + 1);
