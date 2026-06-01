@@ -183,7 +183,7 @@ for row in [3, 4, 5, 6]:
         'productos': productos,
         'conversion': round(ventas / leads, 6) if leads > 0 else 0,
         'pctMin': round(sf(gv(hv, row, 5)), 6),
-        'pctPres': round(sf(gv(hv, row, 7)), 6),
+        'pctPres': round(monto / sf(gv(hv, row, 6)), 6) if sf(gv(hv, row, 6)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
         'pctTotal': 0,
         'comision': round(sf(gv(hv, row, 12)), 4),
         'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
@@ -217,7 +217,7 @@ for row in [3, 4, 5]:
         'productos': si(gv(sv, row, 4)),
         'conversion': round(ventas / leads, 6) if leads > 0 else 0,
         'pctMin': round(sf(gv(sv, row, 7)), 6),
-        'pctPres': round(sf(gv(sv, row, 9)), 6),
+        'pctPres': round(monto / sf(gv(sv, row, 8)), 6) if sf(gv(sv, row, 8)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
         'pctTotal': 0,
         'comision': round(sf(gv(sv, row, 14)), 4),
         'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
@@ -266,7 +266,7 @@ for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]
         'metaMin': round(sf(gv(ds, r, 2)), 2),
         'presupuesto': round(sf(gv(ds, r, 4)), 2),
         'pctMin': round(sf(gv(ds, r, 3)), 6),
-        'pctPres': round(sf(gv(ds, r, 5)), 6),
+        'pctPres': round(monto_t / sf(gv(ds, r, 4)), 6) if sf(gv(ds, r, 4)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
         'leads': leads_t,
         'conversion': conv_t,
         'comisiones': round(c['comisiones'], 4),
@@ -361,7 +361,7 @@ window.parseXlsxFile = async function(file) {
     var hk=nk(r[0]);
     vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"HEAVEN",monto:m,
       metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
-      conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[7]),pctTotal:0,comision:sf(r[12]),
+      conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[6])>0?m/sf(r[6]):0,pctTotal:0,comision:sf(r[12]),
       bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:(hk in crecLookup)?crecLookup[hk]:null,nuevoRecord:!!recordLookup[hk],
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
   for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
@@ -369,7 +369,7 @@ window.parseXlsxFile = async function(file) {
     var sk=nk(r[0]);
     vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"SUE\xd1A",monto:m,
       metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
-      conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[9]),pctTotal:0,comision:sf(r[14]),
+      conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[8])>0?m/sf(r[8]):0,pctTotal:0,comision:sf(r[14]),
       bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:(sk in crecLookup)?crecLookup[sk]:null,nuevoRecord:!!recordLookup[sk],
       ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[11])});}
   var tot=vends.reduce(function(s,v){return s+v.monto;},0);
@@ -379,7 +379,7 @@ window.parseXlsxFile = async function(file) {
     var mn=sf(r[1]),dif=sf(r[9]||0),mp=dif?mn-dif:null;
     var l=ti===0?si((sv[5]||[])[13]):ti===1?si((hv[6]||[])[11]):null;
     tiendas.push({id:tn[ti].toLowerCase().replace("\xf1","n"),nombre:tn[ti],monto:mn,metaMin:sf(r[2]),
-      presupuesto:sf(r[4]),pctMin:sf(r[3]),pctPres:sf(r[5]),leads:l,conversion:null,
+      presupuesto:sf(r[4]),pctMin:sf(r[3]),pctPres:sf(r[4])>0?mn/sf(r[4]):0,leads:l,conversion:null,
       comisiones:0,bonos:0,totalPagado:0,comisionados:0,
       crecimientoVsAbril:mp?dif/mp:null,mesPasadoMonto:mp});}
   if(ds[26]){tiendas[0].comisiones=sf(ds[26][1]);tiendas[0].bonos=sf(ds[26][2]);tiendas[0].totalPagado=sf(ds[26][3]);tiendas[0].comisionados=si(ds[26][4]);}
