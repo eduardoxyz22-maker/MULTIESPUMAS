@@ -471,6 +471,8 @@ to_ts_prev = int(fin_mes_prev.timestamp())
 print("Obteniendo leads del mes anterior...")
 leads_prev = fetch_all_leads(from_ts_prev, to_ts_prev)
 total_leads_prev = len(leads_prev)
+for _l in leads_prev:
+    _l["_contract_ts"] = get_contract_ts(_l, contract_date_field_id)
 prev_mes_short = mes_label_map[prev_month][:3]
 cur_mes_short = mes_label_map[now_dt.month][:3]
 dia_hoy = now_dt.day
@@ -557,7 +559,10 @@ for lead in leads:
     total_value += value
 
     if stage_name == COMPRADORES_STAGE:
-        total_compradores += 1
+        _ct_chk = lead.get("_contract_ts")
+        if not _ct_chk or (datetime.datetime.fromtimestamp(_ct_chk).year == now_dt.year and
+                            datetime.datetime.fromtimestamp(_ct_chk).month == now_dt.month):
+            total_compradores += 1
     if stage_name == NO_RESP_STAGE:
         total_no_resp += 1
     if stage_name in QUALIFIED_STAGES:
@@ -577,7 +582,10 @@ for lead in leads:
     vd["value"] += value
     vd["stages"][stage_name] += 1
     if stage_name == COMPRADORES_STAGE:
-        vd["compradores"] += 1
+        _ct_chk2 = lead.get("_contract_ts")
+        if not _ct_chk2 or (datetime.datetime.fromtimestamp(_ct_chk2).year == now_dt.year and
+                              datetime.datetime.fromtimestamp(_ct_chk2).month == now_dt.month):
+            vd["compradores"] += 1
     if stage_name == NO_RESP_STAGE:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
@@ -613,11 +621,24 @@ for lead in leads:
 
 total_leads = len(leads)
 
+# Leads creados este mes pero con fecha contrato = mes anterior → van al archivo prev
+_prev_cross_from_cur = []
+if contract_date_field_id:
+    for _l in leads:
+        _ct_l = _l.get("_contract_ts")
+        if _ct_l and stage_map.get(_l.get("status_id")) == COMPRADORES_STAGE:
+            _cd_l = datetime.datetime.fromtimestamp(_ct_l)
+            if _cd_l.year == prev_year and _cd_l.month == prev_month:
+                _prev_cross_from_cur.append(_l)
+    if _prev_cross_from_cur:
+        print(f"  → {len(_prev_cross_from_cur)} leads de este mes con fecha contrato en mes anterior")
+
 # === Cierres cross-month: leads de meses anteriores cerrados este mes ===
 # Usa fecha de contrato (si existe) como fuente de verdad del mes de cierre.
 # Si no hay campo de contrato, cae en updated_at como antes.
 _leads_cross = []
 _cross_value = 0.0
+_prev_cross_from_fetch = []
 if _compradores_sid:
     print("Obteniendo cierres cross-month (leads anteriores cerrados este mes)...")
     try:
@@ -629,34 +650,40 @@ if _compradores_sid:
             _cross_from = from_ts
         _cross_raw = fetch_compradores_mes(_compradores_sid, _cross_from)
         _ids_this = {l["id"] for l in leads}
+        _prev_cross_from_fetch = []
         for _l in _cross_raw:
             if _l["id"] in _ids_this:
                 continue
             _ct = get_contract_ts(_l, contract_date_field_id)
             _l["_contract_ts"] = _ct
-            # Determinar si pertenece a este mes
             if _ct:
                 _cd = datetime.datetime.fromtimestamp(_ct)
-                _in_month = (_cd.year == now_dt.year and _cd.month == now_dt.month)
+                _is_cur  = (_cd.year == now_dt.year and _cd.month == now_dt.month)
+                _is_prev = (_cd.year == prev_year  and _cd.month == prev_month)
             else:
-                _in_month = (_l.get("updated_at", 0) >= from_ts)
-            if not _in_month:
-                continue
-            _leads_cross.append(_l)
-            _ids_this.add(_l["id"])
-            _cuid = _l.get("responsible_user_id")
-            _cname = user_map.get(_cuid, "Desconocido")
-            _cval = float(_l.get("price", 0) or 0)
-            _cross_value += _cval
-            vendor_data[_cname]["compradores"] += 1
-            vendor_data[_cname]["value"] += _cval
-            total_compradores += 1
+                _is_cur  = (_l.get("updated_at", 0) >= from_ts)
+                _is_prev = False
+            if _is_cur:
+                _leads_cross.append(_l)
+                _ids_this.add(_l["id"])
+                _cuid = _l.get("responsible_user_id")
+                _cname = user_map.get(_cuid, "Desconocido")
+                _cval = float(_l.get("price", 0) or 0)
+                _cross_value += _cval
+                vendor_data[_cname]["compradores"] += 1
+                vendor_data[_cname]["value"] += _cval
+                total_compradores += 1
+            elif _is_prev:
+                _prev_cross_from_fetch.append(_l)
         if _leads_cross:
-            print(f"  → {len(_leads_cross)} cierres cross-month incorporados (por {'fecha contrato' if contract_date_field_id else 'updated_at'})")
+            print(f"  → {len(_leads_cross)} cierres este mes (cross-month, por {'fecha contrato' if contract_date_field_id else 'updated_at'})")
         else:
             print("  → Sin cierres cross-month este mes")
+        if _prev_cross_from_fetch:
+            print(f"  → {len(_prev_cross_from_fetch)} cierres detectados para mes anterior (se patchearán)")
     except Exception as _xe:
         print(f"  ⚠ Cross-month: {_xe}")
+        _prev_cross_from_fetch = []
 
 # === Detección de fichas duplicadas (mismo teléfono en contactos distintos) ===
 # Un duplicado real = la misma persona cargada como 2+ fichas de contacto diferentes.
@@ -1832,4 +1859,65 @@ with open(_panel_path, "w", encoding="utf-8") as _pf:
 print("panel.html (dashboard rediseñado) generado correctamente.")
 if _archive_saved:
     print(f"  → Archivo histórico disponible en GitHub Pages como panel_{_old_year}_{_old_month:02d}.html")
+
+# === Patchear archivo del mes anterior con cierres de fecha contrato ===
+_all_prev_cross = _prev_cross_from_cur + _prev_cross_from_fetch
+if _all_prev_cross:
+    _prev_archive = f"panel_{prev_year}_{prev_month:02d}.html"
+    print(f"Patcheando {_prev_archive} con {len(_all_prev_cross)} cierres del mes anterior...")
+    try:
+        if not _os.path.exists(_prev_archive):
+            print(f"  ⚠ {_prev_archive} no existe aún — se creará al final del mes o al próximo cierre de mes")
+        else:
+            with open(_prev_archive, encoding="utf-8") as _paf:
+                _prev_content = _paf.read()
+            _pm = _re.search(r'window\.DASH\s*=\s*(\{.*?\});', _prev_content, _re.DOTALL)
+            if not _pm:
+                print(f"  ⚠ No se encontró DASH en {_prev_archive}")
+            else:
+                _pdash = json.loads(_pm.group(1))
+                _pbv = _pdash.get("weekly", {}).get("byVendor", {})
+                _pn = 5
+                if _pbv:
+                    _pn = len(next(iter(_pbv.values()), {}).get("curC", [0]*5))
+
+                def _pwi(day): return min((day - 1) // 7, _pn - 1)
+
+                _padded = 0
+                for _pcl in _all_prev_cross:
+                    if stage_map.get(_pcl.get("status_id")) != COMPRADORES_STAGE:
+                        continue
+                    _pct = _pcl.get("_contract_ts")
+                    _pwi_idx = _pwi(datetime.datetime.fromtimestamp(_pct).day) if _pct else _pn - 1
+                    _pvn  = user_map.get(_pcl.get("responsible_user_id"), "Desconocido")
+                    _ppr  = int(float(_pcl.get("price", 0) or 0))
+                    if _pvn not in _pbv:
+                        _pbv[_pvn] = {"curC":[0]*_pn,"curM":[0]*_pn,"prevC":[0]*_pn,"prevM":[0]*_pn}
+                    _pbv[_pvn]["curC"][_pwi_idx] += 1
+                    _pbv[_pvn]["curM"][_pwi_idx] += _ppr
+                    for _ptv in _pdash.get("team", []):
+                        if _ptv.get("name") == _pvn:
+                            _ptv["cierres"] = _ptv.get("cierres", 0) + 1
+                            _ptv["value"]   = _ptv.get("value", 0) + _ppr
+                            if _ptv.get("leads", 0) > 0:
+                                _ptv["conv"] = round(_ptv["cierres"] / _ptv["leads"] * 100)
+                            break
+                    _padded += 1
+                _pdash["weekly"]["byVendor"] = _pbv
+                _pg = _pdash.get("global", {})
+                _pg["cierres"] = _pg.get("cierres", 0) + _padded
+                _pdash["global"] = _pg
+
+                with open("panel.template.html", encoding="utf-8") as _ptf:
+                    _ptmpl = _ptf.read()
+                _prev_mes_label = mes_label_map[prev_month] + " " + str(prev_year)
+                _parch_list = [{"label": mes_label, "url": "panel.html"}]
+                _pout = _ptmpl.replace("__DASH_JSON__", json.dumps(_pdash, ensure_ascii=False))
+                _pout = _pout.replace("__MES_LABEL__", _prev_mes_label)
+                _pout = _pout.replace("__ARCHIVE_LIST__", json.dumps(_parch_list, ensure_ascii=False))
+                with open(_prev_archive, "w", encoding="utf-8") as _paf2:
+                    _paf2.write(_pout)
+                print(f"  → {_prev_archive} actualizado con {_padded} cierres (fecha contrato {mes_label_map[prev_month]})")
+    except Exception as _pe:
+        print(f"  ⚠ Error patcheando {_prev_archive}: {_pe}")
 # ============================================================================

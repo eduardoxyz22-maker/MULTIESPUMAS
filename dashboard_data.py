@@ -131,15 +131,23 @@ def _weekly_for_leads(leads, user_map, stage_map, comprador_stage, year, month, 
     for lead in leads:
         if stage_map.get(lead.get("status_id")) != comprador_stage:
             continue
-        ts = lead.get("_contract_ts") or lead.get("updated_at") or lead.get("created_at") or 0
-        if not ts:
-            continue
-        d = datetime.datetime.fromtimestamp(ts)
-        if d.year != year or d.month != month:
-            # cerrado en otro mes; lo contamos en la última semana del mes objetivo
-            wi = n_weeks - 1
-        else:
+        _ct = lead.get("_contract_ts")
+        if _ct:
+            # Fecha de contrato explícita: si es de otro mes, no pertenece aquí
+            d = datetime.datetime.fromtimestamp(_ct)
+            if d.year != year or d.month != month:
+                continue
             wi = _week_index(d.day)
+        else:
+            # Sin fecha de contrato: fallback a updated_at
+            ts = lead.get("updated_at") or lead.get("created_at") or 0
+            if not ts:
+                continue
+            d = datetime.datetime.fromtimestamp(ts)
+            if d.year != year or d.month != month:
+                wi = n_weeks - 1  # cerrado en otro mes → última semana
+            else:
+                wi = _week_index(d.day)
         wi = min(wi, n_weeks - 1)
         vname = user_map.get(lead.get("responsible_user_id"), "Desconocido")
         rec = out.setdefault(vname, {"C": [0] * n_weeks, "M": [0] * n_weeks})
