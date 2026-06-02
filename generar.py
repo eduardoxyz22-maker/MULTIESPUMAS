@@ -82,6 +82,32 @@ def fetch_users():
     data = api_get("/users")
     return data.get("_embedded", {}).get("users", [])
 
+def fetch_compradores_mes(status_id, from_ts, to_ts=None):
+    """Leads actualmente en Compradores, actualizados (cerrados) en el período dado."""
+    leads_out = []
+    page = 1
+    while True:
+        param_list = [
+            ("limit", 250), ("page", page), ("with", "contacts"),
+            ("filter[updated_at][from]", from_ts),
+            ("filter[statuses][][id]", status_id),
+        ]
+        if to_ts:
+            param_list.append(("filter[updated_at][to]", to_ts))
+        try:
+            data = api_get("/leads", param_list)
+        except Exception:
+            break
+        batch = (data.get("_embedded") or {}).get("leads", [])
+        if not batch:
+            break
+        leads_out.extend(batch)
+        if "next" not in data.get("_links", {}):
+            break
+        page += 1
+        time.sleep(0.2)
+    return leads_out
+
 def fmt_money(v):
     if v <= 0:
         return "$0"
@@ -202,6 +228,7 @@ ADVANCED_STAGES    = set(filter(None, [_q1, _fs3, _q2, COMPRADORES_STAGE]))
 print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
 print("Etapas seguimiento:", FOLLOWUP_STAGES)
 print("Etapas avanzadas (=gestionado):", ADVANCED_STAGES)
+_compradores_sid = next((k for k, v in stage_map.items() if v == COMPRADORES_STAGE), None)
 
 print("Obteniendo usuarios...")
 users_raw = fetch_users()
@@ -563,6 +590,33 @@ for lead in leads:
 
 total_leads = len(leads)
 
+# === Cierres cross-month: leads de meses anteriores cerrados este mes ===
+# generar.py solo trae leads por created_at. Kommo muestra en "Compradores"
+# también leads de meses anteriores que se cerraron este mes. Este fetch
+# captura esos cierres para que los montos coincidan con el CRM.
+_leads_cross = []
+_cross_value = 0.0
+if _compradores_sid:
+    print("Obteniendo cierres cross-month (leads anteriores cerrados este mes)...")
+    try:
+        _cross_raw = fetch_compradores_mes(_compradores_sid, from_ts)
+        _ids_this_month = {l["id"] for l in leads}
+        _leads_cross = [l for l in _cross_raw if l["id"] not in _ids_this_month]
+        if _leads_cross:
+            print(f"  → {len(_leads_cross)} cierres de meses anteriores incorporados")
+            for _cl in _leads_cross:
+                _cuid = _cl.get("responsible_user_id")
+                _cname = user_map.get(_cuid, "Desconocido")
+                _cval = float(_cl.get("price", 0) or 0)
+                _cross_value += _cval
+                vendor_data[_cname]["compradores"] += 1
+                vendor_data[_cname]["value"] += _cval
+                total_compradores += 1
+        else:
+            print("  → Sin cierres cross-month este mes")
+    except Exception as _xe:
+        print(f"  ⚠ Cross-month: {_xe}")
+
 # === Detección de fichas duplicadas (mismo teléfono en contactos distintos) ===
 # Un duplicado real = la misma persona cargada como 2+ fichas de contacto diferentes.
 # Traemos el teléfono de TODOS los contactos del mes y agrupamos por teléfono normalizado.
@@ -680,7 +734,7 @@ calif_pct = round(total_calificados / total_leads * 100) if total_leads > 0 else
 stag_pct = round(total_stagnant_7 / total_leads * 100) if total_leads > 0 else 0
 auto_pct = round(total_auto / total_leads * 100) if total_leads > 0 else 0
 manual_pct = round(total_manual / total_leads * 100) if total_leads > 0 else 0
-ticket_avg = int(total_value / total_compradores) if total_compradores > 0 else 0
+ticket_avg = int((total_value + _cross_value) / total_compradores) if total_compradores > 0 else 0
 
 # --- KPIs comparativos MoM ---
 conv_prev   = round(compradores_prev / total_leads_prev * 100) if total_leads_prev > 0 else 0
@@ -1660,7 +1714,7 @@ _channels = list(channel_data.items()) if "channel_data" in dir() else None
 dash = build_dash(
     vendors_json_list=vendors_json_list,
     vresp_list=_vresp_list,
-    leads=leads,
+    leads=leads + _leads_cross,
     leads_prev=leads_prev,
     user_map=user_map,
     stage_map=stage_map,
