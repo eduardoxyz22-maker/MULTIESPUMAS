@@ -5366,7 +5366,7 @@ function PresentacionView({ filtered, filterTienda }) {
   })).filter(g => g.vends.length);
 
   const metricas = [
-    { l: "Leads (clientes atendidos)", val: v => v.leads || 0, fmt: v => fmtInt(v.leads || 0) },
+    { l: "Leads (clientes atendidos)", val: v => v.leads || 0, fmt: v => fmtInt(v.leads || 0), noBest: true },
     { l: "Ventas cerradas (clientes)", val: v => v.ventasConcretadas || 0, fmt: v => fmtInt(v.ventasConcretadas || 0) },
     { l: "Unidades vendidas", val: v => v.productos || 0, fmt: v => fmtInt(v.productos || 0) },
     { l: "Conversión", val: v => v.conversion == null ? -1 : v.conversion, fmt: v => v.conversion != null ? fmtPct(v.conversion, 1) : "—" },
@@ -5456,7 +5456,7 @@ function PresentacionView({ filtered, filterTienda }) {
                       <tr key={m.l}>
                         <td style={tdLat}>{m.l}</td>
                         {g.vends.map(v => {
-                          const esMejor = g.vends.length > 1 && isFinite(best) && best !== minV && m.val(v) === best;
+                          const esMejor = !m.noBest && g.vends.length > 1 && isFinite(best) && best !== minV && m.val(v) === best;
                           let color = "var(--ink)";
                           if (m.crec && v.crecimientoVsAbril != null) color = v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)";
                           return (
