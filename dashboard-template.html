@@ -4431,8 +4431,22 @@ function TopBar({ view, setView, filterTienda, setFilterTienda, search, setSearc
 }
 
 // ---------- KPI strip ----------
-function KPIStrip({ derived, filterTienda }) {
+function KPIStrip({ derived, filterTienda, view }) {
   const g = derived;
+    if (view === "presentacion") {
+    const tt = ["SUEÑA", "HEAVEN"].map(t => { const td = (D.tiendas || []).find(x => x.nombre === t) || {}; return { nombre: t, monto: td.monto || 0, pctPres: td.presupuesto > 0 ? td.monto / td.presupuesto : 0, pctMin: td.metaMin > 0 ? td.monto / td.metaMin : 0, personas: (D.vendedores || []).filter(v => v.tienda === t).length }; });
+    return (
+      <section className="kpi-strip" style={{ gridTemplateColumns: "1fr 1fr" }}>
+        {tt.map(t => (
+          <div key={t.nombre} className="kpi" style={{ borderLeft: "4px solid " + TIENDA_COLOR[t.nombre] }}>
+            <div className="kpi-eyebrow">{t.nombre} · venta total del mes</div>
+            <div className="kpi-value">{fmtBs(t.monto)}</div>
+            <div className="kpi-sub"><b>{fmtPct(t.pctPres)}</b> de presupuesto · <b>{fmtPct(t.pctMin)}</b> de meta mínima · {t.personas} personas</div>
+          </div>
+        ))}
+      </section>
+    );
+  }
   const scopeLabel = filterTienda === "Todas" ? "Global" :
     filterTienda === "OTROS" ? "Externos" :
     filterTienda === "SUEÑA" ? "Sueña" :
@@ -5238,7 +5252,7 @@ function App() {
         onUpload={handleUpload}
       />
 
-      <KPIStrip derived={derived} filterTienda={filterTienda} />
+      <KPIStrip derived={derived} filterTienda={filterTienda} view={view} />
 
       <main className="main">
         {view === "resumen" && <ResumenView key={"r" + dataVersion} filtered={filteredVend} derived={derived} filterTienda={filterTienda} />}
@@ -5335,7 +5349,7 @@ function PresentacionView({ filtered, filterTienda }) {
       <section className="card">
         <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
         <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0" }}>
-          Resultados separados por tienda. Arriba están las personas y al costado los indicadores. En cada fila, el mejor valor está resaltado en verde con ✓, para ver al instante quién lidera ese dato. La 👑 es quien más vendió del equipo. Primero, qué significa cada indicador:
+          Resultados separados por tienda. Arriba están las personas y al costado los indicadores. En cada fila, la 🥇 marca a la mejor del equipo en ese indicador — es un reconocimiento a quién encabeza, no que las demás lo hagan mal. La 👑 es quien más vendió del equipo. Primero, qué significa cada indicador:
         </p>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "12px 24px", margin: "16px 0 0" }}>
           {glosario.map((g, i) => (
@@ -5384,8 +5398,8 @@ function PresentacionView({ filtered, filterTienda }) {
                           let color = "var(--ink)";
                           if (m.crec && v.crecimientoVsAbril != null) color = v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)";
                           return (
-                            <td key={v.nombre} style={{ ...tdVal, fontWeight: (m.bold || esMejor) ? 700 : 500, color: esMejor ? "var(--good)" : color, background: esMejor ? "rgba(79,122,63,.10)" : "transparent" }}>
-                              {m.fmt(v)}{esMejor ? " ✓" : ""}
+                            <td key={v.nombre} style={{ ...tdVal, fontWeight: (m.bold || esMejor) ? 700 : 500, color: color, background: esMejor ? "rgba(176,122,31,.15)" : "transparent" }}>
+                              {m.fmt(v)}{esMejor ? " 🥇" : ""}
                             </td>
                           );
                         })}
