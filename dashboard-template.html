@@ -2750,6 +2750,12 @@ function VendedoresView(_ref) {
       return fmtInt(v);
     }
   }, {
+    key: "productos",
+    label: "Unidades",
+    fmt: function fmt(v) {
+      return fmtInt(v);
+    }
+  }, {
     key: "conversion",
     label: "Conv. Lead",
     fmt: function fmt(v) {
@@ -4791,6 +4797,7 @@ function VendedoresView({ filtered, filterTienda }) {
     { key: "pctTotal", label: "% Total", fmt: (v) => fmtPct(v), kind: "pct" },
     { key: "leads", label: "Leads", fmt: (v) => fmtInt(v) },
     { key: "ventasConcretadas", label: "Ventas", fmt: (v) => fmtInt(v) },
+    { key: "productos", label: "Unidades", fmt: (v) => fmtInt(v) },
     { key: "conversion", label: "Conv. Lead", fmt: (v) => fmtPct(v, 2), kind: "pct", scale: 0.2 },
     { key: "ticketProm", label: "Ticket Prom", fmt: (v) => "Bs " + fmtMoney(v) },
     { key: "prodPorVenta", label: "Prod / venta", fmt: (v) => v != null ? v.toFixed(2) : "—" },
