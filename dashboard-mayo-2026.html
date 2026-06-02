@@ -5409,16 +5409,33 @@ function PresentacionView({ filtered, filterTienda }) {
     return { lider, texto: razones.join(", ") };
   }
 
-  // Dona de participacion (arcos SVG)
   function dona(vends, total) {
     const size = 104, R = size / 2, sw = 14, rad = R - sw / 2 - 1, C = 2 * Math.PI * rad;
     let acc = 0;
     return vends.map(v => {
       const frac = total > 0 ? v.monto / total : 0;
       const len = frac * C;
-      const el = (<circle key={v.nombre} cx={R} cy={R} r={rad} fill="none" stroke={VENDOR_COLOR[v.nombre]} strokeWidth={sw} strokeDasharray={len.toFixed(2) + " " + (C - len).toFixed(2)} strokeDashoffset={(-acc * C).toFixed(2)} transform={"rotate(-90 " + R + " " + R + ")"} style={{ transition: "stroke-dasharray .8s" }} />);
+      const el = (<circle key={v.nombre} cx={R} cy={R} r={rad} fill="none" stroke={VENDOR_COLOR[v.nombre]} strokeWidth={sw} strokeDasharray={len.toFixed(2) + " " + (C - len).toFixed(2)} strokeDashoffset={(-acc * C).toFixed(2)} transform={"rotate(-90 " + R + " " + R + ")"} />);
       acc += frac;
       return el;
+    });
+  }
+
+  // count-up: anima de 0 al valor (solo si rAF corre; si no, queda el valor final)
+  function animateCount(el) {
+    if (el.__anim) return; el.__anim = true;
+    var target = parseFloat(el.getAttribute("data-target")) || 0;
+    var fmtT = el.getAttribute("data-fmt") || "int";
+    var finalTxt = el.textContent, dur = 950;
+    requestAnimationFrame(function () {
+      var t0 = null;
+      function step(ts) {
+        if (t0 === null) t0 = ts;
+        var p = Math.min((ts - t0) / dur, 1), e = 1 - Math.pow(1 - p, 3), val = target * e;
+        el.textContent = fmtT === "money" ? ("Bs " + Math.round(val).toLocaleString("es-BO")) : Math.round(val).toLocaleString("es-BO");
+        if (p < 1) requestAnimationFrame(step); else el.textContent = finalTxt;
+      }
+      requestAnimationFrame(step);
     });
   }
 
@@ -5438,6 +5455,14 @@ function PresentacionView({ filtered, filterTienda }) {
     secs[nx].scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const ranking = [...all].sort((a, b) => b.monto - a.monto);
+  const t3 = ranking.slice(0, 3);
+  const podio = [
+    t3[1] ? { v: t3[1], rank: 2, med: "🥈", h: 74, col: "#9aa0a6" } : null,
+    t3[0] ? { v: t3[0], rank: 1, med: "🥇", h: 106, col: "#d4a017" } : null,
+    t3[2] ? { v: t3[2], rank: 3, med: "🥉", h: 54, col: "#c0814e" } : null,
+  ].filter(Boolean);
+
   const GOLD = "#b07a1f";
   const th = { textAlign: "center", padding: "10px 14px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap" };
   const thLider = { ...th, background: "var(--surface-2)" };
@@ -5452,13 +5477,14 @@ function PresentacionView({ filtered, filterTienda }) {
     + " .mx-glosario summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:var(--surface-2);border-radius:8px;} .mx-glosario summary::-webkit-details-marker{display:none;} .mx-glosario[open] summary{margin-bottom:12px;}"
     + " .mx-pres-table tbody tr:hover td{background:rgba(0,0,0,.015);}"
     + " .mx-cellbar{height:5px;background:var(--rail);border-radius:3px;overflow:hidden;margin:5px auto 0;max-width:92px;} .mx-cellbar>i{display:block;height:100%;border-radius:3px;transform-origin:left;transform:scaleX(0);} section.mx-inview .mx-cellbar>i{animation:mxgrow .9s cubic-bezier(.2,.7,.3,1) forwards;} @keyframes mxgrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}"
-    + ""
     + " .mx-portada-logo{display:none;} html.mx-present .mx-portada-logo{display:block;width:min(360px,52%);height:auto;margin:0 auto 18px;animation:mxpop .6s cubic-bezier(.2,.8,.3,1) both;} @keyframes mxpop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}} html.mx-present .mx-intro-head{justify-content:center;text-align:center;} html.mx-present .mx-intro-head h2{font-size:34px;}"
     + " .mx-dona circle{opacity:0;} section.mx-inview .mx-dona circle{animation:mxdash .7s ease forwards;} @keyframes mxdash{from{opacity:0;}to{opacity:1;}}"
-    + " .mx-nav{display:none;} html.mx-present .mx-nav{display:inline-flex;position:fixed;right:18px;z-index:100000;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fbf8f2;border:0;cursor:pointer;font-size:18px;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.32);} html.mx-present .mx-nav-prev{bottom:78px;} html.mx-present .mx-nav-next{bottom:20px;}";
+    + " .mx-nav{display:none;} html.mx-present .mx-nav{display:inline-flex;position:fixed;right:18px;z-index:100000;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fbf8f2;border:0;cursor:pointer;font-size:18px;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.32);} html.mx-present .mx-nav-prev{bottom:78px;} html.mx-present .mx-nav-next{bottom:20px;}"
+    + " .mx-ped{transform-origin:bottom;transform:scaleY(0);} section.mx-inview .mx-ped{animation:mxped .7s cubic-bezier(.2,.8,.3,1) forwards;} @keyframes mxped{to{transform:scaleY(1);}}"
+    + " .mx-best{position:relative;overflow:hidden;} section.mx-inview .mx-best::before{content:'';position:absolute;top:0;left:-45%;width:45%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);animation:mxshine 1.2s ease .25s 1;} @keyframes mxshine{to{left:135%;}} .mx-party{display:inline-block;} section.mx-inview .mx-party{animation:mxpop .5s .3s both;}";
 
   return (
-    <div className="mx-pres-wrap" ref={el => { if (!el || el.__mxObs) return; el.__mxObs = true; var check = function(){ Array.prototype.forEach.call(el.children, function(s){ if (s.tagName !== "SECTION") return; var r = s.getBoundingClientRect(); s.classList.toggle("mx-inview", r.top < window.innerHeight * 0.78 && r.bottom > 70); }); }; check(); setTimeout(check, 60); setTimeout(check, 300); window.addEventListener("scroll", check, { passive: true }); window.addEventListener("resize", check, { passive: true }); }} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+    <div className="mx-pres-wrap" ref={el => { if (!el || el.__mxObs) return; el.__mxObs = true; var check = function(){ Array.prototype.forEach.call(el.children, function(s){ if (s.tagName !== "SECTION") return; var r = s.getBoundingClientRect(); var isIn = r.top < window.innerHeight * 0.78 && r.bottom > 70; var wasIn = s.classList.contains("mx-inview"); s.classList.toggle("mx-inview", isIn); if (isIn && !wasIn) { Array.prototype.forEach.call(s.querySelectorAll(".mx-count"), animateCount); } else if (!isIn && wasIn) { Array.prototype.forEach.call(s.querySelectorAll(".mx-count"), function(c){ c.__anim = false; }); } }); }; check(); setTimeout(check, 60); setTimeout(check, 300); window.addEventListener("scroll", check, { passive: true }); window.addEventListener("resize", check, { passive: true }); }} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
       <style dangerouslySetInnerHTML={{ __html: CSS }} />
 
       <section className="card">
@@ -5490,6 +5516,25 @@ function PresentacionView({ filtered, filterTienda }) {
       <button className="mx-nav mx-nav-prev" onClick={() => navSlide(-1)} title="Anterior">▲</button>
       <button className="mx-nav mx-nav-next" onClick={() => navSlide(1)} title="Siguiente">▼</button>
 
+      <section className="card">
+        <h3 style={{ margin: 0 }}>🏆 Podio del mes</h3>
+        <p style={{ color: "var(--muted)", fontSize: 13, margin: "4px 0 0" }}>Las 3 personas con mayor venta de todo el equipo.</p>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 16, marginTop: 18, flexWrap: "wrap" }}>
+          {podio.map(p => (
+            <div key={p.v.nombre} style={{ width: 158, textAlign: "center" }}>
+              <div style={{ fontSize: 34, lineHeight: 1 }}>{p.med}</div>
+              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6 }}>
+                <span style={{ width: 11, height: 11, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
+                <b style={{ fontSize: 15, color: "var(--ink)" }}>{p.v.nombre}</b>
+              </div>
+              <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 18, color: "var(--ink)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
+              <div style={{ fontSize: 11, color: "var(--muted)" }}>{p.v.tienda}</div>
+              <div className="mx-ped" style={{ height: p.h, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "10px 10px 0 0", marginTop: 10, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 9, color: "#fff", fontWeight: 800, fontSize: 23 }}>{p.rank}°</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {grupos.map(g => {
         const total = g.vends.reduce((s, v) => s + v.monto, 0);
         const d = destacado(g);
@@ -5501,7 +5546,7 @@ function PresentacionView({ filtered, filterTienda }) {
                 <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>{g.nombre}</div>
               </div>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1 }}>{fmtBs(total)}</div>
+                <div className="mx-count" data-target={total} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(total)}</div>
                 <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{g.vends.length} personas · venta total</div>
               </div>
             </div>
@@ -5585,8 +5630,8 @@ function PresentacionView({ filtered, filterTienda }) {
               </table>
             </div>
 
-            <div style={{ margin: "14px 18px 18px", background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
-              <b style={{ color: "var(--ink)" }}>🏆 Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
+            <div className="mx-best" style={{ margin: "14px 18px 18px", background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
+              <b style={{ color: "var(--ink)" }}><span className="mx-party">🎉</span> 🏆 Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
             </div>
           </section>
         );
