@@ -5343,82 +5343,88 @@ function App() {
 }
 
 function PresentacionView({ filtered, filterTienda }) {
-  const vends = [...filtered].sort((a, b) => b.monto - a.monto);
-  if (!vends.length) {
-    return <div className="empty">Elige <b>Todas</b>, <b>Sueña</b> o <b>Heaven</b> en la barra de arriba para ver la comparativa del equipo.</div>;
-  }
-  const best = (key, dir) => [...vends].filter(v => v[key] != null).sort((a, b) => dir * (a[key] - b[key]))[0];
-  const liderVenta = vends[0];
-  const liderConv = best("conversion", -1);
-  const liderTicket = best("ticketProm", -1);
-  const liderMeta = best("pctMin", -1);
-  const liderCrec = best("crecimientoVsAbril", -1);
+  const dtS = { fontWeight: 700, color: "var(--ink)", fontSize: 13 };
+  const ddS = { margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 };
+  const all = [...D.vendedores];
+  const grupos = ["SUEÑA", "HEAVEN"].map(t => ({
+    nombre: t,
+    color: TIENDA_COLOR[t],
+    vends: all.filter(v => v.tienda === t).sort((a, b) => b.monto - a.monto),
+  })).filter(g => g.vends.length);
 
-  const metricas = [
-    { titulo: "Ventas del mes", icono: "💰", fmt: v => fmtBs(v.monto), val: v => v.monto,
-      explica: "Es el total de dinero en ventas que logró cada persona durante el mes. Mientras más alto, mejor." },
-    { titulo: "Cumplimiento de presupuesto", icono: "📊", fmt: v => fmtPct(v.pctPres), val: v => v.pctPres,
-      explica: "Qué tanto alcanzó del presupuesto ideal (la meta exigente). 100% = llegó al presupuesto; más de 100% lo superó." },
-    { titulo: "Cumplimiento de meta mínima", icono: "🎯", fmt: v => fmtPct(v.pctMin), val: v => v.pctMin,
-      explica: "Qué tanto alcanzó de su meta mínima (el piso que debe cumplir). 100% = meta cumplida." },
-    { titulo: "Conversión", icono: "🔄", fmt: v => fmtPct(v.conversion, 1), val: v => v.conversion,
-      explica: "De cada 100 clientes que atendió, cuántos terminaron comprando. Mide qué tan bien cierra las ventas." },
-    { titulo: "Ticket promedio", icono: "🧾", fmt: v => fmtBs(v.ticketProm), val: v => v.ticketProm,
-      explica: "Cuánto gasta en promedio cada cliente que le compra. Un ticket alto significa ventas más grandes." },
-    { titulo: "Crecimiento vs mes anterior", icono: "📈", fmt: v => v.crecimientoVsAbril != null ? fmtPctSign(v.crecimientoVsAbril) : "—", val: v => v.crecimientoVsAbril != null ? v.crecimientoVsAbril : 0,
-      explica: "Cuánto subió o bajó respecto al mes pasado. Verde = creció, rojo = bajó." },
-  ];
+  const totSuena = all.filter(v => v.tienda === "SUEÑA").reduce((s, v) => s + v.monto, 0);
+  const totHeaven = all.filter(v => v.tienda === "HEAVEN").reduce((s, v) => s + v.monto, 0);
+  const maxEquipo = Math.max(totSuena, totHeaven, 1);
 
-  const reconocimientos = [
-    { t: "Mayor venta", n: liderVenta.nombre, v: fmtBs(liderVenta.monto), ico: "💰" },
-    liderConv ? { t: "Mejor conversión", n: liderConv.nombre, v: fmtPct(liderConv.conversion, 1), ico: "🔄" } : null,
-    liderTicket ? { t: "Ticket más alto", n: liderTicket.nombre, v: fmtBs(liderTicket.ticketProm), ico: "🧾" } : null,
-    liderMeta ? { t: "Mejor cumplimiento", n: liderMeta.nombre, v: fmtPct(liderMeta.pctPres), ico: "🎯" } : null,
-    (liderCrec && liderCrec.crecimientoVsAbril > 0) ? { t: "Más creció", n: liderCrec.nombre, v: fmtPctSign(liderCrec.crecimientoVsAbril), ico: "📈" } : null,
+  const best = (key, dir) => [...all].filter(v => v[key] != null).sort((a, b) => dir * (a[key] - b[key]))[0];
+  const lv = best("monto", -1), lc = best("conversion", -1), lt = best("ticketProm", -1), lg = best("crecimientoVsAbril", -1);
+  const recon = [
+    lv && { t: "Mayor venta", n: lv.nombre, v: fmtBs(lv.monto), ico: "💰" },
+    lc && { t: "Mejor conversión", n: lc.nombre, v: fmtPct(lc.conversion, 1), ico: "🔄" },
+    lt && { t: "Ticket más alto", n: lt.nombre, v: fmtBs(lt.ticketProm), ico: "🧾" },
+    (lg && lg.crecimientoVsAbril > 0) && { t: "Más creció", n: lg.nombre, v: fmtPctSign(lg.crecimientoVsAbril), ico: "📈" },
   ].filter(Boolean);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <section className="card">
-        <h3 style={{ margin: 0 }}>Comparativa del equipo · {filterTienda === "Todas" ? "Todo el equipo" : filterTienda}</h3>
-        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>
-          Este panel compara el desempeño de cada integrante de forma sencilla. Cada bloque explica <b>qué significa el dato</b> y muestra una barra para ver de un vistazo quién va adelante. La persona con la barra más larga y la corona 👑 lidera ese indicador.
+        <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
+        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 14px" }}>
+          Resultados separados por tienda. Cada persona muestra cuánto vendió (barra y número), qué tanto del presupuesto alcanzó, su conversión, ticket promedio y cómo cambió vs el mes pasado. Abajo: reconocimientos y la explicación de cada dato.
         </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {[{ n: "SUEÑA", val: totSuena }, { n: "HEAVEN", val: totHeaven }].map(e => (
+            <div key={e.n} style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px", alignItems: "center", gap: 12 }}>
+              <span style={{ fontWeight: 700, color: TIENDA_COLOR[e.n], fontSize: 14 }}>{e.n}</span>
+              <div style={{ height: 22, background: "var(--rail)", borderRadius: 6, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: (e.val / maxEquipo * 100) + "%", background: TIENDA_COLOR[e.n], borderRadius: 6 }} />
+              </div>
+              <span style={{ textAlign: "right", fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{fmtBs(e.val)}</span>
+            </div>
+          ))}
+        </div>
+        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>Venta total por tienda</div>
       </section>
 
-      {metricas.map((m, i) => {
-        const ordenados = [...vends].sort((a, b) => m.val(b) - m.val(a));
-        const max = Math.max(...vends.map(v => Math.abs(m.val(v))), 0.0001);
-        return (
-          <section key={i} className="card">
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
-              <span style={{ fontSize: 22 }}>{m.icono}</span>
-              <h3 style={{ margin: 0 }}>{m.titulo}</h3>
-            </div>
-            <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.5, margin: "0 0 14px" }}>{m.explica}</p>
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {ordenados.map((v, idx) => {
-                const w = Math.max(Math.abs(m.val(v)) / max * 100, 2);
-                const neg = m.val(v) < 0;
-                return (
-                  <div key={v.nombre} style={{ display: "grid", gridTemplateColumns: "130px 1fr 96px", alignItems: "center", gap: 12 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
-                      <span style={{ width: 9, height: 9, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
-                      <span style={{ fontWeight: idx === 0 ? 700 : 500, color: "var(--ink)", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+        {grupos.map(g => {
+          const total = g.vends.reduce((s, v) => s + v.monto, 0);
+          const maxMonto = Math.max(...g.vends.map(v => v.monto), 1);
+          return (
+            <section key={g.nombre} className="card" style={{ borderTop: "3px solid " + g.color }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <h3 style={{ margin: 0, color: g.color }}>{g.nombre}</h3>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>{g.vends.length} personas</span>
+              </div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", marginTop: 4 }}>{fmtBs(total)}</div>
+              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>venta total del equipo</div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {g.vends.map((v, idx) => (
+                  <div key={v.nombre} style={{ borderTop: idx ? "1px solid var(--hairline)" : "none", paddingTop: idx ? 12 : 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
                         {v.nombre}{idx === 0 ? " 👑" : ""}
                       </span>
+                      <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{fmtBs(v.monto)}</span>
                     </div>
-                    <div style={{ height: 18, background: "var(--rail)", borderRadius: 5, overflow: "hidden" }}>
-                      <div style={{ height: "100%", width: w + "%", background: neg ? "var(--bad)" : VENDOR_COLOR[v.nombre], borderRadius: 5, transition: "width .5s" }} />
+                    <div style={{ height: 10, background: "var(--rail)", borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
+                      <div style={{ height: "100%", width: (v.monto / maxMonto * 100) + "%", background: VENDOR_COLOR[v.nombre], borderRadius: 5 }} />
                     </div>
-                    <span style={{ textAlign: "right", fontWeight: 600, fontSize: 13, color: neg ? "var(--bad)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{m.fmt(v)}</span>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 16px", fontSize: 12.5 }}>
+                      <span><b style={{ color: v.pctPres >= 1 ? "var(--good)" : v.pctPres >= 0.8 ? "var(--warn)" : "var(--bad)" }}>{fmtPct(v.pctPres)}</b> <span style={{ color: "var(--muted)" }}>presup.</span></span>
+                      <span><b style={{ color: "var(--ink)" }}>{fmtPct(v.conversion, 1)}</b> <span style={{ color: "var(--muted)" }}>conv.</span></span>
+                      <span><b style={{ color: "var(--ink)" }}>{fmtBs(v.ticketProm)}</b> <span style={{ color: "var(--muted)" }}>ticket</span></span>
+                      {v.crecimientoVsAbril != null && <span style={{ color: v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 600 }}>{v.crecimientoVsAbril >= 0 ? "▲" : "▼"} {fmtPctSign(v.crecimientoVsAbril)}</span>}
+                    </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
-        );
-      })}
+                ))}
+              </div>
+            </section>
+          );
+        })}
+      </div>
 
       <section className="card">
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -5426,7 +5432,7 @@ function PresentacionView({ filtered, filterTienda }) {
           <h3 style={{ margin: 0 }}>Reconocimientos del mes</h3>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
-          {reconocimientos.map((r, i) => (
+          {recon.map((r, i) => (
             <div key={i} style={{ background: "var(--surface-2)", border: "1px solid var(--hairline)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
               <div style={{ fontSize: 26 }}>{r.ico}</div>
               <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 6 }}>{r.t}</div>
@@ -5440,12 +5446,11 @@ function PresentacionView({ filtered, filterTienda }) {
       <section className="card">
         <h3 style={{ marginTop: 0 }}>📖 ¿Qué significa cada dato?</h3>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px 24px", margin: 0 }}>
-          {metricas.map((m, i) => (
-            <div key={i}>
-              <dt style={{ fontWeight: 700, color: "var(--ink)", fontSize: 13 }}>{m.icono} {m.titulo}</dt>
-              <dd style={{ margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 }}>{m.explica}</dd>
-            </div>
-          ))}
+          <div><dt style={dtS}>💰 Ventas</dt><dd style={ddS}>Total de dinero vendido en el mes. La barra compara a cada persona con la líder de su equipo.</dd></div>
+          <div><dt style={dtS}>📊 Presup.</dt><dd style={ddS}>Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó. Verde = bien, rojo = bajo.</dd></div>
+          <div><dt style={dtS}>🔄 Conv.</dt><dd style={ddS}>De cada 100 clientes atendidos, cuántos compraron. Mide qué tan bien cierra ventas.</dd></div>
+          <div><dt style={dtS}>🧾 Ticket</dt><dd style={ddS}>Cuánto gasta en promedio cada cliente que compra. Más alto = ventas más grandes.</dd></div>
+          <div><dt style={dtS}>📈 vs mes ant.</dt><dd style={ddS}>Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado.</dd></div>
         </dl>
       </section>
     </div>
