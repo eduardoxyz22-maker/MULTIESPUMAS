@@ -622,16 +622,33 @@ for lead in leads:
 total_leads = len(leads)
 
 # Leads creados este mes pero con fecha contrato = mes anterior → van al archivo prev
+# Funciona con o sin contract_date_field_id: si el campo no se encontró por nombre,
+# escanea todos los custom fields numéricos del lead buscando fechas en el mes anterior.
 _prev_cross_from_cur = []
-if contract_date_field_id:
-    for _l in leads:
-        _ct_l = _l.get("_contract_ts")
-        if _ct_l and stage_map.get(_l.get("status_id")) == COMPRADORES_STAGE:
-            _cd_l = datetime.datetime.fromtimestamp(_ct_l)
-            if _cd_l.year == prev_year and _cd_l.month == prev_month:
-                _prev_cross_from_cur.append(_l)
-    if _prev_cross_from_cur:
-        print(f"  → {len(_prev_cross_from_cur)} leads de este mes con fecha contrato en mes anterior")
+for _l in leads:
+    if stage_map.get(_l.get("status_id")) != COMPRADORES_STAGE:
+        continue
+    _ct_l = _l.get("_contract_ts")
+    if not _ct_l:
+        # Buscar cualquier campo de fecha con valor en el mes anterior
+        for _cf in _l.get("custom_fields_values") or []:
+            for _cfv in (_cf.get("values") or []):
+                try:
+                    _v = int(_cfv.get("value", 0) or 0)
+                    if from_ts_prev <= _v <= to_ts_prev:
+                        _ct_l = _v
+                        _l["_contract_ts"] = _ct_l
+                        break
+                except (TypeError, ValueError, OSError):
+                    pass
+            if _ct_l:
+                break
+    if _ct_l:
+        _cd_l = datetime.datetime.fromtimestamp(_ct_l)
+        if _cd_l.year == prev_year and _cd_l.month == prev_month:
+            _prev_cross_from_cur.append(_l)
+if _prev_cross_from_cur:
+    print(f"  → {len(_prev_cross_from_cur)} leads de este mes con fecha contrato en mes anterior")
 
 # === Cierres cross-month: leads de meses anteriores cerrados este mes ===
 # Usa fecha de contrato (si existe) como fuente de verdad del mes de cierre.
@@ -644,10 +661,8 @@ if _compradores_sid:
     try:
         # Si hay fecha de contrato, ampliar ventana a 90 días para capturar
         # contratos firmados este mes pero actualizados antes.
-        if contract_date_field_id:
-            _cross_from = int((inicio_mes - datetime.timedelta(days=90)).timestamp())
-        else:
-            _cross_from = from_ts
+        # Ampliar ventana 90 días para capturar contratos firmados antes del mes
+        _cross_from = int((inicio_mes - datetime.timedelta(days=90)).timestamp())
         _cross_raw = fetch_compradores_mes(_compradores_sid, _cross_from)
         _ids_this = {l["id"] for l in leads}
         _prev_cross_from_fetch = []
@@ -655,6 +670,22 @@ if _compradores_sid:
             if _l["id"] in _ids_this:
                 continue
             _ct = get_contract_ts(_l, contract_date_field_id)
+            # Si no se encontró el campo por nombre, escanear todos los campos de fecha
+            if not _ct:
+                for _cf2 in _l.get("custom_fields_values") or []:
+                    for _cfv2 in (_cf2.get("values") or []):
+                        try:
+                            _v2 = int(_cfv2.get("value", 0) or 0)
+                            if _v2 > 0:
+                                _d2 = datetime.datetime.fromtimestamp(_v2)
+                                if (_d2.year == now_dt.year and _d2.month == now_dt.month) or \
+                                   (_d2.year == prev_year  and _d2.month == prev_month):
+                                    _ct = _v2
+                                    break
+                        except (TypeError, ValueError, OSError):
+                            pass
+                    if _ct:
+                        break
             _l["_contract_ts"] = _ct
             if _ct:
                 _cd = datetime.datetime.fromtimestamp(_ct)
@@ -1794,7 +1825,7 @@ dash = build_dash(
         leads=total_leads,
         prev_leads=total_leads_prev,
         compradores=total_compradores,
-        value=total_value,
+        value=total_value + _cross_value,
         ticket=ticket_avg,
     ),
     all_rows=all_rows,
