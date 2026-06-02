@@ -467,6 +467,8 @@ inicio_mes_prev = datetime.datetime(prev_year, prev_month, 1)
 fin_mes_prev = datetime.datetime(prev_year, prev_month, prev_day, 23, 59, 59)
 from_ts_prev = int(inicio_mes_prev.timestamp())
 to_ts_prev = int(fin_mes_prev.timestamp())
+# Full month end — used for fecha-contrato and created_at classification (NOT for leads_prev fetch)
+_full_prev_month_end_ts = int(datetime.datetime(prev_year, prev_month, last_day_prev, 23, 59, 59).timestamp())
 
 print("Obteniendo leads del mes anterior...")
 leads_prev = fetch_all_leads(from_ts_prev, to_ts_prev)
@@ -635,7 +637,7 @@ for _l in leads:
             for _cfv in (_cf.get("values") or []):
                 try:
                     _v = int(_cfv.get("value", 0) or 0)
-                    if from_ts_prev <= _v <= to_ts_prev:
+                    if from_ts_prev <= _v <= _full_prev_month_end_ts:
                         _ct_l = _v
                         _l["_contract_ts"] = _ct_l
                         break
@@ -694,7 +696,7 @@ if _compradores_sid:
             else:
                 # Sin fecha de contrato: usar created_at como mes de origen.
                 # Lead CREADO en mes anterior pero CERRADO este mes → pertenece al mes anterior.
-                _created_in_prev = (from_ts_prev <= _l.get("created_at", 0) <= to_ts_prev)
+                _created_in_prev = (from_ts_prev <= _l.get("created_at", 0) <= _full_prev_month_end_ts)
                 _closed_this_month = (_l.get("updated_at", 0) >= from_ts)
                 if _created_in_prev and _closed_this_month:
                     _is_prev = True
