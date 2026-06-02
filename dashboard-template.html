@@ -5283,111 +5283,105 @@ function App() {
 function PresentacionView({ filtered, filterTienda }) {
   const dtS = { fontWeight: 700, color: "var(--ink)", fontSize: 13 };
   const ddS = { margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 };
+  const th = { textAlign: "right", padding: "8px 10px", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
+  const thL = { ...th, textAlign: "left" };
+  const td = { textAlign: "right", padding: "11px 10px", fontSize: 13.5, color: "var(--ink)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
+  const tdL = { ...td, textAlign: "left" };
+
   const all = [...D.vendedores];
   const grupos = ["SUEÑA", "HEAVEN"].map(t => ({
-    nombre: t,
-    color: TIENDA_COLOR[t],
+    nombre: t, color: TIENDA_COLOR[t],
     vends: all.filter(v => v.tienda === t).sort((a, b) => b.monto - a.monto),
   })).filter(g => g.vends.length);
 
-  const totSuena = all.filter(v => v.tienda === "SUEÑA").reduce((s, v) => s + v.monto, 0);
-  const totHeaven = all.filter(v => v.tienda === "HEAVEN").reduce((s, v) => s + v.monto, 0);
-  const maxEquipo = Math.max(totSuena, totHeaven, 1);
-
-  const best = (key, dir) => [...all].filter(v => v[key] != null).sort((a, b) => dir * (a[key] - b[key]))[0];
-  const lv = best("monto", -1), lc = best("conversion", -1), lt = best("ticketProm", -1), lg = best("crecimientoVsAbril", -1);
-  const recon = [
-    lv && { t: "Mayor venta", n: lv.nombre, v: fmtBs(lv.monto), ico: "💰" },
-    lc && { t: "Mejor conversión", n: lc.nombre, v: fmtPct(lc.conversion, 1), ico: "🔄" },
-    lt && { t: "Ticket más alto", n: lt.nombre, v: fmtBs(lt.ticketProm), ico: "🧾" },
-    (lg && lg.crecimientoVsAbril > 0) && { t: "Más creció", n: lg.nombre, v: fmtPctSign(lg.crecimientoVsAbril), ico: "📈" },
-  ].filter(Boolean);
+  function destacado(g) {
+    const lider = g.vends[0];
+    const total = g.vends.reduce((s, v) => s + v.monto, 0);
+    const razones = ["vendió " + fmtBs(lider.monto) + " (" + fmtPct(total > 0 ? lider.monto / total : 0) + " del total del equipo)"];
+    const mc = [...g.vends].filter(v => v.conversion != null).sort((a, b) => b.conversion - a.conversion)[0];
+    if (mc && mc.nombre === lider.nombre) razones.push("la mejor conversión (" + fmtPct(lider.conversion, 1) + ")");
+    const mg = [...g.vends].filter(v => v.crecimientoVsAbril != null).sort((a, b) => b.crecimientoVsAbril - a.crecimientoVsAbril)[0];
+    if (mg && mg.nombre === lider.nombre && lider.crecimientoVsAbril > 0) razones.push("el mayor crecimiento (" + fmtPctSign(lider.crecimientoVsAbril) + " vs mes pasado)");
+    if (lider.nuevoRecord) razones.push("¡y logró un nuevo récord personal!");
+    return { lider, texto: razones.join(", ") };
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <section className="card">
         <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
-        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 14px" }}>
-          Resultados separados por tienda. Cada persona muestra cuánto vendió (barra y número), qué tanto del presupuesto alcanzó, su conversión, ticket promedio y cómo cambió vs el mes pasado. Abajo: reconocimientos y la explicación de cada dato.
+        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0" }}>
+          Los resultados están separados por tienda. En cada tabla, cada fila es una persona y las columnas son sus indicadores. La persona destacada (👑) lideró las ventas de su equipo. Al final se explica qué significa cada dato.
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {[{ n: "SUEÑA", val: totSuena }, { n: "HEAVEN", val: totHeaven }].map(e => (
-            <div key={e.n} style={{ display: "grid", gridTemplateColumns: "90px 1fr 110px", alignItems: "center", gap: 12 }}>
-              <span style={{ fontWeight: 700, color: TIENDA_COLOR[e.n], fontSize: 14 }}>{e.n}</span>
-              <div style={{ height: 22, background: "var(--rail)", borderRadius: 6, overflow: "hidden" }}>
-                <div style={{ height: "100%", width: (e.val / maxEquipo * 100) + "%", background: TIENDA_COLOR[e.n], borderRadius: 6 }} />
-              </div>
-              <span style={{ textAlign: "right", fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{fmtBs(e.val)}</span>
-            </div>
-          ))}
-        </div>
-        <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 6 }}>Venta total por tienda</div>
       </section>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
-        {grupos.map(g => {
-          const total = g.vends.reduce((s, v) => s + v.monto, 0);
-          const maxMonto = Math.max(...g.vends.map(v => v.monto), 1);
-          return (
-            <section key={g.nombre} className="card" style={{ borderTop: "3px solid " + g.color }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-                <h3 style={{ margin: 0, color: g.color }}>{g.nombre}</h3>
-                <span style={{ fontSize: 12, color: "var(--muted)" }}>{g.vends.length} personas</span>
-              </div>
-              <div style={{ fontSize: 24, fontWeight: 700, color: "var(--ink)", marginTop: 4 }}>{fmtBs(total)}</div>
-              <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 16 }}>venta total del equipo</div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                {g.vends.map((v, idx) => (
-                  <div key={v.nombre} style={{ borderTop: idx ? "1px solid var(--hairline)" : "none", paddingTop: idx ? 12 : 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                      <span style={{ display: "flex", alignItems: "center", gap: 7, fontWeight: 600, color: "var(--ink)", fontSize: 14 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
-                        {v.nombre}{idx === 0 ? " 👑" : ""}
-                      </span>
-                      <span style={{ fontWeight: 700, fontSize: 15, color: "var(--ink)" }}>{fmtBs(v.monto)}</span>
-                    </div>
-                    <div style={{ height: 10, background: "var(--rail)", borderRadius: 5, overflow: "hidden", marginBottom: 8 }}>
-                      <div style={{ height: "100%", width: (v.monto / maxMonto * 100) + "%", background: VENDOR_COLOR[v.nombre], borderRadius: 5 }} />
-                    </div>
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "5px 16px", fontSize: 12.5 }}>
-                      <span><b style={{ color: v.pctPres >= 1 ? "var(--good)" : v.pctPres >= 0.8 ? "var(--warn)" : "var(--bad)" }}>{fmtPct(v.pctPres)}</b> <span style={{ color: "var(--muted)" }}>presup.</span></span>
-                      <span><b style={{ color: "var(--ink)" }}>{fmtPct(v.conversion, 1)}</b> <span style={{ color: "var(--muted)" }}>conv.</span></span>
-                      <span><b style={{ color: "var(--ink)" }}>{fmtBs(v.ticketProm)}</b> <span style={{ color: "var(--muted)" }}>ticket</span></span>
-                      {v.crecimientoVsAbril != null && <span style={{ color: v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 600 }}>{v.crecimientoVsAbril >= 0 ? "▲" : "▼"} {fmtPctSign(v.crecimientoVsAbril)}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          );
-        })}
-      </div>
-
-      <section className="card">
-        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <span style={{ fontSize: 22 }}>⭐</span>
-          <h3 style={{ margin: 0 }}>Reconocimientos del mes</h3>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
-          {recon.map((r, i) => (
-            <div key={i} style={{ background: "var(--surface-2)", border: "1px solid var(--hairline)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
-              <div style={{ fontSize: 26 }}>{r.ico}</div>
-              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 6 }}>{r.t}</div>
-              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)", marginTop: 4 }}>{r.n}</div>
-              <div style={{ fontSize: 13, color: "var(--ink-700)", marginTop: 2 }}>{r.v}</div>
+      {grupos.map(g => {
+        const total = g.vends.reduce((s, v) => s + v.monto, 0);
+        const maxMonto = Math.max(...g.vends.map(v => v.monto), 1);
+        const d = destacado(g);
+        return (
+          <section key={g.nombre} className="card" style={{ borderTop: "3px solid " + g.color }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
+              <h3 style={{ margin: 0, color: g.color, fontSize: 20 }}>{g.nombre}</h3>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>{g.vends.length} personas · <b style={{ color: "var(--ink)" }}>{fmtBs(total)}</b> en ventas</span>
             </div>
-          ))}
-        </div>
-      </section>
+
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 540 }}>
+                <thead>
+                  <tr>
+                    <th style={thL}>Vendedor</th>
+                    <th style={th}>Ventas</th>
+                    <th style={th}>% Presup.</th>
+                    <th style={th}>% Meta mín.</th>
+                    <th style={th}>Conversión</th>
+                    <th style={th}>Ticket prom.</th>
+                    <th style={th}>vs mes ant.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {g.vends.map((v, idx) => (
+                    <tr key={v.nombre} style={idx === 0 ? { background: "var(--surface-2)" } : null}>
+                      <td style={tdL}>
+                        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
+                          <b style={{ fontWeight: idx === 0 ? 700 : 600 }}>{v.nombre}</b>{idx === 0 ? " 👑" : ""}
+                        </span>
+                      </td>
+                      <td style={td}>
+                        <div style={{ fontWeight: 700 }}>{fmtBs(v.monto)}</div>
+                        <div style={{ height: 4, background: "var(--rail)", borderRadius: 2, marginTop: 4, overflow: "hidden" }}>
+                          <div style={{ height: "100%", width: (v.monto / maxMonto * 100) + "%", background: VENDOR_COLOR[v.nombre] }} />
+                        </div>
+                      </td>
+                      <td style={{ ...td, color: v.pctPres >= 1 ? "var(--good)" : v.pctPres >= 0.8 ? "var(--warn)" : "var(--bad)", fontWeight: 600 }}>{fmtPct(v.pctPres)}</td>
+                      <td style={td}>{fmtPct(v.pctMin)}</td>
+                      <td style={td}>{fmtPct(v.conversion, 1)}</td>
+                      <td style={td}>{fmtBs(v.ticketProm)}</td>
+                      <td style={{ ...td, color: v.crecimientoVsAbril == null ? "var(--muted)" : v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 600 }}>
+                        {v.crecimientoVsAbril != null ? (v.crecimientoVsAbril >= 0 ? "▲ " : "▼ ") + fmtPctSign(v.crecimientoVsAbril) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ marginTop: 14, background: "rgba(79,122,63,.08)", border: "1px solid rgba(79,122,63,.22)", borderRadius: 10, padding: "12px 14px", fontSize: 14, color: "var(--ink-700)", lineHeight: 1.55 }}>
+              <b style={{ color: "var(--ink)" }}>🏆 Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
+            </div>
+          </section>
+        );
+      })}
 
       <section className="card">
         <h3 style={{ marginTop: 0 }}>📖 ¿Qué significa cada dato?</h3>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px 24px", margin: 0 }}>
-          <div><dt style={dtS}>💰 Ventas</dt><dd style={ddS}>Total de dinero vendido en el mes. La barra compara a cada persona con la líder de su equipo.</dd></div>
-          <div><dt style={dtS}>📊 Presup.</dt><dd style={ddS}>Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó. Verde = bien, rojo = bajo.</dd></div>
-          <div><dt style={dtS}>🔄 Conv.</dt><dd style={ddS}>De cada 100 clientes atendidos, cuántos compraron. Mide qué tan bien cierra ventas.</dd></div>
-          <div><dt style={dtS}>🧾 Ticket</dt><dd style={ddS}>Cuánto gasta en promedio cada cliente que compra. Más alto = ventas más grandes.</dd></div>
+          <div><dt style={dtS}>💰 Ventas</dt><dd style={ddS}>Total de dinero vendido en el mes. La barrita compara con el líder del equipo.</dd></div>
+          <div><dt style={dtS}>📊 % Presup.</dt><dd style={ddS}>Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó. Verde = bien, rojo = bajo.</dd></div>
+          <div><dt style={dtS}>🎯 % Meta mín.</dt><dd style={ddS}>Qué tanto de su meta mínima alcanzó (el piso que debe cumplir).</dd></div>
+          <div><dt style={dtS}>🔄 Conversión</dt><dd style={ddS}>De cada 100 clientes atendidos, cuántos compraron. Mide qué tan bien cierra ventas.</dd></div>
+          <div><dt style={dtS}>🧾 Ticket prom.</dt><dd style={ddS}>Cuánto gasta en promedio cada cliente que compra. Más alto = ventas más grandes.</dd></div>
           <div><dt style={dtS}>📈 vs mes ant.</dt><dd style={ddS}>Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado.</dd></div>
         </dl>
       </section>
