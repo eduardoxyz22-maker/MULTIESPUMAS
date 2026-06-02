@@ -5365,16 +5365,28 @@ function PresentacionView({ filtered, filterTienda }) {
     vends: all.filter(v => v.tienda === t).sort((a, b) => b.monto - a.monto),
   })).filter(g => g.vends.length);
 
+  function fmtTipo(n, tipo) {
+    if (n == null || !isFinite(n)) return "—";
+    if (tipo === "money") return fmtBs(n);
+    if (tipo === "pct") return fmtPct(n);
+    if (tipo === "pct1") return fmtPct(n, 1);
+    if (tipo === "int") return fmtInt(n);
+    if (tipo === "crec") return (n >= 0 ? "▲ " : "▼ ") + fmtPctSign(n);
+    if (tipo === "falta") return n <= 0 ? "✓ cumplido" : fmtBs(n);
+    return String(n);
+  }
+
   const metricas = [
-    { l: "Leads (clientes atendidos)", val: v => v.leads || 0, fmt: v => fmtInt(v.leads || 0), noBest: true },
-    { l: "Ventas cerradas (clientes)", val: v => v.ventasConcretadas || 0, fmt: v => fmtInt(v.ventasConcretadas || 0) },
-    { l: "Unidades vendidas", val: v => v.productos || 0, fmt: v => fmtInt(v.productos || 0) },
-    { l: "Conversión", val: v => v.conversion == null ? -1 : v.conversion, fmt: v => v.conversion != null ? fmtPct(v.conversion, 1) : "—" },
-    { l: "Monto vendido (Bs)", val: v => v.monto, fmt: v => fmtBs(v.monto), bold: true },
-    { l: "Ticket promedio", val: v => v.ticketProm, fmt: v => fmtBs(v.ticketProm) },
-    { l: "% Presupuesto", val: v => v.pctPres, fmt: v => fmtPct(v.pctPres) },
-    { l: "% Meta mínima", val: v => v.pctMin, fmt: v => fmtPct(v.pctMin) },
-    { l: "Crecimiento vs mes ant.", val: v => v.crecimientoVsAbril == null ? -Infinity : v.crecimientoVsAbril, fmt: v => v.crecimientoVsAbril != null ? (v.crecimientoVsAbril >= 0 ? "▲ " : "▼ ") + fmtPctSign(v.crecimientoVsAbril) : "—", crec: true },
+    { l: "Leads (clientes atendidos)", raw: v => v.leads, tipo: "int", noBest: true },
+    { l: "Ventas cerradas (clientes)", raw: v => v.ventasConcretadas, tipo: "int" },
+    { l: "Unidades vendidas", raw: v => v.productos, tipo: "int" },
+    { l: "Conversión", raw: v => v.conversion, tipo: "pct1" },
+    { l: "Monto vendido (Bs)", raw: v => v.monto, tipo: "money", bold: true },
+    { l: "Ticket promedio", raw: v => v.ticketProm, tipo: "money" },
+    { l: "% Presupuesto", raw: v => v.pctPres, tipo: "pct" },
+    { l: "% Meta mínima", raw: v => v.pctMin, tipo: "pct" },
+    { l: "Crecimiento vs mes ant.", raw: v => v.crecimientoVsAbril, tipo: "crec", crec: true },
+    { l: "Falta para su presupuesto", raw: v => Math.max((v.presupuesto || 0) - (v.monto || 0), 0), tipo: "falta", noBest: true, falta: true },
   ];
 
   const glosario = [
@@ -5387,6 +5399,9 @@ function PresentacionView({ filtered, filterTienda }) {
     { dt: "📊 % Presupuesto", dd: "Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó." },
     { dt: "🎯 % Meta mínima", dd: "Qué tanto de su meta mínima alcanzó (el piso que debe cumplir)." },
     { dt: "📈 Crecimiento", dd: "Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado." },
+    { dt: "⏳ Falta para su presupuesto", dd: "Cuánto dinero le faltó para llegar al 100% de su presupuesto. ✓ cumplido = ya lo alcanzó." },
+    { dt: "Promedio equipo", dd: "El promedio del equipo en cada indicador, para compararte: ¿estás por encima o por debajo?" },
+    { dt: "🥇 Medalla", dd: "Marca a la mejor del equipo en ese indicador. Es un reconocimiento, no que las demás lo hagan mal." },
   ];
 
   function destacado(g) {
@@ -5401,27 +5416,40 @@ function PresentacionView({ filtered, filterTienda }) {
     return { lider, texto: razones.join(", ") };
   }
 
-  const thCorner = { textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", borderBottom: "2px solid var(--hairline-strong)", background: "var(--surface-2)", whiteSpace: "nowrap" };
-  const thVend = { textAlign: "center", padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
+  const togglePresent = () => {
+    const r = document.documentElement;
+    const on = !r.classList.contains("mx-present");
+    r.classList.toggle("mx-present", on);
+    try { if (on && r.requestFullscreen) r.requestFullscreen(); else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+  };
+
+  const th = { textAlign: "center", padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
+  const thCorner = { ...th, textAlign: "left", fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", background: "var(--surface-2)" };
+  const thProm = { ...th, color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: ".03em", background: "var(--surface-2)", borderLeft: "2px solid var(--hairline-strong)" };
   const tdLat = { textAlign: "left", padding: "10px 12px", fontSize: 12.5, fontWeight: 600, color: "var(--ink-700)", borderBottom: "1px solid var(--hairline)", background: "var(--surface-2)", whiteSpace: "nowrap" };
   const tdVal = { textAlign: "center", padding: "10px 12px", fontSize: 14, borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
+  const tdProm = { ...tdVal, background: "var(--surface-2)", color: "var(--ink-700)", fontWeight: 700, borderLeft: "2px solid var(--hairline-strong)" };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <style dangerouslySetInnerHTML={{ __html: "html.mx-present .topbar,html.mx-present .appfoot,html.mx-present #export-html-btn,html.mx-present .twk-fab,html.mx-present .twk-panel{display:none !important;} html.mx-present .wrap{max-width:100% !important;padding:14px !important;} html.mx-present .kpi-strip{margin-bottom:14px;} .mx-present-exit{display:none;} html.mx-present .mx-present-exit{display:inline-flex;position:fixed;top:14px;right:14px;z-index:100000;align-items:center;gap:6px;padding:9px 16px;background:var(--ink);color:#fbf8f2;border:0;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);} html.mx-present .mx-present-go{display:none;} html.mx-present table{font-size:15px;}" }} />
+
       <section className="card">
-        <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+          <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
+          <button className="mx-present-go" onClick={togglePresent} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 15px", background: "var(--ink)", color: "#fbf8f2", border: 0, borderRadius: 999, font: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>▶ Modo presentación</button>
+        </div>
         <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0" }}>
-          Resultados separados por tienda. Arriba están las personas y al costado los indicadores. En cada fila, la 🥇 marca a la mejor del equipo en ese indicador — es un reconocimiento a quién encabeza, no que las demás lo hagan mal. La 👑 es quien más vendió del equipo. Primero, qué significa cada indicador:
+          Separado por tienda. Arriba están las personas y al costado los indicadores. La 🥇 marca a la mejor del equipo en ese indicador (un reconocimiento, no que las demás lo hagan mal). La 👑 es quien más vendió. La última columna muestra el promedio del equipo para compararte. Primero, qué significa cada dato:
         </p>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "12px 24px", margin: "16px 0 0" }}>
-          {glosario.map((g, i) => (
-            <div key={i}>
-              <dt style={dtS}>{g.dt}</dt>
-              <dd style={ddS}>{g.dd}</dd>
-            </div>
+          {glosario.map((gl, i) => (
+            <div key={i}><dt style={dtS}>{gl.dt}</dt><dd style={ddS}>{gl.dd}</dd></div>
           ))}
         </dl>
       </section>
+
+      <button className="mx-present-exit" onClick={togglePresent}>✕ Salir de presentación</button>
 
       {grupos.map(g => {
         const d = destacado(g);
@@ -5438,33 +5466,38 @@ function PresentacionView({ filtered, filterTienda }) {
                   <tr>
                     <th style={thCorner}>Indicador</th>
                     {g.vends.map((v, idx) => (
-                      <th key={v.nombre} style={thVend}>
+                      <th key={v.nombre} style={th}>
                         <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
                           <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
                           {v.nombre}{idx === 0 ? " 👑" : ""}
                         </span>
                       </th>
                     ))}
+                    <th style={thProm}>Promedio equipo</th>
                   </tr>
                 </thead>
                 <tbody>
                   {metricas.map(m => {
-                    const vals = g.vends.map(m.val);
-                    const best = Math.max.apply(null, vals);
-                    const minV = Math.min.apply(null, vals);
+                    const nums = g.vends.map(m.raw).filter(x => x != null && isFinite(x));
+                    const best = nums.length ? Math.max.apply(null, nums) : null;
+                    const minV = nums.length ? Math.min.apply(null, nums) : null;
+                    const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
                     return (
                       <tr key={m.l}>
                         <td style={tdLat}>{m.l}</td>
                         {g.vends.map(v => {
-                          const esMejor = !m.noBest && g.vends.length > 1 && isFinite(best) && best !== minV && m.val(v) === best;
+                          const raw = m.raw(v);
+                          const esMejor = !m.noBest && g.vends.length > 1 && best != null && best !== minV && raw === best;
                           let color = "var(--ink)";
-                          if (m.crec && v.crecimientoVsAbril != null) color = v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)";
+                          if (m.crec && raw != null) color = raw >= 0 ? "var(--good)" : "var(--bad)";
+                          if (m.falta) color = (raw != null && raw <= 0) ? "var(--good)" : "var(--ink)";
                           return (
                             <td key={v.nombre} style={{ ...tdVal, fontWeight: (m.bold || esMejor) ? 700 : 500, color: color, background: esMejor ? "rgba(176,122,31,.15)" : "transparent" }}>
-                              {m.fmt(v)}{esMejor ? " 🥇" : ""}
+                              {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
                             </td>
                           );
                         })}
+                        <td style={tdProm}>{m.falta ? fmtTipo(avg, "money") : fmtTipo(avg, m.tipo)}</td>
                       </tr>
                     );
                   })}
