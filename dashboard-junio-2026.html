@@ -4405,12 +4405,7 @@ function TopBar({ view, setView, filterTienda, setFilterTienda, search, setSearc
   return (
     <header className="topbar">
       <div className="topbar-left">
-        <div className="mark">
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <circle cx="11" cy="11" r="10" stroke="currentColor" strokeWidth="1.2" />
-            <path d="M5 13 L9 8 L13 12 L17 6" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
+        <div style={{ background: "#ffffff", padding: "5px 10px", borderRadius: 9, display: "inline-flex", alignItems: "center", boxShadow: "0 0 0 1px rgba(0,0,0,0.08)" }}><img src="logo.png" alt="MultiEspumas Viscarra S.R.L." style={{ height: 28, width: "auto", display: "block" }} /></div>
         <div className="title-block">
           <div className="eyebrow">Dashboard Comercial</div>
           <div className="title-main">{D.periodo.mes} · {D.periodo.anio}</div>
