@@ -5347,6 +5347,16 @@ function PresentacionView({ filtered, filterTienda }) {
     return { lider, texto: razones.join(", ") };
   }
 
+  // Podio de una tienda (top 3 de sus vendedores, ya ordenados por monto)
+  function podioDe(vends) {
+    const t = vends.slice(0, 3);
+    return [
+      t[1] ? { v: t[1], rank: 2, med: "🥈", h: 60, col: "#9aa0a6" } : null,
+      t[0] ? { v: t[0], rank: 1, med: "🥇", h: 90, col: "#d4a017" } : null,
+      t[2] ? { v: t[2], rank: 3, med: "🥉", h: 42, col: "#c0814e" } : null,
+    ].filter(Boolean);
+  }
+
   function dona(vends, total) {
     const size = 104, R = size / 2, sw = 14, rad = R - sw / 2 - 1, C = 2 * Math.PI * rad;
     let acc = 0;
@@ -5359,7 +5369,6 @@ function PresentacionView({ filtered, filterTienda }) {
     });
   }
 
-  // count-up: anima de 0 al valor (solo si rAF corre; si no, queda el valor final)
   function animateCount(el) {
     if (el.__anim) return; el.__anim = true;
     var target = parseFloat(el.getAttribute("data-target")) || 0;
@@ -5392,14 +5401,6 @@ function PresentacionView({ filtered, filterTienda }) {
     const nx = Math.max(0, Math.min(secs.length - 1, cur + dir));
     secs[nx].scrollIntoView({ behavior: "smooth", block: "start" });
   };
-
-  const ranking = [...all].sort((a, b) => b.monto - a.monto);
-  const t3 = ranking.slice(0, 3);
-  const podio = [
-    t3[1] ? { v: t3[1], rank: 2, med: "🥈", h: 74, col: "#9aa0a6" } : null,
-    t3[0] ? { v: t3[0], rank: 1, med: "🥇", h: 106, col: "#d4a017" } : null,
-    t3[2] ? { v: t3[2], rank: 3, med: "🥉", h: 54, col: "#c0814e" } : null,
-  ].filter(Boolean);
 
   const GOLD = "#b07a1f";
   const th = { textAlign: "center", padding: "10px 14px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap" };
@@ -5453,25 +5454,6 @@ function PresentacionView({ filtered, filterTienda }) {
       <button className="mx-present-exit" onClick={togglePresent}>✕ Salir de presentación</button>
       <button className="mx-nav mx-nav-prev" onClick={() => navSlide(-1)} title="Anterior">▲</button>
       <button className="mx-nav mx-nav-next" onClick={() => navSlide(1)} title="Siguiente">▼</button>
-
-      <section className="card">
-        <h3 style={{ margin: 0 }}>🏆 Podio del mes</h3>
-        <p style={{ color: "var(--muted)", fontSize: 13, margin: "4px 0 0" }}>Las 3 personas con mayor venta de todo el equipo.</p>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 16, marginTop: 18, flexWrap: "wrap" }}>
-          {podio.map(p => (
-            <div key={p.v.nombre} style={{ width: 158, textAlign: "center" }}>
-              <div style={{ fontSize: 34, lineHeight: 1 }}>{p.med}</div>
-              <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 6 }}>
-                <span style={{ width: 11, height: 11, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
-                <b style={{ fontSize: 15, color: "var(--ink)" }}>{p.v.nombre}</b>
-              </div>
-              <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 18, color: "var(--ink)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
-              <div style={{ fontSize: 11, color: "var(--muted)" }}>{p.v.tienda}</div>
-              <div className="mx-ped" style={{ height: p.h, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "10px 10px 0 0", marginTop: 10, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 9, color: "#fff", fontWeight: 800, fontSize: 23 }}>{p.rank}°</div>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {grupos.map(g => {
         const total = g.vends.reduce((s, v) => s + v.monto, 0);
@@ -5566,6 +5548,23 @@ function PresentacionView({ filtered, filterTienda }) {
                   })}
                 </tbody>
               </table>
+            </div>
+
+            <div style={{ padding: "16px 18px 4px" }}>
+              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, textAlign: "center", marginBottom: 8 }}>🏆 Podio de {g.nombre}</div>
+              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
+                {podioDe(g.vends).map(p => (
+                  <div key={p.v.nombre} style={{ width: 134, textAlign: "center" }}>
+                    <div style={{ fontSize: 27, lineHeight: 1 }}>{p.med}</div>
+                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 4 }}>
+                      <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
+                      <b style={{ fontSize: 13.5, color: "var(--ink)" }}>{p.v.nombre}</b>
+                    </div>
+                    <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 15, color: "var(--ink)", marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
+                    <div className="mx-ped" style={{ height: p.h, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "9px 9px 0 0", marginTop: 8, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 7, color: "#fff", fontWeight: 800, fontSize: 21 }}>{p.rank}°</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="mx-best" style={{ margin: "14px 18px 18px", background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
