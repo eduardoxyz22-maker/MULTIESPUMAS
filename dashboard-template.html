@@ -4337,6 +4337,7 @@ function TopBar({ view, setView, filterTienda, setFilterTienda, search, setSearc
     { id: "vendedores", label: "Vendedores" },
     { id: "tiendas", label: "Tiendas" },
     { id: "externos", label: "Externos" },
+    { id: "presentacion", label: "Presentación" },
   ];
   const tiendas = ["Todas", "SUEÑA", "HEAVEN", "OTROS", "ROHO"];
   return (
@@ -5244,6 +5245,7 @@ function App() {
         {view === "vendedores" && <VendedoresView key={"v" + dataVersion} filtered={filteredVend} filterTienda={filterTienda} />}
         {view === "tiendas" && <TiendasView key={"t" + dataVersion} filterTienda={filterTienda} dia={dia} />}
         {view === "externos" && <ExternosView key={"e" + dataVersion} />}
+        {view === "presentacion" && <PresentacionView key={"p" + dataVersion} filtered={filteredVend} filterTienda={filterTienda} />}
       </main>
 
       <footer className="appfoot">
@@ -5274,6 +5276,116 @@ function App() {
           </div>
         </TweakSection>
       </TweaksPanel>
+    </div>
+  );
+}
+
+function PresentacionView({ filtered, filterTienda }) {
+  const vends = [...filtered].sort((a, b) => b.monto - a.monto);
+  if (!vends.length) {
+    return <div className="empty">Elige <b>Todas</b>, <b>Sueña</b> o <b>Heaven</b> en la barra de arriba para ver la comparativa del equipo.</div>;
+  }
+  const best = (key, dir) => [...vends].filter(v => v[key] != null).sort((a, b) => dir * (a[key] - b[key]))[0];
+  const liderVenta = vends[0];
+  const liderConv = best("conversion", -1);
+  const liderTicket = best("ticketProm", -1);
+  const liderMeta = best("pctMin", -1);
+  const liderCrec = best("crecimientoVsAbril", -1);
+
+  const metricas = [
+    { titulo: "Ventas del mes", icono: "💰", fmt: v => fmtBs(v.monto), val: v => v.monto,
+      explica: "Es el total de dinero en ventas que logró cada persona durante el mes. Mientras más alto, mejor." },
+    { titulo: "Cumplimiento de presupuesto", icono: "📊", fmt: v => fmtPct(v.pctPres), val: v => v.pctPres,
+      explica: "Qué tanto alcanzó del presupuesto ideal (la meta exigente). 100% = llegó al presupuesto; más de 100% lo superó." },
+    { titulo: "Cumplimiento de meta mínima", icono: "🎯", fmt: v => fmtPct(v.pctMin), val: v => v.pctMin,
+      explica: "Qué tanto alcanzó de su meta mínima (el piso que debe cumplir). 100% = meta cumplida." },
+    { titulo: "Conversión", icono: "🔄", fmt: v => fmtPct(v.conversion, 1), val: v => v.conversion,
+      explica: "De cada 100 clientes que atendió, cuántos terminaron comprando. Mide qué tan bien cierra las ventas." },
+    { titulo: "Ticket promedio", icono: "🧾", fmt: v => fmtBs(v.ticketProm), val: v => v.ticketProm,
+      explica: "Cuánto gasta en promedio cada cliente que le compra. Un ticket alto significa ventas más grandes." },
+    { titulo: "Crecimiento vs mes anterior", icono: "📈", fmt: v => v.crecimientoVsAbril != null ? fmtPctSign(v.crecimientoVsAbril) : "—", val: v => v.crecimientoVsAbril != null ? v.crecimientoVsAbril : 0,
+      explica: "Cuánto subió o bajó respecto al mes pasado. Verde = creció, rojo = bajó." },
+  ];
+
+  const reconocimientos = [
+    { t: "Mayor venta", n: liderVenta.nombre, v: fmtBs(liderVenta.monto), ico: "💰" },
+    liderConv ? { t: "Mejor conversión", n: liderConv.nombre, v: fmtPct(liderConv.conversion, 1), ico: "🔄" } : null,
+    liderTicket ? { t: "Ticket más alto", n: liderTicket.nombre, v: fmtBs(liderTicket.ticketProm), ico: "🧾" } : null,
+    liderMeta ? { t: "Mejor cumplimiento", n: liderMeta.nombre, v: fmtPct(liderMeta.pctPres), ico: "🎯" } : null,
+    (liderCrec && liderCrec.crecimientoVsAbril > 0) ? { t: "Más creció", n: liderCrec.nombre, v: fmtPctSign(liderCrec.crecimientoVsAbril), ico: "📈" } : null,
+  ].filter(Boolean);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      <section className="card">
+        <h3 style={{ margin: 0 }}>Comparativa del equipo · {filterTienda === "Todas" ? "Todo el equipo" : filterTienda}</h3>
+        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, marginTop: 8 }}>
+          Este panel compara el desempeño de cada integrante de forma sencilla. Cada bloque explica <b>qué significa el dato</b> y muestra una barra para ver de un vistazo quién va adelante. La persona con la barra más larga y la corona 👑 lidera ese indicador.
+        </p>
+      </section>
+
+      {metricas.map((m, i) => {
+        const ordenados = [...vends].sort((a, b) => m.val(b) - m.val(a));
+        const max = Math.max(...vends.map(v => Math.abs(m.val(v))), 0.0001);
+        return (
+          <section key={i} className="card">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+              <span style={{ fontSize: 22 }}>{m.icono}</span>
+              <h3 style={{ margin: 0 }}>{m.titulo}</h3>
+            </div>
+            <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.5, margin: "0 0 14px" }}>{m.explica}</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {ordenados.map((v, idx) => {
+                const w = Math.max(Math.abs(m.val(v)) / max * 100, 2);
+                const neg = m.val(v) < 0;
+                return (
+                  <div key={v.nombre} style={{ display: "grid", gridTemplateColumns: "130px 1fr 96px", alignItems: "center", gap: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7, minWidth: 0 }}>
+                      <span style={{ width: 9, height: 9, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
+                      <span style={{ fontWeight: idx === 0 ? 700 : 500, color: "var(--ink)", fontSize: 13, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                        {v.nombre}{idx === 0 ? " 👑" : ""}
+                      </span>
+                    </div>
+                    <div style={{ height: 18, background: "var(--rail)", borderRadius: 5, overflow: "hidden" }}>
+                      <div style={{ height: "100%", width: w + "%", background: neg ? "var(--bad)" : VENDOR_COLOR[v.nombre], borderRadius: 5, transition: "width .5s" }} />
+                    </div>
+                    <span style={{ textAlign: "right", fontWeight: 600, fontSize: 13, color: neg ? "var(--bad)" : "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{m.fmt(v)}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        );
+      })}
+
+      <section className="card">
+        <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+          <span style={{ fontSize: 22 }}>⭐</span>
+          <h3 style={{ margin: 0 }}>Reconocimientos del mes</h3>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 12 }}>
+          {reconocimientos.map((r, i) => (
+            <div key={i} style={{ background: "var(--surface-2)", border: "1px solid var(--hairline)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
+              <div style={{ fontSize: 26 }}>{r.ico}</div>
+              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", marginTop: 6 }}>{r.t}</div>
+              <div style={{ fontSize: 17, fontWeight: 700, color: "var(--ink)", marginTop: 4 }}>{r.n}</div>
+              <div style={{ fontSize: 13, color: "var(--ink-700)", marginTop: 2 }}>{r.v}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="card">
+        <h3 style={{ marginTop: 0 }}>📖 ¿Qué significa cada dato?</h3>
+        <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px 24px", margin: 0 }}>
+          {metricas.map((m, i) => (
+            <div key={i}>
+              <dt style={{ fontWeight: 700, color: "var(--ink)", fontSize: 13 }}>{m.icono} {m.titulo}</dt>
+              <dd style={{ margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 }}>{m.explica}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </div>
   );
 }
