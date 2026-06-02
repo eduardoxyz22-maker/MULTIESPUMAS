@@ -124,15 +124,14 @@ def _week_index(day):
 def _weekly_for_leads(leads, user_map, stage_map, comprador_stage, year, month, n_weeks):
     """
     Para los leads CERRADOS (etapa == comprador_stage) de un mes, agrupa por vendedora
-    y semana: nº de cierres y suma de $ (price). La fecha de cierre se aproxima con
-    updated_at (último movimiento del lead, que para un comprador es el paso a 'Compradores').
-    Devuelve {vendor: {"C":[...], "M":[...]}}.
+    y semana: nº de cierres y suma de $ (price).
+    Prioridad de fecha de cierre: _contract_ts > updated_at > created_at.
     """
     out = {}
     for lead in leads:
         if stage_map.get(lead.get("status_id")) != comprador_stage:
             continue
-        ts = lead.get("updated_at") or lead.get("created_at") or 0
+        ts = lead.get("_contract_ts") or lead.get("updated_at") or lead.get("created_at") or 0
         if not ts:
             continue
         d = datetime.datetime.fromtimestamp(ts)

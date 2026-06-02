@@ -237,23 +237,46 @@ user_map = {u["id"]: u.get("name", "Desconocido") for u in users_raw}
 print("Obteniendo leads del mes actual...")
 leads = fetch_all_leads(from_ts)
 print("Total leads:", len(leads))
+# Pre-inyectar fecha de contrato en cada lead del mes actual
+for _l in leads:
+    _l["_contract_ts"] = get_contract_ts(_l, contract_date_field_id)
 
-# --- Mejora #2: buscar custom field de origen/fuente ---
-print("Buscando campo de origen en custom fields...")
+# --- Mejora #2: buscar custom fields de origen y fecha de contrato ---
+print("Buscando custom fields (origen, fecha contrato)...")
 source_field_id = None
+contract_date_field_id = None
 try:
     _cf_resp = api_get("/leads/custom_fields")
     for _cf in _cf_resp.get("_embedded", {}).get("custom_fields", []):
         _fn = _cf.get("name", "").lower()
         _fc = (_cf.get("code") or "").lower()
-        if any(k in _fn or k in _fc for k in ["fuente","origen","source","canal","utm","procedencia","origin"]):
+        if not source_field_id and any(k in _fn or k in _fc for k in ["fuente","origen","source","canal","utm","procedencia","origin"]):
             source_field_id = _cf["id"]
             print(f"  Campo origen: '{_cf['name']}' id={source_field_id}")
-            break
+        if not contract_date_field_id and any(k in _fn or k in _fc for k in ["contrato","contract","fecha_cierre","cierre","close_date","sale_date","fecha_venta","fecha cierre","fecha contrato"]):
+            contract_date_field_id = _cf["id"]
+            print(f"  Campo fecha contrato: '{_cf['name']}' id={contract_date_field_id}")
     if not source_field_id:
         print("  Sin campo de origen específico — usando created_by para clasificar.")
+    if not contract_date_field_id:
+        print("  Sin campo de fecha contrato — usando updated_at como fecha de cierre.")
 except Exception as _e:
     print("  ⚠ Error custom fields:", _e)
+
+def get_contract_ts(lead, field_id):
+    """Extrae el timestamp de fecha de contrato del lead (custom field)."""
+    if not field_id:
+        return None
+    for cf in lead.get("custom_fields_values") or []:
+        if cf.get("field_id") == field_id:
+            vals = cf.get("values") or []
+            if vals:
+                v = vals[0].get("value")
+                try:
+                    return int(v)
+                except (TypeError, ValueError):
+                    pass
+    return None
 
 # --- Mejora #1: obtener eventos del mes para tiempo de primera respuesta ---
 print("Obteniendo eventos del mes...")
@@ -591,27 +614,45 @@ for lead in leads:
 total_leads = len(leads)
 
 # === Cierres cross-month: leads de meses anteriores cerrados este mes ===
-# generar.py solo trae leads por created_at. Kommo muestra en "Compradores"
-# también leads de meses anteriores que se cerraron este mes. Este fetch
-# captura esos cierres para que los montos coincidan con el CRM.
+# Usa fecha de contrato (si existe) como fuente de verdad del mes de cierre.
+# Si no hay campo de contrato, cae en updated_at como antes.
 _leads_cross = []
 _cross_value = 0.0
 if _compradores_sid:
     print("Obteniendo cierres cross-month (leads anteriores cerrados este mes)...")
     try:
-        _cross_raw = fetch_compradores_mes(_compradores_sid, from_ts)
-        _ids_this_month = {l["id"] for l in leads}
-        _leads_cross = [l for l in _cross_raw if l["id"] not in _ids_this_month]
+        # Si hay fecha de contrato, ampliar ventana a 90 días para capturar
+        # contratos firmados este mes pero actualizados antes.
+        if contract_date_field_id:
+            _cross_from = int((inicio_mes - datetime.timedelta(days=90)).timestamp())
+        else:
+            _cross_from = from_ts
+        _cross_raw = fetch_compradores_mes(_compradores_sid, _cross_from)
+        _ids_this = {l["id"] for l in leads}
+        for _l in _cross_raw:
+            if _l["id"] in _ids_this:
+                continue
+            _ct = get_contract_ts(_l, contract_date_field_id)
+            _l["_contract_ts"] = _ct
+            # Determinar si pertenece a este mes
+            if _ct:
+                _cd = datetime.datetime.fromtimestamp(_ct)
+                _in_month = (_cd.year == now_dt.year and _cd.month == now_dt.month)
+            else:
+                _in_month = (_l.get("updated_at", 0) >= from_ts)
+            if not _in_month:
+                continue
+            _leads_cross.append(_l)
+            _ids_this.add(_l["id"])
+            _cuid = _l.get("responsible_user_id")
+            _cname = user_map.get(_cuid, "Desconocido")
+            _cval = float(_l.get("price", 0) or 0)
+            _cross_value += _cval
+            vendor_data[_cname]["compradores"] += 1
+            vendor_data[_cname]["value"] += _cval
+            total_compradores += 1
         if _leads_cross:
-            print(f"  → {len(_leads_cross)} cierres de meses anteriores incorporados")
-            for _cl in _leads_cross:
-                _cuid = _cl.get("responsible_user_id")
-                _cname = user_map.get(_cuid, "Desconocido")
-                _cval = float(_cl.get("price", 0) or 0)
-                _cross_value += _cval
-                vendor_data[_cname]["compradores"] += 1
-                vendor_data[_cname]["value"] += _cval
-                total_compradores += 1
+            print(f"  → {len(_leads_cross)} cierres cross-month incorporados (por {'fecha contrato' if contract_date_field_id else 'updated_at'})")
         else:
             print("  → Sin cierres cross-month este mes")
     except Exception as _xe:
