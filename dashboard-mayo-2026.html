@@ -5352,8 +5352,6 @@ function App() {
 }
 
 function PresentacionView({ filtered, filterTienda }) {
-  const dtS = { fontWeight: 700, color: "var(--ink)", fontSize: 13 };
-  const ddS = { margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 };
   const all = [...D.vendedores];
   const grupos = ["SUEÑA", "HEAVEN"].map(t => ({
     nombre: t, color: TIENDA_COLOR[t],
@@ -5372,42 +5370,41 @@ function PresentacionView({ filtered, filterTienda }) {
   }
 
   const metricas = [
-    { l: "Leads (clientes atendidos)", raw: v => v.leads, tipo: "int", noBest: true },
-    { l: "Ventas cerradas (clientes)", raw: v => v.ventasConcretadas, tipo: "int" },
+    { l: "Leads", raw: v => v.leads, tipo: "int", noBest: true },
+    { l: "Ventas cerradas", raw: v => v.ventasConcretadas, tipo: "int" },
     { l: "Unidades vendidas", raw: v => v.productos, tipo: "int" },
     { l: "Conversión", raw: v => v.conversion, tipo: "pct1" },
-    { l: "Monto vendido (Bs)", raw: v => v.monto, tipo: "money", bold: true },
+    { l: "Monto vendido", raw: v => v.monto, tipo: "money", bold: true },
     { l: "Ticket promedio", raw: v => v.ticketProm, tipo: "money" },
     { l: "% Presupuesto", raw: v => v.pctPres, tipo: "pct" },
     { l: "% Meta mínima", raw: v => v.pctMin, tipo: "pct" },
-    { l: "Crecimiento vs mes ant.", raw: v => v.crecimientoVsAbril, tipo: "crec", crec: true },
-    { l: "Falta para su presupuesto", raw: v => Math.max((v.presupuesto || 0) - (v.monto || 0), 0), tipo: "falta", noBest: true, falta: true },
+    { l: "Crecimiento", raw: v => v.crecimientoVsAbril, tipo: "crec", crec: true },
+    { l: "Falta p/ presupuesto", raw: v => Math.max((v.presupuesto || 0) - (v.monto || 0), 0), tipo: "falta", noBest: true, falta: true },
   ];
 
   const glosario = [
-    { dt: "👥 Leads", dd: "Clientes que atendió o que llegaron en el mes (las oportunidades de venta)." },
-    { dt: "✅ Ventas cerradas", dd: "Cuántos clientes terminaron comprando (ventas concretadas)." },
-    { dt: "📦 Unidades vendidas", dd: "Cantidad de productos vendidos en el mes." },
-    { dt: "🔄 Conversión", dd: "De cada 100 leads, cuántos compraron. Es ventas cerradas ÷ leads." },
-    { dt: "💰 Monto vendido", dd: "Total de dinero en ventas durante el mes." },
-    { dt: "🧾 Ticket promedio", dd: "Cuánto gasta en promedio cada cliente que compra." },
-    { dt: "📊 % Presupuesto", dd: "Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó." },
-    { dt: "🎯 % Meta mínima", dd: "Qué tanto de su meta mínima alcanzó (el piso que debe cumplir)." },
-    { dt: "📈 Crecimiento", dd: "Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado." },
-    { dt: "⏳ Falta para su presupuesto", dd: "Cuánto dinero le faltó para llegar al 100% de su presupuesto. ✓ cumplido = ya lo alcanzó." },
-    { dt: "Promedio equipo", dd: "El promedio del equipo en cada indicador, para compararte: ¿estás por encima o por debajo?" },
-    { dt: "🥇 Medalla", dd: "Marca a la mejor del equipo en ese indicador. Es un reconocimiento, no que las demás lo hagan mal." },
+    ["👥 Leads", "Clientes atendidos / oportunidades de venta."],
+    ["✅ Ventas cerradas", "Clientes que terminaron comprando."],
+    ["📦 Unidades vendidas", "Productos vendidos en el mes."],
+    ["🔄 Conversión", "De cada 100 leads, cuántos compraron."],
+    ["💰 Monto vendido", "Total de dinero en ventas."],
+    ["🧾 Ticket promedio", "Cuánto gasta en promedio cada cliente."],
+    ["📊 % Presupuesto", "Qué tanto del presupuesto ideal alcanzó."],
+    ["🎯 % Meta mínima", "Qué tanto de su meta mínima alcanzó."],
+    ["📈 Crecimiento", "Subió (▲) o bajó (▼) vs el mes pasado."],
+    ["⏳ Falta p/ presupuesto", "Cuánto le faltó al 100% del presupuesto."],
+    ["🥇 Medalla", "La mejor del equipo en ese indicador (reconocimiento)."],
   ];
 
   function destacado(g) {
     const lider = g.vends[0];
     const total = g.vends.reduce((s, v) => s + v.monto, 0);
-    const razones = ["vendió " + fmtBs(lider.monto) + " (" + fmtPct(total > 0 ? lider.monto / total : 0) + " del total del equipo)"];
+    const razones = ["vendió " + fmtBs(lider.monto) + " (" + fmtPct(total > 0 ? lider.monto / total : 0) + " del equipo)"];
     const mc = [...g.vends].filter(v => v.conversion != null).sort((a, b) => b.conversion - a.conversion)[0];
     if (mc && mc.nombre === lider.nombre) razones.push("la mejor conversión (" + fmtPct(lider.conversion, 1) + ")");
     const mg = [...g.vends].filter(v => v.crecimientoVsAbril != null).sort((a, b) => b.crecimientoVsAbril - a.crecimientoVsAbril)[0];
-    if (mg && mg.nombre === lider.nombre && lider.crecimientoVsAbril > 0) razones.push("el mayor crecimiento (" + fmtPctSign(lider.crecimientoVsAbril) + " vs mes pasado)");
-    if (lider.nuevoRecord) razones.push("¡y logró un nuevo récord personal!");
+    if (mg && mg.nombre === lider.nombre && lider.crecimientoVsAbril > 0) razones.push("el mayor crecimiento (" + fmtPctSign(lider.crecimientoVsAbril) + ")");
+    if (lider.nuevoRecord) razones.push("¡y un nuevo récord personal!");
     return { lider, texto: razones.join(", ") };
   }
 
@@ -5418,57 +5415,76 @@ function PresentacionView({ filtered, filterTienda }) {
     try { if (on && r.requestFullscreen) r.requestFullscreen(); else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
   };
 
-  const th = { textAlign: "center", padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
-  const thCorner = { ...th, textAlign: "left", fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", background: "var(--surface-2)" };
-  const thProm = { ...th, color: "var(--muted)", fontSize: 11, textTransform: "uppercase", letterSpacing: ".03em", background: "var(--surface-2)", borderLeft: "2px solid var(--hairline-strong)" };
-  const tdLat = { textAlign: "left", padding: "10px 12px", fontSize: 12.5, fontWeight: 600, color: "var(--ink-700)", borderBottom: "1px solid var(--hairline)", background: "var(--surface-2)", whiteSpace: "nowrap" };
-  const tdVal = { textAlign: "center", padding: "10px 12px", fontSize: 14, borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
-  const tdProm = { ...tdVal, background: "var(--surface-2)", color: "var(--ink-700)", fontWeight: 700, borderLeft: "2px solid var(--hairline-strong)" };
+  const GOLD = "#b07a1f";
+  const th = { textAlign: "center", padding: "11px 14px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap" };
+  const thLider = { ...th, background: "var(--surface-2)" };
+  const thCorner = { textAlign: "left", padding: "11px 14px", fontSize: 10.5, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap" };
+  const thProm = { ...th, color: "var(--muted)", fontSize: 10.5, textTransform: "uppercase", letterSpacing: ".05em", borderLeft: "1px solid var(--hairline)" };
+  const tdLat = { textAlign: "left", padding: "11px 14px", fontSize: 13, fontWeight: 600, color: "var(--ink-700)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap" };
+  const tdVal = { textAlign: "center", padding: "11px 14px", fontSize: 14.5, borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
+  const tdLider = { ...tdVal, background: "var(--surface-2)" };
+  const tdProm = { ...tdVal, color: "var(--muted)", fontWeight: 700, borderLeft: "1px solid var(--hairline)" };
 
   return (
-    <div className="mx-pres-wrap" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-      <style dangerouslySetInnerHTML={{ __html: "html.mx-present .topbar,html.mx-present .appfoot,html.mx-present #export-html-btn,html.mx-present .twk-fab,html.mx-present .twk-panel{display:none !important;} html.mx-present .wrap{max-width:100% !important;padding:14px !important;} html.mx-present .kpi-strip{display:none !important;} .mx-present-exit{display:none;} html.mx-present .mx-present-exit{display:inline-flex;position:fixed;top:14px;right:14px;z-index:100000;align-items:center;gap:6px;padding:9px 16px;background:var(--ink);color:#fbf8f2;border:0;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);} html.mx-present .mx-present-go{display:none;} html.mx-present table{font-size:16px;} html.mx-present{scroll-snap-type:y mandatory;} html.mx-present .mx-pres-wrap>section{scroll-snap-align:start;min-height:calc(100vh - 26px);display:flex;flex-direction:column;justify-content:center;}" }} />
+    <div className="mx-pres-wrap" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+      <style dangerouslySetInnerHTML={{ __html: "html.mx-present .topbar,html.mx-present .appfoot,html.mx-present #export-html-btn,html.mx-present .twk-fab,html.mx-present .twk-panel,html.mx-present .kpi-strip{display:none !important;} html.mx-present .wrap{max-width:100% !important;padding:16px !important;} .mx-present-exit{display:none;} html.mx-present .mx-present-exit{display:inline-flex;position:fixed;top:14px;right:14px;z-index:100000;align-items:center;gap:6px;padding:9px 16px;background:var(--ink);color:#fbf8f2;border:0;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);} html.mx-present .mx-present-go{display:none;} html.mx-present{scroll-snap-type:y mandatory;} html.mx-present .mx-pres-wrap>section{scroll-snap-align:start;min-height:calc(100vh - 24px);display:flex;flex-direction:column;justify-content:center;} html.mx-present .mx-glosario{display:none;} .mx-glosario summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:var(--surface-2);border-radius:8px;} .mx-glosario summary::-webkit-details-marker{display:none;} .mx-glosario[open] summary{margin-bottom:12px;} .mx-pres-table tbody tr:hover td{background:rgba(0,0,0,.015);} .mx-best{color:" + GOLD + ";font-weight:800;}" }} />
 
       <section className="card">
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
-          <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
-          <button className="mx-present-go" onClick={togglePresent} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "8px 15px", background: "var(--ink)", color: "#fbf8f2", border: 0, borderRadius: 999, font: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>▶ Modo presentación</button>
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".08em", color: "var(--muted)", textTransform: "uppercase" }}>Presentación de equipo</div>
+            <h2 style={{ margin: "2px 0 0", fontSize: 24, color: "var(--ink)" }}>{D.periodo.mes} · {D.periodo.anio}</h2>
+          </div>
+          <button className="mx-present-go" onClick={togglePresent} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "var(--ink)", color: "#fbf8f2", border: 0, borderRadius: 999, font: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>▶ Modo presentación</button>
         </div>
-        <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0" }}>
-          Separado por tienda. Arriba están las personas y al costado los indicadores. La 🥇 marca a la mejor del equipo en ese indicador (un reconocimiento, no que las demás lo hagan mal). La 👑 es quien más vendió. La última columna muestra el promedio del equipo para compararte. Primero, qué significa cada dato:
+        <p style={{ color: "var(--ink-700)", fontSize: 13.5, lineHeight: 1.55, margin: "10px 0 0" }}>
+          Resultados por tienda. Cada columna es una persona; la <b>👑</b> lideró las ventas y la <b style={{ color: GOLD }}>🥇</b> marca a la mejor en cada indicador. La última columna es el promedio del equipo.
         </p>
-        <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "12px 24px", margin: "16px 0 0" }}>
-          {glosario.map((gl, i) => (
-            <div key={i}><dt style={dtS}>{gl.dt}</dt><dd style={ddS}>{gl.dd}</dd></div>
-          ))}
-        </dl>
+        <details className="mx-glosario" style={{ marginTop: 14 }}>
+          <summary>📖 ¿Qué significa cada indicador?</summary>
+          <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "10px 22px", margin: 0 }}>
+            {glosario.map((gl, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, fontSize: 12.5, lineHeight: 1.4 }}>
+                <b style={{ color: "var(--ink)", whiteSpace: "nowrap" }}>{gl[0]}</b>
+                <span style={{ color: "var(--muted)" }}>{gl[1]}</span>
+              </div>
+            ))}
+          </dl>
+        </details>
       </section>
 
       <button className="mx-present-exit" onClick={togglePresent}>✕ Salir de presentación</button>
 
       {grupos.map(g => {
+        const total = g.vends.reduce((s, v) => s + v.monto, 0);
         const d = destacado(g);
         return (
-          <section key={g.nombre} className="card" style={{ borderTop: "3px solid " + g.color }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
-              <h3 style={{ margin: 0, color: g.color, fontSize: 20 }}>{g.nombre}</h3>
-              <span style={{ fontSize: 13, color: "var(--muted)" }}>{g.vends.length} personas · <b style={{ color: "var(--ink)" }}>{fmtBs(g.vends.reduce((s, v) => s + v.monto, 0))}</b> en ventas</span>
+          <section key={g.nombre} className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ background: g.color, padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Tienda</div>
+                <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>{g.nombre}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1 }}>{fmtBs(total)}</div>
+                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{g.vends.length} personas · venta total</div>
+              </div>
             </div>
 
-            <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <div style={{ padding: "8px 18px 0", overflowX: "auto" }}>
+              <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
                     <th style={thCorner}>Indicador</th>
                     {g.vends.map((v, idx) => (
-                      <th key={v.nombre} style={th}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                      <th key={v.nombre} style={idx === 0 ? thLider : th}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
                           <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
                           {v.nombre}{idx === 0 ? " 👑" : ""}
                         </span>
                       </th>
                     ))}
-                    <th style={thProm}>Promedio equipo</th>
+                    <th style={thProm}>Promedio</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5480,14 +5496,15 @@ function PresentacionView({ filtered, filterTienda }) {
                     return (
                       <tr key={m.l}>
                         <td style={tdLat}>{m.l}</td>
-                        {g.vends.map(v => {
+                        {g.vends.map((v, idx) => {
                           const raw = m.raw(v);
                           const esMejor = !m.noBest && g.vends.length > 1 && best != null && best !== minV && raw === best;
                           let color = "var(--ink)";
                           if (m.crec && raw != null) color = raw >= 0 ? "var(--good)" : "var(--bad)";
                           if (m.falta) color = (raw != null && raw <= 0) ? "var(--good)" : "var(--ink)";
+                          const base = idx === 0 ? tdLider : tdVal;
                           return (
-                            <td key={v.nombre} style={{ ...tdVal, fontWeight: (m.bold || esMejor) ? 700 : 500, color: color, background: esMejor ? "rgba(176,122,31,.15)" : "transparent" }}>
+                            <td key={v.nombre} style={{ ...base, fontWeight: (m.bold || esMejor) ? 800 : 500, color: esMejor ? GOLD : color }}>
                               {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
                             </td>
                           );
@@ -5500,7 +5517,7 @@ function PresentacionView({ filtered, filterTienda }) {
               </table>
             </div>
 
-            <div style={{ marginTop: 14, background: "rgba(79,122,63,.08)", border: "1px solid rgba(79,122,63,.22)", borderRadius: 10, padding: "12px 14px", fontSize: 14, color: "var(--ink-700)", lineHeight: 1.55 }}>
+            <div style={{ margin: "14px 18px 18px", background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
               <b style={{ color: "var(--ink)" }}>🏆 Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
             </div>
           </section>
