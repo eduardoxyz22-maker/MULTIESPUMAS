@@ -5347,12 +5347,33 @@ function PresentacionView({ filtered, filterTienda }) {
     return { lider, texto: razones.join(", ") };
   }
 
+  // Dona de participacion (arcos SVG)
+  function dona(vends, total) {
+    const size = 104, R = size / 2, sw = 14, rad = R - sw / 2 - 1, C = 2 * Math.PI * rad;
+    let acc = 0;
+    return vends.map(v => {
+      const frac = total > 0 ? v.monto / total : 0;
+      const len = frac * C;
+      const el = (<circle key={v.nombre} cx={R} cy={R} r={rad} fill="none" stroke={VENDOR_COLOR[v.nombre]} strokeWidth={sw} strokeDasharray={len.toFixed(2) + " " + (C - len).toFixed(2)} strokeDashoffset={(-acc * C).toFixed(2)} transform={"rotate(-90 " + R + " " + R + ")"} style={{ transition: "stroke-dasharray .8s" }} />);
+      acc += frac;
+      return el;
+    });
+  }
+
   const togglePresent = () => {
     const r = document.documentElement;
     const on = !r.classList.contains("mx-present");
     r.classList.toggle("mx-present", on);
     var glo = document.querySelector(".mx-glosario"); if (glo) glo.open = on;
     try { if (on && r.requestFullscreen) r.requestFullscreen(); else if (!on && document.fullscreenElement && document.exitFullscreen) document.exitFullscreen(); } catch (e) {}
+  };
+  const navSlide = (dir) => {
+    const secs = [...document.querySelectorAll(".mx-pres-wrap > section")];
+    if (!secs.length) return;
+    let cur = 0, best = Infinity;
+    secs.forEach((s, i) => { const dd = Math.abs(s.getBoundingClientRect().top); if (dd < best) { best = dd; cur = i; } });
+    const nx = Math.max(0, Math.min(secs.length - 1, cur + dir));
+    secs[nx].scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   const GOLD = "#b07a1f";
@@ -5370,7 +5391,9 @@ function PresentacionView({ filtered, filterTienda }) {
     + " .mx-pres-table tbody tr:hover td{background:rgba(0,0,0,.015);}"
     + " .mx-cellbar{height:5px;background:var(--rail);border-radius:3px;overflow:hidden;margin:5px auto 0;max-width:92px;} .mx-cellbar>i{display:block;height:100%;border-radius:3px;transform-origin:left;animation:mxgrow .9s cubic-bezier(.2,.7,.3,1) both;} @keyframes mxgrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}"
     + " .mx-pres-wrap>section{animation:mxfade .5s ease both;} .mx-pres-wrap>section:nth-child(3){animation-delay:.08s;} .mx-pres-wrap>section:nth-child(4){animation-delay:.16s;} @keyframes mxfade{from{opacity:0;}to{opacity:1;}}"
-    + " .mx-portada-logo{display:none;} html.mx-present .mx-portada-logo{display:block;width:min(360px,52%);height:auto;margin:0 auto 18px;animation:mxpop .6s cubic-bezier(.2,.8,.3,1) both;} @keyframes mxpop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}} html.mx-present .mx-intro-head{justify-content:center;text-align:center;} html.mx-present .mx-intro-head h2{font-size:34px;}";
+    + " .mx-portada-logo{display:none;} html.mx-present .mx-portada-logo{display:block;width:min(360px,52%);height:auto;margin:0 auto 18px;animation:mxpop .6s cubic-bezier(.2,.8,.3,1) both;} @keyframes mxpop{from{opacity:0;transform:scale(.92);}to{opacity:1;transform:none;}} html.mx-present .mx-intro-head{justify-content:center;text-align:center;} html.mx-present .mx-intro-head h2{font-size:34px;}"
+    + " .mx-dona circle{animation:mxdash .9s cubic-bezier(.3,.8,.3,1) both;} @keyframes mxdash{from{opacity:0;}to{opacity:1;}}"
+    + " .mx-nav{display:none;} html.mx-present .mx-nav{display:inline-flex;position:fixed;right:18px;z-index:100000;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fbf8f2;border:0;cursor:pointer;font-size:18px;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.32);} html.mx-present .mx-nav-prev{bottom:78px;} html.mx-present .mx-nav-next{bottom:20px;}";
 
   return (
     <div className="mx-pres-wrap" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -5402,6 +5425,8 @@ function PresentacionView({ filtered, filterTienda }) {
       </section>
 
       <button className="mx-present-exit" onClick={togglePresent}>✕ Salir de presentación</button>
+      <button className="mx-nav mx-nav-prev" onClick={() => navSlide(-1)} title="Anterior">▲</button>
+      <button className="mx-nav mx-nav-next" onClick={() => navSlide(1)} title="Siguiente">▼</button>
 
       {grupos.map(g => {
         const total = g.vends.reduce((s, v) => s + v.monto, 0);
@@ -5419,7 +5444,31 @@ function PresentacionView({ filtered, filterTienda }) {
               </div>
             </div>
 
-            <div style={{ padding: "8px 18px 0", overflowX: "auto" }}>
+            <div style={{ display: "flex", gap: 20, alignItems: "center", padding: "16px 20px 4px", flexWrap: "wrap" }}>
+              <svg className="mx-dona" width="104" height="104" viewBox="0 0 104 104" style={{ flexShrink: 0 }}>
+                {dona(g.vends, total)}
+                <text x="52" y="49" textAnchor="middle" fontSize="20" fontWeight="800" fill="var(--ink)">{g.vends.length}</text>
+                <text x="52" y="64" textAnchor="middle" fontSize="8.5" letterSpacing="0.5" fill="var(--muted)">PERSONAS</text>
+              </svg>
+              <div style={{ flex: 1, minWidth: 190 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 8 }}>Participación en las ventas</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {g.vends.map(v => {
+                    const frac = total > 0 ? v.monto / total : 0;
+                    return (
+                      <div key={v.nombre} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{v.nombre}</span>
+                        <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{fmtBs(v.monto)}</span>
+                        <b style={{ color: "var(--ink)", minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtPct(frac)}</b>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div style={{ padding: "6px 18px 0", overflowX: "auto" }}>
               <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
