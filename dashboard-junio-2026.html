@@ -5345,16 +5345,20 @@ function App() {
 function PresentacionView({ filtered, filterTienda }) {
   const dtS = { fontWeight: 700, color: "var(--ink)", fontSize: 13 };
   const ddS = { margin: "3px 0 0", color: "var(--muted)", fontSize: 13, lineHeight: 1.5 };
-  const th = { textAlign: "right", padding: "8px 10px", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
-  const thL = { ...th, textAlign: "left" };
-  const td = { textAlign: "right", padding: "11px 10px", fontSize: 13.5, color: "var(--ink)", borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
-  const tdL = { ...td, textAlign: "left" };
-
   const all = [...D.vendedores];
   const grupos = ["SUEÑA", "HEAVEN"].map(t => ({
     nombre: t, color: TIENDA_COLOR[t],
     vends: all.filter(v => v.tienda === t).sort((a, b) => b.monto - a.monto),
   })).filter(g => g.vends.length);
+
+  const metricas = [
+    { l: "Ventas", val: v => v.monto, fmt: v => fmtBs(v.monto), bold: true },
+    { l: "% Presupuesto", val: v => v.pctPres, fmt: v => fmtPct(v.pctPres) },
+    { l: "% Meta mínima", val: v => v.pctMin, fmt: v => fmtPct(v.pctMin) },
+    { l: "Conversión", val: v => v.conversion == null ? -1 : v.conversion, fmt: v => v.conversion != null ? fmtPct(v.conversion, 1) : "—" },
+    { l: "Ticket promedio", val: v => v.ticketProm, fmt: v => fmtBs(v.ticketProm) },
+    { l: "Crecimiento vs mes ant.", val: v => v.crecimientoVsAbril == null ? -Infinity : v.crecimientoVsAbril, fmt: v => v.crecimientoVsAbril != null ? (v.crecimientoVsAbril >= 0 ? "▲ " : "▼ ") + fmtPctSign(v.crecimientoVsAbril) : "—", crec: true },
+  ];
 
   function destacado(g) {
     const lider = g.vends[0];
@@ -5368,63 +5372,64 @@ function PresentacionView({ filtered, filterTienda }) {
     return { lider, texto: razones.join(", ") };
   }
 
+  const thCorner = { textAlign: "left", padding: "10px 12px", fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".03em", borderBottom: "2px solid var(--hairline-strong)", background: "var(--surface-2)", whiteSpace: "nowrap" };
+  const thVend = { textAlign: "center", padding: "10px 12px", fontSize: 13, fontWeight: 700, color: "var(--ink)", borderBottom: "2px solid var(--hairline-strong)", whiteSpace: "nowrap" };
+  const tdLat = { textAlign: "left", padding: "11px 12px", fontSize: 12.5, fontWeight: 600, color: "var(--ink-700)", borderBottom: "1px solid var(--hairline)", background: "var(--surface-2)", whiteSpace: "nowrap" };
+  const tdVal = { textAlign: "center", padding: "11px 12px", fontSize: 14, borderBottom: "1px solid var(--hairline)", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       <section className="card">
         <h3 style={{ margin: 0 }}>Presentación del equipo · {D.periodo.mes} {D.periodo.anio}</h3>
         <p style={{ color: "var(--ink-700)", fontSize: 14, lineHeight: 1.6, margin: "8px 0 0" }}>
-          Los resultados están separados por tienda. En cada tabla, cada fila es una persona y las columnas son sus indicadores. La persona destacada (👑) lideró las ventas de su equipo. Al final se explica qué significa cada dato.
+          Separado por tienda. Arriba están las personas y al costado los indicadores. En cada fila, el mejor valor está resaltado en verde con ✓, para ver al instante quién lidera ese dato. La 👑 es quien más vendió del equipo.
         </p>
       </section>
 
       {grupos.map(g => {
-        const total = g.vends.reduce((s, v) => s + v.monto, 0);
-        const maxMonto = Math.max(...g.vends.map(v => v.monto), 1);
         const d = destacado(g);
         return (
           <section key={g.nombre} className="card" style={{ borderTop: "3px solid " + g.color }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14, flexWrap: "wrap", gap: 8 }}>
               <h3 style={{ margin: 0, color: g.color, fontSize: 20 }}>{g.nombre}</h3>
-              <span style={{ fontSize: 13, color: "var(--muted)" }}>{g.vends.length} personas · <b style={{ color: "var(--ink)" }}>{fmtBs(total)}</b> en ventas</span>
+              <span style={{ fontSize: 13, color: "var(--muted)" }}>{g.vends.length} personas · <b style={{ color: "var(--ink)" }}>{fmtBs(g.vends.reduce((s, v) => s + v.monto, 0))}</b> en ventas</span>
             </div>
 
             <div style={{ overflowX: "auto" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 540 }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
                   <tr>
-                    <th style={thL}>Vendedor</th>
-                    <th style={th}>Ventas</th>
-                    <th style={th}>% Presup.</th>
-                    <th style={th}>% Meta mín.</th>
-                    <th style={th}>Conversión</th>
-                    <th style={th}>Ticket prom.</th>
-                    <th style={th}>vs mes ant.</th>
+                    <th style={thCorner}>Indicador</th>
+                    {g.vends.map((v, idx) => (
+                      <th key={v.nombre} style={thVend}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
+                          {v.nombre}{idx === 0 ? " 👑" : ""}
+                        </span>
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {g.vends.map((v, idx) => (
-                    <tr key={v.nombre} style={idx === 0 ? { background: "var(--surface-2)" } : null}>
-                      <td style={tdL}>
-                        <span style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
-                          <b style={{ fontWeight: idx === 0 ? 700 : 600 }}>{v.nombre}</b>{idx === 0 ? " 👑" : ""}
-                        </span>
-                      </td>
-                      <td style={td}>
-                        <div style={{ fontWeight: 700 }}>{fmtBs(v.monto)}</div>
-                        <div style={{ height: 4, background: "var(--rail)", borderRadius: 2, marginTop: 4, overflow: "hidden" }}>
-                          <div style={{ height: "100%", width: (v.monto / maxMonto * 100) + "%", background: VENDOR_COLOR[v.nombre] }} />
-                        </div>
-                      </td>
-                      <td style={{ ...td, color: v.pctPres >= 1 ? "var(--good)" : v.pctPres >= 0.8 ? "var(--warn)" : "var(--bad)", fontWeight: 600 }}>{fmtPct(v.pctPres)}</td>
-                      <td style={td}>{fmtPct(v.pctMin)}</td>
-                      <td style={td}>{fmtPct(v.conversion, 1)}</td>
-                      <td style={td}>{fmtBs(v.ticketProm)}</td>
-                      <td style={{ ...td, color: v.crecimientoVsAbril == null ? "var(--muted)" : v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 600 }}>
-                        {v.crecimientoVsAbril != null ? (v.crecimientoVsAbril >= 0 ? "▲ " : "▼ ") + fmtPctSign(v.crecimientoVsAbril) : "—"}
-                      </td>
-                    </tr>
-                  ))}
+                  {metricas.map(m => {
+                    const vals = g.vends.map(m.val);
+                    const best = Math.max.apply(null, vals);
+                    return (
+                      <tr key={m.l}>
+                        <td style={tdLat}>{m.l}</td>
+                        {g.vends.map(v => {
+                          const esMejor = g.vends.length > 1 && isFinite(best) && m.val(v) === best;
+                          let color = "var(--ink)";
+                          if (m.crec && v.crecimientoVsAbril != null) color = v.crecimientoVsAbril >= 0 ? "var(--good)" : "var(--bad)";
+                          return (
+                            <td key={v.nombre} style={{ ...tdVal, fontWeight: (m.bold || esMejor) ? 700 : 500, color: esMejor ? "var(--good)" : color, background: esMejor ? "rgba(79,122,63,.10)" : "transparent" }}>
+                              {m.fmt(v)}{esMejor ? " ✓" : ""}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -5439,12 +5444,12 @@ function PresentacionView({ filtered, filterTienda }) {
       <section className="card">
         <h3 style={{ marginTop: 0 }}>📖 ¿Qué significa cada dato?</h3>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "14px 24px", margin: 0 }}>
-          <div><dt style={dtS}>💰 Ventas</dt><dd style={ddS}>Total de dinero vendido en el mes. La barrita compara con el líder del equipo.</dd></div>
-          <div><dt style={dtS}>📊 % Presup.</dt><dd style={ddS}>Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó. Verde = bien, rojo = bajo.</dd></div>
-          <div><dt style={dtS}>🎯 % Meta mín.</dt><dd style={ddS}>Qué tanto de su meta mínima alcanzó (el piso que debe cumplir).</dd></div>
-          <div><dt style={dtS}>🔄 Conversión</dt><dd style={ddS}>De cada 100 clientes atendidos, cuántos compraron. Mide qué tan bien cierra ventas.</dd></div>
-          <div><dt style={dtS}>🧾 Ticket prom.</dt><dd style={ddS}>Cuánto gasta en promedio cada cliente que compra. Más alto = ventas más grandes.</dd></div>
-          <div><dt style={dtS}>📈 vs mes ant.</dt><dd style={ddS}>Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado.</dd></div>
+          <div><dt style={dtS}>💰 Ventas</dt><dd style={ddS}>Total de dinero vendido en el mes.</dd></div>
+          <div><dt style={dtS}>📊 % Presupuesto</dt><dd style={ddS}>Qué tanto del presupuesto ideal alcanzó. 100% = llegó; más, lo superó.</dd></div>
+          <div><dt style={dtS}>🎯 % Meta mínima</dt><dd style={ddS}>Qué tanto de su meta mínima alcanzó (el piso que debe cumplir).</dd></div>
+          <div><dt style={dtS}>🔄 Conversión</dt><dd style={ddS}>De cada 100 clientes atendidos, cuántos compraron.</dd></div>
+          <div><dt style={dtS}>🧾 Ticket promedio</dt><dd style={ddS}>Cuánto gasta en promedio cada cliente que compra.</dd></div>
+          <div><dt style={dtS}>📈 Crecimiento</dt><dd style={ddS}>Cuánto subió (▲ verde) o bajó (▼ rojo) respecto al mes pasado.</dd></div>
         </dl>
       </section>
     </div>
