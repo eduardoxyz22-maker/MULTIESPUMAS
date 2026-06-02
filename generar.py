@@ -692,8 +692,16 @@ if _compradores_sid:
                 _is_cur  = (_cd.year == now_dt.year and _cd.month == now_dt.month)
                 _is_prev = (_cd.year == prev_year  and _cd.month == prev_month)
             else:
-                _is_cur  = (_l.get("updated_at", 0) >= from_ts)
-                _is_prev = False
+                # Sin fecha de contrato: usar created_at como mes de origen.
+                # Lead CREADO en mes anterior pero CERRADO este mes → pertenece al mes anterior.
+                _created_in_prev = (from_ts_prev <= _l.get("created_at", 0) <= to_ts_prev)
+                _closed_this_month = (_l.get("updated_at", 0) >= from_ts)
+                if _created_in_prev and _closed_this_month:
+                    _is_prev = True
+                    _is_cur  = False
+                else:
+                    _is_cur  = _closed_this_month
+                    _is_prev = False
             if _is_cur:
                 _leads_cross.append(_l)
                 _ids_this.add(_l["id"])
