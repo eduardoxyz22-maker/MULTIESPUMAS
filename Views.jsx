@@ -169,21 +169,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   };
 
   /* ===== SEGUIMIENTO ===== */
-  // Cola priorizada representativa (en producción son las 50 fichas más antiguas reales)
-  const BACKLOG_ROWS = [
-    { c: "Lead #38712044", e: "Cotización enviada", r: "Maria Flores", d: 19, nh: false },
-    { c: "Reinaldo Romero", e: "Nueva consulta", r: "Maria Flores", d: 17, nh: true },
-    { c: "Lead #38705628", e: "No Responden", r: "Carola Chavez", d: 16, nh: false },
-    { c: "face 28", e: "No Responden", r: "Carola Chavez", d: 14, nh: true },
-    { c: "SRA SILVIA (Montero)", e: "Cotización enviada", r: "Mirian Salazar", d: 12, nh: false },
-    { c: "Lead #38790858", e: "Nueva consulta", r: "Maria Flores", d: 11, nh: true },
-    { c: "Briseida", e: "Interesado", r: "Carola Chavez", d: 9, nh: false },
-    { c: "Lead #38589856", e: "No Responden", r: "Isabel Robledo", d: 8, nh: false },
-    { c: "aries artesana", e: "Agendado / Visita", r: "Maria Flores", d: 7, nh: false },
-    { c: "YuliM", e: "Cotización enviada", r: "Carola Chavez", d: 6, nh: false },
-    { c: "Lead #39061972", e: "Nueva consulta", r: "Mirian Salazar", d: 5, nh: true },
-    { c: "Dan P", e: "No Responden", r: "Isabel Robledo", d: 4, nh: false },
-  ];
+  const BACKLOG_ROWS = D.backlogLeads || [];
   window.ViewSeguimiento = function () {
     const backlogBy = T.filter(v => v.backlog > 0).map(v => ({ v, n: v.backlog })).sort((a, b) => b.n - a.n);
     const totalBk = T.reduce((s, v) => s + v.backlog, 0);
@@ -394,7 +380,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     for (let k = 0; k < rem; k++) fl[fr[k % fl.length].i]++;
     return fl;
   }
-  const weeklyOf = v => { const cur = splitInt(v.cierres, SEM_W); return { cur, curM: cur.map(n => n * v.ticket), tot: v.cierres, totM: v.cierres * v.ticket }; };
+  const weeklyOf = v => {
+    const real = D.weeklyClosures && D.weeklyClosures[v.name];
+    const cur = real ? real : splitInt(v.cierres, SEM_W);
+    return { cur, curM: cur.map(n => n * v.ticket), tot: v.cierres, totM: v.cierres * v.ticket };
+  };
   // Mes anterior: total derivado de prevLeads y una distribución semanal distinta (forma diferente).
   const SEM_W_PREV = [0.22, 0.18, 0.26, 0.2, 0.14];
   const weeklyPrev = v => { const ratio = v.prevLeads ? v.prevLeads / (v.leads || 1) : 0.85; const p = Math.max(0, Math.round(v.cierres * ratio)); const cur = splitInt(p, SEM_W_PREV); return { cur, totM: p * v.ticket, tot: p }; };

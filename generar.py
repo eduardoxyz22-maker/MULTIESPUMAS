@@ -399,6 +399,8 @@ for lead in leads:
         "days": round(days_float, 1),
         "days_int": days_int,
         "value": int(value),
+        "updated_at": updated_at,
+        "nh": lid not in _first_human_ev,
     })
 
 total_leads = len(leads)
@@ -1357,6 +1359,58 @@ _metrics_panel = {
     "agendado": stage_counts.get("Agendado / Visita", 0),
 }
 
+# --- backlog leads (real stagnant leads, top 50 by days) ---
+_backlog_candidates = sorted(
+    (r for r in all_rows if r.get("stage") in FOLLOWUP_STAGES and r.get("days_int", 0) >= 3),
+    key=lambda r: -r.get("days_int", 0)
+)[:50]
+_backlog_leads_panel = [
+    {
+        "id": r["id"],
+        "c": r["contact"] or r["name"],
+        "e": r["stage"],
+        "r": r["user"].split(" - ", 1)[0] if " - " in r["user"] else r["user"],
+        "suc": r["sucursal"],
+        "d": r["days_int"],
+        "v": r["value"],
+        "nh": r.get("nh", False),
+    }
+    for r in _backlog_candidates
+]
+
+# --- weekly closures (real, by vendor clean name, 5 weeks) ---
+_weekly_closures_raw = defaultdict(lambda: [0, 0, 0, 0, 0])
+for _wr in all_rows:
+    if _wr.get("stage") == COMPRADORES_STAGE and _wr.get("updated_at"):
+        _udt = datetime.datetime.fromtimestamp(_wr["updated_at"])
+        _day = _udt.day
+        _wi = 0 if _day <= 7 else (1 if _day <= 14 else (2 if _day <= 21 else (3 if _day <= 28 else 4)))
+        _clean_v = _wr["user"].split(" - ", 1)[0] if " - " in _wr["user"] else _wr["user"]
+        _weekly_closures_raw[_clean_v][_wi] += 1
+_weekly_closures_panel = {k: list(v) for k, v in _weekly_closures_raw.items()}
+
+# --- alert badge count (mirrors ViewAlertas JS logic) ---
+_open_pct_al = round(_open_sin_valor_p / len(_open_rows_p) * 100) if _open_rows_p else 0
+_worst_conv_al = min(
+    (_v for _v in _team_panel if _v.get("cierres", 0) > 0),
+    key=lambda _v: _v.get("conv", 100), default=None
+)
+_high_no_resp_al = [_v for _v in _team_panel if _v.get("noRespPct", 0) > 50]
+_big_never_al = any(_v.get("nunca", 0) > 20 for _v in _team_panel)
+_man_ch_al = next((c for c in _channels_panel if c.get("cls") == "green"), {})
+_bot_ch_al = next((c for c in _channels_panel if c.get("cls") == "red"), {})
+_mult_al = round(_man_ch_al.get("conv", 0) / max(_bot_ch_al.get("conv", 1), 1)) if _man_ch_al.get("conv") and _bot_ch_al.get("conv") else 0
+_alert_badge_n = 0
+if _open_pct_al > 30: _alert_badge_n += 1
+if _worst_conv_al is not None and _worst_conv_al.get("conv", 100) < 5: _alert_badge_n += 1
+if _high_no_resp_al: _alert_badge_n += 1
+if _mom_pct_p < -5: _alert_badge_n += 1
+if _big_never_al: _alert_badge_n += 1
+if _metrics_panel["sinSucursalPct"] > 50: _alert_badge_n += 1
+if _mult_al >= 5: _alert_badge_n += 1
+if _metrics_panel["backlogPct"] > 20: _alert_badge_n += 1
+if _alert_badge_n == 0: _alert_badge_n = 1  # always show badge (green "no issues" card)
+
 # --- funnel2 (donut breakdown) ---
 _adv_stages_p = ["Interesado", "Cotización enviada", "Agendado / Visita"]
 _funnel2_panel = [
@@ -1422,7 +1476,7 @@ panel_data = {
         {"id": "resumen", "label": "Resumen"},
         {"id": "equipo", "label": "Equipo", "badge": str(len(_team_panel))},
         {"id": "seguimiento", "label": "Seguimiento", "badge": str(total_stagnant_7)},
-        {"id": "alertas", "label": "Alertas", "badge": "8"},
+        {"id": "alertas", "label": "Alertas", "badge": str(_alert_badge_n)},
         {"id": "analisis", "label": "Análisis IA"},
         {"id": "conversion", "label": "Conversión"},
         {"id": "semanal", "label": "Semanal"},
@@ -1430,6 +1484,8 @@ panel_data = {
         {"id": "proyeccion", "label": "Proyección"},
         {"id": "datos", "label": "Datos"},
     ],
+    "backlogLeads": _backlog_leads_panel,
+    "weeklyClosures": _weekly_closures_panel,
     "stagesByV": _stages_by_v_panel,
     "dups": [
         {
