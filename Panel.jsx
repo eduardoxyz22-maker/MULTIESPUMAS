@@ -150,7 +150,7 @@ function ProfileDrawer({ vendor: v, onClose }) {
             </div>
             <div className="drawer-body">
               <div className="dr-sec">Tendencia de leads</div>
-              <div className="dr-mom"><span className="big">{v.leads.toLocaleString("en-US")}</span><span className={`delta ${diff >= 0 ? "up" : "down"}`}>{diff >= 0 ? "▲" : "▼"} {Math.abs(diff)}</span><span className="ww">vs {v.prevLeads.toLocaleString("en-US")} en {D.prevMonth}</span></div>
+              <div className="dr-mom"><span className="big">{v.leads.toLocaleString("en-US")}</span><span className={`delta ${diff >= 0 ? "up" : "down"}`}>{diff >= 0 ? "▲" : "▼"} {Math.abs(diff)}</span><span className="ww">vs {(v.prevLeads || 0).toLocaleString("en-US")} en {D.prevMonth}</span></div>
               <div className="dr-sec">KPIs comerciales</div>
               <div className="dr-kpis" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 10 }}>
                 <div className="dr-k" style={{ borderLeft: "3px solid var(--green)" }}><div className="v" style={{ color: "var(--green-ink)" }}>{fmtMoney(cerrado)}</div><div className="l">Cerrado mes (Compradores)</div></div>
@@ -434,7 +434,7 @@ function Funnel() {
 }
 
 function TeamTable({ cols = "full" }) {
-  const T = D.team, maxLeads = Math.max(...T.map(v => v.leads));
+  const T = D.team, maxLeads = T.length ? Math.max(...T.map(v => v.leads)) : 1;
   return (
     <table className="tbl">
       <thead><tr>
@@ -488,13 +488,13 @@ function getDiagFallback() {
   const dir = (D.leadsMomPct || 0) < 0 ? `cayó ${Math.abs(D.leadsMomPct)}%` : `creció ${Math.abs(D.leadsMomPct || 0)}%`;
   return {
     titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
-    diagnostico: `Con ${G.leads.toLocaleString("en-US")} leads (captación ${dir}) el cuello de botella no es captación — es disciplina de seguimiento y conversión. ${D.metrics.backlog} fichas sin seguimiento +72h y ${D.metrics.noResp} en "No responden" son la prioridad.`,
+    diagnostico: `Con ${G.leads.toLocaleString("en-US")} leads (captación ${dir}) el cuello de botella no es captación — es disciplina de seguimiento y conversión. ${D.metrics?.backlog || 0} fichas sin seguimiento +72h y ${D.metrics?.noResp || 0} en "No responden" son la prioridad.`,
     palancas: [
       top ? `Replicar el playbook de seguimiento de ${top.name.split(" ")[0]}` : "Replicar el playbook de la mejor vendedora",
       `Llamar al top 50 de cotizaciones con más días sin actividad`,
-      `Activar los ${D.metrics.backlog} leads sin seguimiento +72h`,
+      `Activar los ${D.metrics?.backlog || 0} leads sin seguimiento +72h`,
     ],
-    riesgo: `${D.metrics.noResp} leads en "No responden" se enfrían cada día sin una segunda cadencia de contacto.`,
+    riesgo: `${D.metrics?.noResp || 0} leads en "No responden" se enfrían cada día sin una segunda cadencia de contacto.`,
   };
 }
 function DiagnosticoMes() {
@@ -513,7 +513,7 @@ function DiagnosticoMes() {
     const _bot = D.channels.find(c => c.cls === "red") || {};
     return `Eres analista comercial senior de Heaven Colchones (Bolivia). Analiza el mes ${D.month} ${D.year} y responde SOLO con JSON válido, sin texto extra, forma exacta:
 {"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números","palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}
-Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.leads ? G.cierres / G.leads * 100 : 0).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
+Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.leads ? G.cierres / G.leads * 100 : 0).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics?.noResp || 0} (${D.metrics?.noRespPct || 0}%). Sin seguimiento +72h: ${D.metrics?.backlog || 0} (${D.metrics?.backlogPct || 0}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
 Equipo:
 ${teamLines}
 Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name : "N/A"}. Sé directo, específico con nombres y números, español de Bolivia.`;
@@ -697,10 +697,10 @@ function ViewResumen() {
           <Kpi l="Conversión" num={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
           <Kpi l="Cerrado en el mes" num={G.cierres * G.ticket} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Monto de deals que llegaron a Compradores (revenue confirmado)." sub={`${G.cierres} compradores`} />
           <Kpi l="Pipeline total" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Valor de todos los deals en todas las etapas." sub="todas las etapas" />
-          <Kpi l="Sin seguimiento" num={D.metrics.backlogPct} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics.backlog} leads</b> +72h</span>} />
+          <Kpi l="Sin seguimiento" num={D.metrics?.backlogPct || 0} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics?.backlog || 0} leads</b> +72h</span>} />
           <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." sub={<span>valor / cierre</span>} />
-          <Kpi l="Interesado" num={D.metrics.interesado} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." sub="leads en interés" />
-          <Kpi l="Agendado / Visita" num={D.metrics.agendado} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." sub="visitas programadas" />
+          <Kpi l="Interesado" num={D.metrics?.interesado || 0} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." sub="leads en interés" />
+          <Kpi l="Agendado / Visita" num={D.metrics?.agendado || 0} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." sub="visitas programadas" />
           <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.pipeline)}</span>} />
         </div>
       </div>
@@ -729,7 +729,7 @@ function ViewResumen() {
         <div className="card">
           <div className="eb" style={{ marginBottom: 14 }}>Leads por vendedora — {D.month} vs {D.prevMonth}</div>
           {D.team.map((v, i) => {
-            const max = Math.max(...D.team.map(x => Math.max(x.leads, x.prevLeads)));
+            const max = D.team.length ? Math.max(...D.team.map(x => Math.max(x.leads, x.prevLeads || 0))) : 1;
             const diff = v.leads - (v.prevLeads || 0);
             return (
               <div key={i} className="clickable" style={{ display: "grid", gridTemplateColumns: "130px 1fr", alignItems: "center", gap: 12, padding: "9px 0", borderBottom: i < D.team.length - 1 ? "1px solid var(--line2)" : "none" }} onClick={() => window.__perfil(v)}>

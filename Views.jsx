@@ -333,15 +333,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             </div>
           </div>
           <div className="card" style={{ display: "flex", flexDirection: "column", justifyContent: "center", gap: 14 }}>
-            <div className="insight" style={{ margin: 0 }}><span className="ic"><Icon name="bulb" size={18} sw={2.2} /></span><div><div className="t">{D.metrics.noRespPct}% de los leads "no responden"</div><div className="d"><b>{D.metrics.noResp.toLocaleString("en-US")} leads</b> marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad más grande del embudo.</div></div></div>
+            <div className="insight" style={{ margin: 0 }}><span className="ic"><Icon name="bulb" size={18} sw={2.2} /></span><div><div className="t">{D.metrics?.noRespPct || 0}% de los leads "no responden"</div><div className="d"><b>{(D.metrics?.noResp || 0).toLocaleString("en-US")} leads</b> marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad más grande del embudo.</div></div></div>
             <div style={{ display: "flex", gap: 12 }}>
-              <div className="kpi" style={{ flex: 1 }}><div className="kl">Calificados</div><div className="kv" style={{ fontSize: "1.5rem", marginTop: 6 }}>{Math.round(f[2].v / f[0].v * 100)}%</div><div className="ksub">{f[2].v} en etapas avanzadas</div></div>
-              <div className="kpi" style={{ flex: 1 }}><div className="kl">Fichas duplicadas</div><div className="kv" style={{ fontSize: "1.5rem", marginTop: 6 }}>{D.metrics.duplicadosFichas}</div><div className="ksub">{D.metrics.duplicadosTel} teléfonos en 2+ fichas</div></div>
+              <div className="kpi" style={{ flex: 1 }}><div className="kl">Calificados</div><div className="kv" style={{ fontSize: "1.5rem", marginTop: 6 }}>{f.length >= 3 ? Math.round((f[2].v || 0) / (f[0].v || 1) * 100) : 0}%</div><div className="ksub">{f.length >= 3 ? f[2].v : 0} en etapas avanzadas</div></div>
+              <div className="kpi" style={{ flex: 1 }}><div className="kl">Fichas duplicadas</div><div className="kv" style={{ fontSize: "1.5rem", marginTop: 6 }}>{D.metrics?.duplicadosFichas || 0}</div><div className="ksub">{D.metrics?.duplicadosTel || 0} teléfonos en 2+ fichas</div></div>
             </div>
           </div>
         </div>
 
-        <SectionHead eb="Pipeline completo" h3={`Leads por etapa — las ${D.global.leads.toLocaleString("en-US")} fichas del mes`} p="Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido." />
+        <SectionHead eb="Pipeline completo" h3={`Leads por etapa — las ${(G.leads || 0).toLocaleString("en-US")} fichas del mes`} p="Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido." />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
           {D.stagesGlobal.map((s, i) => {
             const max = Math.max(...D.stagesGlobal.map(x => x.count));

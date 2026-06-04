@@ -1187,8 +1187,8 @@ html = html.replace("__USR_OPTS_JSON__", json.dumps(usr_opts, ensure_ascii=False
 html = html.replace("__STG_OPTS_JSON__", json.dumps(stg_opts, ensure_ascii=False))
 html = html.replace("__VENDORS_JSON__", json.dumps(vendors_json_list, ensure_ascii=False))
 html = html.replace("__ETAPAS_JSON__", json.dumps(etapas_json, ensure_ascii=False))
-html = html.replace("__COMPRADORES_STAGE__", COMPRADORES_STAGE)
-html = html.replace("__NO_RESP_STAGE__", NO_RESP_STAGE)
+html = html.replace("__COMPRADORES_STAGE__", json.dumps(COMPRADORES_STAGE)[1:-1])
+html = html.replace("__NO_RESP_STAGE__", json.dumps(NO_RESP_STAGE)[1:-1])
 html = html.replace("__FOLLOWUP_STAGES_JSON__", json.dumps(list(FOLLOWUP_STAGES), ensure_ascii=False))
 # Canal de Origen
 html = html.replace("__CHANNELS_ROWS__", _ch_rows_html)
@@ -1261,7 +1261,7 @@ for _ventry in vendors_json_list:
         _clean_name, _suc_from_name = _vname, None
     _ini = "".join(p[0].upper() for p in _clean_name.split()[:2])
     _suc = vendor_primary_suc.get(_vname, None) or _suc_from_name or "Sin sucursal"
-    _agendado_c = _vd_p["stages"].get("Agendado / Visita", 0)
+    _agendado_c = _vd_p["stages"].get(_q2 or "Agendado / Visita", 0)
     _item = {
         "ini": _ini, "name": _clean_name, "suc": _suc,
         "color": _VENDOR_COLORS.get(_clean_name, _VENDOR_COLORS.get(_vname, "#6B7785")), "photo": "",
@@ -1414,7 +1414,7 @@ if _metrics_panel["backlogPct"] > 20: _alert_badge_n += 1
 if _alert_badge_n == 0: _alert_badge_n = 1  # always show badge (green "no issues" card)
 
 # --- funnel2 (donut breakdown) ---
-_adv_stages_p = ["Interesado", "Cotización enviada", "Agendado / Visita"]
+_adv_stages_p = [_q1 or "Interesado", "Cotización enviada", _q2 or "Agendado / Visita"]
 _funnel2_panel = [
     {"n": "Leads del mes", "v": total_leads, "c": "#27313F"},
     {"n": "Sin respuesta", "v": total_no_resp, "c": "#646E7B"},
