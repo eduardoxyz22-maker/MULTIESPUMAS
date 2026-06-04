@@ -111,6 +111,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   /* ===== EQUIPO ===== */
   window.ViewEquipo = function () {
     const open = v => window.__perfil && window.__perfil(v);
+    const metas = window.useMetas ? window.useMetas() : {};
     return (
       <div className="view">
         <SectionHead eb="⭐ Centro de control" h3="Responsabilidad por vendedora"
@@ -124,8 +125,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         </div>
         <div className="grid3">
           {T.map((v, i) => {
-            const mc = v.metaCierres || 30, pct = Math.min(100, Math.round(v.cierres / mc * 100));
-            const mcol = pct >= 80 ? "var(--green)" : pct >= 50 ? "var(--amber)" : "var(--red)";
+            const metaMonto = metas[v.name] || 0;
+            const cerrado = v.cierres * v.ticket;
+            const mpct = metaMonto ? Math.min(100, Math.round(cerrado / metaMonto * 100)) : 0;
+            const mcol = mpct >= 80 ? "var(--green)" : mpct >= 50 ? "var(--amber)" : "var(--red)";
             return (
               <div className={`tcard clickable ${v.v}`} key={i} style={{ borderTopColor: v.color }} onClick={() => open(v)}>
                 <div className="tcard-h"><Avatar v={v} size={46} ring crown={v.name === TOP} /><div><div className="tcard-name">{v.name}{v.nuevo && <span className="tag-new">NUEVO</span>}</div><div className="tcard-where">{v.suc}</div></div><div style={{ marginLeft: "auto" }}><Pill tone={v.v}>{v.u24}% &lt;24h</Pill></div></div>
@@ -135,10 +138,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   <div className="tm"><div className="v num" style={{ color: `var(--${convTone(window.convPct(v))})` }}>{window.convPct(v)}%</div><div className="l">Conversión</div></div>
                   <div className="tm"><div className="v num">{v.ticket ? money(v.ticket) : "—"}</div><div className="l">Ticket prom.</div></div>
                 </div>
+                {metaMonto > 0 && (
                 <div style={{ padding: "13px 17px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", color: "var(--muted)", marginBottom: 6 }}><span>Meta {mc} cierres</span><b className="num" style={{ color: mcol }}>{pct}%</b></div>
-                  <div className="meter"><i style={{ width: pct + "%", background: mcol }} /></div>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", color: "var(--muted)", marginBottom: 6 }}><span>Meta {window.fmtMoney(metaMonto)}</span><b className="num" style={{ color: mcol }}>{mpct}%</b></div>
+                  <div className="meter"><i style={{ width: mpct + "%", background: mcol }} /></div>
                 </div>
+                )}
                 <WeekSpark weeks={weeklyOf(v).cur} />
                 <div className="tcard-bar">Cierres por semana<b style={{ color: "var(--brand-d)" }}>Ver ficha →</b></div>
               </div>
@@ -343,8 +348,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
         <SectionHead eb="Pipeline completo" h3={`Leads por etapa — las ${(G.leads || 0).toLocaleString("en-US")} fichas del mes`} p="Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido." />
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 12 }}>
-          {D.stagesGlobal.map((s, i) => {
-            const max = Math.max(...D.stagesGlobal.map(x => x.count));
+          {D.stagesGlobal.filter(s => s.count > 0).map((s, i) => {
+            const max = Math.max(...D.stagesGlobal.filter(x => x.count > 0).map(x => x.count));
             return (
               <div className="card" key={i} style={{ padding: 16, position: "relative", overflow: "hidden" }}>
                 <span style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: s.color }} />
@@ -596,7 +601,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             <ol style={{ paddingLeft: 18, fontSize: ".86rem", lineHeight: 1.9, color: "var(--text)" }}>
               <li>Activar los <b>{Math.round(backlog * 0.73)}</b> leads con +7 días sin contacto.</li>
               <li>Revisar el pipeline <b>"No responden"</b> ({D.metrics.noResp.toLocaleString("en-US")} leads).</li>
-              <li>Etiquetar sucursal en leads sin clasificar.</li>
+              <li>Rescatar las <b>{D.metrics.criticos7d}</b> fichas con +7 días sin contacto.</li>
             </ol>
           </div>
         </div>
