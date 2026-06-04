@@ -35,4 +35,5 @@ jobs:
           git add index.html panel.html index_legacy.html
           git add panel_*.html 2>/dev/null || true
           git diff --cached --quiet || git commit -m "Dashboard CRM actualizado $(date '+%Y-%m-%d %H:%M')"
+          git pull --rebase origin main || true
           git push
