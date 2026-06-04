@@ -75,7 +75,7 @@
     const _bot = D.channels.find(c => c.cls === "red") || {};
     const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
 Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
-"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Deals sin valor: ${M.abiertosSinValor}.
+"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}.
 IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las sucursales activas son ${[...new Set(T.map(v => v.suc))].join(', ')}.
 Canales: ${D.channels.map(c => `${c.name} ${c.leads} leads / ${c.conv}% conv / ${c.cierres} cierres`).join('; ')}.
 Roll-up por sucursal (con comparativo vs mes anterior):
@@ -193,7 +193,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const FILTERS = [["all", "Todos"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
     return (
       <div className="view">
-        <SectionHead eb="Acción inmediata" h3={`${totalBk} leads abiertos sin actividad +72h`} p="Ordenados por antigüedad sin contacto (lo más urgente primero). Los leads abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto."
+        <SectionHead eb="Acción inmediata" h3={`${totalBk} leads abiertos sin actividad +72h`} p="Ordenados por antigüedad sin contacto — lo más urgente primero."
           right={<button className="btn" onClick={() => window.downloadCSV(`heaven_backlog_${D.month}.csv`, ["Contacto / Deal", "Etapa", "Responsable", "Dias sin actividad", "Nunca tocado"], BACKLOG_ROWS.map(r => [r.c, r.e, r.r, r.d, r.nh ? "Sí" : "No"]))}><Icon name="download" size={14} />Exportar CSV</button>} />
         <div className="kpis" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
           <Kpi l="Sin seguimiento +72h" num={totalBk} ac="#DC4046" ico="seguimiento" sub={`${D.metrics.backlogPct}% del total de leads`} />
@@ -270,8 +270,6 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const _mult = _man.conv && _bot.conv ? Math.round(_man.conv / Math.max(_bot.conv, 1)) : 0;
     const topCloser = [...T].sort((a, b) => b.cierres - a.cierres)[0] || {};
     const A = [];
-    const openPct = D.metrics.openTotal ? Math.round(D.metrics.abiertosSinValor / D.metrics.openTotal * 100) : 0;
-    if (openPct > 30) A.push({ sev: "red", who: "Datos / Gerencia", t: `Deals abiertos sin valor cargado (${openPct}%)`, d: "No se puede priorizar el pipeline por monto.", act: "Cargar valor estimado al cotizar." });
     if (worstConv.length > 0 && worstConv[0].conv < 5) {
       const v = worstConv[0];
       A.push({ sev: "red", who: v.name, t: `Conversión ${v.conv}% — la más baja del equipo`, d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`, act: "Coaching + auditar cotizaciones." });
@@ -285,7 +283,6 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     if ((D.leadsMomPct || 0) < -5) A.push({ sev: "amber", who: "Gerencia", t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")})`, d: "Caída de captación en todos los frentes.", act: "Revisar inversión en canales." });
     const bigNever = topNever.filter(v => v.nunca > 20)[0];
     if (bigNever) A.push({ sev: "amber", who: bigNever.name, t: `${bigNever.nunca} leads nunca tocados`, d: "El bot los asignó, sin primera acción registrada.", act: "Repartir backlog en reunión diaria." });
-    if (D.metrics.sinSucursalPct > 50) A.push({ sev: "amber", who: "Datos", t: `Sucursal sin etiquetar en el ${D.metrics.sinSucursalPct}% de fichas`, d: `El comparativo por tienda queda parcial (${D.metrics.sinSucursalFichas.toLocaleString("en-US")} fichas).`, act: "Campaña de etiquetado." });
     if (_mult >= 5) A.push({ sev: "green", who: "Equipo", t: `Carga manual convierte ${_mult}× más que el bot`, d: "Oportunidad: priorizar captación manual de calidad.", act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(" ")[0] : "la mejor vendedora"}.` });
     if (D.metrics.backlogPct > 20) A.push({ sev: "amber", who: "Equipo", t: `${D.metrics.backlog} leads sin seguimiento +72h`, d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`, act: "Priorizar en reunión diaria." });
     if (A.length === 0) A.push({ sev: "green", who: "Equipo", t: "Sin alertas críticas este mes", d: "El equipo está al día con el seguimiento.", act: "Mantener el ritmo." });

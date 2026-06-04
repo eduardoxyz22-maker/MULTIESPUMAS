@@ -465,13 +465,15 @@ rescue_extra       = int(total_stagnant_7 * 0.30)
 rescue_val_extra   = fmt_money(int(ticket_avg * rescue_extra))
 
 # === Canal de Origen — datos reales ===
-channel_data = defaultdict(lambda: {"leads": 0, "compradores": 0, "value": 0.0})
+channel_data = defaultdict(lambda: {"leads": 0, "compradores": 0, "value": 0.0, "cerrado_value": 0.0})
 for lead in leads:
     ch = _detect_channel(lead, source_field_id)
+    _lv = float(lead.get("price", 0) or 0)
     channel_data[ch]["leads"] += 1
     if stage_map.get(lead.get("status_id"), "") == COMPRADORES_STAGE:
         channel_data[ch]["compradores"] += 1
-    channel_data[ch]["value"] += float(lead.get("price", 0) or 0)
+        channel_data[ch]["cerrado_value"] += _lv
+    channel_data[ch]["value"] += _lv
 
 _ch_rows_data = sorted(channel_data.items(), key=lambda x: -x[1]["compradores"])
 _ch_eligible = [(n, d) for n, d in _ch_rows_data if d["leads"] >= 5]
@@ -1311,10 +1313,10 @@ for _sn in stage_counts:
 # --- channels ---
 _channels_panel = []
 for _cn, _cd in _ch_rows_data:
-    _cl = _cd["leads"]; _cc = _cd["compradores"]; _cv = _cd["value"]
+    _cl = _cd["leads"]; _cc = _cd["compradores"]; _cv = _cd["value"]; _ccv = _cd["cerrado_value"]
     _cpct = round(_cl / total_leads * 100) if total_leads else 0
     _cconv = round(_cc / _cl * 100) if _cl else 0
-    _ctick = int(_cv / _cc) if _cc > 0 else 0
+    _ctick = int(_ccv / _cc) if _cc > 0 else 0
     _ccls = "green" if _cn == _ch_best_name else ("red" if _cn == _ch_worst_name else "muted")
     _channels_panel.append({
         "ic": _CH_ICON_MAP.get(_cn, "📦"), "name": _cn,
