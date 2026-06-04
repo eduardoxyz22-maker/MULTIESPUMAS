@@ -1,4 +1,4 @@
-/* Heaven panel — unified themeable styles.
+/* Heaven panel — unified themeable styles. v2
    LIGHT theme = Direction A (Refinado). DARK theme = Direction B (Command Center).
    Toggle sets data-theme on <html>. Tokens flip; a few dark-only rules add
    the neon glow, mono numerals and grid texture that define the B aesthetic. */
