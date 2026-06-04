@@ -537,11 +537,13 @@ for vname, vrd in _vresp.items():
     vtimes = vrd["times"]
     vavg = sum(vtimes) / len(vtimes) if vtimes else None
     vlt5_pct = round(sum(1 for t in vtimes if t < 5) / len(vtimes) * 100) if vtimes else 0
-    _vresp_list.append((vname, vavg, vlt5_pct, vrd["cold"]))
+    vlt24_n = sum(1 for t in vtimes if t < 1440)
+    vslow_n = sum(1 for t in vtimes if t >= 1440)
+    _vresp_list.append((vname, vavg, vlt24_n, vslow_n, vrd["cold"], vlt5_pct))
 _vresp_list.sort(key=lambda x: x[1] if x[1] is not None else 99999)
 
 _vendor_resp_html = ""
-for (vname, vavg, vlt5_pct, vcold) in _vresp_list:
+for (vname, vavg, vlt24_n, vslow_n, vcold, vlt5_pct) in _vresp_list:
     if vavg is None:
         avg_str = "Sin datos"
         badge = '<span class="badge b-gray">Sin datos</span>'
@@ -1228,8 +1230,8 @@ for _ventry in vendors_json_list:
     _vq = _ventry["kpis"]["calificados"]
     _vs = _ventry["kpis"]["stagnant"]
     _vtick = _ventry["kpis"]["ticket_avg"]
-    _vrespd = next(((a,b,c,d,e) for (a,b,c,d,e) in _vresp_list if a == _vname), (_vname, None, 0, 0, 0))
-    _, _vavg, _vlt24, _vslow, _vnever = _vrespd
+    _vrespd = next(((a,b,c,d,e,f) for (a,b,c,d,e,f) in _vresp_list if a == _vname), (_vname, None, 0, 0, 0, 0))
+    _, _vavg, _vlt24, _vslow, _vnever, _ = _vrespd
     _vstatus = "red" if (_vnever > 10 or (_vavg is not None and _vavg >= 4320)) else (
                "amber" if (_vavg is None or _vavg >= 1440) else "green")
     _ini = "".join(p[0].upper() for p in _vname.split()[:2])
