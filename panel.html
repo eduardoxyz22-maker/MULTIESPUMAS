@@ -6,7 +6,7 @@
 <title>Heaven Colchones · Panel Comercial — Junio 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>/* Heaven panel — unified themeable styles.
+<style>/* Heaven panel — unified themeable styles. v2
    LIGHT theme = Direction A (Refinado). DARK theme = Direction B (Command Center).
    Toggle sets data-theme on <html>. Tokens flip; a few dark-only rules add
    the neon glow, mono numerals and grid texture that define the B aesthetic. */
@@ -18,8 +18,8 @@
   --line:#E7EAEE; --line2:#F0F2F4; --text:#16202C; --muted:#697483; --faint:#9BA4B0;
   --brand:#00B5AD; --brand-d:#0A7D77; --brand-ink:#04302E; --brand-bg:#E0F4F2;
   --green:#159A57; --green-bg:#E7F5ED; --green-ink:#0C5C34;
-  --amber:#D98300; --amber-bg:#FBF0DA; --amber-ink:#7A4A00;
-  --red:#DC4046; --red-bg:#FBE8E9; --red-ink:#871F23;
+  --amber:#D98300; --amber-bg:#FBF0DA; --amber-ink:#7A4A00; --amber-border:rgba(217,131,0,.3);
+  --red:#DC4046; --red-bg:#FBE8E9; --red-ink:#871F23; --red-border:rgba(220,64,70,.3);
   --blue:#2E6FE0; --purple:#7A5AF0;
   --rail:#0F1620; --rail-tx:#A7B1BD; --rail-line:rgba(255,255,255,.07);
   --mono:'IBM Plex Mono',monospace; --num-ff:'Hanken Grotesk',sans-serif;
@@ -34,8 +34,8 @@ html[data-theme="dark"]{
   --line:#232C37; --line2:rgba(35,44,55,.6); --text:#E6EAEF; --muted:#8B97A4; --faint:#5E6975;
   --brand:#16C8BF; --brand-d:#16C8BF; --brand-ink:#04302E; --brand-bg:rgba(22,200,191,.1);
   --green:#2BB56E; --green-bg:rgba(43,181,110,.14); --green-ink:#4FE0A8;
-  --amber:#E89A1C; --amber-bg:rgba(232,154,28,.14); --amber-ink:#F0C173;
-  --red:#E8585D; --red-bg:rgba(232,88,93,.14); --red-ink:#FF9A9D;
+  --amber:#E89A1C; --amber-bg:rgba(232,154,28,.14); --amber-ink:#F0C173; --amber-border:rgba(232,154,28,.35);
+  --red:#E8585D; --red-bg:rgba(232,88,93,.14); --red-ink:#FF9A9D; --red-border:rgba(232,88,93,.35);
   --blue:#4A86F0; --purple:#8B7BF5;
   --rail:rgba(7,10,14,.7); --rail-tx:#9AA6B2; --rail-line:#232C37;
   --num-ff:'IBM Plex Mono',monospace; --kpi-num-w:600;
@@ -47,6 +47,7 @@ html[data-theme="dark"]{
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
+#root{display:flex;flex:1;min-height:100vh}
 body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;
   background-image:var(--grid);background-size:42px 42px;transition:background-color .3s,color .3s}
 .num{font-family:var(--num-ff);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
@@ -218,6 +219,10 @@ html[data-theme="dark"] .tcard:hover{box-shadow:0 10px 26px rgba(0,0,0,.45)}
 .meter i{display:block;height:100%;border-radius:99px}
 
 /* segmented */
+.controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+.controls input,.controls select{font-family:inherit;font-size:.8rem;padding:7px 11px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--card);color:var(--text);outline:none}
+.controls input:focus,.controls select:focus{border-color:var(--brand)}
+.rc{font-size:.74rem;color:var(--muted);font-weight:600;margin-left:auto;white-space:nowrap}
 .seg{display:inline-flex;background:var(--line2);border-radius:9px;padding:3px;gap:2px}
 .seg button{border:none;background:none;font-family:inherit;font-weight:700;font-size:.74rem;color:var(--muted);padding:6px 14px;border-radius:7px;cursor:pointer}
 .seg button.on{background:var(--card);color:var(--brand-d);box-shadow:var(--sh)}
@@ -318,6 +323,9 @@ html[data-theme="dark"] .rhero{background:linear-gradient(120deg,var(--card),#0E
 .rhero-sep{width:1px;height:20px;background:var(--line);align-self:center}
 .rhero-sub{font-size:.78rem;color:var(--faint);margin-top:12px;line-height:1.5}
 @media(max-width:820px){.rhero{grid-template-columns:1fr;gap:22px}}
+.rhero-left{display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
+.rhero-stats{gap:8px}
+.diag2-main{display:flex;flex-direction:column;justify-content:center;position:relative;z-index:1}
 .diag2-stats{display:flex;flex-direction:column;gap:10px;position:relative;z-index:1}
 .diag2-stat{display:flex;align-items:center;gap:13px;background:var(--bg);border:1px solid var(--line);border-left:3px solid var(--sc);border-radius:var(--r-sm);padding:13px 16px}
 html[data-theme="dark"] .diag2-stat{background:rgba(255,255,255,.03)}
@@ -569,7 +577,7 @@ html[data-theme="dark"] .diag{background-image:linear-gradient(120deg,#0C1218,#1
 <body>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
 <script>
-window.PANEL_DATA={"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 4, "daysInMonth": 30, "fecha": "04/06 17:21", "archives": [{"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 149, "prevLeads": 114, "cierres": 19, "pipeline": 91050, "ticket": 4792}, "funnel2": [{"n": "Leads del mes", "v": 149, "c": "#27313F"}, {"n": "Sin respuesta", "v": 8, "c": "#646E7B"}, {"n": "Calificados", "v": 33, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 72, "c": "#00B5AD"}, {"n": "Compradores", "v": 19, "c": "#159A57"}], "stagesGlobal": [{"name": "Leads Entrantes", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Nueva consulta", "count": 49, "pct": 33, "color": "#27313F"}, {"name": "Interesado", "count": 6, "pct": 4, "color": "#2E6FE0"}, {"name": "Cotización enviada", "count": 58, "pct": 39, "color": "#7A4AD9"}, {"name": "Agendado / Visita", "count": 8, "pct": 5, "color": "#D98300"}, {"name": "Compradores", "count": 19, "pct": 13, "color": "#159A57"}, {"name": "No Responden", "count": 8, "pct": 5, "color": "#646E7B"}, {"name": "Pedido enviado – ganado", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Pedido cancelado – perdido", "count": 1, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 29, "manualPct": 19, "auto": 120, "autoPct": 81}, "channels": [{"ic": "✍", "name": "Carga manual vendedora", "leads": 29, "pct": 19, "cierres": 19, "conv": 66, "ticket": 4792, "pipeline": 91050, "cls": "green"}, {"ic": "📦", "name": "Automático", "leads": 120, "pct": 81, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}], "metrics": {"noResp": 8, "noRespPct": 5, "backlog": 1, "backlogPct": 1, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 118, "openTotal": 121, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 6, "agendado": 8}, "leadsMomPct": 31, "team": [{"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 34, "prevLeads": 28, "cierres": 4, "conv": 12, "ticket": 3322, "value": 13290, "calif": 8, "califPct": 24, "noResp": 1, "noRespPct": 3, "agendado": 3, "u24": 34, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 34, "prevLeads": 26, "cierres": 9, "conv": 26, "ticket": 4796, "value": 43170, "calif": 12, "califPct": 35, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 34, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 33, "prevLeads": 30, "cierres": 6, "conv": 18, "ticket": 5110, "value": 30660, "calif": 6, "califPct": 18, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 33, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 1, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 26, "prevLeads": 30, "cierres": 0, "conv": 0, "ticket": 0, "value": 3930, "calif": 3, "califPct": 12, "noResp": 5, "noRespPct": 19, "agendado": 2, "u24": 26, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 22, "prevLeads": 0, "cierres": 0, "conv": 0, "ticket": 0, "value": 0, "calif": 4, "califPct": 18, "noResp": 0, "noRespPct": 0, "agendado": 3, "u24": 22, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green", "nuevo": true}], "funnel": [{"name": "Leads Entrantes", "count": 0}, {"name": "Nueva consulta", "count": 49}, {"name": "Interesado", "count": 6}, {"name": "Cotización enviada", "count": 58}, {"name": "Agendado / Visita", "count": 8}, {"name": "Compradores", "count": 19}, {"name": "No Responden", "count": 8}, {"name": "Pedido enviado – ganado", "count": 0}, {"name": "Pedido cancelado – perdido", "count": 1}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "1"}, {"id": "alertas", "label": "Alertas", "badge": "1"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "semanal", "label": "Semanal"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "backlogLeads": [{"id": 32947474, "c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 2070, "nh": false}], "weeklyClosures": {"Isabel Robledo": [4, 0, 0, 0, 0], "Maria Flores": [6, 0, 0, 0, 0], "Carola Chavez": [9, 0, 0, 0, 0]}, "stagesByV": {"Isabel Robledo": [["Nueva consulta", 10], ["Interesado", 1], ["Cotización enviada", 15], ["Agendado / Visita", 3], ["Compradores", 4], ["No Responden", 1]], "Maria Flores": [["Nueva consulta", 9], ["Cotización enviada", 17], ["Compradores", 6], ["No Responden", 1]], "Carola Chavez": [["Nueva consulta", 9], ["Interesado", 3], ["Cotización enviada", 11], ["Compradores", 9], ["No Responden", 1], ["Pedido cancelado – perdido", 1]], "Jonathan Monje": [["Nueva consulta", 7], ["Interesado", 1], ["Cotización enviada", 11], ["Agendado / Visita", 3]], "Mirian Salazar": [["Nueva consulta", 14], ["Interesado", 1], ["Cotización enviada", 4], ["Agendado / Visita", 2], ["No Responden", 5]]}, "dups": [], "ai_agents": {}, "ai_diagnostico": null};
+window.PANEL_DATA={"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 4, "daysInMonth": 30, "fecha": "04/06 18:08", "archives": [{"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 149, "prevLeads": 114, "cierres": 19, "pipeline": 91050, "ticket": 4792}, "funnel2": [{"n": "Leads del mes", "v": 149, "c": "#27313F"}, {"n": "Sin respuesta", "v": 8, "c": "#646E7B"}, {"n": "Calificados", "v": 33, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 73, "c": "#00B5AD"}, {"n": "Compradores", "v": 19, "c": "#159A57"}], "stagesGlobal": [{"name": "Leads Entrantes", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Nueva consulta", "count": 48, "pct": 32, "color": "#27313F"}, {"name": "Interesado", "count": 6, "pct": 4, "color": "#2E6FE0"}, {"name": "Cotización enviada", "count": 59, "pct": 40, "color": "#7A4AD9"}, {"name": "Agendado / Visita", "count": 8, "pct": 5, "color": "#D98300"}, {"name": "Compradores", "count": 19, "pct": 13, "color": "#159A57"}, {"name": "No Responden", "count": 8, "pct": 5, "color": "#646E7B"}, {"name": "Pedido enviado – ganado", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Pedido cancelado – perdido", "count": 1, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 29, "manualPct": 19, "auto": 120, "autoPct": 81}, "channels": [{"ic": "✍", "name": "Carga manual vendedora", "leads": 29, "pct": 19, "cierres": 19, "conv": 66, "ticket": 4792, "pipeline": 91050, "cls": "green"}, {"ic": "📦", "name": "Automático", "leads": 120, "pct": 81, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}], "metrics": {"noResp": 8, "noRespPct": 5, "backlog": 1, "backlogPct": 1, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 118, "openTotal": 121, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 6, "agendado": 8}, "leadsMomPct": 31, "team": [{"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 34, "prevLeads": 28, "cierres": 4, "conv": 12, "ticket": 3322, "value": 13290, "calif": 8, "califPct": 24, "noResp": 1, "noRespPct": 3, "agendado": 3, "u24": 34, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 34, "prevLeads": 26, "cierres": 9, "conv": 26, "ticket": 4796, "value": 43170, "calif": 12, "califPct": 35, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 34, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 33, "prevLeads": 30, "cierres": 6, "conv": 18, "ticket": 5110, "value": 30660, "calif": 6, "califPct": 18, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 33, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 1, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 26, "prevLeads": 30, "cierres": 0, "conv": 0, "ticket": 0, "value": 3930, "calif": 3, "califPct": 12, "noResp": 5, "noRespPct": 19, "agendado": 2, "u24": 26, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 22, "prevLeads": 0, "cierres": 0, "conv": 0, "ticket": 0, "value": 0, "calif": 4, "califPct": 18, "noResp": 0, "noRespPct": 0, "agendado": 3, "u24": 22, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green", "nuevo": true}], "funnel": [{"name": "Leads Entrantes", "count": 0}, {"name": "Nueva consulta", "count": 48}, {"name": "Interesado", "count": 6}, {"name": "Cotización enviada", "count": 59}, {"name": "Agendado / Visita", "count": 8}, {"name": "Compradores", "count": 19}, {"name": "No Responden", "count": 8}, {"name": "Pedido enviado – ganado", "count": 0}, {"name": "Pedido cancelado – perdido", "count": 1}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "1"}, {"id": "alertas", "label": "Alertas", "badge": "1"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "semanal", "label": "Semanal"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "backlogLeads": [{"id": 32947474, "c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 2070, "nh": false}], "weeklyClosures": {"Isabel Robledo": [4, 0, 0, 0, 0], "Maria Flores": [6, 0, 0, 0, 0], "Carola Chavez": [9, 0, 0, 0, 0]}, "stagesByV": {"Isabel Robledo": [["Nueva consulta", 10], ["Interesado", 1], ["Cotización enviada", 15], ["Agendado / Visita", 3], ["Compradores", 4], ["No Responden", 1]], "Maria Flores": [["Nueva consulta", 9], ["Cotización enviada", 17], ["Compradores", 6], ["No Responden", 1]], "Carola Chavez": [["Nueva consulta", 8], ["Interesado", 3], ["Cotización enviada", 12], ["Compradores", 9], ["No Responden", 1], ["Pedido cancelado – perdido", 1]], "Jonathan Monje": [["Nueva consulta", 7], ["Interesado", 1], ["Cotización enviada", 11], ["Agendado / Visita", 3]], "Mirian Salazar": [["Nueva consulta", 14], ["Interesado", 1], ["Cotización enviada", 4], ["Agendado / Visita", 2], ["No Responden", 5]]}, "dups": [], "ai_agents": {}, "ai_diagnostico": null};
 window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
 window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
 window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
@@ -829,6 +837,7 @@ function CountUp({
   fmt,
   dur = 950
 }) {
+  if (value == null || isNaN(value)) value = 0;
   const [n, setN] = useState(value);
   useEffect(() => {
     const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -910,6 +919,7 @@ function Donut({
   size = 132,
   unit = ""
 }) {
+  if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.value, 0),
     r = size / 2 - 8,
     c = 2 * Math.PI * r;
@@ -1016,7 +1026,7 @@ function Heatmap({
   }, /*#__PURE__*/React.createElement(Avatar, {
     v: r,
     size: 24
-  }), r.name.split(" ")[0]), r.vals.map((v, j) => /*#__PURE__*/React.createElement("div", {
+  }), r.name.split(" ")[0]), (r.vals || []).map((v, j) => /*#__PURE__*/React.createElement("div", {
     className: "cell",
     key: j,
     style: {
@@ -1813,6 +1823,7 @@ window.useSort = useSort;
 function WeekSpark({
   weeks
 }) {
+  if (!weeks || weeks.length === 0) return null;
   const mx = Math.max(...weeks, 1);
   return /*#__PURE__*/React.createElement("div", {
     className: "tcard-spark"
@@ -1838,8 +1849,8 @@ function QuadrantMatrix({
   const convSorted = team.map(v => v.conv).sort((a, b) => a - b);
   const pos = team.map(v => ({
     v,
-    x: 14 + rankOf(leadsSorted, v.leads) / (n - 1) * 72,
-    y: 14 + rankOf(convSorted, v.conv) / (n - 1) * 72
+    x: 14 + (n > 1 ? rankOf(leadsSorted, v.leads) / (n - 1) * 72 : 36),
+    y: 14 + (n > 1 ? rankOf(convSorted, v.conv) / (n - 1) * 72 : 36)
   }));
   return /*#__PURE__*/React.createElement("div", {
     className: "quad"
@@ -2181,7 +2192,7 @@ Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "diag2-v"
   }, /*#__PURE__*/React.createElement(CountUp, {
-    value: D.metrics.noResp
+    value: D.metrics?.noResp || 0
   })), /*#__PURE__*/React.createElement("div", {
     className: "diag2-l"
   }, "En \"No responden\""))), /*#__PURE__*/React.createElement("div", {
@@ -2537,7 +2548,7 @@ function ViewResumen() {
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "diag2-v"
   }, /*#__PURE__*/React.createElement(CountUp, {
-    value: D.metrics.noResp
+    value: D.metrics?.noResp || 0
   })), /*#__PURE__*/React.createElement("div", {
     className: "diag2-l"
   }, "En \"No responden\""))), /*#__PURE__*/React.createElement("div", {
@@ -2677,9 +2688,9 @@ function ViewResumen() {
     sw: 2.2
   })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "t"
-  }, D.metrics.backlog, " leads sin seguimiento"), /*#__PURE__*/React.createElement("div", {
+  }, D.metrics?.backlog || 0, " leads sin seguimiento"), /*#__PURE__*/React.createElement("div", {
     className: "d"
-  }, "El backlog equivale al ", /*#__PURE__*/React.createElement("b", null, D.metrics.backlogPct, "% del mes"), ". Cada d\xEDa sin contacto reduce la probabilidad de cierre."))))), /*#__PURE__*/React.createElement("div", {
+  }, "El backlog equivale al ", /*#__PURE__*/React.createElement("b", null, D.metrics?.backlogPct || 0, "% del mes"), ". Cada d\xEDa sin contacto reduce la probabilidad de cierre."))))), /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement(SectionHead, {
     eb: "Control del equipo",
@@ -3239,12 +3250,12 @@ window.Panel = Panel;
       b.value += v.value;
       b.n++;
     });
-    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${(b.cierres / b.leads * 100).toFixed(1)}% conv, pipeline Bs ${b.value}`).join("\n");
+    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${b.leads > 0 ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}% conv, pipeline Bs ${b.value}`).join("\n");
     const M = D.metrics;
     const _man = D.channels.find(c => c.cls === "green") || {};
     const _bot = D.channels.find(c => c.cls === "red") || {};
     const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
-Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${(G.cierres / G.leads * 100).toFixed(1)}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
+Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
 "No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Deals sin valor: ${M.abiertosSinValor}.
 IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las sucursales activas son ${[...new Set(T.map(v => v.suc))].join(', ')}.
 Canales: ${D.channels.map(c => `${c.name} ${c.leads} leads / ${c.conv}% conv / ${c.cierres} cierres`).join('; ')}.
@@ -3269,7 +3280,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       role: "Conversión, ticket, pipeline y metas",
       icon: "trophy",
       color: "#159A57",
-      prompt: `Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n${teamLines}\nGlobal: ${G.cierres} cierres, ${(G.cierres / G.leads * 100).toFixed(1)}% conv, pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.\n${jsonRule}`
+      prompt: `Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n${teamLines}\nGlobal: ${G.cierres} cierres, ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% conv, pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.\n${jsonRule}`
     }, {
       id: "comportamiento",
       name: "Analista de Comportamiento",
