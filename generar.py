@@ -1291,6 +1291,27 @@ for _cn, _cd in _ch_rows_data:
         "conv": _cconv, "ticket": _ctick, "pipeline": int(_cv), "cls": _ccls,
     })
 
+# --- duplicates by contact name ---
+_contact_groups = defaultdict(list)
+for _cr in all_rows:
+    _cn = (_cr.get("contact") or "").strip()
+    if _cn and _cn.lower() not in ("", "sin nombre", "sin contacto"):
+        _contact_groups[_cn].append(_cr)
+
+_dup_groups = []
+for _cn, _crow_list in _contact_groups.items():
+    if len(_crow_list) > 1:
+        _dup_groups.append({
+            "phone": _cn,
+            "n_fichas": len(_crow_list),
+            "fichas": [{"name": r["name"]} for r in _crow_list],
+            "rows": _crow_list,
+        })
+_dup_groups.sort(key=lambda g: -g["n_fichas"])
+total_dup_groups = len(_dup_groups)
+total_dup_fichas = sum(g["n_fichas"] for g in _dup_groups)
+_resp_never_n = sum(1 for lead in leads if lead["id"] not in _first_human_ev)
+
 # --- metrics ---
 _sin_suc_n = sum(1 for r in all_rows
                  if not (r.get("sucursal") or "").strip()
@@ -1347,7 +1368,7 @@ def _build_archive_list_new():
     return lst
 
 # --- build PANEL_DATA ---
-_pipeline_total_p = int(total_value + _cross_value)
+_pipeline_total_p = int(total_value)
 _ticket_avg_p = int(_pipeline_total_p / total_compradores) if total_compradores else 0
 _mom_pct_p = round((total_leads - total_leads_prev) / total_leads_prev * 100) if total_leads_prev else 0
 _fecha_str_p = now_dt.strftime("%d/%m %H:%M")
