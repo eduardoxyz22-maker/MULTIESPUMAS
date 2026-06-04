@@ -1844,8 +1844,8 @@ _html_out = f"""<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>{_css_src}</style>
 <script>(function(){{try{{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})()</script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=&quot;https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/react.production.min.js&quot;><\\/scr'+'ipt>')"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=&quot;https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/react-dom.production.min.js&quot;><\\/scr'+'ipt>')"></script>
 </head>
 <body>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
