@@ -334,8 +334,8 @@ for lead in leads:
     user_name = user_map.get(responsible_id, "Desconocido")
     value = float(lead.get("price", 0) or 0)
     created_at = lead.get("created_at", 0)
-    updated_at = lead.get("updated_at", 0)
-    days_float = (now - updated_at) / 86400.0
+    updated_at = lead.get("updated_at") or lead.get("created_at", 0)
+    days_float = (now - updated_at) / 86400.0 if updated_at else 0
     days_int = int(days_float)
     created_str = fmt_date(created_at) if created_at else "—"
 

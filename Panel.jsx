@@ -30,6 +30,7 @@ const convTone = c => c >= 6 ? "green" : c >= 4 ? "amber" : "red";
 // Animated count-up. Always lands on the real value even if rAF is throttled
 // (backgrounded tab): a timer fallback + visibility guard snap to the final.
 function CountUp({ value, fmt, dur = 950 }) {
+  if (value == null || isNaN(value)) value = 0;
   const [n, setN] = useState(value);
   useEffect(() => {
     const reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -66,6 +67,7 @@ function Sparkline({ data, color }) {
 
 // Donut chart. data = [{label, value, color}]. Hover a segment/legend to focus.
 function Donut({ data, size = 132, unit = "" }) {
+  if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.value, 0), r = size / 2 - 8, c = 2 * Math.PI * r;
   const [hov, setHov] = useState(-1);
   let off = 0;
@@ -101,7 +103,7 @@ function Heatmap({ rows, cols }) {
       {rows.map((r, i) => (
         <div className="hrow" key={i}>
           <div className="hname"><Avatar v={r} size={24} />{r.name.split(" ")[0]}</div>
-          {r.vals.map((v, j) => <div className="cell" key={j} style={{ background: heat(v), opacity: .35 + v / 100 * .65 }} title={`${cols[j]}: ${v}%`}>{v}</div>)}
+          {(r.vals || []).map((v, j) => <div className="cell" key={j} style={{ background: heat(v), opacity: .35 + v / 100 * .65 }} title={`${cols[j]}: ${v}%`}>{v}</div>)}
         </div>
       ))}
     </div>
@@ -366,6 +368,7 @@ window.useSort = useSort;
 
 // Weekly cierres sparkline for vendor cards (5 bars).
 function WeekSpark({ weeks }) {
+  if (!weeks || weeks.length === 0) return null;
   const mx = Math.max(...weeks, 1);
   return <div className="tcard-spark">{weeks.map((n, i) => <i key={i} className={n === mx && mx > 1 ? "hi" : ""} style={{ height: `${Math.max(8, n / mx * 100)}%` }} title={`Sem ${i + 1}: ${n}`} />)}</div>;
 }
@@ -380,8 +383,8 @@ function QuadrantMatrix({ team }) {
   const convSorted = team.map(v => v.conv).sort((a, b) => a - b);
   const pos = team.map(v => ({
     v,
-    x: 14 + rankOf(leadsSorted, v.leads) / (n - 1) * 72,
-    y: 14 + rankOf(convSorted, v.conv) / (n - 1) * 72,
+    x: 14 + (n > 1 ? rankOf(leadsSorted, v.leads) / (n - 1) * 72 : 36),
+    y: 14 + (n > 1 ? rankOf(convSorted, v.conv) / (n - 1) * 72 : 36),
   }));
   return (
     <div className="quad">
@@ -552,7 +555,7 @@ Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
             <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={D.metrics.noResp} /></div><div className="diag2-l">En "No responden"</div></div>
+            <div><div className="diag2-v"><CountUp value={D.metrics?.noResp || 0} /></div><div className="diag2-l">En "No responden"</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
@@ -681,7 +684,7 @@ function ViewResumen() {
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
             <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={D.metrics.noResp} /></div><div className="diag2-l">En "No responden"</div></div>
+            <div><div className="diag2-v"><CountUp value={D.metrics?.noResp || 0} /></div><div className="diag2-l">En "No responden"</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
@@ -714,7 +717,7 @@ function ViewResumen() {
           </div>
           <div className="insight amber">
             <span className="ic"><Icon name="alertas" size={17} sw={2.2} /></span>
-            <div><div className="t">{D.metrics.backlog} leads sin seguimiento</div><div className="d">El backlog equivale al <b>{D.metrics.backlogPct}% del mes</b>. Cada día sin contacto reduce la probabilidad de cierre.</div></div>
+            <div><div className="t">{D.metrics?.backlog || 0} leads sin seguimiento</div><div className="d">El backlog equivale al <b>{D.metrics?.backlogPct || 0}% del mes</b>. Cada día sin contacto reduce la probabilidad de cierre.</div></div>
           </div>
         </div>
       </div>
