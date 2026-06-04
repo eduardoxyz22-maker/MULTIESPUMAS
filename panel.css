@@ -39,6 +39,7 @@ html[data-theme="dark"]{
 
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
+#root{display:flex;flex:1;min-height:100vh}
 body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;display:flex;min-height:100vh;
   background-image:var(--grid);background-size:42px 42px;transition:background-color .3s,color .3s}
 .num{font-family:var(--num-ff);font-variant-numeric:tabular-nums;letter-spacing:-.3px}
