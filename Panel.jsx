@@ -393,11 +393,11 @@ function QuadrantMatrix({ team }) {
       <div className="qlbl" style={{ top: 0, left: 0 }}>◆ Potencial</div>
       <div className="qlbl" style={{ bottom: 0, right: 0 }}>■ Volumen</div>
       <div className="qlbl" style={{ bottom: 0, left: 0, color: "var(--red)" }}>○ Crítico</div>
-      <div className="axhint axhint-x">conversión →</div>
-      <div className="axhint axhint-y">leads →</div>
+      <div className="axhint axhint-x">leads →</div>
+      <div className="axhint axhint-y">conversión →</div>
       {pos.map(({ v, x, y }, i) => (
         <div className="qpt" key={i} style={{ left: `${x}%`, bottom: `${y}%` }} onClick={() => window.__perfil(v)} title={`${v.name}: ${v.conv}% conv · ${v.leads} leads`}>
-          <Avatar v={v} size={32} ring crown={v.name === window.TOP_CLOSER} />
+          <Avatar v={v} size={32} ring />
           <span className="qnm">{v.name.split(" ")[0]}</span>
         </div>
       ))}

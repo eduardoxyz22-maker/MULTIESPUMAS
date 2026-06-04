@@ -1360,9 +1360,43 @@ _metrics_panel = {
     "agendado": stage_counts.get(_q2 or "Agendado / Visita", 0),
 }
 
-# --- backlog leads (real stagnant leads, top 50 by days) ---
+# --- backlog leads: include open leads from previous months too ---
+_backlog_extra_rows = []
+try:
+    _from_ts_old = int((inicio_mes - datetime.timedelta(days=90)).timestamp())
+    _to_ts_old = from_ts - 1
+    print("Obteniendo leads anteriores para backlog...")
+    _leads_old = fetch_all_leads(_from_ts_old, _to_ts_old)
+    for _ol in _leads_old:
+        _ostage = stage_map.get(_ol.get("status_id"), "Desconocido")
+        if _ostage not in FOLLOWUP_STAGES:
+            continue
+        _oup_at = _ol.get("updated_at") or _ol.get("created_at", 0)
+        _odays = int((now - _oup_at) / 86400.0) if _oup_at else 0
+        if _odays < 3:
+            continue
+        _ouser = user_map.get(_ol.get("responsible_user_id"), "Desconocido")
+        _osuc = _ouser.split(" - ", 1)[1] if " - " in _ouser else "Sin sucursal"
+        _ocontacts = _ol.get("_embedded", {}).get("contacts", [])
+        _ocontact = _ocontacts[0].get("name", "") if _ocontacts else ""
+        _backlog_extra_rows.append({
+            "id": _ol.get("id", 0),
+            "contact": _ocontact,
+            "name": _ol.get("name", "Sin nombre"),
+            "stage": _ostage,
+            "sucursal": _osuc,
+            "user": _ouser,
+            "days_int": _odays,
+            "value": _ol.get("price", 0) or 0,
+            "nh": False,
+        })
+    print(f"  Leads anteriores en backlog: {len(_backlog_extra_rows)}")
+except Exception as _be:
+    print(f"  ⚠ Error leads anteriores backlog: {_be}")
+    _backlog_extra_rows = []
+
 _backlog_candidates = sorted(
-    (r for r in all_rows if r.get("stage") in FOLLOWUP_STAGES and r.get("days_int", 0) >= 3),
+    (r for r in (all_rows + _backlog_extra_rows) if r.get("stage") in FOLLOWUP_STAGES and r.get("days_int", 0) >= 3),
     key=lambda r: -r.get("days_int", 0)
 )[:50]
 _backlog_leads_panel = [
