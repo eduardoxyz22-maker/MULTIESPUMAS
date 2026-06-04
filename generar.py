@@ -1535,8 +1535,8 @@ _agent_prompts_ai = {
         f"{_bot_ch.get('conv',0)}% conv, {_bot_ch.get('cierres',0)} cierres). "
         f"El {_M_ai['noRespPct']}% termina en \"no responden\". NO hables de metas individuales. "
         "Explica el PATRÓN: qué canal/etapa pierde clientes y cómo reactivarlos.\n"
-        f"Canales: {'; '.join(f\"{c['name']} {c['leads']}/{c['conv']}%/{c['cierres']}\" for c in _channels_panel)}. "
-        f"No-responden {_M_ai['noResp']} ({_M_ai['noRespPct']}%).\n{_json_rule_ai}"
+        "Canales: " + "; ".join(c['name'] + " " + str(c['leads']) + "/" + str(c['conv']) + "%/" + str(c['cierres']) for c in _channels_panel) + ". "
+        + f"No-responden {_M_ai['noResp']} ({_M_ai['noRespPct']}%).\n{_json_rule_ai}"
     ),
     "sintesis": (
         "Eres el DIRECTOR COMERCIAL. Combina los análisis (CRM, ventas, comportamiento) en UN plan "
