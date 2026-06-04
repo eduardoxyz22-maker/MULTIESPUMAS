@@ -180,11 +180,12 @@ _q1 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _q2 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
 QUALIFIED_STAGES   = set(filter(None, [_q1, _q2, COMPRADORES_STAGE]))
 # Etapas donde las vendedoras deben hacer seguimiento activo
+_fs0 = _find_stage(STAGE_ORDER, ["entrante","incoming","inbound","nuevo lead"], None)
 _fs1 = _find_stage(STAGE_ORDER, ["nueva consulta","nueva","consult"], None)
 _fs2 = _find_stage(STAGE_ORDER, ["interesado","interest"], None)
 _fs3 = _find_stage(STAGE_ORDER, ["cotiz","quote","presupuest"], None)
 _fs4 = _find_stage(STAGE_ORDER, ["agend","visit","cita","appointment"], None)
-FOLLOWUP_STAGES    = set(filter(None, [_fs1, _fs2, _fs3, _fs4]))
+FOLLOWUP_STAGES    = set(filter(None, [_fs0, _fs1, _fs2, _fs3, _fs4]))
 print("Stage cierre:", COMPRADORES_STAGE, "| No-resp:", NO_RESP_STAGE, "| Calificados:", QUALIFIED_STAGES)
 print("Etapas seguimiento:", FOLLOWUP_STAGES)
 

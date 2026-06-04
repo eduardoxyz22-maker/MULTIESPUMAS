@@ -174,7 +174,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const backlogBy = T.filter(v => v.backlog > 0).map(v => ({ v, n: v.backlog })).sort((a, b) => b.n - a.n);
     const totalBk = T.reduce((s, v) => s + v.backlog, 0);
     const maxBk = Math.max(...backlogBy.map(b => b.n), 1);
-    const top2Pct = Math.round(backlogBy.slice(0, 2).reduce((s, b) => s + b.n, 0) / totalBk * 100);
+    const top2Pct = totalBk > 0 ? Math.round(backlogBy.slice(0, 2).reduce((s, b) => s + b.n, 0) / totalBk * 100) : 0;
     const [filt, setFilt] = React.useState("all");
     const [who, setWho] = React.useState("");
     const [q, setQ] = React.useState("");
@@ -196,53 +196,61 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           <Kpi l="Nunca tocados" num={D.metrics.nuncaTocados} ac="#7A5AF0" ico="seguimiento" sub="el bot los movió, sin acción humana" />
         </div>
 
-        <SectionHead eb="¿De quién es el backlog?" h3={`Las ${totalBk} fichas tienen dueño`} p={`El ${top2Pct}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.`} />
-        <div className="card">
-          <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
-            {backlogBy.map(({ v, n }, i) => {
-              const col = n > 100 ? "var(--red)" : n > 40 ? "var(--amber)" : "var(--green)";
-              return (
-                <div key={i} className="clickable" style={{ display: "grid", gridTemplateColumns: "170px 1fr 96px", alignItems: "center", gap: 14 }} onClick={() => window.__perfil(v)}>
-                  <div className="who"><Avatar v={v} size={30} ring /><span className="wn" style={{ fontSize: ".82rem" }}>{v.name.split(" ")[0]}</span></div>
-                  <div className="meter" style={{ height: 13 }}><i style={{ width: `${n / maxBk * 100}%`, background: col }} /></div>
-                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 7 }}><b className="num" style={{ color: col, fontSize: "1rem" }}>{n}</b><span className="ww">{Math.round(n / v.leads * 100)}%</span></div>
-                </div>
-              );
-            })}
+        {totalBk === 0 ? (
+          <div className="card" style={{ textAlign: "center", padding: "36px 24px" }}>
+            <div style={{ fontSize: "2rem", marginBottom: 8 }}>✅</div>
+            <div style={{ fontWeight: 800, fontSize: "1.05rem", marginBottom: 6 }}>¡Todo al día!</div>
+            <div className="ww" style={{ maxWidth: 380, margin: "0 auto" }}>Ningún lead supera las 72h sin actividad en etapas activas. El equipo está al día con el seguimiento.</div>
           </div>
-        </div>
+        ) : (<>
+          <SectionHead eb="¿De quién es el backlog?" h3={`Las ${totalBk} fichas tienen dueño`} p={`El ${top2Pct}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.`} />
+          <div className="card">
+            <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
+              {backlogBy.map(({ v, n }, i) => {
+                const col = n > 100 ? "var(--red)" : n > 40 ? "var(--amber)" : "var(--green)";
+                return (
+                  <div key={i} className="clickable" style={{ display: "grid", gridTemplateColumns: "170px 1fr 96px", alignItems: "center", gap: 14 }} onClick={() => window.__perfil(v)}>
+                    <div className="who"><Avatar v={v} size={30} ring /><span className="wn" style={{ fontSize: ".82rem" }}>{v.name.split(" ")[0]}</span></div>
+                    <div className="meter" style={{ height: 13 }}><i style={{ width: `${n / maxBk * 100}%`, background: col }} /></div>
+                    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "flex-end", gap: 7 }}><b className="num" style={{ color: col, fontSize: "1rem" }}>{n}</b><span className="ww">{v.leads > 0 ? Math.round(n / v.leads * 100) : 0}%</span></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
-        <SectionHead eb="Cola priorizada" h3="Más antiguas primero"
-          right={<div className="seg">{FILTERS.map(([k, l]) => <button key={k} className={filt === k ? "on" : ""} onClick={() => setFilt(k)}>{l}</button>)}</div>} />
-        <div className="controls">
-          <input type="search" placeholder="🔍 Buscar contacto, etapa o responsable…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 260 }} />
-          <select value={who} onChange={e => setWho(e.target.value)}>
-            <option value="">Todas las vendedoras</option>
-            {[...new Set(T.map(v => v.name))].map(n => <option key={n} value={n}>{n.split(" ")[0]}</option>)}
-          </select>
-          <span className="rc">{rows.length} de {BACKLOG_ROWS.length} fichas (muestra)</span>
-        </div>
-        <div className="card tight">
-          {rows.length === 0 ? (
-            <EmptyState title="Sin fichas para este filtro" desc="Ninguna ficha del backlog coincide con el filtro o la búsqueda actual. Prueba con otra vendedora o limpia los filtros." icon="seguimiento" onReset={() => { setFilt("all"); setWho(""); setQ(""); }} />
-          ) : (
-          <table className="tbl">
-            <thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Responsable</th><th className="r">Días sin act.</th><th className="r">Estado</th></tr></thead>
-            <tbody>
-              {rows.map((r, i) => (
-                  <tr key={i}>
-                    <td><b style={{ fontWeight: 700 }}>{r.c}</b>{r.nh && <span className="tag-new" style={{ marginLeft: 6 }}>NUNCA TOCADO</span>}</td>
-                    <td><span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: (STAGE_C[r.e] || "#808080"), marginRight: 6 }} />{r.e}</td>
-                    <td className="ww">{r.r}</td>
-                    <td className="r num" style={{ fontWeight: 800, color: r.d >= 7 ? "var(--red)" : "var(--amber)" }}>{r.d} d</td>
-                    <td className="r">{r.d >= 7 ? <Pill tone="red">Crítico</Pill> : <Pill tone="amber">Seguir</Pill>}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-          )}
-        </div>
-        <div className="note">Los {totalBk} leads mostrados están ordenados por antigüedad real desde Kommo — los más urgentes primero. Muchos contactos no tienen nombre cargado y aparecen como "Lead #".</div>
+          <SectionHead eb="Cola priorizada" h3="Más antiguas primero"
+            right={<div className="seg">{FILTERS.map(([k, l]) => <button key={k} className={filt === k ? "on" : ""} onClick={() => setFilt(k)}>{l}</button>)}</div>} />
+          <div className="controls">
+            <input type="search" placeholder="🔍 Buscar contacto, etapa o responsable…" value={q} onChange={e => setQ(e.target.value)} style={{ width: 260 }} />
+            <select value={who} onChange={e => setWho(e.target.value)}>
+              <option value="">Todas las vendedoras</option>
+              {[...new Set(T.map(v => v.name))].map(n => <option key={n} value={n}>{n.split(" ")[0]}</option>)}
+            </select>
+            <span className="rc">{rows.length} de {BACKLOG_ROWS.length} fichas</span>
+          </div>
+          <div className="card tight">
+            {rows.length === 0 ? (
+              <EmptyState title="Sin fichas para este filtro" desc="Prueba con otra vendedora o limpia los filtros." icon="seguimiento" onReset={() => { setFilt("all"); setWho(""); setQ(""); }} />
+            ) : (
+            <table className="tbl">
+              <thead><tr><th>Contacto / Deal</th><th>Etapa</th><th>Responsable</th><th className="r">Días sin act.</th><th className="r">Estado</th></tr></thead>
+              <tbody>
+                {rows.map((r, i) => (
+                    <tr key={i}>
+                      <td><b style={{ fontWeight: 700 }}>{r.c}</b>{r.nh && <span className="tag-new" style={{ marginLeft: 6 }}>NUNCA TOCADO</span>}</td>
+                      <td><span style={{ display: "inline-block", width: 7, height: 7, borderRadius: "50%", background: (STAGE_C[r.e] || "#808080"), marginRight: 6 }} />{r.e}</td>
+                      <td className="ww">{r.r}</td>
+                      <td className="r num" style={{ fontWeight: 800, color: r.d >= 7 ? "var(--red)" : "var(--amber)" }}>{r.d} d</td>
+                      <td className="r">{r.d >= 7 ? <Pill tone="red">Crítico</Pill> : <Pill tone="amber">Seguir</Pill>}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+            )}
+          </div>
+          <div className="note">Los {BACKLOG_ROWS.length} leads mostrados están ordenados por antigüedad real desde Kommo — los más urgentes primero. Muchos contactos no tienen nombre cargado y aparecen como "Lead #".</div>
+        </>)}
       </div>
     );
   };
