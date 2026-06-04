@@ -1390,6 +1390,7 @@ for _wr in all_rows:
 _weekly_closures_panel = {k: list(v) for k, v in _weekly_closures_raw.items()}
 
 # --- alert badge count (mirrors ViewAlertas JS logic) ---
+_mom_pct_p = round((total_leads - total_leads_prev) / total_leads_prev * 100) if total_leads_prev else 0
 _open_pct_al = round(_open_sin_valor_p / len(_open_rows_p) * 100) if _open_rows_p else 0
 _worst_conv_al = min(
     (_v for _v in _team_panel if _v.get("cierres", 0) > 0),
