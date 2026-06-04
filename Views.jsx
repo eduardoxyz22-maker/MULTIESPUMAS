@@ -181,7 +181,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const rows = BACKLOG_ROWS.filter(r => {
       if (filt === "crit" && r.d < 7) return false;
       if (filt === "nh" && !r.nh) return false;
-      if (who && !r.r.includes(who)) return false;
+      if (who && !(r.r || "").includes(who)) return false;
       if (q && !`${r.c} ${r.e} ${r.r}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
@@ -389,7 +389,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     return fl;
   }
   const weeklyOf = v => {
-    const real = D.weeklyClosures && D.weeklyClosures[v.name];
+    let real = D.weeklyClosures && D.weeklyClosures[v.name];
+    if (real && real.length < 5) real = [...real, ...Array(5 - real.length).fill(0)];
     const cur = real ? real : splitInt(v.cierres, SEM_W);
     return { cur, curM: cur.map(n => n * v.ticket), tot: v.cierres, totM: v.cierres * v.ticket };
   };
@@ -502,7 +503,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800 }}><CountUp value={b.leads} /></div><div className="kl">Leads <span className="ww">vs {b.prevLeads.toLocaleString("en-US")}</span></div></div>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--green)" }}><CountUp value={b.cierres} /></div><div className="kl">Cierres</div></div>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--brand-d)" }}><CountUp value={b.value} fmt={money} /></div><div className="kl">Pipeline</div></div>
-                  <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: `var(--${convTone(b.cierres / b.leads * 100)})` }}>{(b.cierres / b.leads * 100).toFixed(1)}%</div><div className="kl">Conversión</div></div>
+                  <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: `var(--${convTone(b.leads ? b.cierres / b.leads * 100 : 0)})` }}>{b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}%</div><div className="kl">Conversión</div></div>
                 </div>
               </div>
             );
@@ -521,12 +522,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
               {thFor("Leads", "leads", b => b.leads)}
               {thFor(`vs ${D.prevMonth}`, "mom", b => mom(b))}
               {thFor("Cierres", "cierres", b => b.cierres)}
-              {thFor("Conv.", "conv", b => b.cierres / b.leads)}
+              {thFor("Conv.", "conv", b => b.leads ? b.cierres / b.leads : 0)}
               {thFor("Agendado", "agendado", b => b.agendado)}
               {thFor("Cerrado mes", "cerrado", b => b.cerrado)}
               {thFor("Pipeline", "value", b => b.value)}
             </tr></thead>
-            <tbody>{sorted.map((b, i) => { const m = mom(b); return (<tr key={i} className="clickable" onClick={() => window.__sucursal && window.__sucursal(b.suc)}><td style={{ fontWeight: 700 }}><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 3, background: COL[b.suc] || "#7A5AF0", marginRight: 8 }} />{b.suc}</td><td className="r num">{b.n}</td><td className="r num">{b.leads.toLocaleString("en-US")}</td><td className="r"><span className={`delta ${m >= 0 ? "up" : "down"}`}>{m >= 0 ? "▲" : "▼"} {m >= 0 ? "+" : ""}{m}%</span></td><td className="r num" style={{ fontWeight: 800 }}>{b.cierres}</td><td className="r"><Pill tone={convTone(b.cierres / b.leads * 100)}>{(b.cierres / b.leads * 100).toFixed(1)}%</Pill></td><td className="r num" style={{ color: "#D98300", fontWeight: 700 }}>{b.agendado}</td><td className="r num" style={{ color: "var(--green-ink)", fontWeight: 700 }}>{money(b.cerrado)}</td><td className="r num">{money(b.value)}</td></tr>); })}</tbody>
+            <tbody>{sorted.map((b, i) => { const m = mom(b); const bconv = b.leads ? b.cierres / b.leads * 100 : 0; return (<tr key={i} className="clickable" onClick={() => window.__sucursal && window.__sucursal(b.suc)}><td style={{ fontWeight: 700 }}><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 3, background: COL[b.suc] || "#6B7785", marginRight: 8 }} />{b.suc}</td><td className="r num">{b.n}</td><td className="r num">{b.leads.toLocaleString("en-US")}</td><td className="r"><span className={`delta ${m >= 0 ? "up" : "down"}`}>{m >= 0 ? "▲" : "▼"} {m >= 0 ? "+" : ""}{m}%</span></td><td className="r num" style={{ fontWeight: 800 }}>{b.cierres}</td><td className="r"><Pill tone={convTone(bconv)}>{bconv.toFixed(1)}%</Pill></td><td className="r num" style={{ color: "#D98300", fontWeight: 700 }}>{b.agendado}</td><td className="r num" style={{ color: "var(--green-ink)", fontWeight: 700 }}>{money(b.cerrado)}</td><td className="r num">{money(b.value)}</td></tr>); })}</tbody>
           </table>
         </div>
       </div>
@@ -535,14 +536,14 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== PROYECCIÓN ===== */
   window.ViewProyeccion = function () {
-    const curDay = D.curDay, dim = D.daysInMonth, left = dim - curDay, progPct = Math.round(curDay / dim * 100);
-    const conv = Math.round(G.cierres / G.leads * 100);
-    const base = Math.round(G.cierres / curDay * dim);
+    const curDay = D.curDay || 1, dim = D.daysInMonth || 30, left = dim - curDay, progPct = Math.round(curDay / dim * 100);
+    const conv = G.leads ? Math.round(G.cierres / G.leads * 100) : 0;
+    const base = curDay ? Math.round(G.cierres / curDay * dim) : 0;
     const conv1 = Math.round(G.leads * (conv + 1) / 100);
     const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
     const extra = Math.round(backlog * conv / 100);
     const resc = base + extra;
-    const paceDay = (G.cierres / curDay).toFixed(1);
+    const paceDay = curDay ? (G.cierres / curDay).toFixed(1) : "0.0";
     const scen = [
       { tag: "Escenario base", v: base, val: base * G.ticket, delta: Math.max(0, base - G.cierres), d: `Pace lineal. ${left} días restantes. Sin cambios en la operación actual.`, hot: false, pin: "" },
       { tag: `+1pp conversión (${conv + 1}%)`, v: conv1, val: conv1 * G.ticket, delta: Math.max(0, conv1 - G.cierres), d: "Si cada vendedora mejora 1pp su tasa de cierre con coaching.", hot: false, pin: "" },

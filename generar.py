@@ -1550,7 +1550,7 @@ for _vai in _team_panel:
 _branch_lines_ai = "\n".join(
     f"{_s}: {_b['n']} vendedora(s), {_b['leads']} leads (mes previo {_b['prev']}, "
     f"{round((_b['leads']-_b['prev'])/(_b['prev'] or 1)*100)}%), {_b['cierres']} cierres, "
-    f"{_b['cierres']/_b['leads']*100:.1f}% conv, pipeline Bs {_b['value']}"
+    f"{(_b['cierres']/_b['leads']*100 if _b['leads'] else 0):.1f}% conv, pipeline Bs {_b['value']}"
     for _s, _b in _br_ai.items()
 )
 
@@ -1566,7 +1566,7 @@ _ctx_ai = (
     f"Heaven Colchones (Bolivia), mes {mes_label_map[now_dt.month]} {now_dt.year}. Moneda Bs.\n"
     f"Global: {_G_ai['leads']} leads (mes previo {_G_ai['prevLeads']}, "
     f"{round((_G_ai['leads']-_G_ai['prevLeads'])/(_G_ai['prevLeads'] or 1)*100)}% MoM), "
-    f"{_G_ai['cierres']} cierres, conversión {(_G_ai['cierres']/_G_ai['leads']*100):.1f}%, "
+    f"{_G_ai['cierres']} cierres, conversión {(_G_ai['cierres']/_G_ai['leads']*100 if _G_ai['leads'] else 0):.1f}%, "
     f"pipeline Bs {_G_ai['pipeline']}, ticket Bs {_G_ai['ticket']}.\n"
     f"\"No responden\" {_M_ai['noResp']} ({_M_ai['noRespPct']}%). "
     f"Sin seguimiento +72h: {_M_ai['backlog']} ({_M_ai['backlogPct']}%). "
@@ -1629,7 +1629,7 @@ _diag_prompt_ai = (
     '"palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}\n'
     f"Datos (Bs): Leads {_G_ai['leads']} (mes anterior {_G_ai['prevLeads']}, "
     f"{round((_G_ai['leads']-_G_ai['prevLeads'])/(_G_ai['prevLeads'] or 1)*100)}%). "
-    f"Cierres {_G_ai['cierres']}, conversión {(_G_ai['cierres']/_G_ai['leads']*100):.1f}%. "
+    f"Cierres {_G_ai['cierres']}, conversión {(_G_ai['cierres']/_G_ai['leads']*100 if _G_ai['leads'] else 0):.1f}%. "
     f"Pipeline Bs {_G_ai['pipeline']}, ticket Bs {_G_ai['ticket']}. "
     f"\"No responden\" {_M_ai['noResp']} ({_M_ai['noRespPct']}%). "
     f"Sin seguimiento +72h: {_M_ai['backlog']} ({_M_ai['backlogPct']}%). "

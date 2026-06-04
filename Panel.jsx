@@ -49,6 +49,7 @@ function CountUp({ value, fmt, dur = 950 }) {
 
 // Mini trend sparkline (SVG, stretches to container width).
 function Sparkline({ data, color }) {
+  if (!data || data.length < 2) return null;
   const w = 120, h = 30, max = Math.max(...data), min = Math.min(...data), span = max - min || 1;
   const pts = data.map((d, i) => [i / (data.length - 1) * w, h - 3 - (d - min) / span * (h - 7)]);
   const line = pts.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
@@ -417,14 +418,15 @@ window.EmptyState = EmptyState;
 const F_COLORS = ["#00B5AD", "#22A7C9", "#2E6FE0", "#7A5AF0", "#159A57", "#DC4046"];
 
 function Funnel() {
-  const maxF = Math.max(...D.funnel.map(f => f.count));
+  const maxF = Math.max(...D.funnel.map(f => f.count), 1);
+  const topCount = D.funnel.length > 0 ? D.funnel[0].count : 1;
   return (
     <div className="funnel">
       {D.funnel.map((f, i) => (
         <div className="fstep" key={i}>
           <div className="fn">{f.name}</div>
-          <div className="fbar num" data-tip={`${f.name}: ${f.count.toLocaleString("en-US")} leads · ${Math.round(f.count / D.funnel[0].count * 100)}% del tope`} style={{ width: `${Math.max(12, f.count / maxF * 100)}%`, background: F_COLORS[i] }}>{f.count.toLocaleString("en-US")}</div>
-          <div className="fp num">{Math.round(f.count / D.funnel[0].count * 100)}%</div>
+          <div className="fbar num" data-tip={`${f.name}: ${f.count.toLocaleString("en-US")} leads · ${Math.round(f.count / (topCount || 1) * 100)}% del tope`} style={{ width: `${Math.max(12, f.count / maxF * 100)}%`, background: F_COLORS[i] }}>{f.count.toLocaleString("en-US")}</div>
+          <div className="fp num">{Math.round(f.count / (topCount || 1) * 100)}%</div>
         </div>
       ))}
     </div>
@@ -546,7 +548,7 @@ Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name
         <div className="diag2-stats">
           <div className="diag2-stat" style={{ "--sc": "var(--brand)" }}>
             <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={+(G.cierres / G.leads * 100).toFixed(1)} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
+            <div><div className="diag2-v"><CountUp value={G.leads ? +(G.cierres / G.leads * 100).toFixed(1) : 0} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
             <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
@@ -665,7 +667,7 @@ function ViewResumen() {
             <span className="rhero-sep" />
             <span><b className="num">{G.cierres}</b> cierres</span>
             <span className="rhero-sep" />
-            <span><b className="num">{(G.cierres / G.leads * 100).toFixed(1)}%</b> conversión</span>
+            <span><b className="num">{G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}%</b> conversión</span>
             <span className="rhero-sep" />
             <span><b className="num">{fmtMoney(G.pipeline)}</b> pipeline</span>
           </div>
@@ -692,13 +694,13 @@ function ViewResumen() {
         <SectionHead eb="Indicadores" h3="Pulso del mes" p="Las 9 métricas clave del mes — pasa el cursor sobre cada ficha para ver su definición." />
         <div className="kpis" style={{ marginTop: 14, gridTemplateColumns: "repeat(auto-fill,minmax(168px,1fr))" }}>
           <Kpi l="Total leads" num={G.leads} ac="#808A96" ico="equipo" tip="Leads ingresados este mes vs el mes anterior." sub={<span><span className={`delta ${(D.leadsMomPct || 0) < 0 ? "down" : "up"}`}>{(D.leadsMomPct || 0) < 0 ? "▼" : "▲"} {Math.abs(D.leadsMomPct || 0)}%</span> vs {D.prevMonth}</span>} />
-          <Kpi l="Conversión" num={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
+          <Kpi l="Conversión" num={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
           <Kpi l="Cerrado en el mes" num={G.cierres * G.ticket} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Monto de deals que llegaron a Compradores (revenue confirmado)." sub={`${G.cierres} compradores`} />
           <Kpi l="Pipeline total" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Valor de todos los deals en todas las etapas." sub="todas las etapas" />
-          <Kpi l="Sin seguimiento" num={D.metrics.backlogPct} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." spark={[26, 28, 31, 30, 33, 35]} sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics.backlog} leads</b> +72h</span>} />
-          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." spark={[4200, 4500, 4800, 4650, 5000, 5153]} sub={<span><span className="delta up">▲</span> valor / cierre</span>} />
-          <Kpi l="Interesado" num={D.metrics.interesado} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." spark={[60, 72, 80, 75, 90, 85]} sub="leads en interés" />
-          <Kpi l="Agendado / Visita" num={D.metrics.agendado} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." spark={[90, 100, 95, 110, 105, 108]} sub="visitas programadas" />
+          <Kpi l="Sin seguimiento" num={D.metrics.backlogPct} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics.backlog} leads</b> +72h</span>} />
+          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." sub={<span>valor / cierre</span>} />
+          <Kpi l="Interesado" num={D.metrics.interesado} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." sub="leads en interés" />
+          <Kpi l="Agendado / Visita" num={D.metrics.agendado} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." sub="visitas programadas" />
           <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.pipeline)}</span>} />
         </div>
       </div>
@@ -741,7 +743,7 @@ function ViewResumen() {
                   <div style={{ display: "grid", gridTemplateColumns: "52px 1fr 78px", alignItems: "center", gap: 7 }}>
                     <div className="num" style={{ fontSize: ".76rem", fontWeight: 700, textAlign: "right" }}>{v.leads.toLocaleString("en-US")}</div>
                     <div className="meter" style={{ height: 7 }}><i style={{ width: `${v.leads / max * 100}%`, background: "var(--brand)", boxShadow: "var(--glow)" }} /></div>
-                    <div>{!v.prevLeads ? <span className="delta up">nuevo</span> : <span className={`delta ${diff >= 0 ? "up" : "down"}`}>{diff >= 0 ? "▲" : "▼"} {diff >= 0 ? "+" : ""}{Math.round(diff / v.prevLeads * 100)}%</span>}</div>
+                    <div>{!v.prevLeads ? <span className="delta up">nuevo</span> : <span className={`delta ${diff >= 0 ? "up" : "down"}`}>{diff >= 0 ? "▲" : "▼"} {diff >= 0 ? "+" : ""}{Math.round(diff / (v.prevLeads || 1) * 100)}%</span>}</div>
                   </div>
                 </div>
               </div>
