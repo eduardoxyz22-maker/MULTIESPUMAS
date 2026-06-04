@@ -596,9 +596,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           <div className="card">
             <div className="eb" style={{ color: "var(--blue)", marginBottom: 10 }}>📅 Este mes</div>
             <ol style={{ paddingLeft: 18, fontSize: ".86rem", lineHeight: 1.9, color: "var(--text)" }}>
-              <li>Activar los <b>{Math.round(backlog * 0.73)}</b> leads con +7 días sin contacto.</li>
+              <li>Activar los <b>{Math.round(backlog * 0.73)}</b> leads con +72h sin contacto humano.</li>
               <li>Revisar el pipeline <b>"No responden"</b> ({D.metrics.noResp.toLocaleString("en-US")} leads).</li>
-              <li>Rescatar las <b>{D.metrics.criticos7d}</b> fichas con +7 días sin contacto.</li>
+              {D.metrics.criticos7d > 0 && <li>Rescatar las <b>{D.metrics.criticos7d}</b> fichas con +7 días sin contacto.</li>}
             </ol>
           </div>
         </div>

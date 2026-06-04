@@ -241,9 +241,10 @@ while True:
         break
 print(f"  Eventos obtenidos: {len(_events_all)}")
 
-# Construir diccionario lead_id -> timestamp primer evento humano
+# Construir diccionario lead_id -> timestamp primer/último evento humano
 _lead_created_ts = {lead["id"]: lead.get("created_at", 0) for lead in leads}
 _first_human_ev = {}
+_last_human_ev = {}
 for _ev in _events_all:
     _ev_by = _ev.get("created_by", 0)
     if _ev_by == 0:
@@ -257,6 +258,8 @@ for _ev in _events_all:
         continue  # evento anterior o simultáneo a la creación
     if _eid not in _first_human_ev or _ets < _first_human_ev[_eid]:
         _first_human_ev[_eid] = _ets
+    if _eid not in _last_human_ev or _ets > _last_human_ev[_eid]:
+        _last_human_ev[_eid] = _ets
 
 # Leads del mes anterior (mismo rango de dias)
 if now_dt.month == 1:
@@ -339,8 +342,10 @@ for lead in leads:
     user_name = user_map.get(responsible_id, "Desconocido")
     value = float(lead.get("price", 0) or 0)
     created_at = lead.get("created_at", 0)
-    updated_at = lead.get("updated_at") or lead.get("created_at", 0)
-    days_float = (now - updated_at) / 86400.0 if updated_at else 0
+    updated_at = lead.get("updated_at") or created_at
+    # Use last HUMAN event for days calculation — bot refreshes updated_at constantly
+    _last_human_ts = _last_human_ev.get(lid, created_at)
+    days_float = (now - _last_human_ts) / 86400.0 if _last_human_ts else 0
     days_int = int(days_float)
     created_str = fmt_date(created_at) if created_at else "—"
 
