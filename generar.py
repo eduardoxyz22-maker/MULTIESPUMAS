@@ -1356,8 +1356,8 @@ _metrics_panel = {
     "openTotal": len(_open_rows_p),
     "duplicadosTel": total_dup_groups,
     "duplicadosFichas": total_dup_fichas,
-    "interesado": stage_counts.get("Interesado", 0),
-    "agendado": stage_counts.get("Agendado / Visita", 0),
+    "interesado": stage_counts.get(_q1 or "Interesado", 0),
+    "agendado": stage_counts.get(_q2 or "Agendado / Visita", 0),
 }
 
 # --- backlog leads (real stagnant leads, top 50 by days) ---
@@ -1433,7 +1433,8 @@ for _vn2, _vd2 in vendor_data.items():
     for _s2 in _vd2["stages"]:
         if _s2 not in STAGE_ORDER and _vd2["stages"][_s2] > 0:
             _sbv.append([_s2, _vd2["stages"][_s2]])
-    _stages_by_v_panel[_vn2] = _sbv
+    _clean_key = _vn2.split(" - ", 1)[0] if " - " in _vn2 else _vn2
+    _stages_by_v_panel[_clean_key] = _sbv
 
 # --- archive list helper ---
 def _build_archive_list_new():
@@ -1448,7 +1449,6 @@ def _build_archive_list_new():
 # --- build PANEL_DATA ---
 _pipeline_total_p = int(total_value)
 _ticket_avg_p = int(_pipeline_total_p / total_compradores) if total_compradores else 0
-_mom_pct_p = round((total_leads - total_leads_prev) / total_leads_prev * 100) if total_leads_prev else 0
 _fecha_str_p = now_dt.strftime("%d/%m %H:%M")
 
 panel_data = {

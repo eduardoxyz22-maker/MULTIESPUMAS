@@ -2,9 +2,9 @@
 (function () {
   const D = window.PANEL_DATA, T = D.team, G = D.global;
   const money = window.fmtMoney, convTone = window.convTone;
-  const { SectionHead, Pill, Funnel, TeamTable, Kpi, Avatar, Donut, Heatmap, MetasSection, WeekSpark, QuadrantMatrix, ExpertAgent, CountUp, EmptyState } = window;
+  const { SectionHead, Pill, Funnel, TeamTable, Kpi, Avatar, Donut, Heatmap, MetasSection, WeekSpark, QuadrantMatrix, ExpertAgent, CountUp, EmptyState, Icon } = window;
   const TOP = window.TOP_CLOSER;
-  const STAGE_C = { "Nueva consulta": "#27313F", "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9", "Agendado / Visita": "#D98300", "Compradores": "#159A57", "No Responden": "#646E7B" };
+  const STAGE_C = { "Leads Entrantes": "#9CA3AF", "Nueva consulta": "#27313F", "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9", "Agendado / Visita": "#D98300", "Compradores": "#159A57", "No Responden": "#646E7B" };
 
   // Sortable KPIs-por-vendedora table (clic en columna ordena).
   function KpiSortTable({ rows, open }) {
@@ -68,7 +68,7 @@
   window.ViewAnalisis = function () {
     const teamLines = T.map(v => `${v.name} (sucursal ${v.suc}): ${v.leads} leads (mes previo ${v.prevLeads}), ${v.cierres} cierres, ${window.convPct(v)}% conv, ${v.noResp} no-responden (${v.noRespPct}%), ${v.backlog} backlog, ${v.nunca} nunca-tocados, ${v.u24}% <24h, ticket Bs ${v.ticket}`).join("\n");
     const branchRoll = {};
-    T.forEach(v => { const b = branchRoll[v.suc] || (branchRoll[v.suc] = { leads: 0, prev: 0, cierres: 0, value: 0, n: 0 }); b.leads += v.leads; b.prev += v.prevLeads; b.cierres += v.cierres; b.value += v.value; b.n++; });
+    T.forEach(v => { const b = branchRoll[v.suc] || (branchRoll[v.suc] = { leads: 0, prev: 0, cierres: 0, value: 0, n: 0 }); b.leads += v.leads; b.prev += (v.prevLeads || 0); b.cierres += v.cierres; b.value += v.value; b.n++; });
     const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${(b.cierres / b.leads * 100).toFixed(1)}% conv, pipeline Bs ${b.value}`).join("\n");
     const M = D.metrics;
     const _man = D.channels.find(c => c.cls === "green") || {};
@@ -316,7 +316,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== CONVERSIÓN ===== */
   window.ViewConversion = function () {
-    const f = D.funnel2, maxF = f[0].v;
+    const f = D.funnel2; const maxF = f.length > 0 ? f[0].v : 1;
     return (
       <div className="view">
         <SectionHead eb="Embudo" h3={`Del lead al cierre — ${D.month} ${D.year}`} />

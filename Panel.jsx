@@ -513,7 +513,7 @@ function DiagnosticoMes() {
     const _bot = D.channels.find(c => c.cls === "red") || {};
     return `Eres analista comercial senior de Heaven Colchones (Bolivia). Analiza el mes ${D.month} ${D.year} y responde SOLO con JSON válido, sin texto extra, forma exacta:
 {"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números","palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}
-Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
+Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.leads ? G.cierres / G.leads * 100 : 0).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
 Equipo:
 ${teamLines}
 Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name : "N/A"}. Sé directo, específico con nombres y números, español de Bolivia.`;
@@ -677,7 +677,7 @@ function ViewResumen() {
         <div className="diag2-stats rhero-stats">
           <div className="diag2-stat" style={{ "--sc": "var(--brand)" }}>
             <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
+            <div><div className="diag2-v"><CountUp value={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
             <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
