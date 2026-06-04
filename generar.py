@@ -298,6 +298,7 @@ vendor_data = defaultdict(lambda: {
 suc_set = set()
 usr_set = set()
 stg_set = set()
+vendor_suc_counts = defaultdict(lambda: defaultdict(int))
 
 total_value = 0.0
 total_compradores = 0
@@ -348,6 +349,7 @@ for lead in leads:
     suc_set.add(sucursal)
     usr_set.add(user_name)
     stg_set.add(stage_name)
+    vendor_suc_counts[user_name][sucursal] += 1
 
     vd = vendor_data[user_name]
     vd["total"] += 1
@@ -602,6 +604,11 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
             "created_manual": created_by_count.get(vname, 0),
         },
     })
+
+vendor_primary_suc = {
+    vname: max(sc, key=sc.get)
+    for vname, sc in vendor_suc_counts.items()
+}
 
 suc_opts = sorted(suc_set)
 usr_opts = sorted(usr_set)
@@ -1178,8 +1185,309 @@ html = html.replace("__RESP_COLD_N__", str(_resp_cold_n))
 html = html.replace("__RESP_COLD_PCT__", str(_resp_cold_pct))
 html = html.replace("__VENDOR_RESP_ROWS__", _vendor_resp_html)
 
-with open("index.html", "w", encoding="utf-8") as f:
+with open("index_legacy.html", "w", encoding="utf-8") as f:
     f.write(html)
 
-print("index.html generado correctamente.")
+print("index_legacy.html (dashboard clásico) generado.")
 print("Leads:", total_leads, "| Valor:", fmt_money(total_value), "| Sin Seguimiento:", total_stagnant_7)
+
+
+# ============================================================================
+#  NUEVO PANEL REACT — genera index.html + panel.html autocontenidos
+#  Lee panel.css, Icons.jsx, Panel.jsx, Views.jsx del mismo directorio y
+#  produce un HTML con window.PANEL_DATA inyectado desde datos vivos de Kommo.
+# ============================================================================
+import json, os as _os, re as _re, glob as _glob
+
+_SCRIPT_DIR = _os.path.dirname(_os.path.abspath(__file__))
+_MESES_ES = ["","Enero","Febrero","Marzo","Abril","Mayo","Junio",
+             "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+_VENDOR_COLORS = {
+    "Isabel Robledo": "#00B5AD", "Maria Flores": "#2E6FE0",
+    "Mirian Salazar": "#7A5AF0", "Carola Chavez": "#D98300", "Jonathan Monje": "#159A57",
+}
+_CH_ICON_MAP = {
+    "Carga manual vendedora": "✍", "Automático (bot)": "⚙", "Walk-in (Tienda)": "🚶",
+    "WhatsApp": "💬", "Facebook": "👥", "Instagram": "📷", "Web": "🌐", "Otros": "📦",
+}
+
+def _fmt_resp_plain(minutes):
+    if minutes is None: return "—"
+    if minutes < 60: return f"{int(round(minutes))} min"
+    if minutes < 1440: return f"{minutes/60:.1f} h"
+    return f"{int(round(minutes/1440))} d"
+
+# --- team ---
+_team_panel = []
+for _ventry in vendors_json_list:
+    _vname = _ventry["name"]
+    _vd_p = vendor_data[_vname]
+    _vt = _ventry["total"]
+    _vc = _ventry["kpis"]["compradores"]
+    _vr = _ventry["kpis"]["no_resp"]
+    _vq = _ventry["kpis"]["calificados"]
+    _vs = _ventry["kpis"]["stagnant"]
+    _vtick = _ventry["kpis"]["ticket_avg"]
+    _vrespd = next(((a,b,c,d,e) for (a,b,c,d,e) in _vresp_list if a == _vname), (_vname, None, 0, 0, 0))
+    _, _vavg, _vlt24, _vslow, _vnever = _vrespd
+    _vstatus = "red" if (_vnever > 10 or (_vavg is not None and _vavg >= 4320)) else (
+               "amber" if (_vavg is None or _vavg >= 1440) else "green")
+    _ini = "".join(p[0].upper() for p in _vname.split()[:2])
+    _suc = vendor_primary_suc.get(_vname, "Sin sucursal")
+    _agendado_c = _vd_p["stages"].get("Agendado / Visita", 0)
+    _item = {
+        "ini": _ini, "name": _vname, "suc": _suc,
+        "color": _VENDOR_COLORS.get(_vname, "#6B7785"), "photo": "",
+        "leads": _vt, "prevLeads": vendor_leads_prev.get(_vname, 0),
+        "cierres": _vc, "conv": round(_vc / _vt * 100) if _vt > 0 else 0,
+        "ticket": _vtick, "value": int(_vd_p["value"]),
+        "calif": _vq, "califPct": round(_vq / _vt * 100) if _vt > 0 else 0,
+        "noResp": _vr, "noRespPct": round(_vr / _vt * 100) if _vt > 0 else 0,
+        "agendado": _agendado_c,
+        "u24": _vlt24, "promTxt": _fmt_resp_plain(_vavg),
+        "tarde": _vslow, "nunca": _vnever, "backlog": _vs,
+        "metaCierres": 0, "metaMonto": 0, "v": _vstatus,
+    }
+    if vendor_leads_prev.get(_vname, 0) == 0 and _vt > 0:
+        _item["nuevo"] = True
+    _team_panel.append(_item)
+
+# --- stagesGlobal ---
+_STAGE_COLORS_P = {
+    "Nueva consulta": "#27313F", "Interesado": "#2E6FE0",
+    "Cotización enviada": "#7A4AD9", "Agendado / Visita": "#D98300",
+    "Compradores": "#159A57", "No Responden": "#646E7B",
+}
+_stages_global_panel = []
+for _sn in STAGE_ORDER:
+    _cnt = stage_counts.get(_sn, 0)
+    _stages_global_panel.append({
+        "name": _sn, "count": _cnt,
+        "pct": round(_cnt / total_leads * 100) if total_leads else 0,
+        "color": _STAGE_COLORS_P.get(_sn, "#9AA3AF"),
+    })
+for _sn in stage_counts:
+    if _sn not in STAGE_ORDER:
+        _cnt = stage_counts[_sn]
+        _stages_global_panel.append({
+            "name": _sn, "count": _cnt,
+            "pct": round(_cnt / total_leads * 100) if total_leads else 0,
+            "color": "#9AA3AF",
+        })
+
+# --- channels ---
+_channels_panel = []
+for _cn, _cd in _ch_rows_data:
+    _cl = _cd["leads"]; _cc = _cd["compradores"]; _cv = _cd["value"]
+    _cpct = round(_cl / total_leads * 100) if total_leads else 0
+    _cconv = round(_cc / _cl * 100) if _cl else 0
+    _ctick = int(_cv / _cc) if _cc > 0 else 0
+    _ccls = "green" if _cn == _ch_best_name else ("red" if _cn == _ch_worst_name else "muted")
+    _channels_panel.append({
+        "ic": _CH_ICON_MAP.get(_cn, "📦"), "name": _cn,
+        "leads": _cl, "pct": _cpct, "cierres": _cc,
+        "conv": _cconv, "ticket": _ctick, "pipeline": int(_cv), "cls": _ccls,
+    })
+
+# --- metrics ---
+_sin_suc_n = sum(1 for r in all_rows
+                 if not (r.get("sucursal") or "").strip()
+                 or (r.get("sucursal") or "").strip().lower() == "sin sucursal")
+_open_rows_p = [r for r in all_rows if r.get("stage") in FOLLOWUP_STAGES]
+_open_sin_valor_p = sum(1 for r in _open_rows_p if not r.get("value"))
+_metrics_panel = {
+    "noResp": total_no_resp,
+    "noRespPct": round(total_no_resp / total_leads * 100) if total_leads else 0,
+    "backlog": total_stagnant_7,
+    "backlogPct": round(total_stagnant_7 / total_leads * 100) if total_leads else 0,
+    "criticos7d": total_stagnant_7_14,
+    "nuncaTocados": _resp_never_n,
+    "sinSucursalFichas": _sin_suc_n,
+    "sinSucursalPct": round(_sin_suc_n / total_leads * 100) if total_leads else 0,
+    "abiertosSinValor": _open_sin_valor_p,
+    "openTotal": len(_open_rows_p),
+    "duplicadosTel": total_dup_groups,
+    "duplicadosFichas": total_dup_fichas,
+    "interesado": stage_counts.get("Interesado", 0),
+    "agendado": stage_counts.get("Agendado / Visita", 0),
+}
+
+# --- funnel2 (donut breakdown) ---
+_adv_stages_p = ["Interesado", "Cotización enviada", "Agendado / Visita"]
+_funnel2_panel = [
+    {"n": "Leads del mes", "v": total_leads, "c": "#27313F"},
+    {"n": "Sin respuesta", "v": total_no_resp, "c": "#646E7B"},
+    {"n": "Calificados", "v": total_calificados, "c": "#2E6FE0"},
+    {"n": "En etapas avanz.", "v": sum(stage_counts.get(s, 0) for s in _adv_stages_p), "c": "#00B5AD"},
+    {"n": "Compradores", "v": total_compradores, "c": "#159A57"},
+]
+
+# --- funnel (bar chart) ---
+_funnel_panel = [{"name": sn, "count": stage_counts.get(sn, 0)} for sn in STAGE_ORDER]
+
+# --- stagesByV ---
+_stages_by_v_panel = {}
+for _vn2, _vd2 in vendor_data.items():
+    _sbv = [[s, _vd2["stages"][s]] for s in STAGE_ORDER if _vd2["stages"].get(s, 0) > 0]
+    for _s2 in _vd2["stages"]:
+        if _s2 not in STAGE_ORDER and _vd2["stages"][_s2] > 0:
+            _sbv.append([_s2, _vd2["stages"][_s2]])
+    _stages_by_v_panel[_vn2] = _sbv
+
+# --- archive list helper ---
+def _build_archive_list_new():
+    lst = []
+    for _f in sorted(_glob.glob(_os.path.join(_SCRIPT_DIR, "panel_????_??.html")), reverse=True):
+        _mm = _re.match(r'.*[/\\]panel_(\d{4})_(\d{2})\.html$', _f)
+        if _mm:
+            _ay, _am = int(_mm.group(1)), int(_mm.group(2))
+            lst.append({"label": f"{_MESES_ES[_am]} {_ay}", "url": _os.path.basename(_f)})
+    return lst
+
+# --- build PANEL_DATA ---
+_pipeline_total_p = int(total_value + _cross_value)
+_ticket_avg_p = int(_pipeline_total_p / total_compradores) if total_compradores else 0
+_mom_pct_p = round((total_leads - total_leads_prev) / total_leads_prev * 100) if total_leads_prev else 0
+_fecha_str_p = now_dt.strftime("%d/%m %H:%M")
+
+panel_data = {
+    "month": mes_label_map[now_dt.month],
+    "year": now_dt.year,
+    "prevMonth": mes_label_map[prev_month],
+    "curDay": now_dt.day,
+    "daysInMonth": calendar.monthrange(now_dt.year, now_dt.month)[1],
+    "fecha": _fecha_str_p,
+    "archives": _build_archive_list_new(),
+    "global": {
+        "leads": total_leads,
+        "prevLeads": total_leads_prev,
+        "cierres": total_compradores,
+        "pipeline": _pipeline_total_p,
+        "ticket": _ticket_avg_p,
+    },
+    "funnel2": _funnel2_panel,
+    "stagesGlobal": _stages_global_panel,
+    "origin": {"manual": total_manual, "manualPct": manual_pct, "auto": total_auto, "autoPct": auto_pct},
+    "channels": _channels_panel,
+    "metrics": _metrics_panel,
+    "leadsMomPct": _mom_pct_p,
+    "team": _team_panel,
+    "funnel": _funnel_panel,
+    "nav": [
+        {"id": "resumen", "label": "Resumen"},
+        {"id": "equipo", "label": "Equipo", "badge": str(len(_team_panel))},
+        {"id": "seguimiento", "label": "Seguimiento", "badge": str(total_stagnant_7)},
+        {"id": "alertas", "label": "Alertas", "badge": "8"},
+        {"id": "analisis", "label": "Análisis IA"},
+        {"id": "conversion", "label": "Conversión"},
+        {"id": "semanal", "label": "Semanal"},
+        {"id": "sucursales", "label": "Sucursales"},
+        {"id": "proyeccion", "label": "Proyección"},
+        {"id": "datos", "label": "Datos"},
+    ],
+    "stagesByV": _stages_by_v_panel,
+    "dups": [
+        {
+            "phone": g["phone"],
+            "n": g["n_fichas"],
+            "fichas": [f["name"] for f in g["fichas"] if f.get("name")],
+            "vends": sorted({r["user"] for r in g["rows"] if r.get("user")}),
+            "etapas": sorted({r["stage"] for r in g["rows"] if r.get("stage")}),
+        }
+        for g in _dup_groups[:40]
+    ],
+}
+
+# --- Read source files ---
+def _read_src(name):
+    path = _os.path.join(_SCRIPT_DIR, name)
+    try:
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        print(f"  ⚠ {name} no encontrado en {_SCRIPT_DIR}")
+        return ""
+
+_css_src = _read_src("panel.css")
+_icons_jsx = _read_src("Icons.jsx")
+_panel_jsx = _read_src("Panel.jsx")
+_views_jsx = _read_src("Views.jsx")
+
+# --- Archive old panel.html / index.html if they belong to a different month ---
+_archive_saved_p = None
+for _target_p in ["panel.html", "index.html"]:
+    _tpath_p = _os.path.join(_SCRIPT_DIR, _target_p)
+    if not _os.path.exists(_tpath_p):
+        continue
+    try:
+        with open(_tpath_p, encoding="utf-8") as _ef:
+            _ec = _ef.read()
+        _my = _re.search(r'"year"\s*:\s*(\d{4})', _ec)
+        _mm2 = _re.search(r'"month"\s*:\s*"([^"]+)"', _ec)
+        if _my and _mm2:
+            _oy = int(_my.group(1))
+            _om_name = _mm2.group(1)
+            _MES_NUM2 = {v: k for k, v in mes_label_map.items()}
+            _om = _MES_NUM2.get(_om_name, 0)
+            if _oy and _om and (_oy != now_dt.year or _om != now_dt.month):
+                _aname = f"panel_{_oy}_{_om:02d}.html"
+                _apath = _os.path.join(_SCRIPT_DIR, _aname)
+                if not _os.path.exists(_apath):
+                    with open(_apath, "w", encoding="utf-8") as _af:
+                        _af.write(_ec)
+                    _archive_saved_p = _aname
+                    print(f"Histórico guardado: {_aname}")
+                    break
+    except Exception as _e:
+        print(f"Aviso: no se pudo archivar {_target_p} ({_e})")
+
+# Update archives list after archiving (new file may have just been created)
+panel_data["archives"] = _build_archive_list_new()
+_panel_data_json = json.dumps(panel_data, ensure_ascii=False)
+
+_html_out = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Heaven Colchones · Panel Comercial — {mes_label}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>{_css_src}</style>
+<script>(function(){{try{{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})()</script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script>
+window.PANEL_DATA={_panel_data_json};
+window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
+window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
+window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
+</script>
+<script type="text/babel">
+{_icons_jsx}
+</script>
+<script type="text/babel">
+{_panel_jsx}
+</script>
+<script type="text/babel">
+{_views_jsx}
+</script>
+<script type="text/babel">
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.Panel));
+</script>
+</body>
+</html>"""
+
+with open(_os.path.join(_SCRIPT_DIR, "panel.html"), "w", encoding="utf-8") as _pf:
+    _pf.write(_html_out)
+with open(_os.path.join(_SCRIPT_DIR, "index.html"), "w", encoding="utf-8") as _inf:
+    _inf.write(_html_out)
+
+print(f"index.html + panel.html (React panel) generados — {total_leads} leads, {total_compradores} cierres.")
+if _archive_saved_p:
+    print(f"  → Histórico guardado: {_archive_saved_p}")
+# ============================================================================
