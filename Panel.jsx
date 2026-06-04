@@ -893,7 +893,7 @@ function Panel() {
           </div>
         </header>
         <div className="scroll" ref={scrollRef} onScroll={onScroll}>
-          {loading ? <SkeletonView /> : <Body key={view} />}
+          <Body key={view} />
         </div>
       </div>
       <div className="scrollbar" style={{ width: prog + "%" }} />
