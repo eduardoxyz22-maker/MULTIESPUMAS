@@ -701,10 +701,10 @@ function ViewResumen() {
           <Kpi l="Cerrado en el mes" num={G.cerrado} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Suma de montos de deals en etapa Compradores." sub={`${G.cierres} compradores`} />
           <Kpi l="Pipeline" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Suma de todos los montos registrados en Kommo, sin importar etapa." sub="todas las etapas" />
           <Kpi l="Sin seguimiento" num={D.metrics?.backlogPct || 0} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics?.backlog || 0} leads</b> +72h</span>} />
-          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline ÷ número de compradores." sub={<span>valor / cierre</span>} />
+          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Cerrado ÷ número de compradores (monto promedio por venta confirmada)." sub={<span>valor / cierre</span>} />
           <Kpi l="Interesado" num={D.metrics?.interesado || 0} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." sub="leads en interés" />
           <Kpi l="Agendado / Visita" num={D.metrics?.agendado || 0} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." sub="visitas programadas" />
-          <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.pipeline)}</span>} />
+          <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.cerrado)}</span>} />
         </div>
       </div>
 

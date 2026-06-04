@@ -513,7 +513,7 @@ if _ch_best_name and _ch_worst_name and _ch_best_name != _ch_worst_name:
     _b_conv = round(_b["compradores"]/_b["leads"]*100) if _b["leads"] else 0
     _w_conv = round(_w["compradores"]/_w["leads"]*100) if _w["leads"] else 0
     _mult = round(_b_conv / max(_w_conv, 1), 1)
-    _b_tick = fmt_money(int(_b["value"]/_b["compradores"])) if _b["compradores"] > 0 else ""
+    _b_tick = fmt_money(int(_b["cerrado_value"]/_b["compradores"])) if _b["compradores"] > 0 else ""
     _channel_insight = f'&#128161; <strong>{_ch_best_name} convierte {_mult}&times; m&aacute;s que {_ch_worst_name}</strong> ({_b_conv}% vs {_w_conv}%).'
     if _b_tick:
         _channel_insight += f' Ticket promedio en {_ch_best_name}: <strong>{_b_tick}</strong> &mdash; priorizar este canal tiene mayor retorno por lead captado.'
@@ -1400,7 +1400,6 @@ _weekly_closures_panel = {k: list(v) for k, v in _weekly_closures_raw.items()}
 
 # --- alert badge count (mirrors ViewAlertas JS logic) ---
 _mom_pct_p = round((total_leads - total_leads_prev) / total_leads_prev * 100) if total_leads_prev else 0
-_open_pct_al = round(_open_sin_valor_p / len(_open_rows_p) * 100) if _open_rows_p else 0
 _worst_conv_al = min(
     (_v for _v in _team_panel if _v.get("cierres", 0) > 0),
     key=lambda _v: _v.get("conv", 100), default=None

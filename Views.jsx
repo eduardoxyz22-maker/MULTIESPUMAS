@@ -68,8 +68,8 @@
   window.ViewAnalisis = function () {
     const teamLines = T.map(v => `${v.name} (sucursal ${v.suc}): ${v.leads} leads (mes previo ${v.prevLeads}), ${v.cierres} cierres, ${window.convPct(v)}% conv, ${v.noResp} no-responden (${v.noRespPct}%), ${v.backlog} backlog, ${v.nunca} nunca-tocados, ${v.u24}% <24h, ticket Bs ${v.ticket}`).join("\n");
     const branchRoll = {};
-    T.forEach(v => { const b = branchRoll[v.suc] || (branchRoll[v.suc] = { leads: 0, prev: 0, cierres: 0, value: 0, n: 0 }); b.leads += v.leads; b.prev += (v.prevLeads || 0); b.cierres += v.cierres; b.value += v.value; b.n++; });
-    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${b.leads > 0 ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}% conv, pipeline Bs ${b.value}`).join("\n");
+    T.forEach(v => { const b = branchRoll[v.suc] || (branchRoll[v.suc] = { leads: 0, prev: 0, cierres: 0, cerrado: 0, value: 0, n: 0 }); b.leads += v.leads; b.prev += (v.prevLeads || 0); b.cierres += v.cierres; b.cerrado += v.cierres * v.ticket; b.value += v.value; b.n++; });
+    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${b.leads > 0 ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}% conv, cerrado Bs ${b.cerrado}, pipeline Bs ${b.value}`).join("\n");
     const M = D.metrics;
     const _man = D.channels.find(c => c.cls === "green") || {};
     const _bot = D.channels.find(c => c.cls === "red") || {};
