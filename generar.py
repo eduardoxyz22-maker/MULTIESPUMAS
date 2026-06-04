@@ -486,9 +486,10 @@ for ch_name, ch_d in _ch_rows_data:
     ch_leads = ch_d["leads"]
     ch_comp = ch_d["compradores"]
     ch_val = ch_d["value"]
+    ch_cerrado_val = ch_d["cerrado_value"]
     ch_pct = round(ch_leads / total_leads * 100) if total_leads > 0 else 0
     ch_conv = round(ch_comp / ch_leads * 100) if ch_leads > 0 else 0
-    ch_ticket = int(ch_val / ch_comp) if ch_comp > 0 else 0
+    ch_ticket = int(ch_cerrado_val / ch_comp) if ch_comp > 0 else 0
     bar_w = round(ch_conv / _max_conv * 100)
     is_best = ch_name == _ch_best_name
     is_worst = ch_name == _ch_worst_name
@@ -1410,7 +1411,6 @@ _man_ch_al = next((c for c in _channels_panel if c.get("cls") == "green"), {})
 _bot_ch_al = next((c for c in _channels_panel if c.get("cls") == "red"), {})
 _mult_al = round(_man_ch_al.get("conv", 0) / max(_bot_ch_al.get("conv", 1), 1)) if _man_ch_al.get("conv") and _bot_ch_al.get("conv") else 0
 _alert_badge_n = 0
-if _open_pct_al > 30: _alert_badge_n += 1
 if _worst_conv_al is not None and _worst_conv_al.get("conv", 100) < 5: _alert_badge_n += 1
 if _high_no_resp_al: _alert_badge_n += 1
 if _mom_pct_p < -5: _alert_badge_n += 1
@@ -1591,7 +1591,7 @@ _agent_prompts_ai = {
         "Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\n"
         f"Datos:\n{_team_lines_ai}\n"
         f"Backlog total {_M_ai['backlog']} (+72h), nunca tocados {_M_ai['nuncaTocados']}, "
-        f"\"no responden\" {_M_ai['noResp']}, deals sin valor {_M_ai['abiertosSinValor']}.\n{_json_rule_ai}"
+        f"\"no responden\" {_M_ai['noResp']}.\n{_json_rule_ai}"
     ),
     "ventas": (
         "Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: "
