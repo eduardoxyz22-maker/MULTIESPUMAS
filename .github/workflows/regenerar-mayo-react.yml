@@ -1,0 +1,30 @@
+name: Regenerar Panel Mayo 2026 (Kommo)
+
+# Regenera panel_mayo_2026.html con el nuevo diseño React usando datos de Kommo.
+# Corre manualmente desde GitHub -> Actions -> Run workflow.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar dependencias Node para compilar JSX
+        run: npm install --no-save @babel/core @babel/preset-react
+
+      - name: Generar panel_mayo_2026.html desde Kommo
+        run: python3 generar.py --month 5 --year 2026 --out panel_mayo_2026.html
+
+      - name: Commit y push panel_mayo_2026.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add panel_mayo_2026.html
+          git diff --cached --quiet || git commit -m "Panel Mayo 2026 (React) regenerado $(date '+%Y-%m-%d %H:%M')"
+          git push

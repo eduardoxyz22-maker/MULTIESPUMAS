@@ -4,7 +4,15 @@ import json
 import time
 import datetime
 import calendar
+import argparse
+import sys
 from collections import defaultdict
+
+_ap = argparse.ArgumentParser(add_help=False)
+_ap.add_argument("--month", type=int, default=None)
+_ap.add_argument("--year",  type=int, default=None)
+_ap.add_argument("--out",   type=str, default=None)
+_args, _ = _ap.parse_known_args()
 
 TOKEN = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVmODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFhZDJhNDQ0OGFhMWZhIn0.eyJhdWQiOiJhYmQ5OThhNi0wMjcwLTRkODAtYjE5Ni0xMmRmOTE3ZjQxYzciLCJqdGkiOiIwMjkzZjEyOTFkOWM1ZTk1Zjg3YmE2YTQxZTI1Y2JkNGE2OTc5ZTNmY2JjY2I0MmU2NmU4MWQyMTEyZjUyOGVlMTRhYWQyYTQ0NDhhYTFmYSIsImlhdCI6MTc3ODA0MDczNCwibmJmIjoxNzc4MDQwNzM0LCJleHAiOjE3OTg1ODg4MDAsInN1YiI6IjE0OTYyMjcxIiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM2MjEyNjIzLCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJwdXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5vdGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiODZmZmE4NzQtNDQ0My00ZjcyLWFjZmQtZWM3MDg5YTVjZjRmIiwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.n5PGBBmLgdOndg-M2oy2bRDtGx1MeO39vkVXW7Tq-wlBkQ2ts1wGJArctkigI-JRXYcyraRprfFY3jAkDRYTAqIwrXuhW6N14DRTZJQ7xVsXjqYfJp_xeaAziDKlyX_aSymVb7xzdioDAHRw04OqX7lkDtioGJPqQUO5TdEanLdCihudNXqVhNv7XbtaUABolI28wZ7PamQ8BYqSI6jsAJZHYn9MroTQcbrDrbBjtL3-WTl2H9yPnmikHykS47PUIaX-BWMCXuT2f9RgOpPQiShYo0tzxP8N9jji3qMKtIlgK72BG8M2ouz8g0aLxqWE1Sk3wE1_9fp_iENV7FcV4Q"
 BASE_URL = "https://eanez.kommo.com/api/v4"
@@ -128,6 +136,12 @@ def _fmt_resp(m):
 
 now = time.time()
 now_dt = datetime.datetime.now()
+if _args.month and _args.year:
+    now_dt = datetime.datetime(
+        _args.year, _args.month,
+        min(now_dt.day, calendar.monthrange(_args.year, _args.month)[1])
+    )
+    now = now_dt.timestamp()
 mes_label_map = {
     1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
     5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
@@ -1609,12 +1623,16 @@ window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
 </body>
 </html>"""
 
-with open(_os.path.join(_SCRIPT_DIR, "panel.html"), "w", encoding="utf-8") as _pf:
-    _pf.write(_html_out)
-with open(_os.path.join(_SCRIPT_DIR, "index.html"), "w", encoding="utf-8") as _inf:
-    _inf.write(_html_out)
+if _args.out:
+    _out_files = [_args.out]
+else:
+    _out_files = ["panel.html", "index.html"]
 
-print(f"index.html + panel.html (React panel) generados — {total_leads} leads, {total_compradores} cierres.")
+for _out_name in _out_files:
+    with open(_os.path.join(_SCRIPT_DIR, _out_name), "w", encoding="utf-8") as _of:
+        _of.write(_html_out)
+
+print(f"{', '.join(_out_files)} (React panel) generados — {total_leads} leads, {total_compradores} cierres.")
 if _archive_saved_p:
     print(f"  → Histórico guardado: {_archive_saved_p}")
 # ============================================================================

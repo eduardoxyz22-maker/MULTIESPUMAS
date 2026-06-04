@@ -809,7 +809,7 @@ function Panel() {
   return (
     <React.Fragment>
       <aside className="rail">
-        <div className="brand"><span className="h">HEAVEN<em>●</em></span><div className="s">Panel comercial</div></div>
+        <div className="brand"><img className="logo-img" src="logo.png" alt="Heaven Colchones" /><div className="s">Panel comercial</div></div>
         <nav className="nav">
           <div className="nl">Control diario</div>
           {D.nav.slice(0, 4).map(n => (
@@ -825,7 +825,7 @@ function Panel() {
 
       <div className="main">
         <header className="top">
-          <div className="mob-brand"><span className="h">HEAVEN<em>●</em></span></div>
+          <div className="mob-brand"><img className="logo-img" src="logo.png" alt="Heaven Colchones" style={{height:"22px",width:"auto",filter:"brightness(0) invert(1)"}} /></div>
           <div><div className="crumb">{meta.crumb}</div><h1>{meta.title}</h1></div>
           <div className="tr">
             <span className="chip">eanez.kommo.com</span>
