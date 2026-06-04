@@ -638,6 +638,7 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
             "stagnant_pct": vstag,
             "stagnant": vs,
             "ticket_avg": vtick,
+            "cerrado_value": int(vd["cerrado_value"]),
             "created_manual": created_by_count.get(vname, 0),
         },
     })
@@ -1281,7 +1282,7 @@ for _ventry in vendors_json_list:
         "color": _VENDOR_COLORS.get(_clean_name, _VENDOR_COLORS.get(_vname, "#6B7785")), "photo": "",
         "leads": _vt, "prevLeads": vendor_leads_prev.get(_vname, 0),
         "cierres": _vc, "conv": round(_vc / _vt * 100) if _vt > 0 else 0,
-        "ticket": _vtick, "value": int(_vd_p["value"]),
+        "ticket": _vtick, "value": int(_vd_p["value"]), "cerrado": int(_ventry["kpis"]["cerrado_value"]),
         "calif": _vq, "califPct": round(_vq / _vt * 100) if _vt > 0 else 0,
         "noResp": _vr, "noRespPct": round(_vr / _vt * 100) if _vt > 0 else 0,
         "agendado": _agendado_c,
@@ -1556,13 +1557,13 @@ _team_lines_ai = "\n".join(
 )
 _br_ai = {}
 for _vai in _team_panel:
-    _bai = _br_ai.setdefault(_vai['suc'], dict(leads=0, prev=0, cierres=0, value=0, n=0))
+    _bai = _br_ai.setdefault(_vai['suc'], dict(leads=0, prev=0, cierres=0, cerrado=0, value=0, n=0))
     _bai['leads'] += _vai['leads']; _bai['prev'] += _vai['prevLeads']
-    _bai['cierres'] += _vai['cierres']; _bai['value'] += _vai['value']; _bai['n'] += 1
+    _bai['cierres'] += _vai['cierres']; _bai['cerrado'] += _vai['cerrado']; _bai['value'] += _vai['value']; _bai['n'] += 1
 _branch_lines_ai = "\n".join(
     f"{_s}: {_b['n']} vendedora(s), {_b['leads']} leads (mes previo {_b['prev']}, "
     f"{round((_b['leads']-_b['prev'])/(_b['prev'] or 1)*100)}%), {_b['cierres']} cierres, "
-    f"{(_b['cierres']/_b['leads']*100 if _b['leads'] else 0):.1f}% conv, pipeline Bs {_b['value']}"
+    f"{(_b['cierres']/_b['leads']*100 if _b['leads'] else 0):.1f}% conv, cerrado Bs {_b['cerrado']}, pipeline Bs {_b['value']}"
     for _s, _b in _br_ai.items()
 )
 
