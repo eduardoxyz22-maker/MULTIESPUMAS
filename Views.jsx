@@ -611,11 +611,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         <SectionHead eb="Calidad de datos" h3="Salud del CRM" p="Estos huecos impiden medir y priorizar bien. Limpiarlos es trabajo de gerencia + equipo." />
         <div className="kpis">
           <Kpi l="Fichas sin sucursal" num={D.metrics.sinSucursalPct} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="datos" sub={`${D.metrics.sinSucursalFichas.toLocaleString("en-US")} fichas · comparativo por tienda parcial`} />
-          <Kpi l="Abiertos sin valor" v="~100%" ac="#DC4046" ico="datos" sub={`${D.metrics.abiertosSinValor.toLocaleString("en-US")} deals · no se puede priorizar por monto`} />
+          <Kpi l="Abiertos sin valor" num={D.metrics.openTotal > 0 ? Math.round(D.metrics.abiertosSinValor / D.metrics.openTotal * 100) : 0} fmt={n => n + "%"} ac="#DC4046" ico="datos" sub={`${D.metrics.abiertosSinValor.toLocaleString("en-US")} deals · no se puede priorizar por monto`} />
           <Kpi l="Teléfonos duplicados" num={D.metrics.duplicadosTel} ac="#7A5AF0" ico="datos" sub={`${D.metrics.duplicadosFichas} fichas en 2+ registros`} />
           <Kpi l="Nunca tocados" num={D.metrics.nuncaTocados} ac="#D98300" ico="datos" sub="el bot los movió, sin acción humana" />
         </div>
-        <div className="insight amber"><span className="ic"><Icon name="alertas" size={17} sw={2.2} /></span><div><div className="t">Prioridad de limpieza: etiquetar sucursal</div><div className="d">Con sucursal vacía en el <b>{D.metrics.sinSucursalPct}%</b> de las fichas ({D.metrics.sinSucursalFichas.toLocaleString("en-US")}), el comparativo por tienda es parcial. Una campaña de etiquetado desbloquea el análisis por sucursal.</div></div></div>
+        {D.metrics.sinSucursalPct > 0 && <div className="insight amber"><span className="ic"><Icon name="alertas" size={17} sw={2.2} /></span><div><div className="t">Prioridad de limpieza: etiquetar sucursal</div><div className="d">Con sucursal vacía en el <b>{D.metrics.sinSucursalPct}%</b> de las fichas ({D.metrics.sinSucursalFichas.toLocaleString("en-US")}), el comparativo por tienda es parcial. Una campaña de etiquetado desbloquea el análisis por sucursal.</div></div></div>}
         <div className="card">
           <SectionHead eb="Duplicados" h3={`${D.metrics.duplicadosTel} teléfonos en 2+ fichas`} p="Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisión." />
           <table className="tbl" style={{ marginTop: 6 }}>
