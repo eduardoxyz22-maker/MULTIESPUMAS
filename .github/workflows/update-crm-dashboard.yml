@@ -2,6 +2,13 @@ name: Actualizar Dashboard CRM Diario
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'generar.py'
+      - 'Panel.jsx'
+      - 'Views.jsx'
+      - 'panel.css'
 
 jobs:
   actualizar:
