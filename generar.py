@@ -1435,6 +1435,163 @@ panel_data = {
     ],
 }
 
+# --- AI analysis baking (requires ANTHROPIC_API_KEY env var / GitHub Secret) ---
+def _call_claude_api(_prompt, _max_tok=700):
+    _key = _os.environ.get("ANTHROPIC_API_KEY", "")
+    if not _key:
+        return None
+    _payload = json.dumps({
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": _max_tok,
+        "messages": [{"role": "user", "content": _prompt}]
+    }).encode("utf-8")
+    _req = urllib.request.Request(
+        "https://api.anthropic.com/v1/messages",
+        data=_payload,
+        headers={"x-api-key": _key, "anthropic-version": "2023-06-01", "content-type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(_req, timeout=30) as _r:
+            _resp = json.loads(_r.read())
+            _raw = _resp["content"][0]["text"]
+            try:
+                return json.loads(_raw.strip())
+            except Exception:
+                _m2 = _re.search(r'\{[\s\S]*\}', _raw)
+                if _m2:
+                    return json.loads(_m2.group(0))
+    except Exception as _e:
+        print(f"  ⚠ Claude API: {_e}")
+    return None
+
+_G_ai = panel_data["global"]
+_M_ai = _metrics_panel
+_man_ch = next((c for c in _channels_panel if c.get("cls") == "green"), {})
+_bot_ch = next((c for c in _channels_panel if c.get("cls") == "red"), {})
+
+_team_lines_ai = "\n".join(
+    f"{v['name']} (sucursal {v['suc']}): {v['leads']} leads (mes previo {v['prevLeads']}), "
+    f"{v['cierres']} cierres, {round(v['cierres']/v['leads']*100) if v['leads'] else 0}% conv, "
+    f"{v['noResp']} no-responden ({v['noRespPct']}%), {v['backlog']} backlog, "
+    f"{v.get('nunca',0)} nunca-tocados, {v['u24']}% <24h, ticket Bs {v['ticket']}"
+    for v in _team_panel
+)
+_br_ai = {}
+for _vai in _team_panel:
+    _bai = _br_ai.setdefault(_vai['suc'], dict(leads=0, prev=0, cierres=0, value=0, n=0))
+    _bai['leads'] += _vai['leads']; _bai['prev'] += _vai['prevLeads']
+    _bai['cierres'] += _vai['cierres']; _bai['value'] += _vai['value']; _bai['n'] += 1
+_branch_lines_ai = "\n".join(
+    f"{_s}: {_b['n']} vendedora(s), {_b['leads']} leads (mes previo {_b['prev']}, "
+    f"{round((_b['leads']-_b['prev'])/(_b['prev'] or 1)*100)}%), {_b['cierres']} cierres, "
+    f"{_b['cierres']/_b['leads']*100:.1f}% conv, pipeline Bs {_b['value']}"
+    for _s, _b in _br_ai.items()
+)
+
+_json_rule_ai = (
+    'Responde SOLO JSON válido, sin texto extra, forma exacta:\n'
+    '{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],'
+    '"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}\n'
+    'Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombres y cifras.\n'
+    'REGLAS ANTI-REPETICIÓN: NO menciones totales globales salvo que sean indispensables. '
+    'Quédate ESTRICTAMENTE en tu dominio. Aporta un ángulo que solo tu especialidad vería.'
+)
+_ctx_ai = (
+    f"Heaven Colchones (Bolivia), mes {mes_label_map[now_dt.month]} {now_dt.year}. Moneda Bs.\n"
+    f"Global: {_G_ai['leads']} leads (mes previo {_G_ai['prevLeads']}, "
+    f"{round((_G_ai['leads']-_G_ai['prevLeads'])/(_G_ai['prevLeads'] or 1)*100)}% MoM), "
+    f"{_G_ai['cierres']} cierres, conversión {(_G_ai['cierres']/_G_ai['leads']*100):.1f}%, "
+    f"pipeline Bs {_G_ai['pipeline']}, ticket Bs {_G_ai['ticket']}.\n"
+    f"\"No responden\" {_M_ai['noResp']} ({_M_ai['noRespPct']}%). "
+    f"Sin seguimiento +72h: {_M_ai['backlog']} ({_M_ai['backlogPct']}%). "
+    f"Nunca tocados: {_M_ai['nuncaTocados']}.\nCanales: "
+    + "; ".join(f"{c['name']} {c['leads']} leads/{c['conv']}% conv/{c['cierres']} cierres" for c in _channels_panel)
+    + f"\nRoll-up sucursales:\n{_branch_lines_ai}\nEquipo:\n{_team_lines_ai}"
+)
+
+_agent_prompts_ai = {
+    "crm": (
+        "Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: "
+        "velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads \"nunca tocados\", "
+        "\"no responden\" y calidad de datos (deals sin valor). NO opines de ventas ni dinero. "
+        "Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\n"
+        f"Datos:\n{_team_lines_ai}\n"
+        f"Backlog total {_M_ai['backlog']} (+72h), nunca tocados {_M_ai['nuncaTocados']}, "
+        f"\"no responden\" {_M_ai['noResp']}, deals sin valor {_M_ai['abiertosSinValor']}.\n{_json_rule_ai}"
+    ),
+    "ventas": (
+        "Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: "
+        "conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. "
+        "NO hables de disciplina de CRM ni canales de origen. Compara vendedoras por eficiencia "
+        "(no por volumen) y di quién deja dinero sobre la mesa.\n"
+        f"Datos:\n{_team_lines_ai}\n"
+        f"Global: {_G_ai['cierres']} cierres, {(_G_ai['cierres']/_G_ai['leads']*100):.1f}% conv, "
+        f"pipeline Bs {_G_ai['pipeline']}, ticket Bs {_G_ai['ticket']}.\n{_json_rule_ai}"
+    ),
+    "comportamiento": (
+        "Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. "
+        f"{_man_ch.get('name','Manual')} ({_man_ch.get('leads',0)} leads, {_man_ch.get('conv',0)}% conv, "
+        f"{_man_ch.get('cierres',0)} cierres) vs {_bot_ch.get('name','Bot')} ({_bot_ch.get('leads',0)} leads, "
+        f"{_bot_ch.get('conv',0)}% conv, {_bot_ch.get('cierres',0)} cierres). "
+        f"El {_M_ai['noRespPct']}% termina en \"no responden\". NO hables de metas individuales. "
+        "Explica el PATRÓN: qué canal/etapa pierde clientes y cómo reactivarlos.\n"
+        f"Canales: {'; '.join(f\"{c['name']} {c['leads']}/{c['conv']}%/{c['cierres']}\" for c in _channels_panel)}. "
+        f"No-responden {_M_ai['noResp']} ({_M_ai['noRespPct']}%).\n{_json_rule_ai}"
+    ),
+    "sintesis": (
+        "Eres el DIRECTOR COMERCIAL. Combina los análisis (CRM, ventas, comportamiento) en UN plan "
+        "priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs. "
+        "Cada decisión debe nombrar responsable y meta concreta.\n"
+        f"{_ctx_ai}\n"
+        'Responde SOLO JSON: {"resumen":"3 frases con el veredicto del mes",'
+        '"hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],'
+        '"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} '
+        "Máx 3 y 3. Español de Bolivia."
+    ),
+}
+
+_top_v_ai = max(_team_panel, key=lambda v: v['cierres'], default={})
+_worst_v_ai = min(
+    (v for v in _team_panel if v.get('cierres', 0) > 0 and v.get('leads', 0) > 0),
+    key=lambda v: v['cierres'] / v['leads'],
+    default={}
+)
+_diag_prompt_ai = (
+    f"Eres analista comercial senior de Heaven Colchones (Bolivia). Analiza el mes "
+    f"{mes_label_map[now_dt.month]} {now_dt.year} y responde SOLO con JSON válido, sin texto extra:\n"
+    '{"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con insight central y números",'
+    '"palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}\n'
+    f"Datos (Bs): Leads {_G_ai['leads']} (mes anterior {_G_ai['prevLeads']}, "
+    f"{round((_G_ai['leads']-_G_ai['prevLeads'])/(_G_ai['prevLeads'] or 1)*100)}%). "
+    f"Cierres {_G_ai['cierres']}, conversión {(_G_ai['cierres']/_G_ai['leads']*100):.1f}%. "
+    f"Pipeline Bs {_G_ai['pipeline']}, ticket Bs {_G_ai['ticket']}. "
+    f"\"No responden\" {_M_ai['noResp']} ({_M_ai['noRespPct']}%). "
+    f"Sin seguimiento +72h: {_M_ai['backlog']} ({_M_ai['backlogPct']}%). "
+    f"Canal manual convierte {_man_ch.get('conv',0)}% vs {_bot_ch.get('conv',0)}% bot.\n"
+    f"Equipo:\n{_team_lines_ai}\n"
+    f"Top: {_top_v_ai.get('name','—')}. Más débil en conversión: {_worst_v_ai.get('name','—')}. "
+    "Sé directo, específico con nombres y números, español de Bolivia."
+)
+
+_ai_agents_baked = {}
+_ai_diagnostico_baked = None
+if _os.environ.get("ANTHROPIC_API_KEY"):
+    print("  Generando análisis IA con Claude (Haiku)...")
+    for _aid_k, _aprompt_k in _agent_prompts_ai.items():
+        _res_k = _call_claude_api(_aprompt_k)
+        if _res_k:
+            _ai_agents_baked[_aid_k] = _res_k
+            print(f"    ✓ Agente {_aid_k}")
+        else:
+            print(f"    ✗ Agente {_aid_k} sin resultado")
+    _ai_diagnostico_baked = _call_claude_api(_diag_prompt_ai)
+    print(f"    {'✓' if _ai_diagnostico_baked else '✗'} Diagnóstico")
+else:
+    print("  ⚠ ANTHROPIC_API_KEY no configurado — análisis IA omitido (agrega el secret en GitHub)")
+
+panel_data["ai_agents"] = _ai_agents_baked
+panel_data["ai_diagnostico"] = _ai_diagnostico_baked
+
 # --- Read source files ---
 def _read_src(name):
     path = _os.path.join(_SCRIPT_DIR, name)

@@ -489,7 +489,11 @@ const DIAG_FALLBACK = {
 function DiagnosticoMes() {
   const G = D.global;
   const CACHE_KEY = `heaven_diag_ai_${D.month}_${D.year}`;
-  const [ai, setAi] = useState(() => { try { const c = sessionStorage.getItem(CACHE_KEY); if (c) return { state: "done", ...JSON.parse(c) }; } catch (e) {} return { state: "idle" }; });
+  const [ai, setAi] = useState(() => {
+    if (D.ai_diagnostico) return { state: "done", ...D.ai_diagnostico };
+    try { const c = sessionStorage.getItem(CACHE_KEY); if (c) return { state: "done", ...JSON.parse(c) }; } catch (e) {}
+    return { state: "idle" };
+  });
   const buildPrompt = () => {
     const top = [...D.team].sort((a, b) => b.cierres - a.cierres)[0];
     const worst = [...D.team].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv)[0];
@@ -573,7 +577,11 @@ window.DiagnosticoMes = DiagnosticoMes;
 // structured output (resumen + hallazgos + recomendaciones). Cached per month.
 function ExpertAgent({ id, name, role, icon, color, buildPrompt, autorun }) {
   const KEY = `heaven_agent_${id}_${D.month}_${D.year}`;
-  const [st, setSt] = useState(() => { try { const c = sessionStorage.getItem(KEY); if (c) return { s: "done", ...JSON.parse(c) }; } catch (e) {} return { s: "idle" }; });
+  const [st, setSt] = useState(() => {
+    if (D.ai_agents && D.ai_agents[id]) return { s: "done", ...D.ai_agents[id] };
+    try { const c = sessionStorage.getItem(KEY); if (c) return { s: "done", ...JSON.parse(c) }; } catch (e) {}
+    return { s: "idle" };
+  });
   const run = async () => {
     if (!window.claude || !window.claude.complete) { setSt({ s: "error" }); return; }
     setSt({ s: "loading" });

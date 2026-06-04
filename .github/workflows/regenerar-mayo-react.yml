@@ -20,6 +20,8 @@ jobs:
 
       - name: Generar panel_mayo_2026.html desde Kommo
         run: python3 generar.py --month 5 --year 2026 --out panel_mayo_2026.html
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Commit y push panel_mayo_2026.html
         run: |

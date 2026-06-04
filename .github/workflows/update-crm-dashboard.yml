@@ -17,6 +17,8 @@ jobs:
 
       - name: Generar index.html desde Kommo
         run: python3 generar.py
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Commit y push index.html
         run: |
