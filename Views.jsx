@@ -16,7 +16,7 @@
           {thFor("Cierres", "cierres", v => v.cierres)}
           {thFor("Conv.", "conv", v => window.convPct(v))}
           {thFor("Ticket", "ticket", v => v.ticket)}
-          {thFor("Monto reg.", "value", v => v.value)}
+          {thFor("Pipeline", "value", v => v.value)}
           {thFor("Calificados", "calif", v => v.calif)}
           {thFor("No responden", "noResp", v => v.noResp)}
         </tr></thead>
@@ -47,7 +47,7 @@
           {thFor("Cierres", "cierres", c => c.cierres)}
           {thFor("Conversión", "conv", c => c.conv)}
           {thFor("Ticket prom.", "ticket", c => c.ticket)}
-          {thFor("Monto reg.", "pipeline", c => c.pipeline)}
+          {thFor("Pipeline", "pipeline", c => c.pipeline)}
         </tr></thead>
         <tbody>{sorted.map((c, i) => (
           <tr key={i}>
@@ -134,7 +134,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                 <div className="tcard-h"><Avatar v={v} size={46} ring crown={v.name === TOP} /><div><div className="tcard-name">{v.name}{v.nuevo && <span className="tag-new">NUEVO</span>}</div><div className="tcard-where">{v.suc}</div></div><div style={{ marginLeft: "auto" }}><Pill tone={v.v}>{v.u24}% &lt;24h</Pill></div></div>
                 <div className="tmetrics">
                   <div className="tm"><div className="v num">{v.cierres}</div><div className="l">Cierres</div></div>
-                  <div className="tm"><div className="v num" style={{ color: "var(--brand-d)" }}>{v.value ? money(v.value) : "—"}</div><div className="l">Monto reg.</div></div>
+                  <div className="tm"><div className="v num" style={{ color: "var(--brand-d)" }}>{v.value ? money(v.value) : "—"}</div><div className="l">Pipeline</div></div>
                   <div className="tm"><div className="v num" style={{ color: `var(--${convTone(window.convPct(v))})` }}>{window.convPct(v)}%</div><div className="l">Conversión</div></div>
                   <div className="tm"><div className="v num">{v.ticket ? money(v.ticket) : "—"}</div><div className="l">Ticket prom.</div></div>
                 </div>
@@ -507,7 +507,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 16 }}>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800 }}><CountUp value={b.leads} /></div><div className="kl">Leads <span className="ww">vs {b.prevLeads.toLocaleString("en-US")}</span></div></div>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--green)" }}><CountUp value={b.cierres} /></div><div className="kl">Cierres</div></div>
-                  <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--brand-d)" }}><CountUp value={b.value} fmt={money} /></div><div className="kl">Monto reg.</div></div>
+                  <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--brand-d)" }}><CountUp value={b.value} fmt={money} /></div><div className="kl">Pipeline</div></div>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: `var(--${convTone(b.leads ? b.cierres / b.leads * 100 : 0)})` }}>{b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}%</div><div className="kl">Conversión</div></div>
                 </div>
               </div>
@@ -530,7 +530,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
               {thFor("Conv.", "conv", b => b.leads ? b.cierres / b.leads : 0)}
               {thFor("Agendado", "agendado", b => b.agendado)}
               {thFor("Cerrado mes", "cerrado", b => b.cerrado)}
-              {thFor("Monto reg.", "value", b => b.value)}
+              {thFor("Pipeline", "value", b => b.value)}
             </tr></thead>
             <tbody>{sorted.map((b, i) => { const m = mom(b); const bconv = b.leads ? b.cierres / b.leads * 100 : 0; return (<tr key={i} className="clickable" onClick={() => window.__sucursal && window.__sucursal(b.suc)}><td style={{ fontWeight: 700 }}><span style={{ display: "inline-block", width: 9, height: 9, borderRadius: 3, background: COL[b.suc] || "#6B7785", marginRight: 8 }} />{b.suc}</td><td className="r num">{b.n}</td><td className="r num">{b.leads.toLocaleString("en-US")}</td><td className="r"><span className={`delta ${m >= 0 ? "up" : "down"}`}>{m >= 0 ? "▲" : "▼"} {m >= 0 ? "+" : ""}{m}%</span></td><td className="r num" style={{ fontWeight: 800 }}>{b.cierres}</td><td className="r"><Pill tone={convTone(bconv)}>{bconv.toFixed(1)}%</Pill></td><td className="r num" style={{ color: "#D98300", fontWeight: 700 }}>{b.agendado}</td><td className="r num" style={{ color: "var(--green-ink)", fontWeight: 700 }}>{money(b.cerrado)}</td><td className="r num">{money(b.value)}</td></tr>); })}</tbody>
           </table>
