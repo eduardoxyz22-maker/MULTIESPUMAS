@@ -1468,6 +1468,67 @@ for _target_p in ["panel.html", "index.html"]:
 panel_data["archives"] = _build_archive_list_new()
 _panel_data_json = json.dumps(panel_data, ensure_ascii=False)
 
+# --- Compile JSX → plain JS using Node/Babel on the runner ---
+import subprocess as _sp, tempfile as _tf
+
+def _compile_jsx(src, label):
+    node_script = r"""
+const babel = require('@babel/core');
+const fs = require('fs');
+const src = fs.readFileSync('/dev/stdin', 'utf8');
+try {
+  const result = babel.transformSync(src, {
+    presets: [['@babel/preset-react', {runtime:'classic'}]],
+    filename: 'panel.jsx'
+  });
+  process.stdout.write(result.code);
+} catch(e) {
+  process.stderr.write('BABEL_ERROR: ' + e.message + '\n');
+  process.exit(1);
+}
+"""
+    try:
+        r = _sp.run(
+            ["node", "-e", node_script],
+            input=src.encode("utf-8"),
+            capture_output=True,
+            timeout=60
+        )
+        if r.returncode == 0:
+            print(f"  JSX compilado: {label}")
+            return r.stdout.decode("utf-8")
+        else:
+            print(f"  ⚠ Babel falló para {label}: {r.stderr.decode()[:200]}")
+    except Exception as e:
+        print(f"  ⚠ No se pudo compilar {label}: {e}")
+    return None
+
+# Try to install @babel/core + preset-react if not present
+def _ensure_babel():
+    r = _sp.run(["node", "-e", "require('@babel/core')"], capture_output=True)
+    if r.returncode != 0:
+        print("  Instalando @babel/core @babel/preset-react...")
+        _sp.run(["npm", "install", "--no-save", "@babel/core", "@babel/preset-react"],
+                capture_output=True, cwd=_SCRIPT_DIR)
+
+_ensure_babel()
+_icons_js = _compile_jsx(_icons_jsx, "Icons.jsx")
+_panel_js  = _compile_jsx(_panel_jsx,  "Panel.jsx")
+_views_js  = _compile_jsx(_views_jsx,  "Views.jsx")
+
+# Fall back to Babel-in-browser if compilation failed
+_use_babel_cdn = not (_icons_js and _panel_js and _views_js)
+if _use_babel_cdn:
+    print("  ⚠ Usando Babel CDN como fallback")
+    _icons_js  = _icons_jsx
+    _panel_js  = _panel_jsx
+    _views_js  = _views_jsx
+    _script_type = 'type="text/babel"'
+    _babel_cdn = '<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>'
+else:
+    _script_type = ""
+    _babel_cdn = ""
+
 _html_out = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1480,27 +1541,36 @@ _html_out = f"""<!DOCTYPE html>
 <script>(function(){{try{{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})()</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+{_babel_cdn}
 </head>
 <body>
-<div id="root"></div>
+<div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
 <script>
 window.PANEL_DATA={_panel_data_json};
 window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
 window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
 window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
 </script>
-<script type="text/babel">
-{_icons_jsx}
+<script {_script_type}>
+{_icons_js}
 </script>
-<script type="text/babel">
-{_panel_jsx}
+<script {_script_type}>
+{_panel_js}
 </script>
-<script type="text/babel">
-{_views_jsx}
+<script {_script_type}>
+{_views_js}
 </script>
-<script type="text/babel">
-ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.Panel));
+<script {_script_type}>
+(function() {{
+  var el = document.getElementById("_loading");
+  if (el) el.remove();
+  try {{
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.Panel));
+  }} catch(e) {{
+    document.getElementById("root").innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error al montar panel: ' + e.message + '</p>';
+    console.error(e);
+  }}
+}})();
 </script>
 </body>
 </html>"""

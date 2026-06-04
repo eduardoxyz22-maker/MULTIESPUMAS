@@ -12,6 +12,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Instalar dependencias Node para compilar JSX
+        run: npm install --no-save @babel/core @babel/preset-react
+
       - name: Generar index.html desde Kommo
         run: python3 generar.py
 
