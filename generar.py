@@ -1248,12 +1248,17 @@ for _ventry in vendors_json_list:
     _, _vavg, _vlt24, _vslow, _vnever, _ = _vrespd
     _vstatus = "red" if (_vnever > 10 or (_vavg is not None and _vavg >= 4320)) else (
                "amber" if (_vavg is None or _vavg >= 1440) else "green")
-    _ini = "".join(p[0].upper() for p in _vname.split()[:2])
-    _suc = vendor_primary_suc.get(_vname, "Sin sucursal")
+    # Kommo user names may include sucursal: "Nombre - Sucursal"
+    if " - " in _vname:
+        _clean_name, _suc_from_name = _vname.split(" - ", 1)
+    else:
+        _clean_name, _suc_from_name = _vname, None
+    _ini = "".join(p[0].upper() for p in _clean_name.split()[:2])
+    _suc = vendor_primary_suc.get(_vname, None) or _suc_from_name or "Sin sucursal"
     _agendado_c = _vd_p["stages"].get("Agendado / Visita", 0)
     _item = {
-        "ini": _ini, "name": _vname, "suc": _suc,
-        "color": _VENDOR_COLORS.get(_vname, "#6B7785"), "photo": "",
+        "ini": _ini, "name": _clean_name, "suc": _suc,
+        "color": _VENDOR_COLORS.get(_clean_name, _VENDOR_COLORS.get(_vname, "#6B7785")), "photo": "",
         "leads": _vt, "prevLeads": vendor_leads_prev.get(_vname, 0),
         "cierres": _vc, "conv": round(_vc / _vt * 100) if _vt > 0 else 0,
         "ticket": _vtick, "value": int(_vd_p["value"]),
