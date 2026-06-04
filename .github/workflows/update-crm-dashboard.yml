@@ -19,7 +19,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html panel.html
+          git add index.html panel.html index_legacy.html
           git add panel_*.html 2>/dev/null || true
           git diff --cached --quiet || git commit -m "Dashboard CRM actualizado $(date '+%Y-%m-%d %H:%M')"
           git push

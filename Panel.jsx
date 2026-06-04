@@ -1,6 +1,7 @@
 // Heaven panel — shell + shared components + Resumen view.
 const { useState, useEffect } = React;
 const D = window.PANEL_DATA;
+const fmtMoney = window.fmtMoney;
 
 /* ---------- shared bits ---------- */
 function SectionHead({ eb, h3, p, right }) {
@@ -493,9 +494,11 @@ function DiagnosticoMes() {
     const top = [...D.team].sort((a, b) => b.cierres - a.cierres)[0];
     const worst = [...D.team].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv)[0];
     const teamLines = D.team.map(v => `${v.name} (${v.suc}): ${v.leads} leads, ${v.cierres} cierres, ${v.conv}% conv, ${v.noResp} no-responden, ${v.backlog} backlog, ${v.u24}% actualiza <24h`).join("\n");
+    const _man = D.channels.find(c => c.cls === "green") || {};
+    const _bot = D.channels.find(c => c.cls === "red") || {};
     return `Eres analista comercial senior de Heaven Colchones (Bolivia). Analiza el mes ${D.month} ${D.year} y responde SOLO con JSON válido, sin texto extra, forma exacta:
 {"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números","palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}
-Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / G.prevLeads * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" 1330 (52%). Sin seguimiento +72h: 890 (35%). Canal manual convierte 21% vs 1% bot.
+Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
 Equipo:
 ${teamLines}
 Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, específico con nombres y números, español de Bolivia.`;
@@ -528,13 +531,13 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
           {isLoading && <span className="diag2-analyzing"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /> Analizando {G.leads.toLocaleString("en-US")} leads del mes…</span>}
         </div>
         <div className="diag2-stats">
-          <div className="diag2-stat" style={{ "--sc": "var(--brand)" }}>
-            <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={4.9} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
+          <div className=”diag2-stat” style={{ “--sc”: “var(--brand)” }}>
+            <div className=”diag2-ic”><Icon name=”conversion” size={16} /></div>
+            <div><div className=”diag2-v”><CountUp value={+(G.cierres / G.leads * 100).toFixed(1)} fmt={n => n.toFixed(1) + “%”} /></div><div className=”diag2-l”>Conversión global</div></div>
           </div>
-          <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
-            <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={1330} /></div><div className="diag2-l">En “No responden”</div></div>
+          <div className=”diag2-stat” style={{ “--sc”: “var(--red)” }}>
+            <div className=”diag2-ic”><Icon name=”alertas” size={16} /></div>
+            <div><div className=”diag2-v”><CountUp value={D.metrics.noResp} /></div><div className=”diag2-l”>En “No responden”</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
@@ -649,7 +652,7 @@ function ViewResumen() {
             <span className="rhero-sep" />
             <span><b className="num">{fmtMoney(G.pipeline)}</b> pipeline</span>
           </div>
-          <p className="rhero-sub">Actualizado 02/06 03:41 · datos en vivo desde Kommo. El análisis del mes vive en la pestaña de inteligencia.</p>
+          <p className="rhero-sub">{D.fecha ? `Actualizado ${D.fecha}` : "Datos en vivo"} · desde Kommo. El análisis del mes vive en la pestaña de inteligencia.</p>
           <button className="btn pri diag2-cta" onClick={() => window.__go("analisis")}><Icon name="analisis" size={14} />Ver análisis IA del mes</button>
         </div>
         <div className="diag2-stats rhero-stats">
@@ -657,13 +660,13 @@ function ViewResumen() {
             <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
             <div><div className="diag2-v"><CountUp value={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
           </div>
-          <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
-            <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={1330} /></div><div className="diag2-l">En “No responden”</div></div>
+          <div className=”diag2-stat” style={{ “--sc”: “var(--red)” }}>
+            <div className=”diag2-ic”><Icon name=”alertas” size={16} /></div>
+            <div><div className=”diag2-v”><CountUp value={D.metrics.noResp} /></div><div className=”diag2-l”>En “No responden”</div></div>
           </div>
-          <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
-            <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Pipeline total</div></div>
+          <div className=”diag2-stat” style={{ “--sc”: “var(--green)” }}>
+            <div className=”diag2-ic”><Icon name=”trophy” size={16} /></div>
+            <div><div className=”diag2-v”><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className=”diag2-l”>Pipeline total</div></div>
           </div>
         </div>
       </div>
@@ -671,10 +674,10 @@ function ViewResumen() {
       <div>
         <SectionHead eb="Indicadores" h3="Pulso del mes" p="Las 9 métricas clave del mes — pasa el cursor sobre cada ficha para ver su definición." />
         <div className="kpis" style={{ marginTop: 14, gridTemplateColumns: "repeat(auto-fill,minmax(168px,1fr))" }}>
-          <Kpi l="Total leads" num={G.leads} ac="#808A96" ico="equipo" tip="Leads ingresados este mes vs el mes anterior." spark={[3120, 3000, 2890, 3010, 2820, 2576]} sub={<span><span className="delta down">▼ 14%</span> vs {D.prevMonth}</span>} />
-          <Kpi l="Conversión" num={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." spark={[3.8, 4.0, 4.4, 4.2, 4.6, 4.9]} sub={<span><span className="delta up">▲ +0.3pp</span> · 127 compradores</span>} />
-          <Kpi l="Cerrado en el mes" num={654540} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Monto de deals que llegaron a Compradores (revenue confirmado)." spark={[520000, 560000, 585000, 610000, 600000, 654540]} sub="127 compradores" />
-          <Kpi l="Pipeline total" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Valor de todos los deals en todas las etapas." spark={[540000, 580000, 600000, 625000, 615000, 654540]} sub="todas las etapas" />
+          <Kpi l="Total leads" num={G.leads} ac="#808A96" ico="equipo" tip="Leads ingresados este mes vs el mes anterior." sub={<span><span className={`delta ${(D.leadsMomPct || 0) < 0 ? "down" : "up"}`}>{(D.leadsMomPct || 0) < 0 ? "▼" : "▲"} {Math.abs(D.leadsMomPct || 0)}%</span> vs {D.prevMonth}</span>} />
+          <Kpi l="Conversión" num={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
+          <Kpi l="Cerrado en el mes" num={G.cierres * G.ticket} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Monto de deals que llegaron a Compradores (revenue confirmado)." sub={`${G.cierres} compradores`} />
+          <Kpi l="Pipeline total" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Valor de todos los deals en todas las etapas." sub="todas las etapas" />
           <Kpi l="Sin seguimiento" num={D.metrics.backlogPct} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." spark={[26, 28, 31, 30, 33, 35]} sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics.backlog} leads</b> +72h</span>} />
           <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." spark={[4200, 4500, 4800, 4650, 5000, 5153]} sub={<span><span className="delta up">▲</span> valor / cierre</span>} />
           <Kpi l="Interesado" num={D.metrics.interesado} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." spark={[60, 72, 80, 75, 90, 85]} sub="leads en interés" />
@@ -688,11 +691,11 @@ function ViewResumen() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="insight">
             <span className="ic"><Icon name="trophy" size={18} sw={2.2} /></span>
-            <div><div className="t">{topV.name.split(" ")[0]} concentra el {Math.round(topV.cierres / G.cierres * 100)}% de los cierres</div><div className="d">Con <b>{topV.cierres} de {G.cierres} cierres</b>, replicar su método de seguimiento al equipo es la palanca #1. El canal manual rinde <b>21× más</b> que el automático.</div></div>
+            <div><div className="t">{topV.name.split(" ")[0]} concentra el {Math.round(topV.cierres / G.cierres * 100)}% de los cierres</div><div className="d">Con <b>{topV.cierres} de {G.cierres} cierres</b>, replicar su método de seguimiento al equipo es la palanca #1.</div></div>
           </div>
           <div className="insight amber">
             <span className="ic"><Icon name="alertas" size={17} sw={2.2} /></span>
-            <div><div className="t">890 leads sin seguimiento</div><div className="d">El backlog equivale al <b>35% del mes</b>. Cada día sin contacto reduce la probabilidad de cierre.</div></div>
+            <div><div className="t">{D.metrics.backlog} leads sin seguimiento</div><div className="d">El backlog equivale al <b>{D.metrics.backlogPct}% del mes</b>. Cada día sin contacto reduce la probabilidad de cierre.</div></div>
           </div>
         </div>
       </div>
@@ -703,7 +706,7 @@ function ViewResumen() {
       </div>
 
       <div>
-        <SectionHead eb={`Tendencia vs ${D.prevMonth}`} h3="Leads del mes — mes a mes" p={`La captación cayó 14% en todos los frentes (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")}). El reto no es entrada de leads, es convertir los que ya hay.`} />
+        <SectionHead eb={`Tendencia vs ${D.prevMonth}`} h3="Leads del mes — mes a mes" p={`La captación ${(D.leadsMomPct || 0) < 0 ? "cayó" : "creció"} ${Math.abs(D.leadsMomPct || 0)}% (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")}). El reto no es entrada de leads, es convertir los que ya hay.`} />
         <div className="card">
           <div className="eb" style={{ marginBottom: 14 }}>Leads por vendedora — {D.month} vs {D.prevMonth}</div>
           {D.team.map((v, i) => {
@@ -731,11 +734,23 @@ function ViewResumen() {
       </div>
 
       <div>
-        <SectionHead eb="Hallazgo clave" h3="El canal manual rinde 21× más" />
-        <div className="insight" style={{ alignItems: "center" }}>
-          <span className="ic"><Icon name="bulb" size={18} sw={2.2} /></span>
-          <div><div className="t">La carga manual convierte 21% vs 1% del bot</div><div className="d">Ticket promedio manual <b>Bs 5,076</b> contra Bs 2,944 del automático. El <b>80%</b> de los leads llegan por bot pero solo aportan <b>15 cierres</b>; <b>106 de 127 cierres</b> vinieron de carga manual. Priorizar la carga manual tiene el mayor retorno por lead.</div></div>
-        </div>
+        {(() => {
+          const man = D.channels.find(c => c.cls === "green") || {};
+          const bot = D.channels.find(c => c.cls === "red") || {};
+          const mult = man.conv && bot.conv ? Math.round(man.conv / Math.max(bot.conv, 1)) : "?";
+          return (
+            <React.Fragment>
+              <SectionHead eb="Hallazgo clave" h3={`El canal manual rinde ${mult}× más`} />
+              <div className="insight" style={{ alignItems: "center" }}>
+                <span className="ic"><Icon name="bulb" size={18} sw={2.2} /></span>
+                <div>
+                  <div className="t">La carga manual convierte {man.conv || 0}% vs {bot.conv || 0}% del bot</div>
+                  <div className="d">Ticket promedio manual <b>{fmtMoney(man.ticket || 0)}</b> contra {fmtMoney(bot.ticket || 0)} del automático. El <b>{bot.pct || 0}%</b> de los leads llegan por bot pero solo aportan <b>{bot.cierres || 0} cierres</b>; <b>{man.cierres || 0} de {G.cierres} cierres</b> vinieron de carga manual. Priorizar la carga manual tiene el mayor retorno por lead.</div>
+                </div>
+              </div>
+            </React.Fragment>
+          );
+        })()}
       </div>
     </div>
   );
@@ -744,15 +759,15 @@ window.ViewResumen = ViewResumen;
 
 /* ---------- shell ---------- */
 const VIEW_META = {
-  resumen:    { crumb: "Control diario", title: "Resumen ejecutivo — Mayo 2026" },
+  resumen:    { crumb: "Control diario", title: `Resumen ejecutivo — ${D.month} ${D.year}` },
   analisis:   { crumb: "Análisis & datos", title: "Análisis IA — Sala de expertos" },
   equipo:     { crumb: "Control diario", title: "Responsabilidad por vendedora" },
   seguimiento:{ crumb: "Control diario", title: "Backlog de seguimiento" },
-  alertas:    { crumb: "Control diario", title: "Alertas accionables — Mayo 2026" },
+  alertas:    { crumb: "Control diario", title: `Alertas accionables — ${D.month} ${D.year}` },
   conversion: { crumb: "Análisis & datos", title: "Conversión y embudo" },
   semanal:    { crumb: "Análisis & datos", title: "Ritmo semanal" },
   sucursales: { crumb: "Análisis & datos", title: "Rendimiento por sucursal" },
-  proyeccion: { crumb: "Análisis & datos", title: "Proyección al cierre — Mayo" },
+  proyeccion: { crumb: "Análisis & datos", title: `Proyección al cierre — ${D.month}` },
   datos:      { crumb: "Análisis & datos", title: "Salud del CRM" },
 };
 function bodyFor(view) {
@@ -794,7 +809,7 @@ function Panel() {
   return (
     <React.Fragment>
       <aside className="rail">
-        <div className="brand"><img className="logo-img" src="../assets/heaven-logo-transparent.png" alt="Heaven Colchones" /><div className="s">Panel comercial</div></div>
+        <div className="brand"><span className="h">HEAVEN<em>●</em></span><div className="s">Panel comercial</div></div>
         <nav className="nav">
           <div className="nl">Control diario</div>
           {D.nav.slice(0, 4).map(n => (
@@ -805,7 +820,7 @@ function Panel() {
             <button key={n.id} className={`ni${view === n.id ? " active" : ""}`} onClick={() => setView(n.id)}><Icon name={n.id} />{n.label}</button>
           ))}
         </nav>
-        <div className="foot"><span className="dot" />Datos en vivo · Kommo<br />Actualizado 02/06 03:41</div>
+        <div className="foot"><span className="dot" />Datos en vivo · Kommo<br />{D.fecha ? `Actualizado ${D.fecha}` : "Datos en vivo"}</div>
       </aside>
 
       <div className="main">

@@ -1,7 +1,4 @@
 __pycache__/
-datos.xlsx
-data/
-debug.json
-node_modules/
-package.json
-package-lock.json
+*.pyc
+*.pyo
+.DS_Store

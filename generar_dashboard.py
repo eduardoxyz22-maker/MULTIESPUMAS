@@ -1,415 +1,677 @@
 #!/usr/bin/env python3
-import zipfile, xml.etree.ElementTree as ET, re, sys, json, calendar, datetime, os
+"""
+Genera index.html con dashboard Heaven Colchones desde datos de Kommo CRM.
+Ejecutar: python3 generar_dashboard.py
+"""
 
-# ── Parametros por mes (via variables de entorno; defaults = comportamiento Mayo) ──
-GLOBAL_SHEET  = os.environ.get('GLOBAL_SHEET', 'MAYO GLOBAL')   # pestana GLOBAL del mes
-OUT_FILE      = os.environ.get('OUT_FILE', 'dashboard-comercial.html')  # archivo de salida
-MES_NOMBRE_ENV = os.environ.get('MES_NOMBRE', '').strip()       # ej. "Junio" (opcional)
-ANIO_ENV       = os.environ.get('ANIO', '').strip()             # ej. "2026" (opcional)
-CERRADO_ENV    = os.environ.get('CERRADO', '').strip().lower() in ('1', 'true', 'yes', 'si', 'sí')
+import urllib.request
+import urllib.error
+import json
+import time
+from datetime import datetime, timezone
 
-def col_to_num(col_str):
-    n = 0
-    for c in col_str.upper():
-        n = n * 26 + (ord(c) - ord('A') + 1)
-    return n - 1
+# ─── CONFIGURACIÓN ────────────────────────────────────────────────────────────
+SUBDOMAIN = "eanez"
+TOKEN = (
+    "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImp0aSI6IjAyOTNmMTI5MWQ5YzVlOTVm"
+    "ODdiYTZhNDFlMjVjYmQ0YTY5NzllM2ZjYmNjYjQyZTY2ZTgxZDIxMTJmNTI4ZWUxNGFh"
+    "ZDJhNDQ0OGFhMWZhIn0.eyJhdWQiOiJhYmQ5OThhNi0wMjcwLTRkODAtYjE5Ni0xMmRm"
+    "OTE3ZjQxYzciLCJqdGkiOiIwMjkzZjEyOTFkOWM1ZTk1Zjg3YmE2YTQxZTI1Y2JkNGE2"
+    "OTc5ZTNmY2JjY2I0MmU2NmU4MWQyMTEyZjUyOGVlMTRhYWQyYTQ0NDhhYTFmYSIsImlh"
+    "dCI6MTc3ODA0MDczNCwibmJmIjoxNzc4MDQwNzM0LCJleHAiOjE3OTg1ODg4MDAsInN1"
+    "YiI6IjE0OTYyMjcxIiwiZ3JhbnRfdHlwZSI6IiIsImFjY291bnRfaWQiOjM2MjEyNjIz"
+    "LCJiYXNlX2RvbWFpbiI6ImtvbW1vLmNvbSIsInZlcnNpb24iOjIsInNjb3BlcyI6WyJw"
+    "dXNoX25vdGlmaWNhdGlvbnMiLCJmaWxlcyIsImNybSIsImZpbGVzX2RlbGV0ZSIsIm5v"
+    "dGlmaWNhdGlvbnMiXSwiaGFzaF91dWlkIjoiODZmZmE4NzQtNDQ0My00ZjcyLWFjZmQt"
+    "ZWM3MDg5YTVjZjRmIiwiYXBpX2RvbWFpbiI6ImFwaS1jLmtvbW1vLmNvbSJ9.n5PGBBm"
+    "LgdOndg-M2oy2bRDtGx1MeO39vkVXW7Tq-wlBkQ2ts1wGJArctkigI-JRXYcyraRprfF"
+    "Y3jAkDRYTAqIwrXuhW6N14DRTZJQ7xVsXjqYfJp_xeaAziDKlyX_aSymVb7xzdioDAHR"
+    "w04OqX7lkDtioGJPqQUO5TdEanLdCihudNXqVhNv7XbtaUABolI28wZ7PamQ8BYqSI6js"
+    "AJZHYn9MroTQcbrDrbBjtL3-WTl2H9yPnmikHykS47PUIaX-BWMCXuT2f9RgOpPQiShYo"
+    "0tzxP8N9jji3qMKtIlgK72BG8M2ouz8g0aLxqWE1Sk3wE1_9fp_iENV7FcV4Q"
+)
+BASE_URL = f"https://{SUBDOMAIN}.kommo.com/api/v4"
+HEADERS = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json",
+    "User-Agent": "HeavenColchones-Dashboard/1.0",
+}
 
-def get_shared_strings(z):
-    root = ET.fromstring(z.read('xl/sharedStrings.xml'))
-    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
-    return [''.join(t.text or '' for t in si.iter(f'{{{ns}}}t')) for si in root]
+# ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-def build_sheet_map(z):
-    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
-    rns = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships'
-    pns = 'http://schemas.openxmlformats.org/package/2006/relationships'
-    wb = ET.fromstring(z.read('xl/workbook.xml'))
-    rels = ET.fromstring(z.read('xl/_rels/workbook.xml.rels'))
-    rid_to_target = {rel.get('Id'): rel.get('Target') for rel in rels.findall(f'{{{pns}}}Relationship')}
-    name_to_file = {}
-    for sheet in wb.findall(f'.//{{{ns}}}sheet'):
-        name = sheet.get('name')
-        rid = sheet.get(f'{{{rns}}}id')
-        target = rid_to_target.get(rid, '')
-        if target:
-            name_to_file[name] = target.split('/')[-1]
-    return name_to_file
+def api_get(path, params=""):
+    url = f"{BASE_URL}{path}"
+    if params:
+        url += f"?{params}"
+    req = urllib.request.Request(url, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode())
 
-def find_sheet_file(name_map, *candidates):
-    def norm(s):
-        return s.upper().replace('Ñ', 'N').strip()
-    for c in candidates:
-        if c in name_map:
-            return name_map[c]
-    targets = {norm(c) for c in candidates}
-    for name, fil in name_map.items():
-        if norm(name) in targets:
-            return fil
-    return None
 
-def read_sheet_by_name(z, name_map, ss, *candidates):
-    fil = find_sheet_file(name_map, *candidates)
-    if not fil:
-        raise KeyError(f'Hoja no encontrada: {candidates}')
-    root = ET.fromstring(z.read(f'xl/worksheets/{fil}'))
-    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
-    data = {}
-    for row in root.findall(f'.//{{{ns}}}row'):
-        r_num = int(row.get('r', 0))
-        data[r_num] = {}
-        for c in row.findall(f'{{{ns}}}c'):
-            ref = c.get('r', '')
-            m = re.match(r'([A-Z]+)', ref)
-            if not m: continue
-            col_num = col_to_num(m.group(1))
-            v = c.find(f'{{{ns}}}v')
-            t = c.get('t', '')
-            val = ''
-            if v is not None and v.text is not None:
-                if t == 's':
-                    idx = int(v.text)
-                    val = ss[idx] if idx < len(ss) else v.text
-                else:
-                    val = v.text
-            data[r_num][col_num] = val
-    return data
+def fetch_all_leads():
+    """Pagina automáticamente si hay más de 250 leads."""
+    all_leads = []
+    page = 1
+    while True:
+        print(f"  Fetching leads page {page}…")
+        data = api_get("/leads", f"limit=250&with=contacts&page={page}")
+        embedded = data.get("_embedded", {}).get("leads", [])
+        all_leads.extend(embedded)
+        links = data.get("_links", {})
+        if "next" not in links:
+            break
+        page += 1
+        time.sleep(0.3)
+    return all_leads
 
-def read_sheet(z, sheet_num, ss):
-    root = ET.fromstring(z.read(f'xl/worksheets/sheet{sheet_num}.xml'))
-    ns = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'
-    data = {}
-    for row in root.findall(f'.//{{{ns}}}row'):
-        r_num = int(row.get('r', 0))
-        data[r_num] = {}
-        for c in row.findall(f'{{{ns}}}c'):
-            ref = c.get('r', '')
-            m = re.match(r'([A-Z]+)', ref)
-            if not m: continue
-            col_num = col_to_num(m.group(1))
-            v = c.find(f'{{{ns}}}v')
-            t = c.get('t', '')
-            val = ''
-            if v is not None and v.text is not None:
-                if t == 's':
-                    idx = int(v.text)
-                    val = ss[idx] if idx < len(ss) else v.text
-                else:
-                    val = v.text
-            data[r_num][col_num] = val
-    return data
 
-def gv(data, row, col, default=''):
-    return data.get(row, {}).get(col, default)
+# ─── FETCH DATA ───────────────────────────────────────────────────────────────
 
-def sf(s, d=0.0):
-    try: return float(s)
-    except: return d
+print("Conectando a Kommo API…")
+print("  1/3 Pipelines…")
+pipelines_raw = api_get("/leads/pipelines")
+print("  2/3 Users…")
+users_raw = api_get("/users")
+print("  3/3 Leads…")
+leads_raw = fetch_all_leads()
+print(f"  Total leads obtenidos: {len(leads_raw)}")
 
-def si(s, d=0):
-    try: return int(float(s))
-    except: return d
+# ─── PARSE ────────────────────────────────────────────────────────────────────
 
-print('Leyendo datos.xlsx...')
-try:
-    with zipfile.ZipFile('datos.xlsx') as z:
-        ss = get_shared_strings(z)
-        name_map = build_sheet_map(z)
-        hv = read_sheet_by_name(z, name_map, ss, 'HEAVEN')
-        sv = read_sheet_by_name(z, name_map, ss, 'SUEÑA', 'SUENA', 'Sueña')
-        mg = read_sheet_by_name(z, name_map, ss, GLOBAL_SHEET)
-        ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD')
-except FileNotFoundError:
-    print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
-    sys.exit(1)
-except KeyError as e:
-    print(f'ERROR: hoja faltante en el Excel: {e}', file=sys.stderr)
-    sys.exit(1)
+pipelines = pipelines_raw.get("_embedded", {}).get("pipelines", [])
+users = users_raw.get("_embedded", {}).get("users", [])
 
-now = datetime.datetime.now()
-mes_map = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
-           7:'Julio',8:'Agosto',9:'Septiembre',10:'Octubre',11:'Noviembre',12:'Diciembre'}
-mes_num = {v.lower(): k for k, v in mes_map.items()}
+# Map id → name
+user_map = {u["id"]: u["name"] for u in users}
 
-# Mes: 1) variable MES_NOMBRE, 2) derivado de la hoja GLOBAL (ej. "JUNIO GLOBAL"), 3) fecha del sistema
-if MES_NOMBRE_ENV:
-    mes = MES_NOMBRE_ENV.title()
-else:
-    derivado = re.sub(r'\s*GLOBAL\s*$', '', GLOBAL_SHEET, flags=re.I).strip().title()
-    mes = derivado if derivado.lower() in mes_num else mes_map[now.month]
+# Flatten stages across all pipelines
+stage_map = {}  # stage_id → {name, pipeline_name, order}
+for pipe in pipelines:
+    for st in pipe.get("_embedded", {}).get("statuses", []):
+        stage_map[st["id"]] = {
+            "name": st["name"],
+            "pipeline": pipe["name"],
+            "order": st.get("sort", 0),
+            "is_won": st.get("type") == 142,
+            "is_lost": st.get("type") == 143,
+        }
 
-anio = int(ANIO_ENV) if ANIO_ENV.isdigit() else now.year
-mnum = mes_num.get(mes.lower(), now.month)
-diasTot = calendar.monthrange(anio, mnum)[1]
-# Mes en curso -> dia de hoy; mes cerrado o pasado -> mes completo
-es_mes_actual = (anio == now.year and mnum == now.month)
-dia_actual = diasTot if (CERRADO_ENV or not es_mes_actual) else min(now.day, diasTot)
-print(f'Configuracion: mes={mes} {anio}, hoja_global={GLOBAL_SHEET!r}, salida={OUT_FILE!r}, dia={dia_actual}/{diasTot}, cerrado={CERRADO_ENV}')
+NOW_TS = int(time.time())
 
-crec_lookup = {}
-for r in list(range(53, 57)) + list(range(60, 65)):
-    nombre_raw = gv(mg, r, 0).strip()
-    crec_val = gv(mg, r, 4)
-    if nombre_raw and crec_val != '':
-        crec_lookup[nombre_raw.lower()] = sf(crec_val)
+def days_since(ts):
+    if not ts:
+        return 0
+    return max(0, (NOW_TS - ts) // 86400)
 
-record_lookup = {}
-for r in range(70, 80):
-    nombre_raw = gv(mg, r, 1).strip()
-    record_val = gv(mg, r, 5).strip()
-    if nombre_raw:
-        record_lookup[nombre_raw.lower()] = bool(record_val)
+# Enrich leads
+deals = []
+for lead in leads_raw:
+    stage_id = lead.get("status_id")
+    stage_info = stage_map.get(stage_id, {"name": "Desconocida", "pipeline": "-", "order": 0, "is_won": False, "is_lost": False})
 
-vendedores = []
+    contacts = lead.get("_embedded", {}).get("contacts", [])
+    contact_name = contacts[0].get("name", "Sin nombre") if contacts else "Sin nombre"
 
-for row in [3, 4, 5, 6]:
-    nombre = gv(hv, row, 0).strip()
-    if not nombre or nombre.upper().startswith('TOTAL'): continue
-    ventas = si(gv(hv, row, 1))
-    productos = si(gv(hv, row, 2))
-    monto = sf(gv(hv, row, 3))
-    leads = si(gv(hv, row, 11))
-    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
-    nombre_key = nombre.lower()
-    vendedores.append({
-        'id': nombre_key.replace(' ', '_'),
-        'nombre': nombre.title(),
-        'tienda': 'HEAVEN',
-        'monto': round(monto, 2),
-        'metaMin': round(sf(gv(hv, row, 4)), 2),
-        'presupuesto': round(sf(gv(hv, row, 6)), 2),
-        'ticketProm': round(sf(gv(hv, row, 8)), 2),
-        'leads': leads,
-        'ventasConcretadas': ventas,
-        'productos': productos,
-        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
-        'pctMin': round(sf(gv(hv, row, 5)), 6),
-        'pctPres': round(monto / sf(gv(hv, row, 6)), 6) if sf(gv(hv, row, 6)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
-        'pctTotal': 0,
-        'comision': round(sf(gv(hv, row, 12)), 4),
-        'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
-        'pctComision': round(sf(gv(hv, row, 13)), 6),
-        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
-        'nuevoRecord': record_lookup.get(nombre_key, False),
-        'ritmoDiario': round(ritmoDiario, 4),
-        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
-        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
-        'prodPorVenta': round(sf(gv(hv, row, 9)), 4),
+    responsible_id = lead.get("responsible_user_id")
+    responsible = user_map.get(responsible_id, f"ID {responsible_id}")
+
+    updated_ts = lead.get("updated_at") or lead.get("created_at", NOW_TS)
+    days_stale = days_since(updated_ts)
+
+    # Detect sucursal from custom fields or tags
+    custom_fields = lead.get("custom_fields_values") or []
+    sucursal = "-"
+    for cf in custom_fields:
+        fname = (cf.get("field_name") or "").lower()
+        if "sucursal" in fname or "tienda" in fname or "store" in fname:
+            vals = cf.get("values", [])
+            if vals:
+                sucursal = vals[0].get("value", "-")
+            break
+
+    tags = [t["name"] for t in (lead.get("_embedded", {}).get("tags") or [])]
+    if sucursal == "-" and tags:
+        sucursal = tags[0]
+
+    deals.append({
+        "id": lead["id"],
+        "name": lead.get("name", "Sin nombre"),
+        "contact": contact_name,
+        "stage_id": stage_id,
+        "stage_name": stage_info["name"],
+        "pipeline": stage_info["pipeline"],
+        "is_won": stage_info["is_won"],
+        "is_lost": stage_info["is_lost"],
+        "responsible": responsible,
+        "sucursal": sucursal,
+        "value": lead.get("price", 0) or 0,
+        "days_stale": days_stale,
+        "created_at": lead.get("created_at", 0),
+        "updated_at": updated_ts,
+        "tags": tags,
     })
 
-for row in [3, 4, 5]:
-    nombre = gv(sv, row, 0).strip()
-    if not nombre: continue
-    ventas = si(gv(sv, row, 2))
-    monto = sf(gv(sv, row, 5))
-    leads = si(gv(sv, row, 13))
-    ritmoDiario = monto / dia_actual if dia_actual > 0 else 0
-    nombre_key = nombre.lower()
-    vendedores.append({
-        'id': nombre_key.replace(' ', '_'),
-        'nombre': nombre.title(),
-        'tienda': 'SUEÑA',
-        'monto': round(monto, 2),
-        'metaMin': round(sf(gv(sv, row, 6)), 2),
-        'presupuesto': round(sf(gv(sv, row, 8)), 2),
-        'ticketProm': round(sf(gv(sv, row, 10)), 2),
-        'leads': leads,
-        'ventasConcretadas': ventas,
-        'productos': si(gv(sv, row, 4)),
-        'conversion': round(ventas / leads, 6) if leads > 0 else 0,
-        'pctMin': round(sf(gv(sv, row, 7)), 6),
-        'pctPres': round(monto / sf(gv(sv, row, 8)), 6) if sf(gv(sv, row, 8)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
-        'pctTotal': 0,
-        'comision': round(sf(gv(sv, row, 14)), 4),
-        'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
-        'pctComision': round(sf(gv(sv, row, 15)), 6),
-        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
-        'nuevoRecord': record_lookup.get(nombre_key, False),
-        'ritmoDiario': round(ritmoDiario, 4),
-        'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
-        'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
-        'prodPorVenta': round(sf(gv(sv, row, 11)), 4),
+# ─── METRICS ──────────────────────────────────────────────────────────────────
+
+active_deals = [d for d in deals if not d["is_won"] and not d["is_lost"]]
+won_deals    = [d for d in deals if d["is_won"]]
+lost_deals   = [d for d in deals if d["is_lost"]]
+
+total_leads      = len(deals)
+total_active     = len(active_deals)
+total_won        = len(won_deals)
+total_pipeline   = sum(d["value"] for d in active_deals)
+stale_14         = len([d for d in active_deals if d["days_stale"] > 14])
+stale_7          = len([d for d in active_deals if 7 <= d["days_stale"] <= 14])
+
+# Stage funnel (active only)
+from collections import defaultdict
+stage_counts = defaultdict(lambda: {"count": 0, "value": 0, "name": "", "pipeline": ""})
+for d in active_deals:
+    sid = d["stage_id"]
+    stage_counts[sid]["count"] += 1
+    stage_counts[sid]["value"] += d["value"]
+    stage_counts[sid]["name"] = d["stage_name"]
+    stage_counts[sid]["pipeline"] = d["pipeline"]
+
+funnel_stages = sorted(
+    [{"id": k, **v} for k, v in stage_counts.items()],
+    key=lambda x: stage_map.get(x["id"], {}).get("order", 0)
+)
+
+# KPIs by seller
+seller_stats = defaultdict(lambda: {
+    "total": 0, "won": 0, "lost": 0, "no_response": 0,
+    "qualified": 0, "value": 0, "active": 0
+})
+for d in deals:
+    s = d["responsible"]
+    seller_stats[s]["total"] += 1
+    if d["is_won"]:
+        seller_stats[s]["won"] += 1
+    elif d["is_lost"]:
+        seller_stats[s]["lost"] += 1
+    else:
+        seller_stats[s]["active"] += 1
+        seller_stats[s]["value"] += d["value"]
+        if d["days_stale"] > 3:
+            seller_stats[s]["no_response"] += 1
+        if d["stage_name"] and any(w in d["stage_name"].lower() for w in ["calific", "interes", "prosp"]):
+            seller_stats[s]["qualified"] += 1
+
+seller_kpis = []
+for name, st in seller_stats.items():
+    total = st["total"] or 1
+    seller_kpis.append({
+        "name": name,
+        "total": st["total"],
+        "won": st["won"],
+        "active": st["active"],
+        "conversion": round(st["won"] / total * 100, 1),
+        "no_response": st["no_response"],
+        "qualified": st["qualified"],
+        "avg_ticket": round(st["value"] / max(st["active"], 1)),
     })
+seller_kpis.sort(key=lambda x: x["conversion"], reverse=True)
 
-tot_vend = sum(v['monto'] for v in vendedores)
-for v in vendedores:
-    v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
+# ─── GENERATE HTML ────────────────────────────────────────────────────────────
 
-comm = {
-    'SUEÑA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
-              'totalPagado': sf(gv(ds, 27, 3)), 'comisionados': si(gv(ds, 27, 4))},
-    'HEAVEN': {'comisiones': sf(gv(ds, 28, 1)), 'bonos': sf(gv(ds, 28, 2)),
-               'totalPagado': sf(gv(ds, 28, 3)), 'comisionados': si(gv(ds, 28, 4))},
-}
-suena_leads = si(gv(sv, 6, 13))
-suena_ventas = si(gv(sv, 6, 2)) + si(gv(sv, 6, 3))
-heaven_leads = si(gv(hv, 7, 11))
-heaven_ventas = si(gv(hv, 7, 1))
+gen_date = datetime.now().strftime("%d/%m/%Y %H:%M")
 
-tiendas = []
-for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
-    monto_t = sf(gv(ds, r, 1))
-    diferencia = sf(gv(ds, r, 9))
-    mes_pasado = round(monto_t - diferencia, 2) if diferencia != 0 else None
-    leads_t = None
-    conv_t = None
-    if nombre_t == 'SUEÑA':
-        leads_t = suena_leads
-        conv_t = round(suena_ventas / suena_leads, 6) if suena_leads > 0 else None
-    elif nombre_t == 'HEAVEN':
-        leads_t = heaven_leads
-        conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
-    c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
-    tiendas.append({
-        'id': nombre_t.lower(),
-        'nombre': nombre_t,
-        'monto': round(monto_t, 2),
-        'metaMin': round(sf(gv(ds, r, 2)), 2),
-        'presupuesto': round(sf(gv(ds, r, 4)), 2),
-        'pctMin': round(sf(gv(ds, r, 3)), 6),
-        'pctPres': round(monto_t / sf(gv(ds, r, 4)), 6) if sf(gv(ds, r, 4)) > 0 else 0,  # monto/presupuesto (ignora celda Excel)
-        'leads': leads_t,
-        'conversion': conv_t,
-        'comisiones': round(c['comisiones'], 4),
-        'bonos': round(c['bonos'], 4),
-        'totalPagado': round(c['totalPagado'], 4),
-        'comisionados': c['comisionados'],
-        'crecimientoVsAbril': round(diferencia / mes_pasado, 6) if mes_pasado else None,
-        'mesPasadoMonto': mes_pasado,
-    })
+def fmt_currency(v):
+    return f"${v:,.0f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
-global_data = {
-    'leadsTotal': si(gv(ds, 27, 10)),
-    'ventasConcretadas': si(gv(ds, 28, 10)),
-    'conversionGlobal': round(sf(gv(ds, 29, 10)), 8),
-    'ticketPromGlobal': round(sf(gv(ds, 30, 10)), 2),
-    'productosVendidos': si(gv(ds, 31, 10)),
-}
+def badge_color(days):
+    if days > 14:
+        return "badge-red"
+    elif days >= 7:
+        return "badge-yellow"
+    return "badge-green"
 
-clientes = []
-for r in range(29, 38):
-    nombre_c = gv(mg, r, 0).strip()
-    if nombre_c and nombre_c.upper() != 'TOTAL':
-        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, r, 2)), 'monto': round(sf(gv(mg, r, 3)), 2)})
+def badge_label(days):
+    if days > 14:
+        return f"{days}d ⚠"
+    elif days >= 7:
+        return f"{days}d !"
+    return f"{days}d"
 
-periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot}
-if CERRADO_ENV:
-    periodo['cerrado'] = True
-data = {
-    'periodo': periodo,
-    'vendedores': vendedores,
-    'tiendas': tiendas,
-    'global': global_data,
-    'clientes': clientes,
-}
+# Build table rows
+table_rows = []
+for d in sorted(deals, key=lambda x: x["days_stale"], reverse=True):
+    bc = badge_color(d["days_stale"])
+    bl = badge_label(d["days_stale"])
+    won_lost = ""
+    if d["is_won"]:
+        won_lost = '<span class="badge badge-green">Ganado</span>'
+    elif d["is_lost"]:
+        won_lost = '<span class="badge badge-red">Perdido</span>'
+    else:
+        won_lost = f'<span class="badge {bc}">{bl}</span>'
 
-print('Leyendo dashboard-template.html...')
-try:
-    with open('dashboard-template.html', 'r', encoding='utf-8') as f:
-        html = f.read()
-except FileNotFoundError:
-    print('ERROR: dashboard-template.html no encontrado.', file=sys.stderr)
-    sys.exit(1)
+    table_rows.append(f"""
+        <tr data-stage="{d['stage_name']}" data-resp="{d['responsible']}" data-days="{d['days_stale']}">
+          <td>{d['contact']}</td>
+          <td><span class="stage-pill">{d['stage_name']}</span></td>
+          <td>{d['sucursal']}</td>
+          <td>{d['responsible']}</td>
+          <td>{fmt_currency(d['value'])}</td>
+          <td>{won_lost}</td>
+        </tr>""")
 
-data_json = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
-html = html.replace(
-    '<script>window.__resources = {};</script>',
-    '<script>window.__resources = {};</script>\n  <script>window.__DATA__ = ' + data_json + ';</script>'
-)
+table_html = "\n".join(table_rows)
 
-CDN_REACT    = 'https://unpkg.com/react@18/umd/react.production.min.js'
-CDN_REACTDOM = 'https://unpkg.com/react-dom@18/umd/react-dom.production.min.js'
-CDN_BABEL    = 'https://unpkg.com/@babel/standalone/babel.min.js'
-CDN_XLSX     = 'https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js'
+# Build funnel bars
+max_count = max((s["count"] for s in funnel_stages), default=1)
+funnel_html = ""
+for s in funnel_stages:
+    pct = round(s["count"] / total_leads * 100, 1) if total_leads else 0
+    bar_w = round(s["count"] / max_count * 100) if max_count else 0
+    funnel_html += f"""
+      <div class="funnel-row">
+        <div class="funnel-label">{s['name']}</div>
+        <div class="funnel-bar-wrap">
+          <div class="funnel-bar" style="width:{bar_w}%"></div>
+        </div>
+        <div class="funnel-stats">
+          <span class="funnel-count">{s['count']}</span>
+          <span class="funnel-pct">{pct}%</span>
+        </div>
+      </div>"""
 
-blob_map = {
-    'blob:https://eduardoxyz22-maker.github.io/74e3f041-15e9-4c0c-b45a-f79ff8e00abc': CDN_REACT,
-    'blob:https://eduardoxyz22-maker.github.io/beb4c7e9-0eca-4dbd-8d28-313b39065fef': CDN_REACTDOM,
-    'blob:https://eduardoxyz22-maker.github.io/665418e3-42cc-4466-82fa-a60648dad3e7': CDN_BABEL,
-    'blob:https://eduardoxyz22-maker.github.io/173704d7-2551-49a7-a5b8-0b23512e0f10': CDN_XLSX,
-}
-for blob_url, cdn_url in blob_map.items():
-    html = html.replace(f'src="{blob_url}"', f'src="{cdn_url}"')
+# Build seller KPI cards
+seller_html = ""
+for sk in seller_kpis:
+    seller_html += f"""
+      <div class="seller-card">
+        <div class="seller-name">{sk['name']}</div>
+        <div class="seller-metrics">
+          <div class="sm-item"><span class="sm-val">{sk['conversion']}%</span><span class="sm-lbl">Conversión</span></div>
+          <div class="sm-item"><span class="sm-val">{sk['won']}</span><span class="sm-lbl">Ganados</span></div>
+          <div class="sm-item"><span class="sm-val">{sk['no_response']}</span><span class="sm-lbl">Sin resp.</span></div>
+          <div class="sm-item"><span class="sm-val">{sk['qualified']}</span><span class="sm-lbl">Calificados</span></div>
+          <div class="sm-item"><span class="sm-val">{fmt_currency(sk['avg_ticket'])}</span><span class="sm-lbl">Ticket prom.</span></div>
+          <div class="sm-item"><span class="sm-val">{sk['total']}</span><span class="sm-lbl">Total leads</span></div>
+        </div>
+      </div>"""
 
-PARSE_INLINE = '''<script>
-window.parseXlsxFile = async function(file) {
-  var buf = await file.arrayBuffer();
-  var wb = XLSX.read(buf, {type:"array"});
-  function sh(n){var ws=wb.Sheets[n];return ws?XLSX.utils.sheet_to_json(ws,{header:1,defval:""}):null;}
-  function sf(v){var n=parseFloat(v);return isNaN(n)?0:n;}
-  function si(v){return Math.round(sf(v));}
-  function title(s){return (""+s).trim().toLowerCase().split(" ").map(function(w){return w?w.charAt(0).toUpperCase()+w.slice(1):w;}).join(" ");}
-  function shFind(names){for(var k=0;k<names.length;k++){var r=sh(names[k]);if(r)return r;}
-    var keys=Object.keys(wb.Sheets);for(var k=0;k<keys.length;k++){var kn=keys[k].toUpperCase().replace(/\xd1/g,"N");
-      for(var j=0;j<names.length;j++){if(kn===names[j].toUpperCase().replace(/\xd1/g,"N"))return sh(keys[k]);}}
-    return null;}
-  var hv=shFind(["HEAVEN"]),sv=shFind(["SUE\xd1A","SUENA","Sue\xf1a"]),mg=shFind(["MAYO GLOBAL"]),ds=shFind(["Dashboard"]);
-  if(!hv||!sv||!mg||!ds) throw new Error("Hojas no encontradas. Verifica que el Excel tenga: HEAVEN, SUE\xd1A, MAYO GLOBAL, Dashboard.");
-  var ahora=new Date();
-  var meses=["","Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  var mes=meses[ahora.getMonth()+1],anio=ahora.getFullYear();
-  var diasTot=new Date(anio,ahora.getMonth()+1,0).getDate();
-  var dia=Math.min(ahora.getDate(),diasTot);
-  var crecLookup={};
-  function addCrec(a,b){for(var i=a;i<=b;i++){var r=mg[i];if(r&&(""+(r[0]||"")).trim()&&(""+(r[4]||""))!==""){crecLookup[(""+r[0]).trim().toLowerCase()]=sf(r[4]);}}}
-  addCrec(52,55);addCrec(59,63);
-  var recordLookup={};
-  for(var ri=69;ri<=78;ri++){var rr=mg[ri];if(rr&&(""+(rr[1]||"")).trim()){recordLookup[(""+rr[1]).trim().toLowerCase()]=!!(""+(rr[5]||"")).trim();}}
-  function nk(x){return (""+x).trim().toLowerCase();}
-  var vends=[];
-  for(var i=2;i<=5;i++){var r=hv[i];if(!r||!r[0]||("" +r[0]).toUpperCase().startsWith("TOTAL"))continue;
-    var m=sf(r[3]),l=si(r[11]),v=si(r[1]),rd=dia>0?m/dia:0;
-    var hk=nk(r[0]);
-    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"HEAVEN",monto:m,
-      metaMin:sf(r[4]),presupuesto:sf(r[6]),ticketProm:sf(r[8]),leads:l,ventasConcretadas:v,productos:si(r[2]),
-      conversion:l>0?v/l:0,pctMin:sf(r[5]),pctPres:sf(r[6])>0?m/sf(r[6]):0,pctTotal:0,comision:sf(r[12]),
-      bonoTitanio:sf(r[14]),pctComision:sf(r[13]),crecimientoVsAbril:(hk in crecLookup)?crecLookup[hk]:null,nuevoRecord:!!recordLookup[hk],
-      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[9])});}
-  for(var i=2;i<=4;i++){var r=sv[i];if(!r||!r[0])continue;
-    var m=sf(r[5]),l=si(r[13]),v=si(r[2]),rd=dia>0?m/dia:0;
-    var sk=nk(r[0]);
-    vends.push({id:("" +r[0]).toLowerCase().replace(/ /g,"_"),nombre:title(r[0]),tienda:"SUE\xd1A",monto:m,
-      metaMin:sf(r[6]),presupuesto:sf(r[8]),ticketProm:sf(r[10]),leads:l,ventasConcretadas:v,productos:si(r[4]),
-      conversion:l>0?v/l:0,pctMin:sf(r[7]),pctPres:sf(r[8])>0?m/sf(r[8]):0,pctTotal:0,comision:sf(r[14]),
-      bonoTitanio:sf(r[16]),pctComision:sf(r[15]),crecimientoVsAbril:(sk in crecLookup)?crecLookup[sk]:null,nuevoRecord:!!recordLookup[sk],
-      ritmoDiario:rd,proyeccion:m+rd*(diasTot-dia),ingresoLead:l>0?m/l:0,prodPorVenta:sf(r[11])});}
-  var tot=vends.reduce(function(s,v){return s+v.monto;},0);
-  vends.forEach(function(v){v.pctTotal=tot?v.monto/tot:0;});
-  var tiendas=[];var tn=["SUE\xd1A","HEAVEN","OTROS","ROHO"];
-  for(var ti=0;ti<4;ti++){var r=ds[18+ti];if(!r)continue;
-    var mn=sf(r[1]),dif=sf(r[9]||0),mp=dif?mn-dif:null;
-    var l=ti===0?si((sv[5]||[])[13]):ti===1?si((hv[6]||[])[11]):null;
-    tiendas.push({id:tn[ti].toLowerCase().replace("\xf1","n"),nombre:tn[ti],monto:mn,metaMin:sf(r[2]),
-      presupuesto:sf(r[4]),pctMin:sf(r[3]),pctPres:sf(r[4])>0?mn/sf(r[4]):0,leads:l,conversion:null,
-      comisiones:0,bonos:0,totalPagado:0,comisionados:0,
-      crecimientoVsAbril:mp?dif/mp:null,mesPasadoMonto:mp});}
-  if(ds[26]){tiendas[0].comisiones=sf(ds[26][1]);tiendas[0].bonos=sf(ds[26][2]);tiendas[0].totalPagado=sf(ds[26][3]);tiendas[0].comisionados=si(ds[26][4]);}
-  if(ds[27]){tiendas[1].comisiones=sf(ds[27][1]);tiendas[1].bonos=sf(ds[27][2]);tiendas[1].totalPagado=sf(ds[27][3]);tiendas[1].comisionados=si(ds[27][4]);}
-  var g={leadsTotal:si((ds[26]||[])[10]),ventasConcretadas:si((ds[27]||[])[10]),
-    conversionGlobal:sf((ds[28]||[])[10]),ticketPromGlobal:sf((ds[29]||[])[10]),
-    productosVendidos:si((ds[30]||[])[10])};
-  var cli=[];
-  for(var i=28;i<=36;i++){var r=mg[i];if(r&&r[0]&&(""+r[0]).toUpperCase()!=="TOTAL")cli.push({nombre:""+r[0],productos:si(r[2]),monto:sf(r[3])});}
-  return {periodo:{mes:mes,anio:anio,diasTotales:diasTot},vendedores:vends,tiendas:tiendas,global:g,clientes:cli};
-};
-</script>'''
+# Unique stages and reps for filters
+all_stages = sorted(set(d["stage_name"] for d in deals))
+all_reps   = sorted(set(d["responsible"] for d in deals))
+stage_opts = "\n".join(f'<option value="{s}">{s}</option>' for s in all_stages)
+rep_opts   = "\n".join(f'<option value="{r}">{r}</option>' for r in all_reps)
 
-html = html.replace(
-    '  <script src="blob:https://eduardoxyz22-maker.github.io/1e6e7d73-36a9-4931-bc01-cada16e587e4"></script>',
-    '  ' + PARSE_INLINE
-)
+HTML = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Heaven Colchones — CRM Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {{
+      --teal:   #00B5AD;
+      --teal2:  #009590;
+      --teal3:  #00D1C9;
+      --dark:   #0F1923;
+      --dark2:  #1A2533;
+      --dark3:  #243040;
+      --card:   #1E2D3D;
+      --text:   #E8F0F7;
+      --muted:  #8A9BB0;
+      --border: #2A3F55;
+      --red:    #E55353;
+      --yellow: #F0A500;
+      --green:  #2EC17E;
+    }}
+    *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+    body {{
+      font-family: 'Inter', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      min-height: 100vh;
+    }}
 
-html = html.replace(
-    'ReactDOM.createRoot(document.getElementById("root")).render(/*#__PURE__*/React.createElement(App, null));\n//# sourceMappingURL',
-    '// Rendering handled by Babel JSX scripts in body\n//# sourceMappingURL'
-)
+    /* ── HEADER ── */
+    header {{
+      background: linear-gradient(135deg, var(--dark2) 0%, #0D1F2D 100%);
+      border-bottom: 2px solid var(--teal);
+      padding: 20px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }}
+    .header-brand {{ display: flex; align-items: center; gap: 14px; }}
+    .header-logo {{
+      width: 48px; height: 48px; border-radius: 12px;
+      background: var(--teal); display: flex; align-items: center;
+      justify-content: center; font-size: 22px; font-weight: 800; color: #fff;
+    }}
+    .header-title {{ font-size: 22px; font-weight: 700; }}
+    .header-sub {{ font-size: 13px; color: var(--muted); margin-top: 2px; }}
+    .header-badge {{
+      background: var(--teal); color: #fff; border-radius: 8px;
+      padding: 6px 14px; font-size: 12px; font-weight: 600;
+    }}
 
-html = html.replace('Dashboard Comercial \xb7 Mayo 2025', f'Dashboard Comercial \xb7 {mes} {anio}')
-html = re.sub(r'ltima actualizaci\xf3n:.*?</span>',
-              f'ltima actualizaci\xf3n: {now.strftime("%d/%m/%Y %H:%M")}</span>', html)
+    /* ── LAYOUT ── */
+    main {{ max-width: 1400px; margin: 0 auto; padding: 32px 24px 60px; }}
+    .section-title {{
+      font-size: 13px; font-weight: 600; color: var(--teal);
+      text-transform: uppercase; letter-spacing: 1px; margin-bottom: 16px;
+    }}
 
-with open(OUT_FILE, 'w', encoding='utf-8') as f:
-    f.write(html)
+    /* ── METRIC CARDS ── */
+    .metrics-grid {{
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }}
+    .metric-card {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .2s;
+    }}
+    .metric-card:hover {{ transform: translateY(-2px); }}
+    .metric-card::before {{
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: var(--teal);
+    }}
+    .metric-card.red::before  {{ background: var(--red); }}
+    .metric-card.green::before {{ background: var(--green); }}
+    .metric-card.yellow::before {{ background: var(--yellow); }}
+    .metric-icon {{ font-size: 28px; margin-bottom: 12px; }}
+    .metric-value {{ font-size: 36px; font-weight: 800; line-height: 1; margin-bottom: 6px; }}
+    .metric-label {{ font-size: 13px; color: var(--muted); font-weight: 500; }}
+    .metric-sub {{ font-size: 11px; color: var(--muted); margin-top: 4px; }}
 
-print(f'{OUT_FILE} generado — {mes} {anio}')
-print(f'Vendedores: {len(vendedores)} | Tiendas: {len(tiendas)} | Clientes: {len(clientes)}')
-print(f'Total global: Bs {sum(t["monto"] for t in tiendas):,.0f}')
+    /* ── TWO-COL LAYOUT ── */
+    .two-col {{ display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; }}
+    @media (max-width: 900px) {{ .two-col {{ grid-template-columns: 1fr; }} }}
+
+    /* ── PANEL ── */
+    .panel {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+    }}
+
+    /* ── FUNNEL ── */
+    .funnel-row {{ display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }}
+    .funnel-label {{ min-width: 160px; font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }}
+    .funnel-bar-wrap {{ flex: 1; background: var(--border); border-radius: 6px; height: 10px; }}
+    .funnel-bar {{ height: 10px; border-radius: 6px; background: linear-gradient(90deg, var(--teal), var(--teal3)); transition: width .6s; }}
+    .funnel-stats {{ display: flex; gap: 8px; min-width: 80px; justify-content: flex-end; }}
+    .funnel-count {{ font-weight: 700; font-size: 14px; }}
+    .funnel-pct {{ font-size: 12px; color: var(--muted); }}
+
+    /* ── SELLER CARDS ── */
+    .sellers-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 40px; }}
+    .seller-card {{
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+    }}
+    .seller-name {{ font-size: 15px; font-weight: 700; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid var(--border); color: var(--teal3); }}
+    .seller-metrics {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }}
+    .sm-item {{ display: flex; flex-direction: column; align-items: center; gap: 4px; }}
+    .sm-val {{ font-size: 20px; font-weight: 700; }}
+    .sm-lbl {{ font-size: 10px; color: var(--muted); text-align: center; }}
+
+    /* ── TABLE ── */
+    .table-controls {{ display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }}
+    .table-controls input, .table-controls select {{
+      background: var(--dark2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 13px;
+      outline: none;
+      font-family: inherit;
+    }}
+    .table-controls input {{ flex: 1; min-width: 200px; }}
+    .table-controls input:focus, .table-controls select:focus {{ border-color: var(--teal); }}
+    .table-wrap {{ overflow-x: auto; border-radius: 12px; border: 1px solid var(--border); }}
+    table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
+    th {{
+      background: var(--dark3);
+      color: var(--teal);
+      text-align: left;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      white-space: nowrap;
+    }}
+    td {{ padding: 11px 16px; border-top: 1px solid var(--border); vertical-align: middle; }}
+    tr:hover td {{ background: rgba(0,181,173,.06); }}
+    .stage-pill {{
+      background: rgba(0,181,173,.15);
+      color: var(--teal3);
+      border-radius: 6px;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }}
+    .badge {{ display: inline-block; border-radius: 6px; padding: 3px 9px; font-size: 11px; font-weight: 700; }}
+    .badge-green  {{ background: rgba(46,193,126,.18); color: var(--green); }}
+    .badge-yellow {{ background: rgba(240,165,0,.18);  color: var(--yellow); }}
+    .badge-red    {{ background: rgba(229,83,83,.18);  color: var(--red); }}
+
+    /* ── FOOTER ── */
+    footer {{
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      margin-top: 20px;
+    }}
+    footer span {{ color: var(--teal); font-weight: 600; }}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="header-brand">
+    <div class="header-logo">HC</div>
+    <div>
+      <div class="header-title">Heaven Colchones — CRM Dashboard</div>
+      <div class="header-sub">Pipeline activo · Datos en tiempo real desde Kommo</div>
+    </div>
+  </div>
+  <div class="header-badge">Subdominio: {SUBDOMAIN} &nbsp;·&nbsp; {gen_date}</div>
+</header>
+
+<main>
+
+  <!-- MÉTRICAS GLOBALES -->
+  <div class="section-title">Métricas Globales</div>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="metric-icon">📋</div>
+      <div class="metric-value">{total_leads}</div>
+      <div class="metric-label">Total Leads</div>
+      <div class="metric-sub">{total_active} activos · {total_won} ganados · {len(lost_deals)} perdidos</div>
+    </div>
+    <div class="metric-card green">
+      <div class="metric-icon">💰</div>
+      <div class="metric-value">{fmt_currency(total_pipeline)}</div>
+      <div class="metric-label">Valor Pipeline Activo</div>
+      <div class="metric-sub">En {total_active} deals abiertos</div>
+    </div>
+    <div class="metric-card green">
+      <div class="metric-icon">🏆</div>
+      <div class="metric-value">{total_won}</div>
+      <div class="metric-label">Compradores (Ganados)</div>
+      <div class="metric-sub">Conversión: {round(total_won/total_leads*100,1) if total_leads else 0}% del total</div>
+    </div>
+    <div class="metric-card yellow">
+      <div class="metric-icon">⏳</div>
+      <div class="metric-value">{stale_7}</div>
+      <div class="metric-label">Estancados 7–14 días</div>
+      <div class="metric-sub">Requieren seguimiento urgente</div>
+    </div>
+    <div class="metric-card red">
+      <div class="metric-icon">🚨</div>
+      <div class="metric-value">{stale_14}</div>
+      <div class="metric-label">Estancados +14 días</div>
+      <div class="metric-sub">Críticos — posible pérdida</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-icon">👥</div>
+      <div class="metric-value">{len(seller_kpis)}</div>
+      <div class="metric-label">Vendedores Activos</div>
+      <div class="metric-sub">Con leads asignados</div>
+    </div>
+  </div>
+
+  <!-- EMBUDO + PIPELINE -->
+  <div class="two-col">
+    <div class="panel">
+      <div class="section-title">Embudo por Etapa (activos)</div>
+      {funnel_html if funnel_html else '<p style="color:var(--muted);font-size:13px">Sin datos de etapas.</p>'}
+    </div>
+    <div class="panel">
+      <div class="section-title">Resumen del Pipeline</div>
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Deals activos</span>
+          <span style="font-weight:700;font-size:18px;">{total_active}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Valor total activo</span>
+          <span style="font-weight:700;font-size:18px;color:var(--teal);">{fmt_currency(total_pipeline)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Ticket promedio</span>
+          <span style="font-weight:700;font-size:18px;">{fmt_currency(total_pipeline // max(total_active,1))}</span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:4px 0;"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Ganados</span>
+          <span style="font-weight:700;font-size:18px;color:var(--green);">{total_won}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Perdidos</span>
+          <span style="font-weight:700;font-size:18px;color:var(--red);">{len(lost_deals)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--muted);">Tasa de cierre</span>
+          <span style="font-weight:700;font-size:18px;color:var(--green);">{round(total_won/(total_won+len(lost_deals))*100,1) if (total_won+len(lost_deals)) else 0}%</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:13px;color:var(--yellow);">⚠ Atención requerida</span>
+          <span style="font-weight:700;font-size:18px;color:var(--yellow);">{stale_7 + stale_14}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPIs VENDEDORAS -->
+  <div class="section-title">KPIs por Vendedor/a</div>
+  <div class="sellers-grid">
+    {seller_html}
+  </div>
+
+  <!-- TABLA DEALS -->
+  <div class="section-title">Todos los Deals</div>
+  <div class="panel">
+    <div class="table-controls">
+      <input type="text" id="searchInput" placeholder="Buscar por contacto, etapa, responsable…" oninput="filterTable()" />
+      <select id="stageFilter" onchange="filterTable()">
+        <option value="">Todas las etapas</option>
+        {stage_opts}
+      </select>
+      <select id="respFilter" onchange="filterTable()">
+        <option value="">Todos los responsables</option>
+        {rep_opts}
+      </select>
+      <select id="staleFilter" onchange="filterTable()">
+        <option value="">Todos</option>
+        <option value="ok">Al día (&lt;7d)</option>
+        <option value="warn">7–14 días</option>
+        <option value="crit">&gt;14 días</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table id="dealsTable">
+        <thead>
+          <tr>
+            <th>Contacto</th>
+            <th>Etapa</th>
+            <th>Sucursal</th>
+            <th>Responsable</th>
+            <th>Valor</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="dealsBody">
+          {table_html}
+        </tbody>
+      </table>
+    </div>
+    <div id="tableCount" style="font-size:12px;color:var(--muted);margin-top:12px;text-align:right;"></div>
+  </div>
+
+</main>
+
+<footer>
+  Dashboard generado el <span>{gen_date}</span> &nbsp;·&nbsp;
+  Subdominio: <span>{SUBDOMAIN}.kommo.com</span> &nbsp;·&nbsp;
+  Heaven Colchones CRM &nbsp;·&nbsp; {total_leads} leads procesados
+</footer>
+
+<script>
+  function filterTable() {{
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const stage  = document.getElementById('stageFilter').value;
+    const resp   = document.getElementById('respFilter').value;
+    const stale  = document.getElementById('staleFilter').value;
+    const rows   = document.querySelectorAll('#dealsBody tr');
+    let visible  = 0;
+    rows.forEach(row => {{
+      const text  = row.textContent.toLowerCase();
+      const rStage = row.dataset.stage || '';
+      const rResp  = row.dataset.resp  || '';
+      const days   = parseInt(row.dataset.days || '0', 10);
+      let staleOk = true;
+      if (stale === 'ok')   staleOk = days < 7;
+      if (stale === 'warn') staleOk = days >= 7 && days <= 14;
+      if (stale === 'crit') staleOk = days > 14;
+      const show = (
+        (!search || text.includes(search)) &&
+        (!stage  || rStage === stage) &&
+        (!resp   || rResp  === resp) &&
+        staleOk
+      );
+      row.style.display = show ? '' : 'none';
+      if (show) visible++;
+    }});
+    document.getElementById('tableCount').textContent =
+      visible + ' deal' + (visible !== 1 ? 's' : '') + ' mostrado' + (visible !== 1 ? 's' : '');
+  }}
+  filterTable();
+</script>
+</body>
+</html>"""
+
+# ─── WRITE FILE ───────────────────────────────────────────────────────────────
+with open("index.html", "w", encoding="utf-8") as f:
+    f.write(HTML)
+
+print(f"\n✅ index.html generado exitosamente con {total_leads} leads.")
+print(f"   Abre el archivo en tu navegador para ver el dashboard.")

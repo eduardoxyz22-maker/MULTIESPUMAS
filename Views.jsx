@@ -71,11 +71,13 @@
     T.forEach(v => { const b = branchRoll[v.suc] || (branchRoll[v.suc] = { leads: 0, prev: 0, cierres: 0, value: 0, n: 0 }); b.leads += v.leads; b.prev += v.prevLeads; b.cierres += v.cierres; b.value += v.value; b.n++; });
     const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${(b.cierres / b.leads * 100).toFixed(1)}% conv, pipeline Bs ${b.value}`).join("\n");
     const M = D.metrics;
+    const _man = D.channels.find(c => c.cls === "green") || {};
+    const _bot = D.channels.find(c => c.cls === "red") || {};
     const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
-Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / G.prevLeads * 100)}% MoM), ${G.cierres} cierres, conversión ${(G.cierres / G.leads * 100).toFixed(1)}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
-"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Deals sin valor: ~100%.
-IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las 3 sucursales son Mia Plaza, Buenos Aires y Central.
-Canales: manual 514 leads / 21% conv / 106 cierres; automático 2029 / 1% / 15 cierres.
+Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${(G.cierres / G.leads * 100).toFixed(1)}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
+"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Deals sin valor: ${M.abiertosSinValor}.
+IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las sucursales activas son ${[...new Set(T.map(v => v.suc))].join(', ')}.
+Canales: ${D.channels.map(c => `${c.name} ${c.leads} leads / ${c.conv}% conv / ${c.cierres} cierres`).join('; ')}.
 Roll-up por sucursal (con comparativo vs mes anterior):
 ${branchLines}
 Equipo (con leads del mes vs mes anterior):
@@ -86,11 +88,11 @@ Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombr
 REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión global, pipeline) salvo que sean indispensables — otros analistas ya los cubren. Quédate ESTRICTAMENTE en tu dominio. No repitas hallazgos genéricos del mes; aporta un ángulo que solo tu especialidad vería.`;
     const agents = [
       { id: "crm", name: "Analista CRM", role: "Disciplina, backlog y calidad de datos", icon: "datos", color: "#2E6FE0",
-        prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total 890 (+72h), nunca tocados 146, "no responden" 1330, deals sin valor ~100%.\n${jsonRule}` },
+        prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total ${M.backlog} (+72h), nunca tocados ${M.nuncaTocados}, "no responden" ${M.noResp}, deals sin valor ${M.abiertosSinValor}.\n${jsonRule}` },
       { id: "ventas", name: "Analista de Ventas", role: "Conversión, ticket, pipeline y metas", icon: "trophy", color: "#159A57",
         prompt: `Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n${teamLines}\nGlobal: ${G.cierres} cierres, ${(G.cierres / G.leads * 100).toFixed(1)}% conv, pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.\n${jsonRule}` },
       { id: "comportamiento", name: "Analista de Comportamiento", role: "Origen de leads, canales y patrones", icon: "conversion", color: "#7A5AF0",
-        prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. Carga manual (514 leads, 21% conv, 106 cierres) vs automático/bot (2029 leads, 1% conv, 15 cierres); el 52% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/horario/etapa pierde clientes y cómo reactivar los 1330 que no responden.\nDatos de canal y etapas globales: manual 514/21%/106 · auto 2029/1%/15 · no-responden 1330 (52%).\n${jsonRule}` },
+        prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. ${_man.name || "Manual"} (${_man.leads || 0} leads, ${_man.conv || 0}% conv, ${_man.cierres || 0} cierres) vs ${_bot.name || "Bot"} (${_bot.leads || 0} leads, ${_bot.conv || 0}% conv, ${_bot.cierres || 0} cierres); el ${M.noRespPct}% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/horario/etapa pierde clientes y cómo reactivar los ${M.noResp} que no responden.\nDatos de canal y etapas globales: ${_man.name||"manual"} ${_man.leads||0}/${_man.conv||0}%/${_man.cierres||0} · ${_bot.name||"bot"} ${_bot.leads||0}/${_bot.conv||0}%/${_bot.cierres||0} · no-responden ${M.noResp} (${M.noRespPct}%).\n${jsonRule}` },
     ];
     const synthPrompt = `Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs. Cada decisión debe nombrar responsable y meta concreta.\n${ctx}\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes","hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} Máx 3 y 3. Español de Bolivia.`;
     return (
@@ -203,8 +205,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         <SectionHead eb="Acción inmediata" h3={`${totalBk} leads abiertos sin actividad +72h`} p="Ordenados por antigüedad sin contacto (lo más urgente primero). Los leads abiertos no tienen valor cargado, así que la prioridad la marca el tiempo, no el monto."
           right={<button className="btn" onClick={() => window.downloadCSV(`heaven_backlog_${D.month}.csv`, ["Contacto / Deal", "Etapa", "Responsable", "Dias sin actividad", "Nunca tocado"], BACKLOG_ROWS.map(r => [r.c, r.e, r.r, r.d, r.nh ? "Sí" : "No"]))}><Icon name="download" size={14} />Exportar CSV</button>} />
         <div className="kpis" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
-          <Kpi l="Sin seguimiento +72h" num={totalBk} ac="#DC4046" ico="seguimiento" sub="35% del total de leads" />
-          <Kpi l="Críticos +7 días" num={Math.round(totalBk * 0.73)} ac="#DC4046" ico="alertas" sub="atención urgente" />
+          <Kpi l="Sin seguimiento +72h" num={totalBk} ac="#DC4046" ico="seguimiento" sub={`${D.metrics.backlogPct}% del total de leads`} />
+          <Kpi l="Críticos +7 días" num={D.metrics.criticos7d} ac="#DC4046" ico="alertas" sub="atención urgente" />
           <Kpi l="Nunca tocados" num={D.metrics.nuncaTocados} ac="#7A5AF0" ico="seguimiento" sub="el bot los movió, sin acción humana" />
         </div>
 
@@ -261,15 +263,33 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== ALERTAS ===== */
   window.ViewAlertas = function () {
-    const A = [
-      { sev: "red", who: "Datos / Gerencia", t: "Deals abiertos sin valor cargado (~100%)", d: "No se puede priorizar el pipeline por monto.", act: "Cargar valor estimado al cotizar." },
-      { sev: "red", who: "Carola Chavez", t: "Conversión 3.7% — la más baja del equipo", d: "24 cierres sobre 655 leads, bajo el umbral de 4%. Revisar calidad de seguimiento.", act: "Coaching + auditar cotizaciones." },
-      { sev: "red", who: "Isabel / Carola", t: "85% y 33% de leads en “No responden”", d: "Mirian e Isabel concentran 1,094 leads sin respuesta del cliente.", act: "Segunda cadencia de contacto por WhatsApp." },
-      { sev: "amber", who: "Gerencia", t: "Leads globales ↓14% vs Abril (2,576 vs 3,000)", d: "Caída de captación en todos los frentes.", act: "Revisar inversión en canales." },
-      { sev: "amber", who: "Maria Flores", t: "135 leads nunca tocados", d: "El bot los asignó, sin primera acción registrada.", act: "Repartir backlog en reunión diaria." },
-      { sev: "amber", who: "Datos", t: "Sucursal sin etiquetar en el 89% de fichas", d: "El comparativo por tienda queda parcial (2,269 fichas).", act: "Campaña de etiquetado." },
-      { sev: "green", who: "Equipo", t: "Carga manual convierte 21× más que el bot", d: "Oportunidad: priorizar captación manual de calidad.", act: "Documentar playbook de Isabel." },
-    ];
+    const noRespTeam = [...T].sort((a, b) => b.noRespPct - a.noRespPct);
+    const worstConv = [...T].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv);
+    const topNever = [...T].sort((a, b) => b.nunca - a.nunca);
+    const _man = D.channels.find(c => c.cls === “green”) || {};
+    const _bot = D.channels.find(c => c.cls === “red”) || {};
+    const _mult = _man.conv && _bot.conv ? Math.round(_man.conv / Math.max(_bot.conv, 1)) : 0;
+    const topCloser = [...T].sort((a, b) => b.cierres - a.cierres)[0] || {};
+    const A = [];
+    const openPct = D.metrics.openTotal ? Math.round(D.metrics.abiertosSinValor / D.metrics.openTotal * 100) : 0;
+    if (openPct > 30) A.push({ sev: “red”, who: “Datos / Gerencia”, t: `Deals abiertos sin valor cargado (${openPct}%)`, d: “No se puede priorizar el pipeline por monto.”, act: “Cargar valor estimado al cotizar.” });
+    if (worstConv.length > 0 && worstConv[0].conv < 5) {
+      const v = worstConv[0];
+      A.push({ sev: “red”, who: v.name, t: `Conversión ${v.conv}% — la más baja del equipo`, d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`, act: “Coaching + auditar cotizaciones.” });
+    }
+    const highNoResp = noRespTeam.filter(v => v.noRespPct > 50).slice(0, 2);
+    if (highNoResp.length > 0) {
+      const names = highNoResp.map(v => v.name.split(“ “)[0]).join(“ / “);
+      const total = highNoResp.reduce((s, v) => s + v.noResp, 0);
+      A.push({ sev: “red”, who: names, t: `${highNoResp.map(v => `${v.noRespPct}%`).join(“ y “)} de leads en “No responden”`, d: `${names} concentran ${total} leads sin respuesta del cliente.`, act: “Segunda cadencia de contacto por WhatsApp.” });
+    }
+    if ((D.leadsMomPct || 0) < -5) A.push({ sev: “amber”, who: “Gerencia”, t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString(“en-US”)} vs ${G.prevLeads.toLocaleString(“en-US”)})`, d: “Caída de captación en todos los frentes.”, act: “Revisar inversión en canales.” });
+    const bigNever = topNever.filter(v => v.nunca > 20)[0];
+    if (bigNever) A.push({ sev: “amber”, who: bigNever.name, t: `${bigNever.nunca} leads nunca tocados`, d: “El bot los asignó, sin primera acción registrada.”, act: “Repartir backlog en reunión diaria.” });
+    if (D.metrics.sinSucursalPct > 50) A.push({ sev: “amber”, who: “Datos”, t: `Sucursal sin etiquetar en el ${D.metrics.sinSucursalPct}% de fichas`, d: `El comparativo por tienda queda parcial (${D.metrics.sinSucursalFichas.toLocaleString(“en-US”)} fichas).`, act: “Campaña de etiquetado.” });
+    if (_mult >= 5) A.push({ sev: “green”, who: “Equipo”, t: `Carga manual convierte ${_mult}× más que el bot`, d: “Oportunidad: priorizar captación manual de calidad.”, act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(“ “)[0] : “la mejor vendedora”}.` });
+    if (D.metrics.backlogPct > 20) A.push({ sev: “amber”, who: “Equipo”, t: `${D.metrics.backlog} leads sin seguimiento +72h`, d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`, act: “Priorizar en reunión diaria.” });
+    if (A.length === 0) A.push({ sev: “green”, who: “Equipo”, t: “Sin alertas críticas este mes”, d: “El equipo está al día con el seguimiento.”, act: “Mantener el ritmo.” });
     const [sev, setSev] = React.useState("all");
     const counts = { all: A.length, red: A.filter(a => a.sev === "red").length, amber: A.filter(a => a.sev === "amber").length, green: A.filter(a => a.sev === "green").length };
     const list = A.filter(a => sev === "all" || a.sev === sev);
@@ -601,14 +621,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           <table className="tbl" style={{ marginTop: 6 }}>
             <thead><tr><th>Teléfono</th><th className="r">Fichas</th><th>Vendedoras involucradas</th><th>Etapas</th><th className="r">Estado</th></tr></thead>
             <tbody>
-              <tr><td className="num">+591 70919189</td><td className="r num">2</td><td className="ww">Maria Flores · Carola Chavez</td><td className="ww">Nueva consulta · No Responden</td><td className="r"><Pill tone="red">Revisar</Pill></td></tr>
-              <tr><td className="num">69907245</td><td className="r num">2</td><td className="ww">Isabel Robledo · Mirian Salazar</td><td className="ww">No Responden · Cotización</td><td className="r"><Pill tone="red">Revisar</Pill></td></tr>
-              <tr><td className="num">+591 72693301</td><td className="r num">3</td><td className="ww">Maria Flores</td><td className="ww">Cotización · Nueva · Compradores</td><td className="r"><Pill tone="amber">Fusionar</Pill></td></tr>
-              <tr><td className="num">+591 71384023</td><td className="r num">2</td><td className="ww">Maria Flores · Carola Chavez</td><td className="ww">Cotización enviada</td><td className="r"><Pill tone="amber">Fusionar</Pill></td></tr>
-              <tr><td className="num">69152708</td><td className="r num">2</td><td className="ww">Carola Chavez · Maria Flores</td><td className="ww">Interesado · Cotización</td><td className="r"><Pill tone="amber">Fusionar</Pill></td></tr>
+              {(D.dups || []).slice(0, 20).map((g, i) => (
+                <tr key={i}>
+                  <td className="num">{g.phone || "—"}</td>
+                  <td className="r num">{g.n}</td>
+                  <td className="ww">{(g.vends || []).map(v => v.split(" ")[0]).join(" · ")}</td>
+                  <td className="ww">{(g.etapas || []).join(" · ")}</td>
+                  <td className="r"><Pill tone={g.n >= 3 ? "red" : "amber"}>{g.n >= 3 ? "Revisar" : "Fusionar"}</Pill></td>
+                </tr>
+              ))}
+              {(!D.dups || D.dups.length === 0) && <tr><td colSpan={5} style={{ textAlign: "center", color: "var(--faint)", padding: "18px 0" }}>Sin duplicados detectados</td></tr>}
             </tbody>
           </table>
-          <div className="note" style={{ marginTop: 12 }}>Muestra de 5 de 89 fichas duplicadas. En producción <code>generar.py</code> inyecta el listado completo.</div>
+          <div className="note" style={{ marginTop: 12 }}>Mostrando {Math.min((D.dups || []).length, 20)} de {D.metrics.duplicadosFichas} fichas duplicadas (hasta 40 en datos).</div>
         </div>
       </div>
     );
