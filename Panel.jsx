@@ -480,12 +480,21 @@ window.downloadCSV = downloadCSV; window.exportTeamCSV = exportTeamCSV;
 // sessionStorage), reads the REAL month data, and writes the headline +
 // diagnosis + levers + risk. Falls back to a static reading while loading or
 // if the model is unavailable. In production, generar.py bakes the result.
-const DIAG_FALLBACK = {
-  titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
-  diagnostico: "Con 2,576 leads el cuello de botella no es captación — es disciplina de seguimiento y conversión. La captación cayó 14% pero el problema real está en el embudo medio.",
-  palancas: ["Llamar al top 50 de cotizaciones por valor", "Replicar el playbook de seguimiento de Isabel", "Activar los 890 leads sin seguimiento +72h"],
-  riesgo: `1,330 leads en "No responden" se enfrían cada día sin una segunda cadencia de contacto.`,
-};
+function getDiagFallback() {
+  const G = D.global;
+  const top = D.team.length ? [...D.team].sort((a, b) => b.cierres - a.cierres)[0] : null;
+  const dir = (D.leadsMomPct || 0) < 0 ? `cayó ${Math.abs(D.leadsMomPct)}%` : `creció ${Math.abs(D.leadsMomPct || 0)}%`;
+  return {
+    titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
+    diagnostico: `Con ${G.leads.toLocaleString("en-US")} leads (captación ${dir}) el cuello de botella no es captación — es disciplina de seguimiento y conversión. ${D.metrics.backlog} fichas sin seguimiento +72h y ${D.metrics.noResp} en "No responden" son la prioridad.`,
+    palancas: [
+      top ? `Replicar el playbook de seguimiento de ${top.name.split(" ")[0]}` : "Replicar el playbook de la mejor vendedora",
+      `Llamar al top 50 de cotizaciones con más días sin actividad`,
+      `Activar los ${D.metrics.backlog} leads sin seguimiento +72h`,
+    ],
+    riesgo: `${D.metrics.noResp} leads en "No responden" se enfrían cada día sin una segunda cadencia de contacto.`,
+  };
+}
 function DiagnosticoMes() {
   const G = D.global;
   const CACHE_KEY = `heaven_diag_ai_${D.month}_${D.year}`;
@@ -495,8 +504,8 @@ function DiagnosticoMes() {
     return { state: "idle" };
   });
   const buildPrompt = () => {
-    const top = [...D.team].sort((a, b) => b.cierres - a.cierres)[0];
-    const worst = [...D.team].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv)[0];
+    const top = D.team.length ? [...D.team].sort((a, b) => b.cierres - a.cierres)[0] : null;
+    const worst = D.team.length ? [...D.team].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv)[0] : null;
     const teamLines = D.team.map(v => `${v.name} (${v.suc}): ${v.leads} leads, ${v.cierres} cierres, ${v.conv}% conv, ${v.noResp} no-responden, ${v.backlog} backlog, ${v.u24}% actualiza <24h`).join("\n");
     const _man = D.channels.find(c => c.cls === "green") || {};
     const _bot = D.channels.find(c => c.cls === "red") || {};
@@ -505,7 +514,7 @@ function DiagnosticoMes() {
 Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%). Canal manual convierte ${_man.conv || 0}% vs ${_bot.conv || 0}% bot.
 Equipo:
 ${teamLines}
-Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, específico con nombres y números, español de Bolivia.`;
+Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name : "N/A"}. Sé directo, específico con nombres y números, español de Bolivia.`;
   };
   const run = async (force) => {
     if (!window.claude || !window.claude.complete) { setAi({ state: "error" }); return; }
@@ -520,7 +529,7 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
     } catch (e) { setAi({ state: "error" }); }
   };
   useEffect(() => { if (ai.state === "idle") run(); }, []);
-  const live = ai.state === "done" ? ai : DIAG_FALLBACK;
+  const live = ai.state === "done" ? ai : getDiagFallback();
   const isLoading = ai.state === "loading";
   return (
     <div>
@@ -558,7 +567,7 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
         <div className="diag-risk">
           <div className="ai-sub" style={{ color: "var(--red-ink)" }}>Mayor riesgo</div>
           <div className="diag-risk-body"><Icon name="alertas" size={16} sw={2.2} /><span>{isLoading ? <span className="diag2-skel-line" /> : live.riesgo}</span></div>
-          {ai.state === "error" && <div className="ai-err" style={{ marginTop: 10 }}>Análisis en vivo no disponible — mostrando lectura base. En producción <code>generar.py</code> hornea el diagnóstico de IA del mes.</div>}
+          {ai.state === "error" && <div className="ai-err" style={{ marginTop: 10 }}>Análisis en vivo no disponible. Agrega <code>ANTHROPIC_API_KEY</code> en GitHub Secrets para generar el diagnóstico automáticamente al correr el workflow.</div>}
         </div>
       </div>
     </div>
@@ -640,12 +649,12 @@ function Kpi({ l, v, num, fmt, ac, ico, sub, spark, tip }) {
 window.SectionHead = SectionHead; window.Pill = Pill; window.Funnel = Funnel; window.Avatar = Avatar;
 window.TeamTable = TeamTable; window.Kpi = Kpi; window.convTone = convTone; window.F_COLORS = F_COLORS;
 window.CountUp = CountUp; window.Sparkline = Sparkline; window.Donut = Donut; window.Heatmap = Heatmap;
-window.TOP_CLOSER = D.team.reduce((a, b) => (b.cierres > a.cierres ? b : a), D.team[0]).name;
+window.TOP_CLOSER = D.team.length ? D.team.reduce((a, b) => (b.cierres > a.cierres ? b : a), D.team[0]).name : "";
 
 /* ---------- Resumen view ---------- */
 function ViewResumen() {
   const G = D.global;
-  const topV = D.team.reduce((a, b) => b.cierres > a.cierres ? b : a, D.team[0]);
+  const topV = D.team.length ? D.team.reduce((a, b) => b.cierres > a.cierres ? b : a, D.team[0]) : null;
   return (
     <div className="view">
       <div className="rhero">
@@ -690,7 +699,7 @@ function ViewResumen() {
           <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." spark={[4200, 4500, 4800, 4650, 5000, 5153]} sub={<span><span className="delta up">▲</span> valor / cierre</span>} />
           <Kpi l="Interesado" num={D.metrics.interesado} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." spark={[60, 72, 80, 75, 90, 85]} sub="leads en interés" />
           <Kpi l="Agendado / Visita" num={D.metrics.agendado} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." spark={[90, 100, 95, 110, 105, 108]} sub="visitas programadas" />
-          <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." spark={[98, 110, 118, 122, 120, 127]} sub={<span><span className="delta up">▲ +4%</span> · {fmtMoney(G.pipeline)}</span>} />
+          <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.pipeline)}</span>} />
         </div>
       </div>
 
@@ -699,7 +708,7 @@ function ViewResumen() {
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="insight">
             <span className="ic"><Icon name="trophy" size={18} sw={2.2} /></span>
-            <div><div className="t">{topV.name.split(" ")[0]} concentra el {Math.round(topV.cierres / G.cierres * 100)}% de los cierres</div><div className="d">Con <b>{topV.cierres} de {G.cierres} cierres</b>, replicar su método de seguimiento al equipo es la palanca #1.</div></div>
+            <div><div className="t">{topV ? topV.name.split(" ")[0] : "—"} concentra el {topV && G.cierres ? Math.round(topV.cierres / G.cierres * 100) : 0}% de los cierres</div><div className="d">Con <b>{topV ? topV.cierres : 0} de {G.cierres} cierres</b>, replicar su método de seguimiento al equipo es la palanca #1.</div></div>
           </div>
           <div className="insight amber">
             <span className="ic"><Icon name="alertas" size={17} sw={2.2} /></span>

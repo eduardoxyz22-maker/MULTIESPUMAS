@@ -242,7 +242,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           </table>
           )}
         </div>
-        <div className="note">Muestra representativa de las fichas más antiguas de {totalBk} en backlog. En Kommo muchos contactos no tienen nombre cargado — aparecen como "Lead #". En producción <code>generar.py</code> inyecta las 50 reales.</div>
+        <div className="note">Los {totalBk} leads mostrados están ordenados por antigüedad real desde Kommo — los más urgentes primero. Muchos contactos no tienen nombre cargado y aparecen como "Lead #".</div>
       </div>
     );
   };
@@ -467,7 +467,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             ))}</tbody>
           </table>
         </div>
-        <div className="note"><b>Cerrado {D.month}</b> = monto de deals en etapa Compradores (cierres × ticket promedio). El reparto semanal es una estimación; en producción <code>generar.py</code> lo calcula con las fechas de cierre reales de Kommo.</div>
+        <div className="note"><b>Cerrado {D.month}</b> = monto de deals en etapa Compradores (cierres × ticket promedio). El reparto semanal usa las fechas de cierre reales de Kommo; si un deal no tiene fecha registrada, se distribuye por pesos históricos.</div>
       </div>
     );
   };
@@ -477,7 +477,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const branches = {};
     T.forEach(v => { const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, leads: 0, prevLeads: 0, cierres: 0, value: 0, agendado: 0, cerrado: 0, n: 0 }); b.leads += v.leads; b.prevLeads += (v.prevLeads || 0); b.cierres += v.cierres; b.value += v.value; b.agendado += (v.agendado || 0); b.cerrado += v.cierres * v.ticket; b.n++; });
     const list = Object.values(branches).sort((a, b) => b.value - a.value);
-    const COL = { "Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D98300" };
+    const COL = {};
+    T.forEach(v => { if (!COL[v.suc]) COL[v.suc] = v.color || "#6B7785"; });
     const { sorted, thFor } = window.useSort(list, "value", b => b.value);
     const mom = b => b.prevLeads ? Math.round((b.leads - b.prevLeads) / b.prevLeads * 100) : 0;
     return (
