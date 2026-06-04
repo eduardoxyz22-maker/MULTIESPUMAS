@@ -156,7 +156,7 @@ function ProfileDrawer({ vendor: v, onClose }) {
               <div className="dr-sec">KPIs comerciales</div>
               <div className="dr-kpis" style={{ gridTemplateColumns: "1fr 1fr", marginBottom: 10 }}>
                 <div className="dr-k" style={{ borderLeft: "3px solid var(--green)" }}><div className="v" style={{ color: "var(--green-ink)" }}>{fmtMoney(cerrado)}</div><div className="l">Cerrado mes (Compradores)</div></div>
-                <div className="dr-k" style={{ borderLeft: "3px solid var(--brand)" }}><div className="v" style={{ color: "var(--brand-d)" }}>{v.value ? fmtMoney(v.value) : "—"}</div><div className="l">Pipeline total</div></div>
+                <div className="dr-k" style={{ borderLeft: "3px solid var(--brand)" }}><div className="v" style={{ color: "var(--brand-d)" }}>{v.value ? fmtMoney(v.value) : "—"}</div><div className="l">Monto registrado</div></div>
               </div>
               <div className="dr-kpis">
                 <div className="dr-k"><div className="v" style={{ color: `var(--${convTone(window.convPct(v))})` }}><CountUp value={window.convPct(v)} fmt={n => n.toFixed(1) + "%"} /></div><div className="l">Conversión</div></div>
@@ -225,7 +225,7 @@ function SucursalDrawer({ name, onClose, onVendor }) {
                 <div className="dr-k"><div className="v"><CountUp value={tot.leads} /></div><div className="l">Leads</div></div>
                 <div className="dr-k"><div className="v"><CountUp value={tot.cierres} /></div><div className="l">Cierres</div></div>
                 <div className="dr-k"><div className="v" style={{ color: "var(--green-ink)" }}><CountUp value={tot.cerrado} fmt={fmtMoney} /></div><div className="l">Cerrado mes</div></div>
-                <div className="dr-k"><div className="v" style={{ color: "var(--brand-d)" }}><CountUp value={tot.value} fmt={fmtMoney} /></div><div className="l">Pipeline</div></div>
+                <div className="dr-k"><div className="v" style={{ color: "var(--brand-d)" }}><CountUp value={tot.value} fmt={fmtMoney} /></div><div className="l">Monto reg.</div></div>
               </div>
               <div className="dr-k" style={{ marginTop: 8, display: "flex", alignItems: "center", justifyContent: "space-between" }}><div className="l" style={{ margin: 0 }}>📅 Agendado / Visita · Conversión {totConv}%</div><div className="v" style={{ color: "#D98300" }}>{tot.agendado}</div></div>
               <div className="dr-sec">Por vendedora — toca para ver perfil completo</div>
@@ -244,7 +244,7 @@ function SucursalDrawer({ name, onClose, onVendor }) {
                         <div><div className="v" style={{ fontSize: "1.05rem" }}>{v.leads.toLocaleString("en-US")}</div><div className="l">Leads</div></div>
                         <div><div className="v" style={{ fontSize: "1.05rem" }}>{v.cierres}</div><div className="l">Cierres</div></div>
                         <div><div className="v" style={{ fontSize: "1.05rem", color: "var(--green-ink)" }}>{fmtMoney(v.cierres * v.ticket)}</div><div className="l">Cerrado</div></div>
-                        <div><div className="v" style={{ fontSize: "1.05rem", color: "var(--muted)" }}>{v.value ? fmtMoney(v.value) : "—"}</div><div className="l">Pipeline</div></div>
+                        <div><div className="v" style={{ fontSize: "1.05rem", color: "var(--muted)" }}>{v.value ? fmtMoney(v.value) : "—"}</div><div className="l">Monto reg.</div></div>
                         <div><div className="v" style={{ fontSize: "1.05rem", color: `var(--${convTone(+conv)})` }}>{conv}%</div><div className="l">Conv.</div></div>
                       </div>
                       <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--line2)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: ".72rem" }}>
@@ -333,7 +333,7 @@ function MetasSection() {
       <div className="meta-row meta-total">
         <div className="top">
           <span className="meta-name" style={{ fontWeight: 800 }}>Equipo (total)</span>
-          <span className="meta-right"><b className="meta-cerr" style={{ color: tCol }}>{fmtMoney(totCerr)}</b><span className="ww">/ pipeline {fmtMoney(totPipe)} / meta <b className="num">{fmtMoney(totMeta)}</b> · proy. {fmtMoney(totProy)} <b style={{ color: tCol }}>({tPct}%)</b></span></span>
+          <span className="meta-right"><b className="meta-cerr" style={{ color: tCol }}>{fmtMoney(totCerr)}</b><span className="ww">/ registrado {fmtMoney(totPipe)} / meta <b className="num">{fmtMoney(totMeta)}</b> · proy. {fmtMoney(totProy)} <b style={{ color: tCol }}>({tPct}%)</b></span></span>
         </div>
         <div className="meta-bar"><i style={{ width: tPct + "%", background: tCol }} /></div>
       </div>
@@ -443,7 +443,7 @@ function TeamTable({ cols = "full" }) {
       <thead><tr>
         <th>Vendedora</th><th className="r">Leads</th><th className="r">Cierres</th><th className="r">Conv.</th>
         {cols === "full" && <th className="r">Ticket</th>}
-        {cols === "full" && <th className="r">Pipeline</th>}
+        {cols === "full" && <th className="r">Monto reg.</th>}
         <th>Disciplina CRM</th>
       </tr></thead>
       <tbody>
@@ -476,7 +476,7 @@ function downloadCSV(filename, headers, rows) {
 }
 function exportTeamCSV() {
   downloadCSV(`heaven_equipo_${D.month}_${D.year}.csv`,
-    ["Vendedora", "Sucursal", "Leads", "Cierres", "Conversion %", "Ticket (Bs)", "Pipeline (Bs)", "Calificados", "No responden", "Backlog", "% <24h"],
+    ["Vendedora", "Sucursal", "Leads", "Cierres", "Conversion %", "Ticket (Bs)", "Monto registrado (Bs)", "Calificados", "No responden", "Backlog", "% <24h"],
     D.team.map(v => [v.name, v.suc, v.leads, v.cierres, v.conv, v.ticket, v.value, v.calif, v.noResp, v.backlog, v.u24]));
 }
 window.downloadCSV = downloadCSV; window.exportTeamCSV = exportTeamCSV;
@@ -559,7 +559,7 @@ Top: ${top ? top.name : "N/A"}. Más débil en conversión: ${worst ? worst.name
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Pipeline total</div></div>
+            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Monto registrado</div></div>
           </div>
         </div>
       </div>
@@ -672,7 +672,7 @@ function ViewResumen() {
             <span className="rhero-sep" />
             <span><b className="num">{G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}%</b> conversión</span>
             <span className="rhero-sep" />
-            <span><b className="num">{fmtMoney(G.pipeline)}</b> pipeline</span>
+            <span><b className="num">{fmtMoney(G.pipeline)}</b> registrado</span>
           </div>
           <p className="rhero-sub">{D.fecha ? `Actualizado ${D.fecha}` : "Datos en vivo"} · desde Kommo. El análisis del mes vive en la pestaña de inteligencia.</p>
           <button className="btn pri diag2-cta" onClick={() => window.__go("analisis")}><Icon name="analisis" size={14} />Ver análisis IA del mes</button>
@@ -688,7 +688,7 @@ function ViewResumen() {
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
-            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Pipeline total</div></div>
+            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Monto registrado</div></div>
           </div>
         </div>
       </div>
@@ -699,9 +699,9 @@ function ViewResumen() {
           <Kpi l="Total leads" num={G.leads} ac="#808A96" ico="equipo" tip="Leads ingresados este mes vs el mes anterior." sub={<span><span className={`delta ${(D.leadsMomPct || 0) < 0 ? "down" : "up"}`}>{(D.leadsMomPct || 0) < 0 ? "▼" : "▲"} {Math.abs(D.leadsMomPct || 0)}%</span> vs {D.prevMonth}</span>} />
           <Kpi l="Conversión" num={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
           <Kpi l="Cerrado en el mes" num={G.cierres * G.ticket} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Monto de deals que llegaron a Compradores (revenue confirmado)." sub={`${G.cierres} compradores`} />
-          <Kpi l="Pipeline total" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Valor de todos los deals en todas las etapas." sub="todas las etapas" />
+          <Kpi l="Monto registrado" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Suma de montos cargados en Kommo: ventas cerradas + pagos parciales de otras etapas." sub="ventas + pagos parciales" />
           <Kpi l="Sin seguimiento" num={D.metrics?.backlogPct || 0} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics?.backlog || 0} leads</b> +72h</span>} />
-          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Pipeline total ÷ número de compradores." sub={<span>valor / cierre</span>} />
+          <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Monto registrado ÷ número de compradores." sub={<span>valor / cierre</span>} />
           <Kpi l="Interesado" num={D.metrics?.interesado || 0} ac="#2E6FE0" ico="conversion" tip="Leads en etapa Interesado — interés activo." sub="leads en interés" />
           <Kpi l="Agendado / Visita" num={D.metrics?.agendado || 0} ac="#D98300" ico="semanal" tip="Leads con visita o cita agendada — mayor probabilidad de cierre." sub="visitas programadas" />
           <Kpi l="Compradores" num={G.cierres} ac="#159A57" ico="trophy" tip="Leads que cerraron como venta confirmada este mes." sub={<span><span className={`delta ${(G.cierres / (G.leads || 1) * 100) >= 5 ? "up" : "down"}`}>{(G.cierres / (G.leads || 1) * 100).toFixed(1)}% conv</span> · {fmtMoney(G.pipeline)}</span>} />
