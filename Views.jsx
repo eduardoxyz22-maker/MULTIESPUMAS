@@ -193,7 +193,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const FILTERS = [["all", "Todos"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
     return (
       <div className="view">
-        <SectionHead eb="Acción inmediata" h3={`${totalBk} leads abiertos sin actividad +72h`} p="Ordenados por antigüedad sin contacto — lo más urgente primero."
+        <SectionHead eb="Acción inmediata" h3={`${totalBk} ${totalBk === 1 ? "lead abierto" : "leads abiertos"} sin actividad +72h`} p="Ordenados por antigüedad sin contacto — lo más urgente primero."
           right={<button className="btn" onClick={() => window.downloadCSV(`heaven_backlog_${D.month}.csv`, ["Contacto / Deal", "Etapa", "Responsable", "Dias sin actividad", "Nunca tocado"], BACKLOG_ROWS.map(r => [r.c, r.e, r.r, r.d, r.nh ? "Sí" : "No"]))}><Icon name="download" size={14} />Exportar CSV</button>} />
         <div className="kpis" style={{ gridTemplateColumns: "repeat(3,1fr)" }}>
           <Kpi l="Sin seguimiento +72h" num={totalBk} ac="#DC4046" ico="seguimiento" sub={`${D.metrics.backlogPct}% del total de leads`} />
@@ -208,7 +208,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             <div className="ww" style={{ maxWidth: 380, margin: "0 auto" }}>Ningún lead supera las 72h sin actividad en etapas activas. El equipo está al día con el seguimiento.</div>
           </div>
         ) : (<>
-          <SectionHead eb="¿De quién es el backlog?" h3={`Las ${totalBk} fichas tienen dueño`} p={`El ${top2Pct}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.`} />
+          <SectionHead eb="¿De quién es el backlog?" h3={totalBk === 1 ? "La 1 ficha tiene dueño" : `Las ${totalBk} fichas tienen dueño`} p={`El ${top2Pct}% del backlog está en ${backlogBy.length === 1 ? "una vendedora" : backlogBy.length === 2 ? "dos vendedoras" : `${backlogBy.length} vendedoras`}. Aquí se controla el equipo: a quién exigirle seguimiento.`} />
           <div className="card">
             <div style={{ display: "flex", flexDirection: "column", gap: 13 }}>
               {backlogBy.map(({ v, n }, i) => {
@@ -562,7 +562,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", color: "var(--faint)", fontWeight: 600, marginTop: 4 }}><span>Día {curDay}</span><span>{left} días restantes</span><span>Día {dim}</span></div>
           </div>
           <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
-            <div><div className="eb">Cierres hoy</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>{G.cierres}</div><div className="ww">{paceDay}/día promedio</div></div>
+            <div><div className="eb">Cierres del mes</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>{G.cierres}</div><div className="ww">{paceDay}/día promedio</div></div>
             <div><div className="eb">Proyección base</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>~{base}</div><div className="ww" style={{ color: "var(--green)" }}>▲ buen ritmo</div></div>
             <div><div className="eb">Ticket promedio</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>{money(G.ticket)}</div><div className="ww">valor / cierre</div></div>
           </div>
