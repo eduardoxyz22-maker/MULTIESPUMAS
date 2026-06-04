@@ -150,7 +150,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         <QuadrantMatrix team={T} />
 
         <div className="card">
-          <SectionHead eb="Rendimiento comercial" h3="KPIs por vendedora" p="Clic en cualquier columna para ordenar. Conversión, ticket, pipeline, calificados y “no responden”." />
+          <SectionHead eb="Rendimiento comercial" h3="KPIs por vendedora" p={'Clic en cualquier columna para ordenar. Conversión, ticket, pipeline, calificados y "no responden".'} />
           <KpiSortTable rows={T} open={open} />
         </div>
         <div className="card">
@@ -266,30 +266,30 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const noRespTeam = [...T].sort((a, b) => b.noRespPct - a.noRespPct);
     const worstConv = [...T].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv);
     const topNever = [...T].sort((a, b) => b.nunca - a.nunca);
-    const _man = D.channels.find(c => c.cls === “green”) || {};
-    const _bot = D.channels.find(c => c.cls === “red”) || {};
+    const _man = D.channels.find(c => c.cls === "green") || {};
+    const _bot = D.channels.find(c => c.cls === "red") || {};
     const _mult = _man.conv && _bot.conv ? Math.round(_man.conv / Math.max(_bot.conv, 1)) : 0;
     const topCloser = [...T].sort((a, b) => b.cierres - a.cierres)[0] || {};
     const A = [];
     const openPct = D.metrics.openTotal ? Math.round(D.metrics.abiertosSinValor / D.metrics.openTotal * 100) : 0;
-    if (openPct > 30) A.push({ sev: “red”, who: “Datos / Gerencia”, t: `Deals abiertos sin valor cargado (${openPct}%)`, d: “No se puede priorizar el pipeline por monto.”, act: “Cargar valor estimado al cotizar.” });
+    if (openPct > 30) A.push({ sev: "red", who: "Datos / Gerencia", t: `Deals abiertos sin valor cargado (${openPct}%)`, d: "No se puede priorizar el pipeline por monto.", act: "Cargar valor estimado al cotizar." });
     if (worstConv.length > 0 && worstConv[0].conv < 5) {
       const v = worstConv[0];
-      A.push({ sev: “red”, who: v.name, t: `Conversión ${v.conv}% — la más baja del equipo`, d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`, act: “Coaching + auditar cotizaciones.” });
+      A.push({ sev: "red", who: v.name, t: `Conversión ${v.conv}% — la más baja del equipo`, d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`, act: "Coaching + auditar cotizaciones." });
     }
     const highNoResp = noRespTeam.filter(v => v.noRespPct > 50).slice(0, 2);
     if (highNoResp.length > 0) {
-      const names = highNoResp.map(v => v.name.split(“ “)[0]).join(“ / “);
+      const names = highNoResp.map(v => v.name.split(" ")[0]).join(" / ");
       const total = highNoResp.reduce((s, v) => s + v.noResp, 0);
-      A.push({ sev: “red”, who: names, t: `${highNoResp.map(v => `${v.noRespPct}%`).join(“ y “)} de leads en “No responden”`, d: `${names} concentran ${total} leads sin respuesta del cliente.`, act: “Segunda cadencia de contacto por WhatsApp.” });
+      A.push({ sev: "red", who: names, t: `${highNoResp.map(v => `${v.noRespPct}%`).join(" y ")} de leads en "No responden"`, d: `${names} concentran ${total} leads sin respuesta del cliente.`, act: "Segunda cadencia de contacto por WhatsApp." });
     }
-    if ((D.leadsMomPct || 0) < -5) A.push({ sev: “amber”, who: “Gerencia”, t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString(“en-US”)} vs ${G.prevLeads.toLocaleString(“en-US”)})`, d: “Caída de captación en todos los frentes.”, act: “Revisar inversión en canales.” });
+    if ((D.leadsMomPct || 0) < -5) A.push({ sev: "amber", who: "Gerencia", t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")})`, d: "Caída de captación en todos los frentes.", act: "Revisar inversión en canales." });
     const bigNever = topNever.filter(v => v.nunca > 20)[0];
-    if (bigNever) A.push({ sev: “amber”, who: bigNever.name, t: `${bigNever.nunca} leads nunca tocados`, d: “El bot los asignó, sin primera acción registrada.”, act: “Repartir backlog en reunión diaria.” });
-    if (D.metrics.sinSucursalPct > 50) A.push({ sev: “amber”, who: “Datos”, t: `Sucursal sin etiquetar en el ${D.metrics.sinSucursalPct}% de fichas`, d: `El comparativo por tienda queda parcial (${D.metrics.sinSucursalFichas.toLocaleString(“en-US”)} fichas).`, act: “Campaña de etiquetado.” });
-    if (_mult >= 5) A.push({ sev: “green”, who: “Equipo”, t: `Carga manual convierte ${_mult}× más que el bot`, d: “Oportunidad: priorizar captación manual de calidad.”, act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(“ “)[0] : “la mejor vendedora”}.` });
-    if (D.metrics.backlogPct > 20) A.push({ sev: “amber”, who: “Equipo”, t: `${D.metrics.backlog} leads sin seguimiento +72h`, d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`, act: “Priorizar en reunión diaria.” });
-    if (A.length === 0) A.push({ sev: “green”, who: “Equipo”, t: “Sin alertas críticas este mes”, d: “El equipo está al día con el seguimiento.”, act: “Mantener el ritmo.” });
+    if (bigNever) A.push({ sev: "amber", who: bigNever.name, t: `${bigNever.nunca} leads nunca tocados`, d: "El bot los asignó, sin primera acción registrada.", act: "Repartir backlog en reunión diaria." });
+    if (D.metrics.sinSucursalPct > 50) A.push({ sev: "amber", who: "Datos", t: `Sucursal sin etiquetar en el ${D.metrics.sinSucursalPct}% de fichas`, d: `El comparativo por tienda queda parcial (${D.metrics.sinSucursalFichas.toLocaleString("en-US")} fichas).`, act: "Campaña de etiquetado." });
+    if (_mult >= 5) A.push({ sev: "green", who: "Equipo", t: `Carga manual convierte ${_mult}× más que el bot`, d: "Oportunidad: priorizar captación manual de calidad.", act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(" ")[0] : "la mejor vendedora"}.` });
+    if (D.metrics.backlogPct > 20) A.push({ sev: "amber", who: "Equipo", t: `${D.metrics.backlog} leads sin seguimiento +72h`, d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`, act: "Priorizar en reunión diaria." });
+    if (A.length === 0) A.push({ sev: "green", who: "Equipo", t: "Sin alertas críticas este mes", d: "El equipo está al día con el seguimiento.", act: "Mantener el ritmo." });
     const [sev, setSev] = React.useState("all");
     const counts = { all: A.length, red: A.filter(a => a.sev === "red").length, amber: A.filter(a => a.sev === "amber").length, green: A.filter(a => a.sev === "green").length };
     const list = A.filter(a => sev === "all" || a.sev === sev);

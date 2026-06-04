@@ -1469,43 +1469,51 @@ panel_data["archives"] = _build_archive_list_new()
 _panel_data_json = json.dumps(panel_data, ensure_ascii=False)
 
 # --- Compile JSX → plain JS using Node/Babel on the runner ---
-import subprocess as _sp, tempfile as _tf
+import subprocess as _sp, tempfile as _tf, os as _os2
 
-def _compile_jsx(src, label):
-    node_script = r"""
+_COMPILE_SCRIPT = r"""
 const babel = require('@babel/core');
 const fs = require('fs');
-const src = fs.readFileSync('/dev/stdin', 'utf8');
-try {
-  const result = babel.transformSync(src, {
-    presets: [['@babel/preset-react', {runtime:'classic'}]],
-    filename: 'panel.jsx'
-  });
-  process.stdout.write(result.code);
-} catch(e) {
-  process.stderr.write('BABEL_ERROR: ' + e.message + '\n');
-  process.exit(1);
-}
+const src = fs.readFileSync(process.argv[2], 'utf8');
+const result = babel.transformSync(src, {
+  presets: [['@babel/preset-react', {runtime:'classic'}]],
+  filename: 'panel.jsx'
+});
+process.stdout.write(result.code);
 """
+
+def _compile_jsx(src, label):
+    tmp_jsx = tmp_script = None
     try:
+        with _tf.NamedTemporaryFile(mode='w', suffix='.jsx', delete=False, dir=_SCRIPT_DIR) as f:
+            f.write(src)
+            tmp_jsx = f.name
+        with _tf.NamedTemporaryFile(mode='w', suffix='.js', delete=False, dir=_SCRIPT_DIR) as f:
+            f.write(_COMPILE_SCRIPT)
+            tmp_script = f.name
         r = _sp.run(
-            ["node", "-e", node_script],
-            input=src.encode("utf-8"),
+            ["node", tmp_script, tmp_jsx],
             capture_output=True,
-            timeout=60
+            timeout=60,
+            cwd=_SCRIPT_DIR
         )
         if r.returncode == 0:
             print(f"  JSX compilado: {label}")
             return r.stdout.decode("utf-8")
         else:
-            print(f"  ⚠ Babel falló para {label}: {r.stderr.decode()[:200]}")
+            print(f"  ⚠ Babel falló para {label}: {r.stderr.decode()[:300]}")
     except Exception as e:
         print(f"  ⚠ No se pudo compilar {label}: {e}")
+    finally:
+        for _p in (tmp_jsx, tmp_script):
+            if _p:
+                try: _os2.unlink(_p)
+                except: pass
     return None
 
 # Try to install @babel/core + preset-react if not present
 def _ensure_babel():
-    r = _sp.run(["node", "-e", "require('@babel/core')"], capture_output=True)
+    r = _sp.run(["node", "-e", "require('@babel/core')"], capture_output=True, cwd=_SCRIPT_DIR)
     if r.returncode != 0:
         print("  Instalando @babel/core @babel/preset-react...")
         _sp.run(["npm", "install", "--no-save", "@babel/core", "@babel/preset-react"],
@@ -1524,14 +1532,14 @@ if _use_babel_cdn:
     _panel_js  = _panel_jsx
     _views_js  = _views_jsx
     _script_type = 'type="text/babel"'
-    _babel_cdn = '<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>'
+    _babel_cdn = '<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.0/babel.min.js" crossorigin="anonymous"></script>'
 else:
     _script_type = ""
     _babel_cdn = ""
 
 if _use_babel_cdn:
     # Babel CDN fallback: separate script tags with type="text/babel"
-    _scripts_block = f"""<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>
+    _scripts_block = f"""<script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.26.0/babel.min.js" crossorigin="anonymous"></script>
 <script type="text/babel">
 {_icons_js}
 </script>

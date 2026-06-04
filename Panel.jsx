@@ -484,7 +484,7 @@ const DIAG_FALLBACK = {
   titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
   diagnostico: "Con 2,576 leads el cuello de botella no es captación — es disciplina de seguimiento y conversión. La captación cayó 14% pero el problema real está en el embudo medio.",
   palancas: ["Llamar al top 50 de cotizaciones por valor", "Replicar el playbook de seguimiento de Isabel", "Activar los 890 leads sin seguimiento +72h"],
-  riesgo: "1,330 leads en “No responden” se enfrían cada día sin una segunda cadencia de contacto.",
+  riesgo: `1,330 leads en "No responden" se enfrían cada día sin una segunda cadencia de contacto.`,
 };
 function DiagnosticoMes() {
   const G = D.global;
@@ -531,13 +531,13 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
           {isLoading && <span className="diag2-analyzing"><span className="ai-dot" /><span className="ai-dot" /><span className="ai-dot" /> Analizando {G.leads.toLocaleString("en-US")} leads del mes…</span>}
         </div>
         <div className="diag2-stats">
-          <div className=”diag2-stat” style={{ “--sc”: “var(--brand)” }}>
-            <div className=”diag2-ic”><Icon name=”conversion” size={16} /></div>
-            <div><div className=”diag2-v”><CountUp value={+(G.cierres / G.leads * 100).toFixed(1)} fmt={n => n.toFixed(1) + “%”} /></div><div className=”diag2-l”>Conversión global</div></div>
+          <div className="diag2-stat" style={{ "--sc": "var(--brand)" }}>
+            <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
+            <div><div className="diag2-v"><CountUp value={+(G.cierres / G.leads * 100).toFixed(1)} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
           </div>
-          <div className=”diag2-stat” style={{ “--sc”: “var(--red)” }}>
-            <div className=”diag2-ic”><Icon name=”alertas” size={16} /></div>
-            <div><div className=”diag2-v”><CountUp value={D.metrics.noResp} /></div><div className=”diag2-l”>En “No responden”</div></div>
+          <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
+            <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
+            <div><div className="diag2-v"><CountUp value={D.metrics.noResp} /></div><div className="diag2-l">En "No responden"</div></div>
           </div>
           <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
             <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
@@ -660,13 +660,13 @@ function ViewResumen() {
             <div className="diag2-ic"><Icon name="conversion" size={16} /></div>
             <div><div className="diag2-v"><CountUp value={G.cierres / G.leads * 100} fmt={n => n.toFixed(1) + "%"} /></div><div className="diag2-l">Conversión global</div></div>
           </div>
-          <div className=”diag2-stat” style={{ “--sc”: “var(--red)” }}>
-            <div className=”diag2-ic”><Icon name=”alertas” size={16} /></div>
-            <div><div className=”diag2-v”><CountUp value={D.metrics.noResp} /></div><div className=”diag2-l”>En “No responden”</div></div>
+          <div className="diag2-stat" style={{ "--sc": "var(--red)" }}>
+            <div className="diag2-ic"><Icon name="alertas" size={16} /></div>
+            <div><div className="diag2-v"><CountUp value={D.metrics.noResp} /></div><div className="diag2-l">En "No responden"</div></div>
           </div>
-          <div className=”diag2-stat” style={{ “--sc”: “var(--green)” }}>
-            <div className=”diag2-ic”><Icon name=”trophy” size={16} /></div>
-            <div><div className=”diag2-v”><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className=”diag2-l”>Pipeline total</div></div>
+          <div className="diag2-stat" style={{ "--sc": "var(--green)" }}>
+            <div className="diag2-ic"><Icon name="trophy" size={16} /></div>
+            <div><div className="diag2-v"><CountUp value={G.pipeline} fmt={fmtMoney} /></div><div className="diag2-l">Pipeline total</div></div>
           </div>
         </div>
       </div>
