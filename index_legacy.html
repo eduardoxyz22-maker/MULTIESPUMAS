@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Dashboard CRM Diario — Junio 2026 — Colchones Heaven</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --teal:#00B5AD;--teal-dk:#008F88;--teal-lt:#E6F7F6;--teal-mid:#00A09A;
+  --gray:#808080;--gray-lt:#F5F6F7;--gray-md:#E2E2E2;
+  --red:#CE2939;--red-lt:#FDEAEC;
+  --amber:#D97706;--amber-lt:#FEF3E2;
+  --black:#1A1A1A;--white:#FFFFFF;--text:#2D2D2D;--muted:#6B6B6B;
+}
+body{background:var(--gray-lt);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+.header{background:var(--teal);padding:0 36px;display:flex;justify-content:space-between;align-items:stretch;box-shadow:0 3px 16px rgba(0,181,173,.35)}
+.hl{display:flex;align-items:center;gap:0;padding:16px 0}
+.logo{border-right:1px solid rgba(255,255,255,.3);padding-right:24px;margin-right:24px}
+.logo-h{font-size:1.75rem;font-weight:800;color:#fff;letter-spacing:.14em;line-height:1}
+.logo-s{font-size:.68rem;color:rgba(255,255,255,.8);letter-spacing:.04em;margin-top:1px}
+.htitle h1{font-size:.98rem;font-weight:600;color:#fff;letter-spacing:.01em}
+.htitle p{font-size:.7rem;color:rgba(255,255,255,.7);margin-top:3px}
+.hr{display:flex;align-items:center;gap:0;padding:16px 0;border-left:1px solid rgba(255,255,255,.25);margin-left:auto}
+.hstat{text-align:center;padding:0 24px;border-right:1px solid rgba(255,255,255,.2)}
+.hstat:last-child{border-right:none}
+.hstat-v{font-size:1.5rem;font-weight:800;color:#fff;line-height:1}
+.hstat-l{font-size:.62rem;color:rgba(255,255,255,.7);margin-top:3px;text-transform:uppercase;letter-spacing:.06em}
+.container{padding:26px 36px;max-width:1500px;margin:0 auto}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:26px}
+.origin-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:12px 0 22px}
+.mc{background:#fff;border-radius:12px;padding:20px 22px;border:1px solid var(--gray-md);position:relative;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}
+.mc.c-teal .mc-bar{background:var(--teal)} .mc.c-gray .mc-bar{background:var(--gray)}
+.mc.c-amber .mc-bar{background:var(--amber)} .mc.c-red .mc-bar{background:var(--red)}
+.mc-lbl{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px}
+.mc-val{font-size:2rem;font-weight:800;line-height:1}
+.mc.c-teal .mc-val{color:var(--teal)} .mc.c-gray .mc-val{color:var(--gray)}
+.mc.c-amber .mc-val{color:var(--amber)} .mc.c-red .mc-val{color:var(--red)}
+.mc-sub{font-size:.68rem;color:var(--muted);margin-top:5px}
+.sec{font-size:.68rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.sec::after{content:'';flex:1;height:1px;background:var(--gray-md)}
+.funnel{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--gray-md);height:40px;margin-bottom:26px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.fs{flex:1;display:flex;align-items:center;justify-content:center;font-size:.63rem;font-weight:700;color:#fff;cursor:default;transition:opacity .15s}
+.fs:hover{opacity:.82}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:11px;margin-bottom:26px}
+.sc{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:15px 17px 13px;position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.sc-bar{position:absolute;top:0;left:0;right:0;height:4px}
+.sc-nm{font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
+.sc-n{font-size:1.75rem;font-weight:800;color:var(--black);line-height:1}
+.sc-d{font-size:.68rem;color:var(--muted);margin-top:4px}
+.alert{background:var(--red-lt);border:1px solid #F5C0C5;border-left:4px solid var(--red);border-radius:8px;padding:13px 18px;margin-bottom:22px;display:flex;align-items:center;gap:12px;font-size:.82rem;color:#8B0012}
+.alert span{font-size:1.2rem}
+.alert b{color:var(--red);font-weight:700}
+.tab-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px}
+.tabs{display:flex;border:1px solid var(--gray-md);border-radius:8px;overflow:hidden;background:#fff}
+.tab{padding:7px 20px;font-size:.76rem;font-weight:600;cursor:pointer;border:none;background:transparent;color:var(--muted);transition:all .15s;font-family:inherit}
+.tab.active{background:var(--teal);color:#fff}
+.tab:hover:not(.active){background:var(--teal-lt);color:var(--teal-dk)}
+.controls{display:flex;gap:9px;margin-bottom:13px;flex-wrap:wrap;align-items:center}
+.controls select,.controls input{background:#fff;border:1px solid var(--gray-md);color:var(--text);border-radius:8px;padding:7px 11px;font-size:.76rem;outline:none;font-family:inherit;cursor:pointer}
+.controls select:focus,.controls input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,181,173,.12)}
+.rc{font-size:.72rem;color:var(--muted)}
+.tw{background:#fff;border:1px solid var(--gray-md);border-radius:12px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.ts{max-height:530px;overflow-y:auto}
+.ts::-webkit-scrollbar{width:5px} .ts::-webkit-scrollbar-track{background:var(--gray-lt)}
+.ts::-webkit-scrollbar-thumb{background:var(--teal);border-radius:3px}
+table{width:100%;border-collapse:collapse;font-size:.79rem}
+thead th{background:var(--black);color:rgba(255,255,255,.75);padding:10px 13px;text-align:left;font-weight:600;font-size:.67rem;text-transform:uppercase;letter-spacing:.07em;border-bottom:3px solid var(--teal)}
+tbody tr{border-bottom:1px solid var(--gray-lt);transition:background .12s}
+tbody tr:hover{background:var(--teal-lt)}
+tbody td{padding:9px 13px;color:var(--text);vertical-align:middle}
+.badge{display:inline-block;padding:3px 9px;border-radius:20px;font-size:.66rem;font-weight:700}
+.b-red{background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5}
+.b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid #FCD34D}
+.b-teal{background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9}
+.b-gray{background:var(--gray-lt);color:var(--gray);border:1px solid var(--gray-md)}
+a{color:var(--teal-dk);text-decoration:none;font-weight:500}
+a:hover{text-decoration:underline;color:var(--teal)}
+.nd{text-align:center;padding:38px;color:var(--muted);font-size:.82rem}
+.team-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:26px}
+.tk{background:#fff;border:1px solid var(--gray-md);border-radius:10px;padding:14px 16px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.05);position:relative;overflow:hidden}
+.tk::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.tk.c-teal::before{background:var(--teal)} .tk.c-red::before{background:var(--red)}
+.tk.c-amber::before{background:var(--amber)} .tk.c-gray::before{background:var(--gray)}
+.tk.c-purple::before{background:#7C3AED}
+.tk-val{font-size:1.6rem;font-weight:800;line-height:1;margin-bottom:4px}
+.tk.c-teal .tk-val{color:var(--teal)} .tk.c-red .tk-val{color:var(--red)}
+.tk.c-amber .tk-val{color:var(--amber)} .tk.c-gray .tk-val{color:var(--gray)}
+.tk.c-purple .tk-val{color:#7C3AED}
+.tk-lbl{font-size:.65rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.tk-sub{font-size:.62rem;color:var(--muted);margin-top:3px}
+.vg{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px;margin-bottom:26px}
+.vc{background:#fff;border:1px solid var(--gray-md);border-radius:12px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.vc-head{background:var(--black);padding:13px 18px;display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid var(--teal)}
+.vc-name{font-size:.9rem;font-weight:700;color:#fff}
+.vc-total{font-size:1.5rem;font-weight:800;color:var(--teal);line-height:1}
+.vc-total-lbl{font-size:.58rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.06em;text-align:right}
+.vc-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:2px solid var(--gray-lt)}
+.vk{padding:9px 8px;text-align:center;border-right:1px solid var(--gray-lt);position:relative}
+.vk:last-child{border-right:none}
+.vk-val{font-size:1.05rem;font-weight:800;line-height:1}
+.vk-lbl{font-size:.58rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.vk-hint{font-size:.58rem;color:var(--muted);margin-top:1px}
+.vk.good .vk-val{color:var(--teal)} .vk.warn .vk-val{color:var(--amber)}
+.vk.bad .vk-val{color:var(--red)} .vk.neu .vk-val{color:var(--gray)}
+.vc-kpis2{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--gray-lt);background:var(--gray-lt)}
+.vk2{padding:7px 8px;text-align:center;border-right:1px solid var(--gray-md)}
+.vk2:last-child{border-right:none}
+.vk2-val{font-size:.88rem;font-weight:700;color:var(--black);line-height:1}
+.vk2-lbl{font-size:.57rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.vk2-hint{font-size:.57rem;color:var(--muted);margin-top:1px}
+.vc-rows{padding:8px 0}
+.vc-row{display:flex;align-items:center;padding:5px 16px;transition:background .12s;gap:8px}
+.vc-row:hover{background:var(--teal-lt)}
+.vc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.vc-sname{font-size:.75rem;color:var(--text);flex:1}
+.vc-bwrap{width:80px;height:5px;background:var(--gray-lt);border-radius:3px;overflow:hidden}
+.vc-bfill{height:100%;border-radius:3px}
+.vc-cnt{font-size:.78rem;font-weight:700;color:var(--black);min-width:22px;text-align:right}
+.vc-pct{font-size:.65rem;color:var(--muted);min-width:32px;text-align:right}
+.footer{text-align:center;padding:18px;font-size:.68rem;color:var(--muted);border-top:1px solid var(--gray-md);background:#fff;margin-top:28px}
+/* Analisis ejecutivo */
+.exec-summary{border-left:4px solid var(--teal);padding:15px 20px;margin:12px 0 22px;background:#fff;border-radius:0 10px 10px 0;border:1px solid var(--gray-md)}
+.quadrant-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin:12px 0 22px}
+.quadrant{border-radius:10px;padding:14px;background:#fff;border:1px solid var(--gray-md);display:flex;flex-direction:column;gap:7px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.q-star{border-left:4px solid #22c55e} .q-potential{border-left:4px solid #eab308} .q-volume{border-left:4px solid #3b82f6} .q-critical{border-left:4px solid var(--red)}
+.q-label{font-weight:700;font-size:.78rem} .q-axis{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.q-person{font-size:.8rem;line-height:1.5} .q-action{font-size:.7rem;color:var(--muted);font-style:italic}
+.actions-row{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:18px;margin-bottom:24px}
+.action-card{border-radius:10px;padding:13px;background:#fff;border:1px solid var(--gray-md);font-size:.75rem;line-height:1.55}
+.action-card h4{margin:0 0 7px;font-size:.78rem} .action-card ol{margin:0;padding-left:16px} .action-card li{margin-bottom:5px}
+.action-card.immediate{border-top:3px solid #22c55e} .action-card.short-term{border-top:3px solid #3b82f6}
+.action-card.insight{border-top:3px solid #7C3AED} .action-card.risk{border-top:3px solid var(--red)}
+/* Badges cuadrante */
+.badge-q{display:inline-block;margin-top:5px;font-size:.62rem;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none}
+.badge-q.star{background:rgba(34,197,94,.12);color:#16a34a;border:1px solid rgba(34,197,94,.3)}
+.badge-q.potential{background:rgba(234,179,8,.12);color:#b45309;border:1px solid rgba(234,179,8,.3)}
+.badge-q.volume{background:rgba(59,130,246,.12);color:#2563eb;border:1px solid rgba(59,130,246,.3)}
+.badge-q.critical{background:rgba(206,41,57,.12);color:var(--red);border:1px solid rgba(206,41,57,.3)}
+.super-star-banner{background:linear-gradient(90deg,#7c3aed,#a855f7);color:#fff;font-size:.65rem;font-weight:800;padding:4px 10px;letter-spacing:.08em;text-transform:uppercase;border-radius:0 0 8px 8px;text-align:center;margin:-1px -1px 0 -1px}
+.vc.is-super-star{border:2px solid #a855f7;box-shadow:0 0 16px rgba(168,85,247,.25)}
+/* Proyeccion */
+.scenarios-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:12px 0 24px}
+.scenario{background:#fff;border-radius:10px;padding:16px;text-align:center;border:1px solid var(--gray-md);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.scenario-base{border-top:3px solid var(--gray)} .scenario-mid{border-top:3px solid #3b82f6} .scenario-top{border-top:3px solid #22c55e}
+.scenario h4{margin:0 0 6px;font-size:.74rem;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.scenario-num{font-size:1.9rem;font-weight:800;color:var(--black);line-height:1}
+.scenario-val{font-size:.95rem;font-weight:700;color:var(--teal);margin:3px 0 7px} .scenario p{font-size:.68rem;color:var(--muted);margin:0}
+/* Fila global automático vs manual */
+.lead-origin-row{display:flex;align-items:center;gap:0;background:#fff;border:1px solid var(--gray-md);border-radius:12px;padding:0;margin-bottom:22px;overflow:hidden;box-shadow:0 1px 5px rgba(0,0,0,.06);position:relative}
+.lo-card{display:flex;align-items:center;gap:16px;flex:1;padding:18px 24px}
+.lo-auto{border-right:1px solid var(--gray-md)}
+.lo-auto .lo-val{color:var(--gray)}
+.lo-manual .lo-val{color:var(--teal)}
+.lo-icon{font-size:2rem;opacity:.7;flex-shrink:0}
+.lo-val{font-size:2.4rem;font-weight:800;line-height:1;margin-bottom:3px}
+.lo-lbl{font-size:.72rem;font-weight:600;color:var(--text);line-height:1.4;max-width:200px}
+.lo-pct{font-size:.66rem;color:var(--muted);margin-top:2px;font-weight:600}
+.lo-vs{font-size:.72rem;font-weight:800;color:var(--muted);padding:0 4px;flex-shrink:0;letter-spacing:.04em}
+.lo-bar-wrap{position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--teal-lt)}
+.lo-bar-fill{height:100%;background:var(--gray);border-radius:0}
+/* Delta MoM */
+.delta-mom{font-size:.65rem;font-weight:700;margin-left:4px;vertical-align:middle}
+.delta-mom.up{color:#16a34a} .delta-mom.down{color:var(--red)} .delta-mom.flat{color:var(--gray)}
+/* Velocidad de Respuesta */
+.resp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:12px 0 16px}
+.resp-ranking{background:#fff;border-radius:10px;border:1px solid var(--gray-md);overflow:hidden;margin-bottom:22px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+/* Canal de Origen */
+.ch-wrap{background:#fff;border-radius:12px;border:1px solid var(--gray-md);overflow:hidden;margin:12px 0 4px;box-shadow:0 1px 5px rgba(0,0,0,.06)}
+.ch-table{width:100%;border-collapse:collapse;font-size:.79rem}
+.ch-table th{background:var(--black);color:rgba(255,255,255,.75);padding:9px 13px;text-align:left;font-weight:600;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:3px solid var(--teal)}
+.ch-table td{padding:9px 13px;border-bottom:1px solid var(--gray-lt);vertical-align:middle}
+.ch-table tr:last-child td{border-bottom:none}
+.ch-table tr:hover td{background:var(--teal-lt)}
+.ch-bar-wrap{width:80px;height:6px;background:var(--gray-lt);border-radius:3px;display:inline-block;vertical-align:middle}
+.ch-bar-fill{height:100%;border-radius:3px}
+.ch-best td{background:rgba(34,197,94,.07)} .ch-best td:nth-child(5){color:#15803d;font-weight:800}
+.ch-worst td{background:rgba(206,41,57,.05)} .ch-worst td:nth-child(5){color:var(--red);font-weight:800}
+.ch-insight{background:var(--teal-lt);border-top:1px solid #99DDD9;padding:12px 18px;font-size:.78rem;line-height:1.65;color:var(--text)}
+.mock-badge{display:inline-block;font-size:.58rem;font-weight:700;background:#FEF3C7;color:#92400E;border:1px solid #FCD34D;padding:2px 6px;border-radius:20px;vertical-align:middle;margin-left:6px;letter-spacing:.02em}
+.ch-alert{background:var(--amber-lt);border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:8px;padding:11px 16px;margin-bottom:10px;display:flex;align-items:center;gap:10px;font-size:.8rem;color:#7C4B00}
+.ch-alert span{font-size:1.1rem} .ch-alert b{color:var(--amber);font-weight:700}
+@media(max-width:768px){.quadrant-grid,.actions-row,.scenarios-grid,.resp-kpis{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="hl">
+    <div class="logo"><div class="logo-h">HEAVEN</div><div class="logo-s">colchones &#10011;</div></div>
+    <div class="htitle">
+      <h1>Dashboard CRM Diario — Junio 2026</h1>
+      <p>Generado: 04/06/2026 09:25 &nbsp;&bull;&nbsp; Actualizacion diaria 10:00 AM y 17:00 PM</p>
+    </div>
+  </div>
+  <div class="hr">
+    <div class="hstat">
+      <div style="display:flex;align-items:baseline;gap:10px;justify-content:center">
+        <div class="hstat-v">138</div>
+        <div style="font-size:1rem;font-weight:800;color:#7FFFB0">&#9650; +24</div>
+      </div>
+      <div class="hstat-l">1-4 Jun &nbsp;vs&nbsp; 114 en May</div>
+    </div>
+    <div class="hstat"><div class="hstat-v">$91,050</div><div class="hstat-l">Valor total</div></div>
+    <div class="hstat"><div class="hstat-v">0</div><div class="hstat-l">Sin Seguimiento</div></div>
+  </div>
+</div>
+<div class="container">
+  <div class="metrics">
+    <div class="mc c-teal"><div class="mc-bar"></div><div class="mc-lbl">Leads del Mes</div><div class="mc-val">138</div><div class="mc-sub">creados en Junio 2026</div></div>
+    <div class="mc c-gray"><div class="mc-bar"></div><div class="mc-lbl">Valor Total Pipeline</div><div class="mc-val">$91,050</div><div class="mc-sub">deals con valor asignado</div></div>
+    <div class="mc c-amber"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +72h</div><div class="mc-val">0</div><div class="mc-sub">sin actividad reciente</div></div>
+    <div class="mc c-red"><div class="mc-bar"></div><div class="mc-lbl">Sin Seguimiento +7 dias</div><div class="mc-val">0</div><div class="mc-sub">atencion urgente</div></div>
+  </div>
+  <div class="lead-origin-row">
+    <div class="lo-card lo-auto">
+      <div class="lo-icon">&#9881;</div>
+      <div class="lo-body">
+        <div class="lo-val">109</div>
+        <div class="lo-lbl">Leads asignados autom&aacute;ticamente por el sistema</div>
+        <div class="lo-pct">79% del total</div>
+      </div>
+    </div>
+    <div class="lo-vs">VS</div>
+    <div class="lo-card lo-manual">
+      <div class="lo-icon">&#9997;</div>
+      <div class="lo-body">
+        <div class="lo-val">29</div>
+        <div class="lo-lbl">Leads ingresados manualmente por vendedoras</div>
+        <div class="lo-pct">21% del total</div>
+      </div>
+    </div>
+    <div class="lo-bar-wrap">
+      <div class="lo-bar-fill" style="width:79%"></div>
+    </div>
+  </div>
+  <div class="sec">Origen de Leads &mdash; Junio 2026</div>
+  
+  <div class="ch-wrap">
+    <table class="ch-table">
+      <thead><tr><th>Canal</th><th>Leads</th><th>% Total</th><th>Cierres</th><th>Conversi&oacute;n</th><th>Conv. relativa</th><th>Ticket prom.</th><th>Pipeline</th></tr></thead>
+      <tbody>
+        <tr class="ch-best"><td>&#9997; Carga manual vendedora</td><td>29</td><td>21%</td><td>19</td><td>66%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:100%;background:#22c55e"></div></div></td><td>$4,792</td><td>$91,050</td></tr>
+        <tr class="ch-worst"><td>&#9881; Automático</td><td>109</td><td>79%</td><td>0</td><td>0%</td><td><div class="ch-bar-wrap"><div class="ch-bar-fill" style="width:0%;background:var(--red)"></div></div></td><td>&mdash;</td><td>&mdash;</td></tr>
+
+      </tbody>
+    </table>
+    <div class="ch-insight">&#128161; <strong>Carga manual vendedora convierte 66.0&times; m&aacute;s que Automático</strong> (66% vs 0%). Ticket promedio en Carga manual vendedora: <strong>$4,792</strong> &mdash; priorizar este canal tiene mayor retorno por lead captado.</div>
+  </div>
+  <div class="sec">Embudo del Mes</div>
+  <div id="funnel" class="funnel"></div>
+  <div class="sg" id="stages-grid"></div>
+  <div class="alert"><span>&#9888;</span><div><b>0 deals (0%)</b> llevan mas de 72h sin seguimiento &mdash; <b>0</b> superan los 7 dias.</div></div>
+  <div class="sec">KPIs del Equipo &mdash; Junio 2026</div>
+  <div class="team-kpis">
+    <div class="tk c-teal"><div class="tk-val">14% <span class="delta-mom up">&#9650; +10pp</span></div><div class="tk-lbl">Tasa de Conversion</div><div class="tk-sub">19 compradores / 138 leads</div></div>
+    <div class="tk c-red"><div class="tk-val">6%</div><div class="tk-lbl">Sin Respuesta del Cliente</div><div class="tk-sub">8 el cliente no responde</div></div>
+    <div class="tk c-amber"><div class="tk-val">22%</div><div class="tk-lbl">Leads Calificados</div><div class="tk-sub">31 en etapas avanzadas</div></div>
+    <div class="tk c-purple"><div class="tk-val">$4,792 <span class="delta-mom up">&#9650;</span></div><div class="tk-lbl">Ticket Promedio</div><div class="tk-sub">valor / compradores cerrados</div></div>
+    <div class="tk c-gray"><div class="tk-val">0%</div><div class="tk-lbl">Sin Seguimiento</div><div class="tk-sub">0 sin actividad &gt;72h</div></div>
+  </div>
+  <div class="sec">Velocidad de Respuesta &mdash; Junio 2026</div>
+  <div class="resp-kpis">
+    <div class="tk c-teal"><div class="tk-val">0 min</div><div class="tk-lbl">Tiempo Promedio Global</div><div class="tk-sub">meta: &lt;15 min</div></div>
+    <div class="tk c-teal"><div class="tk-val">100%</div><div class="tk-lbl">Respondidos en &lt;5 min</div><div class="tk-sub">138 leads &mdash; ventana de oro</div></div>
+    <div class="tk c-teal"><div class="tk-val">100%</div><div class="tk-lbl">Respondidos en &lt;1 hora</div><div class="tk-sub">138 leads contactados a tiempo</div></div>
+    <div class="tk c-red"><div class="tk-val">0</div><div class="tk-lbl">Leads Fr&iacute;os +24h / Sin Respuesta</div><div class="tk-sub">0% &mdash; requieren reactivaci&oacute;n</div></div>
+  </div>
+  <div class="resp-ranking">
+    <table class="ch-table">
+      <thead><tr><th>Vendedora</th><th>% en &lt;5 min</th><th>Tiempo prom. 1&ordf; respuesta</th><th>Fr&iacute;os / Sin contacto</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Carola Chavez - Central</strong></td><td>100%</td><td><strong>0 min</strong></td><td>0</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td><strong>Maria Flores - Buenos Aires</strong></td><td>100%</td><td><strong>0 min</strong></td><td>0</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td><strong>Mirian Salazar - Mia Plaza</strong></td><td>100%</td><td><strong>0 min</strong></td><td>0</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td><strong>Jonathan Monje - Central</strong></td><td>100%</td><td><strong>0 min</strong></td><td>0</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+        <tr><td><strong>Isabel Robledo - Mia Plaza</strong></td><td>100%</td><td><strong>0 min</strong></td><td>0</td><td><span class="badge b-teal">&#128994; Excelente</span></td></tr>
+
+      </tbody>
+    </table>
+  </div>
+  <div class="sec">Análisis Ejecutivo &mdash; Junio 2026</div>
+  <div class="exec-summary">
+    <div style="font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:7px">Diagnóstico del Mes</div>
+    <p style="font-size:.82rem;line-height:1.65;color:var(--text)">
+      El equipo generó <strong>138 leads</strong> con <strong>19 cierres</strong> (14% conversión)
+      y <strong>$91,050</strong> en pipeline.
+      <strong>Carola Chavez - Central concentra el 47% de los cierres</strong> &mdash;
+      la palanca principal de mejora es <strong>conversión y disciplina de seguimiento</strong>.
+      Hay <strong>0 deals sin seguimiento</strong> (0%) que representan oportunidades latentes.
+    </p>
+  </div>
+  <div class="sec" style="margin-top:4px">Matriz de Rendimiento</div>
+  <div class="quadrant-grid" id="quadrant-grid"></div>
+  <div class="actions-row">
+    <div class="action-card immediate">
+      <h4>✅ Esta Semana</h4>
+      <ol>
+        <li>Llamar top 50 cotizaciones por valor &mdash; meta <strong>+10 cierres</strong></li>
+        <li>Acompañar visitas de vendedoras CRÍTICO &mdash; ticket <strong>$4,792</strong></li>
+        <li>Documentar playbook de <strong>Carola Chavez - Central</strong> para replicarlo</li>
+      </ol>
+    </div>
+    <div class="action-card short-term">
+      <h4>📅 Este Mes</h4>
+      <ol>
+        <li>Activar los <strong>0</strong> leads con +7 días sin contacto</li>
+        <li>Revisar pipeline &ldquo;No Responden&rdquo; (<strong>8</strong> leads)</li>
+        <li>Etiquetar sucursal en leads sin clasificar</li>
+      </ol>
+    </div>
+    <div class="action-card insight">
+      <h4>💡 Insight</h4>
+      <p>Con <strong>138 leads</strong> el cuello de botella <strong>no es captación</strong> &mdash; es conversión.
+      Si todas las vendedoras igualaran a <strong>Carola Chavez - Central</strong> habría
+      <strong>~21 cierres extra</strong> solo este mes.</p>
+    </div>
+    <div class="action-card risk">
+      <h4>⚠️ Riesgo</h4>
+      <p><strong>Concentración en Carola Chavez - Central</strong> (47% de cierres).
+      Dependencia estructural alta &mdash; replicar su método al equipo es prioridad #1.</p>
+    </div>
+  </div>
+  <div class="sec">Rendimiento por Vendedora</div>
+  <div class="vg" id="vendors-grid"></div>
+  <div class="sec">Proyección al Cierre de Junio 2026</div>
+  <p style="font-size:.72rem;color:var(--muted);margin-bottom:0">Días transcurridos: <strong>4 / 30</strong> &nbsp;&bull;&nbsp; Pace lineal basado en datos actuales.</p>
+  <div class="scenarios-grid">
+    <div class="scenario scenario-base">
+      <h4>Escenario Base</h4>
+      <div class="scenario-num">~142</div>
+      <div class="scenario-val">~$680,464</div>
+      <p>Mantiene tendencia actual sin intervenciones</p>
+    </div>
+    <div class="scenario scenario-mid">
+      <h4>+1pp Conversión (4%)</h4>
+      <div class="scenario-num">~41</div>
+      <div class="scenario-val">~$196,472</div>
+      <p>Coaching dirigido a vendedoras CRÍTICO</p>
+    </div>
+    <div class="scenario scenario-top">
+      <h4>Rescate Sin Seguimiento (30%)</h4>
+      <div class="scenario-num">+0</div>
+      <div class="scenario-val">+$0</div>
+      <p>Llamada/WhatsApp a los 0 sin seguimiento</p>
+    </div>
+  </div>
+  <div class="tab-row">
+    <div class="sec" style="margin:0;flex:1">Todos los Deals del Mes</div>
+    <div class="tabs">
+      <button class="tab active" onclick="setView('all')">Todos (138)</button>
+      <button class="tab" onclick="setView('stagnant')">Sin Seguimiento (0)</button>
+    </div>
+  </div>
+  <div class="controls">
+    <select id="f-stage" onchange="render()"><option value="">Todas las etapas</option></select>
+    <select id="f-user" onchange="render()"><option value="">Todos los responsables</option></select>
+    <select id="f-suc" onchange="render()"><option value="">Todas las sucursales</option></select>
+    <input id="f-days" type="number" placeholder="Dias min. sin seguimiento" oninput="render()" style="width:190px">
+    <button onclick="document.getElementById('f-days').value=7;render()" style="background:var(--red-lt);color:var(--red);border:1px solid #F5C0C5;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:700;cursor:pointer;font-family:inherit">🔴 Solo críticos +7d</button>
+    <button onclick="exportCSV()" style="background:var(--teal-lt);color:var(--teal-dk);border:1px solid #99DDD9;border-radius:8px;padding:7px 13px;font-size:.73rem;font-weight:600;cursor:pointer;font-family:inherit">⬇ Exportar CSV</button>
+    <span id="rc" class="rc"></span>
+  </div>
+  <div class="tw"><div class="ts">
+    <table>
+      <thead><tr><th>#</th><th>Contacto / Deal</th><th>Etapa</th><th>Sucursal</th><th>Responsable</th><th>Creado</th><th>Dias sin act.</th><th>Valor</th><th>Estado</th></tr></thead>
+      <tbody id="tbl"></tbody>
+    </table>
+  </div></div>
+</div>
+<div class="footer">HEAVEN Colchones &bull; Pipeline Junio 2026 &bull; eanez.kommo.com &bull; 04/06/2026 09:25</div>
+<script>
+const allRows=[{"id": 32931038, "name": "TIENDA-Antonia", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 2.8, "days_int": 2, "value": 2660}, {"id": 32947474, "name": "Lead #32947474", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 2.7, "days_int": 2, "value": 2070}, {"id": 32960960, "name": "TIENDA-Willam Aparicio", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 2.6, "days_int": 2, "value": 1670}, {"id": 32973734, "name": "Lead #32973734", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 2.4, "days_int": 2, "value": 2240}, {"id": 32973816, "name": "Lead #32973816", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 2.4, "days_int": 2, "value": 380}, {"id": 32973914, "name": "Lead #32973914", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 2.4, "days_int": 2, "value": 6880}, {"id": 32916340, "name": "Lead #32916340", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 2.4, "days_int": 2, "value": 0}, {"id": 32984974, "name": "Lead #32984974", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.3, "days_int": 2, "value": 5510}, {"id": 32985124, "name": "Lead #32985124", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.3, "days_int": 2, "value": 2420}, {"id": 32985228, "name": "Lead #32985228", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.3, "days_int": 2, "value": 5980}, {"id": 32985364, "name": "Lead #32985364", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 12870}, {"id": 32985444, "name": "Lead #32985444", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 100}, {"id": 32985568, "name": "Lead #32985568", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 4660}, {"id": 32985744, "name": "Lead #32985744", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 2660}, {"id": 32985806, "name": "Lead #32985806", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 3550}, {"id": 32973546, "name": "Lead #32973546", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 2.2, "days_int": 2, "value": 6050}, {"id": 32985924, "name": "Lead #32985924", "contact": "", "stage": "Compradores", "sucursal": "VISITO DIRECTO TIENDA", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 2.2, "days_int": 2, "value": 5420}, {"id": 33046878, "name": "Lead #33046878", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.8, "days_int": 1, "value": 0}, {"id": 32981548, "name": "Lead #32981548", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 1.8, "days_int": 1, "value": 0}, {"id": 33076214, "name": "Lead #33076214", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 1.7, "days_int": 1, "value": 0}, {"id": 33062534, "name": "Lead #33062534", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 1.7, "days_int": 1, "value": 0}, {"id": 33081926, "name": "Lead #33081926", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 1.6, "days_int": 1, "value": 0}, {"id": 32973622, "name": "Lead #32973622", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "01/06/2026", "days": 1.6, "days_int": 1, "value": 0}, {"id": 33093514, "name": "Lead #33093514", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 1.6, "days_int": 1, "value": 0}, {"id": 33075646, "name": "Lead #33075646", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 1.6, "days_int": 1, "value": 0}, {"id": 33099194, "name": "TIENDA-Yerson", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33100378, "name": "Lead #33100378", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33103512, "name": "Lead #33103512", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33104252, "name": "Lead #33104252", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 32957310, "name": "TIENDA-Jorge Hurtado", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33071396, "name": "Lead #33071396", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33085826, "name": "Lead #33085826", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33104268, "name": "Lead #33104268", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33100616, "name": "Lead #33100616", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33077606, "name": "Lead #33077606", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 32943182, "name": "TIENDA-Wilson", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 1.5, "days_int": 1, "value": 0}, {"id": 33110906, "name": "TIENDA-Roddrigo Rosales", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 1.4, "days_int": 1, "value": 0}, {"id": 33079010, "name": "Lead #33079010", "contact": "", "stage": "Pedido cancelado – perdido", "sucursal": "Atendido", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 1.4, "days_int": 1, "value": 0}, {"id": 33113986, "name": "Lead #33113986", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 1.3, "days_int": 1, "value": 0}, {"id": 33117724, "name": "Lead #33117724", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 1.3, "days_int": 1, "value": 0}, {"id": 33125018, "name": "Lead #33125018", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 1.1, "days_int": 1, "value": 0}, {"id": 33098726, "name": "Lead #33098726", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33110758, "name": "Lead #33110758", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33105772, "name": "Lead #33105772", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33116656, "name": "Lead #33116656", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33118922, "name": "Lead #33118922", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33133962, "name": "Lead #33133962", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33123508, "name": "Lead #33123508", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33125808, "name": "Lead #33125808", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33136380, "name": "Lead #33136380", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33117240, "name": "Lead #33117240", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33136856, "name": "Lead #33136856", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33131284, "name": "Lead #33131284", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33119226, "name": "Lead #33119226", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33116916, "name": "Lead #33116916", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33109526, "name": "Lead #33109526", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33143036, "name": "Lead #33143036", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33081040, "name": "Lead #33081040", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33131502, "name": "Lead #33131502", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33117168, "name": "Lead #33117168", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33146788, "name": "Lead #33146788", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 32935128, "name": "Lead #32935128", "contact": "", "stage": "No Responden", "sucursal": "Atendido", "user": "Carola Chavez - Central", "created": "01/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33110506, "name": "Lead #33110506", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33149116, "name": "Lead #33149116", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33071660, "name": "Lead #33071660", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33124946, "name": "Lead #33124946", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33119394, "name": "Lead #33119394", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.8, "days_int": 0, "value": 0}, {"id": 33100784, "name": "Lead #33100784", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33152748, "name": "Lead #33152748", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33123408, "name": "Lead #33123408", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33124914, "name": "Lead #33124914", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33097618, "name": "TIENDA-Ricardo Cortez", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "02/06/2026", "days": 0.7, "days_int": 0, "value": 3450}, {"id": 33155786, "name": "Lead #33155786", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33068374, "name": "Lead #33068374", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "02/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33158850, "name": "Lead #33158850", "contact": "", "stage": "Interesado", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 3930}, {"id": 33141692, "name": "Lead #33141692", "contact": "", "stage": "No Responden", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.7, "days_int": 0, "value": 0}, {"id": 33146688, "name": "Lead #33146688", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33158526, "name": "Lead #33158526", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33160112, "name": "Lead #33160112", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33123726, "name": "Lead #33123726", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33157466, "name": "Lead #33157466", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33166654, "name": "Lead #33166654", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 120}, {"id": 33166838, "name": "Lead #33166838", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 1670}, {"id": 33167220, "name": "Lead #33167220", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 8830}, {"id": 33162954, "name": "Lead #33162954", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33163324, "name": "Lead #33163324", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 32944104, "name": "CA-60033200", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "01/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33123432, "name": "Lead #33123432", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33135836, "name": "Lead #33135836", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33144652, "name": "Lead #33144652", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33156394, "name": "Lead #33156394", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33159348, "name": "Lead #33159348", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33072064, "name": "Lead #33072064", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33152064, "name": "Lead #33152064", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33166076, "name": "Lead #33166076", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33162116, "name": "Lead #33162116", "contact": "", "stage": "Agendado / Visita", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33166822, "name": "Lead #33166822", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.6, "days_int": 0, "value": 0}, {"id": 33162622, "name": "Lead #33162622", "contact": "", "stage": "Interesado", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33159142, "name": "Lead #33159142", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33151258, "name": "Lead #33151258", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33145968, "name": "Lead #33145968", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33092604, "name": "Lead #33092604", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "02/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33167206, "name": "Lead #33167206", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33157422, "name": "Lead #33157422", "contact": "", "stage": "Interesado", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33159792, "name": "Lead #33159792", "contact": "", "stage": "Interesado", "sucursal": "Envio catálogo", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33165702, "name": "Lead #33165702", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33163292, "name": "Lead #33163292", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33171284, "name": "Lead #33171284", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33164202, "name": "Lead #33164202", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33178084, "name": "Lead #33178084", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 2420}, {"id": 33146232, "name": "Lead #33146232", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33102848, "name": "Lead #33102848", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33094914, "name": "Lead #33094914", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33071386, "name": "Lead #33071386", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 32969426, "name": "Lead #32969426", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "01/06/2026", "days": 0.5, "days_int": 0, "value": 0}, {"id": 33179238, "name": "Lead #33179238", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "03/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33064628, "name": "Lead #33064628", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "02/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33179308, "name": "TIENDA-Sidel Polanco", "contact": "", "stage": "Compradores", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.4, "days_int": 0, "value": 5510}, {"id": 33181862, "name": "Lead #33181862", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "03/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33185972, "name": "Lead #33185972", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33179474, "name": "Lead #33179474", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "03/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33187156, "name": "Lead #33187156", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "04/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33187410, "name": "Lead #33187410", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "04/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33186856, "name": "Lead #33186856", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "04/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33188296, "name": "Lead #33188296", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "04/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33188442, "name": "Lead #33188442", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "04/06/2026", "days": 0.4, "days_int": 0, "value": 0}, {"id": 33189236, "name": "Lead #33189236", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33188998, "name": "Lead #33188998", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33189366, "name": "Lead #33189366", "contact": "", "stage": "Nueva consulta", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33164402, "name": "Lead #33164402", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33191258, "name": "Lead #33191258", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33189090, "name": "Lead #33189090", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33192740, "name": "Lead #33192740", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Maria Flores - Buenos Aires", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33167648, "name": "Lead #33167648", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "03/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33193634, "name": "Lead #33193634", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Jonathan Monje - Central", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33192014, "name": "Lead #33192014", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Carola Chavez - Central", "created": "04/06/2026", "days": 0.3, "days_int": 0, "value": 0}, {"id": 33193348, "name": "Lead #33193348", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Mirian Salazar - Mia Plaza", "created": "04/06/2026", "days": 0.2, "days_int": 0, "value": 0}, {"id": 33194822, "name": "Lead #33194822", "contact": "", "stage": "Cotización enviada", "sucursal": "Sin sucursal", "user": "Isabel Robledo - Mia Plaza", "created": "04/06/2026", "days": 0.2, "days_int": 0, "value": 0}];
+const stages=[{"name": "Leads Entrantes", "count": 0, "value": 0, "pct": 0}, {"name": "Nueva consulta", "count": 44, "value": 8950, "pct": 32}, {"name": "Interesado", "count": 4, "value": 3930, "pct": 3}, {"name": "Cotización enviada", "count": 54, "value": 0, "pct": 39}, {"name": "Agendado / Visita", "count": 8, "value": 0, "pct": 6}, {"name": "Compradores", "count": 19, "value": 72120, "pct": 14}, {"name": "No Responden", "count": 8, "value": 6050, "pct": 6}, {"name": "Pedido enviado – ganado", "count": 0, "value": 0, "pct": 0}, {"name": "Pedido cancelado – perdido", "count": 1, "value": 0, "pct": 1}];
+const sucOpts=["Atendido", "Envio catálogo", "Sin sucursal", "VISITO DIRECTO TIENDA"];
+const usrOpts=["Carola Chavez - Central", "Isabel Robledo - Mia Plaza", "Jonathan Monje - Central", "Maria Flores - Buenos Aires", "Mirian Salazar - Mia Plaza"];
+const stgOpts=["Agendado / Visita", "Compradores", "Cotización enviada", "Interesado", "No Responden", "Nueva consulta", "Pedido cancelado – perdido"];
+const vendors=[{"name": "Isabel Robledo - Mia Plaza", "total": 32, "prev_total": 28, "value": 13290, "stages": [{"stage": "Leads Entrantes", "count": 0}, {"stage": "Nueva consulta", "count": 8}, {"stage": "Interesado", "count": 0}, {"stage": "Cotización enviada", "count": 16}, {"stage": "Agendado / Visita", "count": 3}, {"stage": "Compradores", "count": 4}, {"stage": "No Responden", "count": 1}, {"stage": "Pedido enviado – ganado", "count": 0}, {"stage": "Pedido cancelado – perdido", "count": 0}], "quadrant": "volume", "kpis": {"conv_pct": 12, "compradores": 4, "no_resp_pct": 3, "no_resp": 1, "calif_pct": 22, "calificados": 7, "stagnant_pct": 0, "stagnant": 0, "ticket_avg": 3322, "created_manual": 9}}, {"name": "Maria Flores - Buenos Aires", "total": 31, "prev_total": 30, "value": 30660, "stages": [{"stage": "Leads Entrantes", "count": 0}, {"stage": "Nueva consulta", "count": 8}, {"stage": "Interesado", "count": 0}, {"stage": "Cotización enviada", "count": 16}, {"stage": "Agendado / Visita", "count": 0}, {"stage": "Compradores", "count": 6}, {"stage": "No Responden", "count": 1}, {"stage": "Pedido enviado – ganado", "count": 0}, {"stage": "Pedido cancelado – perdido", "count": 0}], "quadrant": "star", "kpis": {"conv_pct": 19, "compradores": 6, "no_resp_pct": 3, "no_resp": 1, "calif_pct": 19, "calificados": 6, "stagnant_pct": 0, "stagnant": 0, "ticket_avg": 5110, "created_manual": 9}}, {"name": "Carola Chavez - Central", "total": 31, "prev_total": 26, "value": 43170, "stages": [{"stage": "Leads Entrantes", "count": 0}, {"stage": "Nueva consulta", "count": 8}, {"stage": "Interesado", "count": 2}, {"stage": "Cotización enviada", "count": 10}, {"stage": "Agendado / Visita", "count": 0}, {"stage": "Compradores", "count": 9}, {"stage": "No Responden", "count": 1}, {"stage": "Pedido enviado – ganado", "count": 0}, {"stage": "Pedido cancelado – perdido", "count": 1}], "quadrant": "star", "kpis": {"conv_pct": 29, "compradores": 9, "no_resp_pct": 3, "no_resp": 1, "calif_pct": 35, "calificados": 11, "stagnant_pct": 0, "stagnant": 0, "ticket_avg": 4796, "created_manual": 9}}, {"name": "Mirian Salazar - Mia Plaza", "total": 24, "prev_total": 30, "value": 3930, "stages": [{"stage": "Leads Entrantes", "count": 0}, {"stage": "Nueva consulta", "count": 14}, {"stage": "Interesado", "count": 1}, {"stage": "Cotización enviada", "count": 2}, {"stage": "Agendado / Visita", "count": 2}, {"stage": "Compradores", "count": 0}, {"stage": "No Responden", "count": 5}, {"stage": "Pedido enviado – ganado", "count": 0}, {"stage": "Pedido cancelado – perdido", "count": 0}], "quadrant": "critical", "kpis": {"conv_pct": 0, "compradores": 0, "no_resp_pct": 21, "no_resp": 5, "calif_pct": 12, "calificados": 3, "stagnant_pct": 0, "stagnant": 0, "ticket_avg": 0, "created_manual": 2}}, {"name": "Jonathan Monje - Central", "total": 20, "prev_total": 0, "value": 0, "stages": [{"stage": "Leads Entrantes", "count": 0}, {"stage": "Nueva consulta", "count": 6}, {"stage": "Interesado", "count": 1}, {"stage": "Cotización enviada", "count": 10}, {"stage": "Agendado / Visita", "count": 3}, {"stage": "Compradores", "count": 0}, {"stage": "No Responden", "count": 0}, {"stage": "Pedido enviado – ganado", "count": 0}, {"stage": "Pedido cancelado – perdido", "count": 0}], "quadrant": "critical", "kpis": {"conv_pct": 0, "compradores": 0, "no_resp_pct": 0, "no_resp": 0, "calif_pct": 20, "calificados": 4, "stagnant_pct": 0, "stagnant": 0, "ticket_avg": 0, "created_manual": 0}}];
+const etapas=["Leads Entrantes", "Nueva consulta", "Interesado", "Cotización enviada", "Agendado / Visita", "Compradores", "No Responden", "Pedido enviado – ganado", "Pedido cancelado – perdido"];
+const prevMesShort='May';
+const COMPRADORES_STAGE='Compradores';
+const NO_RESP_STAGE_JS='No Responden';
+const FOLLOWUP_STAGES=["Nueva consulta", "Cotización enviada", "Agendado / Visita", "Interesado"];
+const SC={'Incoming leads':'#9CA3AF','Nueva consulta':'#00B5AD','Interesado':'#D97706','Cotizacion enviada':'#3B9ECB','Agendado / Visita':'#22A06B','Compradores':'#7C3AED','No Responden':'#CE2939'};
+function kpiClass(val,g,w){return val>=g?'good':val>=w?'warn':'bad'}
+function kpiClassInv(val,b,w){return val<=w?'good':val<=b?'warn':'bad'}
+const QL={'star':'&#9679; ESTRELLA','potential':'&#9670; POTENCIAL','volume':'&#9632; ALTO VOLUMEN','critical':'&#9675; CRÍTICO'};
+const QC={'star':'star','potential':'potential','volume':'volume','critical':'critical'};
+const qDesc={'star':'Alto volumen · Conversión superior','potential':'Buena conversión · Poco volumen','volume':'Mucho volumen · Conversión promedio','critical':'Bajo volumen · Baja conversión'};
+const qAction={'star':'→ Documentar playbook y replicarlo al equipo','potential':'→ Aumentar volumen de leads asignados','volume':'→ Mejorar cierre: auditar cotizaciones y acompañar visitas','critical':'→ Coaching intensivo y revisión de pipeline'};
+// Quadrant grid
+const superStarName=vendors.reduce((best,v)=>v.kpis.conv_pct>best.kpis.conv_pct?v:best,vendors[0]).name;
+const qg=document.getElementById('quadrant-grid');
+[...vendors].sort((a,b)=>{const o={star:0,potential:1,volume:2,critical:3};return (o[a.quadrant]||3)-(o[b.quadrant]||3);}).forEach(v=>{
+  const cls=v.quadrant||'critical';
+  const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
+  const k=v.kpis;
+  const isQStar=v.name===superStarName&&v.kpis.conv_pct>0;
+  const qStarBanner=isQStar?'<div class="super-star-banner" style="margin:-14px -14px 6px -14px;border-radius:9px 9px 0 0">&#9819; SUPER ESTRELLA &mdash; MEJOR CONVERSIÓN &#9819;</div>':'';
+  qg.innerHTML+='<div class="quadrant q-'+cls+(isQStar?' is-super-star':'')+'" style="'+(isQStar?'border:2px solid #a855f7;box-shadow:0 0 16px rgba(168,85,247,.25)':'')+'">'+qStarBanner
+    +'<span class="q-label">'+QL[cls]+'</span><span class="q-axis">'+qDesc[cls]+'</span>'
+    +'<div class="q-person"><strong>'+v.name+'</strong><br>'+v.total+' leads &middot; '+k.conv_pct+'% conv &middot; '+val+'</div>'
+    +'<p class="q-action">'+(qAction[cls]||qAction['critical'])+'</p></div>';
+});
+// Vendor cards
+const vg=document.getElementById('vendors-grid');
+vendors.forEach(v=>{
+  const isSuperStar=v.name===superStarName&&v.kpis.conv_pct>0;
+  const k=v.kpis;
+  const maxStage=Math.max(...v.stages.map(s=>s.count),1);
+  const val=v.value>0?'$'+v.value.toLocaleString('es-AR'):'--';
+  const ticket=k.ticket_avg>0?'$'+k.ticket_avg.toLocaleString('es-AR'):'--';
+  const stageRows=v.stages.filter(s=>s.count>0).map(s=>{
+    const pct=Math.round(s.count/v.total*100);
+    const w=Math.round(s.count/maxStage*100);
+    return '<div class="vc-row" style="cursor:pointer" title="Ver '+s.stage+' de '+v.name+'" onclick="filterByVendorStage(\x27'+v.name+'\x27,\x27'+s.stage+'\x27,event)"><div class="vc-dot" style="background:'+(SC[s.stage]||'#808080')+'"></div><div class="vc-sname">'+s.stage+'</div><div class="vc-bwrap"><div class="vc-bfill" style="background:'+(SC[s.stage]||'#808080')+';width:'+w+'%"></div></div><div class="vc-cnt">'+s.count+'</div><div class="vc-pct">'+pct+'%</div></div>';
+  }).join('');
+  const badge='<span class="badge-q '+(QC[v.quadrant]||'critical')+'">'+(QL[v.quadrant]||'CRÍTICO')+'</span>';
+  const prevT=v.prev_total||0;
+  const diffV=v.total-prevT;
+  const diffVColor=diffV>0?'#16a34a':(diffV<0?'var(--red)':'var(--gray)');
+  const diffVArrow=diffV>0?'&#9650;':(diffV<0?'&#9660;':'&mdash;');
+  const diffVSign=diffV>0?'+':'';
+  const superBanner=isSuperStar?'<div class="super-star-banner">&#9819; SUPER ESTRELLA &mdash; MEJOR CONVERSIÓN &#9819;</div>':'';
+  vg.innerHTML+='<div class="vc'+(isSuperStar?' is-super-star':'')+'" style="cursor:pointer" onclick="filterByVendor(\x27'+v.name+'\x27)">'
+    +superBanner
+    +'<div class="vc-head"><div><div class="vc-name">'+v.name+'</div>'+badge+'</div><div style="text-align:right"><div style="display:flex;align-items:baseline;gap:8px;justify-content:flex-end"><div class="vc-total">'+v.total+'</div><div style="font-size:.95rem;font-weight:800;color:'+diffVColor+'">'+diffVArrow+' '+diffVSign+diffV+'</div></div><div class="vc-total-lbl">vs '+prevT+' en '+prevMesShort+'</div></div></div>'
+    +'<div class="vc-kpis">'
+    +'<div class="vk '+kpiClass(k.conv_pct,5,2)+'"><div class="vk-val">'+k.conv_pct+'%</div><div class="vk-lbl">Conversion</div><div class="vk-hint">'+k.compradores+' compradores</div></div>'
+    +'<div class="vk '+kpiClassInv(k.no_resp_pct,30,15)+'"><div class="vk-val">'+k.no_resp_pct+'%</div><div class="vk-lbl">Sin Respuesta</div><div class="vk-hint">'+k.no_resp+' no responden</div></div>'
+    +'<div class="vk '+kpiClass(k.calif_pct,40,20)+'"><div class="vk-val">'+k.calif_pct+'%</div><div class="vk-lbl">Calificados</div><div class="vk-hint">'+k.calificados+' en embudo</div></div>'
+    +'</div>'
+    +'<div class="vc-kpis2">'
+    +'<div class="vk2"><div class="vk2-val">'+ticket+'</div><div class="vk2-lbl">Ticket promedio</div></div>'
+    +'<div class="vk2"><div class="vk2-val" style="color:'+(k.stagnant_pct>20?'var(--red)':k.stagnant_pct>10?'var(--amber)':'var(--teal)')+'">'+k.stagnant_pct+'%</div><div class="vk2-lbl">Sin Seguimiento</div><div class="vk2-hint">'+k.stagnant+' leads</div></div>'
+    +'<div class="vk2"><div class="vk2-val">'+val+'</div><div class="vk2-lbl">Valor total</div></div>'
+    +'</div>'
+    +'<div style="padding:6px 16px;font-size:.66rem;color:var(--muted);border-bottom:1px solid var(--gray-lt)">&#9997; <strong style="color:var(--text)">'+k.created_manual+'</strong> leads creados por ella &middot; <strong style="color:var(--text)">'+(v.total-k.created_manual)+'</strong> asignados automáticamente</div>'
+    +'<div class="vc-rows">'+(stageRows||'<div style="padding:12px 16px;font-size:.74rem;color:var(--muted)">Sin leads activos</div>')+'</div></div>';
+});
+const fEl=document.getElementById('funnel');
+stages.filter(s=>s.count>0).forEach(s=>{const g=document.createElement('div');g.className='fs';g.style.background=SC[s.name]||'#808080';g.style.flex=Math.max(s.count,1);g.title=s.name+': '+s.count+' deals';if(s.count>5)g.textContent=s.count;fEl.appendChild(g);});
+const grid=document.getElementById('stages-grid');
+stages.filter(s=>s.count>0).forEach(s=>{const c=SC[s.name]||'#808080';const v=s.value>0?'$'+s.value.toLocaleString('es-AR'):'--';grid.innerHTML+='<div class="sc"><div class="sc-bar" style="background:'+c+'"></div><div class="sc-nm">'+s.name+'</div><div class="sc-n">'+s.count+'</div><div class="sc-d">'+v+' &middot; '+s.pct+'%</div></div>';});
+stgOpts.forEach(v=>document.getElementById('f-stage').innerHTML+='<option>'+v+'</option>');
+usrOpts.forEach(v=>document.getElementById('f-user').innerHTML+='<option>'+v+'</option>');
+sucOpts.forEach(v=>document.getElementById('f-suc').innerHTML+='<option>'+v+'</option>');
+let view='all';
+function setView(v){view=v;document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',(i===0&&v==='all')||(i===1&&v==='stagnant')));document.getElementById('f-days').value=v==='stagnant'?3:'';render();}
+function filterByVendor(name){document.getElementById('f-user').value=name;document.getElementById('f-stage').value='';view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
+function filterByVendorStage(name,stage,ev){if(ev)ev.stopPropagation();document.getElementById('f-user').value=name;document.getElementById('f-stage').value=stage;view='all';document.querySelectorAll('.tab').forEach((b,i)=>b.classList.toggle('active',i===0));document.getElementById('f-days').value='';render();document.getElementById('tbl').scrollIntoView({behavior:'smooth',block:'start'});}
+function exportCSV(){
+  const stage=document.getElementById('f-stage').value;
+  const user=document.getElementById('f-user').value;
+  const suc=document.getElementById('f-suc').value;
+  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
+  const rows=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)).sort((a,b)=>b.value-a.value);
+  const header='ID,Contacto,Deal,Etapa,Sucursal,Responsable,Creado,Dias sin act.,Valor';
+  const lines=rows.map(r=>[r.id,(r.contact||r.name).replace(/,/g,' '),r.name.replace(/,/g,' '),r.stage,r.sucursal,r.user,r.created,r.days_int,r.value].join(','));
+  const blob=new Blob([header+'\n'+lines.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='deals_heaven.csv';a.click();
+}
+function render(){
+  const stage=document.getElementById('f-stage').value;
+  const user=document.getElementById('f-user').value;
+  const suc=document.getElementById('f-suc').value;
+  const minD=parseFloat(document.getElementById('f-days').value)||(view==='stagnant'?3:0);
+  const onlyFollowup=(minD>0||view==='stagnant');
+  const f=allRows.filter(r=>r.days>=minD&&(!stage||r.stage===stage)&&(!user||r.user===user)&&(!suc||r.sucursal===suc)&&(!onlyFollowup||FOLLOWUP_STAGES.includes(r.stage))).sort((a,b)=>b.value-a.value);
+  document.getElementById('rc').textContent=f.length+' deals';
+  const tbody=document.getElementById('tbl');
+  if(!f.length){tbody.innerHTML='<tr><td colspan="9" class="nd">Sin deals con estos filtros</td></tr>';return;}
+  tbody.innerHTML=f.map((r,i)=>{
+    const c=SC[r.stage]||'#808080';
+    const isWon=r.stage===COMPRADORES_STAGE;
+    const isNoResp=r.stage===NO_RESP_STAGE_JS;
+    const inFollowup=FOLLOWUP_STAGES.includes(r.stage);
+    const badge=isWon?'<span class="badge b-teal">Ganado</span>':isNoResp?'<span class="badge b-gray">Sin respuesta</span>':(inFollowup&&r.days_int>=7)?'<span class="badge b-red">+7 dias</span>':(inFollowup&&r.days_int>=3)?'<span class="badge b-amber">+72h</span>':'<span class="badge b-teal">Al dia</span>';
+    const dc=(isWon||isNoResp||!inFollowup)?'var(--muted)':r.days_int>=7?'var(--red)':r.days_int>=3?'var(--amber)':'var(--teal)';
+    const rowBg=(isWon||isNoResp||!inFollowup)?'':r.days_int>=7?'background:rgba(206,41,57,.04)':r.days_int>=3?'background:rgba(217,119,6,.04)':'';
+    const val=r.value>0?'$'+r.value.toLocaleString('es-AR'):'--';
+    const nm=r.contact||r.name;
+    return '<tr style="'+rowBg+'"><td style="color:var(--muted);width:36px">'+(i+1)+'</td>'
+      +'<td><a href="https://eanez.kommo.com/leads/detail/'+r.id+'" target="_blank">'+nm+'</a>'+(r.contact?'<br><span style="font-size:.66rem;color:var(--muted)">#'+r.id+'</span>':'')+'</td>'
+      +'<td><span style="color:'+c+';font-weight:700">'+r.stage+'</span></td>'
+      +'<td style="color:var(--muted)">'+r.sucursal+'</td>'
+      +'<td style="color:var(--muted);font-size:.75rem">'+r.user+'</td>'
+      +'<td style="color:var(--muted)">'+r.created+'</td>'
+      +'<td style="font-weight:800;color:'+dc+'">'+r.days_int+'d</td>'
+      +'<td style="color:var(--teal-dk);font-weight:600">'+val+'</td>'
+      +'<td>'+badge+'</td></tr>';
+  }).join('');
+}
+render();
+</script>
+</body>
+</html>
