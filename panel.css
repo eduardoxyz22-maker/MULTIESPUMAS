@@ -10,8 +10,8 @@
   --line:#E7EAEE; --line2:#F0F2F4; --text:#16202C; --muted:#697483; --faint:#9BA4B0;
   --brand:#00B5AD; --brand-d:#0A7D77; --brand-ink:#04302E; --brand-bg:#E0F4F2;
   --green:#159A57; --green-bg:#E7F5ED; --green-ink:#0C5C34;
-  --amber:#D98300; --amber-bg:#FBF0DA; --amber-ink:#7A4A00;
-  --red:#DC4046; --red-bg:#FBE8E9; --red-ink:#871F23;
+  --amber:#D98300; --amber-bg:#FBF0DA; --amber-ink:#7A4A00; --amber-border:rgba(217,131,0,.3);
+  --red:#DC4046; --red-bg:#FBE8E9; --red-ink:#871F23; --red-border:rgba(220,64,70,.3);
   --blue:#2E6FE0; --purple:#7A5AF0;
   --rail:#0F1620; --rail-tx:#A7B1BD; --rail-line:rgba(255,255,255,.07);
   --mono:'IBM Plex Mono',monospace; --num-ff:'Hanken Grotesk',sans-serif;
@@ -26,8 +26,8 @@ html[data-theme="dark"]{
   --line:#232C37; --line2:rgba(35,44,55,.6); --text:#E6EAEF; --muted:#8B97A4; --faint:#5E6975;
   --brand:#16C8BF; --brand-d:#16C8BF; --brand-ink:#04302E; --brand-bg:rgba(22,200,191,.1);
   --green:#2BB56E; --green-bg:rgba(43,181,110,.14); --green-ink:#4FE0A8;
-  --amber:#E89A1C; --amber-bg:rgba(232,154,28,.14); --amber-ink:#F0C173;
-  --red:#E8585D; --red-bg:rgba(232,88,93,.14); --red-ink:#FF9A9D;
+  --amber:#E89A1C; --amber-bg:rgba(232,154,28,.14); --amber-ink:#F0C173; --amber-border:rgba(232,154,28,.35);
+  --red:#E8585D; --red-bg:rgba(232,88,93,.14); --red-ink:#FF9A9D; --red-border:rgba(232,88,93,.35);
   --blue:#4A86F0; --purple:#8B7BF5;
   --rail:rgba(7,10,14,.7); --rail-tx:#9AA6B2; --rail-line:#232C37;
   --num-ff:'IBM Plex Mono',monospace; --kpi-num-w:600;

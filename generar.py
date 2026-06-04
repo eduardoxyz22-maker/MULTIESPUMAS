@@ -1414,7 +1414,7 @@ if _metrics_panel["backlogPct"] > 20: _alert_badge_n += 1
 if _alert_badge_n == 0: _alert_badge_n = 1  # always show badge (green "no issues" card)
 
 # --- funnel2 (donut breakdown) ---
-_adv_stages_p = [_q1 or "Interesado", "Cotización enviada", _q2 or "Agendado / Visita"]
+_adv_stages_p = [_q1 or "Interesado", _fs3 or "Cotización enviada", _q2 or "Agendado / Visita"]
 _funnel2_panel = [
     {"n": "Leads del mes", "v": total_leads, "c": "#27313F"},
     {"n": "Sin respuesta", "v": total_no_resp, "c": "#646E7B"},
