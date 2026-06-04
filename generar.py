@@ -944,7 +944,6 @@ __VENDOR_RESP_ROWS__
       <ol>
         <li>Activar los <strong>__STAG14__</strong> leads con +7 días sin contacto</li>
         <li>Revisar pipeline &ldquo;No Responden&rdquo; (<strong>__NORESP_N__</strong> leads)</li>
-        <li>Etiquetar sucursal en leads sin clasificar</li>
       </ol>
     </div>
     <div class="action-card insight">
@@ -1407,7 +1406,6 @@ if _worst_conv_al is not None and _worst_conv_al.get("conv", 100) < 5: _alert_ba
 if _high_no_resp_al: _alert_badge_n += 1
 if _mom_pct_p < -5: _alert_badge_n += 1
 if _big_never_al: _alert_badge_n += 1
-if _metrics_panel["sinSucursalPct"] > 50: _alert_badge_n += 1
 if _mult_al >= 5: _alert_badge_n += 1
 if _metrics_panel["backlogPct"] > 20: _alert_badge_n += 1
 if _alert_badge_n == 0: _alert_badge_n = 1  # always show badge (green "no issues" card)
