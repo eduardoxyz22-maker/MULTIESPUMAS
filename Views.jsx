@@ -541,14 +541,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const curDay = D.curDay || 1, dim = D.daysInMonth || 30, left = dim - curDay, progPct = Math.round(curDay / dim * 100);
     const conv = G.leads ? Math.round(G.cierres / G.leads * 100) : 0;
     const base = curDay ? Math.round(G.cierres / curDay * dim) : 0;
-    const conv1 = Math.round(G.leads * (conv + 1) / 100);
+    // Apply +1pp to the same projected lead volume as base (not just current leads)
+    const conv1 = conv > 0 ? Math.round(base * (conv + 1) / conv) : base;
     const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
     const extra = Math.round(backlog * conv / 100);
     const resc = base + extra;
     const paceDay = curDay ? (G.cierres / curDay).toFixed(1) : "0.0";
     const scen = [
       { tag: "Escenario base", v: base, val: base * G.ticket, delta: Math.max(0, base - G.cierres), d: `Pace lineal. ${left} días restantes. Sin cambios en la operación actual.`, hot: false, pin: "" },
-      { tag: `+1pp conversión (${conv + 1}%)`, v: conv1, val: conv1 * G.ticket, delta: Math.max(0, conv1 - G.cierres), d: "Si cada vendedora mejora 1pp su tasa de cierre con coaching.", hot: false, pin: "" },
+      { tag: `+1pp conversión (${conv + 1}%)`, v: conv1, val: conv1 * G.ticket, delta: Math.max(0, conv1 - G.cierres), d: `Misma captación proyectada, ${conv + 1}% de conversión. Si cada vendedora mejora 1pp su tasa de cierre con coaching.`, hot: false, pin: "" },
       { tag: "Rescate sin seguimiento", v: resc, val: resc * G.ticket, delta: extra, d: `Base (~${base}) + rescate de ${backlog} deals sin seguimiento (+${extra} cierres adicionales).`, hot: true, pin: "Mayor palanca" },
     ];
     return (
