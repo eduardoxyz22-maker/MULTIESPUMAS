@@ -303,6 +303,7 @@ all_rows = []
 vendor_data = defaultdict(lambda: {
     "total": 0,
     "value": 0.0,
+    "cerrado_value": 0.0,
     "compradores": 0,
     "no_resp": 0,
     "calificados": 0,
@@ -316,6 +317,7 @@ stg_set = set()
 vendor_suc_counts = defaultdict(lambda: defaultdict(int))
 
 total_value = 0.0
+total_compradores_value = 0.0
 total_compradores = 0
 total_no_resp = 0
 total_calificados = 0
@@ -354,6 +356,7 @@ for lead in leads:
 
     if stage_name == COMPRADORES_STAGE:
         total_compradores += 1
+        total_compradores_value += value
     if stage_name == NO_RESP_STAGE:
         total_no_resp += 1
     if stage_name in QUALIFIED_STAGES:
@@ -375,6 +378,7 @@ for lead in leads:
     vd["stages"][stage_name] += 1
     if stage_name == COMPRADORES_STAGE:
         vd["compradores"] += 1
+        vd["cerrado_value"] += value
     if stage_name == NO_RESP_STAGE:
         vd["no_resp"] += 1
     if stage_name in QUALIFIED_STAGES:
@@ -425,7 +429,7 @@ calif_pct = round(total_calificados / total_leads * 100) if total_leads > 0 else
 stag_pct = round(total_stagnant_7 / total_leads * 100) if total_leads > 0 else 0
 auto_pct = round(total_auto / total_leads * 100) if total_leads > 0 else 0
 manual_pct = round(total_manual / total_leads * 100) if total_leads > 0 else 0
-ticket_avg = int(total_value / total_compradores) if total_compradores > 0 else 0
+ticket_avg = int(total_compradores_value / total_compradores) if total_compradores > 0 else 0
 
 # --- KPIs comparativos MoM ---
 conv_prev   = round(compradores_prev / total_leads_prev * 100) if total_leads_prev > 0 else 0
@@ -589,7 +593,7 @@ for vname, vd in sorted(vendor_data.items(), key=lambda x: -x[1]["total"]):
     vnoresp = round(vr / vt * 100) if vt > 0 else 0
     vcalif = round(vq / vt * 100) if vt > 0 else 0
     vstag = round(vs / vt * 100) if vt > 0 else 0
-    vtick = int(vd["value"] / vc) if vc > 0 else 0
+    vtick = int(vd["cerrado_value"] / vc) if vc > 0 else 0
     stages_list = []
     for sname in STAGE_ORDER:
         stages_list.append({"stage": sname, "count": vd["stages"].get(sname, 0)})
@@ -1445,7 +1449,8 @@ def _build_archive_list_new():
 
 # --- build PANEL_DATA ---
 _pipeline_total_p = int(total_value)
-_ticket_avg_p = int(_pipeline_total_p / total_compradores) if total_compradores else 0
+_cerrado_total_p = int(total_compradores_value)
+_ticket_avg_p = int(_cerrado_total_p / total_compradores) if total_compradores else 0
 _fecha_str_p = now_dt.strftime("%d/%m %H:%M")
 
 panel_data = {
@@ -1460,6 +1465,7 @@ panel_data = {
         "leads": total_leads,
         "prevLeads": total_leads_prev,
         "cierres": total_compradores,
+        "cerrado": _cerrado_total_p,
         "pipeline": _pipeline_total_p,
         "ticket": _ticket_avg_p,
     },
