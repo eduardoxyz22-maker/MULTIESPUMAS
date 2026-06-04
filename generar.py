@@ -1529,6 +1529,53 @@ else:
     _script_type = ""
     _babel_cdn = ""
 
+if _use_babel_cdn:
+    # Babel CDN fallback: separate script tags with type="text/babel"
+    _scripts_block = f"""<script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js" crossorigin="anonymous"></script>
+<script type="text/babel">
+{_icons_js}
+</script>
+<script type="text/babel">
+{_panel_js}
+</script>
+<script type="text/babel">
+{_views_js}
+</script>
+<script type="text/babel">
+(function() {{
+  var el = document.getElementById("_loading");
+  if (el) el.remove();
+  try {{
+    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.Panel));
+  }} catch(e) {{
+    document.getElementById("root").innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + e.message + '</p>';
+  }}
+}})();
+</script>"""
+else:
+    # Pre-compiled JS: single script block with full error handling
+    _scripts_block = f"""<script>
+(function() {{
+  var _root = document.getElementById("root");
+  function _err(msg) {{ _root.innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + msg + '</p>'; }}
+  if (typeof React === 'undefined') {{ _err('React CDN no cargó'); return; }}
+  try {{
+{_icons_js}
+  }} catch(e) {{ _err('Icons: ' + e.message); return; }}
+  try {{
+{_panel_js}
+  }} catch(e) {{ _err('Panel: ' + e.message); return; }}
+  try {{
+{_views_js}
+  }} catch(e) {{ _err('Views: ' + e.message); return; }}
+  var el = document.getElementById("_loading");
+  if (el) el.remove();
+  try {{
+    ReactDOM.createRoot(_root).render(React.createElement(window.Panel));
+  }} catch(e) {{ _err('Mount: ' + e.message); }}
+}})();
+</script>"""
+
 _html_out = f"""<!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1541,7 +1588,6 @@ _html_out = f"""<!DOCTYPE html>
 <script>(function(){{try{{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})()</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
-{_babel_cdn}
 </head>
 <body>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
@@ -1551,27 +1597,7 @@ window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
 window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
 window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
 </script>
-<script {_script_type}>
-{_icons_js}
-</script>
-<script {_script_type}>
-{_panel_js}
-</script>
-<script {_script_type}>
-{_views_js}
-</script>
-<script {_script_type}>
-(function() {{
-  var el = document.getElementById("_loading");
-  if (el) el.remove();
-  try {{
-    ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(window.Panel));
-  }} catch(e) {{
-    document.getElementById("root").innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error al montar panel: ' + e.message + '</p>';
-    console.error(e);
-  }}
-}})();
-</script>
+{_scripts_block}
 </body>
 </html>"""
 
