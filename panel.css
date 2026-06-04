@@ -492,3 +492,64 @@ html[data-theme="dark"] .hist-menu .lbl{font-family:var(--mono)}
 /* subtle texture on the diagnostic banner (drop a real photo behind via --diag-photo) */
 .diag{background-image:linear-gradient(118deg,#0F1620,#26303E),repeating-linear-gradient(135deg,rgba(255,255,255,.02) 0 2px,transparent 2px 9px)}
 html[data-theme="dark"] .diag{background-image:linear-gradient(120deg,#0C1218,#10202A),repeating-linear-gradient(135deg,rgba(22,200,191,.03) 0 2px,transparent 2px 9px)}
+
+/* ===== MOBILE RESPONSIVE ===== */
+.mob-nav{display:none}
+@media(max-width:768px){
+  /* hide desktop rail, show full-width layout */
+  .rail{display:none}
+  body{display:block}
+  .main{min-height:100dvh;display:flex;flex-direction:column}
+  /* compact header on mobile */
+  .top{padding:10px 14px;flex-wrap:wrap;gap:8px}
+  .top h1{font-size:.9rem}
+  .crumb{font-size:.58rem}
+  /* hide heavy buttons on mobile header, keep only theme + refresh */
+  .top .chip,.top .hist,.top .btn.pri{display:none}
+  .top .btn[title="Modo presentación"]{display:none}
+  /* content area with bottom padding for tab bar */
+  .scroll{padding:16px 14px 80px;gap:18px}
+  /* grids become single column */
+  .grid2,.grid3,.kpis{grid-template-columns:1fr}
+  /* cards: reduce padding */
+  .card{padding:14px}
+  /* drawer: full-screen on mobile */
+  .drawer{width:100%;max-width:100%;border-radius:0}
+  /* mobile bottom navigation bar */
+  .mob-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--rail);
+    border-top:1px solid var(--rail-line);
+    z-index:100;
+    padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  .mob-nav button{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:3px;padding:9px 2px 7px;
+    background:none;border:none;
+    color:var(--rail-tx);
+    font-size:.52rem;font-weight:700;
+    text-transform:uppercase;letter-spacing:.4px;
+    cursor:pointer;font-family:inherit;
+    position:relative;
+    transition:color .15s;
+    white-space:nowrap;overflow:hidden;
+  }
+  .mob-nav button.active{color:var(--brand)}
+  .mob-nav button .mob-bdg{
+    position:absolute;top:6px;right:calc(50% - 14px);
+    font-size:.55rem;font-weight:800;
+    background:rgba(220,64,70,.92);color:#fff;
+    border-radius:99px;padding:0 5px;
+    font-family:var(--num-ff);line-height:1.6;
+    min-width:16px;text-align:center;
+  }
+  /* mobile header: show brand name inline */
+  .mob-brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:1rem;letter-spacing:1.5px;color:#fff;margin-right:auto}
+  .mob-brand em{font-style:normal;color:var(--brand)}
+}
+@media(min-width:769px){
+  .mob-brand{display:none}
+}

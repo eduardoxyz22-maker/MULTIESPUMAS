@@ -825,6 +825,7 @@ function Panel() {
 
       <div className="main">
         <header className="top">
+          <div className="mob-brand"><span className="h">HEAVEN<em>●</em></span></div>
           <div><div className="crumb">{meta.crumb}</div><h1>{meta.title}</h1></div>
           <div className="tr">
             <span className="chip">eanez.kommo.com</span>
@@ -855,6 +856,15 @@ function Panel() {
       <button className={`totop${showTop ? " show" : ""}`} title="Volver arriba" onClick={() => scrollRef.current && scrollRef.current.scrollTo({ top: 0, behavior: "smooth" })}><Icon name="up" size={18} /></button>
       <ProfileDrawer vendor={perfil} onClose={() => setPerfil(null)} />
       <SucursalDrawer name={sucursal} onClose={() => setSucursal(null)} onVendor={v => { setSucursal(null); setPerfil(v); }} />
+      <nav className="mob-nav">
+        {D.nav.slice(0, 5).map(n => (
+          <button key={n.id} className={view === n.id ? "active" : ""} onClick={() => setView(n.id)}>
+            <Icon name={n.id} size={20} />
+            {n.label.split(" ")[0]}
+            {n.badge ? <span className="mob-bdg">{n.badge}</span> : null}
+          </button>
+        ))}
+      </nav>
     </React.Fragment>
   );
 }
