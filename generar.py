@@ -1851,6 +1851,7 @@ _html_out = f"""<!DOCTYPE html>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
 <script>
 window.PANEL_DATA={_panel_data_json};
+window.GH_DISPATCH_TOKEN="{_os.environ.get('GH_DISPATCH_TOKEN', '')}";
 window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
 window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
 window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;

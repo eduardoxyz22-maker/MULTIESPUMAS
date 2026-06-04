@@ -813,8 +813,27 @@ function Panel() {
   const [pres, setPres] = useState(false);
   useEffect(() => { document.body.classList.toggle("pres", pres); }, [pres]);
   const onScroll = e => { const el = e.target; const m = el.scrollHeight - el.clientHeight; setProg(m > 0 ? el.scrollTop / m * 100 : 0); setShowTop(el.scrollTop > 300); };
-  const [loading, setLoading] = useState(false);
-  const refresh = () => { setLoading(true); setTimeout(() => setLoading(false), 850); };
+  const [refreshSt, setRefreshSt] = useState("idle"); // idle|dispatching|waiting|error
+  const [countdown, setCountdown] = useState(0);
+  const refresh = async () => {
+    if (refreshSt !== "idle") return;
+    const tok = window.GH_DISPATCH_TOKEN;
+    if (!tok) { window.location.reload(); return; }
+    setRefreshSt("dispatching");
+    try {
+      const r = await fetch(
+        "https://api.github.com/repos/eduardoxyz22-maker/MULTIESPUMAS/actions/workflows/update-crm-dashboard.yml/dispatches",
+        { method: "POST", headers: { Authorization: `Bearer ${tok}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" }, body: JSON.stringify({ ref: "main" }) }
+      );
+      if (!r.ok) throw new Error(r.status);
+      setRefreshSt("waiting");
+      let c = 75; setCountdown(c);
+      const iv = setInterval(() => { c--; setCountdown(c); if (c <= 0) { clearInterval(iv); window.location.reload(); } }, 1000);
+    } catch (e) {
+      setRefreshSt("error");
+      setTimeout(() => setRefreshSt("idle"), 3000);
+    }
+  };
   const [perfil, setPerfil] = useState(null);
   const [sucursal, setSucursal] = useState(null);
   const [histOpen, setHistOpen] = useState(false);
@@ -866,7 +885,10 @@ function Panel() {
             <button className="btn icon" title="Cambiar tema" onClick={() => setTheme(t => t === "dark" ? "light" : "dark")}>
               <Icon name={theme === "dark" ? "sun" : "moon"} size={15} />
             </button>
-            <button className="btn" onClick={refresh}><Icon name="refresh" size={14} style={loading ? { animation: "spin .8s linear infinite" } : null} />Actualizar</button>
+            <button className="btn" onClick={refresh} disabled={refreshSt !== "idle"} title={refreshSt === "waiting" ? "Recarga automática cuando estén listos los datos" : "Obtener datos frescos de Kommo"}>
+              <Icon name="refresh" size={14} style={refreshSt !== "idle" ? { animation: "spin .8s linear infinite" } : null} />
+              {refreshSt === "waiting" ? `Actualizando… ${countdown}s` : refreshSt === "dispatching" ? "Iniciando…" : refreshSt === "error" ? "Error — reintentar" : "Actualizar"}
+            </button>
             <button className="btn pri" onClick={exportTeamCSV} title="Descargar KPIs del equipo (CSV)"><Icon name="download" size={14} />Exportar</button>
           </div>
         </header>
