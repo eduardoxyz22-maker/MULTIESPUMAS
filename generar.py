@@ -286,13 +286,16 @@ diff_color = "#7FFFB0" if diff_leads >= 0 else "#FFB3B3"
 print("Leads mes anterior:", total_leads_prev)
 
 compradores_prev = 0
-valor_prev = 0.0
+valor_prev = 0.0        # pipeline prev (todas las etapas)
+cerrado_prev = 0.0      # cerrado prev (solo Compradores)
 vendor_leads_prev = defaultdict(int)
 for _l in leads_prev:
     _sn = stage_map.get(_l.get("status_id"), "")
+    _vp = float(_l.get("price", 0) or 0)
     if _sn == COMPRADORES_STAGE:
         compradores_prev += 1
-    valor_prev += float(_l.get("price", 0) or 0)
+        cerrado_prev += _vp
+    valor_prev += _vp
     _rid = _l.get("responsible_user_id")
     vendor_leads_prev[user_map.get(_rid, "Desconocido")] += 1
 
@@ -433,7 +436,7 @@ ticket_avg = int(total_compradores_value / total_compradores) if total_comprador
 
 # --- KPIs comparativos MoM ---
 conv_prev   = round(compradores_prev / total_leads_prev * 100) if total_leads_prev > 0 else 0
-ticket_prev = int(valor_prev / compradores_prev) if compradores_prev > 0 else 0
+ticket_prev = int(cerrado_prev / compradores_prev) if compradores_prev > 0 else 0
 
 def _delta(cur, prev):
     d = cur - prev
