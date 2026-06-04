@@ -2481,6 +2481,17 @@ window.TOP_CLOSER = D.team.length ? D.team.reduce((a, b) => b.cierres > a.cierre
 function ViewResumen() {
   const G = D.global;
   const topV = D.team.length ? D.team.reduce((a, b) => b.cierres > a.cierres ? b : a, D.team[0]) : null;
+  const spkCierres = (() => {
+    const a = [0, 0, 0, 0, 0];
+    Object.values(D.weeklyClosures || {}).forEach(arr => arr.forEach((n, i) => {
+      a[i] = (a[i] || 0) + n;
+    }));
+    return a;
+  })();
+  const spkMoney = (() => {
+    const avg = G.cierres ? G.cerrado / G.cierres : 0;
+    return spkCierres.map(n => Math.round(n * avg));
+  })();
   return /*#__PURE__*/React.createElement("div", {
     className: "view"
   }, /*#__PURE__*/React.createElement("div", {
@@ -2595,7 +2606,8 @@ function ViewResumen() {
     ac: "#2E6FE0",
     ico: "conversion",
     tip: "Compradores \xF7 leads. Meta del sector: 5\u20138%.",
-    sub: /*#__PURE__*/React.createElement("span", null, G.cierres, " compradores")
+    sub: /*#__PURE__*/React.createElement("span", null, G.cierres, " compradores"),
+    spark: spkCierres
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Cerrado en el mes",
     num: G.cerrado,
@@ -2603,7 +2615,8 @@ function ViewResumen() {
     ac: "#159A57",
     ico: "trophy",
     tip: "Suma de montos de deals en etapa Compradores.",
-    sub: `${G.cierres} compradores`
+    sub: `${G.cierres} compradores`,
+    spark: spkMoney
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Pipeline",
     num: G.pipeline,
@@ -3156,6 +3169,7 @@ window.Panel = Panel;
     Donut,
     Heatmap,
     MetasSection,
+    MetaStepper,
     WeekSpark,
     QuadrantMatrix,
     ExpertAgent,
@@ -3462,17 +3476,18 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "v num"
       }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
         className: "l"
-      }, "Ticket prom."))), metaMonto > 0 && /*#__PURE__*/React.createElement("div", {
+      }, "Ticket prom."))), /*#__PURE__*/React.createElement("div", {
         style: {
-          padding: "13px 17px"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
+          padding: "10px 17px 0"
+        },
+        onClick: e => e.stopPropagation()
+      }, metaMonto > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           justifyContent: "space-between",
           fontSize: ".7rem",
           color: "var(--muted)",
-          marginBottom: 6
+          marginBottom: 5
         }
       }, /*#__PURE__*/React.createElement("span", null, "Meta ", window.fmtMoney(metaMonto)), /*#__PURE__*/React.createElement("b", {
         className: "num",
@@ -3480,13 +3495,29 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           color: mcol
         }
       }, mpct, "%")), /*#__PURE__*/React.createElement("div", {
-        className: "meter"
+        className: "meter",
+        style: {
+          marginBottom: 6
+        }
       }, /*#__PURE__*/React.createElement("i", {
         style: {
           width: mpct + "%",
           background: mcol
         }
-      }))), /*#__PURE__*/React.createElement(WeekSpark, {
+      }))) : /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".7rem",
+          color: "var(--muted)",
+          marginBottom: 5
+        }
+      }, "Meta mensual (Bs) \u2014 ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--brand)"
+        }
+      }, "sin fijar")), /*#__PURE__*/React.createElement(MetaStepper, {
+        name: v.name,
+        metas: metas
+      })), /*#__PURE__*/React.createElement(WeekSpark, {
         weeks: weeklyOf(v).cur
       }), /*#__PURE__*/React.createElement("div", {
         className: "tcard-bar"

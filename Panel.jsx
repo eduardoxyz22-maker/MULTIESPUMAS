@@ -660,6 +660,8 @@ window.TOP_CLOSER = D.team.length ? D.team.reduce((a, b) => (b.cierres > a.cierr
 function ViewResumen() {
   const G = D.global;
   const topV = D.team.length ? D.team.reduce((a, b) => b.cierres > a.cierres ? b : a, D.team[0]) : null;
+  const spkCierres = (() => { const a = [0,0,0,0,0]; Object.values(D.weeklyClosures || {}).forEach(arr => arr.forEach((n,i) => { a[i] = (a[i]||0)+n; })); return a; })();
+  const spkMoney = (() => { const avg = G.cierres ? G.cerrado / G.cierres : 0; return spkCierres.map(n => Math.round(n * avg)); })();
   return (
     <div className="view">
       <div className="rhero">
@@ -697,8 +699,8 @@ function ViewResumen() {
         <SectionHead eb="Indicadores" h3="Pulso del mes" p="Las 9 métricas clave del mes — pasa el cursor sobre cada ficha para ver su definición." />
         <div className="kpis" style={{ marginTop: 14, gridTemplateColumns: "repeat(auto-fill,minmax(168px,1fr))" }}>
           <Kpi l="Total leads" num={G.leads} ac="#808A96" ico="equipo" tip="Leads ingresados este mes vs el mes anterior." sub={<span><span className={`delta ${(D.leadsMomPct || 0) < 0 ? "down" : "up"}`}>{(D.leadsMomPct || 0) < 0 ? "▼" : "▲"} {Math.abs(D.leadsMomPct || 0)}%</span> vs {D.prevMonth}</span>} />
-          <Kpi l="Conversión" num={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} />
-          <Kpi l="Cerrado en el mes" num={G.cerrado} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Suma de montos de deals en etapa Compradores." sub={`${G.cierres} compradores`} />
+          <Kpi l="Conversión" num={G.leads ? G.cierres / G.leads * 100 : 0} fmt={n => n.toFixed(1) + "%"} ac="#2E6FE0" ico="conversion" tip="Compradores ÷ leads. Meta del sector: 5–8%." sub={<span>{G.cierres} compradores</span>} spark={spkCierres} />
+          <Kpi l="Cerrado en el mes" num={G.cerrado} fmt={fmtMoney} ac="#159A57" ico="trophy" tip="Suma de montos de deals en etapa Compradores." sub={`${G.cierres} compradores`} spark={spkMoney} />
           <Kpi l="Pipeline" num={G.pipeline} fmt={fmtMoney} ac="#00B5AD" ico="proyeccion" tip="Suma de todos los montos registrados en Kommo, sin importar etapa." sub="todas las etapas" />
           <Kpi l="Sin seguimiento" num={D.metrics?.backlogPct || 0} fmt={n => Math.round(n) + "%"} ac="#DC4046" ico="seguimiento" tip="Deals abiertos sin actividad en Kommo +72h." sub={<span><b style={{ color: "var(--red-ink)" }}>{D.metrics?.backlog || 0} {(D.metrics?.backlog || 0) === 1 ? "lead" : "leads"}</b> +72h</span>} />
           <Kpi l="Ticket promedio" num={G.ticket} fmt={fmtMoney} ac="#D98300" ico="conversion" tip="Cerrado ÷ número de compradores (monto promedio por venta confirmada)." sub={<span>valor / cierre</span>} />

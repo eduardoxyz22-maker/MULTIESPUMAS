@@ -2,7 +2,7 @@
 (function () {
   const D = window.PANEL_DATA, T = D.team, G = D.global;
   const money = window.fmtMoney, convTone = window.convTone;
-  const { SectionHead, Pill, Funnel, TeamTable, Kpi, Avatar, Donut, Heatmap, MetasSection, WeekSpark, QuadrantMatrix, ExpertAgent, CountUp, EmptyState, Icon } = window;
+  const { SectionHead, Pill, Funnel, TeamTable, Kpi, Avatar, Donut, Heatmap, MetasSection, MetaStepper, WeekSpark, QuadrantMatrix, ExpertAgent, CountUp, EmptyState, Icon } = window;
   const TOP = window.TOP_CLOSER;
   const STAGE_C = { "Leads Entrantes": "#9CA3AF", "Nueva consulta": "#27313F", "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9", "Agendado / Visita": "#D98300", "Compradores": "#159A57", "No Responden": "#646E7B" };
 
@@ -138,12 +138,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   <div className="tm"><div className="v num" style={{ color: `var(--${convTone(window.convPct(v))})` }}>{window.convPct(v)}%</div><div className="l">Conversión</div></div>
                   <div className="tm"><div className="v num">{v.ticket ? money(v.ticket) : "—"}</div><div className="l">Ticket prom.</div></div>
                 </div>
-                {metaMonto > 0 && (
-                <div style={{ padding: "13px 17px" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", color: "var(--muted)", marginBottom: 6 }}><span>Meta {window.fmtMoney(metaMonto)}</span><b className="num" style={{ color: mcol }}>{mpct}%</b></div>
-                  <div className="meter"><i style={{ width: mpct + "%", background: mcol }} /></div>
+                <div style={{ padding: "10px 17px 0" }} onClick={e => e.stopPropagation()}>
+                  {metaMonto > 0 ? (<>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", color: "var(--muted)", marginBottom: 5 }}><span>Meta {window.fmtMoney(metaMonto)}</span><b className="num" style={{ color: mcol }}>{mpct}%</b></div>
+                    <div className="meter" style={{ marginBottom: 6 }}><i style={{ width: mpct + "%", background: mcol }} /></div>
+                  </>) : (
+                    <div style={{ fontSize: ".7rem", color: "var(--muted)", marginBottom: 5 }}>Meta mensual (Bs) — <span style={{ color: "var(--brand)" }}>sin fijar</span></div>
+                  )}
+                  <MetaStepper name={v.name} metas={metas} />
                 </div>
-                )}
                 <WeekSpark weeks={weeklyOf(v).cur} />
                 <div className="tcard-bar">Cierres por semana<b style={{ color: "var(--brand-d)" }}>Ver ficha →</b></div>
               </div>
