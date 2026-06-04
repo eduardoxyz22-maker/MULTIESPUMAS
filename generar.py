@@ -339,7 +339,10 @@ for lead in leads:
     created_str = fmt_date(created_at) if created_at else "—"
 
     tags = lead.get("_embedded", {}).get("tags", [])
-    sucursal = tags[0]["name"] if tags else "Sin sucursal"
+    # Sucursal: prefer lead tag, fall back to vendor name ("Nombre - Sucursal")
+    _tag_suc = tags[0]["name"] if tags else None
+    _vendor_suc = user_name.split(" - ", 1)[1] if " - " in user_name else None
+    sucursal = _tag_suc or _vendor_suc or "Sin sucursal"
 
     contacts_emb = lead.get("_embedded", {}).get("contacts", [])
     contact_name = contacts_emb[0].get("name", "") if contacts_emb else ""
