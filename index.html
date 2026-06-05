@@ -5000,6 +5000,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   };
 })();
 
+
+  var el = document.getElementById('_loading');
+  if (el) el.remove();
+  try {
+    ReactDOM.createRoot(_root).render(React.createElement(window.Panel));
+  } catch(e) { _root.innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + e.message + '</p>'; }
 })();
 </script>
 </body>
