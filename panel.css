@@ -244,9 +244,11 @@ body.pres .sh p{display:none}
 @keyframes presIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 .pres-vcard{border-top:3px solid var(--vc)!important;animation:presIn .45s ease both}
 .pres-suc{border-top:3px solid var(--sc)!important;animation:presIn .45s ease both}
-.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
-@media(max-width:600px){.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
+.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px}
+.pres-stats-grid{display:grid;grid-template-columns:repeat(5,1fr)}
+@media(max-width:800px){.pres-stats-grid{grid-template-columns:repeat(3,1fr)}.pres-stats-grid>div:nth-child(3){border-right:none!important}.pres-stats-grid>div:nth-child(n+4){border-top:1px solid var(--line2)}}
+@media(max-width:600px){.pres-vendors,.pres-sucs{grid-template-columns:1fr}.pres-stats-grid{grid-template-columns:repeat(2,1fr)}.pres-stats-grid>div:nth-child(2){border-right:none!important}.pres-stats-grid>div:nth-child(3){border-right:1px solid var(--line2)!important}.pres-stats-grid>div:nth-child(n+3){border-top:1px solid var(--line2)}}
 
 /* ===== sparkline ===== */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
