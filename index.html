@@ -5262,6 +5262,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, "conv"))), /*#__PURE__*/React.createElement("div", {
         className: "pres-vnums"
       }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig"
+      }, v.leads), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "leads")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
         className: "pres-vbig",
         style: {
           color: "var(--vc)"
@@ -5286,14 +5290,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
         className: "pres-vsmall"
-      }, "ticket prom.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
-        style: {
-          color: "var(--faint)"
-        }
-      }, money(proy)), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "proyecci\xF3n"))), vm > 0 && /*#__PURE__*/React.createElement("div", {
+      }, "ticket prom."))), vm > 0 && /*#__PURE__*/React.createElement("div", {
         className: "pres-vmeta"
       }, /*#__PURE__*/React.createElement("div", {
         style: {
@@ -5324,7 +5321,27 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           color: "var(--faint)",
           marginTop: 10
         }
-      }, "Sin meta fijada"));
+      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 10,
+          fontSize: ".68rem",
+          color: "var(--muted)",
+          borderTop: "1px solid var(--line2)",
+          paddingTop: 8
+        }
+      }, cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, money(proy)), " ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--faint)"
+        }
+      }, "(", dim - curDay, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--faint)"
+        }
+      }, "Sin cierres a\xFAn \u2014 proyecci\xF3n no disponible")));
     })), /*#__PURE__*/React.createElement("div", {
       className: "pres-section-label"
     }, "Por sucursal"), /*#__PURE__*/React.createElement("div", {

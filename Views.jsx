@@ -718,11 +718,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   </div>
                 </div>
                 <div className="pres-vnums">
+                  <div><div className="pres-vbig">{v.leads}</div><div className="pres-vsmall">leads</div></div>
                   <div><div className="pres-vbig" style={{ color: "var(--vc)" }}>{v.cierres}</div><div className="pres-vsmall">cierres</div></div>
                   <div><div className="pres-vbig">{money(cerrado)}</div><div className="pres-vsmall">facturado</div></div>
                   <div><div className="pres-vbig" style={{ color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})` }}>{v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0}%</div><div className="pres-vsmall">conv.</div></div>
                   <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{v.ticket ? money(v.ticket) : "—"}</div><div className="pres-vsmall">ticket prom.</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--faint)" }}>{money(proy)}</div><div className="pres-vsmall">proyección</div></div>
                 </div>
                 {vm > 0 && (
                   <div className="pres-vmeta">
@@ -734,6 +734,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   </div>
                 )}
                 {vm === 0 && <div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 10 }}>Sin meta fijada</div>}
+                <div style={{ marginTop: 10, fontSize: ".68rem", color: "var(--muted)", borderTop: "1px solid var(--line2)", paddingTop: 8 }}>
+                  {cerrado > 0
+                    ? <span>Proyección al cierre: <b style={{ color: "var(--brand-d)" }}>{money(proy)}</b> <span style={{ color: "var(--faint)" }}>({dim - curDay} días restantes)</span></span>
+                    : <span style={{ color: "var(--faint)" }}>Sin cierres aún — proyección no disponible</span>
+                  }
+                </div>
               </div>
             );
           })}
