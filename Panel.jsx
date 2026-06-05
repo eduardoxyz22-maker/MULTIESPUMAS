@@ -129,6 +129,10 @@ function ProfileDrawer({ vendor: v, onClose }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  useEffect(() => {
+    document.body.style.overflow = v ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [v]);
   const cerrado = v ? Math.round(v.cierres * v.ticket) : 0;
   const diff = v ? v.leads - (v.prevLeads || 0) : 0;
   const metas = useMetas();
@@ -203,6 +207,10 @@ function SucursalDrawer({ name, onClose, onVendor }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  useEffect(() => {
+    document.body.style.overflow = name ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [name]);
   const metas = useMetas();
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const tot = vends.reduce((a, v) => ({ leads: a.leads + v.leads, cierres: a.cierres + v.cierres, value: a.value + v.value, cerrado: a.cerrado + v.cierres * v.ticket, agendado: a.agendado + (v.agendado || 0) }), { leads: 0, cierres: 0, value: 0, cerrado: 0, agendado: 0 });
