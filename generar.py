@@ -1691,6 +1691,20 @@ _icons_jsx = _read_src("Icons.jsx")
 _panel_jsx = _read_src("Panel.jsx")
 _views_jsx = _read_src("Views.jsx")
 
+def _read_umd(pkg, filename):
+    """Read a UMD build from node_modules; return empty string if not found."""
+    for candidate in [
+        _os.path.join(_SCRIPT_DIR, "node_modules", pkg, "umd", filename),
+        _os.path.join(_SCRIPT_DIR, "node_modules", pkg, "cjs", filename),
+    ]:
+        if _os.path.exists(candidate):
+            with open(candidate, encoding="utf-8") as f:
+                return f.read()
+    return ""
+
+_react_src    = _read_umd("react",     "react.production.min.js")
+_reactdom_src = _read_umd("react-dom", "react-dom.production.min.js")
+
 # --- Archive old panel.html / index.html if they belong to a different month ---
 _archive_saved_p = None
 for _target_p in ["panel.html", "index.html"]:
@@ -1722,6 +1736,12 @@ for _target_p in ["panel.html", "index.html"]:
 # Update archives list after archiving (new file may have just been created)
 panel_data["archives"] = _build_archive_list_new()
 _panel_data_json = json.dumps(panel_data, ensure_ascii=False)
+
+# Build React script block: inline if UMD available, else CDN fallback
+if _react_src and _reactdom_src:
+    _react_scripts_block = f"<script>/* React 18.3.1 */\n{_react_src}\n</script>\n<script>/* ReactDOM 18.3.1 */\n{_reactdom_src}\n</script>"
+else:
+    _react_scripts_block = '<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous"></script>\n<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>'
 
 # --- Compile JSX → plain JS using Node/Babel on the runner ---
 import subprocess as _sp, tempfile as _tf, os as _os2
@@ -1849,8 +1869,7 @@ _html_out = f"""<!DOCTYPE html>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <style>{_css_src}</style>
 <script>(function(){{try{{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}}catch(e){{}}}})()</script>
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=&quot;https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/react.production.min.js&quot;><\\/scr'+'ipt>')"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=&quot;https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/react-dom.production.min.js&quot;><\\/scr'+'ipt>')"></script>
+{_react_scripts_block}
 </head>
 <body>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
