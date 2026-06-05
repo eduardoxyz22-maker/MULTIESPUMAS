@@ -1372,6 +1372,7 @@ function SucursalDrawer({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  const metas = useMetas();
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const tot = vends.reduce((a, v) => ({
     leads: a.leads + v.leads,
@@ -1580,7 +1581,39 @@ function SucursalDrawer({
       }
     }, conv, "%"), /*#__PURE__*/React.createElement("div", {
       className: "l"
-    }, "Conv."))), /*#__PURE__*/React.createElement("div", {
+    }, "Conv."))), (() => {
+      const vm = metas[v.name] || 0;
+      if (!vm) return null;
+      const cerr = v.cierres * v.ticket;
+      const mp = Math.round(cerr / vm * 100);
+      const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+      return /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 10,
+          paddingTop: 9,
+          borderTop: "1px solid var(--line2)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".68rem",
+          color: "var(--muted)",
+          marginBottom: 4
+        }
+      }, /*#__PURE__*/React.createElement("span", null, "Meta ", fmtMoney(vm)), /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: mc
+        }
+      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter"
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: Math.min(100, mp) + "%",
+          background: mc
+        }
+      })));
+    })(), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 10,
         paddingTop: 9,

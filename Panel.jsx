@@ -203,6 +203,7 @@ function SucursalDrawer({ name, onClose, onVendor }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  const metas = useMetas();
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const tot = vends.reduce((a, v) => ({ leads: a.leads + v.leads, cierres: a.cierres + v.cierres, value: a.value + v.value, cerrado: a.cerrado + v.cierres * v.ticket, agendado: a.agendado + (v.agendado || 0) }), { leads: 0, cierres: 0, value: 0, cerrado: 0, agendado: 0 });
   const totConv = tot.leads ? (tot.cierres / tot.leads * 100).toFixed(1) : "0.0";
@@ -247,6 +248,7 @@ function SucursalDrawer({ name, onClose, onVendor }) {
                         <div><div className="v" style={{ fontSize: "1.05rem", color: "var(--muted)" }}>{v.value ? fmtMoney(v.value) : "—"}</div><div className="l">Monto reg.</div></div>
                         <div><div className="v" style={{ fontSize: "1.05rem", color: `var(--${convTone(+conv)})` }}>{conv}%</div><div className="l">Conv.</div></div>
                       </div>
+                      {(() => { const vm = metas[v.name] || 0; if (!vm) return null; const cerr = v.cierres * v.ticket; const mp = Math.round(cerr / vm * 100); const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)"; return (<div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--line2)" }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", color: "var(--muted)", marginBottom: 4 }}><span>Meta {fmtMoney(vm)}</span><b style={{ color: mc }}>{mp}%</b></div><div className="meter"><i style={{ width: Math.min(100, mp) + "%", background: mc }} /></div></div>); })()}
                       <div style={{ marginTop: 10, paddingTop: 9, borderTop: "1px solid var(--line2)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: ".72rem" }}>
                         <span style={{ color: "var(--muted)", fontWeight: 600 }}>📅 Agendado / Visita</span>
                         <b style={{ color: "#D98300", fontSize: ".92rem" }}>{v.agendado || 0}</b>
