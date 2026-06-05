@@ -18,6 +18,7 @@ const ICON_PATHS = {
   analisis: <g><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.4L12 15l-1.9-4.6L5.5 9l4.6-1.4z"/><path d="M18 14l.8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8z"/></g>,
   up: <g><path d="M12 19V5M5 12l7-7 7 7"/></g>,
   present: <g><path d="M2 4h20"/><path d="M4 4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4"/><path d="M12 17v4M9 21h6"/></g>,
+  presentacion: <g><path d="M2 4h20"/><path d="M4 4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4"/><path d="M12 17v4M9 21h6"/></g>,
   download: <g><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 19h16"/></g>,
   refresh: <g><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></g>,
   trophy: <g><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0z"/><path d="M5 5H3v2a3 3 0 0 0 3 3M19 5h2v2a3 3 0 0 1-3 3"/></g>,

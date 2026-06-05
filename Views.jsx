@@ -720,7 +720,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                 <div className="pres-vnums">
                   <div><div className="pres-vbig" style={{ color: "var(--vc)" }}>{v.cierres}</div><div className="pres-vsmall">cierres</div></div>
                   <div><div className="pres-vbig">{money(cerrado)}</div><div className="pres-vsmall">facturado</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{money(proy)}</div><div className="pres-vsmall">proyección</div></div>
+                  <div><div className="pres-vbig" style={{ color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})` }}>{v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0}%</div><div className="pres-vsmall">conv.</div></div>
+                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{v.ticket ? money(v.ticket) : "—"}</div><div className="pres-vsmall">ticket prom.</div></div>
+                  <div><div className="pres-vbig" style={{ color: "var(--faint)" }}>{money(proy)}</div><div className="pres-vsmall">proyección</div></div>
                 </div>
                 {vm > 0 && (
                   <div className="pres-vmeta">

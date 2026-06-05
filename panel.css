@@ -258,7 +258,7 @@ body.pres .sh p{display:none}
 .pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
 .pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
 .pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
-.pres-vnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.pres-vnums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
 .pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
 .pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 .pres-vmeta{margin-top:4px}

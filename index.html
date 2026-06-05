@@ -6,7 +6,7 @@
 <title>Heaven Colchones · Panel Comercial — Junio 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>/* Heaven panel — unified themeable styles. v2
+<style>/* Heaven panel — unified themeable styles. v3
    LIGHT theme = Direction A (Refinado). DARK theme = Direction B (Command Center).
    Toggle sets data-theme on <html>. Tokens flip; a few dark-only rules add
    the neon glow, mono numerals and grid texture that define the B aesthetic. */
@@ -247,6 +247,32 @@ body.pres .top .chip,body.pres .totop{display:none}
 body.pres .kv{font-size:2.3rem}
 body.pres .scroll{padding:32px 48px 60px}
 body.pres .sh p{display:none}
+
+/* ===== Presentación tab ===== */
+@keyframes presIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.pres-view{animation:presIn .4s ease both}
+.pres-hero{background:linear-gradient(135deg,#0F1620 0%,#1A2535 60%,#00352F 100%);border-radius:var(--r-lg);padding:34px 36px;color:#fff;margin-bottom:0;box-shadow:0 8px 32px rgba(0,0,0,.22)}
+.pres-hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.pres-hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:28px}
+.pres-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pres-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px 18px;border-top:3px solid var(--pk)}
+.pres-kpi-v{font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:-.5px}
+.pres-kpi-l{font-size:.68rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.pres-section-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 10px}
+.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.pres-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border-top:3px solid var(--vc);animation:presIn .5s ease both}
+.pres-vcard-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.pres-medal{font-size:1.4rem;line-height:1;width:30px;text-align:center}
+.pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
+.pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
+.pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
+.pres-vnums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
+.pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.pres-vmeta{margin-top:4px}
+.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
+@media(max-width:700px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
 
 /* ===== sparkline ===== */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
@@ -570,32 +596,6 @@ html[data-theme="dark"] .diag{background-image:linear-gradient(120deg,#0C1218,#1
 @media(min-width:769px){
   .mob-brand{display:none}
 }
-
-/* ===== Presentación tab ===== */
-@keyframes presIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.pres-view{animation:presIn .4s ease both}
-.pres-hero{background:linear-gradient(135deg,#0F1620 0%,#1A2535 60%,#00352F 100%);border-radius:var(--r-lg);padding:34px 36px;color:#fff;margin-bottom:0;box-shadow:0 8px 32px rgba(0,0,0,.22)}
-.pres-hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
-.pres-hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:28px}
-.pres-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.pres-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px 18px;border-top:3px solid var(--pk)}
-.pres-kpi-v{font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:-.5px}
-.pres-kpi-l{font-size:.68rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
-.pres-section-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 10px}
-.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.pres-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border-top:3px solid var(--vc);animation:presIn .5s ease both}
-.pres-vcard-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.pres-medal{font-size:1.4rem;line-height:1;width:30px;text-align:center}
-.pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
-.pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
-.pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
-.pres-vnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
-.pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
-.pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
-.pres-vmeta{margin-top:4px}
-.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
-@media(max-width:700px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
 </style>
 <script>(function(){try{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})()</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=\https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/react.production.min.js\><\/scr'+'ipt>')"></script>
@@ -747,6 +747,13 @@ const ICON_PATHS = {
     d: "M12 19V5M5 12l7-7 7 7"
   })),
   present: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
+    d: "M2 4h20"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M4 4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4"
+  }), /*#__PURE__*/React.createElement("path", {
+    d: "M12 17v4M9 21h6"
+  })),
+  presentacion: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", {
     d: "M2 4h20"
   }), /*#__PURE__*/React.createElement("path", {
     d: "M4 4v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V4"
@@ -5268,7 +5275,21 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, "facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
         className: "pres-vbig",
         style: {
+          color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})`
+        }
+      }, v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0, "%"), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "conv.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
+        style: {
           color: "var(--muted)"
+        }
+      }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "ticket prom.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
+        style: {
+          color: "var(--faint)"
         }
       }, money(proy)), /*#__PURE__*/React.createElement("div", {
         className: "pres-vsmall"
