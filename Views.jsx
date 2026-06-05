@@ -659,8 +659,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
     const branches = {};
     T.forEach(v => {
-      const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, cerrado: 0, cierres: 0, leads: 0, prevLeads: 0, meta: 0, color: v.color });
-      b.cerrado += v.cierres * v.ticket; b.cierres += v.cierres; b.leads += v.leads; b.prevLeads += (v.prevLeads || 0); b.meta += (metas[v.name] || 0);
+      const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, cerrado: 0, cierres: 0, leads: 0, leadsRet: 0, prevLeads: 0, hasNew: false, meta: 0, color: v.color });
+      b.cerrado += v.cierres * v.ticket; b.cierres += v.cierres; b.leads += v.leads;
+      if (v.nuevo) { b.hasNew = true; } else { b.prevLeads += (v.prevLeads || 0); b.leadsRet += v.leads; }
+      b.meta += (metas[v.name] || 0);
     });
     const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
 
@@ -733,7 +735,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                 </div>
                 <div className="pres-stats-grid" style={{ borderBottom: "1px solid var(--line)" }}>
                   {[
-                    { l: "Leads", v2: v.leads, c: "var(--text)" },
+                    { l: "Leads", v2: v.leads, c: "var(--text)", prev: v.prevLeads },
                     { l: "Cierres", v2: v.cierres, c: "var(--vc)" },
                     { l: "Facturado", v2: cerrado, c: "var(--green)", fmt: money },
                     { l: "Conv.", v2: vconv, c: `var(--${convTone(vconv)})`, fmt: n => n.toFixed(0) + "%" },
@@ -741,6 +743,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   ].map((s, j) => (
                     <div key={j} style={{ padding: "12px 8px", textAlign: "center", borderRight: "1px solid var(--line2)" }}>
                       <div className="num" style={{ fontSize: "1rem", fontWeight: 800, color: s.c }}><CountUp value={s.v2} fmt={s.fmt} /></div>
+                      {s.prev != null && !v.nuevo && <MomBadge cur={s.v2} prev={s.prev} />}
                       <div className="eb" style={{ marginTop: 3, letterSpacing: ".6px", fontSize: ".58rem" }}>{s.l}</div>
                     </div>
                   ))}
@@ -782,7 +785,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                     <div style={{ fontWeight: 800, fontSize: ".95rem" }}>{b.suc}</div>
                     <div className="ww" style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       {T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")}
-                      {b.prevLeads > 0 && <MomBadge cur={b.leads} prev={b.prevLeads} />}
+                      {b.prevLeads > 0 && <MomBadge cur={b.leadsRet} prev={b.prevLeads} />}
+                      {b.hasNew && <span style={{ fontSize: ".6rem", color: "var(--muted)", background: "var(--line2)", padding: "1px 5px", borderRadius: 99 }}>+nuevo</span>}
                     </div>
                   </div>
                   <Pill tone={convTone(bconv)}>{bconv.toFixed(0)}% conv</Pill>
