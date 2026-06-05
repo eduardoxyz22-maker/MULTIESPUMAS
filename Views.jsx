@@ -649,77 +649,67 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   /* ===== PRESENTACIÓN ===== */
   window.ViewPresentacion = function () {
     const metas = window.useMetas();
-    const curDay = D.curDay || 1, dim = D.daysInMonth || 30;
+    const curDay = D.curDay || 1, dim = D.daysInMonth || 30, left = dim - curDay;
     const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
+    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+    const medal = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
+    const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
+    const convMom = prevConv != null ? Math.round(((G.leads ? G.cierres / G.leads * 100 : 0) - prevConv) * 10) / 10 : null;
 
-    // Sucursal roll-up
     const branches = {};
     T.forEach(v => {
       const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, cerrado: 0, cierres: 0, leads: 0, meta: 0, color: v.color });
-      b.cerrado += v.cierres * v.ticket;
-      b.cierres += v.cierres;
-      b.leads += v.leads;
-      b.meta += (metas[v.name] || 0);
+      b.cerrado += v.cierres * v.ticket; b.cierres += v.cierres; b.leads += v.leads; b.meta += (metas[v.name] || 0);
     });
     const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
 
-    // Top vendor
-    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+    const MomBadge = ({ cur, prev, fmt }) => {
+      const p = mom(cur, prev);
+      if (p === null || prev == null) return null;
+      return <span className={`delta ${p >= 0 ? "up" : "down"}`} style={{ fontSize: ".68rem", marginLeft: 6 }}>{p >= 0 ? "▲" : "▼"}{Math.abs(p)}% vs {D.prevMonth.slice(0, 3)}</span>;
+    };
 
-    const medalColor = i => i === 0 ? "#F59E0B" : i === 1 ? "#94A3B8" : i === 2 ? "#CD7F32" : "var(--muted)";
-    const medalLabel = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    const StatRow = ({ label, val, prev, fmt, color }) => (
+      <div className="diag2-stat" style={{ "--sc": color || "var(--brand)" }}>
+        <div className="diag2-ic"><Icon name="conversion" size={14} /></div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="diag2-v" style={{ color: color || "var(--text)" }}>
+            <CountUp value={val} fmt={fmt} />
+            <MomBadge cur={val} prev={prev} fmt={fmt} />
+          </div>
+          <div className="diag2-l">{label}</div>
+        </div>
+      </div>
+    );
 
     return (
-      <div className="view pres-view">
-        {/* ── Header ── */}
-        {(() => {
-          const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
-          const MomTag = ({ cur, prev }) => { const p = mom(cur, prev); if (p === null) return null; return <div className="pres-kpi-mom"><span className={`delta ${p >= 0 ? "up" : "down"}`}>{p >= 0 ? "▲" : "▼"} {Math.abs(p)}%</span> vs {D.prevMonth.slice(0,3)} ({prev != null ? (typeof prev === "number" && prev > 9999 ? money(prev) : prev) : "—"})</div>; };
-          const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
-          const curConvN = G.leads ? G.cierres / G.leads * 100 : 0;
-          const convMom = prevConv != null ? Math.round((curConvN - prevConv) * 10) / 10 : null;
-          return (
-            <div className="pres-hero">
-              <div className="pres-hero-title">Heaven Colchones · {D.month} {D.year}</div>
-              <div className="pres-hero-sub">Resumen comercial del equipo · Actualizado {D.fecha || "hoy"}</div>
-              <div className="pres-kpis" style={{ gridTemplateColumns: "repeat(6,1fr)" }}>
-                <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
-                  <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
-                  <div className="pres-kpi-l">Leads</div>
-                  <MomTag cur={G.leads} prev={G.prevLeads} />
-                </div>
-                <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
-                  <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
-                  <div className="pres-kpi-l">Cierres</div>
-                  <MomTag cur={G.cierres} prev={G.prevCierres} />
-                </div>
-                <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
-                  <div className="pres-kpi-v">{conv}%</div>
-                  <div className="pres-kpi-l">Conversión</div>
-                  {convMom !== null && <div className="pres-kpi-mom"><span className={`delta ${convMom >= 0 ? "up" : "down"}`}>{convMom >= 0 ? "▲" : "▼"} {Math.abs(convMom).toFixed(1)}pp</span> vs {D.prevMonth.slice(0,3)} ({prevConv != null ? prevConv.toFixed(1) : "—"}%)</div>}
-                </div>
-                <div className="pres-kpi" style={{ "--pk": "#00B5AD" }}>
-                  <div className="pres-kpi-v"><CountUp value={G.cerrado} fmt={money} /></div>
-                  <div className="pres-kpi-l">Facturado</div>
-                  <MomTag cur={G.cerrado} prev={G.prevCerrado} />
-                </div>
-                <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
-                  <div className="pres-kpi-v"><CountUp value={G.ticket} fmt={money} /></div>
-                  <div className="pres-kpi-l">Ticket prom.</div>
-                  <MomTag cur={G.ticket} prev={G.prevTicket} />
-                </div>
-                <div className="pres-kpi" style={{ "--pk": "#7A4AD9" }}>
-                  <div className="pres-kpi-v"><CountUp value={G.pipeline} fmt={money} /></div>
-                  <div className="pres-kpi-l">Pipeline</div>
-                  <MomTag cur={G.pipeline} prev={G.prevPipeline} />
-                </div>
-              </div>
+      <div className="view">
+        {/* ── Hero: mismo estilo rhero/diag2 del dashboard ── */}
+        <div className="rhero">
+          <div className="rhero-left">
+            <span className="diag2-eyebrow"><Icon name="presentacion" size={13} sw={2.4} />Presentación comercial · {D.month} {D.year}</span>
+            <div className="rhero-line">
+              <span><b className="num">{G.leads}</b> leads <MomBadge cur={G.leads} prev={G.prevLeads} /></span>
+              <span className="rhero-sep" />
+              <span><b className="num">{G.cierres}</b> cierres <MomBadge cur={G.cierres} prev={G.prevCierres} /></span>
+              <span className="rhero-sep" />
+              <span><b className="num">{conv}%</b> conv{convMom !== null && <span className={`delta ${convMom >= 0 ? "up" : "down"}`} style={{ fontSize: ".68rem", marginLeft: 5 }}>{convMom >= 0 ? "▲" : "▼"}{Math.abs(convMom).toFixed(1)}pp</span>}</span>
             </div>
-          );
-        })()}
+            <p className="rhero-sub">Actualizado {D.fecha || "hoy"} · Día {curDay} de {dim} · {left} días restantes</p>
+            <div style={{ marginTop: 14, height: 6, background: "var(--line2)", borderRadius: 99, overflow: "hidden", maxWidth: 320 }}>
+              <div style={{ height: "100%", width: `${Math.round(curDay / dim * 100)}%`, background: "var(--brand)", borderRadius: 99, boxShadow: "var(--glow)", transition: "width 1.2s ease" }} />
+            </div>
+          </div>
+          <div className="diag2-stats rhero-stats">
+            <StatRow label="Facturado" val={G.cerrado} prev={G.prevCerrado} fmt={money} color="var(--green)" />
+            <StatRow label="Ticket promedio" val={G.ticket} prev={G.prevTicket} fmt={money} color="var(--amber)" />
+            <StatRow label="Pipeline" val={G.pipeline} prev={G.prevPipeline} fmt={money} color="var(--blue)" />
+          </div>
+        </div>
 
-        {/* ── Ranking vendedoras ── */}
-        <div className="pres-section-label">Ranking por vendedora</div>
+        {/* ── Ranking por vendedora ── */}
+        <SectionHead eb="Ranking" h3="Por vendedora — resultados del mes" />
         <div className="pres-vendors">
           {ranked.map((v, i) => {
             const cerrado = v.cierres * v.ticket;
@@ -727,41 +717,48 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
             const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
             const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
+            const vconv = v.leads ? v.cierres / v.leads * 100 : 0;
             return (
-              <div className="pres-vcard" key={i} style={{ "--vc": v.color || "var(--brand)", animationDelay: `${i * 0.07}s` }}>
-                <div className="pres-vcard-top">
-                  <span className="pres-medal">{medalLabel(i)}</span>
-                  <Avatar v={v} size={44} ring />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div className="pres-vname">{v.name.split(" ")[0]}</div>
-                    <div className="pres-vsuc">{v.suc}</div>
-                  </div>
-                  <div className="pres-vconv" style={{ color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})` }}>
-                    {v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0}%<div style={{ fontSize: ".6rem", color: "var(--muted)", fontWeight: 600 }}>conv</div>
-                  </div>
-                </div>
-                <div className="pres-vnums">
-                  <div><div className="pres-vbig">{v.leads}</div><div className="pres-vsmall">leads</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--vc)" }}>{v.cierres}</div><div className="pres-vsmall">cierres</div></div>
-                  <div><div className="pres-vbig">{money(cerrado)}</div><div className="pres-vsmall">facturado</div></div>
-                  <div><div className="pres-vbig" style={{ color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})` }}>{v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0}%</div><div className="pres-vsmall">conv.</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{v.ticket ? money(v.ticket) : "—"}</div><div className="pres-vsmall">ticket prom.</div></div>
-                </div>
-                {vm > 0 && (
-                  <div className="pres-vmeta">
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", marginBottom: 5 }}>
-                      <span style={{ color: "var(--muted)" }}>Meta {money(vm)}</span>
-                      <b style={{ color: mc }}>{mp}%</b>
+              <div className="tcard pres-vcard" key={i} style={{ "--vc": v.color || "var(--brand)", animationDelay: `${i * 0.06}s` }}>
+                <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid var(--line)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 0 }}>
+                    <span style={{ fontSize: "1.5rem", lineHeight: 1, width: 28 }}>{medal(i)}</span>
+                    <Avatar v={v} size={40} ring crown={i === 0} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: ".95rem" }}>{v.name}</div>
+                      <div className="ww">{v.suc}</div>
                     </div>
-                    <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.2s cubic-bezier(.4,0,.2,1)" }} /></div>
+                    <Pill tone={convTone(vconv)}>{vconv.toFixed(0)}% conv</Pill>
                   </div>
-                )}
-                {vm === 0 && <div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 10 }}>Sin meta fijada</div>}
-                <div style={{ marginTop: 10, fontSize: ".68rem", color: "var(--muted)", borderTop: "1px solid var(--line2)", paddingTop: 8 }}>
-                  {cerrado > 0
-                    ? <span>Proyección al cierre: <b style={{ color: "var(--brand-d)" }}>{money(proy)}</b> <span style={{ color: "var(--faint)" }}>({dim - curDay} días restantes)</span></span>
-                    : <span style={{ color: "var(--faint)" }}>Sin cierres aún — proyección no disponible</span>
-                  }
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 0, borderBottom: "1px solid var(--line)" }}>
+                  {[
+                    { l: "Leads", v2: v.leads, c: "var(--text)" },
+                    { l: "Cierres", v2: v.cierres, c: "var(--vc)" },
+                    { l: "Facturado", v2: cerrado, c: "var(--green)", fmt: money },
+                    { l: "Conv.", v2: vconv, c: `var(--${convTone(vconv)})`, fmt: n => n.toFixed(0) + "%" },
+                    { l: "Ticket", v2: v.ticket, c: "var(--amber)", fmt: money },
+                  ].map((s, j) => (
+                    <div key={j} style={{ padding: "12px 10px", borderRight: j < 4 ? "1px solid var(--line2)" : "none", textAlign: "center" }}>
+                      <div className="num" style={{ fontSize: "1.05rem", fontWeight: 800, color: s.c }}><CountUp value={s.v2} fmt={s.fmt} /></div>
+                      <div className="eb" style={{ marginTop: 3, letterSpacing: ".8px" }}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "12px 18px" }}>
+                  {vm > 0 ? (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", marginBottom: 5 }}>
+                        <span style={{ color: "var(--muted)" }}>Meta {money(vm)}</span>
+                        <b style={{ color: mc }}>{mp}%</b>
+                      </div>
+                      <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.2s cubic-bezier(.4,0,.2,1)" }} /></div>
+                    </>
+                  ) : <div className="ww" style={{ fontSize: ".68rem" }}>Sin meta fijada</div>}
+                  <div style={{ marginTop: 8, fontSize: ".68rem", color: "var(--muted)" }}>
+                    {cerrado > 0 ? <span>Proyección al cierre: <b style={{ color: "var(--brand-d)" }}>{money(proy)}</b> <span className="ww">({left} días restantes)</span></span>
+                      : <span className="ww">Sin cierres aún</span>}
+                  </div>
                 </div>
               </div>
             );
@@ -769,55 +766,56 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         </div>
 
         {/* ── Por sucursal ── */}
-        <div className="pres-section-label">Por sucursal</div>
+        <SectionHead eb="Sucursales" h3="Rendimiento por tienda" />
         <div className="pres-sucs">
           {sucList.map((b, i) => {
             const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
             const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
-            const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+            const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
             const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
             const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
             return (
-              <div className="pres-suc" key={i} style={{ "--sc": b.color || "var(--brand)", animationDelay: `${0.2 + i * 0.08}s` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                  <span style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: `color-mix(in srgb, var(--sc) 15%, transparent)`, color: "var(--sc)" }}><Icon name="sucursales" size={20} /></span>
-                  <div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{b.suc}</div><div className="ww">{T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")}</div></div>
-                </div>
-                <div className="pres-vnums">
-                  <div><div className="pres-vbig">{b.leads}</div><div className="pres-vsmall">leads</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--sc)" }}>{b.cierres}</div><div className="pres-vsmall">cierres</div></div>
-                  <div><div className="pres-vbig">{money(b.cerrado)}</div><div className="pres-vsmall">facturado</div></div>
-                  <div><div className="pres-vbig" style={{ color: `var(--${convTone(+bconv)})` }}>{bconv}%</div><div className="pres-vsmall">conv.</div></div>
-                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{bticket ? money(bticket) : "—"}</div><div className="pres-vsmall">ticket prom.</div></div>
-                </div>
-                {b.meta > 0 && (
-                  <div className="pres-vmeta">
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", marginBottom: 5 }}>
-                      <span style={{ color: "var(--muted)" }}>Meta {money(b.meta)}</span>
-                      <b style={{ color: mc }}>{mp}%</b>
-                    </div>
-                    <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.4s cubic-bezier(.4,0,.2,1)" }} /></div>
+              <div className="tcard pres-suc" key={i} style={{ "--sc": b.color || "var(--brand)", animationDelay: `${0.15 + i * 0.08}s` }}>
+                <div style={{ padding: "16px 18px 14px", borderBottom: "1px solid var(--line)", display: "flex", alignItems: "center", gap: 12 }}>
+                  <span style={{ width: 38, height: 38, borderRadius: 10, display: "grid", placeItems: "center", background: `color-mix(in srgb, var(--sc) 14%, transparent)`, color: "var(--sc)", flexShrink: 0 }}><Icon name="sucursales" size={18} /></span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 800, fontSize: ".95rem" }}>{b.suc}</div>
+                    <div className="ww">{T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")}</div>
                   </div>
-                )}
-                {b.meta === 0 && <div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 6 }}>Sin meta fijada</div>}
-                <div style={{ marginTop: 10, fontSize: ".68rem", color: "var(--muted)", borderTop: "1px solid var(--line2)", paddingTop: 8 }}>
-                  {b.cerrado > 0
-                    ? <span>Proyección al cierre: <b style={{ color: "var(--brand-d)" }}>{money(bproy)}</b> <span style={{ color: "var(--faint)" }}>({dim - curDay} días restantes)</span></span>
-                    : <span style={{ color: "var(--faint)" }}>Sin cierres aún — proyección no disponible</span>
-                  }
+                  <Pill tone={convTone(bconv)}>{bconv.toFixed(0)}% conv</Pill>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 0, borderBottom: "1px solid var(--line)" }}>
+                  {[
+                    { l: "Leads", v2: b.leads, c: "var(--text)" },
+                    { l: "Cierres", v2: b.cierres, c: "var(--sc)" },
+                    { l: "Facturado", v2: b.cerrado, c: "var(--green)", fmt: money },
+                    { l: "Conv.", v2: bconv, c: `var(--${convTone(bconv)})`, fmt: n => n.toFixed(0) + "%" },
+                    { l: "Ticket", v2: bticket, c: "var(--amber)", fmt: bticket ? money : () => "—" },
+                  ].map((s, j) => (
+                    <div key={j} style={{ padding: "12px 10px", borderRight: j < 4 ? "1px solid var(--line2)" : "none", textAlign: "center" }}>
+                      <div className="num" style={{ fontSize: "1.05rem", fontWeight: 800, color: s.c }}><CountUp value={s.v2} fmt={s.fmt} /></div>
+                      <div className="eb" style={{ marginTop: 3, letterSpacing: ".8px" }}>{s.l}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "12px 18px" }}>
+                  {b.meta > 0 ? (
+                    <>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", marginBottom: 5 }}>
+                        <span style={{ color: "var(--muted)" }}>Meta {money(b.meta)}</span>
+                        <b style={{ color: mc }}>{mp}%</b>
+                      </div>
+                      <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.4s cubic-bezier(.4,0,.2,1)" }} /></div>
+                    </>
+                  ) : <div className="ww" style={{ fontSize: ".68rem" }}>Sin meta fijada</div>}
+                  <div style={{ marginTop: 8, fontSize: ".68rem", color: "var(--muted)" }}>
+                    {b.cerrado > 0 ? <span>Proyección: <b style={{ color: "var(--brand-d)" }}>{money(bproy)}</b> <span className="ww">({left} días restantes)</span></span>
+                      : <span className="ww">Sin cierres aún</span>}
+                  </div>
                 </div>
               </div>
             );
           })}
-        </div>
-
-        {/* ── Día del mes ── */}
-        <div className="card" style={{ textAlign: "center", padding: "18px 24px" }}>
-          <div style={{ fontSize: ".72rem", color: "var(--muted)", fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", marginBottom: 8 }}>Avance del mes</div>
-          <div style={{ height: 10, background: "var(--line2)", borderRadius: 99, overflow: "hidden", maxWidth: 500, margin: "0 auto 10px" }}>
-            <div style={{ height: "100%", width: `${Math.round(curDay / dim * 100)}%`, background: "var(--brand)", borderRadius: 99, boxShadow: "var(--glow)", transition: "width 1s ease" }} />
-          </div>
-          <div style={{ fontSize: ".72rem", color: "var(--faint)", fontWeight: 600 }}>Día {curDay} de {dim} · {dim - curDay} días restantes</div>
         </div>
       </div>
     );

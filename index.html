@@ -249,33 +249,12 @@ body.pres .scroll{padding:32px 48px 60px}
 body.pres .sh p{display:none}
 
 /* ===== Presentación tab ===== */
-@keyframes presIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
-.pres-view{animation:presIn .4s ease both}
-.pres-hero{background:linear-gradient(135deg,#0F1620 0%,#1A2535 60%,#00352F 100%);border-radius:var(--r-lg);padding:34px 36px;color:#fff;margin-bottom:0;box-shadow:0 8px 32px rgba(0,0,0,.22)}
-.pres-hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
-.pres-hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:28px}
-.pres-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.pres-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px 18px;border-top:3px solid var(--pk)}
-.pres-kpi-v{font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:-.5px}
-.pres-kpi-l{font-size:.68rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
-.pres-kpi-mom{font-size:.62rem;color:rgba(255,255,255,.4);margin-top:5px;font-weight:500}
-.pres-kpi-mom .delta{font-size:.65rem}
-.pres-section-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 10px}
-.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.pres-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border-top:3px solid var(--vc);animation:presIn .5s ease both}
-.pres-vcard-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-.pres-medal{font-size:1.4rem;line-height:1;width:30px;text-align:center}
-.pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
-.pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
-.pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
-.pres-vnums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
-.pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
-.pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
-.pres-vmeta{margin-top:4px}
-.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
-@media(max-width:900px){.pres-kpis{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:600px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
+@keyframes presIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.pres-vcard{border-top:3px solid var(--vc)!important;animation:presIn .45s ease both}
+.pres-suc{border-top:3px solid var(--sc)!important;animation:presIn .45s ease both}
+.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+@media(max-width:600px){.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
 
 /* ===== sparkline ===== */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
@@ -5139,10 +5118,14 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   window.ViewPresentacion = function () {
     const metas = window.useMetas();
     const curDay = D.curDay || 1,
-      dim = D.daysInMonth || 30;
+      dim = D.daysInMonth || 30,
+      left = dim - curDay;
     const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
-
-    // Sucursal roll-up
+    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+    const medal = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
+    const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
+    const convMom = prevConv != null ? Math.round(((G.leads ? G.cierres / G.leads * 100 : 0) - prevConv) * 10) / 10 : null;
     const branches = {};
     T.forEach(v => {
       const b = branches[v.suc] || (branches[v.suc] = {
@@ -5159,131 +5142,137 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       b.meta += metas[v.name] || 0;
     });
     const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
-
-    // Top vendor
-    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
-    const medalColor = i => i === 0 ? "#F59E0B" : i === 1 ? "#94A3B8" : i === 2 ? "#CD7F32" : "var(--muted)";
-    const medalLabel = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    const MomBadge = ({
+      cur,
+      prev,
+      fmt
+    }) => {
+      const p = mom(cur, prev);
+      if (p === null || prev == null) return null;
+      return /*#__PURE__*/React.createElement("span", {
+        className: `delta ${p >= 0 ? "up" : "down"}`,
+        style: {
+          fontSize: ".68rem",
+          marginLeft: 6
+        }
+      }, p >= 0 ? "▲" : "▼", Math.abs(p), "% vs ", D.prevMonth.slice(0, 3));
+    };
+    const StatRow = ({
+      label,
+      val,
+      prev,
+      fmt,
+      color
+    }) => /*#__PURE__*/React.createElement("div", {
+      className: "diag2-stat",
+      style: {
+        "--sc": color || "var(--brand)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "diag2-ic"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "conversion",
+      size: 14
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "diag2-v",
+      style: {
+        color: color || "var(--text)"
+      }
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: val,
+      fmt: fmt
+    }), /*#__PURE__*/React.createElement(MomBadge, {
+      cur: val,
+      prev: prev,
+      fmt: fmt
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "diag2-l"
+    }, label)));
     return /*#__PURE__*/React.createElement("div", {
-      className: "view pres-view"
-    }, (() => {
-      const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
-      const MomTag = ({
-        cur,
-        prev
-      }) => {
-        const p = mom(cur, prev);
-        if (p === null) return null;
-        return /*#__PURE__*/React.createElement("div", {
-          className: "pres-kpi-mom"
-        }, /*#__PURE__*/React.createElement("span", {
-          className: `delta ${p >= 0 ? "up" : "down"}`
-        }, p >= 0 ? "▲" : "▼", " ", Math.abs(p), "%"), " vs ", D.prevMonth.slice(0, 3), " (", prev != null ? typeof prev === "number" && prev > 9999 ? money(prev) : prev : "—", ")");
-      };
-      const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
-      const curConvN = G.leads ? G.cierres / G.leads * 100 : 0;
-      const convMom = prevConv != null ? Math.round((curConvN - prevConv) * 10) / 10 : null;
-      return /*#__PURE__*/React.createElement("div", {
-        className: "pres-hero"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-hero-title"
-      }, "Heaven Colchones \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
-        className: "pres-hero-sub"
-      }, "Resumen comercial del equipo \xB7 Actualizado ", D.fecha || "hoy"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpis",
-        style: {
-          gridTemplateColumns: "repeat(6,1fr)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "var(--brand)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: G.leads
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Leads"), /*#__PURE__*/React.createElement(MomTag, {
-        cur: G.leads,
-        prev: G.prevLeads
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "#159A57"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: G.cierres
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Cierres"), /*#__PURE__*/React.createElement(MomTag, {
-        cur: G.cierres,
-        prev: G.prevCierres
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "#2E6FE0"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, conv, "%"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Conversi\xF3n"), convMom !== null && /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-mom"
-      }, /*#__PURE__*/React.createElement("span", {
-        className: `delta ${convMom >= 0 ? "up" : "down"}`
-      }, convMom >= 0 ? "▲" : "▼", " ", Math.abs(convMom).toFixed(1), "pp"), " vs ", D.prevMonth.slice(0, 3), " (", prevConv != null ? prevConv.toFixed(1) : "—", "%)")), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "#00B5AD"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: G.cerrado,
-        fmt: money
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Facturado"), /*#__PURE__*/React.createElement(MomTag, {
-        cur: G.cerrado,
-        prev: G.prevCerrado
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "#D98300"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: G.ticket,
-        fmt: money
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Ticket prom."), /*#__PURE__*/React.createElement(MomTag, {
-        cur: G.ticket,
-        prev: G.prevTicket
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi",
-        style: {
-          "--pk": "#7A4AD9"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-v"
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: G.pipeline,
-        fmt: money
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "pres-kpi-l"
-      }, "Pipeline"), /*#__PURE__*/React.createElement(MomTag, {
-        cur: G.pipeline,
-        prev: G.prevPipeline
-      }))));
-    })(), /*#__PURE__*/React.createElement("div", {
-      className: "pres-section-label"
-    }, "Ranking por vendedora"), /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "rhero"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "rhero-left"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "diag2-eyebrow"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "presentacion",
+      size: 13,
+      sw: 2.4
+    }), "Presentaci\xF3n comercial \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
+      className: "rhero-line"
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, G.leads), " leads ", /*#__PURE__*/React.createElement(MomBadge, {
+      cur: G.leads,
+      prev: G.prevLeads
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "rhero-sep"
+    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, G.cierres), " cierres ", /*#__PURE__*/React.createElement(MomBadge, {
+      cur: G.cierres,
+      prev: G.prevCierres
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "rhero-sep"
+    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, conv, "%"), " conv", convMom !== null && /*#__PURE__*/React.createElement("span", {
+      className: `delta ${convMom >= 0 ? "up" : "down"}`,
+      style: {
+        fontSize: ".68rem",
+        marginLeft: 5
+      }
+    }, convMom >= 0 ? "▲" : "▼", Math.abs(convMom).toFixed(1), "pp"))), /*#__PURE__*/React.createElement("p", {
+      className: "rhero-sub"
+    }, "Actualizado ", D.fecha || "hoy", " \xB7 D\xEDa ", curDay, " de ", dim, " \xB7 ", left, " d\xEDas restantes"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 14,
+        height: 6,
+        background: "var(--line2)",
+        borderRadius: 99,
+        overflow: "hidden",
+        maxWidth: 320
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: "100%",
+        width: `${Math.round(curDay / dim * 100)}%`,
+        background: "var(--brand)",
+        borderRadius: 99,
+        boxShadow: "var(--glow)",
+        transition: "width 1.2s ease"
+      }
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "diag2-stats rhero-stats"
+    }, /*#__PURE__*/React.createElement(StatRow, {
+      label: "Facturado",
+      val: G.cerrado,
+      prev: G.prevCerrado,
+      fmt: money,
+      color: "var(--green)"
+    }), /*#__PURE__*/React.createElement(StatRow, {
+      label: "Ticket promedio",
+      val: G.ticket,
+      prev: G.prevTicket,
+      fmt: money,
+      color: "var(--amber)"
+    }), /*#__PURE__*/React.createElement(StatRow, {
+      label: "Pipeline",
+      val: G.pipeline,
+      prev: G.prevPipeline,
+      fmt: money,
+      color: "var(--blue)"
+    }))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Ranking",
+      h3: "Por vendedora \u2014 resultados del mes"
+    }), /*#__PURE__*/React.createElement("div", {
       className: "pres-vendors"
     }, ranked.map((v, i) => {
       const cerrado = v.cierres * v.ticket;
@@ -5291,79 +5280,113 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
       const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
       const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
+      const vconv = v.leads ? v.cierres / v.leads * 100 : 0;
       return /*#__PURE__*/React.createElement("div", {
-        className: "pres-vcard",
+        className: "tcard pres-vcard",
         key: i,
         style: {
           "--vc": v.color || "var(--brand)",
-          animationDelay: `${i * 0.07}s`
+          animationDelay: `${i * 0.06}s`
         }
       }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vcard-top"
+        style: {
+          padding: "16px 18px 14px",
+          borderBottom: "1px solid var(--line)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 11,
+          marginBottom: 0
+        }
       }, /*#__PURE__*/React.createElement("span", {
-        className: "pres-medal"
-      }, medalLabel(i)), /*#__PURE__*/React.createElement(Avatar, {
+        style: {
+          fontSize: "1.5rem",
+          lineHeight: 1,
+          width: 28
+        }
+      }, medal(i)), /*#__PURE__*/React.createElement(Avatar, {
         v: v,
-        size: 44,
-        ring: true
+        size: 40,
+        ring: true,
+        crown: i === 0
       }), /*#__PURE__*/React.createElement("div", {
         style: {
           flex: 1,
           minWidth: 0
         }
       }, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vname"
-      }, v.name.split(" ")[0]), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsuc"
-      }, v.suc)), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vconv",
         style: {
-          color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})`
+          fontWeight: 800,
+          fontSize: ".95rem"
         }
-      }, v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0, "%", /*#__PURE__*/React.createElement("div", {
+      }, v.name), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, v.suc)), /*#__PURE__*/React.createElement(Pill, {
+        tone: convTone(vconv)
+      }, vconv.toFixed(0), "% conv"))), /*#__PURE__*/React.createElement("div", {
         style: {
-          fontSize: ".6rem",
-          color: "var(--muted)",
-          fontWeight: 600
+          display: "grid",
+          gridTemplateColumns: "repeat(5,1fr)",
+          gap: 0,
+          borderBottom: "1px solid var(--line)"
         }
-      }, "conv"))), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vnums"
-      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig"
-      }, v.leads), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "leads")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
+      }, [{
+        l: "Leads",
+        v2: v.leads,
+        c: "var(--text)"
+      }, {
+        l: "Cierres",
+        v2: v.cierres,
+        c: "var(--vc)"
+      }, {
+        l: "Facturado",
+        v2: cerrado,
+        c: "var(--green)",
+        fmt: money
+      }, {
+        l: "Conv.",
+        v2: vconv,
+        c: `var(--${convTone(vconv)})`,
+        fmt: n => n.toFixed(0) + "%"
+      }, {
+        l: "Ticket",
+        v2: v.ticket,
+        c: "var(--amber)",
+        fmt: money
+      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
+        key: j,
         style: {
-          color: "var(--vc)"
+          padding: "12px 10px",
+          borderRight: j < 4 ? "1px solid var(--line2)" : "none",
+          textAlign: "center"
         }
-      }, v.cierres), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig"
-      }, money(cerrado)), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
-        style: {
-          color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})`
-        }
-      }, v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0, "%"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "conv.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
-        style: {
-          color: "var(--muted)"
-        }
-      }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "ticket prom."))), vm > 0 && /*#__PURE__*/React.createElement("div", {
-        className: "pres-vmeta"
       }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.05rem",
+          fontWeight: 800,
+          color: s.c
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: s.v2,
+        fmt: s.fmt
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "eb",
+        style: {
+          marginTop: 3,
+          letterSpacing: ".8px"
+        }
+      }, s.l)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "12px 18px"
+        }
+      }, vm > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           justifyContent: "space-between",
-          fontSize: ".68rem",
+          fontSize: ".7rem",
           marginBottom: 5
         }
       }, /*#__PURE__*/React.createElement("span", {
@@ -5382,115 +5405,142 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           background: mc,
           transition: "width 1.2s cubic-bezier(.4,0,.2,1)"
         }
-      }))), vm === 0 && /*#__PURE__*/React.createElement("div", {
+      }))) : /*#__PURE__*/React.createElement("div", {
+        className: "ww",
         style: {
-          fontSize: ".68rem",
-          color: "var(--faint)",
-          marginTop: 10
+          fontSize: ".68rem"
         }
       }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
         style: {
-          marginTop: 10,
+          marginTop: 8,
           fontSize: ".68rem",
-          color: "var(--muted)",
-          borderTop: "1px solid var(--line2)",
-          paddingTop: 8
+          color: "var(--muted)"
         }
       }, cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
         style: {
           color: "var(--brand-d)"
         }
       }, money(proy)), " ", /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--faint)"
-        }
-      }, "(", dim - curDay, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--faint)"
-        }
-      }, "Sin cierres a\xFAn \u2014 proyecci\xF3n no disponible")));
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "pres-section-label"
-    }, "Por sucursal"), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "Sin cierres a\xFAn"))));
+    })), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Sucursales",
+      h3: "Rendimiento por tienda"
+    }), /*#__PURE__*/React.createElement("div", {
       className: "pres-sucs"
     }, sucList.map((b, i) => {
       const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
       const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
-      const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+      const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
       const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
       const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
       return /*#__PURE__*/React.createElement("div", {
-        className: "pres-suc",
+        className: "tcard pres-suc",
         key: i,
         style: {
           "--sc": b.color || "var(--brand)",
-          animationDelay: `${0.2 + i * 0.08}s`
+          animationDelay: `${0.15 + i * 0.08}s`
         }
       }, /*#__PURE__*/React.createElement("div", {
         style: {
+          padding: "16px 18px 14px",
+          borderBottom: "1px solid var(--line)",
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          marginBottom: 14
+          gap: 12
         }
       }, /*#__PURE__*/React.createElement("span", {
         style: {
-          width: 42,
-          height: 42,
-          borderRadius: 11,
+          width: 38,
+          height: 38,
+          borderRadius: 10,
           display: "grid",
           placeItems: "center",
-          background: `color-mix(in srgb, var(--sc) 15%, transparent)`,
-          color: "var(--sc)"
+          background: `color-mix(in srgb, var(--sc) 14%, transparent)`,
+          color: "var(--sc)",
+          flexShrink: 0
         }
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "sucursales",
-        size: 20
-      })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        size: 18
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          minWidth: 0
+        }
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           fontWeight: 800,
-          fontSize: "1.1rem"
+          fontSize: ".95rem"
         }
       }, b.suc), /*#__PURE__*/React.createElement("div", {
         className: "ww"
-      }, T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")))), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vnums"
-      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig"
-      }, b.leads), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "leads")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
+      }, T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · "))), /*#__PURE__*/React.createElement(Pill, {
+        tone: convTone(bconv)
+      }, bconv.toFixed(0), "% conv")), /*#__PURE__*/React.createElement("div", {
         style: {
-          color: "var(--sc)"
+          display: "grid",
+          gridTemplateColumns: "repeat(5,1fr)",
+          gap: 0,
+          borderBottom: "1px solid var(--line)"
         }
-      }, b.cierres), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig"
-      }, money(b.cerrado)), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
+      }, [{
+        l: "Leads",
+        v2: b.leads,
+        c: "var(--text)"
+      }, {
+        l: "Cierres",
+        v2: b.cierres,
+        c: "var(--sc)"
+      }, {
+        l: "Facturado",
+        v2: b.cerrado,
+        c: "var(--green)",
+        fmt: money
+      }, {
+        l: "Conv.",
+        v2: bconv,
+        c: `var(--${convTone(bconv)})`,
+        fmt: n => n.toFixed(0) + "%"
+      }, {
+        l: "Ticket",
+        v2: bticket,
+        c: "var(--amber)",
+        fmt: bticket ? money : () => "—"
+      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
+        key: j,
         style: {
-          color: `var(--${convTone(+bconv)})`
+          padding: "12px 10px",
+          borderRight: j < 4 ? "1px solid var(--line2)" : "none",
+          textAlign: "center"
         }
-      }, bconv, "%"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "conv.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "pres-vbig",
-        style: {
-          color: "var(--muted)"
-        }
-      }, bticket ? money(bticket) : "—"), /*#__PURE__*/React.createElement("div", {
-        className: "pres-vsmall"
-      }, "ticket prom."))), b.meta > 0 && /*#__PURE__*/React.createElement("div", {
-        className: "pres-vmeta"
       }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.05rem",
+          fontWeight: 800,
+          color: s.c
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: s.v2,
+        fmt: s.fmt
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "eb",
+        style: {
+          marginTop: 3,
+          letterSpacing: ".8px"
+        }
+      }, s.l)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "12px 18px"
+        }
+      }, b.meta > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           justifyContent: "space-between",
-          fontSize: ".68rem",
+          fontSize: ".7rem",
           marginBottom: 5
         }
       }, /*#__PURE__*/React.createElement("span", {
@@ -5509,78 +5559,32 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           background: mc,
           transition: "width 1.4s cubic-bezier(.4,0,.2,1)"
         }
-      }))), b.meta === 0 && /*#__PURE__*/React.createElement("div", {
+      }))) : /*#__PURE__*/React.createElement("div", {
+        className: "ww",
         style: {
-          fontSize: ".68rem",
-          color: "var(--faint)",
-          marginTop: 6
+          fontSize: ".68rem"
         }
       }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
         style: {
-          marginTop: 10,
+          marginTop: 8,
           fontSize: ".68rem",
-          color: "var(--muted)",
-          borderTop: "1px solid var(--line2)",
-          paddingTop: 8
+          color: "var(--muted)"
         }
-      }, b.cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
+      }, b.cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n: ", /*#__PURE__*/React.createElement("b", {
         style: {
           color: "var(--brand-d)"
         }
       }, money(bproy)), " ", /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--faint)"
-        }
-      }, "(", dim - curDay, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--faint)"
-        }
-      }, "Sin cierres a\xFAn \u2014 proyecci\xF3n no disponible")));
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "card",
-      style: {
-        textAlign: "center",
-        padding: "18px 24px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: ".72rem",
-        color: "var(--muted)",
-        fontWeight: 700,
-        letterSpacing: ".05em",
-        textTransform: "uppercase",
-        marginBottom: 8
-      }
-    }, "Avance del mes"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: 10,
-        background: "var(--line2)",
-        borderRadius: 99,
-        overflow: "hidden",
-        maxWidth: 500,
-        margin: "0 auto 10px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: "100%",
-        width: `${Math.round(curDay / dim * 100)}%`,
-        background: "var(--brand)",
-        borderRadius: 99,
-        boxShadow: "var(--glow)",
-        transition: "width 1s ease"
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: ".72rem",
-        color: "var(--faint)",
-        fontWeight: 600
-      }
-    }, "D\xEDa ", curDay, " de ", dim, " \xB7 ", dim - curDay, " d\xEDas restantes")));
+        className: "ww"
+      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "Sin cierres a\xFAn"))));
+    })));
   };
 })();
 
-  var el = document.getElementById("_loading"); if (el) el.remove();
-  try { ReactDOM.createRoot(_root).render(React.createElement(window.Panel)); } catch(e) { _root.innerHTML = '<p style="color:red;padding:20px">Error: ' + e.message + '</p>'; }
+  var el=document.getElementById('_loading'); if(el)el.remove();
+  try{ReactDOM.createRoot(_root).render(React.createElement(window.Panel));}catch(e){_root.innerHTML='<p style="color:red;padding:20px">'+e.message+'</p>';}
 })();
 </script>
 </body>
