@@ -4566,9 +4566,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, b.suc), /*#__PURE__*/React.createElement("div", {
         className: "ww"
-      }, b.n, " vendedora", b.n > 1 ? "s" : "")), /*#__PURE__*/React.createElement("span", {
+      }, b.n, " vendedora", b.n > 1 ? "s" : "")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "right"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
         className: `delta ${m >= 0 ? "up" : "down"}`
-      }, m >= 0 ? "▲" : "▼", " ", m >= 0 ? "+" : "", m, "%")), /*#__PURE__*/React.createElement("div", {
+      }, m >= 0 ? "▲" : "▼", m >= 0 ? "+" : "", m, "%"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".62rem",
+          color: "var(--muted)",
+          marginTop: 2
+        }
+      }, "leads 1\u2013", D.curDay, " ", D.prevMonth.slice(0, 3)))), /*#__PURE__*/React.createElement("div", {
         style: {
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
@@ -4999,7 +5009,6 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Mostrando ", Math.min((D.dups || []).length, 20), " de ", D.metrics.duplicadosFichas, " fichas duplicadas (hasta 40 en datos).")));
   };
 })();
-
 
   var el = document.getElementById('_loading');
   if (el) el.remove();
