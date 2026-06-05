@@ -672,37 +672,51 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     return (
       <div className="view pres-view">
         {/* ── Header ── */}
-        <div className="pres-hero">
-          <div className="pres-hero-title">Heaven Colchones · {D.month} {D.year}</div>
-          <div className="pres-hero-sub">Resumen comercial del equipo · Actualizado {D.fecha || "hoy"}</div>
-          <div className="pres-kpis" style={{ gridTemplateColumns: "repeat(6,1fr)" }}>
-            <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
-              <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
-              <div className="pres-kpi-l">Leads</div>
-              <div className="pres-kpi-mom"><span className={`delta ${(D.leadsMomPct||0) >= 0 ? "up" : "down"}`}>{(D.leadsMomPct||0) >= 0 ? "▲" : "▼"} {Math.abs(D.leadsMomPct||0)}%</span> vs {D.prevMonth.slice(0,3)} ({G.prevLeads})</div>
+        {(() => {
+          const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
+          const MomTag = ({ cur, prev }) => { const p = mom(cur, prev); if (p === null) return null; return <div className="pres-kpi-mom"><span className={`delta ${p >= 0 ? "up" : "down"}`}>{p >= 0 ? "▲" : "▼"} {Math.abs(p)}%</span> vs {D.prevMonth.slice(0,3)} ({prev != null ? (typeof prev === "number" && prev > 9999 ? money(prev) : prev) : "—"})</div>; };
+          const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
+          const curConvN = G.leads ? G.cierres / G.leads * 100 : 0;
+          const convMom = prevConv != null ? Math.round((curConvN - prevConv) * 10) / 10 : null;
+          return (
+            <div className="pres-hero">
+              <div className="pres-hero-title">Heaven Colchones · {D.month} {D.year}</div>
+              <div className="pres-hero-sub">Resumen comercial del equipo · Actualizado {D.fecha || "hoy"}</div>
+              <div className="pres-kpis" style={{ gridTemplateColumns: "repeat(6,1fr)" }}>
+                <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
+                  <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
+                  <div className="pres-kpi-l">Leads</div>
+                  <MomTag cur={G.leads} prev={G.prevLeads} />
+                </div>
+                <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
+                  <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
+                  <div className="pres-kpi-l">Cierres</div>
+                  <MomTag cur={G.cierres} prev={G.prevCierres} />
+                </div>
+                <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
+                  <div className="pres-kpi-v">{conv}%</div>
+                  <div className="pres-kpi-l">Conversión</div>
+                  {convMom !== null && <div className="pres-kpi-mom"><span className={`delta ${convMom >= 0 ? "up" : "down"}`}>{convMom >= 0 ? "▲" : "▼"} {Math.abs(convMom).toFixed(1)}pp</span> vs {D.prevMonth.slice(0,3)} ({prevConv != null ? prevConv.toFixed(1) : "—"}%)</div>}
+                </div>
+                <div className="pres-kpi" style={{ "--pk": "#00B5AD" }}>
+                  <div className="pres-kpi-v"><CountUp value={G.cerrado} fmt={money} /></div>
+                  <div className="pres-kpi-l">Facturado</div>
+                  <MomTag cur={G.cerrado} prev={G.prevCerrado} />
+                </div>
+                <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
+                  <div className="pres-kpi-v"><CountUp value={G.ticket} fmt={money} /></div>
+                  <div className="pres-kpi-l">Ticket prom.</div>
+                  <MomTag cur={G.ticket} prev={G.prevTicket} />
+                </div>
+                <div className="pres-kpi" style={{ "--pk": "#7A4AD9" }}>
+                  <div className="pres-kpi-v"><CountUp value={G.pipeline} fmt={money} /></div>
+                  <div className="pres-kpi-l">Pipeline</div>
+                  <MomTag cur={G.pipeline} prev={G.prevPipeline} />
+                </div>
+              </div>
             </div>
-            <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
-              <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
-              <div className="pres-kpi-l">Cierres</div>
-            </div>
-            <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
-              <div className="pres-kpi-v">{conv}%</div>
-              <div className="pres-kpi-l">Conversión</div>
-            </div>
-            <div className="pres-kpi" style={{ "--pk": "#00B5AD" }}>
-              <div className="pres-kpi-v"><CountUp value={G.cerrado} fmt={money} /></div>
-              <div className="pres-kpi-l">Facturado</div>
-            </div>
-            <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
-              <div className="pres-kpi-v"><CountUp value={G.ticket} fmt={money} /></div>
-              <div className="pres-kpi-l">Ticket prom.</div>
-            </div>
-            <div className="pres-kpi" style={{ "--pk": "#7A4AD9" }}>
-              <div className="pres-kpi-v"><CountUp value={G.pipeline} fmt={money} /></div>
-              <div className="pres-kpi-l">Pipeline</div>
-            </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* ── Ranking vendedoras ── */}
         <div className="pres-section-label">Ranking por vendedora</div>
