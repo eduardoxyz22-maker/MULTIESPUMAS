@@ -567,7 +567,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           </div>
           <div style={{ display: "flex", gap: 22, flexWrap: "wrap" }}>
             <div><div className="eb">Cierres del mes</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>{G.cierres}</div><div className="ww">{paceDay}/día promedio</div></div>
-            <div><div className="eb">Proyección base</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>~{base}</div><div className="ww" style={{ color: "var(--green)" }}>▲ buen ritmo</div></div>
+            <div><div className="eb">Proyección base</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>~{base}</div><div className="ww" style={{ color: curDay <= 3 ? "var(--amber)" : "var(--green)" }}>{curDay <= 3 ? `⚠ solo ${curDay} día(s) de datos` : "▲ buen ritmo"}</div></div>
             <div><div className="eb">Ticket promedio</div><div className="num" style={{ fontSize: "1.4rem", fontWeight: 800 }}>{money(G.ticket)}</div><div className="ww">valor / cierre</div></div>
           </div>
         </div>

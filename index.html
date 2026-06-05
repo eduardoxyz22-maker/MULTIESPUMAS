@@ -587,9 +587,6 @@ window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
 <script>
 (function() {
   var _root = document.getElementById("root");
-  function _err(msg) { _root.innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + msg + '</p>'; }
-  if (typeof React === 'undefined') { _err('React CDN no cargó'); return; }
-  try {
 // Shared inline SVG icons (Lucide-style, stroke-based) for the panel redesigns.
 const ICON_PATHS = {
   resumen: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
@@ -767,8 +764,6 @@ function Icon({
   }, ICON_PATHS[name] || null);
 }
 window.Icon = Icon;
-  } catch(e) { _err('Icons: ' + e.message); return; }
-  try {
 // Heaven panel — shell + shared components + Resumen view.
 const {
   useState,
@@ -2331,7 +2326,7 @@ function ExpertAgent({
     }
   };
   useEffect(() => {
-    if (autorun && st.s === "idle") run();
+    if (autorun && st.s === "idle" && window.claude && window.claude.complete) run();
   }, []);
   const sevCol = s => s === "alto" || s === "red" ? "var(--red)" : s === "medio" || s === "amber" ? "var(--amber)" : "var(--green)";
   return /*#__PURE__*/React.createElement("div", {
@@ -3150,8 +3145,6 @@ function Panel() {
   }, n.badge) : null))));
 }
 window.Panel = Panel;
-  } catch(e) { _err('Panel: ' + e.message); return; }
-  try {
 // Heaven panel — the remaining 8 views. All themed via panel.css tokens.
 (function () {
   const D = window.PANEL_DATA,
@@ -4823,9 +4816,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "~", base), /*#__PURE__*/React.createElement("div", {
       className: "ww",
       style: {
-        color: "var(--green)"
+        color: curDay <= 3 ? "var(--amber)" : "var(--green)"
       }
-    }, "\u25B2 buen ritmo")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, curDay <= 3 ? `⚠ solo ${curDay} día(s) de datos` : "▲ buen ritmo")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: "eb"
     }, "Ticket promedio"), /*#__PURE__*/React.createElement("div", {
       className: "num",
@@ -5006,12 +4999,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Mostrando ", Math.min((D.dups || []).length, 20), " de ", D.metrics.duplicadosFichas, " fichas duplicadas (hasta 40 en datos).")));
   };
 })();
-  } catch(e) { _err('Views: ' + e.message); return; }
-  var el = document.getElementById("_loading");
-  if (el) el.remove();
-  try {
-    ReactDOM.createRoot(_root).render(React.createElement(window.Panel));
-  } catch(e) { _err('Mount: ' + e.message); }
+
 })();
 </script>
 </body>

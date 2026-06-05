@@ -607,7 +607,7 @@ function ExpertAgent({ id, name, role, icon, color, buildPrompt, autorun }) {
       setSt({ s: "done", ...p });
     } catch (e) { setSt({ s: "error" }); }
   };
-  useEffect(() => { if (autorun && st.s === "idle") run(); }, []);
+  useEffect(() => { if (autorun && st.s === "idle" && window.claude && window.claude.complete) run(); }, []);
   const sevCol = s => s === "alto" || s === "red" ? "var(--red)" : s === "medio" || s === "amber" ? "var(--amber)" : "var(--green)";
   return (
     <div className="agent" style={{ "--ac": color }}>
