@@ -6,7 +6,7 @@
 <title>Heaven Colchones · Panel Comercial — Junio 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>/* Heaven panel — unified themeable styles. v3
+<style>
 /* Heaven panel — unified themeable styles. v3
    LIGHT theme = Direction A (Refinado). DARK theme = Direction B (Command Center).
    Toggle sets data-theme on <html>. Tokens flip; a few dark-only rules add
@@ -597,7 +597,8 @@ window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.ro
 window.convPct=(v)=>v&&v.leads?+(v.cierres/v.leads*100).toFixed(1):0;
 </script>
 <script>
-(function() {
+(function(){
+'use strict';
 // Shared inline SVG icons (Lucide-style, stroke-based) for the panel redesigns.
 const ICON_PATHS = {
   resumen: /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("rect", {
