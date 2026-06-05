@@ -784,2406 +784,6 @@ function Icon({
 }
 window.Icon = Icon;
 
-// Heaven panel — the remaining 8 views. All themed via panel.css tokens.
-(function () {
-  const D = window.PANEL_DATA,
-    T = D.team,
-    G = D.global;
-  const money = window.fmtMoney,
-    convTone = window.convTone;
-  const {
-    SectionHead,
-    Pill,
-    Funnel,
-    TeamTable,
-    Kpi,
-    Avatar,
-    Donut,
-    Heatmap,
-    MetasSection,
-    MetaStepper,
-    WeekSpark,
-    QuadrantMatrix,
-    ExpertAgent,
-    CountUp,
-    EmptyState,
-    Icon
-  } = window;
-  const TOP = window.TOP_CLOSER;
-  const STAGE_C = {
-    "Leads Entrantes": "#9CA3AF",
-    "Nueva consulta": "#27313F",
-    "Interesado": "#2E6FE0",
-    "Cotización enviada": "#7A4AD9",
-    "Agendado / Visita": "#D98300",
-    "Compradores": "#159A57",
-    "No Responden": "#646E7B"
-  };
-
-  // Sortable KPIs-por-vendedora table (clic en columna ordena).
-  function KpiSortTable({
-    rows,
-    open
-  }) {
-    const {
-      sorted,
-      thFor
-    } = window.useSort(rows, "cierres", v => v.cierres);
-    return /*#__PURE__*/React.createElement("table", {
-      className: "tbl",
-      style: {
-        marginTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "value", v => v.value), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i,
-      className: "clickable",
-      onClick: () => open(v)
-    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
-      className: "who"
-    }, /*#__PURE__*/React.createElement(Avatar, {
-      v: v,
-      size: 32,
-      ring: true
-    }), /*#__PURE__*/React.createElement("span", {
-      className: "wn"
-    }, v.name))), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800
-      }
-    }, v.cierres), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: convTone(window.convPct(v))
-    }, window.convPct(v), "%")), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        color: "var(--brand-d)",
-        fontWeight: 700
-      }
-    }, v.value ? money(v.value) : "—"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, v.calif, " ", /*#__PURE__*/React.createElement("span", {
-      className: "ww"
-    }, "(", v.califPct, "%)")), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        color: "var(--red)"
-      }
-    }, v.noResp, " ", /*#__PURE__*/React.createElement("span", {
-      className: "ww"
-    }, "(", v.noRespPct, "%)"))))));
-  }
-
-  // Sortable origin-channel table.
-  function ChannelTable({
-    rows
-  }) {
-    const {
-      sorted,
-      thFor
-    } = window.useSort(rows, "cierres", c => c.cierres);
-    return /*#__PURE__*/React.createElement("table", {
-      className: "tbl"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Canal"), thFor("Leads", "leads", c => c.leads), thFor("% Total", "pct", c => c.pct), thFor("Cierres", "cierres", c => c.cierres), thFor("Conversión", "conv", c => c.conv), thFor("Ticket prom.", "ticket", c => c.ticket), thFor("Pipeline", "pipeline", c => c.pipeline))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((c, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i
-    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
-      style: {
-        fontWeight: 700
-      }
-    }, c.ic, " ", c.name)), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, c.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, c.pct, "%"), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800
-      }
-    }, c.cierres), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800,
-        color: c.cls === "green" ? "var(--green)" : c.cls === "red" ? "var(--red)" : "var(--faint)"
-      }
-    }, c.conv, "%"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, c.ticket ? money(c.ticket) : "—"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, c.pipeline ? money(c.pipeline) : "—")))));
-  }
-
-  /* ===== ANÁLISIS IA — sala de expertos ===== */
-  window.ViewAnalisis = function () {
-    const teamLines = T.map(v => `${v.name} (sucursal ${v.suc}): ${v.leads} leads (mes previo ${v.prevLeads}), ${v.cierres} cierres, ${window.convPct(v)}% conv, ${v.noResp} no-responden (${v.noRespPct}%), ${v.backlog} backlog, ${v.nunca} nunca-tocados, ${v.u24}% <24h, ticket Bs ${v.ticket}`).join("\n");
-    const branchRoll = {};
-    T.forEach(v => {
-      const b = branchRoll[v.suc] || (branchRoll[v.suc] = {
-        leads: 0,
-        prev: 0,
-        cierres: 0,
-        cerrado: 0,
-        value: 0,
-        n: 0
-      });
-      b.leads += v.leads;
-      b.prev += v.prevLeads || 0;
-      b.cierres += v.cierres;
-      b.cerrado += v.cerrado || 0;
-      b.value += v.value;
-      b.n++;
-    });
-    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${b.leads > 0 ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}% conv, cerrado Bs ${b.cerrado}, pipeline Bs ${b.value}`).join("\n");
-    const M = D.metrics;
-    const _man = D.channels.find(c => c.cls === "green") || {};
-    const _bot = D.channels.find(c => c.cls === "red") || {};
-    const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
-Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
-"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}.
-IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las sucursales activas son ${[...new Set(T.map(v => v.suc))].join(', ')}.
-Canales: ${D.channels.map(c => `${c.name} ${c.leads} leads / ${c.conv}% conv / ${c.cierres} cierres`).join('; ')}.
-Roll-up por sucursal (con comparativo vs mes anterior):
-${branchLines}
-Equipo (con leads del mes vs mes anterior):
-${teamLines}`;
-    const jsonRule = `Responde SOLO JSON válido, sin texto extra, forma exacta:
-{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}
-Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombres y cifras.
-REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión global, pipeline) salvo que sean indispensables — otros analistas ya los cubren. Quédate ESTRICTAMENTE en tu dominio. No repitas hallazgos genéricos del mes; aporta un ángulo que solo tu especialidad vería.`;
-    const agents = [{
-      id: "crm",
-      name: "Analista CRM",
-      role: "Disciplina, backlog y calidad de datos",
-      icon: "datos",
-      color: "#2E6FE0",
-      prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total ${M.backlog} (+72h), nunca tocados ${M.nuncaTocados}, "no responden" ${M.noResp}, deals sin valor ${M.abiertosSinValor}.\n${jsonRule}`
-    }, {
-      id: "ventas",
-      name: "Analista de Ventas",
-      role: "Conversión, ticket, pipeline y metas",
-      icon: "trophy",
-      color: "#159A57",
-      prompt: `Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n${teamLines}\nGlobal: ${G.cierres} cierres, ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% conv, pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.\n${jsonRule}`
-    }, {
-      id: "comportamiento",
-      name: "Analista de Comportamiento",
-      role: "Origen de leads, canales y patrones",
-      icon: "conversion",
-      color: "#7A5AF0",
-      prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. ${_man.name || "Manual"} (${_man.leads || 0} leads, ${_man.conv || 0}% conv, ${_man.cierres || 0} cierres) vs ${_bot.name || "Bot"} (${_bot.leads || 0} leads, ${_bot.conv || 0}% conv, ${_bot.cierres || 0} cierres); el ${M.noRespPct}% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/horario/etapa pierde clientes y cómo reactivar los ${M.noResp} que no responden.\nDatos de canal y etapas globales: ${_man.name || "manual"} ${_man.leads || 0}/${_man.conv || 0}%/${_man.cierres || 0} · ${_bot.name || "bot"} ${_bot.leads || 0}/${_bot.conv || 0}%/${_bot.cierres || 0} · no-responden ${M.noResp} (${M.noRespPct}%).\n${jsonRule}`
-    }];
-    const synthPrompt = `Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs. Cada decisión debe nombrar responsable y meta concreta.\n${ctx}\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes","hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} Máx 3 y 3. Español de Bolivia.`;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "\u2726 Inteligencia",
-      h3: "Sala de expertos IA",
-      p: "Varios agentes especializados leen los datos reales del mes y entregan hallazgos y recomendaciones accionables. Cada an\xE1lisis se genera bajo demanda y, en producci\xF3n, se hornea por mes."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "agent-grid"
-    }, agents.map(a => /*#__PURE__*/React.createElement(ExpertAgent, {
-      key: a.id,
-      id: a.id,
-      name: a.name,
-      role: a.role,
-      icon: a.icon,
-      color: a.color,
-      buildPrompt: () => a.prompt,
-      autorun: true
-    }))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "S\xEDntesis",
-      h3: "Plan ejecutivo del director",
-      p: "Combina los tres an\xE1lisis en un veredicto y un plan priorizado para la reuni\xF3n de gerencia."
-    }), /*#__PURE__*/React.createElement(ExpertAgent, {
-      id: "sintesis",
-      name: "Director Comercial",
-      role: "Veredicto y plan priorizado del mes",
-      icon: "proyeccion",
-      color: "#D97706",
-      buildPrompt: () => synthPrompt
-    }));
-  };
-
-  /* ===== EQUIPO ===== */
-  window.ViewEquipo = function () {
-    const open = v => window.__perfil && window.__perfil(v);
-    const metas = window.useMetas ? window.useMetas() : {};
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "\u2B50 Centro de control",
-      h3: "Responsabilidad por vendedora",
-      p: "Clic en cualquier vendedora para abrir su ficha completa. Mide la disciplina de actualizaci\xF3n del CRM y el rendimiento comercial del mes."
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 9,
-        flexWrap: "wrap",
-        alignItems: "center"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "ww",
-      style: {
-        fontWeight: 700
-      }
-    }, "Ver por sucursal:"), [...new Set(T.map(v => v.suc))].map(s => {
-      const vs = T.filter(v => v.suc === s);
-      return /*#__PURE__*/React.createElement("button", {
-        key: s,
-        className: "btn",
-        style: {
-          padding: "7px 13px"
-        },
-        onClick: () => window.__sucursal && window.__sucursal(s)
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "sucursales",
-        size: 13
-      }), s, " ", /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "\xB7 ", vs.length));
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "grid3"
-    }, T.map((v, i) => {
-      const metaMonto = metas[v.name] || 0;
-      const cerrado = v.cierres * v.ticket;
-      const mpct = metaMonto ? Math.min(100, Math.round(cerrado / metaMonto * 100)) : 0;
-      const mcol = mpct >= 80 ? "var(--green)" : mpct >= 50 ? "var(--amber)" : "var(--red)";
-      return /*#__PURE__*/React.createElement("div", {
-        className: `tcard clickable ${v.v}`,
-        key: i,
-        style: {
-          borderTopColor: v.color
-        },
-        onClick: () => open(v)
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "tcard-h"
-      }, /*#__PURE__*/React.createElement(Avatar, {
-        v: v,
-        size: 46,
-        ring: true,
-        crown: v.name === TOP
-      }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "tcard-name"
-      }, v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
-        className: "tag-new"
-      }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
-        className: "tcard-where"
-      }, v.suc)), /*#__PURE__*/React.createElement("div", {
-        style: {
-          marginLeft: "auto"
-        }
-      }, /*#__PURE__*/React.createElement(Pill, {
-        tone: v.v
-      }, v.u24, "% <24h"))), /*#__PURE__*/React.createElement("div", {
-        className: "tmetrics"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "tm"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "v num"
-      }, v.cierres), /*#__PURE__*/React.createElement("div", {
-        className: "l"
-      }, "Cierres")), /*#__PURE__*/React.createElement("div", {
-        className: "tm"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "v num",
-        style: {
-          color: "var(--brand-d)"
-        }
-      }, v.value ? money(v.value) : "—"), /*#__PURE__*/React.createElement("div", {
-        className: "l"
-      }, "Pipeline")), /*#__PURE__*/React.createElement("div", {
-        className: "tm"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "v num",
-        style: {
-          color: `var(--${convTone(window.convPct(v))})`
-        }
-      }, window.convPct(v), "%"), /*#__PURE__*/React.createElement("div", {
-        className: "l"
-      }, "Conversi\xF3n")), /*#__PURE__*/React.createElement("div", {
-        className: "tm"
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "v num"
-      }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
-        className: "l"
-      }, "Ticket prom."))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "10px 17px 0"
-        },
-        onClick: e => e.stopPropagation()
-      }, metaMonto > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: ".7rem",
-          color: "var(--muted)",
-          marginBottom: 5
-        }
-      }, /*#__PURE__*/React.createElement("span", null, "Meta ", window.fmtMoney(metaMonto)), /*#__PURE__*/React.createElement("b", {
-        className: "num",
-        style: {
-          color: mcol
-        }
-      }, mpct, "%")), /*#__PURE__*/React.createElement("div", {
-        className: "meter",
-        style: {
-          marginBottom: 6
-        }
-      }, /*#__PURE__*/React.createElement("i", {
-        style: {
-          width: mpct + "%",
-          background: mcol
-        }
-      }))) : /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: ".7rem",
-          color: "var(--muted)",
-          marginBottom: 5
-        }
-      }, "Meta mensual (Bs) \u2014 ", /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--brand)"
-        }
-      }, "sin fijar")), /*#__PURE__*/React.createElement(MetaStepper, {
-        name: v.name,
-        metas: metas
-      })), /*#__PURE__*/React.createElement(WeekSpark, {
-        weeks: weeklyOf(v).cur
-      }), /*#__PURE__*/React.createElement("div", {
-        className: "tcard-bar"
-      }, "Cierres por semana", /*#__PURE__*/React.createElement("b", {
-        style: {
-          color: "var(--brand-d)"
-        }
-      }, "Ver ficha \u2192")));
-    })), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Cuadrantes",
-      h3: "Matriz de desempe\xF1o",
-      p: "Conversi\xF3n (vertical) \xD7 volumen de leads (horizontal). Arriba-derecha = estrellas; abajo-izquierda = cr\xEDtico. Clic para ver ficha."
-    }), /*#__PURE__*/React.createElement(QuadrantMatrix, {
-      team: T
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Rendimiento comercial",
-      h3: "KPIs por vendedora",
-      p: 'Clic en cualquier columna para ordenar. Conversión, ticket, pipeline, calificados y "no responden".'
-    }), /*#__PURE__*/React.createElement(KpiSortTable, {
-      rows: T,
-      open: open
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Metas",
-      h3: "Cumplimiento de ventas por vendedora (monto $)",
-      p: "Avance de ventas en $ vs meta mensual, con proyecci\xF3n al cierre. Las metas son editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 16
-      }
-    }, /*#__PURE__*/React.createElement(MetasSection, null))), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Disciplina",
-      h3: "Actualizaci\xF3n del CRM por semana",
-      p: "% de leads con primera acci\xF3n registrada en menos de 24h, semana a semana. Verde = al d\xEDa, rojo = rezagada."
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 14
-      }
-    }, /*#__PURE__*/React.createElement(Heatmap, {
-      cols: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
-      rows: T.map(v => ({
-        name: v.name,
-        ini: v.ini,
-        color: v.color,
-        vals: [Math.max(0, v.u24 - 6), Math.max(0, v.u24 - 2), Math.min(100, v.u24 + 3), v.u24]
-      }))
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Detalle",
-      h3: "Tabla completa"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 6
-      }
-    }, /*#__PURE__*/React.createElement(TeamTable, null))));
-  };
-
-  /* ===== SEGUIMIENTO ===== */
-  const BACKLOG_ROWS = D.backlogLeads || [];
-  window.ViewSeguimiento = function () {
-    const backlogBy = T.filter(v => v.backlog > 0).map(v => ({
-      v,
-      n: v.backlog
-    })).sort((a, b) => b.n - a.n);
-    const totalBk = T.reduce((s, v) => s + v.backlog, 0);
-    const maxBk = Math.max(...backlogBy.map(b => b.n), 1);
-    const top2Pct = totalBk > 0 ? Math.round(backlogBy.slice(0, 2).reduce((s, b) => s + b.n, 0) / totalBk * 100) : 0;
-    const [filt, setFilt] = React.useState("all");
-    const [who, setWho] = React.useState("");
-    const [q, setQ] = React.useState("");
-    const rows = BACKLOG_ROWS.filter(r => {
-      if (filt === "crit" && r.d < 7) return false;
-      if (filt === "nh" && !r.nh) return false;
-      if (who && !(r.r || "").includes(who)) return false;
-      if (q && !`${r.c} ${r.e} ${r.r}`.toLowerCase().includes(q.toLowerCase())) return false;
-      return true;
-    });
-    const FILTERS = [["all", "Todos"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Acci\xF3n inmediata",
-      h3: `${totalBk} ${totalBk === 1 ? "lead abierto" : "leads abiertos"} sin actividad +72h`,
-      p: "Ordenados por antig\xFCedad sin contacto \u2014 lo m\xE1s urgente primero.",
-      right: /*#__PURE__*/React.createElement("button", {
-        className: "btn",
-        onClick: () => window.downloadCSV(`heaven_backlog_${D.month}.csv`, ["Contacto / Deal", "Etapa", "Responsable", "Dias sin actividad", "Nunca tocado"], BACKLOG_ROWS.map(r => [r.c, r.e, r.r, r.d, r.nh ? "Sí" : "No"]))
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "download",
-        size: 14
-      }), "Exportar CSV")
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "kpis",
-      style: {
-        gridTemplateColumns: "repeat(3,1fr)"
-      }
-    }, /*#__PURE__*/React.createElement(Kpi, {
-      l: "Sin seguimiento +72h",
-      num: totalBk,
-      ac: "#DC4046",
-      ico: "seguimiento",
-      sub: `${D.metrics.backlogPct}% del total de leads`
-    }), /*#__PURE__*/React.createElement(Kpi, {
-      l: "Cr\xEDticos +7 d\xEDas",
-      num: D.metrics.criticos7d,
-      ac: "#DC4046",
-      ico: "alertas",
-      sub: "atenci\xF3n urgente"
-    }), /*#__PURE__*/React.createElement(Kpi, {
-      l: "Nunca tocados",
-      num: D.metrics.nuncaTocados,
-      ac: "#7A5AF0",
-      ico: "seguimiento",
-      sub: "el bot los movi\xF3, sin acci\xF3n humana"
-    })), totalBk === 0 ? /*#__PURE__*/React.createElement("div", {
-      className: "card",
-      style: {
-        textAlign: "center",
-        padding: "36px 24px"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: "2rem",
-        marginBottom: 8
-      }
-    }, "\u2705"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontWeight: 800,
-        fontSize: "1.05rem",
-        marginBottom: 6
-      }
-    }, "\xA1Todo al d\xEDa!"), /*#__PURE__*/React.createElement("div", {
-      className: "ww",
-      style: {
-        maxWidth: 380,
-        margin: "0 auto"
-      }
-    }, "Ning\xFAn lead supera las 72h sin actividad en etapas activas. El equipo est\xE1 al d\xEDa con el seguimiento.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "\xBFDe qui\xE9n es el backlog?",
-      h3: totalBk === 1 ? "La 1 ficha tiene dueño" : `Las ${totalBk} fichas tienen dueño`,
-      p: `El ${top2Pct}% del backlog está en ${backlogBy.length === 1 ? "una vendedora" : backlogBy.length === 2 ? "dos vendedoras" : `${backlogBy.length} vendedoras`}. Aquí se controla el equipo: a quién exigirle seguimiento.`
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 13
-      }
-    }, backlogBy.map(({
-      v,
-      n
-    }, i) => {
-      const col = n > 100 ? "var(--red)" : n > 40 ? "var(--amber)" : "var(--green)";
-      return /*#__PURE__*/React.createElement("div", {
-        key: i,
-        className: "clickable",
-        style: {
-          display: "grid",
-          gridTemplateColumns: "170px 1fr 96px",
-          alignItems: "center",
-          gap: 14
-        },
-        onClick: () => window.__perfil(v)
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "who"
-      }, /*#__PURE__*/React.createElement(Avatar, {
-        v: v,
-        size: 30,
-        ring: true
-      }), /*#__PURE__*/React.createElement("span", {
-        className: "wn",
-        style: {
-          fontSize: ".82rem"
-        }
-      }, v.name.split(" ")[0])), /*#__PURE__*/React.createElement("div", {
-        className: "meter",
-        style: {
-          height: 13
-        }
-      }, /*#__PURE__*/React.createElement("i", {
-        style: {
-          width: `${n / maxBk * 100}%`,
-          background: col
-        }
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "flex-end",
-          gap: 7
-        }
-      }, /*#__PURE__*/React.createElement("b", {
-        className: "num",
-        style: {
-          color: col,
-          fontSize: "1rem"
-        }
-      }, n), /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, v.leads > 0 ? Math.round(n / v.leads * 100) : 0, "%")));
-    }))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Cola priorizada",
-      h3: "M\xE1s antiguas primero",
-      right: /*#__PURE__*/React.createElement("div", {
-        className: "seg"
-      }, FILTERS.map(([k, l]) => /*#__PURE__*/React.createElement("button", {
-        key: k,
-        className: filt === k ? "on" : "",
-        onClick: () => setFilt(k)
-      }, l)))
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "controls"
-    }, /*#__PURE__*/React.createElement("input", {
-      type: "search",
-      placeholder: "\uD83D\uDD0D Buscar contacto, etapa o responsable\u2026",
-      value: q,
-      onChange: e => setQ(e.target.value),
-      style: {
-        width: 260
-      }
-    }), /*#__PURE__*/React.createElement("select", {
-      value: who,
-      onChange: e => setWho(e.target.value)
-    }, /*#__PURE__*/React.createElement("option", {
-      value: ""
-    }, "Todas las vendedoras"), [...new Set(T.map(v => v.name))].map(n => /*#__PURE__*/React.createElement("option", {
-      key: n,
-      value: n
-    }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("span", {
-      className: "rc"
-    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas")), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, rows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
-      title: "Sin fichas para este filtro",
-      desc: "Prueba con otra vendedora o limpia los filtros.",
-      icon: "seguimiento",
-      onReset: () => {
-        setFilt("all");
-        setWho("");
-        setQ("");
-      }
-    }) : /*#__PURE__*/React.createElement("table", {
-      className: "tbl"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Contacto / Deal"), /*#__PURE__*/React.createElement("th", null, "Etapa"), /*#__PURE__*/React.createElement("th", null, "Responsable"), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "D\xEDas sin act."), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, rows.map((r, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i
-    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
-      style: {
-        fontWeight: 700
-      }
-    }, r.c), r.nh && /*#__PURE__*/React.createElement("span", {
-      className: "tag-new",
-      style: {
-        marginLeft: 6
-      }
-    }, "NUNCA TOCADO")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
-      style: {
-        display: "inline-block",
-        width: 7,
-        height: 7,
-        borderRadius: "50%",
-        background: STAGE_C[r.e] || "#808080",
-        marginRight: 6
-      }
-    }), r.e), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, r.r), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800,
-        color: r.d >= 7 ? "var(--red)" : "var(--amber)"
-      }
-    }, r.d, " d"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, r.d >= 7 ? /*#__PURE__*/React.createElement(Pill, {
-      tone: "red"
-    }, "Cr\xEDtico") : /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Seguir"))))))), /*#__PURE__*/React.createElement("div", {
-      className: "note"
-    }, "Los ", BACKLOG_ROWS.length, " leads mostrados est\xE1n ordenados por antig\xFCedad real desde Kommo \u2014 los m\xE1s urgentes primero. Muchos contactos no tienen nombre cargado y aparecen como \"Lead #\".")));
-  };
-
-  /* ===== ALERTAS ===== */
-  window.ViewAlertas = function () {
-    const noRespTeam = [...T].sort((a, b) => b.noRespPct - a.noRespPct);
-    const worstConv = [...T].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv);
-    const topNever = [...T].sort((a, b) => b.nunca - a.nunca);
-    const _man = D.channels.find(c => c.cls === "green") || {};
-    const _bot = D.channels.find(c => c.cls === "red") || {};
-    const _mult = _man.conv && _bot.conv ? Math.round(_man.conv / Math.max(_bot.conv, 1)) : 0;
-    const topCloser = [...T].sort((a, b) => b.cierres - a.cierres)[0] || {};
-    const A = [];
-    if (worstConv.length > 0 && worstConv[0].conv < 5) {
-      const v = worstConv[0];
-      A.push({
-        sev: "red",
-        who: v.name,
-        t: `Conversión ${v.conv}% — la más baja del equipo`,
-        d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`,
-        act: "Coaching + auditar cotizaciones."
-      });
-    }
-    const highNoResp = noRespTeam.filter(v => v.noRespPct > 50).slice(0, 2);
-    if (highNoResp.length > 0) {
-      const names = highNoResp.map(v => v.name.split(" ")[0]).join(" / ");
-      const total = highNoResp.reduce((s, v) => s + v.noResp, 0);
-      A.push({
-        sev: "red",
-        who: names,
-        t: `${highNoResp.map(v => `${v.noRespPct}%`).join(" y ")} de leads en "No responden"`,
-        d: `${names} concentran ${total} leads sin respuesta del cliente.`,
-        act: "Segunda cadencia de contacto por WhatsApp."
-      });
-    }
-    if ((D.leadsMomPct || 0) < -5) A.push({
-      sev: "amber",
-      who: "Gerencia",
-      t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")})`,
-      d: "Caída de captación en todos los frentes.",
-      act: "Revisar inversión en canales."
-    });
-    const bigNever = topNever.filter(v => v.nunca > 20)[0];
-    if (bigNever) A.push({
-      sev: "amber",
-      who: bigNever.name,
-      t: `${bigNever.nunca} leads nunca tocados`,
-      d: "El bot los asignó, sin primera acción registrada.",
-      act: "Repartir backlog en reunión diaria."
-    });
-    if (_mult >= 5) A.push({
-      sev: "green",
-      who: "Equipo",
-      t: `Carga manual convierte ${_mult}× más que el bot`,
-      d: "Oportunidad: priorizar captación manual de calidad.",
-      act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(" ")[0] : "la mejor vendedora"}.`
-    });
-    if (D.metrics.backlogPct > 20) A.push({
-      sev: "amber",
-      who: "Equipo",
-      t: `${D.metrics.backlog} leads sin seguimiento +72h`,
-      d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`,
-      act: "Priorizar en reunión diaria."
-    });
-    if (A.length === 0) A.push({
-      sev: "green",
-      who: "Equipo",
-      t: "Sin alertas críticas este mes",
-      d: "El equipo está al día con el seguimiento.",
-      act: "Mantener el ritmo."
-    });
-    const [sev, setSev] = React.useState("all");
-    const counts = {
-      all: A.length,
-      red: A.filter(a => a.sev === "red").length,
-      amber: A.filter(a => a.sev === "amber").length,
-      green: A.filter(a => a.sev === "green").length
-    };
-    const list = A.filter(a => sev === "all" || a.sev === sev);
-    const SEVS = [["all", "Todas", "var(--muted)"], ["red", "🔴 Críticas", "var(--red)"], ["amber", "🟡 Atención", "var(--amber)"], ["green", "🟢 Oportunidad", "var(--green)"]];
-    const sevLabel = s => s === "red" ? "Crítico" : s === "amber" ? "Atención" : "Oportunidad";
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Acci\xF3n",
-      h3: `Alertas accionables — ${D.month} ${D.year}`,
-      p: "Generadas de los datos del mes. Cada una tiene responsable y siguiente paso, para asignar en la reuni\xF3n diaria.",
-      right: /*#__PURE__*/React.createElement("button", {
-        className: "btn",
-        onClick: () => window.downloadCSV(`heaven_alertas_${D.month}.csv`, ["Severidad", "Responsable", "Alerta", "Detalle", "Acción"], A.map(a => [sevLabel(a.sev), a.who, a.t, a.d, a.act]))
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "download",
-        size: 14
-      }), "Exportar CSV")
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 8,
-        flexWrap: "wrap"
-      }
-    }, SEVS.map(([k, l]) => /*#__PURE__*/React.createElement("button", {
-      key: k,
-      className: "fchip",
-      "data-on": sev === k,
-      style: {
-        "--fc": SEVS.find(x => x[0] === k)[2]
-      },
-      onClick: () => setSev(k)
-    }, l, " ", /*#__PURE__*/React.createElement("b", null, counts[k])))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        gap: 12
-      }
-    }, list.map((a, i) => /*#__PURE__*/React.createElement("div", {
-      className: "card alert-card",
-      key: i,
-      style: {
-        display: "flex",
-        gap: 14,
-        alignItems: "flex-start",
-        borderLeft: `3px solid var(--${a.sev})`,
-        padding: "16px 18px"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 34,
-        height: 34,
-        borderRadius: 9,
-        flexShrink: 0,
-        display: "grid",
-        placeItems: "center",
-        background: `var(--${a.sev}-bg)`,
-        color: `var(--${a.sev}-ink)`
-      }
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: a.sev === "green" ? "bulb" : "alertas",
-      size: 17,
-      sw: 2.2
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("b", {
-      style: {
-        fontSize: ".92rem"
-      }
-    }, a.t), /*#__PURE__*/React.createElement(Pill, {
-      tone: a.sev === "green" ? "green" : a.sev
-    }, sevLabel(a.sev))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: ".8rem",
-        color: "var(--muted)",
-        marginTop: 4,
-        lineHeight: 1.5
-      }
-    }, a.d), /*#__PURE__*/React.createElement("div", {
-      style: {
-        fontSize: ".76rem",
-        marginTop: 8,
-        display: "flex",
-        gap: 16,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--faint)"
-      }
-    }, "Responsable: ", /*#__PURE__*/React.createElement("b", {
-      style: {
-        color: "var(--text)"
-      }
-    }, a.who)), /*#__PURE__*/React.createElement("span", {
-      style: {
-        color: "var(--brand-d)",
-        fontWeight: 700
-      }
-    }, "\u2192 ", a.act)))))));
-  };
-
-  /* ===== CONVERSIÓN ===== */
-  window.ViewConversion = function () {
-    const f = D.funnel2;
-    const maxF = f.length > 0 ? f[0].v : 1;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Embudo",
-      h3: `Del lead al cierre — ${D.month} ${D.year}`
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "grid2"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "funnel"
-    }, f.map((s, i) => /*#__PURE__*/React.createElement("div", {
-      className: "fstep",
-      key: i
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "fn"
-    }, s.n), /*#__PURE__*/React.createElement("div", {
-      className: "fbar num",
-      style: {
-        width: `${Math.max(14, Math.round(s.v / maxF * 100))}%`,
-        background: s.c,
-        color: "#fff"
-      }
-    }, s.v.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
-      className: "fp num"
-    }, Math.round(s.v / maxF * 100), "%"))))), /*#__PURE__*/React.createElement("div", {
-      className: "card",
-      style: {
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center",
-        gap: 14
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "insight",
-      style: {
-        margin: 0
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "ic"
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "bulb",
-      size: 18,
-      sw: 2.2
-    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "t"
-    }, D.metrics?.noRespPct || 0, "% de los leads \"no responden\""), /*#__PURE__*/React.createElement("div", {
-      className: "d"
-    }, /*#__PURE__*/React.createElement("b", null, (D.metrics?.noResp || 0).toLocaleString("en-US"), " leads"), " marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad m\xE1s grande del embudo."))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 12
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "kpi",
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "kl"
-    }, "Calificados"), /*#__PURE__*/React.createElement("div", {
-      className: "kv",
-      style: {
-        fontSize: "1.5rem",
-        marginTop: 6
-      }
-    }, f.length >= 3 ? Math.round((f[2].v || 0) / (f[0].v || 1) * 100) : 0, "%"), /*#__PURE__*/React.createElement("div", {
-      className: "ksub"
-    }, f.length >= 3 ? f[2].v : 0, " en etapas avanzadas")), /*#__PURE__*/React.createElement("div", {
-      className: "kpi",
-      style: {
-        flex: 1
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "kl"
-    }, "Fichas duplicadas"), /*#__PURE__*/React.createElement("div", {
-      className: "kv",
-      style: {
-        fontSize: "1.5rem",
-        marginTop: 6
-      }
-    }, D.metrics?.duplicadosFichas || 0), /*#__PURE__*/React.createElement("div", {
-      className: "ksub"
-    }, D.metrics?.duplicadosTel || 0, " tel\xE9fonos en 2+ fichas"))))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Pipeline completo",
-      h3: `Leads por etapa — las ${(G.leads || 0).toLocaleString("en-US")} fichas del mes`,
-      p: "Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido."
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
-        gap: 12
-      }
-    }, D.stagesGlobal.filter(s => s.count > 0).map((s, i) => {
-      const max = Math.max(...D.stagesGlobal.filter(x => x.count > 0).map(x => x.count));
-      return /*#__PURE__*/React.createElement("div", {
-        className: "card",
-        key: i,
-        style: {
-          padding: 16,
-          position: "relative",
-          overflow: "hidden"
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          position: "absolute",
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: s.color
-        }
-      }), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: ".72rem",
-          fontWeight: 600,
-          color: "var(--muted)",
-          minHeight: 32
-        }
-      }, s.name), /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1.5rem",
-          fontWeight: 800,
-          color: s.color,
-          marginTop: 4
-        }
-      }, s.count.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: ".66rem",
-          color: "var(--faint)",
-          margin: "4px 0 8px"
-        }
-      }, s.pct, "% del total"), /*#__PURE__*/React.createElement("div", {
-        className: "meter",
-        style: {
-          height: 5
-        }
-      }, /*#__PURE__*/React.createElement("i", {
-        style: {
-          width: `${Math.max(3, Math.round(s.count / max * 100))}%`,
-          background: s.color
-        }
-      })));
-    })), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Origen de carga",
-      h3: "Manual vs Autom\xE1tico \u2014 global",
-      p: "Cu\xE1ntos leads carg\xF3 manualmente una vendedora y cu\xE1ntos entraron por el bot. La carga manual convierte mucho mejor."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        borderRadius: 10,
-        overflow: "hidden",
-        height: 44,
-        fontWeight: 800,
-        fontSize: ".82rem",
-        color: "#fff"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: D.origin.manual,
-        background: "var(--green)",
-        display: "grid",
-        placeItems: "center"
-      }
-    }, "\u270D ", D.origin.manualPct, "%"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: D.origin.auto,
-        background: "#646E7B",
-        display: "grid",
-        placeItems: "center"
-      }
-    }, "\u2699 ", D.origin.autoPct, "%")), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 22,
-        marginTop: 12,
-        fontSize: ".76rem",
-        color: "var(--muted)"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 7
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 11,
-        height: 11,
-        borderRadius: 3,
-        background: "var(--green)"
-      }
-    }), /*#__PURE__*/React.createElement("b", {
-      style: {
-        color: "var(--text)"
-      }
-    }, D.origin.manual.toLocaleString("en-US")), " manual (vendedora)"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 7
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 11,
-        height: 11,
-        borderRadius: 3,
-        background: "#646E7B"
-      }
-    }), /*#__PURE__*/React.createElement("b", {
-      style: {
-        color: "var(--text)"
-      }
-    }, D.origin.auto.toLocaleString("en-US")), " autom\xE1tico (bot)"))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Por canal",
-      h3: "Origen de leads \u2014 rendimiento",
-      p: "Clic en cualquier columna para ordenar."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, /*#__PURE__*/React.createElement(ChannelTable, {
-      rows: D.channels
-    })));
-  };
-
-  /* ===== SEMANAL ===== */
-  // Reparto semanal determinista de los cierres de cada vendedora en 5 semanas.
-  const SEM_WEEKS = [["S1", "1–7"], ["S2", "8–14"], ["S3", "15–21"], ["S4", "22–28"], ["S5", "29–31"]];
-  const SEM_W = [0.16, 0.2, 0.22, 0.27, 0.15];
-  function splitInt(total, w) {
-    const raw = w.map(x => x * total),
-      fl = raw.map(Math.floor);
-    let rem = total - fl.reduce((a, b) => a + b, 0);
-    const fr = raw.map((x, i) => ({
-      i,
-      f: x - fl[i]
-    })).sort((a, b) => b.f - a.f);
-    for (let k = 0; k < rem; k++) fl[fr[k % fl.length].i]++;
-    return fl;
-  }
-  const weeklyOf = v => {
-    let real = D.weeklyClosures && D.weeklyClosures[v.name];
-    if (real && real.length < 5) real = [...real, ...Array(5 - real.length).fill(0)];
-    const cur = real ? real : splitInt(v.cierres, SEM_W);
-    return {
-      cur,
-      curM: cur.map(n => n * v.ticket),
-      tot: v.cierres,
-      totM: v.cierres * v.ticket
-    };
-  };
-  // Mes anterior: total derivado de prevLeads y una distribución semanal distinta (forma diferente).
-  const SEM_W_PREV = [0.22, 0.18, 0.26, 0.2, 0.14];
-  const weeklyPrev = v => {
-    const ratio = v.prevLeads ? v.prevLeads / (v.leads || 1) : 0.85;
-    const p = Math.max(0, Math.round(v.cierres * ratio));
-    const cur = splitInt(p, SEM_W_PREV);
-    return {
-      cur,
-      totM: p * v.ticket,
-      tot: p
-    };
-  };
-  window.ViewSemanal = function () {
-    const [metric, setMetric] = React.useState("clientes");
-    const isC = metric === "clientes";
-    const data = T.map(v => ({
-      v,
-      wk: weeklyOf(v),
-      pv: weeklyPrev(v)
-    }));
-    const valOf = (d, wi, prev) => isC ? prev ? d.pv.cur[wi] : d.wk.cur[wi] : prev ? d.pv.cur[wi] * d.v.ticket : d.wk.curM[wi];
-    const allVals = [];
-    SEM_WEEKS.forEach((_, wi) => data.forEach(d => {
-      allVals.push(valOf(d, wi, false), valOf(d, wi, true));
-    }));
-    const maxBar = Math.max(...allVals, 1);
-    const weekTotals = SEM_WEEKS.map((_, wi) => data.reduce((s, d) => s + valOf(d, wi, false), 0));
-    const weekTotalsPrev = SEM_WEEKS.map((_, wi) => data.reduce((s, d) => s + valOf(d, wi, true), 0));
-    const fmtCell = n => isC ? n : money(n);
-    const t1 = window.useSort(data, "tot", d => d.wk.tot);
-    const t2 = window.useSort(data, "totM", d => d.wk.totM);
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Ritmo semanal",
-      h3: `Cierres y ventas por semana — ${D.month} vs ${D.prevMonth}`,
-      p: `Barra ancha = ${D.month} · barra delgada tenue al lado = ${D.prevMonth}. Comparativa semana a semana por vendedora.`,
-      right: /*#__PURE__*/React.createElement("div", {
-        className: "seg"
-      }, /*#__PURE__*/React.createElement("button", {
-        className: isC ? "on" : "",
-        onClick: () => setMetric("clientes")
-      }, "Clientes"), /*#__PURE__*/React.createElement("button", {
-        className: !isC ? "on" : "",
-        onClick: () => setMetric("monto")
-      }, "Monto $"))
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 18
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eb"
-    }, isC ? "Compradores por semana y vendedora" : "Monto cerrado por semana y vendedora"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 14,
-        flexWrap: "wrap"
-      }
-    }, T.map((v, i) => /*#__PURE__*/React.createElement("span", {
-      key: i,
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        fontSize: ".7rem",
-        color: "var(--muted)"
-      }
-    }, /*#__PURE__*/React.createElement("span", {
-      style: {
-        width: 10,
-        height: 10,
-        borderRadius: 3,
-        background: v.color
-      }
-    }), v.name.split(" ")[0])))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 16,
-        alignItems: "flex-end",
-        height: 230,
-        padding: "0 4px"
-      }
-    }, SEM_WEEKS.map(([wk, rng], wi) => {
-      const up = weekTotals[wi] >= weekTotalsPrev[wi];
-      return /*#__PURE__*/React.createElement("div", {
-        key: wi,
-        style: {
-          flex: 1,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 7
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: ".7rem",
-          fontWeight: 800,
-          color: "var(--text)"
-        }
-      }, fmtCell(weekTotals[wi]), " ", /*#__PURE__*/React.createElement("span", {
-        className: `delta ${up ? "up" : "down"}`,
-        style: {
-          fontSize: ".58rem"
-        }
-      }, up ? "▲" : "▼")), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          gap: 7,
-          alignItems: "flex-end",
-          height: 165,
-          justifyContent: "center",
-          width: "100%"
-        }
-      }, data.map((d, di) => {
-        const cur = valOf(d, wi, false),
-          prev = valOf(d, wi, true);
-        return /*#__PURE__*/React.createElement("div", {
-          key: di,
-          title: `${d.v.name.split(" ")[0]} · ${D.month}: ${fmtCell(cur)} / ${D.prevMonth}: ${fmtCell(prev)}`,
-          style: {
-            display: "flex",
-            alignItems: "flex-end",
-            gap: 2,
-            height: "100%"
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          className: "bar-grow",
-          style: {
-            width: 11,
-            height: `${cur / maxBar * 100}%`,
-            background: d.v.color,
-            borderRadius: "3px 3px 0 0",
-            boxShadow: "var(--glow)",
-            minHeight: 2
-          }
-        }), /*#__PURE__*/React.createElement("div", {
-          style: {
-            width: 6,
-            height: `${prev / maxBar * 100}%`,
-            background: d.v.color,
-            opacity: .28,
-            borderRadius: "3px 3px 0 0",
-            minHeight: 2
-          },
-          title: `${D.prevMonth}: ${fmtCell(prev)}`
-        }));
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: ".72rem",
-          color: "var(--muted)",
-          fontWeight: 700
-        }
-      }, wk), /*#__PURE__*/React.createElement("div", {
-        className: "ww",
-        style: {
-          fontSize: ".62rem"
-        }
-      }, rng));
-    }))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Tabla 1 \u2014 Clientes cerrados",
-      h3: `Compradores por semana — ${D.month} vs ${D.prevMonth}`,
-      p: "N\xFAmero grande = mes actual \xB7 n\xFAmero peque\xF1o = mes anterior."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, /*#__PURE__*/React.createElement("table", {
-      className: "tbl"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), SEM_WEEKS.map(([w], wi) => t1.thFor(w, "w" + wi, d => d.wk.cur[wi])), t1.thFor("Total", "tot", d => d.wk.tot))), /*#__PURE__*/React.createElement("tbody", null, t1.sorted.map(({
-      v,
-      wk,
-      pv
-    }, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i,
-      className: "clickable",
-      onClick: () => window.__perfil(v)
-    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
-      className: "who"
-    }, /*#__PURE__*/React.createElement(Avatar, {
-      v: v,
-      size: 30,
-      ring: true
-    }), /*#__PURE__*/React.createElement("span", {
-      className: "wn"
-    }, v.name))), wk.cur.map((n, j) => /*#__PURE__*/React.createElement("td", {
-      key: j,
-      className: "r num"
-    }, n, " ", /*#__PURE__*/React.createElement("span", {
-      className: "ww",
-      style: {
-        fontSize: ".66rem"
-      }
-    }, "(", pv.cur[j], ")"))), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800
-      }
-    }, wk.tot, " ", /*#__PURE__*/React.createElement("span", {
-      className: "ww",
-      style: {
-        fontSize: ".66rem"
-      }
-    }, "(", pv.tot, ")"))))))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Tabla 2 \u2014 Monto cerrado ($)",
-      h3: `Monto Compradores por semana — ${D.month}`
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, /*#__PURE__*/React.createElement("table", {
-      className: "tbl"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), SEM_WEEKS.map(([w], wi) => t2.thFor(w, "w" + wi, d => d.wk.curM[wi])), t2.thFor("Total", "totM", d => d.wk.totM))), /*#__PURE__*/React.createElement("tbody", null, t2.sorted.map(({
-      v,
-      wk
-    }, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i,
-      className: "clickable",
-      onClick: () => window.__perfil(v)
-    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
-      className: "who"
-    }, /*#__PURE__*/React.createElement(Avatar, {
-      v: v,
-      size: 30,
-      ring: true
-    }), /*#__PURE__*/React.createElement("span", {
-      className: "wn"
-    }, v.name))), wk.curM.map((n, j) => /*#__PURE__*/React.createElement("td", {
-      key: j,
-      className: "r num"
-    }, money(n))), /*#__PURE__*/React.createElement("td", {
-      className: "r num",
-      style: {
-        fontWeight: 800,
-        color: "var(--green-ink)"
-      }
-    }, money(wk.totM))))))), /*#__PURE__*/React.createElement("div", {
-      className: "note"
-    }, /*#__PURE__*/React.createElement("b", null, "Cerrado ", D.month), " = monto de deals en etapa Compradores (cierres \xD7 ticket promedio). El reparto semanal usa las fechas de cierre reales de Kommo; si un deal no tiene fecha registrada, se distribuye por pesos hist\xF3ricos."));
-  };
-
-  /* ===== SUCURSALES ===== */
-  window.ViewSucursales = function () {
-    const metas = window.useMetas();
-    const metaBySuc = {};
-    T.forEach(v => {
-      metaBySuc[v.suc] = (metaBySuc[v.suc] || 0) + (metas[v.name] || 0);
-    });
-    const branches = {};
-    T.forEach(v => {
-      const b = branches[v.suc] || (branches[v.suc] = {
-        suc: v.suc,
-        leads: 0,
-        prevLeads: 0,
-        cierres: 0,
-        value: 0,
-        agendado: 0,
-        cerrado: 0,
-        n: 0
-      });
-      b.leads += v.leads;
-      b.prevLeads += v.prevLeads || 0;
-      b.cierres += v.cierres;
-      b.value += v.value;
-      b.agendado += v.agendado || 0;
-      b.cerrado += v.cerrado || 0;
-      b.n++;
-    });
-    const list = Object.values(branches).sort((a, b) => b.value - a.value);
-    const COL = {};
-    T.forEach(v => {
-      if (!COL[v.suc]) COL[v.suc] = v.color || "#6B7785";
-    });
-    const {
-      sorted,
-      thFor
-    } = window.useSort(list, "value", b => b.value);
-    const mom = b => b.prevLeads ? Math.round((b.leads - b.prevLeads) / b.prevLeads * 100) : 0;
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Comparativo",
-      h3: "Rendimiento por sucursal",
-      p: "Cada lead se atribuye a la sucursal de su vendedora. Roll-up por tienda con comparativo vs mes anterior."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "grid3"
-    }, list.map((b, i) => {
-      const m = mom(b);
-      return /*#__PURE__*/React.createElement("div", {
-        className: "card clickable",
-        key: i,
-        style: {
-          borderTop: `3px solid ${COL[b.suc] || "#7A5AF0"}`
-        },
-        onClick: () => window.__sucursal && window.__sucursal(b.suc)
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 10
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          width: 34,
-          height: 34,
-          borderRadius: 9,
-          display: "grid",
-          placeItems: "center",
-          background: `color-mix(in srgb, ${COL[b.suc] || "#7A5AF0"} 14%, transparent)`,
-          color: COL[b.suc] || "#7A5AF0"
-        }
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "sucursales",
-        size: 17
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 800,
-          fontSize: ".98rem"
-        }
-      }, b.suc), /*#__PURE__*/React.createElement("div", {
-        className: "ww"
-      }, b.n, " vendedora", b.n > 1 ? "s" : "")), /*#__PURE__*/React.createElement("div", {
-        style: {
-          textAlign: "right"
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        className: `delta ${m >= 0 ? "up" : "down"}`
-      }, m >= 0 ? "▲" : "▼", m >= 0 ? "+" : "", m, "%"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontSize: ".62rem",
-          color: "var(--muted)",
-          marginTop: 2
-        }
-      }, "leads 1\u2013", D.curDay, " ", D.prevMonth.slice(0, 3)))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 12,
-          marginTop: 16
-        }
-      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1.5rem",
-          fontWeight: 800
-        }
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: b.leads
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "kl"
-      }, "Leads ", /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "vs ", b.prevLeads.toLocaleString("en-US")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1.5rem",
-          fontWeight: 800,
-          color: "var(--green)"
-        }
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: b.cierres
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "kl"
-      }, "Cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1.5rem",
-          fontWeight: 800,
-          color: "var(--brand-d)"
-        }
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: b.value,
-        fmt: money
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "kl"
-      }, "Pipeline")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1.5rem",
-          fontWeight: 800,
-          color: `var(--${convTone(b.leads ? b.cierres / b.leads * 100 : 0)})`
-        }
-      }, b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0", "%"), /*#__PURE__*/React.createElement("div", {
-        className: "kl"
-      }, "Conversi\xF3n"))), metaBySuc[b.suc] > 0 && (() => {
-        const mp = Math.round(b.cerrado / metaBySuc[b.suc] * 100);
-        const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
-        return /*#__PURE__*/React.createElement("div", {
-          style: {
-            marginTop: 12,
-            borderTop: "1px solid var(--line)",
-            paddingTop: 10
-          }
-        }, /*#__PURE__*/React.createElement("div", {
-          style: {
-            display: "flex",
-            justifyContent: "space-between",
-            fontSize: ".7rem",
-            color: "var(--muted)",
-            marginBottom: 5
-          }
-        }, /*#__PURE__*/React.createElement("span", null, "Meta sucursal ", money(metaBySuc[b.suc])), /*#__PURE__*/React.createElement("b", {
-          style: {
-            color: mc
-          }
-        }, mp, "%")), /*#__PURE__*/React.createElement("div", {
-          className: "meter"
-        }, /*#__PURE__*/React.createElement("i", {
-          style: {
-            width: Math.min(100, mp) + "%",
-            background: mc
-          }
-        })), /*#__PURE__*/React.createElement("div", {
-          style: {
-            fontSize: ".68rem",
-            color: "var(--faint)",
-            marginTop: 4
-          }
-        }, money(b.cerrado), " cerrado este mes"));
-      })());
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Reparto",
-      h3: "Leads por sucursal"
-    }), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 16
-      }
-    }, /*#__PURE__*/React.createElement(Donut, {
-      unit: "LEADS",
-      data: list.map(b => ({
-        label: b.suc,
-        value: b.leads,
-        color: COL[b.suc] || "#7A5AF0"
-      }))
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Detalle",
-      h3: "Tabla por sucursal",
-      p: "Clic en cualquier columna para ordenar."
-    }), /*#__PURE__*/React.createElement("table", {
-      className: "tbl",
-      style: {
-        marginTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Sucursal"), thFor("Vendedoras", "n", b => b.n), thFor("Leads", "leads", b => b.leads), thFor(`vs ${D.prevMonth}`, "mom", b => mom(b)), thFor("Cierres", "cierres", b => b.cierres), thFor("Conv.", "conv", b => b.leads ? b.cierres / b.leads : 0), thFor("Agendado", "agendado", b => b.agendado), thFor("Cerrado mes", "cerrado", b => b.cerrado), thFor("Pipeline", "value", b => b.value))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((b, i) => {
-      const m = mom(b);
-      const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
-      return /*#__PURE__*/React.createElement("tr", {
-        key: i,
-        className: "clickable",
-        onClick: () => window.__sucursal && window.__sucursal(b.suc)
-      }, /*#__PURE__*/React.createElement("td", {
-        style: {
-          fontWeight: 700
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          display: "inline-block",
-          width: 9,
-          height: 9,
-          borderRadius: 3,
-          background: COL[b.suc] || "#6B7785",
-          marginRight: 8
-        }
-      }), b.suc), /*#__PURE__*/React.createElement("td", {
-        className: "r num"
-      }, b.n), /*#__PURE__*/React.createElement("td", {
-        className: "r num"
-      }, b.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
-        className: "r"
-      }, /*#__PURE__*/React.createElement("span", {
-        className: `delta ${m >= 0 ? "up" : "down"}`
-      }, m >= 0 ? "▲" : "▼", " ", m >= 0 ? "+" : "", m, "%")), /*#__PURE__*/React.createElement("td", {
-        className: "r num",
-        style: {
-          fontWeight: 800
-        }
-      }, b.cierres), /*#__PURE__*/React.createElement("td", {
-        className: "r"
-      }, /*#__PURE__*/React.createElement(Pill, {
-        tone: convTone(bconv)
-      }, bconv.toFixed(1), "%")), /*#__PURE__*/React.createElement("td", {
-        className: "r num",
-        style: {
-          color: "#D98300",
-          fontWeight: 700
-        }
-      }, b.agendado), /*#__PURE__*/React.createElement("td", {
-        className: "r num",
-        style: {
-          color: "var(--green-ink)",
-          fontWeight: 700
-        }
-      }, money(b.cerrado)), /*#__PURE__*/React.createElement("td", {
-        className: "r num"
-      }, money(b.value)));
-    })))));
-  };
-
-  /* ===== PROYECCIÓN ===== */
-  window.ViewProyeccion = function () {
-    const curDay = D.curDay || 1,
-      dim = D.daysInMonth || 30,
-      left = dim - curDay,
-      progPct = Math.round(curDay / dim * 100);
-    const conv = G.leads ? Math.round(G.cierres / G.leads * 100) : 0;
-    const base = curDay ? Math.round(G.cierres / curDay * dim) : 0;
-    // Apply +1pp to the same projected lead volume as base (not just current leads)
-    const conv1 = conv > 0 ? Math.round(base * (conv + 1) / conv) : base;
-    const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
-    const extra = Math.round(backlog * conv / 100);
-    const resc = base + extra;
-    const paceDay = curDay ? (G.cierres / curDay).toFixed(1) : "0.0";
-    const scen = [{
-      tag: "Escenario base",
-      v: base,
-      val: base * G.ticket,
-      delta: Math.max(0, base - G.cierres),
-      d: `Pace lineal. ${left} días restantes. Sin cambios en la operación actual.`,
-      hot: false,
-      pin: ""
-    }, {
-      tag: `+1pp conversión (${conv + 1}%)`,
-      v: conv1,
-      val: conv1 * G.ticket,
-      delta: Math.max(0, conv1 - G.cierres),
-      d: `Misma captación proyectada, ${conv + 1}% de conversión. Si cada vendedora mejora 1pp su tasa de cierre con coaching.`,
-      hot: false,
-      pin: ""
-    }, {
-      tag: "Rescate sin seguimiento",
-      v: resc,
-      val: resc * G.ticket,
-      delta: extra,
-      d: `Base (~${base}) + rescate de ${backlog} deals sin seguimiento (+${extra} cierres adicionales).`,
-      hot: true,
-      pin: "Mayor palanca"
-    }];
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: `Proyección al cierre de ${D.month.toLowerCase()}`,
-      h3: "Tres escenarios \u2014 \xBFa cu\xE1nto podemos llegar?",
-      p: `Basada en la tasa de cierres por día y el ticket promedio actual (${money(G.ticket)}). La palanca de mayor impacto es rescatar el backlog.`
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "card",
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 24,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 180
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eb",
-      style: {
-        marginBottom: 6
-      }
-    }, "Avance del mes"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: 8,
-        background: "var(--line2)",
-        borderRadius: 99,
-        overflow: "hidden"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: "100%",
-        width: progPct + "%",
-        background: "var(--brand)",
-        borderRadius: 99,
-        boxShadow: "var(--glow)"
-      }
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        fontSize: ".68rem",
-        color: "var(--faint)",
-        fontWeight: 600,
-        marginTop: 4
-      }
-    }, /*#__PURE__*/React.createElement("span", null, "D\xEDa ", curDay), /*#__PURE__*/React.createElement("span", null, left, " d\xEDas restantes"), /*#__PURE__*/React.createElement("span", null, "D\xEDa ", dim))), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 22,
-        flexWrap: "wrap"
-      }
-    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "eb"
-    }, "Cierres del mes"), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "1.4rem",
-        fontWeight: 800
-      }
-    }, G.cierres), /*#__PURE__*/React.createElement("div", {
-      className: "ww"
-    }, paceDay, "/d\xEDa promedio")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "eb"
-    }, "Proyecci\xF3n base"), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "1.4rem",
-        fontWeight: 800
-      }
-    }, "~", base), /*#__PURE__*/React.createElement("div", {
-      className: "ww",
-      style: {
-        color: curDay <= 3 ? "var(--amber)" : "var(--green)"
-      }
-    }, curDay <= 3 ? `⚠ solo ${curDay} día(s) de datos` : "▲ buen ritmo")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "eb"
-    }, "Ticket promedio"), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "1.4rem",
-        fontWeight: 800
-      }
-    }, money(G.ticket)), /*#__PURE__*/React.createElement("div", {
-      className: "ww"
-    }, "valor / cierre")))), /*#__PURE__*/React.createElement("div", {
-      className: "grid3"
-    }, scen.map((s, i) => /*#__PURE__*/React.createElement("div", {
-      className: "card",
-      key: i,
-      style: {
-        borderTop: `3px solid ${s.hot ? "var(--green)" : "var(--line)"}`,
-        padding: "20px",
-        position: "relative",
-        boxShadow: s.hot ? "0 0 0 1px var(--green), var(--sh)" : "var(--sh)"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "flex-start",
-        gap: 6,
-        marginBottom: 8
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eb",
-      style: {
-        color: s.hot ? "var(--green-ink)" : "var(--faint)"
-      }
-    }, s.tag), s.pin && /*#__PURE__*/React.createElement("span", {
-      className: "pill green",
-      style: {
-        fontSize: ".58rem"
-      }
-    }, s.pin)), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "2.2rem",
-        fontWeight: 800
-      }
-    }, s.v, " ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: ".9rem",
-        color: "var(--muted)",
-        fontWeight: 700
-      }
-    }, "cierres")), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "1rem",
-        fontWeight: 700,
-        color: "var(--brand-d)",
-        marginTop: 2
-      }
-    }, "~", money(s.val)), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 7,
-        fontSize: ".7rem",
-        fontWeight: 700,
-        color: "var(--green-ink)",
-        background: "var(--green-bg)",
-        display: "inline-block",
-        padding: "2px 9px",
-        borderRadius: 6
-      }
-    }, "+", s.delta, " vs hoy (", G.cierres, ")"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 8,
-        fontSize: ".76rem",
-        color: "var(--muted)",
-        lineHeight: 1.5
-      }
-    }, s.d)))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Plan",
-      h3: "Matriz de acci\xF3n"
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "grid2"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eb",
-      style: {
-        color: "var(--green-ink)",
-        marginBottom: 10
-      }
-    }, "\u2705 Esta semana \u2014 meta +10 cierres"), /*#__PURE__*/React.createElement("ol", {
-      style: {
-        paddingLeft: 18,
-        fontSize: ".86rem",
-        lineHeight: 1.9,
-        color: "var(--text)"
-      }
-    }, /*#__PURE__*/React.createElement("li", null, "Llamar al ", /*#__PURE__*/React.createElement("b", null, "top 50"), " de cotizaciones por valor."), /*#__PURE__*/React.createElement("li", null, "Acompa\xF1ar visitas de vendedoras en estado ", /*#__PURE__*/React.createElement("b", null, "cr\xEDtico"), "."), /*#__PURE__*/React.createElement("li", null, "Documentar el playbook de ", /*#__PURE__*/React.createElement("b", null, window.TOP_CLOSER.split(" ")[0]), " para replicarlo."))), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "eb",
-      style: {
-        color: "var(--blue)",
-        marginBottom: 10
-      }
-    }, "\uD83D\uDCC5 Este mes"), /*#__PURE__*/React.createElement("ol", {
-      style: {
-        paddingLeft: 18,
-        fontSize: ".86rem",
-        lineHeight: 1.9,
-        color: "var(--text)"
-      }
-    }, /*#__PURE__*/React.createElement("li", null, "Activar los ", /*#__PURE__*/React.createElement("b", null, Math.round(backlog * 0.73)), " leads con +72h sin contacto humano."), /*#__PURE__*/React.createElement("li", null, "Revisar el pipeline ", /*#__PURE__*/React.createElement("b", null, "\"No responden\""), " (", D.metrics.noResp.toLocaleString("en-US"), " leads)."), D.metrics.criticos7d > 0 && /*#__PURE__*/React.createElement("li", null, "Rescatar las ", /*#__PURE__*/React.createElement("b", null, D.metrics.criticos7d), " fichas con +7 d\xEDas sin contacto.")))));
-  };
-
-  /* ===== DATOS ===== */
-  window.ViewDatos = function () {
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Calidad de datos",
-      h3: "Salud del CRM",
-      p: "Estos huecos impiden medir y priorizar bien. Limpiarlos es trabajo de gerencia + equipo."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "kpis"
-    }, /*#__PURE__*/React.createElement(Kpi, {
-      l: "Tel\xE9fonos duplicados",
-      num: D.metrics.duplicadosTel,
-      ac: "#7A5AF0",
-      ico: "datos",
-      sub: `${D.metrics.duplicadosFichas} fichas en 2+ registros`
-    }), /*#__PURE__*/React.createElement(Kpi, {
-      l: "Nunca tocados",
-      num: D.metrics.nuncaTocados,
-      ac: "#D98300",
-      ico: "datos",
-      sub: "el bot los movi\xF3, sin acci\xF3n humana"
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "card"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Duplicados",
-      h3: `${D.metrics.duplicadosTel} teléfonos en 2+ fichas`,
-      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n."
-    }), /*#__PURE__*/React.createElement("table", {
-      className: "tbl",
-      style: {
-        marginTop: 6
-      }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Tel\xE9fono"), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Vendedoras involucradas"), /*#__PURE__*/React.createElement("th", null, "Etapas"), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, (D.dups || []).slice(0, 20).map((g, i) => /*#__PURE__*/React.createElement("tr", {
-      key: i
-    }, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, g.phone || "—"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, g.n), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, (g.vends || []).map(v => v.split(" ")[0]).join(" · ")), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, (g.etapas || []).join(" · ")), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: g.n >= 3 ? "red" : "amber"
-    }, g.n >= 3 ? "Revisar" : "Fusionar")))), (!D.dups || D.dups.length === 0) && /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      colSpan: 5,
-      style: {
-        textAlign: "center",
-        color: "var(--faint)",
-        padding: "18px 0"
-      }
-    }, "Sin duplicados detectados")))), /*#__PURE__*/React.createElement("div", {
-      className: "note",
-      style: {
-        marginTop: 12
-      }
-    }, "Mostrando ", Math.min((D.dups || []).length, 20), " de ", D.metrics.duplicadosFichas, " fichas duplicadas (hasta 40 en datos).")));
-  };
-
-  /* ===== PRESENTACIÓN ===== */
-  window.ViewPresentacion = function () {
-    const metas = window.useMetas();
-    const curDay = D.curDay || 1,
-      dim = D.daysInMonth || 30,
-      left = dim - curDay;
-    const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
-    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
-    const medal = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
-    const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
-    const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
-    const convMom = prevConv != null ? Math.round(((G.leads ? G.cierres / G.leads * 100 : 0) - prevConv) * 10) / 10 : null;
-    const branches = {};
-    T.forEach(v => {
-      const b = branches[v.suc] || (branches[v.suc] = {
-        suc: v.suc,
-        cerrado: 0,
-        cierres: 0,
-        leads: 0,
-        leadsRet: 0,
-        prevLeads: 0,
-        hasNew: false,
-        meta: 0,
-        color: v.color
-      });
-      b.cerrado += v.cierres * v.ticket;
-      b.cierres += v.cierres;
-      b.leads += v.leads;
-      if (v.nuevo) {
-        b.hasNew = true;
-      } else {
-        b.prevLeads += v.prevLeads || 0;
-        b.leadsRet += v.leads;
-      }
-      b.meta += metas[v.name] || 0;
-    });
-    const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
-    const MomBadge = ({
-      cur,
-      prev,
-      fmt
-    }) => {
-      const p = mom(cur, prev);
-      if (p === null || prev == null) return null;
-      return /*#__PURE__*/React.createElement("span", {
-        className: `delta ${p >= 0 ? "up" : "down"}`,
-        style: {
-          fontSize: ".68rem",
-          marginLeft: 6
-        }
-      }, p >= 0 ? "▲" : "▼", Math.abs(p), "% vs ", D.prevMonth.slice(0, 3));
-    };
-    const StatRow = ({
-      label,
-      val,
-      prev,
-      fmt,
-      color
-    }) => /*#__PURE__*/React.createElement("div", {
-      className: "diag2-stat",
-      style: {
-        "--sc": color || "var(--brand)"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "diag2-ic"
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "conversion",
-      size: 14
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        flex: 1,
-        minWidth: 0
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "diag2-v",
-      style: {
-        color: color || "var(--text)"
-      }
-    }, /*#__PURE__*/React.createElement(CountUp, {
-      value: val,
-      fmt: fmt
-    }), /*#__PURE__*/React.createElement(MomBadge, {
-      cur: val,
-      prev: prev,
-      fmt: fmt
-    })), /*#__PURE__*/React.createElement("div", {
-      className: "diag2-l"
-    }, label)));
-    return /*#__PURE__*/React.createElement("div", {
-      className: "view"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "rhero"
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "rhero-left"
-    }, /*#__PURE__*/React.createElement("span", {
-      className: "diag2-eyebrow"
-    }, /*#__PURE__*/React.createElement(Icon, {
-      name: "presentacion",
-      size: 13,
-      sw: 2.4
-    }), "Presentaci\xF3n comercial \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
-      className: "rhero-line"
-    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
-      className: "num"
-    }, G.leads), " leads ", /*#__PURE__*/React.createElement(MomBadge, {
-      cur: G.leads,
-      prev: G.prevLeads
-    })), /*#__PURE__*/React.createElement("span", {
-      className: "rhero-sep"
-    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
-      className: "num"
-    }, G.cierres), " cierres ", /*#__PURE__*/React.createElement(MomBadge, {
-      cur: G.cierres,
-      prev: G.prevCierres
-    })), /*#__PURE__*/React.createElement("span", {
-      className: "rhero-sep"
-    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
-      className: "num"
-    }, conv, "%"), " conv", convMom !== null && /*#__PURE__*/React.createElement("span", {
-      className: `delta ${convMom >= 0 ? "up" : "down"}`,
-      style: {
-        fontSize: ".68rem",
-        marginLeft: 5
-      }
-    }, convMom >= 0 ? "▲" : "▼", Math.abs(convMom).toFixed(1), "pp"))), /*#__PURE__*/React.createElement("p", {
-      className: "rhero-sub"
-    }, "Actualizado ", D.fecha || "hoy", " \xB7 D\xEDa ", curDay, " de ", dim, " \xB7 ", left, " d\xEDas restantes"), /*#__PURE__*/React.createElement("div", {
-      style: {
-        marginTop: 14,
-        height: 6,
-        background: "var(--line2)",
-        borderRadius: 99,
-        overflow: "hidden",
-        maxWidth: 320
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      style: {
-        height: "100%",
-        width: `${Math.round(curDay / dim * 100)}%`,
-        background: "var(--brand)",
-        borderRadius: 99,
-        boxShadow: "var(--glow)",
-        transition: "width 1.2s ease"
-      }
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "diag2-stats rhero-stats"
-    }, /*#__PURE__*/React.createElement(StatRow, {
-      label: "Facturado",
-      val: G.cerrado,
-      prev: G.prevCerrado,
-      fmt: money,
-      color: "var(--green)"
-    }), /*#__PURE__*/React.createElement(StatRow, {
-      label: "Ticket promedio",
-      val: G.ticket,
-      prev: G.prevTicket,
-      fmt: money,
-      color: "var(--amber)"
-    }), /*#__PURE__*/React.createElement(StatRow, {
-      label: "Pipeline",
-      val: G.pipeline,
-      prev: G.prevPipeline,
-      fmt: money,
-      color: "var(--blue)"
-    }))), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Ranking",
-      h3: "Por vendedora \u2014 resultados del mes"
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "pres-vendors"
-    }, ranked.map((v, i) => {
-      const cerrado = v.cierres * v.ticket;
-      const vm = metas[v.name] || 0;
-      const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
-      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
-      const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
-      const vconv = v.leads ? v.cierres / v.leads * 100 : 0;
-      return /*#__PURE__*/React.createElement("div", {
-        className: "tcard pres-vcard",
-        key: i,
-        style: {
-          "--vc": v.color || "var(--brand)",
-          animationDelay: `${i * 0.06}s`
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "16px 18px 14px",
-          borderBottom: "1px solid var(--line)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 11,
-          marginBottom: 0
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: "1.5rem",
-          lineHeight: 1,
-          width: 28
-        }
-      }, medal(i)), /*#__PURE__*/React.createElement(Avatar, {
-        v: v,
-        size: 40,
-        ring: true,
-        crown: i === 0
-      }), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1,
-          minWidth: 0
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 800,
-          fontSize: ".95rem"
-        }
-      }, v.name), /*#__PURE__*/React.createElement("div", {
-        className: "ww"
-      }, v.suc)), /*#__PURE__*/React.createElement(Pill, {
-        tone: convTone(vconv)
-      }, vconv.toFixed(0), "% conv"))), /*#__PURE__*/React.createElement("div", {
-        className: "pres-stats-grid",
-        style: {
-          borderBottom: "1px solid var(--line)"
-        }
-      }, [{
-        l: "Leads",
-        v2: v.leads,
-        c: "var(--text)",
-        prev: v.prevLeads
-      }, {
-        l: "Cierres",
-        v2: v.cierres,
-        c: "var(--vc)"
-      }, {
-        l: "Facturado",
-        v2: cerrado,
-        c: "var(--green)",
-        fmt: money
-      }, {
-        l: "Conv.",
-        v2: vconv,
-        c: `var(--${convTone(vconv)})`,
-        fmt: n => n.toFixed(0) + "%"
-      }, {
-        l: "Ticket",
-        v2: v.ticket,
-        c: "var(--amber)",
-        fmt: money
-      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
-        key: j,
-        style: {
-          padding: "12px 8px",
-          textAlign: "center",
-          borderRight: "1px solid var(--line2)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1rem",
-          fontWeight: 800,
-          color: s.c
-        }
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: s.v2,
-        fmt: s.fmt
-      })), s.prev != null && !v.nuevo && /*#__PURE__*/React.createElement(MomBadge, {
-        cur: s.v2,
-        prev: s.prev
-      }), /*#__PURE__*/React.createElement("div", {
-        className: "eb",
-        style: {
-          marginTop: 3,
-          letterSpacing: ".6px",
-          fontSize: ".58rem"
-        }
-      }, s.l)))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "12px 18px"
-        }
-      }, vm > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: ".7rem",
-          marginBottom: 5
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--muted)"
-        }
-      }, "Meta ", money(vm)), /*#__PURE__*/React.createElement("b", {
-        style: {
-          color: mc
-        }
-      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
-        className: "meter"
-      }, /*#__PURE__*/React.createElement("i", {
-        style: {
-          width: mp + "%",
-          background: mc,
-          transition: "width 1.2s cubic-bezier(.4,0,.2,1)"
-        }
-      }))) : /*#__PURE__*/React.createElement("div", {
-        className: "ww",
-        style: {
-          fontSize: ".68rem"
-        }
-      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          marginTop: 8,
-          fontSize: ".68rem",
-          color: "var(--muted)"
-        }
-      }, cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
-        style: {
-          color: "var(--brand-d)"
-        }
-      }, money(proy)), " ", /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "Sin cierres a\xFAn"))));
-    })), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Sucursales",
-      h3: "Rendimiento por tienda"
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "pres-sucs"
-    }, sucList.map((b, i) => {
-      const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
-      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
-      const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
-      const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
-      const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
-      return /*#__PURE__*/React.createElement("div", {
-        className: "tcard pres-suc",
-        key: i,
-        style: {
-          "--sc": b.color || "var(--brand)",
-          animationDelay: `${0.15 + i * 0.08}s`
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "16px 18px 14px",
-          borderBottom: "1px solid var(--line)",
-          display: "flex",
-          alignItems: "center",
-          gap: 12
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          width: 38,
-          height: 38,
-          borderRadius: 10,
-          display: "grid",
-          placeItems: "center",
-          background: `color-mix(in srgb, var(--sc) 14%, transparent)`,
-          color: "var(--sc)",
-          flexShrink: 0
-        }
-      }, /*#__PURE__*/React.createElement(Icon, {
-        name: "sucursales",
-        size: 18
-      })), /*#__PURE__*/React.createElement("div", {
-        style: {
-          flex: 1,
-          minWidth: 0
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        style: {
-          fontWeight: 800,
-          fontSize: ".95rem"
-        }
-      }, b.suc), /*#__PURE__*/React.createElement("div", {
-        className: "ww",
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          flexWrap: "wrap"
-        }
-      }, T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · "), b.prevLeads > 0 && /*#__PURE__*/React.createElement(MomBadge, {
-        cur: b.leadsRet,
-        prev: b.prevLeads
-      }), b.hasNew && /*#__PURE__*/React.createElement("span", {
-        style: {
-          fontSize: ".6rem",
-          color: "var(--muted)",
-          background: "var(--line2)",
-          padding: "1px 5px",
-          borderRadius: 99
-        }
-      }, "+nuevo"))), /*#__PURE__*/React.createElement(Pill, {
-        tone: convTone(bconv)
-      }, bconv.toFixed(0), "% conv")), /*#__PURE__*/React.createElement("div", {
-        className: "pres-stats-grid",
-        style: {
-          borderBottom: "1px solid var(--line)"
-        }
-      }, [{
-        l: "Leads",
-        v2: b.leads,
-        c: "var(--text)"
-      }, {
-        l: "Cierres",
-        v2: b.cierres,
-        c: "var(--sc)"
-      }, {
-        l: "Facturado",
-        v2: b.cerrado,
-        c: "var(--green)",
-        fmt: money
-      }, {
-        l: "Conv.",
-        v2: bconv,
-        c: `var(--${convTone(bconv)})`,
-        fmt: n => n.toFixed(0) + "%"
-      }, {
-        l: "Ticket",
-        v2: bticket,
-        c: "var(--amber)",
-        fmt: bticket ? money : () => "—"
-      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
-        key: j,
-        style: {
-          padding: "12px 8px",
-          textAlign: "center",
-          borderRight: "1px solid var(--line2)"
-        }
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontSize: "1rem",
-          fontWeight: 800,
-          color: s.c
-        }
-      }, /*#__PURE__*/React.createElement(CountUp, {
-        value: s.v2,
-        fmt: s.fmt
-      })), /*#__PURE__*/React.createElement("div", {
-        className: "eb",
-        style: {
-          marginTop: 3,
-          letterSpacing: ".6px",
-          fontSize: ".58rem"
-        }
-      }, s.l)))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          padding: "12px 18px"
-        }
-      }, b.meta > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "flex",
-          justifyContent: "space-between",
-          fontSize: ".7rem",
-          marginBottom: 5
-        }
-      }, /*#__PURE__*/React.createElement("span", {
-        style: {
-          color: "var(--muted)"
-        }
-      }, "Meta ", money(b.meta)), /*#__PURE__*/React.createElement("b", {
-        style: {
-          color: mc
-        }
-      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
-        className: "meter"
-      }, /*#__PURE__*/React.createElement("i", {
-        style: {
-          width: mp + "%",
-          background: mc,
-          transition: "width 1.4s cubic-bezier(.4,0,.2,1)"
-        }
-      }))) : /*#__PURE__*/React.createElement("div", {
-        className: "ww",
-        style: {
-          fontSize: ".68rem"
-        }
-      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
-        style: {
-          marginTop: 8,
-          fontSize: ".68rem",
-          color: "var(--muted)"
-        }
-      }, b.cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n: ", /*#__PURE__*/React.createElement("b", {
-        style: {
-          color: "var(--brand-d)"
-        }
-      }, money(bproy)), " ", /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
-        className: "ww"
-      }, "Sin cierres a\xFAn"))));
-    })));
-  };
-})();
 
 // Heaven panel — shell + shared components + Resumen view.
 const {
@@ -5616,6 +3216,2406 @@ function Panel() {
   }, n.badge) : null))));
 }
 window.Panel = Panel;
+// Heaven panel — the remaining 8 views. All themed via panel.css tokens.
+(function () {
+  const D = window.PANEL_DATA,
+    T = D.team,
+    G = D.global;
+  const money = window.fmtMoney,
+    convTone = window.convTone;
+  const {
+    SectionHead,
+    Pill,
+    Funnel,
+    TeamTable,
+    Kpi,
+    Avatar,
+    Donut,
+    Heatmap,
+    MetasSection,
+    MetaStepper,
+    WeekSpark,
+    QuadrantMatrix,
+    ExpertAgent,
+    CountUp,
+    EmptyState,
+    Icon
+  } = window;
+  const TOP = window.TOP_CLOSER;
+  const STAGE_C = {
+    "Leads Entrantes": "#9CA3AF",
+    "Nueva consulta": "#27313F",
+    "Interesado": "#2E6FE0",
+    "Cotización enviada": "#7A4AD9",
+    "Agendado / Visita": "#D98300",
+    "Compradores": "#159A57",
+    "No Responden": "#646E7B"
+  };
+
+  // Sortable KPIs-por-vendedora table (clic en columna ordena).
+  function KpiSortTable({
+    rows,
+    open
+  }) {
+    const {
+      sorted,
+      thFor
+    } = window.useSort(rows, "cierres", v => v.cierres);
+    return /*#__PURE__*/React.createElement("table", {
+      className: "tbl",
+      style: {
+        marginTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "value", v => v.value), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      className: "clickable",
+      onClick: () => open(v)
+    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
+      className: "who"
+    }, /*#__PURE__*/React.createElement(Avatar, {
+      v: v,
+      size: 32,
+      ring: true
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "wn"
+    }, v.name))), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800
+      }
+    }, v.cierres), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, /*#__PURE__*/React.createElement(Pill, {
+      tone: convTone(window.convPct(v))
+    }, window.convPct(v), "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--brand-d)",
+        fontWeight: 700
+      }
+    }, v.value ? money(v.value) : "—"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, v.calif, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww"
+    }, "(", v.califPct, "%)")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--red)"
+      }
+    }, v.noResp, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww"
+    }, "(", v.noRespPct, "%)"))))));
+  }
+
+  // Sortable origin-channel table.
+  function ChannelTable({
+    rows
+  }) {
+    const {
+      sorted,
+      thFor
+    } = window.useSort(rows, "cierres", c => c.cierres);
+    return /*#__PURE__*/React.createElement("table", {
+      className: "tbl"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Canal"), thFor("Leads", "leads", c => c.leads), thFor("% Total", "pct", c => c.pct), thFor("Cierres", "cierres", c => c.cierres), thFor("Conversión", "conv", c => c.conv), thFor("Ticket prom.", "ticket", c => c.ticket), thFor("Pipeline", "pipeline", c => c.pipeline))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((c, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i
+    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
+      style: {
+        fontWeight: 700
+      }
+    }, c.ic, " ", c.name)), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, c.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, c.pct, "%"), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800
+      }
+    }, c.cierres), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800,
+        color: c.cls === "green" ? "var(--green)" : c.cls === "red" ? "var(--red)" : "var(--faint)"
+      }
+    }, c.conv, "%"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, c.ticket ? money(c.ticket) : "—"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, c.pipeline ? money(c.pipeline) : "—")))));
+  }
+
+  /* ===== ANÁLISIS IA — sala de expertos ===== */
+  window.ViewAnalisis = function () {
+    const teamLines = T.map(v => `${v.name} (sucursal ${v.suc}): ${v.leads} leads (mes previo ${v.prevLeads}), ${v.cierres} cierres, ${window.convPct(v)}% conv, ${v.noResp} no-responden (${v.noRespPct}%), ${v.backlog} backlog, ${v.nunca} nunca-tocados, ${v.u24}% <24h, ticket Bs ${v.ticket}`).join("\n");
+    const branchRoll = {};
+    T.forEach(v => {
+      const b = branchRoll[v.suc] || (branchRoll[v.suc] = {
+        leads: 0,
+        prev: 0,
+        cierres: 0,
+        cerrado: 0,
+        value: 0,
+        n: 0
+      });
+      b.leads += v.leads;
+      b.prev += v.prevLeads || 0;
+      b.cierres += v.cierres;
+      b.cerrado += v.cerrado || 0;
+      b.value += v.value;
+      b.n++;
+    });
+    const branchLines = Object.entries(branchRoll).map(([s, b]) => `${s}: ${b.n} vendedora(s), ${b.leads} leads (mes previo ${b.prev}, ${Math.round((b.leads - b.prev) / (b.prev || 1) * 100)}%), ${b.cierres} cierres, ${b.leads > 0 ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}% conv, cerrado Bs ${b.cerrado}, pipeline Bs ${b.value}`).join("\n");
+    const M = D.metrics;
+    const _man = D.channels.find(c => c.cls === "green") || {};
+    const _bot = D.channels.find(c => c.cls === "red") || {};
+    const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
+Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / (G.prevLeads || 1) * 100)}% MoM), ${G.cierres} cierres, conversión ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
+"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}.
+IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las sucursales activas son ${[...new Set(T.map(v => v.suc))].join(', ')}.
+Canales: ${D.channels.map(c => `${c.name} ${c.leads} leads / ${c.conv}% conv / ${c.cierres} cierres`).join('; ')}.
+Roll-up por sucursal (con comparativo vs mes anterior):
+${branchLines}
+Equipo (con leads del mes vs mes anterior):
+${teamLines}`;
+    const jsonRule = `Responde SOLO JSON válido, sin texto extra, forma exacta:
+{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}
+Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombres y cifras.
+REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión global, pipeline) salvo que sean indispensables — otros analistas ya los cubren. Quédate ESTRICTAMENTE en tu dominio. No repitas hallazgos genéricos del mes; aporta un ángulo que solo tu especialidad vería.`;
+    const agents = [{
+      id: "crm",
+      name: "Analista CRM",
+      role: "Disciplina, backlog y calidad de datos",
+      icon: "datos",
+      color: "#2E6FE0",
+      prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total ${M.backlog} (+72h), nunca tocados ${M.nuncaTocados}, "no responden" ${M.noResp}, deals sin valor ${M.abiertosSinValor}.\n${jsonRule}`
+    }, {
+      id: "ventas",
+      name: "Analista de Ventas",
+      role: "Conversión, ticket, pipeline y metas",
+      icon: "trophy",
+      color: "#159A57",
+      prompt: `Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n${teamLines}\nGlobal: ${G.cierres} cierres, ${G.leads > 0 ? (G.cierres / G.leads * 100).toFixed(1) : "0.0"}% conv, pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.\n${jsonRule}`
+    }, {
+      id: "comportamiento",
+      name: "Analista de Comportamiento",
+      role: "Origen de leads, canales y patrones",
+      icon: "conversion",
+      color: "#7A5AF0",
+      prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. ${_man.name || "Manual"} (${_man.leads || 0} leads, ${_man.conv || 0}% conv, ${_man.cierres || 0} cierres) vs ${_bot.name || "Bot"} (${_bot.leads || 0} leads, ${_bot.conv || 0}% conv, ${_bot.cierres || 0} cierres); el ${M.noRespPct}% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/horario/etapa pierde clientes y cómo reactivar los ${M.noResp} que no responden.\nDatos de canal y etapas globales: ${_man.name || "manual"} ${_man.leads || 0}/${_man.conv || 0}%/${_man.cierres || 0} · ${_bot.name || "bot"} ${_bot.leads || 0}/${_bot.conv || 0}%/${_bot.cierres || 0} · no-responden ${M.noResp} (${M.noRespPct}%).\n${jsonRule}`
+    }];
+    const synthPrompt = `Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs. Cada decisión debe nombrar responsable y meta concreta.\n${ctx}\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes","hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} Máx 3 y 3. Español de Bolivia.`;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "\u2726 Inteligencia",
+      h3: "Sala de expertos IA",
+      p: "Varios agentes especializados leen los datos reales del mes y entregan hallazgos y recomendaciones accionables. Cada an\xE1lisis se genera bajo demanda y, en producci\xF3n, se hornea por mes."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "agent-grid"
+    }, agents.map(a => /*#__PURE__*/React.createElement(ExpertAgent, {
+      key: a.id,
+      id: a.id,
+      name: a.name,
+      role: a.role,
+      icon: a.icon,
+      color: a.color,
+      buildPrompt: () => a.prompt,
+      autorun: true
+    }))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "S\xEDntesis",
+      h3: "Plan ejecutivo del director",
+      p: "Combina los tres an\xE1lisis en un veredicto y un plan priorizado para la reuni\xF3n de gerencia."
+    }), /*#__PURE__*/React.createElement(ExpertAgent, {
+      id: "sintesis",
+      name: "Director Comercial",
+      role: "Veredicto y plan priorizado del mes",
+      icon: "proyeccion",
+      color: "#D97706",
+      buildPrompt: () => synthPrompt
+    }));
+  };
+
+  /* ===== EQUIPO ===== */
+  window.ViewEquipo = function () {
+    const open = v => window.__perfil && window.__perfil(v);
+    const metas = window.useMetas ? window.useMetas() : {};
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "\u2B50 Centro de control",
+      h3: "Responsabilidad por vendedora",
+      p: "Clic en cualquier vendedora para abrir su ficha completa. Mide la disciplina de actualizaci\xF3n del CRM y el rendimiento comercial del mes."
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 9,
+        flexWrap: "wrap",
+        alignItems: "center"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "ww",
+      style: {
+        fontWeight: 700
+      }
+    }, "Ver por sucursal:"), [...new Set(T.map(v => v.suc))].map(s => {
+      const vs = T.filter(v => v.suc === s);
+      return /*#__PURE__*/React.createElement("button", {
+        key: s,
+        className: "btn",
+        style: {
+          padding: "7px 13px"
+        },
+        onClick: () => window.__sucursal && window.__sucursal(s)
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "sucursales",
+        size: 13
+      }), s, " ", /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "\xB7 ", vs.length));
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "grid3"
+    }, T.map((v, i) => {
+      const metaMonto = metas[v.name] || 0;
+      const cerrado = v.cierres * v.ticket;
+      const mpct = metaMonto ? Math.min(100, Math.round(cerrado / metaMonto * 100)) : 0;
+      const mcol = mpct >= 80 ? "var(--green)" : mpct >= 50 ? "var(--amber)" : "var(--red)";
+      return /*#__PURE__*/React.createElement("div", {
+        className: `tcard clickable ${v.v}`,
+        key: i,
+        style: {
+          borderTopColor: v.color
+        },
+        onClick: () => open(v)
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "tcard-h"
+      }, /*#__PURE__*/React.createElement(Avatar, {
+        v: v,
+        size: 46,
+        ring: true,
+        crown: v.name === TOP
+      }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "tcard-name"
+      }, v.name, v.nuevo && /*#__PURE__*/React.createElement("span", {
+        className: "tag-new"
+      }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
+        className: "tcard-where"
+      }, v.suc)), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginLeft: "auto"
+        }
+      }, /*#__PURE__*/React.createElement(Pill, {
+        tone: v.v
+      }, v.u24, "% <24h"))), /*#__PURE__*/React.createElement("div", {
+        className: "tmetrics"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "tm"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "v num"
+      }, v.cierres), /*#__PURE__*/React.createElement("div", {
+        className: "l"
+      }, "Cierres")), /*#__PURE__*/React.createElement("div", {
+        className: "tm"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "v num",
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, v.value ? money(v.value) : "—"), /*#__PURE__*/React.createElement("div", {
+        className: "l"
+      }, "Pipeline")), /*#__PURE__*/React.createElement("div", {
+        className: "tm"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "v num",
+        style: {
+          color: `var(--${convTone(window.convPct(v))})`
+        }
+      }, window.convPct(v), "%"), /*#__PURE__*/React.createElement("div", {
+        className: "l"
+      }, "Conversi\xF3n")), /*#__PURE__*/React.createElement("div", {
+        className: "tm"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "v num"
+      }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("div", {
+        className: "l"
+      }, "Ticket prom."))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "10px 17px 0"
+        },
+        onClick: e => e.stopPropagation()
+      }, metaMonto > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".7rem",
+          color: "var(--muted)",
+          marginBottom: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", null, "Meta ", window.fmtMoney(metaMonto)), /*#__PURE__*/React.createElement("b", {
+        className: "num",
+        style: {
+          color: mcol
+        }
+      }, mpct, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter",
+        style: {
+          marginBottom: 6
+        }
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: mpct + "%",
+          background: mcol
+        }
+      }))) : /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".7rem",
+          color: "var(--muted)",
+          marginBottom: 5
+        }
+      }, "Meta mensual (Bs) \u2014 ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--brand)"
+        }
+      }, "sin fijar")), /*#__PURE__*/React.createElement(MetaStepper, {
+        name: v.name,
+        metas: metas
+      })), /*#__PURE__*/React.createElement(WeekSpark, {
+        weeks: weeklyOf(v).cur
+      }), /*#__PURE__*/React.createElement("div", {
+        className: "tcard-bar"
+      }, "Cierres por semana", /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, "Ver ficha \u2192")));
+    })), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Cuadrantes",
+      h3: "Matriz de desempe\xF1o",
+      p: "Conversi\xF3n (vertical) \xD7 volumen de leads (horizontal). Arriba-derecha = estrellas; abajo-izquierda = cr\xEDtico. Clic para ver ficha."
+    }), /*#__PURE__*/React.createElement(QuadrantMatrix, {
+      team: T
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Rendimiento comercial",
+      h3: "KPIs por vendedora",
+      p: 'Clic en cualquier columna para ordenar. Conversión, ticket, pipeline, calificados y "no responden".'
+    }), /*#__PURE__*/React.createElement(KpiSortTable, {
+      rows: T,
+      open: open
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Metas",
+      h3: "Cumplimiento de ventas por vendedora (monto $)",
+      p: "Avance de ventas en $ vs meta mensual, con proyecci\xF3n al cierre. Las metas son editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 16
+      }
+    }, /*#__PURE__*/React.createElement(MetasSection, null))), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Disciplina",
+      h3: "Actualizaci\xF3n del CRM por semana",
+      p: "% de leads con primera acci\xF3n registrada en menos de 24h, semana a semana. Verde = al d\xEDa, rojo = rezagada."
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 14
+      }
+    }, /*#__PURE__*/React.createElement(Heatmap, {
+      cols: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
+      rows: T.map(v => ({
+        name: v.name,
+        ini: v.ini,
+        color: v.color,
+        vals: [Math.max(0, v.u24 - 6), Math.max(0, v.u24 - 2), Math.min(100, v.u24 + 3), v.u24]
+      }))
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Detalle",
+      h3: "Tabla completa"
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 6
+      }
+    }, /*#__PURE__*/React.createElement(TeamTable, null))));
+  };
+
+  /* ===== SEGUIMIENTO ===== */
+  const BACKLOG_ROWS = D.backlogLeads || [];
+  window.ViewSeguimiento = function () {
+    const backlogBy = T.filter(v => v.backlog > 0).map(v => ({
+      v,
+      n: v.backlog
+    })).sort((a, b) => b.n - a.n);
+    const totalBk = T.reduce((s, v) => s + v.backlog, 0);
+    const maxBk = Math.max(...backlogBy.map(b => b.n), 1);
+    const top2Pct = totalBk > 0 ? Math.round(backlogBy.slice(0, 2).reduce((s, b) => s + b.n, 0) / totalBk * 100) : 0;
+    const [filt, setFilt] = React.useState("all");
+    const [who, setWho] = React.useState("");
+    const [q, setQ] = React.useState("");
+    const rows = BACKLOG_ROWS.filter(r => {
+      if (filt === "crit" && r.d < 7) return false;
+      if (filt === "nh" && !r.nh) return false;
+      if (who && !(r.r || "").includes(who)) return false;
+      if (q && !`${r.c} ${r.e} ${r.r}`.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+    const FILTERS = [["all", "Todos"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Acci\xF3n inmediata",
+      h3: `${totalBk} ${totalBk === 1 ? "lead abierto" : "leads abiertos"} sin actividad +72h`,
+      p: "Ordenados por antig\xFCedad sin contacto \u2014 lo m\xE1s urgente primero.",
+      right: /*#__PURE__*/React.createElement("button", {
+        className: "btn",
+        onClick: () => window.downloadCSV(`heaven_backlog_${D.month}.csv`, ["Contacto / Deal", "Etapa", "Responsable", "Dias sin actividad", "Nunca tocado"], BACKLOG_ROWS.map(r => [r.c, r.e, r.r, r.d, r.nh ? "Sí" : "No"]))
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "download",
+        size: 14
+      }), "Exportar CSV")
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "kpis",
+      style: {
+        gridTemplateColumns: "repeat(3,1fr)"
+      }
+    }, /*#__PURE__*/React.createElement(Kpi, {
+      l: "Sin seguimiento +72h",
+      num: totalBk,
+      ac: "#DC4046",
+      ico: "seguimiento",
+      sub: `${D.metrics.backlogPct}% del total de leads`
+    }), /*#__PURE__*/React.createElement(Kpi, {
+      l: "Cr\xEDticos +7 d\xEDas",
+      num: D.metrics.criticos7d,
+      ac: "#DC4046",
+      ico: "alertas",
+      sub: "atenci\xF3n urgente"
+    }), /*#__PURE__*/React.createElement(Kpi, {
+      l: "Nunca tocados",
+      num: D.metrics.nuncaTocados,
+      ac: "#7A5AF0",
+      ico: "seguimiento",
+      sub: "el bot los movi\xF3, sin acci\xF3n humana"
+    })), totalBk === 0 ? /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      style: {
+        textAlign: "center",
+        padding: "36px 24px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: "2rem",
+        marginBottom: 8
+      }
+    }, "\u2705"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontWeight: 800,
+        fontSize: "1.05rem",
+        marginBottom: 6
+      }
+    }, "\xA1Todo al d\xEDa!"), /*#__PURE__*/React.createElement("div", {
+      className: "ww",
+      style: {
+        maxWidth: 380,
+        margin: "0 auto"
+      }
+    }, "Ning\xFAn lead supera las 72h sin actividad en etapas activas. El equipo est\xE1 al d\xEDa con el seguimiento.")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "\xBFDe qui\xE9n es el backlog?",
+      h3: totalBk === 1 ? "La 1 ficha tiene dueño" : `Las ${totalBk} fichas tienen dueño`,
+      p: `El ${top2Pct}% del backlog está en ${backlogBy.length === 1 ? "una vendedora" : backlogBy.length === 2 ? "dos vendedoras" : `${backlogBy.length} vendedoras`}. Aquí se controla el equipo: a quién exigirle seguimiento.`
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 13
+      }
+    }, backlogBy.map(({
+      v,
+      n
+    }, i) => {
+      const col = n > 100 ? "var(--red)" : n > 40 ? "var(--amber)" : "var(--green)";
+      return /*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: "clickable",
+        style: {
+          display: "grid",
+          gridTemplateColumns: "170px 1fr 96px",
+          alignItems: "center",
+          gap: 14
+        },
+        onClick: () => window.__perfil(v)
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "who"
+      }, /*#__PURE__*/React.createElement(Avatar, {
+        v: v,
+        size: 30,
+        ring: true
+      }), /*#__PURE__*/React.createElement("span", {
+        className: "wn",
+        style: {
+          fontSize: ".82rem"
+        }
+      }, v.name.split(" ")[0])), /*#__PURE__*/React.createElement("div", {
+        className: "meter",
+        style: {
+          height: 13
+        }
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: `${n / maxBk * 100}%`,
+          background: col
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "flex-end",
+          gap: 7
+        }
+      }, /*#__PURE__*/React.createElement("b", {
+        className: "num",
+        style: {
+          color: col,
+          fontSize: "1rem"
+        }
+      }, n), /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, v.leads > 0 ? Math.round(n / v.leads * 100) : 0, "%")));
+    }))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Cola priorizada",
+      h3: "M\xE1s antiguas primero",
+      right: /*#__PURE__*/React.createElement("div", {
+        className: "seg"
+      }, FILTERS.map(([k, l]) => /*#__PURE__*/React.createElement("button", {
+        key: k,
+        className: filt === k ? "on" : "",
+        onClick: () => setFilt(k)
+      }, l)))
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "controls"
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "search",
+      placeholder: "\uD83D\uDD0D Buscar contacto, etapa o responsable\u2026",
+      value: q,
+      onChange: e => setQ(e.target.value),
+      style: {
+        width: 260
+      }
+    }), /*#__PURE__*/React.createElement("select", {
+      value: who,
+      onChange: e => setWho(e.target.value)
+    }, /*#__PURE__*/React.createElement("option", {
+      value: ""
+    }, "Todas las vendedoras"), [...new Set(T.map(v => v.name))].map(n => /*#__PURE__*/React.createElement("option", {
+      key: n,
+      value: n
+    }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("span", {
+      className: "rc"
+    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas")), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, rows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
+      title: "Sin fichas para este filtro",
+      desc: "Prueba con otra vendedora o limpia los filtros.",
+      icon: "seguimiento",
+      onReset: () => {
+        setFilt("all");
+        setWho("");
+        setQ("");
+      }
+    }) : /*#__PURE__*/React.createElement("table", {
+      className: "tbl"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Contacto / Deal"), /*#__PURE__*/React.createElement("th", null, "Etapa"), /*#__PURE__*/React.createElement("th", null, "Responsable"), /*#__PURE__*/React.createElement("th", {
+      className: "r"
+    }, "D\xEDas sin act."), /*#__PURE__*/React.createElement("th", {
+      className: "r"
+    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, rows.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i
+    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
+      style: {
+        fontWeight: 700
+      }
+    }, r.c), r.nh && /*#__PURE__*/React.createElement("span", {
+      className: "tag-new",
+      style: {
+        marginLeft: 6
+      }
+    }, "NUNCA TOCADO")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      style: {
+        display: "inline-block",
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: STAGE_C[r.e] || "#808080",
+        marginRight: 6
+      }
+    }), r.e), /*#__PURE__*/React.createElement("td", {
+      className: "ww"
+    }, r.r), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800,
+        color: r.d >= 7 ? "var(--red)" : "var(--amber)"
+      }
+    }, r.d, " d"), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, r.d >= 7 ? /*#__PURE__*/React.createElement(Pill, {
+      tone: "red"
+    }, "Cr\xEDtico") : /*#__PURE__*/React.createElement(Pill, {
+      tone: "amber"
+    }, "Seguir"))))))), /*#__PURE__*/React.createElement("div", {
+      className: "note"
+    }, "Los ", BACKLOG_ROWS.length, " leads mostrados est\xE1n ordenados por antig\xFCedad real desde Kommo \u2014 los m\xE1s urgentes primero. Muchos contactos no tienen nombre cargado y aparecen como \"Lead #\".")));
+  };
+
+  /* ===== ALERTAS ===== */
+  window.ViewAlertas = function () {
+    const noRespTeam = [...T].sort((a, b) => b.noRespPct - a.noRespPct);
+    const worstConv = [...T].filter(v => v.cierres > 0).sort((a, b) => a.conv - b.conv);
+    const topNever = [...T].sort((a, b) => b.nunca - a.nunca);
+    const _man = D.channels.find(c => c.cls === "green") || {};
+    const _bot = D.channels.find(c => c.cls === "red") || {};
+    const _mult = _man.conv && _bot.conv ? Math.round(_man.conv / Math.max(_bot.conv, 1)) : 0;
+    const topCloser = [...T].sort((a, b) => b.cierres - a.cierres)[0] || {};
+    const A = [];
+    if (worstConv.length > 0 && worstConv[0].conv < 5) {
+      const v = worstConv[0];
+      A.push({
+        sev: "red",
+        who: v.name,
+        t: `Conversión ${v.conv}% — la más baja del equipo`,
+        d: `${v.cierres} cierres sobre ${v.leads} leads, bajo el umbral de 5%. Revisar calidad de seguimiento.`,
+        act: "Coaching + auditar cotizaciones."
+      });
+    }
+    const highNoResp = noRespTeam.filter(v => v.noRespPct > 50).slice(0, 2);
+    if (highNoResp.length > 0) {
+      const names = highNoResp.map(v => v.name.split(" ")[0]).join(" / ");
+      const total = highNoResp.reduce((s, v) => s + v.noResp, 0);
+      A.push({
+        sev: "red",
+        who: names,
+        t: `${highNoResp.map(v => `${v.noRespPct}%`).join(" y ")} de leads en "No responden"`,
+        d: `${names} concentran ${total} leads sin respuesta del cliente.`,
+        act: "Segunda cadencia de contacto por WhatsApp."
+      });
+    }
+    if ((D.leadsMomPct || 0) < -5) A.push({
+      sev: "amber",
+      who: "Gerencia",
+      t: `Leads globales ↓${Math.abs(D.leadsMomPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")})`,
+      d: "Caída de captación en todos los frentes.",
+      act: "Revisar inversión en canales."
+    });
+    const bigNever = topNever.filter(v => v.nunca > 20)[0];
+    if (bigNever) A.push({
+      sev: "amber",
+      who: bigNever.name,
+      t: `${bigNever.nunca} leads nunca tocados`,
+      d: "El bot los asignó, sin primera acción registrada.",
+      act: "Repartir backlog en reunión diaria."
+    });
+    if (_mult >= 5) A.push({
+      sev: "green",
+      who: "Equipo",
+      t: `Carga manual convierte ${_mult}× más que el bot`,
+      d: "Oportunidad: priorizar captación manual de calidad.",
+      act: `Documentar playbook de ${topCloser.name ? topCloser.name.split(" ")[0] : "la mejor vendedora"}.`
+    });
+    if (D.metrics.backlogPct > 20) A.push({
+      sev: "amber",
+      who: "Equipo",
+      t: `${D.metrics.backlog} leads sin seguimiento +72h`,
+      d: `El backlog equivale al ${D.metrics.backlogPct}% del mes.`,
+      act: "Priorizar en reunión diaria."
+    });
+    if (A.length === 0) A.push({
+      sev: "green",
+      who: "Equipo",
+      t: "Sin alertas críticas este mes",
+      d: "El equipo está al día con el seguimiento.",
+      act: "Mantener el ritmo."
+    });
+    const [sev, setSev] = React.useState("all");
+    const counts = {
+      all: A.length,
+      red: A.filter(a => a.sev === "red").length,
+      amber: A.filter(a => a.sev === "amber").length,
+      green: A.filter(a => a.sev === "green").length
+    };
+    const list = A.filter(a => sev === "all" || a.sev === sev);
+    const SEVS = [["all", "Todas", "var(--muted)"], ["red", "🔴 Críticas", "var(--red)"], ["amber", "🟡 Atención", "var(--amber)"], ["green", "🟢 Oportunidad", "var(--green)"]];
+    const sevLabel = s => s === "red" ? "Crítico" : s === "amber" ? "Atención" : "Oportunidad";
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Acci\xF3n",
+      h3: `Alertas accionables — ${D.month} ${D.year}`,
+      p: "Generadas de los datos del mes. Cada una tiene responsable y siguiente paso, para asignar en la reuni\xF3n diaria.",
+      right: /*#__PURE__*/React.createElement("button", {
+        className: "btn",
+        onClick: () => window.downloadCSV(`heaven_alertas_${D.month}.csv`, ["Severidad", "Responsable", "Alerta", "Detalle", "Acción"], A.map(a => [sevLabel(a.sev), a.who, a.t, a.d, a.act]))
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "download",
+        size: 14
+      }), "Exportar CSV")
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 8,
+        flexWrap: "wrap"
+      }
+    }, SEVS.map(([k, l]) => /*#__PURE__*/React.createElement("button", {
+      key: k,
+      className: "fchip",
+      "data-on": sev === k,
+      style: {
+        "--fc": SEVS.find(x => x[0] === k)[2]
+      },
+      onClick: () => setSev(k)
+    }, l, " ", /*#__PURE__*/React.createElement("b", null, counts[k])))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 12
+      }
+    }, list.map((a, i) => /*#__PURE__*/React.createElement("div", {
+      className: "card alert-card",
+      key: i,
+      style: {
+        display: "flex",
+        gap: 14,
+        alignItems: "flex-start",
+        borderLeft: `3px solid var(--${a.sev})`,
+        padding: "16px 18px"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 34,
+        height: 34,
+        borderRadius: 9,
+        flexShrink: 0,
+        display: "grid",
+        placeItems: "center",
+        background: `var(--${a.sev}-bg)`,
+        color: `var(--${a.sev}-ink)`
+      }
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: a.sev === "green" ? "bulb" : "alertas",
+      size: 17,
+      sw: 2.2
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("b", {
+      style: {
+        fontSize: ".92rem"
+      }
+    }, a.t), /*#__PURE__*/React.createElement(Pill, {
+      tone: a.sev === "green" ? "green" : a.sev
+    }, sevLabel(a.sev))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: ".8rem",
+        color: "var(--muted)",
+        marginTop: 4,
+        lineHeight: 1.5
+      }
+    }, a.d), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: ".76rem",
+        marginTop: 8,
+        display: "flex",
+        gap: 16,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--faint)"
+      }
+    }, "Responsable: ", /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: "var(--text)"
+      }
+    }, a.who)), /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--brand-d)",
+        fontWeight: 700
+      }
+    }, "\u2192 ", a.act)))))));
+  };
+
+  /* ===== CONVERSIÓN ===== */
+  window.ViewConversion = function () {
+    const f = D.funnel2;
+    const maxF = f.length > 0 ? f[0].v : 1;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Embudo",
+      h3: `Del lead al cierre — ${D.month} ${D.year}`
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "grid2"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "funnel"
+    }, f.map((s, i) => /*#__PURE__*/React.createElement("div", {
+      className: "fstep",
+      key: i
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "fn"
+    }, s.n), /*#__PURE__*/React.createElement("div", {
+      className: "fbar num",
+      style: {
+        width: `${Math.max(14, Math.round(s.v / maxF * 100))}%`,
+        background: s.c,
+        color: "#fff"
+      }
+    }, s.v.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
+      className: "fp num"
+    }, Math.round(s.v / maxF * 100), "%"))))), /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        gap: 14
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "insight",
+      style: {
+        margin: 0
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "ic"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "bulb",
+      size: 18,
+      sw: 2.2
+    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "t"
+    }, D.metrics?.noRespPct || 0, "% de los leads \"no responden\""), /*#__PURE__*/React.createElement("div", {
+      className: "d"
+    }, /*#__PURE__*/React.createElement("b", null, (D.metrics?.noResp || 0).toLocaleString("en-US"), " leads"), " marcados sin respuesta. Reactivarlos con una segunda cadencia de contacto es la oportunidad m\xE1s grande del embudo."))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 12
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "kpi",
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "kl"
+    }, "Calificados"), /*#__PURE__*/React.createElement("div", {
+      className: "kv",
+      style: {
+        fontSize: "1.5rem",
+        marginTop: 6
+      }
+    }, f.length >= 3 ? Math.round((f[2].v || 0) / (f[0].v || 1) * 100) : 0, "%"), /*#__PURE__*/React.createElement("div", {
+      className: "ksub"
+    }, f.length >= 3 ? f[2].v : 0, " en etapas avanzadas")), /*#__PURE__*/React.createElement("div", {
+      className: "kpi",
+      style: {
+        flex: 1
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "kl"
+    }, "Fichas duplicadas"), /*#__PURE__*/React.createElement("div", {
+      className: "kv",
+      style: {
+        fontSize: "1.5rem",
+        marginTop: 6
+      }
+    }, D.metrics?.duplicadosFichas || 0), /*#__PURE__*/React.createElement("div", {
+      className: "ksub"
+    }, D.metrics?.duplicadosTel || 0, " tel\xE9fonos en 2+ fichas"))))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Pipeline completo",
+      h3: `Leads por etapa — las ${(G.leads || 0).toLocaleString("en-US")} fichas del mes`,
+      p: "Desglose de todas las etapas del pipeline en Kommo, no solo el embudo resumido."
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))",
+        gap: 12
+      }
+    }, D.stagesGlobal.filter(s => s.count > 0).map((s, i) => {
+      const max = Math.max(...D.stagesGlobal.filter(x => x.count > 0).map(x => x.count));
+      return /*#__PURE__*/React.createElement("div", {
+        className: "card",
+        key: i,
+        style: {
+          padding: 16,
+          position: "relative",
+          overflow: "hidden"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 3,
+          background: s.color
+        }
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".72rem",
+          fontWeight: 600,
+          color: "var(--muted)",
+          minHeight: 32
+        }
+      }, s.name), /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.5rem",
+          fontWeight: 800,
+          color: s.color,
+          marginTop: 4
+        }
+      }, s.count.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".66rem",
+          color: "var(--faint)",
+          margin: "4px 0 8px"
+        }
+      }, s.pct, "% del total"), /*#__PURE__*/React.createElement("div", {
+        className: "meter",
+        style: {
+          height: 5
+        }
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: `${Math.max(3, Math.round(s.count / max * 100))}%`,
+          background: s.color
+        }
+      })));
+    })), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Origen de carga",
+      h3: "Manual vs Autom\xE1tico \u2014 global",
+      p: "Cu\xE1ntos leads carg\xF3 manualmente una vendedora y cu\xE1ntos entraron por el bot. La carga manual convierte mucho mejor."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        borderRadius: 10,
+        overflow: "hidden",
+        height: 44,
+        fontWeight: 800,
+        fontSize: ".82rem",
+        color: "#fff"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: D.origin.manual,
+        background: "var(--green)",
+        display: "grid",
+        placeItems: "center"
+      }
+    }, "\u270D ", D.origin.manualPct, "%"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: D.origin.auto,
+        background: "#646E7B",
+        display: "grid",
+        placeItems: "center"
+      }
+    }, "\u2699 ", D.origin.autoPct, "%")), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 22,
+        marginTop: 12,
+        fontSize: ".76rem",
+        color: "var(--muted)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 11,
+        height: 11,
+        borderRadius: 3,
+        background: "var(--green)"
+      }
+    }), /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: "var(--text)"
+      }
+    }, D.origin.manual.toLocaleString("en-US")), " manual (vendedora)"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 7
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 11,
+        height: 11,
+        borderRadius: 3,
+        background: "#646E7B"
+      }
+    }), /*#__PURE__*/React.createElement("b", {
+      style: {
+        color: "var(--text)"
+      }
+    }, D.origin.auto.toLocaleString("en-US")), " autom\xE1tico (bot)"))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Por canal",
+      h3: "Origen de leads \u2014 rendimiento",
+      p: "Clic en cualquier columna para ordenar."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement(ChannelTable, {
+      rows: D.channels
+    })));
+  };
+
+  /* ===== SEMANAL ===== */
+  // Reparto semanal determinista de los cierres de cada vendedora en 5 semanas.
+  const SEM_WEEKS = [["S1", "1–7"], ["S2", "8–14"], ["S3", "15–21"], ["S4", "22–28"], ["S5", "29–31"]];
+  const SEM_W = [0.16, 0.2, 0.22, 0.27, 0.15];
+  function splitInt(total, w) {
+    const raw = w.map(x => x * total),
+      fl = raw.map(Math.floor);
+    let rem = total - fl.reduce((a, b) => a + b, 0);
+    const fr = raw.map((x, i) => ({
+      i,
+      f: x - fl[i]
+    })).sort((a, b) => b.f - a.f);
+    for (let k = 0; k < rem; k++) fl[fr[k % fl.length].i]++;
+    return fl;
+  }
+  const weeklyOf = v => {
+    let real = D.weeklyClosures && D.weeklyClosures[v.name];
+    if (real && real.length < 5) real = [...real, ...Array(5 - real.length).fill(0)];
+    const cur = real ? real : splitInt(v.cierres, SEM_W);
+    return {
+      cur,
+      curM: cur.map(n => n * v.ticket),
+      tot: v.cierres,
+      totM: v.cierres * v.ticket
+    };
+  };
+  // Mes anterior: total derivado de prevLeads y una distribución semanal distinta (forma diferente).
+  const SEM_W_PREV = [0.22, 0.18, 0.26, 0.2, 0.14];
+  const weeklyPrev = v => {
+    const ratio = v.prevLeads ? v.prevLeads / (v.leads || 1) : 0.85;
+    const p = Math.max(0, Math.round(v.cierres * ratio));
+    const cur = splitInt(p, SEM_W_PREV);
+    return {
+      cur,
+      totM: p * v.ticket,
+      tot: p
+    };
+  };
+  window.ViewSemanal = function () {
+    const [metric, setMetric] = React.useState("clientes");
+    const isC = metric === "clientes";
+    const data = T.map(v => ({
+      v,
+      wk: weeklyOf(v),
+      pv: weeklyPrev(v)
+    }));
+    const valOf = (d, wi, prev) => isC ? prev ? d.pv.cur[wi] : d.wk.cur[wi] : prev ? d.pv.cur[wi] * d.v.ticket : d.wk.curM[wi];
+    const allVals = [];
+    SEM_WEEKS.forEach((_, wi) => data.forEach(d => {
+      allVals.push(valOf(d, wi, false), valOf(d, wi, true));
+    }));
+    const maxBar = Math.max(...allVals, 1);
+    const weekTotals = SEM_WEEKS.map((_, wi) => data.reduce((s, d) => s + valOf(d, wi, false), 0));
+    const weekTotalsPrev = SEM_WEEKS.map((_, wi) => data.reduce((s, d) => s + valOf(d, wi, true), 0));
+    const fmtCell = n => isC ? n : money(n);
+    const t1 = window.useSort(data, "tot", d => d.wk.tot);
+    const t2 = window.useSort(data, "totM", d => d.wk.totM);
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Ritmo semanal",
+      h3: `Cierres y ventas por semana — ${D.month} vs ${D.prevMonth}`,
+      p: `Barra ancha = ${D.month} · barra delgada tenue al lado = ${D.prevMonth}. Comparativa semana a semana por vendedora.`,
+      right: /*#__PURE__*/React.createElement("div", {
+        className: "seg"
+      }, /*#__PURE__*/React.createElement("button", {
+        className: isC ? "on" : "",
+        onClick: () => setMetric("clientes")
+      }, "Clientes"), /*#__PURE__*/React.createElement("button", {
+        className: !isC ? "on" : "",
+        onClick: () => setMetric("monto")
+      }, "Monto $"))
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: 18
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb"
+    }, isC ? "Compradores por semana y vendedora" : "Monto cerrado por semana y vendedora"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 14,
+        flexWrap: "wrap"
+      }
+    }, T.map((v, i) => /*#__PURE__*/React.createElement("span", {
+      key: i,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        fontSize: ".7rem",
+        color: "var(--muted)"
+      }
+    }, /*#__PURE__*/React.createElement("span", {
+      style: {
+        width: 10,
+        height: 10,
+        borderRadius: 3,
+        background: v.color
+      }
+    }), v.name.split(" ")[0])))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 16,
+        alignItems: "flex-end",
+        height: 230,
+        padding: "0 4px"
+      }
+    }, SEM_WEEKS.map(([wk, rng], wi) => {
+      const up = weekTotals[wi] >= weekTotalsPrev[wi];
+      return /*#__PURE__*/React.createElement("div", {
+        key: wi,
+        style: {
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 7
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: ".7rem",
+          fontWeight: 800,
+          color: "var(--text)"
+        }
+      }, fmtCell(weekTotals[wi]), " ", /*#__PURE__*/React.createElement("span", {
+        className: `delta ${up ? "up" : "down"}`,
+        style: {
+          fontSize: ".58rem"
+        }
+      }, up ? "▲" : "▼")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          gap: 7,
+          alignItems: "flex-end",
+          height: 165,
+          justifyContent: "center",
+          width: "100%"
+        }
+      }, data.map((d, di) => {
+        const cur = valOf(d, wi, false),
+          prev = valOf(d, wi, true);
+        return /*#__PURE__*/React.createElement("div", {
+          key: di,
+          title: `${d.v.name.split(" ")[0]} · ${D.month}: ${fmtCell(cur)} / ${D.prevMonth}: ${fmtCell(prev)}`,
+          style: {
+            display: "flex",
+            alignItems: "flex-end",
+            gap: 2,
+            height: "100%"
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          className: "bar-grow",
+          style: {
+            width: 11,
+            height: `${cur / maxBar * 100}%`,
+            background: d.v.color,
+            borderRadius: "3px 3px 0 0",
+            boxShadow: "var(--glow)",
+            minHeight: 2
+          }
+        }), /*#__PURE__*/React.createElement("div", {
+          style: {
+            width: 6,
+            height: `${prev / maxBar * 100}%`,
+            background: d.v.color,
+            opacity: .28,
+            borderRadius: "3px 3px 0 0",
+            minHeight: 2
+          },
+          title: `${D.prevMonth}: ${fmtCell(prev)}`
+        }));
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".72rem",
+          color: "var(--muted)",
+          fontWeight: 700
+        }
+      }, wk), /*#__PURE__*/React.createElement("div", {
+        className: "ww",
+        style: {
+          fontSize: ".62rem"
+        }
+      }, rng));
+    }))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Tabla 1 \u2014 Clientes cerrados",
+      h3: `Compradores por semana — ${D.month} vs ${D.prevMonth}`,
+      p: "N\xFAmero grande = mes actual \xB7 n\xFAmero peque\xF1o = mes anterior."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "tbl"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), SEM_WEEKS.map(([w], wi) => t1.thFor(w, "w" + wi, d => d.wk.cur[wi])), t1.thFor("Total", "tot", d => d.wk.tot))), /*#__PURE__*/React.createElement("tbody", null, t1.sorted.map(({
+      v,
+      wk,
+      pv
+    }, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      className: "clickable",
+      onClick: () => window.__perfil(v)
+    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
+      className: "who"
+    }, /*#__PURE__*/React.createElement(Avatar, {
+      v: v,
+      size: 30,
+      ring: true
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "wn"
+    }, v.name))), wk.cur.map((n, j) => /*#__PURE__*/React.createElement("td", {
+      key: j,
+      className: "r num"
+    }, n, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww",
+      style: {
+        fontSize: ".66rem"
+      }
+    }, "(", pv.cur[j], ")"))), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800
+      }
+    }, wk.tot, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww",
+      style: {
+        fontSize: ".66rem"
+      }
+    }, "(", pv.tot, ")"))))))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Tabla 2 \u2014 Monto cerrado ($)",
+      h3: `Monto Compradores por semana — ${D.month}`
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "tbl"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), SEM_WEEKS.map(([w], wi) => t2.thFor(w, "w" + wi, d => d.wk.curM[wi])), t2.thFor("Total", "totM", d => d.wk.totM))), /*#__PURE__*/React.createElement("tbody", null, t2.sorted.map(({
+      v,
+      wk
+    }, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      className: "clickable",
+      onClick: () => window.__perfil(v)
+    }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("div", {
+      className: "who"
+    }, /*#__PURE__*/React.createElement(Avatar, {
+      v: v,
+      size: 30,
+      ring: true
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "wn"
+    }, v.name))), wk.curM.map((n, j) => /*#__PURE__*/React.createElement("td", {
+      key: j,
+      className: "r num"
+    }, money(n))), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800,
+        color: "var(--green-ink)"
+      }
+    }, money(wk.totM))))))), /*#__PURE__*/React.createElement("div", {
+      className: "note"
+    }, /*#__PURE__*/React.createElement("b", null, "Cerrado ", D.month), " = monto de deals en etapa Compradores (cierres \xD7 ticket promedio). El reparto semanal usa las fechas de cierre reales de Kommo; si un deal no tiene fecha registrada, se distribuye por pesos hist\xF3ricos."));
+  };
+
+  /* ===== SUCURSALES ===== */
+  window.ViewSucursales = function () {
+    const metas = window.useMetas();
+    const metaBySuc = {};
+    T.forEach(v => {
+      metaBySuc[v.suc] = (metaBySuc[v.suc] || 0) + (metas[v.name] || 0);
+    });
+    const branches = {};
+    T.forEach(v => {
+      const b = branches[v.suc] || (branches[v.suc] = {
+        suc: v.suc,
+        leads: 0,
+        prevLeads: 0,
+        cierres: 0,
+        value: 0,
+        agendado: 0,
+        cerrado: 0,
+        n: 0
+      });
+      b.leads += v.leads;
+      b.prevLeads += v.prevLeads || 0;
+      b.cierres += v.cierres;
+      b.value += v.value;
+      b.agendado += v.agendado || 0;
+      b.cerrado += v.cerrado || 0;
+      b.n++;
+    });
+    const list = Object.values(branches).sort((a, b) => b.value - a.value);
+    const COL = {};
+    T.forEach(v => {
+      if (!COL[v.suc]) COL[v.suc] = v.color || "#6B7785";
+    });
+    const {
+      sorted,
+      thFor
+    } = window.useSort(list, "value", b => b.value);
+    const mom = b => b.prevLeads ? Math.round((b.leads - b.prevLeads) / b.prevLeads * 100) : 0;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Comparativo",
+      h3: "Rendimiento por sucursal",
+      p: "Cada lead se atribuye a la sucursal de su vendedora. Roll-up por tienda con comparativo vs mes anterior."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "grid3"
+    }, list.map((b, i) => {
+      const m = mom(b);
+      return /*#__PURE__*/React.createElement("div", {
+        className: "card clickable",
+        key: i,
+        style: {
+          borderTop: `3px solid ${COL[b.suc] || "#7A5AF0"}`
+        },
+        onClick: () => window.__sucursal && window.__sucursal(b.suc)
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          width: 34,
+          height: 34,
+          borderRadius: 9,
+          display: "grid",
+          placeItems: "center",
+          background: `color-mix(in srgb, ${COL[b.suc] || "#7A5AF0"} 14%, transparent)`,
+          color: COL[b.suc] || "#7A5AF0"
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "sucursales",
+        size: 17
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 800,
+          fontSize: ".98rem"
+        }
+      }, b.suc), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, b.n, " vendedora", b.n > 1 ? "s" : "")), /*#__PURE__*/React.createElement("div", {
+        style: {
+          textAlign: "right"
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        className: `delta ${m >= 0 ? "up" : "down"}`
+      }, m >= 0 ? "▲" : "▼", m >= 0 ? "+" : "", m, "%"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".62rem",
+          color: "var(--muted)",
+          marginTop: 2
+        }
+      }, "leads 1\u2013", D.curDay, " ", D.prevMonth.slice(0, 3)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 12,
+          marginTop: 16
+        }
+      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.5rem",
+          fontWeight: 800
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: b.leads
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "kl"
+      }, "Leads ", /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "vs ", b.prevLeads.toLocaleString("en-US")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.5rem",
+          fontWeight: 800,
+          color: "var(--green)"
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: b.cierres
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "kl"
+      }, "Cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.5rem",
+          fontWeight: 800,
+          color: "var(--brand-d)"
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: b.value,
+        fmt: money
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "kl"
+      }, "Pipeline")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.5rem",
+          fontWeight: 800,
+          color: `var(--${convTone(b.leads ? b.cierres / b.leads * 100 : 0)})`
+        }
+      }, b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0", "%"), /*#__PURE__*/React.createElement("div", {
+        className: "kl"
+      }, "Conversi\xF3n"))), metaBySuc[b.suc] > 0 && (() => {
+        const mp = Math.round(b.cerrado / metaBySuc[b.suc] * 100);
+        const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+        return /*#__PURE__*/React.createElement("div", {
+          style: {
+            marginTop: 12,
+            borderTop: "1px solid var(--line)",
+            paddingTop: 10
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: ".7rem",
+            color: "var(--muted)",
+            marginBottom: 5
+          }
+        }, /*#__PURE__*/React.createElement("span", null, "Meta sucursal ", money(metaBySuc[b.suc])), /*#__PURE__*/React.createElement("b", {
+          style: {
+            color: mc
+          }
+        }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+          className: "meter"
+        }, /*#__PURE__*/React.createElement("i", {
+          style: {
+            width: Math.min(100, mp) + "%",
+            background: mc
+          }
+        })), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: ".68rem",
+            color: "var(--faint)",
+            marginTop: 4
+          }
+        }, money(b.cerrado), " cerrado este mes"));
+      })());
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Reparto",
+      h3: "Leads por sucursal"
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 16
+      }
+    }, /*#__PURE__*/React.createElement(Donut, {
+      unit: "LEADS",
+      data: list.map(b => ({
+        label: b.suc,
+        value: b.leads,
+        color: COL[b.suc] || "#7A5AF0"
+      }))
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Detalle",
+      h3: "Tabla por sucursal",
+      p: "Clic en cualquier columna para ordenar."
+    }), /*#__PURE__*/React.createElement("table", {
+      className: "tbl",
+      style: {
+        marginTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Sucursal"), thFor("Vendedoras", "n", b => b.n), thFor("Leads", "leads", b => b.leads), thFor(`vs ${D.prevMonth}`, "mom", b => mom(b)), thFor("Cierres", "cierres", b => b.cierres), thFor("Conv.", "conv", b => b.leads ? b.cierres / b.leads : 0), thFor("Agendado", "agendado", b => b.agendado), thFor("Cerrado mes", "cerrado", b => b.cerrado), thFor("Pipeline", "value", b => b.value))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((b, i) => {
+      const m = mom(b);
+      const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
+      return /*#__PURE__*/React.createElement("tr", {
+        key: i,
+        className: "clickable",
+        onClick: () => window.__sucursal && window.__sucursal(b.suc)
+      }, /*#__PURE__*/React.createElement("td", {
+        style: {
+          fontWeight: 700
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          display: "inline-block",
+          width: 9,
+          height: 9,
+          borderRadius: 3,
+          background: COL[b.suc] || "#6B7785",
+          marginRight: 8
+        }
+      }), b.suc), /*#__PURE__*/React.createElement("td", {
+        className: "r num"
+      }, b.n), /*#__PURE__*/React.createElement("td", {
+        className: "r num"
+      }, b.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
+        className: "r"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: `delta ${m >= 0 ? "up" : "down"}`
+      }, m >= 0 ? "▲" : "▼", " ", m >= 0 ? "+" : "", m, "%")), /*#__PURE__*/React.createElement("td", {
+        className: "r num",
+        style: {
+          fontWeight: 800
+        }
+      }, b.cierres), /*#__PURE__*/React.createElement("td", {
+        className: "r"
+      }, /*#__PURE__*/React.createElement(Pill, {
+        tone: convTone(bconv)
+      }, bconv.toFixed(1), "%")), /*#__PURE__*/React.createElement("td", {
+        className: "r num",
+        style: {
+          color: "#D98300",
+          fontWeight: 700
+        }
+      }, b.agendado), /*#__PURE__*/React.createElement("td", {
+        className: "r num",
+        style: {
+          color: "var(--green-ink)",
+          fontWeight: 700
+        }
+      }, money(b.cerrado)), /*#__PURE__*/React.createElement("td", {
+        className: "r num"
+      }, money(b.value)));
+    })))));
+  };
+
+  /* ===== PROYECCIÓN ===== */
+  window.ViewProyeccion = function () {
+    const curDay = D.curDay || 1,
+      dim = D.daysInMonth || 30,
+      left = dim - curDay,
+      progPct = Math.round(curDay / dim * 100);
+    const conv = G.leads ? Math.round(G.cierres / G.leads * 100) : 0;
+    const base = curDay ? Math.round(G.cierres / curDay * dim) : 0;
+    // Apply +1pp to the same projected lead volume as base (not just current leads)
+    const conv1 = conv > 0 ? Math.round(base * (conv + 1) / conv) : base;
+    const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
+    const extra = Math.round(backlog * conv / 100);
+    const resc = base + extra;
+    const paceDay = curDay ? (G.cierres / curDay).toFixed(1) : "0.0";
+    const scen = [{
+      tag: "Escenario base",
+      v: base,
+      val: base * G.ticket,
+      delta: Math.max(0, base - G.cierres),
+      d: `Pace lineal. ${left} días restantes. Sin cambios en la operación actual.`,
+      hot: false,
+      pin: ""
+    }, {
+      tag: `+1pp conversión (${conv + 1}%)`,
+      v: conv1,
+      val: conv1 * G.ticket,
+      delta: Math.max(0, conv1 - G.cierres),
+      d: `Misma captación proyectada, ${conv + 1}% de conversión. Si cada vendedora mejora 1pp su tasa de cierre con coaching.`,
+      hot: false,
+      pin: ""
+    }, {
+      tag: "Rescate sin seguimiento",
+      v: resc,
+      val: resc * G.ticket,
+      delta: extra,
+      d: `Base (~${base}) + rescate de ${backlog} deals sin seguimiento (+${extra} cierres adicionales).`,
+      hot: true,
+      pin: "Mayor palanca"
+    }];
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: `Proyección al cierre de ${D.month.toLowerCase()}`,
+      h3: "Tres escenarios \u2014 \xBFa cu\xE1nto podemos llegar?",
+      p: `Basada en la tasa de cierres por día y el ticket promedio actual (${money(G.ticket)}). La palanca de mayor impacto es rescatar el backlog.`
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 24,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 180
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb",
+      style: {
+        marginBottom: 6
+      }
+    }, "Avance del mes"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 8,
+        background: "var(--line2)",
+        borderRadius: 99,
+        overflow: "hidden"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: "100%",
+        width: progPct + "%",
+        background: "var(--brand)",
+        borderRadius: 99,
+        boxShadow: "var(--glow)"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        fontSize: ".68rem",
+        color: "var(--faint)",
+        fontWeight: 600,
+        marginTop: 4
+      }
+    }, /*#__PURE__*/React.createElement("span", null, "D\xEDa ", curDay), /*#__PURE__*/React.createElement("span", null, left, " d\xEDas restantes"), /*#__PURE__*/React.createElement("span", null, "D\xEDa ", dim))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        gap: 22,
+        flexWrap: "wrap"
+      }
+    }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "eb"
+    }, "Cierres del mes"), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1.4rem",
+        fontWeight: 800
+      }
+    }, G.cierres), /*#__PURE__*/React.createElement("div", {
+      className: "ww"
+    }, paceDay, "/d\xEDa promedio")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "eb"
+    }, "Proyecci\xF3n base"), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1.4rem",
+        fontWeight: 800
+      }
+    }, "~", base), /*#__PURE__*/React.createElement("div", {
+      className: "ww",
+      style: {
+        color: curDay <= 3 ? "var(--amber)" : "var(--green)"
+      }
+    }, curDay <= 3 ? `⚠ solo ${curDay} día(s) de datos` : "▲ buen ritmo")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "eb"
+    }, "Ticket promedio"), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1.4rem",
+        fontWeight: 800
+      }
+    }, money(G.ticket)), /*#__PURE__*/React.createElement("div", {
+      className: "ww"
+    }, "valor / cierre")))), /*#__PURE__*/React.createElement("div", {
+      className: "grid3"
+    }, scen.map((s, i) => /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      key: i,
+      style: {
+        borderTop: `3px solid ${s.hot ? "var(--green)" : "var(--line)"}`,
+        padding: "20px",
+        position: "relative",
+        boxShadow: s.hot ? "0 0 0 1px var(--green), var(--sh)" : "var(--sh)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: 6,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb",
+      style: {
+        color: s.hot ? "var(--green-ink)" : "var(--faint)"
+      }
+    }, s.tag), s.pin && /*#__PURE__*/React.createElement("span", {
+      className: "pill green",
+      style: {
+        fontSize: ".58rem"
+      }
+    }, s.pin)), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "2.2rem",
+        fontWeight: 800
+      }
+    }, s.v, " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: ".9rem",
+        color: "var(--muted)",
+        fontWeight: 700
+      }
+    }, "cierres")), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1rem",
+        fontWeight: 700,
+        color: "var(--brand-d)",
+        marginTop: 2
+      }
+    }, "~", money(s.val)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 7,
+        fontSize: ".7rem",
+        fontWeight: 700,
+        color: "var(--green-ink)",
+        background: "var(--green-bg)",
+        display: "inline-block",
+        padding: "2px 9px",
+        borderRadius: 6
+      }
+    }, "+", s.delta, " vs hoy (", G.cierres, ")"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8,
+        fontSize: ".76rem",
+        color: "var(--muted)",
+        lineHeight: 1.5
+      }
+    }, s.d)))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Plan",
+      h3: "Matriz de acci\xF3n"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "grid2"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb",
+      style: {
+        color: "var(--green-ink)",
+        marginBottom: 10
+      }
+    }, "\u2705 Esta semana \u2014 meta +10 cierres"), /*#__PURE__*/React.createElement("ol", {
+      style: {
+        paddingLeft: 18,
+        fontSize: ".86rem",
+        lineHeight: 1.9,
+        color: "var(--text)"
+      }
+    }, /*#__PURE__*/React.createElement("li", null, "Llamar al ", /*#__PURE__*/React.createElement("b", null, "top 50"), " de cotizaciones por valor."), /*#__PURE__*/React.createElement("li", null, "Acompa\xF1ar visitas de vendedoras en estado ", /*#__PURE__*/React.createElement("b", null, "cr\xEDtico"), "."), /*#__PURE__*/React.createElement("li", null, "Documentar el playbook de ", /*#__PURE__*/React.createElement("b", null, window.TOP_CLOSER.split(" ")[0]), " para replicarlo."))), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb",
+      style: {
+        color: "var(--blue)",
+        marginBottom: 10
+      }
+    }, "\uD83D\uDCC5 Este mes"), /*#__PURE__*/React.createElement("ol", {
+      style: {
+        paddingLeft: 18,
+        fontSize: ".86rem",
+        lineHeight: 1.9,
+        color: "var(--text)"
+      }
+    }, /*#__PURE__*/React.createElement("li", null, "Activar los ", /*#__PURE__*/React.createElement("b", null, Math.round(backlog * 0.73)), " leads con +72h sin contacto humano."), /*#__PURE__*/React.createElement("li", null, "Revisar el pipeline ", /*#__PURE__*/React.createElement("b", null, "\"No responden\""), " (", D.metrics.noResp.toLocaleString("en-US"), " leads)."), D.metrics.criticos7d > 0 && /*#__PURE__*/React.createElement("li", null, "Rescatar las ", /*#__PURE__*/React.createElement("b", null, D.metrics.criticos7d), " fichas con +7 d\xEDas sin contacto.")))));
+  };
+
+  /* ===== DATOS ===== */
+  window.ViewDatos = function () {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Calidad de datos",
+      h3: "Salud del CRM",
+      p: "Estos huecos impiden medir y priorizar bien. Limpiarlos es trabajo de gerencia + equipo."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "kpis"
+    }, /*#__PURE__*/React.createElement(Kpi, {
+      l: "Tel\xE9fonos duplicados",
+      num: D.metrics.duplicadosTel,
+      ac: "#7A5AF0",
+      ico: "datos",
+      sub: `${D.metrics.duplicadosFichas} fichas en 2+ registros`
+    }), /*#__PURE__*/React.createElement(Kpi, {
+      l: "Nunca tocados",
+      num: D.metrics.nuncaTocados,
+      ac: "#D98300",
+      ico: "datos",
+      sub: "el bot los movi\xF3, sin acci\xF3n humana"
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "card"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Duplicados",
+      h3: `${D.metrics.duplicadosTel} teléfonos en 2+ fichas`,
+      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n."
+    }), /*#__PURE__*/React.createElement("table", {
+      className: "tbl",
+      style: {
+        marginTop: 6
+      }
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Tel\xE9fono"), /*#__PURE__*/React.createElement("th", {
+      className: "r"
+    }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Vendedoras involucradas"), /*#__PURE__*/React.createElement("th", null, "Etapas"), /*#__PURE__*/React.createElement("th", {
+      className: "r"
+    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, (D.dups || []).slice(0, 20).map((g, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, g.phone || "—"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, g.n), /*#__PURE__*/React.createElement("td", {
+      className: "ww"
+    }, (g.vends || []).map(v => v.split(" ")[0]).join(" · ")), /*#__PURE__*/React.createElement("td", {
+      className: "ww"
+    }, (g.etapas || []).join(" · ")), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, /*#__PURE__*/React.createElement(Pill, {
+      tone: g.n >= 3 ? "red" : "amber"
+    }, g.n >= 3 ? "Revisar" : "Fusionar")))), (!D.dups || D.dups.length === 0) && /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      colSpan: 5,
+      style: {
+        textAlign: "center",
+        color: "var(--faint)",
+        padding: "18px 0"
+      }
+    }, "Sin duplicados detectados")))), /*#__PURE__*/React.createElement("div", {
+      className: "note",
+      style: {
+        marginTop: 12
+      }
+    }, "Mostrando ", Math.min((D.dups || []).length, 20), " de ", D.metrics.duplicadosFichas, " fichas duplicadas (hasta 40 en datos).")));
+  };
+
+  /* ===== PRESENTACIÓN ===== */
+  window.ViewPresentacion = function () {
+    const metas = window.useMetas();
+    const curDay = D.curDay || 1,
+      dim = D.daysInMonth || 30,
+      left = dim - curDay;
+    const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
+    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+    const medal = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    const mom = (cur, prev) => prev ? Math.round((cur - prev) / prev * 100) : null;
+    const prevConv = G.prevLeads ? (G.prevCierres || 0) / G.prevLeads * 100 : null;
+    const convMom = prevConv != null ? Math.round(((G.leads ? G.cierres / G.leads * 100 : 0) - prevConv) * 10) / 10 : null;
+    const branches = {};
+    T.forEach(v => {
+      const b = branches[v.suc] || (branches[v.suc] = {
+        suc: v.suc,
+        cerrado: 0,
+        cierres: 0,
+        leads: 0,
+        leadsRet: 0,
+        prevLeads: 0,
+        hasNew: false,
+        meta: 0,
+        color: v.color
+      });
+      b.cerrado += v.cierres * v.ticket;
+      b.cierres += v.cierres;
+      b.leads += v.leads;
+      if (v.nuevo) {
+        b.hasNew = true;
+      } else {
+        b.prevLeads += v.prevLeads || 0;
+        b.leadsRet += v.leads;
+      }
+      b.meta += metas[v.name] || 0;
+    });
+    const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
+    const MomBadge = ({
+      cur,
+      prev,
+      fmt
+    }) => {
+      const p = mom(cur, prev);
+      if (p === null || prev == null) return null;
+      return /*#__PURE__*/React.createElement("span", {
+        className: `delta ${p >= 0 ? "up" : "down"}`,
+        style: {
+          fontSize: ".68rem",
+          marginLeft: 6
+        }
+      }, p >= 0 ? "▲" : "▼", Math.abs(p), "% vs ", D.prevMonth.slice(0, 3));
+    };
+    const StatRow = ({
+      label,
+      val,
+      prev,
+      fmt,
+      color
+    }) => /*#__PURE__*/React.createElement("div", {
+      className: "diag2-stat",
+      style: {
+        "--sc": color || "var(--brand)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "diag2-ic"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "conversion",
+      size: 14
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        flex: 1,
+        minWidth: 0
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "diag2-v",
+      style: {
+        color: color || "var(--text)"
+      }
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: val,
+      fmt: fmt
+    }), /*#__PURE__*/React.createElement(MomBadge, {
+      cur: val,
+      prev: prev,
+      fmt: fmt
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "diag2-l"
+    }, label)));
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "rhero"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "rhero-left"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "diag2-eyebrow"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "presentacion",
+      size: 13,
+      sw: 2.4
+    }), "Presentaci\xF3n comercial \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
+      className: "rhero-line"
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, G.leads), " leads ", /*#__PURE__*/React.createElement(MomBadge, {
+      cur: G.leads,
+      prev: G.prevLeads
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "rhero-sep"
+    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, G.cierres), " cierres ", /*#__PURE__*/React.createElement(MomBadge, {
+      cur: G.cierres,
+      prev: G.prevCierres
+    })), /*#__PURE__*/React.createElement("span", {
+      className: "rhero-sep"
+    }), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, conv, "%"), " conv", convMom !== null && /*#__PURE__*/React.createElement("span", {
+      className: `delta ${convMom >= 0 ? "up" : "down"}`,
+      style: {
+        fontSize: ".68rem",
+        marginLeft: 5
+      }
+    }, convMom >= 0 ? "▲" : "▼", Math.abs(convMom).toFixed(1), "pp"))), /*#__PURE__*/React.createElement("p", {
+      className: "rhero-sub"
+    }, "Actualizado ", D.fecha || "hoy", " \xB7 D\xEDa ", curDay, " de ", dim, " \xB7 ", left, " d\xEDas restantes"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 14,
+        height: 6,
+        background: "var(--line2)",
+        borderRadius: 99,
+        overflow: "hidden",
+        maxWidth: 320
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: "100%",
+        width: `${Math.round(curDay / dim * 100)}%`,
+        background: "var(--brand)",
+        borderRadius: 99,
+        boxShadow: "var(--glow)",
+        transition: "width 1.2s ease"
+      }
+    }))), /*#__PURE__*/React.createElement("div", {
+      className: "diag2-stats rhero-stats"
+    }, /*#__PURE__*/React.createElement(StatRow, {
+      label: "Facturado",
+      val: G.cerrado,
+      prev: G.prevCerrado,
+      fmt: money,
+      color: "var(--green)"
+    }), /*#__PURE__*/React.createElement(StatRow, {
+      label: "Ticket promedio",
+      val: G.ticket,
+      prev: G.prevTicket,
+      fmt: money,
+      color: "var(--amber)"
+    }), /*#__PURE__*/React.createElement(StatRow, {
+      label: "Pipeline",
+      val: G.pipeline,
+      prev: G.prevPipeline,
+      fmt: money,
+      color: "var(--blue)"
+    }))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Ranking",
+      h3: "Por vendedora \u2014 resultados del mes"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "pres-vendors"
+    }, ranked.map((v, i) => {
+      const cerrado = v.cierres * v.ticket;
+      const vm = metas[v.name] || 0;
+      const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
+      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+      const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
+      const vconv = v.leads ? v.cierres / v.leads * 100 : 0;
+      return /*#__PURE__*/React.createElement("div", {
+        className: "tcard pres-vcard",
+        key: i,
+        style: {
+          "--vc": v.color || "var(--brand)",
+          animationDelay: `${i * 0.06}s`
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "16px 18px 14px",
+          borderBottom: "1px solid var(--line)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 11,
+          marginBottom: 0
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: "1.5rem",
+          lineHeight: 1,
+          width: 28
+        }
+      }, medal(i)), /*#__PURE__*/React.createElement(Avatar, {
+        v: v,
+        size: 40,
+        ring: true,
+        crown: i === 0
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          minWidth: 0
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 800,
+          fontSize: ".95rem"
+        }
+      }, v.name), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, v.suc)), /*#__PURE__*/React.createElement(Pill, {
+        tone: convTone(vconv)
+      }, vconv.toFixed(0), "% conv"))), /*#__PURE__*/React.createElement("div", {
+        className: "pres-stats-grid",
+        style: {
+          borderBottom: "1px solid var(--line)"
+        }
+      }, [{
+        l: "Leads",
+        v2: v.leads,
+        c: "var(--text)",
+        prev: v.prevLeads
+      }, {
+        l: "Cierres",
+        v2: v.cierres,
+        c: "var(--vc)"
+      }, {
+        l: "Facturado",
+        v2: cerrado,
+        c: "var(--green)",
+        fmt: money
+      }, {
+        l: "Conv.",
+        v2: vconv,
+        c: `var(--${convTone(vconv)})`,
+        fmt: n => n.toFixed(0) + "%"
+      }, {
+        l: "Ticket",
+        v2: v.ticket,
+        c: "var(--amber)",
+        fmt: money
+      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
+        key: j,
+        style: {
+          padding: "12px 8px",
+          textAlign: "center",
+          borderRight: "1px solid var(--line2)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1rem",
+          fontWeight: 800,
+          color: s.c
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: s.v2,
+        fmt: s.fmt
+      })), s.prev != null && !v.nuevo && /*#__PURE__*/React.createElement(MomBadge, {
+        cur: s.v2,
+        prev: s.prev
+      }), /*#__PURE__*/React.createElement("div", {
+        className: "eb",
+        style: {
+          marginTop: 3,
+          letterSpacing: ".6px",
+          fontSize: ".58rem"
+        }
+      }, s.l)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "12px 18px"
+        }
+      }, vm > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".7rem",
+          marginBottom: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--muted)"
+        }
+      }, "Meta ", money(vm)), /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: mc
+        }
+      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter"
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: mp + "%",
+          background: mc,
+          transition: "width 1.2s cubic-bezier(.4,0,.2,1)"
+        }
+      }))) : /*#__PURE__*/React.createElement("div", {
+        className: "ww",
+        style: {
+          fontSize: ".68rem"
+        }
+      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 8,
+          fontSize: ".68rem",
+          color: "var(--muted)"
+        }
+      }, cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, money(proy)), " ", /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "Sin cierres a\xFAn"))));
+    })), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Sucursales",
+      h3: "Rendimiento por tienda"
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "pres-sucs"
+    }, sucList.map((b, i) => {
+      const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
+      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+      const bconv = b.leads ? b.cierres / b.leads * 100 : 0;
+      const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
+      const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
+      return /*#__PURE__*/React.createElement("div", {
+        className: "tcard pres-suc",
+        key: i,
+        style: {
+          "--sc": b.color || "var(--brand)",
+          animationDelay: `${0.15 + i * 0.08}s`
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "16px 18px 14px",
+          borderBottom: "1px solid var(--line)",
+          display: "flex",
+          alignItems: "center",
+          gap: 12
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          width: 38,
+          height: 38,
+          borderRadius: 10,
+          display: "grid",
+          placeItems: "center",
+          background: `color-mix(in srgb, var(--sc) 14%, transparent)`,
+          color: "var(--sc)",
+          flexShrink: 0
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "sucursales",
+        size: 18
+      })), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          minWidth: 0
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 800,
+          fontSize: ".95rem"
+        }
+      }, b.suc), /*#__PURE__*/React.createElement("div", {
+        className: "ww",
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          flexWrap: "wrap"
+        }
+      }, T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · "), b.prevLeads > 0 && /*#__PURE__*/React.createElement(MomBadge, {
+        cur: b.leadsRet,
+        prev: b.prevLeads
+      }), b.hasNew && /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontSize: ".6rem",
+          color: "var(--muted)",
+          background: "var(--line2)",
+          padding: "1px 5px",
+          borderRadius: 99
+        }
+      }, "+nuevo"))), /*#__PURE__*/React.createElement(Pill, {
+        tone: convTone(bconv)
+      }, bconv.toFixed(0), "% conv")), /*#__PURE__*/React.createElement("div", {
+        className: "pres-stats-grid",
+        style: {
+          borderBottom: "1px solid var(--line)"
+        }
+      }, [{
+        l: "Leads",
+        v2: b.leads,
+        c: "var(--text)"
+      }, {
+        l: "Cierres",
+        v2: b.cierres,
+        c: "var(--sc)"
+      }, {
+        l: "Facturado",
+        v2: b.cerrado,
+        c: "var(--green)",
+        fmt: money
+      }, {
+        l: "Conv.",
+        v2: bconv,
+        c: `var(--${convTone(bconv)})`,
+        fmt: n => n.toFixed(0) + "%"
+      }, {
+        l: "Ticket",
+        v2: bticket,
+        c: "var(--amber)",
+        fmt: bticket ? money : () => "—"
+      }].map((s, j) => /*#__PURE__*/React.createElement("div", {
+        key: j,
+        style: {
+          padding: "12px 8px",
+          textAlign: "center",
+          borderRight: "1px solid var(--line2)"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1rem",
+          fontWeight: 800,
+          color: s.c
+        }
+      }, /*#__PURE__*/React.createElement(CountUp, {
+        value: s.v2,
+        fmt: s.fmt
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "eb",
+        style: {
+          marginTop: 3,
+          letterSpacing: ".6px",
+          fontSize: ".58rem"
+        }
+      }, s.l)))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          padding: "12px 18px"
+        }
+      }, b.meta > 0 ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".7rem",
+          marginBottom: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--muted)"
+        }
+      }, "Meta ", money(b.meta)), /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: mc
+        }
+      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter"
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: mp + "%",
+          background: mc,
+          transition: "width 1.4s cubic-bezier(.4,0,.2,1)"
+        }
+      }))) : /*#__PURE__*/React.createElement("div", {
+        className: "ww",
+        style: {
+          fontSize: ".68rem"
+        }
+      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 8,
+          fontSize: ".68rem",
+          color: "var(--muted)"
+        }
+      }, b.cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n: ", /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, money(bproy)), " ", /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "(", left, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, "Sin cierres a\xFAn"))));
+    })));
+  };
+})();
 var el=document.getElementById('_loading'); if(el)el.remove();
 try{ReactDOM.createRoot(document.getElementById('root')).render(React.createElement(window.Panel));}catch(e){document.getElementById('root').innerHTML='<p style="color:red;padding:20px">'+e.message+'</p>';}
 })();
