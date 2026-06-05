@@ -679,6 +679,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
               <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
               <div className="pres-kpi-l">Leads</div>
+              <div className="pres-kpi-mom"><span className={`delta ${(D.leadsMomPct||0) >= 0 ? "up" : "down"}`}>{(D.leadsMomPct||0) >= 0 ? "▲" : "▼"} {Math.abs(D.leadsMomPct||0)}%</span> vs {D.prevMonth.slice(0,3)} ({G.prevLeads})</div>
             </div>
             <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
               <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
