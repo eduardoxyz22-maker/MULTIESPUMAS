@@ -272,7 +272,8 @@ body.pres .sh p{display:none}
 .pres-vmeta{margin-top:4px}
 .pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
 .pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
-@media(max-width:700px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
+@media(max-width:900px){.pres-kpis{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
 
 /* ===== sparkline ===== */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
@@ -5170,7 +5171,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Heaven Colchones \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
       className: "pres-hero-sub"
     }, "Resumen comercial del equipo \xB7 Actualizado ", D.fecha || "hoy"), /*#__PURE__*/React.createElement("div", {
-      className: "pres-kpis"
+      className: "pres-kpis",
+      style: {
+        gridTemplateColumns: "repeat(6,1fr)"
+      }
     }, /*#__PURE__*/React.createElement("div", {
       className: "pres-kpi",
       style: {
@@ -5185,15 +5189,6 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Leads")), /*#__PURE__*/React.createElement("div", {
       className: "pres-kpi",
       style: {
-        "--pk": "#2E6FE0"
-      }
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "pres-kpi-v"
-    }, conv, "%"), /*#__PURE__*/React.createElement("div", {
-      className: "pres-kpi-l"
-    }, "Conversi\xF3n")), /*#__PURE__*/React.createElement("div", {
-      className: "pres-kpi",
-      style: {
         "--pk": "#159A57"
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -5205,7 +5200,16 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Cierres")), /*#__PURE__*/React.createElement("div", {
       className: "pres-kpi",
       style: {
-        "--pk": "#D98300"
+        "--pk": "#2E6FE0"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, conv, "%"), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Conversi\xF3n")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#00B5AD"
       }
     }, /*#__PURE__*/React.createElement("div", {
       className: "pres-kpi-v"
@@ -5214,7 +5218,31 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       fmt: money
     })), /*#__PURE__*/React.createElement("div", {
       className: "pres-kpi-l"
-    }, "Facturado")))), /*#__PURE__*/React.createElement("div", {
+    }, "Facturado")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#D98300"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: G.ticket,
+      fmt: money
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Ticket prom.")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#7A4AD9"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: G.pipeline,
+      fmt: money
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Pipeline")))), /*#__PURE__*/React.createElement("div", {
       className: "pres-section-label"
     }, "Ranking por vendedora"), /*#__PURE__*/React.createElement("div", {
       className: "pres-vendors"
@@ -5350,6 +5378,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
       const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
       const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+      const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
+      const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
       return /*#__PURE__*/React.createElement("div", {
         className: "pres-suc",
         key: i,
@@ -5362,7 +5392,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           display: "flex",
           alignItems: "center",
           gap: 12,
-          marginBottom: 16
+          marginBottom: 14
         }
       }, /*#__PURE__*/React.createElement("span", {
         style: {
@@ -5384,35 +5414,44 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, b.suc), /*#__PURE__*/React.createElement("div", {
         className: "ww"
-      }, b.cierres, " cierres \xB7 ", bconv, "% conv"))), /*#__PURE__*/React.createElement("div", {
-        style: {
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 10,
-          marginBottom: 14
-        }
+      }, T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")))), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vnums"
       }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
+        className: "pres-vbig"
+      }, b.leads), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "leads")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
         style: {
-          fontSize: "1.6rem",
-          fontWeight: 800,
           color: "var(--sc)"
         }
+      }, b.cierres), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig"
       }, money(b.cerrado)), /*#__PURE__*/React.createElement("div", {
-        className: "ww"
-      }, "Facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-        className: "num",
+        className: "pres-vsmall"
+      }, "facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
         style: {
-          fontSize: "1.6rem",
-          fontWeight: 800
+          color: `var(--${convTone(+bconv)})`
         }
-      }, b.leads), /*#__PURE__*/React.createElement("div", {
-        className: "ww"
-      }, "Leads"))), b.meta > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      }, bconv, "%"), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "conv.")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
+        style: {
+          color: "var(--muted)"
+        }
+      }, bticket ? money(bticket) : "—"), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "ticket prom."))), b.meta > 0 && /*#__PURE__*/React.createElement("div", {
+        className: "pres-vmeta"
+      }, /*#__PURE__*/React.createElement("div", {
         style: {
           display: "flex",
           justifyContent: "space-between",
-          fontSize: ".7rem",
+          fontSize: ".68rem",
           marginBottom: 5
         }
       }, /*#__PURE__*/React.createElement("span", {
@@ -5424,17 +5463,40 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           color: mc
         }
       }, mp, "%")), /*#__PURE__*/React.createElement("div", {
-        className: "meter",
-        style: {
-          height: 10
-        }
+        className: "meter"
       }, /*#__PURE__*/React.createElement("i", {
         style: {
           width: mp + "%",
           background: mc,
           transition: "width 1.4s cubic-bezier(.4,0,.2,1)"
         }
-      }))));
+      }))), b.meta === 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".68rem",
+          color: "var(--faint)",
+          marginTop: 6
+        }
+      }, "Sin meta fijada"), /*#__PURE__*/React.createElement("div", {
+        style: {
+          marginTop: 10,
+          fontSize: ".68rem",
+          color: "var(--muted)",
+          borderTop: "1px solid var(--line2)",
+          paddingTop: 8
+        }
+      }, b.cerrado > 0 ? /*#__PURE__*/React.createElement("span", null, "Proyecci\xF3n al cierre: ", /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--brand-d)"
+        }
+      }, money(bproy)), " ", /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--faint)"
+        }
+      }, "(", dim - curDay, " d\xEDas restantes)")) : /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--faint)"
+        }
+      }, "Sin cierres a\xFAn \u2014 proyecci\xF3n no disponible")));
     })), /*#__PURE__*/React.createElement("div", {
       className: "card",
       style: {
@@ -5480,9 +5542,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   var el = document.getElementById('_loading');
   if (el) el.remove();
-  try {
-    ReactDOM.createRoot(_root).render(React.createElement(window.Panel));
-  } catch(e) { _root.innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + e.message + '</p>'; }
+  try { ReactDOM.createRoot(_root).render(React.createElement(window.Panel)); }
+  catch(e) { _root.innerHTML = '<p style="font-family:sans-serif;color:red;padding:20px">Error: ' + e.message + '</p>'; }
 })();
 </script>
 </body>

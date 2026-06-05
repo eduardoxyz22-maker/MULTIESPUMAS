@@ -675,22 +675,30 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         <div className="pres-hero">
           <div className="pres-hero-title">Heaven Colchones · {D.month} {D.year}</div>
           <div className="pres-hero-sub">Resumen comercial del equipo · Actualizado {D.fecha || "hoy"}</div>
-          <div className="pres-kpis">
+          <div className="pres-kpis" style={{ gridTemplateColumns: "repeat(6,1fr)" }}>
             <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
               <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
               <div className="pres-kpi-l">Leads</div>
-            </div>
-            <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
-              <div className="pres-kpi-v">{conv}%</div>
-              <div className="pres-kpi-l">Conversión</div>
             </div>
             <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
               <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
               <div className="pres-kpi-l">Cierres</div>
             </div>
-            <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
+            <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
+              <div className="pres-kpi-v">{conv}%</div>
+              <div className="pres-kpi-l">Conversión</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#00B5AD" }}>
               <div className="pres-kpi-v"><CountUp value={G.cerrado} fmt={money} /></div>
               <div className="pres-kpi-l">Facturado</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
+              <div className="pres-kpi-v"><CountUp value={G.ticket} fmt={money} /></div>
+              <div className="pres-kpi-l">Ticket prom.</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#7A4AD9" }}>
+              <div className="pres-kpi-v"><CountUp value={G.pipeline} fmt={money} /></div>
+              <div className="pres-kpi-l">Pipeline</div>
             </div>
           </div>
         </div>
@@ -752,25 +760,37 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
             const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
             const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
             const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+            const bticket = b.cierres ? Math.round(b.cerrado / b.cierres) : 0;
+            const bproy = curDay ? Math.round(b.cerrado / curDay * dim) : 0;
             return (
               <div className="pres-suc" key={i} style={{ "--sc": b.color || "var(--brand)", animationDelay: `${0.2 + i * 0.08}s` }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
                   <span style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: `color-mix(in srgb, var(--sc) 15%, transparent)`, color: "var(--sc)" }}><Icon name="sucursales" size={20} /></span>
-                  <div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{b.suc}</div><div className="ww">{b.cierres} cierres · {bconv}% conv</div></div>
+                  <div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{b.suc}</div><div className="ww">{T.filter(v => v.suc === b.suc).map(v => v.name.split(" ")[0]).join(" · ")}</div></div>
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
-                  <div><div className="num" style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--sc)" }}>{money(b.cerrado)}</div><div className="ww">Facturado</div></div>
-                  <div><div className="num" style={{ fontSize: "1.6rem", fontWeight: 800 }}>{b.leads}</div><div className="ww">Leads</div></div>
+                <div className="pres-vnums">
+                  <div><div className="pres-vbig">{b.leads}</div><div className="pres-vsmall">leads</div></div>
+                  <div><div className="pres-vbig" style={{ color: "var(--sc)" }}>{b.cierres}</div><div className="pres-vsmall">cierres</div></div>
+                  <div><div className="pres-vbig">{money(b.cerrado)}</div><div className="pres-vsmall">facturado</div></div>
+                  <div><div className="pres-vbig" style={{ color: `var(--${convTone(+bconv)})` }}>{bconv}%</div><div className="pres-vsmall">conv.</div></div>
+                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{bticket ? money(bticket) : "—"}</div><div className="pres-vsmall">ticket prom.</div></div>
                 </div>
                 {b.meta > 0 && (
-                  <div>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", marginBottom: 5 }}>
+                  <div className="pres-vmeta">
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", marginBottom: 5 }}>
                       <span style={{ color: "var(--muted)" }}>Meta {money(b.meta)}</span>
                       <b style={{ color: mc }}>{mp}%</b>
                     </div>
-                    <div className="meter" style={{ height: 10 }}><i style={{ width: mp + "%", background: mc, transition: "width 1.4s cubic-bezier(.4,0,.2,1)" }} /></div>
+                    <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.4s cubic-bezier(.4,0,.2,1)" }} /></div>
                   </div>
                 )}
+                {b.meta === 0 && <div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 6 }}>Sin meta fijada</div>}
+                <div style={{ marginTop: 10, fontSize: ".68rem", color: "var(--muted)", borderTop: "1px solid var(--line2)", paddingTop: 8 }}>
+                  {b.cerrado > 0
+                    ? <span>Proyección al cierre: <b style={{ color: "var(--brand-d)" }}>{money(bproy)}</b> <span style={{ color: "var(--faint)" }}>({dim - curDay} días restantes)</span></span>
+                    : <span style={{ color: "var(--faint)" }}>Sin cierres aún — proyección no disponible</span>
+                  }
+                </div>
               </div>
             );
           })}
