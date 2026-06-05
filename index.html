@@ -1727,7 +1727,7 @@ function MetasSection() {
       v: v
     }), /*#__PURE__*/React.createElement("span", {
       className: "meta-proy"
-    }, "\xB7 proy. ", fmtMoney(proy), " (", proyPct, "%)"))), /*#__PURE__*/React.createElement("div", {
+    }, "\xB7 ", cerrado === 0 ? "sin cierres aún" : `proy. ${fmtMoney(proy)} (${proyPct}%)`))), /*#__PURE__*/React.createElement("div", {
       className: "meta-bar"
     }, /*#__PURE__*/React.createElement("i", {
       style: {
@@ -4489,6 +4489,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== SUCURSALES ===== */
   window.ViewSucursales = function () {
+    const metas = window.useMetas();
+    const metaBySuc = {};
+    T.forEach(v => {
+      metaBySuc[v.suc] = (metaBySuc[v.suc] || 0) + (metas[v.name] || 0);
+    });
     const branches = {};
     T.forEach(v => {
       const b = branches[v.suc] || (branches[v.suc] = {
@@ -4629,7 +4634,42 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0", "%"), /*#__PURE__*/React.createElement("div", {
         className: "kl"
-      }, "Conversi\xF3n"))));
+      }, "Conversi\xF3n"))), metaBySuc[b.suc] > 0 && (() => {
+        const mp = Math.round(b.cerrado / metaBySuc[b.suc] * 100);
+        const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+        return /*#__PURE__*/React.createElement("div", {
+          style: {
+            marginTop: 12,
+            borderTop: "1px solid var(--line)",
+            paddingTop: 10
+          }
+        }, /*#__PURE__*/React.createElement("div", {
+          style: {
+            display: "flex",
+            justifyContent: "space-between",
+            fontSize: ".7rem",
+            color: "var(--muted)",
+            marginBottom: 5
+          }
+        }, /*#__PURE__*/React.createElement("span", null, "Meta sucursal ", money(metaBySuc[b.suc])), /*#__PURE__*/React.createElement("b", {
+          style: {
+            color: mc
+          }
+        }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+          className: "meter"
+        }, /*#__PURE__*/React.createElement("i", {
+          style: {
+            width: Math.min(100, mp) + "%",
+            background: mc
+          }
+        })), /*#__PURE__*/React.createElement("div", {
+          style: {
+            fontSize: ".68rem",
+            color: "var(--faint)",
+            marginTop: 4
+          }
+        }, money(b.cerrado), " cerrado este mes"));
+      })());
     })), /*#__PURE__*/React.createElement("div", {
       className: "card"
     }, /*#__PURE__*/React.createElement(SectionHead, {

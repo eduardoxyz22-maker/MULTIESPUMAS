@@ -323,7 +323,7 @@ function MetasSection() {
               <span className="meta-right">
                 <b className="meta-cerr" style={{ color: col }}>{fmtMoney(cerrado)}</b><span className="ww">/</span>
                 <Stepper v={v} />
-                <span className="meta-proy">· proy. {fmtMoney(proy)} ({proyPct}%)</span>
+                <span className="meta-proy">· {cerrado === 0 ? "sin cierres aún" : `proy. ${fmtMoney(proy)} (${proyPct}%)`}</span>
               </span>
             </div>
             <div className="meta-bar"><i style={{ width: Math.min(100, pct) + "%", background: col }} /><span className="proy" style={{ left: Math.min(100, proyPct) + "%" }} title="Proyección" /></div>

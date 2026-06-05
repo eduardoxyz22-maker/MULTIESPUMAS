@@ -488,6 +488,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== SUCURSALES ===== */
   window.ViewSucursales = function () {
+    const metas = window.useMetas();
+    const metaBySuc = {};
+    T.forEach(v => { metaBySuc[v.suc] = (metaBySuc[v.suc] || 0) + (metas[v.name] || 0); });
     const branches = {};
     T.forEach(v => { const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, leads: 0, prevLeads: 0, cierres: 0, value: 0, agendado: 0, cerrado: 0, n: 0 }); b.leads += v.leads; b.prevLeads += (v.prevLeads || 0); b.cierres += v.cierres; b.value += v.value; b.agendado += (v.agendado || 0); b.cerrado += (v.cerrado || 0); b.n++; });
     const list = Object.values(branches).sort((a, b) => b.value - a.value);
@@ -510,6 +513,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: "var(--brand-d)" }}><CountUp value={b.value} fmt={money} /></div><div className="kl">Pipeline</div></div>
                   <div><div className="num" style={{ fontSize: "1.5rem", fontWeight: 800, color: `var(--${convTone(b.leads ? b.cierres / b.leads * 100 : 0)})` }}>{b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0"}%</div><div className="kl">Conversión</div></div>
                 </div>
+                {metaBySuc[b.suc] > 0 && (() => { const mp = Math.round(b.cerrado / metaBySuc[b.suc] * 100); const mc = mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)"; return (<div style={{ marginTop: 12, borderTop: "1px solid var(--line)", paddingTop: 10 }}><div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", color: "var(--muted)", marginBottom: 5 }}><span>Meta sucursal {money(metaBySuc[b.suc])}</span><b style={{ color: mc }}>{mp}%</b></div><div className="meter"><i style={{ width: Math.min(100, mp) + "%", background: mc }} /></div><div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 4 }}>{money(b.cerrado)} cerrado este mes</div></div>); })()}
               </div>
             );
           })}
