@@ -570,6 +570,32 @@ html[data-theme="dark"] .diag{background-image:linear-gradient(120deg,#0C1218,#1
 @media(min-width:769px){
   .mob-brand{display:none}
 }
+
+/* ===== Presentación tab ===== */
+@keyframes presIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.pres-view{animation:presIn .4s ease both}
+.pres-hero{background:linear-gradient(135deg,#0F1620 0%,#1A2535 60%,#00352F 100%);border-radius:var(--r-lg);padding:34px 36px;color:#fff;margin-bottom:0;box-shadow:0 8px 32px rgba(0,0,0,.22)}
+.pres-hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.pres-hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:28px}
+.pres-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pres-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px 18px;border-top:3px solid var(--pk)}
+.pres-kpi-v{font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:-.5px}
+.pres-kpi-l{font-size:.68rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.pres-section-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 10px}
+.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.pres-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border-top:3px solid var(--vc);animation:presIn .5s ease both}
+.pres-vcard-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.pres-medal{font-size:1.4rem;line-height:1;width:30px;text-align:center}
+.pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
+.pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
+.pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
+.pres-vnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
+.pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.pres-vmeta{margin-top:4px}
+.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
+@media(max-width:700px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
 </style>
 <script>(function(){try{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})()</script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" crossorigin="anonymous" onerror="document.write('<scr'+'ipt src=\https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/react.production.min.js\><\/scr'+'ipt>')"></script>
@@ -578,7 +604,7 @@ html[data-theme="dark"] .diag{background-image:linear-gradient(120deg,#0C1218,#1
 <body>
 <div id="root"><p id="_loading" style="font-family:sans-serif;padding:20px;color:#888">Cargando panel...</p></div>
 <script>
-window.PANEL_DATA={"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 4, "daysInMonth": 30, "fecha": "04/06 22:04", "archives": [{"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 163, "prevLeads": 114, "cierres": 21, "cerrado": 84260, "pipeline": 118440, "ticket": 4012}, "funnel2": [{"n": "Leads del mes", "v": 163, "c": "#27313F"}, {"n": "Sin respuesta", "v": 9, "c": "#646E7B"}, {"n": "Calificados", "v": 39, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 82, "c": "#00B5AD"}, {"n": "Compradores", "v": 21, "c": "#159A57"}], "stagesGlobal": [{"name": "Leads Entrantes", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Nueva consulta", "count": 50, "pct": 31, "color": "#27313F"}, {"name": "Interesado", "count": 7, "pct": 4, "color": "#2E6FE0"}, {"name": "Cotización enviada", "count": 64, "pct": 39, "color": "#7A4AD9"}, {"name": "Agendado / Visita", "count": 11, "pct": 7, "color": "#D98300"}, {"name": "Compradores", "count": 21, "pct": 13, "color": "#159A57"}, {"name": "No Responden", "count": 9, "pct": 6, "color": "#646E7B"}, {"name": "Pedido enviado – ganado", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Pedido cancelado – perdido", "count": 1, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 34, "manualPct": 21, "auto": 129, "autoPct": 79}, "channels": [{"ic": "✍", "name": "Carga manual vendedora", "leads": 34, "pct": 21, "cierres": 21, "conv": 62, "ticket": 4012, "pipeline": 118440, "cls": "green"}, {"ic": "📦", "name": "Automático", "leads": 129, "pct": 79, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}], "metrics": {"noResp": 9, "noRespPct": 6, "backlog": 2, "backlogPct": 1, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 127, "openTotal": 132, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 7, "agendado": 11}, "leadsMomPct": 43, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 40, "prevLeads": 26, "cierres": 11, "conv": 28, "ticket": 5028, "value": 70560, "cerrado": 55310, "calif": 17, "califPct": 42, "noResp": 2, "noRespPct": 5, "agendado": 3, "u24": 40, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 36, "prevLeads": 28, "cierres": 4, "conv": 11, "ticket": 3322, "value": 13290, "cerrado": 13290, "calif": 9, "califPct": 25, "noResp": 1, "noRespPct": 3, "agendado": 3, "u24": 36, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 35, "prevLeads": 30, "cierres": 6, "conv": 17, "ticket": 2610, "value": 30660, "cerrado": 15660, "calif": 6, "califPct": 17, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 35, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 2, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 28, "prevLeads": 30, "cierres": 0, "conv": 0, "ticket": 0, "value": 3930, "cerrado": 0, "calif": 3, "califPct": 11, "noResp": 5, "noRespPct": 18, "agendado": 2, "u24": 28, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 24, "prevLeads": 0, "cierres": 0, "conv": 0, "ticket": 0, "value": 0, "cerrado": 0, "calif": 4, "califPct": 17, "noResp": 0, "noRespPct": 0, "agendado": 3, "u24": 24, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green", "nuevo": true}], "funnel": [{"name": "Leads Entrantes", "count": 0}, {"name": "Nueva consulta", "count": 50}, {"name": "Interesado", "count": 7}, {"name": "Cotización enviada", "count": 64}, {"name": "Agendado / Visita", "count": 11}, {"name": "Compradores", "count": 21}, {"name": "No Responden", "count": 9}, {"name": "Pedido enviado – ganado", "count": 0}, {"name": "Pedido cancelado – perdido", "count": 1}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "2"}, {"id": "alertas", "label": "Alertas", "badge": "1"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "semanal", "label": "Semanal"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "backlogLeads": [{"id": 32947474, "c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 2070, "nh": false}, {"id": 32969426, "c": "Lead #32969426", "e": "Cotización enviada", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 0, "nh": false}], "weeklyClosures": {"Isabel Robledo": [4, 0, 0, 0, 0], "Maria Flores": [6, 0, 0, 0, 0], "Carola Chavez": [11, 0, 0, 0, 0]}, "stagesByV": {"Isabel Robledo": [["Nueva consulta", 10], ["Interesado", 2], ["Cotización enviada", 16], ["Agendado / Visita", 3], ["Compradores", 4], ["No Responden", 1]], "Maria Flores": [["Nueva consulta", 10], ["Cotización enviada", 18], ["Compradores", 6], ["No Responden", 1]], "Carola Chavez": [["Nueva consulta", 7], ["Interesado", 3], ["Cotización enviada", 13], ["Agendado / Visita", 3], ["Compradores", 11], ["No Responden", 2], ["Pedido cancelado – perdido", 1]], "Jonathan Monje": [["Nueva consulta", 8], ["Interesado", 1], ["Cotización enviada", 12], ["Agendado / Visita", 3]], "Mirian Salazar": [["Nueva consulta", 15], ["Interesado", 1], ["Cotización enviada", 5], ["Agendado / Visita", 2], ["No Responden", 5]]}, "dups": [], "ai_agents": {}, "ai_diagnostico": null};
+window.PANEL_DATA={"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 4, "daysInMonth": 30, "fecha": "04/06 22:04", "archives": [{"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 163, "prevLeads": 114, "cierres": 21, "cerrado": 84260, "pipeline": 118440, "ticket": 4012}, "funnel2": [{"n": "Leads del mes", "v": 163, "c": "#27313F"}, {"n": "Sin respuesta", "v": 9, "c": "#646E7B"}, {"n": "Calificados", "v": 39, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 82, "c": "#00B5AD"}, {"n": "Compradores", "v": 21, "c": "#159A57"}], "stagesGlobal": [{"name": "Leads Entrantes", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Nueva consulta", "count": 50, "pct": 31, "color": "#27313F"}, {"name": "Interesado", "count": 7, "pct": 4, "color": "#2E6FE0"}, {"name": "Cotización enviada", "count": 64, "pct": 39, "color": "#7A4AD9"}, {"name": "Agendado / Visita", "count": 11, "pct": 7, "color": "#D98300"}, {"name": "Compradores", "count": 21, "pct": 13, "color": "#159A57"}, {"name": "No Responden", "count": 9, "pct": 6, "color": "#646E7B"}, {"name": "Pedido enviado – ganado", "count": 0, "pct": 0, "color": "#9AA3AF"}, {"name": "Pedido cancelado – perdido", "count": 1, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 34, "manualPct": 21, "auto": 129, "autoPct": 79}, "channels": [{"ic": "✍", "name": "Carga manual vendedora", "leads": 34, "pct": 21, "cierres": 21, "conv": 62, "ticket": 4012, "pipeline": 118440, "cls": "green"}, {"ic": "📦", "name": "Automático", "leads": 129, "pct": 79, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}], "metrics": {"noResp": 9, "noRespPct": 6, "backlog": 2, "backlogPct": 1, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 127, "openTotal": 132, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 7, "agendado": 11}, "leadsMomPct": 43, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 40, "prevLeads": 26, "cierres": 11, "conv": 28, "ticket": 5028, "value": 70560, "cerrado": 55310, "calif": 17, "califPct": 42, "noResp": 2, "noRespPct": 5, "agendado": 3, "u24": 40, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 36, "prevLeads": 28, "cierres": 4, "conv": 11, "ticket": 3322, "value": 13290, "cerrado": 13290, "calif": 9, "califPct": 25, "noResp": 1, "noRespPct": 3, "agendado": 3, "u24": 36, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 35, "prevLeads": 30, "cierres": 6, "conv": 17, "ticket": 2610, "value": 30660, "cerrado": 15660, "calif": 6, "califPct": 17, "noResp": 1, "noRespPct": 3, "agendado": 0, "u24": 35, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 2, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 28, "prevLeads": 30, "cierres": 0, "conv": 0, "ticket": 0, "value": 3930, "cerrado": 0, "calif": 3, "califPct": 11, "noResp": 5, "noRespPct": 18, "agendado": 2, "u24": 28, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green"}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 24, "prevLeads": 0, "cierres": 0, "conv": 0, "ticket": 0, "value": 0, "cerrado": 0, "calif": 4, "califPct": 17, "noResp": 0, "noRespPct": 0, "agendado": 3, "u24": 24, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 0, "metaCierres": 0, "metaMonto": 0, "v": "green", "nuevo": true}], "funnel": [{"name": "Leads Entrantes", "count": 0}, {"name": "Nueva consulta", "count": 50}, {"name": "Interesado", "count": 7}, {"name": "Cotización enviada", "count": 64}, {"name": "Agendado / Visita", "count": 11}, {"name": "Compradores", "count": 21}, {"name": "No Responden", "count": 9}, {"name": "Pedido enviado – ganado", "count": 0}, {"name": "Pedido cancelado – perdido", "count": 1}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "2"}, {"id": "alertas", "label": "Alertas", "badge": "1"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "semanal", "label": "Semanal"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}, {"id": "presentacion", "label": "Presentación"}], "backlogLeads": [{"id": 32947474, "c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 2070, "nh": false}, {"id": 32969426, "c": "Lead #32969426", "e": "Cotización enviada", "r": "Maria Flores", "suc": "Buenos Aires", "d": 3, "v": 0, "nh": false}], "weeklyClosures": {"Isabel Robledo": [4, 0, 0, 0, 0], "Maria Flores": [6, 0, 0, 0, 0], "Carola Chavez": [11, 0, 0, 0, 0]}, "stagesByV": {"Isabel Robledo": [["Nueva consulta", 10], ["Interesado", 2], ["Cotización enviada", 16], ["Agendado / Visita", 3], ["Compradores", 4], ["No Responden", 1]], "Maria Flores": [["Nueva consulta", 10], ["Cotización enviada", 18], ["Compradores", 6], ["No Responden", 1]], "Carola Chavez": [["Nueva consulta", 7], ["Interesado", 3], ["Cotización enviada", 13], ["Agendado / Visita", 3], ["Compradores", 11], ["No Responden", 2], ["Pedido cancelado – perdido", 1]], "Jonathan Monje": [["Nueva consulta", 8], ["Interesado", 1], ["Cotización enviada", 12], ["Agendado / Visita", 3]], "Mirian Salazar": [["Nueva consulta", 15], ["Interesado", 1], ["Cotización enviada", 5], ["Agendado / Visita", 2], ["No Responden", 5]]}, "dups": [], "ai_agents": {}, "ai_diagnostico": null};
 window.GH_DISPATCH_TOKEN="";
 window.fmtMoney=(n)=>"Bs "+Math.round(n).toLocaleString("en-US");
 window.fmtK=(n)=>n>=1000?"Bs "+(n/1000).toFixed(n>=100000?0:1)+"k":"Bs "+Math.round(n);
@@ -2922,6 +2948,10 @@ const VIEW_META = {
   datos: {
     crumb: "Análisis & datos",
     title: "Salud del CRM"
+  },
+  presentacion: {
+    crumb: "Equipo",
+    title: `Presentación — ${D.month} ${D.year}`
   }
 };
 function bodyFor(view) {
@@ -2935,7 +2965,8 @@ function bodyFor(view) {
     semanal: window.ViewSemanal,
     sucursales: window.ViewSucursales,
     proyeccion: window.ViewProyeccion,
-    datos: window.ViewDatos
+    datos: window.ViewDatos,
+    presentacion: window.ViewPresentacion
   };
   return map[view] || ViewResumen;
 }
@@ -5092,6 +5123,320 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         marginTop: 12
       }
     }, "Mostrando ", Math.min((D.dups || []).length, 20), " de ", D.metrics.duplicadosFichas, " fichas duplicadas (hasta 40 en datos).")));
+  };
+
+  /* ===== PRESENTACIÓN ===== */
+  window.ViewPresentacion = function () {
+    const metas = window.useMetas();
+    const curDay = D.curDay || 1,
+      dim = D.daysInMonth || 30;
+    const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
+
+    // Sucursal roll-up
+    const branches = {};
+    T.forEach(v => {
+      const b = branches[v.suc] || (branches[v.suc] = {
+        suc: v.suc,
+        cerrado: 0,
+        cierres: 0,
+        leads: 0,
+        meta: 0,
+        color: v.color
+      });
+      b.cerrado += v.cierres * v.ticket;
+      b.cierres += v.cierres;
+      b.leads += v.leads;
+      b.meta += metas[v.name] || 0;
+    });
+    const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
+
+    // Top vendor
+    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+    const medalColor = i => i === 0 ? "#F59E0B" : i === 1 ? "#94A3B8" : i === 2 ? "#CD7F32" : "var(--muted)";
+    const medalLabel = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+    return /*#__PURE__*/React.createElement("div", {
+      className: "view pres-view"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-hero"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-hero-title"
+    }, "Heaven Colchones \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
+      className: "pres-hero-sub"
+    }, "Resumen comercial del equipo \xB7 Actualizado ", D.fecha || "hoy"), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpis"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "var(--brand)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: G.leads
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Leads")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#2E6FE0"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, conv, "%"), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Conversi\xF3n")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#159A57"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: G.cierres
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Cierres")), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi",
+      style: {
+        "--pk": "#D98300"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-v"
+    }, /*#__PURE__*/React.createElement(CountUp, {
+      value: G.cerrado,
+      fmt: money
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-kpi-l"
+    }, "Facturado")))), /*#__PURE__*/React.createElement("div", {
+      className: "pres-section-label"
+    }, "Ranking por vendedora"), /*#__PURE__*/React.createElement("div", {
+      className: "pres-vendors"
+    }, ranked.map((v, i) => {
+      const cerrado = v.cierres * v.ticket;
+      const vm = metas[v.name] || 0;
+      const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
+      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+      const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
+      return /*#__PURE__*/React.createElement("div", {
+        className: "pres-vcard",
+        key: i,
+        style: {
+          "--vc": v.color || "var(--brand)",
+          animationDelay: `${i * 0.07}s`
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vcard-top"
+      }, /*#__PURE__*/React.createElement("span", {
+        className: "pres-medal"
+      }, medalLabel(i)), /*#__PURE__*/React.createElement(Avatar, {
+        v: v,
+        size: 44,
+        ring: true
+      }), /*#__PURE__*/React.createElement("div", {
+        style: {
+          flex: 1,
+          minWidth: 0
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vname"
+      }, v.name.split(" ")[0]), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsuc"
+      }, v.suc)), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vconv",
+        style: {
+          color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})`
+        }
+      }, v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0, "%", /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".6rem",
+          color: "var(--muted)",
+          fontWeight: 600
+        }
+      }, "conv"))), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vnums"
+      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
+        style: {
+          color: "var(--vc)"
+        }
+      }, v.cierres), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "cierres")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig"
+      }, money(cerrado)), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "pres-vbig",
+        style: {
+          color: "var(--muted)"
+        }
+      }, money(proy)), /*#__PURE__*/React.createElement("div", {
+        className: "pres-vsmall"
+      }, "proyecci\xF3n"))), vm > 0 && /*#__PURE__*/React.createElement("div", {
+        className: "pres-vmeta"
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".68rem",
+          marginBottom: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--muted)"
+        }
+      }, "Meta ", money(vm)), /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: mc
+        }
+      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter"
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: mp + "%",
+          background: mc,
+          transition: "width 1.2s cubic-bezier(.4,0,.2,1)"
+        }
+      }))), vm === 0 && /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontSize: ".68rem",
+          color: "var(--faint)",
+          marginTop: 10
+        }
+      }, "Sin meta fijada"));
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "pres-section-label"
+    }, "Por sucursal"), /*#__PURE__*/React.createElement("div", {
+      className: "pres-sucs"
+    }, sucList.map((b, i) => {
+      const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
+      const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+      const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+      return /*#__PURE__*/React.createElement("div", {
+        className: "pres-suc",
+        key: i,
+        style: {
+          "--sc": b.color || "var(--brand)",
+          animationDelay: `${0.2 + i * 0.08}s`
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          marginBottom: 16
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          width: 42,
+          height: 42,
+          borderRadius: 11,
+          display: "grid",
+          placeItems: "center",
+          background: `color-mix(in srgb, var(--sc) 15%, transparent)`,
+          color: "var(--sc)"
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "sucursales",
+        size: 20
+      })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          fontWeight: 800,
+          fontSize: "1.1rem"
+        }
+      }, b.suc), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, b.cierres, " cierres \xB7 ", bconv, "% conv"))), /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 10,
+          marginBottom: 14
+        }
+      }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.6rem",
+          fontWeight: 800,
+          color: "var(--sc)"
+        }
+      }, money(b.cerrado)), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, "Facturado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontSize: "1.6rem",
+          fontWeight: 800
+        }
+      }, b.leads), /*#__PURE__*/React.createElement("div", {
+        className: "ww"
+      }, "Leads"))), b.meta > 0 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+        style: {
+          display: "flex",
+          justifyContent: "space-between",
+          fontSize: ".7rem",
+          marginBottom: 5
+        }
+      }, /*#__PURE__*/React.createElement("span", {
+        style: {
+          color: "var(--muted)"
+        }
+      }, "Meta ", money(b.meta)), /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: mc
+        }
+      }, mp, "%")), /*#__PURE__*/React.createElement("div", {
+        className: "meter",
+        style: {
+          height: 10
+        }
+      }, /*#__PURE__*/React.createElement("i", {
+        style: {
+          width: mp + "%",
+          background: mc,
+          transition: "width 1.4s cubic-bezier(.4,0,.2,1)"
+        }
+      }))));
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      style: {
+        textAlign: "center",
+        padding: "18px 24px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: ".72rem",
+        color: "var(--muted)",
+        fontWeight: 700,
+        letterSpacing: ".05em",
+        textTransform: "uppercase",
+        marginBottom: 8
+      }
+    }, "Avance del mes"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: 10,
+        background: "var(--line2)",
+        borderRadius: 99,
+        overflow: "hidden",
+        maxWidth: 500,
+        margin: "0 auto 10px"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        height: "100%",
+        width: `${Math.round(curDay / dim * 100)}%`,
+        background: "var(--brand)",
+        borderRadius: 99,
+        boxShadow: "var(--glow)",
+        transition: "width 1s ease"
+      }
+    })), /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: ".72rem",
+        color: "var(--faint)",
+        fontWeight: 600
+      }
+    }, "D\xEDa ", curDay, " de ", dim, " \xB7 ", dim - curDay, " d\xEDas restantes")));
   };
 })();
 

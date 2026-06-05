@@ -1498,6 +1498,7 @@ panel_data = {
         {"id": "sucursales", "label": "Sucursales"},
         {"id": "proyeccion", "label": "Proyección"},
         {"id": "datos", "label": "Datos"},
+        {"id": "presentacion", "label": "Presentación"},
     ],
     "backlogLeads": _backlog_leads_panel,
     "weeklyClosures": _weekly_closures_panel,

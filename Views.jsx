@@ -645,4 +645,138 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       </div>
     );
   };
+
+  /* ===== PRESENTACIÓN ===== */
+  window.ViewPresentacion = function () {
+    const metas = window.useMetas();
+    const curDay = D.curDay || 1, dim = D.daysInMonth || 30;
+    const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0.0";
+
+    // Sucursal roll-up
+    const branches = {};
+    T.forEach(v => {
+      const b = branches[v.suc] || (branches[v.suc] = { suc: v.suc, cerrado: 0, cierres: 0, leads: 0, meta: 0, color: v.color });
+      b.cerrado += v.cierres * v.ticket;
+      b.cierres += v.cierres;
+      b.leads += v.leads;
+      b.meta += (metas[v.name] || 0);
+    });
+    const sucList = Object.values(branches).sort((a, b) => b.cerrado - a.cerrado);
+
+    // Top vendor
+    const ranked = [...T].sort((a, b) => b.cierres - a.cierres);
+
+    const medalColor = i => i === 0 ? "#F59E0B" : i === 1 ? "#94A3B8" : i === 2 ? "#CD7F32" : "var(--muted)";
+    const medalLabel = i => i === 0 ? "🥇" : i === 1 ? "🥈" : i === 2 ? "🥉" : `${i + 1}º`;
+
+    return (
+      <div className="view pres-view">
+        {/* ── Header ── */}
+        <div className="pres-hero">
+          <div className="pres-hero-title">Heaven Colchones · {D.month} {D.year}</div>
+          <div className="pres-hero-sub">Resumen comercial del equipo · Actualizado {D.fecha || "hoy"}</div>
+          <div className="pres-kpis">
+            <div className="pres-kpi" style={{ "--pk": "var(--brand)" }}>
+              <div className="pres-kpi-v"><CountUp value={G.leads} /></div>
+              <div className="pres-kpi-l">Leads</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#2E6FE0" }}>
+              <div className="pres-kpi-v">{conv}%</div>
+              <div className="pres-kpi-l">Conversión</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#159A57" }}>
+              <div className="pres-kpi-v"><CountUp value={G.cierres} /></div>
+              <div className="pres-kpi-l">Cierres</div>
+            </div>
+            <div className="pres-kpi" style={{ "--pk": "#D98300" }}>
+              <div className="pres-kpi-v"><CountUp value={G.cerrado} fmt={money} /></div>
+              <div className="pres-kpi-l">Facturado</div>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Ranking vendedoras ── */}
+        <div className="pres-section-label">Ranking por vendedora</div>
+        <div className="pres-vendors">
+          {ranked.map((v, i) => {
+            const cerrado = v.cierres * v.ticket;
+            const vm = metas[v.name] || 0;
+            const mp = vm ? Math.min(100, Math.round(cerrado / vm * 100)) : null;
+            const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+            const proy = curDay ? Math.round(cerrado / curDay * dim) : 0;
+            return (
+              <div className="pres-vcard" key={i} style={{ "--vc": v.color || "var(--brand)", animationDelay: `${i * 0.07}s` }}>
+                <div className="pres-vcard-top">
+                  <span className="pres-medal">{medalLabel(i)}</span>
+                  <Avatar v={v} size={44} ring />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div className="pres-vname">{v.name.split(" ")[0]}</div>
+                    <div className="pres-vsuc">{v.suc}</div>
+                  </div>
+                  <div className="pres-vconv" style={{ color: `var(--${convTone(v.leads ? v.cierres / v.leads * 100 : 0)})` }}>
+                    {v.leads ? (v.cierres / v.leads * 100).toFixed(0) : 0}%<div style={{ fontSize: ".6rem", color: "var(--muted)", fontWeight: 600 }}>conv</div>
+                  </div>
+                </div>
+                <div className="pres-vnums">
+                  <div><div className="pres-vbig" style={{ color: "var(--vc)" }}>{v.cierres}</div><div className="pres-vsmall">cierres</div></div>
+                  <div><div className="pres-vbig">{money(cerrado)}</div><div className="pres-vsmall">facturado</div></div>
+                  <div><div className="pres-vbig" style={{ color: "var(--muted)" }}>{money(proy)}</div><div className="pres-vsmall">proyección</div></div>
+                </div>
+                {vm > 0 && (
+                  <div className="pres-vmeta">
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".68rem", marginBottom: 5 }}>
+                      <span style={{ color: "var(--muted)" }}>Meta {money(vm)}</span>
+                      <b style={{ color: mc }}>{mp}%</b>
+                    </div>
+                    <div className="meter"><i style={{ width: mp + "%", background: mc, transition: "width 1.2s cubic-bezier(.4,0,.2,1)" }} /></div>
+                  </div>
+                )}
+                {vm === 0 && <div style={{ fontSize: ".68rem", color: "var(--faint)", marginTop: 10 }}>Sin meta fijada</div>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Por sucursal ── */}
+        <div className="pres-section-label">Por sucursal</div>
+        <div className="pres-sucs">
+          {sucList.map((b, i) => {
+            const mp = b.meta ? Math.min(100, Math.round(b.cerrado / b.meta * 100)) : null;
+            const mc = mp === null ? "var(--brand)" : mp >= 100 ? "var(--green)" : mp >= 70 ? "var(--amber)" : "var(--red)";
+            const bconv = b.leads ? (b.cierres / b.leads * 100).toFixed(1) : "0.0";
+            return (
+              <div className="pres-suc" key={i} style={{ "--sc": b.color || "var(--brand)", animationDelay: `${0.2 + i * 0.08}s` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+                  <span style={{ width: 42, height: 42, borderRadius: 11, display: "grid", placeItems: "center", background: `color-mix(in srgb, var(--sc) 15%, transparent)`, color: "var(--sc)" }}><Icon name="sucursales" size={20} /></span>
+                  <div><div style={{ fontWeight: 800, fontSize: "1.1rem" }}>{b.suc}</div><div className="ww">{b.cierres} cierres · {bconv}% conv</div></div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                  <div><div className="num" style={{ fontSize: "1.6rem", fontWeight: 800, color: "var(--sc)" }}>{money(b.cerrado)}</div><div className="ww">Facturado</div></div>
+                  <div><div className="num" style={{ fontSize: "1.6rem", fontWeight: 800 }}>{b.leads}</div><div className="ww">Leads</div></div>
+                </div>
+                {b.meta > 0 && (
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: ".7rem", marginBottom: 5 }}>
+                      <span style={{ color: "var(--muted)" }}>Meta {money(b.meta)}</span>
+                      <b style={{ color: mc }}>{mp}%</b>
+                    </div>
+                    <div className="meter" style={{ height: 10 }}><i style={{ width: mp + "%", background: mc, transition: "width 1.4s cubic-bezier(.4,0,.2,1)" }} /></div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* ── Día del mes ── */}
+        <div className="card" style={{ textAlign: "center", padding: "18px 24px" }}>
+          <div style={{ fontSize: ".72rem", color: "var(--muted)", fontWeight: 700, letterSpacing: ".05em", textTransform: "uppercase", marginBottom: 8 }}>Avance del mes</div>
+          <div style={{ height: 10, background: "var(--line2)", borderRadius: 99, overflow: "hidden", maxWidth: 500, margin: "0 auto 10px" }}>
+            <div style={{ height: "100%", width: `${Math.round(curDay / dim * 100)}%`, background: "var(--brand)", borderRadius: 99, boxShadow: "var(--glow)", transition: "width 1s ease" }} />
+          </div>
+          <div style={{ fontSize: ".72rem", color: "var(--faint)", fontWeight: 600 }}>Día {curDay} de {dim} · {dim - curDay} días restantes</div>
+        </div>
+      </div>
+    );
+  };
 })();

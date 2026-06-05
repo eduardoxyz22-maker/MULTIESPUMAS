@@ -803,12 +803,14 @@ const VIEW_META = {
   sucursales: { crumb: "Análisis & datos", title: "Rendimiento por sucursal" },
   proyeccion: { crumb: "Análisis & datos", title: `Proyección al cierre — ${D.month}` },
   datos:      { crumb: "Análisis & datos", title: "Salud del CRM" },
+  presentacion: { crumb: "Equipo", title: `Presentación — ${D.month} ${D.year}` },
 };
 function bodyFor(view) {
   const map = {
     resumen: ViewResumen, equipo: window.ViewEquipo, seguimiento: window.ViewSeguimiento,
     alertas: window.ViewAlertas, analisis: window.ViewAnalisis, conversion: window.ViewConversion, semanal: window.ViewSemanal,
     sucursales: window.ViewSucursales, proyeccion: window.ViewProyeccion, datos: window.ViewDatos,
+    presentacion: window.ViewPresentacion,
   };
   return map[view] || ViewResumen;
 }

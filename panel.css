@@ -240,6 +240,32 @@ body.pres .kv{font-size:2.3rem}
 body.pres .scroll{padding:32px 48px 60px}
 body.pres .sh p{display:none}
 
+/* ===== Presentación tab ===== */
+@keyframes presIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+.pres-view{animation:presIn .4s ease both}
+.pres-hero{background:linear-gradient(135deg,#0F1620 0%,#1A2535 60%,#00352F 100%);border-radius:var(--r-lg);padding:34px 36px;color:#fff;margin-bottom:0;box-shadow:0 8px 32px rgba(0,0,0,.22)}
+.pres-hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-.4px;margin-bottom:4px}
+.pres-hero-sub{font-size:.78rem;color:rgba(255,255,255,.5);font-weight:500;margin-bottom:28px}
+.pres-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.pres-kpi{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:16px 18px;border-top:3px solid var(--pk)}
+.pres-kpi-v{font-size:1.55rem;font-weight:800;color:#fff;letter-spacing:-.5px}
+.pres-kpi-l{font-size:.68rem;color:rgba(255,255,255,.5);font-weight:600;margin-top:3px;text-transform:uppercase;letter-spacing:.05em}
+.pres-section-label{font-size:.72rem;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;padding:4px 0 10px}
+.pres-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.pres-vcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh);border-top:3px solid var(--vc);animation:presIn .5s ease both}
+.pres-vcard-top{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.pres-medal{font-size:1.4rem;line-height:1;width:30px;text-align:center}
+.pres-vname{font-size:1rem;font-weight:800;letter-spacing:-.2px}
+.pres-vsuc{font-size:.7rem;color:var(--muted);font-weight:600}
+.pres-vconv{font-size:1.1rem;font-weight:800;text-align:right;line-height:1.1}
+.pres-vnums{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line2)}
+.pres-vbig{font-size:1.15rem;font-weight:800;letter-spacing:-.3px}
+.pres-vsmall{font-size:.62rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.pres-vmeta{margin-top:4px}
+.pres-sucs{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.pres-suc{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;box-shadow:var(--sh);border-left:4px solid var(--sc);animation:presIn .5s ease both}
+@media(max-width:700px){.pres-kpis{grid-template-columns:repeat(2,1fr)}.pres-vendors,.pres-sucs{grid-template-columns:1fr}}
+
 /* ===== sparkline ===== */
 .spark{display:block;width:100%;height:30px;margin-top:10px;overflow:visible}
 .spark path.line{fill:none;stroke:var(--kc,var(--brand));stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
