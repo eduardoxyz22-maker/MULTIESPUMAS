@@ -26,7 +26,7 @@ from urllib import request as _rq, parse as _ps, error as _er
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONFIGURACIÓN
 # ─────────────────────────────────────────────────────────────────────────────
-SUBDOMAIN = os.environ.get("KOMMO_SUBDOMAIN", "eanez")
+SUBDOMAIN = (os.environ.get("KOMMO_SUBDOMAIN", "") or "").strip() or "eanez"
 BASE_URL  = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN", "").strip()
 _DIAG     = []   # mensajes de diagnóstico que se incrustan en index.html
