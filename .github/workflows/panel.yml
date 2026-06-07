@@ -1,0 +1,41 @@
+name: Generar Panel Heaven (Kommo → GitHub Pages)
+
+on:
+  schedule:
+    - cron: '0 14 * * *'    # 10:00 Bolivia (UTC-4)
+    - cron: '0 21 * * *'    # 17:00 Bolivia (UTC-4)
+  workflow_dispatch:         # botón manual en la pestaña Actions
+  push:
+    branches: [ main ]
+    paths:
+      - 'generar.py'
+      - 'panel_template.html'
+
+permissions:
+  contents: write            # para hacer commit del HTML regenerado
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Generar panel desde Kommo
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python generar.py --bake-ai
+
+      - name: Commit y push del panel actualizado
+        run: |
+          git config user.name  "heaven-bot"
+          git config user.email "bot@users.noreply.github.com"
+          git add index.html panel.html panel_*.html || true
+          git commit -m "Panel $(date -u +'%Y-%m-%d %H:%M') (auto)" || echo "sin cambios"
+          git push || echo "nada que empujar"
