@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# build: 2026-06-07 23:54 UTC (trigger panel.yml)
 # -*- coding: utf-8 -*-
 """
 generar.py  ·  Heaven Colchones — Panel Comercial
