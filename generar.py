@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# build: 2026-06-07 23:54 UTC (trigger panel.yml)
 # -*- coding: utf-8 -*-
 """
 generar.py  ·  Heaven Colchones — Panel Comercial
@@ -30,6 +29,7 @@ from urllib import request as _rq, parse as _ps, error as _er
 SUBDOMAIN = os.environ.get("KOMMO_SUBDOMAIN", "eanez")
 BASE_URL  = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN", "").strip()
+_DIAG     = []   # mensajes de diagnóstico que se incrustan en index.html
 
 HERE          = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_FILE = os.path.join(HERE, "panel_template.html")
@@ -96,6 +96,11 @@ def api_get(path, params=None, _retry=0):
             return api_get(path, params, _retry + 1)
         if e.code == 204:
             return {}
+        try:
+            _body = e.read().decode("utf-8")[:300]
+        except Exception:
+            _body = "(sin cuerpo)"
+        _DIAG.append(f"{path} -> HTTP {e.code}: {_body}")
         raise
     except Exception:
         if _retry < 2:
@@ -457,6 +462,8 @@ def write_outputs(pd):
     tpl = open(TEMPLATE_FILE, encoding="utf-8").read()
     data_block = "window.PANEL_DATA = " + json.dumps(pd, ensure_ascii=False) + ";"
     html = tpl.replace("__PANEL_DATA__", data_block)
+    diag_comment = "<!-- DIAG_KOMMO\n" + "\n".join(_DIAG) + "\n-->\n"
+    html = diag_comment + html
 
     # archiva el mes en curso ANTES de sobrescribir, si ya existía con datos previos
     arch_name = f"panel_{YEAR}_{MONTH:02d}.html"
@@ -468,10 +475,27 @@ def write_outputs(pd):
 # ─────────────────────────────────────────────────────────────────────────────
 #  MAIN
 # ─────────────────────────────────────────────────────────────────────────────
+def kommo_selftest():
+    """Prueba directa de credenciales: /account dice si el token sirve."""
+    _DIAG.append(f"subdominio={SUBDOMAIN} · token_len={len(TOKEN)} · token_prefix={TOKEN[:6] if TOKEN else '(vacio)'}")
+    try:
+        acc = api_get("/account")
+        _DIAG.append(f"/account OK -> id={acc.get('id')} name={acc.get('name')}")
+    except Exception as e:
+        _DIAG.append(f"/account FALLO -> {type(e).__name__}: {e}")
+    try:
+        t = api_get("/leads", {"limit": 1})
+        n = len((t.get('_embedded',{}) or {}).get('leads',[]))
+        _DIAG.append(f"/leads?limit=1 OK -> devolvio {n} lead(s)")
+    except Exception as e:
+        _DIAG.append(f"/leads FALLO -> {type(e).__name__}: {e}")
+
 def main():
     if not TOKEN:
         sys.exit("✗ Falta KOMMO_TOKEN (variable de entorno / secret de GitHub).")
     print(f"🏗  Heaven · {MESES[MONTH]} {YEAR}")
+    kommo_selftest()
+    for d in _DIAG: print("   ·", d)
 
     print("  📡 pipelines…")
     pls = fetch_paginated("/leads/pipelines", {}, "pipelines", max_pages=10)
