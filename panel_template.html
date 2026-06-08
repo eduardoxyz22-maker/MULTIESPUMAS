@@ -4490,6 +4490,16 @@ window.Panel = Panel;
       sorted,
       thFor
     } = window.useSort(rows, "cierres", v => v.cierres);
+    const T_cierres = rows.reduce((s, v) => s + (v.cierres || 0), 0);
+    const T_leads = rows.reduce((s, v) => s + (v.leads || 0), 0);
+    const T_conv = T_leads ? +(T_cierres / T_leads * 100).toFixed(1) : 0;
+    const T_value = rows.reduce((s, v) => s + (v.value || 0), 0);
+    const T_ticket = T_cierres ? Math.round(T_value / T_cierres) : 0;
+    const T_pipeline = rows.reduce((s, v) => s + (v.pipeline || 0), 0);
+    const T_calif = rows.reduce((s, v) => s + (v.calif || 0), 0);
+    const T_califPct = T_leads ? Math.round(T_calif / T_leads * 100) : 0;
+    const T_noResp = rows.reduce((s, v) => s + (v.noResp || 0), 0);
+    const T_noRespPct = T_leads ? Math.round(T_noResp / T_leads * 100) : 0;
     return /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
@@ -4535,7 +4545,37 @@ window.Panel = Panel;
       }
     }, v.noResp, " ", /*#__PURE__*/React.createElement("span", {
       className: "ww"
-    }, "(", v.noRespPct, "%)"))))));
+    }, "(", v.noRespPct, "%)"))))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+      className: "tbl-tot"
+    }, /*#__PURE__*/React.createElement("td", null, "Equipo total"), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        fontWeight: 800
+      }
+    }, T_cierres), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, /*#__PURE__*/React.createElement(Pill, {
+      tone: convTone(T_conv)
+    }, T_conv, "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, T_ticket ? money(T_ticket) : "\u2014"), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--brand-d)",
+        fontWeight: 700
+      }
+    }, T_pipeline ? money(T_pipeline) : "\u2014"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, T_calif, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww"
+    }, "(", T_califPct, "%)")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--red)"
+      }
+    }, T_noResp, " ", /*#__PURE__*/React.createElement("span", {
+      className: "ww"
+    }, "(", T_noRespPct, "%)")))));
   }
 
   // Sortable origin-channel table.
@@ -5893,6 +5933,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       thFor
     } = window.useSort(list, "value", b => b.value);
     const mom = b => b.prevLeads ? Math.round((b.leads - b.prevLeads) / b.prevLeads * 100) : 0;
+    const Tn = list.reduce((s, b) => s + b.n, 0),
+      Tleads = list.reduce((s, b) => s + b.leads, 0),
+      TprevLeads = list.reduce((s, b) => s + b.prevLeads, 0),
+      Tcierres = list.reduce((s, b) => s + b.cierres, 0),
+      Tagendado = list.reduce((s, b) => s + b.agendado, 0),
+      Tcerrado = list.reduce((s, b) => s + b.cerrado, 0),
+      Tvalue = list.reduce((s, b) => s + b.value, 0);
+    const Tmom = TprevLeads ? Math.round((Tleads - TprevLeads) / TprevLeads * 100) : 0,
+      Tconv = Tleads ? Tcierres / Tleads * 100 : 0;
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
     }, /*#__PURE__*/React.createElement(SectionHead, {
@@ -6102,7 +6151,37 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, money(b.cerrado)), /*#__PURE__*/React.createElement("td", {
         className: "r num"
       }, money(b.value)));
-    })))));
+    })), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+      className: "tbl-tot"
+    }, /*#__PURE__*/React.createElement("td", null, "Total"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, Tn), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, Tleads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: `delta ${Tmom >= 0 ? "up" : "down"}`
+    }, Tmom >= 0 ? "\u25b2" : "\u25bc", " ", Tmom >= 0 ? "+" : "", Tmom, "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, Tcierres), /*#__PURE__*/React.createElement("td", {
+      className: "r"
+    }, /*#__PURE__*/React.createElement(Pill, {
+      tone: convTone(Tconv)
+    }, Tconv.toFixed(1), "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "#D98300",
+        fontWeight: 700
+      }
+    }, Tagendado), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--green-ink)",
+        fontWeight: 700
+      }
+    }, money(Tcerrado)), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, money(Tvalue)))))));
   };
 
   /* ===== PROYECCIÓN ===== */
