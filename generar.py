@@ -200,7 +200,7 @@ def blank_vendor():
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
 
-def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
+def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
     vd = defaultdict(blank_vendor)
     suc_of = {}
     backlog_rows = []
@@ -232,9 +232,10 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         st = stage_map.get(ld.get("status_id"), {"name": "—", "cls": "other"})
         d["stage"][st["name"]] += 1
         cls = st["cls"]
-        # Los cierres/montos NO se cuentan aquí (sería por fecha de creación).
-        # Se cuentan por FECHA DE CONTRATO (closed_at) en el bloque de abajo.
-        if cls == "no_resp":
+        if cls == "compradores":
+            d["cierres"] += 1; d["value"] += ld.get("price") or 0
+            d["wc"][_wk] += 1; d["wm"][_wk] += ld.get("price") or 0
+        elif cls == "no_resp":
             d["noResp"] += 1
         elif cls == "agendado":
             d["agendado"] += 1; d["calif"] += 1
@@ -272,36 +273,15 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
             backlog_rows.append({"c": ld_name, "id": ld.get("id"), "e": st["name"], "r": name,
                                  "d": int(round(stale_days)), "nh": never})
-
-    # ── VENTAS CERRADAS por FECHA DE CONTRATO (closed_at) ──
-    # El cierre y el monto cuentan en el mes en que se GANÓ la venta,
-    # sin importar cuándo se creó el lead. Así coincide con Kommo.
-    for ld in (won_leads or []):
-        raw = user_map.get(ld.get("responsible_user_id"))
-        if not raw:
-            continue
-        nm = raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
-        dd = vd[nm]; price = ld.get("price") or 0
-        dd["cierres"] += 1; dd["value"] += price
-        _cl = ld.get("closed_at") or ld.get("updated_at") or 0
-        try:
-            _cd = datetime.datetime.fromtimestamp(_cl).day
-        except Exception:
-            _cd = 1
-        _wk = min(4, (_cd - 1) // 7)
-        dd["wc"][_wk] += 1; dd["wm"][_wk] += price
-        if nm not in suc_of:
-            suc_of[nm] = (raw.split(" - ", 1)[1].strip() if " - " in raw
-                          else detect_suc(nm, ld))
     return vd, suc_of, backlog_rows
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None):
     now_ts = time.time()
-    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
-    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
+    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts)
+    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts)
 
     names = list(vcur.keys())
     # ordena: por cierres desc, así el color/índice es estable
@@ -444,11 +424,11 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     # canales agregados a partir de detect_channel sobre los leads del mes
     ch_agg = defaultdict(lambda: dict(leads=0, cierres=0, value=0))
     for ld in cur:
-        ch_agg[detect_channel(ld, source_field_id)]["leads"] += 1
-    # cierres/montos por canal: por fecha de contrato (ventas cerradas del mes)
-    for ld in (won or []):
-        ca = ch_agg[detect_channel(ld, source_field_id)]
-        ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
+        ch = detect_channel(ld, source_field_id)
+        ca = ch_agg[ch]; ca["leads"] += 1
+        st = stage_map.get(ld.get("status_id"), {"cls": "other"})
+        if st["cls"] == "compradores":
+            ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
     channels = []
     for ch, a in sorted(ch_agg.items(), key=lambda x: -x[1]["leads"]):
         conv = round(a["cierres"] / a["leads"] * 100) if a["leads"] else 0
@@ -729,81 +709,8 @@ def main():
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
 
-    # ── VENTAS por FECHA DE CONTRATO: cuándo el lead ENTRÓ a "Compradores" ──
-    # En este pipeline "Compradores" no es el estado ganado del sistema, así que
-    # closed_at queda vacío. La fecha real de venta es el cambio de etapa hacia
-    # Compradores, que vive en el historial de eventos.
-    won_status_ids = {sid for sid, info in stage_map.items()
-                      if info.get("cls") == "compradores"}
-
-    def entered_won(ev_list):
-        res = {}
-        for e in ev_list:
-            if e.get("type") != "lead_status_changed":
-                continue
-            sid = None
-            for it in (e.get("value_after") or []):
-                if not isinstance(it, dict):
-                    continue
-                ls = it.get("lead_status") or it.get("status") or it
-                if isinstance(ls, dict) and ls.get("id") is not None:
-                    sid = ls.get("id"); break
-            if sid in won_status_ids:
-                lid = e.get("entity_id"); ts = e.get("created_at", 0)
-                if lid:
-                    res[lid] = max(res.get(lid, 0), ts)   # última entrada a Compradores
-        return res
-
-    print("  🔄 cambios de etapa mes anterior (fecha de contrato)…")
-    raw_ev_prev = fetch_paginated("/events", {
-        "filter[entity][]": "lead",
-        "filter[type]": "lead_status_changed",
-        "filter[created_at][from]": int(p_start.timestamp()),
-        "filter[created_at][to]":   int(p_end.timestamp()),
-        "limit": 100}, "events", max_pages=200, sleep=0.15)
-
-    contract_cur  = entered_won(raw_ev)        # ventas de ESTE mes
-    contract_prev = entered_won(raw_ev_prev)   # ventas del mes anterior
-
-    _by_id = {l.get("id"): l for l in (cur + prev)}
-
-    def build_won(contract_map):
-        out, missing = [], []
-        for lid, ts in contract_map.items():
-            ld = _by_id.get(lid)
-            if ld is None:
-                missing.append((lid, ts)); continue
-            ld = dict(ld); ld["closed_at"] = ts    # fecha de contrato (para semana)
-            out.append(ld)
-        # leads vendidos este mes pero creados en meses anteriores → tráelos por id
-        if missing:
-            fetched = {}
-            ids = [m[0] for m in missing]
-            for i in range(0, len(ids), 50):
-                qs = _ps.urlencode([("filter[id][]", x) for x in ids[i:i+50]])
-                try:
-                    data = api_get("/leads?" + qs)
-                    for l in (data.get("_embedded", {}) or {}).get("leads", []):
-                        fetched[l.get("id")] = l
-                except Exception as ex:
-                    print(f"     ⚠ no pude traer {len(ids)} lead(s) viejos: {ex}", file=sys.stderr)
-            for lid, ts in missing:
-                l = fetched.get(lid)
-                if l:
-                    l = dict(l); l["closed_at"] = ts; out.append(l)
-        return out
-
-    won      = build_won(contract_cur)
-    won_prev = build_won(contract_prev)
-    # Resiliencia: si por config no se detectó ningún cambio de etapa, no dejes
-    # el panel en 0 ventas — cae al método por estado actual de los leads del mes.
-    if not won:
-        won = [l for l in cur if stage_map.get(l.get("status_id"), {}).get("cls") == "compradores"]
-        if won:
-            print(f"     ⚠ sin eventos de etapa; fallback por estado actual: {len(won)}", file=sys.stderr)
-    if not won_prev:
-        won_prev = [l for l in prev if stage_map.get(l.get("status_id"), {}).get("cls") == "compradores"]
-    print(f"     → {len(won)} ventas este mes · {len(won_prev)} mes anterior")
+    # Cierres/montos: leads creados este mes que están HOY en Compradores.
+    # Coincide con la columna del tablero de Kommo (mismo mes, misma foto).
 
     # teléfonos de los contactos del mes (para detectar duplicados reales)
     print("  ☎️  contactos del mes…")
@@ -826,7 +733,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
