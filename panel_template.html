@@ -516,7 +516,9 @@ html[data-theme="dark"] .scrim{background:rgba(0,0,0,.42)}
 .drawer-name{font-weight:800;font-size:1.1rem;letter-spacing:-.3px}
 .drawer-close{border:none;background:var(--bg);width:34px;height:34px;border-radius:9px;font-size:1.3rem;color:var(--muted);cursor:pointer;line-height:1;flex-shrink:0}
 .drawer-close:hover{background:var(--line);color:var(--text)}
-.drawer-body{padding:20px 22px 40px;overflow-y:auto}
+.drawer-body{padding:20px 22px 40px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+body.drawer-open .scroll{overflow:hidden}
+body.drawer-open{overflow:hidden}
 .dr-sec{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--faint);margin:22px 0 11px}
 .dr-sec:first-child{margin-top:0}
 html[data-theme="dark"] .dr-sec{font-family:var(--mono)}
@@ -1287,6 +1289,9 @@ html[data-theme="dark"] .meter,html[data-theme="dark"] .mbar{box-shadow:inset 0 
     opacity:0;animation:navFlash 1s ease-out .1s 1}
   @keyframes navFlash{0%{opacity:0}30%{opacity:.9}100%{opacity:0}}
 }
+
+.lead-link{color:var(--brand-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--brand);cursor:pointer}
+.lead-link:hover{color:var(--brand);border-bottom-style:solid}
 
 </style>
 </head>
@@ -2177,7 +2182,11 @@ function ProfileDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.body.classList.add("drawer-open");
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.classList.remove("drawer-open");
+    };
   }, [onClose]);
   const cerrado = v ? Math.round(v.cierres * v.ticket) : 0;
   const diff = v ? v.leads - (v.prevLeads || 0) : 0;
@@ -2465,7 +2474,11 @@ function SucursalDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.body.classList.add("drawer-open");
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.classList.remove("drawer-open");
+    };
   }, [onClose]);
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const metas = window.useMetas();
@@ -4923,7 +4936,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       return /*#__PURE__*/React.createElement("tr", {
         key: r.c,
         className: st === "done" ? "r-done" : st === "snooze" ? "r-snooze" : ""
-      }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
+      }, /*#__PURE__*/React.createElement("td", null, r.id ? /*#__PURE__*/React.createElement("a", {
+        className: "lead-link",
+        href: `${D.kommoBase}/leads/detail/${r.id}`,
+        target: "_blank",
+        rel: "noopener noreferrer"
+      }, r.c) : /*#__PURE__*/React.createElement("b", {
         className: "rc-name",
         style: {
           fontWeight: 700
@@ -4981,7 +4999,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })))));
     })))), /*#__PURE__*/React.createElement("div", {
       className: "note"
-    }, "Muestra representativa de las fichas m\xE1s antiguas de ", totalBk, " en backlog. En Kommo muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\". En producci\xF3n ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " inyecta las 50 reales."));
+    }, "Las 50 fichas m\xE1s antiguas del backlog real (", totalBk, " en total). Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
   };
 
   /* ===== ALERTAS ===== */
@@ -6214,9 +6232,13 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "card"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Duplicados",
-      h3: `${D.metrics.duplicadosTel} teléfonos en 2+ fichas`,
-      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n."
-    }), /*#__PURE__*/React.createElement("table", {
+      h3: `${D.metrics.duplicadosTel} ${D.metrics.duplicadosTel === 1 ? "teléfono" : "teléfonos"} en 2+ fichas`,
+      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n. Toca una fila para abrir el lead en Kommo."
+    }), !D.dupRows || D.dupRows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
+      title: "Sin tel\xE9fonos duplicados",
+      desc: "Ning\xFAn cliente del mes aparece con el mismo tel\xE9fono en dos o m\xE1s fichas. Buena se\xF1al de higiene de datos.",
+      icon: "datos"
+    }) : /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
         marginTop: 6
@@ -6225,72 +6247,34 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "r"
     }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Vendedoras involucradas"), /*#__PURE__*/React.createElement("th", null, "Etapas"), /*#__PURE__*/React.createElement("th", {
       className: "r"
-    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, D.dupRows.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      className: "clickable",
+      onClick: () => window.open(`${D.kommoBase}/leads/detail/${r.leadIds[0]}`, "_blank", "noopener")
+    }, /*#__PURE__*/React.createElement("td", {
       className: "num"
-    }, "+591 70919189"), /*#__PURE__*/React.createElement("td", {
+    }, /*#__PURE__*/React.createElement("a", {
+      className: "lead-link",
+      href: `${D.kommoBase}/leads/detail/${r.leadIds[0]}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: e => e.stopPropagation()
+    }, r.phone)), /*#__PURE__*/React.createElement("td", {
       className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
+    }, r.fichas), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, "Maria Flores \xB7 Carola Chavez"), /*#__PURE__*/React.createElement("td", {
+    }, r.vendedoras), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, "Nueva consulta \xB7 No Responden"), /*#__PURE__*/React.createElement("td", {
+    }, r.etapas), /*#__PURE__*/React.createElement("td", {
       className: "r"
     }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "red"
-    }, "Revisar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "69907245"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Isabel Robledo \xB7 Mirian Salazar"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "No Responden \xB7 Cotizaci\xF3n"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "red"
-    }, "Revisar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "+591 72693301"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "3"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Maria Flores"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Cotizaci\xF3n \xB7 Nueva \xB7 Compradores"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "+591 71384023"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Maria Flores \xB7 Carola Chavez"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Cotizaci\xF3n enviada"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "69152708"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Carola Chavez \xB7 Maria Flores"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Interesado \xB7 Cotizaci\xF3n"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))))), /*#__PURE__*/React.createElement("div", {
+      tone: r.estado === "Fusionar" ? "amber" : "red"
+    }, r.estado)))))), D.dupRows && D.dupRows.length > 0 && /*#__PURE__*/React.createElement("div", {
       className: "note",
       style: {
         marginTop: 12
       }
-    }, "Muestra de 5 de 89 fichas duplicadas. En producci\xF3n ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " inyecta el listado completo.")));
+    }, D.metrics.duplicadosFichas, " fichas en ", D.metrics.duplicadosTel, " grupos de tel\xE9fono repetido (hasta 50 mostrados). Detecci\xF3n real desde los contactos de Kommo.")));
   };
 })();
 
