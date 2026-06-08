@@ -2182,12 +2182,12 @@ function ProfileDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    document.body.classList.add("drawer-open");
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.classList.remove("drawer-open");
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  useEffect(() => {
+    if (v) document.body.classList.add("drawer-open");else document.body.classList.remove("drawer-open");
+    return () => document.body.classList.remove("drawer-open");
+  }, [v]);
   const cerrado = v ? Math.round(v.cierres * v.ticket) : 0;
   const diff = v ? v.leads - (v.prevLeads || 0) : 0;
   const metas = useMetas();
@@ -2474,12 +2474,12 @@ function SucursalDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    document.body.classList.add("drawer-open");
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.body.classList.remove("drawer-open");
-    };
+    return () => document.removeEventListener("keydown", onKey);
   }, [onClose]);
+  useEffect(() => {
+    if (name) document.body.classList.add("drawer-open");else document.body.classList.remove("drawer-open");
+    return () => document.body.classList.remove("drawer-open");
+  }, [name]);
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const metas = window.useMetas();
   const metaColB = p => p >= 100 ? "var(--green)" : p >= 70 ? "var(--amber)" : "var(--red)";
