@@ -513,7 +513,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     # ── backlog real (top 40 más estancados) ──
     backlog_rows.sort(key=lambda r: r["d"], reverse=True)
     metrics["criticos7d"] = sum(1 for r in backlog_rows if r["d"] >= 7)
-    bk_rows = backlog_rows[:40]
+    bk_rows = backlog_rows[:300]   # todas las fichas sin seguimiento (tope de seguridad 300)
 
     # ── alertas accionables, generadas de los datos reales ──
     alerts = []
