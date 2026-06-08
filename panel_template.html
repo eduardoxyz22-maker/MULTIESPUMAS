@@ -4234,7 +4234,7 @@ function Panel() {
   }, "Meses publicados"), D.archives.map((a, i) => /*#__PURE__*/React.createElement("a", {
     key: i,
     href: a.url,
-    className: i === 1 ? "cur" : "",
+    className: a.url === "#" ? "cur" : "",
     onClick: e => {
       if (a.url === "#") e.preventDefault();
       setHistOpen(false);
@@ -4242,7 +4242,7 @@ function Panel() {
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "semanal",
     size: 14
-  }), a.label, i === 1 && /*#__PURE__*/React.createElement("span", {
+  }), a.label, a.url === "#" && /*#__PURE__*/React.createElement("span", {
     className: "ww",
     style: {
       marginLeft: "auto"
