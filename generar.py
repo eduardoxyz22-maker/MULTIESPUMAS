@@ -270,14 +270,14 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         # fila de backlog real (lead estancado y abierto)
         if is_open and (stale_days > 3 or never):
             ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
-            backlog_rows.append({"c": ld_name, "e": st["name"], "r": name,
+            backlog_rows.append({"c": ld_name, "id": ld.get("id"), "e": st["name"], "r": name,
                                  "d": int(round(stale_days)), "nh": never})
     return vd, suc_of, backlog_rows
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts)
@@ -309,6 +309,32 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
             if c.get("id"): _contact_leads[c["id"]] += 1
     _dup_contactos = sum(1 for c, n in _contact_leads.items() if n >= 2)
     _dup_fichas    = sum(n for c, n in _contact_leads.items() if n >= 2)
+
+    # ── duplicados por TELÉFONO (mismo cliente en 2+ fichas) ──
+    contact_phone = contact_phone or {}
+    phone_groups = defaultdict(list)   # phone -> [(lead_id, vendor, stage)]
+    for ld in cur:
+        rn = user_map.get(ld.get("responsible_user_id"), "")
+        vend = rn.split(" - ")[0].strip() if rn else "—"
+        stg = stage_map.get(ld.get("status_id"), {"name": "—"})["name"]
+        for c in ((ld.get("_embedded", {}) or {}).get("contacts") or []):
+            ph = contact_phone.get(c.get("id"))
+            if ph:
+                phone_groups[ph].append((ld.get("id"), vend, stg))
+                break
+    dup_rows = []
+    for ph, items in phone_groups.items():
+        if len(items) >= 2:
+            vends = sorted(set(i[1] for i in items))
+            stgs  = sorted(set(i[2] for i in items))
+            dup_rows.append({"phone": ph, "fichas": len(items),
+                             "vendedoras": " · ".join(vends), "etapas": " · ".join(stgs),
+                             "leadIds": [i[0] for i in items],
+                             "estado": "Fusionar" if "Compradores" in stgs else "Revisar"})
+    dup_rows.sort(key=lambda r: -r["fichas"])
+    if contact_phone:   # solo si pudimos leer teléfonos, sustituye el conteo por el real
+        _dup_contactos = len(dup_rows)
+        _dup_fichas    = sum(r["fichas"] for r in dup_rows)
 
     team = []
     for i, name in enumerate(names):
@@ -520,7 +546,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
         "channels": channels, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
         "team": team, "funnel": funnel, "nav": nav, "stagesByV": stagesByV,
-        "backlogRows": bk_rows, "alerts": alerts,
+        "backlogRows": bk_rows, "alerts": alerts, "dupRows": dup_rows[:50],
+        "kommoBase": f"https://{SUBDOMAIN}.kommo.com",
     }
 
 def build_archives():
@@ -669,8 +696,28 @@ def main():
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
 
+    # teléfonos de los contactos del mes (para detectar duplicados reales)
+    print("  ☎️  contactos del mes…")
+    contact_phone = {}
+    try:
+        raw_contacts = fetch_paginated("/contacts", {
+            "filter[created_at][from]": int(m_start.timestamp()),
+            "filter[created_at][to]":   int(m_end.timestamp())}, "contacts")
+        for c in raw_contacts:
+            cid = c.get("id"); phone = None
+            for fld in (c.get("custom_fields_values") or []):
+                if fld.get("field_code") == "PHONE":
+                    vals = fld.get("values") or []
+                    if vals: phone = str(vals[0].get("value") or "").strip()
+                    break
+            if cid and phone:
+                contact_phone[cid] = phone
+        print(f"     → {len(contact_phone)} con teléfono")
+    except Exception as e:
+        print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
+
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
