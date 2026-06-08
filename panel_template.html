@@ -2095,7 +2095,7 @@ function Heatmap({
   rows,
   cols
 }) {
-  const heat = v => v >= 80 ? "#159A57" : v >= 55 ? "#6FA52B" : v >= 30 ? "#D98300" : "#DC4046";
+  const heat = v => v == null ? "#D9DEE3" : v >= 80 ? "#159A57" : v >= 55 ? "#6FA52B" : v >= 30 ? "#D98300" : "#DC4046";
   return /*#__PURE__*/React.createElement("div", {
     className: "heat",
     style: {
@@ -2118,10 +2118,11 @@ function Heatmap({
     className: "cell",
     key: j,
     style: {
-      background: heat(v)
+      background: heat(v),
+      color: v == null ? "#8A93A0" : undefined
     },
-    title: `${cols[j]}: ${v}%`
-  }, v)))));
+    title: v == null ? `${cols[j]}: sin datos aún` : `${cols[j]}: ${v}%`
+  }, v == null ? "—" : v)))));
 }
 
 // Skeleton loading state shown briefly on refresh.
@@ -4706,7 +4707,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         name: v.name,
         ini: v.ini,
         color: v.color,
-        vals: [Math.max(0, v.u24 - 6), Math.max(0, v.u24 - 2), Math.min(100, v.u24 + 3), v.u24]
+        vals: v.weekly && v.weekly.u24 ? v.weekly.u24.slice(0, 4) : [null, null, null, null]
       }))
     }))));
   };
@@ -5404,25 +5405,25 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     for (let k = 0; k < rem; k++) fl[fr[k % fl.length].i]++;
     return fl;
   }
+  // Datos semanales REALES desde Kommo (5 semanas: 1-7,8-14,15-21,22-28,29-31).
   const weeklyOf = v => {
-    const cur = splitInt(v.cierres, SEM_W);
+    const cur = v.weekly && v.weekly.c || [0, 0, 0, 0, 0];
+    const curM = v.weekly && v.weekly.m || [0, 0, 0, 0, 0];
     return {
       cur,
-      curM: cur.map(n => n * v.ticket),
-      tot: v.cierres,
-      totM: v.cierres * v.ticket
+      curM,
+      tot: cur.reduce((a, b) => a + b, 0),
+      totM: curM.reduce((a, b) => a + b, 0)
     };
   };
-  // Mes anterior: total derivado de prevLeads y una distribución semanal distinta (forma diferente).
-  const SEM_W_PREV = [0.22, 0.18, 0.26, 0.2, 0.14];
   const weeklyPrev = v => {
-    const ratio = v.prevLeads ? v.prevLeads / (v.leads || 1) : 0.85;
-    const p = Math.max(0, Math.round(v.cierres * ratio));
-    const cur = splitInt(p, SEM_W_PREV);
+    const cur = v.weeklyPrev && v.weeklyPrev.c || [0, 0, 0, 0, 0];
+    const curM = v.weeklyPrev && v.weeklyPrev.m || [0, 0, 0, 0, 0];
     return {
       cur,
-      totM: p * v.ticket,
-      tot: p
+      curM,
+      tot: cur.reduce((a, b) => a + b, 0),
+      totM: curM.reduce((a, b) => a + b, 0)
     };
   };
   window.ViewSemanal = function () {
@@ -5433,7 +5434,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       wk: weeklyOf(v),
       pv: weeklyPrev(v)
     }));
-    const valOf = (d, wi, prev) => isC ? prev ? d.pv.cur[wi] : d.wk.cur[wi] : prev ? d.pv.cur[wi] * d.v.ticket : d.wk.curM[wi];
+    const valOf = (d, wi, prev) => isC ? prev ? d.pv.cur[wi] : d.wk.cur[wi] : prev ? d.pv.curM[wi] : d.wk.curM[wi];
     const allVals = [];
     SEM_WEEKS.forEach((_, wi) => data.forEach(d => {
       allVals.push(valOf(d, wi, false), valOf(d, wi, true));
@@ -5937,7 +5938,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       progPct = Math.round(curDay / dim * 100);
     const conv = Math.round(G.cierres / G.leads * 100);
     const base = Math.round(G.cierres / curDay * dim);
-    const conv1 = Math.round(G.leads * (conv + 1) / 100);
+    const convExact = G.leads ? G.cierres / G.leads * 100 : 0;
+    const projLeads = curDay ? Math.round(G.leads / curDay * dim) : G.leads;
+    const conv1 = Math.round(projLeads * (convExact + 1) / 100);
     const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
     const extra = Math.round(backlog * conv / 100);
     const resc = base + extra;
