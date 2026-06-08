@@ -286,6 +286,30 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     # ordena: por cierres desc, así el color/índice es estable
     names.sort(key=lambda n: (-vcur[n]["cierres"], -vcur[n]["leads"]))
 
+    # ── calidad de datos REAL (recorre los leads del mes una vez) ──
+    _abiertos_sin_valor = 0
+    _sin_suc = 0
+    _contact_leads = defaultdict(int)   # contact_id -> # de leads (para duplicados)
+    for ld in cur:
+        st = stage_map.get(ld.get("status_id"), {"cls": "other"})
+        _is_open = st["cls"] not in ("compradores", "perdido")
+        if _is_open and not (ld.get("price") or 0):
+            _abiertos_sin_valor += 1
+        # sin sucursal: ni tag ni sufijo de vendedora
+        _has_suc = False
+        for t in ((ld.get("_embedded", {}) or {}).get("tags") or []):
+            n = t.get("name", "").lower()
+            if any(k in n for k in ("mia", "plaza", "buenos", "aires", "central")):
+                _has_suc = True; break
+        if not _has_suc:
+            rn = user_map.get(ld.get("responsible_user_id"), "")
+            if " - " not in rn:
+                _sin_suc += 1
+        for c in ((ld.get("_embedded", {}) or {}).get("contacts") or []):
+            if c.get("id"): _contact_leads[c["id"]] += 1
+    _dup_contactos = sum(1 for c, n in _contact_leads.items() if n >= 2)
+    _dup_fichas    = sum(n for c, n in _contact_leads.items() if n >= 2)
+
     team = []
     for i, name in enumerate(names):
         d = vcur[name]; pv = vprev.get(name, blank_vendor())
@@ -355,10 +379,11 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
         "backlog": backlog, "backlogPct": round(backlog / G_leads * 100) if G_leads else 0,
         "criticos7d": 0,   # se calcula real más abajo desde backlog_rows
         "nuncaTocados": nunca,
-        "sinSucursalFichas": sum(1 for n in names if suc_of.get(n) == "Sin sucursal"),
-        "sinSucursalPct": 0,
-        "abiertosSinValor": G_leads - G_cierres,
-        "duplicadosTel": 0, "duplicadosFichas": 0,
+        "sinSucursalFichas": _sin_suc,
+        "sinSucursalPct": round(_sin_suc / G_leads * 100) if G_leads else 0,
+        "abiertosSinValor": _abiertos_sin_valor,
+        "abiertosSinValorPct": round(_abiertos_sin_valor / G_leads * 100) if G_leads else 0,
+        "duplicadosTel": _dup_contactos, "duplicadosFichas": _dup_fichas,
         "interesado": interes_tot, "agendado": agendado_tot,
     }
 
@@ -392,12 +417,17 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     def stage_sum(cls_list):
         return sum(c for n in names for sn, c in vcur[n]["stage"].items()
                    if classify_stage(sn) in cls_list)
+    _cot = sum(vcur[n]['cotizacion'] for n in names)
+    # Embudo monótono decreciente (cada etapa contiene a la siguiente):
+    # Leads ⊇ Calificados (interesado+cotización+agendado+compradores) ⊇
+    # En cotización/visita (cotización+agendado+compradores) ⊇ Compradores.
+    _calif = metrics["interesado"] + _cot + agendado_tot + G_cierres
+    _avanz = _cot + agendado_tot + G_cierres
     funnel2 = [
-        {"n": "Leads del mes",     "v": G_leads,             "c": "#27313F"},
-        {"n": "Sin respuesta",     "v": noResp,              "c": "#646E7B"},
-        {"n": "Calificados",       "v": metrics["interesado"] + sum(vcur[n]['cotizacion'] for n in names), "c": "#2E6FE0"},
-        {"n": "En etapas avanz.",  "v": agendado_tot + sum(vcur[n]['cotizacion'] for n in names), "c": "#00B5AD"},
-        {"n": "Compradores",       "v": G_cierres,           "c": "#159A57"},
+        {"n": "Leads del mes",          "v": G_leads,   "c": "#27313F"},
+        {"n": "Calificados",            "v": _calif,    "c": "#2E6FE0"},
+        {"n": "En cotización o visita", "v": _avanz,    "c": "#00B5AD"},
+        {"n": "Compradores",            "v": G_cierres, "c": "#159A57"},
     ]
     funnel = [{"name": sn, "count": stage_tot.get(sn, 0)} for sn in
               ["Nueva consulta", "Interesado", "Cotización enviada",
