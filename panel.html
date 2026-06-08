@@ -521,7 +521,9 @@ html[data-theme="dark"] .scrim{background:rgba(0,0,0,.42)}
 .drawer-name{font-weight:800;font-size:1.1rem;letter-spacing:-.3px}
 .drawer-close{border:none;background:var(--bg);width:34px;height:34px;border-radius:9px;font-size:1.3rem;color:var(--muted);cursor:pointer;line-height:1;flex-shrink:0}
 .drawer-close:hover{background:var(--line);color:var(--text)}
-.drawer-body{padding:20px 22px 40px;overflow-y:auto}
+.drawer-body{padding:20px 22px 40px;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+body.drawer-open .scroll{overflow:hidden}
+body.drawer-open{overflow:hidden}
 .dr-sec{font-size:.64rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--faint);margin:22px 0 11px}
 .dr-sec:first-child{margin-top:0}
 html[data-theme="dark"] .dr-sec{font-family:var(--mono)}
@@ -1293,6 +1295,9 @@ html[data-theme="dark"] .meter,html[data-theme="dark"] .mbar{box-shadow:inset 0 
   @keyframes navFlash{0%{opacity:0}30%{opacity:.9}100%{opacity:0}}
 }
 
+.lead-link{color:var(--brand-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--brand);cursor:pointer}
+.lead-link:hover{color:var(--brand);border-bottom-style:solid}
+
 </style>
 </head>
 <body>
@@ -1603,7 +1608,7 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 </script>
 <script>
 /* === DATOS DEL MES (window.PANEL_DATA) — generar.py reemplaza este bloque === */
-window.PANEL_DATA = {"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 8, "daysInMonth": 30, "updated": "08/06 00:52", "archives": [{"label": "Junio 2026", "url": "#"}, {"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 381, "prevLeads": 411, "cierres": 24, "pipeline": 94560, "ticket": 3940}, "funnel2": [{"n": "Leads del mes", "v": 381, "c": "#27313F"}, {"n": "Calificados", "v": 200, "c": "#2E6FE0"}, {"n": "En cotización o visita", "v": 183, "c": "#00B5AD"}, {"n": "Compradores", "v": 24, "c": "#159A57"}], "stagesGlobal": [{"name": "Cotización enviada", "count": 143, "pct": 38, "color": "#7A4AD9"}, {"name": "Nueva consulta", "count": 136, "pct": 36, "color": "#27313F"}, {"name": "No Responden", "count": 43, "pct": 11, "color": "#646E7B"}, {"name": "Compradores", "count": 24, "pct": 6, "color": "#159A57"}, {"name": "Interesado", "count": 17, "pct": 4, "color": "#2E6FE0"}, {"name": "Agendado / Visita", "count": 16, "pct": 4, "color": "#D98300"}, {"name": "Pedido cancelado – perdido", "count": 2, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 42, "manualPct": 11, "auto": 339, "autoPct": 89}, "channels": [{"ic": "⚙", "name": "Automático (bot)", "leads": 339, "pct": 89, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}, {"ic": "✍", "name": "Carga manual vendedora", "leads": 31, "pct": 8, "cierres": 16, "conv": 52, "ticket": 3322, "pipeline": 53160, "cls": "green"}, {"ic": "🚶", "name": "Walk-in (Tienda)", "leads": 11, "pct": 3, "cierres": 8, "conv": 73, "ticket": 5175, "pipeline": 41400, "cls": "green"}], "metrics": {"noResp": 43, "noRespPct": 11, "backlog": 99, "backlogPct": 26, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 349, "abiertosSinValorPct": 92, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 17, "agendado": 16}, "leadsMomPct": -7, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 82, "prevLeads": 69, "cierres": 11, "conv": 13.4, "ticket": 5028, "value": 55310, "calif": 40, "califPct": 49, "noResp": 5, "noRespPct": 6, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 24, "metaCierres": 35, "metaMonto": 150000, "v": "green", "prev": {"leads": 69, "cierres": 34, "visitas": 0, "ticket": 3904, "value": 132720}, "origen": {"manual": 14, "bot": 68}, "weekly": {"c": [11, 0, 0, 0, 0], "m": [55310, 0, 0, 0, 0], "u24": [100, null, null, null, null]}, "weeklyPrev": {"c": [2, 6, 8, 18, 0], "m": [11220, 24870, 26660, 69970, 0]}}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 82, "prevLeads": 103, "cierres": 7, "conv": 8.5, "ticket": 3370, "value": 23590, "calif": 25, "califPct": 30, "noResp": 29, "noRespPct": 35, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 4, "metaCierres": 45, "metaMonto": 250000, "v": "green", "prev": {"leads": 103, "cierres": 46, "visitas": 1, "ticket": 5193, "value": 238870}, "origen": {"manual": 13, "bot": 69}, "weekly": {"c": [7, 0, 0, 0, 0], "m": [23590, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [4, 10, 16, 15, 1], "m": [19000, 36480, 103220, 77750, 2420]}}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 77, "prevLeads": 112, "cierres": 6, "conv": 7.8, "ticket": 2610, "value": 15660, "calif": 38, "califPct": 49, "noResp": 3, "noRespPct": 4, "agendado": 0, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 25, "metaCierres": 40, "metaMonto": 160000, "v": "green", "prev": {"leads": 112, "cierres": 36, "visitas": 65, "ticket": 3773, "value": 135833}, "origen": {"manual": 9, "bot": 68}, "weekly": {"c": [6, 0, 0, 0, 0], "m": [15660, 0, 0, 0, 0], "u24": [100, null, null, null, null]}, "weeklyPrev": {"c": [7, 12, 3, 6, 8], "m": [26624, 41929, 26020, 16140, 25120]}}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 74, "prevLeads": 127, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 25, "califPct": 34, "noResp": 6, "noRespPct": 8, "agendado": 4, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 23, "metaCierres": 35, "metaMonto": 160000, "v": "green", "prev": {"leads": 127, "cierres": 28, "visitas": 11, "ticket": 5222, "value": 146225}, "origen": {"manual": 6, "bot": 68}, "weekly": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [2, 5, 9, 9, 3], "m": [8670, 36226, 34150, 50821, 16358]}}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 66, "prevLeads": 0, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 48, "califPct": 73, "noResp": 0, "noRespPct": 0, "agendado": 6, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 23, "metaCierres": 8, "metaMonto": 20000, "v": "green", "prev": {"leads": 0, "cierres": 0, "visitas": 3, "ticket": 0, "value": 0}, "origen": {"manual": 0, "bot": 66}, "weekly": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0]}, "nuevo": true}], "funnel": [{"name": "Nueva consulta", "count": 136}, {"name": "Interesado", "count": 17}, {"name": "Cotización enviada", "count": 143}, {"name": "Agendado / Visita", "count": 16}, {"name": "Compradores", "count": 24}, {"name": "No Responden", "count": 43}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "99"}, {"id": "alertas", "label": "Alertas", "badge": "4"}, {"id": "presentacion", "label": "Presentación"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "stagesByV": {"Carola Chavez": [["Cotización enviada", 30], ["Nueva consulta", 24], ["Compradores", 11], ["Interesado", 7], ["No Responden", 5], ["Agendado / Visita", 3], ["Pedido cancelado – perdido", 2]], "Isabel Robledo": [["No Responden", 29], ["Nueva consulta", 21], ["Cotización enviada", 18], ["Compradores", 7], ["Interesado", 4], ["Agendado / Visita", 3]], "Maria Flores": [["Cotización enviada", 37], ["Nueva consulta", 30], ["Compradores", 6], ["No Responden", 3], ["Interesado", 1]], "Mirian Salazar": [["Nueva consulta", 43], ["Cotización enviada", 19], ["No Responden", 6], ["Agendado / Visita", 4], ["Interesado", 2]], "Jonathan Monje": [["Cotización enviada", 39], ["Nueva consulta", 18], ["Agendado / Visita", 6], ["Interesado", 3]]}, "backlogRows": [{"c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32973914", "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32981548", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 6, "nh": false}, {"c": "Lead #33076214", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33081926", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #32973622", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33093514", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33075646", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33100378", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33103512", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33104252", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33105772", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33133962", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33123508", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33136380", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33117240", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33131284", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33119226", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33116916", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33131502", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33117168", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33102848", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071386", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33064628", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071660", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "TIENDA-Jorge Hurtado", "e": "Cotización enviada", "r": "Isabel Robledo", "d": 5, "nh": false}, {"c": "Lead #33110758", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33136856", "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33109526", "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33143036", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33146788", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33110506", "e": "Agendado / Visita", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33124946", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33100784", "e": "Cotización enviada", "r": "Carola Chavez", "d": 4, "nh": false}, {"c": "Lead #33152748", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33123408", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33155786", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33068374", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33158850", "e": "Interesado", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33146688", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}], "alerts": [{"sev": "red", "who": "Mirian Salazar", "t": "Conversión 0.0% — la más baja del equipo", "d": "0 cierres sobre 74 leads, bajo el umbral de 4%.", "act": "Coaching + auditar cotizaciones."}, {"sev": "red", "who": "Datos / Gerencia", "t": "Muchos deals abiertos sin valor cargado", "d": "No se puede priorizar el pipeline por monto.", "act": "Cargar valor estimado al cotizar."}, {"sev": "amber", "who": "Gerencia", "t": "Leads ↓7% vs mismo periodo de Mayo (381 vs 411)", "d": "Comparado al día 8 de ambos meses. Caída de captación respecto al periodo equivalente.", "act": "Revisar inversión en canales."}, {"sev": "green", "who": "Equipo", "t": "La carga manual es la que convierte", "d": "Manual 52% vs bot 0%. Priorizar captación manual de calidad.", "act": "Documentar el playbook de la mejor vendedora."}]};
+window.PANEL_DATA = {"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 8, "daysInMonth": 30, "updated": "08/06 01:04", "archives": [{"label": "Junio 2026", "url": "#"}, {"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 383, "prevLeads": 411, "cierres": 24, "pipeline": 94560, "ticket": 3940}, "funnel2": [{"n": "Leads del mes", "v": 383, "c": "#27313F"}, {"n": "Calificados", "v": 201, "c": "#2E6FE0"}, {"n": "En cotización o visita", "v": 184, "c": "#00B5AD"}, {"n": "Compradores", "v": 24, "c": "#159A57"}], "stagesGlobal": [{"name": "Cotización enviada", "count": 144, "pct": 38, "color": "#7A4AD9"}, {"name": "Nueva consulta", "count": 137, "pct": 36, "color": "#27313F"}, {"name": "No Responden", "count": 43, "pct": 11, "color": "#646E7B"}, {"name": "Compradores", "count": 24, "pct": 6, "color": "#159A57"}, {"name": "Interesado", "count": 17, "pct": 4, "color": "#2E6FE0"}, {"name": "Agendado / Visita", "count": 16, "pct": 4, "color": "#D98300"}, {"name": "Pedido cancelado – perdido", "count": 2, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 42, "manualPct": 11, "auto": 341, "autoPct": 89}, "channels": [{"ic": "⚙", "name": "Automático (bot)", "leads": 341, "pct": 89, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}, {"ic": "✍", "name": "Carga manual vendedora", "leads": 31, "pct": 8, "cierres": 16, "conv": 52, "ticket": 3322, "pipeline": 53160, "cls": "green"}, {"ic": "🚶", "name": "Walk-in (Tienda)", "leads": 11, "pct": 3, "cierres": 8, "conv": 73, "ticket": 5175, "pipeline": 41400, "cls": "green"}], "metrics": {"noResp": 43, "noRespPct": 11, "backlog": 101, "backlogPct": 26, "criticos7d": 0, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 351, "abiertosSinValorPct": 92, "duplicadosTel": 1, "duplicadosFichas": 2, "interesado": 17, "agendado": 16}, "leadsMomPct": -7, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 83, "prevLeads": 69, "cierres": 11, "conv": 13.3, "ticket": 5028, "value": 55310, "calif": 40, "califPct": 48, "noResp": 5, "noRespPct": 6, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 24, "metaCierres": 35, "metaMonto": 150000, "v": "green", "prev": {"leads": 69, "cierres": 34, "visitas": 0, "ticket": 3904, "value": 132720}, "origen": {"manual": 14, "bot": 69}, "weekly": {"c": [11, 0, 0, 0, 0], "m": [55310, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [2, 6, 8, 18, 0], "m": [11220, 24870, 26660, 69970, 0]}}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 82, "prevLeads": 103, "cierres": 7, "conv": 8.5, "ticket": 3370, "value": 23590, "calif": 25, "califPct": 30, "noResp": 29, "noRespPct": 35, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 4, "metaCierres": 45, "metaMonto": 250000, "v": "green", "prev": {"leads": 103, "cierres": 46, "visitas": 1, "ticket": 5193, "value": 238870}, "origen": {"manual": 13, "bot": 69}, "weekly": {"c": [7, 0, 0, 0, 0], "m": [23590, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [4, 10, 16, 15, 1], "m": [19000, 36480, 103220, 77750, 2420]}}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 78, "prevLeads": 112, "cierres": 6, "conv": 7.7, "ticket": 2610, "value": 15660, "calif": 39, "califPct": 50, "noResp": 3, "noRespPct": 4, "agendado": 0, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 26, "metaCierres": 40, "metaMonto": 160000, "v": "green", "prev": {"leads": 112, "cierres": 36, "visitas": 65, "ticket": 3773, "value": 135833}, "origen": {"manual": 9, "bot": 69}, "weekly": {"c": [6, 0, 0, 0, 0], "m": [15660, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [7, 12, 3, 6, 8], "m": [26624, 41929, 26020, 16140, 25120]}}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 74, "prevLeads": 127, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 25, "califPct": 34, "noResp": 6, "noRespPct": 8, "agendado": 4, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 24, "metaCierres": 35, "metaMonto": 160000, "v": "green", "prev": {"leads": 127, "cierres": 28, "visitas": 11, "ticket": 5222, "value": 146225}, "origen": {"manual": 6, "bot": 68}, "weekly": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [2, 5, 9, 9, 3], "m": [8670, 36226, 34150, 50821, 16358]}}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 66, "prevLeads": 0, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 48, "califPct": 73, "noResp": 0, "noRespPct": 0, "agendado": 6, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 23, "metaCierres": 8, "metaMonto": 20000, "v": "green", "prev": {"leads": 0, "cierres": 0, "visitas": 3, "ticket": 0, "value": 0}, "origen": {"manual": 0, "bot": 66}, "weekly": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0], "u24": [100, 100, null, null, null]}, "weeklyPrev": {"c": [0, 0, 0, 0, 0], "m": [0, 0, 0, 0, 0]}, "nuevo": true}], "funnel": [{"name": "Nueva consulta", "count": 137}, {"name": "Interesado", "count": 17}, {"name": "Cotización enviada", "count": 144}, {"name": "Agendado / Visita", "count": 16}, {"name": "Compradores", "count": 24}, {"name": "No Responden", "count": 43}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "101"}, {"id": "alertas", "label": "Alertas", "badge": "4"}, {"id": "presentacion", "label": "Presentación"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "stagesByV": {"Carola Chavez": [["Cotización enviada", 30], ["Nueva consulta", 25], ["Compradores", 11], ["Interesado", 7], ["No Responden", 5], ["Agendado / Visita", 3], ["Pedido cancelado – perdido", 2]], "Isabel Robledo": [["No Responden", 29], ["Nueva consulta", 21], ["Cotización enviada", 18], ["Compradores", 7], ["Interesado", 4], ["Agendado / Visita", 3]], "Maria Flores": [["Cotización enviada", 38], ["Nueva consulta", 30], ["Compradores", 6], ["No Responden", 3], ["Interesado", 1]], "Mirian Salazar": [["Nueva consulta", 43], ["Cotización enviada", 19], ["No Responden", 6], ["Agendado / Visita", 4], ["Interesado", 2]], "Jonathan Monje": [["Cotización enviada", 39], ["Nueva consulta", 18], ["Agendado / Visita", 6], ["Interesado", 3]]}, "backlogRows": [{"c": "Lead #32947474", "id": 32947474, "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32973914", "id": 32973914, "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32981548", "id": 32981548, "e": "Nueva consulta", "r": "Jonathan Monje", "d": 6, "nh": false}, {"c": "Lead #33076214", "id": 33076214, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33081926", "id": 33081926, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #32973622", "id": 32973622, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33093514", "id": 33093514, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33075646", "id": 33075646, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33100378", "id": 33100378, "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33103512", "id": 33103512, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33104252", "id": 33104252, "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33105772", "id": 33105772, "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33133962", "id": 33133962, "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33123508", "id": 33123508, "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33136380", "id": 33136380, "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33117240", "id": 33117240, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33131284", "id": 33131284, "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33119226", "id": 33119226, "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33116916", "id": 33116916, "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33131502", "id": 33131502, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33117168", "id": 33117168, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33102848", "id": 33102848, "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071386", "id": 33071386, "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33064628", "id": 33064628, "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071660", "id": 33071660, "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "TIENDA-Jorge Hurtado", "id": 32957310, "e": "Cotización enviada", "r": "Isabel Robledo", "d": 5, "nh": false}, {"c": "Lead #33110758", "id": 33110758, "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33136856", "id": 33136856, "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33109526", "id": 33109526, "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33143036", "id": 33143036, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33146788", "id": 33146788, "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33110506", "id": 33110506, "e": "Agendado / Visita", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33124946", "id": 33124946, "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33100784", "id": 33100784, "e": "Cotización enviada", "r": "Carola Chavez", "d": 4, "nh": false}, {"c": "Lead #33152748", "id": 33152748, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33123408", "id": 33123408, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33155786", "id": 33155786, "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33068374", "id": 33068374, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33158850", "id": 33158850, "e": "Interesado", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33146688", "id": 33146688, "e": "Nueva consulta", "r": "Mirian Salazar", "d": 4, "nh": false}], "alerts": [{"sev": "red", "who": "Mirian Salazar", "t": "Conversión 0.0% — la más baja del equipo", "d": "0 cierres sobre 74 leads, bajo el umbral de 4%.", "act": "Coaching + auditar cotizaciones."}, {"sev": "red", "who": "Datos / Gerencia", "t": "Muchos deals abiertos sin valor cargado", "d": "No se puede priorizar el pipeline por monto.", "act": "Cargar valor estimado al cotizar."}, {"sev": "amber", "who": "Gerencia", "t": "Leads ↓7% vs mismo periodo de Mayo (383 vs 411)", "d": "Comparado al día 8 de ambos meses. Caída de captación respecto al periodo equivalente.", "act": "Revisar inversión en canales."}, {"sev": "green", "who": "Equipo", "t": "La carga manual es la que convierte", "d": "Manual 52% vs bot 0%. Priorizar captación manual de calidad.", "act": "Documentar el playbook de la mejor vendedora."}], "dupRows": [{"phone": "78009484", "fichas": 2, "vendedoras": "Maria Flores", "etapas": "Compradores", "leadIds": [32973734, 32973816], "estado": "Fusionar"}], "kommoBase": "https://eanez.kommo.com"};
 /* === Helpers de formato === */
 // Helpers — moneda local: Boliviano (Bs)
 window.fmtMoney = (n) => "Bs " + Math.round(n).toLocaleString("en-US");
@@ -2182,7 +2187,11 @@ function ProfileDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.body.classList.add("drawer-open");
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.classList.remove("drawer-open");
+    };
   }, [onClose]);
   const cerrado = v ? Math.round(v.cierres * v.ticket) : 0;
   const diff = v ? v.leads - (v.prevLeads || 0) : 0;
@@ -2470,7 +2479,11 @@ function SucursalDrawer({
       if (e.key === "Escape") onClose();
     };
     document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+    document.body.classList.add("drawer-open");
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.classList.remove("drawer-open");
+    };
   }, [onClose]);
   const vends = name ? D.team.filter(v => v.suc === name) : [];
   const metas = window.useMetas();
@@ -4928,7 +4941,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       return /*#__PURE__*/React.createElement("tr", {
         key: r.c,
         className: st === "done" ? "r-done" : st === "snooze" ? "r-snooze" : ""
-      }, /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("b", {
+      }, /*#__PURE__*/React.createElement("td", null, r.id ? /*#__PURE__*/React.createElement("a", {
+        className: "lead-link",
+        href: `${D.kommoBase}/leads/detail/${r.id}`,
+        target: "_blank",
+        rel: "noopener noreferrer"
+      }, r.c) : /*#__PURE__*/React.createElement("b", {
         className: "rc-name",
         style: {
           fontWeight: 700
@@ -4986,7 +5004,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })))));
     })))), /*#__PURE__*/React.createElement("div", {
       className: "note"
-    }, "Muestra representativa de las fichas m\xE1s antiguas de ", totalBk, " en backlog. En Kommo muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\". En producci\xF3n ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " inyecta las 50 reales."));
+    }, "Las 50 fichas m\xE1s antiguas del backlog real (", totalBk, " en total). Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
   };
 
   /* ===== ALERTAS ===== */
@@ -6219,9 +6237,13 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "card"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Duplicados",
-      h3: `${D.metrics.duplicadosTel} teléfonos en 2+ fichas`,
-      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n."
-    }), /*#__PURE__*/React.createElement("table", {
+      h3: `${D.metrics.duplicadosTel} ${D.metrics.duplicadosTel === 1 ? "teléfono" : "teléfonos"} en 2+ fichas`,
+      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n. Toca una fila para abrir el lead en Kommo."
+    }), !D.dupRows || D.dupRows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
+      title: "Sin tel\xE9fonos duplicados",
+      desc: "Ning\xFAn cliente del mes aparece con el mismo tel\xE9fono en dos o m\xE1s fichas. Buena se\xF1al de higiene de datos.",
+      icon: "datos"
+    }) : /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
         marginTop: 6
@@ -6230,72 +6252,34 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "r"
     }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Vendedoras involucradas"), /*#__PURE__*/React.createElement("th", null, "Etapas"), /*#__PURE__*/React.createElement("th", {
       className: "r"
-    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+    }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, D.dupRows.map((r, i) => /*#__PURE__*/React.createElement("tr", {
+      key: i,
+      className: "clickable",
+      onClick: () => window.open(`${D.kommoBase}/leads/detail/${r.leadIds[0]}`, "_blank", "noopener")
+    }, /*#__PURE__*/React.createElement("td", {
       className: "num"
-    }, "+591 70919189"), /*#__PURE__*/React.createElement("td", {
+    }, /*#__PURE__*/React.createElement("a", {
+      className: "lead-link",
+      href: `${D.kommoBase}/leads/detail/${r.leadIds[0]}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: e => e.stopPropagation()
+    }, r.phone)), /*#__PURE__*/React.createElement("td", {
       className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
+    }, r.fichas), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, "Maria Flores \xB7 Carola Chavez"), /*#__PURE__*/React.createElement("td", {
+    }, r.vendedoras), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, "Nueva consulta \xB7 No Responden"), /*#__PURE__*/React.createElement("td", {
+    }, r.etapas), /*#__PURE__*/React.createElement("td", {
       className: "r"
     }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "red"
-    }, "Revisar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "69907245"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Isabel Robledo \xB7 Mirian Salazar"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "No Responden \xB7 Cotizaci\xF3n"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "red"
-    }, "Revisar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "+591 72693301"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "3"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Maria Flores"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Cotizaci\xF3n \xB7 Nueva \xB7 Compradores"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "+591 71384023"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Maria Flores \xB7 Carola Chavez"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Cotizaci\xF3n enviada"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
-      className: "num"
-    }, "69152708"), /*#__PURE__*/React.createElement("td", {
-      className: "r num"
-    }, "2"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Carola Chavez \xB7 Maria Flores"), /*#__PURE__*/React.createElement("td", {
-      className: "ww"
-    }, "Interesado \xB7 Cotizaci\xF3n"), /*#__PURE__*/React.createElement("td", {
-      className: "r"
-    }, /*#__PURE__*/React.createElement(Pill, {
-      tone: "amber"
-    }, "Fusionar"))))), /*#__PURE__*/React.createElement("div", {
+      tone: r.estado === "Fusionar" ? "amber" : "red"
+    }, r.estado)))))), D.dupRows && D.dupRows.length > 0 && /*#__PURE__*/React.createElement("div", {
       className: "note",
       style: {
         marginTop: 12
       }
-    }, "Muestra de 5 de 89 fichas duplicadas. En producci\xF3n ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " inyecta el listado completo.")));
+    }, D.metrics.duplicadosFichas, " fichas en ", D.metrics.duplicadosTel, " grupos de tel\xE9fono repetido (hasta 50 mostrados). Detecci\xF3n real desde los contactos de Kommo.")));
   };
 })();
 
