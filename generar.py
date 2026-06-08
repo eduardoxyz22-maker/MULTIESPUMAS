@@ -714,7 +714,8 @@ def main():
             if any(k in ((c.get("code") or "") + (c.get("name") or "")).lower()
                    for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
         contract_field_id = next((c["id"] for c in cfs
-            if "contrato" in ((c.get("code") or "") + (c.get("name") or "")).lower()), None)
+            if "contrato" in ((c.get("code") or "") + (c.get("name") or "")).lower()
+            and c.get("type") in ("date", "date_time")), None)
         # buscar también campos de fecha por si el nombre no incluye "contrato"
         _date_fields = [f"{c.get('name','?')}#{c.get('id')}[{c.get('type','?')}]"
                         for c in cfs if c.get("type") in ("date", "date_time", "birthday")]
