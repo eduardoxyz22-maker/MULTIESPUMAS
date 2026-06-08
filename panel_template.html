@@ -2837,10 +2837,10 @@ window.useMetas = useMetas;
 window.MetaStepper = MetaStepper;
 window.cerradoOf = v => v.value != null ? v.value : v.cierres * v.ticket;
 // Proyección a fin de mes: extrapola el RITMO de ventas de los días corridos
-// (montos/ticket reales) hasta el último día. El pipeline en juego (que cierra
-// ~90%) actúa de PISO para que la proyección nunca quede por debajo de lo casi seguro.
+// (montos/ticket reales) hasta el último día. El pipeline en juego (que se cierra
+// casi al 100%) actúa de PISO para que la proyección nunca quede por debajo de lo seguro.
 window.PROY = {
-  pipe: 0.90
+  pipe: 1.00
 };
 window.proy = function (cerrado, pipeline) {
   cerrado = cerrado || 0;
@@ -6226,7 +6226,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       progPct = Math.round(curDay / dim * 100);
     const metas = window.useMetas ? window.useMetas() : {};
     const metaColor = p => p >= 100 ? "var(--green)" : p >= 70 ? "var(--amber)" : "var(--red)";
-    // Proyección a fin de mes POR VENDEDORA (ritmo real extrapolado). El equipo = suma.
+    // Proyección base POR VENDEDORA: ritmo real extrapolado a fin de mes (pipeline 100% piso).
     const baseRows = T.map(v => {
       const P = window.proy(v.value, v.pipeline);
       const meta = metas[v.name] || v.metaMonto || 0;
@@ -6249,13 +6249,58 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const totMeta = baseRows.reduce((s, r) => s + r._meta, 0);
     const totPct = totMeta ? Math.round(totFin / totMeta * 100) : 0;
     const paceDay = curDay ? Math.round(totCerr / curDay) : 0;
-    const faltaMeta = Math.max(0, totMeta - totFin);
+    // Escenarios-palanca (guía): qué pasa si mejora conversión o ticket. Marco del análisis comercial.
+    const convF = G.leads ? G.cierres / G.leads : 0;
+    const projLeadsF = curDay ? G.leads / curDay * dim : G.leads;
+    const ticket = G.ticket || (G.cierres ? G.cerrado / G.cierres : 0);
+    const DCONV = 0.01,
+      DTICKET = 0.10;
+    const baseProj = totFin;
+    const convExtra = Math.round(projLeadsF * DCONV * ticket);
+    const escConv = baseProj + convExtra;
+    const escTicket = Math.round(baseProj * (1 + DTICKET));
+    const escBest = Math.round((baseProj + convExtra) * (1 + DTICKET));
+    const pctMeta = x => totMeta ? Math.round(x / totMeta * 100) : 0;
+    const dlt = x => x - baseProj;
+    const convNow = convF * 100;
+    const escen = [{
+      ic: "📊",
+      tag: "Base — ritmo actual",
+      v: baseProj,
+      pin: "Proyección",
+      hot: true,
+      d: `Al ritmo de ${money(paceDay)}/día de los primeros ${curDay} días + el 100% del pipeline en juego.`
+    }, {
+      ic: "📈",
+      tag: "+1 pp conversión",
+      v: escConv,
+      pin: "",
+      hot: false,
+      d: `Si la conversión sube de ${convNow.toFixed(1)}% a ${(convNow + DCONV * 100).toFixed(1)}% — cerrar 1 de cada 100 leads más.`
+    }, {
+      ic: "💰",
+      tag: "+10% ticket",
+      v: escTicket,
+      pin: "",
+      hot: false,
+      d: `Subiendo el ticket de ${money(Math.round(ticket))} a ${money(Math.round(ticket * (1 + DTICKET)))} con upsell (mejor gama, almohadas, protectores).`
+    }, {
+      ic: "🚀",
+      tag: "Mejor caso",
+      v: escBest,
+      pin: "Combinado",
+      hot: false,
+      d: `Conversión +1pp y ticket +10% a la vez. El techo realista si todo mejora.`
+    }];
+    const faltaMeta = Math.max(0, totMeta - baseProj);
+    const paceNeeded = left ? Math.round(faltaMeta / left) : 0;
+    const convNeeded = projLeadsF && ticket ? totMeta / ticket / projLeadsF * 100 : 0;
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: `Proyección al cierre de ${D.month.toLowerCase()}`,
-      h3: "\xBFA cu\xE1nto llega el equipo a fin de mes?",
-      p: `Extrapola el ritmo de ventas de los primeros ${curDay} días (montos y ticket reales) hasta el día ${dim}. El pipeline en juego — que cierra ~90% — actúa de piso.`
+      h3: "\xBFA cu\xE1nto llegamos y hasta d\xF3nde podr\xEDamos llegar?",
+      p: `La base extrapola el ritmo real de ventas (montos y ticket) al día ${dim}, con el pipeline en juego al 100%. Los escenarios muestran el potencial si mejora la conversión o el ticket.`
     }), /*#__PURE__*/React.createElement("div", {
       className: "card",
       style: {
@@ -6279,8 +6324,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         height: 10,
         background: "var(--line2)",
         borderRadius: 99,
-        overflow: "hidden",
-        position: "relative"
+        overflow: "hidden"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -6306,15 +6350,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         color: "var(--muted)",
         lineHeight: 1.5
       }
-    }, "Al ritmo actual de ", /*#__PURE__*/React.createElement("b", {
+    }, "Al ritmo de ", /*#__PURE__*/React.createElement("b", {
       style: {
         color: "var(--text)"
       }
-    }, money(paceDay), "/d\xEDa"), ", el equipo cerrar\xEDa ", /*#__PURE__*/React.createElement("b", {
+    }, money(paceDay), "/d\xEDa"), ", el equipo cierra ", /*#__PURE__*/React.createElement("b", {
       style: {
         color: "var(--brand-d)"
       }
-    }, money(totFin)), " a fin de mes \u2014 ", totPct, "% de la meta de ", money(totMeta), faltaMeta > 0 ? `, faltarían ${money(faltaMeta)}` : ", superando la meta", ".")), /*#__PURE__*/React.createElement("div", {
+    }, money(totFin)), " a fin de mes \u2014 ", totPct, "% de la meta de ", money(totMeta), ".")), /*#__PURE__*/React.createElement("div", {
       style: {
         textAlign: "center",
         padding: "4px 8px"
@@ -6324,7 +6368,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       style: {
         marginBottom: 4
       }
-    }, "Proyecci\xF3n a fin de mes"), /*#__PURE__*/React.createElement("div", {
+    }, "Proyecci\xF3n base"), /*#__PURE__*/React.createElement("div", {
       className: "num",
       style: {
         fontSize: "2.4rem",
@@ -6344,12 +6388,101 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       style: {
         marginTop: 2
       }
-    }, "cerrado hoy: ", money(totCerr)))), /*#__PURE__*/React.createElement("div", {
+    }, "cerrado hoy: ", money(totCerr)))), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Escenarios",
+      h3: "\xBFHasta d\xF3nde podr\xEDamos llegar?",
+      p: "La base es la proyecci\xF3n al ritmo actual. Cada palanca muestra cu\xE1nto sumar\xEDa mejorar la conversi\xF3n o el ticket promedio."
+    }), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+        gap: 16
+      }
+    }, escen.map((s, i) => /*#__PURE__*/React.createElement("div", {
+      className: "card",
+      key: i,
+      style: {
+        borderTop: `3px solid ${s.hot ? "var(--green)" : "var(--line)"}`,
+        padding: "20px",
+        position: "relative",
+        boxShadow: s.hot ? "0 0 0 1px var(--green), var(--sh)" : "var(--sh)"
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "flex-start",
+        gap: 6,
+        marginBottom: 8
+      }
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "eb",
+      style: {
+        color: s.hot ? "var(--green-ink)" : "var(--faint)"
+      }
+    }, s.ic, " ", s.tag), s.pin && /*#__PURE__*/React.createElement("span", {
+      className: "pill green",
+      style: {
+        fontSize: ".58rem"
+      }
+    }, s.pin)), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1.85rem",
+        fontWeight: 800,
+        color: "var(--brand-d)"
+      }
+    }, money(s.v)), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: ".88rem",
+        fontWeight: 700,
+        color: "var(--muted)",
+        marginTop: 2
+      }
+    }, pctMeta(s.v), "% de la meta"), s.hot ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 7,
+        fontSize: ".7rem",
+        fontWeight: 700,
+        color: "var(--faint)"
+      }
+    }, "punto de partida") : /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 7,
+        fontSize: ".7rem",
+        fontWeight: 700,
+        color: "var(--green-ink)",
+        background: "var(--green-bg)",
+        display: "inline-block",
+        padding: "2px 9px",
+        borderRadius: 6
+      }
+    }, "+", money(dlt(s.v)), " vs base"), /*#__PURE__*/React.createElement("div", {
+      style: {
+        marginTop: 8,
+        fontSize: ".76rem",
+        color: "var(--muted)",
+        lineHeight: 1.5
+      }
+    }, s.d)))), /*#__PURE__*/React.createElement("div", {
+      className: "insight amber"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "ic"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "proyeccion",
+      size: 17,
+      sw: 2.2
+    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "t"
+    }, "Brecha a la meta"), /*#__PURE__*/React.createElement("div", {
+      className: "d"
+    }, "La proyecci\xF3n base (", money(baseProj), ") queda a ", /*#__PURE__*/React.createElement("b", null, money(faltaMeta)), " de la meta (", money(totMeta), "). Para alcanzarla habr\xEDa que cerrar ", /*#__PURE__*/React.createElement("b", null, money(paceNeeded), "/d\xEDa"), " el resto del mes (hoy ", money(paceDay), "/d\xEDa) o llevar la conversi\xF3n al ", /*#__PURE__*/React.createElement("b", null, convNeeded.toFixed(1), "%"), " (hoy ", convNow.toFixed(1), "%). Si la brecha es muy grande, conviene revisar si la meta es alcanzable o acelerar la generaci\xF3n de leads."))), /*#__PURE__*/React.createElement("div", {
       className: "card"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Por vendedora",
       h3: "Proyecci\xF3n individual a fin de mes",
-      p: "Clic en cualquier columna para ordenar. Cada proyecci\xF3n extrapola el ritmo propio de la vendedora."
+      p: "Clic en cualquier columna para ordenar. Cada proyecci\xF3n extrapola el ritmo propio de la vendedora (pipeline al 100%)."
     }), /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
@@ -6413,7 +6546,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       style: {
         marginTop: 12
       }
-    }, "La proyecci\xF3n extrapola el ritmo de cierres de cada vendedora a los ", dim, " d\xEDas del mes. Si ese ritmo proyecta menos que lo ya cerrado + 90% de su pipeline, se usa ese piso. No es \"cerrado + pipeline\": es a cu\xE1nto llega seg\xFAn c\xF3mo viene vendiendo.")), /*#__PURE__*/React.createElement(SectionHead, {
+    }, "La base extrapola el ritmo de cierres de cada vendedora a los ", dim, " d\xEDas, con piso en lo cerrado + 100% de su pipeline. Los escenarios de arriba son a nivel equipo.")), /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Plan",
       h3: "Matriz de acci\xF3n"
     }), /*#__PURE__*/React.createElement("div", {
