@@ -27,6 +27,7 @@ from urllib import request as _rq, parse as _ps, error as _er
 #  CONFIGURACIÓN
 # ─────────────────────────────────────────────────────────────────────────────
 SUBDOMAIN = (os.environ.get("KOMMO_SUBDOMAIN", "") or "").strip() or "eanez"
+WORKER_URL = (os.environ.get("PANEL_WORKER_URL", "") or "").strip()
 BASE_URL  = f"https://{SUBDOMAIN}.kommo.com/api/v4"
 TOKEN     = os.environ.get("KOMMO_TOKEN", "").strip()
 _DIAG     = []   # mensajes de diagnóstico que se incrustan en index.html
@@ -548,6 +549,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "team": team, "funnel": funnel, "nav": nav, "stagesByV": stagesByV,
         "backlogRows": bk_rows, "alerts": alerts, "dupRows": dup_rows[:50],
         "kommoBase": f"https://{SUBDOMAIN}.kommo.com",
+        "workerUrl": WORKER_URL,
     }
 
 def build_archives():
