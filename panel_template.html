@@ -4942,6 +4942,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const [ccJefe, setCcJefe] = React.useState(!!window.__ccJefe);
     const [rowSt, setRowSt] = window.useRowState("heaven_backlog_state_v1");
     const rows = BACKLOG_ROWS.filter(r => {
+      if (filt === "w72" && r.d < 3) return false;
       if (filt === "crit" && r.d < 7) return false;
       if (filt === "nh" && !r.nh) return false;
       if (who && !r.r.includes(who)) return false;
@@ -4956,7 +4957,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const doneN = BACKLOG_ROWS.filter(r => rowSt[r.c] === "done").length;
     const snoozeN = BACKLOG_ROWS.filter(r => rowSt[r.c] === "snooze").length;
     const pendN = BACKLOG_ROWS.length - doneN - snoozeN;
-    const FILTERS = [["all", "Todos"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
+    const FILTERS = [["all", "Todos"], ["w72", "⏰ +72h"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
     }, /*#__PURE__*/React.createElement(SectionHead, {
