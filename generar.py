@@ -321,7 +321,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -405,7 +405,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "color": cfg.get("color") or DEFAULT_COLORS[i % len(DEFAULT_COLORS)],
             "photo": "",
             "leads": d["leads"], "prevLeads": prev_leads_sd, "cierres": d["cierres"],
-            "conv": conv, "ticket": ticket, "value": d["value"], "pipeline": d["pipeline"],
+            "conv": conv, "ticket": ticket, "value": d["value"],
+            "pipeline": (int(round(pipe_by_name.get(name, 0))) if pipe_by_name is not None else d["pipeline"]),
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
@@ -764,19 +765,20 @@ def main():
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
 
-    # ── VENTAS por FECHA CONTRATO: leads cuyo campo "Fecha contrato" cae en el mes,
-    # sin importar cuándo se crearon. Traemos ventana amplia y filtramos por el campo.
+    # ── VENTANA AMPLIA (~300 días): base para pipeline total y ventas por contrato ──
+    print("  📊 pipeline + ventas (ventana amplia)…")
+    wide_start = m_start - datetime.timedelta(days=300)
+    wide = fetch_paginated("/leads", {
+        "with": "contacts",
+        "filter[created_at][from]": int(wide_start.timestamp()),
+        "filter[created_at][to]":   int(m_end.timestamp())},
+        "leads", max_pages=40, sleep=0.12)
+    ms, me = int(m_start.timestamp()), int(m_end.timestamp())
+    ps, pe = int(p_start.timestamp()), int(p_end.timestamp())
+
+    # CERRADO por FECHA CONTRATO: compradores cuyo campo cae en el mes
     won = []; won_prev = []
     if contract_field_id:
-        print("  📅 ventas por Fecha contrato (ventana amplia)…")
-        wide_start = m_start - datetime.timedelta(days=300)
-        wide = fetch_paginated("/leads", {
-            "with": "contacts",
-            "filter[created_at][from]": int(wide_start.timestamp()),
-            "filter[created_at][to]":   int(m_end.timestamp())},
-            "leads", max_pages=40, sleep=0.12)
-        ms, me = int(m_start.timestamp()), int(m_end.timestamp())
-        ps, pe = int(p_start.timestamp()), int(p_end.timestamp())
         for ld in wide:
             if stage_map.get(ld.get("status_id"), {}).get("cls") != "compradores":
                 continue
@@ -788,7 +790,6 @@ def main():
                 won.append(ld)
             elif ps <= cts < pe:
                 won_prev.append(ld)
-        print(f"     → {len(won)} ventas este mes · {len(won_prev)} mes anterior (por contrato)")
     else:
         print("  ⚠ no encontré campo 'Fecha contrato'; uso estado actual", file=sys.stderr)
         for ld in cur:
@@ -797,6 +798,28 @@ def main():
         for ld in prev:
             if stage_map.get(ld.get("status_id"), {}).get("cls") == "compradores":
                 ld["_contract_ts"] = ld.get("created_at", 0); won_prev.append(ld)
+
+    # PIPELINE TOTAL: TODOS los leads ABIERTOS con monto (cualquier fecha) +
+    # lo cerrado este mes. Excluye perdidos y cierres de meses anteriores.
+    pipe_by_name = defaultdict(float)
+    def _nm_of(uid):
+        raw = user_map.get(uid)
+        if not raw:
+            return None
+        return raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
+    for ld in wide:
+        cls = stage_map.get(ld.get("status_id"), {}).get("cls")
+        pr = ld.get("price") or 0
+        if pr > 0 and cls not in ("perdido", "compradores"):
+            nm = _nm_of(ld.get("responsible_user_id"))
+            if nm:
+                pipe_by_name[nm] += pr
+    for ld in won:
+        pr = ld.get("price") or 0
+        nm = _nm_of(ld.get("responsible_user_id"))
+        if nm and pr > 0:
+            pipe_by_name[nm] += pr
+    print(f"     → {len(won)} ventas mes · pipeline total Bs {int(sum(pipe_by_name.values()))}")
 
     # teléfonos de los contactos del mes (para detectar duplicados reales)
     print("  ☎️  contactos del mes…")
@@ -819,7 +842,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
