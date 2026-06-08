@@ -404,6 +404,9 @@ html = html.replace(
 )
 
 html = html.replace('Dashboard Comercial \xb7 Mayo 2025', f'Dashboard Comercial \xb7 {mes} {anio}')
+# Corregir el prerender estatico (evita el parpadeo "Mayo 2025" antes de hidratar)
+html = html.replace('<div class="title-main">Mayo \xb7 2025</div>', f'<div class="title-main">{mes} \xb7 {anio}</div>')
+html = html.replace('Fuente: <b>Mayo 2025</b>', f'Fuente: <b>{mes} {anio}</b>')
 html = re.sub(r'ltima actualizaci\xf3n:.*?</span>',
               f'ltima actualizaci\xf3n: {now.strftime("%d/%m/%Y %H:%M")}</span>', html)
 
