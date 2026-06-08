@@ -136,6 +136,10 @@ html[data-theme="dark"] .react-eyebrow{font-family:var(--mono)}
 .row-act:hover{border-color:var(--brand);color:var(--brand-d)}
 .row-act.on-done{background:var(--green-bg);border-color:var(--green);color:var(--green-ink)}
 .row-act.on-snooze{background:var(--amber-bg);border-color:var(--amber);color:var(--amber-ink)}
+.row-act:disabled{opacity:.4;cursor:not-allowed}
+.cc-toggle{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+.cc-toggle input{width:15px;height:15px;accent-color:var(--brand);cursor:pointer}
+.cc-toggle:hover{color:var(--ink)}
 tr.r-done,.alert-card.r-done{opacity:.5}
 tr.r-done .rc-name,.r-done .al-title{text-decoration:line-through}
 tr.r-snooze,.alert-card.r-snooze{opacity:.74}
@@ -4110,6 +4114,7 @@ window.__toast = (msg, kind) => {
     el.className = "hv-toast";
   }, 3200);
 };
+window.__ccJefe = false; // "copia para mí": si está activo, cada tarea crea una copia para el jefe
 window.__kommoTask = async (leadId, action, days) => {
   const url = (D.workerUrl || "").trim();
   if (!url || !leadId) return; // sin Worker configurado → solo estado local
@@ -4123,11 +4128,64 @@ window.__kommoTask = async (leadId, action, days) => {
       body: JSON.stringify({
         action,
         leadId,
-        days
+        days,
+        cc: !!window.__ccJefe
       })
     });
     const d = await r.json().catch(() => ({}));
-    if (r.ok && d.ok) window.__toast("✓ Tarea creada en Kommo para la vendedora", "ok");else window.__toast("No se pudo crear la tarea en Kommo", "err");
+    if (r.ok && d.ok) window.__toast(window.__ccJefe ? "✓ Tarea creada (vendedora + copia para ti)" : "✓ Tarea creada en Kommo para la vendedora", "ok");else window.__toast("No se pudo crear la tarea en Kommo", "err");
+  } catch (e) {
+    window.__toast("Sin conexión con Kommo", "err");
+  }
+};
+window.__kommoNote = async leadId => {
+  const url = (D.workerUrl || "").trim();
+  if (!url || !leadId) return;
+  const text = (window.prompt("Escribe la nota para este lead (queda guardada en Kommo):") || "").trim();
+  if (!text) return;
+  try {
+    window.__toast("Guardando nota en Kommo…");
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "note",
+        leadId,
+        text
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) window.__toast("✓ Nota guardada en el lead", "ok");else window.__toast("No se pudo guardar la nota", "err");
+  } catch (e) {
+    window.__toast("Sin conexión con Kommo", "err");
+  }
+};
+window.__kommoBulk = async (leadIds, days) => {
+  const url = (D.workerUrl || "").trim();
+  const ids = (leadIds || []).filter(Boolean);
+  if (!url || !ids.length) {
+    window.__toast("No hay fichas con lead para asignar", "err");
+    return;
+  }
+  if (!window.confirm(`¿Crear una tarea de seguimiento en Kommo para ${ids.length} ficha(s)?`)) return;
+  try {
+    window.__toast(`Creando ${ids.length} tareas en Kommo…`);
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action: "bulk",
+        leadIds: ids,
+        days: days || 1,
+        cc: !!window.__ccJefe
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) window.__toast(`✓ ${d.created || ids.length} tareas creadas en Kommo`, "ok");else window.__toast("No se pudieron crear las tareas", "err");
   } catch (e) {
     window.__toast("Sin conexión con Kommo", "err");
   }
@@ -4802,6 +4860,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const [filt, setFilt] = React.useState("all");
     const [who, setWho] = React.useState("");
     const [q, setQ] = React.useState("");
+    const [ccJefe, setCcJefe] = React.useState(!!window.__ccJefe);
     const [rowSt, setRowSt] = window.useRowState("heaven_backlog_state_v1");
     const rows = BACKLOG_ROWS.filter(r => {
       if (filt === "crit" && r.d < 7) return false;
@@ -4949,7 +5008,24 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       value: n
     }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("span", {
       className: "rc"
-    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas"), /*#__PURE__*/React.createElement("span", {
+    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas"), /*#__PURE__*/React.createElement("button", {
+      className: "btn",
+      title: "Crear una tarea de seguimiento en Kommo para todas las fichas visibles (la vendedora la recibe en su calendario)",
+      onClick: () => window.__kommoBulk && window.__kommoBulk(rows.filter(r => r.id && rowSt[r.c] !== "done").map(r => r.id), 1)
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "bolt",
+      size: 14
+    }), "Acci\xF3n masiva"), /*#__PURE__*/React.createElement("label", {
+      className: "cc-toggle",
+      title: "Crea adem\xE1s una copia de cada tarea asignada a ti (jefe)"
+    }, /*#__PURE__*/React.createElement("input", {
+      type: "checkbox",
+      checked: ccJefe,
+      onChange: e => {
+        setCcJefe(e.target.checked);
+        window.__ccJefe = e.target.checked;
+      }
+    }), /*#__PURE__*/React.createElement("span", null, "Copia para m\xED")), /*#__PURE__*/React.createElement("span", {
       className: "work-summary",
       style: {
         marginLeft: "auto"
@@ -5066,6 +5142,16 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         }
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "snooze",
+        size: 14
+      })), /*#__PURE__*/React.createElement("button", {
+        className: "row-act",
+        title: "Agregar una nota a este lead en Kommo",
+        disabled: !r.id,
+        onClick: () => {
+          if (r.id && window.__kommoNote) window.__kommoNote(r.id);
+        }
+      }, /*#__PURE__*/React.createElement(Icon, {
+        name: "note",
         size: 14
       })))));
     })))), /*#__PURE__*/React.createElement("div", {
