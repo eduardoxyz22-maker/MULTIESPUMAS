@@ -233,8 +233,10 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         d["stage"][st["name"]] += 1
         cls = st["cls"]
         if cls == "compradores":
-            d["cierres"] += 1; d["value"] += ld.get("price") or 0
-            d["wc"][_wk] += 1; d["wm"][_wk] += ld.get("price") or 0
+            # Solo cuenta compradores del pipeline principal (igual que el tablero Kommo)
+            if st.get("main", True):
+                d["cierres"] += 1; d["value"] += ld.get("price") or 0
+                d["wc"][_wk] += 1; d["wm"][_wk] += ld.get("price") or 0
         elif cls == "no_resp":
             d["noResp"] += 1
         elif cls == "agendado":
@@ -427,7 +429,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         ch = detect_channel(ld, source_field_id)
         ca = ch_agg[ch]; ca["leads"] += 1
         st = stage_map.get(ld.get("status_id"), {"cls": "other"})
-        if st["cls"] == "compradores":
+        if st["cls"] == "compradores" and st.get("main", True):
             ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
     channels = []
     for ch, a in sorted(ch_agg.items(), key=lambda x: -x[1]["leads"]):
@@ -662,8 +664,11 @@ def main():
     pls = fetch_paginated("/leads/pipelines", {}, "pipelines", max_pages=10)
     stage_map = {}
     for pl in pls:
+        pl_main = pl.get("is_main", True)   # pipeline principal = el tablero Heaven Kommo
         for st in (pl.get("_embedded", {}) or {}).get("statuses", []):
-            stage_map[st["id"]] = {"name": st.get("name", "—"), "cls": classify_stage(st.get("name", ""))}
+            stage_map[st["id"]] = {"name": st.get("name", "—"),
+                                   "cls": classify_stage(st.get("name", "")),
+                                   "main": pl_main}
 
     print("  👥 usuarios…")
     users = fetch_paginated("/users", {}, "users", max_pages=10)
