@@ -4307,9 +4307,68 @@ function Panel() {
     setShowTop(el.scrollTop > 300);
   };
   const [loading, setLoading] = useState(false);
-  const refresh = () => {
+  const [refreshMsg, setRefreshMsg] = useState("");
+  const refresh = async () => {
+    if (loading) return;
+    const W = D.workerUrl;
+    if (!W) {
+      location.reload();
+      return;
+    } // sin worker → recarga simple
     setLoading(true);
-    setTimeout(() => setLoading(false), 850);
+    setRefreshMsg("Conectando…");
+    const post = b => fetch(W, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(b)
+    }).then(r => r.json());
+    const fail = m => {
+      setRefreshMsg(m);
+      setTimeout(() => {
+        setLoading(false);
+        setRefreshMsg("");
+      }, 3800);
+    };
+    try {
+      const j = await post({
+        action: "refresh"
+      });
+      if (!j || !j.ok) {
+        fail(j && j.error === "missing_github_token" ? "Falta token de GitHub en el worker" : "No se pudo iniciar");
+        return;
+      }
+      const since = j.since;
+      const t0 = Date.now();
+      const tick = async () => {
+        await new Promise(r => setTimeout(r, 9000));
+        let st = {};
+        try {
+          st = await post({
+            action: "refresh_status"
+          });
+        } catch (e) {}
+        const started = st && st.created_at && st.created_at !== since;
+        if (started && st.status === "completed") {
+          setRefreshMsg("Datos listos · publicando…");
+          setTimeout(() => {
+            setRefreshMsg("Recargando…");
+            setTimeout(() => location.reload(), 1500);
+          }, 40000);
+          return;
+        }
+        if (Date.now() - t0 > 210000) {
+          fail("Está tardando; recargá en un momento");
+          return;
+        }
+        setRefreshMsg(started ? "Generando desde Kommo…" : "Iniciando…");
+        tick();
+      };
+      tick();
+    } catch (e) {
+      fail("No se pudo conectar al worker");
+    }
   };
   const [perfil, setPerfil] = useState(null);
   const [sucursal, setSucursal] = useState(null);
@@ -4425,14 +4484,16 @@ function Panel() {
     size: 15
   })), /*#__PURE__*/React.createElement("button", {
     className: "btn",
-    onClick: refresh
+    onClick: refresh,
+    disabled: loading,
+    title: "Trae datos frescos de Kommo: dispara la regeneraci\xF3n y recarga (~2 min)"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "refresh",
     size: 14,
     style: loading ? {
       animation: "spin .8s linear infinite"
     } : null
-  }), "Actualizar"), /*#__PURE__*/React.createElement("button", {
+  }), loading ? refreshMsg || "Actualizando…" : "Actualizar"), /*#__PURE__*/React.createElement("button", {
     className: "btn pri",
     onClick: exportTeamCSV,
     title: "Descargar KPIs del equipo (CSV)"
