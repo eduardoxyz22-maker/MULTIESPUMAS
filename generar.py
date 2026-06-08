@@ -729,18 +729,81 @@ def main():
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
 
-    # ventas cerradas por FECHA DE CONTRATO (closed_at), no por fecha de creación
-    print("  🏆 ventas cerradas del mes (fecha de contrato)…")
-    won = fetch_paginated("/leads", {
-        "filter[closed_at][from]": int(m_start.timestamp()),
-        "filter[closed_at][to]":   int(m_end.timestamp())}, "leads")
-    won = [w for w in won if stage_map.get(w.get("status_id"), {}).get("cls") == "compradores"]
-    print(f"     → {len(won)} ventas")
-    won_prev = fetch_paginated("/leads", {
-        "filter[closed_at][from]": int(p_start.timestamp()),
-        "filter[closed_at][to]":   int(p_end.timestamp())}, "leads")
-    won_prev = [w for w in won_prev if stage_map.get(w.get("status_id"), {}).get("cls") == "compradores"]
-    print(f"     → {len(won_prev)} ventas (mes anterior)")
+    # ── VENTAS por FECHA DE CONTRATO: cuándo el lead ENTRÓ a "Compradores" ──
+    # En este pipeline "Compradores" no es el estado ganado del sistema, así que
+    # closed_at queda vacío. La fecha real de venta es el cambio de etapa hacia
+    # Compradores, que vive en el historial de eventos.
+    won_status_ids = {sid for sid, info in stage_map.items()
+                      if info.get("cls") == "compradores"}
+
+    def entered_won(ev_list):
+        res = {}
+        for e in ev_list:
+            if e.get("type") != "lead_status_changed":
+                continue
+            sid = None
+            for it in (e.get("value_after") or []):
+                if not isinstance(it, dict):
+                    continue
+                ls = it.get("lead_status") or it.get("status") or it
+                if isinstance(ls, dict) and ls.get("id") is not None:
+                    sid = ls.get("id"); break
+            if sid in won_status_ids:
+                lid = e.get("entity_id"); ts = e.get("created_at", 0)
+                if lid:
+                    res[lid] = max(res.get(lid, 0), ts)   # última entrada a Compradores
+        return res
+
+    print("  🔄 cambios de etapa mes anterior (fecha de contrato)…")
+    raw_ev_prev = fetch_paginated("/events", {
+        "filter[entity][]": "lead",
+        "filter[type]": "lead_status_changed",
+        "filter[created_at][from]": int(p_start.timestamp()),
+        "filter[created_at][to]":   int(p_end.timestamp()),
+        "limit": 100}, "events", max_pages=200, sleep=0.15)
+
+    contract_cur  = entered_won(raw_ev)        # ventas de ESTE mes
+    contract_prev = entered_won(raw_ev_prev)   # ventas del mes anterior
+
+    _by_id = {l.get("id"): l for l in (cur + prev)}
+
+    def build_won(contract_map):
+        out, missing = [], []
+        for lid, ts in contract_map.items():
+            ld = _by_id.get(lid)
+            if ld is None:
+                missing.append((lid, ts)); continue
+            ld = dict(ld); ld["closed_at"] = ts    # fecha de contrato (para semana)
+            out.append(ld)
+        # leads vendidos este mes pero creados en meses anteriores → tráelos por id
+        if missing:
+            fetched = {}
+            ids = [m[0] for m in missing]
+            for i in range(0, len(ids), 50):
+                qs = _ps.urlencode([("filter[id][]", x) for x in ids[i:i+50]])
+                try:
+                    data = api_get("/leads?" + qs)
+                    for l in (data.get("_embedded", {}) or {}).get("leads", []):
+                        fetched[l.get("id")] = l
+                except Exception as ex:
+                    print(f"     ⚠ no pude traer {len(ids)} lead(s) viejos: {ex}", file=sys.stderr)
+            for lid, ts in missing:
+                l = fetched.get(lid)
+                if l:
+                    l = dict(l); l["closed_at"] = ts; out.append(l)
+        return out
+
+    won      = build_won(contract_cur)
+    won_prev = build_won(contract_prev)
+    # Resiliencia: si por config no se detectó ningún cambio de etapa, no dejes
+    # el panel en 0 ventas — cae al método por estado actual de los leads del mes.
+    if not won:
+        won = [l for l in cur if stage_map.get(l.get("status_id"), {}).get("cls") == "compradores"]
+        if won:
+            print(f"     ⚠ sin eventos de etapa; fallback por estado actual: {len(won)}", file=sys.stderr)
+    if not won_prev:
+        won_prev = [l for l in prev if stage_map.get(l.get("status_id"), {}).get("cls") == "compradores"]
+    print(f"     → {len(won)} ventas este mes · {len(won_prev)} mes anterior")
 
     # teléfonos de los contactos del mes (para detectar duplicados reales)
     print("  ☎️  contactos del mes…")
