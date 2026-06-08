@@ -4766,10 +4766,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       num: totalBk,
       ac: "#DC4046",
       ico: "seguimiento",
-      sub: "35% del total de leads"
+      sub: `${D.metrics.backlogPct}% del total · sin comprador ni "No responden"`
     }), /*#__PURE__*/React.createElement(Kpi, {
       l: "Cr\xEDticos +7 d\xEDas",
-      num: Math.round(totalBk * 0.73),
+      num: D.metrics.criticos7d,
       ac: "#DC4046",
       ico: "alertas",
       sub: "atenci\xF3n urgente"
@@ -6159,7 +6159,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         lineHeight: 1.9,
         color: "var(--text)"
       }
-    }, /*#__PURE__*/React.createElement("li", null, "Activar los ", /*#__PURE__*/React.createElement("b", null, Math.round(backlog * 0.73)), " leads con +7 d\xEDas sin contacto."), /*#__PURE__*/React.createElement("li", null, "Revisar el pipeline ", /*#__PURE__*/React.createElement("b", null, "\"No responden\""), " (", D.metrics.noResp.toLocaleString("en-US"), " leads)."), /*#__PURE__*/React.createElement("li", null, "Etiquetar sucursal en leads sin clasificar.")))));
+    }, /*#__PURE__*/React.createElement("li", null, "Activar los ", /*#__PURE__*/React.createElement("b", null, D.metrics.criticos7d), " leads con +7 d\xEDas sin contacto."), /*#__PURE__*/React.createElement("li", null, "Revisar el pipeline ", /*#__PURE__*/React.createElement("b", null, "\"No responden\""), " (", D.metrics.noResp.toLocaleString("en-US"), " leads)."), /*#__PURE__*/React.createElement("li", null, "Etiquetar sucursal en leads sin clasificar.")))));
   };
 
   /* ===== DATOS ===== */
