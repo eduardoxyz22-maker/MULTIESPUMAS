@@ -29,6 +29,7 @@ jobs:
           KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
           KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          PANEL_WORKER_URL: ${{ secrets.PANEL_WORKER_URL }}
         run: |
           python generar.py --bake-ai
 
