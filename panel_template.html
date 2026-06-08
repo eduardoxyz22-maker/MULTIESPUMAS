@@ -1310,6 +1310,14 @@ html[data-theme="dark"] .meter,html[data-theme="dark"] .mbar{box-shadow:inset 0 
 .lead-link{color:var(--brand-d);font-weight:700;text-decoration:none;border-bottom:1px dashed var(--brand);cursor:pointer}
 .lead-link:hover{color:var(--brand);border-bottom-style:solid}
 
+/* ===== toast de acciones Kommo ===== */
+#hv-toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);z-index:200;
+  background:var(--ink);color:#fff;font-size:.82rem;font-weight:700;padding:12px 18px;border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,.28);opacity:0;pointer-events:none;transition:opacity .22s,transform .22s;max-width:88vw;text-align:center}
+#hv-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#hv-toast.ok{background:var(--green-ink)}
+#hv-toast.err{background:var(--red-ink)}
+
 </style>
 </head>
 <body>
@@ -4086,6 +4094,44 @@ function useRowState(storeKey) {
   return [m, set];
 }
 window.useRowState = useRowState;
+
+// ── Acción real en Kommo vía Cloudflare Worker (token protegido del lado servidor) ──
+window.__toast = (msg, kind) => {
+  let el = document.getElementById("hv-toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "hv-toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.className = "hv-toast show" + (kind ? " " + kind : "");
+  clearTimeout(window.__toastT);
+  window.__toastT = setTimeout(() => {
+    el.className = "hv-toast";
+  }, 3200);
+};
+window.__kommoTask = async (leadId, action, days) => {
+  const url = (D.workerUrl || "").trim();
+  if (!url || !leadId) return; // sin Worker configurado → solo estado local
+  try {
+    window.__toast(action === "done" ? "Creando tarea en Kommo…" : "Reprogramando en Kommo…");
+    const r = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        action,
+        leadId,
+        days
+      })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.ok) window.__toast("✓ Tarea creada en Kommo para la vendedora", "ok");else window.__toast("No se pudo crear la tarea en Kommo", "err");
+  } catch (e) {
+    window.__toast("Sin conexión con Kommo", "err");
+  }
+};
 const VIEW_META = {
   resumen: {
     crumb: "Control diario",
@@ -5001,15 +5047,23 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "row-actions"
       }, /*#__PURE__*/React.createElement("button", {
         className: `row-act${st === "done" ? " on-done" : ""}`,
-        title: "Marcar atendido",
-        onClick: () => setRowSt(r.c, "done")
+        title: "Marcar atendido y crear tarea en Kommo",
+        onClick: () => {
+          const was = st;
+          setRowSt(r.c, "done");
+          if (was !== "done" && window.__kommoTask) window.__kommoTask(r.id, "done");
+        }
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "check",
         size: 14
       })), /*#__PURE__*/React.createElement("button", {
         className: `row-act${st === "snooze" ? " on-snooze" : ""}`,
-        title: "Posponer",
-        onClick: () => setRowSt(r.c, "snooze")
+        title: "Posponer y reprogramar en Kommo (+3 d\xEDas)",
+        onClick: () => {
+          const was = st;
+          setRowSt(r.c, "snooze");
+          if (was !== "snooze" && window.__kommoTask) window.__kommoTask(r.id, "snooze", 3);
+        }
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "snooze",
         size: 14
