@@ -199,6 +199,7 @@ def blank_vendor():
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
     vd = defaultdict(blank_vendor)
     suc_of = {}
+    backlog_rows = []
     for ld in leads:
         rid = ld.get("responsible_user_id")
         raw_name = user_map.get(rid)
@@ -234,27 +235,35 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         # velocidad de respuesta vía eventos humanos
         ev = events.get(ld.get("id"))
         created = ld.get("created_at", 0)
+        is_open = cls not in ("compradores", "perdido")
+        stale_days = 0; never = False
         if ev and ev.get("first"):
             mins = max(0, (ev["first"] - created) / 60)
             d["resp_minutes"].append(mins)
             if mins <= 1440: d["u24"] += 1
             else:            d["tarde"] += 1
-            stale_h = (now_ts - ev.get("last", ev["first"])) / 3600
-            if stale_h > 72 and cls not in ("compradores", "perdido"):
+            stale_days = (now_ts - ev.get("last", ev["first"])) / 86400
+            if stale_days > 3 and is_open:
                 d["backlog"] += 1
         else:
-            d["nunca"] += 1
-            if cls not in ("compradores", "perdido"):
+            d["nunca"] += 1; never = True
+            stale_days = (now_ts - created) / 86400
+            if is_open:
                 d["backlog"] += 1
-    return vd, suc_of
+        # fila de backlog real (lead estancado y abierto)
+        if is_open and (stale_days > 3 or never):
+            ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
+            backlog_rows.append({"c": ld_name, "e": st["name"], "r": name,
+                                 "d": int(round(stale_days)), "nh": never})
+    return vd, suc_of, backlog_rows
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
 def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     now_ts = time.time()
-    vcur, suc_of = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts)
-    vprev, _     = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts)
+    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts)
+    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts)
 
     names = list(vcur.keys())
     # ordena: por cierres desc, así el color/índice es estable
@@ -377,12 +386,64 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     stagesByV = {n: [[sn, c] for sn, c in sorted(vcur[n]["stage"].items(), key=lambda x: -x[1])]
                  for n in names}
 
+    # ── backlog real (top 40 más estancados) ──
+    backlog_rows.sort(key=lambda r: r["d"], reverse=True)
+    bk_rows = backlog_rows[:40]
+
+    # ── alertas accionables, generadas de los datos reales ──
+    alerts = []
+    convs = [(t, t["conv"]) for t in team if t["cierres"] >= 0 and t["leads"] >= 20]
+    if convs:
+        worst = min(convs, key=lambda x: x[1])[0]
+        if worst["conv"] < 4 and worst["leads"] >= 20:
+            alerts.append({"sev":"red","who":worst["name"],
+                "t":f"Conversión {worst['conv']}% — la más baja del equipo",
+                "d":f"{worst['cierres']} cierres sobre {worst['leads']} leads, bajo el umbral de 4%.",
+                "act":"Coaching + auditar cotizaciones."})
+    nr = sorted(team, key=lambda t: t["noRespPct"], reverse=True)
+    if nr and nr[0]["noRespPct"] >= 40:
+        top_nr = [t for t in team if t["noRespPct"] >= 40]
+        names_nr = " / ".join(t["name"].split()[0] for t in top_nr[:3])
+        tot_nr = sum(t["noResp"] for t in top_nr)
+        alerts.append({"sev":"red","who":names_nr,
+            "t":f"Vendedoras con alto % en “No responden”",
+            "d":f"{names_nr} concentran {tot_nr:,} leads sin respuesta del cliente.".replace(",","."),
+            "act":"Segunda cadencia de contacto por WhatsApp."})
+    if G_cierres and metrics["abiertosSinValor"] and metrics["abiertosSinValor"] > G_leads*0.5:
+        alerts.append({"sev":"red","who":"Datos / Gerencia",
+            "t":"Muchos deals abiertos sin valor cargado",
+            "d":"No se puede priorizar el pipeline por monto.",
+            "act":"Cargar valor estimado al cotizar."})
+    momp = round((G_leads-G_prev)/G_prev*100) if G_prev else 0
+    if momp < -5:
+        alerts.append({"sev":"amber","who":"Gerencia",
+            "t":f"Leads globales ↓{abs(momp)}% vs {MESES[pmo]} ({G_leads:,} vs {G_prev:,})".replace(",","."),
+            "d":"Caída de captación respecto al mes anterior.","act":"Revisar inversión en canales."})
+    if nunca >= 20:
+        worst_nh = max(team, key=lambda t: t["nunca"])
+        alerts.append({"sev":"amber","who":worst_nh["name"],
+            "t":f"{nunca} leads nunca tocados",
+            "d":f"{worst_nh['name']} tiene {worst_nh['nunca']} sin primera acción registrada.",
+            "act":"Repartir backlog en la reunión diaria."})
+    # canal manual vs bot
+    man_ch = next((c for c in channels if "manual" in c["name"].lower()), None)
+    bot_ch = next((c for c in channels if "bot" in c["name"].lower()), None)
+    if man_ch and bot_ch and bot_ch["conv"] >= 0 and man_ch["conv"] > 0:
+        ratio = round(man_ch["conv"]/bot_ch["conv"]) if bot_ch["conv"] else man_ch["conv"]
+        alerts.append({"sev":"green","who":"Equipo",
+            "t":f"La carga manual convierte {ratio}× más que el bot" if bot_ch["conv"] else "La carga manual es la que convierte",
+            "d":f"Manual {man_ch['conv']}% vs bot {bot_ch['conv']}%. Priorizar captación manual de calidad.",
+            "act":"Documentar el playbook de la mejor vendedora."})
+    if not alerts:
+        alerts.append({"sev":"green","who":"Equipo","t":"Sin alertas críticas este mes",
+            "d":"Los indicadores están dentro de rango.","act":"Mantener el ritmo de seguimiento."})
+
     # ── nav (con badges en vivo) ──
     nav = [
         {"id": "resumen", "label": "Resumen"},
         {"id": "equipo", "label": "Equipo", "badge": str(len(team))},
         {"id": "seguimiento", "label": "Seguimiento", "badge": str(backlog)},
-        {"id": "alertas", "label": "Alertas", "badge": "8"},
+        {"id": "alertas", "label": "Alertas", "badge": str(len(alerts))},
         {"id": "presentacion", "label": "Presentación"},
         {"id": "analisis", "label": "Análisis IA"},
         {"id": "conversion", "label": "Conversión"},
@@ -405,6 +466,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
         "channels": channels, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
         "team": team, "funnel": funnel, "nav": nav, "stagesByV": stagesByV,
+        "backlogRows": bk_rows, "alerts": alerts,
     }
 
 def build_archives():
