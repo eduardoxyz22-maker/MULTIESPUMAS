@@ -204,6 +204,12 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
     vd = defaultdict(blank_vendor)
     suc_of = {}
     backlog_rows = []
+    # Detectar pipeline principal por volumen (el que tiene más leads = pipeline Heaven)
+    from collections import Counter as _Cnt
+    _pl_cnt = _Cnt(stage_map.get(l.get("status_id"), {}).get("pl") for l in leads)
+    _pl_cnt.pop(None, None)
+    _main_pl = _pl_cnt.most_common(1)[0][0] if _pl_cnt else None
+
     for ld in leads:
         rid = ld.get("responsible_user_id")
         raw_name = user_map.get(rid)
