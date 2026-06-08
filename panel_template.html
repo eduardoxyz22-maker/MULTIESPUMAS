@@ -5058,11 +5058,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         size: 14
       })), /*#__PURE__*/React.createElement("button", {
         className: `row-act${st === "snooze" ? " on-snooze" : ""}`,
-        title: "Posponer y reprogramar en Kommo (+3 d\xEDas)",
+        title: "Posponer: crea tarea para ma\xF1ana en Kommo",
         onClick: () => {
           const was = st;
           setRowSt(r.c, "snooze");
-          if (was !== "snooze" && window.__kommoTask) window.__kommoTask(r.id, "snooze", 3);
+          if (was !== "snooze" && window.__kommoTask) window.__kommoTask(r.id, "snooze", 1);
         }
       }, /*#__PURE__*/React.createElement(Icon, {
         name: "snooze",
