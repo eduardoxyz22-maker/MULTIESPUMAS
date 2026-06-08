@@ -731,3 +731,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+# rebuild: asegurar index regenerado con botones->Kommo (workerUrl)
