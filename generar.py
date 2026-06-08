@@ -60,7 +60,7 @@ SUC_COLORS = {"Mia Plaza": "#00B5AD", "Buenos Aires": "#2E6FE0", "Central": "#D9
 
 # Clasificación de etapas del pipeline por palabras clave (case-insensitive).
 STAGE_RULES = [
-    ("compradores", ["compra", "comprador", "vendido", "ganado", "won", "pagad", "cerrad", "cliente"]),
+    ("compradores", ["compra", "comprador", "vendido", "ganado", "won", "pagad", "cerrad"]),
     ("no_resp",     ["no responde", "no resp", "sin respuesta", "perdido sin", "frio", "frío", "cold"]),
     ("perdido",     ["perdido", "cancelad", "descartad", "lost"]),
     ("agendado",    ["agendad", "visita", "cita", "agenda", "showroom"]),
