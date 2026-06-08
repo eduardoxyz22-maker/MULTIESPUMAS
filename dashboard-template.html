@@ -5357,6 +5357,24 @@ function PresentacionView({ filtered, filterTienda }) {
     ].filter(Boolean);
   }
 
+  function colTotal(m, vends) {
+    var sum = function(k){ return vends.reduce(function(s,v){ return s + (v[k]||0); }, 0); };
+    var montoT = sum("monto"), leadsT = sum("leads"), ventasT = sum("ventasConcretadas"), presT = sum("presupuesto"), metaT = sum("metaMin");
+    switch (m.l) {
+      case "Leads": return { val: leadsT, tipo: "int" };
+      case "Ventas cerradas": return { val: ventasT, tipo: "int" };
+      case "Unidades vendidas": return { val: sum("productos"), tipo: "int" };
+      case "Conversión": return { val: leadsT > 0 ? ventasT / leadsT : null, tipo: "pct1" };
+      case "Monto vendido": return { val: montoT, tipo: "money" };
+      case "Ticket promedio": return { val: ventasT > 0 ? montoT / ventasT : null, tipo: "money" };
+      case "% Presupuesto": return { val: presT > 0 ? montoT / presT : null, tipo: "pct" };
+      case "% Meta mínima": return { val: metaT > 0 ? montoT / metaT : null, tipo: "pct" };
+      case "Crecimiento": { var pas = vends.reduce(function(s,v){ return s + (v.crecimientoVsAbril != null ? v.monto / (1 + v.crecimientoVsAbril) : v.monto); }, 0); return { val: pas > 0 ? (montoT - pas) / pas : null, tipo: "crec" }; }
+      case "Falta p/ presupuesto": return { val: Math.max(presT - montoT, 0), tipo: "falta" };
+      default: return { val: null, tipo: m.tipo };
+    }
+  }
+
   function dona(vends, total) {
     const size = 104, R = size / 2, sw = 14, rad = R - sw / 2 - 1, C = 2 * Math.PI * rad;
     let acc = 0;
@@ -5412,7 +5430,7 @@ function PresentacionView({ filtered, filterTienda }) {
   const tdLider = { ...tdVal, background: "var(--surface-2)" };
   const tdProm = { ...tdVal, color: "var(--muted)", fontWeight: 700, borderLeft: "1px solid var(--hairline)" };
 
-  const CSS = "html.mx-present .topbar,html.mx-present .appfoot,html.mx-present #export-html-btn,html.mx-present .twk-fab,html.mx-present .twk-panel,html.mx-present .kpi-strip{display:none !important;} html.mx-present .wrap{max-width:100% !important;padding:16px !important;} .mx-present-exit{display:none;} html.mx-present .mx-present-exit{display:inline-flex;position:fixed;top:14px;right:14px;z-index:100000;align-items:center;gap:6px;padding:9px 16px;background:var(--ink);color:#fbf8f2;border:0;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);} html.mx-present .mx-present-go{display:none;} html.mx-present{scroll-snap-type:y mandatory;} html.mx-present .mx-pres-wrap>section{scroll-snap-align:start;min-height:calc(100vh - 24px);display:flex;flex-direction:column;justify-content:center;}"
+  const CSS = "html.mx-present .topbar,html.mx-present .appfoot,html.mx-present #export-html-btn,html.mx-present .twk-fab,html.mx-present .twk-panel,html.mx-present .kpi-strip{display:none !important;} html.mx-present .wrap{max-width:100% !important;padding:16px !important;} .mx-present-exit{display:none;} html.mx-present .mx-present-exit{display:inline-flex;position:fixed;bottom:18px;left:18px;z-index:100000;align-items:center;gap:6px;padding:9px 16px;background:var(--ink);color:#fbf8f2;border:0;border-radius:999px;font:inherit;font-weight:600;cursor:pointer;box-shadow:0 4px 18px rgba(0,0,0,.25);} html.mx-present .mx-present-go{display:none;} html.mx-present{scroll-snap-type:y mandatory;} html.mx-present .mx-pres-wrap>section{scroll-snap-align:start;min-height:calc(100vh - 24px);display:flex;flex-direction:column;justify-content:center;}"
     + " .mx-glosario summary{cursor:pointer;font-weight:700;color:var(--ink);font-size:13px;list-style:none;display:inline-flex;align-items:center;gap:7px;padding:7px 12px;background:var(--surface-2);border-radius:8px;} .mx-glosario summary::-webkit-details-marker{display:none;} .mx-glosario[open] summary{margin-bottom:12px;}"
     + " .mx-pres-table tbody tr:hover td{background:rgba(0,0,0,.015);}"
     + " .mx-cellbar{height:5px;background:var(--rail);border-radius:3px;overflow:hidden;margin:5px auto 0;max-width:92px;} .mx-cellbar>i{display:block;height:100%;border-radius:3px;transform-origin:left;transform:scaleX(0);} section.mx-inview .mx-cellbar>i{animation:mxgrow .9s cubic-bezier(.2,.7,.3,1) forwards;} @keyframes mxgrow{from{transform:scaleX(0);}to{transform:scaleX(1);}}"
@@ -5508,7 +5526,7 @@ function PresentacionView({ filtered, filterTienda }) {
                         </span>
                       </th>
                     ))}
-                    <th style={thProm}>Promedio</th>
+                    <th style={thProm}>Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -5517,6 +5535,7 @@ function PresentacionView({ filtered, filterTienda }) {
                     const best = nums.length ? Math.max.apply(null, nums) : null;
                     const minV = nums.length ? Math.min.apply(null, nums) : null;
                     const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+                    const tcol = colTotal(m, g.vends);
                     return (
                       <tr key={m.l}>
                         <td style={tdLat}>{m.l}</td>
@@ -5542,7 +5561,7 @@ function PresentacionView({ filtered, filterTienda }) {
                             </td>
                           );
                         })}
-                        <td style={tdProm}>{m.falta ? fmtTipo(avg, "money") : fmtTipo(avg, m.tipo)}</td>
+                        <td style={tdProm}>{fmtTipo(tcol.val, tcol.tipo)}</td>
                       </tr>
                     );
                   })}
