@@ -799,15 +799,17 @@ def main():
             if stage_map.get(ld.get("status_id"), {}).get("cls") == "compradores":
                 ld["_contract_ts"] = ld.get("created_at", 0); won_prev.append(ld)
 
-    # PIPELINE TOTAL: TODOS los leads ABIERTOS con monto (cualquier fecha) +
-    # lo cerrado este mes. Excluye perdidos y cierres de meses anteriores.
+    # PIPELINE TOTAL del vendedor = leads DEL MES con monto por cerrar (abiertos)
+    # + lo cerrado del mes (comprador + fecha contrato). Ej: 30.000 por cerrar +
+    # 20.000 ya en comprador = pipeline 50.000, cerrado 20.000.
     pipe_by_name = defaultdict(float)
     def _nm_of(uid):
         raw = user_map.get(uid)
         if not raw:
             return None
         return raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
-    for ld in wide:
+    # componente ABIERTO: leads creados ESTE MES, abiertos, con monto
+    for ld in cur:
         cls = stage_map.get(ld.get("status_id"), {}).get("cls")
         pr = ld.get("price") or 0
         if pr > 0 and cls not in ("perdido", "compradores"):
