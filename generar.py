@@ -711,10 +711,10 @@ def main():
     try:
         cfs = fetch_paginated("/leads/custom_fields", {}, "custom_fields", max_pages=10)
         source_field_id = next((c["id"] for c in cfs
-            if any(k in (c.get("code", "") + c.get("name", "")).lower()
+            if any(k in ((c.get("code") or "") + (c.get("name") or "")).lower()
                    for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
         contract_field_id = next((c["id"] for c in cfs
-            if "contrato" in (c.get("code", "") + c.get("name", "")).lower()), None)
+            if "contrato" in ((c.get("code") or "") + (c.get("name") or "")).lower()), None)
         # buscar también campos de fecha por si el nombre no incluye "contrato"
         _date_fields = [f"{c.get('name','?')}#{c.get('id')}[{c.get('type','?')}]"
                         for c in cfs if c.get("type") in ("date", "date_time", "birthday")]
