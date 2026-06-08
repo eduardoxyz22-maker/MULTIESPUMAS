@@ -200,7 +200,7 @@ def blank_vendor():
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
 
-def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
+def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
     suc_of = {}
     backlog_rows = []
@@ -232,10 +232,9 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         st = stage_map.get(ld.get("status_id"), {"name": "—", "cls": "other"})
         d["stage"][st["name"]] += 1
         cls = st["cls"]
-        if cls == "compradores":
-            d["cierres"] += 1; d["value"] += ld.get("price") or 0
-            d["wc"][_wk] += 1; d["wm"][_wk] += ld.get("price") or 0
-        elif cls == "no_resp":
+        # Los cierres/montos NO se cuentan aquí (sería por fecha de creación).
+        # Se cuentan por FECHA DE CONTRATO (closed_at) en el bloque de abajo.
+        if cls == "no_resp":
             d["noResp"] += 1
         elif cls == "agendado":
             d["agendado"] += 1; d["calif"] += 1
@@ -273,15 +272,36 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
             ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
             backlog_rows.append({"c": ld_name, "id": ld.get("id"), "e": st["name"], "r": name,
                                  "d": int(round(stale_days)), "nh": never})
+
+    # ── VENTAS CERRADAS por FECHA DE CONTRATO (closed_at) ──
+    # El cierre y el monto cuentan en el mes en que se GANÓ la venta,
+    # sin importar cuándo se creó el lead. Así coincide con Kommo.
+    for ld in (won_leads or []):
+        raw = user_map.get(ld.get("responsible_user_id"))
+        if not raw:
+            continue
+        nm = raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
+        dd = vd[nm]; price = ld.get("price") or 0
+        dd["cierres"] += 1; dd["value"] += price
+        _cl = ld.get("closed_at") or ld.get("updated_at") or 0
+        try:
+            _cd = datetime.datetime.fromtimestamp(_cl).day
+        except Exception:
+            _cd = 1
+        _wk = min(4, (_cd - 1) // 7)
+        dd["wc"][_wk] += 1; dd["wm"][_wk] += price
+        if nm not in suc_of:
+            suc_of[nm] = (raw.split(" - ", 1)[1].strip() if " - " in raw
+                          else detect_suc(nm, ld))
     return vd, suc_of, backlog_rows
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None):
     now_ts = time.time()
-    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts)
-    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts)
+    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
+    vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
 
     names = list(vcur.keys())
     # ordena: por cierres desc, así el color/índice es estable
@@ -424,11 +444,11 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     # canales agregados a partir de detect_channel sobre los leads del mes
     ch_agg = defaultdict(lambda: dict(leads=0, cierres=0, value=0))
     for ld in cur:
-        ch = detect_channel(ld, source_field_id)
-        ca = ch_agg[ch]; ca["leads"] += 1
-        st = stage_map.get(ld.get("status_id"), {"cls": "other"})
-        if st["cls"] == "compradores":
-            ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
+        ch_agg[detect_channel(ld, source_field_id)]["leads"] += 1
+    # cierres/montos por canal: por fecha de contrato (ventas cerradas del mes)
+    for ld in (won or []):
+        ca = ch_agg[detect_channel(ld, source_field_id)]
+        ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
     channels = []
     for ch, a in sorted(ch_agg.items(), key=lambda x: -x[1]["leads"]):
         conv = round(a["cierres"] / a["leads"] * 100) if a["leads"] else 0
@@ -490,6 +510,17 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "t":f"Vendedoras con alto % en “No responden”",
             "d":f"{names_nr} concentran {tot_nr:,} leads sin respuesta del cliente.".replace(",","."),
             "act":"Segunda cadencia de contacto por WhatsApp."})
+    # umbral de backlog (sin seguimiento) por vendedora
+    UMBRAL_BK = 25
+    bk_top = sorted(team, key=lambda t: t["backlog"], reverse=True)
+    if bk_top and bk_top[0]["backlog"] >= UMBRAL_BK:
+        offenders = [t for t in team if t["backlog"] >= UMBRAL_BK]
+        nm_bk = " / ".join(t["name"].split()[0] for t in offenders[:3])
+        tot_bk = sum(t["backlog"] for t in offenders)
+        alerts.append({"sev":"red","who":nm_bk,
+            "t":f"Backlog de seguimiento sobre el umbral ({UMBRAL_BK}+)",
+            "d":f"{nm_bk} acumulan {tot_bk} fichas abiertas sin seguimiento +72h.",
+            "act":"Acción masiva: crear tarea a todo el backlog de la vendedora."})
     if G_cierres and metrics["abiertosSinValor"] and metrics["abiertosSinValor"] > G_leads*0.5:
         alerts.append({"sev":"red","who":"Datos / Gerencia",
             "t":"Muchos deals abiertos sin valor cargado",
@@ -698,6 +729,19 @@ def main():
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
 
+    # ventas cerradas por FECHA DE CONTRATO (closed_at), no por fecha de creación
+    print("  🏆 ventas cerradas del mes (fecha de contrato)…")
+    won = fetch_paginated("/leads", {
+        "filter[closed_at][from]": int(m_start.timestamp()),
+        "filter[closed_at][to]":   int(m_end.timestamp())}, "leads")
+    won = [w for w in won if stage_map.get(w.get("status_id"), {}).get("cls") == "compradores"]
+    print(f"     → {len(won)} ventas")
+    won_prev = fetch_paginated("/leads", {
+        "filter[closed_at][from]": int(p_start.timestamp()),
+        "filter[closed_at][to]":   int(p_end.timestamp())}, "leads")
+    won_prev = [w for w in won_prev if stage_map.get(w.get("status_id"), {}).get("cls") == "compradores"]
+    print(f"     → {len(won_prev)} ventas (mes anterior)")
+
     # teléfonos de los contactos del mes (para detectar duplicados reales)
     print("  ☎️  contactos del mes…")
     contact_phone = {}
@@ -719,7 +763,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
