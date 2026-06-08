@@ -1,4 +1,4 @@
-name: Actualizar Mayo 2026 (cerrado)
+﻿name: Actualizar Mayo 2026 (cerrado)
 
 # OJO: Mayo ya esta cerrado y archivado en dashboard-mayo-2026.html.
 # Solo corre este workflow si necesitas regenerar Mayo Y el Excel todavia
@@ -42,7 +42,7 @@ jobs:
           fi
 
       - name: Generar dashboard-mayo-2026.html
-        run: python3 generar_dashboard.py
+        run: python3 generar_comercial.py
 
       - name: Publicar en main
         env:

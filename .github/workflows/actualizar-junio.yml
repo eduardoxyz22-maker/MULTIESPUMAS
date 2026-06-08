@@ -1,4 +1,4 @@
-name: Actualizar Junio 2026
+﻿name: Actualizar Junio 2026
 
 on:
   workflow_dispatch:        # Manual desde GitHub -> Actions -> Run workflow
@@ -43,7 +43,7 @@ jobs:
           echo "Excel descargado y validado correctamente."
 
       - name: Generar dashboard-junio-2026.html
-        run: python3 generar_dashboard.py
+        run: python3 generar_comercial.py
 
       - name: Publicar en main
         env:
