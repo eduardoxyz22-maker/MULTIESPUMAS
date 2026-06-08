@@ -186,7 +186,11 @@ m_end   = datetime.datetime(YEAR, MONTH, DIM, 23, 59, 59)
 pmo = MONTH - 1 or 12
 pyr = YEAR if MONTH > 1 else YEAR - 1
 p_start = datetime.datetime(pyr, pmo, 1)
-p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 59)
+# Comparación justa "mismo día del mes": el mes anterior se recorta al mismo día
+# que hoy (CURDAY). Así 7 días de junio se comparan contra 7 días de mayo, no
+# contra el mes completo. Al cerrar el mes, CURDAY = último día => mes completo.
+_p_cap = min(CURDAY, calendar.monthrange(pyr, pmo)[1])
+p_end   = datetime.datetime(pyr, pmo, _p_cap, 23, 59, 59)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  AGREGACIÓN POR VENDEDORA
@@ -417,8 +421,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     momp = round((G_leads-G_prev)/G_prev*100) if G_prev else 0
     if momp < -5:
         alerts.append({"sev":"amber","who":"Gerencia",
-            "t":f"Leads globales ↓{abs(momp)}% vs {MESES[pmo]} ({G_leads:,} vs {G_prev:,})".replace(",","."),
-            "d":"Caída de captación respecto al mes anterior.","act":"Revisar inversión en canales."})
+            "t":f"Leads ↓{abs(momp)}% vs mismo periodo de {MESES[pmo]} ({G_leads:,} vs {G_prev:,})".replace(",","."),
+            "d":f"Comparado al día {CURDAY} de ambos meses. Caída de captación respecto al periodo equivalente.","act":"Revisar inversión en canales."})
     if nunca >= 20:
         worst_nh = max(team, key=lambda t: t["nunca"])
         alerts.append({"sev":"amber","who":worst_nh["name"],
@@ -470,20 +474,19 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     }
 
 def build_archives():
-    """Lista los panel_YYYY_MM.html existentes + el mes en curso (orden reciente primero)."""
-    found = []
+    """Una entrada por mes (sin duplicados). El mes en curso apunta a "#" (index.html en vivo);
+    los meses pasados a su panel_YYYY_MM.html. Orden: más reciente primero."""
+    months = {}  # (año, mes) -> archivo
     for f in os.listdir(HERE):
-        if f.startswith("panel_") and f.endswith(".html") and f[6:13].replace("_", "").isdigit():
-            try:
-                y, m = int(f[6:10]), int(f[11:13])
-                found.append((y, m, f))
-            except Exception:
-                pass
-    found.append((YEAR, MONTH, "index.html"))
-    found = sorted(set(found), key=lambda x: (x[0], x[1]), reverse=True)
+        if f.startswith("panel_") and f.endswith(".html"):
+            stem = f[len("panel_"):-len(".html")]          # "2026_06"
+            parts = stem.split("_")
+            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                months[(int(parts[0]), int(parts[1]))] = f
+    months[(YEAR, MONTH)] = "#"                            # mes actual = en vivo (sobrescribe su archivo)
     out = []
-    for y, m, f in found[:12]:
-        out.append({"label": f"{MESES[m]} {y}", "url": f if f != "index.html" else "#"})
+    for (y, m) in sorted(months, key=lambda k: (k[0], k[1]), reverse=True)[:12]:
+        out.append({"label": f"{MESES[m]} {y}", "url": months[(y, m)]})
     return out
 
 # ─────────────────────────────────────────────────────────────────────────────
