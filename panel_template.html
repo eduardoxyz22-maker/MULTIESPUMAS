@@ -4505,7 +4505,7 @@ window.Panel = Panel;
       style: {
         marginTop: 6
       }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Cerrado", "value", v => v.value), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
       key: i,
       className: "clickable",
       onClick: () => open(v)
@@ -4527,6 +4527,12 @@ window.Panel = Panel;
     }, /*#__PURE__*/React.createElement(Pill, {
       tone: convTone(window.convPct(v))
     }, window.convPct(v), "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--green-ink)",
+        fontWeight: 800
+      }
+    }, v.value ? money(v.value) : "—"), /*#__PURE__*/React.createElement("td", {
       className: "r num"
     }, v.ticket ? money(v.ticket) : "—"), /*#__PURE__*/React.createElement("td", {
       className: "r num",
@@ -4557,6 +4563,12 @@ window.Panel = Panel;
     }, /*#__PURE__*/React.createElement(Pill, {
       tone: convTone(T_conv)
     }, T_conv, "%")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: "var(--green-ink)",
+        fontWeight: 800
+      }
+    }, T_value ? money(T_value) : "\u2014"), /*#__PURE__*/React.createElement("td", {
       className: "r num"
     }, T_ticket ? money(T_ticket) : "\u2014"), /*#__PURE__*/React.createElement("td", {
       className: "r num",
@@ -4851,7 +4863,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Rendimiento comercial",
       h3: "KPIs por vendedora",
-      p: "Clic en cualquier columna para ordenar. Conversi\xF3n, ticket, pipeline, calificados y \u201Cno responden\u201D."
+      p: "Clic en cualquier columna para ordenar. Conversi\xF3n, cerrado, ticket, pipeline, calificados y \u201Cno responden\u201D."
     }), /*#__PURE__*/React.createElement(KpiSortTable, {
       rows: T,
       open: open
