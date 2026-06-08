@@ -249,7 +249,10 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         # velocidad de respuesta vía eventos humanos
         ev = events.get(ld.get("id"))
         created = ld.get("created_at", 0)
-        is_open = cls not in ("compradores", "perdido")
+        # "Sin seguimiento" = lead abierto que la vendedora no ha tocado/respondido +72h.
+        # Excluye comprador y perdido (cerrados) y "No Responden" (el cliente no contesta,
+        # no es falta de seguimiento de la vendedora).
+        is_open = cls not in ("compradores", "perdido", "no_resp")
         stale_days = 0; never = False
         if ev and ev.get("first"):
             mins = max(0, (ev["first"] - created) / 60)
@@ -350,7 +353,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
     metrics = {
         "noResp": noResp, "noRespPct": round(noResp / G_leads * 100) if G_leads else 0,
         "backlog": backlog, "backlogPct": round(backlog / G_leads * 100) if G_leads else 0,
-        "criticos7d": round(backlog * 0.73),
+        "criticos7d": 0,   # se calcula real más abajo desde backlog_rows
         "nuncaTocados": nunca,
         "sinSucursalFichas": sum(1 for n in names if suc_of.get(n) == "Sin sucursal"),
         "sinSucursalPct": 0,
@@ -408,6 +411,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
 
     # ── backlog real (top 40 más estancados) ──
     backlog_rows.sort(key=lambda r: r["d"], reverse=True)
+    metrics["criticos7d"] = sum(1 for r in backlog_rows if r["d"] >= 7)
     bk_rows = backlog_rows[:40]
 
     # ── alertas accionables, generadas de los datos reales ──
