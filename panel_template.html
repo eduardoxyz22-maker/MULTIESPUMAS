@@ -4464,9 +4464,9 @@ window.Panel = Panel;
     const M = D.metrics;
     const ctx = `Heaven Colchones (Bolivia), mes ${D.month} ${D.year}. Moneda Bs.
 Global: ${G.leads} leads (mes previo ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / G.prevLeads * 100)}% MoM), ${G.cierres} cierres, conversión ${(G.cierres / G.leads * 100).toFixed(1)}% (= ${G.cierres}/${G.leads}), pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}.
-"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Deals sin valor: ~100%.
+"No responden" ${M.noResp} (${M.noRespPct}%). Sin seguimiento +72h: ${M.backlog} (${M.backlogPct}%). Nunca tocados: ${M.nuncaTocados}. Abiertos sin valor: ${M.abiertosSinValor} (${M.abiertosSinValorPct}%).
 IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. Las 3 sucursales son Mia Plaza, Buenos Aires y Central.
-Canales: manual 514 leads / 21% conv / 106 cierres; automático 2029 / 1% / 15 cierres.
+Canales: ${(D.channels || []).map(c => c.name + " " + c.leads + " leads / " + c.conv + "% conv / " + c.cierres + " cierres").join("; ")}.
 Roll-up por sucursal (con comparativo vs mes anterior):
 ${branchLines}
 Equipo (con leads del mes vs mes anterior):
@@ -5680,7 +5680,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }
     }, money(data.reduce((s, d) => s + d.wk.totM, 0))))))), /*#__PURE__*/React.createElement("div", {
       className: "note"
-    }, /*#__PURE__*/React.createElement("b", null, "Cerrado ", D.month), " = monto de deals en etapa Compradores (cierres \xD7 ticket promedio). El reparto semanal es una estimaci\xF3n; en producci\xF3n ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " lo calcula con las fechas de cierre reales de Kommo."));
+    }, /*#__PURE__*/React.createElement("b", null, "Cerrado ", D.month), " = monto de deals en etapa Compradores (cierres \xD7 ticket promedio). El reparto semanal es real: ", /*#__PURE__*/React.createElement("code", null, "generar.py"), " agrupa los cierres por semana seg\xFAn la fecha de creaci\xF3n del lead en Kommo."));
   };
 
   /* ===== SUCURSALES ===== */
@@ -6181,7 +6181,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       sub: `${D.metrics.sinSucursalFichas.toLocaleString("en-US")} fichas · comparativo por tienda parcial`
     }), /*#__PURE__*/React.createElement(Kpi, {
       l: "Abiertos sin valor",
-      v: "~100%",
+      num: D.metrics.abiertosSinValorPct,
+      fmt: n => Math.round(n) + "%",
       ac: "#DC4046",
       ico: "datos",
       sub: `${D.metrics.abiertosSinValor.toLocaleString("en-US")} deals · no se puede priorizar por monto`
