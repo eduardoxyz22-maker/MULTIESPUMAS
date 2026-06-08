@@ -4588,12 +4588,13 @@ window.Panel = Panel;
     const T_califPct = T_leads ? Math.round(T_calif / T_leads * 100) : 0;
     const T_noResp = rows.reduce((s, v) => s + (v.noResp || 0), 0);
     const T_noRespPct = T_leads ? Math.round(T_noResp / T_leads * 100) : 0;
+    const T_backlog = rows.reduce((s, v) => s + (v.backlog || 0), 0);
     return /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
         marginTop: 6
       }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Cerrado", "value", v => v.value), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Cerrado", "value", v => v.value), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp), thFor("Sin seguim.", "backlog", v => v.backlog))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
       key: i,
       className: "clickable",
       onClick: () => open(v)
@@ -4639,7 +4640,12 @@ window.Panel = Panel;
       }
     }, v.noResp, " ", /*#__PURE__*/React.createElement("span", {
       className: "ww"
-    }, "(", v.noRespPct, "%)"))))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
+    }, "(", v.noRespPct, "%)")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: v.backlog > 25 ? "var(--red)" : v.backlog > 10 ? "var(--amber)" : "inherit"
+      }
+    }, v.backlog)))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
       className: "tbl-tot"
     }, /*#__PURE__*/React.createElement("td", null, "Equipo total"), /*#__PURE__*/React.createElement("td", {
       className: "r num",
@@ -4675,7 +4681,12 @@ window.Panel = Panel;
       }
     }, T_noResp, " ", /*#__PURE__*/React.createElement("span", {
       className: "ww"
-    }, "(", T_noRespPct, "%)")))));
+    }, "(", T_noRespPct, "%)")), /*#__PURE__*/React.createElement("td", {
+      className: "r num",
+      style: {
+        color: T_backlog > 25 ? "var(--red)" : T_backlog > 10 ? "var(--amber)" : "inherit"
+      }
+    }, T_backlog))));
   }
 
   // Sortable origin-channel table.
@@ -4951,7 +4962,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Rendimiento comercial",
       h3: "KPIs por vendedora",
-      p: "Clic en cualquier columna para ordenar. Conversi\xF3n, cerrado, ticket, pipeline, calificados y \u201Cno responden\u201D."
+      p: "Clic en cualquier columna para ordenar. Conversi\xF3n, cerrado, ticket, pipeline, calificados, \u201Cno responden\u201D y sin seguimiento."
     }), /*#__PURE__*/React.createElement(KpiSortTable, {
       rows: T,
       open: open
