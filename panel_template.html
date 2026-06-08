@@ -4941,11 +4941,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const [q, setQ] = React.useState("");
     const [ccJefe, setCcJefe] = React.useState(!!window.__ccJefe);
     const [rowSt, setRowSt] = window.useRowState("heaven_backlog_state_v1");
+    const [stage, setStage] = React.useState("");
+    const [sortKey, setSortKey] = React.useState("d");
+    const [sortDir, setSortDir] = React.useState("desc");
     const rows = BACKLOG_ROWS.filter(r => {
-      if (filt === "w72" && r.d < 3) return false;
+      if (filt === "w72" && (r.d < 3 || r.d >= 7)) return false;
       if (filt === "crit" && r.d < 7) return false;
       if (filt === "nh" && !r.nh) return false;
       if (who && !r.r.includes(who)) return false;
+      if (stage && r.e !== stage) return false;
       if (q && !`${r.c} ${r.e} ${r.r}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
@@ -4953,11 +4957,31 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       const s = rowSt[r.c];
       return s === "done" ? 2 : s === "snooze" ? 1 : 0;
     };
-    const orderedRows = [...rows].sort((a, b) => rank(a) - rank(b));
+    const sortVal = {
+      c: r => (r.c || "").toLowerCase(),
+      e: r => r.e || "",
+      r: r => r.r || "",
+      d: r => r.d || 0,
+      st: r => rank(r)
+    };
+    const clickSort = k => {
+      if (sortKey === k) setSortDir(d => d === "asc" ? "desc" : "asc");else {
+        setSortKey(k);
+        setSortDir(k === "d" ? "desc" : "asc");
+      }
+    };
+    const orderedRows = [...rows].sort((a, b) => {
+      const pr = rank(a) - rank(b);
+      if (pr !== 0) return pr;
+      const va = sortVal[sortKey](a),
+        vb = sortVal[sortKey](b);
+      const cmp = typeof va === "number" ? va - vb : String(va).localeCompare(String(vb));
+      return sortDir === "asc" ? cmp : -cmp;
+    });
     const doneN = BACKLOG_ROWS.filter(r => rowSt[r.c] === "done").length;
     const snoozeN = BACKLOG_ROWS.filter(r => rowSt[r.c] === "snooze").length;
     const pendN = BACKLOG_ROWS.length - doneN - snoozeN;
-    const FILTERS = [["all", "Todos"], ["w72", "⏰ +72h"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
+    const FILTERS = [["all", "Todos"], ["w72", "🟡 +72h"], ["crit", "🔴 Críticos +7d"], ["nh", "🔍 Nunca tocados"]];
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
     }, /*#__PURE__*/React.createElement(SectionHead, {
@@ -5086,7 +5110,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Todas las vendedoras"), [...new Set(T.map(v => v.name))].map(n => /*#__PURE__*/React.createElement("option", {
       key: n,
       value: n
-    }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("span", {
+    }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("select", {
+      value: stage,
+      onChange: e => setStage(e.target.value)
+    }, /*#__PURE__*/React.createElement("option", {
+      value: ""
+    }, "Todas las etapas"), [...new Set(BACKLOG_ROWS.map(r => r.e))].map(e => /*#__PURE__*/React.createElement("option", {
+      key: e,
+      value: e
+    }, e))), /*#__PURE__*/React.createElement("span", {
       className: "rc"
     }, rows.length, " de ", BACKLOG_ROWS.length, " fichas"), /*#__PURE__*/React.createElement("button", {
       className: "btn",
@@ -5140,15 +5172,44 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       onReset: () => {
         setFilt("all");
         setWho("");
+        setStage("");
         setQ("");
       }
     }) : /*#__PURE__*/React.createElement("table", {
       className: "tbl"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Contacto / Deal"), /*#__PURE__*/React.createElement("th", null, "Etapa"), /*#__PURE__*/React.createElement("th", null, "Responsable"), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "D\xEDas sin act."), /*#__PURE__*/React.createElement("th", {
-      className: "r"
-    }, "Estado"), /*#__PURE__*/React.createElement("th", {
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
+      onClick: () => clickSort("c")
+    }, "Contacto / Deal", sortKey === "c" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
+      onClick: () => clickSort("e")
+    }, "Etapa", sortKey === "e" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
+      onClick: () => clickSort("r")
+    }, "Responsable", sortKey === "r" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
+      className: "r",
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
+      onClick: () => clickSort("d")
+    }, "D\xEDas sin act.", sortKey === "d" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
+      className: "r",
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
+      onClick: () => clickSort("st")
+    }, "Estado", sortKey === "st" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
       className: "r"
     }, "Acci\xF3n"))), /*#__PURE__*/React.createElement("tbody", null, orderedRows.map(r => {
       const st = rowSt[r.c];
