@@ -201,13 +201,19 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
     suc_of = {}
     for ld in leads:
         rid = ld.get("responsible_user_id")
-        name = user_map.get(rid)
-        if not name:
+        raw_name = user_map.get(rid)
+        if not raw_name:
             continue
+        # Los usuarios de Kommo vienen como "Nombre Apellido - Sucursal".
+        # Separamos: el nombre limpio es la clave; el sufijo es la sucursal.
+        if " - " in raw_name:
+            name, _suc_suffix = [p.strip() for p in raw_name.split(" - ", 1)]
+        else:
+            name, _suc_suffix = raw_name.strip(), None
         d = vd[name]
         d["leads"] += 1
         if name not in suc_of:
-            suc_of[name] = detect_suc(name, ld)
+            suc_of[name] = _suc_suffix or detect_suc(name, ld)
         st = stage_map.get(ld.get("status_id"), {"name": "—", "cls": "other"})
         d["stage"][st["name"]] += 1
         cls = st["cls"]
