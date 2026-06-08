@@ -2222,7 +2222,7 @@ function ProfileDrawer({
   const metas = useMetas();
   const metaMonto = v ? metas[v.name] || 0 : 0;
   const metaPct = metaMonto ? Math.round(cerrado / metaMonto * 100) : 0;
-  const proy = v ? Math.round(cerrado * (D.daysInMonth || 31) / (D.curDay || 26)) : 0;
+  const proy = v ? window.proy ? window.proy(cerrado, v.pipeline).fin : Math.round(cerrado * (D.daysInMonth || 31) / (D.curDay || 26)) : 0;
   const proyPct = metaMonto ? Math.round(proy / metaMonto * 100) : 0;
   const metaCol = metaPct >= 100 ? "var(--green)" : metaPct >= 70 ? "var(--amber)" : "var(--red)";
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
@@ -2372,20 +2372,25 @@ function ProfileDrawer({
       color: "#D98300"
     }
   }, /*#__PURE__*/React.createElement(CountUp, {
-    value: v.backlog
+    value: v.agendado
   })), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "Backlog"))), /*#__PURE__*/React.createElement("div", {
+  }, "Agendado / Visita"))), /*#__PURE__*/React.createElement("div", {
     className: "dr-sec"
   }, "Disciplina del CRM"), /*#__PURE__*/React.createElement("div", {
     className: "dr-kpis"
   }, /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "v"
-  }, v.promTxt), /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: v.backlog > 25 ? "var(--red)" : v.backlog > 10 ? "var(--amber)" : "inherit"
+    }
+  }, /*#__PURE__*/React.createElement(CountUp, {
+    value: v.backlog
+  })), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "Tiempo prom. 1\xAA acci\xF3n")), /*#__PURE__*/React.createElement("div", {
+  }, "Sin seguimiento +72h")), /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
   }, /*#__PURE__*/React.createElement("div", {
     className: "v"
@@ -4686,7 +4691,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     const agents = [{
       id: "crm",
       name: "Analista CRM",
-      role: "Disciplina, backlog y calidad de datos",
+      role: "Disciplina, sin seguimiento y calidad de datos",
       icon: "datos",
       color: "#2E6FE0",
       prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total ${D.metrics.backlog} (+72h), nunca tocados ${D.metrics.nuncaTocados}, "no responden" ${D.metrics.noResp}.\n${jsonRule}`
@@ -4989,9 +4994,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       ico: "seguimiento",
       sub: "el bot los movi\xF3, sin acci\xF3n humana"
     })), /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "\xBFDe qui\xE9n es el backlog?",
+      eb: "\xBFQui\xE9n acumula sin seguimiento?",
       h3: `Las ${totalBk} fichas tienen dueño`,
-      p: `El ${top2Pct}% del backlog está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.`
+      p: `El ${top2Pct}% de los leads sin seguimiento está en dos vendedoras. Aquí se controla el equipo: a quién exigirle seguimiento.`
     }), /*#__PURE__*/React.createElement("div", {
       className: "card"
     }, /*#__PURE__*/React.createElement("div", {
@@ -5129,7 +5134,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "card tight"
     }, rows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
       title: "Sin fichas para este filtro",
-      desc: "Ninguna ficha del backlog coincide con el filtro o la b\xFAsqueda actual. Prueba con otra vendedora o limpia los filtros.",
+      desc: "Ninguna ficha sin seguimiento coincide con el filtro o la b\xFAsqueda actual. Prueba con otra vendedora o limpia los filtros.",
       icon: "seguimiento",
       onReset: () => {
         setFilt("all");
@@ -5230,7 +5235,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })))));
     })))), /*#__PURE__*/React.createElement("div", {
       className: "note"
-    }, "Las 50 fichas m\xE1s antiguas del backlog real (", totalBk, " en total). Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
+    }, "Las 50 fichas m\xE1s antiguas sin seguimiento (", totalBk, " en total). Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
   };
 
   /* ===== ALERTAS ===== */
