@@ -4987,7 +4987,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   };
 
   /* ===== SEGUIMIENTO ===== */
-  // Cola priorizada representativa (en producción son las 50 fichas más antiguas reales)
+  // Cola completa de fichas sin seguimiento (todas las reales que envía generar.py, orden por antigüedad)
   const BACKLOG_ROWS = D.backlogRows && D.backlogRows.length ? D.backlogRows : [];
   window.ViewSeguimiento = function () {
     const backlogBy = T.filter(v => v.backlog > 0).map(v => ({
@@ -5358,7 +5358,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })))));
     })))), /*#__PURE__*/React.createElement("div", {
       className: "note"
-    }, "Las 50 fichas m\xE1s antiguas sin seguimiento (", totalBk, " en total). Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
+    }, BACKLOG_ROWS.length >= totalBk ? `Todas las ${totalBk} fichas sin seguimiento` : `Las ${BACKLOG_ROWS.length} fichas más antiguas (de ${totalBk} en total)`, ", ordenadas de la m\xE1s antigua a la m\xE1s reciente. Toca un lead para abrirlo en Kommo. Muchos contactos no tienen nombre cargado \u2014 aparecen como \"Lead #\"."));
   };
 
   /* ===== ALERTAS ===== */
