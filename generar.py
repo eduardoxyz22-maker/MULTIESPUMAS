@@ -214,7 +214,7 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 #  AGREGACIÓN POR VENDEDORA
 # ─────────────────────────────────────────────────────────────────────────────
 def blank_vendor():
-    return dict(leads=0, cierres=0, value=0, noResp=0, agendado=0, interesado=0,
+    return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
@@ -223,6 +223,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
     vd = defaultdict(blank_vendor)
     suc_of = {}
     backlog_rows = []
+    _pipe_seen = set()   # ids ya sumados al pipeline (evita doble conteo con won)
     for ld in leads:
         rid = ld.get("responsible_user_id")
         raw_name = user_map.get(rid)
@@ -251,7 +252,11 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         st = stage_map.get(ld.get("status_id"), {"name": "—", "cls": "other"})
         d["stage"][st["name"]] += 1
         cls = st["cls"]
-        # Cierres/montos se cuentan por FECHA CONTRATO (bloque won), no aquí.
+        # PIPELINE = monto de leads con precio en cualquier etapa (menos perdidos)
+        _pr = ld.get("price") or 0
+        if _pr > 0 and cls != "perdido":
+            d["pipeline"] += _pr; _pipe_seen.add(ld.get("id"))
+        # Cierres/montos (cerrado) se cuentan por FECHA CONTRATO (bloque won), no aquí.
         if cls == "no_resp":
             d["noResp"] += 1
         elif cls == "agendado":
@@ -299,6 +304,8 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         nm = raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
         dd = vd[nm]; price = ld.get("price") or 0
         dd["cierres"] += 1; dd["value"] += price
+        if ld.get("id") not in _pipe_seen and price > 0:
+            dd["pipeline"] += price; _pipe_seen.add(ld.get("id"))
         _ct = ld.get("_contract_ts") or 0
         try:
             _cd = datetime.datetime.fromtimestamp(_ct).day
@@ -398,7 +405,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "color": cfg.get("color") or DEFAULT_COLORS[i % len(DEFAULT_COLORS)],
             "photo": "",
             "leads": d["leads"], "prevLeads": prev_leads_sd, "cierres": d["cierres"],
-            "conv": conv, "ticket": ticket, "value": d["value"],
+            "conv": conv, "ticket": ticket, "value": d["value"], "pipeline": d["pipeline"],
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
@@ -419,6 +426,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     G_prev    = sum(t["prevLeads"] for t in team)
     G_cierres = sum(t["cierres"] for t in team)
     G_value   = sum(t["value"] for t in team)
+    G_pipeline = sum(t["pipeline"] for t in team)
     G_ticket  = round(G_value / G_cierres) if G_cierres else 0
 
     # ── etapas globales ──
@@ -588,7 +596,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "updated": now.strftime("%d/%m %H:%M"),
         "archives": archives,
         "global": {"leads": G_leads, "prevLeads": G_prev, "cierres": G_cierres,
-                   "pipeline": G_value, "ticket": G_ticket},
+                   "pipeline": G_pipeline, "cerrado": G_value, "ticket": G_ticket},
         "funnel2": funnel2, "stagesGlobal": stagesGlobal, "origin": origin,
         "channels": channels, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
