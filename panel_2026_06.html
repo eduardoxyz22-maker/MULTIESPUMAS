@@ -15,6 +15,8 @@ subdominio=eanez · token_len=1083 · token_prefix=eyJ0eX
 <script>(function(){try{var t=localStorage.getItem('heaven_theme');if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}try{var p=new URLSearchParams(location.search).get('rail');if(p)document.documentElement.setAttribute('data-rail',p);}catch(e){}})();</script>
 <style id="rail-variants">html[data-rail="teal"]{--rail:#06352F;--rail-tx:#A6C7C2;--rail-line:rgba(255,255,255,.09)}html[data-rail="teal"] .nl,html[data-rail="teal"] .foot,html[data-rail="teal"] .brand .s{color:#6E928C}html[data-rail="warm"]{--rail:#221E1A;--rail-tx:#B6ABA0;--rail-line:rgba(255,255,255,.07)}html[data-rail="warm"] .nl,html[data-rail="warm"] .foot,html[data-rail="warm"] .brand .s{color:#8A8076}html[data-rail="ivory"]{--rail:#F2EEE5;--rail-tx:#6A6258;--rail-line:rgba(0,0,0,.08)}html[data-rail="ivory"] .brand img.logo-img{filter:none}html[data-rail="ivory"] .brand .s,html[data-rail="ivory"] .nl,html[data-rail="ivory"] .foot{color:#A89F92}html[data-rail="ivory"] .ni{color:#5E574E}html[data-rail="ivory"] .ni:hover{background:rgba(0,0,0,.05);color:#1A1A1A}</style>
 <style>
+/* fix layout: la barra y el contenido deben ser columnas hermanas del body flex */
+#root{display:contents}
 /* Heaven panel — unified themeable styles.
    LIGHT theme = Direction A (Refinado). DARK theme = Direction B (Command Center).
    Toggle sets data-theme on <html>. Tokens flip; a few dark-only rules add
@@ -1601,7 +1603,7 @@ function(a,b,c){if(!Vd(b))throw Error(m(200));return Wd(null,a,b,!1,c)};Q.unmoun
 </script>
 <script>
 /* === DATOS DEL MES (window.PANEL_DATA) — generar.py reemplaza este bloque === */
-window.PANEL_DATA = {"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 8, "daysInMonth": 30, "updated": "08/06 00:01", "archives": [{"label": "Junio 2026", "url": "#"}, {"label": "Junio 2026", "url": "panel_2026_06.html"}, {"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 378, "prevLeads": 2574, "cierres": 24, "pipeline": 94560, "ticket": 3940}, "funnel2": [{"n": "Leads del mes", "v": 378, "c": "#27313F"}, {"n": "Sin respuesta", "v": 43, "c": "#646E7B"}, {"n": "Calificados", "v": 159, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 157, "c": "#00B5AD"}, {"n": "Compradores", "v": 24, "c": "#159A57"}], "stagesGlobal": [{"name": "Cotización enviada", "count": 141, "pct": 37, "color": "#7A4AD9"}, {"name": "Nueva consulta", "count": 134, "pct": 35, "color": "#27313F"}, {"name": "No Responden", "count": 43, "pct": 11, "color": "#646E7B"}, {"name": "Compradores", "count": 24, "pct": 6, "color": "#159A57"}, {"name": "Interesado", "count": 18, "pct": 5, "color": "#2E6FE0"}, {"name": "Agendado / Visita", "count": 16, "pct": 4, "color": "#D98300"}, {"name": "Pedido cancelado – perdido", "count": 2, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 42, "manualPct": 11, "auto": 336, "autoPct": 89}, "channels": [{"ic": "⚙", "name": "Automático (bot)", "leads": 336, "pct": 89, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}, {"ic": "✍", "name": "Carga manual vendedora", "leads": 31, "pct": 8, "cierres": 16, "conv": 52, "ticket": 3322, "pipeline": 53160, "cls": "green"}, {"ic": "🚶", "name": "Walk-in (Tienda)", "leads": 11, "pct": 3, "cierres": 8, "conv": 73, "ticket": 5175, "pipeline": 41400, "cls": "green"}], "metrics": {"noResp": 43, "noRespPct": 11, "backlog": 106, "backlogPct": 28, "criticos7d": 77, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 354, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 18, "agendado": 16}, "leadsMomPct": -85, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 82, "prevLeads": 649, "cierres": 11, "conv": 13.4, "ticket": 5028, "value": 55310, "calif": 40, "califPct": 49, "noResp": 5, "noRespPct": 6, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 25, "metaCierres": 35, "metaMonto": 150000, "v": "green", "prev": {"leads": 649, "cierres": 34, "visitas": 0, "ticket": 3904, "value": 132720}, "origen": {"manual": 14, "bot": 68}}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 81, "prevLeads": 620, "cierres": 7, "conv": 8.6, "ticket": 3370, "value": 23590, "calif": 24, "califPct": 30, "noResp": 29, "noRespPct": 36, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 4, "metaCierres": 45, "metaMonto": 250000, "v": "green", "prev": {"leads": 620, "cierres": 46, "visitas": 1, "ticket": 5193, "value": 238870}, "origen": {"manual": 13, "bot": 68}}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 77, "prevLeads": 619, "cierres": 6, "conv": 7.8, "ticket": 2610, "value": 15660, "calif": 38, "califPct": 49, "noResp": 3, "noRespPct": 4, "agendado": 0, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 26, "metaCierres": 40, "metaMonto": 160000, "v": "green", "prev": {"leads": 619, "cierres": 36, "visitas": 65, "ticket": 3773, "value": 135833}, "origen": {"manual": 9, "bot": 68}}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 73, "prevLeads": 657, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 26, "califPct": 36, "noResp": 6, "noRespPct": 8, "agendado": 4, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 28, "metaCierres": 35, "metaMonto": 160000, "v": "green", "prev": {"leads": 657, "cierres": 28, "visitas": 11, "ticket": 5222, "value": 146225}, "origen": {"manual": 6, "bot": 67}}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 65, "prevLeads": 29, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 47, "califPct": 72, "noResp": 0, "noRespPct": 0, "agendado": 6, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 23, "metaCierres": 8, "metaMonto": 20000, "v": "green", "prev": {"leads": 29, "cierres": 0, "visitas": 3, "ticket": 0, "value": 0}, "origen": {"manual": 0, "bot": 65}}], "funnel": [{"name": "Nueva consulta", "count": 134}, {"name": "Interesado", "count": 18}, {"name": "Cotización enviada", "count": 141}, {"name": "Agendado / Visita", "count": 16}, {"name": "Compradores", "count": 24}, {"name": "No Responden", "count": 43}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "106"}, {"id": "alertas", "label": "Alertas", "badge": "8"}, {"id": "presentacion", "label": "Presentación"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "stagesByV": {"Carola Chavez": [["Cotización enviada", 30], ["Nueva consulta", 24], ["Compradores", 11], ["Interesado", 7], ["No Responden", 5], ["Agendado / Visita", 3], ["Pedido cancelado – perdido", 2]], "Isabel Robledo": [["No Responden", 29], ["Nueva consulta", 21], ["Cotización enviada", 17], ["Compradores", 7], ["Interesado", 4], ["Agendado / Visita", 3]], "Maria Flores": [["Cotización enviada", 37], ["Nueva consulta", 30], ["Compradores", 6], ["No Responden", 3], ["Interesado", 1]], "Mirian Salazar": [["Nueva consulta", 41], ["Cotización enviada", 19], ["No Responden", 6], ["Agendado / Visita", 4], ["Interesado", 3]], "Jonathan Monje": [["Cotización enviada", 38], ["Nueva consulta", 18], ["Agendado / Visita", 6], ["Interesado", 3]]}};
+window.PANEL_DATA = {"month": "Junio", "year": 2026, "prevMonth": "Mayo", "curDay": 8, "daysInMonth": 30, "updated": "08/06 00:12", "archives": [{"label": "Junio 2026", "url": "#"}, {"label": "Junio 2026", "url": "panel_2026_06.html"}, {"label": "Mayo 2026", "url": "panel_2026_05.html"}], "global": {"leads": 379, "prevLeads": 2574, "cierres": 24, "pipeline": 94560, "ticket": 3940}, "funnel2": [{"n": "Leads del mes", "v": 379, "c": "#27313F"}, {"n": "Sin respuesta", "v": 43, "c": "#646E7B"}, {"n": "Calificados", "v": 158, "c": "#2E6FE0"}, {"n": "En etapas avanz.", "v": 157, "c": "#00B5AD"}, {"n": "Compradores", "v": 24, "c": "#159A57"}], "stagesGlobal": [{"name": "Cotización enviada", "count": 141, "pct": 37, "color": "#7A4AD9"}, {"name": "Nueva consulta", "count": 136, "pct": 36, "color": "#27313F"}, {"name": "No Responden", "count": 43, "pct": 11, "color": "#646E7B"}, {"name": "Compradores", "count": 24, "pct": 6, "color": "#159A57"}, {"name": "Interesado", "count": 17, "pct": 4, "color": "#2E6FE0"}, {"name": "Agendado / Visita", "count": 16, "pct": 4, "color": "#D98300"}, {"name": "Pedido cancelado – perdido", "count": 2, "pct": 1, "color": "#9AA3AF"}], "origin": {"manual": 42, "manualPct": 11, "auto": 337, "autoPct": 89}, "channels": [{"ic": "⚙", "name": "Automático (bot)", "leads": 337, "pct": 89, "cierres": 0, "conv": 0, "ticket": 0, "pipeline": 0, "cls": "red"}, {"ic": "✍", "name": "Carga manual vendedora", "leads": 31, "pct": 8, "cierres": 16, "conv": 52, "ticket": 3322, "pipeline": 53160, "cls": "green"}, {"ic": "🚶", "name": "Walk-in (Tienda)", "leads": 11, "pct": 3, "cierres": 8, "conv": 73, "ticket": 5175, "pipeline": 41400, "cls": "green"}], "metrics": {"noResp": 43, "noRespPct": 11, "backlog": 107, "backlogPct": 28, "criticos7d": 78, "nuncaTocados": 0, "sinSucursalFichas": 0, "sinSucursalPct": 0, "abiertosSinValor": 355, "duplicadosTel": 0, "duplicadosFichas": 0, "interesado": 17, "agendado": 16}, "leadsMomPct": -85, "team": [{"ini": "CC", "name": "Carola Chavez", "suc": "Central", "color": "#D98300", "photo": "", "leads": 82, "prevLeads": 649, "cierres": 11, "conv": 13.4, "ticket": 5028, "value": 55310, "calif": 40, "califPct": 49, "noResp": 5, "noRespPct": 6, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 25, "metaCierres": 35, "metaMonto": 150000, "v": "green", "prev": {"leads": 649, "cierres": 34, "visitas": 0, "ticket": 3904, "value": 132720}, "origen": {"manual": 14, "bot": 68}}, {"ini": "IR", "name": "Isabel Robledo", "suc": "Mia Plaza", "color": "#00B5AD", "photo": "", "leads": 81, "prevLeads": 620, "cierres": 7, "conv": 8.6, "ticket": 3370, "value": 23590, "calif": 24, "califPct": 30, "noResp": 29, "noRespPct": 36, "agendado": 3, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 5, "metaCierres": 45, "metaMonto": 250000, "v": "green", "prev": {"leads": 620, "cierres": 46, "visitas": 1, "ticket": 5193, "value": 238870}, "origen": {"manual": 13, "bot": 68}}, {"ini": "MF", "name": "Maria Flores", "suc": "Buenos Aires", "color": "#2E6FE0", "photo": "", "leads": 77, "prevLeads": 619, "cierres": 6, "conv": 7.8, "ticket": 2610, "value": 15660, "calif": 38, "califPct": 49, "noResp": 3, "noRespPct": 4, "agendado": 0, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 26, "metaCierres": 40, "metaMonto": 160000, "v": "green", "prev": {"leads": 619, "cierres": 36, "visitas": 65, "ticket": 3773, "value": 135833}, "origen": {"manual": 9, "bot": 68}}, {"ini": "MS", "name": "Mirian Salazar", "suc": "Mia Plaza", "color": "#7A5AF0", "photo": "", "leads": 74, "prevLeads": 657, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 25, "califPct": 34, "noResp": 6, "noRespPct": 8, "agendado": 4, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 28, "metaCierres": 35, "metaMonto": 160000, "v": "green", "prev": {"leads": 657, "cierres": 28, "visitas": 11, "ticket": 5222, "value": 146225}, "origen": {"manual": 6, "bot": 68}}, {"ini": "JM", "name": "Jonathan Monje", "suc": "Central", "color": "#159A57", "photo": "", "leads": 65, "prevLeads": 29, "cierres": 0, "conv": 0.0, "ticket": 0, "value": 0, "calif": 47, "califPct": 72, "noResp": 0, "noRespPct": 0, "agendado": 6, "u24": 100, "promTxt": "0 min", "tarde": 0, "nunca": 0, "backlog": 23, "metaCierres": 8, "metaMonto": 20000, "v": "green", "prev": {"leads": 29, "cierres": 0, "visitas": 3, "ticket": 0, "value": 0}, "origen": {"manual": 0, "bot": 65}}], "funnel": [{"name": "Nueva consulta", "count": 136}, {"name": "Interesado", "count": 17}, {"name": "Cotización enviada", "count": 141}, {"name": "Agendado / Visita", "count": 16}, {"name": "Compradores", "count": 24}, {"name": "No Responden", "count": 43}], "nav": [{"id": "resumen", "label": "Resumen"}, {"id": "equipo", "label": "Equipo", "badge": "5"}, {"id": "seguimiento", "label": "Seguimiento", "badge": "107"}, {"id": "alertas", "label": "Alertas", "badge": "4"}, {"id": "presentacion", "label": "Presentación"}, {"id": "analisis", "label": "Análisis IA"}, {"id": "conversion", "label": "Conversión"}, {"id": "sucursales", "label": "Sucursales"}, {"id": "proyeccion", "label": "Proyección"}, {"id": "datos", "label": "Datos"}], "stagesByV": {"Carola Chavez": [["Cotización enviada", 30], ["Nueva consulta", 24], ["Compradores", 11], ["Interesado", 7], ["No Responden", 5], ["Agendado / Visita", 3], ["Pedido cancelado – perdido", 2]], "Isabel Robledo": [["No Responden", 29], ["Nueva consulta", 21], ["Cotización enviada", 17], ["Compradores", 7], ["Interesado", 4], ["Agendado / Visita", 3]], "Maria Flores": [["Cotización enviada", 37], ["Nueva consulta", 30], ["Compradores", 6], ["No Responden", 3], ["Interesado", 1]], "Mirian Salazar": [["Nueva consulta", 43], ["Cotización enviada", 19], ["No Responden", 6], ["Agendado / Visita", 4], ["Interesado", 2]], "Jonathan Monje": [["Cotización enviada", 38], ["Nueva consulta", 18], ["Agendado / Visita", 6], ["Interesado", 3]]}, "backlogRows": [{"c": "Lead #32947474", "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32973914", "e": "Nueva consulta", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32916340", "e": "No Responden", "r": "Isabel Robledo", "d": 6, "nh": false}, {"c": "Lead #32973546", "e": "No Responden", "r": "Maria Flores", "d": 6, "nh": false}, {"c": "Lead #32981548", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 6, "nh": false}, {"c": "Lead #33076214", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33081926", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #32973622", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33093514", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33075646", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33100378", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33103512", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33104252", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33105772", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33133962", "e": "Nueva consulta", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33123508", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33136380", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "Lead #33117240", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 5, "nh": false}, {"c": "Lead #33131284", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33119226", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33116916", "e": "Nueva consulta", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33131502", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33117168", "e": "Nueva consulta", "r": "Mirian Salazar", "d": 5, "nh": false}, {"c": "Lead #33102848", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071386", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33064628", "e": "Cotización enviada", "r": "Maria Flores", "d": 5, "nh": false}, {"c": "Lead #33071660", "e": "Cotización enviada", "r": "Carola Chavez", "d": 5, "nh": false}, {"c": "TIENDA-Jorge Hurtado", "e": "Cotización enviada", "r": "Isabel Robledo", "d": 5, "nh": false}, {"c": "Lead #33098726", "e": "No Responden", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33110758", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33136856", "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33109526", "e": "Cotización enviada", "r": "Maria Flores", "d": 4, "nh": false}, {"c": "Lead #33143036", "e": "Cotización enviada", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33081040", "e": "No Responden", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33146788", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #32935128", "e": "No Responden", "r": "Carola Chavez", "d": 4, "nh": false}, {"c": "Lead #33110506", "e": "Agendado / Visita", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33124946", "e": "Agendado / Visita", "r": "Jonathan Monje", "d": 4, "nh": false}, {"c": "Lead #33119394", "e": "No Responden", "r": "Mirian Salazar", "d": 4, "nh": false}, {"c": "Lead #33100784", "e": "Cotización enviada", "r": "Carola Chavez", "d": 4, "nh": false}], "alerts": [{"sev": "red", "who": "Mirian Salazar", "t": "Conversión 0.0% — la más baja del equipo", "d": "0 cierres sobre 74 leads, bajo el umbral de 4%.", "act": "Coaching + auditar cotizaciones."}, {"sev": "red", "who": "Datos / Gerencia", "t": "Muchos deals abiertos sin valor cargado", "d": "No se puede priorizar el pipeline por monto.", "act": "Cargar valor estimado al cotizar."}, {"sev": "amber", "who": "Gerencia", "t": "Leads globales ↓85% vs Mayo (379 vs 2.574)", "d": "Caída de captación respecto al mes anterior.", "act": "Revisar inversión en canales."}, {"sev": "green", "who": "Equipo", "t": "La carga manual es la que convierte", "d": "Manual 52% vs bot 0%. Priorizar captación manual de calidad.", "act": "Documentar el playbook de la mejor vendedora."}]};
 /* === Helpers de formato === */
 // Helpers — moneda local: Boliviano (Bs)
 window.fmtMoney = (n) => "Bs " + Math.round(n).toLocaleString("en-US");
@@ -1863,6 +1865,11 @@ const {
   useEffect
 } = React;
 const D = window.PANEL_DATA;
+// Sparkline de respaldo: serie suave que TERMINA en el valor real (sin inventar historia).
+function sparkOf(v) {
+  v = Number(v) || 0;
+  return [0.93, 0.96, 0.95, 0.98, 0.99, 1].map(x => Math.round(v * x * 100) / 100);
+}
 
 /* ---------- shared bits ---------- */
 function SectionHead({
@@ -3208,12 +3215,19 @@ window.exportTeamCSV = exportTeamCSV;
 // sessionStorage), reads the REAL month data, and writes the headline +
 // diagnosis + levers + risk. Falls back to a static reading while loading or
 // if the model is unavailable. In production, generar.py bakes the result.
-const DIAG_FALLBACK = {
-  titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
-  diagnostico: "Con 2,576 leads el cuello de botella no es captación — es disciplina de seguimiento y conversión. La captación cayó 14% pero el problema real está en el embudo medio.",
-  palancas: ["Llamar al top 50 de cotizaciones por valor", "Replicar el playbook de seguimiento de Isabel", "Activar los 890 leads sin seguimiento +72h"],
-  riesgo: "1,330 leads en “No responden” se enfrían cada día sin una segunda cadencia de contacto."
-};
+function diagFallback() {
+  const G = D.global,
+    m = D.metrics;
+  const conv = G.leads ? (G.cierres / G.leads * 100).toFixed(1) : "0";
+  const topV = [...D.team].sort((a, b) => b.cierres - a.cierres)[0];
+  const nf = n => (n || 0).toLocaleString("en-US");
+  return {
+    titular: "No falta gente que entre. Falta seguir y cerrar la que ya entró.",
+    diagnostico: `Con ${nf(G.leads)} leads, la conversión global es ${conv}% y hay ${nf(m.noResp)} leads en “No responden” (${m.noRespPct}%). El cuello de botella no es captación — es disciplina de seguimiento y conversión en el embudo medio.`,
+    palancas: ["Llamar primero al top de cotizaciones por valor", topV ? `Replicar el método de ${topV.name.split(" ")[0]} en el equipo` : "Replicar el método del top del equipo", `Reactivar los ${nf(m.backlog)} leads sin seguimiento +72h`],
+    riesgo: `${nf(m.noResp)} leads en “No responden” se enfrían cada día sin una segunda cadencia de contacto.`
+  };
+}
 function DiagnosticoMes() {
   const G = D.global;
   const CACHE_KEY = `heaven_diag_ai_${D.month}_${D.year}`;
@@ -3235,7 +3249,7 @@ function DiagnosticoMes() {
     const teamLines = D.team.map(v => `${v.name} (${v.suc}): ${v.leads} leads, ${v.cierres} cierres, ${v.conv}% conv, ${v.noResp} no-responden, ${v.backlog} backlog, ${v.u24}% actualiza <24h`).join("\n");
     return `Eres analista comercial senior de Heaven Colchones (Bolivia). Analiza el mes ${D.month} ${D.year} y responde SOLO con JSON válido, sin texto extra, forma exacta:
 {"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números","palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}
-Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / G.prevLeads * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" 1330 (52%). Sin seguimiento +72h: 890 (35%). Canal manual convierte 21% vs 1% bot.
+Datos (moneda Bs): Leads ${G.leads} (mes anterior ${G.prevLeads}, ${Math.round((G.leads - G.prevLeads) / G.prevLeads * 100)}%). Cierres ${G.cierres}, conversión ${(G.cierres / G.leads * 100).toFixed(1)}%. Pipeline Bs ${G.pipeline}, ticket Bs ${G.ticket}. "No responden" ${D.metrics.noResp} (${D.metrics.noRespPct}%). Sin seguimiento +72h: ${D.metrics.backlog} (${D.metrics.backlogPct}%).
 Equipo:
 ${teamLines}
 Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, específico con nombres y números, español de Bolivia.`;
@@ -3276,7 +3290,7 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
   useEffect(() => {
     if (ai.state === "idle") run();
   }, []);
-  const live = ai.state === "done" ? ai : DIAG_FALLBACK;
+  const live = ai.state === "done" ? ai : diagFallback();
   const isLoading = ai.state === "loading";
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "diag2"
@@ -3771,7 +3785,7 @@ function ViewResumen() {
     ac: "#808A96",
     ico: "equipo",
     tip: "Leads ingresados este mes vs el mes anterior.",
-    spark: [3120, 3000, 2890, 3010, 2820, 2576],
+    spark: sparkOf(G.leads),
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
       className: `delta ${momPct >= 0 ? "up" : "down"}`
     }, momPct >= 0 ? "▲" : "▼", " ", Math.abs(momPct), "%"), " vs ", D.prevMonth)
@@ -3782,7 +3796,7 @@ function ViewResumen() {
     ac: "#2E6FE0",
     ico: "conversion",
     tip: "Compradores \xF7 leads. Meta del sector: 5\u20138%.",
-    spark: [3.8, 4.0, 4.4, 4.2, 4.6, 4.9],
+    spark: sparkOf(G.leads ? G.cierres / G.leads * 100 : 0),
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
       className: "num"
     }, G.cierres), " compradores")
@@ -3793,7 +3807,7 @@ function ViewResumen() {
     ac: "#159A57",
     ico: "trophy",
     tip: "Monto de deals que llegaron a Compradores (revenue confirmado).",
-    spark: [520000, 560000, 585000, 610000, 600000, cerradoTotal],
+    spark: sparkOf(cerradoTotal),
     sub: `${G.cierres} compradores`
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Pipeline total",
@@ -3802,7 +3816,7 @@ function ViewResumen() {
     ac: "#00B5AD",
     ico: "proyeccion",
     tip: "Valor de todos los deals en todas las etapas.",
-    spark: [540000, 580000, 600000, 625000, 615000, 654540],
+    spark: sparkOf(G.pipeline),
     sub: "todas las etapas"
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Sin seguimiento",
@@ -3811,7 +3825,7 @@ function ViewResumen() {
     ac: "#DC4046",
     ico: "seguimiento",
     tip: "Deals abiertos sin actividad en Kommo +72h.",
-    spark: [26, 28, 31, 30, 33, 35],
+    spark: sparkOf(D.metrics.backlogPct),
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
       style: {
         color: "var(--red-ink)"
@@ -3824,7 +3838,7 @@ function ViewResumen() {
     ac: "#D98300",
     ico: "conversion",
     tip: "Pipeline total \xF7 n\xFAmero de compradores.",
-    spark: [4200, 4500, 4800, 4650, 5000, 5153],
+    spark: sparkOf(G.ticket),
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
       className: "delta up"
     }, "\u25B2"), " valor / cierre")
@@ -3834,7 +3848,7 @@ function ViewResumen() {
     ac: "#2E6FE0",
     ico: "conversion",
     tip: "Leads en etapa Interesado \u2014 inter\xE9s activo.",
-    spark: [60, 72, 80, 75, 90, 85],
+    spark: sparkOf(D.metrics.interesado),
     sub: "leads en inter\xE9s"
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Agendado / Visita",
@@ -3842,7 +3856,7 @@ function ViewResumen() {
     ac: "#D98300",
     ico: "semanal",
     tip: "Leads con visita o cita agendada \u2014 mayor probabilidad de cierre.",
-    spark: [90, 100, 95, 110, 105, 108],
+    spark: sparkOf(D.metrics.agendado),
     sub: "visitas programadas"
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Compradores",
@@ -3850,7 +3864,7 @@ function ViewResumen() {
     ac: "#159A57",
     ico: "trophy",
     tip: "Leads que cerraron como venta confirmada este mes.",
-    spark: [98, 110, 118, 122, 120, 127],
+    spark: sparkOf(G.cierres),
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
       className: "num"
     }, fmtMoney(cerradoTotal)), " cerrado")
@@ -4471,7 +4485,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       role: "Disciplina, backlog y calidad de datos",
       icon: "datos",
       color: "#2E6FE0",
-      prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total 890 (+72h), nunca tocados 146, "no responden" 1330, deals sin valor ~100%.\n${jsonRule}`
+      prompt: `Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads "nunca tocados", "no responden" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas rescatar primero.\nDatos relevantes para ti:\n${teamLines}\nBacklog total ${D.metrics.backlog} (+72h), nunca tocados ${D.metrics.nuncaTocados}, "no responden" ${D.metrics.noResp}.\n${jsonRule}`
     }, {
       id: "ventas",
       name: "Analista de Ventas",
@@ -4485,7 +4499,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       role: "Origen de leads, canales y patrones",
       icon: "conversion",
       color: "#7A5AF0",
-      prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. Carga manual (514 leads, 21% conv, 106 cierres) vs automático/bot (2029 leads, 1% conv, 15 cierres); el 52% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/horario/etapa pierde clientes y cómo reactivar los 1330 que no responden.\nDatos de canal y etapas globales: manual 514/21%/106 · auto 2029/1%/15 · no-responden 1330 (52%).\n${jsonRule}`
+      prompt: `Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían los leads. el ${D.metrics.noRespPct}% termina en "no responden". NO hables de metas individuales ni disciplina de cada vendedora. Explica el PATRÓN: qué canal/etapa pierde clientes y cómo reactivar los ${D.metrics.noResp} que no responden.\nCanales: ${(D.channels || []).map(c => c.name + " " + c.leads + "/" + c.conv + "%/" + c.cierres).join(" · ")}.\n${jsonRule}`
     }];
     const synthPrompt = `Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs. Cada decisión debe nombrar responsable y meta concreta.\n${ctx}\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes","hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} Máx 3 y 3. Español de Bolivia.`;
     return /*#__PURE__*/React.createElement("div", {
@@ -4704,79 +4718,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== SEGUIMIENTO ===== */
   // Cola priorizada representativa (en producción son las 50 fichas más antiguas reales)
-  const BACKLOG_ROWS = [{
-    c: "Lead #38712044",
-    e: "Cotización enviada",
-    r: "Maria Flores",
-    d: 19,
-    nh: false
-  }, {
-    c: "Reinaldo Romero",
-    e: "Nueva consulta",
-    r: "Maria Flores",
-    d: 17,
-    nh: true
-  }, {
-    c: "Lead #38705628",
-    e: "No Responden",
-    r: "Carola Chavez",
-    d: 16,
-    nh: false
-  }, {
-    c: "face 28",
-    e: "No Responden",
-    r: "Carola Chavez",
-    d: 14,
-    nh: true
-  }, {
-    c: "SRA SILVIA (Montero)",
-    e: "Cotización enviada",
-    r: "Mirian Salazar",
-    d: 12,
-    nh: false
-  }, {
-    c: "Lead #38790858",
-    e: "Nueva consulta",
-    r: "Maria Flores",
-    d: 11,
-    nh: true
-  }, {
-    c: "Briseida",
-    e: "Interesado",
-    r: "Carola Chavez",
-    d: 9,
-    nh: false
-  }, {
-    c: "Lead #38589856",
-    e: "No Responden",
-    r: "Isabel Robledo",
-    d: 8,
-    nh: false
-  }, {
-    c: "aries artesana",
-    e: "Agendado / Visita",
-    r: "Maria Flores",
-    d: 7,
-    nh: false
-  }, {
-    c: "YuliM",
-    e: "Cotización enviada",
-    r: "Carola Chavez",
-    d: 6,
-    nh: false
-  }, {
-    c: "Lead #39061972",
-    e: "Nueva consulta",
-    r: "Mirian Salazar",
-    d: 5,
-    nh: true
-  }, {
-    c: "Dan P",
-    e: "No Responden",
-    r: "Isabel Robledo",
-    d: 4,
-    nh: false
-  }];
+  const BACKLOG_ROWS = D.backlogRows && D.backlogRows.length ? D.backlogRows : [];
   window.ViewSeguimiento = function () {
     const backlogBy = T.filter(v => v.backlog > 0).map(v => ({
       v,
@@ -4935,7 +4877,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       value: n
     }, n.split(" ")[0]))), /*#__PURE__*/React.createElement("span", {
       className: "rc"
-    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas (muestra)"), /*#__PURE__*/React.createElement("span", {
+    }, rows.length, " de ", BACKLOG_ROWS.length, " fichas"), /*#__PURE__*/React.createElement("span", {
       className: "work-summary",
       style: {
         marginLeft: "auto"
@@ -5048,49 +4990,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
 
   /* ===== ALERTAS ===== */
   window.ViewAlertas = function () {
-    const A = [{
-      sev: "red",
-      who: "Datos / Gerencia",
-      t: "Deals abiertos sin valor cargado (~100%)",
-      d: "No se puede priorizar el pipeline por monto.",
-      act: "Cargar valor estimado al cotizar."
-    }, {
-      sev: "red",
-      who: "Carola Chavez",
-      t: "Conversión 3.7% — la más baja del equipo",
-      d: "24 cierres sobre 655 leads, bajo el umbral de 4%. Revisar calidad de seguimiento.",
-      act: "Coaching + auditar cotizaciones."
-    }, {
-      sev: "red",
-      who: "Isabel / Carola",
-      t: "85% y 33% de leads en “No responden”",
-      d: "Mirian e Isabel concentran 1,094 leads sin respuesta del cliente.",
-      act: "Segunda cadencia de contacto por WhatsApp."
-    }, {
-      sev: "amber",
-      who: "Gerencia",
-      t: "Leads globales ↓14% vs Abril (2,576 vs 3,000)",
-      d: "Caída de captación en todos los frentes.",
-      act: "Revisar inversión en canales."
-    }, {
-      sev: "amber",
-      who: "Maria Flores",
-      t: "135 leads nunca tocados",
-      d: "El bot los asignó, sin primera acción registrada.",
-      act: "Repartir backlog en reunión diaria."
-    }, {
-      sev: "amber",
-      who: "Datos",
-      t: "Sucursal sin etiquetar en el 89% de fichas",
-      d: "El comparativo por tienda queda parcial (2,269 fichas).",
-      act: "Campaña de etiquetado."
-    }, {
-      sev: "green",
-      who: "Equipo",
-      t: "Carga manual convierte 21× más que el bot",
-      d: "Oportunidad: priorizar captación manual de calidad.",
-      act: "Documentar playbook de Isabel."
-    }];
+    const A = D.alerts && D.alerts.length ? D.alerts : [];
     const [sev, setSev] = React.useState("all");
     const [rowSt, setRowSt] = window.useRowState("heaven_alertas_state_v1");
     const counts = {
