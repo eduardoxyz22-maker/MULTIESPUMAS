@@ -715,9 +715,14 @@ def main():
                    for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
         contract_field_id = next((c["id"] for c in cfs
             if "contrato" in (c.get("code", "") + c.get("name", "")).lower()), None)
-        print(f"     campo Fecha contrato: id={contract_field_id}", file=sys.stderr)
-    except Exception:
+        # buscar también campos de fecha por si el nombre no incluye "contrato"
+        _date_fields = [f"{c.get('name','?')}#{c.get('id')}[{c.get('type','?')}]"
+                        for c in cfs if c.get("type") in ("date", "date_time", "birthday")]
+        _DIAG.append("campos_fecha=" + (" | ".join(_date_fields) if _date_fields else "ninguno"))
+        _DIAG.append(f"contract_field_id={contract_field_id}")
+    except Exception as _e:
         source_field_id = None; contract_field_id = None
+        _DIAG.append(f"campos_error={_e}")
 
     print("  ⚡ eventos del mes…")
     raw_ev = fetch_paginated("/events", {
