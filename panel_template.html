@@ -2835,7 +2835,27 @@ function MetaStepper({
 }
 window.useMetas = useMetas;
 window.MetaStepper = MetaStepper;
-window.cerradoOf = v => v.cierres * v.ticket;
+window.cerradoOf = v => v.value != null ? v.value : v.cierres * v.ticket;
+// Proyección ponderada por pipeline: lo cerrado (piso) + % del pipeline abierto que se espera cerrar este mes.
+window.PROY = {
+  cons: 0.35,
+  prob: 0.60
+};
+window.proy = function (cerrado, pipeline) {
+  cerrado = cerrado || 0;
+  const PD = window.PANEL_DATA,
+    d = PD.curDay || 1,
+    DD = PD.daysInMonth || 30;
+  const porCerrar = Math.max(0, (pipeline || 0) - cerrado);
+  return {
+    porCerrar,
+    runrate: Math.round(d ? cerrado * DD / d : cerrado),
+    cons: Math.round(cerrado + porCerrar * window.PROY.cons),
+    prob: Math.round(cerrado + porCerrar * window.PROY.prob),
+    max: Math.round(cerrado + porCerrar),
+    rem: DD - d
+  };
+};
 
 // Notas de gerencia por vendedora — persistentes (localStorage, por nombre).
 // Extiende el "bucle de acción": compromisos y próximos pasos que sobreviven recargas.
@@ -2880,8 +2900,8 @@ function NotesBox({
 window.NotesBox = NotesBox;
 function MetasSection() {
   const metas = useMetas();
-  const cerradoOf = v => v.cierres * v.ticket;
-  const proyOf = v => Math.round(cerradoOf(v) * (D.daysInMonth || 31) / (D.curDay || 26));
+  const cerradoOf = v => v.value != null ? v.value : v.cierres * v.ticket;
+  const proyOf = v => window.proy(cerradoOf(v), v.pipeline).prob;
   const rows = D.team.filter(v => (metas[v.name] || 0) > 0).map(v => ({
     v,
     meta: metas[v.name],
@@ -2891,7 +2911,7 @@ function MetasSection() {
   const totMeta = D.team.reduce((s, v) => s + (metas[v.name] || 0), 0);
   const totCerr = D.team.reduce((s, v) => s + cerradoOf(v), 0);
   const totProy = D.team.reduce((s, v) => s + proyOf(v), 0);
-  const totPipe = D.team.reduce((s, v) => s + v.value, 0);
+  const totPipe = D.team.reduce((s, v) => s + (v.pipeline || 0), 0);
   const tPct = totMeta ? Math.min(100, Math.round(totCerr / totMeta * 100)) : 0;
   const tCol = tPct >= 100 ? "var(--green)" : tPct >= 70 ? "var(--amber)" : "var(--red)";
   const Stepper = ({
@@ -4872,7 +4892,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Metas",
       h3: "Cumplimiento de ventas por vendedora (monto Bs)",
-      p: "Avance de ventas en Bs vs meta mensual, con proyecci\xF3n al cierre. Las metas son editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
+      p: "Avance en Bs vs meta mensual. La proyecci\xF3n al cierre = lo cerrado + 60% del pipeline en juego. Metas editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
     }), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 16
@@ -6202,46 +6222,38 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       dim = D.daysInMonth,
       left = dim - curDay,
       progPct = Math.round(curDay / dim * 100);
-    const conv = Math.round(G.cierres / G.leads * 100);
-    const base = Math.round(G.cierres / curDay * dim);
-    const convExact = G.leads ? G.cierres / G.leads * 100 : 0;
-    const projLeads = curDay ? Math.round(G.leads / curDay * dim) : G.leads;
-    const conv1 = Math.round(projLeads * (convExact + 1) / 100);
-    const backlog = T.reduce((s, v) => s + (v.backlog || 0), 0);
-    const extra = Math.round(backlog * conv / 100);
-    const resc = base + extra;
-    const paceDay = (G.cierres / curDay).toFixed(1);
+    const metas = window.useMetas ? window.useMetas() : {};
+    const totMeta = T.reduce((s, v) => s + (metas[v.name] || v.metaMonto || 0), 0);
+    const P = window.proy(G.cerrado, G.pipeline);
+    const pctMeta = x => totMeta ? Math.round(x / totMeta * 100) : 0;
+    const dvsHoy = x => Math.max(0, x - G.cerrado);
+    const cf = Math.round(window.PROY.cons * 100),
+      pf = Math.round(window.PROY.prob * 100);
     const scen = [{
-      tag: "Escenario base",
-      v: base,
-      val: base * G.ticket,
-      delta: Math.max(0, base - G.cierres),
-      d: `Pace lineal. ${left} días restantes. Sin cambios en la operación actual.`,
+      tag: "Conservador",
+      v: P.cons,
+      pin: "",
       hot: false,
-      pin: ""
+      d: `Lo cerrado (${money(G.cerrado)}) + ${cf}% del pipeline en juego. El piso prudente si el cierre se enfría.`
     }, {
-      tag: `+1pp conversión (${conv + 1}%)`,
-      v: conv1,
-      val: conv1 * G.ticket,
-      delta: Math.max(0, conv1 - G.cierres),
-      d: "Si cada vendedora mejora 1pp su tasa de cierre con coaching.",
-      hot: false,
-      pin: ""
-    }, {
-      tag: "Rescate sin seguimiento",
-      v: resc,
-      val: resc * G.ticket,
-      delta: extra,
-      d: `Base (~${base}) + rescate de ${backlog} deals sin seguimiento (+${extra} cierres adicionales).`,
+      tag: "Probable",
+      v: P.prob,
+      pin: "Más realista",
       hot: true,
-      pin: "Mayor palanca"
+      d: `Lo cerrado + ${pf}% del pipeline abierto (${money(P.porCerrar)} por cerrar). El escenario central según lo que ya tenés en el funnel.`
+    }, {
+      tag: "Optimista",
+      v: P.max,
+      pin: "",
+      hot: false,
+      d: `Si cierra TODO el pipeline en juego. Equivale al pipeline total de ${money(G.pipeline)}.`
     }];
     return /*#__PURE__*/React.createElement("div", {
       className: "view"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: `Proyección al cierre de ${D.month.toLowerCase()}`,
-      h3: "Tres escenarios \u2014 \xBFa cu\xE1nto podemos llegar?",
-      p: `Basada en la tasa de cierres por día y el ticket promedio actual (${money(G.ticket)}). La palanca de mayor impacto es rescatar el backlog.`
+      h3: "\xBFA cu\xE1nto cerramos el mes?",
+      p: `Parte de lo ya cerrado (piso garantizado) y le suma una porción del pipeline en juego (${money(P.porCerrar)} abiertos). Ticket promedio actual ${money(G.ticket)}.`
     }), /*#__PURE__*/React.createElement("div", {
       className: "card",
       style: {
@@ -6292,38 +6304,37 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: "eb"
-    }, "Cierres hoy"), /*#__PURE__*/React.createElement("div", {
+    }, "Cerrado hoy"), /*#__PURE__*/React.createElement("div", {
       className: "num",
       style: {
         fontSize: "1.4rem",
-        fontWeight: 800
+        fontWeight: 800,
+        color: "var(--green-ink)"
       }
-    }, G.cierres), /*#__PURE__*/React.createElement("div", {
+    }, money(G.cerrado)), /*#__PURE__*/React.createElement("div", {
       className: "ww"
-    }, paceDay, "/d\xEDa promedio")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    }, "piso garantizado")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
       className: "eb"
-    }, "Proyecci\xF3n base"), /*#__PURE__*/React.createElement("div", {
+    }, "Pipeline en juego"), /*#__PURE__*/React.createElement("div", {
       className: "num",
       style: {
         fontSize: "1.4rem",
-        fontWeight: 800
+        fontWeight: 800,
+        color: "var(--brand-d)"
       }
-    }, "~", base), /*#__PURE__*/React.createElement("div", {
-      className: "ww",
-      style: {
-        color: "var(--green)"
-      }
-    }, "\u25B2 buen ritmo")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-      className: "eb"
-    }, "Ticket promedio"), /*#__PURE__*/React.createElement("div", {
-      className: "num",
-      style: {
-        fontSize: "1.4rem",
-        fontWeight: 800
-      }
-    }, money(G.ticket)), /*#__PURE__*/React.createElement("div", {
+    }, money(P.porCerrar)), /*#__PURE__*/React.createElement("div", {
       className: "ww"
-    }, "valor / cierre")))), /*#__PURE__*/React.createElement("div", {
+    }, "por cerrar (abierto)")), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+      className: "eb"
+    }, "Si manten\xE9s el ritmo"), /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontSize: "1.4rem",
+        fontWeight: 800
+      }
+    }, "~", money(P.runrate)), /*#__PURE__*/React.createElement("div", {
+      className: "ww"
+    }, "pace de ", curDay, " d\xEDa", curDay === 1 ? "" : "s")))), /*#__PURE__*/React.createElement("div", {
       className: "grid3"
     }, scen.map((s, i) => /*#__PURE__*/React.createElement("div", {
       className: "card",
@@ -6355,24 +6366,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, s.pin)), /*#__PURE__*/React.createElement("div", {
       className: "num",
       style: {
-        fontSize: "2.2rem",
-        fontWeight: 800
+        fontSize: "2rem",
+        fontWeight: 800,
+        color: "var(--brand-d)"
       }
-    }, s.v, " ", /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: ".9rem",
-        color: "var(--muted)",
-        fontWeight: 700
-      }
-    }, "cierres")), /*#__PURE__*/React.createElement("div", {
+    }, money(s.v)), totMeta > 0 && /*#__PURE__*/React.createElement("div", {
       className: "num",
       style: {
-        fontSize: "1rem",
+        fontSize: ".95rem",
         fontWeight: 700,
-        color: "var(--brand-d)",
+        color: "var(--muted)",
         marginTop: 2
       }
-    }, "~", money(s.val)), /*#__PURE__*/React.createElement("div", {
+    }, pctMeta(s.v), "% de la meta"), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 7,
         fontSize: ".7rem",
@@ -6383,14 +6389,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         padding: "2px 9px",
         borderRadius: 6
       }
-    }, "+", s.delta, " vs hoy (", G.cierres, ")"), /*#__PURE__*/React.createElement("div", {
+    }, "+", money(dvsHoy(s.v)), " vs cerrado hoy"), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 8,
         fontSize: ".76rem",
         color: "var(--muted)",
         lineHeight: 1.5
       }
-    }, s.d)))), /*#__PURE__*/React.createElement(SectionHead, {
+    }, s.d)))), /*#__PURE__*/React.createElement("div", {
+      className: "note",
+      style: {
+        marginTop: 4
+      }
+    }, "Piso = lo ya cerrado (", money(G.cerrado), "). Techo = si cierra todo el pipeline (", money(G.pipeline), "). El ", /*#__PURE__*/React.createElement("b", null, "ritmo"), " (~", money(P.runrate), ") extrapola el pace de los primeros ", curDay, " d\xEDas y suele dar m\xE1s alto porque cuenta los leads nuevos que entrar\xE1n en los ", left, " d\xEDas que faltan. Las tasas de cierre del pipeline (", cf, "% / ", pf, "%) son ajustables."), /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Plan",
       h3: "Matriz de acci\xF3n"
     }), /*#__PURE__*/React.createElement("div", {
