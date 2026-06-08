@@ -186,11 +186,9 @@ m_end   = datetime.datetime(YEAR, MONTH, DIM, 23, 59, 59)
 pmo = MONTH - 1 or 12
 pyr = YEAR if MONTH > 1 else YEAR - 1
 p_start = datetime.datetime(pyr, pmo, 1)
-# Comparación justa "mismo día del mes": el mes anterior se recorta al mismo día
-# que hoy (CURDAY). Así 7 días de junio se comparan contra 7 días de mayo, no
-# contra el mes completo. Al cerrar el mes, CURDAY = último día => mes completo.
-_p_cap = min(CURDAY, calendar.monthrange(pyr, pmo)[1])
-p_end   = datetime.datetime(pyr, pmo, _p_cap, 23, 59, 59)
+# Mes anterior COMPLETO (para comparativo semanal real). La métrica "mismo día"
+# se calcula aparte filtrando por día <= CURDAY (leads_sd).
+p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 59)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  AGREGACIÓN POR VENDEDORA
@@ -198,7 +196,8 @@ p_end   = datetime.datetime(pyr, pmo, _p_cap, 23, 59, 59)
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
-                tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int))
+                tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
+                leads_sd=0, wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
 
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
     vd = defaultdict(blank_vendor)
@@ -217,6 +216,16 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
             name, _suc_suffix = raw_name.strip(), None
         d = vd[name]
         d["leads"] += 1
+        # semana del mes (0..4) por fecha de creación + conteo "mismo día"
+        _cre = ld.get("created_at", 0)
+        try:
+            _day = datetime.datetime.fromtimestamp(_cre).day
+        except Exception:
+            _day = 1
+        _wk = min(4, (_day - 1) // 7)
+        d["wl"][_wk] += 1
+        if _day <= CURDAY:
+            d["leads_sd"] += 1
         if name not in suc_of:
             suc_of[name] = _suc_suffix or detect_suc(name, ld)
         st = stage_map.get(ld.get("status_id"), {"name": "—", "cls": "other"})
@@ -224,6 +233,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         cls = st["cls"]
         if cls == "compradores":
             d["cierres"] += 1; d["value"] += ld.get("price") or 0
+            d["wc"][_wk] += 1; d["wm"][_wk] += ld.get("price") or 0
         elif cls == "no_resp":
             d["noResp"] += 1
         elif cls == "agendado":
@@ -244,7 +254,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts):
         if ev and ev.get("first"):
             mins = max(0, (ev["first"] - created) / 60)
             d["resp_minutes"].append(mins)
-            if mins <= 1440: d["u24"] += 1
+            if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1
             else:            d["tarde"] += 1
             stale_days = (now_ts - ev.get("last", ev["first"])) / 86400
             if stale_days > 3 and is_open:
@@ -286,13 +296,18 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
         califpct = round(d["calif"] / d["leads"] * 100) if d["leads"] else 0
         norpct   = round(d["noResp"] / d["leads"] * 100) if d["leads"] else 0
         pv_ticket = round(pv["value"] / pv["cierres"]) if pv["cierres"] else 0
+        prev_leads_sd = pv["leads_sd"]   # leads del mes anterior al mismo día -> MoM justo
+        # semanal real (5 semanas: 1-7, 8-14, 15-21, 22-28, 29-31)
+        u24w = [ (round(d["wu"][k] / d["wl"][k] * 100) if d["wl"][k] else None) for k in range(5) ]
+        weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w}
+        weekly_prev = {"c": pv["wc"], "m": pv["wm"]}
         team.append({
             "ini": cfg.get("ini") or "".join([p[0] for p in name.split()[:2]]).upper(),
             "name": name,
             "suc": suc_of.get(name, "Sin sucursal"),
             "color": cfg.get("color") or DEFAULT_COLORS[i % len(DEFAULT_COLORS)],
             "photo": "",
-            "leads": d["leads"], "prevLeads": pv["leads"], "cierres": d["cierres"],
+            "leads": d["leads"], "prevLeads": prev_leads_sd, "cierres": d["cierres"],
             "conv": conv, "ticket": ticket, "value": d["value"],
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
@@ -301,11 +316,12 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id):
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
             "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
             "v": v_tone,
-            "prev": {"leads": pv["leads"], "cierres": pv["cierres"],
+            "prev": {"leads": prev_leads_sd, "cierres": pv["cierres"],
                      "visitas": pv["agendado"], "ticket": pv_ticket, "value": pv["value"]},
             "origen": {"manual": d["manual"], "bot": d["bot"]},
+            "weekly": weekly, "weeklyPrev": weekly_prev,
         })
-        if pv["leads"] == 0 and d["leads"] > 0:
+        if prev_leads_sd == 0 and d["leads"] > 0:
             team[-1]["nuevo"] = True
 
     # ── globales ──
