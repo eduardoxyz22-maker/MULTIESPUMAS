@@ -19,7 +19,7 @@ Requisitos: solo librería estándar de Python 3. El token de Kommo se lee de la
 variable de entorno KOMMO_TOKEN (NUNCA se escribe en el código ni en el HTML).
 """
 
-import os, sys, json, time, argparse, calendar, datetime, shutil
+import os, sys, json, time, re, argparse, calendar, datetime, shutil
 from collections import defaultdict
 from urllib import request as _rq, parse as _ps, error as _er
 
@@ -627,10 +627,13 @@ def build_archives():
 # ─────────────────────────────────────────────────────────────────────────────
 #  IA (hornea el diagnóstico + los 4 agentes con la API gratuita de Google Gemini)
 # ─────────────────────────────────────────────────────────────────────────────
-def _ai_call(key, prompt, attempts=3):
-    """Llama a Gemini 2.5 Flash y devuelve un dict JSON (o None). Muy resiliente:
-    prueba configs de mejor a más simple (siempre que puede mantiene el modo JSON),
-    da margen amplio de tokens y reintenta con backoff ante 429/5xx o respuestas vacías."""
+AI_ERRORS = {}  # último error por analista, para diagnóstico (se hornea en ai_debug)
+
+def _ai_call(key, prompt, attempts=3, tag=""):
+    """Llama a Gemini 2.5 Flash y devuelve un dict JSON (o None).
+    Manejo correcto del tier gratis: ante HTTP 429 espera lo que pide la API
+    (retryDelay, o ~35s) en vez de ametrallar; ante 400 cambia de config; y
+    registra el último error en AI_ERRORS[tag] para poder diagnosticarlo."""
     url = ("https://generativelanguage.googleapis.com/v1beta/models/"
            "gemini-2.5-flash:generateContent?key=" + key)
     def _post(gen_cfg):
@@ -643,32 +646,57 @@ def _ai_call(key, prompt, attempts=3):
             return json.loads(r.read().decode())
     base = {"temperature": 0.5, "maxOutputTokens": 12000, "responseMimeType": "application/json"}
     cfgs = [dict(base, thinkingConfig={"thinkingBudget": 0}),  # 1º: sin "pensamiento", JSON puro
-            base,                                              # 2º: igual pero sin tocar thinking
-            None]                                              # 3º: petición pelada (último recurso)
+            base]                                              # 2º: igual pero sin tocar thinking
     last = ""
-    for i in range(attempts):
-        for cfg in cfgs:
+    waits_429 = 0
+    for attempt in range(attempts):
+        ci = 0
+        while ci < len(cfgs):
             try:
-                data = _post(cfg)
+                data = _post(cfgs[ci])
+            except _er.HTTPError as e:
+                body = ""
+                try:
+                    body = e.read().decode()
+                except Exception:
+                    pass
+                last = f"HTTP {e.code}: {body[:200]}"
+                if e.code == 429 and waits_429 < 4:
+                    waits_429 += 1
+                    m = re.search(r'"retryDelay"\s*:\s*"(\d+)', body)
+                    wait = (int(m.group(1)) + 3) if m else 35
+                    print(f"      ({tag}) 429 rate-limit: espero {min(wait,70)}s…")
+                    time.sleep(min(wait, 70))
+                    continue                       # reintenta el MISMO config, sin ráfaga
+                if e.code == 400:
+                    ci += 1                        # config rechazada → siguiente tier
+                    continue
+                time.sleep(5)                      # 5xx u otros: pequeña pausa y siguiente
+                ci += 1
+                continue
             except Exception as ex:
-                last = str(ex); continue
+                last = str(ex)
+                ci += 1
+                continue
             cand = (data.get("candidates") or [{}])[0]
             parts = ((cand.get("content") or {}).get("parts")) or [{}]
             txt = "".join(p.get("text", "") for p in parts)
             txt = txt.replace("```json", "").replace("```", "").strip()
-            s, e = txt.find("{"), txt.rfind("}")
-            if s >= 0 and e > s:
+            s, e2 = txt.find("{"), txt.rfind("}")
+            if s >= 0 and e2 > s:
                 try:
-                    return json.loads(txt[s:e + 1])
+                    return json.loads(txt[s:e2 + 1])
                 except Exception as ex:
                     last = "json.loads: " + str(ex)
             else:
                 last = "finishReason=" + str(cand.get("finishReason")) + " sin texto"
-        if i < attempts - 1:
-            time.sleep(3 + 3 * i)                # backoff: 3s, 6s, 9s
-    print(f"      (Gemini sin respuesta tras {attempts} rondas: {last[:110]})")
+            ci += 1
+        if attempt < attempts - 1:
+            time.sleep(6 + 6 * attempt)            # backoff entre rondas: 6s, 12s
+    if tag:
+        AI_ERRORS[tag] = last[:220]
+    print(f"      ({tag}) Gemini sin respuesta tras {attempts} rondas: {last[:120]}")
     return None
-
 
 
 def bake_ai(pd):
@@ -789,7 +817,7 @@ def bake_ai(pd):
     res = {}
     for name in order:
         time.sleep(1.5)
-        r = _ai_call(key, P[name])
+        r = _ai_call(key, P[name], tag=name)
         if _ok(name, r):
             res[name] = r
             print(f"   ✓ IA '{name}' OK")
@@ -803,7 +831,7 @@ def bake_ai(pd):
         time.sleep(8)
         for name in missing:
             time.sleep(2.5)
-            r = _ai_call(key, P[name])
+            r = _ai_call(key, P[name], tag=name)
             if _ok(name, r):
                 res[name] = r
                 print(f"   ✓ IA '{name}' OK (reintento)")
@@ -816,6 +844,9 @@ def bake_ai(pd):
     agentes_out = {a: res[a] for a in ("crm", "ventas", "comportamiento", "sintesis") if _ok(a, res.get(a))}
     if agentes_out:
         pd["ai_agentes"] = agentes_out
+    faltan = [n for n in order if n not in res]
+    if faltan:
+        pd["ai_debug"] = {n: AI_ERRORS.get(n, "sin detalle") for n in faltan}
     print(f"   → IA horneada: diagnóstico={'sí' if 'ai_diagnostico' in pd else 'no'} · agentes={list(agentes_out)}")
     return pd
 
