@@ -6927,6 +6927,166 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
   const STAGE_TOP = D.team.reduce((a, b) => b.cierres > a.cierres ? b : a, D.team[0]).name;
   const sum = f => T.reduce((s, v) => s + f(v), 0);
 
+  // ===== Embudo por vendedora (etapas + seguimiento) — datos ya presentes en PANEL_DATA =====
+  const STAGE_ORDER = ["Nueva consulta", "Interesado", "Cotización enviada", "Agendado / Visita", "Compradores", "No Responden", "Pedido cancelado – perdido"];
+  const STAGE_SHORT = {
+    "Nueva consulta": "Nueva consulta",
+    "Interesado": "Interesado",
+    "Cotización enviada": "Cotización enviada",
+    "Agendado / Visita": "Agendado / Visita",
+    "Compradores": "Compradores",
+    "No Responden": "No Responden",
+    "Pedido cancelado – perdido": "Cancel. / perdido"
+  };
+  const STAGE_COL = {
+    "Nueva consulta": "#27313F",
+    "Interesado": "#2E6FE0",
+    "Cotización enviada": "#7A4AD9",
+    "Agendado / Visita": "#D98300",
+    "Compradores": "#159A57",
+    "No Responden": "#646E7B",
+    "Pedido cancelado – perdido": "#B9C0C9"
+  };
+  const stageMap = v => Object.fromEntries(D.stagesByV && D.stagesByV[v.name] ? D.stagesByV[v.name] : []);
+  const _seg7 = {};
+  (D.backlogRows || []).forEach(r => {
+    if ((r.d || 0) >= 7) _seg7[r.r] = (_seg7[r.r] || 0) + 1;
+  });
+  const seg7Of = v => _seg7[v.name] || 0;
+  const dotSt = c => ({
+    display: "inline-block",
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    marginRight: 7,
+    verticalAlign: "middle",
+    background: c
+  });
+
+  // Matriz transpuesta: etapas (y seguimiento) en filas, vendedoras en columnas.
+  function StageMatrix({
+    tv
+  }) {
+    const totStage = s => T.reduce((a, v) => a + (stageMap(v)[s] || 0), 0);
+    const totLeads = T.reduce((a, v) => a + v.leads, 0);
+    const tot72 = T.reduce((a, v) => a + (v.backlog || 0), 0);
+    const tot7 = T.reduce((a, v) => a + seg7Of(v), 0);
+    const av = tv ? 36 : 32;
+    const numStyle = (val, col, strongAt) => ({
+      fontWeight: strongAt != null && val >= strongAt ? 800 : 700,
+      color: val ? col || "var(--text)" : "var(--faint)"
+    });
+    return /*#__PURE__*/React.createElement("div", {
+      className: "matrix-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "tbl pres-matrix" + (tv ? " spot-matrix" : "")
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      className: "rowhead"
+    }, "Etapa"), T.map(v => /*#__PURE__*/React.createElement("th", {
+      key: v.name,
+      className: `vhead${tv ? "" : " clickable"}${v.name === STAGE_TOP ? " toph" : ""}`,
+      onClick: tv ? undefined : () => window.__perfil && window.__perfil(v)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "vhead-in"
+    }, /*#__PURE__*/React.createElement(Avatar, {
+      v: v,
+      size: av,
+      ring: true,
+      crown: v.name === STAGE_TOP
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "vhead-nm"
+    }, v.name.split(" ")[0], v.nuevo && /*#__PURE__*/React.createElement("span", {
+      className: "tag-new"
+    }, "NUEVO"), /*#__PURE__*/React.createElement("span", null, v.suc))))), /*#__PURE__*/React.createElement("th", {
+      className: "vhead totcol"
+    }, "Equipo"))), /*#__PURE__*/React.createElement("tbody", null, STAGE_ORDER.map(s => {
+      const isWin = s === "Compradores";
+      return /*#__PURE__*/React.createElement("tr", {
+        key: s
+      }, /*#__PURE__*/React.createElement("td", {
+        className: "rowhead"
+      }, /*#__PURE__*/React.createElement("span", {
+        style: dotSt(STAGE_COL[s])
+      }), STAGE_SHORT[s]), T.map(v => {
+        const nVal = stageMap(v)[s] || 0;
+        return /*#__PURE__*/React.createElement("td", {
+          key: v.name,
+          className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+        }, /*#__PURE__*/React.createElement("div", {
+          className: "num",
+          style: numStyle(nVal, isWin ? "var(--green-ink)" : "var(--text)")
+        }, nVal));
+      }), /*#__PURE__*/React.createElement("td", {
+        className: "mcell totcol"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontWeight: 800,
+          color: isWin ? "var(--green-ink)" : "var(--text)"
+        }
+      }, totStage(s))));
+    }), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      className: "rowhead",
+      style: {
+        fontWeight: 800
+      }
+    }, "Total leads"), T.map(v => /*#__PURE__*/React.createElement("td", {
+      key: v.name,
+      className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontWeight: 800
+      }
+    }, v.leads.toLocaleString("en-US")))), /*#__PURE__*/React.createElement("td", {
+      className: "mcell totcol"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontWeight: 800
+      }
+    }, totLeads.toLocaleString("en-US")))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      className: "rowhead"
+    }, /*#__PURE__*/React.createElement("span", {
+      style: dotSt("#D98300")
+    }), "Sin seguim. +72h"), T.map(v => /*#__PURE__*/React.createElement("td", {
+      key: v.name,
+      className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: numStyle(v.backlog || 0, "#C9531B", 30)
+    }, v.backlog || 0))), /*#__PURE__*/React.createElement("td", {
+      className: "mcell totcol"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontWeight: 800,
+        color: "#C9531B"
+      }
+    }, tot72))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      className: "rowhead"
+    }, /*#__PURE__*/React.createElement("span", {
+      style: dotSt("#E8001D")
+    }), "Sin seguim. +7 d\xEDas"), T.map(v => {
+      const c7 = seg7Of(v);
+      return /*#__PURE__*/React.createElement("td", {
+        key: v.name,
+        className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: numStyle(c7, "#C00", 1)
+      }, c7));
+    }), /*#__PURE__*/React.createElement("td", {
+      className: "mcell totcol"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontWeight: 800,
+        color: "#C00"
+      }
+    }, tot7))))));
+  }
+
   // ▲▼ MoM tag. pp=true → muestra diferencia en puntos porcentuales (para %).
   function MoM({
     cur,
@@ -7129,6 +7289,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, {
       kind: "table"
     }, {
+      kind: "stages"
+    }, {
       kind: "branches"
     }, {
       kind: "ranking"
@@ -7189,7 +7351,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       return () => clearTimeout(t);
     }, [i, playing]);
     const slide = slides[i];
-    const label = slide.kind === "global" ? "Resumen del mes" : slide.kind === "origen" ? "Carga manual vs bot" : slide.kind === "vendor" ? slide.v.name : slide.kind === "ranking" || slide.kind === "rankingMonto" ? "Ranking del mes" : slide.kind === "table" ? "Detalle del equipo" : "Por sucursal";
+    const label = slide.kind === "global" ? "Resumen del mes" : slide.kind === "origen" ? "Carga manual vs bot" : slide.kind === "vendor" ? slide.v.name : slide.kind === "ranking" || slide.kind === "rankingMonto" ? "Ranking del mes" : slide.kind === "table" ? "Detalle del equipo" : slide.kind === "stages" ? "Embudo por vendedora" : "Por sucursal";
 
     // ---- portada: totales del equipo ----
     const renderGlobal = () => {
@@ -7602,6 +7764,13 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })()))))));
     };
 
+    // ---- embudo por vendedora: etapas + seguimiento ----
+    const renderStages = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "spot-section-h"
+    }, "Embudo por vendedora \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement(StageMatrix, {
+      tv: true
+    }));
+
     // ---- origen: carga manual vs bot por vendedora ----
     const renderOrigen = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "spot-section-h"
@@ -7795,7 +7964,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "\xD7"))), /*#__PURE__*/React.createElement("div", {
       className: `spot-stage spot-stage-${slide.kind}`,
       key: i
-    }, slide.kind === "global" && renderGlobal(), slide.kind === "origen" && renderOrigen(), slide.kind === "vendor" && renderVendor(slide.v), slide.kind === "ranking" && renderRanking("Ranking del mes · por clientes", ranked, v => v.cierres + " clientes"), slide.kind === "rankingMonto" && renderRanking("Ranking del mes · por monto cerrado", rankedMonto, v => money(v.cierres * v.ticket)), slide.kind === "table" && renderTable(), slide.kind === "branches" && renderBranches()), /*#__PURE__*/React.createElement("div", {
+    }, slide.kind === "global" && renderGlobal(), slide.kind === "origen" && renderOrigen(), slide.kind === "vendor" && renderVendor(slide.v), slide.kind === "ranking" && renderRanking("Ranking del mes · por clientes", ranked, v => v.cierres + " clientes"), slide.kind === "rankingMonto" && renderRanking("Ranking del mes · por monto cerrado", rankedMonto, v => money(v.cierres * v.ticket)), slide.kind === "table" && renderTable(), slide.kind === "stages" && renderStages(), slide.kind === "branches" && renderBranches()), /*#__PURE__*/React.createElement("div", {
       className: "spot-ctrl"
     }, /*#__PURE__*/React.createElement("button", {
       className: "btn",
@@ -8223,7 +8392,15 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         prev: c.prev,
         pp: row.pp
       }));
-    }))))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
+    }))))))), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Embudo por vendedora",
+      h3: "Leads por etapa y seguimiento pendiente",
+      p: "Cu\xE1ntos leads tiene cada vendedora en cada etapa del mes (las etapas suman su total de leads). Las dos \xFAltimas filas son los leads sin ning\xFAn seguimiento: m\xE1s de 72h y, lo m\xE1s cr\xEDtico, m\xE1s de 7 d\xEDas."
+    }), /*#__PURE__*/React.createElement(StageMatrix, {
+      tv: false
+    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Origen de leads",
       h3: "Carga manual vs bot \u2014 por vendedora",
       p: "La carga manual convierte mucho mejor que el bot. Aqu\xED se ve qui\xE9n trae leads de calidad propia y qui\xE9n depende del autom\xE1tico."
