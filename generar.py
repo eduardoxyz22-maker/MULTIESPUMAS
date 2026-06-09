@@ -630,9 +630,10 @@ def build_archives():
 # ─────────────────────────────────────────────────────────────────────────────
 #  IA (hornea el diagnóstico + los 4 agentes con la API gratuita de Google Gemini)
 # ─────────────────────────────────────────────────────────────────────────────
-def _ai_call(key, prompt):
-    """Llama a Gemini 2.5 Flash y devuelve un dict JSON (o None). Reintenta sin
-    config avanzada por si la cuenta/versión rechaza algún campo."""
+def _ai_call(key, prompt, attempts=3):
+    """Llama a Gemini 2.5 Flash y devuelve un dict JSON (o None). Reintenta con
+    backoff ante 429/5xx o respuestas vacías; el primer intento prueba la config
+    avanzada y, si la cuenta/versión la rechaza, reintenta sin ella."""
     url = ("https://generativelanguage.googleapis.com/v1beta/models/"
            "gemini-2.5-flash:generateContent?key=" + key)
     def _post(gen_cfg):
@@ -643,18 +644,32 @@ def _ai_call(key, prompt):
         req = _rq.Request(url, data=body, headers={"content-type": "application/json"})
         with _rq.urlopen(req, timeout=90) as r:
             return json.loads(r.read().decode())
-    try:
-        data = _post({"temperature": 0.5, "maxOutputTokens": 1500,
-                      "responseMimeType": "application/json",
-                      "thinkingConfig": {"thinkingBudget": 0}})
-    except Exception:
-        data = _post(None)                       # reintento sin config avanzada
-    cand = (data.get("candidates") or [{}])[0]
-    parts = ((cand.get("content") or {}).get("parts")) or [{}]
-    txt = "".join(p.get("text", "") for p in parts)
-    txt = txt.replace("```json", "").replace("```", "").strip()
-    s, e = txt.find("{"), txt.rfind("}")
-    return json.loads(txt[s:e + 1]) if s >= 0 and e > s else None
+    cfg = {"temperature": 0.5, "maxOutputTokens": 1500,
+           "responseMimeType": "application/json",
+           "thinkingConfig": {"thinkingBudget": 0}}
+    last = ""
+    for i in range(attempts):
+        try:
+            try:
+                data = _post(cfg)
+            except Exception as e1:
+                last = str(e1)
+                data = _post(None)               # la cuenta/versión rechazó la config
+            cand = (data.get("candidates") or [{}])[0]
+            parts = ((cand.get("content") or {}).get("parts")) or [{}]
+            txt = "".join(p.get("text", "") for p in parts)
+            txt = txt.replace("```json", "").replace("```", "").strip()
+            s, e = txt.find("{"), txt.rfind("}")
+            if s >= 0 and e > s:
+                return json.loads(txt[s:e + 1])
+            last = "respuesta sin JSON"
+        except Exception as e:
+            last = str(e)
+        if i < attempts - 1:
+            time.sleep(2 + 3 * i)                # backoff: 2s, luego 5s
+    print(f"      (Gemini sin respuesta tras {attempts} intentos: {last[:90]})")
+    return None
+
 
 
 def bake_ai(pd):
@@ -771,9 +786,10 @@ def bake_ai(pd):
     except Exception as e:
         print(f"   ⚠ diagnóstico IA no horneado: {e}")
 
-    # Hornea los 4 agentes
+    # Hornea los 4 agentes (espaciados para no gatillar el límite por ráfaga)
     baked = {}
     for aid, prm in agentes.items():
+        time.sleep(1.2)
         try:
             a = _ai_call(key, prm)
             if a and a.get("resumen"):
