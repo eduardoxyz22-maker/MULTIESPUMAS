@@ -7205,11 +7205,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         prev: pTk,
         c: "#7A5AF0"
       }, {
-        l: "Cerrado en el mes",
-        v: money(gCerr),
-        cur: gCerr,
-        prev: pCerr,
-        c: "var(--green)"
+        l: "Pipeline total",
+        v: money(gPipe),
+        noMom: true,
+        c: "var(--brand)"
       }];
       return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
         className: "spot-head"
@@ -7233,7 +7232,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         className: "spot-tl"
       }, t.l), /*#__PURE__*/React.createElement("div", {
         className: "spot-tv num"
-      }, t.v), /*#__PURE__*/React.createElement(MoM, {
+      }, t.v), !t.noMom && /*#__PURE__*/React.createElement(MoM, {
         cur: t.cur,
         prev: t.prev,
         pp: t.pp
