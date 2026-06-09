@@ -4052,7 +4052,7 @@ function ViewResumen() {
   }, /*#__PURE__*/React.createElement(TeamTable, null))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
     eb: `Tendencia vs ${D.prevMonth}`,
     h3: "Leads del mes \u2014 mes a mes",
-    p: `La captación cayó ${Math.abs(momPct)}% en todos los frentes (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")}). El reto no es entrada de leads, es convertir los que ya hay.`
+    p: `La captación ${momPct >= 0 ? "subió" : "cayó"} ${Math.abs(momPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")}). El reto no es la entrada de leads, es convertir los que ya hay.`
   }), /*#__PURE__*/React.createElement("div", {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
