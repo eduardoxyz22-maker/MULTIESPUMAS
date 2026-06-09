@@ -1900,7 +1900,8 @@ var VENDOR_COLOR = {
   "Fernando": "#4f7a3f",
   "Mirian": "#a13b2b",
   "Juan Pablo": "#2f5a72",
-  "Mauricio": "#8a4a2b"
+  "Mauricio": "#8a4a2b",
+  "Jhonatan": "#2f8a7a"
 };
 var TIENDA_COLOR = {
   "SUEÑA": "#7e3a8e",
@@ -4256,6 +4257,7 @@ const VENDOR_COLOR = {
   "Mirian":    "#a13b2b",
   "Juan Pablo": "#2f5a72",
   "Mauricio":  "#8a4a2b",
+  "Jhonatan":  "#2f8a7a",
 };
 const TIENDA_COLOR = {
   "SUEÑA":  "#7e3a8e",
@@ -5293,6 +5295,7 @@ function PresentacionView({ filtered, filterTienda }) {
   const all = [...D.vendedores];
   const grupos = ["SUEÑA", "HEAVEN"].map(t => ({
     nombre: t, color: TIENDA_COLOR[t],
+    tienda: (D.tiendas || []).find(x => x.nombre === t),
     vends: all.filter(v => v.tienda === t).sort((a, b) => b.monto - a.monto),
   })).filter(g => g.vends.length);
 
@@ -5357,9 +5360,10 @@ function PresentacionView({ filtered, filterTienda }) {
     ].filter(Boolean);
   }
 
-  function colTotal(m, vends) {
+  function colTotal(m, vends, tienda) {
     var sum = function(k){ return vends.reduce(function(s,v){ return s + (v[k]||0); }, 0); };
     var montoT = sum("monto"), leadsT = sum("leads"), ventasT = sum("ventasConcretadas"), presT = sum("presupuesto"), metaT = sum("metaMin");
+    if (tienda) { if (tienda.presupuesto) presT = tienda.presupuesto; if (tienda.metaMin) metaT = tienda.metaMin; }
     switch (m.l) {
       case "Leads": return { val: leadsT, tipo: "int" };
       case "Ventas cerradas": return { val: ventasT, tipo: "int" };
@@ -5454,7 +5458,7 @@ function PresentacionView({ filtered, filterTienda }) {
           <button className="mx-present-go" onClick={togglePresent} style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "9px 16px", background: "var(--ink)", color: "#fbf8f2", border: 0, borderRadius: 999, font: "inherit", fontSize: 13, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" }}>▶ Modo presentación</button>
         </div>
         <p style={{ color: "var(--ink-700)", fontSize: 13.5, lineHeight: 1.55, margin: "10px 0 0" }}>
-          Resultados por tienda. Cada columna es una persona; la <b>👑</b> lideró las ventas y la <b style={{ color: GOLD }}>🥇</b> marca a la mejor en cada indicador. La última columna es el promedio del equipo.
+          Resultados por tienda. Cada columna es una persona; la <b>👑</b> lideró las ventas y la <b style={{ color: GOLD }}>🥇</b> marca a la mejor en cada indicador. La última columna es el total del equipo.
         </p>
         <details className="mx-glosario" style={{ marginTop: 14 }}>
           <summary>📖 ¿Qué significa cada indicador?</summary>
@@ -5535,7 +5539,7 @@ function PresentacionView({ filtered, filterTienda }) {
                     const best = nums.length ? Math.max.apply(null, nums) : null;
                     const minV = nums.length ? Math.min.apply(null, nums) : null;
                     const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
-                    const tcol = colTotal(m, g.vends);
+                    const tcol = colTotal(m, g.vends, g.tienda);
                     return (
                       <tr key={m.l}>
                         <td style={tdLat}>{m.l}</td>

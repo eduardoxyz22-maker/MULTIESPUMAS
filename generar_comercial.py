@@ -278,10 +278,13 @@ comm = {
     'SUEÑA': _comm_of(find_row(ds, 0, 'SUEÑA', 'SUENA', start=_comm_sec)),
     'HEAVEN': _comm_of(find_row(ds, 0, 'HEAVEN', start=_comm_sec)),
 }
-suena_leads = si(gv(sv, 6, 13))
-suena_ventas = si(gv(sv, 6, 2)) + si(gv(sv, 6, 3))
-heaven_leads = si(gv(hv, 7, 11))
-heaven_ventas = si(gv(hv, 7, 1))
+# Totales de tienda desde la fila TOTAL de cada hoja (no fila fija: tolera vendedores extra)
+_sv_total = find_row(sv, 0, 'TOTAL', contains=True) or 6
+_hv_total = find_row(hv, 0, 'TOTAL', contains=True) or 7
+suena_leads = si(gv(sv, _sv_total, 13))
+suena_ventas = si(gv(sv, _sv_total, 2)) + si(gv(sv, _sv_total, 3))
+heaven_leads = si(gv(hv, _hv_total, 11))
+heaven_ventas = si(gv(hv, _hv_total, 1))
 
 # Cumplimiento por tienda: anclar a la seccion y buscar cada tienda por nombre
 _tienda_sec = find_row(ds, 0, 'CUMPLIMIENTO DE METAS POR TIENDA', contains=True)
