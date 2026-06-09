@@ -109,6 +109,22 @@ def si(s, d=0):
     try: return int(float(s))
     except: return d
 
+def _norm(s):
+    return str(s).strip().upper().replace('Ñ', 'N')
+
+def find_row(sheet, col, *labels, start=1, contains=False):
+    """Primera fila (>= start) cuya columna `col` coincide con alguna etiqueta.
+    Permite anclar por nombre/encabezado en vez de filas fijas, asi el layout
+    tolera filas extra (p.ej. una vendedora mas en el ranking)."""
+    tg = [_norm(l) for l in labels]
+    for rn in sorted(k for k in sheet if k >= start):
+        cell = _norm(gv(sheet, rn, col))
+        if not cell:
+            continue
+        if (any(t in cell for t in tg) if contains else cell in tg):
+            return rn
+    return None
+
 print('Leyendo datos.xlsx...')
 try:
     with zipfile.ZipFile('datos.xlsx') as z:
@@ -145,25 +161,42 @@ es_mes_actual = (anio == now.year and mnum == now.month)
 dia_actual = diasTot if (CERRADO_ENV or not es_mes_actual) else min(now.day, diasTot)
 print(f'Configuracion: mes={mes} {anio}, hoja_global={GLOBAL_SHEET!r}, salida={OUT_FILE!r}, dia={dia_actual}/{diasTot}, cerrado={CERRADO_ENV}')
 
+# Crecimiento vs mes anterior por vendedor (seccion "KPIs ADICIONALES" -> "TIENDAS SUEÑA/HEAVEN")
+# OJO: hay otra tabla "TIENDAS ..." arriba con productos; hay que anclar tras "KPIs ADICIONALES".
 crec_lookup = {}
-for r in list(range(53, 57)) + list(range(60, 65)):
-    nombre_raw = gv(mg, r, 0).strip()
-    crec_val = gv(mg, r, 4)
-    if nombre_raw and crec_val != '':
-        crec_lookup[nombre_raw.lower()] = sf(crec_val)
+_kpi = find_row(mg, 0, 'KPIS ADICIONALES', contains=True) or 1
+for _sec_lbl in ['TIENDAS SUE', 'TIENDAS HEAVEN']:
+    _sec = find_row(mg, 0, _sec_lbl, start=_kpi, contains=True)
+    if not _sec:
+        continue
+    _rn = _sec + 2  # +1 encabezado de columnas, +2 primer vendedor
+    while _rn <= _sec + 12:
+        nombre_raw = gv(mg, _rn, 0).strip()
+        if not nombre_raw or nombre_raw.upper().startswith('TOTAL'):
+            break
+        crec_val = gv(mg, _rn, 4)
+        if crec_val != '':
+            crec_lookup[nombre_raw.lower()] = sf(crec_val)
+        _rn += 1
 
+# Nuevo record por vendedor (seccion "RANKING VENDEDORES" de la hoja GLOBAL)
 record_lookup = {}
-for r in range(70, 80):
-    nombre_raw = gv(mg, r, 1).strip()
-    record_val = gv(mg, r, 5).strip()
-    if nombre_raw:
-        record_lookup[nombre_raw.lower()] = bool(record_val)
+_rk = find_row(mg, 0, 'RANKING VENDEDORES', contains=True)
+if _rk:
+    _rn = _rk + 2  # +1 encabezado de columnas, +2 primer vendedor
+    while _rn <= _rk + 20:
+        nombre_raw = gv(mg, _rn, 1).strip()
+        if not nombre_raw:
+            break
+        if not nombre_raw.upper().startswith('TOTAL'):
+            record_lookup[nombre_raw.lower()] = bool(gv(mg, _rn, 5).strip())
+        _rn += 1
 
 vendedores = []
 
-for row in [3, 4, 5, 6]:
+for row in range(3, 40):
     nombre = gv(hv, row, 0).strip()
-    if not nombre or nombre.upper().startswith('TOTAL'): continue
+    if not nombre or nombre.upper().startswith('TOTAL'): break
     ventas = si(gv(hv, row, 1))
     productos = si(gv(hv, row, 2))
     monto = sf(gv(hv, row, 3))
@@ -196,9 +229,9 @@ for row in [3, 4, 5, 6]:
         'prodPorVenta': round(sf(gv(hv, row, 9)), 4),
     })
 
-for row in [3, 4, 5]:
+for row in range(3, 40):
     nombre = gv(sv, row, 0).strip()
-    if not nombre: continue
+    if not nombre or nombre.upper().startswith('TOTAL'): break
     ventas = si(gv(sv, row, 2))
     monto = sf(gv(sv, row, 5))
     leads = si(gv(sv, row, 13))
@@ -234,19 +267,35 @@ tot_vend = sum(v['monto'] for v in vendedores)
 for v in vendedores:
     v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
 
+# Comisiones por tienda (seccion "COMISIONES Y BONOS" del Dashboard)
+_comm_sec = find_row(ds, 0, 'COMISIONES Y BONOS', contains=True) or 1
+def _comm_of(rn):
+    if not rn:
+        return {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0}
+    return {'comisiones': sf(gv(ds, rn, 1)), 'bonos': sf(gv(ds, rn, 2)),
+            'totalPagado': sf(gv(ds, rn, 3)), 'comisionados': si(gv(ds, rn, 4))}
 comm = {
-    'SUEÑA': {'comisiones': sf(gv(ds, 27, 1)), 'bonos': sf(gv(ds, 27, 2)),
-              'totalPagado': sf(gv(ds, 27, 3)), 'comisionados': si(gv(ds, 27, 4))},
-    'HEAVEN': {'comisiones': sf(gv(ds, 28, 1)), 'bonos': sf(gv(ds, 28, 2)),
-               'totalPagado': sf(gv(ds, 28, 3)), 'comisionados': si(gv(ds, 28, 4))},
+    'SUEÑA': _comm_of(find_row(ds, 0, 'SUEÑA', 'SUENA', start=_comm_sec)),
+    'HEAVEN': _comm_of(find_row(ds, 0, 'HEAVEN', start=_comm_sec)),
 }
 suena_leads = si(gv(sv, 6, 13))
 suena_ventas = si(gv(sv, 6, 2)) + si(gv(sv, 6, 3))
 heaven_leads = si(gv(hv, 7, 11))
 heaven_ventas = si(gv(hv, 7, 1))
 
+# Cumplimiento por tienda: anclar a la seccion y buscar cada tienda por nombre
+_tienda_sec = find_row(ds, 0, 'CUMPLIMIENTO DE METAS POR TIENDA', contains=True)
+_t_start = (_tienda_sec + 1) if _tienda_sec else 1
 tiendas = []
-for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]:
+for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
+    r = find_row(ds, 0, nombre_t, 'SUENA' if nombre_t == 'SUEÑA' else nombre_t, start=_t_start)
+    if not r:
+        print(f'AVISO: tienda {nombre_t} no encontrada en Dashboard', file=sys.stderr)
+        tiendas.append({'id': nombre_t.lower(), 'nombre': nombre_t, 'monto': 0, 'metaMin': 0,
+                        'presupuesto': 0, 'pctMin': 0, 'pctPres': 0, 'leads': None, 'conversion': None,
+                        'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0,
+                        'crecimientoVsAbril': None, 'mesPasadoMonto': None})
+        continue
     monto_t = sf(gv(ds, r, 1))
     diferencia = sf(gv(ds, r, 9))
     mes_pasado = round(monto_t - diferencia, 2) if diferencia != 0 else None
@@ -277,19 +326,29 @@ for r, nombre_t in [(19, 'SUEÑA'), (20, 'HEAVEN'), (21, 'OTROS'), (22, 'ROHO')]
         'mesPasadoMonto': mes_pasado,
     })
 
+# Totales globales: etiqueta en col H (idx 7), valor en col K (idx 10)
+def _metric(*kw):
+    rn = find_row(ds, 7, *kw, contains=True)
+    return gv(ds, rn, 10) if rn else ''
 global_data = {
-    'leadsTotal': si(gv(ds, 27, 10)),
-    'ventasConcretadas': si(gv(ds, 28, 10)),
-    'conversionGlobal': round(sf(gv(ds, 29, 10)), 8),
-    'ticketPromGlobal': round(sf(gv(ds, 30, 10)), 2),
-    'productosVendidos': si(gv(ds, 31, 10)),
+    'leadsTotal': si(_metric('TOTAL LEADS')),
+    'ventasConcretadas': si(_metric('VENTAS CONCRETADAS')),
+    'conversionGlobal': round(sf(_metric('CONVERSI')), 8),
+    'ticketPromGlobal': round(sf(_metric('TICKET PROMEDIO')), 2),
+    'productosVendidos': si(_metric('PRODUCTOS VENDIDOS')),
 }
 
+# Clientes externos (seccion "VENTAS ... POR CLIENTE" de la hoja GLOBAL)
 clientes = []
-for r in range(29, 38):
-    nombre_c = gv(mg, r, 0).strip()
-    if nombre_c and nombre_c.upper() != 'TOTAL':
-        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, r, 2)), 'monto': round(sf(gv(mg, r, 3)), 2)})
+_cli = find_row(mg, 0, 'VENTAS TOTALES POR CLIENTE', 'VENTAS POR CLIENTE', contains=True)
+if _cli:
+    _rn = _cli + 2  # +1 encabezado de columnas, +2 primer cliente
+    while _rn <= _cli + 30:
+        nombre_c = gv(mg, _rn, 0).strip()
+        if not nombre_c or nombre_c.upper() == 'TOTAL':
+            break
+        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2)})
+        _rn += 1
 
 periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot}
 if CERRADO_ENV:
