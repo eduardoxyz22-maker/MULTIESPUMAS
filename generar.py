@@ -217,7 +217,8 @@ def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
-                leads_sd=0, wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
+                leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
+                wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
 
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
@@ -261,6 +262,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             d["noResp"] += 1
         elif cls == "agendado":
             d["agendado"] += 1; d["calif"] += 1
+            if _day <= CURDAY: d["agendado_sd"] += 1
         elif cls == "cotizacion":
             d["cotizacion"] += 1; d["calif"] += 1
         elif cls == "interesado":
@@ -313,6 +315,8 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             _cd = 1
         _wk = min(4, (_cd - 1) // 7)
         dd["wc"][_wk] += 1; dd["wm"][_wk] += price
+        if _cd <= CURDAY:
+            dd["cierres_sd"] += 1; dd["value_sd"] += price
         if nm not in suc_of:
             suc_of[nm] = (raw.split(" - ", 1)[1].strip() if " - " in raw
                           else detect_suc(nm, ld))
@@ -392,7 +396,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         prom = (f"{avg_resp/60:.1f} h" if avg_resp >= 60 else f"{avg_resp:.0f} min") if avg_resp else "—"
         califpct = round(d["calif"] / d["leads"] * 100) if d["leads"] else 0
         norpct   = round(d["noResp"] / d["leads"] * 100) if d["leads"] else 0
-        pv_ticket = round(pv["value"] / pv["cierres"]) if pv["cierres"] else 0
+        pv_ticket = round(pv["value_sd"] / pv["cierres_sd"]) if pv["cierres_sd"] else 0
         prev_leads_sd = pv["leads_sd"]   # leads del mes anterior al mismo día -> MoM justo
         # semanal real (5 semanas: 1-7, 8-14, 15-21, 22-28, 29-31)
         u24w = [ (round(d["wu"][k] / d["wl"][k] * 100) if d["wl"][k] else None) for k in range(5) ]
@@ -414,8 +418,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
             "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
             "v": v_tone,
-            "prev": {"leads": prev_leads_sd, "cierres": pv["cierres"],
-                     "visitas": pv["agendado"], "ticket": pv_ticket, "value": pv["value"]},
+            "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
+                     "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"]},
             "origen": {"manual": d["manual"], "bot": d["bot"]},
             "weekly": weekly, "weeklyPrev": weekly_prev,
         })
