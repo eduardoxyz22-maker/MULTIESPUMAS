@@ -7101,20 +7101,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       "Central": "#D98300"
     };
 
-    // Lista de diapositivas: portada global → detalle (tabla) → fichas individuales → ranking (clientes + monto) → sucursales
+    // Lista de diapositivas (mismo orden que la vista normal): global → carga manual vs bot → detalle (tabla) → por sucursal → los dos podios (clientes + monto)
     const slides = [{
       kind: "global"
     }, {
+      kind: "origen"
+    }, {
       kind: "table"
-    }, ...T.map(v => ({
-      kind: "vendor",
-      v
-    })), {
+    }, {
+      kind: "branches"
+    }, {
       kind: "ranking"
     }, {
       kind: "rankingMonto"
-    }, {
-      kind: "branches"
     }];
     const n = slides.length;
     const [i, setI] = useState(0);
@@ -7170,7 +7169,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       return () => clearTimeout(t);
     }, [i, playing]);
     const slide = slides[i];
-    const label = slide.kind === "global" ? "Resumen del mes" : slide.kind === "vendor" ? slide.v.name : slide.kind === "ranking" || slide.kind === "rankingMonto" ? "Ranking del mes" : slide.kind === "table" ? "Tabla del equipo" : "Por sucursal";
+    const label = slide.kind === "global" ? "Resumen del mes" : slide.kind === "origen" ? "Carga manual vs bot" : slide.kind === "vendor" ? slide.v.name : slide.kind === "ranking" || slide.kind === "rankingMonto" ? "Ranking del mes" : slide.kind === "table" ? "Detalle del equipo" : "Por sucursal";
 
     // ---- portada: totales del equipo ----
     const renderGlobal = () => {
@@ -7584,6 +7583,92 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       })()))))));
     };
 
+    // ---- origen: carga manual vs bot por vendedora ----
+    const renderOrigen = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      className: "spot-section-h"
+    }, "Carga manual vs bot \xB7 ", D.month, " ", D.year), /*#__PURE__*/React.createElement("div", {
+      className: "matrix-wrap",
+      style: {
+        maxWidth: 1100,
+        margin: "0 auto",
+        width: "100%"
+      }
+    }, T.map((v, i) => {
+      const man = v.origen.manual,
+        bot = v.origen.bot,
+        tot = man + bot || 1,
+        manPct = Math.round(man / tot * 100);
+      return /*#__PURE__*/React.createElement("div", {
+        className: "origen-row",
+        key: i,
+        style: {
+          padding: "14px 4px"
+        }
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "who",
+        style: {
+          width: 200,
+          flexShrink: 0
+        }
+      }, /*#__PURE__*/React.createElement(Avatar, {
+        v: v,
+        size: 40,
+        ring: true
+      }), /*#__PURE__*/React.createElement("span", {
+        className: "wn",
+        style: {
+          fontSize: "1.1rem",
+          fontWeight: 700
+        }
+      }, v.name.split(" ")[0])), /*#__PURE__*/React.createElement("div", {
+        className: "origen-bar",
+        style: {
+          height: 24
+        }
+      }, /*#__PURE__*/React.createElement("i", {
+        className: "man",
+        style: {
+          width: manPct + "%"
+        }
+      }), /*#__PURE__*/React.createElement("i", {
+        className: "bot",
+        style: {
+          width: 100 - manPct + "%"
+        }
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "origen-vals",
+        style: {
+          fontSize: "1.1rem",
+          minWidth: 240,
+          textAlign: "right"
+        }
+      }, /*#__PURE__*/React.createElement("b", {
+        style: {
+          color: "var(--green)"
+        }
+      }, man), " manual \xB7 ", /*#__PURE__*/React.createElement("span", {
+        className: "ww"
+      }, bot, " bot"), " \xB7 ", /*#__PURE__*/React.createElement("b", {
+        className: "num"
+      }, manPct, "%")));
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "origen-legend",
+      style: {
+        marginTop: 16,
+        fontSize: "1rem"
+      }
+    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+      className: "sw",
+      style: {
+        background: "var(--green)"
+      }
+    }), "Carga manual (vendedora)"), /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("span", {
+      className: "sw",
+      style: {
+        background: "var(--faint)"
+      }
+    }), "Autom\xE1tico (bot)"))));
+
     // ---- sucursales ----
     const renderBranches = () => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
       className: "spot-section-h"
@@ -7691,7 +7776,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "\xD7"))), /*#__PURE__*/React.createElement("div", {
       className: `spot-stage spot-stage-${slide.kind}`,
       key: i
-    }, slide.kind === "global" && renderGlobal(), slide.kind === "vendor" && renderVendor(slide.v), slide.kind === "ranking" && renderRanking("Ranking del mes · por clientes", ranked, v => v.cierres + " clientes"), slide.kind === "rankingMonto" && renderRanking("Ranking del mes · por monto cerrado", rankedMonto, v => money(v.cierres * v.ticket)), slide.kind === "table" && renderTable(), slide.kind === "branches" && renderBranches()), /*#__PURE__*/React.createElement("div", {
+    }, slide.kind === "global" && renderGlobal(), slide.kind === "origen" && renderOrigen(), slide.kind === "vendor" && renderVendor(slide.v), slide.kind === "ranking" && renderRanking("Ranking del mes · por clientes", ranked, v => v.cierres + " clientes"), slide.kind === "rankingMonto" && renderRanking("Ranking del mes · por monto cerrado", rankedMonto, v => money(v.cierres * v.ticket)), slide.kind === "table" && renderTable(), slide.kind === "branches" && renderBranches()), /*#__PURE__*/React.createElement("div", {
       className: "spot-ctrl"
     }, /*#__PURE__*/React.createElement("button", {
       className: "btn",
