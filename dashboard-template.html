@@ -4858,7 +4858,7 @@ function VendedoresView({ filtered, filterTienda }) {
                 { label: "Conv. leads",  get: (s) => Math.min(s.conversion / 0.2, 1) },
                 { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / 4000, 1) },
                 { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / 500, 1) },
-                { label: "Productos",    get: (s) => Math.min((s.prodPorVenta || 0) / 2.5, 1) },
+                { label: "Prod / venta", get: (s) => Math.min((s.prodPorVenta || 0) / 2.5, 1) },
                 { label: "vs mes ant.",     get: (s) => Math.min(Math.max((s.crecimientoVsAbril + 1) / 2, 0), 1) },
               ]}
               series={D.vendedores.filter((v) => selected.includes(v.nombre)).map((v) => ({
@@ -4895,7 +4895,7 @@ function VendedoresView({ filtered, filterTienda }) {
                   <div><dt>Ticket prom</dt><dd>Bs {fmtMoney(v.ticketProm)}</dd></div>
                   <div><dt>Leads</dt><dd>{fmtInt(v.leads)}</dd></div>
                   <div><dt>Bs / lead</dt><dd>Bs {fmtMoney(v.ingresoLead)}</dd></div>
-                  <div><dt>Productos</dt><dd>{v.prodPorVenta?.toFixed(2)}</dd></div>
+                  <div><dt>Prod / venta</dt><dd>{v.prodPorVenta?.toFixed(2)}</dd></div>
                   <div><dt>Ritmo/día</dt><dd>Bs {fmtMoney(v.ritmoDiario)}</dd></div>
                   <div><dt>% Meta mín</dt><dd>{fmtPct(v.pctMin)}</dd></div>
                   <div><dt>% Presup.</dt><dd>{fmtPct(v.pctPres)}</dd></div>
