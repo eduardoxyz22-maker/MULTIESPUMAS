@@ -211,6 +211,8 @@ html[data-theme="dark"] .tbl tbody tr:hover{background:var(--card2)}
 .tbl tfoot td:first-child{font-size:.7rem;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
 html[data-theme="dark"] .tbl tfoot td{background:color-mix(in srgb,var(--brand) 12%,var(--card));border-top-color:color-mix(in srgb,var(--brand) 35%,var(--line))}
 html[data-theme="dark"] .tbl tfoot td:first-child{font-family:var(--mono)}
+.tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tbl-scroll>.tbl{min-width:100%;width:auto}
 .who{display:flex;align-items:center;gap:10px}
 .av{width:34px;height:34px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.78rem;flex-shrink:0}
 /* vendor avatar — per-vendor color gradient + initials/photo */
@@ -2290,7 +2292,12 @@ function ProfileDrawer({
     style: {
       color: "var(--green-ink)"
     }
-  }, /*#__PURE__*/React.createElement(CountUp, {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "1.05em",
+      marginRight: 5
+    }
+  }, "\u270D\uFE0F"), /*#__PURE__*/React.createElement(CountUp, {
     value: oMan
   }), " ", /*#__PURE__*/React.createElement("span", {
     style: {
@@ -2306,7 +2313,12 @@ function ProfileDrawer({
     }
   }, /*#__PURE__*/React.createElement("div", {
     className: "v"
-  }, /*#__PURE__*/React.createElement(CountUp, {
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "1.05em",
+      marginRight: 5
+    }
+  }, "\u2699\uFE0F"), /*#__PURE__*/React.createElement(CountUp, {
     value: oBot
   }), " ", /*#__PURE__*/React.createElement("span", {
     style: {
@@ -4632,7 +4644,9 @@ window.Panel = Panel;
     const T_noResp = rows.reduce((s, v) => s + (v.noResp || 0), 0);
     const T_noRespPct = T_leads ? Math.round(T_noResp / T_leads * 100) : 0;
     const T_backlog = rows.reduce((s, v) => s + (v.backlog || 0), 0);
-    return /*#__PURE__*/React.createElement("table", {
+    return /*#__PURE__*/React.createElement("div", {
+      className: "tbl-scroll"
+    }, /*#__PURE__*/React.createElement("table", {
       className: "tbl",
       style: {
         marginTop: 6
@@ -4733,7 +4747,7 @@ window.Panel = Panel;
       style: {
         color: T_backlog > 25 ? "var(--red)" : T_backlog > 10 ? "var(--amber)" : "inherit"
       }
-    }, T_backlog))));
+    }, T_backlog)))));
   }
 
   // Sortable origin-channel table.
