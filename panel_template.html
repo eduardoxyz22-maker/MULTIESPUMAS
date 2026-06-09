@@ -6996,6 +6996,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       pVis = sum(v => v.prev.visitas);
     const gCerr = sum(v => v.cierres * v.ticket),
       pCerr = sum(v => v.prev.cierres * v.prev.ticket);
+    const gPipe = sum(v => v.pipeline || 0);
     const gConv = gLeads ? gCli / gLeads * 100 : 0,
       pConv = pLeads ? pCli / pLeads * 100 : 0;
     const gTk = gCli ? gCerr / gCli : 0,
@@ -7421,6 +7422,18 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           main: money(gCerr),
           cur: gCerr,
           prev: pCerr
+        })
+      }, {
+        l: "Pipeline",
+        bold: true,
+        color: "var(--brand)",
+        cell: v => ({
+          main: v.pipeline ? money(v.pipeline) : "—",
+          noMom: true
+        }),
+        tot: () => ({
+          main: money(gPipe),
+          noMom: true
         })
       }, {
         l: "Meta",
