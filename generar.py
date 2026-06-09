@@ -660,7 +660,8 @@ def _ai_call(key, prompt, attempts=3, tag=""):
                     body = e.read().decode()
                 except Exception:
                     pass
-                last = f"HTTP {e.code}: {body[:200]}"
+                qid = "; ".join(re.findall(r'"quota(?:Id|Metric)"\s*:\s*"([^"]+)"', body))
+                last = f"HTTP {e.code}" + (f" [{qid}]" if qid else "") + f": {body[:200]}"
                 if e.code == 429 and waits_429 < 4:
                     waits_429 += 1
                     m = re.search(r'"retryDelay"\s*:\s*"(\d+)', body)
@@ -694,9 +695,27 @@ def _ai_call(key, prompt, attempts=3, tag=""):
         if attempt < attempts - 1:
             time.sleep(6 + 6 * attempt)            # backoff entre rondas: 6s, 12s
     if tag:
-        AI_ERRORS[tag] = last[:220]
+        AI_ERRORS[tag] = last[:420]
     print(f"      ({tag}) Gemini sin respuesta tras {attempts} rondas: {last[:120]}")
     return None
+
+
+def _prev_bake():
+    """Lee ai_diagnostico / ai_agentes del index.html ya publicado (corrida anterior),
+    para reutilizarlos como red de seguridad si Gemini falla en esta corrida."""
+    try:
+        p = os.path.join(HERE, "index.html")
+        if not os.path.exists(p):
+            return {}
+        html = open(p, encoding="utf-8").read()
+        m = re.search(r"window\.PANEL_DATA\s*=\s*(\{.*?\});", html, re.S)
+        if not m:
+            return {}
+        old = json.loads(m.group(1))
+        return {"ai_diagnostico": old.get("ai_diagnostico"), "ai_agentes": old.get("ai_agentes") or {}}
+    except Exception as ex:
+        print(f"      (sin bake previo disponible: {ex})")
+        return {}
 
 
 def bake_ai(pd):
@@ -838,15 +857,26 @@ def bake_ai(pd):
             else:
                 print(f"   ⚠ IA '{name}' sin contenido tras reintento")
 
+    # Red de seguridad: lo que falló incluso tras el reintento conserva el
+    # análisis de la corrida anterior (mejor un análisis de hace horas que una tarjeta vacía)
+    fallidos = [n for n in order if n not in res]
+    if fallidos:
+        prev = _prev_bake()
+        for n in fallidos:
+            old = prev.get("ai_diagnostico") if n == "diagnostico" else (prev.get("ai_agentes") or {}).get(n)
+            if _ok(n, old):
+                res[n] = old
+                print(f"   ↺ '{n}' reutiliza el análisis de la corrida anterior")
+
     # Hornea cada pieza por separado (un fallo pierde UNA tarjeta, no todas)
     if _ok("diagnostico", res.get("diagnostico")):
         pd["ai_diagnostico"] = res["diagnostico"]
     agentes_out = {a: res[a] for a in ("crm", "ventas", "comportamiento", "sintesis") if _ok(a, res.get(a))}
     if agentes_out:
         pd["ai_agentes"] = agentes_out
-    faltan = [n for n in order if n not in res]
-    if faltan:
-        pd["ai_debug"] = {n: AI_ERRORS.get(n, "sin detalle") for n in faltan}
+    if fallidos:
+        pd["ai_debug"] = {n: (("(rescatado con el análisis anterior) " if n in res else "")
+                              + AI_ERRORS.get(n, "sin detalle")) for n in fallidos}
     print(f"   → IA horneada: diagnóstico={'sí' if 'ai_diagnostico' in pd else 'no'} · agentes={list(agentes_out)}")
     return pd
 

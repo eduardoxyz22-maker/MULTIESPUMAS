@@ -14,6 +14,10 @@ on:
 permissions:
   contents: write            # para hacer commit del HTML regenerado
 
+concurrency:
+  group: panel-heaven        # nunca dos corridas a la vez (se pelean por la cuota de Gemini)
+  cancel-in-progress: false  # la nueva espera en cola a que termine la actual
+
 jobs:
   build:
     runs-on: ubuntu-latest
