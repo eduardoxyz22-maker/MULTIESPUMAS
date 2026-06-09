@@ -644,7 +644,7 @@ def _ai_call(key, prompt, attempts=3):
         req = _rq.Request(url, data=body, headers={"content-type": "application/json"})
         with _rq.urlopen(req, timeout=90) as r:
             return json.loads(r.read().decode())
-    cfg = {"temperature": 0.5, "maxOutputTokens": 1500,
+    cfg = {"temperature": 0.5, "maxOutputTokens": 4000,
            "responseMimeType": "application/json",
            "thinkingConfig": {"thinkingBudget": 0}}
     last = ""
@@ -718,89 +718,76 @@ def bake_ai(pd):
         f"Roll-up por sucursal (con comparativo vs mes anterior):\n{branch_lines}\n"
         f"Equipo (con leads del mes vs mes anterior):\n{team_lines}")
 
-    json_rule = (
-        'Responde SOLO JSON válido, sin texto extra, forma exacta:\n'
-        '{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],'
-        '"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}\n'
-        'Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombres y cifras.\n'
-        'REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión global, pipeline) '
-        'salvo que sean indispensables — otros analistas ya los cubren. Quédate ESTRICTAMENTE en tu dominio. '
-        'No repitas hallazgos genéricos del mes; aporta un ángulo que solo tu especialidad vería.')
+    # Forma JSON compartida por los 3 analistas especialistas
+    shape_agent = ('{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],'
+                   '"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}')
 
-    agentes = {
-        "crm": (
-            "Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: "
-            "velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads \"nunca tocados\", "
-            "\"no responden\" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni "
-            "dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas "
-            "rescatar primero.\nDatos relevantes para ti:\n" + team_lines +
-            f"\nBacklog total {M['backlog']} (+72h), nunca tocados {M['nuncaTocados']}, \"no responden\" {M['noResp']}.\n" + json_rule),
-        "ventas": (
-            "Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por "
-            "vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de "
-            "disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di "
-            "quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n" + team_lines +
-            f"\nGlobal: {G['cierres']} cierres, {_conv(G['cierres'], G['leads'])}% conv, pipeline Bs {G['pipeline']}, ticket Bs {G['ticket']}.\n" + json_rule),
-        "comportamiento": (
-            "Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían "
-            f"los leads. el {M['noRespPct']}% termina en \"no responden\". NO hables de metas individuales ni "
-            "disciplina de cada vendedora. Explica el PATRÓN: qué canal/etapa pierde clientes y cómo reactivar "
-            f"los {M['noResp']} que no responden.\nCanales: {ch_dot}.\n" + json_rule),
-        "sintesis": (
-            "Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: "
-            "combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto "
-            "en Bs. Cada decisión debe nombrar responsable y meta concreta.\n" + ctx +
-            '\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes",'
-            '"hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],'
-            '"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} '
-            "Máx 3 y 3. Español de Bolivia."),
-    }
-
-    # Diagnóstico de portada (mismo prompt que DiagnosticoMes en el frontend)
     top = sorted(team, key=lambda t: t["cierres"], reverse=True)[0] if team else None
     worst_l = sorted([t for t in team if t["cierres"] > 0], key=lambda t: t["conv"])
     worst = worst_l[0] if worst_l else None
-    diag_team = "\n".join(
-        f"{t['name']} ({t['suc']}): {t['leads']} leads, {t['cierres']} cierres, {t['conv']}% conv, "
-        f"{t['noResp']} no-responden, {t['backlog']} backlog, {t['u24']}% actualiza <24h" for t in team)
-    diag_prompt = (
-        "Eres analista comercial senior de Heaven Colchones (Bolivia). "
-        f"Analiza el mes {pd['month']} {pd['year']} y responde SOLO con JSON válido, sin texto extra, forma exacta:\n"
-        '{"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números",'
-        '"palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}\n'
-        f"Datos (moneda Bs): Leads {G['leads']} (mes anterior {G['prevLeads']}, {mom}%). "
-        f"Cierres {G['cierres']}, conversión {_conv(G['cierres'], G['leads'])}%. Pipeline Bs {G['pipeline']}, "
-        f"ticket Bs {G['ticket']}. \"No responden\" {M['noResp']} ({M['noRespPct']}%). "
-        f"Sin seguimiento +72h: {M['backlog']} ({M['backlogPct']}%).\nEquipo:\n{diag_team}\n"
-        f"Top: {top['name'] if top else '—'}. Más débil en conversión: {worst['name'] if worst else '—'}. "
-        "Sé directo, específico con nombres y números, español de Bolivia.")
 
-    # Hornea el diagnóstico
-    try:
-        d = _ai_call(key, diag_prompt)
-        if d and d.get("titular"):
-            pd["ai_diagnostico"] = d
-            print("   ✓ diagnóstico IA horneado (Gemini)")
-        else:
-            print("   ⚠ diagnóstico IA sin contenido — se omite")
-    except Exception as e:
-        print(f"   ⚠ diagnóstico IA no horneado: {e}")
+    # ── Llamada 1: 3 analistas especialistas en UNA sola respuesta ─────────────
+    specialists_prompt = (
+        "Eres un equipo de 3 analistas comerciales de Heaven Colchones (Bolivia) revisando el mes. "
+        "Cada analista se queda ESTRICTAMENTE en su dominio y NO repite lo que dirían los otros ni los totales globales.\n\n"
+        "1) ANÁLISIS \"crm\" — OPERACIÓN DE CRM (Kommo): higiene del pipeline; velocidad de primera respuesta "
+        "(% <24h por vendedora), backlog +72h, leads nunca-tocados, no-responden y calidad de datos. Señala QUIÉN "
+        "tiene el peor hábito de seguimiento y qué fichas rescatar primero. NO opines de ventas/ticket/dinero.\n"
+        "2) ANÁLISIS \"ventas\" — PERFORMANCE DE VENTAS: conversión por vendedora (compradores/leads), ticket promedio, "
+        "pipeline en Bs y dónde está el dinero. Compara por eficiencia (no por volumen) y di quién deja dinero sobre la "
+        "mesa. NO hables de disciplina de CRM ni de canales.\n"
+        "3) ANÁLISIS \"comportamiento\" — ORIGEN y CANALES: por qué entran y por qué se enfrían los leads, qué "
+        "canal/etapa pierde clientes y cómo reactivar los que no responden. NO hables de metas individuales ni "
+        "disciplina de cada vendedora.\n\n"
+        "DATOS DEL MES:\n" + ctx + "\n\n"
+        "Responde SOLO JSON válido, sin texto extra, con esta forma EXACTA (máx 4 hallazgos y 3 recomendaciones por analista):\n"
+        '{"crm":' + shape_agent + ',"ventas":' + shape_agent + ',"comportamiento":' + shape_agent + '}\n'
+        "Español de Bolivia, directo, con nombres y cifras. Cada analista aporta un ángulo que solo su especialidad vería.")
 
-    # Hornea los 4 agentes (espaciados para no gatillar el límite por ráfaga)
-    baked = {}
-    for aid, prm in agentes.items():
-        time.sleep(1.2)
-        try:
-            a = _ai_call(key, prm)
-            if a and a.get("resumen"):
-                baked[aid] = a
-                print(f"   ✓ agente IA '{aid}' horneado")
-            else:
-                print(f"   ⚠ agente IA '{aid}' sin contenido — se omite")
-        except Exception as e:
-            print(f"   ⚠ agente IA '{aid}' no horneado: {e}")
-    if baked:
-        pd["ai_agentes"] = baked
+    # ── Llamada 2: diagnóstico de portada + plan del director ──────────────────
+    exec_prompt = (
+        "Eres el DIRECTOR COMERCIAL de Heaven Colchones (Bolivia). Entrega dos cosas sobre el mes:\n"
+        "A) \"diagnostico\": titular contundente (máx 11 palabras), 2-3 frases con el insight central y números, "
+        "3 palancas de acción y el mayor riesgo en 1 frase.\n"
+        "B) \"sintesis\": un plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto en Bs, "
+        "cada una con responsable y meta concreta.\n\n"
+        "DATOS DEL MES:\n" + ctx + "\n"
+        f"Top en cierres: {top['name'] if top else '—'}. Más débil en conversión: {worst['name'] if worst else '—'}.\n\n"
+        "Responde SOLO JSON válido, sin texto extra, forma EXACTA:\n"
+        '{"diagnostico":{"titular":"máx 11 palabras","diagnostico":"2-3 frases con números",'
+        '"palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"},'
+        '"sintesis":{"resumen":"3 frases con el veredicto del mes",'
+        '"hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],'
+        '"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]}}\n'
+        "Máx 3 hallazgos y 3 recomendaciones en la síntesis. Español de Bolivia, directo, con nombres y números.")
+
+    # Solo 2 llamadas → muy por debajo del límite del tier gratis de Gemini
+    spec = _ai_call(key, specialists_prompt) or {}
+    time.sleep(1.5)
+    exe = _ai_call(key, exec_prompt) or {}
+
+    # Agentes (3 especialistas + síntesis del director)
+    agentes_out = {}
+    for aid in ("crm", "ventas", "comportamiento"):
+        a = spec.get(aid)
+        if isinstance(a, dict) and a.get("resumen"):
+            agentes_out[aid] = a
+    s = exe.get("sintesis")
+    if isinstance(s, dict) and s.get("resumen"):
+        agentes_out["sintesis"] = s
+    if agentes_out:
+        pd["ai_agentes"] = agentes_out
+        print("   ✓ agentes IA horneados: " + ", ".join(agentes_out))
+    else:
+        print("   ⚠ ningún agente IA horneado")
+
+    # Diagnóstico de portada
+    d = exe.get("diagnostico")
+    if isinstance(d, dict) and d.get("titular"):
+        pd["ai_diagnostico"] = d
+        print("   ✓ diagnóstico IA horneado (Gemini)")
+    else:
+        print("   ⚠ diagnóstico IA sin contenido — se omite")
     return pd
 
 # ─────────────────────────────────────────────────────────────────────────────
