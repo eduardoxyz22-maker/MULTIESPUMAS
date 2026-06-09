@@ -7393,6 +7393,19 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
           prev: pConv
         })
       }, {
+        l: "Ticket prom.",
+        color: "#7A5AF0",
+        cell: v => ({
+          main: v.ticket ? money(v.ticket) : "—",
+          cur: v.ticket,
+          prev: v.prev.ticket
+        }),
+        tot: () => ({
+          main: money(gTk),
+          cur: gTk,
+          prev: pTk
+        })
+      }, {
         l: "Cerrado Bs",
         bold: true,
         color: "var(--brand-d)",
