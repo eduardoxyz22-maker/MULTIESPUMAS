@@ -628,38 +628,163 @@ def build_archives():
     return out
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  IA OPCIONAL (hornea el diagnóstico + agentes con la API de Anthropic)
+#  IA (hornea el diagnóstico + los 4 agentes con la API gratuita de Google Gemini)
 # ─────────────────────────────────────────────────────────────────────────────
-def bake_ai(pd):
-    key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not key:
-        print("   · sin ANTHROPIC_API_KEY → el panel llamará la IA en vivo")
-        return pd
-    G = pd["global"]
-    team_lines = "\n".join(
-        f"{t['name']} ({t['suc']}): {t['leads']} leads, {t['cierres']} cierres, "
-        f"{t['conv']}% conv, {t['noResp']} no-responden, {t['backlog']} backlog, {t['u24']}% <24h"
-        for t in pd["team"])
-    prompt = (f"Eres analista comercial senior de Heaven Colchones (Bolivia). Mes {pd['month']} {pd['year']}. "
-              f"Moneda Bs. Responde SOLO JSON: "
-              f'{{"titular":"frase de máx 11 palabras","diagnostico":"2-3 frases con números",'
-              f'"palancas":["a1","a2","a3"],"riesgo":"1 frase"}}\n'
-              f"Leads {G['leads']} (prev {G['prevLeads']}), cierres {G['cierres']}, "
-              f"conv {round(G['cierres']/G['leads']*100,1) if G['leads'] else 0}%, "
-              f"pipeline Bs {G['pipeline']}, ticket Bs {G['ticket']}. "
-              f"No responden {pd['metrics']['noResp']}, backlog {pd['metrics']['backlog']}.\n{team_lines}")
+def _ai_call(key, prompt):
+    """Llama a Gemini 2.5 Flash y devuelve un dict JSON (o None). Reintenta sin
+    config avanzada por si la cuenta/versión rechaza algún campo."""
+    url = ("https://generativelanguage.googleapis.com/v1beta/models/"
+           "gemini-2.5-flash:generateContent?key=" + key)
+    def _post(gen_cfg):
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        if gen_cfg:
+            payload["generationConfig"] = gen_cfg
+        body = json.dumps(payload).encode()
+        req = _rq.Request(url, data=body, headers={"content-type": "application/json"})
+        with _rq.urlopen(req, timeout=90) as r:
+            return json.loads(r.read().decode())
     try:
-        body = json.dumps({"model": "claude-haiku-4-5-20251001", "max_tokens": 700,
-                           "messages": [{"role": "user", "content": prompt}]}).encode()
-        req = _rq.Request("https://api.anthropic.com/v1/messages", data=body, headers={
-            "x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"})
-        with _rq.urlopen(req, timeout=60) as r:
-            data = json.loads(r.read().decode())
-        txt = "".join(b.get("text", "") for b in data.get("content", []))
-        pd["ai_diagnostico"] = json.loads(txt[txt.find("{"):txt.rfind("}") + 1])
-        print("   ✓ diagnóstico IA horneado")
+        data = _post({"temperature": 0.5, "maxOutputTokens": 1500,
+                      "responseMimeType": "application/json",
+                      "thinkingConfig": {"thinkingBudget": 0}})
+    except Exception:
+        data = _post(None)                       # reintento sin config avanzada
+    cand = (data.get("candidates") or [{}])[0]
+    parts = ((cand.get("content") or {}).get("parts")) or [{}]
+    txt = "".join(p.get("text", "") for p in parts)
+    txt = txt.replace("```json", "").replace("```", "").strip()
+    s, e = txt.find("{"), txt.rfind("}")
+    return json.loads(txt[s:e + 1]) if s >= 0 and e > s else None
+
+
+def bake_ai(pd):
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if not key:
+        print("   · sin GEMINI_API_KEY → el panel mostrará la lectura base de IA")
+        return pd
+    G, M, team = pd["global"], pd["metrics"], pd["team"]
+    ch = pd.get("channels", []) or []
+    def _conv(c, l): return round(c / l * 100, 1) if l else 0
+    mom = round((G["leads"] - G["prevLeads"]) / G["prevLeads"] * 100) if G.get("prevLeads") else 0
+
+    # Línea por vendedora (versión rica, idéntica a la Sala de expertos del frontend)
+    team_lines = "\n".join(
+        f"{t['name']} (sucursal {t['suc']}): {t['leads']} leads (mes previo {t['prevLeads']}), "
+        f"{t['cierres']} cierres, {_conv(t['cierres'], t['leads'])}% conv, "
+        f"{t['noResp']} no-responden ({t['noRespPct']}%), {t['backlog']} backlog, "
+        f"{t['nunca']} nunca-tocados, {t['u24']}% <24h, ticket Bs {t['ticket']}"
+        for t in team)
+
+    # Roll-up por sucursal
+    roll = {}
+    for t in team:
+        b = roll.setdefault(t["suc"], {"leads": 0, "prev": 0, "cierres": 0, "value": 0, "n": 0})
+        b["leads"] += t["leads"]; b["prev"] += t["prevLeads"]; b["cierres"] += t["cierres"]
+        b["value"] += t["value"]; b["n"] += 1
+    branch_lines = "\n".join(
+        f"{s}: {b['n']} vendedora(s), {b['leads']} leads (mes previo {b['prev']}, "
+        f"{round((b['leads'] - b['prev']) / (b['prev'] or 1) * 100)}%), {b['cierres']} cierres, "
+        f"{_conv(b['cierres'], b['leads'])}% conv, pipeline Bs {b['value']}"
+        for s, b in roll.items())
+
+    ch_semi = "; ".join(f"{c['name']} {c['leads']} leads / {c['conv']}% conv / {c['cierres']} cierres" for c in ch)
+    ch_dot = " · ".join(f"{c['name']} {c['leads']}/{c['conv']}%/{c['cierres']}" for c in ch)
+
+    ctx = (
+        f"Heaven Colchones (Bolivia), mes {pd['month']} {pd['year']}. Moneda Bs.\n"
+        f"Global: {G['leads']} leads (mes previo {G['prevLeads']}, {mom}% MoM), {G['cierres']} cierres, "
+        f"conversión {_conv(G['cierres'], G['leads'])}% (= {G['cierres']}/{G['leads']}), "
+        f"pipeline Bs {G['pipeline']}, ticket Bs {G['ticket']}.\n"
+        f"\"No responden\" {M['noResp']} ({M['noRespPct']}%). Sin seguimiento +72h: {M['backlog']} ({M['backlogPct']}%). "
+        f"Nunca tocados: {M['nuncaTocados']}. Abiertos sin valor: {M['abiertosSinValor']} ({M['abiertosSinValorPct']}%).\n"
+        "IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. "
+        "Las 3 sucursales son Mia Plaza, Buenos Aires y Central.\n"
+        f"Canales: {ch_semi}.\n"
+        f"Roll-up por sucursal (con comparativo vs mes anterior):\n{branch_lines}\n"
+        f"Equipo (con leads del mes vs mes anterior):\n{team_lines}")
+
+    json_rule = (
+        'Responde SOLO JSON válido, sin texto extra, forma exacta:\n'
+        '{"resumen":"2-3 frases","hallazgos":[{"t":"hallazgo con números","sev":"alto|medio|bajo"}],'
+        '"recomendaciones":[{"accion":"qué hacer","impacto":"resultado esperado"}]}\n'
+        'Máximo 4 hallazgos y 3 recomendaciones. Español de Bolivia, directo, con nombres y cifras.\n'
+        'REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión global, pipeline) '
+        'salvo que sean indispensables — otros analistas ya los cubren. Quédate ESTRICTAMENTE en tu dominio. '
+        'No repitas hallazgos genéricos del mes; aporta un ángulo que solo tu especialidad vería.')
+
+    agentes = {
+        "crm": (
+            "Eres analista de OPERACIÓN DE CRM (Kommo). Tu único tema es la HIGIENE del pipeline: "
+            "velocidad de primera respuesta (% <24h por vendedora), backlog +72h, leads \"nunca tocados\", "
+            "\"no responden\" y calidad de datos (deals sin valor, sin sucursal). NO opines de ventas, ticket ni "
+            "dinero — eso es de otro analista. Señala QUIÉN tiene el peor hábito de seguimiento y qué fichas "
+            "rescatar primero.\nDatos relevantes para ti:\n" + team_lines +
+            f"\nBacklog total {M['backlog']} (+72h), nunca tocados {M['nuncaTocados']}, \"no responden\" {M['noResp']}.\n" + json_rule),
+        "ventas": (
+            "Eres analista de PERFORMANCE DE VENTAS. Tu único tema es el RESULTADO comercial: conversión por "
+            "vendedora (compradores/leads), ticket promedio, pipeline en Bs y dónde está el dinero. NO hables de "
+            "disciplina de CRM ni de canales de origen. Compara vendedoras por eficiencia (no por volumen) y di "
+            "quién deja dinero sobre la mesa.\nDatos relevantes para ti:\n" + team_lines +
+            f"\nGlobal: {G['cierres']} cierres, {_conv(G['cierres'], G['leads'])}% conv, pipeline Bs {G['pipeline']}, ticket Bs {G['ticket']}.\n" + json_rule),
+        "comportamiento": (
+            "Eres analista de COMPORTAMIENTO y CANALES. Tu único tema: por qué entran y por qué se enfrían "
+            f"los leads. el {M['noRespPct']}% termina en \"no responden\". NO hables de metas individuales ni "
+            "disciplina de cada vendedora. Explica el PATRÓN: qué canal/etapa pierde clientes y cómo reactivar "
+            f"los {M['noResp']} que no responden.\nCanales: {ch_dot}.\n" + json_rule),
+        "sintesis": (
+            "Eres el DIRECTOR COMERCIAL. Ya tienes 3 análisis (CRM, ventas, comportamiento). NO los repitas: "
+            "combínalos en UN plan priorizado de 3 decisiones para la reunión de gerencia, ordenadas por impacto "
+            "en Bs. Cada decisión debe nombrar responsable y meta concreta.\n" + ctx +
+            '\nResponde SOLO JSON: {"resumen":"3 frases con el veredicto del mes",'
+            '"hallazgos":[{"t":"prioridad con número","sev":"alto|medio|bajo"}],'
+            '"recomendaciones":[{"accion":"iniciativa con responsable","impacto":"meta concreta en Bs o cierres"}]} '
+            "Máx 3 y 3. Español de Bolivia."),
+    }
+
+    # Diagnóstico de portada (mismo prompt que DiagnosticoMes en el frontend)
+    top = sorted(team, key=lambda t: t["cierres"], reverse=True)[0] if team else None
+    worst_l = sorted([t for t in team if t["cierres"] > 0], key=lambda t: t["conv"])
+    worst = worst_l[0] if worst_l else None
+    diag_team = "\n".join(
+        f"{t['name']} ({t['suc']}): {t['leads']} leads, {t['cierres']} cierres, {t['conv']}% conv, "
+        f"{t['noResp']} no-responden, {t['backlog']} backlog, {t['u24']}% actualiza <24h" for t in team)
+    diag_prompt = (
+        "Eres analista comercial senior de Heaven Colchones (Bolivia). "
+        f"Analiza el mes {pd['month']} {pd['year']} y responde SOLO con JSON válido, sin texto extra, forma exacta:\n"
+        '{"titular":"frase contundente de máx 11 palabras","diagnostico":"2-3 frases con el insight central y números",'
+        '"palancas":["acción 1","acción 2","acción 3"],"riesgo":"el mayor riesgo en 1 frase"}\n'
+        f"Datos (moneda Bs): Leads {G['leads']} (mes anterior {G['prevLeads']}, {mom}%). "
+        f"Cierres {G['cierres']}, conversión {_conv(G['cierres'], G['leads'])}%. Pipeline Bs {G['pipeline']}, "
+        f"ticket Bs {G['ticket']}. \"No responden\" {M['noResp']} ({M['noRespPct']}%). "
+        f"Sin seguimiento +72h: {M['backlog']} ({M['backlogPct']}%).\nEquipo:\n{diag_team}\n"
+        f"Top: {top['name'] if top else '—'}. Más débil en conversión: {worst['name'] if worst else '—'}. "
+        "Sé directo, específico con nombres y números, español de Bolivia.")
+
+    # Hornea el diagnóstico
+    try:
+        d = _ai_call(key, diag_prompt)
+        if d and d.get("titular"):
+            pd["ai_diagnostico"] = d
+            print("   ✓ diagnóstico IA horneado (Gemini)")
+        else:
+            print("   ⚠ diagnóstico IA sin contenido — se omite")
     except Exception as e:
-        print(f"   ⚠ IA no horneada: {e}")
+        print(f"   ⚠ diagnóstico IA no horneado: {e}")
+
+    # Hornea los 4 agentes
+    baked = {}
+    for aid, prm in agentes.items():
+        try:
+            a = _ai_call(key, prm)
+            if a and a.get("resumen"):
+                baked[aid] = a
+                print(f"   ✓ agente IA '{aid}' horneado")
+            else:
+                print(f"   ⚠ agente IA '{aid}' sin contenido — se omite")
+        except Exception as e:
+            print(f"   ⚠ agente IA '{aid}' no horneado: {e}")
+    if baked:
+        pd["ai_agentes"] = baked
     return pd
 
 # ─────────────────────────────────────────────────────────────────────────────

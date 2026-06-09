@@ -3357,6 +3357,10 @@ function DiagnosticoMes() {
   const G = D.global;
   const CACHE_KEY = `heaven_diag_ai_${D.month}_${D.year}`;
   const [ai, setAi] = useState(() => {
+    if (D.ai_diagnostico && D.ai_diagnostico.titular) return {
+      state: "done",
+      ...D.ai_diagnostico
+    };
     try {
       const c = sessionStorage.getItem(CACHE_KEY);
       if (c) return {
@@ -3427,7 +3431,7 @@ Top: ${top.name}. Más débil en conversión: ${worst.name}. Sé directo, espec�
     name: "bulb",
     size: 13,
     sw: 2.4
-  }), "Diagn\xF3stico IA \xB7 ", D.month, " ", D.year, ai.state === "done" && /*#__PURE__*/React.createElement("button", {
+  }), "Diagn\xF3stico IA \xB7 ", D.month, " ", D.year, ai.state === "done" && window.claude && window.claude.complete && /*#__PURE__*/React.createElement("button", {
     className: "diag2-refresh",
     title: "Re-analizar",
     onClick: () => run(true)
@@ -3569,6 +3573,10 @@ function ExpertAgent({
 }) {
   const KEY = `heaven_agent_${id}_${D.month}_${D.year}`;
   const [st, setSt] = useState(() => {
+    if (D.ai_agentes && D.ai_agentes[id] && D.ai_agentes[id].resumen) return {
+      s: "done",
+      ...D.ai_agentes[id]
+    };
     try {
       const c = sessionStorage.getItem(KEY);
       if (c) return {
@@ -3638,7 +3646,7 @@ function ExpertAgent({
     className: "agent-name"
   }, name), /*#__PURE__*/React.createElement("div", {
     className: "agent-role"
-  }, role)), st.s === "idle" && /*#__PURE__*/React.createElement("button", {
+  }, role)), st.s === "idle" && window.claude && window.claude.complete && /*#__PURE__*/React.createElement("button", {
     className: "btn pri",
     style: {
       fontSize: ".74rem"
@@ -3647,7 +3655,7 @@ function ExpertAgent({
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "analisis",
     size: 13
-  }), "Analizar"), st.s === "done" && /*#__PURE__*/React.createElement("button", {
+  }), "Analizar"), st.s === "done" && window.claude && window.claude.complete && /*#__PURE__*/React.createElement("button", {
     className: "agent-refresh",
     title: "Re-analizar",
     onClick: run
