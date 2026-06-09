@@ -2219,6 +2219,10 @@ function ProfileDrawer({
   }, [v]);
   const cerrado = v ? v.value || 0 : 0;
   const diff = v ? v.leads - (v.prevLeads || 0) : 0;
+  const oMan = v && v.origen ? v.origen.manual || 0 : 0;
+  const oBot = v && v.origen ? v.origen.bot || 0 : 0;
+  const oManPct = v && v.leads ? Math.round(oMan / v.leads * 100) : 0;
+  const oBotPct = v && v.leads ? Math.round(oBot / v.leads * 100) : 0;
   const metas = useMetas();
   const metaMonto = v ? metas[v.name] || 0 : 0;
   const metaPct = metaMonto ? Math.round(cerrado / metaMonto * 100) : 0;
@@ -2273,6 +2277,45 @@ function ProfileDrawer({
   }, diff >= 0 ? "▲" : "▼", " ", Math.abs(diff)), /*#__PURE__*/React.createElement("span", {
     className: "ww"
   }, "vs ", v.prevLeads.toLocaleString("en-US"), " en ", D.prevMonth)), /*#__PURE__*/React.createElement("div", {
+    className: "dr-sec"
+  }, "Origen de los leads"), /*#__PURE__*/React.createElement("div", {
+    className: "dr-kpis"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "dr-k",
+    style: {
+      borderLeft: "3px solid var(--green)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: "var(--green-ink)"
+    }
+  }, /*#__PURE__*/React.createElement(CountUp, {
+    value: oMan
+  }), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: ".7rem",
+      color: "var(--muted)"
+    }
+  }, "(", oManPct, "%)")), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, "Creados a mano (vendedora)")), /*#__PURE__*/React.createElement("div", {
+    className: "dr-k",
+    style: {
+      borderLeft: "3px solid var(--muted)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v"
+  }, /*#__PURE__*/React.createElement(CountUp, {
+    value: oBot
+  }), " ", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: ".7rem",
+      color: "var(--muted)"
+    }
+  }, "(", oBotPct, "%)")), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, "Autom\xE1ticos / bot"))), /*#__PURE__*/React.createElement("div", {
     className: "dr-sec"
   }, "KPIs comerciales"), /*#__PURE__*/React.createElement("div", {
     className: "dr-kpis",
@@ -4594,7 +4637,7 @@ window.Panel = Panel;
       style: {
         marginTop: 6
       }
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Cerrado", "value", v => v.value), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp), thFor("Sin seguim.", "backlog", v => v.backlog))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), thFor("Leads", "leads", v => v.leads), thFor("Cierres", "cierres", v => v.cierres), thFor("Conv.", "conv", v => window.convPct(v)), thFor("Cerrado", "value", v => v.value), thFor("Ticket", "ticket", v => v.ticket), thFor("Pipeline", "pipeline", v => v.pipeline), thFor("Calificados", "calif", v => v.calif), thFor("No responden", "noResp", v => v.noResp), thFor("Sin seguim.", "backlog", v => v.backlog))), /*#__PURE__*/React.createElement("tbody", null, sorted.map((v, i) => /*#__PURE__*/React.createElement("tr", {
       key: i,
       className: "clickable",
       onClick: () => open(v)
@@ -4607,6 +4650,8 @@ window.Panel = Panel;
     }), /*#__PURE__*/React.createElement("span", {
       className: "wn"
     }, v.name))), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, v.leads), /*#__PURE__*/React.createElement("td", {
       className: "r num",
       style: {
         fontWeight: 800
@@ -4648,6 +4693,8 @@ window.Panel = Panel;
     }, v.backlog)))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", {
       className: "tbl-tot"
     }, /*#__PURE__*/React.createElement("td", null, "Equipo total"), /*#__PURE__*/React.createElement("td", {
+      className: "r num"
+    }, T_leads), /*#__PURE__*/React.createElement("td", {
       className: "r num",
       style: {
         fontWeight: 800
