@@ -549,11 +549,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "t":f"Backlog de seguimiento sobre el umbral ({UMBRAL_BK}+)",
             "d":f"{nm_bk} acumulan {tot_bk} fichas abiertas sin seguimiento +72h.",
             "act":"Acción masiva: crear tarea a todo el backlog de la vendedora."})
-    if G_cierres and metrics["abiertosSinValor"] and metrics["abiertosSinValor"] > G_leads*0.5:
-        alerts.append({"sev":"red","who":"Datos / Gerencia",
-            "t":"Muchos deals abiertos sin valor cargado",
-            "d":"No se puede priorizar el pipeline por monto.",
-            "act":"Cargar valor estimado al cotizar."})
+    # (Sin alerta por "abiertos sin valor": en Heaven solo se carga monto al reservar o pagar,
+    #  así que la mayoría de leads abiertos sin monto es lo normal y esperado, no un problema.)
     momp = round((G_leads-G_prev)/G_prev*100) if G_prev else 0
     if momp < -5:
         alerts.append({"sev":"amber","who":"Gerencia",
@@ -699,7 +696,7 @@ def bake_ai(pd):
     branch_lines = "\n".join(
         f"{s}: {b['n']} vendedora(s), {b['leads']} leads (mes previo {b['prev']}, "
         f"{round((b['leads'] - b['prev']) / (b['prev'] or 1) * 100)}%), {b['cierres']} cierres, "
-        f"{_conv(b['cierres'], b['leads'])}% conv, pipeline Bs {b['value']}"
+        f"{_conv(b['cierres'], b['leads'])}% conv, cerrado Bs {b['value']}"
         for s, b in roll.items())
 
     ch_semi = "; ".join(f"{c['name']} {c['leads']} leads / {c['conv']}% conv / {c['cierres']} cierres" for c in ch)
@@ -708,10 +705,14 @@ def bake_ai(pd):
     ctx = (
         f"Heaven Colchones (Bolivia), mes {pd['month']} {pd['year']}. Moneda Bs.\n"
         f"Global: {G['leads']} leads (mes previo {G['prevLeads']}, {mom}% MoM), {G['cierres']} cierres, "
-        f"conversión {_conv(G['cierres'], G['leads'])}% (= {G['cierres']}/{G['leads']}), "
-        f"pipeline Bs {G['pipeline']}, ticket Bs {G['ticket']}.\n"
-        f"\"No responden\" {M['noResp']} ({M['noRespPct']}%). Sin seguimiento +72h: {M['backlog']} ({M['backlogPct']}%). "
-        f"Nunca tocados: {M['nuncaTocados']}. Abiertos sin valor: {M['abiertosSinValor']} ({M['abiertosSinValorPct']}%).\n"
+        f"conversión {_conv(G['cierres'], G['leads'])}% (= {G['cierres']}/{G['leads']}), ticket Bs {G['ticket']}.\n"
+        f"DINERO (Bs): CERRADO {G['cerrado']} = producto YA entregado y facturado. "
+        f"PIPELINE {G['pipeline']} = cerrado + reservado; el reservado (pipeline − cerrado = {G['pipeline'] - G['cerrado']}) "
+        "son ventas con anticipo/pago parcial, prácticamente aseguradas. El pipeline NO son oportunidades inciertas ni dinero 'en riesgo'.\n"
+        "MODELO DE NEGOCIO (respétalo siempre): venden colchones; solo se carga un monto cuando el cliente RESERVA o deja un pago parcial. "
+        "Por eso la mayoría de los leads abiertos NO tienen monto, y eso es NORMAL y esperado — NO es un problema de datos ni de higiene. "
+        "NO lo señales como defecto ni recomiendes 'cargar valor al cotizar'.\n"
+        f"\"No responden\" {M['noResp']} ({M['noRespPct']}%). Sin seguimiento +72h: {M['backlog']} ({M['backlogPct']}%). Nunca tocados: {M['nuncaTocados']}.\n"
         "IMPORTANTE: cada lead SÍ está identificado por sucursal — se atribuye a la sucursal de su vendedora. "
         "Las 3 sucursales son Mia Plaza, Buenos Aires y Central.\n"
         f"Canales: {ch_semi}.\n"
@@ -730,8 +731,8 @@ def bake_ai(pd):
     specialists_prompt = (
         "Eres un equipo de 3 analistas comerciales de Heaven Colchones (Bolivia) revisando el mes. "
         "Cada analista se queda ESTRICTAMENTE en su dominio y NO repite lo que dirían los otros ni los totales globales.\n\n"
-        "1) ANÁLISIS \"crm\" — OPERACIÓN DE CRM (Kommo): higiene del pipeline; velocidad de primera respuesta "
-        "(% <24h por vendedora), backlog +72h, leads nunca-tocados, no-responden y calidad de datos. Señala QUIÉN "
+        "1) ANÁLISIS \"crm\" — OPERACIÓN DE CRM (Kommo): higiene del embudo; velocidad de primera respuesta "
+        "(% <24h por vendedora), backlog +72h, leads nunca-tocados y no-responden (rapidez de seguimiento). Señala QUIÉN "
         "tiene el peor hábito de seguimiento y qué fichas rescatar primero. NO opines de ventas/ticket/dinero.\n"
         "2) ANÁLISIS \"ventas\" — PERFORMANCE DE VENTAS: conversión por vendedora (compradores/leads), ticket promedio, "
         "pipeline en Bs y dónde está el dinero. Compara por eficiencia (no por volumen) y di quién deja dinero sobre la "
