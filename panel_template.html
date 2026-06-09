@@ -7287,9 +7287,9 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, {
       kind: "origen"
     }, {
-      kind: "table"
-    }, {
       kind: "stages"
+    }, {
+      kind: "table"
     }, {
       kind: "branches"
     }, {
@@ -8346,61 +8346,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, v.name), /*#__PURE__*/React.createElement("span", {
         className: "lb-mt num"
       }, metric));
-    }))), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Por vendedora",
-      h3: "Detalle del mes con variaci\xF3n",
-      p: "Vendedoras en columnas, m\xE9tricas en filas. N\xFAmero grande = este mes \xB7 debajo, la variaci\xF3n vs el mes anterior. Clic en una vendedora abre su ficha."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "matrix-wrap"
-    }, /*#__PURE__*/React.createElement("table", {
-      className: "tbl pres-matrix"
-    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
-      className: "rowhead"
-    }, "M\xE9trica"), T.map(v => /*#__PURE__*/React.createElement("th", {
-      key: v.name,
-      className: `vhead clickable${v.name === STAGE_TOP ? " toph" : ""}`,
-      onClick: () => window.__perfil(v)
-    }, /*#__PURE__*/React.createElement("div", {
-      className: "vhead-in"
-    }, /*#__PURE__*/React.createElement(Avatar, {
-      v: v,
-      size: 36,
-      ring: true,
-      crown: v.name === STAGE_TOP
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "vhead-nm"
-    }, v.name.split(" ")[0], /*#__PURE__*/React.createElement("span", null, v.suc))))))), /*#__PURE__*/React.createElement("tbody", null, metricRows.map((row, ri) => /*#__PURE__*/React.createElement("tr", {
-      key: ri
-    }, /*#__PURE__*/React.createElement("td", {
-      className: "rowhead"
-    }, row.l), T.map(v => {
-      const c = row.cell(v),
-        col = c.color || row.color;
-      return /*#__PURE__*/React.createElement("td", {
-        key: v.name,
-        className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
-      }, /*#__PURE__*/React.createElement("div", {
-        className: "num",
-        style: {
-          fontWeight: c.bold || row.bold ? 800 : 700,
-          color: col || "var(--text)"
-        }
-      }, c.main), !c.noMom && /*#__PURE__*/React.createElement(MoM, {
-        cur: c.cur,
-        prev: c.prev,
-        pp: row.pp
-      }));
-    }))))))), /*#__PURE__*/React.createElement("div", {
-      className: "card tight"
-    }, /*#__PURE__*/React.createElement(SectionHead, {
-      eb: "Embudo por vendedora",
-      h3: "Leads por etapa y seguimiento pendiente",
-      p: "Cu\xE1ntos leads tiene cada vendedora en cada etapa del mes (las etapas suman su total de leads). Las dos \xFAltimas filas son los leads sin ning\xFAn seguimiento: m\xE1s de 72h y, lo m\xE1s cr\xEDtico, m\xE1s de 7 d\xEDas."
-    }), /*#__PURE__*/React.createElement(StageMatrix, {
-      tv: false
-    })), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
+    }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Origen de leads",
       h3: "Carga manual vs bot \u2014 por vendedora",
       p: "La carga manual convierte mucho mejor que el bot. Aqu\xED se ve qui\xE9n trae leads de calidad propia y qui\xE9n depende del autom\xE1tico."
@@ -8464,7 +8410,61 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       style: {
         background: "var(--faint)"
       }
-    }), "Autom\xE1tico (bot)")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
+    }), "Autom\xE1tico (bot)")))), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Embudo por vendedora",
+      h3: "Leads por etapa y seguimiento pendiente",
+      p: "Cu\xE1ntos leads tiene cada vendedora en cada etapa del mes (las etapas suman su total de leads). Las dos \xFAltimas filas son los leads sin ning\xFAn seguimiento: m\xE1s de 72h y, lo m\xE1s cr\xEDtico, m\xE1s de 7 d\xEDas."
+    }), /*#__PURE__*/React.createElement(StageMatrix, {
+      tv: false
+    })), /*#__PURE__*/React.createElement("div", {
+      className: "card tight"
+    }, /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Por vendedora",
+      h3: "Detalle del mes con variaci\xF3n",
+      p: "Vendedoras en columnas, m\xE9tricas en filas. N\xFAmero grande = este mes \xB7 debajo, la variaci\xF3n vs el mes anterior. Clic en una vendedora abre su ficha."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "matrix-wrap"
+    }, /*#__PURE__*/React.createElement("table", {
+      className: "tbl pres-matrix"
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+      className: "rowhead"
+    }, "M\xE9trica"), T.map(v => /*#__PURE__*/React.createElement("th", {
+      key: v.name,
+      className: `vhead clickable${v.name === STAGE_TOP ? " toph" : ""}`,
+      onClick: () => window.__perfil(v)
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "vhead-in"
+    }, /*#__PURE__*/React.createElement(Avatar, {
+      v: v,
+      size: 36,
+      ring: true,
+      crown: v.name === STAGE_TOP
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "vhead-nm"
+    }, v.name.split(" ")[0], /*#__PURE__*/React.createElement("span", null, v.suc))))))), /*#__PURE__*/React.createElement("tbody", null, metricRows.map((row, ri) => /*#__PURE__*/React.createElement("tr", {
+      key: ri
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "rowhead"
+    }, row.l), T.map(v => {
+      const c = row.cell(v),
+        col = c.color || row.color;
+      return /*#__PURE__*/React.createElement("td", {
+        key: v.name,
+        className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: {
+          fontWeight: c.bold || row.bold ? 800 : 700,
+          color: col || "var(--text)"
+        }
+      }, c.main), !c.noMom && /*#__PURE__*/React.createElement(MoM, {
+        cur: c.cur,
+        prev: c.prev,
+        pp: row.pp
+      }));
+    }))))))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Por sucursal",
       h3: "Resultado y meta por tienda",
       p: "Roll-up por tienda con su variaci\xF3n vs el mes anterior y el avance de su meta combinada."
