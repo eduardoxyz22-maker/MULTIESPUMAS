@@ -213,13 +213,64 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 # ─────────────────────────────────────────────────────────────────────────────
 #  AGREGACIÓN POR VENDEDORA
 # ─────────────────────────────────────────────────────────────────────────────
+# ── Horario laboral por vendedora (hora Bolivia, UTC-4) ──────────────────────
+# El "tiempo de respuesta" se mide SOLO dentro de la jornada: el reloj se pausa
+# de noche, en la pausa de mediodía y los domingos. Así no se castiga a la
+# vendedora por mensajes que entran fuera de su horario.
+BOLIVIA_OFFSET = -4 * 3600
+# days: 0=Lun … 5=Sáb (6=Dom siempre cerrado). windows: (h_ini,m_ini,h_fin,m_fin)
+SCHED_A = {"days": {0, 1, 2, 3, 4, 5}, "windows": [(9, 0, 21, 0)]}                  # Mia Plaza
+SCHED_B = {"days": {0, 1, 2, 3, 4, 5}, "windows": [(9, 0, 13, 0), (15, 0, 19, 0)]}  # Central / Bs Aires
+
+def sched_for(name):
+    n = (name or "").lower()
+    if "mirian" in n or "isabel" in n:
+        return SCHED_A          # Mia Plaza: 9–21 corrido (Mirian e Isabel rotan turnos)
+    return SCHED_B              # Carola, Jonathan, Maria (y default): 9–13 y 15–19
+
+def business_minutes(start_ts, end_ts, sched):
+    """Minutos de horario laboral entre dos timestamps UTC (se convierten a Bolivia)."""
+    try:
+        s = int(start_ts) + BOLIVIA_OFFSET
+        e = int(end_ts) + BOLIVIA_OFFSET
+    except Exception:
+        return 0.0
+    if e <= s:
+        return 0.0
+    DAY = 86400
+    total = 0
+    cur = s
+    guard = 0
+    while cur < e and guard < 400:
+        guard += 1
+        day0 = (cur // DAY) * DAY                 # medianoche Bolivia de ese día
+        wd = ((day0 // DAY) + 3) % 7              # epoch = jueves → +3 ⇒ 0=Lun
+        nxt = day0 + DAY
+        seg_end = min(e, nxt)
+        if wd in sched["days"]:
+            for (h1, m1, h2, m2) in sched["windows"]:
+                a = max(cur, day0 + h1 * 3600 + m1 * 60)
+                b = min(seg_end, day0 + h2 * 3600 + m2 * 60)
+                if b > a:
+                    total += (b - a)
+        cur = nxt
+    return total / 60.0
+
+def _median(vals):
+    if not vals:
+        return 0
+    s = sorted(vals)
+    n = len(s)
+    mid = n // 2
+    return s[mid] if (n % 2) else (s[mid - 1] + s[mid]) / 2.0
+
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
                 wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0],
-                wrm=[0.0,0.0,0.0,0.0,0.0], wrn=[0,0,0,0,0])
+                wrl=[[],[],[],[],[]])
 
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
@@ -285,18 +336,18 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         if first_seg and (first_seg - created) < 60:
             first_seg = None
         if first_seg:
-            mins = max(0, (first_seg - created) / 60)
-            d["resp_minutes"].append(mins)
-            if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1
+            mins = max(0, (first_seg - created) / 60)                    # reloj de pared (disciplina <24h)
+            biz = business_minutes(created, first_seg, sched_for(name))  # reloj laboral (tiempo de respuesta)
+            d["resp_minutes"].append(biz)                               # la respuesta se mide en horario hábil
+            if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1            # "<24h" sigue siendo reloj de pared
             else:            d["tarde"] += 1
-            # promedio semanal de tiempo de 1ª acción humana: indexado por la semana
-            # en que OCURRIÓ la acción (no la de creación del lead)
+            # mediana semanal del tiempo de respuesta (horario hábil), indexada por la
+            # semana en que OCURRIÓ la acción
             try:
                 _awk = min(4, (datetime.datetime.fromtimestamp(first_seg).day - 1) // 7)
             except Exception:
                 _awk = _wk
-            d["wrm"][_awk] += mins
-            d["wrn"][_awk] += 1
+            d["wrl"][_awk].append(biz)
         else:
             never = not (ev and ev.get("last"))   # nunca tocado = ningún evento humano
             if never:
@@ -406,7 +457,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         v_tone = "green" if u24pct >= 70 else "amber" if u24pct >= 40 else "red"
         conv = round(d["cierres"] / d["leads"] * 100, 1) if d["leads"] else 0
         ticket = round(d["value"] / d["cierres"]) if d["cierres"] else 0
-        avg_resp = (sum(d["resp_minutes"]) / len(d["resp_minutes"])) if d["resp_minutes"] else 0
+        avg_resp = _median(d["resp_minutes"])
         prom = (f"{avg_resp/60:.1f} h" if avg_resp >= 60 else f"{avg_resp:.0f} min") if avg_resp else "—"
         resp_n = len(d["resp_minutes"])
         resp_pct = round(resp_n / d["leads"] * 100) if d["leads"] else 0
@@ -417,7 +468,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         # semanal real (5 semanas: 1-7, 8-14, 15-21, 22-28, 29-31)
         u24w = [ (round(d["wu"][k] / d["wl"][k] * 100) if d["wl"][k] else None) for k in range(5) ]
         # promedio de minutos de 1ª acción humana por semana (None si no hubo acciones esa semana)
-        prw = [ (round(d["wrm"][k] / d["wrn"][k]) if d["wrn"][k] else None) for k in range(5) ]
+        prw = [ (round(_median(d["wrl"][k])) if d["wrl"][k] else None) for k in range(5) ]
         weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w, "prw": prw}
         weekly_prev = {"c": pv["wc"], "m": pv["wm"]}
         team.append({
@@ -471,7 +522,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     agendado_tot = sum(t["agendado"] for t in team)
     interes_tot = sum(vcur[n]["interesado"] for n in names)
     _all_resp = [m for n in names for m in vcur[n]["resp_minutes"]]
-    _avg_g = (sum(_all_resp) / len(_all_resp)) if _all_resp else 0
+    _avg_g = _median(_all_resp)
     metrics = {
         "promPrimera": (f"{_avg_g/60:.1f} h" if _avg_g >= 60 else f"{_avg_g:.0f} min") if _avg_g else "—",
         "respPct": round(len(_all_resp) / G_leads * 100) if G_leads else 0,
