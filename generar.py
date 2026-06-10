@@ -739,6 +739,21 @@ def build_history(pd):
                     "conv": _cv(t.get("cierres", 0), t.get("leads", 0)),
                     "value": t.get("value", 0), "ticket": t.get("ticket", 0)}
                     for t in (team or []) if t.get("name")}}
+    def _from_dash(d):
+        """Adapta el formato viejo (window.DASH, p.ej. el panel de mayo) al moderno.
+        'cerrado' sale de la etapa Compradores (es el 'Cerrado en el mes' de ese panel)."""
+        G0 = d.get("global") or {}
+        cerr = 0
+        for s in (d.get("stages") or []):
+            if "comprador" in str(s.get("name", "")).lower():
+                cerr = s.get("value", 0) or 0
+        G = {"leads": G0.get("leads", 0), "cierres": G0.get("cierres", 0),
+             "cerrado": cerr or G0.get("pipeline", 0), "ticket": G0.get("ticket", 0)}
+        team = [{"name": (t.get("name", "").split(" - ")[0]).strip(),
+                 "leads": t.get("leads", 0), "cierres": t.get("cierres", 0),
+                 "value": t.get("value", 0), "ticket": t.get("ticket", 0)}
+                for t in (d.get("team") or [])]
+        return G, team
     pts = {}
     import glob as _gl
     for p in sorted(_gl.glob(os.path.join(HERE, "panel_2???_??.html"))):
@@ -751,17 +766,23 @@ def build_history(pd):
         try:
             html = open(p, encoding="utf-8").read()
             j = re.search(r"window\.PANEL_DATA\s*=\s*(\{.*?\});", html, re.S)
-            if not j:
+            if j:
+                old = json.loads(j.group(1))
+                pts[(y, m)] = _pt(y, m, old.get("global") or {}, old.get("team") or [])
                 continue
-            old = json.loads(j.group(1))
-            pts[(y, m)] = _pt(y, m, old.get("global") or {}, old.get("team") or [])
+            j = re.search(r"window\.DASH\s*=\s*(\{.*?\});", html, re.S)
+            if j:
+                G0, t0 = _from_dash(json.loads(j.group(1)))
+                pts[(y, m)] = _pt(y, m, G0, t0)
+                print(f"      (historia: {os.path.basename(p)} leído en formato viejo DASH)")
         except Exception as ex:
             print(f"      (historia: no pude leer {os.path.basename(p)}: {ex})")
-    # Mes anterior COMPLETO desde los datos vivos de Kommo (mismos criterios que este panel).
-    # Pisa cualquier archivo de ese mes: el dato vivo es más confiable que un snapshot viejo.
+    # Mes anterior: el ARCHIVO del panel de ese mes manda (es el panel que corrió ese mes,
+    # con todas sus ventas). El fetch en vivo solo rellena si no hay archivo — sabiendo que
+    # puede subcontar cierres (no ve ventas de leads creados en meses previos).
     py, pm = (YEAR, MONTH - 1) if MONTH > 1 else (YEAR - 1, 12)
     team = pd.get("team") or []
-    if any((t.get("prev") or {}).get("leadsFull") or (t.get("prev") or {}).get("leads") for t in team):
+    if (py, pm) not in pts and any((t.get("prev") or {}).get("leadsFull") or (t.get("prev") or {}).get("leads") for t in team):
         Gp = {"leads": sum((t.get("prev") or {}).get("leadsFull", 0) for t in team),
               "cierres": sum((t.get("prev") or {}).get("cierresFull", 0) for t in team),
               "cerrado": sum((t.get("prev") or {}).get("valueFull", 0) for t in team)}
