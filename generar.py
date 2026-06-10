@@ -280,27 +280,32 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         # no es falta de seguimiento de la vendedora).
         is_open = cls not in ("compradores", "perdido", "no_resp")
         stale_days = 0; never = False
-        if ev and ev.get("first"):
-            mins = max(0, (ev["first"] - created) / 60)
+        first_seg = ev.get("first") if ev else None
+        # acción que ocurre en el mismo minuto de creación = automática (no es respuesta real)
+        if first_seg and (first_seg - created) < 60:
+            first_seg = None
+        if first_seg:
+            mins = max(0, (first_seg - created) / 60)
             d["resp_minutes"].append(mins)
             if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1
             else:            d["tarde"] += 1
             # promedio semanal de tiempo de 1ª acción humana: indexado por la semana
             # en que OCURRIÓ la acción (no la de creación del lead)
             try:
-                _awk = min(4, (datetime.datetime.fromtimestamp(ev["first"]).day - 1) // 7)
+                _awk = min(4, (datetime.datetime.fromtimestamp(first_seg).day - 1) // 7)
             except Exception:
                 _awk = _wk
             d["wrm"][_awk] += mins
             d["wrn"][_awk] += 1
-            stale_days = (now_ts - ev.get("last", ev["first"])) / 86400
-            if stale_days > 3 and is_open:
-                d["backlog"] += 1
         else:
-            d["nunca"] += 1; never = True
-            stale_days = (now_ts - created) / 86400
-            if is_open:
-                d["backlog"] += 1
+            never = not (ev and ev.get("last"))   # nunca tocado = ningún evento humano
+            if never:
+                d["nunca"] += 1
+        # backlog / "sin seguimiento" usa el ÚLTIMO toque humano (cualquiera), o la creación
+        last_touch = (ev.get("last") if ev else None) or created
+        stale_days = (now_ts - last_touch) / 86400
+        if stale_days > 3 and is_open:
+            d["backlog"] += 1
         # fila de backlog real (lead estancado y abierto)
         if is_open and (stale_days > 3 or never):
             ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
@@ -1128,20 +1133,35 @@ def main():
         "limit": 100}, "events", max_pages=400, sleep=0.15)
     events = {}
     _ev_tally = {}      # censo: tipo de evento → [humanos, bot] (queda en el DIAG para auditar)
+    # Eventos que SÍ son seguimiento real de la vendedora hacia el lead.
+    # Se excluye 'lead_added' (creación del lead, da 0 min falso), 'entity_linked'
+    # (vinculaciones automáticas) y cambios de campos de sistema.
+    SEGUIMIENTO = {
+        "lead_status_changed",        # movió de etapa
+        "common_note_added",          # dejó una nota
+        "entity_tag_added",           # marcó etiqueta/favorito (la acción que instruyes al abrir)
+        "task_added", "task_completed", "task_result_added",
+        "incoming_chat_message", "outgoing_chat_message",
+        "entity_direct_message",      # mensaje directo desde la ficha
+    }
     for e in raw_ev:
         _t = e.get("type", "?")
         _isbot = (e.get("created_by", 0) == 0)
         _k = _ev_tally.setdefault(_t, [0, 0])
         _k[1 if _isbot else 0] += 1
         lid, ts = e.get("entity_id"), e.get("created_at", 0)
-        if not lid or _isbot:   # solo cuenta ACCIÓN HUMANA real (mover etapa, nota, favorito, etc.)
+        if not lid or _isbot:
             continue
         slot = events.setdefault(lid, {})
-        slot["first"] = min(slot.get("first", ts), ts)
-        slot["last"]  = max(slot.get("last", ts), ts)
+        # 'last' (para backlog/sin-seguimiento) cuenta CUALQUIER toque humano…
+        slot["last"] = max(slot.get("last", ts), ts)
+        # …pero 'first' (velocidad de 1ª acción) SOLO cuenta seguimiento real.
+        if _t in SEGUIMIENTO:
+            slot["first"] = min(slot.get("first", ts), ts)
     _top = sorted(_ev_tally.items(), key=lambda x: -(x[1][0] + x[1][1]))[:12]
     _DIAG.append("ev_types=" + ", ".join(f"{t}:h{h}/b{b}" for t, (h, b) in _top))
-    print(f"     → {len(events)} leads con al menos una acción humana")
+    _conf = sum(1 for v in events.values() if v.get("first"))
+    print(f"     → {len(events)} leads tocados; {_conf} con 1ª acción de seguimiento real")
 
 
     print("  📋 leads del mes…")
