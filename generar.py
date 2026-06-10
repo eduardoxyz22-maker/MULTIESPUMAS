@@ -342,12 +342,8 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1            # "<24h" sigue siendo reloj de pared
             else:            d["tarde"] += 1
             # mediana semanal del tiempo de respuesta (horario hábil), indexada por la
-            # semana en que OCURRIÓ la acción
-            try:
-                _awk = min(4, (datetime.datetime.fromtimestamp(first_seg).day - 1) // 7)
-            except Exception:
-                _awk = _wk
-            d["wrl"][_awk].append(biz)
+            # semana en que ENTRÓ el lead (más intuitivo que la semana de la acción)
+            d["wrl"][_wk].append(biz)
         else:
             never = not (ev and ev.get("last"))   # nunca tocado = ningún evento humano
             if never:
@@ -483,6 +479,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
+            "promMin": int(round(avg_resp)) if avg_resp else None,
             "respPct": resp_pct, "respN": resp_n,
             "tarde": d["tarde"], "nunca": d["nunca"], "backlog": d["backlog"],
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
