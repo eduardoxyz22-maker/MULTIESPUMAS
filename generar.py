@@ -216,11 +216,11 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
-                tarde=0, backlog=0, resp_minutes=[], respH_minutes=[], stage=defaultdict(int),
+                tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
                 wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
 
-def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None, human_msgs=None):
+def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
     suc_of = {}
     backlog_rows = []
@@ -274,10 +274,6 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         # velocidad de respuesta vía eventos humanos
         ev = events.get(ld.get("id"))
         created = ld.get("created_at", 0)
-        # primera respuesta HUMANA real (mensaje saliente de una persona, no bot)
-        _hm = (human_msgs or {}).get(ld.get("id"))
-        if _hm:
-            d["respH_minutes"].append(max(0, (_hm - created) / 60))
         # "Sin seguimiento" = lead abierto que la vendedora no ha tocado/respondido +72h.
         # Excluye comprador y perdido (cerrados) y "No Responden" (el cliente no contesta,
         # no es falta de seguimiento de la vendedora).
@@ -329,9 +325,9 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, human_msgs=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None):
     now_ts = time.time()
-    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won, human_msgs=human_msgs)
+    vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
 
     names = list(vcur.keys())
@@ -398,9 +394,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         ticket = round(d["value"] / d["cierres"]) if d["cierres"] else 0
         avg_resp = (sum(d["resp_minutes"]) / len(d["resp_minutes"])) if d["resp_minutes"] else 0
         prom = (f"{avg_resp/60:.1f} h" if avg_resp >= 60 else f"{avg_resp:.0f} min") if avg_resp else "—"
-        avg_h = (sum(d["respH_minutes"]) / len(d["respH_minutes"])) if d["respH_minutes"] else 0
-        promH = (f"{avg_h/60:.1f} h" if avg_h >= 60 else f"{avg_h:.0f} min") if avg_h else "—"
-        respHpct = round(len(d["respH_minutes"]) / d["leads"] * 100) if d["leads"] else 0
+        resp_n = len(d["resp_minutes"])
+        resp_pct = round(resp_n / d["leads"] * 100) if d["leads"] else 0
         califpct = round(d["calif"] / d["leads"] * 100) if d["leads"] else 0
         norpct   = round(d["noResp"] / d["leads"] * 100) if d["leads"] else 0
         pv_ticket = round(pv["value_sd"] / pv["cierres_sd"]) if pv["cierres_sd"] else 0
@@ -421,7 +416,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
-            "promH": promH, "respHPct": respHpct, "respHN": len(d["respH_minutes"]),
+            "respPct": resp_pct, "respN": resp_n,
             "tarde": d["tarde"], "nunca": d["nunca"], "backlog": d["backlog"],
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
             "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
@@ -459,11 +454,11 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     nunca = sum(t["nunca"] for t in team)
     agendado_tot = sum(t["agendado"] for t in team)
     interes_tot = sum(vcur[n]["interesado"] for n in names)
-    _all_h = [m for n in names for m in vcur[n]["respH_minutes"]]
-    _avg_h_g = (sum(_all_h) / len(_all_h)) if _all_h else 0
+    _all_resp = [m for n in names for m in vcur[n]["resp_minutes"]]
+    _avg_g = (sum(_all_resp) / len(_all_resp)) if _all_resp else 0
     metrics = {
-        "promRespH": (f"{_avg_h_g/60:.1f} h" if _avg_h_g >= 60 else f"{_avg_h_g:.0f} min") if _avg_h_g else "—",
-        "respHPct": round(len(_all_h) / G_leads * 100) if G_leads else 0,
+        "promPrimera": (f"{_avg_g/60:.1f} h" if _avg_g >= 60 else f"{_avg_g:.0f} min") if _avg_g else "—",
+        "respPct": round(len(_all_resp) / G_leads * 100) if G_leads else 0,
         "noResp": noResp, "noRespPct": round(noResp / G_leads * 100) if G_leads else 0,
         "backlog": backlog, "backlogPct": round(backlog / G_leads * 100) if G_leads else 0,
         "criticos7d": 0,   # se calcula real más abajo desde backlog_rows
@@ -884,8 +879,8 @@ def bake_ai(pd):
         f"{_conv((t.get('prev') or {}).get('cierres', 0), t['prevLeads'])}% conv, "
         f"cerrado Bs {(t.get('prev') or {}).get('value', 0)}], "
         f"{t['noResp']} no-responden ({t['noRespPct']}%), {t['backlog']} backlog, "
-        f"{t['nunca']} nunca-tocados, {t['u24']}% <24h, 1ª resp humana {t.get('promH', '—')} "
-        f"({t.get('respHPct', 0)}% de sus leads con mensaje humano), ticket Bs {t['ticket']}"
+        f"{t['nunca']} nunca-tocados, 1ª acción humana prom {t.get('promTxt', '—')} "
+        f"({t.get('respPct', 0)}% de sus leads ya atendidos), ticket Bs {t['ticket']}"
         for t in team)
 
     # Roll-up por sucursal
@@ -1121,9 +1116,6 @@ def main():
         "filter[created_at][to]":   int(m_end.timestamp()),
         "limit": 100}, "events", max_pages=400, sleep=0.15)
     events = {}
-    human_msgs = {}     # lead_id → ts del primer mensaje de chat SALIENTE escrito por una persona
-    _direct_first = {}  # candidato alterno: primer "mensaje directo" humano en la ficha
-    _dm_samples = []    # muestras para auditar contra leads reales
     _ev_tally = {}      # censo: tipo de evento → [humanos, bot] (queda en el DIAG para auditar)
     for e in raw_ev:
         _t = e.get("type", "?")
@@ -1131,59 +1123,14 @@ def main():
         _k = _ev_tally.setdefault(_t, [0, 0])
         _k[1 if _isbot else 0] += 1
         lid, ts = e.get("entity_id"), e.get("created_at", 0)
-        if not lid:
-            continue
-        if _t == "outgoing_chat_message" and not _isbot:
-            if lid not in human_msgs or ts < human_msgs[lid]:
-                human_msgs[lid] = ts
-        if _t == "entity_direct_message" and not _isbot:
-            if lid not in _direct_first or ts < _direct_first[lid]:
-                _direct_first[lid] = ts
-            if len(_dm_samples) < 3:
-                _dm_samples.append(f"lead{lid}/user{e.get('created_by')}")
-        if _isbot:   # para el resto de métricas solo cuentan eventos humanos
+        if not lid or _isbot:   # solo cuenta ACCIÓN HUMANA real (mover etapa, nota, favorito, etc.)
             continue
         slot = events.setdefault(lid, {})
         slot["first"] = min(slot.get("first", ts), ts)
         slot["last"]  = max(slot.get("last", ts), ts)
     _top = sorted(_ev_tally.items(), key=lambda x: -(x[1][0] + x[1][1]))[:12]
     _DIAG.append("ev_types=" + ", ".join(f"{t}:h{h}/b{b}" for t, (h, b) in _top))
-    if _dm_samples:
-        _DIAG.append("dm_samples=" + ", ".join(_dm_samples))
-
-    # El feed general puede NO incluir mensajes de chat: algunos planes de Kommo solo
-    # los exponen pidiéndolos explícitamente con filter[type][] (sintaxis de lista).
-    if not human_msgs:
-        try:
-            _probe = fetch_paginated("/events", {
-                "filter[entity][]": "lead",
-                "filter[type][]": "outgoing_chat_message",
-                "filter[created_at][from]": int(m_start.timestamp()),
-                "filter[created_at][to]":   int(m_end.timestamp()),
-                "limit": 100}, "events", max_pages=200, sleep=0.12)
-            _hum = 0
-            for e in _probe:
-                if e.get("created_by", 0) == 0:
-                    continue
-                lid, ts = e.get("entity_id"), e.get("created_at", 0)
-                if not lid:
-                    continue
-                _hum += 1
-                if lid not in human_msgs or ts < human_msgs[lid]:
-                    human_msgs[lid] = ts
-            _DIAG.append(f"probe_outgoing_chat={len(_probe)} humanos={_hum}")
-            if human_msgs:
-                _DIAG.append("resp_humana_fuente=outgoing_chat_message_filtrado")
-        except Exception as _e:
-            _DIAG.append(f"probe_chat_error={_e}")
-    elif human_msgs:
-        _DIAG.append("resp_humana_fuente=outgoing_chat_message_feed")
-    # NOTA: entity_direct_message resultó NO ser las respuestas del chat (≈32 leads,
-    # casi todo de un solo usuario), así que NO se usa como fuente: mejor "—" honesto
-    # que una métrica engañosa. Cuando se conecte la fuente real del chat, va aquí.
-    if _direct_first:
-        _DIAG.append(f"dm_descartado n={len(_direct_first)}")
-    print(f"     → {len(human_msgs)} leads con respuesta humana real (chat saliente)")
+    print(f"     → {len(events)} leads con al menos una acción humana")
 
 
     print("  📋 leads del mes…")
@@ -1279,7 +1226,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, human_msgs=human_msgs)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
     print("  📈 armando historia mensual…")
     pd = build_history(pd)
     print("  📲 armando resumen WhatsApp…")

@@ -2451,18 +2451,18 @@ function ProfileDrawer({
     style: {
       color: "var(--brand-d)"
     }
-  }, v.promH || "—"), /*#__PURE__*/React.createElement("div", {
+  }, v.promTxt || "—"), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "1\xAA respuesta humana (prom.)")), /*#__PURE__*/React.createElement("div", {
+  }, "1\xAA acci\xF3n humana (prom.)")), /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
   }, /*#__PURE__*/React.createElement("div", {
     className: "v",
     style: {
-      color: v.respHPct != null && v.respHPct < 50 ? "var(--red)" : "inherit"
+      color: v.respPct != null && v.respPct < 50 ? "var(--amber)" : "inherit"
     }
-  }, v.respHPct != null ? v.respHPct + "%" : "—"), /*#__PURE__*/React.createElement("div", {
+  }, v.respPct != null ? v.respPct + "%" : "—"), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "Leads con mensaje humano")), /*#__PURE__*/React.createElement("div", {
+  }, "Leads ya atendidos")), /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
   }, /*#__PURE__*/React.createElement("div", {
     className: "v",
