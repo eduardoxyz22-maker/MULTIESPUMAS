@@ -1121,39 +1121,28 @@ def main():
         "filter[created_at][to]":   int(m_end.timestamp()),
         "limit": 100}, "events", max_pages=400, sleep=0.15)
     events = {}
+    human_msgs = {}     # lead_id → ts del primer mensaje de chat SALIENTE escrito por una persona
+    _ev_tally = {}      # censo: tipo de evento → [humanos, bot] (queda en el DIAG para auditar)
     for e in raw_ev:
-        if e.get("created_by", 0) == 0:   # bot → ignora
-            continue
+        _t = e.get("type", "?")
+        _isbot = (e.get("created_by", 0) == 0)
+        _k = _ev_tally.setdefault(_t, [0, 0])
+        _k[1 if _isbot else 0] += 1
         lid, ts = e.get("entity_id"), e.get("created_at", 0)
         if not lid:
+            continue
+        if _t == "outgoing_chat_message" and not _isbot:
+            if lid not in human_msgs or ts < human_msgs[lid]:
+                human_msgs[lid] = ts
+        if _isbot:   # para el resto de métricas solo cuentan eventos humanos
             continue
         slot = events.setdefault(lid, {})
         slot["first"] = min(slot.get("first", ts), ts)
         slot["last"]  = max(slot.get("last", ts), ts)
+    _top = sorted(_ev_tally.items(), key=lambda x: -(x[1][0] + x[1][1]))[:12]
+    _DIAG.append("ev_types=" + ", ".join(f"{t}:h{h}/b{b}" for t, (h, b) in _top))
+    print(f"     → {len(human_msgs)} leads con respuesta humana real (chat saliente)")
 
-    # Mensajes SALIENTES escritos por una persona (no el salesbot): la única señal
-    # honesta de "alguien respondió al cliente". Eventos tipo outgoing_chat_message.
-    print("  💬 mensajes humanos del mes…")
-    human_msgs = {}
-    try:
-        raw_msg = fetch_paginated("/events", {
-            "filter[entity][]": "lead",
-            "filter[type]": "outgoing_chat_message",
-            "filter[created_at][from]": int(m_start.timestamp()),
-            "filter[created_at][to]":   int(m_end.timestamp()),
-            "limit": 100}, "events", max_pages=300, sleep=0.15)
-        for e in raw_msg:
-            if e.get("created_by", 0) == 0:    # mensaje del bot → fuera
-                continue
-            lid, ts = e.get("entity_id"), e.get("created_at", 0)
-            if not lid:
-                continue
-            if lid not in human_msgs or ts < human_msgs[lid]:
-                human_msgs[lid] = ts
-        print(f"     → {len(human_msgs)} leads con respuesta humana real")
-    except Exception as _e:
-        _DIAG.append(f"msgs_error={_e}")
-        print(f"     ⚠ no pude traer mensajes humanos: {_e}")
 
     print("  📋 leads del mes…")
     cur = fetch_paginated("/leads", {
