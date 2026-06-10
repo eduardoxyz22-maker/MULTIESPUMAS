@@ -1178,10 +1178,11 @@ def main():
             _DIAG.append(f"probe_chat_error={_e}")
     elif human_msgs:
         _DIAG.append("resp_humana_fuente=outgoing_chat_message_feed")
-    # Último recurso: mensajes directos humanos en la ficha como señal de respuesta
-    if not human_msgs and _direct_first:
-        human_msgs = _direct_first
-        _DIAG.append(f"resp_humana_fuente=entity_direct_message n={len(human_msgs)}")
+    # NOTA: entity_direct_message resultó NO ser las respuestas del chat (≈32 leads,
+    # casi todo de un solo usuario), así que NO se usa como fuente: mejor "—" honesto
+    # que una métrica engañosa. Cuando se conecte la fuente real del chat, va aquí.
+    if _direct_first:
+        _DIAG.append(f"dm_descartado n={len(_direct_first)}")
     print(f"     → {len(human_msgs)} leads con respuesta humana real (chat saliente)")
 
 
