@@ -218,7 +218,8 @@ def blank_vendor():
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
-                wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0])
+                wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0],
+                wrm=[0.0,0.0,0.0,0.0,0.0], wrn=[0,0,0,0,0])
 
 def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_leads=None):
     vd = defaultdict(blank_vendor)
@@ -284,6 +285,14 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             d["resp_minutes"].append(mins)
             if mins <= 1440: d["u24"] += 1; d["wu"][_wk] += 1
             else:            d["tarde"] += 1
+            # promedio semanal de tiempo de 1ª acción humana: indexado por la semana
+            # en que OCURRIÓ la acción (no la de creación del lead)
+            try:
+                _awk = min(4, (datetime.datetime.fromtimestamp(ev["first"]).day - 1) // 7)
+            except Exception:
+                _awk = _wk
+            d["wrm"][_awk] += mins
+            d["wrn"][_awk] += 1
             stale_days = (now_ts - ev.get("last", ev["first"])) / 86400
             if stale_days > 3 and is_open:
                 d["backlog"] += 1
@@ -402,7 +411,9 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         prev_leads_sd = pv["leads_sd"]   # leads del mes anterior al mismo día -> MoM justo
         # semanal real (5 semanas: 1-7, 8-14, 15-21, 22-28, 29-31)
         u24w = [ (round(d["wu"][k] / d["wl"][k] * 100) if d["wl"][k] else None) for k in range(5) ]
-        weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w}
+        # promedio de minutos de 1ª acción humana por semana (None si no hubo acciones esa semana)
+        prw = [ (round(d["wrm"][k] / d["wrn"][k]) if d["wrn"][k] else None) for k in range(5) ]
+        weekly      = {"c": d["wc"], "m": d["wm"], "u24": u24w, "prw": prw}
         weekly_prev = {"c": pv["wc"], "m": pv["wm"]}
         team.append({
             "ini": cfg.get("ini") or "".join([p[0] for p in name.split()[:2]]).upper(),

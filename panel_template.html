@@ -2139,9 +2139,18 @@ function Donut({
 // Heatmap. rows=[{name,v,vals:[..]}], cols=[labels]. value 0..100 → color.
 function Heatmap({
   rows,
-  cols
+  cols,
+  mode
 }) {
-  const heat = v => v == null ? "#D9DEE3" : v >= 80 ? "#159A57" : v >= 55 ? "#6FA52B" : v >= 30 ? "#D98300" : "#DC4046";
+  // mode "time": valor en MINUTOS, menos es mejor; se formatea a min/h.
+  const fmtT = m => m == null ? "—" : m >= 60 ? (m / 60).toFixed(1).replace(/\.0$/, "") + "h" : Math.round(m) + "m";
+  const heatPct = v => v == null ? "#D9DEE3" : v >= 80 ? "#159A57" : v >= 55 ? "#6FA52B" : v >= 30 ? "#D98300" : "#DC4046";
+  // umbrales de tiempo (min): <30m excelente, <2h bien, <8h flojo, +8h mal
+  const heatTime = m => m == null ? "#D9DEE3" : m <= 30 ? "#159A57" : m <= 120 ? "#6FA52B" : m <= 480 ? "#D98300" : "#DC4046";
+  const isTime = mode === "time";
+  const heat = isTime ? heatTime : heatPct;
+  const lbl = v => v == null ? "—" : isTime ? fmtT(v) : v;
+  const tip = (v, j) => v == null ? `${cols[j]}: sin datos aún` : isTime ? `${cols[j]}: ${fmtT(v)} promedio` : `${cols[j]}: ${v}%`;
   return /*#__PURE__*/React.createElement("div", {
     className: "heat",
     style: {
@@ -2165,10 +2174,11 @@ function Heatmap({
     key: j,
     style: {
       background: heat(v),
-      color: v == null ? "#8A93A0" : undefined
+      color: v == null ? "#8A93A0" : undefined,
+      fontSize: isTime ? ".78rem" : undefined
     },
-    title: v == null ? `${cols[j]}: sin datos aún` : `${cols[j]}: ${v}%`
-  }, v == null ? "—" : v)))));
+    title: tip(v, j)
+  }, lbl(v))))));
 }
 
 // Skeleton loading state shown briefly on refresh.
@@ -5144,19 +5154,20 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "card"
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Disciplina",
-      h3: "Actualizaci\xF3n del CRM por semana",
-      p: "% de leads con primera acci\xF3n registrada en menos de 24h, semana a semana. Verde = al d\xEDa, rojo = rezagada."
+      h3: "Tiempo de 1\xAA acci\xF3n humana por semana",
+      p: "Promedio que tarda cada vendedora en dar la primera acci\xF3n humana sobre un lead, semana a semana (m = minutos, h = horas). Verde = r\xE1pido, rojo = lento."
     }), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 14
       }
     }, /*#__PURE__*/React.createElement(Heatmap, {
+      mode: "time",
       cols: ["Sem 1", "Sem 2", "Sem 3", "Sem 4"],
       rows: T.map(v => ({
         name: v.name,
         ini: v.ini,
         color: v.color,
-        vals: v.weekly && v.weekly.u24 ? v.weekly.u24.slice(0, 4) : [null, null, null, null]
+        vals: v.weekly && v.weekly.prw ? v.weekly.prw.slice(0, 4) : [null, null, null, null]
       }))
     }))));
   };
