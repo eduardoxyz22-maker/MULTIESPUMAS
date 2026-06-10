@@ -521,7 +521,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
 
     # ── alertas accionables, generadas de los datos reales ──
     alerts = []
-    convs = [(t, t["conv"]) for t in team if t["cierres"] >= 0 and t["leads"] >= 20]
+    convs = [(t, t["conv"]) for t in team if t["cierres"] >= 0 and t["leads"] >= 20 and not t.get("nuevo")]
     if convs:
         worst = min(convs, key=lambda x: x[1])[0]
         if worst["conv"] < 4 and worst["leads"] >= 20:
@@ -771,6 +771,49 @@ def build_history(pd):
     pts[(YEAR, MONTH)] = _pt(YEAR, MONTH, pd["global"], team)
     pd["history"] = [pts[k] for k in sorted(pts)]
     print(f"   ✓ historia: {len(pd['history'])} mes(es) → {[h['label'] for h in pd['history']]}")
+    return pd
+
+
+def build_wsp(pd):
+    """Genera pd["wsp"]: resumen corto listo para copiar y pegar en el grupo de WhatsApp.
+    Usa formato de WhatsApp (*negrita*, _cursiva_) y datos reales del mes."""
+    try:
+        G, M, team = pd["global"], pd["metrics"], pd["team"]
+        def bs(v): return f"{int(round(v)):,}".replace(",", ".")
+        conv = round(G["cierres"] / G["leads"] * 100, 1) if G["leads"] else 0
+        hoy = datetime.date.today().strftime("%d/%m")
+        rank = sorted(team, key=lambda t: (t["cierres"], t["value"]), reverse=True)
+        medals = ["🥇", "🥈", "🥉"] + ["•"] * 10
+        rank_lines = "\n".join(
+            f"{medals[i]} {t['name'].split()[0]} ({t['suc']}): {t['cierres']} cierres · Bs {bs(t['value'])}"
+            for i, t in enumerate(rank))
+        peores_bk = sorted(team, key=lambda t: t["backlog"], reverse=True)[:2]
+        bk_txt = " y ".join(f"{t['name'].split()[0]} ({t['backlog']})" for t in peores_bk if t["backlog"] > 0)
+        crit = M.get("criticos7d", 0)
+        meta_tot = sum(t.get("metaCierres", 0) for t in team)
+        gap = max(0, meta_tot - G["cierres"])
+        prev_line = ""
+        h = pd.get("history") or []
+        if len(h) >= 2:
+            pm = h[-2]
+            prev_line = (f"_Mes anterior ({pm['label']}): {pm['cierres']} cierres · "
+                         f"Bs {bs(pm.get('cerrado', 0))} cerrado_\n")
+        focos = [f"• {M['backlog']} fichas sin seguimiento +72h" + (f" — peores: {bk_txt}" if bk_txt else "")]
+        if crit:
+            focos.append(f"• {crit} fichas llevan *+7 días* sin tocar → rescatarlas HOY")
+        if M.get("noResp"):
+            focos.append(f"• {M['noResp']} en \"no responden\" — reactivar con oferta/recordatorio")
+        pd["wsp"] = (
+            f"*📊 Heaven Colchones — resumen {hoy}*\n\n"
+            f"*Mes de {pd['month']}:* {G['leads']} leads · {G['cierres']} cierres ({conv}%) · "
+            f"Bs {bs(G['cerrado'])} cerrado · pipeline Bs {bs(G['pipeline'])}\n"
+            + prev_line +
+            f"\n*🏆 Ranking de cierres*\n{rank_lines}\n\n"
+            f"*⚠️ Focos de la semana*\n" + "\n".join(focos) + "\n\n"
+            f"*🎯 Meta del mes:* {meta_tot} cierres — faltan {gap}. ¡Vamos equipo! 💪")
+        print("   ✓ resumen WhatsApp generado")
+    except Exception as ex:
+        print(f"   ⚠ no se pudo generar el resumen WhatsApp: {ex}")
     return pd
 
 
@@ -1134,6 +1177,8 @@ def main():
     pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
     print("  📈 armando historia mensual…")
     pd = build_history(pd)
+    print("  📲 armando resumen WhatsApp…")
+    pd = build_wsp(pd)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
