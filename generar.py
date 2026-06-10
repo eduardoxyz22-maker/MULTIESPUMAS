@@ -586,6 +586,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         {"id": "conversion", "label": "Conversión"},
         {"id": "sucursales", "label": "Sucursales"},
         {"id": "proyeccion", "label": "Proyección"},
+        {"id": "evolucion", "label": "Evolución"},
         {"id": "datos", "label": "Datos"},
     ]
 
@@ -718,6 +719,61 @@ def _prev_bake():
         return {}
 
 
+def build_history(pd):
+    """Serie histórica mensual (global + por vendedora) para la pestaña Evolución.
+    Lee los paneles archivados (panel_YYYY_MM.html), sintetiza el mes anterior desde
+    los campos prev* si no hay archivo, y agrega el mes en curso desde pd."""
+    MES = ["", "Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+    def _cv(c, l): return round(c / l * 100, 1) if l else 0
+    def _pt(y, m, G, team):
+        cerr = G.get("cerrado", G.get("value", 0) or 0)
+        cier = G.get("cierres", 0)
+        return {"y": y, "m": m, "label": f"{MES[m]} {str(y)[2:]}",
+                "leads": G.get("leads", 0), "cierres": cier,
+                "conv": _cv(cier, G.get("leads", 0)),
+                "cerrado": cerr,
+                "ticket": G.get("ticket") or (round(cerr / cier) if cier else 0),
+                "team": {t.get("name", ""): {
+                    "leads": t.get("leads", 0), "cierres": t.get("cierres", 0),
+                    "conv": _cv(t.get("cierres", 0), t.get("leads", 0)),
+                    "value": t.get("value", 0), "ticket": t.get("ticket", 0)}
+                    for t in (team or []) if t.get("name")}}
+    pts = {}
+    import glob as _gl
+    for p in sorted(_gl.glob(os.path.join(HERE, "panel_2???_??.html"))):
+        mm = re.search(r"panel_(\d{4})_(\d{2})\.html$", p)
+        if not mm:
+            continue
+        y, m = int(mm.group(1)), int(mm.group(2))
+        if (y, m) == (YEAR, MONTH):
+            continue  # el mes en curso sale de pd, no del archivo
+        try:
+            html = open(p, encoding="utf-8").read()
+            j = re.search(r"window\.PANEL_DATA\s*=\s*(\{.*?\});", html, re.S)
+            if not j:
+                continue
+            old = json.loads(j.group(1))
+            pts[(y, m)] = _pt(y, m, old.get("global") or {}, old.get("team") or [])
+        except Exception as ex:
+            print(f"      (historia: no pude leer {os.path.basename(p)}: {ex})")
+    # mes anterior sintetizado desde prev* si no hay archivo de ese mes
+    py, pm = (YEAR, MONTH - 1) if MONTH > 1 else (YEAR - 1, 12)
+    team = pd.get("team") or []
+    if (py, pm) not in pts and any((t.get("prev") or {}).get("leads") for t in team):
+        Gp = {"leads": pd["global"].get("prevLeads", 0),
+              "cierres": sum((t.get("prev") or {}).get("cierres", 0) for t in team),
+              "cerrado": sum((t.get("prev") or {}).get("value", 0) for t in team)}
+        tp = [{"name": t["name"], "leads": (t.get("prev") or {}).get("leads", 0),
+               "cierres": (t.get("prev") or {}).get("cierres", 0),
+               "value": (t.get("prev") or {}).get("value", 0),
+               "ticket": (t.get("prev") or {}).get("ticket", 0)} for t in team]
+        pts[(py, pm)] = _pt(py, pm, Gp, tp)
+    pts[(YEAR, MONTH)] = _pt(YEAR, MONTH, pd["global"], team)
+    pd["history"] = [pts[k] for k in sorted(pts)]
+    print(f"   ✓ historia: {len(pd['history'])} mes(es) → {[h['label'] for h in pd['history']]}")
+    return pd
+
+
 def bake_ai(pd):
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
@@ -731,7 +787,10 @@ def bake_ai(pd):
     # Línea por vendedora (versión rica, idéntica a la Sala de expertos del frontend)
     team_lines = "\n".join(
         f"{t['name']} (sucursal {t['suc']}): {t['leads']} leads (mes previo {t['prevLeads']}), "
-        f"{t['cierres']} cierres, {_conv(t['cierres'], t['leads'])}% conv, "
+        f"{t['cierres']} cierres, {_conv(t['cierres'], t['leads'])}% conv "
+        f"[mes previo: {(t.get('prev') or {}).get('cierres', 0)} cierres, "
+        f"{_conv((t.get('prev') or {}).get('cierres', 0), t['prevLeads'])}% conv, "
+        f"cerrado Bs {(t.get('prev') or {}).get('value', 0)}], "
         f"{t['noResp']} no-responden ({t['noRespPct']}%), {t['backlog']} backlog, "
         f"{t['nunca']} nunca-tocados, {t['u24']}% <24h, ticket Bs {t['ticket']}"
         for t in team)
@@ -755,6 +814,12 @@ def bake_ai(pd):
         f"Heaven Colchones (Bolivia), mes {pd['month']} {pd['year']}. Moneda Bs.\n"
         f"Global: {G['leads']} leads (mes previo {G['prevLeads']}, {mom}% MoM), {G['cierres']} cierres, "
         f"conversión {_conv(G['cierres'], G['leads'])}% (= {G['cierres']}/{G['leads']}), ticket Bs {G['ticket']}.\n"
+        f"MES ANTERIOR ({pd.get('prevMonth', 'mes previo')}) como referencia: {G['prevLeads']} leads, "
+        f"{sum((t.get('prev') or {}).get('cierres', 0) for t in team)} cierres, "
+        f"{_conv(sum((t.get('prev') or {}).get('cierres', 0) for t in team), G['prevLeads'])}% conv, "
+        f"cerrado Bs {sum((t.get('prev') or {}).get('value', 0) for t in team)}.\n"
+        "COMPARA SIEMPRE contra el mes anterior: di explícitamente quién mejoró y quién retrocedió, "
+        "citando ambas cifras (antes → ahora), tanto a nivel global como por vendedora.\n"
         f"DINERO (Bs): CERRADO {G['cerrado']} = producto YA entregado y facturado. "
         f"PIPELINE {G['pipeline']} = cerrado + reservado; el reservado (pipeline − cerrado = {G['pipeline'] - G['cerrado']}) "
         "son ventas con anticipo/pago parcial, prácticamente aseguradas. El pipeline NO son oportunidades inciertas ni dinero 'en riesgo'.\n"
@@ -1067,6 +1132,8 @@ def main():
 
     print("  🧮 construyendo PANEL_DATA…")
     pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
+    print("  📈 armando historia mensual…")
+    pd = build_history(pd)
     if ARGS.bake_ai:
         print("  🤖 horneando IA…")
         pd = bake_ai(pd)
