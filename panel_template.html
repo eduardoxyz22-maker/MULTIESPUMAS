@@ -2449,6 +2449,24 @@ function ProfileDrawer({
   }, /*#__PURE__*/React.createElement("div", {
     className: "v",
     style: {
+      color: "var(--brand-d)"
+    }
+  }, v.promH || "—"), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, "1\xAA respuesta humana (prom.)")), /*#__PURE__*/React.createElement("div", {
+    className: "dr-k"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: v.respHPct != null && v.respHPct < 50 ? "var(--red)" : "inherit"
+    }
+  }, v.respHPct != null ? v.respHPct + "%" : "—"), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, "Leads con mensaje humano")), /*#__PURE__*/React.createElement("div", {
+    className: "dr-k"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
       color: v.backlog > 25 ? "var(--red)" : v.backlog > 10 ? "var(--amber)" : "inherit"
     }
   }, /*#__PURE__*/React.createElement(CountUp, {
