@@ -1122,6 +1122,8 @@ def main():
         "limit": 100}, "events", max_pages=400, sleep=0.15)
     events = {}
     human_msgs = {}     # lead_id → ts del primer mensaje de chat SALIENTE escrito por una persona
+    _direct_first = {}  # candidato alterno: primer "mensaje directo" humano en la ficha
+    _dm_samples = []    # muestras para auditar contra leads reales
     _ev_tally = {}      # censo: tipo de evento → [humanos, bot] (queda en el DIAG para auditar)
     for e in raw_ev:
         _t = e.get("type", "?")
@@ -1134,6 +1136,11 @@ def main():
         if _t == "outgoing_chat_message" and not _isbot:
             if lid not in human_msgs or ts < human_msgs[lid]:
                 human_msgs[lid] = ts
+        if _t == "entity_direct_message" and not _isbot:
+            if lid not in _direct_first or ts < _direct_first[lid]:
+                _direct_first[lid] = ts
+            if len(_dm_samples) < 3:
+                _dm_samples.append(f"lead{lid}/user{e.get('created_by')}")
         if _isbot:   # para el resto de métricas solo cuentan eventos humanos
             continue
         slot = events.setdefault(lid, {})
@@ -1141,6 +1148,40 @@ def main():
         slot["last"]  = max(slot.get("last", ts), ts)
     _top = sorted(_ev_tally.items(), key=lambda x: -(x[1][0] + x[1][1]))[:12]
     _DIAG.append("ev_types=" + ", ".join(f"{t}:h{h}/b{b}" for t, (h, b) in _top))
+    if _dm_samples:
+        _DIAG.append("dm_samples=" + ", ".join(_dm_samples))
+
+    # El feed general puede NO incluir mensajes de chat: algunos planes de Kommo solo
+    # los exponen pidiéndolos explícitamente con filter[type][] (sintaxis de lista).
+    if not human_msgs:
+        try:
+            _probe = fetch_paginated("/events", {
+                "filter[entity][]": "lead",
+                "filter[type][]": "outgoing_chat_message",
+                "filter[created_at][from]": int(m_start.timestamp()),
+                "filter[created_at][to]":   int(m_end.timestamp()),
+                "limit": 100}, "events", max_pages=200, sleep=0.12)
+            _hum = 0
+            for e in _probe:
+                if e.get("created_by", 0) == 0:
+                    continue
+                lid, ts = e.get("entity_id"), e.get("created_at", 0)
+                if not lid:
+                    continue
+                _hum += 1
+                if lid not in human_msgs or ts < human_msgs[lid]:
+                    human_msgs[lid] = ts
+            _DIAG.append(f"probe_outgoing_chat={len(_probe)} humanos={_hum}")
+            if human_msgs:
+                _DIAG.append("resp_humana_fuente=outgoing_chat_message_filtrado")
+        except Exception as _e:
+            _DIAG.append(f"probe_chat_error={_e}")
+    elif human_msgs:
+        _DIAG.append("resp_humana_fuente=outgoing_chat_message_feed")
+    # Último recurso: mensajes directos humanos en la ficha como señal de respuesta
+    if not human_msgs and _direct_first:
+        human_msgs = _direct_first
+        _DIAG.append(f"resp_humana_fuente=entity_direct_message n={len(human_msgs)}")
     print(f"     → {len(human_msgs)} leads con respuesta humana real (chat saliente)")
 
 
