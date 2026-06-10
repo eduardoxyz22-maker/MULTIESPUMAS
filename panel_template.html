@@ -7035,14 +7035,14 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       height: yBar(h),
       rx: "7",
       fill: "#00B4C8",
-      opacity: "0.85"
+      opacity: h.now ? "0.55" : "0.85"
     }), /*#__PURE__*/React.createElement("text", {
       x: xOf(i) + BW / 2,
-      y: TOPP + CH - yBar(h) - 7,
+      y: yBar(h) >= 28 ? TOPP + CH - yBar(h) + 18 : TOPP + CH - yBar(h) - 7,
       textAnchor: "middle",
       fontSize: "12.5",
       fontWeight: "800",
-      fill: "var(--ink)"
+      fill: yBar(h) >= 28 ? "#fff" : "var(--ink)"
     }, h.cierres), /*#__PURE__*/React.createElement("text", {
       x: xOf(i) + BW / 2,
       y: TOPP + CH + 18,
@@ -7050,7 +7050,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       fontSize: "11.5",
       fontWeight: "700",
       fill: "var(--faint)"
-    }, h.label), /*#__PURE__*/React.createElement("text", {
+    }, h.label, h.now ? "*" : ""), /*#__PURE__*/React.createElement("text", {
       x: xOf(i) + BW / 2,
       y: TOPP + CH + 33,
       textAnchor: "middle",
@@ -7079,7 +7079,13 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       fontSize: "11",
       fontWeight: "800",
       fill: "var(--amber)"
-    }, h.conv, "%"))))), /*#__PURE__*/React.createElement("div", {
+    }, h.conv, "%"))))), last.now ? /*#__PURE__*/React.createElement("div", {
+      style: {
+        fontSize: ".74rem",
+        color: "var(--faint)",
+        marginTop: 6
+      }
+    }, "* ", last.label, ": mes en curso (al d\xEDa ", last.cutDay || D.curDay, "). Sus flechas comparan contra el ", /*#__PURE__*/React.createElement("b", null, "mismo d\xEDa"), " de ", H.length > 1 ? H[H.length - 2].label : "el mes anterior", "; los meses cerrados muestran su total completo.") : null, /*#__PURE__*/React.createElement("div", {
       className: "tbl-scroll"
     }, /*#__PURE__*/React.createElement("table", {
       className: "tbl",
@@ -7097,7 +7103,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, "Cerrado"), /*#__PURE__*/React.createElement("th", {
       className: "r"
     }, "Ticket"))), /*#__PURE__*/React.createElement("tbody", null, H.map((h, i) => {
-      const p = i > 0 ? H[i - 1] : null;
+      const p = h.now && h.prevSd ? h.prevSd : i > 0 ? H[i - 1] : null;
       return /*#__PURE__*/React.createElement("tr", {
         key: h.label,
         className: i === H.length - 1 ? "toprow" : ""
@@ -7105,7 +7111,13 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         style: {
           fontWeight: 700
         }
-      }, h.label), /*#__PURE__*/React.createElement("td", {
+      }, h.label, h.now ? /*#__PURE__*/React.createElement("span", {
+        style: {
+          fontWeight: 600,
+          color: "var(--faint)",
+          fontSize: ".72rem"
+        }
+      }, " \xB7 en curso") : null), /*#__PURE__*/React.createElement("td", {
         className: "r num"
       }, h.leads, " ", p && d(h.leads, p.leads, "")), /*#__PURE__*/React.createElement("td", {
         className: "r num"
@@ -7135,7 +7147,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), H.map(h => /*#__PURE__*/React.createElement("th", {
       key: h.label,
       className: "r"
-    }, h.label)))), /*#__PURE__*/React.createElement("tbody", null, names.map(n => /*#__PURE__*/React.createElement("tr", {
+    }, h.label, h.now ? "*" : "")))), /*#__PURE__*/React.createElement("tbody", null, names.map(n => /*#__PURE__*/React.createElement("tr", {
       key: n
     }, /*#__PURE__*/React.createElement("td", {
       style: {

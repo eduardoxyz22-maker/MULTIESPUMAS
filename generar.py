@@ -419,7 +419,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
             "v": v_tone,
             "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
-                     "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"]},
+                     "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"],
+                     "leadsFull": pv["leads"], "cierresFull": pv["cierres"], "valueFull": pv["value"]},
             "origen": {"manual": d["manual"], "bot": d["bot"]},
             "weekly": weekly, "weeklyPrev": weekly_prev,
         })
@@ -756,19 +757,34 @@ def build_history(pd):
             pts[(y, m)] = _pt(y, m, old.get("global") or {}, old.get("team") or [])
         except Exception as ex:
             print(f"      (historia: no pude leer {os.path.basename(p)}: {ex})")
-    # mes anterior sintetizado desde prev* si no hay archivo de ese mes
+    # Mes anterior COMPLETO desde los datos vivos de Kommo (mismos criterios que este panel).
+    # Pisa cualquier archivo de ese mes: el dato vivo es más confiable que un snapshot viejo.
     py, pm = (YEAR, MONTH - 1) if MONTH > 1 else (YEAR - 1, 12)
     team = pd.get("team") or []
-    if (py, pm) not in pts and any((t.get("prev") or {}).get("leads") for t in team):
-        Gp = {"leads": pd["global"].get("prevLeads", 0),
-              "cierres": sum((t.get("prev") or {}).get("cierres", 0) for t in team),
-              "cerrado": sum((t.get("prev") or {}).get("value", 0) for t in team)}
-        tp = [{"name": t["name"], "leads": (t.get("prev") or {}).get("leads", 0),
-               "cierres": (t.get("prev") or {}).get("cierres", 0),
-               "value": (t.get("prev") or {}).get("value", 0),
-               "ticket": (t.get("prev") or {}).get("ticket", 0)} for t in team]
-        pts[(py, pm)] = _pt(py, pm, Gp, tp)
-    pts[(YEAR, MONTH)] = _pt(YEAR, MONTH, pd["global"], team)
+    if any((t.get("prev") or {}).get("leadsFull") or (t.get("prev") or {}).get("leads") for t in team):
+        Gp = {"leads": sum((t.get("prev") or {}).get("leadsFull", 0) for t in team),
+              "cierres": sum((t.get("prev") or {}).get("cierresFull", 0) for t in team),
+              "cerrado": sum((t.get("prev") or {}).get("valueFull", 0) for t in team)}
+        tp = [{"name": t["name"], "leads": (t.get("prev") or {}).get("leadsFull", 0),
+               "cierres": (t.get("prev") or {}).get("cierresFull", 0),
+               "value": (t.get("prev") or {}).get("valueFull", 0)} for t in team]
+        if Gp["leads"]:
+            pts[(py, pm)] = _pt(py, pm, Gp, tp)
+        elif (py, pm) not in pts:
+            # compatibilidad: si aún no hay *Full (corrida vieja), usa el corte al mismo día
+            Gs = {"leads": pd["global"].get("prevLeads", 0),
+                  "cierres": sum((t.get("prev") or {}).get("cierres", 0) for t in team),
+                  "cerrado": sum((t.get("prev") or {}).get("value", 0) for t in team)}
+            pts[(py, pm)] = _pt(py, pm, Gs, [])
+    cur = _pt(YEAR, MONTH, pd["global"], team)
+    cur["now"] = True                       # mes en curso (parcial)
+    cur["cutDay"] = pd.get("curDay", 0)
+    # corte del mes anterior al MISMO día, para que las flechas del mes en curso comparen parejo
+    cur["prevSd"] = {"leads": pd["global"].get("prevLeads", 0),
+                     "cierres": sum((t.get("prev") or {}).get("cierres", 0) for t in team),
+                     "cerrado": sum((t.get("prev") or {}).get("value", 0) for t in team)}
+    cur["prevSd"]["conv"] = _cv(cur["prevSd"]["cierres"], cur["prevSd"]["leads"])
+    pts[(YEAR, MONTH)] = cur
     pd["history"] = [pts[k] for k in sorted(pts)]
     print(f"   ✓ historia: {len(pd['history'])} mes(es) → {[h['label'] for h in pd['history']]}")
     return pd
@@ -857,7 +873,7 @@ def bake_ai(pd):
         f"Heaven Colchones (Bolivia), mes {pd['month']} {pd['year']}. Moneda Bs.\n"
         f"Global: {G['leads']} leads (mes previo {G['prevLeads']}, {mom}% MoM), {G['cierres']} cierres, "
         f"conversión {_conv(G['cierres'], G['leads'])}% (= {G['cierres']}/{G['leads']}), ticket Bs {G['ticket']}.\n"
-        f"MES ANTERIOR ({pd.get('prevMonth', 'mes previo')}) como referencia: {G['prevLeads']} leads, "
+        f"MES ANTERIOR ({pd.get('prevMonth', 'mes previo')}) CORTADO AL MISMO DÍA del mes (comparación pareja, NO es el total del mes): {G['prevLeads']} leads, "
         f"{sum((t.get('prev') or {}).get('cierres', 0) for t in team)} cierres, "
         f"{_conv(sum((t.get('prev') or {}).get('cierres', 0) for t in team), G['prevLeads'])}% conv, "
         f"cerrado Bs {sum((t.get('prev') or {}).get('value', 0) for t in team)}.\n"
