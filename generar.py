@@ -215,21 +215,28 @@ p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 
 # ─────────────────────────────────────────────────────────────────────────────
 # ── Horario laboral por vendedora (hora Bolivia, UTC-4) ──────────────────────
 # El "tiempo de respuesta" se mide SOLO dentro de la jornada: el reloj se pausa
-# de noche, en la pausa de mediodía y los domingos. Así no se castiga a la
-# vendedora por mensajes que entran fuera de su horario.
+# de noche, en la pausa de mediodía (Central/Bs Aires) y los domingos.
 BOLIVIA_OFFSET = -4 * 3600
-# days: 0=Lun … 5=Sáb (6=Dom siempre cerrado). windows: (h_ini,m_ini,h_fin,m_fin)
-SCHED_A = {"days": {0, 1, 2, 3, 4, 5}, "windows": [(9, 0, 21, 0)]}                  # Mia Plaza
-SCHED_B = {"days": {0, 1, 2, 3, 4, 5}, "windows": [(9, 0, 13, 0), (15, 0, 19, 0)]}  # Central / Bs Aires
+# Ventanas por día de semana (0=Lun … 6=Dom). Día ausente = cerrado (domingo).
+# Formato de ventana: (h_ini, m_ini, h_fin, m_fin).
+SCHED_A = {  # Mia Plaza (Mirian + Isabel rotan turnos): Lun–Sáb 9–21 corrido
+    0: [(9, 0, 21, 0)], 1: [(9, 0, 21, 0)], 2: [(9, 0, 21, 0)],
+    3: [(9, 0, 21, 0)], 4: [(9, 0, 21, 0)], 5: [(9, 0, 21, 0)],
+}
+SCHED_B = {  # Central / Bs Aires: Lun–Vie 9–13 y 15–19 (pausa mediodía); Sáb 9–16 corrido
+    0: [(9, 0, 13, 0), (15, 0, 19, 0)], 1: [(9, 0, 13, 0), (15, 0, 19, 0)],
+    2: [(9, 0, 13, 0), (15, 0, 19, 0)], 3: [(9, 0, 13, 0), (15, 0, 19, 0)],
+    4: [(9, 0, 13, 0), (15, 0, 19, 0)], 5: [(9, 0, 16, 0)],
+}
 
 def sched_for(name):
     n = (name or "").lower()
     if "mirian" in n or "isabel" in n:
-        return SCHED_A          # Mia Plaza: 9–21 corrido (Mirian e Isabel rotan turnos)
-    return SCHED_B              # Carola, Jonathan, Maria (y default): 9–13 y 15–19
+        return SCHED_A          # Mia Plaza
+    return SCHED_B              # Carola, Jonathan, Maria (y default)
 
 def business_minutes(start_ts, end_ts, sched):
-    """Minutos de horario laboral entre dos timestamps UTC (se convierten a Bolivia)."""
+    """Minutos de horario laboral entre dos timestamps UTC (hora Bolivia)."""
     try:
         s = int(start_ts) + BOLIVIA_OFFSET
         e = int(end_ts) + BOLIVIA_OFFSET
@@ -247,14 +254,31 @@ def business_minutes(start_ts, end_ts, sched):
         wd = ((day0 // DAY) + 3) % 7              # epoch = jueves → +3 ⇒ 0=Lun
         nxt = day0 + DAY
         seg_end = min(e, nxt)
-        if wd in sched["days"]:
-            for (h1, m1, h2, m2) in sched["windows"]:
-                a = max(cur, day0 + h1 * 3600 + m1 * 60)
-                b = min(seg_end, day0 + h2 * 3600 + m2 * 60)
-                if b > a:
-                    total += (b - a)
+        for (h1, m1, h2, m2) in sched.get(wd, []):
+            a = max(cur, day0 + h1 * 3600 + m1 * 60)
+            b = min(seg_end, day0 + h2 * 3600 + m2 * 60)
+            if b > a:
+                total += (b - a)
         cur = nxt
     return total / 60.0
+
+def off_hours(ts, sched):
+    """True si la acción ocurrió FUERA de la jornada: antes de abrir, después de
+    cerrar, o domingo. La pausa de mediodía NO cuenta como fuera de horario
+    (se usa el 'sobre' del día: de la apertura al cierre)."""
+    try:
+        b = int(ts) + BOLIVIA_OFFSET
+    except Exception:
+        return False
+    DAY = 86400
+    day0 = (b // DAY) * DAY
+    wd = ((day0 // DAY) + 3) % 7
+    wins = sched.get(wd)
+    if not wins:
+        return True                              # día cerrado (domingo)
+    start = day0 + min(h1 * 3600 + m1 * 60 for (h1, m1, h2, m2) in wins)
+    end = day0 + max(h2 * 3600 + m2 * 60 for (h1, m1, h2, m2) in wins)
+    return not (start <= b < end)                # fuera del sobre [apertura, cierre]
 
 def _median(vals):
     if not vals:
@@ -267,7 +291,7 @@ def _median(vals):
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
-                tarde=0, backlog=0, resp_minutes=[], stage=defaultdict(int),
+                tarde=0, backlog=0, fuera=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
                 wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0],
                 wrl=[[],[],[],[],[]])
@@ -344,6 +368,10 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             # mediana semanal del tiempo de respuesta (horario hábil), indexada por la
             # semana en que ENTRÓ el lead (más intuitivo que la semana de la acción)
             d["wrl"][_wk].append(biz)
+            # reconocimiento: atendió el lead FUERA de su horario (madrugada, noche,
+            # o domingo). No la penaliza — suma como dedicación extra.
+            if off_hours(first_seg, sched_for(name)):
+                d["fuera"] += 1
         else:
             never = not (ev and ev.get("last"))   # nunca tocado = ningún evento humano
             if never:
@@ -480,6 +508,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "noResp": d["noResp"], "noRespPct": norpct,
             "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
             "promMin": int(round(avg_resp)) if avg_resp else None,
+            "fueraHorario": d["fuera"],
             "respPct": resp_pct, "respN": resp_n,
             "tarde": d["tarde"], "nunca": d["nunca"], "backlog": d["backlog"],
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),

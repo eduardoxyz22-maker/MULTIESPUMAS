@@ -2463,7 +2463,18 @@ function ProfileDrawer({
     }
   }, v.promTxt || "—"), /*#__PURE__*/React.createElement("div", {
     className: "l"
-  }, "Tiempo de resp. (t\xEDpico)")), /*#__PURE__*/React.createElement("div", {
+  }, "Tiempo de resp. (t\xEDpico)")), v.fueraHorario ? /*#__PURE__*/React.createElement("div", {
+    className: "dr-k"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "v",
+    style: {
+      color: "var(--green)"
+    }
+  }, /*#__PURE__*/React.createElement(CountUp, {
+    value: v.fueraHorario
+  })), /*#__PURE__*/React.createElement("div", {
+    className: "l"
+  }, "Atendi\xF3 fuera de horario")) : null, /*#__PURE__*/React.createElement("div", {
     className: "dr-k"
   }, /*#__PURE__*/React.createElement("div", {
     className: "v",
