@@ -250,7 +250,7 @@ html[data-theme="dark"] .insight .d{color:#9FC9C5}
 .insight b{color:inherit;font-weight:800}
 .insight.amber{background:var(--amber-bg);border-color:rgba(217,131,0,.3)}
 .insight.amber .ic{background:var(--amber)}
-.insight.amber .t,.insight.amber .d{color:var(--amber-ink)}
+.insight.amber .t,.insight.amber .d{color:var(--amber-ink)}.insight.green{background:var(--green-bg);border-color:rgba(21,154,87,.3)}.insight.green .ic{background:var(--green)}.insight.green .t,.insight.green .d{color:var(--green-ink)}
 
 /* ===== TEAM CARDS ===== */
 .tcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;border-top:3px solid var(--line);transition:transform .18s ease,box-shadow .18s ease}
@@ -6801,7 +6801,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         lineHeight: 1.5
       }
     }, s.d)))), /*#__PURE__*/React.createElement("div", {
-      className: "insight amber"
+      className: "insight " + ((totMeta && baseProj >= totMeta) ? "green" : "amber")
     }, /*#__PURE__*/React.createElement("span", {
       className: "ic"
     }, /*#__PURE__*/React.createElement(Icon, {
