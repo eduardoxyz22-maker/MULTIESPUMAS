@@ -6987,21 +6987,18 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       eb: "Operaci\xF3n",
       h3: "Ingreso por horario real (cada sucursal)",
       p: "Mide cada lead contra el horario real de su sucursal \u2014 responde si entr\xF3 cuando hab\xEDa alguien atendiendo."
-    }), /*#__PURE__*/React.createElement("div", {
-      className: "kpis"
-    }, /*#__PURE__*/React.createElement(Kpi, {
-      l: "Ingresan en horario",
-      num: D.metrics.leadsEnHorario || 0,
-      ac: "var(--green)",
-      ico: "seguimiento",
-      sub: (((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) > 0 ? Math.round((D.metrics.leadsEnHorario || 0) / ((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) * 100) + "% del total" : "\u2014")
-    }), /*#__PURE__*/React.createElement(Kpi, {
-      l: "Ingresan fuera de horario",
-      num: D.metrics.leadsFueraHorario || 0,
-      ac: "#D98300",
-      ico: "seguimiento",
-      sub: (((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) > 0 ? Math.round((D.metrics.leadsFueraHorario || 0) / ((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) * 100) + "% del total" : "\u2014")
-    })), /*#__PURE__*/React.createElement("div", {
+    }), /*#__PURE__*/React.createElement("table", {
+      className: "tbl",
+      style: { marginTop: 4 }
+    }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Sucursal"), /*#__PURE__*/React.createElement("th", { className: "r" }, "En horario"), /*#__PURE__*/React.createElement("th", { className: "r" }, "Fuera de horario"), /*#__PURE__*/React.createElement("th", { className: "r" }, "% fuera"))), /*#__PURE__*/React.createElement("tbody", null, (D.metrics.leadsHorarioPorSuc || []).map(r => {
+      const tot = (r.dentro || 0) + (r.fuera || 0);
+      const pct = tot > 0 ? Math.round((r.fuera || 0) / tot * 100) : 0;
+      return /*#__PURE__*/React.createElement("tr", { key: r.suc }, /*#__PURE__*/React.createElement("td", null, r.suc), /*#__PURE__*/React.createElement("td", { className: "r num" }, (r.dentro || 0).toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", { className: "r num" }, (r.fuera || 0).toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", { className: "r num", style: { color: pct >= 30 ? "var(--amber)" : "inherit", fontWeight: 700 } }, pct + "%"));
+    })), /*#__PURE__*/React.createElement("tfoot", null, (() => {
+      const gd = D.metrics.leadsEnHorario || 0, gf = D.metrics.leadsFueraHorario || 0, gt = gd + gf;
+      const gp = gt > 0 ? Math.round(gf / gt * 100) : 0;
+      return /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "Global"), /*#__PURE__*/React.createElement("td", { className: "r num" }, gd.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", { className: "r num" }, gf.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", { className: "r num" }, gp + "%"));
+    })())), /*#__PURE__*/React.createElement("div", {
       style: { marginTop: 10, fontSize: ".74rem", color: "var(--muted)", lineHeight: 1.6 }
     }, /*#__PURE__*/React.createElement("b", { style: { color: "var(--text)" } }, "Ventana por sucursal: "), "Mia Plaza lun\u2013s\xE1b 9:00\u201321:00 \xB7 Central y Bs Aires lun\u2013vie 9:00\u201319:00 y s\xE1b 9:00\u201316:00 \xB7 domingo cerrado. La pausa de mediod\xEDa no cuenta como fuera."), /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Operaci\xF3n",
