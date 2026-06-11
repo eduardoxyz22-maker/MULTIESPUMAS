@@ -1911,6 +1911,13 @@ function sparkOf(v, prev) {
   const wob = [0, 0.05, -0.04, 0.06, -0.03, 0];
   return [0, 0.2, 0.4, 0.6, 0.8, 1].map((t, i) => Math.round((prev + span * t + amp * wob[i]) * 100) / 100);
 }
+function fmtCreado(ts) {
+  if (!ts) return "\u2014";
+  const d = new Date((ts - 14400) * 1000);
+  const p = n => String(n).padStart(2, "0");
+  return `${p(d.getUTCDate())}/${p(d.getUTCMonth() + 1)} ${p(d.getUTCHours())}:${p(d.getUTCMinutes())}`;
+}
+window.fmtCreado = fmtCreado;
 
 /* ---------- shared bits ---------- */
 function SectionHead({
@@ -5241,6 +5248,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       e: r => r.e || "",
       r: r => r.r || "",
       d: r => r.d || 0,
+      ct: r => r.ct || 0,
       st: r => rank(r)
     };
     const clickSort = k => {
@@ -5467,6 +5475,12 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         cursor: "pointer",
         userSelect: "none"
       },
+      onClick: () => clickSort("ct")
+    }, "Creado", sortKey === "ct" ? sortDir === "asc" ? " \u25B2" : " \u25BC" : ""), /*#__PURE__*/React.createElement("th", {
+      style: {
+        cursor: "pointer",
+        userSelect: "none"
+      },
       onClick: () => clickSort("e")
     }, "Etapa", sortKey === "e" ? sortDir === "asc" ? " ▲" : " ▼" : ""), /*#__PURE__*/React.createElement("th", {
       style: {
@@ -5510,7 +5524,10 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         style: {
           marginLeft: 6
         }
-      }, "NUNCA TOCADO")), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
+      }, "NUNCA TOCADO")), /*#__PURE__*/React.createElement("td", {
+        className: "num",
+        style: { whiteSpace: "nowrap", color: "var(--muted)", fontSize: ".82rem" }
+      }, fmtCreado(r.ct)), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement("span", {
         style: {
           display: "inline-block",
           width: 7,

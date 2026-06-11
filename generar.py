@@ -411,7 +411,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         if is_open and (stale_days > 3 or never):
             ld_name = (ld.get("name") or "").strip() or f"Lead #{ld.get('id')}"
             backlog_rows.append({"c": ld_name, "id": ld.get("id"), "e": st["name"], "r": name,
-                                 "d": int(round(stale_days)), "nh": never})
+                                 "d": int(round(stale_days)), "nh": never, "ct": created})
 
     # ── VENTAS por FECHA CONTRATO (campo manual = lo que filtra Kommo) ──
     for ld in (won_leads or []):
