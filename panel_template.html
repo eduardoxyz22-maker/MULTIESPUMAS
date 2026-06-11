@@ -5085,14 +5085,14 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }, "NUEVO")), /*#__PURE__*/React.createElement("div", {
         className: "tcard-where"
       }, v.suc)), /*#__PURE__*/React.createElement("div", {
-        className: `t24 ${v.v}`
+        className: `t24 ${v.promMin == null ? "brand" : v.promMin <= 120 ? "green" : v.promMin <= 480 ? "amber" : "red"}`
       }, /*#__PURE__*/React.createElement("span", {
         className: "t24-v"
       }, /*#__PURE__*/React.createElement("span", {
         className: "t24-pd"
-      }), v.u24, "%"), /*#__PURE__*/React.createElement("span", {
+      }), v.promTxt || "\u2014"), /*#__PURE__*/React.createElement("span", {
         className: "t24-l"
-      }, "<24h"))), /*#__PURE__*/React.createElement("div", {
+      }, "1\xAA resp."))), /*#__PURE__*/React.createElement("div", {
         className: "tmetrics"
       }, /*#__PURE__*/React.createElement("div", {
         className: "tm"
