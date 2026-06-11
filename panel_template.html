@@ -6968,8 +6968,8 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       sub: "el bot los movi\xF3, sin acci\xF3n humana"
     })), /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Operaci\xF3n",
-      h3: "Ingreso de leads por horario",
-      p: "Cu\xE1ntos leads entran dentro del horario laboral y cu\xE1ntos fuera (madrugada, noche o domingo), seg\xFAn el horario de cada sucursal."
+      h3: "Ingreso por horario real (cada sucursal)",
+      p: "Mide cada lead contra el horario real de su sucursal \u2014 responde si entr\xF3 cuando hab\xEDa alguien atendiendo."
     }), /*#__PURE__*/React.createElement("div", {
       className: "kpis"
     }, /*#__PURE__*/React.createElement(Kpi, {
@@ -6985,6 +6985,28 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       ico: "seguimiento",
       sub: (((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) > 0 ? Math.round((D.metrics.leadsFueraHorario || 0) / ((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) * 100) + "% del total" : "\u2014")
     })), /*#__PURE__*/React.createElement("div", {
+      style: { marginTop: 10, fontSize: ".74rem", color: "var(--muted)", lineHeight: 1.6 }
+    }, /*#__PURE__*/React.createElement("b", { style: { color: "var(--text)" } }, "Ventana por sucursal: "), "Mia Plaza lun\u2013s\xE1b 9:00\u201321:00 \xB7 Central y Bs Aires lun\u2013vie 9:00\u201319:00 y s\xE1b 9:00\u201316:00 \xB7 domingo cerrado. La pausa de mediod\xEDa no cuenta como fuera."), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Operaci\xF3n",
+      h3: "Ingreso por ventana fija \xB7 9:00 a 20:00",
+      p: "Ventana pareja para todos, solo por hora del d\xEDa \u2014 para ver a qu\xE9 hora entran los leads (no distingue d\xEDa ni sucursal)."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "kpis"
+    }, /*#__PURE__*/React.createElement(Kpi, {
+      l: "Ingresan en horario",
+      num: (D.metrics.leadsEnHorarioFijo || 0),
+      ac: "var(--green)",
+      ico: "seguimiento",
+      sub: (((D.metrics.leadsEnHorarioFijo || 0) + (D.metrics.leadsFueraHorarioFijo || 0)) > 0 ? Math.round((D.metrics.leadsEnHorarioFijo || 0) / ((D.metrics.leadsEnHorarioFijo || 0) + (D.metrics.leadsFueraHorarioFijo || 0)) * 100) + "% del total" : "\u2014")
+    }), /*#__PURE__*/React.createElement(Kpi, {
+      l: "Ingresan fuera de horario",
+      num: (D.metrics.leadsFueraHorarioFijo || 0),
+      ac: "#D98300",
+      ico: "seguimiento",
+      sub: (((D.metrics.leadsEnHorarioFijo || 0) + (D.metrics.leadsFueraHorarioFijo || 0)) > 0 ? Math.round((D.metrics.leadsFueraHorarioFijo || 0) / ((D.metrics.leadsEnHorarioFijo || 0) + (D.metrics.leadsFueraHorarioFijo || 0)) * 100) + "% del total" : "\u2014")
+    })), /*#__PURE__*/React.createElement("div", {
+      style: { marginTop: 10, fontSize: ".74rem", color: "var(--muted)", lineHeight: 1.6 }
+    }, /*#__PURE__*/React.createElement("b", { style: { color: "var(--text)" } }, "En horario: "), "9:00\u201320:00. ", /*#__PURE__*/React.createElement("b", { style: { color: "var(--text)" } }, "Fuera: "), "20:01\u20138:59. No distingue d\xEDa de la semana."), /*#__PURE__*/React.createElement("div", {
       className: "insight amber"
     }, /*#__PURE__*/React.createElement("span", {
       className: "ic"
