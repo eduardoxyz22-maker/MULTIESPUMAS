@@ -291,7 +291,7 @@ def _median(vals):
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
-                tarde=0, backlog=0, fuera=0, resp_minutes=[], stage=defaultdict(int),
+                tarde=0, backlog=0, fuera=0, entra_dentro=0, entra_fuera=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
                 wl=[0,0,0,0,0], wc=[0,0,0,0,0], wm=[0,0,0,0,0], wu=[0,0,0,0,0],
                 wrl=[[],[],[],[],[]])
@@ -322,6 +322,12 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             _day = 1
         _wk = min(4, (_day - 1) // 7)
         d["wl"][_wk] += 1
+        # lead que INGRESA dentro vs fuera del horario laboral (según el responsable)
+        if _cre:
+            if off_hours(_cre, sched_for(name)):
+                d["entra_fuera"] += 1
+            else:
+                d["entra_dentro"] += 1
         if _day <= CURDAY:
             d["leads_sd"] += 1
         if name not in suc_of:
@@ -605,6 +611,9 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
                    if classify_stage(sn) in cls_list)
     _cot = sum(vcur[n]['cotizacion'] for n in names)
     metrics["cotizaciones"] = _cot
+    # consolidado: leads que INGRESAN dentro vs fuera del horario laboral
+    metrics["leadsEnHorario"] = sum(vcur[n]["entra_dentro"] for n in names)
+    metrics["leadsFueraHorario"] = sum(vcur[n]["entra_fuera"] for n in names)
     # Embudo monótono decreciente (cada etapa contiene a la siguiente):
     # Leads ⊇ Calificados (interesado+cotización+agendado+compradores) ⊇
     # En cotización/visita (cotización+agendado+compradores) ⊇ Compradores.

@@ -6966,6 +6966,24 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       ac: "#D98300",
       ico: "datos",
       sub: "el bot los movi\xF3, sin acci\xF3n humana"
+    })), /*#__PURE__*/React.createElement(SectionHead, {
+      eb: "Operaci\xF3n",
+      h3: "Ingreso de leads por horario",
+      p: "Cu\xE1ntos leads entran dentro del horario laboral y cu\xE1ntos fuera (madrugada, noche o domingo), seg\xFAn el horario de cada sucursal."
+    }), /*#__PURE__*/React.createElement("div", {
+      className: "kpis"
+    }, /*#__PURE__*/React.createElement(Kpi, {
+      l: "Ingresan en horario",
+      num: D.metrics.leadsEnHorario || 0,
+      ac: "var(--green)",
+      ico: "seguimiento",
+      sub: (((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) > 0 ? Math.round((D.metrics.leadsEnHorario || 0) / ((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) * 100) + "% del total" : "\u2014")
+    }), /*#__PURE__*/React.createElement(Kpi, {
+      l: "Ingresan fuera de horario",
+      num: D.metrics.leadsFueraHorario || 0,
+      ac: "#D98300",
+      ico: "seguimiento",
+      sub: (((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) > 0 ? Math.round((D.metrics.leadsFueraHorario || 0) / ((D.metrics.leadsEnHorario || 0) + (D.metrics.leadsFueraHorario || 0)) * 100) + "% del total" : "\u2014")
     })), /*#__PURE__*/React.createElement("div", {
       className: "insight amber"
     }, /*#__PURE__*/React.createElement("span", {
