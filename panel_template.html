@@ -7392,6 +7392,23 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, totLeads.toLocaleString("en-US")))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
       className: "rowhead"
     }, /*#__PURE__*/React.createElement("span", {
+      style: dotSt("#7A5AF0")
+    }), "Tiempo resp."), T.map(v => /*#__PURE__*/React.createElement("td", {
+      key: v.name,
+      className: `mcell${v.name === STAGE_TOP ? " topcol" : ""}`
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num"
+    }, v.promTxt || "\u2014"))), /*#__PURE__*/React.createElement("td", {
+      className: "mcell totcol"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num",
+      style: {
+        fontWeight: 800,
+        color: "#7A5AF0"
+      }
+    }, D.metrics.promPrimera || "\u2014"))), /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", {
+      className: "rowhead"
+    }, /*#__PURE__*/React.createElement("span", {
       style: dotSt("#D98300")
     }), "Sin seguim. +72h"), T.map(v => /*#__PURE__*/React.createElement("td", {
       key: v.name,
@@ -7735,6 +7752,11 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
         v: money(gPipe),
         noMom: true,
         c: "var(--brand)"
+      }, {
+        l: "Tiempo de resp.",
+        v: D.metrics.promPrimera || "\u2014",
+        noMom: true,
+        c: "#00B5AD"
       }];
       return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
         className: "spot-head"
