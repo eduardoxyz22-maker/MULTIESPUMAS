@@ -594,6 +594,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         return sum(c for n in names for sn, c in vcur[n]["stage"].items()
                    if classify_stage(sn) in cls_list)
     _cot = sum(vcur[n]['cotizacion'] for n in names)
+    metrics["cotizaciones"] = _cot
     # Embudo monótono decreciente (cada etapa contiene a la siguiente):
     # Leads ⊇ Calificados (interesado+cotización+agendado+compradores) ⊇
     # En cotización/visita (cotización+agendado+compradores) ⊇ Compradores.
