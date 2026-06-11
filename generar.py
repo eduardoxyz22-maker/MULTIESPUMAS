@@ -549,8 +549,18 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     interes_tot = sum(vcur[n]["interesado"] for n in names)
     _all_resp = [m for n in names for m in vcur[n]["resp_minutes"]]
     _avg_g = _median(_all_resp)
+    # tiempo de respuesta global por semana de entrada (mediana de todo lo agrupado),
+    # para el sparkline real de la ficha del Resumen. Semanas sin datos se rellenan
+    # con la mediana global para que la línea quede continua (sin huecos).
+    _fill = int(round(_avg_g)) if _avg_g else 0
+    _resp_weekly = []
+    for _k in range(5):
+        _wk = [m for n in names for m in vcur[n]["wrl"][_k]]
+        _resp_weekly.append(int(round(_median(_wk))) if _wk else _fill)
     metrics = {
         "promPrimera": (f"{_avg_g/60:.1f} h" if _avg_g >= 60 else f"{_avg_g:.0f} min") if _avg_g else "—",
+        "promPrimeraMin": int(round(_avg_g)) if _avg_g else 0,
+        "respWeekly": _resp_weekly,
         "respPct": round(len(_all_resp) / G_leads * 100) if G_leads else 0,
         "noResp": noResp, "noRespPct": round(noResp / G_leads * 100) if G_leads else 0,
         "backlog": backlog, "backlogPct": round(backlog / G_leads * 100) if G_leads else 0,
