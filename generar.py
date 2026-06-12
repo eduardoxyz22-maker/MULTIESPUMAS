@@ -638,12 +638,25 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     _suc_h = {}
     for n in names:
         s = suc_of.get(n, "Sin sucursal")
-        bb = _suc_h.setdefault(s, {"dentro": 0, "fuera": 0})
+        bb = _suc_h.setdefault(s, {"dentro": 0, "fuera": 0, "resp": []})
         bb["dentro"] += vcur[n]["entra_dentro"]
         bb["fuera"] += vcur[n]["entra_fuera"]
-    metrics["leadsHorarioPorSuc"] = sorted(
-        [{"suc": s, "dentro": v["dentro"], "fuera": v["fuera"]} for s, v in _suc_h.items()],
-        key=lambda r: -(r["dentro"] + r["fuera"]))
+        bb["resp"].extend(vcur[n]["resp_minutes"])        # mediana consolidada por sucursal
+
+    def _resp_txt(mins):
+        if not mins:
+            return "—", None
+        m = _median(mins)
+        if not m:
+            return "—", None
+        return (f"{m/60:.1f} h" if m >= 60 else f"{m:.0f} min"), int(round(m))
+
+    _suc_list = []
+    for s, v in _suc_h.items():
+        _txt, _min = _resp_txt(v["resp"])
+        _suc_list.append({"suc": s, "dentro": v["dentro"], "fuera": v["fuera"],
+                          "respTxt": _txt, "respMin": _min})
+    metrics["leadsHorarioPorSuc"] = sorted(_suc_list, key=lambda r: -(r["dentro"] + r["fuera"]))
     # ventana fija 09:00–20:00 (solo hora del día)
     metrics["leadsEnHorarioFijo"] = sum(vcur[n]["fix_dentro"] for n in names)
     metrics["leadsFueraHorarioFijo"] = sum(vcur[n]["fix_fuera"] for n in names)
