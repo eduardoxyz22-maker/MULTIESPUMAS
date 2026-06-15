@@ -5295,7 +5295,7 @@ function useFireworks(ref, colors) {
   React.useEffect(function() {
     var el = ref.current;
     if (!el) return;
-    var canvas = null, raf = null, intv = null, parts = [];
+    var canvas = null, raf = null, fwIntv = null, cfIntv = null, parts = [];
     function mk() {
       canvas = document.createElement('canvas');
       canvas.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9997;';
@@ -5304,10 +5304,11 @@ function useFireworks(ref, colors) {
     function rm() {
       if (canvas) { canvas.remove(); canvas = null; }
       if (raf) { cancelAnimationFrame(raf); raf = null; }
-      if (intv) { clearInterval(intv); intv = null; }
+      if (fwIntv) { clearInterval(fwIntv); fwIntv = null; }
+      if (cfIntv) { clearInterval(cfIntv); cfIntv = null; }
       parts = [];
     }
-    function launch() {
+    function launchFW() {
       var w = window.innerWidth, h = window.innerHeight;
       if (canvas) { canvas.width = w; canvas.height = h; }
       [0.28, 0.5, 0.72].forEach(function(xf, i) {
@@ -5316,32 +5317,55 @@ function useFireworks(ref, colors) {
           var col = colors[i] || '#ffd700';
           for (var p = 0; p < 65; p++) {
             var ang = (Math.PI * 2 * p) / 65, spd = 1.5 + Math.random() * 5.5;
-            parts.push({ x: x, y: y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, col: col, a: 1, r: 2 + Math.random()*3.5 });
+            parts.push({ x: x, y: y, vx: Math.cos(ang)*spd, vy: Math.sin(ang)*spd, col: col, a: 1, r: 2 + Math.random()*3.5, t: 'fw' });
           }
           for (var s = 0; s < 18; s++) {
-            parts.push({ x: x, y: y, vx: (Math.random()-0.5)*3, vy: -Math.random()*4, col: '#fff', a: 0.85, r: 1.5 });
+            parts.push({ x: x, y: y, vx: (Math.random()-0.5)*3, vy: -Math.random()*4, col: '#fff', a: 0.85, r: 1.5, t: 'fw' });
           }
         }, i * 380);
       });
     }
+    function launchConf() {
+      var w = window.innerWidth, h = window.innerHeight;
+      var palette = colors.concat(['#ffd700', '#fff', '#ff6b6b', '#69db7c', '#74c0fc']);
+      for (var i = 0; i < 38; i++) {
+        var col = palette[Math.floor(Math.random() * palette.length)];
+        parts.push({ x: Math.random() * w, y: -14, vx: (Math.random()-0.5)*2.5, vy: 2.5 + Math.random()*3.5,
+          col: col, a: 1, rot: Math.random()*Math.PI*2, rotV: (Math.random()-0.5)*0.13,
+          pw: 5 + Math.random()*7, ph: 3 + Math.random()*4, t: 'cf', ch: h });
+      }
+    }
     function anim() {
       if (!canvas) return;
-      var ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var ctx = canvas.getContext('2d'), H = canvas.height;
+      ctx.clearRect(0, 0, canvas.width, H);
       for (var i = parts.length - 1; i >= 0; i--) {
         var p = parts[i];
-        p.vy += 0.09; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.a -= 0.012;
-        if (p.a <= 0) { parts.splice(i, 1); continue; }
-        ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
-        ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+        if (p.t === 'cf') {
+          p.vy += 0.035; p.x += p.vx; p.y += p.vy; p.rot += p.rotV;
+          if (p.y > H + 20) { parts.splice(i, 1); continue; }
+          if (p.y > H * 0.82) p.a = Math.max(0, p.a - 0.05);
+          ctx.save(); ctx.globalAlpha = p.a;
+          ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+          ctx.fillStyle = p.col; ctx.fillRect(-p.pw/2, -p.ph/2, p.pw, p.ph);
+          ctx.restore();
+        } else {
+          p.vy += 0.09; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.a -= 0.012;
+          if (p.a <= 0) { parts.splice(i, 1); continue; }
+          ctx.globalAlpha = p.a; ctx.fillStyle = p.col;
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+        }
       }
       ctx.globalAlpha = 1;
       raf = requestAnimationFrame(anim);
     }
     var obs = new IntersectionObserver(function(entries) {
       var vis = entries[0].isIntersecting && document.documentElement.classList.contains('mx-present');
-      if (vis) { mk(); launch(); anim(); intv = setInterval(launch, 5000); }
-      else { rm(); }
+      if (vis) {
+        mk(); launchFW(); launchConf(); anim();
+        fwIntv = setInterval(launchFW, 5000);
+        cfIntv = setInterval(launchConf, 1800);
+      } else { rm(); }
     }, { threshold: 0.4 });
     obs.observe(el);
     return function() { obs.disconnect(); rm(); };
@@ -5505,7 +5529,9 @@ function PresentacionView({ filtered, filterTienda }) {
     + " .mx-dona circle{opacity:0;} section.mx-inview .mx-dona circle{animation:mxdash .7s ease forwards;} @keyframes mxdash{from{opacity:0;}to{opacity:1;}}"
     + " .mx-nav{display:none;} html.mx-present .mx-nav{display:inline-flex;position:fixed;right:18px;z-index:100000;width:48px;height:48px;border-radius:50%;background:var(--ink);color:#fbf8f2;border:0;cursor:pointer;font-size:18px;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.32);} html.mx-present .mx-nav-prev{bottom:78px;} html.mx-present .mx-nav-next{bottom:20px;}"
     + " .mx-ped{transform-origin:bottom;transform:scaleY(0);} section.mx-inview .mx-ped{animation:mxped .7s cubic-bezier(.2,.8,.3,1) forwards;} @keyframes mxped{to{transform:scaleY(1);}}"
-    + " .mx-best{position:relative;overflow:hidden;} section.mx-inview .mx-best::before{content:'';position:absolute;top:0;left:-45%;width:45%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);animation:mxshine 1.2s ease .25s 1;} @keyframes mxshine{to{left:135%;}} .mx-party{display:inline-block;} section.mx-inview .mx-party{animation:mxpop .5s .3s both;}";
+    + " .mx-best{position:relative;overflow:hidden;} section.mx-inview .mx-best::before{content:'';position:absolute;top:0;left:-45%;width:45%;height:100%;background:linear-gradient(120deg,transparent,rgba(255,255,255,.55),transparent);animation:mxshine 1.2s ease .25s 1;} @keyframes mxshine{to{left:135%;}} .mx-party{display:inline-block;} section.mx-inview .mx-party{animation:mxpop .5s .3s both;}"
+    + " @keyframes mxmedal{0%{opacity:0;transform:translateY(-60px) scale(.55) rotate(-15deg);}60%{transform:translateY(7px) scale(1.15) rotate(4deg);}80%{transform:translateY(-3px) scale(.97) rotate(-1deg);}100%{opacity:1;transform:none;}} section.mx-inview .mx-medal{animation:mxmedal .8s cubic-bezier(.2,.8,.3,1) both;}"
+    + " @keyframes mxwinglow{0%,100%{box-shadow:0 0 0 0 rgba(176,122,31,0);}50%{box-shadow:0 0 28px 12px rgba(176,122,31,.4);}} .mx-winner-glow{border-radius:14px;padding:8px 6px;animation:mxwinglow 2.2s ease-in-out 1.6s infinite;}";
 
   return (
     <div className="mx-pres-wrap" ref={el => { if (!el || el.__mxObs) return; el.__mxObs = true; var check = function(){ Array.prototype.forEach.call(el.children, function(s){ if (s.tagName !== "SECTION") return; var r = s.getBoundingClientRect(); var isIn = r.top < window.innerHeight * 0.78 && r.bottom > 70; var wasIn = s.classList.contains("mx-inview"); s.classList.toggle("mx-inview", isIn); if (isIn && !wasIn) { Array.prototype.forEach.call(s.querySelectorAll(".mx-count"), animateCount); } else if (!isIn && wasIn) { Array.prototype.forEach.call(s.querySelectorAll(".mx-count"), function(c){ c.__anim = false; }); } }); }; check(); setTimeout(check, 60); setTimeout(check, 300); window.addEventListener("scroll", check, { passive: true }); window.addEventListener("resize", check, { passive: true }); }} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
@@ -5654,17 +5680,24 @@ function PresentacionView({ filtered, filterTienda }) {
               <PodioWrap colors={podioDe(g.vends).map(p => VENDOR_COLOR[p.v.nombre])}>
                 <div style={{ padding: "28px 18px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
                   <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
-                    {podioDe(g.vends).map(p => (
-                      <div key={p.v.nombre} style={{ width: 150, textAlign: "center" }}>
-                        <div style={{ fontSize: 38, lineHeight: 1 }}>{p.med}</div>
-                        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 6 }}>
-                          <span style={{ width: 12, height: 12, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
-                          <b style={{ fontSize: 16, color: "var(--ink)" }}>{p.v.nombre}</b>
+                    {podioDe(g.vends).map(p => {
+                      const medalDelay = p.rank === 1 ? '0.8s' : p.rank === 2 ? '0.4s' : '0s';
+                      const barDelay   = p.rank === 1 ? '1.1s' : p.rank === 2 ? '0.6s' : '0.1s';
+                      const inner = (
+                        <div key={p.v.nombre} style={{ width: 150, textAlign: "center" }}>
+                          <div className="mx-medal" style={{ fontSize: 38, lineHeight: 1, animationDelay: medalDelay }}>{p.med}</div>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 6 }}>
+                            <span style={{ width: 12, height: 12, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
+                            <b style={{ fontSize: 16, color: "var(--ink)" }}>{p.v.nombre}</b>
+                          </div>
+                          <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 18, color: "var(--ink)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
+                          <div className="mx-ped" style={{ height: p.h * 1.4, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "9px 9px 0 0", marginTop: 10, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 9, color: "#fff", fontWeight: 800, fontSize: 26, animationDelay: barDelay }}>{p.rank}°</div>
                         </div>
-                        <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 18, color: "var(--ink)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
-                        <div className="mx-ped" style={{ height: p.h * 1.4, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "9px 9px 0 0", marginTop: 10, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 9, color: "#fff", fontWeight: 800, fontSize: 26 }}>{p.rank}°</div>
-                      </div>
-                    ))}
+                      );
+                      return p.rank === 1
+                        ? <div key={p.v.nombre} className="mx-winner-glow">{inner}</div>
+                        : inner;
+                    })}
                   </div>
                   <div className="mx-best" style={{ width: "100%", maxWidth: 520, background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
                     <b style={{ color: "var(--ink)" }}><span className="mx-party">🎉</span> Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
