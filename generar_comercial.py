@@ -223,6 +223,14 @@ if _rk:
             record_lookup[nombre_raw.lower()] = bool(gv(mg, _rn, 5).strip())
         _rn += 1
 
+# Crecimiento "a la fecha": si el mes está abierto y hay dato MoM (mismo día del mes
+# pasado), compara junio-día-15 vs mayo-día-15. Si no, cae al valor del Excel (mes completo).
+def crec_a_fecha(nombre_key, monto_actual):
+    mm = mom_data.get(nombre_key)
+    if (not CERRADO_ENV) and mm and mm.get('monto') and mm['monto'] > 0:
+        return round((monto_actual - mm['monto']) / mm['monto'], 6)
+    return round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None
+
 vendedores = []
 
 for row in range(3, 40):
@@ -252,7 +260,7 @@ for row in range(3, 40):
         'comision': round(sf(gv(hv, row, 12)), 4),
         'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
         'pctComision': round(sf(gv(hv, row, 13)), 6),
-        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
@@ -290,7 +298,7 @@ for row in range(3, 40):
         'comision': round(sf(gv(sv, row, 14)), 4),
         'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
         'pctComision': round(sf(gv(sv, row, 15)), 6),
-        'crecimientoVsAbril': round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None,
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
@@ -305,6 +313,14 @@ for row in range(3, 40):
 tot_vend = sum(v['monto'] for v in vendedores)
 for v in vendedores:
     v['pctTotal'] = round(v['monto'] / tot_vend, 6) if tot_vend > 0 else 0
+
+# Agregado MoM por tienda (suma de montos actual/pasado de sus vendedores con dato MoM)
+mom_tienda = {}
+for v in vendedores:
+    if v.get('momMonto') is not None:
+        d = mom_tienda.setdefault(v['tienda'], {'cur': 0.0, 'prev': 0.0})
+        d['cur'] += v['monto']
+        d['prev'] += v['momMonto']
 
 # Comisiones por tienda (seccion "COMISIONES Y BONOS" del Dashboard)
 _comm_sec = find_row(ds, 0, 'COMISIONES Y BONOS', contains=True) or 1
@@ -350,6 +366,14 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
         leads_t = heaven_leads
         conv_t = round(heaven_ventas / heaven_leads, 6) if heaven_leads > 0 else None
     c = comm.get(nombre_t, {'comisiones': 0, 'bonos': 0, 'totalPagado': 0, 'comisionados': 0})
+    # Crecimiento a la fecha por tienda si hay MoM; si no, diferencia del Excel (mes completo)
+    _mt = mom_tienda.get(nombre_t)
+    if (not CERRADO_ENV) and _mt and _mt['prev'] > 0:
+        crec_t = round((_mt['cur'] - _mt['prev']) / _mt['prev'], 6)
+        mes_pasado_t = round(_mt['prev'], 2)
+    else:
+        crec_t = round(diferencia / mes_pasado, 6) if mes_pasado else None
+        mes_pasado_t = mes_pasado
     tiendas.append({
         'id': nombre_t.lower(),
         'nombre': nombre_t,
@@ -364,8 +388,8 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
         'bonos': round(c['bonos'], 4),
         'totalPagado': round(c['totalPagado'], 4),
         'comisionados': c['comisionados'],
-        'crecimientoVsAbril': round(diferencia / mes_pasado, 6) if mes_pasado else None,
-        'mesPasadoMonto': mes_pasado,
+        'crecimientoVsAbril': crec_t,
+        'mesPasadoMonto': mes_pasado_t,
     })
 
 # Totales globales: etiqueta en col H (idx 7), valor en col K (idx 10)
