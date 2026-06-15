@@ -3286,24 +3286,25 @@ function EmptyState({
 window.EmptyState = EmptyState;
 const F_COLORS = ["#00B5AD", "#22A7C9", "#2E6FE0", "#7A5AF0", "#159A57", "#DC4046"];
 function Funnel() {
-  const maxF = Math.max(...D.funnel.map(f => f.count));
+  const data = D.stagesGlobal || [];
+  const maxF = Math.max(1, ...data.map(f => f.count));
   return /*#__PURE__*/React.createElement("div", {
     className: "funnel"
-  }, D.funnel.map((f, i) => /*#__PURE__*/React.createElement("div", {
+  }, data.map((f, i) => /*#__PURE__*/React.createElement("div", {
     className: "fstep",
     key: i
   }, /*#__PURE__*/React.createElement("div", {
     className: "fn"
   }, f.name), /*#__PURE__*/React.createElement("div", {
     className: "fbar num",
-    "data-tip": `${f.name}: ${f.count.toLocaleString("en-US")} leads · ${Math.round(f.count / D.funnel[0].count * 100)}% del tope`,
+    "data-tip": `${f.name}: ${f.count.toLocaleString("en-US")} leads · ${f.pct}% del total`,
     style: {
       width: `${Math.max(12, f.count / maxF * 100)}%`,
-      background: F_COLORS[i]
+      background: f.color
     }
   }, f.count.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
     className: "fp num"
-  }, Math.round(f.count / D.funnel[0].count * 100), "%"))));
+  }, f.pct, "%"))));
 }
 function TeamTable({
   cols = "full"
@@ -4131,7 +4132,7 @@ function ViewResumen() {
     className: "card"
   }, /*#__PURE__*/React.createElement("div", {
     className: "eb"
-  }, "Embudo del mes"), /*#__PURE__*/React.createElement(Funnel, null)), /*#__PURE__*/React.createElement("div", {
+  }, "Distribuci\xF3n por etapa"), /*#__PURE__*/React.createElement(Funnel, null)), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
