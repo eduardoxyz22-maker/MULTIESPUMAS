@@ -5544,126 +5544,136 @@ function PresentacionView({ filtered, filterTienda }) {
         const total = g.vends.reduce((s, v) => s + v.monto, 0);
         const d = destacado(g);
         return (
-          <section key={g.nombre} className="card" style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ background: g.color, padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-              <div>
-                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Tienda</div>
-                <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>{g.nombre}</div>
-              </div>
-              <div style={{ textAlign: "right" }}>
-                <div className="mx-count" data-target={total} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(total)}</div>
-                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{g.vends.length} personas · venta total</div>
-              </div>
-            </div>
+          <React.Fragment key={g.nombre}>
 
-            <div style={{ display: "flex", gap: 20, alignItems: "center", padding: "16px 20px 4px", flexWrap: "wrap" }}>
-              <svg className="mx-dona" width="104" height="104" viewBox="0 0 104 104" style={{ flexShrink: 0 }}>
-                {dona(g.vends, total)}
-                <text x="52" y="49" textAnchor="middle" fontSize="20" fontWeight="800" fill="var(--ink)">{g.vends.length}</text>
-                <text x="52" y="64" textAnchor="middle" fontSize="8.5" letterSpacing="0.5" fill="var(--muted)">PERSONAS</text>
-              </svg>
-              <div style={{ flex: 1, minWidth: 190 }}>
-                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 8 }}>Participación en las ventas</div>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {g.vends.map(v => {
-                    const frac = total > 0 ? v.monto / total : 0;
-                    return (
-                      <div key={v.nombre} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13 }}>
-                        <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
-                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{v.nombre}</span>
-                        <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{fmtBs(v.monto)}</span>
-                        <b style={{ color: "var(--ink)", minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtPct(frac)}</b>
-                      </div>
-                    );
-                  })}
+            {/* ── Slide: tabla de métricas ── */}
+            <section className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ background: g.color, padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Tienda</div>
+                  <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>{g.nombre}</div>
+                </div>
+                <div style={{ textAlign: "right" }}>
+                  <div className="mx-count" data-target={total} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(total)}</div>
+                  <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{g.vends.length} personas · venta total</div>
                 </div>
               </div>
-            </div>
 
-            <div style={{ padding: "6px 18px 0", overflowX: "auto" }}>
-              <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={thCorner}>Indicador</th>
-                    {g.vends.map((v, idx) => (
-                      <th key={v.nombre} style={idx === 0 ? thLider : th}>
-                        <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
-                          <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
-                          {v.nombre}{idx === 0 ? " 👑" : ""}
-                        </span>
-                      </th>
-                    ))}
-                    <th style={thProm}>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {metricas.map(m => {
-                    const nums = g.vends.map(m.raw).filter(x => x != null && isFinite(x));
-                    const best = nums.length ? Math.max.apply(null, nums) : null;
-                    const minV = nums.length ? Math.min.apply(null, nums) : null;
-                    const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
-                    const tcol = colTotal(m, g.vends, g.tienda);
-                    return (
-                      <tr key={m.l}>
-                        <td style={tdLat}>{m.l}</td>
-                        {g.vends.map((v, idx) => {
-                          const raw = m.raw(v);
-                          const esMejor = !m.noBest && g.vends.length > 1 && best != null && best !== minV && raw === best;
-                          let color = "var(--ink)";
-                          if (m.crec && raw != null) color = raw >= 0 ? "var(--good)" : "var(--bad)";
-                          if (m.falta) color = (raw != null && raw <= 0) ? "var(--good)" : "var(--ink)";
-                          const base = idx === 0 ? tdLider : tdVal;
-                          if (m.bar) {
-                            const bc = (raw != null) ? pctColor(raw) : "var(--muted)";
-                            const ctx = m.ctx ? m.ctx(v) : null;
+              <div style={{ display: "flex", gap: 20, alignItems: "center", padding: "16px 20px 4px", flexWrap: "wrap" }}>
+                <svg className="mx-dona" width="104" height="104" viewBox="0 0 104 104" style={{ flexShrink: 0 }}>
+                  {dona(g.vends, total)}
+                  <text x="52" y="49" textAnchor="middle" fontSize="20" fontWeight="800" fill="var(--ink)">{g.vends.length}</text>
+                  <text x="52" y="64" textAnchor="middle" fontSize="8.5" letterSpacing="0.5" fill="var(--muted)">PERSONAS</text>
+                </svg>
+                <div style={{ flex: 1, minWidth: 190 }}>
+                  <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 8 }}>Participación en las ventas</div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    {g.vends.map(v => {
+                      const frac = total > 0 ? v.monto / total : 0;
+                      return (
+                        <div key={v.nombre} style={{ display: "flex", alignItems: "center", gap: 9, fontSize: 13 }}>
+                          <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre], flexShrink: 0 }} />
+                          <span style={{ flex: 1, color: "var(--ink-700)" }}>{v.nombre}</span>
+                          <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>{fmtBs(v.monto)}</span>
+                          <b style={{ color: "var(--ink)", minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtPct(frac)}</b>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: "6px 18px 18px", overflowX: "auto" }}>
+                <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={thCorner}>Indicador</th>
+                      {g.vends.map((v, idx) => (
+                        <th key={v.nombre} style={idx === 0 ? thLider : th}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 7 }}>
+                            <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[v.nombre] }} />
+                            {v.nombre}{idx === 0 ? " 👑" : ""}
+                          </span>
+                        </th>
+                      ))}
+                      <th style={thProm}>Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {metricas.map(m => {
+                      const nums = g.vends.map(m.raw).filter(x => x != null && isFinite(x));
+                      const best = nums.length ? Math.max.apply(null, nums) : null;
+                      const minV = nums.length ? Math.min.apply(null, nums) : null;
+                      const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
+                      const tcol = colTotal(m, g.vends, g.tienda);
+                      return (
+                        <tr key={m.l}>
+                          <td style={tdLat}>{m.l}</td>
+                          {g.vends.map((v, idx) => {
+                            const raw = m.raw(v);
+                            const esMejor = !m.noBest && g.vends.length > 1 && best != null && best !== minV && raw === best;
+                            let color = "var(--ink)";
+                            if (m.crec && raw != null) color = raw >= 0 ? "var(--good)" : "var(--bad)";
+                            if (m.falta) color = (raw != null && raw <= 0) ? "var(--good)" : "var(--ink)";
+                            const base = idx === 0 ? tdLider : tdVal;
+                            if (m.bar) {
+                              const bc = (raw != null) ? pctColor(raw) : "var(--muted)";
+                              const ctx = m.ctx ? m.ctx(v) : null;
+                              return (
+                                <td key={v.nombre} style={base}>
+                                  <div style={{ fontWeight: esMejor ? 800 : 600, color: esMejor ? GOLD : bc }}>{fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}</div>
+                                  <div className="mx-cellbar"><i style={{ width: Math.min(Math.max(raw || 0, 0), 1.3) / 1.3 * 100 + "%", background: bc }} /></div>
+                                  {ctx && ctx.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(ctx.monto)} / {fmtBs(ctx.denom)}</div>}
+                                </td>
+                              );
+                            }
                             return (
-                              <td key={v.nombre} style={base}>
-                                <div style={{ fontWeight: esMejor ? 800 : 600, color: esMejor ? GOLD : bc }}>{fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}</div>
-                                <div className="mx-cellbar"><i style={{ width: Math.min(Math.max(raw || 0, 0), 1.3) / 1.3 * 100 + "%", background: bc }} /></div>
-                                {ctx && ctx.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(ctx.monto)} / {fmtBs(ctx.denom)}</div>}
+                              <td key={v.nombre} style={{ ...base, fontWeight: (m.bold || esMejor) ? 800 : 500, color: esMejor ? GOLD : color }}>
+                                {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
                               </td>
                             );
-                          }
-                          return (
-                            <td key={v.nombre} style={{ ...base, fontWeight: (m.bold || esMejor) ? 800 : 500, color: esMejor ? GOLD : color }}>
-                              {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
-                            </td>
-                          );
-                        })}
-                        <td style={tdProm}>
-                          <div>{fmtTipo(tcol.val, tcol.tipo)}</div>
-                          {tcol.monto != null && tcol.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(tcol.monto)} / {fmtBs(tcol.denom)}</div>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-
-            <PodioWrap colors={podioDe(g.vends).map(p => VENDOR_COLOR[p.v.nombre])}>
-            <div style={{ padding: "16px 18px 4px" }}>
-              <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, textAlign: "center", marginBottom: 8 }}>🏆 Podio de {g.nombre}</div>
-              <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 14, flexWrap: "wrap" }}>
-                {podioDe(g.vends).map(p => (
-                  <div key={p.v.nombre} style={{ width: 134, textAlign: "center" }}>
-                    <div style={{ fontSize: 27, lineHeight: 1 }}>{p.med}</div>
-                    <div style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 4 }}>
-                      <span style={{ width: 10, height: 10, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
-                      <b style={{ fontSize: 13.5, color: "var(--ink)" }}>{p.v.nombre}</b>
-                    </div>
-                    <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 15, color: "var(--ink)", marginTop: 1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
-                    <div className="mx-ped" style={{ height: p.h, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "9px 9px 0 0", marginTop: 8, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 7, color: "#fff", fontWeight: 800, fontSize: 21 }}>{p.rank}°</div>
-                  </div>
-                ))}
+                          })}
+                          <td style={tdProm}>
+                            <div>{fmtTipo(tcol.val, tcol.tipo)}</div>
+                            {tcol.monto != null && tcol.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(tcol.monto)} / {fmtBs(tcol.denom)}</div>}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
-            </div>
-            </PodioWrap>
+            </section>
 
-            <div className="mx-best" style={{ margin: "14px 18px 18px", background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
-              <b style={{ color: "var(--ink)" }}><span className="mx-party">🎉</span> 🏆 Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
-            </div>
-          </section>
+            {/* ── Slide: podio con fuegos artificiales ── */}
+            <section className="card" style={{ padding: 0, overflow: "hidden" }}>
+              <div style={{ background: g.color, padding: "14px 22px", color: "#fff", textAlign: "center" }}>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Podio · Tienda</div>
+                <div style={{ fontSize: 26, fontWeight: 800, lineHeight: 1.1 }}>🏆 {g.nombre}</div>
+              </div>
+              <PodioWrap colors={podioDe(g.vends).map(p => VENDOR_COLOR[p.v.nombre])}>
+                <div style={{ padding: "28px 18px 10px", display: "flex", flexDirection: "column", alignItems: "center", gap: 22 }}>
+                  <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
+                    {podioDe(g.vends).map(p => (
+                      <div key={p.v.nombre} style={{ width: 150, textAlign: "center" }}>
+                        <div style={{ fontSize: 38, lineHeight: 1 }}>{p.med}</div>
+                        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, marginTop: 6 }}>
+                          <span style={{ width: 12, height: 12, borderRadius: 3, background: VENDOR_COLOR[p.v.nombre] }} />
+                          <b style={{ fontSize: 16, color: "var(--ink)" }}>{p.v.nombre}</b>
+                        </div>
+                        <div className="mx-count" data-target={p.v.monto} data-fmt="money" style={{ fontWeight: 800, fontSize: 18, color: "var(--ink)", marginTop: 3, fontVariantNumeric: "tabular-nums" }}>{fmtBs(p.v.monto)}</div>
+                        <div className="mx-ped" style={{ height: p.h * 1.4, background: "linear-gradient(180deg," + p.col + "," + p.col + "bb)", borderRadius: "9px 9px 0 0", marginTop: 10, display: "flex", alignItems: "flex-start", justifyContent: "center", paddingTop: 9, color: "#fff", fontWeight: 800, fontSize: 26 }}>{p.rank}°</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mx-best" style={{ width: "100%", maxWidth: 520, background: "var(--surface-2)", borderLeft: "3px solid " + g.color, borderRadius: "0 8px 8px 0", padding: "12px 16px", fontSize: 13.5, color: "var(--ink-700)", lineHeight: 1.55 }}>
+                    <b style={{ color: "var(--ink)" }}><span className="mx-party">🎉</span> Mejor de {g.nombre}: {d.lider.nombre}</b> — {d.texto}
+                  </div>
+                </div>
+              </PodioWrap>
+            </section>
+
+          </React.Fragment>
         );
       })}
     </div>
