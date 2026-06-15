@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Catálogo Heaven Colchones</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:'Hanken Grotesk',sans-serif;
+  background:linear-gradient(160deg,#BEE9E6,#D2F1EF,#C8EDEA);
+  min-height:100vh;padding:40px 24px;
+}
+header{text-align:center;margin-bottom:40px}
+.logo-text{font-size:36px;font-weight:800;letter-spacing:3px;color:#0F1620}
+.logo-text em{font-style:normal;color:#00B5AD}
+.subtitle{font-family:'IBM Plex Mono',monospace;font-size:12px;letter-spacing:2px;color:#697483;margin-top:6px}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+  gap:20px;max-width:1200px;margin:0 auto;
+}
+.slide-card{
+  background:rgba(255,255,255,0.70);
+  backdrop-filter:blur(16px);
+  border-radius:16px;
+  border:1px solid rgba(0,181,173,0.25);
+  overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,181,173,0.12);
+  transition:transform .2s,box-shadow .2s;
+}
+.slide-card:hover{transform:translateY(-4px);box-shadow:0 10px 32px rgba(0,181,173,0.22)}
+.slide-card img{width:100%;display:block;border-radius:16px}
+.slide-card a{
+  display:block;
+  text-align:center;
+  padding:10px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;letter-spacing:1px;
+  color:#00B5AD;font-weight:600;
+  border-top:1px solid rgba(0,181,173,0.15);
+  text-decoration:none;
+}
+.slide-card a:hover{background:rgba(0,181,173,0.08)}
+footer{text-align:center;margin-top:48px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(0,181,173,0.55);letter-spacing:1px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo-text">HEAVEN <em>colchones</em></div>
+  <div class="subtitle">// CATÁLOGO DE PRODUCTOS 2025</div>
+</header>
+<div class="grid">
+  <div class="slide-card"><img src="01_Natural_Latex.png" alt="Natural Latex"><a href="01_Natural_Latex.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="02_Ice.png" alt="Ice"><a href="02_Ice.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="03_Anatomico_Viscoelastico.png" alt="Anatomico Viscoelastico"><a href="03_Anatomico_Viscoelastico.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="04_Bi-Relax.png" alt="Bi-Relax"><a href="04_Bi-Relax.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="05_Ortopedico.png" alt="Ortopedico"><a href="05_Ortopedico.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="06_Semiortopedico.png" alt="Semiortopedico"><a href="06_Semiortopedico.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="07_Especial_Tropical.png" alt="Especial Tropical"><a href="07_Especial_Tropical.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="08_Antialergico.png" alt="Antialergico"><a href="08_Antialergico.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="09_Ortopedico_Especial.png" alt="Ortopedico Especial"><a href="09_Ortopedico_Especial.png" download>Descargar</a></div>
+  <div class="slide-card"><img src="10_Almohadas.png" alt="Almohadas"><a href="10_Almohadas.png" download>Descargar</a></div>
+</div>
+<footer>// recarga tu energia · Heaven Colchones 2025</footer>
+</body>
+</html>
