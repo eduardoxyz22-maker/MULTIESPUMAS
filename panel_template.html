@@ -2965,7 +2965,7 @@ window.proy = function (cerrado, pipeline) {
     DD = PD.daysInMonth || 30;
   const porCerrar = Math.max(0, (pipeline || 0) - cerrado);
   const runrate = Math.round(d ? cerrado * DD / d : cerrado); // ritmo extrapolado a fin de mes
-  const pipeFloor = Math.round(cerrado + porCerrar * window.PROY.pipe); // piso: cerrado + 90% del pipeline
+  const pipeFloor = Math.round(cerrado + porCerrar * window.PROY.pipe); // piso: cerrado + 100% del pipeline (window.PROY.pipe)
   return {
     porCerrar,
     runrate,
@@ -5185,7 +5185,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Metas",
       h3: "Cumplimiento de ventas por vendedora (monto Bs)",
-      p: "Avance en Bs vs meta mensual. La proyecci\xF3n al cierre extrapola el ritmo de ventas a fin de mes (pipeline al 90% como piso). Metas editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
+      p: "Avance en Bs vs meta mensual. La proyecci\xF3n al cierre extrapola el ritmo de ventas a fin de mes (pipeline al 100% como piso). Metas editables en l\xEDnea \u2014 usa \u2212 / + o escribe el monto."
     }), /*#__PURE__*/React.createElement("div", {
       style: {
         marginTop: 16
