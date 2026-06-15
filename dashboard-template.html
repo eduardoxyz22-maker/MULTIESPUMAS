@@ -5409,6 +5409,10 @@ function PresentacionView({ filtered, filterTienda }) {
     { l: "% Meta mínima", raw: v => v.pctMin, tipo: "pct", bar: true, ctx: v => ({ monto: v.monto, denom: v.metaMin }) },
     { l: "Crecimiento", raw: v => v.crecimientoVsAbril, tipo: "crec", crec: true },
     { l: "Falta p/ presupuesto", raw: v => Math.max((v.presupuesto || 0) - (v.monto || 0), 0), tipo: "falta", noBest: true, falta: true },
+    { sep: true, l: "📊 MoM vs " + (D.periodo.momLabel || "mes anterior") },
+    { l: "MoM Leads",  raw: v => v.momLeads  != null && v.momLeads  > 0 ? (v.leads - v.momLeads) / v.momLeads   : null, tipo: "crec", noBest: true, mom: true, cur: v => v.leads,                 prev: v => v.momLeads,  tipSub: "int"   },
+    { l: "MoM Ventas", raw: v => v.momVentas != null && v.momVentas > 0 ? (v.ventasConcretadas - v.momVentas) / v.momVentas : null, tipo: "crec", noBest: true, mom: true, cur: v => v.ventasConcretadas, prev: v => v.momVentas, tipSub: "int"   },
+    { l: "MoM Monto",  raw: v => v.momMonto  != null && v.momMonto  > 0 ? (v.monto - v.momMonto) / v.momMonto   : null, tipo: "crec", noBest: true, mom: true, cur: v => v.monto,                prev: v => v.momMonto,  tipSub: "money" },
   ];
 
   const glosario = [
@@ -5462,6 +5466,9 @@ function PresentacionView({ filtered, filterTienda }) {
       case "% Meta mínima": return { val: metaT > 0 ? montoT / metaT : null, tipo: "pct", monto: montoT, denom: metaT };
       case "Crecimiento": { var pas = vends.reduce(function(s,v){ return s + (v.crecimientoVsAbril != null ? v.monto / (1 + v.crecimientoVsAbril) : v.monto); }, 0); return { val: pas > 0 ? (montoT - pas) / pas : null, tipo: "crec" }; }
       case "Falta p/ presupuesto": return { val: Math.max(presT - montoT, 0), tipo: "falta" };
+      case "MoM Leads":  { var c=leadsT,  p=vends.reduce(function(s,v){return s+(v.momLeads||0);},0);  return {val:p>0?(c-p)/p:null,tipo:"crec",cur:c,prev:p,mom:true}; }
+      case "MoM Ventas": { var c=ventasT, p=vends.reduce(function(s,v){return s+(v.momVentas||0);},0); return {val:p>0?(c-p)/p:null,tipo:"crec",cur:c,prev:p,mom:true}; }
+      case "MoM Monto":  { var c=montoT,  p=vends.reduce(function(s,v){return s+(v.momMonto||0);},0);  return {val:p>0?(c-p)/p:null,tipo:"crec",cur:c,prev:p,mom:true,tipSub:"money"}; }
       default: return { val: null, tipo: m.tipo };
     }
   }
@@ -5628,11 +5635,16 @@ function PresentacionView({ filtered, filterTienda }) {
                   </thead>
                   <tbody>
                     {metricas.map(m => {
+                      if (m.sep) return (
+                        <tr key={m.l}>
+                          <td colSpan={g.vends.length + 2} style={{ padding: "5px 14px 3px", background: "var(--surface-2)", fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em", borderTop: "1px solid var(--hairline)" }}>{m.l}</td>
+                        </tr>
+                      );
                       const nums = g.vends.map(m.raw).filter(x => x != null && isFinite(x));
                       const best = nums.length ? Math.max.apply(null, nums) : null;
                       const minV = nums.length ? Math.min.apply(null, nums) : null;
-                      const avg = nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : null;
                       const tcol = colTotal(m, g.vends, g.tienda);
+                      const fmtSub = (val) => m.tipSub === "money" ? fmtBs(val) : fmtInt(val);
                       return (
                         <tr key={m.l}>
                           <td style={tdLat}>{m.l}</td>
@@ -5654,6 +5666,15 @@ function PresentacionView({ filtered, filterTienda }) {
                                 </td>
                               );
                             }
+                            if (m.mom) {
+                              const curV = m.cur(v), prevV = m.prev(v);
+                              return (
+                                <td key={v.nombre} style={{ ...base, color: raw != null ? (raw >= 0 ? "var(--good)" : "var(--bad)") : "var(--muted)" }}>
+                                  <div style={{ fontWeight: 700 }}>{raw != null ? fmtTipo(raw, "crec") : "—"}</div>
+                                  {prevV != null && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtSub(curV)} → {fmtSub(prevV)}</div>}
+                                </td>
+                              );
+                            }
                             return (
                               <td key={v.nombre} style={{ ...base, fontWeight: (m.bold || esMejor) ? 800 : 500, color: esMejor ? GOLD : color }}>
                                 {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
@@ -5663,6 +5684,7 @@ function PresentacionView({ filtered, filterTienda }) {
                           <td style={tdProm}>
                             <div>{fmtTipo(tcol.val, tcol.tipo)}</div>
                             {tcol.monto != null && tcol.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(tcol.monto)} / {fmtBs(tcol.denom)}</div>}
+                            {tcol.mom && tcol.prev > 0 && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{tcol.tipSub === "money" ? fmtBs(tcol.cur) : fmtInt(tcol.cur)} → {tcol.tipSub === "money" ? fmtBs(tcol.prev) : fmtInt(tcol.prev)}</div>}
                           </td>
                         </tr>
                       );

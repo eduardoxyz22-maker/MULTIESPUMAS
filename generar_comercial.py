@@ -134,12 +134,43 @@ try:
         sv = read_sheet_by_name(z, name_map, ss, 'SUEÑA', 'SUENA', 'Sueña')
         mg = read_sheet_by_name(z, name_map, ss, GLOBAL_SHEET)
         ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD')
+        try:
+            mom_s = read_sheet_by_name(z, name_map, ss, 'MOM', 'Mom', 'mom') or {}
+        except (KeyError, Exception):
+            mom_s = {}
 except FileNotFoundError:
     print('ERROR: datos.xlsx no encontrado.', file=sys.stderr)
     sys.exit(1)
 except KeyError as e:
     print(f'ERROR: hoja faltante en el Excel: {e}', file=sys.stderr)
     sys.exit(1)
+
+# ── Leer hoja MOM (comparativo mes anterior al mismo día) ──
+mom_data = {}
+mom_label = ''
+if mom_s:
+    _mom_hdr = None
+    for rn in sorted(k for k in mom_s if k >= 1):
+        if _norm(gv(mom_s, rn, 0)) == 'VENDEDOR':
+            _mom_hdr = rn
+            break
+    if _mom_hdr:
+        for rn in range(_mom_hdr + 1, 30):
+            nm_raw = gv(mom_s, rn, 0).strip()
+            if not nm_raw:
+                continue
+            if 'FECHA' in _norm(nm_raw) or _norm(nm_raw) in ('TOTAL', 'A FECHA'):
+                cell1 = gv(mom_s, rn, 1).strip()
+                if cell1:
+                    mom_label = cell1
+                continue
+            mom_data[nm_raw.lower()] = {
+                'leads':    si(gv(mom_s, rn, 1)),
+                'ventas':   si(gv(mom_s, rn, 2)),
+                'productos': si(gv(mom_s, rn, 3)),
+                'monto':    round(float(gv(mom_s, rn, 4) or 0), 2),
+            }
+print(f'MOM: {len(mom_data)} vendedores, período "{mom_label}"')
 
 now = datetime.datetime.now()
 mes_map = {1:'Enero',2:'Febrero',3:'Marzo',4:'Abril',5:'Mayo',6:'Junio',
@@ -227,6 +258,10 @@ for row in range(3, 40):
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
         'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
         'prodPorVenta': round(sf(gv(hv, row, 9)), 4),
+        'momLeads':    mom_data[nombre_key]['leads']    if nombre_key in mom_data else None,
+        'momVentas':   mom_data[nombre_key]['ventas']   if nombre_key in mom_data else None,
+        'momProductos':mom_data[nombre_key]['productos'] if nombre_key in mom_data else None,
+        'momMonto':    mom_data[nombre_key]['monto']    if nombre_key in mom_data else None,
     })
 
 for row in range(3, 40):
@@ -261,6 +296,10 @@ for row in range(3, 40):
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
         'ingresoLead': round(monto / leads, 4) if leads > 0 else 0,
         'prodPorVenta': round(sf(gv(sv, row, 11)), 4),
+        'momLeads':    mom_data[nombre_key]['leads']    if nombre_key in mom_data else None,
+        'momVentas':   mom_data[nombre_key]['ventas']   if nombre_key in mom_data else None,
+        'momProductos':mom_data[nombre_key]['productos'] if nombre_key in mom_data else None,
+        'momMonto':    mom_data[nombre_key]['monto']    if nombre_key in mom_data else None,
     })
 
 tot_vend = sum(v['monto'] for v in vendedores)
@@ -353,7 +392,7 @@ if _cli:
         clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2)})
         _rn += 1
 
-periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot}
+periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot, 'momLabel': mom_label}
 if CERRADO_ENV:
     periodo['cerrado'] = True
 data = {
