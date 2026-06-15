@@ -660,22 +660,28 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     # ventana fija 09:00–20:00 (solo hora del día)
     metrics["leadsEnHorarioFijo"] = sum(vcur[n]["fix_dentro"] for n in names)
     metrics["leadsFueraHorarioFijo"] = sum(vcur[n]["fix_fuera"] for n in names)
-    # Embudo monótono decreciente (cada etapa contiene a la siguiente):
-    # Leads ⊇ Calificados (interesado+cotización+agendado+compradores) ⊇
-    # En cotización/visita (cotización+agendado+compradores) ⊇ Compradores.
-    _calif = metrics["interesado"] + _cot + agendado_tot + G_cierres
-    _avanz = _cot + agendado_tot + G_cierres
+    # Embudo ACUMULATIVO: cada nivel contiene al siguiente y TODOS salen de la
+    # misma población (la distribución por etapa actual), por lo que nunca puede
+    # superar el 100%. Antes se sumaban conteos que se solapaban y se mezclaban
+    # con los cierres por fecha de contrato, y eso producía barras de 173% / 106%.
+    _f_inter = stage_tot.get("Interesado", 0)
+    _f_cotz = stage_tot.get("Cotización enviada", 0)
+    _f_agen = stage_tot.get("Agendado / Visita", 0)
+    _f_comp = stage_tot.get("Compradores", 0)
+    _calif = _f_inter + _f_cotz + _f_agen + _f_comp      # llegaron al menos a "Interesado"
+    _avanz = _f_cotz + _f_agen + _f_comp                  # llegaron al menos a "Cotización/Visita"
     funnel2 = [
-        {"n": "Leads del mes",          "v": G_leads,   "c": "#27313F"},
-        {"n": "Calificados",            "v": _calif,    "c": "#2E6FE0"},
-        {"n": "En cotización o visita", "v": _avanz,    "c": "#00B5AD"},
-        {"n": "Compradores",            "v": G_cierres, "c": "#159A57"},
+        {"n": "Leads del mes",          "v": G_leads,  "c": "#27313F"},
+        {"n": "Calificados",            "v": _calif,   "c": "#2E6FE0"},
+        {"n": "En cotización o visita", "v": _avanz,   "c": "#00B5AD"},
+        {"n": "Compradores",            "v": _f_comp,  "c": "#159A57"},
     ]
-    funnel = [{"name": sn, "count": stage_tot.get(sn, 0)} for sn in
-              ["Nueva consulta", "Interesado", "Cotización enviada",
-               "Agendado / Visita", "Compradores", "No Responden"] if stage_tot.get(sn, 0)]
-    if not funnel:  # fallback si los nombres de etapa no coinciden
-        funnel = [{"name": s["name"], "count": s["count"]} for s in stagesGlobal[:6]]
+    funnel = [
+        {"name": "Leads del mes",          "count": G_leads},
+        {"name": "Calificados",            "count": _calif},
+        {"name": "En cotización o visita", "count": _avanz},
+        {"name": "Compradores",            "count": _f_comp},
+    ]
 
     # ── stagesByV ──
     stagesByV = {n: [[sn, c] for sn, c in sorted(vcur[n]["stage"].items(), key=lambda x: -x[1])]
