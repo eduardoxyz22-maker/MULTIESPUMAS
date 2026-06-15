@@ -133,7 +133,7 @@ try:
         hv = read_sheet_by_name(z, name_map, ss, 'HEAVEN')
         sv = read_sheet_by_name(z, name_map, ss, 'SUEÑA', 'SUENA', 'Sueña')
         mg = read_sheet_by_name(z, name_map, ss, GLOBAL_SHEET)
-        ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD')
+        ds = read_sheet_by_name(z, name_map, ss, 'Dashboard', 'DASHBOARD', 'Metricas', 'METRICAS', 'metricas')
         try:
             mom_s = read_sheet_by_name(z, name_map, ss, 'MOM', 'Mom', 'mom') or {}
         except (KeyError, Exception):
