@@ -413,8 +413,27 @@ if _cli:
         nombre_c = gv(mg, _rn, 0).strip()
         if not nombre_c or nombre_c.upper() == 'TOTAL':
             break
-        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2)})
+        _mmc = mom_data.get(nombre_c.lower())
+        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2),
+                         'momMonto': _mmc['monto'] if _mmc and _mmc.get('monto') else None})
         _rn += 1
+
+# Comparativo de externos a la fecha: si la hoja MOM trae los clientes externos
+# (día 15 mes pasado), compara externos-hoy vs externos-día-15-mes-pasado. Si no,
+# cae al mes completo anterior (suma de OTROS + ROHO de la tabla por tienda).
+_ext_actual = sum(c['monto'] for c in clientes)
+_ext_prev_mom = sum(c['momMonto'] for c in clientes if c.get('momMonto') is not None)
+_ext_has_mom = any(c.get('momMonto') is not None for c in clientes)
+if _ext_has_mom and _ext_prev_mom > 0:
+    global_data['externosPrev'] = round(_ext_prev_mom, 2)
+    global_data['externosDelta'] = round((_ext_actual - _ext_prev_mom) / _ext_prev_mom, 6)
+    global_data['externosBase'] = 'fecha'
+else:
+    _ext_prev_full = sum(t['mesPasadoMonto'] for t in tiendas
+                         if t['nombre'] in ('OTROS', 'ROHO') and t.get('mesPasadoMonto'))
+    global_data['externosPrev'] = round(_ext_prev_full, 2) if _ext_prev_full else None
+    global_data['externosDelta'] = round((_ext_actual - _ext_prev_full) / _ext_prev_full, 6) if _ext_prev_full else None
+    global_data['externosBase'] = 'mescompleto'
 
 periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot, 'momLabel': mom_label}
 if CERRADO_ENV:

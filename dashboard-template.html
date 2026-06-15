@@ -3193,7 +3193,7 @@ function ExternosView() {
     className: "card span-7"
   }, /*#__PURE__*/React.createElement("header", {
     className: "card-head"
-  }, /*#__PURE__*/React.createElement("h3", null, "Clientes externos \xB7 ventas mayo"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("h3", null, "Clientes externos \xB7 ventas " + (D.periodo.mes || "").toLowerCase()), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'baseline',
@@ -3201,26 +3201,19 @@ function ExternosView() {
     }
   }, /*#__PURE__*/React.createElement("span", {
     className: "card-sub"
-  }, "Total Bs ", fmtMoney(total), " \xB7 ", clientes.length, " cuentas"), ((_D$tiendas$find = D.tiendas.find(function (t) {
-    return t.nombre === "OTROS";
-  })) === null || _D$tiendas$find === void 0 ? void 0 : _D$tiendas$find.mesPasadoMonto) != null && function () {
-    var otros = D.tiendas.find(function (t) {
-      return t.nombre === "OTROS";
-    });
-    return /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        color: otros.crecimientoVsAbril >= 0 ? 'var(--good)' : 'var(--bad)'
-      }
-    }, otros.crecimientoVsAbril >= 0 ? "+" : "", (otros.crecimientoVsAbril * 100).toFixed(1), "% vs mes ant.", /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 400,
-        color: 'var(--muted)',
-        marginLeft: 4
-      }
-    }, "(Bs ", otros.mesPasadoMonto.toLocaleString("es-BO"), ")"));
-  }())), /*#__PURE__*/React.createElement("table", {
+  }, "Total Bs ", fmtMoney(total), " \xB7 ", clientes.length, " cuentas"), D.global.externosDelta != null && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: D.global.externosDelta >= 0 ? 'var(--good)' : 'var(--bad)'
+    }
+  }, D.global.externosDelta >= 0 ? "+" : "", (D.global.externosDelta * 100).toFixed(1), "% vs mes ant.", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      color: 'var(--muted)',
+      marginLeft: 4
+    }
+  }, "(Bs ", D.global.externosPrev.toLocaleString("es-BO"), D.global.externosBase === "fecha" ? " a la fecha" : "", ")"))), /*#__PURE__*/React.createElement("table", {
     className: "ext-table"
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Cliente"), /*#__PURE__*/React.createElement("th", {
     className: "num"
@@ -5090,21 +5083,18 @@ function ExternosView() {
     <div className="externos-grid">
       <section className="card span-7">
         <header className="card-head">
-          <h3>Clientes externos · ventas mayo</h3>
+          <h3>Clientes externos · ventas {(D.periodo.mes || "").toLowerCase()}</h3>
           <div style={{display:'flex',alignItems:'baseline',gap:16}}>
             <span className="card-sub">Total Bs {fmtMoney(total)} · {clientes.length} cuentas</span>
-            {D.tiendas.find(t=>t.nombre==="OTROS")?.mesPasadoMonto != null && (() => {
-              const otros = D.tiendas.find(t=>t.nombre==="OTROS");
-              return (
-                <span style={{fontSize:12,fontWeight:700,
-                  color: otros.crecimientoVsAbril >= 0 ? 'var(--good)' : 'var(--bad)'}}>
-                  {otros.crecimientoVsAbril >= 0 ? "+" : ""}{(otros.crecimientoVsAbril*100).toFixed(1)}% vs mes ant.
-                  <span style={{fontWeight:400,color:'var(--muted)',marginLeft:4}}>
-                    (Bs {otros.mesPasadoMonto.toLocaleString("es-BO")})
-                  </span>
+            {D.global.externosDelta != null && (
+              <span style={{fontSize:12,fontWeight:700,
+                color: D.global.externosDelta >= 0 ? 'var(--good)' : 'var(--bad)'}}>
+                {D.global.externosDelta >= 0 ? "+" : ""}{(D.global.externosDelta*100).toFixed(1)}% vs mes ant.
+                <span style={{fontWeight:400,color:'var(--muted)',marginLeft:4}}>
+                  (Bs {D.global.externosPrev.toLocaleString("es-BO")}{D.global.externosBase === "fecha" ? " a la fecha" : ""})
                 </span>
-              );
-            })()}
+              </span>
+            )}
           </div>
         </header>
         <table className="ext-table">
