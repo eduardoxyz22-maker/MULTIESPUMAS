@@ -5574,8 +5574,15 @@ function PresentacionView({ filtered, filterTienda }) {
       <button className="mx-nav mx-nav-prev" onClick={() => navSlide(-1)} title="Anterior">▲</button>
       <button className="mx-nav mx-nav-next" onClick={() => navSlide(1)} title="Siguiente">▼</button>
 
+      {(() => {
+        var _mesAct = (D.periodo.mes || '').slice(0, 3).toLowerCase();
+        var _mesPrv = (D.periodo.momLabel || '').split(' ').pop().slice(0, 3).toLowerCase();
+        window.__momMes = { act: _mesAct, prv: _mesPrv };
+      })()}
       {grupos.map(g => {
         const total = g.vends.reduce((s, v) => s + v.monto, 0);
+        const mesActual = window.__momMes.act;
+        const mesPrev   = window.__momMes.prv;
         const d = destacado(g);
         return (
           <React.Fragment key={g.nombre}>
@@ -5674,7 +5681,7 @@ function PresentacionView({ filtered, filterTienda }) {
                               return (
                                 <td key={v.nombre} style={{ ...base, color: raw != null ? (raw >= 0 ? "var(--good)" : "var(--bad)") : "var(--muted)" }}>
                                   <div style={{ fontWeight: 700 }}>{raw != null ? fmtTipo(raw, "crec") : "—"}</div>
-                                  {prevV != null && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtSub(curV)} → {fmtSub(prevV)}</div>}
+                                  {prevV != null && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtSub(curV)} <span style={{opacity:.65,fontSize:9.5,textTransform:"uppercase"}}>{mesActual}</span> → {fmtSub(prevV)} <span style={{opacity:.65,fontSize:9.5,textTransform:"uppercase"}}>{mesPrev}</span></div>}
                                 </td>
                               );
                             }
@@ -5687,7 +5694,7 @@ function PresentacionView({ filtered, filterTienda }) {
                           <td style={tdProm}>
                             <div>{fmtTipo(tcol.val, tcol.tipo)}</div>
                             {tcol.monto != null && tcol.denom > 0 && <div style={{ fontSize: 11, color: "var(--ink-700)", marginTop: 3, fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{fmtBs(tcol.monto)} / {fmtBs(tcol.denom)}</div>}
-                            {tcol.mom && tcol.prev > 0 && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{tcol.tipSub === "money" ? fmtBs(tcol.cur) : fmtInt(tcol.cur)} → {tcol.tipSub === "money" ? fmtBs(tcol.prev) : fmtInt(tcol.prev)}</div>}
+                            {tcol.mom && tcol.prev > 0 && <div style={{ fontSize: 10.5, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{tcol.tipSub === "money" ? fmtBs(tcol.cur) : fmtInt(tcol.cur)} <span style={{opacity:.65,fontSize:9.5,textTransform:"uppercase"}}>{mesActual}</span> → {tcol.tipSub === "money" ? fmtBs(tcol.prev) : fmtInt(tcol.prev)} <span style={{opacity:.65,fontSize:9.5,textTransform:"uppercase"}}>{mesPrev}</span></div>}
                           </td>
                         </tr>
                       );
