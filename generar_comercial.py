@@ -371,9 +371,11 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
     if (not CERRADO_ENV) and _mt and _mt['prev'] > 0:
         crec_t = round((_mt['cur'] - _mt['prev']) / _mt['prev'], 6)
         mes_pasado_t = round(_mt['prev'], 2)
+        crec_base_t = 'fecha'
     else:
         crec_t = round(diferencia / mes_pasado, 6) if mes_pasado else None
         mes_pasado_t = mes_pasado
+        crec_base_t = 'mescompleto'
     tiendas.append({
         'id': nombre_t.lower(),
         'nombre': nombre_t,
@@ -390,6 +392,7 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
         'comisionados': c['comisionados'],
         'crecimientoVsAbril': crec_t,
         'mesPasadoMonto': mes_pasado_t,
+        'crecBase': crec_base_t,
     })
 
 # Totales globales: etiqueta en col H (idx 7), valor en col K (idx 10)
@@ -434,6 +437,22 @@ else:
     global_data['externosPrev'] = round(_ext_prev_full, 2) if _ext_prev_full else None
     global_data['externosDelta'] = round((_ext_actual - _ext_prev_full) / _ext_prev_full, 6) if _ext_prev_full else None
     global_data['externosBase'] = 'mescompleto'
+
+# Crecimiento a la fecha de las "tiendas" externas (ROHO = cliente ROHO; OTROS = resto
+# de clientes), usando el MOM de externos. Sobrescribe la diferencia del Excel (mes completo).
+if not CERRADO_ENV:
+    _roho_cli = [c for c in clientes if c['nombre'].strip().upper() == 'ROHO']
+    _otros_cli = [c for c in clientes if c['nombre'].strip().upper() != 'ROHO']
+    for _t in tiendas:
+        _lst = _roho_cli if _t['nombre'] == 'ROHO' else (_otros_cli if _t['nombre'] == 'OTROS' else None)
+        if _lst is None:
+            continue
+        _cur = sum(c['monto'] for c in _lst)
+        _prev = sum(c['momMonto'] for c in _lst if c.get('momMonto') is not None)
+        if any(c.get('momMonto') is not None for c in _lst) and _prev > 0:
+            _t['crecimientoVsAbril'] = round((_cur - _prev) / _prev, 6)
+            _t['mesPasadoMonto'] = round(_prev, 2)
+            _t['crecBase'] = 'fecha'
 
 periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot, 'momLabel': mom_label}
 if CERRADO_ENV:

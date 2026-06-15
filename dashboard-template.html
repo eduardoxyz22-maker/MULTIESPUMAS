@@ -3076,7 +3076,7 @@ function TiendasView(_ref2) {
         color: 'var(--muted)',
         marginLeft: 6
       }
-    }, "Bs ", t.mesPasadoMonto.toLocaleString("es-BO"), " el mes anterior")))), /*#__PURE__*/React.createElement("div", {
+    }, "Bs ", t.mesPasadoMonto.toLocaleString("es-BO"), t.crecBase === "fecha" ? " el mes ant. a la fecha" : " el mes anterior")))), /*#__PURE__*/React.createElement("div", {
       className: "tienda-progress"
     }, /*#__PURE__*/React.createElement("div", {
       className: "progress-label"
@@ -4998,7 +4998,7 @@ function TiendasView({ filterTienda, dia }) {
                   <div className={"stat-value " + (t.crecimientoVsAbril >= 0 ? "good" : "bad")} style={{fontSize:18}}>
                     {t.crecimientoVsAbril >= 0 ? "+" : ""}{(t.crecimientoVsAbril*100).toFixed(1)}%
                     <span style={{fontSize:11,fontWeight:400,color:'var(--muted)',marginLeft:6}}>
-                      Bs {t.mesPasadoMonto.toLocaleString("es-BO")} el mes anterior
+                      Bs {t.mesPasadoMonto.toLocaleString("es-BO")}{t.crecBase === "fecha" ? " el mes ant. a la fecha" : " el mes anterior"}
                     </span>
                   </div>
                 </div>
