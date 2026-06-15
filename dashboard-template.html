@@ -5634,7 +5634,10 @@ function PresentacionView({ filtered, filterTienda }) {
                     </tr>
                   </thead>
                   <tbody>
-                    {metricas.map(m => {
+                    {(() => {
+                      const hasMom = g.vends.some(v => v.momLeads != null);
+                      return metricas.filter(m => !m.mom && !m.sep || hasMom);
+                    })().map(m => {
                       if (m.sep) return (
                         <tr key={m.l}>
                           <td colSpan={g.vends.length + 2} style={{ padding: "5px 14px 3px", background: "var(--surface-2)", fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".06em", borderTop: "1px solid var(--hairline)" }}>{m.l}</td>
