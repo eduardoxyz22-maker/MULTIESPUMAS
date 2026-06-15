@@ -5318,8 +5318,8 @@ function PresentacionView({ filtered, filterTienda }) {
     { l: "Conversión", raw: v => v.conversion, tipo: "pct1" },
     { l: "Monto vendido", raw: v => v.monto, tipo: "money", bold: true },
     { l: "Ticket promedio", raw: v => v.ticketProm, tipo: "money" },
-    { l: "% Presupuesto", raw: v => v.pctPres, tipo: "pct", bar: true },
-    { l: "% Meta mínima", raw: v => v.pctMin, tipo: "pct", bar: true },
+    { l: "% Presupuesto", raw: v => v.pctPres, tipo: "pct", bar: true, ctx: v => ({ monto: v.monto, denom: v.presupuesto }) },
+    { l: "% Meta mínima", raw: v => v.pctMin, tipo: "pct", bar: true, ctx: v => ({ monto: v.monto, denom: v.metaMin }) },
     { l: "Crecimiento", raw: v => v.crecimientoVsAbril, tipo: "crec", crec: true },
     { l: "Falta p/ presupuesto", raw: v => Math.max((v.presupuesto || 0) - (v.monto || 0), 0), tipo: "falta", noBest: true, falta: true },
   ];
@@ -5371,8 +5371,8 @@ function PresentacionView({ filtered, filterTienda }) {
       case "Conversión": return { val: leadsT > 0 ? ventasT / leadsT : null, tipo: "pct1" };
       case "Monto vendido": return { val: montoT, tipo: "money" };
       case "Ticket promedio": return { val: ventasT > 0 ? montoT / ventasT : null, tipo: "money" };
-      case "% Presupuesto": return { val: presT > 0 ? montoT / presT : null, tipo: "pct" };
-      case "% Meta mínima": return { val: metaT > 0 ? montoT / metaT : null, tipo: "pct" };
+      case "% Presupuesto": return { val: presT > 0 ? montoT / presT : null, tipo: "pct", monto: montoT, denom: presT };
+      case "% Meta mínima": return { val: metaT > 0 ? montoT / metaT : null, tipo: "pct", monto: montoT, denom: metaT };
       case "Crecimiento": { var pas = vends.reduce(function(s,v){ return s + (v.crecimientoVsAbril != null ? v.monto / (1 + v.crecimientoVsAbril) : v.monto); }, 0); return { val: pas > 0 ? (montoT - pas) / pas : null, tipo: "crec" }; }
       case "Falta p/ presupuesto": return { val: Math.max(presT - montoT, 0), tipo: "falta" };
       default: return { val: null, tipo: m.tipo };
@@ -5552,10 +5552,12 @@ function PresentacionView({ filtered, filterTienda }) {
                           const base = idx === 0 ? tdLider : tdVal;
                           if (m.bar) {
                             const bc = (raw != null) ? pctColor(raw) : "var(--muted)";
+                            const ctx = m.ctx ? m.ctx(v) : null;
                             return (
                               <td key={v.nombre} style={base}>
                                 <div style={{ fontWeight: esMejor ? 800 : 600, color: esMejor ? GOLD : bc }}>{fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}</div>
                                 <div className="mx-cellbar"><i style={{ width: Math.min(Math.max(raw || 0, 0), 1.3) / 1.3 * 100 + "%", background: bc }} /></div>
+                                {ctx && ctx.denom > 0 && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtBs(ctx.monto)} / {fmtBs(ctx.denom)}</div>}
                               </td>
                             );
                           }
@@ -5565,7 +5567,10 @@ function PresentacionView({ filtered, filterTienda }) {
                             </td>
                           );
                         })}
-                        <td style={tdProm}>{fmtTipo(tcol.val, tcol.tipo)}</td>
+                        <td style={tdProm}>
+                          <div>{fmtTipo(tcol.val, tcol.tipo)}</div>
+                          {tcol.monto != null && tcol.denom > 0 && <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums" }}>{fmtBs(tcol.monto)} / {fmtBs(tcol.denom)}</div>}
+                        </td>
                       </tr>
                     );
                   })}
