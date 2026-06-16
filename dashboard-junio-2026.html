@@ -1573,6 +1573,8 @@ function MetaBar(_ref) {
   var pctV = Math.min(value / m, 1) * 100;
   var pctMeta = meta ? meta / m * 100 : null;
   var pctPres = presupuesto ? presupuesto / m * 100 : null;
+  var hasExcess = presupuesto != null && value > presupuesto;
+  var pctBase = hasExcess ? pctPres : pctV;
   return /*#__PURE__*/React.createElement("div", {
     style: {
       position: "relative",
@@ -1592,8 +1594,20 @@ function MetaBar(_ref) {
       left: 0,
       top: 0,
       height: "100%",
-      width: pctV + "%",
+      width: pctBase + "%",
       background: color,
+      borderRadius: 2,
+      transition: "width 0.6s cubic-bezier(.2,.7,.3,1)"
+    }
+  }), hasExcess && /*#__PURE__*/React.createElement("div", {
+    title: "Excedente sobre presupuesto",
+    style: {
+      position: "absolute",
+      left: pctPres + "%",
+      top: 0,
+      height: "100%",
+      width: (pctV - pctPres) + "%",
+      background: "#0E7C86",
       borderRadius: 2,
       transition: "width 0.6s cubic-bezier(.2,.7,.3,1)"
     }
@@ -1835,7 +1849,7 @@ function PaceBar(_ref6) {
     style: {
       height: "100%",
       width: over * 100 + "%",
-      background: "#00B5AD",
+      background: "#0E7C86",
       transition: "width 0.6s cubic-bezier(.2,.7,.3,1)"
     }
   }) : null);
@@ -4135,10 +4149,15 @@ function MetaBar({ value, meta, presupuesto, max, color = "var(--ink)", height =
   const pctV = Math.min(value / m, 1) * 100;
   const pctMeta = meta ? (meta / m) * 100 : null;
   const pctPres = presupuesto ? (presupuesto / m) * 100 : null;
+  const hasExcess = presupuesto != null && value > presupuesto;
+  const pctBase = hasExcess ? pctPres : pctV;
   return (
     <div style={{ position: "relative", width: "100%", height }}>
       <div style={{ position: "absolute", inset: 0, background: "var(--rail)", borderRadius: 2 }} />
-      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: pctV + "%", background: color, borderRadius: 2, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
+      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: pctBase + "%", background: color, borderRadius: 2, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
+      {hasExcess && (
+        <div title="Excedente sobre presupuesto" style={{ position: "absolute", left: pctPres + "%", top: 0, height: "100%", width: (pctV - pctPres) + "%", background: "#0E7C86", borderRadius: 2, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
+      )}
       {pctMeta != null && (
         <div title={"Meta mín: " + format(meta)} style={{ position: "absolute", left: pctMeta + "%", top: -3, bottom: -3, width: 2, background: "var(--ink)", opacity: 0.9 }} />
       )}
@@ -4264,7 +4283,7 @@ function PaceBar({ pct, height = 6, threshold = 1.0 }) {
   return (
     <div style={{ position: "relative", width: "100%", height, background: "var(--rail)", borderRadius: 999, overflow: "hidden", display: "flex" }}>
       <div style={{ height: "100%", width: base * 100 + "%", background: baseColor, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
-      {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#00B5AD", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
+      {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#0E7C86", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
     </div>
   );
 }
