@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Comparativo Precios — Sueña vs Competencia Junio 2026</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Hanken Grotesk",sans-serif;background:#F5F7F8;color:#0F1620;font-size:14px;-webkit-font-smoothing:antialiased}
+header{background:linear-gradient(135deg,#0F1620 0%,#1a2840 100%);color:#fff;padding:28px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+header h1{font-size:20px;font-weight:800}
+header h1 em{font-style:normal;color:#00B5AD}
+.meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.5);margin-top:3px;letter-spacing:1px}
+.badge-comp{background:rgba(0,181,173,.15);border:1px solid rgba(0,181,173,.4);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:#00B5AD}
+.wrap{max-width:1380px;margin:0 auto;padding:28px 20px}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.kpi{background:#fff;border-radius:12px;padding:18px 20px;border:1px solid #E7EAEE;box-shadow:0 1px 4px rgba(15,22,32,.05)}
+.kpi .v{font-size:38px;font-weight:800;line-height:1;font-family:"IBM Plex Mono",monospace}
+.kpi .l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#697483;margin-top:6px}
+.kpi.g .v{color:#159A57}.kpi.a .v{color:#D98300}.kpi.r .v{color:#DC4046}
+.sec{margin-bottom:36px}
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid #E7EAEE}
+.sh h2{font-size:15px;font-weight:800}
+.seg{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:600;letter-spacing:1px;padding:3px 9px;border-radius:5px;text-transform:uppercase}
+.sB{background:#FBF0DA;color:#7A4A00}.sM{background:#E0F4F2;color:#0A7D77}.sP{background:#EDE9FE;color:#5B3EB5}.sI{background:#F0F2F4;color:#697483}
+tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(15,22,32,.05);border:1px solid #E7EAEE}
+th{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#697483;padding:10px 12px;border-bottom:1px solid #E7EAEE;text-align:left;background:#F8FAFB;white-space:nowrap}
+th.r,td.r{text-align:right}
+td{padding:11px 12px;border-bottom:1px solid #F0F2F4;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#F8FAFB}
+.pn{font-weight:700;font-size:13px}
+.pb{font-size:11px;color:#9BA4B0;font-family:"IBM Plex Mono",monospace;margin-top:1px}
+.fp{display:inline-block;font-size:10px;background:#F0F2F4;color:#697483;border-radius:4px;padding:2px 6px;margin:2px 2px 0 0;font-weight:600}
+.fp.t{background:#E0F4F2;color:#0A7D77}
+.price{font-family:"IBM Plex Mono",monospace;font-weight:700;font-size:13px}
+.my{background:linear-gradient(90deg,rgba(0,181,173,.06),transparent)}
+.cv{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:800;padding:3px 9px;border-radius:99px;white-space:nowrap}
+.cv.MENOR{background:#E7F5ED;color:#0C5C34}
+.cv.IGUAL{background:#FBF0DA;color:#7A4A00}
+.cv.MAYOR{background:#FBE8E9;color:#871F23}
+.rh{font-size:11px;font-weight:700;letter-spacing:.5px;padding:5px 12px;border-bottom:1px solid #F0F2F4}
+.rh.my{color:#00B5AD}.rh.cp{color:#DC4046;background:linear-gradient(90deg,rgba(220,64,70,.05),transparent)}
+.conc{background:#E7F5ED;border:1px solid rgba(21,154,87,.25);border-radius:12px;padding:18px 22px;margin-top:6px;color:#0C5C34;line-height:1.7;font-size:13px}
+.conc strong{display:block;font-size:15px;font-weight:800;margin-bottom:8px}
+footer{text-align:center;padding:28px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:#9BA4B0;letter-spacing:1px;border-top:1px solid #E7EAEE;margin-top:36px}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Comparativo: <em>Sueña</em> vs Competencia</h1>
+    <div class="meta">// LISTA JUNIO 2026 &middot; PRECIOS PROMO &middot; BOLIVIANOS (Bs)</div>
+  </div>
+  <div class="badge-comp">Competencia: Terra &mdash; FA Colchones / MovelPro / Ferreño</div>
+</header>
+
+<div class="wrap">
+  <div class="kpis">
+    <div class="kpi g"><div class="v">14</div><div class="l">Comparaciones donde TUS precios son MENORES</div></div>
+    <div class="kpi a"><div class="v">2</div><div class="l">Precios SIMILARES (diferencia menor al 15%)</div></div>
+    <div class="kpi r"><div class="v">2</div><div class="l">Productos competencia SIN equivalente tuyo</div></div>
+  </div>
+
+  <!-- BASICO -->
+  <div class="sec">
+    <div class="sh"><h2>Segmento Básico — Espuma / Semiortopédico / Ortopédico</h2><span class="seg sB">ENTRADA</span></div>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Producto</th><th>Marca</th><th>Características clave</th><th class="r">1.5 Plz</th><th class="r">2 Plz</th><th class="r">2.5 Plz</th><th class="r">3 Plz</th><th>Vs competencia</th></tr>
+      <tr class="my"><td colspan="8" class="rh my">// TUS PRECIOS (precio promo Junio 2026)</td></tr>
+      <tr class="my">
+        <td><div class="pn">Semiortopédico</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Espuma</span><span class="fp">Doble cara</span><span class="fp">Bonnell</span></td>
+        <td class="r price">620</td><td class="r price">790</td><td class="r price">1.230</td><td class="r price">1.420</td><td>—</td>
+      </tr>
+      <tr class="my">
+        <td><div class="pn">Ortopédico</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Espuma firme</span><span class="fp">Espalda</span></td>
+        <td class="r price">760</td><td class="r price">830</td><td class="r price">1.290</td><td class="r price">1.680</td><td>—</td>
+      </tr>
+      <tr><td colspan="8" class="rh cp">// COMPETENCIA (precios promo "Mitad de Año")</td></tr>
+      <tr>
+        <td><div class="pn">Miel</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D28</span><span class="fp">Doble cara</span><span class="fp">14 cm alto</span><span class="fp">100 kg</span></td>
+        <td class="r price">—</td><td class="r price">680</td><td class="r price">—</td><td class="r price">—</td>
+        <td><span class="cv MAYOR">↑ ELLOS -110 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Platino</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D28</span><span class="fp">Firme</span><span class="fp">17 cm alto</span><span class="fp">100 kg</span></td>
+        <td class="r price">—</td><td class="r price">780</td><td class="r price">—</td><td class="r price">—</td>
+        <td><span class="cv IGUAL">≈ IGUAL (-10 Bs en 2Plz)</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">OrtoFlex</div><div class="pb">OrtoFlex / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D28</span><span class="fp">Doble cara</span><span class="fp">26 cm</span><span class="fp">110 kg</span></td>
+        <td class="r price">—</td><td class="r price">—</td><td class="r price">1.400</td><td class="r price">—</td>
+        <td><span class="cv MENOR">✓ TÚ -170 Bs en 2.5Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Orthofam</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D28</span><span class="fp">Ortopédico</span><span class="fp">120 kg</span></td>
+        <td class="r price">—</td><td class="r price">1.900</td><td class="r price">—</td><td class="r price">2.400</td>
+        <td><span class="cv MENOR">✓ TÚ -1.070 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Max Firme</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D45</span><span class="fp">Ortopédico</span><span class="fp">Algodón</span><span class="fp">140 kg</span></td>
+        <td class="r price">1.750</td><td class="r price">1.990</td><td class="r price">2.290</td><td class="r price">—</td>
+        <td><span class="cv MENOR">✓ TÚ -1.160 Bs en 2Plz</span></td>
+      </tr>
+    </table></div>
+    <p style="font-size:11px;color:#697483;margin-top:6px;font-style:italic">* Miel (680) y Platino (780) son más baratos en 2Plz pero tienen altura 14-17 cm vs los tuyos de mayor especificación.</p>
+  </div>
+
+  <!-- MEDIO -->
+  <div class="sec">
+    <div class="sh"><h2>Segmento Medio — Essential / Soft Ice vs Resortes Básicos Competencia</h2><span class="seg sM">MEDIO</span></div>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Producto</th><th>Marca</th><th>Características clave</th><th class="r">1.5 Plz</th><th class="r">2 Plz</th><th class="r">2.5 Plz</th><th class="r">3 Plz</th><th>Vs competencia</th></tr>
+      <tr class="my"><td colspan="8" class="rh my">// TUS PRECIOS</td></tr>
+      <tr class="my">
+        <td><div class="pn">Essential</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Resortes</span><span class="fp">Premium</span></td>
+        <td class="r price">990</td><td class="r price">1.250</td><td class="r price">1.460</td><td class="r price">1.640</td><td>—</td>
+      </tr>
+      <tr class="my">
+        <td><div class="pn">Soft Ice</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Espuma</span><span class="fp">Cool</span></td>
+        <td class="r price">860</td><td class="r price">900</td><td class="r price">1.250</td><td class="r price">1.750</td><td>—</td>
+      </tr>
+      <tr><td colspan="8" class="rh cp">// COMPETENCIA</td></tr>
+      <tr>
+        <td><div class="pn">Classic Bambu</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">Anti-Acaros</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.150</td><td class="r price">1.400</td><td class="r price">1.590</td><td class="r price">—</td>
+        <td><span class="cv MENOR">✓ TÚ -150 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Brillante</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco</span><span class="fp">Suiza Tech</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.150</td><td class="r price">1.400</td><td class="r price">1.590</td><td class="r price">1.890</td>
+        <td><span class="cv MENOR">✓ TÚ -150 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Chester</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">Suiza Tech</span><span class="fp">NASA Visco</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.150</td><td class="r price">1.400</td><td class="r price">1.590</td><td class="r price">1.890</td>
+        <td><span class="cv MENOR">✓ TÚ -150 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">UltraSoft</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">D33</span><span class="fp">NASA Visco</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.350</td><td class="r price">1.650</td><td class="r price">1.850</td><td class="r price">2.350</td>
+        <td><span class="cv MENOR">✓ TÚ -400 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">New Edu</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">Algodón</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.400</td><td class="r price">1.700</td><td class="r price">2.050</td><td class="r price">—</td>
+        <td><span class="cv MENOR">✓ TÚ -450 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Oregon</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco</span><span class="fp">120 kg</span></td>
+        <td class="r price">—</td><td class="r price">1.600</td><td class="r price">—</td><td class="r price">—</td>
+        <td><span class="cv MENOR">✓ TÚ -350 Bs en 2Plz</span></td>
+      </tr>
+    </table></div>
+  </div>
+
+  <!-- MEDIO-ALTO -->
+  <div class="sec">
+    <div class="sh"><h2>Segmento Medio-Alto — Confort Plus vs Resortes Intermedios</h2><span class="seg sM">MEDIO-ALTO</span></div>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Producto</th><th>Marca</th><th>Características clave</th><th class="r">1.5 Plz</th><th class="r">2 Plz</th><th class="r">2.5 Plz</th><th class="r">3 Plz</th><th>Vs competencia</th></tr>
+      <tr class="my"><td colspan="8" class="rh my">// TUS PRECIOS</td></tr>
+      <tr class="my">
+        <td><div class="pn">Confort Plus</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Resortes</span><span class="fp">Memory Foam</span><span class="fp">5 Zonas</span></td>
+        <td class="r price">1.390</td><td class="r price">1.560</td><td class="r price">1.860</td><td class="r price">2.030</td><td>—</td>
+      </tr>
+      <tr><td colspan="8" class="rh cp">// COMPETENCIA</td></tr>
+      <tr>
+        <td><div class="pn">Alaska Cooler</div><div class="pb">Ferreño / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Premium</span><span class="fp">140 kg</span></td>
+        <td class="r price">1.490</td><td class="r price">1.700</td><td class="r price">2.000</td><td class="r price">2.450</td>
+        <td><span class="cv MENOR">✓ TÚ -140 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Alpino</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Doble cara</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.500</td><td class="r price">1.750</td><td class="r price">2.000</td><td class="r price">2.450</td>
+        <td><span class="cv MENOR">✓ TÚ -190 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Campeon</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">D28</span><span class="fp">Confortable</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.450</td><td class="r price">1.750</td><td class="r price">1.950</td><td class="r price">2.450</td>
+        <td><span class="cv MENOR">✓ TÚ -190 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Wave Plus</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.550</td><td class="r price">1.850</td><td class="r price">2.050</td><td class="r price">2.550</td>
+        <td><span class="cv MENOR">✓ TÚ -290 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Suavity Ice Cooler</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco Gel</span><span class="fp">Suiza Tech</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.690</td><td class="r price">1.950</td><td class="r price">2.150</td><td class="r price">2.950</td>
+        <td><span class="cv MENOR">✓ TÚ -390 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Memphis</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Semi-Ortop.</span><span class="fp">Pocket PHP</span><span class="fp">Inverter Tech</span><span class="fp">120 kg</span></td>
+        <td class="r price">1.650</td><td class="r price">2.050</td><td class="r price">2.450</td><td class="r price">3.100</td>
+        <td><span class="cv MENOR">✓ TÚ -490 Bs en 2Plz</span></td>
+      </tr>
+    </table></div>
+  </div>
+
+  <!-- PREMIUM -->
+  <div class="sec">
+    <div class="sh"><h2>Segmento Premium — Premier Deluxe vs Resortes Premium Competencia</h2><span class="seg sP">PREMIUM</span></div>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Producto</th><th>Marca</th><th>Características clave</th><th class="r">1.5 Plz</th><th class="r">2 Plz</th><th class="r">2.5 Plz</th><th class="r">3 Plz</th><th>Vs competencia</th></tr>
+      <tr class="my"><td colspan="8" class="rh my">// TUS PRECIOS</td></tr>
+      <tr class="my">
+        <td><div class="pn">Premier Deluxe</div><div class="pb">SUEÑA</div></td>
+        <td><span class="fp t">Sueña</span></td>
+        <td><span class="fp">Resortes Pocket</span><span class="fp">Euro Top</span><span class="fp">150 kg</span></td>
+        <td class="r price">1.510</td><td class="r price">1.990</td><td class="r price">2.190</td><td class="r price">3.800</td><td>—</td>
+      </tr>
+      <tr><td colspan="8" class="rh cp">// COMPETENCIA</td></tr>
+      <tr>
+        <td><div class="pn">Bambu Pro</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Premium</span><span class="fp">140 kg</span></td>
+        <td class="r price">1.700</td><td class="r price">2.100</td><td class="r price">2.350</td><td class="r price">2.750</td>
+        <td><span class="cv MENOR">✓ TÚ -110 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Brisa</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Premium</span><span class="fp">D45</span><span class="fp">140 kg</span></td>
+        <td class="r price">1.700</td><td class="r price">2.050</td><td class="r price">2.300</td><td class="r price">2.700</td>
+        <td><span class="cv MENOR">✓ TÚ -60 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Alexa Plush</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco</span><span class="fp">Algodón</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.890</td><td class="r price">—</td><td class="r price">2.450</td><td class="r price">3.350</td>
+        <td><span class="cv MENOR">✓ TÚ -260 Bs en 2.5Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Montana</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Doble cara</span><span class="fp">NASA Visco</span><span class="fp">Pocket PHP</span><span class="fp">130 kg</span></td>
+        <td class="r price">1.900</td><td class="r price">2.250</td><td class="r price">2.700</td><td class="r price">4.200</td>
+        <td><span class="cv IGUAL">≈ SIMILAR -260 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Luan</div><div class="pb">MovelPro / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Premium</span><span class="fp">140 kg</span></td>
+        <td class="r price">1.900</td><td class="r price">2.250</td><td class="r price">2.490</td><td class="r price">3.100</td>
+        <td><span class="cv MENOR">✓ TÚ -260 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Lancaster</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Premium</span><span class="fp">130 kg</span></td>
+        <td class="r price">2.350</td><td class="r price">2.850</td><td class="r price">3.190</td><td class="r price">3.900</td>
+        <td><span class="cv MENOR">✓ TÚ -860 Bs en 2Plz</span></td>
+      </tr>
+      <tr>
+        <td><div class="pn">Nube</div><div class="pb">FA Colchones / Terra</div></td>
+        <td></td>
+        <td><span class="fp">Pocket PHP</span><span class="fp">NASA Visco</span><span class="fp">Suiza Tech</span><span class="fp">130 kg</span></td>
+        <td class="r price">2.190</td><td class="r price">2.700</td><td class="r price">3.100</td><td class="r price">4.300</td>
+        <td><span class="cv MENOR">✓ TÚ -710 Bs en 2Plz</span></td>
+      </tr>
+    </table></div>
+  </div>
+
+  <!-- SIN EQUIVALENTE -->
+  <div class="sec">
+    <div class="sh"><h2>Productos Competencia SIN equivalente en Sueña — Oportunidades</h2><span class="seg sI">ANÁLISIS</span></div>
+    <div style="overflow-x:auto"><table>
+      <tr><th>Producto</th><th>Características diferenciales</th><th class="r">Solo Colchón 2Plz</th><th>Observación estratégica</th></tr>
+      <tr>
+        <td><div class="pn">NASA Gel</div><div class="pb">FA Colchones / Terra</div></td>
+        <td><span class="fp">NASA Visco Gel</span><span class="fp">Premium</span><span class="fp">140 kg</span></td>
+        <td class="r price">5.600</td>
+        <td>Ultra-premium. Rango 4.500–8.200 Bs. Nicho de alto poder adquisitivo.</td>
+      </tr>
+      <tr>
+        <td><div class="pn">Visco Plus Gel</div><div class="pb">FA Colchones / Terra</div></td>
+        <td><span class="fp">NASA Visco Gel</span><span class="fp">Pocket PHP</span><span class="fp">130 kg</span></td>
+        <td class="r price">3.900</td>
+        <td>Segmento premium-alto. Rango 2.900–7.590 Bs. Sin equivalente tuyo.</td>
+      </tr>
+      <tr>
+        <td><div class="pn">For You / Legend</div><div class="pb">FA Colchones / Terra</div></td>
+        <td><span class="fp">NASA Visco Gel</span><span class="fp">150 kg</span><span class="fp">Látex</span></td>
+        <td class="r price">5.600 / 4.700</td>
+        <td>Top de línea con látex + gel. Mercado diferenciado.</td>
+      </tr>
+      <tr>
+        <td><div class="pn">Cuna Damoni Kids</div><div class="pb">FA Colchones / Terra</div></td>
+        <td><span class="fp">Infantil</span><span class="fp">Impermeable</span><span class="fp">D18</span><span class="fp">130x70 cm</span></td>
+        <td class="r price">290 Bs (único)</td>
+        <td>Nicho infantil. Precio de entrada muy bajo. Oportunidad si no tienes.</td>
+      </tr>
+    </table></div>
+  </div>
+
+  <div class="conc">
+    <strong>✅ CONCLUSIÓN EJECUTIVA — Junio 2026</strong>
+    <b>TUS PRECIOS SON COMPETITIVOS O MENORES EN TODOS LOS SEGMENTOS DONDE COMPITES.</b><br><br>
+    &bull; <b>Básico (Semiortop / Ortopédico):</b> Miel (680 Bs) y Platino (780 Bs) son muy similares a tu Semiortopédico (790 Bs), pero tienen menor altura y especificación.<br>
+    &bull; <b>Medio (Essential / Soft Ice):</b> 150–450 Bs más barato que la competencia equivalente (Classic Bambu, Brillante, Chester, UltraSoft, New Edu).<br>
+    &bull; <b>Medio-alto (Confort Plus):</b> 140–490 Bs más barato que Alaska Cooler, Wave Plus, Suavity Ice Cooler, Memphis.<br>
+    &bull; <b>Premium (Premier Deluxe):</b> 60–860 Bs más barato que Bambu Pro, Brisa, Alexa Plush, Lancaster, Nube.<br><br>
+    &bull; <b>Brecha detectada:</b> La competencia ocupa el segmento ultra-premium (3.900–8.200 Bs) con NASA Gel, Visco Plus Gel y For You. Si quieres subir de categoría, ese es el hueco en el mercado.
+  </div>
+
+</div>
+<footer>// Comparativo automático &middot; Sueña (CARIOCA) vs Terra / FA Colchones / MovelPro &middot; Junio 2026</footer>
+</body>
+</html>
