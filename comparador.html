@@ -4,73 +4,118 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Comparador — Sueña vs Competencia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:"Hanken Grotesk",sans-serif;background:#F5F7F8;color:#0F1620;font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh}
-header{background:linear-gradient(135deg,#0F1620,#1a2840);color:#fff;padding:22px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
-header h1{font-size:18px;font-weight:800}
-header h1 em{font-style:normal;color:#00B5AD}
-.meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;letter-spacing:1px}
-.back-link{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.6);text-decoration:none;border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:8px}
-.back-link:hover{background:rgba(255,255,255,.1)}
-.wrap{max-width:1200px;margin:0 auto;padding:32px 20px}
-
-/* Selectors */
-.selector-area{background:#fff;border-radius:16px;border:1px solid #E7EAEE;padding:28px;margin-bottom:28px;box-shadow:0 2px 8px rgba(15,22,32,.06)}
-.selector-area h2{font-size:15px;font-weight:800;margin-bottom:20px;color:#0F1620}
-.selector-grid{display:grid;grid-template-columns:1fr 60px 1fr;gap:16px;align-items:end}
-.sel-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#697483;margin-bottom:6px}
-.sel-group select{width:100%;padding:12px 14px;border:1.5px solid #E7EAEE;border-radius:10px;font-family:"Hanken Grotesk",sans-serif;font-size:14px;font-weight:600;color:#0F1620;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23697483' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
-.sel-group select:focus{outline:none;border-color:#00B5AD;box-shadow:0 0 0 3px rgba(0,181,173,.1)}
-.sel-group select option[data-suena]{font-weight:700}
-.vs-badge{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:700;color:#00B5AD;padding-bottom:6px}
-
-/* Placeholder */
-.placeholder{text-align:center;padding:60px 20px;color:#9BA4B0;font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:1px}
-
-/* Comparison cards */
-.cmp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:16px;overflow:hidden;border:1px solid #E7EAEE;box-shadow:0 2px 12px rgba(15,22,32,.08)}
-.cmp-col{background:#fff}
-.cmp-col.suena{background:linear-gradient(180deg,#E0F4F2 0%,#fff 120px)}
-.cmp-col.comp{background:#fff}
-.cmp-header{padding:20px 22px 16px;border-bottom:2px solid #E7EAEE}
-.cmp-col.suena .cmp-header{border-bottom-color:#00B5AD}
-.brand-badge{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:5px;text-transform:uppercase;margin-bottom:8px}
-.cmp-col.suena .brand-badge{background:rgba(0,181,173,.15);color:#00B5AD}
-.cmp-col.comp .brand-badge{background:#F0F2F4;color:#697483}
-.cmp-name{font-size:18px;font-weight:800;line-height:1.2}
-.cmp-type{font-size:11px;color:#697483;margin-top:4px;font-family:"IBM Plex Mono",monospace}
-.cmp-section{padding:16px 22px;border-bottom:1px solid #F0F2F4}
-.cmp-section:last-child{border-bottom:none}
-.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9BA4B0;margin-bottom:10px}
-.price-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F8FAFB}
-.price-row:last-child{border-bottom:none}
-.size-label{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#697483}
-.price-val{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700;color:#0F1620}
-.price-val.highlight{color:#00B5AD;font-size:14px}
-.fp{display:inline-block;font-size:10px;background:#F0F2F4;color:#697483;border-radius:4px;padding:2px 7px;margin:2px 2px 0 0;font-weight:600}
-.fp.t{background:#E0F4F2;color:#0A7D77}
-.fp.warn{background:#FBE8E9;color:#871F23}
-
-/* Verdict row */
-.verdict-wrap{margin-top:20px;border-radius:16px;overflow:hidden;border:1px solid #E7EAEE;box-shadow:0 2px 8px rgba(15,22,32,.06)}
-.verdict-header{background:#0F1620;color:#fff;padding:14px 22px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
-.verdict-table{width:100%;border-collapse:collapse;background:#fff}
-.verdict-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#697483;padding:10px 16px;border-bottom:1px solid #E7EAEE;text-align:left;background:#F8FAFB}
-.verdict-table th.r{text-align:right}
-.verdict-table td{padding:11px 16px;border-bottom:1px solid #F0F2F4;font-family:"IBM Plex Mono",monospace;font-size:12px;vertical-align:middle}
-.verdict-table tr:last-child td{border-bottom:none}
-.diff-win{color:#0C5C34;font-weight:700;background:#E7F5ED;border-radius:5px;padding:2px 8px;display:inline-block}
-.diff-lose{color:#871F23;font-weight:700;background:#FBE8E9;border-radius:5px;padding:2px 8px;display:inline-block}
-.diff-eq{color:#7A4A00;font-weight:700;background:#FBF0DA;border-radius:5px;padding:2px 8px;display:inline-block}
-.na{color:#C8CDD6}
-
+:root{
+  --teal:#00D4C8;--violet:#C4B0FF;
+  --win:#4ADE80;--lose:#F87171;--eq:#FBBF24;
+  --glass:rgba(255,255,255,.06);--gb:rgba(255,255,255,.1);
+  --suena-bg:rgba(0,212,200,.08);--suena-b:rgba(0,212,200,.28);
+  --comp-bg:rgba(140,90,255,.06);--comp-b:rgba(140,90,255,.22);
+  --muted:rgba(255,255,255,.38);--text:rgba(255,255,255,.9)
+}
+body{font-family:"Hanken Grotesk",sans-serif;background:#070E1A;color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 65% 55% at 8% 8%,rgba(0,212,200,.13) 0%,transparent 65%),radial-gradient(ellipse 55% 55% at 92% 92%,rgba(140,90,255,.10) 0%,transparent 65%);z-index:0}
+header{position:sticky;top:0;z-index:100;background:rgba(7,14,26,.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.08);padding:18px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+header h1{font-size:17px;font-weight:800;letter-spacing:-.3px}
+header h1 em{font-style:normal;color:var(--teal)}
+.meta{font-family:"IBM Plex Mono",monospace;font-size:10px;color:rgba(255,255,255,.32);margin-top:3px;letter-spacing:.8px}
+.back-link{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.5);text-decoration:none;border:1px solid rgba(255,255,255,.14);padding:6px 14px;border-radius:8px;transition:all .2s}
+.back-link:hover{background:rgba(255,255,255,.08);color:#fff}
+.wrap{position:relative;z-index:1;max-width:1160px;margin:0 auto;padding:28px 20px}
+.glass{background:var(--glass);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid var(--gb);border-radius:20px}
+.selector-card{padding:22px 26px;margin-bottom:22px}
+.selector-card h2{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:16px}
+.selector-grid{display:grid;grid-template-columns:1fr 64px 1fr;gap:16px;align-items:end}
+.sel-group label{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:7px}
+.sel-group select{width:100%;padding:11px 14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.11);border-radius:10px;font-family:"Hanken Grotesk",sans-serif;font-size:14px;font-weight:600;color:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300D4C8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:border-color .2s}
+.sel-group select:focus{outline:none;border-color:var(--teal)}
+.sel-group select option{background:#111827}
+.vs-badge{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:20px;font-weight:700;background:linear-gradient(135deg,var(--teal),var(--violet));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;padding-bottom:4px}
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px}
+.prod-card{border-radius:20px;overflow:hidden}
+.prod-card.suena{background:var(--suena-bg);border:1px solid var(--suena-b)}
+.prod-card.comp{background:var(--comp-bg);border:1px solid var(--comp-b)}
+.pc-head{padding:18px 22px 14px}
+.brand-pill{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:9px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+.suena .brand-pill{background:rgba(0,212,200,.18);color:var(--teal);border:1px solid rgba(0,212,200,.3)}
+.comp .brand-pill{background:rgba(196,176,255,.13);color:var(--violet);border:1px solid rgba(196,176,255,.25)}
+.prod-name{font-size:20px;font-weight:800;line-height:1.2}
+.prod-type{font-size:10px;color:var(--muted);margin-top:5px;font-family:"IBM Plex Mono",monospace}
+.pc-feats{padding:12px 22px;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-wrap:wrap;gap:5px}
+.fp{display:inline-flex;align-items:center;font-size:10px;font-weight:600;background:rgba(255,255,255,.07);color:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.1);border-radius:5px;padding:2px 8px}
+.fp.t{background:rgba(0,212,200,.12);color:var(--teal);border-color:rgba(0,212,200,.25)}
+.pc-meta{padding:10px 22px 14px;border-top:1px solid rgba(255,255,255,.06);display:flex;gap:18px}
+.mi{display:flex;flex-direction:column;gap:2px}
+.mi-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.mi-val{font-size:15px;font-weight:800}
+.suena .mi-val{color:var(--teal)}.comp .mi-val{color:var(--violet)}
+.pc-notes{padding:0 22px 12px;font-size:10px;color:rgba(255,255,255,.28);font-family:"IBM Plex Mono",monospace;line-height:1.5}
+.tab-area{padding:20px}
+.tab-nav{display:flex;gap:5px;padding:5px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:13px;margin-bottom:18px}
+.tab-btn{flex:1;padding:9px 8px;font-family:"Hanken Grotesk",sans-serif;font-size:12px;font-weight:700;color:rgba(255,255,255,.35);background:none;border:none;cursor:pointer;border-radius:9px;transition:all .2s}
+.tab-btn.active{background:rgba(255,255,255,.1);color:#fff;box-shadow:0 1px 8px rgba(0,0,0,.3)}
+.tab-pane{display:none}.tab-pane.active{display:block}
+/* Resumen */
+.score-row{display:flex;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:8px}
+.score-track{height:7px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;position:relative;margin-bottom:18px}
+.sf-a{position:absolute;left:0;top:0;height:100%;background:var(--teal);border-radius:99px;transition:width .5s ease}
+.sf-b{position:absolute;right:0;top:0;height:100%;background:var(--violet);border-radius:99px;transition:width .5s ease}
+.price-mode-lbl{font-size:10px;font-family:"IBM Plex Mono",monospace;color:rgba(255,255,255,.28);letter-spacing:.5px;text-transform:uppercase;margin-bottom:12px}
+.winner-rows{display:flex;flex-direction:column;gap:6px;margin-bottom:20px}
+.wr{display:grid;grid-template-columns:140px 1fr 90px 1fr;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06)}
+.wr-size{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted)}
+.wr-p{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700}
+.wr-pa{text-align:right;color:var(--teal)}.wr-pb{text-align:left;color:var(--violet)}
+.wr-diff{text-align:center;font-size:10px;font-weight:700;font-family:"IBM Plex Mono",monospace}
+.wr-diff.win{color:var(--win)}.wr-diff.lose{color:var(--lose)}.wr-diff.eq{color:var(--eq)}.wr-diff.na{color:rgba(255,255,255,.2)}
+.metric-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mc{padding:16px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);text-align:center}
+.mc-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;margin-bottom:12px}
+.mc-vals{display:flex;justify-content:center;gap:18px}
+.mcv{display:flex;flex-direction:column;align-items:center;gap:2px}
+.mcv .v{font-size:18px;font-weight:800}.mcv .l{font-size:9px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+/* Grafico */
+.bar-toggles{display:flex;gap:8px;margin-bottom:18px}
+.bt{padding:6px 16px;border-radius:20px;font-size:11px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.45);cursor:pointer;transition:all .2s;font-family:"Hanken Grotesk",sans-serif}
+.bt.active{background:rgba(0,212,200,.14);border-color:var(--teal);color:var(--teal)}
+.bar-rows{display:flex;flex-direction:column;gap:14px}
+.bar-row .br-size{font-family:"IBM Plex Mono",monospace;font-size:10px;color:var(--muted);margin-bottom:6px}
+.bar-pair{display:flex;flex-direction:column;gap:5px}
+.bar-item{display:flex;align-items:center;gap:10px}
+.bar-brand{font-size:10px;font-weight:700;width:72px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{flex:1;height:28px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden}
+.bar-fill{height:100%;border-radius:7px;display:flex;align-items:center;justify-content:flex-end;padding:0 10px;transition:width .5s ease;min-width:40px}
+.bar-fill.a{background:linear-gradient(90deg,rgba(0,212,200,.15),rgba(0,212,200,.45))}
+.bar-fill.b{background:linear-gradient(90deg,rgba(196,176,255,.12),rgba(196,176,255,.42))}
+.bar-price{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;white-space:nowrap;color:#fff}
+/* Matrix */
+.mx-table{width:100%;border-collapse:collapse}
+.mx-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+.mx-table th.c{text-align:center}
+.mx-table td{padding:8px 16px;border-bottom:1px solid rgba(255,255,255,.04);font-size:13px;vertical-align:middle}
+.mx-table tr:last-child td{border-bottom:none}
+.mx-table tr:hover td{background:rgba(255,255,255,.02)}
+.chk{text-align:center;color:var(--win);font-size:15px}.crs{text-align:center;color:rgba(255,255,255,.18);font-size:15px}
+.feat-key{color:var(--teal);font-weight:700}
+/* Tabla */
+.pt{width:100%;border-collapse:collapse}
+.pt th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left}
+.pt td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-family:"IBM Plex Mono",monospace;font-size:12px;vertical-align:middle}
+.pt tr:last-child td{border-bottom:none}
+.pt .gh td{background:rgba(255,255,255,.04);font-family:"Hanken Grotesk",sans-serif;font-size:11px;font-weight:700;color:var(--muted);padding:8px 14px}
+.dw{background:rgba(74,222,128,.18);border:1px solid rgba(74,222,128,.28);color:#fff;border-radius:5px;padding:2px 8px;display:inline-block;font-size:11px}
+.dl{background:rgba(248,113,113,.18);border:1px solid rgba(248,113,113,.28);color:#fff;border-radius:5px;padding:2px 8px;display:inline-block;font-size:11px}
+.de{background:rgba(251,191,36,.18);border:1px solid rgba(251,191,36,.28);color:#fff;border-radius:5px;padding:2px 8px;display:inline-block;font-size:11px}
+.na{color:rgba(255,255,255,.2)}
+.placeholder{text-align:center;padding:60px 20px;color:rgba(255,255,255,.22);font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:1px}
 @media(max-width:640px){
-  .selector-grid{grid-template-columns:1fr;gap:12px}
-  .vs-badge{display:none}
-  .cmp-wrap{grid-template-columns:1fr}
-  .cmp-col.comp{border-top:2px solid #E7EAEE}
+  .selector-grid{grid-template-columns:1fr;gap:12px}.vs-badge{display:none}
+  .prod-grid{grid-template-columns:1fr}.metric-cards{grid-template-columns:1fr 1fr}
+  .tab-btn{font-size:10px;padding:8px 5px}header{padding:14px 16px}.wrap{padding:16px 12px}
+  .wr{grid-template-columns:100px 1fr 70px 1fr}
 }
 </style>
 </head>
@@ -82,653 +127,256 @@ header h1 em{font-style:normal;color:#00B5AD}
   </div>
   <a href="comparativo_precios.html" class="back-link">← Comparativo completo</a>
 </header>
-
 <div class="wrap">
-  <div class="selector-area">
+  <div class="glass selector-card">
     <h2>Elige dos productos para comparar</h2>
     <div class="selector-grid">
       <div class="sel-group">
         <label>Producto A</label>
-        <select id="selA" onchange="render()">
-          <option value="">— Selecciona un producto —</option>
-        </select>
+        <select id="selA" onchange="render()"><option value="">— Selecciona —</option></select>
       </div>
       <div class="vs-badge">VS</div>
       <div class="sel-group">
         <label>Producto B</label>
-        <select id="selB" onchange="render()">
-          <option value="">— Selecciona un producto —</option>
-        </select>
+        <select id="selB" onchange="render()"><option value="">— Selecciona —</option></select>
       </div>
     </div>
   </div>
-  <div id="output"><div class="placeholder">// Selecciona dos productos para ver la comparativa lado a lado</div></div>
+  <div id="output"><div class="placeholder">// Selecciona dos productos para ver la comparativa</div></div>
 </div>
-
 <script>
-const SIZES = ['1','1.5','2','2.5','3','3.5'];
-const SIZE_LABELS = {'1':'1 Plaza (90×190)','1.5':'1½ Plaza (105×190)','2':'2 Plazas (140×190)','2.5':'2½ Plazas (160×190)','3':'3 Plazas (180×190)','3.5':'3½ Plazas (200×200)'};
+const SIZES=['1','1.5','2','2.5','3','3.5'];
+const SL={'1':'1 Plaza (90×190)','1.5':'1½ Pl (105×190)','2':'2 Plazas (140×190)','2.5':'2½ Pl (160×190)','3':'3 Plazas (180×190)','3.5':'3½ Pl (200×200)'};
+const KEY_F=new Set(['Visco Gel NASA','Pocket PHS','Ice Cooler','Visco NASA','Bambú','Memory Foam','D45','Cooler','Ultrasoft','Pillowtop','Tela Sensación Frío','Espuma Alta Densidad','Espuma Prensada','Espuma Soft Anatómica','Resortes Bonnell','Espuma Ultra Confort','Technology Inverter','Espuma Latex','Active Protection','Suiza Tech']);
 
-const PRODUCTS = [
+const PRODUCTS=[
   /* ===== SUEÑA ===== */
-  {id:'s_premier', name:'Premier Deluxe', brand:'Sueña', isSuena:true, category:'Premium',
-   type:'Ultrasoft + Resortes Bonnell',
-   features:['Ultrasoft','Resortes Bonnell','Espuma Ultra Confort','Antialérgico','Antiácaros'],
-   prices:{'1':1300,'1.5':1510,'2':1990,'2.5':2190,'3':3800,'3.5':4700},
-   combo_s:{'1.5':2090,'2':2590,'2.5':2790},
-   combo_sr:{'1.5':2540,'2':3090,'2.5':3390},
-   weight_kg:110, height_cm:26, notes:'Garantía 3 años. 9 capas: tela + edredonado 2cm + espuma ultra confort 5cm + espuma confort 5cm + colcha resinada + panel resortes c/cajón espuma + colcha resinada + espuma confort 5cm + tela.'},
-
-  {id:'s_confort', name:'Confort Plus', brand:'Sueña', isSuena:true, category:'Medio-Alto',
-   type:'Pillowtop + Resortes Bonnell',
-   features:['Pillowtop','Resortes Bonnell','Antialérgico','Antiácaros'],
-   prices:{'1.5':1390,'2':1560,'2.5':1860,'3':2030,'3.5':2190},
-   combo_s:{}, combo_sr:{},
-   weight_kg:90, height_cm:25, notes:'Garantía 2 años. 9 capas: tela + edredonado 2cm + lámina pillowtop 3cm + espuma confort 5cm + colcha resinada + panel resortes + colcha resinada + espuma confort 5cm + tela.'},
-
-  {id:'s_essential', name:'Essential', brand:'Sueña', isSuena:true, category:'Medio',
-   type:'Resortes Bonnell',
-   features:['Resortes Bonnell','Espuma Confort','Antialérgico','Antiácaros'],
-   prices:{'1':890,'1.5':990,'2':1250,'2.5':1460,'3':1640,'3.5':1940},
-   combo_s:{'1.5':1790,'2':2090,'2.5':2340},
-   combo_sr:{'1.5':2190,'2':2590,'2.5':2890},
-   weight_kg:80, height_cm:22, notes:'Garantía 1 año. 6 capas: tela antialérgica + edredonado 2cm + espuma confort 5cm + panel resortes + espuma confort 5cm + tela.'},
-
-  {id:'s_soft', name:'Soft Ice', brand:'Sueña', isSuena:true, category:'Medio',
-   type:'Espuma Alta Densidad + Tela Sensación Frío',
-   features:['Tela Sensación Frío','Espuma Alta Densidad','Espuma Soft Anatómica','Antiácaros'],
-   prices:{'1':780,'1.5':860,'2':900,'2.5':1250,'3':1750,'3.5':1960},
-   combo_s:{}, combo_sr:{},
-   weight_kg:110, height_cm:20, notes:'Garantía 1 año. 5 capas: tela sensación frío + edredonado 2cm + espuma soft anatómica 3cm + espuma 15cm + tela sensación frío.'},
-
-  {id:'s_semi', name:'Semiortopédico', brand:'Sueña', isSuena:true, category:'Básico',
-   type:'Espuma Alta Densidad',
-   features:['Espuma Alta Densidad','Antialérgico','Antiácaros'],
-   prices:{'1':590,'1.5':620,'2':790,'2.5':1230,'3':1420,'3.5':1770},
-   combo_s:{'1.5':1440,'2':1690,'2.5':2140},
-   combo_sr:{'1.5':1890,'2':2190,'2.5':2690},
-   weight_kg:90, height_cm:20, notes:'Garantía 6 meses. 4 capas: tela antialérgica + edredonado 2cm + espuma 18cm + tela.'},
-
-  {id:'s_orto', name:'Ortopédico', brand:'Sueña', isSuena:true, category:'Básico',
-   type:'Espuma Alta Densidad + Espuma Prensada',
-   features:['Espuma Alta Densidad','Espuma Prensada','Antialérgico','Antiácaros'],
-   prices:{'1':690,'1.5':760,'2':830,'2.5':1290,'3':1680,'3.5':1860},
-   combo_s:{'1.5':1690,'2':1840,'2.5':2390},
-   combo_sr:{'1.5':2090,'2':2390,'2.5':2940},
-   weight_kg:110, height_cm:20, notes:'Garantía 1 año. 5 capas: tela antialérgica + edredonado 2cm + espuma prensada 2cm + espuma 18cm + tela.'},
-
+  {id:'s_premier',name:'Premier Deluxe',brand:'Sueña',isSuena:true,category:'Premium',type:'Ultrasoft + Resortes Bonnell',features:['Ultrasoft','Resortes Bonnell','Espuma Ultra Confort','Antialérgico','Antiácaros'],prices:{'1':1300,'1.5':1510,'2':1990,'2.5':2190,'3':3800,'3.5':4700},combo_s:{'1.5':2090,'2':2590,'2.5':2790},combo_sr:{'1.5':2540,'2':3090,'2.5':3390},weight_kg:110,height_cm:26,notes:'Garantía 3 años. 9 capas: tela + edredonado 2cm + espuma ultra confort 5cm + espuma confort 5cm + colcha resinada + panel resortes c/cajón espuma + colcha resinada + espuma confort 5cm + tela.'},
+  {id:'s_confort',name:'Confort Plus',brand:'Sueña',isSuena:true,category:'Medio-Alto',type:'Pillowtop + Resortes Bonnell',features:['Pillowtop','Resortes Bonnell','Antialérgico','Antiácaros'],prices:{'1.5':1390,'2':1560,'2.5':1860,'3':2030,'3.5':2190},combo_s:{},combo_sr:{},weight_kg:90,height_cm:25,notes:'Garantía 2 años. 9 capas: tela + edredonado 2cm + lámina pillowtop 3cm + espuma confort 5cm + colcha resinada + panel resortes + colcha resinada + espuma confort 5cm + tela.'},
+  {id:'s_essential',name:'Essential',brand:'Sueña',isSuena:true,category:'Medio',type:'Resortes Bonnell',features:['Resortes Bonnell','Espuma Confort','Antialérgico','Antiácaros'],prices:{'1':890,'1.5':990,'2':1250,'2.5':1460,'3':1640,'3.5':1940},combo_s:{'1.5':1790,'2':2090,'2.5':2340},combo_sr:{'1.5':2190,'2':2590,'2.5':2890},weight_kg:80,height_cm:22,notes:'Garantía 1 año. 6 capas: tela antialérgica + edredonado 2cm + espuma confort 5cm + panel resortes + espuma confort 5cm + tela.'},
+  {id:'s_soft',name:'Soft Ice',brand:'Sueña',isSuena:true,category:'Medio',type:'Espuma Alta Densidad + Tela Sensación Frío',features:['Tela Sensación Frío','Espuma Alta Densidad','Espuma Soft Anatómica','Antiácaros'],prices:{'1':780,'1.5':860,'2':900,'2.5':1250,'3':1750,'3.5':1960},combo_s:{},combo_sr:{},weight_kg:110,height_cm:20,notes:'Garantía 1 año. 5 capas: tela sensación frío + edredonado 2cm + espuma soft anatómica 3cm + espuma 15cm + tela sensación frío.'},
+  {id:'s_semi',name:'Semiortopédico',brand:'Sueña',isSuena:true,category:'Básico',type:'Espuma Alta Densidad',features:['Espuma Alta Densidad','Antialérgico','Antiácaros'],prices:{'1':590,'1.5':620,'2':790,'2.5':1230,'3':1420,'3.5':1770},combo_s:{'1.5':1440,'2':1690,'2.5':2140},combo_sr:{'1.5':1890,'2':2190,'2.5':2690},weight_kg:90,height_cm:20,notes:'Garantía 6 meses. 4 capas: tela antialérgica + edredonado 2cm + espuma 18cm + tela.'},
+  {id:'s_orto',name:'Ortopédico',brand:'Sueña',isSuena:true,category:'Básico',type:'Espuma Alta Densidad + Espuma Prensada',features:['Espuma Alta Densidad','Espuma Prensada','Antialérgico','Antiácaros'],prices:{'1':690,'1.5':760,'2':830,'2.5':1290,'3':1680,'3.5':1860},combo_s:{'1.5':1690,'2':1840,'2.5':2390},combo_sr:{'1.5':2090,'2':2390,'2.5':2940},weight_kg:110,height_cm:20,notes:'Garantía 1 año. 5 capas: tela antialérgica + edredonado 2cm + espuma prensada 2cm + espuma 18cm + tela.'},
   /* ===== COMPETENCIA ===== */
-  {id:'c_miel', name:'Miel', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D28',
-   features:['Espuma D28','14 cm','Doble cara','Antialérgico','Antiacaro'],
-   prices:{'1':400,'2':680},
-   combo_s:{'1':900,'2':1330},
-   combo_sr:{'1':1400,'2':1930},
-   weight_kg:100, height_cm:14, notes:'Solo disponible en 1 y 2 plazas.'},
-
-  {id:'c_platino', name:'Platino', brand:'MovelPro', isSuena:false, category:'Básico',
-   type:'Espuma D28',
-   features:['Espuma D28','17 cm','Extra firme','Antialérgico','Antiacaro'],
-   prices:{'1':470,'2':780},
-   combo_s:{'1':970,'2':1430},
-   combo_sr:{'1':1470,'2':2030},
-   weight_kg:100, height_cm:17, notes:'Solo disponible en 1 y 2 plazas.'},
-
-  {id:'c_classic', name:'Classic Bambu', brand:'FA Colchones', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Algodón 100%','Antialérgico','Antiacaro'],
-   prices:{'1.5':1150,'2':1400,'2.5':1590},
-   combo_s:{'1.5':1700,'2':2050,'2.5':2490},
-   combo_sr:{'1.5':2200,'2':2650,'2.5':3190},
-   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964.'},
-
-  {id:'c_brillante', name:'Brillante', brand:'MovelPro', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],
-   prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},
-   combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},
-   combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},
-   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
-
-  {id:'c_chester', name:'Chester', brand:'MovelPro', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],
-   prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},
-   combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},
-   combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},
-   weight_kg:130, height_cm:null, notes:'Mismo spec que Brillante, tapizado negro.'},
-
-  {id:'c_newedu', name:'New Edu', brand:'FA Colchones', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS',
-   features:['Pocket PHS','Algodón 100%','Antialérgico','Antiacaro'],
-   prices:{'1.5':1400,'2':1700,'2.5':2050},
-   combo_s:{'1.5':1950,'2':2350,'2.5':2950},
-   combo_sr:{'1.5':2450,'2':2950,'2.5':3650},
-   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964.'},
-
-  {id:'c_ultrasoft', name:'UltraSoft', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco NASA',
-   features:['Pocket PHS','Visco NASA','Espuma D33','Antialérgico','Suiza Tech'],
-   prices:{'1.5':1350,'2':1650,'2.5':1850,'3':2350,'3.5':2650},
-   combo_s:{'1.5':1900,'2':2300,'2.5':2750,'3':3350,'3.5':3750},
-   combo_sr:{'1.5':2400,'2':2900,'2.5':3450,'3':4150,'3.5':4650},
-   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
-
-  /* ===== TERRA — Catálogo completo ===== */
-  {id:'t_smartflex', name:'Smart Flex', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D28 Doble Cara',
-   features:['Espuma D28','Doble Cara','Antialérgico'],
-   prices:{'1':520},
-   combo_s:{'1':1020}, combo_sr:{'1':1520},
-   weight_kg:100, height_cm:20, notes:'Solo disponible en 1 plaza.'},
-
-  {id:'t_ortoflex', name:'Ortoflex', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D28 Doble Cara',
-   features:['Espuma D28','Doble Cara','Antialérgico'],
-   prices:{'2.5':1400},
-   combo_s:{'2.5':2300}, combo_sr:{'2.5':3000},
-   weight_kg:110, height_cm:26, notes:''},
-
-  {id:'t_orthofam', name:'Orthofam', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D28 Ortopédico',
-   features:['Espuma D28','Ortopédico','Active Protection','Antialérgico','Antiácaros'],
-   prices:{'2':1900,'3':2400},
-   combo_s:{'2':2550,'3':3400}, combo_sr:{'2':3150,'3':4200},
-   weight_kg:120, height_cm:null, notes:''},
-
-  {id:'t_procomendador', name:'Pro Comendador', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D33',
-   features:['Espuma D33','Made in Brasil','Antialérgico'],
-   prices:{'1.5':1250},
-   combo_s:{'1.5':1800}, combo_sr:{'1.5':2300},
-   weight_kg:110, height_cm:null, notes:''},
-
-  {id:'t_emradaptive', name:'EMR Adaptive', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D33 Doble Cara',
-   features:['Espuma D33','Doble Cara','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2':2500,'2.5':2500},
-   combo_s:{'2':3150,'2.5':3400}, combo_sr:{'2':3750,'2.5':4100},
-   weight_kg:110, height_cm:null, notes:''},
-
-  {id:'t_maxfirme', name:'Max Firme', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Espuma D45',
-   features:['Espuma D45','Made in Brasil','Antialérgico'],
-   prices:{'1.5':1750,'2':1990,'2.5':2290},
-   combo_s:{'1.5':2300,'2':2640,'2.5':3190}, combo_sr:{'1.5':2800,'2':3240,'2.5':3890},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_pedicduple', name:'Pedic Duple', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Doble Cara Extra Firme',
-   features:['Doble Cara','Extra Firme','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'1.5':1650,'2':2200},
-   combo_s:{'1.5':2200,'2':2850}, combo_sr:{'1.5':2700,'2':3450},
-   weight_kg:120, height_cm:null, notes:''},
-
-  {id:'t_campeon', name:'Campeon', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Resortes + Espuma D28',
-   features:['Espuma D28','Resortes','Antialérgico'],
-   prices:{'1.5':1450,'2':1750,'2.5':1950,'3':2450,'3.5':2750},
-   combo_s:{'1.5':2000,'2':2400,'2.5':2850,'3':3450,'3.5':3850},
-   combo_sr:{'1.5':2500,'2':3000,'2.5':3550,'3':4250,'3.5':4750},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_pillowpreta', name:'Pillow Top Preta', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],
-   prices:{'1.5':1400},
-   combo_s:{'1.5':1950}, combo_sr:{'1.5':2450},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_ultrafirme', name:'Ultra Firme', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],
-   prices:{'2':1400},
-   combo_s:{'2':2050}, combo_sr:{'2':2650},
-   weight_kg:110, height_cm:null, notes:''},
-
-  {id:'t_oregon', name:'Oregon', brand:'Terra', isSuena:false, category:'Básico',
-   type:'Resortes Pocket PHS',
-   features:['Pocket PHS','Made in Brasil','Antialérgico'],
-   prices:{'2':1600},
-   combo_s:{'2':2250}, combo_sr:{'2':2850},
-   weight_kg:120, height_cm:null, notes:''},
-
-  {id:'t_ortorelax', name:'Ortorelax', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],
-   prices:{'2':1990,'2.5':2200},
-   combo_s:{'2':2640,'2.5':3100}, combo_sr:{'2':3240,'2.5':3800},
-   weight_kg:120, height_cm:null, notes:''},
-
-  {id:'t_bristol', name:'Bristol', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS',
-   features:['Pocket PHS','Active Protection','Antialérgico','Antiácaros'],
-   prices:{'2':2500},
-   combo_s:{'2':3150}, combo_sr:{'2':3750},
-   weight_kg:120, height_cm:null, notes:''},
-
-  {id:'t_cambridge', name:'Cambridge', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS',
-   features:['Pocket PHS','Antialérgico','Antiácaros'],
-   prices:{'2':2500},
-   combo_s:{'2':3150}, combo_sr:{'2':3750},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_drako', name:'Drako', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco NASA',
-   features:['Pocket PHS','Visco NASA','Antialérgico','Made in Brasil'],
-   prices:{'1.5':1700,'2':1950,'2.5':2400},
-   combo_s:{'1.5':2250,'2':2600,'2.5':3300}, combo_sr:{'1.5':2750,'2':3200,'2.5':4000},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_drakoplus', name:'Drako Plus', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco Gel + Inverter',
-   features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Antialérgico'],
-   prices:{'2.5':2400},
-   combo_s:{'2.5':3300}, combo_sr:{'2.5':4000},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_alexaplush', name:'Alexa Plush', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco NASA',
-   features:['Pocket PHS','Visco NASA','Antialérgico','Made in Brasil'],
-   prices:{'1.5':1890,'2.5':2450,'3':3350},
-   combo_s:{'1.5':2440,'2.5':3350,'3':4350}, combo_sr:{'1.5':2940,'2.5':4050,'3':5150},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_versalle', name:'Versalle', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes + Espuma D28',
-   features:['Espuma D28','Resortes','Made in Brasil','Antialérgico'],
-   prices:{'1.5':1950,'2':2500,'2.5':2850,'3':3300,'3.5':3600},
-   combo_s:{'1.5':2500,'2':3150,'2.5':3750,'3':4300,'3.5':4700},
-   combo_sr:{'1.5':3000,'2':3750,'2.5':4450,'3':5100,'3.5':5600},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_vivalle', name:'Vivalle', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Antialérgico'],
-   prices:{'2':2600},
-   combo_s:{'2':3250}, combo_sr:{'2':3850},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_nobile', name:'Nobile', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Inverter',
-   features:['Pocket PHS','Technology Inverter','Antialérgico'],
-   prices:{'2':2950},
-   combo_s:{'2':3600}, combo_sr:{'2':4200},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_magnus', name:'Magnus', brand:'Terra', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Antialérgico'],
-   prices:{'2.5':2650},
-   combo_s:{'2.5':3550}, combo_sr:{'2.5':4250},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_luan', name:'Luan', brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Visco Gel + Inverter',
-   features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'1.5':1900,'2':2250,'2.5':2490,'3':3100,'3.5':3650},
-   combo_s:{'1.5':2450,'2':2900,'2.5':3390,'3':4100,'3.5':4750},
-   combo_sr:{'1.5':2950,'2':3500,'2.5':4090,'3':4900,'3.5':5650},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_andrea', name:'Andrea', brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Visco Gel + Inverter',
-   features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2.5':2390},
-   combo_s:{'2.5':3290}, combo_sr:{'2.5':3990},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_pieros', name:"Piero's", brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Visco Gel + Suiza Tech',
-   features:['Pocket PHS','Visco Gel NASA','Suiza Tech','Antialérgico'],
-   prices:{'2.5':2400},
-   combo_s:{'2.5':3300}, combo_sr:{'2.5':4000},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_atlantavisco', name:'Atlanta Visco', brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Antialérgico'],
-   prices:{'2':2790,'3':4350,'3.5':4700},
-   combo_s:{'2':3440,'3':5350,'3.5':5800}, combo_sr:{'2':4040,'3':6150,'3.5':6700},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_gael', name:'Gael', brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Visco Gel + Technology Inverter',
-   features:['Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2':3400,'2.5':3700,'3':4900},
-   combo_s:{'2':4050,'2.5':4600,'3':5900}, combo_sr:{'2':4650,'2.5':5300,'3':6700},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_hibrido', name:'Híbrido Latex', brand:'Terra', isSuena:false, category:'Medio-Alto',
-   type:'Latex + Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Espuma Latex','Visco Gel NASA','Antialérgico'],
-   prices:{'2':2900},
-   combo_s:{'2':3550}, combo_sr:{'2':4150},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_dakota', name:'Dakota', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel + Inverter',
-   features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2':4200,'2.5':4700,'3':6000},
-   combo_s:{'2':4750,'2.5':5600,'3':7000}, combo_sr:{'2':5350,'2.5':6300,'3':7800},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_muv', name:'Muv', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Latex 100% + Resortes + Visco Gel',
-   features:['Espuma Latex','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2.5':2500},
-   combo_s:{'2.5':3400}, combo_sr:{'2.5':4100},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_newport', name:'Newport', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Made in Brasil','Antialérgico'],
-   prices:{'2':3600},
-   combo_s:{'2':4250}, combo_sr:{'2':4850},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_anatomic', name:'Anatomic', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Espuma Latex + Visco Gel + Inverter',
-   features:['Espuma Latex','Visco Gel NASA','Technology Inverter','Antialérgico'],
-   prices:{'2':3200},
-   combo_s:{'2':3850}, combo_sr:{'2':4450},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'t_icon', name:'Icon', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Espuma Latex + Resortes Pocket PHS',
-   features:['Pocket PHS','Espuma Latex','Active Protection','Antialérgico'],
-   prices:{'2':6500},
-   combo_s:{'2':7150}, combo_sr:{'2':7750},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_foryou', name:'For You', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel + Inverter',
-   features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],
-   prices:{'2':5600,'2.5':6300,'3.5':7950},
-   combo_s:{'2':6250,'2.5':7200,'3.5':9050}, combo_sr:{'2':6850,'2.5':7900,'3.5':9950},
-   weight_kg:150, height_cm:null, notes:''},
-
-  {id:'t_legend', name:'Legend', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Made in Brasil','Antialérgico'],
-   prices:{'2':4700,'2.5':6900},
-   combo_s:{'2':5350,'2.5':7800}, combo_sr:{'2':5950,'2.5':8500},
-   weight_kg:150, height_cm:null, notes:''},
-
-  {id:'t_privelle', name:'Privelle', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel + Latex',
-   features:['Pocket PHS','Visco Gel NASA','Espuma Latex','Antialérgico'],
-   prices:{'2':5500},
-   combo_s:{'2':6150}, combo_sr:{'2':6750},
-   weight_kg:150, height_cm:null, notes:''},
-
-  {id:'t_nasagel', name:'Nasa Gel', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Antialérgico'],
-   prices:{'1.5':4500,'2':5600,'2.5':6450,'3':7550,'3.5':8200},
-   combo_s:{'1.5':5050,'2':6250,'2.5':7350,'3':8550,'3.5':9300},
-   combo_sr:{'1.5':5550,'2':6850,'2.5':8050,'3':9350,'3.5':10200},
-   weight_kg:140, height_cm:null, notes:''},
-
-  {id:'t_signature', name:'Signature', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Espuma Latex + Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Espuma Latex','Visco Gel NASA','Made in Brasil','Antialérgico'],
-   prices:{'2':5500},
-   combo_s:{'2':6150}, combo_sr:{'2':6750},
-   weight_kg:150, height_cm:null, notes:''},
-
-  {id:'t_viscoplugel', name:'Visco Plus Gel', brand:'Terra', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel + Spumalatex',
-   features:['Pocket PHS','Visco Gel NASA','Espuma Latex','Antialérgico'],
-   prices:{'1.5':2900,'2':3900,'2.5':4990,'3':6390,'3.5':7590},
-   combo_s:{'1.5':3450,'2':4550,'2.5':5890,'3':7390,'3.5':8690},
-   combo_sr:{'1.5':3950,'2':5150,'2.5':6590,'3':8190,'3.5':9590},
-   weight_kg:130, height_cm:null, notes:''},
-
-  {id:'c_waveplus', name:'Wave Plus', brand:'MovelPro', isSuena:false, category:'Medio',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Suiza Tech','Antialérgico'],
-   prices:{'1.5':1550,'2':1850,'2.5':2050,'3':2550,'3.5':2850},
-   combo_s:{'1.5':2100,'2':2500,'2.5':2950,'3':3550,'3.5':3950},
-   combo_sr:{'1.5':2600,'2':3100,'2.5':3590,'3':4350,'3.5':4850},
-   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
-
-  {id:'c_alaska', name:'Alaska Cooler', brand:'MovelPro', isSuena:false, category:'Medio-Alto',
-   type:'Resortes + Tecnología Cooler',
-   features:['Pocket PHS','Cooler','Premium','Antialérgico'],
-   prices:{'1.5':1490,'2':1700,'2.5':2000,'3':2450,'3.5':2900},
-   combo_s:{'1.5':2040,'2':2350,'2.5':2900,'3':3600,'3.5':4000},
-   combo_sr:{'1.5':2540,'2':2950,'2.5':3600,'3':4400,'3.5':4900},
-   weight_kg:140, height_cm:null, notes:'Premium. 140 kg capacidad.'},
-
-  {id:'c_suavity', name:'Suavity Ice Cooler', brand:'MovelPro', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Ice Cooler + Visco Gel',
-   features:['Pocket PHS','Ice Cooler','Visco Gel NASA','Antialérgico','Suiza Tech'],
-   prices:{'1.5':1690,'2':1950,'2.5':2150,'3':2950,'3.5':3350},
-   combo_s:{'1.5':2240,'2':2600,'2.5':3050,'3':3950,'3.5':4450},
-   combo_sr:{'1.5':2740,'2':3200,'2.5':3750,'3':4750,'3.5':5350},
-   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
-
-  {id:'c_memphis', name:'Memphis', brand:'FA Colchones', isSuena:false, category:'Medio-Alto',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Tecnología Inverter','Seniortopédico'],
-   prices:{'1.5':1650,'2':2050,'2.5':2450,'3':3100},
-   combo_s:{'1.5':2200,'2':2700,'2.5':3350,'3':4100},
-   combo_sr:{'1.5':2700,'2':3300,'2.5':4050,'3':4900},
-   weight_kg:120, height_cm:null, notes:'120 kg capacidad. Tecnología Inverter.'},
-
-  {id:'c_montana', name:'Montana', brand:'FA Colchones', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco NASA',
-   features:['Pocket PHS','Visco NASA','Doble cara','Antialérgico','Premium'],
-   prices:{'1.5':1900,'2':2250,'2.5':2700,'3':4200},
-   combo_s:{'1.5':2450,'2':2900,'2.5':3600,'3':5200},
-   combo_sr:{'1.5':2950,'2':3500,'2.5':4300,'3':6000},
-   weight_kg:130, height_cm:null, notes:'Doble cara (reversible). FA Colchones.'},
-
-  {id:'c_nube', name:'Nube', brand:'FA Colchones', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Visco Gel',
-   features:['Pocket PHS','Visco Gel NASA','Suiza Tech','Antialérgico','Premium'],
-   prices:{'1.5':2190,'2':2700,'2.5':3100,'3':4300,'3.5':4600},
-   combo_s:{'1.5':2740,'2':3350,'2.5':4000,'3':5300,'3.5':5700},
-   combo_sr:{'1.5':3240,'2':3950,'2.5':4700,'3':6100,'3.5':6600},
-   weight_kg:130, height_cm:null, notes:'Suiza Technology. Premium.'},
-
-  {id:'c_lancaster', name:'Lancaster', brand:'FA Colchones', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS',
-   features:['Pocket PHS','Premium','Antialérgico','Antiacaro'],
-   prices:{'1.5':2350,'2':2850,'2.5':3190,'3':3900},
-   combo_s:{'1.5':2900,'2':3500,'2.5':4090,'3':4900},
-   combo_sr:{'1.5':3400,'2':4100,'2.5':4790,'3':5700},
-   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964. Premium.'},
-
-  {id:'c_bambu', name:'Bambu Pro', brand:'MovelPro', isSuena:false, category:'Premium',
-   type:'Resortes Pocket PHS + Bambú',
-   features:['Pocket PHS','Bambú','Premium','Antialérgico'],
-   prices:{'1.5':1700,'2':2100,'2.5':2350,'3':2750,'3.5':3050},
-   combo_s:{'1.5':2250,'2':2750,'2.5':3250,'3':3750,'3.5':4150},
-   combo_sr:{'1.5':2750,'2':3350,'2.5':3950,'3':4550,'3.5':5050},
-   weight_kg:140, height_cm:null, notes:'140 kg capacidad. Premium.'},
-
-  {id:'c_brisa', name:'Brisa', brand:'MovelPro', isSuena:false, category:'Premium',
-   type:'Espuma D45 alta densidad',
-   features:['Espuma D45','Alta densidad','Premium','Antialérgico'],
-   prices:{'1.5':1700,'2':2050,'2.5':2300,'3':2700,'3.5':3000},
-   combo_s:{'1.5':2250,'2':2700,'2.5':3200,'3':3700,'3.5':4100},
-   combo_sr:{'1.5':2750,'2':3300,'2.5':3900,'3':4500,'3.5':5000},
-   weight_kg:140, height_cm:null, notes:'Sin resortes. Espuma D45. 140 kg.'},
+  {id:'c_miel',name:'Miel',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D28',features:['Espuma D28','14 cm','Doble cara','Antialérgico','Antiacaro'],prices:{'1':400,'2':680},combo_s:{'1':900,'2':1330},combo_sr:{'1':1400,'2':1930},weight_kg:100,height_cm:14,notes:'Solo disponible en 1 y 2 plazas.'},
+  {id:'c_platino',name:'Platino',brand:'MovelPro',isSuena:false,category:'Básico',type:'Espuma D28',features:['Espuma D28','17 cm','Extra firme','Antialérgico','Antiacaro'],prices:{'1':470,'2':780},combo_s:{'1':970,'2':1430},combo_sr:{'1':1470,'2':2030},weight_kg:100,height_cm:17,notes:'Solo disponible en 1 y 2 plazas.'},
+  {id:'c_classic',name:'Classic Bambu',brand:'FA Colchones',isSuena:false,category:'Básico',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Algodón 100%','Antialérgico','Antiacaro'],prices:{'1.5':1150,'2':1400,'2.5':1590},combo_s:{'1.5':1700,'2':2050,'2.5':2490},combo_sr:{'1.5':2200,'2':2650,'2.5':3190},weight_kg:130,height_cm:null,notes:'FA Colchones desde 1964.'},
+  {id:'c_brillante',name:'Brillante',brand:'MovelPro',isSuena:false,category:'Básico',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},weight_kg:130,height_cm:null,notes:'Suiza Technology.'},
+  {id:'c_chester',name:'Chester',brand:'MovelPro',isSuena:false,category:'Básico',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},weight_kg:130,height_cm:null,notes:'Mismo spec que Brillante, tapizado negro.'},
+  {id:'c_newedu',name:'New Edu',brand:'FA Colchones',isSuena:false,category:'Medio',type:'Resortes Pocket PHS',features:['Pocket PHS','Algodón 100%','Antialérgico','Antiacaro'],prices:{'1.5':1400,'2':1700,'2.5':2050},combo_s:{'1.5':1950,'2':2350,'2.5':2950},combo_sr:{'1.5':2450,'2':2950,'2.5':3650},weight_kg:130,height_cm:null,notes:'FA Colchones desde 1964.'},
+  {id:'c_ultrasoft',name:'UltraSoft',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco NASA',features:['Pocket PHS','Visco NASA','Espuma D33','Antialérgico','Suiza Tech'],prices:{'1.5':1350,'2':1650,'2.5':1850,'3':2350,'3.5':2650},combo_s:{'1.5':1900,'2':2300,'2.5':2750,'3':3350,'3.5':3750},combo_sr:{'1.5':2400,'2':2900,'2.5':3450,'3':4150,'3.5':4650},weight_kg:130,height_cm:null,notes:'Suiza Technology.'},
+  /* ===== TERRA catálogo completo ===== */
+  {id:'t_smartflex',name:'Smart Flex',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D28 Doble Cara',features:['Espuma D28','Doble Cara','Antialérgico'],prices:{'1':520},combo_s:{'1':1020},combo_sr:{'1':1520},weight_kg:100,height_cm:20,notes:'Solo disponible en 1 plaza.'},
+  {id:'t_ortoflex',name:'Ortoflex',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D28 Doble Cara',features:['Espuma D28','Doble Cara','Antialérgico'],prices:{'2.5':1400},combo_s:{'2.5':2300},combo_sr:{'2.5':3000},weight_kg:110,height_cm:26,notes:''},
+  {id:'t_orthofam',name:'Orthofam',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D28 Ortopédico',features:['Espuma D28','Ortopédico','Active Protection','Antialérgico','Antiácaros'],prices:{'2':1900,'3':2400},combo_s:{'2':2550,'3':3400},combo_sr:{'2':3150,'3':4200},weight_kg:120,height_cm:null,notes:''},
+  {id:'t_procomendador',name:'Pro Comendador',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D33',features:['Espuma D33','Made in Brasil','Antialérgico'],prices:{'1.5':1250},combo_s:{'1.5':1800},combo_sr:{'1.5':2300},weight_kg:110,height_cm:null,notes:''},
+  {id:'t_emradaptive',name:'EMR Adaptive',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D33 Doble Cara',features:['Espuma D33','Doble Cara','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2':2500,'2.5':2500},combo_s:{'2':3150,'2.5':3400},combo_sr:{'2':3750,'2.5':4100},weight_kg:110,height_cm:null,notes:''},
+  {id:'t_maxfirme',name:'Max Firme',brand:'Terra',isSuena:false,category:'Básico',type:'Espuma D45',features:['Espuma D45','Made in Brasil','Antialérgico'],prices:{'1.5':1750,'2':1990,'2.5':2290},combo_s:{'1.5':2300,'2':2640,'2.5':3190},combo_sr:{'1.5':2800,'2':3240,'2.5':3890},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_pedicduple',name:'Pedic Duple',brand:'Terra',isSuena:false,category:'Básico',type:'Doble Cara Extra Firme',features:['Doble Cara','Extra Firme','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'1.5':1650,'2':2200},combo_s:{'1.5':2200,'2':2850},combo_sr:{'1.5':2700,'2':3450},weight_kg:120,height_cm:null,notes:''},
+  {id:'t_campeon',name:'Campeon',brand:'Terra',isSuena:false,category:'Básico',type:'Resortes + Espuma D28',features:['Espuma D28','Resortes','Antialérgico'],prices:{'1.5':1450,'2':1750,'2.5':1950,'3':2450,'3.5':2750},combo_s:{'1.5':2000,'2':2400,'2.5':2850,'3':3450,'3.5':3850},combo_sr:{'1.5':2500,'2':3000,'2.5':3550,'3':4250,'3.5':4750},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_pillowpreta',name:'Pillow Top Preta',brand:'Terra',isSuena:false,category:'Básico',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],prices:{'1.5':1400},combo_s:{'1.5':1950},combo_sr:{'1.5':2450},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_ultrafirme',name:'Ultra Firme',brand:'Terra',isSuena:false,category:'Básico',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],prices:{'2':1400},combo_s:{'2':2050},combo_sr:{'2':2650},weight_kg:110,height_cm:null,notes:''},
+  {id:'t_oregon',name:'Oregon',brand:'Terra',isSuena:false,category:'Básico',type:'Resortes Pocket PHS',features:['Pocket PHS','Made in Brasil','Antialérgico'],prices:{'2':1600},combo_s:{'2':2250},combo_sr:{'2':2850},weight_kg:120,height_cm:null,notes:''},
+  {id:'t_ortorelax',name:'Ortorelax',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Antialérgico','Made in Brasil'],prices:{'2':1990,'2.5':2200},combo_s:{'2':2640,'2.5':3100},combo_sr:{'2':3240,'2.5':3800},weight_kg:120,height_cm:null,notes:''},
+  {id:'t_bristol',name:'Bristol',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS',features:['Pocket PHS','Active Protection','Antialérgico','Antiácaros'],prices:{'2':2500},combo_s:{'2':3150},combo_sr:{'2':3750},weight_kg:120,height_cm:null,notes:''},
+  {id:'t_cambridge',name:'Cambridge',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS',features:['Pocket PHS','Antialérgico','Antiácaros'],prices:{'2':2500},combo_s:{'2':3150},combo_sr:{'2':3750},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_drako',name:'Drako',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco NASA',features:['Pocket PHS','Visco NASA','Antialérgico','Made in Brasil'],prices:{'1.5':1700,'2':1950,'2.5':2400},combo_s:{'1.5':2250,'2':2600,'2.5':3300},combo_sr:{'1.5':2750,'2':3200,'2.5':4000},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_drakoplus',name:'Drako Plus',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco Gel + Inverter',features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Antialérgico'],prices:{'2.5':2400},combo_s:{'2.5':3300},combo_sr:{'2.5':4000},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_alexaplush',name:'Alexa Plush',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco NASA',features:['Pocket PHS','Visco NASA','Antialérgico','Made in Brasil'],prices:{'1.5':1890,'2.5':2450,'3':3350},combo_s:{'1.5':2440,'2.5':3350,'3':4350},combo_sr:{'1.5':2940,'2.5':4050,'3':5150},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_versalle',name:'Versalle',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes + Espuma D28',features:['Espuma D28','Resortes','Made in Brasil','Antialérgico'],prices:{'1.5':1950,'2':2500,'2.5':2850,'3':3300,'3.5':3600},combo_s:{'1.5':2500,'2':3150,'2.5':3750,'3':4300,'3.5':4700},combo_sr:{'1.5':3000,'2':3750,'2.5':4450,'3':5100,'3.5':5600},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_vivalle',name:'Vivalle',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Antialérgico'],prices:{'2':2600},combo_s:{'2':3250},combo_sr:{'2':3850},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_nobile',name:'Nobile',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Inverter',features:['Pocket PHS','Technology Inverter','Antialérgico'],prices:{'2':2950},combo_s:{'2':3600},combo_sr:{'2':4200},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_magnus',name:'Magnus',brand:'Terra',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Antialérgico'],prices:{'2.5':2650},combo_s:{'2.5':3550},combo_sr:{'2.5':4250},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_luan',name:'Luan',brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Visco Gel + Inverter',features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'1.5':1900,'2':2250,'2.5':2490,'3':3100,'3.5':3650},combo_s:{'1.5':2450,'2':2900,'2.5':3390,'3':4100,'3.5':4750},combo_sr:{'1.5':2950,'2':3500,'2.5':4090,'3':4900,'3.5':5650},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_andrea',name:'Andrea',brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Visco Gel + Inverter',features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2.5':2390},combo_s:{'2.5':3290},combo_sr:{'2.5':3990},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_pieros',name:"Piero's",brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Visco Gel + Suiza Tech',features:['Pocket PHS','Visco Gel NASA','Suiza Tech','Antialérgico'],prices:{'2.5':2400},combo_s:{'2.5':3300},combo_sr:{'2.5':4000},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_atlantavisco',name:'Atlanta Visco',brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Antialérgico'],prices:{'2':2790,'3':4350,'3.5':4700},combo_s:{'2':3440,'3':5350,'3.5':5800},combo_sr:{'2':4040,'3':6150,'3.5':6700},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_gael',name:'Gael',brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Visco Gel + Technology Inverter',features:['Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2':3400,'2.5':3700,'3':4900},combo_s:{'2':4050,'2.5':4600,'3':5900},combo_sr:{'2':4650,'2.5':5300,'3':6700},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_hibrido',name:'Híbrido Latex',brand:'Terra',isSuena:false,category:'Medio-Alto',type:'Latex + Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Espuma Latex','Visco Gel NASA','Antialérgico'],prices:{'2':2900},combo_s:{'2':3550},combo_sr:{'2':4150},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_dakota',name:'Dakota',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel + Inverter',features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2':4200,'2.5':4700,'3':6000},combo_s:{'2':4750,'2.5':5600,'3':7000},combo_sr:{'2':5350,'2.5':6300,'3':7800},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_muv',name:'Muv',brand:'Terra',isSuena:false,category:'Premium',type:'Latex 100% + Resortes + Visco Gel',features:['Espuma Latex','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2.5':2500},combo_s:{'2.5':3400},combo_sr:{'2.5':4100},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_newport',name:'Newport',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Made in Brasil','Antialérgico'],prices:{'2':3600},combo_s:{'2':4250},combo_sr:{'2':4850},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_anatomic',name:'Anatomic',brand:'Terra',isSuena:false,category:'Premium',type:'Espuma Latex + Visco Gel + Inverter',features:['Espuma Latex','Visco Gel NASA','Technology Inverter','Antialérgico'],prices:{'2':3200},combo_s:{'2':3850},combo_sr:{'2':4450},weight_kg:130,height_cm:null,notes:''},
+  {id:'t_icon',name:'Icon',brand:'Terra',isSuena:false,category:'Premium',type:'Espuma Latex + Resortes Pocket PHS',features:['Pocket PHS','Espuma Latex','Active Protection','Antialérgico'],prices:{'2':6500},combo_s:{'2':7150},combo_sr:{'2':7750},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_foryou',name:'For You',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel + Inverter',features:['Pocket PHS','Visco Gel NASA','Technology Inverter','Made in Brasil','Antialérgico'],prices:{'2':5600,'2.5':6300,'3.5':7950},combo_s:{'2':6250,'2.5':7200,'3.5':9050},combo_sr:{'2':6850,'2.5':7900,'3.5':9950},weight_kg:150,height_cm:null,notes:''},
+  {id:'t_legend',name:'Legend',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Made in Brasil','Antialérgico'],prices:{'2':4700,'2.5':6900},combo_s:{'2':5350,'2.5':7800},combo_sr:{'2':5950,'2.5':8500},weight_kg:150,height_cm:null,notes:''},
+  {id:'t_privelle',name:'Privelle',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel + Latex',features:['Pocket PHS','Visco Gel NASA','Espuma Latex','Antialérgico'],prices:{'2':5500},combo_s:{'2':6150},combo_sr:{'2':6750},weight_kg:150,height_cm:null,notes:''},
+  {id:'t_nasagel',name:'Nasa Gel',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Antialérgico'],prices:{'1.5':4500,'2':5600,'2.5':6450,'3':7550,'3.5':8200},combo_s:{'1.5':5050,'2':6250,'2.5':7350,'3':8550,'3.5':9300},combo_sr:{'1.5':5550,'2':6850,'2.5':8050,'3':9350,'3.5':10200},weight_kg:140,height_cm:null,notes:''},
+  {id:'t_signature',name:'Signature',brand:'Terra',isSuena:false,category:'Premium',type:'Espuma Latex + Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Espuma Latex','Visco Gel NASA','Made in Brasil','Antialérgico'],prices:{'2':5500},combo_s:{'2':6150},combo_sr:{'2':6750},weight_kg:150,height_cm:null,notes:''},
+  {id:'t_viscoplugel',name:'Visco Plus Gel',brand:'Terra',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel + Spumalatex',features:['Pocket PHS','Visco Gel NASA','Espuma Latex','Antialérgico'],prices:{'1.5':2900,'2':3900,'2.5':4990,'3':6390,'3.5':7590},combo_s:{'1.5':3450,'2':4550,'2.5':5890,'3':7390,'3.5':8690},combo_sr:{'1.5':3950,'2':5150,'2.5':6590,'3':8190,'3.5':9590},weight_kg:130,height_cm:null,notes:''},
+  /* MovelPro adicionales */
+  {id:'c_waveplus',name:'Wave Plus',brand:'MovelPro',isSuena:false,category:'Medio',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Suiza Tech','Antialérgico'],prices:{'1.5':1550,'2':1850,'2.5':2050,'3':2550,'3.5':2850},combo_s:{'1.5':2100,'2':2500,'2.5':2950,'3':3550,'3.5':3950},combo_sr:{'1.5':2600,'2':3100,'2.5':3590,'3':4350,'3.5':4850},weight_kg:130,height_cm:null,notes:'Suiza Technology.'},
+  {id:'c_alaska',name:'Alaska Cooler',brand:'MovelPro',isSuena:false,category:'Medio-Alto',type:'Resortes + Tecnología Cooler',features:['Pocket PHS','Cooler','Premium','Antialérgico'],prices:{'1.5':1490,'2':1700,'2.5':2000,'3':2450,'3.5':2900},combo_s:{'1.5':2040,'2':2350,'2.5':2900,'3':3600,'3.5':4000},combo_sr:{'1.5':2540,'2':2950,'2.5':3600,'3':4400,'3.5':4900},weight_kg:140,height_cm:null,notes:'Premium. 140 kg capacidad.'},
+  {id:'c_suavity',name:'Suavity Ice Cooler',brand:'MovelPro',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Ice Cooler + Visco Gel',features:['Pocket PHS','Ice Cooler','Visco Gel NASA','Antialérgico','Suiza Tech'],prices:{'1.5':1690,'2':1950,'2.5':2150,'3':2950,'3.5':3350},combo_s:{'1.5':2240,'2':2600,'2.5':3050,'3':3950,'3.5':4450},combo_sr:{'1.5':2740,'2':3200,'2.5':3750,'3':4750,'3.5':5350},weight_kg:130,height_cm:null,notes:'Suiza Technology.'},
+  {id:'c_bambu',name:'Bambu Pro',brand:'MovelPro',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Premium','Antialérgico'],prices:{'1.5':1700,'2':2100,'2.5':2350,'3':2750,'3.5':3050},combo_s:{'1.5':2250,'2':2750,'2.5':3250,'3':3750,'3.5':4150},combo_sr:{'1.5':2750,'2':3350,'2.5':3950,'3':4550,'3.5':5050},weight_kg:140,height_cm:null,notes:'140 kg capacidad. Premium.'},
+  {id:'c_brisa',name:'Brisa',brand:'MovelPro',isSuena:false,category:'Premium',type:'Espuma D45 alta densidad',features:['Espuma D45','Alta densidad','Premium','Antialérgico'],prices:{'1.5':1700,'2':2050,'2.5':2300,'3':2700,'3.5':3000},combo_s:{'1.5':2250,'2':2700,'2.5':3200,'3':3700,'3.5':4100},combo_sr:{'1.5':2750,'2':3300,'2.5':3900,'3':4500,'3.5':5000},weight_kg:140,height_cm:null,notes:'Sin resortes. Espuma D45. 140 kg.'},
+  /* FA Colchones adicionales */
+  {id:'c_memphis',name:'Memphis',brand:'FA Colchones',isSuena:false,category:'Medio-Alto',type:'Resortes Pocket PHS + Bambú',features:['Pocket PHS','Bambú','Tecnología Inverter','Seniortopédico'],prices:{'1.5':1650,'2':2050,'2.5':2450,'3':3100},combo_s:{'1.5':2200,'2':2700,'2.5':3350,'3':4100},combo_sr:{'1.5':2700,'2':3300,'2.5':4050,'3':4900},weight_kg:120,height_cm:null,notes:'120 kg capacidad. Tecnología Inverter.'},
+  {id:'c_montana',name:'Montana',brand:'FA Colchones',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco NASA',features:['Pocket PHS','Visco NASA','Doble cara','Antialérgico','Premium'],prices:{'1.5':1900,'2':2250,'2.5':2700,'3':4200},combo_s:{'1.5':2450,'2':2900,'2.5':3600,'3':5200},combo_sr:{'1.5':2950,'2':3500,'2.5':4300,'3':6000},weight_kg:130,height_cm:null,notes:'Doble cara (reversible). FA Colchones.'},
+  {id:'c_nube',name:'Nube',brand:'FA Colchones',isSuena:false,category:'Premium',type:'Resortes Pocket PHS + Visco Gel',features:['Pocket PHS','Visco Gel NASA','Suiza Tech','Antialérgico','Premium'],prices:{'1.5':2190,'2':2700,'2.5':3100,'3':4300,'3.5':4600},combo_s:{'1.5':2740,'2':3350,'2.5':4000,'3':5300,'3.5':5700},combo_sr:{'1.5':3240,'2':3950,'2.5':4700,'3':6100,'3.5':6600},weight_kg:130,height_cm:null,notes:'Suiza Technology. Premium.'},
+  {id:'c_lancaster',name:'Lancaster',brand:'FA Colchones',isSuena:false,category:'Premium',type:'Resortes Pocket PHS',features:['Pocket PHS','Premium','Antialérgico','Antiacaro'],prices:{'1.5':2350,'2':2850,'2.5':3190,'3':3900},combo_s:{'1.5':2900,'2':3500,'2.5':4090,'3':4900},combo_sr:{'1.5':3400,'2':4100,'2.5':4790,'3':5700},weight_kg:130,height_cm:null,notes:'FA Colchones desde 1964. Premium.'}
 ];
 
-// Populate selects
-const selA = document.getElementById('selA');
-const selB = document.getElementById('selB');
-
-const groups = {};
-PRODUCTS.forEach(p => {
-  const g = p.isSuena ? '🟢 SUEÑA' : `⬜ Competencia — ${p.brand}`;
-  if (!groups[g]) groups[g] = [];
+/* ---- populate selects ---- */
+const selA=document.getElementById('selA'),selB=document.getElementById('selB');
+const groups={};
+PRODUCTS.forEach(p=>{
+  const g=p.isSuena?'🟢 SUEÑA':`⬜ Competencia — ${p.brand}`;
+  if(!groups[g])groups[g]=[];
   groups[g].push(p);
 });
-
-[selA, selB].forEach(sel => {
-  Object.entries(groups).forEach(([gName, prods]) => {
-    const og = document.createElement('optgroup');
-    og.label = gName;
-    prods.forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.id;
-      opt.textContent = p.name + (p.isSuena ? '' : ' (' + p.brand + ')');
-      og.appendChild(opt);
-    });
+[selA,selB].forEach(sel=>{
+  Object.entries(groups).forEach(([gn,prods])=>{
+    const og=document.createElement('optgroup');og.label=gn;
+    prods.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.isSuena?'':' ('+p.brand+')');og.appendChild(o);});
     sel.appendChild(og);
   });
 });
+selA.value='s_essential';selB.value='c_ultrasoft';
 
-// Set defaults
-selA.value = 's_essential';
-selB.value = 'c_ultrasoft';
+/* ---- state ---- */
+let ACTIVE_TAB='resumen',BAR_MODE='solo';
+let PA=null,PB=null;
 
-function fmt(n) {
-  if (n == null) return '—';
-  return n.toLocaleString('es-BO') + ' Bs';
+function fmt(n){return n==null?'—':n.toLocaleString('es-BO')+' Bs'}
+
+function pills(feats){
+  return feats.map(f=>`<span class="fp${KEY_F.has(f)?' t':''}">${f}</span>`).join('');
 }
 
-function pillsHTML(features) {
-  return features.map(f => {
-    const isKey = ['Visco Gel NASA','Pocket PHS','Ice Cooler','Visco NASA','Bambú','Memory Foam','D45','Cooler','Ultrasoft','Pillowtop','Tela Sensación Frío','Espuma Alta Densidad','Espuma Prensada','Espuma Soft Anatómica','Resortes Bonnell','Espuma Ultra Confort','Technology Inverter','Espuma Latex','Active Protection','Suiza Tech'].includes(f);
-    return `<span class="fp${isKey?' t':''}">${f}</span>`;
+function prodCard(p){
+  const cls=p.isSuena?'suena':'comp';
+  const specs=[];
+  if(p.height_cm)specs.push(`<span class="fp">${p.height_cm} cm</span>`);
+  if(p.weight_kg)specs.push(`<span class="fp">${p.weight_kg} kg máx</span>`);
+  return `<div class="prod-card ${cls}">
+    <div class="pc-head">
+      <div class="brand-pill">${p.isSuena?'SUEÑA':p.brand.toUpperCase()}</div>
+      <div class="prod-name">${p.name}</div>
+      <div class="prod-type">${p.type}</div>
+    </div>
+    <div class="pc-feats">${pills(p.features)}${specs.join('')}</div>
+    <div class="pc-meta">
+      <div class="mi"><div class="mi-lbl">Categoría</div><div class="mi-val" style="font-size:12px">${p.category}</div></div>
+      ${p.height_cm?`<div class="mi"><div class="mi-lbl">Alto</div><div class="mi-val">${p.height_cm}cm</div></div>`:''}
+      ${p.weight_kg?`<div class="mi"><div class="mi-lbl">Carga</div><div class="mi-val">${p.weight_kg}kg</div></div>`:''}
+    </div>
+    ${p.notes?`<div class="pc-notes">${p.notes}</div>`:''}
+  </div>`;
+}
+
+function tabResumen(pA,pB){
+  let wA=0,wB=0,ties=0,tot=0;
+  SIZES.forEach(s=>{const a=pA.prices[s],b=pB.prices[s];if(a!=null&&b!=null){tot++;const d=a-b;if(Math.abs(d)<=30)ties++;else if(d<0)wA++;else wB++;}});
+  const base=wA+wB+ties||1;
+  const wrRows=SIZES.filter(s=>pA.prices[s]!=null||pB.prices[s]!=null).map(s=>{
+    const a=pA.prices[s],b=pB.prices[s];
+    let dc='na',dt='—';
+    if(a!=null&&b!=null){const d=a-b;if(Math.abs(d)<=30){dc='eq';dt='≈ igual';}else if(d<0){dc='win';dt=`-${Math.abs(d).toLocaleString()} Bs`;}else{dc='lose';dt=`+${Math.abs(d).toLocaleString()} Bs`;}}
+    return `<div class="wr"><span class="wr-size">${SL[s]}</span><span class="wr-p wr-pa">${fmt(a)}</span><span class="wr-diff ${dc}">${dt}</span><span class="wr-p wr-pb">${fmt(b)}</span></div>`;
+  }).join('');
+  return `
+  <div class="score-row"><span style="color:var(--teal)">${pA.name}: ${wA} victorias</span><span style="color:rgba(255,255,255,.3)">${ties} empate${ties!==1?'s':''}</span><span style="color:var(--violet)">${pB.name}: ${wB} victorias</span></div>
+  <div class="score-track"><div class="sf-a" style="width:${Math.round(wA/base*100)}%"></div><div class="sf-b" style="width:${Math.round(wB/base*100)}%"></div></div>
+  <div class="price-mode-lbl">Precios solo colchón</div>
+  <div class="winner-rows">${wrRows}</div>
+  <div class="metric-cards">
+    <div class="mc"><div class="mc-lbl">Altura colchón</div><div class="mc-vals"><div class="mcv"><div class="v" style="color:var(--teal)">${pA.height_cm?pA.height_cm+'cm':'—'}</div><div class="l">${pA.name}</div></div><div class="mcv"><div class="v" style="color:var(--violet)">${pB.height_cm?pB.height_cm+'cm':'—'}</div><div class="l">${pB.name}</div></div></div></div>
+    <div class="mc"><div class="mc-lbl">Carga máxima</div><div class="mc-vals"><div class="mcv"><div class="v" style="color:var(--teal)">${pA.weight_kg?pA.weight_kg+'kg':'—'}</div><div class="l">${pA.name}</div></div><div class="mcv"><div class="v" style="color:var(--violet)">${pB.weight_kg?pB.weight_kg+'kg':'—'}</div><div class="l">${pB.name}</div></div></div></div>
+    <div class="mc"><div class="mc-lbl">Categoría</div><div class="mc-vals"><div class="mcv"><div class="v" style="color:var(--teal);font-size:13px">${pA.category}</div><div class="l">${pA.name}</div></div><div class="mcv"><div class="v" style="color:var(--violet);font-size:13px">${pB.category}</div><div class="l">${pB.name}</div></div></div></div>
+  </div>`;
+}
+
+function barRowsHTML(pA,pB,mode){
+  const mk={solo:'prices',somier:'combo_s',sr:'combo_sr'};
+  const key=mk[mode];
+  const sizes=SIZES.filter(s=>pA[key][s]!=null||pB[key][s]!=null);
+  if(!sizes.length)return '<div class="placeholder">Sin datos para este modo</div>';
+  const maxV=Math.max(...sizes.map(s=>Math.max(pA[key][s]||0,pB[key][s]||0)));
+  return sizes.map(s=>{
+    const a=pA[key][s],b=pB[key][s];
+    const wA=a!=null?Math.max(8,Math.round(a/maxV*100)):0;
+    const wB=b!=null?Math.max(8,Math.round(b/maxV*100)):0;
+    return `<div class="bar-row">
+      <div class="br-size">${SL[s]}</div>
+      <div class="bar-pair">
+        <div class="bar-item"><div class="bar-brand" style="color:var(--teal)">${pA.name.substring(0,12)}</div><div class="bar-track"><div class="bar-fill a" style="width:${a!=null?wA:0}%"><span class="bar-price">${a!=null?a.toLocaleString()+' Bs':'—'}</span></div></div></div>
+        <div class="bar-item"><div class="bar-brand" style="color:var(--violet)">${pB.name.substring(0,12)}</div><div class="bar-track"><div class="bar-fill b" style="width:${b!=null?wB:0}%"><span class="bar-price">${b!=null?b.toLocaleString()+' Bs':'—'}</span></div></div></div>
+      </div>
+    </div>`;
   }).join('');
 }
 
-function renderCard(p) {
-  const headerClass = p.isSuena ? 'suena' : 'comp';
-  const badgeText = p.isSuena ? 'SUEÑA' : p.brand.toUpperCase();
-
-  const sizeRows = SIZES.filter(s => p.prices[s] != null).map(s => `
-    <div class="price-row">
-      <span class="size-label">${SIZE_LABELS[s]}</span>
-      <span class="price-val${s==='2'?' highlight':''}">${fmt(p.prices[s])}</span>
-    </div>`).join('');
-
-  const comboSRows = Object.keys(p.combo_s).length ? SIZES.filter(s => p.combo_s[s]).map(s => `
-    <div class="price-row">
-      <span class="size-label">${SIZE_LABELS[s]}</span>
-      <span class="price-val">${fmt(p.combo_s[s])}</span>
-    </div>`).join('') : '<div style="color:#9BA4B0;font-size:12px;font-family:monospace">No disponible</div>';
-
-  const comboSRRows = Object.keys(p.combo_sr).length ? SIZES.filter(s => p.combo_sr[s]).map(s => `
-    <div class="price-row">
-      <span class="size-label">${SIZE_LABELS[s]}</span>
-      <span class="price-val">${fmt(p.combo_sr[s])}</span>
-    </div>`).join('') : '<div style="color:#9BA4B0;font-size:12px;font-family:monospace">No disponible</div>';
-
-  const specs = [];
-  if (p.height_cm) specs.push(`<span class="fp">${p.height_cm} cm alto</span>`);
-  if (p.weight_kg) specs.push(`<span class="fp">${p.weight_kg} kg máx</span>`);
-
-  return `
-  <div class="cmp-col ${headerClass}">
-    <div class="cmp-header">
-      <div class="brand-badge">${badgeText}</div>
-      <div class="cmp-name">${p.name}</div>
-      <div class="cmp-type">${p.type}</div>
-    </div>
-    <div class="cmp-section">
-      <div class="section-label">Características</div>
-      ${pillsHTML(p.features)}
-      ${specs.join('')}
-      ${p.notes ? `<div style="margin-top:8px;font-size:11px;color:#9BA4B0;font-family:monospace">${p.notes}</div>` : ''}
-    </div>
-    <div class="cmp-section">
-      <div class="section-label">Solo colchón</div>
-      ${sizeRows}
-    </div>
-    <div class="cmp-section">
-      <div class="section-label">Combo + Somier</div>
-      ${comboSRows}
-    </div>
-    <div class="cmp-section">
-      <div class="section-label">Combo + Somier + Respaldar</div>
-      ${comboSRRows}
-    </div>
-  </div>`;
+function tabGrafico(pA,pB){
+  const btns=['solo:Solo colchón','somier:+ Somier','sr:+ S + Respaldar'];
+  const togglesHTML=btns.map(b=>{const[m,l]=b.split(':');return `<button class="bt${BAR_MODE===m?' active':''}" onclick="setBarMode('${m}')">${l}</button>`;}).join('');
+  return `<div class="bar-toggles">${togglesHTML}</div><div class="bar-rows" id="bar-rows">${barRowsHTML(pA,pB,BAR_MODE)}</div>`;
 }
 
-function renderVerdict(pA, pB) {
-  const types = [
-    {label:'Solo colchón', keyA:'prices', keyB:'prices'},
-    {label:'+ Somier', keyA:'combo_s', keyB:'combo_s'},
-    {label:'+ Somier + Respaldar', keyA:'combo_sr', keyB:'combo_sr'},
-  ];
-  const allSizes = SIZES.filter(s => types.some(t => pA[t.keyA][s] || pB[t.keyB][s]));
+function tabMatrix(pA,pB){
+  const allF=[...new Set([...pA.features,...pB.features])];
+  const rows=allF.map(f=>{
+    const hA=pA.features.includes(f),hB=pB.features.includes(f);
+    return `<tr><td class="${KEY_F.has(f)?'feat-key':''}">${f}</td><td class="${hA?'chk':'crs'}">${hA?'✓':'–'}</td><td class="${hB?'chk':'crs'}">${hB?'✓':'–'}</td></tr>`;
+  }).join('');
+  return `<table class="mx-table"><thead><tr><th>Característica</th><th class="c" style="color:var(--teal)">${pA.name}</th><th class="c" style="color:var(--violet)">${pB.name}</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
 
-  let rows = '';
-  types.forEach(t => {
-    const relevantSizes = allSizes.filter(s => pA[t.keyA][s] || pB[t.keyB][s]);
-    if (!relevantSizes.length) return;
-    relevantSizes.forEach(s => {
-      const vA = pA[t.keyA][s];
-      const vB = pB[t.keyB][s];
-      let diffHTML = '<span class="na">—</span>';
-      let winner = '<span class="na">—</span>';
-      if (vA != null && vB != null) {
-        const diff = vA - vB;
-        if (Math.abs(diff) <= 30) {
-          diffHTML = `<span class="diff-eq">≈ IGUAL</span>`;
-          winner = '<span class="diff-eq">Empate</span>';
-        } else if (diff < 0) {
-          diffHTML = `<span class="diff-win">A gana ${Math.abs(diff).toLocaleString()} Bs</span>`;
-          winner = `<strong>${pA.name}</strong>`;
-        } else {
-          diffHTML = `<span class="diff-lose">B gana ${Math.abs(diff).toLocaleString()} Bs</span>`;
-          winner = `<strong>${pB.name}</strong>`;
-        }
-      } else if (vA == null && vB != null) {
-        diffHTML = '<span class="na">A sin dato</span>';
-      } else if (vA != null && vB == null) {
-        diffHTML = '<span class="na">B sin dato</span>';
-      }
-      rows += `<tr>
-        <td>${t.label}</td>
-        <td>${SIZE_LABELS[s]}</td>
-        <td style="font-weight:700">${vA != null ? vA.toLocaleString()+' Bs' : '<span class="na">—</span>'}</td>
-        <td style="font-weight:700">${vB != null ? vB.toLocaleString()+' Bs' : '<span class="na">—</span>'}</td>
-        <td>${diffHTML}</td>
-        <td>${winner}</td>
-      </tr>`;
+function tabTabla(pA,pB){
+  const groups=[{l:'Solo colchón',kA:'prices',kB:'prices'},{l:'+ Somier',kA:'combo_s',kB:'combo_s'},{l:'+ Somier + Respaldar',kA:'combo_sr',kB:'combo_sr'}];
+  let rows='';
+  groups.forEach(g=>{
+    const szs=SIZES.filter(s=>pA[g.kA][s]!=null||pB[g.kB][s]!=null);
+    if(!szs.length)return;
+    rows+=`<tr class="gh"><td colspan="4">${g.l}</td></tr>`;
+    szs.forEach(s=>{
+      const a=pA[g.kA][s],b=pB[g.kB][s];
+      let dh='<span class="na">—</span>';
+      if(a!=null&&b!=null){const d=a-b;if(Math.abs(d)<=30)dh='<span class="de">≈ igual</span>';else if(d<0)dh=`<span class="dw">A −${Math.abs(d).toLocaleString()} Bs</span>`;else dh=`<span class="dl">B −${Math.abs(d).toLocaleString()} Bs</span>`;}
+      else if(a==null&&b!=null)dh='<span class="na">A sin dato</span>';
+      else if(a!=null&&b==null)dh='<span class="na">B sin dato</span>';
+      rows+=`<tr><td style="color:var(--muted)">${SL[s]}</td><td style="font-weight:700;color:var(--teal)">${a!=null?a.toLocaleString()+' Bs':'<span class="na">—</span>'}</td><td style="font-weight:700;color:var(--violet)">${b!=null?b.toLocaleString()+' Bs':'<span class="na">—</span>'}</td><td>${dh}</td></tr>`;
     });
   });
-
-  return `
-  <div class="verdict-wrap">
-    <div class="verdict-header">⚖️ Tabla comparativa de precios — ${pA.name} vs ${pB.name}</div>
-    <table class="verdict-table">
-      <thead><tr>
-        <th>Tipo</th><th>Tamaño</th>
-        <th>${pA.name} <span style="font-weight:400;opacity:.6">(${pA.brand})</span></th>
-        <th>${pB.name} <span style="font-weight:400;opacity:.6">(${pB.brand})</span></th>
-        <th>Diferencia</th>
-        <th>Más barato</th>
-      </tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-  </div>`;
+  return `<table class="pt"><thead><tr><th>Tamaño</th><th style="color:var(--teal)">${pA.name}</th><th style="color:var(--violet)">${pB.name}</th><th>Diferencia</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function render() {
-  const idA = selA.value, idB = selB.value;
-  if (!idA || !idB) {
-    document.getElementById('output').innerHTML = '<div class="placeholder">// Selecciona dos productos para ver la comparativa lado a lado</div>';
-    return;
-  }
-  const pA = PRODUCTS.find(p => p.id === idA);
-  const pB = PRODUCTS.find(p => p.id === idB);
-  if (!pA || !pB) return;
+function setBarMode(m){
+  BAR_MODE=m;
+  document.querySelectorAll('.bt').forEach(b=>b.classList.toggle('active',b.textContent.trim()===({solo:'Solo colchón',somier:'+ Somier',sr:'+ S + Respaldar'}[m])));
+  const el=document.getElementById('bar-rows');
+  if(el&&PA&&PB)el.innerHTML=barRowsHTML(PA,PB,m);
+}
 
-  document.getElementById('output').innerHTML = `
-    <div class="cmp-wrap">${renderCard(pA)}${renderCard(pB)}</div>
-    ${renderVerdict(pA, pB)}
-  `;
+function switchTab(id){
+  ACTIVE_TAB=id;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===id));
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='tp-'+id));
+}
+
+function render(){
+  const idA=selA.value,idB=selB.value;
+  if(!idA||!idB){document.getElementById('output').innerHTML='<div class="placeholder">// Selecciona dos productos para ver la comparativa</div>';return;}
+  PA=PRODUCTS.find(p=>p.id===idA);
+  PB=PRODUCTS.find(p=>p.id===idB);
+  if(!PA||!PB)return;
+
+  document.getElementById('output').innerHTML=`
+    <div class="prod-grid">${prodCard(PA)}${prodCard(PB)}</div>
+    <div class="glass tab-area">
+      <div class="tab-nav">
+        <button class="tab-btn" data-tab="resumen" onclick="switchTab('resumen')">Resumen</button>
+        <button class="tab-btn" data-tab="grafico" onclick="switchTab('grafico')">Gráfico</button>
+        <button class="tab-btn" data-tab="matrix" onclick="switchTab('matrix')">Características</button>
+        <button class="tab-btn" data-tab="tabla" onclick="switchTab('tabla')">Tabla completa</button>
+      </div>
+      <div id="tp-resumen" class="tab-pane">${tabResumen(PA,PB)}</div>
+      <div id="tp-grafico" class="tab-pane">${tabGrafico(PA,PB)}</div>
+      <div id="tp-matrix" class="tab-pane">${tabMatrix(PA,PB)}</div>
+      <div id="tp-tabla" class="tab-pane">${tabTabla(PA,PB)}</div>
+    </div>`;
+
+  switchTab(ACTIVE_TAB);
 }
 
 render();
