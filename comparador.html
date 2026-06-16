@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Comparador — Sueña vs Competencia</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&display=swap">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:"Hanken Grotesk",sans-serif;background:#F5F7F8;color:#0F1620;font-size:14px;-webkit-font-smoothing:antialiased;min-height:100vh}
+header{background:linear-gradient(135deg,#0F1620,#1a2840);color:#fff;padding:22px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+header h1{font-size:18px;font-weight:800}
+header h1 em{font-style:normal;color:#00B5AD}
+.meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.45);margin-top:3px;letter-spacing:1px}
+.back-link{font-family:"IBM Plex Mono",monospace;font-size:11px;color:rgba(255,255,255,.6);text-decoration:none;border:1px solid rgba(255,255,255,.2);padding:6px 14px;border-radius:8px}
+.back-link:hover{background:rgba(255,255,255,.1)}
+.wrap{max-width:1200px;margin:0 auto;padding:32px 20px}
+
+/* Selectors */
+.selector-area{background:#fff;border-radius:16px;border:1px solid #E7EAEE;padding:28px;margin-bottom:28px;box-shadow:0 2px 8px rgba(15,22,32,.06)}
+.selector-area h2{font-size:15px;font-weight:800;margin-bottom:20px;color:#0F1620}
+.selector-grid{display:grid;grid-template-columns:1fr 60px 1fr;gap:16px;align-items:end}
+.sel-group label{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#697483;margin-bottom:6px}
+.sel-group select{width:100%;padding:12px 14px;border:1.5px solid #E7EAEE;border-radius:10px;font-family:"Hanken Grotesk",sans-serif;font-size:14px;font-weight:600;color:#0F1620;background:#fff;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23697483' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+.sel-group select:focus{outline:none;border-color:#00B5AD;box-shadow:0 0 0 3px rgba(0,181,173,.1)}
+.sel-group select option[data-suena]{font-weight:700}
+.vs-badge{text-align:center;font-family:"IBM Plex Mono",monospace;font-size:18px;font-weight:700;color:#00B5AD;padding-bottom:6px}
+
+/* Placeholder */
+.placeholder{text-align:center;padding:60px 20px;color:#9BA4B0;font-family:"IBM Plex Mono",monospace;font-size:13px;letter-spacing:1px}
+
+/* Comparison cards */
+.cmp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:16px;overflow:hidden;border:1px solid #E7EAEE;box-shadow:0 2px 12px rgba(15,22,32,.08)}
+.cmp-col{background:#fff}
+.cmp-col.suena{background:linear-gradient(180deg,#E0F4F2 0%,#fff 120px)}
+.cmp-col.comp{background:#fff}
+.cmp-header{padding:20px 22px 16px;border-bottom:2px solid #E7EAEE}
+.cmp-col.suena .cmp-header{border-bottom-color:#00B5AD}
+.brand-badge{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:700;letter-spacing:1px;padding:3px 9px;border-radius:5px;text-transform:uppercase;margin-bottom:8px}
+.cmp-col.suena .brand-badge{background:rgba(0,181,173,.15);color:#00B5AD}
+.cmp-col.comp .brand-badge{background:#F0F2F4;color:#697483}
+.cmp-name{font-size:18px;font-weight:800;line-height:1.2}
+.cmp-type{font-size:11px;color:#697483;margin-top:4px;font-family:"IBM Plex Mono",monospace}
+.cmp-section{padding:16px 22px;border-bottom:1px solid #F0F2F4}
+.cmp-section:last-child{border-bottom:none}
+.section-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#9BA4B0;margin-bottom:10px}
+.price-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #F8FAFB}
+.price-row:last-child{border-bottom:none}
+.size-label{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#697483}
+.price-val{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700;color:#0F1620}
+.price-val.highlight{color:#00B5AD;font-size:14px}
+.fp{display:inline-block;font-size:10px;background:#F0F2F4;color:#697483;border-radius:4px;padding:2px 7px;margin:2px 2px 0 0;font-weight:600}
+.fp.t{background:#E0F4F2;color:#0A7D77}
+.fp.warn{background:#FBE8E9;color:#871F23}
+
+/* Verdict row */
+.verdict-wrap{margin-top:20px;border-radius:16px;overflow:hidden;border:1px solid #E7EAEE;box-shadow:0 2px 8px rgba(15,22,32,.06)}
+.verdict-header{background:#0F1620;color:#fff;padding:14px 22px;font-size:13px;font-weight:800;display:flex;align-items:center;gap:8px}
+.verdict-table{width:100%;border-collapse:collapse;background:#fff}
+.verdict-table th{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#697483;padding:10px 16px;border-bottom:1px solid #E7EAEE;text-align:left;background:#F8FAFB}
+.verdict-table th.r{text-align:right}
+.verdict-table td{padding:11px 16px;border-bottom:1px solid #F0F2F4;font-family:"IBM Plex Mono",monospace;font-size:12px;vertical-align:middle}
+.verdict-table tr:last-child td{border-bottom:none}
+.diff-win{color:#0C5C34;font-weight:700;background:#E7F5ED;border-radius:5px;padding:2px 8px;display:inline-block}
+.diff-lose{color:#871F23;font-weight:700;background:#FBE8E9;border-radius:5px;padding:2px 8px;display:inline-block}
+.diff-eq{color:#7A4A00;font-weight:700;background:#FBF0DA;border-radius:5px;padding:2px 8px;display:inline-block}
+.na{color:#C8CDD6}
+
+@media(max-width:640px){
+  .selector-grid{grid-template-columns:1fr;gap:12px}
+  .vs-badge{display:none}
+  .cmp-wrap{grid-template-columns:1fr}
+  .cmp-col.comp{border-top:2px solid #E7EAEE}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Comparador <em>Sueña</em> vs Competencia</h1>
+    <div class="meta">// PRECIOS PROMO JUNIO 2026 &middot; BOLIVIANOS (Bs)</div>
+  </div>
+  <a href="comparativo_precios.html" class="back-link">← Comparativo completo</a>
+</header>
+
+<div class="wrap">
+  <div class="selector-area">
+    <h2>Elige dos productos para comparar</h2>
+    <div class="selector-grid">
+      <div class="sel-group">
+        <label>Producto A</label>
+        <select id="selA" onchange="render()">
+          <option value="">— Selecciona un producto —</option>
+        </select>
+      </div>
+      <div class="vs-badge">VS</div>
+      <div class="sel-group">
+        <label>Producto B</label>
+        <select id="selB" onchange="render()">
+          <option value="">— Selecciona un producto —</option>
+        </select>
+      </div>
+    </div>
+  </div>
+  <div id="output"><div class="placeholder">// Selecciona dos productos para ver la comparativa lado a lado</div></div>
+</div>
+
+<script>
+const SIZES = ['1','1.5','2','2.5','3','3.5'];
+const SIZE_LABELS = {'1':'1 Plaza (90×190)','1.5':'1½ Plaza (105×190)','2':'2 Plazas (140×190)','2.5':'2½ Plazas (160×190)','3':'3 Plazas (180×190)','3.5':'3½ Plazas (200×200)'};
+
+const PRODUCTS = [
+  /* ===== SUEÑA ===== */
+  {id:'s_premier', name:'Premier Deluxe', brand:'Sueña', isSuena:true, category:'Premium',
+   type:'Visco Gel + Resortes Pocket',
+   features:['Visco Gel NASA','Resortes Pocket','Memory Foam','Antialérgico','Antiacaro'],
+   prices:{'1':1300,'1.5':1510,'2':1990,'2.5':2190,'3':3800,'3.5':4700},
+   combo_s:{'1.5':2090,'2':2590,'2.5':2790},
+   combo_sr:{'1.5':2540,'2':3090,'2.5':3390},
+   weight_kg:null, height_cm:null, notes:'Línea top Sueña. Nombre anterior: Bahia.'},
+
+  {id:'s_confort', name:'Confort Plus', brand:'Sueña', isSuena:true, category:'Medio-Alto',
+   type:'Resortes + Espuma',
+   features:['Resortes Bonnell','Espuma confort','Antialérgico'],
+   prices:{'1.5':1390,'2':1560,'2.5':1860,'3':2030,'3.5':2190},
+   combo_s:{}, combo_sr:{},
+   weight_kg:null, height_cm:null, notes:'Nombre anterior: Carioca Premier.'},
+
+  {id:'s_essential', name:'Essential', brand:'Sueña', isSuena:true, category:'Medio',
+   type:'Resortes + Viscoelástico',
+   features:['Resortes','Viscoelástico','Antialérgico'],
+   prices:{'1':890,'1.5':990,'2':1250,'2.5':1460,'3':1640,'3.5':1940},
+   combo_s:{'1.5':1790,'2':2090,'2.5':2340},
+   combo_sr:{'1.5':2190,'2':2590,'2.5':2890},
+   weight_kg:null, height_cm:null, notes:'Nombre anterior: Carioca Rio.'},
+
+  {id:'s_soft', name:'Soft Ice', brand:'Sueña', isSuena:true, category:'Medio',
+   type:'Espuma viscoelástica',
+   features:['Soft Ice','Espuma','Antialérgico'],
+   prices:{'1':780,'1.5':860,'2':900,'2.5':1250,'3':1750,'3.5':1960},
+   combo_s:{}, combo_sr:{},
+   weight_kg:null, height_cm:null, notes:''},
+
+  {id:'s_semi', name:'Semiortopédico', brand:'Sueña', isSuena:true, category:'Básico',
+   type:'Espuma',
+   features:['Espuma','Doble cara','Firmeza media','Antialérgico'],
+   prices:{'1':590,'1.5':620,'2':790,'2.5':1230,'3':1420,'3.5':1770},
+   combo_s:{'1.5':1440,'2':1690,'2.5':2140},
+   combo_sr:{'1.5':1890,'2':2190,'2.5':2690},
+   weight_kg:null, height_cm:null, notes:''},
+
+  {id:'s_orto', name:'Ortopédico', brand:'Sueña', isSuena:true, category:'Básico',
+   type:'Espuma ortopédica',
+   features:['Espuma','Extra firme','Ortopédico','Antialérgico'],
+   prices:{'1':690,'1.5':760,'2':830,'2.5':1290,'3':1680,'3.5':1860},
+   combo_s:{'1.5':1690,'2':1840,'2.5':2390},
+   combo_sr:{'1.5':2090,'2':2390,'2.5':2940},
+   weight_kg:null, height_cm:null, notes:''},
+
+  /* ===== COMPETENCIA ===== */
+  {id:'c_miel', name:'Miel', brand:'Terra', isSuena:false, category:'Básico',
+   type:'Espuma D28',
+   features:['Espuma D28','14 cm','Doble cara','Antialérgico','Antiacaro'],
+   prices:{'1':400,'2':680},
+   combo_s:{'1':900,'2':1330},
+   combo_sr:{'1':1400,'2':1930},
+   weight_kg:100, height_cm:14, notes:'Solo disponible en 1 y 2 plazas.'},
+
+  {id:'c_platino', name:'Platino', brand:'MovelPro', isSuena:false, category:'Básico',
+   type:'Espuma D28',
+   features:['Espuma D28','17 cm','Extra firme','Antialérgico','Antiacaro'],
+   prices:{'1':470,'2':780},
+   combo_s:{'1':970,'2':1430},
+   combo_sr:{'1':1470,'2':2030},
+   weight_kg:100, height_cm:17, notes:'Solo disponible en 1 y 2 plazas.'},
+
+  {id:'c_classic', name:'Classic Bambu', brand:'FA Colchones', isSuena:false, category:'Básico',
+   type:'Resortes Pocket PHS + Bambú',
+   features:['Pocket PHS','Bambú','Algodón 100%','Antialérgico','Antiacaro'],
+   prices:{'1.5':1150,'2':1400,'2.5':1590},
+   combo_s:{'1.5':1700,'2':2050,'2.5':2490},
+   combo_sr:{'1.5':2200,'2':2650,'2.5':3190},
+   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964.'},
+
+  {id:'c_brillante', name:'Brillante', brand:'MovelPro', isSuena:false, category:'Básico',
+   type:'Resortes Pocket PHS + Visco Gel',
+   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],
+   prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},
+   combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},
+   combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},
+   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
+
+  {id:'c_chester', name:'Chester', brand:'MovelPro', isSuena:false, category:'Básico',
+   type:'Resortes Pocket PHS + Visco Gel',
+   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Antialérgico','Antiacaro'],
+   prices:{'1.5':1150,'2':1400,'2.5':1590,'3':1890,'3.5':2290},
+   combo_s:{'1.5':1700,'2':2050,'2.5':2490,'3':2890,'3.5':3390},
+   combo_sr:{'1.5':2200,'2':2650,'2.5':3190,'3':3690,'3.5':4290},
+   weight_kg:130, height_cm:null, notes:'Mismo spec que Brillante, tapizado negro.'},
+
+  {id:'c_newedu', name:'New Edu', brand:'FA Colchones', isSuena:false, category:'Medio',
+   type:'Resortes Pocket PHS',
+   features:['Pocket PHS','Algodón 100%','Antialérgico','Antiacaro'],
+   prices:{'1.5':1400,'2':1700,'2.5':2050},
+   combo_s:{'1.5':1950,'2':2350,'2.5':2950},
+   combo_sr:{'1.5':2450,'2':2950,'2.5':3650},
+   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964.'},
+
+  {id:'c_ultrasoft', name:'UltraSoft', brand:'Terra', isSuena:false, category:'Medio',
+   type:'Resortes Pocket PHS + Visco NASA',
+   features:['Pocket PHS','Visco NASA','Espuma D33','Antialérgico','Suiza Tech'],
+   prices:{'1.5':1350,'2':1650,'2.5':1850,'3':2350,'3.5':2650},
+   combo_s:{'1.5':1900,'2':2300,'2.5':2750,'3':3350,'3.5':3750},
+   combo_sr:{'1.5':2400,'2':2900,'2.5':3450,'3':4150,'3.5':4650},
+   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
+
+  {id:'c_waveplus', name:'Wave Plus', brand:'MovelPro', isSuena:false, category:'Medio',
+   type:'Resortes Pocket PHS + Visco Gel',
+   features:['Pocket PHS','Visco Gel NASA','Algodón 100%','Suiza Tech','Antialérgico'],
+   prices:{'1.5':1550,'2':1850,'2.5':2050,'3':2550,'3.5':2850},
+   combo_s:{'1.5':2100,'2':2500,'2.5':2950,'3':3550,'3.5':3950},
+   combo_sr:{'1.5':2600,'2':3100,'2.5':3590,'3':4350,'3.5':4850},
+   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
+
+  {id:'c_alaska', name:'Alaska Cooler', brand:'MovelPro', isSuena:false, category:'Medio-Alto',
+   type:'Resortes + Tecnología Cooler',
+   features:['Pocket PHS','Cooler','Premium','Antialérgico'],
+   prices:{'1.5':1490,'2':1700,'2.5':2000,'3':2450,'3.5':2900},
+   combo_s:{'1.5':2040,'2':2350,'2.5':2900,'3':3600,'3.5':4000},
+   combo_sr:{'1.5':2540,'2':2950,'2.5':3600,'3':4400,'3.5':4900},
+   weight_kg:140, height_cm:null, notes:'Premium. 140 kg capacidad.'},
+
+  {id:'c_suavity', name:'Suavity Ice Cooler', brand:'MovelPro', isSuena:false, category:'Medio-Alto',
+   type:'Resortes Pocket PHS + Ice Cooler + Visco Gel',
+   features:['Pocket PHS','Ice Cooler','Visco Gel NASA','Antialérgico','Suiza Tech'],
+   prices:{'1.5':1690,'2':1950,'2.5':2150,'3':2950,'3.5':3350},
+   combo_s:{'1.5':2240,'2':2600,'2.5':3050,'3':3950,'3.5':4450},
+   combo_sr:{'1.5':2740,'2':3200,'2.5':3750,'3':4750,'3.5':5350},
+   weight_kg:130, height_cm:null, notes:'Suiza Technology.'},
+
+  {id:'c_memphis', name:'Memphis', brand:'FA Colchones', isSuena:false, category:'Medio-Alto',
+   type:'Resortes Pocket PHS + Bambú',
+   features:['Pocket PHS','Bambú','Tecnología Inverter','Seniortopédico'],
+   prices:{'1.5':1650,'2':2050,'2.5':2450,'3':3100},
+   combo_s:{'1.5':2200,'2':2700,'2.5':3350,'3':4100},
+   combo_sr:{'1.5':2700,'2':3300,'2.5':4050,'3':4900},
+   weight_kg:120, height_cm:null, notes:'120 kg capacidad. Tecnología Inverter.'},
+
+  {id:'c_montana', name:'Montana', brand:'FA Colchones', isSuena:false, category:'Premium',
+   type:'Resortes Pocket PHS + Visco NASA',
+   features:['Pocket PHS','Visco NASA','Doble cara','Antialérgico','Premium'],
+   prices:{'1.5':1900,'2':2250,'2.5':2700,'3':4200},
+   combo_s:{'1.5':2450,'2':2900,'2.5':3600,'3':5200},
+   combo_sr:{'1.5':2950,'2':3500,'2.5':4300,'3':6000},
+   weight_kg:130, height_cm:null, notes:'Doble cara (reversible). FA Colchones.'},
+
+  {id:'c_nube', name:'Nube', brand:'FA Colchones', isSuena:false, category:'Premium',
+   type:'Resortes Pocket PHS + Visco Gel',
+   features:['Pocket PHS','Visco Gel NASA','Suiza Tech','Antialérgico','Premium'],
+   prices:{'1.5':2190,'2':2700,'2.5':3100,'3':4300,'3.5':4600},
+   combo_s:{'1.5':2740,'2':3350,'2.5':4000,'3':5300,'3.5':5700},
+   combo_sr:{'1.5':3240,'2':3950,'2.5':4700,'3':6100,'3.5':6600},
+   weight_kg:130, height_cm:null, notes:'Suiza Technology. Premium.'},
+
+  {id:'c_lancaster', name:'Lancaster', brand:'FA Colchones', isSuena:false, category:'Premium',
+   type:'Resortes Pocket PHS',
+   features:['Pocket PHS','Premium','Antialérgico','Antiacaro'],
+   prices:{'1.5':2350,'2':2850,'2.5':3190,'3':3900},
+   combo_s:{'1.5':2900,'2':3500,'2.5':4090,'3':4900},
+   combo_sr:{'1.5':3400,'2':4100,'2.5':4790,'3':5700},
+   weight_kg:130, height_cm:null, notes:'FA Colchones desde 1964. Premium.'},
+
+  {id:'c_bambu', name:'Bambu Pro', brand:'MovelPro', isSuena:false, category:'Premium',
+   type:'Resortes Pocket PHS + Bambú',
+   features:['Pocket PHS','Bambú','Premium','Antialérgico'],
+   prices:{'1.5':1700,'2':2100,'2.5':2350,'3':2750,'3.5':3050},
+   combo_s:{'1.5':2250,'2':2750,'2.5':3250,'3':3750,'3.5':4150},
+   combo_sr:{'1.5':2750,'2':3350,'2.5':3950,'3':4550,'3.5':5050},
+   weight_kg:140, height_cm:null, notes:'140 kg capacidad. Premium.'},
+
+  {id:'c_brisa', name:'Brisa', brand:'MovelPro', isSuena:false, category:'Premium',
+   type:'Espuma D45 alta densidad',
+   features:['Espuma D45','Alta densidad','Premium','Antialérgico'],
+   prices:{'1.5':1700,'2':2050,'2.5':2300,'3':2700,'3.5':3000},
+   combo_s:{'1.5':2250,'2':2700,'2.5':3200,'3':3700,'3.5':4100},
+   combo_sr:{'1.5':2750,'2':3300,'2.5':3900,'3':4500,'3.5':5000},
+   weight_kg:140, height_cm:null, notes:'Sin resortes. Espuma D45. 140 kg.'},
+];
+
+// Populate selects
+const selA = document.getElementById('selA');
+const selB = document.getElementById('selB');
+
+const groups = {};
+PRODUCTS.forEach(p => {
+  const g = p.isSuena ? '🟢 SUEÑA' : `⬜ Competencia — ${p.brand}`;
+  if (!groups[g]) groups[g] = [];
+  groups[g].push(p);
+});
+
+[selA, selB].forEach(sel => {
+  Object.entries(groups).forEach(([gName, prods]) => {
+    const og = document.createElement('optgroup');
+    og.label = gName;
+    prods.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name + (p.isSuena ? '' : ' (' + p.brand + ')');
+      og.appendChild(opt);
+    });
+    sel.appendChild(og);
+  });
+});
+
+// Set defaults
+selA.value = 's_essential';
+selB.value = 'c_ultrasoft';
+
+function fmt(n) {
+  if (n == null) return '—';
+  return n.toLocaleString('es-BO') + ' Bs';
+}
+
+function pillsHTML(features) {
+  return features.map(f => {
+    const isKey = ['Visco Gel NASA','Pocket PHS','Ice Cooler','Visco NASA','Bambú','Memory Foam','D45','Cooler'].includes(f);
+    return `<span class="fp${isKey?' t':''}">${f}</span>`;
+  }).join('');
+}
+
+function renderCard(p) {
+  const headerClass = p.isSuena ? 'suena' : 'comp';
+  const badgeText = p.isSuena ? 'SUEÑA' : p.brand.toUpperCase();
+
+  const sizeRows = SIZES.filter(s => p.prices[s] != null).map(s => `
+    <div class="price-row">
+      <span class="size-label">${SIZE_LABELS[s]}</span>
+      <span class="price-val${s==='2'?' highlight':''}">${fmt(p.prices[s])}</span>
+    </div>`).join('');
+
+  const comboSRows = Object.keys(p.combo_s).length ? SIZES.filter(s => p.combo_s[s]).map(s => `
+    <div class="price-row">
+      <span class="size-label">${SIZE_LABELS[s]}</span>
+      <span class="price-val">${fmt(p.combo_s[s])}</span>
+    </div>`).join('') : '<div style="color:#9BA4B0;font-size:12px;font-family:monospace">No disponible</div>';
+
+  const comboSRRows = Object.keys(p.combo_sr).length ? SIZES.filter(s => p.combo_sr[s]).map(s => `
+    <div class="price-row">
+      <span class="size-label">${SIZE_LABELS[s]}</span>
+      <span class="price-val">${fmt(p.combo_sr[s])}</span>
+    </div>`).join('') : '<div style="color:#9BA4B0;font-size:12px;font-family:monospace">No disponible</div>';
+
+  const specs = [];
+  if (p.height_cm) specs.push(`<span class="fp">${p.height_cm} cm alto</span>`);
+  if (p.weight_kg) specs.push(`<span class="fp">${p.weight_kg} kg máx</span>`);
+
+  return `
+  <div class="cmp-col ${headerClass}">
+    <div class="cmp-header">
+      <div class="brand-badge">${badgeText}</div>
+      <div class="cmp-name">${p.name}</div>
+      <div class="cmp-type">${p.type}</div>
+    </div>
+    <div class="cmp-section">
+      <div class="section-label">Características</div>
+      ${pillsHTML(p.features)}
+      ${specs.join('')}
+      ${p.notes ? `<div style="margin-top:8px;font-size:11px;color:#9BA4B0;font-family:monospace">${p.notes}</div>` : ''}
+    </div>
+    <div class="cmp-section">
+      <div class="section-label">Solo colchón</div>
+      ${sizeRows}
+    </div>
+    <div class="cmp-section">
+      <div class="section-label">Combo + Somier</div>
+      ${comboSRows}
+    </div>
+    <div class="cmp-section">
+      <div class="section-label">Combo + Somier + Respaldar</div>
+      ${comboSRRows}
+    </div>
+  </div>`;
+}
+
+function renderVerdict(pA, pB) {
+  const types = [
+    {label:'Solo colchón', keyA:'prices', keyB:'prices'},
+    {label:'+ Somier', keyA:'combo_s', keyB:'combo_s'},
+    {label:'+ Somier + Respaldar', keyA:'combo_sr', keyB:'combo_sr'},
+  ];
+  const allSizes = SIZES.filter(s => types.some(t => pA[t.keyA][s] || pB[t.keyB][s]));
+
+  let rows = '';
+  types.forEach(t => {
+    const relevantSizes = allSizes.filter(s => pA[t.keyA][s] || pB[t.keyB][s]);
+    if (!relevantSizes.length) return;
+    relevantSizes.forEach(s => {
+      const vA = pA[t.keyA][s];
+      const vB = pB[t.keyB][s];
+      let diffHTML = '<span class="na">—</span>';
+      let winner = '<span class="na">—</span>';
+      if (vA != null && vB != null) {
+        const diff = vA - vB;
+        if (Math.abs(diff) <= 30) {
+          diffHTML = `<span class="diff-eq">≈ IGUAL</span>`;
+          winner = '<span class="diff-eq">Empate</span>';
+        } else if (diff < 0) {
+          diffHTML = `<span class="diff-win">A gana ${Math.abs(diff).toLocaleString()} Bs</span>`;
+          winner = `<strong>${pA.name}</strong>`;
+        } else {
+          diffHTML = `<span class="diff-lose">B gana ${Math.abs(diff).toLocaleString()} Bs</span>`;
+          winner = `<strong>${pB.name}</strong>`;
+        }
+      } else if (vA == null && vB != null) {
+        diffHTML = '<span class="na">A sin dato</span>';
+      } else if (vA != null && vB == null) {
+        diffHTML = '<span class="na">B sin dato</span>';
+      }
+      rows += `<tr>
+        <td>${t.label}</td>
+        <td>${SIZE_LABELS[s]}</td>
+        <td style="font-weight:700">${vA != null ? vA.toLocaleString()+' Bs' : '<span class="na">—</span>'}</td>
+        <td style="font-weight:700">${vB != null ? vB.toLocaleString()+' Bs' : '<span class="na">—</span>'}</td>
+        <td>${diffHTML}</td>
+        <td>${winner}</td>
+      </tr>`;
+    });
+  });
+
+  return `
+  <div class="verdict-wrap">
+    <div class="verdict-header">⚖️ Tabla comparativa de precios — ${pA.name} vs ${pB.name}</div>
+    <table class="verdict-table">
+      <thead><tr>
+        <th>Tipo</th><th>Tamaño</th>
+        <th>${pA.name} <span style="font-weight:400;opacity:.6">(${pA.brand})</span></th>
+        <th>${pB.name} <span style="font-weight:400;opacity:.6">(${pB.brand})</span></th>
+        <th>Diferencia</th>
+        <th>Más barato</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function render() {
+  const idA = selA.value, idB = selB.value;
+  if (!idA || !idB) {
+    document.getElementById('output').innerHTML = '<div class="placeholder">// Selecciona dos productos para ver la comparativa lado a lado</div>';
+    return;
+  }
+  const pA = PRODUCTS.find(p => p.id === idA);
+  const pB = PRODUCTS.find(p => p.id === idB);
+  if (!pA || !pB) return;
+
+  document.getElementById('output').innerHTML = `
+    <div class="cmp-wrap">${renderCard(pA)}${renderCard(pB)}</div>
+    ${renderVerdict(pA, pB)}
+  `;
+}
+
+render();
+</script>
+</body>
+</html>
