@@ -1831,7 +1831,12 @@ function PaceBar(_ref6) {
     style: {
       position: "relative",
       width: "100%",
-      height: height,
+      height: height
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      position: "absolute",
+      inset: 0,
       background: "var(--rail)",
       borderRadius: 999,
       overflow: "hidden",
@@ -1850,8 +1855,18 @@ function PaceBar(_ref6) {
       height: "100%",
       width: over * 100 + "%",
       background: "#0E7C86",
-      borderLeft: "2px solid var(--ink)",
       transition: "width 0.6s cubic-bezier(.2,.7,.3,1)"
+    }
+  }) : null), over > 0 ? /*#__PURE__*/React.createElement("div", {
+    title: "Presupuesto (100%)",
+    style: {
+      position: "absolute",
+      left: base * 100 + "%",
+      top: -3,
+      bottom: -3,
+      width: 2,
+      background: "var(--ink)",
+      opacity: 0.95
     }
   }) : null);
 }
@@ -4283,9 +4298,12 @@ function PaceBar({ pct, height = 6, threshold = 1.0 }) {
   const over = Math.max(pct - 1, 0) / scale;
   const baseColor = pct >= threshold ? "var(--good)" : (pct >= 0.7 ? "var(--warn)" : "var(--bad)");
   return (
-    <div style={{ position: "relative", width: "100%", height, background: "var(--rail)", borderRadius: 999, overflow: "hidden", display: "flex" }}>
-      <div style={{ height: "100%", width: base * 100 + "%", background: baseColor, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
-      {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#0E7C86", borderLeft: "2px solid var(--ink)", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
+    <div style={{ position: "relative", width: "100%", height }}>
+      <div style={{ position: "absolute", inset: 0, background: "var(--rail)", borderRadius: 999, overflow: "hidden", display: "flex" }}>
+        <div style={{ height: "100%", width: base * 100 + "%", background: baseColor, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
+        {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#0E7C86", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
+      </div>
+      {over > 0 && <div title="Presupuesto (100%)" style={{ position: "absolute", left: base * 100 + "%", top: -3, bottom: -3, width: 2, background: "var(--ink)", opacity: 0.95 }} />}
     </div>
   );
 }
