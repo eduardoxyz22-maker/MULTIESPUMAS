@@ -1630,8 +1630,8 @@ function MetaBar(_ref) {
       top: -3,
       bottom: -3,
       width: 2,
-      background: "var(--ink)",
-      opacity: 0.35
+      background: hasExcess ? "#fff" : "var(--ink)",
+      opacity: hasExcess ? 0.95 : 0.35
     }
   }));
 }
@@ -1850,6 +1850,7 @@ function PaceBar(_ref6) {
       height: "100%",
       width: over * 100 + "%",
       background: "#0E7C86",
+      borderLeft: "2px solid #fff",
       transition: "width 0.6s cubic-bezier(.2,.7,.3,1)"
     }
   }) : null);
@@ -3110,7 +3111,8 @@ function TiendasView(_ref2) {
       className: "muted"
     }, "Bs ", fmtMoney(t.monto), " / Bs ", fmtMoney(t.presupuesto), " \xB7 ", fmtPct(t.pctPres))), /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
-      max: t.presupuesto,
+      presupuesto: t.presupuesto,
+      max: Math.max(t.monto, t.presupuesto),
       color: TIENDA_COLOR[t.nombre],
       height: 10
     })), vendedores.length > 0 && /*#__PURE__*/React.createElement("div", {
@@ -4162,7 +4164,7 @@ function MetaBar({ value, meta, presupuesto, max, color = "var(--ink)", height =
         <div title={"Meta mín: " + format(meta)} style={{ position: "absolute", left: pctMeta + "%", top: -3, bottom: -3, width: 2, background: "var(--ink)", opacity: 0.9 }} />
       )}
       {pctPres != null && (
-        <div title={"Presupuesto: " + format(presupuesto)} style={{ position: "absolute", left: pctPres + "%", top: -3, bottom: -3, width: 2, background: "var(--ink)", opacity: 0.35 }} />
+        <div title={"Presupuesto: " + format(presupuesto)} style={{ position: "absolute", left: pctPres + "%", top: -3, bottom: -3, width: 2, background: hasExcess ? "#fff" : "var(--ink)", opacity: hasExcess ? 0.95 : 0.35 }} />
       )}
     </div>
   );
@@ -4283,7 +4285,7 @@ function PaceBar({ pct, height = 6, threshold = 1.0 }) {
   return (
     <div style={{ position: "relative", width: "100%", height, background: "var(--rail)", borderRadius: 999, overflow: "hidden", display: "flex" }}>
       <div style={{ height: "100%", width: base * 100 + "%", background: baseColor, transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />
-      {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#0E7C86", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
+      {over > 0 && <div title="Excedente sobre presupuesto" style={{ height: "100%", width: over * 100 + "%", background: "#0E7C86", borderLeft: "2px solid #fff", transition: "width 0.6s cubic-bezier(.2,.7,.3,1)" }} />}
     </div>
   );
 }
@@ -5110,7 +5112,7 @@ function TiendasView({ filterTienda, dia }) {
                 <span>Avance vs Presupuesto</span>
                 <span className="muted">Bs {fmtMoney(t.monto)} / Bs {fmtMoney(t.presupuesto)} · {fmtPct(t.pctPres)}</span>
               </div>
-              <MetaBar value={t.monto} max={t.presupuesto} color={TIENDA_COLOR[t.nombre]} height={10} />
+              <MetaBar value={t.monto} presupuesto={t.presupuesto} max={Math.max(t.monto, t.presupuesto)} color={TIENDA_COLOR[t.nombre]} height={10} />
             </div>
 
             {vendedores.length > 0 && (
