@@ -4816,6 +4816,24 @@ function VendedoresView({ filtered, filterTienda }) {
     { key: "pctMin", label: "% Meta mín", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.3, ctx: (v) => ({ monto: v.monto, denom: v.metaMin }) },
   ];
 
+  // Escalas del radar: dinámicas según el máximo real de los vendedores (redondeado a un valor "lindo")
+  const niceUp = (x) => {
+    if (!isFinite(x) || x <= 0) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(x)));
+    const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+    return (steps.find((s) => x / mag <= s) || 10) * mag;
+  };
+  const axMax = (fn, fallback) => {
+    const vals = D.vendedores.map(fn).filter((x) => x != null && isFinite(x) && x > 0);
+    return vals.length ? niceUp(Math.max(...vals)) : fallback;
+  };
+  const sPres = axMax((v) => v.pctPres, 1.5);
+  const sConv = axMax((v) => v.conversion, 0.2);
+  const sTicket = axMax((v) => v.ticketProm, 4000);
+  const sIngr = axMax((v) => v.ingresoLead, 500);
+  const sProd = axMax((v) => v.prodPorVenta, 2.5);
+  const sCrec = niceUp(Math.max(0.5, ...D.vendedores.map((v) => Math.abs(v.crecimientoVsAbril || 0)).filter(isFinite)));
+
   return (
     <div className="vend-grid">
       {/* Selector + Comparator card */}
@@ -4848,12 +4866,12 @@ function VendedoresView({ filtered, filterTienda }) {
               size={380}
               max={1}
               axes={[
-                { label: "% Presup", get: (s) => Math.min(s.pctPres / 1.5, 1) },
-                { label: "Conv. leads",  get: (s) => Math.min(s.conversion / 0.2, 1) },
-                { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / 4000, 1) },
-                { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / 500, 1) },
-                { label: "Prod / venta", get: (s) => Math.min((s.prodPorVenta || 0) / 2.5, 1) },
-                { label: "vs mes ant.",     get: (s) => Math.min(Math.max((s.crecimientoVsAbril + 1) / 2, 0), 1) },
+                { label: "% Presup", get: (s) => Math.min(s.pctPres / sPres, 1) },
+                { label: "Conv. leads",  get: (s) => Math.min(s.conversion / sConv, 1) },
+                { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / sTicket, 1) },
+                { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / sIngr, 1) },
+                { label: "Prod / venta", get: (s) => Math.min((s.prodPorVenta || 0) / sProd, 1) },
+                { label: "vs mes ant.",     get: (s) => Math.min(Math.max((s.crecimientoVsAbril + sCrec) / (2 * sCrec), 0), 1) },
               ]}
               series={D.vendedores.filter((v) => selected.includes(v.nombre)).map((v) => ({
                 ...v, color: VENDOR_COLOR[v.nombre],
@@ -4862,12 +4880,12 @@ function VendedoresView({ filtered, filterTienda }) {
             <div className="radar-key">
               <div className="key-title">Métricas comparadas</div>
               <ul>
-                <li><span>% Presup</span><i>0 — 150%</i></li>
-                <li><span>Conv. leads</span><i>0 — 20%</i></li>
-                <li><span>Ticket prom</span><i>0 — Bs 4 000</i></li>
-                <li><span>Ingreso / lead</span><i>0 — Bs 500</i></li>
-                <li><span>Prod / venta</span><i>0 — 2.5</i></li>
-                <li><span>vs mes ant.</span><i>−100% — +100%</i></li>
+                <li><span>% Presup</span><i>0 — {fmtPct(sPres)}</i></li>
+                <li><span>Conv. leads</span><i>0 — {fmtPct(sConv)}</i></li>
+                <li><span>Ticket prom</span><i>0 — Bs {fmtMoney(sTicket)}</i></li>
+                <li><span>Ingreso / lead</span><i>0 — Bs {fmtMoney(sIngr)}</i></li>
+                <li><span>Prod / venta</span><i>0 — {sProd.toFixed(1)}</i></li>
+                <li><span>vs mes ant.</span><i>{fmtPctSign(-sCrec)} — {fmtPctSign(sCrec)}</i></li>
               </ul>
             </div>
           </div>
