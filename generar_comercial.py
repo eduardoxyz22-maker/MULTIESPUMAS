@@ -224,12 +224,18 @@ if _rk:
         _rn += 1
 
 # Crecimiento "a la fecha": si el mes está abierto y hay dato MoM (mismo día del mes
-# pasado), compara junio-día-15 vs mayo-día-15. Si no, cae al valor del Excel (mes completo).
+# pasado), compara junio-día-15 vs mayo-día-15. Si el MoM del mes pasado es 0 (y este mes
+# vendió), es vendedor NUEVO -> no hay % comparable. Si no hay MoM, cae al Excel (mes completo).
+# Devuelve (crecimiento, esNuevo).
 def crec_a_fecha(nombre_key, monto_actual):
     mm = mom_data.get(nombre_key)
-    if (not CERRADO_ENV) and mm and mm.get('monto') and mm['monto'] > 0:
-        return round((monto_actual - mm['monto']) / mm['monto'], 6)
-    return round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None
+    if (not CERRADO_ENV) and mm is not None and 'monto' in mm:
+        prev = mm['monto'] or 0
+        if prev > 0:
+            return round((monto_actual - prev) / prev, 6), False
+        if monto_actual > 0:
+            return None, True  # nuevo: 0 el mes pasado
+    return (round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None), False
 
 vendedores = []
 
@@ -260,7 +266,8 @@ for row in range(3, 40):
         'comision': round(sf(gv(hv, row, 12)), 4),
         'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
         'pctComision': round(sf(gv(hv, row, 13)), 6),
-        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto)[0],
+        'esNuevo': crec_a_fecha(nombre_key, monto)[1],
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
@@ -298,7 +305,8 @@ for row in range(3, 40):
         'comision': round(sf(gv(sv, row, 14)), 4),
         'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
         'pctComision': round(sf(gv(sv, row, 15)), 6),
-        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto)[0],
+        'esNuevo': crec_a_fecha(nombre_key, monto)[1],
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
