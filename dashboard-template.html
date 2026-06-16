@@ -5079,6 +5079,12 @@ function ExternosView() {
   const clientes = [...D.clientes].sort((a, b) => b.monto - a.monto);
   const total = clientes.reduce((s, c) => s + c.monto, 0);
   const max = Math.max(...clientes.map((c) => c.monto));
+  const cliCrec = (c) => {
+    const mm = c.momMonto;
+    if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", cls: c.monto >= mm ? "good" : "bad" };
+    if (c.monto > 0) return { txt: "Nuevo", cls: "good" };
+    return { txt: "—", cls: "muted" };
+  };
   return (
     <div className="externos-grid">
       <section className="card span-7">
@@ -5101,28 +5107,28 @@ function ExternosView() {
           <thead>
             <tr>
               <th>Cliente</th>
-              <th className="num">Ventas</th>
               <th className="num">Monto</th>
+              <th className="num">vs mes ant.</th>
               <th className="num">% Total</th>
               <th>Participación</th>
             </tr>
           </thead>
           <tbody>
-            {clientes.map((c) => (
+            {clientes.map((c) => { const cc = cliCrec(c); return (
               <tr key={c.nombre}>
                 <td><b>{c.nombre}</b></td>
-                <td className="num">{c.ventas}</td>
                 <td className="num">Bs {fmtMoney(c.monto)}</td>
+                <td className={"num " + cc.cls}>{cc.txt}</td>
                 <td className="num">{fmtPct(c.monto / total)}</td>
                 <td><div className="ext-bar"><div style={{ width: (c.monto / max) * 100 + "%" }} /></div></td>
               </tr>
-            ))}
+            ); })}
           </tbody>
           <tfoot>
             <tr>
               <td><b>TOTAL</b></td>
-              <td className="num">{clientes.reduce((s, c) => s + c.ventas, 0)}</td>
               <td className="num"><b>Bs {fmtMoney(total)}</b></td>
+              <td className={"num " + (D.global.externosDelta != null ? (D.global.externosDelta >= 0 ? "good" : "bad") : "")}><b>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : ""}</b></td>
               <td className="num">100%</td>
               <td></td>
             </tr>
@@ -5734,6 +5740,69 @@ function PresentacionView({ filtered, filterTienda }) {
           </React.Fragment>
         );
       })}
+
+      {/* ── Slide final: clientes externos con MoM ── */}
+      {D.clientes && D.clientes.length > 0 && (() => {
+        const cli = [...D.clientes].sort((a, b) => b.monto - a.monto);
+        const totalE = cli.reduce((s, c) => s + c.monto, 0);
+        const maxE = Math.max(...cli.map(c => c.monto), 1);
+        const mesAct = (window.__momMes && window.__momMes.act || "").toUpperCase();
+        const mesPrev = (window.__momMes && window.__momMes.prv || "").toUpperCase();
+        const crecCli = (c) => {
+          const mm = c.momMonto;
+          if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", col: c.monto >= mm ? "var(--good)" : "var(--bad)" };
+          if (c.monto > 0) return { txt: "Nuevo", col: "var(--good)" };
+          return { txt: "—", col: "var(--muted)" };
+        };
+        return (
+          <section className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ background: "#7e3a8e", padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Clientes externos</div>
+                <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>Ventas {(D.periodo.mes || "").toLowerCase()}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div className="mx-count" data-target={totalE} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(totalE)}</div>
+                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{cli.length} cuentas{D.global.externosDelta != null ? " · " + (D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(1) + "% vs mes ant." : ""}</div>
+              </div>
+            </div>
+
+            <div style={{ padding: "10px 18px 18px", overflowX: "auto" }}>
+              <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={thCorner}>Cliente</th>
+                    <th style={th}>{mesAct}</th>
+                    <th style={th}>{mesPrev} <span style={{ opacity: .7, fontWeight: 400 }}>día 15</span></th>
+                    <th style={th}>vs mes ant.</th>
+                    <th style={thProm}>Participación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cli.map(c => { const cc = crecCli(c); return (
+                    <tr key={c.nombre}>
+                      <td style={tdLat}><b>{c.nombre}</b></td>
+                      <td style={tdVal}>{fmtBs(c.monto)}</td>
+                      <td style={{ ...tdVal, color: "var(--muted)" }}>{c.momMonto != null ? fmtBs(c.momMonto) : "—"}</td>
+                      <td style={{ ...tdVal, color: cc.col, fontWeight: 700 }}>{cc.txt}</td>
+                      <td style={tdProm}><div className="ext-bar" style={{ minWidth: 90 }}><div style={{ width: (c.monto / maxE) * 100 + "%" }} /></div></td>
+                    </tr>
+                  ); })}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td style={{ ...tdLat, fontWeight: 800 }}>TOTAL</td>
+                    <td style={{ ...tdVal, fontWeight: 800 }}>{fmtBs(totalE)}</td>
+                    <td style={{ ...tdVal, color: "var(--muted)", fontWeight: 700 }}>{D.global.externosPrev != null ? fmtBs(D.global.externosPrev) : "—"}</td>
+                    <td style={{ ...tdVal, color: D.global.externosDelta >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 800 }}>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : "—"}</td>
+                    <td style={tdProm}></td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }
