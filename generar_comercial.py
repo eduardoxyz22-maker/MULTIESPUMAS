@@ -224,12 +224,18 @@ if _rk:
         _rn += 1
 
 # Crecimiento "a la fecha": si el mes está abierto y hay dato MoM (mismo día del mes
-# pasado), compara junio-día-15 vs mayo-día-15. Si no, cae al valor del Excel (mes completo).
+# pasado), compara junio-día-15 vs mayo-día-15. Si el MoM del mes pasado es 0 (y este mes
+# vendió), es vendedor NUEVO -> no hay % comparable. Si no hay MoM, cae al Excel (mes completo).
+# Devuelve (crecimiento, esNuevo).
 def crec_a_fecha(nombre_key, monto_actual):
     mm = mom_data.get(nombre_key)
-    if (not CERRADO_ENV) and mm and mm.get('monto') and mm['monto'] > 0:
-        return round((monto_actual - mm['monto']) / mm['monto'], 6)
-    return round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None
+    if (not CERRADO_ENV) and mm is not None and 'monto' in mm:
+        prev = mm['monto'] or 0
+        if prev > 0:
+            return round((monto_actual - prev) / prev, 6), False
+        if monto_actual > 0:
+            return None, True  # nuevo: 0 el mes pasado
+    return (round(crec_lookup[nombre_key], 6) if nombre_key in crec_lookup else None), False
 
 vendedores = []
 
@@ -260,7 +266,8 @@ for row in range(3, 40):
         'comision': round(sf(gv(hv, row, 12)), 4),
         'bonoTitanio': round(sf(gv(hv, row, 14)), 4),
         'pctComision': round(sf(gv(hv, row, 13)), 6),
-        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto)[0],
+        'esNuevo': crec_a_fecha(nombre_key, monto)[1],
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
@@ -298,7 +305,8 @@ for row in range(3, 40):
         'comision': round(sf(gv(sv, row, 14)), 4),
         'bonoTitanio': round(sf(gv(sv, row, 16)), 4),
         'pctComision': round(sf(gv(sv, row, 15)), 6),
-        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto),
+        'crecimientoVsAbril': crec_a_fecha(nombre_key, monto)[0],
+        'esNuevo': crec_a_fecha(nombre_key, monto)[1],
         'nuevoRecord': record_lookup.get(nombre_key, False),
         'ritmoDiario': round(ritmoDiario, 4),
         'proyeccion': round(monto + ritmoDiario * (diasTot - dia_actual), 2),
@@ -371,9 +379,11 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
     if (not CERRADO_ENV) and _mt and _mt['prev'] > 0:
         crec_t = round((_mt['cur'] - _mt['prev']) / _mt['prev'], 6)
         mes_pasado_t = round(_mt['prev'], 2)
+        crec_base_t = 'fecha'
     else:
         crec_t = round(diferencia / mes_pasado, 6) if mes_pasado else None
         mes_pasado_t = mes_pasado
+        crec_base_t = 'mescompleto'
     tiendas.append({
         'id': nombre_t.lower(),
         'nombre': nombre_t,
@@ -390,6 +400,7 @@ for nombre_t in ['SUEÑA', 'HEAVEN', 'OTROS', 'ROHO']:
         'comisionados': c['comisionados'],
         'crecimientoVsAbril': crec_t,
         'mesPasadoMonto': mes_pasado_t,
+        'crecBase': crec_base_t,
     })
 
 # Totales globales: etiqueta en col H (idx 7), valor en col K (idx 10)
@@ -413,8 +424,43 @@ if _cli:
         nombre_c = gv(mg, _rn, 0).strip()
         if not nombre_c or nombre_c.upper() == 'TOTAL':
             break
-        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2)})
+        _mmc = mom_data.get(nombre_c.lower())
+        clientes.append({'nombre': nombre_c, 'productos': si(gv(mg, _rn, 2)), 'monto': round(sf(gv(mg, _rn, 3)), 2),
+                         'momMonto': _mmc['monto'] if _mmc and _mmc.get('monto') else None})
         _rn += 1
+
+# Comparativo de externos a la fecha: si la hoja MOM trae los clientes externos
+# (día 15 mes pasado), compara externos-hoy vs externos-día-15-mes-pasado. Si no,
+# cae al mes completo anterior (suma de OTROS + ROHO de la tabla por tienda).
+_ext_actual = sum(c['monto'] for c in clientes)
+_ext_prev_mom = sum(c['momMonto'] for c in clientes if c.get('momMonto') is not None)
+_ext_has_mom = any(c.get('momMonto') is not None for c in clientes)
+if _ext_has_mom and _ext_prev_mom > 0:
+    global_data['externosPrev'] = round(_ext_prev_mom, 2)
+    global_data['externosDelta'] = round((_ext_actual - _ext_prev_mom) / _ext_prev_mom, 6)
+    global_data['externosBase'] = 'fecha'
+else:
+    _ext_prev_full = sum(t['mesPasadoMonto'] for t in tiendas
+                         if t['nombre'] in ('OTROS', 'ROHO') and t.get('mesPasadoMonto'))
+    global_data['externosPrev'] = round(_ext_prev_full, 2) if _ext_prev_full else None
+    global_data['externosDelta'] = round((_ext_actual - _ext_prev_full) / _ext_prev_full, 6) if _ext_prev_full else None
+    global_data['externosBase'] = 'mescompleto'
+
+# Crecimiento a la fecha de las "tiendas" externas (ROHO = cliente ROHO; OTROS = resto
+# de clientes), usando el MOM de externos. Sobrescribe la diferencia del Excel (mes completo).
+if not CERRADO_ENV:
+    _roho_cli = [c for c in clientes if c['nombre'].strip().upper() == 'ROHO']
+    _otros_cli = [c for c in clientes if c['nombre'].strip().upper() != 'ROHO']
+    for _t in tiendas:
+        _lst = _roho_cli if _t['nombre'] == 'ROHO' else (_otros_cli if _t['nombre'] == 'OTROS' else None)
+        if _lst is None:
+            continue
+        _cur = sum(c['monto'] for c in _lst)
+        _prev = sum(c['momMonto'] for c in _lst if c.get('momMonto') is not None)
+        if any(c.get('momMonto') is not None for c in _lst) and _prev > 0:
+            _t['crecimientoVsAbril'] = round((_cur - _prev) / _prev, 6)
+            _t['mesPasadoMonto'] = round(_prev, 2)
+            _t['crecBase'] = 'fecha'
 
 periodo = {'mes': mes, 'anio': anio, 'diasTotales': diasTot, 'momLabel': mom_label}
 if CERRADO_ENV:

@@ -895,6 +895,7 @@ table.matrix tr.is-sel td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
 
 /* ===== Externos ===== */
 .ext-table { font-size: 13px; }
+.ext-table th.num { text-align: right; }
 .ext-bar { width: 100%; height: 6px; background: var(--rail); border-radius: 999px; overflow: hidden; }
 .ext-bar > div { height: 100%; background: var(--accent); }
 .ext-donut { display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -2509,8 +2510,8 @@ function RankingTable(_ref5) {
     }, "Bs ", fmtMoney(proy, {
       "short": true
     })), /*#__PURE__*/React.createElement("td", {
-      className: "num " + (v.crecimientoVsAbril >= 0 ? "good" : "bad")
-    }, fmtPctSign(v.crecimientoVsAbril)));
+      className: "num " + (v.esNuevo ? "good" : (v.crecimientoVsAbril >= 0 ? "good" : "bad"))
+    }, v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsAbril)));
   })));
 }
 function ProyeccionList(_ref6) {
@@ -2923,10 +2924,10 @@ function VendedoresView(_ref) {
     }, v.tienda === "SUEÑA" ? "Sueña" : "Heaven")), /*#__PURE__*/React.createElement("div", {
       className: "cmp-money"
     }, "Bs ", fmtMoney(v.monto)), /*#__PURE__*/React.createElement("div", {
-      className: "cmp-delta " + (v.crecimientoVsAbril >= 0 ? "good" : "bad")
-    }, fmtPctSign(v.crecimientoVsAbril), " ", /*#__PURE__*/React.createElement("span", {
+      className: "cmp-delta " + (v.esNuevo ? "good" : (v.crecimientoVsAbril >= 0 ? "good" : "bad"))
+    }, v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsAbril), " ", /*#__PURE__*/React.createElement("span", {
       className: "muted"
-    }, "vs mes ant.")), /*#__PURE__*/React.createElement("dl", {
+    }, v.esNuevo ? "este mes" : "vs mes ant.")), /*#__PURE__*/React.createElement("dl", {
       className: "cmp-stats"
     }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Conversi\xF3n"), /*#__PURE__*/React.createElement("dd", null, fmtPct(v.conversion, 2))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Ticket prom"), /*#__PURE__*/React.createElement("dd", null, "Bs ", fmtMoney(v.ticketProm))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Leads"), /*#__PURE__*/React.createElement("dd", null, fmtInt(v.leads))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Bs / lead"), /*#__PURE__*/React.createElement("dd", null, "Bs ", fmtMoney(v.ingresoLead))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Productos"), /*#__PURE__*/React.createElement("dd", null, (_v$prodPorVenta = v.prodPorVenta) === null || _v$prodPorVenta === void 0 ? void 0 : _v$prodPorVenta.toFixed(2))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Ritmo/d\xEDa"), /*#__PURE__*/React.createElement("dd", null, "Bs ", fmtMoney(v.ritmoDiario))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "% Meta m\xEDn"), /*#__PURE__*/React.createElement("dd", null, fmtPct(v.pctMin))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "% Presup."), /*#__PURE__*/React.createElement("dd", null, fmtPct(v.pctPres))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Comisi\xF3n"), /*#__PURE__*/React.createElement("dd", null, "Bs ", fmtMoney(v.comision + (v.bonoTitanio || 0)))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("dt", null, "Proyecci\xF3n"), /*#__PURE__*/React.createElement("dd", null, "Bs ", fmtMoney(v.proyeccion, {
       "short": true
@@ -3076,7 +3077,7 @@ function TiendasView(_ref2) {
         color: 'var(--muted)',
         marginLeft: 6
       }
-    }, "Bs ", t.mesPasadoMonto.toLocaleString("es-BO"), " el mes anterior")))), /*#__PURE__*/React.createElement("div", {
+    }, "Bs ", t.mesPasadoMonto.toLocaleString("es-BO"), t.crecBase === "fecha" ? " el mes ant. a la fecha" : " el mes anterior")))), /*#__PURE__*/React.createElement("div", {
       className: "tienda-progress"
     }, /*#__PURE__*/React.createElement("div", {
       className: "progress-label"
@@ -3193,7 +3194,7 @@ function ExternosView() {
     className: "card span-7"
   }, /*#__PURE__*/React.createElement("header", {
     className: "card-head"
-  }, /*#__PURE__*/React.createElement("h3", null, "Clientes externos \xB7 ventas mayo"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("h3", null, "Clientes externos \xB7 ventas " + (D.periodo.mes || "").toLowerCase()), /*#__PURE__*/React.createElement("div", {
     style: {
       display: 'flex',
       alignItems: 'baseline',
@@ -3201,26 +3202,19 @@ function ExternosView() {
     }
   }, /*#__PURE__*/React.createElement("span", {
     className: "card-sub"
-  }, "Total Bs ", fmtMoney(total), " \xB7 ", clientes.length, " cuentas"), ((_D$tiendas$find = D.tiendas.find(function (t) {
-    return t.nombre === "OTROS";
-  })) === null || _D$tiendas$find === void 0 ? void 0 : _D$tiendas$find.mesPasadoMonto) != null && function () {
-    var otros = D.tiendas.find(function (t) {
-      return t.nombre === "OTROS";
-    });
-    return /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 12,
-        fontWeight: 700,
-        color: otros.crecimientoVsAbril >= 0 ? 'var(--good)' : 'var(--bad)'
-      }
-    }, otros.crecimientoVsAbril >= 0 ? "+" : "", (otros.crecimientoVsAbril * 100).toFixed(1), "% vs mes ant.", /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontWeight: 400,
-        color: 'var(--muted)',
-        marginLeft: 4
-      }
-    }, "(Bs ", otros.mesPasadoMonto.toLocaleString("es-BO"), ")"));
-  }())), /*#__PURE__*/React.createElement("table", {
+  }, "Total Bs ", fmtMoney(total), " \xB7 ", clientes.length, " cuentas"), D.global.externosDelta != null && /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: 12,
+      fontWeight: 700,
+      color: D.global.externosDelta >= 0 ? 'var(--good)' : 'var(--bad)'
+    }
+  }, D.global.externosDelta >= 0 ? "+" : "", (D.global.externosDelta * 100).toFixed(1), "% vs mes ant.", /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontWeight: 400,
+      color: 'var(--muted)',
+      marginLeft: 4
+    }
+  }, "(Bs ", D.global.externosPrev.toLocaleString("es-BO"), D.global.externosBase === "fecha" ? " a la fecha" : "", ")"))), /*#__PURE__*/React.createElement("table", {
     className: "ext-table"
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Cliente"), /*#__PURE__*/React.createElement("th", {
     className: "num"
@@ -4672,8 +4666,8 @@ function RankingTable({ rows, dia, diasTotales }) {
             <td className="num">{fmtPct(v.conversion, 2)}</td>
             <td className="num">Bs {fmtMoney(v.ticketProm)}</td>
             <td className="num">Bs {fmtMoney(proy, { short: true })}</td>
-            <td className={"num " + (v.crecimientoVsAbril >= 0 ? "good" : "bad")}>
-              {fmtPctSign(v.crecimientoVsAbril)}
+            <td className={"num " + (v.esNuevo ? "good" : (v.crecimientoVsAbril >= 0 ? "good" : "bad"))}>
+              {v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsAbril)}
             </td>
           </tr>
         );})}
@@ -4818,9 +4812,27 @@ function VendedoresView({ filtered, filterTienda }) {
     { key: "proyeccion", label: "Proyección", fmt: (v) => "Bs " + fmtMoney(v, { short: true }) },
     { key: "crecimientoVsAbril", label: "vs mes ant.", fmt: (v) => fmtPctSign(v), kind: "delta" },
     { key: "comision", label: "Comisión", fmt: (v) => "Bs " + fmtMoney(v + 0) },
-    { key: "pctPres", label: "% Presup", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.5 },
-    { key: "pctMin", label: "% Meta mín", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.3 },
+    { key: "pctPres", label: "% Presup", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.5, ctx: (v) => ({ monto: v.monto, denom: v.presupuesto }) },
+    { key: "pctMin", label: "% Meta mín", fmt: (v) => fmtPct(v), kind: "pct", scale: 1.3, ctx: (v) => ({ monto: v.monto, denom: v.metaMin }) },
   ];
+
+  // Escalas del radar: dinámicas según el máximo real de los vendedores (redondeado a un valor "lindo")
+  const niceUp = (x) => {
+    if (!isFinite(x) || x <= 0) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(x)));
+    const steps = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10];
+    return (steps.find((s) => x / mag <= s) || 10) * mag;
+  };
+  const axMax = (fn, fallback) => {
+    const vals = D.vendedores.map(fn).filter((x) => x != null && isFinite(x) && x > 0);
+    return vals.length ? niceUp(Math.max(...vals)) : fallback;
+  };
+  const sPres = axMax((v) => v.pctPres, 1.5);
+  const sConv = axMax((v) => v.conversion, 0.2);
+  const sTicket = axMax((v) => v.ticketProm, 4000);
+  const sIngr = axMax((v) => v.ingresoLead, 500);
+  const sProd = axMax((v) => v.prodPorVenta, 2.5);
+  const sCrec = niceUp(Math.max(0.5, ...D.vendedores.map((v) => Math.abs(v.crecimientoVsAbril || 0)).filter(isFinite)));
 
   return (
     <div className="vend-grid">
@@ -4854,12 +4866,12 @@ function VendedoresView({ filtered, filterTienda }) {
               size={380}
               max={1}
               axes={[
-                { label: "% Presup", get: (s) => Math.min(s.pctPres / 1.5, 1) },
-                { label: "Conv. leads",  get: (s) => Math.min(s.conversion / 0.2, 1) },
-                { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / 4000, 1) },
-                { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / 500, 1) },
-                { label: "Prod / venta", get: (s) => Math.min((s.prodPorVenta || 0) / 2.5, 1) },
-                { label: "vs mes ant.",     get: (s) => Math.min(Math.max((s.crecimientoVsAbril + 1) / 2, 0), 1) },
+                { label: "% Presup", get: (s) => Math.min(s.pctPres / sPres, 1) },
+                { label: "Conv. leads",  get: (s) => Math.min(s.conversion / sConv, 1) },
+                { label: "Ticket prom",  get: (s) => Math.min(s.ticketProm / sTicket, 1) },
+                { label: "Ingreso/lead", get: (s) => Math.min(s.ingresoLead / sIngr, 1) },
+                { label: "Prod / venta", get: (s) => Math.min((s.prodPorVenta || 0) / sProd, 1) },
+                { label: "vs mes ant.",     get: (s) => Math.min(Math.max((s.crecimientoVsAbril + sCrec) / (2 * sCrec), 0), 1) },
               ]}
               series={D.vendedores.filter((v) => selected.includes(v.nombre)).map((v) => ({
                 ...v, color: VENDOR_COLOR[v.nombre],
@@ -4868,12 +4880,12 @@ function VendedoresView({ filtered, filterTienda }) {
             <div className="radar-key">
               <div className="key-title">Métricas comparadas</div>
               <ul>
-                <li><span>% Presup</span><i>0 — 150%</i></li>
-                <li><span>Conv. leads</span><i>0 — 20%</i></li>
-                <li><span>Ticket prom</span><i>0 — Bs 4 000</i></li>
-                <li><span>Ingreso / lead</span><i>0 — Bs 500</i></li>
-                <li><span>Prod / venta</span><i>0 — 2.5</i></li>
-                <li><span>vs mes ant.</span><i>−100% — +100%</i></li>
+                <li><span>% Presup</span><i>0 — {fmtPct(sPres)}</i></li>
+                <li><span>Conv. leads</span><i>0 — {fmtPct(sConv)}</i></li>
+                <li><span>Ticket prom</span><i>0 — Bs {fmtMoney(sTicket)}</i></li>
+                <li><span>Ingreso / lead</span><i>0 — Bs {fmtMoney(sIngr)}</i></li>
+                <li><span>Prod / venta</span><i>0 — {sProd.toFixed(1)}</i></li>
+                <li><span>vs mes ant.</span><i>{fmtPctSign(-sCrec)} — {fmtPctSign(sCrec)}</i></li>
               </ul>
             </div>
           </div>
@@ -4887,8 +4899,8 @@ function VendedoresView({ filtered, filterTienda }) {
                   <span className="cmp-tag">{v.tienda === "SUEÑA" ? "Sueña" : "Heaven"}</span>
                 </div>
                 <div className="cmp-money">Bs {fmtMoney(v.monto)}</div>
-                <div className={"cmp-delta " + (v.crecimientoVsAbril >= 0 ? "good" : "bad")}>
-                  {fmtPctSign(v.crecimientoVsAbril)} <span className="muted">vs mes ant.</span>
+                <div className={"cmp-delta " + (v.esNuevo ? "good" : (v.crecimientoVsAbril >= 0 ? "good" : "bad"))}>
+                  {v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsAbril)} <span className="muted">{v.esNuevo ? "este mes" : "vs mes ant."}</span>
                 </div>
                 <dl className="cmp-stats">
                   <div><dt>Conversión</dt><dd>{fmtPct(v.conversion, 2)}</dd></div>
@@ -4948,6 +4960,7 @@ function VendedoresView({ filtered, filterTienda }) {
                           {c.kind === "pct" && val != null && (
                             <div className="row-bar tiny"><div style={{ width: Math.min(val / (c.scale || 1), 1) * 100 + "%", background: VENDOR_COLOR[v.nombre] }} /></div>
                           )}
+                          {c.ctx && (() => { const x = c.ctx(v); return x.denom > 0 ? <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 2, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>Bs {fmtMoney(x.monto, { short: true })} / {fmtMoney(x.denom, { short: true })}</div> : null; })()}
                         </div>
                       </td>
                     );
@@ -4976,7 +4989,8 @@ function TiendasView({ filterTienda, dia }) {
         const proyeccion = ritmoDiario * diasTotales;
         const tEff = { ...t, ritmoDiario, proyeccion };
         return (
-          <section key={t.nombre} className="card tienda-card">
+          <React.Fragment key={t.nombre}>
+          <section className="card tienda-card">
             <header className="card-head tienda-head" style={{ borderTopColor: TIENDA_COLOR[t.nombre] }}>
               <div>
                 <div className="eyebrow">Tienda</div>
@@ -5005,7 +5019,7 @@ function TiendasView({ filterTienda, dia }) {
                   <div className={"stat-value " + (t.crecimientoVsAbril >= 0 ? "good" : "bad")} style={{fontSize:18}}>
                     {t.crecimientoVsAbril >= 0 ? "+" : ""}{(t.crecimientoVsAbril*100).toFixed(1)}%
                     <span style={{fontSize:11,fontWeight:400,color:'var(--muted)',marginLeft:6}}>
-                      Bs {t.mesPasadoMonto.toLocaleString("es-BO")} el mes anterior
+                      Bs {t.mesPasadoMonto.toLocaleString("es-BO")}{t.crecBase === "fecha" ? " el mes ant. a la fecha" : " el mes anterior"}
                     </span>
                   </div>
                 </div>
@@ -5066,6 +5080,43 @@ function TiendasView({ filterTienda, dia }) {
               </div>
             )}
           </section>
+
+          {t.nombre === "OTROS" && (() => {
+            const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
+            const otrosCli = [...D.clientes].filter((c) => c.nombre.toUpperCase() !== "ROHO" && c.monto > 0).sort((a, b) => b.monto - a.monto);
+            const totOtros = otrosCli.reduce((s, c) => s + c.monto, 0);
+            if (!otrosCli.length) return null;
+            return (
+              <section className="card tienda-card">
+                <header className="card-head" style={{ borderTopColor: "#7e3a8e" }}>
+                  <div>
+                    <div className="eyebrow">Composición</div>
+                    <h3>Externos <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 14 }}>(sin ROHO)</span></h3>
+                  </div>
+                  <div className="tienda-headline">
+                    <div className="big">Bs {fmtMoney(totOtros)}</div>
+                    <div className="pace muted">{otrosCli.length} cuentas</div>
+                  </div>
+                </header>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center", padding: "8px 0" }}>
+                  <Donut size={190} thickness={28}
+                    data={otrosCli.map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
+                    centerLabel="Otros" centerValue={"Bs " + fmtMoney(totOtros, { short: true })} />
+                  <ul className="legend" style={{ minWidth: 175, fontSize: 13 }}>
+                    {otrosCli.map((c, i) => (
+                      <li key={c.nombre} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                        <span style={{ width: 11, height: 11, borderRadius: 3, background: COLS[i % 8], flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{c.nombre}</span>
+                        <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>Bs {fmtMoney(c.monto)}</span>
+                        <b style={{ color: "var(--ink)", minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtPct(c.monto / totOtros)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
+          </React.Fragment>
         );
       })}
     </div>
@@ -5086,53 +5137,56 @@ function ExternosView() {
   const clientes = [...D.clientes].sort((a, b) => b.monto - a.monto);
   const total = clientes.reduce((s, c) => s + c.monto, 0);
   const max = Math.max(...clientes.map((c) => c.monto));
+  const cliCrec = (c) => {
+    const mm = c.momMonto;
+    if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", cls: c.monto >= mm ? "good" : "bad" };
+    if (c.monto > 0) return { txt: "Nuevo", cls: "good" };
+    return { txt: "—", cls: "muted" };
+  };
   return (
     <div className="externos-grid">
       <section className="card span-7">
         <header className="card-head">
-          <h3>Clientes externos · ventas mayo</h3>
+          <h3>Clientes externos · ventas {(D.periodo.mes || "").toLowerCase()}</h3>
           <div style={{display:'flex',alignItems:'baseline',gap:16}}>
             <span className="card-sub">Total Bs {fmtMoney(total)} · {clientes.length} cuentas</span>
-            {D.tiendas.find(t=>t.nombre==="OTROS")?.mesPasadoMonto != null && (() => {
-              const otros = D.tiendas.find(t=>t.nombre==="OTROS");
-              return (
-                <span style={{fontSize:12,fontWeight:700,
-                  color: otros.crecimientoVsAbril >= 0 ? 'var(--good)' : 'var(--bad)'}}>
-                  {otros.crecimientoVsAbril >= 0 ? "+" : ""}{(otros.crecimientoVsAbril*100).toFixed(1)}% vs mes ant.
-                  <span style={{fontWeight:400,color:'var(--muted)',marginLeft:4}}>
-                    (Bs {otros.mesPasadoMonto.toLocaleString("es-BO")})
-                  </span>
+            {D.global.externosDelta != null && (
+              <span style={{fontSize:12,fontWeight:700,
+                color: D.global.externosDelta >= 0 ? 'var(--good)' : 'var(--bad)'}}>
+                {D.global.externosDelta >= 0 ? "+" : ""}{(D.global.externosDelta*100).toFixed(1)}% vs mes ant.
+                <span style={{fontWeight:400,color:'var(--muted)',marginLeft:4}}>
+                  (Bs {D.global.externosPrev.toLocaleString("es-BO")}{D.global.externosBase === "fecha" ? " a la fecha" : ""})
                 </span>
-              );
-            })()}
+              </span>
+            )}
           </div>
         </header>
         <table className="ext-table">
           <thead>
             <tr>
               <th>Cliente</th>
-              <th className="num">Ventas</th>
               <th className="num">Monto</th>
+              <th className="num">vs mes ant.</th>
               <th className="num">% Total</th>
               <th>Participación</th>
             </tr>
           </thead>
           <tbody>
-            {clientes.map((c) => (
+            {clientes.map((c) => { const cc = cliCrec(c); return (
               <tr key={c.nombre}>
                 <td><b>{c.nombre}</b></td>
-                <td className="num">{c.ventas}</td>
                 <td className="num">Bs {fmtMoney(c.monto)}</td>
+                <td className={"num " + cc.cls}>{cc.txt}</td>
                 <td className="num">{fmtPct(c.monto / total)}</td>
                 <td><div className="ext-bar"><div style={{ width: (c.monto / max) * 100 + "%" }} /></div></td>
               </tr>
-            ))}
+            ); })}
           </tbody>
           <tfoot>
             <tr>
               <td><b>TOTAL</b></td>
-              <td className="num">{clientes.reduce((s, c) => s + c.ventas, 0)}</td>
               <td className="num"><b>Bs {fmtMoney(total)}</b></td>
+              <td className={"num " + (D.global.externosDelta != null ? (D.global.externosDelta >= 0 ? "good" : "bad") : "")}><b>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : ""}</b></td>
               <td className="num">100%</td>
               <td></td>
             </tr>
@@ -5464,7 +5518,7 @@ function PresentacionView({ filtered, filterTienda }) {
       case "Ticket promedio": return { val: ventasT > 0 ? montoT / ventasT : null, tipo: "money" };
       case "% Presupuesto": return { val: presT > 0 ? montoT / presT : null, tipo: "pct", monto: montoT, denom: presT };
       case "% Meta mínima": return { val: metaT > 0 ? montoT / metaT : null, tipo: "pct", monto: montoT, denom: metaT };
-      case "Crecimiento": { var pas = vends.reduce(function(s,v){ return s + (v.crecimientoVsAbril != null ? v.monto / (1 + v.crecimientoVsAbril) : v.monto); }, 0); return { val: pas > 0 ? (montoT - pas) / pas : null, tipo: "crec" }; }
+      case "Crecimiento": { var pas = vends.reduce(function(s,v){ return s + (v.esNuevo ? 0 : (v.crecimientoVsAbril != null ? v.monto / (1 + v.crecimientoVsAbril) : v.monto)); }, 0); return { val: pas > 0 ? (montoT - pas) / pas : null, tipo: "crec" }; }
       case "Falta p/ presupuesto": return { val: Math.max(presT - montoT, 0), tipo: "falta" };
       case "MoM Leads":  { var c=leadsT,  p=vends.reduce(function(s,v){return s+(v.momLeads||0);},0);  return {val:p>0?(c-p)/p:null,tipo:"crec",cur:c,prev:p,mom:true}; }
       case "MoM Ventas": { var c=ventasT, p=vends.reduce(function(s,v){return s+(v.momVentas||0);},0); return {val:p>0?(c-p)/p:null,tipo:"crec",cur:c,prev:p,mom:true}; }
@@ -5663,6 +5717,7 @@ function PresentacionView({ filtered, filterTienda }) {
                             const esMejor = !m.noBest && g.vends.length > 1 && best != null && best !== minV && raw === best;
                             let color = "var(--ink)";
                             if (m.crec && raw != null) color = raw >= 0 ? "var(--good)" : "var(--bad)";
+                            if (m.crec && v.esNuevo) color = "var(--good)";
                             if (m.falta) color = (raw != null && raw <= 0) ? "var(--good)" : "var(--ink)";
                             const base = idx === 0 ? tdLider : tdVal;
                             if (m.bar) {
@@ -5687,7 +5742,7 @@ function PresentacionView({ filtered, filterTienda }) {
                             }
                             return (
                               <td key={v.nombre} style={{ ...base, fontWeight: (m.bold || esMejor) ? 800 : 500, color: esMejor ? GOLD : color }}>
-                                {fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}
+                                {(m.crec && v.esNuevo) ? "Nuevo" : <>{fmtTipo(raw, m.tipo)}{esMejor ? " 🥇" : ""}</>}
                               </td>
                             );
                           })}
@@ -5743,6 +5798,110 @@ function PresentacionView({ filtered, filterTienda }) {
           </React.Fragment>
         );
       })}
+
+      {/* ── Slide final: clientes externos con MoM ── */}
+      {D.clientes && D.clientes.length > 0 && (() => {
+        const cliAll = [...D.clientes].sort((a, b) => b.monto - a.monto);
+        const totalE = cliAll.reduce((s, c) => s + c.monto, 0);
+        const roho = cliAll.find(c => c.nombre.toUpperCase() === "ROHO");
+        const otros = cliAll.filter(c => c.nombre.toUpperCase() !== "ROHO");
+        const totOtros = otros.reduce((s, c) => s + c.monto, 0);
+        const maxE = Math.max(...cliAll.map(c => c.monto), 1);
+        const tRoho = D.tiendas.find(t => t.nombre === "ROHO");
+        const tOtros = D.tiendas.find(t => t.nombre === "OTROS");
+        const mesPrev = (window.__momMes && window.__momMes.prv || "").toUpperCase();
+        const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
+        const crecCli = (c) => {
+          const mm = c.momMonto;
+          if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", col: c.monto >= mm ? "var(--good)" : "var(--bad)", prev: mm };
+          if (c.monto > 0) return { txt: "Nuevo", col: "var(--good)", prev: null };
+          return { txt: "—", col: "var(--muted)", prev: mm };
+        };
+        const filaCli = (c) => { const cc = crecCli(c); return (
+          <tr key={c.nombre}>
+            <td style={tdLat}><b>{c.nombre}</b></td>
+            <td style={tdVal}>
+              <div style={{ fontWeight: 700 }}>{fmtBs(c.monto)}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: cc.col, marginTop: 1 }}>{cc.txt}{cc.prev != null && cc.prev > 0 ? <span style={{ color: "var(--muted)", fontWeight: 400 }}> · {fmtBs(cc.prev)} {mesPrev}</span> : null}</div>
+            </td>
+            <td style={{ ...tdProm, fontWeight: 700 }}>{fmtPct(c.monto / totalE)}</td>
+          </tr>
+        ); };
+        const statBox = (lbl, t) => (
+          <div style={{ flex: 1, background: "var(--surface-2)", borderRadius: 10, padding: "8px 11px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>{lbl}</div>
+            <div style={{ fontSize: 13.5, fontVariantNumeric: "tabular-nums" }}>{fmtPct(t.pctPres)} <span style={{ color: "var(--muted)", fontSize: 10.5 }}>presup.</span></div>
+            <div style={{ fontSize: 13.5, fontVariantNumeric: "tabular-nums" }}>{fmtPct(t.pctMin)} <span style={{ color: "var(--muted)", fontSize: 10.5 }}>mín.</span></div>
+          </div>
+        );
+        return (
+          <section className="card" style={{ padding: 0, overflow: "hidden" }}>
+            <div style={{ background: "#7e3a8e", padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: ".09em", opacity: 0.85, textTransform: "uppercase" }}>Clientes externos</div>
+                <div style={{ fontSize: 23, fontWeight: 800, lineHeight: 1.1 }}>Ventas {(D.periodo.mes || "").toLowerCase()}</div>
+              </div>
+              <div style={{ textAlign: "right" }}>
+                <div className="mx-count" data-target={totalE} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(totalE)}</div>
+                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{cliAll.length} cuentas{D.global.externosDelta != null ? " · " + (D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(1) + "% vs mes ant." : ""}</div>
+              </div>
+            </div>
+
+            <div style={{ display: "flex", gap: 20, padding: "14px 18px 18px", flexWrap: "wrap", alignItems: "flex-start" }}>
+              <div style={{ flex: "1 1 430px", minWidth: 320, overflowX: "auto" }}>
+                <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={thCorner}>Cliente</th>
+                      <th style={th}>Monto · vs mes ant.</th>
+                      <th style={thProm}>% Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roho && filaCli(roho)}
+                    {roho && <tr><td colSpan={3} style={{ borderTop: "2px solid #7e3a8e", padding: 0, height: 2 }}></td></tr>}
+                    {otros.map(filaCli)}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td style={{ ...tdLat, fontWeight: 800 }}>TOTAL</td>
+                      <td style={tdVal}>
+                        <div style={{ fontWeight: 800 }}>{fmtBs(totalE)}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: D.global.externosDelta >= 0 ? "var(--good)" : "var(--bad)" }}>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : ""}</div>
+                      </td>
+                      <td style={{ ...tdProm, fontWeight: 800 }}>100%</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div style={{ flex: "1 1 330px", minWidth: 280 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 10, textAlign: "center" }}>Participación de otros <span style={{ fontWeight: 400 }}>(sin ROHO)</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
+                  <Donut size={210} thickness={30}
+                    data={otros.filter(c => c.monto > 0).map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
+                    centerLabel="Otros" centerValue={fmtBs(totOtros)} />
+                  <ul className="legend" style={{ minWidth: 160, fontSize: 13 }}>
+                    {otros.filter(c => c.monto > 0).map((c, i) => (
+                      <li key={c.nombre} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
+                        <span style={{ width: 11, height: 11, borderRadius: 3, background: COLS[i % 8], flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{c.nombre}</span>
+                        <b style={{ color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{fmtPct(c.monto / totOtros)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {(tRoho || tOtros) && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 16, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
+                    {tRoho && statBox("ROHO", tRoho)}
+                    {tOtros && statBox("Otros", tOtros)}
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
     </div>
   );
 }
@@ -5979,7 +6138,11 @@ function exportarHTML() {
       var big = el("div", "mx-bigrow");
       big.appendChild(el("span", "mx-big", fmtBs(v.monto)));
       var ant = montoAnteriorVend(v);
-      if (v.crecimientoVsAbril != null) {
+      if (v.esNuevo) {
+        var dn = el("span", "mx-delta up");
+        dn.textContent = "★ Nuevo este mes";
+        big.appendChild(dn);
+      } else if (v.crecimientoVsAbril != null) {
         var d = el("span", "mx-delta " + (v.crecimientoVsAbril >= 0 ? "up" : "down"));
         d.textContent = (v.crecimientoVsAbril >= 0 ? "▲ " : "▼ ") + fmtPctSign(v.crecimientoVsAbril);
         big.appendChild(d);
