@@ -3086,8 +3086,7 @@ function TiendasView(_ref2) {
       className: "muted"
     }, "Bs ", fmtMoney(t.monto), " / Bs ", fmtMoney(t.metaMin), " \xB7 ", fmtPct(t.pctMin))), /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
-      meta: t.metaMin,
-      presupuesto: t.presupuesto,
+      max: t.metaMin,
       color: TIENDA_COLOR[t.nombre],
       height: 18,
       format: function format(n) {
@@ -3099,7 +3098,7 @@ function TiendasView(_ref2) {
       className: "muted"
     }, "Bs ", fmtMoney(t.monto), " / Bs ", fmtMoney(t.presupuesto), " \xB7 ", fmtPct(t.pctPres))), /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
-      presupuesto: t.presupuesto,
+      max: t.presupuesto,
       color: TIENDA_COLOR[t.nombre],
       height: 10
     })), vendedores.length > 0 && /*#__PURE__*/React.createElement("div", {
@@ -5094,12 +5093,12 @@ function TiendasView({ filterTienda, dia }) {
                 <span>Avance vs Meta mín</span>
                 <span className="muted">Bs {fmtMoney(t.monto)} / Bs {fmtMoney(t.metaMin)} · {fmtPct(t.pctMin)}</span>
               </div>
-              <MetaBar value={t.monto} meta={t.metaMin} presupuesto={t.presupuesto} color={TIENDA_COLOR[t.nombre]} height={18} format={(n) => "Bs " + fmtMoney(n)} />
+              <MetaBar value={t.monto} max={t.metaMin} color={TIENDA_COLOR[t.nombre]} height={18} format={(n) => "Bs " + fmtMoney(n)} />
               <div className="progress-label">
                 <span>Avance vs Presupuesto</span>
                 <span className="muted">Bs {fmtMoney(t.monto)} / Bs {fmtMoney(t.presupuesto)} · {fmtPct(t.pctPres)}</span>
               </div>
-              <MetaBar value={t.monto} presupuesto={t.presupuesto} color={TIENDA_COLOR[t.nombre]} height={10} />
+              <MetaBar value={t.monto} max={t.presupuesto} color={TIENDA_COLOR[t.nombre]} height={10} />
             </div>
 
             {vendedores.length > 0 && (
