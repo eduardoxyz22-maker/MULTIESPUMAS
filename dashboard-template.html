@@ -895,6 +895,7 @@ table.matrix tr.is-sel td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
 
 /* ===== Externos ===== */
 .ext-table { font-size: 13px; }
+.ext-table th.num { text-align: right; }
 .ext-bar { width: 100%; height: 6px; background: var(--rail); border-radius: 999px; overflow: hidden; }
 .ext-bar > div { height: 100%; background: var(--accent); }
 .ext-donut { display: flex; flex-direction: column; align-items: center; gap: 14px; }
@@ -5034,6 +5035,32 @@ function TiendasView({ filterTienda, dia }) {
               </div>
             )}
 
+            {t.nombre === "OTROS" && (() => {
+              const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
+              const otrosCli = [...D.clientes].filter((c) => c.nombre.toUpperCase() !== "ROHO" && c.monto > 0).sort((a, b) => b.monto - a.monto);
+              const totOtros = otrosCli.reduce((s, c) => s + c.monto, 0);
+              if (!otrosCli.length) return null;
+              return (
+                <div className="tienda-vends">
+                  <div className="card-sub" style={{ marginBottom: 8 }}>Participación de externos <span style={{ color: "var(--muted)", fontWeight: 400 }}>(sin ROHO)</span></div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
+                    <Donut size={150} thickness={22}
+                      data={otrosCli.map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
+                      centerLabel="Otros" centerValue={"Bs " + fmtMoney(totOtros, { short: true })} />
+                    <ul className="legend tight" style={{ flex: 1, minWidth: 180 }}>
+                      {otrosCli.map((c, i) => (
+                        <li key={c.nombre}>
+                          <span className="dot" style={{ background: COLS[i % 8] }} />
+                          <span className="name">{c.nombre}</span>
+                          <span className="val">{fmtPct(c.monto / totOtros)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              );
+            })()}
+
             {tEff.proyeccion != null && (
               <div className="tienda-proj">
                 <div className="card-sub">Proyección a cierre · {diasRestantes} día{diasRestantes === 1 ? "" : "s"} restante{diasRestantes === 1 ? "" : "s"}</div>
@@ -5743,17 +5770,40 @@ function PresentacionView({ filtered, filterTienda }) {
 
       {/* ── Slide final: clientes externos con MoM ── */}
       {D.clientes && D.clientes.length > 0 && (() => {
-        const cli = [...D.clientes].sort((a, b) => b.monto - a.monto);
-        const totalE = cli.reduce((s, c) => s + c.monto, 0);
-        const maxE = Math.max(...cli.map(c => c.monto), 1);
-        const mesAct = (window.__momMes && window.__momMes.act || "").toUpperCase();
+        const cliAll = [...D.clientes].sort((a, b) => b.monto - a.monto);
+        const totalE = cliAll.reduce((s, c) => s + c.monto, 0);
+        const roho = cliAll.find(c => c.nombre.toUpperCase() === "ROHO");
+        const otros = cliAll.filter(c => c.nombre.toUpperCase() !== "ROHO");
+        const totOtros = otros.reduce((s, c) => s + c.monto, 0);
+        const maxE = Math.max(...cliAll.map(c => c.monto), 1);
+        const tRoho = D.tiendas.find(t => t.nombre === "ROHO");
+        const tOtros = D.tiendas.find(t => t.nombre === "OTROS");
         const mesPrev = (window.__momMes && window.__momMes.prv || "").toUpperCase();
+        const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
         const crecCli = (c) => {
           const mm = c.momMonto;
-          if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", col: c.monto >= mm ? "var(--good)" : "var(--bad)" };
-          if (c.monto > 0) return { txt: "Nuevo", col: "var(--good)" };
-          return { txt: "—", col: "var(--muted)" };
+          if (mm != null && mm > 0) return { txt: (c.monto >= mm ? "+" : "") + ((c.monto - mm) / mm * 100).toFixed(0) + "%", col: c.monto >= mm ? "var(--good)" : "var(--bad)", prev: mm };
+          if (c.monto > 0) return { txt: "Nuevo", col: "var(--good)", prev: null };
+          return { txt: "—", col: "var(--muted)", prev: mm };
         };
+        const filaCli = (c) => { const cc = crecCli(c); return (
+          <tr key={c.nombre}>
+            <td style={tdLat}><b>{c.nombre}</b></td>
+            <td style={tdVal}>
+              <div style={{ fontWeight: 700 }}>{fmtBs(c.monto)}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: cc.col, marginTop: 1 }}>{cc.txt}{cc.prev != null && cc.prev > 0 ? <span style={{ color: "var(--muted)", fontWeight: 400 }}> · {fmtBs(cc.prev)} {mesPrev}</span> : null}</div>
+            </td>
+            <td style={{ ...tdVal, fontWeight: 700 }}>{fmtPct(c.monto / totalE)}</td>
+            <td style={tdProm}><div className="ext-bar" style={{ minWidth: 90 }}><div style={{ width: (c.monto / maxE) * 100 + "%" }} /></div></td>
+          </tr>
+        ); };
+        const statBox = (lbl, t) => (
+          <div style={{ flex: 1, background: "var(--surface-2)", borderRadius: 10, padding: "8px 11px" }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".04em", marginBottom: 3 }}>{lbl}</div>
+            <div style={{ fontSize: 13.5, fontVariantNumeric: "tabular-nums" }}>{fmtPct(t.pctPres)} <span style={{ color: "var(--muted)", fontSize: 10.5 }}>presup.</span></div>
+            <div style={{ fontSize: 13.5, fontVariantNumeric: "tabular-nums" }}>{fmtPct(t.pctMin)} <span style={{ color: "var(--muted)", fontSize: 10.5 }}>mín.</span></div>
+          </div>
+        );
         return (
           <section className="card" style={{ padding: 0, overflow: "hidden" }}>
             <div style={{ background: "#7e3a8e", padding: "16px 22px", color: "#fff", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
@@ -5763,42 +5813,54 @@ function PresentacionView({ filtered, filterTienda }) {
               </div>
               <div style={{ textAlign: "right" }}>
                 <div className="mx-count" data-target={totalE} data-fmt="money" style={{ fontSize: 25, fontWeight: 800, lineHeight: 1.1, fontVariantNumeric: "tabular-nums" }}>{fmtBs(totalE)}</div>
-                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{cli.length} cuentas{D.global.externosDelta != null ? " · " + (D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(1) + "% vs mes ant." : ""}</div>
+                <div style={{ fontSize: 12, opacity: 0.85, marginTop: 2 }}>{cliAll.length} cuentas{D.global.externosDelta != null ? " · " + (D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(1) + "% vs mes ant." : ""}</div>
               </div>
             </div>
 
-            <div style={{ padding: "10px 18px 18px", overflowX: "auto" }}>
-              <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr>
-                    <th style={thCorner}>Cliente</th>
-                    <th style={th}>{mesAct}</th>
-                    <th style={th}>{mesPrev} <span style={{ opacity: .7, fontWeight: 400 }}>día 15</span></th>
-                    <th style={th}>vs mes ant.</th>
-                    <th style={thProm}>Participación</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cli.map(c => { const cc = crecCli(c); return (
-                    <tr key={c.nombre}>
-                      <td style={tdLat}><b>{c.nombre}</b></td>
-                      <td style={tdVal}>{fmtBs(c.monto)}</td>
-                      <td style={{ ...tdVal, color: "var(--muted)" }}>{c.momMonto != null ? fmtBs(c.momMonto) : "—"}</td>
-                      <td style={{ ...tdVal, color: cc.col, fontWeight: 700 }}>{cc.txt}</td>
-                      <td style={tdProm}><div className="ext-bar" style={{ minWidth: 90 }}><div style={{ width: (c.monto / maxE) * 100 + "%" }} /></div></td>
+            <div style={{ display: "flex", gap: 20, padding: "14px 18px 18px", flexWrap: "wrap", alignItems: "flex-start" }}>
+              <div style={{ flex: "1 1 430px", minWidth: 320, overflowX: "auto" }}>
+                <table className="mx-pres-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <thead>
+                    <tr>
+                      <th style={thCorner}>Cliente</th>
+                      <th style={th}>Monto · vs mes ant.</th>
+                      <th style={th}>% Total</th>
+                      <th style={thProm}>Participación</th>
                     </tr>
-                  ); })}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td style={{ ...tdLat, fontWeight: 800 }}>TOTAL</td>
-                    <td style={{ ...tdVal, fontWeight: 800 }}>{fmtBs(totalE)}</td>
-                    <td style={{ ...tdVal, color: "var(--muted)", fontWeight: 700 }}>{D.global.externosPrev != null ? fmtBs(D.global.externosPrev) : "—"}</td>
-                    <td style={{ ...tdVal, color: D.global.externosDelta >= 0 ? "var(--good)" : "var(--bad)", fontWeight: 800 }}>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : "—"}</td>
-                    <td style={tdProm}></td>
-                  </tr>
-                </tfoot>
-              </table>
+                  </thead>
+                  <tbody>
+                    {roho && filaCli(roho)}
+                    {roho && <tr><td colSpan={4} style={{ borderTop: "2px solid #7e3a8e", padding: 0, height: 2 }}></td></tr>}
+                    {otros.map(filaCli)}
+                  </tbody>
+                  <tfoot>
+                    <tr>
+                      <td style={{ ...tdLat, fontWeight: 800 }}>TOTAL</td>
+                      <td style={tdVal}>
+                        <div style={{ fontWeight: 800 }}>{fmtBs(totalE)}</div>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: D.global.externosDelta >= 0 ? "var(--good)" : "var(--bad)" }}>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : ""}</div>
+                      </td>
+                      <td style={{ ...tdVal, fontWeight: 800 }}>100%</td>
+                      <td style={tdProm}></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+
+              <div style={{ flex: "0 1 250px", minWidth: 210 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 6, textAlign: "center" }}>Participación de otros <span style={{ fontWeight: 400 }}>(sin ROHO)</span></div>
+                <div style={{ display: "flex", justifyContent: "center" }}>
+                  <Donut size={170} thickness={24}
+                    data={otros.filter(c => c.monto > 0).map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
+                    centerLabel="Otros" centerValue={fmtBs(totOtros)} />
+                </div>
+                {(tRoho || tOtros) && (
+                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                    {tRoho && statBox("ROHO", tRoho)}
+                    {tOtros && statBox("Otros", tOtros)}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         );
