@@ -4970,7 +4970,8 @@ function TiendasView({ filterTienda, dia }) {
         const proyeccion = ritmoDiario * diasTotales;
         const tEff = { ...t, ritmoDiario, proyeccion };
         return (
-          <section key={t.nombre} className="card tienda-card">
+          <React.Fragment key={t.nombre}>
+          <section className="card tienda-card">
             <header className="card-head tienda-head" style={{ borderTopColor: TIENDA_COLOR[t.nombre] }}>
               <div>
                 <div className="eyebrow">Tienda</div>
@@ -5035,32 +5036,6 @@ function TiendasView({ filterTienda, dia }) {
               </div>
             )}
 
-            {t.nombre === "OTROS" && (() => {
-              const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
-              const otrosCli = [...D.clientes].filter((c) => c.nombre.toUpperCase() !== "ROHO" && c.monto > 0).sort((a, b) => b.monto - a.monto);
-              const totOtros = otrosCli.reduce((s, c) => s + c.monto, 0);
-              if (!otrosCli.length) return null;
-              return (
-                <div className="tienda-vends">
-                  <div className="card-sub" style={{ marginBottom: 8 }}>Participación de externos <span style={{ color: "var(--muted)", fontWeight: 400 }}>(sin ROHO)</span></div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 18, flexWrap: "wrap" }}>
-                    <Donut size={150} thickness={22}
-                      data={otrosCli.map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
-                      centerLabel="Otros" centerValue={"Bs " + fmtMoney(totOtros, { short: true })} />
-                    <ul className="legend tight" style={{ flex: 1, minWidth: 180 }}>
-                      {otrosCli.map((c, i) => (
-                        <li key={c.nombre}>
-                          <span className="dot" style={{ background: COLS[i % 8] }} />
-                          <span className="name">{c.nombre}</span>
-                          <span className="val">{fmtPct(c.monto / totOtros)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              );
-            })()}
-
             {tEff.proyeccion != null && (
               <div className="tienda-proj">
                 <div className="card-sub">Proyección a cierre · {diasRestantes} día{diasRestantes === 1 ? "" : "s"} restante{diasRestantes === 1 ? "" : "s"}</div>
@@ -5086,6 +5061,43 @@ function TiendasView({ filterTienda, dia }) {
               </div>
             )}
           </section>
+
+          {t.nombre === "OTROS" && (() => {
+            const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
+            const otrosCli = [...D.clientes].filter((c) => c.nombre.toUpperCase() !== "ROHO" && c.monto > 0).sort((a, b) => b.monto - a.monto);
+            const totOtros = otrosCli.reduce((s, c) => s + c.monto, 0);
+            if (!otrosCli.length) return null;
+            return (
+              <section className="card tienda-card">
+                <header className="card-head" style={{ borderTopColor: "#7e3a8e" }}>
+                  <div>
+                    <div className="eyebrow">Composición</div>
+                    <h3>Externos <span style={{ color: "var(--muted)", fontWeight: 400, fontSize: 14 }}>(sin ROHO)</span></h3>
+                  </div>
+                  <div className="tienda-headline">
+                    <div className="big">Bs {fmtMoney(totOtros)}</div>
+                    <div className="pace muted">{otrosCli.length} cuentas</div>
+                  </div>
+                </header>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center", padding: "8px 0" }}>
+                  <Donut size={190} thickness={28}
+                    data={otrosCli.map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
+                    centerLabel="Otros" centerValue={"Bs " + fmtMoney(totOtros, { short: true })} />
+                  <ul className="legend" style={{ minWidth: 175, fontSize: 13 }}>
+                    {otrosCli.map((c, i) => (
+                      <li key={c.nombre} style={{ display: "flex", alignItems: "center", gap: 8, padding: "4px 0" }}>
+                        <span style={{ width: 11, height: 11, borderRadius: 3, background: COLS[i % 8], flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{c.nombre}</span>
+                        <span style={{ color: "var(--muted)", fontVariantNumeric: "tabular-nums" }}>Bs {fmtMoney(c.monto)}</span>
+                        <b style={{ color: "var(--ink)", minWidth: 44, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{fmtPct(c.monto / totOtros)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </section>
+            );
+          })()}
+          </React.Fragment>
         );
       })}
     </div>
@@ -5793,8 +5805,7 @@ function PresentacionView({ filtered, filterTienda }) {
               <div style={{ fontWeight: 700 }}>{fmtBs(c.monto)}</div>
               <div style={{ fontSize: 11, fontWeight: 700, color: cc.col, marginTop: 1 }}>{cc.txt}{cc.prev != null && cc.prev > 0 ? <span style={{ color: "var(--muted)", fontWeight: 400 }}> · {fmtBs(cc.prev)} {mesPrev}</span> : null}</div>
             </td>
-            <td style={{ ...tdVal, fontWeight: 700 }}>{fmtPct(c.monto / totalE)}</td>
-            <td style={tdProm}><div className="ext-bar" style={{ minWidth: 90 }}><div style={{ width: (c.monto / maxE) * 100 + "%" }} /></div></td>
+            <td style={{ ...tdProm, fontWeight: 700 }}>{fmtPct(c.monto / totalE)}</td>
           </tr>
         ); };
         const statBox = (lbl, t) => (
@@ -5824,13 +5835,12 @@ function PresentacionView({ filtered, filterTienda }) {
                     <tr>
                       <th style={thCorner}>Cliente</th>
                       <th style={th}>Monto · vs mes ant.</th>
-                      <th style={th}>% Total</th>
-                      <th style={thProm}>Participación</th>
+                      <th style={thProm}>% Total</th>
                     </tr>
                   </thead>
                   <tbody>
                     {roho && filaCli(roho)}
-                    {roho && <tr><td colSpan={4} style={{ borderTop: "2px solid #7e3a8e", padding: 0, height: 2 }}></td></tr>}
+                    {roho && <tr><td colSpan={3} style={{ borderTop: "2px solid #7e3a8e", padding: 0, height: 2 }}></td></tr>}
                     {otros.map(filaCli)}
                   </tbody>
                   <tfoot>
@@ -5840,22 +5850,30 @@ function PresentacionView({ filtered, filterTienda }) {
                         <div style={{ fontWeight: 800 }}>{fmtBs(totalE)}</div>
                         <div style={{ fontSize: 11, fontWeight: 700, color: D.global.externosDelta >= 0 ? "var(--good)" : "var(--bad)" }}>{D.global.externosDelta != null ? ((D.global.externosDelta >= 0 ? "+" : "") + (D.global.externosDelta * 100).toFixed(0) + "%") : ""}</div>
                       </td>
-                      <td style={{ ...tdVal, fontWeight: 800 }}>100%</td>
-                      <td style={tdProm}></td>
+                      <td style={{ ...tdProm, fontWeight: 800 }}>100%</td>
                     </tr>
                   </tfoot>
                 </table>
               </div>
 
-              <div style={{ flex: "0 1 250px", minWidth: 210 }}>
-                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 6, textAlign: "center" }}>Participación de otros <span style={{ fontWeight: 400 }}>(sin ROHO)</span></div>
-                <div style={{ display: "flex", justifyContent: "center" }}>
-                  <Donut size={170} thickness={24}
+              <div style={{ flex: "1 1 330px", minWidth: 280 }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase", letterSpacing: ".05em", fontWeight: 700, marginBottom: 10, textAlign: "center" }}>Participación de otros <span style={{ fontWeight: 400 }}>(sin ROHO)</span></div>
+                <div style={{ display: "flex", alignItems: "center", gap: 20, flexWrap: "wrap", justifyContent: "center" }}>
+                  <Donut size={210} thickness={30}
                     data={otros.filter(c => c.monto > 0).map((c, i) => ({ label: c.nombre, value: c.monto, color: COLS[i % 8] }))}
                     centerLabel="Otros" centerValue={fmtBs(totOtros)} />
+                  <ul className="legend" style={{ minWidth: 160, fontSize: 13 }}>
+                    {otros.filter(c => c.monto > 0).map((c, i) => (
+                      <li key={c.nombre} style={{ display: "flex", alignItems: "center", gap: 8, padding: "3px 0" }}>
+                        <span style={{ width: 11, height: 11, borderRadius: 3, background: COLS[i % 8], flexShrink: 0 }} />
+                        <span style={{ flex: 1, color: "var(--ink-700)" }}>{c.nombre}</span>
+                        <b style={{ color: "var(--ink)", fontVariantNumeric: "tabular-nums" }}>{fmtPct(c.monto / totOtros)}</b>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
                 {(tRoho || tOtros) && (
-                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 16, maxWidth: 360, marginLeft: "auto", marginRight: "auto" }}>
                     {tRoho && statBox("ROHO", tRoho)}
                     {tOtros && statBox("Otros", tOtros)}
                   </div>
