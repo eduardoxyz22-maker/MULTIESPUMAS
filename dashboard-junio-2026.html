@@ -6297,44 +6297,50 @@ function exportarHTML() {
     var out = [];
     var vends = D.vendedores || [], tiendas = D.tiendas || [];
     var ventaGlobal = tiendas.reduce(function (s, t) { return s + (t.monto || 0); }, 0);
-    var metaGlobal = tiendas.reduce(function (s, t) { return s + (t.metaMin || 0); }, 0);
+    var presupGlobal = tiendas.reduce(function (s, t) { return s + (t.presupuesto || 0); }, 0);
 
     if (ventaGlobal === 0) {
       return [{ kind: "yellow", ico: "🕓", html: "<b>Sin datos cargados.</b> Aún no hay ventas registradas para este mes. Sube el Excel del mes con el botón “Subir Excel” para activar las alertas." }];
     }
 
     var dia = periodoDia(), dt = (D.periodo || {}).diasTotales || 30, rest = Math.max(dt - dia, 0);
-    var proyGlobal = dia > 0 ? (ventaGlobal / dia) * dt : ventaGlobal;
+    // Todas las alertas se evalúan por PROYECCIÓN a cierre (ritmo de los primeros `dia` días) vs PRESUPUESTO,
+    // igual que la proyección global → así un vendedor que va en buen ritmo no aparece como crítico a mitad de mes.
+    var proyOf = function (monto) { return dia > 0 ? (monto / dia) * dt : monto; };
+    var paceTxt = rest > 0 ? " (al ritmo de los primeros " + dia + " de " + dt + " días)" : "";
 
-    // críticas
-    if (metaGlobal > 0 && proyGlobal < metaGlobal) {
-      var gap = metaGlobal - proyGlobal;
-      out.push({ kind: "red", ico: "🔴", html: "<b>Proyección global insuficiente:</b> " + fmtBs(proyGlobal) + " proyectado vs meta " + fmtBs(metaGlobal) + " (" + fmtPct(proyGlobal / metaGlobal) + "). Faltan " + fmtBs(gap) + (rest > 0 ? " en " + rest + " día" + (rest === 1 ? "" : "s") : "") + "." });
+    // GLOBAL
+    var proyGlobal = proyOf(ventaGlobal);
+    if (presupGlobal > 0 && proyGlobal < 0.8 * presupGlobal) {
+      out.push({ kind: "red", ico: "🔴", html: "<b>Proyección global insuficiente:</b> a ritmo actual el mes cerraría en " + fmtBs(proyGlobal) + " (" + fmtPct(proyGlobal / presupGlobal) + " del presupuesto " + fmtBs(presupGlobal) + ")." });
+    } else if (presupGlobal > 0 && proyGlobal < presupGlobal) {
+      out.push({ kind: "yellow", ico: "🟡", html: "<b>Proyección global ajustada:</b> proyecta " + fmtBs(proyGlobal) + " (" + fmtPct(proyGlobal / presupGlobal) + " del presupuesto). Falta ritmo para el 100%." });
     }
-    // tiendas bajo 80%
+
+    // TIENDAS por proyección vs presupuesto
     tiendas.forEach(function (t) {
-      if (t.metaMin > 0 && t.pctMin < 0.8) {
-        out.push({ kind: "red", ico: "🔴", html: "<b>" + t.nombre + " bajo el 80% de meta:</b> " + fmtPct(t.pctMin) + " (" + fmtBs(t.monto) + " de " + fmtBs(t.metaMin) + "). Faltan " + fmtBs(t.metaMin - t.monto) + "." });
+      if (!(t.presupuesto > 0)) return;
+      var proy = proyOf(t.monto), pace = proy / t.presupuesto;
+      if (pace < 0.8) {
+        out.push({ kind: "red", ico: "🔴", html: "<b>" + t.nombre + " proyecta no llegar al presupuesto:</b> cerraría en " + fmtBs(proy) + " (" + fmtPct(pace) + " de " + fmtBs(t.presupuesto) + ")" + paceTxt + "." });
+      } else if (pace < 1) {
+        out.push({ kind: "yellow", ico: "🟡", html: "<b>" + t.nombre + " ajustada al presupuesto:</b> proyecta " + fmtPct(pace) + " (" + fmtBs(proy) + " de " + fmtBs(t.presupuesto) + ")." });
       }
     });
-    // vendedores bajo 80%
-    vends.slice().sort(function (a, b) { return a.pctMin - b.pctMin; }).forEach(function (v) {
-      if (v.pctMin < 0.8) {
-        var falta = v.metaMin - v.monto;
-        out.push({ kind: "red", ico: "🔴", html: "<b>" + v.nombre + " — meta en riesgo:</b> " + fmtPct(v.pctMin) + " de cumplimiento (" + fmtBs(v.monto) + " de " + fmtBs(v.metaMin) + "). Necesita " + fmtBs(falta) + (rest > 0 ? " → " + fmtBs(falta / rest) + "/día" : "") + "." });
+
+    // VENDEDORES por proyección vs presupuesto (peor ritmo primero)
+    vends.slice().filter(function (v) { return v.presupuesto > 0; }).sort(function (a, b) {
+      return (proyOf(a.monto) / a.presupuesto) - (proyOf(b.monto) / b.presupuesto);
+    }).forEach(function (v) {
+      var proy = proyOf(v.monto), pace = proy / v.presupuesto;
+      var falta = Math.max(0, v.presupuesto - v.monto);
+      if (pace < 0.8) {
+        out.push({ kind: "red", ico: "🔴", html: "<b>" + v.nombre + " — proyecta no alcanzar presupuesto:</b> cerraría en " + fmtBs(proy) + " (" + fmtPct(pace) + " de " + fmtBs(v.presupuesto) + ")" + (rest > 0 ? ". Necesita " + fmtBs(falta / rest) + "/día los " + rest + " día" + (rest === 1 ? "" : "s") + " restantes" : "") + "." });
+      } else if (pace < 1) {
+        out.push({ kind: "yellow", ico: "🟡", html: "<b>" + v.nombre + " cerca del presupuesto:</b> proyecta " + fmtPct(pace) + " (" + fmtBs(proy) + " de " + fmtBs(v.presupuesto) + ")." });
       }
     });
-    // seguimiento 80–100%
-    vends.forEach(function (v) {
-      if (v.pctMin >= 0.8 && v.pctMin < 1) {
-        out.push({ kind: "yellow", ico: "🟡", html: "<b>" + v.nombre + " cerca de la meta:</b> " + fmtPct(v.pctMin) + " de meta mínima. Le faltan " + fmtBs(v.metaMin - v.monto) + " para asegurarla." });
-      }
-    });
-    tiendas.forEach(function (t) {
-      if (t.metaMin > 0 && t.pctMin >= 0.8 && t.pctMin < 1) {
-        out.push({ kind: "yellow", ico: "🟡", html: "<b>" + t.nombre + " en el límite:</b> " + fmtPct(t.pctMin) + " de meta mínima. Faltan " + fmtBs(t.metaMin - t.monto) + "." });
-      }
-    });
+
     // positivos
     vends.forEach(function (v) {
       if (v.nuevoRecord) out.push({ kind: "green", ico: "🏆", html: "<b>" + v.nombre + " — nuevo récord histórico personal:</b> " + fmtBs(v.monto) + ". ¡Reconocimiento al equipo!" });
@@ -6344,7 +6350,9 @@ function exportarHTML() {
     var bestConv = vends.slice().filter(function (v) { return v.conversion != null; }).sort(function (a, b) { return b.conversion - a.conversion; })[0];
     if (bestConv) out.push({ kind: "green", ico: "🎯", html: "<b>" + bestConv.nombre + " — mejor conversión del equipo:</b> " + fmtPct(bestConv.conversion, 2) + " · " + fmtBs(bestConv.ingresoLead) + " por lead." });
     tiendas.forEach(function (t) {
-      if (t.metaMin > 0 && t.pctMin >= 1) out.push({ kind: "green", ico: "📈", html: "<b>" + t.nombre + " supera la meta:</b> " + fmtPct(t.pctMin) + " de meta mínima (" + fmtBs(t.monto) + ")." });
+      if (!(t.presupuesto > 0)) return;
+      var proy = proyOf(t.monto), pace = proy / t.presupuesto;
+      if (pace >= 1) out.push({ kind: "green", ico: "📈", html: "<b>" + t.nombre + " proyecta superar el presupuesto:</b> " + fmtPct(pace) + " (" + fmtBs(proy) + " de " + fmtBs(t.presupuesto) + ")." });
     });
     return out;
   }
