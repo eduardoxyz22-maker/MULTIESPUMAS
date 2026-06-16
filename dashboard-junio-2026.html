@@ -3084,7 +3084,7 @@ function TiendasView(_ref2) {
       className: "progress-label"
     }, /*#__PURE__*/React.createElement("span", null, "Avance vs Meta m\xEDn"), /*#__PURE__*/React.createElement("span", {
       className: "muted"
-    }, "Bs ", fmtMoney(t.monto), " / Bs ", fmtMoney(t.metaMin))), /*#__PURE__*/React.createElement(MetaBar, {
+    }, "Bs ", fmtMoney(t.monto), " / Bs ", fmtMoney(t.metaMin), " \xB7 ", fmtPct(t.pctMin))), /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
       meta: t.metaMin,
       presupuesto: t.presupuesto,
@@ -5092,7 +5092,7 @@ function TiendasView({ filterTienda, dia }) {
             <div className="tienda-progress">
               <div className="progress-label">
                 <span>Avance vs Meta mín</span>
-                <span className="muted">Bs {fmtMoney(t.monto)} / Bs {fmtMoney(t.metaMin)}</span>
+                <span className="muted">Bs {fmtMoney(t.monto)} / Bs {fmtMoney(t.metaMin)} · {fmtPct(t.pctMin)}</span>
               </div>
               <MetaBar value={t.monto} meta={t.metaMin} presupuesto={t.presupuesto} color={TIENDA_COLOR[t.nombre]} height={18} format={(n) => "Bs " + fmtMoney(n)} />
               <div className="progress-label">
