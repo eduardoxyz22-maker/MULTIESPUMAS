@@ -228,7 +228,13 @@ PRODUCTS.forEach(p=>{
 [selA,selB].forEach(sel=>{
   Object.entries(groups).forEach(([gn,prods])=>{
     const og=document.createElement('optgroup');og.label=gn;
-    prods.forEach(p=>{const o=document.createElement('option');o.value=p.id;o.textContent=p.name+(p.isSuena?'':' ('+p.brand+')');og.appendChild(o);});
+    prods.forEach(p=>{
+      const o=document.createElement('option');o.value=p.id;
+      const pocket=p.features.includes('Pocket PHS')?' · Pocket':'';
+      const brand=p.isSuena?'':' ('+p.brand+')';
+      o.textContent=p.name+pocket+brand;
+      og.appendChild(o);
+    });
     sel.appendChild(og);
   });
 });
