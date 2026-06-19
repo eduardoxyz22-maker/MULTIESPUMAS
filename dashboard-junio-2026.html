@@ -5275,6 +5275,16 @@ function KPIStrip(_ref2) {
     }));
   }
   var scopeLabel = filterTienda === "Todas" ? "Global" : filterTienda === "OTROS" ? "Externos" : filterTienda === "SUEÑA" ? "Sueña" : filterTienda === "HEAVEN" ? "Heaven" : "Roho";
+  // MoM de conversión (vs mismo período del mes anterior, según los vendedores del scope)
+  var _sv = g.vendedores || [];
+  var _prevLeads = _sv.reduce(function (s, v) {
+    return s + (v.momLeads || 0);
+  }, 0);
+  var _prevVentas = _sv.reduce(function (s, v) {
+    return s + (v.momVentas || 0);
+  }, 0);
+  var _prevConv = _prevLeads > 0 ? _prevVentas / _prevLeads : null;
+  var convMoM = _prevConv && g.conversion != null ? (g.conversion - _prevConv) / _prevConv : null;
   var items = [{
     eyebrow: "Venta total · " + scopeLabel,
     value: fmtBs(g.ventaTotal),
@@ -5300,8 +5310,21 @@ function KPIStrip(_ref2) {
     sub: g.productos ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, fmtInt(g.productos)), " productos vendidos") : /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, g.vendedores.length), " vendedor", g.vendedores.length === 1 ? "" : "es", " en scope")
   }, {
     eyebrow: "Conversión",
-    value: g.conversion != null ? fmtPct(g.conversion, 2) : "—",
-    sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, fmtInt(g.ventasConcretadas)), " ventas \xB7 ", /*#__PURE__*/React.createElement("b", null, fmtInt(g.leads)), " leads"),
+    value: g.leads ? /*#__PURE__*/React.createElement("span", null, fmtInt(g.leads), " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontSize: 15,
+        color: "var(--muted)",
+        fontWeight: 400
+      }
+    }, "leads")) : "—",
+    sub: g.conversion != null ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, fmtPct(g.conversion, 2)), " conversi\xF3n", convMoM != null ? /*#__PURE__*/React.createElement("span", {
+      style: {
+        fontWeight: 700,
+        color: convMoM >= 0 ? "var(--good)" : "var(--bad)"
+      }
+    }, " ", fmtPctSign(convMoM), " vs mes ant.") : null, " \xB7 ", /*#__PURE__*/React.createElement("b", null, fmtInt(g.ventasConcretadas)), " ventas") : /*#__PURE__*/React.createElement("span", {
+      className: "muted"
+    }, "Sin leads en scope"),
     mini: g.conversion != null ? /*#__PURE__*/React.createElement("span", {
       className: "mini-bar"
     }, /*#__PURE__*/React.createElement("span", {

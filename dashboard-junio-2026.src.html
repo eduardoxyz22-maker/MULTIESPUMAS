@@ -4549,6 +4549,12 @@ function KPIStrip({ derived, filterTienda, view }) {
     filterTienda === "OTROS" ? "Externos" :
     filterTienda === "SUEÑA" ? "Sueña" :
     filterTienda === "HEAVEN" ? "Heaven" : "Roho";
+  // MoM de conversión (vs mismo período del mes anterior, según los vendedores del scope)
+  const _sv = g.vendedores || [];
+  const _prevLeads = _sv.reduce((s, v) => s + (v.momLeads || 0), 0);
+  const _prevVentas = _sv.reduce((s, v) => s + (v.momVentas || 0), 0);
+  const _prevConv = _prevLeads > 0 ? _prevVentas / _prevLeads : null;
+  const convMoM = (_prevConv && g.conversion != null) ? (g.conversion - _prevConv) / _prevConv : null;
   const items = [
     {
       eyebrow: "Venta total · " + scopeLabel,
@@ -4574,8 +4580,10 @@ function KPIStrip({ derived, filterTienda, view }) {
     },
     {
       eyebrow: "Conversión",
-      value: g.conversion != null ? fmtPct(g.conversion, 2) : "—",
-      sub: <span><b>{fmtInt(g.ventasConcretadas)}</b> ventas · <b>{fmtInt(g.leads)}</b> leads</span>,
+      value: g.leads ? <span>{fmtInt(g.leads)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>leads</span></span> : "—",
+      sub: g.conversion != null
+        ? <span><b>{fmtPct(g.conversion, 2)}</b> conversión{convMoM != null ? <span style={{ fontWeight: 700, color: convMoM >= 0 ? "var(--good)" : "var(--bad)" }}> {fmtPctSign(convMoM)} vs mes ant.</span> : null} · <b>{fmtInt(g.ventasConcretadas)}</b> ventas</span>
+        : <span className="muted">Sin leads en scope</span>,
       mini: g.conversion != null
         ? <span className="mini-bar"><span style={{ width: Math.min(g.conversion / 0.2, 1) * 100 + "%" }} /></span>
         : null,
