@@ -677,7 +677,8 @@ html, body {
 .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 .tienda-money { display: flex; flex-direction: column; gap: 2px; }
 .tienda-money .big-num { font-size: 22px; line-height: 1; }
-.tienda-money .vs { font-size: 11px; color: var(--muted); }
+.tienda-money .vs { font-size: 12.5px; color: var(--ink-700); line-height: 1.4; }
+.tienda-money .vs b { color: var(--ink); font-weight: 700; }
 .tienda-bar { display: flex; flex-direction: column; gap: 6px; }
 .tienda-pcts { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .tienda-pcts .pct { font-weight: 600; color: var(--ink); }
@@ -4657,7 +4658,8 @@ function ResumenView({ filtered, derived, filterTienda }) {
               </div>
               <div className="tienda-money">
                 <span className="big-num">{fmtBs(t.monto, { short: true })}</span>
-                <span className="vs">vs Bs {fmtMoney(t.presupuesto, { short: true })} presup · {fmtMoney(t.metaMin, { short: true })} meta</span>
+                <span className="vs">Presup. <b>Bs {fmtMoney(t.presupuesto)}</b></span>
+                <span className="vs">Meta mín <b>Bs {fmtMoney(t.metaMin)}</b></span>
               </div>
               <div className="tienda-bar">
                 <MetaBar

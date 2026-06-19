@@ -677,7 +677,8 @@ html, body {
 .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 .tienda-money { display: flex; flex-direction: column; gap: 2px; }
 .tienda-money .big-num { font-size: 22px; line-height: 1; }
-.tienda-money .vs { font-size: 11px; color: var(--muted); }
+.tienda-money .vs { font-size: 12.5px; color: var(--ink-700); line-height: 1.4; }
+.tienda-money .vs b { color: var(--ink); font-weight: 700; }
 .tienda-bar { display: flex; flex-direction: column; gap: 6px; }
 .tienda-pcts { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .tienda-pcts .pct { font-weight: 600; color: var(--ink); }
@@ -5437,11 +5438,9 @@ function ResumenView(_ref3) {
       "short": true
     })), /*#__PURE__*/React.createElement("span", {
       className: "vs"
-    }, "vs Bs ", fmtMoney(t.presupuesto, {
-      "short": true
-    }), " presup \xB7 ", fmtMoney(t.metaMin, {
-      "short": true
-    }), " meta")), /*#__PURE__*/React.createElement("div", {
+    }, "Presup. ", /*#__PURE__*/React.createElement("b", null, "Bs ", fmtMoney(t.presupuesto))), /*#__PURE__*/React.createElement("span", {
+      className: "vs"
+    }, "Meta m\xEDn ", /*#__PURE__*/React.createElement("b", null, "Bs ", fmtMoney(t.metaMin)))), /*#__PURE__*/React.createElement("div", {
       className: "tienda-bar"
     }, /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
