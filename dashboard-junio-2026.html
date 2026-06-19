@@ -888,6 +888,9 @@ table.matrix tr.is-sel td:first-child { box-shadow: inset 3px 0 0 var(--ink); }
 .t-vend-row .mom { font-variant-numeric: tabular-nums; text-align: right; font-size: 11.5px; font-weight: 600; }
 .t-vend-row .mom.good { color: var(--good); }
 .t-vend-row .mom.bad { color: var(--bad); }
+.t-vend-row.t-vend-head { padding: 0 0 4px; border-bottom: 1px solid var(--hairline); margin-bottom: 2px; }
+.t-vend-row.t-vend-head span { font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--muted); font-weight: 600; }
+.t-vend-row.t-vend-head .pct, .t-vend-row.t-vend-head .mom { text-align: right; }
 .t-vend-row .bar { height: 5px; background: var(--rail); border-radius: 999px; overflow: hidden; }
 .t-vend-row .bar > div { height: 100%; transition: width 0.6s cubic-bezier(.2,.7,.3,1); }
 
@@ -6280,7 +6283,17 @@ function TiendasView(_ref2) {
       style: {
         marginBottom: 8
       }
-    }, "Equipo (", vendedores.length, ")"), vendedores.map(function (v) {
+    }, "Equipo (", vendedores.length, ")"), /*#__PURE__*/React.createElement("div", {
+      className: "t-vend-row t-vend-head"
+    }, /*#__PURE__*/React.createElement("span", null), /*#__PURE__*/React.createElement("span", {
+      className: "name"
+    }, "Vendedor"), /*#__PURE__*/React.createElement("span", {
+      className: "val"
+    }, "Monto"), /*#__PURE__*/React.createElement("span", {
+      className: "pct"
+    }, "% meta m\xEDn"), /*#__PURE__*/React.createElement("span", {
+      className: "mom"
+    }, "vs mes ant."), /*#__PURE__*/React.createElement("span", null)), vendedores.map(function (v) {
       return /*#__PURE__*/React.createElement("div", {
         key: v.nombre,
         className: "t-vend-row"
