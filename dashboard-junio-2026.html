@@ -5272,7 +5272,11 @@ function KPIStrip(_ref2) {
   var items = [{
     eyebrow: "Venta total · " + scopeLabel,
     value: fmtBs(g.ventaTotal),
-    sub: g.metaMin > 0 ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, fmtPct(g.pctMeta)), " de meta m\xEDn", g.presupuesto ? /*#__PURE__*/React.createElement("span", null, " \xB7 ", /*#__PURE__*/React.createElement("b", null, fmtPct(g.pctPres)), " de presupuesto") : null) : /*#__PURE__*/React.createElement("span", {
+    sub: g.metaMin > 0 ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", null, fmtPct(g.pctMeta)), " de meta m\xEDn ", /*#__PURE__*/React.createElement("span", {
+      className: "muted"
+    }, "\xB7 Bs ", fmtMoney(g.metaMin)), g.presupuesto ? /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("br", null), /*#__PURE__*/React.createElement("b", null, fmtPct(g.pctPres)), " de presupuesto ", /*#__PURE__*/React.createElement("span", {
+      className: "muted"
+    }, "\xB7 Bs ", fmtMoney(g.presupuesto))) : null) : /*#__PURE__*/React.createElement("span", {
       className: "muted"
     }, "Sin meta definida"),
     bar: g.presupuesto > 0 ? /*#__PURE__*/React.createElement(PaceBar, {

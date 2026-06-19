@@ -4548,7 +4548,7 @@ function KPIStrip({ derived, filterTienda, view }) {
       eyebrow: "Venta total · " + scopeLabel,
       value: fmtBs(g.ventaTotal),
       sub: g.metaMin > 0
-        ? <span><b>{fmtPct(g.pctMeta)}</b> de meta mín{g.presupuesto ? <span> · <b>{fmtPct(g.pctPres)}</b> de presupuesto</span> : null}</span>
+        ? <span><b>{fmtPct(g.pctMeta)}</b> de meta mín <span className="muted">· Bs {fmtMoney(g.metaMin)}</span>{g.presupuesto ? <span><br /><b>{fmtPct(g.pctPres)}</b> de presupuesto <span className="muted">· Bs {fmtMoney(g.presupuesto)}</span></span> : null}</span>
         : <span className="muted">Sin meta definida</span>,
       bar: g.presupuesto > 0 ? <PaceBar pct={g.pctPres} /> : null,
     },
