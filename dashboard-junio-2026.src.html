@@ -4688,10 +4688,17 @@ function ResumenView({ filtered, derived, filterTienda }) {
       {/* Ranking */}
       <section className="card span-7">
         <header className="card-head">
-          <h3>Ranking de vendedores</h3>
-          <span className="card-sub">{filtered.length} resultado{filtered.length === 1 ? "" : "s"}</span>
+          <h3>{(filterTienda === "OTROS" || filterTienda === "ROHO") ? "Ranking de clientes externos" : "Ranking de vendedores"}</h3>
+          {(() => {
+            const n = (filterTienda === "OTROS" || filterTienda === "ROHO")
+              ? (D.clientes || []).filter((c) => c.monto > 0 && (filterTienda === "ROHO" ? c.nombre.toUpperCase() === "ROHO" : c.nombre.toUpperCase() !== "ROHO")).length
+              : filtered.length;
+            return <span className="card-sub">{n} resultado{n === 1 ? "" : "s"}</span>;
+          })()}
         </header>
-        {filtered.length === 0 ? (
+        {(filterTienda === "OTROS" || filterTienda === "ROHO") ? (
+          <ExternosRanking filterTienda={filterTienda} derived={derived} />
+        ) : filtered.length === 0 ? (
           <div className="empty">No hay vendedores en este filtro.</div>
         ) : (
           <RankingTable rows={filtered} dia={derived.dia} diasTotales={derived.diasTotales} />
@@ -4743,6 +4750,69 @@ function DonutBlock({ filtered }) {
         ))}
       </ul>
     </div>
+  );
+}
+
+function ExternosRanking({ filterTienda, derived }) {
+  const COLS = ["#7e3a8e","#3a6db0","#b07a1f","#4f7a3f","#a13b2b","#2f5a72","#8a4a2b","#6b6b6b"];
+  const all = (D.clientes || []).filter((c) => c.monto > 0);
+  const rows = (filterTienda === "ROHO"
+    ? all.filter((c) => c.nombre.toUpperCase() === "ROHO")
+    : all.filter((c) => c.nombre.toUpperCase() !== "ROHO")
+  ).sort((a, b) => b.monto - a.monto);
+  const total = rows.reduce((s, c) => s + c.monto, 0) || 1;
+  const max = Math.max(...rows.map((c) => c.monto), 1);
+  const dia = derived.dia, dt = derived.diasTotales;
+  const tienda = (D.tiendas || []).find((t) => t.nombre === (filterTienda === "ROHO" ? "ROHO" : "OTROS"));
+  const mom = (c) => {
+    if (c.momMonto != null && c.momMonto > 0) return { txt: fmtPctSign((c.monto - c.momMonto) / c.momMonto), cls: c.monto >= c.momMonto ? "good" : "bad" };
+    if (c.monto > 0) return { txt: "Nuevo", cls: "good" };
+    return { txt: "—", cls: "" };
+  };
+  if (rows.length === 0) return <div className="empty">Sin clientes en este filtro.</div>;
+  return (
+    <>
+      <table className="ranking">
+        <thead>
+          <tr>
+            <th style={{ width: 28 }}>#</th>
+            <th>Cliente</th>
+            <th className="num">Monto</th>
+            <th className="num">vs mes ant.</th>
+            <th className="num">% del total</th>
+            <th className="num">Proyección</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((c, i) => {
+            const proy = dia > 0 ? (c.monto / dia) * dt : c.monto;
+            const m = mom(c);
+            const col = COLS[i % COLS.length];
+            return (
+              <tr key={c.nombre}>
+                <td className="rank">{i + 1}</td>
+                <td className="vend-cell"><span className="swatch" style={{ background: col }} /><span>{c.nombre}</span></td>
+                <td className="num">
+                  <div className="num-with-bar">
+                    <span>Bs {fmtMoney(c.monto)}</span>
+                    <div className="row-bar"><div style={{ width: (c.monto / max) * 100 + "%", background: col }} /></div>
+                  </div>
+                </td>
+                <td className={"num " + m.cls}>{m.txt}</td>
+                <td className="num">{fmtPct(c.monto / total)}</td>
+                <td className="num">Bs {fmtMoney(proy, { short: true })}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      {tienda && tienda.presupuesto > 0 && (
+        <footer className="card-foot">
+          <span>Total {filterTienda === "ROHO" ? "ROHO" : "externos"}:&nbsp;<b>Bs {fmtMoney(total)}</b></span>
+          <span>· Cumplimiento:&nbsp;<b>{fmtPct(tienda.monto / tienda.presupuesto)}</b> presup · <b>{fmtPct(tienda.monto / tienda.metaMin)}</b> meta mín</span>
+        </footer>
+      )}
+    </>
   );
 }
 

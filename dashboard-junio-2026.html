@@ -5449,9 +5449,17 @@ function ResumenView(_ref3) {
     className: "card span-7"
   }, /*#__PURE__*/React.createElement("header", {
     className: "card-head"
-  }, /*#__PURE__*/React.createElement("h3", null, "Ranking de vendedores"), /*#__PURE__*/React.createElement("span", {
-    className: "card-sub"
-  }, filtered.length, " resultado", filtered.length === 1 ? "" : "s")), filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("h3", null, filterTienda === "OTROS" || filterTienda === "ROHO" ? "Ranking de clientes externos" : "Ranking de vendedores"), function () {
+    var n = filterTienda === "OTROS" || filterTienda === "ROHO" ? (D.clientes || []).filter(function (c) {
+      return c.monto > 0 && (filterTienda === "ROHO" ? c.nombre.toUpperCase() === "ROHO" : c.nombre.toUpperCase() !== "ROHO");
+    }).length : filtered.length;
+    return /*#__PURE__*/React.createElement("span", {
+      className: "card-sub"
+    }, n, " resultado", n === 1 ? "" : "s");
+  }()), filterTienda === "OTROS" || filterTienda === "ROHO" ? /*#__PURE__*/React.createElement(ExternosRanking, {
+    filterTienda: filterTienda,
+    derived: derived
+  }) : filtered.length === 0 ? /*#__PURE__*/React.createElement("div", {
     className: "empty"
   }, "No hay vendedores en este filtro.") : /*#__PURE__*/React.createElement(RankingTable, {
     rows: filtered,
@@ -5541,10 +5549,105 @@ function DonutBlock(_ref4) {
     }, fmtPct(d.value / totVendedores)));
   })));
 }
-function RankingTable(_ref5) {
-  var rows = _ref5.rows,
-    dia = _ref5.dia,
-    diasTotales = _ref5.diasTotales;
+function ExternosRanking(_ref5) {
+  var filterTienda = _ref5.filterTienda,
+    derived = _ref5.derived;
+  var COLS = ["#7e3a8e", "#3a6db0", "#b07a1f", "#4f7a3f", "#a13b2b", "#2f5a72", "#8a4a2b", "#6b6b6b"];
+  var all = (D.clientes || []).filter(function (c) {
+    return c.monto > 0;
+  });
+  var rows = (filterTienda === "ROHO" ? all.filter(function (c) {
+    return c.nombre.toUpperCase() === "ROHO";
+  }) : all.filter(function (c) {
+    return c.nombre.toUpperCase() !== "ROHO";
+  })).sort(function (a, b) {
+    return b.monto - a.monto;
+  });
+  var total = rows.reduce(function (s, c) {
+    return s + c.monto;
+  }, 0) || 1;
+  var max = Math.max.apply(Math, _toConsumableArray(rows.map(function (c) {
+    return c.monto;
+  })).concat([1]));
+  var dia = derived.dia,
+    dt = derived.diasTotales;
+  var tienda = (D.tiendas || []).find(function (t) {
+    return t.nombre === (filterTienda === "ROHO" ? "ROHO" : "OTROS");
+  });
+  var mom = function mom(c) {
+    if (c.momMonto != null && c.momMonto > 0) return {
+      txt: fmtPctSign((c.monto - c.momMonto) / c.momMonto),
+      cls: c.monto >= c.momMonto ? "good" : "bad"
+    };
+    if (c.monto > 0) return {
+      txt: "Nuevo",
+      cls: "good"
+    };
+    return {
+      txt: "—",
+      cls: ""
+    };
+  };
+  if (rows.length === 0) return /*#__PURE__*/React.createElement("div", {
+    className: "empty"
+  }, "Sin clientes en este filtro.");
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("table", {
+    className: "ranking"
+  }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", {
+    style: {
+      width: 28
+    }
+  }, "#"), /*#__PURE__*/React.createElement("th", null, "Cliente"), /*#__PURE__*/React.createElement("th", {
+    className: "num"
+  }, "Monto"), /*#__PURE__*/React.createElement("th", {
+    className: "num"
+  }, "vs mes ant."), /*#__PURE__*/React.createElement("th", {
+    className: "num"
+  }, "% del total"), /*#__PURE__*/React.createElement("th", {
+    className: "num"
+  }, "Proyecci\xF3n"))), /*#__PURE__*/React.createElement("tbody", null, rows.map(function (c, i) {
+    var proy = dia > 0 ? c.monto / dia * dt : c.monto;
+    var m = mom(c);
+    var col = COLS[i % COLS.length];
+    return /*#__PURE__*/React.createElement("tr", {
+      key: c.nombre
+    }, /*#__PURE__*/React.createElement("td", {
+      className: "rank"
+    }, i + 1), /*#__PURE__*/React.createElement("td", {
+      className: "vend-cell"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "swatch",
+      style: {
+        background: col
+      }
+    }), /*#__PURE__*/React.createElement("span", null, c.nombre)), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "num-with-bar"
+    }, /*#__PURE__*/React.createElement("span", null, "Bs ", fmtMoney(c.monto)), /*#__PURE__*/React.createElement("div", {
+      className: "row-bar"
+    }, /*#__PURE__*/React.createElement("div", {
+      style: {
+        width: c.monto / max * 100 + "%",
+        background: col
+      }
+    })))), /*#__PURE__*/React.createElement("td", {
+      className: "num " + m.cls
+    }, m.txt), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, fmtPct(c.monto / total)), /*#__PURE__*/React.createElement("td", {
+      className: "num"
+    }, "Bs ", fmtMoney(proy, {
+      "short": true
+    })));
+  }))), tienda && tienda.presupuesto > 0 && /*#__PURE__*/React.createElement("footer", {
+    className: "card-foot"
+  }, /*#__PURE__*/React.createElement("span", null, "Total ", filterTienda === "ROHO" ? "ROHO" : "externos", ":\xA0", /*#__PURE__*/React.createElement("b", null, "Bs ", fmtMoney(total))), /*#__PURE__*/React.createElement("span", null, "\xB7 Cumplimiento:\xA0", /*#__PURE__*/React.createElement("b", null, fmtPct(tienda.monto / tienda.presupuesto)), " presup \xB7 ", /*#__PURE__*/React.createElement("b", null, fmtPct(tienda.monto / tienda.metaMin)), " meta m\xEDn")));
+}
+function RankingTable(_ref6) {
+  var rows = _ref6.rows,
+    dia = _ref6.dia,
+    diasTotales = _ref6.diasTotales;
   var max = Math.max.apply(Math, _toConsumableArray(D.vendedores.map(function (v) {
     return v.monto;
   })));
@@ -5610,9 +5713,9 @@ function RankingTable(_ref5) {
     })));
   })));
 }
-function ProyeccionList(_ref6) {
-  var derived = _ref6.derived,
-    filterTienda = _ref6.filterTienda;
+function ProyeccionList(_ref7) {
+  var derived = _ref7.derived,
+    filterTienda = _ref7.filterTienda;
   var tiendas = derived.tiendas;
   var rows = tiendas.map(function (t) {
     var proy = derived.dia > 0 ? t.monto / derived.dia * derived.diasTotales : t.monto;
@@ -5672,9 +5775,9 @@ function ProyeccionList(_ref6) {
     }, fmtPct(p.proy / p.meta), /*#__PURE__*/React.createElement("small", null, " m\xEDn")) : null));
   }));
 }
-function CommissionGrid(_ref7) {
-  var tiendas = _ref7.tiendas,
-    vendedores = _ref7.vendedores;
+function CommissionGrid(_ref8) {
+  var tiendas = _ref8.tiendas,
+    vendedores = _ref8.vendedores;
   var conComm = tiendas.filter(function (t) {
     return t.comisiones > 0;
   });
