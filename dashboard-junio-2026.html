@@ -677,8 +677,9 @@ html, body {
 .swatch { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
 .tienda-money { display: flex; flex-direction: column; gap: 2px; }
 .tienda-money .big-num { font-size: 22px; line-height: 1; }
-.tienda-money .vs { font-size: 12.5px; color: var(--ink-700); line-height: 1.4; }
-.tienda-money .vs b { color: var(--ink); font-weight: 700; }
+.tienda-money .mny-row { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 12px; font-variant-numeric: tabular-nums; line-height: 1.5; }
+.tienda-money .mny-row .lbl { color: var(--muted); font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+.tienda-money .mny-row .amt { color: var(--ink-700); font-weight: 600; }
 .tienda-bar { display: flex; flex-direction: column; gap: 6px; }
 .tienda-pcts { display: flex; align-items: center; gap: 6px; font-size: 12px; }
 .tienda-pcts .pct { font-weight: 600; color: var(--ink); }
@@ -5437,10 +5438,18 @@ function ResumenView(_ref3) {
     }, fmtBs(t.monto, {
       "short": true
     })), /*#__PURE__*/React.createElement("span", {
-      className: "vs"
-    }, "Presup. ", /*#__PURE__*/React.createElement("b", null, "Bs ", fmtMoney(t.presupuesto))), /*#__PURE__*/React.createElement("span", {
-      className: "vs"
-    }, "Meta m\xEDn ", /*#__PURE__*/React.createElement("b", null, "Bs ", fmtMoney(t.metaMin)))), /*#__PURE__*/React.createElement("div", {
+      className: "mny-row"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "lbl"
+    }, "Presup."), /*#__PURE__*/React.createElement("span", {
+      className: "amt"
+    }, "Bs ", fmtMoney(t.presupuesto))), /*#__PURE__*/React.createElement("span", {
+      className: "mny-row"
+    }, /*#__PURE__*/React.createElement("span", {
+      className: "lbl"
+    }, "Meta m\xEDn"), /*#__PURE__*/React.createElement("span", {
+      className: "amt"
+    }, "Bs ", fmtMoney(t.metaMin)))), /*#__PURE__*/React.createElement("div", {
       className: "tienda-bar"
     }, /*#__PURE__*/React.createElement(MetaBar, {
       value: t.monto,
