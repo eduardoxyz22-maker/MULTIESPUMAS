@@ -4290,7 +4290,101 @@ function ViewResumen() {
     className: "t"
   }, "La carga manual convierte ", manualCh.conv, "% vs ", autoCh.conv, "% del bot"), /*#__PURE__*/React.createElement("div", {
     className: "d"
-  }, "Ticket promedio manual ", /*#__PURE__*/React.createElement("b", null, fmtMoney(manualCh.ticket)), " contra ", fmtMoney(autoCh.ticket), " del autom\xE1tico. El ", /*#__PURE__*/React.createElement("b", null, D.origin.autoPct, "%"), " de los leads llegan por bot pero solo aportan ", /*#__PURE__*/React.createElement("b", null, autoCh.cierres, " cierres"), "; ", /*#__PURE__*/React.createElement("b", null, manualCh.cierres, " de ", G.cierres, " cierres"), " vinieron de carga manual. Priorizar la carga manual tiene el mayor retorno por lead.")))), /*#__PURE__*/React.createElement(WspCard, null));
+  }, "Ticket promedio manual ", /*#__PURE__*/React.createElement("b", null, fmtMoney(manualCh.ticket)), " contra ", fmtMoney(autoCh.ticket), " del autom\xE1tico. El ", /*#__PURE__*/React.createElement("b", null, D.origin.autoPct, "%"), " de los leads llegan por bot pero solo aportan ", /*#__PURE__*/React.createElement("b", null, autoCh.cierres, " cierres"), "; ", /*#__PURE__*/React.createElement("b", null, manualCh.cierres, " de ", G.cierres, " cierres"), " vinieron de carga manual. Priorizar la carga manual tiene el mayor retorno por lead.")))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
+    eb: "Origen de carga",
+    h3: "Manual vs Autom\xE1tico — global",
+    p: "Cu\xE1ntos leads carg\xF3 manualmente una vendedora y cu\xE1ntos entraron por el bot. La carga manual convierte mucho mejor."
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      borderRadius: 12,
+      overflow: "hidden",
+      height: 50,
+      fontWeight: 800,
+      fontSize: ".9rem",
+      color: "#fff"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: D.origin.manual,
+      minWidth: 0,
+      background: "var(--green)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 7,
+      whiteSpace: "nowrap",
+      lineHeight: 1,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,.32), inset 0 -6px 9px rgba(0,0,0,.13)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "1.02rem",
+      lineHeight: 1
+    }
+  }, "✍"), D.origin.manualPct, "%"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      flex: D.origin.auto,
+      minWidth: 0,
+      background: "#646E7B",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 7,
+      whiteSpace: "nowrap",
+      lineHeight: 1,
+      boxShadow: "inset 0 1px 0 rgba(255,255,255,.18), inset 0 -6px 9px rgba(0,0,0,.15)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      fontSize: "1.02rem",
+      lineHeight: 1
+    }
+  }, "⚙"), D.origin.autoPct, "%")), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 22,
+      marginTop: 12,
+      fontSize: ".76rem",
+      color: "var(--muted)"
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 7
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 11,
+      height: 11,
+      borderRadius: 3,
+      background: "var(--green)"
+    }
+  }), /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--text)"
+    }
+  }, D.origin.manual.toLocaleString("en-US")), " manual (vendedora)"), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 7
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 11,
+      height: 11,
+      borderRadius: 3,
+      background: "#646E7B"
+    }
+  }), /*#__PURE__*/React.createElement("b", {
+    style: {
+      color: "var(--text)"
+    }
+  }, D.origin.auto.toLocaleString("en-US")), " autom\xE1tico (bot)")))), /*#__PURE__*/React.createElement(WspCard, null));
 }
 window.ViewResumen = ViewResumen;
 
