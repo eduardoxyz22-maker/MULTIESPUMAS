@@ -4568,10 +4568,12 @@ function KPIStrip({ derived, filterTienda, view }) {
       bar: g.presupuesto > 0 ? <PaceBar pct={g.pctPres} /> : null,
     },
     {
-      eyebrow: "Falta para presupuesto",
-      value: fmtBs(Math.max(0, g.presupuesto - g.ventaTotal)),
+      eyebrow: "Presupuesto",
+      value: g.presupuesto > 0
+        ? <span>{fmtBs(g.ventaTotal)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>de {fmtBs(g.presupuesto)}</span></span>
+        : fmtBs(g.ventaTotal),
       sub: g.presupuesto > 0
-        ? <span>De Bs {fmtMoney(g.presupuesto)} · <b>{g.diasRestantes} día{g.diasRestantes === 1 ? "" : "s"}</b></span>
+        ? <span>Faltan <b>Bs {fmtMoney(Math.max(0, g.presupuesto - g.ventaTotal))}</b> · <b>{g.diasRestantes} día{g.diasRestantes === 1 ? "" : "s"}</b></span>
         : <span className="muted">Sin presupuesto definido</span>,
     },
     {
@@ -6576,7 +6578,7 @@ function exportarHTML() {
     "Conversión": "Ventas cerradas ÷ leads recibidos × 100.",
     "Ticket promedio": "Ingreso total ÷ número de productos/transacciones.",
     "Comisiones": "Comisiones de vendedores + bonos Titanio del período.",
-    "Falta para presupuesto": "Diferencia entre el presupuesto y la venta acumulada actual."
+    "Presupuesto": "Venta acumulada vs el presupuesto del mes (la barra muestra el avance)."
   };
   function scopeMontos(scopeLabel) {
     var map = { "Global": null, "Sueña": "sueña", "Heaven": "heaven", "Externos": "otros", "Roho": "roho" };
@@ -6614,8 +6616,8 @@ function exportarHTML() {
         }
       }
 
-      // barra de progreso en Falta para presupuesto
-      if (eyebrow.indexOf("Falta para presupuesto") === 0 && !kpi.querySelector(".mx-faltabar")) {
+      // barra de progreso en Presupuesto
+      if (eyebrow.indexOf("Presupuesto") === 0 && !kpi.querySelector(".mx-faltabar")) {
         var scope2 = "Global";
         // intentar inferir scope desde el KPI de venta total
         var vt = document.querySelector(".kpi-strip .kpi .kpi-eyebrow");
