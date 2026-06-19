@@ -4582,7 +4582,7 @@ function KPIStrip({ derived, filterTienda, view }) {
     {
       eyebrow: "Conversión",
       value: g.leads
-        ? <span>{fmtInt(g.leads)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>leads</span>{leadsMoM != null ? <span style={{ fontSize: 13, fontWeight: 700, marginLeft: 8, color: leadsMoM >= 0 ? "var(--good)" : "var(--bad)" }}>{leadsMoM >= 0 ? "▲" : "▼"} {fmtPctSign(leadsMoM)} <span style={{ color: "var(--muted)", fontWeight: 400 }}>vs mes ant.</span></span> : null}</span>
+        ? <span>{fmtInt(g.leads)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>leads</span>{leadsMoM != null ? <span style={{ fontSize: 13, fontWeight: 700, marginLeft: 8, color: leadsMoM >= 0 ? "var(--good)" : "var(--bad)" }}>{leadsMoM >= 0 ? "▲" : "▼"} {fmtPctSign(leadsMoM)} <span style={{ color: "var(--muted)", fontWeight: 400 }}>vs mes ant. · {fmtInt(_prevLeads)} leads</span></span> : null}</span>
         : "—",
       sub: g.conversion != null
         ? <span><b>{fmtPct(g.conversion, 2)}</b> conversión · <b>{fmtInt(g.ventasConcretadas)}</b> ventas</span>
