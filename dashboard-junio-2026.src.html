@@ -4571,7 +4571,7 @@ function KPIStrip({ derived, filterTienda, view }) {
       eyebrow: "Presupuesto",
       value: fmtBs(g.presupuesto),
       sub: g.presupuesto > 0
-        ? <span style={{ color: "var(--ink-700)", fontSize: 12.5 }}>Vamos <b>{fmtBs(g.ventaTotal)}</b> de <b>{fmtBs(g.presupuesto)}</b><br />Faltan <b>{fmtBs(Math.max(0, g.presupuesto - g.ventaTotal))}</b> · <b>{g.diasRestantes} día{g.diasRestantes === 1 ? "" : "s"}</b></span>
+        ? <span style={{ color: "var(--ink-700)", fontSize: 12.5 }}>Vamos <b>{fmtBs(g.ventaTotal)}</b> <span style={{ color: "var(--muted)" }}>({fmtPct(g.pctPres)})</span><br />Faltan <b>{fmtBs(Math.max(0, g.presupuesto - g.ventaTotal))}</b> · <b>{g.diasRestantes} día{g.diasRestantes === 1 ? "" : "s"}</b></span>
         : <span className="muted">Sin presupuesto definido</span>,
     },
     {

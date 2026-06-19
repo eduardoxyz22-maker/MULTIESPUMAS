@@ -5309,7 +5309,11 @@ function KPIStrip(_ref2) {
         color: "var(--ink-700)",
         fontSize: 12.5
       }
-    }, "Vamos ", /*#__PURE__*/React.createElement("b", null, fmtBs(g.ventaTotal)), " de ", /*#__PURE__*/React.createElement("b", null, fmtBs(g.presupuesto)), /*#__PURE__*/React.createElement("br", null), "Faltan ", /*#__PURE__*/React.createElement("b", null, fmtBs(Math.max(0, g.presupuesto - g.ventaTotal))), " \xB7 ", /*#__PURE__*/React.createElement("b", null, g.diasRestantes, " d\xEDa", g.diasRestantes === 1 ? "" : "s")) : /*#__PURE__*/React.createElement("span", {
+    }, "Vamos ", /*#__PURE__*/React.createElement("b", null, fmtBs(g.ventaTotal)), " ", /*#__PURE__*/React.createElement("span", {
+      style: {
+        color: "var(--muted)"
+      }
+    }, "(", fmtPct(g.pctPres), ")"), /*#__PURE__*/React.createElement("br", null), "Faltan ", /*#__PURE__*/React.createElement("b", null, fmtBs(Math.max(0, g.presupuesto - g.ventaTotal))), " \xB7 ", /*#__PURE__*/React.createElement("b", null, g.diasRestantes, " d\xEDa", g.diasRestantes === 1 ? "" : "s")) : /*#__PURE__*/React.createElement("span", {
       className: "muted"
     }, "Sin presupuesto definido")
   }, {
