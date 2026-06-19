@@ -4752,11 +4752,11 @@ function RankingTable({ rows, dia, diasTotales }) {
           <th style={{ width: 28 }}>#</th>
           <th>Vendedor</th>
           <th className="num">Monto</th>
+          <th className="num">vs mes ant.</th>
           <th className="num">% total</th>
           <th className="num">Conv.</th>
           <th className="num">Ticket</th>
           <th className="num">Proyección</th>
-          <th className="num">vs mes ant.</th>
         </tr>
       </thead>
       <tbody>
@@ -4778,13 +4778,13 @@ function RankingTable({ rows, dia, diasTotales }) {
                 <div className="row-bar"><div style={{ width: (v.monto / max) * 100 + "%", background: VENDOR_COLOR[v.nombre] }} /></div>
               </div>
             </td>
+            <td className={"num " + (v.esNuevo ? "good" : (v.crecimientoVsMesAnt >= 0 ? "good" : "bad"))}>
+              {v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsMesAnt)}
+            </td>
             <td className="num">{fmtPct(v.pctTotal)}</td>
             <td className="num">{fmtPct(v.conversion, 2)}</td>
             <td className="num">Bs {fmtMoney(v.ticketProm)}</td>
             <td className="num">Bs {fmtMoney(proy, { short: true })}</td>
-            <td className={"num " + (v.esNuevo ? "good" : (v.crecimientoVsMesAnt >= 0 ? "good" : "bad"))}>
-              {v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsMesAnt)}
-            </td>
           </tr>
         );})}
       </tbody>

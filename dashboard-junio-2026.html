@@ -5555,15 +5555,15 @@ function RankingTable(_ref5) {
     className: "num"
   }, "Monto"), /*#__PURE__*/React.createElement("th", {
     className: "num"
+  }, "vs mes ant."), /*#__PURE__*/React.createElement("th", {
+    className: "num"
   }, "% total"), /*#__PURE__*/React.createElement("th", {
     className: "num"
   }, "Conv."), /*#__PURE__*/React.createElement("th", {
     className: "num"
   }, "Ticket"), /*#__PURE__*/React.createElement("th", {
     className: "num"
-  }, "Proyecci\xF3n"), /*#__PURE__*/React.createElement("th", {
-    className: "num"
-  }, "vs mes ant."))), /*#__PURE__*/React.createElement("tbody", null, rows.map(function (v, idx) {
+  }, "Proyecci\xF3n"))), /*#__PURE__*/React.createElement("tbody", null, rows.map(function (v, idx) {
     // Proyección recalculada
     var proy = dia > 0 ? v.monto / dia * diasTotales : v.monto;
     return /*#__PURE__*/React.createElement("tr", {
@@ -5593,6 +5593,8 @@ function RankingTable(_ref5) {
         background: VENDOR_COLOR[v.nombre]
       }
     })))), /*#__PURE__*/React.createElement("td", {
+      className: "num " + (v.esNuevo ? "good" : v.crecimientoVsMesAnt >= 0 ? "good" : "bad")
+    }, v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsMesAnt)), /*#__PURE__*/React.createElement("td", {
       className: "num"
     }, fmtPct(v.pctTotal)), /*#__PURE__*/React.createElement("td", {
       className: "num"
@@ -5602,9 +5604,7 @@ function RankingTable(_ref5) {
       className: "num"
     }, "Bs ", fmtMoney(proy, {
       "short": true
-    })), /*#__PURE__*/React.createElement("td", {
-      className: "num " + (v.esNuevo ? "good" : v.crecimientoVsMesAnt >= 0 ? "good" : "bad")
-    }, v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsMesAnt)));
+    })));
   })));
 }
 function ProyeccionList(_ref6) {
