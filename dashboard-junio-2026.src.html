@@ -4838,6 +4838,7 @@ function RankingTable({ rows, dia, diasTotales }) {
           <th className="num">Monto</th>
           <th className="num">vs mes ant.</th>
           <th className="num">% total</th>
+          <th className="num">Leads</th>
           <th className="num">Conv.</th>
           <th className="num">Ticket</th>
           <th className="num">Proyección</th>
@@ -4866,6 +4867,14 @@ function RankingTable({ rows, dia, diasTotales }) {
               {v.esNuevo ? "Nuevo" : fmtPctSign(v.crecimientoVsMesAnt)}
             </td>
             <td className="num">{fmtPct(v.pctTotal)}</td>
+            <td className="num">
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", lineHeight: 1.15 }}>
+                <span>{fmtInt(v.leads)}</span>
+                {(v.momLeads != null && v.momLeads > 0)
+                  ? <span style={{ fontSize: 10.5, fontWeight: 700, color: v.leads >= v.momLeads ? "var(--good)" : "var(--bad)" }}>{fmtPctSign((v.leads - v.momLeads) / v.momLeads)}</span>
+                  : (v.leads > 0 ? <span style={{ fontSize: 10.5, fontWeight: 700, color: "var(--good)" }}>Nuevo</span> : null)}
+              </div>
+            </td>
             <td className="num">{fmtPct(v.conversion, 2)}</td>
             <td className="num">Bs {fmtMoney(v.ticketProm)}</td>
             <td className="num">Bs {fmtMoney(proy, { short: true })}</td>
