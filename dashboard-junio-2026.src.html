@@ -4555,6 +4555,7 @@ function KPIStrip({ derived, filterTienda, view }) {
   const _prevVentas = _sv.reduce((s, v) => s + (v.momVentas || 0), 0);
   const _prevConv = _prevLeads > 0 ? _prevVentas / _prevLeads : null;
   const convMoM = (_prevConv && g.conversion != null) ? (g.conversion - _prevConv) / _prevConv : null;
+  const leadsMoM = _prevLeads > 0 ? (g.leads - _prevLeads) / _prevLeads : null;
   const items = [
     {
       eyebrow: "Venta total · " + scopeLabel,
@@ -4580,9 +4581,11 @@ function KPIStrip({ derived, filterTienda, view }) {
     },
     {
       eyebrow: "Conversión",
-      value: g.leads ? <span>{fmtInt(g.leads)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>leads</span></span> : "—",
+      value: g.leads
+        ? <span>{fmtInt(g.leads)} <span style={{ fontSize: 15, color: "var(--muted)", fontWeight: 400 }}>leads</span>{leadsMoM != null ? <span style={{ fontSize: 13, fontWeight: 700, marginLeft: 8, color: leadsMoM >= 0 ? "var(--good)" : "var(--bad)" }}>{leadsMoM >= 0 ? "▲" : "▼"} {fmtPctSign(leadsMoM)} <span style={{ color: "var(--muted)", fontWeight: 400 }}>vs mes ant.</span></span> : null}</span>
+        : "—",
       sub: g.conversion != null
-        ? <span><b>{fmtPct(g.conversion, 2)}</b> conversión{convMoM != null ? <span style={{ fontWeight: 700, color: convMoM >= 0 ? "var(--good)" : "var(--bad)" }}> {fmtPctSign(convMoM)} vs mes ant.</span> : null} · <b>{fmtInt(g.ventasConcretadas)}</b> ventas</span>
+        ? <span><b>{fmtPct(g.conversion, 2)}</b> conversión · <b>{fmtInt(g.ventasConcretadas)}</b> ventas</span>
         : <span className="muted">Sin leads en scope</span>,
       mini: g.conversion != null
         ? <span className="mini-bar"><span style={{ width: Math.min(g.conversion / 0.2, 1) * 100 + "%" }} /></span>
