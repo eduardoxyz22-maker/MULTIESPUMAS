@@ -2975,7 +2975,41 @@ function KpiDrawer({
     style: {
       marginBottom: 6
     }
-  }, "Desglose por vendedora"), rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
+  }, "Desglose por vendedora"), d.split && /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      gap: 18,
+      margin: "4px 0 12px",
+      fontSize: ".72rem",
+      color: "var(--muted)"
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: 3,
+      background: "var(--green)"
+    }
+  }), "✍ manual"), /*#__PURE__*/React.createElement("span", {
+    style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6
+    }
+  }, /*#__PURE__*/React.createElement("span", {
+    style: {
+      width: 10,
+      height: 10,
+      borderRadius: 3,
+      background: "#646E7B"
+    }
+  }), "⚙ autom\xE1tico (bot)")), rows.map((r, i) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
       display: "grid",
@@ -3026,7 +3060,29 @@ function KpiDrawer({
       overflow: "hidden",
       textOverflow: "ellipsis"
     }
-  }, r.suc))), /*#__PURE__*/React.createElement("div", {
+  }, r.suc))), d.split ? /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      height: 9,
+      borderRadius: 99,
+      overflow: "hidden",
+      background: "var(--line2)"
+    }
+  }, /*#__PURE__*/React.createElement("i", {
+    style: {
+      width: `${(r.manual || 0) / max * 100}%`,
+      background: "var(--green)",
+      display: "block",
+      height: "100%"
+    }
+  }), /*#__PURE__*/React.createElement("i", {
+    style: {
+      width: `${(r.bot || 0) / max * 100}%`,
+      background: "#646E7B",
+      display: "block",
+      height: "100%"
+    }
+  })) : /*#__PURE__*/React.createElement("div", {
     className: "meter",
     style: {
       height: 8
@@ -4082,6 +4138,28 @@ function ViewResumen() {
   });
   const fmtInt = n => (n || 0).toLocaleString("en-US");
   const fmtTime = n => !n ? "—" : n >= 60 ? (n / 60).toFixed(1) + " h" : Math.round(n) + " min";
+  const originDetail = {
+    title: "Origen de carga",
+    ico: "equipo",
+    color: "#159A57",
+    totalTxt: fmtInt(D.origin.manual) + " manual · " + fmtInt(D.origin.auto) + " bot",
+    desc: "Cu\xE1ntos leads carg\xF3 manualmente cada vendedora (verde) y cu\xE1ntos le entraron por el bot (gris). Se atribuye por created_by del lead en Kommo.",
+    split: true,
+    rows: D.team.map(v => {
+      const man = v.origen ? v.origen.manual || 0 : 0;
+      const bot = v.origen ? v.origen.bot || 0 : 0;
+      return {
+        name: v.name,
+        suc: v.suc,
+        color: v.color,
+        ini: v.ini,
+        manual: man,
+        bot: bot,
+        valNum: man + bot,
+        valTxt: "✍" + man + " · ⚙" + bot
+      };
+    })
+  };
   return /*#__PURE__*/React.createElement("div", {
     className: "view"
   }, /*#__PURE__*/React.createElement("div", {
@@ -4323,9 +4401,11 @@ function ViewResumen() {
   }))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
     eb: "Origen de carga",
     h3: "Manual vs Autom\xE1tico — global",
-    p: "Cu\xE1ntos leads carg\xF3 manualmente una vendedora y cu\xE1ntos entraron por el bot. La carga manual convierte mucho mejor."
+    p: "Cu\xE1ntos leads carg\xF3 manualmente una vendedora y cu\xE1ntos entraron por el bot. La carga manual convierte mucho mejor. Clic para ver el desglose por vendedora."
   }), /*#__PURE__*/React.createElement("div", {
-    className: "card"
+    className: "card clickable",
+    onClick: () => window.__kpiDetail && window.__kpiDetail(originDetail),
+    title: "Ver desglose por vendedora"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
