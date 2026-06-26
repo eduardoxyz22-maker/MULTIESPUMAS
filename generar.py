@@ -74,9 +74,9 @@ STAGE_COLORS = {
 }
 
 CH_ICON = {
-    "Facebook Ads": "📘", "Instagram": "📷", "WhatsApp directo": "📱", "Google Ads": "🔍",
-    "Orgánico/Web": "🌐", "Referido": "🤝", "Walk-in (Tienda)": "🚶",
-    "Carga manual vendedora": "✍", "Automático (bot)": "⚙", "Otro": "📦",
+    "Facebook Ads": "📘", "Instagram": "📷", "TikTok": "🎵", "WhatsApp directo": "📱",
+    "Google Ads": "🔍", "Orgánico/Web": "🌐", "Referido": "🤝", "Walk-in (Tienda)": "🚶",
+    "Cliente antiguo": "🔁", "Carga manual vendedora": "✍", "Automático (bot)": "⚙", "Otro": "📦",
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -141,12 +141,14 @@ def classify_stage(name):
 def norm_channel(s):
     s = (s or "").lower()
     if any(k in s for k in ["facebook", "fb ", "meta", "messenger"]): return "Facebook Ads"
-    if "instagram" in s or "ig " in s:                                return "Instagram"
+    if any(k in s for k in ["instagram", "instragram", "ig "]):       return "Instagram"
+    if any(k in s for k in ["tiktok", "tik tok", "tik-tok"]):         return "TikTok"
     if any(k in s for k in ["whatsapp", "wsp", "wa "]):               return "WhatsApp directo"
     if any(k in s for k in ["google", "gads", "adword", "sem"]):      return "Google Ads"
     if any(k in s for k in ["organic", "orgánic", "web", "seo"]):     return "Orgánico/Web"
     if any(k in s for k in ["referid", "recomend", "boca"]):          return "Referido"
-    if any(k in s for k in ["walk", "tienda", "local", "show"]):      return "Walk-in (Tienda)"
+    if any(k in s for k in ["walk", "tienda", "local", "show", "visita"]): return "Walk-in (Tienda)"
+    if any(k in s for k in ["antiguo", "recompra", "cliente ant"]):   return "Cliente antiguo"
     if any(k in s for k in ["manual", "vendedor"]):                   return "Carga manual vendedora"
     if any(k in s for k in ["bot", "automát", "auto"]):               return "Automático (bot)"
     return "Otro"
