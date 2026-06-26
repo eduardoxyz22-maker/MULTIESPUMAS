@@ -610,21 +610,38 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
               "auto": bot, "autoPct": round(bot / tot_o * 100)}
 
     # canales agregados a partir de detect_channel sobre los leads del mes
+    def _vname_of(ld):
+        raw = user_map.get(ld.get("responsible_user_id")) or ""
+        return raw.split(" - ", 1)[0].strip() if raw else ""
     ch_agg = defaultdict(lambda: dict(leads=0, cierres=0, value=0))
+    # desglose canal × vendedora (quién aporta cada canal)
+    ch_by_v = defaultdict(lambda: defaultdict(lambda: dict(leads=0, cierres=0)))
     for ld in cur:
-        ch_agg[detect_channel(ld, source_field_id)]["leads"] += 1
+        ch = detect_channel(ld, source_field_id)
+        ch_agg[ch]["leads"] += 1
+        nm = _vname_of(ld)
+        if nm:
+            ch_by_v[ch][nm]["leads"] += 1
     for ld in (won or []):
-        ca = ch_agg[detect_channel(ld, source_field_id)]
+        ch = detect_channel(ld, source_field_id)
+        ca = ch_agg[ch]
         ca["cierres"] += 1; ca["value"] += ld.get("price") or 0
+        nm = _vname_of(ld)
+        if nm:
+            ch_by_v[ch][nm]["cierres"] += 1
     channels = []
     for ch, a in sorted(ch_agg.items(), key=lambda x: -x[1]["leads"]):
         conv = round(a["cierres"] / a["leads"] * 100) if a["leads"] else 0
         cls = "green" if (a["leads"] >= 5 and conv >= 10) else "red" if a["leads"] >= 5 else "muted"
+        byV = sorted(
+            [{"name": nm, "leads": x["leads"], "cierres": x["cierres"]}
+             for nm, x in ch_by_v[ch].items()],
+            key=lambda r: -r["leads"])
         channels.append({
             "ic": CH_ICON.get(ch, "📦"), "name": ch, "leads": a["leads"],
             "pct": round(a["leads"] / (G_leads or 1) * 100), "cierres": a["cierres"],
             "conv": conv, "ticket": round(a["value"] / a["cierres"]) if a["cierres"] else 0,
-            "pipeline": a["value"], "cls": cls,
+            "pipeline": a["value"], "cls": cls, "byV": byV,
         })
 
     # ── embudos ──

@@ -4160,6 +4160,25 @@ function ViewResumen() {
       };
     })
   };
+  // Desglose de un canal: qué vendedoras aportan sus leads/cierres.
+  const chDetail = c => ({
+    title: c.ic + " " + c.name,
+    ico: "conversion",
+    color: c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
+    totalTxt: fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
+    desc: "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
+    rows: (c.byV || []).map(b => {
+      const tv = D.team.find(t => t.name === b.name);
+      return {
+        name: b.name,
+        suc: tv ? tv.suc : "",
+        color: tv ? tv.color : "#808A96",
+        ini: tv ? tv.ini : b.name.split(" ").slice(0, 2).map(p => p[0] || "").join("").toUpperCase(),
+        valNum: b.leads,
+        valTxt: fmtInt(b.leads) + " (" + b.cierres + "✓)"
+      };
+    })
+  });
   return /*#__PURE__*/React.createElement("div", {
     className: "view"
   }, /*#__PURE__*/React.createElement("div", {
@@ -4551,7 +4570,10 @@ function ViewResumen() {
   }, "Cierres"), /*#__PURE__*/React.createElement("th", {
     className: "r"
   }, "Conv."))), /*#__PURE__*/React.createElement("tbody", null, [...D.channels].sort((a, b) => b.cierres - a.cierres).map((c, i) => /*#__PURE__*/React.createElement("tr", {
-    key: i
+    key: i,
+    className: c.byV && c.byV.length ? "clickable" : undefined,
+    onClick: c.byV && c.byV.length ? () => window.__kpiDetail && window.__kpiDetail(chDetail(c)) : undefined,
+    title: c.byV && c.byV.length ? "Ver qué vendedoras aportan este canal" : undefined
   }, /*#__PURE__*/React.createElement("td", null, c.ic, "\xA0", c.name), /*#__PURE__*/React.createElement("td", {
     className: "r num"
   }, c.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
