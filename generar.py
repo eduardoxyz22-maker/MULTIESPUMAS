@@ -534,7 +534,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "pipeline": (int(round(pipe_by_name.get(name, 0))) if pipe_by_name is not None else d["pipeline"]),
             "calif": d["calif"], "califPct": califpct,
             "noResp": d["noResp"], "noRespPct": norpct,
-            "agendado": d["agendado"], "u24": u24pct, "promTxt": prom,
+            "agendado": d["agendado"], "interesado": d["interesado"], "u24": u24pct, "promTxt": prom,
             "promMin": int(round(avg_resp)) if avg_resp else None,
             "fueraHorario": d["fuera"],
             "respPct": resp_pct, "respN": resp_n,
