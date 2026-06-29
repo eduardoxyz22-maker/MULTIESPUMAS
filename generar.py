@@ -625,6 +625,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     carry = dict(cierres=0, value=0)                       # cierres de meses anteriores
     carry_by_v = defaultdict(lambda: dict(leads=0, cierres=0))
     carry_by_ch = defaultdict(int)                         # … desglosado también por canal
+    ch_all_close = defaultdict(int)                        # TODOS los cierres del mes por canal (caja)
+    man_close = 0; bot_close = 0                           # cierres de cohorte por tipo de carga
     for ld in cur:
         ch = detect_channel(ld, source_field_id)
         ch_agg[ch]["leads"] += 1
@@ -635,11 +637,16 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         nm = _vname_of(ld)
         val = ld.get("price") or 0
         ch = detect_channel(ld, source_field_id)
+        ch_all_close[ch] += 1                              # share de cierres por canal (todos)
         if ld.get("id") in cur_ids:                        # mismo mes: cuenta al canal
             ca = ch_agg[ch]
             ca["cierres"] += 1; ca["value"] += val
             if nm:
                 ch_by_v[ch][nm]["cierres"] += 1
+            if ld.get("created_by") == 0:                  # tasa de cierre por tipo de carga
+                bot_close += 1
+            else:
+                man_close += 1
         else:                                              # entró antes: fila de reconciliación
             carry["cierres"] += 1; carry["value"] += val
             carry_by_ch[ch] += 1
@@ -675,6 +682,20 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "pipeline": carry["value"], "cls": "carry", "carry": True,
             "byV": carry_byV, "byCh": carry_byCh,
         })
+
+    # ── tasa de cierre por tipo de carga (de los leads del mes, cuántos cerraron) ──
+    origin["manualClosed"] = man_close
+    origin["autoClosed"] = bot_close
+    origin["manualCloseRate"] = round(man_close / man * 100) if man else 0
+    origin["autoCloseRate"] = round(bot_close / bot * 100) if bot else 0
+
+    # ── share de cierres por canal (de TODO lo cerrado este mes, qué % por canal) ──
+    tot_close = sum(ch_all_close.values()) or 1
+    closeShare = sorted(
+        [{"ic": CH_ICON.get(ch, "📦"), "name": ch, "cierres": n,
+          "pct": round(n / tot_close * 100)}
+         for ch, n in ch_all_close.items()],
+        key=lambda r: -r["cierres"])
 
     # ── embudos ──
     def stage_sum(cls_list):
@@ -825,7 +846,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "global": {"leads": G_leads, "prevLeads": G_prev, "cierres": G_cierres,
                    "pipeline": G_pipeline, "cerrado": G_value, "ticket": G_ticket},
         "funnel2": funnel2, "stagesGlobal": stagesGlobal, "origin": origin,
-        "channels": channels, "metrics": metrics,
+        "channels": channels, "closeShare": closeShare, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
         "team": team, "funnel": funnel, "nav": nav, "stagesByV": stagesByV,
         "backlogRows": bk_rows, "alerts": alerts, "dupRows": dup_rows[:50],
