@@ -3550,6 +3550,8 @@ function TeamTable({
     className: "r"
   }, "Ticket"), cols === "full" && /*#__PURE__*/React.createElement("th", {
     className: "r"
+  }, "Cerrado"), cols === "full" && /*#__PURE__*/React.createElement("th", {
+    className: "r"
   }, "Pipeline"), /*#__PURE__*/React.createElement("th", null, "Disciplina CRM"))), /*#__PURE__*/React.createElement("tbody", null, T.map((v, i) => /*#__PURE__*/React.createElement("tr", {
     key: i,
     className: `clickable ${v.name === window.TOP_CLOSER ? "toprow " : ""}${v.v === "red" ? "crit" : v.v === "amber" ? "warn" : ""}`,
@@ -3587,8 +3589,14 @@ function TeamTable({
   }, window.convPct(v), "%")), cols === "full" && /*#__PURE__*/React.createElement("td", {
     className: "r num"
   }, v.ticket ? fmtMoney(v.ticket) : "—"), cols === "full" && /*#__PURE__*/React.createElement("td", {
+    className: "r num",
+    style: {
+      fontWeight: 800,
+      color: v.value ? "var(--green)" : "inherit"
+    }
+  }, v.value ? fmtMoney(v.value) : "—"), cols === "full" && /*#__PURE__*/React.createElement("td", {
     className: "r num"
-  }, v.value ? fmtMoney(v.value) : "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Pill, {
+  }, v.pipeline ? fmtMoney(v.pipeline) : "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Pill, {
     tone: v.v
   }, v.u24, "% en <24h"))))));
 }
