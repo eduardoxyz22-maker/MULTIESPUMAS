@@ -624,6 +624,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     ch_by_v = defaultdict(lambda: defaultdict(lambda: dict(leads=0, cierres=0)))
     carry = dict(cierres=0, value=0)                       # cierres de meses anteriores
     carry_by_v = defaultdict(lambda: dict(leads=0, cierres=0))
+    carry_by_ch = defaultdict(int)                         # … desglosado también por canal
     for ld in cur:
         ch = detect_channel(ld, source_field_id)
         ch_agg[ch]["leads"] += 1
@@ -633,14 +634,15 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     for ld in (won or []):
         nm = _vname_of(ld)
         val = ld.get("price") or 0
+        ch = detect_channel(ld, source_field_id)
         if ld.get("id") in cur_ids:                        # mismo mes: cuenta al canal
-            ch = detect_channel(ld, source_field_id)
             ca = ch_agg[ch]
             ca["cierres"] += 1; ca["value"] += val
             if nm:
                 ch_by_v[ch][nm]["cierres"] += 1
         else:                                              # entró antes: fila de reconciliación
             carry["cierres"] += 1; carry["value"] += val
+            carry_by_ch[ch] += 1
             if nm:
                 carry_by_v[nm]["cierres"] += 1
     channels = []
@@ -662,11 +664,16 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             [{"name": nm, "leads": 0, "cierres": x["cierres"]}
              for nm, x in carry_by_v.items()],
             key=lambda r: -r["cierres"])
+        carry_byCh = sorted(
+            [{"name": ch, "ic": CH_ICON.get(ch, "📦"), "cierres": n}
+             for ch, n in carry_by_ch.items()],
+            key=lambda r: -r["cierres"])
         channels.append({
             "ic": "↩", "name": "Cerrados de meses anteriores", "leads": 0,
             "pct": 0, "cierres": carry["cierres"], "conv": 0,
             "ticket": round(carry["value"] / carry["cierres"]) if carry["cierres"] else 0,
-            "pipeline": carry["value"], "cls": "carry", "carry": True, "byV": carry_byV,
+            "pipeline": carry["value"], "cls": "carry", "carry": True,
+            "byV": carry_byV, "byCh": carry_byCh,
         })
 
     # ── embudos ──
