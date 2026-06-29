@@ -3538,6 +3538,9 @@ function TeamTable({
 }) {
   const T = D.team,
     maxLeads = Math.max(...T.map(v => v.leads));
+  const tot = T.reduce((a, v) => ({ leads: a.leads + (v.leads || 0), cierres: a.cierres + (v.cierres || 0), value: a.value + (v.value || 0), pipeline: a.pipeline + (v.pipeline || 0) }), { leads: 0, cierres: 0, value: 0, pipeline: 0 });
+  const totConv = tot.leads ? (tot.cierres / tot.leads * 100).toFixed(1) : "0";
+  const totTicket = tot.cierres ? Math.round(tot.value / tot.cierres) : 0;
   return /*#__PURE__*/React.createElement("table", {
     className: "tbl"
   }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Vendedora"), /*#__PURE__*/React.createElement("th", {
@@ -3598,7 +3601,20 @@ function TeamTable({
     className: "r num"
   }, v.pipeline ? fmtMoney(v.pipeline) : "—"), /*#__PURE__*/React.createElement("td", null, /*#__PURE__*/React.createElement(Pill, {
     tone: v.v
-  }, v.u24, "% en <24h"))))));
+  }, v.u24, "% en <24h"))))), /*#__PURE__*/React.createElement("tfoot", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("td", null, "Total equipo"), /*#__PURE__*/React.createElement("td", {
+    className: "r num"
+  }, tot.leads.toLocaleString("en-US")), /*#__PURE__*/React.createElement("td", {
+    className: "r num"
+  }, tot.cierres), /*#__PURE__*/React.createElement("td", {
+    className: "r"
+  }, totConv, "%"), cols === "full" && /*#__PURE__*/React.createElement("td", {
+    className: "r num"
+  }, fmtMoney(totTicket)), cols === "full" && /*#__PURE__*/React.createElement("td", {
+    className: "r num",
+    style: { color: "var(--green)" }
+  }, fmtMoney(tot.value)), cols === "full" && /*#__PURE__*/React.createElement("td", {
+    className: "r num"
+  }, fmtMoney(tot.pipeline)), /*#__PURE__*/React.createElement("td", null, ""))));
 }
 
 // CSV download helper — quotes fields, triggers browser download.
