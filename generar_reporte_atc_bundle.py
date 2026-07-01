@@ -21,9 +21,10 @@ API   = "https://api.trello.com/1"
 
 TEMPLATE = os.environ.get("ATC_BUNDLE_TEMPLATE", "reporte-atc-template.html")
 OUTPUT   = os.environ.get("ATC_BUNDLE_OUTPUT", "reporte-atc-20260522.html")
-DATA_ASSET   = "655a879d-04b8-41dc-ae96-98eccd1d89cd"  # window.TRELLO_DATA / _META
-STAGES_ASSET = "c8e379b4-c341-40f0-81eb-1fd7a8b72129"  # LIST_ORDER / LIST_DOT_COLOR
-ETAPAS_ASSET = "6d573ff7-3eb1-4cdc-8505-806c95ba6b61"  # "N etapas"
+DATA_ASSET     = "655a879d-04b8-41dc-ae96-98eccd1d89cd"  # window.TRELLO_DATA / _META
+STAGES_ASSET   = "c8e379b4-c341-40f0-81eb-1fd7a8b72129"  # LIST_ORDER / LIST_DOT_COLOR
+ETAPAS_ASSET   = "6d573ff7-3eb1-4cdc-8505-806c95ba6b61"  # "N etapas"
+ANALISIS_ASSET = "08df21b3-6d2a-420c-b031-cb201ecb2d49"  # currentYear (antigüedad)
 
 # Colores originales por etapa + reserva para listas nuevas del tablero.
 STAGE_COLORS = {
@@ -270,6 +271,15 @@ def patch_stages(manifest, orden):
     src2 = _decode_asset(b).replace("5 etapas", f"{len(orden)} etapas", 1)
     _repack_asset(b, src2)
 
+def patch_year(manifest, year):
+    """Actualiza el año de referencia del análisis de antigüedad, que venía
+    fijo en 2026 (rompería el cálculo en años siguientes)."""
+    a = manifest[ANALISIS_ASSET]
+    src = _decode_asset(a)
+    src = src.replace("const currentYear = 2026", f"const currentYear = {year}")
+    src = src.replace("y <= 2026", f"y <= {year}")
+    _repack_asset(a, src)
+
 def main():
     print("Conectando a Trello…")
     lists, cards = fetch()
@@ -295,6 +305,8 @@ def main():
 
     # Sincronizar las etapas del diseño con las listas reales del tablero.
     patch_stages(manifest, meta["listas"])
+    # Mantener el año de referencia del análisis al día.
+    patch_year(manifest, datetime.date.today().year)
 
     manifest_json = json.dumps(manifest, ensure_ascii=False)
     html_new = html[:m.start()] + m.group(1) + manifest_json + m.group(3) + html[m.end():]
