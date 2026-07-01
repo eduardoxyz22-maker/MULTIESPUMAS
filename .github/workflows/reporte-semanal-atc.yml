@@ -18,11 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generar reportes desde Trello
+      - name: Generar reporte semanal (HTML simple + CSV)
         env:
           TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
           TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
         run: python3 generar_reporte_atc.py
+
+      - name: Regenerar bundle Kanban con datos frescos
+        env:
+          TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
+          TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
+        run: python3 generar_reporte_atc_bundle.py
 
       - name: Publicar todo en un solo commit
         run: |
