@@ -21,7 +21,19 @@ API   = "https://api.trello.com/1"
 
 TEMPLATE = os.environ.get("ATC_BUNDLE_TEMPLATE", "reporte-atc-template.html")
 OUTPUT   = os.environ.get("ATC_BUNDLE_OUTPUT", "reporte-atc-20260522.html")
-DATA_ASSET = "655a879d-04b8-41dc-ae96-98eccd1d89cd"
+DATA_ASSET   = "655a879d-04b8-41dc-ae96-98eccd1d89cd"  # window.TRELLO_DATA / _META
+STAGES_ASSET = "c8e379b4-c341-40f0-81eb-1fd7a8b72129"  # LIST_ORDER / LIST_DOT_COLOR
+ETAPAS_ASSET = "6d573ff7-3eb1-4cdc-8505-806c95ba6b61"  # "N etapas"
+
+# Colores originales por etapa + reserva para listas nuevas del tablero.
+STAGE_COLORS = {
+    "Solicitadas": "#D89534",
+    "Programadas recojo": "#C99668",
+    "En producción": "#B85B3E",
+    "Listas devolver": "#6B8E5A",
+    "Post venta": "#8E837A",
+}
+FALLBACK_COLORS = ["#3B9ECB", "#7C6BA8", "#4A9E88", "#A85B7A", "#B8863E", "#6B7A8E"]
 
 # ── Trello ─────────────────────────────────────────────────────────────────
 def get(path, extra=None):
@@ -227,6 +239,37 @@ def replace_window_assignment(js_src, name, new_literal):
         raise RuntimeError(f"No se encontró el cierre de window.{name}")
     return js_src[:open_i] + new_literal + js_src[end + 1:]
 
+def _decode_asset(asset):
+    raw = base64.b64decode(asset["data"])
+    return gzip.decompress(raw).decode("utf-8") if asset.get("compressed") \
+           else raw.decode("utf-8")
+
+def _repack_asset(asset, new_src):
+    data = new_src.encode("utf-8")
+    if asset.get("compressed"):
+        data = gzip.compress(data, mtime=0)
+    asset["data"] = base64.b64encode(data).decode("ascii")
+
+def patch_stages(manifest, orden):
+    """Sincroniza las etapas del diseño (Kanban/pipeline/filtros) con las listas
+    reales del tablero, para que ninguna lista nueva quede oculta."""
+    # 1) LIST_ORDER + LIST_DOT_COLOR (asset de componentes)
+    a = manifest[STAGES_ASSET]
+    src = _decode_asset(a)
+    order_js = json.dumps(orden, ensure_ascii=False)
+    src = re.sub(r"const LIST_ORDER = \[[^\]]*\];",
+                 lambda _: f"const LIST_ORDER = {order_js};", src, count=1)
+    fb = iter(FALLBACK_COLORS)
+    pares = [f"'{st}': '{STAGE_COLORS.get(st) or next(fb, '#8E837A')}'" for st in orden]
+    color_js = "const LIST_DOT_COLOR = {\n  " + ",\n  ".join(pares) + ",\n};"
+    src = re.sub(r"const LIST_DOT_COLOR = \{[^}]*\};",
+                 lambda _: color_js, src, count=1)
+    _repack_asset(a, src)
+    # 2) etiqueta "N etapas"
+    b = manifest[ETAPAS_ASSET]
+    src2 = _decode_asset(b).replace("5 etapas", f"{len(orden)} etapas", 1)
+    _repack_asset(b, src2)
+
 def main():
     print("Conectando a Trello…")
     lists, cards = fetch()
@@ -243,18 +286,15 @@ def main():
     manifest = json.loads(m.group(2))
 
     asset = manifest[DATA_ASSET]
-    raw = base64.b64decode(asset["data"])
-    js_src = gzip.decompress(raw).decode("utf-8") if asset.get("compressed") \
-             else raw.decode("utf-8")
-
+    js_src = _decode_asset(asset)
     js_new = replace_window_assignment(
         js_src, "TRELLO_DATA", json.dumps(registros, ensure_ascii=False, indent=2))
     js_new = replace_window_assignment(
         js_new, "TRELLO_META", json.dumps(meta, ensure_ascii=False, indent=2))
+    _repack_asset(asset, js_new)
 
-    packed = gzip.compress(js_new.encode("utf-8"), mtime=0) \
-             if asset.get("compressed") else js_new.encode("utf-8")
-    asset["data"] = base64.b64encode(packed).decode("ascii")
+    # Sincronizar las etapas del diseño con las listas reales del tablero.
+    patch_stages(manifest, meta["listas"])
 
     manifest_json = json.dumps(manifest, ensure_ascii=False)
     html_new = html[:m.start()] + m.group(1) + manifest_json + m.group(3) + html[m.end():]
