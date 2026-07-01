@@ -354,7 +354,13 @@ function exportCSV() {{
 </body>
 </html>"""
 
+# El reporte semanal (URL viva principal)
 with open("reporte-semanal-atc.html", "w", encoding="utf-8") as f:
+    f.write(HTML)
+
+# Espejo con datos frescos en la URL histórica que se sigue compartiendo.
+# Mismo contenido; el nombre 20260522 se conserva solo por compatibilidad del enlace.
+with open("reporte-atc-20260522.html", "w", encoding="utf-8") as f:
     f.write(HTML)
 
 import csv as _csv
@@ -367,4 +373,5 @@ with open(CSV_OUT, "w", newline="", encoding="utf-8-sig") as f:
     w.writerows(rows)
 
 print(f"reporte-semanal-atc.html generado — {len(rows)} tarjetas")
+print(f"reporte-atc-20260522.html actualizado (espejo) — {len(rows)} tarjetas")
 print(f"atc-semanal.csv generado — {len(rows)} filas")

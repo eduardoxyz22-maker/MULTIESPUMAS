@@ -18,22 +18,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generar reporte-semanal-atc.html
+      - name: Generar reportes desde Trello
         env:
           TRELLO_API_KEY: ${{ secrets.TRELLO_API_KEY }}
           TRELLO_TOKEN:   ${{ secrets.TRELLO_TOKEN }}
         run: python3 generar_reporte_atc.py
 
-      - name: Publicar HTML en main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PUBLISH_FILE: reporte-semanal-atc.html
-        run: python3 publish_atc.py
-
-      - name: Publicar CSV en main
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          PUBLISH_FILE: atc-semanal.csv
-        run: python3 publish_atc.py
+      - name: Publicar todo en un solo commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add reporte-semanal-atc.html reporte-atc-20260522.html atc-semanal.csv
+          FECHA=$(TZ='America/La_Paz' date '+%d/%m/%Y %H:%M')
+          git commit -m "Reporte Semanal ATC $FECHA (auto)" || { echo "sin cambios"; exit 0; }
+          git push
