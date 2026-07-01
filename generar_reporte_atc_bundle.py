@@ -266,9 +266,11 @@ def patch_stages(manifest, orden):
     src = re.sub(r"const LIST_DOT_COLOR = \{[^}]*\};",
                  lambda _: color_js, src, count=1)
     _repack_asset(a, src)
-    # 2) etiqueta "N etapas"
+    # 2) etiqueta "N etapas" + mostrar TODAS las vendedoras (venía cap. a 7)
     b = manifest[ETAPAS_ASSET]
     src2 = _decode_asset(b).replace("5 etapas", f"{len(orden)} etapas", 1)
+    src2 = src2.replace(".slice(0, 7)", ".slice(0, 99)", 1)  # byVendedora: sin tope
+    src2 = src2.replace(">top 7<", ">todas<", 1)             # etiqueta del widget
     _repack_asset(b, src2)
 
 def patch_year(manifest, year):
