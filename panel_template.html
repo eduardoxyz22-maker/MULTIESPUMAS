@@ -4645,6 +4645,71 @@ function ViewResumen() {
       marginTop: 6
     }
   }, /*#__PURE__*/React.createElement(TeamTable, null))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
+    eb: "Productos",
+    h3: "Productos vendidos — " + D.month + " " + D.year,
+    p: "Unidades registradas en la pesta\xF1a Productos de Kommo, solo de los cierres del mes. Clic en un producto para ver qui\xE9n lo vendi\xF3."
+  }), /*#__PURE__*/React.createElement("div", {
+    className: "card"
+  }, (() => {
+    const PR = D.productos || { total: 0, conProducto: 0, sinProducto: 0, items: [] };
+    if (!PR.items.length) return /*#__PURE__*/React.createElement("div", {
+      style: { fontSize: ".82rem", color: "var(--muted)", padding: "8px 0" }
+    }, "A\xFAn no hay productos registrados en los cierres de este mes. Las vendedoras deben agregarlos en la pesta\xF1a ", /*#__PURE__*/React.createElement("b", null, "Productos"), " del lead en Kommo antes de cerrarlo.");
+    const maxQ = PR.items[0].qty || 1;
+    const prodDetail = p => ({
+      title: "🛏️ " + p.name,
+      ico: "trophy",
+      color: "#00B5AD",
+      totalTxt: fmtInt(p.qty) + " unidades",
+      desc: "Qui\xE9n vendi\xF3 “" + p.name + "” este mes (unidades registradas en sus cierres).",
+      rows: (p.byV || []).map(b => {
+        const tv = D.team.find(t => t.name === b.name);
+        return {
+          name: b.name,
+          suc: tv ? tv.suc : "",
+          color: tv ? tv.color : "#808A96",
+          ini: tv ? tv.ini : b.name.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase(),
+          valNum: b.qty,
+          valTxt: fmtInt(b.qty) + " unid."
+        };
+      })
+    });
+    return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+      style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12, flexWrap: "wrap" }
+    }, /*#__PURE__*/React.createElement("div", {
+      style: { display: "flex", alignItems: "baseline", gap: 10 }
+    }, /*#__PURE__*/React.createElement("b", {
+      className: "num",
+      style: { fontSize: "1.9rem", fontWeight: 800, letterSpacing: "-1px" }
+    }, fmtInt(PR.total)), /*#__PURE__*/React.createElement("span", {
+      style: { fontSize: ".78rem", color: "var(--muted)" }
+    }, "unidades \xB7 en ", PR.conProducto, " cierres \xB7 ", PR.items.length, " producto", PR.items.length !== 1 ? "s" : "", " distinto", PR.items.length !== 1 ? "s" : "")), PR.conProducto > 0 && /*#__PURE__*/React.createElement("span", {
+      style: { fontSize: ".7rem", fontWeight: 700, color: "var(--brand)", background: "color-mix(in srgb,var(--brand) 12%,transparent)", borderRadius: 99, padding: "4px 10px", whiteSpace: "nowrap" }
+    }, "⌀ ", (PR.total / PR.conProducto).toFixed(1), " unid. / cierre")), PR.items.map((p, i) => {
+      const pct = PR.total ? Math.round(p.qty / PR.total * 100) : 0;
+      return /*#__PURE__*/React.createElement("div", {
+        key: i,
+        className: "clickable",
+        onClick: () => window.__kpiDetail && window.__kpiDetail(prodDetail(p)),
+        title: "Ver qui\xE9n lo vendi\xF3",
+        style: { display: "grid", gridTemplateColumns: "minmax(160px,1.2fr) 1fr 86px", gap: 12, alignItems: "center", padding: "9px 0", borderBottom: i < PR.items.length - 1 ? "1px solid var(--line2)" : "none" }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: ".82rem", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }
+      }, p.name), /*#__PURE__*/React.createElement("div", {
+        className: "meter",
+        style: { height: 8 }
+      }, /*#__PURE__*/React.createElement("i", {
+        style: { width: Math.max(3, Math.round(p.qty / maxQ * 100)) + "%", background: "var(--brand)" }
+      })), /*#__PURE__*/React.createElement("div", {
+        className: "num",
+        style: { textAlign: "right", fontSize: ".84rem", fontWeight: 800 }
+      }, fmtInt(p.qty), " ", /*#__PURE__*/React.createElement("span", {
+        style: { fontSize: ".64rem", color: "var(--faint)", fontWeight: 400 }
+      }, pct, "%")));
+    }), PR.sinProducto > 0 && /*#__PURE__*/React.createElement("div", {
+      style: { marginTop: 12, paddingTop: 12, borderTop: "1px solid var(--line)", fontSize: ".74rem", color: "var(--amber, #D98300)" }
+    }, "⚠ ", /*#__PURE__*/React.createElement("b", null, PR.sinProducto, " cierre", PR.sinProducto !== 1 ? "s" : "", " del mes"), " sin productos registrados en Kommo"));
+  })())), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
     eb: `Tendencia vs ${D.prevMonth}`,
     h3: "Leads del mes \u2014 mes a mes",
     p: `La captación ${momPct >= 0 ? "subió" : "cayó"} ${Math.abs(momPct)}% vs ${D.prevMonth} (${G.leads.toLocaleString("en-US")} vs ${G.prevLeads.toLocaleString("en-US")}). El reto no es la entrada de leads, es convertir los que ya hay.`

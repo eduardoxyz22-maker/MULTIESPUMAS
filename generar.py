@@ -321,6 +321,48 @@ def lead_units(ld):
             total += 1
     return total
 
+def build_products(won, user_map):
+    """Lista de productos vendidos del mes: por cada elemento del catálogo, unidades
+    totales y desglose por vendedora. Población = cierres del mes (won, incluye los
+    de leads de meses anteriores). Los nombres se resuelven con una consulta extra
+    a /catalogs/{id}/elements (el embed del lead solo trae id + cantidad)."""
+    agg = {}                                   # element_id -> {qty, byV, cat}
+    cat_ids = set()
+    con = 0; sin = 0                           # cierres con/sin productos registrados
+    for ld in (won or []):
+        ces = (ld.get("_embedded", {}) or {}).get("catalog_elements") or []
+        if ces:
+            con += 1
+        else:
+            sin += 1
+        raw = user_map.get(ld.get("responsible_user_id")) or ""
+        nm = raw.split(" - ", 1)[0].strip() if raw else ""
+        for ce in ces:
+            eid = ce.get("id")
+            md = ce.get("metadata") or {}
+            if md.get("catalog_id"):
+                cat_ids.add(md.get("catalog_id"))
+            try:
+                q = int(float(md.get("quantity")))
+            except (TypeError, ValueError):
+                q = 1
+            a = agg.setdefault(eid, {"qty": 0, "byV": defaultdict(int)})
+            a["qty"] += q
+            if nm:
+                a["byV"][nm] += q
+    names = {}
+    for cid in cat_ids:
+        for el in fetch_paginated(f"/catalogs/{cid}/elements", {}, "elements", max_pages=20):
+            names[el.get("id")] = el.get("name", "")
+    items = sorted(
+        [{"name": names.get(eid) or f"Producto #{eid}", "qty": a["qty"],
+          "byV": sorted([{"name": k, "qty": v} for k, v in a["byV"].items()],
+                        key=lambda r: -r["qty"])}
+         for eid, a in agg.items()],
+        key=lambda r: -r["qty"])
+    return {"total": sum(i["qty"] for i in items), "conProducto": con,
+            "sinProducto": sin, "items": items}
+
 def blank_vendor():
     return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0, unidades=0, atendido=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
@@ -1497,6 +1539,13 @@ def main():
 
     print("  🧮 construyendo PANEL_DATA…")
     pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
+    print("  🛒 productos vendidos…")
+    try:
+        pd["productos"] = build_products(won, user_map)
+        print(f"     → {pd['productos']['total']} unidades · {len(pd['productos']['items'])} productos")
+    except Exception as ex:
+        pd["productos"] = {"total": 0, "conProducto": 0, "sinProducto": 0, "items": []}
+        print(f"   ⚠ no se pudo armar productos: {ex}", file=sys.stderr)
     print("  📈 armando historia mensual…")
     pd = build_history(pd)
     print("  📲 armando resumen WhatsApp…")
