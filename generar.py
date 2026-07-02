@@ -1276,10 +1276,16 @@ def write_outputs(pd):
 
     # archiva el mes en curso ANTES de sobrescribir, si ya existía con datos previos
     arch_name = f"panel_{YEAR}_{MONTH:02d}.html"
-    for out in ("index.html", "panel.html", arch_name):
+    # Si se está regenerando un MES PASADO (--month/--year), solo se reescribe su
+    # archivo histórico: el index.html en vivo es del mes en curso y no debe pisarse.
+    if (YEAR, MONTH) != (now.year, now.month):
+        outs = (arch_name,)
+    else:
+        outs = ("index.html", "panel.html", arch_name)
+    for out in outs:
         with open(os.path.join(HERE, out), "w", encoding="utf-8") as f:
             f.write(html)
-    print(f"   ✓ index.html + panel.html + {arch_name}")
+    print(f"   ✓ {' + '.join(outs)}")
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  MAIN

@@ -5,6 +5,15 @@ on:
     - cron: '0 14 * * *'    # 10:00 Bolivia (UTC-4)
     - cron: '0 21 * * *'    # 17:00 Bolivia (UTC-4)
   workflow_dispatch:         # botón manual en la pestaña Actions
+    inputs:
+      month:                 # opcional: regenerar un mes pasado (solo su archivo histórico)
+        description: 'Mes a regenerar (1-12, vacío = mes en curso)'
+        required: false
+        default: ''
+      year:
+        description: 'Año del mes a regenerar (vacío = año en curso)'
+        required: false
+        default: ''
   push:
     branches: [ main ]
     paths:
@@ -38,7 +47,12 @@ jobs:
         run: |
           # IA horneada PAUSADA temporalmente para acelerar el ciclo de cambios.
           # Restaurar con: python generar.py --bake-ai
-          python generar.py
+          EXTRA=""
+          if [ -n "${{ github.event.inputs.month }}" ]; then
+            EXTRA="--month ${{ github.event.inputs.month }} --year ${{ github.event.inputs.year || '2026' }}"
+            echo "Regenerando mes pasado: $EXTRA"
+          fi
+          python generar.py $EXTRA
 
       - name: Commit y push del panel actualizado
         run: |

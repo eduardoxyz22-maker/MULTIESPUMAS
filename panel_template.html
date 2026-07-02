@@ -5116,7 +5116,19 @@ function Panel() {
     className: "hist-menu"
   }, /*#__PURE__*/React.createElement("div", {
     className: "lbl"
-  }, "Meses publicados"), D.archives.map((a, i) => /*#__PURE__*/React.createElement("a", {
+  }, "Meses publicados"), /panel_\d{4}_\d{2}\.html/.test(window.location.pathname) && /*#__PURE__*/React.createElement("a", {
+    href: "index.html",
+    onClick: () => setHistOpen(false)
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "semanal",
+    size: 14
+  }), "Mes en curso", /*#__PURE__*/React.createElement("span", {
+    className: "ww",
+    style: {
+      marginLeft: "auto",
+      color: "var(--brand)"
+    }
+  }, "en vivo")), D.archives.map((a, i) => /*#__PURE__*/React.createElement("a", {
     key: i,
     href: a.url,
     className: a.url === "#" ? "cur" : "",
@@ -5132,7 +5144,7 @@ function Panel() {
     style: {
       marginLeft: "auto"
     }
-  }, "actual"))))), /*#__PURE__*/React.createElement("button", {
+  }, /panel_\d{4}_\d{2}\.html/.test(window.location.pathname) ? "viendo" : "actual"))))), /*#__PURE__*/React.createElement("button", {
     className: "btn icon",
     title: "Modo presentaci\xF3n",
     onClick: () => setPres(p => !p)
