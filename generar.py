@@ -66,11 +66,11 @@ STAGE_RULES = [
     ("agendado",    ["agendad", "visita", "cita", "agenda", "showroom"]),
     ("cotizacion",  ["cotiz", "propuest", "quot", "presupuest"]),
     ("interesado",  ["interesad", "negocia", "seguimiento", "interest"]),
-    ("atendido",    ["atendid"]),      # consulta ya respondida (aún no calificada)
+    ("atendido",    ["atendi"]),       # consulta ya respondida (aún no calificada)
     ("nueva",       ["nueva", "nuevo", "consulta", "entrante", "inbound", "primer", "lead"]),
 ]
 STAGE_COLORS = {
-    "Nueva consulta": "#27313F", "Atendido": "#22A7C9", "ATENDIDO": "#22A7C9",
+    "Nueva consulta": "#27313F", "Atendido": "#22A7C9", "ATENDIDO": "#22A7C9", "Atendi": "#22A7C9",
     "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9",
     "Agendado / Visita": "#D98300", "Compradores": "#159A57", "No Responden": "#646E7B",
 }
