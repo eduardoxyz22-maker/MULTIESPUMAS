@@ -2,7 +2,7 @@ name: Reporte Semanal ATC
 
 on:
   schedule:
-    - cron: '0 14 * * 1'   # Cada lunes 10:00 AM Bolivia (UTC-4)
+    - cron: '0 21 * * *'   # Todos los días 17:00 Bolivia (UTC-4)
   workflow_dispatch:         # Ejecución manual desde GitHub → Actions
 
 concurrency:
