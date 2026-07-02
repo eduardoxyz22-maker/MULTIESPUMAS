@@ -307,8 +307,20 @@ def _median(vals):
     mid = n // 2
     return s[mid] if (n % 2) else (s[mid - 1] + s[mid]) / 2.0
 
+def lead_units(ld):
+    """Unidades de producto del lead (pestaña Productos de Kommo = catalog_elements).
+    Cada elemento trae metadata.quantity; si falta, cuenta como 1 unidad."""
+    total = 0
+    for ce in ((ld.get("_embedded", {}) or {}).get("catalog_elements") or []):
+        q = (ce.get("metadata") or {}).get("quantity")
+        try:
+            total += int(float(q))
+        except (TypeError, ValueError):
+            total += 1
+    return total
+
 def blank_vendor():
-    return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0,
+    return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0, unidades=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, fuera=0, entra_dentro=0, entra_fuera=0, fix_dentro=0, fix_fuera=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
@@ -425,6 +437,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         nm = raw.split(" - ", 1)[0].strip() if " - " in raw else raw.strip()
         dd = vd[nm]; price = ld.get("price") or 0
         dd["cierres"] += 1; dd["value"] += price
+        dd["unidades"] += lead_units(ld)          # el dinero sigue saliendo del Presupuesto (price)
         if ld.get("id") not in _pipe_seen and price > 0:
             dd["pipeline"] += price; _pipe_seen.add(ld.get("id"))
         _ct = ld.get("_contract_ts") or 0
@@ -541,6 +554,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "fueraHorario": d["fuera"],
             "respPct": resp_pct, "respN": resp_n,
             "tarde": d["tarde"], "nunca": d["nunca"], "backlog": d["backlog"],
+            "unidades": d["unidades"],
             "metaCierres": cfg.get("metaCierres", max(8, d["cierres"] + 5)),
             "metaMonto": cfg.get("metaMonto", max(20000, d["value"])),
             "v": v_tone,
@@ -560,6 +574,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     G_value   = sum(t["value"] for t in team)
     G_pipeline = sum(t["pipeline"] for t in team)
     G_ticket  = round(G_value / G_cierres) if G_cierres else 0
+    G_unidades = sum(t["unidades"] for t in team)
 
     # ── etapas globales ──
     stage_tot = defaultdict(int)
@@ -836,7 +851,8 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "updated": now.strftime("%d/%m %H:%M"),
         "archives": archives,
         "global": {"leads": G_leads, "prevLeads": G_prev, "cierres": G_cierres,
-                   "pipeline": G_pipeline, "cerrado": G_value, "ticket": G_ticket},
+                   "pipeline": G_pipeline, "cerrado": G_value, "ticket": G_ticket,
+                   "unidades": G_unidades},
         "funnel2": funnel2, "stagesGlobal": stagesGlobal, "origin": origin,
         "channels": channels, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
@@ -1385,14 +1401,14 @@ def main():
 
     print("  📋 leads del mes…")
     cur = fetch_paginated("/leads", {
-        "with": "contacts",
+        "with": "contacts,catalog_elements",
         "filter[created_at][from]": int(m_start.timestamp()),
         "filter[created_at][to]":   int(m_end.timestamp())}, "leads")
     print(f"     → {len(cur)} leads")
 
     print(f"  📋 leads {MESES[pmo]}…")
     prev = fetch_paginated("/leads", {
-        "with": "contacts",
+        "with": "contacts,catalog_elements",
         "filter[created_at][from]": int(p_start.timestamp()),
         "filter[created_at][to]":   int(p_end.timestamp())}, "leads")
     print(f"     → {len(prev)} leads")
@@ -1401,7 +1417,7 @@ def main():
     print("  📊 pipeline + ventas (ventana amplia)…")
     wide_start = m_start - datetime.timedelta(days=300)
     wide = fetch_paginated("/leads", {
-        "with": "contacts",
+        "with": "contacts,catalog_elements",
         "filter[created_at][from]": int(wide_start.timestamp()),
         "filter[created_at][to]":   int(m_end.timestamp())},
         "leads", max_pages=40, sleep=0.12)

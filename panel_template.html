@@ -4371,7 +4371,7 @@ function ViewResumen() {
   }, fmtMoney(recPotencial)), /*#__PURE__*/React.createElement("span", null, "potencial a recuperar \u2192"))), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement(SectionHead, {
     eb: "Indicadores",
     h3: "Pulso del mes",
-    p: "Las 10 m\xE9tricas clave del mes \u2014 pasa el cursor sobre cada ficha para ver su definici\xF3n."
+    p: "Las m\xE9tricas clave del mes \u2014 pasa el cursor sobre cada ficha para ver su definici\xF3n."
   }), /*#__PURE__*/React.createElement("div", {
     className: "kpis",
     style: {
@@ -4476,6 +4476,17 @@ function ViewResumen() {
     sub: /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
       className: "num"
     }, fmtMoney(cerradoTotal)), " cerrado")
+  }), /*#__PURE__*/React.createElement(Kpi, {
+    l: "Unidades vendidas",
+    num: G.unidades || 0,
+    ac: "#00B5AD",
+    ico: "datos",
+    tip: "Unidades de producto registradas en los cierres del mes (pesta\xF1a Productos de Kommo). El dinero sale del Presupuesto.",
+    detail: mkDetail("Unidades vendidas", "datos", "#00B5AD", fmtInt(G.unidades || 0), "Suma de las unidades de producto que cada vendedora registr\xF3 en sus cierres del mes (pesta\xF1a Productos del lead en Kommo). El monto cerrado sigue saliendo del campo Presupuesto.", v => v.unidades || 0, fmtInt),
+    spark: sparkOf(G.unidades || 0),
+    sub: /*#__PURE__*/React.createElement("span", null, "en ", /*#__PURE__*/React.createElement("b", {
+      className: "num"
+    }, G.cierres), " cierres")
   }), /*#__PURE__*/React.createElement(Kpi, {
     l: "Tiempo de resp.",
     num: D.metrics.promPrimeraMin || 0,
