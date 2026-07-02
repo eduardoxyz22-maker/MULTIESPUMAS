@@ -1493,4 +1493,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: asegurar index regenerado con botones->Kommo (workerUrl)
+# rebuild: regenerar junio con template final (2026-07-02)
