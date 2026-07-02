@@ -198,7 +198,9 @@ def detect_suc(vname, lead):
 # ─────────────────────────────────────────────────────────────────────────────
 #  PERIODO
 # ─────────────────────────────────────────────────────────────────────────────
-now   = datetime.datetime.now()
+# Hora de BOLIVIA (UTC-4): el runner de GitHub Actions corre en UTC, así que
+# datetime.now() marcaba 4h adelantado (el "Actualizado 22:10" era 18:10 real).
+now   = datetime.datetime.utcnow() - datetime.timedelta(hours=4)
 YEAR  = ARGS.year  or now.year
 MONTH = ARGS.month or now.month
 DIM   = calendar.monthrange(YEAR, MONTH)[1]
