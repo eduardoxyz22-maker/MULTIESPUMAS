@@ -1,14 +1,24 @@
 # ATC MULTIESPUMAS
 
-Skill de referencia para el Reporte Semanal ATC de Heaven Colchones.
+Skill de referencia para el Reporte ATC de Heaven Colchones.
+
+> 📄 **Contexto completo y actualizado en `CONTEXTO_ATC.md` (raíz del repo).**
+> Leerlo primero: explica la arquitectura actual (bundle Kanban dinámico, generadores,
+> cron diario, clasificadores). Esta skill quedó parcialmente desactualizada.
 
 ## URLs en producción
 
-| Archivo | URL |
-|---|---|
-| Reporte ATC (fijo mayo 2026) | https://eduardoxyz22-maker.github.io/MULTIESPUMAS/reporte-atc-20260522.html |
-| Reporte ATC (semanal auto) | https://eduardoxyz22-maker.github.io/MULTIESPUMAS/reporte-semanal-atc.html |
-| CSV ATC (descarga directa) | https://eduardoxyz22-maker.github.io/MULTIESPUMAS/atc-semanal.csv |
+| Archivo | URL | Se actualiza |
+|---|---|---|
+| Reporte ATC Kanban (bundle React) | .../reporte-atc-20260522.html | ✅ diario (NO es snapshot fijo) |
+| Reporte ATC semanal (HTML simple) | .../reporte-semanal-atc.html | ✅ diario |
+| CSV ATC (descarga directa) | .../atc-semanal.csv | ✅ diario |
+
+Base: `https://eduardoxyz22-maker.github.io/MULTIESPUMAS/`
+
+**Actualización**: diaria 17:00 Bolivia (cron `0 21 * * *`) + manual (Actions → Reporte Semanal ATC).
+El bundle `reporte-atc-20260522.html` se regenera con `generar_reporte_atc_bundle.py`
+(reinyecta datos frescos en el bundle React; plantilla estable en `reporte-atc-template.html`).
 
 ## Tablero Trello ATC
 
