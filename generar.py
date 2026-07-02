@@ -1513,4 +1513,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: releer productos/unidades desde Kommo (2026-07-02b)
+# rebuild: releer etapa Atendido renombrada (2026-07-02c)
