@@ -1,1 +1,2 @@
-redeploy: 2026-07-02T15:38
+redeploy limpio 15:51 UTC
+causa: cola de Pages congestionada, ultimo deploy exitoso 6f8c75a
