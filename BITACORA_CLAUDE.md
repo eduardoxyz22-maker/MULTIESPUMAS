@@ -75,6 +75,21 @@ Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedim
 - Etiquetado del origen: manual por las vendedoras preguntando "¿cómo nos encontraste?".
 - Insight núcleo del negocio: la carga manual convierte ~57% vs ~1% del bot; ~8% de los leads (manuales) producen ~90% de las ventas.
 
+## 4b. Adiciones del 2026-07-02 (tarde)
+
+- **Ficha "Unidades vendidas"** en el Pulso del mes: suma `metadata.quantity` de los `catalog_elements`
+  (pestaña Productos de Kommo) de los cierres del mes, por vendedora (clic → drawer). El dinero
+  (cerrado/ticket/pipeline) SIGUE saliendo del campo **Presupuesto** (`price`), NO del valor de productos.
+  Producto sin cantidad cuenta como 1. Los fetches de leads llevan `with=contacts,catalog_elements`.
+- **REGLA CRÍTICA DE CONTEO**: un lead solo cuenta como venta (cierre + monto + unidades) si está en
+  etapa **Compradores** Y tiene **"Fecha contrato"** dentro del mes. Compradores sin Fecha contrato =
+  invisible para el dashboard (caso real: lead de Maria con producto que no sumaba unidades).
+- **Etapa "Atendido"** agregada al embudo en Kommo: clasificada con clase propia (`atendido`), color
+  cyan #22A7C9 en la distribución. NO cuenta como calificado (calificados = al menos Interesado).
+  El tiempo de 1ª respuesta ya la cubre automáticamente (evento `lead_status_changed`).
+- **GitHub Pages se atascó** (5+ deploys "deployment_queued→timeout" con status global verde):
+  se resolvió con el toggle Settings→Pages→None→main. Documentado como playbook en §3.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

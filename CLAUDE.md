@@ -28,7 +28,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
 
 ## Etapas del pipeline
-`Incoming leads` → `Nueva consulta` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
+`Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
+("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)
 
 ## Vendedoras
 Mirian Salazar, Maria Flores, Isabel Robledo, Carola Chavez (+ Jonathan Monje). Sucursales: Mia Plaza, Buenos Aires, Central.

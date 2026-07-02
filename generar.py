@@ -66,10 +66,12 @@ STAGE_RULES = [
     ("agendado",    ["agendad", "visita", "cita", "agenda", "showroom"]),
     ("cotizacion",  ["cotiz", "propuest", "quot", "presupuest"]),
     ("interesado",  ["interesad", "negocia", "seguimiento", "interest"]),
+    ("atendido",    ["atendid"]),      # consulta ya respondida (aún no calificada)
     ("nueva",       ["nueva", "nuevo", "consulta", "entrante", "inbound", "primer", "lead"]),
 ]
 STAGE_COLORS = {
-    "Nueva consulta": "#27313F", "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9",
+    "Nueva consulta": "#27313F", "Atendido": "#22A7C9", "ATENDIDO": "#22A7C9",
+    "Interesado": "#2E6FE0", "Cotización enviada": "#7A4AD9",
     "Agendado / Visita": "#D98300", "Compradores": "#159A57", "No Responden": "#646E7B",
 }
 
@@ -320,7 +322,7 @@ def lead_units(ld):
     return total
 
 def blank_vendor():
-    return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0, unidades=0,
+    return dict(leads=0, cierres=0, value=0, pipeline=0, noResp=0, agendado=0, interesado=0, unidades=0, atendido=0,
                 cotizacion=0, nueva=0, calif=0, manual=0, bot=0, u24=0, nunca=0,
                 tarde=0, backlog=0, fuera=0, entra_dentro=0, entra_fuera=0, fix_dentro=0, fix_fuera=0, resp_minutes=[], stage=defaultdict(int),
                 leads_sd=0, cierres_sd=0, value_sd=0, agendado_sd=0,
@@ -385,6 +387,8 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
             d["cotizacion"] += 1; d["calif"] += 1
         elif cls == "interesado":
             d["interesado"] += 1; d["calif"] += 1
+        elif cls == "atendido":
+            d["atendido"] += 1                 # respondida, pero NO cuenta como calificado
         elif cls == "nueva":
             d["nueva"] += 1
         if ld.get("created_by") == 0: d["bot"] += 1
