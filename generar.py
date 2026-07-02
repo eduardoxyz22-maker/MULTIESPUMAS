@@ -1513,4 +1513,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: releer etapa Atendido renombrada (2026-07-02c)
+# rebuild: releer nombre final de etapa Atendido (2026-07-02d)
