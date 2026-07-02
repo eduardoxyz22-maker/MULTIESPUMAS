@@ -53,6 +53,9 @@ jobs:
             echo "Regenerando mes pasado: $EXTRA"
           fi
           python generar.py $EXTRA
+          # ONE-SHOT (retirar tras esta corrida): regenerar el archivo de Mayo
+          # con el template final. Solo reescribe panel_2026_05.html.
+          python generar.py --month 5 --year 2026
 
       - name: Commit y push del panel actualizado
         run: |

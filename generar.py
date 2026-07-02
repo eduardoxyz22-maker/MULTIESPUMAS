@@ -1493,4 +1493,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: regenerar junio con template final (2026-07-02)
+# rebuild: regenerar mayo con template final (2026-07-02)
