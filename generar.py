@@ -1509,4 +1509,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: regenerar mayo con template final (2026-07-02)
+# rebuild: releer productos/unidades desde Kommo (2026-07-02b)
