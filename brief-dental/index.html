@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A3A44">
+<title>Brief de Campaña · Clínica Dental Ezequiel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --deep:#0A3A44; --deep2:#0D4653; --teal:#0E8FA3; --aqua:#7FD4E0; --mist:#EAF6F8;
+    --ink:#17272C; --gray:#5E7178; --line:#DCE8EB; --wa:#128C4B; --gold:#D8B45A; --paper:#FDFEFE;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0; font-family:'Manrope',system-ui,sans-serif; color:var(--ink); background:#EDF3F4; font-size:16px; line-height:1.6;}
+  h1,h2{font-family:'Fraunces',Georgia,serif; font-weight:600; margin:0; line-height:1.2;}
+  .wrap{max-width:720px; margin:0 auto; background:var(--paper); min-height:100vh;}
+  @media(min-width:740px){ .wrap{margin:26px auto; border-radius:20px; overflow:hidden; box-shadow:0 14px 50px rgba(10,58,68,.14);} }
+
+  header{background:linear-gradient(155deg,var(--deep),var(--deep2)); color:#fff; padding:44px 26px 34px;}
+  .eyebrow{font-size:11.5px; letter-spacing:2.5px; text-transform:uppercase; font-weight:800; color:var(--aqua); margin-bottom:10px;}
+  header h1{font-size:clamp(26px,5.6vw,34px); color:#fff;}
+  header p{color:#B9D6DC; margin:12px 0 0; font-size:15px; max-width:520px;}
+  header .time{margin-top:14px; font-size:13px; color:#8FB4BC;}
+
+  /* sticky progress */
+  .prog{position:sticky; top:0; z-index:50; background:#fff; border-bottom:1px solid var(--line); padding:10px 26px; display:flex; align-items:center; gap:14px;}
+  .prog .bar{flex:1; height:8px; background:#E2EEF1; border-radius:8px; overflow:hidden;}
+  .prog .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--teal),var(--aqua)); border-radius:8px; transition:width .4s ease;}
+  .prog .pct{font-weight:800; color:var(--deep); font-size:13.5px; min-width:74px; text-align:right;}
+
+  main{padding:10px 26px 40px;}
+  .sec{padding:26px 0 8px; border-bottom:1px solid var(--line);}
+  .sec:last-of-type{border-bottom:none;}
+  .sec h2{font-size:20px; color:var(--deep); display:flex; gap:10px; align-items:center; margin-bottom:4px;}
+  .sec h2 .n{flex:0 0 auto; width:28px; height:28px; border-radius:50%; background:var(--mist); color:var(--deep); font-family:'Manrope'; font-weight:800; font-size:14px; display:flex; align-items:center; justify-content:center;}
+  .sec .why{font-size:13px; color:var(--gray); font-style:italic; margin:2px 0 14px;}
+
+  .q{margin:16px 0;}
+  label.q-l{display:block; font-weight:700; font-size:14.5px; color:var(--deep); margin-bottom:7px;}
+  label.q-l small{font-weight:500; color:var(--gray);}
+  input[type=text], textarea, select{
+    width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font-family:'Manrope'; font-size:15px;
+    color:var(--ink); background:#fff; outline:none; transition:border-color .25s, box-shadow .25s;}
+  input[type=text]:focus, textarea:focus, select:focus{border-color:var(--teal); box-shadow:0 0 0 4px #0E8FA318;}
+  textarea{min-height:88px; resize:vertical;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chips label{border:1.5px solid var(--line); border-radius:30px; padding:9px 16px; font-size:13.5px; cursor:pointer; user-select:none; transition:all .2s; background:#fff;}
+  .chips input{display:none;}
+  .chips input:checked + span{color:#fff;}
+  .chips label:has(input:checked){background:var(--teal); border-color:var(--teal); color:#fff; font-weight:700;}
+
+  .note{background:var(--mist); border-left:4px solid var(--teal); border-radius:10px; padding:12px 15px; font-size:13.5px; color:#33555D; margin:14px 0;}
+  .note b{color:var(--deep);}
+
+  .actions{padding:26px; background:linear-gradient(180deg,#F4FAFB,#fff); border-top:1px solid var(--line); text-align:center;}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; border:none; cursor:pointer; font-family:'Manrope'; font-weight:800;
+    font-size:16px; padding:15px 30px; border-radius:40px; transition:transform .2s, box-shadow .2s; width:100%; max-width:380px; margin:6px auto;}
+  .btn:hover{transform:scale(1.02);}
+  .btn.primary{background:var(--deep); color:#fff; box-shadow:0 10px 26px rgba(10,58,68,.3);}
+  .btn.wa{background:var(--wa); color:#fff; box-shadow:0 10px 26px rgba(18,140,75,.3);}
+  .hintline{font-size:12.5px; color:var(--gray); margin-top:10px;}
+  .toast{position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--deep); color:#fff;
+    padding:13px 24px; border-radius:40px; font-size:14px; font-weight:700; opacity:0; transition:all .4s; z-index:99; box-shadow:0 12px 32px rgba(0,0,0,.3);}
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  footer{text-align:center; font-size:12px; color:var(--gray); padding:18px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">Brief de campaña · Confidencial</div>
+  <h1>Conozcamos tu consultorio a fondo</h1>
+  <p>Estas respuestas nos permiten diseñar una campaña a la medida de tu clínica — en qué invertir, qué promocionar y cómo hablarle a tus pacientes. Cuanto más completo, mejor apunta la estrategia.</p>
+  <div class="time">⏱ Toma unos 10–15 minutos · Se puede responder aproximado</div>
+</header>
+
+<div class="prog">
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <div class="pct" id="pct">0% listo</div>
+</div>
+
+<main id="form">
+
+  <!-- 1 NEGOCIO -->
+  <div class="sec">
+    <h2><span class="n">1</span>Tu negocio por dentro</h2>
+    <div class="why">Para decidir qué servicios conviene promocionar primero.</div>
+    <div class="q"><label class="q-l">¿Qué servicios ofrecés y cuánto cuesta cada uno? <small>(aproximado está bien)</small></label>
+      <textarea data-k="Servicios y precios" placeholder="Ej: Limpieza Bs 150, Blanqueamiento Bs 800, Ortodoncia Bs 6.000..."></textarea></div>
+    <div class="q"><label class="q-l">¿Cuál de esos servicios te deja mejor ganancia?</label>
+      <input type="text" data-k="Servicio más rentable" placeholder="Ej: ortodoncia y blanqueamiento"></div>
+    <div class="q"><label class="q-l">¿Cuántas citas nuevas por semana podés atender sin saturarte?</label>
+      <input type="text" data-k="Capacidad semanal" placeholder="Ej: 10-15 citas nuevas por semana"></div>
+    <div class="q"><label class="q-l">¿Qué días u horarios se te quedan vacíos y te gustaría llenar?</label>
+      <input type="text" data-k="Horarios muertos" placeholder="Ej: martes y jueves por la mañana"></div>
+  </div>
+
+  <!-- 2 HISTORIAL -->
+  <div class="sec">
+    <h2><span class="n">2</span>Historia y temporadas</h2>
+    <div class="why">Tu historial nos dice qué funcionó, qué no, y qué esperar de cada mes.</div>
+    <div class="q"><label class="q-l">¿Hiciste publicidad antes (Facebook, Instagram, volantes, radio)? ¿Cómo te fue?</label>
+      <textarea data-k="Publicidad anterior" placeholder="Ej: publiqué anuncios yo mismo el año pasado, llegaban mensajes pero pocos agendaban..."></textarea></div>
+    <div class="q"><label class="q-l">¿Nos podés dar acceso al administrador de anuncios anterior? <small>(si existe)</small></label>
+      <div class="chips">
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Sí, tengo acceso y lo comparto"><span>Sí, lo comparto</span></label>
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Existe pero no sé cómo dar acceso"><span>Existe, no sé darlo</span></label>
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Nunca hice anuncios pagados"><span>Nunca hice</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">¿Cuáles son tus meses fuertes y cuáles los flojos? <small>(pensá en el año pasado)</small></label>
+      <textarea data-k="Estacionalidad" placeholder="Ej: enero-febrero flojos, julio (aguinaldo) y diciembre fuertes..."></textarea></div>
+    <div class="q"><label class="q-l">Hoy, ¿de dónde llegan la mayoría de tus pacientes?</label>
+      <div class="chips">
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Recomendación / boca a boca"><span>Recomendación</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Pasan por la zona"><span>Pasan por la zona</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Redes sociales"><span>Redes sociales</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Otro"><span>Otro</span></label>
+      </div></div>
+  </div>
+
+  <!-- 3 EMBUDO -->
+  <div class="sec">
+    <h2><span class="n">3</span>Cómo atendés hoy los mensajes</h2>
+    <div class="why">La campaña trae conversaciones; acá vemos cómo convertirlas en citas.</div>
+    <div class="q"><label class="q-l">¿Quién responde el WhatsApp del consultorio y en qué horario?</label>
+      <input type="text" data-k="Quién responde WhatsApp" placeholder="Ej: la recepcionista de 8 a 18, después nadie"></div>
+    <div class="q"><label class="q-l">¿Cuánto tardan normalmente en responder un mensaje nuevo?</label>
+      <div class="chips">
+        <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="Menos de 15 minutos"><span>&lt; 15 min</span></label>
+        <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="Dentro de la hora"><span>~ 1 hora</span></label>
+        <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="Varias horas"><span>Varias horas</span></label>
+        <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="A veces al día siguiente"><span>Al día siguiente</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">De cada 10 personas que escriben, ¿cuántas terminan agendando? ¿Y cuántas llegan a la cita?</label>
+      <input type="text" data-k="Conversión actual" placeholder="Ej: de 10 escriben, agendan 3 y llegan 2"></div>
+    <div class="q"><label class="q-l">¿Qué excusas u objeciones escuchás más seguido?</label>
+      <div class="chips">
+        <label><input type="checkbox" data-k="Objeciones" value="Precio"><span>«Está caro»</span></label>
+        <label><input type="checkbox" data-k="Objeciones" value="Miedo al dentista"><span>Miedo</span></label>
+        <label><input type="checkbox" data-k="Objeciones" value="Falta de tiempo"><span>«No tengo tiempo»</span></label>
+        <label><input type="checkbox" data-k="Objeciones" value="Lo consulto y desaparece"><span>Preguntan y desaparecen</span></label>
+      </div></div>
+  </div>
+
+  <!-- 4 DIFERENCIAL -->
+  <div class="sec">
+    <h2><span class="n">4</span>Tu diferencia frente a otros</h2>
+    <div class="why">Esto define el mensaje de los anuncios: por qué elegirte a vos.</div>
+    <div class="q"><label class="q-l">¿Por qué un paciente debería elegirte a vos y no a otro consultorio de la zona?</label>
+      <textarea data-k="Diferenciales" placeholder="Ej: equipos modernos, atención puntual, trato humano, facilidades de pago..."></textarea></div>
+    <div class="q"><label class="q-l">¿Sabés qué cobran los consultorios cercanos por una limpieza o los servicios principales?</label>
+      <textarea data-k="Precios de competencia" placeholder="Ej: el de enfrente cobra Bs 120 la limpieza..."></textarea></div>
+    <div class="q"><label class="q-l">¿Ofrecés facilidades de pago, promos o convenios?</label>
+      <input type="text" data-k="Facilidades" placeholder="Ej: pago en 3 cuotas para ortodoncia, descuento familiar..."></div>
+  </div>
+
+  <!-- 5 MATERIAL -->
+  <div class="sec">
+    <h2><span class="n">5</span>Material disponible</h2>
+    <div class="why">Con esto Gabriela arma los artes y videos de la campaña.</div>
+    <div class="q"><label class="q-l">¿Qué material tenés hoy?</label>
+      <div class="chips">
+        <label><input type="checkbox" data-k="Material disponible" value="Fotos del consultorio"><span>Fotos del consultorio</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Fotos/videos del equipo"><span>Del equipo</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Casos antes/después"><span>Antes / después</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Testimonios o reseñas"><span>Testimonios</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Logo en buena calidad"><span>Logo</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Casi nada, hay que producir"><span>Casi nada</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">Los casos antes/después, ¿tienen consentimiento del paciente para publicarse?</label>
+      <div class="chips">
+        <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="Sí, firmado"><span>Sí, firmado</span></label>
+        <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="Verbal solamente"><span>Solo verbal</span></label>
+        <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="No / no sé"><span>No / no sé</span></label>
+      </div></div>
+    <div class="note"><b>Importante:</b> en salud solo se pueden publicar casos reales con consentimiento firmado. Si no lo hay, preparamos una plantilla simple para que tus pacientes la firmen.</div>
+  </div>
+
+  <!-- 6 METAS -->
+  <div class="sec">
+    <h2><span class="n">6</span>Metas e inversión</h2>
+    <div class="why">Para poner un número al éxito y dimensionar bien la pauta.</div>
+    <div class="q"><label class="q-l">En 3 meses, ¿qué resultado te haría decir «esto funcionó»?</label>
+      <textarea data-k="Meta a 3 meses" placeholder="Ej: 20 pacientes nuevos por mes, llenar los martes, vender 3 ortodoncias..."></textarea></div>
+    <div class="q"><label class="q-l">¿Qué presupuesto mensual de pauta podés sostener 3 meses seguidos sin cortarlo?</label>
+      <div class="chips">
+        <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 600-900"><span>Bs 600–900</span></label>
+        <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 900-1.500"><span>Bs 900–1.500</span></label>
+        <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 1.500-3.000"><span>Bs 1.500–3.000</span></label>
+        <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Más de Bs 3.000"><span>+ Bs 3.000</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">¿Algo más que debamos saber?</label>
+      <textarea data-k="Comentarios extra" placeholder="Lo que quieras agregar..."></textarea></div>
+  </div>
+
+</main>
+
+<div class="actions">
+  <button class="btn wa" onclick="sendWA()">💬 Enviar respuestas por WhatsApp</button>
+  <button class="btn primary" onclick="copyAll()">📋 Copiar mis respuestas</button>
+  <div class="hintline">Al enviar, tus respuestas se arman solas en un mensaje — solo tocás enviar.</div>
+</div>
+
+<footer>Brief confidencial · Clínica Dental Ezequiel · Preparado por Eduardo Añez & Gabriela Parada</footer>
+</div>
+
+<div class="toast" id="toast">✅ Respuestas copiadas</div>
+
+<script>
+(function(){
+  var form = document.getElementById('form');
+  var inputs = Array.prototype.slice.call(form.querySelectorAll('input[type=text], textarea'));
+  var groups = {};
+  form.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(function(i){
+    var g = i.name || i.dataset.k;
+    (groups[g] = groups[g] || []).push(i);
+  });
+
+  function progress(){
+    var total = inputs.length + Object.keys(groups).length;
+    var done = inputs.filter(function(i){ return i.value.trim() !== ''; }).length;
+    Object.keys(groups).forEach(function(g){
+      if(groups[g].some(function(i){ return i.checked; })) done++;
+    });
+    var p = Math.round(done/total*100);
+    document.getElementById('fill').style.width = p + '%';
+    document.getElementById('pct').textContent = p + '% listo';
+  }
+  form.addEventListener('input', progress);
+  form.addEventListener('change', progress);
+  progress();
+
+  function collect(){
+    var lines = ['*BRIEF DE CAMPAÑA — CLÍNICA DENTAL*', ''];
+    var secs = form.querySelectorAll('.sec');
+    secs.forEach(function(sec){
+      lines.push('*' + sec.querySelector('h2').textContent.trim() + '*');
+      sec.querySelectorAll('.q').forEach(function(q){
+        var k, v = '';
+        var txt = q.querySelector('input[type=text], textarea');
+        if(txt){ k = txt.dataset.k; v = txt.value.trim(); }
+        else {
+          var checked = Array.prototype.filter.call(q.querySelectorAll('input'), function(i){ return i.checked; });
+          if(checked.length){ k = checked[0].dataset.k; v = checked.map(function(i){ return i.value; }).join(', '); }
+          else { var any = q.querySelector('input'); k = any ? any.dataset.k : null; }
+        }
+        if(k) lines.push('• ' + k + ': ' + (v || '(sin responder)'));
+      });
+      lines.push('');
+    });
+    return lines.join('\n');
+  }
+
+  window.copyAll = function(){
+    var text = collect();
+    (navigator.clipboard ? navigator.clipboard.writeText(text) : Promise.reject()).then(show, function(){
+      var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); document.body.removeChild(ta); show();
+    });
+    function show(){
+      var t = document.getElementById('toast');
+      t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); }, 2400);
+    }
+  };
+
+  window.sendWA = function(){
+    var text = collect();
+    window.open('https://wa.me/59162166628?text=' + encodeURIComponent(text), '_blank');
+  };
+})();
+</script>
+</body>
+</html>
