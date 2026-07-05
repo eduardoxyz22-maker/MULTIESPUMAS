@@ -25,7 +25,6 @@
   header p{color:#B9D6DC; margin:12px 0 0; font-size:15px; max-width:520px;}
   header .time{margin-top:14px; font-size:13px; color:#8FB4BC;}
 
-  /* sticky progress */
   .prog{position:sticky; top:0; z-index:50; background:#fff; border-bottom:1px solid var(--line); padding:10px 26px; display:flex; align-items:center; gap:14px;}
   .prog .bar{flex:1; height:8px; background:#E2EEF1; border-radius:8px; overflow:hidden;}
   .prog .fill{height:100%; width:0%; background:linear-gradient(90deg,var(--teal),var(--aqua)); border-radius:8px; transition:width .4s ease;}
@@ -41,23 +40,24 @@
   .q{margin:16px 0;}
   label.q-l{display:block; font-weight:700; font-size:14.5px; color:var(--deep); margin-bottom:7px;}
   label.q-l small{font-weight:500; color:var(--gray);}
-  input[type=text], textarea, select{
+  input[type=text], textarea{
     width:100%; border:1.5px solid var(--line); border-radius:12px; padding:12px 14px; font-family:'Manrope'; font-size:15px;
     color:var(--ink); background:#fff; outline:none; transition:border-color .25s, box-shadow .25s;}
-  input[type=text]:focus, textarea:focus, select:focus{border-color:var(--teal); box-shadow:0 0 0 4px #0E8FA318;}
+  input[type=text]:focus, textarea:focus{border-color:var(--teal); box-shadow:0 0 0 4px #0E8FA318;}
   textarea{min-height:88px; resize:vertical;}
   .chips{display:flex; flex-wrap:wrap; gap:8px;}
   .chips label{border:1.5px solid var(--line); border-radius:30px; padding:9px 16px; font-size:13.5px; cursor:pointer; user-select:none; transition:all .2s; background:#fff;}
   .chips input{display:none;}
-  .chips input:checked + span{color:#fff;}
   .chips label:has(input:checked){background:var(--teal); border-color:var(--teal); color:#fff; font-weight:700;}
 
   .note{background:var(--mist); border-left:4px solid var(--teal); border-radius:10px; padding:12px 15px; font-size:13.5px; color:#33555D; margin:14px 0;}
   .note b{color:var(--deep);}
+  .note.warn{background:#FDF6E7; border-color:var(--gold); color:#6E5A22;}
+  .note.warn b{color:#8a6d24;}
 
   .actions{padding:26px; background:linear-gradient(180deg,#F4FAFB,#fff); border-top:1px solid var(--line); text-align:center;}
   .btn{display:inline-flex; align-items:center; justify-content:center; gap:10px; border:none; cursor:pointer; font-family:'Manrope'; font-weight:800;
-    font-size:16px; padding:15px 30px; border-radius:40px; transition:transform .2s, box-shadow .2s; width:100%; max-width:380px; margin:6px auto;}
+    font-size:16px; padding:15px 30px; border-radius:40px; transition:transform .2s; width:100%; max-width:380px; margin:6px auto;}
   .btn:hover{transform:scale(1.02);}
   .btn.primary{background:var(--deep); color:#fff; box-shadow:0 10px 26px rgba(10,58,68,.3);}
   .btn.wa{background:var(--wa); color:#fff; box-shadow:0 10px 26px rgba(18,140,75,.3);}
@@ -74,8 +74,8 @@
 <header>
   <div class="eyebrow">Brief de campaña · Confidencial</div>
   <h1>Conozcamos tu consultorio a fondo</h1>
-  <p>Estas respuestas nos permiten diseñar una campaña a la medida de tu clínica — en qué invertir, qué promocionar y cómo hablarle a tus pacientes. Cuanto más completo, mejor apunta la estrategia.</p>
-  <div class="time">⏱ Toma unos 10–15 minutos · Se puede responder aproximado</div>
+  <p>Estas respuestas nos permiten diseñar la campaña a la medida de tu clínica: qué promocionar, a quién, con qué mensaje y con qué inversión. Cuanto más completo, mejor apunta la estrategia — y menos plata se desperdicia probando.</p>
+  <div class="time">⏱ Toma unos 20 minutos · Se puede responder aproximado · Se puede llenar en partes</div>
 </header>
 
 <div class="prog">
@@ -85,47 +85,99 @@
 
 <main id="form">
 
-  <!-- 1 NEGOCIO -->
+  <!-- 1 DATOS -->
   <div class="sec">
-    <h2><span class="n">1</span>Tu negocio por dentro</h2>
-    <div class="why">Para decidir qué servicios conviene promocionar primero.</div>
-    <div class="q"><label class="q-l">¿Qué servicios ofrecés y cuánto cuesta cada uno? <small>(aproximado está bien)</small></label>
-      <textarea data-k="Servicios y precios" placeholder="Ej: Limpieza Bs 150, Blanqueamiento Bs 800, Ortodoncia Bs 6.000..."></textarea></div>
-    <div class="q"><label class="q-l">¿Cuál de esos servicios te deja mejor ganancia?</label>
-      <input type="text" data-k="Servicio más rentable" placeholder="Ej: ortodoncia y blanqueamiento"></div>
+    <h2><span class="n">1</span>Datos del consultorio</h2>
+    <div class="why">La base: quiénes son, dónde están y cómo trabajan.</div>
+    <div class="q"><label class="q-l">Nombre comercial exacto y dirección <small>(con referencia, ej: "frente al mercado")</small></label>
+      <input type="text" data-k="Nombre y dirección" placeholder="Ej: Clínica Dental Ezequiel, calle X, frente a..."></div>
+    <div class="q"><label class="q-l">Horarios de atención completos</label>
+      <input type="text" data-k="Horarios" placeholder="Ej: Lun-Vie 8:00-19:00, Sáb 8:00-13:00"></div>
+    <div class="q"><label class="q-l">¿Cuántos profesionales atienden y qué especialidades tienen?</label>
+      <textarea data-k="Equipo y especialidades" placeholder="Ej: Dr. Ezequiel (general y estética), Dra. X (ortodoncia)..."></textarea></div>
+    <div class="q"><label class="q-l">Años de experiencia y credenciales que valga la pena mostrar <small>(títulos, cursos, casos)</small></label>
+      <textarea data-k="Trayectoria y credenciales" placeholder="Ej: 12 años de experiencia, especialidad en implantes en..."></textarea></div>
+    <div class="q"><label class="q-l">¿Trabajan con seguros o convenios de empresas?</label>
+      <input type="text" data-k="Seguros y convenios" placeholder="Ej: no / sí, con la empresa X..."></div>
+  </div>
+
+  <!-- 2 SERVICIOS -->
+  <div class="sec">
+    <h2><span class="n">2</span>Servicios y números</h2>
+    <div class="why">Para decidir qué promocionar primero y calcular el retorno real de la campaña.</div>
+    <div class="q"><label class="q-l">Lista de servicios con su precio <small>(aproximado está bien)</small></label>
+      <textarea data-k="Servicios y precios" placeholder="Ej: Limpieza Bs 150, Blanqueamiento Bs 800, Ortodoncia Bs 6.000, Implante Bs..."></textarea></div>
+    <div class="q"><label class="q-l">¿Cuál servicio es el MÁS PEDIDO y cuál el que MÁS GANANCIA deja? <small>(no siempre son el mismo)</small></label>
+      <input type="text" data-k="Más pedido vs más rentable" placeholder="Ej: más pedido limpieza, más rentable ortodoncia"></div>
+    <div class="q"><label class="q-l">¿Cuánto gasta en promedio un paciente por visita? ¿Y cuántas veces vuelve al año?</label>
+      <input type="text" data-k="Ticket promedio y frecuencia" placeholder="Ej: Bs 200 por visita, vuelve 2 veces al año"></div>
+    <div class="q"><label class="q-l">Hoy sin publicidad, ¿cuántos pacientes NUEVOS llegan por mes? <small>(nuestra línea de partida)</small></label>
+      <input type="text" data-k="Pacientes nuevos/mes actual" placeholder="Ej: unos 8-10 nuevos al mes"></div>
     <div class="q"><label class="q-l">¿Cuántas citas nuevas por semana podés atender sin saturarte?</label>
       <input type="text" data-k="Capacidad semanal" placeholder="Ej: 10-15 citas nuevas por semana"></div>
-    <div class="q"><label class="q-l">¿Qué días u horarios se te quedan vacíos y te gustaría llenar?</label>
+    <div class="q"><label class="q-l">¿Qué días u horarios se quedan vacíos y querés llenar?</label>
       <input type="text" data-k="Horarios muertos" placeholder="Ej: martes y jueves por la mañana"></div>
   </div>
 
-  <!-- 2 HISTORIAL -->
+  <!-- 3 PACIENTE IDEAL -->
   <div class="sec">
-    <h2><span class="n">2</span>Historia y temporadas</h2>
-    <div class="why">Tu historial nos dice qué funcionó, qué no, y qué esperar de cada mes.</div>
-    <div class="q"><label class="q-l">¿Hiciste publicidad antes (Facebook, Instagram, volantes, radio)? ¿Cómo te fue?</label>
-      <textarea data-k="Publicidad anterior" placeholder="Ej: publiqué anuncios yo mismo el año pasado, llegaban mensajes pero pocos agendaban..."></textarea></div>
-    <div class="q"><label class="q-l">¿Nos podés dar acceso al administrador de anuncios anterior? <small>(si existe)</small></label>
+    <h2><span class="n">3</span>Tu paciente ideal</h2>
+    <div class="why">A quién le hablamos define el mensaje, las fotos y hasta el horario de los anuncios.</div>
+    <div class="q"><label class="q-l">¿Quién es tu paciente típico? <small>(edad, ocupación, de dónde viene)</small></label>
+      <textarea data-k="Paciente típico" placeholder="Ej: mujeres 25-45 que trabajan en la zona del mercado, madres con hijos..."></textarea></div>
+    <div class="q"><label class="q-l">¿Qué tipo de paciente te gustaría atraer MÁS?</label>
       <div class="chips">
-        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Sí, tengo acceso y lo comparto"><span>Sí, lo comparto</span></label>
-        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Existe pero no sé cómo dar acceso"><span>Existe, no sé darlo</span></label>
-        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Nunca hice anuncios pagados"><span>Nunca hice</span></label>
+        <label><input type="checkbox" data-k="Paciente deseado" value="Adultos jóvenes (estética)"><span>Jóvenes / estética</span></label>
+        <label><input type="checkbox" data-k="Paciente deseado" value="Familias con niños"><span>Familias con niños</span></label>
+        <label><input type="checkbox" data-k="Paciente deseado" value="Adultos mayores (prótesis/implantes)"><span>Adultos mayores</span></label>
+        <label><input type="checkbox" data-k="Paciente deseado" value="Trabajadores de la zona"><span>Trabajadores de la zona</span></label>
+        <label><input type="checkbox" data-k="Paciente deseado" value="Pacientes de ortodoncia"><span>Ortodoncia</span></label>
       </div></div>
-    <div class="q"><label class="q-l">¿Cuáles son tus meses fuertes y cuáles los flojos? <small>(pensá en el año pasado)</small></label>
-      <textarea data-k="Estacionalidad" placeholder="Ej: enero-febrero flojos, julio (aguinaldo) y diciembre fuertes..."></textarea></div>
-    <div class="q"><label class="q-l">Hoy, ¿de dónde llegan la mayoría de tus pacientes?</label>
-      <div class="chips">
-        <label><input type="checkbox" data-k="Origen de pacientes" value="Recomendación / boca a boca"><span>Recomendación</span></label>
-        <label><input type="checkbox" data-k="Origen de pacientes" value="Pasan por la zona"><span>Pasan por la zona</span></label>
-        <label><input type="checkbox" data-k="Origen de pacientes" value="Redes sociales"><span>Redes sociales</span></label>
-        <label><input type="checkbox" data-k="Origen de pacientes" value="Otro"><span>Otro</span></label>
-      </div></div>
+    <div class="q"><label class="q-l">¿Atendés niños? ¿Desde qué edad?</label>
+      <input type="text" data-k="Atención a niños" placeholder="Ej: sí, desde los 4 años / no"></div>
+    <div class="q"><label class="q-l">¿De qué barrios o zonas vienen la mayoría de tus pacientes actuales?</label>
+      <input type="text" data-k="Zonas de origen" placeholder="Ej: Mutualista, Villa 1ro de Mayo, 3er-4to anillo..."></div>
   </div>
 
-  <!-- 3 EMBUDO -->
+  <!-- 4 HISTORIAL Y ACCESOS -->
   <div class="sec">
-    <h2><span class="n">3</span>Cómo atendés hoy los mensajes</h2>
-    <div class="why">La campaña trae conversaciones; acá vemos cómo convertirlas en citas.</div>
+    <h2><span class="n">4</span>Historial digital y accesos</h2>
+    <div class="why">Tu historial nos dice qué funcionó y qué no; los accesos nos permiten trabajar sin trabas.</div>
+    <div class="q"><label class="q-l">¿Hiciste publicidad antes (Facebook, Instagram, volantes, radio)? ¿Cómo te fue y cuánto invertiste?</label>
+      <textarea data-k="Publicidad anterior" placeholder="Ej: pauté yo mismo el año pasado unos Bs 500/mes, llegaban mensajes pero pocos agendaban..."></textarea></div>
+    <div class="q"><label class="q-l">¿Nos podés dar acceso al administrador de anuncios anterior? <small>(si existe)</small></label>
+      <div class="chips">
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Sí, lo comparto"><span>Sí, lo comparto</span></label>
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Existe pero no sé darlo"><span>Existe, no sé darlo</span></label>
+        <label><input type="radio" name="acceso" data-k="Acceso a anuncios previos" value="Nunca hice anuncios pagados"><span>Nunca hice</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">¿Qué cuentas tiene hoy el consultorio y quién las maneja?</label>
+      <div class="chips">
+        <label><input type="checkbox" data-k="Cuentas existentes" value="Página de Facebook"><span>Página Facebook</span></label>
+        <label><input type="checkbox" data-k="Cuentas existentes" value="Instagram"><span>Instagram</span></label>
+        <label><input type="checkbox" data-k="Cuentas existentes" value="WhatsApp Business"><span>WhatsApp Business</span></label>
+        <label><input type="checkbox" data-k="Cuentas existentes" value="TikTok"><span>TikTok</span></label>
+        <label><input type="checkbox" data-k="Cuentas existentes" value="Google Maps / ficha"><span>Google Maps</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">¿Quién administra hoy esas redes y cada cuánto publican?</label>
+      <input type="text" data-k="Quién administra redes" placeholder="Ej: yo mismo cuando puedo, 1 vez por semana"></div>
+    <div class="q"><label class="q-l">¿Cuáles son tus meses FUERTES y cuáles los FLOJOS? <small>(pensá en el año pasado — julio, por ejemplo, ¿cómo fue?)</small></label>
+      <textarea data-k="Estacionalidad" placeholder="Ej: enero-febrero flojos por vacaciones, julio (aguinaldo) y diciembre fuertes..."></textarea></div>
+    <div class="q"><label class="q-l">Hoy, ¿de dónde llegan la mayoría de tus pacientes?</label>
+      <div class="chips">
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Recomendación"><span>Recomendación</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Pasan por la zona"><span>Pasan por la zona</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Redes sociales"><span>Redes sociales</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Google Maps"><span>Google Maps</span></label>
+        <label><input type="checkbox" data-k="Origen de pacientes" value="Otro"><span>Otro</span></label>
+      </div></div>
+    <div class="note"><b>Accesos que vamos a necesitar:</b> administrador de la página de Facebook, Instagram, y el WhatsApp Business del consultorio. Te guiamos paso a paso para compartirlos de forma segura — nunca pedimos tu contraseña.</div>
+  </div>
+
+  <!-- 5 EMBUDO -->
+  <div class="sec">
+    <h2><span class="n">5</span>Cómo atendés hoy los mensajes y citas</h2>
+    <div class="why">La campaña trae conversaciones; acá vemos cómo convertirlas en citas y que nadie se pierda.</div>
     <div class="q"><label class="q-l">¿Quién responde el WhatsApp del consultorio y en qué horario?</label>
       <input type="text" data-k="Quién responde WhatsApp" placeholder="Ej: la recepcionista de 8 a 18, después nadie"></div>
     <div class="q"><label class="q-l">¿Cuánto tardan normalmente en responder un mensaje nuevo?</label>
@@ -135,65 +187,93 @@
         <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="Varias horas"><span>Varias horas</span></label>
         <label><input type="radio" name="resp" data-k="Tiempo de respuesta" value="A veces al día siguiente"><span>Al día siguiente</span></label>
       </div></div>
-    <div class="q"><label class="q-l">De cada 10 personas que escriben, ¿cuántas terminan agendando? ¿Y cuántas llegan a la cita?</label>
+    <div class="q"><label class="q-l">Cuando preguntan precio por WhatsApp, ¿qué hacen hoy?</label>
+      <div class="chips">
+        <label><input type="radio" name="precio" data-k="Política de precios por WhatsApp" value="Damos el precio directo"><span>Damos precio directo</span></label>
+        <label><input type="radio" name="precio" data-k="Política de precios por WhatsApp" value="Solo en consulta presencial"><span>Solo en consulta</span></label>
+        <label><input type="radio" name="precio" data-k="Política de precios por WhatsApp" value="Depende del servicio"><span>Depende</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">De cada 10 personas que escriben, ¿cuántas agendan? ¿Y cuántas llegan a la cita?</label>
       <input type="text" data-k="Conversión actual" placeholder="Ej: de 10 escriben, agendan 3 y llegan 2"></div>
+    <div class="q"><label class="q-l">¿Cómo manejan la agenda y los recordatorios de cita?</label>
+      <input type="text" data-k="Agenda y recordatorios" placeholder="Ej: agenda de papel, no mandamos recordatorio / sistema X y recordamos 1 día antes"></div>
     <div class="q"><label class="q-l">¿Qué excusas u objeciones escuchás más seguido?</label>
       <div class="chips">
         <label><input type="checkbox" data-k="Objeciones" value="Precio"><span>«Está caro»</span></label>
         <label><input type="checkbox" data-k="Objeciones" value="Miedo al dentista"><span>Miedo</span></label>
         <label><input type="checkbox" data-k="Objeciones" value="Falta de tiempo"><span>«No tengo tiempo»</span></label>
-        <label><input type="checkbox" data-k="Objeciones" value="Lo consulto y desaparece"><span>Preguntan y desaparecen</span></label>
+        <label><input type="checkbox" data-k="Objeciones" value="Preguntan y desaparecen"><span>Preguntan y desaparecen</span></label>
+        <label><input type="checkbox" data-k="Objeciones" value="Lo dejan para después"><span>«Después vengo»</span></label>
       </div></div>
   </div>
 
-  <!-- 4 DIFERENCIAL -->
+  <!-- 6 COMPETENCIA -->
   <div class="sec">
-    <h2><span class="n">4</span>Tu diferencia frente a otros</h2>
-    <div class="why">Esto define el mensaje de los anuncios: por qué elegirte a vos.</div>
-    <div class="q"><label class="q-l">¿Por qué un paciente debería elegirte a vos y no a otro consultorio de la zona?</label>
-      <textarea data-k="Diferenciales" placeholder="Ej: equipos modernos, atención puntual, trato humano, facilidades de pago..."></textarea></div>
-    <div class="q"><label class="q-l">¿Sabés qué cobran los consultorios cercanos por una limpieza o los servicios principales?</label>
-      <textarea data-k="Precios de competencia" placeholder="Ej: el de enfrente cobra Bs 120 la limpieza..."></textarea></div>
-    <div class="q"><label class="q-l">¿Ofrecés facilidades de pago, promos o convenios?</label>
-      <input type="text" data-k="Facilidades" placeholder="Ej: pago en 3 cuotas para ortodoncia, descuento familiar..."></div>
+    <h2><span class="n">6</span>Competencia y tu diferencia</h2>
+    <div class="why">Esto define el mensaje central: por qué elegirte a vos y no al de la otra cuadra.</div>
+    <div class="q"><label class="q-l">¿Cuáles considerás tus 2-3 competidores directos en la zona?</label>
+      <textarea data-k="Competidores directos" placeholder="Ej: el consultorio de enfrente, la clínica X del 4to anillo..."></textarea></div>
+    <div class="q"><label class="q-l">¿Sabés qué cobran por limpieza u otros servicios? ¿Viste promociones de ellos?</label>
+      <textarea data-k="Precios y promos de competencia" placeholder="Ej: el de enfrente cobra Bs 120 la limpieza y hace 2x1 en..."></textarea></div>
+    <div class="q"><label class="q-l">¿Por qué un paciente debería elegirte a VOS? <small>(sé honesto, esto es el corazón del mensaje)</small></label>
+      <textarea data-k="Diferenciales" placeholder="Ej: equipos modernos, no hago esperar, trato sin dolor, facilidades de pago..."></textarea></div>
+    <div class="q"><label class="q-l">¿Ofrecés facilidades de pago, planes o descuentos?</label>
+      <input type="text" data-k="Facilidades de pago" placeholder="Ej: ortodoncia en cuotas mensuales, descuento familiar..."></div>
   </div>
 
-  <!-- 5 MATERIAL -->
+  <!-- 7 MARCA Y MATERIAL -->
   <div class="sec">
-    <h2><span class="n">5</span>Material disponible</h2>
-    <div class="why">Con esto Gabriela arma los artes y videos de la campaña.</div>
+    <h2><span class="n">7</span>Marca, material y contenido</h2>
+    <div class="why">Con esto Gabriela construye la identidad visual y el contenido del consultorio.</div>
     <div class="q"><label class="q-l">¿Qué material tenés hoy?</label>
       <div class="chips">
+        <label><input type="checkbox" data-k="Material disponible" value="Logo en buena calidad"><span>Logo</span></label>
         <label><input type="checkbox" data-k="Material disponible" value="Fotos del consultorio"><span>Fotos del consultorio</span></label>
         <label><input type="checkbox" data-k="Material disponible" value="Fotos/videos del equipo"><span>Del equipo</span></label>
         <label><input type="checkbox" data-k="Material disponible" value="Casos antes/después"><span>Antes / después</span></label>
         <label><input type="checkbox" data-k="Material disponible" value="Testimonios o reseñas"><span>Testimonios</span></label>
-        <label><input type="checkbox" data-k="Material disponible" value="Logo en buena calidad"><span>Logo</span></label>
-        <label><input type="checkbox" data-k="Material disponible" value="Casi nada, hay que producir"><span>Casi nada</span></label>
+        <label><input type="checkbox" data-k="Material disponible" value="Casi nada"><span>Casi nada</span></label>
       </div></div>
-    <div class="q"><label class="q-l">Los casos antes/después, ¿tienen consentimiento del paciente para publicarse?</label>
+    <div class="q"><label class="q-l">Los casos antes/después, ¿tienen consentimiento FIRMADO del paciente?</label>
       <div class="chips">
         <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="Sí, firmado"><span>Sí, firmado</span></label>
-        <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="Verbal solamente"><span>Solo verbal</span></label>
+        <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="Solo verbal"><span>Solo verbal</span></label>
         <label><input type="radio" name="cons" data-k="Consentimiento antes/después" value="No / no sé"><span>No / no sé</span></label>
       </div></div>
-    <div class="note"><b>Importante:</b> en salud solo se pueden publicar casos reales con consentimiento firmado. Si no lo hay, preparamos una plantilla simple para que tus pacientes la firmen.</div>
+    <div class="q"><label class="q-l">¿Te animás a salir en cámara para los videos? <small>(los reels donde aparece el doctor son los que MÁS confianza generan)</small></label>
+      <div class="chips">
+        <label><input type="radio" name="cam" data-k="Doctor en cámara" value="Sí, sin problema"><span>Sí, sin problema</span></label>
+        <label><input type="radio" name="cam" data-k="Doctor en cámara" value="Sí, pero con guion y práctica"><span>Sí, con guion</span></label>
+        <label><input type="radio" name="cam" data-k="Doctor en cámara" value="Prefiero que salga el equipo"><span>Mejor el equipo</span></label>
+        <label><input type="radio" name="cam" data-k="Doctor en cámara" value="Prefiero no aparecer"><span>Prefiero no</span></label>
+      </div></div>
+    <div class="q"><label class="q-l">¿Hay cuentas de dentistas o clínicas cuyo estilo te GUSTE? <small>(pegá los @ o nombres)</small></label>
+      <input type="text" data-k="Referencias que le gustan" placeholder="Ej: @clinicadentalx, el estilo de..."></div>
+    <div class="q"><label class="q-l">¿Algo que NO quieras mostrar o comunicar? <small>(límites, temas sensibles, privacidad)</small></label>
+      <input type="text" data-k="Límites de contenido" placeholder="Ej: no mostrar procedimientos con sangre, no dar precios en público..."></div>
+    <div class="q"><label class="q-l">¿Quién va a APROBAR el contenido antes de publicar y cuánto suele tardar en responder?</label>
+      <input type="text" data-k="Aprobación de contenido" placeholder="Ej: yo mismo, respondo el mismo día"></div>
+    <div class="note warn"><b>Importante:</b> en salud solo se pueden publicar casos reales con consentimiento firmado. Si no lo tenés, te preparamos una plantilla simple para que tus pacientes la firmen en la consulta.</div>
   </div>
 
-  <!-- 6 METAS -->
+  <!-- 8 OFERTA Y METAS -->
   <div class="sec">
-    <h2><span class="n">6</span>Metas e inversión</h2>
-    <div class="why">Para poner un número al éxito y dimensionar bien la pauta.</div>
+    <h2><span class="n">8</span>Oferta, metas e inversión</h2>
+    <div class="why">Para poner un número al éxito, definir el gancho de la campaña y dimensionar la pauta.</div>
+    <div class="q"><label class="q-l">¿Qué promo o precio gancho estás dispuesto a ofrecer para atraer pacientes nuevos? <small>(ej: limpieza a precio especial)</small></label>
+      <textarea data-k="Oferta gancho" placeholder="Ej: limpieza a Bs 99 la primera vez, valoración gratis, 20% en blanqueamiento..."></textarea></div>
+    <div class="q"><label class="q-l">¿Hasta cuánto descuento tolerás sin perder plata?</label>
+      <input type="text" data-k="Descuento máximo" placeholder="Ej: hasta 30% en limpieza, en ortodoncia nada"></div>
     <div class="q"><label class="q-l">En 3 meses, ¿qué resultado te haría decir «esto funcionó»?</label>
-      <textarea data-k="Meta a 3 meses" placeholder="Ej: 20 pacientes nuevos por mes, llenar los martes, vender 3 ortodoncias..."></textarea></div>
-    <div class="q"><label class="q-l">¿Qué presupuesto mensual de pauta podés sostener 3 meses seguidos sin cortarlo?</label>
+      <textarea data-k="Meta a 3 meses" placeholder="Ej: 20 pacientes nuevos por mes, llenar los martes, cerrar 3 ortodoncias..."></textarea></div>
+    <div class="q"><label class="q-l">¿Qué presupuesto mensual de pauta podés sostener 3 MESES SEGUIDOS sin cortarlo?</label>
       <div class="chips">
         <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 600-900"><span>Bs 600–900</span></label>
         <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 900-1.500"><span>Bs 900–1.500</span></label>
         <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Bs 1.500-3.000"><span>Bs 1.500–3.000</span></label>
         <label><input type="radio" name="ppto" data-k="Presupuesto mensual" value="Más de Bs 3.000"><span>+ Bs 3.000</span></label>
       </div></div>
-    <div class="q"><label class="q-l">¿Algo más que debamos saber?</label>
+    <div class="q"><label class="q-l">¿Algo más que debamos saber? <small>(planes de crecer, mudanza, nuevo equipo, lo que sea)</small></label>
       <textarea data-k="Comentarios extra" placeholder="Lo que quieras agregar..."></textarea></div>
   </div>
 
@@ -202,7 +282,7 @@
 <div class="actions">
   <button class="btn wa" onclick="sendWA()">💬 Enviar respuestas por WhatsApp</button>
   <button class="btn primary" onclick="copyAll()">📋 Copiar mis respuestas</button>
-  <div class="hintline">Al enviar, tus respuestas se arman solas en un mensaje — solo tocás enviar.</div>
+  <div class="hintline">Al enviar, tus respuestas se arman solas en un mensaje — solo tocás enviar. Si es muy largo, usá "Copiar" y pegalo en el chat.</div>
 </div>
 
 <footer>Brief confidencial · Clínica Dental Ezequiel · Preparado por Eduardo Añez & Gabriela Parada</footer>
@@ -236,8 +316,7 @@
 
   function collect(){
     var lines = ['*BRIEF DE CAMPAÑA — CLÍNICA DENTAL*', ''];
-    var secs = form.querySelectorAll('.sec');
-    secs.forEach(function(sec){
+    form.querySelectorAll('.sec').forEach(function(sec){
       lines.push('*' + sec.querySelector('h2').textContent.trim() + '*');
       sec.querySelectorAll('.q').forEach(function(q){
         var k, v = '';
@@ -268,8 +347,7 @@
   };
 
   window.sendWA = function(){
-    var text = collect();
-    window.open('https://wa.me/59162166628?text=' + encodeURIComponent(text), '_blank');
+    window.open('https://wa.me/59162166628?text=' + encodeURIComponent(collect()), '_blank');
   };
 })();
 </script>
