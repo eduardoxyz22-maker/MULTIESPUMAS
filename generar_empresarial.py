@@ -30,11 +30,34 @@ except ImportError:
     sys.exit("Falta openpyxl. Instalar con: pip install openpyxl")
 
 DEFAULT_XLSX = r"C:/Users/multiespumas/Downloads/VENTAS 2026 SEGUIMIENTO (Recuperado).xlsx"
-DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard-empresarial.html")
+DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "dashboard-empresarial-junio.html")
 
 # Periodo / etiquetas (derivados de la estructura del Excel: cierre de junio 2026)
 MES_ACTUAL = "junio"
 MES_ANTERIOR = "mayo"
+
+# Archivos por mes para el selector de meses (junio cerrado / julio en curso).
+DASH_JUNIO = "dashboard-empresarial-junio.html"   # mes cerrado (snapshot)
+DASH_JULIO = "dashboard-empresarial.html"          # mes en curso (default/live)
+
+def month_switcher(active):
+    """Barra selectora de meses (Junio cerrado / Julio en curso). `active` = 'junio' | 'julio'.
+    Cada pill es un enlace al HTML del otro mes — separa el mes cerrado del mes en curso."""
+    def pill(label, href, is_active):
+        style = ("background:#0F5F6D;color:#fff;box-shadow:0 3px 12px rgba(15,95,109,.4)"
+                 if is_active else "background:transparent;color:var(--muted)")
+        return (f'<a href="{href}" style="text-decoration:none;font-family:inherit;font-weight:700;'
+                f'font-size:.82rem;padding:9px 26px;border-radius:13px;transition:all .18s;'
+                f'letter-spacing:.02em;{style}">{label}</a>')
+    ja = active == "junio"
+    return ('<div style="display:flex;justify-content:center;margin-bottom:14px">'
+            '<div style="display:inline-flex;gap:5px;background:rgba(255,255,255,.55);'
+            'backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);'
+            'border:1px solid rgba(255,255,255,.72);border-radius:16px;padding:5px;'
+            'box-shadow:0 8px 24px rgba(9,72,68,.14), inset 0 1px 0 rgba(255,255,255,.95)">'
+            f'{pill("JUNIO · cerrado", DASH_JUNIO, ja)}'
+            f'{pill("JULIO · en curso", DASH_JULIO, not ja)}'
+            '</div></div>')
 
 # ----------------------------------------------------------------------------
 # Helpers de lectura
@@ -1156,6 +1179,7 @@ def build_html(D):
     </header>
   </div>
   <main class="container">
+    {month_switcher("junio")}
     <div class="viewtabs" style="display:flex;justify-content:center;margin-bottom:26px">
       <div id="viewtabs" style="display:inline-flex;gap:5px;background:rgba(255,255,255,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.72);border-radius:18px;padding:5px;box-shadow:0 8px 24px rgba(9,72,68,.14), inset 0 1px 0 rgba(255,255,255,.95)">{view_tabs}</div>
     </div>
