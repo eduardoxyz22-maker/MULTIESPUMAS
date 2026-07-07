@@ -162,6 +162,17 @@ def extract(xlsx_path):
     # Prod term (no suma al total)
     D["prod_term"] = {"vtas": ju("E19"), "u": ju("D19")}
 
+    # --- KPI por marca (totales de marca en JULIO): real, proyeccion, presupuesto ---
+    # Filas de subtotal de marca: 8=HEAVEN, 12=SUEÑA, 14=ROHO, 17=CLIENTES EXTERNOS.
+    marca_kpi = {}
+    for r in (8, 12, 14, 17):
+        lbl = str(JU[f"A{r}"].value or "").replace("Total", "").strip()
+        proy_ = ju(f"N{r}"); ppto_ = ju(f"R{r}")
+        key = re.sub(r"\s+", " ", norm(lbl))  # colapsa espacios dobles ("clientes  externos")
+        marca_kpi[key] = {"real": ju(f"E{r}"), "proy": proy_, "ppto": ppto_,
+                          "cumpl_proy": (proy_/ppto_) if (proy_ and ppto_) else None}
+    D["marca_kpi"] = marca_kpi
+
     # --- Detalle por tienda semanal (seg semanal): Bs + unidades S1 junio vs julio ---
     seg = []
     for r in range(2, 22):
@@ -211,16 +222,22 @@ def build_html(D):
 
     # ---- Section 01: resultado parcial ----
     ring = f'conic-gradient(var(--teal) 0 {min((alc_proy or 0)*100,100):.1f}%, rgba(15,95,109,.13) {min((alc_proy or 0)*100,100):.1f}% 100%)'
-    # mchips por marca (julio, ordenado por ventas desc, con var vs junio S1)
-    sem_by = {norm(x["marca"]): x for x in D["sem_marca"]}
+    # mchips por marca · % del objetivo del mes (proyección de cierre / presupuesto),
+    # ordenado por % desc y coloreado como junio. Julio es parcial: el % "vs objetivo" con sentido
+    # es el PROYECTADO (coherente con el anillo del hero, 95.6% proy vs objetivo).
+    kpi = D["marca_kpi"]
+    def _cp(mk):
+        k = kpi.get(re.sub(r"\s+", " ", norm(mk["marca"])))
+        return (k["cumpl_proy"] if k else None) or 0
     chips = ""
-    for mk in sorted(D["marcas_jul"], key=lambda x: -(x["vtas"] or 0)):
-        s = sem_by.get(norm(mk["marca"]))
-        v = vf(s["var"]) if s else {"txt": "—", "cls": ""}
+    for mk in sorted(D["marcas_jul"], key=lambda x: -_cp(x)):
+        k = kpi.get(re.sub(r"\s+", " ", norm(mk["marca"])))
+        cp = k["cumpl_proy"] if k else None
+        col = obj_col(cp)
         chips += (f'<div class="mchip"><span class="dot" style="background:{mcolor(mk["marca"])}"></span>'
                   f'<span style="flex:1;font-size:.8rem;font-weight:600">{esc(prettify(mk["marca"]))}</span>'
                   f'<span style="font-size:.82rem;font-weight:800">Bs {fmt(mk["vtas"])}</span>'
-                  f'<span class="{v["cls"]}" style="font-size:.68rem;min-width:52px;text-align:right">{v["txt"]}</span></div>')
+                  f'<span style="color:{col};font-weight:700;font-size:.68rem;min-width:52px;text-align:right">{pct(cp)}</span></div>')
     sec01 = f'''<div class="sec mensual-only">01 · Resultado parcial · julio 2026</div>
     <div class="lg lg-glow mensual-only" style="padding:30px 34px;margin-bottom:26px">
       <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap">
@@ -246,7 +263,7 @@ def build_html(D):
           <div style="font-size:.66rem;color:var(--muted)">Alcance proyectado</div>
         </div>
         <div style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Julio por marca · vs junio (Semana 1)</div>
+          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Julio por marca · % del objetivo (proyección)</div>
           {chips}
         </div>
       </div>
@@ -515,6 +532,8 @@ def _leads_campana(D):
     L = D["leads"]
     lh = L["heaven"]; ls = L["suena"]; lt = L["total"]
     items = ""
+    dsctos = [it["dscto"] for it in D["campana"]["items"] if it["dscto"] is not None]
+    max_dscto = f"−{max(dsctos)*100:.0f}%" if dsctos else ""  # badge derivado del dato
     for it in D["campana"]["items"]:
         items += (f'<tr><td>{esc(it["producto"])}</td>{num_td("Bs "+fmt(it["precio"]))}'
                   f'{num_td(pct(it["dscto"]))}<td class="num"><b>Bs {fmt(it["final"])}</b></td></tr>')
@@ -555,7 +574,7 @@ def _leads_campana(D):
         <div class="tw lg" style="padding:22px 24px">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
             <span class="badge b-teal" style="font-size:.7rem">COMBO TITANIO Y ORO</span>
-            <span class="badge b-red" style="font-size:.7rem">−45%</span>
+            <span class="badge b-red" style="font-size:.7rem">{max_dscto}</span>
           </div>
           <p class="ds-body" style="margin-bottom:14px">{esc(D["campana"]["mecanica"])}</p>
           <div class="tw" style="margin-bottom:12px"><table>
