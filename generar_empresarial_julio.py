@@ -26,7 +26,7 @@ except ImportError:
 
 import generar_empresarial as G
 from generar_empresarial import (fmt, pct, pct2, vf, esc, num_td, vf_td, prettify, norm,
-                                 month_switcher, DASH_JULIO, JS_TEMPLATE)
+                                 month_switcher, DASH_JULIO, JS_TEMPLATE, bar, bar_row, barlist)
 from _assets_empresarial import CSS
 
 DEFAULT_XLSX = r"C:/Users/multiespumas/Downloads/VENTAS 2026 SEGUIMIENTO + dashboard a.xlsx"
@@ -173,6 +173,18 @@ def extract(xlsx_path):
                           "cumpl_proy": (proy_/ppto_) if (proy_ and ppto_) else None}
     D["marca_kpi"] = marca_kpi
 
+    # --- Acumulado ene–jun por marca (pestaña '2026'): filas Total por marca, cols ene..jun ---
+    acum_marca = {}
+    if "2026" in wb.sheetnames:
+        Y = wb["2026"]
+        def yv(coord):
+            v = Y[coord].value
+            return float(v) if isinstance(v, (int, float)) else 0.0
+        mescols = ["D", "F", "H", "J", "L", "N"]  # TOTAL_BRUTO ene..jun
+        for key, row in [("heaven", 8), ("suena", 12), ("roho", 14), ("otros", 17)]:
+            acum_marca[key] = sum(yv(f"{c}{row}") for c in mescols)
+    D["acum_marca"] = acum_marca
+
     # --- Detalle por tienda semanal (seg semanal): Bs + unidades S1 junio vs julio ---
     seg = []
     for r in range(2, 22):
@@ -296,7 +308,7 @@ def build_html(D):
     tt = D["tiendas_total"]
     tr += (f'<tr class="trow-total"><td>TOTAL</td>{num_td(fmt(tt["vtas"]))}{num_td(fmt(tt["junio"]))}'
            f'<td class="num">—</td>{num_td(fmt(tt["ppto"]))}{num_td(fmt(tt["proy"]))}{num_td(pct(tt["alc_proy"]))}</tr>')
-    sec02 = f'''<div class="sec mensual-only">02 · Desempeño por tienda · julio (parcial + proyección)</div>
+    sec_tienda = f'''<div class="sec mensual-only">04 · Desempeño por tienda · julio (parcial + proyección)</div>
     <div class="tw mensual-only" style="margin-bottom:28px"><table>
       <thead><tr><th>Tienda / Canal</th><th class="num">Vtas Jul</th><th class="num">Junio (mes)</th><th class="num">Var %</th><th class="num">PPTO Jul</th><th class="num">Proy. cierre</th><th class="num">% Alcance proy</th></tr></thead>
       <tbody>{tr}</tbody>
@@ -321,17 +333,23 @@ def build_html(D):
       <div>{_producto_table(D)}</div>
     </div>'''
 
+    # ---- Section 02: Desviación vs presupuesto (barras de avance, proyectado) ----
+    desviacion = _desviacion_bars(D)
+
     # ---- Semanal block ----
     semanal = _semanal_block(D)
 
-    # ---- Anual sections ----
+    # ---- Anual sections (panorama + barras de avance anual + tablas + comparativo) ----
     anual = _anual_sections(D)
 
-    # ---- Leads + campaña (always visible in Todas/Mensual) ----
+    # ---- Section 05: rendimiento por marca (tabs + barlists + fichas) ----
+    sec05_html, brands = _brand_section(D)
+
+    # ---- Leads + campaña ----
     extras = _leads_campana(D)
 
     view_tabs = _view_tabs()
-    js_data = {"brands": {}, "weeksBs": "", "weeksU": ""}
+    js_data = {"brands": brands, "weeksBs": "", "weeksU": ""}
     data_json = json.dumps(js_data, ensure_ascii=False)
 
     html = f'''<!DOCTYPE html>
@@ -376,9 +394,11 @@ def build_html(D):
     {sec01}
     {exec_html}
     {alert}
-    {sec02}
-    {sec03}
+    {desviacion}
     {anual}
+    {sec_tienda}
+    {sec05_html}
+    {sec03}
     {extras}
     {semanal}
     <div class="footer" style="border-radius:12px;border:1px solid var(--gray-md);margin-top:20px">
@@ -509,6 +529,7 @@ def _anual_sections(D):
     cp += (f'<tr class="trow-total"><td>TOTAL</td>{num_td(fmt(cpt["j26"]))}{num_td(fmt(cpt["j25"]))}'
            f'{vf_td(cpt["var"])}{num_td(("+" if (cpt["abs"] or 0)>=0 else "−")+"Bs "+fmt(abs(cpt["abs"] or 0)))}</tr>')
     return f'''{panorama}
+    {_anual_budget(D)}
     <div class="two-col anual-only">
       <div><div class="sec">02 · Evolución mensual · real vs objetivo vs 2025</div>
         <div class="tw"><table>
@@ -585,6 +606,187 @@ def _leads_campana(D):
         </div>
       </div>
     </div>'''
+
+
+def _desviacion_bars(D):
+    """Section 02 (mensual) — avance PROYECTADO de presupuesto: barra grande + barras por tienda.
+    Julio es parcial, así que el avance con sentido es el proyectado (coherente con el hero)."""
+    tt = D["tiendas_total"]; proy = tt["proy"]; obj = tt["ppto"]
+    w = min((proy / obj * 100) if obj else 0, 100); falta = obj - proy
+    real = D["resumen"]["jul_ventas"]
+    tiendas = [t for t in D["tiendas"] if t["ppto"] and t["proy"] is not None]
+    bars = "".join(bar_row(bar(prettify(t["nombre"]), t["proy"], t["ppto"]), 172)
+                   for t in sorted(tiendas, key=lambda t: -(t["alc_proy"] or 0)))
+    falta_txt = ("supera Bs " + fmt(-falta)) if falta <= 0 else ("falta Bs " + fmt(falta))
+    falta_col = "var(--green)" if falta <= 0 else "var(--red)"
+    return f'''<div class="sec mensual-only">02 · Desviación vs presupuesto · julio (proyectado)</div>
+    <div class="lg mensual-only" style="padding:24px 30px 26px;margin-bottom:26px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em">Avance proyectado de presupuesto · julio</div>
+        <div style="font-size:.72rem;color:var(--muted)">Objetivo <b style="color:var(--text)">Bs {fmt(obj)}</b></div>
+      </div>
+      <div style="position:relative;height:44px;border-radius:14px;overflow:hidden;background:rgba(15,95,109,.09);box-shadow:inset 0 1px 3px rgba(20,58,60,.12)">
+        <div style="position:absolute;inset:0 auto 0 0;width:{w:.1f}%;border-radius:14px;background:linear-gradient(90deg,#0F5F6D,#1B94A4);box-shadow:0 2px 10px rgba(15,95,109,.35);display:flex;align-items:center;padding-left:16px">
+          <span style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">Bs {fmt(proy)}</span>
+        </div>
+        <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);color:{falta_col};font-weight:800;font-size:.9rem">{falta_txt}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.68rem;color:var(--muted)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#0F5F6D,#1B94A4)"></span>Proyectado · {pct(proy/obj if obj else None)}</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:rgba(15,95,109,.25)"></span>Real a la fecha · {pct(real/obj if obj else None)}</span>
+      </div>
+      <div style="height:1px;background:rgba(15,95,109,.1);margin:22px 0 18px"></div>
+      <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px">Avance proyectado por tienda / canal · proyección vs presupuesto julio</div>
+      {bars}
+      <div class="cap" style="margin-top:6px">Barra recortada al 100%; el % y montos muestran el valor real. Proyección de cierre vs PPTO julio por tienda (mes parcial, día {D["dia"]}/{D["dias"]}).</div>
+    </div>'''
+
+
+def _anual_budget(D):
+    """Anual — barra grande de avance acumulado + barras por marca (acum ene–jun vs ppto anual)."""
+    ac = D["acum"]; ventas = ac["v2026"]; obj = ac["obj"]; w = min(ventas / obj * 100, 100)
+    falta = ac["brecha"]  # sobre totales redondeados (coherente con la tarjeta de panorama)
+    ppto_by = {norm(x["marca"]): x["ppto"] for x in D["ppto_anual"]}
+    NAME = {"heaven": "HEAVEN", "suena": "SUEÑA", "roho": "ROHO", "otros": "PROD. TERM. / Otros"}
+    marcas = []
+    for key in ("heaven", "suena", "roho", "otros"):
+        acum = D["acum_marca"].get(key); ppto = ppto_by.get(key)
+        if acum and ppto:
+            marcas.append(bar(NAME[key], acum, ppto))
+    marcas.sort(key=lambda b: -float(b["pct"].rstrip("%")))
+    bars = "".join(bar_row(m, 186) for m in marcas)
+    return f'''<div class="lg anual-only" style="padding:24px 30px 26px;margin-bottom:26px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+        <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em">Avance de presupuesto · acumulado ene–jun</div>
+        <div style="font-size:.72rem;color:var(--muted)">Objetivo <b style="color:var(--text)">Bs {fmt(obj)}</b></div>
+      </div>
+      <div style="position:relative;height:44px;border-radius:14px;overflow:hidden;background:rgba(15,95,109,.09);box-shadow:inset 0 1px 3px rgba(20,58,60,.12)">
+        <div style="position:absolute;inset:0 auto 0 0;width:{w:.1f}%;border-radius:14px;background:linear-gradient(90deg,#0F5F6D,#1B94A4);box-shadow:0 2px 10px rgba(15,95,109,.35);display:flex;align-items:center;padding-left:16px">
+          <span style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">Bs {fmt(ventas)}</span>
+        </div>
+        <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--amber);font-weight:800;font-size:.9rem">falta Bs {fmt(falta)}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.68rem;color:var(--muted)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#0F5F6D,#1B94A4)"></span>Logrado · {pct(ventas/obj)}</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:rgba(184,104,8,.5)"></span>Por alcanzar · {pct(1-ventas/obj)}</span>
+      </div>
+      <div style="height:1px;background:rgba(15,95,109,.1);margin:22px 0 18px"></div>
+      <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px">Avance por marca · acumulado ene–jun vs presupuesto anual</div>
+      {bars}
+      <div class="cap" style="margin-top:6px">Ppto anual 2026 (año completo); el % mide lo acumulado ene–jun contra la meta anual.</div>
+    </div>'''
+
+
+def _todas_barlists(D):
+    """Section 05 — barlists por marca (Julio Bs, % objetivo proy, acum ene–jun, % avance anual)."""
+    kpi = D["marca_kpi"]; ppto_by = {norm(x["marca"]): x["ppto"] for x in D["ppto_anual"]}
+    def k(mk):
+        return re.sub(r"\s+", " ", norm(mk["marca"]))
+    def lbl(mk, anual=False):
+        n = norm(mk["marca"])
+        if "clientes" in n or "otros" in n:
+            return "Otros / Ext." if anual else "Clientes ext."
+        return prettify(mk["marca"])
+    ms = D["marcas_jul"]
+    # 1) Julio por marca · Bs (real a la fecha)
+    maxj = max((m["vtas"] or 0) for m in ms) or 1
+    r1 = [{"name": lbl(m), "val": "Bs " + fmt(m["vtas"]), "w": f'{(m["vtas"] or 0)/maxj*100:.0f}%',
+           "color": mcolor(m["marca"])} for m in sorted(ms, key=lambda m: -(m["vtas"] or 0))]
+    # 2) % del objetivo (proyección)
+    def cp(m):
+        x = kpi.get(k(m)); return (x["cumpl_proy"] if x else None) or 0
+    r2 = [{"name": lbl(m), "val": pct(cp(m)), "w": f'{min(cp(m)*100,100):.1f}%', "color": mcolor(m["marca"])}
+          for m in sorted(ms, key=lambda m: -cp(m))]
+    # 3) Acumulado ene–jun por marca · Bs
+    ACUMKEY = {"heaven": "heaven", "sueña": "suena", "suena": "suena", "roho": "roho", "clientes externos": "otros"}
+    def acu(m):
+        return D["acum_marca"].get(ACUMKEY.get(norm(m["marca"]), ""), 0) or 0
+    maxa = max(acu(m) for m in ms) or 1
+    r3 = [{"name": lbl(m, True), "val": "Bs " + fmt(acu(m)), "w": f'{acu(m)/maxa*100:.0f}%',
+           "color": mcolor(m["marca"])} for m in sorted(ms, key=lambda m: -acu(m))]
+    # 4) % Avance anual (acum / ppto anual)
+    PPTOKEY = {"heaven": "heaven", "sueña": "suena", "suena": "suena", "roho": "roho", "clientes externos": "otros"}
+    def av(m):
+        p = ppto_by.get(PPTOKEY.get(norm(m["marca"]), ""))
+        return (acu(m) / p) if p else 0
+    r4 = [{"name": lbl(m, True), "val": pct(av(m)), "w": f'{min(av(m)*100,100):.1f}%', "color": mcolor(m["marca"])}
+          for m in sorted(ms, key=lambda m: -av(m))]
+    return ('<div class="two-col">'
+            + barlist("Julio por marca · Bs (a la fecha)", r1, "mensual-only")
+            + barlist("% del objetivo (proyección)", r2, "mensual-only")
+            + barlist("Acumulado ene–jun por marca · Bs", r3, "anual-only")
+            + barlist("% Avance vs presupuesto anual", r4, "anual-only")
+            + '</div>')
+
+
+NAME = {"HEAVEN": "HEAVEN", "SUENA": "SUEÑA", "ROHO": "ROHO", "CLIENTES": "Clientes ext."}
+COLOR = {"HEAVEN": "var(--teal)", "SUENA": "var(--amber)", "ROHO": "var(--red)", "CLIENTES": "var(--series-blue)"}
+NORMK = {"HEAVEN": "heaven", "SUENA": "suena", "ROHO": "roho", "CLIENTES": "clientes externos"}
+ACUMK = {"HEAVEN": "heaven", "SUENA": "suena", "ROHO": "roho", "CLIENTES": "otros"}
+LEADK = {"HEAVEN": "heaven", "SUENA": "suena"}
+
+def _brand_detail_julio(D, K):
+    ms = {re.sub(r"\s+", " ", norm(m["marca"])): m for m in D["marcas_jul"]}
+    sem = {re.sub(r"\s+", " ", norm(x["marca"])): x for x in D["sem_marca"]}
+    ppto = {norm(x["marca"]): x for x in D["ppto_anual"]}
+    nk = NORMK[K]; m = ms.get(nk); k = D["marca_kpi"].get(nk); s = sem.get(nk)
+    color = COLOR[K]
+    vtas = m["vtas"] if m else None
+    cumpl = k["cumpl_proy"] if k else None; proy = k["proy"] if k else None; pj = k["ppto"] if k else None
+    alc = (proy / pj) if (proy and pj) else None
+    acum = D["acum_marca"].get(ACUMK[K])
+    pa = ppto.get("otros" if K == "CLIENTES" else nk)
+    crec = vf(pa["crec"]) if pa else {"txt": "—", "cls": ""}
+    real25 = pa["real25"] if pa else None
+    vs1 = vf(s["var"]) if s else {"txt": "—", "cls": ""}
+    ld = D["leads"].get(LEADK[K]) if K in LEADK else None
+    ringc = f'conic-gradient({color} 0 {min((cumpl or 0)*100,100):.1f}%, rgba(15,95,109,.13) {min((cumpl or 0)*100,100):.1f}% 100%)'
+    leads_card = ""
+    if ld:
+        leads_card = (
+            '<div class="glass-card"><div class="gc-bar" style="background:var(--amber)"></div>'
+            '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Leads del mes</div>'
+            f'<div style="font-size:1.9rem;font-weight:800;line-height:1">{fmt(ld["leads"])}</div>'
+            f'<div style="font-size:.72rem;color:var(--muted);margin-top:10px">{pct2(ld["efect"])} efectividad · {fmt(ld["ventas"])} ventas · acumulado</div></div>')
+    return (
+        '<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">'
+        f'<span class="dot" style="width:14px;height:14px;background:{color}"></span>'
+        f'<span style="font-size:1.15rem;font-weight:800;color:var(--text)">{esc(NAME[K])}</span>'
+        '<span class="ds-muted">· detalle julio 2026 (parcial)</span></div>'
+        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px">'
+        f'<div class="glass-card"><div class="gc-bar" style="background:{color}"></div>'
+        '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Ventas julio · a la fecha</div>'
+        f'<div style="font-size:1.9rem;font-weight:800;line-height:1">Bs {fmt(vtas)}</div>'
+        f'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="dchip {vs1["cls"]}" style="background:rgba(15,95,109,.06);border:1px solid rgba(15,95,109,.16);font-size:.66rem">{vs1["txt"]} vs junio (Sem 1)</span></div></div>'
+        '<div class="glass-card"><div class="gc-bar" style="background:var(--series-blue)"></div>'
+        '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">% Objetivo (proyección)</div>'
+        '<div style="display:flex;align-items:center;gap:14px">'
+        f'<div class="ring" style="width:82px;height:82px;background:{ringc}"><div><div style="font-size:1rem;font-weight:800;line-height:1">{pct(cumpl)}</div></div></div>'
+        f'<div style="font-size:.72rem;color:var(--muted)">de Bs<br><b style="color:var(--text);font-size:.82rem">{fmt(pj)}</b><br>PPTO julio</div></div></div>'
+        '<div class="glass-card"><div class="gc-bar" style="background:var(--purple)"></div>'
+        '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Proyección cierre julio</div>'
+        f'<div style="font-size:1.9rem;font-weight:800;line-height:1">Bs {fmt(proy)}</div>'
+        f'<div style="font-size:.72rem;color:var(--muted);margin-top:10px">{pct(alc)} del PPTO julio</div></div>'
+        + leads_card +
+        '<div class="glass-card"><div class="gc-bar" style="background:var(--green)"></div>'
+        '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Acumulado ene–jun</div>'
+        f'<div style="font-size:1.9rem;font-weight:800;line-height:1">Bs {fmt(acum)}</div>'
+        f'<div style="font-size:.72rem;color:var(--muted);margin-top:10px">ppto vs 2025 <span class="{crec["cls"]}">{crec["txt"]}</span> · Bs {fmt(real25)} en 2025</div></div>'
+        '</div>')
+
+
+def _brand_section(D):
+    BTAB = [("TODAS", "Todas"), ("HEAVEN", "HEAVEN"), ("SUENA", "SUEÑA"), ("ROHO", "ROHO"), ("CLIENTES", "Clientes ext.")]
+    tabs = "".join(f'<button class="tab{" active" if k=="TODAS" else ""}" data-brand="{k}">{esc(l)}</button>' for k, l in BTAB)
+    html = f'''<div class="sec">05 · Rendimiento por marca · julio</div>
+    <div class="tab-row">
+      <div class="tabs" id="brandTabs">{tabs}</div>
+      <div class="rc">Selecciona una marca para ver su detalle · datos de julio 2026 (parcial) y acumulado</div>
+    </div>
+    <div id="todasBars">{_todas_barlists(D)}</div>
+    <div id="brandDetail" style="display:none;margin-bottom:28px"></div>'''
+    brands = {k: _brand_detail_julio(D, k) for k in ("HEAVEN", "SUENA", "ROHO", "CLIENTES")}
+    return html, brands
 
 
 def main():
