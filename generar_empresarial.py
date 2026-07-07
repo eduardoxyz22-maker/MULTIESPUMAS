@@ -677,16 +677,18 @@ def build_html(D):
         f'<div class="hstat"><div class="hstat-v">{pct(m["cumpl"])}</div><div class="hstat-l">Alcance mes</div></div>'
         f'<div class="hstat"><div class="hstat-v" style="color:#7CF6EF">{pct(sem["cumpl"])}</div><div class="hstat-l">Semestre</div></div>')
 
-    # ---- Section 01 mchips (junio por marca vs mayo, ordenado por junio desc) ----
-    chip_brands = sorted(brands.values(), key=lambda b: -(b["junio"] or 0))
+    # ---- Section 01 mchips (junio por marca vs objetivo del mes, ordenado por % cumplimiento desc) ----
+    def _obj_col(a):
+        return "var(--green)" if (a or 0) >= 1 else ("var(--amber)" if (a or 0) >= 0.65 else "var(--red)")
+    chip_brands = sorted(brands.values(), key=lambda b: -(b["cumplMes"] or 0))
     mchips = ""
     for b in chip_brands:
-        v = vf(b["varMayo"])
+        col = _obj_col(b["cumplMes"])
         mchips += (
             f'<div class="mchip"><span class="dot" style="background:{b["color"]}"></span>'
             f'<span style="flex:1;font-size:.8rem;font-weight:600">{esc(b["nombre"])}</span>'
             f'<span style="font-size:.82rem;font-weight:800">Bs {fmt(b["junio"])}</span>'
-            f'<span class="{v["cls"]}" style="font-size:.68rem;min-width:52px;text-align:right">{v["txt"]}</span></div>')
+            f'<span style="color:{col};font-weight:700;font-size:.68rem;min-width:52px;text-align:right">{pct(b["cumplMes"])}</span></div>')
 
     ring01 = f'conic-gradient(var(--teal) 0 {(m["cumpl"] or 0)*100:.1f}%, rgba(15,95,109,.13) {(m["cumpl"] or 0)*100:.1f}% 100%)'
     sec01 = f'''<div class="sec mensual-only">01 · Resultado del mes · junio 2026</div>
@@ -713,7 +715,7 @@ def build_html(D):
           <div style="font-size:.66rem;color:var(--muted)">Alcance del mes</div>
         </div>
         <div style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Junio por marca · vs mayo 2026</div>
+          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Junio por marca · % del objetivo del mes</div>
           {mchips}
         </div>
       </div>
