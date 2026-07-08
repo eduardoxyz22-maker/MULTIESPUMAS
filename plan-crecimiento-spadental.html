@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Plan de crecimiento · Ezequiel Spadental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--charcoal:#262625;--paper:#F5F4EF;--card:#FFFFFF;--lime:#A8C21E;--lime-deep:#6E8410;--ink:#2A2A28;--ink-soft:#6B6A64;--line:#E4E2D9;--radius:14px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Archivo',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:820px;margin:0 auto;padding:0 22px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime-deep);margin-bottom:14px}
+  h2{font-family:'Archivo';font-weight:800;font-size:clamp(23px,4.2vw,32px);line-height:1.12;letter-spacing:-.01em;color:var(--ink)}
+  p.lead{font-size:clamp(16px,2.1vw,18px);color:var(--ink-soft);margin-top:14px;max-width:60ch}
+  section{padding:58px 0;border-bottom:1px solid var(--line)}
+  .hero{background:var(--charcoal);color:#fff;border:none;padding:0}
+  .hero .wrap{padding-top:44px;padding-bottom:56px}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:46px}
+  .brand svg{width:38px;height:auto;display:block}
+  .brand .name{font-family:'Archivo';font-weight:800;letter-spacing:.02em;font-size:19px;line-height:1;color:#fff}
+  .brand .name span{display:block;font-weight:500;font-size:11px;letter-spacing:.16em;color:var(--lime);text-transform:uppercase;margin-top:3px}
+  .hero .eyebrow{color:var(--lime)}
+  .hero h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(38px,8vw,72px);line-height:.98;letter-spacing:.005em;text-transform:uppercase;color:#fff}
+  .hero h1 b{color:var(--lime);font-weight:400}
+  .hero .sub{font-size:clamp(16px,2.3vw,19px);color:#CFCEC6;margin-top:22px;max-width:54ch}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  .box.dark{background:var(--charcoal);border-color:var(--charcoal)}
+  .box .k{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+  .box.dark .k{color:var(--lime)}
+  .box .big{font-family:'Anton',sans-serif;font-size:38px;line-height:1;color:var(--ink);margin:10px 0 2px}
+  .box.dark .big{color:#fff}
+  .box .big small{font-family:'Archivo';font-weight:700;font-size:15px;color:var(--lime-deep)}
+  .box.dark .big small{color:var(--lime)}
+  .box .d{font-size:13.5px;color:var(--ink-soft);margin-top:6px}
+  .box.dark .d{color:#B9B8B0}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;margin-top:26px;font-size:15px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .tbl th,.tbl td{padding:15px 16px;text-align:left}
+  .tbl thead th{background:var(--charcoal);color:#fff;font-weight:700;font-size:13px;letter-spacing:.03em}
+  .tbl thead th:not(:first-child){text-align:center}
+  .tbl thead th.hi{color:var(--lime)}
+  .tbl tbody td{border-top:1px solid var(--line)}
+  .tbl tbody td:not(:first-child){text-align:center;font-family:'Archivo';font-weight:700}
+  .tbl tbody td:first-child{font-weight:700;color:var(--ink)}
+  .tbl tr.hi td{background:#EEF1D8}.tbl tr.hi td:first-child{color:#3F4A12}
+  .tbl td .pac{font-family:'Anton',sans-serif;font-size:26px;color:var(--ink);display:block;line-height:1}
+  .tbl tr.hi td .pac{color:var(--lime-deep)}
+  .tbl caption{caption-side:bottom;text-align:left;font-size:13px;color:var(--ink-soft);margin-top:12px;padding:0 2px}
+  .note{margin-top:20px;background:#EEF1D8;border:1px solid #DCE2B0;border-radius:var(--radius);padding:18px 20px;font-size:15px;color:#3F4A12}
+  .note b{color:var(--lime-deep)}
+  .killer{margin-top:22px;font-size:clamp(17px,2.4vw,21px);font-weight:700;line-height:1.45;color:var(--ink)}
+  .killer .hl{color:var(--lime-deep)}
+  .checklist{list-style:none;margin-top:24px;display:flex;flex-direction:column;gap:12px}
+  .checklist li{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px}
+  .checklist .ic{flex-shrink:0;width:26px;height:26px;border-radius:50%;background:var(--lime);display:flex;align-items:center;justify-content:center;margin-top:1px}
+  .checklist .ic svg{width:15px;height:15px}
+  .checklist h3{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:3px}
+  .checklist p{font-size:14.5px;color:var(--ink-soft)}
+  .close{background:var(--charcoal);color:#fff;border:none;text-align:center}
+  .close h2{color:#fff;font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(27px,5.2vw,48px);line-height:1.04}
+  .close h2 b{color:var(--lime);font-weight:400}
+  .close p{color:#CFCEC6;margin-top:18px;font-size:16px;max-width:48ch;margin-left:auto;margin-right:auto}
+  footer{padding:28px 0 44px;text-align:center;color:var(--ink-soft);font-size:13px}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}.reveal.in{opacity:1;transform:none}
+  @media (max-width:600px){.split{grid-template-columns:1fr}section{padding:46px 0}.tbl{font-size:13.5px}.tbl th,.tbl td{padding:12px 10px}.tbl td .pac{font-size:22px}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+  a{color:inherit}:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 100 84" aria-hidden="true"><path d="M8 78 L14 30 L34 52 L50 14 L66 52 L86 30 L92 78 Z" fill="#A8C21E"/><rect x="8" y="76" width="84" height="7" rx="3" fill="#fff"/></svg>
+    <div class="name">EZEQUIEL SPADENTAL<span>Dra. Mirna Veizaga</span></div>
+  </div>
+  <div class="eyebrow reveal">Plan de crecimiento · Julio 2026</div>
+  <h1 class="reveal">Los mismos pacientes,<br>con menos <b>desperdicio</b>.</h1>
+  <p class="sub reveal">Antes hacías 55 a 60 pacientes nuevos al mes. Te muestro cómo volver ahí,
+  y a más, aprovechando mejor cada peso.</p>
+</div></header>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">De dónde partimos</div>
+  <h2 class="reveal">Ya lograbas 55 a 60<br>pacientes por mes</h2>
+  <p class="lead reveal">Entre noviembre y abril, con unos Bs 5.400 al mes en publicidad, llegabas a 55 o 60
+  pacientes nuevos por mes. Eso son cerca de Bs 95 por paciente. Funcionaba. Pero mirá cómo lo lograbas.</p>
+  <div class="split reveal">
+    <div class="box"><div class="k">Lo que funcionaba</div><div class="big">55–60<small> pac/mes</small></div><div class="d">~Bs 5.400 de inversión · Bs 95 por paciente</div></div>
+    <div class="box dark"><div class="k">El desperdicio</div><div class="big">74<small> por 1</small></div><div class="d">Hacían falta 74 conversaciones para sacar 1 paciente</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">El problema real</div>
+  <h2 class="reveal">Nunca fue traer gente.<br>Fue cerrar la cita.</h2>
+  <p class="lead reveal">En esos meses entraron más de 21.000 conversaciones por WhatsApp. Gente sobraba.
+  Pero solo el 1,3 de cada 100 terminaba en paciente. Se pagaba por una avalancha de mensajes de baja
+  calidad para rescatar unos pocos. El plan de ahora es al revés: menos conversaciones, mejor apuntadas,
+  y un cierre que aproveche cada una.</p>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">Qué logramos hoy</div>
+  <h2 class="reveal">Con Bs 1.800 al mes</h2>
+  <p class="lead reveal">Con la inversión actual, el resultado depende de cuánto desperdicio saquemos.
+  A la eficiencia de antes, o mejorando el cierre:</p>
+  <table class="tbl reveal">
+    <thead><tr><th>Con Bs 1.800 / mes</th><th>Como antes (Bs 95/pac)</th><th class="hi">Cerrando mejor (Bs 70/pac)</th></tr></thead>
+    <tbody>
+      <tr class="hi"><td>Pacientes al mes</td><td><span class="pac">~19</span></td><td><span class="pac">~26</span></td></tr>
+    </tbody>
+    <caption>Mismo dinero. Cuanto menos conversación desperdiciamos, más pacientes por el mismo peso.</caption>
+  </table>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">El camino a más</div>
+  <h2 class="reveal">Cuánto para volver<br>a 55 o 60</h2>
+  <p class="lead reveal">Subiendo el presupuesto de forma gradual, y con el cierre ya afinado, este es
+  el mapa. La idea de fondo: llegar a lo mismo que antes, o más, gastando menos por paciente.</p>
+  <table class="tbl reveal">
+    <thead><tr><th>Meta</th><th>Presupuesto (cerrando bien)</th></tr></thead>
+    <tbody>
+      <tr><td>~26 pacientes</td><td>Bs 1.800 / mes</td></tr>
+      <tr class="hi"><td>40 pacientes</td><td>~Bs 2.800 / mes</td></tr>
+      <tr><td>55 a 60 pacientes</td><td>Bs 4.000 a 5.400 / mes</td></tr>
+    </tbody>
+    <caption>Antes gastabas ~Bs 5.400 para 57 pacientes. La meta es lograr eso con menos, y con menos ruido.</caption>
+  </table>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">Qué necesitamos</div>
+  <h2 class="reveal">Lo que baja el desperdicio<br>de 74 a 1 hacia 4 a 1</h2>
+  <p class="lead reveal">No es más plata. Es atender el WhatsApp de otra forma, para que cada conversación
+  cuente:</p>
+  <ul class="checklist reveal">
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#2A3405" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><div><h3>Responder en menos de 15 minutos</h3><p>Alguien a cargo del WhatsApp en las horas de más mensajes. Una conversación que se enfría es una cita perdida.</p></div></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#2A3405" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><div><h3>Proponer siempre día y hora</h3><p>No esperar a que el paciente pida la cita. Ofrecerle dos opciones concretas para que solo elija cuándo.</p></div></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#2A3405" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><div><h3>Recordatorio el día antes</h3><p>Sube fuerte la asistencia. Es lo que evita que agenden y después no aparezcan.</p></div></li>
+    <li><span class="ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#2A3405" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg></span><div><h3>Anotar cada conversación</h3><p>Registrar quién escribió y en qué quedó, para medir de verdad cuántas cierran y ninguna se pierda.</p></div></li>
+  </ul>
+</div></section>
+
+<section class="close"><div class="wrap">
+  <h2 class="reveal">Antes: <b>74</b> conversaciones<br>por paciente. La meta: <b>menos</b>.</h2>
+  <p class="reveal">Ya demostraste que podés hacer 55 o 60 al mes. Ahora lo hacemos más eficiente:
+  cerrando mejor y gastando menos por cada uno.</p>
+</div></section>
+
+<footer>Ezequiel Spadental · Dra. Mirna Veizaga · Julio 2026</footer>
+<script>
+  var els=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});els.forEach(function(el){io.observe(el)});}else{els.forEach(function(el){el.classList.add('in')});}
+</script>
+</body>
+</html>
