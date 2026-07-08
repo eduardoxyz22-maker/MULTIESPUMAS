@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desglose mensual · Ezequiel Spadental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--charcoal:#262625;--paper:#F5F4EF;--card:#FFFFFF;--lime:#A8C21E;--lime-deep:#6E8410;--ink:#2A2A28;--ink-soft:#6B6A64;--line:#E4E2D9;--radius:14px}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{font-family:'Archivo',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:900px;margin:0 auto;padding:0 22px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime-deep);margin-bottom:14px}
+h2{font-family:'Archivo';font-weight:800;font-size:clamp(23px,4.2vw,32px);line-height:1.12;color:var(--ink)}
+p.lead{font-size:clamp(16px,2.1vw,18px);color:var(--ink-soft);margin-top:14px;max-width:62ch}
+section{padding:52px 0;border-bottom:1px solid var(--line)}
+.hero{background:var(--charcoal);color:#fff;border:none;padding:0}.hero .wrap{padding-top:44px;padding-bottom:50px}
+.brand{display:flex;align-items:center;gap:12px;margin-bottom:42px}.brand svg{width:38px}
+.brand .name{font-family:'Archivo';font-weight:800;font-size:19px;line-height:1;color:#fff}
+.brand .name span{display:block;font-weight:500;font-size:11px;letter-spacing:.16em;color:var(--lime);text-transform:uppercase;margin-top:3px}
+.hero .eyebrow{color:var(--lime)}
+.hero h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(34px,7vw,60px);line-height:1;text-transform:uppercase;color:#fff}
+.hero h1 b{color:var(--lime);font-weight:400}
+.hero .sub{font-size:clamp(15px,2.2vw,18px);color:#CFCEC6;margin-top:20px;max-width:56ch}
+.chart-card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 16px 12px;margin-top:22px}
+.mes{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px;margin-top:18px}
+.mhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mhead h3{font-family:'Archivo';font-weight:800;font-size:20px;color:var(--ink)}
+.pill{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 10px;border-radius:20px}
+.kpis{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+.k{flex:1;min-width:96px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px 10px;text-align:center}
+.kn{font-family:'Archivo';font-weight:800;font-size:17px;color:var(--ink);line-height:1.1}
+.kl{font-size:11.5px;color:var(--ink-soft);margin-top:4px}
+.tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:14px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.tbl th,.tbl td{padding:10px 12px;text-align:right}.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl thead th{background:var(--charcoal);color:#fff;font-weight:700;font-size:12px}
+.tbl tbody td{border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+.tbl tbody td:first-child{font-weight:700;color:var(--ink)}
+.tbl tbody tr:first-child td{border-top:none}
+.note{margin-top:20px;background:#EEF1D8;border:1px solid #DCE2B0;border-radius:var(--radius);padding:16px 18px;font-size:14.5px;color:#3F4A12}
+.note b{color:var(--lime-deep)}
+footer{padding:28px 0 44px;text-align:center;color:var(--ink-soft);font-size:13px}
+.reveal{opacity:0;transform:translateY(14px);transition:opacity .5s ease,transform .5s ease}.reveal.in{opacity:1;transform:none}
+@media(max-width:640px){section{padding:40px 0}.tbl{font-size:12px}.tbl th,.tbl td{padding:8px 7px}.kn{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+</style></head><body>
+<header class="hero"><div class="wrap">
+<div class="brand"><svg viewBox="0 0 100 84" aria-hidden="true"><path d="M8 78 L14 30 L34 52 L50 14 L66 52 L86 30 L92 78 Z" fill="#A8C21E"/><rect x="8" y="76" width="84" height="7" rx="3" fill="#fff"/></svg><div class="name">EZEQUIEL SPADENTAL<span>Dra. Mirna Veizaga</span></div></div>
+<div class="eyebrow reveal">Desglose mensual de campañas · nov 2025 – jul 2026</div>
+<h1 class="reveal">Mes a mes,<br>campaña por <b>campaña</b>.</h1>
+<p class="sub reveal">Qué se gastó, cuántos mensajes y clics generó cada mes, y qué campaña puso cada número. Datos reales de Meta, a Bs 10 por dólar.</p>
+</div></header>
+
+<section><div class="wrap">
+<div class="eyebrow reveal">Vista general</div>
+<h2 class="reveal">Mensajes iniciados por mes</h2>
+<div class="chart-card reveal">
+<svg width="100%" viewBox="0 0 760 292" role="img" xmlns="http://www.w3.org/2000/svg"><title>Mensajes iniciados por mes</title><desc>Volumen alto de diciembre a marzo y caída fuerte desde abril.</desc>
+<line x1="60" y1="250" x2="740" y2="250" stroke="#C9C7BD" stroke-width="1"/><rect x="75" y="236" width="46" height="14" rx="3" fill="#9E9C94"/><text x="98" y="229" text-anchor="middle" font-size="10.5" fill="#6B6A64" font-family="Archivo" font-weight="700">339</text><text x="98" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">nov</text><rect x="150" y="40" width="46" height="210" rx="3" fill="#A8C21E"/><text x="173" y="33" text-anchor="middle" font-size="10.5" fill="#3F4A12" font-family="Archivo" font-weight="700">5.124</text><text x="173" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">dic</text><rect x="226" y="40" width="46" height="210" rx="3" fill="#A8C21E"/><text x="249" y="33" text-anchor="middle" font-size="10.5" fill="#3F4A12" font-family="Archivo" font-weight="700">5.120</text><text x="249" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">ene</text><rect x="301" y="115" width="46" height="135" rx="3" fill="#A8C21E"/><text x="324" y="108" text-anchor="middle" font-size="10.5" fill="#3F4A12" font-family="Archivo" font-weight="700">3.291</text><text x="324" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">feb</text><rect x="377" y="95" width="46" height="155" rx="3" fill="#A8C21E"/><text x="400" y="88" text-anchor="middle" font-size="10.5" fill="#3F4A12" font-family="Archivo" font-weight="700">3.793</text><text x="400" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">mar</text><rect x="453" y="177" width="46" height="73" rx="3" fill="#D89A2B"/><text x="476" y="170" text-anchor="middle" font-size="10.5" fill="#7A5308" font-family="Archivo" font-weight="700">1.776</text><text x="476" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">abr</text><rect x="528" y="177" width="46" height="73" rx="3" fill="#D89A2B"/><text x="551" y="170" text-anchor="middle" font-size="10.5" fill="#7A5308" font-family="Archivo" font-weight="700">1.773</text><text x="551" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">may</text><rect x="604" y="245" width="46" height="5" rx="3" fill="#B4451F"/><text x="627" y="238" text-anchor="middle" font-size="10.5" fill="#B4451F" font-family="Archivo" font-weight="700">114</text><text x="627" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">jun</text><rect x="679" y="246" width="46" height="4" rx="3" fill="#B4451F"/><text x="702" y="239" text-anchor="middle" font-size="10.5" fill="#B4451F" font-family="Archivo" font-weight="700">9</text><text x="702" y="270" text-anchor="middle" font-size="12" fill="#6B6A64" font-family="Archivo">jul</text></svg>
+</div>
+<div class="note reveal"><b>Mensajes iniciados</b> es lo que Meta llama "conversaciones": la cantidad de veces que alguien tocó el botón y abrió el chat de WhatsApp. No son conversaciones reales ni pacientes; muchos son toques sin intención. Las conversaciones de verdad están en el WhatsApp de la clínica, y los pacientes en Kommo.</div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow reveal">El desglose</div>
+<h2 class="reveal">Cada mes, por dentro</h2>
+<p class="lead reveal">Cada bloque muestra el total del mes arriba, y abajo qué campañas estuvieron activas y cuánto aportó cada una.</p>
+
+  <div class="mes reveal">
+    <div class="mhead"><h3>Noviembre 2025</h3><span class="pill" style="background:#9E9C94;color:#FFFFFF">Arranque</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 466</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">339</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">547</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">1,27%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 1,38</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Endodoncia</td><td>339</td><td>547</td><td>Bs 466</td><td>1,38</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Diciembre 2025</h3><span class="pill" style="background:#A8C21E;color:#3F4A12">Época dorada</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 4.346</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">5.124</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">8.637</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">1,66%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 0,85</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Placas</td><td>2.098</td><td>3.478</td><td>Bs 1.576</td><td>0,75</td></tr><tr><td>Implantes</td><td>1.634</td><td>2.429</td><td>Bs 899</td><td>0,55</td></tr><tr><td>Endodoncia</td><td>1.392</td><td>2.730</td><td>Bs 1.871</td><td>1,34</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Enero 2026</h3><span class="pill" style="background:#A8C21E;color:#3F4A12">Época dorada</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 5.519</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">5.120</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">9.530</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">1,09%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 1,08</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Placas</td><td>3.000</td><td>5.246</td><td>Bs 2.080</td><td>0,69</td></tr><tr><td>Endodoncia</td><td>1.445</td><td>2.842</td><td>Bs 1.880</td><td>1,30</td></tr><tr><td>Coronas</td><td>306</td><td>626</td><td>Bs 498</td><td>1,63</td></tr><tr><td>Caries</td><td>247</td><td>563</td><td>Bs 880</td><td>3,56</td></tr><tr><td>Puentes</td><td>122</td><td>253</td><td>Bs 182</td><td>1,50</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Febrero 2026</h3><span class="pill" style="background:#A8C21E;color:#3F4A12">Época dorada</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 3.558</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">3.291</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">6.048</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">1,22%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 1,08</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Placas</td><td>1.305</td><td>2.187</td><td>Bs 861</td><td>0,66</td></tr><tr><td>Endodoncia</td><td>826</td><td>1.528</td><td>Bs 969</td><td>1,17</td></tr><tr><td>Puentes</td><td>675</td><td>1.227</td><td>Bs 866</td><td>1,28</td></tr><tr><td>Coronas</td><td>485</td><td>1.106</td><td>Bs 862</td><td>1,78</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Marzo 2026</h3><span class="pill" style="background:#A8C21E;color:#3F4A12">Época dorada</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 3.996</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">3.793</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">7.104</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">1,03%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 1,05</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Endodoncia</td><td>1.524</td><td>2.867</td><td>Bs 1.566</td><td>1,03</td></tr><tr><td>Placas</td><td>1.438</td><td>2.631</td><td>Bs 1.095</td><td>0,76</td></tr><tr><td>Puentes</td><td>705</td><td>1.330</td><td>Bs 1.128</td><td>1,60</td></tr><tr><td>Coronas</td><td>81</td><td>206</td><td>Bs 121</td><td>1,49</td></tr><tr><td>Ortodoncia</td><td>45</td><td>70</td><td>Bs 86</td><td>1,90</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Abril 2026</h3><span class="pill" style="background:#D89A2B;color:#7A5308">Caída</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 3.247</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">1.776</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">3.187</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">0,89%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 1,83</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Puentes</td><td>695</td><td>1.228</td><td>Bs 1.106</td><td>1,59</td></tr><tr><td>Endodoncia</td><td>627</td><td>1.210</td><td>Bs 1.193</td><td>1,90</td></tr><tr><td>Ortodoncia</td><td>454</td><td>749</td><td>Bs 947</td><td>2,09</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Mayo 2026</h3><span class="pill" style="background:#D89A2B;color:#7A5308">Caída</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 4.188</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">1.773</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">3.633</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">0,95%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 2,36</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Puentes</td><td>538</td><td>1.006</td><td>Bs 1.066</td><td>1,98</td></tr><tr><td>Limpieza Dental</td><td>372</td><td>655</td><td>Bs 801</td><td>2,15</td></tr><tr><td>Coronas</td><td>319</td><td>653</td><td>Bs 806</td><td>2,53</td></tr><tr><td>Variante Servicios</td><td>222</td><td>596</td><td>Bs 371</td><td>1,67</td></tr><tr><td>Endodoncia</td><td>202</td><td>455</td><td>Bs 518</td><td>2,56</td></tr><tr><td>Extracciones</td><td>120</td><td>268</td><td>Bs 626</td><td>5,22</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Junio 2026</h3><span class="pill" style="background:#B4451F;color:#FFFFFF">Colapso</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 1.777</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">114</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">816</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">0,88%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 15,59</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Limpieza Blanqueamiento/Blanqueam.</td><td>113</td><td>816</td><td>Bs 1.777</td><td>15,73</td></tr><tr><td>Limpieza Dental</td><td>1</td><td>0</td><td>Bs 0</td><td>0,00</td></tr></tbody>
+    </table>
+  </div>
+  <div class="mes reveal">
+    <div class="mhead"><h3>Julio 2026</h3><span class="pill" style="background:#B4451F;color:#FFFFFF">Colapso</span></div>
+    <div class="kpis">
+      <div class="k"><div class="kn">Bs 134</div><div class="kl">gastado</div></div>
+      <div class="k"><div class="kn">9</div><div class="kl">mensajes iniciados</div></div>
+      <div class="k"><div class="kn">56</div><div class="kl">clics</div></div>
+      <div class="k"><div class="kn">0,95%</div><div class="kl">CTR</div></div>
+      <div class="k"><div class="kn">Bs 14,87</div><div class="kl">por mensaje</div></div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Campaña activa</th><th>Mensajes</th><th>Clics</th><th>Gasto</th><th>Bs/msj</th></tr></thead>
+      <tbody><tr><td>Limpieza Blanqueamiento/Blanqueam.</td><td>9</td><td>56</td><td>Bs 134</td><td>14,87</td></tr></tbody>
+    </table>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+<div class="eyebrow reveal">El total</div>
+<h2 class="reveal">Los 8 meses juntos</h2>
+<div class="kpis reveal" style="margin-top:22px">
+<div class="k"><div class="kn">Bs 27.231</div><div class="kl">gastado total</div></div>
+<div class="k"><div class="kn">21.339</div><div class="kl">mensajes iniciados</div></div>
+<div class="k"><div class="kn">39.558</div><div class="kl">clics</div></div>
+</div>
+</div></section>
+
+<footer>Ezequiel Spadental · Documento de trabajo · Datos de Meta a Bs 10/USD · Julio 2026</footer>
+<script>
+var els=document.querySelectorAll('.reveal');
+if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.1});els.forEach(function(el){io.observe(el)});}else{els.forEach(function(el){el.classList.add('in')});}
+</script></body></html>
