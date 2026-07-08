@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de campañas · Ezequiel Spadental</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--charcoal:#262625;--paper:#F5F4EF;--card:#FFFFFF;--lime:#A8C21E;--lime-deep:#6E8410;--ink:#2A2A28;--ink-soft:#6B6A64;--line:#E4E2D9;--red:#B4451F;--radius:14px}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Archivo',system-ui,sans-serif;background:var(--paper);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:880px;margin:0 auto;padding:0 22px}
+  .eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--lime-deep);margin-bottom:14px}
+  h2{font-family:'Archivo';font-weight:800;font-size:clamp(23px,4.2vw,32px);line-height:1.12;letter-spacing:-.01em;color:var(--ink)}
+  p.lead{font-size:clamp(16px,2.1vw,18px);color:var(--ink-soft);margin-top:14px;max-width:62ch}
+  section{padding:56px 0;border-bottom:1px solid var(--line)}
+  .hero{background:var(--charcoal);color:#fff;border:none;padding:0}
+  .hero .wrap{padding-top:44px;padding-bottom:54px}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:44px}
+  .brand svg{width:38px;height:auto}
+  .brand .name{font-family:'Archivo';font-weight:800;font-size:19px;line-height:1;color:#fff}
+  .brand .name span{display:block;font-weight:500;font-size:11px;letter-spacing:.16em;color:var(--lime);text-transform:uppercase;margin-top:3px}
+  .hero .eyebrow{color:var(--lime)}
+  .hero h1{font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(34px,7vw,60px);line-height:1;text-transform:uppercase;color:#fff}
+  .hero h1 b{color:var(--lime);font-weight:400}
+  .hero .sub{font-size:clamp(15px,2.2vw,18px);color:#CFCEC6;margin-top:20px;max-width:56ch}
+  .chips{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;flex:1;min-width:132px}
+  .chip .n{font-family:'Anton',sans-serif;font-size:29px;line-height:1;color:var(--ink)}
+  .chip .n small{font-family:'Archivo';font-weight:700;font-size:13px;color:var(--lime-deep)}
+  .chip .l{font-size:12.5px;color:var(--ink-soft);margin-top:7px}
+  .flip{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:26px}
+  .fcard{border-radius:var(--radius);padding:24px}
+  .fcard.look{background:var(--card);border:1px solid var(--line)}
+  .fcard.real{background:var(--charcoal)}
+  .fcard .k{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .fcard.look .k{color:var(--ink-soft)}.fcard.real .k{color:var(--lime)}
+  .fcard .v{font-family:'Anton',sans-serif;font-size:44px;line-height:.95;margin:12px 0 4px}
+  .fcard.look .v{color:var(--ink)}.fcard.real .v{color:#fff}
+  .fcard .d{font-size:13.5px}.fcard.look .d{color:var(--ink-soft)}.fcard.real .d{color:#B9B8B0}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;margin-top:24px;font-size:14px;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--card)}
+  .tbl th,.tbl td{padding:12px 12px;text-align:right}
+  .tbl th:first-child,.tbl td:first-child{text-align:left}
+  .tbl thead th{background:var(--charcoal);color:#fff;font-weight:700;font-size:12px;letter-spacing:.01em}
+  .tbl tbody td{border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  .tbl tbody td:first-child{font-weight:700;color:var(--ink)}
+  .tbl tr.bad td{background:#FBEDE7}.tbl tr.bad td:first-child{color:var(--red)}
+  .tbl tr.good td:first-child{color:var(--lime-deep)}
+  .g{color:var(--lime-deep);font-weight:800}.r{color:var(--red);font-weight:800}
+  .tbl tfoot td{border-top:2px solid var(--charcoal);font-weight:800;color:var(--ink);background:#F1EFE8}
+  .tbl caption{caption-side:bottom;text-align:left;font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+  .note{margin-top:20px;background:#EEF1D8;border:1px solid #DCE2B0;border-radius:var(--radius);padding:18px 20px;font-size:15px;color:#3F4A12}
+  .note b{color:var(--lime-deep)}
+  .note.warn{background:#FBEDE7;border-color:#EBC9BC;color:#7A3115}.note.warn b{color:var(--red)}
+  .killer{margin-top:22px;font-size:clamp(17px,2.4vw,21px);font-weight:700;line-height:1.45;color:var(--ink)}
+  .killer .hl{color:var(--lime-deep)}
+  .close{background:var(--charcoal);color:#fff;border:none;text-align:center}
+  .close h2{color:#fff;font-family:'Anton',sans-serif;font-weight:400;text-transform:uppercase;font-size:clamp(26px,5vw,46px);line-height:1.05}
+  .close h2 b{color:var(--lime);font-weight:400}
+  .close p{color:#CFCEC6;margin-top:18px;font-size:16px;max-width:52ch;margin-left:auto;margin-right:auto}
+  footer{padding:28px 0 44px;text-align:center;color:var(--ink-soft);font-size:13px}
+  .reveal{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .6s ease}.reveal.in{opacity:1;transform:none}
+  @media (max-width:640px){.flip{grid-template-columns:1fr}section{padding:44px 0}.tbl{font-size:12px}.tbl th,.tbl td{padding:9px 7px}}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none}html{scroll-behavior:auto}}
+  a{color:inherit}:focus-visible{outline:3px solid var(--lime);outline-offset:2px}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="brand">
+    <svg viewBox="0 0 100 84" aria-hidden="true"><path d="M8 78 L14 30 L34 52 L50 14 L66 52 L86 30 L92 78 Z" fill="#A8C21E"/><rect x="8" y="76" width="84" height="7" rx="3" fill="#fff"/></svg>
+    <div class="name">EZEQUIEL SPADENTAL<span>Dra. Mirna Veizaga</span></div>
+  </div>
+  <div class="eyebrow reveal">Análisis de campañas · nov 2025 – abr 2026</div>
+  <h1 class="reveal">La publicidad<br>funcionó. El <b>cierre</b> no.</h1>
+  <p class="sub reveal">Un repaso real de las campañas pasadas, con datos exportados de Meta. Qué mostraban
+  los costos, qué pasaba de verdad, y dónde estuvo el problema.</p>
+</div></header>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">El resumen</div>
+  <h2 class="reveal">Lo que se hizo, en total</h2>
+  <p class="lead reveal">Sumando todas las campañas del período, los números duros de Meta.</p>
+  <div class="chips reveal">
+    <div class="chip"><div class="n"><small>Bs</small> 27.231</div><div class="l">inversión (~5 meses)</div></div>
+    <div class="chip"><div class="n">39.558</div><div class="l">clics en el anuncio</div></div>
+    <div class="chip"><div class="n">21.339</div><div class="l">conversaciones</div></div>
+    <div class="chip"><div class="n">1,14<small>%</small></div><div class="l">CTR (interés)</div></div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">El punto clave</div>
+  <h2 class="reveal">El anuncio hizo su trabajo.<br>El paciente se perdía después.</h2>
+  <p class="lead reveal">Casi 40.000 personas hicieron clic, a bajo costo y con buen nivel de interés
+  (un CTR por encima de lo normal). Miles arrancaron conversación. Y aun así, muy pocos terminaron
+  como pacientes. La fuga no estaba en la publicidad.</p>
+  <div class="flip reveal">
+    <div class="fcard look"><div class="k">La publicidad</div><div class="v">1,14%</div><div class="d">de CTR y Bs 0,69 por clic. Trajo interés real, y mucho.</div></div>
+    <div class="fcard real"><div class="k">El resultado final</div><div class="v">Bs 95</div><div class="d">por paciente. Solo 1,3 de cada 100 conversaciones cerró.</div></div>
+  </div>
+  <div class="note reveal">De 21.339 conversaciones salieron unos 287 pacientes: un cierre del <b>1,3%</b>.
+  El costo por conversación bajo no era el problema, ni la publicidad. El problema era que casi nadie
+  pasaba de "escribió" a "vino a la consulta". Ahí es donde se ganaba o se perdía la plata.</div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">Campaña por campaña</div>
+  <h2 class="reveal">Dónde se fue cada peso</h2>
+  <p class="lead reveal">Ordenado por inversión. El CTR muestra el interés real que despertó cada anuncio;
+  el costo por conversación, qué tan barato o caro fue.</p>
+  <table class="tbl reveal">
+    <thead><tr><th>Servicio</th><th>Conv.</th><th>Clics</th><th>CTR</th><th>Gasto Bs</th><th>Bs/conv.</th></tr></thead>
+    <tbody>
+      <tr class="good"><td>Endodoncia</td><td>6.355</td><td>12.179</td><td class="g">1,15%</td><td>8.464</td><td class="g">1,33</td></tr>
+      <tr class="good"><td>Placas</td><td>7.841</td><td>13.542</td><td class="g">1,18%</td><td>5.612</td><td class="g">0,72</td></tr>
+      <tr><td>Puentes</td><td>2.735</td><td>5.044</td><td>1,07%</td><td>4.348</td><td>1,59</td></tr>
+      <tr><td>Coronas</td><td>1.191</td><td>2.591</td><td>1,11%</td><td>2.287</td><td>1,92</td></tr>
+      <tr class="bad"><td>Limpieza / Blanqueam.</td><td>122</td><td>872</td><td class="r">0,88%</td><td>1.911</td><td class="r">15,66</td></tr>
+      <tr class="bad"><td>Ortodoncia</td><td>499</td><td>819</td><td class="r">0,77%</td><td>1.033</td><td>2,07</td></tr>
+      <tr class="good"><td>Implantes</td><td>1.634</td><td>2.429</td><td class="g">2,16%</td><td>899</td><td class="g">0,55</td></tr>
+      <tr class="bad"><td>Caries</td><td>247</td><td>563</td><td class="r">0,72%</td><td>880</td><td class="r">3,56</td></tr>
+      <tr><td>Limpieza dental</td><td>373</td><td>655</td><td>1,05%</td><td>801</td><td>2,15</td></tr>
+      <tr class="bad"><td>Extracciones</td><td>120</td><td>268</td><td class="r">0,45%</td><td>626</td><td class="r">5,22</td></tr>
+      <tr><td>Variante Servicios</td><td>222</td><td>596</td><td class="g">1,92%</td><td>371</td><td>1,67</td></tr>
+    </tbody>
+    <tfoot><tr><td>Total</td><td>21.339</td><td>39.558</td><td>1,14%</td><td>27.231</td><td>1,28</td></tr></tfoot>
+    <caption>Verde = buen desempeño (CTR alto o costo bajo). Rojo = flojo (poco interés o caro). CTR sano &gt; 1%.</caption>
+  </table>
+  <div class="note reveal">Los ganadores claros fueron <b>Implantes</b> (mejor CTR, 2,16%, y el clic más barato),
+  <b>Placas</b> y <b>Endodoncia</b>: mucho interés a bajo costo. Los flojos, <b>Extracciones, Caries y
+  Limpieza / Blanqueamiento</b>, coinciden en lo mismo: poco interés y caros. Esos son los que conviene
+  no repetir tal cual.</div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="eyebrow reveal">La lección</div>
+  <h2 class="reveal">El problema no era<br>gastar, era cerrar</h2>
+  <p class="killer reveal">Con 39.558 clics y 21.339 conversaciones, la clínica tuvo interés de sobra.
+  Y aun así solo <span class="hl">287 pacientes</span>. Ningún ajuste de publicidad arregla eso: se
+  arregla en el WhatsApp.</p>
+  <div class="note reveal">Lo que sigue: mantener los anuncios que ya funcionan (Implantes, Placas,
+  Endodoncia), soltar los flojos, y sumar un <b>proceso de cierre por WhatsApp</b> (respuesta rápida,
+  proponer día y hora, recordatorio). Ahí es donde estaban los pacientes que se escapaban.</div>
+</div></section>
+
+<section class="close"><div class="wrap">
+  <h2 class="reveal">39.558 clics.<br><b>287</b> pacientes.</h2>
+  <p class="reveal">La publicidad ya traía a la gente. El trabajo pendiente es no dejarla ir cuando
+  escribe por WhatsApp.</p>
+</div></section>
+
+<footer>Ezequiel Spadental · Análisis interno · Datos de Meta a Bs 10/USD · Julio 2026</footer>
+<script>
+  var els=document.querySelectorAll('.reveal');
+  if('IntersectionObserver' in window){var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}})},{threshold:.12});els.forEach(function(el){io.observe(el)});}else{els.forEach(function(el){el.classList.add('in')});}
+</script>
+</body>
+</html>
