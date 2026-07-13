@@ -141,15 +141,18 @@ def classify_stage(name):
     return "other"
 
 def norm_channel(s):
+    # Fallback por ETIQUETAS (leads sin el campo Canal). Los nombres devueltos
+    # coinciden con las opciones del dropdown de Kommo para que un lead por
+    # etiqueta y otro por campo caigan en la MISMA fila.
     s = (s or "").lower()
-    if any(k in s for k in ["facebook", "fb ", "meta", "messenger"]): return "Facebook Ads"
+    if any(k in s for k in ["facebook", "fb ", "meta", "messenger"]): return "Facebook"
     if any(k in s for k in ["instagram", "instragram", "ig "]):       return "Instagram"
-    if any(k in s for k in ["tiktok", "tik tok", "tik-tok"]):         return "TikTok"
+    if any(k in s for k in ["tiktok", "tik tok", "tik-tok"]):         return "Tiktok"
     if any(k in s for k in ["whatsapp", "wsp", "wa "]):               return "WhatsApp directo"
     if any(k in s for k in ["google", "gads", "adword", "sem"]):      return "Google Ads"
     if any(k in s for k in ["organic", "orgánic", "web", "seo"]):     return "Orgánico/Web"
     if any(k in s for k in ["referid", "recomend", "boca"]):          return "Referido"
-    if any(k in s for k in ["walk", "tienda", "local", "show", "visita"]): return "Walk-in (Tienda)"
+    if any(k in s for k in ["walk", "tienda", "local", "show", "visita"]): return "Visita tienda"
     if any(k in s for k in ["antiguo", "recompra", "cliente ant"]):   return "Cliente antiguo"
     if any(k in s for k in ["manual", "vendedor"]):                   return "Carga manual vendedora"
     if any(k in s for k in ["bot", "automát", "auto"]):               return "Automático (bot)"
