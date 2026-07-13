@@ -5515,6 +5515,30 @@ window.Panel = Panel;
   }
 
   // Sortable origin-channel table.
+  // Junta los canales "fallback" (leads sin el campo Canal marcado, clasificados
+  // por quién los creó: bot o carga manual) en UNA fila "⚪ Sin canal marcado",
+  // para que la tabla de canales muestre solo ORIGEN real + esa fila gris.
+  function mergeSinCanal(rows) {
+    const FB = ["Carga manual vendedora", "Autom\xe1tico (bot)"];
+    const fb = (rows || []).filter(c => FB.indexOf(c.name) >= 0 && !c.carry);
+    if (!fb.length) return rows;
+    const rest = (rows || []).filter(c => !(FB.indexOf(c.name) >= 0 && !c.carry));
+    const agg = fb.reduce((a, c) => ({
+      leads: a.leads + (c.leads || 0),
+      pct: a.pct + (c.pct || 0),
+      cierres: a.cierres + (c.cierres || 0),
+      pipeline: a.pipeline + (c.pipeline || 0),
+      tsum: a.tsum + (c.ticket || 0) * (c.cierres || 0)
+    }), { leads: 0, pct: 0, cierres: 0, pipeline: 0, tsum: 0 });
+    const merged = {
+      ic: "⚪", name: "Sin canal marcado",
+      leads: agg.leads, pct: agg.pct, cierres: agg.cierres,
+      conv: agg.leads ? Math.round(agg.cierres / agg.leads * 100) : 0,
+      ticket: agg.cierres ? Math.round(agg.tsum / agg.cierres) : 0,
+      pipeline: agg.pipeline, cls: "gray"
+    };
+    return rest.concat([merged]);
+  }
   function ChannelTable({
     rows
   }) {
@@ -6615,7 +6639,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }), /*#__PURE__*/React.createElement("div", {
       className: "card tight"
     }, /*#__PURE__*/React.createElement(ChannelTable, {
-      rows: D.channels
+      rows: mergeSinCanal(D.channels)
     })));
   };
 
