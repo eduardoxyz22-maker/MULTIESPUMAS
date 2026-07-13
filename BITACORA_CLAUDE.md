@@ -1,6 +1,6 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-07-02**.
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-07-13**.
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
 
 ---
@@ -89,6 +89,30 @@ Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedim
   El tiempo de 1ª respuesta ya la cubre automáticamente (evento `lead_status_changed`).
 - **GitHub Pages se atascó** (5+ deploys "deployment_queued→timeout" con status global verde):
   se resolvió con el toggle Settings→Pages→None→main. Documentado como playbook en §3.
+
+## 4c. Adiciones del 2026-07-13
+
+- **Detección del campo "Canal" (bug crítico corregido)**: `detect_channel` matcheaba primero
+  `utm_source`/`utm_content` (vacíos) en vez del campo lista **Canal** que llenan las vendedoras.
+  Fix: en la detección de campos se prefiere el campo de tipo lista (`select/multiselect/radiobutton`)
+  cuyo nombre matchea "canal/fuente/origen/…" (`_is_src`, `_SEL`). Reveló que ~718/1140 leads del mes
+  SÍ tenían Canal marcado pero se ignoraban; **Referido pasó de 0 a 10**. La lista de canales ahora
+  siembra TODAS las opciones del dropdown de Kommo (`channel_enums`, incl. las de 0 leads) leyéndolas
+  del campo, o de `/leads/custom_fields/{id}`, o del hardcode de respaldo.
+- **Nombres de canal = TAL CUAL Kommo**: `detect_channel` devuelve el valor crudo del campo; `norm_channel`
+  (solo para el fallback por tags) alinea sus etiquetas con el dropdown (Facebook, Instagram, Tiktok,
+  Visita tienda, Referido, Cliente antiguo) para no partir una misma fila en dos.
+- **"Sin canal marcado" clickeable** → drawer con cuántos cierres sin marcar tiene cada vendedora.
+- **Card "Razón de pérdida"** en Resumen (etapa "Pedido cancelado – perdido"): tabla de razones con
+  barras rojas, clickeable por razón → desglose por vendedora. **La razón vive en el `loss_reason_id`
+  NATIVO de Kommo**, NO en un campo personalizado (el campo personalizado de pérdida está vacío para
+  ~todos los leads). Se carga el mapa `loss_reason_id→nombre` desde `/leads/loss_reasons` y se usa con
+  prioridad: **nativa → campo personalizado → "Sin razón definida"**. Realidad del negocio: las
+  vendedoras casi no registran la razón (256/258 salen "Sin razón definida"); solo aparecen reales
+  cuando alguien la marca ("Comprado del competidor", "Presupuesto insuficiente").
+- **Productos vendidos**: card en Resumen con lista + cantidades (`build_products`), clickeable →
+  desglose por vendedora; ficha "Unidades vendidas" en el Pulso. El dinero SIGUE saliendo del
+  Presupuesto (`price`), no del valor de productos.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
