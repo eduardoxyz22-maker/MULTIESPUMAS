@@ -174,18 +174,38 @@ def contract_ts(lead, contract_field_id):
     return None
 
 
+def channel_icon(name):
+    """Emoji para un canal, por palabra clave (sin renombrar el canal)."""
+    s = (name or "").lower()
+    if any(k in s for k in ["facebook", "fb ", "meta", "messenger"]): return "📘"
+    if any(k in s for k in ["instagram", "instragram", "ig "]):       return "📷"
+    if any(k in s for k in ["tiktok", "tik tok", "tik-tok"]):         return "🎵"
+    if any(k in s for k in ["whatsapp", "wsp"]):                      return "📱"
+    if any(k in s for k in ["google", "gads", "adword", "sem"]):      return "🔍"
+    if any(k in s for k in ["organic", "orgánic", "web", "seo"]):     return "🌐"
+    if any(k in s for k in ["referid", "recomend", "boca"]):          return "🤝"
+    if any(k in s for k in ["walk", "tienda", "visita", "local"]):    return "🚶"
+    if any(k in s for k in ["antiguo", "recompra", "cliente ant"]):   return "🔁"
+    if any(k in s for k in ["manual", "vendedor"]):                   return "✍"
+    if any(k in s for k in ["bot", "automát", "auto"]):               return "⚙"
+    return "📦"
+
 def detect_channel(lead, source_field_id):
+    # 1) Campo "Canal" de Kommo: se usa el valor TAL CUAL lo eligen las vendedoras
+    #    (no se renombra), para que el dashboard coincida con la lista de Kommo.
     if source_field_id:
         for cf in (lead.get("custom_fields_values") or []):
             if cf.get("field_id") == source_field_id:
                 vals = cf.get("values") or [{}]
-                ch = norm_channel(str(vals[0].get("value", "")))
-                if ch != "Otro":
-                    return ch
+                raw = str(vals[0].get("value", "")).strip()
+                if raw:
+                    return raw
+    # 2) Fallback por etiquetas (legado): sí se normaliza para agrupar variantes.
     for t in ((lead.get("_embedded", {}) or {}).get("tags") or []):
         ch = norm_channel(t.get("name", ""))
         if ch != "Otro":
             return ch
+    # 3) Sin canal marcado: se clasifica por quién creó el lead.
     return "Automático (bot)" if lead.get("created_by") == 0 else "Carga manual vendedora"
 
 def detect_suc(vname, lead):
@@ -722,7 +742,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
              for nm, x in ch_by_v[ch].items()],
             key=lambda r: -r["leads"])
         channels.append({
-            "ic": CH_ICON.get(ch, "📦"), "name": ch, "leads": a["leads"],
+            "ic": channel_icon(ch), "name": ch, "leads": a["leads"],
             "pct": round(a["leads"] / (G_leads or 1) * 100), "cierres": a["cierres"],
             "conv": conv, "ticket": round(a["value"] / a["cierres"]) if a["cierres"] else 0,
             "pipeline": a["value"], "cls": cls, "byV": byV,
@@ -733,7 +753,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
              for nm, x in carry_by_v.items()],
             key=lambda r: -r["cierres"])
         carry_byCh = sorted(
-            [{"name": ch, "ic": CH_ICON.get(ch, "📦"), "cierres": n}
+            [{"name": ch, "ic": channel_icon(ch), "cierres": n}
              for ch, n in carry_by_ch.items()],
             key=lambda r: -r["cierres"])
         channels.append({
