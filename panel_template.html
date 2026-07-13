@@ -4232,21 +4232,46 @@ function ViewResumen() {
   const carryRow = (D.channels || []).find(c => c.carry);
   const mesesAnt = carryRow ? carryRow.cierres : 0;
   const FALLBACK = ["Carga manual vendedora", "Autom\xe1tico (bot)"];
-  const sinCanal = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) >= 0).reduce((s, c) => s + (c.cierres || 0), 0);
+  const fallbackCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) >= 0);
+  const sinCanal = fallbackCh.reduce((s, c) => s + (c.cierres || 0), 0);
   const realCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) < 0);
+  // desglose de "Sin canal marcado": cierres por vendedora sumando los canales fallback
+  const sinCanalByV = {};
+  fallbackCh.forEach(c => (c.byV || []).forEach(b => {
+    sinCanalByV[b.name] = (sinCanalByV[b.name] || 0) + (b.cierres || 0);
+  }));
+  const sinCanalDetail = {
+    title: "⚪ Sin canal marcado",
+    ico: "datos",
+    color: "#64748B",
+    totalTxt: fmtInt(sinCanal) + " cierres",
+    desc: "Cierres del mes cuyo lead NO tiene el campo Canal marcado en Kommo (carga manual o bot). Cu\xE1ntos tiene cada vendedora sin marcar — es lo que hay que ir reduciendo.",
+    rows: Object.keys(sinCanalByV).filter(nm => sinCanalByV[nm] > 0).map(nm => {
+      const tv = D.team.find(t => t.name === nm);
+      return {
+        name: nm,
+        suc: tv ? tv.suc : "",
+        color: tv ? tv.color : "#808A96",
+        ini: tv ? tv.ini : nm.split(" ").slice(0, 2).map(w => w[0] || "").join("").toUpperCase(),
+        valNum: sinCanalByV[nm],
+        valTxt: fmtInt(sinCanalByV[nm]) + " cierres"
+      };
+    })
+  };
   const loadRows = [{ lbl: "✍ Manual (este mes)", n: D.origin.manualClosed || 0, color: "var(--green)" }, { lbl: "⚙ Bot (este mes)", n: D.origin.autoClosed || 0, color: "#646E7B" }];
   if (mesesAnt) loadRows.push({ lbl: "↩ De meses anteriores", n: mesesAnt, color: "#7A5AF0", carry: true });
   const chRows = realCh.map(c => ({ lbl: c.ic + " " + c.name, n: c.cierres || 0, color: "var(--brand)" }));
-  if (sinCanal) chRows.push({ lbl: "⚪ Sin canal marcado", n: sinCanal, color: "#9AA3AF" });
+  if (sinCanal) chRows.push({ lbl: "⚪ Sin canal marcado", n: sinCanal, color: "#9AA3AF", detail: sinCanalDetail });
   if (mesesAnt) chRows.push({ lbl: "↩ De meses anteriores", n: mesesAnt, color: "#7A5AF0", carry: true });
   chRows.sort((a, b) => b.n - a.n);
   const originShareRow = (r, i) => {
     const pct = G.cierres ? Math.round(r.n / G.cierres * 100) : 0;
+    const dt = r.detail || (r.carry ? chDetail(carryRow) : null);
     return /*#__PURE__*/React.createElement("div", {
       key: i,
-      className: r.carry ? "clickable" : undefined,
-      onClick: r.carry ? () => window.__kpiDetail && window.__kpiDetail(chDetail(carryRow)) : undefined,
-      title: r.carry ? "Ver desglose por vendedora y canal" : undefined,
+      className: dt ? "clickable" : undefined,
+      onClick: dt ? () => window.__kpiDetail && window.__kpiDetail(dt) : undefined,
+      title: dt ? "Ver desglose por vendedora" : undefined,
       style: { display: "grid", gridTemplateColumns: "160px 1fr 80px", alignItems: "center", gap: 10, padding: "7px 0", color: r.carry ? "var(--muted)" : undefined, fontStyle: r.carry ? "italic" : undefined }
     }, /*#__PURE__*/React.createElement("span", { style: { fontSize: ".8rem", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, r.lbl), /*#__PURE__*/React.createElement("div", { className: "meter", style: { height: 7 } }, /*#__PURE__*/React.createElement("i", { style: { width: Math.max(2, pct) + "%", background: r.color } })), /*#__PURE__*/React.createElement("div", { style: { textAlign: "right", fontSize: ".8rem" } }, /*#__PURE__*/React.createElement("b", null, pct, "%"), /*#__PURE__*/React.createElement("span", { style: { fontSize: ".66rem", color: "var(--faint)" } }, " \xb7 ", r.n)));
   };
