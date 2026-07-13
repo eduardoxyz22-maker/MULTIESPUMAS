@@ -810,6 +810,20 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
              for r, a in loss_agg.items()],
             key=lambda x: -x["count"])
     }
+    # DIAG: ¿dónde vive el dato de razón de pérdida? (field_ids con valor en leads perdidos + native)
+    _ldbg_fields = {}; _ldbg_native = 0; _lost_n = 0
+    for ld in cur:
+        if stage_map.get(ld.get("status_id"), {}).get("cls") != "perdido":
+            continue
+        _lost_n += 1
+        if ld.get("loss_reason_id"):
+            _ldbg_native += 1
+        for cf in (ld.get("custom_fields_values") or []):
+            v = str(((cf.get("values") or [{}])[0]).get("value", "")).strip()
+            if v:
+                k = str(cf.get("field_id")) + ":" + (cf.get("field_name") or "")
+                _ldbg_fields[k] = _ldbg_fields.get(k, 0) + 1
+    _DIAG.append(f"loss_dbg lost={_lost_n} native_loss_reason={_ldbg_native} campos_con_valor={_ldbg_fields}")
 
     # ── embudos ──
     def stage_sum(cls_list):
