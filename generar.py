@@ -526,7 +526,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None, loss_field_id=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -786,6 +786,31 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     origin["manualCloseRate"] = round(man_close / man * 100) if man else 0
     origin["autoCloseRate"] = round(bot_close / bot * 100) if bot else 0
 
+    # ── razón de pérdida: por qué se perdieron los leads del mes (etapa perdido) ──
+    loss_agg = {}
+    for ld in cur:
+        if stage_map.get(ld.get("status_id"), {}).get("cls") != "perdido":
+            continue
+        reason = None
+        if loss_field_id:
+            for cf in (ld.get("custom_fields_values") or []):
+                if cf.get("field_id") == loss_field_id:
+                    reason = str(((cf.get("values") or [{}])[0]).get("value", "")).strip() or None
+        reason = reason or "Sin razón definida"
+        nm = _vname_of(ld)
+        a = loss_agg.setdefault(reason, {"count": 0, "byV": defaultdict(int)})
+        a["count"] += 1
+        if nm:
+            a["byV"][nm] += 1
+    lossReasons = {
+        "total": sum(a["count"] for a in loss_agg.values()),
+        "items": sorted(
+            [{"name": r, "count": a["count"],
+              "byV": sorted([{"name": k, "count": v} for k, v in a["byV"].items()], key=lambda x: -x["count"])}
+             for r, a in loss_agg.items()],
+            key=lambda x: -x["count"])
+    }
+
     # ── embudos ──
     def stage_sum(cls_list):
         return sum(c for n in names for sn, c in vcur[n]["stage"].items()
@@ -936,7 +961,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
                    "pipeline": G_pipeline, "cerrado": G_value, "ticket": G_ticket,
                    "unidades": G_unidades},
         "funnel2": funnel2, "stagesGlobal": stagesGlobal, "origin": origin,
-        "channels": channels, "metrics": metrics,
+        "channels": channels, "lossReasons": lossReasons, "metrics": metrics,
         "leadsMomPct": round((G_leads - G_prev) / G_prev * 100) if G_prev else 0,
         "team": team, "funnel": funnel, "nav": nav, "stagesByV": stagesByV,
         "backlogRows": bk_rows, "alerts": alerts, "dupRows": dup_rows[:50],
@@ -1466,8 +1491,19 @@ def main():
                         for c in cfs if c.get("type") in ("date", "date_time", "birthday")]
         _DIAG.append("campos_fecha=" + (" | ".join(_date_fields) if _date_fields else "ninguno"))
         _DIAG.append(f"contract_field_id={contract_field_id}")
+        # Campo "Razón de pérdida" (lista) para desglosar por qué se pierden los leads
+        def _is_loss(c):
+            blob = ((c.get("code") or "") + " " + (c.get("name") or "")).lower()
+            if any(k in blob for k in ["loss", "motivo"]):
+                return True
+            return ("raz" in blob) and ("perd" in blob or "pérd" in blob)
+        _loss_cands = [c for c in cfs if _is_loss(c)]
+        _loss_field = next((c for c in _loss_cands if c.get("type") in _SEL), None) or (_loss_cands[0] if _loss_cands else None)
+        loss_field_id = _loss_field["id"] if _loss_field else None
+        _DIAG.append("loss_field=" + str(loss_field_id) + " name=" + str((_loss_field or {}).get("name")) +
+                     " · cands=" + str([(c.get("name"), c.get("type")) for c in _loss_cands]))
     except Exception as _e:
-        source_field_id = None; contract_field_id = None
+        source_field_id = None; contract_field_id = None; loss_field_id = None
         channel_enums = ["Facebook", "Instagram", "Tiktok", "Visita tienda", "Referido", "Cliente antiguo"]
         _DIAG.append(f"campos_error={_e}")
 
@@ -1603,7 +1639,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)
