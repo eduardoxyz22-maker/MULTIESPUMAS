@@ -526,7 +526,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None, loss_field_id=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -787,12 +787,14 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     origin["autoCloseRate"] = round(bot_close / bot * 100) if bot else 0
 
     # ── razón de pérdida: por qué se perdieron los leads del mes (etapa perdido) ──
+    # Prioridad: razón NATIVA de Kommo (loss_reason_id) → campo personalizado → "Sin razón definida".
+    loss_reasons_map = loss_reasons_map or {}
     loss_agg = {}
     for ld in cur:
         if stage_map.get(ld.get("status_id"), {}).get("cls") != "perdido":
             continue
-        reason = None
-        if loss_field_id:
+        reason = loss_reasons_map.get(ld.get("loss_reason_id"))
+        if not reason and loss_field_id:
             for cf in (ld.get("custom_fields_values") or []):
                 if cf.get("field_id") == loss_field_id:
                     reason = str(((cf.get("values") or [{}])[0]).get("value", "")).strip() or None
@@ -810,20 +812,6 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
              for r, a in loss_agg.items()],
             key=lambda x: -x["count"])
     }
-    # DIAG: ¿dónde vive el dato de razón de pérdida? (field_ids con valor en leads perdidos + native)
-    _ldbg_fields = {}; _ldbg_native = 0; _lost_n = 0
-    for ld in cur:
-        if stage_map.get(ld.get("status_id"), {}).get("cls") != "perdido":
-            continue
-        _lost_n += 1
-        if ld.get("loss_reason_id"):
-            _ldbg_native += 1
-        for cf in (ld.get("custom_fields_values") or []):
-            v = str(((cf.get("values") or [{}])[0]).get("value", "")).strip()
-            if v:
-                k = str(cf.get("field_id")) + ":" + (cf.get("field_name") or "")
-                _ldbg_fields[k] = _ldbg_fields.get(k, 0) + 1
-    _DIAG.append(f"loss_dbg lost={_lost_n} native_loss_reason={_ldbg_native} campos_con_valor={_ldbg_fields}")
 
     # ── embudos ──
     def stage_sum(cls_list):
@@ -1516,8 +1504,17 @@ def main():
         loss_field_id = _loss_field["id"] if _loss_field else None
         _DIAG.append("loss_field=" + str(loss_field_id) + " name=" + str((_loss_field or {}).get("name")) +
                      " · cands=" + str([(c.get("name"), c.get("type")) for c in _loss_cands]))
+        # Razón de pérdida NATIVA de Kommo (loss_reason_id → nombre)
+        try:
+            loss_reasons_map = {r.get("id"): (r.get("name") or "").strip()
+                                for r in fetch_paginated("/leads/loss_reasons", {}, "loss_reasons", max_pages=10)}
+            _DIAG.append(f"loss_reasons_nativas={list(loss_reasons_map.values())}")
+        except Exception as _lre:
+            loss_reasons_map = {}
+            _DIAG.append(f"loss_reasons_error={_lre}")
     except Exception as _e:
         source_field_id = None; contract_field_id = None; loss_field_id = None
+        loss_reasons_map = {}
         channel_enums = ["Facebook", "Instagram", "Tiktok", "Visita tienda", "Referido", "Cliente antiguo"]
         _DIAG.append(f"campos_error={_e}")
 
@@ -1653,7 +1650,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)
