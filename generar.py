@@ -526,7 +526,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -706,6 +706,10 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         return raw.split(" - ", 1)[0].strip() if raw else ""
     cur_ids = {ld.get("id") for ld in cur}
     ch_agg = defaultdict(lambda: dict(leads=0, cierres=0, value=0))
+    # Siembra TODAS las opciones del dropdown de Kommo (aparecen aunque tengan 0),
+    # para que la tabla muestre la lista completa de canales del CRM.
+    for opt in (channel_enums or []):
+        _ = ch_agg[opt]
     # desglose canal × vendedora (quién aporta cada canal)
     ch_by_v = defaultdict(lambda: defaultdict(lambda: dict(leads=0, cierres=0)))
     carry = dict(cierres=0, value=0)                       # cierres de meses anteriores
@@ -1414,9 +1418,15 @@ def main():
     print("  🔎 campo de origen…")
     try:
         cfs = fetch_paginated("/leads/custom_fields", {}, "custom_fields", max_pages=10)
-        source_field_id = next((c["id"] for c in cfs
+        _src_field = next((c for c in cfs
             if any(k in ((c.get("code") or "") + (c.get("name") or "")).lower()
                    for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
+        source_field_id = _src_field["id"] if _src_field else None
+        # Opciones del dropdown (para mostrar SIEMPRE la lista completa de Kommo)
+        channel_enums = [e.get("value", "").strip()
+                         for e in ((_src_field or {}).get("enums") or [])
+                         if e.get("value", "").strip()]
+        _DIAG.append("canal_opciones=" + (", ".join(channel_enums) if channel_enums else "ninguna"))
         contract_field_id = next((c["id"] for c in cfs
             if "contrato" in ((c.get("code") or "") + (c.get("name") or "")).lower()
             and c.get("type") in ("date", "date_time")), None)
@@ -1426,7 +1436,7 @@ def main():
         _DIAG.append("campos_fecha=" + (" | ".join(_date_fields) if _date_fields else "ninguno"))
         _DIAG.append(f"contract_field_id={contract_field_id}")
     except Exception as _e:
-        source_field_id = None; contract_field_id = None
+        source_field_id = None; contract_field_id = None; channel_enums = []
         _DIAG.append(f"campos_error={_e}")
 
     print("  ⚡ eventos del mes…")
@@ -1561,7 +1571,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)

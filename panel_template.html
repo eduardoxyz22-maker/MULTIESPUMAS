@@ -4234,7 +4234,7 @@ function ViewResumen() {
   const FALLBACK = ["Carga manual vendedora", "Autom\xe1tico (bot)"];
   const fallbackCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) >= 0);
   const sinCanal = fallbackCh.reduce((s, c) => s + (c.cierres || 0), 0);
-  const realCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) < 0);
+  const realCh = (D.channels || []).filter(c => !c.carry && FALLBACK.indexOf(c.name) < 0 && (c.cierres || 0) > 0);
   // desglose de "Sin canal marcado": cierres por vendedora sumando los canales fallback
   const sinCanalByV = {};
   fallbackCh.forEach(c => (c.byV || []).forEach(b => {
