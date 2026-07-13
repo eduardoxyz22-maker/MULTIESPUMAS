@@ -1608,4 +1608,4 @@ def main():
 if __name__ == "__main__":
     main()
 
-# rebuild: releer nombre final de etapa Atendido (2026-07-02d)
+# rebuild: verificar conteo canal Referido (2026-07-13)
