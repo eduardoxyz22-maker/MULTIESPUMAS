@@ -704,6 +704,15 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     def _vname_of(ld):
         raw = user_map.get(ld.get("responsible_user_id")) or ""
         return raw.split(" - ", 1)[0].strip() if raw else ""
+    # DIAG: ¿cuántos leads del mes tienen el campo Canal con valor? ¿qué valores?
+    _cf_vals = {}
+    for ld in cur:
+        for cf in (ld.get("custom_fields_values") or []):
+            if cf.get("field_id") == source_field_id:
+                v = str(((cf.get("values") or [{}])[0]).get("value", "")).strip()
+                if v:
+                    _cf_vals[v] = _cf_vals.get(v, 0) + 1
+    _DIAG.append(f"cur_con_canal={sum(_cf_vals.values())}/{len(cur)} · valores={_cf_vals}")
     cur_ids = {ld.get("id") for ld in cur}
     ch_agg = defaultdict(lambda: dict(leads=0, cierres=0, value=0))
     # Siembra TODAS las opciones del dropdown de Kommo (aparecen aunque tengan 0),
@@ -1418,10 +1427,20 @@ def main():
     print("  🔎 campo de origen…")
     try:
         cfs = fetch_paginated("/leads/custom_fields", {}, "custom_fields", max_pages=10)
-        _src_field = next((c for c in cfs
-            if any(k in ((c.get("code") or "") + (c.get("name") or "")).lower()
-                   for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
+        _SEL = ("select", "multiselect", "radiobutton")
+        def _is_src(c):
+            blob = ((c.get("code") or "") + " " + (c.get("name") or "")).lower()
+            return any(k in blob for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])
+        _cands = [c for c in cfs if _is_src(c)]
+        # Preferir el campo LISTA llamado "Canal" (el que llenan las vendedoras),
+        # antes que cualquier campo genérico de origen/fuente que pudiera venir antes.
+        _src_field = (next((c for c in _cands if "canal" in (c.get("name") or "").lower() and c.get("type") in _SEL), None)
+                      or next((c for c in _cands if c.get("type") in _SEL), None)
+                      or (_cands[0] if _cands else None))
         source_field_id = _src_field["id"] if _src_field else None
+        _DIAG.append("source_field=" + str(source_field_id) + " name=" + str((_src_field or {}).get("name")) +
+                     " type=" + str((_src_field or {}).get("type")) +
+                     " · candidatos=" + str([(c.get("name"), c.get("type"), c.get("id")) for c in _cands]))
         # Opciones del dropdown (para mostrar SIEMPRE la lista completa de Kommo).
         # La lista /custom_fields a veces NO trae los enums → se consulta el detalle
         # del campo por su ID; si aún falla, se usa la lista conocida como respaldo.
