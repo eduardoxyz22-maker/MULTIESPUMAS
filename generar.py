@@ -1422,11 +1422,23 @@ def main():
             if any(k in ((c.get("code") or "") + (c.get("name") or "")).lower()
                    for k in ["fuente", "origen", "source", "canal", "utm", "procedencia"])), None)
         source_field_id = _src_field["id"] if _src_field else None
-        # Opciones del dropdown (para mostrar SIEMPRE la lista completa de Kommo)
+        # Opciones del dropdown (para mostrar SIEMPRE la lista completa de Kommo).
+        # La lista /custom_fields a veces NO trae los enums → se consulta el detalle
+        # del campo por su ID; si aún falla, se usa la lista conocida como respaldo.
         channel_enums = [e.get("value", "").strip()
                          for e in ((_src_field or {}).get("enums") or [])
                          if e.get("value", "").strip()]
-        _DIAG.append("canal_opciones=" + (", ".join(channel_enums) if channel_enums else "ninguna"))
+        if source_field_id and not channel_enums:
+            try:
+                _fd = api_get(f"/leads/custom_fields/{source_field_id}")
+                channel_enums = [e.get("value", "").strip()
+                                 for e in (_fd.get("enums") or [])
+                                 if e.get("value", "").strip()]
+            except Exception as _ee:
+                _DIAG.append(f"canal_detalle_error={_ee}")
+        if not channel_enums:
+            channel_enums = ["Facebook", "Instagram", "Tiktok", "Visita tienda", "Referido", "Cliente antiguo"]
+        _DIAG.append("canal_opciones=" + ", ".join(channel_enums))
         contract_field_id = next((c["id"] for c in cfs
             if "contrato" in ((c.get("code") or "") + (c.get("name") or "")).lower()
             and c.get("type") in ("date", "date_time")), None)
@@ -1436,7 +1448,8 @@ def main():
         _DIAG.append("campos_fecha=" + (" | ".join(_date_fields) if _date_fields else "ninguno"))
         _DIAG.append(f"contract_field_id={contract_field_id}")
     except Exception as _e:
-        source_field_id = None; contract_field_id = None; channel_enums = []
+        source_field_id = None; contract_field_id = None
+        channel_enums = ["Facebook", "Instagram", "Tiktok", "Visita tienda", "Referido", "Cliente antiguo"]
         _DIAG.append(f"campos_error={_e}")
 
     print("  ⚡ eventos del mes…")
