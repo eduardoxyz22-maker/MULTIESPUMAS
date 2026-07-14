@@ -526,7 +526,7 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
 # ─────────────────────────────────────────────────────────────────────────────
 #  CONSTRUCCIÓN DE window.PANEL_DATA
 # ─────────────────────────────────────────────────────────────────────────────
-def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None):
+def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=None, won=None, won_prev=None, pipe_by_name=None, pipe_prev_by_name=None, channel_enums=None, loss_field_id=None, loss_reasons_map=None):
     now_ts = time.time()
     vcur, suc_of, backlog_rows = aggregate(cur, stage_map, user_map, events, source_field_id, now_ts, won_leads=won)
     vprev, _, _  = aggregate(prev, stage_map, user_map, {}, source_field_id, now_ts, won_leads=won_prev)
@@ -629,6 +629,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "v": v_tone,
             "prev": {"leads": prev_leads_sd, "cierres": pv["cierres_sd"],
                      "visitas": pv["agendado_sd"], "ticket": pv_ticket, "value": pv["value_sd"],
+                     "pipeline": (int(round(pipe_prev_by_name.get(name, 0))) if pipe_prev_by_name is not None else 0),
                      "leadsFull": pv["leads"], "cierresFull": pv["cierres"], "valueFull": pv["value"]},
             "origen": {"manual": d["manual"], "bot": d["bot"]},
             "weekly": weekly, "weeklyPrev": weekly_prev,
@@ -1629,6 +1630,34 @@ def main():
             pipe_by_name[nm] += pr
     print(f"     → {len(won)} ventas mes · pipeline total Bs {int(sum(pipe_by_name.values()))}")
 
+    # PIPELINE del mes ANTERIOR cortado AL MISMO DÍA (comparación pareja "a la fecha").
+    # Mismo formato que pipe_by_name: abiertos del mes previo (creados hasta CURDAY) +
+    # cerrado del mes previo (fecha contrato hasta CURDAY).
+    pipe_prev_by_name = defaultdict(float)
+    for ld in prev:
+        cls = stage_map.get(ld.get("status_id"), {}).get("cls")
+        pr = ld.get("price") or 0
+        if pr <= 0 or cls in ("perdido", "compradores"):
+            continue
+        try:
+            _pday = datetime.datetime.fromtimestamp(ld.get("created_at", 0)).day
+        except Exception:
+            _pday = 1
+        if _pday <= CURDAY:
+            nm = _nm_of(ld.get("responsible_user_id"))
+            if nm:
+                pipe_prev_by_name[nm] += pr
+    for ld in won_prev:
+        pr = ld.get("price") or 0
+        try:
+            _pcd = datetime.datetime.fromtimestamp(ld.get("_contract_ts") or 0).day
+        except Exception:
+            _pcd = 1
+        if pr > 0 and _pcd <= CURDAY:
+            nm = _nm_of(ld.get("responsible_user_id"))
+            if nm:
+                pipe_prev_by_name[nm] += pr
+
     # teléfonos de los contactos del mes (para detectar duplicados reales)
     print("  ☎️  contactos del mes…")
     contact_phone = {}
@@ -1650,7 +1679,7 @@ def main():
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")
 
     print("  🧮 construyendo PANEL_DATA…")
-    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map)
+    pd = build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, contact_phone=contact_phone, won=won, won_prev=won_prev, pipe_by_name=pipe_by_name, pipe_prev_by_name=pipe_prev_by_name, channel_enums=channel_enums, loss_field_id=loss_field_id, loss_reasons_map=loss_reasons_map)
     print("  🛒 productos vendidos…")
     try:
         pd["productos"] = build_products(won, user_map)
