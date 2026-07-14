@@ -78,14 +78,38 @@ def extract(xlsx_path):
     D["proy_marca"] = proy
     D["proy_marca_total"] = {"proy": dn("C38"), "real": dn("C39"), "real_pct": dn("D39")}
 
-    # --- Semanal S1 por marca (junio vs julio) ---
+    # --- Semanal por marca: fuente = 'seg semanal' (autoritativa; la sección 5 del DASHBOARD
+    #     viene DESALINEADA en el Excel — etiquetas de marca no corresponden a los valores).
+    #     seg semanal compara junio vs julio en las MISMAS semanas transcurridas (like-for-like). ---
+    def _snum(x):
+        return float(x) if isinstance(x, (int, float)) else 0.0
+    wk = set()
+    for r in range(1, SS.max_row + 1):
+        c = SS.cell(r, 3).value
+        if isinstance(c, str) and re.match(r"semana\s+\d", c.strip().lower()):  # "Semana N", no el header "SEMANA MES"
+            wk.add(c.strip().lower())
+    D["n_weeks"] = len(wk) or 1
+    D["sem_label"] = ("a la fecha" if D["n_weeks"] <= 1 else f"a la fecha · sem 1–{D['n_weeks']}")
+    bs_by, u_by = {}, {}
+    for r in range(1, SS.max_row + 1):
+        a = str(SS.cell(r, 1).value or "").strip()
+        if a.startswith("Total ") and "general" not in a.lower():
+            bs_by[re.sub(r"\s+", " ", norm(a[6:]))] = (SS.cell(r, 4).value, SS.cell(r, 5).value)
+        j = str(SS.cell(r, 10).value or "").strip()
+        if j.startswith("Total ") and "general" not in j.lower():
+            u_by[re.sub(r"\s+", " ", norm(j[6:]))] = (SS.cell(r, 13).value, SS.cell(r, 14).value)
+    MARCAS = [("HEAVEN", "heaven"), ("SUEÑA", "suena"), ("ROHO", "roho"), ("CLIENTES EXTERNOS", "clientes externos")]
     sem = []
-    for r in range(43, 47):
-        sem.append({"marca": DB[f"B{r}"].value, "jun": dn(f"C{r}"), "jul": dn(f"D{r}"),
-                    "var": dn(f"E{r}"), "u_jun": dn(f"F{r}"), "u_jul": dn(f"G{r}")})
+    for name, key in MARCAS:
+        b = bs_by.get(key, (0, 0)); u = u_by.get(key, (0, 0))
+        jun, jul = _snum(b[0]), _snum(b[1])
+        sem.append({"marca": name, "jun": jun, "jul": jul,
+                    "var": (jul / jun - 1) if jun else None,
+                    "u_jun": _snum(u[0]), "u_jul": _snum(u[1])})
     D["sem_marca"] = sem
-    D["sem_marca_total"] = {"jun": dn("C47"), "jul": dn("D47"), "var": dn("E47"),
-                            "u_jun": dn("F47"), "u_jul": dn("G47")}
+    tj = sum(s["jun"] for s in sem); tk = sum(s["jul"] for s in sem)
+    D["sem_marca_total"] = {"jun": tj, "jul": tk, "var": (tk / tj - 1) if tj else None,
+                            "u_jun": sum(s["u_jun"] for s in sem), "u_jul": sum(s["u_jul"] for s in sem)}
 
     # --- Producto S1 (junio vs julio) ---
     prod = []
@@ -223,7 +247,8 @@ def build_html(D):
     alc_proy = (proy / obj) if obj else None
     avance_real = (ventas / obj) if obj else None
     st = D["sem_marca_total"]
-    var_s1 = st["var"]  # julio S1 vs junio S1 (total)
+    var_s1 = st["var"]  # julio vs junio en las mismas semanas transcurridas (like-for-like)
+    sem_lbl = D["sem_label"]  # "a la fecha · sem 1–N"
     ticket = rs["ticket"]
 
     # ---- Header stats ----
@@ -263,7 +288,7 @@ def build_html(D):
             <div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Desv. proy vs objetivo</div><div style="font-size:1.2rem;font-weight:800;color:{"var(--green)" if proy>=obj else "var(--red)"}">{("+" if proy>=obj else "−")} Bs {fmt(abs(proy-obj))}</div></div>
           </div>
           <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-            <span class="dchip" style="background:rgba(34,150,100,.1);color:#1c8a5f;border:1px solid rgba(34,150,100,.28)">{vf(var_s1)["txt"]} vs junio (Semana 1)</span>
+            <span class="dchip" style="background:rgba(34,150,100,.1);color:#1c8a5f;border:1px solid rgba(34,150,100,.28)">{vf(var_s1)["txt"]} vs junio ({sem_lbl})</span>
             <span class="dchip" style="background:rgba(184,104,8,.1);color:#B86808;border:1px solid rgba(184,104,8,.28)">{pct(avance_real)} del objetivo a la fecha</span>
             <span class="dchip" style="background:rgba(15,95,109,.06);color:#0F5F6D;border:1px solid rgba(15,95,109,.2)">día {dia} de {dias}</span>
           </div>
@@ -286,12 +311,12 @@ def build_html(D):
     mom_txt = ", ".join(f'{prettify(x["marca"])} {signed_pct(x["var"])}' for x in momentum)
     exec_html = f'''<div class="exec">
       <div class="exec-lbl">Resumen ejecutivo · mes en curso</div>
-      <p>Julio arranca en <b>Bs {fmt(ventas)}</b> en los primeros <b>{dia} días</b> ({fmt(rs["jul_u"])} unidades, ticket Bs {fmt(ticket)}) — <b style="color:var(--green)">{signed_pct(var_s1)}</b> vs la Semana 1 de junio. La <b>proyección de cierre</b> es <b>Bs {fmt(proy)}</b> = <b>{pct(alc_proy)}</b> del objetivo (Bs {fmt(obj)}). Momentum por marca vs la Semana 1 de junio: {mom_txt}. Es un mes parcial: las cifras crecerán con las próximas semanas.</p>
+      <p>Julio arranca en <b>Bs {fmt(ventas)}</b> en los primeros <b>{dia} días</b> ({fmt(rs["jul_u"])} unidades, ticket Bs {fmt(ticket)}) — <b style="color:{"var(--green)" if (var_s1 or 0)>=0 else "var(--red)"}">{signed_pct(var_s1)}</b> vs junio en las mismas semanas transcurridas. La <b>proyección de cierre</b> es <b>Bs {fmt(proy)}</b> = <b>{pct(alc_proy)}</b> del objetivo (Bs {fmt(obj)}). Momentum por marca vs junio (mismas semanas): {mom_txt}. Es un mes parcial: las cifras crecerán con las próximas semanas.</p>
     </div>'''
 
     # ---- Alert ----
     if proy >= obj:
-        alert = f'''<div class="alert amber"><span class="ico">💡</span><div>Proyección de cierre <b>Bs {fmt(proy)}</b> — <b>{pct(alc_proy)}</b> del objetivo. Buen arranque: mantener el ritmo de la Semana 1 para superar el presupuesto.</div></div>'''
+        alert = f'''<div class="alert amber"><span class="ico">💡</span><div>Proyección de cierre <b>Bs {fmt(proy)}</b> — <b>{pct(alc_proy)}</b> del objetivo. Buen arranque: mantener el ritmo para superar el presupuesto.</div></div>'''
     else:
         alert = f'''<div class="alert amber"><span class="ico">⚠️</span><div>Proyección de cierre <b>Bs {fmt(proy)}</b> = <b>{pct(alc_proy)}</b> del objetivo; faltarían <b>Bs {fmt(obj-proy)}</b>. Reforzar el ritmo para cerrar la brecha en las próximas semanas.</div></div>'''
 
@@ -324,14 +349,11 @@ def build_html(D):
     pm += (f'<tr class="trow-total"><td>TOTAL PROYECTADO</td>{num_td(fmt(pmt["proy"]))}{num_td("100.0%")}</tr>'
            f'<tr><td>Real a la fecha (julio)</td>{num_td(fmt(pmt["real"]))}{num_td(pct(pmt["real_pct"]))}</tr>')
     sec03 = f'''<div class="sec mensual-only">03 · Proyección de cierre por canal · julio (PROY)</div>
-    <div class="two-col mensual-only">
-      <div><div class="tw"><table>
+    <div class="tw mensual-only" style="margin-bottom:8px"><table>
         <thead><tr><th>Canal</th><th class="num">Proyectado (Bs)</th><th class="num">% del total</th></tr></thead>
         <tbody>{pm}</tbody>
-      </table></div>
-      <div class="cap">Fuente: pestaña PROY (proyección por marca, método propio). Difiere de la proyección operativa por tienda (Bs {fmt(proy)}) — es un snapshot alternativo.</div></div>
-      <div>{_producto_table(D)}</div>
-    </div>'''
+    </table></div>
+    <div class="cap mensual-only" style="margin-bottom:26px">Fuente: pestaña PROY (proyección por marca, método propio). Difiere de la proyección operativa por tienda (Bs {fmt(proy)}) — es un snapshot alternativo. (El desglose semanal por producto se omite: la sección 6 del DASHBOARD viene desalineada en el Excel.)</div>'''
 
     # ---- Section 02: Desviación vs presupuesto (barras de avance, proyectado) ----
     desviacion = _desviacion_bars(D)
@@ -437,7 +459,8 @@ def _producto_table(D):
 
 
 def _semanal_block(D):
-    # tabla por marca S1
+    lbl = D.get("sem_label", "a la fecha")
+    # tabla por marca (junio vs julio, mismas semanas transcurridas)
     mr = ""
     for x in D["sem_marca"]:
         mr += (f'<tr><td><span class="badge {mbadge(x["marca"])}">{esc(prettify(x["marca"]))}</span></td>'
@@ -466,9 +489,9 @@ def _semanal_block(D):
         stg += (f'<tr><td>{esc(prettify(t["nombre"]))}</td>{num_td(fmt(t["jun"]))}{num_td(fmt(t["jul"]))}'
                 f'{vf_td(var)}{num_td(fmt(t["u_jun"]))}{num_td(fmt(t["u_jul"]))}</tr>')
     return f'''<div class="semanal-block">
-      <div class="sec">Seguimiento semanal · Semana 1 · junio vs julio 2026</div>
+      <div class="sec">Seguimiento semanal · junio vs julio 2026 · {lbl}</div>
       <div class="lg" style="padding:24px 28px;margin-bottom:22px">
-        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:22px">Semana 1 por marca · junio vs julio (Bs)</div>
+        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:22px">Por marca · junio vs julio (Bs) · {lbl}</div>
         <div style="display:flex;align-items:flex-end;gap:22px;height:200px">{bars}</div>
         <div style="display:flex;gap:22px;margin-top:18px;padding-top:14px;border-top:1px solid var(--gray-md)">
           <span style="display:flex;align-items:center;gap:7px;font-size:.72rem;color:var(--muted)"><span style="width:13px;height:13px;background:var(--gray-md);border-radius:3px"></span>Junio</span>
@@ -476,20 +499,20 @@ def _semanal_block(D):
         </div>
       </div>
       <div class="two-col">
-        <div><div class="sec">Por marca · Semana 1</div>
+        <div><div class="sec">Por marca · junio vs julio</div>
           <div class="tw"><table>
             <thead><tr><th>Marca</th><th class="num">Bs Junio</th><th class="num">Bs Julio</th><th class="num">Var %</th><th class="num">Und Jun</th><th class="num">Und Jul</th></tr></thead>
             <tbody>{mr}</tbody>
           </table></div>
         </div>
-        <div><div class="sec">Por tienda · Semana 1</div>
+        <div><div class="sec">Por tienda · junio vs julio</div>
           <div class="tw"><table>
             <thead><tr><th>Tienda / Canal</th><th class="num">Bs Junio</th><th class="num">Bs Julio</th><th class="num">Var %</th><th class="num">Und Jun</th><th class="num">Und Jul</th></tr></thead>
             <tbody>{stg}</tbody>
           </table></div>
         </div>
       </div>
-      <div class="cap" style="margin-bottom:26px">Fuente: pestañas 'DASHBOARD' y 'seg semanal' · comparativo de la Semana 1 de cada mes (Bs y unidades).</div>
+      <div class="cap" style="margin-bottom:26px">Fuente: pestaña 'seg semanal' · comparativo like-for-like: junio vs julio en las mismas semanas transcurridas ({lbl}), Bs y unidades.</div>
     </div>'''
 
 
@@ -757,7 +780,7 @@ def _brand_detail_julio(D, K):
         f'<div class="glass-card"><div class="gc-bar" style="background:{color}"></div>'
         '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">Ventas julio · a la fecha</div>'
         f'<div style="font-size:1.9rem;font-weight:800;line-height:1">Bs {fmt(vtas)}</div>'
-        f'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="dchip {vs1["cls"]}" style="background:rgba(15,95,109,.06);border:1px solid rgba(15,95,109,.16);font-size:.66rem">{vs1["txt"]} vs junio (Sem 1)</span></div></div>'
+        f'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="dchip {vs1["cls"]}" style="background:rgba(15,95,109,.06);border:1px solid rgba(15,95,109,.16);font-size:.66rem">{vs1["txt"]} vs junio (a la fecha)</span></div></div>'
         '<div class="glass-card"><div class="gc-bar" style="background:var(--series-blue)"></div>'
         '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">% Objetivo (proyección)</div>'
         '<div style="display:flex;align-items:center;gap:14px">'
