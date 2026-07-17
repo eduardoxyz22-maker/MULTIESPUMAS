@@ -462,9 +462,9 @@ def aggregate(leads, stage_map, user_map, events, source_field_id, now_ts, won_l
         ev = events.get(ld.get("id"))
         created = ld.get("created_at", 0)
         # "Sin seguimiento" = lead abierto que la vendedora no ha tocado/respondido +72h.
-        # Excluye comprador y perdido (cerrados) y "No Responden" (el cliente no contesta,
-        # no es falta de seguimiento de la vendedora).
-        is_open = cls not in ("compradores", "perdido", "no_resp")
+        # Excluye solo los cerrados (comprador y perdido/cancelado). "No Responden" SÍ
+        # cuenta: aunque el cliente no conteste, sigue necesitando una 2ª cadencia de contacto.
+        is_open = cls not in ("compradores", "perdido")
         stale_days = 0; never = False
         first_seg = ev.get("first") if ev else None
         # acción que ocurre en el mismo minuto de creación = automática (no es respuesta real)
