@@ -725,6 +725,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     carry = dict(cierres=0, value=0)                       # cierres de meses anteriores
     carry_by_v = defaultdict(lambda: dict(leads=0, cierres=0))
     carry_by_ch = defaultdict(int)                         # … desglosado también por canal
+    carry_man = 0; carry_bot = 0                           # … y por tipo de carga (manual/bot)
     man_close = 0; bot_close = 0                           # cierres de cohorte por tipo de carga
     for ld in cur:
         ch = detect_channel(ld, source_field_id)
@@ -748,6 +749,10 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         else:                                              # entró antes: fila de reconciliación
             carry["cierres"] += 1; carry["value"] += val
             carry_by_ch[ch] += 1
+            if ld.get("created_by") == 0:                  # tipo de carga del lead original
+                carry_bot += 1
+            else:
+                carry_man += 1
             if nm:
                 carry_by_v[nm]["cierres"] += 1
     channels = []
@@ -779,6 +784,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
             "ticket": round(carry["value"] / carry["cierres"]) if carry["cierres"] else 0,
             "pipeline": carry["value"], "cls": "carry", "carry": True,
             "byV": carry_byV, "byCh": carry_byCh,
+            "manual": carry_man, "bot": carry_bot,
         })
 
     # ── tasa de cierre por tipo de carga (de los leads del mes, cuántos cerraron) ──

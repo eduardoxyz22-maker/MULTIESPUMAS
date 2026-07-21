@@ -195,6 +195,7 @@ html[data-theme="dark"] .kl{font-family:var(--mono);letter-spacing:1px}
 .fstep{display:flex;align-items:center;gap:12px}
 .fn{font-size:.76rem;font-weight:700;width:130px;text-align:right;flex-shrink:0;color:var(--text)}
 html[data-theme="dark"] .fn{color:var(--muted)}
+.ftrack{flex:1 1 0%;min-width:0}
 .fbar{height:34px;border-radius:7px;display:flex;align-items:center;padding:0 12px;color:#fff;font-weight:800;font-size:.8rem;min-width:46px;font-family:var(--num-ff);transition:width .5s cubic-bezier(.4,0,.2,1)}
 html[data-theme="dark"] .fbar{color:var(--brand-ink)}
 .fp{width:42px;text-align:right;font-size:.74rem;color:var(--muted);font-weight:700;font-family:var(--num-ff)}
@@ -3523,13 +3524,15 @@ function Funnel() {
   }, /*#__PURE__*/React.createElement("div", {
     className: "fn"
   }, f.name), /*#__PURE__*/React.createElement("div", {
+    className: "ftrack"
+  }, /*#__PURE__*/React.createElement("div", {
     className: "fbar num",
     "data-tip": `${f.name}: ${f.count.toLocaleString("en-US")} leads · ${f.pct}% del total`,
     style: {
-      width: `${Math.max(12, f.count / maxF * 100)}%`,
+      width: `${Math.max(2, f.count / maxF * 100)}%`,
       background: f.color
     }
-  }, f.count.toLocaleString("en-US")), /*#__PURE__*/React.createElement("div", {
+  }, f.count.toLocaleString("en-US"))), /*#__PURE__*/React.createElement("div", {
     className: "fp num"
   }, f.pct, "%"))));
 }
@@ -4222,7 +4225,7 @@ function ViewResumen() {
     ico: "conversion",
     color: c.carry ? "#7A5AF0" : c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
     totalTxt: c.carry ? c.cierres + " cierres" : fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
-    desc: c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
+    desc: c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora. De ellos, ✍ " + (c.manual || 0) + " de carga manual y ⚙ " + (c.bot || 0) + " por el bot." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
     rows: (c.byV || []).map(b => {
       const tv = D.team.find(t => t.name === b.name);
       return {
