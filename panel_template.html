@@ -2913,6 +2913,7 @@ function KpiDrawer({
   const sortRows = list => [...(list || [])].sort((a, b) => (b.valNum || 0) - (a.valNum || 0));
   const rows = d ? sortRows(d.rows) : [];
   const extra = d && d.extraRows ? sortRows(d.extraRows) : [];
+  const extra2 = d && d.extra2Rows ? sortRows(d.extra2Rows) : [];
   const renderRow = (r, i, list, mx) => /*#__PURE__*/React.createElement("div", {
     key: i,
     style: {
@@ -3113,7 +3114,13 @@ function KpiDrawer({
       marginTop: 20,
       marginBottom: 6
     }
-  }, d.extraTitle || "Por canal"), renderList(extra))))));
+  }, d.extraTitle || "Por canal"), renderList(extra)), extra2.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("div", {
+    className: "eb",
+    style: {
+      marginTop: 20,
+      marginBottom: 6
+    }
+  }, d.extra2Title || "Por tipo de carga"), renderList(extra2))))));
 }
 window.KpiDrawer = KpiDrawer;
 
@@ -4225,7 +4232,7 @@ function ViewResumen() {
     ico: "conversion",
     color: c.carry ? "#7A5AF0" : c.cls === "green" ? "#159A57" : c.cls === "red" ? "#DC4046" : "#2E6FE0",
     totalTxt: c.carry ? c.cierres + " cierres" : fmtInt(c.leads) + " leads · " + c.cierres + " cierres",
-    desc: c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora. De ellos, ✍ " + (c.manual || 0) + " de carga manual y ⚙ " + (c.bot || 0) + " por el bot." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
+    desc: c.carry ? "Cierres de este mes cuyo lead entr\xF3 en meses anteriores. La barra es el n\xFAmero de cierres por vendedora." : "Vendedoras responsables de los leads del canal “" + c.name + "”. La barra es el volumen de leads; a la derecha, leads y cierres (✓).",
     rows: (c.byV || []).map(b => {
       const tv = D.team.find(t => t.name === b.name);
       return {
@@ -4246,7 +4253,25 @@ function ViewResumen() {
       ini: b.ic,
       valNum: b.cierres,
       valTxt: b.cierres + " cierres"
-    })) : undefined
+    })) : undefined,
+    extra2Title: c.carry ? "Por tipo de carga" : undefined,
+    extra2Rows: c.carry ? [{
+      name: "Autom\xE1tico (bot)",
+      label: "Autom\xE1tico (bot)",
+      suc: "",
+      color: "#646E7B",
+      ini: "⚙",
+      valNum: c.bot || 0,
+      valTxt: (c.bot || 0) + " cierres"
+    }, {
+      name: "Manual (vendedora)",
+      label: "Manual (vendedora)",
+      suc: "",
+      color: "#159A57",
+      ini: "✍",
+      valNum: c.manual || 0,
+      valTxt: (c.manual || 0) + " cierres"
+    }] : undefined
   });
   // ── Rendimiento de origen: reparto de los cierres del mes (base = G.cierres) ──
   const carryRow = (D.channels || []).find(c => c.carry);
