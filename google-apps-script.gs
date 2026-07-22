@@ -14,9 +14,10 @@
  *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
  *           ts | _productos_json | Método pago | Observaciones |
  *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de) |
- *           Nota de venta | A cuenta (Bs) | Facturar a | NIT
+ *           Nota de venta | A cuenta (Bs) | Facturar a | NIT | N° del día
  *           (medida y código van dentro del texto de Productos)
- * El servidor hace cumplir el límite de 25 pedidos por día (CUPOS_DIA).
+ * El servidor hace cumplir el límite de 25 pedidos/día (CUPOS_DIA) y asigna
+ * el N° del día correlativo (1,2,3…) de forma atómica.
  * ============================================================================
  */
 
@@ -26,7 +27,7 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
                'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)',
-               'Nota de venta','A cuenta (Bs)','Facturar a','NIT'];
+               'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día'];
 
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -101,7 +102,8 @@ function readAll() {
       nota: String(r[22] == null ? '' : r[22]),
       acuenta: Number(r[23]) || 0,
       facturarA: String(r[24] || ''),
-      nit: String(r[25] == null ? '' : r[25])
+      nit: String(r[25] == null ? '' : r[25]),
+      nroDia: Number(r[26]) || 0
     });
   }
   return out;
@@ -120,12 +122,16 @@ function doSave(p) {
   // PORTERO DE CUPOS: si es NUEVO, contar los del día y rechazar si ya hay 25.
   // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca pasa de 25.
   if (foundRow < 0 && p.fecha) {
-    var usados = 0;
+    var usados = 0, maxNro = 0;
     if (last >= 2) {
-      var fechas = sh.getRange(2, 2, last - 1, 1).getValues(); // columna B = Fecha
-      for (var j = 0; j < fechas.length; j++) { if (fmtDate(fechas[j][0]) === String(p.fecha)) usados++; }
+      var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
+      var nros   = sh.getRange(2, HEADERS.length, last - 1, 1).getValues(); // última col = N° del día
+      for (var j = 0; j < fechas.length; j++) {
+        if (fmtDate(fechas[j][0]) === String(p.fecha)) { usados++; var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n; }
+      }
     }
     if (usados >= CUPOS_DIA) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, cupos:CUPOS_DIA, usados:usados });
+    p.nroDia = Math.max(maxNro, usados) + 1; // N° correlativo del día (server-assigned, atómico por el lock)
   }
   var row = recToRow(p);
   if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); return jsonOut({ ok:true, pedido:p, mode:'update' }); }
@@ -154,7 +160,7 @@ function recToRow(p) {
     p.metodoPago || '', p.observaciones || '',
     p.estado || '', p.entregado ? 'SÍ' : 'NO',
     p.vehiculo || '', p.chofer || '', p.garantia || '',
-    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || ''
+    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0
   ];
 }
 
