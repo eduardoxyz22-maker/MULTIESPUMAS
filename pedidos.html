@@ -373,12 +373,12 @@ tbody tr:hover{background:var(--teal-lt)}
           <div class="field">
             <label class="lb">Ver por</label>
             <div class="seg" id="adm-mode">
-              <button type="button" data-val="dia" class="active">Día</button>
+              <button type="button" data-val="dia">Día</button>
               <button type="button" data-val="mes">Mes</button>
-              <button type="button" data-val="todo">Todo</button>
+              <button type="button" data-val="todo" class="active">Todo</button>
             </div>
           </div>
-          <div class="field" id="wrap-dia">
+          <div class="field" id="wrap-dia" style="display:none">
             <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
@@ -1269,7 +1269,7 @@ function exportExcel(){
   if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
   var H=1,C=2;
   var fechaHoraStr=function(p){ if(p.ts){ var d=new Date(p.ts); if(d&&!isNaN(d.getTime())){ var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); } } return p.fecha||''; };
-  var header=['N°','Fecha y hora','Nota de venta','N° OC','Vendedor','Cliente','Producto y medida','Cantidad','Código','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','A cuenta (Bs)','Saldo (Bs)','Observaciones','Garantía','Facturar a','NIT','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
+  var header=['N°','Fecha y hora','Fecha de entrega','Nota de venta','N° OC','Vendedor','Cliente','Producto y medida','Cantidad','Código','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','A cuenta (Bs)','Saldo (Bs)','Observaciones','Garantía','Facturar a','NIT','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   var merges=[];
   list.forEach(function(p){
@@ -1283,25 +1283,25 @@ function exportExcel(){
       var prodCol=(x.desc||'')+(x.medida?(' '+x.medida):'');
       var cantCell=(x.cant===''||x.cant==null)?cl(''):{v:(Number(x.cant)||0),t:'n',s:fs};
       if(idx===0){
-        rows.push([ cl(p.nroDia||''),cl(fechaHoraStr(p)),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),
+        rows.push([ cl(p.nroDia||''),cl(fechaHoraStr(p)),cl(p.fecha||''),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),
           cl(prodCol),cantCell,cl(x.codigo||''),
           cl(p.celular||''),cl(p.turno||''),cl(p.zona||''),cl(p.direccion||''),cl(p.maps||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),
           {v:(Number(p.acuenta)||0),t:'n',s:fc},{v:(Number(p.saldo)||0),t:'n',s:fc},
           cl(p.observaciones||''),cl(p.garantia||''),cl(p.facturarA||''),cl(p.nit||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
       }else{
-        rows.push([ E,E,E,E,E,E, cl(prodCol),cantCell,cl(x.codigo||''), E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E,E ]);
+        rows.push([ E,E,E,E,E,E,E, cl(prodCol),cantCell,cl(x.codigo||''), E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E,E ]);
       }
     });
     if(prods.length>1){
       var r1=startIdx+1, r2=startIdx+prods.length; // filas Excel (matriz idx i -> fila i+1)
-      for(var c=0;c<26;c++){ if(c>=6&&c<=8) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
+      for(var c=0;c<27;c++){ if(c>=7&&c<=9) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
     }
   });
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,saldo:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
-  var bytes=buildXlsx([{name:'Pedidos',cols:[6,16,12,9,18,22,30,8,12,12,7,14,30,26,9,12,14,14,34,18,20,14,16,10,16,16],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
+  var bytes=buildXlsx([{name:'Pedidos',cols:[6,16,14,12,9,18,22,30,8,12,12,7,14,30,26,9,12,14,14,34,18,20,14,16,10,16,16],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
   var mode=segVal('adm-mode');
   var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
