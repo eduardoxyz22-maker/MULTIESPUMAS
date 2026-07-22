@@ -592,6 +592,9 @@ function monthStr(){ return todayStr().slice(0,7); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function nextOc(){ var mx=0; for(var i=0;i<STATE.length;i++){ var m=String(STATE[i].oc||'').match(/\d+/); if(m){var v=parseInt(m[0],10); if(v>mx)mx=v;} } return mx>0?(mx+1):1001; }
 function nextNroDia(fecha){ var mx=0,n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha){ n++; var v=Number(STATE[i].nroDia)||0; if(v>mx)mx=v; } } return Math.max(mx,n)+1; }
+// N° del día CALCULADO por posición (orden de carga) dentro de cada fecha de entrega.
+// Así la secuencia queda siempre contigua: al borrar un pedido, los demás de ese día se renumeran solos.
+function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=STATE[i]; if(!p||!p.fecha) continue; (byF[p.fecha]||(byF[p.fecha]=[])).push(p); } for(f in byF){ var a=byF[f]; a.sort(function(x,y){ return (Number(x.ts)||0)-(Number(y.ts)||0) || (String(x.id)<String(y.id)?-1:1); }); for(var j=0;j<a.length;j++) map[a[j].id]=j+1; } return map; }
 
 /* ============================================================================
    Red — Google Apps Script Web App (POST text/plain => sin preflight CORS)
@@ -820,7 +823,7 @@ function resetForm(){
   document.getElementById('edit-banner').classList.remove('on');
   document.getElementById('f-fecha').value=tomorrowStr();
   document.getElementById('f-nota').value='';
-  document.getElementById('f-oc').value=nextOc();
+  document.getElementById('f-oc').value='';
   document.getElementById('f-vendedor').value='';
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
@@ -1047,6 +1050,7 @@ function renderAdmin(){
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
   var head='<thead><tr><th>N°</th><th>Entrega</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var dn=dayNumMap();
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var pago=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):'<span class="badge b-red">DEBE</span>';
@@ -1055,7 +1059,7 @@ function renderAdmin(){
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=(ESTADOS[p.estado]?ESTADOS[p.estado].cls:'');
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td><b style="color:var(--teal-dk)">'+(p.nroDia||'—')+'</b></td><td>'+esc(p.fecha||'')+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(p.fecha||'')+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
       '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td><td>'+pago+'</td>'+
@@ -1145,11 +1149,12 @@ function showWhatsappModal(rec){
 
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
+  var dnum=dayNumMap()[p.id];
   var prod=(p.productos||[]).map(function(x){ return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
-  var body=row('N° del día', p.nroDia?('<b style="color:var(--teal-dk);font-size:1.1em">#'+p.nroDia+'</b>'):'')+
+  var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
@@ -1270,6 +1275,7 @@ function exportExcel(){
   var list=admFilter();
   if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
   var H=1,C=2;
+  var dn=dayNumMap();
   var fechaHoraStr=function(p){ if(p.ts){ var d=new Date(p.ts); if(d&&!isNaN(d.getTime())){ var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); } } return p.fecha||''; };
   var header=['N°','Fecha y hora','Fecha de entrega','Nota de venta','N° OC','Vendedor','Cliente','Producto y medida','Cantidad','Código','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','A cuenta (Bs)','Saldo (Bs)','Observaciones','Garantía','Facturar a','NIT','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
   var rows=[header];
@@ -1285,7 +1291,7 @@ function exportExcel(){
       var prodCol=(x.desc||'')+(x.medida?(' '+x.medida):'');
       var cantCell=(x.cant===''||x.cant==null)?cl(''):{v:(Number(x.cant)||0),t:'n',s:fs};
       if(idx===0){
-        rows.push([ cl(p.nroDia||''),cl(fechaHoraStr(p)),cl(p.fecha||''),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),
+        rows.push([ cl(dn[p.id]||''),cl(fechaHoraStr(p)),cl(p.fecha||''),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),
           cl(prodCol),cantCell,cl(x.codigo||''),
           cl(p.celular||''),cl(p.turno||''),cl(p.zona||''),cl(p.direccion||''),cl(p.maps||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),
           {v:(Number(p.acuenta)||0),t:'n',s:fc},{v:(Number(p.saldo)||0),t:'n',s:fc},
