@@ -325,7 +325,7 @@ tbody tr:hover{background:var(--teal-lt)}
           <div class="num-money"><input type="number" id="f-acuenta" min="0" step="0.01" value="0"></div>
         </div>
         <div class="field">
-          <label class="lb">Saldo por cobrar</label>
+          <label class="lb" id="lbl-saldo">Saldo por cobrar</label>
           <div class="num-money"><input type="number" id="f-saldo" min="0" step="0.01" value="0"></div>
         </div>
       </div>
@@ -724,6 +724,7 @@ function updateMetodoVisibility(){
   var show = pagado || (acuenta>0);
   document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
   if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'; }
+  var sl=document.getElementById('lbl-saldo'); if(sl) sl.innerHTML='Saldo por cobrar'+((acuenta>0 && !pagado)?' <span class="req">*</span>':'');
 }
 
 function submitPedido(){
@@ -741,6 +742,7 @@ function submitPedido(){
   if(!ok){ toast('Completá los campos marcados (*)','err'); return; }
   var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
   if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
+  if(_acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
 
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
