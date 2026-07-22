@@ -373,12 +373,12 @@ tbody tr:hover{background:var(--teal-lt)}
           <div class="field">
             <label class="lb">Ver por</label>
             <div class="seg" id="adm-mode">
-              <button type="button" data-val="dia" class="active">Día</button>
+              <button type="button" data-val="dia">Día</button>
               <button type="button" data-val="mes">Mes</button>
-              <button type="button" data-val="todo">Todo</button>
+              <button type="button" data-val="todo" class="active">Todo</button>
             </div>
           </div>
-          <div class="field" id="wrap-dia">
+          <div class="field" id="wrap-dia" style="display:none">
             <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
