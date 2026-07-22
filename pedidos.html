@@ -228,7 +228,7 @@ tbody tr:hover{background:var(--teal-lt)}
 
       <div class="grid2">
         <div class="field">
-          <label class="lb">Fecha del pedido <span class="req">*</span></label>
+          <label class="lb">Fecha de entrega <span class="req">*</span></label>
           <input type="date" id="f-fecha">
         </div>
         <div class="field">
@@ -379,7 +379,7 @@ tbody tr:hover{background:var(--teal-lt)}
             </div>
           </div>
           <div class="field" id="wrap-dia">
-            <label class="lb">Fecha</label>
+            <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
           <div class="field" id="wrap-mes" style="display:none">
@@ -1037,14 +1037,14 @@ function renderAdmin(){
   var byD={};
   list.forEach(function(p){ var k=p.fecha||'—'; if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
   var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
-  document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Fecha</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
+  document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
   var byC={};
   list.forEach(function(p){ if(p.vehiculo){ if(!byC[p.vehiculo])byC[p.vehiculo]={n:0,ent:0,pend:0}; byC[p.vehiculo].n++; if(p.entregado)byC[p.vehiculo].ent++; else byC[p.vehiculo].pend++; } });
   var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
-  var head='<thead><tr><th>N°</th><th>Fecha</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var head='<thead><tr><th>N°</th><th>Entrega</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var pago=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):'<span class="badge b-red">DEBE</span>';
@@ -1094,7 +1094,7 @@ function pedidoText(p){
     return s+' × '+x.cant;
   }).join('\n');
   var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · OC '+p.oc):'')+'*',
-    '📅 '+(p.fecha||'')+(p.turno?('  ·  Turno '+p.turno):''),
+    '📅 Entrega: '+(p.fecha||'')+(p.turno?('  ·  Turno '+p.turno):''),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
     '📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||''),
@@ -1148,7 +1148,7 @@ function showPedidoModal(id){
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
   var body=row('N° del día', p.nroDia?('<b style="color:var(--teal-dk);font-size:1.1em">#'+p.nroDia+'</b>'):'')+
-    row('Fecha', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
+    row('Fecha de entrega', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
