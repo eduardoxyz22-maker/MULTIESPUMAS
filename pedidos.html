@@ -1187,8 +1187,13 @@ function vehiculoSelect(p){
   Object.keys(VEHICULOS).forEach(function(v){ opts+='<option'+(p.vehiculo===v?' selected':'')+'>'+v+'</option>'; });
   return '<select class="msel" onchange="setVehiculo(\''+p.id+'\',this.value)">'+opts+'</select>';
 }
+function allChoferes(){
+  var seen={}, out=[];
+  Object.keys(VEHICULOS).forEach(function(v){ VEHICULOS[v].forEach(function(c){ if(!seen[c]){ seen[c]=1; out.push(c); } }); });
+  return out;
+}
 function choferSelect(p){
-  var list=VEHICULOS[p.vehiculo]||[];
+  var list=allChoferes(); // TODOS los choferes, para poder cambiarlo por cualquiera aunque se autollene
   var opts='<option value="">'+(p.vehiculo?'Chofer…':'(elegí vehículo)')+'</option>';
   list.forEach(function(c){ opts+='<option'+(p.chofer===c?' selected':'')+'>'+c+'</option>'; });
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
