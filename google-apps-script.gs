@@ -1,0 +1,152 @@
+/**
+ * ============================================================================
+ * PEDIDOS MultiEspumas — Backend Google Apps Script
+ * ============================================================================
+ * Pegá TODO este código en Extensiones > Apps Script de tu Google Sheet,
+ * guardá, y Deploy > New deployment > Web app:
+ *    - Execute as: Me (tu cuenta)
+ *    - Who has access: Anyone
+ * Copiá la URL que termina en /exec y pásasela a Claude (o pegala en
+ * pedidos.html, variable SHEETS_URL).
+ *
+ * La hoja "Pedidos" y sus encabezados se crean solos la primera vez.
+ * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
+ *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
+ *           ts | _productos_json
+ * ============================================================================
+ */
+
+var SHEET_NAME = 'Pedidos';
+var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
+               'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
+               'ts','_productos_json'];
+
+function getSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_NAME);
+    sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+
+function jsonOut(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+/** GET: útil para ver los datos desde el navegador (mismo formato que 'list'). */
+function doGet(e) {
+  return jsonOut({ ok: true, pedidos: readAll() });
+}
+
+/** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
+function doPost(e) {
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
+  try {
+    var body = {};
+    try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
+    var action = body.action || 'save';
+    if (action === 'list')   return jsonOut({ ok:true, pedidos: readAll() });
+    if (action === 'delete') return doDelete(body.id);
+    return doSave(body.pedido);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function readAll() {
+  var sh = getSheet();
+  var values = sh.getDataRange().getValues();
+  var out = [];
+  for (var i = 1; i < values.length; i++) {
+    var r = values[i];
+    if (!r[0]) continue; // sin id -> ignorar
+    out.push({
+      id: String(r[0]),
+      fecha: fmtDate(r[1]),
+      oc: String(r[2] == null ? '' : r[2]),
+      vendedor: String(r[3] || ''),
+      cliente: String(r[4] || ''),
+      productos: parseProd(r[14], r[5]),
+      celular: String(r[6] == null ? '' : r[6]),
+      turno: String(r[7] || ''),
+      zona: String(r[8] || ''),
+      direccion: String(r[9] || ''),
+      maps: String(r[10] || ''),
+      pagado: (String(r[11]).toUpperCase().charAt(0) === 'S'),
+      saldo: Number(r[12]) || 0,
+      ts: Number(r[13]) || 0
+    });
+  }
+  return out;
+}
+
+function doSave(p) {
+  if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
+  var sh = getSheet();
+  var row = recToRow(p);
+  var last = sh.getLastRow();
+  if (last >= 2) {
+    var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === String(p.id)) {
+        sh.getRange(i + 2, 1, 1, row.length).setValues([row]);
+        return jsonOut({ ok:true, pedido:p, mode:'update' });
+      }
+    }
+  }
+  sh.appendRow(row);
+  return jsonOut({ ok:true, pedido:p, mode:'add' });
+}
+
+function doDelete(id) {
+  var sh = getSheet();
+  var last = sh.getLastRow();
+  if (last >= 2) {
+    var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+    for (var i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === String(id)) { sh.deleteRow(i + 2); return jsonOut({ ok:true }); }
+    }
+  }
+  return jsonOut({ ok:false, error:'not found' });
+}
+
+function recToRow(p) {
+  return [
+    p.id, p.fecha || '', p.oc || '', p.vendedor || '', p.cliente || '',
+    prodText(p.productos), p.celular || '', p.turno || '', p.zona || '',
+    p.direccion || '', p.maps || '', p.pagado ? 'SÍ' : 'NO',
+    Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || [])
+  ];
+}
+
+function prodText(prods) {
+  if (!prods || !prods.length) return '';
+  return prods.map(function (x) { return x.desc + ' × ' + x.cant; }).join('  ·  ');
+}
+
+function parseProd(js, txt) {
+  if (js) { try { var a = JSON.parse(js); if (a && a.length != null) return a; } catch (e) {} }
+  txt = String(txt || '').trim();
+  if (!txt) return [];
+  return txt.split('·').map(function (s) {
+    var m = s.trim().split('×');
+    return { desc: (m[0] || '').trim(), cant: parseInt(m[1] || '1', 10) || 1 };
+  }).filter(function (p) { return p.desc; });
+}
+
+/** La fecha puede venir como texto 'YYYY-MM-DD' o como Date (si Sheets la reinterpreta). */
+function fmtDate(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    var m = v.getMonth() + 1, d = v.getDate();
+    return v.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
+  }
+  return String(v);
+}
