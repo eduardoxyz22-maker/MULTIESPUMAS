@@ -9,23 +9,28 @@
  * Copiá la URL que termina en /exec y pásasela a Claude (o pegala en
  * pedidos.html, variable SHEETS_URL).
  *
- * La hoja "Pedidos" y sus encabezados se crean solos la primera vez.
+ * La hoja "Pedidos" y sus encabezados se crean/actualizan solos.
  * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
  *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
- *           ts | _productos_json
+ *           ts | _productos_json | Método pago | Observaciones |
+ *           Estado stock | Entregado | Vehículo | Chofer
+ *           (medida y código van dentro del texto de Productos)
  * ============================================================================
  */
 
 var SHEET_NAME = 'Pedidos';
 var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
-               'ts','_productos_json'];
+               'ts','_productos_json','Método pago','Observaciones',
+               'Estado stock','Entregado','Vehículo','Chofer'];
 
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName(SHEET_NAME);
-  if (!sh) {
-    sh = ss.insertSheet(SHEET_NAME);
+  if (!sh) sh = ss.insertSheet(SHEET_NAME);
+  // Asegura/actualiza la fila de encabezados al esquema actual (agrega columnas nuevas sin tocar los datos existentes).
+  var lastCol = sh.getLastRow() === 0 ? 0 : sh.getRange(1, 1).getValue() === 'id' ? sh.getLastColumn() : 0;
+  if (lastCol < HEADERS.length) {
     sh.getRange(1, 1, 1, HEADERS.length).setValues([HEADERS]);
     sh.setFrozenRows(1);
     sh.getRange(1, 1, 1, HEADERS.length).setFontWeight('bold');
@@ -81,7 +86,13 @@ function readAll() {
       maps: String(r[10] || ''),
       pagado: (String(r[11]).toUpperCase().charAt(0) === 'S'),
       saldo: Number(r[12]) || 0,
-      ts: Number(r[13]) || 0
+      ts: Number(r[13]) || 0,
+      metodoPago: String(r[15] || ''),
+      observaciones: String(r[16] || ''),
+      estado: String(r[17] || ''),
+      entregado: (String(r[18]).toUpperCase().charAt(0) === 'S'),
+      vehiculo: String(r[19] || ''),
+      chofer: String(r[20] || '')
     });
   }
   return out;
@@ -122,22 +133,30 @@ function recToRow(p) {
     p.id, p.fecha || '', p.oc || '', p.vendedor || '', p.cliente || '',
     prodText(p.productos), p.celular || '', p.turno || '', p.zona || '',
     p.direccion || '', p.maps || '', p.pagado ? 'SÍ' : 'NO',
-    Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || [])
+    Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
+    p.metodoPago || '', p.observaciones || '',
+    p.estado || '', p.entregado ? 'SÍ' : 'NO',
+    p.vehiculo || '', p.chofer || ''
   ];
 }
 
 function prodText(prods) {
   if (!prods || !prods.length) return '';
-  return prods.map(function (x) { return x.desc + ' × ' + x.cant; }).join('  ·  ');
+  return prods.map(function (x) {
+    var s = x.desc || '';
+    if (x.medida) s += ' · ' + x.medida;
+    if (x.codigo) s += ' · cód ' + x.codigo;
+    return s + ' × ' + x.cant;
+  }).join('   |   ');
 }
 
 function parseProd(js, txt) {
   if (js) { try { var a = JSON.parse(js); if (a && a.length != null) return a; } catch (e) {} }
   txt = String(txt || '').trim();
   if (!txt) return [];
-  return txt.split('·').map(function (s) {
+  return txt.split('|').map(function (s) {
     var m = s.trim().split('×');
-    return { desc: (m[0] || '').trim(), cant: parseInt(m[1] || '1', 10) || 1 };
+    return { desc: (m[0] || '').trim(), medida: '', codigo: '', cant: parseInt(m[1] || '1', 10) || 1 };
   }).filter(function (p) { return p.desc; });
 }
 

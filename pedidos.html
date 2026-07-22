@@ -58,6 +58,12 @@ body{font-family:var(--font-sans);color:var(--text);-webkit-font-smoothing:antia
 .conn .dot{width:9px;height:9px;border-radius:50%;flex:none}
 .conn.on .dot{background:var(--green);box-shadow:0 0 0 3px rgba(34,160,107,.2)}
 .conn.off .dot{background:var(--amber)}
+/* Contador de cupos por día */
+.cupo{border-radius:var(--r-md);padding:11px 15px;margin-bottom:16px;font-size:.82rem;font-weight:600;line-height:1.45}
+.cupo.ok{background:var(--green-lt);border:1px solid var(--green-border);color:#0f6b45}
+.cupo.warn{background:var(--amber-lt);border:1px solid var(--amber-border);color:#7c4b00}
+.cupo.full{background:var(--red-lt);border:1px solid var(--red-border);color:var(--red)}
+.cupo b{font-size:1.1em}
 
 .field{margin-bottom:16px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
@@ -80,12 +86,18 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .seg.pay button[data-val="SI"].active{background:var(--green)}
 .seg.pay button[data-val="NO"].active{background:var(--red)}
 
-.prod-row{display:grid;grid-template-columns:1fr 18px 74px 36px;gap:8px;margin-bottom:8px;align-items:center}
-.prod-row .prod-cant{text-align:center}
-.prod-x{text-align:center;font-weight:800;color:var(--muted);font-size:.9rem}
-.prod-del{width:34px;height:38px;border:1px solid var(--red-border);background:var(--red-lt);color:var(--red);border-radius:var(--r-md);font-size:1.1rem;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
+.prod-card{border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;margin-bottom:10px;background:#fbfdfd}
+.prod-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.prod-top .prod-desc{flex:1}
+.prod-sub{display:grid;grid-template-columns:1.25fr 1fr 64px;gap:8px;align-items:end}
+.prod-card select.prod-medida{width:100%;padding:10px 11px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.86rem;background:#fff;color:var(--text)}
+.prod-card .prod-cant{text-align:center}
+.prod-medida-otro{margin-top:8px}
+.mini-lb{font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px}
+.prod-del{width:34px;height:40px;flex:none;border:1px solid var(--red-border);background:var(--red-lt);color:var(--red);border-radius:var(--r-md);font-size:1.1rem;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 .prod-del:disabled{opacity:.3;cursor:default}
-.prod-head{display:grid;grid-template-columns:1fr 18px 74px 36px;gap:8px;font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.msel{width:100%;padding:9px 11px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.85rem;background:#fff;color:var(--text)}
+.msel:disabled{background:var(--gray-lt);color:var(--muted)}
 .btn-add{margin-top:4px;padding:8px 14px;border:1px dashed var(--teal-border);background:var(--teal-lt);color:var(--teal-dk);border-radius:var(--r-md);font:inherit;font-weight:700;font-size:.78rem;cursor:pointer}
 .btn-add:hover{background:#d4f2f0}
 
@@ -139,6 +151,11 @@ tbody tr:hover{background:var(--teal-lt)}
 .b-green{background:var(--green-lt);color:var(--green);border:1px solid var(--green-border)}
 .b-red{background:var(--red-lt);color:var(--red);border:1px solid var(--red-border)}
 .b-gray{background:var(--gray-lt);color:var(--gray);border:1px solid var(--gray-md)}
+.b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
+/* Resaltado suave de fila según estado de stock */
+.row-stock{background:#e9f9f1}
+.row-prod{background:#fef6e3}
+.row-nohay{background:#fdecee}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
@@ -151,6 +168,33 @@ tbody tr:hover{background:var(--teal-lt)}
 .note{font-size:.68rem;color:var(--muted);background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:var(--r-md);padding:10px 14px;margin-bottom:18px;line-height:1.55}
 .footer{text-align:center;padding:26px 20px 8px;font-size:.66rem;color:var(--muted)}
 .footer a{color:var(--teal-dk);cursor:pointer;font-weight:700;text-decoration:underline}
+
+/* Método de pago segment */
+.seg.mtd button.active{background:var(--teal)}
+.seg.mtd button[data-val="Efectivo"].active{background:var(--green)}
+.seg.mtd button[data-val="QR"].active{background:var(--series-blue,#3B82F6)}
+.seg.mtd button[data-val="Tarjeta"].active{background:var(--purple,#7C3AED)}
+
+/* Modal flotante */
+.modal-overlay{position:fixed;inset:0;background:rgba(15,40,45,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:300;padding:20px 12px;overflow-y:auto}
+.modal-overlay.on{display:flex}
+.modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:540px;width:100%;margin:auto;overflow:hidden;animation:pop .18s ease}
+@keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+.modal-h{background:var(--grad-header);background-size:300% 300%;color:#fff;padding:15px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.modal-h h3{font-size:1rem;font-weight:700}
+.modal-x{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;min-width:30px;border-radius:50%;font-size:1rem;cursor:pointer;line-height:1}
+.modal-x:hover{background:rgba(255,255,255,.35)}
+.modal-b{padding:20px}
+.wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
+.modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.wa-btn{background:#25D366;color:#fff}
+.wa-btn:hover{background:#1da851}
+.dl-row{display:flex;gap:12px;padding:9px 0;border-bottom:1px solid var(--gray-lt);font-size:.85rem}
+.dl-row:last-child{border-bottom:none}
+.dl-k{width:96px;flex:none;color:var(--muted);font-weight:700;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
+.dl-v{flex:1;color:var(--text);word-break:break-word}
+.metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
+.metodos-line b{color:var(--text)}
 </style>
 </head>
 <body>
@@ -172,6 +216,7 @@ tbody tr:hover{background:var(--teal-lt)}
   <div id="view-form" class="view active">
     <div class="card form-card">
       <div id="conn-form" class="conn off"><span class="dot"></span><span id="conn-form-txt"></span></div>
+      <div id="cupo-form" class="cupo ok"></div>
 
       <div id="edit-banner" class="edit-banner">
         <span>✏️ Editando pedido <b id="edit-oc"></b></span>
@@ -204,8 +249,7 @@ tbody tr:hover{background:var(--teal-lt)}
       </div>
 
       <div class="field">
-        <label class="lb">Producto y medida × cantidad <span class="req">*</span></label>
-        <div class="prod-head"><span>Producto y medida</span><span></span><span style="text-align:center">Cant.</span><span></span></div>
+        <label class="lb">Productos <span class="req">*</span> <span class="hint">producto · medida · código · cantidad</span></label>
         <div id="f-productos"></div>
         <button type="button" class="btn-add" id="f-add-prod">＋ Agregar otro producto</button>
       </div>
@@ -259,6 +303,20 @@ tbody tr:hover{background:var(--teal-lt)}
         </div>
       </div>
 
+      <div class="field" id="wrap-metodo" style="display:none">
+        <label class="lb">¿Con qué pagó? <span class="req">*</span></label>
+        <div class="seg mtd" id="f-metodo">
+          <button type="button" data-val="Efectivo">💵 Efectivo</button>
+          <button type="button" data-val="QR">📱 QR</button>
+          <button type="button" data-val="Tarjeta">💳 Tarjeta</button>
+        </div>
+      </div>
+
+      <div class="sec">📝 Observaciones</div>
+      <div class="field">
+        <textarea id="f-obs" placeholder="Notas del pedido: entregar después de las 15h, llamar antes, color específico, etc. (opcional)"></textarea>
+      </div>
+
       <div style="margin-top:22px">
         <button class="btn btn-primary" id="f-submit">Guardar pedido</button>
       </div>
@@ -281,6 +339,7 @@ tbody tr:hover{background:var(--teal-lt)}
     <div id="admin-content" style="display:none">
       <div class="card" style="border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg)">
         <div id="conn-admin" class="conn off"><span class="dot"></span><span id="conn-admin-txt"></span></div>
+        <div id="cupo-admin" class="cupo ok"></div>
 
         <div class="filters">
           <div class="field">
@@ -309,6 +368,7 @@ tbody tr:hover{background:var(--teal-lt)}
         </div>
 
         <div class="metrics" id="adm-metrics"></div>
+        <div class="metodos-line" id="adm-metodos"></div>
 
         <div class="two-col">
           <div class="panel">
@@ -337,6 +397,7 @@ tbody tr:hover{background:var(--teal-lt)}
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
 
 <script>
 /* ============================================================================
@@ -560,28 +621,62 @@ function initSeg(id,onchange){
 /* ============================================================================
    Productos
    ========================================================================== */
-function addProdRow(desc,cant){
+var MEDIDAS = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz'];
+function addProdRow(desc,medida,codigo,cant){
   var box=document.getElementById('f-productos');
-  var row=document.createElement('div'); row.className='prod-row';
-  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Ej. Colchón Pillow 2 plazas'; d.autocomplete='off'; if(desc)d.value=desc;
-  var x=document.createElement('span'); x.className='prod-x'; x.textContent='×';
-  var q=document.createElement('input'); q.type='number'; q.className='prod-cant'; q.min='1'; q.step='1'; q.value=cant||1;
+  var card=document.createElement('div'); card.className='prod-card';
+  // fila superior: producto + borrar
+  var top=document.createElement('div'); top.className='prod-top';
+  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; if(desc)d.value=desc;
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
-  del.addEventListener('click',function(){ row.remove(); refreshDelButtons(); });
-  row.appendChild(d); row.appendChild(x); row.appendChild(q); row.appendChild(del);
-  box.appendChild(row); refreshDelButtons();
+  del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); });
+  top.appendChild(d); top.appendChild(del);
+  // sub: medida | código | cantidad
+  var sub=document.createElement('div'); sub.className='prod-sub';
+  var isKnown = medida && MEDIDAS.indexOf(medida)>=0;
+  var mW=document.createElement('div');
+  var mL=document.createElement('div'); mL.className='mini-lb'; mL.textContent='Medida';
+  var mSel=document.createElement('select'); mSel.className='prod-medida';
+  var oh='<option value="">Medida…</option>';
+  MEDIDAS.forEach(function(m){ oh+='<option'+((medida===m)?' selected':'')+'>'+m+'</option>'; });
+  oh+='<option value="Otros"'+((medida&&!isKnown)?' selected':'')+'>Otros…</option>';
+  mSel.innerHTML=oh;
+  mW.appendChild(mL); mW.appendChild(mSel);
+  var cW=document.createElement('div');
+  var cL=document.createElement('div'); cL.className='mini-lb'; cL.textContent='Código';
+  var cIn=document.createElement('input'); cIn.type='text'; cIn.className='prod-codigo'; cIn.placeholder='—'; cIn.autocomplete='off'; if(codigo)cIn.value=codigo;
+  cW.appendChild(cL); cW.appendChild(cIn);
+  var qW=document.createElement('div');
+  var qL=document.createElement('div'); qL.className='mini-lb'; qL.textContent='Cant.';
+  var q=document.createElement('input'); q.type='number'; q.className='prod-cant'; q.min='1'; q.step='1'; q.value=cant||1;
+  qW.appendChild(qL); qW.appendChild(q);
+  sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW);
+  // medida "Otros" -> input manual (ancho completo, debajo)
+  var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
+  otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
+  mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
+  card.appendChild(top); card.appendChild(sub); card.appendChild(otro);
+  box.appendChild(card); refreshDelButtons();
 }
-function refreshDelButtons(){ var rows=document.querySelectorAll('#f-productos .prod-row'); for(var i=0;i<rows.length;i++) rows[i].querySelector('.prod-del').disabled=(rows.length<=1); }
+function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
 function getProductos(){
-  var rows=document.querySelectorAll('#f-productos .prod-row'),out=[];
-  for(var i=0;i<rows.length;i++){
-    var desc=rows[i].querySelector('.prod-desc').value.trim();
-    var cant=parseInt(rows[i].querySelector('.prod-cant').value,10)||1;
-    if(desc) out.push({desc:desc,cant:cant});
+  var cards=document.querySelectorAll('#f-productos .prod-card'),out=[];
+  for(var i=0;i<cards.length;i++){
+    var desc=cards[i].querySelector('.prod-desc').value.trim();
+    var mSel=cards[i].querySelector('.prod-medida');
+    var medida = mSel.value==='Otros' ? cards[i].querySelector('.prod-medida-otro').value.trim() : mSel.value;
+    var codigo=cards[i].querySelector('.prod-codigo').value.trim();
+    var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;
+    if(desc) out.push({desc:desc, medida:medida, codigo:codigo, cant:cant});
   }
   return out;
 }
-function prodText(prods){ return (prods||[]).map(function(p){return p.desc+' × '+p.cant;}).join('  ·  '); }
+function prodText(prods){ return (prods||[]).map(function(p){
+  var s=p.desc||'';
+  if(p.medida) s+=' · '+p.medida;
+  if(p.codigo) s+=' · cód '+p.codigo;
+  return s+' × '+p.cant;
+}).join('   |   '); }
 
 /* ============================================================================
    Guardar / editar (optimista + sincroniza en segundo plano)
@@ -601,9 +696,16 @@ function submitPedido(){
   if(!cliente){ markErr('f-cliente'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   if(!ok){ toast('Completá los campos marcados','err'); return; }
+  if(segVal('f-pagado')==='SI' && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
 
   var isEdit=!!EDIT_ID;
-  var prevTs=0; if(isEdit){ for(var i=0;i<STATE.length;i++) if(STATE[i].id===EDIT_ID){ prevTs=STATE[i].ts||0; break; } }
+  var prev = isEdit ? findById(EDIT_ID) : null;
+  var fechaSel = document.getElementById('f-fecha').value||todayStr();
+  if(!isEdit && cuposUsados(fechaSel) >= CUPOS_DIA){
+    toast('Cupos llenos para el '+fechaSel+' — elegí otra fecha','err');
+    var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'});
+    renderCupoForm(); return;
+  }
   var rec={
     id: EDIT_ID||uid(),
     fecha: document.getElementById('f-fecha').value||todayStr(),
@@ -615,8 +717,14 @@ function submitPedido(){
     direccion: document.getElementById('f-direccion').value.trim(),
     maps: document.getElementById('f-maps').value.trim(),
     pagado: segVal('f-pagado')==='SI',
+    metodoPago: (segVal('f-pagado')==='SI')?segVal('f-metodo'):'',
     saldo: parseFloat(document.getElementById('f-saldo').value)||0,
-    ts: isEdit?prevTs:Date.now()
+    observaciones: document.getElementById('f-obs').value.trim(),
+    estado: prev ? (prev.estado||'') : '',
+    entregado: prev ? !!prev.entregado : false,
+    vehiculo: prev ? (prev.vehiculo||'') : '',
+    chofer: prev ? (prev.chofer||'') : '',
+    ts: isEdit ? (prev?prev.ts:0) : Date.now()
   };
 
   // Optimista: actualizamos la vista ya
@@ -640,7 +748,7 @@ function submitPedido(){
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
     after(isEdit);
   }
-  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit) showView('admin'); }
+  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
 }
 
 function resetForm(){
@@ -659,8 +767,12 @@ function resetForm(){
   document.getElementById('f-maps').value='';
   segSet('f-pagado','NO');
   var s=document.getElementById('f-saldo'); s.value='0'; s.disabled=false;
+  document.getElementById('f-obs').value='';
+  document.getElementById('wrap-metodo').style.display='none';
+  var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
   clearErr();
+  renderCupoForm();
 }
 
 function editPedido(id){
@@ -672,7 +784,7 @@ function editPedido(id){
   document.getElementById('f-vendedor').value=rec.vendedor||'';
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
-  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++) addProdRow(rec.productos[i].desc,rec.productos[i].cant); } else addProdRow();
+  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant); } } else addProdRow();
   document.getElementById('f-celular').value=rec.celular||'';
   segSet('f-turno',rec.turno||'AM');
   document.getElementById('f-zona').value=rec.zona||'';
@@ -680,6 +792,10 @@ function editPedido(id){
   document.getElementById('f-maps').value=rec.maps||'';
   segSet('f-pagado',rec.pagado?'SI':'NO');
   var s=document.getElementById('f-saldo'); s.value=rec.saldo||0; s.disabled=!!rec.pagado;
+  document.getElementById('f-obs').value=rec.observaciones||'';
+  var wm=document.getElementById('wrap-metodo');
+  if(rec.pagado){ wm.style.display='block'; segSet('f-metodo',rec.metodoPago||''); }
+  else { wm.style.display='none'; var mb2=document.querySelectorAll('#f-metodo button'); for(var mj=0;mj<mb2.length;mj++) mb2[mj].classList.remove('active'); }
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -688,9 +804,11 @@ function editPedido(id){
 function cancelEdit(){ resetForm(); }
 
 function deletePedido(id){
-  var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
-  if(!rec) return;
+  var rec=findById(id); if(!rec) return;
   if(!confirm('¿Eliminar el pedido de '+(rec.cliente||'')+(rec.oc?(' (N° '+rec.oc+')'):'')+'?')) return;
+  realDelete(id);
+}
+function realDelete(id){
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
   saveMirror(); updateStats(); renderAdmin();
@@ -718,6 +836,26 @@ function updateStats(){
   for(var i=0;i<STATE.length;i++) if(STATE[i].fecha===t) n++;
   document.getElementById('stat-hoy').textContent=n;
   updateFooter();
+}
+
+/* ---- Cupos por día (límite de pedidos/entregas diarias) ---- */
+var CUPOS_DIA = 25;
+function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
+function renderCupoForm(){
+  var el=document.getElementById('cupo-form'); if(!el) return;
+  var fecha=document.getElementById('f-fecha').value||todayStr();
+  var usados=cuposUsados(fecha), rest=CUPOS_DIA-usados;
+  if(rest<=0){
+    el.className='cupo full';
+    el.innerHTML='🚫 <b>Cupos llenos</b> para el '+fecha+' — '+usados+'/'+CUPOS_DIA+'. Elegí <b>otra fecha</b> para este pedido.';
+  }else{
+    el.className='cupo '+(rest<=5?'warn':'ok');
+    el.innerHTML='🎟️ Cupos del '+fecha+': <b>'+rest+'</b> de '+CUPOS_DIA+' libres'+(rest<=5?' — ¡quedan pocos!':'');
+  }
+}
+function refreshCupos(){
+  if(!CONNECTED){ renderCupoForm(); return; }
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); updateStats(); } renderCupoForm(); }).catch(function(){ renderCupoForm(); });
 }
 function updateFooter(){
   var pend=getPending().length;
@@ -805,13 +943,17 @@ function admFilter(){
 function renderAdmin(){
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
-  list.forEach(function(p){ if(p.pagado)pagados++; else saldoPend+=Number(p.saldo)||0; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
+  var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, est={'En stock':0,'En producción':0,'No hay':0};
+  list.forEach(function(p){ if(p.pagado){ pagados++; if(mtd[p.metodoPago]!=null)mtd[p.metodoPago]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
   var pend=total-pagados;
   document.getElementById('adm-metrics').innerHTML=
     mc('var(--teal)','Pedidos',total,unidades+' unidades')+
     mc('var(--green)','Pagados',pagados,total?Math.round(pagados/total*100)+'% del total':'—')+
     mc('var(--red)','Por cobrar',pend,'pedidos pendientes')+
     mc('var(--amber)','Saldo pendiente',fmtBs(saldoPend),'suma por cobrar');
+  document.getElementById('adm-metodos').innerHTML=
+    'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
+    '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
 
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
@@ -823,18 +965,24 @@ function renderAdmin(){
   var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
   document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Fecha</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
-  var head='<thead><tr><th>Fecha</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var head='<thead><tr><th>Fecha</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
   var body=list.map(function(p){
-    var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 abrir</a>'):'—';
-    var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
+    var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
+    var pago=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):'<span class="badge b-red">DEBE</span>';
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
-    return '<tr>'+
+    var estadoCell=estadoBadge(p.estado)+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
+    var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
+    var cls=(ESTADOS[p.estado]?ESTADOS[p.estado].cls:'');
+    return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td>'+esc(p.fecha||'')+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
       '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td><td>'+pago+'</td>'+
+      '<td style="white-space:nowrap">'+estadoCell+'</td>'+
+      '<td style="white-space:nowrap">'+vehCell+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td>'+
-      '<td style="white-space:nowrap">'+
+      '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
+        '<button class="rowbtn" onclick="showPedidoModal(\''+p.id+'\')" title="Ver detalle">👁</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
@@ -843,32 +991,185 @@ function renderAdmin(){
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('pedidos-empty').style.display=list.length?'none':'block';
   document.getElementById('tbl-pedidos').style.display=list.length?'table':'none';
+  var cupoEl=document.getElementById('cupo-admin');
+  if(cupoEl){
+    var cmode=segVal('adm-mode');
+    var cdia = cmode==='dia' ? (document.getElementById('adm-dia').value||todayStr()) : todayStr();
+    var cus=cuposUsados(cdia), crest=CUPOS_DIA-cus;
+    cupoEl.className='cupo '+(crest<=0?'full':(crest<=5?'warn':'ok'));
+    cupoEl.innerHTML='🎟️ Cupos del '+cdia+': <b>'+Math.max(0,crest)+'</b> de '+CUPOS_DIA+' libres · '+cus+' usados'+(crest<=0?' — <b>LLENO</b>':'');
+  }
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ============================================================================
-   Copiar pedido (WhatsApp / despacho)
+   Texto de pedido + copiar (WhatsApp / despacho)
    ========================================================================== */
-function copyPedido(id){
-  var p=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ p=STATE[i]; break; }
-  if(!p) return;
-  var lines=['📦 PEDIDO'+(p.oc?(' N° '+p.oc):''),
+function findById(id){ for(var i=0;i<STATE.length;i++) if(STATE[i].id===id) return STATE[i]; return null; }
+function pedidoText(p){
+  var prod=(p.productos||[]).map(function(x){
+    var s='   • '+x.desc;
+    if(x.medida) s+=' '+x.medida;
+    if(x.codigo) s+=' (cód '+x.codigo+')';
+    return s+' × '+x.cant;
+  }).join('\n');
+  var lines=['📦 *PEDIDO'+(p.oc?(' N° '+p.oc):'')+'*',
+    '📅 '+(p.fecha||'')+(p.turno?('  ·  Turno '+p.turno):''),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
-    '🛏️ '+prodText(p.productos),
-    '🕐 Turno: '+(p.turno||'—'),
+    '🛏️ Productos:', prod,
     '📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||''),
     p.maps?('🗺️ '+p.maps):'',
-    '💰 '+(p.pagado?'PAGADO':('POR COBRAR: '+fmtBs(p.saldo)))
+    p.observaciones?('📝 '+p.observaciones):'',
+    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo))),
+    (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
+    '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
-  var text=lines.join('\n');
-  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Pedido copiado ✓','ok');},function(){fallbackCopy(text);}); }
+  return lines.join('\n');
+}
+function copyText(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text).then(function(){toast('Copiado ✓','ok');},function(){fallbackCopy(text);}); }
   else fallbackCopy(text);
 }
+function copyPedido(id){ var p=findById(id); if(p) copyText(pedidoText(p)); }
 function fallbackCopy(text){
-  var ta=document.createElement('textarea'); ta.value=text; document.body.appendChild(ta); ta.select();
-  try{ document.execCommand('copy'); toast('Pedido copiado ✓','ok'); }catch(e){ prompt('Copiá el pedido:',text); }
+  var ta=document.createElement('textarea'); ta.value=text; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); toast('Copiado ✓','ok'); }catch(e){ prompt('Copiá el pedido:',text); }
   ta.remove();
+}
+function whatsappUrl(text){ return 'https://wa.me/?text='+encodeURIComponent(text); }
+
+/* ============================================================================
+   Modales flotantes
+   ========================================================================== */
+function openModal(html){ document.getElementById('modal-box').innerHTML=html; document.getElementById('modal').classList.add('on'); }
+function closeModal(){ document.getElementById('modal').classList.remove('on'); }
+
+function showWhatsappModal(rec){
+  var text=pedidoText(rec);
+  var html='<div class="modal-h"><h3>✅ Pedido guardado</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copiá el pedido y pegalo en WhatsApp, o abrí WhatsApp directo:</p>'+
+      '<textarea class="wa-text" id="wa-text" readonly>'+esc(text)+'</textarea>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar</button>'+
+        '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html);
+}
+
+function showPedidoModal(id){
+  var p=findById(id); if(!p) return;
+  var prod=(p.productos||[]).map(function(x){ return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
+  function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
+  var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
+  var body=row('Fecha', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
+    row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+    row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
+    row('Dirección', esc(p.direccion))+row('Maps', maps)+row('Observaciones', esc(p.observaciones))+row('Cobro', cobro)+
+    row('Estado', estadoBadge(p.estado))+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
+    row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
+  var mark = !p.pagado ? (
+    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div class="lb" style="margin-bottom:8px">💵 Marcar como pagado — ¿con qué pagó?</div>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-sm" style="background:var(--green);color:#fff" onclick="markPaid(\''+p.id+'\',\'Efectivo\')">💵 Efectivo</button>'+
+        '<button class="btn btn-sm" style="background:var(--series-blue,#3B82F6);color:#fff" onclick="markPaid(\''+p.id+'\',\'QR\')">📱 QR</button>'+
+        '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
+      '</div>'+
+    '</div>') : '';
+  var stockSec =
+    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div class="lb" style="margin-bottom:8px">📦 Estado de stock</div>'+
+      '<div class="modal-actions">'+
+        estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
+        estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
+        estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
+        '<div class="lb">🚚 ¿Entregado?</div>'+
+        '<button class="btn btn-sm" style="'+(p.entregado?'background:var(--green);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleEntregado(\''+p.id+'\')">'+(p.entregado?'✓ SÍ, entregado':'Marcar entregado')+'</button>'+
+      '</div>'+
+    '</div>';
+  var despachoSec =
+    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div class="lb" style="margin-bottom:8px">🚛 Vehículo y chofer</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
+    '</div>';
+  var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+body+mark+stockSec+despachoSec+
+      '<div class="modal-actions" style="margin-top:16px">'+
+        '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
+        '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
+    '</div>';
+  openModal(html);
+}
+
+function markPaid(id, metodo){
+  var p=findById(id); if(!p) return;
+  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
+  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  toast('Marcado como pagado ('+metodo+') ✓','ok');
+  showPedidoModal(id);
+}
+
+/* ---- Estado de stock + entregado ---- */
+var ESTADOS = {
+  'En stock':      {cls:'row-stock', badge:'b-green', emo:'🟢'},
+  'En producción': {cls:'row-prod',  badge:'b-amber', emo:'🟡'},
+  'No hay':        {cls:'row-nohay', badge:'b-red',   emo:'🔴'}
+};
+function estadoBadge(e){ var m=ESTADOS[e]; return m?('<span class="badge '+m.badge+'">'+m.emo+' '+esc(e)+'</span>'):'<span class="badge b-gray">Sin marcar</span>'; }
+function estadoBtn(p,val,label,color){
+  var active=(p.estado===val);
+  return '<button class="btn btn-sm" style="'+(active?('background:'+color+';color:#fff'):('background:#fff;border:1px solid var(--gray-md);color:var(--muted)'))+'" onclick="setEstado(\''+p.id+'\',\''+val+'\')">'+label+'</button>';
+}
+function setEstado(id,val){
+  var p=findById(id); if(!p) return;
+  p.estado=(p.estado===val)?'':val; // tocar el mismo lo desmarca
+  upsert(p); saveMirror(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  showPedidoModal(id);
+}
+function toggleEntregado(id){
+  var p=findById(id); if(!p) return;
+  p.entregado=!p.entregado;
+  upsert(p); saveMirror(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
+  showPedidoModal(id);
+}
+
+/* ---- Vehículo + chofer (despacho) ---- */
+var VEHICULOS = {
+  'Carry':           ['Luis Pierre','Ysrael'],
+  'Foton nuevo':     ['Luis Eyzaguirre','Giordano'],
+  'Foton encarpado': ['Cristhian','Miguel'],
+  'Foton insumo':    ['Fernando']
+};
+function vehiculoSelect(p){
+  var opts='<option value="">Vehículo…</option>';
+  Object.keys(VEHICULOS).forEach(function(v){ opts+='<option'+(p.vehiculo===v?' selected':'')+'>'+v+'</option>'; });
+  return '<select class="msel" onchange="setVehiculo(\''+p.id+'\',this.value)">'+opts+'</select>';
+}
+function choferSelect(p){
+  var list=VEHICULOS[p.vehiculo]||[];
+  var opts='<option value="">'+(p.vehiculo?'Chofer…':'(elegí vehículo)')+'</option>';
+  list.forEach(function(c){ opts+='<option'+(p.chofer===c?' selected':'')+'>'+c+'</option>'; });
+  return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
+}
+function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); showPedidoModal(id); }
+function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; persistPedido(p); showPedidoModal(id); }
+function persistPedido(p){
+  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 
 /* ============================================================================
@@ -878,14 +1179,14 @@ function exportExcel(){
   var list=admFilter();
   if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
   var H=1,C=2;
-  var header=['Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)'].map(function(t){return {v:t,s:H};});
+  var header=['Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','Saldo (Bs)','Observaciones','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
   var rows=[header];
-  list.forEach(function(p){ rows.push([ p.fecha||'',p.oc||'',p.vendedor||'',p.cliente||'',prodText(p.productos),p.celular||'',p.turno||'',p.zona||'',p.direccion||'',p.maps||'',p.pagado?'SÍ':'NO',{v:(Number(p.saldo)||0),t:'n',s:C} ]); });
+  list.forEach(function(p){ rows.push([ p.fecha||'',p.oc||'',p.vendedor||'',p.cliente||'',prodText(p.productos),p.celular||'',p.turno||'',p.zona||'',p.direccion||'',p.maps||'',p.pagado?'SÍ':'NO',p.metodoPago||'',{v:(Number(p.saldo)||0),t:'n',s:C},p.observaciones||'',p.estado||'',p.entregado?'SÍ':'NO',p.vehiculo||'',p.chofer||'' ]); });
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,saldo:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
-  var bytes=buildXlsx([{name:'Pedidos',cols:[12,9,18,22,34,12,7,14,30,26,9,14],matrix:rows},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
+  var bytes=buildXlsx([{name:'Pedidos',cols:[12,9,18,22,34,12,7,14,30,26,9,12,14,34,16,10,16,16],matrix:rows},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
   var mode=segVal('adm-mode');
   var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -910,7 +1211,12 @@ document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   initConnUI();
   initSeg('f-turno',null);
-  initSeg('f-pagado',function(val){ var s=document.getElementById('f-saldo'); if(val==='SI'){ s.value='0'; s.disabled=true; } else s.disabled=false; });
+  initSeg('f-pagado',function(val){
+    var s=document.getElementById('f-saldo'), wm=document.getElementById('wrap-metodo');
+    if(val==='SI'){ s.value='0'; s.disabled=true; wm.style.display='block'; }
+    else { s.disabled=false; wm.style.display='none'; }
+  });
+  initSeg('f-metodo',null);
   initSeg('adm-mode',function(val){
     document.getElementById('wrap-dia').style.display=(val==='dia')?'block':'none';
     document.getElementById('wrap-mes').style.display=(val==='mes')?'block':'none';
@@ -921,9 +1227,14 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-dia').value=todayStr();
   document.getElementById('adm-mes').value=monthStr();
   var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){ if(UNLOCKED) renderAdmin(); });
+  document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
+  document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
+  document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
   refreshDatalists();
   resetForm();
   updateStats();
+  refreshCupos();
   if(CONNECTED) flushPending();
 });
 </script>
