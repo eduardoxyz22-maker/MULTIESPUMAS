@@ -717,6 +717,14 @@ var EDIT_ID=null;
 function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+/* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
+function updateMetodoVisibility(){
+  var pagado = segVal('f-pagado')==='SI';
+  var acuenta = parseFloat(document.getElementById('f-acuenta').value)||0;
+  var show = pagado || (acuenta>0);
+  document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
+  if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'; }
+}
 
 function submitPedido(){
   clearErr();
@@ -731,7 +739,8 @@ function submitPedido(){
   if(!document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   if(!ok){ toast('Completá los campos marcados (*)','err'); return; }
-  if(segVal('f-pagado')==='SI' && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
+  var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
+  if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
 
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
@@ -753,7 +762,7 @@ function submitPedido(){
     direccion: document.getElementById('f-direccion').value.trim(),
     maps: document.getElementById('f-maps').value.trim(),
     pagado: segVal('f-pagado')==='SI',
-    metodoPago: (segVal('f-pagado')==='SI')?segVal('f-metodo'):'',
+    metodoPago: (segVal('f-pagado')==='SI' || (parseFloat(document.getElementById('f-acuenta').value)||0)>0)?segVal('f-metodo'):'',
     acuenta: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-acuenta').value)||0),
     saldo: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-saldo').value)||0),
     observaciones: document.getElementById('f-obs').value.trim(),
@@ -851,9 +860,9 @@ function editPedido(id){
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';
   document.getElementById('f-nit').value=rec.nit||'';
-  var wm=document.getElementById('wrap-metodo'), wn=document.getElementById('wrap-nopago');
-  if(rec.pagado){ wm.style.display='block'; wn.style.display='none'; segSet('f-metodo',rec.metodoPago||''); }
-  else { wm.style.display='none'; wn.style.display=''; var mb2=document.querySelectorAll('#f-metodo button'); for(var mj=0;mj<mb2.length;mj++) mb2[mj].classList.remove('active'); }
+  document.getElementById('wrap-nopago').style.display = rec.pagado ? 'none' : '';
+  segSet('f-metodo', rec.metodoPago||'');
+  updateMetodoVisibility();
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -1086,7 +1095,7 @@ function pedidoText(p){
     p.observaciones?('📝 '+p.observaciones):'',
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
     (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
-    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo)+(Number(p.acuenta)>0?('  ·  a cuenta '+fmtBs(p.acuenta)):''))),
+    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo)+(Number(p.acuenta)>0?('  ·  a cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' ('+p.metodoPago+')'):'')):''))),
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
@@ -1130,7 +1139,7 @@ function showPedidoModal(id){
   var prod=(p.productos||[]).map(function(x){ return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+'</span>'):''));
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
   var body=row('Fecha', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
@@ -1290,9 +1299,10 @@ document.addEventListener('DOMContentLoaded',function(){
   initConnUI();
   initSeg('f-turno',null);
   initSeg('f-pagado',function(val){
-    var wm=document.getElementById('wrap-metodo'), wn=document.getElementById('wrap-nopago');
-    if(val==='SI'){ wm.style.display='block'; wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
-    else { wm.style.display='none'; wn.style.display=''; }
+    var wn=document.getElementById('wrap-nopago');
+    if(val==='SI'){ wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
+    else { wn.style.display=''; }
+    updateMetodoVisibility();
   });
   initSeg('f-metodo',null);
   initSeg('adm-mode',function(val){
@@ -1308,6 +1318,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
+  document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
   refreshDatalists();
   resetForm();
