@@ -202,7 +202,7 @@ tbody tr:hover{background:var(--teal-lt)}
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1>Registro de Pedidos</h1><p>Cargá desde el celular · se comparte con el equipo</p></div>
-    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l">Pedidos hoy</div></div>
+    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l">Cupos mañana</div></div>
   </div>
 </div>
 
@@ -586,6 +586,7 @@ function setPending(a){ try{ localStorage.setItem(LS_PEND, JSON.stringify(a)); }
 function queuePending(rec){ var a=getPending().filter(function(p){return p.id!==rec.id;}); a.push(rec); setPending(a); updateFooter(); }
 
 function todayStr(){ return isoLocal(new Date()); }
+function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return isoLocal(d); }
 function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
 function monthStr(){ return todayStr().slice(0,7); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -817,7 +818,7 @@ function submitPedido(){
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
-  document.getElementById('f-fecha').value=todayStr();
+  document.getElementById('f-fecha').value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value=nextOc();
   document.getElementById('f-vendedor').value='';
@@ -906,9 +907,10 @@ function refreshDatalists(){
   Object.keys(zonas).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
 }
 function updateStats(){
-  var t=todayStr(),n=0;
-  for(var i=0;i<STATE.length;i++) if(STATE[i].fecha===t) n++;
-  document.getElementById('stat-hoy').textContent=n;
+  // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana.
+  var man=tomorrowStr();
+  var rest=Math.max(0, CUPOS_DIA - cuposUsados(man));
+  document.getElementById('stat-hoy').textContent=rest;
   updateFooter();
 }
 
