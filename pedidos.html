@@ -80,12 +80,12 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .seg.pay button[data-val="SI"].active{background:var(--green)}
 .seg.pay button[data-val="NO"].active{background:var(--red)}
 
-.prod-row{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;margin-bottom:8px;align-items:center}
+.prod-row{display:grid;grid-template-columns:1fr 18px 74px 36px;gap:8px;margin-bottom:8px;align-items:center}
 .prod-row .prod-cant{text-align:center}
 .prod-x{text-align:center;font-weight:800;color:var(--muted);font-size:.9rem}
 .prod-del{width:34px;height:38px;border:1px solid var(--red-border);background:var(--red-lt);color:var(--red);border-radius:var(--r-md);font-size:1.1rem;font-weight:700;cursor:pointer;line-height:1;display:flex;align-items:center;justify-content:center}
 .prod-del:disabled{opacity:.3;cursor:default}
-.prod-head{display:grid;grid-template-columns:1fr 92px 34px;gap:8px;font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
+.prod-head{display:grid;grid-template-columns:1fr 18px 74px 36px;gap:8px;font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px}
 .btn-add{margin-top:4px;padding:8px 14px;border:1px dashed var(--teal-border);background:var(--teal-lt);color:var(--teal-dk);border-radius:var(--r-md);font:inherit;font-weight:700;font-size:.78rem;cursor:pointer}
 .btn-add:hover{background:#d4f2f0}
 
@@ -205,7 +205,7 @@ tbody tr:hover{background:var(--teal-lt)}
 
       <div class="field">
         <label class="lb">Producto y medida × cantidad <span class="req">*</span></label>
-        <div class="prod-head"><span>Producto y medida</span><span style="text-align:center">Cant.</span><span></span></div>
+        <div class="prod-head"><span>Producto y medida</span><span></span><span style="text-align:center">Cant.</span><span></span></div>
         <div id="f-productos"></div>
         <button type="button" class="btn-add" id="f-add-prod">＋ Agregar otro producto</button>
       </div>
