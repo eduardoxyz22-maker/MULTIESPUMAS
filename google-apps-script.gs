@@ -13,7 +13,8 @@
  * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
  *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
  *           ts | _productos_json | Método pago | Observaciones |
- *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de)
+ *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de) |
+ *           Nota de venta | A cuenta (Bs) | Facturar a | NIT
  *           (medida y código van dentro del texto de Productos)
  * El servidor hace cumplir el límite de 25 pedidos por día (CUPOS_DIA).
  * ============================================================================
@@ -24,7 +25,8 @@ var CUPOS_DIA = 25; // máximo de pedidos por día (capacidad logística). El se
 var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
-               'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)'];
+               'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)',
+               'Nota de venta','A cuenta (Bs)','Facturar a','NIT'];
 
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -95,7 +97,11 @@ function readAll() {
       entregado: (String(r[18]).toUpperCase().charAt(0) === 'S'),
       vehiculo: String(r[19] || ''),
       chofer: String(r[20] || ''),
-      garantia: String(r[21] || '')
+      garantia: String(r[21] || ''),
+      nota: String(r[22] == null ? '' : r[22]),
+      acuenta: Number(r[23]) || 0,
+      facturarA: String(r[24] || ''),
+      nit: String(r[25] == null ? '' : r[25])
     });
   }
   return out;
@@ -147,7 +153,8 @@ function recToRow(p) {
     Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
     p.metodoPago || '', p.observaciones || '',
     p.estado || '', p.entregado ? 'SÍ' : 'NO',
-    p.vehiculo || '', p.chofer || '', p.garantia || ''
+    p.vehiculo || '', p.chofer || '', p.garantia || '',
+    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || ''
   ];
 }
 

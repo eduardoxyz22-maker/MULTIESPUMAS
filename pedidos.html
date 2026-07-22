@@ -231,20 +231,31 @@ tbody tr:hover{background:var(--teal-lt)}
           <input type="date" id="f-fecha">
         </div>
         <div class="field">
-          <label class="lb">N° OC <span class="hint">(orden de compra)</span></label>
-          <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
+          <label class="lb">N° Nota de venta <span class="req">*</span></label>
+          <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
         </div>
       </div>
 
       <div class="grid2">
         <div class="field">
+          <label class="lb">N° OC <span class="hint">(orden de compra, opcional)</span></label>
+          <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
+        </div>
+        <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
           <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off">
           <datalist id="dl-vendedores"></datalist>
         </div>
+      </div>
+
+      <div class="grid2">
         <div class="field">
           <label class="lb">Nombre del cliente <span class="req">*</span></label>
           <input type="text" id="f-cliente" placeholder="Nombre y apellido" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="lb"># Celular <span class="req">*</span></label>
+          <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
         </div>
       </div>
 
@@ -256,21 +267,27 @@ tbody tr:hover{background:var(--teal-lt)}
 
       <div class="grid2">
         <div class="field">
-          <label class="lb"># Celular <span class="req">*</span></label>
-          <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
-        </div>
-        <div class="field">
           <label class="lb">Turno de entrega</label>
           <div class="seg" id="f-turno">
             <button type="button" data-val="AM" class="active">🌅 AM</button>
             <button type="button" data-val="PM">🌆 PM</button>
           </div>
         </div>
+        <div class="field">
+          <label class="lb">🛡️ Garantía — a nombre de <span class="hint">(opcional)</span></label>
+          <input type="text" id="f-garantia" placeholder="Nombre a quien va la garantía" autocomplete="off">
+        </div>
       </div>
 
-      <div class="field">
-        <label class="lb">🛡️ Garantía — a nombre de <span class="hint">(opcional)</span></label>
-        <input type="text" id="f-garantia" placeholder="Nombre a quien va la garantía" autocomplete="off">
+      <div class="grid2">
+        <div class="field">
+          <label class="lb">🧾 Facturar a <span class="hint">(opcional)</span></label>
+          <input type="text" id="f-facturar" placeholder="Nombre / razón social" autocomplete="off">
+        </div>
+        <div class="field">
+          <label class="lb">NIT <span class="hint">(opcional)</span></label>
+          <input type="text" id="f-nit" placeholder="NIT / CI" autocomplete="off" inputmode="numeric">
+        </div>
       </div>
 
       <div class="sec">📍 Entrega</div>
@@ -294,13 +311,18 @@ tbody tr:hover{background:var(--teal-lt)}
 
       <div class="sec">💰 Cobro</div>
 
-      <div class="grid2">
+      <div class="field">
+        <label class="lb">¿Pagado?</label>
+        <div class="seg pay" id="f-pagado">
+          <button type="button" data-val="SI">SÍ, pagado</button>
+          <button type="button" data-val="NO" class="active">NO</button>
+        </div>
+      </div>
+
+      <div class="grid2" id="wrap-nopago">
         <div class="field">
-          <label class="lb">¿Pagado?</label>
-          <div class="seg pay" id="f-pagado">
-            <button type="button" data-val="SI">SÍ, pagado</button>
-            <button type="button" data-val="NO" class="active">NO</button>
-          </div>
+          <label class="lb">A cuenta <span class="hint">(adelanto)</span></label>
+          <div class="num-money"><input type="number" id="f-acuenta" min="0" step="0.01" value="0"></div>
         </div>
         <div class="field">
           <label class="lb">Saldo por cobrar</label>
@@ -702,6 +724,7 @@ function submitPedido(){
   var cliente=document.getElementById('f-cliente').value.trim();
   var productos=getProductos();
   var ok=true;
+  if(!document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
   if(!cliente){ markErr('f-cliente'); ok=false; }
   if(!document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
@@ -721,6 +744,7 @@ function submitPedido(){
   var rec={
     id: EDIT_ID||uid(),
     fecha: document.getElementById('f-fecha').value||todayStr(),
+    nota: document.getElementById('f-nota').value.trim(),
     oc: document.getElementById('f-oc').value.trim(),
     vendedor: vendedor, cliente: cliente, productos: productos,
     celular: document.getElementById('f-celular').value.trim(),
@@ -730,9 +754,12 @@ function submitPedido(){
     maps: document.getElementById('f-maps').value.trim(),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: (segVal('f-pagado')==='SI')?segVal('f-metodo'):'',
-    saldo: parseFloat(document.getElementById('f-saldo').value)||0,
+    acuenta: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-acuenta').value)||0),
+    saldo: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-saldo').value)||0),
     observaciones: document.getElementById('f-obs').value.trim(),
     garantia: document.getElementById('f-garantia').value.trim(),
+    facturarA: document.getElementById('f-facturar').value.trim(),
+    nit: document.getElementById('f-nit').value.trim(),
     estado: prev ? (prev.estado||'') : '',
     entregado: prev ? !!prev.entregado : false,
     vehiculo: prev ? (prev.vehiculo||'') : '',
@@ -775,6 +802,7 @@ function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
   document.getElementById('f-fecha').value=todayStr();
+  document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value=nextOc();
   document.getElementById('f-vendedor').value='';
   document.getElementById('f-cliente').value='';
@@ -787,9 +815,13 @@ function resetForm(){
   document.getElementById('f-maps').value='';
   segSet('f-pagado','NO');
   var s=document.getElementById('f-saldo'); s.value='0'; s.disabled=false;
+  document.getElementById('f-acuenta').value='0';
   document.getElementById('f-obs').value='';
   document.getElementById('f-garantia').value='';
+  document.getElementById('f-facturar').value='';
+  document.getElementById('f-nit').value='';
   document.getElementById('wrap-metodo').style.display='none';
+  document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
   clearErr();
@@ -801,6 +833,7 @@ function editPedido(id){
   if(!rec) return;
   EDIT_ID=id;
   document.getElementById('f-fecha').value=rec.fecha||todayStr();
+  document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
   document.getElementById('f-vendedor').value=rec.vendedor||'';
   document.getElementById('f-cliente').value=rec.cliente||'';
@@ -812,12 +845,15 @@ function editPedido(id){
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-maps').value=rec.maps||'';
   segSet('f-pagado',rec.pagado?'SI':'NO');
-  var s=document.getElementById('f-saldo'); s.value=rec.saldo||0; s.disabled=!!rec.pagado;
+  document.getElementById('f-saldo').value=rec.saldo||0;
+  document.getElementById('f-acuenta').value=rec.acuenta||0;
   document.getElementById('f-obs').value=rec.observaciones||'';
   document.getElementById('f-garantia').value=rec.garantia||'';
-  var wm=document.getElementById('wrap-metodo');
-  if(rec.pagado){ wm.style.display='block'; segSet('f-metodo',rec.metodoPago||''); }
-  else { wm.style.display='none'; var mb2=document.querySelectorAll('#f-metodo button'); for(var mj=0;mj<mb2.length;mj++) mb2[mj].classList.remove('active'); }
+  document.getElementById('f-facturar').value=rec.facturarA||'';
+  document.getElementById('f-nit').value=rec.nit||'';
+  var wm=document.getElementById('wrap-metodo'), wn=document.getElementById('wrap-nopago');
+  if(rec.pagado){ wm.style.display='block'; wn.style.display='none'; segSet('f-metodo',rec.metodoPago||''); }
+  else { wm.style.display='none'; wn.style.display=''; var mb2=document.querySelectorAll('#f-metodo button'); for(var mj=0;mj<mb2.length;mj++) mb2[mj].classList.remove('active'); }
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -992,7 +1028,7 @@ function renderAdmin(){
   var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
-  var head='<thead><tr><th>Fecha</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var head='<thead><tr><th>Fecha</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var pago=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):'<span class="badge b-red">DEBE</span>';
@@ -1001,7 +1037,7 @@ function renderAdmin(){
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=(ESTADOS[p.estado]?ESTADOS[p.estado].cls:'');
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td>'+esc(p.fecha||'')+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td>'+esc(p.fecha||'')+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
       '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td><td>'+pago+'</td>'+
@@ -1041,7 +1077,7 @@ function pedidoText(p){
     if(x.codigo) s+=' (cód '+x.codigo+')';
     return s+' × '+x.cant;
   }).join('\n');
-  var lines=['📦 *PEDIDO'+(p.oc?(' N° '+p.oc):'')+'*',
+  var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · OC '+p.oc):'')+'*',
     '📅 '+(p.fecha||'')+(p.turno?('  ·  Turno '+p.turno):''),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
@@ -1049,7 +1085,8 @@ function pedidoText(p){
     p.maps?('🗺️ '+p.maps):'',
     p.observaciones?('📝 '+p.observaciones):'',
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
-    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo))),
+    (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
+    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo)+(Number(p.acuenta)>0?('  ·  a cuenta '+fmtBs(p.acuenta)):''))),
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
@@ -1093,11 +1130,13 @@ function showPedidoModal(id){
   var prod=(p.productos||[]).map(function(x){ return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+'</span>'):''));
   var body=row('Fecha', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
+    row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
-    row('Dirección', esc(p.direccion))+row('Maps', maps)+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+row('Cobro', cobro)+
+    row('Dirección', esc(p.direccion))+row('Maps', maps)+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
+    row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoBadge(p.estado))+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
   var mark = !p.pagado ? (
@@ -1213,19 +1252,19 @@ function exportExcel(){
   if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
   var H=1,C=2;
   var fechaHoraStr=function(p){ if(p.ts){ var d=new Date(p.ts); if(d&&!isNaN(d.getTime())){ var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); } } return p.fecha||''; };
-  var header=['Fecha y hora','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','Saldo (Bs)','Observaciones','Garantía','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
+  var header=['Fecha y hora','Nota de venta','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','A cuenta (Bs)','Saldo (Bs)','Observaciones','Garantía','Facturar a','NIT','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     var fs = p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0;   // relleno para strings
     var fc = p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C;   // relleno para moneda
     var cl=function(v){ return {v:v, s:fs}; };
-    rows.push([ cl(fechaHoraStr(p)),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),cl(prodText(p.productos)),cl(p.celular||''),cl(p.turno||''),cl(p.zona||''),cl(p.direccion||''),cl(p.maps||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),{v:(Number(p.saldo)||0),t:'n',s:fc},cl(p.observaciones||''),cl(p.garantia||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
+    rows.push([ cl(fechaHoraStr(p)),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),cl(prodText(p.productos)),cl(p.celular||''),cl(p.turno||''),cl(p.zona||''),cl(p.direccion||''),cl(p.maps||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),{v:(Number(p.acuenta)||0),t:'n',s:fc},{v:(Number(p.saldo)||0),t:'n',s:fc},cl(p.observaciones||''),cl(p.garantia||''),cl(p.facturarA||''),cl(p.nit||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
   });
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,saldo:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
-  var bytes=buildXlsx([{name:'Pedidos',cols:[16,9,18,22,34,12,7,14,30,26,9,12,14,34,18,16,10,16,16],matrix:rows},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
+  var bytes=buildXlsx([{name:'Pedidos',cols:[16,12,9,18,22,34,12,7,14,30,26,9,12,14,14,34,18,20,14,16,10,16,16],matrix:rows},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
   var mode=segVal('adm-mode');
   var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -1251,9 +1290,9 @@ document.addEventListener('DOMContentLoaded',function(){
   initConnUI();
   initSeg('f-turno',null);
   initSeg('f-pagado',function(val){
-    var s=document.getElementById('f-saldo'), wm=document.getElementById('wrap-metodo');
-    if(val==='SI'){ s.value='0'; s.disabled=true; wm.style.display='block'; }
-    else { s.disabled=false; wm.style.display='none'; }
+    var wm=document.getElementById('wrap-metodo'), wn=document.getElementById('wrap-nopago');
+    if(val==='SI'){ wm.style.display='block'; wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
+    else { wm.style.display='none'; wn.style.display=''; }
   });
   initSeg('f-metodo',null);
   initSeg('adm-mode',function(val){
