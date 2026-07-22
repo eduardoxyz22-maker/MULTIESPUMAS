@@ -13,16 +13,18 @@
  * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
  *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
  *           ts | _productos_json | Método pago | Observaciones |
- *           Estado stock | Entregado | Vehículo | Chofer
+ *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de)
  *           (medida y código van dentro del texto de Productos)
+ * El servidor hace cumplir el límite de 25 pedidos por día (CUPOS_DIA).
  * ============================================================================
  */
 
 var SHEET_NAME = 'Pedidos';
+var CUPOS_DIA = 25; // máximo de pedidos por día (capacidad logística). El servidor lo hace cumplir aunque carguen varios a la vez.
 var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
-               'Estado stock','Entregado','Vehículo','Chofer'];
+               'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)'];
 
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -92,7 +94,8 @@ function readAll() {
       estado: String(r[17] || ''),
       entregado: (String(r[18]).toUpperCase().charAt(0) === 'S'),
       vehiculo: String(r[19] || ''),
-      chofer: String(r[20] || '')
+      chofer: String(r[20] || ''),
+      garantia: String(r[21] || '')
     });
   }
   return out;
@@ -101,17 +104,25 @@ function readAll() {
 function doSave(p) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   var sh = getSheet();
-  var row = recToRow(p);
   var last = sh.getLastRow();
+  // ¿Ya existe (update) o es nuevo?
+  var foundRow = -1;
   if (last >= 2) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
-    for (var i = 0; i < ids.length; i++) {
-      if (String(ids[i][0]) === String(p.id)) {
-        sh.getRange(i + 2, 1, 1, row.length).setValues([row]);
-        return jsonOut({ ok:true, pedido:p, mode:'update' });
-      }
-    }
+    for (var i = 0; i < ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { foundRow = i + 2; break; } }
   }
+  // PORTERO DE CUPOS: si es NUEVO, contar los del día y rechazar si ya hay 25.
+  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca pasa de 25.
+  if (foundRow < 0 && p.fecha) {
+    var usados = 0;
+    if (last >= 2) {
+      var fechas = sh.getRange(2, 2, last - 1, 1).getValues(); // columna B = Fecha
+      for (var j = 0; j < fechas.length; j++) { if (fmtDate(fechas[j][0]) === String(p.fecha)) usados++; }
+    }
+    if (usados >= CUPOS_DIA) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, cupos:CUPOS_DIA, usados:usados });
+  }
+  var row = recToRow(p);
+  if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); return jsonOut({ ok:true, pedido:p, mode:'update' }); }
   sh.appendRow(row);
   return jsonOut({ ok:true, pedido:p, mode:'add' });
 }
@@ -136,7 +147,7 @@ function recToRow(p) {
     Number(p.saldo) || 0, Number(p.ts) || 0, JSON.stringify(p.productos || []),
     p.metodoPago || '', p.observaciones || '',
     p.estado || '', p.entregado ? 'SÍ' : 'NO',
-    p.vehiculo || '', p.chofer || ''
+    p.vehiculo || '', p.chofer || '', p.garantia || ''
   ];
 }
 
