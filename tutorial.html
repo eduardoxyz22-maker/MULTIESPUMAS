@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cómo cargar un pedido · MultiEspumas</title>
+<style>
+:root{
+  --teal:#00B5AD; --teal-dk:#00847E; --teal-lt:#E1F5F2; --teal-line:#BADFDA;
+  --ink:#0F2E2A; --body:#2E4A47; --muted:#5F7B78;
+  --bg:#EEF7F5; --bg2:#E3F1EE; --card:#FFFFFF; --line:#D9E9E6;
+  --req:#CE2A3A; --req-bg:#FBE6E9; --req-line:#F3C7CC;
+  --opt:#6A807D; --opt-bg:#EDF2F1; --opt-line:#DCE6E4;
+  --amber:#9A6A12; --amber-bg:#FAEFD7; --amber-line:#EBD7A6;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --sh:0 1px 2px rgba(9,42,39,.05),0 8px 22px rgba(9,42,39,.05);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --teal:#2BD0C5; --teal-dk:#5FE0D7; --teal-lt:#0F312E; --teal-line:#245049;
+    --ink:#EAF6F4; --body:#C3D7D4; --muted:#87A29F;
+    --bg:#0A1918; --bg2:#0E211F; --card:#14312E; --line:#254742;
+    --req:#FF7683; --req-bg:#37202333; --req-line:#5A2A31;
+    --opt:#8AA3A0; --opt-bg:#183330; --opt-line:#2A4A46;
+    --amber:#E3B461; --amber-bg:#2E2413; --amber-line:#4A3A1C;
+    --sh:0 1px 2px rgba(0,0,0,.3),0 10px 26px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="light"]{
+  --teal:#00B5AD; --teal-dk:#00847E; --teal-lt:#E1F5F2; --teal-line:#BADFDA;
+  --ink:#0F2E2A; --body:#2E4A47; --muted:#5F7B78;
+  --bg:#EEF7F5; --bg2:#E3F1EE; --card:#FFFFFF; --line:#D9E9E6;
+  --req:#CE2A3A; --req-bg:#FBE6E9; --req-line:#F3C7CC;
+  --opt:#6A807D; --opt-bg:#EDF2F1; --opt-line:#DCE6E4;
+  --amber:#9A6A12; --amber-bg:#FAEFD7; --amber-line:#EBD7A6;
+  --sh:0 1px 2px rgba(9,42,39,.05),0 8px 22px rgba(9,42,39,.05);
+}
+:root[data-theme="dark"]{
+  --teal:#2BD0C5; --teal-dk:#5FE0D7; --teal-lt:#0F312E; --teal-line:#245049;
+  --ink:#EAF6F4; --body:#C3D7D4; --muted:#87A29F;
+  --bg:#0A1918; --bg2:#0E211F; --card:#14312E; --line:#254742;
+  --req:#FF7683; --req-bg:#37202333; --req-line:#5A2A31;
+  --opt:#8AA3A0; --opt-bg:#183330; --opt-line:#2A4A46;
+  --amber:#E3B461; --amber-bg:#2E2413; --amber-line:#4A3A1C;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 10px 26px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{font-family:var(--sans);background:var(--bg);color:var(--body);line-height:1.5;-webkit-font-smoothing:antialiased;padding:0 0 56px}
+.wrap{max-width:600px;margin:0 auto;padding:0 16px}
+
+/* Hero */
+.hero{background:linear-gradient(155deg,var(--teal-dk),var(--teal));color:#fff;padding:34px 22px 30px;border-radius:0 0 26px 26px;box-shadow:var(--sh)}
+.hero-in{max-width:600px;margin:0 auto}
+.brand{font-size:.72rem;font-weight:800;letter-spacing:.24em;opacity:.9}
+.hero h1{font-size:1.7rem;font-weight:800;letter-spacing:-.01em;margin:10px 0 8px;text-wrap:balance;line-height:1.1}
+.hero .sub{font-size:.92rem;opacity:.94;max-width:44ch}
+.hero .ast{color:#FFE08A;font-weight:800}
+
+/* Section eyebrow */
+.sec{display:flex;align-items:center;gap:9px;margin:30px 2px 12px;font-size:.74rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--teal-dk)}
+.sec::after{content:"";flex:1;height:1px;background:var(--line)}
+.sec .em{font-size:1.05rem}
+
+/* Field card */
+.field{display:flex;gap:13px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 15px;margin-bottom:10px;box-shadow:var(--sh)}
+.num{flex:none;width:26px;height:26px;border-radius:8px;background:var(--teal-lt);color:var(--teal-dk);border:1px solid var(--teal-line);font-weight:800;font-size:.82rem;display:flex;align-items:center;justify-content:center;font-variant-numeric:tabular-nums}
+.fbody{flex:1;min-width:0}
+.fhead{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.fname{font-size:1rem;font-weight:700;color:var(--ink)}
+.chip{font-size:.62rem;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:2px 8px;border-radius:20px;white-space:nowrap}
+.chip.req{color:var(--req);background:var(--req-bg);border:1px solid var(--req-line)}
+.chip.opt{color:var(--opt);background:var(--opt-bg);border:1px solid var(--opt-line)}
+.fwhat{font-size:.9rem;color:var(--body)}
+.fwhat b{color:var(--ink);font-weight:650}
+.ej{display:flex;align-items:center;gap:8px;margin-top:9px;flex-wrap:wrap}
+.ejlbl{font-size:.62rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.ej code{font-family:var(--mono);font-size:.82rem;color:var(--teal-dk);background:var(--teal-lt);border:1px solid var(--teal-line);border-radius:7px;padding:3px 9px}
+
+/* Producto sub-list */
+.sub{margin-top:11px;border-top:1px dashed var(--line);padding-top:11px;display:grid;gap:9px}
+.subrow{display:flex;gap:10px;align-items:baseline}
+.subk{flex:none;width:80px;font-size:.72rem;font-weight:800;letter-spacing:.02em;text-transform:uppercase;color:var(--teal-dk);padding-top:1px}
+.subv{font-size:.86rem;color:var(--body)}
+.subv b{color:var(--ink)}
+.pluspill{display:inline-block;margin-top:2px;font-size:.8rem;font-weight:650;color:var(--teal-dk);background:var(--teal-lt);border:1px dashed var(--teal-line);border-radius:8px;padding:5px 11px}
+
+/* Note / callout */
+.note{display:flex;gap:12px;align-items:flex-start;background:var(--amber-bg);border:1px solid var(--amber-line);border-radius:14px;padding:14px 15px;margin:12px 0}
+.note.teal{background:var(--teal-lt);border-color:var(--teal-line)}
+.note-ico{font-size:1.2rem;line-height:1.2;flex:none}
+.note b{color:var(--ink);font-weight:750;font-size:.94rem}
+.note p{font-size:.86rem;color:var(--body);margin-top:2px}
+
+/* Cobro fork */
+.fork{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 2px}
+@media (max-width:480px){.fork{grid-template-columns:1fr}}
+.fork-card{border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:var(--card);box-shadow:var(--sh)}
+.fork-card.si{border-top:3px solid #22A06B}
+.fork-card.no{border-top:3px solid var(--req)}
+.fork-h{font-weight:750;color:var(--ink);font-size:.92rem;margin-bottom:5px}
+.fork-card p{font-size:.85rem;color:var(--body)}
+.fork-card b{color:var(--ink);font-weight:650}
+
+/* Finish */
+.finish{display:flex;gap:13px;align-items:center;background:linear-gradient(150deg,var(--teal-lt),var(--card));border:1px solid var(--teal-line);border-radius:16px;padding:16px 16px;margin-top:26px;box-shadow:var(--sh)}
+.finish-badge{flex:none;width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;font-size:1.3rem;font-weight:800;display:flex;align-items:center;justify-content:center}
+.finish b{color:var(--ink);font-size:1rem;font-weight:750}
+.finish p{font-size:.88rem;color:var(--body);margin-top:2px}
+
+.foot{text-align:center;color:var(--muted);font-size:.74rem;margin-top:26px;line-height:1.6}
+.foot b{color:var(--teal-dk)}
+
+/* Botón descargar / PDF */
+.dl{margin-top:18px;display:inline-flex;align-items:center;gap:8px;background:#fff;color:#00847E;border:none;border-radius:12px;padding:12px 20px;font-family:inherit;font-size:.9rem;font-weight:800;cursor:pointer;box-shadow:0 5px 16px rgba(0,0,0,.16);transition:transform .15s}
+.dl:hover{transform:translateY(-1px)}
+.dl:focus-visible{outline:3px solid #FFE08A;outline-offset:2px}
+.dl-hint{text-align:center;font-size:.76rem;color:var(--muted);margin-top:14px}
+@media (prefers-reduced-motion:reduce){.dl{transition:none}}
+
+/* Impresión / Guardar como PDF */
+@media print{
+  :root, :root[data-theme="dark"], :root[data-theme="light"]{
+    --bg:#fff; --bg2:#fff; --card:#fff; --line:#D9E9E6;
+    --ink:#0F2E2A; --body:#2E4A47; --muted:#5F7B78;
+    --teal:#00B5AD; --teal-dk:#00847E; --teal-lt:#E1F5F2; --teal-line:#BADFDA;
+    --req:#CE2A3A; --req-bg:#FBE6E9; --req-line:#F3C7CC;
+    --opt:#6A807D; --opt-bg:#EDF2F1; --opt-line:#DCE6E4;
+    --amber:#9A6A12; --amber-bg:#FAEFD7; --amber-line:#EBD7A6; --sh:none;
+  }
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{background:#fff;padding:0}
+  .dl,.dl-hint{display:none!important}
+  .hero{border-radius:0;box-shadow:none;padding:22px}
+  .wrap{max-width:100%;padding:0 14px}
+  .field,.fork-card,.note,.finish,.fork{break-inside:avoid;box-shadow:none}
+  .sec{break-after:avoid}
+}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="hero-in">
+    <div class="brand">MULTIESPUMAS</div>
+    <h1>Cómo cargar un pedido</h1>
+    <p class="sub">Guía rápida: qué va en cada casillero. Llená de arriba hacia abajo — los campos con <span class="ast">*</span> son obligatorios y no dejan guardar si faltan.</p>
+    <button class="dl" onclick="window.print()">⬇ Descargar / Guardar PDF</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="note teal">
+    <div class="note-ico">📲</div>
+    <div><b>Antes de empezar</b><p>Abrí el enlace del formulario desde tu celular y andá a <b>＋ Nuevo pedido</b>. Consejo: agregalo a la pantalla de inicio para tenerlo a mano como una app.</p></div>
+  </div>
+
+  <div class="sec"><span class="em">📦</span> Datos del pedido</div>
+
+  <div class="field">
+    <div class="num">1</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Fecha del pedido</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">La fecha de <b>entrega</b>. Ya viene puesta la de hoy; cambiala si el pedido es para otro día.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>22/07/2026</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">2</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">N° Nota de venta</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">El número de la <b>nota de venta</b> del talonario. Es el dato clave para el control.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>5001</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">3</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">N° OC</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Número de orden de compra, solo si el cliente te la dio. Si no, dejalo vacío.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>900</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">4</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Vendedor</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat"><b>Tu nombre.</b> Tocá el casillero y elegilo de la lista.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Fernando Peinado</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">5</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Nombre del cliente</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">Nombre y apellido de quien recibe el pedido.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Juan Pérez</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">6</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname"># Celular</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">Teléfono de contacto del cliente, para coordinar la entrega.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>700 12345</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">7</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Productos</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">Cargá cada producto en su tarjeta, con estos 4 datos:</p>
+      <div class="sub">
+        <div class="subrow"><div class="subk">Producto</div><div class="subv">Nombre y modelo. <b>Ej: Colchón Pillow Top</b></div></div>
+        <div class="subrow"><div class="subk">Medida</div><div class="subv">Elegí de la lista (1 · 1.5 · 2 · 2.5 · 3 · 3.5 plz). ¿Otra? Elegí <b>“Otros”</b> y escribila a mano (ej. 140×190).</div></div>
+        <div class="subrow"><div class="subk">Código</div><div class="subv">El código del producto. <b>Ej: CH1761</b></div></div>
+        <div class="subrow"><div class="subk">Cant.</div><div class="subv">Cuántas unidades de ese producto.</div></div>
+      </div>
+      <div style="margin-top:10px"><span class="pluspill">＋ Agregar otro producto</span> &nbsp;para sumar somier, almohada, base, etc. al mismo pedido.</div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">8</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Turno de entrega</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Cuándo se entrega: <b>🌅 AM</b> (mañana) o <b>🌆 PM</b> (tarde).</p>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">9</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Garantía — a nombre de</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">A nombre de quién queda la garantía del producto.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Juan Pérez</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">10</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Facturar a &nbsp;·&nbsp; NIT</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Si piden factura: el <b>nombre o razón social</b> y el <b>NIT / CI</b>. Si no, dejalos vacíos.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Empresa SRL</code><code>123456789</code></div>
+    </div>
+  </div>
+
+  <div class="sec"><span class="em">📍</span> Entrega</div>
+
+  <div class="field">
+    <div class="num">11</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Zona</span><span class="chip req">obligatorio</span></div>
+      <p class="fwhat">La zona de la ciudad donde se entrega. Ayuda a armar la ruta.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Norte</code><code>Plan 3000</code></div>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">12</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Link de Google Maps</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Pegá el <b>link de la ubicación</b> de Google Maps. No es obligatorio, pero le facilita muchísimo la llegada al chofer.</p>
+    </div>
+  </div>
+
+  <div class="field">
+    <div class="num">13</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Dirección</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Calle, número y alguna referencia clara.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Av. Banzer, casa verde, portón 9</code></div>
+    </div>
+  </div>
+
+  <div class="sec"><span class="em">💰</span> Cobro</div>
+
+  <div class="field">
+    <div class="num">14</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">¿Pagado?</span></div>
+      <p class="fwhat">Elegí <b>SÍ</b> o <b>NO</b>. Según lo que elijas, aparecen distintos campos:</p>
+    </div>
+  </div>
+
+  <div class="fork">
+    <div class="fork-card si">
+      <div class="fork-h">✅ Si marcás SÍ, pagado</div>
+      <p>Aparece <b>¿Con qué pagó?</b> → elegí <b>Efectivo</b>, <b>QR</b> o <b>Tarjeta</b>. (Es obligatorio.)</p>
+    </div>
+    <div class="fork-card no">
+      <div class="fork-h">🕒 Si marcás NO</div>
+      <p>Poné el <b>Saldo por cobrar</b>. Si dejó un adelanto, cargá el monto en <b>A cuenta</b> — ahí también tenés que elegir con qué pagó y cuánto queda de saldo.</p>
+    </div>
+  </div>
+
+  <div class="ej" style="margin:12px 4px 0"><span class="ejlbl">Ej. a cuenta</span><code>A cuenta: Bs 1500</code><code>Saldo: Bs 3000</code></div>
+
+  <div class="sec"><span class="em">📝</span> Observaciones</div>
+
+  <div class="field">
+    <div class="num">15</div>
+    <div class="fbody">
+      <div class="fhead"><span class="fname">Observaciones</span><span class="chip opt">opcional</span></div>
+      <p class="fwhat">Cualquier nota útil para la entrega o el armado.</p>
+      <div class="ej"><span class="ejlbl">Ej.</span><code>Doble bolsa · Llamar antes · Entregar después de las 15h</code></div>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-ico">🎟️</div>
+    <div><b>Cupos del día (máx. 25)</b><p>Cada día se pueden cargar hasta <b>25 pedidos</b>. Arriba del formulario te dice cuántos quedan libres. Si ya está lleno, no te va a dejar guardar en esa fecha — <b>elegí otra fecha</b> y listo.</p></div>
+  </div>
+
+  <div class="finish">
+    <div class="finish-badge">✓</div>
+    <div>
+      <b>Tocá “Guardar pedido”</b>
+      <p>Se abre una ventana con el pedido armado. Tocá <b>📋 Copiar</b> o <b>📲 Abrir WhatsApp</b> para enviarlo. ¡Y listo, pedido cargado!</p>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:24px">
+    <button class="dl" style="box-shadow:0 5px 16px rgba(0,132,126,.22)" onclick="window.print()">⬇ Descargar / Guardar PDF</button>
+    <p class="dl-hint">En el celular se abre la vista de impresión → elegí <b>“Guardar como PDF”</b> y ya lo podés mandar por WhatsApp.</p>
+  </div>
+
+  <p class="foot">MultiEspumas · Guía para cargar pedidos<br>Los pedidos se guardan solos en la planilla compartida — el <b>administrador</b> los ve todos en el panel.</p>
+
+</div>
+</body>
+</html>
