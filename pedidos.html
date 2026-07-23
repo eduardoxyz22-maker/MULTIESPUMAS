@@ -1389,7 +1389,7 @@ function buildMapaKml(list, coords){
     byC[ch].forEach(function(it){
       var p=it.p, g=it.g;
       var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
-      var nom=ident+(p.cliente?(' · '+p.cliente):'');
+      var nom=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
       var desc=[ p.cliente?('Cliente: '+p.cliente):'', p.celular?('Cel: '+p.celular):'',
         p.direccion?('Dir: '+p.direccion):'', p.turno?('Turno: '+p.turno):'',
         prodText(p.productos)?('Productos: '+prodText(p.productos)):'',
