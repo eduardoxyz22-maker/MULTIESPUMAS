@@ -158,6 +158,8 @@ tbody tr:hover{background:var(--teal-lt)}
 .row-nohay{background:#fdecee}
 .row-especial{background:#d6ecfb;box-shadow:inset 4px 0 0 #38bdf8}
 tbody tr.row-especial:hover{background:#c6e4fa}
+.row-5070{background:#ffe6c7;box-shadow:inset 4px 0 0 #fb923c}
+tbody tr.row-5070:hover{background:#ffdcb0}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
@@ -541,7 +543,7 @@ function cellXml(ref,cv){
   if(cv.t==='n') return '<c r="'+ref+'"'+s+'><v>'+cv.v+'</v></c>';
   return '<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(cv.v)+'</t></is></c>';
 }
-var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="7"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFDF1D6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="11"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="8"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFDF1D6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 function buildSheetXml(sheet){
   var rowsXml='';
   for(var r=0;r<sheet.matrix.length;r++){
@@ -663,9 +665,11 @@ function initSeg(id,onchange){
 /* ============================================================================
    Productos
    ========================================================================== */
-var MEDIDAS = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz'];
+var MEDIDAS = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz','50x70'];
 // Un pedido tiene medida ESPECIAL si algún producto trae una medida no estándar (opción "Otros").
 function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && MEDIDAS.indexOf(m)<0) return true; } return false; }
+// Un pedido lleva medida 50x70 si algún producto tiene esa medida (resalte naranja claro).
+function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ if(String(pr[i].medida||'').trim()==='50x70') return true; } return false; }
 function addProdRow(desc,medida,codigo,cant){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
@@ -1061,7 +1065,7 @@ function renderAdmin(){
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
     var estadoCell=estadoBadge(p.estado)+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
-    var cls=hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:'');
+    var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(p.fecha||'')+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
@@ -1285,9 +1289,9 @@ function exportExcel(){
   var rows=[header];
   var merges=[];
   list.forEach(function(p){
-    var esp = hasEspecial(p);
-    var fs = esp?9 :(p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0);   // relleno strings (celeste si medida especial)
-    var fc = esp?10:(p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C);   // relleno moneda (celeste si medida especial)
+    var esp = hasEspecial(p), c50 = has50x70(p);
+    var fs = c50?11:(esp?9 :(p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0));   // relleno strings (naranja 50x70 / celeste especial)
+    var fc = c50?12:(esp?10:(p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C));   // relleno moneda (naranja 50x70 / celeste especial)
     var cl=function(v){ return {v:v, s:fs}; };
     var E={v:'',s:fs}; // celda vacía con relleno (continuación / dentro del merge)
     var prods=(p.productos&&p.productos.length)?p.productos:[{desc:'',medida:'',codigo:'',cant:''}];
