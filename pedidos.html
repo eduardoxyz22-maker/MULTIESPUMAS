@@ -267,6 +267,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
       <div class="field">
         <label class="lb">Productos <span class="req">*</span> <span class="hint">producto · medida · código · cantidad</span></label>
         <div id="f-productos"></div>
+        <datalist id="dl-productos"></datalist>
         <button type="button" class="btn-add" id="f-add-prod">＋ Agregar otro producto</button>
       </div>
 
@@ -552,7 +553,7 @@ function buildSheetXml(sheet){
     rowsXml+='<row r="'+(r+1)+'">'+cells+'</row>';
   }
   var cols='';
-  if(sheet.cols){cols='<cols>';for(var i=0;i<sheet.cols.length;i++)cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+sheet.cols[i]+'" customWidth="1"/>';cols+='</cols>';}
+  if(sheet.cols){cols='<cols>';for(var i=0;i<sheet.cols.length;i++){var _c=sheet.cols[i],_w=(_c&&typeof _c==='object')?_c.w:_c,_h=(_c&&typeof _c==='object'&&_c.h)?' hidden="1"':'';cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+_w+'" customWidth="1"'+_h+'/>';}cols+='</cols>';}
   var merges='';
   if(sheet.merges&&sheet.merges.length){ merges='<mergeCells count="'+sheet.merges.length+'">'; for(var m=0;m<sheet.merges.length;m++) merges+='<mergeCell ref="'+sheet.merges[m]+'"/>'; merges+='</mergeCells>'; }
   return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+cols+'<sheetData>'+rowsXml+'</sheetData>'+merges+'</worksheet>';
@@ -665,17 +666,24 @@ function initSeg(id,onchange){
 /* ============================================================================
    Productos
    ========================================================================== */
-var MEDIDAS = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz','50x70'];
+var MEDIDAS = ['90x190','105x190','140x190','160x190','180x190','200x200','50x70'];
+// Medidas antiguas (compatibilidad): pedidos ya guardados con solo "X plz" NO deben marcarse como "especiales".
+var MEDIDAS_LEGACY = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz'];
+function esMedidaConocida(m){ m=String(m||'').trim(); return MEDIDAS.indexOf(m)>=0 || MEDIDAS_LEGACY.indexOf(m)>=0; }
 // Un pedido tiene medida ESPECIAL si algún producto trae una medida no estándar (opción "Otros").
-function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && MEDIDAS.indexOf(m)<0) return true; } return false; }
+function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && !esMedidaConocida(m)) return true; } return false; }
 // Un pedido lleva medida 50x70 si algún producto tiene esa medida (resalte naranja claro).
 function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ if(String(pr[i].medida||'').trim()==='50x70') return true; } return false; }
+// Tabla de codigos -> producto + medida (autollenado). Generada desde el Excel de la empresa.
+var CODIGOS = {"CH1129":{d:"TITANIO LATEX",m:"140x190"}, "CH1130":{d:"TITANIO LATEX",m:"160x190"}, "CH1131":{d:"TITANIO LATEX",m:"180x190"}, "CH1132":{d:"TITANIO LATEX",m:"200x200"}, "CH1224":{d:"TITANIO ICE",m:"105x190"}, "CH1220":{d:"TITANIO ICE",m:"140x190"}, "CH1201":{d:"TITANIO ICE",m:"160x190"}, "CH1221":{d:"TITANIO ICE",m:"180x190"}, "CH1222":{d:"TITANIO ICE",m:"200x200"}, "CH1042":{d:"ORO ANATOMICO VISCOLASTICO",m:"90x190"}, "CH1031":{d:"ORO ANATOMICO VISCOLASTICO",m:"105x190"}, "CH1036":{d:"ORO ANATOMICO VISCOLASTICO",m:"140x190"}, "CH1037":{d:"ORO ANATOMICO VISCOLASTICO",m:"160x190"}, "CH1038":{d:"ORO ANATOMICO VISCOLASTICO",m:"180x190"}, "CH1039":{d:"ORO ANATOMICO VISCOLASTICO",m:"200x200"}, "CH1787":{d:"ORO BI RELAX",m:"90x190"}, "CH1778":{d:"ORO BI RELAX",m:"105x190"}, "CH1761":{d:"ORO BI RELAX",m:"140x190"}, "CH1770":{d:"ORO BI RELAX",m:"160x190"}, "CH1775":{d:"ORO BI RELAX",m:"180x190"}, "CH1780":{d:"ORO BI RELAX",m:"200x200"}, "CH1043":{d:"ORO ORTOPEDICO",m:"90x190"}, "CH1048":{d:"ORO ORTOPEDICO",m:"105x190"}, "CH1051":{d:"ORO ORTOPEDICO",m:"140x190"}, "CH1052":{d:"ORO ORTOPEDICO",m:"160x190"}, "CH1053":{d:"ORO ORTOPEDICO",m:"180x190"}, "CH1054":{d:"ORO ORTOPEDICO",m:"200x200"}, "CH1464":{d:"ESPECIAL ORTOPEDICO D/C",m:"105x190"}, "CH1452":{d:"ESPECIAL ORTOPEDICO D/C",m:"140x190"}, "CH1456":{d:"ESPECIAL ORTOPEDICO D/C",m:"160x190"}, "CH1087":{d:"ESPECIAL ORTOPEDICO D/C",m:"180x190"}, "CH1473":{d:"ESPECIAL ORTOPEDICO D/C",m:"200x200"}, "CH1472":{d:"ESPECIAL ORTOPEDICO",m:"180x190"}, "CH1096":{d:"ESPECIAL SEMIORTOPEDICO",m:"90x190"}, "CH1098":{d:"ESPECIAL SEMIORTOPEDICO",m:"105x190"}, "CH1107":{d:"ESPECIAL SEMIORTOPEDICO",m:"140x190"}, "CH1101":{d:"ESPECIAL SEMIORTOPEDICO",m:"160x190"}, "CH1102":{d:"ESPECIAL SEMIORTOPEDICO",m:"180x190"}, "CH1093":{d:"ESPECIAL SEMIORTOPEDICO",m:"200x200"}, "CH1109":{d:"HEAVEN TROPICAL",m:"90x190"}, "CH1117":{d:"HEAVEN TROPICAL",m:"105x190"}, "CH1121":{d:"HEAVEN TROPICAL",m:"140x190"}, "CH2144":{d:"HEAVEN TROPICAL",m:"160x190"}, "CH1137":{d:"ESPECIAL ANTIALERGICO",m:"90x190"}, "CH1075":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH1078":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH2391":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH2392":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH1883":{d:"DREAM REFORZADO",m:"180x190"}, "CH2086":{d:"COLCHONETA HEAVEN",m:"68x89"}, "CH1149":{d:"SOMIER TITANIO LATEX",m:"140x190"}, "CH1150":{d:"SOMIER TITANIO LATEX",m:"160x190"}, "CH1255":{d:"SOMIER TITANIO LATEX",m:"180x190"}, "CH1151":{d:"SOMIER TITANIO LATEX",m:"200x200"}, "CH1407":{d:"SOMIER TITANIO ICE",m:"105x190"}, "CH1212":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1208":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1223":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1232":{d:"SOMIER TITANIO ICE",m:"200x200"}, "CH1281":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1521":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1606":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1737":{d:"SOMIER ORO",m:"90x190"}, "CH1165":{d:"SOMIER ORO",m:"105x190"}, "CH1144":{d:"SOMIER ORO",m:"140x190"}, "CH1145":{d:"SOMIER ORO",m:"160x190"}, "CH1146":{d:"SOMIER ORO",m:"180x190"}, "CH1147":{d:"SOMIER ORO",m:"200x200"}, "CH1795":{d:"SOMIER BiRELAX",m:"105x190"}, "CH1766":{d:"SOMIER BiRELAX",m:"140x190"}, "CH1771":{d:"SOMIER BiRELAX",m:"160x190"}, "CH2172":{d:"SOMIER BiRELAX",m:"ESPECIAL"}, "CH1803":{d:"SOMIER BiRELAX",m:"200x200"}, "CH1159":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"105x190"}, "CH1168":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"140x190"}, "CH1160":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"160x190"}, "49":{d:"SOMIER PLATA SEMIORTOPEDICO",m:""}, "CH1156":{d:"SOMIER ESPECIAL",m:"180x190"}, "CH2159":{d:"SOMIER TROPICAL",m:"105x190"}, "CH2142":{d:"SOMIER TROPICAL",m:"140x190"}, "CH2143":{d:"SOMIER TROPICAL",m:"160x190"}, "CD1403":{d:"ALMOHADA",m:"50x70"}, "CD1459":{d:"ALMOHADA FIBRA SILICONADA",m:"50x90"}, "CH1253":{d:"ALM/HEAVEN",m:"30x40"}, "CH1195":{d:"ALM/NASA",m:"50x70"}, "CD1918":{d:"SEMIPEDIC",m:"90x190"}, "CD1913":{d:"SEMIPEDIC",m:"105x190"}, "CD1911":{d:"SEMIPEDIC",m:"140x190"}, "CD1912":{d:"SEMIPEDIC",m:"160x190"}, "CH1686":{d:"PILLOW PEDIC",m:"105x190"}, "CH1682":{d:"PILLOW PEDIC",m:"140x190"}, "CH1683":{d:"PILLOW PEDIC",m:"160x190"}, "CH1684":{d:"PILLOW PEDIC",m:"180x190"}, "CH1702":{d:"PILLOW PEDIC",m:"200x200"}, "CH1765":{d:"EUROPEDIC",m:"140x190"}, "CH1767":{d:"EUROPEDIC",m:"160x190"}, "CH1768":{d:"EUROPEDIC",m:"180x190"}, "CH1769":{d:"EUROPEDIC",m:"200x200"}, "CH2284":{d:"DYNAMIC PEDIC",m:"140x190"}, "CH2297":{d:"DYNAMIC PEDIC",m:"160x190"}, "CH2298":{d:"DYNAMIC PEDIC",m:"180x190"}, "CH2299":{d:"DYNAMIC PEDIC",m:"200x200"}, "CH2239":{d:"SOMIER NEGRO",m:"90x190"}, "SR2011":{d:"SOMIER NEGRO",m:"105x190"}, "SR2012":{d:"SOMIER NEGRO",m:"140x190"}, "SR2013":{d:"SOMIER NEGRO",m:"160x190"}, "SR2014":{d:"SOMIER NEGRO",m:"180x190"}, "SR2016":{d:"SOMIER NEGRO",m:"200x200"}, "CH2101":{d:"PILLOW FLEX",m:"90x190"}, "CH2102":{d:"PILLOW FLEX",m:"105x190"}, "CH2103":{d:"PILLOW FLEX",m:"140x190"}, "CH2104":{d:"PILLOW FLEX",m:"160x190"}, "CH2105":{d:"PILLOW FLEX",m:"180x190"}, "CH2106":{d:"PILLOW FLEX",m:"200x200"}, "CH2107":{d:"FORTE FLEX",m:"90x190"}, "CH2108":{d:"FORTE FLEX",m:"105x190"}, "CH2109":{d:"FORTE FLEX",m:"140x190"}, "CH2110":{d:"FORTE FLEX",m:"160x190"}, "CH2113":{d:"SOMIER FLEX",m:"90x190"}, "CH2114":{d:"SOMIER FLEX",m:"105x190"}, "CH2115":{d:"SOMIER FLEX",m:"140x190"}, "CH2116":{d:"SOMIER FLEX",m:"160x190"}, "CH2117":{d:"SOMIER FLEX",m:"180x190"}, "CH2118":{d:"SOMIER FLEX",m:"200x200"}, "CH2290":{d:"MEMORY FLEX",m:"105x190"}, "CH2283":{d:"MEMORY FLEX",m:"140x190"}, "CH2291":{d:"MEMORY FLEX",m:"160x190"}, "CH2292":{d:"MEMORY FLEX",m:"180x190"}, "CH2293":{d:"MEMORY FLEX",m:"200x200"}, "CH1330":{d:"NUEVO ECO FLEX",m:"90x190"}, "CH1331":{d:"NUEVO ECO FLEX",m:"105x190"}, "CH1332":{d:"NUEVO ECO FLEX",m:"140x190"}, "CH1333":{d:"NUEVO ECO FLEX",m:"160x190"}, "CD1951":{d:"COLCHON BAHIA",m:"140x190"}, "CD1954":{d:"COLCHON BAHIA",m:"160x190"}, "CD1972":{d:"COLCHON BAHIA",m:"180x190"}, "CD2034":{d:"COLCHON BAHIA",m:"200x200"}, "CH1681":{d:"COLCHON CARIOCA PREMIER",m:"105x190"}, "CH1672":{d:"COLCHON CARIOCA PREMIER",m:"140x190"}, "CH1689":{d:"COLCHON CARIOCA PREMIER",m:"160x190"}, "CH1688":{d:"COLCHON CARIOCA PREMIER",m:"180x190"}, "CH1720":{d:"COLCHON CARIOCA PREMIER",m:"200x200"}, "CH2030":{d:"COLCHON CARIOCA RIO",m:"105x190"}, "CH1928":{d:"COLCHON CARIOCA RIO",m:"140x190"}, "COLT0045":{d:"COLCHON SEMIORTOP.",m:"90x190"}, "COLT0037":{d:"COLCHON SEMIORTOP.",m:"105x190"}, "COLT0038":{d:"COLCHON SEMIORTOP.",m:"140x190"}, "COLT0040":{d:"COLCHON SEMIORTOP.",m:"160x190"}, "COLT0069":{d:"COLCHON SEMIORTOP.",m:"180x190"}, "COLT0058":{d:"COLCHON SEMIORTOP.",m:"200x200"}, "COLT0059":{d:"COLCHON SOFT",m:"90x190"}, "COLT0062":{d:"COLCHON SOFT",m:"105x190"}, "COLT0048":{d:"COLCHON SOFT",m:"140x190"}, "COLT0060":{d:"COLCHON SOFT",m:"160x190"}, "COLT0061":{d:"COLCHON SOFT",m:"180x190"}, "COLT0085":{d:"COLCHON SOFT",m:"200x200"}, "COLT0054":{d:"COLCHON ORTOPEDICO SUEÑA",m:"90x190"}, "COLT0029":{d:"COLCHON ORTOPEDICO SUEÑA",m:"105x190"}, "COLT0028":{d:"COLCHON ORTOPEDICO SUEÑA",m:"140x190"}, "COLT0044":{d:"COLCHON ORTOPEDICO SUEÑA",m:"160x190"}, "COLT0047":{d:"COLCHON ORTOPEDICO SUEÑA",m:"180x190"}, "COLT0041":{d:"COLCHON ORTOPEDICO SUEÑA",m:"200x200"}, "CH1506":{d:"SOMIER BAHIA",m:"140x190"}, "CH1499":{d:"SOMIER BAHIA",m:"160x190"}, "CH2158":{d:"SOMIER CARIOCA PREMIER",m:"105x190"}, "CH2157":{d:"SOMIER CARIOCA PREMIER",m:"140x190"}, "CH2156":{d:"SOMIER CARIOCA PREMIER",m:"160x190"}, "CH1740":{d:"SOMIER CARIOCA PREMIER",m:"180x190"}, "CH1741":{d:"SOMIER CARIOCA PREMIER",m:"200x200"}, "SM001":{d:"SOMIER MOVEL PRO",m:"105x190"}, "SM002":{d:"SOMIER MOVEL PRO",m:"140x190"}, "SM003":{d:"SOMIER MOVEL PRO",m:"160x190"}, "SM004":{d:"SOMIER MOVEL PRO",m:"180x190"}, "SM005":{d:"SOMIER MOVEL PRO",m:"200x200"}, "CH1685":{d:"COLCHONETA CAMPING",m:"70X190X3"}, "COLT0081":{d:"COLCHON CUNA",m:"65x100"}, "CD1433":{d:"COLCHONETA",m:"90x190"}, "COLT0064":{d:"COLCHON SOFT",m:"180x200"}, "CS1001":{d:"SOMIER SUEÑA",m:"105x190"}, "CS1004":{d:"SOMIER SUEÑA",m:"140x190"}, "CS1005":{d:"SOMIER SUEÑA",m:"160x190"}, "CH1942":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1943":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH1951":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH1952":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1953":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH2441":{d:"RESPALDAR PRAG.",m:"150x190"}, "CH2442":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH2451":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2452":{d:"RESPALDAR PRAG.",m:"140x190"}, "CMBSE001":{d:"COMBO SUEÑA ESSENTIAL",m:"105x190"}, "CMBSE002":{d:"COMBO SUEÑA ESSENTIAL",m:"140x190"}, "CMBSE003":{d:"COMBO SUEÑA ESSENTIAL",m:"160x190"}, "CMBSS001":{d:"COMBO SEMIORTOP.",m:"105x190"}, "CMBSS002":{d:"COMBO SEMIORTOP.",m:"140x190"}, "CMBSS003":{d:"COMBO SEMIORTOP.",m:"160x190"}, "CMBSO001":{d:"COMBO ORTOPEDICO",m:"105x190"}, "CMBSO002":{d:"COMBO ORTOPEDICO",m:"140x190"}, "CMBSO003":{d:"COMBO ORTOPEDICO",m:"160x190"}, "CMBSP001":{d:"COMBO SUEÑA PREMIER DELUXE",m:"105x190"}, "CMBSP002":{d:"COMBO SUEÑA PREMIER DELUXE",m:"140x190"}, "CMBSP003":{d:"COMBO SUEÑA PREMIER DELUXE",m:"160x190"}, "CMBSE011":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"105x190"}, "CMBSE012":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"140x190"}, "CMBSE013":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"160x190"}, "CMBSE014":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"105x190"}, "CMBSE015":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"140x190"}, "CMBSE016":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"160x190"}, "CMBSE017":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE018":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE019":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSE020":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE021":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE022":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSS004":{d:"COMBO SEMIORTOP SUEÑA CAFÉ",m:"105x190"}, "CMBSS005":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"140x190"}, "CMBSS006":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"160x190"}, "CMBSS007":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"105x190"}, "CMBSS008":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"140x190"}, "CMBSS009":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"160x190"}, "CMBSS010":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"105x190"}, "CMBSS011":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"140x190"}, "CMBSS012":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"160x190"}, "CMBSS013":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"105x190"}, "CMBSS014":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"140x190"}, "CMBSS015":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"160x190"}, "CMBSO004":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"105x190"}, "CMBSO005":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"140x190"}, "CMBSO006":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"160x190"}, "CMBSO007":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"105x190"}, "CMBSO008":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"140x190"}, "CMBSO009":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"160x190"}, "CMBSO010":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"105x190"}, "CMBSO011":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"140x190"}, "CMBSO012":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"160x190"}, "CMBSO013":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"105x190"}, "CMBSO014":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"140x190"}, "CMBSO015":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"160x190"}, "CMBSP004":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"105x190"}, "CMBSP005":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"140x190"}, "CMBSP006":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"160x190"}, "CMBSP007":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"105x190"}, "CMBSP008":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"140x190"}, "CMBSP009":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"160x190"}, "CMBSP010":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"105x190"}, "CMBSP011":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"140x190"}, "CMBSP012":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"160x190"}, "CMBSP013":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"105x190"}, "CMBSP014":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"140x190"}, "CMBSP015":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"160x190"}, "CS1027":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"90x190"}, "CS1028":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"105x190"}, "CS1029":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"140x190"}, "CS1030":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"160x190"}, "CS1031":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"180x190"}, "CS1032":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"200x200"}, "CS1011":{d:"COLCHON CONFORT PLUS",m:"105x190"}, "CS1012":{d:"COLCHON CONFORT PLUS",m:"140x190"}, "CS1013":{d:"COLCHON CONFORT PLUS",m:"160x190"}, "CS1014":{d:"COLCHON CONFORT PLUS",m:"180x190"}, "CS1015":{d:"COLCHON CONFORT PLUS",m:"200x200"}, "CC1000":{d:"COLCHON SUEÑA ESSENTIAL",m:"90x190"}, "CC1001":{d:"COLCHON SUEÑA ESSENTIAL",m:"105x190"}, "CC1002":{d:"COLCHON SUEÑA ESSENTIAL",m:"140x190"}, "CC1003":{d:"COLCHON SUEÑA ESSENTIAL",m:"160x190"}, "CC1004":{d:"COLCHON SUEÑA ESSENTIAL",m:"180x190"}, "CC1005":{d:"COLCHON SUEÑA ESSENTIAL",m:"200x200"}, "CS1000":{d:"SOMIER SUEÑA",m:"90x190"}, "CS1006":{d:"SOMIER SUEÑA",m:"180x190"}, "CS1007":{d:"SOMIER SUEÑA",m:"200x200"}, "CH1941":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2443":{d:"RESPALDAR PRAG.",m:"160x190"}};
+var NOMBRES = {}; (function(){ for(var _k in CODIGOS){ var _v=CODIGOS[_k]; var _lb=_v.d+(_v.m?(' '+_v.m):''); if(!NOMBRES[_lb]) NOMBRES[_lb]={code:_k,d:_v.d,m:_v.m}; } })();
+function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
 function addProdRow(desc,medida,codigo,cant){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
   // fila superior: producto + borrar
   var top=document.createElement('div'); top.className='prod-top';
-  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; if(desc)d.value=desc;
+  var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; d.setAttribute('list','dl-productos'); if(desc)d.value=desc;
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
   del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); });
   top.appendChild(d); top.appendChild(del);
@@ -703,6 +711,10 @@ function addProdRow(desc,medida,codigo,cant){
   var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
   mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
+  // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
+  cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase(); var hit=CODIGOS[code]; if(!hit) return; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
+  // Elegir por NOMBRE (lista emergente): al elegir un 'NOMBRE MEDIDA', llena codigo y medida.
+  d.addEventListener('input',function(){ var hit=NOMBRES[d.value.trim()]; if(!hit) return; cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   card.appendChild(top); card.appendChild(sub); card.appendChild(otro);
   box.appendChild(card); refreshDelButtons();
 }
@@ -909,6 +921,7 @@ function realDelete(id){
    Datalists / stats / footer
    ========================================================================== */
 function refreshDatalists(){
+  var dp=document.getElementById('dl-productos'); if(dp && !dp.childNodes.length){ Object.keys(NOMBRES).sort().forEach(function(lb){ var o=document.createElement('option'); o.value=lb; dp.appendChild(o); }); }
   var dv=document.getElementById('dl-vendedores'); dv.innerHTML='';
   var vends={}; VENDEDORES.forEach(function(v){vends[v]=1;});
   STATE.forEach(function(p){ if(p.vendedor)vends[p.vendedor]=1; });
@@ -1164,6 +1177,7 @@ function showPedidoModal(id){
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
+    row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
@@ -1282,43 +1296,43 @@ function persistPedido(p){
 function exportExcel(){
   var list=admFilter();
   if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
-  var H=1,C=2;
+  var H=1, C=2;
   var dn=dayNumMap();
-  var fechaHoraStr=function(p){ if(p.ts){ var d=new Date(p.ts); if(d&&!isNaN(d.getTime())){ var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); } } return p.fecha||''; };
-  var header=['N°','Fecha y hora','Fecha de entrega','Nota de venta','N° OC','Vendedor','Cliente','Producto y medida','Cantidad','Código','Celular','Turno','Zona','Dirección','Link Maps','Pagado','Método pago','A cuenta (Bs)','Saldo (Bs)','Observaciones','Garantía','Facturar a','NIT','Estado stock','Entregado','Vehículo','Chofer'].map(function(t){return {v:t,s:H};});
+  // Columnas: las 9 primeras VISIBLES (las que pediste); el resto se exporta OCULTO (datos completos disponibles).
+  var header=['FECHA DE ENTREGA','VENDEDOR - CLIENTE','PRODUCTO','CANTIDAD','CÓDIGO','CELULAR','TURNO','DIRECCIÓN','LINK','OBSERVACIONES','N° DÍA','INGRESADO','NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ZONA','PAGADO','MÉTODO PAGO','A CUENTA (Bs)','SALDO (Bs)','GARANTÍA','FACTURAR A','NIT','ESTADO STOCK','ENTREGADO','VEHÍCULO','CHOFER'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   var merges=[];
   list.forEach(function(p){
     var esp = hasEspecial(p), c50 = has50x70(p);
-    var fs = c50?11:(esp?9 :(p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0));   // relleno strings (naranja 50x70 / celeste especial)
-    var fc = c50?12:(esp?10:(p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C));   // relleno moneda (naranja 50x70 / celeste especial)
+    var fs = c50?11:(esp?9:(p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0));
+    var fc = c50?12:(esp?10:(p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C));
     var cl=function(v){ return {v:v, s:fs}; };
-    var E={v:'',s:fs}; // celda vacía con relleno (continuación / dentro del merge)
+    var E={v:'',s:fs};
+    var vendCli=[p.vendedor,p.cliente].filter(function(s){return s&&String(s).trim();}).join(' - ');
     var prods=(p.productos&&p.productos.length)?p.productos:[{desc:'',medida:'',codigo:'',cant:''}];
-    var startIdx=rows.length; // índice de matriz de la 1ª fila del pedido
+    var startIdx=rows.length;
     prods.forEach(function(x,idx){
       var prodCol=(x.desc||'')+(x.medida?(' '+x.medida):'');
       var cantCell=(x.cant===''||x.cant==null)?cl(''):{v:(Number(x.cant)||0),t:'n',s:fs};
       if(idx===0){
-        rows.push([ cl(dn[p.id]||''),cl(fechaHoraStr(p)),cl(p.fecha||''),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),
-          cl(prodCol),cantCell,cl(x.codigo||''),
-          cl(p.celular||''),cl(p.turno||''),cl(p.zona||''),cl(p.direccion||''),cl(p.maps||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),
+        rows.push([ cl(p.fecha||''),cl(vendCli),cl(prodCol),cantCell,cl(x.codigo||''),cl(p.celular||''),cl(p.turno||''),cl(p.direccion||''),cl(p.maps||''),cl(p.observaciones||''),
+          cl(dn[p.id]||''),cl(tsFmt(p.ts)),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),cl(p.zona||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),
           {v:(Number(p.acuenta)||0),t:'n',s:fc},{v:(Number(p.saldo)||0),t:'n',s:fc},
-          cl(p.observaciones||''),cl(p.garantia||''),cl(p.facturarA||''),cl(p.nit||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
+          cl(p.garantia||''),cl(p.facturarA||''),cl(p.nit||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
       }else{
-        rows.push([ E,E,E,E,E,E,E, cl(prodCol),cantCell,cl(x.codigo||''), E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E,E ]);
+        rows.push([ E,E,cl(prodCol),cantCell,cl(x.codigo||''),E,E,E,E,E, E,E,E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E ]);
       }
     });
     if(prods.length>1){
-      var r1=startIdx+1, r2=startIdx+prods.length; // filas Excel (matriz idx i -> fila i+1)
-      for(var c=0;c<27;c++){ if(c>=7&&c<=9) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
+      var r1=startIdx+1, r2=startIdx+prods.length;
+      for(var c=0;c<28;c++){ if(c>=2&&c<=4) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
     }
   });
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,saldo:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
-  var bytes=buildXlsx([{name:'Pedidos',cols:[6,16,14,12,9,18,22,30,8,12,12,7,14,30,26,9,12,14,14,34,18,20,14,16,10,16,16],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
+  var bytes=buildXlsx([{name:'Pedidos',cols:[{w:14},{w:30},{w:32},{w:9},{w:12,h:1},{w:13},{w:8},{w:36},{w:28},{w:36},{w:6,h:1},{w:17,h:1},{w:14,h:1},{w:12,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:9,h:1},{w:13,h:1},{w:14,h:1},{w:14,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:16,h:1},{w:10,h:1},{w:16,h:1},{w:16,h:1}],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
   var mode=segVal('adm-mode');
   var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
