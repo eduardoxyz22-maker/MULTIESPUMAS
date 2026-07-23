@@ -56,18 +56,102 @@ function doGet(e) {
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
 function doPost(e) {
+  var body = {};
+  try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
+  var action = body.action || 'save';
+  // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
+  if (action === 'geocode') return jsonOut({ ok:true, geo: resolveLinks(body.links || []) });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    var body = {};
-    try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
-    var action = body.action || 'save';
     if (action === 'list')   return jsonOut({ ok:true, pedidos: readAll() });
     if (action === 'delete') return doDelete(body.id);
     return doSave(body.pedido);
   } finally {
     lock.releaseLock();
   }
+}
+
+/* ============================================================================
+ * Geocodificación: resuelve links cortos de Google Maps (maps.app.goo.gl/...)
+ * a lat/long siguiendo la redirección y extrayendo las coordenadas de la URL
+ * final (o del cuerpo). Se cachean en la hoja "Geo" para no repetir el trabajo.
+ * ========================================================================== */
+function resolveLinks(links) {
+  var cache = getGeoCache();
+  var out = [], nuevos = [];
+  for (var i = 0; i < links.length; i++) {
+    var url = String(links[i] == null ? '' : links[i]).trim();
+    if (!url) { out.push(null); continue; }
+    if (cache[url]) { out.push({ link: url, lat: cache[url].lat, lng: cache[url].lng }); continue; }
+    var c = resolveOne(url);
+    if (c) { out.push({ link: url, lat: c.lat, lng: c.lng }); cache[url] = c; nuevos.push([url, c.lat, c.lng]); }
+    else out.push({ link: url, lat: null, lng: null });
+  }
+  if (nuevos.length) saveGeoCache(nuevos);
+  return out;
+}
+
+function followRedirects(url) {
+  var cur = url, hops = 0;
+  try {
+    while (hops < 6) {
+      var r = UrlFetchApp.fetch(cur, { followRedirects: false, muteHttpExceptions: true });
+      var code = r.getResponseCode();
+      if (code >= 300 && code < 400) {
+        var h = r.getAllHeaders(); var loc = h['Location'] || h['location'];
+        if (!loc) break;
+        cur = (String(loc).indexOf('http') === 0) ? loc : (cur.replace(/(\/\/[^\/]+).*/, '$1') + loc);
+        hops++;
+        if (extractCoords(cur)) return cur;
+        continue;
+      }
+      break;
+    }
+  } catch (e) {}
+  return cur;
+}
+
+function resolveOne(url) {
+  var finalUrl = followRedirects(url);
+  var c = extractCoords(finalUrl);
+  if (c) return c;
+  try {
+    var rb = UrlFetchApp.fetch(finalUrl, { followRedirects: true, muteHttpExceptions: true });
+    var body = rb.getContentText();
+    var mb = body.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || body.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || body.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
+    if (mb) { var la = parseFloat(mb[1]), ln = parseFloat(mb[2]); if (!isNaN(la) && !isNaN(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180) return { lat: la, lng: ln }; }
+  } catch (e) {}
+  return null;
+}
+
+function extractCoords(u) {
+  u = String(u || '');
+  var m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+       || u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+       || u.match(/[?&](?:q|ll|daddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
+       || u.match(/[\/=](-?\d{1,2}\.\d{3,}),(-?\d{1,3}\.\d{3,})/);
+  if (m) {
+    var lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+    if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat: lat, lng: lng };
+  }
+  return null;
+}
+
+function getGeoCache() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Geo');
+  if (!sh) { sh = ss.insertSheet('Geo'); sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]); return {}; }
+  var vals = sh.getDataRange().getValues(); var c = {};
+  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[String(vals[i][0])] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]) }; }
+  return c;
+}
+
+function saveGeoCache(rows) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Geo') || ss.insertSheet('Geo');
+  if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]);
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 3).setValues(rows);
 }
 
 function readAll() {

@@ -421,6 +421,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 
         <div class="btn-row" style="margin-bottom:16px">
           <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
+          <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas (KML)</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
@@ -611,6 +612,7 @@ function apiPost(payload){
 function apiList(){ return apiPost({action:'list'}); }
 function apiSave(rec){ return apiPost({action:'save', pedido:rec}); }
 function apiDelete(id){ return apiPost({action:'delete', id:id}); }
+function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
 
 function flushPending(){
   if(!CONNECTED) return Promise.resolve();
@@ -1348,6 +1350,57 @@ function backupJson(){
   var data=JSON.stringify({app:'ME_PEDIDOS',version:2,exported:todayStr(),pedidos:STATE},null,2);
   downloadBlob(new TextEncoder().encode(data),'respaldo-pedidos-'+todayStr()+'.json','application/json');
   toast('Respaldo descargado ✓','ok');
+}
+
+/* ============================================================================
+   Mapa de entregas -> KML para Google My Maps (una capa por chofer)
+   El backend resuelve los links cortos de Maps a coordenadas.
+   ========================================================================== */
+function exportMapa(){
+  if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; }
+  var list=admFilter().filter(function(p){ return p.maps && String(p.maps).trim(); });
+  if(!list.length){ toast('No hay pedidos con link de Maps en esta vista.','err'); return; }
+  var links=[], seen={};
+  list.forEach(function(p){ var u=String(p.maps).trim(); if(!seen[u]){ seen[u]=1; links.push(u); } });
+  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Generando… ('+links.length+' ubicaciones)'; }
+  toast('Resolviendo '+links.length+' ubicaciones… puede tardar un momento','ok');
+  apiGeocode(links).then(function(res){
+    if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas (KML)'; }
+    if(!res||!res.ok||!Array.isArray(res.geo)){ toast('No se pudo resolver las ubicaciones. Revisá que el backend esté actualizado.','err'); return; }
+    var coords={}; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) coords[g.link]=g; });
+    buildMapaKml(list, coords);
+  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas (KML)'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); });
+}
+function buildMapaKml(list, coords){
+  var byC={}, ok=0, sin=0;
+  list.forEach(function(p){
+    var g=coords[String(p.maps).trim()];
+    if(!g){ sin++; return; }
+    var k=String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
+    (byC[k]||(byC[k]=[])).push({p:p,g:g}); ok++;
+  });
+  if(!ok){ toast('No se pudo ubicar ningún pedido (links no resueltos). Probá de nuevo o revisá el backend.','err'); return; }
+  var dn=dayNumMap();
+  var mode=segVal('adm-mode');
+  var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
+  var kml='<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>'+xmlEsc('Entregas '+tag)+'</name>';
+  Object.keys(byC).sort().forEach(function(ch){
+    kml+='<Folder><name>'+xmlEsc(ch)+'</name>';
+    byC[ch].forEach(function(it){
+      var p=it.p, g=it.g;
+      var nom='PEDIDO '+(dn[p.id]||'')+(p.cliente?(' · '+p.cliente):'');
+      var desc=[ p.cliente?('Cliente: '+p.cliente):'', p.celular?('Cel: '+p.celular):'',
+        p.direccion?('Dir: '+p.direccion):'', p.turno?('Turno: '+p.turno):'',
+        prodText(p.productos)?('Productos: '+prodText(p.productos)):'',
+        p.observaciones?('Obs: '+p.observaciones):'', p.maps?('Link: '+p.maps):'' ].filter(Boolean).join('\n');
+      kml+='<Placemark><name>'+xmlEsc(nom)+'</name><description>'+xmlEsc(desc)+'</description>'+
+           '<Point><coordinates>'+g.lng+','+g.lat+',0</coordinates></Point></Placemark>';
+    });
+    kml+='</Folder>';
+  });
+  kml+='</Document></kml>';
+  downloadBlob(new TextEncoder().encode(kml),'entregas-'+tag+'.kml','application/vnd.google-earth.kml+xml');
+  toast('Mapa listo: '+ok+' ubicados'+(sin?(' · '+sin+' sin ubicar'):'')+' ✓','ok');
 }
 
 /* ============================================================================
