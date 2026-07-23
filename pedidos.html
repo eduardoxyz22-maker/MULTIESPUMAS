@@ -1388,7 +1388,8 @@ function buildMapaKml(list, coords){
     kml+='<Folder><name>'+xmlEsc(ch)+'</name>';
     byC[ch].forEach(function(it){
       var p=it.p, g=it.g;
-      var nom='PEDIDO '+(dn[p.id]||'')+(p.cliente?(' · '+p.cliente):'');
+      var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+      var nom=ident+(p.cliente?(' · '+p.cliente):'');
       var desc=[ p.cliente?('Cliente: '+p.cliente):'', p.celular?('Cel: '+p.celular):'',
         p.direccion?('Dir: '+p.direccion):'', p.turno?('Turno: '+p.turno):'',
         prodText(p.productos)?('Productos: '+prodText(p.productos)):'',
