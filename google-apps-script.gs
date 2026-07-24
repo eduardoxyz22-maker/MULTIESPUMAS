@@ -287,3 +287,35 @@ function fmtDate(v) {
   }
   return String(v);
 }
+
+/* ============================================================================
+   BACKUP AUTOMÁTICO DIARIO
+   Copia la planilla completa a una carpeta de Drive, conservando las últimas 30.
+   Configuración (una sola vez): editor de Apps Script -> Activadores (icono reloj,
+   panel izquierdo) -> Añadir activador -> función: backupDiario · fuente: Según tiempo
+   · tipo: Temporizador diario · hora: 2 a.m. a 3 a.m. Guardar (pedirá permiso de Drive).
+   Para probar: ejecutá backupDiario() a mano una vez desde el editor.
+   ========================================================================== */
+var BACKUP_FOLDER = 'Backups Pedidos MultiEspumas';
+var BACKUP_KEEP = 30; // cuántas copias conservar
+
+function backupDiario() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var folder = backupFolder_();
+  var stamp = Utilities.formatDate(new Date(), 'GMT-4', 'yyyy-MM-dd_HH-mm');
+  var copia = DriveApp.getFileById(ss.getId()).makeCopy('Pedidos ' + stamp, folder);
+  purgeBackups_(folder, BACKUP_KEEP);
+  return copia.getUrl();
+}
+
+function backupFolder_() {
+  var it = DriveApp.getFoldersByName(BACKUP_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+}
+
+function purgeBackups_(folder, keep) {
+  var files = [], it = folder.getFiles();
+  while (it.hasNext()) files.push(it.next());
+  files.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  for (var i = keep; i < files.length; i++) files[i].setTrashed(true);
+}
