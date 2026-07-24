@@ -178,7 +178,8 @@ tbody tr:hover{background:var(--teal-lt)}
 .chkbtn:hover{background:var(--gray-lt)}
 .chkbtn.ok{background:var(--green);color:#fff;border-color:var(--green)}
 .chkbtn.no{background:var(--red);color:#fff;border-color:var(--red)}
-.chkbtn.prod{background:#f5c400;color:#5a4500;border-color:#f5c400}
+.chkbtn.im{background:#f5c400;color:#5a4500;border-color:#f5c400}
+.chkbtn.wide{width:auto;padding:0 10px;font-size:.74rem;white-space:nowrap}
 .prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
 /* Resaltado suave de fila según estado de stock */
@@ -1325,7 +1326,8 @@ function renderAdmin(){
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
-    var estadoCell=estadoBadge(p.estado)+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
+    var nIM=(p.productos||[]).filter(esRecoger).length;
+    var estadoCell=estadoBadge(p.estado)+(nIM?' <span class="badge" style="background:#fff8d6;color:#8a6d00;border:1px solid #f0d264" title="Hay que recoger de IM">📥 Recoger IM</span>':'')+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
@@ -1497,6 +1499,14 @@ function abrirCarga(){ document.getElementById('carga-overlay').style.display='f
 function closeCarga(){ var ov=document.getElementById('carga-overlay'); if(ov) ov.style.display='none'; }
 function setCargaDia(d){ CARGA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('carga-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#0f766e':'#fff'; } }); renderCarga(); }
 function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')).trim(); }
+/* Lista de productos de una parada con la alerta PEGADA a cada producto */
+function prodTextCarga(prods){ return (prods||[]).map(function(x){
+  var s=esc(x.desc||'')+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · cód '+esc(x.codigo)):'')+' × '+esc(x.cant);
+  if(x.chk==='no')      return '<span style="color:#c0392b;font-weight:800">'+s+' ⛔ NO HAY</span>';
+  if(esRecoger(x))      return '<span style="color:#a67c00;font-weight:800">'+s+' 📥 RECOGER IM</span>';
+  if(x.chk==='ok')      return s+' <span style="color:var(--green);font-weight:800">✔</span>';
+  return s;
+}).join('   |   '); }
 /* Tildes de la lista de carga: se guardan por día+vehículo+producto (en esta compu),
    así el cargador puede salir y volver sin perder lo que ya subió. */
 var LS_CARGA='me_carga_chk';
@@ -1512,7 +1522,7 @@ function renderCarga(){
     var k=vehiculoDe(p)||'Sin vehículo';
     if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},prodProd:{},bultos:0,choferes:{}}; order.push(k); }
     byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
-    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; if(x.chk==='no') byV[k].prodNo[kk]=(byV[k].prodNo[kk]||0)+c; else if(x.chk==='prod') byV[k].prodProd[kk]=(byV[k].prodProd[kk]||0)+c; });
+    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; if(x.chk==='no') byV[k].prodNo[kk]=(byV[k].prodNo[kk]||0)+c; else if(esRecoger(x)) byV[k].prodProd[kk]=(byV[k].prodProd[kk]||0)+c; });
   });
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
   var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
@@ -1522,24 +1532,21 @@ function renderCarga(){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
     var nv=o.stops.filter(function(s){return s.verificado;}).length;
     var nSinStock=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
-    var nEnProd=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return x.chk==='prod'; }); }).length;
+    var nEnProd=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return esRecoger(x); }); }).length;
     html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
         '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
-        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+(nEnProd?(' · <span style="color:#a67c00">🏭 '+nEnProd+' en producción</span>'):'')+'</span></div>';
+        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+(nEnProd?(' · <span style="color:#a67c00">📥 '+nEnProd+' por recoger IM</span>'):'')+'</span></div>';
     var pk=Object.keys(o.prod).sort();
     html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
       pk.map(function(kk){
-        var ck=cargaChkKey(k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=((nNo+nPr)>=o.prod[kk]);
-        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">🏭 '+nPr+' en producción</span>'):'')+'</label>'; }).join('')+'</div>';
+        // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
+        var ck=cargaChkKey(k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      var faltan=(p.productos||[]).filter(function(x){ return x.chk==='no'; }).map(function(x){ return cargaProdKey(x)+' × '+x.cant; });
-      var enProd=(p.productos||[]).filter(function(x){ return x.chk==='prod'; }).map(function(x){ return cargaProdKey(x)+' × '+x.cant; });
-      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+
-        (faltan.length?('<div style="color:#c0392b;font-weight:700;margin-top:2px">⛔ NO HAY: '+esc(faltan.join(' · '))+'</div>'):'')+
-        (enProd.length?('<div style="color:#a67c00;font-weight:700;margin-top:2px">🏭 EN PRODUCCIÓN: '+esc(enProd.join(' · '))+'</div>'):'')+'</div>';
+      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -1776,18 +1783,18 @@ function showPedidoModal(id){
       '</div>'+
     '</div>') : '';
   var pr=p.productos||[];
-  var nOk=0,nNo=0,nProd=0;
-  for(var ri=0;ri<pr.length;ri++){ var cc=pr[ri].chk; if(cc==='ok')nOk++; else if(cc==='no')nNo++; else if(cc==='prod')nProd++; }
+  var nOk=0,nNo=0,nIM=0;
+  for(var ri=0;ri<pr.length;ri++){ var cc=pr[ri].chk; if(cc==='ok')nOk++; else if(cc==='no')nNo++; else if(esRecoger(pr[ri]))nIM++; }
   var revSec = !pr.length ? '' : (
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:4px">🔎 Revisión de productos — ✔ hay · ✗ no hay · 🏭 se mandó a producir</div>'+
-      '<div style="font-size:.76rem;color:var(--muted);margin-bottom:8px">'+nOk+' de '+pr.length+' con stock'+(nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+(nProd?(' · <b style="color:#a67c00">'+nProd+' en producción</b>'):'')+'</div>'+
+      '<div class="lb" style="margin-bottom:4px">🔎 Revisión de productos — ✔ hay · ✗ no hay · 📥 hay que recogerlo de IM</div>'+
+      '<div style="font-size:.76rem;color:var(--muted);margin-bottom:8px">'+nOk+' de '+pr.length+' con stock'+(nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+(nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+'</div>'+
       pr.map(function(x,i){
         return '<div class="prod-rev">'+
           '<span style="flex:1">'+esc(x.desc||'')+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b></span>'+
-          '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock">✔</button>'+
+          '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
           '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
-          '<button class="chkbtn'+(x.chk==='prod'?' prod':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'prod\')" title="No hay, pero se mandó a producir">🏭</button>'+
+          '<button class="chkbtn wide'+(esRecoger(x)?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\')" title="Sí hay, pero hay que recogerlo del almacén IM">📥 Recoger IM</button>'+
         '</div>';
       }).join('')+
     '</div>');
@@ -1869,21 +1876,24 @@ function toggleEntregado(id){
 /* ---- Revisión producto por producto (logística): ✔ hay / ✗ no hay ----
    El estado vive en cada producto (x.chk) y viaja dentro del JSON de productos,
    así que se guarda en la planilla sin columnas nuevas. */
+/* Sí hay, pero está en otro almacén y hay que ir a recoger ('prod' = valor viejo, se respeta) */
+function esRecoger(x){ return x && (x.chk==='im' || x.chk==='prod'); }
 function syncVerificado(p){
   var pr=p.productos||[]; if(!pr.length) return;
-  var todosOk=true, algunoNo=false, algunoProd=false, algunoSin=false, algunoMarcado=false;
+  var todosOk=true, algunoNo=false, algunoIM=false, algunoSin=false, algunoMarcado=false;
   for(var i=0;i<pr.length;i++){
     var c=pr[i].chk;
-    if(c==='ok'||c==='no'||c==='prod') algunoMarcado=true;
+    if(c==='ok'||c==='no'||esRecoger(pr[i])) algunoMarcado=true;
     if(c==='no'){ algunoNo=true; todosOk=false; }
-    else if(c==='prod'){ algunoProd=true; todosOk=false; }
+    else if(esRecoger(pr[i])){ algunoIM=true; todosOk=false; }   // hay, pero falta traerlo
     else if(c!=='ok'){ algunoSin=true; todosOk=false; }
   }
   if(todosOk) p.verificado=true;
-  else if(algunoNo||algunoProd||algunoSin) p.verificado=false;
-  // El estado de stock del pedido se deriva de los productos: manda lo peor.
-  if(algunoMarcado){
-    p.estado = algunoNo ? 'No hay' : (algunoProd ? 'En producción' : (todosOk ? 'En stock' : p.estado));
+  else if(algunoNo||algunoIM||algunoSin) p.verificado=false;     // hasta que se recoja, no está listo para cargar
+  // Estado de stock del pedido: solo lo marcamos cuando el producto NO existe o está todo completo.
+  if(algunoMarcado && !algunoSin){
+    if(algunoNo) p.estado='No hay';
+    else if(todosOk) p.estado='En stock';
   }
 }
 function setProdChk(id, idx, val){
@@ -1895,7 +1905,7 @@ function setProdChk(id, idx, val){
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   showPedidoModal(id);
 }
-function prodChkIcon(x){ return x.chk==='ok'?'<span style="color:var(--green);font-weight:800">✔</span> ':(x.chk==='no'?'<span style="color:var(--red);font-weight:800">✗</span> ':(x.chk==='prod'?'<span title="Se mandó a producir">🏭</span> ':'')); }
+function prodChkIcon(x){ return x.chk==='ok'?'<span style="color:var(--green);font-weight:800">✔</span> ':(x.chk==='no'?'<span style="color:var(--red);font-weight:800">✗</span> ':(esRecoger(x)?'<span title="Sí hay, pero hay que recogerlo de IM">📥</span> ':'')); }
 function toggleVerificado(id){
   var p=findById(id); if(!p) return;
   p.verificado=!p.verificado;
@@ -1973,12 +1983,12 @@ function exportExcel(scope){
     prods.forEach(function(x,idx){
       var prodCol=(x.desc||'')+(x.medida?(' '+x.medida):'');
       // Revisión de logística: ✔ hay / ✗ no hay. Lo que NO hay se resalta en rojo.
-      var noHay=(x.chk==='no'), siHay=(x.chk==='ok'), enProd=(x.chk==='prod');
+      var noHay=(x.chk==='no'), siHay=(x.chk==='ok'), enProd=esRecoger(x);
       var ps = noHay?BAD:(enProd?WIP:fs);                       // estilo del producto/cantidad
       var rs = noHay?BAD:(enProd?WIP:(siHay?GOOD:fs));          // estilo de la celda REVISIÓN
       var prodCell={v:prodCol, s:ps};
       var cantCell=(x.cant===''||x.cant==null)?{v:'',s:ps}:{v:(Number(x.cant)||0),t:'n',s:ps};
-      var revCell={v:(noHay?'✗ NO HAY':(enProd?'🏭 EN PRODUCCIÓN':(siHay?'✔ HAY':''))), s:rs};
+      var revCell={v:(noHay?'✗ NO HAY':(enProd?'📥 RECOGER IM':(siHay?'✔ HAY':''))), s:rs};
       if(idx===0){
         rows.push([ cl(p.fecha||''),cl(vendCli),prodCell,cantCell,revCell,cl(x.codigo||''),cl(p.celular||''),cl(p.turno||''),cl(p.direccion||''),cl(p.maps||''),cl(p.observaciones||''),
           cl(p.verificado?'SÍ':'NO'),
