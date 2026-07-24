@@ -199,6 +199,14 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 .dl-v{flex:1;color:var(--text);word-break:break-word}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
+
+@media print{
+  body.printing-ruta > *{ display:none !important; }
+  body.printing-ruta #ruta-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-ruta #ruta-overlay .no-print{ display:none !important; }
+  body.printing-ruta #ruta-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-ruta .ruta-chofer{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
+}
 </style>
 </head>
 <body>
@@ -422,6 +430,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
         <div class="btn-row" style="margin-bottom:16px">
           <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
           <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
@@ -438,6 +447,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
+<div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
 /* ============================================================================
@@ -1352,6 +1362,59 @@ function downloadBlob(bytes,filename,mime){
   var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
+var RUTA_DIA='manana', RUTA_ORDER=[], RUTA_BYC={};
+function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function abrirRuta(){ document.getElementById('ruta-overlay').style.display='flex'; renderRuta(); }
+function closeRuta(){ var ov=document.getElementById('ruta-overlay'); if(ov) ov.style.display='none'; }
+function setRutaDia(d){ RUTA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('ruta-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderRuta(); }
+function renderRuta(){
+  var list=rutaLista();
+  RUTA_BYC={}; RUTA_ORDER=[];
+  list.forEach(function(p){ var k=String(p.chofer||'Sin chofer').trim()||'Sin chofer'; if(!RUTA_BYC[k]){ RUTA_BYC[k]=[]; RUTA_ORDER.push(k); } RUTA_BYC[k].push(p); });
+  RUTA_ORDER.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
+  RUTA_ORDER.forEach(function(k){ RUTA_BYC[k].sort(function(a,b){ var ta=(a.turno||'ZZ'),tb=(b.turno||'ZZ'); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }); });
+  var diaLbl=RUTA_DIA==='hoy'?('hoy '+todayStr()):RUTA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
+  var html='';
+  RUTA_ORDER.forEach(function(k, idx){
+    var stops=RUTA_BYC[k], cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+    var esSin=(k==='Sin chofer');
+    html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
+      '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
+      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
+      (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
+      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
+    stops.forEach(function(p,i){
+      var cobro=p.pagado?'<span style="color:#2e7d32;font-weight:700">✅ PAGADO</span>':('<span style="color:#c0392b;font-weight:700">💰 COBRAR '+fmtBs(p.saldo)+'</span>'+(Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):''));
+      html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
+        '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
+        '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
+        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+cobro+
+        (p.maps?(' &nbsp;·&nbsp; <a href="'+esc(p.maps)+'" target="_blank" rel="noopener">🗺️ Maps</a>'):'')+
+        (p.observaciones?('<br><span style="color:#a05a00">📝 '+esc(p.observaciones)+'</span>'):'')+'</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('ruta-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+}
+function rutaWhatsapp(idx){
+  var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
+  var diaLbl=RUTA_DIA==='hoy'?todayStr():RUTA_DIA==='manana'?tomorrowStr():'';
+  var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
+  stops.forEach(function(p,i){
+    L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
+    L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
+    L.push('   🛏️ '+prodText(p.productos));
+    L.push('   '+(p.pagado?'✅ PAGADO':('💰 COBRAR '+fmtBs(p.saldo))));
+    if(p.maps) L.push('   🗺️ '+p.maps);
+    if(p.observaciones) L.push('   📝 '+p.observaciones);
+    L.push('');
+  });
+  var text=L.join('\n'); copyText(text); window.open(whatsappUrl(text),'_blank');
+}
+function printRuta(){ document.body.classList.add('printing-ruta'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-ruta'); },600); }
 function backupJson(){
   var data=JSON.stringify({app:'ME_PEDIDOS',version:2,exported:todayStr(),pedidos:STATE},null,2);
   downloadBlob(new TextEncoder().encode(data),'respaldo-pedidos-'+todayStr()+'.json','application/json');
