@@ -285,7 +285,7 @@ th.sortable:hover{color:var(--teal-dk)}
         </div>
         <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
-          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off">
+          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value)">
           <datalist id="dl-vendedores"></datalist>
         </div>
       </div>
@@ -718,7 +718,7 @@ function showView(v){
   document.getElementById('tab-admin').classList.toggle('active',v==='admin');
   document.getElementById('tab-mis').classList.toggle('active',v==='mis');
   if(v==='admin' && UNLOCKED) loadFromServer(false);
-  if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=localStorage.getItem('me_mis_vendedor')||''; } refreshMis(); }
+  if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=getVendedorMem(); } refreshMis(); }
 }
 function initConnUI(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
@@ -903,6 +903,7 @@ function submitPedido(){
     ts: isEdit ? (prev?prev.ts:0) : Date.now()
   };
 
+  setVendedorMem(vendedor); // recordar quién soy en esta compu
   // Optimista: actualizamos la vista ya
   upsert(rec); saveMirror(); updateStats();
   if(UNLOCKED) renderAdmin();
@@ -937,13 +938,16 @@ function submitPedido(){
   function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
 }
 
+/* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
+function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
+function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
-  document.getElementById('f-vendedor').value='';
+  document.getElementById('f-vendedor').value=getVendedorMem();
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
   addProdRow();
@@ -1418,7 +1422,7 @@ function refreshMis(){
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=(mv.value||'').trim();
-  try{ localStorage.setItem('me_mis_vendedor', v); }catch(e){}
+  setVendedorMem(v);
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty');
   if(!v){ box.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
