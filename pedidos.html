@@ -71,6 +71,9 @@ body{font-family:var(--font-sans);color:var(--text);-webkit-font-smoothing:antia
 label.lb{display:block;font-size:.72rem;font-weight:700;color:var(--text);margin-bottom:6px;letter-spacing:.02em}
 label.lb .req{color:var(--red)}
 label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
+.lite-only{display:none}
+.lite-vendedor .lite-only{display:block}
+.lite-vendedor .req-lite{display:none}
 input[type=text],input[type=tel],input[type=url],input[type=number],input[type=date],input[type=month],textarea,select{
   width:100%;padding:11px 13px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
@@ -274,7 +277,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <input type="date" id="f-fecha">
         </div>
         <div class="field">
-          <label class="lb">N° Nota de venta <span class="req">*</span></label>
+          <label class="lb">N° Nota de venta <span class="req req-lite">*</span></label>
           <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
         </div>
       </div>
@@ -286,10 +289,12 @@ th.sortable:hover{color:var(--teal-dk)}
         </div>
         <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
-          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value)">
+          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value);applyVendedorLite()">
           <datalist id="dl-vendedores"></datalist>
         </div>
       </div>
+
+      <div id="lite-hint" class="lite-only" style="font-size:.8rem;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:14px">✔️ <b>Modo simplificado</b> — para vos, la <b>Nota de venta</b>, <b>OC</b>, <b>celular</b> y <b>cobro</b> son opcionales, y podés <b>agendar para hoy mismo</b>.</div>
 
       <div class="grid2">
         <div class="field">
@@ -297,7 +302,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <input type="text" id="f-cliente" placeholder="Nombre y apellido" autocomplete="off">
         </div>
         <div class="field">
-          <label class="lb"># Celular <span class="req">*</span></label>
+          <label class="lb"># Celular <span class="req req-lite">*</span></label>
           <input type="tel" id="f-celular" placeholder="Ej. 700 12345" autocomplete="off">
         </div>
       </div>
@@ -520,6 +525,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="besito-overlay" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.78);align-items:center;justify-content:center;flex-direction:column;cursor:pointer;padding:20px;text-align:center"><img src="roho-suerte.jpg" alt="Su pedido fue aprobado" onerror="document.getElementById('besito-overlay').style.display='none'" style="max-width:min(360px,88vw);max-height:78vh;border-radius:16px;box-shadow:0 12px 44px rgba(0,0,0,.55)"><div style="color:#fff;margin-top:14px;font-weight:700;font-size:.85rem;opacity:.85">Tocá para cerrar 💋</div></div>
 
 <script>
 /* ============================================================================
@@ -677,6 +683,9 @@ function queuePending(rec){ var a=getPending().filter(function(p){return p.id!==
 function todayStr(){ return isoLocal(new Date()); }
 function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return isoLocal(d); }
 function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
+/* Muestra la fecha como día/mes/año (guarda internamente ISO AAAA-MM-DD). */
+function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):String(iso||''); }
+function fmtFechaCorta(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]):String(iso||''); }
 function monthStr(){ return todayStr().slice(0,7); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
 function nextOc(){ var mx=0; for(var i=0;i<STATE.length;i++){ var m=String(STATE[i].oc||'').match(/\d+/); if(m){var v=parseInt(m[0],10); if(v>mx)mx=v;} } return mx>0?(mx+1):1001; }
@@ -849,22 +858,26 @@ function submitPedido(){
   var cliente=document.getElementById('f-cliente').value.trim();
   var productos=getProductos();
   var ok=true;
-  if(!document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
+  var lite=esVendedorLite(vendedor); // Eduardo Añez y ROHO: nota, OC, celular y cobro NO obligatorios
+  if(!lite && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
   if(!cliente){ markErr('f-cliente'); ok=false; }
-  if(!document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
+  if(!lite && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
   if(!document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   if(!ok){ toast('Completá los campos marcados (*)','err'); return; }
   var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
-  if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
-  if(_acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+  if(!lite){
+    if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
+    if(_acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+  }
 
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
-  if(!isEdit && fechaSel < tomorrowStr()){
-    toast('La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
+  var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
+  if(!isEdit && fechaSel < minFecha){
+    toast(lite ? 'La fecha no puede ser anterior a hoy.' : 'La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
     var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
     return;
   }
@@ -872,7 +885,7 @@ function submitPedido(){
   if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= cupoTurno(turnoSel)){
     var otro = turnoSel==='AM'?'PM':'AM';
     var libreOtro = Math.max(0, cupoTurno(otro) - cuposUsadosTurno(fechaSel, otro));
-    toast('Turno '+turnoSel+' lleno para el '+fechaSel+' ('+cupoTurno(turnoSel)+'/'+cupoTurno(turnoSel)+'). '+(libreOtro>0?('Probá turno '+otro+' ('+libreOtro+' libres) u otra fecha.'):'Elegí otra fecha.'),'err');
+    toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+cupoTurno(turnoSel)+'/'+cupoTurno(turnoSel)+'). '+(libreOtro>0?('Probá turno '+otro+' ('+libreOtro+' libres) u otra fecha.'):'Elegí otra fecha.'),'err');
     renderCupoForm();
     var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
@@ -882,7 +895,7 @@ function submitPedido(){
     id: EDIT_ID||uid(),
     fecha: document.getElementById('f-fecha').value||todayStr(),
     nota: document.getElementById('f-nota').value.trim(),
-    oc: document.getElementById('f-oc').value.trim(),
+    oc: cleanOC(document.getElementById('f-oc').value),
     vendedor: vendedor, cliente: cliente, productos: productos,
     celular: document.getElementById('f-celular').value.trim(),
     turno: segVal('f-turno'),
@@ -918,7 +931,7 @@ function submitPedido(){
         // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
         var tmsg = res.turno ? ('Turno '+res.turno+' lleno') : 'Cupos llenos';
-        toast('❌ '+tmsg+' para el '+rec.fecha+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
+        toast('❌ '+tmsg+' para el '+fmtFecha(rec.fecha)+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
         renderCupoForm();
         var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
         var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
@@ -937,19 +950,24 @@ function submitPedido(){
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
     after(isEdit);
   }
-  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
+  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); if(String(rec.vendedor||'').trim().toLowerCase()==='roho') mostrarBesito(); } }
 }
 
 /* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
 function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
 function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
+/* Vendedores con formulario simplificado: nota, OC, celular y cobro NO obligatorios. */
+function esVendedorLite(v){ var s=String(v||'').trim().toLowerCase(); return s==='eduardo añez'||s==='eduardo anez'||s==='roho'; }
+function applyVendedorLite(){ var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form'), lite=v?esVendedorLite(v.value):false; if(view) view.classList.toggle('lite-vendedor', lite); var ff=document.getElementById('f-fecha'); if(ff) ff.min = lite ? todayStr() : tomorrowStr(); }
+/* Guiño para ROHO: muestra "Besito pa la suerte" al crear un pedido. */
+function mostrarBesito(){ var o=document.getElementById('besito-overlay'); if(o) o.style.display='flex'; }
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
-  document.getElementById('f-vendedor').value=getVendedorMem();
+  document.getElementById('f-vendedor').value=getVendedorMem(); applyVendedorLite();
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
   addProdRow();
@@ -980,7 +998,7 @@ function editPedido(id){
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
-  document.getElementById('f-vendedor').value=rec.vendedor||'';
+  document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
   if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant); } } else addProdRow();
@@ -1060,10 +1078,10 @@ function renderCupoForm(){
   var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
   if(restSel<=0){
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fecha+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea;
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea;
   }else{
     el.className='cupo '+(restSel<=3?'warn':'ok');
-    el.innerHTML='🎟️ Cupos del '+fecha+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
+    el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
   }
 }
 function refreshCupos(){
@@ -1118,7 +1136,15 @@ function setAdminLoading(on){
   if(!b) return;
   b.disabled=on; b.innerHTML=on?'<span class="spin" style="border-color:rgba(0,0,0,.2);border-top-color:var(--teal)"></span> Cargando…':'🔄 Actualizar';
 }
+function cleanOC(v){
+  var s=String(v==null?'':v).trim();
+  // Si el "N° OC" quedó con una fecha (texto tipo "Sun Jul 26 2026 00:00:00 GMT-0400"), lo tratamos como vacío.
+  if(/\bGMT\b/i.test(s)) return '';
+  if(/^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{4}\b/.test(s)) return '';
+  return s;
+}
 function mergePending(serverList){
+  serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
   var pend=getPending().filter(function(p){return !ids[p.id];});
   return serverList.concat(pend);
@@ -1206,7 +1232,7 @@ function renderAdmin(){
 
   var byD={};
   list.forEach(function(p){ var k=p.fecha||'—'; if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
-  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
+  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+esc(fmtFecha(k))+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
   document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
   var byC={};
@@ -1229,7 +1255,7 @@ function renderAdmin(){
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(p.fecha||'')+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(fmtFecha(p.fecha))+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
       '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td><td>'+pago+'</td>'+
@@ -1255,7 +1281,7 @@ function renderAdmin(){
     var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(cdia,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(cdia,'PM'));
     var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
     cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
-    cupoEl.innerHTML='🎟️ Cupos del '+cdia+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
+    cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
   }
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
@@ -1296,7 +1322,7 @@ function renderRevisar(){
   var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
   probl.forEach(function(o){ o.miss.forEach(function(m){ cnt[m]++; }); });
   var resumen=Object.keys(cnt).filter(function(k){return cnt[k];}).map(function(k){return cnt[k]+' '+k;}).join(' · ');
-  var head='⚠️ <b>Revisar entregas de mañana</b> ('+man+'): <b>'+probl.length+'</b> de '+manList.length+' pedidos con datos faltantes &nbsp; '+
+  var head='⚠️ <b>Revisar entregas de mañana</b> ('+fmtFecha(man)+'): <b>'+probl.length+'</b> de '+manList.length+' pedidos con datos faltantes &nbsp; '+
     '<button class="rv-toggle" onclick="toggleRevisar()">'+(REVISAR_OPEN?'ocultar':'ver detalle')+'</button>'+
     '<div style="margin-top:4px;font-size:.75rem">'+resumen+'</div>';
   var detail='';
@@ -1328,7 +1354,7 @@ function renderOcupacion(){
     var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
     var f=isoLocal(d), uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM;
     rows+='<div class="occ-row">'+
-      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+f.slice(5)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
+      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
       occBar('🌅',uAM,CUPOS_AM)+occBar('🌆',uPM,CUPOS_PM)+
       '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+(tot>=CUPOS_DIA?'var(--red)':'var(--muted)')+'">'+tot+'/'+CUPOS_DIA+'</span></div>';
   }
@@ -1364,12 +1390,12 @@ function reprogramarPedido(id){
   var t=normTurno(p.turno);
   if(cuposUsadosTurno(nueva,t) >= cupoTurno(t)){
     var otro=t==='AM'?'PM':'AM', libreOtro=Math.max(0,cupoTurno(otro)-cuposUsadosTurno(nueva,otro));
-    toast('Turno '+t+' lleno el '+nueva+' ('+cupoTurno(t)+'/'+cupoTurno(t)+'). '+(libreOtro>0?('En '+otro+' hay '+libreOtro+' libres — cambiá el turno primero.'):'Elegí otra fecha.'),'err');
+    toast('Turno '+t+' lleno el '+fmtFecha(nueva)+' ('+cupoTurno(t)+'/'+cupoTurno(t)+'). '+(libreOtro>0?('En '+otro+' hay '+libreOtro+' libres — cambiá el turno primero.'):'Elegí otra fecha.'),'err');
     return;
   }
   var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
   persistPedido(p);
-  toast('Reprogramado: '+antes+' → '+nueva+' ✓','ok');
+  toast('Reprogramado: '+fmtFecha(antes)+' → '+fmtFecha(nueva)+' ✓','ok');
   showPedidoModal(id);
 }
 
@@ -1391,7 +1417,7 @@ function renderCarga(){
     (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; });
   });
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
-  var diaLbl=CARGA_DIA==='hoy'?('hoy '+todayStr()):CARGA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
   document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
   var html='';
   order.forEach(function(k){
@@ -1444,7 +1470,7 @@ function renderMis(){
     var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
     var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>';
     return '<tr onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td>'+esc(p.fecha||'')+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
+      '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
       '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
       '<td style="text-align:center">'+gps+'</td></tr>';
@@ -1477,10 +1503,13 @@ function showMisModal(id){
   var alertas='';
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
-  var body=row('Fecha de entrega', esc(p.fecha)+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
+  var choferVal = p.chofer
+    ? ('🚚 <b>'+esc(p.chofer)+'</b>'+(p.vehiculo?(' <span style="color:var(--muted)">· '+esc(p.vehiculo)+'</span>'):''))
+    : '<span class="badge b-gray">Sin asignar todavía</span>';
+  var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
-    row('Cobro', cobro)+row('Estado', estado);
+    row('Cobro', cobro)+row('Estado', estado)+row('Chofer', choferVal);
   var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
@@ -1514,7 +1543,7 @@ function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(funct
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
   list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=Number(p.cobradoBs)||0; else pend+=Number(p.saldo)||0; });
-  document.getElementById('rep-info').textContent=r.lbl+' · '+r.desde+' a '+r.hasta;
+  document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
   var byV={}; list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=Number(p.cobradoBs)||0; else byC[c].pend+=Number(p.saldo)||0; });
@@ -1557,7 +1586,7 @@ function pedidoText(p){
     return s+' × '+x.cant;
   }).join('\n');
   var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · OC '+p.oc):'')+'*',
-    '📅 Entrega: '+(p.fecha||'')+(p.turno?('  ·  Turno '+p.turno):''),
+    '📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):''),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
     '📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||''),
@@ -1612,7 +1641,7 @@ function showPedidoModal(id){
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
-    row('Fecha de entrega', esc(p.fecha)+(p.turno?(' · Turno '+esc(p.turno)):''))+
+    row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
@@ -1790,7 +1819,7 @@ function renderRuta(){
   list.forEach(function(p){ var k=String(p.chofer||'Sin chofer').trim()||'Sin chofer'; if(!RUTA_BYC[k]){ RUTA_BYC[k]=[]; RUTA_ORDER.push(k); } RUTA_BYC[k].push(p); });
   RUTA_ORDER.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
   RUTA_ORDER.forEach(function(k){ RUTA_BYC[k].sort(function(a,b){ var ta=(a.turno||'ZZ'),tb=(b.turno||'ZZ'); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }); });
-  var diaLbl=RUTA_DIA==='hoy'?('hoy '+todayStr()):RUTA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  var diaLbl=RUTA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):RUTA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
   var html='';
   RUTA_ORDER.forEach(function(k, idx){
@@ -1817,7 +1846,7 @@ function renderRuta(){
 }
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
-  var diaLbl=RUTA_DIA==='hoy'?todayStr():RUTA_DIA==='manana'?tomorrowStr():'';
+  var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(tomorrowStr()):'';
   var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
   var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
