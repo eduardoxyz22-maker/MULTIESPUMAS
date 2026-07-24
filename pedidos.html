@@ -230,6 +230,10 @@ th.sortable:hover{color:var(--teal-dk)}
   body.printing-carga #carga-overlay .no-print{ display:none !important; }
   body.printing-carga #carga-body{ overflow:visible !important; padding:0 !important; }
   body.printing-carga .carga-cam{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
+  body.printing-reporte > *{ display:none !important; }
+  body.printing-reporte #reporte-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-reporte #reporte-overlay .no-print{ display:none !important; }
+  body.printing-reporte #reporte-body{ overflow:visible !important; padding:0 !important; }
 }
 </style>
 </head>
@@ -244,6 +248,7 @@ th.sortable:hover{color:var(--teal-dk)}
 
 <div class="nav">
   <button id="tab-form" class="active" onclick="showView('form')">＋ Nuevo pedido</button>
+  <button id="tab-mis" onclick="showView('mis')">📋 Mis pedidos</button>
   <button id="tab-admin" onclick="showView('admin')">🔒 Administración</button>
 </div>
 
@@ -475,6 +480,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
@@ -485,6 +491,24 @@ th.sortable:hover{color:var(--teal-dk)}
       </div>
     </div>
   </div>
+
+  <!-- ============ MIS PEDIDOS VIEW ============ -->
+  <div id="view-mis" class="view">
+    <div class="card">
+      <div class="filters">
+        <div class="field" style="flex:1;min-width:180px">
+          <label class="lb">Tu nombre</label>
+          <input type="text" id="mis-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="renderMis()">
+        </div>
+        <div class="field">
+          <button class="btn btn-ghost btn-sm" onclick="refreshMis()">🔄 Actualizar</button>
+        </div>
+      </div>
+      <div class="metrics" id="mis-metrics"></div>
+      <div class="tw"><table id="mis-tbl"></table></div>
+      <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
+    </div>
+  </div>
 </div>
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
@@ -493,6 +517,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
 /* ============================================================================
@@ -688,9 +713,12 @@ function flushPending(){
 function showView(v){
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
+  document.getElementById('view-mis').classList.toggle('active',v==='mis');
   document.getElementById('tab-form').classList.toggle('active',v==='form');
   document.getElementById('tab-admin').classList.toggle('active',v==='admin');
+  document.getElementById('tab-mis').classList.toggle('active',v==='mis');
   if(v==='admin' && UNLOCKED) loadFromServer(false);
+  if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=localStorage.getItem('me_mis_vendedor')||''; } refreshMis(); }
 }
 function initConnUI(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
@@ -1379,6 +1407,76 @@ function renderCarga(){
   document.getElementById('carga-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
+
+/* ============================================================================
+   Mis pedidos (lado vendedora) — cada quien ve los suyos + su total
+   ========================================================================== */
+function refreshMis(){
+  if(!CONNECTED){ renderMis(); return; }
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } renderMis(); }).catch(function(){ renderMis(); });
+}
+function renderMis(){
+  var mv=document.getElementById('mis-vendedor'); if(!mv) return;
+  var v=(mv.value||'').trim();
+  try{ localStorage.setItem('me_mis_vendedor', v); }catch(e){}
+  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty');
+  if(!v){ box.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
+  mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
+  mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
+  box.innerHTML=
+    mc('var(--teal)','Hoy',nHoy,'pedidos cargados')+
+    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades')+
+    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
+    mc('var(--green)','Total cargados',mine.length,'histórico');
+  if(!mine.length){ tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
+  empty.style.display='none'; tbl.style.display='table';
+  var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th></th></tr></thead>';
+  var body=mine.slice(0,120).map(function(p){
+    var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
+    var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
+    return '<tr><td>'+esc(p.fecha||'')+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
+      '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
+      '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
+      '<td onclick="event.stopPropagation()"><button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button></td></tr>';
+  }).join('');
+  tbl.innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
+/* ============================================================================
+   Reporte semanal / mensual — desempeño por vendedora y por chofer
+   ========================================================================== */
+var REP_PERIODO='mes';
+function repRango(){
+  var hoy=todayStr();
+  if(REP_PERIODO==='7d'){ var d=new Date(); d.setDate(d.getDate()-6); return {desde:isoLocal(d),hasta:hoy,lbl:'últimos 7 días'}; }
+  if(REP_PERIODO==='mespasado'){ var n=new Date(),y=n.getFullYear(),m=n.getMonth(); var first=new Date(y,m-1,1),last=new Date(y,m,0); return {desde:isoLocal(first),hasta:isoLocal(last),lbl:'mes pasado'}; }
+  var mes=hoy.slice(0,7); return {desde:mes+'-01',hasta:hoy,lbl:'este mes ('+mes+')'};
+}
+function repLista(){ var r=repRango(); return STATE.filter(function(p){ var f=p.fecha||''; return f>=r.desde && f<=r.hasta; }); }
+function abrirReporte(){ document.getElementById('reporte-overlay').style.display='flex'; renderReporte(); }
+function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(ov) ov.style.display='none'; }
+function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
+function renderReporte(){
+  var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=Number(p.cobradoBs)||0; else pend+=Number(p.saldo)||0; });
+  document.getElementById('rep-info').textContent=r.lbl+' · '+r.desde+' a '+r.hasta;
+  var byV={}; list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
+  var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=Number(p.cobradoBs)||0; else byC[c].pend+=Number(p.saldo)||0; });
+  var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
+  document.getElementById('reporte-body').innerHTML=
+    '<div class="metrics" style="margin-bottom:16px">'+
+      mc('var(--teal)','Pedidos',tot,unid+' unidades')+
+      mc('var(--green)','Entregados',ent,tot?Math.round(ent/tot*100)+'% del total':'—')+
+      mc('var(--green)','Cobrado (entrega)',fmtBs(cob),'en el período')+
+      mc('var(--red)','Por cobrar',fmtBs(pend),'saldo pendiente')+
+    '</div>'+
+    '<div class="panel" style="margin-bottom:16px"><div class="panel-h">🧑‍💼 Por vendedora</div><div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr><th>Vendedora</th><th class="num">Pedidos</th><th class="num">Unid.</th><th class="num">Entreg.</th><th class="num">Por cobrar</th></tr></thead><tbody>'+(vr||'<tr><td colspan="5" class="empty" style="padding:16px">Sin datos</td></tr>')+'</tbody></table></div></div>'+
+    '<div class="panel"><div class="panel-h">🚚 Por chofer</div><div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr><th>Chofer</th><th class="num">Entregas</th><th class="num">Entregadas</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(cr||'<tr><td colspan="5" class="empty" style="padding:16px">Sin datos</td></tr>')+'</tbody></table></div></div>';
+}
+function printReporte(){ document.body.classList.add('printing-reporte'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-reporte'); },600); }
 
 /* ---- Acciones rápidas de fila: entregado / cobrado ---- */
 function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
