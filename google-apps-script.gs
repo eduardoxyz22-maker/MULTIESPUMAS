@@ -222,7 +222,11 @@ function doSave(p) {
       }
     }
     var tSel = String(p.turno || '').toUpperCase().indexOf('PM') >= 0 ? 'PM' : 'AM';
-    var limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;
+    var dow = dowDeGs(p.fecha);                                  // 0=domingo, 6=sábado
+    var limT;
+    if (dow === 0) limT = 0;                                     // domingo: cerrado
+    else if (dow === 6) limT = (tSel === 'AM') ? 15 : 0;         // sábado: 15 AM, sin PM
+    else limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;           // resto: 12 AM / 13 PM
     var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
     if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
     p.nroDia = Math.max(maxNro, usados) + 1; // N° correlativo del día (server-assigned, atómico por el lock)
@@ -276,6 +280,13 @@ function parseProd(js, txt) {
     var m = s.trim().split('×');
     return { desc: (m[0] || '').trim(), medida: '', codigo: '', cant: parseInt(m[1] || '1', 10) || 1 };
   }).filter(function (p) { return p.desc; });
+}
+
+/** Día de la semana (0=domingo … 6=sábado) de una fecha 'YYYY-MM-DD'. */
+function dowDeGs(fecha) {
+  var m = String(fecha || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return -1;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay();
 }
 
 /** La fecha puede venir como texto 'YYYY-MM-DD' o como Date (si Sheets la reinterpreta). */

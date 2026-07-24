@@ -511,6 +511,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <button class="btn btn-ghost btn-sm" onclick="refreshMis()">🔄 Actualizar</button>
         </div>
       </div>
+      <div id="mis-ubic-aviso"></div>
       <div class="metrics" id="mis-metrics"></div>
       <div class="tw"><table id="mis-tbl"></table></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
@@ -882,10 +883,19 @@ function submitPedido(){
     return;
   }
   var turnoSel = normTurno(segVal('f-turno'));
-  if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= cupoTurno(turnoSel)){
-    var otro = turnoSel==='AM'?'PM':'AM';
-    var libreOtro = Math.max(0, cupoTurno(otro) - cuposUsadosTurno(fechaSel, otro));
-    toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+cupoTurno(turnoSel)+'/'+cupoTurno(turnoSel)+'). '+(libreOtro>0?('Probá turno '+otro+' ('+libreOtro+' libres) u otra fecha.'):'Elegí otra fecha.'),'err');
+  if(!isEdit && diaDomingo(fechaSel)){
+    toast('🚫 No se agenda los DOMINGOS. Elegí otra fecha.','err');
+    var feD=document.getElementById('f-fecha'); feD.classList.add('err'); feD.focus(); feD.scrollIntoView({block:'center'});
+    return;
+  }
+  if(!isEdit && diaSabado(fechaSel) && turnoSel==='PM'){
+    toast('Los SÁBADOS solo hay turno AM. Cambiá a AM o elegí otra fecha.','err');
+    var ftS=document.getElementById('f-turno'); if(ftS){ ftS.classList.add('seg-err'); setTimeout(function(){ ftS.classList.remove('seg-err'); },1600); ftS.scrollIntoView({block:'center'}); }
+    return;
+  }
+  if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
+    var lim=limTurno(fechaSel, turnoSel);
+    toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+lim+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');
     renderCupoForm();
     var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
@@ -1056,9 +1066,9 @@ function refreshDatalists(){
 function updateStats(){
   // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
   var man=tomorrowStr();
-  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(man,'PM'));
-  document.getElementById('stat-hoy').textContent=(rAM+rPM);
-  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML='Cupos mañana · 🌅'+rAM+' 🌆'+rPM;
+  var rAM=Math.max(0,limTurno(man,'AM')-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,limTurno(man,'PM')-cuposUsadosTurno(man,'PM'));
+  document.getElementById('stat-hoy').textContent=(diaDomingo(man)?'0':(rAM+rPM));
+  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos mañana · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM));
   updateFooter();
 }
 
@@ -1067,12 +1077,39 @@ var CUPOS_AM = 12, CUPOS_PM = 13;
 var CUPOS_DIA = CUPOS_AM + CUPOS_PM; // 25 total (compat)
 function normTurno(t){ return String(t||'').toUpperCase().indexOf('PM')>=0 ? 'PM' : 'AM'; }
 function cupoTurno(t){ return normTurno(t)==='PM' ? CUPOS_PM : CUPOS_AM; }
+/* Reglas por día: domingo cerrado; sábado solo AM (máx 15); resto 12 AM / 13 PM. */
+function dowDe(fecha){ var m=String(fecha||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]).getDay() : -1; }
+function diaDomingo(fecha){ return dowDe(fecha)===0; }
+function diaSabado(fecha){ return dowDe(fecha)===6; }
+function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0) return 0; if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
 function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
+function ajustarTurnoSeg(fecha){
+  var seg=document.getElementById('f-turno'); if(!seg) return;
+  var pm=seg.querySelector('button[data-val="PM"]'); if(!pm) return;
+  var sab=diaSabado(fecha);
+  pm.disabled=sab; pm.style.opacity=sab?'.4':''; pm.style.cursor=sab?'not-allowed':'';
+  pm.title=sab?'Los sábados solo hay turno AM':'';
+  if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
+}
 function renderCupoForm(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
+  ajustarTurnoSeg(fecha);
   var turno=normTurno(segVal('f-turno'));
+  if(diaDomingo(fecha)){
+    el.className='cupo full';
+    el.innerHTML='🚫 <b>No se agenda los DOMINGOS.</b> Elegí otra fecha para este pedido.';
+    return;
+  }
+  if(diaSabado(fecha)){
+    var uAMs=cuposUsadosTurno(fecha,'AM'), rAMs=Math.max(0,15-uAMs);
+    el.className='cupo '+(rAMs<=0?'full':(rAMs<=3?'warn':'ok'));
+    el.innerHTML=(rAMs<=0
+      ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/15 AM). Elegí otra fecha.'
+      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>';
+    return;
+  }
   var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(fecha,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(fecha,'PM'));
   var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM;
   var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
@@ -1236,7 +1273,7 @@ function renderAdmin(){
   document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
   var byC={};
-  list.forEach(function(p){ if(p.vehiculo){ if(!byC[p.vehiculo])byC[p.vehiculo]={n:0,ent:0,pend:0}; byC[p.vehiculo].n++; if(p.entregado)byC[p.vehiculo].ent++; else byC[p.vehiculo].pend++; } });
+  list.forEach(function(p){ var vh=vehiculoDe(p); if(vh){ if(!byC[vh])byC[vh]={n:0,ent:0,pend:0}; byC[vh].n++; if(p.entregado)byC[vh].ent++; else byC[vh].pend++; } });
   var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
@@ -1278,10 +1315,19 @@ function renderAdmin(){
   if(cupoEl){
     var cmode=segVal('adm-mode');
     var cdia = cmode==='dia' ? (document.getElementById('adm-dia').value||todayStr()) : todayStr();
-    var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(cdia,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(cdia,'PM'));
-    var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
-    cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
-    cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
+    var lAM=limTurno(cdia,'AM'), lPM=limTurno(cdia,'PM');
+    var rAM=Math.max(0,lAM-cuposUsadosTurno(cdia,'AM')), rPM=Math.max(0,lPM-cuposUsadosTurno(cdia,'PM'));
+    if(diaDomingo(cdia)){
+      cupoEl.className='cupo full';
+      cupoEl.innerHTML='🚫 <b>'+fmtFecha(cdia)+' (domingo)</b> — no se agenda';
+    }else if(diaSabado(cdia)){
+      cupoEl.className='cupo '+(rAM<=0?'full':(rAM<=3?'warn':'ok'));
+      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'');
+    }else{
+      var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
+      cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
+      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
+    }
   }
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
@@ -1340,6 +1386,7 @@ function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
 /* ---- Ocupación de cupos próximos 7 días ---- */
 function diaSemana(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
 function occBar(icon,used,max){
+  if(max<=0){ return '<span style="flex:1;display:flex;align-items:center;gap:6px;opacity:.55">'+icon+'<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px"></span><span style="width:42px;flex:none;font-size:.66rem;font-weight:700;color:var(--muted)">cerrado</span></span>'; }
   var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
   var col=full?'var(--red)':(used>=max*0.8?'var(--amber)':'var(--teal)');
   return '<span style="flex:1;display:flex;align-items:center;gap:6px">'+icon+
@@ -1352,11 +1399,12 @@ function renderOcupacion(){
   var rows='';
   for(var i=0;i<7;i++){
     var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
-    var f=isoLocal(d), uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM;
-    rows+='<div class="occ-row">'+
+    var f=isoLocal(d), lAM=limTurno(f,'AM'), lPM=limTurno(f,'PM');
+    var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f);
+    rows+='<div class="occ-row"'+(dom?' style="opacity:.6"':'')+'>'+
       '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
-      occBar('🌅',uAM,CUPOS_AM)+occBar('🌆',uPM,CUPOS_PM)+
-      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+(tot>=CUPOS_DIA?'var(--red)':'var(--muted)')+'">'+tot+'/'+CUPOS_DIA+'</span></div>';
+      (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>' : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
+      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+(dom?'—':(tot+'/'+totLim))+'</span></div>';
   }
   el.innerHTML=rows;
 }
@@ -1387,10 +1435,12 @@ function reprogramarPedido(id){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(nueva)){ toast('Fecha inválida. Usá AAAA-MM-DD (ej. '+tomorrowStr()+')','err'); return; }
   if(nueva<tomorrowStr()){ toast('La fecha debe ser desde mañana.','err'); return; }
   if(nueva===p.fecha){ toast('Es la misma fecha.','err'); return; }
+  if(diaDomingo(nueva)){ toast('🚫 No se agenda los domingos. Elegí otra fecha.','err'); return; }
   var t=normTurno(p.turno);
-  if(cuposUsadosTurno(nueva,t) >= cupoTurno(t)){
-    var otro=t==='AM'?'PM':'AM', libreOtro=Math.max(0,cupoTurno(otro)-cuposUsadosTurno(nueva,otro));
-    toast('Turno '+t+' lleno el '+fmtFecha(nueva)+' ('+cupoTurno(t)+'/'+cupoTurno(t)+'). '+(libreOtro>0?('En '+otro+' hay '+libreOtro+' libres — cambiá el turno primero.'):'Elegí otra fecha.'),'err');
+  if(diaSabado(nueva) && t==='PM'){ toast('Los sábados solo hay turno AM. Este pedido es PM — cambiá el turno (Editar) o elegí otra fecha.','err'); return; }
+  if(cuposUsadosTurno(nueva,t) >= limTurno(nueva,t)){
+    var lim=limTurno(nueva,t);
+    toast('Turno '+t+' lleno el '+fmtFecha(nueva)+' ('+lim+'/'+lim+'). Elegí otra fecha'+(diaSabado(nueva)?'':' o cambiá el turno')+'.','err');
     return;
   }
   var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
@@ -1411,7 +1461,7 @@ function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+Strin
 function renderCarga(){
   var list=cargaLista(), byV={}, order=[];
   list.forEach(function(p){
-    var k=String(p.vehiculo||'').trim()||'Sin vehículo';
+    var k=vehiculoDe(p)||'Sin vehículo';
     if(!byV[k]){ byV[k]={stops:[],prod:{},bultos:0,choferes:{}}; order.push(k); }
     byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
     (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; });
@@ -1451,10 +1501,16 @@ function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=(mv.value||'').trim();
   setVendedorMem(v);
-  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty');
-  if(!v){ box.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
+  if(!v){ box.innerHTML=''; if(av) av.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
   mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  if(av){
+    var sinUbic=mine.filter(function(p){ return !p.maps && !p.entregado; }).length;
+    av.innerHTML = !mine.length ? '' : (sinUbic>0
+      ? '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#7c4b00">⚠️ Te faltan <b>'+sinUbic+'</b> '+(sinUbic===1?'ubicación GPS':'ubicaciones GPS')+' por cargar. Tocá cada pedido con <b>⚠️ falta</b> y agregá el enlace de Maps.</div>'
+      : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-left:4px solid var(--green);border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#0a6b47">✅ Todas tus entregas pendientes tienen ubicación GPS. ¡Bien ahí!</div>');
+  }
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
   mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
@@ -1468,7 +1524,7 @@ function renderMis(){
   var body=mine.slice(0,120).map(function(p){
     var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
     var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
-    var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>';
+    var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':(p.entregado?'<span style="color:var(--gray)">—</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>');
     return '<tr onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
       '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
@@ -1478,7 +1534,7 @@ function renderMis(){
   tbl.innerHTML=head+'<tbody>'+body+'</tbody>';
 }
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
-function editarUbicacionMis(id){
+function editarUbicacion(id, reopen){
   var p=findById(id); if(!p) return;
   var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nPegá el link de Google Maps (en Maps: Compartir → Copiar enlace).\nDejalo vacío para quitar la ubicación:', p.maps||'');
   if(nuevo==null) return;
@@ -1489,9 +1545,11 @@ function editarUbicacionMis(id){
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   if(UNLOCKED) renderAdmin();
   renderMis();
-  if(document.getElementById('modal').classList.contains('on')) showMisModal(id);
   toast(nuevo?'Ubicación guardada ✓':'Ubicación quitada','ok');
+  if(reopen && document.getElementById('modal').classList.contains('on')) reopen(id);
 }
+function editarUbicacionMis(id){ editarUbicacion(id, showMisModal); }
+function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
 /* Ventana flotante de un pedido (vista vendedora): datos + alertas + agregar/editar ubicación. */
 function showMisModal(id){
   var p=findById(id); if(!p) return;
@@ -1646,7 +1704,7 @@ function showPedidoModal(id){
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
-    row('Dirección', esc(p.direccion))+row('Maps', maps)+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
+    row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoBadge(p.estado))+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
@@ -1677,8 +1735,15 @@ function showPedidoModal(id){
       '<div class="lb" style="margin-bottom:8px">🚛 Vehículo y chofer</div>'+
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
     '</div>';
+  var ubicSec =
+    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
+      (p.maps
+        ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionAdmin(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
+        : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
+    '</div>';
   var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+body+mark+stockSec+despachoSec+
+    '<div class="modal-b">'+body+mark+stockSec+despachoSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
@@ -1741,6 +1806,10 @@ function allChoferes(){
   Object.keys(VEHICULOS).forEach(function(v){ VEHICULOS[v].forEach(function(c){ if(!seen[c]){ seen[c]=1; out.push(c); } }); });
   return out;
 }
+/* Cada chofer pertenece a un solo camión: deducir el vehículo a partir del chofer. */
+function vehiculoDeChofer(c){ c=String(c||'').trim(); if(!c) return ''; var ks=Object.keys(VEHICULOS); for(var i=0;i<ks.length;i++){ if(VEHICULOS[ks[i]].indexOf(c)>=0) return ks[i]; } return ''; }
+/* Vehículo efectivo de un pedido: el guardado, o el que corresponde al chofer. */
+function vehiculoDe(p){ return String((p&&p.vehiculo)||'').trim() || vehiculoDeChofer(p&&p.chofer) || ''; }
 function choferSelect(p){
   var list=allChoferes(); // TODOS los choferes, para poder cambiarlo por cualquiera aunque se autollene
   var opts='<option value="">'+(p.vehiculo?'Chofer…':'(elegí vehículo)')+'</option>';
@@ -1748,7 +1817,7 @@ function choferSelect(p){
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
 }
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); showPedidoModal(id); }
-function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; persistPedido(p); showPedidoModal(id); }
+function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); showPedidoModal(id); }
 function persistPedido(p){
   upsert(p); saveMirror(); updateStats(); renderAdmin();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
@@ -1964,7 +2033,7 @@ function toggleSoloSin(){
 }
 function asignarChoferMapa(id, c){
   var p=findById(id); if(!p) return;
-  p.chofer=c; persistPedido(p);
+  p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p);
   var m=MAPA_MARKERS[id];
   if(MAPA_SOLO_SIN && mapaKey(p)!=='Sin chofer'){ if(m){ MAPA.removeLayer(m); delete MAPA_MARKERS[id]; } }
   else if(m&&m.setStyle){ m.setStyle({fillColor: mapaColorFor(mapaKey(p))}); }
