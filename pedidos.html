@@ -114,6 +114,11 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .btn-ghost:hover{background:var(--gray-lt);color:var(--text)}
 .btn-sm{padding:7px 14px;font-size:.76rem}
 .btn-row{display:flex;gap:10px;flex-wrap:wrap}
+/* Grupo de exportación Excel por alcance (hoy/mañana/mes/todo) */
+.xls-group{display:inline-flex;align-items:center;gap:5px;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:var(--r-pill);padding:3px 6px 3px 12px;flex-wrap:wrap}
+.xls-group .xls-lbl{font-size:.75rem;font-weight:800;color:var(--teal-dk);white-space:nowrap}
+.xls-b{padding:6px 12px;border:1px solid var(--teal-border);background:#fff;color:var(--teal-dk);border-radius:var(--r-pill);font:inherit;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .12s}
+.xls-b:hover{background:var(--teal);color:#fff;border-color:var(--teal)}
 
 .edit-banner{display:none;align-items:center;gap:12px;background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#7c4b00}
 .edit-banner.on{display:flex}
@@ -165,6 +170,11 @@ tbody tr:hover{background:var(--teal-lt)}
 tbody tr.row-especial:hover{background:#c6e4fa}
 .row-5070{background:#ffe6c7;box-shadow:inset 4px 0 0 #fb923c}
 tbody tr.row-5070:hover{background:#ffdcb0}
+/* Pedido ya entregado: fila en gris (gana sobre los demás resaltados) */
+tbody tr.row-entregado{background:#e7ebee !important;box-shadow:inset 4px 0 0 #90a4ae !important}
+tbody tr.row-entregado:hover{background:#dde3e7 !important}
+tbody tr.row-entregado td{color:#6b7880}
+tbody tr.row-entregado td b{color:#55636b}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
@@ -482,7 +492,13 @@ th.sortable:hover{color:var(--teal-dk)}
         </div>
 
         <div class="btn-row" style="margin-bottom:16px">
-          <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
+          <span class="xls-group" title="Descargar Excel según el alcance elegido">
+            <span class="xls-lbl">⬇ Excel</span>
+            <button class="xls-b" onclick="exportExcel('hoy')">Hoy</button>
+            <button class="xls-b" onclick="exportExcel('manana')">Mañana</button>
+            <button class="xls-b" onclick="exportExcel('mes')">Este mes</button>
+            <button class="xls-b" onclick="exportExcel('todo')">Todo</button>
+          </span>
           <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
@@ -1291,6 +1307,7 @@ function renderAdmin(){
     var estadoCell=estadoBadge(p.estado)+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
+    if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(fmtFecha(p.fecha))+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
@@ -1525,7 +1542,7 @@ function renderMis(){
     var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
     var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
     var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':(p.entregado?'<span style="color:var(--gray)">—</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>');
-    return '<tr onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
+    return '<tr class="'+(p.entregado?'row-entregado':'')+'" onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
       '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
@@ -1826,9 +1843,18 @@ function persistPedido(p){
 /* ============================================================================
    Export Excel / backup
    ========================================================================== */
-function exportExcel(){
-  var list=admFilter();
-  if(list.length===0){ toast('No hay pedidos para exportar','err'); return; }
+function exportScopeInfo(scope){
+  var t=todayStr(), m=t.slice(0,7);
+  if(scope==='hoy')  return {list:STATE.filter(function(p){return p.fecha===t;}), lbl:'hoy '+fmtFecha(t), tag:'hoy-'+t};
+  if(scope==='manana'){ var mn=tomorrowStr(); return {list:STATE.filter(function(p){return p.fecha===mn;}), lbl:'mañana '+fmtFecha(mn), tag:'manana-'+mn}; }
+  if(scope==='mes')  return {list:STATE.filter(function(p){return (p.fecha||'').slice(0,7)===m;}), lbl:'este mes', tag:'mes-'+m};
+  if(scope==='todo') return {list:STATE.slice(), lbl:'todo el histórico', tag:'todos'};
+  return null;
+}
+function exportExcel(scope){
+  var info = scope ? exportScopeInfo(scope) : null;
+  var list = info ? admSort(info.list) : admFilter();
+  if(list.length===0){ toast('No hay pedidos para exportar'+(info?(' — '+info.lbl):''),'err'); return; }
   var H=1, C=2;
   var dn=dayNumMap();
   // Columnas: las 9 primeras VISIBLES (las que pediste); el resto se exporta OCULTO (datos completos disponibles).
@@ -1866,10 +1892,11 @@ function exportExcel(){
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
   var bytes=buildXlsx([{name:'Pedidos',cols:[{w:14},{w:30},{w:32},{w:9},{w:12,h:1},{w:13},{w:8},{w:36},{w:28},{w:36},{w:6,h:1},{w:17,h:1},{w:14,h:1},{w:12,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:9,h:1},{w:13,h:1},{w:14,h:1},{w:14,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:16,h:1},{w:10,h:1},{w:16,h:1},{w:16,h:1}],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
-  var mode=segVal('adm-mode');
-  var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
+  var tag;
+  if(info){ tag=info.tag; }
+  else { var mode=segVal('adm-mode'); tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos'; }
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('Excel descargado ✓','ok');
+  toast('Excel de '+(info?info.lbl:'la vista actual')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
 }
 function downloadBlob(bytes,filename,mime){
   var blob=new Blob([bytes],{type:mime||'application/octet-stream'});

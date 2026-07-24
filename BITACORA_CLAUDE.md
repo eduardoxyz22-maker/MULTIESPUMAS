@@ -120,3 +120,16 @@ Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedim
 3. Corregir el typo **"Instragram" → "Instagram"** en el campo Canal de Kommo (el código lo tolera).
 4. Borrar `.pages-redeploy` (archivo basura de los redeploys forzados) en algún commit futuro.
 5. Token Kommo expira ~2026-10-28 (secret `KOMMO_TOKEN`).
+6. **Integración Kommo → panel de pedidos** (diferida 2026-07-24, decisión del usuario "dejarlo pendiente").
+   - Objetivo: que crear/mover un lead en Kommo genere el pedido en el panel (`pedidos.html`) automáticamente.
+   - Diseño propuesto: webhook de Kommo por cambio de etapa → `doPost` del Apps Script del panel →
+     callback `GET /leads/{id}?with=catalog_elements,contacts` con `KOMMO_TOKEN` → escribir la fila del pedido.
+   - **Ya resuelto (según §4b/§4c)**: los productos viven en el **catálogo** de Kommo como `catalog_elements`
+     con **`metadata.quantity`** (código + cantidad) → el mapeo de productos es viable sin campos nuevos.
+   - **Falta en Kommo**: campos de entrega — *fecha entrega, turno AM/PM, zona, dirección, link Google Maps,
+     celular*. Sin ellos los pedidos llegarían a medias y el panel pierde sus controles (cupos, sábado/domingo, GPS).
+   - Recomendación dada al usuario: el panel es mejor lugar para cargar la ENTREGA; Kommo es el CRM de la VENTA.
+     Alternativa liviana anotada: al marcar Entregado/Cobrado en el panel, actualizar el lead en Kommo.
+   - No se pudo relevar Kommo en vivo desde el sandbox (token es secret de GH Actions + el proxy bloquea
+     `eanez.kommo.com` con 403). Para inspeccionar sin exponer claves: workflow de solo-lectura
+     (`workflow_dispatch`) que imprima pipelines/etapas/campos/catálogo al log de Actions.
