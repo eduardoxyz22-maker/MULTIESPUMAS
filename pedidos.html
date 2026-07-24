@@ -163,6 +163,22 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
+.rowbtn.on{background:var(--green-lt);color:var(--green);border-color:var(--green-border)}
+.rowbtn.on:hover{background:var(--green);color:#fff}
+.qchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.qchip{padding:7px 13px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-pill);font:inherit;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .12s}
+.qchip:hover{background:var(--gray-lt);color:var(--text)}
+.qchip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.qchip .n{opacity:.7;font-weight:600}
+.qchip.active .n{opacity:.95}
+.revisar{background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#7c4b00;line-height:1.5}
+.revisar b{color:var(--amber)}
+.revisar .rv-toggle{color:#7c4b00;cursor:pointer;font-weight:800;text-decoration:underline;background:none;border:none;font:inherit}
+.revisar .rv-item{padding:7px 0;border-top:1px dashed var(--amber-border);font-size:.8rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.revisar .rv-miss{background:#fff;border:1px solid var(--amber-border);border-radius:var(--r-pill);padding:1px 8px;font-size:.68rem;font-weight:700;color:var(--amber)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--teal-dk)}
+.sort-arr{font-size:.7em;opacity:.9;margin-left:1px}
 .maplink{color:var(--teal-dk);font-weight:600;text-decoration:none}
 .maplink:hover{text-decoration:underline}
 .empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:.86rem}
@@ -408,6 +424,9 @@ tbody tr.row-5070:hover{background:#ffdcb0}
           </div>
         </div>
 
+        <div class="qchips" id="adm-chips"></div>
+        <div id="adm-revisar"></div>
+
         <div class="metrics" id="adm-metrics"></div>
         <div class="metodos-line" id="adm-metodos"></div>
 
@@ -425,6 +444,11 @@ tbody tr.row-5070:hover{background:#ffdcb0}
         <div class="panel" style="margin-bottom:22px">
           <div class="panel-h">🚛 Entregas asignadas por camión</div>
           <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-camion"></table></div>
+        </div>
+
+        <div class="panel" style="margin-bottom:22px">
+          <div class="panel-h">💵 Rendición por chofer — salió a cobrar vs cobrado</div>
+          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-rendicion"></table></div>
         </div>
 
         <div class="btn-row" style="margin-bottom:16px">
@@ -1048,17 +1072,48 @@ function loadFromServer(showToastOk){
 /* ============================================================================
    Admin: filtros / render
    ========================================================================== */
-function admFilter(){
+var QUICK_FILTER='';                 // '', 'cobrar','sinchofer','noentregado','am','pm','especial'
+var SORT_KEY='', SORT_DIR=1;         // orden de columnas (1 asc, -1 desc)
+var QUICK_DEFS=[
+  {k:'',            lbl:'Todos',           test:function(p){return true;}},
+  {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado;}},
+  {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
+  {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
+  {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
+  {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
+  {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}}
+];
+function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
+function admBaseList(){
   var mode=segVal('adm-mode');
   var q=document.getElementById('adm-search').value.trim().toLowerCase();
   var list=STATE.slice();
   if(mode==='dia'){ var d=document.getElementById('adm-dia').value; if(d) list=list.filter(function(p){return p.fecha===d;}); }
   else if(mode==='mes'){ var m=document.getElementById('adm-mes').value; if(m) list=list.filter(function(p){return (p.fecha||'').slice(0,7)===m;}); }
-  if(q) list=list.filter(function(p){ return [p.oc,p.vendedor,p.cliente,p.zona,p.direccion,prodText(p.productos)].join(' ').toLowerCase().indexOf(q)>=0; });
-  list.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  if(q) list=list.filter(function(p){ return [p.oc,p.nota,p.vendedor,p.cliente,p.celular,p.zona,p.direccion,prodText(p.productos)].join(' ').toLowerCase().indexOf(q)>=0; });
   return list;
 }
+function admSort(list){
+  if(!SORT_KEY){ list.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); }); return list; }
+  var dn = SORT_KEY==='num' ? dayNumMap() : null;
+  function val(p){
+    switch(SORT_KEY){
+      case 'num':      return dn[p.id]||0;
+      case 'fecha':    return p.fecha||'';
+      case 'vendedor': return (p.vendedor||'').toLowerCase();
+      case 'cliente':  return (p.cliente||'').toLowerCase();
+      case 'zona':     return (p.zona||'').toLowerCase();
+      case 'saldo':    return p.pagado?0:(Number(p.saldo)||0);
+      case 'estado':   return (p.estado||'zzz')+(p.entregado?'-1':'-0');
+      default:         return '';
+    }
+  }
+  list.sort(function(a,b){ var x=val(a),y=val(b); if(x<y) return -SORT_DIR; if(x>y) return SORT_DIR; return (b.ts||0)-(a.ts||0); });
+  return list;
+}
+function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
+  renderChips(); renderRevisar();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -1088,7 +1143,12 @@ function renderAdmin(){
   var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
-  var head='<thead><tr><th>N°</th><th>Entrega</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var byCh={};
+  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=Number(p.cobradoBs)||0; else byCh[c].pend+=Number(p.saldo)||0; });
+  var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
+  document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
+
+  var head='<thead><tr>'+sh('num','N°')+sh('fecha','Entrega')+'<th>Nota vta</th><th>N° OC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th><th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Pago</th>'+sh('estado','Estado')+'<th>Vehículo</th>'+shNum('saldo','Saldo')+'<th>Acciones</th></tr></thead>';
   var dn=dayNumMap();
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
@@ -1106,6 +1166,8 @@ function renderAdmin(){
       '<td style="white-space:nowrap">'+vehCell+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td>'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
+        '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
+        '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
         '<button class="rowbtn" onclick="showPedidoModal(\''+p.id+'\')" title="Ver detalle">👁</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
@@ -1126,6 +1188,70 @@ function renderAdmin(){
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---- Filtros rápidos (chips) + orden de columnas ---- */
+function setQuick(k){ QUICK_FILTER=(QUICK_FILTER===k?'':k); renderAdmin(); }
+function renderChips(){
+  var el=document.getElementById('adm-chips'); if(!el) return;
+  var base=admBaseList();
+  el.innerHTML=QUICK_DEFS.map(function(d){
+    var n=d.k?base.filter(d.test).length:base.length;
+    var active=(QUICK_FILTER===d.k);
+    return '<button class="qchip'+(active?' active':'')+'" onclick="setQuick(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
+  }).join('');
+}
+function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } renderAdmin(); }
+function sortArrow(key){ return SORT_KEY===key?('<span class="sort-arr">'+(SORT_DIR>0?'▲':'▼')+'</span>'):''; }
+function sh(key,label){ return '<th class="sortable" onclick="setSort(\''+key+'\')">'+label+' '+sortArrow(key)+'</th>'; }
+function shNum(key,label){ return '<th class="sortable num" onclick="setSort(\''+key+'\')">'+label+' '+sortArrow(key)+'</th>'; }
+
+/* ---- Revisar antes de despachar: pedidos de mañana con datos faltantes ---- */
+var REVISAR_OPEN=false;
+function pedidoIssues(p){
+  var m=[];
+  if(!(p.chofer||p.vehiculo)) m.push('sin chofer');
+  if(!p.maps) m.push('sin Maps');
+  if(!(p.direccion&&String(p.direccion).trim())) m.push('sin dirección');
+  if(!(p.celular&&String(p.celular).trim())) m.push('sin celular');
+  return m;
+}
+function renderRevisar(){
+  var el=document.getElementById('adm-revisar'); if(!el) return;
+  var man=tomorrowStr();
+  var manList=STATE.filter(function(p){return p.fecha===man;});
+  var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
+  if(!manList.length || !probl.length){ el.className=''; el.innerHTML=''; return; }
+  var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
+  probl.forEach(function(o){ o.miss.forEach(function(m){ cnt[m]++; }); });
+  var resumen=Object.keys(cnt).filter(function(k){return cnt[k];}).map(function(k){return cnt[k]+' '+k;}).join(' · ');
+  var head='⚠️ <b>Revisar entregas de mañana</b> ('+man+'): <b>'+probl.length+'</b> de '+manList.length+' pedidos con datos faltantes &nbsp; '+
+    '<button class="rv-toggle" onclick="toggleRevisar()">'+(REVISAR_OPEN?'ocultar':'ver detalle')+'</button>'+
+    '<div style="margin-top:4px;font-size:.75rem">'+resumen+'</div>';
+  var detail='';
+  if(REVISAR_OPEN){
+    detail=probl.map(function(o){ var p=o.p;
+      return '<div class="rv-item"><b>'+esc(p.cliente||'(sin cliente)')+'</b>'+(p.oc?(' <span style="color:#a06a00">OC '+esc(p.oc)+'</span>'):'')+' '+
+        o.miss.map(function(m){return '<span class="rv-miss">'+m+'</span>';}).join(' ')+
+        '<button class="rowbtn" style="margin-left:auto" onclick="showPedidoModal(\''+p.id+'\')">Abrir</button></div>';
+    }).join('');
+  }
+  el.className='revisar'; el.innerHTML=head+detail;
+}
+function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
+
+/* ---- Acciones rápidas de fila: entregado / cobrado ---- */
+function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function applyPaid(p, metodo){
+  if(!p.pagado) p.cobradoBs=Number(p.saldo)||0;   // capturar lo cobrado en la entrega para la rendición
+  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
+  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+}
+function quickCobrado(id){
+  var p=findById(id); if(!p) return;
+  if(p.pagado){ p.pagado=false; p.saldo=Number(p.cobradoBs)||Number(p.saldo)||0; p.cobradoBs=0; p.metodoPago=''; persistPedido(p); toast('Cobro deshecho ✓','ok'); return; }
+  applyPaid(p,'Efectivo'); toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
+}
 
 /* ============================================================================
    Texto de pedido + copiar (WhatsApp / despacho)
@@ -1244,9 +1370,7 @@ function showPedidoModal(id){
 
 function markPaid(id, metodo){
   var p=findById(id); if(!p) return;
-  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
-  upsert(p); saveMirror(); updateStats(); renderAdmin();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  applyPaid(p, metodo);
   toast('Marcado como pagado ('+metodo+') ✓','ok');
   showPedidoModal(id);
 }
