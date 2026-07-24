@@ -669,7 +669,7 @@ function cellXml(ref,cv){
   if(cv.t==='n') return '<c r="'+ref+'"'+s+'><v>'+cv.v+'</v></c>';
   return '<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(cv.v)+'</t></is></c>';
 }
-var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="2"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="8"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFDF1D6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="13"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="4"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font></fonts><fills count="10"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFDF1D6"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="15"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 function buildSheetXml(sheet){
   var rowsXml='';
   for(var r=0;r<sheet.matrix.length;r++){
@@ -1944,7 +1944,8 @@ function exportExcel(scope){
   var H=1, C=2;
   var dn=dayNumMap();
   // Columnas: las 9 primeras VISIBLES (las que pediste); el resto se exporta OCULTO (datos completos disponibles).
-  var header=['FECHA DE ENTREGA','VENDEDOR - CLIENTE','PRODUCTO','CANTIDAD','CÓDIGO','CELULAR','TURNO','DIRECCIÓN','LINK','OBSERVACIONES','N° DÍA','INGRESADO','NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ZONA','PAGADO','MÉTODO PAGO','A CUENTA (Bs)','SALDO (Bs)','GARANTÍA','FACTURAR A','NIT','ESTADO STOCK','ENTREGADO','VEHÍCULO','CHOFER'].map(function(t){return {v:t,s:H};});
+  var BAD=13, GOOD=14; // estilos: rojo fuerte (no hay) / verde (hay)
+  var header=['FECHA DE ENTREGA','VENDEDOR - CLIENTE','PRODUCTO','CANTIDAD','REVISIÓN','CÓDIGO','CELULAR','TURNO','DIRECCIÓN','LINK','OBSERVACIONES','VERIFICADO','N° DÍA','INGRESADO','NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ZONA','PAGADO','MÉTODO PAGO','A CUENTA (Bs)','SALDO (Bs)','GARANTÍA','FACTURAR A','NIT','ESTADO STOCK','ENTREGADO','VEHÍCULO','CHOFER'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   var merges=[];
   list.forEach(function(p){
@@ -1958,26 +1959,33 @@ function exportExcel(scope){
     var startIdx=rows.length;
     prods.forEach(function(x,idx){
       var prodCol=(x.desc||'')+(x.medida?(' '+x.medida):'');
-      var cantCell=(x.cant===''||x.cant==null)?cl(''):{v:(Number(x.cant)||0),t:'n',s:fs};
+      // Revisión de logística: ✔ hay / ✗ no hay. Lo que NO hay se resalta en rojo.
+      var noHay=(x.chk==='no'), siHay=(x.chk==='ok');
+      var ps = noHay?BAD:fs;                                  // estilo del producto/cantidad
+      var rs = noHay?BAD:(siHay?GOOD:fs);                      // estilo de la celda REVISIÓN
+      var prodCell={v:prodCol, s:ps};
+      var cantCell=(x.cant===''||x.cant==null)?{v:'',s:ps}:{v:(Number(x.cant)||0),t:'n',s:ps};
+      var revCell={v:(noHay?'✗ NO HAY':(siHay?'✔ HAY':'')), s:rs};
       if(idx===0){
-        rows.push([ cl(p.fecha||''),cl(vendCli),cl(prodCol),cantCell,cl(x.codigo||''),cl(p.celular||''),cl(p.turno||''),cl(p.direccion||''),cl(p.maps||''),cl(p.observaciones||''),
+        rows.push([ cl(p.fecha||''),cl(vendCli),prodCell,cantCell,revCell,cl(x.codigo||''),cl(p.celular||''),cl(p.turno||''),cl(p.direccion||''),cl(p.maps||''),cl(p.observaciones||''),
+          cl(p.verificado?'SÍ':'NO'),
           cl(dn[p.id]||''),cl(tsFmt(p.ts)),cl(p.nota||''),cl(p.oc||''),cl(p.vendedor||''),cl(p.cliente||''),cl(p.zona||''),cl(p.pagado?'SÍ':'NO'),cl(p.metodoPago||''),
           {v:(Number(p.acuenta)||0),t:'n',s:fc},{v:(Number(p.saldo)||0),t:'n',s:fc},
           cl(p.garantia||''),cl(p.facturarA||''),cl(p.nit||''),cl(p.estado||''),cl(p.entregado?'SÍ':'NO'),cl(p.vehiculo||''),cl(p.chofer||'') ]);
       }else{
-        rows.push([ E,E,cl(prodCol),cantCell,cl(x.codigo||''),E,E,E,E,E, E,E,E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E ]);
+        rows.push([ E,E,prodCell,cantCell,revCell,cl(x.codigo||''),E,E,E,E,E, E,E,E,E,E,E,E,E,E,E, E,E, E,E,E,E,E,E,E ]);
       }
     });
     if(prods.length>1){
       var r1=startIdx+1, r2=startIdx+prods.length;
-      for(var c=0;c<28;c++){ if(c>=2&&c<=4) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
+      for(var c=0;c<30;c++){ if(c>=2&&c<=5) continue; merges.push(colLetter(c)+r1+':'+colLetter(c)+r2); }
     }
   });
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,saldo:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var res=[['Vendedor','Pedidos','Unidades','Saldo pendiente (Bs)'].map(function(t){return {v:t,s:H};})];
   Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).forEach(function(k){ res.push([k,{v:byV[k].n,t:'n'},{v:byV[k].u,t:'n'},{v:byV[k].saldo,t:'n',s:C}]); });
-  var bytes=buildXlsx([{name:'Pedidos',cols:[{w:14},{w:30},{w:32},{w:9},{w:12,h:1},{w:13},{w:8},{w:36},{w:28},{w:36},{w:6,h:1},{w:17,h:1},{w:14,h:1},{w:12,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:9,h:1},{w:13,h:1},{w:14,h:1},{w:14,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:16,h:1},{w:10,h:1},{w:16,h:1},{w:16,h:1}],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
+  var bytes=buildXlsx([{name:'Pedidos',cols:[{w:14},{w:30},{w:32},{w:9},{w:12},{w:12,h:1},{w:13},{w:8},{w:36},{w:28},{w:36},{w:12},{w:6,h:1},{w:17,h:1},{w:14,h:1},{w:12,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:9,h:1},{w:13,h:1},{w:14,h:1},{w:14,h:1},{w:18,h:1},{w:20,h:1},{w:14,h:1},{w:16,h:1},{w:10,h:1},{w:16,h:1},{w:16,h:1}],matrix:rows,merges:merges},{name:'Resumen',cols:[24,10,10,20],matrix:res}]);
   var tag;
   if(info){ tag=info.tag; }
   else { var mode=segVal('adm-mode'); tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos'; }
