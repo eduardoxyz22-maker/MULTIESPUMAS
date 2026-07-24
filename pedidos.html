@@ -81,6 +81,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .num-money input{padding-left:38px}
 
 .seg{display:inline-flex;border:1px solid var(--gray-md);border-radius:var(--r-md);overflow:hidden;background:#fff}
+.seg.seg-err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt);animation:segpulse .4s ease-in-out 2}
+@keyframes segpulse{0%,100%{box-shadow:0 0 0 3px var(--red-lt)}50%{box-shadow:0 0 0 5px var(--red-border)}}
 .seg button{padding:11px 22px;border:none;background:transparent;font:inherit;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer;transition:all .12s}
 .seg button.active{background:var(--teal);color:#fff}
 .seg.pay button[data-val="SI"].active{background:var(--green)}
@@ -230,7 +232,7 @@ th.sortable:hover{color:var(--teal-dk)}
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1>Registro de Pedidos</h1><p>Cargá desde el celular · se comparte con el equipo</p></div>
-    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l">Cupos mañana</div></div>
+    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l" id="stat-hoy-l">Cupos mañana</div></div>
   </div>
 </div>
 
@@ -817,10 +819,15 @@ function submitPedido(){
     var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
     return;
   }
-  if(!isEdit && cuposUsados(fechaSel) >= CUPOS_DIA){
-    toast('Cupos llenos para el '+fechaSel+' — elegí otra fecha','err');
-    var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'});
-    renderCupoForm(); return;
+  var turnoSel = normTurno(segVal('f-turno'));
+  if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= cupoTurno(turnoSel)){
+    var otro = turnoSel==='AM'?'PM':'AM';
+    var libreOtro = Math.max(0, cupoTurno(otro) - cuposUsadosTurno(fechaSel, otro));
+    toast('Turno '+turnoSel+' lleno para el '+fechaSel+' ('+cupoTurno(turnoSel)+'/'+cupoTurno(turnoSel)+'). '+(libreOtro>0?('Probá turno '+otro+' ('+libreOtro+' libres) u otra fecha.'):'Elegí otra fecha.'),'err');
+    renderCupoForm();
+    var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+    var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
+    return;
   }
   var rec={
     id: EDIT_ID||uid(),
@@ -858,10 +865,13 @@ function submitPedido(){
     apiSave(rec).then(function(res){
       setSubmitting(false);
       if(res && res.error==='cupos_llenos'){
-        // El servidor rechazó: el día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
+        // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
-        toast('❌ Cupos llenos para el '+rec.fecha+' — otro cargó al mismo tiempo. Cambiá la fecha y guardá de nuevo.','err');
-        var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'}); renderCupoForm();
+        var tmsg = res.turno ? ('Turno '+res.turno+' lleno') : 'Cupos llenos';
+        toast('❌ '+tmsg+' para el '+rec.fecha+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
+        renderCupoForm();
+        var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+        var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
         return;
       }
       if(res&&res.ok){ if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); } toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok'); flushPending(); }
@@ -973,26 +983,34 @@ function refreshDatalists(){
   Object.keys(zonas).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
 }
 function updateStats(){
-  // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana.
+  // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
   var man=tomorrowStr();
-  var rest=Math.max(0, CUPOS_DIA - cuposUsados(man));
-  document.getElementById('stat-hoy').textContent=rest;
+  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(man,'PM'));
+  document.getElementById('stat-hoy').textContent=(rAM+rPM);
+  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML='Cupos mañana · 🌅'+rAM+' 🌆'+rPM;
   updateFooter();
 }
 
-/* ---- Cupos por día (límite de pedidos/entregas diarias) ---- */
-var CUPOS_DIA = 25;
+/* ---- Cupos por día y por turno (límite logístico de entregas) ---- */
+var CUPOS_AM = 12, CUPOS_PM = 13;
+var CUPOS_DIA = CUPOS_AM + CUPOS_PM; // 25 total (compat)
+function normTurno(t){ return String(t||'').toUpperCase().indexOf('PM')>=0 ? 'PM' : 'AM'; }
+function cupoTurno(t){ return normTurno(t)==='PM' ? CUPOS_PM : CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
+function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
 function renderCupoForm(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
-  var usados=cuposUsados(fecha), rest=CUPOS_DIA-usados;
-  if(rest<=0){
+  var turno=normTurno(segVal('f-turno'));
+  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(fecha,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(fecha,'PM'));
+  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM;
+  var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
+  if(restSel<=0){
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Cupos llenos</b> para el '+fecha+' — '+usados+'/'+CUPOS_DIA+'. Elegí <b>otra fecha</b> para este pedido.';
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fecha+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea;
   }else{
-    el.className='cupo '+(rest<=5?'warn':'ok');
-    el.innerHTML='🎟️ Cupos del '+fecha+': <b>'+rest+'</b> de '+CUPOS_DIA+' libres'+(rest<=5?' — ¡quedan pocos!':'');
+    el.className='cupo '+(restSel<=3?'warn':'ok');
+    el.innerHTML='🎟️ Cupos del '+fecha+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
   }
 }
 function refreshCupos(){
@@ -1181,9 +1199,10 @@ function renderAdmin(){
   if(cupoEl){
     var cmode=segVal('adm-mode');
     var cdia = cmode==='dia' ? (document.getElementById('adm-dia').value||todayStr()) : todayStr();
-    var cus=cuposUsados(cdia), crest=CUPOS_DIA-cus;
-    cupoEl.className='cupo '+(crest<=0?'full':(crest<=5?'warn':'ok'));
-    cupoEl.innerHTML='🎟️ Cupos del '+cdia+': <b>'+Math.max(0,crest)+'</b> de '+CUPOS_DIA+' libres · '+cus+' usados'+(crest<=0?' — <b>LLENO</b>':'');
+    var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(cdia,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(cdia,'PM'));
+    var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
+    cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
+    cupoEl.innerHTML='🎟️ Cupos del '+cdia+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
   }
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
@@ -1691,7 +1710,7 @@ function buildMapaKml(list, coords){
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   initConnUI();
-  initSeg('f-turno',null);
+  initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
     if(val==='SI'){ wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }

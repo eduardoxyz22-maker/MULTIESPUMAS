@@ -16,13 +16,15 @@
  *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de) |
  *           Nota de venta | A cuenta (Bs) | Facturar a | NIT | N° del día
  *           (medida y código van dentro del texto de Productos)
- * El servidor hace cumplir el límite de 25 pedidos/día (CUPOS_DIA) y asigna
- * el N° del día correlativo (1,2,3…) de forma atómica.
+ * El servidor hace cumplir el límite por turno (12 AM / 13 PM = 25 por día)
+ * y asigna el N° del día correlativo (1,2,3…) de forma atómica.
  * ============================================================================
  */
 
 var SHEET_NAME = 'Pedidos';
-var CUPOS_DIA = 25; // máximo de pedidos por día (capacidad logística). El servidor lo hace cumplir aunque carguen varios a la vez.
+var CUPOS_AM = 12;  // máximo de entregas turno AM por día
+var CUPOS_PM = 13;  // máximo de entregas turno PM por día
+var CUPOS_DIA = CUPOS_AM + CUPOS_PM; // 25 por día (capacidad logística). El servidor lo hace cumplir aunque carguen varios a la vez.
 var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
@@ -203,18 +205,26 @@ function doSave(p) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { foundRow = i + 2; break; } }
   }
-  // PORTERO DE CUPOS: si es NUEVO, contar los del día y rechazar si ya hay 25.
-  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca pasa de 25.
+  // PORTERO DE CUPOS POR TURNO: si es NUEVO, contar los del día por turno y rechazar si el turno elegido está lleno (12 AM / 13 PM).
+  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca se pasa del límite.
   if (foundRow < 0 && p.fecha) {
-    var usados = 0, maxNro = 0;
+    var usados = 0, usadosAM = 0, usadosPM = 0, maxNro = 0;
     if (last >= 2) {
       var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
+      var turnos = sh.getRange(2, 8, last - 1, 1).getValues();             // col H = Turno
       var nros   = sh.getRange(2, HEADERS.length, last - 1, 1).getValues(); // última col = N° del día
       for (var j = 0; j < fechas.length; j++) {
-        if (fmtDate(fechas[j][0]) === String(p.fecha)) { usados++; var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n; }
+        if (fmtDate(fechas[j][0]) === String(p.fecha)) {
+          usados++;
+          if (String(turnos[j][0] || '').toUpperCase().indexOf('PM') >= 0) usadosPM++; else usadosAM++;
+          var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n;
+        }
       }
     }
-    if (usados >= CUPOS_DIA) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, cupos:CUPOS_DIA, usados:usados });
+    var tSel = String(p.turno || '').toUpperCase().indexOf('PM') >= 0 ? 'PM' : 'AM';
+    var limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;
+    var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
+    if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
     p.nroDia = Math.max(maxNro, usados) + 1; // N° correlativo del día (server-assigned, atómico por el lock)
   }
   var row = recToRow(p);
