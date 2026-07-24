@@ -1438,16 +1438,33 @@ function renderMis(){
     mc('var(--green)','Total cargados',mine.length,'histórico');
   if(!mine.length){ tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
   empty.style.display='none'; tbl.style.display='table';
-  var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th></th></tr></thead>';
+  var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th>Ubicación GPS</th></tr></thead>';
   var body=mine.slice(0,120).map(function(p){
     var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
     var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
+    var ubic=p.maps
+      ? '<a href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()" class="maplink" title="Abrir ubicación">📍</a> <button class="rowbtn on" onclick="editarUbicacionMis(\''+p.id+'\')" title="Editar ubicación GPS">✏️</button>'
+      : '<button class="rowbtn" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')" title="Agregar ubicación GPS">📍 Agregar</button>';
     return '<tr><td>'+esc(p.fecha||'')+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
       '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
-      '<td onclick="event.stopPropagation()"><button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button></td></tr>';
+      '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+ubic+' <button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button></td></tr>';
   }).join('');
   tbl.innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+/* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
+function editarUbicacionMis(id){
+  var p=findById(id); if(!p) return;
+  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nPegá el link de Google Maps (en Maps: Compartir → Copiar enlace).\nDejalo vacío para quitar la ubicación:', p.maps||'');
+  if(nuevo==null) return;
+  nuevo=String(nuevo).trim();
+  if(nuevo && !/^https?:\/\//i.test(nuevo)){ toast('El link debe empezar con http… — pegá el enlace de Google Maps','err'); return; }
+  p.maps=nuevo;
+  upsert(p); saveMirror();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  if(UNLOCKED) renderAdmin();
+  renderMis();
+  toast(nuevo?'Ubicación guardada ✓':'Ubicación quitada','ok');
 }
 
 /* ============================================================================
