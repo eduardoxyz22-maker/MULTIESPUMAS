@@ -421,7 +421,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 
         <div class="btn-row" style="margin-bottom:16px">
           <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
-          <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas (KML)</button>
+          <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
@@ -437,6 +437,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
+<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 
 <script>
 /* ============================================================================
@@ -1361,21 +1362,66 @@ function backupJson(){
    Mapa de entregas -> KML para Google My Maps (una capa por chofer)
    El backend resuelve los links cortos de Maps a coordenadas.
    ========================================================================== */
+var MAPA=null, MAPA_LIST=[], MAPA_COORDS={};
+var CHOFER_COLORS=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00897b','#6d4c41','#3949ab','#c2185b','#00acc1','#7cb342','#5e35b1'];
+function ensureLeaflet(cb){
+  if(window.L){ cb(); return; }
+  if(!document.getElementById('leaflet-css')){
+    var css=document.createElement('link'); css.id='leaflet-css'; css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    var js=document.createElement('script'); js.id='leaflet-js'; js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload=function(){ cb(); }; js.onerror=function(){ toast('No se pudo cargar el mapa (¿sin internet?).','err'); };
+    document.head.appendChild(js);
+  } else { var t=setInterval(function(){ if(window.L){ clearInterval(t); cb(); } },120); setTimeout(function(){ clearInterval(t); },12000); }
+}
 function exportMapa(){
   if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; }
   var list=admFilter().filter(function(p){ return p.maps && String(p.maps).trim(); });
   if(!list.length){ toast('No hay pedidos con link de Maps en esta vista.','err'); return; }
   var links=[], seen={};
   list.forEach(function(p){ var u=String(p.maps).trim(); if(!seen[u]){ seen[u]=1; links.push(u); } });
-  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Generando… ('+links.length+' ubicaciones)'; }
-  toast('Resolviendo '+links.length+' ubicaciones… puede tardar un momento','ok');
+  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Resolviendo… ('+links.length+')'; }
+  toast('Resolviendo '+links.length+' ubicaciones… puede tardar','ok');
   apiGeocode(links).then(function(res){
-    if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas (KML)'; }
-    if(!res||!res.ok||!Array.isArray(res.geo)){ toast('No se pudo resolver las ubicaciones. Revisá que el backend esté actualizado.','err'); return; }
+    if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; }
+    if(!res||!res.ok||!Array.isArray(res.geo)){ toast('No se pudo resolver las ubicaciones (¿backend actualizado?).','err'); return; }
     var coords={}; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) coords[g.link]=g; });
-    buildMapaKml(list, coords);
-  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas (KML)'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); });
+    MAPA_LIST=list; MAPA_COORDS=coords;
+    ensureLeaflet(showMapaView);
+  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); });
 }
+function mapaGrupos(){
+  var byC={}, order=[], ok=0, sin=0;
+  MAPA_LIST.forEach(function(p){ var g=MAPA_COORDS[String(p.maps).trim()]; if(!g){ sin++; return; }
+    var k=String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
+    if(!byC[k]){ byC[k]=[]; order.push(k); } byC[k].push({p:p,g:g}); ok++; });
+  order.sort();
+  return { byC:byC, order:order, ok:ok, sin:sin };
+}
+function showMapaView(){
+  var G=mapaGrupos();
+  if(!G.ok){ toast('No se pudo ubicar ningún pedido (links no resueltos).','err'); return; }
+  var colorOf={}; G.order.forEach(function(k,i){ colorOf[k]=CHOFER_COLORS[i%CHOFER_COLORS.length]; });
+  document.getElementById('mapa-overlay').style.display='flex';
+  document.getElementById('mapa-info').textContent=G.ok+' ubicados'+(G.sin?(' · '+G.sin+' sin ubicar'):'');
+  document.getElementById('mapa-legend').innerHTML=G.order.map(function(k){ return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:50%;background:'+colorOf[k]+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' ('+G.byC[k].length+')</span>'; }).join('');
+  var dn=dayNumMap();
+  if(MAPA){ MAPA.remove(); MAPA=null; }
+  MAPA=L.map('mapa-canvas');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA);
+  var pts=[];
+  G.order.forEach(function(k){ G.byC[k].forEach(function(it){
+    var p=it.p, g=it.g;
+    var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+    var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
+    var pop='<b>'+esc(title)+'</b><br>'+(p.celular?('📞 '+esc(p.celular)+'<br>'):'')+(p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+(prodText(p.productos)?(esc(prodText(p.productos))+'<br>'):'')+(p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps</a>'):'');
+    L.circleMarker([g.lat,g.lng],{radius:8,color:'#fff',weight:2,fillColor:colorOf[k],fillOpacity:.95}).bindPopup(pop).addTo(MAPA);
+    pts.push([g.lat,g.lng]);
+  }); });
+  setTimeout(function(){ MAPA.invalidateSize(); if(pts.length) MAPA.fitBounds(pts,{padding:[30,30]}); }, 150);
+}
+function closeMapa(){ var ov=document.getElementById('mapa-overlay'); if(ov) ov.style.display='none'; }
+function downloadMapaKml(){ if(!MAPA_LIST.length){ toast('Abrí el mapa primero.','err'); return; } buildMapaKml(MAPA_LIST, MAPA_COORDS); }
+
 function buildMapaKml(list, coords){
   var byC={}, ok=0, sin=0;
   list.forEach(function(p){
