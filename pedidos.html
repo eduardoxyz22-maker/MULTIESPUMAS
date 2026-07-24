@@ -218,12 +218,18 @@ th.sortable:hover{color:var(--teal-dk)}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
+.occ-row{display:flex;align-items:center;gap:8px;padding:5px 0}
 @media print{
   body.printing-ruta > *{ display:none !important; }
   body.printing-ruta #ruta-overlay{ display:block !important; position:static !important; background:#fff !important; }
   body.printing-ruta #ruta-overlay .no-print{ display:none !important; }
   body.printing-ruta #ruta-body{ overflow:visible !important; padding:0 !important; }
   body.printing-ruta .ruta-chofer{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
+  body.printing-carga > *{ display:none !important; }
+  body.printing-carga #carga-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-carga #carga-overlay .no-print{ display:none !important; }
+  body.printing-carga #carga-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-carga .carga-cam{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
 }
 </style>
 </head>
@@ -453,10 +459,22 @@ th.sortable:hover{color:var(--teal-dk)}
           <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-rendicion"></table></div>
         </div>
 
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-h">📅 Ocupación de cupos — próximos 7 días</div>
+            <div style="padding:10px 14px" id="adm-ocupacion"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h">🔥 Concentración por zona</div>
+            <div style="padding:10px 14px" id="adm-zonas"></div>
+          </div>
+        </div>
+
         <div class="btn-row" style="margin-bottom:16px">
           <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
           <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
@@ -474,6 +492,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
 /* ============================================================================
@@ -1131,7 +1150,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar();
+  renderChips(); renderRevisar(); renderOcupacion(); renderZonas();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -1258,6 +1277,109 @@ function renderRevisar(){
 }
 function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
 
+/* ---- Ocupación de cupos próximos 7 días ---- */
+function diaSemana(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
+function occBar(icon,used,max){
+  var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
+  var col=full?'var(--red)':(used>=max*0.8?'var(--amber)':'var(--teal)');
+  return '<span style="flex:1;display:flex;align-items:center;gap:6px">'+icon+
+    '<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
+    '<span style="width:42px;flex:none;font-size:.72rem;font-weight:700;color:'+(full?'var(--red)':'var(--muted)')+'">'+used+'/'+max+'</span></span>';
+}
+function renderOcupacion(){
+  var el=document.getElementById('adm-ocupacion'); if(!el) return;
+  var base=new Date(); base.setDate(base.getDate()+1); // desde mañana (no se agenda el mismo día)
+  var rows='';
+  for(var i=0;i<7;i++){
+    var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
+    var f=isoLocal(d), uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM;
+    rows+='<div class="occ-row">'+
+      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+f.slice(5)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
+      occBar('🌅',uAM,CUPOS_AM)+occBar('🌆',uPM,CUPOS_PM)+
+      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+(tot>=CUPOS_DIA?'var(--red)':'var(--muted)')+'">'+tot+'/'+CUPOS_DIA+'</span></div>';
+  }
+  el.innerHTML=rows;
+}
+
+/* ---- Concentración por zona (mapa de calor textual) ---- */
+function renderZonas(){
+  var el=document.getElementById('adm-zonas'); if(!el) return;
+  var list=admFilter(), byZ={};
+  list.forEach(function(p){ var z=String(p.zona||'').trim()||'(sin zona)'; if(!byZ[z])byZ[z]={n:0,pend:0}; byZ[z].n++; if(!p.entregado)byZ[z].pend++; });
+  var keys=Object.keys(byZ).sort(function(a,b){return byZ[b].n-byZ[a].n;});
+  if(!keys.length){ el.innerHTML='<div class="empty" style="padding:14px;color:var(--muted)">Sin datos</div>'; return; }
+  var maxN=byZ[keys[0]].n;
+  el.innerHTML=keys.slice(0,12).map(function(z){
+    var o=byZ[z], pct=Math.max(6,Math.round(o.n/maxN*100)), intens=o.n/maxN;
+    var col='hsl('+Math.round(28-intens*28)+','+Math.round(75+intens*15)+'%,'+Math.round(62-intens*17)+'%)';
+    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(z)+'">'+esc(z)+'</span>'+
+      '<span style="flex:1;height:15px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
+      '<span style="width:104px;flex:none;text-align:right;font-size:.74rem;color:var(--muted)"><b style="color:var(--text)">'+o.n+'</b> pedidos'+(o.pend?(' · '+o.pend+' pend'):'')+'</span></div>';
+  }).join('');
+}
+
+/* ---- Reprogramar entrega en 1 clic (respeta cupos por turno) ---- */
+function reprogramarPedido(id){
+  var p=findById(id); if(!p) return;
+  var nueva=prompt('Reprogramar entrega de "'+(p.cliente||'')+'"\nFecha actual: '+(p.fecha||'—')+' ('+normTurno(p.turno)+')\n\nNueva fecha (AAAA-MM-DD):', p.fecha||tomorrowStr());
+  if(nueva==null) return;
+  nueva=String(nueva).trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nueva)){ toast('Fecha inválida. Usá AAAA-MM-DD (ej. '+tomorrowStr()+')','err'); return; }
+  if(nueva<tomorrowStr()){ toast('La fecha debe ser desde mañana.','err'); return; }
+  if(nueva===p.fecha){ toast('Es la misma fecha.','err'); return; }
+  var t=normTurno(p.turno);
+  if(cuposUsadosTurno(nueva,t) >= cupoTurno(t)){
+    var otro=t==='AM'?'PM':'AM', libreOtro=Math.max(0,cupoTurno(otro)-cuposUsadosTurno(nueva,otro));
+    toast('Turno '+t+' lleno el '+nueva+' ('+cupoTurno(t)+'/'+cupoTurno(t)+'). '+(libreOtro>0?('En '+otro+' hay '+libreOtro+' libres — cambiá el turno primero.'):'Elegí otra fecha.'),'err');
+    return;
+  }
+  var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
+  persistPedido(p);
+  toast('Reprogramado: '+antes+' → '+nueva+' ✓','ok');
+  showPedidoModal(id);
+}
+
+/* ============================================================================
+   Lista de carga por camión (picking) — qué productos suben a cada vehículo
+   ========================================================================== */
+var CARGA_DIA='manana';
+function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
+function closeCarga(){ var ov=document.getElementById('carga-overlay'); if(ov) ov.style.display='none'; }
+function setCargaDia(d){ CARGA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('carga-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#0f766e':'#fff'; } }); renderCarga(); }
+function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')).trim(); }
+function renderCarga(){
+  var list=cargaLista(), byV={}, order=[];
+  list.forEach(function(p){
+    var k=String(p.vehiculo||'').trim()||'Sin vehículo';
+    if(!byV[k]){ byV[k]={stops:[],prod:{},bultos:0,choferes:{}}; order.push(k); }
+    byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
+    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; });
+  });
+  order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
+  var diaLbl=CARGA_DIA==='hoy'?('hoy '+todayStr()):CARGA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
+  var html='';
+  order.forEach(function(k){
+    var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
+    html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
+        '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
+        (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
+        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas</span></div>';
+    var pk=Object.keys(o.prod).sort();
+    html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
+      pk.map(function(kk){ return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none"> <b style="min-width:34px;color:#0f766e">'+o.prod[kk]+'×</b> '+esc(kk)+'</label>'; }).join('')+'</div>';
+    html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
+    o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
+      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('carga-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+}
+function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
+
 /* ---- Acciones rápidas de fila: entregado / cobrado ---- */
 function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 function applyPaid(p, metodo){
@@ -1380,6 +1502,7 @@ function showPedidoModal(id){
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
         '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
