@@ -29,7 +29,8 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
                'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)',
-               'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día'];
+               'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día','Verificado'];
+var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
 function getSheet() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -189,7 +190,8 @@ function readAll() {
       acuenta: Number(r[23]) || 0,
       facturarA: String(r[24] || ''),
       nit: String(r[25] == null ? '' : r[25]),
-      nroDia: Number(r[26]) || 0
+      nroDia: Number(r[26]) || 0,
+      verificado: (String(r[27]).toUpperCase().charAt(0) === 'S')
     });
   }
   return out;
@@ -212,7 +214,7 @@ function doSave(p) {
     if (last >= 2) {
       var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
       var turnos = sh.getRange(2, 8, last - 1, 1).getValues();             // col H = Turno
-      var nros   = sh.getRange(2, HEADERS.length, last - 1, 1).getValues(); // última col = N° del día
+      var nros   = sh.getRange(2, NRO_COL, last - 1, 1).getValues();        // col N° del día (ya no es la última)
       for (var j = 0; j < fechas.length; j++) {
         if (fmtDate(fechas[j][0]) === String(p.fecha)) {
           usados++;
@@ -258,7 +260,8 @@ function recToRow(p) {
     p.metodoPago || '', p.observaciones || '',
     p.estado || '', p.entregado ? 'SÍ' : 'NO',
     p.vehiculo || '', p.chofer || '', p.garantia || '',
-    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0
+    p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0,
+    p.verificado ? 'SÍ' : 'NO'
   ];
 }
 

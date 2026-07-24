@@ -149,8 +149,9 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .panel-h{padding:12px 16px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text);border-bottom:1px solid var(--gray-lt);display:flex;justify-content:space-between;align-items:center}
 
 .tw{overflow-x:auto;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);background:#fff}
+.tw-tall{max-height:72vh;overflow:auto}
 table{width:100%;border-collapse:collapse;font-size:.8rem;white-space:nowrap}
-thead th{background:var(--black);color:rgba(255,255,255,.8);padding:10px 12px;text-align:left;font-weight:600;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:3px solid var(--teal);position:sticky;top:0}
+thead th{background:var(--black);color:rgba(255,255,255,.8);padding:10px 12px;text-align:left;font-weight:600;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:3}
 tbody td{padding:9px 12px;border-bottom:1px solid var(--gray-lt);vertical-align:top}
 tbody tr:hover{background:var(--teal-lt)}
 .mini td,.mini th{font-size:.76rem;white-space:normal}
@@ -161,6 +162,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .b-green{background:var(--green-lt);color:var(--green);border:1px solid var(--green-border)}
 .b-red{background:var(--red-lt);color:var(--red);border:1px solid var(--red-border)}
 .b-gray{background:var(--gray-lt);color:var(--gray);border:1px solid var(--gray-md)}
+.b-verif{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
 /* Resaltado suave de fila según estado de stock */
 .row-stock{background:#e9f9f1}
@@ -509,7 +511,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
         </div>
 
-        <div class="tw"><table id="tbl-pedidos"></table></div>
+        <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="pedidos-empty" class="empty" style="display:none">No hay pedidos para este filtro todavía.</div>
       </div>
     </div>
@@ -529,7 +531,7 @@ th.sortable:hover{color:var(--teal-dk)}
       </div>
       <div id="mis-ubic-aviso"></div>
       <div class="metrics" id="mis-metrics"></div>
-      <div class="tw"><table id="mis-tbl"></table></div>
+      <div class="tw tw-tall"><table id="mis-tbl"></table></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
     </div>
   </div>
@@ -938,6 +940,7 @@ function submitPedido(){
     nit: document.getElementById('f-nit').value.trim(),
     estado: prev ? (prev.estado||'') : '',
     entregado: prev ? !!prev.entregado : false,
+    verificado: prev ? !!prev.verificado : false,
     vehiculo: prev ? (prev.vehiculo||'') : '',
     chofer: prev ? (prev.chofer||'') : '',
     nroDia: isEdit ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
@@ -1229,6 +1232,7 @@ var QUICK_DEFS=[
   {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado;}},
   {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
+  {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
   {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
   {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
   {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}}
@@ -1266,8 +1270,8 @@ function renderAdmin(){
   renderChips(); renderRevisar(); renderOcupacion(); renderZonas();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
-  var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, est={'En stock':0,'En producción':0,'No hay':0};
-  list.forEach(function(p){ if(p.pagado){ pagados++; if(mtd[p.metodoPago]!=null)mtd[p.metodoPago]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
+  var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
+  list.forEach(function(p){ if(p.pagado){ pagados++; if(mtd[p.metodoPago]!=null)mtd[p.metodoPago]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(p.verificado)verificados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
   var pend=total-pagados;
   document.getElementById('adm-metrics').innerHTML=
     mc('var(--teal)','Pedidos',total,unidades+' unidades')+
@@ -1276,7 +1280,7 @@ function renderAdmin(){
     mc('var(--amber)','Saldo pendiente',fmtBs(saldoPend),'suma por cobrar');
   document.getElementById('adm-metodos').innerHTML=
     'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
-    '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
+    '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
 
   var byV={};
   list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
@@ -1298,32 +1302,33 @@ function renderAdmin(){
   var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
   document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
 
-  var head='<thead><tr>'+sh('num','N°')+sh('fecha','Entrega')+'<th>Nota vta</th><th>N° OC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th><th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Pago</th>'+sh('estado','Estado')+'<th>Vehículo</th>'+shNum('saldo','Saldo')+'<th>Acciones</th></tr></thead>';
+  var head='<thead><tr><th>Acciones</th>'+sh('num','N°')+sh('fecha','Entrega')+'<th>N° OC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th><th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th>'+sh('estado','Estado')+'<th>Vehículo</th>'+shNum('saldo','Saldo')+'</tr></thead>';
   var dn=dayNumMap();
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
-    var pago=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):'<span class="badge b-red">DEBE</span>';
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
-    var estadoCell=estadoBadge(p.estado)+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
+    var estadoCell=estadoBadge(p.estado)+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(fmtFecha(p.fecha))+'</td><td><b>'+esc(p.nota||'—')+'</b></td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
-      '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
-      '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
-      '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td><td>'+pago+'</td>'+
-      '<td style="white-space:nowrap">'+estadoCell+'</td>'+
-      '<td style="white-space:nowrap">'+vehCell+'</td>'+
-      '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td>'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
+        '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
         '<button class="rowbtn" onclick="showPedidoModal(\''+p.id+'\')" title="Ver detalle">👁</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
-      '</td></tr>';
+      '</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
+      '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
+      '<td class="prod-cell">'+esc(p.direccion||'—')+'</td><td>'+maps+'</td>'+
+      '<td style="white-space:nowrap">'+estadoCell+'</td>'+
+      '<td style="white-space:nowrap">'+vehCell+'</td>'+
+      '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td>'+
+      '</tr>';
   }).join('');
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('pedidos-empty').style.display=list.length?'none':'block';
@@ -1489,17 +1494,18 @@ function renderCarga(){
   var html='';
   order.forEach(function(k){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
+    var nv=o.stops.filter(function(s){return s.verificado;}).length;
     html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
         '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
-        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas</span></div>';
+        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span></span></div>';
     var pk=Object.keys(o.prod).sort();
     html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
       pk.map(function(kk){ return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none"> <b style="min-width:34px;color:#0f766e">'+o.prod[kk]+'×</b> '+esc(kk)+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -1635,7 +1641,8 @@ function renderReporte(){
 }
 function printReporte(){ document.body.classList.add('printing-reporte'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-reporte'); },600); }
 
-/* ---- Acciones rápidas de fila: entregado / cobrado ---- */
+/* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
+function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
 function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 function applyPaid(p, metodo){
   if(!p.pagado) p.cobradoBs=Number(p.saldo)||0;   // capturar lo cobrado en la entrega para la rendición
@@ -1723,7 +1730,7 @@ function showPedidoModal(id){
     row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
-    row('Estado', estadoBadge(p.estado))+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
+    row('Estado', estadoBadge(p.estado))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
   var mark = !p.pagado ? (
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
@@ -1741,6 +1748,10 @@ function showPedidoModal(id){
         estadoBtn(p,'En stock','🟢 En stock','var(--green)')+
         estadoBtn(p,'En producción','🟡 En producción','var(--amber)')+
         estadoBtn(p,'No hay','🔴 No hay · reprogramar','var(--red)')+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
+        '<div class="lb">✅ ¿Verificado / listo para cargar?</div>'+
+        '<button class="btn btn-sm" style="'+(p.verificado?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleVerificado(\''+p.id+'\')">'+(p.verificado?'✓ SÍ, verificado':'Marcar verificado')+'</button>'+
       '</div>'+
       '<div style="display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap">'+
         '<div class="lb">🚚 ¿Entregado?</div>'+
@@ -1803,6 +1814,14 @@ function toggleEntregado(id){
   upsert(p); saveMirror(); renderAdmin();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
+  showPedidoModal(id);
+}
+function toggleVerificado(id){
+  var p=findById(id); if(!p) return;
+  p.verificado=!p.verificado;
+  upsert(p); saveMirror(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok');
   showPedidoModal(id);
 }
 
