@@ -1508,9 +1508,9 @@ function renderCarga(){
   var list=cargaLista(), byV={}, order=[];
   list.forEach(function(p){
     var k=vehiculoDe(p)||'Sin vehículo';
-    if(!byV[k]){ byV[k]={stops:[],prod:{},bultos:0,choferes:{}}; order.push(k); }
+    if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},bultos:0,choferes:{}}; order.push(k); }
     byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
-    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; });
+    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; if(x.chk==='no') byV[k].prodNo[kk]=(byV[k].prodNo[kk]||0)+c; });
   });
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
   var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
@@ -1519,17 +1519,22 @@ function renderCarga(){
   order.forEach(function(k){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
     var nv=o.stops.filter(function(s){return s.verificado;}).length;
+    var nSinStock=o.stops.filter(function(s){ return (s.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
     html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
       '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
         '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
         (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
-        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span></span></div>';
+        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas · <span style="color:'+(nv===o.stops.length?'#0369a1':'#c47f00')+'">✅ '+nv+'/'+o.stops.length+' verif.</span>'+(nSinStock?(' · <span style="color:#c0392b">⛔ '+nSinStock+' con faltante</span>'):'')+'</span></div>';
     var pk=Object.keys(o.prod).sort();
     html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
-      pk.map(function(kk){ var ck=cargaChkKey(k,kk); return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:#0f766e">'+o.prod[kk]+'×</b> '+esc(kk)+'</label>'; }).join('')+'</div>';
+      pk.map(function(kk){
+        var ck=cargaChkKey(k,kk), nNo=o.prodNo[kk]||0, todoNo=(nNo>=o.prod[kk]);
+        return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.6':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(todoNo?'#c0392b':'#0f766e')+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      var faltan=(p.productos||[]).filter(function(x){ return x.chk==='no'; }).map(function(x){ return cargaProdKey(x)+' × '+x.cant; });
+      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+
+        (faltan.length?('<div style="color:#c0392b;font-weight:700;margin-top:2px">⛔ NO HAY: '+esc(faltan.join(' · '))+'</div>'):'')+'</div>';
     });
     html+='</div>';
   });
