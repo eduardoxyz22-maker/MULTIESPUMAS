@@ -777,6 +777,11 @@ function submitPedido(){
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
+  if(!isEdit && fechaSel < tomorrowStr()){
+    toast('La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
+    var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
+    return;
+  }
   if(!isEdit && cuposUsados(fechaSel) >= CUPOS_DIA){
     toast('Cupos llenos para el '+fechaSel+' — elegí otra fecha','err');
     var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'});
@@ -843,7 +848,7 @@ function submitPedido(){
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
-  document.getElementById('f-fecha').value=tomorrowStr();
+  var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
   document.getElementById('f-vendedor').value='';
@@ -874,7 +879,7 @@ function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
   EDIT_ID=id;
-  document.getElementById('f-fecha').value=rec.fecha||todayStr();
+  var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
   document.getElementById('f-vendedor').value=rec.vendedor||'';
