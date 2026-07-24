@@ -150,6 +150,16 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 
 .tw{overflow-x:auto;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);background:#fff}
 .tw-tall{max-height:72vh;overflow:auto}
+/* Columna de Acciones fija a la izquierda (no se mueve al deslizar) */
+#tbl-pedidos thead th:first-child{left:0;z-index:4}
+#tbl-pedidos tbody td:first-child{position:sticky;left:0;z-index:2;background:#fff;box-shadow:1px 0 0 var(--gray-lt)}
+#tbl-pedidos tbody tr:hover td:first-child{background:var(--teal-lt)}
+#tbl-pedidos tbody tr.row-stock td:first-child{background:#e9f9f1}
+#tbl-pedidos tbody tr.row-prod td:first-child{background:#fef6e3}
+#tbl-pedidos tbody tr.row-nohay td:first-child{background:#fdecee}
+#tbl-pedidos tbody tr.row-especial td:first-child{background:#d6ecfb}
+#tbl-pedidos tbody tr.row-5070 td:first-child{background:#ffe6c7}
+#tbl-pedidos tbody tr.row-entregado td:first-child{background:#e7ebee !important}
 table{width:100%;border-collapse:collapse;font-size:.8rem;white-space:nowrap}
 thead th{background:var(--black);color:rgba(255,255,255,.8);padding:10px 12px;text-align:left;font-weight:600;font-size:.64rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:3px solid var(--teal);position:sticky;top:0;z-index:3}
 tbody td{padding:9px 12px;border-bottom:1px solid var(--gray-lt);vertical-align:top}
@@ -1316,7 +1326,6 @@ function renderAdmin(){
         '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
-        '<button class="rowbtn" onclick="showPedidoModal(\''+p.id+'\')" title="Ver detalle">👁</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
