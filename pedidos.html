@@ -1362,7 +1362,7 @@ function backupJson(){
    Mapa de entregas -> KML para Google My Maps (una capa por chofer)
    El backend resuelve los links cortos de Maps a coordenadas.
    ========================================================================== */
-var MAPA=null, MAPA_LIST=[], MAPA_COORDS={};
+var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0;
 var CHOFER_COLORS=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00897b','#6d4c41','#3949ab','#c2185b','#00acc1','#7cb342','#5e35b1'];
 function ensureLeaflet(cb){
   if(window.L){ cb(); return; }
@@ -1389,35 +1389,57 @@ function exportMapa(){
     ensureLeaflet(showMapaView);
   }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); });
 }
+function mapaKey(p){ return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer'; }
+function mapaColorFor(k){ if(!MAPA_COLOROF[k]){ MAPA_COLOROF[k]=CHOFER_COLORS[MAPA_COLIDX % CHOFER_COLORS.length]; MAPA_COLIDX++; } return MAPA_COLOROF[k]; }
 function mapaGrupos(){
   var byC={}, order=[], ok=0, sin=0;
   MAPA_LIST.forEach(function(p){ var g=MAPA_COORDS[String(p.maps).trim()]; if(!g){ sin++; return; }
-    var k=String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
-    if(!byC[k]){ byC[k]=[]; order.push(k); } byC[k].push({p:p,g:g}); ok++; });
+    var k=mapaKey(p); if(!byC[k]){ byC[k]=[]; order.push(k); } byC[k].push({p:p,g:g}); ok++; });
   order.sort();
   return { byC:byC, order:order, ok:ok, sin:sin };
+}
+function renderMapaLegend(){
+  var cnt={}, sin=0, ok=0;
+  MAPA_LIST.forEach(function(p){ if(!MAPA_COORDS[String(p.maps).trim()]){ sin++; return; } var k=mapaKey(p); cnt[k]=(cnt[k]||0)+1; ok++; });
+  document.getElementById('mapa-info').textContent=ok+' ubicados'+(sin?(' · '+sin+' sin ubicar'):'');
+  document.getElementById('mapa-legend').innerHTML=Object.keys(cnt).sort().map(function(k){ return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:50%;background:'+mapaColorFor(k)+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' ('+cnt[k]+')</span>'; }).join('');
+}
+function mapaPopup(p){
+  var dn=dayNumMap();
+  var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+  var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
+  var choferOpts='<option value=""'+(p.chofer?'':' selected')+'>Sin chofer</option>'+allChoferes().map(function(c){ return '<option'+(p.chofer===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+  return '<b>'+esc(title)+'</b><br>'+
+    (p.celular?('📞 '+esc(p.celular)+'<br>'):'')+
+    (p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+
+    (prodText(p.productos)?(esc(prodText(p.productos))+'<br>'):'')+
+    '<div style="margin:7px 0 3px"><b>🚛 Chofer:</b> <select onchange="asignarChoferMapa(\''+p.id+'\',this.value)" style="font:inherit;padding:3px 5px;max-width:150px">'+choferOpts+'</select></div>'+
+    (p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>'):'');
 }
 function showMapaView(){
   var G=mapaGrupos();
   if(!G.ok){ toast('No se pudo ubicar ningún pedido (links no resueltos).','err'); return; }
-  var colorOf={}; G.order.forEach(function(k,i){ colorOf[k]=CHOFER_COLORS[i%CHOFER_COLORS.length]; });
+  MAPA_COLOROF={}; MAPA_COLIDX=0; MAPA_MARKERS={};
+  G.order.forEach(function(k){ mapaColorFor(k); });
   document.getElementById('mapa-overlay').style.display='flex';
-  document.getElementById('mapa-info').textContent=G.ok+' ubicados'+(G.sin?(' · '+G.sin+' sin ubicar'):'');
-  document.getElementById('mapa-legend').innerHTML=G.order.map(function(k){ return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:50%;background:'+colorOf[k]+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' ('+G.byC[k].length+')</span>'; }).join('');
-  var dn=dayNumMap();
   if(MAPA){ MAPA.remove(); MAPA=null; }
   MAPA=L.map('mapa-canvas');
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA);
   var pts=[];
   G.order.forEach(function(k){ G.byC[k].forEach(function(it){
     var p=it.p, g=it.g;
-    var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
-    var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
-    var pop='<b>'+esc(title)+'</b><br>'+(p.celular?('📞 '+esc(p.celular)+'<br>'):'')+(p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+(prodText(p.productos)?(esc(prodText(p.productos))+'<br>'):'')+(p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps</a>'):'');
-    L.circleMarker([g.lat,g.lng],{radius:8,color:'#fff',weight:2,fillColor:colorOf[k],fillOpacity:.95}).bindPopup(pop).addTo(MAPA);
-    pts.push([g.lat,g.lng]);
+    var m=L.circleMarker([g.lat,g.lng],{radius:8,color:'#fff',weight:2,fillColor:mapaColorFor(k),fillOpacity:.95}).bindPopup(mapaPopup(p)).addTo(MAPA);
+    MAPA_MARKERS[p.id]=m; pts.push([g.lat,g.lng]);
   }); });
+  renderMapaLegend();
   setTimeout(function(){ MAPA.invalidateSize(); if(pts.length) MAPA.fitBounds(pts,{padding:[30,30]}); }, 150);
+}
+function asignarChoferMapa(id, c){
+  var p=findById(id); if(!p) return;
+  p.chofer=c; persistPedido(p);
+  var m=MAPA_MARKERS[id]; if(m&&m.setStyle){ m.setStyle({fillColor: mapaColorFor(mapaKey(p))}); }
+  renderMapaLegend();
+  toast(c?('Chofer asignado: '+c):'Chofer quitado','ok');
 }
 function closeMapa(){ var ov=document.getElementById('mapa-overlay'); if(ov) ov.style.display='none'; }
 function downloadMapaKml(){ if(!MAPA_LIST.length){ toast('Abrí el mapa primero.','err'); return; } buildMapaKml(MAPA_LIST, MAPA_COORDS); }
