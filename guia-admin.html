@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Guía del administrador · Panel · MultiEspumas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#00B5AD; --teal-mid:#00A09A; --teal-dk:#008F88; --teal-lt:#E6F7F6; --teal-border:#99DDD9;
+  --black:#1A1A1A; --text:#2D2D2D; --muted:#6B6B6B; --gray:#808080; --gray-md:#E2E2E2; --gray-lt:#F5F6F7; --white:#fff;
+  --red:#CE2939; --red-lt:#FDEAEC; --red-border:#F5C0C5;
+  --green:#22A06B; --green-lt:#E6F9F0; --green-border:#b8e6d0;
+  --amber:#D97706; --amber-lt:#FEF3E2; --amber-border:#FCD34D;
+  --blue:#1a73e8; --blue-lt:#e8f0fe;
+  --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r-md:10px; --r-lg:14px; --r-pill:20px;
+  --grad-header:linear-gradient(135deg,#00B5AD,#0f766e,#1e3a5f,#1d4ed8,#0f5c8a,#00B5AD);
+  --bg-app:linear-gradient(135deg,#e6fffe 0%,#f4f7ff 45%,#eef2ff 100%);
+  --sh-card:0 1px 5px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+html,body{background:var(--bg-app);min-height:100%}
+body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:56px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+@keyframes grad-move{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero{background:var(--grad-header);background-size:300% 300%;animation:grad-move 14s ease infinite;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.22)}
+@media(prefers-reduced-motion:reduce){.hero{animation:none}}
+.hero-in{max-width:760px;margin:0 auto;padding:28px 22px}
+.brand{font-size:.72rem;font-weight:800;letter-spacing:.2em;opacity:.9}
+.hero h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em;margin:9px 0 7px;line-height:1.14}
+.hero .sub{font-size:.92rem;opacity:.95;max-width:56ch}
+.sec{display:flex;align-items:center;gap:9px;margin:30px 2px 14px;font-size:.72rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-dk)}
+.sec::after{content:"";flex:1;height:1px;background:var(--gray-md)}
+.sec .em{font-size:1.05rem}
+.card{background:var(--white);border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:15px 18px;margin-bottom:12px;box-shadow:var(--sh-card)}
+.card h3{font-size:1.04rem;font-weight:800;color:var(--black);margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.card p{font-size:.9rem;color:var(--text);margin:5px 0}
+.card ul{margin:6px 0 2px;padding-left:20px}
+.card li{font-size:.9rem;margin:4px 0}
+.card b{font-weight:700;color:var(--black)}
+.kbd{display:inline-block;background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:6px;padding:1px 7px;font-size:.82em;font-weight:700;color:var(--teal-dk)}
+.callout{border-radius:var(--r-md);padding:11px 15px;margin:10px 0 2px;font-size:.87rem;border:1px solid;border-left-width:4px}
+.callout.tip{background:var(--teal-lt);border-color:var(--teal-border);color:#065f5b}
+.callout.warn{background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00}
+.callout.new{background:var(--green-lt);border-color:var(--green-border);color:#0a6b47}
+.callout b{font-weight:800}
+.pill{display:inline-block;font-size:.68rem;font-weight:800;padding:2px 8px;border-radius:var(--r-pill);white-space:nowrap;vertical-align:middle}
+.pill.redeploy{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
+.swatch{display:inline-block;width:13px;height:13px;border-radius:4px;vertical-align:middle;border:1px solid rgba(0,0,0,.15)}
+.toc{background:var(--white);border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:6px 8px;margin:18px 0 6px;box-shadow:var(--sh-card);display:flex;flex-wrap:wrap;gap:4px}
+.toc a{color:var(--teal-dk);text-decoration:none;font-weight:700;font-size:.8rem;padding:6px 10px;border-radius:8px}
+.toc a:hover{background:var(--teal-lt)}
+.foot{text-align:center;color:var(--muted);font-size:.78rem;margin-top:30px}
+@media print{ .hero{animation:none} body{padding-bottom:0} .card,.callout{break-inside:avoid} .toc{display:none} }
+</style>
+</head>
+<body>
+<div class="hero"><div class="hero-in">
+  <div class="brand">MULTIESPUMAS · ADMINISTRACIÓN</div>
+  <h1>Guía del administrador — Novedades del panel</h1>
+  <div class="sub">Todo lo nuevo para gestionar entregas, cobros y logística, explicado paso a paso.</div>
+</div></div>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <a href="#filtros">⚡ Filtros + orden</a>
+    <a href="#1clic">✅ Entregado/Cobrado</a>
+    <a href="#rendicion">💵 Rendición</a>
+    <a href="#revisar">⚠️ Revisar mañana</a>
+    <a href="#reprogramar">📅 Reprogramar</a>
+    <a href="#cupos">🎟️ Cupos/turno</a>
+    <a href="#zonas">🔥 Zonas</a>
+    <a href="#mapa">🗺️ Mapa</a>
+    <a href="#ruta">🧾 Hoja de ruta</a>
+    <a href="#carga">📦 Lista de carga</a>
+    <a href="#reporte">📊 Reporte</a>
+    <a href="#excel">⬇️ Excel</a>
+    <a href="#colores">🎨 Colores</a>
+    <a href="#backup">💾 Backup</a>
+  </nav>
+
+  <div class="sec"><span class="em">📋</span> En la tabla de pedidos</div>
+
+  <div class="card" id="filtros">
+    <h3>⚡ Filtros rápidos + ordenar columnas</h3>
+    <p>Arriba de la tabla hay <b>chips</b> con contador: <b>Por cobrar · Sin chofer · No entregados · AM · PM · Especiales</b>. Un clic filtra, otro clic lo quita.</p>
+    <p>Tocá el <b>encabezado</b> de una columna para <b>ordenar</b> (N°, Entrega, Vendedor, Cliente, Zona, Estado, Saldo). La flecha ▲▼ indica el orden.</p>
+    <div class="callout tip">🔎 La búsqueda ahora también encuentra por <b>nota de venta</b> y <b>celular</b>.</div>
+  </div>
+
+  <div class="card" id="1clic">
+    <h3>✅ Marcar Entregado / Cobrado en 1 clic</h3>
+    <p>En cada fila hay dos botones nuevos, sin abrir “Editar”:</p>
+    <ul>
+      <li><span class="kbd">🚚</span> <b>Entregado</b> — marca la entrega hecha.</li>
+      <li><span class="kbd">💰</span> <b>Cobrado</b> — marca cobrado en <b>efectivo</b>.</li>
+    </ul>
+    <p>Se ponen <b>verdes</b> al activarse; un clic de nuevo lo <b>deshace</b>.</p>
+    <div class="callout tip">💳 Si fue <b>QR o Tarjeta</b>, abrí el pedido y elegí el método ahí (el botón rápido asume efectivo).</div>
+  </div>
+
+  <div class="card" id="rendicion">
+    <h3>💵 Rendición por chofer</h3>
+    <p>Nueva tabla que muestra, por chofer: <b>salió a cobrar → cobrado → falta</b>. Sirve para <b>cuadrar la plata</b> cuando el chofer vuelve al final del día.</p>
+  </div>
+
+  <div class="card" id="revisar">
+    <h3>⚠️ Revisar entregas de mañana</h3>
+    <p>Aparece un <b>aviso ámbar</b> con los pedidos de <b>mañana</b> a los que les falta algo: <b>sin chofer, sin Maps, sin dirección o sin celular</b>. Tocá <b>“ver detalle”</b> y usá <b>“Abrir”</b> para corregir cada uno antes de despachar.</p>
+  </div>
+
+  <div class="card" id="reprogramar">
+    <h3>📅 Reprogramar en 1 clic</h3>
+    <p>En el detalle de un pedido, botón <b>“Reprogramar”</b> → escribís la <b>nueva fecha</b>. Respeta los <b>cupos por turno</b>: si el turno está lleno ese día, avisa y sugiere el otro turno o cambiar la fecha. Ideal para los pedidos marcados <b>“No hay stock”</b>.</p>
+  </div>
+
+  <div class="sec"><span class="em">🎟️</span> Planificación y cupos</div>
+
+  <div class="card" id="cupos">
+    <h3>🎟️ Cupos por turno + Ocupación 7 días</h3>
+    <p>El límite ahora es por turno: <b>12 AM 🌅 / 13 PM 🌆</b> por día (25 en total). El panel <b>“Ocupación de cupos — próximos 7 días”</b> muestra barras por turno para ver qué días se están llenando.</p>
+    <div class="callout warn">Si un turno se llena, el sistema <b>bloquea</b> nuevas cargas en ese turno (tanto en el celular como en el servidor) y pide cambiar de turno o fecha.</div>
+  </div>
+
+  <div class="card" id="zonas">
+    <h3>🔥 Concentración por zona (mapa de calor)</h3>
+    <p>Panel con <b>barras rankeadas</b> por zona, para ver <b>dónde se concentran las entregas</b> y planear mejor rutas y stock.</p>
+  </div>
+
+  <div class="sec"><span class="em">🚚</span> Logística y despacho</div>
+
+  <div class="card" id="mapa">
+    <h3>🗺️ Mapa de entregas <span class="pill redeploy">requiere redeploy</span></h3>
+    <p>Botón <b>“🗺️ Mapa de entregas”</b>. Muestra los pedidos como <b>pines en el mapa</b>, coloreados por chofer.</p>
+    <ul>
+      <li>Clic en un pin → <b>asignar el chofer</b> desde ahí.</li>
+      <li>Filtros <b>Hoy / Mañana / Todos</b> y <b>“Solo sin chofer”</b>.</li>
+      <li>Botón <b>KML</b> para abrir todo en <b>Google My Maps</b> (una capa por chofer).</li>
+    </ul>
+    <div class="callout warn">Para que el mapa ubique los links, hay que tener el <b>Apps Script actualizado</b> (redeploy con la última versión).</div>
+  </div>
+
+  <div class="card" id="ruta">
+    <h3>🧾 Hoja de ruta por chofer</h3>
+    <p>Botón <b>“🧾 Hoja de ruta”</b>. Agrupa por chofer las paradas y lo <b>a cobrar</b>.</p>
+    <ul>
+      <li><span class="kbd">📲 WhatsApp</span> — arma el mensaje del chofer con <b>links de Maps tocables</b> (esto es lo que el chofer usa para navegar). Lo copiás y lo pegás en su chat.</li>
+      <li><span class="kbd">🖨 Imprimir</span> — versión en papel (para tu control; los links no se tocan en papel).</li>
+    </ul>
+  </div>
+
+  <div class="card" id="carga">
+    <h3>📦 Lista de carga por camión</h3>
+    <p>Botón <b>“📦 Lista de carga”</b>. Por cada camión muestra:</p>
+    <ul>
+      <li><b>Qué cargar</b> — resumen de productos con <b>casillas para tildar</b> a medida que suben al camión.</li>
+      <li><b>Paradas en orden</b> de entrega.</li>
+    </ul>
+    <p>Se puede <b>imprimir</b> para el depósito. Filtro Hoy / Mañana / Todos.</p>
+  </div>
+
+  <div class="sec"><span class="em">📊</span> Reportes y datos</div>
+
+  <div class="card" id="reporte">
+    <h3>📊 Reporte semanal / mensual</h3>
+    <p>Botón <b>“📊 Reporte”</b>. Elegí el período <b>7 días / este mes / mes pasado</b> y ves:</p>
+    <ul>
+      <li>Totales: pedidos, entregados, cobrado y por cobrar.</li>
+      <li>Desglose <b>por vendedora</b> y <b>por chofer</b>.</li>
+    </ul>
+    <p>Se puede imprimir.</p>
+  </div>
+
+  <div class="card" id="excel">
+    <h3>⬇️ Excel</h3>
+    <p>El botón <b>“Descargar Excel”</b> exporta con las <b>columnas nombradas</b> visibles (Fecha de entrega, Vendedor - Cliente, Producto, Cantidad, Celular, Turno, Dirección, Link, Observaciones); el resto de los datos va <b>oculto</b> (por si los necesitás) y se mantiene la hoja <b>Resumen</b>.</p>
+  </div>
+
+  <div class="card" id="colores">
+    <h3>🎨 Colores de fila</h3>
+    <p>Los pedidos se resaltan solos para ubicarlos rápido:</p>
+    <ul>
+      <li><span class="swatch" style="background:#dbeafe"></span> <b>Celeste</b> — medida <b>especial</b> (cargada como “Otros”).</li>
+      <li><span class="swatch" style="background:#ffedd5"></span> <b>Naranja</b> — medida <b>50x70</b>.</li>
+    </ul>
+    <p>Estos colores también salen en el Excel.</p>
+  </div>
+
+  <div class="card" id="backup">
+    <h3>💾 Backup automático diario <span class="pill redeploy">configurar 1 vez</span></h3>
+    <p>El Apps Script guarda una <b>copia diaria</b> de la planilla en una carpeta de Google Drive (“Backups Pedidos MultiEspumas”), conservando las <b>últimas 30</b>.</p>
+    <div class="callout warn">Hay que configurarlo <b>una sola vez</b>: en el editor de Apps Script → <b>Activadores</b> (icono reloj) → <b>Añadir activador</b> → función <b>backupDiario</b>, <i>Según tiempo → Temporizador diario → 2–3 a.m.</i></div>
+  </div>
+
+  <div class="foot">MultiEspumas · Guía del administrador · Panel de pedidos y entregas. 💚</div>
+</div>
+</body>
+</html>

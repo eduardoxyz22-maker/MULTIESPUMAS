@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Guía del vendedor · Cargar pedidos · MultiEspumas</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#00B5AD; --teal-mid:#00A09A; --teal-dk:#008F88; --teal-lt:#E6F7F6; --teal-border:#99DDD9;
+  --black:#1A1A1A; --text:#2D2D2D; --muted:#6B6B6B; --gray:#808080; --gray-md:#E2E2E2; --gray-lt:#F5F6F7; --white:#fff;
+  --red:#CE2939; --red-lt:#FDEAEC; --red-border:#F5C0C5;
+  --green:#22A06B; --green-lt:#E6F9F0; --green-border:#b8e6d0;
+  --amber:#D97706; --amber-lt:#FEF3E2; --amber-border:#FCD34D;
+  --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r-md:10px; --r-lg:14px; --r-pill:20px;
+  --grad-header:linear-gradient(135deg,#00B5AD,#0f766e,#1e3a5f,#1d4ed8,#0f5c8a,#00B5AD);
+  --bg-app:linear-gradient(135deg,#e6fffe 0%,#f4f7ff 45%,#eef2ff 100%);
+  --sh-card:0 1px 5px rgba(0,0,0,.06);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+html,body{background:var(--bg-app);min-height:100%}
+body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-font-smoothing:antialiased;padding-bottom:56px}
+.wrap{max-width:720px;margin:0 auto;padding:0 16px}
+@keyframes grad-move{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.hero{background:var(--grad-header);background-size:300% 300%;animation:grad-move 14s ease infinite;color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.22)}
+@media(prefers-reduced-motion:reduce){.hero{animation:none}}
+.hero-in{max-width:720px;margin:0 auto;padding:28px 22px}
+.brand{font-size:.72rem;font-weight:800;letter-spacing:.2em;opacity:.9}
+.hero h1{font-size:1.6rem;font-weight:800;letter-spacing:-.01em;margin:9px 0 7px;line-height:1.14}
+.hero .sub{font-size:.92rem;opacity:.95;max-width:52ch}
+.sec{display:flex;align-items:center;gap:9px;margin:30px 2px 14px;font-size:.72rem;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-dk)}
+.sec::after{content:"";flex:1;height:1px;background:var(--gray-md)}
+.sec .em{font-size:1.05rem}
+.card{background:var(--white);border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:15px 18px;margin-bottom:12px;box-shadow:var(--sh-card)}
+.card h3{font-size:1.04rem;font-weight:800;color:var(--black);margin-bottom:5px;display:flex;align-items:center;gap:8px}
+.card p{font-size:.9rem;color:var(--text);margin:5px 0}
+.card ul{margin:6px 0 2px;padding-left:20px}
+.card li{font-size:.9rem;margin:4px 0}
+.card b{font-weight:700;color:var(--black)}
+.kbd{display:inline-block;background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:6px;padding:1px 7px;font-size:.82em;font-weight:700;color:var(--teal-dk)}
+.callout{border-radius:var(--r-md);padding:11px 15px;margin:10px 0 2px;font-size:.87rem;border:1px solid;border-left-width:4px}
+.callout.tip{background:var(--teal-lt);border-color:var(--teal-border);color:#065f5b}
+.callout.warn{background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00}
+.callout.new{background:var(--green-lt);border-color:var(--green-border);color:#0a6b47}
+.callout b{font-weight:800}
+.pill{display:inline-block;font-size:.7rem;font-weight:800;padding:2px 9px;border-radius:var(--r-pill);white-space:nowrap;vertical-align:middle}
+.pill.new{background:var(--green-lt);color:var(--green);border:1px solid var(--green-border)}
+.toc{background:var(--white);border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:6px 8px;margin:18px 0 6px;box-shadow:var(--sh-card);display:flex;flex-wrap:wrap;gap:4px}
+.toc a{color:var(--teal-dk);text-decoration:none;font-weight:700;font-size:.82rem;padding:6px 11px;border-radius:8px}
+.toc a:hover{background:var(--teal-lt)}
+.foot{text-align:center;color:var(--muted);font-size:.78rem;margin-top:30px}
+@media print{ .hero{animation:none} body{padding-bottom:0} .card,.callout{break-inside:avoid} .toc{display:none} }
+</style>
+</head>
+<body>
+<div class="hero"><div class="hero-in">
+  <div class="brand">MULTIESPUMAS · PEDIDOS</div>
+  <h1>Guía del vendedor — Novedades para cargar pedidos</h1>
+  <div class="sub">Todo lo nuevo, explicado fácil. 👉 Guardá esta página en <b>Favoritos</b> para tenerla a mano.</div>
+</div></div>
+
+<div class="wrap">
+
+  <nav class="toc">
+    <a href="#nombre">📋 Tu nombre</a>
+    <a href="#fecha">📅 Fecha de entrega</a>
+    <a href="#cupos">🎟️ Cupos por turno</a>
+    <a href="#producto">⚡ Cargar producto</a>
+    <a href="#medidas">📏 Medidas</a>
+    <a href="#maps">🗺️ Link de Maps</a>
+    <a href="#guardar">✅ Al guardar</a>
+    <a href="#mis">👤 Mis pedidos</a>
+  </nav>
+
+  <div class="sec"><span class="em">🆕</span> Lo más importante que cambió</div>
+
+  <div class="card" id="nombre">
+    <h3>📋 Tu nombre queda guardado</h3>
+    <p>Elegí tu nombre <b>una sola vez</b> en el campo <b>Vendedor</b>. Tu computadora lo recuerda y a partir de ahí <b>ya aparece solo</b> en cada pedido nuevo — no lo reescribís más.</p>
+    <div class="callout tip">💻 Cada vendedora entra desde <b>su propia compu</b>, así que cada una ve lo suyo. Aunque compartan el mismo wifi, <b>no se cruzan</b> (el nombre se guarda en la compu, no en la red).</div>
+  </div>
+
+  <div class="card" id="fecha">
+    <h3>📅 Fecha de <u>entrega</u> — siempre desde mañana</h3>
+    <p>La fecha del pedido ahora es la <b>fecha de entrega</b> (cuándo se le lleva al cliente), no la de carga.</p>
+    <ul>
+      <li>Se agenda con <b>1 día de anticipación</b>: no se puede elegir <b>hoy</b>.</li>
+      <li>El formulario ya viene con <b>mañana</b> puesto. Podés adelantar a otro día, pero nunca al mismo día.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="cupos">
+    <h3>🎟️ Cupos por turno — 12 en la mañana / 13 en la tarde</h3>
+    <p>Cada día tiene un límite: <b>12 entregas AM 🌅</b> y <b>13 entregas PM 🌆</b>. Arriba a la derecha ves <b>“Cupos mañana”</b> con lo que queda en cada turno.</p>
+    <div class="callout warn">🚫 Si el turno que elegís <b>ya está lleno</b>, el pedido <b>no se guarda</b> y sale un aviso rojo. La solución: elegí el <b>otro turno</b> (el aviso te dice cuántos cupos quedan) o cambiá la <b>fecha</b>.</div>
+  </div>
+
+  <div class="sec"><span class="em">⚡</span> Cargar más rápido y con menos errores</div>
+
+  <div class="card" id="producto">
+    <h3>⚡ Cargar el producto en segundos</h3>
+    <p>Ya no hace falta escribir todo a mano. Tenés <b>dos formas</b>:</p>
+    <ul>
+      <li><b>Por código:</b> escribí el <b>código</b> del producto → se llenan solos el <b>nombre</b> y la <b>medida</b>.</li>
+      <li><b>Por nombre:</b> elegí de la lista desplegable un <b>“NOMBRE MEDIDA”</b> → se llenan solos el <b>código</b> y la <b>medida</b>.</li>
+    </ul>
+    <div class="callout tip">✅ Siempre revisá que la medida quedó correcta antes de guardar.</div>
+  </div>
+
+  <div class="card" id="medidas">
+    <h3>📏 Medidas</h3>
+    <p>Elegí la <b>dimensión</b> de la lista: <b>90x190, 105x190, 140x190, 160x190, 180x190, 200x200, 50x70</b>.</p>
+    <p>Si es una <b>medida especial</b> que no está en la lista, elegí <b>“Otros…”</b> y escribila. Esos pedidos se <b>resaltan</b> para que logística los tenga presentes.</p>
+  </div>
+
+  <div class="card" id="maps">
+    <h3>🗺️ El link de Google Maps <span class="pill new">CLAVE</span></h3>
+    <p>Pegá el <b>link de la ubicación</b> del cliente (compartir ubicación desde Google Maps → “Copiar enlace”).</p>
+    <div class="callout tip">📍 Con el link, el pedido <b>aparece en el mapa</b> de logística y el <b>chofer navega directo</b> al tocar el enlace. Sin link igual se guarda, pero el chofer tiene que ubicarse solo. <b>Cargalo siempre que puedas.</b></div>
+  </div>
+
+  <div class="sec"><span class="em">✅</span> Después de guardar</div>
+
+  <div class="card" id="guardar">
+    <h3>✅ Comprobante “Ingresado”</h3>
+    <p>Al enviar el pedido ves un <b>comprobante</b> con la <b>fecha y hora</b> en que se cargó, y un botón para <b>copiarlo a WhatsApp</b> y reenviarlo si hace falta.</p>
+  </div>
+
+  <div class="card" id="mis">
+    <h3>👤 Pestaña nueva: “Mis pedidos”</h3>
+    <p>Arriba, entrá a <b>“📋 Mis pedidos”</b>. Con tu nombre puesto, ves <b>solo los tuyos</b>, con:</p>
+    <ul>
+      <li>Cuántos cargaste <b>hoy</b> y <b>este mes</b> (y las unidades).</li>
+      <li>Cuánto tenés <b>por cobrar</b>.</li>
+      <li>Botón <span class="kbd">📋</span> en cada pedido para <b>copiarlo y reenviarlo</b> por WhatsApp.</li>
+    </ul>
+  </div>
+
+  <div class="foot">MultiEspumas · Guía del vendedor · Cualquier duda, avisá al administrador. 💚</div>
+</div>
+</body>
+</html>

@@ -81,6 +81,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .num-money input{padding-left:38px}
 
 .seg{display:inline-flex;border:1px solid var(--gray-md);border-radius:var(--r-md);overflow:hidden;background:#fff}
+.seg.seg-err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt);animation:segpulse .4s ease-in-out 2}
+@keyframes segpulse{0%,100%{box-shadow:0 0 0 3px var(--red-lt)}50%{box-shadow:0 0 0 5px var(--red-border)}}
 .seg button{padding:11px 22px;border:none;background:transparent;font:inherit;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer;transition:all .12s}
 .seg button.active{background:var(--teal);color:#fff}
 .seg.pay button[data-val="SI"].active{background:var(--green)}
@@ -163,6 +165,22 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
+.rowbtn.on{background:var(--green-lt);color:var(--green);border-color:var(--green-border)}
+.rowbtn.on:hover{background:var(--green);color:#fff}
+.qchips{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 14px}
+.qchip{padding:7px 13px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-pill);font:inherit;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .12s}
+.qchip:hover{background:var(--gray-lt);color:var(--text)}
+.qchip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+.qchip .n{opacity:.7;font-weight:600}
+.qchip.active .n{opacity:.95}
+.revisar{background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#7c4b00;line-height:1.5}
+.revisar b{color:var(--amber)}
+.revisar .rv-toggle{color:#7c4b00;cursor:pointer;font-weight:800;text-decoration:underline;background:none;border:none;font:inherit}
+.revisar .rv-item{padding:7px 0;border-top:1px dashed var(--amber-border);font-size:.8rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.revisar .rv-miss{background:#fff;border:1px solid var(--amber-border);border-radius:var(--r-pill);padding:1px 8px;font-size:.68rem;font-weight:700;color:var(--amber)}
+th.sortable{cursor:pointer;user-select:none;white-space:nowrap}
+th.sortable:hover{color:var(--teal-dk)}
+.sort-arr{font-size:.7em;opacity:.9;margin-left:1px}
 .maplink{color:var(--teal-dk);font-weight:600;text-decoration:none}
 .maplink:hover{text-decoration:underline}
 .empty{text-align:center;padding:44px 20px;color:var(--muted);font-size:.86rem}
@@ -199,6 +217,24 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 .dl-v{flex:1;color:var(--text);word-break:break-word}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
+
+.occ-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+@media print{
+  body.printing-ruta > *{ display:none !important; }
+  body.printing-ruta #ruta-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-ruta #ruta-overlay .no-print{ display:none !important; }
+  body.printing-ruta #ruta-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-ruta .ruta-chofer{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
+  body.printing-carga > *{ display:none !important; }
+  body.printing-carga #carga-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-carga #carga-overlay .no-print{ display:none !important; }
+  body.printing-carga #carga-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-carga .carga-cam{ page-break-after:always; box-shadow:none !important; border:1px solid #bbb !important; }
+  body.printing-reporte > *{ display:none !important; }
+  body.printing-reporte #reporte-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-reporte #reporte-overlay .no-print{ display:none !important; }
+  body.printing-reporte #reporte-body{ overflow:visible !important; padding:0 !important; }
+}
 </style>
 </head>
 <body>
@@ -206,12 +242,13 @@ tbody tr.row-5070:hover{background:#ffdcb0}
   <div class="header-in">
     <div class="logo"><div class="logo-h">MULTIESPUMAS</div><div class="logo-s">PEDIDOS</div></div>
     <div class="htitle"><h1>Registro de Pedidos</h1><p>Cargá desde el celular · se comparte con el equipo</p></div>
-    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l">Cupos mañana</div></div>
+    <div class="hstat"><div class="hstat-v" id="stat-hoy">0</div><div class="hstat-l" id="stat-hoy-l">Cupos mañana</div></div>
   </div>
 </div>
 
 <div class="nav">
   <button id="tab-form" class="active" onclick="showView('form')">＋ Nuevo pedido</button>
+  <button id="tab-mis" onclick="showView('mis')">📋 Mis pedidos</button>
   <button id="tab-admin" onclick="showView('admin')">🔒 Administración</button>
 </div>
 
@@ -222,6 +259,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
       <div id="conn-form" class="conn off"><span class="dot"></span><span id="conn-form-txt"></span></div>
       <div id="cupo-form" class="cupo ok"></div>
       <a href="tutorial.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--teal-dk);font-weight:700;text-decoration:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:20px;padding:7px 14px;margin-bottom:16px">❓ ¿Cómo llenar el pedido? — ver la guía</a>
+      <a href="guia-vendedor.html" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:#0a6b47;font-weight:700;text-decoration:none;background:var(--green-lt);border:1px solid var(--green-border);border-radius:20px;padding:7px 14px;margin:0 0 16px 8px">🆕 Novedades — guía rápida</a>
 
       <div id="edit-banner" class="edit-banner">
         <span>✏️ Editando pedido <b id="edit-oc"></b></span>
@@ -248,7 +286,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
         </div>
         <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
-          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off">
+          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value)">
           <datalist id="dl-vendedores"></datalist>
         </div>
       </div>
@@ -400,6 +438,9 @@ tbody tr.row-5070:hover{background:#ffdcb0}
           </div>
         </div>
 
+        <div class="qchips" id="adm-chips"></div>
+        <div id="adm-revisar"></div>
+
         <div class="metrics" id="adm-metrics"></div>
         <div class="metodos-line" id="adm-metodos"></div>
 
@@ -419,11 +460,32 @@ tbody tr.row-5070:hover{background:#ffdcb0}
           <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-camion"></table></div>
         </div>
 
+        <div class="panel" style="margin-bottom:22px">
+          <div class="panel-h">💵 Rendición por chofer — salió a cobrar vs cobrado</div>
+          <div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini" id="tbl-rendicion"></table></div>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <div class="panel-h">📅 Ocupación de cupos — próximos 7 días</div>
+            <div style="padding:10px 14px" id="adm-ocupacion"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h">🔥 Concentración por zona</div>
+            <div style="padding:10px 14px" id="adm-zonas"></div>
+          </div>
+        </div>
+
         <div class="btn-row" style="margin-bottom:16px">
           <button class="btn btn-primary btn-sm" style="width:auto" onclick="exportExcel()">⬇ Descargar Excel</button>
+          <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
-          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="changePass()">🔑 Cambiar contraseña</button>
+          <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
+          <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
         </div>
 
         <div class="tw"><table id="tbl-pedidos"></table></div>
@@ -431,11 +493,33 @@ tbody tr.row-5070:hover{background:#ffdcb0}
       </div>
     </div>
   </div>
+
+  <!-- ============ MIS PEDIDOS VIEW ============ -->
+  <div id="view-mis" class="view">
+    <div class="card">
+      <div class="filters">
+        <div class="field" style="flex:1;min-width:180px">
+          <label class="lb">Tu nombre</label>
+          <input type="text" id="mis-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="renderMis()">
+        </div>
+        <div class="field">
+          <button class="btn btn-ghost btn-sm" onclick="refreshMis()">🔄 Actualizar</button>
+        </div>
+      </div>
+      <div class="metrics" id="mis-metrics"></div>
+      <div class="tw"><table id="mis-tbl"></table></div>
+      <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
+    </div>
+  </div>
 </div>
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
+<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
+<div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
 /* ============================================================================
@@ -611,6 +695,7 @@ function apiPost(payload){
 function apiList(){ return apiPost({action:'list'}); }
 function apiSave(rec){ return apiPost({action:'save', pedido:rec}); }
 function apiDelete(id){ return apiPost({action:'delete', id:id}); }
+function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
 
 function flushPending(){
   if(!CONNECTED) return Promise.resolve();
@@ -630,9 +715,12 @@ function flushPending(){
 function showView(v){
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
+  document.getElementById('view-mis').classList.toggle('active',v==='mis');
   document.getElementById('tab-form').classList.toggle('active',v==='form');
   document.getElementById('tab-admin').classList.toggle('active',v==='admin');
+  document.getElementById('tab-mis').classList.toggle('active',v==='mis');
   if(v==='admin' && UNLOCKED) loadFromServer(false);
+  if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=getVendedorMem(); } refreshMis(); }
 }
 function initConnUI(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
@@ -775,10 +863,20 @@ function submitPedido(){
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
-  if(!isEdit && cuposUsados(fechaSel) >= CUPOS_DIA){
-    toast('Cupos llenos para el '+fechaSel+' — elegí otra fecha','err');
-    var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'});
-    renderCupoForm(); return;
+  if(!isEdit && fechaSel < tomorrowStr()){
+    toast('La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
+    var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
+    return;
+  }
+  var turnoSel = normTurno(segVal('f-turno'));
+  if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= cupoTurno(turnoSel)){
+    var otro = turnoSel==='AM'?'PM':'AM';
+    var libreOtro = Math.max(0, cupoTurno(otro) - cuposUsadosTurno(fechaSel, otro));
+    toast('Turno '+turnoSel+' lleno para el '+fechaSel+' ('+cupoTurno(turnoSel)+'/'+cupoTurno(turnoSel)+'). '+(libreOtro>0?('Probá turno '+otro+' ('+libreOtro+' libres) u otra fecha.'):'Elegí otra fecha.'),'err');
+    renderCupoForm();
+    var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+    var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
+    return;
   }
   var rec={
     id: EDIT_ID||uid(),
@@ -807,6 +905,7 @@ function submitPedido(){
     ts: isEdit ? (prev?prev.ts:0) : Date.now()
   };
 
+  setVendedorMem(vendedor); // recordar quién soy en esta compu
   // Optimista: actualizamos la vista ya
   upsert(rec); saveMirror(); updateStats();
   if(UNLOCKED) renderAdmin();
@@ -816,10 +915,13 @@ function submitPedido(){
     apiSave(rec).then(function(res){
       setSubmitting(false);
       if(res && res.error==='cupos_llenos'){
-        // El servidor rechazó: el día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
+        // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
-        toast('❌ Cupos llenos para el '+rec.fecha+' — otro cargó al mismo tiempo. Cambiá la fecha y guardá de nuevo.','err');
-        var fe=document.getElementById('f-fecha'); fe.classList.add('err'); fe.focus(); fe.scrollIntoView({block:'center'}); renderCupoForm();
+        var tmsg = res.turno ? ('Turno '+res.turno+' lleno') : 'Cupos llenos';
+        toast('❌ '+tmsg+' para el '+rec.fecha+' — otro cargó al mismo tiempo. Cambiá turno/fecha y guardá de nuevo.','err');
+        renderCupoForm();
+        var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
+        var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
         return;
       }
       if(res&&res.ok){ if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); } toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok'); flushPending(); }
@@ -838,13 +940,16 @@ function submitPedido(){
   function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
 }
 
+/* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
+function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
+function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
-  document.getElementById('f-fecha').value=tomorrowStr();
+  var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
-  document.getElementById('f-vendedor').value='';
+  document.getElementById('f-vendedor').value=getVendedorMem();
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
   addProdRow();
@@ -872,7 +977,7 @@ function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
   EDIT_ID=id;
-  document.getElementById('f-fecha').value=rec.fecha||todayStr();
+  var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
   document.getElementById('f-vendedor').value=rec.vendedor||'';
@@ -931,26 +1036,34 @@ function refreshDatalists(){
   Object.keys(zonas).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
 }
 function updateStats(){
-  // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana.
+  // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
   var man=tomorrowStr();
-  var rest=Math.max(0, CUPOS_DIA - cuposUsados(man));
-  document.getElementById('stat-hoy').textContent=rest;
+  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(man,'PM'));
+  document.getElementById('stat-hoy').textContent=(rAM+rPM);
+  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML='Cupos mañana · 🌅'+rAM+' 🌆'+rPM;
   updateFooter();
 }
 
-/* ---- Cupos por día (límite de pedidos/entregas diarias) ---- */
-var CUPOS_DIA = 25;
+/* ---- Cupos por día y por turno (límite logístico de entregas) ---- */
+var CUPOS_AM = 12, CUPOS_PM = 13;
+var CUPOS_DIA = CUPOS_AM + CUPOS_PM; // 25 total (compat)
+function normTurno(t){ return String(t||'').toUpperCase().indexOf('PM')>=0 ? 'PM' : 'AM'; }
+function cupoTurno(t){ return normTurno(t)==='PM' ? CUPOS_PM : CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
+function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
 function renderCupoForm(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
-  var usados=cuposUsados(fecha), rest=CUPOS_DIA-usados;
-  if(rest<=0){
+  var turno=normTurno(segVal('f-turno'));
+  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(fecha,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(fecha,'PM'));
+  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM;
+  var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
+  if(restSel<=0){
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Cupos llenos</b> para el '+fecha+' — '+usados+'/'+CUPOS_DIA+'. Elegí <b>otra fecha</b> para este pedido.';
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fecha+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea;
   }else{
-    el.className='cupo '+(rest<=5?'warn':'ok');
-    el.innerHTML='🎟️ Cupos del '+fecha+': <b>'+rest+'</b> de '+CUPOS_DIA+' libres'+(rest<=5?' — ¡quedan pocos!':'');
+    el.className='cupo '+(restSel<=3?'warn':'ok');
+    el.innerHTML='🎟️ Cupos del '+fecha+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
   }
 }
 function refreshCupos(){
@@ -1030,17 +1143,48 @@ function loadFromServer(showToastOk){
 /* ============================================================================
    Admin: filtros / render
    ========================================================================== */
-function admFilter(){
+var QUICK_FILTER='';                 // '', 'cobrar','sinchofer','noentregado','am','pm','especial'
+var SORT_KEY='', SORT_DIR=1;         // orden de columnas (1 asc, -1 desc)
+var QUICK_DEFS=[
+  {k:'',            lbl:'Todos',           test:function(p){return true;}},
+  {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado;}},
+  {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
+  {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
+  {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
+  {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
+  {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}}
+];
+function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
+function admBaseList(){
   var mode=segVal('adm-mode');
   var q=document.getElementById('adm-search').value.trim().toLowerCase();
   var list=STATE.slice();
   if(mode==='dia'){ var d=document.getElementById('adm-dia').value; if(d) list=list.filter(function(p){return p.fecha===d;}); }
   else if(mode==='mes'){ var m=document.getElementById('adm-mes').value; if(m) list=list.filter(function(p){return (p.fecha||'').slice(0,7)===m;}); }
-  if(q) list=list.filter(function(p){ return [p.oc,p.vendedor,p.cliente,p.zona,p.direccion,prodText(p.productos)].join(' ').toLowerCase().indexOf(q)>=0; });
-  list.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  if(q) list=list.filter(function(p){ return [p.oc,p.nota,p.vendedor,p.cliente,p.celular,p.zona,p.direccion,prodText(p.productos)].join(' ').toLowerCase().indexOf(q)>=0; });
   return list;
 }
+function admSort(list){
+  if(!SORT_KEY){ list.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); }); return list; }
+  var dn = SORT_KEY==='num' ? dayNumMap() : null;
+  function val(p){
+    switch(SORT_KEY){
+      case 'num':      return dn[p.id]||0;
+      case 'fecha':    return p.fecha||'';
+      case 'vendedor': return (p.vendedor||'').toLowerCase();
+      case 'cliente':  return (p.cliente||'').toLowerCase();
+      case 'zona':     return (p.zona||'').toLowerCase();
+      case 'saldo':    return p.pagado?0:(Number(p.saldo)||0);
+      case 'estado':   return (p.estado||'zzz')+(p.entregado?'-1':'-0');
+      default:         return '';
+    }
+  }
+  list.sort(function(a,b){ var x=val(a),y=val(b); if(x<y) return -SORT_DIR; if(x>y) return SORT_DIR; return (b.ts||0)-(a.ts||0); });
+  return list;
+}
+function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
+  renderChips(); renderRevisar(); renderOcupacion(); renderZonas();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -1070,7 +1214,12 @@ function renderAdmin(){
   var cRows=Object.keys(byC).sort(function(a,b){return byC[b].n-byC[a].n;}).map(function(k){ return '<tr><td>🚛 '+esc(k)+'</td><td class="num">'+byC[k].n+'</td><td class="num">'+byC[k].ent+'</td><td class="num">'+byC[k].pend+'</td></tr>'; }).join('');
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
-  var head='<thead><tr><th>N°</th><th>Entrega</th><th>Nota vta</th><th>N° OC</th><th>Vendedor</th><th>Cliente</th><th>Productos</th><th>Celular</th><th>Turno</th><th>Zona</th><th>Dirección</th><th>Maps</th><th>Pago</th><th>Estado</th><th>Vehículo</th><th class="num">Saldo</th><th>Acciones</th></tr></thead>';
+  var byCh={};
+  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=Number(p.cobradoBs)||0; else byCh[c].pend+=Number(p.saldo)||0; });
+  var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
+  document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
+
+  var head='<thead><tr>'+sh('num','N°')+sh('fecha','Entrega')+'<th>Nota vta</th><th>N° OC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th><th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Pago</th>'+sh('estado','Estado')+'<th>Vehículo</th>'+shNum('saldo','Saldo')+'<th>Acciones</th></tr></thead>';
   var dn=dayNumMap();
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
@@ -1088,6 +1237,8 @@ function renderAdmin(){
       '<td style="white-space:nowrap">'+vehCell+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td>'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
+        '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
+        '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
         '<button class="rowbtn" onclick="showPedidoModal(\''+p.id+'\')" title="Ver detalle">👁</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
@@ -1101,13 +1252,251 @@ function renderAdmin(){
   if(cupoEl){
     var cmode=segVal('adm-mode');
     var cdia = cmode==='dia' ? (document.getElementById('adm-dia').value||todayStr()) : todayStr();
-    var cus=cuposUsados(cdia), crest=CUPOS_DIA-cus;
-    cupoEl.className='cupo '+(crest<=0?'full':(crest<=5?'warn':'ok'));
-    cupoEl.innerHTML='🎟️ Cupos del '+cdia+': <b>'+Math.max(0,crest)+'</b> de '+CUPOS_DIA+' libres · '+cus+' usados'+(crest<=0?' — <b>LLENO</b>':'');
+    var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(cdia,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(cdia,'PM'));
+    var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
+    cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
+    cupoEl.innerHTML='🎟️ Cupos del '+cdia+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
   }
 }
 function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ---- Filtros rápidos (chips) + orden de columnas ---- */
+function setQuick(k){ QUICK_FILTER=(QUICK_FILTER===k?'':k); renderAdmin(); }
+function renderChips(){
+  var el=document.getElementById('adm-chips'); if(!el) return;
+  var base=admBaseList();
+  el.innerHTML=QUICK_DEFS.map(function(d){
+    var n=d.k?base.filter(d.test).length:base.length;
+    var active=(QUICK_FILTER===d.k);
+    return '<button class="qchip'+(active?' active':'')+'" onclick="setQuick(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
+  }).join('');
+}
+function setSort(key){ if(SORT_KEY===key){ SORT_DIR=-SORT_DIR; } else { SORT_KEY=key; SORT_DIR=1; } renderAdmin(); }
+function sortArrow(key){ return SORT_KEY===key?('<span class="sort-arr">'+(SORT_DIR>0?'▲':'▼')+'</span>'):''; }
+function sh(key,label){ return '<th class="sortable" onclick="setSort(\''+key+'\')">'+label+' '+sortArrow(key)+'</th>'; }
+function shNum(key,label){ return '<th class="sortable num" onclick="setSort(\''+key+'\')">'+label+' '+sortArrow(key)+'</th>'; }
+
+/* ---- Revisar antes de despachar: pedidos de mañana con datos faltantes ---- */
+var REVISAR_OPEN=false;
+function pedidoIssues(p){
+  var m=[];
+  if(!(p.chofer||p.vehiculo)) m.push('sin chofer');
+  if(!p.maps) m.push('sin Maps');
+  if(!(p.direccion&&String(p.direccion).trim())) m.push('sin dirección');
+  if(!(p.celular&&String(p.celular).trim())) m.push('sin celular');
+  return m;
+}
+function renderRevisar(){
+  var el=document.getElementById('adm-revisar'); if(!el) return;
+  var man=tomorrowStr();
+  var manList=STATE.filter(function(p){return p.fecha===man;});
+  var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
+  if(!manList.length || !probl.length){ el.className=''; el.innerHTML=''; return; }
+  var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
+  probl.forEach(function(o){ o.miss.forEach(function(m){ cnt[m]++; }); });
+  var resumen=Object.keys(cnt).filter(function(k){return cnt[k];}).map(function(k){return cnt[k]+' '+k;}).join(' · ');
+  var head='⚠️ <b>Revisar entregas de mañana</b> ('+man+'): <b>'+probl.length+'</b> de '+manList.length+' pedidos con datos faltantes &nbsp; '+
+    '<button class="rv-toggle" onclick="toggleRevisar()">'+(REVISAR_OPEN?'ocultar':'ver detalle')+'</button>'+
+    '<div style="margin-top:4px;font-size:.75rem">'+resumen+'</div>';
+  var detail='';
+  if(REVISAR_OPEN){
+    detail=probl.map(function(o){ var p=o.p;
+      return '<div class="rv-item"><b>'+esc(p.cliente||'(sin cliente)')+'</b>'+(p.oc?(' <span style="color:#a06a00">OC '+esc(p.oc)+'</span>'):'')+' '+
+        o.miss.map(function(m){return '<span class="rv-miss">'+m+'</span>';}).join(' ')+
+        '<button class="rowbtn" style="margin-left:auto" onclick="showPedidoModal(\''+p.id+'\')">Abrir</button></div>';
+    }).join('');
+  }
+  el.className='revisar'; el.innerHTML=head+detail;
+}
+function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
+
+/* ---- Ocupación de cupos próximos 7 días ---- */
+function diaSemana(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
+function occBar(icon,used,max){
+  var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
+  var col=full?'var(--red)':(used>=max*0.8?'var(--amber)':'var(--teal)');
+  return '<span style="flex:1;display:flex;align-items:center;gap:6px">'+icon+
+    '<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
+    '<span style="width:42px;flex:none;font-size:.72rem;font-weight:700;color:'+(full?'var(--red)':'var(--muted)')+'">'+used+'/'+max+'</span></span>';
+}
+function renderOcupacion(){
+  var el=document.getElementById('adm-ocupacion'); if(!el) return;
+  var base=new Date(); base.setDate(base.getDate()+1); // desde mañana (no se agenda el mismo día)
+  var rows='';
+  for(var i=0;i<7;i++){
+    var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
+    var f=isoLocal(d), uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM;
+    rows+='<div class="occ-row">'+
+      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+f.slice(5)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
+      occBar('🌅',uAM,CUPOS_AM)+occBar('🌆',uPM,CUPOS_PM)+
+      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+(tot>=CUPOS_DIA?'var(--red)':'var(--muted)')+'">'+tot+'/'+CUPOS_DIA+'</span></div>';
+  }
+  el.innerHTML=rows;
+}
+
+/* ---- Concentración por zona (mapa de calor textual) ---- */
+function renderZonas(){
+  var el=document.getElementById('adm-zonas'); if(!el) return;
+  var list=admFilter(), byZ={};
+  list.forEach(function(p){ var z=String(p.zona||'').trim()||'(sin zona)'; if(!byZ[z])byZ[z]={n:0,pend:0}; byZ[z].n++; if(!p.entregado)byZ[z].pend++; });
+  var keys=Object.keys(byZ).sort(function(a,b){return byZ[b].n-byZ[a].n;});
+  if(!keys.length){ el.innerHTML='<div class="empty" style="padding:14px;color:var(--muted)">Sin datos</div>'; return; }
+  var maxN=byZ[keys[0]].n;
+  el.innerHTML=keys.slice(0,12).map(function(z){
+    var o=byZ[z], pct=Math.max(6,Math.round(o.n/maxN*100)), intens=o.n/maxN;
+    var col='hsl('+Math.round(28-intens*28)+','+Math.round(75+intens*15)+'%,'+Math.round(62-intens*17)+'%)';
+    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(z)+'">'+esc(z)+'</span>'+
+      '<span style="flex:1;height:15px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
+      '<span style="width:104px;flex:none;text-align:right;font-size:.74rem;color:var(--muted)"><b style="color:var(--text)">'+o.n+'</b> pedidos'+(o.pend?(' · '+o.pend+' pend'):'')+'</span></div>';
+  }).join('');
+}
+
+/* ---- Reprogramar entrega en 1 clic (respeta cupos por turno) ---- */
+function reprogramarPedido(id){
+  var p=findById(id); if(!p) return;
+  var nueva=prompt('Reprogramar entrega de "'+(p.cliente||'')+'"\nFecha actual: '+(p.fecha||'—')+' ('+normTurno(p.turno)+')\n\nNueva fecha (AAAA-MM-DD):', p.fecha||tomorrowStr());
+  if(nueva==null) return;
+  nueva=String(nueva).trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(nueva)){ toast('Fecha inválida. Usá AAAA-MM-DD (ej. '+tomorrowStr()+')','err'); return; }
+  if(nueva<tomorrowStr()){ toast('La fecha debe ser desde mañana.','err'); return; }
+  if(nueva===p.fecha){ toast('Es la misma fecha.','err'); return; }
+  var t=normTurno(p.turno);
+  if(cuposUsadosTurno(nueva,t) >= cupoTurno(t)){
+    var otro=t==='AM'?'PM':'AM', libreOtro=Math.max(0,cupoTurno(otro)-cuposUsadosTurno(nueva,otro));
+    toast('Turno '+t+' lleno el '+nueva+' ('+cupoTurno(t)+'/'+cupoTurno(t)+'). '+(libreOtro>0?('En '+otro+' hay '+libreOtro+' libres — cambiá el turno primero.'):'Elegí otra fecha.'),'err');
+    return;
+  }
+  var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
+  persistPedido(p);
+  toast('Reprogramado: '+antes+' → '+nueva+' ✓','ok');
+  showPedidoModal(id);
+}
+
+/* ============================================================================
+   Lista de carga por camión (picking) — qué productos suben a cada vehículo
+   ========================================================================== */
+var CARGA_DIA='manana';
+function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
+function closeCarga(){ var ov=document.getElementById('carga-overlay'); if(ov) ov.style.display='none'; }
+function setCargaDia(d){ CARGA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('carga-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#0f766e':'#fff'; } }); renderCarga(); }
+function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')).trim(); }
+function renderCarga(){
+  var list=cargaLista(), byV={}, order=[];
+  list.forEach(function(p){
+    var k=String(p.vehiculo||'').trim()||'Sin vehículo';
+    if(!byV[k]){ byV[k]={stops:[],prod:{},bultos:0,choferes:{}}; order.push(k); }
+    byV[k].stops.push(p); if(p.chofer) byV[k].choferes[p.chofer]=1;
+    (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; });
+  });
+  order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
+  var diaLbl=CARGA_DIA==='hoy'?('hoy '+todayStr()):CARGA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
+  var html='';
+  order.forEach(function(k){
+    var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
+    html+='<div class="carga-cam" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">'+
+      '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
+        '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#0f766e')+'">'+(esSin?'⚠️ SIN VEHÍCULO (asignar)':'🚛 '+esc(k))+'</b>'+
+        (chof.length?('<span style="font-size:.8rem;color:#666">'+esc(chof.join(', '))+'</span>'):'')+
+        '<span style="margin-left:auto;font-weight:700;color:#0f766e">'+o.bultos+' bultos · '+o.stops.length+' paradas</span></div>';
+    var pk=Object.keys(o.prod).sort();
+    html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
+      pk.map(function(kk){ return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem"><input type="checkbox" style="width:17px;height:17px;flex:none"> <b style="min-width:34px;color:#0f766e">'+o.prod[kk]+'×</b> '+esc(kk)+'</label>'; }).join('')+'</div>';
+    html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
+    o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
+      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+' — '+esc(prodText(p.productos))+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('carga-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+}
+function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
+
+/* ============================================================================
+   Mis pedidos (lado vendedora) — cada quien ve los suyos + su total
+   ========================================================================== */
+function refreshMis(){
+  if(!CONNECTED){ renderMis(); return; }
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } renderMis(); }).catch(function(){ renderMis(); });
+}
+function renderMis(){
+  var mv=document.getElementById('mis-vendedor'); if(!mv) return;
+  var v=(mv.value||'').trim();
+  setVendedorMem(v);
+  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty');
+  if(!v){ box.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
+  mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
+  mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
+  box.innerHTML=
+    mc('var(--teal)','Hoy',nHoy,'pedidos cargados')+
+    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades')+
+    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
+    mc('var(--green)','Total cargados',mine.length,'histórico');
+  if(!mine.length){ tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
+  empty.style.display='none'; tbl.style.display='table';
+  var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th></th></tr></thead>';
+  var body=mine.slice(0,120).map(function(p){
+    var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
+    var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
+    return '<tr><td>'+esc(p.fecha||'')+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
+      '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
+      '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
+      '<td onclick="event.stopPropagation()"><button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button></td></tr>';
+  }).join('');
+  tbl.innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
+/* ============================================================================
+   Reporte semanal / mensual — desempeño por vendedora y por chofer
+   ========================================================================== */
+var REP_PERIODO='mes';
+function repRango(){
+  var hoy=todayStr();
+  if(REP_PERIODO==='7d'){ var d=new Date(); d.setDate(d.getDate()-6); return {desde:isoLocal(d),hasta:hoy,lbl:'últimos 7 días'}; }
+  if(REP_PERIODO==='mespasado'){ var n=new Date(),y=n.getFullYear(),m=n.getMonth(); var first=new Date(y,m-1,1),last=new Date(y,m,0); return {desde:isoLocal(first),hasta:isoLocal(last),lbl:'mes pasado'}; }
+  var mes=hoy.slice(0,7); return {desde:mes+'-01',hasta:hoy,lbl:'este mes ('+mes+')'};
+}
+function repLista(){ var r=repRango(); return STATE.filter(function(p){ var f=p.fecha||''; return f>=r.desde && f<=r.hasta; }); }
+function abrirReporte(){ document.getElementById('reporte-overlay').style.display='flex'; renderReporte(); }
+function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(ov) ov.style.display='none'; }
+function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
+function renderReporte(){
+  var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=Number(p.cobradoBs)||0; else pend+=Number(p.saldo)||0; });
+  document.getElementById('rep-info').textContent=r.lbl+' · '+r.desde+' a '+r.hasta;
+  var byV={}; list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
+  var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=Number(p.cobradoBs)||0; else byC[c].pend+=Number(p.saldo)||0; });
+  var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
+  document.getElementById('reporte-body').innerHTML=
+    '<div class="metrics" style="margin-bottom:16px">'+
+      mc('var(--teal)','Pedidos',tot,unid+' unidades')+
+      mc('var(--green)','Entregados',ent,tot?Math.round(ent/tot*100)+'% del total':'—')+
+      mc('var(--green)','Cobrado (entrega)',fmtBs(cob),'en el período')+
+      mc('var(--red)','Por cobrar',fmtBs(pend),'saldo pendiente')+
+    '</div>'+
+    '<div class="panel" style="margin-bottom:16px"><div class="panel-h">🧑‍💼 Por vendedora</div><div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr><th>Vendedora</th><th class="num">Pedidos</th><th class="num">Unid.</th><th class="num">Entreg.</th><th class="num">Por cobrar</th></tr></thead><tbody>'+(vr||'<tr><td colspan="5" class="empty" style="padding:16px">Sin datos</td></tr>')+'</tbody></table></div></div>'+
+    '<div class="panel"><div class="panel-h">🚚 Por chofer</div><div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr><th>Chofer</th><th class="num">Entregas</th><th class="num">Entregadas</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(cr||'<tr><td colspan="5" class="empty" style="padding:16px">Sin datos</td></tr>')+'</tbody></table></div></div>';
+}
+function printReporte(){ document.body.classList.add('printing-reporte'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-reporte'); },600); }
+
+/* ---- Acciones rápidas de fila: entregado / cobrado ---- */
+function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function applyPaid(p, metodo){
+  if(!p.pagado) p.cobradoBs=Number(p.saldo)||0;   // capturar lo cobrado en la entrega para la rendición
+  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
+  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+}
+function quickCobrado(id){
+  var p=findById(id); if(!p) return;
+  if(p.pagado){ p.pagado=false; p.saldo=Number(p.cobradoBs)||Number(p.saldo)||0; p.cobradoBs=0; p.metodoPago=''; persistPedido(p); toast('Cobro deshecho ✓','ok'); return; }
+  applyPaid(p,'Efectivo'); toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
+}
 
 /* ============================================================================
    Texto de pedido + copiar (WhatsApp / despacho)
@@ -1217,6 +1606,7 @@ function showPedidoModal(id){
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
         '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
@@ -1226,9 +1616,7 @@ function showPedidoModal(id){
 
 function markPaid(id, metodo){
   var p=findById(id); if(!p) return;
-  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
-  upsert(p); saveMirror(); updateStats(); renderAdmin();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  applyPaid(p, metodo);
   toast('Marcado como pagado ('+metodo+') ✓','ok');
   showPedidoModal(id);
 }
@@ -1344,10 +1732,203 @@ function downloadBlob(bytes,filename,mime){
   var a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
+var RUTA_DIA='manana', RUTA_ORDER=[], RUTA_BYC={};
+function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function abrirRuta(){ document.getElementById('ruta-overlay').style.display='flex'; renderRuta(); }
+function closeRuta(){ var ov=document.getElementById('ruta-overlay'); if(ov) ov.style.display='none'; }
+function setRutaDia(d){ RUTA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('ruta-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderRuta(); }
+function renderRuta(){
+  var list=rutaLista();
+  RUTA_BYC={}; RUTA_ORDER=[];
+  list.forEach(function(p){ var k=String(p.chofer||'Sin chofer').trim()||'Sin chofer'; if(!RUTA_BYC[k]){ RUTA_BYC[k]=[]; RUTA_ORDER.push(k); } RUTA_BYC[k].push(p); });
+  RUTA_ORDER.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
+  RUTA_ORDER.forEach(function(k){ RUTA_BYC[k].sort(function(a,b){ var ta=(a.turno||'ZZ'),tb=(b.turno||'ZZ'); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }); });
+  var diaLbl=RUTA_DIA==='hoy'?('hoy '+todayStr()):RUTA_DIA==='manana'?('mañana '+tomorrowStr()):'todos';
+  document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
+  var html='';
+  RUTA_ORDER.forEach(function(k, idx){
+    var stops=RUTA_BYC[k], cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+    var esSin=(k==='Sin chofer');
+    html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
+    html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
+      '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
+      '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
+      (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
+      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
+    stops.forEach(function(p,i){
+      var cobro=p.pagado?'<span style="color:#2e7d32;font-weight:700">✅ PAGADO</span>':('<span style="color:#c0392b;font-weight:700">💰 COBRAR '+fmtBs(p.saldo)+'</span>'+(Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):''));
+      html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
+        '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
+        '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
+        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+cobro+
+        (p.maps?(' &nbsp;·&nbsp; <a href="'+esc(p.maps)+'" target="_blank" rel="noopener">🗺️ Maps</a>'):'')+
+        (p.observaciones?('<br><span style="color:#a05a00">📝 '+esc(p.observaciones)+'</span>'):'')+'</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('ruta-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
+}
+function rutaWhatsapp(idx){
+  var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
+  var diaLbl=RUTA_DIA==='hoy'?todayStr():RUTA_DIA==='manana'?tomorrowStr():'';
+  var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
+  stops.forEach(function(p,i){
+    L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
+    L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
+    L.push('   🛏️ '+prodText(p.productos));
+    L.push('   '+(p.pagado?'✅ PAGADO':('💰 COBRAR '+fmtBs(p.saldo))));
+    if(p.maps) L.push('   🗺️ '+p.maps);
+    if(p.observaciones) L.push('   📝 '+p.observaciones);
+    L.push('');
+  });
+  var text=L.join('\n'); copyText(text); window.open(whatsappUrl(text),'_blank');
+}
+function printRuta(){ document.body.classList.add('printing-ruta'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-ruta'); },600); }
 function backupJson(){
   var data=JSON.stringify({app:'ME_PEDIDOS',version:2,exported:todayStr(),pedidos:STATE},null,2);
   downloadBlob(new TextEncoder().encode(data),'respaldo-pedidos-'+todayStr()+'.json','application/json');
   toast('Respaldo descargado ✓','ok');
+}
+
+/* ============================================================================
+   Mapa de entregas -> KML para Google My Maps (una capa por chofer)
+   El backend resuelve los links cortos de Maps a coordenadas.
+   ========================================================================== */
+var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0, MAPA_SOLO_SIN=false, MAPA_DIA='manana';
+var CHOFER_COLORS=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00897b','#6d4c41','#3949ab','#c2185b','#00acc1','#7cb342','#5e35b1'];
+function ensureLeaflet(cb){
+  if(window.L){ cb(); return; }
+  if(!document.getElementById('leaflet-css')){
+    var css=document.createElement('link'); css.id='leaflet-css'; css.rel='stylesheet'; css.href='https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(css);
+    var js=document.createElement('script'); js.id='leaflet-js'; js.src='https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    js.onload=function(){ cb(); }; js.onerror=function(){ toast('No se pudo cargar el mapa (¿sin internet?).','err'); };
+    document.head.appendChild(js);
+  } else { var t=setInterval(function(){ if(window.L){ clearInterval(t); cb(); } },120); setTimeout(function(){ clearInterval(t); },12000); }
+}
+function mapaFilteredList(){
+  return STATE.filter(function(p){
+    if(!p.maps || !String(p.maps).trim()) return false;
+    if(MAPA_DIA==='hoy') return p.fecha===todayStr();
+    if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
+    return true;
+  });
+}
+function exportMapa(){ if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; } mapaRefresh(); }
+function setMapaDia(d){
+  MAPA_DIA=d;
+  ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('mapa-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } });
+  mapaRefresh();
+}
+function mapaRefresh(){
+  MAPA_LIST=mapaFilteredList();
+  document.getElementById('mapa-overlay').style.display='flex';
+  var need=[], seen={};
+  MAPA_LIST.forEach(function(p){ var u=String(p.maps).trim(); if(!MAPA_COORDS[u] && !seen[u]){ seen[u]=1; need.push(u); } });
+  if(!need.length){ ensureLeaflet(showMapaView); return; }
+  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Resolviendo… ('+need.length+')'; }
+  toast('Resolviendo '+need.length+' ubicaciones…','ok');
+  apiGeocode(need).then(function(res){
+    if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; }
+    if(res&&res.ok&&Array.isArray(res.geo)){ res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; }); }
+    else { toast('No se pudo resolver algunas ubicaciones (¿backend actualizado?).','err'); }
+    ensureLeaflet(showMapaView);
+  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); ensureLeaflet(showMapaView); });
+}
+function mapaKey(p){ return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer'; }
+function mapaVisible(p){ return !MAPA_SOLO_SIN || mapaKey(p)==='Sin chofer'; }
+function mapaColorFor(k){ if(!MAPA_COLOROF[k]){ MAPA_COLOROF[k]=CHOFER_COLORS[MAPA_COLIDX % CHOFER_COLORS.length]; MAPA_COLIDX++; } return MAPA_COLOROF[k]; }
+function mapaGrupos(){
+  var byC={}, order=[], ok=0, sin=0;
+  MAPA_LIST.forEach(function(p){ if(!mapaVisible(p)) return; var g=MAPA_COORDS[String(p.maps).trim()]; if(!g){ sin++; return; }
+    var k=mapaKey(p); if(!byC[k]){ byC[k]=[]; order.push(k); } byC[k].push({p:p,g:g}); ok++; });
+  order.sort();
+  return { byC:byC, order:order, ok:ok, sin:sin };
+}
+function renderMapaLegend(){
+  var cnt={}, sin=0, ok=0;
+  MAPA_LIST.forEach(function(p){ if(!mapaVisible(p)) return; if(!MAPA_COORDS[String(p.maps).trim()]){ sin++; return; } var k=mapaKey(p); cnt[k]=(cnt[k]||0)+1; ok++; });
+  document.getElementById('mapa-info').textContent=ok+(MAPA_SOLO_SIN?' sin chofer':' ubicados')+(sin?(' · '+sin+' sin ubicar'):'');
+  document.getElementById('mapa-legend').innerHTML=Object.keys(cnt).sort().map(function(k){ return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:50%;background:'+mapaColorFor(k)+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' ('+cnt[k]+')</span>'; }).join('');
+}
+function mapaPopup(p){
+  var dn=dayNumMap();
+  var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+  var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
+  var choferOpts='<option value=""'+(p.chofer?'':' selected')+'>Sin chofer</option>'+allChoferes().map(function(c){ return '<option'+(p.chofer===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+  return '<b>'+esc(title)+'</b><br>'+
+    (p.celular?('📞 '+esc(p.celular)+'<br>'):'')+
+    (p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+
+    (prodText(p.productos)?(esc(prodText(p.productos))+'<br>'):'')+
+    '<div style="margin:7px 0 3px"><b>🚛 Chofer:</b> <select onchange="asignarChoferMapa(\''+p.id+'\',this.value)" style="font:inherit;padding:3px 5px;max-width:150px">'+choferOpts+'</select></div>'+
+    (p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>'):'');
+}
+function showMapaView(){
+  var G=mapaGrupos();
+  document.getElementById('mapa-overlay').style.display='flex';
+  MAPA_COLOROF={}; MAPA_COLIDX=0; MAPA_MARKERS={};
+  G.order.forEach(function(k){ mapaColorFor(k); });
+  if(MAPA){ MAPA.remove(); MAPA=null; }
+  MAPA=L.map('mapa-canvas');
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(MAPA);
+  var pts=[];
+  G.order.forEach(function(k){ G.byC[k].forEach(function(it){
+    var p=it.p, g=it.g;
+    var m=L.circleMarker([g.lat,g.lng],{radius:8,color:'#fff',weight:2,fillColor:mapaColorFor(k),fillOpacity:.95}).bindPopup(mapaPopup(p)).addTo(MAPA);
+    MAPA_MARKERS[p.id]=m; pts.push([g.lat,g.lng]);
+  }); });
+  renderMapaLegend();
+  setTimeout(function(){ MAPA.invalidateSize(); if(pts.length) MAPA.fitBounds(pts,{padding:[30,30]}); else MAPA.setView([-17.7833,-63.1821],12); }, 150);
+}
+function toggleSoloSin(){
+  MAPA_SOLO_SIN=!MAPA_SOLO_SIN;
+  var b=document.getElementById('mapa-solosin');
+  if(b){ b.style.background=MAPA_SOLO_SIN?'#fff':'rgba(255,255,255,.22)'; b.style.color=MAPA_SOLO_SIN?'#00877f':'#fff'; b.textContent=(MAPA_SOLO_SIN?'☑':'◻')+' Solo sin chofer'; }
+  showMapaView();
+}
+function asignarChoferMapa(id, c){
+  var p=findById(id); if(!p) return;
+  p.chofer=c; persistPedido(p);
+  var m=MAPA_MARKERS[id];
+  if(MAPA_SOLO_SIN && mapaKey(p)!=='Sin chofer'){ if(m){ MAPA.removeLayer(m); delete MAPA_MARKERS[id]; } }
+  else if(m&&m.setStyle){ m.setStyle({fillColor: mapaColorFor(mapaKey(p))}); }
+  renderMapaLegend();
+  toast(c?('Chofer asignado: '+c):'Chofer quitado','ok');
+}
+function closeMapa(){ var ov=document.getElementById('mapa-overlay'); if(ov) ov.style.display='none'; }
+function downloadMapaKml(){ if(!MAPA_LIST.length){ toast('Abrí el mapa primero.','err'); return; } buildMapaKml(MAPA_LIST, MAPA_COORDS); }
+
+function buildMapaKml(list, coords){
+  var byC={}, ok=0, sin=0;
+  list.forEach(function(p){
+    var g=coords[String(p.maps).trim()];
+    if(!g){ sin++; return; }
+    var k=String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
+    (byC[k]||(byC[k]=[])).push({p:p,g:g}); ok++;
+  });
+  if(!ok){ toast('No se pudo ubicar ningún pedido (links no resueltos). Probá de nuevo o revisá el backend.','err'); return; }
+  var dn=dayNumMap();
+  var mode=segVal('adm-mode');
+  var tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos';
+  var kml='<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>'+xmlEsc('Entregas '+tag)+'</name>';
+  Object.keys(byC).sort().forEach(function(ch){
+    kml+='<Folder><name>'+xmlEsc(ch)+'</name>';
+    byC[ch].forEach(function(it){
+      var p=it.p, g=it.g;
+      var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+      var nom=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
+      var desc=[ p.cliente?('Cliente: '+p.cliente):'', p.celular?('Cel: '+p.celular):'',
+        p.direccion?('Dir: '+p.direccion):'', p.turno?('Turno: '+p.turno):'',
+        prodText(p.productos)?('Productos: '+prodText(p.productos)):'',
+        p.observaciones?('Obs: '+p.observaciones):'', p.maps?('Link: '+p.maps):'' ].filter(Boolean).join('\n');
+      kml+='<Placemark><name>'+xmlEsc(nom)+'</name><description>'+xmlEsc(desc)+'</description>'+
+           '<Point><coordinates>'+g.lng+','+g.lat+',0</coordinates></Point></Placemark>';
+    });
+    kml+='</Folder>';
+  });
+  kml+='</Document></kml>';
+  downloadBlob(new TextEncoder().encode(kml),'entregas-'+tag+'.kml','application/vnd.google-earth.kml+xml');
+  toast('Mapa listo: '+ok+' ubicados'+(sin?(' · '+sin+' sin ubicar'):'')+' ✓','ok');
 }
 
 /* ============================================================================
@@ -1356,7 +1937,7 @@ function backupJson(){
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   initConnUI();
-  initSeg('f-turno',null);
+  initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
     if(val==='SI'){ wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }

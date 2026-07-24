@@ -16,13 +16,15 @@
  *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de) |
  *           Nota de venta | A cuenta (Bs) | Facturar a | NIT | N° del día
  *           (medida y código van dentro del texto de Productos)
- * El servidor hace cumplir el límite de 25 pedidos/día (CUPOS_DIA) y asigna
- * el N° del día correlativo (1,2,3…) de forma atómica.
+ * El servidor hace cumplir el límite por turno (12 AM / 13 PM = 25 por día)
+ * y asigna el N° del día correlativo (1,2,3…) de forma atómica.
  * ============================================================================
  */
 
 var SHEET_NAME = 'Pedidos';
-var CUPOS_DIA = 25; // máximo de pedidos por día (capacidad logística). El servidor lo hace cumplir aunque carguen varios a la vez.
+var CUPOS_AM = 12;  // máximo de entregas turno AM por día
+var CUPOS_PM = 13;  // máximo de entregas turno PM por día
+var CUPOS_DIA = CUPOS_AM + CUPOS_PM; // 25 por día (capacidad logística). El servidor lo hace cumplir aunque carguen varios a la vez.
 var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
@@ -56,18 +58,102 @@ function doGet(e) {
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
 function doPost(e) {
+  var body = {};
+  try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
+  var action = body.action || 'save';
+  // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
+  if (action === 'geocode') return jsonOut({ ok:true, geo: resolveLinks(body.links || []) });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    var body = {};
-    try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
-    var action = body.action || 'save';
     if (action === 'list')   return jsonOut({ ok:true, pedidos: readAll() });
     if (action === 'delete') return doDelete(body.id);
     return doSave(body.pedido);
   } finally {
     lock.releaseLock();
   }
+}
+
+/* ============================================================================
+ * Geocodificación: resuelve links cortos de Google Maps (maps.app.goo.gl/...)
+ * a lat/long siguiendo la redirección y extrayendo las coordenadas de la URL
+ * final (o del cuerpo). Se cachean en la hoja "Geo" para no repetir el trabajo.
+ * ========================================================================== */
+function resolveLinks(links) {
+  var cache = getGeoCache();
+  var out = [], nuevos = [];
+  for (var i = 0; i < links.length; i++) {
+    var url = String(links[i] == null ? '' : links[i]).trim();
+    if (!url) { out.push(null); continue; }
+    if (cache[url]) { out.push({ link: url, lat: cache[url].lat, lng: cache[url].lng }); continue; }
+    var c = resolveOne(url);
+    if (c) { out.push({ link: url, lat: c.lat, lng: c.lng }); cache[url] = c; nuevos.push([url, c.lat, c.lng]); }
+    else out.push({ link: url, lat: null, lng: null });
+  }
+  if (nuevos.length) saveGeoCache(nuevos);
+  return out;
+}
+
+function followRedirects(url) {
+  var cur = url, hops = 0;
+  try {
+    while (hops < 6) {
+      var r = UrlFetchApp.fetch(cur, { followRedirects: false, muteHttpExceptions: true });
+      var code = r.getResponseCode();
+      if (code >= 300 && code < 400) {
+        var h = r.getAllHeaders(); var loc = h['Location'] || h['location'];
+        if (!loc) break;
+        cur = (String(loc).indexOf('http') === 0) ? loc : (cur.replace(/(\/\/[^\/]+).*/, '$1') + loc);
+        hops++;
+        if (extractCoords(cur)) return cur;
+        continue;
+      }
+      break;
+    }
+  } catch (e) {}
+  return cur;
+}
+
+function resolveOne(url) {
+  var finalUrl = followRedirects(url);
+  var c = extractCoords(finalUrl);
+  if (c) return c;
+  try {
+    var rb = UrlFetchApp.fetch(finalUrl, { followRedirects: true, muteHttpExceptions: true });
+    var body = rb.getContentText();
+    var mb = body.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || body.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || body.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
+    if (mb) { var la = parseFloat(mb[1]), ln = parseFloat(mb[2]); if (!isNaN(la) && !isNaN(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180) return { lat: la, lng: ln }; }
+  } catch (e) {}
+  return null;
+}
+
+function extractCoords(u) {
+  u = String(u || '');
+  var m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
+       || u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+       || u.match(/[?&](?:q|ll|daddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
+       || u.match(/[\/=](-?\d{1,2}\.\d{3,}),(-?\d{1,3}\.\d{3,})/);
+  if (m) {
+    var lat = parseFloat(m[1]), lng = parseFloat(m[2]);
+    if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat: lat, lng: lng };
+  }
+  return null;
+}
+
+function getGeoCache() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Geo');
+  if (!sh) { sh = ss.insertSheet('Geo'); sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]); return {}; }
+  var vals = sh.getDataRange().getValues(); var c = {};
+  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[String(vals[i][0])] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]) }; }
+  return c;
+}
+
+function saveGeoCache(rows) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName('Geo') || ss.insertSheet('Geo');
+  if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]);
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 3).setValues(rows);
 }
 
 function readAll() {
@@ -119,18 +205,26 @@ function doSave(p) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { foundRow = i + 2; break; } }
   }
-  // PORTERO DE CUPOS: si es NUEVO, contar los del día y rechazar si ya hay 25.
-  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca pasa de 25.
+  // PORTERO DE CUPOS POR TURNO: si es NUEVO, contar los del día por turno y rechazar si el turno elegido está lleno (12 AM / 13 PM).
+  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca se pasa del límite.
   if (foundRow < 0 && p.fecha) {
-    var usados = 0, maxNro = 0;
+    var usados = 0, usadosAM = 0, usadosPM = 0, maxNro = 0;
     if (last >= 2) {
       var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
+      var turnos = sh.getRange(2, 8, last - 1, 1).getValues();             // col H = Turno
       var nros   = sh.getRange(2, HEADERS.length, last - 1, 1).getValues(); // última col = N° del día
       for (var j = 0; j < fechas.length; j++) {
-        if (fmtDate(fechas[j][0]) === String(p.fecha)) { usados++; var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n; }
+        if (fmtDate(fechas[j][0]) === String(p.fecha)) {
+          usados++;
+          if (String(turnos[j][0] || '').toUpperCase().indexOf('PM') >= 0) usadosPM++; else usadosAM++;
+          var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n;
+        }
       }
     }
-    if (usados >= CUPOS_DIA) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, cupos:CUPOS_DIA, usados:usados });
+    var tSel = String(p.turno || '').toUpperCase().indexOf('PM') >= 0 ? 'PM' : 'AM';
+    var limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;
+    var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
+    if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
     p.nroDia = Math.max(maxNro, usados) + 1; // N° correlativo del día (server-assigned, atómico por el lock)
   }
   var row = recToRow(p);
@@ -192,4 +286,36 @@ function fmtDate(v) {
     return v.getFullYear() + '-' + (m < 10 ? '0' : '') + m + '-' + (d < 10 ? '0' : '') + d;
   }
   return String(v);
+}
+
+/* ============================================================================
+   BACKUP AUTOMÁTICO DIARIO
+   Copia la planilla completa a una carpeta de Drive, conservando las últimas 30.
+   Configuración (una sola vez): editor de Apps Script -> Activadores (icono reloj,
+   panel izquierdo) -> Añadir activador -> función: backupDiario · fuente: Según tiempo
+   · tipo: Temporizador diario · hora: 2 a.m. a 3 a.m. Guardar (pedirá permiso de Drive).
+   Para probar: ejecutá backupDiario() a mano una vez desde el editor.
+   ========================================================================== */
+var BACKUP_FOLDER = 'Backups Pedidos MultiEspumas';
+var BACKUP_KEEP = 30; // cuántas copias conservar
+
+function backupDiario() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var folder = backupFolder_();
+  var stamp = Utilities.formatDate(new Date(), 'GMT-4', 'yyyy-MM-dd_HH-mm');
+  var copia = DriveApp.getFileById(ss.getId()).makeCopy('Pedidos ' + stamp, folder);
+  purgeBackups_(folder, BACKUP_KEEP);
+  return copia.getUrl();
+}
+
+function backupFolder_() {
+  var it = DriveApp.getFoldersByName(BACKUP_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(BACKUP_FOLDER);
+}
+
+function purgeBackups_(folder, keep) {
+  var files = [], it = folder.getFiles();
+  while (it.hasNext()) files.push(it.next());
+  files.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
+  for (var i = keep; i < files.length; i++) files[i].setTrashed(true);
 }
