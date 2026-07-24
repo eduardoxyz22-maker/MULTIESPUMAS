@@ -437,7 +437,7 @@ tbody tr.row-5070:hover{background:#ffdcb0}
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
-<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
+<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 
 <script>
 /* ============================================================================
@@ -1362,7 +1362,7 @@ function backupJson(){
    Mapa de entregas -> KML para Google My Maps (una capa por chofer)
    El backend resuelve los links cortos de Maps a coordenadas.
    ========================================================================== */
-var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0, MAPA_SOLO_SIN=false;
+var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0, MAPA_SOLO_SIN=false, MAPA_DIA='manana';
 var CHOFER_COLORS=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00897b','#6d4c41','#3949ab','#c2185b','#00acc1','#7cb342','#5e35b1'];
 function ensureLeaflet(cb){
   if(window.L){ cb(); return; }
@@ -1373,22 +1373,34 @@ function ensureLeaflet(cb){
     document.head.appendChild(js);
   } else { var t=setInterval(function(){ if(window.L){ clearInterval(t); cb(); } },120); setTimeout(function(){ clearInterval(t); },12000); }
 }
-function exportMapa(){
-  if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; }
-  var list=admFilter().filter(function(p){ return p.maps && String(p.maps).trim(); });
-  if(!list.length){ toast('No hay pedidos con link de Maps en esta vista.','err'); return; }
-  var links=[], seen={};
-  list.forEach(function(p){ var u=String(p.maps).trim(); if(!seen[u]){ seen[u]=1; links.push(u); } });
-  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Resolviendo… ('+links.length+')'; }
-  toast('Resolviendo '+links.length+' ubicaciones… puede tardar','ok');
-  apiGeocode(links).then(function(res){
+function mapaFilteredList(){
+  return STATE.filter(function(p){
+    if(!p.maps || !String(p.maps).trim()) return false;
+    if(MAPA_DIA==='hoy') return p.fecha===todayStr();
+    if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
+    return true;
+  });
+}
+function exportMapa(){ if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; } mapaRefresh(); }
+function setMapaDia(d){
+  MAPA_DIA=d;
+  ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('mapa-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } });
+  mapaRefresh();
+}
+function mapaRefresh(){
+  MAPA_LIST=mapaFilteredList();
+  document.getElementById('mapa-overlay').style.display='flex';
+  var need=[], seen={};
+  MAPA_LIST.forEach(function(p){ var u=String(p.maps).trim(); if(!MAPA_COORDS[u] && !seen[u]){ seen[u]=1; need.push(u); } });
+  if(!need.length){ ensureLeaflet(showMapaView); return; }
+  var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Resolviendo… ('+need.length+')'; }
+  toast('Resolviendo '+need.length+' ubicaciones…','ok');
+  apiGeocode(need).then(function(res){
     if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; }
-    if(!res||!res.ok||!Array.isArray(res.geo)){ toast('No se pudo resolver las ubicaciones (¿backend actualizado?).','err'); return; }
-    var coords={}; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) coords[g.link]=g; });
-    if(!Object.keys(coords).length){ toast('No se pudo ubicar ningún pedido (links no resueltos, ¿backend actualizado?).','err'); return; }
-    MAPA_LIST=list; MAPA_COORDS=coords; MAPA_SOLO_SIN=false;
+    if(res&&res.ok&&Array.isArray(res.geo)){ res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; }); }
+    else { toast('No se pudo resolver algunas ubicaciones (¿backend actualizado?).','err'); }
     ensureLeaflet(showMapaView);
-  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); });
+  }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); ensureLeaflet(showMapaView); });
 }
 function mapaKey(p){ return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer'; }
 function mapaVisible(p){ return !MAPA_SOLO_SIN || mapaKey(p)==='Sin chofer'; }
