@@ -181,6 +181,9 @@ tbody tr:hover{background:var(--teal-lt)}
 .chkbtn.im{background:#f5c400;color:#5a4500;border-color:#f5c400}
 .chkbtn.wide{width:auto;padding:0 10px;font-size:.74rem;white-space:nowrap}
 .prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem}
+/* Parada de la lista de carga: se toca para abrir la ficha del pedido */
+.carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
+.carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
 /* Resaltado suave de fila según estado de stock */
 .row-stock{background:#e9f9f1}
@@ -205,6 +208,8 @@ tbody tr.row-entregado td b{color:#55636b}
 .qchip{padding:7px 13px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-pill);font:inherit;font-size:.75rem;font-weight:700;color:var(--muted);cursor:pointer;transition:all .12s}
 .qchip:hover{background:var(--gray-lt);color:var(--text)}
 .qchip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
+/* Chips pegados a la tabla: quedan fijos al desplazar la página para filtrar sin subir */
+.qchips-tabla{position:sticky;top:0;z-index:6;background:#fff;padding:10px 0 12px;margin:0;border-bottom:1px solid var(--gray-lt)}
 .qchip .n{opacity:.7;font-weight:600}
 .qchip.active .n{opacity:.95}
 .revisar{background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#7c4b00;line-height:1.5}
@@ -232,7 +237,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .seg.mtd button[data-val="Tarjeta"].active{background:var(--purple,#7C3AED)}
 
 /* Modal flotante */
-.modal-overlay{position:fixed;inset:0;background:rgba(15,40,45,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:300;padding:20px 12px;overflow-y:auto}
+.modal-overlay{position:fixed;inset:0;background:rgba(15,40,45,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);display:none;align-items:flex-start;justify-content:center;z-index:4000;padding:20px 12px;overflow-y:auto}
 .modal-overlay.on{display:flex}
 .modal{background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.35);max-width:540px;width:100%;margin:auto;overflow:hidden;animation:pop .18s ease}
 @keyframes pop{from{transform:translateY(10px) scale(.98);opacity:0}to{transform:none;opacity:1}}
@@ -474,7 +479,6 @@ th.sortable:hover{color:var(--teal-dk)}
           </div>
         </div>
 
-        <div class="qchips" id="adm-chips"></div>
         <div id="adm-revisar"></div>
 
         <div class="metrics" id="adm-metrics"></div>
@@ -530,6 +534,7 @@ th.sortable:hover{color:var(--teal-dk)}
           <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
         </div>
 
+        <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="pedidos-empty" class="empty" style="display:none">No hay pedidos para este filtro todavía.</div>
       </div>
@@ -1497,6 +1502,9 @@ function reprogramarPedido(id){
 var CARGA_DIA='manana';
 function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
 function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
+/* Si la lista de carga está abierta, refrescarla al cambiar algo desde la ficha del pedido */
+function cargaAbierta(){ var ov=document.getElementById('carga-overlay'); return !!(ov && ov.style.display==='flex'); }
+function refreshCarga(){ if(cargaAbierta()) renderCarga(); }
 function closeCarga(){ var ov=document.getElementById('carga-overlay'); if(ov) ov.style.display='none'; }
 function setCargaDia(d){ CARGA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('carga-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#0f766e':'#fff'; } }); renderCarga(); }
 function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')).trim(); }
@@ -1547,7 +1555,7 @@ function renderCarga(){
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div style="padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop" onclick="showPedidoModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -1635,6 +1643,7 @@ function editarUbicacion(id, reopen){
   upsert(p); saveMirror();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   if(UNLOCKED) renderAdmin();
+  refreshCarga();
   renderMis();
   toast(nuevo?'Ubicación guardada ✓':'Ubicación quitada','ok');
   if(reopen && document.getElementById('modal').classList.contains('on')) reopen(id);
@@ -1888,14 +1897,14 @@ function estadoBtn(p,val,label,color){
 function setEstado(id,val){
   var p=findById(id); if(!p) return;
   p.estado=(p.estado===val)?'':val; // tocar el mismo lo desmarca
-  upsert(p); saveMirror(); renderAdmin();
+  upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   showPedidoModal(id);
 }
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
   p.entregado=!p.entregado;
-  upsert(p); saveMirror(); renderAdmin();
+  upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
   showPedidoModal(id);
@@ -1928,7 +1937,7 @@ function setProdChk(id, idx, val){
   var x=p.productos[idx];
   x.chk=(x.chk===val)?'':val;              // tocar el mismo lo desmarca
   syncVerificado(p);
-  upsert(p); saveMirror(); renderAdmin();
+  upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   showPedidoModal(id);
 }
@@ -1936,7 +1945,7 @@ function prodChkIcon(x){ return x.chk==='ok'?'<span style="color:var(--green);fo
 function toggleVerificado(id){
   var p=findById(id); if(!p) return;
   p.verificado=!p.verificado;
-  upsert(p); saveMirror(); renderAdmin();
+  upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok');
   showPedidoModal(id);
@@ -1972,7 +1981,7 @@ function choferSelect(p){
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); showPedidoModal(id); }
 function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); showPedidoModal(id); }
 function persistPedido(p){
-  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 
