@@ -1616,9 +1616,10 @@ function misPendientes(mine){
   var sinStock=[], sinGps=[];
   mine.forEach(function(p){
     if(p.entregado) return;
+    // Solo avisamos por lo que NO HAY. "📥 Recoger IM" no cuenta: el producto existe,
+    // solo hay que traerlo del otro almacén — eso lo resuelve logística, no el cliente.
     var falta=(p.productos||[]).filter(function(x){ return x.chk==='no'; });
-    var recoger=(p.productos||[]).filter(esRecoger);
-    if(falta.length||recoger.length) sinStock.push({p:p, falta:falta, recoger:recoger});
+    if(falta.length) sinStock.push({p:p, falta:falta});
     if(!p.maps) sinGps.push(p);
   });
   return {sinStock:sinStock, sinGps:sinGps};
@@ -1627,7 +1628,7 @@ function avisoMisHtml(mine){
   var q=misPendientes(mine), n=q.sinStock.length, g=q.sinGps.length;
   if(!n && !g) return '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-left:4px solid var(--green);border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#0a6b47">✅ No tenés nada pendiente. ¡Bien ahí!</div>';
   var partes=[];
-  if(n) partes.push('<b>'+n+'</b> '+(n===1?'pedido con producto que no hay':'pedidos con productos que no hay'));
+  if(n) partes.push('<b>'+n+'</b> '+(n===1?'pedido con un producto que no hay':'pedidos con productos que no hay'));
   if(g) partes.push('<b>'+g+'</b> '+(g===1?'ubicación GPS por cargar':'ubicaciones GPS por cargar'));
   var rojo=n>0;
   return '<div style="background:'+(rojo?'var(--red-lt)':'var(--amber-lt)')+';border:1px solid '+(rojo?'var(--red-border)':'var(--amber-border)')+';border-left:4px solid '+(rojo?'var(--red)':'var(--amber)')+';border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:'+(rojo?'#8a1c24':'#7c4b00')+';display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
@@ -1657,8 +1658,7 @@ function abrirMisAvisos(){
       '<div style="font-weight:800;color:var(--red);margin-bottom:4px">🔴 Avisá a estos clientes</div>'+
       '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:10px">Logística revisó y falta stock. Llamalos para reprogramar la entrega.</div>'+
       q.sinStock.map(function(o){
-        var det=o.falta.map(function(x){ return '<span style="color:var(--red);font-weight:700">✗ '+esc(cargaProdKey(x))+' × '+esc(x.cant)+(enProduccion(x)?' <span style="color:#a67c00">🏭 pedido a producción</span>':'')+'</span>'; })
-          .concat(o.recoger.map(function(x){ return '<span style="color:#a67c00;font-weight:700">📥 '+esc(cargaProdKey(x))+' × '+esc(x.cant)+' (se recoge de IM)</span>'; })).join('<br>');
+        var det=o.falta.map(function(x){ return '<span style="color:var(--red);font-weight:700">✗ '+esc(cargaProdKey(x))+' × '+esc(x.cant)+(enProduccion(x)?' <span style="color:#a67c00">🏭 pedido a producción</span>':'')+'</span>'; }).join('<br>');
         return '<div style="background:#fff;border-radius:8px;padding:10px 12px;margin-bottom:8px">'+
           '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">'+
             '<b>'+esc(o.p.cliente||'')+'</b>'+(o.p.celular?('<span style="color:var(--muted);font-size:.85rem">📞 '+esc(o.p.celular)+'</span>'):'')+
@@ -1685,10 +1685,8 @@ function abrirMisAvisos(){
 function avisoClienteText(id){
   var p=findById(id); if(!p) return '';
   var falta=(p.productos||[]).filter(function(x){ return x.chk==='no'; });
-  var recoger=(p.productos||[]).filter(esRecoger);
   var L=['Hola '+(p.cliente||'')+' 👋','Le escribo de *Heaven Colchones* por su pedido del *'+fmtFecha(p.fecha)+'*:'];
   falta.forEach(function(x){ L.push('• '+cargaProdKey(x)+' × '+x.cant+(enProduccion(x)?' — ya está *en producción*':' — *sin stock por ahora*')); });
-  recoger.forEach(function(x){ L.push('• '+cargaProdKey(x)+' × '+x.cant+' — lo estamos trayendo de nuestro otro depósito'); });
   L.push('');
   L.push(falta.length?'¿Le reprogramamos la entrega? Dígame qué día le queda cómodo y lo coordinamos. 🙏':'Le confirmamos apenas esté listo para la entrega. 🙏');
   return L.join('\n');
