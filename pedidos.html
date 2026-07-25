@@ -180,7 +180,8 @@ tbody tr:hover{background:var(--teal-lt)}
 .chkbtn.no{background:var(--red);color:#fff;border-color:var(--red)}
 .chkbtn.im{background:#f5c400;color:#5a4500;border-color:#f5c400}
 .chkbtn.wide{width:auto;padding:0 10px;font-size:.74rem;white-space:nowrap}
-.prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem}
+.prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem;flex-wrap:wrap}
+.prod-rev:last-child{border-bottom:none}
 /* Parada de la lista de carga: se toca para abrir la ficha del pedido */
 .carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
 .carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
@@ -188,7 +189,12 @@ tbody tr:hover{background:var(--teal-lt)}
 /* Resaltado suave de fila según estado de stock */
 .row-stock{background:#e9f9f1}
 .row-prod{background:#fff176;box-shadow:inset 4px 0 0 #f5c400}
-.row-nohay{background:#fdecee}
+/* Falta stock: gana sobre especial/50x70 para que nunca pase desapercibido */
+.row-nohay{background:#ffdadd;box-shadow:inset 4px 0 0 #dc2626}
+tbody tr.row-nohay:hover{background:#ffc9ce}
+/* Hay, pero hay que recogerlo de IM */
+.row-im{background:#ece8fd;box-shadow:inset 4px 0 0 #7c3aed}
+tbody tr.row-im:hover{background:#ded8fb}
 .row-especial{background:#d6ecfb;box-shadow:inset 4px 0 0 #38bdf8}
 tbody tr.row-especial:hover{background:#c6e4fa}
 .row-5070{background:#ffe6c7;box-shadow:inset 4px 0 0 #fb923c}
@@ -678,7 +684,7 @@ function cellXml(ref,cv){
   if(cv.t==='n') return '<c r="'+ref+'"'+s+'><v>'+cv.v+'</v></c>';
   return '<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(cv.v)+'</t></is></c>';
 }
-var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font></fonts><fills count="11"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="16"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font></fonts><fills count="12"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFECE8FD"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="18"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="11" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="11" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 function buildSheetXml(sheet){
   var rowsXml='';
   for(var r=0;r<sheet.matrix.length;r++){
@@ -1335,7 +1341,7 @@ function renderAdmin(){
     var nIM=(p.productos||[]).filter(esRecoger).length;
     var estadoCell=estadoBadge(p.estado)+(nIM?' <span class="badge" style="background:#fff8d6;color:#8a6d00;border:1px solid #f0d264" title="Hay que recoger de IM">📥 Recoger IM</span>':'')+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
-    var cls=has50x70(p)?'row-5070':(hasEspecial(p)?'row-especial':(ESTADOS[p.estado]?ESTADOS[p.estado].cls:''));
+    var cls=rowClass(p);
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
@@ -1555,7 +1561,7 @@ function renderCarga(){
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div class="carga-stop" onclick="showPedidoModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -1792,10 +1798,71 @@ function showWhatsappModal(rec){
   openModal(html);
 }
 
+/* Qué ficha está abierta, para volver a la correcta al marcar algo */
+var MODAL_KIND='admin';
+function reabrirFicha(id){ if(MODAL_KIND==='carga') showCargaModal(id); else showPedidoModal(id); }
+
+/* ---- Ficha del JEFE DE ALMACÉN (se abre desde la Lista de carga) ----
+   Solo lo necesario para cargar el camión: qué se lleva y hacia dónde.
+   Sin cobros: no muestra saldo ni permite marcar pagado. */
+function showCargaModal(id){
+  var p=findById(id); if(!p) return;
+  MODAL_KIND='carga';
+  var dnum=dayNumMap()[p.id];
+  function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
+  var maps=p.maps
+    ? '<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'
+    : '<span class="badge b-amber">⚠️ sin ubicación</span> <button class="btn btn-sm" style="background:var(--amber);color:#fff;margin-left:6px" onclick="editarUbicacionCarga(\''+p.id+'\')">📍 Agregar</button>';
+  var vehTxt=vehiculoDe(p)
+    ? ('🚛 <b>'+esc(vehiculoDe(p))+'</b>'+(p.chofer?(' · '+esc(p.chofer)):''))
+    : '<span class="badge b-amber">⚠️ sin asignar</span>';
+  var body=
+    row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
+    row('Entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
+    row('Vendedor', esc(p.vendedor))+
+    row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+    row('Celular', esc(p.celular))+
+    row('Productos'+PROD_AYUDA, prodRevList(p)+prodResumen(p))+
+    row('Zona', '<b>'+esc(p.zona||'—')+'</b>')+
+    row('Dirección', '<b>'+esc(p.direccion||'—')+'</b>')+
+    row('Ubicación', maps)+
+    row('Observaciones', esc(p.observaciones))+
+    row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+
+    row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
+    row('Vehículo', vehTxt);
+  var accionesSec=
+    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
+        '<div class="lb">✅ ¿Verificado / listo para cargar?</div>'+
+        '<button class="btn btn-sm" style="'+(p.verificado?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleVerificado(\''+p.id+'\')">'+(p.verificado?'✓ SÍ, verificado':'Marcar verificado')+'</button>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:12px;margin-top:12px;flex-wrap:wrap">'+
+        '<div class="lb">🚚 ¿Entregado?</div>'+
+        '<button class="btn btn-sm" style="'+(p.entregado?'background:var(--green);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="toggleEntregado(\''+p.id+'\')">'+(p.entregado?'✓ SÍ, entregado':'Marcar entregado')+'</button>'+
+      '</div>'+
+    '</div>';
+  var despachoSec=
+    '<div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+      '<div class="lb" style="margin-bottom:8px">🚛 Asignar vehículo y chofer</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
+    '</div>';
+  var html='<div class="modal-h"><h3>📦 Para cargar'+(dnum?(' · #'+dnum):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+body+accionesSec+despachoSec+
+      '<div class="modal-actions" style="margin-top:16px">'+
+        '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="copyPedido(\''+p.id+'\')">📋 Copiar</button>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
+    '</div>';
+  openModal(html);
+}
+function editarUbicacionCarga(id){ editarUbicacion(id, showCargaModal); }
+
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
   var dnum=dayNumMap()[p.id];
-  var prod=(p.productos||[]).map(function(x){ return prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
+  MODAL_KIND='admin';
+  var prod=prodRevList(p);
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
@@ -1804,7 +1871,7 @@ function showPedidoModal(id){
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
     row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
-    row('Celular', esc(p.celular))+row('Productos', prod)+row('Zona', esc(p.zona))+
+    row('Celular', esc(p.celular))+row('Productos'+PROD_AYUDA, prod+prodResumen(p))+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoBadge(p.estado))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
@@ -1818,22 +1885,6 @@ function showPedidoModal(id){
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
       '</div>'+
     '</div>') : '';
-  var pr=p.productos||[];
-  var nOk=0,nNo=0,nIM=0;
-  for(var ri=0;ri<pr.length;ri++){ var cc=pr[ri].chk; if(cc==='ok')nOk++; else if(cc==='no')nNo++; else if(esRecoger(pr[ri]))nIM++; }
-  var revSec = !pr.length ? '' : (
-    '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
-      '<div class="lb" style="margin-bottom:4px">🔎 Revisión de productos — ✔ hay · ✗ no hay · 📥 hay que recogerlo de IM</div>'+
-      '<div style="font-size:.76rem;color:var(--muted);margin-bottom:8px">'+nOk+' de '+pr.length+' con stock'+(nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+(nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+'</div>'+
-      pr.map(function(x,i){
-        return '<div class="prod-rev">'+
-          '<span style="flex:1">'+esc(x.desc||'')+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b></span>'+
-          '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
-          '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
-          '<button class="chkbtn wide'+(esRecoger(x)?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\')" title="Sí hay, pero hay que recogerlo del almacén IM">📥 Recoger IM</button>'+
-        '</div>';
-      }).join('')+
-    '</div>');
   var stockSec =
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div class="lb" style="margin-bottom:8px">📦 Estado de stock</div>'+
@@ -1864,7 +1915,7 @@ function showPedidoModal(id){
         : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+body+mark+revSec+stockSec+despachoSec+ubicSec+
+    '<div class="modal-b">'+body+mark+stockSec+despachoSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
@@ -1899,7 +1950,7 @@ function setEstado(id,val){
   p.estado=(p.estado===val)?'':val; // tocar el mismo lo desmarca
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
-  showPedidoModal(id);
+  reabrirFicha(id);
 }
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
@@ -1907,7 +1958,7 @@ function toggleEntregado(id){
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
-  showPedidoModal(id);
+  reabrirFicha(id);
 }
 /* ---- Revisión producto por producto (logística): ✔ hay / ✗ no hay ----
    El estado vive en cada producto (x.chk) y viaja dentro del JSON de productos,
@@ -1939,7 +1990,46 @@ function setProdChk(id, idx, val){
   syncVerificado(p);
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
-  showPedidoModal(id);
+  reabrirFicha(id);
+}
+/* ---- Color de la fila del pedido (misma regla para la tabla y para el Excel) ----
+   Prioridad: falta stock (rojo) > hay que recoger de IM (violeta) > 50x70 (naranja)
+   > medida especial (celeste) > estado de stock. "Entregado" (gris) se agrega aparte. */
+function tieneRecogerIM(p){ return (p.productos||[]).some(esRecoger); }
+function rowKind(p){
+  if(p.estado==='No hay') return 'nohay';
+  if(tieneRecogerIM(p))   return 'im';
+  if(has50x70(p))         return '5070';
+  if(hasEspecial(p))      return 'especial';
+  if(p.estado==='En stock')      return 'stock';
+  if(p.estado==='En producción') return 'prod';
+  return '';
+}
+function rowClass(p){ var k=rowKind(p); return k?('row-'+k):''; }
+/* Lista de productos donde se marca ✔ hay / ✗ no hay / 📥 recoger de IM (se usa en las dos fichas) */
+function prodRevList(p){
+  return (p.productos||[]).map(function(x,i){
+    return '<div class="prod-rev">'+
+      '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b></span>'+
+      '<span style="display:flex;gap:5px;flex:none">'+
+        '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
+        '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
+        '<button class="chkbtn wide'+(esRecoger(x)?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\')" title="Sí hay, pero hay que recogerlo del almacén IM">📥 IM</button>'+
+      '</span></div>';
+  }).join('');
+}
+var PROD_AYUDA='<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay · ✗ no hay · 📥 recoger de IM</div>';
+/* Resumen de la revisión: cuántos hay / faltan / hay que recoger */
+function prodResumen(p){
+  var pr=p.productos||[]; if(!pr.length) return '';
+  var nOk=0,nNo=0,nIM=0,nSin=0;
+  for(var i=0;i<pr.length;i++){ var c=pr[i].chk; if(c==='ok')nOk++; else if(c==='no')nNo++; else if(esRecoger(pr[i]))nIM++; else nSin++; }
+  var t='<div style="font-size:.74rem;color:var(--muted);margin-top:7px">'+
+    '<b style="color:var(--green)">'+nOk+'</b> de '+pr.length+' con stock'+
+    (nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+
+    (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+
+    (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+'</div>';
+  return t;
 }
 function prodChkIcon(x){ return x.chk==='ok'?'<span style="color:var(--green);font-weight:800">✔</span> ':(x.chk==='no'?'<span style="color:var(--red);font-weight:800">✗</span> ':(esRecoger(x)?'<span title="Sí hay, pero hay que recogerlo de IM">📥</span> ':'')); }
 function toggleVerificado(id){
@@ -1948,7 +2038,7 @@ function toggleVerificado(id){
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok');
-  showPedidoModal(id);
+  reabrirFicha(id);
 }
 
 /* ---- Vehículo + chofer (despacho) ---- */
@@ -1978,8 +2068,8 @@ function choferSelect(p){
   list.forEach(function(c){ opts+='<option'+(p.chofer===c?' selected':'')+'>'+c+'</option>'; });
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
 }
-function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); showPedidoModal(id); }
-function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); showPedidoModal(id); }
+function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
+function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); reabrirFicha(id); }
 function persistPedido(p){
   upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
@@ -2008,9 +2098,9 @@ function exportExcel(scope){
   var rows=[header];
   var merges=[];
   list.forEach(function(p){
-    var esp = hasEspecial(p), c50 = has50x70(p);
-    var fs = c50?11:(esp?9:(p.estado==='En stock'?3:p.estado==='En producción'?4:p.estado==='No hay'?5:0));
-    var fc = c50?12:(esp?10:(p.estado==='En stock'?6:p.estado==='En producción'?7:p.estado==='No hay'?8:C));
+    // Mismo criterio de color que la tabla (rowKind): falta stock > recoger IM > 50x70 > especial > estado
+    var K={ nohay:[5,8], im:[16,17], '5070':[11,12], especial:[9,10], stock:[3,6], prod:[4,7] }[rowKind(p)] || [0,C];
+    var fs = K[0], fc = K[1];
     var cl=function(v){ return {v:v, s:fs}; };
     var E={v:'',s:fs};
     var vendCli=[p.vendedor,p.cliente].filter(function(s){return s&&String(s).trim();}).join(' - ');
