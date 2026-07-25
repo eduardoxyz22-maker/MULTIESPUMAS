@@ -1312,7 +1312,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderOcupacion(); renderZonas();
+  renderChips(); renderRevisar(); renderOcupacion(); renderZonas(); autoAbrirParte();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -1863,6 +1863,28 @@ function printFaltantes(){ document.body.classList.add('printing-faltantes'); wi
 /* ============================================================================
    📋 Parte del día — cómo cerró hoy y qué sale mañana
    ========================================================================== */
+/* Cierre del día: 18:00 hora Bolivia (UTC-4). Se calcula explícitamente para no depender
+   de la zona horaria configurada en la compu. */
+var HORA_CIERRE=18;
+function horaBolivia(){ var d=new Date(); return new Date(d.getTime()+d.getTimezoneOffset()*60000-4*3600000); }
+function hhmmBolivia(){ var b=horaBolivia(), z=function(n){return (n<10?'0':'')+n;}; return z(b.getHours())+':'+z(b.getMinutes()); }
+function esCierre(){ return horaBolivia().getHours()>=HORA_CIERRE; }
+/* A partir de las 18:00, al entrar al panel se abre solo una vez por día (por compu). */
+function autoAbrirParte(){
+  if(!UNLOCKED || !esCierre()) return;
+  var k='me_parte_'+todayStr();
+  try{ if(localStorage.getItem(k)) return; localStorage.setItem(k,'1'); }catch(e){}
+  setTimeout(function(){
+    var vw=document.getElementById('view-admin');
+    if(!vw || !vw.classList.contains('active')) return;                    // no está en el panel
+    if(document.getElementById('modal').classList.contains('on')) return;  // hay una ficha abierta
+    var abierta=['carga','mapa','ruta','reporte','faltantes'].some(function(x){
+      var ov=document.getElementById(x+'-overlay'); return ov && ov.style.display==='flex';
+    });
+    if(abierta) return;                                                    // está usando otra ventana
+    abrirParte();
+  }, 600);
+}
 function abrirParte(){ document.getElementById('parte-overlay').style.display='flex'; renderParte(); }
 function closeParte(){ var ov=document.getElementById('parte-overlay'); if(ov) ov.style.display='none'; }
 function parteData(){
@@ -1885,7 +1907,7 @@ function parteData(){
 }
 function renderParte(){
   var d=parteData();
-  document.getElementById('parte-info').textContent=fmtFecha(d.hoy);
+  document.getElementById('parte-info').textContent=fmtFecha(d.hoy)+' · '+hhmmBolivia()+(esCierre()?' · cierre del día':'')+' (hora Bolivia)';
   function card(c,t,v,s){ return '<div style="background:#fff;border-radius:10px;padding:12px 15px;border-left:4px solid '+c+';box-shadow:0 1px 4px rgba(0,0,0,.08)"><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:#888;font-weight:700">'+t+'</div><div style="font-size:1.5rem;font-weight:800;color:'+c+';line-height:1.2">'+v+'</div><div style="font-size:.78rem;color:#888">'+s+'</div></div>'; }
   var chRows=Object.keys(d.byCh).sort().map(function(c){ var o=d.byCh[c]; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.cob)+'</td></tr>'; }).join('');
   document.getElementById('parte-body').innerHTML=
@@ -1910,7 +1932,7 @@ function renderParte(){
 }
 function parteText(){
   var d=parteData();
-  var L=['📋 *PARTE DEL DÍA* — '+fmtFecha(d.hoy),'',
+  var L=['📋 *PARTE DEL DÍA* — '+fmtFecha(d.hoy)+' · '+hhmmBolivia()+(esCierre()?' (cierre)':''),'',
     '📦 Entregados: *'+d.ent+' de '+d.nHoy+'*',
     '💰 Cobrado hoy: *'+fmtBs(d.cob)+'*',
     '⏳ Por cobrar: *'+fmtBs(d.pend)+'* ('+d.pendN+' pedido'+(d.pendN===1?'':'s')+')'];
