@@ -179,6 +179,8 @@ tbody tr:hover{background:var(--teal-lt)}
 .chkbtn.ok{background:var(--green);color:#fff;border-color:var(--green)}
 .chkbtn.no{background:var(--red);color:#fff;border-color:var(--red)}
 .chkbtn.im{background:#f5c400;color:#5a4500;border-color:#f5c400}
+.chkbtn.prodon{background:#fff176;color:#5a4500;border-color:#f5c400;box-shadow:inset 0 0 0 1px #f5c400}
+.chk-sep{width:1px;align-self:stretch;background:var(--gray-md);margin:0 2px}
 .chkbtn.wide{width:auto;padding:0 10px;font-size:.74rem;white-space:nowrap}
 .prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem;flex-wrap:wrap}
 .prod-rev:last-child{border-bottom:none}
@@ -1339,7 +1341,8 @@ function renderAdmin(){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
     var nIM=(p.productos||[]).filter(esRecoger).length;
-    var estadoCell=estadoBadge(p.estado)+(nIM?' <span class="badge" style="background:#fff8d6;color:#8a6d00;border:1px solid #f0d264" title="Hay que recoger de IM">📥 Recoger IM</span>':'')+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
+    var nPrd=(p.productos||[]).filter(enProduccion).length;
+    var estadoCell=estadoBadge(p.estado)+(nIM?' <span class="badge" style="background:#fff8d6;color:#8a6d00;border:1px solid #f0d264" title="Hay que recoger de IM">📥 Recoger IM</span>':'')+(nPrd?' <span class="badge" style="background:#fff176;color:#5a4500;border:1px solid #f5c400" title="Ya se pidió a producción">🏭 En producción</span>':'')+(p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+(p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=rowClass(p);
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
@@ -1517,10 +1520,11 @@ function cargaProdKey(x){ return (String(x.desc||'').trim()+(x.medida?(' '+Strin
 /* Lista de productos de una parada con la alerta PEGADA a cada producto */
 function prodTextCarga(prods){ return (prods||[]).map(function(x){
   var s=esc(x.desc||'')+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · cód '+esc(x.codigo)):'')+' × '+esc(x.cant);
-  if(x.chk==='no')      return '<span style="color:#c0392b;font-weight:800">'+s+' ⛔ NO HAY</span>';
-  if(esRecoger(x))      return '<span style="color:#a67c00;font-weight:800">'+s+' 📥 RECOGER IM</span>';
-  if(x.chk==='ok')      return s+' <span style="color:var(--green);font-weight:800">✔</span>';
-  return s;
+  var pr = enProduccion(x) ? ' <span style="color:#a67c00;font-weight:800">🏭 EN PRODUCCIÓN</span>' : '';
+  if(x.chk==='no')      return '<span style="color:#c0392b;font-weight:800">'+s+' ⛔ NO HAY</span>'+pr;
+  if(esRecoger(x))      return '<span style="color:#a67c00;font-weight:800">'+s+' 📥 RECOGER IM</span>'+pr;
+  if(x.chk==='ok')      return s+' <span style="color:var(--green);font-weight:800">✔</span>'+pr;
+  return s+pr;
 }).join('   |   '); }
 /* Tildes de la lista de carga: se guardan por día+vehículo+producto (en esta compu),
    así el cargador puede salir y volver sin perder lo que ya subió. */
@@ -1964,7 +1968,20 @@ function toggleEntregado(id){
    El estado vive en cada producto (x.chk) y viaja dentro del JSON de productos,
    así que se guarda en la planilla sin columnas nuevas. */
 /* Sí hay, pero está en otro almacén y hay que ir a recoger ('prod' = valor viejo, se respeta) */
-function esRecoger(x){ return x && (x.chk==='im' || x.chk==='prod'); }
+function esRecoger(x){ return !!x && x.chk==='im'; }
+/* "Se pidió a producción" es una marca APARTE: convive con ✗ no hay (se pidió pero todavía
+   no está) o con cualquier otra. x.chk==='prod' es el valor viejo, cuando era un estado. */
+function enProduccion(x){ return !!x && (x.enProd===true || x.chk==='prod'); }
+function toggleProdProduccion(id, idx){
+  var p=findById(id); if(!p||!p.productos||!p.productos[idx]) return;
+  var x=p.productos[idx];
+  var nuevo=!enProduccion(x);
+  x.enProd=nuevo;
+  if(x.chk==='prod') x.chk = nuevo ? 'no' : '';   // migrar el valor viejo a la marca nueva
+  upsert(p); saveMirror(); renderAdmin(); refreshCarga();
+  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  reabrirFicha(id);
+}
 function syncVerificado(p){
   var pr=p.productos||[]; if(!pr.length) return;
   var todosOk=true, algunoNo=false, algunoIM=false, algunoSin=false, algunoMarcado=false;
@@ -1977,11 +1994,11 @@ function syncVerificado(p){
   }
   if(todosOk) p.verificado=true;
   else if(algunoNo||algunoIM||algunoSin) p.verificado=false;     // hasta que se recoja, no está listo para cargar
-  // Estado de stock del pedido: solo lo marcamos cuando el producto NO existe o está todo completo.
-  if(algunoMarcado && !algunoSin){
-    if(algunoNo) p.estado='No hay';
-    else if(todosOk) p.estado='En stock';
-  }
+  // Estado de stock del pedido. Con UN solo producto en ✗ ya falta stock, aunque el resto
+  // no esté revisado todavía: se marca al toque para que la fila salga en rojo.
+  if(algunoNo) p.estado='No hay';
+  else if(todosOk) p.estado='En stock';
+  else if(algunoMarcado && !algunoSin && p.estado==='No hay') p.estado='';   // se corrigió el ✗
 }
 function setProdChk(id, idx, val){
   var p=findById(id); if(!p||!p.productos||!p.productos[idx]) return;
@@ -2015,23 +2032,31 @@ function prodRevList(p){
         '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
         '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
         '<button class="chkbtn wide'+(esRecoger(x)?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\')" title="Sí hay, pero hay que recogerlo del almacén IM">📥 IM</button>'+
+        '<span class="chk-sep"></span>'+
+        '<button class="chkbtn'+(enProduccion(x)?' prodon':'')+'" onclick="toggleProdProduccion(\''+p.id+'\','+i+')" title="Ya se pidió a producción (se puede marcar junto con ✗ no hay)">🏭</button>'+
       '</span></div>';
   }).join('');
 }
-var PROD_AYUDA='<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay · ✗ no hay · 📥 recoger de IM</div>';
+var PROD_AYUDA='<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay · ✗ no hay · 📥 recoger de IM &nbsp;|&nbsp; 🏭 se pidió a producción (se combina)</div>';
 /* Resumen de la revisión: cuántos hay / faltan / hay que recoger */
 function prodResumen(p){
   var pr=p.productos||[]; if(!pr.length) return '';
-  var nOk=0,nNo=0,nIM=0,nSin=0;
-  for(var i=0;i<pr.length;i++){ var c=pr[i].chk; if(c==='ok')nOk++; else if(c==='no')nNo++; else if(esRecoger(pr[i]))nIM++; else nSin++; }
+  var nOk=0,nNo=0,nIM=0,nSin=0,nProd=0;
+  for(var i=0;i<pr.length;i++){ var c=pr[i].chk; if(c==='ok')nOk++; else if(c==='no')nNo++; else if(esRecoger(pr[i]))nIM++; else nSin++; if(enProduccion(pr[i]))nProd++; }
   var t='<div style="font-size:.74rem;color:var(--muted);margin-top:7px">'+
     '<b style="color:var(--green)">'+nOk+'</b> de '+pr.length+' con stock'+
     (nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+
     (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+
-    (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+'</div>';
+    (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+
+    (nProd?(' · <b style="color:#a67c00">🏭 '+nProd+' pedido'+(nProd===1?'':'s')+' a producción</b>'):'')+'</div>';
   return t;
 }
-function prodChkIcon(x){ return x.chk==='ok'?'<span style="color:var(--green);font-weight:800">✔</span> ':(x.chk==='no'?'<span style="color:var(--red);font-weight:800">✗</span> ':(esRecoger(x)?'<span title="Sí hay, pero hay que recogerlo de IM">📥</span> ':'')); }
+function prodChkIcon(x){
+  var base = x.chk==='ok' ? '<span style="color:var(--green);font-weight:800">✔</span> '
+    : (x.chk==='no' ? '<span style="color:var(--red);font-weight:800">✗</span> '
+    : (esRecoger(x) ? '<span title="Sí hay, pero hay que recogerlo de IM">📥</span> ' : ''));
+  return base + (enProduccion(x) ? '<span title="Ya se pidió a producción">🏭</span> ' : '');
+}
 function toggleVerificado(id){
   var p=findById(id); if(!p) return;
   p.verificado=!p.verificado;
@@ -2114,7 +2139,9 @@ function exportExcel(scope){
       var rs = noHay?BAD:(enProd?WIP:(siHay?GOOD:fs));          // estilo de la celda REVISIÓN
       var prodCell={v:prodCol, s:ps};
       var cantCell=(x.cant===''||x.cant==null)?{v:'',s:ps}:{v:(Number(x.cant)||0),t:'n',s:ps};
-      var revCell={v:(noHay?'✗ NO HAY':(enProd?'📥 RECOGER IM':(siHay?'✔ HAY':''))), s:rs};
+      var revTxt=(noHay?'✗ NO HAY':(enProd?'📥 RECOGER IM':(siHay?'✔ HAY':'')));
+      if(enProduccion(x)) revTxt=(revTxt?revTxt+' · ':'')+'🏭 EN PRODUCCIÓN';
+      var revCell={v:revTxt, s:rs};
       if(idx===0){
         rows.push([ cl(p.fecha||''),cl(vendCli),prodCell,cantCell,revCell,cl(x.codigo||''),cl(p.celular||''),cl(p.turno||''),cl(p.direccion||''),cl(p.maps||''),cl(p.observaciones||''),
           cl(p.verificado?'SÍ':'NO'),
