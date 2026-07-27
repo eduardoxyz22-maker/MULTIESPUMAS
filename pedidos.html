@@ -2718,6 +2718,24 @@ function backupJson(){
    El backend resuelve los links cortos de Maps a coordenadas.
    ========================================================================== */
 var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0, MAPA_SOLO_SIN=false, MAPA_DIA='manana';
+/* Las ubicaciones que costó resolver (las que tuvo que abrir el servidor) se guardan en el
+   teléfono. Sin esto, al cerrar y volver a abrir la página se perdía todo y había que
+   resolverlas de nuevo. Al guardar se descartan las que ya no son de ningún pedido. */
+var LS_GEO='me_geo_cache';
+function geoCacheLoad(){
+  try{
+    var j=JSON.parse(localStorage.getItem(LS_GEO)||'{}');
+    if(j && typeof j==='object') for(var k in j){ if(j[k] && j[k].lat!=null) MAPA_COORDS[k]=j[k]; }
+  }catch(e){}
+}
+function geoCacheSave(){
+  try{
+    var vivos={}, out={};
+    STATE.forEach(function(p){ var u=String(p.maps||'').trim(); if(u) vivos[u]=1; });
+    for(var k in MAPA_COORDS){ if(vivos[k] && MAPA_COORDS[k] && MAPA_COORDS[k].lat!=null) out[k]={lat:MAPA_COORDS[k].lat, lng:MAPA_COORDS[k].lng, aprox:!!MAPA_COORDS[k].aprox}; }
+    localStorage.setItem(LS_GEO, JSON.stringify(out));
+  }catch(e){}
+}
 var CHOFER_COLORS=['#e53935','#1e88e5','#43a047','#fb8c00','#8e24aa','#00897b','#6d4c41','#3949ab','#c2185b','#00acc1','#7cb342','#5e35b1'];
 function ensureLeaflet(cb){
   if(window.L){ cb(); return; }
@@ -2906,6 +2924,7 @@ function renderRevUbic(yaResolvio){
     '<div style="background:var(--gray-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--muted)">'+d.sinLink.length+'</div><div style="font-size:.72rem;color:var(--muted);font-weight:700">SIN ENLACE</div></div>'+
   '</div>';
   if(REV_INTENTO) h+=revMotivoHtml();
+  h+=fijarUbicHtml();
   if(!d.conLink.length) h+='<div class="empty" style="padding:22px">Todavía no hay pedidos con enlace de ubicación.</div>';
   if(d.cortos.length){
     h+='<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
@@ -2953,6 +2972,7 @@ function resolverCortosRev(){
       REV_N=n;
       // Si no resolvió NINGUNO, lo primero a mirar es si lo publicado es la versión nueva.
       REV_MOTIVO = n ? '' : (SERVER_VER===SCRIPT_VERSION_ESPERADA ? 'ninguno' : 'viejo');
+      geoCacheSave();
     }
     renderRevUbic(true);
     toast(REV_N ? ('Ubicados '+REV_N+' de '+REV_TOT+' ✓') : ('No se pudo con ninguno de los '+REV_TOT), REV_N?'ok':'err');
@@ -2973,6 +2993,46 @@ function revVersionHtml(){
         : '<b>⚠️ El servidor está corriendo una versión vieja</b> (dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>).<br>'+
           'Pasa cuando se pega el código y se GUARDA, pero no se publica. Guardar no publica: hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.')+
     '</div>';
+}
+/* Deja las ubicaciones resueltas GUARDADAS dentro del pedido: reemplaza el enlace corto
+   por las coordenadas. Es el arreglo de fondo — así lo ven todos los dispositivos, sobrevive
+   a cerrar la página y deja de depender de que el enlace corto siga vivo.
+   Solo las EXACTAS: las aproximadas (buscadas por dirección) siguen listadas para que
+   alguien las verifique bien. */
+function fijablesRev(){
+  var out=[], seen={};
+  STATE.forEach(function(p){
+    var u=String(p.maps||'').trim(); if(!u) return;
+    var g=MAPA_COORDS[u];
+    if(!g || g.lat==null || g.aprox) return;
+    if(coordsDeLink(u)) return;                 // ese enlace ya se lee solo, no hay que tocarlo
+    out.push({p:p, g:g}); seen[u]=1;
+  });
+  return out;
+}
+function fijarUbicRev(){
+  var lista=fijablesRev();
+  if(!lista.length) return;
+  if(!confirm('Se van a guardar '+lista.length+' ubicaciones dentro de los pedidos.\n\n'+
+              'El enlace corto se reemplaza por las coordenadas exactas: quedan para siempre, '+
+              'las ve cualquier dispositivo y ya no dependen de que el enlace siga funcionando.\n\n¿Seguimos?')) return;
+  lista.forEach(function(x){
+    x.p.maps='https://www.google.com/maps?q='+x.g.lat+','+x.g.lng;
+    MAPA_COORDS[x.p.maps]={lat:x.g.lat, lng:x.g.lng};
+    upsert(x.p);
+    if(CONNECTED){ apiSave(x.p).then(function(res){ if(!(res&&res.ok)) queuePending(x.p); }, function(){ queuePending(x.p); }); }
+  });
+  saveMirror(); geoCacheSave(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo();
+  renderRevUbic(REV_INTENTO);
+  toast(lista.length+' ubicaciones guardadas en los pedidos ✓','ok');
+}
+function fijarUbicHtml(){
+  var n=fijablesRev().length;
+  if(!n) return '';
+  return '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin:8px 0">'+
+    '<div style="font-size:.85rem;color:#0a6b47;margin-bottom:8px"><b>'+n+' ubicaciones resueltas están guardadas solo en esta computadora.</b> '+
+    'El chofer y las vendedoras las siguen viendo como enlace corto. Guardalas dentro del pedido y quedan para siempre, en todos los dispositivos, sin depender de que el enlace corto siga vivo.</div>'+
+    '<button class="btn btn-sm" style="background:var(--green);color:#fff;font-weight:700" onclick="fijarUbicRev()">📌 Guardar las '+n+' en los pedidos</button></div>';
 }
 function revMotivoHtml(){
   var cuenta='<div style="font-size:.82rem;font-weight:700;color:#7c4b00;margin:6px 0 2px">Resultado: ubicó <b>'+REV_N+'</b> de '+REV_TOT+'.</div>';
@@ -3007,7 +3067,7 @@ function mapaRefresh(){
   toast('Resolviendo '+need.length+' ubicaciones…','ok');
   apiGeocode(need).then(function(res){
     if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; }
-    if(res&&res.ok&&Array.isArray(res.geo)){ res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; }); }
+    if(res&&res.ok&&Array.isArray(res.geo)){ res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; }); geoCacheSave(); }
     else { toast('No se pudo resolver algunas ubicaciones (¿backend actualizado?).','err'); }
     ensureLeaflet(showMapaView);
   }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); ensureLeaflet(showMapaView); });
@@ -3113,6 +3173,7 @@ function buildMapaKml(list, coords){
    ========================================================================== */
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
+  geoCacheLoad();
   initConnUI();
   initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
