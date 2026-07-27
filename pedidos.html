@@ -683,7 +683,6 @@ th.sortable:hover{color:var(--teal-dk)}
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="besito-overlay" onclick="this.style.display='none'" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.78);align-items:center;justify-content:center;flex-direction:column;cursor:pointer;padding:20px;text-align:center"><img src="roho-suerte.jpg" alt="Su pedido fue aprobado" onerror="document.getElementById('besito-overlay').style.display='none'" style="max-width:min(360px,88vw);max-height:78vh;border-radius:16px;box-shadow:0 12px 44px rgba(0,0,0,.55)"><div style="color:#fff;margin-top:14px;font-weight:700;font-size:.85rem;opacity:.85">Tocá para cerrar 💋</div></div>
 
 <script>
 /* ============================================================================
@@ -1068,11 +1067,22 @@ function submitPedido(){
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
     return;
   }
+  // ROHO se identifica por el N° de OC (es lo que va al Excel), así que no puede repetirse.
+  var ocSel=cleanOC(document.getElementById('f-oc').value);
+  if(esRoho(vendedor) && ocSel){
+    var dup=ocRepetidaRoho(ocSel, EDIT_ID);
+    if(dup){
+      markErr('f-oc');
+      toast('🚫 OC repetida — ROHO ya tiene la OC '+ocSel+' (cliente '+(dup.cliente||'sin nombre')+', entrega '+fmtFecha(dup.fecha)+'). Verificá.','err');
+      var fo=document.getElementById('f-oc'); if(fo){ fo.focus(); fo.scrollIntoView({block:'center'}); }
+      return;
+    }
+  }
   var rec={
     id: EDIT_ID||uid(),
     fecha: document.getElementById('f-fecha').value||todayStr(),
     nota: document.getElementById('f-nota').value.trim(),
-    oc: cleanOC(document.getElementById('f-oc').value),
+    oc: ocSel,
     vendedor: vendedor, cliente: cliente, productos: productos,
     celular: document.getElementById('f-celular').value.trim(),
     turno: segVal('f-turno'),
@@ -1128,17 +1138,27 @@ function submitPedido(){
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
     after(isEdit);
   }
-  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); if(String(rec.vendedor||'').trim().toLowerCase()==='roho') mostrarBesito(); } }
+  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
 }
 
 /* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
 function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
 function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
 /* Vendedores con formulario simplificado: nota, OC, celular y cobro NO obligatorios. */
+/* ¿Otro pedido de ROHO ya usa esta OC? Devuelve ese pedido (para nombrarlo en el aviso). */
+function ocRepetidaRoho(oc, exceptoId){
+  var k=String(oc||'').trim().toUpperCase(); if(!k) return null;
+  for(var i=0;i<STATE.length;i++){
+    var p=STATE[i];
+    if(p.id===exceptoId) continue;
+    if(!esRoho(p.vendedor)) continue;
+    if(String(cleanOC(p.oc)||'').trim().toUpperCase()===k) return p;
+  }
+  return null;
+}
+function esRoho(v){ return String(v||'').trim().toLowerCase()==='roho'; }
 function esVendedorLite(v){ var s=String(v||'').trim().toLowerCase(); return s==='eduardo añez'||s==='eduardo anez'||s==='roho'; }
 function applyVendedorLite(){ var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form'), lite=v?esVendedorLite(v.value):false; if(view) view.classList.toggle('lite-vendedor', lite); var ff=document.getElementById('f-fecha'); if(ff) ff.min = lite ? todayStr() : tomorrowStr(); }
-/* Guiño para ROHO: muestra "Besito pa la suerte" al crear un pedido. */
-function mostrarBesito(){ var o=document.getElementById('besito-overlay'); if(o) o.style.display='flex'; }
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
@@ -3085,7 +3105,9 @@ function exportExcel(scope){
     var fs = K[0], fc = K[1];
     var cl=function(v){ return {v:v, s:fs}; };
     var E={v:'',s:fs};
-    var vendCli=[p.vendedor,p.cliente].filter(function(s){return s&&String(s).trim();}).join(' - ');
+    // ROHO factura por N° de OC: en la columna va la OC, no el nombre del vendedor.
+    var quien = esRoho(p.vendedor) ? cleanOC(p.oc) : p.vendedor;
+    var vendCli=[quien,p.cliente].filter(function(s){return s&&String(s).trim();}).join(' - ');
     var prods=(p.productos&&p.productos.length)?p.productos:[{desc:'',medida:'',codigo:'',cant:''}];
     var startIdx=rows.length;
     prods.forEach(function(x,idx){
