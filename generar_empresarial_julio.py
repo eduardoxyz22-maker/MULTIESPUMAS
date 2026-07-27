@@ -111,6 +111,15 @@ def extract(xlsx_path):
     D["sem_marca_total"] = {"jun": tj, "jul": tk, "var": (tk / tj - 1) if tj else None,
                             "u_jun": sum(s["u_jun"] for s in sem), "u_jul": sum(s["u_jul"] for s in sem)}
 
+    # Unidades: la pestaña JULIO/DASHBOARD a veces trae CANT desactualizado (refresca las ventas
+    # pero no las unidades). 'seg semanal' es el pivote vivo; usarlo como fuente de unidades totales
+    # y recomputar el ticket para que sea consistente con la sección semanal.
+    ss_u = D["sem_marca_total"]["u_jul"]; db_u = D["resumen"]["jul_u"]
+    D["u_discrepancia"] = ((db_u, ss_u) if (ss_u and db_u and abs(ss_u - db_u) > max(2, 0.03 * ss_u)) else None)
+    if ss_u:
+        D["resumen"]["jul_u"] = ss_u
+        D["resumen"]["ticket"] = (D["resumen"]["jul_ventas"] / ss_u) if D["resumen"]["jul_ventas"] else None
+
     # --- Producto S1 (junio vs julio) ---
     prod = []
     for r in range(51, 55):
