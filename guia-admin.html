@@ -77,6 +77,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#mapa">🗺️ Mapa</a>
     <a href="#ruta">🧾 Hoja de ruta</a>
     <a href="#carga">📦 Lista de carga</a>
+    <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#reporte">📊 Reporte</a>
     <a href="#excel">⬇️ Excel</a>
@@ -221,6 +222,21 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout tip"><b>Puede cargar varios cobros en un mismo pedido.</b> Si el cliente paga Bs 6.000 en efectivo y Bs 1.750 por QR, el chofer anota los dos: la tarjeta muestra <span class="kbd">💵 Efectivo Bs 6.000,00</span> <span class="kbd">📱 QR Bs 1.750,00</span> y el saldo va bajando solo. Cada cobro se puede quitar con la <b>✕</b> si se equivocó.</div>
     <div class="callout warn"><b>⚠️ Si se pasa del monto, la app le avisa.</b> Antes de anotar un cobro que supere lo que el vendedor puso, le sale: <i>“Ojo, te estás pasando. El pedido dice cobrar Bs 7.750 y con este cobro juntarías Bs 8.250 — son Bs 500 de más. ¿Lo anoto igual?”</i>. Puede seguir (a veces el cliente paga un extra), pero el pedido queda marcado con <b>⚠️ Bs 500,00 de más</b> para que lo revises.</div>
     <div class="callout tip">Todo lo que marca el chofer aparece al instante en tu panel y <b>entra en la rendición por chofer con el detalle de cada cobro</b>, así al final del día sabés cuánto trajo cada uno y cómo cobró. En la planilla queda escrito tal cual: <span class="kbd">Efectivo 6000 + QR 1750</span>.</div>
+  </div>
+
+  <div class="card" id="entregado">
+    <h3>🚚 Entregado — el parte del día, camión por camión</h3>
+    <p>Botón verde <b>“🚚 Entregado”</b> arriba de la tabla. Se abre a pantalla completa con <b>lo que ya se entregó</b> en el día que elijas.</p>
+    <ul>
+      <li>Arriba, el <b>selector de fecha</b> con <b>‹ ›</b> para moverte día por día y <b>Hoy</b> para volver.</li>
+      <li>Cuatro números grandes: <b>entregados</b> (de cuántos había), <b>unidades</b>, <b>cobrado</b> y <b>quedó por cobrar</b>. Al lado, el desglose <b>Efectivo / QR / Tarjeta</b>.</li>
+      <li>Después, <b>un bloque por camión</b> (vehículo + chofer) con su propio total: cuántas entregas, cuántas unidades y cuánta plata trajo. Eso es la <b>rendición</b> de ese chofer, ya sumada.</li>
+      <li>Dentro de cada camión, <b>cada pedido</b>: N° del día, <b>OC</b>, nota de venta, cliente, turno, zona, vendedora, productos con medida, dirección, <b>cómo cobró y cuánto</b>, y las <b>fotos de la entrega</b>. Tocás el nombre del cliente y se abre la ficha completa.</li>
+      <li>Lo entregado <b>sin cobrar</b> sale marcado en rojo — es lo primero que hay que reclamar.</li>
+      <li>Abajo, en ámbar, <b>lo que falta entregar</b> ese día.</li>
+    </ul>
+    <div class="callout tip"><b>📷 Control de fotos:</b> arriba te avisa cuántas entregas quedaron <b>sin foto</b>, y marca cuáles. Si están todas, te lo dice en verde.</div>
+    <div class="callout tip"><b>📋 Copiar</b> arma el parte en texto listo para pegar en WhatsApp (resumen, cada camión con su total, cada pedido con su cobro y lo que falta entregar). <b>🖨 Imprimir</b> lo saca en papel, un camión por hoja.</div>
   </div>
 
   <div class="card" id="fotos">
