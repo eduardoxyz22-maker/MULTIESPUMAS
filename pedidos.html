@@ -2874,23 +2874,26 @@ function revUbicDatos(){
   });
   return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
 }
-function abrirRevUbic(){ REV_MOTIVO=''; renderRevUbic(false); }
+function abrirRevUbic(){ REV_MOTIVO=''; REV_YA=false; renderRevUbic(false); }
+/* Corregir SIN salir del panel: se arregla la ubicación y la lista se actualiza en el lugar,
+   así se pueden arreglar varios seguidos sin volver a abrir todo cada vez. */
+var REV_YA=false;
+function corregirDesdeRev(id){ editarUbicacion(id, function(){ renderRevUbic(REV_YA); }); }
 function renderRevUbic(yaResolvio){
+  REV_YA=!!yaResolvio;
   var d=revUbicDatos();
-  function filaCorto(p, conAbrir){
+  function fila(p){
+    var esLink=/^https?:/i.test(p.maps||'');
     return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<b style="cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
         '<span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
-        (conAbrir?('<a class="btn btn-sm" style="margin-left:auto;background:var(--teal);color:#fff;text-decoration:none" href="'+esc(p.maps)+'" target="_blank" rel="noopener">↗ Abrir</a>'+
-                   '<button class="btn btn-sm btn-ghost" onclick="closeModal();editarUbicacionAdmin(\''+p.id+'\')">✏️ Corregir</button>'):'')+
+        '<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">'+
+          (esLink?('<a class="btn btn-sm" style="background:var(--teal);color:#fff;text-decoration:none" href="'+esc(p.maps)+'" target="_blank" rel="noopener">↗ Abrir</a>'):'')+
+          '<button class="btn btn-sm btn-ghost" onclick="corregirDesdeRev(\''+p.id+'\')">✏️ '+(p.maps?'Corregir':'Cargar')+'</button>'+
+        '</span>'+
       '</div>'+
-      '<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+esc(p.maps)+'</div></div>';
-  }
-  function fila(p, extra){
-    return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem;cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+
-      '<b>'+esc(p.cliente||'—')+'</b> <span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
-      (extra?('<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+extra+'</div>'):'')+'</div>';
+      (p.maps?('<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+esc(p.maps)+'</div>'):'')+'</div>';
   }
   var h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:14px">'+
     '<div style="background:var(--green-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--green)">'+d.ok.length+'</div><div style="font-size:.72rem;color:#0a6b47;font-weight:700">SE UBICAN</div></div>'+
@@ -2906,18 +2909,18 @@ function renderRevUbic(yaResolvio){
         (yaResolvio?' <b>No se pudieron resolver</b> — revisá que el enlace siga funcionando.':'')+'</div>'+
       (yaResolvio?revMotivoHtml():'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
       (yaResolvio?'<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">Mientras tanto se arregla a mano en 20 segundos: tocá <b>↗ Abrir</b> → en el mapa <b>mantené apretado el pin</b> → abajo aparecen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve pegar el código tipo <code>5P2Q+PFX</code>.</div>':'')+
-      '<div style="margin-top:9px">'+d.cortos.map(function(p){ return filaCorto(p, yaResolvio); }).join('')+'</div></div>';
+      '<div style="margin-top:9px">'+d.cortos.map(fila).join('')+'</div></div>';
   }
   if(d.nores.length){
     h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
       '<div style="font-weight:800;color:var(--red);margin-bottom:3px">⚠️ '+d.nores.length+' no se pueden ubicar</div>'+
-      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">El texto guardado no tiene coordenadas. Tocá cada uno para corregir el enlace.</div>'+
-      d.nores.map(function(p){ return fila(p, esc(p.maps)); }).join('')+'</div>';
+      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">Lo guardado no tiene coordenadas (suele ser texto pegado por error). Tocá <b>✏️ Corregir</b> y pegá los números, el link o el código del lugar.</div>'+
+      d.nores.map(fila).join('')+'</div>';
   }
   if(d.sinLink.length){
     h+='<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px">'+
       '<div style="font-weight:800;color:var(--muted);margin-bottom:9px">📭 '+d.sinLink.length+' pedidos sin entregar y sin enlace</div>'+
-      d.sinLink.slice(0,40).map(function(p){ return fila(p,''); }).join('')+
+      d.sinLink.slice(0,40).map(fila).join('')+
       (d.sinLink.length>40?('<div style="font-size:.78rem;color:var(--muted)">…y '+(d.sinLink.length-40)+' más</div>'):'')+'</div>';
   }
   if(d.conLink.length && !d.nores.length && !d.cortos.length)
