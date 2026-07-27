@@ -37,8 +37,13 @@ body{font-family:var(--font-sans);color:var(--text);-webkit-font-smoothing:antia
 .hstat-v{font-size:1.4rem;font-weight:800;color:#fff;line-height:1}
 .hstat-l{font-size:.58rem;color:rgba(255,255,255,.72);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
 
-.nav{max-width:1180px;margin:20px auto 0;padding:0 22px;display:flex;gap:10px}
-.nav button{padding:10px 20px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-md) var(--r-md) 0 0;font:inherit;font-weight:700;font-size:.82rem;color:var(--muted);cursor:pointer;transition:all .15s;border-bottom:none}
+.nav{max-width:1180px;margin:20px auto 0;padding:0 22px;display:flex;gap:10px;flex-wrap:wrap}
+.nav button{padding:10px 20px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-md) var(--r-md) 0 0;font:inherit;font-weight:700;font-size:.82rem;color:var(--muted);cursor:pointer;transition:all .15s;border-bottom:none;white-space:nowrap}
+/* En celular las 4 pestañas no entran en una línea: se achican y se reparten */
+@media(max-width:560px){
+  .nav{padding:0 10px;gap:6px}
+  .nav button{flex:1 1 auto;padding:9px 8px;font-size:.74rem;text-align:center}
+}
 .nav button.active{background:var(--teal);color:#fff;border-color:var(--teal)}
 .nav button:hover:not(.active){background:var(--teal-lt);color:var(--teal-dk)}
 
@@ -140,7 +145,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.mc-val{font-size:1.7rem;font-weight:800;line-height:1.1;margin-top:6px}
+.mc-val{font-size:1.7rem;font-weight:800;line-height:1.1;margin-top:6px;word-break:break-word}
+@media(max-width:560px){.mc{padding:13px 14px}.mc-val{font-size:1.25rem}}
 .mc-sub{font-size:.66rem;color:var(--muted);margin-top:3px}
 
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
@@ -185,6 +191,24 @@ tbody tr:hover{background:var(--teal-lt)}
 .prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem;flex-wrap:wrap}
 .prod-rev:last-child{border-bottom:none}
 /* Parada de la lista de carga: se toca para abrir la ficha del pedido */
+/* ---- Panel del chofer: tarjetas grandes, pensadas para usar en el celular ---- */
+.cho-card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:14px 15px;margin-bottom:12px;box-shadow:var(--sh-card)}
+.cho-card.hecho{background:#eef2f4;border-color:#cfd8dc}
+.cho-card.hecho .cho-cli{color:#66757c}
+.cho-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.cho-n{width:30px;height:30px;flex:none;border-radius:50%;background:var(--teal);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.cho-cli{font-weight:800;font-size:1.05rem;line-height:1.25}
+.cho-row{font-size:.88rem;color:var(--text);margin:3px 0}
+.cho-row .k{color:var(--muted);font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.cho-acc{display:flex;gap:8px;flex-wrap:wrap;margin-top:11px}
+.cho-btn{flex:1 1 auto;min-width:132px;padding:13px 12px;border:1px solid var(--gray-md);background:#fff;color:var(--text);border-radius:var(--r-md);font:inherit;font-size:.86rem;font-weight:800;cursor:pointer;transition:all .12s}
+.cho-btn:active{transform:scale(.98)}
+.cho-btn.ent{border-color:var(--green-border);color:var(--green)}
+.cho-btn.ent.on{background:var(--green);color:#fff;border-color:var(--green)}
+.cho-btn.cob{border-color:var(--red-border);color:var(--red)}
+.cho-btn.cob.on{background:var(--green);color:#fff;border-color:var(--green)}
+.cho-link{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:var(--r-md);font-size:.84rem;font-weight:800;text-decoration:none;border:1px solid var(--teal-border);background:var(--teal-lt);color:var(--teal-dk)}
+.cho-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 /* Encabezado de fecha cuando la Lista de carga muestra "Todos" */
 .carga-fecha{margin-bottom:22px}
 .carga-fecha-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:#0f766e;color:#fff;font-weight:800;font-size:1rem;padding:9px 14px;border-radius:9px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
@@ -307,6 +331,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div class="nav">
   <button id="tab-form" class="active" onclick="showView('form')">＋ Nuevo pedido</button>
   <button id="tab-mis" onclick="showView('mis')">📋 Mis pedidos</button>
+  <button id="tab-chofer" onclick="showView('chofer')">🚚 Chofer</button>
   <button id="tab-admin" onclick="showView('admin')">🔒 Administración</button>
 </div>
 
@@ -581,6 +606,25 @@ th.sortable:hover{color:var(--teal-dk)}
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
     </div>
   </div>
+
+  <!-- ============ CHOFER VIEW ============ -->
+  <div id="view-chofer" class="view">
+    <div class="card">
+      <div class="filters">
+        <div class="field" style="flex:1;min-width:180px">
+          <label class="lb">¿Quién sos?</label>
+          <select id="cho-nombre" onchange="setChoferMem(this.value);renderChofer()"></select>
+        </div>
+        <div class="field">
+          <button class="btn btn-ghost btn-sm" onclick="refreshChofer()">🔄 Actualizar</button>
+        </div>
+      </div>
+      <div class="qchips" id="cho-chips"></div>
+      <div class="metrics" id="cho-metrics"></div>
+      <div id="cho-lista"></div>
+      <div id="cho-empty" class="empty">Elegí tu nombre para ver tus entregas.</div>
+    </div>
+  </div>
 </div>
 
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
@@ -792,11 +836,14 @@ function showView(v){
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
   document.getElementById('view-mis').classList.toggle('active',v==='mis');
+  document.getElementById('view-chofer').classList.toggle('active',v==='chofer');
   document.getElementById('tab-form').classList.toggle('active',v==='form');
   document.getElementById('tab-admin').classList.toggle('active',v==='admin');
   document.getElementById('tab-mis').classList.toggle('active',v==='mis');
+  document.getElementById('tab-chofer').classList.toggle('active',v==='chofer');
   if(v==='admin' && UNLOCKED) loadFromServer(false);
   if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=getVendedorMem(); } refreshMis(); }
+  if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
 }
 function initConnUI(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
@@ -1729,6 +1776,140 @@ function avisoClienteText(id){
   L.push(falta.length?'¿Le reprogramamos la entrega? Dígame qué día le queda cómodo y lo coordinamos. 🙏':'Le confirmamos apenas esté listo para la entrega. 🙏');
   return L.join('\n');
 }
+/* ============================================================================
+   🚚 Panel del CHOFER — sus entregas del día en el celular.
+   Puede marcar entregado / no entregado y cobrar (con el método de pago).
+   Se identifica eligiendo su nombre; queda recordado en ese teléfono.
+   ========================================================================== */
+var LS_CHOFER='me_chofer_nombre';
+var CHO_FILTER='hoy';
+var CHO_DEFS=[
+  {k:'hoy',    lbl:'📅 Hoy',           test:function(p){ return p.fecha===todayStr(); }},
+  {k:'manana', lbl:'🌅 Mañana',        test:function(p){ return p.fecha===tomorrowStr(); }},
+  {k:'pend',   lbl:'⏳ Sin entregar',  test:function(p){ return !p.entregado; }},
+  {k:'todos',  lbl:'📋 Todos',         test:function(){ return true; }}
+];
+function choTest(k){ for(var i=0;i<CHO_DEFS.length;i++) if(CHO_DEFS[i].k===k) return CHO_DEFS[i].test; return function(){return true;}; }
+function setChoFiltro(k){ CHO_FILTER=k; renderChofer(); }
+function getChoferMem(){ try{ return localStorage.getItem(LS_CHOFER)||''; }catch(e){ return ''; } }
+function setChoferMem(c){ try{ localStorage.setItem(LS_CHOFER, c||''); }catch(e){} }
+function refreshChofer(){
+  llenarSelectChoferes();
+  if(!CONNECTED){ renderChofer(); return; }
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } llenarSelectChoferes(); renderChofer(); })
+           .catch(function(){ renderChofer(); });
+}
+function llenarSelectChoferes(){
+  var sel=document.getElementById('cho-nombre'); if(!sel) return;
+  var actual=sel.value||getChoferMem();
+  var seen={}, list=[];
+  allChoferes().forEach(function(c){ if(c&&!seen[c]){ seen[c]=1; list.push(c); } });
+  STATE.forEach(function(p){ var c=String(p.chofer||'').trim(); if(c&&!seen[c]){ seen[c]=1; list.push(c); } });
+  list.sort();
+  sel.innerHTML='<option value="">Elegí tu nombre…</option>'+list.map(function(c){ return '<option>'+esc(c)+'</option>'; }).join('');
+  if(actual && list.indexOf(actual)>=0) sel.value=actual;
+}
+function renderChoferSiActivo(){ var vw=document.getElementById('view-chofer'); if(vw && vw.classList.contains('active')) renderChofer(); }
+function renderChofer(){
+  var sel=document.getElementById('cho-nombre'); if(!sel) return;
+  var c=(sel.value||'').trim();
+  var box=document.getElementById('cho-metrics'), cont=document.getElementById('cho-lista'),
+      empty=document.getElementById('cho-empty'), chips=document.getElementById('cho-chips');
+  if(!c){ box.innerHTML=''; cont.innerHTML=''; chips.innerHTML=''; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus entregas.'; return; }
+  var mias=STATE.filter(function(p){ return String(p.chofer||'').trim().toLowerCase()===c.toLowerCase(); });
+  chips.innerHTML=CHO_DEFS.map(function(d){
+    var n=mias.filter(d.test).length;
+    return '<button class="qchip'+(CHO_FILTER===d.k?' active':'')+'" onclick="setChoFiltro(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
+  }).join('');
+  var list=mias.filter(choTest(CHO_FILTER));
+  list.sort(function(a,b){
+    if(a.fecha!==b.fecha) return a.fecha<b.fecha?-1:1;
+    var ta=normTurno(a.turno), tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1;
+    return String(a.zona||'')<String(b.zona||'')?-1:1;
+  });
+  var ent=0, porCobrar=0, cobrado=0;
+  list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=Number(p.cobradoBs)||0; else porCobrar+=Number(p.saldo)||0; });
+  box.innerHTML=
+    mc('var(--teal)','Entregas',list.length,'asignadas a vos')+
+    mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
+    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar')+
+    mc('var(--teal-dk)','Cobrado',fmtBs(cobrado),'ya cobrado');
+  if(!list.length){
+    cont.innerHTML=''; empty.style.display='block';
+    empty.textContent = CHO_FILTER==='hoy' ? 'No tenés entregas para hoy ('+fmtFecha(todayStr())+').'
+      : CHO_FILTER==='manana' ? 'No tenés entregas para mañana ('+fmtFecha(tomorrowStr())+').'
+      : CHO_FILTER==='pend' ? '✅ ¡Listo! No te queda ninguna entrega pendiente.'
+      : 'Todavía no tenés entregas asignadas.';
+    return;
+  }
+  empty.style.display='none';
+  cont.innerHTML=list.map(function(p,i){
+    var prod=(p.productos||[]).map(function(x){
+      var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
+      if(x.chk==='no') t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
+      else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de IM</span>';
+      return t;
+    }).join('<br>');
+    var deuda=Number(p.saldo)||0;
+    return '<div class="cho-card'+(p.entregado?' hecho':'')+'">'+
+      '<div class="cho-top">'+
+        '<div class="cho-n" style="'+(p.entregado?'background:var(--gray)':'')+'">'+(i+1)+'</div>'+
+        '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
+          '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+'</div></div>'+
+        (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ Pendiente</span>')+
+      '</div>'+
+      '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
+      (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
+      (p.observaciones?('<div class="cho-row" style="background:var(--amber-lt);border-radius:8px;padding:7px 10px;color:#7c4b00"><b>📌 '+esc(p.observaciones)+'</b></div>'):'')+
+      '<div class="cho-row"><span class="k">Cobrar</span> '+(p.pagado
+          ? '<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'
+          : (deuda>0?('<b style="color:var(--red);font-size:1.15rem">'+fmtBs(deuda)+'</b>'):'<span class="badge b-gray">Sin saldo</span>'))+'</div>'+
+      '<div class="cho-links">'+
+        (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Ir en Maps</a>'):'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">⚠️ sin ubicación</span>')+
+        (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'">📞 Llamar</a>'):'')+
+      '</div>'+
+      '<div class="cho-acc">'+
+        '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
+        (p.pagado
+          ? '<button class="cho-btn cob on" onclick="choDeshacerCobro(\''+p.id+'\')">✓ Cobrado · deshacer</button>'
+          : (deuda>0?('<button class="cho-btn cob" onclick="choPedirMetodo(\''+p.id+'\')">💰 Cobrar '+fmtBs(deuda)+'</button>'):''))+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+function choEntregado(id){
+  var p=findById(id); if(!p) return;
+  p.entregado=!p.entregado;
+  persistPedido(p); renderChofer();
+  toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
+}
+function choPedirMetodo(id){
+  var p=findById(id); if(!p) return;
+  openModal('<div class="modal-h"><h3>💵 ¿Con qué pagó?</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<div style="font-size:.95rem"><b>'+esc(p.cliente||'')+'</b></div>'+
+      '<div style="font-size:1.7rem;font-weight:800;color:var(--red);margin:4px 0 16px">'+fmtBs(p.saldo)+'</div>'+
+      '<div style="display:grid;gap:10px">'+
+        '<button class="btn" style="background:var(--green);color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'Efectivo\')">💵 Efectivo</button>'+
+        '<button class="btn" style="background:#3B82F6;color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'QR\')">📱 QR</button>'+
+        '<button class="btn" style="background:#7C3AED;color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
+      '</div>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-top:14px" onclick="closeModal()">Cancelar</button>'+
+    '</div>');
+}
+function choCobrar(id, metodo){
+  var p=findById(id); if(!p) return;
+  applyPaid(p, metodo);
+  closeModal(); renderChofer();
+  toast('Cobrado en '+metodo+' ✓','ok');
+}
+function choDeshacerCobro(id){
+  var p=findById(id); if(!p) return;
+  if(!confirm('¿Deshacer el cobro de '+(p.cliente||'')+'?')) return;
+  p.pagado=false; p.saldo=Number(p.cobradoBs)||Number(p.saldo)||0; p.cobradoBs=0; p.metodoPago='';
+  persistPedido(p); renderChofer();
+  toast('Cobro deshecho','ok');
+}
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=(mv.value||'').trim();
@@ -2027,7 +2208,7 @@ function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.e
 function applyPaid(p, metodo){
   if(!p.pagado) p.cobradoBs=Number(p.saldo)||0;   // capturar lo cobrado en la entrega para la rendición
   p.pagado=true; p.metodoPago=metodo; p.saldo=0;
-  upsert(p); saveMirror(); updateStats(); renderAdmin();
+  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 function quickCobrado(id){
@@ -2389,7 +2570,7 @@ function choferSelect(p){
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
 function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); reabrirFicha(id); }
 function persistPedido(p){
-  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga();
+  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 
