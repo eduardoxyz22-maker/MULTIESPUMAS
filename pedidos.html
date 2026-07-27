@@ -429,7 +429,7 @@ th.sortable:hover{color:var(--teal-dk)}
         </div>
         <div class="field">
           <label class="lb">Link de Google Maps</label>
-          <input type="url" id="f-maps" placeholder="https://maps.google.com/…" autocomplete="off">
+          <input type="text" id="f-maps" placeholder="Link de Maps o coordenadas (-17.749444, -63.104556)" autocomplete="off">
         </div>
       </div>
 
@@ -1025,7 +1025,7 @@ function submitPedido(){
     turno: segVal('f-turno'),
     zona: document.getElementById('f-zona').value.trim(),
     direccion: document.getElementById('f-direccion').value.trim(),
-    maps: document.getElementById('f-maps').value.trim(),
+    maps: (normalizaUbicacion(document.getElementById('f-maps').value)||''),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: (segVal('f-pagado')==='SI' || (parseFloat(document.getElementById('f-acuenta').value)||0)>0)?segVal('f-metodo'):'',
     acuenta: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-acuenta').value)||0),
@@ -1960,11 +1960,11 @@ function renderMis(){
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
 function editarUbicacion(id, reopen){
   var p=findById(id); if(!p) return;
-  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nPegá el link de Google Maps (en Maps: Compartir → Copiar enlace).\nDejalo vacío para quitar la ubicación:', p.maps||'');
+  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nPegá el link de Google Maps, O las coordenadas\n(en Maps mantené apretado el punto y copiá los números).\nDejalo vacío para quitar la ubicación:', p.maps||'');
   if(nuevo==null) return;
-  nuevo=String(nuevo).trim();
-  if(nuevo && !/^https?:\/\//i.test(nuevo)){ toast('El link debe empezar con http… — pegá el enlace de Google Maps','err'); return; }
-  p.maps=nuevo;
+  var norm=normalizaUbicacion(nuevo);
+  if(norm===null){ toast('No se entiende: pegá el enlace de Maps o las coordenadas (ej: -17.749444, -63.104556)','err'); return; }
+  p.maps=norm;
   upsert(p); saveMirror();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   if(UNLOCKED) renderAdmin();
@@ -2745,8 +2745,29 @@ function validaCoord(a,b){
   if(isNaN(la)||isNaN(ln)||Math.abs(la)>90||Math.abs(ln)>180) return null;
   return {lat:la, lng:ln};
 }
+/* Coordenadas pegadas sueltas: "-17.749444, -63.104556" (lo que copia Maps al mantener
+   apretado un punto). Es la forma MÁS confiable: no depende de abrir ningún enlace. */
+function coordsSueltas(txt){
+  var t=String(txt||'').trim().replace(/[()]/g,'').replace(/\s+/g,' ');
+  var m=t.match(/^(-?\d{1,2}(?:[.,]\d+)?)\s*[,; ]\s*(-?\d{1,3}(?:[.,]\d+)?)$/);
+  if(!m) return null;
+  var a=m[1].replace(',','.'), b=m[2].replace(',','.');
+  if(a.indexOf('.')<0 || b.indexOf('.')<0) return null;   // sin decimales no es una ubicación
+  return validaCoord(a,b);
+}
+/* Deja la ubicación lista para guardar: acepta un enlace o coordenadas sueltas.
+   Devuelve '' para borrar, la cadena a guardar, o null si no se entiende. */
+function normalizaUbicacion(txt){
+  var t=String(txt||'').trim();
+  if(!t) return '';
+  if(/^https?:\/\//i.test(t)) return t;
+  var c=coordsSueltas(t);
+  if(c) return 'https://www.google.com/maps?q='+c.lat+','+c.lng;
+  return null;
+}
 function coordsDeLink(u){
   u=String(u||''); if(!u) return null;
+  var sueltas=coordsSueltas(u); if(sueltas) return sueltas;
   var d=u; try{ d=decodeURIComponent(u.replace(/\+/g,' ')); }catch(e){}
   var m;
   // 1) el pin exacto: !3d<lat>!4d<lng>
