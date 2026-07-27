@@ -220,6 +220,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-prod{font-size:.85rem;margin-top:5px}
 .ent-dir{font-size:.8rem;color:var(--muted);margin-top:4px}
 .ent-sinfoto{font-size:.78rem;color:var(--amber);font-weight:700;margin-top:7px}
+.callout-rojo{background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;font-size:.86rem;color:#8a1c24}
 .callout-warn{background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;font-size:.86rem;color:#7c4b00}
 .callout-ok{background:var(--green-lt);border:1px solid var(--green-border);border-left:4px solid var(--green);border-radius:var(--r-md);padding:10px 14px;margin-bottom:12px;font-size:.86rem;color:#0a6b47}
 @media print{ .ent-cam{page-break-inside:avoid} }
@@ -1971,7 +1972,11 @@ function entregasDatos(fecha){
     });
   });
   orden.sort(function(a,b){ return a.localeCompare(b,'es'); });
-  var tot={ n:hechos.length, total:delDia.length, unid:0, cobrado:0, porMetodo:{}, fotos:0, sinFoto:0, porCobrar:0 };
+  // Dos cosas distintas que antes se mezclaban:
+  //   · porCobrarTotal  = todo lo que falta cobrar ese día (entregado o no)
+  //   · porCobrarSalio  = lo que YA SALIÓ y volvió sin cobrar → eso es lo que hay que reclamar
+  var tot={ n:hechos.length, total:delDia.length, unid:0, cobrado:0, porMetodo:{}, fotos:0, sinFoto:0,
+            porCobrarTotal:0, porCobrarSalio:0, porCobrarFalta:0, nSinCobrar:0 };
   hechos.forEach(function(p){
     (p.productos||[]).forEach(function(x){ tot.unid+=Number(x.cant)||0; });
     var f=fotosDe(p).length; tot.fotos+=f; if(!f) tot.sinFoto++;
@@ -1979,22 +1984,30 @@ function entregasDatos(fecha){
       tot.cobrado+=Number(cb.monto)||0;
       tot.porMetodo[cb.metodo]=(tot.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
     });
-    if((Number(p.saldo)||0)>0.01) tot.porCobrar+=Number(p.saldo)||0;
+    var sal=Number(p.saldo)||0;
+    if(sal>0.01){ tot.porCobrarSalio+=sal; tot.nSinCobrar++; }
   });
+  faltan.forEach(function(p){ var sal=Number(p.saldo)||0; if(sal>0.01) tot.porCobrarFalta+=sal; });
+  tot.porCobrarTotal=r2(tot.porCobrarSalio+tot.porCobrarFalta);
+  tot.porCobrarSalio=r2(tot.porCobrarSalio); tot.porCobrarFalta=r2(tot.porCobrarFalta);
+  tot.cobrado=r2(tot.cobrado);
   return { hechos:hechos, faltan:faltan, grupos:grupos, orden:orden, tot:tot };
 }
 function metodosHtml(m){
   var k=Object.keys(m||{}); if(!k.length) return '';
   return k.map(function(x){ return '<span class="badge b-gray">'+metodoIcono(x)+' '+esc(x)+' '+fmtBs(m[x])+'</span>'; }).join(' ');
 }
-function entregaCardHtml(p, dn){
+function entregaCardHtml(p, dn, pendiente){
   var prod=(p.productos||[]).map(function(x){
     return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
   }).join('<br>');
   var cob=cobrosVisibles(p);
+  var saldo=Number(p.saldo)||0;
+  // Ojo: "SIN COBRAR" en rojo solo si YA SE ENTREGÓ. Si todavía no salió, es un saldo normal.
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
-    : ((Number(p.saldo)||0)>0.01 ? ('<span class="badge b-red">SIN COBRAR · '+fmtBs(p.saldo)+'</span>')
-                                 : '<span class="badge b-gray">Sin saldo</span>');
+    : (saldo>0.01 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
+                               : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
+                  : '<span class="badge b-gray">Sin saldo</span>');
   var fotos=fotosDe(p);
   return '<div class="ent-card">'+
     '<div class="ent-top">'+
@@ -2021,9 +2034,15 @@ function renderEntregas(){
     mc('var(--green)','Entregados',t.n, t.total?('de '+t.total+' del día'):'no hay pedidos ese día')+
     mc('var(--teal-dk)','Unidades',t.unid,'productos entregados')+
     mc('var(--teal)','Cobrado',fmtBs(t.cobrado), metodosHtml(t.porMetodo)?'':'sin cobros anotados')+
-    mc(t.porCobrar?'var(--red)':'var(--gray)','Quedó por cobrar',fmtBs(t.porCobrar),'de lo entregado')+
+    mc(t.porCobrarTotal?'var(--red)':'var(--gray)','Por cobrar',fmtBs(t.porCobrarTotal),
+       t.porCobrarTotal
+         ? ((t.porCobrarSalio?(fmtBs(t.porCobrarSalio)+' ya entregado'):'')+
+            (t.porCobrarSalio&&t.porCobrarFalta?' · ':'')+
+            (t.porCobrarFalta?(fmtBs(t.porCobrarFalta)+' sin entregar'):''))
+         : 'no queda nada por cobrar')+
   '</div>'+
   (metodosHtml(t.porMetodo)?('<div style="margin:0 0 12px">'+metodosHtml(t.porMetodo)+'</div>'):'')+
+  (t.porCobrarSalio?('<div class="callout-rojo">💸 <b>'+t.nSinCobrar+'</b> '+(t.nSinCobrar===1?'entrega salió y volvió SIN COBRAR':'entregas salieron y volvieron SIN COBRAR')+': <b>'+fmtBs(t.porCobrarSalio)+'</b>. Es lo primero que hay que reclamar.</div>'):'')+
   (t.n&&t.sinFoto?('<div class="callout-warn">📷 <b>'+t.sinFoto+'</b> '+(t.sinFoto===1?'entrega no tiene foto':'entregas no tienen foto')+'.</div>'):'')+
   (t.n&&!t.sinFoto?('<div class="callout-ok">✅ Todas las entregas tienen foto.</div>'):'');
   if(!d.hechos.length){
@@ -2045,7 +2064,7 @@ function renderEntregas(){
   if(d.faltan.length){
     h+='<div class="ent-cam" style="border-color:var(--amber-border)">'+
       '<div class="ent-cam-h" style="background:var(--amber)">⏳ Falta entregar<span style="margin-left:auto;font-weight:700;font-size:.82rem">'+d.faltan.length+'</span></div>'+
-      '<div style="padding:10px 13px 13px">'+d.faltan.map(function(p){ return entregaCardHtml(p, dn[p.id]); }).join('')+'</div></div>';
+      '<div style="padding:10px 13px 13px">'+d.faltan.map(function(p){ return entregaCardHtml(p, dn[p.id], true); }).join('')+'</div></div>';
   }
   document.getElementById('entregas-body').innerHTML=h;
 }
@@ -2054,6 +2073,8 @@ function entregasTexto(){
   var f=ENTREGAS_FECHA||todayStr(), d=entregasDatos(f), dn=dayNumMap(), t=d.tot;
   var L=['🚚 ENTREGAS '+fmtFecha(f), t.n+' de '+t.total+' entregados · '+t.unid+' unidades · cobrado '+fmtBs(t.cobrado)];
   Object.keys(t.porMetodo).forEach(function(m){ L.push('   '+m+': '+fmtBs(t.porMetodo[m])); });
+  if(t.porCobrarTotal) L.push('Por cobrar: '+fmtBs(t.porCobrarTotal)+
+    (t.porCobrarSalio?('  (⚠️ '+fmtBs(t.porCobrarSalio)+' ya entregado sin cobrar)'):''));
   d.orden.forEach(function(k){
     var g=d.grupos[k];
     L.push('', '🚛 '+k+'  ('+g.list.length+(g.list.length===1?' entrega':' entregas')+' · '+fmtBs(g.cobrado)+')');
@@ -2067,7 +2088,8 @@ function entregasTexto(){
   });
   if(d.faltan.length){
     L.push('', '⏳ FALTA ENTREGAR ('+d.faltan.length+')');
-    d.faltan.forEach(function(p){ L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')); });
+    d.faltan.forEach(function(p){ L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
+      (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')); });
   }
   return L.join('\n');
 }
