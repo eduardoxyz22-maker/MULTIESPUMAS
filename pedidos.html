@@ -211,6 +211,13 @@ tbody tr:hover{background:var(--teal-lt)}
 .cho-cobro{display:inline-flex;align-items:center;gap:6px;background:var(--green-lt);border:1px solid var(--green-border);color:#0a6b47;border-radius:var(--r-pill);padding:5px 6px 5px 11px;font-size:.82rem;font-weight:700}
 .cho-cobro button{border:none;background:rgba(0,0,0,.07);color:#0a6b47;width:20px;height:20px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0}
 .cho-cobro button:active{transform:scale(.92)}
+.fotos{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 2px}
+.foto{position:relative;display:inline-block;line-height:0}
+.foto img{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid var(--gray-md);background:var(--gray-lt);display:block}
+.foto button{position:absolute;top:-6px;right:-6px;border:none;background:var(--red);color:#fff;width:22px;height:22px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.28)}
+.foto button:active{transform:scale(.92)}
+.cho-btn.foto{border-color:var(--teal-border);color:var(--teal-dk)}
+.cho-btn.foto:hover{background:var(--teal-lt)}
 .cho-mini{border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:var(--r-pill);padding:3px 11px;font:inherit;font-size:.76rem;font-weight:700;cursor:pointer;margin-left:4px}
 .cho-mini:hover{border-color:var(--teal-border);color:var(--teal-dk);background:var(--teal-lt)}
 .cho-cobrar{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 2px}
@@ -648,6 +655,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -827,7 +835,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-07-27-b';
+var SCRIPT_VERSION_ESPERADA='2026-07-27-c';
 function apiPost(payload){
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
@@ -837,6 +845,8 @@ function apiList(){ return apiPost({action:'list'}); }
 function apiSave(rec){ return apiPost({action:'save', pedido:rec}); }
 function apiDelete(id){ return apiPost({action:'delete', id:id}); }
 function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
+function apiFoto(id, cliente, dataUrl){ return apiPost({action:'foto', id:id, cliente:cliente, dataUrl:dataUrl}); }
+function apiBorrarFoto(fotoId){ return apiPost({action:'borrarFoto', fotoId:fotoId}); }
 
 function flushPending(){
   if(!CONNECTED) return Promise.resolve();
@@ -1885,12 +1895,14 @@ function renderChofer(){
       (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
       (p.observaciones?('<div class="cho-row" style="background:var(--amber-lt);border-radius:8px;padding:7px 10px;color:#7c4b00"><b>📌 '+esc(p.observaciones)+'</b></div>'):'')+
       cobroChoferHtml(p)+
+      fotosHtml(p, true)+
       '<div class="cho-links">'+
         (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Ir en Maps</a>'):'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">⚠️ sin ubicación</span>')+
         (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'">📞 Llamar</a>'):'')+
       '</div>'+
       '<div class="cho-acc">'+
         '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
+        '<button class="cho-btn foto" onclick="pedirFoto(\''+p.id+'\')">📷 '+(fotosDe(p).length?('Otra foto ('+fotosDe(p).length+')'):'Foto de la entrega')+'</button>'+
         (cobrosVisibles(p).length?('<button class="cho-btn cob" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+
       '</div>'+
     '</div>';
@@ -1898,6 +1910,83 @@ function renderChofer(){
 }
 /* Bloque de cobro de la tarjeta del chofer: lo que hay que cobrar, lo que ya cobró
    (desglosado y cada uno se puede quitar) y los tres botones para sumar un pago. */
+/* ============================================================================
+   FOTOS DE LA ENTREGA — el chofer saca la foto al dejar el producto y queda
+   guardada en Drive. La foto de un celular pesa 4–8 MB: se achica ACÁ, en el
+   propio teléfono, antes de subirla (queda en ~200 KB), si no subirla con datos
+   móviles sería imposible.
+   ========================================================================== */
+function fotosDe(p){ return Array.isArray(p.fotos)?p.fotos:[]; }
+function fotoThumb(fid){ return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w400'; }
+function fotoVer(fid){ return 'https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/view'; }
+function achicarFoto(file, maxPx, calidad){
+  return new Promise(function(res, rej){
+    var fr=new FileReader();
+    fr.onerror=function(){ rej(new Error('no se pudo leer el archivo')); };
+    fr.onload=function(){
+      var img=new Image();
+      img.onerror=function(){ rej(new Error('eso no es una imagen')); };
+      img.onload=function(){
+        var w=img.naturalWidth||img.width, h=img.naturalHeight||img.height;
+        var k=Math.min(1, maxPx/Math.max(w,h));
+        var c=document.createElement('canvas');
+        c.width=Math.max(1,Math.round(w*k)); c.height=Math.max(1,Math.round(h*k));
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        try{ res(c.toDataURL('image/jpeg', calidad)); }catch(e){ rej(e); }
+      };
+      img.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+var FOTO_PEDIDO_ID='';
+function pedirFoto(id){
+  var el=document.getElementById('foto-input'); if(!el) return;
+  FOTO_PEDIDO_ID=id; el.value=''; el.click();
+}
+function onFotoElegida(ev){
+  var f=(ev.target.files||[])[0]; if(!f) return;
+  var p=findById(FOTO_PEDIDO_ID); if(!p) return;
+  if(!CONNECTED){ toast('Sin conexión: conectate al servidor para subir la foto','err'); return; }
+  toast('Achicando y subiendo la foto…','ok');
+  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
+    return apiFoto(p.id, p.cliente||'', dataUrl);
+  }).then(function(res){
+    if(!res || !res.ok || !res.fotoId){
+      toast(res && res.version ? ('No se pudo guardar la foto ('+(res.error||'error')+')')
+                               : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
+      return;
+    }
+    p.fotos=fotosDe(p).concat([res.fotoId]);
+    persistPedido(p); renderChoferSiActivo(); renderMis();
+    if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
+    toast('Foto guardada ✓','ok');
+  }).catch(function(e){ toast('No se pudo subir la foto: '+(e&&e.message?e.message:'error'),'err'); });
+}
+function quitarFoto(id, idx){
+  var p=findById(id); if(!p) return;
+  var arr=fotosDe(p).slice();
+  if(idx<0||idx>=arr.length) return;
+  if(!confirm('¿Borrar esta foto de la entrega?')) return;
+  var fid=arr[idx]; arr.splice(idx,1); p.fotos=arr;
+  persistPedido(p); renderChoferSiActivo(); renderMis();
+  if(CONNECTED) apiBorrarFoto(fid);
+  if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
+  toast('Foto borrada','ok');
+}
+/* Tira de fotos. conBorrar solo donde corresponde (chofer y administración). */
+function fotosHtml(p, conBorrar){
+  var a=fotosDe(p);
+  if(!a.length) return '';
+  return '<div class="fotos">'+a.map(function(fid,i){
+    return '<span class="foto">'+
+      '<a href="'+fotoVer(fid)+'" target="_blank" rel="noopener" title="Ver la foto en grande">'+
+        '<img src="'+fotoThumb(fid)+'" alt="Foto de la entrega" loading="lazy">'+
+      '</a>'+
+      (conBorrar?('<button title="Borrar esta foto" onclick="quitarFoto(\''+p.id+'\','+i+')">✕</button>'):'')+
+    '</span>';
+  }).join('')+'</div>';
+}
 var CHO_COBRO_ABIERTO={};
 function choMostrarCobro(id){ CHO_COBRO_ABIERTO[id]=true; renderChofer(); }
 /* Solo los cobros con monto: un pedido que el vendedor marcó pagado en la tienda queda
@@ -2068,6 +2157,7 @@ function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
 /* Ventana flotante de un pedido (vista vendedora): datos + alertas + agregar/editar ubicación. */
 function showMisModal(id){
   var p=findById(id); if(!p) return;
+  MODAL_KIND='mis';
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   // Solo informativo: la vendedora ve qué marcó logística, pero no puede cambiarlo.
   var prod=(p.productos||[]).map(function(x){
@@ -2089,7 +2179,8 @@ function showMisModal(id){
   var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
-    row('Cobro', cobro)+row('Entrega', entrega)+(p.estado?row('Stock', estadoBadge(p.estado)):'')+row('Chofer', choferVal);
+    row('Cobro', cobro)+row('Entrega', entrega)+(p.estado?row('Stock', estadoBadge(p.estado)):'')+row('Chofer', choferVal)+
+    row('Fotos de la entrega', fotosHtml(p, false));
   var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
@@ -2439,7 +2530,7 @@ function showWhatsappModal(rec){
 
 /* Qué ficha está abierta, para volver a la correcta al marcar algo */
 var MODAL_KIND='admin';
-function reabrirFicha(id){ if(MODAL_KIND==='carga') showCargaModal(id); else showPedidoModal(id); }
+function reabrirFicha(id){ if(MODAL_KIND==='carga') showCargaModal(id); else if(MODAL_KIND==='mis') showMisModal(id); else showPedidoModal(id); }
 
 /* ---- Ficha del JEFE DE ALMACÉN (se abre desde la Lista de carga) ----
    Solo lo necesario para cargar el camión: qué se lleva y hacia dónde.
@@ -2469,7 +2560,8 @@ function showCargaModal(id){
     row('Observaciones', esc(p.observaciones))+
     row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+
     row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
-    row('Vehículo', vehTxt);
+    row('Vehículo', vehTxt)+
+    row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>');
   var accionesSec=
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">'+
@@ -2525,6 +2617,7 @@ function showPedidoModal(id){
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoBadge(p.estado))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
+    row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
   var mark = !p.pagado ? (
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+

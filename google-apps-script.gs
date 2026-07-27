@@ -29,7 +29,8 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'Turno','Zona','Dirección','Link Maps','Pagado','Saldo (Bs)',
                'ts','_productos_json','Método pago','Observaciones',
                'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)',
-               'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día','Verificado'];
+               'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día','Verificado',
+               'Fotos entrega'];
 var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
 function getSheet() {
@@ -49,7 +50,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-07-27-b';
+var SCRIPT_VERSION = '2026-07-27-c';
 
 function jsonOut(obj) {
   return ContentService
@@ -71,6 +72,9 @@ function doPost(e) {
   // Devuelve tambien la VERSION: asi el panel sabe si lo que esta publicado es este archivo
   // o una implementacion vieja (guardar el codigo NO alcanza, hay que crear version nueva).
   if (action === 'geocode') return jsonOut({ ok:true, version:SCRIPT_VERSION, geo: resolveLinks(body.links || []) });
+  // Fotos de la entrega: van a Drive (en una celda no entran). Tambien sin lock: es lento.
+  if (action === 'foto')       return guardarFoto(body);
+  if (action === 'borrarFoto') return borrarFoto(body);
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
@@ -379,7 +383,8 @@ function readAll() {
       facturarA: String(r[24] || ''),
       nit: String(r[25] == null ? '' : r[25]),
       nroDia: Number(r[26]) || 0,
-      verificado: (String(r[27]).toUpperCase().charAt(0) === 'S')
+      verificado: (String(r[27]).toUpperCase().charAt(0) === 'S'),
+      fotos: String(r[28] || '').split(/[\s|]+/).filter(function (x) { return x; })
     });
   }
   return out;
@@ -449,7 +454,8 @@ function recToRow(p) {
     p.estado || '', p.entregado ? 'SÍ' : 'NO',
     p.vehiculo || '', p.chofer || '', p.garantia || '',
     p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0,
-    p.verificado ? 'SÍ' : 'NO'
+    p.verificado ? 'SÍ' : 'NO',
+    (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : ''
   ];
 }
 
@@ -508,6 +514,43 @@ function backupDiario() {
   var copia = DriveApp.getFileById(ss.getId()).makeCopy('Pedidos ' + stamp, folder);
   purgeBackups_(folder, BACKUP_KEEP);
   return copia.getUrl();
+}
+
+/* ============================================================================
+ * FOTOS DE LA ENTREGA — el chofer saca la foto y va a Drive. En una celda de la
+ * planilla no entra una imagen, asi que en la hoja solo se guarda el ID del
+ * archivo. Llega ya achicada desde el celular (~200 KB), no la foto original.
+ * ========================================================================== */
+var FOTOS_FOLDER = 'Fotos entregas MultiEspumas';
+
+function fotosFolder_() {
+  var it = DriveApp.getFoldersByName(FOTOS_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(FOTOS_FOLDER);
+}
+
+function guardarFoto(body) {
+  var d = String((body && body.dataUrl) || '');
+  var m = d.match(/^data:(image\/[a-z+.\-]+);base64,(.+)$/i);
+  if (!m) return jsonOut({ ok:false, error:'formato', version:SCRIPT_VERSION });
+  var bytes;
+  try { bytes = Utilities.base64Decode(m[2]); }
+  catch (e) { return jsonOut({ ok:false, error:'ilegible', version:SCRIPT_VERSION }); }
+  if (bytes.length > 6 * 1024 * 1024) return jsonOut({ ok:false, error:'muy_pesada', version:SCRIPT_VERSION });
+  var ext = (m[1].indexOf('png') >= 0) ? 'png' : 'jpg';
+  var nombre = 'entrega_' + String((body.cliente || body.id || 'x')).replace(/[^\w\-]+/g, '_').slice(0, 40) +
+               '_' + Utilities.formatDate(new Date(), 'GMT-4', 'yyyyMMdd_HHmmss') + '.' + ext;
+  try {
+    var f = fotosFolder_().createFile(Utilities.newBlob(bytes, m[1], nombre));
+    f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return jsonOut({ ok:true, fotoId:f.getId(), version:SCRIPT_VERSION });
+  } catch (e) {
+    return jsonOut({ ok:false, error:String(e), version:SCRIPT_VERSION });
+  }
+}
+
+function borrarFoto(body) {
+  try { DriveApp.getFileById(String(body.fotoId)).setTrashed(true); } catch (e) {}
+  return jsonOut({ ok:true, version:SCRIPT_VERSION });
 }
 
 function backupFolder_() {

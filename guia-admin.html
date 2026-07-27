@@ -77,6 +77,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#mapa">🗺️ Mapa</a>
     <a href="#ruta">🧾 Hoja de ruta</a>
     <a href="#carga">📦 Lista de carga</a>
+    <a href="#fotos">📷 Foto entrega</a>
     <a href="#reporte">📊 Reporte</a>
     <a href="#excel">⬇️ Excel</a>
     <a href="#colores">🎨 Colores</a>
@@ -220,6 +221,20 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout tip"><b>Puede cargar varios cobros en un mismo pedido.</b> Si el cliente paga Bs 6.000 en efectivo y Bs 1.750 por QR, el chofer anota los dos: la tarjeta muestra <span class="kbd">💵 Efectivo Bs 6.000,00</span> <span class="kbd">📱 QR Bs 1.750,00</span> y el saldo va bajando solo. Cada cobro se puede quitar con la <b>✕</b> si se equivocó.</div>
     <div class="callout warn"><b>⚠️ Si se pasa del monto, la app le avisa.</b> Antes de anotar un cobro que supere lo que el vendedor puso, le sale: <i>“Ojo, te estás pasando. El pedido dice cobrar Bs 7.750 y con este cobro juntarías Bs 8.250 — son Bs 500 de más. ¿Lo anoto igual?”</i>. Puede seguir (a veces el cliente paga un extra), pero el pedido queda marcado con <b>⚠️ Bs 500,00 de más</b> para que lo revises.</div>
     <div class="callout tip">Todo lo que marca el chofer aparece al instante en tu panel y <b>entra en la rendición por chofer con el detalle de cada cobro</b>, así al final del día sabés cuánto trajo cada uno y cómo cobró. En la planilla queda escrito tal cual: <span class="kbd">Efectivo 6000 + QR 1750</span>.</div>
+  </div>
+
+  <div class="card" id="fotos">
+    <h3>📷 Foto de la entrega <span class="pill redeploy">requiere actualizar el Apps Script</span></h3>
+    <p>En la tarjeta del chofer, al lado de “Marcar entregado”, hay un botón <b>📷 Foto de la entrega</b>. Le abre <b>la cámara del celular</b>, saca la foto y queda guardada en el pedido. Puede sacar <b>varias</b> (el producto en la puerta, el recibo firmado, el ambiente donde lo dejó).</p>
+    <ul>
+      <li>La foto se <b>achica en el propio teléfono</b> antes de subirla: una foto de cámara pesa 4–8 MB y sube como <b>~150 KB</b>. Así funciona con datos móviles y no le come el plan al chofer.</li>
+      <li>Se guardan en tu <b>Google Drive</b>, en una carpeta llamada <span class="kbd">Fotos entregas MultiEspumas</span>. En la planilla queda solo el identificador del archivo (una imagen no entra en una celda).</li>
+      <li>Se ven como <b>miniaturas</b> en la tarjeta del chofer, en la <b>ficha del pedido</b>, en la <b>ficha del jefe de almacén</b> y en <b>Mis pedidos</b> de la vendedora. Un toque y se abren en grande.</li>
+      <li>Vos y el jefe de almacén también pueden <b>agregar</b> una foto desde la ficha, y <b>borrarla</b> con la ✕ (va a la papelera de Drive). La vendedora solo la ve.</li>
+    </ul>
+    <div class="callout warn"><b>Dos cosas para saber:</b><br>
+      <b>1)</b> Los archivos quedan como <b>“cualquiera con el enlace puede ver”</b> — es lo que permite que la foto se vea dentro del panel sin pedir contraseña. El enlace es imposible de adivinar, pero si se lo pasás a alguien, esa persona ve la foto.<br>
+      <b>2)</b> Ocupan espacio en tu Drive: a ~150 KB por foto y 25 entregas por día, son unos <b>50 MB al mes</b>. Nada grave, pero conviene mirarlo una vez al año.</div>
   </div>
 
   <div class="card" id="revision">
