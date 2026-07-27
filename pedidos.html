@@ -1162,7 +1162,9 @@ function deletePedido(id){
 function realDelete(id){
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
-  saveMirror(); updateStats(); renderAdmin();
+  // Refrescar TODO: si no, el pedido borrado seguía apareciendo en la lista de carga,
+  // en Mis pedidos, en el panel del chofer y en el mapa.
+  saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo();
   if(CONNECTED){
     apiDelete(id).then(function(res){ if(!(res&&res.ok)) toast('No se pudo borrar del servidor. Actualizá.','err'); },
                        function(){ toast('Sin conexión: se borró local (puede reaparecer al actualizar).','err'); });
@@ -2327,6 +2329,7 @@ function showCargaModal(id){
   var body=
     row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
+    row('Ingresado', esc(tsFmt(p.ts)))+
     row('Vendedor', esc(p.vendedor))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+
@@ -2357,14 +2360,24 @@ function showCargaModal(id){
   var html='<div class="modal-h"><h3>📦 Para cargar'+(dnum?(' · #'+dnum):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+body+accionesSec+despachoSec+
       '<div class="modal-actions" style="margin-top:16px">'+
+        '<button class="btn btn-ghost btn-sm" onclick="editarDesdeCarga(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="copyPedido(\''+p.id+'\')">📋 Copiar</button>'+
+        '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="eliminarDesdeCarga(\''+p.id+'\')">🗑 Eliminar</button>'+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
     '</div>';
   openModal(html);
 }
 function editarUbicacionCarga(id){ editarUbicacion(id, showCargaModal); }
+/* Editar desde la lista de carga: hay que cerrar TAMBIÉN la lista, si no el formulario
+   queda tapado por la pantalla de carga, que va por encima de todo. */
+function editarDesdeCarga(id){ closeModal(); closeCarga(); editPedido(id); }
+function eliminarDesdeCarga(id){
+  var p=findById(id); if(!p) return;
+  if(!confirm('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos y no se puede deshacer.')) return;
+  closeModal(); realDelete(id);
+}
 
 function showPedidoModal(id){
   var p=findById(id); if(!p) return;
