@@ -79,6 +79,9 @@ label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
 .lite-only{display:none}
 .lite-vendedor .lite-only{display:block}
 .lite-vendedor .req-lite{display:none}
+.oc-roho{display:none}
+.roho-vendedor .oc-roho{display:inline}
+.roho-vendedor .oc-opcional{display:none}
 input[type=text],input[type=tel],input[type=url],input[type=number],input[type=date],input[type=month],textarea,select{
   width:100%;padding:11px 13px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
@@ -214,6 +217,13 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .ent-cam{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-card)}
 .ent-cam-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#0f766e;color:#fff;padding:9px 13px;font-weight:800;font-size:.9rem}
+.ent-falta{background:#fff;border:1px solid var(--amber-border);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-card)}
+.ent-sub{border:1px solid var(--gray-md);border-radius:var(--r-md);margin-bottom:11px;overflow:hidden}
+.ent-sub.sin{border-color:var(--amber-border)}
+.ent-sub-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--gray-lt);color:var(--text);padding:7px 11px;font-weight:800;font-size:.85rem}
+.ent-sub-h.sin{background:var(--amber-lt);color:#7c4b00}
+.ent-sub .ent-card{margin:9px 9px 0}
+.ent-sub .ent-card:last-child{margin-bottom:9px}
 .ent-card{border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 12px;margin-bottom:9px;background:var(--gray-lt)}
 .ent-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.9rem}
 .ent-n{background:var(--teal);color:#fff;border-radius:var(--r-pill);padding:1px 9px;font-size:.76rem;font-weight:800}
@@ -406,7 +416,7 @@ th.sortable:hover{color:var(--teal-dk)}
 
       <div class="grid2">
         <div class="field">
-          <label class="lb">N° OC <span class="hint">(orden de compra, opcional)</span></label>
+          <label class="lb">N° OC <span class="hint oc-opcional">(orden de compra, opcional)</span><span class="req oc-roho">*</span> <span class="hint oc-roho">obligatorio para ROHO</span></label>
           <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
         </div>
         <div class="field">
@@ -1025,14 +1035,21 @@ function submitPedido(){
   var cliente=document.getElementById('f-cliente').value.trim();
   var productos=getProductos();
   var ok=true;
-  var lite=esVendedorLite(vendedor); // Eduardo Añez y ROHO: nota, OC, celular y cobro NO obligatorios
+  var lite=esVendedorLite(vendedor); // Eduardo Añez y ROHO: nota, celular y cobro NO obligatorios
+  // Salvo el N° de OC en ROHO: es lo que identifica el pedido y lo que va al Excel.
+  var faltaOcRoho=false;
+  if(esRoho(vendedor) && !document.getElementById('f-oc').value.trim()){ markErr('f-oc'); ok=false; faltaOcRoho=true; }
   if(!lite && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
   if(!cliente){ markErr('f-cliente'); ok=false; }
   if(!lite && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
   if(!document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
-  if(!ok){ toast('Completá los campos marcados (*)','err'); return; }
+  if(!ok){
+    toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.' : 'Completá los campos marcados (*)','err');
+    if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
+    return;
+  }
   var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
@@ -1158,7 +1175,12 @@ function ocRepetidaRoho(oc, exceptoId){
 }
 function esRoho(v){ return String(v||'').trim().toLowerCase()==='roho'; }
 function esVendedorLite(v){ var s=String(v||'').trim().toLowerCase(); return s==='eduardo añez'||s==='eduardo anez'||s==='roho'; }
-function applyVendedorLite(){ var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form'), lite=v?esVendedorLite(v.value):false; if(view) view.classList.toggle('lite-vendedor', lite); var ff=document.getElementById('f-fecha'); if(ff) ff.min = lite ? todayStr() : tomorrowStr(); }
+function applyVendedorLite(){
+  var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form');
+  var lite=v?esVendedorLite(v.value):false, roho=v?esRoho(v.value):false;
+  if(view){ view.classList.toggle('lite-vendedor', lite); view.classList.toggle('roho-vendedor', roho); }
+  var ff=document.getElementById('f-fecha'); if(ff) ff.min = lite ? todayStr() : tomorrowStr();
+}
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
@@ -1973,25 +1995,38 @@ function entregasDia(delta){
 }
 function renderEntregasSiActivo(){ var ov=document.getElementById('entregas-overlay'); if(ov && ov.style.display==='flex') renderEntregas(); }
 /* Todo lo del día, separado en entregado / pendiente, y agrupado por vehículo. */
-function entregasDatos(fecha){
-  var delDia=STATE.filter(function(p){ return p.fecha===fecha; });
-  var hechos=delDia.filter(function(p){ return p.entregado; });
-  var faltan=delDia.filter(function(p){ return !p.entregado; });
+/* Agrupa pedidos por camión (vehículo + chofer). Los que no tienen nada asignado van
+   juntos en "Sin asignar" y quedan SIEMPRE al final: son los que faltan resolver. */
+var SIN_CAMION='Sin asignar';
+function agruparPorCamion(list){
   var grupos={}, orden=[];
-  hechos.forEach(function(p){
+  (list||[]).forEach(function(p){
     var v=(vehiculoDe(p)||'').trim(), c=String(p.chofer||'').trim();
-    var k=(v||c)?((v||'Sin vehículo')+' · '+(c||'sin chofer')):'Sin asignar';
-    if(!grupos[k]){ grupos[k]={k:k, list:[], unid:0, cobrado:0, porMetodo:{}, fotos:0}; orden.push(k); }
+    var k=(v||c)?((v||'Sin vehículo')+' · '+(c||'sin chofer')):SIN_CAMION;
+    if(!grupos[k]){ grupos[k]={k:k, list:[], unid:0, cobrado:0, porCobrar:0, porMetodo:{}, fotos:0}; orden.push(k); }
     var g=grupos[k];
     g.list.push(p);
     (p.productos||[]).forEach(function(x){ g.unid+=Number(x.cant)||0; });
     g.fotos+=fotosDe(p).length;
+    var sal=Number(p.saldo)||0; if(sal>0.01) g.porCobrar+=sal;
     cobrosVisibles(p).forEach(function(cb){
       g.cobrado+=Number(cb.monto)||0;
       g.porMetodo[cb.metodo]=(g.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
     });
   });
-  orden.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  orden.sort(function(a,b){
+    if(a===SIN_CAMION) return 1;
+    if(b===SIN_CAMION) return -1;
+    return a.localeCompare(b,'es');
+  });
+  return { grupos:grupos, orden:orden };
+}
+function entregasDatos(fecha){
+  var delDia=STATE.filter(function(p){ return p.fecha===fecha; });
+  var hechos=delDia.filter(function(p){ return p.entregado; });
+  var faltan=delDia.filter(function(p){ return !p.entregado; });
+  var g1=agruparPorCamion(hechos), grupos=g1.grupos, orden=g1.orden;
+  var g2=agruparPorCamion(faltan);
   // Dos cosas distintas que antes se mezclaban:
   //   · porCobrarTotal  = todo lo que falta cobrar ese día (entregado o no)
   //   · porCobrarSalio  = lo que YA SALIÓ y volvió sin cobrar → eso es lo que hay que reclamar
@@ -2011,7 +2046,7 @@ function entregasDatos(fecha){
   tot.porCobrarTotal=r2(tot.porCobrarSalio+tot.porCobrarFalta);
   tot.porCobrarSalio=r2(tot.porCobrarSalio); tot.porCobrarFalta=r2(tot.porCobrarFalta);
   tot.cobrado=r2(tot.cobrado);
-  return { hechos:hechos, faltan:faltan, grupos:grupos, orden:orden, tot:tot };
+  return { hechos:hechos, faltan:faltan, grupos:grupos, orden:orden, tot:tot, pend:g2 };
 }
 function metodosHtml(m){
   var k=Object.keys(m||{}); if(!k.length) return '';
@@ -2082,9 +2117,22 @@ function renderEntregas(){
     }).join('');
   }
   if(d.faltan.length){
-    h+='<div class="ent-cam" style="border-color:var(--amber-border)">'+
-      '<div class="ent-cam-h" style="background:var(--amber)">⏳ Falta entregar<span style="margin-left:auto;font-weight:700;font-size:.82rem">'+d.faltan.length+'</span></div>'+
-      '<div style="padding:10px 13px 13px">'+d.faltan.map(function(p){ return entregaCardHtml(p, dn[p.id], true); }).join('')+'</div></div>';
+    var sinCam=(d.pend.grupos[SIN_CAMION]||{list:[]}).list.length;
+    h+='<div class="ent-falta">'+
+      '<div class="ent-cam-h" style="background:var(--amber)">⏳ Falta entregar'+
+        '<span style="margin-left:auto;font-weight:700;font-size:.82rem">'+d.faltan.length+' '+(d.faltan.length===1?'pedido':'pedidos')+
+        (sinCam?(' · '+sinCam+' sin camión'):' · todos con camión')+'</span></div>'+
+      '<div style="padding:10px 13px 13px">'+
+      d.pend.orden.map(function(k){
+        var g=d.pend.grupos[k], sin=(k===SIN_CAMION);
+        return '<div class="ent-sub'+(sin?' sin':'')+'">'+
+          '<div class="ent-sub-h'+(sin?' sin':'')+'">'+(sin?'⚠️ Sin camión asignado':('🚛 '+esc(k)))+
+            '<span style="margin-left:auto;font-weight:700">'+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+' · '+g.unid+' u.'+
+            (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+'</span></div>'+
+          g.list.map(function(p){ return entregaCardHtml(p, dn[p.id], true); }).join('')+
+        '</div>';
+      }).join('')+
+      '</div></div>';
   }
   document.getElementById('entregas-body').innerHTML=h;
 }
@@ -2108,8 +2156,13 @@ function entregasTexto(){
   });
   if(d.faltan.length){
     L.push('', '⏳ FALTA ENTREGAR ('+d.faltan.length+')');
-    d.faltan.forEach(function(p){ L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
-      (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')); });
+    d.pend.orden.forEach(function(k){
+      var g=d.pend.grupos[k];
+      L.push('  '+(k===SIN_CAMION?'⚠️ Sin camión asignado':('🚛 '+k))+'  ('+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+
+        (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+')');
+      g.list.forEach(function(p){ L.push('     '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
+        (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')); });
+    });
   }
   return L.join('\n');
 }
