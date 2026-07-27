@@ -1965,18 +1965,42 @@ function renderMis(){
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
 function editarUbicacion(id, reopen){
   var p=findById(id); if(!p) return;
-  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nDejalo vacío para quitar la ubicación:', p.maps||'');
+  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nSi pegás un enlace corto (maps.app.goo.gl) lo abro yo y guardo la ubicación.\n\nDejalo vacío para quitar la ubicación:', p.maps||'');
   if(nuevo==null) return;
   var norm=normalizaUbicacion(nuevo);
   if(norm===null){ toast('No se entiende: pegá el enlace, las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX)','err'); return; }
+  guardarUbicacion(p, norm, reopen);
+}
+function esLinkCorto(u){ return /goo\.gl|maps\.app|bit\.ly|tinyurl/i.test(String(u||'')); }
+/* Guarda la ubicación. Si lo que pegaron es un ENLACE CORTO (maps.app.goo.gl…) no sirve de
+   nada guardarlo tal cual: no dice dónde está y el pedido sigue igual de perdido. Se lo
+   preguntamos al servidor en el momento y guardamos las COORDENADAS, que no caducan. */
+function guardarUbicacion(p, norm, reopen){
+  function fin(msg, tipo){
+    upsert(p); saveMirror();
+    if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+    if(UNLOCKED) renderAdmin();
+    refreshCarga(); renderMis(); renderChoferSiActivo();
+    toast(msg, tipo||'ok');
+    if(reopen && document.getElementById('modal').classList.contains('on')) reopen(p.id);
+  }
+  if(norm && esLinkCorto(norm) && !coordsDeLink(norm) && CONNECTED){
+    toast('Es un enlace corto: averiguando a dónde apunta…','ok');
+    apiGeocode([norm]).then(function(res){
+      var g=(res && res.ok && Array.isArray(res.geo)) ? res.geo[0] : null;
+      if(g && g.lat!=null && g.lng!=null){
+        p.maps='https://www.google.com/maps?q='+g.lat+','+g.lng;
+        MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:!!g.aprox}; geoCacheSave();
+        fin(g.aprox?'Ubicación encontrada (aproximada) ✓':'Ubicación encontrada y guardada ✓');
+      }else{
+        p.maps=norm;
+        fin('Ese enlace corto no se puede ubicar. Abrilo, mantené apretado el pin y copiá los NÚMEROS de abajo.','err');
+      }
+    }, function(){ p.maps=norm; fin('Guardado, pero el servidor no respondió y sigue sin ubicarse.','err'); });
+    return;
+  }
   p.maps=norm;
-  upsert(p); saveMirror();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
-  if(UNLOCKED) renderAdmin();
-  refreshCarga();
-  renderMis();
-  toast(nuevo?'Ubicación guardada ✓':'Ubicación quitada','ok');
-  if(reopen && document.getElementById('modal').classList.contains('on')) reopen(id);
+  fin(norm?'Ubicación guardada ✓':'Ubicación quitada');
 }
 function editarUbicacionMis(id){ editarUbicacion(id, showMisModal); }
 function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
@@ -2892,7 +2916,7 @@ function revUbicDatos(){
     var g=MAPA_COORDS[u];
     var c=(g&&g.lat!=null)?g:coordsDeLink(u);
     if(c && c.lat!=null) ok.push({p:p,c:c});
-    else if(/goo\.gl|maps\.app|bit\.ly|tinyurl/i.test(u)) cortos.push(p);   // hay que resolverlos en el servidor
+    else if(esLinkCorto(u)) cortos.push(p);   // hay que resolverlos en el servidor
     else nores.push(p);
   });
   return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
