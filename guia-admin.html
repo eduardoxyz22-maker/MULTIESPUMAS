@@ -177,17 +177,61 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
 
   <div class="card" id="excel">
     <h3>⬇️ Excel</h3>
-    <p>El botón <b>“Descargar Excel”</b> exporta con las <b>columnas nombradas</b> visibles (Fecha de entrega, Vendedor - Cliente, Producto, Cantidad, Celular, Turno, Dirección, Link, Observaciones); el resto de los datos va <b>oculto</b> (por si los necesitás) y se mantiene la hoja <b>Resumen</b>.</p>
+    <p>El botón <b>Excel</b> tiene cuatro alcances: <b>Hoy</b>, <b>Mañana</b>, <b>Este mes</b> y <b>Todo</b>. El archivo sale con las columnas nombradas visibles; el resto de los datos va oculto (por si los necesitás) y se mantiene la hoja <b>Resumen</b>.</p>
+    <p>Además incluye la revisión de logística: columna <b>VERIFICADO</b> (SÍ/NO) por pedido y columna <b>REVISIÓN</b> por producto (<b>✔ HAY</b> en verde, <b>✗ NO HAY</b> en rojo, <b>📥 RECOGER IM</b> y <b>🏭 EN PRODUCCIÓN</b> en amarillo), con el producto faltante resaltado.</p>
   </div>
 
   <div class="card" id="colores">
     <h3>🎨 Colores de fila</h3>
-    <p>Los pedidos se resaltan solos para ubicarlos rápido:</p>
+    <p>Los pedidos se resaltan solos para ubicarlos rápido. <b>Manda el más urgente:</b></p>
     <ul>
-      <li><span class="swatch" style="background:#dbeafe"></span> <b>Celeste</b> — medida <b>especial</b> (cargada como “Otros”).</li>
+      <li><span class="swatch" style="background:#ffdadd"></span> <b>Rojo</b> — <b>falta stock</b>. Gana sobre todos los demás para que un faltante nunca pase desapercibido.</li>
+      <li><span class="swatch" style="background:#ece8fd"></span> <b>Violeta</b> — hay que <b>recoger de IM</b> (el producto existe, pero está en el otro almacén).</li>
       <li><span class="swatch" style="background:#ffedd5"></span> <b>Naranja</b> — medida <b>50x70</b>.</li>
+      <li><span class="swatch" style="background:#dbeafe"></span> <b>Celeste</b> — medida <b>especial</b> (cargada como “Otros”).</li>
+      <li><span class="swatch" style="background:#fff176"></span> <b>Amarillo</b> — <b>en producción</b>.</li>
+      <li><span class="swatch" style="background:#e7ebee"></span> <b>Gris</b> — ya <b>entregado</b>.</li>
     </ul>
-    <p>Estos colores también salen en el Excel.</p>
+    <p>Estos colores también salen en el Excel, con el mismo criterio.</p>
+  </div>
+
+  <div class="card" id="ubicaciones">
+    <h3>📍 Revisar ubicaciones</h3>
+    <p>Revisa <b>todos</b> los enlaces cargados y te dice cuáles no se pueden ubicar en el mapa, sin esperar a que el chofer ya haya salido. Los agrupa en cuatro:</p>
+    <ul>
+      <li><b>Se ubican</b> — el pin sale bien. Nada que hacer.</li>
+      <li><b>No se ubican</b> — se pegó texto o algo sin coordenadas. Tocás y se abre el pedido para corregirlo.</li>
+      <li><b>Link corto</b> (<span class="kbd">maps.app.goo.gl</span>) — no dice dónde está: hay que abrirlo contra Google. Botón <b>“Resolverlos ahora”</b>; si alguno falla, con <b>↗ Abrir</b> + <b>✏️ Corregir</b> lo arreglás a mano.</li>
+      <li><b>Sin enlace</b> — pedidos sin entregar a los que todavía les falta la ubicación.</li>
+    </ul>
+    <div class="callout tip"><b>El truco que evita todo esto:</b> en Google Maps se mantiene apretado el punto de la casa y aparecen unos números (<span class="kbd">-17.749444, -63.104556</span>). Esos números <b>se pueden pegar directo</b> en el pedido: es la ubicación exacta, se ubica al instante y no depende de ningún enlace. Está explicado en la guía del vendedor.</div>
+  </div>
+
+  <div class="card" id="chofer">
+    <h3>🚚 Panel del chofer</h3>
+    <p>Pestaña <b>“🚚 Chofer”</b>, pensada para el celular. El chofer elige su nombre (le queda guardado en su teléfono) y ve <b>solo sus entregas</b>, empezando por las de hoy.</p>
+    <ul>
+      <li>Cliente, productos (marcando en rojo lo que <b>no hay</b>), dirección y observaciones.</li>
+      <li><b>📍 Ir en Maps</b> y <b>📞 Llamar</b> al cliente.</li>
+      <li><b>✅ Marcar entregado</b> (se puede deshacer) y <b>💰 Cobrar</b>, eligiendo <b>Efectivo / QR / Tarjeta</b>.</li>
+    </ul>
+    <div class="callout tip">Todo lo que marca el chofer aparece al instante en tu panel y <b>entra en la rendición por chofer con el método de pago</b>, así al final del día sabés cuánto trajo cada uno y cómo cobró.</div>
+  </div>
+
+  <div class="card" id="revision">
+    <h3>🔎 Revisión de stock por producto</h3>
+    <p>Al abrir un pedido, cada producto tiene sus botones: <b>✔ hay</b>, <b>✗ no hay</b>, <b>📥 recoger IM</b> (existe pero está en el otro almacén) y, aparte, <b>🏭 en producción</b>, que <b>se combina</b> con los otros (podés decir “no hay <i>pero</i> ya se pidió a producción”).</p>
+    <ul>
+      <li>Si marcás <b>todos ✔</b>, el pedido queda <b>✅ Verificado</b> solo.</li>
+      <li>Si hay algún <b>✗</b>, la fila se pone <b>roja</b> y la vendedora recibe el aviso para llamar al cliente.</li>
+      <li>Lo de <b>recoger IM</b> no molesta a la vendedora: es tarea de logística.</li>
+    </ul>
+  </div>
+
+  <div class="card" id="robots">
+    <h3>🏭 Faltantes / producción &nbsp;·&nbsp; 📋 Parte del día</h3>
+    <p><b>Faltantes / producción:</b> junta todo lo marcado ✗ y lo pedido a producción, <b>agrupado por producto y código</b> y sumando cantidades, con filtro Hoy / Mañana / Todos. Tiene <b>Copiar para WhatsApp</b> para mandárselo a producción sin armar la lista a mano.</p>
+    <p><b>Parte del día:</b> entregados, cobrado, por cobrar, faltantes y sin vehículo de hoy; lo que sale mañana; y el detalle por chofer. <b>Se abre solo a las 18:00</b> (hora Bolivia) cuando entrás al panel, una vez por día.</p>
   </div>
 
   <div class="card" id="backup">

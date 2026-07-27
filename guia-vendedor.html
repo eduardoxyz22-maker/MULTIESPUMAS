@@ -37,8 +37,9 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
 .card{background:var(--white);border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:15px 18px;margin-bottom:12px;box-shadow:var(--sh-card)}
 .card h3{font-size:1.04rem;font-weight:800;color:var(--black);margin-bottom:5px;display:flex;align-items:center;gap:8px}
 .card p{font-size:.9rem;color:var(--text);margin:5px 0}
-.card ul{margin:6px 0 2px;padding-left:20px}
+.card ul,.card ol{margin:6px 0 2px;padding-left:20px}
 .card li{font-size:.9rem;margin:4px 0}
+.card ol li{margin:7px 0}
 .card b{font-weight:700;color:var(--black)}
 .kbd{display:inline-block;background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:6px;padding:1px 7px;font-size:.82em;font-weight:700;color:var(--teal-dk)}
 .callout{border-radius:var(--r-md);padding:11px 15px;margin:10px 0 2px;font-size:.87rem;border:1px solid;border-left-width:4px}
@@ -117,9 +118,31 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
   </div>
 
   <div class="card" id="maps">
-    <h3>🗺️ El link de Google Maps <span class="pill new">CLAVE</span></h3>
-    <p>Pegá el <b>link de la ubicación</b> del cliente (compartir ubicación desde Google Maps → “Copiar enlace”).</p>
-    <div class="callout tip">📍 Con el link, el pedido <b>aparece en el mapa</b> de logística y el <b>chofer navega directo</b> al tocar el enlace. Sin link igual se guarda, pero el chofer tiene que ubicarse solo. <b>Cargalo siempre que puedas.</b></div>
+    <h3>🗺️ La ubicación del cliente <span class="pill new">CLAVE</span></h3>
+    <p>Con la ubicación cargada, el pedido <b>aparece en el mapa</b> de logística y el <b>chofer navega directo</b>. Sin ella, el chofer tiene que ubicarse solo.</p>
+
+    <div class="callout tip"><b>✅ La forma que nunca falla: copiar los números</b></div>
+    <p>En <b>Google Maps</b>, sobre la casa del cliente:</p>
+    <ol>
+      <li><b>Mantené apretado</b> el punto exacto de la casa (1 segundo) hasta que aparezca un <b>pin rojo</b>.</li>
+      <li>Abajo se abre una fichita con unos <b>números</b>, algo así:<br>
+        <span class="kbd">-17.749444, -63.104556</span></li>
+      <li><b>Tocá esos números</b> — se copian solos.</li>
+      <li>Volvé al pedido y <b>pegalos</b> en el campo de ubicación.</li>
+    </ol>
+    <p>Listo. La app los entiende igual que un link y la ubicación queda <b>exacta</b>.</p>
+
+    <div class="callout"><b>También podés pegar el link</b> de “Compartir → Copiar enlace”. Funciona, pero a veces Google entrega un <b>enlace corto</b> (<span class="kbd">maps.app.goo.gl/…</span>) que <b>no dice dónde está</b>: hay que abrirlo para averiguarlo y algunas veces falla. Por eso, <b>si podés, mandá los números</b>.</div>
+
+    <div class="callout warn"><b>⚠️ Ojo con estos errores comunes</b>
+      <ul>
+        <li><b>No escribas la dirección acá</b> (“frente a la plazuela”). Eso va en el campo <b>Dirección</b>. Acá van el link o los números.</li>
+        <li>Si el pin lo pusiste “más o menos”, el chofer llega “más o menos”. <b>Ubicalo sobre la puerta.</b></li>
+        <li>Si el cliente te manda su ubicación por WhatsApp: abrila, tocá <b>“Ver en Google Maps”</b>, y de ahí copiá los números.</li>
+      </ul>
+    </div>
+
+    <div class="callout tip">📍 ¿No la tenés en el momento? Cargá el pedido igual y agregá la ubicación después desde <b>“📋 Mis pedidos”</b> — tocás el pedido y usás <b>“Agregar ubicación”</b>. La app te avisa cuáles te faltan.</div>
   </div>
 
   <div class="sec"><span class="em">✅</span> Después de guardar</div>
