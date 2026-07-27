@@ -2862,7 +2862,10 @@ function revMotivoHtml(){
     '<b>El Apps Script está desactualizado.</b><br>El servidor no reconoce el pedido de ubicaciones. Hay que pegar de nuevo el archivo <b>google-apps-script.gs</b> y volver a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).</div>';
   if(REV_MOTIVO==='permiso') return '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
     '<b>Al Apps Script le falta permiso para abrir enlaces.</b><br>Abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos que pida (incluye “conectarse a un servicio externo”). Después volvé acá y tocá otra vez “Resolverlos ahora”.</div>';
-  return '';
+  // El servidor funciona (resolvió otros), pero con estos no pudo.
+  return '<div style="background:#fff;border-left:4px solid var(--teal);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:var(--text)">'+
+    '<b>El servidor funciona</b> — con estos enlaces en particular no pudo. Suele pasar con los que se comparten desde la <b>app de Maps del celular</b> (terminan en <code>?g_st=…</code>).<br>'+
+    'Si ya actualizaste el Apps Script y siguen fallando, arreglalos a mano con <b>Abrir</b> + <b>Corregir</b>.</div>';
 }
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();

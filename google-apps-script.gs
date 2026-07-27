@@ -115,18 +115,62 @@ function followRedirects(url) {
   return cur;
 }
 
+// Los links que comparte la APP de Maps del celular (…?g_st=aw / ic / ac / iw) no contestan
+// con una redireccion normal: devuelven una pagina intermedia con el destino adentro.
+// Hay que leer esa pagina y sacar de ahi la direccion real.
+var UA_NAV = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36';
+
+function urlDestinoEnCuerpo(body) {
+  // Google a veces manda las URLs escapadas dentro de JSON (https:\/\/… , \u003d):
+  // se normaliza primero, si no las expresiones de abajo no las encuentran.
+  body = limpiaHtml(String(body || ''));
+  var m;
+  // 1) <meta http-equiv="refresh" content="0; url=...">
+  if ((m = body.match(/http-equiv=["']?refresh["']?[^>]*content=["'][^"']*url=([^"']+)["']/i))) return limpiaHtml(m[1]);
+  // 2) location.replace('...') / location.href = '...'
+  if ((m = body.match(/location\.(?:replace\(|href\s*=\s*)["']([^"']+)["']/i))) return limpiaHtml(m[1]);
+  // 3) cualquier URL de Google Maps que aparezca en la pagina
+  if ((m = body.match(/https?:\/\/(?:www\.)?google\.[a-z.]+\/maps\/[^"'<>\\ ]+/i))) return limpiaHtml(m[0]);
+  if ((m = body.match(/https?:\/\/maps\.google\.[a-z.]+\/[^"'<>\\ ]+/i))) return limpiaHtml(m[0]);
+  return '';
+}
+function limpiaHtml(u) {
+  return String(u || '').replace(/&amp;/g, '&').replace(/\\u003d/g, '=').replace(/\\u0026/g, '&').replace(/\\\//g, '/').trim();
+}
+function coordsEnCuerpo(body) {
+  body = String(body || '');
+  var mb = body.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
+        || body.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/)
+        || body.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (mb) return okCoord(mb[1], mb[2]);
+  return null;
+}
+
 function resolveOne(url) {
   var c0 = extractCoords(url);      // el enlace ya trae las coordenadas: ni hace falta salir a internet
   if (c0) return c0;
   var finalUrl = followRedirects(url);
   var c = extractCoords(finalUrl);
   if (c) return c;
-  try {
-    var rb = UrlFetchApp.fetch(finalUrl, { followRedirects: true, muteHttpExceptions: true });
-    var body = rb.getContentText();
-    var mb = body.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || body.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || body.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
-    if (mb) { var la = parseFloat(mb[1]), ln = parseFloat(mb[2]); if (!isNaN(la) && !isNaN(ln) && Math.abs(la) <= 90 && Math.abs(ln) <= 180) return { lat: la, lng: ln }; }
-  } catch (e) {}
+  // Pedimos la pagina haciendonos pasar por un navegador: a un "robot" Google le contesta distinto.
+  for (var intento = 0; intento < 2; intento++) {
+    try {
+      var rb = UrlFetchApp.fetch(finalUrl, {
+        followRedirects: true, muteHttpExceptions: true,
+        headers: { 'User-Agent': UA_NAV, 'Accept-Language': 'es-BO,es;q=0.9' }
+      });
+      var body = rb.getContentText();
+      var cc = coordsEnCuerpo(body);
+      if (cc) return cc;
+      var destino = urlDestinoEnCuerpo(body);      // la pagina intermedia dice a donde va
+      if (destino) {
+        var cd = extractCoords(destino);
+        if (cd) return cd;
+        if (destino !== finalUrl) { finalUrl = destino; continue; }   // seguirlo una vez mas
+      }
+    } catch (e) {}
+    break;
+  }
   return null;
 }
 
