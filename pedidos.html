@@ -211,6 +211,8 @@ tbody tr:hover{background:var(--teal-lt)}
 .cho-cobro{display:inline-flex;align-items:center;gap:6px;background:var(--green-lt);border:1px solid var(--green-border);color:#0a6b47;border-radius:var(--r-pill);padding:5px 6px 5px 11px;font-size:.82rem;font-weight:700}
 .cho-cobro button{border:none;background:rgba(0,0,0,.07);color:#0a6b47;width:20px;height:20px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0}
 .cho-cobro button:active{transform:scale(.92)}
+.cho-mini{border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:var(--r-pill);padding:3px 11px;font:inherit;font-size:.76rem;font-weight:700;cursor:pointer;margin-left:4px}
+.cho-mini:hover{border-color:var(--teal-border);color:var(--teal-dk);background:var(--teal-lt)}
 .cho-cobrar{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 2px}
 .cho-pay{flex:1 1 30%;min-width:96px;padding:11px 8px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-md);font:inherit;font-size:.83rem;font-weight:800;cursor:pointer;transition:all .12s}
 .cho-pay:active{transform:scale(.97)}
@@ -1889,20 +1891,31 @@ function renderChofer(){
       '</div>'+
       '<div class="cho-acc">'+
         '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
-        (cobrosDe(p).length?('<button class="cho-btn cob'+(p.pagado?' on':'')+'" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+
+        (cobrosVisibles(p).length?('<button class="cho-btn cob" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+
       '</div>'+
     '</div>';
   }).join('');
 }
 /* Bloque de cobro de la tarjeta del chofer: lo que hay que cobrar, lo que ya cobró
    (desglosado y cada uno se puede quitar) y los tres botones para sumar un pago. */
+var CHO_COBRO_ABIERTO={};
+function choMostrarCobro(id){ CHO_COBRO_ABIERTO[id]=true; renderChofer(); }
+/* Solo los cobros con monto: un pedido que el vendedor marcó pagado en la tienda queda
+   con el método pero sin importe, y no tiene sentido mostrarle al chofer "Bs 0,00". */
+function cobrosVisibles(p){ return cobrosDe(p).filter(function(c){ return (Number(c.monto)||0)>0; }); }
 function cobroChoferHtml(p){
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
-  var cobros=cobrosDe(p);
-  if(objetivo<=0 && !cobros.length)
-    return '<div class="cho-row"><span class="k">Cobrar</span> <span class="badge b-gray">Sin saldo</span></div>';
+  var cobros=cobrosVisibles(p);
+  // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
+  // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
+  if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
+    return '<div class="cho-row"><span class="k">Cobrar</span> '+
+      (p.pagado ? '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>'
+                : '<span class="badge b-gray">Sin saldo</span>')+
+      ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>';
+  }
   var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
-    (p.pagado
+    (falta<=0.01
       ? '<span class="badge b-green">COBRADO ✓ '+fmtBs(cobrado)+'</span>'
       : '<b style="color:var(--red);font-size:1.15rem">'+fmtBs(falta)+'</b>'+
         (cobrado>0?(' <span style="color:var(--muted);font-size:.8rem">de '+fmtBs(objetivo)+' · ya cobraste '+fmtBs(cobrado)+'</span>'):''))+
@@ -1911,7 +1924,7 @@ function cobroChoferHtml(p){
       return '<span class="cho-cobro">'+esc(metodoIcono(c.metodo))+' '+esc(c.metodo)+' <b>'+fmtBs(c.monto)+'</b>'+
         '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button></span>';
     }).join('')+'</div>'):'';
-  var btns=(falta>0 || !cobros.length)
+  var btns=(falta>0.01 || CHO_COBRO_ABIERTO[p.id])
     ? ('<div class="cho-cobrar">'+METODOS.map(function(m){
         return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
       }).join('')+'</div>')
@@ -1938,14 +1951,14 @@ function choCobrarMetodo(id, metodo){
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
       '¿Lo anoto igual?')) return;
   }
-  var arr=cobrosDe(p).slice();
+  var arr=cobrosVisibles(p).slice();
   arr.push({metodo:metodo, monto:monto});
   aplicarCobros(p, arr); renderChofer();
   toast('Anotado: '+metodo+' '+fmtBs(monto)+' ✓','ok');
 }
 function choQuitarCobro(id, idx){
   var p=findById(id); if(!p) return;
-  var arr=cobrosDe(p).slice();
+  var arr=cobrosVisibles(p).slice();
   if(idx<0 || idx>=arr.length) return;
   if(!confirm('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?')) return;
   arr.splice(idx,1);
