@@ -207,6 +207,19 @@ tbody tr:hover{background:var(--teal-lt)}
 .cho-btn.ent.on{background:var(--green);color:#fff;border-color:var(--green)}
 .cho-btn.cob{border-color:var(--red-border);color:var(--red)}
 .cho-btn.cob.on{background:var(--green);color:#fff;border-color:var(--green)}
+.cho-cobros{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px}
+.cho-cobro{display:inline-flex;align-items:center;gap:6px;background:var(--green-lt);border:1px solid var(--green-border);color:#0a6b47;border-radius:var(--r-pill);padding:5px 6px 5px 11px;font-size:.82rem;font-weight:700}
+.cho-cobro button{border:none;background:rgba(0,0,0,.07);color:#0a6b47;width:20px;height:20px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0}
+.cho-cobro button:active{transform:scale(.92)}
+.cho-cobrar{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 2px}
+.cho-pay{flex:1 1 30%;min-width:96px;padding:11px 8px;border:1px solid var(--gray-md);background:#fff;border-radius:var(--r-md);font:inherit;font-size:.83rem;font-weight:800;cursor:pointer;transition:all .12s}
+.cho-pay:active{transform:scale(.97)}
+.cho-pay.efectivo{border-color:var(--green-border);color:var(--green)}
+.cho-pay.efectivo:hover{background:var(--green);color:#fff}
+.cho-pay.qr{border-color:#bfdbfe;color:#2563eb}
+.cho-pay.qr:hover{background:#3B82F6;color:#fff;border-color:#3B82F6}
+.cho-pay.tarjeta{border-color:#ddd6fe;color:#7C3AED}
+.cho-pay.tarjeta:hover{background:#7C3AED;color:#fff;border-color:#7C3AED}
 .cho-link{display:inline-flex;align-items:center;gap:6px;padding:9px 13px;border-radius:var(--r-md);font-size:.84rem;font-weight:800;text-decoration:none;border:1px solid var(--teal-border);background:var(--teal-lt);color:var(--teal-dk)}
 .cho-links{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}
 /* Encabezado de fecha cuando la Lista de carga muestra "Todos" */
@@ -1869,21 +1882,75 @@ function renderChofer(){
       '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
       (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
       (p.observaciones?('<div class="cho-row" style="background:var(--amber-lt);border-radius:8px;padding:7px 10px;color:#7c4b00"><b>📌 '+esc(p.observaciones)+'</b></div>'):'')+
-      '<div class="cho-row"><span class="k">Cobrar</span> '+(p.pagado
-          ? '<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'
-          : (deuda>0?('<b style="color:var(--red);font-size:1.15rem">'+fmtBs(deuda)+'</b>'):'<span class="badge b-gray">Sin saldo</span>'))+'</div>'+
+      cobroChoferHtml(p)+
       '<div class="cho-links">'+
         (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Ir en Maps</a>'):'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">⚠️ sin ubicación</span>')+
         (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'">📞 Llamar</a>'):'')+
       '</div>'+
       '<div class="cho-acc">'+
         '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
-        (p.pagado
-          ? '<button class="cho-btn cob on" onclick="choDeshacerCobro(\''+p.id+'\')">✓ Cobrado · deshacer</button>'
-          : (deuda>0?('<button class="cho-btn cob" onclick="choPedirMetodo(\''+p.id+'\')">💰 Cobrar '+fmtBs(deuda)+'</button>'):''))+
+        (cobrosDe(p).length?('<button class="cho-btn cob'+(p.pagado?' on':'')+'" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+
       '</div>'+
     '</div>';
   }).join('');
+}
+/* Bloque de cobro de la tarjeta del chofer: lo que hay que cobrar, lo que ya cobró
+   (desglosado y cada uno se puede quitar) y los tres botones para sumar un pago. */
+function cobroChoferHtml(p){
+  var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
+  var cobros=cobrosDe(p);
+  if(objetivo<=0 && !cobros.length)
+    return '<div class="cho-row"><span class="k">Cobrar</span> <span class="badge b-gray">Sin saldo</span></div>';
+  var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
+    (p.pagado
+      ? '<span class="badge b-green">COBRADO ✓ '+fmtBs(cobrado)+'</span>'
+      : '<b style="color:var(--red);font-size:1.15rem">'+fmtBs(falta)+'</b>'+
+        (cobrado>0?(' <span style="color:var(--muted);font-size:.8rem">de '+fmtBs(objetivo)+' · ya cobraste '+fmtBs(cobrado)+'</span>'):''))+
+    excesoBadge(p)+'</div>';
+  var lista=cobros.length?('<div class="cho-cobros">'+cobros.map(function(c,i){
+      return '<span class="cho-cobro">'+esc(metodoIcono(c.metodo))+' '+esc(c.metodo)+' <b>'+fmtBs(c.monto)+'</b>'+
+        '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button></span>';
+    }).join('')+'</div>'):'';
+  var btns=(falta>0 || !cobros.length)
+    ? ('<div class="cho-cobrar">'+METODOS.map(function(m){
+        return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
+      }).join('')+'</div>')
+    : '';
+  return cab+lista+btns;
+}
+function metodoIcono(m){ return m==='Efectivo'?'💵':(m==='QR'?'📱':(m==='Tarjeta'?'💳':'💰')); }
+/* Suma un cobro. Avisa si con eso se pasa de lo que el vendedor puso que hay que cobrar,
+   pero deja seguir: a veces el cliente paga un extra y el chofer tiene que poder anotarlo. */
+function choCobrarMetodo(id, metodo){
+  var p=findById(id); if(!p) return;
+  var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
+  var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
+    'Cliente: '+(p.cliente||'')+'\n'+
+    'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
+    (cobrado>0?('Ya cobraste: '+fmtBs(cobrado)+'\n'):'')+
+    'Falta: '+fmtBs(falta)+'\n\nEscribí el monto:', falta>0?String(falta):'');
+  if(txt==null) return;
+  var monto=parseMonto(txt);
+  if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
+  if(monto>falta+0.01){
+    if(!confirm('⚠️ Ojo, te estás pasando.\n\n'+
+      'El pedido dice cobrar '+fmtBs(objetivo)+'.\n'+
+      'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
+      '¿Lo anoto igual?')) return;
+  }
+  var arr=cobrosDe(p).slice();
+  arr.push({metodo:metodo, monto:monto});
+  aplicarCobros(p, arr); renderChofer();
+  toast('Anotado: '+metodo+' '+fmtBs(monto)+' ✓','ok');
+}
+function choQuitarCobro(id, idx){
+  var p=findById(id); if(!p) return;
+  var arr=cobrosDe(p).slice();
+  if(idx<0 || idx>=arr.length) return;
+  if(!confirm('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?')) return;
+  arr.splice(idx,1);
+  aplicarCobros(p, arr); renderChofer();
+  toast('Cobro quitado','ok');
 }
 function choEntregado(id){
   var p=findById(id); if(!p) return;
@@ -1891,31 +1958,10 @@ function choEntregado(id){
   persistPedido(p); renderChofer();
   toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
 }
-function choPedirMetodo(id){
-  var p=findById(id); if(!p) return;
-  openModal('<div class="modal-h"><h3>💵 ¿Con qué pagó?</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+
-      '<div style="font-size:.95rem"><b>'+esc(p.cliente||'')+'</b></div>'+
-      '<div style="font-size:1.7rem;font-weight:800;color:var(--red);margin:4px 0 16px">'+fmtBs(p.saldo)+'</div>'+
-      '<div style="display:grid;gap:10px">'+
-        '<button class="btn" style="background:var(--green);color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'Efectivo\')">💵 Efectivo</button>'+
-        '<button class="btn" style="background:#3B82F6;color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'QR\')">📱 QR</button>'+
-        '<button class="btn" style="background:#7C3AED;color:#fff;width:100%" onclick="choCobrar(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
-      '</div>'+
-      '<button class="btn btn-ghost" style="width:100%;margin-top:14px" onclick="closeModal()">Cancelar</button>'+
-    '</div>');
-}
-function choCobrar(id, metodo){
-  var p=findById(id); if(!p) return;
-  applyPaid(p, metodo);
-  closeModal(); renderChofer();
-  toast('Cobrado en '+metodo+' ✓','ok');
-}
 function choDeshacerCobro(id){
   var p=findById(id); if(!p) return;
   if(!confirm('¿Deshacer el cobro de '+(p.cliente||'')+'?')) return;
-  p.pagado=false; p.saldo=Number(p.cobradoBs)||Number(p.saldo)||0; p.cobradoBs=0; p.metodoPago='';
-  persistPedido(p); renderChofer();
+  aplicarCobros(p, []); renderChofer();
   toast('Cobro deshecho','ok');
 }
 function renderMis(){
@@ -2018,7 +2064,7 @@ function showMisModal(id){
     if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción</span>';
     return prodChkIcon(x)+t;
   }).join('<br>');
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
   var entrega=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>';
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
@@ -2237,15 +2283,85 @@ function printReporte(){ document.body.classList.add('printing-reporte'); window
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
 function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+/* ============================================================================
+   COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
+   QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
+   "Método pago" que la planilla YA tiene ("Efectivo 6000 + QR 1750"): así funciona
+   sin tocar el Apps Script y encima queda legible para quien mire la hoja.
+   ========================================================================== */
+var METODOS=['Efectivo','QR','Tarjeta'];
+function normMetodo(m){
+  m=String(m||'').trim().toLowerCase();
+  if(m.indexOf('efec')===0) return 'Efectivo';
+  if(m==='qr')              return 'QR';
+  if(m.indexOf('tarj')===0) return 'Tarjeta';
+  return '';
+}
+function r2(n){ return Math.round((Number(n)||0)*100)/100; }
+/* Acepta lo que sea que escriba el chofer: 6000 · 6.000 · 6,000 · Bs 6000 · 1750,50 */
+function parseMonto(t){
+  t=String(t==null?'':t).replace(/[^\d.,]/g,'').trim();
+  if(!t) return 0;
+  if(t.indexOf(',')>=0 && t.indexOf('.')>=0){
+    t = (t.lastIndexOf(',')>t.lastIndexOf('.')) ? t.replace(/\./g,'').replace(',','.') : t.replace(/,/g,'');
+  }else if(t.indexOf(',')>=0){
+    var pc=t.split(','); t = (pc[pc.length-1].length===3) ? t.replace(/,/g,'') : t.replace(',','.');
+  }else if(t.indexOf('.')>=0){
+    var pd=t.split('.'); if(pd[pd.length-1].length===3) t=t.replace(/\./g,'');
+  }
+  var n=parseFloat(t);
+  return isNaN(n)?0:r2(n);
+}
+function parseCobros(txt){
+  var out=[];
+  String(txt||'').split('+').forEach(function(s){
+    var m=s.trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)\s+([\d.,]+)$/);
+    if(!m) return;
+    var met=normMetodo(m[1]); if(!met) return;
+    var n=parseMonto(m[2]); if(!(n>0)) return;
+    out.push({metodo:met, monto:n});
+  });
+  return out;
+}
+function textoCobros(arr){ return (arr||[]).map(function(c){ return c.metodo+' '+r2(c.monto); }).join(' + '); }
+function cobrosDe(p){
+  var a=parseCobros(p.metodoPago);
+  if(a.length) return a;
+  // Formato viejo: un solo método sin monto anotado.
+  if(p.pagado && p.metodoPago) return [{metodo:normMetodo(p.metodoPago)||String(p.metodoPago), monto:r2(p.cobradoBs)}];
+  return [];
+}
+function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
+/* Lo que el vendedor dijo que hay que cobrar = lo que falta + lo ya cobrado.
+   Se calcula así para que siga siendo el mismo número a medida que entran los pagos. */
+function objetivoCobro(p){ return r2((Number(p.saldo)||0) + totalCobrado(p)); }
+/* Cuánto cobraron de más respecto de lo que puso el vendedor (0 si está bien). */
+function excesoCobro(p){ var e=r2(totalCobrado(p)-objetivoCobro(p)); return e>0.01?e:0; }
+function excesoBadge(p){ var e=excesoCobro(p); return e?(' <span class="badge b-red">⚠️ '+fmtBs(e)+' de más</span>'):''; }
+function cobrosResumen(p){
+  var a=cobrosDe(p);
+  if(!a.length) return esc(p.metodoPago||'');
+  return a.map(function(c){ return esc(c.metodo)+(c.monto>0?(' '+fmtBs(c.monto)):''); }).join(' + ');
+}
+/* Reescribe los cobros del pedido y recalcula saldo/pagado. OJO: el objetivo se lee
+   ANTES de tocar nada, porque depende del saldo actual. */
+function aplicarCobros(p, arr){
+  var objetivo=objetivoCobro(p), total=0;
+  (arr||[]).forEach(function(c){ total+=Number(c.monto)||0; });
+  total=r2(total);
+  p.metodoPago=textoCobros(arr);
+  p.cobradoBs=total;
+  p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
+  p.pagado = total>0 && total>=objetivo-0.01;
+  persistPedido(p);
+}
 function applyPaid(p, metodo){
-  if(!p.pagado) p.cobradoBs=Number(p.saldo)||0;   // capturar lo cobrado en la entrega para la rendición
-  p.pagado=true; p.metodoPago=metodo; p.saldo=0;
-  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  var monto = p.pagado ? (Number(p.cobradoBs)||totalCobrado(p)) : (Number(p.saldo)||0);
+  aplicarCobros(p, [{metodo:(normMetodo(metodo)||metodo), monto:monto}]);
 }
 function quickCobrado(id){
   var p=findById(id); if(!p) return;
-  if(p.pagado){ p.pagado=false; p.saldo=Number(p.cobradoBs)||Number(p.saldo)||0; p.cobradoBs=0; p.metodoPago=''; persistPedido(p); toast('Cobro deshecho ✓','ok'); return; }
+  if(p.pagado){ aplicarCobros(p, []); toast('Cobro deshecho ✓','ok'); return; }
   applyPaid(p,'Efectivo'); toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
 }
 
@@ -2386,7 +2502,7 @@ function showPedidoModal(id){
   var prod=prodRevList(p);
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+

@@ -214,9 +214,12 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <ul>
       <li>Cliente, productos (marcando en rojo lo que <b>no hay</b>), dirección y observaciones.</li>
       <li><b>📍 Ir en Maps</b> y <b>📞 Llamar</b> al cliente.</li>
-      <li><b>✅ Marcar entregado</b> (se puede deshacer) y <b>💰 Cobrar</b>, eligiendo <b>Efectivo / QR / Tarjeta</b>.</li>
+      <li><b>✅ Marcar entregado</b> (se puede deshacer).</li>
+      <li><b>Cobros con monto</b>: tres botones — <b>💵 Efectivo</b>, <b>📱 QR</b>, <b>💳 Tarjeta</b>. Toca uno, escribe cuánto cobró, y listo.</li>
     </ul>
-    <div class="callout tip">Todo lo que marca el chofer aparece al instante en tu panel y <b>entra en la rendición por chofer con el método de pago</b>, así al final del día sabés cuánto trajo cada uno y cómo cobró.</div>
+    <div class="callout tip"><b>Puede cargar varios cobros en un mismo pedido.</b> Si el cliente paga Bs 6.000 en efectivo y Bs 1.750 por QR, el chofer anota los dos: la tarjeta muestra <span class="kbd">💵 Efectivo Bs 6.000,00</span> <span class="kbd">📱 QR Bs 1.750,00</span> y el saldo va bajando solo. Cada cobro se puede quitar con la <b>✕</b> si se equivocó.</div>
+    <div class="callout warn"><b>⚠️ Si se pasa del monto, la app le avisa.</b> Antes de anotar un cobro que supere lo que el vendedor puso, le sale: <i>“Ojo, te estás pasando. El pedido dice cobrar Bs 7.750 y con este cobro juntarías Bs 8.250 — son Bs 500 de más. ¿Lo anoto igual?”</i>. Puede seguir (a veces el cliente paga un extra), pero el pedido queda marcado con <b>⚠️ Bs 500,00 de más</b> para que lo revises.</div>
+    <div class="callout tip">Todo lo que marca el chofer aparece al instante en tu panel y <b>entra en la rendición por chofer con el detalle de cada cobro</b>, así al final del día sabés cuánto trajo cada uno y cómo cobró. En la planilla queda escrito tal cual: <span class="kbd">Efectivo 6000 + QR 1750</span>.</div>
   </div>
 
   <div class="card" id="revision">
