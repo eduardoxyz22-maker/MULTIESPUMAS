@@ -1980,7 +1980,7 @@ function guardarUbicacion(p, norm, reopen){
     upsert(p); saveMirror();
     if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
     if(UNLOCKED) renderAdmin();
-    refreshCarga(); renderMis(); renderChoferSiActivo();
+    refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo();
     toast(msg, tipo||'ok');
     if(reopen && document.getElementById('modal').classList.contains('on')) reopen(p.id);
   }
@@ -2904,22 +2904,32 @@ function coordsDeLink(u){
    📍 Revisar ubicaciones — comprueba TODOS los enlaces cargados y avisa
    cuáles no se pueden ubicar en el mapa, para corregirlos.
    ========================================================================== */
+/* Control de cordura del pin: la distancia al centro de Santa Cruz. Un pedido que cae a
+   cientos de kilómetros es casi seguro un enlace mal leído o un lugar equivocado — mejor
+   mostrarlo que dejar que el chofer se entere en la calle. */
+function kmDeSantaCruz(lat,lng){
+  var R=6371, r=Math.PI/180;
+  var dLat=(lat-OLC_REF_LAT)*r, dLng=(lng-OLC_REF_LNG)*r;
+  var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(OLC_REF_LAT*r)*Math.cos(lat*r)*Math.sin(dLng/2)*Math.sin(dLng/2);
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+var KM_SOSPECHOSO=60;   // toda la mancha urbana + Cotoca, Porongo, La Guardia, Warnes entran holgados
 function revUbicDatos(){
   var conLink=[], sinLink=[];
   STATE.forEach(function(p){
     var u=String(p.maps||'').trim();
     if(u) conLink.push(p); else if(!p.entregado) sinLink.push(p);
   });
-  var ok=[], nores=[], cortos=[];
+  var ok=[], nores=[], cortos=[], lejos=[];
   conLink.forEach(function(p){
     var u=String(p.maps).trim();
     var g=MAPA_COORDS[u];
     var c=(g&&g.lat!=null)?g:coordsDeLink(u);
-    if(c && c.lat!=null) ok.push({p:p,c:c});
+    if(c && c.lat!=null){ var km=kmDeSantaCruz(c.lat,c.lng); ok.push({p:p,c:c,km:km}); if(km>KM_SOSPECHOSO) lejos.push({p:p,c:c,km:km}); }
     else if(esLinkCorto(u)) cortos.push(p);   // hay que resolverlos en el servidor
     else nores.push(p);
   });
-  return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
+  return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos, lejos:lejos};
 }
 function abrirRevUbic(){ renderRevUbic(REV_INTENTO); }
 /* Corregir SIN salir del panel: se arregla la ubicación y la lista se actualiza en el lugar,
@@ -2928,12 +2938,13 @@ function corregirDesdeRev(id){ editarUbicacion(id, function(){ renderRevUbic(REV
 function renderRevUbic(yaResolvio){
   if(yaResolvio) REV_INTENTO=true;
   var d=revUbicDatos();
-  function fila(p){
+  function fila(p, nota){
     var esLink=/^https?:/i.test(p.maps||'');
     return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem">'+
       '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
         '<b style="cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
         '<span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
+        (nota?('<span style="background:var(--red);color:#fff;border-radius:20px;padding:1px 9px;font-size:.72rem;font-weight:800">'+esc(nota)+'</span>'):'')+
         '<span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap">'+
           (esLink?('<a class="btn btn-sm" style="background:var(--teal);color:#fff;text-decoration:none" href="'+esc(p.maps)+'" target="_blank" rel="noopener">↗ Abrir</a>'):'')+
           '<button class="btn btn-sm btn-ghost" onclick="corregirDesdeRev(\''+p.id+'\')">✏️ '+(p.maps?'Corregir':'Cargar')+'</button>'+
@@ -2955,8 +2966,14 @@ function renderRevUbic(yaResolvio){
       '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
       '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.</div>'+
       '<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 '+(yaResolvio?'Probar de nuevo':'Resolverlos ahora')+'</button>'+
-      '<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">A mano son 20 segundos y queda perfecto: tocá <b>↗ Abrir</b> → en el mapa <b>mantené apretado el pin</b> → abajo aparecen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve pegar el código tipo <code>5P2Q+PFX</code>.</div>'+
+      '<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">A mano son 20 segundos y queda perfecto: tocá <b>↗ Abrir</b> → <b>en el celular</b> mantené apretado el punto de la casa; <b>en la computadora</b> hacé <b>clic derecho</b> sobre el punto → arriba de todo salen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve el código tipo <code>5P2Q+PFX</code>.</div>'+
       '<div style="margin-top:9px">'+d.cortos.map(fila).join('')+'</div></div>';
+  }
+  if(d.lejos.length){
+    h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+      '<div style="font-weight:800;color:var(--red);margin-bottom:3px">🧭 '+d.lejos.length+' '+(d.lejos.length===1?'cae':'caen')+' lejos de Santa Cruz</div>'+
+      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">Se ubican en el mapa, pero a más de '+KM_SOSPECHOSO+' km del centro. Casi siempre es el pin puesto en el lugar equivocado. Revisalos antes de mandar el camión.</div>'+
+      d.lejos.map(function(x){ return fila(x.p, x.km+' km del centro'); }).join('')+'</div>';
   }
   if(d.nores.length){
     h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
@@ -2970,7 +2987,7 @@ function renderRevUbic(yaResolvio){
       d.sinLink.slice(0,40).map(fila).join('')+
       (d.sinLink.length>40?('<div style="font-size:.78rem;color:var(--muted)">…y '+(d.sinLink.length-40)+' más</div>'):'')+'</div>';
   }
-  if(d.conLink.length && !d.nores.length && !d.cortos.length)
+  if(d.conLink.length && !d.nores.length && !d.cortos.length && !d.lejos.length)
     h+='<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center;color:#0a6b47;font-weight:700">✅ Todos los enlaces cargados se ubican en el mapa.</div>';
   openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
@@ -3046,7 +3063,7 @@ function fijarUbicRev(){
     upsert(x.p);
     if(CONNECTED){ apiSave(x.p).then(function(res){ if(!(res&&res.ok)) queuePending(x.p); }, function(){ queuePending(x.p); }); }
   });
-  saveMirror(); geoCacheSave(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo();
+  saveMirror(); geoCacheSave(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo();
   renderRevUbic(REV_INTENTO);
   toast(lista.length+' ubicaciones guardadas en los pedidos ✓','ok');
 }
@@ -3157,6 +3174,8 @@ function asignarChoferMapa(id, c){
   toast(c?('Chofer asignado: '+c):'Chofer quitado','ok');
 }
 function closeMapa(){ var ov=document.getElementById('mapa-overlay'); if(ov) ov.style.display='none'; }
+/* Si el mapa está abierto mientras se corrige una ubicación, que el pin se mueva solo. */
+function mapaRefreshSiActivo(){ var ov=document.getElementById('mapa-overlay'); if(ov && ov.style.display==='flex') mapaRefresh(); }
 function downloadMapaKml(){ if(!MAPA_LIST.length){ toast('Abrí el mapa primero.','err'); return; } buildMapaKml(MAPA_LIST, MAPA_COORDS); }
 
 function buildMapaKml(list, coords){
