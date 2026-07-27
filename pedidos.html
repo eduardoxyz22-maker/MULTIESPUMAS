@@ -225,7 +225,10 @@ tbody tr:hover{background:var(--teal-lt)}
 @media print{ .ent-cam{page-break-inside:avoid} }
 .fotos{display:flex;gap:8px;flex-wrap:wrap;margin:9px 0 2px}
 .foto{position:relative;display:inline-block;line-height:0}
-.foto img{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid var(--gray-md);background:var(--gray-lt);display:block}
+.foto img{width:92px;height:92px;object-fit:cover;border-radius:10px;border:1px solid var(--gray-md);background:var(--gray-lt);display:block;cursor:zoom-in}
+.foto img:hover{border-color:var(--teal);box-shadow:0 0 0 2px var(--teal-lt)}
+.visor-nav{flex:0 0 auto;border:none;background:rgba(255,255,255,.16);color:#fff;width:46px;height:78px;border-radius:12px;font-size:2rem;line-height:1;cursor:pointer}
+.visor-nav:hover{background:rgba(255,255,255,.28)}
 .foto button{position:absolute;top:-6px;right:-6px;border:none;background:var(--red);color:#fff;width:22px;height:22px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.28)}
 .foto button:active{transform:scale(.92)}
 .cho-btn.foto{border-color:var(--teal-border);color:var(--teal-dk)}
@@ -672,6 +675,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
 <div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
 <div id="entregas-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -1995,7 +1999,7 @@ function entregaCardHtml(p, dn){
   return '<div class="ent-card">'+
     '<div class="ent-top">'+
       (dn?('<span class="ent-n">#'+dn+'</span>'):'')+
-      '<b style="cursor:pointer" onclick="closeEntregas();showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
+      '<b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" title="Ver la ficha completa" onclick="showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
       (p.oc?('<span class="badge b-gray">OC '+esc(p.oc)+'</span>'):'')+
       (p.nota?('<span class="badge b-gray">Nota '+esc(p.nota)+'</span>'):'')+
       '<span style="color:var(--muted);font-size:.8rem">'+esc(normTurno(p.turno))+(p.zona?(' · '+esc(p.zona)):'')+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
@@ -2139,12 +2143,45 @@ function fotosHtml(p, conBorrar){
   if(!a.length) return '';
   return '<div class="fotos">'+a.map(function(fid,i){
     return '<span class="foto">'+
-      '<a href="'+fotoVer(fid)+'" target="_blank" rel="noopener" title="Ver la foto en grande">'+
-        '<img src="'+fotoThumb(fid)+'" alt="Foto de la entrega" loading="lazy">'+
-      '</a>'+
+      '<img src="'+fotoThumb(fid)+'" alt="Foto de la entrega" loading="lazy" title="Ver la foto en grande" onclick="abrirVisor(\''+p.id+'\','+i+')">'+
       (conBorrar?('<button title="Borrar esta foto" onclick="quitarFoto(\''+p.id+'\','+i+')">✕</button>'):'')+
     '</span>';
   }).join('')+'</div>';
+}
+/* Visor de fotos: se abre DENTRO de la app, encima de todo, y se pasa de una a otra
+   con ‹ › o con las flechas del teclado. Antes había que salir a Drive en otra pestaña. */
+var VISOR={ids:[], i:0, tit:'', pid:''};
+function abrirVisor(pid, idx){
+  var p=findById(pid); if(!p) return;
+  var a=fotosDe(p); if(!a.length) return;
+  VISOR={ ids:a, i:Math.min(Math.max(0, idx||0), a.length-1), pid:pid,
+          tit:(p.cliente||'')+(p.oc?(' · OC '+p.oc):'')+' · '+fmtFecha(p.fecha) };
+  renderVisor();
+}
+function renderVisor(){
+  var ov=document.getElementById('visor'); if(!ov) return;
+  var fid=VISOR.ids[VISOR.i];
+  ov.querySelector('#visor-img').src='https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w1600';
+  ov.querySelector('#visor-tit').textContent=VISOR.tit;
+  ov.querySelector('#visor-n').textContent=(VISOR.i+1)+' de '+VISOR.ids.length;
+  ov.querySelector('#visor-drive').href=fotoVer(fid);
+  var varias=VISOR.ids.length>1;
+  ov.querySelector('#visor-ant').style.visibility=varias?'visible':'hidden';
+  ov.querySelector('#visor-sig').style.visibility=varias?'visible':'hidden';
+  ov.style.display='flex';
+}
+function visorMover(d){
+  if(!VISOR.ids.length) return;
+  VISOR.i=(VISOR.i+d+VISOR.ids.length)%VISOR.ids.length;
+  renderVisor();
+}
+function cerrarVisor(){ var ov=document.getElementById('visor'); if(ov) ov.style.display='none'; }
+function visorTeclas(e){
+  var ov=document.getElementById('visor');
+  if(!ov || ov.style.display!=='flex') return;
+  if(e.key==='Escape'){ cerrarVisor(); }
+  else if(e.key==='ArrowLeft'){ visorMover(-1); }
+  else if(e.key==='ArrowRight'){ visorMover(1); }
 }
 var CHO_COBRO_ABIERTO={};
 function choMostrarCobro(id){ CHO_COBRO_ABIERTO[id]=true; renderChofer(); }
@@ -3611,6 +3648,7 @@ function buildMapaKml(list, coords){
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   geoCacheLoad();
+  document.addEventListener('keydown', visorTeclas);
   initConnUI();
   initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
