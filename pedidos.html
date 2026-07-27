@@ -2736,11 +2736,49 @@ function setMapaDia(d){
   ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('mapa-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } });
   mapaRefresh();
 }
+/* ---- Coordenadas a partir del enlace, sin salir a internet ----
+   Ojo con la prioridad: el "@lat,lng" es el CENTRO del mapa, no el pin; usarlo puede
+   errarle cientos de metros. Primero buscamos el pin real (!3d!4d o los grados). */
+function validaCoord(a,b){
+  var la=parseFloat(a), ln=parseFloat(b);
+  if(isNaN(la)||isNaN(ln)||Math.abs(la)>90||Math.abs(ln)>180) return null;
+  return {lat:la, lng:ln};
+}
+function coordsDeLink(u){
+  u=String(u||''); if(!u) return null;
+  var d=u; try{ d=decodeURIComponent(u.replace(/\+/g,' ')); }catch(e){}
+  var m;
+  // 1) el pin exacto: !3d<lat>!4d<lng>
+  if((m=u.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/))) return validaCoord(m[1],m[2]);
+  // 2) grados: 17°44'58.0"S 63°06'16.4"W  (viene codificado como %C2%B0 …)
+  if((m=d.match(/(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([NSns])[\s,+]+(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([EWOewo])/))){
+    var la=(+m[1])+(+m[2])/60+(+m[3])/3600; if(/[Ss]/.test(m[4])) la=-la;
+    var ln=(+m[5])+(+m[6])/60+(+m[7])/3600; if(/[WOwo]/.test(m[8])) ln=-ln;
+    return validaCoord(la,ln);
+  }
+  // 3) parámetros explícitos
+  if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
+  // 4) centro del mapa (menos preciso, pero mejor que nada)
+  if((m=u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
+  // 5) par suelto en la ruta
+  if((m=u.match(/[\/=](-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/))) return validaCoord(m[1],m[2]);
+  return null;
+}
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();
   document.getElementById('mapa-overlay').style.display='flex';
   var need=[], seen={};
-  MAPA_LIST.forEach(function(p){ var u=String(p.maps).trim(); if(!MAPA_COORDS[u] && !seen[u]){ seen[u]=1; need.push(u); } });
+  // Si el enlace ya trae las coordenadas, se resuelve acá mismo (instantáneo y sin servidor).
+  // Solo los links cortos (maps.app.goo.gl) hay que mandarlos a resolver.
+  var local=0;
+  MAPA_LIST.forEach(function(p){
+    var u=String(p.maps).trim();
+    if(!u || MAPA_COORDS[u] || seen[u]) return;
+    seen[u]=1;
+    var c=coordsDeLink(u);
+    if(c){ MAPA_COORDS[u]={link:u, lat:c.lat, lng:c.lng}; local++; }
+    else need.push(u);
+  });
   if(!need.length){ ensureLeaflet(showMapaView); return; }
   var btn=document.getElementById('btn-mapa'); if(btn){ btn.disabled=true; btn.textContent='🗺️ Resolviendo… ('+need.length+')'; }
   toast('Resolviendo '+need.length+' ubicaciones…','ok');

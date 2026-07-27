@@ -116,6 +116,8 @@ function followRedirects(url) {
 }
 
 function resolveOne(url) {
+  var c0 = extractCoords(url);      // el enlace ya trae las coordenadas: ni hace falta salir a internet
+  if (c0) return c0;
   var finalUrl = followRedirects(url);
   var c = extractCoords(finalUrl);
   if (c) return c;
@@ -128,16 +130,26 @@ function resolveOne(url) {
   return null;
 }
 
+function okCoord(a, b) {
+  var la = parseFloat(a), ln = parseFloat(b);
+  if (isNaN(la) || isNaN(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) return null;
+  return { lat: la, lng: ln };
+}
+// OJO con el orden: "@lat,lng" es el CENTRO del mapa, no el pin (puede errarle cientos de
+// metros). Primero se busca el pin real: !3d!4d, o las coordenadas en grados.
 function extractCoords(u) {
   u = String(u || '');
-  var m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)
-       || u.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)
-       || u.match(/[?&](?:q|ll|daddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)
-       || u.match(/[\/=](-?\d{1,2}\.\d{3,}),(-?\d{1,3}\.\d{3,})/);
-  if (m) {
-    var lat = parseFloat(m[1]), lng = parseFloat(m[2]);
-    if (!isNaN(lat) && !isNaN(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat: lat, lng: lng };
+  var d = u; try { d = decodeURIComponent(u.replace(/\+/g, ' ')); } catch (e) {}
+  var m;
+  if ((m = u.match(/!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/))) return okCoord(m[1], m[2]);
+  if ((m = d.match(/(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([NSns])[\s,+]+(\d+)\s*°\s*(\d+)\s*['′]\s*([\d.]+)\s*["″]?\s*([EWOewo])/))) {
+    var la = (+m[1]) + (+m[2]) / 60 + (+m[3]) / 3600; if (/[Ss]/.test(m[4])) la = -la;
+    var ln = (+m[5]) + (+m[6]) / 60 + (+m[7]) / 3600; if (/[WOwo]/.test(m[8])) ln = -ln;
+    return okCoord(la, ln);
   }
+  if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
+  if ((m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
+  if ((m = u.match(/[\/=](-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/))) return okCoord(m[1], m[2]);
   return null;
 }
 
