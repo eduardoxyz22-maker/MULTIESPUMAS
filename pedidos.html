@@ -1797,9 +1797,16 @@ function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
 function showMisModal(id){
   var p=findById(id); if(!p) return;
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
-  var prod=(p.productos||[]).map(function(x){ return esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'; }).join('<br>');
+  // Solo informativo: la vendedora ve qué marcó logística, pero no puede cambiarlo.
+  var prod=(p.productos||[]).map(function(x){
+    var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
+    if(x.chk==='no')   t='<span style="color:var(--red);font-weight:700">'+t+' — no hay</span>';
+    else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 se recoge de IM</span>';
+    if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción</span>';
+    return prodChkIcon(x)+t;
+  }).join('<br>');
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
-  var estado=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
+  var entrega=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>';
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
@@ -1810,7 +1817,7 @@ function showMisModal(id){
   var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
-    row('Cobro', cobro)+row('Estado', estado)+row('Chofer', choferVal);
+    row('Cobro', cobro)+row('Entrega', entrega)+(p.estado?row('Stock', estadoBadge(p.estado)):'')+row('Chofer', choferVal);
   var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
