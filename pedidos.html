@@ -185,6 +185,9 @@ tbody tr:hover{background:var(--teal-lt)}
 .prod-rev{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px dashed var(--gray-lt);font-size:.85rem;flex-wrap:wrap}
 .prod-rev:last-child{border-bottom:none}
 /* Parada de la lista de carga: se toca para abrir la ficha del pedido */
+/* Encabezado de fecha cuando la Lista de carga muestra "Todos" */
+.carga-fecha{margin-bottom:22px}
+.carga-fecha-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:#0f766e;color:#fff;font-weight:800;font-size:1rem;padding:9px 14px;border-radius:9px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
 .carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
@@ -1542,13 +1545,22 @@ function prodTextCarga(prods){ return (prods||[]).map(function(x){
    así el cargador puede salir y volver sin perder lo que ya subió. */
 var LS_CARGA='me_carga_chk';
 function cargaDiaKey(){ return CARGA_DIA==='hoy'?todayStr():CARGA_DIA==='manana'?tomorrowStr():'todos'; }
-function cargaChkKey(veh,prod){ return cargaDiaKey()+'|'+veh+'|'+prod; }
+function cargaChkKey(fecha,veh,prod){ return fecha+'|'+veh+'|'+prod; }
 function getCargaChk(){ try{ return JSON.parse(localStorage.getItem(LS_CARGA)||'{}')||{}; }catch(e){ return {}; } }
 function isCargaChk(k){ return !!getCargaChk()[k]; }
 function setCargaChk(k,on){ var m=getCargaChk(); if(on)m[k]=1; else delete m[k]; try{ localStorage.setItem(LS_CARGA,JSON.stringify(m)); }catch(e){} }
-function limpiarCargaChk(){ if(!confirm('¿Destildar todo lo cargado de este día?')) return; var m=getCargaChk(), pre=cargaDiaKey()+'|'; Object.keys(m).forEach(function(k){ if(k.indexOf(pre)===0) delete m[k]; }); try{ localStorage.setItem(LS_CARGA,JSON.stringify(m)); }catch(e){} renderCarga(); toast('Tildes borrados','ok'); }
-function renderCarga(){
-  var list=cargaLista(), byV={}, order=[];
+function limpiarCargaChk(){
+  if(!confirm('¿Destildar todo lo cargado de esta vista?')) return;
+  var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
+  var m=getCargaChk();
+  Object.keys(m).forEach(function(k){ if(fechas[k.split('|')[0]]) delete m[k]; });
+  try{ localStorage.setItem(LS_CARGA,JSON.stringify(m)); }catch(e){}
+  renderCarga(); toast('Tildes borrados','ok');
+}
+/* Bloques por camión de un conjunto de pedidos. 'fecha' se usa para las tildes,
+   así lo tildado en "Hoy" y en "Todos" es lo mismo. */
+function cargaBloquesHtml(list, fecha){
+  var byV={}, order=[];
   list.forEach(function(p){
     var k=vehiculoDe(p)||'Sin vehículo';
     if(!byV[k]){ byV[k]={stops:[],prod:{},prodNo:{},prodProd:{},bultos:0,choferes:{}}; order.push(k); }
@@ -1556,8 +1568,6 @@ function renderCarga(){
     (p.productos||[]).forEach(function(x){ var kk=cargaProdKey(x)||'(sin detalle)'; var c=Number(x.cant)||0; byV[k].prod[kk]=(byV[k].prod[kk]||0)+c; byV[k].bultos+=c; if(x.chk==='no') byV[k].prodNo[kk]=(byV[k].prodNo[kk]||0)+c; else if(esRecoger(x)) byV[k].prodProd[kk]=(byV[k].prodProd[kk]||0)+c; });
   });
   order.sort(function(a,b){ if(a==='Sin vehículo')return 1; if(b==='Sin vehículo')return -1; return a<b?-1:1; });
-  var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
-  document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
   var html='';
   order.forEach(function(k){
     var o=byV[k], esSin=(k==='Sin vehículo'), chof=Object.keys(o.choferes);
@@ -1573,7 +1583,7 @@ function renderCarga(){
     html+='<div style="margin-bottom:10px"><div class="lb" style="margin-bottom:6px">📋 A cargar en el camión</div>'+
       pk.map(function(kk){
         // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
-        var ck=cargaChkKey(k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
+        var ck=cargaChkKey(fecha,k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
@@ -1581,6 +1591,32 @@ function renderCarga(){
     });
     html+='</div>';
   });
+  return html;
+}
+function renderCarga(){
+  var list=cargaLista();
+  var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todas las fechas';
+  document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
+  var html='';
+  if(CARGA_DIA!=='todos'){
+    html=cargaBloquesHtml(list, cargaDiaKey());
+  }else{
+    // "Todos" mezcla varias fechas: se agrupa por día para no sumar productos de días distintos
+    var byF={}, fechas=[];
+    list.forEach(function(p){ var f=p.fecha||''; if(!byF[f]){ byF[f]=[]; fechas.push(f); } byF[f].push(p); });
+    fechas.sort();
+    html=fechas.map(function(f){
+      var sub=byF[f], bultos=0;
+      sub.forEach(function(p){ (p.productos||[]).forEach(function(x){ bultos+=Number(x.cant)||0; }); });
+      var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(f||'');
+      var dia=m?diaSemana(new Date(+m[1],+m[2]-1,+m[3])):'';
+      var hoyTxt = f===todayStr()?' · hoy' : (f===tomorrowStr()?' · mañana':'');
+      return '<div class="carga-fecha">'+
+        '<div class="carga-fecha-h">📅 '+esc(f?fmtFecha(f):'(sin fecha)')+(dia?(' · '+dia):'')+esc(hoyTxt)+
+          ' <span style="margin-left:auto;font-weight:700">'+sub.length+' pedido'+(sub.length===1?'':'s')+' · '+bultos+' bulto'+(bultos===1?'':'s')+'</span></div>'+
+        cargaBloquesHtml(sub, f)+'</div>';
+    }).join('');
+  }
   document.getElementById('carga-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
 }
 function printCarga(){ document.body.classList.add('printing-carga'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-carga'); },600); }
@@ -1597,6 +1633,8 @@ var MIS_FILTER='todos';
 var MIS_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',      test:function(p){ return p.fecha===todayStr(); }},
   {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===tomorrowStr(); }},
+  {k:'pend',   lbl:'⏳ No entregados', test:function(p){ return !p.entregado; }},
+  {k:'ent',    lbl:'🚚 Entregados',    test:function(p){ return !!p.entregado; }},
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
@@ -1716,6 +1754,8 @@ function renderMis(){
     tbl.style.display='none'; empty.style.display='block';
     empty.textContent = MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
       : MIS_FILTER==='manana' ? 'No tenés pedidos para entregar mañana ('+fmtFecha(tomorrowStr())+').'
+      : MIS_FILTER==='pend' ? '✅ No te queda ningún pedido pendiente de entrega.'
+      : MIS_FILTER==='ent' ? 'Todavía no tenés pedidos entregados.'
       : 'Todavía no tenés pedidos cargados con ese nombre.';
     return;
   }
@@ -1723,7 +1763,9 @@ function renderMis(){
   var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th>GPS</th></tr></thead>';
   var body=lista.slice(0,120).map(function(p){
     var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
-    var est=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':estadoBadge(p.estado);
+    // La vendedora tiene que ver claro si ya se entregó o no; el stock va como dato extra.
+    var est=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
+      (p.estado?('<br><span style="display:inline-block;margin-top:3px">'+estadoBadge(p.estado)+'</span>'):'');
     var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':(p.entregado?'<span style="color:var(--gray)">—</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>');
     return '<tr class="'+(p.entregado?'row-entregado':'')+'" onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
