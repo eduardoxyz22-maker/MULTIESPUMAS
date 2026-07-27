@@ -569,6 +569,7 @@ th.sortable:hover{color:var(--teal-dk)}
             <button class="xls-b" onclick="exportExcel('todo')">Todo</button>
           </span>
           <button id="btn-mapa" class="btn btn-primary btn-sm" style="width:auto;background:#1a73e8" onclick="exportMapa()">🗺️ Mapa de entregas</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#7c3aed" onclick="abrirRevUbic()">📍 Revisar ubicaciones</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirRuta()">🧾 Hoja de ruta</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirCarga()">📦 Lista de carga</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#b45309" onclick="abrirFaltantes()">🏭 Faltantes / producción</button>
@@ -2763,6 +2764,79 @@ function coordsDeLink(u){
   // 5) par suelto en la ruta
   if((m=u.match(/[\/=](-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/))) return validaCoord(m[1],m[2]);
   return null;
+}
+/* ============================================================================
+   📍 Revisar ubicaciones — comprueba TODOS los enlaces cargados y avisa
+   cuáles no se pueden ubicar en el mapa, para corregirlos.
+   ========================================================================== */
+function revUbicDatos(){
+  var conLink=[], sinLink=[];
+  STATE.forEach(function(p){
+    var u=String(p.maps||'').trim();
+    if(u) conLink.push(p); else if(!p.entregado) sinLink.push(p);
+  });
+  var ok=[], nores=[], cortos=[];
+  conLink.forEach(function(p){
+    var u=String(p.maps).trim();
+    var g=MAPA_COORDS[u];
+    var c=(g&&g.lat!=null)?g:coordsDeLink(u);
+    if(c && c.lat!=null) ok.push({p:p,c:c});
+    else if(/goo\.gl|maps\.app|bit\.ly|tinyurl/i.test(u)) cortos.push(p);   // hay que resolverlos en el servidor
+    else nores.push(p);
+  });
+  return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
+}
+function abrirRevUbic(){ renderRevUbic(false); }
+function renderRevUbic(yaResolvio){
+  var d=revUbicDatos();
+  function fila(p, extra){
+    return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem;cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+
+      '<b>'+esc(p.cliente||'—')+'</b> <span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
+      (extra?('<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+extra+'</div>'):'')+'</div>';
+  }
+  var h='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:9px;margin-bottom:14px">'+
+    '<div style="background:var(--green-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--green)">'+d.ok.length+'</div><div style="font-size:.72rem;color:#0a6b47;font-weight:700">SE UBICAN</div></div>'+
+    '<div style="background:'+(d.nores.length?'var(--red-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.nores.length?'var(--red)':'var(--gray)')+'">'+d.nores.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.nores.length?'#8a1c24':'var(--muted)')+'">NO SE UBICAN</div></div>'+
+    '<div style="background:'+(d.cortos.length?'var(--amber-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.cortos.length?'var(--amber)':'var(--gray)')+'">'+d.cortos.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.cortos.length?'#7c4b00':'var(--muted)')+'">LINK CORTO</div></div>'+
+    '<div style="background:var(--gray-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--muted)">'+d.sinLink.length+'</div><div style="font-size:.72rem;color:var(--muted);font-weight:700">SIN ENLACE</div></div>'+
+  '</div>';
+  if(!d.conLink.length) h+='<div class="empty" style="padding:22px">Todavía no hay pedidos con enlace de ubicación.</div>';
+  if(d.cortos.length){
+    h+='<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+      '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
+      '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.'+
+        (yaResolvio?' <b>No se pudieron resolver</b> — revisá que el enlace siga funcionando.':'')+'</div>'+
+      (yaResolvio?'':'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
+      '<div style="margin-top:9px">'+d.cortos.map(function(p){ return fila(p, esc(p.maps)); }).join('')+'</div></div>';
+  }
+  if(d.nores.length){
+    h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+      '<div style="font-weight:800;color:var(--red);margin-bottom:3px">⚠️ '+d.nores.length+' no se pueden ubicar</div>'+
+      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">El texto guardado no tiene coordenadas. Tocá cada uno para corregir el enlace.</div>'+
+      d.nores.map(function(p){ return fila(p, esc(p.maps)); }).join('')+'</div>';
+  }
+  if(d.sinLink.length){
+    h+='<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px">'+
+      '<div style="font-weight:800;color:var(--muted);margin-bottom:9px">📭 '+d.sinLink.length+' pedidos sin entregar y sin enlace</div>'+
+      d.sinLink.slice(0,40).map(function(p){ return fila(p,''); }).join('')+
+      (d.sinLink.length>40?('<div style="font-size:.78rem;color:var(--muted)">…y '+(d.sinLink.length-40)+' más</div>'):'')+'</div>';
+  }
+  if(d.conLink.length && !d.nores.length && !d.cortos.length)
+    h+='<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center;color:#0a6b47;font-weight:700">✅ Todos los enlaces cargados se ubican en el mapa.</div>';
+  openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
+}
+function resolverCortosRev(){
+  var d=revUbicDatos();
+  var links=[], seen={};
+  d.cortos.forEach(function(p){ var u=String(p.maps).trim(); if(!seen[u]){ seen[u]=1; links.push(u); } });
+  if(!links.length) return;
+  if(!CONNECTED){ toast('Sin conexión al servidor','err'); return; }
+  toast('Resolviendo '+links.length+' enlaces…','ok');
+  apiGeocode(links).then(function(res){
+    if(res&&res.ok&&Array.isArray(res.geo)) res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; });
+    renderRevUbic(true);
+  }).catch(function(){ toast('No se pudo consultar al servidor','err'); renderRevUbic(true); });
 }
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();
