@@ -809,9 +809,14 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* ============================================================================
    Red — Google Apps Script Web App (POST text/plain => sin preflight CORS)
    ========================================================================== */
+/* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
+   respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
+var SERVER_VER='';
+var SCRIPT_VERSION_ESPERADA='2026-07-27-b';
 function apiPost(payload){
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
-    .then(function(r){ return r.json(); });
+    .then(function(r){ return r.json(); })
+    .then(function(j){ if(j && j.version) SERVER_VER=String(j.version); return j; });
 }
 function apiList(){ return apiPost({action:'list'}); }
 function apiSave(rec){ return apiPost({action:'save', pedido:rec}); }
@@ -2874,13 +2879,12 @@ function revUbicDatos(){
   });
   return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
 }
-function abrirRevUbic(){ REV_MOTIVO=''; REV_YA=false; renderRevUbic(false); }
+function abrirRevUbic(){ renderRevUbic(REV_INTENTO); }
 /* Corregir SIN salir del panel: se arregla la ubicación y la lista se actualiza en el lugar,
    así se pueden arreglar varios seguidos sin volver a abrir todo cada vez. */
-var REV_YA=false;
-function corregirDesdeRev(id){ editarUbicacion(id, function(){ renderRevUbic(REV_YA); }); }
+function corregirDesdeRev(id){ editarUbicacion(id, function(){ renderRevUbic(REV_INTENTO); }); }
 function renderRevUbic(yaResolvio){
-  REV_YA=!!yaResolvio;
+  if(yaResolvio) REV_INTENTO=true;
   var d=revUbicDatos();
   function fila(p){
     var esLink=/^https?:/i.test(p.maps||'');
@@ -2901,20 +2905,20 @@ function renderRevUbic(yaResolvio){
     '<div style="background:'+(d.cortos.length?'var(--amber-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.cortos.length?'var(--amber)':'var(--gray)')+'">'+d.cortos.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.cortos.length?'#7c4b00':'var(--muted)')+'">LINK CORTO</div></div>'+
     '<div style="background:var(--gray-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--muted)">'+d.sinLink.length+'</div><div style="font-size:.72rem;color:var(--muted);font-weight:700">SIN ENLACE</div></div>'+
   '</div>';
+  if(REV_INTENTO) h+=revMotivoHtml();
   if(!d.conLink.length) h+='<div class="empty" style="padding:22px">Todavía no hay pedidos con enlace de ubicación.</div>';
   if(d.cortos.length){
     h+='<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
       '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
-      '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.'+
-        (yaResolvio?' <b>No se pudieron resolver</b> — revisá que el enlace siga funcionando.':'')+'</div>'+
-      (yaResolvio?revMotivoHtml():'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
-      (yaResolvio?'<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">Mientras tanto se arregla a mano en 20 segundos: tocá <b>↗ Abrir</b> → en el mapa <b>mantené apretado el pin</b> → abajo aparecen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve pegar el código tipo <code>5P2Q+PFX</code>.</div>':'')+
+      '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.</div>'+
+      '<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 '+(yaResolvio?'Probar de nuevo':'Resolverlos ahora')+'</button>'+
+      '<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">A mano son 20 segundos y queda perfecto: tocá <b>↗ Abrir</b> → en el mapa <b>mantené apretado el pin</b> → abajo aparecen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve pegar el código tipo <code>5P2Q+PFX</code>.</div>'+
       '<div style="margin-top:9px">'+d.cortos.map(fila).join('')+'</div></div>';
   }
   if(d.nores.length){
     h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
       '<div style="font-weight:800;color:var(--red);margin-bottom:3px">⚠️ '+d.nores.length+' no se pueden ubicar</div>'+
-      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">Lo guardado no tiene coordenadas (suele ser texto pegado por error). Tocá <b>✏️ Corregir</b> y pegá los números, el link o el código del lugar.</div>'+
+      '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">Lo guardado no tiene coordenadas (suele ser texto pegado por error, o un link de otro buscador). El botón <b>🌐 Resolverlos</b> de arriba también los intenta: si es una dirección escrita, el servidor la busca. Si no, tocá <b>✏️ Corregir</b> y pegá los números, el link o el código del lugar.</div>'+
       d.nores.map(fila).join('')+'</div>';
   }
   if(d.sinLink.length){
@@ -2928,38 +2932,60 @@ function renderRevUbic(yaResolvio){
   openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
 }
-/* Por qué fallaron los links cortos: distinguir "el Apps Script está viejo" de
-   "el Apps Script no tiene permiso para salir a internet". Son arreglos distintos. */
-var REV_MOTIVO='';
+/* Diagnóstico honesto de por qué fallaron: cuántos resolvió y QUÉ VERSIÓN del Apps Script
+   está publicada (en Apps Script, guardar el código NO publica nada: hay que crear versión
+   nueva). El resultado se conserva al cerrar y volver a abrir el panel. */
+var REV_MOTIVO='', REV_INTENTO=false, REV_N=0, REV_TOT=0, REV_RESPONDIO=false;
 function resolverCortosRev(){
   var d=revUbicDatos();
   var links=[], seen={};
-  d.cortos.forEach(function(p){ var u=String(p.maps).trim(); if(!seen[u]){ seen[u]=1; links.push(u); } });
+  d.cortos.concat(d.nores).forEach(function(p){ var u=String(p.maps||'').trim(); if(u && !seen[u]){ seen[u]=1; links.push(u); } });
   if(!links.length) return;
   if(!CONNECTED){ toast('Sin conexión al servidor','err'); return; }
-  toast('Resolviendo '+links.length+' enlaces…','ok');
+  REV_TOT=links.length; REV_INTENTO=true;
+  toast('Consultando el servidor por '+links.length+'…','ok');
   apiGeocode(links).then(function(res){
+    REV_RESPONDIO = !!(res && res.ok);
     if(!res || !res.ok || !Array.isArray(res.geo)){
-      REV_MOTIVO='viejo';                       // el servidor ni entiende el pedido
+      REV_MOTIVO='viejo'; REV_N=0;                // el servidor ni entiende el pedido
     }else{
-      var n=0; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null){ MAPA_COORDS[g.link]=g; n++; } });
-      REV_MOTIVO = n ? '' : 'ninguno';          // contestó, pero no pudo abrir ninguno
+      var n=0; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null){ MAPA_COORDS[g.link]={lat:g.lat,lng:g.lng,aprox:!!g.aprox}; n++; } });
+      REV_N=n;
+      // Si no resolvió NINGUNO, lo primero a mirar es si lo publicado es la versión nueva.
+      REV_MOTIVO = n ? '' : (SERVER_VER===SCRIPT_VERSION_ESPERADA ? 'ninguno' : 'viejo');
     }
     renderRevUbic(true);
-  }).catch(function(){ REV_MOTIVO='viejo'; renderRevUbic(true); });
+    toast(REV_N ? ('Ubicados '+REV_N+' de '+REV_TOT+' ✓') : ('No se pudo con ninguno de los '+REV_TOT), REV_N?'ok':'err');
+  }).catch(function(){ REV_MOTIVO='viejo'; REV_N=0; REV_RESPONDIO=false; renderRevUbic(true); toast('El servidor no respondió','err'); });
+}
+/* Qué versión del Apps Script está PUBLICADA. Es el dato que aclara todo: si acá no dice
+   la versión esperada, el "Implementar → Nueva versión" no se hizo (guardar no alcanza). */
+function revVersionHtml(){
+  if(!SERVER_VER) return REV_RESPONDIO
+    ? ('<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
+       '<b>⚠️ Lo que está publicado es una versión vieja.</b> El servidor contestó, pero ni siquiera dice qué versión es — las nuevas sí lo dicen.<br>'+
+       'Ojo con esto: en Apps Script <b>guardar el código NO publica nada</b>. Hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.</div>')
+    : ('<div style="background:#fff;border-left:4px solid var(--gray);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.8rem;color:var(--muted)">'+
+       'El servidor no contestó, así que no sé qué versión tiene publicada.</div>');
+  var ok=(SERVER_VER===SCRIPT_VERSION_ESPERADA);
+  return '<div style="background:#fff;border-left:4px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.82rem;color:'+(ok?'#0a6b47':'#8a1c24')+'">'+
+    (ok ? '<b>✅ El servidor está actualizado</b> (versión <code>'+esc(SERVER_VER)+'</code>). Ya sabe leer los códigos <code>5P2Q+PFX</code> y buscar por dirección.'
+        : '<b>⚠️ El servidor está corriendo una versión vieja</b> (dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>).<br>'+
+          'Pasa cuando se pega el código y se GUARDA, pero no se publica. Guardar no publica: hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.')+
+    '</div>';
 }
 function revMotivoHtml(){
-  if(REV_MOTIVO==='viejo') return '<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
-    '<b>El Apps Script está desactualizado.</b><br>El servidor no reconoce el pedido de ubicaciones. Hay que pegar de nuevo el archivo <b>google-apps-script.gs</b> y volver a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).</div>';
-  if(REV_MOTIVO==='ninguno') return '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
-    '<b>El servidor contestó, pero no pudo con ninguno.</b> Casi siempre es una de estas dos:<br>'+
-    '<b>1)</b> El Apps Script está viejo. La versión nueva entiende los enlaces que llegan con <b>Plus Code</b> (tipo <code>5P2Q+PFX</code>), que es lo que manda la app de Maps del celular y antes no se podía leer. Pegá de nuevo <b>google-apps-script.gs</b> y volvé a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).<br>'+
-    '<b>2)</b> Le falta permiso para abrir enlaces. Abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos.<br>'+
-    'Después volvé acá y tocá otra vez “Resolverlos ahora”.</div>';
-  // El servidor funciona (resolvió otros), pero con estos no pudo.
-  return '<div style="background:#fff;border-left:4px solid var(--teal);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:var(--text)">'+
-    '<b>El servidor funciona</b> — con estos enlaces en particular no pudo. Suelen ser enlaces vencidos o de un lugar que Google ya no muestra.<br>'+
+  var cuenta='<div style="font-size:.82rem;font-weight:700;color:#7c4b00;margin:6px 0 2px">Resultado: ubicó <b>'+REV_N+'</b> de '+REV_TOT+'.</div>';
+  if(REV_N) return cuenta+'<div style="background:#fff;border-left:4px solid var(--teal);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:var(--text)">'+
+    'Con los que quedan el servidor no pudo: suelen ser enlaces vencidos, o de un lugar que Google ya no muestra.<br>'+
     'Arreglalos a mano con <b>↗ Abrir</b> + <b>✏️ Corregir</b>: es lo más rápido y queda bien para siempre.</div>';
+  if(REV_MOTIVO==='viejo') return cuenta+revVersionHtml()+
+    '<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
+    'Mientras el servidor no esté al día, estos enlaces no se van a poder resolver solos. Igual los podés arreglar a mano acá abajo.</div>';
+  return cuenta+revVersionHtml()+
+    '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
+    '<b>El servidor está al día pero no pudo con ninguno.</b> Lo más probable es que le falte el permiso para abrir enlaces:<br>'+
+    'abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos que pida (incluye “conectarse a un servicio externo”). Después volvé y tocá <b>Probar de nuevo</b>.</div>';
 }
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();

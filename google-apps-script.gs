@@ -46,6 +46,11 @@ function getSheet() {
   return sh;
 }
 
+/* Sello de version: el panel lo muestra para saber si la implementacion publicada es
+   este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
+   Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
+var SCRIPT_VERSION = '2026-07-27-b';
+
 function jsonOut(obj) {
   return ContentService
     .createTextOutput(JSON.stringify(obj))
@@ -63,11 +68,13 @@ function doPost(e) {
   try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
   var action = body.action || 'save';
   // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
-  if (action === 'geocode') return jsonOut({ ok:true, geo: resolveLinks(body.links || []) });
+  // Devuelve tambien la VERSION: asi el panel sabe si lo que esta publicado es este archivo
+  // o una implementacion vieja (guardar el codigo NO alcanza, hay que crear version nueva).
+  if (action === 'geocode') return jsonOut({ ok:true, version:SCRIPT_VERSION, geo: resolveLinks(body.links || []) });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'list')   return jsonOut({ ok:true, pedidos: readAll() });
+    if (action === 'list')   return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
     if (action === 'delete') return doDelete(body.id);
     return doSave(body.pedido);
   } finally {
@@ -86,9 +93,9 @@ function resolveLinks(links) {
   for (var i = 0; i < links.length; i++) {
     var url = String(links[i] == null ? '' : links[i]).trim();
     if (!url) { out.push(null); continue; }
-    if (cache[url]) { out.push({ link: url, lat: cache[url].lat, lng: cache[url].lng }); continue; }
+    if (cache[url]) { out.push({ link: url, lat: cache[url].lat, lng: cache[url].lng, aprox: !!cache[url].aprox }); continue; }
     var c = resolveOne(url);
-    if (c) { out.push({ link: url, lat: c.lat, lng: c.lng }); cache[url] = c; nuevos.push([url, c.lat, c.lng]); }
+    if (c) { out.push({ link: url, lat: c.lat, lng: c.lng, aprox: !!c.aprox }); cache[url] = c; nuevos.push([url, c.lat, c.lng, c.aprox ? 'aprox' : '']); }
     else out.push({ link: url, lat: null, lng: null });
   }
   if (nuevos.length) saveGeoCache(nuevos);
@@ -146,9 +153,50 @@ function coordsEnCuerpo(body) {
   return null;
 }
 
+/* ULTIMO RECURSO: si no hay ninguna coordenada pero SI el nombre del lugar o una direccion
+   escrita, se la preguntamos al geocodificador que ya viene con Apps Script (no necesita
+   clave ni tarjeta). Devuelve el punto APROXIMADO del lugar — se marca como tal para no
+   hacerle creer al chofer que es la puerta exacta. Solo se acepta si cae dentro de Santa Cruz. */
+var SC_SW_LAT = -18.15, SC_SW_LNG = -63.60, SC_NE_LAT = -17.45, SC_NE_LNG = -62.85;
+
+function nombreDeLugar(u) {
+  var m = String(u || '').match(/\/maps\/place\/([^\/@?]+)/);
+  if (!m) return '';
+  var t = m[1];
+  try { t = decodeURIComponent(t.replace(/\+/g, ' ')); } catch (e) { t = t.replace(/\+/g, ' '); }
+  t = t.replace(/\s+/g, ' ').trim();
+  if (plusCodeDeTexto(t)) return '';                      // eso ya lo intento el decodificador
+  if (/^-?\d+\.\d+\s*,\s*-?\d+\.\d+$/.test(t)) return '';
+  if (/\d+\s*°/.test(t)) return '';
+  return t;
+}
+
+function geocodeTexto(txt) {
+  txt = String(txt || '').replace(/\s+/g, ' ').trim();
+  if (txt.length < 8) return null;                        // "casa 3" no alcanza para buscar
+  if (/^https?:\/\//i.test(txt)) return null;             // un link no es una direccion
+  if (!/santa cruz|bolivia/i.test(txt)) txt += ', Santa Cruz de la Sierra, Bolivia';
+  try {
+    var r = Maps.newGeocoder().setRegion('bo')
+      .setBounds(SC_SW_LAT, SC_SW_LNG, SC_NE_LAT, SC_NE_LNG)
+      .geocode(txt);
+    if (r && r.status === 'OK' && r.results && r.results.length) {
+      var loc = r.results[0].geometry.location;
+      var c = okCoord(loc.lat, loc.lng);
+      if (c && c.lat >= SC_SW_LAT && c.lat <= SC_NE_LAT && c.lng >= SC_SW_LNG && c.lng <= SC_NE_LNG) {
+        c.aprox = true;                                   // aviso: es el lugar, no la puerta
+        return c;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
 function resolveOne(url) {
   var c0 = extractCoords(url);      // el enlace ya trae las coordenadas: ni hace falta salir a internet
   if (c0) return c0;
+  // No es un link: pegaron una direccion escrita. Se busca directo, sin salir a abrir nada.
+  if (!/^https?:\/\//i.test(url)) return geocodeTexto(url);
   var finalUrl = followRedirects(url);
   var c = extractCoords(finalUrl);
   if (c) return c;
@@ -171,6 +219,10 @@ function resolveOne(url) {
     } catch (e) {}
     break;
   }
+  // Nada de coordenadas en ningun lado. Si el enlace al menos dice QUE lugar es
+  // (/maps/place/DPM+EXPRESS+CARGO,+Av.+Tres+Pasos…), lo buscamos por nombre.
+  var nom = nombreDeLugar(finalUrl) || nombreDeLugar(url);
+  if (nom) return geocodeTexto(nom);
   return null;
 }
 
@@ -279,17 +331,18 @@ function probarUbicacion() {
 function getGeoCache() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName('Geo');
-  if (!sh) { sh = ss.insertSheet('Geo'); sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]); return {}; }
+  if (!sh) { sh = ss.insertSheet('Geo'); sh.getRange(1, 1, 1, 4).setValues([['link', 'lat', 'lng', 'aprox']]); return {}; }
   var vals = sh.getDataRange().getValues(); var c = {};
-  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[String(vals[i][0])] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]) }; }
+  for (var i = 1; i < vals.length; i++) { if (vals[i][0]) c[String(vals[i][0])] = { lat: Number(vals[i][1]), lng: Number(vals[i][2]), aprox: !!vals[i][3] }; }
   return c;
 }
 
 function saveGeoCache(rows) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName('Geo') || ss.insertSheet('Geo');
-  if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, 3).setValues([['link', 'lat', 'lng']]);
-  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 3).setValues(rows);
+  if (sh.getLastRow() === 0) sh.getRange(1, 1, 1, 4).setValues([['link', 'lat', 'lng', 'aprox']]);
+  if (sh.getLastColumn() < 4) sh.getRange(1, 4).setValue('aprox');   // hojas viejas de 3 columnas
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, 4).setValues(rows);
 }
 
 function readAll() {
