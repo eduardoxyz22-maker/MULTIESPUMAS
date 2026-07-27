@@ -2786,9 +2786,19 @@ function revUbicDatos(){
   });
   return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos};
 }
-function abrirRevUbic(){ renderRevUbic(false); }
+function abrirRevUbic(){ REV_MOTIVO=''; renderRevUbic(false); }
 function renderRevUbic(yaResolvio){
   var d=revUbicDatos();
+  function filaCorto(p, conAbrir){
+    return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem">'+
+      '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">'+
+        '<b style="cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
+        '<span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
+        (conAbrir?('<a class="btn btn-sm" style="margin-left:auto;background:var(--teal);color:#fff;text-decoration:none" href="'+esc(p.maps)+'" target="_blank" rel="noopener">↗ Abrir</a>'+
+                   '<button class="btn btn-sm btn-ghost" onclick="closeModal();editarUbicacionAdmin(\''+p.id+'\')">✏️ Corregir</button>'):'')+
+      '</div>'+
+      '<div style="color:var(--muted);font-size:.76rem;word-break:break-all;margin-top:3px">'+esc(p.maps)+'</div></div>';
+  }
   function fila(p, extra){
     return '<div style="background:#fff;border-radius:8px;padding:9px 12px;margin-bottom:7px;font-size:.85rem;cursor:pointer" onclick="closeModal();showPedidoModal(\''+p.id+'\')">'+
       '<b>'+esc(p.cliente||'—')+'</b> <span style="color:var(--muted)">· '+esc(fmtFecha(p.fecha))+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
@@ -2806,8 +2816,9 @@ function renderRevUbic(yaResolvio){
       '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
       '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.'+
         (yaResolvio?' <b>No se pudieron resolver</b> — revisá que el enlace siga funcionando.':'')+'</div>'+
-      (yaResolvio?'':'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
-      '<div style="margin-top:9px">'+d.cortos.map(function(p){ return fila(p, esc(p.maps)); }).join('')+'</div></div>';
+      (yaResolvio?revMotivoHtml():'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
+      (yaResolvio?'<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">Mientras tanto podés arreglarlo a mano: tocá <b>Abrir</b>, mirá dónde cae el pin, copiá de la barra del navegador el enlace largo y pegalo en el pedido.</div>':'')+
+      '<div style="margin-top:9px">'+d.cortos.map(function(p){ return filaCorto(p, yaResolvio); }).join('')+'</div></div>';
   }
   if(d.nores.length){
     h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
@@ -2826,6 +2837,9 @@ function renderRevUbic(yaResolvio){
   openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
 }
+/* Por qué fallaron los links cortos: distinguir "el Apps Script está viejo" de
+   "el Apps Script no tiene permiso para salir a internet". Son arreglos distintos. */
+var REV_MOTIVO='';
 function resolverCortosRev(){
   var d=revUbicDatos();
   var links=[], seen={};
@@ -2834,9 +2848,21 @@ function resolverCortosRev(){
   if(!CONNECTED){ toast('Sin conexión al servidor','err'); return; }
   toast('Resolviendo '+links.length+' enlaces…','ok');
   apiGeocode(links).then(function(res){
-    if(res&&res.ok&&Array.isArray(res.geo)) res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null) MAPA_COORDS[g.link]=g; });
+    if(!res || !res.ok || !Array.isArray(res.geo)){
+      REV_MOTIVO='viejo';                       // el servidor ni entiende el pedido
+    }else{
+      var n=0; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null){ MAPA_COORDS[g.link]=g; n++; } });
+      REV_MOTIVO = n ? '' : 'permiso';          // contestó, pero no pudo abrir ninguno
+    }
     renderRevUbic(true);
-  }).catch(function(){ toast('No se pudo consultar al servidor','err'); renderRevUbic(true); });
+  }).catch(function(){ REV_MOTIVO='viejo'; renderRevUbic(true); });
+}
+function revMotivoHtml(){
+  if(REV_MOTIVO==='viejo') return '<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
+    '<b>El Apps Script está desactualizado.</b><br>El servidor no reconoce el pedido de ubicaciones. Hay que pegar de nuevo el archivo <b>google-apps-script.gs</b> y volver a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).</div>';
+  if(REV_MOTIVO==='permiso') return '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
+    '<b>Al Apps Script le falta permiso para abrir enlaces.</b><br>Abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos que pida (incluye “conectarse a un servicio externo”). Después volvé acá y tocá otra vez “Resolverlos ahora”.</div>';
+  return '';
 }
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();

@@ -153,6 +153,23 @@ function extractCoords(u) {
   return null;
 }
 
+/**
+ * PROBAR UBICACIONES — ejecutá esta función desde el editor (▶ Ejecutar) para:
+ *   1) que Apps Script te pida los permisos (incluye "conectarse a un servicio externo",
+ *      que es el que hace falta para abrir los links cortos de maps.app.goo.gl), y
+ *   2) ver en el registro si el enlace se resuelve bien.
+ * Cambiá LINK por uno de los enlaces que te aparecen en "Revisar ubicaciones".
+ */
+function probarUbicacion() {
+  var LINK = 'https://maps.app.goo.gl/RqsEezKpiDsaFS9L7';
+  Logger.log('Probando: ' + LINK);
+  var fin = followRedirects(LINK);
+  Logger.log('El enlace lleva a: ' + fin);
+  var c = resolveOne(LINK);
+  Logger.log(c ? ('OK -> lat ' + c.lat + ' , lng ' + c.lng) : 'NO se pudo sacar la ubicación');
+  return c;
+}
+
 function getGeoCache() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sh = ss.getSheetByName('Geo');
