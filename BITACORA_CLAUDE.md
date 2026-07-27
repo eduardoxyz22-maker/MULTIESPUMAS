@@ -114,6 +114,35 @@ Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedim
   desglose por vendedora; ficha "Unidades vendidas" en el Pulso. El dinero SIGUE saliendo del
   Presupuesto (`price`), no del valor de productos.
 
+## 4d. Ubicaciones del panel de pedidos (2026-07-27)
+
+Cadena de fallas que impedía que los pedidos aparecieran en el mapa, resuelta en este orden:
+
+1. **Prioridad del pin invertida**: se leía `@lat,lng` (el CENTRO del mapa) antes que `!3d!4d`
+   (el pin real) → 711 m de error en el enlace del usuario. Orden correcto, en `coordsDeLink`
+   (pedidos.html) y `extractCoords` (google-apps-script.gs):
+   **`!3d!4d` → grados DMS → Plus Code → parámetros (`q`/`query`/`destination`/…) → `@` → par suelto**.
+2. **El servidor salía a internet antes de mirar el enlace**: `resolveOne` ahora prueba
+   `extractCoords(url)` primero; recién si falla sigue redirecciones.
+3. **Extracción del lado del cliente**: `coordsDeLink` resuelve en el navegador todo enlace que ya
+   traiga coordenadas. Solo los cortos (`maps.app.goo.gl`) necesitan al servidor → el mapa ya no
+   depende del redeploy del Apps Script.
+4. **La app rechazaba coordenadas pegadas**: el campo era `type="url"` y exigía `^https?://`, o sea
+   que el método MÁS confiable (copiar los números de Maps) estaba bloqueado. `normalizaUbicacion`
+   acepta ahora link, coordenadas sueltas o Plus Code.
+5. **Plus Codes (causa raíz de los 8 links cortos que seguían fallando)**: al compartir desde la
+   **app de Maps del celular**, el destino del link corto es del tipo
+   `/maps/place/5P2Q+PFX+Condominio+Asaí+2,+Santa+Cruz+de+la+Sierra/data=!1s0x93f1…` — **sin ninguna
+   coordenada**: solo el Plus Code y el place ID. `extractCoords` devolvía null con razón.
+   Se implementó el decodificador **Open Location Code** (`olcDecode`/`olcPrefijo`/`olcCoords`/
+   `plusCodeDeTexto`) en LOS DOS archivos.
+   - Google acorta el código sacándole los **4 primeros caracteres** y poniendo la ciudad en su lugar.
+     Se recuperan con la referencia **`OLC_REF_LAT/LNG = -17.7833, -63.1821` (Santa Cruz de la Sierra)**.
+   - ⚠️ Esa recuperación es exacta hasta **~50 km** del centro (verificado: 0 errores en 20 000 puntos
+     a ±0,45°; falla más allá de ±0,5°, que es un límite matemático del código corto, no un bug).
+     **Si algún día reparten en otra ciudad, hay que cambiar esa referencia.**
+   - Verificado contra los vectores oficiales de `google/open-location-code` y con ida y vuelta.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

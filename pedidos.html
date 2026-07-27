@@ -428,8 +428,8 @@ th.sortable:hover{color:var(--teal-dk)}
           <datalist id="dl-zonas"></datalist>
         </div>
         <div class="field">
-          <label class="lb">Link de Google Maps</label>
-          <input type="text" id="f-maps" placeholder="Link de Maps o coordenadas (-17.749444, -63.104556)" autocomplete="off">
+          <label class="lb">Ubicación de Google Maps</label>
+          <input type="text" id="f-maps" placeholder="Link, coordenadas (-17.749444, -63.104556) o código (5P2Q+PFX)" autocomplete="off">
         </div>
       </div>
 
@@ -1960,10 +1960,10 @@ function renderMis(){
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
 function editarUbicacion(id, reopen){
   var p=findById(id); if(!p) return;
-  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nPegá el link de Google Maps, O las coordenadas\n(en Maps mantené apretado el punto y copiá los números).\nDejalo vacío para quitar la ubicación:', p.maps||'');
+  var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nDejalo vacío para quitar la ubicación:', p.maps||'');
   if(nuevo==null) return;
   var norm=normalizaUbicacion(nuevo);
-  if(norm===null){ toast('No se entiende: pegá el enlace de Maps o las coordenadas (ej: -17.749444, -63.104556)','err'); return; }
+  if(norm===null){ toast('No se entiende: pegá el enlace, las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX)','err'); return; }
   p.maps=norm;
   upsert(p); saveMirror();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
@@ -2755,7 +2755,69 @@ function coordsSueltas(txt){
   if(a.indexOf('.')<0 || b.indexOf('.')<0) return null;   // sin decimales no es una ubicación
   return validaCoord(a,b);
 }
-/* Deja la ubicación lista para guardar: acepta un enlace o coordenadas sueltas.
+/* ---- Plus Codes (los códigos tipo "5P2Q+PFX" de Google Maps) ----
+   Cuando se comparte desde la app del celular, Maps suele mandar el lugar SOLO con
+   su Plus Code y el nombre de la ciudad, sin ninguna coordenada adentro. El código
+   ES la ubicación: son coordenadas escritas en otro alfabeto, así que se pueden
+   convertir acá mismo, sin salir a internet.
+   Google acorta el código sacándole los 4 primeros caracteres (los que dicen "en qué
+   parte del mundo") y en su lugar escribe la ciudad. Se recuperan usando Santa Cruz
+   como referencia: es exacto hasta ~50 km del centro, o sea toda la zona de reparto. */
+var OLC_A='23456789CFGHJMPQRVWX';
+var OLC_REF_LAT=-17.7833, OLC_REF_LNG=-63.1821;   // Santa Cruz de la Sierra
+function olcDecode(code){
+  code=String(code||'').replace(/\+/g,'').replace(/0+$/,'').toUpperCase();
+  if(code.length<10) return null;                 // menos de 10 dígitos = zona muy grande, no sirve
+  var nLat=-720000, nLng=-1440000, pv=160000, dig=Math.min(code.length,10), i, a, b;
+  for(i=0;i<dig;i+=2){
+    a=OLC_A.indexOf(code.charAt(i)); b=OLC_A.indexOf(code.charAt(i+1));
+    if(a<0||b<0) return null;
+    nLat+=a*pv; nLng+=b*pv;
+    if(i<dig-2) pv/=20;
+  }
+  var latP=pv/8000, lngP=pv/8000, xLat=0, xLng=0;
+  if(code.length>10){                             // dígitos finos: cuadrícula de 4x5
+    var rpv=625, cpv=256, max=Math.min(code.length,15), d;
+    for(i=10;i<max;i++){
+      d=OLC_A.indexOf(code.charAt(i)); if(d<0) return null;
+      xLat+=Math.floor(d/4)*rpv; xLng+=(d%4)*cpv;
+      if(i<max-1){ rpv/=5; cpv/=4; }
+    }
+    latP=rpv/25000000; lngP=cpv/8192000;
+  }
+  return validaCoord(nLat/8000+xLat/25000000+latP/2, nLng/8000+xLng/8192000+lngP/2);
+}
+function olcPrefijo(lat,lng,n){
+  var la=lat+90, lo=lng+180, res=20, out='', i, a, b;
+  for(i=0;i<n;i+=2){
+    a=Math.floor(la/res); b=Math.floor(lo/res);
+    if(a>19)a=19; if(a<0)a=0; if(b>19)b=19; if(b<0)b=0;
+    out+=OLC_A.charAt(a)+OLC_A.charAt(b);
+    la-=a*res; lo-=b*res; res/=20;
+  }
+  return out;
+}
+function olcCoords(code){
+  code=String(code||'').toUpperCase();
+  var p=code.indexOf('+');
+  if(p===8) return olcDecode(code);
+  var falta=8-p;
+  if(falta!==2 && falta!==4 && falta!==6) return null;
+  var g=olcDecode(olcPrefijo(OLC_REF_LAT,OLC_REF_LNG,falta)+code);
+  if(!g) return null;
+  var reso=Math.pow(20,2-falta/2), half=reso/2;   // elegir la celda más cercana a Santa Cruz
+  if(OLC_REF_LAT+half<g.lat && g.lat-reso>=-90) g.lat-=reso;
+  else if(OLC_REF_LAT-half>g.lat && g.lat+reso<=90) g.lat+=reso;
+  if(OLC_REF_LNG+half<g.lng) g.lng-=reso;
+  else if(OLC_REF_LNG-half>g.lng) g.lng+=reso;
+  return g;
+}
+function plusCodeDeTexto(txt){
+  var m=String(txt||'').match(/(^|[^0-9A-Za-z+])([23456789CFGHJMPQRVWXcfghjmpqrvwx]{4,8})\+([23456789CFGHJMPQRVWXcfghjmpqrvwx]{2,3})(?![0-9A-Za-z+])/);
+  if(!m || (m[2].length%2)) return null;
+  return (m[2]+'+'+m[3]).toUpperCase();
+}
+/* Deja la ubicación lista para guardar: acepta un enlace, coordenadas sueltas o un Plus Code.
    Devuelve '' para borrar, la cadena a guardar, o null si no se entiende. */
 function normalizaUbicacion(txt){
   var t=String(txt||'').trim();
@@ -2763,6 +2825,8 @@ function normalizaUbicacion(txt){
   if(/^https?:\/\//i.test(t)) return t;
   var c=coordsSueltas(t);
   if(c) return 'https://www.google.com/maps?q='+c.lat+','+c.lng;
+  var pc=plusCodeDeTexto(t);                       // pegaron un Plus Code: "5P2Q+PFX"
+  if(pc){ var g=olcCoords(pc); if(g) return 'https://www.google.com/maps?q='+g.lat+','+g.lng; }
   return null;
 }
 function coordsDeLink(u){
@@ -2778,6 +2842,9 @@ function coordsDeLink(u){
     var ln=(+m[5])+(+m[6])/60+(+m[7])/3600; if(/[WOwo]/.test(m[8])) ln=-ln;
     return validaCoord(la,ln);
   }
+  // 2b) Plus Code en el nombre del lugar (es el pin exacto, más preciso que el "@")
+  var pc=plusCodeDeTexto(d);
+  if(pc){ var gp=olcCoords(pc); if(gp) return gp; }
   // 3) parámetros explícitos
   if((m=u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return validaCoord(m[1],m[2]);
   // 4) centro del mapa (menos preciso, pero mejor que nada)
@@ -2838,7 +2905,7 @@ function renderRevUbic(yaResolvio){
       '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.'+
         (yaResolvio?' <b>No se pudieron resolver</b> — revisá que el enlace siga funcionando.':'')+'</div>'+
       (yaResolvio?revMotivoHtml():'<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 Resolverlos ahora</button>')+
-      (yaResolvio?'<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">Mientras tanto podés arreglarlo a mano: tocá <b>Abrir</b>, mirá dónde cae el pin, copiá de la barra del navegador el enlace largo y pegalo en el pedido.</div>':'')+
+      (yaResolvio?'<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">Mientras tanto se arregla a mano en 20 segundos: tocá <b>↗ Abrir</b> → en el mapa <b>mantené apretado el pin</b> → abajo aparecen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve pegar el código tipo <code>5P2Q+PFX</code>.</div>':'')+
       '<div style="margin-top:9px">'+d.cortos.map(function(p){ return filaCorto(p, yaResolvio); }).join('')+'</div></div>';
   }
   if(d.nores.length){
@@ -2873,7 +2940,7 @@ function resolverCortosRev(){
       REV_MOTIVO='viejo';                       // el servidor ni entiende el pedido
     }else{
       var n=0; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null){ MAPA_COORDS[g.link]=g; n++; } });
-      REV_MOTIVO = n ? '' : 'permiso';          // contestó, pero no pudo abrir ninguno
+      REV_MOTIVO = n ? '' : 'ninguno';          // contestó, pero no pudo abrir ninguno
     }
     renderRevUbic(true);
   }).catch(function(){ REV_MOTIVO='viejo'; renderRevUbic(true); });
@@ -2881,12 +2948,15 @@ function resolverCortosRev(){
 function revMotivoHtml(){
   if(REV_MOTIVO==='viejo') return '<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
     '<b>El Apps Script está desactualizado.</b><br>El servidor no reconoce el pedido de ubicaciones. Hay que pegar de nuevo el archivo <b>google-apps-script.gs</b> y volver a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).</div>';
-  if(REV_MOTIVO==='permiso') return '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
-    '<b>Al Apps Script le falta permiso para abrir enlaces.</b><br>Abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos que pida (incluye “conectarse a un servicio externo”). Después volvé acá y tocá otra vez “Resolverlos ahora”.</div>';
+  if(REV_MOTIVO==='ninguno') return '<div style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:#7c4b00">'+
+    '<b>El servidor contestó, pero no pudo con ninguno.</b> Casi siempre es una de estas dos:<br>'+
+    '<b>1)</b> El Apps Script está viejo. La versión nueva entiende los enlaces que llegan con <b>Plus Code</b> (tipo <code>5P2Q+PFX</code>), que es lo que manda la app de Maps del celular y antes no se podía leer. Pegá de nuevo <b>google-apps-script.gs</b> y volvé a implementar (Implementar → Administrar implementaciones → ✏️ → Nueva versión).<br>'+
+    '<b>2)</b> Le falta permiso para abrir enlaces. Abrí <b>Extensiones → Apps Script</b>, elegí arriba la función <b>probarUbicacion</b>, tocá <b>▶ Ejecutar</b> y aceptá los permisos.<br>'+
+    'Después volvé acá y tocá otra vez “Resolverlos ahora”.</div>';
   // El servidor funciona (resolvió otros), pero con estos no pudo.
   return '<div style="background:#fff;border-left:4px solid var(--teal);border-radius:8px;padding:10px 12px;margin:8px 0;font-size:.82rem;color:var(--text)">'+
-    '<b>El servidor funciona</b> — con estos enlaces en particular no pudo. Suele pasar con los que se comparten desde la <b>app de Maps del celular</b> (terminan en <code>?g_st=…</code>).<br>'+
-    'Si ya actualizaste el Apps Script y siguen fallando, arreglalos a mano con <b>Abrir</b> + <b>Corregir</b>.</div>';
+    '<b>El servidor funciona</b> — con estos enlaces en particular no pudo. Suelen ser enlaces vencidos o de un lugar que Google ya no muestra.<br>'+
+    'Arreglalos a mano con <b>↗ Abrir</b> + <b>✏️ Corregir</b>: es lo más rápido y queda bien para siempre.</div>';
 }
 function mapaRefresh(){
   MAPA_LIST=mapaFilteredList();

@@ -179,8 +179,68 @@ function okCoord(a, b) {
   if (isNaN(la) || isNaN(ln) || Math.abs(la) > 90 || Math.abs(ln) > 180) return null;
   return { lat: la, lng: ln };
 }
+// PLUS CODES ("5P2Q+PFX"). Cuando se comparte desde la app del celular, Maps manda el
+// lugar solo con su Plus Code y el nombre de la ciudad: la URL no trae NINGUNA coordenada.
+// El codigo es la ubicacion escrita en otro alfabeto, asi que se convierte con cuentas.
+// Google le saca los 4 primeros caracteres; se recuperan tomando Santa Cruz de referencia
+// (exacto hasta ~50 km del centro, o sea toda la zona de reparto).
+var OLC_A = '23456789CFGHJMPQRVWX';
+var OLC_REF_LAT = -17.7833, OLC_REF_LNG = -63.1821;
+function olcDecode(code) {
+  code = String(code || '').replace(/\+/g, '').replace(/0+$/, '').toUpperCase();
+  if (code.length < 10) return null;
+  var nLat = -720000, nLng = -1440000, pv = 160000, dig = Math.min(code.length, 10), i, a, b;
+  for (i = 0; i < dig; i += 2) {
+    a = OLC_A.indexOf(code.charAt(i)); b = OLC_A.indexOf(code.charAt(i + 1));
+    if (a < 0 || b < 0) return null;
+    nLat += a * pv; nLng += b * pv;
+    if (i < dig - 2) pv /= 20;
+  }
+  var latP = pv / 8000, lngP = pv / 8000, xLat = 0, xLng = 0;
+  if (code.length > 10) {
+    var rpv = 625, cpv = 256, max = Math.min(code.length, 15), dd;
+    for (i = 10; i < max; i++) {
+      dd = OLC_A.indexOf(code.charAt(i)); if (dd < 0) return null;
+      xLat += Math.floor(dd / 4) * rpv; xLng += (dd % 4) * cpv;
+      if (i < max - 1) { rpv /= 5; cpv /= 4; }
+    }
+    latP = rpv / 25000000; lngP = cpv / 8192000;
+  }
+  return okCoord(nLat / 8000 + xLat / 25000000 + latP / 2, nLng / 8000 + xLng / 8192000 + lngP / 2);
+}
+function olcPrefijo(lat, lng, n) {
+  var la = lat + 90, lo = lng + 180, res = 20, out = '', i, a, b;
+  for (i = 0; i < n; i += 2) {
+    a = Math.floor(la / res); b = Math.floor(lo / res);
+    if (a > 19) a = 19; if (a < 0) a = 0; if (b > 19) b = 19; if (b < 0) b = 0;
+    out += OLC_A.charAt(a) + OLC_A.charAt(b);
+    la -= a * res; lo -= b * res; res /= 20;
+  }
+  return out;
+}
+function olcCoords(code) {
+  code = String(code || '').toUpperCase();
+  var p = code.indexOf('+');
+  if (p === 8) return olcDecode(code);
+  var falta = 8 - p;
+  if (falta !== 2 && falta !== 4 && falta !== 6) return null;
+  var g = olcDecode(olcPrefijo(OLC_REF_LAT, OLC_REF_LNG, falta) + code);
+  if (!g) return null;
+  var reso = Math.pow(20, 2 - falta / 2), half = reso / 2;
+  if (OLC_REF_LAT + half < g.lat && g.lat - reso >= -90) g.lat -= reso;
+  else if (OLC_REF_LAT - half > g.lat && g.lat + reso <= 90) g.lat += reso;
+  if (OLC_REF_LNG + half < g.lng) g.lng -= reso;
+  else if (OLC_REF_LNG - half > g.lng) g.lng += reso;
+  return g;
+}
+function plusCodeDeTexto(txt) {
+  var m = String(txt || '').match(/(^|[^0-9A-Za-z+])([23456789CFGHJMPQRVWXcfghjmpqrvwx]{4,8})\+([23456789CFGHJMPQRVWXcfghjmpqrvwx]{2,3})(?![0-9A-Za-z+])/);
+  if (!m || (m[2].length % 2)) return null;
+  return (m[2] + '+' + m[3]).toUpperCase();
+}
+
 // OJO con el orden: "@lat,lng" es el CENTRO del mapa, no el pin (puede errarle cientos de
-// metros). Primero se busca el pin real: !3d!4d, o las coordenadas en grados.
+// metros). Primero se busca el pin real: !3d!4d, las coordenadas en grados, o el Plus Code.
 function extractCoords(u) {
   u = String(u || '');
   var d = u; try { d = decodeURIComponent(u.replace(/\+/g, ' ')); } catch (e) {}
@@ -191,6 +251,8 @@ function extractCoords(u) {
     var ln = (+m[5]) + (+m[6]) / 60 + (+m[7]) / 3600; if (/[WOwo]/.test(m[8])) ln = -ln;
     return okCoord(la, ln);
   }
+  var pc = plusCodeDeTexto(d);
+  if (pc) { var gp = olcCoords(pc); if (gp) return gp; }
   if ((m = u.match(/[?&](?:q|query|ll|sll|daddr|saddr|destination|center)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
   if ((m = u.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/))) return okCoord(m[1], m[2]);
   if ((m = u.match(/[\/=](-?\d{1,2}\.\d{3,}),\s*(-?\d{1,3}\.\d{3,})/))) return okCoord(m[1], m[2]);
