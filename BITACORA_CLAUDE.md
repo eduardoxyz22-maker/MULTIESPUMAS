@@ -175,6 +175,27 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   "Por cobrar" es el total del día con desglose (ya entregado / sin entregar); el aviso rojo
   es solo para lo que **salió y volvió sin cobrar**, que es el problema real.
 
+## 4f. Panel de pedidos — "Mis pedidos" en fichas, chofer y atraso (2026-07-28)
+
+- **"Mis pedidos" dejó de ser tabla**: son fichas (`misCardHtml`) que reusan el CSS
+  `.cho-card` del panel del chofer. Las vendedoras miran esto del celular; la tabla obligaba
+  a deslizar para los costados.
+- **La fila "Chofer" se dibuja SIEMPRE** (`choferTexto`). Antes salía solo si ya había chofer,
+  y entonces no se distinguía "todavía no le asignaron" de "no me lo está mostrando". Sin
+  chofer dice *"Sin asignar todavía"*. Usa `vehiculoDe()`, que deduce el vehículo del chofer
+  cuando no quedó guardado.
+- **Atraso** (`minutosAtraso` / `atrasoBadge` / chip "⏰ Atrasados"):
+  - `TURNO_FIN = {AM:13, PM:19}` — **hasta qué hora se espera cada turno, hora local**. Es una
+    convención, no un dato de la planilla: si cambia el horario de reparto, se toca acá.
+  - **`turnoDe()` existe por esto**: `normTurno()` devuelve `'AM'` cuando el campo viene
+    vacío, y para avisar de un atraso eso miente — marcaría atrasado a la 1 de la tarde un
+    pedido al que nadie le puso turno. `turnoDe()` devuelve `''` y ese pedido se juzga con
+    todo el día (`TURNO_FIN.PM`). **No reemplazar una por la otra.**
+  - Se calcula **en el navegador contra la hora del equipo**. No se guarda nada en la planilla:
+    un pedido "atrasado" deja de estarlo solo con marcarlo entregado.
+  - En el filtro "Atrasados" la lista se ordena **del más atrasado al menos**, al revés que el
+    resto de las vistas (que van por fecha descendente).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

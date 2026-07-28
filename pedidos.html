@@ -1312,6 +1312,37 @@ function diaSabado(fecha){ return dowDe(fecha)===6; }
 function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0) return 0; if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
 function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
+/* ---- Turno y atraso ----
+   normTurno() da 'AM' cuando el campo viene vacío, y para AVISAR DE UN ATRASO eso miente:
+   marcaría atrasado a la 1 de la tarde un pedido al que nadie le puso turno. turnoDe()
+   devuelve '' en ese caso y el pedido se juzga con todo el día. */
+var TURNO_FIN = { AM: 13, PM: 19 };  // hasta qué hora se espera cada turno (hora de Bolivia)
+function turnoDe(p){ var t=String((p&&p.turno)||'').trim(); return t?normTurno(t):''; }
+function turnoIcono(t){ return t==='AM'?'🌅':(t==='PM'?'🌆':'🕗'); }
+function turnoBadge(p){
+  var t=turnoDe(p);
+  return t ? ('<span class="badge b-gray">'+turnoIcono(t)+' '+t+'</span>')
+           : '<span class="badge b-gray">🕗 Sin turno</span>';
+}
+/* Minutos de atraso. 0 = está en hora, ya se entregó, o no hay fecha con la cual comparar. */
+function minutosAtraso(p, ahora){
+  if(!p || p.entregado) return 0;
+  var f=String(p.fecha||'').match(/^(\d{4})-(\d{2})-(\d{2})/); if(!f) return 0;
+  var t=turnoDe(p);
+  var lim=new Date(+f[1], +f[2]-1, +f[3], (t?TURNO_FIN[t]:TURNO_FIN.PM), 0, 0);
+  var d=Math.floor(((ahora||new Date())-lim)/60000);
+  return d>0?d:0;
+}
+function textoAtraso(p, ahora){
+  var m=minutosAtraso(p, ahora); if(!m) return '';
+  if(m<60) return m+' min';
+  var h=Math.floor(m/60); if(h<24) return h+' h';
+  var d=Math.floor(h/24); return d+(d===1?' día':' días');
+}
+function atrasoBadge(p, ahora){
+  var t=textoAtraso(p, ahora);
+  return t?('<span class="badge b-red">⏰ Atrasado '+t+'</span>'):'';
+}
 function ajustarTurnoSeg(fecha){
   var seg=document.getElementById('f-turno'); if(!seg) return;
   var pm=seg.querySelector('button[data-val="PM"]'); if(!pm) return;
@@ -1796,6 +1827,7 @@ var MIS_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',      test:function(p){ return p.fecha===todayStr(); }},
   {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===tomorrowStr(); }},
   {k:'pend',   lbl:'⏳ No entregados', test:function(p){ return !p.entregado; }},
+  {k:'atras',  lbl:'⏰ Atrasados', test:function(p){ return minutosAtraso(p)>0; }},
   {k:'ent',    lbl:'🚚 Entregados',    test:function(p){ return !!p.entregado; }},
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
@@ -2421,11 +2453,14 @@ function renderMis(){
   renderMisChips(mine);
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
   var lista=mine.filter(misTest(MIS_FILTER));
+  // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
+  if(MIS_FILTER==='atras') lista.sort(function(a,b){ return minutosAtraso(b)-minutosAtraso(a); });
   if(!lista.length){
     tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
     empty.textContent = MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
       : MIS_FILTER==='manana' ? 'No tenés pedidos para entregar mañana ('+fmtFecha(tomorrowStr())+').'
       : MIS_FILTER==='pend' ? '✅ No te queda ningún pedido pendiente de entrega.'
+      : MIS_FILTER==='atras' ? '✅ Ningún pedido tuyo pasó su turno sin entregar.'
       : MIS_FILTER==='ent' ? 'Todavía no tenés pedidos entregados.'
       : 'Todavía no tenés pedidos cargados con ese nombre.';
     return;
@@ -2463,10 +2498,11 @@ function misCardHtml(p, n, todos){
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
-          (p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+
-          (p.oc?(' · OC '+esc(p.oc)):'')+'</div></div>'+
+          (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · OC '+esc(p.oc)):'')+'</div></div>'+
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
+      turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
+      atrasoBadge(p)+
     '</div>'+
     '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
     (p.estado?('<div class="cho-row"><span class="k">Stock</span> '+estadoBadge(p.estado)+'</div>'):'')+
@@ -2537,13 +2573,15 @@ function showMisModal(id){
     return prodChkIcon(x)+t;
   }).join('<br>');
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
-  var entrega=p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>';
+  var entrega=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+' '+atrasoBadge(p);
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
+  var atr=textoAtraso(p);
+  if(atr) alertas+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:var(--red)">⏰ <b>Atrasado '+atr+'.</b> '+(turnoDe(p)?('Era para el turno '+turnoDe(p)+' del '+esc(fmtFecha(p.fecha))+'.'):('Era para el '+esc(fmtFecha(p.fecha))+'.'))+' Preguntá al administrador cómo va.</div>';
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
   var choferVal = choferTexto(p);
-  var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
+  var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
     row('Cobro', cobro)+row('Entrega', entrega)+(p.estado?row('Stock', estadoBadge(p.estado)):'')+row('Chofer', choferVal)+
