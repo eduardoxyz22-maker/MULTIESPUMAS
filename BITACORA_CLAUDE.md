@@ -143,6 +143,38 @@ Cadena de fallas que impedía que los pedidos aparecieran en el mapa, resuelta e
      **Si algún día reparten en otra ciudad, hay que cambiar esa referencia.**
    - Verificado contra los vectores oficiales de `google/open-location-code` y con ida y vuelta.
 
+## 4e. Panel de pedidos — cobros, fotos y entregas (2026-07-27)
+
+Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
+
+- **Cobros múltiples del chofer**: el chofer anota varios pagos por pedido (efectivo + QR +
+  tarjeta), cada uno con su monto. Se guardan **como texto en el campo `Método pago` que la
+  planilla YA tenía**: `"Efectivo 6000 + QR 1750"`. Se eligió así a propósito, para no
+  depender de un redeploy del Apps Script y para que quede legible en la hoja.
+  `parseCobros()` lo vuelve a leer. Si se cambia ese formato, se pierde el histórico.
+  - `objetivoCobro(p) = saldo + totalCobrado` — así el monto que puso el vendedor sigue
+    siendo el mismo número a medida que entran los cobros.
+  - **`p.saldo` NO se recorta en 0**: si cobraron de más queda negativo. Es lo que permite
+    detectar el exceso (`excesoCobro`) y restaurar el saldo original al deshacer.
+  - `applyPaid()` ahora escribe el monto (`"Efectivo 3500"`), no solo el método. Eso arregló
+    de paso que la rendición por chofer se ponía en cero al recargar (`cobradoBs` es
+    client-only, no tiene columna).
+- **Fotos de la entrega**: van a **Drive**, carpeta `Fotos entregas MultiEspumas`; en la
+  planilla (columna nueva `Fotos entrega`) va **solo el id del archivo**. Se comparten como
+  **"cualquiera con el enlace puede ver"** — es lo que permite mostrarlas dentro del panel
+  sin autenticación. La foto se **achica en el navegador del chofer** (canvas, máx 1280 px,
+  JPEG 0.72): de 4–8 MB a ~150 KB. **Sin eso no se puede subir con datos móviles.**
+- **`SCRIPT_VERSION` en el .gs** (hoy `2026-07-27-c`), devuelta en `geocode` y `list`, y
+  comparada contra `SCRIPT_VERSION_ESPERADA` en pedidos.html. **Subirla en los dos lados
+  cuando el .gs cambie**: es lo único que avisa si el usuario pegó el código pero NO creó
+  versión nueva en Implementar (guardar no publica — nos costó varias vueltas descubrirlo).
+- **Vendedor ROHO**: la OC es obligatoria, no puede repetirse entre pedidos de ROHO
+  (`ocRepetidaRoho`), y en el Excel la columna "VENDEDOR - CLIENTE" lleva **la OC** en vez
+  del nombre. Solo ROHO: Eduardo Añez también es "lite" pero no le aplica nada de esto.
+- **Panel 🚚 Entregado**: parte del día agrupado por camión, entregados y pendientes.
+  "Por cobrar" es el total del día con desglose (ya entregado / sin entregar); el aviso rojo
+  es solo para lo que **salió y volvió sin cobrar**, que es el problema real.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

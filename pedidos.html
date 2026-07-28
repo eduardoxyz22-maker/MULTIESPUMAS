@@ -217,6 +217,11 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .ent-cam{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-card)}
 .ent-cam-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#0f766e;color:#fff;padding:9px 13px;font-weight:800;font-size:.9rem}
+.turno-sw{display:inline-flex;gap:5px;vertical-align:middle}
+.turno-b{border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:var(--r-pill);padding:4px 12px;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .12s}
+.turno-b:hover{border-color:var(--teal-border);color:var(--teal-dk);background:var(--teal-lt)}
+.turno-b.on{background:var(--teal);border-color:var(--teal);color:#fff;cursor:default}
+.turno-b.on:hover{background:var(--teal);color:#fff}
 .ent-falta{background:#fff;border:1px solid var(--amber-border);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-card)}
 .ent-sub{border:1px solid var(--gray-md);border-radius:var(--r-md);margin-bottom:11px;overflow:hidden}
 .ent-sub.sin{border-color:var(--amber-border)}
@@ -1662,7 +1667,7 @@ function reprogramarPedido(id){
   var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
   persistPedido(p);
   toast('Reprogramado: '+fmtFecha(antes)+' → '+fmtFecha(nueva)+' ✓','ok');
-  showPedidoModal(id);
+  reabrirFicha(id);                       // vuelve a la ficha desde la que se abrió, no siempre a la del admin
 }
 
 /* ============================================================================
@@ -2839,7 +2844,7 @@ function showCargaModal(id){
     : '<span class="badge b-amber">⚠️ sin asignar</span>';
   var body=
     row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
-    row('Entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
+    row('Entrega', esc(fmtFecha(p.fecha))+' &nbsp; '+turnoBotonesHtml(p))+
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Vendedor', esc(p.vendedor))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
@@ -2882,6 +2887,39 @@ function showCargaModal(id){
   openModal(html);
 }
 function editarUbicacionCarga(id){ editarUbicacion(id, showCargaModal); }
+/* El jefe de almacén puede mover la entrega de turno sin salir de la ficha: pasa siempre
+   que el camión no llega a cargar todo en la mañana. Respeta los cupos y la regla del
+   sábado, igual que el formulario. */
+function turnoBotonesHtml(p){
+  var t=normTurno(p.turno);
+  return '<span class="turno-sw">'+['AM','PM'].map(function(x){
+    var lim=limTurno(p.fecha,x), usados=cuposUsadosTurno(p.fecha,x);
+    var tit=(t===x) ? ('Este pedido va en el turno '+x)
+      : (lim<=0 ? ('No hay turno '+x+' ese día')
+                : ('Pasar al turno '+x+' — '+Math.max(0,lim-usados)+' de '+lim+' cupos libres'));
+    return '<button class="turno-b'+(t===x?' on':'')+'" title="'+esc(tit)+'" onclick="cambiarTurno(\''+p.id+'\',\''+x+'\')">'+
+      (x==='AM'?'🌅 AM':'🌆 PM')+'</button>';
+  }).join('')+'</span>';
+}
+function cambiarTurno(id, turno){
+  var p=findById(id); if(!p) return;
+  turno=normTurno(turno);
+  if(normTurno(p.turno)===turno) return;              // ya está en ese turno
+  var lim=limTurno(p.fecha, turno);
+  if(lim<=0){
+    toast(diaSabado(p.fecha) ? 'Los sábados solo hay turno AM.' : 'Ese día no tiene turno '+turno+'.','err');
+    return;
+  }
+  var usados=cuposUsadosTurno(p.fecha, turno);        // el pedido está en el OTRO turno, no se cuenta acá
+  if(usados>=lim){
+    toast('El turno '+turno+' del '+fmtFecha(p.fecha)+' está lleno ('+lim+'/'+lim+'). Reprogramá a otro día.','err');
+    return;
+  }
+  p.turno=turno;
+  persistPedido(p);
+  reabrirFicha(id);
+  toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
+}
 /* Editar desde la lista de carga: hay que cerrar TAMBIÉN la lista, si no el formulario
    queda tapado por la pantalla de carga, que va por encima de todo. */
 function editarDesdeCarga(id){ closeModal(); closeCarga(); editPedido(id); }
