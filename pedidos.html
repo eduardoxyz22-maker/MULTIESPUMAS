@@ -144,12 +144,14 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .filters{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:20px}
 .filters .field{margin-bottom:0}
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
-@media(max-width:720px){.metrics{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}}
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.mc-val{font-size:1.7rem;font-weight:800;line-height:1.1;margin-top:6px;word-break:break-word}
-@media(max-width:560px){.mc{padding:13px 14px}.mc-val{font-size:1.25rem}}
+.mc-val{font-size:1.7rem;font-weight:800;line-height:1.1;margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* En el celular el monto puede pasar a dos líneas, pero NUNCA se parte un número
+   a la mitad ("Bs 1.750,0 / 0"): se corta entre palabras, como corresponde. */
+@media(max-width:560px){.mc{padding:13px 14px}.mc-val{font-size:clamp(1rem,3.8vw,1.25rem);white-space:normal;overflow:visible}}
 .mc-sub{font-size:.66rem;color:var(--muted);margin-top:3px}
 
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
@@ -667,7 +669,7 @@ th.sortable:hover{color:var(--teal-dk)}
       <div id="mis-ubic-aviso"></div>
       <div class="qchips" id="mis-chips"></div>
       <div class="metrics" id="mis-metrics"></div>
-      <div class="tw tw-tall"><table id="mis-tbl"></table></div>
+      <div id="mis-lista"></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
     </div>
   </div>
@@ -2402,7 +2404,7 @@ function renderMis(){
   var v=(mv.value||'').trim();
   var todos=MIS_TODOS && UNLOCKED;                 // modo administración: ve los pedidos de todas
   setVendedorMem(v);
-  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
+  var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-lista'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
@@ -2417,10 +2419,10 @@ function renderMis(){
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   renderMisChips(mine);
-  if(!mine.length){ tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
+  if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
   var lista=mine.filter(misTest(MIS_FILTER));
   if(!lista.length){
-    tbl.style.display='none'; empty.style.display='block';
+    tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
     empty.textContent = MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
       : MIS_FILTER==='manana' ? 'No tenés pedidos para entregar mañana ('+fmtFecha(tomorrowStr())+').'
       : MIS_FILTER==='pend' ? '✅ No te queda ningún pedido pendiente de entrega.'
@@ -2428,21 +2430,48 @@ function renderMis(){
       : 'Todavía no tenés pedidos cargados con ese nombre.';
     return;
   }
-  empty.style.display='none'; tbl.style.display='table';
-  var head='<thead><tr><th>Entrega</th><th>Turno</th>'+(todos?'<th>Vendedor</th>':'')+'<th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th>GPS</th></tr></thead>';
-  var body=lista.slice(0,120).map(function(p){
-    var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
-    // La vendedora tiene que ver claro si ya se entregó o no; el stock va como dato extra.
-    var est=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
-      (p.estado?('<br><span style="display:inline-block;margin-top:3px">'+estadoBadge(p.estado)+'</span>'):'');
-    var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':(p.entregado?'<span style="color:var(--gray)">—</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>');
-    return '<tr class="'+(p.entregado?'row-entregado':'')+'" onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td>'+(todos?('<td>'+esc(p.vendedor||'—')+'</td>'):'')+'<td><b>'+esc(p.cliente||'')+'</b></td>'+
-      '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
-      '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
-      '<td style="text-align:center">'+gps+'</td></tr>';
-  }).join('');
-  tbl.innerHTML=head+'<tbody>'+body+'</tbody>';
+  empty.style.display='none'; tbl.style.display='block';
+  tbl.innerHTML=lista.slice(0,120).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('');
+}
+/* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
+   en el celular, que es donde las vendedoras miran esto. */
+function misCardHtml(p, n, todos){
+  var prod=(p.productos||[]).map(function(x){
+    var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
+    if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
+    else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de IM</span>';
+    else if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción</span>';
+    return t;
+  }).join('<br>');
+  var falta=Number(p.saldo)||0, cob=cobrosVisibles(p);
+  var cobro = cob.length
+    ? ((falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">falta · </span>')
+                   : '<span class="badge b-green">PAGADO</span> ')+cobrosResumen(p)+excesoBadge(p))
+    : (p.pagado ? ('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>')
+      : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
+                    : '<span class="badge b-gray">Sin saldo</span>'));
+  return '<div class="cho-card'+(p.entregado?' hecho':'')+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
+    '<div class="cho-top">'+
+      '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
+      '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
+        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
+          (p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+
+          (p.oc?(' · OC '+esc(p.oc)):'')+'</div></div>'+
+      (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
+      (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
+    '</div>'+
+    '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
+    (p.estado?('<div class="cho-row"><span class="k">Stock</span> '+estadoBadge(p.estado)+'</div>'):'')+
+    (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
+    '<div class="cho-row"><span class="k">Cobro</span> '+cobro+'</div>'+
+    (p.chofer?('<div class="cho-row"><span class="k">Chofer</span> 🚚 '+esc(p.chofer)+(p.vehiculo?(' · '+esc(p.vehiculo)):'')+'</div>'):'')+
+    fotosHtml(p, false)+
+    '<div class="cho-links">'+
+      (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ver ubicación</a>')
+             :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
+      (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>'):'')+
+    '</div>'+
+  '</div>';
 }
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
 function editarUbicacion(id, reopen){
