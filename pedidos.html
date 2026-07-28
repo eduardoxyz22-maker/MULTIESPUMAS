@@ -2433,6 +2433,14 @@ function renderMis(){
   empty.style.display='none'; tbl.style.display='block';
   tbl.innerHTML=lista.slice(0,120).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('');
 }
+/* Quién lleva el pedido. Se muestra SIEMPRE (aunque no haya chofer): que no aparezca la fila
+   no significa "no tiene chofer", significa "no sé", y la vendedora necesita distinguirlo. */
+function choferTexto(p){
+  var c=String((p&&p.chofer)||'').trim();
+  if(!c) return '<span class="badge b-gray">Sin asignar todavía</span>';
+  var vh=vehiculoDe(p);
+  return '🚚 <b>'+esc(c)+'</b>'+(vh?(' <span style="color:var(--muted)">· '+esc(vh)+'</span>'):'');
+}
 /* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
    en el celular, que es donde las vendedoras miran esto. */
 function misCardHtml(p, n, todos){
@@ -2464,7 +2472,7 @@ function misCardHtml(p, n, todos){
     (p.estado?('<div class="cho-row"><span class="k">Stock</span> '+estadoBadge(p.estado)+'</div>'):'')+
     (p.direccion?('<div class="cho-row"><span class="k">Dirección</span><br>'+esc(p.direccion)+'</div>'):'')+
     '<div class="cho-row"><span class="k">Cobro</span> '+cobro+'</div>'+
-    (p.chofer?('<div class="cho-row"><span class="k">Chofer</span> 🚚 '+esc(p.chofer)+(p.vehiculo?(' · '+esc(p.vehiculo)):'')+'</div>'):'')+
+    '<div class="cho-row"><span class="k">Chofer</span> '+choferTexto(p)+'</div>'+
     fotosHtml(p, false)+
     '<div class="cho-links">'+
       (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ver ubicación</a>')
@@ -2534,9 +2542,7 @@ function showMisModal(id){
   var alertas='';
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
-  var choferVal = p.chofer
-    ? ('🚚 <b>'+esc(p.chofer)+'</b>'+(p.vehiculo?(' <span style="color:var(--muted)">· '+esc(p.vehiculo)+'</span>'):''))
-    : '<span class="badge b-gray">Sin asignar todavía</span>';
+  var choferVal = choferTexto(p);
   var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(normTurno(p.turno))):''))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
