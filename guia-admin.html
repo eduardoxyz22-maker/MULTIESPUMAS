@@ -81,6 +81,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#turno-carga">🌅🌆 Turno AM/PM</a>
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
+    <a href="#envio">📤 Cierre / Mañana</a>
     <a href="#reporte">📊 Reporte</a>
     <a href="#excel">⬇️ Excel</a>
     <a href="#colores">🎨 Colores</a>
@@ -289,6 +290,17 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <h3>🏭 Faltantes / producción &nbsp;·&nbsp; 📋 Parte del día</h3>
     <p><b>Faltantes / producción:</b> junta todo lo marcado ✗ y lo pedido a producción, <b>agrupado por producto y código</b> y sumando cantidades, con filtro Hoy / Mañana / Todos. Tiene <b>Copiar para WhatsApp</b> para mandárselo a producción sin armar la lista a mano.</p>
     <p><b>Parte del día:</b> entregados, cobrado, por cobrar, faltantes y sin vehículo de hoy; lo que sale mañana; y el detalle por chofer. <b>Se abre solo a las 18:00</b> (hora Bolivia) cuando entrás al panel, una vez por día.</p>
+  </div>
+
+  <div class="card" id="envio">
+    <h3>📤 Cierre del día &nbsp;·&nbsp; 📤 Mañana <span class="pill">reemplaza el Excel</span></h3>
+    <p>Dos botones en <b>Administración</b> que arman solos el mensaje que hoy se manda a mano al grupo. Se abre una ventana con <b>el texto tal cual va a salir</b>: lo podés <b>editar</b> ahí mismo, y después <b>📋 Copiar</b> o <b>📲 Abrir WhatsApp</b>.</p>
+    <ul>
+      <li><b>📤 Mañana</b> — la lista de lo que se carga mañana, <b>para que la revisen</b>. Arriba un bloque <b>REVISAR</b> con lo que falta resolver (productos ⛔ NO HAY, 📥 recoger de IM, 🏭 en producción, 🔎 sin verificar, 📍 sin ubicación, 🚛 sin camión). Abajo, los pedidos <b>agrupados por camión</b>.</li>
+      <li><b>📤 Cierre del día</b> — lo mismo pero de hoy: <b>cuántos se entregaron</b>, <b>cuánto se cobró</b> (desglosado por efectivo / QR / tarjeta) y <b>cuánto quedó por cobrar</b>, con el aviso de lo que <b>salió y volvió sin cobrar</b>. Cada pedido va con ✅ o ⏳.</li>
+      <li>Cada pedido sale con el <b>mismo formato de la planilla</b>: <b>N° del día</b>, <b>Vendedor - Cliente</b> (los de <b>ROHO</b> van con su <b>OC</b> en vez del nombre), producto × cantidad, celular, turno y dirección.</li>
+    </ul>
+    <div class="callout">Si el mensaje sale muy largo, la ventana te avisa: en ese caso usá <b>Copiar</b> y pegalo en el grupo — abrir WhatsApp por enlace puede cortar los mensajes largos.</div>
   </div>
 
   <div class="card" id="backup">

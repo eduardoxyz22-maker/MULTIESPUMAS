@@ -195,6 +195,18 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
     un pedido "atrasado" deja de estarlo solo con marcarlo entregado.
   - En el filtro "Atrasados" la lista se ordena **del más atrasado al menos**, al revés que el
     resto de las vistas (que van por fecha descendente).
+- **📤 Cierre del día / 📤 Mañana** (`envioTexto(modo)`, overlay `envio-overlay`): arman el
+  mensaje de WhatsApp que antes se mandaba a mano como Excel.
+  - Se respeta **el formato de esa planilla** a propósito: `N° del día`, `Vendedor - Cliente`
+    (y la **OC** en lugar del vendedor cuando es ROHO, igual que `exportExcel`), producto ×
+    cantidad, celular, turno, dirección. Si se cambia, el grupo deja de reconocer la lista.
+  - Se numera con **`dayNumMap()`**, no con un contador por camión: es el mismo número que va
+    en la columna "N° del día" de la planilla y en las listas impresas, así "revisá el 7"
+    significa lo mismo para todos.
+  - El texto se muestra en un **textarea editable** y es exactamente lo que se copia. No hay
+    un "preview" distinto del mensaje real, a propósito.
+  - `wa.me` corta los mensajes largos: arriba de 3500 caracteres la ventana avisa y empuja a
+    usar Copiar. **Copiar es el camino confiable**, WhatsApp por enlace es la comodidad.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
