@@ -217,6 +217,9 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-res{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
 .ent-cam{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);margin-bottom:14px;overflow:hidden;box-shadow:var(--sh-card)}
 .ent-cam-h{display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:#0f766e;color:#fff;padding:9px 13px;font-weight:800;font-size:.9rem}
+.todos-b{border:1px solid #ddd6fe;background:#fff;color:#7C3AED;font-weight:800}
+.todos-b:hover{background:#f5f3ff}
+.todos-b.on{background:#7C3AED;color:#fff;border-color:#7C3AED}
 .turno-sw{display:inline-flex;gap:5px;vertical-align:middle}
 .turno-b{border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:var(--r-pill);padding:4px 12px;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;transition:all .12s}
 .turno-b:hover{border-color:var(--teal-border);color:var(--teal-dk);background:var(--teal-lt)}
@@ -654,6 +657,9 @@ th.sortable:hover{color:var(--teal-dk)}
           <label class="lb">Tu nombre</label>
           <input type="text" id="mis-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="renderMis()">
         </div>
+        <div class="field" id="mis-todos-wrap" style="display:none">
+          <button class="btn btn-sm todos-b" id="mis-todos-btn" onclick="toggleMisTodos()">👑 Ver todos</button>
+        </div>
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshMis()">🔄 Actualizar</button>
         </div>
@@ -673,6 +679,9 @@ th.sortable:hover{color:var(--teal-dk)}
         <div class="field" style="flex:1;min-width:180px">
           <label class="lb">¿Quién sos?</label>
           <select id="cho-nombre" onchange="setChoferMem(this.value);renderChofer()"></select>
+        </div>
+        <div class="field" id="cho-todos-wrap" style="display:none">
+          <button class="btn btn-sm todos-b" id="cho-todos-btn" onclick="toggleChoTodos()">👑 Ver todos</button>
         </div>
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshChofer()">🔄 Actualizar</button>
@@ -1369,6 +1378,7 @@ function tryUnlock(){
   var stored=localStorage.getItem(LS_ADMIN)||DEFAULT_HASH;
   if(sha256(pass)===stored){
     UNLOCKED=true;
+    mostrarBotonesTodos();
     document.getElementById('admin-lock').style.display='none';
     document.getElementById('admin-content').style.display='block';
     document.getElementById('admin-pass').value='';
@@ -1884,6 +1894,27 @@ function avisoClienteText(id){
    Puede marcar entregado / no entregado y cobrar (con el método de pago).
    Se identifica eligiendo su nombre; queda recordado en ese teléfono.
    ========================================================================== */
+/* ============================================================================
+   👑 VER TODOS — solo para administración. Las vendedoras y los choferes siguen
+   viendo únicamente lo suyo; el botón aparece recién cuando se desbloquea el panel.
+   ========================================================================== */
+var MIS_TODOS=false, CHO_TODOS=false;
+function mostrarBotonesTodos(){
+  var a=document.getElementById('mis-todos-wrap'), b=document.getElementById('cho-todos-wrap');
+  if(a) a.style.display = UNLOCKED ? '' : 'none';
+  if(b) b.style.display = UNLOCKED ? '' : 'none';
+  if(!UNLOCKED){ MIS_TODOS=false; CHO_TODOS=false; }
+  pintarBotonTodos('mis-todos-btn', MIS_TODOS);
+  pintarBotonTodos('cho-todos-btn', CHO_TODOS);
+}
+function pintarBotonTodos(id, on){
+  var b=document.getElementById(id); if(!b) return;
+  b.classList.toggle('on', !!on);
+  b.textContent = on ? '👑 Viendo todos' : '👑 Ver todos';
+}
+function toggleMisTodos(){ MIS_TODOS=!MIS_TODOS; pintarBotonTodos('mis-todos-btn', MIS_TODOS); renderMis(); }
+function toggleChoTodos(){ CHO_TODOS=!CHO_TODOS; pintarBotonTodos('cho-todos-btn', CHO_TODOS); renderChofer(); }
+
 var LS_CHOFER='me_chofer_nombre';
 var CHO_FILTER='hoy';
 var CHO_DEFS=[
@@ -1916,16 +1947,18 @@ function renderChoferSiActivo(){ var vw=document.getElementById('view-chofer'); 
 function renderChofer(){
   var sel=document.getElementById('cho-nombre'); if(!sel) return;
   var c=(sel.value||'').trim();
+  var todos=CHO_TODOS && UNLOCKED;                 // modo administración: ve las entregas de todos
   var box=document.getElementById('cho-metrics'), cont=document.getElementById('cho-lista'),
       empty=document.getElementById('cho-empty'), chips=document.getElementById('cho-chips');
-  if(!c){ box.innerHTML=''; cont.innerHTML=''; chips.innerHTML=''; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus entregas.'; return; }
-  var mias=STATE.filter(function(p){ return String(p.chofer||'').trim().toLowerCase()===c.toLowerCase(); });
+  if(!c && !todos){ box.innerHTML=''; cont.innerHTML=''; chips.innerHTML=''; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus entregas.'; return; }
+  var mias=todos ? STATE.slice() : STATE.filter(function(p){ return String(p.chofer||'').trim().toLowerCase()===c.toLowerCase(); });
   chips.innerHTML=CHO_DEFS.map(function(d){
     var n=mias.filter(d.test).length;
     return '<button class="qchip'+(CHO_FILTER===d.k?' active':'')+'" onclick="setChoFiltro(\''+d.k+'\')">'+d.lbl+' <span class="n">'+n+'</span></button>';
   }).join('');
   var list=mias.filter(choTest(CHO_FILTER));
   list.sort(function(a,b){
+    if(todos){ var ca=String(a.chofer||'~').trim().toLowerCase(), cb=String(b.chofer||'~').trim().toLowerCase(); if(ca!==cb) return ca<cb?-1:1; }
     if(a.fecha!==b.fecha) return a.fecha<b.fecha?-1:1;
     var ta=normTurno(a.turno), tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1;
     return String(a.zona||'')<String(b.zona||'')?-1:1;
@@ -1933,13 +1966,14 @@ function renderChofer(){
   var ent=0, porCobrar=0, cobrado=0;
   list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=Number(p.cobradoBs)||0; else porCobrar+=Number(p.saldo)||0; });
   box.innerHTML=
-    mc('var(--teal)','Entregas',list.length,'asignadas a vos')+
+    mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
     mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar')+
     mc('var(--teal-dk)','Cobrado',fmtBs(cobrado),'ya cobrado');
   if(!list.length){
     cont.innerHTML=''; empty.style.display='block';
-    empty.textContent = CHO_FILTER==='hoy' ? 'No tenés entregas para hoy ('+fmtFecha(todayStr())+').'
+    empty.textContent = todos ? ('No hay entregas para ese filtro.')
+      : CHO_FILTER==='hoy' ? 'No tenés entregas para hoy ('+fmtFecha(todayStr())+').'
       : CHO_FILTER==='manana' ? 'No tenés entregas para mañana ('+fmtFecha(tomorrowStr())+').'
       : CHO_FILTER==='pend' ? '✅ ¡Listo! No te queda ninguna entrega pendiente.'
       : 'Todavía no tenés entregas asignadas.';
@@ -1959,6 +1993,7 @@ function renderChofer(){
         '<div class="cho-n" style="'+(p.entregado?'background:var(--gray)':'')+'">'+(i+1)+'</div>'+
         '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
           '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+'</div></div>'+
+        (todos?('<span class="badge b-gray">🚚 '+esc(p.chofer||'sin chofer')+'</span>'):'')+
         (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ Pendiente</span>')+
       '</div>'+
       '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
@@ -2365,18 +2400,19 @@ function choDeshacerCobro(id){
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=(mv.value||'').trim();
+  var todos=MIS_TODOS && UNLOCKED;                 // modo administración: ve los pedidos de todas
   setVendedorMem(v);
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-tbl'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
-  if(!v){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
-  var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
+  if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
+  var mine=todos ? STATE.slice() : STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
   mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
-  if(av) av.innerHTML = mine.length ? avisoMisHtml(mine) : '';
-  if(mine.length) autoAbrirAvisos(v, mine);
+  if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
+  if(mine.length && !todos) autoAbrirAvisos(v, mine);
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
   mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
-    mc('var(--teal)','Hoy',nHoy,'pedidos cargados')+
+    mc('var(--teal)','Hoy',nHoy, todos?'de todo el equipo':'pedidos cargados')+
     mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades')+
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
@@ -2393,7 +2429,7 @@ function renderMis(){
     return;
   }
   empty.style.display='none'; tbl.style.display='table';
-  var head='<thead><tr><th>Entrega</th><th>Turno</th><th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th>GPS</th></tr></thead>';
+  var head='<thead><tr><th>Entrega</th><th>Turno</th>'+(todos?'<th>Vendedor</th>':'')+'<th>Cliente</th><th>Productos</th><th>Zona</th><th>Pago</th><th class="num">Saldo</th><th>Estado</th><th>GPS</th></tr></thead>';
   var body=lista.slice(0,120).map(function(p){
     var pago=p.pagado?'<span class="badge b-green">PAGADO</span>':'<span class="badge b-red">DEBE</span>';
     // La vendedora tiene que ver claro si ya se entregó o no; el stock va como dato extra.
@@ -2401,7 +2437,7 @@ function renderMis(){
       (p.estado?('<br><span style="display:inline-block;margin-top:3px">'+estadoBadge(p.estado)+'</span>'):'');
     var gps=p.maps?'<span title="Tiene ubicación" style="font-size:1.15em">📍</span>':(p.entregado?'<span style="color:var(--gray)">—</span>':'<span title="Falta ubicación GPS" style="color:var(--amber);font-weight:800;white-space:nowrap">⚠️ falta</span>');
     return '<tr class="'+(p.entregado?'row-entregado':'')+'" onclick="showMisModal(\''+p.id+'\')" style="cursor:pointer">'+
-      '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td><td><b>'+esc(p.cliente||'')+'</b></td>'+
+      '<td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(normTurno(p.turno))+'</td>'+(todos?('<td>'+esc(p.vendedor||'—')+'</td>'):'')+'<td><b>'+esc(p.cliente||'')+'</b></td>'+
       '<td class="prod-cell">'+esc(prodText(p.productos))+'</td><td>'+esc(p.zona||'—')+'</td><td>'+pago+'</td>'+
       '<td class="num">'+(p.pagado?'—':fmtBs(p.saldo))+'</td><td style="white-space:nowrap">'+est+'</td>'+
       '<td style="text-align:center">'+gps+'</td></tr>';
@@ -3783,6 +3819,7 @@ function buildMapaKml(list, coords){
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   geoCacheLoad();
+  mostrarBotonesTodos();
   document.addEventListener('keydown', visorTeclas);
   initConnUI();
   initSeg('f-turno',renderCupoForm);
