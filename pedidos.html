@@ -2771,64 +2771,93 @@ function printParte(){ document.body.classList.add('printing-parte'); window.pri
 
 /* ============================================================================
    Envío por WhatsApp — cierre del día y lista de mañana
-   Reemplaza el Excel que se mandaba a mano al grupo. Se respeta el formato de
-   esa planilla: "Vendedor - Cliente" (y la OC en vez del vendedor cuando es
-   ROHO, igual que en la exportación), producto × cantidad, celular, turno y
-   dirección; agrupado por camión como la hoja de ruta.
+   Reemplaza el Excel que se mandaba a mano al grupo.
+
+   Cómo se agrupa, y por qué NO es lo mismo en los dos mensajes:
+     · MAÑANA se manda la noche anterior, cuando todavía no se asignan camiones.
+       Agrupar por camión ahí tira 14 de 15 pedidos a "sin asignar": un bloque
+       gigante que no organiza nada. Por eso va agrupado por TURNO (AM/PM), que
+       es la información que SÍ existe en ese momento; el camión, si ya lo tiene,
+       se muestra en la línea del pedido.
+     · CIERRE se manda cuando los camiones ya salieron, así que ahí sí agrupa
+       por camión.
+   El cliente va primero y en negrita (es lo que todos buscan) y el vendedor —o
+   la OC, en ROHO— atrás. Dentro de cada bloque los N° van SIEMPRE de menor a
+   mayor: si saltan, el mensaje se vuelve ilegible.
    ========================================================================== */
 var ENVIO_MODO='manana';
 var DIAS_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 function diaSemana(iso){ var d=dowDe(iso); return d>=0?DIAS_SEM[d]:''; }
 function envioFecha(modo){ return modo==='hoy'?todayStr():tomorrowStr(); }
+function envioCliente(p){ return String(p.cliente||'').trim()||'—'; }
 function envioQuien(p){
-  var q = esRoho(p.vendedor) ? cleanOC(p.oc) : String(p.vendedor||'').trim();
-  return [q, String(p.cliente||'').trim()].filter(Boolean).join(' - ') || '—';
+  return esRoho(p.vendedor) ? ('OC '+cleanOC(p.oc)) : String(p.vendedor||'').trim();
 }
 function envioProd(p){
   return (p.productos||[]).map(function(x){
-    var s=String(x.desc||'')+(x.medida?(' · '+x.medida):'')+' × '+(x.cant||0);
+    var s=String(x.desc||'')+(x.medida?(' '+x.medida):'')+' ×'+(x.cant||0);
     if(x.chk==='no')      s+='  ⛔ NO HAY';
     else if(esRecoger(x)) s+='  📥 RECOGER DE IM';
-    if(enProduccion(x))   s+='  🏭 EN PRODUCCIÓN';
+    if(enProduccion(x))   s+='  🏭 PRODUCCIÓN';
     return s;
   });
 }
-/* Las líneas de un pedido. En "hoy" interesa qué se entregó y qué se cobró;
-   en "mañana" interesa qué falta revisar antes de cargar el camión. */
+/* Las líneas de un pedido. Cuatro como piso: quién, qué, teléfono y dónde.
+   Todo lo demás solo aparece si hay algo que hacer con eso. */
 function envioPedido(p, n, modo){
-  var L=[], t=turnoDe(p);
-  var marca = modo==='hoy' ? (p.entregado?'✅ ':'⏳ ') : '';
-  L.push(n+' '+marca+'*'+envioQuien(p)+'*  ['+(t||'SIN TURNO')+']');
-  envioProd(p).forEach(function(s){ L.push('    🛏️ '+s); });
+  var L=[], marca = modo==='hoy' ? (p.entregado?'✅ ':'⏳ ') : '';
+  var quien=envioQuien(p);
+  L.push(marca+'*'+n+'. '+envioCliente(p)+'*'+(quien?('  ·  '+quien):''));
+  envioProd(p).forEach(function(s){ L.push('    '+s); });
   if(p.celular) L.push('    📞 '+p.celular);
   L.push('    📍 '+(String(p.direccion||'').trim()||'—')+(p.zona?('  ('+p.zona+')'):''));
   if(modo==='hoy'){
+    var veh=vehiculoDe(p), ch=String(p.chofer||'').trim();
     var cob=cobrosVisibles(p), falta=Number(p.saldo)||0;
     if(cob.length) L.push('    💰 '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')+(falta>0.01?('  · falta '+fmtBs(falta)):''));
     else if(falta>0.01) L.push('    💰 '+(p.entregado?'SIN COBRAR ':'A cobrar ')+fmtBs(falta));
-    else L.push('    💰 Pagado');
   }else{
-    var av=[];
-    if(!p.maps) av.push('sin ubicación GPS');
-    if(!p.verificado) av.push('sin verificar');
-    if(av.length) L.push('    ⚠️ '+av.join(' · '));
+    // El camión va acá porque en "mañana" el grupo es el turno, no el vehículo.
+    var v2=vehiculoDe(p), c2=String(p.chofer||'').trim();
+    if(v2||c2) L.push('    🚛 '+[v2,c2].filter(Boolean).join(' · '));
+    if(!p.maps) L.push('    ⚠️ FALTA UBICACIÓN');
     if((Number(p.saldo)||0)>0.01) L.push('    💰 Cobrar '+fmtBs(p.saldo));
   }
-  if(p.observaciones) L.push('    📝 '+p.observaciones);
+  if(p.observaciones) L.push('    📝 '+String(p.observaciones).replace(/\s*\n\s*/g,' '));
   return L;
+}
+/* Cuántas unidades de cada producto hay que subir al camión. Es lo que el
+   almacén necesita del mensaje y lo que antes había que contar a mano. */
+function envioParaCargar(list){
+  var m={}, orden=[];
+  (list||[]).forEach(function(p){
+    (p.productos||[]).forEach(function(x){
+      var k=(String(x.desc||'').trim()+(x.medida?(' '+String(x.medida).trim()):'')).trim()||'(sin detalle)';
+      if(m[k]==null){ m[k]=0; orden.push(k); }
+      m[k]+=Number(x.cant)||0;
+    });
+  });
+  orden.sort(function(a,b){ return (m[b]-m[a]) || a.localeCompare(b,'es'); });
+  return orden.map(function(k){ return {desc:k, cant:m[k]}; });
 }
 function envioDatos(modo){
   var f=envioFecha(modo);
   var list=STATE.filter(function(p){ return p.fecha===f; });
-  var g=agruparPorCamion(list);
-  // Dentro de cada camión: primero AM, después PM, y por zona — el orden en que se carga.
-  g.orden.forEach(function(k){
-    g.grupos[k].list.sort(function(a,b){
-      var ta=turnoDe(a)||'ZZ', tb=turnoDe(b)||'ZZ';
-      if(ta!==tb) return ta<tb?-1:1;
-      return String(a.zona||'').localeCompare(String(b.zona||''),'es');
+  var dn=dayNumMap();
+  var porNum=function(a,b){ return (dn[a.id]||9999)-(dn[b.id]||9999); };
+  var grupos={}, orden=[];
+  if(modo==='hoy'){
+    var g=agruparPorCamion(list);
+    grupos=g.grupos; orden=g.orden;
+    orden.forEach(function(k){ grupos[k].list.sort(porNum); });
+  }else{
+    // Por turno. 'Sin turno' al final, como el 'sin camión' en el cierre.
+    var defs=[{k:'AM', tit:'🌅 *TURNO AM*'},{k:'PM', tit:'🌆 *TURNO PM*'},{k:'', tit:'🕗 *SIN TURNO*'}];
+    defs.forEach(function(d){
+      var sub=list.filter(function(p){ return turnoDe(p)===d.k; }).sort(porNum);
+      if(sub.length){ grupos[d.tit]={list:sub}; orden.push(d.tit); }
     });
-  });
+  }
   var t={n:list.length, unid:0, am:0, pm:0, sinTurno:0, ent:0, cobrado:0, porMetodo:{},
          porCobrar:0, salioSinCobrar:0, noHay:0, recoger:0, produccion:0, sinGps:0, noVerif:0, sinCamion:0};
   list.forEach(function(p){
@@ -2848,48 +2877,56 @@ function envioDatos(modo){
       var m=Number(c.monto)||0; t.cobrado+=m; t.porMetodo[c.metodo]=(t.porMetodo[c.metodo]||0)+m;
     });
   });
-  return {fecha:f, list:list, grupos:g.grupos, orden:g.orden, tot:t};
+  return {fecha:f, list:list, grupos:grupos, orden:orden, dn:dn, tot:t};
 }
 function envioTexto(modo){
-  var d=envioDatos(modo), t=d.tot;
-  var cab=fmtFecha(d.fecha)+(diaSemana(d.fecha)?(' ('+diaSemana(d.fecha)+')'):'');
+  var d=envioDatos(modo), t=d.tot, dn=d.dn;
+  var dia=(diaSemana(d.fecha)?(diaSemana(d.fecha)+' '):'')+fmtFecha(d.fecha);
   var L=[];
   if(modo==='hoy'){
-    L.push('🚚 *CIERRE DEL DÍA* — '+cab+' · '+hhmmBolivia());
+    L.push('🚚 *CIERRE DEL DÍA* · '+dia+' · '+hhmmBolivia());
     if(!t.n){ L.push('', 'No hubo pedidos para hoy.'); return L.join('\n'); }
-    L.push('📦 '+t.ent+' de '+t.n+' entregados · '+t.unid+' unidades');
-    L.push('💰 Cobrado: *'+fmtBs(t.cobrado)+'*');
-    Object.keys(t.porMetodo).sort().forEach(function(m){ L.push('     · '+m+': '+fmtBs(t.porMetodo[m])); });
+    L.push('📦 Entregados: *'+t.ent+' de '+t.n+'*  ·  '+t.unid+' unidades');
+    L.push('💰 Cobrado: *'+fmtBs(t.cobrado)+'*'+(Object.keys(t.porMetodo).length
+      ? ('  ('+Object.keys(t.porMetodo).sort().map(function(m){ return m+' '+fmtBs(t.porMetodo[m]); }).join(' · ')+')') : ''));
     if(t.porCobrar>0.01){
-      L.push('⏳ Por cobrar: *'+fmtBs(t.porCobrar)+'*');
-      if(t.salioSinCobrar>0.01) L.push('     ⚠️ '+fmtBs(t.salioSinCobrar)+' ya entregado SIN COBRAR');
+      L.push('⏳ Quedó por cobrar: *'+fmtBs(t.porCobrar)+'*');
+      if(t.salioSinCobrar>0.01) L.push('⚠️ *'+fmtBs(t.salioSinCobrar)+' se entregó SIN COBRAR*');
     }
   }else{
-    L.push('📦 *PEDIDOS DE MAÑANA* — '+cab);
+    L.push('📦 *PEDIDOS DE MAÑANA* · '+dia);
     if(!t.n){ L.push('', 'Todavía no hay pedidos cargados para mañana.'); return L.join('\n'); }
-    L.push(t.n+' pedidos · '+t.unid+' unidades · '+t.am+' AM · '+t.pm+' PM'+(t.sinTurno?(' · '+t.sinTurno+' sin turno'):''));
+    L.push(t.n+' pedidos  ·  '+t.unid+' unidades  ·  🌅 '+t.am+' AM  ·  🌆 '+t.pm+' PM'+(t.sinTurno?('  ·  🕗 '+t.sinTurno+' sin turno'):''));
+    // Una sola línea de pendientes. Cuando algo sale en casi todos los pedidos
+    // deja de ser una alerta y pasa a ser ruido: por eso el conteo va acá arriba
+    // y NO repetido pedido por pedido.
     var rev=[];
-    if(t.noHay)     rev.push('⛔ '+t.noHay+' producto'+(t.noHay===1?'':'s')+' marcado'+(t.noHay===1?'':'s')+' NO HAY');
-    if(t.recoger)   rev.push('📥 '+t.recoger+' para recoger de IM');
+    if(t.noHay)     rev.push('⛔ '+t.noHay+' sin stock');
+    if(t.recoger)   rev.push('📥 '+t.recoger+' de IM');
     if(t.produccion)rev.push('🏭 '+t.produccion+' en producción');
-    if(t.noVerif)   rev.push('🔎 '+t.noVerif+' pedido'+(t.noVerif===1?'':'s')+' sin verificar');
-    if(t.sinGps)    rev.push('📍 '+t.sinGps+' sin ubicación GPS');
-    if(t.sinCamion) rev.push('🚛 '+t.sinCamion+' sin camión asignado');
-    if(rev.length){ L.push('', '*REVISAR:*'); rev.forEach(function(s){ L.push('  ' +s); }); }
-    else L.push('✅ Todo verificado, con ubicación y con camión.');
+    if(t.noVerif)   rev.push('🔎 '+t.noVerif+' sin verificar');
+    if(t.sinGps)    rev.push('📍 '+t.sinGps+' sin ubicación');
+    if(t.sinCamion) rev.push('🚛 '+t.sinCamion+' sin camión');
+    L.push(rev.length ? ('⚠️ *Falta:*  '+rev.join('  ·  ')) : '✅ Todo verificado, con ubicación y con camión.');
+    L.push('', '_Revisá tu pedido: cliente, producto, dirección y teléfono._');
   }
-  // Se numera con el N° del día: es el mismo número que va en la planilla y en las
-  // listas impresas, así "revisá el 7" quiere decir lo mismo para todos.
-  var dn=dayNumMap();
   d.orden.forEach(function(k){
     var g=d.grupos[k], un=0, ent=0;
     g.list.forEach(function(p){ (p.productos||[]).forEach(function(x){ un+=Number(x.cant)||0; }); if(p.entregado) ent++; });
-    var tit = (k===SIN_CAMION) ? '⚠️ *SIN CAMIÓN ASIGNADO*' : ('🚛 *'+k.toUpperCase()+'*');
+    var tit = (modo==='hoy') ? ((k===SIN_CAMION)?'⚠️ *SIN CAMIÓN ASIGNADO*':('🚛 *'+k.toUpperCase()+'*')) : k;
     var res = g.list.length+(g.list.length===1?' pedido':' pedidos')+' · '+un+(un===1?' unidad':' unidades')+
               (modo==='hoy'?(' · '+ent+(ent===1?' entregado':' entregados')):'');
-    L.push('', tit+'  ('+res+')');
-    g.list.forEach(function(p,i){ L.push.apply(L, envioPedido(p, dn[p.id]?('#'+dn[p.id]):((i+1)+')'), modo)); });
+    L.push('', '━━━━━━━━━━━━━━━', tit+'  —  '+res, '');
+    g.list.forEach(function(p,i){ L.push.apply(L, envioPedido(p, (dn[p.id]||(i+1)), modo)); L.push(''); });
+    if(L[L.length-1]==='') L.pop();
   });
+  if(modo!=='hoy'){
+    var car=envioParaCargar(d.list);
+    if(car.length){
+      L.push('', '━━━━━━━━━━━━━━━', '🛏️ *TOTAL A CARGAR*  —  '+t.unid+(t.unid===1?' unidad':' unidades'), '');
+      car.forEach(function(c){ L.push('    '+c.desc+'  ×'+c.cant); });
+    }
+  }
   return L.join('\n');
 }
 function abrirEnvio(modo){

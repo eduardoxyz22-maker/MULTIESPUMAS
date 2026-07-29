@@ -197,12 +197,23 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
     resto de las vistas (que van por fecha descendente).
 - **📤 Cierre del día / 📤 Mañana** (`envioTexto(modo)`, overlay `envio-overlay`): arman el
   mensaje de WhatsApp que antes se mandaba a mano como Excel.
-  - Se respeta **el formato de esa planilla** a propósito: `N° del día`, `Vendedor - Cliente`
-    (y la **OC** en lugar del vendedor cuando es ROHO, igual que `exportExcel`), producto ×
-    cantidad, celular, turno, dirección. Si se cambia, el grupo deja de reconocer la lista.
-  - Se numera con **`dayNumMap()`**, no con un contador por camión: es el mismo número que va
+  - **"Mañana" agrupa por TURNO, "Cierre" por CAMIÓN.** No es una inconsistencia: la lista de
+    mañana se manda la noche anterior, cuando todavía no se asignan camiones — en la prueba
+    real fueron **14 de 15 "sin asignar"**, o sea un bloque gigante que no organizaba nada.
+    El turno es la información que sí existe en ese momento. En el cierre los camiones ya
+    salieron, así que ahí el camión sí es el eje. **Antes de "unificar" los dos, releer esto.**
+  - **El cliente va primero y en negrita**, el vendedor (o la OC de ROHO) atrás. La planilla
+    tiene "Vendedor - Cliente", pero puesto así el nombre del cliente queda enterrado a mitad
+    de línea y el mensaje se vuelve ilegible en el celular.
+  - Se numera con **`dayNumMap()`**, no con un contador por bloque: es el mismo número que va
     en la columna "N° del día" de la planilla y en las listas impresas, así "revisá el 7"
-    significa lo mismo para todos.
+    significa lo mismo para todos. Dentro de cada bloque se ordena **por ese número, ascendente**
+    (antes iba por zona y los números saltaban: #2, #3, #9, #11, #6… ilegible).
+  - **Los avisos que aparecen en casi todos los pedidos van SOLO en el conteo de arriba**, no
+    repetidos pedido por pedido ("sin verificar" salía en 9 de 15 = ruido, no alerta). Por
+    pedido queda únicamente lo accionable: `⛔ NO HAY` pegado al producto y `⚠️ FALTA UBICACIÓN`.
+  - `envioParaCargar()` cierra el mensaje de mañana con las **unidades por producto**: es lo
+    que el almacén necesita y lo que antes se contaba a mano.
   - El texto se muestra en un **textarea editable** y es exactamente lo que se copia. No hay
     un "preview" distinto del mensaje real, a propósito.
   - `wa.me` corta los mensajes largos: arriba de 3500 caracteres la ventana avisa y empuja a
