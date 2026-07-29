@@ -710,7 +710,7 @@ th.sortable:hover{color:var(--teal-dk)}
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="envio-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a enviar. Podés editarlo antes de copiarlo.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
+<div id="envio-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
@@ -2786,6 +2786,10 @@ function printParte(){ document.body.classList.add('printing-parte'); window.pri
    mayor: si saltan, el mensaje se vuelve ilegible.
    ========================================================================== */
 var ENVIO_MODO='manana';
+/* 'todo' | 'AM' | 'PM'. Partir el mensaje en dos es la forma de que entre cómodo por
+   WhatsApp cuando el día trae muchos pedidos: en vez de un texto de 4.000 caracteres
+   que sale con "Leer más", van dos cortos y cada turno se revisa por separado. */
+var ENVIO_PARTE='todo';
 var DIAS_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 function diaSemana(iso){ var d=dowDe(iso); return d>=0?DIAS_SEM[d]:''; }
 function envioFecha(modo){ return modo==='hoy'?todayStr():tomorrowStr(); }
@@ -2826,6 +2830,11 @@ function envioPedido(p, n, modo){
   if(p.observaciones) L.push('    📝 '+String(p.observaciones).replace(/\s*\n\s*/g,' '));
   return L;
 }
+/* Título de bloque encerrado entre dos líneas. Con una sola raya arriba el corte
+   entre AM y PM se pierde al hacer scroll en el celular; encerrado no hay forma
+   de pasarlo de largo. La raya es corta a propósito: si es más larga que el ancho
+   del teléfono, WhatsApp la parte en dos y queda peor que sin nada. */
+function envioTitulo(txt){ var r='━━━━━━━━━━━━━━━'; return ['', r, txt, r, '']; }
 /* Cuántas unidades de cada producto hay que subir al camión. Es lo que el
    almacén necesita del mensaje y lo que antes había que contar a mano. */
 function envioParaCargar(list){
@@ -2843,6 +2852,9 @@ function envioParaCargar(list){
 function envioDatos(modo){
   var f=envioFecha(modo);
   var list=STATE.filter(function(p){ return p.fecha===f; });
+  // El filtro por turno solo aplica a "mañana": el cierre va entero o no va.
+  var parte=(modo==='manana' && (ENVIO_PARTE==='AM'||ENVIO_PARTE==='PM')) ? ENVIO_PARTE : '';
+  if(parte) list=list.filter(function(p){ return turnoDe(p)===parte; });
   var dn=dayNumMap();
   var porNum=function(a,b){ return (dn[a.id]||9999)-(dn[b.id]||9999); };
   var grupos={}, orden=[];
@@ -2877,7 +2889,7 @@ function envioDatos(modo){
       var m=Number(c.monto)||0; t.cobrado+=m; t.porMetodo[c.metodo]=(t.porMetodo[c.metodo]||0)+m;
     });
   });
-  return {fecha:f, list:list, grupos:grupos, orden:orden, dn:dn, tot:t};
+  return {fecha:f, list:list, grupos:grupos, orden:orden, dn:dn, parte:parte, tot:t};
 }
 function envioTexto(modo){
   var d=envioDatos(modo), t=d.tot, dn=d.dn;
@@ -2894,9 +2906,11 @@ function envioTexto(modo){
       if(t.salioSinCobrar>0.01) L.push('⚠️ *'+fmtBs(t.salioSinCobrar)+' se entregó SIN COBRAR*');
     }
   }else{
-    L.push('📦 *PEDIDOS DE MAÑANA* · '+dia);
-    if(!t.n){ L.push('', 'Todavía no hay pedidos cargados para mañana.'); return L.join('\n'); }
-    L.push(t.n+' pedidos  ·  '+t.unid+' unidades  ·  🌅 '+t.am+' AM  ·  🌆 '+t.pm+' PM'+(t.sinTurno?('  ·  🕗 '+t.sinTurno+' sin turno'):''));
+    L.push('📦 *PEDIDOS DE MAÑANA*'+(d.parte?(' · '+(d.parte==='AM'?'🌅 SOLO TURNO AM':'🌆 SOLO TURNO PM')):'')+' · '+dia);
+    if(!t.n){ L.push('', d.parte?('No hay pedidos del turno '+d.parte+' para mañana.'):'Todavía no hay pedidos cargados para mañana.'); return L.join('\n'); }
+    L.push(d.parte
+      ? (t.n+' pedidos  ·  '+t.unid+' unidades')
+      : (t.n+' pedidos  ·  '+t.unid+' unidades  ·  🌅 '+t.am+' AM  ·  🌆 '+t.pm+' PM'+(t.sinTurno?('  ·  🕗 '+t.sinTurno+' sin turno'):'')));
     // Una sola línea de pendientes. Cuando algo sale en casi todos los pedidos
     // deja de ser una alerta y pasa a ser ruido: por eso el conteo va acá arriba
     // y NO repetido pedido por pedido.
@@ -2916,42 +2930,52 @@ function envioTexto(modo){
     var tit = (modo==='hoy') ? ((k===SIN_CAMION)?'⚠️ *SIN CAMIÓN ASIGNADO*':('🚛 *'+k.toUpperCase()+'*')) : k;
     var res = g.list.length+(g.list.length===1?' pedido':' pedidos')+' · '+un+(un===1?' unidad':' unidades')+
               (modo==='hoy'?(' · '+ent+(ent===1?' entregado':' entregados')):'');
-    L.push('', '━━━━━━━━━━━━━━━', tit+'  —  '+res, '');
+    // Si el mensaje YA es de un solo turno, el encabezado lo dice: repetirlo acá sobra.
+    if(d.parte) L.push('');
+    else L.push.apply(L, envioTitulo(tit+'  ·  '+res));
     g.list.forEach(function(p,i){ L.push.apply(L, envioPedido(p, (dn[p.id]||(i+1)), modo)); L.push(''); });
     if(L[L.length-1]==='') L.pop();
   });
   if(modo!=='hoy'){
     var car=envioParaCargar(d.list);
     if(car.length){
-      L.push('', '━━━━━━━━━━━━━━━', '🛏️ *TOTAL A CARGAR*  —  '+t.unid+(t.unid===1?' unidad':' unidades'), '');
+      L.push.apply(L, envioTitulo('🛏️ *TOTAL A CARGAR*  ·  '+t.unid+(t.unid===1?' unidad':' unidades')));
       car.forEach(function(c){ L.push('    '+c.desc+'  ×'+c.cant); });
     }
   }
   return L.join('\n');
 }
 function abrirEnvio(modo){
-  ENVIO_MODO=modo;
+  ENVIO_MODO=modo; ENVIO_PARTE='todo';
   document.getElementById('envio-overlay').style.display='flex';
   renderEnvio();
 }
 function closeEnvio(){ var ov=document.getElementById('envio-overlay'); if(ov) ov.style.display='none'; }
-function setEnvioModo(m){
-  ENVIO_MODO=m;
-  ['hoy','manana'].forEach(function(x){ var b=document.getElementById('envio-modo-'+x); if(b){ var on=(x===m); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#128C7E':'#fff'; } });
-  renderEnvio();
+function setEnvioModo(m){ ENVIO_MODO=m; ENVIO_PARTE='todo'; renderEnvio(); }
+function setEnvioParte(p){ ENVIO_PARTE=p; renderEnvio(); }
+function pintarEnvioBotones(){
+  ['hoy','manana'].forEach(function(x){ var b=document.getElementById('envio-modo-'+x); if(b){ var on=(x===ENVIO_MODO); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#128C7E':'#fff'; } });
+  // El corte AM/PM no tiene sentido en el cierre: ahí el día ya pasó y va entero.
+  var box=document.getElementById('envio-partes'); if(box) box.style.display=(ENVIO_MODO==='manana')?'flex':'none';
+  ['todo','AM','PM'].forEach(function(x){ var b=document.getElementById('envio-parte-'+x); if(b){ var on=(x===ENVIO_PARTE); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#128C7E':'#fff'; } });
 }
 function renderEnvio(){
   var m=ENVIO_MODO, txt=envioTexto(m), d=envioDatos(m);
-  ['hoy','manana'].forEach(function(x){ var b=document.getElementById('envio-modo-'+x); if(b){ var on=(x===m); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#128C7E':'#fff'; } });
+  pintarEnvioBotones();
   document.getElementById('envio-tit').textContent = m==='hoy' ? '📤 Cierre del día' : '📤 Pedidos de mañana';
   // El largo importa: WhatsApp por enlace se corta con mensajes muy largos, y copiar nunca falla.
   var largo=txt.length;
   document.getElementById('envio-info').textContent =
-    fmtFecha(d.fecha)+' · '+d.list.length+' pedidos · '+d.orden.length+(d.orden.length===1?' camión':' camiones')+' · '+largo+' caracteres';
+    fmtFecha(d.fecha)+' · '+d.list.length+' pedidos · '+largo+' caracteres';
   document.getElementById('envio-texto').value=txt;
   var av=document.getElementById('envio-aviso');
-  av.style.display = largo>3500 ? 'block' : 'none';
-  av.textContent = largo>3500 ? '⚠️ El mensaje es largo. Si al abrir WhatsApp aparece cortado, usá "Copiar" y pegalo en el grupo.' : '';
+  var largoDemas = largo>3500;
+  av.style.display = largoDemas ? 'block' : 'none';
+  av.textContent = largoDemas
+    ? (m==='manana'
+        ? '⚠️ El mensaje es largo: por WhatsApp va a salir con "Leer más". Mandalo en dos, con 🌅 Solo AM y 🌆 Solo PM.'
+        : '⚠️ El mensaje es largo. Si al abrir WhatsApp aparece cortado, usá "Copiar" y pegalo en el grupo.')
+    : '';
 }
 function copiarEnvio(){ copyText(document.getElementById('envio-texto').value); }
 function enviarEnvioWA(){ window.open(whatsappUrl(document.getElementById('envio-texto').value),'_blank'); }

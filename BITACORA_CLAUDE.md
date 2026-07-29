@@ -214,6 +214,18 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
     pedido queda únicamente lo accionable: `⛔ NO HAY` pegado al producto y `⚠️ FALTA UBICACIÓN`.
   - `envioParaCargar()` cierra el mensaje de mañana con las **unidades por producto**: es lo
     que el almacén necesita y lo que antes se contaba a mano.
+  - **`ENVIO_PARTE` ('todo' | 'AM' | 'PM')** corta el mensaje de mañana en dos. Con 15 pedidos
+    el texto entero da ~4.400 caracteres y WhatsApp lo muestra con "Leer más"; partido quedan
+    dos de ~2.400 que entran completos. Solo aplica a "mañana" (en el cierre el día ya pasó y
+    va entero) y se resetea a 'todo' al cambiar de modo. Cuando está filtrado, el encabezado,
+    el conteo de "Falta" y el TOTAL A CARGAR son **los del turno**, no los del día, y **no se
+    repite el título del bloque** porque ya lo dice el encabezado.
+  - `envioTitulo()` encierra el título entre **dos** rayas (no una arriba). Con una sola, al
+    scrollear en el celular el corte AM/PM se pasaba de largo. La raya es corta a propósito:
+    más larga que el ancho del teléfono, WhatsApp la parte en dos y queda peor que sin nada.
+  - **Se descartó el PDF** (decisión del usuario, 2026-07-29): el texto se lee en el chat sin
+    descargar nada, el buscador de WhatsApp lo encuentra y los teléfonos son tocables. Un PDF
+    pierde las tres cosas. **No reintroducirlo sin que lo pidan.**
   - El texto se muestra en un **textarea editable** y es exactamente lo que se copia. No hay
     un "preview" distinto del mensaje real, a propósito.
   - `wa.me` corta los mensajes largos: arriba de 3500 caracteres la ventana avisa y empuja a
