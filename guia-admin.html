@@ -278,12 +278,17 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
 
   <div class="card" id="revision">
     <h3>🔎 Revisión de stock por producto</h3>
-    <p>Al abrir un pedido, cada producto tiene sus botones: <b>✔ hay</b>, <b>✗ no hay</b>, <b>📥 recoger IM</b> (existe pero está en el otro almacén) y, aparte, <b>🏭 en producción</b>, que <b>se combina</b> con los otros (podés decir “no hay <i>pero</i> ya se pidió a producción”).</p>
+    <p>Al abrir un pedido, cada producto tiene sus botones: <b>✔ hay</b>, <b>✗ no hay</b>, <b>📥 recoger IM</b> (existe pero está en el otro almacén) y, aparte, <b>🏭 MORENO</b> y <b>🏭 MULTI</b>, que marcan <b>a qué fábrica se pidió</b>. Se <b>combinan</b> con los otros: podés decir “no hay <i>pero</i> ya se pidió a Moreno”.</p>
     <ul>
       <li>Si marcás <b>todos ✔</b>, el pedido queda <b>✅ Verificado</b> solo.</li>
       <li>Si hay algún <b>✗</b>, la fila se pone <b>roja</b> y la vendedora recibe el aviso para llamar al cliente.</li>
       <li>Lo de <b>recoger IM</b> no molesta a la vendedora: es tarea de logística.</li>
+      <li><b>🏭 MORENO / 🏭 MULTI:</b> tocás el de la fábrica a la que se pidió y queda marcado. Tocás <b>el otro</b> y se cambia de fábrica; tocás <b>el mismo</b> y se desmarca. <b>Ojo:</b> esto es que se pidió <b>fabricar</b> — el <b>📥 IM</b> es otra cosa, ahí el producto <b>ya existe</b> y solo hay que ir a buscarlo.</li>
+      <li>La fábrica se arrastra a todos lados: la <b>lista de carga</b>, la ficha de la vendedora, el <b>Excel</b> y el mensaje de WhatsApp dicen <b>🏭 ... · MORENO</b> o <b>· MULTI</b>.</li>
     </ul>
+    <div class="callout"><b>Columna “Estado”</b> — ahora va <b>pegada a Productos</b> en la tabla (antes había que scrollear hasta el final) y <b>se deduce de los tildes</b>, no de lo que se marcó a mano:
+      <br>🟢 <b>En stock</b> (todo ✔) &nbsp;·&nbsp; 🔴 <b>No hay</b> (algo ✗ que <b>no</b> se pidió a fábrica) &nbsp;·&nbsp; 🏭 <b>En producción · MORENO</b> (o MULTI, o las dos) &nbsp;·&nbsp; ⬜ <b>Sin revisar (1 de 2)</b> &nbsp;·&nbsp; 📥 <b>Recoger de IM</b>.
+      <br>Si además marcaste un estado a mano en la ficha y dice algo distinto, aparece atrás en gris para que no se contradigan en silencio.</div>
   </div>
 
   <div class="card" id="robots">

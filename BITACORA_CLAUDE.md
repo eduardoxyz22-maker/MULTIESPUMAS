@@ -231,6 +231,31 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   - `wa.me` corta los mensajes largos: arriba de 3500 caracteres la ventana avisa y empuja a
     usar Copiar. **Copiar es el camino confiable**, WhatsApp por enlace es la comodidad.
 
+## 4g. Fábrica de producción y estado deducido (2026-07-29)
+
+- **El 🏭 se partió en dos botones por producto: `🏭 MORENO` y `🏭 MULTI`** — a qué fábrica se
+  pidió fabricar. `setProdProduccion(id, idx, lugar)`; tocar el mismo desmarca, tocar el otro
+  cambia de fábrica. `PROD_LUGARES` tiene los dos valores (`'Moreno'`, `'Multiespumas'`).
+- **⚠️ NO confundir con `📥 IM`.** El botón de recoger IM quedó **intacto** y es otra cosa: ahí
+  el stock **ya existe** en el almacén de Moreno y hay que ir a buscarlo. Lo nuevo es que se
+  pidió **fabricar**. Dos conceptos, dos marcas; el usuario fue explícito en esto.
+- **El lugar vive en el producto (`x.prodEn`), no en el pedido.** Los productos viajan como
+  JSON en `_productos_json`, así que un campo nuevo se guarda **sin tocar el Apps Script**
+  (nada de columna nueva ni redeploy). Y es lo correcto: el lugar es del producto que se
+  fabrica, no del pedido. **Si algún día se quiere a nivel pedido, hace falta columna nueva.**
+- **`estadoStock(p)` — el estado se DEDUCE de los tildes**, y esa es la columna "Estado" que
+  ahora va **pegada a Productos** en la tabla (antes al final, había que scrollear).
+  Prioridad, de más urgente a menos: `🔴 No hay` (algo ✗ que **no** se pidió a fábrica) →
+  `🏭 En producción · MORENO/MULTI` → `⬜ Sin revisar (n de m)` → `📥 Recoger de IM` →
+  `🟢 En stock`. El "no hay sin pedir" va primero a propósito: es lo único que nadie resolvió.
+- **`p.estado` (el marcado a mano en la ficha) NO se tocó** — sigue guardándose en su columna,
+  alimenta los colores de fila (`rowKind`) y el flujo de reprogramar. En la tabla y en la ficha
+  se muestra **atrás y en gris solo si dice algo distinto** al deducido, para que no se
+  contradigan en silencio. Antes la ficha podía decir "Estado: Sin marcar" con los productos
+  marcados en producción.
+- Si un producto tiene `enProd` pero no `prodEn` (datos viejos de la planilla), el estado dice
+  **"En producción · sin marcar dónde"**. No se inventa una fábrica.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
