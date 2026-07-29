@@ -284,7 +284,10 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li>Si hay algún <b>✗</b>, la fila se pone <b>roja</b> y la vendedora recibe el aviso para llamar al cliente.</li>
       <li>Lo de <b>recoger IM</b> no molesta a la vendedora: es tarea de logística.</li>
       <li><b>🏭 MORENO / 🏭 MULTI:</b> tocás el de la fábrica a la que se pidió y queda marcado. Tocás <b>el otro</b> y se cambia de fábrica; tocás <b>el mismo</b> y se desmarca. <b>Ojo:</b> esto es que se pidió <b>fabricar</b> — el <b>📥 IM</b> es otra cosa, ahí el producto <b>ya existe</b> y solo hay que ir a buscarlo.</li>
-      <li>La fábrica se arrastra a todos lados: la <b>lista de carga</b>, la ficha de la vendedora, el <b>Excel</b> y el mensaje de WhatsApp dicen <b>🏭 ... · MORENO</b> o <b>· MULTI</b>.</li>
+      <li>Al elegir la fábrica, el <b>“🟡 En producción” de abajo se marca solo</b>: no hay que tocarlo a mano. Si le quitás la fábrica y el producto sigue en ✗, vuelve a <b>“No hay”</b>.</li>
+      <li><b>La fila igual queda roja</b> mientras haya un ✗, aunque ya se haya pedido a fábrica. El producto sigue sin estar, y un faltante no puede pasar desapercibido.</li>
+      <li>Si ves un botón <b>🏭 ¿?</b> resaltado, es un pedido marcado con la versión anterior (que no preguntaba la fábrica). Elegí <b>MORENO</b> o <b>MULTI</b>, o tocá el <b>¿?</b> para desmarcarlo.</li>
+      <li>La fábrica se arrastra a todos lados: la <b>lista de carga</b>, la ficha de la vendedora, el <b>Excel</b>, <b>Faltantes / producción</b> y el mensaje de WhatsApp dicen <b>🏭 ... · MORENO</b> o <b>· MULTI</b>.</li>
     </ul>
     <div class="callout"><b>Columna “Estado”</b> — ahora va <b>pegada a Productos</b> en la tabla (antes había que scrollear hasta el final) y <b>se deduce de los tildes</b>, no de lo que se marcó a mano:
       <br>🟢 <b>En stock</b> (todo ✔) &nbsp;·&nbsp; 🔴 <b>No hay</b> (algo ✗ que <b>no</b> se pidió a fábrica) &nbsp;·&nbsp; 🏭 <b>En producción · MORENO</b> (o MULTI, o las dos) &nbsp;·&nbsp; ⬜ <b>Sin revisar (1 de 2)</b> &nbsp;·&nbsp; 📥 <b>Recoger de IM</b>.
@@ -293,7 +296,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
 
   <div class="card" id="robots">
     <h3>🏭 Faltantes / producción &nbsp;·&nbsp; 📋 Parte del día</h3>
-    <p><b>Faltantes / producción:</b> junta todo lo marcado ✗ y lo pedido a producción, <b>agrupado por producto y código</b> y sumando cantidades, con filtro Hoy / Mañana / Todos. Tiene <b>Copiar para WhatsApp</b> para mandárselo a producción sin armar la lista a mano.</p>
+    <p><b>Faltantes / producción:</b> junta todo lo marcado ✗ y lo pedido a fábrica, <b>agrupado por producto y código</b> y sumando cantidades, con filtro Hoy / Mañana / Todos. Dice <b>en qué fábrica</b> está cada cosa: el resumen desglosa <b>(MORENO 6 · MULTI 4)</b>, cada producto muestra <b>🏭 6 en producción · MORENO 4 + MULTI 2</b> si está repartido, y cada cliente dice a cuál fue lo suyo. El <b>Copiar para WhatsApp</b> arma una <b>sección por fábrica</b>, así le mandás a cada una solo lo suyo.</p>
     <p><b>Parte del día:</b> entregados, cobrado, por cobrar, faltantes y sin vehículo de hoy; lo que sale mañana; y el detalle por chofer. <b>Se abre solo a las 18:00</b> (hora Bolivia) cuando entrás al panel, una vez por día.</p>
   </div>
 

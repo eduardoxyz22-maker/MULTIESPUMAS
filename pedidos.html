@@ -2641,19 +2641,33 @@ function faltantesData(){
     if(FALT_DIA==='manana') return p.fecha===tomorrowStr();
     return true;
   });
-  var g={};  // producto -> {cant, prod, pedidos:[]}
+  var g={}, totFab={};  // producto -> {cant, prod, fab:{fábrica:unidades}, pedidos:[]}
   list.forEach(function(p){
     (p.productos||[]).forEach(function(x){
       if(x.chk!=='no' && !enProduccion(x)) return;
       var k=cargaProdKey(x)+(x.codigo?(' |'+x.codigo):'');
-      if(!g[k]) g[k]={nom:cargaProdKey(x), cod:x.codigo||'', cant:0, prod:0, pedidos:[]};
+      if(!g[k]) g[k]={nom:cargaProdKey(x), cod:x.codigo||'', cant:0, prod:0, fab:{}, pedidos:[]};
       var c=Number(x.cant)||0;
       if(x.chk==='no') g[k].cant+=c;
-      if(enProduccion(x)) g[k].prod+=c;
-      g[k].pedidos.push({cli:p.cliente||'', fecha:p.fecha, cant:c, enProd:enProduccion(x), falta:(x.chk==='no')});
+      var f='';
+      if(enProduccion(x)){
+        g[k].prod+=c;
+        f=prodDondeSePide(x);            // '' cuando nadie marcó la fábrica
+        g[k].fab[f]=(g[k].fab[f]||0)+c;
+        totFab[f]=(totFab[f]||0)+c;
+      }
+      g[k].pedidos.push({cli:p.cliente||'', fecha:p.fecha, cant:c, enProd:enProduccion(x), fab:f, falta:(x.chk==='no')});
     });
   });
-  return { grupos:Object.keys(g).sort().map(function(k){return g[k];}), nPedidos:list.length };
+  return { grupos:Object.keys(g).sort().map(function(k){return g[k];}), totFab:totFab, nPedidos:list.length };
+}
+/* Nombre de la fábrica. '' = está en producción pero nadie marcó dónde: se dice, no se inventa. */
+function faltFabCorto(f){ return f ? prodLugarCorto(f) : 'SIN MARCAR DÓNDE'; }
+/* " · MORENO"  ·  " · MORENO 2 + MULTI 2" — el desglose por fábrica de un producto. */
+function faltFabTxt(fab){
+  var ks=Object.keys(fab||{}); if(!ks.length) return '';
+  if(ks.length===1) return ' · '+faltFabCorto(ks[0]);
+  return ' · '+ks.map(function(k){ return faltFabCorto(k)+' '+fab[k]; }).join(' + ');
 }
 function renderFaltantes(){
   var d=faltantesData(), G=d.grupos;
@@ -2666,14 +2680,17 @@ function renderFaltantes(){
   }else{
     html='<div style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
       '<div style="font-size:.95rem;font-weight:800;color:#b45309;margin-bottom:10px">Resumen — '+esc(faltDiaLbl())+'</div>'+
-      '<div style="font-size:.9rem">⛔ Sin stock: <b style="color:#c0392b">'+totFalta+'</b> unidad'+(totFalta===1?'':'es')+' &nbsp;·&nbsp; 🏭 Ya pedido a producción: <b style="color:#a67c00">'+totProd+'</b></div></div>';
+      '<div style="font-size:.9rem">⛔ Sin stock: <b style="color:#c0392b">'+totFalta+'</b> unidad'+(totFalta===1?'':'es')+
+        ' &nbsp;·&nbsp; 🏭 Ya pedido a fábrica: <b style="color:#a67c00">'+totProd+'</b>'+
+        (Object.keys(d.totFab).length?('<span style="color:#a67c00;font-weight:700"> ('+Object.keys(d.totFab).map(function(f){ return esc(faltFabCorto(f))+' '+d.totFab[f]; }).join(' · ')+')</span>'):'')+
+      '</div></div>';
     html+=G.map(function(o){
       return '<div style="background:#fff;border-radius:10px;padding:12px 16px;margin-bottom:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(o.cant&&!o.prod?';border-left:4px solid #c0392b':(o.prod?';border-left:4px solid #f5c400':''))+'">'+
         '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+
           '<b style="font-size:1rem">'+esc(o.nom)+'</b>'+(o.cod?('<span style="color:#888;font-size:.82rem">cód '+esc(o.cod)+'</span>'):'')+
-          '<span style="margin-left:auto;font-weight:800">'+(o.cant?('<span style="color:#c0392b">⛔ faltan '+o.cant+'</span>'):'')+(o.cant&&o.prod?' &nbsp;·&nbsp; ':'')+(o.prod?('<span style="color:#a67c00">🏭 '+o.prod+' en producción</span>'):'')+'</span>'+
+          '<span style="margin-left:auto;font-weight:800">'+(o.cant?('<span style="color:#c0392b">⛔ faltan '+o.cant+'</span>'):'')+(o.cant&&o.prod?' &nbsp;·&nbsp; ':'')+(o.prod?('<span style="color:#a67c00">🏭 '+o.prod+' en producción'+esc(faltFabTxt(o.fab))+'</span>'):'')+'</span>'+
         '</div>'+
-        '<div style="margin-top:6px;font-size:.82rem;color:#666">'+o.pedidos.map(function(q){ return esc(q.cli)+' ('+esc(fmtFechaCorta(q.fecha))+') × '+q.cant+(q.enProd?' 🏭':''); }).join(' &nbsp;·&nbsp; ')+'</div></div>';
+        '<div style="margin-top:6px;font-size:.82rem;color:#666">'+o.pedidos.map(function(q){ return esc(q.cli)+' ('+esc(fmtFechaCorta(q.fecha))+') × '+q.cant+(q.enProd?(' <span style="color:#a67c00;font-weight:700">🏭 '+esc(faltFabCorto(q.fab))+'</span>'):''); }).join(' &nbsp;·&nbsp; ')+'</div></div>';
     }).join('');
   }
   document.getElementById('faltantes-body').innerHTML=html;
@@ -2682,9 +2699,15 @@ function faltantesText(){
   var d=faltantesData(), G=d.grupos;
   if(!G.length) return '🏭 *FALTANTES* — '+faltDiaLbl()+'\nSin faltantes marcados. ✅';
   var L=['🏭 *FALTANTES / PRODUCCIÓN* — '+faltDiaLbl(),''];
-  var falt=G.filter(function(o){return o.cant;}), pro=G.filter(function(o){return o.prod;});
+  var falt=G.filter(function(o){return o.cant;});
   if(falt.length){ L.push('⛔ *Sin stock (hay que conseguir/fabricar):*'); falt.forEach(function(o){ L.push('• '+o.cant+'× '+o.nom+(o.cod?(' (cód '+o.cod+')'):'')); }); L.push(''); }
-  if(pro.length){ L.push('🏭 *Ya pedido a producción:*'); pro.forEach(function(o){ L.push('• '+o.prod+'× '+o.nom+(o.cod?(' (cód '+o.cod+')'):'')); }); }
+  // Lo pedido va SEPARADO POR FÁBRICA: así se le manda a cada una solo lo suyo.
+  Object.keys(d.totFab).sort().forEach(function(f){
+    L.push('🏭 *Ya pedido a '+(f?String(f).toUpperCase():'FÁBRICA — SIN MARCAR DÓNDE')+':*');
+    G.forEach(function(o){ if(o.fab[f]) L.push('• '+o.fab[f]+'× '+o.nom+(o.cod?(' (cód '+o.cod+')'):'')); });
+    L.push('');
+  });
+  while(L.length && L[L.length-1]==='') L.pop();
   return L.join('\n');
 }
 function copiarFaltantes(){ copyText(faltantesText()); }
@@ -3394,6 +3417,7 @@ function setProdProduccion(id, idx, lugar){
   x.enProd = !apagar;
   x.prodEn = apagar ? '' : lugar;
   if(x.chk==='prod') x.chk = apagar ? '' : 'no';   // migrar el valor viejo a la marca nueva
+  syncVerificado(p);   // el "Estado de stock" de abajo se marca solo: ya se pidió a fábrica
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   reabrirFicha(id);
@@ -3446,11 +3470,19 @@ function syncVerificado(p){
   }
   if(todosOk) p.verificado=true;
   else if(algunoNo||algunoIM||algunoSin) p.verificado=false;     // hasta que se recoja, no está listo para cargar
-  // Estado de stock del pedido. Con UN solo producto en ✗ ya falta stock, aunque el resto
-  // no esté revisado todavía: se marca al toque para que la fila salga en rojo.
-  if(algunoNo) p.estado='No hay';
+  // Estado de stock del pedido, con la MISMA prioridad que la columna "Estado" de la tabla:
+  // lo que falta y NO se pidió a ninguna fábrica es lo único sin resolver, así que gana.
+  // Si ya se pidió a Moreno o a Multiespumas, el pedido queda "En producción" solo — es lo
+  // que se marcaba a mano abajo y ya no hace falta.
+  var algunoProd=false, noSinPedir=false;
+  for(var j=0;j<pr.length;j++){
+    if(enProduccion(pr[j])) algunoProd=true;
+    else if(pr[j].chk==='no') noSinPedir=true;
+  }
+  if(noSinPedir) p.estado='No hay';
+  else if(algunoProd) p.estado='En producción';
   else if(todosOk) p.estado='En stock';
-  else if(algunoMarcado && !algunoSin && p.estado==='No hay') p.estado='';   // se corrigió el ✗
+  else if(algunoMarcado && !algunoSin && (p.estado==='No hay'||p.estado==='En producción')) p.estado='';   // se corrigió
 }
 function setProdChk(id, idx, val){
   var p=findById(id); if(!p||!p.productos||!p.productos[idx]) return;
@@ -3466,7 +3498,10 @@ function setProdChk(id, idx, val){
    > medida especial (celeste) > estado de stock. "Entregado" (gris) se agrega aparte. */
 function tieneRecogerIM(p){ return (p.productos||[]).some(esRecoger); }
 function rowKind(p){
-  if(p.estado==='No hay') return 'nohay';
+  // El rojo se mira en los PRODUCTOS, no en p.estado: desde que un ✗ ya pedido a fábrica
+  // pone el pedido "En producción", si mirara solo p.estado la fila dejaría de ser roja y un
+  // faltante pasaría desapercibido. Falta stock = rojo, aunque ya se haya pedido a fábrica.
+  if(p.estado==='No hay' || (p.productos||[]).some(function(x){ return x.chk==='no'; })) return 'nohay';
   if(tieneRecogerIM(p))   return 'im';
   if(has50x70(p))         return '5070';
   if(hasEspecial(p))      return 'especial';
@@ -3489,6 +3524,12 @@ function prodRevList(p){
           var on=(prodDondeSePide(x)===L.v);
           return '<button class="chkbtn wide'+(on?' prodon':'')+'" onclick="setProdProduccion(\''+p.id+'\','+i+',\''+L.v+'\')" title="Ya se pidió a fábrica '+L.v+' (se puede marcar junto con ✗ no hay)">🏭 '+L.corto+'</button>';
         }).join('')+
+        /* Producto marcado en producción con el botón VIEJO, que no preguntaba la fábrica.
+           Sin este botón el estado no se ve resaltado en ninguna parte y, peor, no hay forma
+           de desmarcarlo: quedaba trabado diciendo "sin marcar dónde" para siempre. */
+        (enProduccion(x) && !prodDondeSePide(x)
+          ? '<button class="chkbtn wide prodon" style="border-style:dashed" onclick="setProdProduccion(\''+p.id+'\','+i+',\'\')" title="Está marcado como pedido a fábrica pero no se dijo a cuál. Elegí MORENO o MULTI, o tocá acá para desmarcarlo.">🏭 ¿?</button>'
+          : '')+
       '</span></div>';
   }).join('');
 }

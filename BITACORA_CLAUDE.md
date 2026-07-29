@@ -254,7 +254,21 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   contradigan en silencio. Antes la ficha podía decir "Estado: Sin marcar" con los productos
   marcados en producción.
 - Si un producto tiene `enProd` pero no `prodEn` (datos viejos de la planilla), el estado dice
-  **"En producción · sin marcar dónde"**. No se inventa una fábrica.
+  **"En producción · sin marcar dónde"**. No se inventa una fábrica. Y en la lista de productos
+  aparece un **botón `🏭 ¿?` resaltado**: sin él ese estado no se veía en ningún botón y —peor—
+  **no había forma de desmarcarlo**, quedaba trabado. Al elegir MORENO/MULTI o tocar el `¿?`
+  desaparece. **No borrar ese botón pensando que sobra.**
+- **`syncVerificado(p)` ahora también se llama desde `setProdProduccion`**: elegir la fábrica
+  marca solo el "🟡 En producción" de abajo (lo pidió el usuario). La prioridad de `p.estado`
+  es la misma que la de `estadoStock`: `No hay` (✗ sin pedir a nadie) > `En producción` >
+  `En stock`.
+- **⚠️ `rowKind()` mira los PRODUCTOS para el rojo, no `p.estado`.** Al poner "En producción"
+  automáticamente, si el color siguiera saliendo de `p.estado` la fila dejaría de ser roja y un
+  faltante pasaría desapercibido — justo lo que la regla de colores promete que no pasa
+  (§ "Rojo gana sobre todos los demás"). Un ✗ pinta rojo **aunque ya se haya pedido a fábrica**;
+  la columna Estado, en paralelo, dice en qué fábrica está. Son complementarios: el rojo avisa,
+  la columna informa. **Esto lo detectó test_full ("p4 ✗ + en producción → gana el rojo") — no
+  aflojar esa prueba.**
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
