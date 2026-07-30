@@ -1589,6 +1589,32 @@ def main():
     ms, me = int(m_start.timestamp()), int(m_end.timestamp())
     ps, pe = int(p_start.timestamp()), int(p_end.timestamp())
 
+    # REFUERZO DE VENTAS SIN LÍMITE DE ANTIGÜEDAD.
+    # La ventana amplia filtra por created_at (300 días) y se trunca en 10k leads,
+    # así que OMITE ventas de leads viejos (p.ej. "cliente antiguo" creado hace
+    # >10 meses que compra este mes). Kommo, al filtrar por "Fecha contrato: Este
+    # mes", no tiene ese límite → por eso mostraba más monto que el panel.
+    # Solución: traer TODOS los leads que HOY están en etapa Compradores y se
+    # tocaron desde el mes anterior (updated_at), sin importar cuándo se crearon,
+    # y fusionarlos en `wide` (dedup por id).
+    won_status_pairs = [(pl.get("id"), st["id"])
+                        for pl in pls
+                        for st in (pl.get("_embedded", {}) or {}).get("statuses", [])
+                        if classify_stage(st.get("name", "")) == "compradores"]
+    _seen_wide = {ld.get("id") for ld in wide}
+    _extra_won = 0
+    for _pi, _si in won_status_pairs:
+        for ld in fetch_paginated("/leads", {
+                "with": "contacts,catalog_elements",
+                "filter[statuses][0][pipeline_id]": _pi,
+                "filter[statuses][0][status_id]":  _si,
+                "filter[updated_at][from]": int(p_start.timestamp())},
+                "leads", max_pages=40, sleep=0.12):
+            if ld.get("id") not in _seen_wide:
+                wide.append(ld); _seen_wide.add(ld.get("id")); _extra_won += 1
+    _DIAG.append(f"won_refuerzo statuses={won_status_pairs} extra_leads={_extra_won}")
+    print(f"     → refuerzo compradores: +{_extra_won} leads viejos (sin límite de antigüedad)")
+
     # CERRADO por FECHA CONTRATO: compradores cuyo campo cae en el mes
     won = []; won_prev = []
     if contract_field_id:
