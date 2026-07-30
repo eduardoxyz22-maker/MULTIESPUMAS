@@ -270,6 +270,25 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   la columna informa. **Esto lo detectó test_full ("p4 ✗ + en producción → gana el rojo") — no
   aflojar esa prueba.**
 
+## 4d. Fix crítico de conteo de ventas (2026-07-30)
+
+- **Síntoma (usuario)**: en Kommo, filtrando *Fecha contrato: Este mes + Usuario: Isabel*, salían
+  **46 leads = Bs 219.780**, pero el panel mostraba menos (37 cierres / Bs 179.320).
+- **Causa raíz**: la **ventana amplia** (`wide`) que detecta las ventas filtra por `created_at` en
+  **300 días** y se **trunca a 10.000 leads** (`max_pages=40`). Con ~2.700 leads/mes el CRM supera
+  los 10k y además ignora leads creados hace >10 meses. Resultado: **las ventas de leads viejos**
+  (p.ej. "cliente antiguo" creado hace mucho que compra este mes) **no se contaban**. Kommo, al
+  filtrar por Fecha contrato, no tiene ese límite.
+- **Fix (`generar.py`, tras el fetch `wide`)**: además de la ventana por `created_at`, se traen
+  **TODOS los leads que HOY están en etapa Compradores** (statuses con `cls=="compradores"` en todos
+  los pipelines) y se **tocaron desde el mes anterior** (`filter[updated_at][from]=p_start`), **sin
+  límite de antigüedad de creación**, y se fusionan en `wide` (dedup por `id`). Así los cierres/monto/
+  pipeline por Fecha contrato cuadran con Kommo. Diagnóstico: `won_refuerzo … extra_leads=N`.
+- **Resultado verificado en vivo**: equipo **139 → 157 cierres**; Isabel **37 → 45 cierres**,
+  cerrado **179.320 → 211.620**, **pipeline Bs 219.780 = EXACTO** al total de Kommo. La diferencia
+  46 (Kommo) vs 45 cierres = 1 lead con Fecha contrato pero aún NO en etapa Compradores (cuenta en
+  pipeline, no como cierre) — coherente con la REGLA CRÍTICA (venta = Compradores + Fecha contrato).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
