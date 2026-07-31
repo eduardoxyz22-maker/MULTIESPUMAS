@@ -321,6 +321,29 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   y el modal igual explica cómo cargarlo bien, así que nadie se queda sin la instrucción.
   Si algún día molesta, se vacía `MEME_COMBO` y todos vuelven al aviso normal.
 
+## 4i. Banco del QR por vendedora (2026-07-31)
+
+- Al marcar **pago por QR** (pagado o a cuenta) el formulario pregunta **a qué banco entró**,
+  y es **obligatorio**. Las opciones dependen de quién carga:
+  - Fernando Peinado · Mauricio Merida · Juan Pablo Paredes → **Ganadero / Económico**
+  - Carola Chavez · Jonathan Monje · Maria Flores · Isabel Robledo · Mirian Salazar → **BISA / Económico**
+  - Cualquier otro (Eduardo Añez, ROHO) ve **los tres**: mejor eso que trabarlos, y no se les
+    inventa un banco que no es el suyo.
+- **El banco NO tiene columna propia**: se guarda **pegado al método** → `metodoPago = "QR Ganadero"`.
+  Así **no hubo que reimplementar el Apps Script** (el usuario evita eso). Por eso existen
+  `metodoBase()` ("QR Ganadero" → "QR") y `bancoDe()` ("QR Ganadero" → "Ganadero").
+- **Lo que había que tocar para que no se rompiera** — si se agrega otro lector de `metodoPago`,
+  acordarse de usar `metodoBase()`:
+  - `updateStats` contaba `mtd[p.metodoPago]`: con "QR Ganadero" habría caído en "sin método".
+  - `segSet('f-metodo', ...)` al editar: hay que pasarle la base, si no ningún botón queda marcado.
+- Los botones del banco se **redibujan al cambiar de vendedora** (`applyVendedorLite` llama a
+  `updateBancoVisibility`), y se limpia lo elegido si ese banco no está en la lista nueva: si no,
+  a Isabel le podía quedar "Ganadero" pegado de un pedido de Fernando.
+- **No se tocó el panel del chofer**: si el chofer cobra por QR sigue sin elegir banco (no se pidió).
+  Ojo: si el chofer registra un cobro sobre un pedido que ya tenía "QR Ganadero", `aplicarCobros`
+  reescribe el campo y **se pierde el banco**. Es un caso raro (si ya estaba pagado el chofer no
+  cobra) pero está acá anotado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

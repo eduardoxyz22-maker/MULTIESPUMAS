@@ -81,6 +81,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#turno-carga">🌅🌆 Turno AM/PM</a>
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
+    <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
     <a href="#envio">📤 Cierre / Mañana</a>
     <a href="#reporte">📊 Reporte</a>
@@ -275,6 +276,17 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout warn"><b>Dos cosas para saber:</b><br>
       <b>1)</b> Los archivos quedan como <b>“cualquiera con el enlace puede ver”</b> — es lo que permite que la foto se vea dentro del panel sin pedir contraseña. El enlace es imposible de adivinar, pero si se lo pasás a alguien, esa persona ve la foto.<br>
       <b>2)</b> Ocupan espacio en tu Drive: a ~150 KB por foto y 25 entregas por día, son unos <b>50 MB al mes</b>. Nada grave, pero conviene mirarlo una vez al año.</div>
+  </div>
+
+  <div class="card" id="banco">
+    <h3>🏦 Banco del QR <span class="pill">nuevo</span></h3>
+    <p>Al cargar un pedido pagado <b>por QR</b>, la vendedora tiene que elegir <b>a qué banco entró</b>. Es obligatorio: sin eso no guarda.</p>
+    <ul>
+      <li><b>Fernando Peinado · Mauricio Merida · Juan Pablo Paredes</b> → <b>Ganadero</b> / <b>Económico</b></li>
+      <li><b>Carola Chavez · Jonathan Monje · Maria Flores · Isabel Robledo · Mirian Salazar</b> → <b>BISA</b> / <b>Económico</b></li>
+      <li>Los que no están en ninguna lista (Eduardo Añez, ROHO) ven los tres, para no trabarlos.</li>
+    </ul>
+    <div class="callout">Se guarda <b>pegado al método</b>: la columna <b>MÉTODO PAGO</b> de la planilla dice <b>“QR Ganadero”</b>, <b>“QR BISA”</b> o <b>“QR Económico”</b>. Así <b>no hizo falta una columna nueva</b> ni volver a implementar el Apps Script. Las estadísticas lo siguen contando como <b>QR</b>.</div>
   </div>
 
   <div class="card" id="combos">
