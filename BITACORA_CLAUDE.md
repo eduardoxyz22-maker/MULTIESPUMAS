@@ -449,6 +449,34 @@ Ejemplo textual: 2.000 el 31/07 con nota 939, saldo 4.000; el 03/08 paga 4.000 c
 - Compatibilidad: banco, fecha y nota siguen siendo **opcionales**; `"Efectivo 6000"` y
   `"Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30"` se leen igual (probado).
 
+## 4m. Cuadre y conciliación (2026-07-31)
+
+Pedido: *"falta un dashboard y control de contabilidad, para cuadrar conciliar, ahí mismo
+dentro de contabilidad"*. Se resolvió como **sub-pestaña** de Contabilidad
+(`#cta-tab`: `📋 Ventas` / `🧮 Cuadre y conciliación`), no como pestaña nueva ni overlay.
+
+- **⚠️ CORTA POR FECHA DEL PAGO, no por `contaFecha` (fecha de ingreso).** Es lo que
+  distingue esta vista de la de Ventas y **el motivo de que exista**: para arquear caja y
+  conciliar banco importa cuándo ENTRÓ la plata. Una venta del 31/07 cuyo saldo se cobró el
+  03/08 pone sus Bs en el cuadre del 03/08. **Si alguien "unifica" los dos filtros, rompe
+  el sentido de la pantalla.**
+- `cuadrePagos()` devuelve **un renglón por PAGO** (no por venta), recorriendo `contaPagos()`
+  de todo `STATE` (sin los excluidos). Los pagos **sin fecha** no entran en ningún período —
+  por eso hay una alerta dedicada, si no desaparecerían en silencio.
+- `cuadrePorForma()` agrupa por **método + banco** (`Efectivo`, `QR BISA`, `QR Ganadero`,
+  `Tarjeta`): así se cuenta la caja aparte y cada banco se cruza con SU extracto.
+- **El arqueo ("contado / extracto") vive en `localStorage`** (`multiespumas_cuadre_v1`),
+  con clave `modo|valor|forma`. Motivo: la planilla no tiene columna y agregarla obliga a
+  reimplementar el Apps Script. **Es por computadora** y la pantalla lo dice explícitamente.
+  Cada día/mes guarda lo suyo — probado que un día no contamina a otro.
+- **Bloques**: métricas (entró · efectivo · bancos · diferencia o por cobrar) → cierre por
+  forma de pago con diferencia → por cobrar por antigüedad (rojo ≥30 d, ámbar ≥8 d) →
+  alertas → detalle tildable. Todo clickeable abre `showContaModal`.
+- `📋 Copiar` arma el texto para WhatsApp; `⬇️ Excel` baja detalle + cierre.
+- Ojo al tocar `renderContaSiActiva()`: ahora despacha a `renderCuadre()` o `renderConta()`
+  según la sub-pestaña activa. Y `refreshConta()` inicializa también `cua-dia` / `cua-mes`.
+- `diasEntre()` se clampea a 0: una venta con fecha futura mostraba "-3 d".
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

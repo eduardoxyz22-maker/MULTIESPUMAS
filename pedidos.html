@@ -366,6 +366,15 @@ th.sortable:hover{color:var(--teal-dk)}
 .dl-row:last-child{border-bottom:none}
 .dl-k{width:96px;flex:none;color:var(--muted);font-weight:700;font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;padding-top:2px}
 .dl-v{flex:1;color:var(--text);word-break:break-word}
+/* Sub-pestañas dentro de Contabilidad (Ventas / Cuadre) */
+.subtabs button{padding:10px 18px;font-size:.84rem}
+.cua-box{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);padding:16px 18px;margin-bottom:18px}
+.cua-t{font-size:.68rem;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
+input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-size:.85rem;padding:6px 9px;display:inline-block}
+.cua-dif-ok{color:var(--green);font-weight:800}
+.cua-dif-mal{color:var(--red);font-weight:800}
+.cua-alerta{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-lt);font-size:.83rem}
+.cua-alerta:last-child{border-bottom:none}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
@@ -704,6 +713,48 @@ th.sortable:hover{color:var(--teal-dk)}
   <!-- ============ CONTABILIDAD VIEW ============ -->
   <div id="view-conta" class="view">
     <div class="card">
+      <div class="seg subtabs" id="cta-tab" style="margin-bottom:18px">
+        <button type="button" data-val="ventas" class="active">📋 Ventas</button>
+        <button type="button" data-val="cuadre">🧮 Cuadre y conciliación</button>
+      </div>
+
+      <!-- ---- CUADRE: la plata que ENTRÓ, por fecha de pago ---- -->
+      <div id="cta-pane-cuadre" style="display:none">
+        <div class="filters">
+          <div class="field">
+            <label class="lb">Cuadrar por <span style="font-weight:400;color:var(--muted)">fecha del PAGO</span></label>
+            <div class="seg" id="cua-mode">
+              <button type="button" data-val="dia" class="active">Día</button>
+              <button type="button" data-val="mes">Mes</button>
+              <button type="button" data-val="todo">Todo</button>
+            </div>
+          </div>
+          <div class="field" id="cua-wrap-dia">
+            <label class="lb">Día</label>
+            <input type="date" id="cua-dia" onchange="renderCuadre()">
+          </div>
+          <div class="field" id="cua-wrap-mes" style="display:none">
+            <label class="lb">Mes</label>
+            <input type="month" id="cua-mes" onchange="renderCuadre()">
+          </div>
+          <div class="field">
+            <button class="btn btn-ghost btn-sm" onclick="copiarCuadre()">📋 Copiar</button>
+          </div>
+          <div class="field">
+            <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportCuadre()">⬇️ Excel</button>
+          </div>
+        </div>
+        <div class="metrics" id="cua-metrics"></div>
+        <div id="cua-cierre"></div>
+        <div class="two-col">
+          <div id="cua-pendientes"></div>
+          <div id="cua-alertas"></div>
+        </div>
+        <div id="cua-detalle"></div>
+      </div>
+
+      <!-- ---- VENTAS: la tabla de siempre ---- -->
+      <div id="cta-pane-ventas">
       <div class="filters">
         <div class="field">
           <label class="lb">Ver por <span style="font-weight:400;color:var(--muted)">fecha de ingreso</span></label>
@@ -739,6 +790,7 @@ th.sortable:hover{color:var(--teal-dk)}
       <div class="metodos-line" id="cta-resumen"></div>
       <div class="tw tw-tall"><table id="tbl-conta"></table></div>
       <div id="cta-empty" class="empty">No hay pedidos en este período.</div>
+      </div>
     </div>
   </div>
 
@@ -1218,10 +1270,13 @@ function contaProdTxt(prods){
 function refreshConta(){
   var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=todayStr().slice(0,7);
   var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=todayStr();
+  var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=todayStr();
+  var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=todayStr().slice(0,7);
   llenarSelectContaVendedor();
-  if(!CONNECTED){ renderConta(); return; }
-  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } llenarSelectContaVendedor(); renderConta(); })
-           .catch(function(){ renderConta(); });
+  var pinta=function(){ llenarSelectContaVendedor(); if(contaTab()==='cuadre') renderCuadre(); else renderConta(); };
+  if(!CONNECTED){ pinta(); return; }
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } pinta(); })
+           .catch(pinta);
 }
 function setContaModo(m){
   document.getElementById('cta-wrap-dia').style.display=(m==='dia')?'block':'none';
@@ -1315,7 +1370,276 @@ function contaPagosCelda(p){
     '</div>';
   }).join('');
 }
-function renderContaSiActiva(){ var v=document.getElementById('view-conta'); if(v && v.classList.contains('active')) renderConta(); }
+function renderContaSiActiva(){
+  var v=document.getElementById('view-conta'); if(!v || !v.classList.contains('active')) return;
+  if(contaTab()==='cuadre') renderCuadre(); else renderConta();
+}
+
+/* ============================================================================
+   CUADRE Y CONCILIACIÓN
+   La pestaña Ventas corta por fecha de INGRESO (cuándo se hizo la venta).
+   El cuadre corta por fecha del PAGO: para arquear la caja y conciliar el banco
+   importa cuándo ENTRÓ la plata, no cuándo se vendió. Una venta del 31/07 cuyo
+   saldo se cobró el 03/08 pone su plata en el cuadre del 03/08.
+   ========================================================================== */
+function contaTab(){ return segVal('cta-tab')||'ventas'; }
+function setContaTab(t){
+  document.getElementById('cta-pane-ventas').style.display=(t==='cuadre')?'none':'block';
+  document.getElementById('cta-pane-cuadre').style.display=(t==='cuadre')?'block':'none';
+  if(t==='cuadre') renderCuadre(); else renderConta();
+}
+function setCuadreModo(m){
+  document.getElementById('cua-wrap-dia').style.display=(m==='dia')?'block':'none';
+  document.getElementById('cua-wrap-mes').style.display=(m==='mes')?'block':'none';
+  renderCuadre();
+}
+function cuadrePeriodo(){
+  var modo=segVal('cua-mode')||'dia';
+  if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||todayStr())};
+  if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||todayStr().slice(0,7))};
+  return {modo:'todo', val:''};
+}
+var MESES_ES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+function mesNombre(ym){
+  var m=String(ym||'').match(/^(\d{4})-(\d{2})/);
+  return m ? (MESES_ES[+m[2]-1]+' de '+m[1]) : String(ym||'');
+}
+function cuadrePeriodoTxt(){
+  var pe=cuadrePeriodo();
+  return pe.modo==='dia' ? fmtFecha(pe.val) : pe.modo==='mes' ? mesNombre(pe.val) : 'todo el historial';
+}
+function enPeriodoCuadre(fecha, pe){
+  if(!fecha) return false;                       // sin fecha no se puede cuadrar
+  if(pe.modo==='dia') return fecha===pe.val;
+  if(pe.modo==='mes') return fecha.slice(0,7)===pe.val;
+  return true;
+}
+/* Un renglón por PAGO (no por venta): es lo que se tilda contra el extracto. */
+function cuadrePagos(){
+  var pe=cuadrePeriodo(), out=[];
+  STATE.forEach(function(p){
+    if(contaExcluido(p.vendedor)) return;
+    contaPagos(p).forEach(function(c){
+      if(!enPeriodoCuadre(c.fecha, pe)) return;
+      out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
+                 monto:Number(c.monto)||0, nota:limpiaNota(c.nota), anticipo:!!c.anticipo });
+    });
+  });
+  return out.sort(function(a,b){
+    if(a.fecha!==b.fecha) return a.fecha<b.fecha?-1:1;
+    return String(a.p.cliente||'').localeCompare(String(b.p.cliente||''),'es');
+  });
+}
+/* "Efectivo" / "QR BISA" / "Tarjeta" — la forma de pago que se concilia por separado:
+   el efectivo se cuenta en caja y cada banco se cruza con SU extracto. */
+function cuadreForma(c){ return (c.metodo?(c.metodo+(c.banco?(' '+c.banco):'')):'sin método anotado'); }
+function cuadrePorForma(pagos){
+  var mapa={}, orden=[];
+  (pagos||[]).forEach(function(c){
+    var k=cuadreForma(c);
+    if(!mapa[k]){ mapa[k]={forma:k, n:0, monto:0, efectivo:(c.metodo==='Efectivo')}; orden.push(k); }
+    mapa[k].n++; mapa[k].monto=r2(mapa[k].monto+c.monto);
+  });
+  orden.sort(function(a,b){
+    var pa=(a.indexOf('Efectivo')===0?0:a.indexOf('QR')===0?1:a.indexOf('Tarjeta')===0?2:3);
+    var pb=(b.indexOf('Efectivo')===0?0:b.indexOf('QR')===0?1:b.indexOf('Tarjeta')===0?2:3);
+    return pa!==pb ? pa-pb : a.localeCompare(b,'es');
+  });
+  return orden.map(function(k){ return mapa[k]; });
+}
+/* Lo contado en caja / lo que dice el extracto. Vive SOLO en esta computadora
+   (la planilla no tiene dónde guardarlo) — el cartel de la pantalla lo aclara. */
+var CUADRE_LS='multiespumas_cuadre_v1';
+function cuadreArqueoTodo(){ try{ return JSON.parse(localStorage.getItem(CUADRE_LS)||'{}')||{}; }catch(e){ return {}; } }
+function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
+function cuadreArqueo(forma){ var v=cuadreArqueoTodo()[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
+function setCuadreArqueo(forma, valor){
+  var all=cuadreArqueoTodo(), k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
+  if(t==='') delete all[k]; else all[k]=parseMonto(t);
+  try{ localStorage.setItem(CUADRE_LS, JSON.stringify(all)); }catch(e){}
+  renderCuadre();
+}
+function limpiarArqueo(){
+  var all=cuadreArqueoTodo(), pe=cuadrePeriodo(), pref=pe.modo+'|'+pe.val+'|', n=0;
+  Object.keys(all).forEach(function(k){ if(k.indexOf(pref)===0){ delete all[k]; n++; } });
+  try{ localStorage.setItem(CUADRE_LS, JSON.stringify(all)); }catch(e){}
+  toast(n?('Arqueo borrado ('+n+')'):'No había nada anotado','ok');
+  renderCuadre();
+}
+/* Ventas con saldo, de la más vieja a la más nueva: lo que hay que salir a cobrar. */
+function cuadrePendientes(){
+  var hoy=todayStr();
+  return STATE.filter(function(p){ return !contaExcluido(p.vendedor) && !p.pagado && (Number(p.saldo)||0)>0.01; })
+    .map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(p.saldo) }; })
+    .sort(function(a,b){ return b.dias-a.dias; });
+}
+function diasEntre(a,b){
+  if(!a||!b) return 0;
+  var x=new Date(a+'T00:00:00'), y=new Date(b+'T00:00:00');
+  if(isNaN(x)||isNaN(y)) return 0;
+  return Math.round((y-x)/86400000);
+}
+/* Todo lo que impide cerrar el cuadre, junto y en un solo lugar. */
+function cuadreAlertas(pagos){
+  var A=[];
+  var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
+  if(sinNota.length) A.push({ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return (c.p.cliente||'—')+' · '+fmtBs(c.monto); })});
+  var sinFecha=[];
+  STATE.forEach(function(p){ if(contaExcluido(p.vendedor)) return;
+    contaPagos(p).forEach(function(c){ if(!c.fecha) sinFecha.push({p:p,c:c}); }); });
+  if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b>', det:sinFecha.map(function(x){ return (x.p.cliente||'—')+' · '+fmtBs(x.c.monto); })});
+  var sinSistema={};
+  (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
+  var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
+  if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return (p.cliente||'—')+(p.nota?(' · nota '+p.nota):''); })});
+  var exceso=[];
+  (pagos||[]).forEach(function(c){ if(excesoCobro(c.p)>0 && exceso.indexOf(c.p)<0) exceso.push(c.p); });
+  if(exceso.length) A.push({ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return (p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)); })});
+  return A;
+}
+function renderCuadre(){
+  var box=document.getElementById('cua-metrics'); if(!box) return;
+  var pagos=cuadrePagos(), formas=cuadrePorForma(pagos);
+  var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
+  var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
+  var efectivo=0, banco=0;
+  formas.forEach(function(f){ if(f.efectivo) efectivo=r2(efectivo+f.monto); else banco=r2(banco+f.monto); });
+  var pend=cuadrePendientes(), pendTotal=0; pend.forEach(function(x){ pendTotal=r2(pendTotal+x.saldo); });
+
+  // ---- diferencia global del arqueo (solo cuenta las formas donde anotaron algo)
+  var difTotal=0, anotadas=0;
+  formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
+
+  box.innerHTML=
+    mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s'))+
+    mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'para arquear la caja')+
+    mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
+    (anotadas
+      ? mc(difTotal===0?'var(--green)':'var(--red)',
+           difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
+           difTotal===0?'✅ Cuadra':fmtBs(Math.abs(difTotal)),
+           anotadas+' de '+formas.length+' forma'+(formas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s'))
+      : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),pend.length+' venta'+(pend.length===1?'':'s')+' con saldo'));
+
+  // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
+  var cie=document.getElementById('cua-cierre');
+  if(!formas.length){
+    cie.innerHTML='<div class="cua-box"><div class="cua-t">🧮 Cierre por forma de pago</div>'+
+      '<div class="empty" style="padding:18px 0">No entró plata en '+esc(cuadrePeriodoTxt())+'.</div></div>';
+  } else {
+    cie.innerHTML='<div class="cua-box">'+
+      '<div class="cua-t">🧮 Cierre por forma de pago — '+esc(cuadrePeriodoTxt())+'</div>'+
+      '<div class="tw"><table class="mini"><thead><tr>'+
+        '<th>Forma de pago</th><th style="text-align:right">Pagos</th><th style="text-align:right">Según el panel</th>'+
+        '<th style="text-align:right">Contado / extracto</th><th style="text-align:right">Diferencia</th></tr></thead><tbody>'+
+      formas.map(function(f){
+        var a=cuadreArqueo(f.forma), dif=(a==null)?null:r2(a-f.monto);
+        return '<tr><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b></td>'+
+          '<td style="text-align:right">'+f.n+'</td>'+
+          '<td style="text-align:right"><b>'+fmtBs(f.monto)+'</b></td>'+
+          '<td style="text-align:right"><input class="cua-arqueo" type="number" step="0.01" inputmode="decimal" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)"></td>'+
+          '<td style="text-align:right">'+(dif==null?'<span style="color:var(--muted)">—</span>'
+             :(dif===0?'<span class="cua-dif-ok">✅ cuadra</span>'
+               :'<span class="cua-dif-mal">'+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))+'</span>'))+'</td></tr>';
+      }).join('')+
+      '<tr style="border-top:2px solid var(--gray-md)"><td><b>TOTAL</b></td><td style="text-align:right"><b>'+pagos.length+'</b></td>'+
+        '<td style="text-align:right"><b>'+fmtBs(total)+'</b></td><td></td>'+
+        '<td style="text-align:right">'+(anotadas?(difTotal===0?'<span class="cua-dif-ok">✅ cuadra</span>':'<span class="cua-dif-mal">'+(difTotal>0?'sobra ':'falta ')+fmtBs(Math.abs(difTotal))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td></tr>'+
+      '</tbody></table></div>'+
+      '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">'+
+        '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Eso queda guardado <b>en esta computadora</b>, no en la planilla.</span>'+
+        '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="limpiarArqueo()">↺ Borrar lo anotado</button>'+
+      '</div></div>';
+  }
+
+  // ---- por cobrar, de lo más viejo a lo más nuevo
+  var pe=document.getElementById('cua-pendientes');
+  pe.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">⏳ Por cobrar — '+fmtBs(pendTotal)+'</div>'+
+    (pend.length
+      ? '<div class="tw" style="max-height:320px;overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Desde</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+
+        pend.slice(0,60).map(function(x){
+          var col=x.dias>=30?'var(--red)':x.dias>=8?'var(--amber)':'var(--muted)';
+          return '<tr onclick="showContaModal(\''+x.p.id+'\')" style="cursor:pointer"><td><b>'+esc(x.p.cliente||'—')+'</b>'+
+            (x.p.nota?('<br><span style="color:var(--muted);font-size:.9em">nota '+esc(x.p.nota)+'</span>'):'')+'</td>'+
+            '<td><span style="color:'+col+'">'+esc(fmtFechaCorta(x.desde))+' · '+(x.dias?(x.dias+' d'):'hoy')+'</span></td>'+
+            '<td style="text-align:right"><b>'+fmtBs(x.saldo)+'</b></td></tr>';
+        }).join('')+'</tbody></table></div>'+
+        (pend.length>60?('<div style="font-size:.72rem;color:var(--muted);margin-top:8px">Se muestran las 60 más viejas de '+pend.length+'.</div>'):'')
+      : '<div class="empty" style="padding:16px 0">✅ No queda nada por cobrar.</div>')+
+    '</div>';
+
+  // ---- alertas
+  var al=cuadreAlertas(pagos), av=document.getElementById('cua-alertas');
+  av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar</div>'+
+    (al.length ? al.map(function(a){
+        return '<div class="cua-alerta"><span style="font-size:1.05rem">'+a.ico+'</span><div><div>'+a.txt+'</div>'+
+          '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">'+esc(a.det.slice(0,6).join(' · '))+(a.det.length>6?(' … +'+(a.det.length-6)):'')+'</div></div></div>';
+      }).join('')
+    : '<div class="empty" style="padding:16px 0">✅ Todo en orden: nada pendiente de revisar.</div>')+
+    '</div>';
+
+  // ---- detalle: un renglón por pago, para tildar
+  var det=document.getElementById('cua-detalle');
+  det.innerHTML='<div class="cua-box"><div class="cua-t">📄 Detalle de los pagos — '+pagos.length+'</div>'+
+    (pagos.length
+      ? '<div class="tw tw-tall"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>N° nota del pago</th><th>Vendedor</th><th>Forma de pago</th><th style="text-align:right">Monto</th><th>Venta</th><th>Sistema</th></tr></thead><tbody>'+
+        pagos.map(function(c){
+          return '<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
+            '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.fecha))+'</td>'+
+            '<td><b>'+esc(c.p.cliente||'—')+'</b></td>'+
+            '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+'</td>'+
+            '<td>'+esc(c.p.vendedor||'—')+'</td>'+
+            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+'</td>'+
+            '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
+            '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
+            '<td>'+(regEnSistema(c.p)?'<span class="badge b-green">✅</span>':'<span class="badge b-amber">falta</span>')+'</td></tr>';
+        }).join('')+'</tbody></table></div>'
+      : '<div class="empty" style="padding:16px 0">No hay pagos con fecha en '+esc(cuadrePeriodoTxt())+'.</div>')+
+    '</div>';
+}
+/* El cuadre listo para pegar en WhatsApp. */
+function cuadreTexto(){
+  var pagos=cuadrePagos(), formas=cuadrePorForma(pagos), total=0;
+  pagos.forEach(function(c){ total=r2(total+c.monto); });
+  var L=['🧮 *CUADRE — '+cuadrePeriodoTxt().toUpperCase()+'*',''];
+  if(!formas.length){ L.push('No entró plata en el período.'); }
+  else {
+    formas.forEach(function(f){
+      var a=cuadreArqueo(f.forma), dif=(a==null)?null:r2(a-f.monto);
+      L.push('• '+f.forma+': *'+fmtBs(f.monto)+'*  ('+f.n+' pago'+(f.n===1?'':'s')+')'+
+             (dif==null?'':(dif===0?'  ✅ cuadra':('  ⚠️ '+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))))));
+    });
+    L.push('', '*TOTAL: '+fmtBs(total)+'*');
+  }
+  var pend=cuadrePendientes(), pt=0; pend.forEach(function(x){ pt=r2(pt+x.saldo); });
+  if(pend.length) L.push('', '⏳ Por cobrar: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
+  var al=cuadreAlertas(pagos);
+  if(al.length){ L.push('', '🔎 Revisar:'); al.forEach(function(a){ L.push('   '+a.ico+' '+a.txt.replace(/<[^>]+>/g,'')); }); }
+  return L.join('\n');
+}
+function copiarCuadre(){ copyText(cuadreTexto()); }
+function exportCuadre(){
+  var pagos=cuadrePagos();
+  if(!pagos.length){ toast('No hay pagos para exportar en este período','err'); return; }
+  var H=1, fc={numFmt:'#,##0.00'};
+  var rows=[['FECHA DEL PAGO','CLIENTE','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA'].map(function(t){return {v:t,s:H};})];
+  pagos.forEach(function(c){
+    rows.push([c.fecha, c.p.cliente||'', c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
+               {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO']);
+  });
+  var formas=cuadrePorForma(pagos);
+  rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO',s:H}]);
+  formas.forEach(function(f){
+    var a=cuadreArqueo(f.forma);
+    rows.push([f.forma, '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
+  });
+  var pe=cuadrePeriodo();
+  var bytes=buildXlsx([{name:'Cuadre',
+    cols:[{w:14},{w:26},{w:16},{w:18},{w:12},{w:12},{w:14},{w:10},{w:16},{w:12},{w:11}],
+    matrix:rows}]);
+  downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+' ✓','ok');
+}
 /* Los pagos de un pedido, listos para mostrar: fecha · método (y banco) · monto. */
 function contaPagosHtml(p){
   var cob=contaPagos(p);
@@ -4857,6 +5181,8 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   initSeg('f-metodo',updateBancoVisibility);
   initSeg('cta-mode',setContaModo);
+  initSeg('cta-tab',setContaTab);
+  initSeg('cua-mode',setCuadreModo);
   initSeg('adm-mode',function(val){
     document.getElementById('wrap-dia').style.display=(val==='dia')?'block':'none';
     document.getElementById('wrap-mes').style.display=(val==='mes')?'block':'none';

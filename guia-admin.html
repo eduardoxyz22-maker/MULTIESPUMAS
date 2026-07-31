@@ -82,6 +82,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#contabilidad">🧾 Contabilidad</a>
+    <a href="#cuadre">🧮 Cuadre</a>
     <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
     <a href="#envio">📤 Cierre / Mañana</a>
@@ -299,6 +300,20 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li><b>✅ Pago registrado en sistema</b> — lo marca contabilidad cuando ya cargó la venta en su sistema contable. Esa fila <b>se pinta de verde</b> en la tabla y lleva la etiqueta <b>EN SISTEMA</b>. El resumen de arriba dice <b>cuántas van y cuántas faltan por cargar</b>. Se puede desmarcar.</li>
       <li>El <b>Excel</b> incluye los pagos con fecha, método <b>y N° de nota</b>, el total cobrado, el saldo y la columna <b>EN SISTEMA</b>.</li>
       <li>⚠️ Si una vendedora <b>edita</b> un pedido que ya tiene pagos registrados y cambia los montos, el panel <b>avisa antes</b> y le muestra qué pagos se van a perder. Si solo corrige otra cosa (zona, dirección, productos), el historial de pagos <b>no se toca</b>.</li>
+    </ul>
+
+    <h3 id="cuadre">🧮 Cuadre y conciliación <span class="pill">nuevo</span></h3>
+    <p>Dentro de <b>Contabilidad</b>, segunda sub-pestaña. Sirve para cerrar la caja del día y cruzar los bancos con sus extractos.</p>
+    <ul>
+      <li><b>Corta por la fecha del PAGO</b>, no por la de la venta. Es la diferencia clave con la pestaña Ventas: si una venta del 31/07 cobra su saldo el 03/08, esa plata entra en el cuadre del <b>03/08</b>, que es el día en que hay que encontrarla en la caja o en el banco.</li>
+      <li>Arriba, cuatro números: <b>lo que entró</b> en el período, cuánto fue <b>efectivo</b> (para contar la caja), cuánto fue <b>banco y tarjeta</b> (para el extracto) y <b>lo que falta cobrar</b>.</li>
+      <li><b>Cierre por forma de pago</b>: una fila por Efectivo, por cada banco del QR y por Tarjeta, con cuántos pagos y cuánto suma. Al lado se escribe <b>lo que contaste en caja</b> o <b>lo que dice el extracto</b>, y la diferencia sale sola: <b>✅ cuadra</b>, <b>falta Bs …</b> o <b>sobra Bs …</b>.</li>
+      <li>⚠️ Lo que se escribe en “contado / extracto” queda guardado <b>en esa computadora</b>, no en la planilla (la planilla no tiene dónde ponerlo). Cada día y cada mes guardan lo suyo por separado, y hay un botón <b>↺ Borrar lo anotado</b>.</li>
+      <li><b>⏳ Por cobrar</b>: todas las ventas con saldo, <b>de la más vieja a la más nueva</b>, con cuántos días lleva. En naranja desde 8 días, en rojo desde 30. Se hace clic y se abre la venta.</li>
+      <li><b>🔎 Revisar antes de cerrar</b>: pagos sin N° de nota, <b>pagos sin fecha</b> (esos no entran en ningún cuadre), ventas con plata que todavía no se cargaron al sistema contable y ventas con cobro de más.</li>
+      <li><b>📄 Detalle de los pagos</b>: un renglón por pago —fecha, cliente, N° de nota del pago, vendedor, forma de pago, monto y si ya está en el sistema— para ir tildando contra el extracto. Clic en cualquier renglón abre la venta.</li>
+      <li><b>📋 Copiar</b> arma el cuadre listo para pegar en WhatsApp, y <b>⬇️ Excel</b> baja el detalle más el cierre por forma de pago.</li>
+      <li>ROHO y Eduardo Añez quedan fuera, igual que en el resto de Contabilidad.</li>
     </ul>
     <div class="callout">Los pagos se guardan en la columna <b>Método pago</b> que la planilla ya tenía (<span class="kbd">Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30 · REGISTRADO</span>), así que <b>no hubo que agregar columnas ni volver a implementar el Apps Script</b>. Los cobros que carga el chofer entran en la misma lista: es un solo historial de pagos por venta.</div>
     <div class="callout">Esta pestaña <b>no pide contraseña</b>, igual que “Mis pedidos” y “Chofer”. Si querés que solo entre contabilidad, avisá y se le pone candado.</div>
