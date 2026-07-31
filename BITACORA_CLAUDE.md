@@ -443,9 +443,9 @@ Ejemplo textual: 2.000 el 31/07 con nota 939, saldo 4.000; el 03/08 paga 4.000 c
   un cambio real, y `_seguiaPagado` lo contempla (si no, cada edición pedía confirmación).
 - **Nada muestra ya `p.metodoPago` crudo** (sería `~Efectivo 2000 @…`): `contaMetodosTxt()` para
   la columna Pago, `cobrosResumen()` con salida armada, y la badge "A cuenta" del admin.
-- El n° de nota **no es obligatorio** pero avisa con `confirm()`, y en la tabla el pago sin
-  recibo sale **"sin nota" en naranja**. Sin eso, el control que pidió el usuario se llena de
-  huecos silenciosos.
+- El n° de nota es **OBLIGATORIO** (decisión del usuario, 2026-07-31): sin él no deja
+  registrar, marca el campo en rojo y avisa. Los pagos **anteriores** a esta pantalla pueden
+  no tenerlo y salen como **"sin nota" en naranja** en la tabla.
 - Compatibilidad: banco, fecha y nota siguen siendo **opcionales**; `"Efectivo 6000"` y
   `"Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30"` se leen igual (probado).
 

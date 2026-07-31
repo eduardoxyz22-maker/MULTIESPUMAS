@@ -1350,7 +1350,7 @@ function showContaModal(id){
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
            '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+r2(falta)+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha del pago</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
-           '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
@@ -1391,10 +1391,12 @@ function ctaRegistrarPago(id){
   var nota=limpiaNota((document.getElementById('cta-pago-nota')||{}).value);
   if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
   if(CTA_PAGO.metodo==='QR' && !CTA_PAGO.banco){ toast('Elegí a qué banco entró el QR','err'); return; }
-  // El recibo no se exige (a veces lo cargan después), pero se avisa: sin él contabilidad
-  // no puede cruzar el pago con su talonario, que es justamente para lo que sirve esto.
-  if(!nota && !confirm('No pusiste el N° de nota de venta de este pago.\n\n¿Registrarlo igual?')) {
-    var ni=document.getElementById('cta-pago-nota'); if(ni) ni.focus(); return;
+  // El recibo es OBLIGATORIO: sin él contabilidad no puede cruzar el pago con su
+  // talonario, que es justamente para lo que sirve esta pantalla.
+  if(!nota){
+    var ni=document.getElementById('cta-pago-nota');
+    if(ni){ ni.classList.add('err'); ni.focus(); ni.scrollIntoView({block:'center'}); }
+    toast('Poné el N° de nota de venta del recibo de este pago','err'); return;
   }
   var falta=Number(p.saldo)||0;
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
