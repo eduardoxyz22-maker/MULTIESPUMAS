@@ -465,10 +465,14 @@ dentro de contabilidad"*. Se resolvió como **sub-pestaña** de Contabilidad
   por eso hay una alerta dedicada, si no desaparecerían en silencio.
 - `cuadrePorForma()` agrupa por **método + banco** (`Efectivo`, `QR BISA`, `QR Ganadero`,
   `Tarjeta`): así se cuenta la caja aparte y cada banco se cruza con SU extracto.
-- **El arqueo ("contado / extracto") vive en `localStorage`** (`multiespumas_cuadre_v1`),
-  con clave `modo|valor|forma`. Motivo: la planilla no tiene columna y agregarla obliga a
-  reimplementar el Apps Script. **Es por computadora** y la pantalla lo dice explícitamente.
-  Cada día/mes guarda lo suyo — probado que un día no contamina a otro.
+- **El arqueo ("contado / extracto") se guarda en la PLANILLA** (2026-07-31, pedido del
+  usuario: *"se debe ver desde todas las compu y navegadores TV"*). Va en la fila del sistema
+  `__arqueo_cuadre__`, con el **mismo truco de la fecha vacía** que los días cerrados, así que
+  tampoco hizo falta tocar el Apps Script. Formato legible desde la propia hoja:
+  `dia|2026-08-03|Efectivo=1500 ; dia|2026-08-03|QR BISA=3900`. `|` y `=` no aparecen en
+  ningún método ni banco. `localStorage` (`multiespumas_cuadre_v1`) quedó como **espejo**.
+  Tope `ARQUEO_MAX=1200` anotaciones: al pasarse se tiran las más viejas (las claves ordenan
+  por período). Cada día/mes guarda lo suyo — probado que un día no contamina a otro.
 - **Bloques**: métricas (entró · efectivo · bancos · diferencia o por cobrar) → cierre por
   forma de pago con diferencia → por cobrar por antigüedad (rojo ≥30 d, ámbar ≥8 d) →
   alertas → detalle tildable. Todo clickeable abre `showContaModal`.

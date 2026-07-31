@@ -979,8 +979,8 @@ var STATE=[];
 function loadMirror(){
   try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
   if(!Array.isArray(STATE))STATE=[];
-  STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae la fila de cierres
-  loadCierresMirror();
+  STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
+  loadCierresMirror(); loadArqueoMirror();
 }
 function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
@@ -1453,24 +1453,63 @@ function cuadrePorForma(pagos){
   });
   return orden.map(function(k){ return mapa[k]; });
 }
-/* Lo contado en caja / lo que dice el extracto. Vive SOLO en esta computadora
-   (la planilla no tiene dónde guardarlo) — el cartel de la pantalla lo aclara. */
+/* ---- Lo contado en caja / lo que dice el extracto ----
+   Se guarda en la PLANILLA (fila del sistema `__arqueo_cuadre__`, también con fecha
+   vacía) para que se vea desde cualquier computadora, celular o TV. El localStorage
+   queda solo como espejo, para que se vea al toque antes de bajar la planilla.
+
+   Formato, legible desde la propia hoja:
+     dia|2026-08-03|Efectivo=1500 ; dia|2026-08-03|QR BISA=3900 ; mes|2026-08|Efectivo=…
+   `|` y `=` no aparecen en ningún método ni banco, así que no hay ambigüedad. */
 var CUADRE_LS='multiespumas_cuadre_v1';
-function cuadreArqueoTodo(){ try{ return JSON.parse(localStorage.getItem(CUADRE_LS)||'{}')||{}; }catch(e){ return {}; } }
-function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
-function cuadreArqueo(forma){ var v=cuadreArqueoTodo()[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
-function setCuadreArqueo(forma, valor){
-  var all=cuadreArqueoTodo(), k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
-  if(t==='') delete all[k]; else all[k]=parseMonto(t);
-  try{ localStorage.setItem(CUADRE_LS, JSON.stringify(all)); }catch(e){}
+var ARQUEO={};
+var ARQUEO_MAX=1200;   // tope de anotaciones guardadas: la celda de la planilla no es infinita
+function parseArqueo(txt){
+  var out={};
+  String(txt||'').split(';').forEach(function(s){
+    var m=s.trim().match(/^(dia|mes|todo)\|([^|]*)\|(.+?)=([\d.,-]+)$/);
+    if(!m) return;
+    out[m[1]+'|'+m[2]+'|'+m[3].trim()]=parseMonto(m[4]);
+  });
+  return out;
+}
+function textoArqueo(obj){
+  var ks=Object.keys(obj||{});
+  // Si algún día se pasa del tope, se tiran las anotaciones más viejas (las claves
+  // ordenan por período, así que el final de la lista es lo más reciente).
+  ks.sort(function(a,b){ return a<b?-1:1; });
+  if(ks.length>ARQUEO_MAX) ks=ks.slice(ks.length-ARQUEO_MAX);
+  return ks.map(function(k){ return k+'='+r2(obj[k]); }).join(' ; ');
+}
+function saveArqueoMirror(){ try{ localStorage.setItem(CUADRE_LS, JSON.stringify(ARQUEO)); }catch(e){} }
+function loadArqueoMirror(){
+  try{ ARQUEO=JSON.parse(localStorage.getItem(CUADRE_LS)||'{}')||{}; }catch(e){ ARQUEO={}; }
+  if(typeof ARQUEO!=='object'||!ARQUEO) ARQUEO={};
+}
+function guardarArqueo(){
+  saveArqueoMirror();
+  var fila=filaSistema(ARQUEO_ID, '🧮 ARQUEO DEL CUADRE — fila del sistema, NO BORRAR', textoArqueo(ARQUEO));
+  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
+  else queuePending(fila);
   renderCuadre();
 }
+function cuadreArqueoTodo(){ return ARQUEO; }
+function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
+function cuadreArqueo(forma){ var v=ARQUEO[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
+function setCuadreArqueo(forma, valor){
+  var k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
+  if(t==='') delete ARQUEO[k]; else ARQUEO[k]=parseMonto(t);
+  guardarArqueo();
+}
 function limpiarArqueo(){
-  var all=cuadreArqueoTodo(), pe=cuadrePeriodo(), pref=pe.modo+'|'+pe.val+'|', n=0;
-  Object.keys(all).forEach(function(k){ if(k.indexOf(pref)===0){ delete all[k]; n++; } });
-  try{ localStorage.setItem(CUADRE_LS, JSON.stringify(all)); }catch(e){}
+  var pe=cuadrePeriodo(), pref=pe.modo+'|'+pe.val+'|', n=0;
+  Object.keys(ARQUEO).forEach(function(k){ if(k.indexOf(pref)===0){ delete ARQUEO[k]; n++; } });
   toast(n?('Arqueo borrado ('+n+')'):'No había nada anotado','ok');
-  renderCuadre();
+  guardarArqueo();
+}
+function renderCuadreSiActivo(){
+  var v=document.getElementById('view-conta');
+  if(v && v.classList.contains('active') && contaTab()==='cuadre') renderCuadre();
 }
 /* Ventas con saldo, de la más vieja a la más nueva: lo que hay que salir a cobrar. */
 function cuadrePendientes(){
@@ -1553,7 +1592,7 @@ function renderCuadre(){
         '<td style="text-align:right">'+(anotadas?(difTotal===0?'<span class="cua-dif-ok">✅ cuadra</span>':'<span class="cua-dif-mal">'+(difTotal>0?'sobra ':'falta ')+fmtBs(Math.abs(difTotal))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td></tr>'+
       '</tbody></table></div>'+
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">'+
-        '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Eso queda guardado <b>en esta computadora</b>, no en la planilla.</span>'+
+        '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Queda guardado <b>en la planilla</b>, así que se ve desde cualquier computadora o celular.</span>'+
         '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="limpiarArqueo()">↺ Borrar lo anotado</button>'+
       '</div></div>';
   }
@@ -2381,19 +2420,34 @@ function mergePending(serverList){
    mira (`if (foundRow < 0 && p.fecha)`) y no hizo falta tocar el Apps Script.
    ========================================================================== */
 var CIERRE_ID='__dias_cerrados__';
+var ARQUEO_ID='__arqueo_cuadre__';
 var LS_CIERRES='ME_DIAS_CERRADOS_V1';
 var DIAS_CERRADOS=[];
 function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
-/* Saca la fila de cierres de la lista del servidor y deja los días en DIAS_CERRADOS. */
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID); }
+/* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
+function filaSistema(id, titulo, texto){
+  return { id:id, fecha:'', turno:'', vendedor:'', productos:[], cliente:titulo,
+           celular:'', zona:'', direccion:'', maps:'', pagado:false, saldo:0, ts:Date.now(),
+           metodoPago:'', observaciones:String(texto||''), estado:'', entregado:false,
+           vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
+           nroDia:0, verificado:false, fotos:[] };
+}
+/* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
-  var fila=null, resto=[];
-  (lista||[]).forEach(function(p){ if(esFilaCierre(p)) fila=p; else resto.push(p); });
-  if(fila){
-    DIAS_CERRADOS=String(fila.observaciones||'').split(/[^\d-]+/)
+  var resto=[], cie=null, arq=null;
+  (lista||[]).forEach(function(p){
+    if(esFilaCierre(p)) cie=p;
+    else if(p && String(p.id)===ARQUEO_ID) arq=p;
+    else resto.push(p);
+  });
+  if(cie){
+    DIAS_CERRADOS=String(cie.observaciones||'').split(/[^\d-]+/)
       .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); });
     DIAS_CERRADOS.sort();
     saveCierresMirror();
   }
+  if(arq){ ARQUEO=parseArqueo(arq.observaciones); saveArqueoMirror(); renderCuadreSiActivo(); }
   return resto;
 }
 function saveCierresMirror(){ try{ localStorage.setItem(LS_CIERRES, JSON.stringify(DIAS_CERRADOS)); }catch(e){} }
@@ -2402,12 +2456,7 @@ function loadCierresMirror(){
   if(!Array.isArray(DIAS_CERRADOS)) DIAS_CERRADOS=[];
 }
 function filaCierre(dias){
-  return { id:CIERRE_ID, fecha:'', turno:'', vendedor:'', productos:[],
-           cliente:'🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR',
-           celular:'', zona:'', direccion:'', maps:'', pagado:false, saldo:0, ts:Date.now(),
-           metodoPago:'', observaciones:(dias||[]).join(' '), estado:'', entregado:false,
-           vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
-           nroDia:0, verificado:false, fotos:[] };
+  return filaSistema(CIERRE_ID, '🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR', (dias||[]).join(' '));
 }
 function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
 function guardarCierres(){
