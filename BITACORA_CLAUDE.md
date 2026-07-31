@@ -540,6 +540,35 @@ o sea llegar al celular de las vendedoras.
 - Si alguien borra a mano esa fila de la planilla, **se reabren todos los días** — está avisado
   en la guía del admin.
 
+## 4p. N° de OC correlativo mensual (2026-07-31, arranca el 2026-08-01)
+
+Pedido: *"los pedidos desde el 1 agosto las OC se deben generar correlativa según se van
+colocando los pedidos indistinto del vendedor para tener un correlativo mensual. Que reinicia
+cada mes"*. Se preguntó y el usuario eligió **formato `08-001`** y **dejar ROHO como está**.
+
+- `OC_DESDE='2026-08-01'` + `nextOcMes(fecha)` → `MM-NNN`. **El mes es el de CARGA
+  (`contaFecha`, o sea `ts`), no el de entrega**: un pedido cargado el 31/08 para entregar el
+  02/09 lleva `08-xxx`. Es lo que pidió el usuario ("según se van colocando los pedidos").
+- `nextOcMes` filtra por **mes-año de carga Y prefijo**: con solo el prefijo, los `08-xxx` del
+  año anterior seguirían sumando.
+- **El número se asigna al GUARDAR, no al abrir el formulario.** Si se asignara al abrir, dos
+  vendedoras con el formulario abierto se llevarían el mismo. El campo muestra "va por 08-007"
+  como referencia, pero el definitivo sale en `submitPedido`.
+- **Editar NO reasigna** (`!isEdit`): el pedido conserva su número. Desde Administración el
+  campo queda editable para corregir a mano.
+- **⚠️ ROHO queda AFUERA a propósito.** Su "N° OC" es la orden de compra que manda el cliente:
+  es lo que identifica el pedido, lo que va a su Excel y lo que `ocRepetidaRoho` protege de
+  duplicados. Generárselo se lo borraría. **No "unificar" esto sin preguntar.**
+- El campo sale `readOnly` para todos menos ROHO y modo edición (`pintarCampoOc`, llamada
+  desde `applyVendedorLite`, que corre en cada cambio de vendedor).
+- **Límite conocido**: la asignación es del lado del navegador (max+1 sobre `STATE`), así que
+  dos que guarden **en el mismo segundo** podrían repetir número. `ocsRepetidas()` lo detecta y
+  `renderRevisar()` lo muestra en rojo en Administración para corregirlo desde Editar.
+  Hacerlo atómico exige mover la asignación al Apps Script (como `nroDia`) **y redeployarlo** —
+  se evitó porque el usuario viene pidiendo no tocar Google. Si aparecen repetidos seguido,
+  ese es el arreglo.
+- `nextOc()` (el viejo max+1 global, que estaba sin uso) fue reemplazado por este bloque.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

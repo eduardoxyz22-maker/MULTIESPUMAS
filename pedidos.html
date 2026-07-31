@@ -455,7 +455,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="grid2">
         <div class="field">
-          <label class="lb">N° OC <span class="hint oc-opcional">(orden de compra, opcional)</span><span class="req oc-roho">*</span> <span class="hint oc-roho">obligatorio para ROHO</span></label>
+          <label class="lb">N° OC <span class="hint" id="f-oc-hint">(orden de compra, opcional)</span><span class="req oc-roho">*</span> <span class="hint oc-roho">obligatorio para ROHO</span></label>
           <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
         </div>
         <div class="field">
@@ -998,7 +998,50 @@ function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/);
 function fmtFechaCorta(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]):String(iso||''); }
 function monthStr(){ return todayStr().slice(0,7); }
 function fmtBs(n){ n=Number(n)||0; return 'Bs '+n.toLocaleString('es-BO',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function nextOc(){ var mx=0; for(var i=0;i<STATE.length;i++){ var m=String(STATE[i].oc||'').match(/\d+/); if(m){var v=parseInt(m[0],10); if(v>mx)mx=v;} } return mx>0?(mx+1):1001; }
+/* ============================================================================
+   N° DE OC — CORRELATIVO MENSUAL AUTOMÁTICO (desde el 01/08/2026)
+   Formato MM-NNN ("08-001"): el número va corrido según se van cargando los
+   pedidos, sin importar quién los carga, y ARRANCA DE NUEVO cada mes.
+   El mes es el de CARGA del pedido, no el de entrega: un pedido cargado el 31/08
+   para entregar el 02/09 lleva 08-xxx.
+
+   ⚠️ ROHO queda AFUERA a propósito: su "N° OC" es el número de orden de compra
+   que manda el cliente, es lo que identifica el pedido y lo que va a su Excel.
+   Generárselo se lo borraría. Ver `ocRepetidaRoho`.
+   ========================================================================== */
+var OC_DESDE='2026-08-01';   // desde qué día se empieza a numerar solo
+function ocAutoActivo(f){ return (f||todayStr()) >= OC_DESDE; }
+function pad3(n){ n=String(n); while(n.length<3) n='0'+n; return n; }
+function ocMesDe(f){ var m=String(f||todayStr()).match(/^\d{4}-(\d{2})/); return m?m[1]:''; }
+/* ¿Es un número generado por el panel (y no algo que escribieron a mano)? */
+function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(String(oc||'').trim()); }
+/* El próximo del mes. Se mira el MES DE CARGA de cada pedido (no solo el prefijo):
+   si no, el "08" del año pasado seguiría sumando al de este año. */
+function nextOcMes(fecha){
+  var f=fecha||todayStr(), pre=ocMesDe(f), mes=String(f).slice(0,7), mx=0;
+  for(var i=0;i<STATE.length;i++){
+    var p=STATE[i];
+    if(!p || esRoho(p.vendedor)) continue;
+    if(contaFecha(p).slice(0,7)!==mes) continue;
+    var m=String(p.oc||'').trim().match(/^(\d{2})-(\d+)$/);
+    if(!m || m[1]!==pre) continue;
+    var v=parseInt(m[2],10); if(v>mx) mx=v;
+  }
+  return pre+'-'+pad3(mx+1);
+}
+/* Si dos cargaron en el mismo instante puede repetirse un número. Es MUY poco
+   probable (hay que guardar en el mismo segundo) pero no imposible sin tocar el
+   Apps Script, así que se detecta y se muestra en Administración para corregirlo. */
+function ocsRepetidas(){
+  var vistas={}, rep={};
+  for(var i=0;i<STATE.length;i++){
+    var p=STATE[i]; if(!p || esRoho(p.vendedor)) continue;
+    var oc=String(p.oc||'').trim(); if(!ocAuto(oc)) continue;
+    var k=contaFecha(p).slice(0,7)+'|'+oc;
+    if(vistas[k]) rep[oc]=(rep[oc]||1)+1; else vistas[k]=1;
+  }
+  return Object.keys(rep).sort();
+}
 function nextNroDia(fecha){ var mx=0,n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha){ n++; var v=Number(STATE[i].nroDia)||0; if(v>mx)mx=v; } } return Math.max(mx,n)+1; }
 // N° del día CALCULADO por posición (orden de carga) dentro de cada fecha de entrega.
 // Así la secuencia queda siempre contigua: al borrar un pedido, los demás de ese día se renumeran solos.
@@ -1977,6 +2020,11 @@ function submitPedido(){
   }
   // ROHO se identifica por el N° de OC (es lo que va al Excel), así que no puede repetirse.
   var ocSel=cleanOC(document.getElementById('f-oc').value);
+  /* Correlativo mensual de OC (desde el 01/08/2026). Se asigna acá, al guardar, y NO
+     al abrir el formulario: si se asignara antes, dos vendedoras con el formulario
+     abierto se llevarían el mismo número. Editando NO se toca: el pedido conserva el
+     suyo. ROHO queda afuera — su OC es el número que manda el cliente. */
+  if(!isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo()) ocSel=nextOcMes();
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -2139,6 +2187,20 @@ function applyVendedorLite(){
      sacara en editPedido(), volvería a aparecer sola. */
   var ff=document.getElementById('f-fecha');
   if(ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min = lite ? todayStr() : tomorrowStr(); }
+  pintarCampoOc(roho);
+}
+/* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
+   ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
+function pintarCampoOc(roho){
+  var fo=document.getElementById('f-oc'), hint=document.getElementById('f-oc-hint');
+  if(!fo) return;
+  var manual = roho || !!EDIT_ID || !ocAutoActivo();
+  fo.readOnly=!manual;
+  fo.style.background = manual ? '' : 'var(--gray-lt)';
+  fo.style.color      = manual ? '' : 'var(--muted)';
+  fo.placeholder = manual ? 'Ej. 1024' : 'Se asigna solo al guardar';
+  // En ROHO el cartel lo pone el "* obligatorio para ROHO": si no, se contradicen.
+  if(hint) hint.textContent = roho ? '' : (manual ? '(orden de compra, opcional)' : ('(se asigna solo — va por '+nextOcMes()+')'));
 }
 function resetForm(){
   EDIT_ID=null;
@@ -2722,7 +2784,16 @@ function renderRevisar(){
   var man=tomorrowStr();
   var manList=STATE.filter(function(p){return p.fecha===man;});
   var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
-  if(!manList.length || !probl.length){ el.className=''; el.innerHTML=''; return; }
+  var rep=ocsRepetidas();
+  var avisoOc = rep.length
+    ? '<div style="margin-top:6px;font-size:.78rem;color:var(--red);font-weight:700">🔢 N° de OC repetido: '+esc(rep.join(', '))+' — corregilo desde Editar.</div>'
+    : '';
+  if(!manList.length || !probl.length){
+    // Aunque no haya nada que revisar de mañana, una OC repetida SÍ hay que mostrarla.
+    el.className = avisoOc ? 'revisar' : '';
+    el.innerHTML = avisoOc;
+    return;
+  }
   var cnt={'sin chofer':0,'sin Maps':0,'sin dirección':0,'sin celular':0};
   probl.forEach(function(o){ o.miss.forEach(function(m){ cnt[m]++; }); });
   var resumen=Object.keys(cnt).filter(function(k){return cnt[k];}).map(function(k){return cnt[k]+' '+k;}).join(' · ');
@@ -2737,7 +2808,7 @@ function renderRevisar(){
         '<button class="rowbtn" style="margin-left:auto" onclick="showPedidoModal(\''+p.id+'\')">Abrir</button></div>';
     }).join('');
   }
-  el.className='revisar'; el.innerHTML=head+detail;
+  el.className='revisar'; el.innerHTML=head+detail+avisoOc;
 }
 function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
 
