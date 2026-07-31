@@ -382,6 +382,33 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
 - **No tiene candado**: quedó abierta como "Mis pedidos" y "Chofer", que también muestran plata.
   Se le avisó al usuario que puede pedir que se le ponga contraseña.
 
+## 4k. Ancho de la página (2026-07-31)
+
+Queja del usuario: *"¿por qué no ocupas todo el ancho de la página? se ve todo muy contenido"*.
+La tabla de pedidos vivía en 1136 px y **se desplazaba ~830 px de costado** mientras sobraban
+700 px de blanco a cada lado.
+
+- **`--wrap` / `--wrap-ancho` en `:root`** + `body.ancha`. `showView()` pone/saca la clase:
+  `document.body.classList.toggle('ancha', v!=='form')`.
+  - **El formulario de carga SIGUE angosto (1180/680)** a propósito: está pensado para el
+    celular, y estirar sus campos a 1900 px lo empeora. Todo lo demás son tablas y listas.
+  - `.header-in`, `.nav` y `.wrap` **comparten la variable**. Tienen que ir juntos: si la barra
+    de pestañas no acompaña, la pestaña activa deja de estar pegada a la esquina de la tarjeta.
+  - `transition:max-width .2s` para que el cambio de pestaña no sea un salto seco.
+    **Ojo al testear: hay que esperar ~350 ms o se mide a mitad de la animación.**
+- **Resultado**: tabla de pedidos 1136 → 1798 px (sobran 167 px de scroll en vez de 830) y
+  Contabilidad entra **entera, sin scroll**.
+- **Lo que NO se estira**, porque a lo ancho quedaba peor que antes:
+  - `.metrics` → tope 1180 px (a 450 px por tarjeta quedan casi vacías).
+  - `.two-col` (consolidados) → tope 1400 px (3 columnas de texto a 900 px dejan huecos enormes).
+  - `.filters .field` → tope 520 px (el buscador se comía media pantalla).
+- **`#mis-lista` y `#cho-lista` pasaron a grilla**
+  (`repeat(auto-fill,minmax(min(520px,100%),1fr))`): en escritorio van 3 fichas por fila. Una
+  ficha estirada a 1800 px deja el nombre del cliente a un palmo de sus etiquetas.
+  El `min(...,100%)` es lo que mantiene **una sola columna en el celular** — sin eso, la ficha
+  desborda la pantalla. Verificado a 390 px: 1 columna y cero desplazamiento lateral.
+  - ⚠️ `renderMis` ponía `tbl.style.display='block'` y **eso pisaba la grilla**: ahora va `''`.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
