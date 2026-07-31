@@ -2079,6 +2079,30 @@ function renderCompForm(esQR){
     : ('<button type="button" class="btn btn-sm" style="width:100%;background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:12px" onclick="adjuntarCompForm()">📎 Adjuntar la captura del pago</button>');
 }
 function quitarCompForm(){ FORM_COMP=''; renderCompForm(true); }
+/* El mismo gato del combo, para el mismo tipo de olvido. La imagen se comparte a
+   propósito: es la misma y no tiene sentido subirla dos veces al repo.
+   Va para TODAS las vendedoras menos Eduardo Añez y ROHO — a ellos el panel ni
+   siquiera les pide método de pago (formulario "lite"), así que tampoco comprobante. */
+function memeComprobante(vendedor){
+  var quien=String(vendedor||'').trim().split(' ')[0];
+  openModal('<div class="modal-h" style="background:var(--red)"><h3>📎 Falta el comprobante'+(quien?(', '+esc(quien)):'')+'…</h3><button class="modal-x" onclick="closeModal();focoComprobante()">✕</button></div>'+
+    '<div class="modal-b" style="text-align:center">'+
+      '<img src="combo-instrucciones.jpg" alt="El comprobante del QR es obligatorio" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
+      '<p style="font-size:.95rem;color:var(--red);font-weight:800;margin-bottom:6px">El pago es por QR y no adjuntaste la captura.</p>'+
+      '<p style="font-size:.88rem;color:var(--muted)">Es <b>obligatoria</b>: sin ella contabilidad no puede confirmar que la plata entró, y el pedido <b>no se guarda</b>.</p>'+
+      '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-primary btn-sm" style="width:100%" onclick="closeModal();focoComprobante()">Ya la adjunto</button></div>'+
+    '</div>');
+  return true;
+}
+/* Igual que focoProducto: el navegador manda el foco al body al cerrar el modal,
+   así que hay que esperar un tick para llevarlo al bloque del comprobante. */
+function focoComprobante(){
+  setTimeout(function(){
+    var w=document.getElementById('wrap-comp'); if(!w) return;
+    w.classList.add('seg-err'); setTimeout(function(){ w.classList.remove('seg-err'); },1800);
+    try{ w.scrollIntoView({block:'center'}); }catch(e){}
+  }, 0);
+}
 function adjuntarCompForm(){
   if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
   var el=document.getElementById('fcomp-input'); if(!el) return;
@@ -2127,9 +2151,8 @@ function submitPedido(){
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
     if(segVal('f-metodo')==='QR' && !FORM_COMP){
-      toast('📎 Falta la CAPTURA del pago por QR — es obligatoria','err');
-      var wc=document.getElementById('wrap-comp');
-      if(wc){ wc.classList.add('seg-err'); setTimeout(function(){ wc.classList.remove('seg-err'); },1800); wc.scrollIntoView({block:'center'}); }
+      // El gato en vez del toast: el aviso suelto se les pasaba de largo.
+      memeComprobante(vendedor);
       return;
     }
     if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }

@@ -634,6 +634,13 @@ cliente o pedido, en contabilidad"*.
   - **`metodoBase()` y `bancoDe()` también llaman a `compDeTexto()`.** Sin eso,
     `bancoDe("QR BISA %ABC")` devolvía vacío y se perdía el banco en todo el panel — lo cazó
     `test_banco`.
+  - **El aviso es el MEME del gato** (`memeComprobante`), no un toast: el aviso suelto se les
+    pasaba de largo. **Reusa `combo-instrucciones.jpg`** a propósito — es la misma imagen que
+    mandó el usuario para el combo ("el shampoo trae instrucciones"), no tiene sentido
+    duplicarla en el repo. Va para **todas menos Eduardo Añez y ROHO**, que por ser
+    formulario "lite" no llevan ni método de pago.
+  - `focoComprobante()` marca el bloque en rojo al cerrar el modal, con el mismo
+    `setTimeout(...,0)` que `focoProducto` (el navegador manda el foco al body al cerrar).
   - ⚠️ `renderCompForm()` **NO borra `FORM_COMP` al ocultarse**: corre muchas veces mientras se
     arma el formulario y en `editPedido` llega ANTES de que se muestre el bloque de método, así
     que borrarlo ahí perdía el comprobante del pedido que se estaba editando y después no
