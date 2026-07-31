@@ -580,6 +580,28 @@ cada mes"*. Se preguntó y el usuario eligió **formato `08-001`** y **dejar ROH
   ese es el arreglo.
 - `nextOc()` (el viejo max+1 global, que estaba sin uso) fue reemplazado por este bloque.
 
+## 4q. Un vendedor = una sola persona (2026-07-31)
+
+Reporte del usuario: *"unifica carola chavez hay 2"*. En los desplegables aparecía dos veces
+porque en la planilla su nombre está escrito de más de una forma (tilde / mayúsculas /
+espacio doble), y **cada escritura arrastraba la mitad de sus pedidos**: al filtrar por una,
+la otra mitad desaparecía.
+
+- **`normNombre(v)`**: saca tildes (NFD + quita diacríticos), colapsa espacios y pasa a
+  minúsculas. **Todas** las comparaciones de vendedor pasan por ahí (`mismoVendedor`).
+- **`nombreCanonico(v)`**: si el nombre está en `VENDEDORES`, devuelve ESA escritura. Es lo
+  que se muestra en desplegables, datalist y consolidados. Un nombre que no está en la lista
+  se deja como vino (no se inventa nada).
+- Tocados: los dos desplegables de vendedor, el datalist del formulario, `contaLista`,
+  `cuadreEsDe`, `renderMis`, `abrirMisAvisos`, los dos consolidados por vendedor
+  (`tbl-vendedor` y el del reporte), `bancosDeVendedor`, `memeCombo`, `esRoho`,
+  `esVendedorLite` y `contaExcluido`.
+- **Efecto colateral bueno**: "Eduardo Añez" y "Eduardo Anez" también quedan unificados; antes
+  eso estaba parcheado a mano en dos funciones distintas.
+- **No se reescribió la planilla.** La unificación es al leer y al comparar: los pedidos
+  viejos conservan su texto original. Si alguna vez se quiere dejar la hoja prolija, hay que
+  reescribir cada fila (lento y riesgoso) — no hacía falta para el problema reportado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

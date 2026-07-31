@@ -852,6 +852,22 @@ var SHEETS_URL = 'https://script.google.com/macros/s/AKfycbw3IUxaRvdpvFJOzbuZ78C
 var CONNECTED = /^https:\/\/script\.google\.com\/.*\/exec/.test(SHEETS_URL);
 
 var VENDEDORES = ['Juan Pablo Paredes','Fernando Peinado','Mauricio Merida','Carola Chavez','Isabel Robledo','Mirian Salazar','Maria Flores','Jonathan Monje','Eduardo Añez','ROHO'];
+/* ⚠️ El mismo nombre llega escrito de varias formas ("Carola Chavez" / "Carola Chávez" /
+   "carola  chavez") y aparecía DOS VECES en los desplegables, con los pedidos repartidos
+   entre las dos. Todas las comparaciones de vendedor pasan por acá: sin tildes, sin
+   mayúsculas y sin espacios de más. También unifica "Eduardo Añez" con "Eduardo Anez". */
+function normNombre(v){
+  var t=String(v==null?'':v).replace(/\s+/g,' ').trim();
+  if(t.normalize) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return t.toLowerCase();
+}
+/* Cómo se ESCRIBE ese nombre: si está en la lista oficial, se usa esa forma. */
+function nombreCanonico(v){
+  var k=normNombre(v);
+  for(var i=0;i<VENDEDORES.length;i++) if(normNombre(VENDEDORES[i])===k) return VENDEDORES[i];
+  return String(v==null?'':v).replace(/\s+/g,' ').trim();
+}
+function mismoVendedor(a,b){ return normNombre(a)===normNombre(b); }
 
 var LS_KEY   = 'ME_PEDIDOS_V1';   // cache local (espejo)
 var LS_ADMIN = 'ME_ADMIN_HASH_V1';
@@ -1251,9 +1267,9 @@ function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoLocal(new Date(t))
    desplegable, del resumen y del Excel. Sacar un nombre de acá lo devuelve a la vista. */
 var CONTA_EXCLUIR=['ROHO','Eduardo Añez'];
 function contaExcluido(v){
-  var s=String(v||'').trim().toLowerCase();
-  for(var i=0;i<CONTA_EXCLUIR.length;i++) if(CONTA_EXCLUIR[i].toLowerCase()===s) return true;
-  return s==='eduardo anez';   // sin la ñ, como lo tolera esVendedorLite
+  // normNombre ya saca tildes y ñ, así que "Eduardo Añez" y "Eduardo Anez" caen igual.
+  for(var i=0;i<CONTA_EXCLUIR.length;i++) if(mismoVendedor(CONTA_EXCLUIR[i], v)) return true;
+  return false;
 }
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
@@ -1265,16 +1281,19 @@ function llenarSelectContaVendedor(){
 function llenarUnSelectVendedor(id){
   var sel=document.getElementById(id); if(!sel) return;
   var actual=sel.value||'';
+  // Se agrupa por nombre NORMALIZADO: si no, "Carola Chavez" y "Carola Chávez" salían dos veces.
   var seen={}, list=[];
-  VENDEDORES.forEach(function(v){ if(v&&!seen[v]&&!contaExcluido(v)){ seen[v]=1; list.push(v); } });
-  STATE.forEach(function(p){ var v=String(p.vendedor||'').trim(); if(v&&!seen[v]&&!contaExcluido(v)){ seen[v]=1; list.push(v); } });
+  var meter=function(v){ var k=normNombre(v); if(!k||seen[k]||contaExcluido(v)) return; seen[k]=1; list.push(nombreCanonico(v)); };
+  VENDEDORES.forEach(meter);
+  STATE.forEach(function(p){ meter(p.vendedor); });
   list.sort(function(a,b){ return a.localeCompare(b,'es'); });
   sel.innerHTML='<option value="">Todos</option>'+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
-  if(actual && list.indexOf(actual)>=0) sel.value=actual;   // no perder lo elegido al refrescar
+  // Al refrescar no se pierde lo elegido, aunque estuviera escrito distinto.
+  if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
 }
 /* El vendedor elegido en el cuadre ('' = todos). */
 function cuadreVendedor(){ return ((document.getElementById('cua-vendedor')||{}).value||'').trim(); }
-function cuadreEsDe(p, v){ return !v || String(p&&p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); }
+function cuadreEsDe(p, v){ return !v || mismoVendedor(p&&p.vendedor, v); }
 function contaLista(){
   var modo=segVal('cta-mode')||'mes';
   var q=(document.getElementById('cta-search')||{}).value||'';
@@ -1282,7 +1301,7 @@ function contaLista(){
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
   var list=STATE.filter(function(p){
     if(contaExcluido(p.vendedor)) return false;
-    if(vend && String(p.vendedor||'').trim().toLowerCase()!==vend) return false;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return false;
     var f=contaFecha(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
     if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
@@ -1907,10 +1926,9 @@ var BANCOS_TODOS=['Ganadero','BISA','Económico'];
 /* Los que no están en ninguna lista (Eduardo Añez, ROHO) ven todos: mejor eso que
    trabarlos, y no se les inventa un banco que no es el suyo. */
 function bancosDeVendedor(v){
-  var s=String(v||'').trim().toLowerCase();
   for(var i=0;i<BANCOS_POR_VENDEDOR.length;i++){
     var g=BANCOS_POR_VENDEDOR[i];
-    for(var j=0;j<g.vendedores.length;j++) if(g.vendedores[j].toLowerCase()===s) return g.bancos;
+    for(var j=0;j<g.vendedores.length;j++) if(mismoVendedor(g.vendedores[j], v)) return g.bancos;
   }
   return BANCOS_TODOS;
 }
@@ -2182,8 +2200,7 @@ function rechazarCombo(txt, inputDesc, inputCod){
    está adentro del modal, así que nadie se queda sin saber qué hacer. */
 var MEME_COMBO=['Fernando Peinado','Mauricio Merida','Juan Pablo Paredes'];
 function memeCombo(vendedor, queEscribio){
-  var v=String(vendedor||'').trim().toLowerCase();
-  var toca=MEME_COMBO.some(function(n){ return n.toLowerCase()===v; });
+  var toca=MEME_COMBO.some(function(n){ return mismoVendedor(n, vendedor); });
   if(!toca) return false;
   openModal('<div class="modal-h" style="background:var(--red)"><h3>🚫 Otra vez el combo, '+esc(String(vendedor).split(' ')[0])+'…</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b" style="text-align:center">'+
@@ -2206,8 +2223,8 @@ function ocRepetidaRoho(oc, exceptoId){
   }
   return null;
 }
-function esRoho(v){ return String(v||'').trim().toLowerCase()==='roho'; }
-function esVendedorLite(v){ var s=String(v||'').trim().toLowerCase(); return s==='eduardo añez'||s==='eduardo anez'||s==='roho'; }
+function esRoho(v){ return mismoVendedor(v,'ROHO'); }
+function esVendedorLite(v){ return mismoVendedor(v,'Eduardo Añez') || esRoho(v); }
 function applyVendedorLite(){
   updateBancoVisibility();   // cada vendedora cobra en su banco
   var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form');
@@ -2327,10 +2344,15 @@ function realDelete(id){
    ========================================================================== */
 function refreshDatalists(){
   var dp=document.getElementById('dl-productos'); if(dp && !dp.childNodes.length){ Object.keys(NOMBRES).sort().forEach(function(lb){ var o=document.createElement('option'); o.value=lb; dp.appendChild(o); }); }
+  // Una sola sugerencia por persona, con la escritura oficial: si no, la lista ofrecía
+  // "Carola Chavez" y "Carola Chávez" y cada una arrastraba la mitad de los pedidos.
   var dv=document.getElementById('dl-vendedores'); dv.innerHTML='';
-  var vends={}; VENDEDORES.forEach(function(v){vends[v]=1;});
-  STATE.forEach(function(p){ if(p.vendedor)vends[p.vendedor]=1; });
-  Object.keys(vends).forEach(function(v){ var o=document.createElement('option'); o.value=v; dv.appendChild(o); });
+  var vends={}, orden=[];
+  var meterV=function(v){ var k=normNombre(v); if(!k||vends[k]) return; vends[k]=1; orden.push(nombreCanonico(v)); };
+  VENDEDORES.forEach(meterV);
+  STATE.forEach(function(p){ meterV(p.vendedor); });
+  orden.sort(function(x,y){ return x.localeCompare(y,'es'); });
+  orden.forEach(function(v){ var o=document.createElement('option'); o.value=v; dv.appendChild(o); });
   var dz=document.getElementById('dl-zonas'); dz.innerHTML='';
   var zonas={}; STATE.forEach(function(p){ if(p.zona)zonas[p.zona]=1; });
   Object.keys(zonas).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
@@ -2704,7 +2726,7 @@ function renderAdmin(){
     '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
 
   var byV={};
-  list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
+  list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,saldo:0}; byV[k].n++; if(!p.pagado)byV[k].saldo+=Number(p.saldo)||0; });
   var vRows=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){ return '<tr><td>'+esc(k)+'</td><td class="num">'+byV[k].n+'</td><td class="num">'+fmtBs(byV[k].saldo)+'</td></tr>'; }).join('');
   document.getElementById('tbl-vendedor').innerHTML='<thead><tr><th>Vendedor</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(vRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
@@ -3137,7 +3159,7 @@ function autoAbrirAvisos(v, mine){
 function abrirMisAvisos(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
   var v=(mv.value||'').trim(); if(!v) return;
-  var mine=STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
+  var mine=STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   var q=misPendientes(mine);
   var h='';
   if(q.sinStock.length){
@@ -3694,7 +3716,7 @@ function renderMis(){
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-lista'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
-  var mine=todos ? STATE.slice() : STATE.filter(function(p){ return String(p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); });
+  var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
   if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
   if(mine.length && !todos) autoAbrirAvisos(v, mine);
@@ -4263,7 +4285,7 @@ function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
   list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=Number(p.cobradoBs)||0; else pend+=Number(p.saldo)||0; });
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
-  var byV={}; list.forEach(function(p){ var k=p.vendedor||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
+  var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=Number(p.cobradoBs)||0; else byC[c].pend+=Number(p.saldo)||0; });
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
