@@ -101,6 +101,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 
 .seg{display:inline-flex;border:1px solid var(--gray-md);border-radius:var(--r-md);overflow:hidden;background:#fff}
 .seg.seg-err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt);animation:segpulse .4s ease-in-out 2}
+/* El aviso de "falta el comprobante" va sobre un .field, no sobre un .seg */
+.field.seg-err{border:1px solid var(--red);border-radius:var(--r-md);padding:8px;box-shadow:0 0 0 3px var(--red-lt);animation:segpulse .4s ease-in-out 2}
 @keyframes segpulse{0%,100%{box-shadow:0 0 0 3px var(--red-lt)}50%{box-shadow:0 0 0 5px var(--red-border)}}
 .seg button{padding:11px 22px;border:none;background:transparent;font:inherit;font-weight:700;font-size:.85rem;color:var(--muted);cursor:pointer;transition:all .12s}
 .seg button.active{background:var(--teal);color:#fff}
@@ -564,6 +566,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="seg mtd" id="f-banco"></div>
       </div>
 
+      <div class="field" id="wrap-comp" style="display:none">
+        <label class="lb">Comprobante del QR <span class="req">*</span> <span class="hint">la captura del pago</span></label>
+        <div id="f-comp-box"></div>
+      </div>
+
       <div class="sec">📝 Observaciones</div>
       <div class="field">
         <textarea id="f-obs" placeholder="Notas del pedido: entregar después de las 15h, llamar antes, color específico, etc. (opcional)"></textarea>
@@ -832,6 +839,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
 <!-- Comprobante del pago: SIN capture, para poder elegir una captura de pantalla ya guardada -->
 <input type="file" id="comp-input" accept="image/*" style="display:none" onchange="onCompElegido(event)">
+<input type="file" id="fcomp-input" accept="image/*" style="display:none" onchange="onCompFormElegido(event)">
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -2015,14 +2023,21 @@ function bancosDeVendedor(v){
 }
 function esBanco(b){ var s=String(b||'').trim().toLowerCase(); for(var i=0;i<BANCOS_TODOS.length;i++) if(BANCOS_TODOS[i].toLowerCase()===s) return BANCOS_TODOS[i]; return ''; }
 /* "QR Ganadero" → "QR" · "Efectivo" → "Efectivo". Para las estadísticas y el selector. */
+/* El método suelto que deja la vendedora puede traer pegado el comprobante:
+   "QR BISA %1AbC_xyz". Todo lo que lea método o banco tiene que sacarlo primero. */
+function compDeTexto(t){
+  var m=String(t||'').match(/^(.*?)\s*%\s*([A-Za-z0-9_-]+)\s*$/);
+  return m ? { txt:m[1].trim(), comp:m[2] } : { txt:String(t||'').trim(), comp:'' };
+}
 function metodoBase(m){
-  var s=String(m||'').trim();
+  var s=compDeTexto(m).txt;
   var mm=s.match(/^(Efectivo|QR|Tarjeta)\b/i);
   return mm ? (mm[1].toUpperCase()==='QR'?'QR':(mm[1].charAt(0).toUpperCase()+mm[1].slice(1).toLowerCase())) : s;
 }
 /* "QR Ganadero" → "Ganadero". Vacío si no lleva banco. */
 function bancoDe(m){
-  var mm=String(m||'').trim().match(/^QR\s+(.+)$/i);
+  // El texto puede traer el comprobante pegado ("QR BISA %1AbC"): se saca antes de leer.
+  var mm=compDeTexto(m).txt.match(/^QR\s+(.+)$/i);
   return mm ? (esBanco(mm[1])||'') : '';
 }
 function renderBancos(){
@@ -2040,6 +2055,51 @@ function updateBancoVisibility(){
   if(esQR) renderBancos();
   wrap.style.display=esQR?'block':'none';
   if(!esQR) segSet('f-banco','');
+  renderCompForm(esQR);
+}
+/* ---- Comprobante del QR en el formulario de carga (OBLIGATORIO) ----
+   Se sube apenas se elige la imagen y queda en FORM_COMP hasta que se guarda el
+   pedido; ahí se pega al método ("QR BISA %1AbC_xyz") y de ahí lo lee Contabilidad. */
+var FORM_COMP='';
+function renderCompForm(esQR){
+  var wrap=document.getElementById('wrap-comp'), box=document.getElementById('f-comp-box');
+  if(!wrap||!box) return;
+  wrap.style.display = esQR ? 'block' : 'none';
+  /* ⚠️ Al ocultar NO se borra FORM_COMP: esta función corre muchas veces mientras se
+     arma el formulario (applyVendedorLite, editPedido…) y en editPedido llega ANTES de
+     que se muestre el bloque de método, así que borrarlo acá perdía el comprobante del
+     pedido que se estaba editando y después no dejaba guardar. Se limpia en resetForm. */
+  if(!esQR){ box.innerHTML=''; return; }
+  box.innerHTML = FORM_COMP
+    ? ('<div style="display:flex;align-items:center;gap:10px;border:1px solid var(--green-border);background:var(--green-lt);border-radius:var(--r-md);padding:8px 11px">'+
+         '<img src="'+fotoThumb(FORM_COMP)+'" alt="Comprobante del pago" style="height:56px;border-radius:8px;cursor:pointer" onclick="window.open(\''+fotoVer(FORM_COMP)+'\',\'_blank\')">'+
+         '<b style="color:var(--green);font-size:.85rem">✅ Comprobante listo</b>'+
+         '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="quitarCompForm()">✕ Cambiar</button>'+
+       '</div>')
+    : ('<button type="button" class="btn btn-sm" style="width:100%;background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:12px" onclick="adjuntarCompForm()">📎 Adjuntar la captura del pago</button>');
+}
+function quitarCompForm(){ FORM_COMP=''; renderCompForm(true); }
+function adjuntarCompForm(){
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  var el=document.getElementById('fcomp-input'); if(!el) return;
+  el.value=''; el.click();
+}
+function onCompFormElegido(ev){
+  var f=(ev.target.files||[])[0]; if(!f) return;
+  toast('Achicando y subiendo el comprobante…','ok');
+  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
+    return apiFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl);
+  }).then(function(res){
+    if(!res || !res.ok || !res.fotoId){
+      toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
+                               : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
+      return;
+    }
+    FORM_COMP=res.fotoId;
+    var w=document.getElementById('wrap-comp'); if(w) w.classList.remove('seg-err');
+    renderCompForm(true);
+    toast('Comprobante listo ✓','ok');
+  }).catch(function(e){ toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err'); });
 }
 
 function submitPedido(){
@@ -2066,6 +2126,12 @@ function submitPedido(){
   var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
+    if(segVal('f-metodo')==='QR' && !FORM_COMP){
+      toast('📎 Falta la CAPTURA del pago por QR — es obligatoria','err');
+      var wc=document.getElementById('wrap-comp');
+      if(wc){ wc.classList.add('seg-err'); setTimeout(function(){ wc.classList.remove('seg-err'); },1800); wc.scrollIntoView({block:'center'}); }
+      return;
+    }
     if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
@@ -2084,7 +2150,8 @@ function submitPedido(){
   var _acuVal = _pagSI?0:_acu;
   var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
   var _metForm = (_pagSI || _acuVal>0)
-        ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):''))
+        ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):'')+
+           ((segVal('f-metodo')==='QR' && FORM_COMP)?(' %'+FORM_COMP):''))
         : '';
   var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
@@ -2357,6 +2424,7 @@ function resetForm(){
   document.getElementById('f-nit').value='';
   document.getElementById('wrap-metodo').style.display='none';
   document.getElementById('wrap-banco').style.display='none'; segSet('f-banco','');
+  FORM_COMP=''; renderCompForm(false);
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
@@ -2392,6 +2460,7 @@ function editPedido(id){
      suelto sino la lista entera: el que corresponde mostrar es el del anticipo. Sin
      esto el segmento queda sin marcar y el pedido no se puede volver a guardar. */
   var _mf=metodoFormulario(rec);
+  FORM_COMP=_mf.comp||'';                       // no perder el comprobante al editar
   segSet('f-metodo', _mf.metodo);
   updateBancoVisibility(); segSet('f-banco', _mf.banco);
   updateMetodoVisibility();
@@ -4473,7 +4542,10 @@ function cobrosDe(p){
   if(a.length) return a;
   // Formato viejo: un solo método sin monto anotado (lo que dejaba la vendedora al cargar).
   var t=sinMarcaReg(p.metodoPago);
-  if(p.pagado && t && !todo.length) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:'', nota:'', comp:''}];
+  if(p.pagado && t && !todo.length){
+    var cd=compDeTexto(t);
+    return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comp:cd.comp}];
+  }
   return [];
 }
 /* El ANTICIPO: lo que el cliente dejó al comprar. Si todavía no está escrito en el
@@ -4486,8 +4558,9 @@ function anticipoDe(p){
   var acu=Number(p.acuenta)||0; if(!(acu>0)) return null;
   var t=sinMarcaReg(p.metodoPago);
   var suelto = t && !parseCobros(t).length;   // "Efectivo" / "QR BISA": método sin monto
-  return { metodo:(suelto?metodoBase(t):'')||'', banco:(suelto?bancoDe(t):''), monto:r2(acu),
-           fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:'', anticipo:true };
+  var cd=compDeTexto(t);
+  return { metodo:(suelto?metodoBase(cd.txt):'')||'', banco:(suelto?bancoDe(cd.txt):''), monto:r2(acu),
+           fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:(suelto?cd.comp:''), anticipo:true };
 }
 /* Total de la VENTA = el anticipo + lo que quedó por cobrar. La planilla no tiene
    columna "Total", así que se reconstruye. No confundir con objetivoCobro(), que es
@@ -4497,9 +4570,9 @@ function ventaTotal(p){ var a=anticipoDe(p); return r2(objetivoCobro(p) + (a?(Nu
    historial de pagos hay que sacar el método del anticipo, no del texto crudo. */
 function metodoFormulario(rec){
   var t=sinMarcaReg(rec&&rec.metodoPago);
-  if(!parseCobros(t).length) return { metodo:metodoBase(t), banco:bancoDe(t) };
+  if(!parseCobros(t).length){ var cd=compDeTexto(t); return { metodo:metodoBase(cd.txt), banco:bancoDe(cd.txt), comp:cd.comp }; }
   var c=anticipoDe(rec)||parseCobros(t)[0]||{};
-  return { metodo:c.metodo||'', banco:c.banco||'' };
+  return { metodo:c.metodo||'', banco:c.banco||'', comp:c.comp||'' };
 }
 function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
 /* Lo que el vendedor dijo que hay que cobrar = lo que falta + lo ya cobrado.
@@ -4513,7 +4586,7 @@ function cobrosResumen(p){
   // Sin cobros, el campo puede traer solo el método suelto ("QR BISA"). Si lo que trae
   // es el historial (anticipo incluido) NO se muestra crudo: se arma legible.
   if(!a.length){
-    var t=sinMarcaReg(p.metodoPago);
+    var t=compDeTexto(sinMarcaReg(p.metodoPago)).txt;
     if(!parseCobros(t).length) return esc(t);
     var ant=anticipoDe(p);
     return ant ? (esc(cobroMetodoTxt(ant)||'a cuenta')+' '+fmtBs(ant.monto)) : '';

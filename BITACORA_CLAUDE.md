@@ -625,6 +625,19 @@ cliente o pedido, en contabilidad"*.
   `cobrosDe()`; el anticipo NO se puede editar porque no está en la lista de cobros.
 - El botón sale **solo con QR** (para Efectivo no hay comprobante). Si algún día se quiere en
   Tarjeta, es agregar el método a esa condición.
+- **También en el FORMULARIO de carga, y OBLIGATORIO** (pedido del usuario: *"al meter pedido
+  no sale el botón adjuntar obligatorio comprobante"*). Bloque `wrap-comp`, visible cuando el
+  método es QR; sin captura `submitPedido` **no guarda**.
+  - Ahí todavía no existe el ledger (la venta no tiene pagos anotados), así que el id se pega
+    al **método suelto**: `metodoPago = "QR BISA %1AbC_xyz"`. `anticipoDe` y el fallback de
+    `cobrosDe` lo separan con `compDeTexto()` y lo devuelven en `comp`.
+  - **`metodoBase()` y `bancoDe()` también llaman a `compDeTexto()`.** Sin eso,
+    `bancoDe("QR BISA %ABC")` devolvía vacío y se perdía el banco en todo el panel — lo cazó
+    `test_banco`.
+  - ⚠️ `renderCompForm()` **NO borra `FORM_COMP` al ocultarse**: corre muchas veces mientras se
+    arma el formulario y en `editPedido` llega ANTES de que se muestre el bloque de método, así
+    que borrarlo ahí perdía el comprobante del pedido que se estaba editando y después no
+    dejaba guardarlo. Se limpia solo en `resetForm()`.
 - Se ve como 📎 en la tabla de Contabilidad, en el detalle del cuadre y como link en el Excel.
 
 ## 5. Pendientes
