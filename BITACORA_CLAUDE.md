@@ -409,6 +409,46 @@ La tabla de pedidos vivía en 1136 px y **se desplazaba ~830 px de costado** mie
   desborda la pantalla. Verificado a 390 px: 1 columna y cero desplazamiento lateral.
   - ⚠️ `renderMis` ponía `tbl.style.display='block'` y **eso pisaba la grilla**: ahora va `''`.
 
+## 4l. Cada pago con su fecha y su N° de nota de venta (2026-07-31)
+
+Pedido del usuario: *"cuando registran un anticipo no muestra la fecha del anticipo… al lado
+de ese pago debe mostrarse tb el nro de nota de venta… y cuando registran otro pago tb falta
+el botón nro nota de venta de ese pago. PARA SU CONTROL"*.
+Ejemplo textual: 2.000 el 31/07 con nota 939, saldo 4.000; el 03/08 paga 4.000 con nota 980.
+
+- **Formato del ledger (columna "Método pago") ampliado**:
+  `~Efectivo 2000 @2026-07-31 #939 + QR BISA 4000 @2026-08-03 #980 · REGISTRADO`
+  - `#nota` = el recibo de **ese** pago. `limpiaNota()` saca `+ · # @ ~` para que un n° raro
+    no rompa el parseo.
+  - **`~` marca el ANTICIPO** (lo que dejó el cliente al comprar).
+- **Al implementarlo aparecieron 3 bugs REALES, no cosméticos:**
+  1. **Registrar el 2º pago borraba el anticipo.** `ctaRegistrarPago` partía de `cobrosDe(p)`,
+     que no incluye el "a cuenta", y `aplicarCobros` reescribe el campo entero. El caso exacto
+     del usuario perdía los 2.000. Ahora `aplicarCobros` **relee el anticipo antes de
+     reescribir y lo vuelve a poner siempre**, igual que ya hacía con `REGISTRADO`.
+  2. **"Total de la venta" mostraba el saldo, no el total.** Usaba `objetivoCobro()`, que es
+     *lo que falta cobrar en la entrega*. Con 2.000 de anticipo decía "Bs 4.000". Se agregó
+     **`ventaTotal()` = objetivoCobro + anticipo**. La planilla NO tiene columna Total: se
+     reconstruye. **No confundir las dos funciones.**
+  3. **Un pedido con anticipo ya cobrado no se podía volver a editar.** Dos causas: `metodoBase`
+     no reconocía el ledger con `~` (el segmento "con qué pagó" quedaba sin marcar → validación)
+     y la regla "hay a cuenta, poné el saldo" saltaba aunque estuviera marcado PAGADO.
+     Arreglados con `metodoFormulario()` y un `segVal('f-pagado')!=='SI'`.
+- **`cobrosDe()` filtra el anticipo a propósito.** Así `totalCobrado` y `objetivoCobro` siguen
+  midiendo lo del chofer y **no se tocó nada de su flujo**. El anticipo se pide con
+  `anticipoDe()` y la vista completa con `contaPagos()` = `[anticipo] ++ cobrosDe`.
+- **Editar ya no borra el historial**: si el vendedor no cambia ningún número de plata se
+  conserva `prev.metodoPago` tal cual; si los cambia, **`confirm()` que lista los pagos que se
+  van a perder**. Al guardar como PAGADO el formulario manda "a cuenta 0" siempre — eso NO es
+  un cambio real, y `_seguiaPagado` lo contempla (si no, cada edición pedía confirmación).
+- **Nada muestra ya `p.metodoPago` crudo** (sería `~Efectivo 2000 @…`): `contaMetodosTxt()` para
+  la columna Pago, `cobrosResumen()` con salida armada, y la badge "A cuenta" del admin.
+- El n° de nota **no es obligatorio** pero avisa con `confirm()`, y en la tabla el pago sin
+  recibo sale **"sin nota" en naranja**. Sin eso, el control que pidió el usuario se llena de
+  huecos silenciosos.
+- Compatibilidad: banco, fecha y nota siguen siendo **opcionales**; `"Efectivo 6000"` y
+  `"Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30"` se leen igual (probado).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

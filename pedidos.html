@@ -1184,8 +1184,19 @@ function contaLista(){
   return list.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });   // lo último cargado, arriba
 }
 /* "PAGADO · QR Ganadero" / "DEBE" / "A cuenta · Efectivo" — lo que contabilidad necesita leer. */
+/* Los métodos usados, sin montos ni fechas: el detalle va en "Pagos recibidos".
+   OJO: NO se puede mostrar `p.metodoPago` crudo, que ahora es el historial entero
+   ("~Efectivo 2000 @2026-07-31 #939 + ..."). */
+function contaMetodosTxt(p){
+  var vistos=[], out=[];
+  contaPagos(p).forEach(function(c){
+    var m=cobroMetodoTxt(c); if(!m || vistos.indexOf(m)>=0) return;
+    vistos.push(m); out.push(m);
+  });
+  return out.join(' · ');
+}
 function contaPagoHtml(p){
-  var met=String(p.metodoPago||'').trim();
+  var met=contaMetodosTxt(p);
   var acu=Number(p.acuenta)||0;
   var metTxt=met?(' <span style="color:var(--muted)">· '+esc(met)+'</span>'):'';
   if(p.pagado) return '<span class="badge b-green">PAGADO</span>'+metTxt;
@@ -1193,7 +1204,7 @@ function contaPagoHtml(p){
   return '<span class="badge b-red">DEBE '+fmtBs(p.saldo)+'</span>';
 }
 function contaPagoTxt(p){
-  var met=String(p.metodoPago||'').trim();
+  var met=contaMetodosTxt(p);
   var acu=Number(p.acuenta)||0;
   if(p.pagado) return 'PAGADO'+(met?(' · '+met):'');
   if(acu>0)    return 'A CUENTA '+fmtBs(acu)+(met?(' · '+met):'')+' · debe '+fmtBs(p.saldo);
@@ -1274,36 +1285,50 @@ function renderConta(){
    PAGADO al cargarlo no tiene el monto guardado (cobradoBs vive solo en el navegador,
    no hay columna en la planilla), así que filtrar por monto>0 lo dejaba sin método.
    Acá se prefiere decir "QR BISA · monto no anotado" antes que esconder el pago. */
+/* TODOS los pagos de la venta para contabilidad: el anticipo primero (que para el
+   resto del panel no es un "cobro") y después lo que se fue cobrando. */
 function contaPagos(p){
-  var a=cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; });
-  if(a.length) return a;
-  // El adelanto "a cuenta" que anotó la vendedora al cargar: para contabilidad ES un pago,
-  // aunque cobrosDe() no lo devuelva (solo cae al formato viejo si el pedido está pagado).
-  var t=sinMarcaReg(p.metodoPago), acu=Number(p.acuenta)||0;
-  if(t && acu>0) return [{metodo:metodoBase(t), banco:bancoDe(t), monto:acu, fecha:''}];
-  return [];
+  var ant=anticipoDe(p);
+  return (ant?[ant]:[]).concat(cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; }));
 }
 function contaMontoTxt(c){ return (Number(c.monto)||0)>0 ? fmtBs(c.monto) : 'monto no anotado'; }
+function contaMetodoTxt(c){ return cobroMetodoTxt(c) || 'método no anotado'; }
+/* "nota 939" — el recibo que se le dio al cliente POR ESE PAGO, que puede no ser el
+   de la venta cuando paga el saldo otro día. */
+function contaNotaTxt(c){ var n=limpiaNota(c&&c.nota); return n?('nota '+n):'sin nota'; }
 /* Los pagos en una sola línea, para la celda del Excel. */
 function contaPagosTxt(p){
   return contaPagos(p).map(function(c){
-    return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+cobroMetodoTxt(c)+' · '+contaMontoTxt(c);
+    return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
   }).join('  |  ');
 }
 function contaPagosCelda(p){
   var cob=contaPagos(p);
   if(!cob.length) return '<span style="color:var(--muted)">—</span>';
   return cob.map(function(c){
-    return '<span style="white-space:nowrap"><span style="color:var(--muted)">'+esc(c.fecha?fmtFechaCorta(c.fecha):'s/f')+'</span> '+esc(cobroMetodoTxt(c))+' <b>'+esc(contaMontoTxt(c))+'</b></span>';
-  }).join('<br>');
+    var n=limpiaNota(c.nota);
+    return '<div style="white-space:nowrap;padding:1px 0">'+
+      '<span style="color:var(--muted)">'+esc(c.fecha?fmtFechaCorta(c.fecha):'s/f')+'</span> '+
+      esc(contaMetodoTxt(c))+' <b>'+esc(contaMontoTxt(c))+'</b>'+
+      (n?(' <span class="badge b-gray" style="font-size:.62rem">🧾 '+esc(n)+'</span>')
+        :' <span style="color:var(--amber);font-size:.72rem">sin nota</span>')+
+    '</div>';
+  }).join('');
 }
 function renderContaSiActiva(){ var v=document.getElementById('view-conta'); if(v && v.classList.contains('active')) renderConta(); }
 /* Los pagos de un pedido, listos para mostrar: fecha · método (y banco) · monto. */
 function contaPagosHtml(p){
   var cob=contaPagos(p);
   if(!cob.length) return '<span style="color:var(--muted)">— sin pagos registrados —</span>';
-  return cob.map(function(c){
-    return '<div style="padding:2px 0"><span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · <b>'+esc(cobroMetodoTxt(c))+'</b> · '+esc(contaMontoTxt(c))+'</div>';
+  return cob.map(function(c,i){
+    var n=limpiaNota(c.nota);
+    return '<div style="padding:3px 0'+(i?';border-top:1px solid var(--gray-lt)':'')+'">'+
+      '<span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · '+
+      '<b>'+esc(contaMetodoTxt(c))+'</b> · '+esc(contaMontoTxt(c))+
+      (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
+        :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
+      (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
+    '</div>';
   }).join('');
 }
 /* ---- Ventana flotante de contabilidad ----
@@ -1325,6 +1350,7 @@ function showContaModal(id){
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
            '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+r2(falta)+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha del pago</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
@@ -1343,7 +1369,7 @@ function showContaModal(id){
       row('Productos', prods)+
       row('Facturar a', esc(p.facturarA)||'—')+
       row('NIT', esc(p.nit)||'—')+
-      row('Total de la venta', '<b>'+fmtBs(objetivoCobro(p))+'</b>')+
+      row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
       row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
@@ -1362,14 +1388,20 @@ function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
   var monto=parseMonto(document.getElementById('cta-pago-monto').value);
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
+  var nota=limpiaNota((document.getElementById('cta-pago-nota')||{}).value);
   if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
   if(CTA_PAGO.metodo==='QR' && !CTA_PAGO.banco){ toast('Elegí a qué banco entró el QR','err'); return; }
+  // El recibo no se exige (a veces lo cargan después), pero se avisa: sin él contabilidad
+  // no puede cruzar el pago con su talonario, que es justamente para lo que sirve esto.
+  if(!nota && !confirm('No pusiste el N° de nota de venta de este pago.\n\n¿Registrarlo igual?')) {
+    var ni=document.getElementById('cta-pago-nota'); if(ni) ni.focus(); return;
+  }
   var falta=Number(p.saldo)||0;
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
-  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha});
+  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota});
   aplicarCobros(p, arr);
-  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
+  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
   showContaModal(id);
 }
 function ctaToggleRegistrado(id){
@@ -1384,7 +1416,7 @@ function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -1489,11 +1521,40 @@ function submitPedido(){
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
     if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
-    if(_acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+    // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
+    // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
+    if(segVal('f-pagado')!=='SI' && _acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
   }
 
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
+
+  /* ---- El historial de pagos comparte campo con el método ----
+     Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
+     NO tocó ningún número de plata, se conserva TAL CUAL: reescribirlo con el método
+     suelto le borraría a contabilidad todo el historial. Si sí cambió los montos, se
+     rehace desde el formulario, pero avisando antes. */
+  var _pagSI  = segVal('f-pagado')==='SI';
+  var _acuVal = _pagSI?0:_acu;
+  var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
+  var _metForm = (_pagSI || _acuVal>0)
+        ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):''))
+        : '';
+  var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
+  /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
+     que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
+     pedido ya venía pagado, se conservan el anticipo y el historial. */
+  var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)===0;
+  var _plataIgual = _tieneHist && ( _seguiaPagado ||
+                    ((Number(prev.acuenta)||0)===_acuVal &&
+                     (Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+  if(_tieneHist && !_plataIgual &&
+     !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
+              contaPagos(prev).map(function(c){
+                return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
+              }).join('\n')+
+              '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
+  var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
   if(!isEdit && fechaSel < minFecha){
@@ -1555,11 +1616,9 @@ function submitPedido(){
     direccion: document.getElementById('f-direccion').value.trim(),
     maps: (normalizaUbicacion(document.getElementById('f-maps').value)||''),
     pagado: segVal('f-pagado')==='SI',
-    metodoPago: (segVal('f-pagado')==='SI' || (parseFloat(document.getElementById('f-acuenta').value)||0)>0)
-                  ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):''))
-                  : '',
-    acuenta: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-acuenta').value)||0),
-    saldo: (segVal('f-pagado')==='SI')?0:(parseFloat(document.getElementById('f-saldo').value)||0),
+    metodoPago: _metodoPago,
+    acuenta: _plataIgual ? (Number(prev.acuenta)||0) : _acuVal,
+    saldo:   _plataIgual ? (Number(prev.saldo)||0)   : _salVal,
     observaciones: document.getElementById('f-obs').value.trim(),
     garantia: document.getElementById('f-garantia').value.trim(),
     facturarA: document.getElementById('f-facturar').value.trim(),
@@ -1748,8 +1807,12 @@ function editPedido(id){
   document.getElementById('f-facturar').value=rec.facturarA||'';
   document.getElementById('f-nit').value=rec.nit||'';
   document.getElementById('wrap-nopago').style.display = rec.pagado ? 'none' : '';
-  segSet('f-metodo', metodoBase(rec.metodoPago||''));
-  updateBancoVisibility(); segSet('f-banco', bancoDe(rec.metodoPago||''));
+  /* Con qué pagó. Si el pedido ya tiene historial de pagos, el campo NO trae un método
+     suelto sino la lista entera: el que corresponde mostrar es el del anticipo. Sin
+     esto el segmento queda sin marcar y el pedido no se puede volver a guardar. */
+  var _mf=metodoFormulario(rec);
+  segSet('f-metodo', _mf.metodo);
+  updateBancoVisibility(); segSet('f-banco', _mf.banco);
   updateMetodoVisibility();
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
@@ -3567,41 +3630,83 @@ function parseMonto(t){
    Todo vive en la columna "Método pago" que la planilla YA tiene, para no agregar
    columnas nuevas (eso obliga a reimplementar el Apps Script). Formato:
 
-     "Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30 · REGISTRADO"
-      └método  └monto └fecha     └banco                     └marca de contabilidad
+     "~Efectivo 2000 @2026-07-31 #939 + QR BISA 4000 @2026-08-03 #980 · REGISTRADO"
+      │└método  └monto └fecha     └nota  └banco                        └marca de contab.
+      └ el ~ marca el ANTICIPO (lo que dejó el cliente al hacer la compra)
 
-   El banco y la fecha son opcionales: los cobros viejos ("Efectivo 6000") se siguen
+   Banco, fecha y nota son opcionales: los cobros viejos ("Efectivo 6000") se siguen
    leyendo igual. La marca REGISTRADO la pone contabilidad cuando cargó la venta en su
-   sistema; se guarda acá por el mismo motivo (no hay columna libre). */
+   sistema; se guarda acá por el mismo motivo (no hay columna libre).
+
+   ⚠️ El anticipo (~) NO cuenta como cobro del chofer: `cobrosDe` lo filtra, así que
+   `totalCobrado` y `objetivoCobro` siguen midiendo lo que falta cobrar en la entrega,
+   igual que antes. El total de la VENTA es otra cosa y se pide con `ventaTotal()`. */
 var MARCA_REG='REGISTRADO';
 function sinMarcaReg(t){ return String(t||'').replace(/\s*·\s*REGISTRADO\s*$/i,''); }
 function regEnSistema(p){ return /·\s*REGISTRADO\s*$/i.test(String((p&&p.metodoPago)||'')); }
 function conMarcaReg(txt, on){ var base=sinMarcaReg(txt); return on ? (base+(base?' ':'')+'· '+MARCA_REG) : base; }
+/* El n° de nota/recibo viaja dentro del mismo texto, así que no puede traer los
+   caracteres que separan el formato. Se limpian en vez de rechazar el pago. */
+function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~]/g,' ').replace(/\s+/g,' ').trim(); }
 function parseCobros(txt){
   var out=[];
   sinMarcaReg(txt).split('+').forEach(function(s){
-    var m=s.trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)(?:\s+([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s+([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?$/);
+    var t=s.trim(), ant=false;
+    if(t.charAt(0)==='~'){ ant=true; t=t.slice(1).trim(); }
+    var m=t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#]*))?\s*$/);
     if(!m) return;
-    var met=normMetodo(m[1]); if(!met) return;
+    var met=normMetodo(m[1]||'');
+    // Un cobro normal sin método es basura; el anticipo puede no tenerlo (venta vieja).
+    if(!met && !ant) return;
     var n=parseMonto(m[3]); if(!(n>0)) return;
-    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||''});
+    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]), anticipo:ant});
   });
   return out;
 }
 function textoCobros(arr){
   return (arr||[]).map(function(c){
-    return c.metodo+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+(c.fecha?(' @'+c.fecha):'');
+    var nota=limpiaNota(c.nota);
+    return (c.anticipo?'~':'')+(c.metodo||'')+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+
+           (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'');
   }).join(' + ');
 }
 /* "Efectivo" · "QR BISA" — cómo se muestra un pago. */
 function cobroMetodoTxt(c){ return String(c.metodo||'')+(c.banco?(' '+c.banco):''); }
+/* Los COBROS: lo que se cobró después de la venta. El anticipo queda afuera a
+   propósito — mezclarlo acá le cambiaría las cuentas al chofer. */
 function cobrosDe(p){
-  var a=parseCobros(p.metodoPago);
+  var todo=parseCobros(p.metodoPago);
+  var a=todo.filter(function(c){ return !c.anticipo; });
   if(a.length) return a;
   // Formato viejo: un solo método sin monto anotado (lo que dejaba la vendedora al cargar).
   var t=sinMarcaReg(p.metodoPago);
-  if(p.pagado && t) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:''}];
+  if(p.pagado && t && !todo.length) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:'', nota:''}];
   return [];
+}
+/* El ANTICIPO: lo que el cliente dejó al comprar. Si todavía no está escrito en el
+   ledger se arma con lo que hay: el monto de "A cuenta", el método suelto que anotó
+   la vendedora, y —como fecha y recibo— los de la venta, que es cuando lo pagó. */
+function anticipoDe(p){
+  if(!p) return null;
+  var enTexto=parseCobros(p.metodoPago).filter(function(c){ return c.anticipo; });
+  if(enTexto.length) return enTexto[0];
+  var acu=Number(p.acuenta)||0; if(!(acu>0)) return null;
+  var t=sinMarcaReg(p.metodoPago);
+  var suelto = t && !parseCobros(t).length;   // "Efectivo" / "QR BISA": método sin monto
+  return { metodo:(suelto?metodoBase(t):'')||'', banco:(suelto?bancoDe(t):''), monto:r2(acu),
+           fecha:contaFecha(p), nota:limpiaNota(p.nota), anticipo:true };
+}
+/* Total de la VENTA = el anticipo + lo que quedó por cobrar. La planilla no tiene
+   columna "Total", así que se reconstruye. No confundir con objetivoCobro(), que es
+   lo que el chofer tiene que cobrar en la entrega. */
+function ventaTotal(p){ var a=anticipoDe(p); return r2(objetivoCobro(p) + (a?(Number(a.monto)||0):0)); }
+/* Con qué pagó, para los segmentos del formulario de edición. Cuando el campo ya es el
+   historial de pagos hay que sacar el método del anticipo, no del texto crudo. */
+function metodoFormulario(rec){
+  var t=sinMarcaReg(rec&&rec.metodoPago);
+  if(!parseCobros(t).length) return { metodo:metodoBase(t), banco:bancoDe(t) };
+  var c=anticipoDe(rec)||parseCobros(t)[0]||{};
+  return { metodo:c.metodo||'', banco:c.banco||'' };
 }
 function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
 /* Lo que el vendedor dijo que hay que cobrar = lo que falta + lo ya cobrado.
@@ -3612,16 +3717,27 @@ function excesoCobro(p){ var e=r2(totalCobrado(p)-objetivoCobro(p)); return e>0.
 function excesoBadge(p){ var e=excesoCobro(p); return e?(' <span class="badge b-red">⚠️ '+fmtBs(e)+' de más</span>'):''; }
 function cobrosResumen(p){
   var a=cobrosDe(p);
-  if(!a.length) return esc(sinMarcaReg(p.metodoPago));
+  // Sin cobros, el campo puede traer solo el método suelto ("QR BISA"). Si lo que trae
+  // es el historial (anticipo incluido) NO se muestra crudo: se arma legible.
+  if(!a.length){
+    var t=sinMarcaReg(p.metodoPago);
+    if(!parseCobros(t).length) return esc(t);
+    var ant=anticipoDe(p);
+    return ant ? (esc(cobroMetodoTxt(ant)||'a cuenta')+' '+fmtBs(ant.monto)) : '';
+  }
   return a.map(function(c){ return esc(cobroMetodoTxt(c))+(c.monto>0?(' '+fmtBs(c.monto)):''); }).join(' + ');
 }
 /* Reescribe los cobros del pedido y recalcula saldo/pagado. OJO: el objetivo se lee
    ANTES de tocar nada, porque depende del saldo actual. */
 function aplicarCobros(p, arr){
   var objetivo=objetivoCobro(p), total=0;
-  (arr||[]).forEach(function(c){ total+=Number(c.monto)||0; });
+  var cobros=(arr||[]).filter(function(c){ return !c.anticipo; });
+  cobros.forEach(function(c){ total+=Number(c.monto)||0; });
   total=r2(total);
-  p.metodoPago=conMarcaReg(textoCobros(arr), regEnSistema(p));   // no pisar la marca de contabilidad
+  // El anticipo se relee ANTES de reescribir el campo y se vuelve a escribir siempre,
+  // igual que la marca REGISTRADO: si no, el primer cobro se lo llevaría puesto.
+  var ant=anticipoDe(p);
+  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros)), regEnSistema(p));
   p.cobradoBs=total;
   p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
   p.pagado = total>0 && total>=objetivo-0.01;
@@ -3808,7 +3924,7 @@ function showPedidoModal(id){
   var prod=prodRevList(p);
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>'):''));
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(anticipoDe(p)&&cobroMetodoTxt(anticipoDe(p))?(' · '+esc(cobroMetodoTxt(anticipoDe(p)))):'')+'</span>'):''));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
