@@ -561,6 +561,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
       </div>
 
+      <div class="field" id="wrap-cobrado" style="display:none">
+        <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">cuánto entró por esta venta</span></label>
+        <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000"></div>
+      </div>
+
       <div class="field" id="wrap-banco" style="display:none">
         <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
         <div class="seg mtd" id="f-banco"></div>
@@ -1260,6 +1265,10 @@ function updateMetodoVisibility(){
   document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
   if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'; }
   var sl=document.getElementById('lbl-saldo'); if(sl) sl.innerHTML='Saldo por cobrar'+((acuenta>0 && !pagado)?' <span class="req">*</span>':'');
+  /* Cuánto cobró. Solo con "SÍ, pagado": si hay adelanto, el monto ya es "A cuenta".
+     Sin este campo la venta quedaba SIN el monto en ningún lado (el famoso
+     "PAGADA sin anotar el monto" del cuadre) — no hay columna Total en la planilla. */
+  var wc=document.getElementById('wrap-cobrado'); if(wc) wc.style.display = pagado ? 'block' : 'none';
   updateBancoVisibility();
 }
 
@@ -2031,13 +2040,17 @@ function compDeTexto(t){
 }
 function metodoBase(m){
   var s=compDeTexto(m).txt;
+  // El campo puede ser el HISTORIAL entero ("~QR BISA 5000 @… #950"): se lee el 1er pago.
+  var pc=parseCobros(s); if(pc.length) return pc[0].metodo||'';
   var mm=s.match(/^(Efectivo|QR|Tarjeta)\b/i);
   return mm ? (mm[1].toUpperCase()==='QR'?'QR':(mm[1].charAt(0).toUpperCase()+mm[1].slice(1).toLowerCase())) : s;
 }
 /* "QR Ganadero" → "Ganadero". Vacío si no lleva banco. */
 function bancoDe(m){
-  // El texto puede traer el comprobante pegado ("QR BISA %1AbC"): se saca antes de leer.
-  var mm=compDeTexto(m).txt.match(/^QR\s+(.+)$/i);
+  // El texto puede traer el comprobante pegado ("QR BISA %1AbC") o ser el historial entero.
+  var s=compDeTexto(m).txt;
+  var pc=parseCobros(s); if(pc.length) return pc[0].banco||'';
+  var mm=s.match(/^QR\s+(.+)$/i);
   return mm ? (esBanco(mm[1])||'') : '';
 }
 function renderBancos(){
@@ -2150,12 +2163,19 @@ function submitPedido(){
   var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
+    // Mismo orden que en pantalla: método → monto → banco → comprobante.
+    if(segVal('f-pagado')==='SI' && !(parseFloat(document.getElementById('f-cobrado').value)>0)){
+      markErr('f-cobrado');
+      toast('Poné el MONTO TOTAL COBRADO de esta venta','err');
+      var fcb=document.getElementById('f-cobrado'); fcb.focus(); fcb.scrollIntoView({block:'center'});
+      return;
+    }
+    if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
     if(segVal('f-metodo')==='QR' && !FORM_COMP){
       // El gato en vez del toast: el aviso suelto se les pasaba de largo.
       memeComprobante(vendedor);
       return;
     }
-    if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
     if(segVal('f-pagado')!=='SI' && _acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
@@ -2172,10 +2192,22 @@ function submitPedido(){
   var _pagSI  = segVal('f-pagado')==='SI';
   var _acuVal = _pagSI?0:_acu;
   var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
-  var _metForm = (_pagSI || _acuVal>0)
+  var _cobVal = _pagSI ? (parseFloat(document.getElementById('f-cobrado').value)||0) : 0;
+  var _metSuelto = (_pagSI || _acuVal>0)
         ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):'')+
            ((segVal('f-metodo')==='QR' && FORM_COMP)?(' %'+FORM_COMP):''))
         : '';
+  /* Con "SÍ, pagado" el monto se guarda como un PAGO de verdad en el historial
+     (`~método monto @fecha #nota %comprobante`), no como texto suelto. Así aparece
+     en Contabilidad y en el cuadre con su monto, su fecha y su comprobante. */
+  var _metForm = (_pagSI && _cobVal>0)
+        ? textoCobros([{ anticipo:true,
+                         metodo:segVal('f-metodo'),
+                         banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
+                         monto:_cobVal, fecha:todayStr(),
+                         nota:document.getElementById('f-nota').value,
+                         comp:(segVal('f-metodo')==='QR'?FORM_COMP:'') }])
+        : _metSuelto;
   var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
      que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
@@ -2269,6 +2301,7 @@ function submitPedido(){
     maps: (normalizaUbicacion(document.getElementById('f-maps').value)||''),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: _metodoPago,
+    cobradoBs: _cobVal || (prev?(Number(prev.cobradoBs)||0):0),
     acuenta: _plataIgual ? (Number(prev.acuenta)||0) : _acuVal,
     saldo:   _plataIgual ? (Number(prev.saldo)||0)   : _salVal,
     observaciones: document.getElementById('f-obs').value.trim(),
@@ -2448,6 +2481,7 @@ function resetForm(){
   document.getElementById('wrap-metodo').style.display='none';
   document.getElementById('wrap-banco').style.display='none'; segSet('f-banco','');
   FORM_COMP=''; renderCompForm(false);
+  var _fcb=document.getElementById('f-cobrado'); if(_fcb){ _fcb.value=''; _fcb.classList.remove('err'); }
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
@@ -2474,6 +2508,9 @@ function editPedido(id){
   segSet('f-pagado',rec.pagado?'SI':'NO');
   document.getElementById('f-saldo').value=rec.saldo||0;
   document.getElementById('f-acuenta').value=rec.acuenta||0;
+  // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
+  var _cb=document.getElementById('f-cobrado');
+  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
   document.getElementById('f-obs').value=rec.observaciones||'';
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';

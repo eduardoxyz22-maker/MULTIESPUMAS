@@ -647,6 +647,29 @@ cliente o pedido, en contabilidad"*.
     dejaba guardarlo. Se limpia solo en `resetForm()`.
 - Se ve como 📎 en la tabla de Contabilidad, en el detalle del cuadre y como link en el Excel.
 
+## 4s. Monto total cobrado al marcar PAGADO (2026-07-31)
+
+Pedido: *"cuando los vendedores seleccionen pagados sí … tiene que aparecer la opción de
+colocar cuánto fue el monto total cobrado, porque eso no tenemos"*. Es exactamente el hueco
+que había detectado el cuadre ("53 ventas marcadas PAGADAS sin anotar el monto").
+
+- Campo `f-cobrado` (`wrap-cobrado`), visible **solo con "SÍ, pagado"**. Con adelanto a
+  cuenta NO aparece: ese monto ya se anota en "A cuenta". **Obligatorio** — si no, seguíamos
+  sin el dato, que era justamente el problema.
+- **Se guarda como un PAGO de verdad en el ledger**, no como texto suelto:
+  `metodoPago = "~Efectivo 5000 @2026-07-31 #950"` (con `%comprobante` si es QR). Así la venta
+  aparece en Contabilidad y en el cuadre **con monto, fecha, nota y comprobante**, y
+  `ventaTotal()` por fin sabe cuánto fue.
+- ⚠️ **`metodoBase()` y `bancoDe()` ahora detectan el historial**: `parseCobros` primero, y si
+  hay entradas se usa el método/banco del primer pago. Sin eso `metodoBase("~QR BISA 5000 …")`
+  devolvía vacío y **`updateStats` contaba la venta como "sin método"** — lo cazó `test_banco`.
+- Orden en pantalla y en las validaciones: **método → monto → banco → comprobante** (los dos
+  van juntos a propósito; si se cambia uno hay que cambiar el otro).
+- Editar trae el monto desde `anticipoDe(rec)` y no lo pierde al guardar.
+- Eduardo Añez y ROHO quedan afuera (formulario "lite", como el resto de las exigencias).
+- Los pedidos VIEJOS marcados pagados sin monto siguen igual: el aviso del cuadre los sigue
+  listando con su nota de venta para completarlos a mano.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
