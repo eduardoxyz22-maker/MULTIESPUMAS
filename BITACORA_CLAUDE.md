@@ -289,6 +289,21 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   46 (Kommo) vs 45 cierres = 1 lead con Fecha contrato pero aún NO en etapa Compradores (cuenta en
   pipeline, no como cierre) — coherente con la REGLA CRÍTICA (venta = Compradores + Fecha contrato).
 
+## 4h. Combos fuera de la lista de precios (2026-07-29)
+
+- **Se borraron de `CODIGOS` las 60 entradas cuya descripción empieza con "COMBO"** (todas con
+  código `CMB*`). Quedan **212 de 272**. Decisión del usuario: *"de ahora en adelante tienen que
+  llenar cada producto de manera individual"*.
+- `CODIGOS` solo alimenta el **autocompletado** (`NOMBRES` → datalist por nombre, y el input de
+  código). **No** se usa para mostrar pedidos ya guardados: la descripción viaja como texto en
+  el JSON de productos. Por eso **los pedidos viejos con combos se siguen viendo intactos** en
+  la tabla, el Excel y las listas. Verificado en `test_combos.js`.
+- **Además se bloquea en `submitPedido`**: si alguna línea empieza con "combo" (sin importar
+  mayúsculas), no guarda y explica cómo cargarlo. Sacarlo solo del autocompletado no alcanzaba
+  — escribirlo a mano seguía pasando.
+- El motivo de fondo, por si alguien quiere revertirlo: con un combo en **una sola línea** no se
+  puede marcar ✔/✗ producto por producto ni contar bien los bultos en el "TOTAL A CARGAR".
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
