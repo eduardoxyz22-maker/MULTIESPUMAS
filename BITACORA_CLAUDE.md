@@ -602,6 +602,31 @@ la otra mitad desaparecía.
   viejos conservan su texto original. Si alguna vez se quiere dejar la hoja prolija, hay que
   reescribir cada fila (lento y riesgoso) — no hacía falta para el problema reportado.
 
+## 4r. Comprobante del pago por QR (2026-07-31)
+
+Pedido: *"botón para adjuntar imagen cuando carguen pago por QR, y se vea en la ficha de cada
+cliente o pedido, en contabilidad"*.
+
+- **Se reusó el canal de fotos que ya existía** (`apiFoto` → `action:'foto'` del Apps Script,
+  que sube a Drive y devuelve el `fotoId`). **Ya estaba publicado**, así que otra vez no hubo
+  que tocar Google.
+- **El comprobante va pegado al PAGO, no al pedido**: `%<fileId>` al final del renglón dentro
+  de "Método pago" (`QR BISA 4000 @2026-08-03 #980 %1AbC_xyz`). Es lo correcto: si el cliente
+  pagó dos veces por QR, cada pago tiene el suyo. **No confundir con `p.fotos`**, que son las
+  fotos de la ENTREGA (columna "Fotos entrega") y siguen igual.
+- `limpiaNota` ahora saca también el `%`, y la nota del pago excluye `%` de su charset: si no,
+  una nota rara podía comerse el id del comprobante.
+- `<input id="comp-input">` es **otro** input que el de entregas y va **sin `capture`**: la
+  captura del QR ya está guardada en la galería, forzar la cámara la haría inaccesible.
+- Se puede adjuntar en dos momentos: **al registrar** (queda en `CTA_PAGO.comp`, y se limpia
+  al registrar para que no se pegue al pago siguiente) y **después**, sobre un pago ya
+  registrado (`COMP_DESTINO={id,idx}` → reescribe ese renglón con `aplicarCobros`).
+  ⚠️ `ctaIdxCobro()` traduce el índice de `contaPagos()` (que antepone el anticipo) al de
+  `cobrosDe()`; el anticipo NO se puede editar porque no está en la lista de cobros.
+- El botón sale **solo con QR** (para Efectivo no hay comprobante). Si algún día se quiere en
+  Tarjeta, es agregar el método a esa condición.
+- Se ve como 📎 en la tabla de Contabilidad, en el detalle del cuadre y como link en el Excel.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

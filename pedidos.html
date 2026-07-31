@@ -830,6 +830,8 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
 <div id="entregas-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <input type="file" id="foto-input" accept="image/*" capture="environment" style="display:none" onchange="onFotoElegida(event)">
+<!-- Comprobante del pago: SIN capture, para poder elegir una captura de pantalla ya guardada -->
+<input type="file" id="comp-input" accept="image/*" style="display:none" onchange="onCompElegido(event)">
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -1447,6 +1449,7 @@ function contaPagosCelda(p){
       esc(contaMetodoTxt(c))+' <b>'+esc(contaMontoTxt(c))+'</b>'+
       (n?(' <span class="badge b-gray" style="font-size:.62rem">🧾 '+esc(n)+'</span>')
         :' <span style="color:var(--amber);font-size:.72rem">sin nota</span>')+
+      (c.comp?' <span title="Tiene comprobante" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(c.comp)+'\',\'_blank\')">📎</span>':'')+
     '</div>';
   }).join('');
 }
@@ -1503,7 +1506,7 @@ function cuadrePagos(){
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
-                 monto:Number(c.monto)||0, nota:limpiaNota(c.nota), anticipo:!!c.anticipo });
+                 monto:Number(c.monto)||0, nota:limpiaNota(c.nota), comp:String(c.comp||''), anticipo:!!c.anticipo });
     });
   });
   return out.sort(function(a,b){
@@ -1726,7 +1729,8 @@ function renderCuadre(){
           return '<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
             '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.fecha))+'</td>'+
             '<td><b>'+esc(c.p.cliente||'—')+'</b></td>'+
-            '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+'</td>'+
+            '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+
+              (c.comp?' <span title="Ver el comprobante" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(c.comp)+'\',\'_blank\')">📎</span>':'')+'</td>'+
             '<td>'+esc(c.p.vendedor||'—')+'</td>'+
             '<td style="white-space:nowrap">'+esc(cuadreForma(c))+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
@@ -1762,10 +1766,11 @@ function exportCuadre(){
   var pagos=cuadrePagos();
   if(!pagos.length){ toast('No hay pagos para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
-  var rows=[['FECHA DEL PAGO','CLIENTE','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA'].map(function(t){return {v:t,s:H};})];
+  var rows=[['FECHA DEL PAGO','CLIENTE','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE'].map(function(t){return {v:t,s:H};})];
   pagos.forEach(function(c){
     rows.push([c.fecha, c.p.cliente||'', c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
-               {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO']);
+               {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO',
+               c.comp?fotoVer(c.comp):'']);
   });
   var formas=cuadrePorForma(pagos);
   rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO',s:H}]);
@@ -1775,7 +1780,7 @@ function exportCuadre(){
   });
   var pe=cuadrePeriodo();
   var bytes=buildXlsx([{name:'Cuadre',
-    cols:[{w:14},{w:26},{w:16},{w:18},{w:12},{w:12},{w:14},{w:10},{w:16},{w:12},{w:11}],
+    cols:[{w:14},{w:26},{w:16},{w:18},{w:12},{w:12},{w:14},{w:10},{w:16},{w:12},{w:11},{w:44}],
     matrix:rows}]);
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+' ✓','ok');
@@ -1784,21 +1789,85 @@ function exportCuadre(){
 function contaPagosHtml(p){
   var cob=contaPagos(p);
   if(!cob.length) return '<span style="color:var(--muted)">— sin pagos registrados —</span>';
+  var pid=p.id;
   return cob.map(function(c,i){
     var n=limpiaNota(c.nota);
+    var idx=ctaIdxCobro(p, i);                      // el anticipo (idx<0) no se puede reescribir
+    var esQR=String(c.metodo||'')==='QR';
+    var comp = c.comp
+      ? ('<div style="margin-top:5px;display:flex;align-items:center;gap:8px">'+
+           '<img src="'+fotoThumb(c.comp)+'" alt="Comprobante del pago" loading="lazy" style="height:56px;border-radius:8px;border:1px solid var(--gray-md);cursor:pointer" onclick="window.open(\''+fotoVer(c.comp)+'\',\'_blank\')" title="Ver el comprobante en grande">'+
+           '<span style="color:var(--green);font-size:.78rem;font-weight:700">📎 comprobante</span>'+
+           (idx>=0?('<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="ctaQuitarComp(\''+pid+'\','+idx+')">✕</button>'):'')+
+         '</div>')
+      : (esQR && idx>=0
+          ? ('<div style="margin-top:4px"><button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px" onclick="ctaAdjuntar(\''+pid+'\','+idx+')">📎 Adjuntar comprobante</button></div>')
+          : '');
     return '<div style="padding:3px 0'+(i?';border-top:1px solid var(--gray-lt)':'')+'">'+
       '<span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · '+
       '<b>'+esc(contaMetodoTxt(c))+'</b> · '+esc(contaMontoTxt(c))+
       (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
         :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
       (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
+      comp+
     '</div>';
   }).join('');
 }
 /* ---- Ventana flotante de contabilidad ----
    Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
    Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
-var CTA_PAGO={metodo:'Efectivo', banco:''};
+var CTA_PAGO={metodo:'Efectivo', banco:'', comp:''};
+/* ---- Comprobante del pago (la captura del QR) ----
+   Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
+   Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
+   guarda es el ID del archivo, pegado al pago dentro de "Método pago". */
+var COMP_DESTINO=null;   // {id, idx} → a qué pago se le está adjuntando; null = al que se está por registrar
+function ctaAdjuntar(id, idx){
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  COMP_DESTINO=(idx==null) ? null : {id:id, idx:idx};
+  var el=document.getElementById('comp-input'); if(!el) return;
+  el.value=''; el.dataset.pedido=id; el.click();
+}
+function onCompElegido(ev){
+  var f=(ev.target.files||[])[0]; if(!f) return;
+  var pid=ev.target.dataset.pedido||'', p=findById(pid); if(!p) return;
+  var destino=COMP_DESTINO; COMP_DESTINO=null;
+  toast('Achicando y subiendo el comprobante…','ok');
+  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
+    return apiFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl);
+  }).then(function(res){
+    if(!res || !res.ok || !res.fotoId){
+      toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
+                               : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
+      return;
+    }
+    if(destino){
+      // A un pago YA registrado: se reescribe ese renglón con su comprobante.
+      var arr=cobrosDe(p).slice();
+      if(destino.idx>=0 && destino.idx<arr.length){ arr[destino.idx].comp=res.fotoId; aplicarCobros(p, arr); }
+      toast('Comprobante adjuntado ✓','ok');
+      showContaModal(p.id);
+    }else{
+      CTA_PAGO.comp=res.fotoId;              // al pago que se está por registrar
+      toast('Comprobante listo ✓ — ahora tocá "Registrar pago"','ok');
+      showContaModal(p.id);
+    }
+  }).catch(function(e){ toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err'); });
+}
+function ctaQuitarComp(id, idx){
+  var p=findById(id); if(!p) return;
+  var arr=cobrosDe(p).slice();
+  if(idx<0 || idx>=arr.length || !arr[idx].comp) return;
+  if(!confirm('¿Quitar el comprobante de este pago?')) return;
+  var fid=arr[idx].comp; arr[idx].comp='';
+  aplicarCobros(p, arr);
+  if(CONNECTED) apiBorrarFoto(fid);
+  toast('Comprobante quitado','ok');
+  showContaModal(id);
+}
+/* El índice del pago dentro de cobrosDe() — contaPagos() antepone el anticipo, que no
+   se puede reescribir (no está en la lista de cobros). */
+function ctaIdxCobro(p, iEnContaPagos){ return anticipoDe(p) ? (iEnContaPagos-1) : iEnContaPagos; }
 function showContaModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='conta';
@@ -1817,7 +1886,16 @@ function showContaModal(id){
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
-         (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
+         (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>'+
+            '<div style="margin-top:9px"><label class="lb">Comprobante <span style="font-weight:400;color:var(--muted)">la captura del QR</span></label>'+
+              (CTA_PAGO.comp
+                ? ('<div style="display:flex;align-items:center;gap:9px">'+
+                     '<img src="'+fotoThumb(CTA_PAGO.comp)+'" alt="Comprobante" style="height:54px;border-radius:8px;border:1px solid var(--gray-md);cursor:pointer" onclick="window.open(\''+fotoVer(CTA_PAGO.comp)+'\',\'_blank\')">'+
+                     '<span style="color:var(--green);font-weight:700;font-size:.83rem">✅ Listo</span>'+
+                     '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="ctaSacarComp(\''+p.id+'\')">✕ Quitar</button>'+
+                   '</div>')
+                : '<button type="button" class="btn btn-sm" style="width:100%;background:#fff;border:1px dashed var(--gray-md);color:var(--muted)" onclick="ctaAdjuntar(\''+p.id+'\')">📎 Adjuntar comprobante</button>')+
+            '</div>') : '')+
          '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ Registrar pago</button>'+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
@@ -1846,7 +1924,8 @@ function showContaModal(id){
     '</div>';
   openModal(html);
 }
-function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; showContaModal(id); }
+function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR'){ CTA_PAGO.banco=''; CTA_PAGO.comp=''; } showContaModal(id); }
+function ctaSacarComp(id){ CTA_PAGO.comp=''; showContaModal(id); }
 function ctaSetBanco(id,b){ CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
@@ -1865,7 +1944,9 @@ function ctaRegistrarPago(id){
   var falta=Number(p.saldo)||0;
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
-  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota});
+  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
+            comp:(CTA_PAGO.metodo==='QR'?CTA_PAGO.comp:'')});
+  CTA_PAGO.comp='';                                  // que no se pegue al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
   showContaModal(id);
@@ -4337,11 +4418,14 @@ function parseMonto(t){
    Todo vive en la columna "Método pago" que la planilla YA tiene, para no agregar
    columnas nuevas (eso obliga a reimplementar el Apps Script). Formato:
 
-     "~Efectivo 2000 @2026-07-31 #939 + QR BISA 4000 @2026-08-03 #980 · REGISTRADO"
-      │└método  └monto └fecha     └nota  └banco                        └marca de contab.
+     "~Efectivo 2000 @2026-07-31 #939 + QR BISA 4000 @2026-08-03 #980 %1AbC_xyz · REGISTRADO"
+      │└método  └monto └fecha     └nota  └banco                        └comprobante (Drive)
       └ el ~ marca el ANTICIPO (lo que dejó el cliente al hacer la compra)
 
-   Banco, fecha y nota son opcionales: los cobros viejos ("Efectivo 6000") se siguen
+   El `%` es el ID en Drive de la CAPTURA del pago (el comprobante del QR). Se guarda
+   pegado al pago, no al pedido: cada pago tiene el suyo.
+
+   Banco, fecha, nota y comprobante son opcionales: los cobros viejos ("Efectivo 6000") se siguen
    leyendo igual. La marca REGISTRADO la pone contabilidad cuando cargó la venta en su
    sistema; se guarda acá por el mismo motivo (no hay columna libre).
 
@@ -4354,27 +4438,29 @@ function regEnSistema(p){ return /·\s*REGISTRADO\s*$/i.test(String((p&&p.metodo
 function conMarcaReg(txt, on){ var base=sinMarcaReg(txt); return on ? (base+(base?' ':'')+'· '+MARCA_REG) : base; }
 /* El n° de nota/recibo viaja dentro del mismo texto, así que no puede traer los
    caracteres que separan el formato. Se limpian en vez de rechazar el pago. */
-function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~]/g,' ').replace(/\s+/g,' ').trim(); }
+function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~%]/g,' ').replace(/\s+/g,' ').trim(); }
 function parseCobros(txt){
   var out=[];
   sinMarcaReg(txt).split('+').forEach(function(s){
     var t=s.trim(), ant=false;
     if(t.charAt(0)==='~'){ ant=true; t=t.slice(1).trim(); }
-    var m=t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#]*))?\s*$/);
+    var m=t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#%]*))?(?:\s*%\s*([A-Za-z0-9_-]+))?\s*$/);
     if(!m) return;
     var met=normMetodo(m[1]||'');
     // Un cobro normal sin método es basura; el anticipo puede no tenerlo (venta vieja).
     if(!met && !ant) return;
     var n=parseMonto(m[3]); if(!(n>0)) return;
-    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]), anticipo:ant});
+    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]),
+              comp:String(m[6]||'').trim(), anticipo:ant});
   });
   return out;
 }
 function textoCobros(arr){
   return (arr||[]).map(function(c){
     var nota=limpiaNota(c.nota);
+    var comp=String(c.comp||'').replace(/[^A-Za-z0-9_-]/g,'');
     return (c.anticipo?'~':'')+(c.metodo||'')+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+
-           (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'');
+           (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'')+(comp?(' %'+comp):'');
   }).join(' + ');
 }
 /* "Efectivo" · "QR BISA" — cómo se muestra un pago. */
@@ -4387,7 +4473,7 @@ function cobrosDe(p){
   if(a.length) return a;
   // Formato viejo: un solo método sin monto anotado (lo que dejaba la vendedora al cargar).
   var t=sinMarcaReg(p.metodoPago);
-  if(p.pagado && t && !todo.length) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:'', nota:''}];
+  if(p.pagado && t && !todo.length) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:'', nota:'', comp:''}];
   return [];
 }
 /* El ANTICIPO: lo que el cliente dejó al comprar. Si todavía no está escrito en el
@@ -4401,7 +4487,7 @@ function anticipoDe(p){
   var t=sinMarcaReg(p.metodoPago);
   var suelto = t && !parseCobros(t).length;   // "Efectivo" / "QR BISA": método sin monto
   return { metodo:(suelto?metodoBase(t):'')||'', banco:(suelto?bancoDe(t):''), monto:r2(acu),
-           fecha:contaFecha(p), nota:limpiaNota(p.nota), anticipo:true };
+           fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:'', anticipo:true };
 }
 /* Total de la VENTA = el anticipo + lo que quedó por cobrar. La planilla no tiene
    columna "Total", así que se reconstruye. No confundir con objetivoCobro(), que es
