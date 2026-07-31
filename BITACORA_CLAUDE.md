@@ -362,6 +362,23 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   vista: tabla, desplegable, resumen y Excel. El motivo: no llevan nota de venta, NIT ni
   "facturar a" (por eso tienen el formulario "lite"), así que aparecerían casi vacíos y
   ensuciarían los totales. **Para devolver a alguien a la vista, sacarlo de esa lista.**
+- **Ficha propia (`showContaModal`)**: al hacer clic en una fila. Se maneja **distinto a la ficha
+  de pedidos** — no toca stock, chofer ni entrega. Tiene **registrar pago** (monto + fecha +
+  método + banco si es QR) y **✅ Pago registrado en sistema**, que pinta la fila de verde.
+- **⚠️ El ledger de pagos vive en la columna "Método pago"**, que la planilla YA tenía:
+  `"Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30 · REGISTRADO"`. Se eligió así para **no
+  agregar columnas** (obliga a reimplementar el Apps Script). `parseCobros` lee banco y fecha
+  como **opcionales**, así que los cobros viejos (`"Efectivo 6000"`) se siguen leyendo igual.
+  **Si se cambia el formato, se pierde el histórico.**
+  - `sinMarcaReg()` saca el `· REGISTRADO` **antes** de partir por `+`: sin eso la marca se
+    comía el último pago.
+  - `aplicarCobros()` (el chofer) **preserva la marca** al reescribir el campo.
+  - **Es UN SOLO historial**: lo que cobra el chofer y lo que registra contabilidad son la misma
+    lista. Es lo correcto — son pagos de la misma venta.
+- **`contaPagos()` usa `cobrosDe()`, NO `cobrosVisibles()`**, y además cae al `acuenta`. Motivo:
+  un pedido que la vendedora marcó PAGADO al cargarlo **no guarda el monto** (`cobradoBs` es
+  client-only, no tiene columna), así que filtrar por `monto>0` dejaba esas ventas **sin método
+  a la vista**. Acá se prefiere "QR BISA · monto no anotado" antes que esconder el pago.
 - **No tiene candado**: quedó abierta como "Mis pedidos" y "Chofer", que también muestran plata.
   Se le avisó al usuario que puede pedir que se le ponga contraseña.
 

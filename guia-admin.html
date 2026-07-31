@@ -290,6 +290,14 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li><b>⬇️ Excel</b> con esas mismas columnas, <b>una fila por producto</b>, para trabajarlo aparte. Respeta el vendedor elegido y lo pone en el nombre del archivo.</li>
       <li>El más reciente va arriba.</li>
     </ul>
+    <p><b>Al hacer clic en una venta</b> se abre una ventana con todo: datos, total, los pagos recibidos y el saldo. Se maneja <b>distinto a la ficha de pedidos</b> — acá no se toca stock, chofer ni entrega, solo la plata.</p>
+    <ul>
+      <li><b>💵 Registrar un pago</b> — para cuando el cliente tenía saldo y paga <b>en otra fecha</b>. Se pone el <b>monto</b>, la <b>fecha del pago</b> y el <b>método</b> (con banco si es QR). El saldo baja solo y, cuando llega a cero, la venta queda <b>PAGADO</b>.</li>
+      <li>Se pueden registrar <b>varios pagos</b>. La columna <b>“Pagos recibidos”</b> los muestra todos, uno por renglón, con <b>su fecha y su método</b>: <br><span class="kbd">28/07 Efectivo Bs 500,00</span> <span class="kbd">30/07 QR BISA Bs 1.800,00</span></li>
+      <li><b>✅ Pago registrado en sistema</b> — lo marca contabilidad cuando ya cargó la venta en su sistema contable. Esa fila <b>se pinta de verde</b> en la tabla y lleva la etiqueta <b>EN SISTEMA</b>. El resumen de arriba dice <b>cuántas van y cuántas faltan por cargar</b>. Se puede desmarcar.</li>
+      <li>El <b>Excel</b> incluye los pagos con fecha y método, el total cobrado, el saldo y la columna <b>EN SISTEMA</b>.</li>
+    </ul>
+    <div class="callout">Los pagos se guardan en la columna <b>Método pago</b> que la planilla ya tenía (<span class="kbd">Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30 · REGISTRADO</span>), así que <b>no hubo que agregar columnas ni volver a implementar el Apps Script</b>. Los cobros que carga el chofer entran en la misma lista: es un solo historial de pagos por venta.</div>
     <div class="callout">Esta pestaña <b>no pide contraseña</b>, igual que “Mis pedidos” y “Chofer”. Si querés que solo entre contabilidad, avisá y se le pone candado.</div>
   </div>
 

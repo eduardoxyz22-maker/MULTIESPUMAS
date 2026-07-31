@@ -1199,19 +1199,21 @@ function setContaModo(m){
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   var list=contaLista();
-  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={};
+  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0;
   list.forEach(function(p){
+    if(regEnSistema(p)) nReg++;
     if(p.pagado) nPag++; else nDebe++;
     aCuenta+=Number(p.acuenta)||0;
     if(!p.pagado) saldo+=Number(p.saldo)||0;
-    var met=String(p.metodoPago||'').trim();
-    if(met) porMet[met]=(porMet[met]||0)+1;
+    contaPagos(p).forEach(function(c){ var k=cobroMetodoTxt(c); if(k) porMet[k]=(porMet[k]||0)+1; });
   });
   var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
     (saldo>0?(' ('+fmtBs(saldo)+')'):'')+(aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
+    ' &nbsp;·&nbsp; 🧾 En el sistema: <b>'+nReg+'</b> de '+list.length+
+    (list.length-nReg>0?(' <span style="color:var(--amber)">('+(list.length-nReg)+' por cargar)</span>'):'')+
     (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'');
   var vac=document.getElementById('cta-empty');
   vac.style.display=list.length?'none':'block';
@@ -1227,9 +1229,10 @@ function renderConta(){
   tbl.style.display=list.length?'table':'none';
   if(!list.length){ tbl.innerHTML=''; return; }
   var head='<thead><tr><th>Ingresado</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Celular</th>'+
-           '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Observaciones</th></tr></thead>';
+           '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+list.map(function(p){
-    return '<tr>'+
+    var reg=regEnSistema(p);
+    return '<tr onclick="showContaModal(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">OC '+esc(p.oc)+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
@@ -1238,16 +1241,129 @@ function renderConta(){
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
       '<td>'+esc(p.facturarA||'—')+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
-      '<td style="white-space:nowrap">'+contaPagoHtml(p)+'</td>'+
+      '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
+      '<td>'+contaPagosCelda(p)+'</td>'+
       '<td class="prod-cell">'+esc(p.observaciones||'')+'</td>'+
     '</tr>';
   }).join('')+'</tbody>';
+}
+/* Cada pago en su renglón: fecha · método (con banco) · monto. Es lo que pidió
+   contabilidad para ver "los dos pagos" cuando entraron en fechas distintas. */
+/* Contabilidad usa cobrosDe(), NO cobrosVisibles(): un pedido que la vendedora marcó
+   PAGADO al cargarlo no tiene el monto guardado (cobradoBs vive solo en el navegador,
+   no hay columna en la planilla), así que filtrar por monto>0 lo dejaba sin método.
+   Acá se prefiere decir "QR BISA · monto no anotado" antes que esconder el pago. */
+function contaPagos(p){
+  var a=cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; });
+  if(a.length) return a;
+  // El adelanto "a cuenta" que anotó la vendedora al cargar: para contabilidad ES un pago,
+  // aunque cobrosDe() no lo devuelva (solo cae al formato viejo si el pedido está pagado).
+  var t=sinMarcaReg(p.metodoPago), acu=Number(p.acuenta)||0;
+  if(t && acu>0) return [{metodo:metodoBase(t), banco:bancoDe(t), monto:acu, fecha:''}];
+  return [];
+}
+function contaMontoTxt(c){ return (Number(c.monto)||0)>0 ? fmtBs(c.monto) : 'monto no anotado'; }
+/* Los pagos en una sola línea, para la celda del Excel. */
+function contaPagosTxt(p){
+  return contaPagos(p).map(function(c){
+    return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+cobroMetodoTxt(c)+' · '+contaMontoTxt(c);
+  }).join('  |  ');
+}
+function contaPagosCelda(p){
+  var cob=contaPagos(p);
+  if(!cob.length) return '<span style="color:var(--muted)">—</span>';
+  return cob.map(function(c){
+    return '<span style="white-space:nowrap"><span style="color:var(--muted)">'+esc(c.fecha?fmtFechaCorta(c.fecha):'s/f')+'</span> '+esc(cobroMetodoTxt(c))+' <b>'+esc(contaMontoTxt(c))+'</b></span>';
+  }).join('<br>');
+}
+function renderContaSiActiva(){ var v=document.getElementById('view-conta'); if(v && v.classList.contains('active')) renderConta(); }
+/* Los pagos de un pedido, listos para mostrar: fecha · método (y banco) · monto. */
+function contaPagosHtml(p){
+  var cob=contaPagos(p);
+  if(!cob.length) return '<span style="color:var(--muted)">— sin pagos registrados —</span>';
+  return cob.map(function(c){
+    return '<div style="padding:2px 0"><span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · <b>'+esc(cobroMetodoTxt(c))+'</b> · '+esc(contaMontoTxt(c))+'</div>';
+  }).join('');
+}
+/* ---- Ventana flotante de contabilidad ----
+   Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
+   Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
+var CTA_PAGO={metodo:'Efectivo', banco:''};
+function showContaModal(id){
+  var p=findById(id); if(!p) return;
+  MODAL_KIND='conta';
+  function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
+  var falta=Number(p.saldo)||0, reg=regEnSistema(p);
+  var prods=contaProdTxt(p.productos).map(esc).join('<br>');
+  var bancos=bancosDeVendedor(p.vendedor);
+  var mb=function(m){ return '<button type="button" class="btn btn-sm" style="'+(CTA_PAGO.metodo===m?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetMetodo(\''+p.id+'\',\''+m+'\')">'+m+'</button>'; };
+  var bb=function(b){ return '<button type="button" class="btn btn-sm" style="'+(CTA_PAGO.banco===b?'background:var(--teal-dk);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetBanco(\''+p.id+'\',\''+esc(b)+'\')">🏦 '+esc(b)+'</button>'; };
+  var formPago = falta>0.01
+    ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+         '<div class="lb" style="margin-bottom:8px">💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b></div>'+
+         '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+r2(falta)+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">Fecha del pago</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
+         '</div>'+
+         '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
+         (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ Registrar pago</button>'+
+       '</div>')
+    : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
+  var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
+      row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
+      row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
+      row('N° OC', esc(p.oc))+
+      row('Vendedor', esc(p.vendedor))+
+      row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+      row('Celular', esc(p.celular))+
+      row('Productos', prods)+
+      row('Facturar a', esc(p.facturarA)||'—')+
+      row('NIT', esc(p.nit)||'—')+
+      row('Total de la venta', '<b>'+fmtBs(objetivoCobro(p))+'</b>')+
+      row('Pagos', contaPagosHtml(p))+
+      row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
+      row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
+      row('Observaciones', esc(p.observaciones))+
+      formPago+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html);
+}
+function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; showContaModal(id); }
+function ctaSetBanco(id,b){ CTA_PAGO.banco=b; showContaModal(id); }
+function ctaRegistrarPago(id){
+  var p=findById(id); if(!p) return;
+  var monto=parseMonto(document.getElementById('cta-pago-monto').value);
+  var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
+  if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
+  if(CTA_PAGO.metodo==='QR' && !CTA_PAGO.banco){ toast('Elegí a qué banco entró el QR','err'); return; }
+  var falta=Number(p.saldo)||0;
+  if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
+  var arr=cobrosDe(p).slice();
+  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha});
+  aplicarCobros(p, arr);
+  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
+  showContaModal(id);
+}
+function ctaToggleRegistrado(id){
+  var p=findById(id); if(!p) return;
+  var on=!regEnSistema(p);
+  p.metodoPago=conMarcaReg(p.metodoPago, on);
+  persistPedido(p);
+  toast(on?'Marcado como registrado en el sistema ✓':'Ya no figura como registrado','ok');
+  showContaModal(id);
 }
 function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','MÉTODO / BANCO','A CUENTA (Bs)','SALDO (Bs)','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -1258,14 +1374,14 @@ function exportConta(){
         i===0?(p.vendedor||''):'', i===0?(p.cliente||''):'', i===0?(p.celular||''):'',
         x.desc||'', x.medida||'', x.codigo||'', (x.cant===''?'':{v:Number(x.cant)||0,t:'n'}),
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
-        i===0?(p.pagado?'SÍ':'NO'):'', i===0?(p.metodoPago||''):'',
-        i===0?{v:Number(p.acuenta)||0,t:'n'}:'', i===0?{v:(p.pagado?0:(Number(p.saldo)||0)),t:'n'}:'',
-        i===0?(p.observaciones||''):''
+        i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
+        i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
+        i===0?(regEnSistema(p)?'SÍ':'NO'):'', i===0?(p.observaciones||''):''
       ]);
     });
   });
   var bytes=buildXlsx([{name:'Contabilidad',
-    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:20},{w:14},{w:14},{w:36}],
+    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -3425,23 +3541,44 @@ function parseMonto(t){
   var n=parseFloat(t);
   return isNaN(n)?0:r2(n);
 }
+/* ---- Ledger de pagos ----
+   Todo vive en la columna "Método pago" que la planilla YA tiene, para no agregar
+   columnas nuevas (eso obliga a reimplementar el Apps Script). Formato:
+
+     "Efectivo 500 @2026-07-28 + QR BISA 1800 @2026-07-30 · REGISTRADO"
+      └método  └monto └fecha     └banco                     └marca de contabilidad
+
+   El banco y la fecha son opcionales: los cobros viejos ("Efectivo 6000") se siguen
+   leyendo igual. La marca REGISTRADO la pone contabilidad cuando cargó la venta en su
+   sistema; se guarda acá por el mismo motivo (no hay columna libre). */
+var MARCA_REG='REGISTRADO';
+function sinMarcaReg(t){ return String(t||'').replace(/\s*·\s*REGISTRADO\s*$/i,''); }
+function regEnSistema(p){ return /·\s*REGISTRADO\s*$/i.test(String((p&&p.metodoPago)||'')); }
+function conMarcaReg(txt, on){ var base=sinMarcaReg(txt); return on ? (base+(base?' ':'')+'· '+MARCA_REG) : base; }
 function parseCobros(txt){
   var out=[];
-  String(txt||'').split('+').forEach(function(s){
-    var m=s.trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)\s+([\d.,]+)$/);
+  sinMarcaReg(txt).split('+').forEach(function(s){
+    var m=s.trim().match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)(?:\s+([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s+([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?$/);
     if(!m) return;
     var met=normMetodo(m[1]); if(!met) return;
-    var n=parseMonto(m[2]); if(!(n>0)) return;
-    out.push({metodo:met, monto:n});
+    var n=parseMonto(m[3]); if(!(n>0)) return;
+    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||''});
   });
   return out;
 }
-function textoCobros(arr){ return (arr||[]).map(function(c){ return c.metodo+' '+r2(c.monto); }).join(' + '); }
+function textoCobros(arr){
+  return (arr||[]).map(function(c){
+    return c.metodo+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+(c.fecha?(' @'+c.fecha):'');
+  }).join(' + ');
+}
+/* "Efectivo" · "QR BISA" — cómo se muestra un pago. */
+function cobroMetodoTxt(c){ return String(c.metodo||'')+(c.banco?(' '+c.banco):''); }
 function cobrosDe(p){
   var a=parseCobros(p.metodoPago);
   if(a.length) return a;
-  // Formato viejo: un solo método sin monto anotado.
-  if(p.pagado && p.metodoPago) return [{metodo:normMetodo(p.metodoPago)||String(p.metodoPago), monto:r2(p.cobradoBs)}];
+  // Formato viejo: un solo método sin monto anotado (lo que dejaba la vendedora al cargar).
+  var t=sinMarcaReg(p.metodoPago);
+  if(p.pagado && t) return [{metodo:metodoBase(t)||String(t), banco:bancoDe(t), monto:r2(p.cobradoBs), fecha:''}];
   return [];
 }
 function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
@@ -3453,8 +3590,8 @@ function excesoCobro(p){ var e=r2(totalCobrado(p)-objetivoCobro(p)); return e>0.
 function excesoBadge(p){ var e=excesoCobro(p); return e?(' <span class="badge b-red">⚠️ '+fmtBs(e)+' de más</span>'):''; }
 function cobrosResumen(p){
   var a=cobrosDe(p);
-  if(!a.length) return esc(p.metodoPago||'');
-  return a.map(function(c){ return esc(c.metodo)+(c.monto>0?(' '+fmtBs(c.monto)):''); }).join(' + ');
+  if(!a.length) return esc(sinMarcaReg(p.metodoPago));
+  return a.map(function(c){ return esc(cobroMetodoTxt(c))+(c.monto>0?(' '+fmtBs(c.monto)):''); }).join(' + ');
 }
 /* Reescribe los cobros del pedido y recalcula saldo/pagado. OJO: el objetivo se lee
    ANTES de tocar nada, porque depende del saldo actual. */
@@ -3462,7 +3599,7 @@ function aplicarCobros(p, arr){
   var objetivo=objetivoCobro(p), total=0;
   (arr||[]).forEach(function(c){ total+=Number(c.monto)||0; });
   total=r2(total);
-  p.metodoPago=textoCobros(arr);
+  p.metodoPago=conMarcaReg(textoCobros(arr), regEnSistema(p));   // no pisar la marca de contabilidad
   p.cobradoBs=total;
   p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
   p.pagado = total>0 && total>=objetivo-0.01;
@@ -3539,7 +3676,7 @@ function showWhatsappModal(rec){
 
 /* Qué ficha está abierta, para volver a la correcta al marcar algo */
 var MODAL_KIND='admin';
-function reabrirFicha(id){ if(MODAL_KIND==='carga') showCargaModal(id); else if(MODAL_KIND==='mis') showMisModal(id); else showPedidoModal(id); }
+function reabrirFicha(id){ if(MODAL_KIND==='carga') showCargaModal(id); else if(MODAL_KIND==='mis') showMisModal(id); else if(MODAL_KIND==='conta') showContaModal(id); else showPedidoModal(id); }
 
 /* ---- Ficha del JEFE DE ALMACÉN (se abre desde la Lista de carga) ----
    Solo lo necesario para cargar el camión: qué se lleva y hacia dónde.
@@ -3949,7 +4086,7 @@ function choferSelect(p){
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
 function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); reabrirFicha(id); }
 function persistPedido(p){
-  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo();
+  upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 
