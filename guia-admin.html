@@ -124,7 +124,15 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
 
   <div class="card" id="reprogramar">
     <h3>📅 Reprogramar en 1 clic</h3>
-    <p>En el detalle de un pedido, botón <b>“Reprogramar”</b> → escribís la <b>nueva fecha</b>. Respeta los <b>cupos por turno</b>: si el turno está lleno ese día, avisa y sugiere el otro turno o cambiar la fecha. Ideal para los pedidos marcados <b>“No hay stock”</b>.</p>
+    <p>En el detalle de un pedido, botón <b>“Reprogramar”</b> → se abre una ventana con <b>calendario</b> (ya no hay que escribir la fecha a mano) y con atajos <b>Hoy</b> y <b>Mañana</b>. Desde ahí se cambia también el <b>turno</b>. Ideal para los pedidos marcados <b>“No hay stock”</b>.</p>
+    <ul>
+      <li><b>Se puede pasar una entrega a HOY.</b> Antes el calendario no dejaba y “Reprogramar” cortaba con “la fecha debe ser desde mañana”.</li>
+      <li>Muestra <b>cuántos cupos quedan</b> en el turno y el día elegidos.</li>
+      <li>Si el día es <b>domingo</b>, es un <b>sábado a la tarde</b>, la fecha <b>ya pasó</b> o el <b>turno está lleno</b>, <b>avisa y pide confirmación</b>, pero <b>no lo bloquea</b>: desde Administración se decide.</li>
+    </ul>
+
+    <h3>✏️ Editar un pedido ya cargado</h3>
+    <p>Botón <b>“Editar”</b> en el detalle. Desde Administración <b>no hay tope de fecha</b>: se puede poner <b>hoy</b> o corregir una fecha que ya pasó. Los carteles de “turno lleno” o “no se agenda los domingos” siguen apareciendo como <b>aviso</b>, y aclaran que estando en edición <b>se puede guardar igual</b>. En un pedido <b>nuevo</b> las reglas de siempre no cambian: la entrega se agenda desde mañana.</p>
   </div>
 
   <div class="sec"><span class="em">🎟️</span> Planificación y cupos</div>

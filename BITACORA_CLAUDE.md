@@ -477,6 +477,34 @@ dentro de contabilidad"*. Se resolvió como **sub-pestaña** de Contabilidad
   según la sub-pestaña activa. Y `refreshConta()` inicializa también `cua-dia` / `cua-mes`.
 - `diasEntre()` se clampea a 0: una venta con fecha futura mostraba "-3 d".
 
+## 4n. Editar y reprogramar a HOY desde Administración (2026-07-31)
+
+Pedido: *"cuando editan o reprograman desde el panel administración (cuando ya está la clave
+puesta) debe permitir al navegador editar y/o reprogramar los pedidos y permitir colocar
+fecha de hoy"*.
+
+- **La causa era `applyVendedorLite()`.** `editPedido()` hacía `removeAttribute('min')` sobre
+  `f-fecha`, pero tres líneas después llamaba a `applyVendedorLite()`, que **volvía a poner
+  `min = tomorrowStr()`**. Como esa función corre en cada cambio de vendedor, sacarlo solo en
+  `editPedido` no alcanzaba: ahora el propio `applyVendedorLite` **respeta `EDIT_ID`**.
+  ⚠️ Las validaciones de `submitPedido` (fecha mínima, domingo, sábado PM, cupos) YA tenían
+  `!isEdit` — o sea, el guardado nunca fue el problema, **era el calendario del navegador**.
+- **`reprogramarPedido()` pasó de `prompt()` a ventana propia** (`showReproModal`, estado en
+  `REPRO`). El prompt obligaba a tipear "2026-08-05" a mano y bloqueaba con
+  `nueva < tomorrowStr()`. Ahora: `<input type="date">` **sin `min`**, atajos Hoy/Mañana,
+  **selector de turno** (antes había que ir a Editar) y el estado de cupos del día elegido.
+- **Domingo, sábado PM, fecha pasada y turno lleno ya no bloquean: avisan.** `reproAvisos()`
+  los junta, se muestran en la ventana y se piden por `confirm()`. Quien entró con la clave
+  decide. **Es deliberado — no "arreglar" volviendo a bloquear.**
+- `REPRO.kind` guarda el `MODAL_KIND` de origen para que `reproVolver()` regrese a la ficha
+  correcta (admin / carga / mis / conta), igual que hacía el `reabrirFicha` viejo.
+- `nroDia` solo se reasigna **si cambió la fecha** (antes se pisaba siempre, aunque solo se
+  cambiara el turno).
+- Dos arreglos de la misma familia: `ajustarTurnoSeg()` **ya no deshabilita PM ni lo cambia
+  solo a AM cuando se está editando** (un pedido histórico de sábado PM se auto-corregía sin
+  que nadie lo pidiera), y los carteles de cupo agregan *"estás editando: se puede guardar
+  igual"* — sin eso uno lee "elegí otra fecha" y cree que está trabado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

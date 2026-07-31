@@ -2076,7 +2076,13 @@ function applyVendedorLite(){
   var v=document.getElementById('f-vendedor'), view=document.getElementById('view-form');
   var lite=v?esVendedorLite(v.value):false, roho=v?esRoho(v.value):false;
   if(view){ view.classList.toggle('lite-vendedor', lite); view.classList.toggle('roho-vendedor', roho); }
-  var ff=document.getElementById('f-fecha'); if(ff) ff.min = lite ? todayStr() : tomorrowStr();
+  /* El tope de fecha es SOLO para pedidos nuevos. Editando (desde Administración) no se
+     pone ninguno: hay que poder pasar una entrega a HOY o corregir una fecha que ya pasó,
+     y con el `min` puesto el calendario del navegador ni siquiera deja elegirlas.
+     ⚠️ Va acá porque esta función corre cada vez que cambia el vendedor: si solo se
+     sacara en editPedido(), volvería a aparecer sola. */
+  var ff=document.getElementById('f-fecha');
+  if(ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min = lite ? todayStr() : tomorrowStr(); }
 }
 function resetForm(){
   EDIT_ID=null;
@@ -2233,7 +2239,9 @@ function atrasoBadge(p, ahora){
 function ajustarTurnoSeg(fecha){
   var seg=document.getElementById('f-turno'); if(!seg) return;
   var pm=seg.querySelector('button[data-val="PM"]'); if(!pm) return;
-  var sab=diaSabado(fecha);
+  // Editando NO se traba el PM: si el pedido histórico quedó un sábado a la tarde,
+  // deshabilitarlo lo cambiaba solo a AM sin que nadie lo pidiera.
+  var sab=diaSabado(fecha) && !EDIT_ID;
   pm.disabled=sab; pm.style.opacity=sab?'.4':''; pm.style.cursor=sab?'not-allowed':'';
   pm.title=sab?'Los sábados solo hay turno AM':'';
   if(sab && segVal('f-turno')==='PM'){ segSet('f-turno','AM'); }
@@ -2242,10 +2250,13 @@ function renderCupoForm(){
   var el=document.getElementById('cupo-form'); if(!el) return;
   var fecha=document.getElementById('f-fecha').value||todayStr();
   ajustarTurnoSeg(fecha);
+  /* Editando, los carteles de "lleno" y "no se agenda" son AVISOS, no muros: el guardado
+     ya no los aplica. Sin esta aclaración uno lee "elegí otra fecha" y cree que no puede. */
+  var _ed = EDIT_ID ? '<br><span style="opacity:.85">✏️ Estás <b>editando</b>: se puede guardar igual.</span>' : '';
   var turno=normTurno(segVal('f-turno'));
   if(diaDomingo(fecha)){
     el.className='cupo full';
-    el.innerHTML='🚫 <b>No se agenda los DOMINGOS.</b> Elegí otra fecha para este pedido.';
+    el.innerHTML='🚫 <b>No se agenda los DOMINGOS.</b> Elegí otra fecha para este pedido.'+_ed;
     return;
   }
   if(diaSabado(fecha)){
@@ -2253,7 +2264,7 @@ function renderCupoForm(){
     el.className='cupo '+(rAMs<=0?'full':(rAMs<=3?'warn':'ok'));
     el.innerHTML=(rAMs<=0
       ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/15 AM). Elegí otra fecha.'
-      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>';
+      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>'+(rAMs<=0?_ed:'');
     return;
   }
   var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(fecha,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(fecha,'PM'));
@@ -2261,7 +2272,7 @@ function renderCupoForm(){
   var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
   if(restSel<=0){
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea;
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea+_ed;
   }else{
     el.className='cupo '+(restSel<=3?'warn':'ok');
     el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
@@ -2586,27 +2597,83 @@ function renderZonas(){
   }).join('');
 }
 
-/* ---- Reprogramar entrega en 1 clic (respeta cupos por turno) ---- */
+/* ---- Reprogramar entrega ----
+   Ventana con calendario de verdad (antes era un prompt donde había que TIPEAR
+   "2026-08-05" a mano). Sin tope de fecha: desde Administración tiene que poder
+   pasarse una entrega a HOY. Las reglas del negocio (domingo, sábado PM, turno
+   lleno) ya no bloquean: AVISAN y se confirman — el que entró con la clave decide. */
+var REPRO={ id:null, kind:'admin', fecha:'', turno:'' };
 function reprogramarPedido(id){
   var p=findById(id); if(!p) return;
-  var nueva=prompt('Reprogramar entrega de "'+(p.cliente||'')+'"\nFecha actual: '+(p.fecha||'—')+' ('+normTurno(p.turno)+')\n\nNueva fecha (AAAA-MM-DD):', p.fecha||tomorrowStr());
-  if(nueva==null) return;
-  nueva=String(nueva).trim();
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(nueva)){ toast('Fecha inválida. Usá AAAA-MM-DD (ej. '+tomorrowStr()+')','err'); return; }
-  if(nueva<tomorrowStr()){ toast('La fecha debe ser desde mañana.','err'); return; }
-  if(nueva===p.fecha){ toast('Es la misma fecha.','err'); return; }
-  if(diaDomingo(nueva)){ toast('🚫 No se agenda los domingos. Elegí otra fecha.','err'); return; }
-  var t=normTurno(p.turno);
-  if(diaSabado(nueva) && t==='PM'){ toast('Los sábados solo hay turno AM. Este pedido es PM — cambiá el turno (Editar) o elegí otra fecha.','err'); return; }
-  if(cuposUsadosTurno(nueva,t) >= limTurno(nueva,t)){
-    var lim=limTurno(nueva,t);
-    toast('Turno '+t+' lleno el '+fmtFecha(nueva)+' ('+lim+'/'+lim+'). Elegí otra fecha'+(diaSabado(nueva)?'':' o cambiá el turno')+'.','err');
-    return;
+  REPRO.id=id;
+  if(MODAL_KIND!=='repro') REPRO.kind=MODAL_KIND;   // a qué ficha hay que volver
+  REPRO.fecha=p.fecha||todayStr();
+  REPRO.turno=normTurno(p.turno)||'AM';
+  showReproModal();
+}
+function reproSetFecha(v){ REPRO.fecha=String(v||'').trim(); showReproModal(); }
+function reproSetTurno(t){ REPRO.turno=t; showReproModal(); }
+function reproVolver(){ MODAL_KIND=REPRO.kind; reabrirFicha(REPRO.id); }
+/* Los avisos de la fecha/turno elegidos. Vacío = todo en orden. */
+function reproAvisos(p, f, t){
+  var A=[];
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return ['Falta elegir la fecha.'];
+  if(f<todayStr()) A.push('Es una fecha que YA PASÓ ('+fmtFecha(f)+').');
+  if(diaDomingo(f)) A.push('Es DOMINGO: normalmente no se entrega.');
+  else if(diaSabado(f) && t==='PM') A.push('Es SÁBADO y los sábados solo hay turno AM.');
+  else {
+    var lim=limTurno(f,t), usados=cuposUsadosTurno(f,t);
+    if(p.fecha===f && normTurno(p.turno)===t) usados--;   // no contarse a sí mismo
+    if(lim>0 && usados>=lim) A.push('El turno '+t+' del '+fmtFecha(f)+' ya está lleno ('+lim+'/'+lim+').');
   }
-  var antes=p.fecha; p.fecha=nueva; p.nroDia=nextNroDia(nueva);
+  return A;
+}
+function showReproModal(){
+  var p=findById(REPRO.id); if(!p) return;
+  MODAL_KIND='repro';
+  var f=REPRO.fecha, t=REPRO.turno;
+  var avisos=reproAvisos(p,f,t);
+  var lim=limTurno(f,t), usados=cuposUsadosTurno(f,t);
+  if(p.fecha===f && normTurno(p.turno)===t) usados--;
+  var libre=Math.max(0, lim-usados);
+  var tb=function(x){ return '<button type="button" class="btn btn-sm" style="'+(t===x?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="reproSetTurno(\''+x+'\')">'+(x==='AM'?'🌅 AM':'🌆 PM')+'</button>'; };
+  var rapido=function(v,txt){ return '<button type="button" class="btn btn-ghost btn-sm" onclick="reproSetFecha(\''+v+'\')">'+txt+'</button>'; };
+  var igual = (f===p.fecha && t===normTurno(p.turno));
+  var html='<div class="modal-h"><h3>📅 Reprogramar entrega</h3><button class="modal-x" onclick="reproVolver()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<div class="dl-row"><div class="dl-k">Cliente</div><div class="dl-v"><b>'+esc(p.cliente||'—')+'</b>'+(p.zona?(' <span style="color:var(--muted)">· '+esc(p.zona)+'</span>'):'')+'</div></div>'+
+      '<div class="dl-row"><div class="dl-k">Ahora</div><div class="dl-v">'+esc(fmtFecha(p.fecha))+' · '+esc(normTurno(p.turno)||'—')+'</div></div>'+
+      '<div style="margin-top:14px"><label class="lb">Nueva fecha</label>'+
+        '<input type="date" id="repro-fecha" value="'+esc(f)+'" onchange="reproSetFecha(this.value)" style="width:100%">'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+rapido(todayStr(),'Hoy')+rapido(tomorrowStr(),'Mañana')+'</div>'+
+      '</div>'+
+      '<div style="margin-top:12px"><label class="lb">Turno</label><div style="display:flex;gap:6px">'+tb('AM')+tb('PM')+'</div></div>'+
+      (avisos.length
+        ? '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:10px 13px;margin-top:13px;font-size:.83rem;color:#8a5a00">'+
+            avisos.map(function(a){ return '⚠️ '+esc(a); }).join('<br>')+
+            '<div style="margin-top:6px;font-weight:700">Se puede reprogramar igual — te lo va a confirmar antes.</div></div>'
+        : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:10px 13px;margin-top:13px;font-size:.83rem;color:#0a6b47">'+
+            '✅ Turno '+esc(t)+' del '+esc(fmtFecha(f))+': quedan <b>'+libre+'</b> de '+lim+'.</div>')+
+      '<div class="modal-actions" style="margin-top:15px">'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:170px'+(igual?';opacity:.5':'')+'" onclick="reproConfirmar()">✓ Reprogramar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="reproVolver()">Cancelar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html);
+}
+function reproConfirmar(){
+  var p=findById(REPRO.id); if(!p) return;
+  var f=REPRO.fecha, t=REPRO.turno;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí la nueva fecha','err'); return; }
+  if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
+  var avisos=reproAvisos(p,f,t);
+  if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
+  var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
+  if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
+  p.turno=t;
   persistPedido(p);
-  toast('Reprogramado: '+fmtFecha(antes)+' → '+fmtFecha(nueva)+' ✓','ok');
-  reabrirFicha(id);                       // vuelve a la ficha desde la que se abrió, no siempre a la del admin
+  toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
+  reproVolver();                          // vuelve a la ficha desde la que se abrió
 }
 
 /* ============================================================================
