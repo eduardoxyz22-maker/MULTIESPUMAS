@@ -1112,7 +1112,7 @@ function submitPedido(){
     var pds=document.querySelectorAll('#f-productos .prod-desc');
     for(var ci=0;ci<pds.length;ci++){ if(/^\s*combo\b/i.test(pds[ci].value||'')) pds[ci].classList.add('err'); }
     if(memeCombo(vendedor, combo[0].desc)) return;   // a los reincidentes, con cariño
-    toast('🚫 Los combos se cargan por separado: poné el colchón en una línea y el somier (y la almohada, si va) en otra. Encontré: '+combo[0].desc,'err');
+    toast('🚫 Los combos se cargan por separado — una línea por producto: el colchón en una, el somier en otra, el respaldar en otra y la almohada en otra si va. Encontré: '+combo[0].desc,'err');
     var pe=document.querySelector('#f-productos .prod-desc.err'); if(pe){ pe.focus(); pe.scrollIntoView({block:'center'}); }
     return;
   }
@@ -1206,7 +1206,7 @@ function memeCombo(vendedor, queEscribio){
     '<div class="modal-b" style="text-align:center">'+
       '<img src="combo-instrucciones.jpg" alt="Los combos se cargan por separado" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
       '<p style="font-size:.9rem;color:var(--text);margin-bottom:6px"><b>Escribiste:</b> '+esc(queEscribio||'')+'</p>'+
-      '<p style="font-size:.88rem;color:var(--muted)">Cargá <b>una línea por producto</b>: el colchón en una, el somier en otra y la almohada en otra si va.</p>'+
+      '<p style="font-size:.88rem;color:var(--muted)">Cargá <b>una línea por producto</b>: el colchón en una, el somier en otra, el respaldar en otra y la almohada en otra si va.</p>'+
       '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-primary btn-sm" style="width:100%" onclick="closeModal();var e=document.querySelector(\'#f-productos .prod-desc.err\');if(e){e.focus();e.scrollIntoView({block:\'center\'});}">Ya entendí, lo corrijo</button></div>'+
     '</div>');
   return true;
