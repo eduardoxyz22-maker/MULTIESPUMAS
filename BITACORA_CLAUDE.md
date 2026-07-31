@@ -477,6 +477,17 @@ dentro de contabilidad"*. Se resolvió como **sub-pestaña** de Contabilidad
   forma de pago con diferencia → por cobrar por antigüedad (rojo ≥30 d, ámbar ≥8 d) →
   alertas → detalle tildable. Todo clickeable abre `showContaModal`.
 - `📋 Copiar` arma el texto para WhatsApp; `⬇️ Excel` baja detalle + cierre.
+- **Filtro por vendedor** (2026-07-31, pedido del usuario): `cua-vendedor`, mismo llenador que
+  el de Ventas (`llenarUnSelectVendedor`) pero **cada pestaña recuerda lo suyo**. Recorta
+  pagos, "por cobrar" y alertas.
+  - **⚠️ Con un vendedor elegido NO se deja anotar el arqueo.** El valor guardado es global
+    (`modo|valor|forma`, sin vendedor) y anotar un total parcial lo pisaría. Además la caja y
+    el extracto son UNO SOLO, no uno por vendedora. Se muestran los números y se explica en
+    pantalla. **No "arreglar" esto habilitando el input sin cambiar antes la clave.**
+- **Alerta separada "PAGADA sin anotar el monto"**: antes esas ventas caían en "pagos sin
+  fecha · Bs 0,00" (el usuario vio 53 así). No son pagos sin fecha: son ventas que la
+  vendedora marcó pagada cuando el monto del cobro **no se guardaba** en la planilla
+  (`cobradoBs` es client-only). Ahora van en su propio aviso y con la nota de venta.
 - Ojo al tocar `renderContaSiActiva()`: ahora despacha a `renderCuadre()` o `renderConta()`
   según la sub-pestaña activa. Y `refreshConta()` inicializa también `cua-dia` / `cua-mes`.
 - `diasEntre()` se clampea a 0: una venta con fecha futura mostraba "-3 d".

@@ -738,6 +738,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <label class="lb">Mes</label>
             <input type="month" id="cua-mes" onchange="renderCuadre()">
           </div>
+          <div class="field" style="min-width:170px">
+            <label class="lb">Vendedor</label>
+            <select id="cua-vendedor" onchange="renderCuadre()"></select>
+          </div>
           <div class="field">
             <button class="btn btn-ghost btn-sm" onclick="copiarCuadre()">📋 Copiar</button>
           </div>
@@ -1254,7 +1258,12 @@ function contaExcluido(v){
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
 function llenarSelectContaVendedor(){
-  var sel=document.getElementById('cta-vendedor'); if(!sel) return;
+  // Los dos desplegables (Ventas y Cuadre) se llenan igual y por separado:
+  // cada pestaña recuerda su propia elección.
+  ['cta-vendedor','cua-vendedor'].forEach(llenarUnSelectVendedor);
+}
+function llenarUnSelectVendedor(id){
+  var sel=document.getElementById(id); if(!sel) return;
   var actual=sel.value||'';
   var seen={}, list=[];
   VENDEDORES.forEach(function(v){ if(v&&!seen[v]&&!contaExcluido(v)){ seen[v]=1; list.push(v); } });
@@ -1263,6 +1272,9 @@ function llenarSelectContaVendedor(){
   sel.innerHTML='<option value="">Todos</option>'+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
   if(actual && list.indexOf(actual)>=0) sel.value=actual;   // no perder lo elegido al refrescar
 }
+/* El vendedor elegido en el cuadre ('' = todos). */
+function cuadreVendedor(){ return ((document.getElementById('cua-vendedor')||{}).value||'').trim(); }
+function cuadreEsDe(p, v){ return !v || String(p&&p.vendedor||'').trim().toLowerCase()===v.toLowerCase(); }
 function contaLista(){
   var modo=segVal('cta-mode')||'mes';
   var q=(document.getElementById('cta-search')||{}).value||'';
@@ -1465,9 +1477,10 @@ function enPeriodoCuadre(fecha, pe){
 }
 /* Un renglón por PAGO (no por venta): es lo que se tilda contra el extracto. */
 function cuadrePagos(){
-  var pe=cuadrePeriodo(), out=[];
+  var pe=cuadrePeriodo(), vend=cuadreVendedor(), out=[];
   STATE.forEach(function(p){
     if(contaExcluido(p.vendedor)) return;
+    if(!cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
@@ -1556,8 +1569,8 @@ function renderCuadreSiActivo(){
 }
 /* Ventas con saldo, de la más vieja a la más nueva: lo que hay que salir a cobrar. */
 function cuadrePendientes(){
-  var hoy=todayStr();
-  return STATE.filter(function(p){ return !contaExcluido(p.vendedor) && !p.pagado && (Number(p.saldo)||0)>0.01; })
+  var hoy=todayStr(), vend=cuadreVendedor();
+  return STATE.filter(function(p){ return !contaExcluido(p.vendedor) && cuadreEsDe(p, vend) && !p.pagado && (Number(p.saldo)||0)>0.01; })
     .map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(p.saldo) }; })
     .sort(function(a,b){ return b.dias-a.dias; });
 }
@@ -1572,10 +1585,21 @@ function cuadreAlertas(pagos){
   var A=[];
   var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
   if(sinNota.length) A.push({ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return (c.p.cliente||'—')+' · '+fmtBs(c.monto); })});
-  var sinFecha=[];
-  STATE.forEach(function(p){ if(contaExcluido(p.vendedor)) return;
-    contaPagos(p).forEach(function(c){ if(!c.fecha) sinFecha.push({p:p,c:c}); }); });
+  /* Dos problemas MUY distintos que antes salían mezclados como "pagos sin fecha":
+     - sin fecha pero CON monto → es un pago de verdad, solo falta cuándo entró.
+     - sin monto → es una venta que la vendedora marcó PAGADA sin anotar cuánto
+       (el monto de esos cobros nunca se guardó en la planilla). Listarlas como
+       "pago sin fecha · Bs 0,00" no le decía nada a nadie. */
+  var vend=cuadreVendedor(), sinFecha=[], sinMonto=[];
+  STATE.forEach(function(p){
+    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    contaPagos(p).forEach(function(c){
+      if(!((Number(c.monto)||0)>0)) sinMonto.push(p);
+      else if(!c.fecha) sinFecha.push({p:p,c:c});
+    });
+  });
   if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b>', det:sinFecha.map(function(x){ return (x.p.cliente||'—')+' · '+fmtBs(x.c.monto); })});
+  if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró', det:sinMonto.map(function(p){ return (p.cliente||'—')+(p.nota?(' · nota '+p.nota):''); })});
   var sinSistema={};
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
@@ -1594,9 +1618,13 @@ function renderCuadre(){
   formas.forEach(function(f){ if(f.efectivo) efectivo=r2(efectivo+f.monto); else banco=r2(banco+f.monto); });
   var pend=cuadrePendientes(), pendTotal=0; pend.forEach(function(x){ pendTotal=r2(pendTotal+x.saldo); });
 
-  // ---- diferencia global del arqueo (solo cuenta las formas donde anotaron algo)
+  /* ---- diferencia del arqueo ----
+     El arqueo solo tiene sentido con "Todos": la caja y el extracto son UNO SOLO,
+     no uno por vendedora. Filtrado se muestran los números pero no se deja anotar,
+     porque el valor guardado es global y se pisaría con un total parcial. */
+  var vendSel=cuadreVendedor(), arqueoOn=!vendSel;
   var difTotal=0, anotadas=0;
-  formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
+  if(arqueoOn) formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
 
   box.innerHTML=
     mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s'))+
@@ -1616,16 +1644,18 @@ function renderCuadre(){
       '<div class="empty" style="padding:18px 0">No entró plata en '+esc(cuadrePeriodoTxt())+'.</div></div>';
   } else {
     cie.innerHTML='<div class="cua-box">'+
-      '<div class="cua-t">🧮 Cierre por forma de pago — '+esc(cuadrePeriodoTxt())+'</div>'+
+      '<div class="cua-t">🧮 Cierre por forma de pago — '+esc(cuadrePeriodoTxt())+(vendSel?(' · '+esc(vendSel)):'')+'</div>'+
       '<div class="tw"><table class="mini"><thead><tr>'+
         '<th>Forma de pago</th><th style="text-align:right">Pagos</th><th style="text-align:right">Según el panel</th>'+
         '<th style="text-align:right">Contado / extracto</th><th style="text-align:right">Diferencia</th></tr></thead><tbody>'+
       formas.map(function(f){
-        var a=cuadreArqueo(f.forma), dif=(a==null)?null:r2(a-f.monto);
+        var a=arqueoOn?cuadreArqueo(f.forma):null, dif=(a==null)?null:r2(a-f.monto);
         return '<tr><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b></td>'+
           '<td style="text-align:right">'+f.n+'</td>'+
           '<td style="text-align:right"><b>'+fmtBs(f.monto)+'</b></td>'+
-          '<td style="text-align:right"><input class="cua-arqueo" type="number" step="0.01" inputmode="decimal" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)"></td>'+
+          '<td style="text-align:right">'+(arqueoOn
+             ? ('<input class="cua-arqueo" type="number" step="0.01" inputmode="decimal" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
+             : '<span style="color:var(--muted);font-size:.78rem">—</span>')+'</td>'+
           '<td style="text-align:right">'+(dif==null?'<span style="color:var(--muted)">—</span>'
              :(dif===0?'<span class="cua-dif-ok">✅ cuadra</span>'
                :'<span class="cua-dif-mal">'+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))+'</span>'))+'</td></tr>';
@@ -1635,8 +1665,10 @@ function renderCuadre(){
         '<td style="text-align:right">'+(anotadas?(difTotal===0?'<span class="cua-dif-ok">✅ cuadra</span>':'<span class="cua-dif-mal">'+(difTotal>0?'sobra ':'falta ')+fmtBs(Math.abs(difTotal))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td></tr>'+
       '</tbody></table></div>'+
       '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">'+
-        '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Queda guardado <b>en la planilla</b>, así que se ve desde cualquier computadora o celular.</span>'+
-        '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="limpiarArqueo()">↺ Borrar lo anotado</button>'+
+        (arqueoOn
+          ? '<span style="font-size:.72rem;color:var(--muted)">💡 Escribí lo que contaste en caja y lo que dice cada extracto: la diferencia sale sola. Queda guardado <b>en la planilla</b>, así que se ve desde cualquier computadora o celular.</span>'+
+            '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="limpiarArqueo()">↺ Borrar lo anotado</button>'
+          : '<span style="font-size:.72rem;color:var(--amber)">👤 Estás viendo solo lo de <b>'+esc(vendSel)+'</b>. El arqueo se hace con <b>Todos</b>: la caja y el extracto son uno solo, no uno por vendedora.</span>')+
       '</div></div>';
   }
 
@@ -1689,7 +1721,8 @@ function renderCuadre(){
 function cuadreTexto(){
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos), total=0;
   pagos.forEach(function(c){ total=r2(total+c.monto); });
-  var L=['🧮 *CUADRE — '+cuadrePeriodoTxt().toUpperCase()+'*',''];
+  var v=cuadreVendedor();
+  var L=['🧮 *CUADRE — '+cuadrePeriodoTxt().toUpperCase()+'*'+(v?('\n👤 '+v):''),''];
   if(!formas.length){ L.push('No entró plata en el período.'); }
   else {
     formas.forEach(function(f){
