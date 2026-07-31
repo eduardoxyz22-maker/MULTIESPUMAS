@@ -344,6 +344,20 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   reescribe el campo y **se pierde el banco**. Es un caso raro (si ya estaba pagado el chofer no
   cobra) pero está acá anotado.
 
+## 4j. Pestaña Contabilidad (2026-07-31)
+
+- Quinta pestaña (`view-conta`) con los datos de facturación: ingresado, N° de nota (y OC),
+  vendedor, cliente, celular, productos (producto · medida · código × cantidad), facturar a,
+  NIT, pago (con método **y banco**) y observaciones. Más buscador, resumen y Excel propio.
+- **Corta por FECHA DE INGRESO (`p.ts`), no por `p.fecha`** como todo el resto del panel:
+  contabilidad cierra por cuándo se hizo la venta, no por cuándo sale el camión. Por eso la
+  columna "Ingresado" va primera aunque el usuario no la pidió — sin ella el filtro no se
+  entiende. **Si alguien "arregla" esto para que use `p.fecha`, rompe el sentido de la vista.**
+- El Excel va con **una fila por producto** (mismo criterio que `exportExcel`) y repite los datos
+  del pedido solo en la primera fila, para que se pueda filtrar y sumar por producto.
+- **No tiene candado**: quedó abierta como "Mis pedidos" y "Chofer", que también muestran plata.
+  Se le avisó al usuario que puede pedir que se le ponga contraseña.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

@@ -81,6 +81,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#turno-carga">🌅🌆 Turno AM/PM</a>
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
+    <a href="#contabilidad">🧾 Contabilidad</a>
     <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
     <a href="#envio">📤 Cierre / Mañana</a>
@@ -276,6 +277,19 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout warn"><b>Dos cosas para saber:</b><br>
       <b>1)</b> Los archivos quedan como <b>“cualquiera con el enlace puede ver”</b> — es lo que permite que la foto se vea dentro del panel sin pedir contraseña. El enlace es imposible de adivinar, pero si se lo pasás a alguien, esa persona ve la foto.<br>
       <b>2)</b> Ocupan espacio en tu Drive: a ~150 KB por foto y 25 entregas por día, son unos <b>50 MB al mes</b>. Nada grave, pero conviene mirarlo una vez al año.</div>
+  </div>
+
+  <div class="card" id="contabilidad">
+    <h3>🧾 Pestaña Contabilidad <span class="pill">nueva</span></h3>
+    <p>Pestaña propia con los datos de facturación de los pedidos cargados: <b>fecha y hora de ingreso, N° de nota de venta (y OC), vendedor, cliente, celular, productos</b> (producto · medida · código · cantidad), <b>facturar a, NIT, pago</b> (con método y banco) y <b>observaciones</b>.</p>
+    <ul>
+      <li><b>Corta por fecha de INGRESO</b>, no por fecha de entrega como el resto del panel: contabilidad cierra por cuándo se hizo la venta, no por cuándo sale el camión. Filtros <b>Día / Mes / Todo</b>.</li>
+      <li><b>Buscador</b> por cliente, N° de nota, OC, NIT, “facturar a”, vendedor, celular, observaciones y hasta código de producto.</li>
+      <li>Arriba, un resumen: cuántos pedidos, <b>cuántos pagados y cuántos con saldo</b> (con el total), lo cobrado <b>a cuenta</b> y el conteo por método —incluyendo el banco del QR.</li>
+      <li><b>⬇️ Excel</b> con esas mismas columnas, <b>una fila por producto</b>, para trabajarlo aparte.</li>
+      <li>El más reciente va arriba.</li>
+    </ul>
+    <div class="callout">Esta pestaña <b>no pide contraseña</b>, igual que “Mis pedidos” y “Chofer”. Si querés que solo entre contabilidad, avisá y se le pone candado.</div>
   </div>
 
   <div class="card" id="banco">
