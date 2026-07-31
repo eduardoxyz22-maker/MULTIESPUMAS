@@ -297,6 +297,14 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
 - **`rechazarCombo()` corta EN EL MOMENTO de colocarlo**, no al guardar: al elegirlo del datalist,
   al escribir su código `CMB*` o al salir del campo (`blur`). Limpia descripción y código y
   devuelve el foco. Es a propósito: antes llenaban todo el formulario y se lo rebotaba al final.
+- **`esCombo` matchea el PREFIJO `^comb`, no la palabra entera** (y `esCodigoCombo`, `^cmb`):
+  si escribieron "comb" ya van camino a "combo", así que salta en la 4ª letra sin esperar.
+  **Es seguro**: se verificó que NINGÚN producto real empieza con "COMB" — los colchones son
+  "COL…". Si algún día se agrega uno que empiece así, hay que revisar esto.
+- El aviso **solo nombra el combo cuando ya se sabe cuál es** (texto completo `^combo\b` o código
+  que resuelve en `CODIGOS`). Con "comb"/"CMB" a medias va el mensaje genérico: decir
+  `"CMB" es un combo` parece un error del sistema. Por eso el handler del código **resuelve
+  primero en `CODIGOS`** y recién después mira el prefijo.
 - **`submitPedido` mantiene el corte como red**, por si algo se cuela (autocompletado del
   navegador, pegado, etc.). Los dos caminos usan `esCombo()`.
 - `CODIGOS` solo alimenta el **autocompletado**. **No** se usa para mostrar pedidos ya guardados:

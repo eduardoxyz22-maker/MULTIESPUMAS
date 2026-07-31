@@ -1006,12 +1006,17 @@ function addProdRow(desc,medida,codigo,cant){
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
   mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
   // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
-  cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase(); var hit=CODIGOS[code]; if(!hit) return;
-    if(rechazarCombo(hit.d+(hit.m?(' '+hit.m):''), d, cIn)) return;
+  cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase();
+    var hit=CODIGOS[code];
+    // Primero se resuelve el código: si ya se sabe qué combo es, el aviso lo nombra.
+    // Recién si no resuelve (lo están escribiendo) alcanza con que empiece con CMB.
+    if(hit && rechazarCombo(hit.d+(hit.m?(' '+hit.m):''), d, cIn)) return;
+    if(!hit){ if(esCodigoCombo(code)) rechazarCombo(code, d, cIn); return; }
     d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Elegir por NOMBRE (lista emergente): al elegir un 'NOMBRE MEDIDA', llena codigo y medida.
-  d.addEventListener('input',function(){ var etiqueta=d.value.trim(); var hit=NOMBRES[etiqueta]; if(!hit) return;
-    if(rechazarCombo(etiqueta, d, cIn)) return;
+  d.addEventListener('input',function(){ var etiqueta=d.value.trim();
+    if(rechazarCombo(etiqueta, d, cIn)) return;   // salta ya con "comb", sin esperar a que termine
+    var hit=NOMBRES[etiqueta]; if(!hit) return;
     cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Escrito a mano y sin elegir de la lista: se revisa al salir del campo.
   d.addEventListener('blur',function(){ rechazarCombo(d.value, d, cIn); });
@@ -1207,7 +1212,11 @@ function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(
    o al salir del campo— y no recién al guardar: así no llenan todo el formulario
    para que se lo rebote al final. El corte en submitPedido queda igual, de red.
    ========================================================================== */
-function esCombo(desc){ return /^\s*combo\b/i.test(String(desc||'')); }
+/* Alcanza con que EMPIECE con "comb": no hay ningún producto real que empiece así
+   (los colchones son "COL..."), y si escribieron "comb" ya van camino a "combo".
+   Cortarlos ahí les ahorra terminar de escribirlo. Los códigos de combo son "CMB...". */
+function esCombo(desc){ return /^\s*comb/i.test(String(desc||'')); }
+function esCodigoCombo(cod){ return /^\s*cmb/i.test(String(cod||'')); }
 /* Manda el cursor a la línea de producto que hay que rellenar: la marcada en rojo,
    si no la primera vacía, si no la primera. */
 function focoProducto(){
@@ -1220,14 +1229,22 @@ function focoProducto(){
   // del clic (porque el botón que se tocó queda oculto) y se comía este focus().
   setTimeout(function(){ try{ e.focus(); e.scrollIntoView({block:'center'}); }catch(x){} },0);
 }
-/* Devuelve true si era un combo (y ya avisó + limpió el campo). */
-function rechazarCombo(desc, inputDesc, inputCod){
-  if(!esCombo(desc)) return false;
+var COMO_CARGARLO='el colchón en una línea, el somier en otra, el respaldar en otra y la almohada en otra si va.';
+/* Devuelve true si era (o iba a ser) un combo: ya avisó y limpió el campo. */
+function rechazarCombo(txt, inputDesc, inputCod){
+  var t=String(txt||'');
+  if(!esCombo(t) && !esCodigoCombo(t)) return false;
   var vend=(document.getElementById('f-vendedor')||{}).value||'';
   if(inputDesc){ inputDesc.value=''; inputDesc.classList.remove('err'); }
   if(inputCod)  inputCod.value='';
-  if(!memeCombo(vend, desc)) toast('🚫 '+String(desc).trim()+' es un combo — cargalo por separado: el colchón en una línea, el somier en otra, el respaldar en otra y la almohada en otra si va.','err');
-  if(inputDesc) setTimeout(function(){ try{ inputDesc.focus(); }catch(e){} },50);
+  // Si todavía es "comb" a medio escribir no se lo nombra, que quedaría raro.
+  // Solo se lo nombra cuando ya se sabe CUÁL es. Con "comb" o "CMB" a medias, mensaje genérico:
+  // decir '"CMB" es un combo' suena a error del sistema.
+  var entero=/^\s*combo\b/i.test(t);
+  var conMeme=memeCombo(vend, t);
+  if(!conMeme) toast('🚫 '+(entero?('"'+t.trim()+'" es un combo. Cargalo'):'Los combos no se cargan enteros. Cargá')+' por separado: '+COMO_CARGARLO,'err');
+  // Con el meme abierto, el foco lo pone su botón: no tiene sentido pelearlo por detrás.
+  if(inputDesc && !conMeme) setTimeout(function(){ try{ inputDesc.focus(); }catch(e){} },50);
   return true;
 }
 /* ---- El meme del combo ----
