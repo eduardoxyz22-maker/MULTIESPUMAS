@@ -303,6 +303,11 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   — escribirlo a mano seguía pasando.
 - El motivo de fondo, por si alguien quiere revertirlo: con un combo en **una sola línea** no se
   puede marcar ✔/✗ producto por producto ni contar bien los bultos en el "TOTAL A CARGAR".
+- **`memeCombo()` — broma interna pedida por el dueño**: a **Fernando Peinado, Mauricio Merida y
+  Juan Pablo Paredes** (lista `MEME_COMBO`) se les muestra `combo-instrucciones.jpg` en un modal
+  en vez del toast. **El bloqueo es exactamente el mismo para todos**; solo cambia cómo se avisa,
+  y el modal igual explica cómo cargarlo bien, así que nadie se queda sin la instrucción.
+  Si algún día molesta, se vacía `MEME_COMBO` y todos vuelven al aviso normal.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).

@@ -1111,6 +1111,7 @@ function submitPedido(){
   if(combo.length){
     var pds=document.querySelectorAll('#f-productos .prod-desc');
     for(var ci=0;ci<pds.length;ci++){ if(/^\s*combo\b/i.test(pds[ci].value||'')) pds[ci].classList.add('err'); }
+    if(memeCombo(vendedor, combo[0].desc)) return;   // a los reincidentes, con cariño
     toast('🚫 Los combos se cargan por separado: poné el colchón en una línea y el somier (y la almohada, si va) en otra. Encontré: '+combo[0].desc,'err');
     var pe=document.querySelector('#f-productos .prod-desc.err'); if(pe){ pe.focus(); pe.scrollIntoView({block:'center'}); }
     return;
@@ -1192,6 +1193,24 @@ function submitPedido(){
 /* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
 function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
 function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
+/* ---- El meme del combo ----
+   A estos tres se les muestra la imagen en vez del aviso normal. Es una broma interna
+   pedida por el dueño; el pedido queda igual de bloqueado y el mensaje de cómo cargarlo
+   está adentro del modal, así que nadie se queda sin saber qué hacer. */
+var MEME_COMBO=['Fernando Peinado','Mauricio Merida','Juan Pablo Paredes'];
+function memeCombo(vendedor, queEscribio){
+  var v=String(vendedor||'').trim().toLowerCase();
+  var toca=MEME_COMBO.some(function(n){ return n.toLowerCase()===v; });
+  if(!toca) return false;
+  openModal('<div class="modal-h" style="background:var(--red)"><h3>🚫 Otra vez el combo, '+esc(String(vendedor).split(' ')[0])+'…</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" style="text-align:center">'+
+      '<img src="combo-instrucciones.jpg" alt="Los combos se cargan por separado" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
+      '<p style="font-size:.9rem;color:var(--text);margin-bottom:6px"><b>Escribiste:</b> '+esc(queEscribio||'')+'</p>'+
+      '<p style="font-size:.88rem;color:var(--muted)">Cargá <b>una línea por producto</b>: el colchón en una, el somier en otra y la almohada en otra si va.</p>'+
+      '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-primary btn-sm" style="width:100%" onclick="closeModal();var e=document.querySelector(\'#f-productos .prod-desc.err\');if(e){e.focus();e.scrollIntoView({block:\'center\'});}">Ya entendí, lo corrijo</button></div>'+
+    '</div>');
+  return true;
+}
 /* Vendedores con formulario simplificado: nota, OC, celular y cobro NO obligatorios. */
 /* ¿Otro pedido de ROHO ya usa esta OC? Devuelve ese pedido (para nombrarlo en el aviso). */
 function ocRepetidaRoho(oc, exceptoId){
