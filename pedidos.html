@@ -674,6 +674,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#128C7E" onclick="abrirEnvio('hoy')">📤 Cierre del día</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#25D366;color:#0b3d2c" onclick="abrirEnvio('manana')">📤 Mañana</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
+          <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
@@ -975,7 +976,12 @@ function buildXlsx(sheets){
    Estado + espejo local + cola offline
    ========================================================================== */
 var STATE=[];
-function loadMirror(){ try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; } if(!Array.isArray(STATE))STATE=[]; }
+function loadMirror(){
+  try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
+  if(!Array.isArray(STATE))STATE=[];
+  STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae la fila de cierres
+  loadCierresMirror();
+}
 function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
 function upsert(rec){ for(var i=0;i<STATE.length;i++){ if(STATE[i].id===rec.id){ STATE[i]=rec; return; } } STATE.unshift(rec); }
@@ -1899,6 +1905,17 @@ function submitPedido(){
     var ftS=document.getElementById('f-turno'); if(ftS){ ftS.classList.add('seg-err'); setTimeout(function(){ ftS.classList.remove('seg-err'); },1600); ftS.scrollIntoView({block:'center'}); }
     return;
   }
+  /* Día cerrado por Administración: el camión de esa fecha ya está armado. Para un pedido
+     NUEVO no hay vuelta; editando uno que ya estaba, se avisa y decide quien tiene la clave. */
+  if(diaCerrado(fechaSel)){
+    if(!isEdit){
+      toast('🔒 El '+fmtFecha(fechaSel)+' está CERRADO — ya no se cargan pedidos para ese día. Elegí otra fecha de entrega.','err');
+      var feC=document.getElementById('f-fecha'); feC.classList.add('err'); feC.focus(); feC.scrollIntoView({block:'center'});
+      renderCupoForm();
+      return;
+    }
+    if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Guardar igual el pedido para ese día?')) return;
+  }
   if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
     var lim=limTurno(fechaSel, turnoSel);
     toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+lim+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');
@@ -2253,6 +2270,11 @@ function renderCupoForm(){
   /* Editando, los carteles de "lleno" y "no se agenda" son AVISOS, no muros: el guardado
      ya no los aplica. Sin esta aclaración uno lee "elegí otra fecha" y cree que no puede. */
   var _ed = EDIT_ID ? '<br><span style="opacity:.85">✏️ Estás <b>editando</b>: se puede guardar igual.</span>' : '';
+  if(diaCerrado(fecha)){
+    el.className='cupo full';
+    el.innerHTML='🔒 <b>El '+fmtFecha(fecha)+' está CERRADO.</b> Administración cerró ese día: el camión ya está armado. Elegí <b>otra fecha de entrega</b>.'+_ed;
+    return;
+  }
   var turno=normTurno(segVal('f-turno'));
   if(diaDomingo(fecha)){
     el.className='cupo full';
@@ -2339,10 +2361,126 @@ function cleanOC(v){
   return s;
 }
 function mergePending(serverList){
+  serverList=leerCierresDeLista(serverList);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
   var pend=getPending().filter(function(p){return !ids[p.id];});
   return serverList.concat(pend);
+}
+
+/* ============================================================================
+   🔒 DÍAS DE ENTREGA CERRADOS
+   Administración cierra una fecha cuando el camión de ese día ya está armado:
+   desde ahí no entran más pedidos con entrega ese día. Se siguen cargando
+   pedidos, pero para otra fecha.
+
+   ⚠️ Viaja por la MISMA planilla, en una fila especial con id CIERRE_ID y
+   **FECHA VACÍA**. Lo de la fecha vacía no es un detalle: el Apps Script cuenta
+   los cupos del día contando las filas con esa fecha, así que una fila marcadora
+   con fecha se comería un cupo. Con la fecha vacía el portero de cupos ni la
+   mira (`if (foundRow < 0 && p.fecha)`) y no hizo falta tocar el Apps Script.
+   ========================================================================== */
+var CIERRE_ID='__dias_cerrados__';
+var LS_CIERRES='ME_DIAS_CERRADOS_V1';
+var DIAS_CERRADOS=[];
+function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
+/* Saca la fila de cierres de la lista del servidor y deja los días en DIAS_CERRADOS. */
+function leerCierresDeLista(lista){
+  var fila=null, resto=[];
+  (lista||[]).forEach(function(p){ if(esFilaCierre(p)) fila=p; else resto.push(p); });
+  if(fila){
+    DIAS_CERRADOS=String(fila.observaciones||'').split(/[^\d-]+/)
+      .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); });
+    DIAS_CERRADOS.sort();
+    saveCierresMirror();
+  }
+  return resto;
+}
+function saveCierresMirror(){ try{ localStorage.setItem(LS_CIERRES, JSON.stringify(DIAS_CERRADOS)); }catch(e){} }
+function loadCierresMirror(){
+  try{ DIAS_CERRADOS=JSON.parse(localStorage.getItem(LS_CIERRES))||[]; }catch(e){ DIAS_CERRADOS=[]; }
+  if(!Array.isArray(DIAS_CERRADOS)) DIAS_CERRADOS=[];
+}
+function filaCierre(dias){
+  return { id:CIERRE_ID, fecha:'', turno:'', vendedor:'', productos:[],
+           cliente:'🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR',
+           celular:'', zona:'', direccion:'', maps:'', pagado:false, saldo:0, ts:Date.now(),
+           metodoPago:'', observaciones:(dias||[]).join(' '), estado:'', entregado:false,
+           vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
+           nroDia:0, verificado:false, fotos:[] };
+}
+function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
+function guardarCierres(){
+  DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
+  saveCierresMirror();
+  var fila=filaCierre(DIAS_CERRADOS);
+  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
+  else queuePending(fila);
+  renderAdmin(); renderCupoForm(); renderCierreDias();
+}
+function cerrarDia(f){
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
+  if(diaCerrado(f)) return;
+  DIAS_CERRADOS.push(f); guardarCierres();
+  toast('🔒 '+fmtFecha(f)+' cerrado — ya no entran pedidos nuevos para ese día','ok');
+}
+function abrirDia(f){
+  var i=DIAS_CERRADOS.indexOf(String(f||'')); if(i<0) return;
+  DIAS_CERRADOS.splice(i,1); guardarCierres();
+  toast('🔓 '+fmtFecha(f)+' reabierto','ok');
+}
+function pedidosDelDia(f){ var n=0; for(var i=0;i<STATE.length;i++) if(STATE[i].fecha===f) n++; return n; }
+/* ---- Ventana de Administración ---- */
+function abrirCierreDias(){
+  var d=document.getElementById('cie-fecha');
+  MODAL_KIND='admin';
+  renderCierreDias(true);
+  if(!d){ var n=document.getElementById('cie-fecha'); if(n && !n.value) n.value=tomorrowStr(); }
+}
+function cieFechaSel(){ var i=document.getElementById('cie-fecha'); return i?i.value:''; }
+function renderCierreDias(abrir){
+  if(!abrir && !document.getElementById('cie-fecha')) return;   // la ventana no está abierta
+  var f=cieFechaSel()||tomorrowStr();
+  var cerrado=diaCerrado(f), n=pedidosDelDia(f);
+  var lista=DIAS_CERRADOS.slice().sort();
+  var html='<div class="modal-h" style="background:#8a1c24"><h3>🔒 Cerrar día de entrega</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:.82rem;color:var(--muted);margin-bottom:13px">Cerrá un día cuando el camión de esa fecha <b>ya está armado</b>. Desde ese momento <b>nadie puede cargar pedidos nuevos con entrega ese día</b>, ni desde su celular. Los pedidos que ya estaban <b>no se tocan</b>.</p>'+
+      '<div><label class="lb">¿Qué día?</label>'+
+        '<input type="date" id="cie-fecha" value="'+esc(f)+'" onchange="renderCierreDias()" style="width:100%">'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+todayStr()+'\')">Hoy</button>'+
+          '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+tomorrowStr()+'\')">Mañana</button>'+
+        '</div></div>'+
+      '<div style="background:'+(cerrado?'var(--red-lt);border:1px solid var(--red-border)':'var(--green-lt);border:1px solid var(--green-border)')+';border-radius:10px;padding:11px 14px;margin-top:13px;font-size:.85rem">'+
+        (cerrado ? '<b style="color:var(--red)">🔒 '+esc(fmtFecha(f))+' está CERRADO</b><br><span style="color:var(--muted)">No entran pedidos nuevos para ese día. Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'.</span>'
+                 : '<b style="color:var(--green)">🔓 '+esc(fmtFecha(f))+' está abierto</b><br><span style="color:var(--muted)">Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'. Se pueden seguir agregando.</span>')+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:12px;'+(cerrado?'background:var(--green)':'background:#8a1c24')+'" onclick="'+(cerrado?('abrirDia(\''+f+'\')'):('cerrarDia(\''+f+'\')'))+'">'+
+        (cerrado?'🔓 Reabrir este día':'🔒 Cerrar este día')+'</button>'+
+      '<div style="margin-top:16px;padding-top:13px;border-top:1px solid var(--gray-lt)">'+
+        '<div class="lb" style="margin-bottom:8px">Días cerrados ahora mismo</div>'+
+        (lista.length
+          ? lista.map(function(d){
+              return '<div style="display:flex;align-items:center;gap:9px;padding:6px 0;border-bottom:1px solid var(--gray-lt);font-size:.86rem">'+
+                '<b>🔒 '+esc(fmtFecha(d))+'</b>'+
+                '<span style="color:var(--muted);font-size:.9em">'+pedidosDelDia(d)+' pedido'+(pedidosDelDia(d)===1?'':'s')+'</span>'+
+                '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="abrirDia(\''+d+'\')">🔓 Reabrir</button></div>';
+            }).join('')
+          : '<div style="color:var(--muted);font-size:.84rem">Ningún día cerrado.</div>')+
+      '</div>'+
+      '<button class="btn btn-ghost" style="width:100%;margin-top:14px" onclick="closeModal()">Cerrar ventana</button>'+
+    '</div>';
+  openModal(html);
+}
+function cieIr(f){ var i=document.getElementById('cie-fecha'); if(i){ i.value=f; renderCierreDias(); } }
+/* Que se vea de un vistazo, sin abrir la ventana, que hay días cerrados. */
+function pintarBotonCierre(){
+  var b=document.getElementById('btn-cerrar-dia'); if(!b) return;
+  // Los días ya pasados no se muestran: molestan y no bloquean nada útil.
+  var hoy=todayStr(), vig=DIAS_CERRADOS.filter(function(f){ return f>=hoy; });
+  b.textContent = vig.length ? ('🔒 Cerrar día · '+vig.length+' cerrado'+(vig.length===1?'':'s')) : '🔒 Cerrar día';
+  b.title = vig.length ? ('Días cerrados: '+vig.map(fmtFecha).join(', ')) : 'Cerrar un día de entrega para que no entren más pedidos';
 }
 function loadFromServer(showToastOk){
   if(!CONNECTED){ renderAdmin(); return; }
@@ -2406,7 +2544,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderOcupacion(); renderZonas(); autoAbrirParte();
+  renderChips(); renderRevisar(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -2618,6 +2756,7 @@ function reproVolver(){ MODAL_KIND=REPRO.kind; reabrirFicha(REPRO.id); }
 function reproAvisos(p, f, t){
   var A=[];
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return ['Falta elegir la fecha.'];
+  if(diaCerrado(f)) A.push('El '+fmtFecha(f)+' está CERRADO (el camión de ese día ya está armado).');
   if(f<todayStr()) A.push('Es una fecha que YA PASÓ ('+fmtFecha(f)+').');
   if(diaDomingo(f)) A.push('Es DOMINGO: normalmente no se entrega.');
   else if(diaSabado(f) && t==='PM') A.push('Es SÁBADO y los sábados solo hay turno AM.');

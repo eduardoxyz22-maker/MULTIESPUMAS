@@ -505,6 +505,37 @@ fecha de hoy"*.
   que nadie lo pidiera), y los carteles de cupo agregan *"estás editando: se puede guardar
   igual"* — sin eso uno lee "elegí otra fecha" y cree que está trabado.
 
+## 4o. Cerrar día de entrega (2026-07-31)
+
+Pedido: *"un botón de cerrar día cosa que cierre el día y no permita meter nuevos pedidos"* +
+*"no es para las vendedoras, es para administración"*. Se preguntó y el usuario eligió:
+**cierra una FECHA DE ENTREGA** (no la jornada de carga) y **tiene que bloquear de verdad**,
+o sea llegar al celular de las vendedoras.
+
+- **⚠️ EL TRUCO ESTÁ EN LA FECHA VACÍA.** El estado viaja por la MISMA planilla, en una fila
+  con `id = '__dias_cerrados__'` y **`fecha:''`**. No es cosmético: `doSave()` del Apps Script
+  cuenta los cupos del día escaneando las filas con esa fecha, así que una fila marcadora
+  *con* fecha **se comería un cupo**. Con la fecha vacía el portero ni la mira
+  (`if (foundRow < 0 && p.fecha)`) → **no hizo falta tocar ni redeployar el Apps Script**.
+  Los días van en `observaciones` separados por espacio; `cliente` dice
+  "🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR" para que se entienda en la hoja.
+- `mergePending()` es el **único** embudo por donde entran los datos del servidor
+  (loadFromServer, refreshConta, refreshMis, refreshChofer): ahí `leerCierresDeLista()` saca la
+  fila y llena `DIAS_CERRADOS`. Por eso la fila **no aparece** como pedido en ninguna vista.
+  `loadMirror()` hace lo mismo por si una copia local vieja la trae.
+- Espejo en `localStorage` (`ME_DIAS_CERRADOS_V1`) para que el bloqueo valga desde el primer
+  segundo, antes de bajar la planilla.
+- **Dureza del bloqueo, a propósito:**
+  - Pedido NUEVO con entrega ese día → **no se guarda** (toast + campo en rojo + cartel de
+    cupos explicando por qué). Es el objetivo del pedido.
+  - **Editar** un pedido que ya estaba en ese día → `confirm()` y pasa. No se puede dejar
+    trabado un pedido existente.
+  - **Reprogramar** hacia un día cerrado → entra en `reproAvisos()`: avisa y confirma.
+- El botón de Administración muestra cuántos días cerrados **vigentes** hay (los pasados no se
+  cuentan: molestan y no bloquean nada útil).
+- Si alguien borra a mano esa fila de la planilla, **se reabren todos los días** — está avisado
+  en la guía del admin.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

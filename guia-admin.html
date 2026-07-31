@@ -72,6 +72,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#rendicion">💵 Rendición</a>
     <a href="#revisar">⚠️ Revisar mañana</a>
     <a href="#reprogramar">📅 Reprogramar</a>
+    <a href="#cerrardia">🔒 Cerrar día</a>
     <a href="#cupos">🎟️ Cupos/turno</a>
     <a href="#zonas">🔥 Zonas</a>
     <a href="#mapa">🗺️ Mapa</a>
@@ -123,6 +124,18 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
   </div>
 
   <div class="card" id="reprogramar">
+    <h3 id="cerrardia">🔒 Cerrar día de entrega <span class="pill">nuevo</span></h3>
+    <p>Botón <b>“🔒 Cerrar día”</b> en la barra de Administración. Sirve para cuando <b>el camión de un día ya está armado</b> y no querés que entren más pedidos para esa fecha.</p>
+    <ul>
+      <li>Elegís el día (atajos <b>Hoy</b> y <b>Mañana</b>), te dice <b>cuántos pedidos tiene</b> y lo cerrás.</li>
+      <li>Desde ese momento, <b>nadie puede cargar un pedido nuevo con entrega ese día</b> — tampoco desde su celular. Al elegir esa fecha les sale un cartel rojo explicando por qué.</li>
+      <li><b>Los pedidos que ya estaban NO se tocan.</b> Se siguen viendo, editando, verificando y entregando como siempre.</li>
+      <li>Las vendedoras <b>pueden seguir cargando</b>: solo tienen que elegir <b>otra fecha de entrega</b>.</li>
+      <li>Desde Administración, si <b>editás</b> un pedido de ese día o lo <b>reprogramás</b> hacia él, te <b>avisa y pide confirmación</b>, pero te deja.</li>
+      <li>El botón muestra cuántos días hay cerrados, y la ventana los lista con un botón <b>🔓 Reabrir</b> para cada uno.</li>
+      <li>El cierre <b>se guarda en la planilla</b> (en una fila especial que dice <b>“🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR”</b>). Es lo que hace que el bloqueo llegue a todos los celulares. <b>No borres esa fila</b> de la planilla: si la borrás, se reabren todos los días.</li>
+    </ul>
+
     <h3>📅 Reprogramar en 1 clic</h3>
     <p>En el detalle de un pedido, botón <b>“Reprogramar”</b> → se abre una ventana con <b>calendario</b> (ya no hay que escribir la fecha a mano) y con atajos <b>Hoy</b> y <b>Mañana</b>. Desde ahí se cambia también el <b>turno</b>. Ideal para los pedidos marcados <b>“No hay stock”</b>.</p>
     <ul>
