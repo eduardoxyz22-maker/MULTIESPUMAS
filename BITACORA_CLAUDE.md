@@ -289,18 +289,22 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   46 (Kommo) vs 45 cierres = 1 lead con Fecha contrato pero aún NO en etapa Compradores (cuenta en
   pipeline, no como cierre) — coherente con la REGLA CRÍTICA (venta = Compradores + Fecha contrato).
 
-## 4h. Combos fuera de la lista de precios (2026-07-29)
+## 4h. Combos: en la lista, pero no se pueden cargar (2026-07-29 / 31)
 
-- **Se borraron de `CODIGOS` las 60 entradas cuya descripción empieza con "COMBO"** (todas con
-  código `CMB*`). Quedan **212 de 272**. Decisión del usuario: *"de ahora en adelante tienen que
-  llenar cada producto de manera individual"*.
-- `CODIGOS` solo alimenta el **autocompletado** (`NOMBRES` → datalist por nombre, y el input de
-  código). **No** se usa para mostrar pedidos ya guardados: la descripción viaja como texto en
-  el JSON de productos. Por eso **los pedidos viejos con combos se siguen viendo intactos** en
-  la tabla, el Excel y las listas. Verificado en `test_combos.js`.
-- **Además se bloquea en `submitPedido`**: si alguna línea empieza con "combo" (sin importar
-  mayúsculas), no guarda y explica cómo cargarlo. Sacarlo solo del autocompletado no alcanzaba
-  — escribirlo a mano seguía pasando.
+- **Los 60 combos SIGUEN en `CODIGOS`** (272 productos) — se borraron el 2026-07-29 y el usuario
+  pidió **volver a ponerlos** el 2026-07-31: la lista de precios es la de la empresa y se mantiene
+  completa. Lo que cambia es que **no se pueden cargar**: el pedido va producto por producto.
+- **`rechazarCombo()` corta EN EL MOMENTO de colocarlo**, no al guardar: al elegirlo del datalist,
+  al escribir su código `CMB*` o al salir del campo (`blur`). Limpia descripción y código y
+  devuelve el foco. Es a propósito: antes llenaban todo el formulario y se lo rebotaba al final.
+- **`submitPedido` mantiene el corte como red**, por si algo se cuela (autocompletado del
+  navegador, pegado, etc.). Los dos caminos usan `esCombo()`.
+- `CODIGOS` solo alimenta el **autocompletado**. **No** se usa para mostrar pedidos ya guardados:
+  la descripción viaja como texto en el JSON de productos. Por eso **los pedidos viejos con
+  combos se siguen viendo intactos** en la tabla, el Excel y las listas. Verificado en
+  `test_combo2.js` (reemplazó a `test_combos.js`, que afirmaba lo contrario).
+- **Ojo con el datalist**: son 60 códigos pero **57 opciones**, porque `NOMBRES` deduplica por
+  etiqueta `desc + medida` y tres combos repiten nombre y medida con distinto código.
 - El motivo de fondo, por si alguien quiere revertirlo: con un combo en **una sola línea** no se
   puede marcar ✔/✗ producto por producto ni contar bien los bultos en el "TOTAL A CARGAR".
 - **`memeCombo()` — broma interna pedida por el dueño**: a **Fernando Peinado, Mauricio Merida y
