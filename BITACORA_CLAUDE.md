@@ -355,6 +355,13 @@ Decisiones no obvias de esta tanda. **Ojo antes de tocar cualquiera de estas.**
   entiende. **Si alguien "arregla" esto para que use `p.fecha`, rompe el sentido de la vista.**
 - El Excel va con **una fila por producto** (mismo criterio que `exportExcel`) y repite los datos
   del pedido solo en la primera fila, para que se pueda filtrar y sumar por producto.
+- **Filtro por vendedor** (`cta-vendedor`) además del buscador. El cartel de vacío dice **por qué**
+  está vacío (vendedor / búsqueda / período): si no, uno cree que no hay pedidos cuando en
+  realidad los está tapando un filtro.
+- **`CONTA_EXCLUIR` = ROHO y Eduardo Añez** — decisión del usuario. Quedan fuera de **todo** la
+  vista: tabla, desplegable, resumen y Excel. El motivo: no llevan nota de venta, NIT ni
+  "facturar a" (por eso tienen el formulario "lite"), así que aparecerían casi vacíos y
+  ensuciarían los totales. **Para devolver a alguien a la vista, sacarlo de esa lista.**
 - **No tiene candado**: quedó abierta como "Mis pedidos" y "Chofer", que también muestran plata.
   Se le avisó al usuario que puede pedir que se le ponga contraseña.
 

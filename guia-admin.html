@@ -284,9 +284,10 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <p>Pestaña propia con los datos de facturación de los pedidos cargados: <b>fecha y hora de ingreso, N° de nota de venta (y OC), vendedor, cliente, celular, productos</b> (producto · medida · código · cantidad), <b>facturar a, NIT, pago</b> (con método y banco) y <b>observaciones</b>.</p>
     <ul>
       <li><b>Corta por fecha de INGRESO</b>, no por fecha de entrega como el resto del panel: contabilidad cierra por cuándo se hizo la venta, no por cuándo sale el camión. Filtros <b>Día / Mes / Todo</b>.</li>
-      <li><b>Buscador</b> por cliente, N° de nota, OC, NIT, “facturar a”, vendedor, celular, observaciones y hasta código de producto.</li>
+      <li><b>Filtro por vendedor</b> (desplegable) y <b>buscador</b> por cliente, N° de nota, OC, NIT, “facturar a”, celular, observaciones y hasta código de producto. Si el resultado queda vacío, el cartel dice <b>por qué</b> (si fue el vendedor, la búsqueda o el período).</li>
+      <li><b>ROHO y Eduardo Añez quedan fuera</b> de esta pestaña: no llevan nota de venta, NIT ni “facturar a”, así que saldrían casi vacíos y ensuciarían los totales. No aparecen ni en la tabla, ni en el desplegable, ni en el Excel.</li>
       <li>Arriba, un resumen: cuántos pedidos, <b>cuántos pagados y cuántos con saldo</b> (con el total), lo cobrado <b>a cuenta</b> y el conteo por método —incluyendo el banco del QR.</li>
-      <li><b>⬇️ Excel</b> con esas mismas columnas, <b>una fila por producto</b>, para trabajarlo aparte.</li>
+      <li><b>⬇️ Excel</b> con esas mismas columnas, <b>una fila por producto</b>, para trabajarlo aparte. Respeta el vendedor elegido y lo pone en el nombre del archivo.</li>
       <li>El más reciente va arriba.</li>
     </ul>
     <div class="callout">Esta pestaña <b>no pide contraseña</b>, igual que “Mis pedidos” y “Chofer”. Si querés que solo entre contabilidad, avisá y se le pone candado.</div>

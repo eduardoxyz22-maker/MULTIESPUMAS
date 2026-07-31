@@ -703,9 +703,13 @@ th.sortable:hover{color:var(--teal-dk)}
           <label class="lb">Mes</label>
           <input type="month" id="cta-mes" onchange="renderConta()">
         </div>
+        <div class="field" style="min-width:170px">
+          <label class="lb">Vendedor</label>
+          <select id="cta-vendedor" onchange="renderConta()"></select>
+        </div>
         <div class="field" style="flex:1;min-width:150px">
           <label class="lb">Buscar</label>
-          <input type="text" id="cta-search" placeholder="Cliente, nota, NIT, vendedor…" oninput="renderConta()">
+          <input type="text" id="cta-search" placeholder="Cliente, nota, NIT, producto…" oninput="renderConta()">
         </div>
         <div class="field">
           <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
@@ -1115,11 +1119,36 @@ function updateMetodoVisibility(){
    primera — sin ella el filtro no se entiende.
    ========================================================================== */
 function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoLocal(new Date(t)):(p&&p.fecha)||''; }
+/* ROHO y Eduardo Añez quedan FUERA de Contabilidad: no llevan nota de venta, NIT ni
+   "facturar a" (por eso tienen el formulario simplificado), así que en esta vista
+   aparecerían casi vacíos y ensuciarían los totales. Se los saca de la tabla, del
+   desplegable, del resumen y del Excel. Sacar un nombre de acá lo devuelve a la vista. */
+var CONTA_EXCLUIR=['ROHO','Eduardo Añez'];
+function contaExcluido(v){
+  var s=String(v||'').trim().toLowerCase();
+  for(var i=0;i<CONTA_EXCLUIR.length;i++) if(CONTA_EXCLUIR[i].toLowerCase()===s) return true;
+  return s==='eduardo anez';   // sin la ñ, como lo tolera esVendedorLite
+}
+/* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
+   en los pedidos (por si alguien quedó cargado con otro nombre). */
+function llenarSelectContaVendedor(){
+  var sel=document.getElementById('cta-vendedor'); if(!sel) return;
+  var actual=sel.value||'';
+  var seen={}, list=[];
+  VENDEDORES.forEach(function(v){ if(v&&!seen[v]&&!contaExcluido(v)){ seen[v]=1; list.push(v); } });
+  STATE.forEach(function(p){ var v=String(p.vendedor||'').trim(); if(v&&!seen[v]&&!contaExcluido(v)){ seen[v]=1; list.push(v); } });
+  list.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  sel.innerHTML='<option value="">Todos</option>'+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
+  if(actual && list.indexOf(actual)>=0) sel.value=actual;   // no perder lo elegido al refrescar
+}
 function contaLista(){
   var modo=segVal('cta-mode')||'mes';
   var q=(document.getElementById('cta-search')||{}).value||'';
   q=q.trim().toLowerCase();
+  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
   var list=STATE.filter(function(p){
+    if(contaExcluido(p.vendedor)) return false;
+    if(vend && String(p.vendedor||'').trim().toLowerCase()!==vend) return false;
     var f=contaFecha(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
     if(modo==='mes') return f.slice(0,7)===(((document.getElementById('cta-mes')||{}).value)||todayStr().slice(0,7));
@@ -1157,8 +1186,9 @@ function contaProdTxt(prods){
 function refreshConta(){
   var mm=document.getElementById('cta-mes'); if(mm && !mm.value) mm.value=todayStr().slice(0,7);
   var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=todayStr();
+  llenarSelectContaVendedor();
   if(!CONNECTED){ renderConta(); return; }
-  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } renderConta(); })
+  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } llenarSelectContaVendedor(); renderConta(); })
            .catch(function(){ renderConta(); });
 }
 function setContaModo(m){
@@ -1177,11 +1207,23 @@ function renderConta(){
     var met=String(p.metodoPago||'').trim();
     if(met) porMet[met]=(porMet[met]||0)+1;
   });
+  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
   document.getElementById('cta-resumen').innerHTML=
+    (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
     (saldo>0?(' ('+fmtBs(saldo)+')'):'')+(aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
     (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'');
-  document.getElementById('cta-empty').style.display=list.length?'none':'block';
+  var vac=document.getElementById('cta-empty');
+  vac.style.display=list.length?'none':'block';
+  // Que el cartel diga POR QUÉ está vacío: si no, uno cree que no hay pedidos
+  // cuando en realidad lo está tapando el filtro de vendedor o la búsqueda.
+  if(!list.length){
+    var qTxt=((document.getElementById('cta-search')||{}).value||'').trim();
+    vac.textContent = vSel && qTxt ? ('Sin resultados para "'+qTxt+'" en los pedidos de '+vSel+' en este período.')
+      : vSel  ? (vSel+' no tiene pedidos cargados en este período.')
+      : qTxt  ? ('Sin resultados para "'+qTxt+'" en este período.')
+      : 'No hay pedidos en este período.';
+  }
   tbl.style.display=list.length?'table':'none';
   if(!list.length){ tbl.innerHTML=''; return; }
   var head='<thead><tr><th>Ingresado</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Celular</th>'+
@@ -1228,6 +1270,8 @@ function exportConta(){
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
           : modo==='mes' ? (document.getElementById('cta-mes').value||'mes') : 'todos';
+  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  if(vSel) tag+='-'+vSel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   downloadBlob(bytes,'contabilidad-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de contabilidad descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
 }
