@@ -623,8 +623,12 @@ cliente o pedido, en contabilidad"*.
   registrado (`COMP_DESTINO={id,idx}` → reescribe ese renglón con `aplicarCobros`).
   ⚠️ `ctaIdxCobro()` traduce el índice de `contaPagos()` (que antepone el anticipo) al de
   `cobrosDe()`; el anticipo NO se puede editar porque no está en la lista de cobros.
-- El botón sale **solo con QR** (para Efectivo no hay comprobante). Si algún día se quiere en
-  Tarjeta, es agregar el método a esa condición.
+- **`metodoConComprobante(m)`** decide qué formas de pago llevan comprobante: **QR y Tarjeta**
+  (el efectivo no tiene nada que adjuntar). Está en UN solo lugar a propósito — antes la
+  condición `==='QR'` estaba repetida en 8 sitios y extenderla a Tarjeta (2026-08-01, pedido
+  del usuario) obligó a tocarlos todos. **Si se agrega otra forma de pago, se cambia ahí.**
+  Los textos cambian solos: "la captura del pago" para QR, "la foto del voucher" para Tarjeta,
+  y el meme también lo nombra. El **banco sigue siendo solo del QR**.
 - **También en el FORMULARIO de carga, y OBLIGATORIO** (pedido del usuario: *"al meter pedido
   no sale el botón adjuntar obligatorio comprobante"*). Bloque `wrap-comp`, visible cuando el
   método es QR; sin captura `submitPedido` **no guarda**.

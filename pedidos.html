@@ -1810,7 +1810,7 @@ function contaPagosHtml(p){
   return cob.map(function(c,i){
     var n=limpiaNota(c.nota);
     var idx=ctaIdxCobro(p, i);                      // el anticipo (idx<0) no se puede reescribir
-    var esQR=String(c.metodo||'')==='QR';
+    var esQR=metodoConComprobante(c.metodo);
     var comp = c.comp
       ? ('<div style="margin-top:5px;display:flex;align-items:center;gap:8px">'+
            '<img src="'+fotoThumb(c.comp)+'" alt="Comprobante del pago" loading="lazy" style="height:56px;border-radius:8px;border:1px solid var(--gray-md);cursor:pointer" onclick="window.open(\''+fotoVer(c.comp)+'\',\'_blank\')" title="Ver el comprobante en grande">'+
@@ -1903,8 +1903,9 @@ function showContaModal(id){
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
-         (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>'+
-            '<div style="margin-top:9px"><label class="lb">Comprobante <span style="font-weight:400;color:var(--muted)">la captura del QR</span></label>'+
+         (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
+         (metodoConComprobante(CTA_PAGO.metodo) ? (
+            '<div style="margin-top:9px"><label class="lb">Comprobante <span style="font-weight:400;color:var(--muted)">'+(CTA_PAGO.metodo==='Tarjeta'?'la foto del voucher':'la captura del QR')+'</span></label>'+
               (CTA_PAGO.comp
                 ? ('<div style="display:flex;align-items:center;gap:9px">'+
                      '<img src="'+fotoThumb(CTA_PAGO.comp)+'" alt="Comprobante" style="height:54px;border-radius:8px;border:1px solid var(--gray-md);cursor:pointer" onclick="window.open(\''+fotoVer(CTA_PAGO.comp)+'\',\'_blank\')">'+
@@ -1941,7 +1942,7 @@ function showContaModal(id){
     '</div>';
   openModal(html);
 }
-function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR'){ CTA_PAGO.banco=''; CTA_PAGO.comp=''; } showContaModal(id); }
+function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comp=''; showContaModal(id); }
 function ctaSacarComp(id){ CTA_PAGO.comp=''; showContaModal(id); }
 function ctaSetBanco(id,b){ CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
@@ -1962,7 +1963,7 @@ function ctaRegistrarPago(id){
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
-            comp:(CTA_PAGO.metodo==='QR'?CTA_PAGO.comp:'')});
+            comp:(metodoConComprobante(CTA_PAGO.metodo)?CTA_PAGO.comp:'')});
   CTA_PAGO.comp='';                                  // que no se pegue al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
@@ -2068,16 +2069,23 @@ function updateBancoVisibility(){
   if(esQR) renderBancos();
   wrap.style.display=esQR?'block':'none';
   if(!esQR) segSet('f-banco','');
-  renderCompForm(esQR);
+  // El banco es solo del QR; el comprobante, del QR Y de la tarjeta.
+  renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
 }
 /* ---- Comprobante del QR en el formulario de carga (OBLIGATORIO) ----
    Se sube apenas se elige la imagen y queda en FORM_COMP hasta que se guarda el
    pedido; ahí se pega al método ("QR BISA %1AbC_xyz") y de ahí lo lee Contabilidad. */
 var FORM_COMP='';
-function renderCompForm(esQR){
+function renderCompForm(pide){
   var wrap=document.getElementById('wrap-comp'), box=document.getElementById('f-comp-box');
   if(!wrap||!box) return;
-  wrap.style.display = esQR ? 'block' : 'none';
+  var esQR=pide;
+  var lb=wrap.querySelector('.lb');
+  if(lb && pide){
+    var tarj=segVal('f-metodo')==='Tarjeta';
+    lb.innerHTML='Comprobante '+(tarj?'de la tarjeta':'del QR')+' <span class="req">*</span> <span class="hint">'+(tarj?'la foto del voucher':'la captura del pago')+'</span>';
+  }
+  wrap.style.display = pide ? 'block' : 'none';
   /* ⚠️ Al ocultar NO se borra FORM_COMP: esta función corre muchas veces mientras se
      arma el formulario (applyVendedorLite, editPedido…) y en editPedido llega ANTES de
      que se muestre el bloque de método, así que borrarlo acá perdía el comprobante del
@@ -2089,19 +2097,22 @@ function renderCompForm(esQR){
          '<b style="color:var(--green);font-size:.85rem">✅ Comprobante listo</b>'+
          '<button type="button" class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="quitarCompForm()">✕ Cambiar</button>'+
        '</div>')
-    : ('<button type="button" class="btn btn-sm" style="width:100%;background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:12px" onclick="adjuntarCompForm()">📎 Adjuntar la captura del pago</button>');
+    : ('<button type="button" class="btn btn-sm" style="width:100%;background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:12px" onclick="adjuntarCompForm()">📎 Adjuntar '+(segVal('f-metodo')==='Tarjeta'?'la foto del voucher':'la captura del pago')+'</button>');
 }
 function quitarCompForm(){ FORM_COMP=''; renderCompForm(true); }
 /* El mismo gato del combo, para el mismo tipo de olvido. La imagen se comparte a
    propósito: es la misma y no tiene sentido subirla dos veces al repo.
    Va para TODAS las vendedoras menos Eduardo Añez y ROHO — a ellos el panel ni
    siquiera les pide método de pago (formulario "lite"), así que tampoco comprobante. */
-function memeComprobante(vendedor){
+function memeComprobante(vendedor, metodo){
   var quien=String(vendedor||'').trim().split(' ')[0];
+  var esTar=String(metodo||'')==='Tarjeta';
+  var queFalta=esTar?'la foto del VOUCHER':'la CAPTURA del pago';
+  var comoPago=esTar?'con TARJETA':'por QR';
   openModal('<div class="modal-h" style="background:var(--red)"><h3>📎 Falta el comprobante'+(quien?(', '+esc(quien)):'')+'…</h3><button class="modal-x" onclick="closeModal();focoComprobante()">✕</button></div>'+
     '<div class="modal-b" style="text-align:center">'+
       '<img src="combo-instrucciones.jpg" alt="El comprobante del QR es obligatorio" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
-      '<p style="font-size:.95rem;color:var(--red);font-weight:800;margin-bottom:6px">El pago es por QR y no adjuntaste la captura.</p>'+
+      '<p style="font-size:.95rem;color:var(--red);font-weight:800;margin-bottom:6px">El pago es '+comoPago+' y no adjuntaste '+queFalta+'.</p>'+
       '<p style="font-size:.88rem;color:var(--muted)">Es <b>obligatoria</b>: sin ella contabilidad no puede confirmar que la plata entró, y el pedido <b>no se guarda</b>.</p>'+
       '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-primary btn-sm" style="width:100%" onclick="closeModal();focoComprobante()">Ya la adjunto</button></div>'+
     '</div>');
@@ -2171,9 +2182,9 @@ function submitPedido(){
       return;
     }
     if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
-    if(segVal('f-metodo')==='QR' && !FORM_COMP){
+    if(metodoConComprobante(segVal('f-metodo')) && !FORM_COMP){
       // El gato en vez del toast: el aviso suelto se les pasaba de largo.
-      memeComprobante(vendedor);
+      memeComprobante(vendedor, segVal('f-metodo'));
       return;
     }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
@@ -2195,7 +2206,7 @@ function submitPedido(){
   var _cobVal = _pagSI ? (parseFloat(document.getElementById('f-cobrado').value)||0) : 0;
   var _metSuelto = (_pagSI || _acuVal>0)
         ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):'')+
-           ((segVal('f-metodo')==='QR' && FORM_COMP)?(' %'+FORM_COMP):''))
+           ((metodoConComprobante(segVal('f-metodo')) && FORM_COMP)?(' %'+FORM_COMP):''))
         : '';
   /* Con "SÍ, pagado" el monto se guarda como un PAGO de verdad en el historial
      (`~método monto @fecha #nota %comprobante`), no como texto suelto. Así aparece
@@ -2206,7 +2217,7 @@ function submitPedido(){
                          banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
                          monto:_cobVal, fecha:todayStr(),
                          nota:document.getElementById('f-nota').value,
-                         comp:(segVal('f-metodo')==='QR'?FORM_COMP:'') }])
+                         comp:(metodoConComprobante(segVal('f-metodo'))?FORM_COMP:'') }])
         : _metSuelto;
   var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
@@ -4521,6 +4532,9 @@ function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.e
    sin tocar el Apps Script y encima queda legible para quien mire la hoja.
    ========================================================================== */
 var METODOS=['Efectivo','QR','Tarjeta'];
+/* Qué formas de pago dejan comprobante: el QR su captura, la tarjeta su voucher.
+   El efectivo no tiene nada que adjuntar. Un solo lugar para cambiarlo. */
+function metodoConComprobante(m){ m=String(m||''); return m==='QR' || m==='Tarjeta'; }
 function normMetodo(m){
   m=String(m||'').trim().toLowerCase();
   if(m.indexOf('efec')===0) return 'Efectivo';
