@@ -260,17 +260,29 @@ def build_html(D):
     sem_lbl = D["sem_label"]  # "a la fecha · sem 1–N"
     ticket = rs["ticket"]
 
-    # ---- Header stats ----
-    header_stats = (
-        f'<div class="hstat"><div class="hstat-v">Bs {fmt(ventas)}</div><div class="hstat-l">Ventas julio · parcial</div></div>'
-        f'<div class="hstat"><div class="hstat-v">Bs {proy/1_000_000:.2f}M</div><div class="hstat-l">Proyección cierre</div></div>'
-        f'<div class="hstat"><div class="hstat-v" style="color:#7CF6EF">{pct(alc_proy)}</div><div class="hstat-l">Proy vs objetivo</div></div>')
+    closed = dia >= dias                 # mes cerrado (día 31 de 31): cierre final, no proyección
+    alc = (ventas / obj) if obj else None  # % del objetivo (real en cierre; == proy cuando proy==ventas)
+    desv = (ventas - obj) if closed else (proy - obj)  # desviación vs objetivo
+    estado = "cerrado" if closed else "en curso"
+    periodo_sub = "mes cerrado" if closed else f"mes en curso (día {dia} de {dias})"
+    footer_periodo = "cerrado" if closed else f"parcial, día {dia}/{dias}"
+    tienda_sub = "cierre" if closed else "parcial + proyección"
 
-    # ---- Section 01: resultado parcial ----
-    ring = f'conic-gradient(var(--teal) 0 {min((alc_proy or 0)*100,100):.1f}%, rgba(15,95,109,.13) {min((alc_proy or 0)*100,100):.1f}% 100%)'
-    # mchips por marca · % del objetivo del mes (proyección de cierre / presupuesto),
-    # ordenado por % desc y coloreado como junio. Julio es parcial: el % "vs objetivo" con sentido
-    # es el PROYECTADO (coherente con el anillo del hero, 95.6% proy vs objetivo).
+    # ---- Header stats ----
+    if closed:
+        header_stats = (
+            f'<div class="hstat"><div class="hstat-v">Bs {ventas/1_000_000:.2f}M</div><div class="hstat-l">Ventas julio</div></div>'
+            f'<div class="hstat"><div class="hstat-v" style="color:#7CF6EF">{pct(alc)}</div><div class="hstat-l">% del objetivo</div></div>'
+            f'<div class="hstat"><div class="hstat-v">{fmt(rs["jul_u"])}</div><div class="hstat-l">Unidades</div></div>')
+    else:
+        header_stats = (
+            f'<div class="hstat"><div class="hstat-v">Bs {fmt(ventas)}</div><div class="hstat-l">Ventas julio · parcial</div></div>'
+            f'<div class="hstat"><div class="hstat-v">Bs {proy/1_000_000:.2f}M</div><div class="hstat-l">Proyección cierre</div></div>'
+            f'<div class="hstat"><div class="hstat-v" style="color:#7CF6EF">{pct(alc_proy)}</div><div class="hstat-l">Proy vs objetivo</div></div>')
+
+    # ---- Section 01: resultado del mes (cerrado) / parcial ----
+    ring_pct = alc if closed else alc_proy
+    ring = f'conic-gradient(var(--teal) 0 {min((ring_pct or 0)*100,100):.1f}%, rgba(15,95,109,.13) {min((ring_pct or 0)*100,100):.1f}% 100%)'
     kpi = D["marca_kpi"]
     def _cp(mk):
         k = kpi.get(re.sub(r"\s+", " ", norm(mk["marca"])))
@@ -284,32 +296,48 @@ def build_html(D):
                   f'<span style="flex:1;font-size:.8rem;font-weight:600">{esc(prettify(mk["marca"]))}</span>'
                   f'<span style="font-size:.82rem;font-weight:800">Bs {fmt(mk["vtas"])}</span>'
                   f'<span style="color:{col};font-weight:700;font-size:.68rem;min-width:52px;text-align:right">{pct(cp)}</span></div>')
-    sec01 = f'''<div class="sec mensual-only">01 · Resultado parcial · julio 2026</div>
+    sec_lbl_01 = "01 · Resultado del mes · julio 2026" if closed else "01 · Resultado parcial · julio 2026"
+    hero_lbl = "Ventas totales de julio" if closed else "Ventas de julio · a la fecha"
+    sub_line = (f"Cierre del mes · {fmt(rs['jul_u'])} unidades · ticket Bs {fmt(ticket)}" if closed
+                else f"Mes en curso · día {dia} de {dias} · {fmt(rs['jul_u'])} unidades · ticket Bs {fmt(ticket)}")
+    if closed:
+        cols3 = (
+            f'<div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Objetivo del mes</div><div style="font-size:1.2rem;font-weight:800;color:var(--text)">Bs {fmt(obj)}</div></div>'
+            f'<div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Desviación vs objetivo</div><div style="font-size:1.2rem;font-weight:800;color:{"var(--green)" if desv>=0 else "var(--red)"}">{("+" if desv>=0 else "−")} Bs {fmt(abs(desv))}</div></div>')
+    else:
+        cols3 = (
+            f'<div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Proyección cierre</div><div style="font-size:1.2rem;font-weight:800;color:var(--text)">Bs {fmt(proy)}</div></div>'
+            f'<div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Objetivo del mes</div><div style="font-size:1.2rem;font-weight:800;color:var(--text)">Bs {fmt(obj)}</div></div>'
+            f'<div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Desv. proy vs objetivo</div><div style="font-size:1.2rem;font-weight:800;color:{"var(--green)" if desv>=0 else "var(--red)"}">{("+" if desv>=0 else "−")} Bs {fmt(abs(desv))}</div></div>')
+    if closed:
+        chips_hero = (f'<span class="dchip" style="background:rgba(34,150,100,.1);color:#1c8a5f;border:1px solid rgba(34,150,100,.28)">{vf(var_s1)["txt"]} vs junio</span>'
+                      f'<span class="dchip" style="background:rgba(184,104,8,.1);color:#B86808;border:1px solid rgba(184,104,8,.28)">{pct(alc)} del objetivo</span>'
+                      f'<span class="dchip" style="background:rgba(15,95,109,.06);color:#0F5F6D;border:1px solid rgba(15,95,109,.2)">mes cerrado · día {dia}/{dias}</span>')
+    else:
+        chips_hero = (f'<span class="dchip" style="background:rgba(34,150,100,.1);color:#1c8a5f;border:1px solid rgba(34,150,100,.28)">{vf(var_s1)["txt"]} vs junio ({sem_lbl})</span>'
+                      f'<span class="dchip" style="background:rgba(184,104,8,.1);color:#B86808;border:1px solid rgba(184,104,8,.28)">{pct(avance_real)} del objetivo a la fecha</span>'
+                      f'<span class="dchip" style="background:rgba(15,95,109,.06);color:#0F5F6D;border:1px solid rgba(15,95,109,.2)">día {dia} de {dias}</span>')
+    ring_lbl = "% del objetivo" if closed else "proy. vs objetivo"
+    ring_sub = "Alcance del mes" if closed else "Alcance proyectado"
+    panel_lbl = "Julio por marca · % del objetivo" if closed else "Julio por marca · % del objetivo (proyección)"
+    sec01 = f'''<div class="sec mensual-only">{sec_lbl_01}</div>
     <div class="lg lg-glow mensual-only" style="padding:30px 34px;margin-bottom:26px">
       <div style="display:flex;align-items:center;gap:40px;flex-wrap:wrap">
         <div style="flex:1.3;min-width:280px">
-          <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Ventas de julio · a la fecha</div>
+          <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">{hero_lbl}</div>
           <div style="font-size:3.4rem;font-weight:800;line-height:1;color:var(--text);letter-spacing:-.02em">Bs {fmt(ventas)}</div>
-          <div style="font-size:.82rem;color:var(--muted);margin-top:8px">Mes en curso · día {dia} de {dias} · {fmt(rs["jul_u"])} unidades · ticket Bs {fmt(ticket)}</div>
-          <div style="display:flex;gap:30px;margin-top:14px">
-            <div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Proyección cierre</div><div style="font-size:1.2rem;font-weight:800;color:var(--text)">Bs {fmt(proy)}</div></div>
-            <div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Objetivo del mes</div><div style="font-size:1.2rem;font-weight:800;color:var(--text)">Bs {fmt(obj)}</div></div>
-            <div><div style="font-size:.6rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Desv. proy vs objetivo</div><div style="font-size:1.2rem;font-weight:800;color:{"var(--green)" if proy>=obj else "var(--red)"}">{("+" if proy>=obj else "−")} Bs {fmt(abs(proy-obj))}</div></div>
-          </div>
-          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
-            <span class="dchip" style="background:rgba(34,150,100,.1);color:#1c8a5f;border:1px solid rgba(34,150,100,.28)">{vf(var_s1)["txt"]} vs junio ({sem_lbl})</span>
-            <span class="dchip" style="background:rgba(184,104,8,.1);color:#B86808;border:1px solid rgba(184,104,8,.28)">{pct(avance_real)} del objetivo a la fecha</span>
-            <span class="dchip" style="background:rgba(15,95,109,.06);color:#0F5F6D;border:1px solid rgba(15,95,109,.2)">día {dia} de {dias}</span>
-          </div>
+          <div style="font-size:.82rem;color:var(--muted);margin-top:8px">{sub_line}</div>
+          <div style="display:flex;gap:30px;margin-top:14px">{cols3}</div>
+          <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">{chips_hero}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:center;gap:9px">
           <div class="ring" style="background:{ring}">
-            <div><div style="font-size:2rem;font-weight:800;color:var(--text);line-height:1">{pct(alc_proy)}</div><div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">proy. vs objetivo</div></div>
+            <div><div style="font-size:2rem;font-weight:800;color:var(--text);line-height:1">{pct(ring_pct)}</div><div style="font-size:.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px">{ring_lbl}</div></div>
           </div>
-          <div style="font-size:.66rem;color:var(--muted)">Alcance proyectado</div>
+          <div style="font-size:.66rem;color:var(--muted)">{ring_sub}</div>
         </div>
         <div style="flex:1;min-width:250px;display:flex;flex-direction:column;gap:8px">
-          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">Julio por marca · % del objetivo (proyección)</div>
+          <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:2px">{panel_lbl}</div>
           {chips}
         </div>
       </div>
@@ -318,13 +346,26 @@ def build_html(D):
     # ---- Exec summary ----
     momentum = sorted([x for x in D["sem_marca"] if x["var"] is not None], key=lambda x: -x["var"])[:3]
     mom_txt = ", ".join(f'{prettify(x["marca"])} {signed_pct(x["var"])}' for x in momentum)
-    exec_html = f'''<div class="exec">
+    if closed:
+        cierre_txt = (f'superando el presupuesto en <b style="color:var(--green)">Bs {fmt(desv)}</b>' if desv >= 0
+                      else f'quedando <b style="color:var(--red)">Bs {fmt(-desv)}</b> bajo el objetivo')
+        exec_html = f'''<div class="exec">
+      <div class="exec-lbl">Resumen ejecutivo · cierre del mes</div>
+      <p>Julio cierra en <b>Bs {fmt(ventas)}</b> ({fmt(rs["jul_u"])} unidades, ticket Bs {fmt(ticket)}) = <b>{pct(alc)} del objetivo</b> (Bs {fmt(obj)}), {cierre_txt}. Crecimiento <b style="color:{"var(--green)" if (var_s1 or 0)>=0 else "var(--red)"}">{signed_pct(var_s1)}</b> vs junio. Por marca vs junio: {mom_txt}.</p>
+    </div>'''
+    else:
+        exec_html = f'''<div class="exec">
       <div class="exec-lbl">Resumen ejecutivo · mes en curso</div>
       <p>Julio arranca en <b>Bs {fmt(ventas)}</b> en los primeros <b>{dia} días</b> ({fmt(rs["jul_u"])} unidades, ticket Bs {fmt(ticket)}) — <b style="color:{"var(--green)" if (var_s1 or 0)>=0 else "var(--red)"}">{signed_pct(var_s1)}</b> vs junio en las mismas semanas transcurridas. La <b>proyección de cierre</b> es <b>Bs {fmt(proy)}</b> = <b>{pct(alc_proy)}</b> del objetivo (Bs {fmt(obj)}). Momentum por marca vs junio (mismas semanas): {mom_txt}. Es un mes parcial: las cifras crecerán con las próximas semanas.</p>
     </div>'''
 
     # ---- Alert ----
-    if proy >= obj:
+    if closed:
+        if desv >= 0:
+            alert = f'''<div class="alert amber"><span class="ico">🎉</span><div>Julio cerró en <b>Bs {fmt(ventas)}</b> — <b>{pct(alc)}</b> del objetivo, <b>superando el presupuesto en Bs {fmt(desv)}</b>.</div></div>'''
+        else:
+            alert = f'''<div class="alert amber"><span class="ico">⚠️</span><div>Julio cerró en <b>Bs {fmt(ventas)}</b> = <b>{pct(alc)}</b> del objetivo; faltaron <b>Bs {fmt(-desv)}</b> para la meta.</div></div>'''
+    elif proy >= obj:
         alert = f'''<div class="alert amber"><span class="ico">💡</span><div>Proyección de cierre <b>Bs {fmt(proy)}</b> — <b>{pct(alc_proy)}</b> del objetivo. Buen arranque: mantener el ritmo para superar el presupuesto.</div></div>'''
     else:
         alert = f'''<div class="alert amber"><span class="ico">⚠️</span><div>Proyección de cierre <b>Bs {fmt(proy)}</b> = <b>{pct(alc_proy)}</b> del objetivo; faltarían <b>Bs {fmt(obj-proy)}</b>. Reforzar el ritmo para cerrar la brecha en las próximas semanas.</div></div>'''
@@ -342,7 +383,7 @@ def build_html(D):
     tt = D["tiendas_total"]
     tr += (f'<tr class="trow-total"><td>TOTAL</td>{num_td(fmt(tt["vtas"]))}{num_td(fmt(tt["junio"]))}'
            f'<td class="num">—</td>{num_td(fmt(tt["ppto"]))}{num_td(fmt(tt["proy"]))}{num_td(pct(tt["alc_proy"]))}</tr>')
-    sec_tienda = f'''<div class="sec mensual-only">04 · Desempeño por tienda · julio (parcial + proyección)</div>
+    sec_tienda = f'''<div class="sec mensual-only">04 · Desempeño por tienda · julio ({tienda_sub})</div>
     <div class="tw mensual-only" style="margin-bottom:28px"><table>
       <thead><tr><th>Tienda / Canal</th><th class="num">Vtas Jul</th><th class="num">Junio (mes)</th><th class="num">Var %</th><th class="num">PPTO Jul</th><th class="num">Proy. cierre</th><th class="num">% Alcance proy</th></tr></thead>
       <tbody>{tr}</tbody>
@@ -388,7 +429,7 @@ def build_html(D):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dashboard Ventas 2026 · Gerencia — Julio (en curso) — Heaven Colchones</title>
+<title>Dashboard Ventas 2026 · Gerencia — Julio ({estado}) — Heaven Colchones</title>
 <meta name="generator" content="generar_empresarial_julio.py — fuente: {esc(D["_xlsx"])}">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>{CSS}</style>
@@ -407,7 +448,7 @@ def build_html(D):
         </div>
         <div class="htitle">
           <h1>DASHBOARD VENTAS 2026 · GERENCIA</h1>
-          <p>Julio 2026 · mes en curso (día {dia} de {dias}) · MultiESPUMAS Viscarra S.R.L.</p>
+          <p>Julio 2026 · {periodo_sub} · MultiESPUMAS Viscarra S.R.L.</p>
         </div>
       </div>
       <div class="hr" style="position:relative;z-index:1;border-left:none">
@@ -433,7 +474,7 @@ def build_html(D):
     {extras}
     {semanal}
     <div class="footer" style="border-radius:12px;border:1px solid var(--gray-md);margin-top:20px">
-      Heaven Colchones · MultiESPUMAS Viscarra S.R.L. — Santa Cruz, Bolivia · Julio 2026 (parcial, día {dia}/{dias}) · Montos en bolivianos (Bs) · Generado desde {esc(D["_xlsx"])}
+      Heaven Colchones · MultiESPUMAS Viscarra S.R.L. — Santa Cruz, Bolivia · Julio 2026 ({footer_periodo}) · Montos en bolivianos (Bs) · Generado desde {esc(D["_xlsx"])}
     </div>
   </main>
   <button class="fab" id="hc-fab">⬇ Exportar / Imprimir</button>
@@ -641,36 +682,45 @@ def _leads_campana(D):
 
 
 def _desviacion_bars(D):
-    """Section 02 (mensual) — avance PROYECTADO de presupuesto: barra grande + barras por tienda.
-    Julio es parcial, así que el avance con sentido es el proyectado (coherente con el hero)."""
-    tt = D["tiendas_total"]; proy = tt["proy"]; obj = tt["ppto"]
-    w = min((proy / obj * 100) if obj else 0, 100); falta = obj - proy
+    """Section 02 (mensual) — avance de presupuesto: barra grande + barras por tienda.
+    Mes en curso: usa la PROYECCIÓN (coherente con el hero). Mes cerrado: proy==real, es el cierre."""
+    closed = D["dia"] >= D["dias"]
+    tt = D["tiendas_total"]; base = tt["proy"]; obj = tt["ppto"]  # proy==real en cierre
+    w = min((base / obj * 100) if obj else 0, 100); falta = obj - base
     real = D["resumen"]["jul_ventas"]
     tiendas = [t for t in D["tiendas"] if t["ppto"] and t["proy"] is not None]
     bars = "".join(bar_row(bar(prettify(t["nombre"]), t["proy"], t["ppto"]), 172)
                    for t in sorted(tiendas, key=lambda t: -(t["alc_proy"] or 0)))
     falta_txt = ("supera Bs " + fmt(-falta)) if falta <= 0 else ("falta Bs " + fmt(falta))
     falta_col = "var(--green)" if falta <= 0 else "var(--red)"
-    return f'''<div class="sec mensual-only">02 · Desviación vs presupuesto · julio (proyectado)</div>
+    tit = "julio (cierre)" if closed else "julio (proyectado)"
+    bartit = "Avance de presupuesto · julio (cierre)" if closed else "Avance proyectado de presupuesto · julio"
+    leg1 = ("Logrado" if closed else "Proyectado") + f" · {pct(base/obj if obj else None)}"
+    leg2 = ("" if closed else f'<span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:rgba(15,95,109,.25)"></span>Real a la fecha · {pct(real/obj if obj else None)}</span>')
+    tiendatit = ("Avance por tienda / canal · ventas vs presupuesto julio" if closed
+                 else "Avance proyectado por tienda / canal · proyección vs presupuesto julio")
+    cap = ("Barra recortada al 100%; el % y montos muestran el valor real. Ventas vs PPTO julio por tienda (cierre del mes)." if closed
+           else f"Barra recortada al 100%; el % y montos muestran el valor real. Proyección de cierre vs PPTO julio por tienda (mes parcial, día {D['dia']}/{D['dias']}).")
+    return f'''<div class="sec mensual-only">02 · Desviación vs presupuesto · {tit}</div>
     <div class="lg mensual-only" style="padding:24px 30px 26px;margin-bottom:26px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:16px">
-        <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em">Avance proyectado de presupuesto · julio</div>
+        <div style="font-size:.66rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.1em">{bartit}</div>
         <div style="font-size:.72rem;color:var(--muted)">Objetivo <b style="color:var(--text)">Bs {fmt(obj)}</b></div>
       </div>
       <div style="position:relative;height:44px;border-radius:14px;overflow:hidden;background:rgba(15,95,109,.09);box-shadow:inset 0 1px 3px rgba(20,58,60,.12)">
         <div style="position:absolute;inset:0 auto 0 0;width:{w:.1f}%;border-radius:14px;background:linear-gradient(90deg,#0F5F6D,#1B94A4);box-shadow:0 2px 10px rgba(15,95,109,.35);display:flex;align-items:center;padding-left:16px">
-          <span style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">Bs {fmt(proy)}</span>
+          <span style="color:#fff;font-weight:800;font-size:.92rem;letter-spacing:-.01em">Bs {fmt(base)}</span>
         </div>
         <div style="position:absolute;right:16px;top:50%;transform:translateY(-50%);color:{falta_col};font-weight:800;font-size:.9rem">{falta_txt}</div>
       </div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:.68rem;color:var(--muted)">
-        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#0F5F6D,#1B94A4)"></span>Proyectado · {pct(proy/obj if obj else None)}</span>
-        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:rgba(15,95,109,.25)"></span>Real a la fecha · {pct(real/obj if obj else None)}</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:linear-gradient(90deg,#0F5F6D,#1B94A4)"></span>{leg1}</span>
+        {leg2}
       </div>
       <div style="height:1px;background:rgba(15,95,109,.1);margin:22px 0 18px"></div>
-      <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px">Avance proyectado por tienda / canal · proyección vs presupuesto julio</div>
+      <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:16px">{tiendatit}</div>
       {bars}
-      <div class="cap" style="margin-top:6px">Barra recortada al 100%; el % y montos muestran el valor real. Proyección de cierre vs PPTO julio por tienda (mes parcial, día {D["dia"]}/{D["dias"]}).</div>
+      <div class="cap" style="margin-top:6px">{cap}</div>
     </div>'''
 
 
@@ -745,7 +795,7 @@ def _todas_barlists(D):
           for m in sorted(ms, key=lambda m: -av(m))]
     return ('<div class="two-col">'
             + barlist("Julio por marca · Bs (a la fecha)", r1, "mensual-only")
-            + barlist("% del objetivo (proyección)", r2, "mensual-only")
+            + barlist("% del objetivo" if D["dia"] >= D["dias"] else "% del objetivo (proyección)", r2, "mensual-only")
             + barlist("Acumulado ene–jun por marca · Bs", r3, "anual-only")
             + barlist("% Avance vs presupuesto anual", r4, "anual-only")
             + '</div>')
@@ -791,7 +841,7 @@ def _brand_detail_julio(D, K):
         f'<div style="font-size:1.9rem;font-weight:800;line-height:1">Bs {fmt(vtas)}</div>'
         f'<div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap"><span class="dchip {vs1["cls"]}" style="background:rgba(15,95,109,.06);border:1px solid rgba(15,95,109,.16);font-size:.66rem">{vs1["txt"]} vs junio (a la fecha)</span></div></div>'
         '<div class="glass-card"><div class="gc-bar" style="background:var(--series-blue)"></div>'
-        '<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">% Objetivo (proyección)</div>'
+        f'<div style="font-size:.66rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:8px">% Objetivo{"" if D["dia"] >= D["dias"] else " (proyección)"}</div>'
         '<div style="display:flex;align-items:center;gap:14px">'
         f'<div class="ring" style="width:82px;height:82px;background:{ringc}"><div><div style="font-size:1rem;font-weight:800;line-height:1">{pct(cumpl)}</div></div></div>'
         f'<div style="font-size:.72rem;color:var(--muted)">de Bs<br><b style="color:var(--text);font-size:.82rem">{fmt(pj)}</b><br>PPTO julio</div></div></div>'

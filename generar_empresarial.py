@@ -56,7 +56,7 @@ def month_switcher(active):
             'border:1px solid rgba(255,255,255,.72);border-radius:16px;padding:5px;'
             'box-shadow:0 8px 24px rgba(9,72,68,.14), inset 0 1px 0 rgba(255,255,255,.95)">'
             f'{pill("JUNIO · cerrado", DASH_JUNIO, ja)}'
-            f'{pill("JULIO · en curso", DASH_JULIO, not ja)}'
+            f'{pill("JULIO · cerrado", DASH_JULIO, not ja)}'
             '</div></div>')
 
 # ----------------------------------------------------------------------------
