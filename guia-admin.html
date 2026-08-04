@@ -84,6 +84,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#contabilidad">🧾 Contabilidad</a>
+    <a href="#tienda">🏪 Venta de tienda</a>
     <a href="#cuadre">🧮 Cuadre</a>
     <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
@@ -355,6 +356,27 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li>⚠️ Si una vendedora <b>edita</b> un pedido que ya tiene pagos registrados y cambia los montos, el panel <b>avisa antes</b> y le muestra qué pagos se van a perder. Si solo corrige otra cosa (zona, dirección, productos), el historial de pagos <b>no se toca</b>.</li>
     </ul>
 
+    <h3 id="tienda">🏪 Registrar venta de tienda <span class="pill">nuevo</span></h3>
+    <p>Botón <b>“🏪 Registrar venta de tienda”</b> en la barra de Contabilidad. Es para la venta que el <b>cliente se lleva del local</b>: no hay entrega que programar, pero la venta tiene que quedar registrada igual.</p>
+    <p>Abre <b>el mismo formulario del pedido</b>, sin nada del camión:</p>
+    <ul>
+      <li><b>No pide</b> fecha de entrega, turno, zona, ubicación de Google Maps ni dirección.</li>
+      <li>La dirección queda como <b>SALIÓ DE TIENDA</b> y la zona como <b>TIENDA</b>.</li>
+      <li>Todo lo demás se llena igual y con las <b>mismas exigencias</b>: N° de nota de venta, cliente, celular, productos, y el cobro con su método, su monto y —si es QR o tarjeta— <b>la foto del comprobante</b>.</li>
+      <li>Se le asigna su <b>N° de OC</b> del correlativo del mes, como cualquier venta.</li>
+    </ul>
+    <p><b>No ocupa cupo del camión.</b> Se guarda sin fecha de entrega, así que no le saca un lugar a ninguna entrega — ni en el panel ni en la planilla. Tampoco aparece en Faltantes, ni en la Lista de carga, ni en los mensajes de Cierre del día / Mañana: no hay nada que cargar, ya salió.</p>
+    <p>Queda marcada como <b>Entregada ✓</b> y <b>Verificada</b> desde el momento en que se registra: el producto salió con el cliente.</p>
+    <p>Dónde se ve después:</p>
+    <ul>
+      <li>En <b>Contabilidad</b>, con el cartelito <b>🏪 TIENDA</b> al lado del cliente, y en el <b>Cuadre y conciliación</b> con su pago.</li>
+      <li>En <b>Administración</b>, con <b>🏪 TIENDA</b> en la columna Entrega en vez de una fecha.</li>
+      <li>En <b>🛏️ Productos más entregados</b>, contada por el día en que se cargó.</li>
+    </ul>
+    <div class="callout tip">Si después hay que corregirla, se edita con el ✏️ de siempre y vuelve a abrirse <b>en modo tienda</b> — no te va a pedir fecha ni dirección.</div>
+  </div>
+
+  <div class="card">
     <h3 id="cuadre">🧮 Cuadre y conciliación <span class="pill">nuevo</span></h3>
     <p>Dentro de <b>Contabilidad</b>, segunda sub-pestaña. Sirve para cerrar la caja del día y cruzar los bancos con sus extractos.</p>
     <ul>

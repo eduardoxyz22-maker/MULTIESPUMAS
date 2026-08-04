@@ -708,6 +708,39 @@ mes"*.
 - Detalle que cazó `test_prods`: el plural de "vez" es **"veces"**, no "vezes" → helper `nVeces()`.
 - Tests: `test_prods.js` (55 comprobaciones).
 
+## 4u. Registrar venta de tienda (2026-08-04)
+
+Pedido: *"en contabilidad, agregar un botón que diga «registrar venta de tienda» y se llene el
+mismo formulario que pedidos pero sin las ubicaciones y dirección de entrega, es «SALIÓ DE
+TIENDA», directo para registrar la venta a contabilidad y su panel"*.
+
+- Botón **🏪 Registrar venta de tienda** en la barra de Contabilidad → `abrirVentaTienda()`.
+  Es el **mismo formulario** con la clase `venta-tienda` en `#view-form`; los campos del camión
+  llevan `solo-entrega` y se esconden por CSS (fecha, turno, zona, Maps, dirección, cartel de cupos).
+- Se guarda con `zona:'TIENDA'`, `direccion:'SALIÓ DE TIENDA'`, `maps:''`, `turno:''`,
+  `entregado:true`, `verificado:true` (ya salió con el cliente).
+- ⚠️ **`fecha:''` A PROPÓSITO — es lo que evita que se coma un cupo del camión.** El portero de
+  cupos del Apps Script es `if (foundRow < 0 && p.fecha)`: sin fecha ni lo mira. Del lado del
+  panel pasa igual (`cuposUsadosTurno` compara `p.fecha===fecha`). **Mismo truco que las filas
+  del sistema (§4o/§4m) → sin redeploy del Apps Script.**
+- Contabilidad la ve igual porque **`contaFecha()` usa el `ts` de carga**, no `p.fecha`. Y el
+  cuadre la ve porque corta por la fecha del PAGO.
+- Queda **fuera de toda la logística** sin código extra: faltantes, lista de carga, parte del
+  día y los envíos de WhatsApp filtran por `p.fecha===hoy/mañana`, que '' nunca cumple.
+- `esVentaTienda(p)` la reconoce por dirección **o** zona (con `normNombre`, así que "SALIO DE
+  TIENDA" sin tilde también entra) → badge `🏪 TIENDA` en Contabilidad y en Administración
+  (donde la columna Entrega mostraría una fecha vacía), y `🏪 Tienda` en el resumen por día.
+- `fechaSalida(p)` = fecha de entrega, o la de carga si salió de tienda → **`prodRankData()`
+  (§4t) la cuenta como entregada** por el día en que se cargó.
+- Se mantienen TODAS las exigencias de la venta: nota obligatoria, cliente, celular, productos,
+  método + monto + banco + comprobante (QR/tarjeta). Solo se saltean las validaciones de
+  entrega (fecha mínima, domingo, sábado PM, día cerrado, cupos).
+- Al guardar va **derecho a Contabilidad**, no al modal de WhatsApp: no hay camión al que avisarle.
+- `resetForm()` apaga el modo (por eso `abrirVentaTienda` lo prende DESPUÉS de llamarlo) y
+  `editPedido()` lo prende con `esVentaTienda(rec)`: una venta de tienda se edita como tal.
+- Tests: `test_tienda.js` (55 comprobaciones), incluida la verificación de que un pedido normal
+  sigue ocupando su cupo y que el modo no se pega al pedido siguiente.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

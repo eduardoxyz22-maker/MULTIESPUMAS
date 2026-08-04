@@ -90,6 +90,14 @@ label.lb .hint{font-weight:500;color:var(--muted);font-size:.68rem}
 .oc-roho{display:none}
 .roho-vendedor .oc-roho{display:inline}
 .roho-vendedor .oc-opcional{display:none}
+/* Venta de TIENDA: el cliente se lo lleva del local, no hay entrega que programar.
+   Se esconde todo lo del camión (fecha, turno, zona, maps, dirección). */
+.venta-tienda .solo-entrega{display:none !important}
+.tienda-only{display:none}
+.venta-tienda .tienda-only{display:block}
+.tienda-banner{display:none;align-items:center;gap:12px;background:#e6f2f7;border:1px solid #a9cfdf;border-left:4px solid #155e75;border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#0d4a5e}
+.venta-tienda .tienda-banner{display:flex}
+.venta-tienda #cupo-form{display:none}
 input[type=text],input[type=tel],input[type=url],input[type=number],input[type=date],input[type=month],textarea,select{
   width:100%;padding:11px 13px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;color:var(--text);background:#fff;transition:border .15s,box-shadow .15s}
 input:focus,textarea:focus,select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px var(--teal-lt)}
@@ -446,10 +454,15 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="cancelEdit()">Cancelar edición</button>
       </div>
 
+      <div class="tienda-banner">
+        <span>🏪 <b>Venta de tienda</b> — el cliente se lo lleva del local. No lleva fecha de entrega, turno ni dirección: queda como <b>SALIÓ DE TIENDA</b> y <b>no ocupa cupo del camión</b>.</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="cancelarVentaTienda()">Cancelar</button>
+      </div>
+
       <div class="sec">📦 Datos del pedido</div>
 
       <div class="grid2">
-        <div class="field">
+        <div class="field solo-entrega">
           <label class="lb">Fecha de entrega <span class="req">*</span></label>
           <input type="date" id="f-fecha">
         </div>
@@ -492,7 +505,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       </div>
 
       <div class="grid2">
-        <div class="field">
+        <div class="field solo-entrega">
           <label class="lb">Turno de entrega</label>
           <div class="seg" id="f-turno">
             <button type="button" data-val="AM" class="active">🌅 AM</button>
@@ -516,9 +529,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
       </div>
 
-      <div class="sec">📍 Entrega</div>
+      <div class="sec solo-entrega">📍 Entrega</div>
 
-      <div class="grid2">
+      <div class="grid2 solo-entrega">
         <div class="field">
           <label class="lb">Zona <span class="req">*</span></label>
           <input type="text" id="f-zona" list="dl-zonas" placeholder="Ej. Norte, Plan 3000…" autocomplete="off">
@@ -530,7 +543,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
       </div>
 
-      <div class="field">
+      <div class="field solo-entrega">
         <label class="lb">Dirección</label>
         <textarea id="f-direccion" placeholder="Calle, número, referencia…"></textarea>
       </div>
@@ -807,6 +820,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
         <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
+        </div>
+        <div class="field">
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
         </div>
       </div>
       <div class="metodos-line" id="cta-resumen"></div>
@@ -1428,7 +1444,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">OC '+esc(p.oc)+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
-      '<td><b>'+esc(p.cliente||'—')+'</b></td>'+
+      '<td><b>'+esc(p.cliente||'—')+'</b>'+(esVentaTienda(p)?('<br>'+badgeTienda(p)):'')+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
       '<td>'+esc(p.facturarA||'—')+'</td>'+
@@ -2170,7 +2186,7 @@ function submitPedido(){
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
   if(!cliente){ markErr('f-cliente'); ok=false; }
   if(!lite && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
-  if(!document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
+  if(!VENTA_TIENDA && !document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   if(!ok){
     toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.' : 'Completá los campos marcados (*)','err');
@@ -2242,6 +2258,9 @@ function submitPedido(){
   var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
+  /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
+     ni día cerrado, ni cupo del camión que ocupar. Se saltea todo ese bloque. */
+  if(!VENTA_TIENDA){
   if(!isEdit && fechaSel < minFecha){
     toast(lite ? 'La fecha no puede ser anterior a hoy.' : 'La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
     var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
@@ -2277,6 +2296,7 @@ function submitPedido(){
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
     return;
   }
+  }
   // Los combos se sacaron de la lista de precios: cada producto va cargado por separado,
   // porque un "COMBO" en una sola línea no deja revisar stock ni contar bultos por producto.
   // Se corta acá y no solo en el autocompletado, porque escribirlo a mano seguía pasando.
@@ -2305,17 +2325,19 @@ function submitPedido(){
       return;
     }
   }
+  var _tienda=!!VENTA_TIENDA;
   var rec={
     id: EDIT_ID||uid(),
-    fecha: document.getElementById('f-fecha').value||todayStr(),
+    // Sin fecha la venta de tienda no ocupa cupo del camión (ver §VENTA DE TIENDA).
+    fecha: _tienda ? '' : (document.getElementById('f-fecha').value||todayStr()),
     nota: document.getElementById('f-nota').value.trim(),
     oc: ocSel,
     vendedor: vendedor, cliente: cliente, productos: productos,
     celular: document.getElementById('f-celular').value.trim(),
-    turno: segVal('f-turno'),
-    zona: document.getElementById('f-zona').value.trim(),
-    direccion: document.getElementById('f-direccion').value.trim(),
-    maps: (normalizaUbicacion(document.getElementById('f-maps').value)||''),
+    turno: _tienda ? '' : segVal('f-turno'),
+    zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
+    direccion: _tienda ? DIR_TIENDA : document.getElementById('f-direccion').value.trim(),
+    maps: _tienda ? '' : (normalizaUbicacion(document.getElementById('f-maps').value)||''),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: _metodoPago,
     cobradoBs: _cobVal || (prev?(Number(prev.cobradoBs)||0):0),
@@ -2326,11 +2348,12 @@ function submitPedido(){
     facturarA: document.getElementById('f-facturar').value.trim(),
     nit: document.getElementById('f-nit').value.trim(),
     estado: prev ? (prev.estado||'') : '',
-    entregado: prev ? !!prev.entregado : false,
-    verificado: prev ? !!prev.verificado : false,
+    // La venta de tienda ya salió con el cliente: entregada y con el stock descontado.
+    entregado: _tienda ? true : (prev ? !!prev.entregado : false),
+    verificado: _tienda ? true : (prev ? !!prev.verificado : false),
     vehiculo: prev ? (prev.vehiculo||'') : '',
     chofer: prev ? (prev.chofer||'') : '',
-    nroDia: isEdit ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
+    nroDia: (_tienda || isEdit) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
     ts: isEdit ? (prev?prev.ts:0) : Date.now()
   };
 
@@ -2366,7 +2389,12 @@ function submitPedido(){
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
     after(isEdit);
   }
-  function after(wasEdit){ EDIT_ID=null; resetForm(); refreshDatalists(); if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); } }
+  function after(wasEdit){
+    EDIT_ID=null; resetForm(); refreshDatalists();
+    // La venta de tienda va derecho a Contabilidad: no hay camión al que avisarle por WhatsApp.
+    if(_tienda){ showView('conta'); renderConta(); return; }
+    if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); }
+  }
 }
 
 /* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
@@ -2460,6 +2488,46 @@ function applyVendedorLite(){
   if(ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min = lite ? todayStr() : tomorrowStr(); }
   pintarCampoOc(roho);
 }
+/* ============================================================================
+   🏪 VENTA DE TIENDA — el cliente se lo lleva del local
+   Es el MISMO formulario del pedido, sin nada del camión: ni fecha de entrega, ni
+   turno, ni zona, ni Maps, ni dirección. La dirección queda en "SALIÓ DE TIENDA".
+
+   ⚠️ Se guarda con `fecha:''` A PROPÓSITO. El portero de cupos del Apps Script es
+   `if (foundRow < 0 && p.fecha)`: sin fecha ni siquiera lo mira, así que una venta
+   de tienda **no se come un cupo del camión** — ni acá ni en la planilla, y sin
+   tener que redeployar el Apps Script. Del lado del panel pasa lo mismo:
+   `cuposUsadosTurno` compara `p.fecha===fecha` y '' nunca coincide.
+   Contabilidad igual la ve, porque `contaFecha()` usa el `ts` de carga.
+   ========================================================================== */
+var DIR_TIENDA='SALIÓ DE TIENDA', ZONA_TIENDA='TIENDA';
+var VENTA_TIENDA=false;
+/* Se reconoce por la dirección (lo que pidió el usuario) o por la zona, para que
+   siga funcionando si alguien la corrige a mano en la planilla. normNombre saca
+   tildes: "SALIO DE TIENDA" también entra. */
+function esVentaTienda(p){
+  if(!p) return false;
+  return normNombre(p.direccion)===normNombre(DIR_TIENDA) || normNombre(p.zona)===normNombre(ZONA_TIENDA);
+}
+/* El cartelito 🏪 con el que se distingue de un pedido con entrega. */
+function badgeTienda(p){ return esVentaTienda(p) ? '<span class="badge b-gray" title="Venta de tienda — salió del local, sin entrega">🏪 TIENDA</span>' : ''; }
+/* La fecha con la que cuenta una venta: la de entrega, y si salió de tienda la de carga. */
+function fechaSalida(p){ return (p&&p.fecha) ? p.fecha : contaFecha(p); }
+function pintarModoTienda(){
+  var view=document.getElementById('view-form');
+  if(view) view.classList.toggle('venta-tienda', !!VENTA_TIENDA);
+  var b=document.getElementById('f-submit');
+  if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
+}
+function abrirVentaTienda(){
+  EDIT_ID=null;
+  showView('form'); resetForm();      // resetForm apaga el modo: se prende después
+  VENTA_TIENDA=true; pintarModoTienda();
+  var fc=document.getElementById('f-cliente'); if(fc){ fc.focus(); fc.scrollIntoView({block:'center'}); }
+}
+function cancelarVentaTienda(){
+  VENTA_TIENDA=false; resetForm(); pintarModoTienda(); showView('conta'); renderConta();
+}
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
 function pintarCampoOc(roho){
@@ -2502,6 +2570,7 @@ function resetForm(){
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
+  VENTA_TIENDA=false; pintarModoTienda();
   clearErr();
   renderCupoForm();
 }
@@ -2510,6 +2579,8 @@ function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
   EDIT_ID=id;
+  // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
+  VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
@@ -2958,8 +3029,8 @@ function renderAdmin(){
   document.getElementById('tbl-vendedor').innerHTML='<thead><tr><th>Vendedor</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(vRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
   var byD={};
-  list.forEach(function(p){ var k=p.fecha||'—'; if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
-  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+esc(fmtFecha(k))+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
+  list.forEach(function(p){ var k=esVentaTienda(p)?'TIENDA':(p.fecha||'—'); if(!byD[k])byD[k]={n:0,saldo:0}; byD[k].n++; if(!p.pagado)byD[k].saldo+=Number(p.saldo)||0; });
+  var dRows=Object.keys(byD).sort().reverse().map(function(k){ return '<tr><td>'+(k==='TIENDA'?'🏪 Tienda':esc(fmtFecha(k)))+'</td><td class="num">'+byD[k].n+'</td><td class="num">'+fmtBs(byD[k].saldo)+'</td></tr>'; }).join('');
   document.getElementById('tbl-dia').innerHTML='<thead><tr><th>Entrega</th><th class="num">Pedidos</th><th class="num">Saldo pend.</th></tr></thead><tbody>'+(dRows||'<tr><td colspan="3" class="empty" style="padding:18px">Sin datos</td></tr>')+'</tbody>';
 
   var byC={};
@@ -3001,7 +3072,7 @@ function renderAdmin(){
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td>'+esc(fmtFecha(p.fecha))+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td style="white-space:nowrap">'+estadoCell+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
@@ -4592,7 +4663,9 @@ function prodRankData(){
   var r=prodRango(), g={}, totEnt=0, totCarg=0, totFab=0, porFab={}, nPed=0, nEnt=0;
   STATE.forEach(function(p){
     if(esFilaSistema(p)) return;
-    var f=p.fecha||''; if(!(f>=r.desde && f<=r.hasta)) return;
+    // La venta de tienda no tiene fecha de entrega (no ocupa camión), pero el producto
+    // salió igual: cuenta por el día en que se cargó.
+    var f=fechaSalida(p); if(!(f>=r.desde && f<=r.hasta)) return;
     nPed++;
     var ent=!!p.entregado; if(ent) nEnt++;
     (p.productos||[]).forEach(function(x){
