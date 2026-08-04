@@ -767,6 +767,43 @@ como admin cuando le doy todos y quiero ver cada pedido no identifico de qué ve
 - La vista del **Chofer** no necesitó nada: sus tarjetas son inline, no tiene ficha flotante.
 - Tests: `test_misvend.js` (18 comprobaciones).
 
+## 4w. Retiro de efectivo (2026-08-04)
+
+Pedido: *"en contabilidad falta un botón de «retiro efectivo», donde cada vendedor registra su
+usuario (o sea vendedor), quién retira Eduardo Añez, quién entrega (el vendedor seleccionado),
+monto, nro de notas (deben anotar varios), elegir si ese retiro es de recibos facturado o no
+facturado, y eso verse reflejado en la planilla de todos o de cada vendedor en contabilidad y en
+la conciliación para determinar si se recogió todo el efectivo de cada vendedor"* + *"y deben
+poder subir la foto del recibo"*.
+
+- Botón **💵 Retiro de efectivo** en las DOS pestañas de Contabilidad → overlay `retiros-overlay`
+  con el formulario arriba y la lista de lo registrado abajo (filtro por mes y por vendedora).
+- ⚠️ **Un retiro = UNA FILA de la planilla**, con id `__ret_<uid>__` y **fecha vacía** (mismo truco
+  de §4o/§4t: el portero de cupos del Apps Script es `if (foundRow < 0 && p.fecha)`). Va una fila
+  por retiro **y no todas juntas en una** para que dos personas puedan anotar a la vez sin pisarse
+  — a diferencia de `__arqueo_cuadre__`, que sí es una sola.
+- Todo en columnas que la planilla YA tiene, **sin redeploy del Apps Script**:
+  `Vendedor`→quien entrega · `Chofer`→quien retira · `A cuenta`→monto · `Zona`→FACTURADO/NO
+  FACTURADO · `Nota de venta`→las notas separadas por coma · `Fotos entrega`→la foto del recibo ·
+  `Observaciones`→la nota libre · `Cliente`→el título "💵 RETIRO DE EFECTIVO — NO BORRAR".
+- **La fecha del retiro viaja en `ts`**, porque `contaFecha()` lee de ahí: así el retiro cae solo
+  en el período correcto sin ocupar la columna `Fecha`. `retTs()` la fija al **mediodía** para que
+  el huso horario no la corra un día. `direccion` lleva "Retiro del dd/mm/aaaa" solo para que la
+  hoja se entienda; **nadie la vuelve a leer**.
+- `esFilaRetiro()` entra en `esFilaSistema()` y `leerCierresDeLista()` las aparta en `RETIROS`:
+  nunca son pedidos (ni cupos, ni faltantes, ni ranking de productos, ni totales).
+- Varias notas por retiro: chips con `retAgregarNota()`. Acepta pegar varias de una
+  (`732, 731 742`), no repite y **exige al menos una** — es lo que respalda el retiro.
+- Foto del recibo por el canal `apiFoto` de siempre; se guarda en `fotos[]`.
+- **El control que pidió el usuario**: `cuadreEfectivoPorVendedor()` cruza el efectivo cobrado
+  (de `cuadrePagos()`, solo `metodo==='Efectivo'`) contra los retiros del mismo período/vendedor →
+  caja **💵 Efectivo cobrado vs. retirado** en el cuadre, con *le queda en la mano* = cobrado −
+  retirado. Respeta el filtro de vendedor y el período. Va también al **Copiar** del cuadre y a su
+  **Excel** (dos bloques: resumen por vendedora + detalle de retiros).
+- ⚠️ Al agregar bloques al Excel del cuadre hay que respetar que el bloque "CIERRE POR FORMA DE
+  PAGO" apoya sus montos en columnas fijas (ver §4u).
+- Tests: `test_retiros.js` (84 comprobaciones), incluida la lectura del .xlsx generado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

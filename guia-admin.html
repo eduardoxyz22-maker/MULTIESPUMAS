@@ -85,6 +85,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#contabilidad">🧾 Contabilidad</a>
     <a href="#tienda">🏪 Venta de tienda</a>
+    <a href="#retiros">💵 Retiro de efectivo</a>
     <a href="#cuadre">🧮 Cuadre</a>
     <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
@@ -375,6 +376,32 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li>En <b>🛏️ Productos más entregados</b>, contada por el día en que se cargó.</li>
     </ul>
     <div class="callout tip">Si después hay que corregirla, se edita con el ✏️ de siempre y vuelve a abrirse <b>en modo tienda</b> — no te va a pedir fecha ni dirección.</div>
+  </div>
+
+  <div class="card">
+    <h3 id="retiros">💵 Retiro de efectivo <span class="pill">nuevo</span></h3>
+    <p>Botón <b>“💵 Retiro de efectivo”</b> — está en las dos pestañas de Contabilidad (<b>Ventas</b> y <b>Cuadre</b>). Sirve para anotar cada vez que alguien pasa a <b>recoger el efectivo</b> que tiene una vendedora, y así saber si se recogió <b>todo</b>.</p>
+    <p>Al registrar un retiro se anota:</p>
+    <ul>
+      <li><b>Fecha</b> del retiro (viene en hoy, se puede cambiar).</li>
+      <li><b>Quién ENTREGA</b> — la vendedora de la que sale el efectivo. Obligatorio.</li>
+      <li><b>Quién RETIRA</b> — viene puesto <b>Eduardo Añez</b>, se puede cambiar si pasó otra persona.</li>
+      <li><b>Monto</b> retirado. Obligatorio.</li>
+      <li><b>N° de notas</b> que cubre ese retiro — se pueden anotar <b>varias</b>: escribís una y tocás <b>＋ Agregar</b> (o Enter), y quedan como etiquetas. También se pueden pegar todas juntas: <span class="kbd">732, 731 727</span>. Al menos una es obligatoria: es lo que respalda el retiro.</li>
+      <li><b>Facturado</b> o <b>No facturado</b>, según de qué recibos sea la plata.</li>
+      <li><b>Foto del recibo</b> — se adjunta igual que el comprobante de un pago y queda guardada en Drive.</li>
+      <li><b>Observación</b> libre (opcional).</li>
+    </ul>
+    <p>Abajo se ven <b>todos los retiros ya anotados</b>, filtrables por <b>mes</b> y por <b>vendedora</b>, con su total y el corte facturado / no facturado. Cada uno se puede <b>editar (✏️)</b> o <b>borrar (🗑)</b>.</p>
+    <p><b>Lo importante: el control queda en el Cuadre.</b> En <b>Cuadre y conciliación</b> aparece la tabla <b>💵 Efectivo cobrado vs. retirado</b>, vendedora por vendedora:</p>
+    <ul>
+      <li><b>Efectivo cobrado</b> — lo que esa vendedora cobró en efectivo en el período (el QR y la tarjeta no entran).</li>
+      <li><b>Retirado facturado</b> y <b>Retirado no facturado</b>, y el <b>total retirado</b>.</li>
+      <li><b>Le queda en la mano</b> = cobrado − retirado. En cero dice <b>✅ todo recogido</b>; si sobra, muestra en rojo cuánto falta recoger; y si se retiró de más, lo avisa.</li>
+    </ul>
+    <p>Respeta el <b>filtro de vendedor</b> del cuadre (una sola o Todas) y el período elegido. Va también en el <b>📋 Copiar</b> del cuadre y en su <b>⬇️ Excel</b>, con dos bloques: el resumen por vendedora y el detalle de cada retiro.</p>
+    <div class="callout tip">Cada retiro se guarda como <b>una fila propia</b> en la planilla, marcada <b>💵 RETIRO DE EFECTIVO — NO BORRAR</b>. <b>No es un pedido</b>: no ocupa cupo del camión, no aparece en la lista de carga ni en los envíos, y no se cuenta en los totales de pedidos.</div>
+
   </div>
 
   <div class="card">
