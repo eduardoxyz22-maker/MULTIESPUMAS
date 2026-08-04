@@ -751,6 +751,22 @@ TIENDA», directo para registrar la venta a contabilidad y su panel"*.
   .xlsx generados** y comprueba que la columna esté y que no se haya corrido nada. `test_conta.js`
   se actualizó: indexaba las celdas por posición.
 
+## 4v. Vendedor en la ficha de "Mis pedidos" (2026-08-04)
+
+Pedido: *"en mis pedidos en la ficha flotante al dar clic falta el identificador de vendedor, yo
+como admin cuando le doy todos y quiero ver cada pedido no identifico de qué vendedor es"*.
+
+- La TARJETA ya traía el badge `👤 vendedor` (solo con "Ver todos"), pero `showMisModal()` no
+  mostraba el dato en ningún lado. Se agregó la fila **Vendedor** entre *Fecha de entrega* y
+  *Cliente*, **la misma posición que en la ficha de Administración** (`showPedidoModal`).
+- Va **siempre**, no solo con "Ver todos": no molesta a la vendedora que mira lo suyo y evita
+  que la ficha quede muda si se abre por otro camino.
+- Usa `nombreCanonico()` (§4q), así que "Carola Chávez" y "  Carola  Chavez " salen con la misma
+  escritura. Sin vendedor muestra `⚠️ sin vendedor` en rojo en vez de omitir la fila —
+  `row()` esconde los valores vacíos y el pedido habría quedado sin identificar.
+- La vista del **Chofer** no necesitó nada: sus tarjetas son inline, no tiene ficha flotante.
+- Tests: `test_misvend.js` (18 comprobaciones).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

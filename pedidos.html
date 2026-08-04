@@ -4168,7 +4168,13 @@ function showMisModal(id){
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
   var choferVal = choferTexto(p);
+  /* El vendedor va SIEMPRE, aunque la vendedora esté mirando lo suyo: con "Ver todos"
+     puesto, administración abre una ficha cualquiera y necesita saber de quién es. */
+  var vendCell = p.vendedor
+    ? '<span class="badge b-gray">👤 '+esc(nombreCanonico(p.vendedor)||p.vendedor)+'</span>'
+    : '<span class="badge b-red">⚠️ sin vendedor</span>';
   var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p))+
+    row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
     row('Cobro', cobro)+row('Entrega', entrega)+row('Stock', estadoStockBadge(p))+row('Chofer', choferVal)+
