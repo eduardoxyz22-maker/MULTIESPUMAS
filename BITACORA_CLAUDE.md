@@ -831,6 +831,29 @@ hecho"*.
 - Tests: `test_dosfotos.js` (45 comprobaciones). `test_compform`, `test_comprobante`,
   `test_retiros` y `test_tienda` se actualizaron a la API nueva.
 
+## 4y. FIX — el cuadre no se movía con el período (2026-08-04)
+
+Reporte: *"los cuadros y dashboard no se actualizan según día, mes, o que uno selecciona fecha,
+se sigue mostrando general… si pongo Carola y pongo día sigue mostrando lo mismo por cobrar"*.
+
+- **Diagnóstico**: se probó panel por panel (`dbg_filtros.js`). Administración, Contabilidad
+  Ventas, el Reporte y Productos más entregados **sí** filtraban bien. El problema estaba
+  acotado al **Cuadre**: `cuadrePendientes()` y la parte de `cuadreAlertas()` que barre `STATE`
+  respetaban el **vendedor** pero **ignoraban el período**. Por eso "Por cobrar" y "Revisar
+  antes de cerrar" mostraban lo mismo con Día, Mes o Todo.
+- **Fix**: las dos cortan ahora por `enPeriodoCuadre(contaFecha(p), pe)`.
+  ⚠️ El corte va por la fecha de la **VENTA**, no la del pago: *un saldo justamente no tiene
+  pago*, y un "pago sin fecha" tampoco — cortarlos por la fecha del pago los dejaría fuera de
+  todos los períodos, que es justo lo contrario de lo que se quiere (son los que hay que
+  arreglar). Lee: "de lo vendido en el período, cuánto falta cobrar".
+- Para no perder el total global, `cuadrePendientes(true)` devuelve el historial completo y la
+  caja avisa *"Fuera de este período queda Bs X más por cobrar — elegí Todo para verlas"*.
+  Los títulos ahora dicen el período (`— 05/08/2026`, `de lo vendido en agosto de 2026`).
+- El texto de WhatsApp acompaña.
+- Tests: `test_periodo.js` (31 comprobaciones), incluidos **clics reales** en Día/Mes/Todo y
+  cambios de fecha por el calendario, no solo llamadas a las funciones. Se actualizaron
+  `test_cuadre` y `test_unifvend`, que asumían el comportamiento viejo.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

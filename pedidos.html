@@ -1645,12 +1645,22 @@ function renderCuadreSiActivo(){
   if(v && v.classList.contains('active') && contaTab()==='cuadre') renderCuadre();
 }
 /* Ventas con saldo, de la más vieja a la más nueva: lo que hay que salir a cobrar. */
-function cuadrePendientes(){
-  var hoy=todayStr(), vend=cuadreVendedor();
-  return STATE.filter(function(p){ return !contaExcluido(p.vendedor) && cuadreEsDe(p, vend) && !p.pagado && (Number(p.saldo)||0)>0.01; })
+/* Lo que falta cobrar. `sinPeriodo` devuelve TODO el historial (para el total de
+   referencia); sin él corta por el período elegido, igual que el resto del panel.
+   ⚠️ El corte va por la fecha de la VENTA (`contaFecha`), no por la del pago: un
+   saldo justamente NO tiene pago. Es "de lo vendido en el período, cuánto falta
+   cobrar". Sin esto el panel mostraba el mismo número con Día, Mes o Todo. */
+function cuadrePendientes(sinPeriodo){
+  var hoy=todayStr(), vend=cuadreVendedor(), pe=cuadrePeriodo();
+  return STATE.filter(function(p){
+      if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return false;
+      if(p.pagado || !((Number(p.saldo)||0)>0.01)) return false;
+      return sinPeriodo ? true : enPeriodoCuadre(contaFecha(p), pe);
+    })
     .map(function(p){ var f=contaFecha(p); return { p:p, desde:f, dias:Math.max(0,diasEntre(f,hoy)), saldo:r2(p.saldo) }; })
     .sort(function(a,b){ return b.dias-a.dias; });
 }
+function cuadreSuma(list){ var t=0; (list||[]).forEach(function(x){ t=r2(t+x.saldo); }); return t; }
 function diasEntre(a,b){
   if(!a||!b) return 0;
   var x=new Date(a+'T00:00:00'), y=new Date(b+'T00:00:00');
@@ -1667,9 +1677,12 @@ function cuadreAlertas(pagos){
      - sin monto → es una venta que la vendedora marcó PAGADA sin anotar cuánto
        (el monto de esos cobros nunca se guardó en la planilla). Listarlas como
        "pago sin fecha · Bs 0,00" no le decía nada a nadie. */
-  var vend=cuadreVendedor(), sinFecha=[], sinMonto=[];
+  var vend=cuadreVendedor(), pe=cuadrePeriodo(), sinFecha=[], sinMonto=[];
   STATE.forEach(function(p){
     if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    // Por la fecha de la VENTA: estos pagos justamente no tienen fecha propia, así
+    // que cortarlos por la del pago los dejaría fuera de todos los períodos.
+    if(!enPeriodoCuadre(contaFecha(p), pe)) return;
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0)) sinMonto.push(p);
       else if(!c.fecha) sinFecha.push({p:p,c:c});
@@ -1693,7 +1706,9 @@ function renderCuadre(){
   var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
   var efectivo=0, banco=0;
   formas.forEach(function(f){ if(f.efectivo) efectivo=r2(efectivo+f.monto); else banco=r2(banco+f.monto); });
-  var pend=cuadrePendientes(), pendTotal=0; pend.forEach(function(x){ pendTotal=r2(pendTotal+x.saldo); });
+  var pend=cuadrePendientes(), pendTotal=cuadreSuma(pend);
+  // El total de TODO el historial, para no perder de vista lo que se debe en general.
+  var pendAll=cuadrePendientes(true), pendAllTotal=cuadreSuma(pendAll);
 
   /* ---- diferencia del arqueo ----
      El arqueo solo tiene sentido con "Todos": la caja y el extracto son UNO SOLO,
@@ -1712,7 +1727,8 @@ function renderCuadre(){
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
            difTotal===0?'✅ Cuadra':fmtBs(Math.abs(difTotal)),
            anotadas+' de '+formas.length+' forma'+(formas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s'))
-      : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),pend.length+' venta'+(pend.length===1?'':'s')+' con saldo'));
+      : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
+           pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt())));
 
   // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
   var cie=document.getElementById('cua-cierre');
@@ -1754,7 +1770,14 @@ function renderCuadre(){
 
   // ---- por cobrar, de lo más viejo a lo más nuevo
   var pe=document.getElementById('cua-pendientes');
-  pe.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">⏳ Por cobrar — '+fmtBs(pendTotal)+'</div>'+
+  var otroPeriodo = r2(pendAllTotal-pendTotal);
+  pe.innerHTML='<div class="cua-box" style="margin-bottom:0">'+
+    '<div class="cua-t">⏳ Por cobrar — '+fmtBs(pendTotal)+
+      ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">de lo vendido en '+esc(cuadrePeriodoTxt())+'</span></div>'+
+    (otroPeriodo>0.01
+      ? ('<div style="font-size:.76rem;color:var(--muted);margin:-4px 0 8px">💡 Fuera de este período queda '+fmtBs(otroPeriodo)+
+         ' más por cobrar ('+(pendAll.length-pend.length)+' venta'+((pendAll.length-pend.length)===1?'':'s')+'). Elegí <b>Todo</b> para verlas.</div>')
+      : '')+
     (pend.length
       ? '<div class="tw" style="max-height:320px;overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Desde</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+
         pend.slice(0,60).map(function(x){
@@ -1770,7 +1793,8 @@ function renderCuadre(){
 
   // ---- alertas
   var al=cuadreAlertas(pagos), av=document.getElementById('cua-alertas');
-  av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar</div>'+
+  av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
+    ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
     (al.length ? al.map(function(a){
         return '<div class="cua-alerta"><span style="font-size:1.05rem">'+a.ico+'</span><div><div>'+a.txt+'</div>'+
           '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">'+esc(a.det.slice(0,6).join(' · '))+(a.det.length>6?(' … +'+(a.det.length-6)):'')+'</div></div></div>';
@@ -1823,8 +1847,8 @@ function cuadreTexto(){
              (Math.abs(o.falta)<0.01 ? '  ✅' : (o.falta>0 ? ('  ⚠️ le quedan '+fmtBs(o.falta)) : ('  ⚠️ se retiró '+fmtBs(Math.abs(o.falta))+' de más'))));
     });
   }
-  var pend=cuadrePendientes(), pt=0; pend.forEach(function(x){ pt=r2(pt+x.saldo); });
-  if(pend.length) L.push('', '⏳ Por cobrar: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
+  var pend=cuadrePendientes(), pt=cuadreSuma(pend);
+  if(pend.length) L.push('', '⏳ Por cobrar de lo vendido en el período: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
   var al=cuadreAlertas(pagos);
   if(al.length){ L.push('', '🔎 Revisar:'); al.forEach(function(a){ L.push('   '+a.ico+' '+a.txt.replace(/<[^>]+>/g,'')); }); }
   return L.join('\n');
