@@ -1436,7 +1436,7 @@ function renderConta(){
   }
   tbl.style.display=list.length?'table':'none';
   if(!list.length){ tbl.innerHTML=''; return; }
-  var head='<thead><tr><th>Ingresado</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Celular</th>'+
+  var head='<thead><tr><th>Ingresado</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Entrega</th><th>Celular</th>'+
            '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+list.map(function(p){
     var reg=regEnSistema(p);
@@ -1444,7 +1444,8 @@ function renderConta(){
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">OC '+esc(p.oc)+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
-      '<td><b>'+esc(p.cliente||'—')+'</b>'+(esVentaTienda(p)?('<br>'+badgeTienda(p)):'')+'</td>'+
+      '<td><b>'+esc(p.cliente||'—')+'</b></td>'+
+      '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
       '<td>'+esc(p.facturarA||'—')+'</td>'+
@@ -1763,11 +1764,12 @@ function renderCuadre(){
   var det=document.getElementById('cua-detalle');
   det.innerHTML='<div class="cua-box"><div class="cua-t">📄 Detalle de los pagos — '+pagos.length+'</div>'+
     (pagos.length
-      ? '<div class="tw tw-tall"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>N° nota del pago</th><th>Vendedor</th><th>Forma de pago</th><th style="text-align:right">Monto</th><th>Venta</th><th>Sistema</th></tr></thead><tbody>'+
+      ? '<div class="tw tw-tall"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Entrega</th><th>N° nota del pago</th><th>Vendedor</th><th>Forma de pago</th><th style="text-align:right">Monto</th><th>Venta</th><th>Sistema</th></tr></thead><tbody>'+
         pagos.map(function(c){
           return '<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
             '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.fecha))+'</td>'+
             '<td><b>'+esc(c.p.cliente||'—')+'</b></td>'+
+            '<td style="white-space:nowrap">'+tipoVentaHtml(c.p)+'</td>'+
             '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+
               (c.comp?' <span title="Ver el comprobante" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(c.comp)+'\',\'_blank\')">📎</span>':'')+'</td>'+
             '<td>'+esc(c.p.vendedor||'—')+'</td>'+
@@ -1805,9 +1807,9 @@ function exportCuadre(){
   var pagos=cuadrePagos();
   if(!pagos.length){ toast('No hay pagos para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
-  var rows=[['FECHA DEL PAGO','CLIENTE','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE'].map(function(t){return {v:t,s:H};})];
+  var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE'].map(function(t){return {v:t,s:H};})];
   pagos.forEach(function(c){
-    rows.push([c.fecha, c.p.cliente||'', c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
+    rows.push([c.fecha, c.p.cliente||'', tipoVenta(c.p), c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
                {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO',
                c.comp?fotoVer(c.comp):'']);
   });
@@ -1815,11 +1817,11 @@ function exportCuadre(){
   rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO',s:H}]);
   formas.forEach(function(f){
     var a=cuadreArqueo(f.forma);
-    rows.push([f.forma, '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
+    rows.push([f.forma, '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
   });
   var pe=cuadrePeriodo();
   var bytes=buildXlsx([{name:'Cuadre',
-    cols:[{w:14},{w:26},{w:16},{w:18},{w:12},{w:12},{w:14},{w:10},{w:16},{w:12},{w:11},{w:44}],
+    cols:[{w:14},{w:26},{w:19},{w:16},{w:18},{w:12},{w:12},{w:14},{w:10},{w:16},{w:12},{w:11},{w:44}],
     matrix:rows}]);
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+' ✓','ok');
@@ -1947,6 +1949,7 @@ function showContaModal(id){
       row('N° OC', esc(p.oc))+
       row('Vendedor', esc(p.vendedor))+
       row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+      row('Entrega', tipoVentaHtml(p))+
       row('Celular', esc(p.celular))+
       row('Productos', prods)+
       row('Facturar a', esc(p.facturarA)||'—')+
@@ -2003,7 +2006,7 @@ function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -2011,7 +2014,7 @@ function exportConta(){
     prods.forEach(function(x,i){
       rows.push([
         i===0?(tsFmt(p.ts)||fmtFecha(p.fecha)):'', i===0?(p.nota||''):'', i===0?(p.oc||''):'',
-        i===0?(p.vendedor||''):'', i===0?(p.cliente||''):'', i===0?(p.celular||''):'',
+        i===0?(p.vendedor||''):'', i===0?(p.cliente||''):'', i===0?tipoVenta(p):'', i===0?(p.celular||''):'',
         x.desc||'', x.medida||'', x.codigo||'', (x.cant===''?'':{v:Number(x.cant)||0,t:'n'}),
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
         i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
@@ -2021,7 +2024,7 @@ function exportConta(){
     });
   });
   var bytes=buildXlsx([{name:'Contabilidad',
-    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -2511,6 +2514,14 @@ function esVentaTienda(p){
 }
 /* El cartelito 🏪 con el que se distingue de un pedido con entrega. */
 function badgeTienda(p){ return esVentaTienda(p) ? '<span class="badge b-gray" title="Venta de tienda — salió del local, sin entrega">🏪 TIENDA</span>' : ''; }
+/* Cómo salió la venta: la cargó una vendedora como pedido (va el camión) o la registró
+   contabilidad con "🏪 Registrar venta de tienda" (se la llevó el cliente del local). */
+function tipoVenta(p){ return esVentaTienda(p) ? 'Salió de tienda' : 'Entrega a domicilio'; }
+function tipoVentaHtml(p){
+  return esVentaTienda(p)
+    ? '<span class="badge b-gray" title="Se la llevó el cliente del local">🏪 Salió de tienda</span>'
+    : '<span class="badge b-verif" title="Se carga en el camión y se lleva al cliente">🚚 Entrega a domicilio</span>';
+}
 /* La fecha con la que cuenta una venta: la de entrega, y si salió de tienda la de carga. */
 function fechaSalida(p){ return (p&&p.fecha) ? p.fecha : contaFecha(p); }
 function pintarModoTienda(){

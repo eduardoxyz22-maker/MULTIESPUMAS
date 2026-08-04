@@ -738,8 +738,18 @@ TIENDA», directo para registrar la venta a contabilidad y su panel"*.
 - Al guardar va **derecho a Contabilidad**, no al modal de WhatsApp: no hay camión al que avisarle.
 - `resetForm()` apaga el modo (por eso `abrirVentaTienda` lo prende DESPUÉS de llamarlo) y
   `editPedido()` lo prende con `esVentaTienda(rec)`: una venta de tienda se edita como tal.
-- Tests: `test_tienda.js` (55 comprobaciones), incluida la verificación de que un pedido normal
-  sigue ocupando su cupo y que el modo no se pega al pedido siguiente.
+- **Columna "Entrega" en Contabilidad** (pedido del usuario: *"la columna que indique entrega a
+  domicilio si se creó como pedido o salió de tienda si se registró desde panel contabilidad"*).
+  `tipoVenta(p)` / `tipoVentaHtml(p)` → **🚚 Entrega a domicilio** o **🏪 Salió de tienda**. Va en:
+  tabla de Ventas (después de Cliente), ficha del cliente, detalle del Cuadre y **los dos Excel**.
+  Reemplaza al badge suelto que estaba debajo del nombre. **Es del panel de Contabilidad, no del
+  de entregas** — en Administración la columna Entrega sigue mostrando la FECHA (y `🏪 TIENDA`
+  cuando no la hay).
+  ⚠️ Al meter la columna en `exportCuadre` hubo que **correr una posición** la fila de
+  "CIERRE POR FORMA DE PAGO", que apoya sus montos en columnas fijas.
+- Tests: `test_tienda.js` (63 comprobaciones) y `test_xlstienda.js` (20), que **abre los dos
+  .xlsx generados** y comprueba que la columna esté y que no se haya corrido nada. `test_conta.js`
+  se actualizó: indexaba las celdas por posición.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
