@@ -804,6 +804,33 @@ poder subir la foto del recibo"*.
   PAGO" apoya sus montos en columnas fijas (ver §4u).
 - Tests: `test_retiros.js` (84 comprobaciones), incluida la lectura del .xlsx generado.
 
+## 4x. Hasta 2 imágenes en todos los botones de subir (2026-08-04)
+
+Pedido: *"el botón subir imagen en todas las opciones debe permitir subir hasta 2 imágenes,
+igual cuando registran pago, ya que deben subir foto del comprobante de pago y foto del recibo
+hecho"*.
+
+- `COMP_MAX=2`. Helpers compartidos: `compsArr()` (limpia, deduplica y corta en 2),
+  `idsDeTexto()` y **`compTiraHtml()`** — la misma tirita de miniaturas (con ✕ por imagen y el
+  botón "Agregar otra imagen" que desaparece al llegar a 2) para los TRES lugares:
+  formulario del pedido, registrar pago en Contabilidad y retiro de efectivo.
+- ⚠️ **Cambio de formato del historial de pagos**: el `%` ahora puede venir repetido →
+  `"QR BISA 4000 @2026-08-03 #980 %ID_PAGO %ID_RECIBO"`. `parseCobros` devuelve `comps[]` y
+  **mantiene `comp` = la primera** para no romper lo que ya lo leía. `compDeTexto` saca TODOS
+  los `%` del final (antes sacaba uno solo y el sobrante ensuciaba el método/banco).
+  Lo viejo —una sola imagen o ninguna— se sigue leyendo igual.
+- `FORM_COMP` → `FORM_COMPS[]`, `CTA_PAGO.comp` → `CTA_PAGO.comps[]`, `RET_FORM.foto` →
+  `RET_FORM.fotos[]`. `quitarCompForm(i)`, `ctaSacarComp(id,i)`, `ctaQuitarComp(id,idx,k)` y
+  `retQuitarFoto(i)` sacan **una sola**; sin índice, todas.
+- ⚠️ **El tope va en los `on…Elegido`, no solo en el botón**: si no, una tercera imagen se subía
+  a Drive y recién después se descartaba. Lo cazó `test_dosfotos`.
+- **La obligatoriedad NO cambió**: sigue bastando UNA para guardar (QR/tarjeta). Subir las dos es
+  lo deseable, no un bloqueo — con 2 obligatorias se trababa a quien todavía no tiene el recibo.
+- Se ven las dos en la ficha del pago, en la celda 📎 de la tabla de Contabilidad, en el detalle
+  del cuadre y en los Excel (separadas por `|`).
+- Tests: `test_dosfotos.js` (45 comprobaciones). `test_compform`, `test_comprobante`,
+  `test_retiros` y `test_tienda` se actualizaron a la API nueva.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
