@@ -89,6 +89,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#combos">🚫 Combos</a>
     <a href="#envio">📤 Cierre / Mañana</a>
     <a href="#reporte">📊 Reporte</a>
+    <a href="#prods">🛏️ Productos más entregados</a>
     <a href="#excel">⬇️ Excel</a>
     <a href="#colores">🎨 Colores</a>
     <a href="#backup">💾 Backup</a>
@@ -216,6 +217,23 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li>Desglose <b>por vendedora</b> y <b>por chofer</b>.</li>
     </ul>
     <p>Se puede imprimir.</p>
+  </div>
+
+  <div class="card" id="prods">
+    <h3>🛏️ Productos más entregados <span class="pill">nuevo</span></h3>
+    <p>Botón <b>“🛏️ Productos más entregados”</b>. Contesta dos preguntas de una: <b>qué producto y qué medida sale más</b>, y <b>cuántas veces se lo tuvo que pedir a producir</b>.</p>
+    <p>Arriba elegís el período: <b>Día</b>, <b>Semana</b> (lunes a domingo) o <b>Mes</b>. Abre en <b>Mes</b>, en el mes en curso. Con Día o Semana aparece un calendario: en Semana alcanza con elegir cualquier día y toma la semana entera.</p>
+    <p>El ranking sale ordenado del más entregado al que menos, con estas columnas:</p>
+    <ul>
+      <li><b>🚚 Entregado</b> — unidades de pedidos marcados <b>Entregado ✓</b>. Es la columna que ordena la lista.</li>
+      <li><b>📦 Cargado</b> — todas las unidades pedidas, se hayan entregado o no.</li>
+      <li><b>🏭 A fábrica</b> — <b>cuántas veces ese producto se tuvo que pedir a producir</b>, con el desglose <b>MORENO</b> / <b>MULTI</b> según dónde se pidió.</li>
+    </ul>
+    <p>Arriba de todo, cuatro números del período: unidades entregadas, productos distintos, veces que se pidió a fábrica y <b>cuál fue el más entregado</b>.</p>
+    <p><b>Producto y medida van juntos.</b> “TITANIO ICE 140x190” y “TITANIO ICE 200x200” son dos renglones distintos, porque son dos cosas distintas para producción. En cambio la misma medida escrita diferente (“140X190” y “140x190”) se junta sola.</p>
+    <p><b>El período se corta por la fecha de ENTREGA del pedido.</b> Si un producto se pidió a fábrica para una entrega del mes que viene, cuenta en el mes que viene.</p>
+    <p>⚠️ Si nadie marcó <b>Entregado ✓</b> en el período, la columna 🚚 queda en cero y aparece un aviso amarillo: ahí mirá la columna <b>📦 Cargado</b>.</p>
+    <p>Se puede <b>copiar para WhatsApp</b> (manda los 15 primeros y avisa cuántos quedaron afuera) o <b>imprimir</b>.</p>
   </div>
 
   <div class="card" id="excel">

@@ -404,6 +404,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
   body.printing-faltantes #faltantes-overlay{ display:block !important; position:static !important; background:#fff !important; }
   body.printing-faltantes #faltantes-overlay .no-print{ display:none !important; }
   body.printing-faltantes #faltantes-body{ overflow:visible !important; padding:0 !important; }
+  body.printing-prods > *{ display:none !important; }
+  body.printing-prods #prods-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-prods #prods-overlay .no-print{ display:none !important; }
+  body.printing-prods #prods-body{ overflow:visible !important; padding:0 !important; }
   body.printing-parte > *{ display:none !important; }
   body.printing-parte #parte-overlay{ display:block !important; position:static !important; background:#fff !important; }
   body.printing-parte #parte-overlay .no-print{ display:none !important; }
@@ -686,6 +690,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#128C7E" onclick="abrirEnvio('hoy')">📤 Cierre del día</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#25D366;color:#0b3d2c" onclick="abrirEnvio('manana')">📤 Mañana</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirProds()">🛏️ Productos más entregados</button>
           <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
@@ -849,6 +854,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="parte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📋 Parte del día</b><span id="parte-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#0f766e;font-weight:700" onclick="copiarParte()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printParte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeParte()">✕ Cerrar</button></div><div id="parte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="envio-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
+<div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
@@ -4521,6 +4527,171 @@ function renderReporte(){
     '<div class="panel"><div class="panel-h">🚚 Por chofer</div><div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr><th>Chofer</th><th class="num">Entregas</th><th class="num">Entregadas</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(cr||'<tr><td colspan="5" class="empty" style="padding:16px">Sin datos</td></tr>')+'</tbody></table></div></div>';
 }
 function printReporte(){ document.body.classList.add('printing-reporte'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-reporte'); },600); }
+
+/* ============================================================================
+   🛏️ Productos más entregados — qué producto y qué medida sale más, y cuántas
+   veces se lo tuvo que pedir a producir. Por día, por semana o por mes.
+
+   El corte va por la FECHA DE ENTREGA del pedido (p.fecha): es la única fecha
+   que tiene un producto. La marca de fábrica (x.enProd) no lleva fecha propia,
+   viaja adentro del pedido, así que cae en el mismo período que la entrega.
+   ========================================================================== */
+function abrirProds(){
+  var d=document.getElementById('prod-dia'), m=document.getElementById('prod-mes');
+  if(d && !d.value) d.value=todayStr();
+  if(m && !m.value) m.value=todayStr().slice(0,7);
+  document.getElementById('prods-overlay').style.display='flex';
+  setProdModo(segVal('prod-mode')||'mes');
+}
+function closeProds(){ var ov=document.getElementById('prods-overlay'); if(ov) ov.style.display='none'; }
+function setProdModo(m){
+  segSet('prod-mode', m);
+  ['dia','semana','mes'].forEach(function(x){
+    var b=document.querySelector('#prod-mode button[data-val="'+x+'"]'); if(!b) return;
+    var on=(x===m); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#155e75':'#fff';
+  });
+  var d=document.getElementById('prod-dia'), mm=document.getElementById('prod-mes');
+  if(d)  d.style.display  = (m==='mes') ? 'none' : '';
+  if(mm) mm.style.display = (m==='mes') ? '' : 'none';
+  renderProds();
+}
+/* Lunes a domingo de la semana en la que cae esa fecha. */
+function semanaDe(iso){
+  var d=new Date(String(iso||'')+'T12:00:00');
+  if(isNaN(d.getTime())) d=new Date();
+  var dow=d.getDay(), atras=(dow===0)?6:(dow-1);          // el domingo cierra la semana
+  var lun=new Date(d.getTime()); lun.setDate(lun.getDate()-atras);
+  var dom=new Date(lun.getTime()); dom.setDate(dom.getDate()+6);
+  return {desde:isoLocal(lun), hasta:isoLocal(dom)};
+}
+function prodPeriodo(){
+  var modo=segVal('prod-mode')||'mes';
+  if(modo==='mes') return {modo:'mes', val:(((document.getElementById('prod-mes')||{}).value)||todayStr().slice(0,7))};
+  return {modo:modo, val:(((document.getElementById('prod-dia')||{}).value)||todayStr())};
+}
+function prodRango(pe){
+  pe=pe||prodPeriodo();
+  if(pe.modo==='dia') return {desde:pe.val, hasta:pe.val, lbl:fmtFecha(pe.val)};
+  if(pe.modo==='semana'){ var s=semanaDe(pe.val); s.lbl='semana del '+fmtFecha(s.desde)+' al '+fmtFecha(s.hasta); return s; }
+  var m=String(pe.val).match(/^(\d{4})-(\d{2})/), hoy=new Date();
+  var y=m?+m[1]:hoy.getFullYear(), mo=m?+m[2]:(hoy.getMonth()+1);
+  return {desde:pe.val+'-01', hasta:isoLocal(new Date(y, mo, 0)), lbl:mesNombre(pe.val)};
+}
+/* Dos renglones son el MISMO producto si coinciden descripción Y medida. El código
+   queda afuera de la clave: viene vacío en unos pedidos y cargado en otros, y
+   partiría en dos lo que en realidad es el mismo colchón. */
+function prodRankKey(x){
+  var n=function(t){
+    t=String(t==null?'':t).replace(/\s+/g,' ').trim().toUpperCase();
+    if(t.normalize) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    return t;
+  };
+  return n(x&&x.desc)+'|'+n(x&&x.medida);
+}
+function prodRankData(){
+  var r=prodRango(), g={}, totEnt=0, totCarg=0, totFab=0, porFab={}, nPed=0, nEnt=0;
+  STATE.forEach(function(p){
+    if(esFilaSistema(p)) return;
+    var f=p.fecha||''; if(!(f>=r.desde && f<=r.hasta)) return;
+    nPed++;
+    var ent=!!p.entregado; if(ent) nEnt++;
+    (p.productos||[]).forEach(function(x){
+      var k=prodRankKey(x); if(k==='|') return;              // renglón vacío
+      if(!g[k]) g[k]={ desc:String((x&&x.desc)||'').trim(), medida:String((x&&x.medida)||'').trim(),
+                       cod:'', ent:0, entPed:0, carg:0, ped:0, fab:0, fabU:0, porFab:{} };
+      var o=g[k], c=Number(x.cant)||0;
+      if(!o.cod && x.codigo) o.cod=String(x.codigo).trim();
+      o.carg+=c; o.ped++; totCarg+=c;
+      if(ent){ o.ent+=c; o.entPed++; totEnt+=c; }
+      if(enProduccion(x)){
+        o.fab++; o.fabU+=c; totFab++;
+        var l=prodDondeSePide(x);
+        o.porFab[l]=(o.porFab[l]||0)+1; porFab[l]=(porFab[l]||0)+1;
+      }
+    });
+  });
+  var lista=Object.keys(g).map(function(k){ return g[k]; }).sort(function(a,b){
+    return (b.ent-a.ent) || (b.carg-a.carg) || (b.fab-a.fab) || a.desc.localeCompare(b.desc);
+  });
+  return { rango:r, lista:lista, totEnt:totEnt, totCarg:totCarg, totFab:totFab,
+           porFab:porFab, nPed:nPed, nEnt:nEnt };
+}
+/* "MORENO 3 · MULTI 1" — dónde se pidió a fabricar. Sin marcar se dice, no se inventa. */
+function prodFabTxt(porFab){
+  var ks=Object.keys(porFab||{}); if(!ks.length) return '';
+  return ks.sort().map(function(k){ return faltFabCorto(k)+' '+porFab[k]; }).join(' · ');
+}
+function prodNombre(o){ return o.desc + (o.medida?(' '+o.medida):''); }
+function nVeces(n){ return n+(n===1?' vez':' veces'); }
+function renderProds(){
+  var d=prodRankData(), L=d.lista;
+  var conEnt=L.filter(function(o){ return o.ent>0; }).length;
+  var top=L.length?L[0]:null;
+  document.getElementById('prod-info').textContent =
+    d.rango.lbl+' · '+d.nPed+' pedido'+(d.nPed===1?'':'s')+' · '+L.length+' producto'+(L.length===1?'':'s');
+  var html =
+    '<div class="metrics" style="margin-bottom:16px">'+
+      mc('#155e75','Entregado', d.totEnt, d.totEnt===1?'unidad':'unidades')+
+      mc('var(--teal)','Productos distintos', L.length, conEnt+' con entregas')+
+      mc('#b45309','Pedido a fábrica', d.totFab, d.totFab ? (prodFabTxt(d.porFab)||'sin marcar dónde') : 'nada a producir')+
+      mc('var(--green)','El más entregado', top&&top.ent ? (top.ent+(top.ent===1?' unid.':' unid.')) : '—', top&&top.ent ? esc(prodNombre(top)) : 'todavía nada entregado')+
+    '</div>';
+  if(!L.length){
+    html+='<div style="text-align:center;color:#888;padding:44px">Sin pedidos en '+esc(d.rango.lbl)+'.'+
+      '<br><span style="font-size:.85rem">Se cuentan los pedidos por su FECHA DE ENTREGA.</span></div>';
+  }else{
+    if(!d.totEnt){
+      html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:.83rem;color:#7c4b00">'+
+        '⚠️ En '+esc(d.rango.lbl)+' hay '+d.nPed+' pedido'+(d.nPed===1?'':'s')+' cargado'+(d.nPed===1?'':'s')+' pero ninguno marcado <b>Entregado ✓</b>. '+
+        'Mientras no se marque la entrega, la columna 🚚 queda en cero — mirá la columna 📦 Cargado.</div>';
+    }
+    html+='<div class="panel"><div class="panel-h">🏆 Ranking de productos — '+esc(d.rango.lbl)+'</div>'+
+      '<div class="tw" style="border:none;box-shadow:none;border-radius:0"><table class="mini"><thead><tr>'+
+        '<th style="width:34px">#</th><th>Producto</th><th>Medida</th><th>Cód.</th>'+
+        '<th class="num">🚚 Entregado</th><th class="num">📦 Cargado</th><th class="num">🏭 A fábrica</th>'+
+      '</tr></thead><tbody>'+
+      L.map(function(o,i){
+        var fab=o.fab ? ('<b style="color:#b45309">'+o.fab+'</b> '+(o.fab===1?'vez':'veces')+
+                         (prodFabTxt(o.porFab)?('<div style="font-size:.72rem;color:#a67c00">'+esc(prodFabTxt(o.porFab))+'</div>'):'')) : '—';
+        return '<tr'+(o.ent?'':' style="opacity:.72"')+'>'+
+          '<td class="num" style="color:#888">'+(i+1)+'</td>'+
+          '<td><b>'+esc(o.desc||'(sin nombre)')+'</b></td>'+
+          '<td>'+esc(o.medida||'—')+'</td>'+
+          '<td style="color:#888;font-size:.8rem">'+esc(o.cod||'—')+'</td>'+
+          '<td class="num"><b style="color:var(--green);font-size:1rem">'+o.ent+'</b>'+
+            (o.entPed?('<div style="font-size:.72rem;color:#888">'+o.entPed+' pedido'+(o.entPed===1?'':'s')+'</div>'):'')+'</td>'+
+          '<td class="num">'+o.carg+'<div style="font-size:.72rem;color:#888">'+o.ped+' pedido'+(o.ped===1?'':'s')+'</div></td>'+
+          '<td class="num">'+fab+'</td>'+
+        '</tr>';
+      }).join('')+
+      '</tbody></table></div></div>'+
+      '<div style="font-size:.78rem;color:#888;margin-top:10px">'+
+        '🚚 <b>Entregado</b> = unidades de pedidos marcados «Entregado ✓». '+
+        '📦 <b>Cargado</b> = todas las unidades pedidas, se hayan entregado o no. '+
+        '🏭 <b>A fábrica</b> = cuántas veces ese producto se tuvo que pedir a producir (Moreno o Multiespumas). '+
+        'El período se corta por la fecha de ENTREGA del pedido.</div>';
+  }
+  document.getElementById('prods-body').innerHTML=html;
+}
+var PRODS_TOP_WA=15;   // el mensaje de WhatsApp se corta con listas largas
+function prodsText(){
+  var d=prodRankData(), L=d.lista;
+  if(!L.length) return '🛏️ *PRODUCTOS MÁS ENTREGADOS* — '+d.rango.lbl+'\nSin pedidos en el período.';
+  var T=['🛏️ *PRODUCTOS MÁS ENTREGADOS* — '+d.rango.lbl,
+         '🚚 Entregado: '+d.totEnt+' unid. ('+d.nEnt+' de '+d.nPed+' pedidos)   📦 Cargado: '+d.totCarg+' unid.',''];
+  L.slice(0,PRODS_TOP_WA).forEach(function(o,i){
+    T.push((i+1)+'. '+prodNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+
+      ' — 🚚 '+o.ent+' entregadas · 📦 '+o.carg+' cargadas'+
+      (o.fab?(' · 🏭 '+nVeces(o.fab)+' a fábrica'+(prodFabTxt(o.porFab)?(' ('+prodFabTxt(o.porFab)+')'):'')):''));
+  });
+  if(L.length>PRODS_TOP_WA) T.push('… y '+(L.length-PRODS_TOP_WA)+' producto'+(L.length-PRODS_TOP_WA===1?'':'s')+' más (ver en el panel).');
+  T.push('');
+  T.push('🏭 *Se tuvo que pedir a producir:* '+nVeces(d.totFab)+
+         (prodFabTxt(d.porFab)?(' — '+prodFabTxt(d.porFab)):''));
+  return T.join('\n');
+}
+function copiarProds(){ copyText(prodsText()); }
+function printProds(){ document.body.classList.add('printing-prods'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-prods'); },600); }
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }

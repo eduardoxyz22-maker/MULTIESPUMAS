@@ -674,6 +674,40 @@ que había detectado el cuadre ("53 ventas marcadas PAGADAS sin anotar el monto"
 - Los pedidos VIEJOS marcados pagados sin monto siguen igual: el aviso del cuadre los sigue
   listando con su nota de venta para completarlos a mano.
 
+## 4t. Productos más entregados (2026-08-04)
+
+Pedido: *"Necesitamos un botón en panel administración que muestre por día/ semana / mes la
+lista de productos y medida más entregado y cuantas veces se tuvo que pedir a producir en el
+mes"*.
+
+- Botón **🛏️ Productos más entregados** en la barra de Administración → overlay `prods-overlay`
+  (mismo patrón que Reporte / Faltantes). Abre en **Mes**, mes en curso.
+- Selector **Día / Semana / Mes**. La *semana* es **lunes a domingo** (`semanaDe()`): el domingo
+  cierra la semana, no abre una nueva. Rango en `prodRango()`, etiqueta en castellano con
+  `mesNombre()`.
+- **Producto = descripción + medida** (`prodRankKey()`, normaliza mayúsculas, espacios y tildes).
+  El **código queda afuera de la clave**: viene vacío en unos pedidos y cargado en otros, y
+  partiría en dos el mismo colchón. Se guarda el primer código no vacío que aparece.
+  “TITANIO ICE 140x190” y “TITANIO ICE 200x200” sí son dos renglones — son dos cosas distintas
+  para producción.
+- Tres columnas y qué significa cada una (está escrito también al pie del panel):
+  - **🚚 Entregado** — unidades de pedidos con `p.entregado===true`. **Ordena el ranking.**
+  - **📦 Cargado** — todas las unidades pedidas, entregadas o no.
+  - **🏭 A fábrica** — **cuántas veces** ese producto tuvo `enProduccion(x)`, con desglose
+    **MORENO / MULTI** (`prodDondeSePide` + `faltFabCorto`, reusados de Faltantes).
+- ⚠️ **El corte va por `p.fecha` (fecha de ENTREGA)**, para los dos conteos. La marca de fábrica
+  (`x.enProd`) **no tiene fecha propia** — viaja adentro del pedido —, así que cae en el mismo
+  período que la entrega. Es la única fecha disponible; está aclarado en la guía.
+- Si en el período **nadie marcó "Entregado ✓"**, la columna 🚚 queda en cero y sale un aviso
+  amarillo apuntando a 📦 Cargado, en vez de mostrar una tabla vacía que parece un error.
+- `esFilaSistema()` filtra las filas del sistema (`__dias_cerrados__`, `__arqueo_cuadre__`) para
+  que no cuenten como pedidos.
+- Copiar para WhatsApp: **top 15** y una línea diciendo cuántos quedaron afuera (`PRODS_TOP_WA`);
+  en pantalla salen todos. Imprimible (`printing-prods`).
+- Sin tocar el Apps Script ni la planilla: **todo se calcula de datos que ya se guardan**.
+- Detalle que cazó `test_prods`: el plural de "vez" es **"veces"**, no "vezes" → helper `nVeces()`.
+- Tests: `test_prods.js` (55 comprobaciones).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
