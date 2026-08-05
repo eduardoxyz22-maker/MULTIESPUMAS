@@ -1028,6 +1028,28 @@ no había forma de encontrarlas.
     el anticipo no se cuenta dos veces).
 - Tests: `test_alertaclic.js` (17) y `test_ctafichas.js` (28).
 
+## 4af. Efectivo retirado / por retirar en el cuadre, y "Todo" incluye los sin fecha (2026-08-05)
+
+Pedido: *"falta efectivo retirado, efectivo por retirar, y que funcione el filtro día mes todo"*.
+
+- **Dos tarjetas nuevas** en el cuadre (ahora son **6**, en grilla de **3 columnas** con
+  `.metrics.m3` — con 4 columnas quedaban 4+2 desbalanceadas):
+  - **💵 Efectivo retirado** = `retirosTotal(retirosDe(pe, vend))`, con cuántos retiros y
+    cuánto de eso es facturado.
+  - **💵 Efectivo por retirar** = `efectivo − retirado`, o sea lo que **todavía está en la
+    mano**. En cero dice *"✅ Nada · se recogió todo el efectivo"*; en negativo cambia de
+    título a **"Se retiró de más"** en rojo.
+- **Se verificó que el filtro Día/Mes/Todo ya andaba** (`dbg_filtro2.js`: día hoy 1.000,
+  día ayer 2.000, mes 3.000, todo 7.000). Lo que NO andaba era otra cosa, y apareció mirando:
+- ⚠️ **`enPeriodoCuadre('', pe)` devolvía `false` siempre** → un pago **sin fecha** era
+  invisible en las **tres** vistas, "Todo" incluido. El aviso lo nombraba y no aparecía en
+  ninguna tabla — el mismo agujero de §4ae. Ahora `if(!fecha) return pe.modo==='todo'`:
+  **"Todo" es todo**. En Día y Mes sigue afuera, que es lo correcto (no se sabe cuándo entró).
+- Tests: `test_cuaefec.js` (28), incluidos los tres modos, el filtro de vendedora, el caso
+  "se retiró de más" y que el pago sin fecha aparezca en Todo pero no en Mes.
+- ⚠️ **Para los tests**: `.mc-lbl` se ve en MAYÚSCULAS por CSS (`text-transform`), pero
+  `textContent` devuelve el texto original. Comparar siempre con `.toUpperCase()`.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

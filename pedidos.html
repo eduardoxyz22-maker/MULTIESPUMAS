@@ -166,6 +166,9 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    quedan casi vacías y cuesta leerlas de un vistazo */
 .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;max-width:1180px}
 @media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}}
+/* El cuadre tiene SEIS tarjetas: en tres columnas quedan 3+3 parejas, no 4+2 desbalanceado */
+.metrics.m3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.metrics.m3{grid-template-columns:repeat(2,1fr)}}
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -787,7 +790,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
           </div>
         </div>
-        <div class="metrics" id="cua-metrics"></div>
+        <div class="metrics m3" id="cua-metrics"></div>
         <div id="cua-cierre"></div>
         <div id="cua-retiros"></div>
         <div class="two-col">
@@ -1582,7 +1585,10 @@ function cuadrePeriodoTxt(){
   return pe.modo==='dia' ? fmtFecha(pe.val) : pe.modo==='mes' ? mesNombre(pe.val) : 'todo el historial';
 }
 function enPeriodoCuadre(fecha, pe){
-  if(!fecha) return false;                       // sin fecha no se puede cuadrar
+  /* Sin fecha no se puede cuadrar contra ningún día ni mes… pero en TODO sí tiene que
+     salir: si no, un pago sin fecha era invisible en las tres vistas y nadie lo encontraba
+     nunca (el aviso lo nombraba y no aparecía en ninguna tabla). "Todo" es todo. */
+  if(!fecha) return pe.modo==='todo';
   if(pe.modo==='dia') return fecha===pe.val;
   if(pe.modo==='mes') return fecha.slice(0,7)===pe.val;
   return true;
@@ -1770,10 +1776,27 @@ function renderCuadre(){
   var difTotal=0, anotadas=0;
   if(arqueoOn) formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
 
+  /* ---- efectivo retirado y lo que todavía está en la mano ----
+     El efectivo es el único que se puede perder de vista: entra a la mano de la vendedora
+     y de ahí lo tiene que recoger alguien. Estos dos números son el control de eso. */
+  var pe=cuadrePeriodo();
+  var rets=retirosDe(pe, vendSel), retirado=retirosTotal(rets);
+  var porRetirar=r2(efectivo-retirado);
+  var deQuien=vendSel?('de '+vendSel):'del equipo';
+
   box.innerHTML=
     mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s'))+
-    mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'para arquear la caja')+
+    mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo')+
     mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
+    mc('#7c3aed','Efectivo retirado',fmtBs(retirado),
+       rets.length ? (rets.length+' retiro'+(rets.length===1?'':'s')+' · 🧾 '+fmtBs(retirosPorTipo(rets,'Facturado'))+' facturado')
+                   : 'todavía no se retiró nada')+
+    mc(Math.abs(porRetirar)<0.01?'var(--green)':(porRetirar>0?'var(--amber)':'var(--red)'),
+       porRetirar<-0.01?'Se retiró de más':'Efectivo por retirar',
+       Math.abs(porRetirar)<0.01?'✅ Nada':fmtBs(Math.abs(porRetirar)),
+       Math.abs(porRetirar)<0.01 ? 'se recogió todo el efectivo'
+         : (porRetirar>0 ? ('sigue en la mano '+esc(deQuien)+' — hay que recogerlo')
+                         : 'se retiró más de lo que se cobró en efectivo'))+
     (anotadas
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
