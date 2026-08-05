@@ -795,6 +795,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <div id="cua-alertas"></div>
         </div>
         <div id="cua-detalle"></div>
+        <div id="cua-det-retiros"></div>
       </div>
 
       <!-- ---- VENTAS: la tabla de siempre ---- -->
@@ -1823,7 +1824,51 @@ function renderCuadre(){
         }).join('')+'</tbody></table></div>'
       : '<div class="empty" style="padding:16px 0">No hay pagos con fecha en '+esc(cuadrePeriodoTxt())+'.</div>')+
     '</div>';
+
+  // ---- y debajo, un renglón por RETIRO de efectivo: la plata que SALIÓ
+  renderCuadreDetRetiros();
 }
+/* El contador necesita ver los retiros uno por uno, no solo el total por vendedor:
+   es la contraparte del detalle de pagos (lo que entró) — acá está lo que salió.
+   Respeta los mismos filtros de arriba (período y vendedor). */
+function renderCuadreDetRetiros(){
+  var box=document.getElementById('cua-det-retiros'); if(!box) return;
+  var list=retirosDe(cuadrePeriodo(), cuadreVendedor()), tot=retirosTotal(list);
+  var fac=retirosPorTipo(list,'Facturado'), nofac=r2(tot-fac);
+  box.innerHTML='<div class="cua-box">'+
+    '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
+      '<div class="cua-t" style="margin:0">💵 Detalle de los retiros de efectivo — '+list.length+'</div>'+
+      '<button class="btn btn-sm" style="margin-left:auto;background:#155e75;color:#fff;width:auto" onclick="abrirRetiros()">💵 Registrar retiro</button>'+
+    '</div>'+
+    (list.length
+      ? '<div class="tw tw-tall" style="margin-top:10px"><table><thead><tr><th>Fecha</th><th>Entrega</th><th>Retira</th>'+
+        '<th>N° notas del recibo</th><th>Tipo</th><th style="text-align:right">Monto</th><th>Observación</th></tr></thead><tbody>'+
+        list.map(function(r){
+          return '<tr onclick="verRetiro('+JSON.stringify(r.id).replace(/"/g,'&quot;')+')" style="cursor:pointer" title="Abrir para ver o corregir">'+
+            '<td style="white-space:nowrap">'+esc(fmtFechaCorta(r.fecha))+'</td>'+
+            '<td><b>'+esc(r.entrega||'—')+'</b></td>'+
+            '<td>'+esc(r.retira||'—')+'</td>'+
+            '<td>'+(r.notas.length
+                     ? r.notas.map(function(n){ return '<span class="badge b-gray">🧾 '+esc(n)+'</span>'; }).join(' ')
+                     : '<span style="color:var(--amber)">sin notas</span>')+
+              compsArr(r.fotos).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del recibo" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+
+              (compsArr(r.fotos).length?'':' <span title="No se adjuntó la foto del recibo" style="color:var(--amber)">⚠️</span>')+'</td>'+
+            '<td style="white-space:nowrap">'+(r.tipo==='Facturado'
+                 ? '<span class="badge b-verif">🧾 Facturado</span>'
+                 : '<span class="badge b-gray">📄 No facturado</span>')+'</td>'+
+            '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b></td>'+
+            '<td>'+esc(r.obs||'')+'</td></tr>';
+        }).join('')+
+        '<tr style="border-top:2px solid var(--gray-md)"><td colspan="5"><b>TOTAL RETIRADO</b>'+
+          ' <span style="color:var(--muted);font-weight:400">🧾 facturado '+fmtBs(fac)+' · 📄 no facturado '+fmtBs(nofac)+'</span></td>'+
+          '<td style="text-align:right"><b>'+fmtBs(tot)+'</b></td><td></td></tr>'+
+        '</tbody></table></div>'+
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Es la plata que SALIÓ de la mano de la vendedora. Tocá un renglón para verlo o corregirlo.</div>'
+      : '<div class="empty" style="padding:16px 0">No se registró ningún retiro en '+esc(cuadrePeriodoTxt())+'.</div>')+
+    '</div>';
+}
+/* Desde el cuadre: abre la ventana de retiros con ese retiro listo para revisar. */
+function verRetiro(id){ abrirRetiros(); editarRetiro(id); }
 /* El cuadre listo para pegar en WhatsApp. */
 function cuadreTexto(){
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos), total=0;

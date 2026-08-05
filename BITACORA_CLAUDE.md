@@ -973,6 +973,26 @@ atributo al medio**: el navegador leía `onclick="ctaAdjuntar("` y el botón no 
     ventanas y compila el `onclick` de **cada botón visible** (320) con `new Function`.
     Se verificó que, con el bug puesto de vuelta, el barrido lo encuentra.
 
+## 4ad. Detalle de los retiros de efectivo en el cuadre (2026-08-05)
+
+Pedido: *"en el panel contabilidad es para un contador y falta en la tabla mostrar los retiros
+de efectivo registrados"*.
+
+- Nueva caja **`💵 Detalle de los retiros de efectivo — N`** (`renderCuadreDetRetiros()`,
+  contenedor `#cua-det-retiros`) **debajo del `📄 Detalle de los pagos`**. La idea es esa
+  simetría: arriba **lo que entró**, abajo **lo que salió**.
+- Un renglón por retiro: fecha · entrega (vendedora) · retira · N° de notas del recibo ·
+  facturado/no facturado · monto · observación. El **📎** abre la foto del recibo; si no hay
+  ninguna, sale **⚠️** — para el contador es justo lo que tiene que reclamar.
+- Cierra con **TOTAL RETIRADO**, con el corte facturado / no facturado al lado.
+- Respeta **los mismos filtros** que el resto del cuadre (período y vendedora), igual que §4y.
+- Tocar un renglón → `verRetiro(id)` = `abrirRetiros()` + `editarRetiro(id)`.
+- El **Excel del cuadre ya traía este bloque** desde §4w; lo que faltaba era verlo en pantalla.
+- ⚠️ **Para los tests**: `RETIROS` se **rearma desde la planilla** en cada relectura
+  (`mergePending`). No alcanza con asignar `RETIROS=[…]`: las filas tienen que venir también
+  en lo que devuelve el `apiList` mockeado, si no el primer refresco las borra.
+- Tests: `test_detret.js` (26 comprobaciones).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
