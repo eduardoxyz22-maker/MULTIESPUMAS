@@ -993,6 +993,41 @@ de efectivo registrados"*.
   en lo que devuelve el `apiList` mockeado, si no el primer refresco las borra.
 - Tests: `test_detret.js` (26 comprobaciones).
 
+## 4ae. Los avisos del cuadre se pueden tocar, y Ventas muestra los números en grande (2026-08-05)
+
+Reporte: *"ahora menciona 3 nombres pero en la tabla de abajo los busco y no me aparecen"*
+(el aviso "3 ventas marcadas PAGADA sin anotar el monto").
+
+**No era un bug del filtro**: esas ventas **no tienen ningún pago** (ni monto ni fecha), y el
+`📄 Detalle de los pagos` lista PAGOS — `cuadrePagos()` corta por `enPeriodoCuadre(c.fecha, pe)`
+y un pago sin fecha no entra en ningún período. Estaban en el limbo: el aviso las nombraba y
+no había forma de encontrarlas.
+
+- **`alertaDetHtml()`**: cada nombre del aviso es ahora un `<span>` que abre esa venta
+  (`showContaModal`). El `det` de `cuadreAlertas` pasó de `['texto']` a `[{txt,id}]`.
+  Tope de 8 nombres (`ALERTA_DET_MAX`) y "… +N" para el resto.
+- Los avisos **dicen por qué** no salen abajo: *"por eso no salen en el detalle de abajo"* /
+  *"no entran en ningún cuadre ni en el detalle de abajo"*.
+- **`ctaAnotarMonto(id, idx)`** en la ficha: el pago que dice *"monto no anotado"* trae un botón
+  **💵 Anotar el monto**. Pregunta cuánto entró, le pone la **fecha de la venta** (sin fecha
+  seguiría fuera de todo cuadre) y la venta vuelve a la normalidad.
+  - ⚠️ Necesitó **`aplicarCobros(p, arr, objetivoForzado)`**: el objetivo se calcula como
+    `saldo + totalCobrado`, que en estas ventas da **0**. Sin forzarlo, anotar Bs 5.750 dejaba
+    `saldo = -5750` y la venta pasaba a figurar con **"cobro de más"** — cambiar un problema
+    por otro. Con el objetivo forzado queda saldo 0, pagada y sin exceso.
+- ⚠️ **Corrección del usuario, importante para el futuro**: *"CUADRE Y CONCILIACIÓN NO ES PARA
+  QUE EL CONTADOR EDITE AHÍ MISMO, ES PARA QUE DETECTE FALTANTES … PARA INFORMAR AL VENDEDOR"*.
+  El cuadre **detecta**; la corrección se hace en **Contabilidad → Ventas**, que es donde las
+  vendedoras cargan sus pagos. Los avisos abren la venta para **verla y saber a quién
+  reclamarle**. (El usuario después aceptó que desde la ficha sí se pueda anotar y editar.)
+- **Tarjetas grandes en Contabilidad → Ventas** (`renderContaMetrics`, `#cta-metrics`), pedidas
+  para que la vendedora vea de un vistazo: **Vendido en el período · Ya ingresó (con el % de lo
+  vendido) · Falta cobrar (y cuántas ventas hay que salir a cobrar) · Por cargar al sistema**.
+  Se mueven con el filtro de vendedor y con el período. Debajo queda el resumen fino de siempre.
+  - Helpers: `contaFaltaCobrar(p)` y `contaCobrado(p) = ventaTotal - falta` (por diferencia, así
+    el anticipo no se cuenta dos veces).
+- Tests: `test_alertaclic.js` (17) y `test_ctafichas.js` (28).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

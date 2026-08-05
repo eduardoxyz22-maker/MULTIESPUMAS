@@ -838,6 +838,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#7c3aed" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
         </div>
       </div>
+      <div class="metrics" id="cta-metrics"></div>
       <div class="metodos-line" id="cta-resumen"></div>
       <div class="tw tw-tall"><table id="tbl-conta"></table></div>
       <div id="cta-empty" class="empty">No hay pedidos en este período.</div>
@@ -1420,6 +1421,38 @@ function setContaModo(m){
   document.getElementById('cta-wrap-mes').style.display=(m==='mes')?'block':'none';
   renderConta();
 }
+/* Lo cobrado de una venta, anticipo incluido. `ventaTotal` = lo cobrado + lo que falta,
+   así que se saca por diferencia y no hay riesgo de contar dos veces el anticipo. */
+function contaFaltaCobrar(p){ return (p&&p.pagado) ? 0 : Math.max(0, Number(p&&p.saldo)||0); }
+function contaCobrado(p){ return r2(ventaTotal(p) - contaFaltaCobrar(p)); }
+/* Las tarjetas grandes de Contabilidad → Ventas. Son PARA LA VENDEDORA: de un vistazo,
+   cuánto vendió, cuánto ya entró y —lo que más importa— cuánto le falta cobrar.
+   El cuadre detecta y avisa; acá es donde ella lo ve y lo corrige. */
+function renderContaMetrics(list, vSel){
+  var box=document.getElementById('cta-metrics'); if(!box) return;
+  var vendido=0, cobrado=0, falta=0, nDeben=0, nReg=0;
+  (list||[]).forEach(function(p){
+    vendido=r2(vendido+ventaTotal(p));
+    cobrado=r2(cobrado+contaCobrado(p));
+    var f=contaFaltaCobrar(p);
+    if(f>0.01){ falta=r2(falta+f); nDeben++; }
+    if(regEnSistema(p)) nReg++;
+  });
+  var n=(list||[]).length, porCargar=n-nReg, quien=vSel?('de '+vSel):'de todo el equipo';
+  box.innerHTML=
+    mc('var(--teal)','Vendido en el período', fmtBs(vendido),
+       n+' venta'+(n===1?'':'s')+' '+esc(quien))+
+    mc('var(--green)','Ya ingresó', fmtBs(cobrado),
+       vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
+    mc(falta>0.01?'var(--amber)':'var(--green)', 'Falta cobrar',
+       falta>0.01?fmtBs(falta):'✅ Nada',
+       falta>0.01 ? (nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas')
+                  : 'no queda saldo pendiente')+
+    mc(porCargar>0?'var(--amber)':'var(--green)','Por cargar al sistema',
+       porCargar>0?String(porCargar):'✅ Todo',
+       porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
+                   : ('las '+n+' están registradas'));
+}
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   var list=contaLista();
@@ -1432,6 +1465,7 @@ function renderConta(){
     contaPagos(p).forEach(function(c){ var k=cobroMetodoTxt(c); if(k) porMet[k]=(porMet[k]||0)+1; });
   });
   var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  renderContaMetrics(list, vSel);
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
@@ -1673,7 +1707,7 @@ function diasEntre(a,b){
 function cuadreAlertas(pagos){
   var A=[];
   var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
-  if(sinNota.length) A.push({ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return (c.p.cliente||'—')+' · '+fmtBs(c.monto); })});
+  if(sinNota.length) A.push({ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return {txt:(c.p.cliente||'—')+' · '+fmtBs(c.monto), id:c.p.id}; })});
   /* Dos problemas MUY distintos que antes salían mezclados como "pagos sin fecha":
      - sin fecha pero CON monto → es un pago de verdad, solo falta cuándo entró.
      - sin monto → es una venta que la vendedora marcó PAGADA sin anotar cuánto
@@ -1690,16 +1724,32 @@ function cuadreAlertas(pagos){
       else if(!c.fecha) sinFecha.push({p:p,c:c});
     });
   });
-  if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b>', det:sinFecha.map(function(x){ return (x.p.cliente||'—')+' · '+fmtBs(x.c.monto); })});
-  if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró', det:sinMonto.map(function(p){ return (p.cliente||'—')+(p.nota?(' · nota '+p.nota):''); })});
+  if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
+  if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   var sinSistema={};
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
-  if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return (p.cliente||'—')+(p.nota?(' · nota '+p.nota):''); })});
+  if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   var exceso=[];
   (pagos||[]).forEach(function(c){ if(excesoCobro(c.p)>0 && exceso.indexOf(c.p)<0) exceso.push(c.p); });
-  if(exceso.length) A.push({ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return (p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)); })});
+  if(exceso.length) A.push({ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return {txt:(p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)), id:p.id}; })});
   return A;
+}
+/* Los nombres de cada aviso se pueden TOCAR y abren esa venta.
+   ⚠️ Sin esto el contador leía "3 ventas marcadas PAGADA sin anotar el monto", las
+   buscaba en el detalle de abajo y no las encontraba nunca: ese detalle lista PAGOS,
+   y estas ventas justamente no tienen ninguno. Ahora se abren desde el propio aviso. */
+var ALERTA_DET_MAX=8;
+function alertaDetHtml(det){
+  det=det||[];
+  var html=det.slice(0,ALERTA_DET_MAX).map(function(d){
+    var t=esc(typeof d==='string' ? d : (d&&d.txt)||'');
+    if(!d || !d.id) return t;
+    return '<span onclick="showContaModal('+JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
+      ' style="cursor:pointer;border-bottom:1px dashed currentColor" title="Abrir esta venta para corregirla">'+t+'</span>';
+  }).join(' · ');
+  if(det.length>ALERTA_DET_MAX) html+=' … +'+(det.length-ALERTA_DET_MAX);
+  return html;
 }
 function renderCuadre(){
   var box=document.getElementById('cua-metrics'); if(!box) return;
@@ -1799,8 +1849,9 @@ function renderCuadre(){
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
     (al.length ? al.map(function(a){
         return '<div class="cua-alerta"><span style="font-size:1.05rem">'+a.ico+'</span><div><div>'+a.txt+'</div>'+
-          '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">'+esc(a.det.slice(0,6).join(' · '))+(a.det.length>6?(' … +'+(a.det.length-6)):'')+'</div></div></div>';
-      }).join('')
+          '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">'+alertaDetHtml(a.det)+'</div></div></div>';
+      }).join('')+
+      '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Tocá un <b>nombre</b> para abrir esa venta y corregirla ahí mismo.</div>'
     : '<div class="empty" style="padding:16px 0">✅ Todo en orden: nada pendiente de revisar.</div>')+
     '</div>';
 
@@ -2380,12 +2431,19 @@ function contaPagosHtml(p){
       : (esQR && idx>=0
           ? ('<div style="margin-top:4px"><button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px" onclick="ctaAdjuntar(\''+pid+'\','+idx+')">📎 Adjuntar comprobante</button></div>')
           : '');
+    /* La venta que se marcó PAGADA sin anotar cuánto entró: acá se arregla.
+       Es la que aparece en "Revisar antes de cerrar" y no sale en el detalle de pagos. */
+    var faltaMonto = (idx>=0 && !((Number(c.monto)||0)>0))
+      ? ('<div style="margin-top:4px"><button class="btn btn-sm" style="background:var(--amber-lt);border:1px solid var(--amber-border);color:var(--amber);font-size:.76rem;padding:4px 10px;width:auto;font-weight:700" onclick="ctaAnotarMonto(\''+pid+'\','+idx+')">💵 Anotar el monto</button></div>')
+      : '';
     return '<div style="padding:3px 0'+(i?';border-top:1px solid var(--gray-lt)':'')+'">'+
       '<span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · '+
-      '<b>'+esc(contaMetodoTxt(c))+'</b> · '+esc(contaMontoTxt(c))+
+      '<b>'+esc(contaMetodoTxt(c))+'</b> · '+
+      ((Number(c.monto)||0)>0 ? esc(contaMontoTxt(c)) : '<b style="color:var(--amber)">'+esc(contaMontoTxt(c))+'</b>')+
       (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
         :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
       (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
+      faltaMonto+
       comp+
     '</div>';
   }).join('');
@@ -2463,6 +2521,29 @@ function ctaQuitarComp(id, idx, k){
 /* El índice del pago dentro de cobrosDe() — contaPagos() antepone el anticipo, que no
    se puede reescribir (no está en la lista de cobros). */
 function ctaIdxCobro(p, iEnContaPagos){ return anticipoDe(p) ? (iEnContaPagos-1) : iEnContaPagos; }
+/* Anotarle el monto a una venta que se marcó PAGADA sin decir cuánto entró.
+   Sin esto quedaban en el limbo: el aviso "Revisar antes de cerrar" las nombraba pero no
+   salían en el detalle de pagos (un pago sin monto no es un pago) y no había dónde
+   corregirlas sin volver a editar el pedido entero. */
+function ctaAnotarMonto(id, idx){
+  var p=findById(id); if(!p) return;
+  var arr=cobrosDe(p).slice();
+  if(idx<0 || idx>=arr.length) return;
+  var c=arr[idx];
+  var txt=prompt('💵 ¿Cuánto se cobró?\n\n'+(p.cliente||'—')+(p.nota?('  ·  nota '+p.nota):'')+'\n\n'+
+    'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '');
+  if(txt==null) return;
+  var monto=parseMonto(txt);
+  if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
+  var otros=0; arr.forEach(function(x,i){ if(i!==idx) otros=r2(otros+(Number(x.monto)||0)); });
+  c.monto=monto;
+  // Sin fecha propia no entraría en ningún cuadre: se le pone la de la venta.
+  var puso=!c.fecha;
+  if(puso) c.fecha=contaFecha(p)||todayStr();
+  aplicarCobros(p, arr, r2(otros+monto));
+  showContaModal(id); renderCuadreSiActivo(); renderContaSiActiva();
+  toast('Monto anotado: '+fmtBs(monto)+(puso?(' · con la fecha de la venta ('+fmtFechaCorta(c.fecha)+')'):'')+' ✓','ok');
+}
 function showContaModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='conta';
@@ -5694,8 +5775,12 @@ function cobrosResumen(p){
 }
 /* Reescribe los cobros del pedido y recalcula saldo/pagado. OJO: el objetivo se lee
    ANTES de tocar nada, porque depende del saldo actual. */
-function aplicarCobros(p, arr){
-  var objetivo=objetivoCobro(p), total=0;
+/* `objetivoForzado` = cuánto TENÍA que cobrarse. Se usa al anotar el monto de una venta
+   que la vendedora marcó PAGADA sin decir cuánto: ahí el total de la venta ES lo que se
+   acaba de anotar. Sin esto el objetivo seguía siendo 0 y el saldo quedaba negativo
+   ("cobro de más"), que es exactamente el problema que se estaba arreglando. */
+function aplicarCobros(p, arr, objetivoForzado){
+  var objetivo=(objetivoForzado==null)?objetivoCobro(p):r2(objetivoForzado), total=0;
   var cobros=(arr||[]).filter(function(c){ return !c.anticipo; });
   cobros.forEach(function(c){ total+=Number(c.monto)||0; });
   total=r2(total);
