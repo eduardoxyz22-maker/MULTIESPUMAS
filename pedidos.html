@@ -1166,6 +1166,7 @@ function showView(v){
   /* El formulario de carga se queda angosto (es para celular); todo lo demás
      son tablas y listas: se estiran a lo ancho de la pantalla */
   document.body.classList.toggle('ancha', v!=='form');
+  if(v==='form') refrescarSiHaceRato();   // por si administración cerró un día recién
   if(v==='conta') refreshConta();
   if(v==='admin' && UNLOCKED) loadFromServer(false);
   if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=getVendedorMem(); } refreshMis(); }
@@ -2877,6 +2878,34 @@ function submitPedido(){
   };
 
   setVendedorMem(vendedor); // recordar quién soy en esta compu
+
+  /* ⚠️ ÚLTIMA MIRADA A LA PLANILLA ANTES DE GUARDAR
+     El cierre de un día vive en la planilla y NO hay aviso automático: una compu con
+     la página abierta desde antes del cierre no se entera y guardaba igual. Por eso,
+     para un pedido NUEVO con entrega, se vuelve a bajar la planilla justo acá y se
+     revisa de nuevo. Si la red falla, NO se traba: se guarda igual (mejor un pedido
+     de más que una vendedora que no puede trabajar). */
+  /* Se mira SIEMPRE, sin atajos por "recién miré": el día se puede haber cerrado hace
+     10 segundos y esa es justo la carrera que hay que ganar. Lo que sí tiene es un
+     TOPE de 4 segundos: si la planilla no contesta, se guarda igual — una vendedora
+     esperando a que cargue una hoja lenta es peor que un pedido de más. */
+  if(CONNECTED && !isEdit && !_tienda && !diaCerrado(rec.fecha)){
+    setSubmitting(true);
+    conTope(refrescarEstado(), 4000).then(function(){
+      setSubmitting(false);
+      if(diaCerrado(rec.fecha)){
+        toast('🔒 El '+fmtFecha(rec.fecha)+' se acaba de CERRAR — administración armó ese camión. Elegí otra fecha de entrega.','err');
+        var fx=document.getElementById('f-fecha'); if(fx){ fx.classList.add('err'); fx.focus(); fx.scrollIntoView({block:'center'}); }
+        renderCupoForm();
+        return;
+      }
+      guardarYa();
+    });
+    return;
+  }
+  guardarYa();
+
+  function guardarYa(){
   // Optimista: actualizamos la vista ya
   upsert(rec); saveMirror(); updateStats();
   if(UNLOCKED) renderAdmin();
@@ -2885,6 +2914,17 @@ function submitPedido(){
     setSubmitting(true);
     apiSave(rec).then(function(res){
       setSubmitting(false);
+      /* El servidor dice que ese día está CERRADO. Solo llega si la planilla ya tiene
+         el Apps Script nuevo; con el viejo el freno queda del lado del panel. */
+      if(res && res.error==='dia_cerrado'){
+        STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
+        DIAS_CERRADOS=DIAS_CERRADOS.concat([rec.fecha]).filter(function(f,i,a){ return f && a.indexOf(f)===i; });
+        saveCierresMirror();
+        toast('🔒 El '+fmtFecha(rec.fecha)+' está CERRADO — administración ya armó ese camión. Elegí otra fecha de entrega.','err');
+        renderCupoForm();
+        var fz=document.getElementById('f-fecha'); if(fz){ fz.classList.add('err'); fz.focus(); fz.scrollIntoView({block:'center'}); }
+        return;
+      }
       if(res && res.error==='cupos_llenos'){
         // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
@@ -2907,6 +2947,7 @@ function submitPedido(){
   }else{
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
     after(isEdit);
+  }
   }
   function after(wasEdit){
     EDIT_ID=null; resetForm(); refreshDatalists();
@@ -3281,9 +3322,42 @@ function renderCupoForm(){
     el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
   }
 }
+/* Vuelve a bajar la planilla: así se entera de los DÍAS CERRADOS y de los cupos que
+   cargó otra computadora. Devuelve una promesa que NUNCA rechaza — si falla la red se
+   resuelve en false y la carga sigue igual, no se traba a la vendedora.
+   ⚠️ Es la única forma de que un celular con la página abierta desde ayer se entere
+   de que administración cerró un día: el cierre viaja en la planilla, no hay push. */
+var ULTIMO_REFRESCO=0;
+function refrescarEstado(){
+  if(!CONNECTED) return Promise.resolve(false);
+  return apiList().then(function(res){
+    if(res&&res.ok&&Array.isArray(res.pedidos)){
+      STATE=mergePending(res.pedidos); saveMirror(); updateStats();
+      ULTIMO_REFRESCO=Date.now();
+      return true;
+    }
+    return false;
+  }).catch(function(){ return false; });
+}
+/* Al entrar al formulario, si hace más de un minuto que no se mira la planilla. */
+var REFRESCO_MS=60000;
+/* La promesa, pero con fecha de vencimiento: si tarda más de `ms` sigue de largo. */
+function conTope(prom, ms){
+  return new Promise(function(res){
+    var listo=false;
+    var fin=function(){ if(!listo){ listo=true; res(false); } };
+    setTimeout(fin, ms);
+    prom.then(function(v){ if(!listo){ listo=true; res(v); } }, fin);
+  });
+}
+function refrescarSiHaceRato(){
+  if(!CONNECTED) return;
+  if(Date.now()-ULTIMO_REFRESCO < REFRESCO_MS) return;
+  refrescarEstado().then(function(){ renderCupoForm(); pintarBotonCierre(); });
+}
 function refreshCupos(){
   if(!CONNECTED){ renderCupoForm(); return; }
-  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); updateStats(); } renderCupoForm(); }).catch(function(){ renderCupoForm(); });
+  refrescarEstado().then(function(){ renderCupoForm(); });
 }
 function updateFooter(){
   var pend=getPending().length;

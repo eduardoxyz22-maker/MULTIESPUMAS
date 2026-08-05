@@ -390,15 +390,36 @@ function readAll() {
   return out;
 }
 
+/* ¿Administración cerró esa fecha de entrega?
+   Los días cerrados viajan en la fila con id '__dias_cerrados__', en la columna
+   Observaciones, separados por coma: "2026-08-06,2026-08-07". Esa fila va con la
+   FECHA VACÍA a propósito, así que no cuenta como pedido ni ocupa cupo. */
+function diaCerradoGs(sh, last, ids, fecha) {
+  if (!fecha || last < 2 || !ids) return false;
+  var col = HEADERS.indexOf('Observaciones') + 1;
+  for (var i = 0; i < ids.length; i++) {
+    if (String(ids[i][0]) !== '__dias_cerrados__') continue;
+    var txt = String(sh.getRange(i + 2, col).getValue() || '');
+    return txt.split(/[^0-9-]+/).indexOf(String(fecha)) >= 0;
+  }
+  return false;
+}
 function doSave(p) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   var sh = getSheet();
   var last = sh.getLastRow();
   // ¿Ya existe (update) o es nuevo?
-  var foundRow = -1;
+  var foundRow = -1, ids = null;
   if (last >= 2) {
-    var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+    ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { foundRow = i + 2; break; } }
+  }
+  // PORTERO DE DÍAS CERRADOS: administración cierra una fecha cuando ese camión ya está
+  // armado. El aviso vive en la fila __dias_cerrados__ de esta misma hoja. Se revisa ACÁ
+  // y no solo en el panel porque una compu con la página abierta desde antes del cierre
+  // no se entera y guardaba igual: es el único lugar donde el "no" es definitivo.
+  if (foundRow < 0 && p.fecha && diaCerradoGs(sh, last, ids, p.fecha)) {
+    return jsonOut({ ok:false, error:'dia_cerrado', fecha:p.fecha });
   }
   // PORTERO DE CUPOS POR TURNO: si es NUEVO, contar los del día por turno y rechazar si el turno elegido está lleno (12 AM / 13 PM).
   // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca se pasa del límite.

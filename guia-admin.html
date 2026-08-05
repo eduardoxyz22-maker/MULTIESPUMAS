@@ -140,6 +140,8 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     </ul>
 
     <h3 id="cerrardia">🔒 Cerrar día de entrega <span class="pill">nuevo</span></h3>
+    <div class="callout warn"><b>El cierre le llega a todas las computadoras y celulares</b>, aunque tengan la página abierta desde antes. Como el aviso viaja por la planilla y no hay notificación automática, el panel <b>vuelve a mirar la planilla justo antes de guardar cada pedido</b>: si el día se cerró mientras la vendedora llenaba el formulario, no la deja y le dice por qué. Si la planilla no contesta en 4 segundos, el pedido se guarda igual — es preferible a dejarla sin poder trabajar.<br>
+      <b>Para el candado definitivo</b> hay que <b>actualizar el Apps Script</b> (pegar de nuevo <span class="kbd">google-apps-script.gs</span> e implementar una versión nueva): con eso la planilla misma rechaza los pedidos de un día cerrado, sin depender de que el celular esté al día. Sin actualizarlo el panel igual los frena — solo que el freno queda del lado del navegador.</div>
     <p>Botón <b>“🔒 Cerrar día”</b> en la barra de Administración. Sirve para cuando <b>el camión de un día ya está armado</b> y no querés que entren más pedidos para esa fecha.</p>
     <ul>
       <li>Elegís el día (atajos <b>Hoy</b> y <b>Mañana</b>), te dice <b>cuántos pedidos tiene</b> y lo cerrás.</li>

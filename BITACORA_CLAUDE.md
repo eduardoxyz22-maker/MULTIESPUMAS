@@ -854,6 +854,35 @@ se sigue mostrando general… si pongo Carola y pongo día sigue mostrando lo mi
   cambios de fecha por el calendario, no solo llamadas a las funciones. Se actualizaron
   `test_cuadre` y `test_unifvend`, que asumían el comportamiento viejo.
 
+## 4z. FIX — el día cerrado no frenaba a las otras computadoras (2026-08-04)
+
+Reporte: *"si el día está cerrado y lo cerramos y en nuestra compu o celu aparece cerrado que
+no deja meter pedidos, ¿por qué a otros vendedores desde otra computadora sí?"*.
+
+- **Causa**: los días cerrados solo se bajaban de la planilla **al cargar la página**
+  (`refreshCupos()` en el arranque). Un celular con la pestaña abierta desde antes del cierre
+  **nunca se enteraba**. Y el freno era **solo del navegador**: `doSave` del Apps Script
+  únicamente controlaba cupos, así que ese cliente desactualizado guardaba y el servidor aceptaba.
+- **Fix 1 — se vuelve a mirar la planilla justo ANTES de guardar** (`refrescarEstado()` en
+  `submitPedido`, solo para pedidos NUEVOS con entrega). Es la carrera que hay que ganar.
+  ⚠️ **Sin atajos por "recién miré"**: se probó saltearlo si hacía <1 min del último refresco y
+  eso reabría el mismo agujero (el día se cierra 10 s antes de guardar). Se mira siempre.
+  ⚠️ Con **tope de 4 s** (`conTope()`): si la planilla no contesta, **se guarda igual**. Trabar
+  a una vendedora por una hoja lenta es peor que un pedido de más.
+- **Fix 2 — refresco al entrar al formulario** (`refrescarSiHaceRato`, throttle de 1 min): el
+  cartel rojo aparece sin tener que intentar guardar.
+- **Fix 3 — candado en el Apps Script** (`diaCerradoGs` + `error:'dia_cerrado'` en `doSave`).
+  Es el único definitivo, pero **exige que el usuario reimplemente el Apps Script**. El panel ya
+  entiende la respuesta (revierte el pedido, avisa y aprende el cierre). **Sin actualizarlo no se
+  rompe nada**: sigue vigente el freno del navegador.
+- ⚠️ Efecto lateral en los tests: el guardado ahora hace una llamada más. Las suites que ponían
+  `CONNECTED=true` y mockeaban `apiSave` pero **no** `apiList` salían a la red de verdad y
+  flaqueaban. Se les agregó el mock a `test_roho`, `test_montocobrado` y `test_occorr`.
+  **No** al resto: en `test_full` el mock le cambiaba los datos del Excel y rompía la prueba de
+  colores. Regla: mockear `apiList` solo donde la suite guarda pedidos.
+- Tests: `test_cierre2.js` (19 comprobaciones) — simula las dos computadoras, el Apps Script
+  viejo y el nuevo, y que sin internet no se trabe.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
