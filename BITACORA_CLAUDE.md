@@ -907,6 +907,45 @@ El resto es preferencia local a propósito (nombre recordado, chofer, caché de 
   buscó nada más fino.
 - Tests: `test_cargachk.js` (21 comprobaciones), incluida la simulación de la segunda computadora.
 
+## 4ab. La imagen del pago es obligatoria SIEMPRE, y entran hasta 4 (2026-08-05)
+
+Pedido: *"en contabilidad y al cargar pedido en cualquier método de pago o registro de pago o
+efectivo debe exigirles subir foto ya sea del comprobante o del QR o voucher de tarjeta. Así que
+indiferente del método de pago permite que suban hasta 4 fotos"*.
+
+- **`metodoConComprobante(m)` → `!!String(m||'').trim()`**: antes era `m==='QR'||m==='Tarjeta'`.
+  Ahora **Efectivo también pide imagen**; lo único que no pide nada es *todavía no eligió método*
+  (`''`), porque el bloque ni siquiera está en pantalla.
+- **`nombreComprobante(m)`** para hablarle a cada uno en su idioma: QR → *"la captura del pago"*,
+  Tarjeta → *"la foto del voucher"*, **Efectivo → *"la foto del recibo"***. Se usa en el rótulo,
+  en el aviso rojo y en el gato 🐱 (`memeComprobante`, que ahora dice "el pago es en EFECTIVO y no
+  adjuntaste la foto del RECIBO").
+- ⚠️ **Contabilidad NO bloqueaba** — el gate del formulario existía desde §4r, pero
+  `ctaRegistrarPago` registraba sin imagen. Se agregó el corte **antes** del chequeo de saldo
+  (si no, un pago que además tenía otro problema mostraba el mensaje equivocado), y hace scroll
+  al fondo del modal para que se vea el botón de adjuntar.
+- **`COMP_MAX` 2 → 4** (§4x). Nada más cambió: `compsArr()`, `compTiraHtml()` y el tope dentro de
+  los `on…Elegido` ya trabajaban con la constante, así que los TRES lugares (formulario,
+  Contabilidad, retiro de efectivo) pasaron a 4 solos.
+- El formato del historial ya soportaba varios `%` desde §4x → `"Efectivo 500 @… #1 %A %B %C %D"`.
+  **No hubo cambio de formato**: lo viejo se sigue leyendo igual.
+- ⚠️⚠️ **`faltaComprobanteForm()` — la trampa que casi rompe todo**: **casi todas las ventas
+  históricas fueron en efectivo y ninguna tiene imagen**. Con la regla a secas, abrir cualquiera
+  de esas para corregirle la dirección quedaba trabado para siempre. Regla final:
+  al pedido **NUEVO** siempre se le pide; al que se **EDITA**, solo si el pago se está cargando o
+  cambiando ahora (si ya venía con pago y sin imagen, pasa; si tenía imagen y se la quitan, no).
+- El **retiro de efectivo** sigue con la foto **opcional** (allí el pedido fue *"deben poder
+  subir"*, no *"deben"*); lo que subió es el tope a 4. El **cobro que anota el chofer en la calle**
+  tampoco pide imagen: no se lo traba en pleno reparto.
+- Tests: `test_fotoefec.js` (38 comprobaciones, incluidas las 4 del pedido viejo que se sigue
+  editando). Se actualizaron `test_dosfotos`, `test_comprobante` (afirmaba *"con Efectivo NO pide
+  comprobante"*, justo lo que el usuario quería cambiar), `test_compform`, `test_conta2`,
+  `test_notapago`, `test_montocobrado`, `test_banco` y `test_tienda`.
+- ⚠️ **Nota de laboratorio**: varias suites se volvieron inestables desde §4z porque el repaso de
+  la planilla previo a guardar se va a la red bloqueada del sandbox y tarda segundos. Se les
+  agregó `apiList` mockeado (`test_compform`, `test_tienda`). Si una suite falla en el guardado
+  "sin razón", es lo primero que hay que mirar.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

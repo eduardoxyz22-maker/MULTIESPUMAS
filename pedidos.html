@@ -2438,9 +2438,9 @@ function showContaModal(id){
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
          (metodoConComprobante(CTA_PAGO.metodo) ? (
-            '<div style="margin-top:9px"><label class="lb">Comprobante <span style="font-weight:400;color:var(--muted)">hasta '+COMP_MAX+' imágenes</span></label>'+
+            '<div style="margin-top:9px"><label class="lb">Comprobante <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">hasta '+COMP_MAX+' imágenes</span></label>'+
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
-                'Hasta '+COMP_MAX+': '+(CTA_PAGO.metodo==='Tarjeta'?'la foto del <b>voucher</b>':'la <b>captura del pago</b>')+' y el <b>recibo</b> que le diste al cliente.')+
+                'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
          '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ Registrar pago</button>'+
        '</div>')
@@ -2494,6 +2494,13 @@ function ctaRegistrarPago(id){
     var ni=document.getElementById('cta-pago-nota');
     if(ni){ ni.classList.add('err'); ni.focus(); ni.scrollIntoView({block:'center'}); }
     toast('Poné el N° de nota de venta del recibo de este pago','err'); return;
+  }
+  /* La imagen del respaldo es OBLIGATORIA en TODA forma de pago, efectivo incluido:
+     sin ella no hay con qué probar que la plata entró. */
+  if(!compsArr(CTA_PAGO.comps).length){
+    toast('Falta la imagen del pago — adjuntá '+nombreComprobante(CTA_PAGO.metodo),'err');
+    var wc=document.getElementById('modal-box'); if(wc) wc.scrollTop=wc.scrollHeight;
+    return;
   }
   var falta=Number(p.saldo)||0;
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
@@ -2607,10 +2614,11 @@ function updateBancoVisibility(){
   if(esQR) renderBancos();
   wrap.style.display=esQR?'block':'none';
   if(!esQR) segSet('f-banco','');
-  // El banco es solo del QR; el comprobante, del QR Y de la tarjeta.
+  // El banco es solo del QR; la imagen del pago se pide con CUALQUIER método.
   renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
 }
-/* ---- Comprobante del QR en el formulario de carga (OBLIGATORIO) ----
+/* ---- Imagen del pago en el formulario de carga (OBLIGATORIA con cualquier método) ----
+   QR → la captura, Tarjeta → el voucher, Efectivo → el recibo que se le dio al cliente.
    Se suben apenas se eligen y quedan en FORM_COMPS (hasta COMP_MAX) hasta que se
    guarda el pedido; ahí se pegan al método ("QR BISA %ID_PAGO %ID_RECIBO") y de ahí
    los lee Contabilidad. */
@@ -2621,8 +2629,7 @@ function renderCompForm(pide){
   var esQR=pide;
   var lb=wrap.querySelector('.lb');
   if(lb && pide){
-    var tarj=segVal('f-metodo')==='Tarjeta';
-    lb.innerHTML='Comprobante '+(tarj?'de la tarjeta':'del QR')+' <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
+    lb.innerHTML='Comprobante del pago <span class="req">*</span> <span class="hint">hasta '+COMP_MAX+' im\u00e1genes</span>';
   }
   wrap.style.display = pide ? 'block' : 'none';
   /* ⚠️ Al ocultar NO se borra FORM_COMPS: esta función corre muchas veces mientras se
@@ -2630,14 +2637,28 @@ function renderCompForm(pide){
      que se muestre el bloque de método, así que borrarlo acá perdía el comprobante del
      pedido que se estaba editando y después no dejaba guardar. Se limpia en resetForm. */
   if(!esQR){ box.innerHTML=''; return; }
-  var tar=segVal('f-metodo')==='Tarjeta';
   box.innerHTML = compTiraHtml(FORM_COMPS, 'quitarCompForm', 'adjuntarCompForm()',
-    'Hasta '+COMP_MAX+': '+(tar?'la foto del <b>voucher</b>':'la <b>captura del pago</b>')+' y el <b>recibo</b> que le diste al cliente. Con una alcanza para guardar.');
+    'Hasta '+COMP_MAX+' im\u00e1genes: '+nombreComprobante(segVal('f-metodo'))+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>');
 }
 function quitarCompForm(i){
   var a=compsArr(FORM_COMPS);
   if(i==null) a=[]; else a.splice(i,1);
   FORM_COMPS=a; renderCompForm(true);
+}
+/* ¿Hay que frenar el guardado por falta de imagen?
+   ⚠️ Los pedidos VIEJOS en efectivo no tienen ninguna (antes no se pedía) y son casi todos.
+   Si se exigiera a secas, nadie podría volver a abrir uno para corregirle la dirección.
+   Regla: al pedido NUEVO siempre se le pide; al que se está EDITANDO, solo si el pago se
+   está cargando o cambiando ahora (si ya venía con pago y sin imagen, se lo deja pasar). */
+function faltaComprobanteForm(){
+  if(!metodoConComprobante(segVal('f-metodo'))) return false;
+  if(compsArr(FORM_COMPS).length) return false;
+  if(!EDIT_ID) return true;
+  var orig=findById(EDIT_ID); if(!orig) return true;
+  var mf=metodoFormulario(orig);
+  var teniaPago=!!String(mf.metodo||'').trim();
+  var teniaImg=!!compsArr(mf.comps!=null?mf.comps:mf.comp).length;
+  return !(teniaPago && !teniaImg);
 }
 /* El mismo gato del combo, para el mismo tipo de olvido. La imagen se comparte a
    propósito: es la misma y no tiene sentido subirla dos veces al repo.
@@ -2645,9 +2666,13 @@ function quitarCompForm(i){
    siquiera les pide método de pago (formulario "lite"), así que tampoco comprobante. */
 function memeComprobante(vendedor, metodo){
   var quien=String(vendedor||'').trim().split(' ')[0];
-  var esTar=String(metodo||'')==='Tarjeta';
-  var queFalta=esTar?'la foto del VOUCHER':'la CAPTURA del pago';
-  var comoPago=esTar?'con TARJETA':'por QR';
+  var m=String(metodo||'');
+  var queFalta = m==='Tarjeta' ? 'la foto del VOUCHER'
+               : m==='QR'      ? 'la CAPTURA del pago'
+                               : 'la foto del RECIBO';
+  var comoPago = m==='Tarjeta' ? 'con TARJETA'
+               : m==='QR'      ? 'por QR'
+                               : 'en EFECTIVO';
   openModal('<div class="modal-h" style="background:var(--red)"><h3>📎 Falta el comprobante'+(quien?(', '+esc(quien)):'')+'…</h3><button class="modal-x" onclick="closeModal();focoComprobante()">✕</button></div>'+
     '<div class="modal-b" style="text-align:center">'+
       '<img src="combo-instrucciones.jpg" alt="El comprobante del QR es obligatorio" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
@@ -2724,7 +2749,7 @@ function submitPedido(){
       return;
     }
     if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
-    if(metodoConComprobante(segVal('f-metodo')) && !compsArr(FORM_COMPS).length){
+    if(faltaComprobanteForm()){
       // El gato en vez del toast: el aviso suelto se les pasaba de largo.
       memeComprobante(vendedor, segVal('f-metodo'));
       return;
@@ -5435,9 +5460,18 @@ function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.e
    sin tocar el Apps Script y encima queda legible para quien mire la hoja.
    ========================================================================== */
 var METODOS=['Efectivo','QR','Tarjeta'];
-/* Qué formas de pago dejan comprobante: el QR su captura, la tarjeta su voucher.
-   El efectivo no tiene nada que adjuntar. Un solo lugar para cambiarlo. */
-function metodoConComprobante(m){ m=String(m||''); return m==='QR' || m==='Tarjeta'; }
+/* TODA forma de pago deja respaldo: el QR su captura, la tarjeta su voucher y el
+   EFECTIVO el recibo que se le dio al cliente. Antes el efectivo quedaba afuera y era
+   justo el que no dejaba rastro. Un solo lugar para cambiarlo.
+   ('' = todavía no eligió método: ahí no se pide nada.) */
+function metodoConComprobante(m){ return !!String(m||'').trim(); }
+/* Cómo se le llama a la imagen según con qué pagó. */
+function nombreComprobante(m){
+  m=String(m||'');
+  if(m==='Tarjeta') return 'la foto del voucher';
+  if(m==='QR')      return 'la captura del pago';
+  return 'la foto del recibo';
+}
 function normMetodo(m){
   m=String(m||'').trim().toLowerCase();
   if(m.indexOf('efec')===0) return 'Efectivo';
@@ -5483,7 +5517,7 @@ function parseMonto(t){
    (nota de venta) que se le dio al cliente. Por eso el `%` del historial puede venir
    repetido: "… #939 %ID_DEL_PAGO %ID_DEL_RECIBO". Lo viejo, con un solo `%` o sin
    ninguno, se sigue leyendo igual. */
-var COMP_MAX=2;
+var COMP_MAX=4;
 function idsDeTexto(t){
   return String(t==null?'':t).split('%').map(function(x){ return x.trim(); })
     .filter(function(x){ return /^[A-Za-z0-9_-]+$/.test(x); });
