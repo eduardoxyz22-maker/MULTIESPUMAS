@@ -5533,17 +5533,20 @@ function compsArr(x){
   return out;
 }
 /* La tirita de imágenes: las que ya están (con su ✕) y el botón para sumar otra,
-   que desaparece al llegar a COMP_MAX. La usan el formulario, contabilidad y los retiros. */
+   que desaparece al llegar a COMP_MAX. La usan el formulario, contabilidad y los retiros.
+   ⚠️ Los `onclick` van SIEMPRE por `esc()`: si el que llama arma la función con comillas
+   dobles (JSON.stringify del id, por ejemplo), sin esto el atributo se corta al medio y el
+   botón queda mudo — nadie podía adjuntar el comprobante en Contabilidad. */
 function compTiraHtml(arr, quitarFn, agregarFn, hint){
   arr=compsArr(arr);
   var thumbs=arr.map(function(fid,i){
     return '<span class="foto">'+
       '<img src="'+fotoThumb(fid)+'" alt="Imagen '+(i+1)+'" title="Ver en grande" onclick="window.open(\''+fotoVer(fid)+'\',\'_blank\')">'+
-      '<button type="button" title="Quitar esta imagen" onclick="'+quitarFn+'('+i+')">✕</button>'+
+      '<button type="button" title="Quitar esta imagen" onclick="'+esc(quitarFn+'('+i+')')+'">✕</button>'+
     '</span>';
   }).join('');
   var btn = (arr.length<COMP_MAX)
-    ? '<button type="button" class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:10px 14px;width:auto" onclick="'+agregarFn+'">📎 '+(arr.length?'Agregar otra imagen':'Adjuntar imagen')+'</button>'
+    ? '<button type="button" class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:10px 14px;width:auto" onclick="'+esc(agregarFn)+'">📎 '+(arr.length?'Agregar otra imagen':'Adjuntar imagen')+'</button>'
     : '<span style="color:var(--green);font-weight:700;font-size:.83rem;align-self:center">✅ Listo — las '+COMP_MAX+' imágenes</span>';
   return '<div class="fotos" style="align-items:center">'+thumbs+btn+'</div>'+
     (hint?('<div style="font-size:.72rem;color:var(--muted);margin-top:2px">'+hint+'</div>'):'');

@@ -946,6 +946,33 @@ indiferente del método de pago permite que suban hasta 4 fotos"*.
   agregó `apiList` mockeado (`test_compform`, `test_tienda`). Si una suite falla en el guardado
   "sin razón", es lo primero que hay que mirar.
 
+## 4ac. FIX GRAVE — el botón "Adjuntar imagen" de Contabilidad estaba mudo (2026-08-05)
+
+Reporte: *"el botón de adjuntar imagen en efectivo, pestaña contabilidad no funciona"*.
+
+**La causa, en una línea**: `compTiraHtml` metía el handler crudo en el atributo →
+`onclick="ctaAdjuntar("p-123")"`. **Las comillas dobles del `JSON.stringify` cortaban el
+atributo al medio**: el navegador leía `onclick="ctaAdjuntar("` y el botón no hacía NADA.
+
+- Existía desde §4x (2026-08-04) y afectaba a **los tres métodos**, no solo al efectivo —
+  nadie lo notó porque hasta §4ab el comprobante era opcional. Con la imagen ya obligatoria
+  se volvió un **bloqueo total: no se podía registrar ningún pago en Contabilidad.**
+- Lo mismo le pasaba a la **✕ de cada miniatura** (`ctaSacarCompIdx.bind(null,"id")`).
+- Arreglo: `compTiraHtml` pasa **todos** sus handlers por `esc()`, así queda a prueba de
+  quien lo llame con comillas dobles. Los otros dos usos (formulario y retiros) nunca
+  fallaron porque pasan nombres pelados (`adjuntarCompForm()`).
+- ⚠️ En el resto del archivo el patrón correcto ya estaba: **todo `JSON.stringify` dentro de
+  un `onclick` lleva `.replace(/"/g,'&quot;')`**. Este era el único sin la guarda.
+- ⚠️⚠️ **Por qué no lo cazó ningún test**: las 95 suites llamaban a las funciones por dentro
+  (`onCompElegido(...)`) en vez de **hacerle clic al botón**. El HTML podía estar roto y
+  todo seguía en verde. Desde ahora hay dos suites nuevas:
+  - `test_botones.js` (23) — le hace **clic de verdad** a cada botón de adjuntar y a cada ✕,
+    en Contabilidad (los 3 métodos + pago ya registrado), en el formulario y en los retiros.
+    Espía el `.click()` del input de archivos escondido para saber si la cadena llegó al final.
+  - `test_onclicks.js` (24) — **barrido de toda la app**: abre las 5 pantallas y las 12
+    ventanas y compila el `onclick` de **cada botón visible** (320) con `new Function`.
+    Se verificó que, con el bug puesto de vuelta, el barrido lo encuentra.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
