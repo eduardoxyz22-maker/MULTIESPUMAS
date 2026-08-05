@@ -1051,7 +1051,7 @@ function loadMirror(){
   try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
   if(!Array.isArray(STATE))STATE=[];
   STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
-  loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror();
+  loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror();
 }
 function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
@@ -3443,7 +3443,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || esFilaRetiro(p)); }
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
 function filaSistema(id, titulo, texto){
   return { id:id, fecha:'', turno:'', vendedor:'', productos:[], cliente:titulo,
@@ -3454,13 +3454,15 @@ function filaSistema(id, titulo, texto){
 }
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
-  var resto=[], cie=null, arq=null, rets=[];
+  var resto=[], cie=null, arq=null, rets=[], car=null;
   (lista||[]).forEach(function(p){
     if(esFilaCierre(p)) cie=p;
     else if(p && String(p.id)===ARQUEO_ID) arq=p;
+    else if(p && String(p.id)===CARGA_ID) car=p;
     else if(esFilaRetiro(p)) rets.push(p);
     else resto.push(p);
   });
+  if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   if(cie){
     DIAS_CERRADOS=String(cie.observaciones||'').split(/[^\d-]+/)
@@ -3915,21 +3917,66 @@ function prodTextCarga(prods){ return (prods||[]).map(function(x){
   if(x.chk==='ok')      return s+' <span style="color:var(--green);font-weight:800">✔</span>'+pr;
   return s+pr;
 }).join('   |   '); }
-/* Tildes de la lista de carga: se guardan por día+vehículo+producto (en esta compu),
-   así el cargador puede salir y volver sin perder lo que ya subió. */
+/* ---- Tildes de la lista de carga ----
+   Lo que el cargador va tildando (por día + vehículo + producto) SE COMPARTE con todo
+   el equipo: viaja en la planilla, en la fila del sistema `__carga_chk__` con FECHA
+   VACÍA (mismo molde que los días cerrados y el arqueo, así no ocupa cupo del camión
+   ni hace falta tocar el Apps Script). El localStorage queda como espejo, para que se
+   vea al toque y aguante quedarse sin señal.
+
+   Formato, legible desde la propia hoja:
+     2026-08-05|CAMION 1|COLCHON SOFT 140x190 ; 2026-08-05|CAMION 1|ALMOHADA 50x70
+   Se podan solas las de más de 10 días: si no, la celda crecería para siempre. */
+var CARGA_ID='__carga_chk__';
 var LS_CARGA='me_carga_chk';
+var CARGA_CHK={};
+var CARGA_DIAS_GUARDA=10;
 function cargaDiaKey(){ return CARGA_DIA==='hoy'?todayStr():CARGA_DIA==='manana'?tomorrowStr():'todos'; }
-function cargaChkKey(fecha,veh,prod){ return fecha+'|'+veh+'|'+prod; }
-function getCargaChk(){ try{ return JSON.parse(localStorage.getItem(LS_CARGA)||'{}')||{}; }catch(e){ return {}; } }
-function isCargaChk(k){ return !!getCargaChk()[k]; }
-function setCargaChk(k,on){ var m=getCargaChk(); if(on)m[k]=1; else delete m[k]; try{ localStorage.setItem(LS_CARGA,JSON.stringify(m)); }catch(e){} }
+/* El `;` separa entradas: si un producto lo trae en el nombre, se cambia por coma. */
+function cargaChkKey(fecha,veh,prod){
+  return [fecha,veh,prod].map(function(x){ return String(x==null?'':x).replace(/;/g,','); }).join('|');
+}
+function parseCargaChk(txt){
+  var out={};
+  String(txt||'').split(';').forEach(function(k){ k=k.trim(); if(k) out[k]=1; });
+  return out;
+}
+/* Al guardar se tiran las viejas: la celda de la planilla no es infinita. */
+function textoCargaChk(obj){
+  var corte=new Date(); corte.setDate(corte.getDate()-CARGA_DIAS_GUARDA); corte=isoLocal(corte);
+  return Object.keys(obj||{}).filter(function(k){
+    var f=k.split('|')[0];
+    return !/^\d{4}-\d{2}-\d{2}$/.test(f) || f>=corte;
+  }).sort().join(' ; ');
+}
+function saveCargaMirror(){ try{ localStorage.setItem(LS_CARGA, JSON.stringify(CARGA_CHK)); }catch(e){} }
+function loadCargaMirror(){
+  try{ var o=JSON.parse(localStorage.getItem(LS_CARGA)||'{}'); CARGA_CHK=(o&&typeof o==='object')?o:{}; }catch(e){ CARGA_CHK={}; }
+}
+function getCargaChk(){ return CARGA_CHK; }
+function isCargaChk(k){ return !!CARGA_CHK[k]; }
+/* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez. */
+var _cargaT=null;
+function guardarCargaChk(){
+  saveCargaMirror();
+  clearTimeout(_cargaT);
+  _cargaT=setTimeout(function(){
+    var fila=filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK));
+    if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
+    else queuePending(fila);
+  }, 700);
+}
+function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; guardarCargaChk(); }
 function limpiarCargaChk(){
-  if(!confirm('¿Destildar todo lo cargado de esta vista?')) return;
+  if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
-  var m=getCargaChk();
-  Object.keys(m).forEach(function(k){ if(fechas[k.split('|')[0]]) delete m[k]; });
-  try{ localStorage.setItem(LS_CARGA,JSON.stringify(m)); }catch(e){}
-  renderCarga(); toast('Tildes borrados','ok');
+  Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]) delete CARGA_CHK[k]; });
+  guardarCargaChk();
+  renderCarga(); toast('Tildes borrados para todo el equipo','ok');
+}
+function renderCargaSiActiva(){
+  var ov=document.getElementById('carga-overlay');
+  if(ov && ov.style.display==='flex') renderCarga();
 }
 /* Bloques por camión de un conjunto de pedidos. 'fecha' se usa para las tildes,
    así lo tildado en "Hoy" y en "Todos" es lo mismo. */

@@ -883,6 +883,30 @@ no deja meter pedidos, ¿por qué a otros vendedores desde otra computadora sí?
 - Tests: `test_cierre2.js` (19 comprobaciones) — simula las dos computadoras, el Apps Script
   viejo y el nuevo, y que sin internet no se trabe.
 
+## 4aa. Los tildes de la lista de carga se comparten (2026-08-05)
+
+El usuario preguntó *"¿qué más hay que se guarda en una compu y no se ve en las demás?"*.
+Se auditó **todo** el `localStorage`. Se comparten por la planilla: pedidos, cobros, fotos,
+días cerrados, arqueo y retiros. Quedaban **solo en cada máquina**:
+1. los **tildes de la Lista de carga** (este cambio),
+2. la **contraseña de administración** (`LS_ADMIN`),
+3. la **cola offline** (`LS_PEND` — inherente: son los que todavía no salieron de ese celular).
+El resto es preferencia local a propósito (nombre recordado, chofer, caché de geo, "ya vi el parte").
+
+- `CARGA_CHK` viaja en la fila del sistema **`__carga_chk__`** con **fecha vacía** (mismo molde
+  de §4o/§4m/§4w → sin redeploy del Apps Script). localStorage queda de espejo.
+- Formato legible en la hoja: `2026-08-05|CAMION 1|COLCHON SOFT 140x190 ; …`.
+  ⚠️ El `;` separa entradas: `cargaChkKey()` lo cambia por coma en día/vehículo/producto,
+  así un producto con `;` en el nombre no parte la lista en dos.
+- ⚠️ **Se poda solo a 10 días** (`CARGA_DIAS_GUARDA`): la celda de la planilla no es infinita
+  y los tildes viejos no le sirven a nadie.
+- ⚠️ **Escritura con respiro de 700 ms** (`guardarCargaChk`): tildando 10 productos seguidos va
+  **una sola** escritura, no diez. Está verificado en el test.
+- "Destildar todo" ahora avisa que borra **para todo el equipo**.
+- Última escritura gana. En la práctica tilda una sola persona por camión, así que no se
+  buscó nada más fino.
+- Tests: `test_cargachk.js` (21 comprobaciones), incluida la simulación de la segunda computadora.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
