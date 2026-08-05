@@ -2459,6 +2459,10 @@ function contaPagosHtml(p){
     var faltaMonto = (idx>=0 && !((Number(c.monto)||0)>0))
       ? ('<div style="margin-top:4px"><button class="btn btn-sm" style="background:var(--amber-lt);border:1px solid var(--amber-border);color:var(--amber);font-size:.76rem;padding:4px 10px;width:auto;font-weight:700" onclick="ctaAnotarMonto(\''+pid+'\','+idx+')">💵 Anotar el monto</button></div>')
       : '';
+    // Para volver a mandarlo al grupo cuando haga falta, no solo al registrarlo.
+    var wa = ((Number(c.monto)||0)>0)
+      ? (' <button class="btn btn-sm" style="background:#fff;border:1px solid var(--green-border);color:var(--green);font-size:.72rem;padding:2px 8px;width:auto;font-weight:700" title="Copiar este pago para WhatsApp" onclick="showPagoWhatsapp(\''+pid+'\','+i+')">📲 WhatsApp</button>')
+      : '';
     return '<div style="padding:3px 0'+(i?';border-top:1px solid var(--gray-lt)':'')+'">'+
       '<span style="color:var(--muted)">'+esc(c.fecha?fmtFecha(c.fecha):'sin fecha')+'</span> · '+
       '<b>'+esc(contaMetodoTxt(c))+'</b> · '+
@@ -2466,6 +2470,7 @@ function contaPagosHtml(p){
       (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
         :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
       (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
+      wa+
       faltaMonto+
       comp+
     '</div>';
@@ -2659,7 +2664,48 @@ function ctaRegistrarPago(id){
   CTA_PAGO.comps=[];                                 // que no se peguen al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
-  showContaModal(id);
+  // Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
+  showPagoWhatsapp(id, contaPagos(p).length-1);
+}
+/* ---- El pago, listo para pegar en el grupo de WhatsApp ----
+   Se manda el mensaje Y el link de la imagen: WhatsApp no puede adjuntar el archivo desde
+   un texto, pero el link abre el comprobante en Drive y sirve igual de respaldo. */
+function pagoTexto(p, c){
+  if(!p || !c) return '';
+  var L=[c.anticipo?'💰 *PAGO A CUENTA (ANTICIPO)*':'💰 *PAGO REGISTRADO*',''];
+  L.push('👤 Cliente: '+(p.cliente||'—'));
+  if(p.nota) L.push('🧾 Nota de venta: '+p.nota);
+  L.push('📅 '+(c.fecha?fmtFecha(c.fecha):'sin fecha'));
+  L.push('💳 '+(contaMetodoTxt(c)||'—'));
+  L.push('💵 Monto: *'+fmtBs(c.monto)+'*');
+  var n=limpiaNota(c.nota);
+  if(n) L.push('🧾 Recibo N° '+n);
+  if(p.vendedor) L.push('🧾 Vendedor: '+p.vendedor);
+  var falta=Number(p.saldo)||0;
+  L.push('');
+  L.push(falta>0.01 ? ('⏳ Queda por cobrar: *'+fmtBs(falta)+'*') : '✅ Venta PAGADA por completo');
+  var cs=compsArr(c.comps!=null?c.comps:c.comp);
+  if(cs.length){
+    L.push('');
+    cs.forEach(function(fid,i){ L.push('📎 '+(cs.length>1?('Imagen '+(i+1)+': '):'Comprobante: ')+fotoVer(fid)); });
+  }
+  return L.join('\n');
+}
+function showPagoWhatsapp(id, i){
+  var p=findById(id); if(!p) return;
+  var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
+  var text=pagoTexto(p, c);
+  openModal('<div class="modal-h" style="background:var(--green)"><h3>✅ Pago registrado</h3>'+
+      '<button class="modal-x" onclick="showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copialo y pegalo en el grupo. El <b>📎 link</b> abre la imagen del comprobante.</p>'+
+      '<textarea class="wa-text" id="wa-pago" readonly style="min-height:290px">'+esc(text)+'</textarea>'+
+      '<div class="modal-actions">'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-pago\').value)">📋 Copiar</button>'+
+        '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-pago\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')">Volver a la venta</button>'+
+      '</div>'+
+    '</div>');
 }
 function ctaToggleRegistrado(id){
   var p=findById(id); if(!p) return;

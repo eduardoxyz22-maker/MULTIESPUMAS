@@ -1050,6 +1050,27 @@ Pedido: *"falta efectivo retirado, efectivo por retirar, y que funcione el filtr
 - ⚠️ **Para los tests**: `.mc-lbl` se ve en MAYÚSCULAS por CSS (`text-transform`), pero
   `textContent` devuelve el texto original. Comparar siempre con `.toUpperCase()`.
 
+## 4ag. El pago se copia para WhatsApp (2026-08-05)
+
+Pedido: *"añadir botón copiar whatsapp cuando carguen un pago, así pueden mandar al grupo el
+comprobante y el mensaje"*.
+
+- **`pagoTexto(p, c)`** arma el mensaje: cliente, N° de nota de venta, fecha, forma de pago (con
+  banco), monto, N° del recibo de ESE pago, vendedor, si quedó **pagada** o **cuánto falta**, y
+  el **link de cada imagen** (`fotoVer`). Si el pago es el anticipo, el título cambia a
+  *"PAGO A CUENTA (ANTICIPO)"*.
+  ⚠️ WhatsApp **no puede adjuntar el archivo desde un texto**: va el **link** a Drive, que abre
+  la imagen. Es lo máximo que se puede hacer sin app nativa.
+- **`showPagoWhatsapp(id, i)`** — mismo molde que el modal de "Pedido guardado" (§ viejo):
+  textarea + **📋 Copiar** + **📲 Abrir WhatsApp** (`wa.me/?text=`) + **Volver a la venta**
+  (que reabre la ficha en vez de dejar la pantalla vacía).
+- `ctaRegistrarPago` lo abre **en lugar de** volver a la ficha: recién cobrado, lo que sigue es
+  avisarle al grupo.
+- Además, **cada pago ya registrado** tiene su botón **📲 WhatsApp** en la ficha, para volver a
+  mandarlo más tarde. El índice que se pasa es el de `contaPagos()`, así el **anticipo también
+  se puede reenviar**.
+- Tests: `test_wapago.js` (24).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
