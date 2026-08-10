@@ -1144,7 +1144,18 @@ que hacían falta DOS estados.
   - En el cuadre, aviso **"N entregas con el recargo por entrega sin cobrar"**, tocable (§4ae).
 - **Los tres números** en la ficha (`envioResumenHtml`), en la columna de Ventas (badge
   ⏳ POR COBRAR), en el resumen y en el Excel (RECARGO / COBRADO / POR COBRAR).
-- Tests: `test_flete2.js` (36). `test_recargo.js` (41) sigue verde.
+- ⚠️ **Dos cosas que faltaban (reportadas por el usuario)**:
+  1. **El campo del flete no aparecía si la venta iba toda por cobrar.** Colgaba de
+     `metodoVisible` (el bloque de "¿con qué pagó?"), que solo sale con PAGADO=SÍ o con
+     adelanto. Justo el caso más común del flete —venta a crédito, transporte contra
+     entrega— se quedaba sin campo. Ahora `#wrap-envio` está **siempre visible**; lo que
+     sí depende del cobro es el *"¿ya lo cobraste?"* (sin método no hay con qué respaldarlo,
+     así que solo puede quedar pactado, y se avisa con `#f-envio-pend`).
+  2. **Faltaban las tarjetas en el cuadre.** Se agregaron **🚚 Transporte cobrado** y
+     **🚚 Transporte por cobrar** → el cuadre pasó de 6 a **8 tarjetas** (vuelve a la grilla
+     de 4 columnas, 4+4; se sacó `.m3`). El "por cobrar" sale de `cuadreFletesPend()`, que
+     corta por la **fecha de la VENTA** (un flete sin cobrar no tiene fecha de pago).
+- Tests: `test_flete2.js` (46). `test_recargo.js` (41) sigue verde.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).

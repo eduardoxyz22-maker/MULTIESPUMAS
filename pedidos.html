@@ -591,9 +591,12 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000"></div>
       </div>
 
-      <div class="field" id="wrap-envio" style="display:none">
+      <!-- ⚠️ El flete NO depende de cómo se pagó la mercadería: se cobra igual aunque la
+           venta quede toda por cobrar. Por eso este campo está SIEMPRE visible. -->
+      <div class="field" id="wrap-envio">
         <label class="lb">🚚 Recargo por entrega <span class="hint">opcional — el flete que paga el cliente APARTE. No baja el saldo ni se factura</span></label>
         <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
+        <div id="f-envio-pend" style="display:none;margin-top:6px;font-size:.78rem;color:var(--amber);font-weight:700">⏳ Queda <b>por cobrar</b>: se cobra al entregar y hay que registrarlo con su comprobante.</div>
         <div id="wrap-envio-cob" style="display:none;margin-top:8px">
           <label class="lb">¿Ya cobraste el flete?</label>
           <div class="seg" id="f-envio-cob">
@@ -803,7 +806,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
           </div>
         </div>
-        <div class="metrics m3" id="cua-metrics"></div>
+        <div class="metrics" id="cua-metrics"></div>
         <div id="cua-cierre"></div>
         <div id="cua-retiros"></div>
         <div class="two-col">
@@ -1763,6 +1766,21 @@ function diasEntre(a,b){
   return Math.round((y-x)/86400000);
 }
 /* Todo lo que impide cerrar el cuadre, junto y en un solo lugar. */
+/* Las entregas con el transporte PACTADO y todavía sin cobrar, del período y de la
+   vendedora elegidos. Se cortan por la fecha de la VENTA: un flete sin cobrar no tiene
+   fecha de pago (justamente porque todavía no se pagó). */
+function cuadreFletesPend(){
+  var vend=cuadreVendedor(), pe=cuadrePeriodo(), out=[];
+  STATE.forEach(function(p){
+    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    if(!enPeriodoCuadre(contaFecha(p), pe)) return;
+    if(envioPendiente(p)) out.push(p);
+  });
+  return out;
+}
+function cuadreFletesPendTotal(){
+  var t=0; cuadreFletesPend().forEach(function(p){ t=r2(t+envioPorCobrar(p)); }); return t;
+}
 function cuadreAlertas(pagos){
   var A=[];
   var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
@@ -1787,12 +1805,7 @@ function cuadreAlertas(pagos){
   if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin
      cobrar, es plata que la empresa no vio y que nadie va a reclamar solo. */
-  var fletes=[];
-  STATE.forEach(function(p){
-    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
-    if(!enPeriodoCuadre(contaFecha(p), pe)) return;
-    if(envioPendiente(p)) fletes.push(p);
-  });
+  var fletes=cuadreFletesPend();
   if(fletes.length){
     var fBs=0; fletes.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
     A.push({ico:'🚚', txt:'<b>'+fletes.length+'</b> entrega'+(fletes.length===1?'':'s')+' con el <b>recargo por entrega sin cobrar</b> — '+fmtBs(fBs)+' que todavía no entró',
@@ -1847,6 +1860,7 @@ function renderCuadre(){
      y de ahí lo tiene que recoger alguien. Estos dos números son el control de eso. */
   // Cuánto de lo que entró es RECARGO POR ENTREGA (flete), que no es plata de la venta.
   var recargos=0; pagos.forEach(function(c){ if(esEnvio(c)) recargos=r2(recargos+c.monto); });
+  var fletesPend=cuadreFletesPend(), fletePend=cuadreFletesPendTotal(), fletesN=fletesPend.length;
   var pe=cuadrePeriodo();
   var rets=retirosDe(pe, vendSel), retirado=retirosTotal(rets);
   var porRetirar=r2(efectivo-retirado);
@@ -1866,6 +1880,12 @@ function renderCuadre(){
        Math.abs(porRetirar)<0.01 ? 'se recogió todo el efectivo'
          : (porRetirar>0 ? ('sigue en la mano '+esc(deQuien)+' — hay que recogerlo')
                          : 'se retiró más de lo que se cobró en efectivo'))+
+    mc(recargos>0?'#0d9488':'var(--muted)','🚚 Transporte cobrado',fmtBs(recargos),
+       recargos>0?'flete que ya entró — va aparte de la venta':'no entró nada de flete en el período')+
+    mc(fletePend>0.01?'var(--red)':'var(--green)','🚚 Transporte por cobrar',
+       fletePend>0.01?fmtBs(fletePend):'✅ Nada',
+       fletePend>0.01 ? (fletesN+' entrega'+(fletesN===1?'':'s')+' — se cobra al entregar y hay que reportarlo')
+                      : 'no queda flete sin cobrar')+
     (anotadas
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
@@ -3005,7 +3025,6 @@ function updateBancoVisibility(){
   if(!esQR) segSet('f-banco','');
   // El banco es solo del QR; la imagen del pago se pide con CUALQUIER método.
   renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
-  var we=document.getElementById('wrap-envio'); if(we) we.style.display=metodoVisible?'block':'none';
   pintarEnvioCobrado();
 }
 /* ---- Imagen del pago en el formulario de carga (OBLIGATORIA con cualquier método) ----
@@ -3036,11 +3055,18 @@ function pintarEnvioCobrado(){
   var el=document.getElementById('f-envio'), w=document.getElementById('wrap-envio-cob');
   if(!el||!w) return;
   var hay=(parseFloat(el.value)||0)>0;
-  w.style.display=hay?'block':'none';
+  /* "Sí, ya lo cobré" necesita un método y un comprobante, y esos salen del cobro de la
+     venta. Si la venta va toda por cobrar, el flete solo puede quedar PACTADO. */
+  var wm=document.getElementById('wrap-metodo');
+  var hayCobro = !!(wm && wm.style.display!=='none' && segVal('f-metodo'));
+  w.style.display=(hay && hayCobro)?'block':'none';
+  if(!hayCobro) segSet('f-envio-cob','NO');
   var h=document.getElementById('f-envio-hint');
   if(h) h.innerHTML = segVal('f-envio-cob')==='SI'
     ? 'Se guarda como <b>cobrado</b>, con el mismo comprobante del pago.'
     : 'Queda <b>por cobrar</b>: te va a aparecer en «Mis pedidos» hasta que lo registres con su comprobante.';
+  var hp=document.getElementById('f-envio-pend');
+  if(hp) hp.style.display=(hay && !hayCobro)?'block':'none';
 }
 function quitarCompForm(i){
   var a=compsArr(FORM_COMPS);
