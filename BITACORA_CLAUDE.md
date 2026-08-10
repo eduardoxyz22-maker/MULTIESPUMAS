@@ -1184,6 +1184,28 @@ propósito (§ pestaña Contabilidad). Lo que faltaba era **poder mirarlo por la
   Cuadre = pago**. Está verificado en el test que no se duplica.
 - Tests: `test_mescruz.js` (21).
 
+## 4ak. ATC — atención al cliente, con su propia numeración (2026-08-10)
+
+Pedido: *"en pedidos donde dice N° OC debe haber un botón que deje seleccionar ATC, así no se
+numera por OC sino por ATC porque es una atención al cliente"*.
+
+- **Selector `#f-doc-tipo`** (📄 OC / 🎧 ATC) arriba del campo. Cambia el rótulo
+  (**N° OC** ↔ **N° ATC**) y el cartel de "va por…".
+- **Dos series independientes**, cada una con su correlativo mensual:
+  `08-001` para las OC y **`ATC 08-001`** para las ATC. `nextOcMes(fecha, tipo)` filtra por
+  `esATC(p.oc)!==atc`, así **cargar una ATC no le saltea el número al siguiente pedido**.
+- ⚠️ **El tipo viaja en el propio número** — no hizo falta ninguna columna nueva (la planilla
+  tiene 29 fijas). `esATC()`, `ocSinPre()` y **`ocEtiq()`** son los tres helpers de todo esto.
+- ⚠️ **`ocEtiq(oc)` en los 11 lugares que imprimían `'OC '+p.oc`**: si no, quedaba
+  **"OC ATC 08-001"**. Ahora devuelve `"OC 08-001"` o `"ATC 08-001"` según corresponda —
+  tablas, fichas, WhatsApp, la ruta y el parte del día.
+- `ocAuto()` acepta las dos series (lo usa el detector de números repetidos), y como la
+  comparación es sobre el texto completo, las series no se pisan entre sí.
+- **ROHO no cambia**: su N° lo manda el cliente, así que ahí el selector **se oculta** y el
+  campo sigue siendo manual.
+- Al **editar**, el selector arranca en el tipo que ya tenía y el número no se toca.
+- Tests: `test_atc.js` (31).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

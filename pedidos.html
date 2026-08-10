@@ -482,7 +482,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="grid2">
         <div class="field">
-          <label class="lb">N° OC <span class="hint" id="f-oc-hint">(orden de compra, opcional)</span><span class="req oc-roho">*</span> <span class="hint oc-roho">obligatorio para ROHO</span></label>
+          <label class="lb" id="f-oc-lb">N° OC <span class="hint" id="f-oc-hint">(orden de compra, opcional)</span><span class="req oc-roho">*</span> <span class="hint oc-roho">obligatorio para ROHO</span></label>
+          <div class="seg" id="f-doc-tipo" style="margin-bottom:7px">
+            <button type="button" data-val="OC" class="active">📄 OC</button>
+            <button type="button" data-val="ATC">🎧 ATC</button>
+          </div>
           <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
         </div>
         <div class="field">
@@ -1112,21 +1116,32 @@ var OC_DESDE='2026-08-01';   // desde qué día se empieza a numerar solo
 function ocAutoActivo(f){ return (f||todayStr()) >= OC_DESDE; }
 function pad3(n){ n=String(n); while(n.length<3) n='0'+n; return n; }
 function ocMesDe(f){ var m=String(f||todayStr()).match(/^\d{4}-(\d{2})/); return m?m[1]:''; }
+/* ---- Dos tipos de número, cada uno con SU correlativo mensual ----
+   OC  = orden de compra (una venta).      → "08-001"
+   ATC = atención al cliente (un servicio). → "ATC 08-001"
+   El tipo viaja en el propio número, así que no hizo falta ninguna columna nueva. */
+var ATC_PRE='ATC ';
+function esATC(oc){ return /^ATC\b/i.test(String(oc||'').trim()); }
+function ocSinPre(oc){ return String(oc||'').trim().replace(/^ATC\s*/i,''); }
+/* Cómo se muestra: "OC 08-001" o "ATC 08-001" (el ATC ya trae su etiqueta adentro). */
+function ocEtiq(oc){ oc=String(oc||'').trim(); return oc ? (esATC(oc)?oc:('OC '+oc)) : ''; }
 /* ¿Es un número generado por el panel (y no algo que escribieron a mano)? */
-function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(String(oc||'').trim()); }
+function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
 /* El próximo del mes. Se mira el MES DE CARGA de cada pedido (no solo el prefijo):
    si no, el "08" del año pasado seguiría sumando al de este año. */
-function nextOcMes(fecha){
+function nextOcMes(fecha, tipo){
   var f=fecha||todayStr(), pre=ocMesDe(f), mes=String(f).slice(0,7), mx=0;
+  var atc = String(tipo||'OC').toUpperCase()==='ATC';
   for(var i=0;i<STATE.length;i++){
     var p=STATE[i];
     if(!p || esRoho(p.vendedor)) continue;
     if(contaFecha(p).slice(0,7)!==mes) continue;
-    var m=String(p.oc||'').trim().match(/^(\d{2})-(\d+)$/);
+    if(esATC(p.oc)!==atc) continue;              // cada serie cuenta la suya
+    var m=ocSinPre(p.oc).match(/^(\d{2})-(\d+)$/);
     if(!m || m[1]!==pre) continue;
     var v=parseInt(m[2],10); if(v>mx) mx=v;
   }
-  return pre+'-'+pad3(mx+1);
+  return (atc?ATC_PRE:'')+pre+'-'+pad3(mx+1);
 }
 /* Si dos cargaron en el mismo instante puede repetirse un número. Es MUY poco
    probable (hay que guardar en el mismo segundo) pero no imposible sin tocar el
@@ -1538,7 +1553,7 @@ function renderConta(){
     return '<tr onclick="showContaModal(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
       '<td style="white-space:nowrap">'+esc(tsFmt(p.ts)||fmtFecha(p.fecha))+'</td>'+
       '<td style="white-space:nowrap">'+entregaFechaHtml(p)+'</td>'+
-      '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">OC '+esc(p.oc)+'</span>'):'')+'</td>'+
+      '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">'+esc(ocEtiq(p.oc))+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
       '<td><b>'+esc(p.cliente||'—')+'</b></td>'+
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
@@ -2841,7 +2856,7 @@ function showContaModal(id){
       (reg?'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;padding:9px 13px;margin-bottom:11px;color:#0a6b47;font-weight:700;font-size:.88rem">✅ Ya está registrado en el sistema contable</div>':'')+
       row('Ingresado', esc(tsFmt(p.ts)||fmtFecha(p.fecha)))+
       row('N° Nota de venta', p.nota?('<b>'+esc(p.nota)+'</b>'):'—')+
-      row('N° OC', esc(p.oc))+
+      row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+
       row('Vendedor', esc(p.vendedor))+
       row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
       row('Entrega', tipoVentaHtml(p))+
@@ -3362,7 +3377,7 @@ function submitPedido(){
      al abrir el formulario: si se asignara antes, dos vendedoras con el formulario
      abierto se llevarían el mismo número. Editando NO se toca: el pedido conserva el
      suyo. ROHO queda afuera — su OC es el número que manda el cliente. */
-  if(!isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo()) ocSel=nextOcMes();
+  if(!isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo()) ocSel=nextOcMes(null, docTipoSel());
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -3625,23 +3640,35 @@ function cancelarVentaTienda(){
 }
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
+function docTipoSel(){ return segVal('f-doc-tipo')==='ATC' ? 'ATC' : 'OC'; }
+/* ATC = atención al cliente. Es un servicio, no una venta, así que lleva su propia
+   numeración: cada serie corre por su cuenta y se distingue de un vistazo. */
 function pintarCampoOc(roho){
   var fo=document.getElementById('f-oc'), hint=document.getElementById('f-oc-hint');
   if(!fo) return;
+  var atc=docTipoSel()==='ATC';
   var manual = roho || !!EDIT_ID || !ocAutoActivo();
   fo.readOnly=!manual;
   fo.style.background = manual ? '' : 'var(--gray-lt)';
   fo.style.color      = manual ? '' : 'var(--muted)';
   fo.placeholder = manual ? 'Ej. 1024' : 'Se asigna solo al guardar';
+  var lb=document.getElementById('f-oc-lb');
+  if(lb) lb.childNodes[0].nodeValue = atc ? 'N° ATC ' : 'N° OC ';
   // En ROHO el cartel lo pone el "* obligatorio para ROHO": si no, se contradicen.
-  if(hint) hint.textContent = roho ? '' : (manual ? '(orden de compra, opcional)' : ('(se asigna solo — va por '+nextOcMes()+')'));
+  if(hint) hint.textContent = roho ? ''
+    : (manual ? (atc?'(atención al cliente)':'(orden de compra, opcional)')
+              : ('(se asigna solo — va por '+nextOcMes(null, docTipoSel())+')'));
+  // El selector no tiene sentido en ROHO: ahí el número lo manda el cliente.
+  var wt=document.getElementById('f-doc-tipo'); if(wt) wt.style.display = roho ? 'none' : '';
 }
+function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); }
 function resetForm(){
   EDIT_ID=null;
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
+  segSet('f-doc-tipo','OC');
   document.getElementById('f-vendedor').value=getVendedorMem(); applyVendedorLite();
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
@@ -3681,6 +3708,7 @@ function editPedido(id){
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
+  segSet('f-doc-tipo', esATC(rec.oc)?'ATC':'OC');
   document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
@@ -4186,7 +4214,7 @@ function renderAdmin(){
 
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
-  var head='<thead><tr><th>Acciones</th>'+sh('num','N°')+sh('fecha','Entrega')+'<th>N° OC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th>'+sh('estado','Estado')+'<th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Vehículo</th>'+shNum('saldo','Saldo')+'</tr></thead>';
+  var head='<thead><tr><th>Acciones</th>'+sh('num','N°')+sh('fecha','Entrega')+'<th>N° OC / ATC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th>'+sh('estado','Estado')+'<th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Vehículo</th>'+shNum('saldo','Saldo')+'</tr></thead>';
   var dn=dayNumMap();
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
@@ -4297,7 +4325,7 @@ function renderRevisar(){
   var detail='';
   if(REVISAR_OPEN){
     detail=probl.map(function(o){ var p=o.p;
-      return '<div class="rv-item"><b>'+esc(p.cliente||'(sin cliente)')+'</b>'+(p.oc?(' <span style="color:#a06a00">OC '+esc(p.oc)+'</span>'):'')+' '+
+      return '<div class="rv-item"><b>'+esc(p.cliente||'(sin cliente)')+'</b>'+(p.oc?(' <span style="color:#a06a00">'+esc(ocEtiq(p.oc))+'</span>'):'')+' '+
         o.miss.map(function(m){return '<span class="rv-miss">'+m+'</span>';}).join(' ')+
         '<button class="rowbtn" style="margin-left:auto" onclick="showPedidoModal(\''+p.id+'\')">Abrir</button></div>';
     }).join('');
@@ -4920,7 +4948,7 @@ function entregaCardHtml(p, dn, pendiente){
     '<div class="ent-top">'+
       (dn?('<span class="ent-n">#'+dn+'</span>'):'')+
       '<b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" title="Ver la ficha completa" onclick="showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
-      (p.oc?('<span class="badge b-gray">OC '+esc(p.oc)+'</span>'):'')+
+      (p.oc?('<span class="badge b-gray">'+esc(ocEtiq(p.oc))+'</span>'):'')+
       (p.nota?('<span class="badge b-gray">Nota '+esc(p.nota)+'</span>'):'')+
       '<span style="color:var(--muted);font-size:.8rem">'+esc(normTurno(p.turno))+(p.zona?(' · '+esc(p.zona)):'')+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
       '<span style="margin-left:auto">'+cobTxt+'</span>'+
@@ -5000,7 +5028,7 @@ function entregasTexto(){
     L.push('', '🚛 '+k+'  ('+g.list.length+(g.list.length===1?' entrega':' entregas')+' · '+fmtBs(g.cobrado)+')');
     g.list.forEach(function(p){
       var cob=cobrosVisibles(p);
-      L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?('OC '+p.oc+' · '):'')+(p.cliente||'')+
+      L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?(ocEtiq(p.oc)+' · '):'')+(p.cliente||'')+
         (cob.length?('  → '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')):
           ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+
         (fotosDe(p).length?'  📷':''));
@@ -5102,7 +5130,7 @@ function abrirVisor(pid, idx){
   var p=findById(pid); if(!p) return;
   var a=fotosDe(p); if(!a.length) return;
   VISOR={ ids:a, i:Math.min(Math.max(0, idx||0), a.length-1), pid:pid,
-          tit:(p.cliente||'')+(p.oc?(' · OC '+p.oc):'')+' · '+fmtFecha(p.fecha) };
+          tit:(p.cliente||'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+' · '+fmtFecha(p.fecha) };
   renderVisor();
 }
 function renderVisor(){
@@ -5277,7 +5305,7 @@ function misCardHtml(p, n, todos){
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
-          (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · OC '+esc(p.oc)):'')+'</div></div>'+
+          (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
@@ -5387,7 +5415,7 @@ function showMisModal(id){
       ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
-  var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · OC '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -5610,7 +5638,7 @@ function diaSemana(iso){ var d=dowDe(iso); return d>=0?DIAS_SEM[d]:''; }
 function envioFecha(modo){ return modo==='hoy'?todayStr():tomorrowStr(); }
 function envioCliente(p){ return String(p.cliente||'').trim()||'—'; }
 function envioQuien(p){
-  return esRoho(p.vendedor) ? ('OC '+cleanOC(p.oc)) : String(p.vendedor||'').trim();
+  return esRoho(p.vendedor) ? (ocEtiq(cleanOC(p.oc))) : String(p.vendedor||'').trim();
 }
 function envioProd(p){
   return (p.productos||[]).map(function(x){
@@ -6252,7 +6280,7 @@ function pedidoText(p){
     if(x.codigo) s+=' (cód '+x.codigo+')';
     return s+' × '+x.cant;
   }).join('\n');
-  var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · OC '+p.oc):'')+'*',
+  var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+'*',
     '📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):''),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
@@ -6417,7 +6445,7 @@ function showPedidoModal(id){
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
-    row('N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+    row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos'+PROD_AYUDA, prod+prodResumen(p))+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
@@ -7245,7 +7273,7 @@ function renderMapaLegend(){
 }
 function mapaPopup(p){
   var dn=dayNumMap();
-  var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+  var ident=p.oc?ocEtiq(p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
   var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
   var choferOpts='<option value=""'+(p.chofer?'':' selected')+'>Sin chofer</option>'+allChoferes().map(function(c){ return '<option'+(p.chofer===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
   return '<b>'+esc(title)+'</b><br>'+
@@ -7309,7 +7337,7 @@ function buildMapaKml(list, coords){
     kml+='<Folder><name>'+xmlEsc(ch)+'</name>';
     byC[ch].forEach(function(it){
       var p=it.p, g=it.g;
-      var ident=p.oc?('OC '+p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
+      var ident=p.oc?ocEtiq(p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
       var nom=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
       var desc=[ p.cliente?('Cliente: '+p.cliente):'', p.celular?('Cel: '+p.celular):'',
         p.direccion?('Dir: '+p.direccion):'', p.turno?('Turno: '+p.turno):'',
@@ -7343,6 +7371,7 @@ document.addEventListener('DOMContentLoaded',function(){
   });
   initSeg('f-metodo',updateBancoVisibility);
   initSeg('f-envio-cob',pintarEnvioCobrado);
+  initSeg('f-doc-tipo',setDocTipo);
   initSeg('cta-mode',setContaModo);
   initSeg('cta-base',setContaBase);
   initSeg('cta-tab',setContaTab);
