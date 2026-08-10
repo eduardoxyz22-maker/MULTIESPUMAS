@@ -593,7 +593,15 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="field" id="wrap-envio" style="display:none">
         <label class="lb">🚚 Recargo por entrega <span class="hint">opcional — el flete que paga el cliente APARTE. No baja el saldo ni se factura</span></label>
-        <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150"></div>
+        <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
+        <div id="wrap-envio-cob" style="display:none;margin-top:8px">
+          <label class="lb">¿Ya cobraste el flete?</label>
+          <div class="seg" id="f-envio-cob">
+            <button type="button" data-val="NO" class="active">Todavía no — se cobra al entregar</button>
+            <button type="button" data-val="SI">Sí, ya lo cobré</button>
+          </div>
+          <div id="f-envio-hint" style="font-size:.75rem;color:var(--muted);margin-top:5px"></div>
+        </div>
       </div>
 
       <div class="field" id="wrap-banco" style="display:none">
@@ -1464,9 +1472,11 @@ function renderContaMetrics(list, vSel){
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   var list=contaLista();
-  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0;
+  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0;
   list.forEach(function(p){
     envios=r2(envios+envioTotal(p));
+    enviosCob=r2(enviosCob+envioCobrado(p));
+    enviosFalta=r2(enviosFalta+envioPorCobrar(p));
     if(regEnSistema(p)) nReg++;
     if(p.pagado) nPag++; else nDebe++;
     aCuenta+=Number(p.acuenta)||0;
@@ -1479,7 +1489,9 @@ function renderConta(){
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
     (saldo>0?(' ('+fmtBs(saldo)+')'):'')+(aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
-    (envios>0?(' &nbsp;·&nbsp; 🚚 Recargos de entrega: <b>'+fmtBs(envios)+'</b>'):'')+
+    (envios>0?(' &nbsp;·&nbsp; 🚚 Recargos de entrega: <b>'+fmtBs(envios)+'</b>'+
+      ' <span style="color:var(--muted)">(cobrado '+fmtBs(enviosCob)+
+      (enviosFalta>0.01?(' · <b style="color:var(--red)">por cobrar '+fmtBs(enviosFalta)+'</b>'):'')+')</span>'):'')+
     ' &nbsp;·&nbsp; 🧾 En el sistema: <b>'+nReg+'</b> de '+list.length+
     (list.length-nReg>0?(' <span style="color:var(--amber)">('+(list.length-nReg)+' por cargar)</span>'):'')+
     (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'');
@@ -1517,14 +1529,29 @@ function renderConta(){
     '</tr>';
   }).join('')+'</tbody>';
 }
+/* Los tres números del flete, que es lo que pidió contabilidad: cuánto se pactó,
+   cuánto ya entró y cuánto falta cobrar en la puerta. */
+function envioResumenHtml(p){
+  var tot=envioTotal(p), cob=envioCobrado(p), falta=envioPorCobrar(p);
+  return '<b style="color:var(--amber)">'+fmtBs(tot)+'</b>'+
+    ' <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>'+
+    '<div style="margin-top:3px;font-size:.85em">'+
+      '✅ Cobrado: <b>'+fmtBs(cob)+'</b> &nbsp;·&nbsp; '+
+      (falta>0.01
+        ? '<b style="color:var(--red)">⏳ Por cobrar: '+fmtBs(falta)+'</b> <span style="color:var(--muted)">— se cobra al entregar</span>'
+        : '<span style="color:var(--green);font-weight:700">✅ Nada por cobrar</span>')+
+    '</div>';
+}
 /* El flete que pagó el cliente aparte. Va en su propia columna a propósito: no es
    plata de la mercadería y no entra en lo facturado. */
 function envioCelda(p){
   var t=envioTotal(p);
   if(!(t>0)) return '<span style="color:var(--muted)">—</span>';
-  var e=enviosDe(p)[0]||{};
+  var falta=envioPorCobrar(p), e=enviosDe(p).filter(envioYaCobrado)[0]||{};
   return '<b style="color:var(--amber)">'+fmtBs(t)+'</b>'+
-    (e.metodo?('<br><span style="color:var(--muted);font-size:.9em">'+esc(cobroMetodoTxt(e))+'</span>'):'')+
+    (falta>0.01
+      ? '<br><span class="badge b-red" style="font-size:.6rem">⏳ POR COBRAR</span>'
+      : '<br><span style="color:var(--muted);font-size:.9em">'+esc(cobroMetodoTxt(e)||'cobrado')+'</span>')+
     compsArr(e.comps!=null?e.comps:e.comp).map(function(fid,k){
       return ' <span title="Ver la imagen '+(k+1)+' del recargo" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('');
 }
@@ -1540,8 +1567,11 @@ function contaPagos(p){
   var ant=anticipoDe(p);
   /* El recargo por entrega va AL FINAL: es plata que entró (tiene que verse en la ficha,
      en la tabla y en el cuadre) pero no es de la venta, así que no se mezcla con sus pagos. */
+  /* ⚠️ Solo el flete YA COBRADO: el pactado sin cobrar no entró a ninguna caja y no
+     puede figurar como pago (si no, el cuadre lo contaba como plata recibida). Ese se
+     ve en la fila "Recargo por entrega" y en el aviso de la vendedora. */
   return (ant?[ant]:[]).concat(cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; }))
-                       .concat(enviosDe(p));
+                       .concat(enviosDe(p).filter(envioYaCobrado));
 }
 function contaMontoTxt(c){ return (Number(c.monto)||0)>0 ? fmtBs(c.monto) : 'monto no anotado'; }
 function contaMetodoTxt(c){ return cobroMetodoTxt(c) || 'método no anotado'; }
@@ -1755,6 +1785,19 @@ function cuadreAlertas(pagos){
   });
   if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
   if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin
+     cobrar, es plata que la empresa no vio y que nadie va a reclamar solo. */
+  var fletes=[];
+  STATE.forEach(function(p){
+    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    if(!enPeriodoCuadre(contaFecha(p), pe)) return;
+    if(envioPendiente(p)) fletes.push(p);
+  });
+  if(fletes.length){
+    var fBs=0; fletes.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
+    A.push({ico:'🚚', txt:'<b>'+fletes.length+'</b> entrega'+(fletes.length===1?'':'s')+' con el <b>recargo por entrega sin cobrar</b> — '+fmtBs(fBs)+' que todavía no entró',
+             det:fletes.map(function(p){ return {txt:(p.cliente||'—')+' · '+fmtBs(envioPorCobrar(p))+(p.vendedor?(' · '+p.vendedor):''), id:p.id}; })});
+  }
   var sinSistema={};
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
@@ -1967,6 +2010,18 @@ function renderCuadreDetRetiros(){
         '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Es la plata que SALIÓ de la mano de la vendedora. Tocá un renglón para verlo o corregirlo.</div>'
       : '<div class="empty" style="padding:16px 0">No se registró ningún retiro en '+esc(cuadrePeriodoTxt())+'.</div>')+
     '</div>';
+}
+/* Desde "Mis pedidos": lleva a la ficha de esa venta con el cobro del flete listo,
+   que es donde se piden el monto, la fecha, el recibo y —obligatorio— el comprobante. */
+function cobrarFlete(id){
+  closeModal();
+  CTA_ULTIMA=String(id);
+  CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+  CTA_TIPO='envio';
+  showView('conta');
+  segSet('cta-tab','ventas'); setContaTab('ventas');
+  showContaModal(id);
+  var mb=document.getElementById('modal-box'); if(mb) setTimeout(function(){ mb.scrollTop=mb.scrollHeight; },120);
 }
 /* Desde el cuadre: abre la ventana de retiros con ese retiro listo para revisar. */
 function verRetiro(id){ abrirRetiros(); editarRetiro(id); }
@@ -2690,19 +2745,22 @@ function showContaModal(id){
   /* El mismo bloque sirve para dos cosas distintas: cobrar lo que falta de la VENTA, o
      anotar el RECARGO POR ENTREGA (el flete que paga el cliente aparte y que NO le baja
      el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
-  var esEnv = CTA_TIPO==='envio' || falta<=0.01;
+  // Con flete pactado sin cobrar, el bloque abre directo en modo recargo: es lo urgente.
+  var esEnv = CTA_TIPO==='envio' || falta<=0.01 || (CTA_TIPO!=='pago' && envioPendiente(p));
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
-  var formPago = (falta>0.01 || !yaEnv)
+  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p))
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
          (falta>0.01
            ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
            : '')+
          '<div class="lb" style="margin-bottom:8px">'+(esEnv
-             ? '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>'
+             ? (envioPorCobrar(p)>0.01
+                 ? '🚚 Cobrar el recargo por entrega — pactado <b style="color:var(--red)">'+fmtBs(envioPorCobrar(p))+'</b> <span style="font-weight:400;color:var(--muted)">sin cobrar</span>'
+                 : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+(esEnv?'':r2(falta))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -2713,7 +2771,7 @@ function showContaModal(id){
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?'Anotar el recargo':'Registrar pago')+'</button>'+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -2732,9 +2790,7 @@ function showContaModal(id){
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
       row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
-      (envioTotal(p)>0
-        ? row('🚚 Recargo por entrega', '<b style="color:var(--amber)">'+fmtBs(envioTotal(p))+'</b> <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>')
-        : '')+
+      (envioTotal(p)>0 ? row('🚚 Recargo por entrega', envioResumenHtml(p)) : '')+
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
       row('Observaciones', esc(p.observaciones))+
       formPago+
@@ -2782,7 +2838,10 @@ function ctaRegistrarPago(id){
   /* RECARGO POR ENTREGA: es plata que entró, pero NO es de la venta. No le baja el saldo,
      no cuenta como cobro de más y no entra en lo facturado. Va en su propio renglón. */
   if(CTA_TIPO==='envio' || falta<=0.01){
-    var ae=enviosDe(p); ae.push(linea);
+    /* Si había un flete PACTADO sin cobrar, este cobro lo reemplaza (no se suma encima):
+       lo que se está haciendo es justamente reportar que ya se cobró. */
+    var ae=enviosDe(p).filter(envioYaCobrado);
+    linea.envio=true; ae.push(linea);
     CTA_PAGO.comps=[];
     aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
@@ -2853,7 +2912,7 @@ function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','RECARGO ENTREGA (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -2866,13 +2925,13 @@ function exportConta(){
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
         i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
         i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
-        i===0?{v:envioTotal(p),t:'n'}:'',
+        i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
         i===0?(regEnSistema(p)?'SÍ':'NO'):'', i===0?(p.observaciones||''):''
       ]);
     });
   });
   var bytes=buildXlsx([{name:'Contabilidad',
-    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:18},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:18},{w:18},{w:20},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -2947,6 +3006,7 @@ function updateBancoVisibility(){
   // El banco es solo del QR; la imagen del pago se pide con CUALQUIER método.
   renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
   var we=document.getElementById('wrap-envio'); if(we) we.style.display=metodoVisible?'block':'none';
+  pintarEnvioCobrado();
 }
 /* ---- Imagen del pago en el formulario de carga (OBLIGATORIA con cualquier método) ----
    QR → la captura, Tarjeta → el voucher, Efectivo → el recibo que se le dio al cliente.
@@ -2970,6 +3030,17 @@ function renderCompForm(pide){
   if(!esQR){ box.innerHTML=''; return; }
   box.innerHTML = compTiraHtml(FORM_COMPS, 'quitarCompForm', 'adjuntarCompForm()',
     'Hasta '+COMP_MAX+' im\u00e1genes: '+nombreComprobante(segVal('f-metodo'))+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>');
+}
+/* El "¿ya lo cobraste?" solo tiene sentido si hay un monto de flete puesto. */
+function pintarEnvioCobrado(){
+  var el=document.getElementById('f-envio'), w=document.getElementById('wrap-envio-cob');
+  if(!el||!w) return;
+  var hay=(parseFloat(el.value)||0)>0;
+  w.style.display=hay?'block':'none';
+  var h=document.getElementById('f-envio-hint');
+  if(h) h.innerHTML = segVal('f-envio-cob')==='SI'
+    ? 'Se guarda como <b>cobrado</b>, con el mismo comprobante del pago.'
+    : 'Queda <b>por cobrar</b>: te va a aparecer en «Mis pedidos» hasta que lo registres con su comprobante.';
 }
 function quitarCompForm(i){
   var a=compsArr(FORM_COMPS);
@@ -3144,11 +3215,21 @@ function submitPedido(){
     var base=sinEnvios(sinMarcaReg(_metodoPago));
     var linea=null;
     if(monto>0){
+      var yaCob = segVal('f-envio-cob')==='SI';
+      /* ⚠️ Un recargo SIN método es el que todavía NO se cobró: así lo distingue todo el
+         panel. Con método (y su fecha, recibo y comprobante) es el que ya entró. */
       linea = prevEnv.length ? prevEnv[0]
-            : { metodo:(segVal('f-metodo')||'Efectivo'),
-                banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
-                fecha:todayStr(), nota:document.getElementById('f-nota').value,
-                comps:(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]) };
+            : { fecha:'', nota:'', comps:[] };
+      if(yaCob && !envioYaCobrado(linea)){
+        linea.metodo=(segVal('f-metodo')||'Efectivo');
+        linea.banco=(segVal('f-metodo')==='QR'?segVal('f-banco'):'');
+        linea.fecha=todayStr();
+        linea.nota=document.getElementById('f-nota').value;
+        linea.comps=(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]);
+      }else if(!yaCob && envioYaCobrado(linea)){
+        // lo pasó de "cobrado" a "por cobrar": se le saca el método (y su respaldo)
+        linea.metodo=''; linea.banco=''; linea.fecha=''; linea.nota=''; linea.comps=[];
+      }
       linea.monto=monto; linea.envio=true; linea.anticipo=false;
     }
     var txt = base + (linea ? ((base?' + ':'')+textoCobros([linea])) : '');
@@ -3514,6 +3595,7 @@ function resetForm(){
   FORM_COMPS=[]; renderCompForm(false);
   var _fcb=document.getElementById('f-cobrado'); if(_fcb){ _fcb.value=''; _fcb.classList.remove('err'); }
   var _fen=document.getElementById('f-envio'); if(_fen) _fen.value='';
+  segSet('f-envio-cob','NO'); pintarEnvioCobrado();
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
@@ -3546,7 +3628,10 @@ function editPedido(id){
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
   var _cb=document.getElementById('f-cobrado');
   if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
-  var _ce=document.getElementById('f-envio'); if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
+  var _ce=document.getElementById('f-envio');
+  if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
+  segSet('f-envio-cob', (envioTotal(rec)>0 && !envioPendiente(rec))?'SI':'NO');
+  pintarEnvioCobrado();
   document.getElementById('f-obs').value=rec.observaciones||'';
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';
@@ -4453,7 +4538,10 @@ function renderMisChips(mine){
    para pegar en WhatsApp. Sin correos: todo dentro de la app.
    ========================================================================== */
 function misPendientes(mine){
-  var sinStock=[], sinGps=[];
+  var sinStock=[], sinGps=[], sinFlete=[];
+  /* El flete se cobra EN LA PUERTA, así que es lo que más se olvida de reportar.
+     Se persigue aunque el pedido ya esté entregado: si no, se pierde para siempre. */
+  mine.forEach(function(p){ if(envioPendiente(p)) sinFlete.push(p); });
   mine.forEach(function(p){
     if(p.entregado) return;
     // Solo avisamos por lo que NO HAY. "📥 Recoger IM" no cuenta: el producto existe,
@@ -4462,16 +4550,30 @@ function misPendientes(mine){
     if(falta.length) sinStock.push({p:p, falta:falta});
     if(!p.maps) sinGps.push(p);
   });
-  return {sinStock:sinStock, sinGps:sinGps};
+  return {sinStock:sinStock, sinGps:sinGps, sinFlete:sinFlete};
 }
 function avisoMisHtml(mine){
-  var q=misPendientes(mine), n=q.sinStock.length, g=q.sinGps.length;
-  if(!n && !g) return '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-left:4px solid var(--green);border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#0a6b47">✅ No tenés nada pendiente. ¡Bien ahí!</div>';
+  var q=misPendientes(mine), n=q.sinStock.length, g=q.sinGps.length, f=q.sinFlete.length;
+  var fBs=0; q.sinFlete.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
+  var avisoFlete = f
+    ? ('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:10px;padding:11px 15px;margin-bottom:10px;font-size:.9rem;color:#8a1c24">'+
+         '🚚 <b>Recargo por entrega sin reportar:</b> '+f+(f===1?' entrega':' entregas')+' por <b>'+fmtBs(fBs)+'</b>. '+
+         'Cuando lo cobres, entrá al pedido y tocá <b>«Cobré el flete»</b> — hay que subir el comprobante.'+
+         '<div style="margin-top:7px;display:flex;gap:6px;flex-wrap:wrap">'+
+           q.sinFlete.slice(0,8).map(function(p){
+             return '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--red-border);color:#8a1c24;font-weight:700;font-size:.76rem;padding:3px 9px;width:auto" onclick="showMisModal('+JSON.stringify(String(p.id)).replace(/"/g,'&quot;')+')">'+esc(p.cliente||'—')+' · '+fmtBs(envioPorCobrar(p))+'</button>';
+           }).join('')+
+           (f>8?('<span style="align-self:center">… +'+(f-8)+'</span>'):'')+
+         '</div>'+
+       '</div>')
+    : '';
+  if(!n && !g) return avisoFlete+(avisoFlete?'':'<div style="background:var(--green-lt);border:1px solid var(--green-border);border-left:4px solid var(--green);border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:#0a6b47">✅ No tenés nada pendiente. ¡Bien ahí!</div>');
   var partes=[];
   if(n) partes.push('<b>'+n+'</b> '+(n===1?'pedido con un producto que no hay':'pedidos con productos que no hay'));
   if(g) partes.push('<b>'+g+'</b> '+(g===1?'ubicación GPS por cargar':'ubicaciones GPS por cargar'));
   var rojo=n>0;
-  return '<div style="background:'+(rojo?'var(--red-lt)':'var(--amber-lt)')+';border:1px solid '+(rojo?'var(--red-border)':'var(--amber-border)')+';border-left:4px solid '+(rojo?'var(--red)':'var(--amber)')+';border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:'+(rojo?'#8a1c24':'#7c4b00')+';display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
+  return avisoFlete+
+    '<div style="background:'+(rojo?'var(--red-lt)':'var(--amber-lt)')+';border:1px solid '+(rojo?'var(--red-border)':'var(--amber-border)')+';border-left:4px solid '+(rojo?'var(--red)':'var(--amber)')+';border-radius:10px;padding:11px 15px;margin-bottom:14px;font-size:.9rem;color:'+(rojo?'#8a1c24':'#7c4b00')+';display:flex;align-items:center;gap:10px;flex-wrap:wrap">'+
     '<span>'+(rojo?'🔴':'⚠️')+' Tenés '+partes.join(' y ')+'.</span>'+
     '<button class="btn btn-sm" style="margin-left:auto;background:'+(rojo?'var(--red)':'var(--amber)')+';color:#fff;font-weight:700" onclick="abrirMisAvisos()">Ver qué hacer</button></div>';
 }
@@ -5199,8 +5301,18 @@ function showMisModal(id){
     row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
-    row('Cobro', cobro)+row('Entrega', entrega)+row('Stock', estadoStockBadge(p))+row('Chofer', choferVal)+
+    row('Cobro', cobro)+
+    (envioTotal(p)>0 ? row('🚚 Recargo por entrega', envioResumenHtml(p)) : '')+
+    row('Entrega', entrega)+row('Stock', estadoStockBadge(p))+row('Chofer', choferVal)+
     row('Fotos de la entrega', fotosHtml(p, false));
+  /* El flete se cobra en la puerta: acá es donde la vendedora lo reporta. */
+  var fleteSec = envioPendiente(p)
+    ? ('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+         '<div style="font-weight:800;color:#8a1c24;font-size:.92rem">🚚 Tenés que cobrar '+fmtBs(envioPorCobrar(p))+' de flete</div>'+
+         '<div style="font-size:.8rem;color:#8a1c24;margin-top:3px">Cuando lo cobres, registralo acá con su <b>comprobante</b>. Hasta que no lo hagas te va a seguir apareciendo el aviso.</div>'+
+         '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;width:100%;margin-top:9px" onclick="cobrarFlete(\''+p.id+'\')">💵 Ya cobré el flete — registrarlo</button>'+
+       '</div>')
+    : '';
   var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
@@ -5208,7 +5320,7 @@ function showMisModal(id){
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · OC '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+alertas+body+ubicSec+
+    '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
       '</div>'+
@@ -5926,8 +6038,9 @@ function parseCobros(txt){
     var m=t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*$/);
     if(!m) return;
     var met=normMetodo(m[1]||'');
-    // Un cobro normal sin método es basura; el anticipo puede no tenerlo (venta vieja).
-    if(!met && !ant) return;
+    /* Un cobro normal sin método es basura; el anticipo puede no tenerlo (venta vieja),
+       y el RECARGO sin método es el que todavía NO se cobró (se cobra al entregar). */
+    if(!met && !ant && !env) return;
     var n=parseMonto(m[3]); if(!(n>0)) return;
     var cs=idsDeTexto(m[6]);
     out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]),
@@ -5939,7 +6052,8 @@ function textoCobros(arr){
   return (arr||[]).map(function(c){
     var nota=limpiaNota(c.nota);
     var comps=compsArr(c.comps!=null?c.comps:c.comp);
-    return (c.anticipo?'~':(c.envio?'^':''))+(c.metodo||'')+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+
+    var met=(c.metodo||'')+(c.banco?(' '+c.banco):'');
+    return (c.anticipo?'~':(c.envio?'^':''))+met+(met?' ':'')+r2(c.monto)+
            (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'')+
            comps.map(function(id){ return ' %'+id; }).join('');
   }).join(' + ');
@@ -5949,6 +6063,9 @@ function cobroMetodoTxt(c){ return String(c.metodo||'')+(c.banco?(' '+c.banco):'
 /* Los COBROS: lo que se cobró después de la venta. El anticipo queda afuera a
    propósito — mezclarlo acá le cambiaría las cuentas al chofer. */
 function esEnvio(c){ return !!(c && c.envio); }
+/* Un recargo con método ya se cobró (tiene fecha, recibo y comprobante).
+   Sin método es el que quedó PACTADO y se cobra al entregar. */
+function envioYaCobrado(c){ return esEnvio(c) && !!String(c.metodo||'').trim(); }
 /* El mismo texto pero SIN los recargos. Lo usan los caminos que leen el campo crudo
    (el método suelto de una venta con saldo, por ejemplo): para ellos el recargo no existe. */
 function sinEnvios(txt){
@@ -5957,7 +6074,15 @@ function sinEnvios(txt){
 }
 /* Los RECARGOS POR ENTREGA de una venta (el flete que paga el cliente aparte). */
 function enviosDe(p){ return parseCobros(p&&p.metodoPago).filter(esEnvio); }
+/* Lo PACTADO: todo el flete de esa venta, cobrado o no. */
 function envioTotal(p){ var t=0; enviosDe(p).forEach(function(c){ t=r2(t+(Number(c.monto)||0)); }); return t; }
+/* Lo que YA entró por flete. */
+function envioCobrado(p){
+  var t=0; enviosDe(p).forEach(function(c){ if(envioYaCobrado(c)) t=r2(t+(Number(c.monto)||0)); }); return t;
+}
+/* Lo que falta cobrar de flete: se cobra en la puerta, al entregar. */
+function envioPorCobrar(p){ return r2(envioTotal(p)-envioCobrado(p)); }
+function envioPendiente(p){ return envioPorCobrar(p)>0.01; }
 function cobrosDe(p){
   var todo=parseCobros(p.metodoPago);
   var a=todo.filter(function(c){ return !c.anticipo && !esEnvio(c); });
@@ -7149,6 +7274,7 @@ document.addEventListener('DOMContentLoaded',function(){
     updateMetodoVisibility();
   });
   initSeg('f-metodo',updateBancoVisibility);
+  initSeg('f-envio-cob',pintarEnvioCobrado);
   initSeg('cta-mode',setContaModo);
   initSeg('cta-tab',setContaTab);
   initSeg('cua-mode',setCuadreModo);

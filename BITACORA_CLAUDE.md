@@ -1111,6 +1111,41 @@ para que se refleje en contabilidad y los vendedores también lo registren y rep
   columna nueva en el Excel.
 - Tests: `test_recargo.js` (41), incluidos los tres formatos viejos que podían ensuciarse.
 
+## 4ai. El flete se cobra al entregar: pactado vs. cobrado (2026-08-10)
+
+Reporte: *"no todas las entregas tienen recargo, y falta mostrar en las fichas cuánto se
+cobrará por entregas y cuánto se cobró … y como se cobra al entregar debe alertar al vendedor
+y obligar a colocar si se pagó lo reportado por cobrar de entrega y subir comprobante"*.
+
+§4ah dejaba el recargo como **un pago ya hecho**. En la realidad **se cobra en la puerta**, así
+que hacían falta DOS estados.
+
+- **La distinción, sin inventar formato nuevo**: un `^` **sin método** es el flete **PACTADO
+  y sin cobrar**; **con método** (y su fecha, recibo y comprobante) es el **ya cobrado**.
+  Para eso `parseCobros` dejó de exigir método en las líneas `^`
+  (`if(!met && !ant && !env) return;`). Al cobrarlo, la línea pactada **se reemplaza**, no se
+  suma encima.
+  - `envioTotal` = pactado · `envioCobrado` · `envioPorCobrar` · `envioPendiente`.
+- ⚠️⚠️ **Lo que casi se cuela: el flete pactado NO puede figurar como plata que entró.**
+  Estaba entrando en `contaPagos()` → aparecía en "Pagos recibidos" como *"método no anotado"*
+  y, en el cuadre en modo **Todo** (§4af), **se contaba como ingreso**. `contaPagos()` ahora
+  filtra `envioYaCobrado`. Verificado con `dbg_flete3`: día/mes/todo = 4000, nunca 4250.
+- ⚠️ `textoCobros` metía un espacio de más sin método (`"^ 150"`). Parseaba igual, pero en la
+  hoja se veía sucio.
+- **Formulario**: bajo el monto, segmento **"¿Ya cobraste el flete?"** — por defecto
+  *"Todavía no, se cobra al entregar"*. Cambiarlo de SÍ a NO le saca método y comprobante.
+- **La persecución** (el pedido literal era *"obligar"*):
+  - `misPendientes()` suma `sinFlete` — y a diferencia de los otros pendientes, **persigue
+    también los pedidos ya entregados**: si no, el flete cobrado y no reportado se perdía.
+  - Aviso rojo en **Mis pedidos** con un botón por entrega.
+  - En la ficha, **"Ya cobré el flete — registrarlo"** → `cobrarFlete(id)` abre la ficha de
+    Contabilidad en modo recargo con el monto puesto. El comprobante ya era obligatorio (§4ab),
+    así que **no se puede reportar el cobro sin la foto**.
+  - En el cuadre, aviso **"N entregas con el recargo por entrega sin cobrar"**, tocable (§4ae).
+- **Los tres números** en la ficha (`envioResumenHtml`), en la columna de Ventas (badge
+  ⏳ POR COBRAR), en el resumen y en el Excel (RECARGO / COBRADO / POR COBRAR).
+- Tests: `test_flete2.js` (36). `test_recargo.js` (41) sigue verde.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
