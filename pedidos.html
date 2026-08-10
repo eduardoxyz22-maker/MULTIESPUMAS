@@ -1370,6 +1370,12 @@ function contaExcluido(v){
   for(var i=0;i<CONTA_EXCLUIR.length;i++) if(mismoVendedor(CONTA_EXCLUIR[i], v)) return true;
   return false;
 }
+/* ⚠️ La ÚNICA puerta de entrada a Contabilidad y al Cuadre. Quedan afuera:
+   - los vendedores excluidos (ROHO y Eduardo Añez), y
+   - las **ATC**: una atención al cliente es un servicio, no una venta — a contabilidad
+     no le interesa y ensuciaría los totales, el cuadre y la conciliación.
+   Todo lo que filtre por contabilidad tiene que pasar por acá, no por contaExcluido. */
+function fueraDeConta(p){ return !p || contaExcluido(p.vendedor) || esATC(p.oc); }
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
 function llenarSelectContaVendedor(){
@@ -1412,7 +1418,7 @@ function contaLista(){
   q=q.trim().toLowerCase();
   var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
   var list=STATE.filter(function(p){
-    if(contaExcluido(p.vendedor)) return false;
+    if(fueraDeConta(p)) return false;
     if(vend && !mismoVendedor(p.vendedor, vend)) return false;
     var f=contaFechaBase(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
@@ -1707,7 +1713,7 @@ function enPeriodoCuadre(fecha, pe){
 function cuadrePagos(){
   var pe=cuadrePeriodo(), vend=cuadreVendedor(), out=[];
   STATE.forEach(function(p){
-    if(contaExcluido(p.vendedor)) return;
+    if(fueraDeConta(p)) return;
     if(!cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
@@ -1806,7 +1812,7 @@ function renderCuadreSiActivo(){
 function cuadrePendientes(sinPeriodo){
   var hoy=todayStr(), vend=cuadreVendedor(), pe=cuadrePeriodo();
   return STATE.filter(function(p){
-      if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return false;
+      if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return false;
       if(p.pagado || !((Number(p.saldo)||0)>0.01)) return false;
       return sinPeriodo ? true : enPeriodoCuadre(contaFecha(p), pe);
     })
@@ -1827,7 +1833,7 @@ function diasEntre(a,b){
 function cuadreFletesPend(){
   var vend=cuadreVendedor(), pe=cuadrePeriodo(), out=[];
   STATE.forEach(function(p){
-    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     if(!enPeriodoCuadre(contaFecha(p), pe)) return;
     if(envioPendiente(p)) out.push(p);
   });
@@ -1847,7 +1853,7 @@ function cuadreAlertas(pagos){
        "pago sin fecha · Bs 0,00" no le decía nada a nadie. */
   var vend=cuadreVendedor(), pe=cuadrePeriodo(), sinFecha=[], sinMonto=[];
   STATE.forEach(function(p){
-    if(contaExcluido(p.vendedor) || !cuadreEsDe(p, vend)) return;
+    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     // Por la fecha de la VENTA: estos pagos justamente no tienen fecha propia, así
     // que cortarlos por la del pago los dejaría fuera de todos los períodos.
     if(!enPeriodoCuadre(contaFecha(p), pe)) return;

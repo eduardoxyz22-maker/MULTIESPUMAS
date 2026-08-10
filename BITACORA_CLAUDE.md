@@ -1204,7 +1204,18 @@ numera por OC sino por ATC porque es una atención al cliente"*.
 - **ROHO no cambia**: su N° lo manda el cliente, así que ahí el selector **se oculta** y el
   campo sigue siendo manual.
 - Al **editar**, el selector arranca en el tipo que ya tenía y el número no se toca.
-- Tests: `test_atc.js` (31).
+- ⚠️⚠️ **Las ATC NO entran a Contabilidad** (pedido explícito del usuario: *"las ATC no le
+  importan a contabilidad, no se deben ver en contabilidad y conciliación"*). Una atención al
+  cliente es un servicio, no una venta: ensuciaría los totales y el cuadre.
+  - Se agregó **`fueraDeConta(p)`** = `contaExcluido(p.vendedor) || esATC(p.oc)` y se cambió
+    en los **5** puntos de entrada: `contaLista`, `cuadrePagos`, `cuadrePendientes`,
+    `cuadreFletesPend` y `cuadreAlertas`. **Todo lo que filtre por contabilidad va por ahí**,
+    ya no por `contaExcluido` suelto.
+  - Con eso quedan afuera de una sola vez: la tabla de Ventas, sus tarjetas y su resumen, el
+    Excel, el detalle de pagos, el "por cobrar", los avisos, el efectivo por vendedora y las
+    dos tarjetas de transporte.
+  - **Sí siguen en Administración**, la lista de carga y la ruta: la entrega hay que hacerla.
+- Tests: `test_atc.js` (31) y `test_atcconta.js` (20).
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
