@@ -1071,6 +1071,46 @@ comprobante y el mensaje"*.
   se puede reenviar**.
 - Tests: `test_wapago.js` (24).
 
+## 4ah. Recargo por entrega — el flete que paga el cliente aparte (2026-08-10)
+
+Pedido: *"¿cómo podemos implementar cuando tiene un cobro adicional de recargo por entrega,
+para que se refleje en contabilidad y los vendedores también lo registren y reporten?"* +
+*"queremos tener mejor control haciendo que los vendedores reporten ese cobro y ese pago"*.
+
+**Decisiones del usuario** (preguntadas antes de escribir una línea):
+1. El recargo va **APARTE de la venta** — no se suma al saldo del cliente.
+2. **NO se factura** — columna y total propios, sin mezclarse con lo facturado.
+3. Lo carga **la vendedora al cargar el pedido** y también se puede anotar **después desde
+   Contabilidad** (para el clásico *"el cliente pagará transporte contra entrega, cotizar"*).
+   **El chofer NO lo anota** (el usuario lo descartó).
+
+- **Formato**: un renglón más en el mismo historial de pagos, con la marca **`^`**
+  (`~` = anticipo, `^` = recargo): `"~Efectivo 5000 @… #900 %F1 + ^Efectivo 150 @… #900 %F2"`.
+  Sin columnas nuevas y **sin redeploy del Apps Script**.
+- ⚠️⚠️ **La parte delicada: que el recargo sea INVISIBLE para todo lo demás.**
+  - `cobrosDe()` lo excluye → no toca `totalCobrado`, `objetivoCobro`, `saldo`, `ventaTotal`
+    ni `excesoCobro` (si no, cada flete aparecía como **"cobro de más"**).
+  - `aplicarCobros()` **relee los recargos antes de reescribir** y los vuelve a escribir,
+    igual que el anticipo: sin eso, el primer cobro se los llevaba puestos.
+  - **`sinEnvios(txt)`** para los caminos que leen el campo CRUDO (el "método suelto" de una
+    venta con saldo). Sin esto, un pedido viejo con recargo perdía su método y su comprobante.
+  - `aplicarEnvios(p, arr)` reescribe SOLO los recargos, dejando anticipo y cobros intactos.
+- **Sí es visible como plata que entró**: `contaPagos()` lo agrega al final, así sale en la
+  ficha, en la celda de pagos y en el **cuadre** (marcado `🚚 RECARGO`). En el cuadre se aclara
+  cuánto de lo que entró es flete, y va también en el texto de WhatsApp.
+- **Dónde se carga**:
+  - Formulario: campo **"🚚 Recargo por entrega"**, aparece junto al método de pago. Hereda el
+    método, la fecha, la nota y las fotos del cobro. Al editar se relee y se puede borrar.
+  - Ficha de Contabilidad: dos botones arriba del bloque de cobro — **💵 Pago de la venta** /
+    **🚚 Recargo por entrega** (`CTA_TIPO`). Con saldo 0 el bloque aparece directo en modo
+    recargo (antes no aparecía nada y no había dónde anotarlo). Mismo comprobante obligatorio.
+  - Botones propios del renglón: `ctaEnvioAdjuntar`, `ctaEnvioQuitarComp`, `ctaBorrarEnvio`
+    (⚠️ el recargo **no está en `cobrosDe`**, así que los botones de los cobros no le sirven:
+    `ctaIdxCobro` devuelve **-1** para él a propósito).
+- **Contabilidad**: columna **"Recargo entrega"** (con método y 📎), total en el resumen, y
+  columna nueva en el Excel.
+- Tests: `test_recargo.js` (41), incluidos los tres formatos viejos que podían ensuciarse.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

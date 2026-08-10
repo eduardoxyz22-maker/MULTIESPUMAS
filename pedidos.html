@@ -591,6 +591,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000"></div>
       </div>
 
+      <div class="field" id="wrap-envio" style="display:none">
+        <label class="lb">🚚 Recargo por entrega <span class="hint">opcional — el flete que paga el cliente APARTE. No baja el saldo ni se factura</span></label>
+        <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150"></div>
+      </div>
+
       <div class="field" id="wrap-banco" style="display:none">
         <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
         <div class="seg mtd" id="f-banco"></div>
@@ -1459,8 +1464,9 @@ function renderContaMetrics(list, vSel){
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   var list=contaLista();
-  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0;
+  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0;
   list.forEach(function(p){
+    envios=r2(envios+envioTotal(p));
     if(regEnSistema(p)) nReg++;
     if(p.pagado) nPag++; else nDebe++;
     aCuenta+=Number(p.acuenta)||0;
@@ -1473,6 +1479,7 @@ function renderConta(){
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
     (saldo>0?(' ('+fmtBs(saldo)+')'):'')+(aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
+    (envios>0?(' &nbsp;·&nbsp; 🚚 Recargos de entrega: <b>'+fmtBs(envios)+'</b>'):'')+
     ' &nbsp;·&nbsp; 🧾 En el sistema: <b>'+nReg+'</b> de '+list.length+
     (list.length-nReg>0?(' <span style="color:var(--amber)">('+(list.length-nReg)+' por cargar)</span>'):'')+
     (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'');
@@ -1490,7 +1497,7 @@ function renderConta(){
   tbl.style.display=list.length?'table':'none';
   if(!list.length){ tbl.innerHTML=''; return; }
   var head='<thead><tr><th>Ingresado</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Entrega</th><th>Celular</th>'+
-           '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Observaciones</th></tr></thead>';
+           '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Recargo entrega</th><th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+list.map(function(p){
     var reg=regEnSistema(p);
     return '<tr onclick="showContaModal(\''+p.id+'\')" style="cursor:pointer'+(reg?';background:var(--green-lt)':'')+'" title="'+(reg?'Ya registrado en el sistema contable':'Abrir para ver todo y registrar pagos')+'">'+
@@ -1505,9 +1512,21 @@ function renderConta(){
       '<td style="white-space:nowrap">'+esc(p.nit||'—')+'</td>'+
       '<td style="white-space:nowrap">'+(reg?'<span class="badge b-green" style="margin-right:4px">✅ EN SISTEMA</span><br>':'')+contaPagoHtml(p)+'</td>'+
       '<td>'+contaPagosCelda(p)+'</td>'+
+      '<td style="white-space:nowrap">'+envioCelda(p)+'</td>'+
       '<td class="prod-cell">'+esc(p.observaciones||'')+'</td>'+
     '</tr>';
   }).join('')+'</tbody>';
+}
+/* El flete que pagó el cliente aparte. Va en su propia columna a propósito: no es
+   plata de la mercadería y no entra en lo facturado. */
+function envioCelda(p){
+  var t=envioTotal(p);
+  if(!(t>0)) return '<span style="color:var(--muted)">—</span>';
+  var e=enviosDe(p)[0]||{};
+  return '<b style="color:var(--amber)">'+fmtBs(t)+'</b>'+
+    (e.metodo?('<br><span style="color:var(--muted);font-size:.9em">'+esc(cobroMetodoTxt(e))+'</span>'):'')+
+    compsArr(e.comps!=null?e.comps:e.comp).map(function(fid,k){
+      return ' <span title="Ver la imagen '+(k+1)+' del recargo" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('');
 }
 /* Cada pago en su renglón: fecha · método (con banco) · monto. Es lo que pidió
    contabilidad para ver "los dos pagos" cuando entraron en fechas distintas. */
@@ -1519,7 +1538,10 @@ function renderConta(){
    resto del panel no es un "cobro") y después lo que se fue cobrando. */
 function contaPagos(p){
   var ant=anticipoDe(p);
-  return (ant?[ant]:[]).concat(cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; }));
+  /* El recargo por entrega va AL FINAL: es plata que entró (tiene que verse en la ficha,
+     en la tabla y en el cuadre) pero no es de la venta, así que no se mezcla con sus pagos. */
+  return (ant?[ant]:[]).concat(cobrosDe(p).filter(function(c){ return c.metodo||c.monto>0; }))
+                       .concat(enviosDe(p));
 }
 function contaMontoTxt(c){ return (Number(c.monto)||0)>0 ? fmtBs(c.monto) : 'monto no anotado'; }
 function contaMetodoTxt(c){ return cobroMetodoTxt(c) || 'método no anotado'; }
@@ -1603,7 +1625,8 @@ function cuadrePagos(){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
                  monto:Number(c.monto)||0, nota:limpiaNota(c.nota),
-                 comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''), anticipo:!!c.anticipo });
+                 comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''),
+                 anticipo:!!c.anticipo, envio:esEnvio(c) });
     });
   });
   return out.sort(function(a,b){
@@ -1779,13 +1802,16 @@ function renderCuadre(){
   /* ---- efectivo retirado y lo que todavía está en la mano ----
      El efectivo es el único que se puede perder de vista: entra a la mano de la vendedora
      y de ahí lo tiene que recoger alguien. Estos dos números son el control de eso. */
+  // Cuánto de lo que entró es RECARGO POR ENTREGA (flete), que no es plata de la venta.
+  var recargos=0; pagos.forEach(function(c){ if(esEnvio(c)) recargos=r2(recargos+c.monto); });
   var pe=cuadrePeriodo();
   var rets=retirosDe(pe, vendSel), retirado=retirosTotal(rets);
   var porRetirar=r2(efectivo-retirado);
   var deQuien=vendSel?('de '+vendSel):'del equipo';
 
   box.innerHTML=
-    mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s'))+
+    mc('var(--teal)','Entró en el período',fmtBs(total), pagos.length+' pago'+(pagos.length===1?'':'s')+' · '+Object.keys(ventas).length+' venta'+(Object.keys(ventas).length===1?'':'s')+
+       (recargos>0?(' · 🚚 '+fmtBs(recargos)+' de recargos'):''))+
     mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo')+
     mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
     mc('#7c3aed','Efectivo retirado',fmtBs(retirado),
@@ -1891,7 +1917,8 @@ function renderCuadre(){
             '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+
               compsArr(c.comps!=null?c.comps:c.comp).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del pago" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+'</td>'+
             '<td>'+esc(c.p.vendedor||'—')+'</td>'+
-            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+'</td>'+
+            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+
+              (esEnvio(c)?' <span class="badge b-amber" style="font-size:.6rem">🚚 RECARGO</span>':'')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
             '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
             '<td>'+(regEnSistema(c.p)?'<span class="badge b-green">✅</span>':'<span class="badge b-amber">falta</span>')+'</td></tr>';
@@ -1967,6 +1994,8 @@ function cuadreTexto(){
              (Math.abs(o.falta)<0.01 ? '  ✅' : (o.falta>0 ? ('  ⚠️ le quedan '+fmtBs(o.falta)) : ('  ⚠️ se retiró '+fmtBs(Math.abs(o.falta))+' de más'))));
     });
   }
+  var _rec=0; pagos.forEach(function(c){ if(esEnvio(c)) _rec=r2(_rec+c.monto); });
+  if(_rec>0) L.push('', '🚚 De eso, *'+fmtBs(_rec)+'* son recargos por entrega (flete, no es de la venta)');
   var pend=cuadrePendientes(), pt=cuadreSuma(pend);
   if(pend.length) L.push('', '⏳ Por cobrar de lo vendido en el período: *'+fmtBs(pt)+'* en '+pend.length+' venta'+(pend.length===1?'':'s'));
   var al=cuadreAlertas(pagos);
@@ -2436,7 +2465,7 @@ function contaPagosHtml(p){
   var pid=p.id;
   return cob.map(function(c,i){
     var n=limpiaNota(c.nota);
-    var idx=ctaIdxCobro(p, i);                      // el anticipo (idx<0) no se puede reescribir
+    var idx=ctaIdxCobro(p, i, c);                   // el anticipo y el recargo (idx<0) van por otra vía
     var esQR=metodoConComprobante(c.metodo);
     var cs=compsArr(c.comps!=null?c.comps:c.comp);
     var comp = cs.length
@@ -2444,7 +2473,8 @@ function contaPagosHtml(p){
            cs.map(function(fid,k){
              return '<span class="foto">'+
                '<img src="'+fotoThumb(fid)+'" alt="Imagen '+(k+1)+' del pago" loading="lazy" title="Ver en grande" onclick="window.open(\''+fotoVer(fid)+'\',\'_blank\')">'+
-               (idx>=0?('<button type="button" title="Quitar esta imagen" onclick="ctaQuitarComp(\''+pid+'\','+idx+','+k+')">✕</button>'):'')+
+               (idx>=0?('<button type="button" title="Quitar esta imagen" onclick="ctaQuitarComp(\''+pid+'\','+idx+','+k+')">✕</button>')
+                : (esEnvio(c)?('<button type="button" title="Quitar esta imagen" onclick="ctaEnvioQuitarComp(\''+pid+'\','+k+')">✕</button>'):''))+
              '</span>';
            }).join('')+
            ((esQR && idx>=0 && cs.length<COMP_MAX)
@@ -2454,6 +2484,16 @@ function contaPagosHtml(p){
       : (esQR && idx>=0
           ? ('<div style="margin-top:4px"><button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px" onclick="ctaAdjuntar(\''+pid+'\','+idx+')">📎 Adjuntar comprobante</button></div>')
           : '');
+    /* El recargo por entrega no se toca con los botones de los cobros (no está en esa
+       lista): tiene los suyos, que reescriben solo su renglón. */
+    var envBtns = esEnvio(c)
+      ? ('<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">'+
+           (cs.length<COMP_MAX
+             ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaEnvioAdjuntar(\''+pid+'\')">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar comprobante')+'</button>'
+             : '')+
+           '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaBorrarEnvio(\''+pid+'\')">🗑 Quitar el recargo</button>'+
+         '</div>')
+      : '';
     /* La venta que se marcó PAGADA sin anotar cuánto entró: acá se arregla.
        Es la que aparece en "Revisar antes de cerrar" y no sale en el detalle de pagos. */
     var faltaMonto = (idx>=0 && !((Number(c.monto)||0)>0))
@@ -2470,9 +2510,11 @@ function contaPagosHtml(p){
       (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
         :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
       (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
+      (esEnvio(c)?' <span class="badge b-amber" style="font-size:.62rem">🚚 RECARGO POR ENTREGA</span>':'')+
       wa+
       faltaMonto+
       comp+
+      envBtns+
     '</div>';
   }).join('');
 }
@@ -2480,6 +2522,9 @@ function contaPagosHtml(p){
    Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
    Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
 var CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+/* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
+var CTA_TIPO='pago';
+function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; showContaModal(id); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
    Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
@@ -2496,10 +2541,11 @@ function onCompElegido(ev){
   var pid=ev.target.dataset.pedido||'', p=findById(pid); if(!p) return;
   var destino=COMP_DESTINO; COMP_DESTINO=null;
   // Cuántas tiene ya: las del pago que se está por registrar, o las del pago elegido.
-  var yaTiene = destino
-    ? (function(){ var a=cobrosDe(p), c=a[destino.idx];
-        return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
-    : compsArr(CTA_PAGO.comps).length;
+  var yaTiene = !destino ? compsArr(CTA_PAGO.comps).length
+    : destino.envio
+      ? (function(){ var c=enviosDe(p)[0]; return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
+      : (function(){ var a=cobrosDe(p), c=a[destino.idx];
+          return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })();
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   achicarFoto(f, 1280, 0.72).then(function(dataUrl){
@@ -2510,7 +2556,17 @@ function onCompElegido(ev){
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
       return;
     }
-    if(destino){
+    if(destino && destino.envio){
+      // Al RECARGO POR ENTREGA: se reescribe solo su renglón.
+      var ae=enviosDe(p);
+      if(ae.length){
+        ae[0].comps=compsArr(compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp).concat([res.fotoId]));
+        ae[0].comp=ae[0].comps[0]||'';
+        aplicarEnvios(p, ae);
+      }
+      toast('Comprobante del recargo adjuntado ✓','ok');
+      showContaModal(p.id);
+    }else if(destino){
       // A un pago YA registrado: se reescribe ese renglón con su comprobante.
       var arr=cobrosDe(p).slice();
       if(destino.idx>=0 && destino.idx<arr.length){
@@ -2548,7 +2604,49 @@ function ctaQuitarComp(id, idx, k){
 }
 /* El índice del pago dentro de cobrosDe() — contaPagos() antepone el anticipo, que no
    se puede reescribir (no está en la lista de cobros). */
-function ctaIdxCobro(p, iEnContaPagos){ return anticipoDe(p) ? (iEnContaPagos-1) : iEnContaPagos; }
+function ctaIdxCobro(p, iEnContaPagos, c){
+  if(esEnvio(c)) return -1;                       // el recargo tiene sus propios botones
+  return anticipoDe(p) ? (iEnContaPagos-1) : iEnContaPagos;
+}
+/* ---- Botones del RECARGO POR ENTREGA en la ficha ---- */
+function ctaEnvioAdjuntar(id){
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  COMP_DESTINO={id:id, envio:true};
+  var el=document.getElementById('comp-input'); if(!el) return;
+  el.value=''; el.dataset.pedido=id; el.click();
+}
+function ctaEnvioQuitarComp(id, k){
+  var p=findById(id); if(!p) return;
+  var ae=enviosDe(p); if(!ae.length) return;
+  var cs=compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp);
+  var fid=cs[k]; if(!fid) return;
+  if(!confirm('¿Quitar esta imagen del recargo por entrega?')) return;
+  ae[0].comps=cs.filter(function(x){ return x!==fid; });
+  ae[0].comp=ae[0].comps[0]||'';
+  aplicarEnvios(p, ae);
+  if(CONNECTED) apiBorrarFoto(fid);
+  toast('Imagen quitada','ok');
+  showContaModal(id);
+}
+function ctaBorrarEnvio(id){
+  var p=findById(id); if(!p) return;
+  var ae=enviosDe(p); if(!ae.length) return;
+  if(!confirm('¿Quitar el recargo por entrega de '+fmtBs(ae[0].monto)+'?\n\nEl resto de la venta no se toca.')) return;
+  var fotos=compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp);
+  aplicarEnvios(p, []);
+  if(CONNECTED) fotos.forEach(function(fid){ apiBorrarFoto(fid); });
+  renderCuadreSiActivo(); renderContaSiActiva();
+  toast('Recargo por entrega quitado','ok');
+  showContaModal(id);
+}
+/* Reescribe SOLO los recargos, dejando intactos el anticipo y los cobros de la venta. */
+function aplicarEnvios(p, arr){
+  var ant=anticipoDe(p), cobros=cobrosDe(p);
+  var env=(arr||[]).map(function(c){ c.envio=true; c.anticipo=false; return c; })
+                   .filter(function(c){ return (Number(c.monto)||0)>0; });
+  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
+  persistPedido(p);
+}
 /* Anotarle el monto a una venta que se marcó PAGADA sin decir cuánto entró.
    Sin esto quedaban en el limbo: el aviso "Revisar antes de cerrar" las nombraba pero no
    salían en el detalle de pagos (un pago sin monto no es un pago) y no había dónde
@@ -2572,21 +2670,40 @@ function ctaAnotarMonto(id, idx){
   showContaModal(id); renderCuadreSiActivo(); renderContaSiActiva();
   toast('Monto anotado: '+fmtBs(monto)+(puso?(' · con la fecha de la venta ('+fmtFechaCorta(c.fecha)+')'):'')+' ✓','ok');
 }
+var CTA_ULTIMA='';
 function showContaModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='conta';
+  /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
+     un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
+  if(CTA_ULTIMA!==String(id)){
+    CTA_ULTIMA=String(id);
+    CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+    CTA_TIPO='pago';
+  }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
   var prods=contaProdTxt(p.productos).map(esc).join('<br>');
   var bancos=bancosDeVendedor(p.vendedor);
   var mb=function(m){ return '<button type="button" class="btn btn-sm" style="'+(CTA_PAGO.metodo===m?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetMetodo(\''+p.id+'\',\''+m+'\')">'+m+'</button>'; };
   var bb=function(b){ return '<button type="button" class="btn btn-sm" style="'+(CTA_PAGO.banco===b?'background:var(--teal-dk);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetBanco(\''+p.id+'\',\''+esc(b)+'\')">🏦 '+esc(b)+'</button>'; };
-  var formPago = falta>0.01
+  /* El mismo bloque sirve para dos cosas distintas: cobrar lo que falta de la VENTA, o
+     anotar el RECARGO POR ENTREGA (el flete que paga el cliente aparte y que NO le baja
+     el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
+  var esEnv = CTA_TIPO==='envio' || falta<=0.01;
+  var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
+  var yaEnv=envioTotal(p);
+  var formPago = (falta>0.01 || !yaEnv)
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
-         '<div class="lb" style="margin-bottom:8px">💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b></div>'+
+         (falta>0.01
+           ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
+           : '')+
+         '<div class="lb" style="margin-bottom:8px">'+(esEnv
+             ? '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>'
+             : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+r2(falta)+'" style="width:100%"></div>'+
-           '<div style="flex:1;min-width:130px"><label class="lb">Fecha del pago</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+(esEnv?'':r2(falta))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
@@ -2596,7 +2713,7 @@ function showContaModal(id){
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ Registrar pago</button>'+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?'Anotar el recargo':'Registrar pago')+'</button>'+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -2615,6 +2732,9 @@ function showContaModal(id){
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
       row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
+      (envioTotal(p)>0
+        ? row('🚚 Recargo por entrega', '<b style="color:var(--amber)">'+fmtBs(envioTotal(p))+'</b> <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>')
+        : '')+
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
       row('Observaciones', esc(p.observaciones))+
       formPago+
@@ -2657,10 +2777,22 @@ function ctaRegistrarPago(id){
     return;
   }
   var falta=Number(p.saldo)||0;
+  var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
+             comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])};
+  /* RECARGO POR ENTREGA: es plata que entró, pero NO es de la venta. No le baja el saldo,
+     no cuenta como cobro de más y no entra en lo facturado. Va en su propio renglón. */
+  if(CTA_TIPO==='envio' || falta<=0.01){
+    var ae=enviosDe(p); ae.push(linea);
+    CTA_PAGO.comps=[];
+    aplicarEnvios(p, ae);
+    renderCuadreSiActivo(); renderContaSiActiva();
+    toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
+    showPagoWhatsapp(id, contaPagos(p).length-1);
+    return;
+  }
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
-  arr.push({metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
-            comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])});
+  arr.push(linea);
   CTA_PAGO.comps=[];                                 // que no se peguen al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
@@ -2672,7 +2804,8 @@ function ctaRegistrarPago(id){
    un texto, pero el link abre el comprobante en Drive y sirve igual de respaldo. */
 function pagoTexto(p, c){
   if(!p || !c) return '';
-  var L=[c.anticipo?'💰 *PAGO A CUENTA (ANTICIPO)*':'💰 *PAGO REGISTRADO*',''];
+  var L=[esEnvio(c)?'🚚 *RECARGO POR ENTREGA COBRADO*'
+        :(c.anticipo?'💰 *PAGO A CUENTA (ANTICIPO)*':'💰 *PAGO REGISTRADO*'),''];
   L.push('👤 Cliente: '+(p.cliente||'—'));
   if(p.nota) L.push('🧾 Nota de venta: '+p.nota);
   L.push('📅 '+(c.fecha?fmtFecha(c.fecha):'sin fecha'));
@@ -2683,7 +2816,8 @@ function pagoTexto(p, c){
   if(p.vendedor) L.push('🧾 Vendedor: '+p.vendedor);
   var falta=Number(p.saldo)||0;
   L.push('');
-  L.push(falta>0.01 ? ('⏳ Queda por cobrar: *'+fmtBs(falta)+'*') : '✅ Venta PAGADA por completo');
+  L.push(esEnvio(c) ? '📌 Es el flete: va aparte de la venta, no se factura'
+        : (falta>0.01 ? ('⏳ Queda por cobrar: *'+fmtBs(falta)+'*') : '✅ Venta PAGADA por completo'));
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   if(cs.length){
     L.push('');
@@ -2719,7 +2853,7 @@ function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','RECARGO ENTREGA (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -2732,12 +2866,13 @@ function exportConta(){
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
         i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
         i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
+        i===0?{v:envioTotal(p),t:'n'}:'',
         i===0?(regEnSistema(p)?'SÍ':'NO'):'', i===0?(p.observaciones||''):''
       ]);
     });
   });
   var bytes=buildXlsx([{name:'Contabilidad',
-    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:18},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -2811,6 +2946,7 @@ function updateBancoVisibility(){
   if(!esQR) segSet('f-banco','');
   // El banco es solo del QR; la imagen del pago se pide con CUALQUIER método.
   renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
+  var we=document.getElementById('wrap-envio'); if(we) we.style.display=metodoVisible?'block':'none';
 }
 /* ---- Imagen del pago en el formulario de carga (OBLIGATORIA con cualquier método) ----
    QR → la captura, Tarjeta → el voucher, Efectivo → el recibo que se le dio al cliente.
@@ -2996,6 +3132,28 @@ function submitPedido(){
               }).join('\n')+
               '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
   var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
+  /* 🚚 RECARGO POR ENTREGA. Va como un renglón aparte al final del historial (`^…`):
+     no le baja el saldo a la venta, no se factura y no lo toca ninguna otra cuenta.
+     Se reescribe desde el formulario conservando el método, la fecha y las fotos que
+     ya tenía, para no perder el comprobante al editar el pedido por otra cosa. */
+  (function(){
+    var el=document.getElementById('f-envio'); if(!el) return;
+    var monto=parseFloat(el.value)||0;
+    var prevEnv = prev ? enviosDe(prev) : [];
+    if(!(monto>0) && !prevEnv.length) return;                 // no hay recargo ni lo hubo
+    var base=sinEnvios(sinMarcaReg(_metodoPago));
+    var linea=null;
+    if(monto>0){
+      linea = prevEnv.length ? prevEnv[0]
+            : { metodo:(segVal('f-metodo')||'Efectivo'),
+                banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
+                fecha:todayStr(), nota:document.getElementById('f-nota').value,
+                comps:(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]) };
+      linea.monto=monto; linea.envio=true; linea.anticipo=false;
+    }
+    var txt = base + (linea ? ((base?' + ':'')+textoCobros([linea])) : '');
+    _metodoPago = conMarcaReg(txt, !!(prev && regEnSistema(prev)));
+  })();
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
@@ -3355,6 +3513,7 @@ function resetForm(){
   document.getElementById('wrap-banco').style.display='none'; segSet('f-banco','');
   FORM_COMPS=[]; renderCompForm(false);
   var _fcb=document.getElementById('f-cobrado'); if(_fcb){ _fcb.value=''; _fcb.classList.remove('err'); }
+  var _fen=document.getElementById('f-envio'); if(_fen) _fen.value='';
   document.getElementById('wrap-nopago').style.display='';
   var mb=document.querySelectorAll('#f-metodo button'); for(var mi=0;mi<mb.length;mi++) mb[mi].classList.remove('active');
   var b=document.getElementById('f-submit'); b.disabled=false; b.textContent='Guardar pedido';
@@ -3387,6 +3546,7 @@ function editPedido(id){
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
   var _cb=document.getElementById('f-cobrado');
   if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
+  var _ce=document.getElementById('f-envio'); if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
   document.getElementById('f-obs').value=rec.observaciones||'';
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';
@@ -5758,8 +5918,11 @@ function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~%]/g,' ').re
 function parseCobros(txt){
   var out=[];
   sinMarcaReg(txt).split('+').forEach(function(s){
-    var t=s.trim(), ant=false;
+    var t=s.trim(), ant=false, env=false;
+    /* ~ = el anticipo de la venta.  ^ = RECARGO POR ENTREGA: plata que entró pero que
+       NO es de la mercadería, así que no le toca el saldo de la venta ni se factura. */
     if(t.charAt(0)==='~'){ ant=true; t=t.slice(1).trim(); }
+    else if(t.charAt(0)==='^'){ env=true; t=t.slice(1).trim(); }
     var m=t.match(/^([A-Za-zÁÉÍÓÚáéíóúÑñ]+)?(?:\s*([A-Za-zÁÉÍÓÚáéíóúÑñ]+))?\s*([\d.,]+)(?:\s*@\s*(\d{4}-\d{2}-\d{2}))?(?:\s*#\s*([^+·#%]*))?((?:\s*%\s*[A-Za-z0-9_-]+)*)\s*$/);
     if(!m) return;
     var met=normMetodo(m[1]||'');
@@ -5768,7 +5931,7 @@ function parseCobros(txt){
     var n=parseMonto(m[3]); if(!(n>0)) return;
     var cs=idsDeTexto(m[6]);
     out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]),
-              comps:cs, comp:(cs[0]||''), anticipo:ant});
+              comps:cs, comp:(cs[0]||''), anticipo:ant, envio:env});
   });
   return out;
 }
@@ -5776,7 +5939,7 @@ function textoCobros(arr){
   return (arr||[]).map(function(c){
     var nota=limpiaNota(c.nota);
     var comps=compsArr(c.comps!=null?c.comps:c.comp);
-    return (c.anticipo?'~':'')+(c.metodo||'')+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+
+    return (c.anticipo?'~':(c.envio?'^':''))+(c.metodo||'')+(c.banco?(' '+c.banco):'')+' '+r2(c.monto)+
            (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'')+
            comps.map(function(id){ return ' %'+id; }).join('');
   }).join(' + ');
@@ -5785,13 +5948,23 @@ function textoCobros(arr){
 function cobroMetodoTxt(c){ return String(c.metodo||'')+(c.banco?(' '+c.banco):''); }
 /* Los COBROS: lo que se cobró después de la venta. El anticipo queda afuera a
    propósito — mezclarlo acá le cambiaría las cuentas al chofer. */
+function esEnvio(c){ return !!(c && c.envio); }
+/* El mismo texto pero SIN los recargos. Lo usan los caminos que leen el campo crudo
+   (el método suelto de una venta con saldo, por ejemplo): para ellos el recargo no existe. */
+function sinEnvios(txt){
+  return String(txt==null?'':txt).split('+').map(function(x){ return x.trim(); })
+    .filter(function(x){ return x.charAt(0)!=='^'; }).join(' + ');
+}
+/* Los RECARGOS POR ENTREGA de una venta (el flete que paga el cliente aparte). */
+function enviosDe(p){ return parseCobros(p&&p.metodoPago).filter(esEnvio); }
+function envioTotal(p){ var t=0; enviosDe(p).forEach(function(c){ t=r2(t+(Number(c.monto)||0)); }); return t; }
 function cobrosDe(p){
   var todo=parseCobros(p.metodoPago);
-  var a=todo.filter(function(c){ return !c.anticipo; });
+  var a=todo.filter(function(c){ return !c.anticipo && !esEnvio(c); });
   if(a.length) return a;
   // Formato viejo: un solo método sin monto anotado (lo que dejaba la vendedora al cargar).
-  var t=sinMarcaReg(p.metodoPago);
-  if(p.pagado && t && !todo.length){
+  var t=sinEnvios(sinMarcaReg(p.metodoPago));
+  if(p.pagado && t && !todo.filter(function(c){ return !esEnvio(c); }).length){
     var cd=compDeTexto(t);
     return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comp:cd.comp}];
   }
@@ -5802,10 +5975,10 @@ function cobrosDe(p){
    la vendedora, y —como fecha y recibo— los de la venta, que es cuando lo pagó. */
 function anticipoDe(p){
   if(!p) return null;
-  var enTexto=parseCobros(p.metodoPago).filter(function(c){ return c.anticipo; });
+  var enTexto=parseCobros(p.metodoPago).filter(function(c){ return c.anticipo && !esEnvio(c); });
   if(enTexto.length) return enTexto[0];
   var acu=Number(p.acuenta)||0; if(!(acu>0)) return null;
-  var t=sinMarcaReg(p.metodoPago);
+  var t=sinEnvios(sinMarcaReg(p.metodoPago));
   var suelto = t && !parseCobros(t).length;   // "Efectivo" / "QR BISA": método sin monto
   var cd=compDeTexto(t);
   return { metodo:(suelto?metodoBase(cd.txt):'')||'', banco:(suelto?bancoDe(cd.txt):''), monto:r2(acu),
@@ -5818,7 +5991,7 @@ function ventaTotal(p){ var a=anticipoDe(p); return r2(objetivoCobro(p) + (a?(Nu
 /* Con qué pagó, para los segmentos del formulario de edición. Cuando el campo ya es el
    historial de pagos hay que sacar el método del anticipo, no del texto crudo. */
 function metodoFormulario(rec){
-  var t=sinMarcaReg(rec&&rec.metodoPago);
+  var t=sinEnvios(sinMarcaReg(rec&&rec.metodoPago));
   if(!parseCobros(t).length){ var cd=compDeTexto(t); return { metodo:metodoBase(cd.txt), banco:bancoDe(cd.txt), comp:cd.comp }; }
   var c=anticipoDe(rec)||parseCobros(t)[0]||{};
   return { metodo:c.metodo||'', banco:c.banco||'', comp:c.comp||'' };
@@ -5856,7 +6029,10 @@ function aplicarCobros(p, arr, objetivoForzado){
   // El anticipo se relee ANTES de reescribir el campo y se vuelve a escribir siempre,
   // igual que la marca REGISTRADO: si no, el primer cobro se lo llevaría puesto.
   var ant=anticipoDe(p);
-  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros)), regEnSistema(p));
+  /* ⚠️ Los recargos se releen ANTES de reescribir el campo y se vuelven a escribir
+     siempre, igual que el anticipo: si no, el primer cobro se los llevaba puestos. */
+  var env=enviosDe(p);
+  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
   p.cobradoBs=total;
   p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
   p.pagado = total>0 && total>=objetivo-0.01;

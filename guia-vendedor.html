@@ -75,6 +75,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#banco">🏦 Banco del QR</a>
     <a href="#monto">💰 Monto cobrado</a>
     <a href="#comprobante">📎 Comprobante</a>
+    <a href="#recargo">🚚 Recargo entrega</a>
     <a href="#medidas">📏 Medidas</a>
     <a href="#maps">🗺️ Link de Maps</a>
     <a href="#guardar">✅ Al guardar</a>
@@ -163,6 +164,13 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <p><b>Podés subir hasta 4 imágenes</b> por pago — por ejemplo el comprobante, el recibo y lo que haga falta. Después de la primera aparece <b>“📎 Agregar otra imagen”</b>; cuando ya están las 4, el botón desaparece y dice <b>✅ Listo</b>.</p>
     <div class="callout warn">🚫 <b>Sin ninguna imagen el pedido NO se guarda</b>, tampoco si el pago fue en efectivo. Si intentás guardar sin nada te va a saltar <b>el gato</b> 🐱 recordándotelo. Es lo que le permite a contabilidad confirmar que la plata entró. <b>Con una alcanza para guardar</b>, pero si tenés más, subilas.</div>
     <div class="callout">✅ Si te equivocaste de imagen, tocá la <b>✕ roja</b> de esa miniatura y elegí otra — se quita solo esa, las demás quedan.</div>
+  </div>
+
+  <div class="card" id="recargo">
+    <h3>🚚 Recargo por entrega <span class="pill">nuevo</span></h3>
+    <p>Cuando el cliente paga un <b>extra por el transporte</b>, se anota en el campo <b>“🚚 Recargo por entrega”</b>, que aparece junto al cobro. Poné solo el monto del flete: <span class="kbd">150</span>.</p>
+    <div class="callout">✅ <b>Va aparte de la venta.</b> Si vendiste Bs 5.000 y cobraste Bs 150 de flete, la venta sigue siendo de <b>Bs 5.000</b>: el recargo <b>no</b> le suma al total, <b>no</b> le baja el saldo y <b>no</b> se factura. Se anota aparte para que contabilidad sepa cuánto entró de fletes.</div>
+    <div class="callout warn">📌 Si el cliente <b>paga el transporte contra entrega</b> y todavía no sabés cuánto es, dejalo vacío. Después se anota desde <b>Contabilidad</b>, en la ficha de esa venta.</div>
   </div>
 
   <div class="card" id="medidas">
