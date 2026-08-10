@@ -1157,6 +1157,33 @@ que hacían falta DOS estados.
      corta por la **fecha de la VENTA** (un flete sin cobrar no tiene fecha de pago).
 - Tests: `test_flete2.js` (46). `test_recargo.js` (41) sigue verde.
 
+## 4aj. Contabilidad puede cortar por fecha de ENTREGA (2026-08-10)
+
+Reporte: *"este pedido entró en julio pero se entregó en agosto y no se ve reflejado en la
+planilla de contabilidad de agosto … ¿cómo hacemos cuando un pedido ingresa los últimos días
+del mes pasado y se entrega en el mes actual?"*
+
+No era un bug: **Contabilidad → Ventas siempre cortó por fecha de INGRESO** (el `ts`), a
+propósito (§ pestaña Contabilidad). Lo que faltaba era **poder mirarlo por la otra fecha**.
+
+- **`#cta-base`** — segmento nuevo **📝 Ingreso / 🚚 Entrega**, arriba del Día/Mes/Todo.
+  `contaBase()` y **`contaFechaBase(p)`** (entrega → `fechaSalida(p)`, que ya cubre las ventas
+  de tienda cayendo en la de ingreso). `contaLista()` filtra por esa fecha.
+  **El valor por defecto sigue siendo INGRESO**: cambiarlo movería todos los números que el
+  usuario ya conoce.
+- **Columna "Entregado el"** con `entregaFechaHtml(p)`: la fecha, más **📆 OTRO MES** cuando la
+  entrega cayó en un mes distinto al de la carga, **🏪 EN TIENDA** para las ventas de tienda y
+  *"sin entregar"* si todavía no salió. Va también al Excel.
+- **`pagoOtroMes(p, c)`** — marca los pagos cuyo mes difiere del de la venta: **📆 julio** en la
+  tabla y **📆 se pagó en julio de 2026** en la ficha. Es la respuesta visual a *"indicar se pagó
+  tanto el mes pasado"*, y explica por qué esa plata no está en el cuadre de este mes.
+- ⚠️ **El Cuadre NO se tocó**: sigue cortando por **fecha del PAGO**, que es lo correcto — la
+  plata se busca en la caja o el extracto del día en que entró. Una venta de julio entregada en
+  agosto puede figurar en la planilla de agosto (por entrega) y su plata en el cuadre de julio.
+  Son tres ejes distintos y a propósito: **admin = entrega · Ventas = ingreso o entrega ·
+  Cuadre = pago**. Está verificado en el test que no se duplica.
+- Tests: `test_mescruz.js` (21).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
