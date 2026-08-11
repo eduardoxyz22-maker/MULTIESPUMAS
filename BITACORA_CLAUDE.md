@@ -1217,6 +1217,35 @@ numera por OC sino por ATC porque es una atención al cliente"*.
   - **Sí siguen en Administración**, la lista de carga y la ruta: la entrega hay que hacerla.
 - Tests: `test_atc.js` (31) y `test_atcconta.js` (20).
 
+### Resaltado fucsia de las ATC (2026-08-11)
+El usuario preguntó **qué color quedaba libre** para resaltarlas. Relevamiento de los 7 ya usados
+en `rowKind()`: rojo `#dc2626` (falta stock) · violeta `#7c3aed` (recoger de IM) · naranja `#fb923c`
+(50x70) · celeste `#38bdf8` (medida especial) · verde `#e9f9f1` (en stock) · amarillo `#f5c400`
+(en producción) · gris `#90a4ae` (entregado). **Libre y no confundible: fucsia** — turquesa choca con
+el celeste y con el teal de la marca, y el marrón se lee como gris sucio al lado del de "entregado".
+
+**Decisión de diseño (la parte importante):** la ATC **no compite por el fondo de la fila**.
+`rowKind()` devuelve UNA sola clase por prioridad, así que si el fucsia entraba en esa cadena, una ATC
+sin stock **habría perdido el rojo**. En su lugar la ATC usa un **canal distinto**:
+- el **fondo** lo sigue mandando el estado de stock;
+- la **barrita izquierda** (`box-shadow: inset 4px 0 0`) pasa a fucsia — `row-atc` se agrega *además* de
+  la clase de stock, y su regla CSS va **última** a propósito (con `!important` empatado gana la de abajo);
+- se agrega el chip `🎧 ATC` (`.b-atc`).
+
+Variables nuevas en `:root`: `--atc #D946EF` / `--atc-lt` / `--atc-dk` / `--atc-border`.
+Ayudantes: `atcChip(p)` y `atcCls(p, cls)`.
+
+⚠️ En `#tbl-pedidos` la primera celda es `position:sticky` con fondo opaco y **tapa el `inset` del `<tr>`**
+(por eso ya existían las reglas `tr.row-X td:first-child{background:…}`). Hace falta la regla extra
+`#tbl-pedidos tbody tr.row-atc td:first-child{box-shadow:inset 4px 0 0 var(--atc),1px 0 0 var(--gray-lt)}`
+o la barra no se ve.
+
+Aplicado en las 5 vistas donde aparece un pedido: tabla de Administración, **Lista de carga**
+(`.carga-stop.atc`), **ruta del chofer** y **Mis entregas** (`.cho-card.atc`, filo izquierdo de 5px)
+y **reporte de entregas** (`.ent-card.atc` + el N° en chip fucsia).
+- Test: `test_atccolor.js` (32) — verifica que una ATC sin stock **conserva el mismo fondo rojo** que una
+  venta sin stock, que la entregada conserva el gris, y que ningún otro estado usa el fucsia.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

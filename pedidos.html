@@ -12,6 +12,8 @@
   --black:#1A1A1A; --text:#2D2D2D; --muted:#6B6B6B; --gray:#808080; --gray-md:#E2E2E2; --gray-lt:#F5F6F7; --white:#fff;
   --red:#CE2939; --red-lt:#FDEAEC; --red-border:#F5C0C5;
   --amber:#D97706; --amber-lt:#FEF3E2; --amber-border:#FCD34D;
+  /* Fucsia = 🎧 ATC. Es el único tono que no estaba usado por ningún estado de stock. */
+  --atc:#D946EF; --atc-lt:#FDF0FC; --atc-dk:#A21CAF; --atc-border:#F0ABFC;
   --green:#22A06B; --green-lt:#E6F9F0; --green-border:#b8e6d0;
   --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:20px;
@@ -211,6 +213,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .b-gray{background:var(--gray-lt);color:var(--gray);border:1px solid var(--gray-md)}
 .b-verif{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc}
 .b-im{background:#fff8d6;color:#8a6d00;border:1px solid #f0d264}
+.b-atc{background:var(--atc-lt);color:var(--atc-dk);border:1px solid var(--atc-border)}
 /* Revisión producto por producto (logística): ✔ hay / ✗ no hay */
 .chkbtn{width:34px;height:30px;flex:none;border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:7px;font:inherit;font-size:.95rem;font-weight:800;cursor:pointer;transition:all .12s}
 .chkbtn:hover{background:var(--gray-lt)}
@@ -225,6 +228,8 @@ tbody tr:hover{background:var(--teal-lt)}
 /* Parada de la lista de carga: se toca para abrir la ficha del pedido */
 /* ---- Panel del chofer: tarjetas grandes, pensadas para usar en el celular ---- */
 .cho-card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:14px 15px;margin-bottom:12px;box-shadow:var(--sh-card)}
+/* 🎧 ATC: se ve de lejos por el filo fucsia, sin tocar el gris de "ya entregado". */
+.cho-card.atc{border-left:5px solid var(--atc)}
 /* En pantalla ancha las fichas van en columnas. Estiradas a lo largo de toda la
    pantalla el nombre del cliente queda a un palmo de sus etiquetas y no se lee
    de un vistazo. En el celular sigue siendo una sola columna (el min(...,100%)) */
@@ -267,6 +272,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-sub .ent-card{margin:9px 9px 0}
 .ent-sub .ent-card:last-child{margin-bottom:9px}
 .ent-card{border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 12px;margin-bottom:9px;background:var(--gray-lt)}
+.ent-card.atc{border-left:5px solid var(--atc)}
 .ent-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.9rem}
 .ent-n{background:var(--teal);color:#fff;border-radius:var(--r-pill);padding:1px 9px;font-size:.76rem;font-weight:800}
 .ent-prod{font-size:.85rem;margin-top:5px}
@@ -303,6 +309,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .carga-fecha{margin-bottom:22px}
 .carga-fecha-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:#0f766e;color:#fff;font-weight:800;font-size:1rem;padding:9px 14px;border-radius:9px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
+.carga-stop.atc{box-shadow:inset 4px 0 0 var(--atc);padding-left:9px}
 .carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
 /* Resaltado suave de fila según estado de stock */
@@ -324,6 +331,11 @@ tbody tr.row-entregado{background:#e7ebee !important;box-shadow:inset 4px 0 0 #9
 tbody tr.row-entregado:hover{background:#dde3e7 !important}
 tbody tr.row-entregado td{color:#6b7880}
 tbody tr.row-entregado td b{color:#55636b}
+/* 🎧 ATC (atención al cliente): NO pelea por el fondo — ese sigue diciendo si hay stock.
+   Se lleva la barrita fucsia del borde izquierdo, que ningún otro estado usa. Va última
+   a propósito: con igual peso, la regla de más abajo es la que pinta la barra. */
+tbody tr.row-atc{box-shadow:inset 4px 0 0 var(--atc) !important}
+#tbl-pedidos tbody tr.row-atc td:first-child{box-shadow:inset 4px 0 0 var(--atc),1px 0 0 var(--gray-lt)}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
@@ -1127,6 +1139,15 @@ function ocSinPre(oc){ return String(oc||'').trim().replace(/^ATC\s*/i,''); }
 function ocEtiq(oc){ oc=String(oc||'').trim(); return oc ? (esATC(oc)?oc:('OC '+oc)) : ''; }
 /* ¿Es un número generado por el panel (y no algo que escribieron a mano)? */
 function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
+/* Chip fucsia para las listas. El fucsia es el único tono que no estaba ocupado por
+   ningún estado de stock, así que se distingue del rojo de "falta" de un vistazo. */
+function atcChip(p){
+  return esATC(p&&p.oc)
+    ? '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>'
+    : '';
+}
+/* La clase del resaltado, para pegarla donde haga falta. */
+function atcCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : ''; }
 /* El próximo del mes. Se mira el MES DE CARGA de cada pedido (no solo el prefijo):
    si no, el "08" del año pasado seguiría sumando al de este año. */
 function nextOcMes(fecha, tipo){
@@ -4238,6 +4259,8 @@ function renderAdmin(){
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=rowClass(p);
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
+    // La ATC se suma al final: no reemplaza el color de stock, le pone la barra fucsia.
+    if(esATC(p.oc)) cls=(cls?cls+' ':'')+'row-atc';
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
         '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
@@ -4247,7 +4270,7 @@ function renderAdmin(){
         '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+esc(p.oc||'—')+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td style="white-space:nowrap">'+estadoCell+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
@@ -4575,7 +4598,7 @@ function cargaBloquesHtml(list, fecha){
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div class="carga-stop" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop '+atcCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+atcChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -4834,11 +4857,12 @@ function renderChofer(){
       return t;
     }).join('<br>');
     var deuda=Number(p.saldo)||0;
-    return '<div class="cho-card'+(p.entregado?' hecho':'')+'">'+
+    return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+atcCls(p)+'">'+
       '<div class="cho-top">'+
         '<div class="cho-n" style="'+(p.entregado?'background:var(--gray)':'')+'">'+(i+1)+'</div>'+
         '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
           '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+'</div></div>'+
+        atcChip(p)+
         (todos?('<span class="badge b-gray">🚚 '+esc(p.chofer||'sin chofer')+'</span>'):'')+
         (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ Pendiente</span>')+
       '</div>'+
@@ -4950,11 +4974,11 @@ function entregaCardHtml(p, dn, pendiente){
                                : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
                   : '<span class="badge b-gray">Sin saldo</span>');
   var fotos=fotosDe(p);
-  return '<div class="ent-card">'+
+  return '<div class="ent-card '+atcCls(p)+'">'+
     '<div class="ent-top">'+
       (dn?('<span class="ent-n">#'+dn+'</span>'):'')+
       '<b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" title="Ver la ficha completa" onclick="showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
-      (p.oc?('<span class="badge b-gray">'+esc(ocEtiq(p.oc))+'</span>'):'')+
+      (p.oc?('<span class="badge '+(esATC(p.oc)?'b-atc">🎧 ':'b-gray">')+esc(ocEtiq(p.oc))+'</span>'):'')+
       (p.nota?('<span class="badge b-gray">Nota '+esc(p.nota)+'</span>'):'')+
       '<span style="color:var(--muted);font-size:.8rem">'+esc(normTurno(p.turno))+(p.zona?(' · '+esc(p.zona)):'')+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
       '<span style="margin-left:auto">'+cobTxt+'</span>'+
@@ -5306,12 +5330,13 @@ function misCardHtml(p, n, todos){
     : (p.pagado ? ('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>')
       : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
                     : '<span class="badge b-gray">Sin saldo</span>'));
-  return '<div class="cho-card'+(p.entregado?' hecho':'')+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
+  return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+atcCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
+      atcChip(p)+
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
