@@ -122,7 +122,12 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .prod-card{border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;margin-bottom:10px;background:#fbfdfd}
 .prod-top{display:flex;gap:8px;align-items:center;margin-bottom:8px}
 .prod-top .prod-desc{flex:1}
-.prod-sub{display:grid;grid-template-columns:1.25fr 1fr 64px;gap:8px;align-items:end}
+.prod-sub{display:grid;grid-template-columns:1.15fr 1fr 58px 88px;gap:8px;align-items:end}
+@media(max-width:520px){ .prod-sub{grid-template-columns:1fr 1fr;} }
+.prod-card .prod-precio{text-align:right}
+/* Subtotal de la línea: se actualiza solo al escribir el precio o la cantidad. */
+.prod-sub-tot{margin-top:7px;text-align:right;font-size:.76rem;font-weight:700;color:var(--teal-dk);min-height:1em}
+.prod-sub-tot.vacio{color:var(--muted);font-weight:600}
 .prod-card select.prod-medida{width:100%;padding:10px 11px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.86rem;background:#fff;color:var(--text)}
 .prod-card .prod-cant{text-align:center}
 .prod-medida-otro{margin-top:8px}
@@ -522,8 +527,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       </div>
 
       <div class="field">
-        <label class="lb">Productos <span class="req">*</span> <span class="hint">producto · medida · código · cantidad</span></label>
+        <label class="lb">Productos <span class="req">*</span> <span class="hint">producto · medida · código · cantidad · precio</span></label>
         <div id="f-productos"></div>
+        <div id="f-prods-total" style="display:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:var(--r-md);padding:9px 13px;margin:2px 0 10px;font-size:.82rem;color:var(--teal-dk)"></div>
         <datalist id="dl-productos"></datalist>
         <button type="button" class="btn-add" id="f-add-prod">＋ Agregar otro producto</button>
       </div>
@@ -1280,14 +1286,14 @@ function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){
 var CODIGOS = {"CH1129":{d:"TITANIO LATEX",m:"140x190"}, "CH1130":{d:"TITANIO LATEX",m:"160x190"}, "CH1131":{d:"TITANIO LATEX",m:"180x190"}, "CH1132":{d:"TITANIO LATEX",m:"200x200"}, "CH1224":{d:"TITANIO ICE",m:"105x190"}, "CH1220":{d:"TITANIO ICE",m:"140x190"}, "CH1201":{d:"TITANIO ICE",m:"160x190"}, "CH1221":{d:"TITANIO ICE",m:"180x190"}, "CH1222":{d:"TITANIO ICE",m:"200x200"}, "CH1042":{d:"ORO ANATOMICO VISCOLASTICO",m:"90x190"}, "CH1031":{d:"ORO ANATOMICO VISCOLASTICO",m:"105x190"}, "CH1036":{d:"ORO ANATOMICO VISCOLASTICO",m:"140x190"}, "CH1037":{d:"ORO ANATOMICO VISCOLASTICO",m:"160x190"}, "CH1038":{d:"ORO ANATOMICO VISCOLASTICO",m:"180x190"}, "CH1039":{d:"ORO ANATOMICO VISCOLASTICO",m:"200x200"}, "CH1787":{d:"ORO BI RELAX",m:"90x190"}, "CH1778":{d:"ORO BI RELAX",m:"105x190"}, "CH1761":{d:"ORO BI RELAX",m:"140x190"}, "CH1770":{d:"ORO BI RELAX",m:"160x190"}, "CH1775":{d:"ORO BI RELAX",m:"180x190"}, "CH1780":{d:"ORO BI RELAX",m:"200x200"}, "CH1043":{d:"ORO ORTOPEDICO",m:"90x190"}, "CH1048":{d:"ORO ORTOPEDICO",m:"105x190"}, "CH1051":{d:"ORO ORTOPEDICO",m:"140x190"}, "CH1052":{d:"ORO ORTOPEDICO",m:"160x190"}, "CH1053":{d:"ORO ORTOPEDICO",m:"180x190"}, "CH1054":{d:"ORO ORTOPEDICO",m:"200x200"}, "CH1464":{d:"ESPECIAL ORTOPEDICO D/C",m:"105x190"}, "CH1452":{d:"ESPECIAL ORTOPEDICO D/C",m:"140x190"}, "CH1456":{d:"ESPECIAL ORTOPEDICO D/C",m:"160x190"}, "CH1087":{d:"ESPECIAL ORTOPEDICO D/C",m:"180x190"}, "CH1473":{d:"ESPECIAL ORTOPEDICO D/C",m:"200x200"}, "CH1472":{d:"ESPECIAL ORTOPEDICO",m:"180x190"}, "CH1096":{d:"ESPECIAL SEMIORTOPEDICO",m:"90x190"}, "CH1098":{d:"ESPECIAL SEMIORTOPEDICO",m:"105x190"}, "CH1107":{d:"ESPECIAL SEMIORTOPEDICO",m:"140x190"}, "CH1101":{d:"ESPECIAL SEMIORTOPEDICO",m:"160x190"}, "CH1102":{d:"ESPECIAL SEMIORTOPEDICO",m:"180x190"}, "CH1093":{d:"ESPECIAL SEMIORTOPEDICO",m:"200x200"}, "CH1109":{d:"HEAVEN TROPICAL",m:"90x190"}, "CH1117":{d:"HEAVEN TROPICAL",m:"105x190"}, "CH1121":{d:"HEAVEN TROPICAL",m:"140x190"}, "CH2144":{d:"HEAVEN TROPICAL",m:"160x190"}, "CH1137":{d:"ESPECIAL ANTIALERGICO",m:"90x190"}, "CH1075":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH1078":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH2391":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH2392":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH1883":{d:"DREAM REFORZADO",m:"180x190"}, "CH2086":{d:"COLCHONETA HEAVEN",m:"68x89"}, "CH1149":{d:"SOMIER TITANIO LATEX",m:"140x190"}, "CH1150":{d:"SOMIER TITANIO LATEX",m:"160x190"}, "CH1255":{d:"SOMIER TITANIO LATEX",m:"180x190"}, "CH1151":{d:"SOMIER TITANIO LATEX",m:"200x200"}, "CH1407":{d:"SOMIER TITANIO ICE",m:"105x190"}, "CH1212":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1208":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1223":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1232":{d:"SOMIER TITANIO ICE",m:"200x200"}, "CH1281":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1521":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1606":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1737":{d:"SOMIER ORO",m:"90x190"}, "CH1165":{d:"SOMIER ORO",m:"105x190"}, "CH1144":{d:"SOMIER ORO",m:"140x190"}, "CH1145":{d:"SOMIER ORO",m:"160x190"}, "CH1146":{d:"SOMIER ORO",m:"180x190"}, "CH1147":{d:"SOMIER ORO",m:"200x200"}, "CH1795":{d:"SOMIER BiRELAX",m:"105x190"}, "CH1766":{d:"SOMIER BiRELAX",m:"140x190"}, "CH1771":{d:"SOMIER BiRELAX",m:"160x190"}, "CH2172":{d:"SOMIER BiRELAX",m:"ESPECIAL"}, "CH1803":{d:"SOMIER BiRELAX",m:"200x200"}, "CH1159":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"105x190"}, "CH1168":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"140x190"}, "CH1160":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"160x190"}, "49":{d:"SOMIER PLATA SEMIORTOPEDICO",m:""}, "CH1156":{d:"SOMIER ESPECIAL",m:"180x190"}, "CH2159":{d:"SOMIER TROPICAL",m:"105x190"}, "CH2142":{d:"SOMIER TROPICAL",m:"140x190"}, "CH2143":{d:"SOMIER TROPICAL",m:"160x190"}, "CD1403":{d:"ALMOHADA",m:"50x70"}, "CD1459":{d:"ALMOHADA FIBRA SILICONADA",m:"50x90"}, "CH1253":{d:"ALM/HEAVEN",m:"30x40"}, "CH1195":{d:"ALM/NASA",m:"50x70"}, "CD1918":{d:"SEMIPEDIC",m:"90x190"}, "CD1913":{d:"SEMIPEDIC",m:"105x190"}, "CD1911":{d:"SEMIPEDIC",m:"140x190"}, "CD1912":{d:"SEMIPEDIC",m:"160x190"}, "CH1686":{d:"PILLOW PEDIC",m:"105x190"}, "CH1682":{d:"PILLOW PEDIC",m:"140x190"}, "CH1683":{d:"PILLOW PEDIC",m:"160x190"}, "CH1684":{d:"PILLOW PEDIC",m:"180x190"}, "CH1702":{d:"PILLOW PEDIC",m:"200x200"}, "CH1765":{d:"EUROPEDIC",m:"140x190"}, "CH1767":{d:"EUROPEDIC",m:"160x190"}, "CH1768":{d:"EUROPEDIC",m:"180x190"}, "CH1769":{d:"EUROPEDIC",m:"200x200"}, "CH2284":{d:"DYNAMIC PEDIC",m:"140x190"}, "CH2297":{d:"DYNAMIC PEDIC",m:"160x190"}, "CH2298":{d:"DYNAMIC PEDIC",m:"180x190"}, "CH2299":{d:"DYNAMIC PEDIC",m:"200x200"}, "CH2239":{d:"SOMIER NEGRO",m:"90x190"}, "SR2011":{d:"SOMIER NEGRO",m:"105x190"}, "SR2012":{d:"SOMIER NEGRO",m:"140x190"}, "SR2013":{d:"SOMIER NEGRO",m:"160x190"}, "SR2014":{d:"SOMIER NEGRO",m:"180x190"}, "SR2016":{d:"SOMIER NEGRO",m:"200x200"}, "CH2101":{d:"PILLOW FLEX",m:"90x190"}, "CH2102":{d:"PILLOW FLEX",m:"105x190"}, "CH2103":{d:"PILLOW FLEX",m:"140x190"}, "CH2104":{d:"PILLOW FLEX",m:"160x190"}, "CH2105":{d:"PILLOW FLEX",m:"180x190"}, "CH2106":{d:"PILLOW FLEX",m:"200x200"}, "CH2107":{d:"FORTE FLEX",m:"90x190"}, "CH2108":{d:"FORTE FLEX",m:"105x190"}, "CH2109":{d:"FORTE FLEX",m:"140x190"}, "CH2110":{d:"FORTE FLEX",m:"160x190"}, "CH2113":{d:"SOMIER FLEX",m:"90x190"}, "CH2114":{d:"SOMIER FLEX",m:"105x190"}, "CH2115":{d:"SOMIER FLEX",m:"140x190"}, "CH2116":{d:"SOMIER FLEX",m:"160x190"}, "CH2117":{d:"SOMIER FLEX",m:"180x190"}, "CH2118":{d:"SOMIER FLEX",m:"200x200"}, "CH2290":{d:"MEMORY FLEX",m:"105x190"}, "CH2283":{d:"MEMORY FLEX",m:"140x190"}, "CH2291":{d:"MEMORY FLEX",m:"160x190"}, "CH2292":{d:"MEMORY FLEX",m:"180x190"}, "CH2293":{d:"MEMORY FLEX",m:"200x200"}, "CH1330":{d:"NUEVO ECO FLEX",m:"90x190"}, "CH1331":{d:"NUEVO ECO FLEX",m:"105x190"}, "CH1332":{d:"NUEVO ECO FLEX",m:"140x190"}, "CH1333":{d:"NUEVO ECO FLEX",m:"160x190"}, "CD1951":{d:"COLCHON BAHIA",m:"140x190"}, "CD1954":{d:"COLCHON BAHIA",m:"160x190"}, "CD1972":{d:"COLCHON BAHIA",m:"180x190"}, "CD2034":{d:"COLCHON BAHIA",m:"200x200"}, "CH1681":{d:"COLCHON CARIOCA PREMIER",m:"105x190"}, "CH1672":{d:"COLCHON CARIOCA PREMIER",m:"140x190"}, "CH1689":{d:"COLCHON CARIOCA PREMIER",m:"160x190"}, "CH1688":{d:"COLCHON CARIOCA PREMIER",m:"180x190"}, "CH1720":{d:"COLCHON CARIOCA PREMIER",m:"200x200"}, "CH2030":{d:"COLCHON CARIOCA RIO",m:"105x190"}, "CH1928":{d:"COLCHON CARIOCA RIO",m:"140x190"}, "COLT0045":{d:"COLCHON SEMIORTOP.",m:"90x190"}, "COLT0037":{d:"COLCHON SEMIORTOP.",m:"105x190"}, "COLT0038":{d:"COLCHON SEMIORTOP.",m:"140x190"}, "COLT0040":{d:"COLCHON SEMIORTOP.",m:"160x190"}, "COLT0069":{d:"COLCHON SEMIORTOP.",m:"180x190"}, "COLT0058":{d:"COLCHON SEMIORTOP.",m:"200x200"}, "COLT0059":{d:"COLCHON SOFT",m:"90x190"}, "COLT0062":{d:"COLCHON SOFT",m:"105x190"}, "COLT0048":{d:"COLCHON SOFT",m:"140x190"}, "COLT0060":{d:"COLCHON SOFT",m:"160x190"}, "COLT0061":{d:"COLCHON SOFT",m:"180x190"}, "COLT0085":{d:"COLCHON SOFT",m:"200x200"}, "COLT0054":{d:"COLCHON ORTOPEDICO SUEÑA",m:"90x190"}, "COLT0029":{d:"COLCHON ORTOPEDICO SUEÑA",m:"105x190"}, "COLT0028":{d:"COLCHON ORTOPEDICO SUEÑA",m:"140x190"}, "COLT0044":{d:"COLCHON ORTOPEDICO SUEÑA",m:"160x190"}, "COLT0047":{d:"COLCHON ORTOPEDICO SUEÑA",m:"180x190"}, "COLT0041":{d:"COLCHON ORTOPEDICO SUEÑA",m:"200x200"}, "CH1506":{d:"SOMIER BAHIA",m:"140x190"}, "CH1499":{d:"SOMIER BAHIA",m:"160x190"}, "CH2158":{d:"SOMIER CARIOCA PREMIER",m:"105x190"}, "CH2157":{d:"SOMIER CARIOCA PREMIER",m:"140x190"}, "CH2156":{d:"SOMIER CARIOCA PREMIER",m:"160x190"}, "CH1740":{d:"SOMIER CARIOCA PREMIER",m:"180x190"}, "CH1741":{d:"SOMIER CARIOCA PREMIER",m:"200x200"}, "SM001":{d:"SOMIER MOVEL PRO",m:"105x190"}, "SM002":{d:"SOMIER MOVEL PRO",m:"140x190"}, "SM003":{d:"SOMIER MOVEL PRO",m:"160x190"}, "SM004":{d:"SOMIER MOVEL PRO",m:"180x190"}, "SM005":{d:"SOMIER MOVEL PRO",m:"200x200"}, "CH1685":{d:"COLCHONETA CAMPING",m:"70X190X3"}, "COLT0081":{d:"COLCHON CUNA",m:"65x100"}, "CD1433":{d:"COLCHONETA",m:"90x190"}, "COLT0064":{d:"COLCHON SOFT",m:"180x200"}, "CS1001":{d:"SOMIER SUEÑA",m:"105x190"}, "CS1004":{d:"SOMIER SUEÑA",m:"140x190"}, "CS1005":{d:"SOMIER SUEÑA",m:"160x190"}, "CH1942":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1943":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH1951":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH1952":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1953":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH2441":{d:"RESPALDAR PRAG.",m:"150x190"}, "CH2442":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH2451":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2452":{d:"RESPALDAR PRAG.",m:"140x190"}, "CMBSE001":{d:"COMBO SUEÑA ESSENTIAL",m:"105x190"}, "CMBSE002":{d:"COMBO SUEÑA ESSENTIAL",m:"140x190"}, "CMBSE003":{d:"COMBO SUEÑA ESSENTIAL",m:"160x190"}, "CMBSS001":{d:"COMBO SEMIORTOP.",m:"105x190"}, "CMBSS002":{d:"COMBO SEMIORTOP.",m:"140x190"}, "CMBSS003":{d:"COMBO SEMIORTOP.",m:"160x190"}, "CMBSO001":{d:"COMBO ORTOPEDICO",m:"105x190"}, "CMBSO002":{d:"COMBO ORTOPEDICO",m:"140x190"}, "CMBSO003":{d:"COMBO ORTOPEDICO",m:"160x190"}, "CMBSP001":{d:"COMBO SUEÑA PREMIER DELUXE",m:"105x190"}, "CMBSP002":{d:"COMBO SUEÑA PREMIER DELUXE",m:"140x190"}, "CMBSP003":{d:"COMBO SUEÑA PREMIER DELUXE",m:"160x190"}, "CMBSE011":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"105x190"}, "CMBSE012":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"140x190"}, "CMBSE013":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"160x190"}, "CMBSE014":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"105x190"}, "CMBSE015":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"140x190"}, "CMBSE016":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"160x190"}, "CMBSE017":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE018":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE019":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSE020":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE021":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE022":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSS004":{d:"COMBO SEMIORTOP SUEÑA CAFÉ",m:"105x190"}, "CMBSS005":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"140x190"}, "CMBSS006":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"160x190"}, "CMBSS007":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"105x190"}, "CMBSS008":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"140x190"}, "CMBSS009":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"160x190"}, "CMBSS010":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"105x190"}, "CMBSS011":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"140x190"}, "CMBSS012":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"160x190"}, "CMBSS013":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"105x190"}, "CMBSS014":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"140x190"}, "CMBSS015":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"160x190"}, "CMBSO004":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"105x190"}, "CMBSO005":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"140x190"}, "CMBSO006":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"160x190"}, "CMBSO007":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"105x190"}, "CMBSO008":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"140x190"}, "CMBSO009":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"160x190"}, "CMBSO010":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"105x190"}, "CMBSO011":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"140x190"}, "CMBSO012":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"160x190"}, "CMBSO013":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"105x190"}, "CMBSO014":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"140x190"}, "CMBSO015":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"160x190"}, "CMBSP004":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"105x190"}, "CMBSP005":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"140x190"}, "CMBSP006":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"160x190"}, "CMBSP007":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"105x190"}, "CMBSP008":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"140x190"}, "CMBSP009":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"160x190"}, "CMBSP010":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"105x190"}, "CMBSP011":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"140x190"}, "CMBSP012":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"160x190"}, "CMBSP013":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"105x190"}, "CMBSP014":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"140x190"}, "CMBSP015":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"160x190"}, "CS1027":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"90x190"}, "CS1028":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"105x190"}, "CS1029":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"140x190"}, "CS1030":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"160x190"}, "CS1031":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"180x190"}, "CS1032":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"200x200"}, "CS1011":{d:"COLCHON CONFORT PLUS",m:"105x190"}, "CS1012":{d:"COLCHON CONFORT PLUS",m:"140x190"}, "CS1013":{d:"COLCHON CONFORT PLUS",m:"160x190"}, "CS1014":{d:"COLCHON CONFORT PLUS",m:"180x190"}, "CS1015":{d:"COLCHON CONFORT PLUS",m:"200x200"}, "CC1000":{d:"COLCHON SUEÑA ESSENTIAL",m:"90x190"}, "CC1001":{d:"COLCHON SUEÑA ESSENTIAL",m:"105x190"}, "CC1002":{d:"COLCHON SUEÑA ESSENTIAL",m:"140x190"}, "CC1003":{d:"COLCHON SUEÑA ESSENTIAL",m:"160x190"}, "CC1004":{d:"COLCHON SUEÑA ESSENTIAL",m:"180x190"}, "CC1005":{d:"COLCHON SUEÑA ESSENTIAL",m:"200x200"}, "CS1000":{d:"SOMIER SUEÑA",m:"90x190"}, "CS1006":{d:"SOMIER SUEÑA",m:"180x190"}, "CS1007":{d:"SOMIER SUEÑA",m:"200x200"}, "CH1941":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2443":{d:"RESPALDAR PRAG.",m:"160x190"}};
 var NOMBRES = {}; (function(){ for(var _k in CODIGOS){ var _v=CODIGOS[_k]; var _lb=_v.d+(_v.m?(' '+_v.m):''); if(!NOMBRES[_lb]) NOMBRES[_lb]={code:_k,d:_v.d,m:_v.m}; } })();
 function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
-function addProdRow(desc,medida,codigo,cant){
+function addProdRow(desc,medida,codigo,cant,precio){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
   // fila superior: producto + borrar
   var top=document.createElement('div'); top.className='prod-top';
   var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; d.setAttribute('list','dl-productos'); if(desc)d.value=desc;
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
-  del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); });
+  del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); pintarTotalProds(); });
   top.appendChild(d); top.appendChild(del);
   // sub: medida | código | cantidad
   var sub=document.createElement('div'); sub.className='prod-sub';
@@ -1308,7 +1314,24 @@ function addProdRow(desc,medida,codigo,cant){
   var qL=document.createElement('div'); qL.className='mini-lb'; qL.textContent='Cant.';
   var q=document.createElement('input'); q.type='number'; q.className='prod-cant'; q.min='1'; q.step='1'; q.value=cant||1;
   qW.appendChild(qL); qW.appendChild(q);
-  sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW);
+  // Precio UNITARIO. Se puede dejar vacío: los pedidos viejos no lo tienen y no por eso
+  // están mal. El subtotal se muestra abajo para que se vea qué está cobrando.
+  var pW=document.createElement('div');
+  var pL=document.createElement('div'); pL.className='mini-lb'; pL.textContent='Precio c/u';
+  var pIn=document.createElement('input'); pIn.type='number'; pIn.className='prod-precio';
+  pIn.min='0'; pIn.step='0.01'; pIn.placeholder='Bs'; pIn.autocomplete='off';
+  if(Number(precio)>0) pIn.value=r2(precio);
+  pW.appendChild(pL); pW.appendChild(pIn);
+  sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW); sub.appendChild(pW);
+  var tot=document.createElement('div'); tot.className='prod-sub-tot';
+  function pintarSub(){
+    var pr=parseFloat(pIn.value)||0, ct=parseInt(q.value,10)||0;
+    if(pr>0){ tot.className='prod-sub-tot'; tot.textContent='× '+ct+' = '+fmtBs(r2(pr*ct)); }
+    else { tot.className='prod-sub-tot vacio'; tot.textContent='sin precio'; }
+    pintarTotalProds();
+  }
+  pIn.addEventListener('input',pintarSub); q.addEventListener('input',pintarSub);
+  pintarSub();
   // medida "Otros" -> input manual (ancho completo, debajo)
   var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
@@ -1328,8 +1351,42 @@ function addProdRow(desc,medida,codigo,cant){
     cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Escrito a mano y sin elegir de la lista: se revisa al salir del campo.
   d.addEventListener('blur',function(){ rechazarCombo(d.value, d, cIn); });
-  card.appendChild(top); card.appendChild(sub); card.appendChild(otro);
-  box.appendChild(card); refreshDelButtons();
+  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(tot);
+  box.appendChild(card); refreshDelButtons(); pintarTotalProds();
+}
+/* Suma de los ítems, debajo de la lista. Es solo informativa: el total de la venta lo
+   sigue mandando "A cuenta + Saldo". El botón la copia a los montos para no tipear. */
+function pintarTotalProds(){
+  var cja=document.getElementById('f-prods-total'); if(!cja) return;
+  var t=0, con=0, sin=0;
+  var cards=document.querySelectorAll('#f-productos .prod-card');
+  for(var i=0;i<cards.length;i++){
+    var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
+    var pr=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    var ct=parseInt(cards[i].querySelector('.prod-cant').value,10)||0;
+    if(pr>0){ t+=pr*ct; con++; } else sin++;
+  }
+  if(!con){ cja.style.display='none'; cja.innerHTML=''; return; }
+  cja.style.display='block';
+  cja.innerHTML='<b>Los ítems suman '+fmtBs(r2(t))+'</b>'+
+    (sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'):'')+
+    ' <button type="button" class="btn btn-sm" style="margin-left:8px;padding:3px 10px;font-size:.72rem" onclick="usarTotalProds()">Usar como total</button>';
+}
+/* Copia la suma de los ítems a los montos: lo que ya pagó queda igual y el resto pasa
+   a saldo. Si ya está pagado todo, no toca nada. */
+function usarTotalProds(){
+  var t=0, cards=document.querySelectorAll('#f-productos .prod-card');
+  for(var i=0;i<cards.length;i++){
+    var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
+    t+=(parseFloat(cards[i].querySelector('.prod-precio').value)||0)*(parseInt(cards[i].querySelector('.prod-cant').value,10)||0);
+  }
+  t=r2(t);
+  if(segVal('f-pagado')==='SI'){ toast('El pedido está marcado como PAGADO: no hay saldo que llenar','err'); return; }
+  var acu=parseFloat(document.getElementById('f-acuenta').value)||0;
+  if(acu>t){ toast('Lo que ya pagó ('+fmtBs(acu)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
+  document.getElementById('f-saldo').value=r2(t-acu);
+  updateMetodoVisibility();
+  toast('Saldo por cobrar: '+fmtBs(r2(t-acu))+' (total '+fmtBs(t)+' − a cuenta '+fmtBs(acu)+')','ok');
 }
 function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
 function getProductos(){
@@ -1340,7 +1397,10 @@ function getProductos(){
     var medida = mSel.value==='Otros' ? cards[i].querySelector('.prod-medida-otro').value.trim() : mSel.value;
     var codigo=cards[i].querySelector('.prod-codigo').value.trim();
     var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;
-    if(desc) out.push({desc:desc, medida:medida, codigo:codigo, cant:cant});
+    var precio=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    if(desc){ var it={desc:desc, medida:medida, codigo:codigo, cant:cant};
+      if(precio>0) it.precio=r2(precio);          // sin precio no se guarda la clave: los viejos quedan igual
+      out.push(it); }
   }
   return out;
 }
@@ -1481,9 +1541,33 @@ function contaPagoTxt(p){
   if(acu>0)    return 'A CUENTA '+fmtBs(acu)+(met?(' · '+met):'')+' · debe '+fmtBs(p.saldo);
   return 'DEBE '+fmtBs(p.saldo);
 }
+/* ============================================================================
+   Precio de cada ítem
+   El precio es UNITARIO y en Bs: el subtotal de la línea es precio × cantidad.
+   Viaja adentro de `productos`, que la planilla ya guarda como JSON, así que NO hizo
+   falta ninguna columna nueva ni volver a publicar el Apps Script.
+
+   El total de la venta lo sigue mandando lo que la vendedora anota en "A cuenta" y
+   "Saldo" — decisión del usuario. Los precios son el DETALLE (para que contabilidad
+   sepa a cuánto se vendió cada cosa) y, si no cuadran con el total, se AVISA en vez
+   de pisar lo que ella cargó: un descuento o un combo armado a mano son legítimos.
+   ========================================================================== */
+function prodPrecio(x){ var n=Number(x&&x.precio); return (isFinite(n)&&n>0)?r2(n):0; }
+function prodSub(x){ return r2(prodPrecio(x)*(Number(x&&x.cant)||0)); }
+function prodTotal(p){ var t=0; ((p&&p.productos)||[]).forEach(function(x){ t+=prodSub(x); }); return r2(t); }
+function tienePrecios(p){ return ((p&&p.productos)||[]).some(function(x){ return prodPrecio(x)>0; }); }
+/* Empezado a llenar pero incompleto: es lo que hay que reclamar. Un pedido sin ningún
+   precio todavía no se reclama (los viejos no tienen y no son un error). */
+function preciosAMedias(p){
+  return tienePrecios(p) && ((p&&p.productos)||[]).some(function(x){ return prodPrecio(x)<=0; });
+}
+/* Cuánto se despega la suma de los ítems del total anotado. 0 = cuadra. */
+function difPrecios(p){ return tienePrecios(p) ? r2(prodTotal(p)-ventaTotal(p)) : 0; }
+function precioDescuadra(p){ return Math.abs(difPrecios(p))>0.01; }
 function contaProdTxt(prods){
   return (prods||[]).map(function(x){
-    return [x.desc,x.medida,(x.codigo?('cód '+x.codigo):'')].filter(Boolean).join(' · ')+' × '+(x.cant||0);
+    return [x.desc,x.medida,(x.codigo?('cód '+x.codigo):'')].filter(Boolean).join(' · ')+' × '+(x.cant||0)+
+           (prodPrecio(x)>0 ? ('  ·  '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))) : '');
   });
 }
 function refreshConta(){
@@ -2898,12 +2982,131 @@ function showContaModal(id){
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
       row('Observaciones', esc(p.observaciones))+
       formPago+
+      ctaEditHtml(p)+
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
     '</div>';
   openModal(html);
+  ctaRecalc();                      // pinta los subtotales y el aviso apenas abre
+}
+/* ---------------------------------------------------------------------------
+   Corregir precios y montos desde Contabilidad
+   Lo carga el vendedor: es el que sabe a cuánto vendió cada cosa y cuánto le quedó
+   por cobrar. Administración lo corrige igual desde la ficha del pedido (✏️).
+   Los PAGOS YA REGISTRADOS no se tocan acá: cada uno tiene su recibo, su fecha y su
+   foto, y son el respaldo del contador. Lo editable es el adelanto y el saldo.
+   ------------------------------------------------------------------------- */
+function ctaEditHtml(p){
+  var prods=(p.productos||[]);
+  var filas=prods.map(function(x,i){
+    return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed var(--gray-lt)">'+
+      '<span style="flex:1;min-width:150px;font-size:.83rem">'+esc(x.desc||'—')+
+        (x.medida?(' <span style="color:var(--muted)">· '+esc(x.medida)+'</span>'):'')+
+        ' <b>× '+esc(x.cant||0)+'</b></span>'+
+      '<input type="number" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" min="0" step="0.01" '+
+        'placeholder="Bs c/u" value="'+(prodPrecio(x)>0?r2(prodPrecio(x)):'')+'" '+
+        'oninput="ctaRecalc()" style="width:100px;text-align:right">'+
+      '<span id="cta-sub-'+i+'" style="min-width:96px;text-align:right;font-size:.79rem;font-weight:700"></span>'+
+    '</div>';
+  }).join('');
+  var pagos=totalCobrado(p);
+  return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+    '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
+      '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
+    (prods.length?filas:'<div style="color:var(--muted);font-size:.83rem;padding:4px 0">Este pedido no tiene productos cargados.</div>')+
+    '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto)</span></label>'+
+        '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+r2(Number(p.acuenta)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+      '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
+        '<input type="number" id="cta-saldo" min="0" step="0.01" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+    '</div>'+
+    (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
+    '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
+    '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="ctaGuardarMontos('+JSON.stringify(String(p.id))+')">💾 Guardar precios y montos</button>'+
+  '</div>';
+}
+/* Recalcula los subtotales EN EL DOM (sin volver a dibujar la ficha: si la redibujara,
+   el cursor saltaría del campo a cada tecla). */
+function ctaRecalc(){
+  var box=document.getElementById('cta-edit'); if(!box) return;
+  var ins=box.querySelectorAll('.cta-pr'), suma=0, sin=0;
+  for(var i=0;i<ins.length;i++){
+    var pr=parseFloat(ins[i].value)||0, ct=Number(ins[i].getAttribute('data-cant'))||0;
+    var lb=document.getElementById('cta-sub-'+i);
+    if(pr>0){ suma+=pr*ct; if(lb){ lb.textContent=fmtBs(r2(pr*ct)); lb.style.color='var(--teal-dk)'; } }
+    else { sin++; if(lb){ lb.textContent='sin precio'; lb.style.color='var(--muted)'; lb.style.fontWeight='400'; } }
+  }
+  suma=r2(suma);
+  var acu=parseFloat((document.getElementById('cta-acuenta')||{}).value)||0;
+  var sal=parseFloat((document.getElementById('cta-saldo')||{}).value)||0;
+  var pagos=Number(box.getAttribute('data-pagos'))||0;
+  var total=r2(acu+pagos+sal);
+  var s=document.getElementById('cta-sum');
+  if(s) s.innerHTML = ins.length
+    ? ('Los ítems suman <b style="color:var(--teal-dk)">'+fmtBs(suma)+'</b>'+
+       (sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' sin precio</span>'):''))
+    : '';
+  var a=document.getElementById('cta-tot-aviso'); if(!a) return;
+  var txt='Total de la venta: <b>'+fmtBs(total)+'</b>';
+  if(suma>0 && !sin && Math.abs(suma-total)>0.01){
+    var d=r2(suma-total);
+    txt+='<div style="margin-top:5px;color:var(--amber);font-weight:700">⚠️ Los precios suman '+fmtBs(suma)+' — hay '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+' que el total. Puede ser un descuento; si no, revisá.</div>';
+  } else if(suma>0 && !sin){
+    txt+=' <span style="color:var(--green);font-weight:700">✅ cuadra con los precios</span>';
+  }
+  a.innerHTML=txt;
+}
+function ctaGuardarMontos(id){
+  var p=findById(id); if(!p) return;
+  var acuEl=document.getElementById('cta-acuenta'), salEl=document.getElementById('cta-saldo');
+  if(!acuEl||!salEl) return;
+  var acu=parseFloat(acuEl.value)||0, sal=parseFloat(salEl.value)||0;
+  if(acu<0||sal<0){ toast('Los montos no pueden ser negativos','err'); return; }
+  // Los precios: se copian los productos para no dejar el pedido a medias si algo falla.
+  var prods=(p.productos||[]).map(function(x,i){
+    var el=document.getElementById('cta-pr-'+i);
+    var q={}; for(var k in x) q[k]=x[k];
+    if(el){ var v=parseFloat(el.value); if(isFinite(v)&&v>0) q.precio=r2(v); else delete q.precio; }
+    return q;
+  });
+  p.productos=prods;
+  aplicarMontos(p, acu, sal);
+  renderCuadreSiActivo(); renderContaSiActiva();
+  toast('Guardado — total '+fmtBs(ventaTotal(p))+' · falta cobrar '+fmtBs(Math.max(0,Number(p.saldo)||0)),'ok');
+  reabrirFicha(id);
+}
+/* Corrige el ADELANTO y el SALDO sin tocar los pagos ya registrados.
+   El total de la venta se recalcula solo: adelanto + pagos registrados + saldo. */
+function aplicarMontos(p, acu, sal){
+  acu=r2(acu); sal=r2(sal);
+  var ant=anticipoDe(p);
+  var antesAcu=r2(ant?(Number(ant.monto)||0):0);
+  /* El ledger SOLO se reescribe si el adelanto cambió de verdad. Reescribirlo de gusto
+     convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
+     fecha — plata que después no aparece en los filtros por día ni por mes. */
+  if(Math.abs(acu-antesAcu)>0.01){
+    var cobros=cobrosDe(p).map(function(c){
+      var q={}; for(var k in c) q[k]=c[k];
+      if(!q.fecha) q.fecha=contaFecha(p);        // que no nazca un pago sin fecha
+      return q;
+    });
+    var env=enviosDe(p), nuevo=null;
+    if(acu>0){
+      nuevo = ant ? JSON.parse(JSON.stringify(ant))
+                  : { metodo:'', banco:'', fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:'' };
+      nuevo.monto=acu; nuevo.anticipo=true;
+    }
+    p.metodoPago=conMarcaReg(textoCobros((nuevo?[nuevo]:[]).concat(cobros).concat(env)), regEnSistema(p));
+    var t=0; cobros.forEach(function(c){ t+=Number(c.monto)||0; });
+    p.cobradoBs=r2(t);
+  }
+  p.acuenta=acu;
+  p.saldo=sal;
+  p.pagado = (sal<=0.01) && (acu>0 || (Number(p.cobradoBs)||0)>0);
+  persistPedido(p);
 }
 function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
@@ -3016,7 +3219,7 @@ function exportConta(){
   var list=contaLista();
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
-  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
+  var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
   var rows=[header];
   list.forEach(function(p){
     // Una fila por producto, como el otro Excel: contabilidad necesita el detalle línea a línea.
@@ -3026,16 +3229,18 @@ function exportConta(){
         i===0?(tsFmt(p.ts)||fmtFecha(p.fecha)):'', i===0?(p.fecha||''):'', i===0?(p.nota||''):'', i===0?(p.oc||''):'',
         i===0?(p.vendedor||''):'', i===0?(p.cliente||''):'', i===0?tipoVenta(p):'', i===0?(p.celular||''):'',
         x.desc||'', x.medida||'', x.codigo||'', (x.cant===''?'':{v:Number(x.cant)||0,t:'n'}),
+        (prodPrecio(x)>0?{v:prodPrecio(x),t:'n'}:''), (prodPrecio(x)>0?{v:prodSub(x),t:'n'}:''),
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
         i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
         i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
+        i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
         i===0?(regEnSistema(p)?'SÍ':'NO'):'', i===0?(p.observaciones||''):''
       ]);
     });
   });
   var bytes=buildXlsx([{name:'Contabilidad',
-    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:18},{w:18},{w:20},{w:12},{w:36}],
+    cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
@@ -3739,7 +3944,7 @@ function editPedido(id){
   document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
-  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant); } } else addProdRow();
+  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio); } } else addProdRow();
   document.getElementById('f-celular').value=rec.celular||'';
   segSet('f-turno',rec.turno||'AM');
   document.getElementById('f-zona').value=rec.zona||'';
@@ -6693,7 +6898,8 @@ function rowClass(p){ var k=rowKind(p); return k?('row-'+k):''; }
 function prodRevList(p){
   return (p.productos||[]).map(function(x,i){
     return '<div class="prod-rev">'+
-      '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b></span>'+
+      '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'+
+        (prodPrecio(x)>0?(' <span style="color:var(--teal-dk);font-weight:700">· '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))+'</span>'):'')+'</span>'+
       '<span style="display:flex;gap:5px;flex:none">'+
         '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
         '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
@@ -6724,6 +6930,14 @@ function prodResumen(p){
     (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+
     (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+
     (nProd?(' · <b style="color:#a67c00">🏭 '+nProd+' pedido'+(nProd===1?'':'s')+' a fábrica'+esc(lugaresProd(p))+'</b>'):'')+'</div>';
+  // Los precios, si están cargados. Se avisa cuando no cuadran con lo anotado como venta.
+  if(tienePrecios(p)){
+    var d=difPrecios(p);
+    t+='<div style="font-size:.76rem;margin-top:4px"><b style="color:var(--teal-dk)">Los ítems suman '+fmtBs(prodTotal(p))+'</b>'+
+      (preciosAMedias(p) ? ' <span style="color:var(--amber);font-weight:700">· faltan precios</span>'
+        : (precioDescuadra(p) ? (' <span style="color:var(--amber);font-weight:700">· '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+' que el total ('+fmtBs(ventaTotal(p))+')</span>')
+                              : ' <span style="color:var(--green);font-weight:700">· cuadra ✅</span>'))+'</div>';
+  }
   return t;
 }
 function prodChkIcon(x){

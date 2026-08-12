@@ -1246,6 +1246,54 @@ y **reporte de entregas** (`.ent-card.atc` + el N° en chip fucsia).
 - Test: `test_atccolor.js` (32) — verifica que una ATC sin stock **conserva el mismo fondo rojo** que una
   venta sin stock, que la entregada conserva el gris, y que ningún otro estado usa el fucsia.
 
+## 4al. Precio por ítem + corregir montos desde Contabilidad (2026-08-12)
+Pedido: *"Que los vendedores puedan editar y modificar sus precio de cada ítem desde
+contabilidad y pedidos"*. Al preguntarle si los precios debían mandar el total, aclaró:
+*"que puedan modificar el a cuenta y saldo lo que cargan y colocan actualmente"* — o sea
+**el total lo sigue mandando lo que ella anota**; los precios son el detalle. Quién edita:
+**el vendedor y Administración**.
+
+**Dónde vive el precio.** `x.precio` = precio **UNITARIO** en Bs, adentro de `productos`.
+La planilla ya guarda ese array como JSON en `_productos_json` (`google-apps-script.gs:473`),
+así que **no hizo falta columna nueva ni volver a publicar el Apps Script**. Si el precio es
+0 o vacío **no se escribe la clave**: los pedidos viejos quedan byte por byte como estaban.
+
+Helpers: `prodPrecio(x)` · `prodSub(x)` (precio × cant) · `prodTotal(p)` · `tienePrecios(p)` ·
+`preciosAMedias(p)` · `difPrecios(p)` · `precioDescuadra(p)`.
+
+**Por qué el total NO se calcula solo.** Un combo armado a mano o un descuento hacen que la
+suma de los ítems no dé el total, y eso es legítimo. Entonces se **avisa** (naranja, con la
+diferencia) en vez de pisar lo que cargó la vendedora. `difPrecios()` devuelve 0 cuando el
+pedido no tiene ningún precio, así que **los viejos nunca descuadran**.
+
+**Formulario:** campo `PRECIO C/U` en cada `.prod-card` (la grilla `.prod-sub` pasó de 3 a 4
+columnas, y a 2 en celular), subtotal en vivo por línea (`.prod-sub-tot`), caja
+`#f-prods-total` con la suma y un botón **Usar como total** (`usarTotalProds()`) que llena el
+saldo = suma − a cuenta. `addProdRow()` recibe un 5º parámetro y `getProductos()` lo lee.
+
+**Contabilidad → ficha:** bloque `#cta-edit` (`ctaEditHtml`) con el precio de cada ítem, el
+**A cuenta** y el **Saldo**, y `ctaGuardarMontos()`. `ctaRecalc()` repinta **por DOM, no
+redibujando la ficha**: si redibujara, el cursor saltaría del campo a cada tecla.
+
+⚠️ **Lo delicado — no pisar los pagos registrados.** Cada pago tiene recibo, fecha y foto: es
+el respaldo del contador. `aplicarMontos(p, acu, sal)` reescribe **solo** el anticipo y el
+saldo, y **el ledger se toca únicamente si el adelanto cambió de verdad** — reescribirlo de
+gusto convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
+fecha, o sea plata que después no aparece en los filtros por día ni por mes. Cuando sí hay
+que reescribir, a los cobros sin fecha se les pone `contaFecha(p)` por la misma razón.
+El total queda **adelanto + pagos registrados + saldo**.
+
+**Excel de Contabilidad:** 4 columnas nuevas — `PRECIO UNIT.` y `SUBTOTAL` por producto,
+`TOTAL VENTA` y `SUMA DE PRECIOS` por pedido (27 columnas; el ancho de `cols` se actualizó
+para que siga coincidiendo con el encabezado).
+
+- Test: `test_precios.js` (38). Cubre las cuentas, el formulario, el guardado, la reedición,
+  que un pedido viejo no se rompa, la edición desde Contabilidad, **que el pago registrado
+  sobreviva** (`#901` y `%F1` siguen en el ledger), corregir el a cuenta, quedar pagado,
+  el rechazo de negativos y las columnas del Excel.
+- ⚠️ Trampa al escribir tests del formulario: `resetForm()` deja **una fila vacía adelante**,
+  así que hay que buscar cada `.prod-card` por su `.prod-desc`, no por posición.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
