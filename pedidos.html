@@ -1568,6 +1568,46 @@ function preciosAMedias(p){
 /* Cuánto se despega la suma de los ítems del total anotado. 0 = cuadra. */
 function difPrecios(p){ return tienePrecios(p) ? r2(prodTotal(p)-ventaTotal(p)) : 0; }
 function precioDescuadra(p){ return Math.abs(difPrecios(p))>0.01; }
+/* ============================================================================
+   ⚠️ ¿La misma venta cargada dos veces?
+   Es el error más caro que se puede colar: el cliente figura comprando dos veces, el
+   mes sale inflado y el contador factura de más. Se miran dos señales:
+     - el MISMO N° de nota de venta en dos ventas distintas (cada recibo es único), y
+     - el mismo cliente, por el mismo total, el mismo día.
+   Es un AVISO, no un veredicto: un cliente puede comprar dos veces de verdad. Por eso
+   dice "¿DUPLICADA?" con signos de pregunta y nunca esconde ni borra nada solo.
+   ========================================================================== */
+function indiceDuplicados(list){
+  var porNota={}, porVenta={}, marca={}, grupos=[];
+  (list||[]).forEach(function(p){
+    var n=limpiaNota(p&&p.nota);
+    if(n) (porNota[n]=porNota[n]||[]).push(p);
+    var cli=normNombre(p&&p.cliente), tot=r2(ventaTotal(p)), f=contaFecha(p);
+    if(cli && tot>0 && f){ var k=cli+'|'+tot+'|'+f; (porVenta[k]=porVenta[k]||[]).push(p); }
+  });
+  function juntar(mapa, motivo){
+    for(var k in mapa){
+      var g=mapa[k]; if(g.length<2) continue;
+      grupos.push({motivo:motivo, clave:k, ps:g});
+      // La primera señal que marca una venta manda su etiqueta: la nota repetida es la
+      // más fuerte, así que se junta primero.
+      g.forEach(function(p){ if(!marca[p.id]) marca[p.id]=motivo; });
+    }
+  }
+  juntar(porNota,'nota');
+  juntar(porVenta,'venta');
+  return { grupos:grupos, marca:marca, n:Object.keys(marca).length };
+}
+/* Se recalcula UNA vez por render: mirarlo fila por fila sería recorrer toda la lista
+   por cada fila. */
+var DUP_IDX={grupos:[], marca:{}, n:0};
+function dupChip(p){
+  var m=DUP_IDX.marca[p&&p.id]; if(!m) return '';
+  return '<br><span class="badge b-amber" title="'+(m==='nota'
+      ? 'Hay otra venta con el MISMO N° de nota de venta — un recibo no se repite'
+      : 'Hay otra venta del mismo cliente, por el mismo monto y el mismo día')+
+    '">⚠️ ¿DUPLICADA?</span>';
+}
 function contaProdTxt(prods){
   return (prods||[]).map(function(x){
     return [x.desc,x.medida,(x.codigo?('cód '+x.codigo):'')].filter(Boolean).join(' · ')+' × '+(x.cant||0)+
@@ -1637,6 +1677,9 @@ function renderConta(){
     contaPagos(p).forEach(function(c){ var k=cobroMetodoTxt(c); if(k) porMet[k]=(porMet[k]||0)+1; });
   });
   var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  // Sobre la MISMA lista que se muestra: así las dos ventas del par están a la vista y
+  // se pueden comparar. Marcar una sin poder ver la otra confundiría más de lo que ayuda.
+  DUP_IDX=indiceDuplicados(list);
   renderContaMetrics(list, vSel);
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
@@ -1647,7 +1690,10 @@ function renderConta(){
       (enviosFalta>0.01?(' · <b style="color:var(--red)">por cobrar '+fmtBs(enviosFalta)+'</b>'):'')+')</span>'):'')+
     ' &nbsp;·&nbsp; 🧾 En el sistema: <b>'+nReg+'</b> de '+list.length+
     (list.length-nReg>0?(' <span style="color:var(--amber)">('+(list.length-nReg)+' por cargar)</span>'):'')+
-    (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'');
+    (Object.keys(porMet).length?('<br>Métodos — '+Object.keys(porMet).sort().map(function(m){ return esc(m)+': <b>'+porMet[m]+'</b>'; }).join(' &nbsp;·&nbsp; ')):'')+
+    (DUP_IDX.n?('<br><span style="color:var(--amber);font-weight:700">⚠️ '+DUP_IDX.n+' venta'+(DUP_IDX.n===1?'':'s')+
+      ' que puede'+(DUP_IDX.n===1?'':'n')+' estar <b>cargada'+(DUP_IDX.n===1?'':'s')+' dos veces</b> — '+
+      'están marcadas en la tabla. Revisalas antes de facturar.</span>'):'');
   var vac=document.getElementById('cta-empty');
   vac.style.display=list.length?'none':'block';
   // Que el cartel diga POR QUÉ está vacío: si no, uno cree que no hay pedidos
@@ -1670,7 +1716,7 @@ function renderConta(){
       '<td style="white-space:nowrap">'+entregaFechaHtml(p)+'</td>'+
       '<td><b>'+esc(p.nota||'—')+'</b>'+(p.oc?('<br><span style="color:var(--muted);font-size:.9em">'+esc(ocEtiq(p.oc))+'</span>'):'')+'</td>'+
       '<td>'+esc(p.vendedor||'—')+'</td>'+
-      '<td><b>'+esc(p.cliente||'—')+'</b></td>'+
+      '<td><b>'+esc(p.cliente||'—')+'</b>'+dupChip(p)+'</td>'+
       '<td style="white-space:nowrap">'+tipoVentaHtml(p)+'</td>'+
       '<td style="white-space:nowrap">'+esc(p.celular||'—')+'</td>'+
       '<td class="prod-cell">'+contaProdTxt(p.productos).map(esc).join('<br>')+'</td>'+
@@ -1985,6 +2031,23 @@ function cuadreAlertas(pagos){
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
   if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
+     lo demás en importancia, así que se lista con las dos ventas del par juntas para
+     poder compararlas de un toque. */
+  var enPeriodo=STATE.filter(function(p){
+    return !fueraDeConta(p) && cuadreEsDe(p, vend) && enPeriodoCuadre(contaFecha(p), pe);
+  });
+  var dup=indiceDuplicados(enPeriodo);
+  if(dup.n){
+    A.push({ico:'👯', txt:'<b>'+dup.n+'</b> venta'+(dup.n===1?'':'s')+' que puede'+(dup.n===1?'':'n')+
+      ' estar <b>cargada'+(dup.n===1?'':'s')+' dos veces</b> — revisalas antes de facturar',
+      det:dup.grupos.map(function(g){
+        var q=g.ps[0];
+        return { txt:(q.cliente||'—')+' · '+fmtBs(ventaTotal(q))+' · '+g.ps.length+' veces'+
+                     (g.motivo==='nota'?(' (misma nota '+g.clave+')'):' (mismo día y monto)'),
+                 id:q.id };
+      })});
+  }
   var exceso=[];
   (pagos||[]).forEach(function(c){ if(excesoCobro(c.p)>0 && exceso.indexOf(c.p)<0) exceso.push(c.p); });
   if(exceso.length) A.push({ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return {txt:(p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)), id:p.id}; })});

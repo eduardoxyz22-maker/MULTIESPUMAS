@@ -1355,8 +1355,33 @@ El `onclick` va por `esc()` (§4ac / §4al) — `test_borrarventa` lo verifica e
   **segunda** tampoco, que se borre de STATE **y de la planilla**, que la venta buena quede
   intacta, que la tabla se refresque sola, y que Administración y Contabilidad queden de acuerdo.
 
-**Ofrecido, no pedido:** un detector de posibles duplicados (mismo cliente + mismo monto +
-mismo día) que los marque en Contabilidad antes de que se conviertan en un problema.
+### Detector de ventas cargadas dos veces (mismo día, "hazlo")
+`indiceDuplicados(list)` marca una venta cuando encuentra otra con:
+- el **mismo N° de nota de venta** (`limpiaNota`) — cada recibo es único, es la señal fuerte; o
+- el **mismo cliente** (`normNombre`, sin tildes) **+ mismo `ventaTotal` + mismo `contaFecha`**.
+
+Devuelve `{grupos, marca, n}`. `marca` es un mapa `id → motivo`, y la primera señal que toca
+una venta manda su etiqueta (por eso se juntan las notas **primero**).
+
+Se calcula **una vez por render** en `renderConta` (`DUP_IDX`) — mirarlo fila por fila sería
+recorrer la lista entera por cada fila. Se corre sobre **la misma lista que se muestra**:
+marcar una venta sin poder ver su par confundiría más de lo que ayuda.
+
+Se ve en tres lugares: chip `⚠️ ¿DUPLICADA?` al lado del cliente (`dupChip`), una línea en el
+resumen de Ventas, y un aviso `👯` en `cuadreAlertas` que lista cada par con el motivo y se
+toca para abrir la venta.
+
+Como pasa por `contaLista()` / `fueraDeConta()`, **las ATC y los vendedores excluidos no
+cuentan**. Es un **aviso, no un veredicto** — hay clientes que compran dos veces de verdad,
+así que dice "¿duplicada?" y nunca borra ni esconde nada solo.
+
+- Test: `test_duplicados.js` (28). Verifica las dos señales, los tres **falsos positivos que
+  NO debe marcar** (otro día, otro monto, venta sola), que la marca desaparezca al borrar la
+  copia, y que ATC y Eduardo queden fuera.
+
+⚠️ **`test_fotos` es otro flake del run paralelo** (como `test_cerrardia`): salió 10 fallas en
+`-P 4` y **26 OK · 0 fallan** las tres veces que se corrió en serie, sin errores JS. Sumado a
+la línea base.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
