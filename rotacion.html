@@ -32,6 +32,16 @@ h1{font-size:21px;font-weight:700;letter-spacing:-.2px}
 .marca.on .n{opacity:.7}
 .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 
+/* ---- periodo ---- */
+.periodos{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.periodos .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.5px;opacity:.7;margin-right:2px}
+.per{background:rgba(0,0,0,.16);border:1px solid rgba(255,255,255,.22);color:#fff;
+     padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px;transition:.12s}
+.per:hover{background:rgba(0,0,0,.26)}
+.per.on{background:#fff;color:var(--azul);border-color:#fff;font-weight:600}
+.per .d{opacity:.65;font-size:11px}
+.per.on .d{opacity:.6}
+
 /* ---- tabs ---- */
 .tabs{display:flex;gap:4px;border-bottom:2px solid var(--linea);margin-bottom:16px;flex-wrap:wrap}
 .tab{padding:11px 18px;cursor:pointer;font-weight:600;font-size:13.5px;color:var(--gris);
@@ -112,6 +122,7 @@ h3{font-size:14px;margin:20px 0 9px;color:var(--azul)}
     <h1>Rotación de productos · MULTIESPUMAS</h1>
     <div class="sub" id="sub"></div>
     <div class="marcas" id="marcas"></div>
+    <div class="periodos" id="periodos"></div>
   </div>
 </header>
 
@@ -217,12 +228,38 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 let marcaSel = -1;                                    // -1 = todas
 let U = null, B = null, totMes = null, totProd = null, GRAN = 0;
 
-/** Reagrega unidades/Bs segun la marca elegida. */
+/* --------- ventana de periodo ---------
+   El Excel no arranca parejo: SUEÑA tiene ventas desde Ene-2025 pero HEAVEN y
+   ROHO recien desde Jul-2025. Comparar marcas sobre "todo" le regala a SUEÑA
+   seis meses en los que era la unica cargada. Por eso el periodo por defecto
+   empieza en el primer mes en que TODAS las marcas tienen movimiento. */
+const iniMarca = MARCAS.map((_,i)=>{
+  let f = NMES;
+  for (const v of D.ventas) if (v[3]===i && v[1] < f) f = v[1];
+  return f;
+});
+const M0_COMP = Math.max(...iniMarca);
+const PERIODOS = [
+  {k:'comp', ini:M0_COMP, t:()=>`${etqMesL(M0_COMP)} – ${etqMesL(NMES-1)}`,
+   d:'comparable · todas las marcas cargadas'},
+  {k:'todo', ini:0,       t:()=>`${etqMesL(0)} – ${etqMesL(NMES-1)}`,
+   d:'todo lo que hay en el Excel'},
+];
+let perSel = 'comp';
+const per = () => PERIODOS.find(p=>p.k===perSel);
+let M0 = M0_COMP;                     // primer mes de la ventana
+const M1 = NMES-1;                    // ultimo mes con datos
+const enVentana = m => m >= M0 && m <= M1;
+const mesesVentana = () => { const a=[]; for(let m=M0;m<=M1;m++) a.push(m); return a; };
+
+/** Reagrega unidades/Bs segun la marca y el periodo elegidos. */
 function agregar(){
+  M0 = per().ini;
   U = new Float64Array(NP*NMES); B = new Float64Array(NP*NMES);
   totMes = new Float64Array(NMES); totProd = new Float64Array(NP); GRAN = 0;
   for (const v of D.ventas){
     if (marcaSel >= 0 && v[3] !== marcaSel) continue;
+    if (!enVentana(v[1])) continue;
     const k = v[0]*NMES + v[1];
     U[k] += v[4]; B[k] += v[5];
     totMes[v[1]] += v[4]; totProd[v[0]] += v[4]; GRAN += v[4];
@@ -231,10 +268,15 @@ function agregar(){
 const und = (p,m) => U[p*NMES+m];
 const val = (p,m) => B[p*NMES+m];
 
-/* --------- unidades por marca (para las pastillas del header) --------- */
-const undMarca = MARCAS.map(()=>0);
-let undTotal = 0;
-for (const v of D.ventas){ undMarca[v[3]] += v[4]; undTotal += v[4]; }
+/* --------- unidades por marca dentro de la ventana (pastillas del header) --------- */
+let undMarca = MARCAS.map(()=>0), undTotal = 0;
+function totalesMarca(){
+  undMarca = MARCAS.map(()=>0); undTotal = 0;
+  for (const v of D.ventas){
+    if (v[1] < per().ini) continue;
+    undMarca[v[3]] += v[4]; undTotal += v[4];
+  }
+}
 
 /* ---------------- filtros de texto / medida ---------------- */
 function medidasDisponibles(){
@@ -278,24 +320,45 @@ q('marcas').onclick = e => {
   pintar();
 };
 
+/* ================= PERIODO ================= */
+function pintarPeriodos(){
+  q('periodos').innerHTML = '<span class="lbl">Período</span>' + PERIODOS.map(p=>
+    `<div class="per${perSel===p.k?' on':''}" data-p="${p.k}">${p.t()}
+       <span class="d">· ${p.d}</span></div>`).join('');
+}
+q('periodos').onclick = e => {
+  const d = e.target.closest('.per'); if (!d || d.dataset.p === perSel) return;
+  perSel = d.dataset.p;
+  agregar(); totalesMarca();
+  mesSel = Math.min(Math.max(mesSel, M0), M1);
+  llenarMeses();
+  llenarAnios();
+  pintarPeriodos(); pintarMarcas(); pintarSub();
+  ['mMed','aMed','xMed','yMed'].forEach(id=>llenarMedidas(q(id)));
+  pintar();
+};
+
 /* ================= LISTA POR MES ================= */
 let mesSel = NMES-1;
-q('mSel').innerHTML = MESES.map((m,i)=>`<option value="${i}">${etqMesL(i)}</option>`).join('');
-q('mSel').value = mesSel;
+function llenarMeses(){
+  q('mSel').innerHTML = mesesVentana().map(i=>`<option value="${i}">${etqMesL(i)}</option>`).join('');
+  q('mSel').value = mesSel;
+}
 q('mSel').onchange = e => { mesSel = +e.target.value; pintar(); };
-q('mPrev').onclick = () => { if (mesSel>0){ mesSel--; q('mSel').value = mesSel; pintar(); } };
-q('mNext').onclick = () => { if (mesSel<NMES-1){ mesSel++; q('mSel').value = mesSel; pintar(); } };
+q('mPrev').onclick = () => { if (mesSel>M0){ mesSel--; q('mSel').value = mesSel; pintar(); } };
+q('mNext').onclick = () => { if (mesSel<M1){ mesSel++; q('mSel').value = mesSel; pintar(); } };
 q('mBusca').oninput = () => pintar();
 q('mMed').onchange = () => pintar();
 
 function panelMes(){
-  q('mPrev').disabled = mesSel===0; q('mNext').disabled = mesSel===NMES-1;
+  q('mPrev').disabled = mesSel===M0; q('mNext').disabled = mesSel===M1;
   const qq = val_('mBusca'), med = q('mMed').value;
-  const tot = totMes[mesSel], prev = mesSel>0 ? totMes[mesSel-1] : 0;
+  const hayPrev = mesSel > M0;
+  const tot = totMes[mesSel], prev = hayPrev ? totMes[mesSel-1] : 0;
   const lista = [];
   for (let p=0;p<NP;p++){
     const u = und(p,mesSel);
-    if (u>0 && pasa(p,qq,med)) lista.push([p,u,val(p,mesSel), mesSel>0?und(p,mesSel-1):0]);
+    if (u>0 && pasa(p,qq,med)) lista.push([p,u,val(p,mesSel), hayPrev?und(p,mesSel-1):0]);
   }
   lista.sort((a,b)=> b[1]-a[1] || b[2]-a[2] || P[a[0]].n.localeCompare(P[b[0]].n));
 
@@ -335,12 +398,20 @@ function panelMes(){
 }
 
 /* ================= ANUAL ================= */
-const ANIOS = [...new Set(MESES.map(m=>m[0]))];
-const mesesDe = a => MESES.map((m,i)=>[m,i]).filter(([m])=>m[0]===a).map(([,i])=>i);
-q('aSel').innerHTML = ANIOS.map(a=>{
-    const n = mesesDe(a).length;
-    return `<option value="${a}">${a} — ${n===12?'año completo':`Ene a ${NM[MESES[mesesDe(a)[n-1]][1]]} (parcial)`}</option>`;
-  }).join('') + `<option value="0">Acumulado ${ANIOS[0]}–${ANIOS[ANIOS.length-1]}</option>`;
+let ANIOS = [];
+const mesesDe = a => mesesVentana().filter(i=>MESES[i][0]===a);
+function llenarAnios(){
+  const v = q('aSel').value;
+  ANIOS = [...new Set(mesesVentana().map(i=>MESES[i][0]))];
+  q('aSel').innerHTML = ANIOS.map(a=>{
+      const ms = mesesDe(a), n = ms.length;
+      const tramo = n===12 ? 'año completo'
+        : `${NM[MESES[ms[0]][1]]} a ${NM[MESES[ms[n-1]][1]]} (${n} ${n===1?'mes':'meses'})`;
+      return `<option value="${a}">${a} — ${tramo}</option>`;
+    }).join('') +
+    `<option value="0">Acumulado del período (${mesesVentana().length} meses)</option>`;
+  q('aSel').value = [...ANIOS.map(String),'0'].includes(v) ? v : '0';
+}
 q('aSel').onchange = () => pintar();
 q('aBusca').oninput = () => pintar();
 q('aMed').onchange = () => pintar();
@@ -348,7 +419,7 @@ q('aPareto').onchange = () => pintar();
 
 function panelAnual(){
   const a = +q('aSel').value;
-  const idx = a ? mesesDe(a) : MESES.map((_,i)=>i);
+  const idx = a ? mesesDe(a) : mesesVentana();
   const qq = val_('aBusca'), med = q('aMed').value, soloP = q('aPareto').checked;
 
   // ranking sobre TODO el universo de la marca: el % acumulado y el Pareto no
@@ -370,7 +441,7 @@ function panelAnual(){
 
   const nm = idx.length;
   q('aCards').innerHTML = [
-    ['Unidades', fmt(tot), a?`${nm} ${nm===1?'mes':'meses'}`:`${nm} meses`],
+    ['Unidades', fmt(tot), `${etqMesL(idx[0])} a ${etqMesL(idx[nm-1])} · ${nm} ${nm===1?'mes':'meses'}`],
     ['Venta Bs', bs(todas.reduce((s,f)=>s+f[2],0)), ''],
     ['Productos con venta', fmt(todas.length), ''],
     ['Promedio mensual', fmt1(tot/nm), 'unidades / mes'],
@@ -415,40 +486,41 @@ function panelAnual(){
 
 function panelMatriz(){
   const qq = val_('xBusca'), med = q('xMed').value, ord = q('xOrd').value, act = q('xAct').checked;
-  const ini6 = Math.max(0, NMES-6);
+  const MV = mesesVentana();
+  const ini6 = Math.max(M0, M1-5);
   const filas = [];
   for (let p=0;p<NP;p++){
     if (!totProd[p] || !pasa(p,qq,med)) continue;
-    let u6=0; for(let m=ini6;m<NMES;m++) u6+=und(p,m);
+    let u6=0; for(let m=ini6;m<=M1;m++) u6+=und(p,m);
     if (act && !u6) continue;
     filas.push(p);
   }
-  const ORD = {tot:p=>-totProd[p], ult:p=>-und(p,NMES-1), nom:p=>P[p].n, cod:p=>P[p].c};
+  const ORD = {tot:p=>-totProd[p], ult:p=>-und(p,M1), nom:p=>P[p].n, cod:p=>P[p].c};
   const key = ORD[ord] || ORD.tot;
   filas.sort((a,b)=>{ const x=key(a),y=key(b); return typeof x==='string'?x.localeCompare(y):(x-y)||(totProd[b]-totProd[a]); });
 
   let max = 0;
-  for (const p of filas) for (let m=0;m<NMES;m++) max = Math.max(max, und(p,m));
+  for (const p of filas) for (const m of MV) max = Math.max(max, und(p,m));
   const esc2 = v => { if(!v) return ''; const t=Math.min(1,Math.sqrt(v/max));
     return `background:rgba(15,123,108,${(.10+t*.72).toFixed(2)});color:${t>.45?'#fff':'inherit'};font-weight:${t>.25?600:400}`; };
 
-  q('xHint').textContent = `${filas.length} productos · ${NMES} meses`;
+  q('xHint').textContent = `${filas.length} productos · ${MV.length} meses`;
   if (!filas.length){ q('xTab').innerHTML = `<tbody><tr><td class="vacio">Sin datos para este filtro.</td></tr></tbody>`; return; }
 
   q('xTab').innerHTML =
    `<thead><tr><th></th><th>Código</th><th>Producto</th><th>Medida</th>` +
-   MESES.map((_,i)=>`<th class="num" style="text-align:center">${etqMes(i)}</th>`).join('') +
+   MV.map(i=>`<th class="num" style="text-align:center">${etqMes(i)}</th>`).join('') +
    `<th class="num">Total</th><th class="num">Meses</th></tr></thead><tbody>` +
    filas.map((p,i)=>{
      let act2=0;
-     const celdas = MESES.map((_,m)=>{ const v=und(p,m); if(v)act2++;
+     const celdas = MV.map(m=>{ const v=und(p,m); if(v)act2++;
        return `<td class="m" style="${esc2(v)}">${v?fmt(v):'<span class="zero">·</span>'}</td>`; }).join('');
      return `<tr><td class="rank">${i+1}</td><td class="cod">${esc(P[p].c)}</td>
        <td class="prod">${esc(P[p].n)}</td><td>${esc(P[p].m)}</td>${celdas}
        <td class="num"><b>${fmt(totProd[p])}</b></td><td class="num">${act2}</td></tr>`;
    }).join('') +
    `</tbody><tfoot><tr><td></td><td></td><td>TOTAL</td><td></td>` +
-   MESES.map((_,m)=>`<td class="m">${fmt(filas.reduce((s,p)=>s+und(p,m),0))}</td>`).join('') +
+   MV.map(m=>`<td class="m">${fmt(filas.reduce((s,p)=>s+und(p,m),0))}</td>`).join('') +
    `<td class="num">${fmt(filas.reduce((s,p)=>s+totProd[p],0))}</td><td></td></tr></tfoot>`;
 }
 
@@ -456,8 +528,8 @@ function panelMatriz(){
 ['yBusca','yMed','yEst'].forEach(id=>{ const e=q(id); e[e.type==='text'?'oninput':'onchange'] = () => pintar(); });
 const NPROY = 5;                                   // meses a proyectar
 
-/** Primer mes con movimiento en la seleccion actual. */
-function primerMes(){ for (let m=0;m<NMES;m++) if (totMes[m]>0) return m; return NMES; }
+/** Primer mes con movimiento en la seleccion actual, dentro de la ventana. */
+function primerMes(){ for (let m=M0;m<=M1;m++) if (totMes[m]>0) return m; return M1+1; }
 
 /** Promedio de los ultimos k meses hasta 'corte', sin contar los meses previos al
  *  arranque de la seleccion: si no, una marca que empezo en Jul-2025 se castiga
@@ -479,16 +551,19 @@ const MIN_PRON = 8;                // menos pronosticos que esto no es una medic
 /** Corre el backtest empezando en el mes 'arranque' de historia. */
 function corridaBacktest(conEstacionalidad, arranque){
   const ini = primerMes(), s = m => totMes[m], errs = [];
-  for (let corte = ini+arranque; corte < NMES-1; corte++){
+  let conIdx = 0;                       // pronosticos donde el indice existia de verdad
+  for (let corte = ini+arranque; corte < M1; corte++){
     const iAt = conEstacionalidad ? estacionalidad(corte) : null;
     const niv = nivel(s, corte, ini);
-    for (let h=1; h<=Math.min(NPROY, NMES-1-corte); h++){
+    for (let h=1; h<=Math.min(NPROY, M1-corte); h++){
       const real = totMes[corte+h];
       if (real <= 0) continue;
       const pred = niv * (iAt ? iAt[MESES[corte+h][1]] : 1);
+      if (iAt) conIdx++;
       errs.push(Math.abs(pred-real)/real);
     }
   }
+  errs.conIdx = conIdx;
   return errs;
 }
 /** Backtest: corta la historia en cada mes, proyecta 1 a 5 meses con el mismo
@@ -499,12 +574,13 @@ function corridaBacktest(conEstacionalidad, arranque){
  *  arrancaron en Jul-2025 — baja a cortes con 6 meses y lo avisa, porque medir
  *  con poca historia castiga al metodo mas de lo que le corresponde. */
 function backtestMape(conEstacionalidad){
-  let errs = corridaBacktest(conEstacionalidad, 11);
-  if (errs.length >= MIN_PRON)
-    return {mape: errs.reduce((a,b)=>a+b,0)/errs.length, n: errs.length, corto:false};
-  errs = corridaBacktest(conEstacionalidad, 5);
-  if (errs.length >= MIN_PRON)
-    return {mape: errs.reduce((a,b)=>a+b,0)/errs.length, n: errs.length, corto:true};
+  for (const [arr, corto] of [[11,false],[5,true]]){
+    const errs = corridaBacktest(conEstacionalidad, arr);
+    if (errs.length >= MIN_PRON)
+      return {mape: errs.reduce((a,b)=>a+b,0)/errs.length, n: errs.length, corto,
+              // si el indice no existia en ningun corte, este numero NO mide la estacionalidad
+              estMedida: !conEstacionalidad || errs.conIdx > 0};
+  }
   return null;
 }
 
@@ -512,8 +588,8 @@ function backtestMape(conEstacionalidad){
  *  antes la tendencia. Con 13 meses hay UNA sola observacion por mes calendario, y
  *  el backtest muestra que empeora el pronostico: queda apagado por defecto. */
 function estacionalidad(corte){
-  if (corte === undefined) corte = NMES-1;
-  const activos = []; for (let m=0;m<=corte;m++) if (totMes[m]>0) activos.push(m);
+  if (corte === undefined) corte = M1;
+  const activos = []; for (let m=M0;m<=corte;m++) if (totMes[m]>0) activos.push(m);
   if (activos.length < 12) return null;
   const win = activos.slice(-13), n = win.length;
   let sx=0, sy=0, sxx=0, sxy=0;
@@ -538,7 +614,7 @@ function estacionalidad(corte){
 }
 /** Los NPROY meses calendario siguientes al ultimo con datos. */
 function mesesProy(){
-  const [y0,m0] = MESES[NMES-1], out = [];
+  const [y0,m0] = MESES[M1], out = [];
   for (let i=1;i<=NPROY;i++){ const t=m0+i; out.push([y0+Math.floor((t-1)/12), ((t-1)%12)+1]); }
   return out;
 }
@@ -546,7 +622,7 @@ function panelProy(){
   const usarEst = q('yEst').checked;
   const idx = usarEst ? estacionalidad() : null;
   const PM = mesesProy();
-  const ini = primerMes(), U = NMES-1;
+  const ini = primerMes(), U = M1;
   const serieTot = m => totMes[m];
 
   // ---- error medido del metodo sobre esta misma seleccion ----
@@ -567,12 +643,18 @@ function panelProy(){
      (arranca en ${etqMesL(ini)}), no alcanzan los ${MIN_PRON} pronósticos mínimos para medir nada.
      La banda de abajo es un ±${pct(0.30)} supuesto, no medido.`) +
     (usarEst
-      ? ` <b>Estacionalidad activada.</b> Ojo: con 13 meses hay una sola observación por mes calendario,
-     y el backtest dice que <b>empeora</b> el pronóstico${btAlt ? ` (±${pct(bt.mape)} con estacionalidad
-     contra ±${pct(btAlt.mape)} sin ella)` : ''}. Sirve para mirar la forma del año, no para proyectar.`
-      : ` <b>Sin estacionalidad</b> (recomendado)${btAlt ? `: activarla sube el error de ±${pct(bt ? bt.mape : 0)}
-     a ±${pct(btAlt.mape)}` : ''}. El índice estacional se mueve demasiado según el mes en que lo calcules
-     — con esta historia no se puede separar la temporada del crecimiento.`) +
+      ? (bt && !bt.estMedida
+          ? ` <b>Estacionalidad activada, pero acá no se puede evaluar.</b> En este período no hay ningún
+     corte con 12 meses de historia previa, así que el error de arriba mide el método <i>sin</i> el índice
+     — no dice nada sobre la estacionalidad. Donde sí se pudo medir (período "todo lo que hay"), el índice
+     <b>empeora</b> el error de ±14% a ±47%.`
+          : ` <b>Estacionalidad activada.</b> Ojo: hay una sola observación por mes calendario y el backtest
+     dice que <b>empeora</b> el pronóstico${btAlt ? ` (±${pct(bt.mape)} con índice contra
+     ±${pct(btAlt.mape)} sin él)` : ''}. Sirve para mirar la forma del año, no para proyectar.`)
+      : ` <b>Sin estacionalidad</b> (recomendado)${btAlt && btAlt.estMedida
+     ? `: activarla sube el error de ±${pct(bt ? bt.mape : 0)} a ±${pct(btAlt.mape)}` : ''}.
+     El índice estacional se mueve demasiado según el mes en que lo calcules — con esta historia no se
+     puede separar la temporada del crecimiento.`) +
     ` La proyección supone que no hay cambios de precio, quiebres de stock ni campañas fuera de lo habitual.
      La suma de las cuatro marcas no da exacto el total de TODAS: cada selección calcula su propio nivel.` +
     (bt && bt.mape > 0.45
@@ -624,7 +706,7 @@ function panelProy(){
   ].map(([k,v,d])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
 
   // ---- tabla de totales por mes ----
-  const acum = MESES.map((_,m)=>m).filter(m=>MESES[m][0]===PM[0][0]).reduce((s,m)=>s+totMes[m],0);
+  const acum = mesesVentana().filter(m=>MESES[m][0]===PM[0][0]).reduce((s,m)=>s+totMes[m],0);
   q('yTotTab').innerHTML =
    `<thead><tr><th>Mes</th><th class="num">Índice estacional</th><th class="num">Piso</th>
      <th class="num">Base</th><th class="num">Techo</th></tr></thead><tbody>` +
@@ -682,14 +764,15 @@ function panelProy(){
 
 /* ================= CATALOGO ================= */
 function panelCat(){
-  const enCat = P.filter(p=>p.k).length;
+  let enCat = 0, fueraCat = 0;
+  for (let p=0;p<NP;p++) if (totProd[p]>0) (P[p].k ? enCat++ : fueraCat++);
   const uExc = D.excluidos.reduce((s,e)=>s+e.u,0);
   q('catInfo').innerHTML =
    `<div class="nota"><b>${D.excluidos.length} productos excluidos.</b> Son los que marcaste en amarillo en la
      matriz mensual: armazones, esponja, sábanas, protectores, mantas, fundas, patas, parrillas y servicios de
-     reparación. Quedan fuera de <b>todo</b> — rankings, matriz, promedios, proyección y totales.
-     Se restaron ${fmt(uExc)} unidades: la base pasa de 14.622 a <b>${fmt(undTotal)}</b>. La lista completa
-     está más abajo; si falta o sobra alguno, se ajusta y se recalcula todo.</div>
+     reparación. Quedan fuera de <b>todo</b> — rankings, matriz, promedios, proyección y totales
+     (son ${fmt(uExc)} unidades en el Excel completo). La lista está más abajo; si falta o sobra alguno,
+     se ajusta y se recalcula todo.</div>
     <div class="info"><b>Cómo se asigna la marca.</b> Primero mandan tus <b>reasignaciones manuales</b>
      (${D.reasignados.length} productos que marcaste en la hoja MATRIZ OTROS: rojo → ROHO, amarillo → SUEÑA).
      Después manda el catálogo: si el código está en la lista de HEAVEN o de SUEÑA, el producto es de esa
@@ -697,16 +780,20 @@ function panelCat(){
      Excel (columna VENTAS MARCA): ROHO queda como ROHO, y lo de fábrica / clientes externos cae en OTROS.
      El código <b>CD1403</b> (almohada 50×70) figura en los dos catálogos, así que sus ventas se reparten
      entre HEAVEN y SUEÑA según cómo se registró cada venta.</div>
-    <div class="nota"><b>Ojo con la cobertura del Excel.</b> De enero a junio 2025 solo hay ventas de SUEÑA
-     y de fábrica: HEAVEN y ROHO recién aparecen en <b>julio 2025</b>, y clientes externos en
-     <b>febrero 2026</b>. Por eso el volumen salta de junio a julio 2025 — es incorporación de líneas,
-     no crecimiento. Para comparar rotación mes a mes de forma limpia, usar de julio 2025 en adelante
-     o filtrar por marca.</div>
+    <div class="${perSel==='comp'?'info':'nota'}"><b>Por qué el período arranca en ${etqMesL(M0_COMP)}.</b>
+     De enero a junio 2025 el Excel solo tiene ventas de SUEÑA y de fábrica: HEAVEN y ROHO recién aparecen
+     en <b>${etqMesL(M0_COMP).toLowerCase()}</b>, y los clientes externos en febrero 2026. Sobre "todo el Excel",
+     SUEÑA se lleva 6 meses en los que era la única cargada — su participación sube de
+     <b>32,3%</b> a <b>38,3%</b> por eso, no por vender más. El período comparable pone a las cuatro marcas
+     a medir sobre los mismos ${NMES-M0_COMP} meses.
+     ${perSel==='comp'
+       ? 'Está activo: los números que ves son comparables entre marcas.'
+       : '<b>Ahora estás viendo "todo lo que hay": las participaciones entre marcas no son comparables.</b>'}</div>
     <div class="cards">` +
    [['Códigos en catálogo', fmt(D.catalogo.HEAVEN+D.catalogo['SUEÑA']), `${D.catalogo.HEAVEN} HEAVEN · ${D.catalogo['SUEÑA']} SUEÑA`],
     ['Con venta en el período', fmt(enCat), 'del catálogo'],
-    ['Sin ninguna venta', fmt(D.sinVenta.length), 'revisar si siguen vigentes'],
-    ['Con venta fuera de catálogo', fmt(P.length-enCat), 'accesorios, fábrica, ROHO, medidas especiales']]
+    ['Sin ninguna venta', fmt(D.sinVenta.length), 'en todo el Excel · revisar si siguen vigentes'],
+    ['Con venta fuera de catálogo', fmt(fueraCat), 'accesorios, fábrica, ROHO, medidas especiales']]
    .map(([k,v,d])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('') +
    `</div>`;
 
@@ -765,11 +852,19 @@ function pintar(){
   ({mes:panelMes, anual:panelAnual, matriz:panelMatriz, proy:panelProy, cat:panelCat})[tabSel]();
 }
 
-q('sub').textContent =
-  `${etqMesL(0)} a ${etqMesL(NMES-1)} · ${fmt(undTotal)} unidades · ${fmt(NP)} códigos · ` +
-  `marca por catálogo HEAVEN / SUEÑA · ${D.excluidos.length} productos excluidos`;
+function pintarSub(){
+  q('sub').textContent =
+    `${etqMesL(M0)} a ${etqMesL(M1)} · ${fmt(undTotal)} unidades · ` +
+    `marca por catálogo HEAVEN / SUEÑA · ${D.excluidos.length} productos excluidos`;
+}
 agregar();
+totalesMarca();
+mesSel = M1;
+llenarMeses();
+llenarAnios();
+pintarPeriodos();
 pintarMarcas();
+pintarSub();
 ['mMed','aMed','xMed','yMed'].forEach(id=>llenarMedidas(q(id)));
 pintar();
 </script>
