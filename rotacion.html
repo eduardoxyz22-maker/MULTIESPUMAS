@@ -169,7 +169,7 @@ h3{font-size:14px;margin:20px 0 9px;color:var(--azul)}
   <div class="panel" id="p-proy">
     <div class="info" id="proyInfo"></div>
     <div class="bar">
-      <label class="chk"><input type="checkbox" id="yEst" checked> Aplicar estacionalidad</label>
+      <label class="chk" title="El backtest muestra que empeora el pronóstico. Sirve para mirar la forma del año."><input type="checkbox" id="yEst"> Aplicar estacionalidad (empeora el pronóstico)</label>
       <input type="text" id="yBusca" placeholder="Buscar código, producto o medida…">
       <select id="yMed"></select>
       <div class="spacer"></div>
@@ -456,12 +456,64 @@ function panelMatriz(){
 ['yBusca','yMed','yEst'].forEach(id=>{ const e=q(id); e[e.type==='text'?'oninput':'onchange'] = () => pintar(); });
 const NPROY = 5;                                   // meses a proyectar
 
-/** Indice estacional de los ultimos 13 meses con movimiento, quitando antes la
- *  tendencia: si no se descuenta el crecimiento, una marca que viene subiendo
- *  hace que los meses viejos parezcan "temporada baja" cuando solo eran meses
- *  en los que se vendia menos en general. */
-function estacionalidad(){
-  const activos = []; for (let m=0;m<NMES;m++) if (totMes[m]>0) activos.push(m);
+/** Primer mes con movimiento en la seleccion actual. */
+function primerMes(){ for (let m=0;m<NMES;m++) if (totMes[m]>0) return m; return NMES; }
+
+/** Promedio de los ultimos k meses hasta 'corte', sin contar los meses previos al
+ *  arranque de la seleccion: si no, una marca que empezo en Jul-2025 se castiga
+ *  con ceros estructurales. */
+function promK(serie, corte, k, ini){
+  const desde = Math.max(ini, corte-k+1);
+  let t = 0;
+  for (let m=desde;m<=corte;m++) t += serie(m);
+  return t/(corte-desde+1);
+}
+/** Nivel base = promedio simple de los promedios de 3, 6 y 12 meses.
+ *  Es la variante que menos se equivoca en el backtest (ver backtestMape). */
+function nivel(serie, corte, ini){
+  return (promK(serie,corte,3,ini) + promK(serie,corte,6,ini) + promK(serie,corte,12,ini))/3;
+}
+
+const MIN_PRON = 8;                // menos pronosticos que esto no es una medicion
+
+/** Corre el backtest empezando en el mes 'arranque' de historia. */
+function corridaBacktest(conEstacionalidad, arranque){
+  const ini = primerMes(), s = m => totMes[m], errs = [];
+  for (let corte = ini+arranque; corte < NMES-1; corte++){
+    const iAt = conEstacionalidad ? estacionalidad(corte) : null;
+    const niv = nivel(s, corte, ini);
+    for (let h=1; h<=Math.min(NPROY, NMES-1-corte); h++){
+      const real = totMes[corte+h];
+      if (real <= 0) continue;
+      const pred = niv * (iAt ? iAt[MESES[corte+h][1]] : 1);
+      errs.push(Math.abs(pred-real)/real);
+    }
+  }
+  return errs;
+}
+/** Backtest: corta la historia en cada mes, proyecta 1 a 5 meses con el mismo
+ *  metodo y compara contra lo que realmente pasó. Es la unica forma honesta de
+ *  decir cuanto vale esta proyeccion.
+ *  Primero intenta medir con cortes que ya tenian 12 meses de historia (lo mas
+ *  parecido a la situacion de hoy). Si no hay suficientes casos — marcas que
+ *  arrancaron en Jul-2025 — baja a cortes con 6 meses y lo avisa, porque medir
+ *  con poca historia castiga al metodo mas de lo que le corresponde. */
+function backtestMape(conEstacionalidad){
+  let errs = corridaBacktest(conEstacionalidad, 11);
+  if (errs.length >= MIN_PRON)
+    return {mape: errs.reduce((a,b)=>a+b,0)/errs.length, n: errs.length, corto:false};
+  errs = corridaBacktest(conEstacionalidad, 5);
+  if (errs.length >= MIN_PRON)
+    return {mape: errs.reduce((a,b)=>a+b,0)/errs.length, n: errs.length, corto:true};
+  return null;
+}
+
+/** Indice estacional de los ultimos 13 meses con movimiento hasta 'corte', quitando
+ *  antes la tendencia. Con 13 meses hay UNA sola observacion por mes calendario, y
+ *  el backtest muestra que empeora el pronostico: queda apagado por defecto. */
+function estacionalidad(corte){
+  if (corte === undefined) corte = NMES-1;
+  const activos = []; for (let m=0;m<=corte;m++) if (totMes[m]>0) activos.push(m);
   if (activos.length < 12) return null;
   const win = activos.slice(-13), n = win.length;
   let sx=0, sy=0, sxx=0, sxy=0;
@@ -494,60 +546,88 @@ function panelProy(){
   const usarEst = q('yEst').checked;
   const idx = usarEst ? estacionalidad() : null;
   const PM = mesesProy();
-  const f3 = Math.max(0,NMES-3), f6 = Math.max(0,NMES-6), f9 = Math.max(0,NMES-9);
+  const ini = primerMes(), U = NMES-1;
+  const serieTot = m => totMes[m];
+
+  // ---- error medido del metodo sobre esta misma seleccion ----
+  const bt = backtestMape(usarEst), btAlt = backtestMape(!usarEst);
+  const nHist = U-ini+1;
 
   q('proyInfo').innerHTML =
-    `<b>Cómo se calcula.</b> Base por producto = 60% del promedio de los últimos 3 meses
-     (${etqMesL(f3)}–${etqMesL(NMES-1)}) + 40% del promedio de los últimos 6 (${etqMesL(f6)}–${etqMesL(NMES-1)}),
-     de modo que pesa más lo reciente sin que un mes atípico distorsione. La tendencia compara esos
-     últimos 3 meses contra los 3 anteriores. ` +
-    (idx ? `Sobre esa base se aplica un <b>índice de estacionalidad</b> de los últimos 13 meses de la selección,
-     calculado después de descontarle la tendencia — si no, una marca que viene creciendo haría parecer
-     "temporada baja" a sus meses más viejos. Aun así hay <b>una sola observación por mes calendario</b>:
-     tómalo como referencia, no como un dato estadístico.`
-          : `<b>Sin estacionalidad</b>: la selección no llega a 12 meses de historia, así que se proyecta el promedio plano.`) +
-    ` El escenario conservador y el optimista abren la banda hacia abajo y hacia arriba según qué tanto
-     se sostenga el ritmo actual. Todo esto supone que no hay cambios de precio, quiebres de stock ni
-     campañas fuera de lo habitual. Nota: la suma de las cuatro marcas no da exacto el total de TODAS,
-     porque cada selección calcula su propia estacionalidad y su propia mezcla de promedios.`;
+    `<b>Cómo se calcula.</b> Para cada producto se toma el promedio de los últimos 3, de los últimos 6
+     y de los últimos 12 meses, y se promedian esos tres números. Eso da el nivel base por mes: pesa lo
+     reciente pero un mes atípico no lo arrastra. Probé las alternativas contra la historia real
+     (promedio de 3 meses solo, de 6, de 12, el último mes) y esta fue la que menos se equivocó.` +
+    (bt ? ` <b>Error medido:</b> aplicando este método en cada mes del pasado y comparándolo con lo que
+     realmente pasó, se equivoca en promedio <b>±${pct(bt.mape)}</b> por mes (${bt.n} pronósticos).
+     Es la precisión real que podés esperar, no una promesa.` +
+       (bt.corto ? ` Esta selección arranca en ${etqMesL(ini)} (${nHist} meses), así que la medición usó
+     cortes con apenas 6 meses de historia: el error real de hoy probablemente sea algo menor.` : '')
+        : ` <b>Sin error medido:</b> esta selección tiene solo ${nHist} meses de historia
+     (arranca en ${etqMesL(ini)}), no alcanzan los ${MIN_PRON} pronósticos mínimos para medir nada.
+     La banda de abajo es un ±${pct(0.30)} supuesto, no medido.`) +
+    (usarEst
+      ? ` <b>Estacionalidad activada.</b> Ojo: con 13 meses hay una sola observación por mes calendario,
+     y el backtest dice que <b>empeora</b> el pronóstico${btAlt ? ` (±${pct(bt.mape)} con estacionalidad
+     contra ±${pct(btAlt.mape)} sin ella)` : ''}. Sirve para mirar la forma del año, no para proyectar.`
+      : ` <b>Sin estacionalidad</b> (recomendado)${btAlt ? `: activarla sube el error de ±${pct(bt ? bt.mape : 0)}
+     a ±${pct(btAlt.mape)}` : ''}. El índice estacional se mueve demasiado según el mes en que lo calcules
+     — con esta historia no se puede separar la temporada del crecimiento.`) +
+    ` La proyección supone que no hay cambios de precio, quiebres de stock ni campañas fuera de lo habitual.
+     La suma de las cuatro marcas no da exacto el total de TODAS: cada selección calcula su propio nivel.` +
+    (bt && bt.mape > 0.45
+      ? `<br><br><b style="color:#c0392b">Cuidado con esta selección.</b> El método se equivoca ±${pct(bt.mape)}:
+         la serie es demasiado errática (pedidos grandes de una sola vez, altas y bajas de productos) como
+         para proyectarla. Usá estos números como orden de magnitud, no para planificar compras.`
+      : '');
 
+  // ---- nivel por producto ----
   const filas = [];
-  let base=0, prom3=0, prom6=0, tend3=0, tend3p=0;
+  let base = 0, prom3 = 0;
   for (let p=0;p<NP;p++){
-    let s3=0,s6=0,s9=0;
-    for(let m=f3;m<NMES;m++) s3+=und(p,m);
-    for(let m=f6;m<NMES;m++) s6+=und(p,m);
-    for(let m=f9;m<f6;m++)  s9+=und(p,m);
-    const p3=s3/(NMES-f3), p6=s6/(NMES-f6), pa=(f6-f9)?s9/(f6-f9):0;
-    const bse = .6*p3 + .4*p6;
-    prom3+=p3; prom6+=p6; tend3+=s3; tend3p+=(s6-s3); base+=bse;
+    const sp = m => und(p,m);
+    const bse = nivel(sp, U, ini), p3 = promK(sp, U, 3, ini), p6 = promK(sp, U, 6, ini);
+    const p12 = promK(sp, U, 12, ini);
+    prom3 += p3; base += bse;
     if (bse<=0 && totProd[p]<=0) continue;
-    filas.push({p, p3, p6, pa, bse, tot:totProd[p],
+    let a6=0, b6=0;
+    for (let m=Math.max(ini,U-5);m<=U;m++) a6 += und(p,m);
+    for (let m=Math.max(ini,U-11);m<=U-6;m++) b6 += und(p,m);
+    filas.push({p, p3, p6, p12, bse, tot:totProd[p], t6: b6 ? (a6-b6)/b6 : null,
       proy: PM.map(([,mm]) => bse * (idx ? idx[mm] : 1))});
   }
-  const tendencia = tend3p ? (tend3-tend3p)/tend3p : 0;
-  const tCap = Math.max(-0.3, Math.min(0.3, tendencia));
-  // tres niveles de partida; el mas bajo es el conservador y el mas alto el optimista,
-  // asi el orden se sostiene tanto si la marca sube como si baja
-  const niveles = [prom6, base, prom3*(1+tCap)];
-  const nCons = Math.min(...niveles), nOpt = Math.max(...niveles);
+
+  // ---- tendencia: 6 vs 6 meses. La de 3 vs 3 es demasiado ruidosa: en ROHO
+  //      daba +43% cuando la marca en realidad viene cayendo a la mitad. ----
+  const suma = (a,b) => { let t=0; for(let m=Math.max(ini,a);m<=b;m++) t+=totMes[m]; return t; };
+  const u6 = suma(U-5,U), p6prev = suma(U-11,U-6);
+  const tendencia = p6prev ? (u6-p6prev)/p6prev : 0;
+  const u3 = suma(U-2,U), p3prev = suma(U-5,U-3);
+  const tend3 = p3prev ? (u3-p3prev)/p3prev : 0;
+
+  // La banda sale del error que el metodo realmente comete (backtest), no de un
+  // supuesto inventado: si se equivoca ±14% por mes, ese es el ancho honesto.
+  const banda = Math.min(bt ? bt.mape : 0.30, 0.60);
+  const nCons = base*(1-banda), nOpt = base*(1+banda);
   const sumIdx = PM.reduce((s,[,mm])=>s+(idx?idx[mm]:1),0);
   const totProyBase = filas.reduce((s,f)=>s+f.proy.reduce((a,b)=>a+b,0),0);
   const totCons = nCons*sumIdx, totOpt = nOpt*sumIdx;
 
   q('yCards').innerHTML = [
-    [`Proyección ${NM[PM[0][1]]}–${NM[PM[NPROY-1][1]]} ${PM[0][0]}`, fmt(Math.round(totProyBase)), 'escenario base'],
-    ['Conservador', fmt(Math.round(totCons)), 'si el ritmo no se sostiene'],
-    ['Optimista', fmt(Math.round(totOpt)), 'si la tendencia continúa'],
-    ['Tendencia', (tendencia>=0?'+':'')+pct(tendencia), 'últimos 3 meses vs 3 previos'],
+    [`Proyección ${NM[PM[0][1]]}–${NM[PM[NPROY-1][1]]} ${PM[0][0]}`, fmt(Math.round(totProyBase)),
+     bt ? `escenario base · ±${pct(bt.mape)} de error medido` : 'escenario base'],
+    ['Piso', fmt(Math.round(totCons)), `base −${pct(banda)}${bt?'':' (sin medir)'}`],
+    ['Techo', fmt(Math.round(totOpt)), `base +${pct(banda)}${bt?'':' (sin medir)'}`],
+    ['Tendencia', (tendencia>=0?'+':'')+pct(tendencia),
+     `últimos 6 meses vs 6 previos (a 3 meses: ${tend3>=0?'+':''}${pct(tend3)})`],
     ['Ritmo actual', fmt1(prom3), 'und/mes (promedio 3 meses)'],
   ].map(([k,v,d])=>`<div class="card"><div class="k">${k}</div><div class="v">${v}</div><div class="d">${d}</div></div>`).join('');
 
   // ---- tabla de totales por mes ----
   const acum = MESES.map((_,m)=>m).filter(m=>MESES[m][0]===PM[0][0]).reduce((s,m)=>s+totMes[m],0);
   q('yTotTab').innerHTML =
-   `<thead><tr><th>Mes</th><th class="num">Índice estacional</th><th class="num">Conservador</th>
-     <th class="num">Base</th><th class="num">Optimista</th></tr></thead><tbody>` +
+   `<thead><tr><th>Mes</th><th class="num">Índice estacional</th><th class="num">Piso</th>
+     <th class="num">Base</th><th class="num">Techo</th></tr></thead><tbody>` +
    PM.map(([yy,mm])=>{
      const f = idx?idx[mm]:1;
      return `<tr><td><b>${NM[mm]} ${yy}</b></td>
@@ -574,17 +654,19 @@ function panelProy(){
 
   q('yTab').innerHTML =
    `<thead><tr><th></th><th>Código</th><th>Producto</th><th>Medida</th>
-     <th class="num">Prom. 3m</th><th class="num">Prom. 6m</th><th class="num">Tend.</th>` +
+     <th class="num">Prom. 3m</th><th class="num">Prom. 6m</th><th class="num">Prom. 12m</th>
+     <th class="num">Tend. 6v6</th>` +
    PM.map(([yy,mm])=>`<th class="num">${NM[mm]}-${String(yy).slice(2)}</th>`).join('') +
    `<th class="num">Total ${NPROY}m</th><th>Rotación</th></tr></thead><tbody>` +
    vis.map((f,i)=>{
-     const t = f.pa ? (f.p3-f.pa)/f.pa : null;
+     const t = f.t6;
      const s = f.proy.reduce((a,b)=>a+b,0);
      const cl = f.p3>=8?['ALTA','#12805c']:f.p3>=3?['MEDIA','#0ea5e9']:f.p3>=1?['BAJA','#f59e0b']:f.p3>0?['LENTA','#94a3b8']:['SIN MOV.','#cbd5e1'];
      return `<tr class="${i<3?'top':''}">
        <td class="rank">${i+1}</td><td class="cod">${esc(P[f.p].c)}</td>
        <td class="prod">${esc(P[f.p].n)}</td><td>${esc(P[f.p].m)}</td>
        <td class="num">${fmt1(f.p3)}</td><td class="num">${fmt1(f.p6)}</td>
+       <td class="num">${fmt1(f.p12)}</td>
        <td class="num">${t===null?'<span class="zero">—</span>':`<span class="${t>=0?'up':'dn'}">${t>=0?'+':''}${pct(t)}</span>`}</td>` +
        f.proy.map(v=>`<td class="num">${v>=.05?fmt1(v):'<span class="zero">—</span>'}</td>`).join('') +
       `<td class="num"><b>${fmt(Math.round(s))}</b></td>
@@ -592,7 +674,8 @@ function panelProy(){
    }).join('') +
    `</tbody><tfoot><tr><td></td><td></td><td>TOTAL LISTADO</td><td></td>
      <td class="num">${fmt1(vis.reduce((s,f)=>s+f.p3,0))}</td>
-     <td class="num">${fmt1(vis.reduce((s,f)=>s+f.p6,0))}</td><td></td>` +
+     <td class="num">${fmt1(vis.reduce((s,f)=>s+f.p6,0))}</td>
+     <td class="num">${fmt1(vis.reduce((s,f)=>s+f.p12,0))}</td><td></td>` +
    PM.map((_,j)=>`<td class="num">${fmt(Math.round(vis.reduce((s,f)=>s+f.proy[j],0)))}</td>`).join('') +
    `<td class="num">${fmt(Math.round(vis.reduce((s,f)=>s+f.proy.reduce((a,b)=>a+b,0),0)))}</td><td></td></tr></tfoot>`;
 }
