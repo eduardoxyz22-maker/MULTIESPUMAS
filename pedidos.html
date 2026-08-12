@@ -3084,6 +3084,12 @@ function ctaGuardarMontos(id){
    El total de la venta se recalcula solo: adelanto + pagos registrados + saldo. */
 function aplicarMontos(p, acu, sal){
   acu=r2(acu); sal=r2(sal);
+  /* ⚠️ Cuánto se cobró se saca de totalCobrado(), que LEE EL LEDGER de metodoPago —
+     NO de p.cobradoBs. Ese campo no tiene columna en la planilla (vive solo en el
+     navegador que cargó la venta), así que desde OTRA COMPUTADORA llega vacío y una
+     venta ya cobrada quedaba marcada como NO pagada. El cobradoBs local queda de
+     respaldo para los pedidos viejos marcados PAGADO sin monto anotado. */
+  var yaCobrado = totalCobrado(p) || (Number(p.cobradoBs)||0);
   var ant=anticipoDe(p);
   var antesAcu=r2(ant?(Number(ant.monto)||0):0);
   /* El ledger SOLO se reescribe si el adelanto cambió de verdad. Reescribirlo de gusto
@@ -3107,7 +3113,7 @@ function aplicarMontos(p, acu, sal){
   }
   p.acuenta=acu;
   p.saldo=sal;
-  p.pagado = (sal<=0.01) && (acu>0 || (Number(p.cobradoBs)||0)>0);
+  p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0);
   persistPedido(p);
 }
 function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }

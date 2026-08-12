@@ -1287,7 +1287,7 @@ El total queda **adelanto + pagos registrados + saldo**.
 `TOTAL VENTA` y `SUMA DE PRECIOS` por pedido (27 columnas; el ancho de `cols` se actualizó
 para que siga coincidiendo con el encabezado).
 
-- Test: `test_precios.js` (38). Cubre las cuentas, el formulario, el guardado, la reedición,
+- Test: `test_precios.js` (44). Cubre las cuentas, el formulario, el guardado, la reedición,
   que un pedido viejo no se rompa, la edición desde Contabilidad, **que el pago registrado
   sobreviva** (`#901` y `%F1` siguen en el ledger), corregir el a cuenta, quedar pagado,
   el rechazo de negativos y las columnas del Excel.
@@ -1300,6 +1300,29 @@ cortan el atributo — exactamente el bug de §4ac, otra vez. Ningún test funci
 visto (todos llaman a la función directo). Corregido con `esc()`.
 👉 **Regla: todo `onclick` que se arma como string va por `esc()`.** `JSON.stringify` NO sirve
 para eso dentro de un atributo HTML entre comillas dobles.
+
+### ⚠️ `cobradoBs` NO tiene columna en la planilla (2026-08-12)
+Al preguntar el usuario *"¿se ve los cambios desde cualquier compu?"* apareció un bug real
+del cambio de arriba. **`cobradoBs` no se escribe ni se lee en el Apps Script** (`recToRow`
+tiene 29 columnas y ninguna es esa; ver también el comentario de `pedidos.html:1728`): vive
+**solo en el navegador que cargó la venta**. Desde OTRA computadora el pedido llega sin ese
+campo y lo único que sobrevive es el **ledger dentro de `metodoPago`**.
+
+`aplicarMontos()` decidía `p.pagado` mirando `p.cobradoBs` → desde otra compu, poner el saldo
+en 0 dejaba la venta **marcada como NO pagada** aunque estuviera cobrada. Corregido:
+`var yaCobrado = totalCobrado(p) || (Number(p.cobradoBs)||0);` — el ledger primero (es lo que
+viaja), el cache local solo de respaldo para los viejos marcados PAGADO sin monto anotado.
+👉 **Regla: para saber cuánto se cobró, `totalCobrado(p)` (lee el ledger). NUNCA `p.cobradoBs`
+   a secas en algo que se guarde.**
+
+Verificado con las funciones **reales** del `.gs` (`recToRow` + `parseProd`) que sí sobreviven
+el viaje: **`precio` de cada ítem** (va dentro de `_productos_json`), `acuenta`, `saldo`,
+`metodoPago` entero (recibos `#` y fotos `%`).
+
+Aparte, se observó que **una recarga en vuelo puede pisar un guardado en la pantalla local**
+(`refreshConta()` hace `STATE=mergePending(res.pedidos)` con la foto tomada al llamar a
+`apiList`). El dato **sí llega a la planilla**; lo que queda viejo es la vista hasta el próximo
+refresco. Es preexistente y afecta a todos los guardados, no solo a este. No se tocó.
 
 **Flake de medianoche corregido en `test_conta.js`** (preexistente, no era de este cambio):
 el fixture usaba `ts: Date.now()-7200000` para el pedido "de hace 2 horas", que entre las
