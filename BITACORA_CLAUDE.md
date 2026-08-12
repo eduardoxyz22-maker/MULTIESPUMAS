@@ -1379,9 +1379,12 @@ así que dice "¿duplicada?" y nunca borra ni esconde nada solo.
   NO debe marcar** (otro día, otro monto, venta sola), que la marca desaparezca al borrar la
   copia, y que ATC y Eduardo queden fuera.
 
-⚠️ **`test_fotos` es otro flake del run paralelo** (como `test_cerrardia`): salió 10 fallas en
-`-P 4` y **26 OK · 0 fallan** las tres veces que se corrió en serie, sin errores JS. Sumado a
-la línea base.
+⚠️ **Los tests de FOTOS son flakes del run paralelo**, como `test_cerrardia`. En dos corridas
+seguidas de `-P 4` falló uno distinto cada vez (`test_fotos` 10 fallas, después `test_dosfotos`
+2 fallas), y **los dos pasan limpios las tres veces que se corren en serie** (26/0 y 43/0), sin
+errores JS. Son los que más manipulan imágenes, así que se les va el timing cuando compiten por
+CPU. 👉 **Antes de acusar una regresión en `test_fotos` / `test_dosfotos` / `test_cerrardia`,
+correrlos en serie.**
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
