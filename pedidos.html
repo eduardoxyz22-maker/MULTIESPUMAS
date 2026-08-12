@@ -145,6 +145,10 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .btn-primary:disabled{opacity:.6;cursor:default;transform:none}
 .btn-ghost{background:#fff;border:1px solid var(--gray-md);color:var(--muted)}
 .btn-ghost:hover{background:var(--gray-lt);color:var(--text)}
+/* Borrar es lo único que no se puede deshacer: va discreto y en rojo, para que no se
+   toque por error al lado de los botones que sí se usan todos los días. */
+.btn-borrar{background:#fff;border:1px solid var(--red-border);color:var(--red)}
+.btn-borrar:hover{background:var(--red-lt)}
 .btn-sm{padding:7px 14px;font-size:.76rem}
 .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 /* Grupo de exportación Excel por alcance (hoy/mañana/mes/todo) */
@@ -2987,6 +2991,11 @@ function showContaModal(id){
         '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
+      '<div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--gray-md);text-align:center">'+
+        '<button class="btn btn-borrar btn-sm" onclick="'+esc("ctaEliminarVenta('"+String(p.id)+"')")+'" '+
+          'title="Para una venta cargada dos veces, o que nunca existió">🗑 Eliminar esta venta</button>'+
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:5px">Para una venta <b>duplicada</b> o cargada por error. No se puede deshacer.</div>'+
+      '</div>'+
     '</div>';
   openModal(html);
   ctaRecalc();                      // pinta los subtotales y el aviso apenas abre
@@ -3115,6 +3124,29 @@ function aplicarMontos(p, acu, sal){
   p.saldo=sal;
   p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0);
   persistPedido(p);
+}
+/* Borrar una venta desde Contabilidad. Es para la venta CARGADA DOS VECES (el caso que
+   lo motivó) o la que nunca existió. Borra la fila de la planilla: no se deshace, así
+   que el aviso dice exactamente qué se va y cuánta plata anotada se lleva puesta. */
+function ctaEliminarVenta(id){
+  var p=findById(id); if(!p) return;
+  var ant=anticipoDe(p);
+  var plata=r2((ant?(Number(ant.monto)||0):0)+totalCobrado(p));
+  var quien=(p.cliente||'esta venta')+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'');
+  var txt='🗑 ELIMINAR ESTA VENTA\n\n'+quien+'\n'+
+          'Total de la venta: '+fmtBs(ventaTotal(p))+'\n'+
+          'Vendedor: '+(p.vendedor||'—')+'\n\n';
+  if(plata>0.01) txt+='⚠️ Tiene '+fmtBs(plata)+' en pagos anotados. Se borran también.\n\n';
+  if(p.entregado) txt+='⚠️ Este pedido figura como YA ENTREGADO.\n\n';
+  txt+='Se borra de la planilla y NO se puede deshacer.\n\n¿Eliminarla?';
+  if(!confirm(txt)) return;
+  /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
+     lo que más duele si el clic fue por error. */
+  if((plata>0.01 || p.entregado) &&
+     !confirm('Última confirmación.\n\nSe van a borrar '+
+              (plata>0.01?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
+  closeModal();
+  realDelete(id);
 }
 function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
@@ -3997,8 +4029,10 @@ function realDelete(id){
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
   // Refrescar TODO: si no, el pedido borrado seguía apareciendo en la lista de carga,
-  // en Mis pedidos, en el panel del chofer y en el mapa.
+  // en Mis pedidos, en el panel del chofer, en el mapa y —desde que se puede borrar
+  // desde ahí— en la tabla de Contabilidad y en el Cuadre.
   saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
+  renderContaSiActiva(); renderCuadreSiActivo();
   if(CONNECTED){
     apiDelete(id).then(function(res){ if(!(res&&res.ok)) toast('No se pudo borrar del servidor. Actualizá.','err'); },
                        function(){ toast('Sin conexión: se borró local (puede reaparecer al actualizar).','err'); });

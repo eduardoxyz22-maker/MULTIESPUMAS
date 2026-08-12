@@ -1330,6 +1330,34 @@ el fixture usaba `ts: Date.now()-7200000` para el pedido "de hace 2 horas", que 
 Ahora el fixture ancla al **mediodía** (`new Date().setHours(12,0,0,0)`). Se comprobó
 corriendo el test contra `05b1bb3` (ya publicado) antes de tocar nada: fallaba igual.
 
+## 4am. Eliminar una venta desde Contabilidad (2026-08-12)
+Pedido: *"falta el boton eliminar venta en contabilidad... mi vendedor duplico una venta y
+es como si el cliente hubiera comprado 2 veces cuando fue solo 1"*.
+
+`ctaEliminarVenta(id)` en la ficha de Contabilidad. La infraestructura ya existía
+(`apiDelete` → `doDelete` → `sh.deleteRow`), así que **no hubo que tocar el Apps Script**.
+
+**Fricción a propósito**, porque borrar es lo único que no se deshace:
+- el botón va **abajo del todo**, separado por una línea punteada, chico y en rojo outline
+  (`.btn-borrar`), lejos de los que se usan a diario;
+- el `confirm()` nombra **cliente, nota, OC, total y vendedor**;
+- si hay **plata anotada** (anticipo + pagos) o el pedido está **entregado**, pide una
+  **segunda confirmación** que repite el monto. Sin plata y sin entregar, una sola.
+
+⚠️ `realDelete()` no repintaba Contabilidad ni el Cuadre (nadie borraba desde ahí antes):
+se le agregaron `renderContaSiActiva()` y `renderCuadreSiActivo()`. Sin eso la venta borrada
+seguía en la tabla hasta cambiar de pestaña.
+
+El `onclick` va por `esc()` (§4ac / §4al) — `test_borrarventa` lo verifica explícitamente.
+
+- Test: `test_borrarventa.js` (22). Controla cada `confirm()` por separado para poder probar
+  el **cancelar**: que cancelando en la primera vuelta no se borre nada, que cancelando en la
+  **segunda** tampoco, que se borre de STATE **y de la planilla**, que la venta buena quede
+  intacta, que la tabla se refresque sola, y que Administración y Contabilidad queden de acuerdo.
+
+**Ofrecido, no pedido:** un detector de posibles duplicados (mismo cliente + mismo monto +
+mismo día) que los marque en Contabilidad antes de que se conviertan en un problema.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
