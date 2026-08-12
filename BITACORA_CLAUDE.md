@@ -1294,6 +1294,19 @@ para que siga coincidiendo con el encabezado).
 - ⚠️ Trampa al escribir tests del formulario: `resetForm()` deja **una fila vacía adelante**,
   así que hay que buscar cada `.prod-card` por su `.prod-desc`, no por posición.
 
+**`test_onclicks` se ganó el sueldo.** El botón "Guardar precios y montos" salió mudo:
+`onclick="ctaGuardarMontos('+JSON.stringify(String(p.id))+')"` mete **comillas dobles** que
+cortan el atributo — exactamente el bug de §4ac, otra vez. Ningún test funcional lo hubiera
+visto (todos llaman a la función directo). Corregido con `esc()`.
+👉 **Regla: todo `onclick` que se arma como string va por `esc()`.** `JSON.stringify` NO sirve
+para eso dentro de un atributo HTML entre comillas dobles.
+
+**Flake de medianoche corregido en `test_conta.js`** (preexistente, no era de este cambio):
+el fixture usaba `ts: Date.now()-7200000` para el pedido "de hace 2 horas", que entre las
+00:00 y las 02:00 UTC cae al **día anterior** y el filtro por día encontraba 2 en vez de 3.
+Ahora el fixture ancla al **mediodía** (`new Date().setHours(12,0,0,0)`). Se comprobó
+corriendo el test contra `05b1bb3` (ya publicado) antes de tocar nada: fallaba igual.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

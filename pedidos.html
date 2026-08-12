@@ -3025,7 +3025,9 @@ function ctaEditHtml(p){
     '</div>'+
     (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
     '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
-    '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="ctaGuardarMontos('+JSON.stringify(String(p.id))+')">💾 Guardar precios y montos</button>'+
+    // ⚠️ Por esc(): con JSON.stringify las comillas dobles cortaban el atributo y el botón
+    //    quedaba mudo (el mismo bug de §4ac).
+    '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:10px" onclick="'+esc("ctaGuardarMontos('"+String(p.id)+"')")+'">💾 Guardar precios y montos</button>'+
   '</div>';
 }
 /* Recalcula los subtotales EN EL DOM (sin volver a dibujar la ficha: si la redibujara,
