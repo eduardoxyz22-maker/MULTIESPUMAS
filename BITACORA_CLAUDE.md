@@ -1386,6 +1386,40 @@ errores JS. Son los que más manipulan imágenes, así que se les va el timing c
 CPU. 👉 **Antes de acusar una regresión en `test_fotos` / `test_dosfotos` / `test_cerrardia`,
 correrlos en serie.**
 
+## 4an. Las imágenes no se veían desde otra computadora (2026-08-12)
+Reporte: *"Las imagenes que suben los vendedores en contabilidad no se logra ver EN OTRAS PC"*.
+
+**Causa.** Todas las imágenes se pedían por `https://drive.google.com/thumbnail?id=…`. Ese
+endpoint sirve el archivo casi siempre **solo si el navegador ya tiene sesión de Google con
+acceso** — por eso la vendedora veía su propio comprobante (su navegador estaba logueado) y
+desde otra PC salía el ícono roto. El Apps Script **sí** comparte bien
+(`f.setSharing(ANYONE_WITH_LINK, VIEW)` en `guardarFoto`), el problema era cómo se pedía.
+
+**Arreglo — dos caminos y una salida digna:**
+1. `fotoThumb()` ahora devuelve `https://lh3.googleusercontent.com/d/<id>=w<N>`, que sirve el
+   archivo compartido "con cualquiera que tenga el link" **sin pedir sesión**.
+2. `fotoThumbAlt()` conserva el endpoint viejo como respaldo.
+3. `fotoFallback(img, fid, w)`: primer error → prueba el alterno; segundo error → **reemplaza
+   el `<img>` por un link** `📎 abrir imagen` (`.foto-rota`), en vez de dejar un cuadradito roto.
+
+`fotoImgHtml(fid, {w, alt, title, cls, style, onclick})` es **el único lugar** que arma el
+`<img>`, así que los dos caminos y el aviso valen para las 4 pantallas de una: comprobantes
+del pago (ficha de Contabilidad), fotos de la entrega, retiros de efectivo y `compTiraHtml`.
+El visor grande lo arma a mano porque su `<img>` ya existe en el HTML.
+`fidLimpio()` deja solo `[A-Za-z0-9_-]` antes de meter el id en un atributo.
+
+**Si el link 📎 tampoco abre en Drive**, entonces sí es un problema de permisos (política de
+la cuenta que bloquea "cualquiera con el link"), no del panel. Pendiente ofrecido: que
+`guardarFoto` relea `f.getSharingAccess()` y avise en el acto si quedó privada — **eso sí
+necesitaría volver a publicar el Apps Script**.
+
+- Test: `test_imgotra.js` (25). Simula **otra computadora** interceptando lh3 y drive con 403:
+  verifica el orden de los intentos (`lh3 → lh3 → drive → drive`), que el `onerror` no quede
+  cortado por comillas, y que la ficha de Contabilidad termine mostrando **2 links legibles y
+  0 imágenes rotas**.
+- ⚠️ Al escribir el fixture: los comprobantes van en el ledger **separados por espacio**
+  (`%FOTO_A %FOTO_B`), no con `|`.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

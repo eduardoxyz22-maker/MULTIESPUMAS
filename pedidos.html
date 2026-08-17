@@ -149,6 +149,10 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    toque por error al lado de los botones que sí se usan todos los días. */
 .btn-borrar{background:#fff;border:1px solid var(--red-border);color:var(--red)}
 .btn-borrar:hover{background:var(--red-lt)}
+/* Cuando la imagen no se puede mostrar: un link, no un cuadradito roto. */
+.foto-rota{display:inline-flex;align-items:center;gap:5px;padding:8px 11px;border:1px dashed var(--amber-border);
+  background:var(--amber-lt);color:var(--amber);border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;white-space:nowrap}
+.foto-rota:hover{background:#fde9c8}
 .btn-sm{padding:7px 14px;font-size:.76rem}
 .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 /* Grupo de exportación Excel por alcance (hoy/mañana/mes/todo) */
@@ -2670,7 +2674,9 @@ function renderRetiros(){
             '<td style="white-space:nowrap">'+(r.tipo==='Facturado'?'<span class="badge b-verif">🧾 Facturado</span>':'<span class="badge b-gray">📄 No facturado</span>')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(r.monto)+'</b></td>'+
             '<td style="white-space:nowrap">'+(r.fotos.length
-                ? r.fotos.map(function(fid,k){ return '<img src="'+fotoThumb(fid)+'" alt="Imagen '+(k+1)+'" style="height:34px;border-radius:6px;border:1px solid var(--gray-md);cursor:pointer;margin-right:4px" title="Ver en grande" onclick="window.open(\''+fotoVer(fid)+'\',\'_blank\')">'; }).join('')
+                ? r.fotos.map(function(fid,k){ return fotoImgHtml(fid,{alt:'Imagen '+(k+1), title:'Ver en grande',
+                    style:'height:34px;border-radius:6px;border:1px solid var(--gray-md);cursor:pointer;margin-right:4px',
+                    onclick:"window.open('"+fotoVer(fidLimpio(fid))+"','_blank')"}); }).join('')
                 : '<span style="color:var(--amber);font-size:.78rem">sin foto</span>')+'</td>'+
             '<td style="white-space:nowrap">'+
               '<button class="rowbtn" title="Editar" onclick="editarRetiro('+JSON.stringify(r.id).replace(/"/g,'&quot;')+')">✏️</button>'+
@@ -2780,7 +2786,8 @@ function contaPagosHtml(p){
       ? ('<div class="fotos" style="align-items:center;margin-top:5px">'+
            cs.map(function(fid,k){
              return '<span class="foto">'+
-               '<img src="'+fotoThumb(fid)+'" alt="Imagen '+(k+1)+' del pago" loading="lazy" title="Ver en grande" onclick="window.open(\''+fotoVer(fid)+'\',\'_blank\')">'+
+               fotoImgHtml(fid,{alt:'Imagen '+(k+1)+' del pago', title:'Ver en grande',
+                 onclick:"window.open('"+fotoVer(fidLimpio(fid))+"','_blank')"})+
                (idx>=0?('<button type="button" title="Quitar esta imagen" onclick="ctaQuitarComp(\''+pid+'\','+idx+','+k+')">✕</button>')
                 : (esEnvio(c)?('<button type="button" title="Quitar esta imagen" onclick="ctaEnvioQuitarComp(\''+pid+'\','+k+')">✕</button>'):''))+
              '</span>';
@@ -5395,8 +5402,43 @@ function copiarEntregas(){ copyText(entregasTexto()); }
    móviles sería imposible.
    ========================================================================== */
 function fotosDe(p){ return Array.isArray(p.fotos)?p.fotos:[]; }
-function fotoThumb(fid){ return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w400'; }
+/* ⚠️ POR QUÉ HAY DOS DIRECCIONES PARA LA MISMA IMAGEN
+   `drive.google.com/thumbnail` (lo que había antes) muchas veces sirve la imagen SOLO si
+   el navegador ya tiene una sesión de Google con acceso al archivo. Por eso la vendedora
+   veía su propio comprobante —su navegador estaba logueado— y desde OTRA computadora
+   salía el ícono roto.
+   `lh3.googleusercontent.com/d/<id>` sirve el archivo compartido "con cualquiera que
+   tenga el link" SIN pedir sesión, así que va primero. El otro queda de respaldo, y si
+   los dos fallan se muestra un link para abrirla en vez de un ícono roto. */
+function fotoThumb(fid, w){ return 'https://lh3.googleusercontent.com/d/'+encodeURIComponent(fid)+'=w'+(w||400); }
+function fotoThumbAlt(fid, w){ return 'https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w'+(w||400); }
 function fotoVer(fid){ return 'https://drive.google.com/file/d/'+encodeURIComponent(fid)+'/view'; }
+/* Los IDs de Drive son [A-Za-z0-9_-]: se limpian antes de meterlos en un atributo. */
+function fidLimpio(fid){ return String(fid==null?'':fid).replace(/[^\w-]/g,''); }
+/* Primer fallo → se prueba la otra dirección. Segundo fallo → un link legible, para que
+   nadie se quede mirando un cuadradito roto sin saber qué pasó. */
+function fotoFallback(img, fid, w){
+  if(!img) return;
+  if(!img.dataset.reintento){ img.dataset.reintento='1'; img.src=fotoThumbAlt(fid, w); return; }
+  img.onerror=null;
+  var a=document.createElement('a');
+  a.href=fotoVer(fid); a.target='_blank'; a.rel='noopener'; a.className='foto-rota';
+  a.textContent='📎 abrir imagen';
+  a.title='No se pudo mostrar acá. Se abre en Google Drive; si ahí tampoco se ve, la imagen no quedó compartida.';
+  a.onclick=function(e){ e.stopPropagation(); };
+  if(img.parentNode) img.parentNode.replaceChild(a, img);
+}
+/* UN SOLO lugar arma el <img>: así los dos caminos y el aviso valen para TODAS las
+   pantallas, y no hay que acordarse de repetirlo en cada una. */
+function fotoImgHtml(fid, o){
+  o=o||{}; var w=o.w||400, f=fidLimpio(fid);
+  return '<img src="'+esc(fotoThumb(f,w))+'" loading="lazy" alt="'+esc(o.alt||'Imagen')+'"'+
+    (o.title?(' title="'+esc(o.title)+'"'):'')+
+    (o.cls?(' class="'+esc(o.cls)+'"'):'')+
+    (o.style?(' style="'+esc(o.style)+'"'):'')+
+    (o.onclick?(' onclick="'+esc(o.onclick)+'"'):'')+
+    ' onerror="'+esc("fotoFallback(this,'"+f+"',"+w+")")+'">';
+}
 function achicarFoto(file, maxPx, calidad){
   return new Promise(function(res, rej){
     var fr=new FileReader();
@@ -5458,7 +5500,8 @@ function fotosHtml(p, conBorrar){
   if(!a.length) return '';
   return '<div class="fotos">'+a.map(function(fid,i){
     return '<span class="foto">'+
-      '<img src="'+fotoThumb(fid)+'" alt="Foto de la entrega" loading="lazy" title="Ver la foto en grande" onclick="abrirVisor(\''+p.id+'\','+i+')">'+
+      fotoImgHtml(fid,{alt:'Foto de la entrega', title:'Ver la foto en grande',
+        onclick:"abrirVisor('"+String(p.id).replace(/'/g,'')+"',"+i+")"})+
       (conBorrar?('<button title="Borrar esta foto" onclick="quitarFoto(\''+p.id+'\','+i+')">✕</button>'):'')+
     '</span>';
   }).join('')+'</div>';
@@ -5476,7 +5519,15 @@ function abrirVisor(pid, idx){
 function renderVisor(){
   var ov=document.getElementById('visor'); if(!ov) return;
   var fid=VISOR.ids[VISOR.i];
-  ov.querySelector('#visor-img').src='https://drive.google.com/thumbnail?id='+encodeURIComponent(fid)+'&sz=w1600';
+  // Mismo doble camino que las miniaturas: acá se arma a mano porque el <img> ya existe.
+  var im=ov.querySelector('#visor-img');
+  im.dataset.reintento='';
+  im.onerror=function(){
+    if(!this.dataset.reintento){ this.dataset.reintento='1'; this.src=fotoThumbAlt(fid,1600); return; }
+    this.onerror=null; this.removeAttribute('src');
+    this.alt='No se pudo mostrar la foto acá — abrila con “⬇ Original”';
+  };
+  im.src=fotoThumb(fid,1600);
   ov.querySelector('#visor-tit').textContent=VISOR.tit;
   ov.querySelector('#visor-n').textContent=(VISOR.i+1)+' de '+VISOR.ids.length;
   ov.querySelector('#visor-drive').href=fotoVer(fid);
@@ -6445,7 +6496,8 @@ function compTiraHtml(arr, quitarFn, agregarFn, hint){
   arr=compsArr(arr);
   var thumbs=arr.map(function(fid,i){
     return '<span class="foto">'+
-      '<img src="'+fotoThumb(fid)+'" alt="Imagen '+(i+1)+'" title="Ver en grande" onclick="window.open(\''+fotoVer(fid)+'\',\'_blank\')">'+
+      fotoImgHtml(fid,{alt:'Imagen '+(i+1), title:'Ver en grande',
+        onclick:"window.open('"+fotoVer(fidLimpio(fid))+"','_blank')"})+
       '<button type="button" title="Quitar esta imagen" onclick="'+esc(quitarFn+'('+i+')')+'">✕</button>'+
     '</span>';
   }).join('');
