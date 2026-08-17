@@ -3594,10 +3594,30 @@ function submitPedido(){
      NO tocó ningún número de plata, se conserva TAL CUAL: reescribirlo con el método
      suelto le borraría a contabilidad todo el historial. Si sí cambió los montos, se
      rehace desde el formulario, pero avisando antes. */
+  var _compSinPago=false;
   var _pagSI  = segVal('f-pagado')==='SI';
   var _acuVal = _pagSI?0:_acu;
   var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
   var _cobVal = _pagSI ? (parseFloat(document.getElementById('f-cobrado').value)||0) : 0;
+  /* ⚠️ EL COMPROBANTE VA PEGADO A UN PAGO — sin pago no tiene dónde guardarse.
+     Antes, si la vendedora adjuntaba la imagen pero dejaba el pedido SIN pago (ni "a
+     cuenta" ni "pagado"), la imagen se subía a Drive y el ID se tiraba en silencio: ella
+     la veía en pantalla, guardaba, y en Contabilidad no aparecía nunca. En vez de perderla
+     se frena y se le dice qué hacer. El recargo por entrega ya cobrado también la usa. */
+  (function(){
+    if(!compsArr(FORM_COMPS).length) return;
+    var _env=parseFloat((document.getElementById('f-envio')||{}).value)||0;
+    var _envCob=_env>0 && segVal('f-envio-cob')==='SI';
+    if(_pagSI || _acuVal>0 || _envCob) return;                 // hay dónde guardarla
+    _compSinPago=true;
+  })();
+  if(_compSinPago){
+    toast('Subiste la imagen pero no anotaste ningún pago. El comprobante va pegado a un pago: poné cuánto entró en «A cuenta» o marcá «SÍ, pagado». Si todavía no pagó, quitá la imagen y adjuntala después desde Contabilidad al registrar el pago.','err');
+    var _wc=document.getElementById('wrap-comp');
+    if(_wc){ _wc.classList.add('seg-err'); try{ _wc.scrollIntoView({block:'center'}); }catch(e){} }
+    var _wp=document.getElementById('f-acuenta'); if(_wp) _wp.classList.add('err');
+    return;
+  }
   var _metSuelto = (_pagSI || _acuVal>0)
         ? (segVal('f-metodo')+((segVal('f-metodo')==='QR' && segVal('f-banco'))?(' '+segVal('f-banco')):'')+
            ((metodoConComprobante(segVal('f-metodo')))?compsArr(FORM_COMPS).map(function(id){return ' %'+id;}).join(''):''))
@@ -5421,12 +5441,17 @@ function fotoFallback(img, fid, w){
   if(!img) return;
   if(!img.dataset.reintento){ img.dataset.reintento='1'; img.src=fotoThumbAlt(fid, w); return; }
   img.onerror=null;
+  /* El <img> se ESCONDE, no se borra: así el resto del panel (y los tests) siguen
+     encontrando el elemento donde estaba, y un repintado lo vuelve a intentar. */
+  img.style.display='none';
+  if(img.dataset.link) return;                       // el link ya está puesto
+  img.dataset.link='1';
   var a=document.createElement('a');
   a.href=fotoVer(fid); a.target='_blank'; a.rel='noopener'; a.className='foto-rota';
   a.textContent='📎 abrir imagen';
   a.title='No se pudo mostrar acá. Se abre en Google Drive; si ahí tampoco se ve, la imagen no quedó compartida.';
   a.onclick=function(e){ e.stopPropagation(); };
-  if(img.parentNode) img.parentNode.replaceChild(a, img);
+  if(img.parentNode) img.parentNode.insertBefore(a, img.nextSibling);
 }
 /* UN SOLO lugar arma el <img>: así los dos caminos y el aviso valen para TODAS las
    pantallas, y no hay que acordarse de repetirlo en cada una. */
@@ -6580,7 +6605,8 @@ function cobrosDe(p){
   var t=sinEnvios(sinMarcaReg(p.metodoPago));
   if(p.pagado && t && !todo.filter(function(c){ return !esEnvio(c); }).length){
     var cd=compDeTexto(t);
-    return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comp:cd.comp}];
+    // Mismo cuidado que en anticipoDe(): van TODAS las imágenes, no solo la primera.
+    return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comps:cd.comps, comp:cd.comp}];
   }
   return [];
 }
@@ -6596,7 +6622,10 @@ function anticipoDe(p){
   var suelto = t && !parseCobros(t).length;   // "Efectivo" / "QR BISA": método sin monto
   var cd=compDeTexto(t);
   return { metodo:(suelto?metodoBase(cd.txt):'')||'', banco:(suelto?bancoDe(cd.txt):''), monto:r2(acu),
-           fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:(suelto?cd.comp:''), anticipo:true };
+           fecha:contaFecha(p), nota:limpiaNota(p.nota),
+           /* ⚠️ TODAS las imágenes, no solo la primera. Antes iba solo `comp` (una) y la
+              vendedora que subía el comprobante Y el recibo veía desaparecer el segundo. */
+           comps:(suelto?cd.comps:[]), comp:(suelto?cd.comp:''), anticipo:true };
 }
 /* Total de la VENTA = el anticipo + lo que quedó por cobrar. La planilla no tiene
    columna "Total", así que se reconstruye. No confundir con objetivoCobro(), que es

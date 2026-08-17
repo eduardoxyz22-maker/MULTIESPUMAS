@@ -1419,6 +1419,40 @@ necesitaría volver a publicar el Apps Script**.
   0 imágenes rotas**.
 - ⚠️ Al escribir el fixture: los comprobantes van en el ledger **separados por espacio**
   (`%FOTO_A %FOTO_B`), no con `|`.
+- El `<img>` que falla **se esconde, no se borra**, y el link se inserta al lado: así el DOM
+  queda estable (el resto del panel y los tests siguen encontrando el elemento) y un
+  repintado lo vuelve a intentar.
+
+### 4an-bis. Y además, el comprobante SE PERDÍA (2026-08-12)
+El usuario acotó: *"lo que cargan de venta en tienda es lo que no está saliendo"* y después
+*"puede que el error sea cuando el vendedor crea la venta y horas o días después recién carga
+el comprobante y el pago"*. Reproduciendo la matriz de casos aparecieron **dos bugs de datos**
+que no tenían nada que ver con la URL. Ninguno es exclusivo de tienda, pero las ventas de
+tienda son justo las que se cargan sin pago, por eso ahí saltó.
+
+**1. Pedido guardado SIN pago → la imagen se tiraba en silencio.** En `submitPedido`,
+`_metSuelto` solo se arma `if(_pagSI || _acuVal>0)`; sin pago quedaba `''` y **los IDs de
+`FORM_COMPS` se descartaban**. La vendedora subía la foto (ya estaba en Drive), la veía en
+pantalla, guardaba… y en Contabilidad no aparecía nunca. La imagen quedaba huérfana en Drive.
+→ Ahora se **frena el guardado** y se explica: anotá el pago, o quitá la imagen y adjuntala
+después desde Contabilidad. (Se contempla el recargo por entrega ya cobrado, que también
+consume `FORM_COMPS`.)
+
+**2. Con "a cuenta", solo se leía la PRIMERA imagen.** `anticipoDe()` devolvía `comp`
+(singular) y no `comps`, y `textoCobros` hace `c.comps!=null?c.comps:c.comp` → la segunda se
+perdía en el primer reescribido del ledger. Mismo arreglo en el fallback de `cobrosDe()`.
+👉 **Regla: todo lo que arme un cobro devuelve `comps` (array), no solo `comp`.**
+
+El camino "pago cargado días después desde Contabilidad" **ya funcionaba** — se verificó y
+quedó cubierto para que no se rompa.
+
+- Test: `test_compperdido.js` (16). Los tres casos (pagada / a cuenta / sin pago) sobre una
+  venta de tienda, releyendo el pedido **como llega de la planilla**, más el camino correcto
+  de cargar el pago después.
+
+⚠️ **Al cambiar `fotoThumb()` se rompieron 6 suites** que afirmaban sobre la URL vieja
+(`test_compform`, `test_comprobante`, `test_dosfotos`, `test_fotos`, `test_retiros`,
+`test_visor`). Se hicieron agnósticas: aceptan cualquiera de los dos caminos.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
