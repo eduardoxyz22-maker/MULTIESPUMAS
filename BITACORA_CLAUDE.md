@@ -1450,9 +1450,20 @@ quedó cubierto para que no se rompa.
   venta de tienda, releyendo el pedido **como llega de la planilla**, más el camino correcto
   de cargar el pago después.
 
-⚠️ **Al cambiar `fotoThumb()` se rompieron 6 suites** que afirmaban sobre la URL vieja
+⚠️ **Al cambiar `fotoThumb()` se rompieron 9 suites** que afirmaban sobre la URL vieja
 (`test_compform`, `test_comprobante`, `test_dosfotos`, `test_fotos`, `test_retiros`,
-`test_visor`). Se hicieron agnósticas: aceptan cualquiera de los dos caminos.
+`test_visor`, `test_entregas`, `test_fotoefec`, `test_miscards`). Se hicieron agnósticas.
+👉 **Las que CONTABAN ocurrencias de la URL (`match(/thumbnail\?id=/g).length`) pasaron a
+contar `<img`**: al fallar la carga el `src` cambia a la dirección de respaldo, así que
+contar la URL había quedado **dependiente del timing**. Contar la etiqueta es lo que de
+verdad quiere decir "se ven las N miniaturas".
+
+⚠️ **Otro test con fecha fija que envejeció**: `test_cargachk` usaba `'2026-08-05'` y
+`textoCargaChk()` descarta los tildes de más de `CARGA_DIAS_GUARDA` (10) días — al pasar del
+15/08 el test empezó a fallar solo. Ahora usa `todayStr()`. Se comprobó corriéndolo contra
+`1fac1d7` (ya publicado) antes de tocar nada: fallaba igual.
+👉 **Patrón que ya mordió tres veces (`test_conta`, `test_cargachk`): nada de fechas fijas en
+los fixtures — siempre relativas a `todayStr()`.**
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
