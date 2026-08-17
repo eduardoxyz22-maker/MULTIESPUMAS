@@ -1465,6 +1465,33 @@ verdad quiere decir "se ven las N miniaturas".
 👉 **Patrón que ya mordió tres veces (`test_conta`, `test_cargachk`): nada de fechas fijas en
 los fixtures — siempre relativas a `todayStr()`.**
 
+## 4ao. Corregir la fecha de un pago ya anotado (2026-08-12)
+Reporte: *"cargaron un pago que entró el sábado y se les puso como fecha de hoy, no pudieron
+poner fecha de cuando era"*. El anticipo del formulario se escribe con `fecha:todayStr()` sin
+campo para cambiarla, y una vez anotado **no había forma de moverlo**: el cuadre lo contaba el
+día equivocado para siempre.
+
+Botón **📅 Fecha** en cada renglón de pago de la ficha (`contaPagosHtml`). Abre un
+`<input type="date">` inline con `max=hoy`. Estado en `CTA_FECHA_I` (índice dentro de
+`contaPagos`), que se resetea al cambiar de venta igual que `CTA_PAGO`.
+
+`ctaGuardarFecha(id,i)` cubre **los tres tipos de renglón**, que se reescriben distinto:
+- **recargo** → `aplicarEnvios()` (solo su renglón, sin tocar el pago de la venta);
+- **anticipo** → puede no estar en el ledger todavía (se deduce de `acuenta`); al ponerle
+  fecha propia queda **materializado** con `~`, que es justo lo que hace falta;
+- **cobro** → `aplicarCobros()` con el índice de `ctaIdxCobro()`.
+
+⚠️ `ctaCobrosConFecha(p)` rellena con `contaFecha(p)` los cobros del formato viejo antes de
+reescribir — misma trampa que en `aplicarMontos()` (§4an): reescribirlos sin fecha los
+convierte en plata que no aparece en ningún filtro por día ni por mes.
+
+Valida: formato `YYYY-MM-DD`, **nada a futuro** (es plata que YA entró) y no vacía; si falla
+**deja el campo abierto** para que la corrijan en vez de cerrarse perdiendo lo escrito.
+
+- Test: `test_fechapago.js` (27). Los cuatro tipos de renglón (cobro, anticipo suelto,
+  recargo, formato viejo sin fecha), que el **cuadre pase la plata al día correcto**, que no
+  se pierdan recibo/foto/monto, los rechazos, y que el campo no se arrastre a otra venta.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
