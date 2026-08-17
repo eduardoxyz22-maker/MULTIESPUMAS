@@ -1752,15 +1752,41 @@ function pagoOtroMes(p, c){
 }
 /* Los tres números del flete, que es lo que pidió contabilidad: cuánto se pactó,
    cuánto ya entró y cuánto falta cobrar en la puerta. */
-function envioResumenHtml(p){
+/* `editable` solo en la ficha de Contabilidad: ahí se puede corregir cuánto se PACTÓ
+   cobrar de flete. Lo ya cobrado no se toca desde acá (tiene su propio ✏️ Corregir). */
+function envioResumenHtml(p, editable){
   var tot=envioTotal(p), cob=envioCobrado(p), falta=envioPorCobrar(p);
-  return '<b style="color:var(--amber)">'+fmtBs(tot)+'</b>'+
-    ' <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>'+
-    '<div style="margin-top:3px;font-size:.85em">'+
-      '✅ Cobrado: <b>'+fmtBs(cob)+'</b> &nbsp;·&nbsp; '+
-      (falta>0.01
-        ? '<b style="color:var(--red)">⏳ Por cobrar: '+fmtBs(falta)+'</b> <span style="color:var(--muted)">— se cobra al entregar</span>'
-        : '<span style="color:var(--green);font-weight:700">✅ Nada por cobrar</span>')+
+  var h='';
+  if(tot>0){
+    h+='<b style="color:var(--amber)">'+fmtBs(tot)+'</b>'+
+      ' <span style="color:var(--muted);font-size:.85em">— va aparte de la venta, no se factura</span>'+
+      '<div style="margin-top:3px;font-size:.85em">'+
+        '✅ Cobrado: <b>'+fmtBs(cob)+'</b> &nbsp;·&nbsp; '+
+        (falta>0.01
+          ? '<b style="color:var(--red)">⏳ Por cobrar: '+fmtBs(falta)+'</b> <span style="color:var(--muted)">— se cobra al entregar</span>'
+          : '<span style="color:var(--green);font-weight:700">✅ Nada por cobrar</span>')+
+      '</div>';
+  }else{
+    h+='<span style="color:var(--muted)">— sin recargo por entrega —</span>';
+  }
+  if(!editable) return h;
+  /* Corregir lo PACTADO. Hacía falta porque el monto por cobrar solo se podía poner al
+     cargar el pedido: si el flete cambiaba —o se lo olvidaron— no había cómo arreglarlo,
+     y a la vendedora le quedaba el aviso rojo de "flete sin cobrar" con el monto viejo. */
+  if(!CTA_ENV_EDIT){
+    return h+'<div style="margin-top:5px"><button class="btn btn-sm" style="background:#fff;border:1px solid var(--amber-border);color:var(--amber);font-size:.72rem;padding:3px 9px;width:auto;font-weight:700" onclick="'+esc("ctaEditarEnvio('"+String(p.id)+"',1)")+'">✏️ '+(tot>0?'Cambiar lo que falta cobrar':'Poner un recargo por cobrar')+'</button></div>';
+  }
+  return h+
+    '<div style="margin-top:7px;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px">'+
+      '<div class="lb" style="margin-bottom:6px">✏️ ¿Cuánto falta cobrar de flete?</div>'+
+      '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">'+
+        '<input type="number" id="cta-env-monto" step="0.01" min="0" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
+        '<button class="btn btn-primary btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaGuardarEnvio('"+String(p.id)+"')")+'">Guardar</button>'+
+        '<button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaEditarEnvio('"+String(p.id)+"',0)")+'">Cancelar</button>'+
+      '</div>'+
+      '<div style="font-size:.72rem;color:var(--muted);margin-top:5px">Es lo que <b>todavía hay que cobrarle</b> al cliente por la entrega. '+
+        (cob>0.01?('Los '+fmtBs(cob)+' ya cobrados <b>no se tocan</b>. '):'')+
+        'Poné <b>0</b> para sacar el recargo. Esto <b>no le cambia el saldo de la venta</b>.</div>'+
     '</div>';
 }
 /* El flete que pagó el cliente aparte. Va en su propia columna a propósito: no es
@@ -2969,6 +2995,30 @@ function ctaQuitarComp(id, idx, k){
    ------------------------------------------------------------------------- */
 var CTA_EDIT_I=-1;                        // qué renglón está abierto (-1 = ninguno)
 var CTA_EDIT_M='', CTA_EDIT_B='';         // método y banco mientras se edita
+var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recargo pactado?
+/* ---- Cuánto falta cobrar de FLETE ----
+   Solo se podía poner al cargar el pedido. Si el flete cambiaba, o se lo olvidaban, no
+   había cómo arreglarlo: a la vendedora le quedaba el aviso rojo de "flete sin cobrar"
+   con el monto viejo (o sin aviso, si el olvido fue no ponerlo). */
+function ctaEditarEnvio(id, on){ CTA_ENV_EDIT=!!(on&&Number(on)); showContaModal(id); }
+function ctaGuardarEnvio(id){
+  var p=findById(id); if(!p) return;
+  var el=document.getElementById('cta-env-monto'); if(!el) return;
+  var txt=String(el.value||'').trim();
+  var m=txt===''?0:parseMonto(txt);
+  if(montoNegativo(txt) || !(m>=0)){ toast('Poné un monto válido, o 0 para sacar el recargo','err'); el.focus(); return; }
+  var antes=envioPorCobrar(p), cob=envioCobrado(p);
+  /* Lo YA COBRADO queda intacto: tiene su recibo, su fecha y su comprobante. Lo que se
+     reescribe es solo el renglón PACTADO (el que no tiene método). */
+  var arr=enviosDe(p).filter(envioYaCobrado);
+  if(m>0) arr.push({ metodo:'', banco:'', monto:m, fecha:'', nota:'', comps:[], envio:true });
+  aplicarEnvios(p, arr);
+  CTA_ENV_EDIT=false;
+  renderCuadreSiActivo(); renderContaSiActiva();
+  toast(m>0 ? ('Flete por cobrar: '+fmtBs(antes)+' → '+fmtBs(m)+(cob>0.01?(' · los '+fmtBs(cob)+' cobrados no se tocaron'):''))
+            : 'Se sacó el recargo por cobrar'+(cob>0.01?(' — quedan los '+fmtBs(cob)+' ya cobrados'):''),'ok');
+  reabrirFicha(id);
+}
 function ctaEditarPago(id, i){
   var p=findById(id); if(!p) return;
   if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; showContaModal(id); return; }
@@ -2990,7 +3040,7 @@ function ctaGuardarPago(id, i){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí una fecha válida','err'); ef.focus(); return; }
   if(f>todayStr()){ toast('La fecha no puede ser a futuro: es el día en que YA entró la plata','err'); ef.focus(); return; }
   var monto=parseMonto(em.value);
-  if(!(monto>0)){ toast('Poné cuánto entró (ej. 1750)','err'); em.focus(); return; }
+  if(montoNegativo(em.value) || !(monto>0)){ toast('Poné cuánto entró (ej. 1750)','err'); em.focus(); return; }
   var nota=limpiaNota(en.value);
   if(!nota){ toast('Poné el N° de nota de venta del recibo de este pago','err'); en.classList.add('err'); en.focus(); return; }
   if(CTA_EDIT_M==='QR' && !CTA_EDIT_B){ toast('Elegí a qué banco entró el QR','err'); return; }
@@ -3119,6 +3169,7 @@ function showContaModal(id){
     CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
     CTA_TIPO='pago';
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
+    CTA_ENV_EDIT=false;             // ni el del flete
   }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
@@ -3174,7 +3225,9 @@ function showContaModal(id){
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
       row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
-      (envioTotal(p)>0 ? row('🚚 Recargo por entrega', envioResumenHtml(p)) : '')+
+      /* Siempre visible en Contabilidad: si no hubiera recargo, la fila igual da el botón
+         para ponerlo — antes, olvidarse el flete al cargar el pedido no tenía arreglo. */
+      row('🚚 Recargo por entrega', envioResumenHtml(p, true))+
       row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):''))+
       row('Observaciones', esc(p.observaciones))+
       formPago+
@@ -3352,7 +3405,8 @@ function ctaSacarComp(id, i){
 function ctaSetBanco(id,b){ CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
-  var monto=parseMonto(document.getElementById('cta-pago-monto').value);
+  var _mEl=document.getElementById('cta-pago-monto');
+  var monto=montoNegativo(_mEl.value)?0:parseMonto(_mEl.value);
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
   var nota=limpiaNota((document.getElementById('cta-pago-nota')||{}).value);
   if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
@@ -6583,6 +6637,10 @@ function normMetodo(m){
 }
 function r2(n){ return Math.round((Number(n)||0)*100)/100; }
 /* Acepta lo que sea que escriba el chofer: 6000 · 6.000 · 6,000 · Bs 6000 · 1750,50 */
+/* ⚠️ parseMonto() saca TODO lo que no sea número, así que a "-50" le queda 50. Donde el
+   monto lo escribe una persona hay que mirar el texto crudo antes, o un menos de más se
+   guardaría en silencio como si fuera positivo. */
+function montoNegativo(t){ return /^\s*-/.test(String(t==null?'':t)); }
 function parseMonto(t){
   t=String(t==null?'':t).replace(/[^\d.,]/g,'').trim();
   if(!t) return 0;

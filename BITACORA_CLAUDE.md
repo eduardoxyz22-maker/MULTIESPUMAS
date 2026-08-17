@@ -1502,7 +1502,30 @@ Valida: fecha `YYYY-MM-DD` y **nada a futuro** (es plata que YA entró), **monto
 **N° de recibo obligatorio** y **banco si es QR**. Si algo falla **deja el editor abierto**
 en vez de cerrarse perdiendo lo escrito. El **comprobante no se toca** desde acá.
 
-- Test: `test_pagoedit.js` (42). Los cuatro tipos de renglón (cobro, anticipo suelto,
+### El flete PACTADO (lo que falta cobrar) — mismo día
+*"falta que puedan editar el monto por cobrar de recargo por envío"*. El pactado **no está en
+`contaPagos()`** (a propósito: no es plata que entró), así que no le llegaba el ✏️ Corregir.
+Solo se podía poner al cargar el pedido: si el flete cambiaba —o se lo olvidaban— no había
+arreglo, y a la vendedora le quedaba el aviso rojo con el monto viejo.
+
+`envioResumenHtml(p, editable)` ahora dibuja su propio editor (`CTA_ENV_EDIT`), y la fila
+🚚 en la ficha de Contabilidad **se muestra siempre**, incluso sin recargo, para poder poner
+el que faltaba. `ctaGuardarEnvio()` reescribe **solo el renglón pactado**:
+`arr = enviosDe(p).filter(envioYaCobrado)` + el nuevo pactado sin método → `aplicarEnvios()`.
+Lo ya cobrado (con su recibo, fecha y comprobante) queda intacto, y **0 saca el recargo**
+(`aplicarEnvios` filtra `monto>0`). No toca el saldo de la venta.
+
+⚠️ **Bug de raíz encontrado de paso: `parseMonto()` saca el signo** (`replace(/[^\d.,]/g,'')`),
+así que **"-50" se guardaba como 50** en silencio. Nuevo `montoNegativo(txt)` que mira el
+texto crudo, aplicado en los tres campos donde el monto lo escribe una persona:
+`ctaGuardarEnvio`, `ctaGuardarPago` y `ctaRegistrarPago`.
+👉 **Regla: antes de `parseMonto()` sobre algo tipeado, pasar por `montoNegativo()`.**
+
+- Test: `test_fleteedit.js` (25). Corregir el pactado, sacarlo con 0, que **lo ya cobrado no
+  se pise**, ponerle uno a una venta que no tenía, que el **saldo de la venta no se mueva**,
+  que el Cuadre lo liste como pendiente y **no** como plata que entró, y el rechazo del negativo.
+
+- Test: `test_pagoedit.js` (43). Los cuatro tipos de renglón (cobro, anticipo suelto,
   recargo, formato viejo sin fecha); que el **cuadre pase la plata al día correcto** y que al
   cambiar Efectivo→QR **la pase de caja a bancos**; que corregir el monto **deje el total de
   la venta quieto** y ajuste el saldo (tanto en un cobro como en el adelanto); que no se
