@@ -1465,17 +1465,30 @@ verdad quiere decir "se ven las N miniaturas".
 👉 **Patrón que ya mordió tres veces (`test_conta`, `test_cargachk`): nada de fechas fijas en
 los fixtures — siempre relativas a `todayStr()`.**
 
-## 4ao. Corregir la fecha de un pago ya anotado (2026-08-12)
+## 4ao. Corregir un pago ya anotado — fecha, monto, N° de recibo y método (2026-08-12)
 Reporte: *"cargaron un pago que entró el sábado y se les puso como fecha de hoy, no pudieron
 poner fecha de cuando era"*. El anticipo del formulario se escribe con `fecha:todayStr()` sin
 campo para cambiarla, y una vez anotado **no había forma de moverlo**: el cuadre lo contaba el
 día equivocado para siempre.
 
-Botón **📅 Fecha** en cada renglón de pago de la ficha (`contaPagosHtml`). Abre un
-`<input type="date">` inline con `max=hoy`. Estado en `CTA_FECHA_I` (índice dentro de
-`contaPagos`), que se resetea al cambiar de venta igual que `CTA_PAGO`.
+Al preguntar el usuario *"¿y si se equivocan en el monto o nro de recibo?"* se amplió a un
+editor completo: hasta ahora `ctaAnotarMonto()` solo aparecía cuando el monto era 0, y el
+N° de recibo y el método **no se podían tocar nunca**.
 
-`ctaGuardarFecha(id,i)` cubre **los tres tipos de renglón**, que se reescriben distinto:
+Botón **✏️ Corregir** en cada renglón de pago de la ficha (`contaPagosHtml`). Abre inline
+**fecha** (`max=hoy`), **monto**, **N° de nota de venta** y **método** (+ banco si es QR).
+Estado en `CTA_EDIT_I` / `CTA_EDIT_M` / `CTA_EDIT_B`, que se resetean al cambiar de venta
+igual que `CTA_PAGO`.
+
+⚠️ **Regla de negocio: corregir un monto NO mueve el total de la venta** — lo que cambia es
+**cuánto falta cobrar**. Si la vendedora tipeó 2.000 y era 1.800, el cliente no compró por
+menos: quedó debiendo 200. Por eso se le pasa el objetivo forzado a `aplicarCobros()`:
+- cobro → `aplicarCobros(p, arr, objetivoCobro(p))` capturado **antes** de tocar nada;
+- anticipo → `aplicarCobros(p, cobros, ventaTotal(p)−nuevoMonto)`, también con el total de
+  antes, y actualizando `p.acuenta`;
+- recargo → no toca el saldo, va por `aplicarEnvios()`.
+
+`ctaGuardarPago(id,i)` cubre **los tres tipos de renglón**, que se reescriben distinto:
 - **recargo** → `aplicarEnvios()` (solo su renglón, sin tocar el pago de la venta);
 - **anticipo** → puede no estar en el ledger todavía (se deduce de `acuenta`); al ponerle
   fecha propia queda **materializado** con `~`, que es justo lo que hace falta;
@@ -1485,12 +1498,15 @@ Botón **📅 Fecha** en cada renglón de pago de la ficha (`contaPagosHtml`). A
 reescribir — misma trampa que en `aplicarMontos()` (§4an): reescribirlos sin fecha los
 convierte en plata que no aparece en ningún filtro por día ni por mes.
 
-Valida: formato `YYYY-MM-DD`, **nada a futuro** (es plata que YA entró) y no vacía; si falla
-**deja el campo abierto** para que la corrijan en vez de cerrarse perdiendo lo escrito.
+Valida: fecha `YYYY-MM-DD` y **nada a futuro** (es plata que YA entró), **monto > 0**,
+**N° de recibo obligatorio** y **banco si es QR**. Si algo falla **deja el editor abierto**
+en vez de cerrarse perdiendo lo escrito. El **comprobante no se toca** desde acá.
 
-- Test: `test_fechapago.js` (27). Los cuatro tipos de renglón (cobro, anticipo suelto,
-  recargo, formato viejo sin fecha), que el **cuadre pase la plata al día correcto**, que no
-  se pierdan recibo/foto/monto, los rechazos, y que el campo no se arrastre a otra venta.
+- Test: `test_pagoedit.js` (42). Los cuatro tipos de renglón (cobro, anticipo suelto,
+  recargo, formato viejo sin fecha); que el **cuadre pase la plata al día correcto** y que al
+  cambiar Efectivo→QR **la pase de caja a bancos**; que corregir el monto **deje el total de
+  la venta quieto** y ajuste el saldo (tanto en un cobro como en el adelanto); que no se
+  pierdan recibo, foto ni monto; los rechazos; y que el editor no se arrastre a otra venta.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
