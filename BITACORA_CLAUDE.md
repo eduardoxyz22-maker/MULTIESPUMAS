@@ -1531,6 +1531,41 @@ texto crudo, aplicado en los tres campos donde el monto lo escribe una persona:
   la venta quieto** y ajuste el saldo (tanto en un cobro como en el adelanto); que no se
   pierdan recibo, foto ni monto; los rechazos; y que el editor no se arrastre a otra venta.
 
+## 4ap. Los dos WhatsApp rotos (2026-08-19)
+Reporte con capturas: *"no les sale el botón copiar whatsapp cuando cargan una venta de
+tienda"* y *"el botón de los pagos registrados no distingue si es pago a cuenta o pago final,
+en ambos genera pago por completo"*.
+
+**1. La venta de tienda no mostraba el mensaje.** `after()` tenía
+`if(_tienda){ showView('conta'); renderConta(); return; }` — el razonamiento era "no hay
+camión al que avisarle", pero la vendedora igual tiene que pasar la venta al grupo. Ahora
+muestra `showWhatsappModal(rec)` y al cerrarlo queda en Contabilidad, como antes.
+
+**2. El encabezado del pago se decidía por la marca `~` del ledger**, no por la plata. Todo
+lo que la vendedora anota al cargar la venta se guarda como anticipo, así que un pago que
+cubría la venta entera salía `💰 *PAGO A CUENTA (ANTICIPO)*` y tres líneas abajo
+`✅ Venta PAGADA por completo`: **el mensaje se contradecía solo**. Ahora manda
+`contaFaltaCobrar(p)`: **PAGO COMPLETO DE LA VENTA** o **PAGO A CUENTA**, y lo de "es el
+adelanto" pasó a ser una línea aparte que solo sale cuando de verdad queda saldo.
+👉 **Regla: para decir si una venta está saldada, `contaFaltaCobrar(p)` — nunca la marca `~`
+   ni `p.saldo` a secas.**
+
+**3. De paso, `pedidoText()` salía roto** (se vio al fin, porque hasta ahora la venta de
+tienda nunca llegaba a mostrarse):
+- `📅 Entrega:` **vacío**, porque la venta de tienda no tiene fecha → ahora
+  `🏪 Salió de tienda — se la llevó el cliente`, y se saltea la línea `📍` que repetía
+  "SALIÓ DE TIENDA";
+- la plata se pegaba con `p.metodoPago` **crudo**, que desde que guarda el historial completo
+  salía `💰 PAGADO (~QR BISA 5690 @2026-08-19 #627 %IMG_A %IMG_B)` — ilegible y encima con
+  los IDs de las fotos. Nuevo `plataLineaWa(p)`: `💰 PAGADO — QR BISA Bs 5.690,00` o
+  `💰 POR COBRAR: Bs 1.300,00 · ya pagó Efectivo Bs 500,00`. Esto mejora **todos** los
+  mensajes, no solo los de tienda.
+
+- Test: `test_watienda.js` (21). Que al guardar una venta de tienda aparezca el mensaje con
+  sus botones y detrás quede Contabilidad; que el texto no tenga la fecha vacía, ni la
+  dirección repetida, ni el ledger crudo; que el pago completo diga COMPLETO y el adelanto
+  con saldo diga A CUENTA; y que el recargo por entrega conserve su propio encabezado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

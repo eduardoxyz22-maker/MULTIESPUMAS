@@ -3456,8 +3456,13 @@ function ctaRegistrarPago(id){
    un texto, pero el link abre el comprobante en Drive y sirve igual de respaldo. */
 function pagoTexto(p, c){
   if(!p || !c) return '';
+  /* ⚠️ El encabezado se decide por SI QUEDA ALGO POR COBRAR, no por la marca `~` del
+     historial. Antes toda la plata que la vendedora anotaba al cargar la venta salía como
+     "PAGO A CUENTA (ANTICIPO)" aunque cubriera la venta entera, y abajo decía "PAGADA por
+     completo": el mensaje se contradecía solo. */
+  var faltaTot=contaFaltaCobrar(p), completo=faltaTot<=0.01;
   var L=[esEnvio(c)?'🚚 *RECARGO POR ENTREGA COBRADO*'
-        :(c.anticipo?'💰 *PAGO A CUENTA (ANTICIPO)*':'💰 *PAGO REGISTRADO*'),''];
+        :(completo?'💰 *PAGO COMPLETO DE LA VENTA*':'💰 *PAGO A CUENTA*'),''];
   L.push('👤 Cliente: '+(p.cliente||'—'));
   if(p.nota) L.push('🧾 Nota de venta: '+p.nota);
   L.push('📅 '+(c.fecha?fmtFecha(c.fecha):'sin fecha'));
@@ -3466,10 +3471,10 @@ function pagoTexto(p, c){
   var n=limpiaNota(c.nota);
   if(n) L.push('🧾 Recibo N° '+n);
   if(p.vendedor) L.push('🧾 Vendedor: '+p.vendedor);
-  var falta=Number(p.saldo)||0;
+  if(!esEnvio(c) && c.anticipo && !completo) L.push('📌 Es el adelanto que dejó al comprar');
   L.push('');
   L.push(esEnvio(c) ? '📌 Es el flete: va aparte de la venta, no se factura'
-        : (falta>0.01 ? ('⏳ Queda por cobrar: *'+fmtBs(falta)+'*') : '✅ Venta PAGADA por completo'));
+        : (completo ? '✅ Venta PAGADA por completo' : '⏳ Queda por cobrar: *'+fmtBs(faltaTot)+'*'));
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   if(cs.length){
     L.push('');
@@ -4031,8 +4036,11 @@ function submitPedido(){
   }
   function after(wasEdit){
     EDIT_ID=null; resetForm(); refreshDatalists();
-    // La venta de tienda va derecho a Contabilidad: no hay camión al que avisarle por WhatsApp.
-    if(_tienda){ showView('conta'); renderConta(); return; }
+    /* ⚠️ La venta de TIENDA también necesita el mensaje para el grupo. Antes se iba
+       derecho a Contabilidad —el razonamiento era "no hay camión al que avisarle"— pero
+       la vendedora igual tiene que pasar la venta, así que se quedaba sin el botón de
+       copiar. Se le muestra el mensaje y, al cerrarlo, cae en Contabilidad como antes. */
+    if(_tienda){ showView('conta'); renderConta(); showWhatsappModal(rec); return; }
     if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); }
   }
 }
@@ -6875,6 +6883,17 @@ function quickCobrado(id){
    Texto de pedido + copiar (WhatsApp / despacho)
    ========================================================================== */
 function findById(id){ for(var i=0;i<STATE.length;i++) if(STATE[i].id===id) return STATE[i]; return null; }
+/* ⚠️ La plata, EN CRIOLLO. Antes se pegaba `p.metodoPago` crudo, que desde que guarda el
+   historial completo salía así en el grupo:
+      💰 PAGADO (~QR BISA 5690 @2026-08-19 #627 %IMG_A %IMG_B)
+   Ilegible, y encima mostraba los IDs de las fotos. */
+function plataLineaWa(p){
+  var pagos=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0; });
+  var met=pagos.map(function(c){ return contaMetodoTxt(c)+' '+fmtBs(c.monto); }).join('  +  ');
+  var falta=contaFaltaCobrar(p);
+  if(falta<=0.01) return '💰 PAGADO'+(met?('  —  '+met):'');
+  return '💰 POR COBRAR: '+fmtBs(falta)+(met?('  ·  ya pagó '+met):'');
+}
 function pedidoText(p){
   var prod=(p.productos||[]).map(function(x){
     var s='   • '+x.desc;
@@ -6883,15 +6902,18 @@ function pedidoText(p){
     return s+' × '+x.cant;
   }).join('\n');
   var lines=['📦 *PEDIDO'+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'')+'*',
-    '📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):''),
+    /* La venta de tienda no tiene fecha de entrega: antes salía "📅 Entrega:" vacío. */
+    esVentaTienda(p) ? '🏪 Salió de tienda — se la llevó el cliente'
+                     : ('📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):'')),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
-    '📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||''),
+    // En la venta de tienda la dirección es "SALIÓ DE TIENDA": repetiría la línea de arriba.
+    esVentaTienda(p) ? '' : ('📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||'')),
     p.maps?('🗺️ '+p.maps):'',
     p.observaciones?('📝 '+p.observaciones):'',
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
     (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
-    '💰 '+(p.pagado?('PAGADO'+(p.metodoPago?(' ('+p.metodoPago+')'):'')):('POR COBRAR: '+fmtBs(p.saldo)+(Number(p.acuenta)>0?('  ·  a cuenta '+fmtBs(p.acuenta)+(p.metodoPago?(' ('+p.metodoPago+')'):'')):''))),
+    plataLineaWa(p),
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
