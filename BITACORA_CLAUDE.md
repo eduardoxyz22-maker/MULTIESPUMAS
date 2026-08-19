@@ -1566,6 +1566,39 @@ tienda nunca llegaba a mostrarse):
   dirección repetida, ni el ledger crudo; que el pago completo diga COMPLETO y el adelanto
   con saldo diga A CUENTA; y que el recargo por entrega conserve su propio encabezado.
 
+## 4aq. "No avisa si se cargó, guardó o ya está" (2026-08-19)
+Reporte: *"aveces cargan una imagen y pago y no avisa se cargó, guardó o ya está, las chicas
+no saben si deben dar x, cerrar o algo"*.
+
+**El diagnóstico: todo se avisaba con `toast()`, que se va solo.** Si la vendedora miraba a
+otro lado —o el celular tardaba— se perdía el único aviso y quedaba sin saber en qué estado
+estaba. Nada de lo que había en pantalla se lo decía.
+
+**1. Mientras sube la imagen** (va a Drive, tarda segundos): `COMP_SUBIENDO` cuenta las
+subidas en curso y `compTiraHtml()` muestra **`⏳ Subiendo la imagen… esperá un momento`**
+(con parpadeo suave, apagado si el sistema pide menos movimiento) **en lugar del botón**, así
+tampoco lo tocan dos veces. Se repinta al ARRANCAR la subida, no solo al terminar.
+⚠️ El contador se baja en **los tres caminos**: éxito, respuesta con error y `catch` — si no,
+quedaba colgado en "Subiendo…" para siempre.
+
+**2. Cuando terminó**: `.comp-ok` — **`✅ 1 imagen guardada — ya quedó con este pago`**, que
+**no desaparece**. La miniatura sola no alcanzaba: podía ser la que estaban por subir.
+
+**3. Al registrar el pago**: la ventana arrancaba con *"Copialo y pegalo en el grupo"* — se
+leía como una **tarea pendiente**. Ahora lo primero es un recuadro verde con
+**"✅ Listo — el pago ya quedó guardado"**, lo que quedó anotado (método, monto, recibo,
+cuántas imágenes), **cómo quedó la venta** (pagada o cuánto falta) y *"No tenés que hacer nada
+más"*. El mensaje de WhatsApp pasó a estar rotulado **Opcional**, y abajo hay un botón verde
+ancho **"✅ Listo, volver a la venta"** — antes la única salida clara era la ✕.
+
+- Test: `test_avisos.js` (20). Usa un `apiFoto` **lento a propósito** para mirar la pantalla
+  *en el medio* de la subida, que es justo el momento que se reportó. Verifica el aviso de
+  subiendo, que no se pueda tocar el botón otra vez, el texto que queda, el plural con dos
+  imágenes, que la confirmación aparezca **antes** que el bloque de WhatsApp, el botón de
+  salida, y que **si la subida falla no quede colgado** en "Subiendo…".
+- Suites actualizadas por los cambios de texto: `test_tienda` (ahora espera el modal) y
+  `test_wapago` (encabezado por lo que falta cobrar, botón "Listo, volver a la venta").
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

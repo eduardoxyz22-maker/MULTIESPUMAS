@@ -153,6 +153,14 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .foto-rota{display:inline-flex;align-items:center;gap:5px;padding:8px 11px;border:1px dashed var(--amber-border);
   background:var(--amber-lt);color:var(--amber);border-radius:8px;font-size:.72rem;font-weight:700;text-decoration:none;white-space:nowrap}
 .foto-rota:hover{background:#fde9c8}
+/* Estado de la subida: la vendedora tiene que ver que ALGO está pasando, y después que
+   quedó guardado, sin depender del aviso flotante que se va solo. */
+@keyframes comp-late{0%,100%{opacity:1}50%{opacity:.45}}
+.comp-subiendo{display:inline-flex;align-items:center;gap:6px;padding:10px 14px;border:1px dashed var(--teal-border);
+  background:var(--teal-lt);color:var(--teal-dk);border-radius:var(--r-md);font-size:.82rem;font-weight:700;
+  animation:comp-late 1.1s ease-in-out infinite}
+.comp-ok{margin-top:5px;font-size:.78rem;font-weight:700;color:var(--green)}
+@media(prefers-reduced-motion:reduce){ .comp-subiendo{animation:none} }
 .btn-sm{padding:7px 14px;font-size:.76rem}
 .btn-row{display:flex;gap:10px;flex-wrap:wrap}
 /* Grupo de exportación Excel por alcance (hoy/mañana/mes/todo) */
@@ -2930,10 +2938,13 @@ function onCompElegido(ev){
           return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })();
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
+  COMP_SUBIENDO++; showContaModal(p.id);          // que se vea "⏳ Subiendo…" desde ya
   achicarFoto(f, 1280, 0.72).then(function(dataUrl){
     return apiFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl);
   }).then(function(res){
+    COMP_SUBIENDO--;
     if(!res || !res.ok || !res.fotoId){
+      showContaModal(p.id);
       toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
       return;
@@ -2965,7 +2976,11 @@ function onCompElegido(ev){
                                            : 'Las '+COMP_MAX+' imágenes listas ✓ — ahora tocá "Registrar pago"','ok');
       showContaModal(p.id);
     }
-  }).catch(function(e){ toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err'); });
+  }).catch(function(e){
+    if(COMP_SUBIENDO>0) COMP_SUBIENDO--;          // que no quede colgado en "Subiendo…"
+    showContaModal(p.id);
+    toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err');
+  });
 }
 /* idx = qué pago; k = cuál de sus imágenes (sin k, todas). */
 function ctaQuitarComp(id, idx, k){
@@ -3486,16 +3501,37 @@ function showPagoWhatsapp(id, i){
   var p=findById(id); if(!p) return;
   var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
   var text=pagoTexto(p, c);
-  openModal('<div class="modal-h" style="background:var(--green)"><h3>✅ Pago registrado</h3>'+
-      '<button class="modal-x" onclick="showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')">✕</button></div>'+
+  /* ⚠️ Antes esta ventana arrancaba con "Copialo y pegalo en el grupo": se leía como una
+     TAREA pendiente y las chicas no sabían si el pago ya estaba guardado o si les faltaba
+     hacer algo. Ahora lo primero que se ve es la confirmación, con lo que quedó anotado, y
+     recién después el mensaje —que es opcional. */
+  var cs=compsArr(c.comps!=null?c.comps:c.comp);
+  var falta=contaFaltaCobrar(p);
+  var volver='showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')';
+  openModal('<div class="modal-h" style="background:var(--green)"><h3>✅ Guardado</h3>'+
+      '<button class="modal-x" onclick="'+volver+'">✕</button></div>'+
     '<div class="modal-b">'+
-      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copialo y pegalo en el grupo. El <b>📎 link</b> abre la imagen del comprobante.</p>'+
-      '<textarea class="wa-text" id="wa-pago" readonly style="min-height:290px">'+esc(text)+'</textarea>'+
+      '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+        '<div style="font-weight:800;color:var(--green);font-size:.95rem">✅ Listo — '+(esEnvio(c)?'el recargo':'el pago')+' ya quedó guardado</div>'+
+        '<div style="font-size:.85rem;margin-top:5px">'+
+          esc(contaMetodoTxt(c))+' · <b>'+esc(fmtBs(c.monto))+'</b>'+
+          (limpiaNota(c.nota)?(' · recibo '+esc(limpiaNota(c.nota))):'')+
+          (cs.length?(' · '+cs.length+(cs.length===1?' imagen':' imágenes')):'')+
+        '</div>'+
+        '<div style="font-size:.85rem;margin-top:4px">'+
+          (esEnvio(c) ? '🚚 Es el flete: va aparte, no le baja el saldo a la venta'
+            : (falta>0.01 ? ('⏳ A esta venta le queda por cobrar <b style="color:var(--red)">'+fmtBs(falta)+'</b>')
+                          : '✅ La venta quedó <b>PAGADA por completo</b>'))+
+        '</div>'+
+        '<div style="font-size:.76rem;color:var(--muted);margin-top:6px">No tenés que hacer nada más. Si querés, pasá el aviso al grupo 👇</div>'+
+      '</div>'+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:8px"><b>Opcional:</b> copiá este mensaje y pegalo en el grupo. El <b>📎 link</b> abre la imagen del comprobante.</p>'+
+      '<textarea class="wa-text" id="wa-pago" readonly style="min-height:250px">'+esc(text)+'</textarea>'+
       '<div class="modal-actions">'+
         '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-pago\').value)">📋 Copiar</button>'+
         '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-pago\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')">Volver a la venta</button>'+
       '</div>'+
+      '<button class="btn btn-sm" style="width:100%;margin-top:9px;background:var(--green);color:#fff" onclick="'+volver+'">✅ Listo, volver a la venta</button>'+
     '</div>');
 }
 function ctaToggleRegistrado(id){
@@ -3710,10 +3746,13 @@ function onCompFormElegido(ev){
   // El tope va acá y no solo en el botón: así no se sube nada a Drive de más.
   if(compsArr(FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
+  COMP_SUBIENDO++; renderCompForm(true);          // que se vea "⏳ Subiendo…" desde ya
   achicarFoto(f, 1280, 0.72).then(function(dataUrl){
     return apiFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl);
   }).then(function(res){
+    COMP_SUBIENDO--;
     if(!res || !res.ok || !res.fotoId){
+      renderCompForm(true);
       toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
       return;
@@ -3722,7 +3761,11 @@ function onCompFormElegido(ev){
     var w=document.getElementById('wrap-comp'); if(w) w.classList.remove('seg-err');
     renderCompForm(true);
     toast(FORM_COMPS.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar el recibo' : 'Las '+COMP_MAX+' imágenes listas ✓','ok');
-  }).catch(function(e){ toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err'); });
+  }).catch(function(e){
+    if(COMP_SUBIENDO>0) COMP_SUBIENDO--;          // que no quede colgado en "Subiendo…"
+    renderCompForm(true);
+    toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err');
+  });
 }
 
 function submitPedido(){
@@ -6705,6 +6748,10 @@ function compsArr(x){
    ⚠️ Los `onclick` van SIEMPRE por `esc()`: si el que llama arma la función con comillas
    dobles (JSON.stringify del id, por ejemplo), sin esto el atributo se corta al medio y el
    botón queda mudo — nadie podía adjuntar el comprobante en Contabilidad. */
+/* ⚠️ Cuántas imágenes se están subiendo AHORA. Sin esto, la vendedora tocaba "Adjuntar",
+   no pasaba nada visible por unos segundos (la imagen va a Drive) y no sabía si había
+   funcionado: el aviso flotante se le escapaba y volvía a tocar el botón. */
+var COMP_SUBIENDO=0;
 function compTiraHtml(arr, quitarFn, agregarFn, hint){
   arr=compsArr(arr);
   var thumbs=arr.map(function(fid,i){
@@ -6714,10 +6761,17 @@ function compTiraHtml(arr, quitarFn, agregarFn, hint){
       '<button type="button" title="Quitar esta imagen" onclick="'+esc(quitarFn+'('+i+')')+'">✕</button>'+
     '</span>';
   }).join('');
-  var btn = (arr.length<COMP_MAX)
-    ? '<button type="button" class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:10px 14px;width:auto" onclick="'+esc(agregarFn)+'">📎 '+(arr.length?'Agregar otra imagen':'Adjuntar imagen')+'</button>'
-    : '<span style="color:var(--green);font-weight:700;font-size:.83rem;align-self:center">✅ Listo — las '+COMP_MAX+' imágenes</span>';
-  return '<div class="fotos" style="align-items:center">'+thumbs+btn+'</div>'+
+  var btn = COMP_SUBIENDO>0
+    ? '<span class="comp-subiendo">⏳ Subiendo la imagen… esperá un momento</span>'
+    : (arr.length<COMP_MAX)
+      ? '<button type="button" class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);padding:10px 14px;width:auto" onclick="'+esc(agregarFn)+'">📎 '+(arr.length?'Agregar otra imagen':'Adjuntar imagen')+'</button>'
+      : '<span style="color:var(--green);font-weight:700;font-size:.83rem;align-self:center">✅ Listo — las '+COMP_MAX+' imágenes</span>';
+  /* Confirmación que NO se va sola: el aviso flotante se les escapaba y quedaban sin
+     saber si la imagen había entrado. */
+  var ok = (arr.length && COMP_SUBIENDO<=0)
+    ? '<div class="comp-ok">✅ '+arr.length+(arr.length===1?' imagen guardada':' imágenes guardadas')+' — ya '+(arr.length===1?'quedó':'quedaron')+' con este pago</div>'
+    : '';
+  return '<div class="fotos" style="align-items:center">'+thumbs+btn+'</div>'+ok+
     (hint?('<div style="font-size:.72rem;color:var(--muted);margin-top:2px">'+hint+'</div>'):'');
 }
 var COMP_HINT='Se pueden subir hasta '+COMP_MAX+': la <b>captura del pago</b> y el <b>recibo</b> que le diste al cliente.';
