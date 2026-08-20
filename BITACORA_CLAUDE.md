@@ -1599,6 +1599,24 @@ ancho **"✅ Listo, volver a la venta"** — antes la única salida clara era la
 - Suites actualizadas por los cambios de texto: `test_tienda` (ahora espera el modal) y
   `test_wapago` (encabezado por lo que falta cobrar, botón "Listo, volver a la venta").
 
+### Reenviar la venta desde la ficha de Contabilidad (mismo día)
+*"el boton whatsap no sale en las ventas de tienda, solo sale al ingresar la venta, pero no
+en el panel flotante cuando ves la venta por si quieren reenviar la información"*.
+
+Relevamiento: `showMisModal`, `showCargaModal` y `showPedidoModal` **ya tenían** `copyPedido`.
+**`showContaModal` era la única sin nada** — y es justo donde cae la venta de tienda, así que
+el mensaje se veía una sola vez, al guardarla.
+
+Botón **📲 Reenviar la venta** en las acciones de la ficha → `ctaWhatsappVenta(id)`.
+`showWhatsappModal(rec, volverA, reenvio)` ganó dos parámetros: sin `volverA` cierra como
+siempre (el caso "recién guardado"), y con él **vuelve a la ficha** en vez de dejar a la
+vendedora en el aire — tanto por el botón como por la ✕.
+
+- Test: `test_reenviar.js` (17). Que el botón esté, que abra el mensaje de la VENTA (no el de
+  un pago), que copie y abra WhatsApp, que **la ✕ y "Volver a la venta" reabran la ficha**,
+  que sirva también para una venta normal, y que el flujo de **recién guardado siga cerrando**
+  como antes.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

@@ -3249,6 +3249,7 @@ function showContaModal(id){
       ctaEditHtml(p)+
       '<div class="modal-actions" style="margin-top:14px">'+
         '<button class="btn btn-sm" style="flex:1;min-width:180px;'+(reg?'background:var(--gray-lt);border:1px solid var(--gray-md);color:var(--muted)':'background:var(--green);color:#fff')+'" onclick="ctaToggleRegistrado(\''+p.id+'\')">'+(reg?'↺ Quitar de registrado':'✅ Pago registrado en sistema')+'</button>'+
+        '<button class="btn btn-sm wa-btn" style="min-width:150px" onclick="'+esc("ctaWhatsappVenta('"+String(p.id)+"')")+'" title="Volver a pasar esta venta al grupo">📲 Reenviar la venta</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
       '<div style="margin-top:12px;padding-top:11px;border-top:1px dashed var(--gray-md);text-align:center">'+
@@ -6991,19 +6992,30 @@ function whatsappUrl(text){ return 'https://wa.me/?text='+encodeURIComponent(tex
 function openModal(html){ document.getElementById('modal-box').innerHTML=html; document.getElementById('modal').classList.add('on'); }
 function closeModal(){ document.getElementById('modal').classList.remove('on'); }
 
-function showWhatsappModal(rec){
+/* `volverA` = qué hacer al salir. Sin él cierra, como siempre (recién guardado). Desde una
+   ficha se le pasa cómo volver a ella, para no dejar a la vendedora en el aire. */
+function showWhatsappModal(rec, volverA, reenvio){
   var text=pedidoText(rec);
-  var html='<div class="modal-h"><h3>✅ Pedido guardado</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+  var salir = esc(volverA || 'closeModal()');
+  var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':'✅ Pedido guardado')+'</h3>'+
+      '<button class="modal-x" onclick="'+salir+'">✕</button></div>'+
     '<div class="modal-b">'+
-      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copiá el pedido y pegalo en WhatsApp, o abrí WhatsApp directo:</p>'+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copiá'+(reenvio?' la venta':' el pedido')+' y pegalo en WhatsApp, o abrí WhatsApp directo:</p>'+
       '<textarea class="wa-text" id="wa-text" readonly>'+esc(text)+'</textarea>'+
       '<div class="modal-actions">'+
         '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar</button>'+
         '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="'+salir+'">'+(reenvio?'Volver a la venta':'Cerrar')+'</button>'+
       '</div>'+
     '</div>';
   openModal(html);
+}
+/* ⚠️ La ficha de Contabilidad era la ÚNICA sin el botón para pasar la venta al grupo
+   (Mis pedidos, Lista de carga y Administración ya lo tenían). Se notó con las ventas de
+   TIENDA, que caen justo ahí y solo veían el mensaje una vez, al guardarlas. */
+function ctaWhatsappVenta(id){
+  var p=findById(id); if(!p) return;
+  showWhatsappModal(p, "showContaModal('"+String(id).replace(/'/g,'')+"')", true);
 }
 
 /* Qué ficha está abierta, para volver a la correcta al marcar algo */
