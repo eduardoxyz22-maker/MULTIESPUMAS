@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Guía de Capacitación · Heaven Colchones</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --teal:#00B5AD; --teal-mid:#00A09A; --teal-dk:#008F88; --teal-lt:#E6F7F6; --teal-border:#99DDD9;
+  --black:#1A1A1A; --text:#2D2D2D; --muted:#6B6B6B; --gray:#808080; --gray-md:#E2E2E2; --gray-lt:#F5F6F7; --white:#fff;
+  --amber:#D97706; --amber-lt:#FEF3E2; --amber-border:#FCD34D;
+  --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --r-md:10px; --r-lg:14px; --r-pill:20px;
+  --grad-header:linear-gradient(135deg,#00B5AD,#0f766e,#1e3a5f,#1d4ed8,#0f5c8a,#00B5AD);
+  --bg-app:linear-gradient(135deg,#e6fffe 0%,#f4f7ff 45%,#eef2ff 100%);
+  --sh-card:0 1px 5px rgba(0,0,0,.06); --sh-soft:0 2px 12px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+html,body{background:var(--bg-app);min-height:100%}
+body{font-family:var(--font-sans);color:var(--text);line-height:1.5;-webkit-font-smoothing:antialiased;padding-bottom:40px}
+button{font-family:inherit;cursor:pointer;border:none;background:none}
+
+/* ---------- header ---------- */
+.hdr{background:var(--grad-header);background-size:300% 300%;color:#fff;padding:26px 20px 22px;text-align:center}
+.hdr .kicker{font-size:10px;letter-spacing:4px;font-weight:600;opacity:.85;margin-bottom:8px}
+.hdr h1{font-size:22px;font-weight:800;letter-spacing:-.4px}
+.hdr .sub{font-size:12.5px;opacity:.9;margin-top:5px;font-weight:400}
+
+/* ---------- filtros ---------- */
+.filters{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--gray-md);padding:10px 14px;display:flex;gap:7px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.filters::-webkit-scrollbar{display:none}
+.chip{padding:7px 13px;border-radius:var(--r-pill);font-size:11px;font-weight:700;letter-spacing:.5px;
+  white-space:nowrap;background:var(--white);color:var(--muted);border:1px solid var(--gray-md);transition:.15s}
+.chip.on{background:var(--teal);color:#fff;border-color:var(--teal);box-shadow:0 2px 8px rgba(0,181,173,.35)}
+
+/* ---------- grid ---------- */
+.grid{padding:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(min-width:640px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:900px){.grid{grid-template-columns:repeat(5,1fr);max-width:1100px;margin:0 auto}}
+.card{background:var(--white);border-radius:var(--r-lg);padding:12px 11px;text-align:left;
+  border:2px solid transparent;box-shadow:var(--sh-card);transition:.15s}
+.card:active{transform:scale(.98)}
+.card .emo{font-size:22px;line-height:1}
+.card .nm{font-size:12px;font-weight:700;margin-top:5px;line-height:1.25}
+.card .ln{font-size:9.5px;color:var(--gray);margin-top:3px;letter-spacing:.4px}
+.card .meta{font-size:9.5px;font-weight:700;margin-top:5px}
+
+/* ---------- ficha ---------- */
+.ficha{margin:0 14px 22px;background:var(--white);border-radius:18px;overflow:hidden;box-shadow:var(--sh-soft)}
+@media(min-width:900px){.ficha{max-width:1100px;margin:0 auto 22px}}
+.fh{padding:18px 18px 15px;color:#fff}
+.fh .ln{font-size:9.5px;letter-spacing:3px;opacity:.75;font-weight:600}
+.fh h2{font-size:21px;font-weight:800;margin-top:3px;letter-spacing:-.3px;line-height:1.2}
+.fh .st{font-size:11.5px;letter-spacing:1.2px;opacity:.9;margin-top:4px;font-weight:500;text-transform:uppercase}
+.fh .esl{font-size:13px;opacity:.95;margin-top:8px;font-style:italic}
+.fh-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.gar{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);border-radius:12px;
+  padding:7px 11px;text-align:center;flex-shrink:0}
+.gar b{display:block;font-size:21px;font-weight:800;line-height:1}
+.gar span{font-size:8.5px;letter-spacing:1px;opacity:.85}
+.specs{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.spec{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.22);border-radius:8px;
+  padding:5px 9px;font-size:10.5px;display:flex;align-items:center;gap:5px}
+.tags{padding:11px 18px;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid var(--gray-lt)}
+.tag{font-size:9.5px;font-weight:700;letter-spacing:.3px;padding:4px 9px;border-radius:var(--r-pill)}
+
+/* ---------- tabs ---------- */
+.tabs{display:flex;border-bottom:1px solid var(--gray-md)}
+.tab{flex:1;padding:12px 3px;font-size:10.5px;font-weight:500;color:var(--gray);
+  border-bottom:2.5px solid transparent;transition:.15s}
+.tab.on{font-weight:700;border-bottom-width:2.5px}
+.pane{padding:15px 18px 20px}
+.lbl{font-size:10.5px;color:var(--gray);font-weight:700;letter-spacing:1.2px;margin-bottom:11px}
+
+.frase{display:flex;gap:9px;margin-bottom:9px;padding:10px 13px;border-radius:var(--r-md);border-left:3px solid}
+.frase i{font-style:normal;font-weight:800;font-size:12.5px;flex-shrink:0}
+.frase span{font-size:12.5px;color:var(--text);line-height:1.5}
+
+.aviso{margin-top:13px;padding:10px 13px;background:var(--amber-lt);border-left:3px solid var(--amber);
+  border-radius:var(--r-md);font-size:11.5px;color:#9A5B06;line-height:1.5;display:flex;gap:8px}
+
+.med{display:flex;justify-content:space-between;align-items:center;gap:10px;
+  margin-bottom:7px;padding:11px 13px;border-radius:var(--r-md);border-left:3px solid}
+.med b{font-size:12.5px;font-weight:700}
+.med span{font-size:13.5px;font-weight:700}
+
+.item{display:flex;align-items:flex-start;gap:9px;margin-bottom:9px;padding:10px 13px;
+  background:var(--gray-lt);border-radius:var(--r-md)}
+.item i{width:22px;height:22px;border-radius:50%;color:#fff;font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;font-style:normal}
+.item span{font-size:12.5px;line-height:1.5}
+
+.obj{margin-bottom:12px;border-radius:var(--r-md);overflow:hidden}
+.obj .q{padding:10px 13px;background:var(--amber-lt);border-left:3px solid var(--amber);
+  font-size:12.5px;color:#9A5B06;font-style:italic}
+.obj .a{padding:10px 13px;border-left:3px solid;font-size:12.5px;line-height:1.5}
+
+/* ---------- footer ---------- */
+.ftr{text-align:center;padding:14px 18px 26px;font-size:11px;color:var(--muted);line-height:1.75}
+.ftr b{color:var(--teal-dk);font-weight:700;letter-spacing:1px}
+.ftr .warn{display:inline-block;margin-top:9px;font-size:10.5px;color:var(--gray)}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="kicker">HEAVEN COLCHONES · CALIDAD SUIZA</div>
+  <h1>Guía de Capacitación</h1>
+  <div class="sub">Fichas técnicas y argumentos de venta</div>
+</div>
+
+<div class="filters" id="filters"></div>
+<div class="grid" id="grid"></div>
+<div id="ficha"></div>
+
+<div class="ftr">
+  <b>HEAVEN COLCHONES</b> · Santa Cruz de la Sierra<br>
+  2do anillo, Av. Cristóbal de Mendoza (entre Bernabé Sosa y Suárez Arana)<br>
+  2do anillo, Av. Cristóbal de Mendoza casi Av. Alemana — Mall MIA PLAZA<br>
+  Calle Buenos Aires #188 · Telf. 339-2540
+  <span class="warn">Guía interna para impulsadoras — no compartir con clientes</span>
+</div>
+
+<script>
+const PRODUCTS = [
+{
+  id:1, linea:"LÍNEA TITANIO", color:"#0097A7", bg:"#E0F7FA",
+  nombre:"Titanio Látex", emoji:"🌿", subtitulo:"Experiencia Látex Premium",
+  eslogan:"Lo más premium. Lo más natural.",
+  garantia:10, altura:"35 cm", resistencia:"150 kg por persona", firmeza:"Suave", tecnologia:"Pocket Individual",
+  tags:["Látex Natural de Alta Gama","Tecnología Pocket Individual","Altura Premium 35 cm","150 kg por persona","10 años de garantía"],
+  medidas:[["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"],["3.5 PLAZAS","200 x 200"]],
+  paraQuien:["Parejas con pesos diferentes (soporta 150 kg por persona)","Personas que buscan lo MEJOR del catálogo","Quienes quieren un colchón de materiales naturales","Clientes que valoran altura y presencia de cama (35 cm)"],
+  comoVenderlo:["«Este es nuestro colchón TOP de línea — el único con látex natural de alta gama»","«Soporta hasta 150 kg por persona, el más resistente de todo el catálogo»","«35 cm de altura premium — es la cama que más se luce en el dormitorio»","«Tiene 10 años de garantía, la más larga de la marca»","«Los resortes son pocket individuales: si tu pareja se mueve, vos no lo sentís»"],
+  noDecir:"No menciones el precio primero. Primero enamóralos con los beneficios.",
+  objeciones:[["¿Es muy caro?","«La garantía de 10 años lo hace una inversión, no un gasto: son diez años de descanso garantizado»"],["¿Qué es el látex?","«Es material natural del árbol de caucho — muy duradero, transpirable y sin químicos»"],["¿Por qué es más caro que el Ice?","«El látex natural es el material más noble y duradero, y este soporta 20 kg más por persona»"]]
+},
+{
+  id:2, linea:"LÍNEA TITANIO", color:"#0097A7", bg:"#E0F7FA",
+  nombre:"Titanio Ice", emoji:"❄️", subtitulo:"Sensación Fría Superior",
+  eslogan:"Para quien duerme con calor.",
+  garantia:10, altura:"30 cm", resistencia:"130 kg por persona", firmeza:"Media", tecnologia:"Pocket Individual",
+  tags:["Telas Frías","Tecnología Pocket Individual","Altura Premium 30 cm","130 kg por persona","10 años de garantía"],
+  medidas:[["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"],["3.5 PLAZAS","200 x 200"]],
+  paraQuien:["Personas que transpiran mucho al dormir","Clientes en ciudades calurosas (¡perfecto para Santa Cruz!)","Parejas que se mueven mucho durante la noche","Quienes quieren firmeza media: ni muy duro ni muy suave"],
+  comoVenderlo:["«Está fabricado con telas frías: disipan el calor del cuerpo toda la noche»","«Sensación media — es el punto justo, le gusta a la mayoría de las parejas»","«Los resortes pocket son independientes: si tu pareja se mueve, vos no lo sentís»","«Soporta 130 kg por persona y tiene 10 años de garantía»"],
+  noDecir:"No lo compares con el Titanio Látex si el cliente no pregunta.",
+  objeciones:[["¿Realmente enfría?","«La tela tiene fibras frías que disipan el calor corporal — no vas a despertar transpirando»"],["¿Qué son los resortes pocket?","«Cada resorte va en su bolsita individual: se adapta al cuerpo y no transmite movimiento»"]]
+},
+{
+  id:3, linea:"LÍNEA ORO", color:"#B8860B", bg:"#FFF8E1",
+  nombre:"Oro Anatómico Viscolástico", emoji:"🏅", subtitulo:"Ergonomía Superior",
+  eslogan:"Se adapta a tu cuerpo, no al revés.",
+  garantia:8, altura:"28 cm", resistencia:"110 kg por persona", firmeza:"Suave", tecnologia:"Pocket Individual",
+  tags:["Espuma NASA","Tecnología Pocket Individual","28 cm de altura","110 kg por persona","8 años de garantía"],
+  medidas:[["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"],["3.5 PLAZAS","200 x 200"]],
+  paraQuien:["Personas que buscan máximo confort sin llegar a la línea Titanio","Quienes duermen de lado (la espuma alivia hombro y cadera)","Clientes que se despiertan con el cuerpo cansado","Parejas que quieren movimiento independiente"],
+  comoVenderlo:["«Tiene espuma NASA: se amolda a tu cuerpo y vuelve a su forma, como un abrazo»","«Es anatómico — reparte el peso y quita la presión de hombros y cadera»","«Resortes pocket individuales, igual que la línea Titanio»","«8 años de garantía y 28 cm de altura»"],
+  noDecir:"No digas que es «igual al Titanio pero más barato». Cada uno tiene su propuesta.",
+  objeciones:[["¿Cuál es la diferencia con el Ice?","«El Viscolástico es suave y envolvente; el Ice es firmeza media y está pensado para el calor»"],["¿Qué es la espuma NASA?","«Es viscoelástica: recuerda la forma de tu cuerpo y te sostiene sin hacer presión»"],["¿No es muy suave?","«Es suave en la superficie, pero abajo tiene resortes pocket que dan todo el soporte»"]]
+},
+{
+  id:4, linea:"LÍNEA ORO", color:"#B8860B", bg:"#FFF8E1",
+  nombre:"Oro Ortopédico", emoji:"🦴", subtitulo:"Postura Perfecta",
+  eslogan:"Tu espalda te lo va a agradecer.",
+  garantia:8, altura:"28 cm", resistencia:"150 kg por persona", firmeza:"Extra Firme", tecnologia:"Bonnell",
+  tags:["Ortopédico","Extra Firme","Tecnología Bonnell","150 kg por persona","8 años de garantía"],
+  medidas:[["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"],["3.5 PLAZAS","200 x 200"]],
+  paraQuien:["Personas con dolores de espalda o indicación de colchón ortopédico","Clientes de contextura fuerte (soporta 150 kg por persona)","Quienes duermen boca arriba","Los que dicen «a mí me gusta duro»"],
+  comoVenderlo:["«Es extra firme: mantiene la columna alineada toda la noche»","«Soporta 150 kg por persona — es el ortopédico más resistente que tenemos»","«El resorte Bonnell da un soporte sólido y parejo en toda la superficie»","«8 años de garantía y 28 cm de altura»"],
+  noDecir:"No prometas que «cura» dolores. Decí que ayuda a mantener la postura correcta.",
+  objeciones:[["¿Es muy duro?","«Firme no es incómodo: firme es soporte. Si tenés molestias de espalda, es lo que necesitás»"],["El médico me dijo ortopédico","«Entonces este es el indicado: extra firme y con 8 años de garantía»"],["¿Y el Especial Ortopédico?","«El Oro soporta 150 kg por persona y da 8 años de garantía; el Especial, 110 kg y 6 años»"]]
+},
+{
+  id:5, linea:"LÍNEA ORO", color:"#B8860B", bg:"#FFF8E1",
+  nombre:"Oro Birelax", emoji:"⚡", subtitulo:"Antiestrés y Antialérgico",
+  eslogan:"Dos sensaciones en un solo colchón.",
+  garantia:8, altura:"28 cm", resistencia:"130 kg por persona", firmeza:"Suave y Firme", tecnologia:"Bonnell",
+  tags:["Carbón Activado","Antiestrés","Antialérgico","Tecnología Bonnell","130 kg por persona","8 años de garantía"],
+  medidas:[["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"],["3.5 PLAZAS","200 x 200"]],
+  paraQuien:["Parejas que NO se ponen de acuerdo en la firmeza","Personas con estrés o tensión muscular","Clientes con alergias (el carbón activado es antialérgico)","Contexturas robustas: hasta 130 kg por persona"],
+  comoVenderlo:["«¿Vos lo querés suave y tu pareja firme? Este tiene sensación suave y firme»","«Está tratado con carbón activado: purifica, es antialérgico y ayuda a liberar la tensión»","«Es el antiestrés de la casa — pensado para que te levantes descansado»","«8 años de garantía, 28 cm de altura y soporta 130 kg por persona»"],
+  noDecir:"No lo llames «eléctrico» ni prometas efectos médicos. Hablá de descanso y de aire más limpio.",
+  objeciones:[["¿Qué es el carbón activado?","«Es un tratamiento del tejido que absorbe humedad y olores, y evita ácaros y bacterias»"],["¿Sirve para alergias?","«Sí, el carbón activado lo hace antialérgico — ideal si en casa hay alergias o asma»"],["¿Es suave o firme?","«Tiene sensación suave y firme a la vez: superficie mullida con soporte abajo»"]]
+},
+{
+  id:6, linea:"LÍNEA ESPECIAL", color:"#546E7A", bg:"#ECEFF1",
+  nombre:"Especial Ortopédico", emoji:"💪", subtitulo:"Soporte Esencial",
+  eslogan:"Firmeza total, soporte esencial.",
+  garantia:6, altura:"28 cm", resistencia:"110 kg por persona", firmeza:"Súper Firme", tecnologia:"Bonnell",
+  tags:["Ortopédico","Súper Firme","Tecnología Bonnell","110 kg por persona","6 años de garantía"],
+  medidas:[["1.5 PLAZAS","105 x 190"],["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"]],
+  paraQuien:["Clientes con indicación de ortopédico","Quienes quieren máxima firmeza en línea Especial","Camas individuales y de 1.5 plazas"],
+  comoVenderlo:["«Es súper firme: el soporte más sólido de la línea Especial»","«28 cm de altura, igual que el Oro Ortopédico — se ve una cama grande»","«6 años de garantía respaldados por Heaven»","«Si te indicaron colchón duro, este cumple perfecto»"],
+  noDecir:"No lo compares negativamente con el Oro Ortopédico. Cada uno tiene su nivel.",
+  objeciones:[["¿En qué se diferencia del Oro Ortopédico?","«El Oro soporta 150 kg por persona y da 8 años de garantía. Este da la misma firmeza, 110 kg y 6 años»"],["¿No es muy duro para mi esposa?","«Es súper firme. Si buscan algo intermedio, mirá el Semiortopédico»"]]
+},
+{
+  id:7, linea:"LÍNEA ESPECIAL", color:"#546E7A", bg:"#ECEFF1",
+  nombre:"Especial Semiortopédico", emoji:"🌡️", subtitulo:"Doble Estación",
+  eslogan:"Para invierno y verano, un solo colchón.",
+  garantia:6, altura:"24 cm", resistencia:"110 kg por persona", firmeza:"Media", tecnologia:"Bonnell",
+  tags:["Invierno / Verano","Doble Cara","Tecnología Bonnell","110 kg por persona","6 años de garantía"],
+  medidas:[["1.5 PLAZAS","105 x 190"],["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"],["3 PLAZAS","180 x 190"]],
+  paraQuien:["Personas que sienten mucho el cambio de estación","Quienes no quieren ni muy duro ni muy blando","Clientes que buscan un intermedio en la línea Especial"],
+  comoVenderlo:["«Tiene doble estación: una cara para invierno y otra para verano, solo lo volteás»","«Sensación media — el término medio que le gusta a casi todos»","«Soporta 110 kg por persona y tiene 6 años de garantía»","«Es la opción inteligente: buen soporte y versatilidad»"],
+  noDecir:"No lo presentes como «el más barato». Presentalo como «la opción inteligente».",
+  objeciones:[["¿Cada cuánto lo volteo?","«Cuando cambia el clima, dos veces al año. Además así se desgasta parejo y dura más»"],["¿Es ortopédico?","«Es semiortopédico: firmeza media. Si necesitás firme de verdad, andá al Especial Ortopédico»"]]
+},
+{
+  id:8, linea:"LÍNEA ESPECIAL", color:"#546E7A", bg:"#ECEFF1",
+  nombre:"Especial Antialérgico", emoji:"🛡️", subtitulo:"Defensa Activa",
+  eslogan:"Aire limpio mientras dormís.",
+  garantia:6, altura:"22 cm", resistencia:"110 kg por persona", firmeza:"Suave", tecnologia:"Bonnell",
+  tags:["Tejidos Hipoalergénicos","Antiácaros","Antibacterias","Tecnología Bonnell","110 kg por persona","6 años de garantía"],
+  medidas:[["1 PLAZA","90 x 190"],["1.5 PLAZAS","105 x 190"],["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"]],
+  paraQuien:["Personas con alergias respiratorias, rinitis o asma","Dormitorios de niños y jóvenes (viene en 1 y 1.5 plazas)","Casas con mascotas o mucho polvo","Primer colchón propio / cuarto de huéspedes"],
+  comoVenderlo:["«Los tejidos son hipoalergénicos: frenan ácaros y bacterias»","«Es la opción ideal si en casa hay alergias, asma o niños chicos»","«Viene desde 1 plaza — perfecto para el dormitorio de los chicos»","«Sensación suave y 6 años de garantía»"],
+  noDecir:"No lo vendas solo por precio. Vendé la salud respiratoria de la familia.",
+  objeciones:[["¿Es solo para niños?","«No, viene hasta 2.5 plazas. Es para cualquiera que quiera un colchón antialérgico»"],["¿De verdad evita alergias?","«El tejido impide que se alojen ácaros y bacterias, que es lo que dispara la mayoría de las alergias»"],["Se ve delgado","«Son 22 cm, la altura estándar. Lo importante acá es el tejido hipoalergénico»"]]
+},
+{
+  id:9, linea:"LÍNEA ESPECIAL", color:"#546E7A", bg:"#ECEFF1",
+  nombre:"Especial Tropical", emoji:"🌴", subtitulo:"Frescura Esencial",
+  eslogan:"Fresco, liviano y flexible.",
+  garantia:6, altura:"22 cm", resistencia:"100 kg por persona", firmeza:"Suave", tecnologia:"Bonnell",
+  tags:["Fresco","Liviano y Flexible","Tecnología Bonnell","100 kg por persona","6 años de garantía"],
+  medidas:[["1 PLAZA","90 x 190"],["1.5 PLAZAS","105 x 190"],["2 PLAZAS","140 x 190"],["2.5 PLAZAS","160 x 190"]],
+  paraQuien:["Clientes que sienten calor pero no buscan línea Titanio","Cuarto de huéspedes, alquiler, segunda cama","Personas livianas (hasta 100 kg por persona)","Primera compra"],
+  comoVenderlo:["«Es fresco, liviano y flexible: fácil de mover y muy cómodo para el clima de acá»","«Sensación suave — ideal para quien no quiere colchón duro»","«6 años de garantía respaldados por Heaven»","«Perfecto para el cuarto de huéspedes o para una segunda cama»"],
+  noDecir:"No lo ofrezcas primero si el cliente puede acceder a algo superior. Úsalo como alternativa.",
+  objeciones:[["¿Es bueno para la espalda?","«Es de sensación suave. Si tenés molestias de columna, te conviene un ortopédico»"],["¿Enfría como el Titanio Ice?","«El Tropical es fresco y transpirable; el Ice tiene telas frías, es otro nivel»"]]
+},
+{
+  id:10, linea:"COMPLEMENTOS", color:"#6A1B9A", bg:"#F3E5F5",
+  nombre:"Almohadas", emoji:"🛏️", subtitulo:"El complemento perfecto",
+  eslogan:"Sin almohada buena, no hay colchón bueno.",
+  garantia:null, altura:null, resistencia:null, firmeza:"Extra Firme", tecnologia:"Fibra Siliconada",
+  tags:["Fibra Siliconada","50 x 70 cm","50 x 90 cm","Extra Firme"],
+  medidas:[["ESTÁNDAR","50 x 70"],["LARGA","50 x 90"]],
+  paraQuien:["Cualquier cliente que compra colchón","Quienes duermen de lado (la 50x90 es ideal)","Venta complementaria: ofrecela SIEMPRE"],
+  comoVenderlo:["«¿Ya tenés almohada nueva para acompañar el colchón?»","«La 50x90 es la más completa — ideal para quienes duermen de lado»","«Fibra siliconada: no se aplasta, mantiene la altura toda la noche»","«Completá el combo y dormí perfecto desde el primer día»"],
+  noDecir:"No la ofrezcas al final como algo suelto. Integrala en el momento de la venta principal.",
+  objeciones:[["Ya tengo almohada","«Con colchón nuevo y almohada vieja, el cuello igual te va a doler. Es parte del combo»"]]
+}
+];
+
+const LINEAS = ["TODOS","LÍNEA TITANIO","LÍNEA ORO","LÍNEA ESPECIAL","COMPLEMENTOS"];
+const TABS = [["vender","💬 Cómo venderlo"],["medidas","📐 Medidas"],["quien","👤 Para quién"],["objecion","🛡️ Objeciones"]];
+
+let filtro = "TODOS";
+let sel = PRODUCTS[0];
+let tab = "vender";
+
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const visibles = () => filtro === "TODOS" ? PRODUCTS : PRODUCTS.filter(p => p.linea === filtro);
+
+function renderFiltros(){
+  document.getElementById("filters").innerHTML = LINEAS.map(l =>
+    `<button class="chip${l===filtro?" on":""}" data-linea="${esc(l)}">${esc(l)}</button>`).join("");
+}
+
+function renderGrid(){
+  document.getElementById("grid").innerHTML = visibles().map(p => `
+    <button class="card" data-id="${p.id}" style="${p.id===sel.id?`border-color:${p.color};background:${p.bg};box-shadow:0 4px 16px ${p.color}33`:""}">
+      <div class="emo">${p.emoji}</div>
+      <div class="nm" style="color:${p.color}">${esc(p.nombre)}</div>
+      <div class="ln">${esc(p.linea)}</div>
+      ${p.garantia ? `<div class="meta" style="color:${p.color}">${p.garantia} años · ${esc(p.firmeza)}</div>` : ""}
+    </button>`).join("");
+}
+
+function paneVender(p){
+  return `<div class="lbl">FRASES QUE PODÉS USAR:</div>` +
+    p.comoVenderlo.map((f,i) =>
+      `<div class="frase" style="background:${p.bg};border-left-color:${p.color}">
+         <i style="color:${p.color}">${i+1}.</i><span>${esc(f)}</span></div>`).join("") +
+    `<div class="aviso"><span>⚠️</span><span><b>Tené en cuenta:</b> ${esc(p.noDecir)}</span></div>`;
+}
+
+function paneMedidas(p){
+  return `<div class="lbl">MEDIDAS DISPONIBLES:</div>` +
+    p.medidas.map(([plaza,cm],i) =>
+      `<div class="med" style="background:${i%2?"#F5F6F7":p.bg};border-left-color:${p.color}">
+         <b>${esc(plaza)}</b><span style="color:${p.color}">${esc(cm)} cm</span></div>`).join("") +
+    `<div class="aviso"><span>💡</span><span><b>Los precios varían según el canal de venta.</b>
+       Consultá siempre la lista vigente de tu canal antes de cotizar.</span></div>`;
+}
+
+function paneQuien(p){
+  return `<div class="lbl">ESTE PRODUCTO ES IDEAL PARA:</div>` +
+    p.paraQuien.map(c =>
+      `<div class="item"><i style="background:${p.color}">✓</i><span>${esc(c)}</span></div>`).join("");
+}
+
+function paneObjecion(p){
+  return `<div class="lbl">CÓMO RESPONDER CUANDO TE DICEN:</div>` +
+    p.objeciones.map(([q,a]) =>
+      `<div class="obj">
+         <div class="q">🗣️ "${esc(q)}"</div>
+         <div class="a" style="background:${p.bg};border-left-color:${p.color}">💡 ${esc(a)}</div>
+       </div>`).join("");
+}
+
+function renderFicha(){
+  const p = sel;
+  const specs = p.altura ? [["📏",p.altura],["⚖️",p.resistencia],["🛌",p.firmeza],["🔩",p.tecnologia]] : [["🛌",p.firmeza],["🔩",p.tecnologia]];
+  const panes = {vender:paneVender, medidas:paneMedidas, quien:paneQuien, objecion:paneObjecion};
+  document.getElementById("ficha").innerHTML = `
+    <div class="ficha">
+      <div class="fh" style="background:linear-gradient(135deg,${p.color},${p.color}CC)">
+        <div class="fh-top">
+          <div>
+            <div class="ln">${esc(p.linea)}</div>
+            <h2>${p.emoji} ${esc(p.nombre)}</h2>
+            <div class="st">${esc(p.subtitulo)}</div>
+            <div class="esl">"${esc(p.eslogan)}"</div>
+          </div>
+          ${p.garantia ? `<div class="gar"><b>${p.garantia}</b><span>AÑOS GAR.</span></div>` : ""}
+        </div>
+        <div class="specs">${specs.map(([i,t]) => `<div class="spec"><span>${i}</span><span>${esc(t)}</span></div>`).join("")}</div>
+      </div>
+      <div class="tags">${p.tags.map(t => `<span class="tag" style="background:${p.bg};color:${p.color}">${esc(t)}</span>`).join("")}</div>
+      <div class="tabs">${TABS.map(([k,l]) =>
+        `<button class="tab${k===tab?" on":""}" data-tab="${k}" style="${k===tab?`color:${p.color};border-bottom-color:${p.color}`:""}">${l}</button>`).join("")}</div>
+      <div class="pane">${panes[tab](p)}</div>
+    </div>`;
+}
+
+function render(){ renderFiltros(); renderGrid(); renderFicha(); }
+
+document.addEventListener("click", e => {
+  const chip = e.target.closest(".chip");
+  if (chip){ filtro = chip.dataset.linea; sel = visibles()[0]; tab = "vender"; render(); return; }
+
+  const card = e.target.closest(".card");
+  if (card){
+    sel = PRODUCTS.find(p => p.id === Number(card.dataset.id));
+    tab = "vender"; render();
+    document.querySelector(".ficha").scrollIntoView({behavior:"smooth", block:"start"});
+    return;
+  }
+
+  const t = e.target.closest(".tab");
+  if (t){ tab = t.dataset.tab; renderFicha(); }
+});
+
+render();
+</script>
+</body>
+</html>
