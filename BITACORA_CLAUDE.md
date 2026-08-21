@@ -1850,6 +1850,49 @@ correcciones de esta misma sesión, porque el rescate trae la versión original.
 `precios` · `pagoedit` · `fleteedit` · `duplicados` · `borrarventa` · `imgotra` ·
 `compperdido` · `watienda` · `avisos` · `reenviar` · `onclicks` · `carga` · `ruta` · `mapa`.
 
+## 4av. Las 25 OC repetidas de agosto — no era una carrera de un segundo (2026-08-21)
+Reporte del dueño, con la razón de su lado: *"no entiendo la alerta de OC repetidas, si eres
+el sistema que automáticamente designa las OC"*. El aviso listaba **25 números duplicados**
+(08-001, 08-002, 08-010, 08-011, 08-014, 08-022, 08-042…).
+
+**El correlativo no estaba mal. Estaba mal CUÁNDO se calculaba.**
+
+`nextOcMes()` saca el máximo del mes y le suma 1, pero lee **`STATE`: la planilla que ESA
+computadora tiene en memoria**, que es de la última vez que se miró. El comentario viejo decía
+*"si dos cargaron en el mismo instante puede repetirse — es MUY poco probable"*. **No era eso.**
+La ventana real no era de un segundo: era de **horas**. Una vendedora con la pestaña abierta
+toda la mañana calculaba `max+1` sobre el panel de las 8 AM y se llevaba un número que otra ya
+había usado a las 10. Con 4–5 vendedoras cargando todo el día, 25 choques en un mes salen solos.
+
+**Lo irónico:** el arreglo ya estaba medio hecho. Había una *"ÚLTIMA MIRADA A LA PLANILLA ANTES
+DE GUARDAR"* (`conTope(refrescarEstado(), 4000)`) para detectar el día cerrado… pero corría
+**DESPUÉS** de que la OC ya se había asignado, unas líneas más arriba. Se bajaba la planilla
+fresca y no se la usaba para numerar.
+
+```js
+var _ocAuto = !isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo();
+if(_ocAuto) ocSel=nextOcMes(null, docTipoSel());        // provisorio
+...
+conTope(refrescarEstado(), 4000).then(function(){
+  if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());   // ⬅️ DEFINITIVO, con la planilla al día
+  guardarYa();
+});
+```
+La ventana pasa de horas al viaje de ida y vuelta (~1 s). Si la red no contesta en 4 segundos
+**se guarda igual** con el provisorio: mejor una OC a corregir que una vendedora trabada — y
+para eso está el aviso de repetidas.
+
+También se extendió la bajada a la **venta de tienda**, que antes la salteaba (`!_tienda`)
+porque no tiene día que se cierre… pero **sí toma número de OC**. Se llevaba el duplicado igual.
+
+**Sobre reiniciar cada mes:** se revisó y **se deja como está**. El número ya lleva el mes
+adentro (`08-047`), así que es único aunque el contador vuelva a 1; y el contador lee "el 47 de
+agosto" de un vistazo. Numerar de corrido hasta el infinito no agregaría nada y perdería eso.
+
+- Test: `tests/test_ocrepe.js` (7). Reproduce **el caso real**: una computadora que ve 3 de 8
+  pedidos y aun así toma el 009. **Verificado contra la versión publicada**: ahí da 08-004
+  duplicado, y la venta de tienda también. Cubre además que sin internet no trabe.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

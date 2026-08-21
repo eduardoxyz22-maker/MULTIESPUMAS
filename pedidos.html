@@ -4104,7 +4104,11 @@ function submitPedido(){
      al abrir el formulario: si se asignara antes, dos vendedoras con el formulario
      abierto se llevarían el mismo número. Editando NO se toca: el pedido conserva el
      suyo. ROHO queda afuera — su OC es el número que manda el cliente. */
-  if(!isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo()) ocSel=nextOcMes(null, docTipoSel());
+  /* ⚠️ Acá se calcula un número PROVISORIO, con la planilla que esta computadora tenga
+     en memoria. El DEFINITIVO se vuelve a calcular más abajo, con la planilla recién
+     bajada — ver "EL N° DE OC SE ASIGNA ACÁ". Ver también §OC REPETIDAS en la bitácora. */
+  var _ocAuto = !isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo();
+  if(_ocAuto) ocSel=nextOcMes(null, docTipoSel());
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -4158,16 +4162,32 @@ function submitPedido(){
      10 segundos y esa es justo la carrera que hay que ganar. Lo que sí tiene es un
      TOPE de 4 segundos: si la planilla no contesta, se guarda igual — una vendedora
      esperando a que cargue una hoja lenta es peor que un pedido de más. */
-  if(CONNECTED && !isEdit && !_tienda && !diaCerrado(rec.fecha)){
+  /* La MISMA bajada sirve para las dos cosas, así que también se hace cuando el número de
+     OC se asigna solo — aunque sea una venta de tienda, que no tiene día que se cierre. */
+  var _mirarCierre = !_tienda && !diaCerrado(rec.fecha);
+  if(CONNECTED && !isEdit && (_ocAuto || _mirarCierre)){
     setSubmitting(true);
     conTope(refrescarEstado(), 4000).then(function(){
       setSubmitting(false);
-      if(diaCerrado(rec.fecha)){
+      if(_mirarCierre && diaCerrado(rec.fecha)){
         toast('🔒 El '+fmtFecha(rec.fecha)+' se acaba de CERRAR — administración armó ese camión. Elegí otra fecha de entrega.','err');
         var fx=document.getElementById('f-fecha'); if(fx){ fx.classList.add('err'); fx.focus(); fx.scrollIntoView({block:'center'}); }
         renderCupoForm();
         return;
       }
+      /* ⚠️ EL N° DE OC SE ASIGNA ACÁ, con la planilla RECIÉN BAJADA.
+         Antes se calculaba arriba, contra lo que esta computadora tenía en memoria. Esa
+         memoria es de la última vez que se miró la planilla: si la vendedora dejó la
+         pestaña abierta toda la mañana, podía estar viendo el panel de hace horas y no
+         enterarse de los pedidos que cargaron las demás. Resultado: max+1 daba el mismo
+         número para dos personas distintas, una y otra vez. Así aparecieron 25 OC
+         repetidas en agosto — NO era una carrera de un segundo como decía el comentario
+         viejo, era una ventana de horas.
+         Bajando la planilla justo antes, la ventana pasa a ser el viaje de ida y vuelta
+         (~1 segundo). Si la red no contesta en 4 segundos se guarda igual con el número
+         provisorio: mejor una OC a corregir que una vendedora que no puede trabajar —
+         y para eso está el aviso de repetidas en Administración. */
+      if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
       guardarYa();
     });
     return;
