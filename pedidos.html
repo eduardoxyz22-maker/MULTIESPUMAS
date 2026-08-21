@@ -4675,9 +4675,91 @@ function refreshCupos(){
 function updateFooter(){
   var pend=getPending().length;
   var base='MultiEspumas · Registro de pedidos';
-  document.getElementById('footer').innerHTML = pend
+  document.getElementById('footer').innerHTML = (pend
     ? (base+' · <b style="color:var(--amber)">'+pend+' sin enviar</b> <a onclick="flushPending().then(function(){toast(\'Reintentado\',\'ok\');})">reintentar</a>')
-    : base;
+    : base) + autoSelloHtml();
+}
+
+/* ============================================================================
+   ACTUALIZACIÓN AUTOMÁTICA
+   El problema, tal como lo contó el dueño: *"las que dejan su panel todo el día y no
+   actualizan"*. Nadie toca 🔄, así que la pantalla se queda con la planilla de la mañana:
+   la vendedora no ve los pagos que cargaron las otras, el chofer no ve que le
+   reasignaron una entrega, y —lo que ya costó caro— el correlativo de OC se calculaba
+   sobre datos viejos y salían números repetidos (§4av).
+
+   Tres reglas, y las tres importan:
+   1. **No pisar a nadie que está trabajando.** Si hay una ficha abierta, una pantalla
+      completa (mapa, ruta, lista de carga…), una imagen subiendo o un pedido guardándose,
+      el tic se SALTEA y se vuelve a intentar al siguiente. Nunca se le mueve la pantalla
+      a alguien en el medio de algo. El formulario SÍ se refresca: se tocan los cupos y el
+      aviso de día cerrado, nunca lo que ella escribió.
+   2. **Pestaña de fondo = no se consulta nada.** El celular en el bolsillo o la pestaña
+      atrás no necesitan datos, y así no se gasta cuota de Google al pedo.
+   3. **Al volver a la pestaña, se actualiza en el acto.** Ese es el momento que importa:
+      vuelve a mirar y tiene que ver lo de ahora, no lo de hace tres horas.
+   ========================================================================== */
+var AUTO_MS=120000;          // cada 2 minutos mientras la pestaña esté a la vista
+var AUTO_VUELTA_MS=15000;    // al volver a la pestaña, no más seguido que esto
+var AUTO_TIMER=null;
+/* Qué está haciendo la persona ahora mismo, si es que está haciendo algo. Devuelve ''
+   cuando la pantalla está quieta y se puede refrescar sin molestar. */
+function autoOcupado(){
+  var m=document.getElementById('modal');
+  if(m && m.classList.contains('on')) return 'ficha abierta';
+  if(typeof COMP_SUBIENDO!=='undefined' && COMP_SUBIENDO>0) return 'subiendo una imagen';
+  var b=document.getElementById('f-submit');
+  if(b && b.disabled) return 'guardando el pedido';
+  var ids=['mapa','ruta','carga','faltantes','entregas','retiros','prods','reporte','parte','envio'];
+  for(var i=0;i<ids.length;i++){
+    var o=document.getElementById(ids[i]+'-overlay');
+    if(o && o.style.display && o.style.display!=='none') return ids[i];
+  }
+  var v=document.getElementById('visor');
+  if(v && v.style.display && v.style.display!=='none') return 'visor';
+  return '';
+}
+/* Repinta SOLO la vista que se está mirando, y le devuelve el scroll donde estaba: que
+   la lista salte sola mientras uno la lee es peor que tenerla desactualizada. */
+function autoRepintar(){
+  var y=window.scrollY;
+  if(document.getElementById('view-form').classList.contains('active')){ renderCupoForm(); pintarBotonCierre(); }
+  else if(document.getElementById('view-admin').classList.contains('active')){ if(UNLOCKED) renderAdmin(); }
+  else if(document.getElementById('view-mis').classList.contains('active')) renderMis();
+  else if(document.getElementById('view-chofer').classList.contains('active')) renderChofer();
+  else if(document.getElementById('view-conta').classList.contains('active')) renderContaSiActiva();
+  window.scrollTo(0,y);
+}
+function autoRefrescar(motivo){
+  if(!CONNECTED) return Promise.resolve(false);
+  if(document.hidden) return Promise.resolve(false);
+  if(autoOcupado()) return Promise.resolve(false);
+  return refrescarEstado().then(function(ok){
+    if(ok){ autoRepintar(); updateFooter(); }
+    return ok;
+  });
+}
+/* El sello del pie: "actualizado recién / hace 3 min". No es decoración — es cómo se
+   sabe que la pantalla está viva. Antes no había forma de saber si lo que se veía era
+   de ahora o de la mañana, y esa era justamente la trampa. */
+function autoSelloHtml(){
+  if(!CONNECTED) return '';
+  if(!ULTIMO_REFRESCO) return '';
+  var min=Math.floor((Date.now()-ULTIMO_REFRESCO)/60000);
+  var txt = min<1 ? 'recién' : (min===1 ? 'hace 1 min' : ('hace '+min+' min'));
+  var viejo = min>=10;
+  return ' · <span style="color:'+(viejo?'var(--amber)':'var(--muted)')+'" title="La pantalla se actualiza sola cada 2 minutos">'+
+    (viejo?'⚠️ ':'')+'actualizado '+txt+'</span>';
+}
+function autoArrancar(){
+  if(AUTO_TIMER) clearInterval(AUTO_TIMER);
+  AUTO_TIMER=setInterval(function(){ autoRefrescar('tic'); updateFooter(); }, AUTO_MS);
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden) return;
+    // Al volver a la pestaña: al toque, salvo que se haya mirado recién.
+    if(Date.now()-ULTIMO_REFRESCO < AUTO_VUELTA_MS){ updateFooter(); return; }
+    autoRefrescar('volvió a la pestaña').then(updateFooter);
+  });
 }
 
 /* ============================================================================
@@ -8265,6 +8347,7 @@ document.addEventListener('DOMContentLoaded',function(){
   updateStats();
   refreshCupos();
   if(CONNECTED) flushPending();
+  autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
 });
 </script>
 </body>

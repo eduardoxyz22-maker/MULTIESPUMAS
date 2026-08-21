@@ -84,6 +84,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#contabilidad">🧾 Contabilidad</a>
+    <a href="#autoref">🔄 Auto-actualizar</a>
     <a href="#mayoristas">🏭 Mayoristas</a>
     <a href="#tienda">🏪 Venta de tienda</a>
     <a href="#retiros">💵 Retiro de efectivo</a>
@@ -457,6 +458,20 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <p>Es la contraparte del detalle de pagos: arriba está <b>lo que entró</b>, abajo <b>lo que salió</b>. Los dos respetan el <b>filtro de vendedor</b> del cuadre (una sola o Todas) y el período elegido. Va también en el <b>📋 Copiar</b> del cuadre y en su <b>⬇️ Excel</b>, con dos bloques: el resumen por vendedora y el detalle de cada retiro.</p>
     <div class="callout tip">Cada retiro se guarda como <b>una fila propia</b> en la planilla, marcada <b>💵 RETIRO DE EFECTIVO — NO BORRAR</b>. <b>No es un pedido</b>: no ocupa cupo del camión, no aparece en la lista de carga ni en los envíos, y no se cuenta en los totales de pedidos.</div>
 
+  </div>
+
+  <div class="card">
+    <h3 id="autoref">🔄 La pantalla se actualiza sola <span class="pill">nuevo</span></h3>
+    <p>Antes el panel <b>solo</b> se refrescaba al tocar 🔄 o al entrar al formulario. Quien lo dejaba abierto toda la mañana seguía viendo la planilla de las 8: no veía los pagos de las demás, ni los cambios de chofer, ni los pedidos nuevos. <b>Eso fue lo que causó las 25 OC repetidas de agosto</b> — el correlativo se calculaba sobre datos viejos.</p>
+    <ul>
+      <li><b>Se pone al día sola cada 2 minutos</b>, y <b>al instante al volver a la pestaña</b>, que es el momento que importa.</li>
+      <li><b>Nunca interrumpe.</b> Si hay una <b>ficha abierta</b>, una <b>pantalla completa</b> (mapa, hoja de ruta, lista de carga, faltantes, retiros…), una <b>imagen subiendo</b> o un <b>pedido guardándose</b>, el turno se saltea y se reintenta al siguiente. No se le mueve la pantalla a nadie en el medio de algo.</li>
+      <li><b>En el formulario sí se actualiza</b> (cupos, aviso de día cerrado, N° de OC) y <b>no toca lo que la vendedora escribió</b>.</li>
+      <li><b>Devuelve el scroll donde estaba</b>: que la lista salte sola mientras uno la lee es peor que tenerla desactualizada.</li>
+      <li><b>Con la pestaña de fondo no consulta nada</b> — el celular en el bolsillo no necesita datos, y así no se gasta cuota de Google al pedo.</li>
+      <li>Abajo de todo, en el pie, dice <b>“actualizado recién”</b> / <b>“hace 3 min”</b>. Si pasa de 10 minutos lo marca en <b>ámbar</b>: ahí sí conviene tocar 🔄.</li>
+    </ul>
+    <div class="callout tip">El botón <b>🔄 Actualizar</b> sigue estando y sigue sirviendo — ahora es para cuando querés forzarlo, no una obligación.</div>
   </div>
 
   <div class="card">

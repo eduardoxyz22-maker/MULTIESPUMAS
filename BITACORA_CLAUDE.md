@@ -1893,6 +1893,38 @@ agosto" de un vistazo. Numerar de corrido hasta el infinito no agregaría nada y
   pedidos y aun así toma el 009. **Verificado contra la versión publicada**: ahí da 08-004
   duplicado, y la venta de tienda también. Cubre además que sin internet no trabe.
 
+## 4aw. La pantalla se actualiza sola (2026-08-21)
+Pedido, y es la **causa de raíz** de §4av: *"tb debemos hacer algo con las que dejan su panel
+todo el día y no actualizan, para hacer que se actualice automático"*.
+
+**Lo que había:** `refrescarSiHaceRato()` y nada más — solo corría al ENTRAR al formulario, y
+con un piso de 1 minuto. Quien dejaba el panel abierto en cualquier otra vista veía la
+planilla de cuando lo abrió, para siempre. De ahí salieron las 25 OC repetidas.
+
+**Lo nuevo** (`§ACTUALIZACIÓN AUTOMÁTICA`): un reloj cada **2 minutos** + refresco **inmediato
+al volver a la pestaña** (`visibilitychange`), que es el momento que de verdad importa.
+
+**Lo delicado no es refrescar: es NO PISAR a nadie.** `autoOcupado()` devuelve el motivo y el
+tic se saltea si hay:
+ficha abierta · pantalla completa (mapa, ruta, carga, faltantes, entregas, retiros, prods,
+reporte, parte, envío, visor) · imagen subiendo (`COMP_SUBIENDO`) · pedido guardándose
+(`#f-submit.disabled`). Se reintenta al tic siguiente; no se pierde nada.
+
+- **El formulario SÍ se refresca** — es donde más falta hace (cupos, día cerrado, N° de OC) —
+  y `autoRepintar()` solo llama a `renderCupoForm()`/`pintarBotonCierre()`, que **no tocan los
+  campos**. Verificado en el test con el formulario a medio llenar.
+- **Devuelve el scroll donde estaba**: que la lista salte sola mientras uno la lee es peor que
+  tenerla desactualizada.
+- **`document.hidden` ⇒ no se consulta nada.** Un celular en el bolsillo no necesita datos, y
+  así no se quema cuota de Apps Script con 6 pestañas abiertas todo el día.
+- **Sello en el pie** (`autoSelloHtml`): *"actualizado recién / hace 3 min"*, y en **ámbar**
+  pasados los 10 minutos. Sin esto no hay forma de saber si lo que se ve es de ahora — que era
+  exactamente la trampa.
+
+- Test: `tests/test_autoref.js` (15). Los cuatro motivos de "ocupado" uno por uno, que la ficha
+  quede abierta y sin moverse, que el formulario se actualice **sin borrar lo escrito**, que
+  con la pestaña de fondo **no se consulte** y sí al volver, y el sello del pie.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
