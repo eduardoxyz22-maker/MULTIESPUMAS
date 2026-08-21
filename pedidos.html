@@ -808,6 +808,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
     <div class="card">
       <div class="seg subtabs" id="cta-tab" style="margin-bottom:18px">
         <button type="button" data-val="ventas" class="active">📋 Ventas</button>
+        <button type="button" data-val="mayor">🏭 Mayoristas</button>
         <button type="button" data-val="cuadre">🧮 Cuadre y conciliación</button>
       </div>
 
@@ -881,7 +882,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <label class="lb">Mes</label>
           <input type="month" id="cta-mes" onchange="renderConta()">
         </div>
-        <div class="field" style="min-width:170px">
+        <div class="field" style="min-width:170px" id="cta-wrap-vend">
           <label class="lb">Vendedor</label>
           <select id="cta-vendedor" onchange="renderConta()"></select>
         </div>
@@ -902,6 +903,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#7c3aed" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
         </div>
       </div>
+      <div id="cta-banner" style="display:none"></div>
       <div class="metrics" id="cta-metrics"></div>
       <div class="metodos-line" id="cta-resumen"></div>
       <div class="tw tw-tall"><table id="tbl-conta"></table></div>
@@ -1467,12 +1469,40 @@ function contaExcluido(v){
   for(var i=0;i<CONTA_EXCLUIR.length;i++) if(mismoVendedor(CONTA_EXCLUIR[i], v)) return true;
   return false;
 }
+/* ============================================================================
+   LA PLANILLA DE MAYORISTAS (Eduardo Añez)
+   Eduardo vende a MAYORISTAS, no en tienda: sus ventas tienen otro cliente, otro
+   volumen y otro cobro, y mezcladas con las del equipo desvirtuaban los dos lados
+   (le inflaban el total a las vendedoras y a él lo dejaban sin control propio).
+   Por eso Contabilidad tiene DOS planillas de ventas, no una:
+     · "📋 Ventas"     → el equipo de tienda   (ROHO y Eduardo quedan afuera, como siempre)
+     · "🏭 Mayoristas" → SOLO Eduardo Añez     (su seguimiento para cobrar y registrar pagos)
+   Las dos usan la MISMA maquinaria (tabla, ficha, pagos, Excel): lo único que cambia
+   es a quién dejan pasar. El "🧮 Cuadre" NO se toca: sigue siendo el del equipo.
+   Para sumar a alguien más a la planilla de mayoristas, agregarlo a esta lista. */
+var CONTA_MAYORISTAS=['Eduardo Añez'];
+function esMayorista(p){
+  var v=p&&p.vendedor;
+  for(var i=0;i<CONTA_MAYORISTAS.length;i++) if(mismoVendedor(CONTA_MAYORISTAS[i], v)) return true;
+  return false;
+}
+/* El nombre para los carteles: si algún día son varios, se listan separados por " y ". */
+function mayoristasTxt(){ return CONTA_MAYORISTAS.join(' y '); }
+/* En qué planilla estamos parados. Si no es la de mayoristas, es la de tienda. */
+function contaAmbito(){ return contaTab()==='mayor' ? 'mayor' : 'tienda'; }
 /* ⚠️ La ÚNICA puerta de entrada a Contabilidad y al Cuadre. Quedan afuera:
-   - los vendedores excluidos (ROHO y Eduardo Añez), y
    - las **ATC**: una atención al cliente es un servicio, no una venta — a contabilidad
-     no le interesa y ensuciaría los totales, el cuadre y la conciliación.
-   Todo lo que filtre por contabilidad tiene que pasar por acá, no por contaExcluido. */
-function fueraDeConta(p){ return !p || contaExcluido(p.vendedor) || esATC(p.oc); }
+     no le interesa y ensuciaría los totales, el cuadre y la conciliación; y después,
+     según qué planilla se esté mirando (`ambito`, 'tienda' si no se dice otra cosa):
+   - en 'tienda' → los vendedores excluidos (ROHO y Eduardo Añez), como siempre;
+   - en 'mayor'  → todos los que NO son mayoristas.
+   Todo lo que filtre por contabilidad tiene que pasar por acá, no por contaExcluido.
+   El Cuadre llama sin `ambito` a propósito: cuadra la caja del equipo de tienda. */
+function fueraDeConta(p, ambito){
+  if(!p || esATC(p.oc)) return true;
+  if(ambito==='mayor') return !esMayorista(p);
+  return contaExcluido(p.vendedor);
+}
 /* Los vendedores que se pueden elegir: los de la lista fija más los que aparezcan
    en los pedidos (por si alguien quedó cargado con otro nombre). */
 function llenarSelectContaVendedor(){
@@ -1513,9 +1543,12 @@ function contaLista(){
   var modo=segVal('cta-mode')||'mes';
   var q=(document.getElementById('cta-search')||{}).value||'';
   q=q.trim().toLowerCase();
-  var vend=((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
+  var amb=contaAmbito();
+  // En Mayoristas el desplegable de vendedor está escondido: si quedó con una vendedora
+  // puesta de antes, se ignora (si no, filtraba a cero y parecía que no había ventas).
+  var vend=amb==='mayor' ? '' : ((document.getElementById('cta-vendedor')||{}).value||'').trim().toLowerCase();
   var list=STATE.filter(function(p){
-    if(fueraDeConta(p)) return false;
+    if(fueraDeConta(p, amb)) return false;
     if(vend && !mismoVendedor(p.vendedor, vend)) return false;
     var f=contaFechaBase(p);
     if(modo==='dia') return f===((document.getElementById('cta-dia')||{}).value||todayStr());
@@ -1688,7 +1721,10 @@ function renderConta(){
     if(!p.pagado) saldo+=Number(p.saldo)||0;
     contaPagos(p).forEach(function(c){ var k=cobroMetodoTxt(c); if(k) porMet[k]=(porMet[k]||0)+1; });
   });
-  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  // En Mayoristas no hay desplegable que leer: el "vendedor" es siempre el mayorista,
+  // y así las tarjetas y el resumen dicen de quién son los números.
+  var vSel=contaAmbito()==='mayor' ? mayoristasTxt()
+         : ((document.getElementById('cta-vendedor')||{}).value||'').trim();
   // Sobre la MISMA lista que se muestra: así las dos ventas del par están a la vista y
   // se pueden comparar. Marcar una sin poder ver la otra confundiría más de lo que ayuda.
   DUP_IDX=indiceDuplicados(list);
@@ -1869,9 +1905,41 @@ function renderContaSiActiva(){
    ========================================================================== */
 function contaTab(){ return segVal('cta-tab')||'ventas'; }
 function setContaTab(t){
+  // "Ventas" y "Mayoristas" son la MISMA pantalla con distinta gente adentro:
+  // comparten el panel para no duplicar tabla, ficha, pagos ni Excel.
   document.getElementById('cta-pane-ventas').style.display=(t==='cuadre')?'none':'block';
   document.getElementById('cta-pane-cuadre').style.display=(t==='cuadre')?'block':'none';
+  pintarAmbitoConta(t==='mayor');
   if(t==='cuadre') renderCuadre(); else renderConta();
+}
+/* Lo poquito que cambia entre una planilla y la otra. */
+function pintarAmbitoConta(mayor){
+  // El desplegable de vendedor no tiene nada que elegir en Mayoristas: es de una sola
+  // persona. Se esconde Y se limpia, para que no quede filtrando por detrás.
+  var w=document.getElementById('cta-wrap-vend');
+  if(w){
+    if(mayor){ var s=document.getElementById('cta-vendedor'); if(s) s.value=''; }
+    w.style.display=mayor?'none':'';
+  }
+  // Un cartel que diga qué planilla se está mirando: las dos se ven idénticas.
+  var b=document.getElementById('cta-banner');
+  if(b){
+    b.style.display=mayor?'block':'none';
+    b.innerHTML=mayor
+      ? '<div style="background:#eef6ff;border:1px solid #bcd8f5;border-left:4px solid #1d6fb8;border-radius:9px;padding:10px 14px;margin-bottom:12px;font-size:.85rem;color:#134a7c">'+
+        '🏭 <b>Planilla de mayoristas</b> — las ventas y pedidos de <b>'+esc(mayoristasTxt())+'</b>, aparte de las del equipo de tienda. '+
+        'Acá se les hace el seguimiento, se ve lo que falta cobrar y se registran los pagos, igual que en Ventas.</div>'
+      : '';
+  }
+}
+/* A qué planilla de Contabilidad pertenece una venta. Sin esto, al saltar a la ficha de
+   una venta de Eduardo la tabla de atrás quedaba vacía (estaba parada en "Ventas"). */
+function contaTabDe(p){ return esMayorista(p) ? 'mayor' : 'ventas'; }
+function irAContaDe(p){
+  var t=contaTabDe(p);
+  segSet('cta-tab',t);   // primero la pestaña: así showView ya pinta la planilla correcta
+  showView('conta');
+  setContaTab(t);
 }
 function setCuadreModo(m){
   document.getElementById('cua-wrap-dia').style.display=(m==='dia')?'block':'none';
@@ -2309,8 +2377,7 @@ function cobrarFlete(id){
   CTA_ULTIMA=String(id);
   CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
   CTA_TIPO='envio';
-  showView('conta');
-  segSet('cta-tab','ventas'); setContaTab('ventas');
+  irAContaDe(findById(id));      // la planilla que corresponda: tienda o mayoristas
   showContaModal(id);
   var mb=document.getElementById('modal-box'); if(mb) setTimeout(function(){ mb.scrollTop=mb.scrollHeight; },120);
 }
@@ -3544,7 +3611,7 @@ function ctaToggleRegistrado(id){
   showContaModal(id);
 }
 function exportConta(){
-  var list=contaLista();
+  var list=contaLista(), mayor=contaAmbito()==='mayor';
   if(!list.length){ toast('No hay pedidos para exportar en este período','err'); return; }
   var H=1;
   var header=['INGRESADO','FECHA DE ENTREGA','N° NOTA DE VENTA','N° OC','VENDEDOR','CLIENTE','ENTREGA','CELULAR','PRODUCTO','MEDIDA','CÓDIGO','CANTIDAD','PRECIO UNIT. (Bs)','SUBTOTAL (Bs)','FACTURAR A','NIT','PAGADO','PAGOS (fecha · método · monto · nota)','TOTAL COBRADO (Bs)','SALDO (Bs)','TOTAL VENTA (Bs)','SUMA DE PRECIOS (Bs)','RECARGO ENTREGA (Bs)','RECARGO COBRADO (Bs)','RECARGO POR COBRAR (Bs)','EN SISTEMA','OBSERVACIONES'].map(function(t){return {v:t,s:H};});
@@ -3567,16 +3634,18 @@ function exportConta(){
       ]);
     });
   });
-  var bytes=buildXlsx([{name:'Contabilidad',
+  // La planilla de mayoristas baja como archivo aparte: es para otro control, no se
+  // mezcla con la del contador ni se pisan entre ellas en la carpeta de descargas.
+  var bytes=buildXlsx([{name:mayor?'Mayoristas':'Contabilidad',
     cols:[{w:17},{w:15},{w:15},{w:12},{w:18},{w:24},{w:19},{w:14},{w:30},{w:12},{w:12},{w:10},{w:16},{w:15},{w:24},{w:14},{w:9},{w:38},{w:16},{w:14},{w:16},{w:19},{w:18},{w:18},{w:20},{w:12},{w:36}],
     matrix:rows}]);
   var modo=segVal('cta-mode')||'mes';
   var tag = modo==='dia' ? (document.getElementById('cta-dia').value||'dia')
           : modo==='mes' ? (document.getElementById('cta-mes').value||'mes') : 'todos';
-  var vSel=((document.getElementById('cta-vendedor')||{}).value||'').trim();
+  var vSel=mayor?'':((document.getElementById('cta-vendedor')||{}).value||'').trim();
   if(vSel) tag+='-'+vSel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
-  downloadBlob(bytes,'contabilidad-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('Excel de contabilidad descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
+  downloadBlob(bytes,(mayor?'mayoristas-':'contabilidad-')+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('Excel de '+(mayor?'mayoristas':'contabilidad')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
 }
 
 /* ============================================================================
@@ -4084,7 +4153,7 @@ function submitPedido(){
        derecho a Contabilidad —el razonamiento era "no hay camión al que avisarle"— pero
        la vendedora igual tiene que pasar la venta, así que se quedaba sin el botón de
        copiar. Se le muestra el mensaje y, al cerrarlo, cae en Contabilidad como antes. */
-    if(_tienda){ showView('conta'); renderConta(); showWhatsappModal(rec); return; }
+    if(_tienda){ irAContaDe(rec); showWhatsappModal(rec); return; }
     if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); }
   }
 }
@@ -4226,7 +4295,7 @@ function abrirVentaTienda(){
   var fc=document.getElementById('f-cliente'); if(fc){ fc.focus(); fc.scrollIntoView({block:'center'}); }
 }
 function cancelarVentaTienda(){
-  VENTA_TIENDA=false; resetForm(); pintarModoTienda(); showView('conta'); renderConta();
+  VENTA_TIENDA=false; resetForm(); pintarModoTienda(); showView('conta'); setContaTab(contaTab());
 }
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */

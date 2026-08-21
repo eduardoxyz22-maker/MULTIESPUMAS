@@ -1617,6 +1617,71 @@ vendedora en el aire — tanto por el botón como por la ✕.
   que sirva también para una venta normal, y que el flujo de **recién guardado siga cerrando**
   como antes.
 
+## 4ar. La planilla de MAYORISTAS — Eduardo Añez, aparte de las vendedoras (2026-08-21)
+Pedido: *"en contabilidad eduardo añez tiene y debe tener una planilla aparte de sus pedidos y
+ventas, ya que él vende a mayoristas y necesita control de sus ventas y pedidos, pero es el
+jefe comercial (o sea soy yo) para que lleve control y seguimiento para cobrar. y registrar
+pagos"* + *"separado de los vendedores"*.
+
+**El problema.** Eduardo estaba en `CONTA_EXCLUIR` desde el principio (§4 original): quedaba
+fuera de Contabilidad **y de todo**. La razón original sigue siendo válida —sus ventas no
+llevan nota de venta ni NIT ni "facturar a", mezcladas le inflaban los totales al equipo— pero
+el efecto colateral era que **él no tenía dónde ver lo suyo**. Vende a mayoristas y necesita
+saber a quién le falta cobrar.
+
+**La decisión: NO reactivarlo en la planilla del equipo, sino darle la suya.** Contabilidad
+pasó de dos sub-pestañas a **tres**: `📋 Ventas` · `🏭 Mayoristas` · `🧮 Cuadre y conciliación`.
+
+**Cómo, sin duplicar nada.** `mayor` **comparte el `#cta-pane-ventas`** con `ventas`: la misma
+tabla, la misma ficha con registro de pagos, el mismo corrector de precios/montos, el mismo
+recargo por entrega, el mismo Excel. Lo único que cambia es **a quién deja pasar el filtro**.
+
+```js
+var CONTA_MAYORISTAS=['Eduardo Añez'];          // sumar a alguien más = una línea acá
+function esMayorista(p){ /* mismoVendedor contra la lista */ }
+function contaAmbito(){ return contaTab()==='mayor' ? 'mayor' : 'tienda'; }
+function fueraDeConta(p, ambito){               // ⚠️ `ambito` es OPCIONAL a propósito
+  if(!p || esATC(p.oc)) return true;            // las ATC siguen fuera de las DOS
+  if(ambito==='mayor') return !esMayorista(p);
+  return contaExcluido(p.vendedor);             // 'tienda' (por defecto) = lo de siempre
+}
+```
+**El parámetro opcional es el truco del cambio.** Los **cuatro** puntos del Cuadre
+(`cuadrePagos`, `cuadrePendientes`, `cuadreFletesPend`, `cuadreAlertas`) llaman
+`fueraDeConta(p)` **sin ámbito** y por lo tanto **no se tocaron ni una letra**: el cuadre sigue
+siendo la caja del equipo de tienda, que es lo correcto (arquear caja y conciliar banco es de
+la tienda; el seguimiento de mayoristas es otra cosa). El **único** que pasa ámbito es
+`contaLista()`.
+
+**Los detalles que se rompían si no se cuidaban:**
+- **El desplegable de vendedor.** `llenarUnSelectVendedor` filtra con `contaExcluido`, así que
+  Eduardo **nunca** aparece ahí. Si se quedaba con una vendedora elegida, en Mayoristas
+  filtraba a cero y parecía que no había ventas. `pintarAmbitoConta(true)` lo **esconde y lo
+  limpia**, y `contaLista()` además ignora `vend` cuando el ámbito es `mayor` (cinturón y
+  tiradores).
+- **Saltar a una ficha.** `cobrarFlete()` y el post-guardado de la venta de tienda hacían
+  `setContaTab('ventas')` a mano: con una venta de Eduardo la ficha abría bien pero **la tabla
+  de atrás quedaba vacía**. Nuevos `contaTabDe(p)` / `irAContaDe(p)` mandan a la planilla que
+  corresponde.
+- **Las tarjetas y el resumen.** `vSel` en Mayoristas se toma del ámbito, no del `<select>`:
+  dicen *"de Eduardo Añez"* en vez de *"de todo el equipo"*, y el cartel de vacío lo nombra.
+- **El Excel** baja como `mayoristas-….xlsx` con la hoja `Mayoristas`, para que no se pise en
+  la carpeta de descargas con el del contador.
+- Un **cartel azul** arriba de las tarjetas dice qué planilla se está mirando: las dos se ven
+  idénticas y sin él no se distinguen.
+
+**ROHO se dejó fuera de las tres** — el pedido era por Eduardo. Sumarlo es agregarlo a
+`CONTA_MAYORISTAS`, pero conviene preguntar antes: son negocios distintos y mezclarlos
+repetiría el problema que este cambio resuelve.
+
+- Test: `test_mayorista.js` (37). Que las dos planillas **no se pisen** en ninguna dirección,
+  que las ATC y ROHO queden fuera de ambas, que el **Cuadre no se haya movido**, que las
+  tarjetas sumen solo lo suyo, que el filtro de vendedora colgado no la vacíe, que se pueda
+  **registrar un pago** desde la ficha de un mayorista y que quede guardado en la planilla
+  compartida, y que `irAContaDe` reparta bien.
+- `test_cuadre.js` actualizado: afirmaba `tabs.length===2`; ahora son tres y el Cuadre es la
+  última.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
