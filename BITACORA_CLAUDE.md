@@ -1682,6 +1682,63 @@ repetiría el problema que este cambio resuelve.
 - `test_cuadre.js` actualizado: afirmaba `tabs.length===2`; ahora son tres y el Cuadre es la
   última.
 
+## 4as. "DEBE Bs 0,00" — la venta sin monto salía disfrazada de saldada (2026-08-21)
+Salió de una consulta lateral: el usuario intentaba pasar una venta de PAGADO a POR COBRAR
+y creía que el panel no lo dejaba. **Sí dejaba** (`dbg_pagado.js` lo probó: poner el saldo
+deja `pagado=false`), pero al reproducirlo apareció otra cosa: la venta con
+`pagado=false, saldo=0, acuenta=0` y sin ledger se pintaba **"DEBE Bs 0,00"**.
+
+**Por qué importa.** Eso se lee como *"no debe nada"*. Es exactamente al revés: **nadie le
+anotó el monto**. La venta que hay que ir a completar quedaba disfrazada de venta saldada,
+y —peor— el **chofer** la veía como un `Sin saldo` **gris** y la hoja de ruta le decía
+`💰 COBRAR Bs 0,00`. Entregaba, volvía sin la plata, y nadie se enteraba.
+
+Regla que fijó el usuario: *"si hay saldo debe decir cuánto se debe"*. O sea, el cero no es
+una respuesta — o hay monto, o falta anotarlo.
+
+```js
+function sinMontoAnotado(p){          // ni pagada, ni adelanto, ni saldo, ni ledger
+  if(!p || p.pagado) return false;
+  if((Number(p.saldo)||0)>0.01) return false;
+  if((Number(p.acuenta)||0)>0.01) return false;
+  return totalCobrado(p)<=0.01;
+}
+function badgeSinMonto(){ return '<span class="badge b-amber">⚠️ SIN MONTO ANOTADO</span>'; }
+/* Las TRES cosas distintas que se le pueden decir al chofer. Nunca "COBRAR Bs 0,00". */
+function cobroRutaTxt(p){ /* ✅ PAGADO · ⚠️ SIN MONTO ANOTADO · ✅ NADA QUE COBRAR · 💰 COBRAR X */ }
+```
+**Ámbar, no rojo**: no es una deuda, es un dato que falta. El rojo se reserva para la plata
+que de verdad hay que salir a cobrar.
+
+**Los seis lugares que mentían** (todos con el mismo cero):
+1. `contaPagoHtml` — la tabla de Contabilidad.
+2. `contaPagoTxt` — el Excel y el copiar.
+3. `showPedidoModal` — la ficha de Administración.
+4. `showMisModal` — la ficha de Mis pedidos (la que ve la vendedora).
+5. `entregaCardHtml` — el panel 🚚 Entregado.
+6. `cobroChoferHtml` + `renderRuta` + el WhatsApp de la ruta — **el que costaba plata**.
+
+De paso quedaron sin poder salir **dos ceros más**:
+- el renglón `debe Bs 0,00` abajo de un "A cuenta" (ahora `debeLinea()` solo lo pinta si el
+  saldo es > 0.01), y
+- la venta con la plata en el ledger pero sin la marca de pagada, que decía DEBE Bs 0,00 y
+  ahora dice **`COBRADO Bs X · falta marcarla como pagada`**.
+
+**El cuadre las lista.** `cuadreAlertas` ya tenía el aviso 💸 de *"venta marcada PAGADA sin
+anotar el monto"*, pero esa recorre `contaPagos(p)` y **estas ventas no tienen ningún pago**:
+eran mudas. Nuevo bucket `sinNada` (❓) con la misma mecánica de tocar el nombre y abrir la
+venta. Sin esto el panel marcaba el problema pero nadie se enteraba.
+
+- Test: `test_sinmonto.js` (28). Los seis lugares, más que **una venta CON saldo siga
+  diciendo cuánto** (que es la mitad de la regla que se pidió), el adelanto con y sin saldo,
+  la pagada, la del ledger, y que el cuadre las liste.
+- `test_sinsaldo.js` actualizado: afirmaba `dice "Sin saldo"` para el chofer — codificaba
+  justo el comportamiento que este cambio corrige.
+
+⚠️ **`test_chofer.js` está muerto desde antes de este cambio**: llama a `choPedirMetodo`, que
+ya no existe (verificado contra `origin/main`). No imprime ningún `✗`, así que `_run1.sh` lo
+da por "ok (sin resumen)" y pasa desapercibido. **Pendiente de arreglar.**
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

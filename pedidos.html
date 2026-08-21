@@ -1575,20 +1575,57 @@ function contaMetodosTxt(p){
   });
   return out.join(' · ');
 }
+/* ⚠️ Una venta SIN MONTO ANOTADO: no está marcada pagada, no dejó adelanto, no le quedó
+   saldo y no hay ningún pago en el ledger. **No es que deba cero** — es que nadie anotó
+   cuánto era. Antes salía "DEBE Bs 0,00", que se lee como "no debe nada": la venta que
+   justamente hay que ir a completar quedaba disfrazada de venta saldada.
+   Regla: si hay saldo, decir CUÁNTO se debe; si no hay ningún monto, decir que falta. */
+function sinMontoAnotado(p){
+  if(!p || p.pagado) return false;
+  if((Number(p.saldo)||0)>0.01) return false;
+  if((Number(p.acuenta)||0)>0.01) return false;
+  return totalCobrado(p)<=0.01;
+}
+/* Ámbar y no rojo: no es una deuda, es un dato que falta. El rojo se reserva para la
+   plata que de verdad hay que salir a cobrar. */
+function badgeSinMonto(){ return '<span class="badge b-amber">⚠️ SIN MONTO ANOTADO</span>'; }
+/* Lo que hay que decirle al CHOFER sobre la plata, en una línea. Nunca "COBRAR Bs 0,00":
+   son TRES casos distintos y confundirlos cuesta plata — hay un monto que cobrar, no hay
+   nada que cobrar, o nadie anotó cuánto era (y entonces tiene que preguntar, no callarse).
+   La usan la hoja de ruta impresa y el mensaje de WhatsApp, para que digan lo mismo. */
+function cobroRutaTxt(p){
+  if(p&&p.pagado) return {t:'✅ PAGADO', c:'#2e7d32'};
+  if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00'};
+  if((Number(p&&p.saldo)||0)<=0.01) return {t:'✅ NADA QUE COBRAR', c:'#2e7d32'};
+  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b'};
+}
+/* El renglón "debe Bs X" solo cuando de verdad hay saldo (si es 0 no dice nada). */
+function debeLinea(p){
+  return (Number(p&&p.saldo)||0)>0.01
+    ? '<br><span style="color:var(--red);font-size:.9em">debe '+fmtBs(p.saldo)+'</span>' : '';
+}
 function contaPagoHtml(p){
   var met=contaMetodosTxt(p);
-  var acu=Number(p.acuenta)||0;
+  var acu=Number(p.acuenta)||0, sal=Number(p.saldo)||0;
   var metTxt=met?(' <span style="color:var(--muted)">· '+esc(met)+'</span>'):'';
+  var pie=function(t){ return '<br><span style="color:var(--muted);font-size:.9em">'+t+'</span>'; };
   if(p.pagado) return '<span class="badge b-green">PAGADO</span>'+metTxt;
-  if(acu>0)    return '<span class="badge b-amber">A CUENTA '+fmtBs(acu)+'</span>'+metTxt+'<br><span style="color:var(--red);font-size:.9em">debe '+fmtBs(p.saldo)+'</span>';
-  return '<span class="badge b-red">DEBE '+fmtBs(p.saldo)+'</span>';
+  if(sinMontoAnotado(p)) return badgeSinMonto()+metTxt+pie('falta registrar el pago');
+  if(acu>0)    return '<span class="badge b-amber">A CUENTA '+fmtBs(acu)+'</span>'+metTxt+debeLinea(p);
+  /* Sin saldo y sin marca de pagada, pero CON plata anotada: se dice lo que entró.
+     "DEBE Bs 0,00" no le sirve a nadie — no hay deuda que cobrar, lo que falta es la marca. */
+  if(sal<=0.01) return '<span class="badge b-amber">COBRADO '+fmtBs(totalCobrado(p))+'</span>'+metTxt+pie('falta marcarla como pagada');
+  return '<span class="badge b-red">DEBE '+fmtBs(sal)+'</span>';
 }
 function contaPagoTxt(p){
   var met=contaMetodosTxt(p);
-  var acu=Number(p.acuenta)||0;
-  if(p.pagado) return 'PAGADO'+(met?(' · '+met):'');
-  if(acu>0)    return 'A CUENTA '+fmtBs(acu)+(met?(' · '+met):'')+' · debe '+fmtBs(p.saldo);
-  return 'DEBE '+fmtBs(p.saldo);
+  var acu=Number(p.acuenta)||0, sal=Number(p.saldo)||0;
+  var m=met?(' · '+met):'';
+  if(p.pagado) return 'PAGADO'+m;
+  if(sinMontoAnotado(p)) return 'SIN MONTO ANOTADO — falta registrar el pago'+m;
+  if(acu>0)    return 'A CUENTA '+fmtBs(acu)+m+(sal>0.01?(' · debe '+fmtBs(sal)):'');
+  if(sal<=0.01) return 'COBRADO '+fmtBs(totalCobrado(p))+m+' · falta marcarla como pagada';
+  return 'DEBE '+fmtBs(sal);
 }
 /* ============================================================================
    Precio de cada ítem
@@ -2112,12 +2149,16 @@ function cuadreAlertas(pagos){
      - sin monto → es una venta que la vendedora marcó PAGADA sin anotar cuánto
        (el monto de esos cobros nunca se guardó en la planilla). Listarlas como
        "pago sin fecha · Bs 0,00" no le decía nada a nadie. */
-  var vend=cuadreVendedor(), pe=cuadrePeriodo(), sinFecha=[], sinMonto=[];
+  var vend=cuadreVendedor(), pe=cuadrePeriodo(), sinFecha=[], sinMonto=[], sinNada=[];
   STATE.forEach(function(p){
     if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     // Por la fecha de la VENTA: estos pagos justamente no tienen fecha propia, así
     // que cortarlos por la del pago los dejaría fuera de todos los períodos.
     if(!enPeriodoCuadre(contaFecha(p), pe)) return;
+    /* La hermana de "sinMonto": la venta a la que NADIE le anotó nada — ni pagada, ni
+       adelanto, ni saldo. No tiene ningún pago, así que el bucle de abajo no la ve, y
+       salía como "DEBE Bs 0,00": disfrazada de venta saldada y muda en todos los avisos. */
+    if(sinMontoAnotado(p)) sinNada.push(p);
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0)) sinMonto.push(p);
       else if(!c.fecha) sinFecha.push({p:p,c:c});
@@ -2125,6 +2166,7 @@ function cuadreAlertas(pagos){
   });
   if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
   if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  if(sinNada.length) A.push({ico:'❓', txt:'<b>'+sinNada.length+'</b> venta'+(sinNada.length===1?'':'s')+' <b>sin ningún monto anotado</b> — ni pagada, ni a cuenta, ni saldo. <b>No se sabe cuánto vale ni si el cliente pagó</b>: hay que abrirla y completarla antes de entregar', det:sinNada.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin
      cobrar, es plata que la empresa no vio y que nadie va a reclamar solo. */
   var fletes=cuadreFletesPend();
@@ -5606,6 +5648,7 @@ function entregaCardHtml(p, dn, pendiente){
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
     : (saldo>0.01 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
                                : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
+       : sinMontoAnotado(p) ? badgeSinMonto()
                   : '<span class="badge b-gray">Sin saldo</span>');
   var fotos=fotosDe(p);
   return '<div class="ent-card '+atcCls(p)+'">'+
@@ -5882,9 +5925,14 @@ function cobroChoferHtml(p){
   // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
   // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
   if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
+    /* ⚠️ "Sin saldo" en gris se lee como "no cobres nada", y para la venta a la que
+       NADIE le anotó el monto eso es plata que sale por la puerta y no vuelve. Si no
+       está marcada pagada y no hay ningún monto, se lo dice en ámbar: que pregunte
+       ANTES de entregar. */
     return '<div class="cho-row"><span class="k">Cobrar</span> '+
       (p.pagado ? '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>'
-                : '<span class="badge b-gray">Sin saldo</span>')+
+       : sinMontoAnotado(p) ? '<span class="badge b-amber">⚠️ Sin monto anotado — preguntá antes de entregar</span>'
+       : '<span class="badge b-gray">Sin saldo</span>')+
       ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>';
   }
   var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
@@ -6093,7 +6141,8 @@ function showMisModal(id){
     if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
     return prodChkIcon(x)+t;
   }).join('<br>');
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>');
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
+           :(sinMontoAnotado(p)?badgeSinMonto():('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'));
   var entrega=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+' '+atrasoBadge(p);
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
@@ -7199,7 +7248,8 @@ function showPedidoModal(id){
   var prod=prodRevList(p);
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
-  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p)):('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(anticipoDe(p)&&cobroMetodoTxt(anticipoDe(p))?(' · '+esc(cobroMetodoTxt(anticipoDe(p)))):'')+'</span>'):''));
+  var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
+           :(sinMontoAnotado(p)?badgeSinMonto():('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(anticipoDe(p)&&cobroMetodoTxt(anticipoDe(p))?(' · '+esc(cobroMetodoTxt(anticipoDe(p)))):'')+'</span>'):'')));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
@@ -7612,7 +7662,9 @@ function renderRuta(){
       (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
       (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
-      var cobro=p.pagado?'<span style="color:#2e7d32;font-weight:700">✅ PAGADO</span>':('<span style="color:#c0392b;font-weight:700">💰 COBRAR '+fmtBs(p.saldo)+'</span>'+(Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):''));
+      var cr=cobroRutaTxt(p);
+      var cobro='<span style="color:'+cr.c+';font-weight:700">'+cr.t+'</span>'+
+        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'');
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
@@ -7633,7 +7685,7 @@ function rutaWhatsapp(idx){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
     L.push('   🛏️ '+prodText(p.productos));
-    L.push('   '+(p.pagado?'✅ PAGADO':('💰 COBRAR '+fmtBs(p.saldo))));
+    L.push('   '+cobroRutaTxt(p).t);
     if(p.maps) L.push('   🗺️ '+p.maps);
     if(p.observaciones) L.push('   📝 '+p.observaciones);
     L.push('');
