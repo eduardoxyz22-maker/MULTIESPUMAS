@@ -3668,7 +3668,10 @@ function exportConta(){
         x.desc||'', x.medida||'', x.codigo||'', (x.cant===''?'':{v:Number(x.cant)||0,t:'n'}),
         (prodPrecio(x)>0?{v:prodPrecio(x),t:'n'}:''), (prodPrecio(x)>0?{v:prodSub(x),t:'n'}:''),
         i===0?(p.facturarA||''):'', i===0?(p.nit||''):'',
-        i===0?(p.pagado?'SÍ':'NO'):'', i===0?contaPagosTxt(p):'',
+        /* Tres valores, no dos: para el contador un "NO" con saldo 0 y cobrado 0 se lee
+           como "no debe nada", que es justo al revés — a esa venta le falta el monto.
+           Se mantiene corto y filtrable, que es para lo que usa esta columna. */
+        i===0?(p.pagado?'SÍ':(sinMontoAnotado(p)?'SIN MONTO':'NO')):'', i===0?contaPagosTxt(p):'',
         i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
         i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
