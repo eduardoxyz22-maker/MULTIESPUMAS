@@ -1739,6 +1739,68 @@ venta. Sin esto el panel marcaba el problema pero nadie se enteraba.
 ya no existe (verificado contra `origin/main`). No imprime ningún `✗`, así que `_run1.sh` lo
 da por "ok (sin resumen)" y pasa desapercibido. **Pendiente de arreglar.**
 
+## 4at. AUDITORÍA del primer mes — la línea de base bajó a CERO (2026-08-21)
+Pedido: *"abre un loop para buscar errores, discrepancias, mejoras… como vamos a 1 mes de
+funcionamiento, y audita todo"*.
+
+### Lo que se auditó y dio limpio
+- **Botones muertos** (`audit_refs.js`): se cruzaron todas las funciones invocadas desde un
+  `onclick/oninput/onchange` —incluidas las que el JS arma concatenando cadenas— contra las
+  declaradas. **Ninguna falta.** Es la clase de bug de §4ac (botón mudo) y no hay ninguno vivo.
+- **Integridad entre computadoras** (`audit_campos2.js`): se cruzó todo lo que el panel
+  escribe en un pedido contra las **29 columnas de `recToRow`**. El único huérfano sigue
+  siendo **`cobradoBs`**, ya identificado y ya tapado (todo lee `totalCobrado()`). `precio`
+  aparece como falso positivo: es de un PRODUCTO y viaja dentro de `_productos_json`.
+
+### 🔴 Bug encontrado y corregido: el Excel del contador
+Se había dicho que el arreglo de §4as llegaba al Excel y **era falso**. El export nunca pasó
+por `contaPagoTxt` —**esa función está MUERTA, nadie la llama**— y la columna PAGADO se
+armaba con `p.pagado?'SÍ':'NO'`. La venta sin monto caía en el "NO" con saldo 0 y cobrado 0:
+para el contador, *"no debe nada"*. Ahora la columna tiene **tres valores: SÍ / NO / SIN
+MONTO**, corta y filtrable como la usa él.
+
+### 🔴 Bug encontrado: las medidas escritas con × se marcaban como "especiales"
+`esMedidaConocida()` comparaba **literal** contra `MEDIDAS`. Una medida perfectamente normal
+escrita `160×190` (signo de multiplicación, que es como la arma la columna de texto de la
+planilla) o `160X190` (X mayúscula) **no coincidía** → el pedido se pintaba de celeste, caía
+en el filtro 🔵 Especiales y confundía a producción. Nuevo `normMedida()` (minúsculas,
+`×✕✖ → x`, sin espacios) aplicado en `esMedidaConocida()` y en `has50x70()`.
+
+### La deuda real: 27 afirmaciones falladas que veníamos arrastrando como "línea de base"
+Se triaron **una por una**. **Ninguna era un bug**: las 13 suites describían versiones
+anteriores del panel. Lo que cambió de verdad:
+
+| Suite | Por qué fallaba |
+|---|---|
+| `misfiltro` (6) · `agrupa` (3) · parte de `gris` | **Mis pedidos dejó de ser una TABLA y pasó a TARJETAS** (`#mis-lista .cho-card`) y los chips pasaron de 3 a 6 |
+| `im` (4) | El botón se acortó a `📥 IM`; el badge dice `Recoger de IM`; y el valor viejo `chk:'prod'` **cambió de significado** (era "recoger de IM", ahora es "en producción") — la migración está bien hecha en `enProduccion()` |
+| `prod` (5) | El botón 🏭 ahora **pregunta a qué fábrica** (MORENO/MULTI): 2 por producto, no 1 |
+| `turno` (2) | Reprogramar pasó de un `prompt()` a un **modal con validaciones** (día cerrado, cupo lleno, sábado PM, fecha pasada) |
+| `motivo` (2) | `REV_MOTIVO` ya no tiene el valor `'permiso'`: es `'ninguno'` + un texto **con el paso a paso** para dar el permiso |
+| `cargaficha` (2) · `revision` (1) | La fila ya no se titula "Revisión de productos": los botones ✔/✗/IM/🏭 van dentro de "Productos". Y borrar pasa por `eliminarDesdeCarga` |
+| `faltantes` (2) | `⛔ NO HAY:` pasó a `⛔ NO HAY` pegado al producto |
+| `fichaprod` (1) | 3 botones por producto → 5 |
+| `misficha` (1) | La fila **Stock se muestra siempre** y dice el estado (⬜ Sin revisar / 🟢 En stock) en vez de desaparecer |
+| `gris` (1) | El test truncaba el texto de la fila a **40 caracteres** y el cliente quedaba cortado |
+
+### ⚠️ `test_chofer` estaba MUERTO
+Llamaba a `choPedirMetodo`, borrada hace tiempo. **No imprimía ningún `✗`**, así que
+`_run1.sh` —que cuenta `✗`— lo daba por "ok (sin resumen)": **la pantalla donde se cobra la
+plata estaba sin red desde hacía semanas.** Reescrito al flujo actual (los tres botones van
+EN LA TARJETA y cada uno pregunta el monto). Ahora corre entero: 15/15, y confirma el
+circuito completo — cobra, guarda el método, el admin ve `PAGADO · QR` y entra en la rendición.
+
+### Carreras de tiempo en los tests
+`test_turno` capturaba **el último** toast y a veces se le colaba un
+`"Sin conexión: mostrando copia local"`. Se cambió a juntar **todos** los avisos. Mismo
+patrón aplicado a la sección del cupo lleno.
+
+> **📌 LA LÍNEA DE BASE AHORA ES CERO.** 120 suites, **0 fallas**. La lista de "fallas
+> conocidas" que se venía arrastrando **ya no existe**: si algo falla, es una regresión de
+> verdad. No volver a normalizar fallas sin triarlas.
+> Único flake que queda: **`test_cerrardia`** falla ~1 de cada 5 corridas (probablemente la
+> misma carrera de toasts). **Pendiente de hacer robusto.**
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
