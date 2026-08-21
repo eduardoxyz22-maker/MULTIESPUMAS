@@ -1801,6 +1801,55 @@ patrón aplicado a la sección del cupo lleno.
 > Único flake que queda: **`test_cerrardia`** falla ~1 de cada 5 corridas (probablemente la
 > misma carrera de toasts). **Pendiente de hacer robusto.**
 
+## 4au. Auditoría, pasada 3: la plata no cuadraba entre vistas — y se perdió la batería (2026-08-21)
+
+### 🔴 Contabilidad y el Cuadre daban DISTINTO sobre las mismas ventas
+El control nuevo `tests/test_plata.js` arma un juego de ventas difíciles a propósito y cruza
+los cuatro totales por sus dos caminos. Encontró **Bs 200 de diferencia**: Contabilidad decía
+que habían entrado Bs 6.920 y el Cuadre Bs 7.120.
+
+La diferencia era **exactamente un cobro de más** (el cliente pagó 1.200 sobre una venta de
+1.000). El motivo:
+```js
+function contaCobrado(p){ return r2(ventaTotal(p) - contaFaltaCobrar(p)); }   // ❌ TOPEA
+```
+"Total de la venta menos lo que falta" **nunca puede pasar del total**, así que el excedente
+desaparecía de la tarjeta "Ya ingresó". El **Cuadre tenía razón**: en la caja están los 1.200.
+Ahora:
+```js
+function contaCobrado(p){ var a=anticipoDe(p); return r2(totalCobrado(p)+(a?(Number(a.monto)||0):0)); }
+```
+La tarjeta "Ya ingresó" avisa en ámbar *"⚠️ Bs 200 de MÁS en 1 venta — revisalas"* en lugar
+de un "120% de lo vendido" ilegible.
+
+**La identidad correcta** (la que verifica el test) lleva el exceso restado:
+`vendido = entró + falta − exceso`. Sin ese término la cuenta no cierra nunca.
+
+Los otros tres cruces ya daban bien: **falta cobrar**, **flete pendiente** y **quiénes entran**
+(la ATC, ROHO y el mayorista quedan fuera de las dos vistas; la venta de tienda y la venta sin
+monto sí entran).
+
+### 💀 SE PERDIÓ LA BATERÍA DE TESTS — ~117 suites
+A mitad de esta pasada **el directorio temporal de la sesión se vació solo**. Las ~120 suites
+vivían **únicamente** en `/tmp/.../scratchpad/` y **nunca se habían commiteado**. No había
+copia en el repo ni en ningún otro lado del disco.
+
+Del historial de la conversación solo se pudieron rescatar **2** (los que se habían escrito
+enteros con `Write`; los que solo se editaron con `Edit` no tienen copia completa).
+
+**Sobrevivieron / se rehicieron:** `test_plata.js` (nuevo, 11), `test_mayorista.js` (37),
+`test_sinmonto.js` (32) — a los dos rescatados hubo que **reaplicarles a mano** las
+correcciones de esta misma sesión, porque el rescate trae la versión original.
+
+> **📌 REGLA NUEVA, INNEGOCIABLE: los tests van en `tests/`, dentro del repo, y se commitean
+> en el MISMO commit que el cambio que prueban.** Un test que no está en el repo es un test
+> que todavía no existe. Ver `tests/LEEME.md`.
+
+**Pendiente grande:** rehacer las suites perdidas. Las prioritarias, por orden:
+`conta` · `cuadre` · `chofer` · `cobros` · `porcobrar` · `contador` · `excel` · `atc` ·
+`precios` · `pagoedit` · `fleteedit` · `duplicados` · `borrarventa` · `imgotra` ·
+`compperdido` · `watienda` · `avisos` · `reenviar` · `onclicks` · `carga` · `ruta` · `mapa`.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
