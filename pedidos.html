@@ -4225,6 +4225,23 @@ function submitPedido(){
         return;
       }
       if(res&&res.ok){ if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); } toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok'); flushPending(); }
+      /* ⚠️ EL SERVIDOR CONTESTÓ Y DIJO QUE NO. Eso NO se encola.
+         Antes cualquier rechazo que no fuera "día cerrado" o "cupos llenos" caía en un
+         `else` que lo metía en la cola y mostraba **"Guardado ✓" en verde**. O sea: el
+         servidor rechazaba el pedido y la vendedora se iba convencida de que había
+         entrado — le pasaba la venta al grupo y todo. El pedido quedaba de zombi,
+         reintentándose para siempre contra un servidor que nunca lo iba a aceptar.
+         La cola es para cuando NO HAY RED (el `catch` de abajo), no para un "no". */
+      else if(res && res.ok===false){
+        STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats();
+        if(UNLOCKED) renderAdmin();
+        var _e=String(res.error||'');
+        toast(_e==='busy'
+          ? '⏳ El servidor estaba ocupado y NO guardó el pedido. Esperá unos segundos y tocá Guardar de nuevo.'
+          : ('❌ El servidor NO aceptó el pedido'+(_e?(' ('+_e+')'):'')+'. NO se guardó — revisá los datos y volvé a intentar.'),'err');
+        renderCupoForm();
+        return;
+      }
       else { queuePending(rec); toast('Guardado. Se sincronizará en breve.','ok'); }
       after(isEdit);
     }).catch(function(){
@@ -4920,8 +4937,42 @@ function abrirCierreDias(){
   if(!d){ var n=document.getElementById('cie-fecha'); if(n && !n.value) n.value=tomorrowStr(); }
 }
 function cieFechaSel(){ var i=document.getElementById('cie-fecha'); return i?i.value:''; }
+/* ⚠️ ¿EL CANDADO ESTÁ DE VERDAD EN LA PUERTA, O SOLO EN LOS NAVEGADORES?
+   Cerrar un día tiene DOS trancas:
+     1. El panel: no deja elegir esa fecha. Pero cada computadora tiene que ENTERARSE, y
+        una pestaña abierta desde antes del cierre no se entera sola.
+     2. El servidor (Apps Script): rechaza el pedido aunque el panel lo mande. **Esta es la
+        única que no se puede saltear.**
+   La 2 solo existe si lo PUBLICADO en Google es la versión al día. Y en Apps Script
+   *guardar el código no publica nada*: hay que hacer Implementar → Nueva versión. Si eso
+   no se hizo, cerrar el día da una seguridad que no existe — y eso es exactamente lo que
+   hay que decir acá, en el botón mismo, y no escondido en otra pantalla. */
+function cierreCandadoHtml(){
+  var caja=function(bg,bd,col,txt){
+    return '<div style="background:'+bg+';border:1px solid '+bd+';border-left-width:4px;border-radius:10px;'+
+           'padding:10px 13px;margin-top:13px;font-size:.82rem;color:'+col+'">'+txt+'</div>';
+  };
+  if(!CONNECTED) return caja('var(--gray-lt)','var(--gray-md)','var(--muted)',
+    '📴 <b>Sin conexión.</b> Lo que cierres queda anotado en esta computadora y se manda al reconectar.');
+  if(!SERVER_VER) return caja('#FEF3E2','#FCD34D','#7c4b00',
+    '⏳ <b>Todavía no sé si el candado está puesto en el servidor.</b> Tocá <b>🔄 Actualizar</b> y volvé a abrir esta ventana.');
+  if(SERVER_VER===SCRIPT_VERSION_ESPERADA) return caja('var(--green-lt)','var(--green-border)','#0a6b47',
+    '✅ <b>El candado está en el servidor.</b> Aunque una vendedora tenga el panel abierto desde antes, '+
+    'el servidor le va a rechazar el pedido. No se puede saltear.');
+  return caja('var(--red-lt)','var(--red-border)','#8a1c24',
+    '🚨 <b>OJO: el candado está SOLO en los navegadores.</b> Lo publicado en Google es una versión vieja '+
+    '(dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>), '+
+    'y esa versión <b>no rechaza</b> los pedidos de un día cerrado.<br>'+
+    'Con eso, quien tenga el panel abierto desde antes del cierre <b>igual puede cargar</b> — que es justo lo que '+
+    'pasó el 21/08.<br><b>Cómo se arregla:</b> en la planilla, <b>Extensiones → Apps Script → Implementar → '+
+    'Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar</b>. '+
+    'Guardar el código NO alcanza.');
+}
 function renderCierreDias(abrir){
   if(!abrir && !document.getElementById('cie-fecha')) return;   // la ventana no está abierta
+  /* Al abrir la ventana se le pregunta al servidor qué versión tiene publicada: sin ese
+     dato no se puede decir si el candado es de verdad, y es lo primero que hay que saber. */
+  if(abrir && CONNECTED && !SERVER_VER) apiList().then(function(){ renderCierreDias(); }, function(){});
   var f=cieFechaSel()||tomorrowStr();
   var cerrado=diaCerrado(f), n=pedidosDelDia(f);
   var lista=DIAS_CERRADOS.slice().sort();
@@ -4934,6 +4985,7 @@ function renderCierreDias(abrir){
           '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+todayStr()+'\')">Hoy</button>'+
           '<button type="button" class="btn btn-ghost btn-sm" onclick="cieIr(\''+tomorrowStr()+'\')">Mañana</button>'+
         '</div></div>'+
+      cierreCandadoHtml()+
       '<div style="background:'+(cerrado?'var(--red-lt);border:1px solid var(--red-border)':'var(--green-lt);border:1px solid var(--green-border)')+';border-radius:10px;padding:11px 14px;margin-top:13px;font-size:.85rem">'+
         (cerrado ? '<b style="color:var(--red)">🔒 '+esc(fmtFecha(f))+' está CERRADO</b><br><span style="color:var(--muted)">No entran pedidos nuevos para ese día. Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'.</span>'
                  : '<b style="color:var(--green)">🔓 '+esc(fmtFecha(f))+' está abierto</b><br><span style="color:var(--muted)">Tiene '+n+' pedido'+(n===1?'':'s')+' cargado'+(n===1?'':'s')+'. Se pueden seguir agregando.</span>')+

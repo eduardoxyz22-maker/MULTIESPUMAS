@@ -1979,6 +1979,59 @@ sabe que volvió la conexión.
   cuenta**, así que el caso de "pantalla ocupada" cambia de vista ANTES de encolar — si no,
   el test pasaba por el motivo equivocado.
 
+## 4az. 🔴 "Cerré el día y me metieron 2 pedidos igual" (2026-08-21)
+Reporte del dueño, y tenía toda la razón: *"hace 40 min usé el botón cerrar día… y sin
+embargo los vendedores lograron meter 2 pedidos más. Se supone que al cerrar día no deja a
+nadie, de otra PC ni celular. ¿Se quita solo el seguro, o los demás no lo ven?"*
+
+### Cerrar un día tiene DOS trancas, y hay que tener clara la diferencia
+1. **El panel** no deja elegir esa fecha — pero cada computadora tiene que **enterarse**.
+   Una pestaña abierta desde antes del cierre no se entera sola (§4aw).
+2. **El servidor** (`doSave` → `diaCerradoGs`) rechaza el pedido aunque el panel lo mande.
+   **Es la única que no se puede saltear.** Y solo existe si lo **PUBLICADO** en Google es la
+   versión al día: en Apps Script *guardar el código no publica nada*.
+
+Hay además una **tercera rendija, deliberada**: la "última mirada a la planilla" antes de
+guardar tiene un **tope de 4 segundos**. Con un mes de datos, `apiList` tarda de sobra más
+que eso; cuando vence, el panel **guarda igual** para no trabar a la vendedora. Ahí la única
+defensa que queda es la tranca 2.
+
+### 🔴 El agujero propio del panel
+```js
+if(res && res.ok){ ...éxito... }
+else { queuePending(rec); toast('Guardado. Se sincronizará en breve.','ok'); }   // ❌
+```
+`dia_cerrado` y `cupos_llenos` tenían su rama y estaban bien resueltos. **Todo lo demás**
+—`busy` (el lock de 30 s del Apps Script vencido), `bad json`, `no id`, `not found`— caía en
+ese `else`: se **encolaba** y se mostraba **"Guardado ✓" EN VERDE**. O sea: el servidor
+rechazaba el pedido y **la vendedora se iba convencida de que había entrado**, le pasaba la
+venta al grupo, y el pedido quedaba de zombi reintentándose contra un servidor que nunca lo
+iba a aceptar.
+
+**Arreglado:** un `ok:false` del servidor **revierte** (sale de `STATE`), **no se encola** y
+avisa en rojo. La cola es para cuando **no hay red** (el `catch`), no para un "no".
+
+### El botón ahora dice si el candado es de verdad
+`cierreCandadoHtml()`, arriba de todo en la ventana de Cerrar día, con los cuatro estados:
+- ✅ **verde** — lo publicado coincide: *"el candado está en el servidor, no se puede saltear"*
+- 🚨 **rojo** — versión vieja publicada: *"el candado está SOLO en los navegadores"* + el paso
+  a paso de **Implementar → Nueva versión** (y la aclaración de que guardar el código no alcanza)
+- ⏳ **ámbar** — todavía no se preguntó (y se pregunta solo al abrir la ventana)
+- 📴 **gris** — sin conexión
+
+Esto estaba escondido en la pantalla de revisar ubicaciones. Va **en el botón mismo**: es el
+único lugar donde importa, porque cerrar un día sin la tranca 2 da una seguridad que no existe.
+
+- Test: `tests/test_cerrardia.js` (15). Reproduce **el caso exacto**: una compu que no se
+  enteró del cierre **y** la planilla que no contesta (o sea, la mirada previa ciega) — y
+  verifica que el servidor igual la frene, que la vendedora vea "CERRADO" y no "guardado",
+  que no quede fantasma ni encolada, y que esa compu **aprenda** que el día está cerrado.
+  Cubre también el rechazo `busy` y los cuatro estados del candado.
+
+> **📌 PARA EL USUARIO:** si el cartel del botón sale **rojo**, el candado no está puesto del
+> lado del servidor y hay que **volver a publicar el Apps Script**. Es la explicación más
+> probable de los 2 pedidos que se colaron el 21/08.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

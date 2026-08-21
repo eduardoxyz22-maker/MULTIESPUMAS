@@ -84,6 +84,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#entregado">🚚 Entregado</a>
     <a href="#fotos">📷 Foto entrega</a>
     <a href="#contabilidad">🧾 Contabilidad</a>
+    <a href="#cierre-candado">🔒 Cerrar día</a>
     <a href="#autoref">🔄 Auto-actualizar</a>
     <a href="#mayoristas">🏭 Mayoristas</a>
     <a href="#tienda">🏪 Venta de tienda</a>
@@ -458,6 +459,24 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <p>Es la contraparte del detalle de pagos: arriba está <b>lo que entró</b>, abajo <b>lo que salió</b>. Los dos respetan el <b>filtro de vendedor</b> del cuadre (una sola o Todas) y el período elegido. Va también en el <b>📋 Copiar</b> del cuadre y en su <b>⬇️ Excel</b>, con dos bloques: el resumen por vendedora y el detalle de cada retiro.</p>
     <div class="callout tip">Cada retiro se guarda como <b>una fila propia</b> en la planilla, marcada <b>💵 RETIRO DE EFECTIVO — NO BORRAR</b>. <b>No es un pedido</b>: no ocupa cupo del camión, no aparece en la lista de carga ni en los envíos, y no se cuenta en los totales de pedidos.</div>
 
+  </div>
+
+  <div class="card">
+    <h3 id="cierre-candado">🔒 Cerrar un día: cómo saber si el candado está PUESTO <span class="pill">importante</span></h3>
+    <p>Cerrar un día tiene <b>dos trancas</b>, y conviene entender la diferencia porque no valen lo mismo:</p>
+    <ol>
+      <li><b>El panel</b> no deja elegir esa fecha… <b>pero cada computadora tiene que enterarse</b>. Una vendedora con la pestaña abierta desde antes del cierre no se entera sola.</li>
+      <li><b>El servidor</b> rechaza el pedido <b>aunque el panel lo mande</b>. Esta es la única que <b>no se puede saltear</b>.</li>
+    </ol>
+    <div class="callout warn"><b>La tranca 2 solo existe si el Apps Script publicado está al día.</b> Y ojo con esto: en Apps Script <b>guardar el código NO publica nada</b>. Hay que hacer <b>Extensiones → Apps Script → Implementar → Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar</b>.</div>
+    <p>Por eso la ventana de <b>🔒 Cerrar día</b> ahora te lo dice arriba de todo <span class="pill">nuevo</span>:</p>
+    <ul>
+      <li>✅ <b>Verde</b> — “El candado está en el servidor. No se puede saltear.” Podés cerrar tranquilo.</li>
+      <li>🚨 <b>Rojo</b> — “El candado está SOLO en los navegadores.” Lo publicado es una versión vieja que <b>no rechaza</b> los pedidos de un día cerrado: quien tenga el panel abierto desde antes <b>igual va a poder cargar</b>. Te da el paso a paso para arreglarlo.</li>
+      <li>⏳ <b>Ámbar</b> — todavía no se le preguntó al servidor (se pregunta solo al abrir la ventana).</li>
+    </ul>
+    <div class="callout tip"><b>Hay una tercera rendija, y es a propósito.</b> Antes de guardar, el panel le da una última mirada a la planilla — pero con un <b>tope de 4 segundos</b>. Si la hoja tarda más (con un mes de datos pasa seguido), guarda igual: una vendedora esperando a que cargue una hoja lenta es peor que un pedido de más. En ese momento la <b>única</b> defensa que queda es la tranca 2. Otra razón para tener el Apps Script publicado al día.</div>
+    <div class="callout new">🚫 <b>Y el panel ya no miente cuando el servidor dice que no</b> <span class="pill new">arreglado</span> Si el servidor rechazaba un pedido por algo que no fuera “día cerrado” o “cupos llenos” —por ejemplo, <b>estar ocupado</b>— el panel lo <b>encolaba y mostraba “Guardado ✓” en verde</b>. La vendedora se iba convencida de que había entrado y hasta pasaba la venta al grupo. Ahora un “no” del servidor <b>revierte el pedido y avisa en rojo</b>; la cola quedó solo para cuando <b>no hay internet</b>, que es para lo que estaba pensada.</div>
   </div>
 
   <div class="card">
