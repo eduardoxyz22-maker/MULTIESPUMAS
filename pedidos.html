@@ -1727,26 +1727,40 @@ function setContaModo(m){
 /* Lo cobrado de una venta, anticipo incluido. `ventaTotal` = lo cobrado + lo que falta,
    así que se saca por diferencia y no hay riesgo de contar dos veces el anticipo. */
 function contaFaltaCobrar(p){ return (p&&p.pagado) ? 0 : Math.max(0, Number(p&&p.saldo)||0); }
-function contaCobrado(p){ return r2(ventaTotal(p) - contaFaltaCobrar(p)); }
+/* ⚠️ LA PLATA QUE DE VERDAD ENTRÓ: el anticipo + todos los pagos anotados. NO se calcula
+   como "total de la venta menos lo que falta", que era lo de antes: esa cuenta TOPEA en el
+   total de la venta y, cuando cobran de más (el cliente pagó 1.200 sobre 1.000, o la
+   vendedora tipeó de más), escondía la diferencia. Contabilidad decía Bs 6.920 y el Cuadre
+   Bs 7.120 sobre las MISMAS ventas: dos números distintos para la misma plata y nadie sabía
+   a cuál creerle. El Cuadre tenía razón — en la caja están los 1.200.
+   El recargo por entrega va aparte (envioCobrado): es plata que entró pero no es de la venta. */
+function contaCobrado(p){
+  var ant=anticipoDe(p);
+  return r2(totalCobrado(p) + (ant?(Number(ant.monto)||0):0));
+}
 /* Las tarjetas grandes de Contabilidad → Ventas. Son PARA LA VENDEDORA: de un vistazo,
    cuánto vendió, cuánto ya entró y —lo que más importa— cuánto le falta cobrar.
    El cuadre detecta y avisa; acá es donde ella lo ve y lo corrige. */
 function renderContaMetrics(list, vSel){
   var box=document.getElementById('cta-metrics'); if(!box) return;
-  var vendido=0, cobrado=0, falta=0, nDeben=0, nReg=0;
+  var vendido=0, cobrado=0, falta=0, nDeben=0, nReg=0, exceso=0, nExceso=0;
   (list||[]).forEach(function(p){
     vendido=r2(vendido+ventaTotal(p));
     cobrado=r2(cobrado+contaCobrado(p));
     var f=contaFaltaCobrar(p);
     if(f>0.01){ falta=r2(falta+f); nDeben++; }
+    var e=excesoCobro(p); if(e>0.01){ exceso=r2(exceso+e); nExceso++; }
     if(regEnSistema(p)) nReg++;
   });
   var n=(list||[]).length, porCargar=n-nReg, quien=vSel?('de '+vSel):'de todo el equipo';
   box.innerHTML=
     mc('var(--teal)','Vendido en el período', fmtBs(vendido),
        n+' venta'+(n===1?'':'s')+' '+esc(quien))+
-    mc('var(--green)','Ya ingresó', fmtBs(cobrado),
-       vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
+    /* Si entró MÁS de lo vendido, decirlo con todas las letras en vez de un "120% de lo
+       vendido" que no se entiende: son cobros de más y hay que ir a mirarlos. */
+    mc(exceso>0.01?'var(--amber)':'var(--green)','Ya ingresó', fmtBs(cobrado),
+       exceso>0.01 ? ('⚠️ '+fmtBs(exceso)+' de MÁS en '+nExceso+' venta'+(nExceso===1?'':'s')+' — revisalas')
+       : vendido>0 ? (Math.round(cobrado/vendido*100)+'% de lo vendido, ya cobrado') : 'todavía no entró nada')+
     mc(falta>0.01?'var(--amber)':'var(--green)', 'Falta cobrar',
        falta>0.01?fmtBs(falta):'✅ Nada',
        falta>0.01 ? (nDeben+' venta'+(nDeben===1?'':'s')+' con saldo — hay que salir a cobrarlas')
