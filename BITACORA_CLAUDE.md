@@ -1925,6 +1925,28 @@ reporte, parte, envío, visor) · imagen subiendo (`COMP_SUBIENDO`) · pedido gu
   quede abierta y sin moverse, que el formulario se actualice **sin borrar lo escrito**, que
   con la pestaña de fondo **no se consulte** y sí al volver, y el sello del pie.
 
+## 4ax. Reconstrucción de la batería, tanda 1 (2026-08-21)
+Después de la pérdida de §4au, se empieza a rehacer. **No se re-transcriben los tests viejos:
+se escriben los que más rinden**, y priorizando los que cuidan la plata.
+
+| Suite | Qué cuida |
+|---|---|
+| `test_onclicks` (5) | **Botones muertos.** Cruza las 178 funciones invocadas desde un `onclick` contra las que existen —preguntándole al NAVEGADOR, que es la única prueba que vale—. Más: que los `onclick` con `JSON.stringify` estén escapados (las comillas dobles cortan el atributo y dejan el botón mudo, §4ac), que cada `<div class="seg">` tenga su `initSeg`, y que los `id` fijos que busca el código existan |
+| `test_humo` (40) | **Recorre TODO** con un pedido de cada forma conviviendo (ATC, ROHO, mayorista, tienda, con flete, sin ubicación, cobrada de más, duplicada, entregada con fotos, en producción): las 5 vistas, las 3 sub-pestañas de Contabilidad con períodos y cortes, las 8 pantallas completas **paseándose por sus filtros de día**, las 4 fichas contra los 9 tipos, los 4 Excel y los 6 textos de WhatsApp. Cuenta errores JS de punta a punta |
+| `test_cuadre` (24) | Lo que **define** la pantalla: corta por la fecha del **PAGO**, no de la venta. Una venta del mes pasado cobrada hoy entra hoy; el pago sin fecha no cae en ningún día pero sí en "Todo"; las formas se separan por banco; el flete pactado no cuenta como ingreso; el filtro por vendedora recorta todo; los cuatro avisos |
+| `test_chofer` (18) | **Donde se cobra la plata en la puerta.** Ve lo suyo y nada más, los avisos que le evitan un viaje al pedo, entregar y deshacer, los tres botones de cobro EN LA TARJETA, cobrar de más marcado, quitar un cobro mal puesto, y que lo cobrado llegue a Administración y a la rendición |
+
+**Detalle del `test_humo` que vale anotar:** la primera versión abría cada pantalla y miraba
+"Hoy", que con esos datos está casi vacío — la Lista de carga daba **132 caracteres** contra
+los 1.382 de la Hoja de ruta. Un test que no toca la pantalla llena no sirve para saber si la
+pantalla llena anda. Ahora se pasea por Hoy / Mañana / Todos (1.428 → 1.953 caracteres).
+
+**Estado: 9 suites · 189 comprobaciones · 0 fallas.** Recorrido completo del panel: **0 errores JS.**
+
+Faltan por rehacer: `conta` · `cobros` · `porcobrar` · `contador` · `excel` · `atc` ·
+`precios` · `pagoedit` · `fleteedit` · `duplicados` · `borrarventa` · `imgotra` ·
+`compperdido` · `watienda` · `avisos` · `reenviar` · `carga` · `mapa`.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
