@@ -4733,10 +4733,19 @@ function autoRepintar(){
 function autoRefrescar(motivo){
   if(!CONNECTED) return Promise.resolve(false);
   if(document.hidden) return Promise.resolve(false);
-  if(autoOcupado()) return Promise.resolve(false);
-  return refrescarEstado().then(function(ok){
-    if(ok){ autoRepintar(); updateFooter(); }
-    return ok;
+  /* ⚠️ MANDAR LO QUE QUEDÓ SIN ENVIAR VA PRIMERO, y NO espera a que la pantalla esté
+     quieta: no mueve nada en pantalla, y un pedido sin enviar es una venta que para el
+     resto del equipo todavía no existe.
+     Antes esto solo se reintentaba al recargar la página, al guardar otro pedido con
+     éxito, o si alguien se daba cuenta del "sin enviar" del pie y tocaba "reintentar".
+     O sea: una vendedora que se quedaba sin señal, cargaba el pedido y recuperaba señal
+     podía tenerlo en la cola durante horas sin enterarse. */
+  return flushPending().then(function(){
+    if(autoOcupado()) { updateFooter(); return false; }
+    return refrescarEstado().then(function(ok){
+      if(ok){ autoRepintar(); updateFooter(); }
+      return ok;
+    });
   });
 }
 /* El sello del pie: "actualizado recién / hace 3 min". No es decoración — es cómo se
@@ -4759,6 +4768,12 @@ function autoArrancar(){
     // Al volver a la pestaña: al toque, salvo que se haya mirado recién.
     if(Date.now()-ULTIMO_REFRESCO < AUTO_VUELTA_MS){ updateFooter(); return; }
     autoRefrescar('volvió a la pestaña').then(updateFooter);
+  });
+  /* Y en cuanto el navegador dice que volvió la señal, se manda lo que haya en la cola
+     sin esperar los 2 minutos del reloj: es el momento exacto en que se puede. */
+  window.addEventListener('online', function(){
+    if(!CONNECTED || !getPending().length) return;
+    flushPending().then(function(){ updateFooter(); autoRefrescar('volvió la señal'); });
   });
 }
 

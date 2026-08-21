@@ -1947,6 +1947,38 @@ Faltan por rehacer: `conta` · `cobros` · `porcobrar` · `contador` · `excel` 
 `precios` · `pagoedit` · `fleteedit` · `duplicados` · `borrarventa` · `imgotra` ·
 `compperdido` · `watienda` · `avisos` · `reenviar` · `carga` · `mapa`.
 
+## 4ay. El pedido sin señal se quedaba esperando a que alguien se diera cuenta (2026-08-21)
+Encontrado auditando la cola offline, justo después de meter la actualización automática
+(§4aw). La primera pregunta era defensiva —*¿el refresco cada 2 minutos no pisará un pedido
+sin enviar?*— y la respuesta es **no**: `mergePending()` lo protege y el test lo verifica.
+Pero al escribir la prueba apareció otra cosa peor.
+
+**`flushPending()` solo corría en cuatro momentos:** al cargar la página, después de guardar
+OTRO pedido con éxito, al entrar a Administración (`loadFromServer`), y si alguien veía el
+*"N sin enviar"* del pie y tocaba **reintentar**. **No había ningún reintento al volver la
+señal.** Una vendedora que se quedaba sin datos, cargaba el pedido y recuperaba señal podía
+tenerlo en la cola **horas**, sin enterarse — y el resto del equipo sin verlo.
+
+Ahora el tic de la actualización automática **manda primero y refresca después**, y —esto es
+lo importante— **el envío NO espera a que la pantalla esté quieta**:
+```js
+return flushPending().then(function(){
+  if(autoOcupado()) { updateFooter(); return false; }   // el REPINTADO sí espera
+  return refrescarEstado().then(...);                    // el ENVÍO no
+});
+```
+Mandar no mueve nada en pantalla; un pedido sin enviar es urgente. Se sumó además un
+`window.addEventListener('online', …)` para no esperar los 2 minutos cuando el navegador ya
+sabe que volvió la conexión.
+
+- Test: `tests/test_cola.js` (11). **Verificado contra la versión publicada: 4 fallas.** Cubre
+  que con señal se mande derecho, que sin señal no se pierda y se avise, que el refresco
+  **no lo pise**, que el tic lo mande solo, que lo mande **aun con la pantalla ocupada** sin
+  moverla, y que si la señal no vuelve el pedido siga esperando en vez de descartarse.
+  ⚠️ Ojo al escribirlo: cambiar a la vista de Administración **ya dispara un envío por su
+  cuenta**, así que el caso de "pantalla ocupada" cambia de vista ANTES de encolar — si no,
+  el test pasaba por el motivo equivocado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
