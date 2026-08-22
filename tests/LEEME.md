@@ -26,6 +26,13 @@ prueba.** Un test que no está en el repo es un test que todavía no existe.
   que pasar, no cómo está hecho. Cuando uno falla, el mensaje solo tiene que alcanzar.
 - **Nada de fechas fijas.** Usar `todayStr()` / `tomorrowStr()` o anclar en el mediodía
   (`new Date().setHours(12,0,0,0)`). Ya rompieron tres veces al pasar el tiempo.
+- **Y ojo con `tomorrowStr()` a secas**: si mañana cae **DOMINGO** el panel no agenda, así
+  que el test se cae **solo los sábados** (pasó con tres suites el 22/08). Cuando el test
+  carga un pedido por el formulario, hay que correrse al primer día entregable:
+  ```js
+  var d=new Date(), f;
+  do { d.setDate(d.getDate()+1); f=isoLocal(d); } while(diaDomingo(f));
+  ```
 - Al capturar avisos (`toast`), juntar **todos**, no quedarse con el último: el panel puede
   meter un "Sin conexión" en el medio y pisar el que se busca.
 - Un test que **no imprime ninguna falla porque se cayó antes** pasa por bueno. Si se toca

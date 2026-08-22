@@ -50,7 +50,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-07-27-c';
+var SCRIPT_VERSION = '2026-08-21-a';
 
 function jsonOut(obj) {
   return ContentService

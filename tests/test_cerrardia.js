@@ -35,13 +35,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       var g=JSON.parse(JSON.stringify(rec));
       if(String(g.id).indexOf('__')===0){        // fila del sistema (los días cerrados)
         window._cerradosEnServidor=String(g.observaciones||'').split(/\s+/).filter(Boolean);
-        return Promise.resolve({ok:true, version:'2026-07-27-c'});
+        return Promise.resolve({ok:true, version:SCRIPT_VERSION_ESPERADA});
       }
       var yaEsta=window._planilla.some(function(p){ return p.id===g.id; });
       if(!yaEsta && g.fecha && !window._servidorViejo && window._cerradosEnServidor.indexOf(g.fecha)>=0)
-        return Promise.resolve({ok:false, error:'dia_cerrado', fecha:g.fecha, version:'2026-07-27-c'});
+        return Promise.resolve({ok:false, error:'dia_cerrado', fecha:g.fecha, version:SCRIPT_VERSION_ESPERADA});
       window._planilla.push(g);
-      return Promise.resolve({ok:true, version:'2026-07-27-c'});
+      return Promise.resolve({ok:true, version:SCRIPT_VERSION_ESPERADA});
     };
     apiList=function(){
       SERVER_VER = window._servidorViejo ? '2026-07-01-a' : SCRIPT_VERSION_ESPERADA;
@@ -57,7 +57,12 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     document.getElementById('admin-lock').style.display='none';
     document.getElementById('admin-content').style.display='block';
     showView('form');
-    return tomorrowStr();
+    /* ⚠️ NO sirve `tomorrowStr()` a secas: si mañana cae DOMINGO el panel no agenda y el
+       test se cae solo los sábados. Se busca el primer día entregable de acá en adelante.
+       (Es la misma trampa de las fechas fijas, disfrazada de "mañana".) */
+    var d=new Date(); var f;
+    do { d.setDate(d.getDate()+1); f=isoLocal(d); } while(diaDomingo(f));
+    return f;
   });
 
   const cargarPara = (cliente, fecha) => page.evaluate(async (a) => {
