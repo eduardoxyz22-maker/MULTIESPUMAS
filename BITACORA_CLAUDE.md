@@ -2092,6 +2092,50 @@ se habían enterado.
   `chk`**, y le pisó la variable `r`: los tres del candado fallaban con el texto vacío y el
   problema no era el candado. Cuidado con eso al agregar bloques en el medio de un test.
 
+## 4bb. 🔴🔴 LA RAÍZ DE TODO: Google convertía el día suelto en FECHA (2026-08-22)
+Tercer reporte de la misma saga: *"bloqueo el día, luego actualizan página y sale eso"* — el
+candado en verde, el cierre hecho… y tras el refresco el formulario mostraba el día abierto
+con cupos.
+
+**El hallazgo.** La fila `__dias_cerrados__` guarda los días en la columna Observaciones.
+Con **UN solo día**, la celda queda `2026-08-24` pelado y **Google Sheets la convierte en una
+FECHA de verdad**. Al releerla, `String(r[16])` devuelve `"Mon Aug 24 2026 00:00:00
+GMT-0400 (…)"`:
+- el panel filtra por `\d{4}-\d{2}-\d{2}` → **no encuentra nada** → el cierre se esfuma de
+  TODAS las computadoras al primer refresco;
+- `diaCerradoGs` en el servidor hace el mismo split → **el portero tampoco frena** → los 2
+  pedidos que entraron el 21/08.
+
+Con **dos o más días** (`"2026-08-24 2026-08-25"`) no parece fecha, queda texto y todo anda.
+**Por eso era intermitente** — el peor tipo de bug. Y la pista estaba en el propio `.gs`:
+`fmtDate()` existe porque la columna **Fecha** ya sufrió esta misma conversión; a
+Observaciones nadie la protegió.
+
+**Por qué mis pruebas anteriores no lo vieron:** el arnés (`/tmp/rt.js`) simulaba la hoja con
+un array de JS, que **no convierte** textos en fechas. El Sheets real sí. Quedó el caso
+agregado al arnés y al test permanente.
+
+**El arreglo, en tres capas** (cinturón y tiradores):
+1. **Panel — escritura**: `filaCierre()` escribe `"🔒 2026-08-24"` — con el prefijo la celda
+   **nunca** parece fecha. Los lectores filtran por patrón, el prefijo no les molesta (al
+   portero viejo publicado tampoco: su split lo descarta).
+2. **Panel — lectura**: si el filtro no encuentra días pero la celda tiene algo, se intenta
+   `new Date(crudo)` → `isoLocal()`. Así la celda **ya corrompida hoy** se lee bien incluso
+   antes de reescribirse.
+3. **Servidor**: `readAll` y `diaCerradoGs` pasan la celda por `fmtDate()` (Date →
+   `yyyy-MM-dd`, texto pasa tal cual), y `doSave` prefija él mismo si un panel viejo con la
+   página cacheada manda un día pelado.
+
+Versiones → **2026-08-22-a** en los dos lados (hay que **volver a publicar el Apps Script**:
+Implementar → Nueva versión). Ojo: `guardarCierres` comparaba `CIERRES_PEND` contra
+`fila.observaciones` — con el prefijo eso ya no era igual; ahora compara contra la lista de
+días capturada (`mandado`).
+
+- Test: `tests/test_cerrardia.js` **19 → 21**: la fila escrita no puede "parecer fecha", y la
+  celda ya convertida se lee como día cerrado igual.
+- Verificado con el `.gs` REAL en el arnés: celda-Date → readAll `"2026-08-24"` ✓, portero
+  frena ✓; panel viejo manda día pelado → el servidor lo prefija ✓.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

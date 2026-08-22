@@ -50,7 +50,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-08-21-a';
+var SCRIPT_VERSION = '2026-08-22-a';
 
 function jsonOut(obj) {
   return ContentService
@@ -372,7 +372,7 @@ function readAll() {
       saldo: Number(r[12]) || 0,
       ts: Number(r[13]) || 0,
       metodoPago: String(r[15] || ''),
-      observaciones: String(r[16] || ''),
+      observaciones: fmtDate(r[16]),  // fmtDate: si Sheets convirtio la celda en Fecha, vuelve como yyyy-MM-dd; un texto pasa tal cual
       estado: String(r[17] || ''),
       entregado: (String(r[18]).toUpperCase().charAt(0) === 'S'),
       vehiculo: String(r[19] || ''),
@@ -399,13 +399,22 @@ function diaCerradoGs(sh, last, ids, fecha) {
   var col = HEADERS.indexOf('Observaciones') + 1;
   for (var i = 0; i < ids.length; i++) {
     if (String(ids[i][0]) !== '__dias_cerrados__') continue;
-    var txt = String(sh.getRange(i + 2, col).getValue() || '');
+    /* fmtDate y no String(): si la lista tenia UN solo dia, Sheets convirtio la celda en
+       FECHA de verdad y String() devolvia "Mon Aug 24 2026..." — el portero no encontraba
+       nada y dejaba pasar pedidos de un dia cerrado (los reportes del 21-22/08). */
+    var txt = fmtDate(sh.getRange(i + 2, col).getValue());
     return txt.split(/[^0-9-]+/).indexOf(String(fecha)) >= 0;
   }
   return false;
 }
 function doSave(p) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
+  // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
+  // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
+  // mandan el prefijo; esto cubre a los viejos con la pagina cacheada.
+  if (String(p.id) === '__dias_cerrados__' && /^\d{4}-\d{2}-\d{2}$/.test(String(p.observaciones || '').trim())) {
+    p.observaciones = '\uD83D\uDD12 ' + String(p.observaciones).trim();
+  }
   var sh = getSheet();
   var last = sh.getLastRow();
   // ¿Ya existe (update) o es nuevo?

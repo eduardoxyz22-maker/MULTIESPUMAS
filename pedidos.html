@@ -1212,7 +1212,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-08-21-a';
+var SCRIPT_VERSION_ESPERADA='2026-08-22-a';
 function apiPost(payload){
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
@@ -4892,8 +4892,17 @@ function leerCierresDeLista(lista){
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   if(cie){
-    var delServidor=String(cie.observaciones||'').split(/[^\d-]+/)
+    var crudoCie=String(cie.observaciones||'').trim();
+    var delServidor=crudoCie.split(/[^\d-]+/)
       .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); }).sort();
+    /* Último recurso para la celda YA convertida en fecha (ver filaCierre): si no se
+       encontró ningún día pero la celda tiene algo, se intenta leerla como la fecha que
+       Google devolvió ("Mon Aug 24 2026 00:00:00 GMT-0400 …"). Así el cierre se ve bien
+       incluso antes de que la fila se reescriba con el prefijo nuevo. */
+    if(!delServidor.length && crudoCie){
+      var dCie=new Date(crudoCie);
+      if(!isNaN(dCie)) delServidor=[isoLocal(dCie)];
+    }
     /* ⚠️ EL CIERRE RECIÉN HECHO GANA SOBRE LO QUE DIGA LA PLANILLA.
        Cerrar un día es: (1) anotarlo acá, (2) mandarlo al servidor — y (2) tarda unos
        segundos con la hoja cargada. Cualquier refresco que caiga EN EL MEDIO traía la fila
@@ -4918,7 +4927,16 @@ function loadCierresMirror(){
   if(!Array.isArray(DIAS_CERRADOS)) DIAS_CERRADOS=[];
 }
 function filaCierre(dias){
-  return filaSistema(CIERRE_ID, '🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR', (dias||[]).join(' '));
+  /* ⚠️ El "🔒 " adelante NO es adorno. Con UN solo día la celda quedaba "2026-08-24"
+     pelado y GOOGLE LA CONVERTÍA EN FECHA: al releerla volvía como "Mon Aug 24 2026…",
+     nadie encontraba ahí ninguna fecha y el cierre se esfumaba de TODAS las computadoras
+     — y el portero del Apps Script tampoco la entendía, así que los pedidos entraban
+     igual (los DOS reportes del 21–22/08). Con dos o más días no pasaba ("2026-08-24
+     2026-08-25" no parece fecha), por eso era intermitente. Con el prefijo, la celda es
+     SIEMPRE texto. Los que leen filtran por patrón de fecha, así que no les molesta. */
+  var d=(dias||[]);
+  return filaSistema(CIERRE_ID, '🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR',
+    d.length ? ('🔒 '+d.join(' ')) : '');
 }
 function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
 /* Lo que esta computadora mandó y el servidor todavía no confirmó. Mientras esté puesto,
@@ -4928,10 +4946,12 @@ function guardarCierres(){
   DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
   saveCierresMirror();
   var fila=filaCierre(DIAS_CERRADOS);
+  var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
   CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
   var confirmado=function(ok){
     // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
-    if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===fila.observaciones) CIERRES_PEND=null;
+    // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
+    if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
     if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
     renderCupoForm(); renderCierreDias();
   };

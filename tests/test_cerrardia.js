@@ -218,10 +218,38 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       'al cerrar='+r.alCerrar+' · tras el refresco='+r.trasRefresco);
   chk('  la ventana avisa que todavía se está guardando', r.avisaGuardando===true, '');
   chk('  cuando el guardado llega, queda firme en la planilla',
-      r.alLlegar===true && r.enServidor===MAN && r.yaFirme===true,
+      r.alLlegar===true && String(r.enServidor).indexOf(MAN)>=0 && r.yaFirme===true,
       'servidor="'+r.enServidor+'"');
   chk('  y sigue cerrado al recargar', r.trasRecargar===true, '');
 
+
+  // ---------- 8. EL BUG DE FONDO: Google convertía el día suelto en FECHA ----------
+  /* Con UN solo día cerrado, la celda quedaba "2026-08-24" pelado y Sheets la guardaba
+     como FECHA de verdad. Al releer volvía "Mon Aug 24 2026 00:00:00 GMT-0400 (…)":
+     nadie encontraba ninguna fecha, el cierre se esfumaba de TODAS las computadoras y el
+     portero del servidor tampoco frenaba. Con 2+ días quedaba texto y andaba — por eso
+     era intermitente. Fue la raíz de los dos reportes del 21–22/08. */
+  r = await page.evaluate(async (man)=>{
+    var L={};
+    // 1) lo que se ESCRIBE ya no puede parecer una fecha (Sheets no lo convierte)
+    var fila=filaCierre([man]);
+    L.obs=fila.observaciones;
+    L.noParece=!/^\d{4}-\d{2}-\d{2}$/.test(String(fila.observaciones).trim());
+    // 2) y la celda YA convertida (lo que hoy está en la planilla) igual se entiende
+    DIAS_CERRADOS=[]; CIERRES_PEND=null; saveCierresMirror();
+    apiSave=function(){ return Promise.resolve({ok:true}); };
+    var comoVuelve=new Date(man+'T00:00:00').toString();   // "Mon Aug 24 2026 00:00:00 GMT…"
+    apiList=function(){ return Promise.resolve({ok:true, version:SCRIPT_VERSION_ESPERADA, pedidos:[
+      { id:CIERRE_ID, fecha:'', observaciones:comoVuelve, cliente:'c', productos:[], saldo:0, ts:1 }
+    ]}); };
+    await refrescarEstado();
+    L.crudo=comoVuelve.slice(0,21); L.cerrado=diaCerrado(man);
+    return L;
+  }, MAN);
+  chk('🔴 la lista guardada ya no puede "parecer fecha" (Sheets la convertía)',
+      r.noParece===true, JSON.stringify(r.obs));
+  chk('  y la celda YA convertida en fecha igual se lee como día cerrado',
+      r.cerrado===true, 'venía como "'+r.crudo+'…"');
 
   chk('sin errores JS', errors.length===0, errors.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
