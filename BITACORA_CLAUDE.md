@@ -2028,9 +2028,19 @@ Esto estaba escondido en la pantalla de revisar ubicaciones. Va **en el botón m
   que no quede fantasma ni encolada, y que esa compu **aprenda** que el día está cerrado.
   Cubre también el rechazo `busy` y los cuatro estados del candado.
 
-> **📌 PARA EL USUARIO:** si el cartel del botón sale **rojo**, el candado no está puesto del
-> lado del servidor y hay que **volver a publicar el Apps Script**. Es la explicación más
-> probable de los 2 pedidos que se colaron el 21/08.
+> **📌 CONFIRMADO (22/08/2026):** era eso. El usuario republicó el Apps Script
+> (Implementar → **Nueva versión**) y el cartel pasó a **verde**: *"el candado está en el
+> servidor"*. O sea que hasta ese momento **lo publicado era código viejo sin el portero**, y
+> el candado existía únicamente en los navegadores — exactamente lo que dejaba pasar los
+> pedidos de una pestaña abierta desde antes del cierre.
+>
+> Para poder confirmarlo hubo que **subir el sello de versión** (`2026-07-27-c` →
+> `2026-08-21-a`) en el `.gs` **y** en `SCRIPT_VERSION_ESPERADA` del panel: republicando con
+> el mismo sello, el cartel se ve igual antes y después y no se puede distinguir "lo
+> publicaron" de "ya estaba".
+>
+> ⚠️ **Regla para adelante: cada vez que se toque `google-apps-script.gs`, subir el sello en
+> los DOS archivos.** Si no, no hay manera de saber si lo publicado es lo que se escribió.
 
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
