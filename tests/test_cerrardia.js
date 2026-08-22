@@ -176,6 +176,53 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /SOLO en los navegadores/.test(r.mal) && /Nueva versión/.test(r.mal), '');
   chk('  y dice que no sabe cuando todavía no preguntó', /Todavía no sé/.test(r.nose), '');
 
+  // ---------- 7. EL CIERRE NO SE CAE MIENTRAS SE ESTÁ GUARDANDO ----------
+  /* 🔴 Reporte del 22/08: *"no está cerrado de verdad, actualizo la página y sale"*.
+     Cerrar es (1) anotarlo acá y (2) mandarlo al servidor — y (2) tarda unos segundos con
+     la hoja cargada. Cualquier refresco que caiga EN EL MEDIO traía la fila vieja y
+     BORRABA el cierre de la pantalla. Antes casi no se notaba; desde que hay un refresco
+     automático cada 2 minutos, se perdía la carrera seguido. */
+  r = await page.evaluate(async (man)=>{
+    var L={};
+    DIAS_CERRADOS=[]; CIERRES_PEND=null; saveCierresMirror();
+    window._enServidor='';
+    apiSave=function(rec){
+      var g=JSON.parse(JSON.stringify(rec));
+      return new Promise(function(res){ setTimeout(function(){          // la hoja tarda
+        if(g.id===CIERRE_ID) window._enServidor=String(g.observaciones||'');
+        res({ok:true});
+      }, 1200); });
+    };
+    apiList=function(){
+      return Promise.resolve({ok:true, version:SCRIPT_VERSION_ESPERADA, pedidos:[
+        { id:CIERRE_ID, fecha:'', observaciones:window._enServidor, cliente:'c', productos:[], saldo:0, ts:1 }
+      ]});
+    };
+    cerrarDia(man);
+    L.alCerrar = diaCerrado(man);
+    await new Promise(x=>setTimeout(x,250));      // el guardado sigue en el aire…
+    await refrescarEstado();                      // …y entra el refresco automático
+    L.trasRefresco = diaCerrado(man);
+    L.avisaGuardando = /Guardando el cambio/.test((function(){
+      abrirCierreDias(); var t=document.getElementById('modal-box').textContent; closeModal(); return t; })());
+    await new Promise(x=>setTimeout(x,1400));     // ahora sí llega
+    L.alLlegar = diaCerrado(man);
+    L.enServidor = window._enServidor;
+    await refrescarEstado();                      // y una recarga posterior
+    L.trasRecargar = diaCerrado(man);
+    L.yaFirme = (CIERRES_PEND===null);
+    return L;
+  }, MAN);
+  chk('🔴 el cierre NO se cae si entra un refresco mientras se guarda',
+      r.alCerrar===true && r.trasRefresco===true,
+      'al cerrar='+r.alCerrar+' · tras el refresco='+r.trasRefresco);
+  chk('  la ventana avisa que todavía se está guardando', r.avisaGuardando===true, '');
+  chk('  cuando el guardado llega, queda firme en la planilla',
+      r.alLlegar===true && r.enServidor===MAN && r.yaFirme===true,
+      'servidor="'+r.enServidor+'"');
+  chk('  y sigue cerrado al recargar', r.trasRecargar===true, '');
+
+
   chk('sin errores JS', errors.length===0, errors.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

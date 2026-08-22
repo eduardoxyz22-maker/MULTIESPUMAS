@@ -2042,6 +2042,56 @@ Esto estaba escondido en la pantalla de revisar ubicaciones. Va **en el botón m
 > ⚠️ **Regla para adelante: cada vez que se toque `google-apps-script.gs`, subir el sello en
 > los DOS archivos.** Si no, no hay manera de saber si lo publicado es lo que se escribió.
 
+## 4ba. 🔴 El cierre se caía solo: la carrera con el guardado (2026-08-22)
+Segundo reporte, después de publicar el Apps Script: *"no, no está cerrado de verdad;
+actualizo la página en mi misma computadora y sale"*.
+
+**Primero se descartó el servidor.** Se corrió el `.gs` DE VERDAD contra una planilla
+simulada (`/tmp/rt.js`): guarda la fila, la devuelve, el portero frena el día cerrado, deja
+pasar los demás y agrega un segundo día sin pisar el primero. **El servidor está impecable.**
+
+**El bug estaba en el panel, y era una carrera.** Cerrar un día son dos cosas:
+1. anotarlo en `DIAS_CERRADOS` (instantáneo, se ve en pantalla), y
+2. mandar la fila al servidor — **que tarda segundos** con la hoja cargada.
+
+Cualquier `apiList` que cayera **en el medio** traía la fila vieja, y `leerCierresDeLista`
+**pisaba `DIAS_CERRADOS`**: el día volvía a verse abierto. Reproducido con
+`/tmp/carrera.js`:
+```
+al instante de cerrar        → en pantalla: true   · en el servidor: ""
+tras un refresco en el medio → en pantalla: FALSE  · en el servidor: ""     ← ⬅️ se cayó
+```
+**Y lo empeoró la actualización automática de §4aw**: antes esa ventana casi no se pisaba
+porque no había refrescos solos; ahora hay uno cada 2 minutos y al volver a la pestaña. De
+ahí que el usuario lo viera enseguida.
+
+Peor todavía: con el día viéndose abierto otra vez, administración **lo vuelve a cerrar**, y
+ese segundo `guardarCierres()` escribe `filaCierre(DIAS_CERRADOS)` — con la lista ya
+pisada—, **borrando cierres buenos en el servidor**.
+
+**El arreglo — `CIERRES_PEND`:** lo que esta computadora mandó y el servidor todavía no
+confirmó. Mientras esté puesto, **gana sobre lo que traiga la planilla**:
+```js
+if(CIERRES_PEND){
+  if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')) CIERRES_PEND=null;  // ya llegó
+  else delServidor=CIERRES_PEND.slice().sort();                                          // todavía no
+}
+```
+Se suelta solo cuando el servidor devuelve exactamente lo que se mandó — así se cura solo y
+no hace falta acertarle al momento. Si el guardado falla, va a la cola y `CIERRES_PEND`
+**sigue mandando** hasta que la cola lo logre.
+
+La ventana además avisa **⏳ "Guardando el cambio en la planilla… todavía no está firme para
+las demás computadoras"**: antes se veía "cerrado" y no había forma de saber si las otras ya
+se habían enterado.
+
+- Test: `tests/test_cerrardia.js` pasó de 15 a **19**. El bloque nuevo simula la hoja lenta
+  (1,2 s) y mete un `refrescarEstado()` en el medio. **Verificado contra la versión
+  publicada: 3 fallas.**
+- ⚠️ Al escribirlo, el bloque nuevo quedó insertado **entre el `evaluate` del bloque 6 y sus
+  `chk`**, y le pisó la variable `r`: los tres del candado fallaban con el texto vacío y el
+  problema no era el candado. Cuidado con eso al agregar bloques en el medio de un test.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

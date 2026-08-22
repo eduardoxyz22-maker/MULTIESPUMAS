@@ -4892,9 +4892,21 @@ function leerCierresDeLista(lista){
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   if(cie){
-    DIAS_CERRADOS=String(cie.observaciones||'').split(/[^\d-]+/)
-      .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); });
-    DIAS_CERRADOS.sort();
+    var delServidor=String(cie.observaciones||'').split(/[^\d-]+/)
+      .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); }).sort();
+    /* ⚠️ EL CIERRE RECIÉN HECHO GANA SOBRE LO QUE DIGA LA PLANILLA.
+       Cerrar un día es: (1) anotarlo acá, (2) mandarlo al servidor — y (2) tarda unos
+       segundos con la hoja cargada. Cualquier refresco que caiga EN EL MEDIO traía la fila
+       vieja y **borraba el cierre de la pantalla**: administración lo veía abierto otra
+       vez, lo volvía a cerrar, y ese segundo guardado podía pisar la lista buena.
+       Antes casi no se notaba porque no había refrescos automáticos; desde que hay uno
+       cada 2 minutos (§4aw) la carrera se perdía seguido. Por eso, mientras el servidor
+       no confirme lo que mandamos, manda lo nuestro. */
+    if(CIERRES_PEND){
+      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')) CIERRES_PEND=null;  // ya llegó
+      else delServidor=CIERRES_PEND.slice().sort();                                          // todavía no
+    }
+    DIAS_CERRADOS=delServidor;
     saveCierresMirror();
   }
   if(arq){ ARQUEO=parseArqueo(arq.observaciones); saveArqueoMirror(); renderCuadreSiActivo(); }
@@ -4909,12 +4921,22 @@ function filaCierre(dias){
   return filaSistema(CIERRE_ID, '🔒 DÍAS DE ENTREGA CERRADOS — fila del sistema, NO BORRAR', (dias||[]).join(' '));
 }
 function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
+/* Lo que esta computadora mandó y el servidor todavía no confirmó. Mientras esté puesto,
+   gana sobre lo que traiga la planilla (ver el comentario en leerCierresDeLista). */
+var CIERRES_PEND=null;
 function guardarCierres(){
   DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
   saveCierresMirror();
   var fila=filaCierre(DIAS_CERRADOS);
-  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-  else queuePending(fila);
+  CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
+  var confirmado=function(ok){
+    // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
+    if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===fila.observaciones) CIERRES_PEND=null;
+    if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
+    renderCupoForm(); renderCierreDias();
+  };
+  if(CONNECTED){ apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); }); }
+  else { queuePending(fila); }
   renderAdmin(); renderCupoForm(); renderCierreDias();
 }
 function cerrarDia(f){
@@ -4952,6 +4974,11 @@ function cierreCandadoHtml(){
     return '<div style="background:'+bg+';border:1px solid '+bd+';border-left-width:4px;border-radius:10px;'+
            'padding:10px 13px;margin-top:13px;font-size:.82rem;color:'+col+'">'+txt+'</div>';
   };
+  /* Mientras el guardado viaja, decirlo: si no, se ve "cerrado" y no hay forma de saber si
+     las demás computadoras ya se enteraron. Con la hoja cargada esto tarda varios segundos. */
+  if(CIERRES_PEND) return caja('#FEF3E2','#FCD34D','#7c4b00',
+    '⏳ <b>Guardando el cambio en la planilla…</b> Todavía no está firme para las demás computadoras. '+
+    'Esperá a que diga “anotado”; si te quedaste sin señal, se manda solo al reconectar.');
   if(!CONNECTED) return caja('var(--gray-lt)','var(--gray-md)','var(--muted)',
     '📴 <b>Sin conexión.</b> Lo que cierres queda anotado en esta computadora y se manda al reconectar.');
   if(!SERVER_VER) return caja('#FEF3E2','#FCD34D','#7c4b00',
