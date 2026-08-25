@@ -2136,6 +2136,54 @@ días capturada (`mandado`).
 - Verificado con el `.gs` REAL en el arnés: celda-Date → readAll `"2026-08-24"` ✓, portero
   frena ✓; panel viejo manda día pelado → el servidor lo prefija ✓.
 
+## 4bc. ✏️ La vendedora edita su pedido — y logística se entera (2026-08-25)
+
+Pedido del usuario: *"ponles el botón editar en «mis pedidos» a los vendedores, que puedan
+adicionar, quitar, modificar producto, ubicación, y salga una alerta a logística en
+administración que «este pedido fue modificado» si ya «estaba verificado o tickeado»"*.
+
+**Lo que apareció buscando dónde meterlo (más grave que lo pedido).** `getProductos()` arma
+la lista de productos **de cero** con lo que hay en el formulario: `{desc, medida, codigo,
+cant, precio}`. O sea que **cada** edición —hasta corregir una letra de la dirección— le
+borraba `chk` / `enProd` / `prodEn` a **TODOS** los productos, y el pedido **seguía diciendo
+"✅ Verificado"**. El jefe de almacén revisaba el stock, la vendedora tocaba cualquier cosa,
+y la revisión desaparecía sin dejar rastro. Ya venía pasando; no lo causó este cambio.
+Verificado contra `origin/main`: `["ok","ok"]` → `[null,null]`, con `verificado` en `true`.
+
+**Cómo quedó**
+- `heredarMarcas(nuevos, viejos)` — le devuelve las marcas a los productos que quedaron
+  **iguales**. La clave es `desc|normMedida(medida)|codigo` **+ la cantidad**: el almacén no
+  dijo "hay almohada", dijo "hay 2"; si pasan a 5 ese ✔ ya no vale.
+- `difPedido(antes, ahora)` — qué cambió, en criollo y con el producto adentro:
+  `➕ SOFT PLUS 200x200 × 3`, `🔢 ALMOHADA × 5 — de 2 a 5`, `➖`, `📍`, `🏠`, `🗺️`, `📅`, `🕐`.
+- `marcarModificado(rec, quien, cambios)` — deja `{f, h, q, d}` en el pedido.
+- `avisoModifHtml(p, compacto)` — el cartel rojo (ficha de Administración y ficha del jefe de
+  almacén) con el botón **"✓ Ya lo revisé"** (`verVistoModif`), y la chapita **⚠️ MODIFICADO**
+  para la tabla de Administración, el renglón de la Lista de carga y la tarjeta de Mis pedidos.
+- Si cambió **lo que se carga** (`cambiaronProductos`), el pedido vuelve a **sin verificar**.
+  Si cambió solo la dirección/zona/fecha, la verificación **sigue valiendo**.
+- `editarDesdeMis(id)` — botón **✏️ Editar** en la tarjeta y en la ficha de Mis pedidos. Avisa
+  antes con un `confirm` si el pedido ya está entregado y/o si el almacén ya lo revisó.
+
+**⚠️ Dónde vive la marca.** Dentro de `productos` (que ya viaja como JSON en `_productos_json`,
+col 15) — **sin columna nueva y sin volver a publicar el Apps Script**, el mismo truco que
+`precio`. Se pone en **TODOS** los productos a propósito: si fuera solo en el primero y la
+vendedora justo borra ese, el aviso se perdería. Se descartaron: `observaciones` (~12 lugares
+donde se muestra, el marcador se filtraría a WhatsApp y al Excel), una columna 30 (un tercer
+redeploy seguido) y una fila de sistema (otro subsistema más la carrera de escritura de §4ba).
+
+**Ojo con el nombre.** El helper de resumen se llama `prodCorto(producto)` y **no**
+`prodResumen`: más abajo ya existe `prodResumen(pedido)` —el de la revisión de stock— y la
+segunda declaración le gana a la primera, así que el original se comía al nuevo en silencio.
+
+- Test: `tests/test_modif.js` (**32 checks**). Contra `origin/main` falla en las marcas
+  borradas y revienta con `modDe is not defined`.
+- Batería completa: **12 suites · 253 checks · 0 fallas**.
+- **Trampa del arnés** (anotada en `tests/LEEME.md`): `editPedido` termina en
+  `showView('form')`, que **vuelve a bajar la planilla**. Si el "servidor" simulado está
+  vacío, `STATE` se vacía en medio de la edición, `prev` queda `null` y el test mide otra
+  cosa. Hay que sembrar el pedido **también** en la planilla simulada.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

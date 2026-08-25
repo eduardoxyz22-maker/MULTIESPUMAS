@@ -35,6 +35,11 @@ prueba.** Un test que no está en el repo es un test que todavía no existe.
   ```
 - Al capturar avisos (`toast`), juntar **todos**, no quedarse con el último: el panel puede
   meter un "Sin conexión" en el medio y pisar el que se busca.
+- **La planilla simulada tiene que tener el pedido.** Varias funciones del panel terminan en
+  `showView(...)`, que **vuelve a bajar la planilla**: `editPedido` es una. Si el "servidor"
+  simulado (`apiList`) devuelve vacío, `STATE` se vacía en medio de la prueba, `findById`
+  devuelve `null` y el test mide otra cosa —y a veces *pasa* por el motivo equivocado—.
+  Sembrar el pedido en **las dos** puntas: `STATE` y la planilla simulada.
 - Un test que **no imprime ninguna falla porque se cayó antes** pasa por bueno. Si se toca
   una función que un test llama, correrlo y mirar que llegue hasta el final.
 - Terminar con `process.exit(FAIL?1:0)` y un resumen `N bien · N mal`.

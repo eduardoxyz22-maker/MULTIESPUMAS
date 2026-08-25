@@ -1434,6 +1434,128 @@ function getProductos(){
   }
   return out;
 }
+/* ============================================================================
+   ✏️ EL VENDEDOR EDITA UN PEDIDO QUE LOGÍSTICA YA REVISÓ
+   La vendedora tiene que poder corregir su pedido: agregar un producto, sacar otro,
+   cambiar la cantidad o la ubicación. El problema es CUÁNDO: si el jefe de almacén ya
+   revisó el stock (✔/✗/📥/🏭) o ya lo dio por verificado, esa revisión queda vieja y
+   NADIE se entera — el camión sale cargado con lo de antes.
+
+   Dos cosas, y las dos importan:
+   1. **No borrarle el trabajo a logística.** `getProductos()` arma los productos DE CERO
+      con lo que hay en el formulario, así que cada edición borraba `chk`, `enProd` y
+      `prodEn` de TODOS los productos, incluso los que no se tocaron. Ahora las marcas se
+      vuelven a pegar a los productos que quedaron IGUALES; el que cambió las pierde, que
+      es lo correcto: hay que revisarlo de nuevo.
+   2. **Avisarle.** El pedido queda marcado y en Administración y en la Lista de carga
+      sale "⚠️ MODIFICADO", con qué cambió y quién lo hizo.
+
+   ⚠️ La marca viaja DENTRO de `productos` (que ya va como JSON en `_productos_json`), así
+   que no hizo falta ninguna columna nueva ni volver a publicar el Apps Script. Se pone en
+   TODOS los productos a propósito: si se pusiera solo en el primero y la vendedora
+   justo borra ese, el aviso se perdería. */
+function prodClave(x){
+  return [String((x&&x.desc)||'').trim().toLowerCase(),
+          normMedida(x&&x.medida),
+          String((x&&x.codigo)||'').trim().toLowerCase()].join('|');
+}
+/* ¿Logística ya le puso la mano encima a este pedido? */
+function teniaRevision(p){
+  if(!p) return false;
+  if(p.verificado) return true;
+  return ((p.productos||[]).some(function(x){ return !!(x && (x.chk || x.enProd)); }));
+}
+/* Le devuelve a cada producto que NO cambió las marcas que logística ya le había puesto. */
+function heredarMarcas(nuevos, viejos){
+  var porClave={};
+  (viejos||[]).forEach(function(x){ if(x) porClave[prodClave(x)]=x; });
+  return (nuevos||[]).map(function(x){
+    var v=porClave[prodClave(x)];
+    if(!v) return x;                                   // producto nuevo: nadie lo revisó
+    /* ⚠️ La CANTIDAD también cuenta. El almacén no dijo "hay ALMOHADA", dijo "hay 2
+       almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
+    if((Number(v.cant)||0)!==(Number(x.cant)||0)) return x;
+    if(v.chk)    x.chk=v.chk;
+    if(v.enProd) x.enProd=v.enProd;
+    if(v.prodEn) x.prodEn=v.prodEn;
+    return x;
+  });
+}
+/* Qué cambió, en criollo. Es lo que va a leer el jefe de almacén, así que se dice
+   concreto: qué producto y qué le pasó, no "hubo cambios". */
+function difPedido(antes, ahora){
+  var out=[];
+  var vA=(antes&&antes.productos)||[], vB=(ahora&&ahora.productos)||[];
+  var mapA={}, mapB={};
+  vA.forEach(function(x){ mapA[prodClave(x)]=x; });
+  vB.forEach(function(x){ mapB[prodClave(x)]=x; });
+  vB.forEach(function(x){
+    var k=prodClave(x), v=mapA[k];
+    if(!v) out.push('➕ '+prodCorto(x));
+    else if((Number(v.cant)||0)!==(Number(x.cant)||0)) out.push('🔢 '+prodCorto(x)+' — de '+(v.cant||0)+' a '+(x.cant||0));
+  });
+  vA.forEach(function(x){ if(!mapB[prodClave(x)]) out.push('➖ '+prodCorto(x)); });
+  var uA=String((antes&&antes.maps)||'').trim(), uB=String((ahora&&ahora.maps)||'').trim();
+  if(uA!==uB) out.push(uB ? (uA?'📍 cambió la ubicación':'📍 le pusieron ubicación') : '📍 le sacaron la ubicación');
+  var dA=String((antes&&antes.direccion)||'').trim(), dB=String((ahora&&ahora.direccion)||'').trim();
+  if(dA!==dB) out.push('🏠 cambió la dirección');
+  var zA=String((antes&&antes.zona)||'').trim(), zB=String((ahora&&ahora.zona)||'').trim();
+  if(zA!==zB) out.push('🗺️ cambió de zona: '+(zA||'—')+' → '+(zB||'—'));
+  if(String((antes&&antes.fecha)||'')!==String((ahora&&ahora.fecha)||'')) out.push('📅 cambió la fecha de entrega');
+  if(normTurno(antes&&antes.turno)!==normTurno(ahora&&ahora.turno)) out.push('🕐 cambió de turno');
+  return out;
+}
+/* ⚠️ se llama prodCorto y no prodResumen porque MÁS ABAJO ya hay un prodResumen(pedido)
+   —el de la revisión de stock— y la segunda declaración le gana a la primera. */
+function prodCorto(x){
+  return String((x&&x.desc)||'—')+((x&&x.medida)?(' '+x.medida):'')+' × '+((x&&x.cant)||0);
+}
+/* ¿Cambió lo que hay que CARGAR EN EL CAMIÓN? (la dirección o la fecha no cuentan:
+   esas no tocan el stock, así que la revisión del almacén sigue valiendo). */
+function cambiaronProductos(antes, ahora){
+  var a=(antes&&antes.productos)||[], b=(ahora&&ahora.productos)||[];
+  if(a.length!==b.length) return true;
+  var m={}; a.forEach(function(x){ m[prodClave(x)]=(Number(x.cant)||0); });
+  for(var i=0;i<b.length;i++){ var k=prodClave(b[i]);
+    if(!(k in m) || m[k]!==(Number(b[i].cant)||0)) return true; }
+  return false;
+}
+/* La marca que queda pegada al pedido. Corta a propósito: entra en una celda y se lee
+   de un vistazo en la tabla. */
+function marcarModificado(rec, quien, cambios){
+  var m={ f:todayStr(), h:horaCorta(), q:String(quien||'').trim(), d:cambios.slice(0,6) };
+  (rec.productos||[]).forEach(function(x){ if(x) x.mod=m; });
+}
+function modDe(p){
+  var pr=(p&&p.productos)||[];
+  for(var i=0;i<pr.length;i++) if(pr[i] && pr[i].mod) return pr[i].mod;
+  return null;
+}
+function esModificado(p){ return !!modDe(p); }
+/* Logística lo vio y lo tomó en cuenta: se saca el aviso de todos lados. */
+function verVistoModif(id){
+  var p=findById(id); if(!p) return;
+  (p.productos||[]).forEach(function(x){ if(x) delete x.mod; });
+  persistPedido(p);
+  toast('✓ Aviso de modificación quitado — el pedido queda como revisado por vos','ok');
+  renderAdmin(); renderCargaSiActiva(); renderMis(); reabrirFicha(id);
+}
+function horaCorta(){ var d=new Date(), z=function(n){return (n<10?'0':'')+n;}; return z(d.getHours())+':'+z(d.getMinutes()); }
+/* El cartel para el jefe de almacén. `compacto` = la versión de una línea para la tabla. */
+function avisoModifHtml(p, compacto){
+  var m=modDe(p); if(!m) return '';
+  if(compacto) return '<span class="badge b-red" title="Lo cambiaron después de que ustedes lo revisaron">⚠️ MODIFICADO</span>';
+  return '<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
+    'border-radius:9px;padding:11px 14px;margin-bottom:11px;font-size:.85rem;color:#8a1c24">'+
+    '<b>⚠️ ESTE PEDIDO FUE MODIFICADO después de que ustedes lo revisaron.</b><br>'+
+    '<span style="font-size:.9em">'+esc(m.q||'La vendedora')+' lo cambió el '+esc(fmtFecha(m.f))+
+    (m.h?(' a las '+esc(m.h)):'')+'. Revisá el stock de nuevo antes de cargar el camión.</span>'+
+    ((m.d&&m.d.length)?('<div style="margin-top:7px;background:#fff;border-radius:7px;padding:8px 11px">'+
+      m.d.map(function(t){ return '<div>'+esc(t)+'</div>'; }).join('')+'</div>'):'')+
+    '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;width:100%;margin-top:9px" '+
+      'onclick="'+esc("verVistoModif('"+String(p.id)+"')")+'">✓ Ya lo revisé — quitar el aviso</button>'+
+  '</div>';
+}
 function prodText(prods){ return (prods||[]).map(function(p){
   var s=p.desc||'';
   if(p.medida) s+=' · '+p.medida;
@@ -3954,6 +4076,13 @@ function submitPedido(){
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
 
+  /* ⚠️ EDITAR NO LE PUEDE BORRAR EL TRABAJO A LOGÍSTICA.
+     `getProductos()` arma la lista DE CERO con lo que hay en el formulario, así que hasta
+     ahora cada edición dejaba a TODOS los productos sin ✔/✗/📥/🏭 — incluso a los que no
+     se tocaron — y nadie se enteraba. Se les devuelven las marcas a los que quedaron
+     IGUALES; el que la vendedora cambió las pierde a propósito: hay que revisarlo de nuevo. */
+  if(isEdit && prev) productos=heredarMarcas(productos, prev.productos);
+
   /* ---- El historial de pagos comparte campo con el método ----
      Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
      NO tocó ningún número de plata, se conserva TAL CUAL: reescribirlo con el método
@@ -4149,6 +4278,25 @@ function submitPedido(){
     nroDia: (_tienda || isEdit) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
     ts: isEdit ? (prev?prev.ts:0) : Date.now()
   };
+
+  /* ⚠️ AVISO A LOGÍSTICA: «ESTE PEDIDO FUE MODIFICADO».
+     Si el jefe de almacén ya lo había revisado (verificado o con productos tickeados) y
+     la vendedora le cambia algo, él tiene que enterarse: si no, el camión sale cargado
+     con la lista de antes. El aviso queda pegado al pedido hasta que él toque
+     «Ya lo revisé». Ver §4bc en la bitácora. */
+  if(isEdit && prev){
+    var _modPrev=modDe(prev);
+    var _cambios=(teniaRevision(prev)||_modPrev) ? difPedido(prev, rec) : [];
+    if(_cambios.length){
+      marcarModificado(rec, vendedor, _cambios);
+      // Cambió lo que hay que cargar → ya no está "listo para cargar".
+      if(cambiaronProductos(prev, rec)) rec.verificado=false;
+    }else if(_modPrev){
+      /* Venía marcado de una edición anterior que nadie revisó todavía, y esta vez no
+         cambió nada que a logística le importe: el aviso NO se pierde. */
+      (rec.productos||[]).forEach(function(x){ if(x) x.mod=_modPrev; });
+    }
+  }
 
   setVendedorMem(vendedor); // recordar quién soy en esta compu
 
@@ -5176,6 +5324,7 @@ function renderAdmin(){
     var estadoCell='<span class="badge '+eSt.badge+'">'+(eSt.emo?(eSt.emo+' '):'')+esc(eSt.txt)+'</span>'+manual+
       (nIM&&eSt.badge!=='b-im'?' <span class="badge b-im" title="Hay que recoger de IM">📥 IM</span>':'')+
       (p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+
+      avisoModifHtml(p, true)+
       (p.entregado?' <span class="badge b-green">🚚✓</span>':'');
     var vehCell=p.vehiculo?(esc(p.vehiculo)+(p.chofer?('<br><span style="color:var(--muted);font-size:.9em">'+esc(p.chofer)+'</span>'):'')):'—';
     var cls=rowClass(p);
@@ -5519,7 +5668,7 @@ function cargaBloquesHtml(list, fecha){
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div class="carga-stop '+atcCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+atcChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop '+atcCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+atcChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+(esModificado(p)?' <span style="color:var(--red);font-weight:800">⚠️ MODIFICADO</span>':'')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -6317,6 +6466,7 @@ function misCardHtml(p, n, todos){
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
       atrasoBadge(p)+
+      avisoModifHtml(p, true)+
     '</div>'+
     '<div class="cho-row"><span class="k">Productos</span><br>'+prod+'</div>'+
     (p.estado?('<div class="cho-row"><span class="k">Stock</span> '+estadoBadge(p.estado)+'</div>'):'')+
@@ -6325,6 +6475,7 @@ function misCardHtml(p, n, todos){
     '<div class="cho-row"><span class="k">Chofer</span> '+choferTexto(p)+'</div>'+
     fotosHtml(p, false)+
     '<div class="cho-links">'+
+      '<button class="cho-link" onclick="event.stopPropagation();editarDesdeMis(\''+p.id+'\')">✏️ Editar</button>'+
       (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 Ver ubicación</a>')
              :(p.entregado?'':'<button class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00;font-weight:800" onclick="event.stopPropagation();editarUbicacionMis(\''+p.id+'\')">⚠️ Falta ubicación — cargar</button>'))+
       (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'" onclick="event.stopPropagation()">📞 Llamar</a>'):'')+
@@ -6372,6 +6523,19 @@ function guardarUbicacion(p, norm, reopen){
   fin(norm?'Ubicación guardada ✓':'Ubicación quitada');
 }
 function editarUbicacionMis(id){ editarUbicacion(id, showMisModal); }
+/* ✏️ La vendedora edita su propio pedido desde «Mis pedidos».
+   Antes tenía que llamar a administración por cualquier cosa: un producto de más, una
+   cantidad mal, la dirección. Ahora lo abre ella misma en el formulario de siempre.
+   Lo único que se le avisa antes es la consecuencia: si logística ya lo revisó, el
+   cambio les va a llegar como «PEDIDO MODIFICADO» y tienen que revisar el stock otra vez. */
+function editarDesdeMis(id){
+  var p=findById(id); if(!p) return;
+  var avisos=[];
+  if(p.entregado) avisos.push('🚚 Este pedido YA FUE ENTREGADO. Cambiarlo ahora no cambia lo que salió en el camión.');
+  if(teniaRevision(p)) avisos.push('📦 El almacén YA REVISÓ este pedido. Si le cambiás algo les va a saltar un aviso de «PEDIDO MODIFICADO» para que vuelvan a revisar el stock.');
+  if(avisos.length && !confirm(avisos.join('\n\n')+'\n\n¿Abrirlo igual para corregirlo?')) return;
+  closeModal(); editPedido(id);
+}
 function editarUbicacionAdmin(id){ editarUbicacion(id, showPedidoModal); }
 /* Ventana flotante de un pedido (vista vendedora): datos + alertas + agregar/editar ubicación. */
 function showMisModal(id){
@@ -6393,6 +6557,7 @@ function showMisModal(id){
   var alertas='';
   var atr=textoAtraso(p);
   if(atr) alertas+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:var(--red)">⏰ <b>Atrasado '+atr+'.</b> '+(turnoDe(p)?('Era para el turno '+turnoDe(p)+' del '+esc(fmtFecha(p.fecha))+'.'):('Era para el '+esc(fmtFecha(p.fecha))+'.'))+' Preguntá al administrador cómo va.</div>';
+  if(esModificado(p)) alertas+=alertBox('⚠️ <b>Lo modificaste después de que el almacén ya lo había revisado.</b> Les quedó el aviso para que revisen el stock de nuevo — el aviso se les saca cuando ellos lo revisan.');
   if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
   var choferVal = choferTexto(p);
@@ -6426,6 +6591,7 @@ function showMisModal(id){
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
+        '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
       '</div>'+
       '<button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="closeModal()">✓ Listo</button>'+
@@ -7432,7 +7598,7 @@ function showCargaModal(id){
       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+vehiculoSelect(p)+choferSelect(p)+'</div>'+
     '</div>';
   var html='<div class="modal-h"><h3>📦 Para cargar'+(dnum?(' · #'+dnum):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+body+accionesSec+despachoSec+
+    '<div class="modal-b">'+avisoModifHtml(p)+body+accionesSec+despachoSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-ghost btn-sm" onclick="editarDesdeCarga(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
@@ -7545,7 +7711,7 @@ function showPedidoModal(id){
         : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+body+mark+stockSec+despachoSec+ubicSec+
+    '<div class="modal-b">'+avisoModifHtml(p)+body+mark+stockSec+despachoSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
