@@ -2216,6 +2216,37 @@ Sin esto la única salida era marcar OTRO banco — o sea **mentir sobre dónde 
   archivo de trabajo. Durante un rato pareció que el caso normal ya funcionaba. Los tests del
   repo usan `path.resolve('pedidos.html')` y `correr.sh` los para en la raíz — que siga así.
 
+## 4be. 🔒 La edición no era puerta trasera… hasta que se la dimos a las vendedoras (2026-08-25)
+
+Cerrando el círculo de §4bc: **todos** los porteros de fecha en `submitPedido` (mínima,
+domingo, sábado PM, día cerrado, cupos) tenían `!isEdit`, y el freno del servidor es a
+propósito solo para filas nuevas (`foundRow < 0` — si no, logística no podría tocar nada de
+un día cerrado). Mientras editar era cosa de administración, daba igual. Con el botón Editar
+en Mis pedidos, una vendedora SIN clave podía **mover** su pedido a un día CERRADO, a un
+turno LLENO, a un domingo, a un sábado PM o a ayer — reproducido contra `origin/main`:
+`"Cambios guardados ✓"` con el pedido adentro del día cerrado.
+
+**La regla nueva:** si la edición **cambia** la fecha o el turno y NO está `UNLOCKED`, el
+destino pasa por los mismos porteros que un pedido nuevo (`_mueveFecha` / `_mueveTurno` /
+`_mueveVend`). Además:
+- La "última mirada" a la planilla (§4az) ahora también corre para la movida de una
+  vendedora — su copia puede ser de hace horas — y **re-mira el cupo** del destino con la
+  planilla recién bajada, porque para las movidas el servidor no lo cuida.
+- Corregir un pedido que YA estaba en un día cerrado (sin moverlo) pasa **sin el confirm**
+  de antes: el cartel solo salta cuando el pedido está ENTRANDO al día. Le saca ruido a
+  logística y a la vendedora que corrige una dirección.
+- Con `UNLOCKED`, igual que siempre: confirm y manda administración.
+
+Verificado con el `.gs` REAL en el arnés (`/tmp/rt2.js`): pedido nuevo a día cerrado →
+`dia_cerrado` ✓ · **editar** uno que ya estaba → pasa ✓ · la marca `.mod` de §4bc sobrevive
+`doSave→readAll` ✓ (y el "Ya lo revisé" también) · el portero sigue frenando después ✓.
+
+- Test: `tests/test_mover.js` (**15 checks**). Contra `origin/main`: **8 fallas** (todas las
+  movidas prohibidas entraban).
+- Batería: **14 suites · 284 checks · 0 fallas**.
+- El exec de Google sigue inalcanzable desde el sandbox (proxy 403): la confirmación del
+  deploy `2026-08-22-a` es el cartel del candado en la pantalla del usuario.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

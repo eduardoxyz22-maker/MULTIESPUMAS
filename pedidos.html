@@ -4195,34 +4195,49 @@ function submitPedido(){
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
      ni día cerrado, ni cupo del camión que ocupar. Se saltea todo ese bloque. */
   if(!VENTA_TIENDA){
-  if(!isEdit && fechaSel < minFecha){
+  /* ✏️ LA EDICIÓN NO ES UNA PUERTA TRASERA (§4be). Desde que las vendedoras editan sus
+     pedidos (§4bc), CAMBIAR la fecha o el turno equivale a cargar la entrega de nuevo:
+     sin la clave de administración, el DESTINO pasa por los mismos porteros que un pedido
+     nuevo (fecha mínima, domingo, sábado PM, día cerrado y cupos). El servidor no ayuda
+     acá: su freno de día cerrado es solo para filas NUEVAS (y está bien, si no logística
+     no podría tocar nada de un día cerrado), así que este es el único portero.
+     El pedido que YA estaba en un día cerrado se sigue corrigiendo EN ese día sin drama —
+     lo que no se puede es meterle un bulto más a un camión que ya se armó.
+     Con la clave puesta, todo sigue como siempre (avisos con confirmación). */
+  var turnoSel = normTurno(segVal('f-turno'));
+  var _mueveFecha = isEdit && prev && String(prev.fecha||'')!==fechaSel;
+  var _mueveTurno = isEdit && prev && normTurno(prev.turno)!==turnoSel;
+  var _mueveVend  = isEdit && !UNLOCKED && (_mueveFecha || _mueveTurno);
+  if((!isEdit || (!UNLOCKED && _mueveFecha)) && fechaSel < minFecha){
     toast(lite ? 'La fecha no puede ser anterior a hoy.' : 'La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
     var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
     return;
   }
-  var turnoSel = normTurno(segVal('f-turno'));
-  if(!isEdit && diaDomingo(fechaSel)){
+  if((!isEdit || (!UNLOCKED && _mueveFecha)) && diaDomingo(fechaSel)){
     toast('🚫 No se agenda los DOMINGOS. Elegí otra fecha.','err');
     var feD=document.getElementById('f-fecha'); feD.classList.add('err'); feD.focus(); feD.scrollIntoView({block:'center'});
     return;
   }
-  if(!isEdit && diaSabado(fechaSel) && turnoSel==='PM'){
+  if((!isEdit || _mueveVend) && diaSabado(fechaSel) && turnoSel==='PM'){
     toast('Los SÁBADOS solo hay turno AM. Cambiá a AM o elegí otra fecha.','err');
     var ftS=document.getElementById('f-turno'); if(ftS){ ftS.classList.add('seg-err'); setTimeout(function(){ ftS.classList.remove('seg-err'); },1600); ftS.scrollIntoView({block:'center'}); }
     return;
   }
   /* Día cerrado por Administración: el camión de esa fecha ya está armado. Para un pedido
      NUEVO no hay vuelta; editando uno que ya estaba, se avisa y decide quien tiene la clave. */
-  if(diaCerrado(fechaSel)){
-    if(!isEdit){
-      toast('🔒 El '+fmtFecha(fechaSel)+' está CERRADO — ya no se cargan pedidos para ese día. Elegí otra fecha de entrega.','err');
+  /* Solo cuenta si el pedido está ENTRANDO a ese día (nuevo, o movido de otra fecha).
+     El que ya estaba ahí se corrige en el lugar sin preguntar nada: logística vive
+     retocando pedidos de días cerrados y el confirm de antes solo molestaba. */
+  if(diaCerrado(fechaSel) && (!isEdit || _mueveFecha)){
+    if(!isEdit || !UNLOCKED){
+      toast('🔒 El '+fmtFecha(fechaSel)+' está CERRADO — ese camión ya está armado y no se le agregan entregas. Elegí otra fecha.','err');
       var feC=document.getElementById('f-fecha'); feC.classList.add('err'); feC.focus(); feC.scrollIntoView({block:'center'});
       renderCupoForm();
       return;
     }
-    if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Guardar igual el pedido para ese día?')) return;
+    if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Mover igual el pedido a ese día?')) return;
   }
-  if(!isEdit && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
+  if((!isEdit || _mueveVend) && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
     var lim=limTurno(fechaSel, turnoSel);
     toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+lim+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');
     renderCupoForm();
@@ -4328,8 +4343,10 @@ function submitPedido(){
      esperando a que cargue una hoja lenta es peor que un pedido de más. */
   /* La MISMA bajada sirve para las dos cosas, así que también se hace cuando el número de
      OC se asigna solo — aunque sea una venta de tienda, que no tiene día que se cierre. */
-  var _mirarCierre = !_tienda && !diaCerrado(rec.fecha);
-  if(CONNECTED && !isEdit && (_ocAuto || _mirarCierre)){
+  /* También corre cuando una vendedora MUEVE la entrega: su copia del panel puede ser
+     de hace horas y el día de destino haberse cerrado (o llenado) en el medio. */
+  var _mirarCierre = !_tienda && (!isEdit || _mueveVend) && !diaCerrado(rec.fecha);
+  if(CONNECTED && (_ocAuto || _mirarCierre)){
     setSubmitting(true);
     conTope(refrescarEstado(), 4000).then(function(){
       setSubmitting(false);
@@ -4338,6 +4355,16 @@ function submitPedido(){
         var fx=document.getElementById('f-fecha'); if(fx){ fx.classList.add('err'); fx.focus(); fx.scrollIntoView({block:'center'}); }
         renderCupoForm();
         return;
+      }
+      /* El servidor solo cuida el cupo de las filas NUEVAS; una MOVIDA hay que volver a
+         mirarla acá con la planilla recién bajada, o dos que mueven a la vez se pasan. */
+      if(_mirarCierre && _mueveVend){
+        var _tv=normTurno(rec.turno);
+        if(cuposUsadosTurno(rec.fecha,_tv) >= limTurno(rec.fecha,_tv)){
+          toast('Turno '+_tv+' lleno para el '+fmtFecha(rec.fecha)+' — se llenó recién. Probá el otro turno u otra fecha.','err');
+          renderCupoForm();
+          return;
+        }
       }
       /* ⚠️ EL N° DE OC SE ASIGNA ACÁ, con la planilla RECIÉN BAJADA.
          Antes se calculaba arriba, contra lo que esta computadora tenía en memoria. Esa
