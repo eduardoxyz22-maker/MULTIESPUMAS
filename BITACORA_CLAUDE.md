@@ -2184,6 +2184,38 @@ segunda declaración le gana a la primera, así que el original se comía al nue
   vacío, `STATE` se vacía en medio de la edición, `prev` queda `null` y el test mide otra
   cosa. Hay que sembrar el pedido **también** en la planilla simulada.
 
+## 4bd. 🔴 No se podía EDITAR ningún pedido cobrado por QR (2026-08-25)
+
+Salió probando el botón Editar de §4bc. **Cualquier** pedido con QR —de cualquier vendedora,
+con su propio banco, abierto desde Administración o desde Mis pedidos— al guardar contestaba
+**«Elegí a qué banco entró el QR»** y **no guardaba nada**. Ni la dirección.
+
+**La causa: el orden en `editPedido`.** `renderBancos()` solo dibuja los botones del banco si
+el bloque del método está **a la vista**, y quien lo muestra es `updateMetodoVisibility()`.
+Estaba así:
+
+```
+segSet('f-metodo', _mf.metodo);
+updateBancoVisibility(); segSet('f-banco', _mf.banco);   // ← los botones todavía no existen
+updateMetodoVisibility();                                 // ← recién acá se muestran
+```
+
+`segSet` no encontraba el botón, el segmento quedaba vacío, y el `renderBancos()` que corre
+después leía `prev=segVal('f-banco')` = `''` y no marcaba nada. Ahora se muestra primero y se
+marca después.
+
+**Y de paso, el segundo caso**: el banco registrado puede **no estar en la lista de esa
+vendedora** (el pedido pasó de otra, o las cuentas cambiaron). Ahí el botón directamente no
+existe. `BANCO_EXTRA` lo agrega a la lista mientras dura la edición, etiquetado
+**"(ya registrado)"**, y `resetForm()` lo limpia para que no se le cuele al pedido siguiente.
+Sin esto la única salida era marcar OTRO banco — o sea **mentir sobre dónde entró la plata**.
+
+- Test: `tests/test_banco.js` (**16 checks**). Contra `b5038a4`: **7 fallas**.
+- **⚠️ Lección de arnés** (en `tests/LEEME.md`): los scripts sueltos de diagnóstico tenían la
+  ruta **absoluta** del panel, así que correrlos "contra la versión vieja" abría igual el
+  archivo de trabajo. Durante un rato pareció que el caso normal ya funcionaba. Los tests del
+  repo usan `path.resolve('pedidos.html')` y `correr.sh` los para en la raíz — que siga así.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

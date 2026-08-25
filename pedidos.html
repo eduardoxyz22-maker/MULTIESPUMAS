@@ -3887,11 +3887,27 @@ function bancoDe(m){
   var mm=s.match(/^QR\s+(.+)$/i);
   return mm ? (esBanco(mm[1])||'') : '';
 }
+/* ⚠️ EL BANCO QUE EL PEDIDO YA TIENE VA SIEMPRE.
+   Cada vendedora ve solo SUS bancos, y está bien para cargar un pedido nuevo. Pero al
+   EDITAR uno viejo el banco puede no estar en su lista: el pedido pasó de otra vendedora,
+   o las cuentas cambiaron con el tiempo. Ahí el botón no existía, `segSet` no encontraba
+   dónde marcar y el segmento quedaba vacío → al guardar saltaba «Elegí a qué banco entró
+   el QR» y la vendedora quedaba TRABADA: no podía corregir ni la dirección, y la única
+   salida era marcar OTRO banco, o sea mentir sobre dónde entró la plata.
+   Se guarda en `BANCO_EXTRA` y se agrega a la lista mientras dure la edición. */
+var BANCO_EXTRA='';
 function renderBancos(){
   var box=document.getElementById('f-banco'); if(!box) return;
   var v=(document.getElementById('f-vendedor')||{}).value||'';
-  var lista=bancosDeVendedor(v), prev=segVal('f-banco');
-  box.innerHTML=lista.map(function(b){ return '<button type="button" data-val="'+esc(b)+'">🏦 '+esc(b)+'</button>'; }).join('');
+  var lista=bancosDeVendedor(v).slice(), prev=segVal('f-banco');
+  var extra=esBanco(BANCO_EXTRA);
+  if(extra && lista.indexOf(extra)<0) lista.push(extra);
+  box.innerHTML=lista.map(function(b){
+    var ajeno=(b===extra);
+    return '<button type="button" data-val="'+esc(b)+'"'+
+      (ajeno?' title="Así quedó registrado este pago. No lo cambies salvo que estés corrigiendo un error de verdad."':'')+
+      '>🏦 '+esc(b)+(ajeno?' <span style="opacity:.7;font-size:.8em">(ya registrado)</span>':'')+'</button>';
+  }).join('');
   initSeg('f-banco',null);
   if(prev && lista.indexOf(prev)>=0) segSet('f-banco', prev);   // no perder lo elegido al recargar
 }
@@ -4579,6 +4595,7 @@ function pintarCampoOc(roho){
 function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); }
 function resetForm(){
   EDIT_ID=null;
+  BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
   document.getElementById('f-nota').value='';
@@ -4654,8 +4671,15 @@ function editPedido(id){
   var _mf=metodoFormulario(rec);
   FORM_COMPS=compsArr(_mf.comps!=null?_mf.comps:_mf.comp);   // no perder los comprobantes al editar
   segSet('f-metodo', _mf.metodo);
-  updateBancoVisibility(); segSet('f-banco', _mf.banco);
+  BANCO_EXTRA=_mf.banco||'';                  // el banco de ESTE pedido, sea de quien sea
+  /* ⚠️ EL ORDEN IMPORTA. `renderBancos()` solo dibuja los botones del banco si el bloque
+     del método está A LA VISTA, y quien lo muestra es `updateMetodoVisibility()`. Estaba
+     al revés: se marcaba el banco antes de que existiera su botón, el segmento quedaba
+     vacío y al guardar saltaba «Elegí a qué banco entró el QR» — con la vendedora sin
+     poder corregir ni la dirección de un pedido ya cobrado. Primero se muestra todo,
+     recién después se marca el banco. */
   updateMetodoVisibility();
+  segSet('f-banco', _mf.banco);
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';

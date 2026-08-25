@@ -40,6 +40,11 @@ prueba.** Un test que no está en el repo es un test que todavía no existe.
   simulado (`apiList`) devuelve vacío, `STATE` se vacía en medio de la prueba, `findById`
   devuelve `null` y el test mide otra cosa —y a veces *pasa* por el motivo equivocado—.
   Sembrar el pedido en **las dos** puntas: `STATE` y la planilla simulada.
+- **Nunca poner la ruta absoluta del panel** (`path.resolve('/home/user/.../pedidos.html')`).
+  Siempre `path.resolve('pedidos.html')`, que sale de `correr.sh` parado en la raíz. Con la
+  ruta absoluta, correr el test contra una copia vieja (`git show <commit>:pedidos.html`)
+  abre **igual el archivo de trabajo**: parece que la versión vieja ya estaba bien y uno
+  cierra el bug por bueno. Pasó el 25/08 con el arreglo del banco del QR.
 - Un test que **no imprime ninguna falla porque se cayó antes** pasa por bueno. Si se toca
   una función que un test llama, correrlo y mirar que llegue hasta el final.
 - Terminar con `process.exit(FAIL?1:0)` y un resumen `N bien · N mal`.
