@@ -45,6 +45,15 @@ prueba.** Un test que no está en el repo es un test que todavía no existe.
   ruta absoluta, correr el test contra una copia vieja (`git show <commit>:pedidos.html`)
   abre **igual el archivo de trabajo**: parece que la versión vieja ya estaba bien y uno
   cierra el bug por bueno. Pasó el 25/08 con el arreglo del banco del QR.
+- **Para probar Administración no alcanza `UNLOCKED=true`.** El candado esconde
+  `#admin-content` con un `display:none` inline que solo quita `tryUnlock()`. Si no se abre a
+  mano, todo mide "oculto" y el test no distingue lo que escondió la función que se prueba de
+  lo que ya estaba tapado:
+  ```js
+  document.getElementById('admin-lock').style.display='none';
+  document.getElementById('admin-content').style.display='block';
+  mostrarBotonesTodos();
+  ```
 - Un test que **no imprime ninguna falla porque se cayó antes** pasa por bueno. Si se toca
   una función que un test llama, correrlo y mirar que llegue hasta el final.
 - Terminar con `process.exit(FAIL?1:0)` y un resumen `N bien · N mal`.

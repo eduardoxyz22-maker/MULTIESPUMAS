@@ -712,6 +712,12 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
         <div id="adm-revisar"></div>
 
+        <!-- 👁️ Interruptor del resumen: ver §4bf en la bitácora. -->
+        <div style="display:flex;justify-content:flex-end;margin:0 0 10px">
+          <button class="btn btn-ghost btn-sm" id="adm-resumen-btn" style="width:auto" onclick="toggleResumenAdm()">🙈 Ocultar resumen</button>
+        </div>
+
+        <div id="adm-resumen">
         <div class="metrics" id="adm-metrics"></div>
         <div class="metodos-line" id="adm-metodos"></div>
 
@@ -746,6 +752,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <div style="padding:10px 14px" id="adm-zonas"></div>
           </div>
         </div>
+        </div><!-- /adm-resumen -->
 
         <div class="btn-row" style="margin-bottom:16px">
           <span class="xls-group" title="Descargar Excel según el alcance elegido">
@@ -5335,6 +5342,10 @@ function renderAdmin(){
     mc('var(--green)','Pagados',pagados,total?Math.round(pagados/total*100)+'% del total':'—')+
     mc('var(--red)','Por cobrar',pend,'pedidos pendientes')+
     mc('var(--amber)','Saldo pendiente',fmtBs(saldoPend),'suma por cobrar');
+  /* Lo que muestra el botón cuando el resumen está plegado: el número grueso a la vista
+     sin tener que desplegar nada. */
+  RESUMEN_MINI = total+' pedido'+(total===1?'':'s')+(pend?(' · '+pend+' por cobrar · '+fmtBs(saldoPend)):'');
+  pintarResumenAdm();
   document.getElementById('adm-metodos').innerHTML=
     'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
     '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
@@ -6534,20 +6545,29 @@ function misCardHtml(p, n, todos){
   '</div>';
 }
 /* La vendedora puede agregar/editar SOLO la ubicación GPS (campo Maps) de sus pedidos. */
-function editarUbicacion(id, reopen){
+function editarUbicacion(id, reopen, deVendedora){
   var p=findById(id); if(!p) return;
   var nuevo=prompt('📍 Ubicación GPS de "'+(p.cliente||'')+'"\n\nSirve cualquiera de estas tres:\n  • el link de Google Maps\n  • las coordenadas: -17.749444, -63.104556\n  • el código del lugar: 5P2Q+PFX\n(en Maps mantené apretado el punto y copiá lo que aparece abajo)\n\nSi pegás un enlace corto (maps.app.goo.gl) lo abro yo y guardo la ubicación.\n\nDejalo vacío para quitar la ubicación:', p.maps||'');
   if(nuevo==null) return;
   var norm=normalizaUbicacion(nuevo);
   if(norm===null){ toast('No se entiende: pegá el enlace, las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX)','err'); return; }
-  guardarUbicacion(p, norm, reopen);
+  guardarUbicacion(p, norm, reopen, deVendedora);
 }
 function esLinkCorto(u){ return /goo\.gl|maps\.app|bit\.ly|tinyurl/i.test(String(u||'')); }
 /* Guarda la ubicación. Si lo que pegaron es un ENLACE CORTO (maps.app.goo.gl…) no sirve de
    nada guardarlo tal cual: no dice dónde está y el pedido sigue igual de perdido. Se lo
    preguntamos al servidor en el momento y guardamos las COORDENADAS, que no caducan. */
-function guardarUbicacion(p, norm, reopen){
+function guardarUbicacion(p, norm, reopen, deVendedora){
+  /* ⚠️ El botón rápido de ubicación era un agujero en el aviso de §4bc: por el formulario
+     completo el cambio de ubicación avisaba a logística, pero por acá no. Y es justo el
+     dato que decide si el chofer llega o da vueltas. Solo avisa cuando lo cambia la
+     VENDEDORA desde Mis pedidos — si lo corrige logística, no tiene a quién avisarse. */
+  var _mapsAntes=String(p.maps||'').trim();
   function fin(msg, tipo){
+    if(deVendedora && String(p.maps||'').trim()!==_mapsAntes && (teniaRevision(p)||esModificado(p))){
+      marcarModificado(p, p.vendedor, [ !String(p.maps||'').trim() ? '📍 le sacaron la ubicación'
+        : (_mapsAntes ? '📍 cambió la ubicación' : '📍 le pusieron ubicación') ]);
+    }
     upsert(p); saveMirror();
     if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
     if(UNLOCKED) renderAdmin();
@@ -6573,7 +6593,7 @@ function guardarUbicacion(p, norm, reopen){
   p.maps=norm;
   fin(norm?'Ubicación guardada ✓':'Ubicación quitada');
 }
-function editarUbicacionMis(id){ editarUbicacion(id, showMisModal); }
+function editarUbicacionMis(id){ editarUbicacion(id, showMisModal, true); }
 /* ✏️ La vendedora edita su propio pedido desde «Mis pedidos».
    Antes tenía que llamar a administración por cualquier cosa: un producto de más, una
    cantidad mal, la dirección. Ahora lo abre ella misma en el formulario de siempre.
@@ -7929,6 +7949,32 @@ function rowKind(p){
   return '';
 }
 function rowClass(p){ var k=rowKind(p); return k?('row-'+k):''; }
+/* ============================================================================
+   👁️ OCULTAR EL RESUMEN DE ADMINISTRACIÓN
+   Arriba de la tabla hay una pila de estadísticas (las fichas, la línea de cobros,
+   los consolidados por vendedor y por día, camión, rendición, cupos y zonas). Sirven,
+   pero empujan la tabla —que es lo que se usa todo el día— muy abajo. Con el botón se
+   guarda plegado o desplegado EN ESTA COMPUTADORA: cada uno lo deja como le sirve, sin
+   pisarle la pantalla al resto del equipo.
+   Plegado, el botón se lleva el número grueso, así no hay que desplegarlo para saber
+   cuántos pedidos hay y cuánto falta cobrar. */
+var LS_RESUMEN='pedidos_resumen_adm', RESUMEN_MINI='';
+function resumenAdmVisible(){ try{ return localStorage.getItem(LS_RESUMEN)!=='0'; }catch(e){ return true; } }
+function pintarResumenAdm(){
+  var box=document.getElementById('adm-resumen'), b=document.getElementById('adm-resumen-btn');
+  if(!box||!b) return;
+  var ver=resumenAdmVisible();
+  box.style.display = ver ? '' : 'none';
+  b.innerHTML = ver ? '🙈 Ocultar resumen'
+    : ('👁️ Ver resumen'+(RESUMEN_MINI?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_MINI+'</span>'):''));
+  b.title = ver ? 'Esconde las fichas y los consolidados para dejar la tabla arriba de todo'
+                : 'Vuelve a mostrar las fichas y los consolidados';
+}
+function toggleResumenAdm(){
+  try{ localStorage.setItem(LS_RESUMEN, resumenAdmVisible()?'0':'1'); }catch(e){}
+  pintarResumenAdm();
+  if(!resumenAdmVisible()){ var t=document.getElementById('adm-chips'); if(t){ try{ window.scrollTo(0,0); }catch(e){} } }
+}
 /* Lista de productos donde se marca ✔ hay / ✗ no hay / 📥 recoger de IM (se usa en las dos fichas) */
 function prodRevList(p){
   return (p.productos||[]).map(function(x,i){

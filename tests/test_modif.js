@@ -188,6 +188,36 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
         return vuelta.some(function(x){ return x && x.mod && x.mod.q; });
       }));
 
+  // ======= 12. el botón RÁPIDO de ubicación también avisa (era un agujero) =======
+  await prep();
+  const ubiRap = await page.evaluate(async () => {
+    /* El prompt() del navegador no se puede tipear desde acá: se le pone la respuesta. */
+    window.prompt=function(){ return '-17.749444, -63.104556'; };
+    editarUbicacionMis('PX');
+    await new Promise(r=>setTimeout(r,400));
+    closeModal();
+    var p=findById('PX'), m=modDe(p);
+    return { maps:String(p.maps||''), mod:m?JSON.parse(JSON.stringify(m)):null };
+  });
+  chk('el botón rápido guarda la ubicación', /-17\.749444/.test(ubiRap.maps), ubiRap.maps);
+  chk('…y AVISA a logística, igual que por el formulario', !!ubiRap.mod, JSON.stringify(ubiRap.mod));
+  chk('…diciendo que le pusieron la ubicación',
+      !!ubiRap.mod && (ubiRap.mod.d||[]).some(t=>/📍/.test(t)), ubiRap.mod&&JSON.stringify(ubiRap.mod.d));
+  chk('…y a nombre de la vendedora', !!ubiRap.mod && ubiRap.mod.q==='Carola Chavez', ubiRap.mod&&ubiRap.mod.q);
+
+  // ======= 13. si la corrige LOGÍSTICA, no se avisan a sí mismos =======
+  await prep();
+  const ubiLog = await page.evaluate(async () => {
+    window.prompt=function(){ return '-17.700000, -63.100000'; };
+    editarUbicacionAdmin('PX');
+    await new Promise(r=>setTimeout(r,400));
+    closeModal();
+    var p=findById('PX');
+    return { maps:String(p.maps||''), mod:esModificado(p) };
+  });
+  chk('logística corrige la ubicación y se guarda', /-17\.7/.test(ubiLog.maps), ubiLog.maps);
+  chk('…sin mandarse un aviso a sí misma', ubiLog.mod===false, ubiLog.mod);
+
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

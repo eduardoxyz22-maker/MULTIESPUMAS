@@ -78,6 +78,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#zonas">🔥 Zonas</a>
     <a href="#mapa">🗺️ Mapa</a>
     <a href="#ruta">🧾 Hoja de ruta</a>
+    <a href="#resumen">👁️ Ocultar resumen</a>
     <a href="#carga">📦 Lista de carga</a>
     <a href="#vertodos">👑 Ver todos</a>
     <a href="#turno-carga">🌅🌆 Turno AM/PM</a>
@@ -205,6 +206,19 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     </ul>
     <div class="callout warn"><b>⚠️ Nunca más “COBRAR Bs 0,00”</b> <span class="pill">arreglado</span> — al chofer se le dicen <b>tres cosas distintas</b>, no una sola: <b>💰 COBRAR Bs X</b> cuando hay saldo, <b>✅ NADA QUE COBRAR</b> cuando no hay nada, y <b>⚠️ SIN MONTO ANOTADO — preguntar antes de entregar</b> cuando <b>nadie le anotó cuánto era</b>.<br>
       Antes ese último caso salía como “COBRAR Bs 0,00” en la hoja de ruta y como un <b>“Sin saldo”</b> gris en la pantalla del chofer — o sea, “no cobres nada”. El camión entregaba y volvía sin la plata, y nadie se enteraba. Va igual en el papel, en el WhatsApp y en la pantalla del chofer.</div>
+  </div>
+
+  <div class="card" id="resumen">
+    <h3>👁️ Ocultar el resumen — dejar la tabla arriba de todo <span class="pill new">nuevo</span></h3>
+    <p>Arriba de la tabla de pedidos hay una pila de estadísticas: las <b>cuatro fichas</b> (Pedidos, Pagados, Por cobrar, Saldo pendiente), la línea de <b>cobros y stock</b>, los <b>consolidados por vendedor y por día</b>, <b>entregas por camión</b>, <b>rendición por chofer</b>, <b>ocupación de cupos</b> y <b>concentración por zona</b>. Sirven, pero empujan la tabla —que es lo que se usa todo el día— bien abajo.</p>
+    <p>Ahora, arriba a la derecha, hay un botón <b>🙈 Ocultar resumen</b>. Se toca y todo eso se pliega de una: la tabla queda apenas debajo de los avisos.</p>
+    <ul>
+      <li><b>Los avisos NO se ocultan.</b> «Revisar entregas de mañana» y «N° de OC repetido» siguen arriba, siempre — son los que no se pueden perder de vista.</li>
+      <li><b>Los botones tampoco</b> (Excel, Lista de carga, Cerrar día, Reporte…), ni los filtros rápidos de la tabla.</li>
+      <li><b>Plegado, el botón se lleva el número grueso:</b> <span class="kbd">👁️ Ver resumen · 65 pedidos · 44 por cobrar · Bs 28.121,00</span>. No hace falta desplegarlo para saber cómo viene el día.</li>
+      <li><b>Queda guardado en TU computadora.</b> Si lo dejás plegado, sigue plegado la próxima vez que entres, sin tener que tocarlo de nuevo. Y <b>no le cambia la pantalla a nadie más</b>: cada uno lo deja como le sirve.</li>
+      <li>Para traerlo de vuelta, el mismo botón: <b>👁️ Ver resumen</b>.</li>
+    </ul>
   </div>
 
   <div class="card" id="carga">
@@ -574,6 +588,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
         <li>Si el pedido <b>ya estaba verificado o tildado</b> y la vendedora lo cambia, en la ficha les sale un <b>cartel rojo</b> con <b>quién</b> lo cambió, <b>cuándo</b> y <b>qué</b> cambió (producto por producto: ➕ agregó, ➖ sacó, 🔢 cambió la cantidad, 📍 la ubicación, 🗺️ la zona, 📅 la fecha).</li>
         <li>La chapita <b>⚠️ MODIFICADO</b> aparece también en la <b>tabla de Administración</b> y en la <b>Lista de carga</b>, para verlo sin abrir nada.</li>
         <li>Cuando lo revisan, tocan <b>«✓ Ya lo revisé — quitar el aviso»</b> y el cartel se va <b>para todo el equipo</b>.</li>
+        <li>El aviso salta <b>también</b> cuando la vendedora usa el botón rápido <b>📍 Cambiar ubicación</b> desde su ficha — es justo el dato que decide si el chofer llega o da vueltas. Si la ubicación la corrigen <b>ustedes</b>, no salta nada: no tiene sentido avisarse a sí mismos.</li>
       </ul></div>
     <div class="callout warn"><b>🔒 La edición no es una puerta trasera del día cerrado</b> <span class="pill">arreglado</span> — al darles el botón Editar quedaba un agujero: los controles de fecha corrían solo para pedidos <b>nuevos</b>, así que una vendedora podía <b>mover</b> su pedido a un día cerrado, a un turno lleno, a un domingo o a un sábado PM — y el camión armado recibía un bulto más sin que nadie lo apruebe.<br>
       Ahora, <b>sin la clave</b>, mover la fecha o el turno pasa por los mismos porteros que un pedido nuevo. <b>Con la clave</b> todo sigue igual (te pregunta y decidís vos). Y un detalle que molestaba: corregir un pedido que <b>ya estaba</b> en un día cerrado —sin moverlo— ya <b>no</b> pregunta nada; el cartel solo salta cuando el pedido está <b>entrando</b> a ese día.</div>

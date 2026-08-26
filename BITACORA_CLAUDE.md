@@ -2247,6 +2247,39 @@ Verificado con el `.gs` REAL en el arnés (`/tmp/rt2.js`): pedido nuevo a día c
 - El exec de Google sigue inalcanzable desde el sandbox (proxy 403): la confirmación del
   deploy `2026-08-22-a` es el cartel del candado en la pantalla del usuario.
 
+## 4bf. 👁️ Botón para ocultar el resumen de Administración (2026-08-26)
+
+Pedido del usuario, con capturas tachadas: *"quieren el botón «ocultar» para esos que taché
+… el consolidado por vendedor y las fichas, para tener más orden y limpio"*.
+
+Se envolvió TODO el bloque de estadísticas en `#adm-resumen` (fichas `adm-metrics`, línea
+`adm-metodos`, consolidados por vendedor/día, camión, rendición, ocupación de cupos y zonas)
+con un interruptor arriba a la derecha. Se plegó **todo** y no solo las dos cosas tachadas
+a propósito: con el resto en pie la tabla seguía quedando lejos, que es el problema real.
+
+- Persiste en `localStorage` (`pedidos_resumen_adm`), o sea **por computadora** — nadie le
+  cambia la pantalla al resto. Por defecto: **visible** (nada cambia para quien no lo toque).
+- **NO** se pliegan los avisos (`#adm-revisar`: entregas por revisar, OC repetidas), ni los
+  botones, ni los chips, ni la tabla.
+- Plegado, el botón se lleva el número grueso: `👁️ Ver resumen · 65 pedidos · 44 por cobrar ·
+  Bs 28.121,00` (`RESUMEN_MINI`, que arma `renderAdmin`). Sin saldo pendiente omite esa parte
+  en vez de decir "0 por cobrar".
+
+**Y de paso, un agujero del aviso de §4bc**: el botón rápido `📍 Cambiar ubicación` de «Mis
+pedidos» NO marcaba el pedido como MODIFICADO — por el formulario completo sí. La ubicación
+es justo lo que decide si el chofer llega o da vueltas. `guardarUbicacion` toma un cuarto
+argumento `deVendedora`: solo `editarUbicacionMis` lo pasa, así logística corrigiendo una
+ubicación no se manda un aviso a sí misma.
+
+- Tests: `tests/test_resumen.js` (**22 checks**) y 5 nuevos en `test_modif.js` (**33 → 38**).
+  Contra `origin/main`: `test_resumen` revienta (`toggleResumenAdm` no existe) y `test_modif`
+  da 3 fallas.
+- Batería: **15 suites · 312 checks · 0 fallas**.
+- **⚠️ Trampa de arnés** (anotada en `tests/LEEME.md`): poner `UNLOCKED=true` NO abre la
+  pantalla de Administración — el candado esconde `#admin-content` con un `display` inline
+  que quita `tryUnlock()`. Sin eso TODO mide "oculto" y el test no distingue lo que plegó el
+  botón de lo que ya estaba tapado.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
