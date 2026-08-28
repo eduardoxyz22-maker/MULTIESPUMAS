@@ -3122,7 +3122,7 @@ function contaPagosHtml(p){
        monto mal tipeado quedaba mal para siempre, y un "Efectivo" que en realidad era QR
        descuadraba la caja contra el banco. Vale para los tres renglones: anticipo, cobro
        y recargo por entrega. */
-    var editando = (CTA_EDIT_I===i);
+    var editando = (CTA_EDIT_I===i), _ev = editando ? (CTA_EDIT_V||{}) : {};
     var btnEditar = '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--teal-border);color:var(--teal-dk);font-size:.7rem;padding:2px 8px;width:auto;font-weight:700" title="Corregir fecha, monto, N° de recibo o método de este pago" onclick="'+esc("ctaEditarPago('"+pid+"',"+i+")")+'">✏️ Corregir</button>';
     var cajaEdit='';
     if(editando){
@@ -3133,15 +3133,36 @@ function contaPagosHtml(p){
         '<div class="lb" style="margin-bottom:7px">✏️ Corregir este pago</div>'+
         '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
           '<div style="flex:1;min-width:130px"><label class="lb">¿Qué día entró?</label>'+
-            '<input type="date" id="cta-ed-fecha" value="'+esc(c.fecha||contaFecha(p)||todayStr())+'" max="'+todayStr()+'" style="width:100%"></div>'+
+            '<input type="date" id="cta-ed-fecha" value="'+esc(_ev.fecha!=null?_ev.fecha:(c.fecha||contaFecha(p)||todayStr()))+'" max="'+todayStr()+'" style="width:100%"></div>'+
           '<div style="flex:1;min-width:100px"><label class="lb">Monto</label>'+
-            '<input type="number" id="cta-ed-monto" step="0.01" min="0" value="'+((Number(c.monto)||0)>0?r2(c.monto):'')+'" placeholder="Bs" style="width:100%"></div>'+
+            '<input type="number" id="cta-ed-monto" step="0.01" min="0" value="'+esc(_ev.monto!=null?_ev.monto:((Number(c.monto)||0)>0?r2(c.monto):''))+'" placeholder="Bs" style="width:100%"></div>'+
           '<div style="flex:1;min-width:110px"><label class="lb">N° nota de venta</label>'+
-            '<input type="text" id="cta-ed-nota" value="'+esc(limpiaNota(c.nota))+'" placeholder="del recibo" autocomplete="off" style="width:100%"></div>'+
+            '<input type="text" id="cta-ed-nota" value="'+esc(_ev.nota!=null?_ev.nota:limpiaNota(c.nota))+'" placeholder="del recibo" autocomplete="off" style="width:100%"></div>'+
         '</div>'+
         '<div style="margin-top:8px"><label class="lb">Método</label>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb2).join('')+'</div></div>'+
         (CTA_EDIT_M==='QR' ? ('<div style="margin-top:8px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancosV.map(bb2).join('')+'</div></div>') : '')+
+        /* 📎 El comprobante, acá adentro. Antes había que buscar el botón afuera —y para
+           el ANTICIPO no existía— así que un pago al que se le olvidaron la captura se
+           quedaba sin respaldo para siempre. Ver §4bg en la bitácora. */
+        '<div style="margin-top:9px"><label class="lb">📎 Imágenes de respaldo'+
+          ' <span style="font-weight:600;text-transform:none;color:var(--muted)">· hasta '+COMP_MAX+'</span></label>'+
+          '<div class="fotos" style="align-items:center;margin-top:4px">'+
+            cs.map(function(fid,k){
+              return '<span class="foto">'+
+                fotoImgHtml(fid,{alt:'Imagen '+(k+1)+' del pago', title:'Ver en grande',
+                  onclick:"window.open('"+fotoVer(fidLimpio(fid))+"','_blank')"})+
+                '<button type="button" title="Quitar esta imagen" onclick="'+esc("ctaQuitarCompEdit('"+pid+"',"+i+","+k+")")+'">✕</button>'+
+              '</span>';
+            }).join('')+
+            (COMP_SUBIENDO>0
+              ? '<span style="font-size:.78rem;color:var(--muted)"><span class="spin"></span> Subiendo…</span>'
+              : (cs.length<COMP_MAX
+                  ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="'+esc("ctaAdjuntarEdit('"+pid+"',"+i+")")+'">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar '+nombreComprobante(CTA_EDIT_M))+'</button>'
+                  : '<span style="font-size:.74rem;color:var(--muted)">ya tiene las '+COMP_MAX+'</span>'))+
+          '</div>'+
+          (cs.length?'':'<div style="font-size:.72rem;color:var(--amber);font-weight:700;margin-top:3px">⚠️ Este pago no tiene ninguna imagen de respaldo.</div>')+
+        '</div>'+
         '<div style="display:flex;gap:7px;margin-top:10px">'+
           '<button class="btn btn-primary btn-sm" style="flex:1" onclick="'+esc("ctaGuardarPago('"+pid+"',"+i+")")+'">💾 Guardar</button>'+
           '<button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaEditarPago('"+pid+"',-1)")+'">Cancelar</button>'+
@@ -3150,7 +3171,7 @@ function contaPagosHtml(p){
           (c.anticipo?'Cambiar el monto del adelanto <b>no mueve el total de la venta</b>: ajusta lo que falta cobrar.'
             :(esEnvio(c)?'Este es el <b>recargo por entrega</b>: va aparte y no le baja el saldo a la venta.'
                        :'Cambiar el monto <b>no mueve el total de la venta</b>: ajusta lo que falta cobrar.'))+
-          ' El comprobante no se toca.</div>'+
+          ' Las imágenes se agregan y se quitan acá mismo, y se guardan solas — no hace falta tocar «Guardar».</div>'+
       '</div>';
     }
     var otroMes=pagoOtroMes(p, c);
@@ -3198,8 +3219,10 @@ function onCompElegido(ev){
   var yaTiene = !destino ? compsArr(CTA_PAGO.comps).length
     : destino.envio
       ? (function(){ var c=enviosDe(p)[0]; return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
-      : (function(){ var a=cobrosDe(p), c=a[destino.idx];
-          return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })();
+      : destino.anticipo
+        ? (function(){ var c=anticipoDe(p); return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
+        : (function(){ var a=cobrosDe(p), c=a[destino.idx];
+            return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })();
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; showContaModal(p.id);          // que se vea "⏳ Subiendo…" desde ya
@@ -3222,6 +3245,12 @@ function onCompElegido(ev){
         aplicarEnvios(p, ae);
       }
       toast('Comprobante del recargo adjuntado ✓','ok');
+      showContaModal(p.id);
+    }else if(destino && destino.anticipo){
+      // Al ADELANTO: su renglón se reescribe aparte (no está en la lista de cobros).
+      var a0=anticipoDe(p);
+      if(a0) aplicarCompsAnticipo(p, compsArr(a0.comps!=null?a0.comps:a0.comp).concat([res.fotoId]));
+      toast('Comprobante del adelanto adjuntado ✓','ok');
       showContaModal(p.id);
     }else if(destino){
       // A un pago YA registrado: se reescribe ese renglón con su comprobante.
@@ -3274,6 +3303,14 @@ function ctaQuitarComp(id, idx, k){
    ------------------------------------------------------------------------- */
 var CTA_EDIT_I=-1;                        // qué renglón está abierto (-1 = ninguno)
 var CTA_EDIT_M='', CTA_EDIT_B='';         // método y banco mientras se edita
+/* ⚠️ Subir o quitar una imagen repinta la ficha entera, y eso borraba la fecha, el monto
+   y el n° de recibo que se estuvieran tipeando. Se guardan antes de repintar. */
+var CTA_EDIT_V=null;
+function ctaEditRecordar(){
+  var f=document.getElementById('cta-ed-fecha'), m=document.getElementById('cta-ed-monto'),
+      n=document.getElementById('cta-ed-nota');
+  CTA_EDIT_V=(f&&m&&n) ? {fecha:f.value, monto:m.value, nota:n.value} : null;
+}
 var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recargo pactado?
 /* ---- Cuánto falta cobrar de FLETE ----
    Solo se podía poner al cargar el pedido. Si el flete cambiaba, o se lo olvidaban, no
@@ -3300,9 +3337,9 @@ function ctaGuardarEnvio(id){
 }
 function ctaEditarPago(id, i){
   var p=findById(id); if(!p) return;
-  if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; showContaModal(id); return; }
+  if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(id); return; }
   var c=contaPagos(p)[i]; if(!c) return;
-  CTA_EDIT_I=i;
+  CTA_EDIT_I=i; CTA_EDIT_V=null;
   CTA_EDIT_M=metodoBase(c.metodo)||String(c.metodo||'')||'Efectivo';
   CTA_EDIT_B=c.banco||'';
   showContaModal(id);
@@ -3356,7 +3393,7 @@ function ctaGuardarPago(id, i){
     arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco;
     aplicarCobros(p, arr, objetivo);
   }
-  CTA_EDIT_I=-1;
+  CTA_EDIT_I=-1; CTA_EDIT_V=null;
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota,'ok');
   reabrirFicha(id);
@@ -3407,6 +3444,49 @@ function ctaBorrarEnvio(id){
   showContaModal(id);
 }
 /* Reescribe SOLO los recargos, dejando intactos el anticipo y los cobros de la venta. */
+/* ---- 📎 Las imágenes del ANTICIPO ----
+   El anticipo NO está en la lista de cobros (`cobrosDe`): `ctaIdxCobro` le devuelve -1 y
+   por eso era el ÚNICO pago al que no se le podía adjuntar ni quitar una imagen. Y es el
+   más común: es el que carga la vendedora junto con el pedido, así que si se olvidaba la
+   captura, esa venta se quedaba sin respaldo para siempre.
+   Se reescribe solo su renglón del historial: no toca el monto, ni el saldo, ni el resto. */
+function aplicarCompsAnticipo(p, comps){
+  var ant=anticipoDe(p); if(!ant) return false;
+  ant=JSON.parse(JSON.stringify(ant));
+  ant.comps=compsArr(comps); ant.comp=ant.comps[0]||''; ant.anticipo=true;
+  var cobros=cobrosDe(p), env=enviosDe(p);          // ⚠️ leerlos ANTES de pisar metodoPago
+  p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
+  persistPedido(p);
+  return true;
+}
+/* 📎 Adjuntar desde el editor «Corregir este pago». Sirve para los TRES renglones
+   (anticipo, cobro y recargo por entrega); cada uno se guarda por su propio camino. */
+function ctaAdjuntarEdit(id, i){
+  var p=findById(id); if(!p) return;
+  if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  var c=contaPagos(p)[i]; if(!c) return;
+  ctaEditRecordar();                                // que no se pierda lo tipeado al repintar
+  COMP_DESTINO = esEnvio(c)  ? {id:id, envio:true}
+               : c.anticipo  ? {id:id, anticipo:true}
+                             : {id:id, idx:ctaIdxCobro(p, i, c)};
+  var el=document.getElementById('comp-input'); if(!el) return;
+  el.value=''; el.dataset.pedido=id; el.click();
+}
+function ctaQuitarCompEdit(id, i, k){
+  var p=findById(id); if(!p) return;
+  var c=contaPagos(p)[i]; if(!c) return;
+  ctaEditRecordar();
+  if(esEnvio(c))   return ctaEnvioQuitarComp(id, k);
+  if(!c.anticipo)  return ctaQuitarComp(id, ctaIdxCobro(p, i, c), k);
+  var cs=compsArr(c.comps!=null?c.comps:c.comp);
+  if(k==null || k<0 || k>=cs.length) return;
+  if(!confirm('¿Quitar esta imagen del pago?')) return;
+  var fuera=cs[k];
+  aplicarCompsAnticipo(p, cs.filter(function(x,j){ return j!==k; }));
+  if(CONNECTED) apiBorrarFoto(fidLimpio(fuera));
+  toast('Imagen quitada','ok');
+  showContaModal(id);
+}
 function aplicarEnvios(p, arr){
   var ant=anticipoDe(p), cobros=cobrosDe(p);
   var env=(arr||[]).map(function(c){ c.envio=true; c.anticipo=false; return c; })

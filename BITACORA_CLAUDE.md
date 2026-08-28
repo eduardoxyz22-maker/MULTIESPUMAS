@@ -2280,6 +2280,43 @@ ubicación no se manda un aviso a sí misma.
   que quita `tryUnlock()`. Sin eso TODO mide "oculto" y el test no distingue lo que plegó el
   botón de lo que ya estaba tapado.
 
+## 4bg. 📎 Adjuntar el comprobante que falta desde «Corregir este pago» (2026-08-28)
+
+Pedido del usuario, con captura: *"Contabilidad, botón corregir, al usarlo debería tb salir
+la opción de adjuntar imagen por si se olvidaron alguna en ese pago ya registrado"*.
+
+**Y el agujero de fondo que apareció ahí:** el **ADELANTO** no está en la lista de cobros
+(`cobrosDe`), así que `ctaIdxCobro` le devuelve `-1` — y los botones de adjuntar en
+`contaPagosHtml` estaban todos detrás de `idx>=0`. O sea que el anticipo era el **ÚNICO**
+pago sin forma de adjuntarle ni quitarle una imagen… y es el más común: el que carga la
+vendedora junto con el pedido. Olvidada la captura, esa venta se quedaba sin respaldo para
+siempre. (Justo el renglón de la captura del usuario.)
+
+**Cómo quedó**
+- Dentro de `cajaEdit` («Corregir este pago») va la sección **📎 Imágenes de respaldo**: las
+  que ya tiene con su ✕, el botón para sumar otra (tope `COMP_MAX`) y, si no tiene ninguna,
+  el aviso ámbar. Vale para los **tres** renglones: anticipo, cobro y recargo por entrega.
+- `ctaAdjuntarEdit(id,i)` / `ctaQuitarCompEdit(id,i,k)` despachan por tipo de renglón;
+  `aplicarCompsAnticipo(p, comps)` es el camino nuevo del adelanto — reescribe **solo** su
+  renglón del ledger (⚠️ lee `cobrosDe`/`enviosDe` ANTES de pisar `p.metodoPago`) y no toca
+  monto, saldo ni total.
+- `onCompElegido` gana la rama `destino.anticipo` (y su cuenta de `yaTiene`).
+- **`CTA_EDIT_V`**: subir o quitar una imagen repinta la ficha entera con `showContaModal`,
+  y eso borraba la fecha/monto/recibo que se estuvieran tipeando. Se capturan con
+  `ctaEditRecordar()` antes de repintar y se restauran al pintar los inputs; se descartan al
+  abrir, cerrar o guardar el editor (reabrirlo muestra el valor de verdad, no el descartado).
+- El pie del editor decía **«El comprobante no se toca»** — ya no es cierto: ahora explica
+  que las imágenes se guardan solas y no hace falta tocar «Guardar».
+
+Sube por el mismo canal de siempre (`apiFoto`, `action:'foto'`), así que **no hace falta
+tocar el Apps Script**.
+
+- Test: `tests/test_compedit.js` (**32 checks**) — cubre los tres renglones, que la imagen no
+  se le cuele a otro pago, que la plata no se mueva ni un centavo (adelanto, cobrado, saldo,
+  total y el historial con sus fechas/recibos/banco), el borrado en Drive y lo tipeado.
+  Contra `origin/main`: falla y revienta con `ctaAdjuntarEdit is not defined`.
+- Batería: **16 suites · 344 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
