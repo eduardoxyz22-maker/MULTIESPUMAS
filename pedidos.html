@@ -203,7 +203,7 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 
 /* Consolidados: 3 columnas de texto estiradas a 900px dejan huecos enormes
    entre el vendedor y su monto. Se limitan y quedan legibles */
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;max-width:1400px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px;max-width:1400px;align-items:start}
 @media(max-width:820px){.two-col{grid-template-columns:1fr}}
 .panel{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);overflow:hidden}
 .panel-h{padding:12px 16px;font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:var(--text);border-bottom:1px solid var(--gray-lt);display:flex;justify-content:space-between;align-items:center}
@@ -421,6 +421,28 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 .cua-dif-mal{color:var(--red);font-weight:800}
 .cua-alerta{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-lt);font-size:.83rem}
 .cua-alerta:last-child{border-bottom:none}
+/* ---- Avisos plegables (§4bk): un titular por renglón, y los nombres se abren al tocar.
+   Antes cada aviso volcaba TODOS los nombres como un párrafo corrido y el panel medía
+   926px: había que scrollear media pantalla para pasarlo. ---- */
+.cua-gr{margin:14px 0 4px;font-size:.64rem;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}
+.cua-gr:first-child{margin-top:2px}
+.cua-av{display:flex;gap:9px;align-items:flex-start;padding:7px 9px;border-radius:9px;font-size:.83rem;cursor:pointer;border-left:3px solid var(--gray-md);background:#fff;margin-bottom:3px;transition:background .12s}
+.cua-av:hover{background:var(--gray-lt)}
+.cua-av.sev-plata{border-left-color:var(--red)}
+.cua-av.sev-datos{border-left-color:var(--amber)}
+.cua-av.sev-mirar{border-left-color:var(--gray-md)}
+.cua-av .av-txt{flex:1;min-width:0}
+.cua-av .av-n{flex:none;align-self:center;font-size:.72rem;font-weight:800;color:var(--muted);background:var(--gray-lt);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.cua-av.on .av-n{background:var(--teal-lt);color:var(--teal-dk)}
+.cua-det{padding:2px 0 10px 32px}
+.cua-chip{display:inline-block;background:#fff;border:1px solid var(--gray-md);border-radius:999px;padding:2px 10px;margin:0 4px 4px 0;font-size:.75rem;color:var(--muted);cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
+.cua-chip:hover{background:var(--teal-lt);border-color:var(--teal);color:var(--teal-dk)}
+.cua-chip.plano{cursor:default}
+.cua-chip.plano:hover{background:#fff;border-color:var(--gray-md);color:var(--muted)}
+/* Los avisos tienen texto largo; «Por cobrar» es una tabla angosta de tres columnas.
+   Repartir mitad y mitad hacía que el texto de los avisos envolviera de más. */
+.cua-2col{grid-template-columns:1.8fr 1fr}
+@media(max-width:1100px){.cua-2col{grid-template-columns:1fr}}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
@@ -859,9 +881,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="metrics" id="cua-metrics"></div>
         <div id="cua-cierre"></div>
         <div id="cua-retiros"></div>
-        <div class="two-col">
-          <div id="cua-pendientes"></div>
+        <div class="two-col cua-2col">
           <div id="cua-alertas"></div>
+          <div id="cua-pendientes"></div>
         </div>
         </div><!-- /cua-resumen -->
         <div id="cua-detalle"></div>
@@ -2415,7 +2437,7 @@ function tramosDeudaHtml(pend){
 function cuadreAlertas(pagos){
   var A=[];
   var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
-  if(sinNota.length) A.push({ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return {txt:(c.p.cliente||'—')+' · '+fmtBs(c.monto), id:c.p.id}; })});
+  if(sinNota.length) A.push({k:'sinnotapago', sev:'datos', ico:'🧾', txt:'<b>'+sinNota.length+'</b> pago'+(sinNota.length===1?'':'s')+' sin N° de nota de venta — no se pueden cruzar con el talonario', det:sinNota.map(function(c){ return {txt:(c.p.cliente||'—')+' · '+fmtBs(c.monto), id:c.p.id}; })});
   /* Dos problemas MUY distintos que antes salían mezclados como "pagos sin fecha":
      - sin fecha pero CON monto → es un pago de verdad, solo falta cuándo entró.
      - sin monto → es una venta que la vendedora marcó PAGADA sin anotar cuánto
@@ -2452,25 +2474,25 @@ function cuadreAlertas(pagos){
       else if(c.fecha>todayStr() || (contaFecha(p) && c.fecha<contaFecha(p))) fechaRara.push({p:p,c:c});
     });
   });
-  if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
-  if(sinMonto.length) A.push({ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
-  if(sinNada.length) A.push({ico:'❓', txt:'<b>'+sinNada.length+'</b> venta'+(sinNada.length===1?'':'s')+' <b>sin ningún monto anotado</b> — ni pagada, ni a cuenta, ni saldo. <b>No se sabe cuánto vale ni si el cliente pagó</b>: hay que abrirla y completarla antes de entregar', det:sinNada.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
+  if(sinMonto.length) A.push({k:'sinmonto', sev:'datos', ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  if(sinNada.length) A.push({k:'sinnada', sev:'datos', ico:'❓', txt:'<b>'+sinNada.length+'</b> venta'+(sinNada.length===1?'':'s')+' <b>sin ningún monto anotado</b> — ni pagada, ni a cuenta, ni saldo. <b>No se sabe cuánto vale ni si el cliente pagó</b>: hay que abrirla y completarla antes de entregar', det:sinNada.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin
      cobrar, es plata que la empresa no vio y que nadie va a reclamar solo. */
   var fletes=cuadreFletesPend();
   if(fletes.length){
     var fBs=0; fletes.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
-    A.push({ico:'🚚', txt:'<b>'+fletes.length+'</b> entrega'+(fletes.length===1?'':'s')+' con el <b>recargo por entrega sin cobrar</b> — '+fmtBs(fBs)+' que todavía no entró',
+    A.push({k:'flete', sev:'plata', ico:'🚚', txt:'<b>'+fletes.length+'</b> entrega'+(fletes.length===1?'':'s')+' con el <b>recargo por entrega sin cobrar</b> — '+fmtBs(fBs)+' que todavía no entró',
              det:fletes.map(function(p){ return {txt:(p.cliente||'—')+' · '+fmtBs(envioPorCobrar(p))+(p.vendedor?(' · '+p.vendedor):''), id:p.id}; })});
   }
   var sinSistema={};
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
-  if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  if(ss.length) A.push({k:'sistema', sev:'datos', ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* 🚚💰 Entregado Y debiendo: la mercadería ya salió y la plata no entró. */
   if(entregadoDebe.length){
     var edBs=0; entregadoDebe.forEach(function(p){ edBs=r2(edBs+(Number(p.saldo)||0)); });
-    A.push({ico:'🚚', txt:'<b>'+entregadoDebe.length+'</b> venta'+(entregadoDebe.length===1?'':'s')+
+    A.push({k:'entregado', sev:'plata', ico:'🚚', txt:'<b>'+entregadoDebe.length+'</b> venta'+(entregadoDebe.length===1?'':'s')+
       ' <b>ya entregada'+(entregadoDebe.length===1?'':'s')+' y todavía sin cobrar</b> — '+fmtBs(edBs)+
       ' que está en la calle: la mercadería salió y la plata no entró',
       det:entregadoDebe.slice().sort(function(a,b){ return (Number(b.saldo)||0)-(Number(a.saldo)||0); })
@@ -2481,7 +2503,7 @@ function cuadreAlertas(pagos){
      poder compararlas de un toque. */
   var dup=indiceDuplicados(enPeriodo);
   if(dup.n){
-    A.push({ico:'👯', txt:'<b>'+dup.n+'</b> venta'+(dup.n===1?'':'s')+' que puede'+(dup.n===1?'':'n')+
+    A.push({k:'dup', sev:'plata', ico:'👯', txt:'<b>'+dup.n+'</b> venta'+(dup.n===1?'':'s')+' que puede'+(dup.n===1?'':'n')+
       ' estar <b>cargada'+(dup.n===1?'':'s')+' dos veces</b> — revisalas antes de facturar',
       det:dup.grupos.map(function(g){
         var q=g.ps[0];
@@ -2497,7 +2519,7 @@ function cuadreAlertas(pagos){
      se cobró de verdad), o alguien la reusó. Nadie lo miraba y el dato ya estaba guardado. */
   var repes=compRepetidos(enPeriodo);
   if(repes.length){
-    A.push({ico:'🖼️', txt:'<b>'+repes.length+'</b> comprobante'+(repes.length===1?'':'s')+
+    A.push({k:'compdup', sev:'plata', ico:'🖼️', txt:'<b>'+repes.length+'</b> comprobante'+(repes.length===1?'':'s')+
       ' <b>usado'+(repes.length===1?'':'s')+' en más de una venta</b> — la misma imagen no puede respaldar dos pagos: o la plata entró una sola vez, o hay que cambiarle el respaldo a una',
       det:repes.map(function(g){
         return {txt:g.ps.map(function(p){ return (p.cliente||'—'); }).join(' + ')+' · '+fmtBs(ventaTotal(g.ps[0])), id:g.ps[0].id};
@@ -2505,14 +2527,14 @@ function cuadreAlertas(pagos){
   }
   /* 📆 Pagos con fecha imposible. */
   if(fechaRara.length){
-    A.push({ico:'📆', txt:'<b>'+fechaRara.length+'</b> pago'+(fechaRara.length===1?'':'s')+
+    A.push({k:'fecharara', sev:'datos', ico:'📆', txt:'<b>'+fechaRara.length+'</b> pago'+(fechaRara.length===1?'':'s')+
       ' con <b>fecha imposible</b> — anterior a la venta o a futuro: cae en el día equivocado del cuadre',
       det:fechaRara.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+' · pago '+fmtFechaCorta(x.c.fecha)+
         ' vs venta '+fmtFechaCorta(contaFecha(x.p)), id:x.p.id}; })});
   }
   /* 🧮 Los precios no dan el total anotado. */
   if(descuadre.length){
-    A.push({ico:'🧮', txt:'<b>'+descuadre.length+'</b> venta'+(descuadre.length===1?'':'s')+
+    A.push({k:'descuadre', sev:'datos', ico:'🧮', txt:'<b>'+descuadre.length+'</b> venta'+(descuadre.length===1?'':'s')+
       ' donde <b>los precios de los productos no dan el total anotado</b> — uno de los dos números está mal',
       det:descuadre.map(function(p){ var d=difPrecios(p);
         return {txt:(p.cliente||'—')+' · productos '+fmtBs(prodTotal(p))+' vs venta '+fmtBs(ventaTotal(p))+
@@ -2522,7 +2544,7 @@ function cuadreAlertas(pagos){
   var sinResp=(pagos||[]).filter(function(c){ return c.monto>0 && !compsArr(c.comps).length; });
   if(sinResp.length){
     var srBs=0; sinResp.forEach(function(c){ srBs=r2(srBs+c.monto); });
-    A.push({ico:'📎', txt:'<b>'+sinResp.length+'</b> pago'+(sinResp.length===1?'':'s')+
+    A.push({k:'sinresp', sev:'datos', ico:'📎', txt:'<b>'+sinResp.length+'</b> pago'+(sinResp.length===1?'':'s')+
       ' <b>sin ninguna imagen de respaldo</b> — '+fmtBs(srBs)+' que no se puede probar. Se adjunta desde la ficha, en <b>✏️ Corregir</b>',
       det:sinResp.map(function(c){ return {txt:(c.p.cliente||'—')+' · '+fmtBs(c.monto)+' · '+fmtFechaCorta(c.fecha), id:c.p.id}; })});
   }
@@ -2531,7 +2553,7 @@ function cuadreAlertas(pagos){
   for(var kc in porCliente) if(porCliente[kc].length>1) variasNotas.push(porCliente[kc]);
   if(variasNotas.length){
     variasNotas.sort(function(a,b){ return b.length-a.length; });
-    A.push({ico:'👥', txt:'<b>'+variasNotas.length+'</b> cliente'+(variasNotas.length===1?'':'s')+
+    A.push({k:'varias', sev:'mirar', ico:'👥', txt:'<b>'+variasNotas.length+'</b> cliente'+(variasNotas.length===1?'':'s')+
       ' con <b>saldo en más de una venta</b> — conviene llamarlos una sola vez y cobrar todo junto',
       det:variasNotas.map(function(g){
         var t=0; g.forEach(function(p){ t=r2(t+(Number(p.saldo)||0)); });
@@ -2542,13 +2564,18 @@ function cuadreAlertas(pagos){
   var huecos=huecosTalonario(enPeriodo);
   if(huecos.length){
     var nFalt=0; huecos.forEach(function(h){ nFalt+=h.faltan.length; });
-    A.push({ico:'🔢', txt:'<b>'+nFalt+'</b> N° de nota <b>salteado'+(nFalt===1?'':'s')+' en el talonario</b>'+
+    A.push({k:'talonario', sev:'mirar', ico:'🔢', txt:'<b>'+nFalt+'</b> N° de nota <b>salteado'+(nFalt===1?'':'s')+' en el talonario</b>'+
       ' — puede ser una venta que nunca se cargó, o un recibo anulado',
-      det:huecos.map(function(h){ return {txt:h.vendedor+': falta'+(h.faltan.length===1?' la':'n las')+' '+h.faltan.join(', ')}; })});
+      /* Resumido: un chip por vendedora con CUÁNTOS le faltan, y los números en el globito.
+         Con 8 vendedoras y 82 faltantes, listarlos era un muro de ocho renglones. */
+      det:huecos.map(function(h){
+        return { txt:h.vendedor+' · '+h.faltan.length+' faltante'+(h.faltan.length===1?'':'s'),
+                 tip:'Falta'+(h.faltan.length===1?' la':'n las')+' '+h.faltan.join(', ') };
+      })});
   }
   var exceso=[];
   (pagos||[]).forEach(function(c){ if(excesoCobro(c.p)>0 && exceso.indexOf(c.p)<0) exceso.push(c.p); });
-  if(exceso.length) A.push({ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return {txt:(p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)), id:p.id}; })});
+  if(exceso.length) A.push({k:'exceso', sev:'plata', ico:'⚠️', txt:'<b>'+exceso.length+'</b> venta'+(exceso.length===1?'':'s')+' con <b>cobro de más</b>', det:exceso.map(function(p){ return {txt:(p.cliente||'—')+' · sobra '+fmtBs(excesoCobro(p)), id:p.id}; })});
   return A;
 }
 /* Los nombres de cada aviso se pueden TOCAR y abren esa venta.
@@ -2556,15 +2583,60 @@ function cuadreAlertas(pagos){
    buscaba en el detalle de abajo y no las encontraba nunca: ese detalle lista PAGOS,
    y estas ventas justamente no tienen ninguno. Ahora se abren desde el propio aviso. */
 var ALERTA_DET_MAX=8;
+/* ============================================================================
+   🔎 EL PANEL DE AVISOS, PLEGADO (§4bk)
+   Antes cada aviso volcaba todos los nombres como un párrafo corrido: con la planilla de
+   agosto el panel medía 926px y había que scrollear media pantalla para pasarlo. Ahora
+   cada aviso es UN titular —que ya dice lo importante: cuántos y cuánta plata— y los
+   nombres se abren al tocarlo.
+   Van agrupados por gravedad, porque no es lo mismo plata que se puede perder que un dato
+   incompleto. Los de PLATA arrancan abiertos; el resto, plegados. */
+var CUA_SEV=[{k:'plata', lbl:'🔴 Plata en juego'},
+             {k:'datos', lbl:'🟡 Datos incompletos — frenan el cierre'},
+             {k:'mirar', lbl:'⚪ Para mirar'}];
+var CUA_AV_ABIERTO=null;       // null = todavía nadie tocó nada: manda el default por gravedad
+function avisoAbierto(a){
+  if(CUA_AV_ABIERTO && CUA_AV_ABIERTO[a.k]!=null) return !!CUA_AV_ABIERTO[a.k];
+  return a.sev==='plata';
+}
+function cuaToggleAviso(k){
+  if(!CUA_AV_ABIERTO) CUA_AV_ABIERTO={};
+  var al=CUA_AL_ULT||[], a=null;
+  for(var i=0;i<al.length;i++) if(al[i].k===k) a=al[i];
+  CUA_AV_ABIERTO[k]=!(a?avisoAbierto(a):false);
+  renderCuadre();
+}
+var CUA_AL_ULT=[];
+function avisosHtml(al){
+  CUA_AL_ULT=al||[];
+  var out='';
+  CUA_SEV.forEach(function(g){
+    var ls=(al||[]).filter(function(a){ return (a.sev||'datos')===g.k; });
+    if(!ls.length) return;
+    out+='<div class="cua-gr">'+g.lbl+'</div>';
+    ls.forEach(function(a){
+      var abierto=avisoAbierto(a), n=(a.det||[]).length;
+      out+='<div class="cua-av sev-'+esc(a.sev||'datos')+(abierto?' on':'')+'" onclick="'+esc("cuaToggleAviso('"+a.k+"')")+'">'+
+        '<span style="font-size:1.05rem;flex:none">'+a.ico+'</span>'+
+        '<div class="av-txt">'+a.txt+'</div>'+
+        (n?('<span class="av-n">'+(abierto?'▾':'▸')+' '+n+'</span>'):'')+
+      '</div>';
+      if(abierto && n) out+='<div class="cua-det">'+alertaDetHtml(a.det)+'</div>';
+    });
+  });
+  return out;
+}
 function alertaDetHtml(det){
   det=det||[];
   var html=det.slice(0,ALERTA_DET_MAX).map(function(d){
     var t=esc(typeof d==='string' ? d : (d&&d.txt)||'');
-    if(!d || !d.id) return t;
-    return '<span onclick="showContaModal('+JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
-      ' style="cursor:pointer;border-bottom:1px dashed currentColor" title="Abrir esta venta para corregirla">'+t+'</span>';
-  }).join(' · ');
-  if(det.length>ALERTA_DET_MAX) html+=' … +'+(det.length-ALERTA_DET_MAX);
+    var tip=(d&&d.tip)?(' title="'+esc(d.tip)+'"'):'';
+    if(!d || !d.id) return '<span class="cua-chip plano"'+(tip||' title="'+t+'"')+'>'+t+'</span>';
+    return '<span class="cua-chip" onclick="event.stopPropagation();showContaModal('+
+      JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
+      (tip||' title="Abrir esta venta para corregirla"')+'>'+t+'</span>';
+  }).join('');
+  if(det.length>ALERTA_DET_MAX) html+='<span class="cua-chip plano" title="Se muestran los primeros '+ALERTA_DET_MAX+'">… y '+(det.length-ALERTA_DET_MAX)+' más</span>';
   return html;
 }
 function renderCuadre(){
@@ -2698,11 +2770,8 @@ function renderCuadre(){
   pintarResumenCua();
   av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
-    (al.length ? al.map(function(a){
-        return '<div class="cua-alerta"><span style="font-size:1.05rem">'+a.ico+'</span><div><div>'+a.txt+'</div>'+
-          '<div style="color:var(--muted);font-size:.78rem;margin-top:2px">'+alertaDetHtml(a.det)+'</div></div></div>';
-      }).join('')+
-      '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 Tocá un <b>nombre</b> para abrir esa venta y corregirla ahí mismo.</div>'
+    (al.length ? avisosHtml(al)+
+      '<div style="font-size:.72rem;color:var(--muted);margin-top:10px">💡 Tocá un <b>renglón</b> para ver los nombres, y un <b>nombre</b> para abrir esa venta y corregirla.</div>'
     : '<div class="empty" style="padding:16px 0">✅ Todo en orden: nada pendiente de revisar.</div>')+
     '</div>';
 

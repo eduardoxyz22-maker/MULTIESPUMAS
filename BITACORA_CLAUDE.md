@@ -2426,6 +2426,46 @@ retiros, por cobrar y avisos, y deja la planilla de pagos arriba. Plegado, el bo
 - Batería: **19 suites · 449 checks · 0 fallas**.
 - La trampa del `apiList` vacío picó por tercera vez (ya estaba en `tests/LEEME.md`).
 
+## 4bk. 📐 El panel de avisos, plegado (2026-08-29)
+
+El usuario mandó la captura: *"se ve fatal, hace que uno tenga que scrollear mucho, y hay
+demasiado espacio perdido y sin usar"*. **Se midió antes de opinar** (`/tmp/medir.js`, 176
+ventas simuladas) y eran DOS problemas, no uno:
+
+| | antes |
+|---|---|
+| `cua-alertas` | **926 px** — cada aviso volcaba los nombres como párrafo corrido |
+| `cua-pendientes` | **926 px** con ~250 px de contenido |
+
+Lo segundo no era falta de contenido: `.two-col` es un **grid**, y el grid **estira las dos
+cajas a la altura de la más alta**. Esos ~670 px de blanco eran la grilla, no un descuido.
+
+**Lo que se hizo** (el usuario eligió el rediseño completo):
+- `align-items:start` en `.two-col` — mata el estiramiento en TODA la app, una línea.
+- `avisosHtml()` — cada aviso es **un titular** (el texto ya dice cuántos y cuánta plata) con
+  un contador `▸ 64` a la derecha; se toca y se abren los nombres. `cuaToggleAviso(k)` +
+  `CUA_AV_ABIERTO`. Por eso cada aviso lleva ahora `k` (clave estable) y `sev`.
+- **Agrupados por gravedad**: 🔴 plata en juego (abiertos por defecto) · 🟡 datos incompletos ·
+  ⚪ para mirar. Barra de color a la izquierda de cada renglón.
+- Los nombres pasan de párrafo subrayado a **chips** (`.cua-chip`).
+- El talonario, **resumido**: «María Flores · 25 faltantes», con los números en el `title`.
+  Con 8 vendedoras y 82 faltantes era un muro de ocho renglones.
+
+**⚠️ La opción C se dio vuelta al medirla.** Sacar los avisos a lo ancho y apilarlos daba
+482+490 = **972 px**, PEOR que los 926 originales: cada caja quedaba bien pero el total
+crecía. Lado a lado con `align-items:start` la fila mide lo que la más alta, no la suma. Se
+probaron proporciones (1.3 / 1.6 / 1.8 / 2fr) y quedó **1.8fr 1fr**: los avisos tienen texto
+largo y «Por cobrar» es una tabla angosta de tres columnas.
+
+**Resultado: la fila de 926 → 582 px (−37 %)**, y el blanco de la izquierda desaparece.
+
+- Tests: `test_revisar.js` **58 → 69** (agrupado, plegado por defecto según gravedad, abrir y
+  cerrar, chips, y que el grid no estire).
+- Batería: **19 suites · 460 checks · 0 fallas**.
+- ⚠️ Dos fallas del test fueron del test, no del panel: extraer la clave con
+  `replace(/[^a-z]/g,'')` se comía la T de «Toggle», y `a||'?'+':'+b` se agrupa como
+  `a||('?'+':'+b)` — la precedencia se comió el sufijo. El panel estaba bien las dos veces.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

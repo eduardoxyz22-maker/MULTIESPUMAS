@@ -239,6 +239,14 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout tip"><b>⏳ Antigüedad de la deuda</b> <span class="pill new">nuevo</span> — arriba de «Por cobrar» hay cuatro cuadritos con cuánta plata hay en cada tramo: <b>0 a 15 días</b>, <b>16 a 30</b>, <b>31 a 60</b> y <b>más de 60</b>. Los de +60 son los que casi nunca se cobran solos.</div>
     <div class="callout new">🔎 <b>Buscador en el detalle de los pagos</b> <span class="pill new">nuevo</span> — con 250 renglones no se encontraba nada. Ahora hay un campo arriba de la tabla que busca en <b>todo lo que se ve en la fila</b>: cliente, N° de nota del pago, N° de la venta, vendedor, forma de pago (y el banco del QR), monto y fecha.<br>
       Se pueden poner <b>varias palabras</b> y tienen que estar todas: <span class="kbd">mirian qr</span> trae los QR de Mirian. Y el título <b>suma lo filtrado</b> — <span class="kbd">2 de 4 · suman Bs 5.420,00</span> — así que no hay que sacar la cuenta a mano.</div>
+    <div class="callout new"><b>📐 Cómo leerlo</b> <span class="pill new">nuevo</span> — los avisos van <b>agrupados por gravedad</b> y cada uno ocupa <b>un solo renglón</b>:
+      <ul>
+        <li>🔴 <b>Plata en juego</b> — lo que se puede perder: entregado sin cobrar, comprobante repetido, cargadas dos veces, cobro de más, flete sin cobrar. Vienen <b>abiertos</b>.</li>
+        <li>🟡 <b>Datos incompletos</b> — frenan el cierre: sin fecha, sin monto, sin cargar al sistema, sin respaldo, precios que no cuadran.</li>
+        <li>⚪ <b>Para mirar</b> — informativos: cliente con varias notas, huecos del talonario.</li>
+      </ul>
+      A la derecha de cada renglón hay un contador (<span class="kbd">▸ 64</span>): <b>tocá el renglón</b> y se abren los nombres como chips; tocá un <b>chip</b> y se abre esa venta. En los huecos del talonario el chip dice <b>«María Flores · 25 faltantes»</b> y los números concretos salen al <b>apoyar el mouse encima</b>.<br>
+      Antes cada aviso volcaba todos los nombres de corrido y el panel medía <b>926 px</b> — media pantalla de scroll. Ahora mide <b>582</b>, y la caja de «Por cobrar» ya no se estira al alto de los avisos (esos ~670 px de blanco que quedaban abajo a la izquierda).</div>
     <div class="callout tip"><b>🙈 Ocultar resumen</b> <span class="pill new">nuevo</span> — arriba a la derecha del Cuadre, para dejar la <b>planilla de pagos</b> arriba de todo cuando hay que trabajar con ella. Se pliegan los cierres, los retiros, el por cobrar y los avisos.<br>
       <b>Plegado, el botón no te deja olvidarte:</b> dice en rojo <span class="kbd">🔎 4 por revisar</span> y cuánto falta cobrar. Queda guardado en tu computadora y no le cambia la pantalla a nadie más.</div>
   </div>

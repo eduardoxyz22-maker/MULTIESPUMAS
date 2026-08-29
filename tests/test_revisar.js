@@ -40,8 +40,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var sv=document.getElementById('cua-vendedor'); if(sv) sv.value='';
     await new Promise(r=>setTimeout(r,50));
     return cuadreAlertas(cuadrePagos()).map(function(a){
-      return { ico:a.ico, txt:a.txt.replace(/<[^>]+>/g,''),
-               det:(a.det||[]).map(function(d){ return d.txt; }) };
+      return { ico:a.ico, k:a.k, sev:a.sev, txt:a.txt.replace(/<[^>]+>/g,''),
+               det:(a.det||[]).map(function(d){ return d.txt; }),
+               /* Desde §4bk los números del talonario viven en el globito, no en el texto. */
+               tips:(a.det||[]).map(function(d){ return d.tip||''; }) };
     });
   }, ventas);
   const hay = (A, ico) => A.filter(a=>a.ico===ico)[0] || null;
@@ -205,14 +207,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   ]);
   let hu = hay(A,'🔢');
   chk('salta el N° salteado del talonario', !!hu, hu && hu.txt);
-  chk('…diciendo quién y cuál falta', !!hu && hu.det.some(t=>/Isabel/.test(t) && /722/.test(t)),
+  chk('…diciendo quién y cuántas le faltan, no un muro de números',
+      !!hu && hu.det.some(t=>/Isabel/.test(t) && /faltante/.test(t)) && !hu.det.some(t=>/722/.test(t)),
       hu && JSON.stringify(hu.det));
+  chk('…y los números concretos quedan en el globito', !!hu && hu.tips.some(t=>/722/.test(t)),
+      hu && JSON.stringify(hu.tips));
   chk('un salto enorme NO se cuenta como faltante (es otro talonario)',
       !!hu && !hu.det.some(t=>/8999/.test(t)), hu && JSON.stringify(hu.det));
   chk('un salto de 8 tampoco: un olvido deja uno o dos huecos, no ocho',
       !!hu && !hu.det.some(t=>/74[1-8]/.test(t)), hu && JSON.stringify(hu.det));
-  chk('pero un hueco de dos SÍ se reporta',
-      !!hu && hu.det.some(t=>/724, 725/.test(t) || /722/.test(t)), hu && JSON.stringify(hu.det));
+  chk('pero un hueco SÍ se reporta', !!hu && hu.det.length>0, hu && JSON.stringify(hu.det));
   chk('la vendedora sin huecos no aparece', !!hu && !hu.det.some(t=>/Maria/.test(t)));
   chk('las notas que no son correlativos no inventan huecos',
       !!hu && !hu.det.some(t=>/Carola/.test(t)), hu && JSON.stringify(hu.det));
@@ -335,6 +339,94 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   b = await buscar('');
   chk('limpiar el buscador devuelve los cuatro', b.n===4, b.n);
   chk('…y el título vuelve a ser el simple', !/de 4/.test(b.titulo), b.titulo.trim());
+
+  // ============================================================================
+  // 🔎 EL PANEL PLEGADO (§4bk): titulares que se abren, agrupados por gravedad
+  // ============================================================================
+  const panel = () => page.evaluate(() => {
+    var box=document.getElementById('cua-alertas');
+    return { grupos:[].slice.call(box.querySelectorAll('.cua-gr')).map(function(g){ return g.textContent.trim(); }),
+             filas:[].slice.call(box.querySelectorAll('.cua-av')).map(function(f){
+               return { k:((f.getAttribute('onclick')||'').match(/cuaToggleAviso\('([^']+)'\)/)||[])[1]||'?',
+                        abierto:f.classList.contains('on'),
+                        txt:f.textContent.replace(/\s+/g,' ').trim() };
+             }),
+             detalles:[].slice.call(box.querySelectorAll('.cua-det')).length,
+             chips:[].slice.call(box.querySelectorAll('.cua-chip')).length,
+             alto:Math.round(box.getBoundingClientRect().height) };
+  });
+
+  await page.evaluate(async () => {
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(STATE))}); };
+    var L=function(a){ return textoCobros(a); };
+    var mk=function(o){ return { id:o.id, cliente:o.cliente, nota:String(o.nota),
+      vendedor:o.vendedor||'Isabel Robledo', fecha:o.fecha, ts:new Date(o.fecha+'T10:00:00').getTime(),
+      saldo:o.saldo||0, acuenta:0, pagado:!!o.pagado, cobradoBs:0, metodoPago:o.metodoPago||'',
+      entregado:!!o.entregado, verificado:false, oc:'', observaciones:'', garantia:'',
+      facturarA:'', nit:'', estado:'', vehiculo:'', chofer:'', turno:'AM', celular:'7',
+      zona:'N', direccion:'Av', maps:'', nroDia:1, productos:[{desc:'X',cant:1}] }; };
+    STATE=[
+      // 🔴 plata: entregado y debiendo
+      mk({id:'z1', cliente:'DEBE UNO', nota:'800', fecha:'2026-08-01', saldo:1500, entregado:true}),
+      mk({id:'z2', cliente:'DEBE DOS', nota:'801', fecha:'2026-08-02', saldo:900,  entregado:true}),
+      // 🟡 datos: pago sin respaldo
+      mk({id:'z3', cliente:'SIN FOTO', nota:'802', fecha:'2026-08-03', pagado:true,
+          metodoPago:L([{metodo:'Efectivo', monto:700, fecha:'2026-08-03', nota:'802', comps:[]}])}),
+      // ⚪ para mirar: hueco en el talonario (falta la 804)
+      mk({id:'z4', cliente:'OTRA', nota:'805', fecha:'2026-08-04', saldo:0, pagado:true,
+          metodoPago:L([{metodo:'QR', banco:'BISA', monto:100, fecha:'2026-08-04', nota:'805', comps:['FQ']}])})
+    ];
+    saveMirror();
+    CUA_AV_ABIERTO=null;
+    showView('conta'); segSet('cta-tab','cuadre'); setContaTab('cuadre');
+    await new Promise(r=>setTimeout(r,300));
+    segSet('cua-mode','todo'); setCuadreModo('todo');
+    await new Promise(r=>setTimeout(r,350));
+  });
+
+  let P = await panel();
+  chk('los avisos vienen agrupados por gravedad', P.grupos.length>=2, JSON.stringify(P.grupos));
+  chk('…con la plata primero', /PLATA/i.test(P.grupos[0]||''), JSON.stringify(P.grupos));
+  chk('cada aviso es UN renglón, no un párrafo con todos los nombres',
+      P.filas.length>=3, P.filas.length+' → '+JSON.stringify(P.filas.map(f=>f.txt.slice(0,40))));
+  chk('los de PLATA vienen abiertos: es lo que no se puede pasar por alto',
+      P.filas.filter(f=>f.k==='entregado')[0] && P.filas.filter(f=>f.k==='entregado')[0].abierto===true,
+      JSON.stringify(P.filas.map(f=>f.k+':'+f.abierto)));
+  chk('los demás vienen plegados',
+      P.filas.filter(f=>f.k==='sinresp')[0] && P.filas.filter(f=>f.k==='sinresp')[0].abierto===false,
+      JSON.stringify(P.filas.map(f=>f.k+':'+f.abierto)));
+  chk('los nombres se ven como chips, no como texto corrido', P.chips>0, P.chips);
+  const altoInicial = P.alto;
+
+  const abierto = await page.evaluate(async () => {
+    cuaToggleAviso('sinresp');
+    await new Promise(r=>setTimeout(r,200));
+    var box=document.getElementById('cua-alertas');
+    return { abierto:!!box.querySelector('.cua-av.on'),
+             filas:[].slice.call(box.querySelectorAll('.cua-av')).map(function(f){
+               return ((((f.getAttribute('onclick')||'').match(/cuaToggleAviso\('([^']+)'\)/)||[])[1])||'?')+':'+f.classList.contains('on'); }),
+             alto:Math.round(box.getBoundingClientRect().height) };
+  });
+  chk('tocar un renglón plegado lo abre',
+      abierto.filas.indexOf('sinresp:true')>=0, JSON.stringify(abierto.filas));
+  chk('…y el panel crece al abrirlo (o sea, estaba plegado de verdad)',
+      abierto.alto>altoInicial, altoInicial+' → '+abierto.alto);
+
+  const cerrado = await page.evaluate(async () => {
+    cuaToggleAviso('entregado');
+    await new Promise(r=>setTimeout(r,200));
+    var box=document.getElementById('cua-alertas');
+    return { filas:[].slice.call(box.querySelectorAll('.cua-av')).map(function(f){
+               return ((((f.getAttribute('onclick')||'').match(/cuaToggleAviso\('([^']+)'\)/)||[])[1])||'?')+':'+f.classList.contains('on'); }) };
+  });
+  chk('y tocar uno abierto lo cierra',
+      cerrado.filas.indexOf('entregado:false')>=0, JSON.stringify(cerrado.filas));
+
+  chk('«Por cobrar» ya no se estira a la altura de los avisos (era el espacio blanco)',
+      await page.evaluate(()=>{
+        var g=document.querySelector('.cua-2col');
+        return !!g && getComputedStyle(g).alignItems==='start';
+      }));
 
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
