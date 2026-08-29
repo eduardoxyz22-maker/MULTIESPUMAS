@@ -1601,6 +1601,12 @@ function prodText(prods){ return (prods||[]).map(function(p){
    Guardar / editar (optimista + sincroniza en segundo plano)
    ========================================================================== */
 var EDIT_ID=null;
+/* ⚠️ DE DÓNDE SALIÓ LA EDICIÓN (§4bl).
+   `after()` terminaba SIEMPRE en `showView('admin')` porque editar era cosa de
+   administración. Desde que las vendedoras editan sus pedidos (§4bc), guardar las
+   escupía a la pantalla del candado pidiéndoles la contraseña — y sin confirmación:
+   parecía que el cambio no se había guardado. Ahora se vuelve a donde estaban. */
+var EDIT_DESDE='admin';
 function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
@@ -1632,6 +1638,40 @@ function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoLocal(new Date(t))
    aparecerían casi vacíos y ensuciarían los totales. Se los saca de la tabla, del
    desplegable, del resumen y del Excel. Sacar un nombre de acá lo devuelve a la vista. */
 var CONTA_EXCLUIR=['ROHO','Eduardo Añez'];
+/* ============================================================================
+   🛏️ LAS DOS MARCAS — SUEÑA y HEAVEN (§4bl)
+   El equipo vende dos marcas y cada una tiene su propia caja: no es lo mismo cuánto entró
+   en total que cuánto entró por cada una. La división es por vendedor y no por producto
+   porque cada vendedor trabaja una sola marca.
+   ⚠️ Coincide exactamente con `BANCOS_POR_VENDEDOR`, y no por casualidad: los de Sueña
+   cobran a Ganadero/Económico y los de Heaven a BISA/Económico. Son dos cajas de verdad.
+   Quien no esté en ninguna lista NO se reparte a la fuerza: se cuenta aparte y se avisa.
+   ========================================================================== */
+var MARCAS=[
+  {k:'suena',  lbl:'Sueña',  ico:'🛏️', col:'#c2410c',
+   vendedores:['Mauricio Merida','Juan Pablo Paredes','Fernando Peinado']},
+  {k:'heaven', lbl:'Heaven', ico:'💚', col:'#1d4ed8',
+   vendedores:['Jonathan Monje','Maria Flores','Isabel Robledo','Carola Chavez','Mirian Salazar']}
+];
+function marcaDe(v){
+  for(var i=0;i<MARCAS.length;i++){
+    var g=MARCAS[i];
+    for(var j=0;j<g.vendedores.length;j++) if(mismoVendedor(g.vendedores[j], v)) return g.k;
+  }
+  return '';
+}
+/* Cuánto entró por marca en los pagos que se están mirando. */
+function totalPorMarca(pagos){
+  var out={ suena:{bs:0,n:0,ventas:{}}, heaven:{bs:0,n:0,ventas:{}}, otros:{bs:0,n:0,ventas:{}} };
+  (pagos||[]).forEach(function(c){
+    var k=marcaDe(c.p&&c.p.vendedor)||'otros';
+    out[k].bs=r2(out[k].bs+(Number(c.monto)||0));
+    out[k].n++;
+    out[k].ventas[c.p.id]=1;
+  });
+  ['suena','heaven','otros'].forEach(function(k){ out[k].nv=Object.keys(out[k].ventas).length; });
+  return out;
+}
 function contaExcluido(v){
   // normNombre ya saca tildes y ñ, así que "Eduardo Añez" y "Eduardo Anez" caen igual.
   for(var i=0;i<CONTA_EXCLUIR.length;i++) if(mismoVendedor(CONTA_EXCLUIR[i], v)) return true;
@@ -2689,6 +2729,20 @@ function renderCuadre(){
        fletePend>0.01?fmtBs(fletePend):'✅ Nada',
        fletePend>0.01 ? (fletesN+' entrega'+(fletesN===1?'':'s')+' — se cobra al entregar y hay que reportarlo')
                       : 'no queda flete sin cobrar')+
+    /* 🛏️💚 Las dos marcas. Van juntas y con el % para que se lea de un vistazo cuánto
+       aportó cada caja — y si no suman 100, es que hay plata de alguien sin marca. */
+    (function(){
+      var M=totalPorMarca(pagos), out='';
+      var pc=function(bs){ return total>0.01 ? (Math.round(bs/total*100)+'% de lo que entró') : 'sin movimientos'; };
+      MARCAS.forEach(function(g){
+        var d=M[g.k];
+        out+=mc(g.col, g.ico+' '+g.lbl, fmtBs(d.bs),
+          d.nv ? (d.nv+' venta'+(d.nv===1?'':'s')+' · '+pc(d.bs)) : 'sin ventas en el período');
+      });
+      if(M.otros.bs>0.01) out+=mc('var(--amber)','⚠️ Sin marca',fmtBs(M.otros.bs),
+        M.otros.nv+' venta'+(M.otros.nv===1?'':'s')+' de vendedores que no están en ninguna marca');
+      return out;
+    })()+
     (anotadas
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
@@ -4790,9 +4844,10 @@ function submitPedido(){
      la vendedora le cambia algo, él tiene que enterarse: si no, el camión sale cargado
      con la lista de antes. El aviso queda pegado al pedido hasta que él toque
      «Ya lo revisé». Ver §4bc en la bitácora. */
+  var _difEdit = (isEdit && prev) ? difPedido(prev, rec) : [];
   if(isEdit && prev){
     var _modPrev=modDe(prev);
-    var _cambios=(teniaRevision(prev)||_modPrev) ? difPedido(prev, rec) : [];
+    var _cambios=(teniaRevision(prev)||_modPrev) ? _difEdit : [];
     if(_cambios.length){
       marcarModificado(rec, vendedor, _cambios);
       // Cambió lo que hay que cargar → ya no está "listo para cargar".
@@ -4922,13 +4977,19 @@ function submitPedido(){
   }
   }
   function after(wasEdit){
+    var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
     EDIT_ID=null; resetForm(); refreshDatalists();
     /* ⚠️ La venta de TIENDA también necesita el mensaje para el grupo. Antes se iba
        derecho a Contabilidad —el razonamiento era "no hay camión al que avisarle"— pero
        la vendedora igual tiene que pasar la venta, así que se quedaba sin el botón de
        copiar. Se le muestra el mensaje y, al cerrarlo, cae en Contabilidad como antes. */
     if(_tienda){ irAContaDe(rec); showWhatsappModal(rec); return; }
-    if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); }
+    /* ⚠️ Volver a DONDE ESTABA, no a Administración. Antes iba siempre a `showView('admin')`
+       —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
+       pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
+       confirmación: parecía que el cambio no se había guardado. */
+    if(wasEdit){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
+    showWhatsappModal(rec);
   }
 }
 
@@ -5097,7 +5158,7 @@ function pintarCampoOc(roho){
 }
 function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); }
 function resetForm(){
-  EDIT_ID=null;
+  EDIT_ID=null; EDIT_DESDE='admin';
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
@@ -5189,6 +5250,39 @@ function editPedido(id){
   showView('form'); window.scrollTo(0,0);
 }
 function cancelEdit(){ resetForm(); }
+/* A qué pantalla se vuelve después de guardar una edición. Nadie tiene que caer nunca en
+   el candado: si no está la clave puesta, se vuelve a «Mis pedidos». */
+function volverDeEdicion(desde){
+  if(UNLOCKED && desde==='carga'){ showView('admin'); abrirCarga(); return; }
+  if(UNLOCKED && desde==='admin'){ showView('admin'); return; }
+  showView('mis'); renderMis();
+}
+/* La confirmación de que el cambio SÍ se guardó, con qué cambió. Y el botón para volver a
+   pasar la venta: si le agregó un producto o le movió la fecha, el mensaje que la vendedora
+   ya había mandado al grupo quedó viejo. */
+function waDesdeEdicion(id){ var p=findById(id); if(p) showWhatsappModal(p, 'closeModal()', true); }
+function confirmEdicionModal(rec, cambios){
+  var m=modDe(rec);
+  cambios=cambios||[];
+  openModal('<div class="modal-h" style="background:var(--green)"><h3>✓ Cambios guardados</h3>'+
+      '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:1rem;font-weight:800;margin-bottom:3px">'+esc(rec.cliente||'—')+'</p>'+
+      '<p style="font-size:.82rem;color:var(--muted);margin-bottom:12px">'+
+        (rec.nota?('nota '+esc(rec.nota)):'')+(rec.oc?((rec.nota?' · ':'')+esc(ocEtiq(rec.oc))):'')+'</p>'+
+      (cambios.length
+        ? ('<div style="background:var(--gray-lt);border-radius:9px;padding:10px 13px;font-size:.85rem">'+
+             '<div style="font-weight:700;margin-bottom:5px">Qué cambió</div>'+
+             cambios.map(function(t){ return '<div>'+esc(t)+'</div>'; }).join('')+'</div>')
+        : '<div style="font-size:.85rem;color:var(--muted)">Se guardó, pero no cambió nada de lo que se ve en la lista de entrega.</div>')+
+      (m ? ('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:9px;padding:10px 13px;margin-top:10px;font-size:.83rem;color:#7c4b00">'+
+              '📦 <b>Al almacén le llegó el aviso</b> de que este pedido se modificó, para que revisen el stock de nuevo.</div>') : '')+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-sm wa-btn" style="width:100%" onclick="'+esc("waDesdeEdicion('"+String(rec.id)+"')")+'">📲 Pasar la venta actualizada</button>'+
+      '</div>'+
+      '<button class="btn btn-primary" style="width:100%;margin-top:10px" onclick="closeModal()">✓ Listo</button>'+
+    '</div>');
+}
 
 function deletePedido(id){
   var rec=findById(id); if(!rec) return;
@@ -5868,7 +5962,7 @@ function renderAdmin(){
         '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
-        '<button class="rowbtn" onclick="editPedido(\''+p.id+'\')">✏️</button>'+
+        '<button class="rowbtn" onclick="EDIT_DESDE=\'admin\';editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
       '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
@@ -7070,6 +7164,7 @@ function editarUbicacionMis(id){ editarUbicacion(id, showMisModal, true); }
    cambio les va a llegar como «PEDIDO MODIFICADO» y tienen que revisar el stock otra vez. */
 function editarDesdeMis(id){
   var p=findById(id); if(!p) return;
+  EDIT_DESDE='mis';
   var avisos=[];
   if(p.entregado) avisos.push('🚚 Este pedido YA FUE ENTREGADO. Cambiarlo ahora no cambia lo que salió en el camión.');
   if(teniaRevision(p)) avisos.push('📦 El almacén YA REVISÓ este pedido. Si le cambiás algo les va a saltar un aviso de «PEDIDO MODIFICADO» para que vuelvan a revisar el stock.');
@@ -8185,7 +8280,7 @@ function cambiarTurno(id, turno){
 }
 /* Editar desde la lista de carga: hay que cerrar TAMBIÉN la lista, si no el formulario
    queda tapado por la pantalla de carga, que va por encima de todo. */
-function editarDesdeCarga(id){ closeModal(); closeCarga(); editPedido(id); }
+function editarDesdeCarga(id){ EDIT_DESDE='carga'; closeModal(); closeCarga(); editPedido(id); }
 function eliminarDesdeCarga(id){
   var p=findById(id); if(!p) return;
   if(!confirm('¿Eliminar el pedido de '+(p.cliente||'')+(p.oc?(' · N° '+p.oc):'')+'?\n\nSe borra para todos y no se puede deshacer.')) return;
@@ -8254,7 +8349,7 @@ function showPedidoModal(id){
     '<div class="modal-b">'+avisoModifHtml(p)+body+mark+stockSec+despachoSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
-        '<button class="btn btn-ghost btn-sm" onclick="closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="reprogramarPedido(\''+p.id+'\')">📅 Reprogramar</button>'+
         '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:var(--red);border-color:var(--red-border)" onclick="if(confirm(\'¿Eliminar este pedido?\')){closeModal();realDelete(\''+p.id+'\');}">🗑 Eliminar</button>'+
       '</div>'+

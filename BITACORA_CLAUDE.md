@@ -2466,6 +2466,43 @@ largo y «Por cobrar» es una tabla angosta de tres columnas.
   `replace(/[^a-z]/g,'')` se comía la T de «Toggle», y `a||'?'+':'+b` se agrupa como
   `a||('?'+':'+b)` — la precedencia se comió el sufijo. El panel estaba bien las dos veces.
 
+## 4bl. 🐛 Guardar una edición mandaba al candado · 🛏️💚 Las dos marcas (2026-08-29)
+
+**El bug.** El usuario: *"¿por qué cuando los vendedores editan un pedido no les sale la
+confirmación y los lleva al panel de admin a poner la clave?"*. Una línea, de §4bc:
+
+```js
+if(wasEdit){ showView('admin'); } else { showWhatsappModal(rec); }
+```
+
+Escrita cuando editar era **solo** cosa de administración. Al darles el botón Editar en «Mis
+pedidos», guardar las escupía a la pantalla del candado — y sin confirmación, así que
+**parecía que el cambio no se había guardado** (sí se guardaba).
+
+- `EDIT_DESDE` recuerda de dónde salió la edición (`mis` / `carga` / `admin`), lo setean los
+  puntos de entrada, y `resetForm()` lo vuelve a `admin`.
+- `volverDeEdicion(desde)` vuelve ahí — y **si no está `UNLOCKED`, siempre a «Mis pedidos»**:
+  nadie puede volver a caer en el candado, venga de donde venga.
+- `confirmEdicionModal(rec, cambios)` — cartel verde «✓ Cambios guardados» con **qué cambió**
+  (el mismo `difPedido` de §4bc), el aviso de que a logística le llegó la alerta cuando
+  corresponde, y **📲 «Pasar la venta actualizada»**: si le agregó un producto o le movió la
+  fecha, el mensaje que ya había mandado al grupo quedó viejo.
+- ⚠️ `after()` guarda `EDIT_DESDE` y el diff en locales **antes** de `resetForm()`, que los pisa.
+
+**Las dos marcas.** Dos fichas nuevas en el Cuadre: `MARCAS` + `marcaDe()` + `totalPorMarca()`.
+🛏️ Sueña = Mauricio · Juan Pablo · Fernando. 💚 Heaven = Jonathan · María · Isabel · Carola ·
+Mirian. Con el % de lo que entró.
+
+⚠️ Coincide exactamente con `BANCOS_POR_VENDEDOR` y no por casualidad: Sueña cobra a
+Ganadero/Económico y Heaven a BISA/Económico — son dos cajas de verdad. Quien no esté en
+ninguna lista **no se reparte a la fuerza**: sale una tercera ficha «⚠️ Sin marca» con su
+monto, para que nadie la dé por repartida.
+
+- Test: `tests/test_marcas.js` (**24 checks**) — el bug del candado reproducido (contra
+  `origin/main`: `candado true`, `vista admin`), la vuelta según de dónde salió, la
+  confirmación, y las marcas incluyendo al vendedor huérfano.
+- Batería: **20 suites · 484 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
