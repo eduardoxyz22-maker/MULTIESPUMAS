@@ -3197,9 +3197,23 @@ function contaPagosHtml(p){
    Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
    Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
 var CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+/* ⚠️ Adjuntar una imagen repinta la ficha entera (`showContaModal`), y eso borraba el
+   MONTO, la FECHA y el N° DE RECIBO que se estuvieran tipeando. El monto parecía
+   sobrevivir solo porque vuelve a nacer con el saldo; la fecha volvía a HOY sin avisar,
+   así que un pago del sábado cargado el lunes se cuadraba en el día equivocado. */
+var CTA_PAGO_V=null;
+function ctaPagoRecordar(){
+  var m=document.getElementById('cta-pago-monto'), f=document.getElementById('cta-pago-fecha'),
+      n=document.getElementById('cta-pago-nota');
+  /* ⚠️ Si NO están es porque otra ventana (el gato del comprobante) tapó la ficha: ahí no
+     hay nada que recordar y, sobre todo, no hay que BORRAR lo que ya se había recordado —
+     era justo el caso que perdía la fecha y el recibo. Se limpia al registrar el pago,
+     al cambiar de tipo y al pasar a otra venta, no acá. */
+  if(m&&f&&n) CTA_PAGO_V={monto:m.value, fecha:f.value, nota:n.value};
+}
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
-function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; showContaModal(id); }
+function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; CTA_PAGO_V=null; showContaModal(id); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
    Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
@@ -3207,6 +3221,7 @@ function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; showContaModal
 var COMP_DESTINO=null;   // {id, idx} → a qué pago se le está adjuntando; null = al que se está por registrar
 function ctaAdjuntar(id, idx){
   if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
+  if(idx==null) ctaPagoRecordar();          // es del pago que se está por registrar
   COMP_DESTINO=(idx==null) ? null : {id:id, idx:idx};
   var el=document.getElementById('comp-input'); if(!el) return;
   el.value=''; el.dataset.pedido=id; el.click();
@@ -3309,7 +3324,7 @@ var CTA_EDIT_V=null;
 function ctaEditRecordar(){
   var f=document.getElementById('cta-ed-fecha'), m=document.getElementById('cta-ed-monto'),
       n=document.getElementById('cta-ed-nota');
-  CTA_EDIT_V=(f&&m&&n) ? {fecha:f.value, monto:m.value, nota:n.value} : null;
+  if(f&&m&&n) CTA_EDIT_V={fecha:f.value, monto:m.value, nota:n.value};   // ver ctaPagoRecordar
 }
 var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recargo pactado?
 /* ---- Cuánto falta cobrar de FLETE ----
@@ -3346,12 +3361,22 @@ function ctaEditarPago(id, i){
 }
 function ctaEditMetodo(id,m){ CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; showContaModal(id); }
 function ctaEditBanco(id,b){ CTA_EDIT_B=b; showContaModal(id); }
-function ctaGuardarPago(id, i){
+/* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
+   existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
+function ctaEdVal(id, k){
+  var el=document.getElementById(id);
+  if(el) return String(el.value||'');
+  return (CTA_EDIT_V && CTA_EDIT_V[k]!=null) ? String(CTA_EDIT_V[k]) : null;
+}
+function ctaGuardarPago(id, i, igual){
   var p=findById(id); if(!p) return;
-  var ef=document.getElementById('cta-ed-fecha'),
-      em=document.getElementById('cta-ed-monto'),
-      en=document.getElementById('cta-ed-nota');
-  if(!ef||!em||!en) return;
+  var _vf=ctaEdVal('cta-ed-fecha','fecha'), _vm=ctaEdVal('cta-ed-monto','monto'),
+      _vn=ctaEdVal('cta-ed-nota','nota');
+  if(_vf==null||_vm==null||_vn==null) return;
+  var ef={value:_vf, focus:function(){ var e=document.getElementById('cta-ed-fecha'); if(e) e.focus(); }},
+      em={value:_vm, focus:function(){ var e=document.getElementById('cta-ed-monto'); if(e) e.focus(); }},
+      en={value:_vn, classList:{add:function(){ var e=document.getElementById('cta-ed-nota'); if(e) e.classList.add('err'); }},
+          focus:function(){ var e=document.getElementById('cta-ed-nota'); if(e) e.focus(); }};
   var f=String(ef.value||'').trim();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí una fecha válida','err'); ef.focus(); return; }
   if(f>todayStr()){ toast('La fecha no puede ser a futuro: es el día en que YA entró la plata','err'); ef.focus(); return; }
@@ -3363,6 +3388,12 @@ function ctaGuardarPago(id, i){
   var todos=contaPagos(p), c=todos[i];
   if(!c){ CTA_EDIT_I=-1; showContaModal(id); return; }
   var banco=(CTA_EDIT_M==='QR')?CTA_EDIT_B:'';
+  /* 🐱 Sin imagen de respaldo: se avisa con el gato, pero NO se traba — ver memeCompConta. */
+  if(!igual && !compsArr(c.comps!=null?c.comps:c.comp).length){
+    ctaEditRecordar();
+    memeCompConta(CTA_EDIT_M, {corregir:true, id:id, i:i});
+    return;
+  }
 
   if(esEnvio(c)){
     /* El recargo vive en su propio renglón: se reescribe solo ese y no toca el saldo. */
@@ -3529,6 +3560,7 @@ function showContaModal(id){
     CTA_TIPO='pago';
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
+    CTA_PAGO_V=null; CTA_EDIT_V=null;   // ni lo que se estaba tipeando en la venta anterior
   }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
@@ -3541,6 +3573,7 @@ function showContaModal(id){
      el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
   // Con flete pactado sin cobrar, el bloque abre directo en modo recargo: es lo urgente.
   var esEnv = CTA_TIPO==='envio' || falta<=0.01 || (CTA_TIPO!=='pago' && envioPendiente(p));
+  var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
   var formPago = (falta>0.01 || !yaEnv || envioPendiente(p))
@@ -3554,9 +3587,9 @@ function showContaModal(id){
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
-           '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+todayStr()+'" style="width:100%"></div>'+
-           '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
@@ -3753,7 +3786,7 @@ function ctaEliminarVenta(id){
   closeModal();
   realDelete(id);
 }
-function ctaSetMetodo(id,m){ CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
+function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
 function ctaSacarCompIdx(id, i){ ctaSacarComp(id, i); }
 /* i = cuál de las imágenes se quita; sin i, todas. */
@@ -3762,7 +3795,7 @@ function ctaSacarComp(id, i){
   if(i==null) a=[]; else a.splice(i,1);
   CTA_PAGO.comps=a; showContaModal(id);
 }
-function ctaSetBanco(id,b){ CTA_PAGO.banco=b; showContaModal(id); }
+function ctaSetBanco(id,b){ ctaPagoRecordar(); CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
   var _mEl=document.getElementById('cta-pago-monto');
@@ -3781,8 +3814,8 @@ function ctaRegistrarPago(id){
   /* La imagen del respaldo es OBLIGATORIA en TODA forma de pago, efectivo incluido:
      sin ella no hay con qué probar que la plata entró. */
   if(!compsArr(CTA_PAGO.comps).length){
-    toast('Falta la imagen del pago — adjuntá '+nombreComprobante(CTA_PAGO.metodo),'err');
-    var wc=document.getElementById('modal-box'); if(wc) wc.scrollTop=wc.scrollHeight;
+    ctaPagoRecordar();                       // que no se pierda lo tipeado al abrir el gato
+    memeCompConta(CTA_PAGO.metodo, {id:id});
     return;
   }
   var falta=Number(p.saldo)||0;
@@ -3795,7 +3828,7 @@ function ctaRegistrarPago(id){
        lo que se está haciendo es justamente reportar que ya se cobró. */
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
-    CTA_PAGO.comps=[];
+    CTA_PAGO.comps=[]; CTA_PAGO_V=null;
     aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
     toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
@@ -3805,7 +3838,7 @@ function ctaRegistrarPago(id){
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
-  CTA_PAGO.comps=[];                                 // que no se peguen al pago siguiente
+  CTA_PAGO.comps=[]; CTA_PAGO_V=null;                // que no se peguen al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
   // Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
@@ -4091,6 +4124,43 @@ function memeComprobante(vendedor, metodo){
       '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-primary btn-sm" style="width:100%" onclick="closeModal();focoComprobante()">Ya la adjunto</button></div>'+
     '</div>');
   return true;
+}
+/* 🐱 EL MISMO GATO, EN CONTABILIDAD (§4bi).
+   Dos situaciones que NO son iguales y por eso no se resuelven igual:
+   · REGISTRANDO un pago nuevo → no se guarda hasta que adjunten. Tienen la imagen a mano,
+     es el momento de pedirla, y es la misma regla que al cargar el pedido.
+   · CORRIGIENDO uno viejo → se avisa igual de fuerte, pero se PUEDE guardar igual. Hay
+     pagos de antes de que la imagen fuera obligatoria; trabar ahí dejaría a contabilidad
+     sin poder arreglarles la fecha ni el monto — la misma trampa del banco de §4bd. */
+function memeCompConta(metodo, opts){
+  opts=opts||{};
+  var m=String(metodo||'');
+  var queFalta = m==='Tarjeta' ? 'la foto del VOUCHER'
+               : m==='QR'      ? 'la CAPTURA del pago'
+                               : 'la foto del RECIBO';
+  var accion = opts.corregir
+    ? "closeModal();ctaAdjuntarDespues('"+String(opts.id)+"',"+Number(opts.i)+")"
+    : "closeModal();ctaAdjuntar('"+String(opts.id)+"')";
+  openModal('<div class="modal-h" style="background:var(--red)"><h3>📎 Falta el comprobante…</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b" style="text-align:center">'+
+      '<img src="combo-instrucciones.jpg" alt="El comprobante del pago es obligatorio" style="max-width:100%;border-radius:10px;display:block;margin:0 auto 14px">'+
+      '<p style="font-size:.95rem;color:var(--red);font-weight:800;margin-bottom:6px">'+
+        (opts.corregir ? 'Este pago no tiene NINGUNA imagen de respaldo.' : 'No adjuntaste '+queFalta+'.')+'</p>'+
+      '<p style="font-size:.88rem;color:var(--muted)">Sin ella no hay con qué probar que la plata entró'+
+        (opts.corregir ? ', y en el arqueo ese pago queda sin respaldo.' : ', y el pago <b>no se registra</b>.')+'</p>'+
+      '<div class="modal-actions" style="margin-top:14px;flex-direction:column;gap:8px">'+
+        '<button class="btn btn-primary btn-sm" style="width:100%" onclick="'+esc(accion)+'">📎 Ya la adjunto</button>'+
+        (opts.corregir
+          ? '<button class="btn btn-ghost btn-sm" style="width:100%" onclick="'+esc("closeModal();ctaGuardarPago('"+String(opts.id)+"',"+Number(opts.i)+",true)")+'">Guardar igual — la subo después</button>'
+          : '')+
+      '</div>'+
+    '</div>');
+  return true;
+}
+/* Vuelve a la ficha con el editor abierto y dispara el adjuntar. */
+function ctaAdjuntarDespues(id, i){
+  showContaModal(id);
+  setTimeout(function(){ ctaAdjuntarEdit(id, i); }, 0);
 }
 /* Igual que focoProducto: el navegador manda el foco al body al cerrar el modal,
    así que hay que esperar un tick para llevarlo al bloque del comprobante. */

@@ -2349,6 +2349,37 @@ su pedido **sí se guarda** ("✅ Pedido guardado") y no queda trabado.
   **5 fallas**.
 - Batería: **17 suites · 355 checks · 0 fallas**.
 
+## 4bi. 🐱📎 El comprobante olvidado, en Contabilidad (2026-08-29)
+
+Pedido del usuario, siguiendo §4bh: *"lo mismo cuando corrigen en contabilidad, y registran
+un pago, y olvidan adjuntar comprobante"*. Se midió antes de tocar (`/tmp/conta.js`) y había
+**tres** cosas, no una:
+
+1. **Registrar** un pago sin imagen → frenaba bien, pero con un **toast** — justo el aviso
+   que se les pasa de largo y para lo que existe el gato. Ahora: `memeCompConta`, bloqueante.
+2. **Corregir** un pago sin imagen → **guardaba en silencio**, sin chistar. Ahora el gato,
+   con **dos botones**: «Ya la adjunto» (vuelve al editor y dispara `ctaAdjuntarEdit`) y
+   «Guardar igual — la subo después» (`ctaGuardarPago(id,i,true)`). **No traba**: hay pagos
+   de antes de que la imagen fuera obligatoria y trabar ahí sería la trampa de §4bd otra vez.
+3. 💰 **El de plata**: adjuntar la imagen repinta la ficha y eso **borraba la FECHA y el N°
+   de recibo** que se estaban tipeando. La fecha volvía a **HOY** sin avisar → un pago del
+   sábado cargado el lunes se cuadraba en el día equivocado. `CTA_PAGO_V` los conserva.
+   (El monto *parecía* sobrevivir, pero solo porque vuelve a nacer con el saldo.)
+
+**⚠️ La trampa de las funciones "recordar".** `ctaPagoRecordar()`/`ctaEditRecordar()` hacían
+`X = (inputs) ? {...} : null`. Cuando el gato **tapa la ficha** los inputs no existen, así
+que la llamada **borraba** justo lo que había que conservar — el test lo cazó con 6 fallas
+que el probe manual no veía (ahí el gato todavía no estaba en el medio). Ahora solo escriben
+si encuentran los campos; el limpiado es explícito: al registrar el pago, al cambiar de tipo
+y al abrir OTRA venta (`CTA_ULTIMA`).
+
+`ctaGuardarPago` lee sus campos por `ctaEdVal()`, que cae a `CTA_EDIT_V` cuando los inputs no
+están — es lo que hace posible el «Guardar igual» con el gato encima.
+
+- Test: `tests/test_compconta.js` (**29 checks**). Contra `origin/main`: falla en masa y
+  revienta con `ctaAdjuntarDespues is not defined`.
+- Batería: **18 suites · 384 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
