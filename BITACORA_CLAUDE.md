@@ -2380,6 +2380,52 @@ están — es lo que hace posible el «Guardar igual» con el gato encima.
   revienta con `ctaAdjuntarDespues is not defined`.
 - Batería: **18 suites · 384 checks · 0 fallas**.
 
+## 4bj. 🔎 Nueve controles para contabilidad, y un buscador (2026-08-29)
+
+El usuario pidió opciones para reforzar «Revisar antes de cerrar» —preguntando puntualmente
+por un detector de doble venta por cliente y monto— y eligió **todas**.
+
+**Lo que ya existía y estaba roto.** El detector de duplicados YA miraba cliente+monto, pero
+exigía el **mismo día**, y agrupaba por notas que no son notas. Reproducido:
+
+```
+nota "0"   → ALZER + OTRO + TERCERO + CUARTO      ← 4 falsos
+nota "S/N" → QUINTO + SEXTO                       ← 2 falsos
+ANA LOPEZ Bs 2.500 el 12 y el 13                  ← NO lo veía
+```
+En la planilla real, **11 de las 19** "cargadas dos veces" eran «ALZER · misma nota 0».
+
+- `notaDeTalonario()` — una nota solo agrupa si tiene dígitos y no es cero. `notaNumero()`
+  es más estricto (solo enteros pelados) y se usa nada más que para los huecos.
+- `DUP_DIAS=7` — cliente+monto ahora agrupa por **cercanía de fechas**, no por día exacto.
+
+**Los ocho controles nuevos** (todos en `cuadreAlertas`, recolectados en UNA pasada):
+🖼️ el mismo comprobante en dos ventas (`compRepetidos` — el más fuerte, y el dato ya estaba
+guardado) · 🚚 entregado y sin cobrar · 📆 fechas imposibles (pago anterior a la venta o a
+futuro) · 🧮 precios que no dan el total (`precioDescuadra`, ya existía sin usarse acá) ·
+📎 pagos sin imagen de respaldo · 👥 cliente con saldo en varias notas · 🔢 huecos en el
+talonario (`huecosTalonario`) · ⏳ tramos de antigüedad de la deuda (`tramosDeudaHtml`).
+
+**⚠️ `HUECO_MAX=3`, no 10.** Con 10, la prueba visual escupió «faltan las 902…909»: ocho
+seguidos no es un olvido, es otro talonario. Un aviso ruidoso es un aviso que nadie mira —
+que es exactamente el problema que este trabajo vino a arreglar.
+
+**🔎 Buscador del detalle de pagos** (`CUA_BUSCA` / `cuaFiltrar`): busca en todo lo que se ve
+en la fila, admite varias palabras (todas tienen que estar), compara el monto con y sin
+formato, y el título **suma lo filtrado** (`2 de 4 · suman Bs 5.420,00`). Repintar la tabla
+roba el foco, así que se lo devuelve con el cursor al final: sin eso se escribe una letra y
+el teclado deja de responder.
+
+**🙈 Ocultar resumen en el Cuadre** (`LS_RESUMEN_CUA`, hermano de §4bf): pliega cierres,
+retiros, por cobrar y avisos, y deja la planilla de pagos arriba. Plegado, el botón se lleva
+**cuántos avisos quedan** en rojo — esconder el panel no puede ser olvidarse de revisarlo.
+
+- Tests: `tests/test_revisar.js` (**58 checks**: cada control con su caso real Y su falso
+  positivo) y 7 nuevos en `test_resumen.js` (**22 → 29**). Contra `origin/main`, `test_revisar`
+  falla en masa.
+- Batería: **19 suites · 449 checks · 0 fallas**.
+- La trampa del `apiList` vacío picó por tercera vez (ya estaba en `tests/LEEME.md`).
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

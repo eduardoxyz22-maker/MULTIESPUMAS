@@ -852,6 +852,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirRetiros()">💵 Retiro de efectivo</button>
           </div>
         </div>
+        <div style="display:flex;justify-content:flex-end;margin:0 0 10px">
+          <button class="btn btn-ghost btn-sm" id="cua-resumen-btn" style="width:auto" onclick="toggleResumenCua()">🙈 Ocultar resumen</button>
+        </div>
+        <div id="cua-resumen">
         <div class="metrics" id="cua-metrics"></div>
         <div id="cua-cierre"></div>
         <div id="cua-retiros"></div>
@@ -859,6 +863,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <div id="cua-pendientes"></div>
           <div id="cua-alertas"></div>
         </div>
+        </div><!-- /cua-resumen -->
         <div id="cua-detalle"></div>
         <div id="cua-det-retiros"></div>
       </div>
@@ -1791,35 +1796,123 @@ function preciosAMedias(p){
 /* Cuánto se despega la suma de los ítems del total anotado. 0 = cuadra. */
 function difPrecios(p){ return tienePrecios(p) ? r2(prodTotal(p)-ventaTotal(p)) : 0; }
 function precioDescuadra(p){ return Math.abs(difPrecios(p))>0.01; }
+/* ¿Esta "nota" es un N° de talonario de verdad?
+   ⚠️ El campo es texto libre y las vendedoras escriben cualquier cosa cuando no tienen el
+   recibo a mano: "0", "S/N", "MEDICION", "Atencion al cliente", "MORENO". Agrupar por eso
+   juntaba ventas que no tienen NADA que ver: en agosto, 11 de las 19 "cargadas dos veces"
+   eran ventas distintas que compartían la nota "0". Un aviso con más falsos que verdaderos
+   es un aviso que se deja de mirar, así que primero hay que saber qué es una nota. */
+function notaDeTalonario(n){
+  var t=limpiaNota(n);
+  if(!t) return '';
+  if(!/\d/.test(t)) return '';                                  // "S/N", "MEDICION", texto suelto
+  var soloNum=t.replace(/\D+/g,'');
+  if(!soloNum || Number(soloNum)===0) return '';                // "0", "00", "0-0"
+  return t;
+}
+/* El N° como entero, solo para buscar huecos en el talonario. Un "001-08" sirve para
+   comparar notas iguales pero NO es un correlativo, así que acá queda afuera. */
+function notaNumero(n){
+  var t=notaDeTalonario(n);
+  return /^\d+$/.test(t) ? Number(t) : 0;
+}
+function diasEntreFechas(a,b){
+  var da=new Date(String(a)+'T12:00:00'), db=new Date(String(b)+'T12:00:00');
+  if(isNaN(da.getTime())||isNaN(db.getTime())) return 1e9;
+  return Math.abs(Math.round((db-da)/86400000));
+}
 /* ============================================================================
    ⚠️ ¿La misma venta cargada dos veces?
    Es el error más caro que se puede colar: el cliente figura comprando dos veces, el
    mes sale inflado y el contador factura de más. Se miran dos señales:
      - el MISMO N° de nota de venta en dos ventas distintas (cada recibo es único), y
-     - el mismo cliente, por el mismo total, el mismo día.
+     - el mismo cliente, por el mismo total, con POCOS DÍAS de diferencia.
+   ⚠️ Lo segundo antes exigía el MISMO día, y así se le escapaba el caso más común: la
+   venta que se carga hoy y alguien vuelve a cargar mañana. Ahora agrupa por cercanía
+   (`DUP_DIAS`), que es como lo miraría una persona.
    Es un AVISO, no un veredicto: un cliente puede comprar dos veces de verdad. Por eso
    dice "¿DUPLICADA?" con signos de pregunta y nunca esconde ni borra nada solo.
    ========================================================================== */
+var DUP_DIAS=7;
 function indiceDuplicados(list){
   var porNota={}, porVenta={}, marca={}, grupos=[];
   (list||[]).forEach(function(p){
-    var n=limpiaNota(p&&p.nota);
+    var n=notaDeTalonario(p&&p.nota);
     if(n) (porNota[n]=porNota[n]||[]).push(p);
     var cli=normNombre(p&&p.cliente), tot=r2(ventaTotal(p)), f=contaFecha(p);
-    if(cli && tot>0 && f){ var k=cli+'|'+tot+'|'+f; (porVenta[k]=porVenta[k]||[]).push(p); }
+    if(cli && tot>0 && f){ var k=cli+'|'+tot; (porVenta[k]=porVenta[k]||[]).push(p); }
   });
-  function juntar(mapa, motivo){
-    for(var k in mapa){
-      var g=mapa[k]; if(g.length<2) continue;
-      grupos.push({motivo:motivo, clave:k, ps:g});
-      // La primera señal que marca una venta manda su etiqueta: la nota repetida es la
-      // más fuerte, así que se junta primero.
-      g.forEach(function(p){ if(!marca[p.id]) marca[p.id]=motivo; });
+  function marcar(g, motivo, clave){
+    grupos.push({motivo:motivo, clave:clave, ps:g.slice()});
+    // La primera señal que marca una venta manda su etiqueta: la nota repetida es la
+    // más fuerte, así que se junta primero.
+    g.forEach(function(p){ if(!marca[p.id]) marca[p.id]=motivo; });
+  }
+  for(var kn in porNota) if(porNota[kn].length>1) marcar(porNota[kn],'nota',kn);
+  for(var kv in porVenta){
+    var g=porVenta[kv].slice().sort(function(a,b){ var fa=contaFecha(a), fb=contaFecha(b); return fa<fb?-1:(fa>fb?1:0); });
+    var run=g.length?[g[0]]:[];
+    for(var i=1;i<=g.length;i++){
+      if(i<g.length && diasEntreFechas(contaFecha(g[i-1]), contaFecha(g[i]))<=DUP_DIAS){ run.push(g[i]); continue; }
+      if(run.length>1) marcar(run,'venta',kv);
+      run=(i<g.length)?[g[i]]:[];
     }
   }
-  juntar(porNota,'nota');
-  juntar(porVenta,'venta');
   return { grupos:grupos, marca:marca, n:Object.keys(marca).length };
+}
+/* 🖼️ LA MISMA IMAGEN DE COMPROBANTE EN DOS VENTAS DISTINTAS.
+   Cada captura de un QR respalda UN pago. Si la misma aparece en dos ventas, o la plata
+   entró una sola vez (y una de las dos está cobrada de mentira), o alguien reusó la
+   imagen porque no tenía la que iba. Dentro de la MISMA venta no cuenta: ahí puede estar
+   la captura del banco y el recibo, o repetirse entre el anticipo y el saldo. */
+function compRepetidos(list){
+  var porImg={};
+  (list||[]).forEach(function(p){
+    var vistos={};
+    contaPagos(p).forEach(function(c){
+      compsArr(c.comps!=null?c.comps:c.comp).forEach(function(fid){
+        var k=fidLimpio(fid);
+        if(!k || vistos[k]) return;                 // una sola vez por venta
+        vistos[k]=1;
+        (porImg[k]=porImg[k]||[]).push(p);
+      });
+    });
+  });
+  var out=[];
+  for(var k in porImg) if(porImg[k].length>1) out.push({img:k, ps:porImg[k]});
+  return out;
+}
+/* 🔢 HUECOS EN EL TALONARIO, por vendedora.
+   Cada recibo es correlativo: si están la 720 y la 722 pero no la 721, ese recibo existe
+   en papel y no está en el sistema — puede ser una venta que nunca se cargó.
+   ⚠️ Con cuidado, porque el campo es texto libre:
+   · solo entran las notas que son un número pelado (`notaNumero`), no "001-08" ni "S/N";
+   · solo se miran huecos ENTRE dos notas que sí están, así que el corte del mes no
+     inventa faltantes en las puntas;
+   · un salto de más de `HUECO_MAX` se ignora: eso ya no es un olvido, es OTRO TALONARIO.
+     Se dejó en 3 a propósito y no en 10: una venta que no se cargó deja un hueco de uno o
+     dos números; ocho seguidos es un talonario nuevo, y listarlos ensucia el aviso — que es
+     exactamente lo que le pasaba al de duplicados y por lo que nadie lo miraba. */
+var HUECO_MAX=3;
+function huecosTalonario(list){
+  var porVend={};
+  (list||[]).forEach(function(p){
+    var n=notaNumero(p&&p.nota); if(!n) return;
+    var v=nombreCanonico(p.vendedor)||String(p.vendedor||'').trim()||'(sin vendedor)';
+    (porVend[v]=porVend[v]||{})[n]=1;
+  });
+  var out=[];
+  Object.keys(porVend).forEach(function(v){
+    var ns=Object.keys(porVend[v]).map(Number).sort(function(a,b){ return a-b; });
+    var faltan=[];
+    for(var i=1;i<ns.length;i++){
+      var salto=ns[i]-ns[i-1];
+      if(salto<2 || salto>HUECO_MAX+1) continue;
+      for(var k=ns[i-1]+1;k<ns[i];k++) faltan.push(k);
+    }
+    if(faltan.length) out.push({vendedor:v, faltan:faltan});
+  });
+  return out.sort(function(a,b){ return b.faltan.length-a.faltan.length; });
 }
 /* Se recalcula UNA vez por render: mirarlo fila por fila sería recorrer toda la lista
    por cada fila. */
@@ -1828,7 +1921,7 @@ function dupChip(p){
   var m=DUP_IDX.marca[p&&p.id]; if(!m) return '';
   return '<br><span class="badge b-amber" title="'+(m==='nota'
       ? 'Hay otra venta con el MISMO N° de nota de venta — un recibo no se repite'
-      : 'Hay otra venta del mismo cliente, por el mismo monto y el mismo día')+
+      : 'Hay otra venta del mismo cliente y por el mismo monto, con pocos días de diferencia')+
     '">⚠️ ¿DUPLICADA?</span>';
 }
 function contaProdTxt(prods){
@@ -2295,6 +2388,30 @@ function cuadreFletesPend(){
 function cuadreFletesPendTotal(){
   var t=0; cuadreFletesPend().forEach(function(p){ t=r2(t+envioPorCobrar(p)); }); return t;
 }
+/* ⏳ ANTIGÜEDAD DE LA DEUDA, en tramos. La lista de abajo ya va del más viejo al más
+   nuevo, pero no dice CUÁNTA plata hay en cada tramo, que es lo que decide a quién se
+   llama primero. Los +60 días son los que casi nunca se cobran solos. */
+function tramosDeudaHtml(pend){
+  var T=[{lbl:'0 a 15 días', max:15,       col:'var(--muted)'},
+         {lbl:'16 a 30',     max:30,       col:'#a67c00'},
+         {lbl:'31 a 60',     max:60,       col:'var(--amber)'},
+         {lbl:'más de 60',   max:1e9,      col:'var(--red)'}];
+  T.forEach(function(t){ t.n=0; t.bs=0; });
+  (pend||[]).forEach(function(x){
+    var d=Number(x.dias)||0;
+    for(var i=0;i<T.length;i++) if(d<=T[i].max){ T[i].n++; T[i].bs=r2(T[i].bs+(Number(x.saldo)||0)); break; }
+  });
+  var hay=T.filter(function(t){ return t.n>0; });
+  if(hay.length<2) return '';                       // con un solo tramo no aporta nada
+  return '<div style="display:flex;gap:7px;flex-wrap:wrap;margin:-2px 0 10px">'+
+    hay.map(function(t){
+      return '<div style="flex:1;min-width:110px;background:#fff;border:1px solid var(--gray-lt);'+
+        'border-left:3px solid '+t.col+';border-radius:8px;padding:6px 10px">'+
+        '<div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.03em">'+t.lbl+'</div>'+
+        '<div style="font-weight:800;color:'+t.col+'">'+fmtBs(t.bs)+'</div>'+
+        '<div style="font-size:.7rem;color:var(--muted)">'+t.n+' venta'+(t.n===1?'':'s')+'</div></div>';
+    }).join('')+'</div>';
+}
 function cuadreAlertas(pagos){
   var A=[];
   var sinNota=(pagos||[]).filter(function(c){ return !c.nota; });
@@ -2305,6 +2422,7 @@ function cuadreAlertas(pagos){
        (el monto de esos cobros nunca se guardó en la planilla). Listarlas como
        "pago sin fecha · Bs 0,00" no le decía nada a nadie. */
   var vend=cuadreVendedor(), pe=cuadrePeriodo(), sinFecha=[], sinMonto=[], sinNada=[];
+  var enPeriodo=[], entregadoDebe=[], descuadre=[], fechaRara=[], porCliente={};
   STATE.forEach(function(p){
     if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     // Por la fecha de la VENTA: estos pagos justamente no tienen fecha propia, así
@@ -2314,9 +2432,24 @@ function cuadreAlertas(pagos){
        adelanto, ni saldo. No tiene ningún pago, así que el bucle de abajo no la ve, y
        salía como "DEBE Bs 0,00": disfrazada de venta saldada y muda en todos los avisos. */
     if(sinMontoAnotado(p)) sinNada.push(p);
+    enPeriodo.push(p);
+    /* 🚚 YA SE ENTREGÓ Y SIGUE DEBIENDO: es plata EN LA CALLE. No es lo mismo que un
+       saldo de algo que todavía no salió del depósito — eso todavía se puede frenar. */
+    var _saldo=Number(p.saldo)||0;
+    if(p.entregado && _saldo>0.01 && !sinMontoAnotado(p)) entregadoDebe.push(p);
+    /* 🧮 Los precios cargados no dan el total anotado: uno de los dos números está mal. */
+    if(precioDescuadra(p)) descuadre.push(p);
+    /* 👥 El mismo cliente debiendo en varias notas: se lo llama UNA vez y se cobra todo. */
+    if(_saldo>0.01 && !sinMontoAnotado(p)){
+      var _k=normNombre(p.cliente);
+      if(_k) (porCliente[_k]=porCliente[_k]||[]).push(p);
+    }
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0)) sinMonto.push(p);
       else if(!c.fecha) sinFecha.push({p:p,c:c});
+      /* 📆 Fechas imposibles: plata que entró ANTES de que existiera la venta, o a futuro.
+         Siempre es un tipeo, y descoloca el cuadre del día sin que nadie lo note. */
+      else if(c.fecha>todayStr() || (contaFecha(p) && c.fecha<contaFecha(p))) fechaRara.push({p:p,c:c});
     });
   });
   if(sinFecha.length) A.push({ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
@@ -2334,12 +2467,18 @@ function cuadreAlertas(pagos){
   (pagos||[]).forEach(function(c){ if(!regEnSistema(c.p)) sinSistema[c.p.id]=c.p; });
   var ss=Object.keys(sinSistema).map(function(k){ return sinSistema[k]; });
   if(ss.length) A.push({ico:'📥', txt:'<b>'+ss.length+'</b> venta'+(ss.length===1?'':'s')+' con plata en este período todavía <b>sin cargar al sistema contable</b>', det:ss.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
+  /* 🚚💰 Entregado Y debiendo: la mercadería ya salió y la plata no entró. */
+  if(entregadoDebe.length){
+    var edBs=0; entregadoDebe.forEach(function(p){ edBs=r2(edBs+(Number(p.saldo)||0)); });
+    A.push({ico:'🚚', txt:'<b>'+entregadoDebe.length+'</b> venta'+(entregadoDebe.length===1?'':'s')+
+      ' <b>ya entregada'+(entregadoDebe.length===1?'':'s')+' y todavía sin cobrar</b> — '+fmtBs(edBs)+
+      ' que está en la calle: la mercadería salió y la plata no entró',
+      det:entregadoDebe.slice().sort(function(a,b){ return (Number(b.saldo)||0)-(Number(a.saldo)||0); })
+        .map(function(p){ return {txt:(p.cliente||'—')+' · '+fmtBs(p.saldo)+(p.vendedor?(' · '+p.vendedor):''), id:p.id}; })});
+  }
   /* La venta cargada dos veces: infla el mes y hace facturar de más. Va arriba de todo
      lo demás en importancia, así que se lista con las dos ventas del par juntas para
      poder compararlas de un toque. */
-  var enPeriodo=STATE.filter(function(p){
-    return !fueraDeConta(p) && cuadreEsDe(p, vend) && enPeriodoCuadre(contaFecha(p), pe);
-  });
   var dup=indiceDuplicados(enPeriodo);
   if(dup.n){
     A.push({ico:'👯', txt:'<b>'+dup.n+'</b> venta'+(dup.n===1?'':'s')+' que puede'+(dup.n===1?'':'n')+
@@ -2347,9 +2486,65 @@ function cuadreAlertas(pagos){
       det:dup.grupos.map(function(g){
         var q=g.ps[0];
         return { txt:(q.cliente||'—')+' · '+fmtBs(ventaTotal(q))+' · '+g.ps.length+' veces'+
-                     (g.motivo==='nota'?(' (misma nota '+g.clave+')'):' (mismo día y monto)'),
+                     (g.motivo==='nota'
+                       ? (' (misma nota '+g.clave+')')
+                       : (' (mismo cliente y monto · '+g.ps.map(function(x){ return fmtFechaCorta(contaFecha(x)); }).join(' y ')+')')),
                  id:q.id };
       })});
+  }
+  /* 🖼️ LA MISMA IMAGEN EN DOS VENTAS: es un pago contado dos veces. Si la misma captura
+     del QR está pegada a dos ventas distintas, o entró una sola vez (y una de las dos no
+     se cobró de verdad), o alguien la reusó. Nadie lo miraba y el dato ya estaba guardado. */
+  var repes=compRepetidos(enPeriodo);
+  if(repes.length){
+    A.push({ico:'🖼️', txt:'<b>'+repes.length+'</b> comprobante'+(repes.length===1?'':'s')+
+      ' <b>usado'+(repes.length===1?'':'s')+' en más de una venta</b> — la misma imagen no puede respaldar dos pagos: o la plata entró una sola vez, o hay que cambiarle el respaldo a una',
+      det:repes.map(function(g){
+        return {txt:g.ps.map(function(p){ return (p.cliente||'—'); }).join(' + ')+' · '+fmtBs(ventaTotal(g.ps[0])), id:g.ps[0].id};
+      })});
+  }
+  /* 📆 Pagos con fecha imposible. */
+  if(fechaRara.length){
+    A.push({ico:'📆', txt:'<b>'+fechaRara.length+'</b> pago'+(fechaRara.length===1?'':'s')+
+      ' con <b>fecha imposible</b> — anterior a la venta o a futuro: cae en el día equivocado del cuadre',
+      det:fechaRara.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+' · pago '+fmtFechaCorta(x.c.fecha)+
+        ' vs venta '+fmtFechaCorta(contaFecha(x.p)), id:x.p.id}; })});
+  }
+  /* 🧮 Los precios no dan el total anotado. */
+  if(descuadre.length){
+    A.push({ico:'🧮', txt:'<b>'+descuadre.length+'</b> venta'+(descuadre.length===1?'':'s')+
+      ' donde <b>los precios de los productos no dan el total anotado</b> — uno de los dos números está mal',
+      det:descuadre.map(function(p){ var d=difPrecios(p);
+        return {txt:(p.cliente||'—')+' · productos '+fmtBs(prodTotal(p))+' vs venta '+fmtBs(ventaTotal(p))+
+          ' ('+(d>0?'+':'')+fmtBs(d)+')', id:p.id}; })});
+  }
+  /* 📎 Pagos sin ninguna imagen de respaldo. */
+  var sinResp=(pagos||[]).filter(function(c){ return c.monto>0 && !compsArr(c.comps).length; });
+  if(sinResp.length){
+    var srBs=0; sinResp.forEach(function(c){ srBs=r2(srBs+c.monto); });
+    A.push({ico:'📎', txt:'<b>'+sinResp.length+'</b> pago'+(sinResp.length===1?'':'s')+
+      ' <b>sin ninguna imagen de respaldo</b> — '+fmtBs(srBs)+' que no se puede probar. Se adjunta desde la ficha, en <b>✏️ Corregir</b>',
+      det:sinResp.map(function(c){ return {txt:(c.p.cliente||'—')+' · '+fmtBs(c.monto)+' · '+fmtFechaCorta(c.fecha), id:c.p.id}; })});
+  }
+  /* 👥 El mismo cliente debiendo en varias notas. */
+  var variasNotas=[];
+  for(var kc in porCliente) if(porCliente[kc].length>1) variasNotas.push(porCliente[kc]);
+  if(variasNotas.length){
+    variasNotas.sort(function(a,b){ return b.length-a.length; });
+    A.push({ico:'👥', txt:'<b>'+variasNotas.length+'</b> cliente'+(variasNotas.length===1?'':'s')+
+      ' con <b>saldo en más de una venta</b> — conviene llamarlos una sola vez y cobrar todo junto',
+      det:variasNotas.map(function(g){
+        var t=0; g.forEach(function(p){ t=r2(t+(Number(p.saldo)||0)); });
+        return {txt:(g[0].cliente||'—')+' · '+g.length+' ventas · debe '+fmtBs(t), id:g[0].id};
+      })});
+  }
+  /* 🔢 Huecos en el talonario. */
+  var huecos=huecosTalonario(enPeriodo);
+  if(huecos.length){
+    var nFalt=0; huecos.forEach(function(h){ nFalt+=h.faltan.length; });
+    A.push({ico:'🔢', txt:'<b>'+nFalt+'</b> N° de nota <b>salteado'+(nFalt===1?'':'s')+' en el talonario</b>'+
+      ' — puede ser una venta que nunca se cargó, o un recibo anulado',
+      det:huecos.map(function(h){ return {txt:h.vendedor+': falta'+(h.faltan.length===1?' la':'n las')+' '+h.faltan.join(', ')}; })});
   }
   var exceso=[];
   (pagos||[]).forEach(function(c){ if(excesoCobro(c.p)>0 && exceso.indexOf(c.p)<0) exceso.push(c.p); });
@@ -2478,6 +2673,7 @@ function renderCuadre(){
       ? ('<div style="font-size:.76rem;color:var(--muted);margin:-4px 0 8px">💡 Fuera de este período queda '+fmtBs(otroPeriodo)+
          ' más por cobrar ('+(pendAll.length-pend.length)+' venta'+((pendAll.length-pend.length)===1?'':'s')+'). Elegí <b>Todo</b> para verlas.</div>')
       : '')+
+    (pend.length ? tramosDeudaHtml(pend) : '')+
     (pend.length
       ? '<div class="tw" style="max-height:320px;overflow:auto"><table class="mini"><thead><tr><th>Cliente</th><th>Desde</th><th style="text-align:right">Saldo</th></tr></thead><tbody>'+
         pend.slice(0,60).map(function(x){
@@ -2493,6 +2689,13 @@ function renderCuadre(){
 
   // ---- alertas
   var al=cuadreAlertas(pagos), av=document.getElementById('cua-alertas');
+  /* Lo que se lleva el botón cuando el resumen está plegado. Los avisos van PRIMERO y en
+     rojo: es lo único de acá arriba que no se puede dejar pasar. */
+  RESUMEN_CUA = (al.length
+      ? ('<b style="color:var(--red)">🔎 '+al.length+' por revisar</b>')
+      : '✅ nada por revisar')
+    + (pendTotal>0.01 ? (' · '+fmtBs(pendTotal)+' por cobrar') : '');
+  pintarResumenCua();
   av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
     (al.length ? al.map(function(a){
@@ -2505,10 +2708,24 @@ function renderCuadre(){
 
   // ---- detalle: un renglón por pago, para tildar
   var det=document.getElementById('cua-detalle');
-  det.innerHTML='<div class="cua-box"><div class="cua-t">📄 Detalle de los pagos — '+pagos.length+'</div>'+
-    (pagos.length
+  /* 🔎 BUSCADOR. Con 250 renglones, encontrar «la nota 963» o «lo de Mario Huanca»
+     scrolleando no es trabajo, es sufrimiento. Busca en TODO lo que se ve en la fila:
+     cliente, N° de nota del pago, N° de la venta, vendedor, forma de pago, monto y fecha.
+     El total y la suma de abajo se recalculan sobre lo filtrado, así se puede sumar
+     «todo lo de Mirian en efectivo» sin sacar la cuenta a mano. */
+  var vistos=cuaFiltrar(pagos), totVistos=0;
+  vistos.forEach(function(c){ totVistos=r2(totVistos+(Number(c.monto)||0)); });
+  det.innerHTML='<div class="cua-box"><div class="cua-t">📄 Detalle de los pagos — '+
+      (CUA_BUSCA ? (vistos.length+' de '+pagos.length) : pagos.length)+
+      (CUA_BUSCA ? (' <span style="font-weight:400;color:var(--teal-dk)">· suman '+fmtBs(totVistos)+'</span>') : '')+'</div>'+
+    '<div style="display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap">'+
+      '<input type="text" id="cua-buscar" value="'+esc(CUA_BUSCA)+'" placeholder="🔎 Buscar por cliente, N° de nota, vendedor, forma de pago o monto…" '+
+        'oninput="cuaBuscar(this.value)" autocomplete="off" style="flex:1;min-width:220px">'+
+      (CUA_BUSCA ? '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="cuaBuscar(\'\')">✕ Limpiar</button>' : '')+
+    '</div>'+
+    (vistos.length
       ? '<div class="tw tw-tall"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Entrega</th><th>N° nota del pago</th><th>Vendedor</th><th>Forma de pago</th><th style="text-align:right">Monto</th><th>Venta</th><th>Sistema</th></tr></thead><tbody>'+
-        pagos.map(function(c){
+        vistos.map(function(c){
           return '<tr onclick="showContaModal(\''+c.p.id+'\')" style="cursor:pointer'+(regEnSistema(c.p)?';background:var(--green-lt)':'')+'">'+
             '<td style="white-space:nowrap">'+esc(fmtFechaCorta(c.fecha))+'</td>'+
             '<td><b>'+esc(c.p.cliente||'—')+'</b></td>'+
@@ -2522,11 +2739,43 @@ function renderCuadre(){
             '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
             '<td>'+(regEnSistema(c.p)?'<span class="badge b-green">✅</span>':'<span class="badge b-amber">falta</span>')+'</td></tr>';
         }).join('')+'</tbody></table></div>'
-      : '<div class="empty" style="padding:16px 0">No hay pagos con fecha en '+esc(cuadrePeriodoTxt())+'.</div>')+
+      : (CUA_BUSCA
+          ? '<div class="empty" style="padding:16px 0">Ningún pago coincide con «'+esc(CUA_BUSCA)+'».</div>'
+          : '<div class="empty" style="padding:16px 0">No hay pagos con fecha en '+esc(cuadrePeriodoTxt())+'.</div>'))+
     '</div>';
+  /* Escribir repinta la tabla entera, así que hay que devolverle el foco y el cursor al
+     buscador: si no, se escribe una letra y el teclado deja de funcionar. */
+  if(CUA_BUSCA){
+    var bi=document.getElementById('cua-buscar');
+    if(bi && document.activeElement!==bi){ try{ bi.focus(); bi.setSelectionRange(bi.value.length, bi.value.length); }catch(e){} }
+  }
 
   // ---- y debajo, un renglón por RETIRO de efectivo: la plata que SALIÓ
   renderCuadreDetRetiros();
+}
+/* 🔎 Qué se busca en cada renglón del detalle: todo lo que la persona ve en la fila.
+   El monto se compara con y sin formato ("5500", "5.500,00" y "5500,00" encuentran lo
+   mismo), porque nadie escribe los puntos de los miles. */
+var CUA_BUSCA='';
+function cuaBuscar(v){ CUA_BUSCA=String(v||''); renderCuadre(); }
+function cuaTextoFila(c){
+  var m=Number(c.monto)||0;
+  return [ c.p.cliente, c.nota, c.p.nota, c.p.vendedor, cuadreForma(c),
+           c.fecha, fmtFechaCorta(c.fecha), fmtBs(m), String(m), String(r2(m)).replace('.',','),
+           (c.anticipo?'anticipo':''), (c.envio?'recargo flete envio':''),
+           (regEnSistema(c.p)?'registrado sistema':'falta sistema'),
+           (esVentaTienda(c.p)?'tienda':'domicilio entrega')
+         ].join(' ');
+}
+function cuaFiltrar(pagos){
+  var q=normNombre(CUA_BUSCA).trim();
+  if(!q) return pagos||[];
+  var ts=q.split(/\s+/);                    // todas las palabras tienen que estar
+  return (pagos||[]).filter(function(c){
+    var t=normNombre(cuaTextoFila(c));
+    for(var i=0;i<ts.length;i++) if(t.indexOf(ts[i])<0) return false;
+    return true;
+  });
 }
 /* El contador necesita ver los retiros uno por uno, no solo el total por vendedor:
    es la contraparte del detalle de pagos (lo que entró) — acá está lo que salió.
@@ -8120,6 +8369,27 @@ function pintarResumenAdm(){
     : ('👁️ Ver resumen'+(RESUMEN_MINI?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_MINI+'</span>'):''));
   b.title = ver ? 'Esconde las fichas y los consolidados para dejar la tabla arriba de todo'
                 : 'Vuelve a mostrar las fichas y los consolidados';
+}
+/* ⚠️ Lo mismo para el CUADRE: contabilidad necesita trabajar con la planilla de pagos de
+   abajo y arriba tiene los cierres, los retiros, el por cobrar y los avisos.
+   La diferencia con Administración: acá lo que se pliega incluye «Revisar antes de
+   cerrar», así que el botón se lleva CUÁNTOS avisos quedan. Esconder el panel no puede
+   ser lo mismo que olvidarse de que hay algo para revisar. */
+var LS_RESUMEN_CUA='pedidos_resumen_cua', RESUMEN_CUA='';
+function resumenCuaVisible(){ try{ return localStorage.getItem(LS_RESUMEN_CUA)!=='0'; }catch(e){ return true; } }
+function pintarResumenCua(){
+  var box=document.getElementById('cua-resumen'), b=document.getElementById('cua-resumen-btn');
+  if(!box||!b) return;
+  var ver=resumenCuaVisible();
+  box.style.display = ver ? '' : 'none';
+  b.innerHTML = ver ? '🙈 Ocultar resumen'
+    : ('👁️ Ver resumen'+(RESUMEN_CUA?(' <span style="opacity:.75;font-weight:600">· '+RESUMEN_CUA+'</span>'):''));
+  b.title = ver ? 'Esconde los cierres, el por cobrar y los avisos para dejar la planilla de pagos arriba de todo'
+                : 'Vuelve a mostrar los cierres, el por cobrar y los avisos';
+}
+function toggleResumenCua(){
+  try{ localStorage.setItem(LS_RESUMEN_CUA, resumenCuaVisible()?'0':'1'); }catch(e){}
+  pintarResumenCua();
 }
 function toggleResumenAdm(){
   try{ localStorage.setItem(LS_RESUMEN, resumenAdmVisible()?'0':'1'); }catch(e){}

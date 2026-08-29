@@ -79,6 +79,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#mapa">🗺️ Mapa</a>
     <a href="#ruta">🧾 Hoja de ruta</a>
     <a href="#resumen">👁️ Ocultar resumen</a>
+    <a href="#revisar">🔎 Revisar antes de cerrar</a>
     <a href="#carga">📦 Lista de carga</a>
     <a href="#vertodos">👑 Ver todos</a>
     <a href="#turno-carga">🌅🌆 Turno AM/PM</a>
@@ -219,6 +220,27 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li><b>Queda guardado en TU computadora.</b> Si lo dejás plegado, sigue plegado la próxima vez que entres, sin tener que tocarlo de nuevo. Y <b>no le cambia la pantalla a nadie más</b>: cada uno lo deja como le sirve.</li>
       <li>Para traerlo de vuelta, el mismo botón: <b>👁️ Ver resumen</b>.</li>
     </ul>
+  </div>
+
+  <div class="card" id="revisar">
+    <h3>🔎 «Revisar antes de cerrar» — los nueve controles <span class="pill new">nuevo</span></h3>
+    <p>El panel del <b>Cuadre</b> que avisa qué hay que arreglar antes de cerrar el mes. Tocá cualquier <b>nombre</b> y se abre esa venta para corregirla ahí mismo.</p>
+    <ul>
+      <li>👯 <b>Cargada dos veces</b> — misma nota de venta, o mismo cliente y mismo monto. <b>Arreglado:</b> antes agrupaba por notas que no son notas (<span class="kbd">0</span>, <span class="kbd">S/N</span>, texto suelto) y juntaba ventas que no tenían nada que ver — en agosto, <b>11 de las 19</b> eran falsas. Y ahora también encuentra la que se cargó <b>en días distintos</b> (hasta una semana), que era justo la que se escapaba.</li>
+      <li>🖼️ <b>El mismo comprobante en dos ventas</b> — la misma captura de QR no puede respaldar dos pagos: o la plata entró una sola vez, o hay que cambiarle el respaldo a una. Nadie lo estaba mirando.</li>
+      <li>🚚 <b>Entregado y sin cobrar</b> — la mercadería salió y la plata no entró. Es plata <b>en la calle</b>, muy distinta del saldo de algo que todavía está en el depósito.</li>
+      <li>📆 <b>Fechas imposibles</b> — un pago fechado antes de la venta, o a futuro. Siempre es un tipeo, y hace caer la plata en el día equivocado del cuadre.</li>
+      <li>🧮 <b>Los precios no dan el total</b> — la suma de los productos no coincide con lo anotado como venta: uno de los dos números está mal.</li>
+      <li>📎 <b>Pagos sin imagen de respaldo</b> — con cuánta plata quedó sin poder probarse. Se adjunta desde la ficha, en <b>✏️ Corregir</b>.</li>
+      <li>👥 <b>Cliente con saldo en más de una venta</b> — para llamarlo una sola vez y cobrar todo junto.</li>
+      <li>🔢 <b>N° de nota salteados en el talonario</b> — si están la 720 y la 722 pero no la 721, ese recibo existe en papel y no está en el sistema. Solo mira las notas que son un número, y <b>solo huecos de hasta 3</b>: un salto más grande es otro talonario, no un olvido.</li>
+      <li>Y los de siempre: pagos sin fecha, ventas sin monto anotado, sin cargar al sistema, flete sin cobrar y cobro de más.</li>
+    </ul>
+    <div class="callout tip"><b>⏳ Antigüedad de la deuda</b> <span class="pill new">nuevo</span> — arriba de «Por cobrar» hay cuatro cuadritos con cuánta plata hay en cada tramo: <b>0 a 15 días</b>, <b>16 a 30</b>, <b>31 a 60</b> y <b>más de 60</b>. Los de +60 son los que casi nunca se cobran solos.</div>
+    <div class="callout new">🔎 <b>Buscador en el detalle de los pagos</b> <span class="pill new">nuevo</span> — con 250 renglones no se encontraba nada. Ahora hay un campo arriba de la tabla que busca en <b>todo lo que se ve en la fila</b>: cliente, N° de nota del pago, N° de la venta, vendedor, forma de pago (y el banco del QR), monto y fecha.<br>
+      Se pueden poner <b>varias palabras</b> y tienen que estar todas: <span class="kbd">mirian qr</span> trae los QR de Mirian. Y el título <b>suma lo filtrado</b> — <span class="kbd">2 de 4 · suman Bs 5.420,00</span> — así que no hay que sacar la cuenta a mano.</div>
+    <div class="callout tip"><b>🙈 Ocultar resumen</b> <span class="pill new">nuevo</span> — arriba a la derecha del Cuadre, para dejar la <b>planilla de pagos</b> arriba de todo cuando hay que trabajar con ella. Se pliegan los cierres, los retiros, el por cobrar y los avisos.<br>
+      <b>Plegado, el botón no te deja olvidarte:</b> dice en rojo <span class="kbd">🔎 4 por revisar</span> y cuánto falta cobrar. Queda guardado en tu computadora y no le cambia la pantalla a nadie más.</div>
   </div>
 
   <div class="card" id="carga">

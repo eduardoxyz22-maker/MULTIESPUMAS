@@ -128,6 +128,51 @@ const ARCH = 'file://' + path.resolve('pedidos.html');
   chk('con todo cobrado no dice "0 por cobrar" al pedo', !/por cobrar/.test(limpio), limpio.trim());
   chk('…pero sí cuántos pedidos hay', /4 pedidos/.test(limpio), limpio.trim());
 
+  // ============ 9. el MISMO botón en el Cuadre de Contabilidad ============
+  const cua = await page.evaluate(async () => {
+    var mk=function(i,saldo){ return { id:'Q'+i, cliente:'CLI '+i, nota:''+(700+i),
+      vendedor:'Isabel Robledo', fecha:'2026-08-0'+(i+1), ts:new Date('2026-08-0'+(i+1)+'T10:00:00').getTime(),
+      saldo:saldo, acuenta:0, pagado:false, cobradoBs:0, metodoPago:'', entregado:i===0,
+      verificado:false, oc:'', observaciones:'', garantia:'', facturarA:'', nit:'', estado:'',
+      vehiculo:'', chofer:'', turno:'AM', celular:'7', zona:'N', direccion:'Av', maps:'',
+      nroDia:1, productos:[{desc:'X',cant:1}] }; };
+    STATE=[mk(0,1500), mk(1,900), mk(2,0)];
+    window._pl=JSON.parse(JSON.stringify(STATE)); saveMirror();
+    showView('conta'); segSet('cta-tab','cuadre'); setContaTab('cuadre');
+    await new Promise(r=>setTimeout(r,300));
+    segSet('cua-mode','todo'); setCuadreModo('todo');
+    await new Promise(r=>setTimeout(r,300));
+    renderCuadre();
+    await new Promise(r=>setTimeout(r,150));
+    var vis=function(id){ var e=document.getElementById(id); if(!e) return 'NO EXISTE';
+      for(var n=e; n && n!==document.body; n=n.parentElement){
+        if(n.style && n.style.display==='none') return false; }
+      return true; };
+    var antes={ pendientes:vis('cua-pendientes'), alertas:vis('cua-alertas'),
+                cierre:vis('cua-cierre'), detalle:vis('cua-detalle'),
+                boton:(document.getElementById('cua-resumen-btn')||{}).textContent||'' };
+    toggleResumenCua();
+    var despues={ pendientes:vis('cua-pendientes'), alertas:vis('cua-alertas'),
+                  cierre:vis('cua-cierre'), detalle:vis('cua-detalle'),
+                  boton:(document.getElementById('cua-resumen-btn')||{}).textContent||'' };
+    toggleResumenCua();
+    var vuelta=vis('cua-alertas');
+    return { antes:antes, despues:despues, vuelta:vuelta, soloMio:resumenCuaVisible() };
+  });
+  chk('el Cuadre arranca con el resumen a la vista',
+      cua.antes.pendientes===true && cua.antes.alertas===true, JSON.stringify(cua.antes));
+  chk('plegado se van los cierres, el por cobrar y los avisos',
+      cua.despues.cierre===false && cua.despues.pendientes===false && cua.despues.alertas===false,
+      JSON.stringify(cua.despues));
+  chk('…y la PLANILLA DE PAGOS de abajo se queda, que es para lo que se pliega',
+      cua.despues.detalle===true, cua.despues.detalle);
+  chk('⚠️ plegado, el botón dice CUÁNTOS avisos quedan sin revisar',
+      /por revisar/.test(cua.despues.boton), cua.despues.boton.trim());
+  chk('…y cuánto falta cobrar', /por cobrar/.test(cua.despues.boton), cua.despues.boton.trim());
+  chk('volver a mostrarlo trae todo de vuelta', cua.vuelta===true, cua.vuelta);
+  chk('el del Cuadre es independiente del de Administración (dos interruptores distintos)',
+      await page.evaluate(()=> LS_RESUMEN!==LS_RESUMEN_CUA));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
