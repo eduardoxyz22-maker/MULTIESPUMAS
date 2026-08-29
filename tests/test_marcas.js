@@ -180,6 +180,54 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
         return m.suena.bs===1000 && m.heaven.bs===0;
       }));
 
+  // ============================================================================
+  // 📐 CÓMO SE ACOMODAN LAS FICHAS (§4bm)
+  //    Antes: `repeat(4,1fr)` con `max-width:1180px` — siempre 4 por fila y el bloque
+  //    topeado, así que en una pantalla de 1920 sobraban ~640px a la derecha y las diez
+  //    fichas del Cuadre quedaban 4+4+2.
+  // ============================================================================
+  const acomodo = (W) => page.evaluate(async (W) => {
+    /* Se mide sobre un contenedor de prueba, para no depender de cuántas fichas tenga
+       hoy el Cuadre: lo que se prueba es la REGLA. */
+    var box=document.getElementById('cua-metrics');
+    var prev=box.innerHTML, ancho=box.parentElement.style.width;
+    var out={};
+    [4,6,8,10,11].forEach(function(n){
+      box.innerHTML='';
+      for(var i=0;i<n;i++){ var d=document.createElement('div'); d.className='mc';
+        d.innerHTML='<div>Bs 660.498,99</div>'; box.appendChild(d); }
+      box.parentElement.style.width=W+'px';
+      acomodarFichas();
+      var cs=[].slice.call(box.children), filas={};
+      cs.forEach(function(c){ var y=Math.round(c.getBoundingClientRect().top); filas[y]=(filas[y]||0)+1; });
+      out[n]=Object.keys(filas).sort(function(a,b){return a-b;}).map(function(y){return filas[y];});
+      out['usa'+n]=Math.round(box.getBoundingClientRect().width);
+      out['hay'+n]=Math.round(box.parentElement.getBoundingClientRect().width);
+    });
+    box.parentElement.style.width=ancho; box.innerHTML=prev; acomodarFichas();
+    return out;
+  }, W);
+
+  let ac = await acomodo(1800);
+  chk('📐 10 fichas en pantalla ancha van 5+5, no 4+4+2',
+      ac[10].join('+')==='5+5', ac[10].join('+'));
+  chk('…y el bloque usa TODO el ancho, no se topea a 1180px',
+      ac.usa10 >= ac.hay10-2, ac.usa10+' de '+ac.hay10);
+  chk('8 fichas van 4+4', ac[8].join('+')==='4+4', ac[8].join('+'));
+  chk('6 fichas entran en una sola fila si hay lugar', ac[6].join('+')==='6', ac[6].join('+'));
+  chk('4 fichas también', ac[4].join('+')==='4', ac[4].join('+'));
+  chk('11 fichas se reparten lo más parejo posible (6+5)',
+      ac[11].join('+')==='6+5', ac[11].join('+'));
+
+  ac = await acomodo(1000);
+  chk('en una pantalla mediana no se aprietan de más: 10 → 4+4+2',
+      ac[10].join('+')==='4+4+2', ac[10].join('+'));
+  chk('…y sigue usando todo el ancho', ac.usa10 >= ac.hay10-2, ac.usa10+' de '+ac.hay10);
+
+  ac = await acomodo(520);
+  chk('en el celular quedan de a dos, no una sola gigante por fila',
+      ac[10].join('+')==='2+2+2+2+2', ac[10].join('+'));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

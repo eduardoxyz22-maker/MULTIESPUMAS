@@ -187,11 +187,13 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .filters .field{margin-bottom:0;max-width:520px}
 /* La tabla usa todo el ancho, pero las tarjetas de resumen no: estiradas a 450px
    quedan casi vacías y cuesta leerlas de un vistazo */
-.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px;max-width:1180px}
-@media(max-width:900px){.metrics{grid-template-columns:repeat(2,1fr)}}
-/* El cuadre tiene SEIS tarjetas: en tres columnas quedan 3+3 parejas, no 4+2 desbalanceado */
-.metrics.m3{grid-template-columns:repeat(3,1fr)}
-@media(max-width:900px){.metrics.m3{grid-template-columns:repeat(2,1fr)}}
+/* ⚠️ Antes: `repeat(4,1fr)` con `max-width:1180px`. Siempre CUATRO por fila, y el bloque
+   topeado a 1180px aunque la pantalla tuviera 1900 — un tercio en blanco a la derecha. Y
+   con las diez fichas del Cuadre quedaban 4+4+2, mal apiladas.
+   Ahora el ancho es libre y `acomodarFichas()` elige cuántas columnas para que las filas
+   queden PAREJAS (10 → 5+5, no 8+2). Esto de acá es el respaldo por si el JS no llega. */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:22px}
+@media(max-width:640px){.metrics{grid-template-columns:1fr}}
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -2053,6 +2055,7 @@ function renderContaMetrics(list, vSel){
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
+  acomodarFichas();
 }
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
@@ -2821,7 +2824,7 @@ function renderCuadre(){
       ? ('<b style="color:var(--red)">🔎 '+al.length+' por revisar</b>')
       : '✅ nada por revisar')
     + (pendTotal>0.01 ? (' · '+fmtBs(pendTotal)+' por cobrar') : '');
-  pintarResumenCua();
+  pintarResumenCua(); acomodarFichas();
   av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
     (al.length ? avisosHtml(al)+
@@ -5908,7 +5911,7 @@ function renderAdmin(){
   /* Lo que muestra el botón cuando el resumen está plegado: el número grueso a la vista
      sin tener que desplegar nada. */
   RESUMEN_MINI = total+' pedido'+(total===1?'':'s')+(pend?(' · '+pend+' por cobrar · '+fmtBs(saldoPend)):'');
-  pintarResumenAdm();
+  pintarResumenAdm(); acomodarFichas();
   document.getElementById('adm-metodos').innerHTML=
     'Cobros — 💵 Efectivo: <b>'+mtd.Efectivo+'</b> &nbsp;·&nbsp; 📱 QR: <b>'+mtd.QR+'</b> &nbsp;·&nbsp; 💳 Tarjeta: <b>'+mtd.Tarjeta+'</b>'+(mtdSin?(' &nbsp;·&nbsp; sin método: <b>'+mtdSin+'</b>'):'')+' &nbsp;&nbsp;|&nbsp;&nbsp; ⏳ Por cobrar: <b>'+pend+'</b>'+
     '<br>Stock — 🟢 <b>'+est['En stock']+'</b> &nbsp;·&nbsp; 🟡 <b>'+est['En producción']+'</b> &nbsp;·&nbsp; 🔴 <b>'+est['No hay']+'</b> &nbsp;&nbsp;|&nbsp;&nbsp; ✅ Verificados: <b>'+verificados+'</b> &nbsp;·&nbsp; 🚚 Entregados: <b>'+entregados+'</b> / '+total;
@@ -7036,7 +7039,7 @@ function renderMis(){
     mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades')+
     mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
-  renderMisChips(mine);
+  renderMisChips(mine); acomodarFichas();
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
   var lista=mine.filter(misTest(MIS_FILTER));
   // En "Atrasados" lo urgente va primero: el que lleva más tiempo esperando, arriba.
@@ -8153,7 +8156,45 @@ function whatsappUrl(text){ return 'https://wa.me/?text='+encodeURIComponent(tex
 /* ============================================================================
    Modales flotantes
    ========================================================================== */
-function openModal(html){ document.getElementById('modal-box').innerHTML=html; document.getElementById('modal').classList.add('on'); }
+/* ============================================================================
+   📐 CÓMO SE ACOMODAN LAS FICHAS (§4bm)
+   Dos reglas, en este orden:
+     1. la MENOR cantidad de filas que entre en el ancho disponible, y
+     2. entre esas, la que deja las filas más PAREJAS.
+   Con 10 fichas en una pantalla ancha entran hasta 7 por fila, pero 7 daría 7+3: se
+   eligen 5, o sea 5+5. Con 8 → 4+4. Con 6 → una sola fila de 6.
+   `FICHA_MIN` es el ancho mínimo para que un monto como «Bs 660.498,99» no se parta. Se
+   midió: con 250 quedaba [3,3,3,1] a 1100px y una sola ficha por fila (¡de 498px!) a 600.
+   Con 230 da [4,4,2] y [2,2,2,2,2] — que es como se veía antes en pantalla chica, y ahí
+   funcionaba bien. ========================================================================== */
+var FICHA_MIN=230, FICHA_GAP=12;
+function acomodarFichas(){
+  var boxes=document.querySelectorAll('.metrics');
+  for(var i=0;i<boxes.length;i++){
+    var b=boxes[i], n=b.children.length;
+    if(!n){ b.style.gridTemplateColumns=''; continue; }
+    var w=b.clientWidth||0;
+    if(!w) continue;                       // está escondido: no se puede medir, se deja el CSS
+    var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(FICHA_MIN+FICHA_GAP))));
+    var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
+    for(var c=max-1;c>=1;c--){
+      var f=Math.ceil(n/c), h=f*c-n;
+      if(f<filas || (f===filas && h<huecos)){ mejor=c; filas=f; huecos=h; }
+    }
+    b.style.gridTemplateColumns='repeat('+mejor+',minmax(0,1fr))';
+  }
+}
+/* Al cambiar el tamaño de la ventana hay que recalcular, pero sin hacerlo en cada píxel. */
+var _acomodaT=null;
+window.addEventListener('resize', function(){
+  if(_acomodaT) clearTimeout(_acomodaT);
+  _acomodaT=setTimeout(acomodarFichas, 120);
+});
+function openModal(html){
+  document.getElementById('modal-box').innerHTML=html;
+  document.getElementById('modal').classList.add('on');
+  acomodarFichas();                        // el reporte y los productos traen sus fichas
+}
 function closeModal(){ document.getElementById('modal').classList.remove('on'); }
 
 /* `volverA` = qué hacer al salir. Sin él cierra, como siempre (recién guardado). Desde una

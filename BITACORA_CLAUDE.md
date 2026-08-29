@@ -2503,6 +2503,40 @@ monto, para que nadie la dé por repartida.
   confirmación, y las marcas incluyendo al vendedor huérfano.
 - Batería: **20 suites · 484 checks · 0 fallas**.
 
+## 4bm. 📐 Las fichas llenaban un tercio de la pantalla (2026-08-29)
+
+El usuario, con captura: *"quedaron mal apiladas, mira todo el espacio desperdiciado a la
+derecha"*. Estaba en el CSS, a la vista:
+
+```css
+.metrics{grid-template-columns:repeat(4,1fr); max-width:1180px}
+```
+
+**Siempre cuatro por fila**, y el bloque **topeado a 1180 px**. Medido en 1920: usaba 1180
+de 1818 px — **638 px en blanco** — y las diez fichas del Cuadre (§4bl le sumó dos) quedaban
+**4+4+2**. El `.m3` que ya existía («el cuadre tiene SEIS tarjetas… 3+3, no 4+2») era el
+mismo problema parcheado a mano para otro conteo; quedó sin uso y se borró.
+
+`acomodarFichas()` elige las columnas con dos reglas, en orden: **menos filas** primero y,
+entre esas, las filas más **parejas**. Con 10 en pantalla ancha entrarían 7 (→ 7+3), pero
+elige 5 → **5+5**. Se llama desde los cuatro renders que llenan fichas, desde `openModal`
+(el reporte y los productos traen las suyas) y al cambiar el tamaño de la ventana.
+
+**⚠️ `FICHA_MIN` se midió, no se adivinó.** Con 250 px quedaba `[3,3,3,1]` a 1100 y **una
+sola ficha de 498 px por fila** a 600. Con **230** da `[4,4,2]` y `[2,2,2,2,2]` — que es
+como se veía antes en pantalla chica, donde funcionaba bien.
+
+| ancho | antes | ahora |
+|---|---|---|
+| 1920 | 4+4+2 · usa 1180 de 1818 | **5+5 · usa 1818** |
+| 1400 | 4+4+2 · usa 1180 de 1298 | **5+5 · usa 1298** |
+| 1100 | 4+4+2 | 4+4+2 |
+| 600 | 2+2+2+2+2 | 2+2+2+2+2 |
+
+- Tests: `test_marcas.js` **24 → 33** — la regla probada sobre un contenedor de prueba con
+  4/6/8/10/11 fichas en tres anchos, así no depende de cuántas fichas tenga hoy el Cuadre.
+- Batería: **20 suites · 493 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

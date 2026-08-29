@@ -246,6 +246,8 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       </ul>
       La división es <b>por vendedor</b>, porque cada uno trabaja una sola marca — y coincide con los bancos: los de Sueña cobran a <b>Ganadero/Económico</b> y los de Heaven a <b>BISA/Económico</b>. Son dos cajas de verdad.<br>
       Si alguna vez entra plata de un vendedor que <b>no está en ninguna de las dos listas</b>, no se le suma a ninguna: aparece una tercera ficha <b>«⚠️ Sin marca»</b> para que nadie la dé por repartida. Si eso pasa, avisá y lo agrego a la lista que corresponda.</div>
+    <div class="callout tip"><b>📐 Las fichas ahora llenan la pantalla</b> <span class="pill">arreglado</span> — estaban clavadas en <b>cuatro por fila</b> y el bloque topeado a 1180 px, así que en un monitor ancho sobraba casi un tercio a la derecha y las diez fichas del Cuadre quedaban <b>4+4+2</b>.<br>
+      Ahora el panel calcula cuántas entran y elige las columnas para que las filas queden <b>parejas</b>: en pantalla ancha van <b>5+5</b>, en una mediana <b>4+4+2</b>, y en el celular <b>de a dos</b>. Se recalcula solo si cambiás el tamaño de la ventana.</div>
     <div class="callout new"><b>📐 Cómo leerlo</b> <span class="pill new">nuevo</span> — los avisos van <b>agrupados por gravedad</b> y cada uno ocupa <b>un solo renglón</b>:
       <ul>
         <li>🔴 <b>Plata en juego</b> — lo que se puede perder: entregado sin cobrar, comprobante repetido, cargadas dos veces, cobro de más, flete sin cobrar. Vienen <b>abiertos</b>.</li>
