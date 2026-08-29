@@ -1,0 +1,187 @@
+/* 📄 LA TABLA DE ADMINISTRACIÓN NO PUEDE CRECER PARA SIEMPRE.
+   El dueño lo vio venir: *"lo del retraso en pintar solo sería cuando le dan ver TODO"*.
+   Tenía razón en la dirección, y medirlo bien (con calentamiento y mediana) lo confirmó:
+
+        1.500 ventas → Mes 172 ms · Todo 864 ms
+        3.000 ventas → Mes 796 ms · Todo 1.469 ms
+
+   Pero con dos vueltas de tuerca: «Todo» era el filtro **de fábrica** (el `active` estaba
+   ahí), así que nadie estaba en el modo rápido; y la tabla dibujaba UNA FILA POR VENTA DE
+   LA HISTORIA, y se repinta sola cada dos minutos y en cada tilde.
+
+   Dos arreglos: arrancar en «Mes», y topar las filas con un «ver más».
+   ⚠️ Lo que este test cuida por encima de todo: que el BUSCADOR siga mirando TODA la
+   planilla. Un tope que esconda lo que alguien está buscando sería mucho peor que la
+   lentitud que vino a arreglar. */
+const { chromium } = require('/opt/node22/lib/node_modules/playwright');
+const path = require('path');
+let PASS=0, FAIL=0;
+const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+e):''); };
+
+(async () => {
+  const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
+  const page = await browser.newPage({ viewport:{width:1500,height:1000} });
+  const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+  page.on('dialog',d=>d.accept());
+  await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
+  await page.waitForTimeout(300);
+
+  /* `n` ventas repartidas en varios meses, para que «Mes» y «Todo» den distinto. */
+  const prep = (n) => page.evaluate(async (n) => {
+    var el=document.getElementById('conn-form'); if(el) el.style.display='none';
+    CONNECTED=true; UNLOCKED=true;
+    document.getElementById('admin-lock').style.display='none';
+    document.getElementById('admin-content').style.display='block';
+    mostrarBotonesTodos();
+    apiSave=function(){ return Promise.resolve({ok:true}); };
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(STATE))}); };
+    var V=['Maria Flores','Isabel Robledo','Carola Chavez','Mirian Salazar'];
+    STATE=[];
+    for(var i=0;i<n;i++){
+      var d=new Date(2026,7,1); d.setDate(d.getDate()+(i%150));   // ~5 meses
+      var f=isoLocal(d);
+      STATE.push({ id:'t'+i, cliente:'CLIENTE '+i, nota:''+(1000+i), vendedor:V[i%4],
+        fecha:f, ts:d.getTime(), saldo:0, acuenta:0, pagado:true, cobradoBs:0, metodoPago:'',
+        entregado:false, verificado:false, oc:'08-'+i, observaciones:'', garantia:'',
+        facturarA:'', nit:'', estado:'', vehiculo:'', chofer:'', turno:'AM', celular:'7',
+        zona:'Norte', direccion:'Av '+i, maps:'', nroDia:i,
+        productos:[{desc:'SOFT ICE', medida:'140x190', codigo:'A1', cant:1}] });
+    }
+    saveMirror();
+    if(typeof admTopeReset==='function') admTopeReset();
+    var sb=document.getElementById('adm-search'); if(sb) sb.value='';
+    document.getElementById('adm-mes').value='2026-08';
+    showView('admin'); renderAdmin();
+    await new Promise(r=>setTimeout(r,150));
+  }, n);
+
+  const foto = () => page.evaluate(() => ({
+    modo: segVal('adm-mode'),
+    filas: document.querySelectorAll('#tbl-pedidos tbody tr').length,
+    aviso: (document.getElementById('adm-mas')||{textContent:''}).textContent||'',
+    botones: [].slice.call(document.querySelectorAll('#adm-mas button')).map(b=>b.textContent.trim()),
+    mesVisible: document.getElementById('wrap-mes').style.display!=='none'
+  }));
+  const modo = (m) => page.evaluate(async (m) => {
+    segSet('adm-mode', m);
+    document.getElementById('wrap-dia').style.display=(m==='dia')?'block':'none';
+    document.getElementById('wrap-mes').style.display=(m==='mes')?'block':'none';
+    if(typeof admTopeReset==='function') admTopeReset();
+    renderAdmin();
+    await new Promise(r=>setTimeout(r,120));
+  }, m);
+
+  // ============ 1. arranca en MES, no en Todo ============
+  await prep(400);
+  let f = await foto();
+  chk('el filtro arranca en «Mes», no en «Todo»', f.modo==='mes', f.modo);
+  chk('…y el campo del mes se ve (si no, no se sabría qué mes se está mirando)',
+      f.mesVisible===true, f.mesVisible);
+
+  // ============ 2. el tope de filas ============
+  await modo('todo');
+  f = await foto();
+  chk('con 400 ventas la tabla dibuja 150, no 400', f.filas===150, f.filas);
+  chk('…y avisa que hay más, con los dos números', /150 de 400/.test(f.aviso.replace(/\s+/g,' ')),
+      f.aviso.replace(/\s+/g,' ').trim().slice(0,90));
+  chk('…y manda al buscador, que es como se encuentra uno puntual',
+      /buscador/i.test(f.aviso), f.aviso.replace(/\s+/g,' ').trim().slice(0,120));
+  chk('con botón para ver más', f.botones.some(b=>/Ver 150 más/.test(b)), JSON.stringify(f.botones));
+  chk('…y otro para ver los 400 de una', f.botones.some(b=>/Ver los 400/.test(b)),
+      JSON.stringify(f.botones));
+
+  // ============ 3. ver más suma de a 150 ============
+  let mas = await page.evaluate(async () => { if(typeof admVerMas!=='function') return -1; admVerMas(); await new Promise(r=>setTimeout(r,150));
+    return document.querySelectorAll('#tbl-pedidos tbody tr').length; });
+  chk('«Ver más» pasa a 300', mas===300, mas);
+  mas = await page.evaluate(async () => { if(typeof admVerTodos!=='function') return {filas:-1,aviso:'no existe admVerTodos'}; admVerTodos(); await new Promise(r=>setTimeout(r,200));
+    return { filas:document.querySelectorAll('#tbl-pedidos tbody tr').length,
+             aviso:(document.getElementById('adm-mas')||{textContent:''}).textContent.trim() }; });
+  chk('«Ver los 400» las muestra todas', mas.filas===400, mas.filas);
+  chk('…y ahí ya no queda nada que avisar', mas.aviso==='', mas.aviso.slice(0,60));
+
+  // ============ 4. cambiar de filtro devuelve el tope a su base ============
+  await modo('mes');
+  await modo('todo');
+  f = await foto();
+  chk('cambiar de filtro NO deja pegado el «ver todos» de antes', f.filas===150, f.filas);
+
+  // ============ 5. 🔎 LO QUE MÁS IMPORTA: el buscador mira TODA la planilla ============
+  const buscado = await page.evaluate(async () => {
+    /* El cliente 399 está en el fondo del fondo: fuera de las 150 que se dibujan. */
+    var sb=document.getElementById('adm-search'); sb.value='CLIENTE 399';
+    if(typeof admTopeReset==='function') admTopeReset();
+    renderAdmin();
+    await new Promise(r=>setTimeout(r,150));
+    var filas=[].slice.call(document.querySelectorAll('#tbl-pedidos tbody tr'));
+    return { n:filas.length, txt:filas.map(function(t){return t.textContent;}).join(' ') };
+  });
+  chk('🔎 el buscador encuentra una venta que quedó FUERA del tope',
+      buscado.n>=1 && /CLIENTE 399/.test(buscado.txt), buscado.n+' filas');
+  chk('…y trae solo esa, no las 150 primeras', buscado.n<=2, buscado.n);
+
+  const porNota = await page.evaluate(async () => {
+    var sb=document.getElementById('adm-search'); sb.value='1399';
+    if(typeof admTopeReset==='function') admTopeReset();
+    renderAdmin();
+    await new Promise(r=>setTimeout(r,150));
+    return document.querySelectorAll('#tbl-pedidos tbody tr').length;
+  });
+  chk('…y también por N° de nota', porNota>=1 && porNota<=2, porNota);
+
+  await page.evaluate(async () => { document.getElementById('adm-search').value='';
+    if(typeof admTopeReset==='function') admTopeReset();
+    renderAdmin(); await new Promise(r=>setTimeout(r,150)); });
+
+  // ============ 6. con pocos pedidos no molesta con nada ============
+  await prep(40);
+  await modo('todo');
+  f = await foto();
+  chk('con 40 ventas se ven las 40', f.filas===40, f.filas);
+  chk('…y no aparece ningún aviso de «ver más»', f.aviso.trim()==='', f.aviso.trim().slice(0,60));
+
+  // ============ 7. los totales de arriba NO se topan: cuentan todo ============
+  await prep(400);
+  await modo('todo');
+  const totales = await page.evaluate(() => {
+    /* Se lee la ficha «Pedidos» por su etiqueta, no buscando "400" en todo el texto:
+       los textos van pegados ("Pedidos400400 unidades") y un match suelto no prueba nada. */
+    var ficha=function(lbl){
+      var l=[].slice.call(document.querySelectorAll('#adm-metrics .mc-lbl'))
+              .filter(function(e){ return e.textContent.trim()===lbl; })[0];
+      return l ? l.parentElement.querySelector('.mc-val').textContent.trim() : 'NO ESTÁ';
+    };
+    return { pedidos:ficha('Pedidos'), pagados:ficha('Pagados'),
+             filas:document.querySelectorAll('#tbl-pedidos tbody tr').length };
+  });
+  chk('⚠️ la ficha «Pedidos» sigue diciendo 400, aunque se dibujen 150',
+      totales.pedidos==='400', totales.filas+' filas · la ficha dice '+totales.pedidos);
+  chk('…y la de «Pagados» también cuenta las 400', totales.pagados==='400', totales.pagados);
+  const linea = await page.evaluate(() =>
+    document.getElementById('adm-metodos').textContent.replace(/\s+/g,' '));
+  chk('…y la línea de entregados cuenta sobre el total, no sobre lo dibujado',
+      /\/ 400/.test(linea), linea.slice(-60));
+
+  /* ⚠️ El tope es de la TABLA y de nadie más. Si alguna vez alguien "optimiza" metiéndolo
+     dentro de admFilter(), el Excel saldría con 150 ventas de 400 y nadie se daría cuenta
+     hasta que el contador reclame. Esto lo agarra. */
+  const fuentes = await page.evaluate(() => {
+    /* cargaLista() filtra por día (hoy / mañana / todos): se la pone en "todos" para
+       comparar contra las 400, si no compara peras con manzanas. */
+    var _c=(typeof CARGA_DIA!=='undefined')?CARGA_DIA:null;
+    if(_c!==null) CARGA_DIA='todos';
+    var carga=(typeof cargaLista==='function') ? cargaLista().length : 'no existe';
+    if(_c!==null) CARGA_DIA=_c;
+    return { excel: admFilter().length,        // de acá saca las filas exportExcel()
+             carga: carga,
+             filas: document.querySelectorAll('#tbl-pedidos tbody tr').length };
+  });
+  chk('📊 el Excel sigue exportando las 400 (el tope es solo de la tabla)',
+      fuentes.excel===400, fuentes.filas+' filas dibujadas · admFilter() da '+fuentes.excel);
+  chk('📦 la Lista de carga también ve las 400', fuentes.carga===400, fuentes.carga);
+
+  chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
+  console.log('\n'+PASS+' bien · '+FAIL+' mal');
+  await browser.close();
+  process.exit(FAIL?1:0);
+})();

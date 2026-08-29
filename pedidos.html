@@ -711,17 +711,20 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="filters">
           <div class="field">
             <label class="lb">Ver por</label>
+            <!-- ⚠️ Arranca en MES, no en Todo (§4bn). Con «Todo» de fábrica, cada repintado
+                 recorría la planilla entera: medido con 1.500 ventas, 864 ms contra 172. Y
+                 el trabajo de todos los días es el mes en curso. -->
             <div class="seg" id="adm-mode">
               <button type="button" data-val="dia">Día</button>
-              <button type="button" data-val="mes">Mes</button>
-              <button type="button" data-val="todo" class="active">Todo</button>
+              <button type="button" data-val="mes" class="active">Mes</button>
+              <button type="button" data-val="todo">Todo</button>
             </div>
           </div>
           <div class="field" id="wrap-dia" style="display:none">
             <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
-          <div class="field" id="wrap-mes" style="display:none">
+          <div class="field" id="wrap-mes">
             <label class="lb">Mes</label>
             <input type="month" id="adm-mes">
           </div>
@@ -806,6 +809,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
+        <div id="adm-mas"></div>
         <div id="pedidos-empty" class="empty" style="display:none">No hay pedidos para este filtro todavía.</div>
       </div>
     </div>
@@ -5868,6 +5872,14 @@ var QUICK_DEFS=[
   {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}}
 ];
 function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
+/* Cuántas filas se dibujan de una. 150 entra de sobra en el uso diario (el mes en curso
+   ronda las 250 y con un filtro puesto son muchas menos) y deja el repintado en decenas de
+   milisegundos en vez de cientos. `admVerMas` lo sube a pedido; vuelve solo al cambiar de
+   filtro, para que un «ver todos» de una vez no se quede pegado para siempre. */
+var ADM_TOPE_BASE=150, ADM_PASO=150, ADM_TOPE=150;
+function admVerMas(){ ADM_TOPE+=ADM_PASO; renderAdmin(); }
+function admVerTodos(){ ADM_TOPE=1e9; renderAdmin(); }
+function admTopeReset(){ ADM_TOPE=ADM_TOPE_BASE; }
 function admBaseList(){
   var mode=segVal('adm-mode');
   var q=document.getElementById('adm-search').value.trim().toLowerCase();
@@ -5939,7 +5951,14 @@ function renderAdmin(){
   // "Estado" va pegado a Productos a propósito: es la lectura de esos mismos tildes y
   // allá a la derecha había que scrollear para verla.
   var head='<thead><tr><th>Acciones</th>'+sh('num','N°')+sh('fecha','Entrega')+'<th>N° OC / ATC</th>'+sh('vendedor','Vendedor')+sh('cliente','Cliente')+'<th>Productos</th>'+sh('estado','Estado')+'<th>Celular</th><th>Turno</th>'+sh('zona','Zona')+'<th>Dirección</th><th>Maps</th><th>Vehículo</th>'+shNum('saldo','Saldo')+'</tr></thead>';
+  /* 📄 TOPE DE FILAS (§4bn). Con «Todo» la tabla dibujaba una fila por cada venta de la
+     historia: 1.500 filas son 864 ms CADA vez que se repinta — y se repinta sola cada dos
+     minutos y en cada tilde. Nadie lee mil filas: se busca. Se muestran las primeras y el
+     resto se pide con el botón. El buscador y los filtros trabajan sobre TODO igual, así
+     que no se esconde nada que se esté buscando. */
   var dn=dayNumMap();
+  var deMas=Math.max(0, list.length-ADM_TOPE);
+  if(deMas) list=list.slice(0, ADM_TOPE);
   var body=list.map(function(p){
     var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">📍 abrir</a>'):'—';
     var turno=p.turno?('<span class="badge b-gray">'+esc(p.turno)+'</span>'):'—';
@@ -5980,6 +5999,19 @@ function renderAdmin(){
   document.getElementById('tbl-pedidos').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('pedidos-empty').style.display=list.length?'none':'block';
   document.getElementById('tbl-pedidos').style.display=list.length?'table':'none';
+  var masEl=document.getElementById('adm-mas');
+  if(masEl){
+    masEl.innerHTML = deMas
+      ? ('<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 2px">'+
+           '<span style="font-size:.8rem;color:var(--muted)">Se muestran <b>'+ADM_TOPE+'</b> de <b>'+
+             (ADM_TOPE+deMas)+'</b> pedidos. Para encontrar uno puntual usá el <b>buscador</b> de arriba: '+
+             'busca en todos, no solo en los que se ven.</span>'+
+           '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="admVerMas()">▾ Ver '+
+             Math.min(deMas, ADM_PASO)+' más</button>'+
+           (deMas>ADM_PASO ? ('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="admVerTodos()">Ver los '+(ADM_TOPE+deMas)+'</button>') : '')+
+         '</div>')
+      : '';
+  }
   var cupoEl=document.getElementById('cupo-admin');
   if(cupoEl){
     var cmode=segVal('adm-mode');
@@ -9333,15 +9365,15 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('adm-mode',function(val){
     document.getElementById('wrap-dia').style.display=(val==='dia')?'block':'none';
     document.getElementById('wrap-mes').style.display=(val==='mes')?'block':'none';
-    renderAdmin();
+    admTopeReset(); renderAdmin();
   });
   document.getElementById('f-add-prod').addEventListener('click',function(){ addProdRow(); });
   document.getElementById('f-submit').addEventListener('click',submitPedido);
   document.getElementById('adm-dia').value=todayStr();
   document.getElementById('adm-mes').value=monthStr();
-  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){ if(UNLOCKED) renderAdmin(); });
-  document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
-  document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED) renderAdmin(); });
+  var sb=document.getElementById('adm-search'); if(sb) sb.addEventListener('input',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+  document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
+  document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
   document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });

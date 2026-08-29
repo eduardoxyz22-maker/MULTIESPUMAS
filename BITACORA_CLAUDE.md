@@ -2537,6 +2537,48 @@ como se veía antes en pantalla chica, donde funcionaba bien.
   4/6/8/10/11 fichas en tres anchos, así no depende de cuántas fichas tenga hoy el Cuadre.
 - Batería: **20 suites · 493 checks · 0 fallas**.
 
+## 4bn. ⚡ Administración abría en «Todo» y dibujaba la historia entera (2026-08-29)
+
+El usuario corrigió un número mío: *"lo del retraso en pintar solo sería cuando le dan ver
+'todo' desde el fin de los tiempos, no solo lo del mes"*. Tenía razón, y la corrección era
+sobre **mi propia medición**: los 944 ms que le había mostrado los medí **sin tocar el
+filtro** — o sea en «Todo» — y se los presenté como el uso de todos los días. Se lo dije.
+
+Pero al medirlo bien (3 renders de descarte + mediana de 5) aparecieron dos vueltas de
+tuerca que lo volvían un problema real igual:
+
+1. **«Todo» era el filtro de fábrica** — el `class="active"` estaba en ese botón. Nadie
+   estaba en el modo rápido salvo que lo eligiera a mano cada vez.
+2. La tabla dibujaba **una fila por cada venta de la historia**, y se repinta sola cada dos
+   minutos y en cada tilde.
+
+| ventas | Mes antes | Todo antes | Mes ahora | Todo ahora |
+|---|---|---|---|---|
+| 250 | 37 ms | 120 ms | 43 ms | 85 ms |
+| 750 | 204 ms | 427 ms | 82 ms | 80 ms |
+| 1.500 | 172 ms | **864 ms** | 84 ms | **90 ms** |
+| 3.000 | 796 ms | **1.469 ms** | 84 ms | **98 ms** |
+
+Dos arreglos, los dos baratos:
+
+- **Arranca en «Mes»** (`active` movido, y `#wrap-mes` ya no nace con `display:none`).
+- **`ADM_TOPE=150` filas dibujadas**, con aviso *«Se muestran 150 de 400»* y botones
+  `admVerMas()` / `admVerTodos()`. `admTopeReset()` vuelve a 150 al cambiar de filtro,
+  de día, de mes o al escribir en el buscador — un «ver todos» no se queda pegado.
+
+**⚠️ El tope es SOLO de la tabla, y ahí está todo el riesgo.** El recorte es un `slice` de
+una variable local, puesto **después** de que se calculan las fichas y los cinco
+consolidados (vendedor, día, camión, chofer, zonas), y `admFilter()` / `cargaLista()` no lo
+ven. Así el **buscador sigue mirando la planilla entera**: un tope que esconda lo que
+alguien está buscando sería mucho peor que la lentitud que vino a arreglar. Si alguna vez
+alguien "optimiza" metiendo el tope dentro de `admFilter()`, el Excel saldría con 150 de
+400 ventas y nadie se enteraría hasta que reclame el contador.
+
+- Test nuevo: `test_tabla.js` (**22 checks**). Contra `origin/main` da **11 fallas** — y las
+  9 que pasan en ambas versiones son justamente los invariantes que no había que romper
+  (buscador, fichas, Excel, Lista de carga, y que con 40 pedidos no aparezca ningún aviso).
+- Batería: **21 suites · 515 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

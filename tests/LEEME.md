@@ -58,6 +58,25 @@ prueba.** Un test que no está en el repo es un test que todavía no existe.
   una función que un test llama, correrlo y mirar que llegue hasta el final.
 - Terminar con `process.exit(FAIL?1:0)` y un resumen `N bien · N mal`.
 
+## Probar que el test tiene dientes
+
+Un test nuevo que pasa no prueba nada: hay que verlo **fallar** contra la versión sin el
+arreglo. Como los tests abren `pedidos.html` **relativo**, alcanza con pararse en otra
+carpeta que tenga la copia vieja:
+
+```bash
+mkdir -p /tmp/viejo && git show origin/main:pedidos.html > /tmp/viejo/pedidos.html
+cd /tmp/viejo && node /home/user/MULTIESPUMAS/tests/test_loquesea.js
+```
+
+Y **mirar cuáles pasan igual**: esos son los invariantes que el arreglo no debía romper
+(en `test_tabla.js`, que el buscador siga encontrando todo). Si pasan *todos*, el test no
+prueba el arreglo; si fallan *todos*, no está cuidando lo que ya funcionaba.
+
+Que el test **reviente** contra la versión vieja también alcanza como prueba, pero conviene
+que degrade a checks en rojo (`if(typeof loNuevo!=='function') return -1;`): quien lo corra
+dentro de seis meses ve *qué* falta, no un stack trace.
+
 ## La regla de oro
 
 **Si algo falla, es una regresión de verdad.** No hay "fallas conocidas" que normalizar: la
