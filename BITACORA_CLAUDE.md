@@ -2317,6 +2317,38 @@ tocar el Apps Script**.
   Contra `origin/main`: falla y revienta con `ctaAdjuntarEdit is not defined`.
 - Batería: **16 suites · 344 checks · 0 fallas**.
 
+## 4bh. 🐱 El gato, para todo el equipo (2026-08-29)
+
+Pedido del usuario: *"la alerta que falta adjuntar comprobante, y el gato de meme que sale
+a Isabel, que salga a todos los demás vendedores"*.
+
+**Antes de tocar nada se midió** (`/tmp/quien.js`, los dos casos × los 10 vendedores), porque
+eran DOS avisos distintos con la MISMA imagen y solo uno estaba restringido:
+
+| | falta el comprobante | escribió un combo |
+|---|---|---|
+| Fernando · Mauricio · Juan Pablo | 🐱 | 🐱 |
+| Carola · Isabel · Mirian · María · Jonathan | 🐱 | solo un toast |
+| Eduardo Añez · ROHO | — (form lite) | solo un toast |
+
+O sea: el del **comprobante ya salía para las 8** — lo que Isabel veía no era un privilegio.
+El restringido era el del **combo**, por la lista `MEME_COMBO` de tres nombres; el resto veía
+un toast que, justamente, se les pasaba de largo (que es para lo que existe el gato).
+
+**Se borró la lista.** `memeCombo` ya no filtra por vendedor. Sin lista no hay a quién
+olvidarse de agregar cuando entra alguien nuevo. El título se adapta: con nombre
+*"Otra vez el combo, Isabel…"*, sin nombre elegido *"Los combos se cargan por separado"*
+(antes quedaba colgando con una coma y puntos suspensivos).
+
+Eduardo Añez y ROHO **siguen sin** el del comprobante, y está bien: su formulario es "lite"
+y ni siquiera pide método de pago, así que no hay comprobante que reclamar — se verificó que
+su pedido **sí se guarda** ("✅ Pedido guardado") y no queda trabado.
+
+- Test: `tests/test_memes.js` (**11 checks**) — cruza los DOS avisos contra TODOS los
+  vendedores, así la lista no puede volver a encogerse en silencio. Contra `origin/main`:
+  **5 fallas**.
+- Batería: **17 suites · 355 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
