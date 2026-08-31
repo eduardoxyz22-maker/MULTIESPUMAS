@@ -2650,6 +2650,17 @@ casillero del arqueo va a aparecer vacío al abrir, y eso asusta.
 - Batería: **22 suites · 536 checks · 0 fallas**.
 
 ## 5. Pendientes
+
+> **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
+> en verde el **22/08/2026** (§ del candado). Verificado de nuevo el 31/08: `SCRIPT_VERSION`
+> del `.gs` y `SCRIPT_VERSION_ESPERADA` del panel coinciden, y **nada tocó
+> `google-apps-script.gs` desde entonces** (`git log 96e9d05..main -- google-apps-script.gs`
+> vacío), así que no hace falta volver a publicar.
+> **Antes de pedirle al usuario que republique: correr ese `git log`.** Si está vacío, no hay
+> nada que republicar — se preguntó de más el 29 y el 31/08 por no mirar acá primero.
+> El exec de Google es inalcanzable desde el sandbox (proxy 403): la única confirmación
+> posible es el cartel en 🔒 Cerrar día, en la pantalla del usuario.
+
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
 3. Corregir el typo **"Instragram" → "Instagram"** en el campo Canal de Kommo (el código lo tolera).
