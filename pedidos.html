@@ -711,20 +711,25 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="filters">
           <div class="field">
             <label class="lb">Ver por</label>
-            <!-- ⚠️ Arranca en MES, no en Todo (§4bn). Con «Todo» de fábrica, cada repintado
-                 recorría la planilla entera: medido con 1.500 ventas, 864 ms contra 172. Y
-                 el trabajo de todos los días es el mes en curso. -->
+            <!-- ⚠️ VUELVE A ARRANCAR EN «TODO» (§4bo revierte a §4bn).
+                 §4bn lo había puesto en «Mes» por velocidad, pero medido DESPUÉS del tope de
+                 filas la diferencia es de 14 ms (84 vs 98 con 3.000 ventas): el tope fue lo
+                 que arregló la lentitud, no el filtro. Y «Mes» corta por fecha de ENTREGA,
+                 así que el 31 de agosto escondía las entregas de septiembre —justo las que se
+                 están preparando—. No vale 14 ms.
+                 El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
+                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba. -->
             <div class="seg" id="adm-mode">
               <button type="button" data-val="dia">Día</button>
-              <button type="button" data-val="mes" class="active">Mes</button>
-              <button type="button" data-val="todo">Todo</button>
+              <button type="button" data-val="mes">Mes</button>
+              <button type="button" data-val="todo" class="active">Todo</button>
             </div>
           </div>
           <div class="field" id="wrap-dia" style="display:none">
             <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
-          <div class="field" id="wrap-mes">
+          <div class="field" id="wrap-mes" style="display:none">
             <label class="lb">Mes</label>
             <input type="month" id="adm-mes">
           </div>
@@ -807,6 +812,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
         </div>
 
+        <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
+             Plegar el resumen no puede esconder entregas que vienen. -->
+        <div id="adm-fuera"></div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -1653,10 +1661,16 @@ var CONTA_EXCLUIR=['ROHO','Eduardo Añez'];
    cobran a Ganadero/Económico y los de Heaven a BISA/Económico. Son dos cajas de verdad.
    Quien no esté en ninguna lista NO se reparte a la fuerza: se cuenta aparte y se avisa.
    ========================================================================== */
+/* `col` = el borde de la ficha · `txt` = el número.
+   ⚠️ Van SEPARADOS a propósito. El usuario pidió "Heaven turquesa, Sueña amarillo patito",
+   y el amarillo patito de verdad (#FFD400) sobre blanco da 1,34:1 de contraste: como borde
+   se ve perfecto, pero de número el monto sería ilegible. Así que el borde lleva el color
+   vivo que se pidió y el monto una versión oscura del MISMO amarillo (4,92:1) — el turquesa
+   igual: #00B5AD de borde (el teal de la marca) y #0f766e de número (5,47:1). */
 var MARCAS=[
-  {k:'suena',  lbl:'Sueña',  ico:'🛏️', col:'#c2410c',
+  {k:'suena',  lbl:'Sueña',  ico:'🛏️', col:'#FFD400', txt:'#a16207',
    vendedores:['Mauricio Merida','Juan Pablo Paredes','Fernando Peinado']},
-  {k:'heaven', lbl:'Heaven', ico:'💚', col:'#1d4ed8',
+  {k:'heaven', lbl:'Heaven', ico:'💚', col:'#00B5AD', txt:'#0f766e',
    vendedores:['Jonathan Monje','Maria Flores','Isabel Robledo','Carola Chavez','Mirian Salazar']}
 ];
 function marcaDe(v){
@@ -2744,7 +2758,7 @@ function renderCuadre(){
       MARCAS.forEach(function(g){
         var d=M[g.k];
         out+=mc(g.col, g.ico+' '+g.lbl, fmtBs(d.bs),
-          d.nv ? (d.nv+' venta'+(d.nv===1?'':'s')+' · '+pc(d.bs)) : 'sin ventas en el período');
+          d.nv ? (d.nv+' venta'+(d.nv===1?'':'s')+' · '+pc(d.bs)) : 'sin ventas en el período', g.txt);
       });
       if(M.otros.bs>0.01) out+=mc('var(--amber)','⚠️ Sin marca',fmtBs(M.otros.bs),
         M.otros.nv+' venta'+(M.otros.nv===1?'':'s')+' de vendedores que no están en ninguna marca');
@@ -5876,6 +5890,54 @@ function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k==
    ronda las 250 y con un filtro puesto son muchas menos) y deja el repintado en decenas de
    milisegundos en vez de cientos. `admVerMas` lo sube a pedido; vuelve solo al cambiar de
    filtro, para que un «ver todos» de una vez no se quede pegado para siempre. */
+/* 📅 EL FILTRO «MES» PUEDE ESCONDER ENTREGAS QUE VIENEN (§4bo).
+   El filtro corta por FECHA DE ENTREGA, así que el 31 de agosto todo lo que se entrega en
+   septiembre —justo lo que se está cargando esos días— queda fuera de la vista de fábrica.
+   La Lista de carga y el Excel lo siguen viendo, pero la TABLA es donde se asigna chofer y
+   se tilda verificado: no puede desaparecer sin avisar. Lo destapó el 31/08 un test que
+   sembraba pedidos "para mañana" y de golpe midió cero.
+   ⚠️ Mira solo hacia ADELANTE (de hoy en adelante): esconder lo viejo es justamente para
+   lo que sirve un filtro por mes. */
+function fueraDelMes(){
+  if(segVal('adm-mode')!=='mes') return null;
+  var m=document.getElementById('adm-mes').value; if(!m) return null;
+  var hoy=todayStr(), por={};
+  STATE.forEach(function(p){
+    var f=p.fecha||'';
+    if(!f || f<hoy) return;                       // lo de antes de hoy ya pasó
+    var mm=f.slice(0,7);
+    if(mm===m) return;                            // eso ya se ve en la tabla
+    por[mm]=(por[mm]||0)+1;
+  });
+  var meses=Object.keys(por).sort();
+  if(!meses.length) return null;
+  var total=0; meses.forEach(function(k){ total+=por[k]; });
+  return { meses:meses, por:por, total:total };
+}
+function renderFueraDelMes(){
+  var el=document.getElementById('adm-fuera'); if(!el) return;
+  var d=fueraDelMes();
+  if(!d){ el.className=''; el.innerHTML=''; return; }
+  var btns=d.meses.slice(0,3).map(function(mm){
+    return '<button class="rv-toggle" style="margin-left:8px" onclick="admIrAlMes(\''+esc(mm)+'\')">ver '+
+      esc(mesNombre(mm))+' ('+d.por[mm]+')</button>';
+  }).join('');
+  el.className='revisar';
+  var uno=(d.total===1);
+  el.innerHTML='📅 Hay <b>'+d.total+'</b> pedido'+(uno?'':'s')+' con <b>entrega fuera de este mes</b> '+
+    'que no se '+(uno?'ve':'ven')+' en la tabla con el filtro puesto. '+btns+
+    (d.meses.length>3 ? ' <button class="rv-toggle" style="margin-left:8px" onclick="admVerTodoElHistorial()">ver todo</button>' : '');
+}
+function admIrAlMes(mm){
+  var el=document.getElementById('adm-mes'); if(el) el.value=mm;
+  admTopeReset(); renderAdmin();
+}
+function admVerTodoElHistorial(){
+  segSet('adm-mode','todo');
+  document.getElementById('wrap-dia').style.display='none';
+  document.getElementById('wrap-mes').style.display='none';
+  admTopeReset(); renderAdmin();
+}
 var ADM_TOPE_BASE=150, ADM_PASO=150, ADM_TOPE=150;
 function admVerMas(){ ADM_TOPE+=ADM_PASO; renderAdmin(); }
 function admVerTodos(){ ADM_TOPE=1e9; renderAdmin(); }
@@ -5909,7 +5971,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -6031,7 +6093,9 @@ function renderAdmin(){
     }
   }
 }
-function mc(color,lbl,val,sub){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+color+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
+/* `txt` es opcional: cuando el color del borde no sirve de texto (un amarillo sobre blanco
+   no se lee) se pasa aparte el tono oscuro del número. Sin `txt` se comporta como siempre. */
+function mc(color,lbl,val,sub,txt){ return '<div class="mc"><div class="mc-bar" style="background:'+color+'"></div><div class="mc-lbl">'+lbl+'</div><div class="mc-val" style="color:'+(txt||color)+'">'+val+'</div><div class="mc-sub">'+sub+'</div></div>'; }
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* ---- Filtros rápidos (chips) + orden de columnas ---- */

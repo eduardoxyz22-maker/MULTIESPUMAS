@@ -2579,6 +2579,53 @@ alguien "optimiza" metiendo el tope dentro de `admFilter()`, el Excel saldría c
   (buscador, fichas, Excel, Lista de carga, y que con 40 pedidos no aparezca ningún aviso).
 - Batería: **21 suites · 515 checks · 0 fallas**.
 
+## 4bo. 🎨 Turquesa y amarillo patito · 🐛 el filtro «Mes» escondía las entregas que venían (2026-08-31)
+
+Pedido chico: *"heaven borde turquesa, y sueña borde amarillo patito porfavor"*. Al hacerlo
+apareció un bug propio, y el bug importaba mucho más que el color.
+
+**El color.** `MARCAS` usaba un solo `col` para el **borde** de la ficha y para el **monto**.
+El amarillo patito de verdad (`#FFD400`) sobre blanco da **1,34:1**: de borde se ve perfecto,
+de número el monto sería ilegible. Así que `col` (borde) y `txt` (número) van separados:
+
+| marca | borde | monto | contraste del monto |
+|---|---|---|---|
+| Sueña | `#FFD400` patito | `#a16207` | 4,92:1 |
+| Heaven | `#00B5AD` (el teal de la marca) | `#0f766e` | 5,47:1 |
+
+`mc()` toma un 5º parámetro opcional `txt`; sin él se comporta como siempre.
+
+**El bug, que lo destapó el calendario.** Al correr la batería, `test_resumen` falló 4 checks
+por primera vez: sembraba pedidos "para mañana" y medía **cero**. No era el test — era el
+**31 de agosto**, y mañana ya era septiembre. §4bn había puesto el filtro de fábrica en
+«Mes», y **«Mes» corta por fecha de ENTREGA**: los últimos días de cada mes, todo lo que se
+entrega el mes siguiente —justo lo que se está preparando— desaparecía de la tabla. La Lista
+de carga y el Excel lo seguían viendo, pero la tabla es donde se asigna chofer y se tilda
+verificado. `renderRevisar` tampoco lo cubría: solo mira pedidos con **datos faltantes**.
+
+**Se revirtió la mitad de §4bn.** Medido *después* del tope de filas, «Mes» y «Todo» dan
+**84 y 98 ms** con 3.000 ventas: el **tope fue lo que arregló la lentitud**, y el filtro por
+defecto ya casi no aportaba. Catorce milisegundos no pagan esconder entregas. Vuelve a
+arrancar en **«Todo»** — y como el orden de fábrica es por **fecha descendente**, las 150
+filas dibujadas son las entregas **más próximas**, no 150 pedidos viejos.
+
+**Y se agregó la red de seguridad** para cuando alguien *elige* «Mes», que es legítimo y
+sigue escondiendo lo mismo: `renderFueraDelMes()` pone un aviso ámbar —*«📅 Hay 4 pedidos con
+entrega fuera de este mes…»*— con un botón por mes que salta ahí. Mira **solo de hoy en
+adelante**: esconder lo viejo es para lo que sirve el filtro. Va en `#adm-fuera`, **fuera de
+`#adm-resumen`** a propósito: plegar el resumen no puede tapar una alerta.
+
+- Tests: `test_finmes.js` nuevo (**15 checks**) — contra lo publicado da **13 fallas**, y la
+  primera línea es la prueba del bug en vivo: `mes · 3 filas`, con las 4 de septiembre
+  escondidas y sin aviso. `test_tabla.js` **22 → 24**: ahora fija que arranca en «Todo» y que
+  lo dibujado es lo más próximo (nada escondido es más nuevo que lo que se ve).
+- Batería: **22 suites · 532 checks · 0 fallas**.
+
+> **Lección para la próxima.** §4bn cambió un valor por defecto por **14 ms** y abrió un
+> agujero operativo que solo se vuelve visible **dos días al mes**. Lo agarró el calendario,
+> no una revisión. Antes de cambiar un filtro por defecto: preguntarse **qué queda afuera**,
+> y medir la ganancia *después* de los otros arreglos, no antes.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

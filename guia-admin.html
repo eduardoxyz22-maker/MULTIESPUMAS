@@ -110,12 +110,14 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <p>Tocá el <b>encabezado</b> de una columna para <b>ordenar</b> (N°, Entrega, Vendedor, Cliente, Zona, Estado, Saldo). La flecha ▲▼ indica el orden.</p>
     <div class="callout tip">🔎 La búsqueda ahora también encuentra por <b>nota de venta</b> y <b>celular</b>.</div>
 
-    <h3 style="margin-top:18px">📅 «Ver por» arranca en <b>Mes</b> <span class="pill">nuevo</span></h3>
-    <p>Antes la pantalla abría en <b>Todo</b> —el historial entero desde el primer día— y eso la hacía pesada: cada vez que se repinta (sola cada dos minutos, y en cada tilde que ponés) tenía que recorrer todas las ventas de la historia. Ahora abre en <b>Mes</b>, que es el trabajo de todos los días. <b>Día</b> y <b>Todo</b> siguen ahí, a un clic.</p>
-
     <h3 style="margin-top:18px">📄 La tabla muestra de a <b>150</b> <span class="pill">nuevo</span></h3>
-    <p>Cuando el filtro trae muchísimos pedidos, la tabla dibuja los <b>primeros 150</b> y debajo avisa <i>«Se muestran 150 de 400 pedidos»</i>, con dos botones: <b>▾ Ver 150 más</b> y <b>Ver los 400</b>. Al cambiar de filtro vuelve a 150 solo.</p>
+    <p>La pantalla sigue abriendo en <b>Todo</b>, como siempre, pero ya no dibuja miles de filas de una: muestra las <b>primeras 150</b> —que son las de <b>entrega más próxima</b>, porque la tabla viene ordenada por fecha— y debajo avisa <i>«Se muestran 150 de 400 pedidos»</i>, con dos botones: <b>▾ Ver 150 más</b> y <b>Ver los 400</b>. Al cambiar de filtro vuelve a 150 solo.</p>
+    <p>Antes, con muchas ventas cargadas, cada repintado (la pantalla se refresca sola cada dos minutos, y cada vez que ponés un tilde) tenía que dibujar una fila por cada venta de la historia. Con 3.000 ventas eso eran <b>casi un segundo y medio</b>; ahora es una décima.</p>
     <div class="callout tip">🔎 <b>El buscador NO se topa</b>: busca sobre <b>todos</b> los pedidos, no solo sobre los que se ven en pantalla. Si buscás un cliente que quedó en el pedido 380, igual aparece. Lo mismo los <b>chips</b>, los números de las fichas de arriba, el <b>⬇️ Excel</b> y la <b>📦 Lista de carga</b>: todos siguen contando y exportando el total.</div>
+
+    <h3 style="margin-top:18px">📅 Aviso: «entregas fuera de este mes» <span class="pill">nuevo</span></h3>
+    <p>Cuando elegís <b>Mes</b>, el filtro corta por <b>fecha de entrega</b>. Eso quiere decir que a fin de mes —cuando ya estás cargando pedidos para entregar el mes siguiente— esas entregas <b>no aparecen</b> en la tabla si estás mirando el mes en curso.</p>
+    <div class="callout warn">Para que no se te pase, arriba de la tabla sale un aviso ámbar: <b>«📅 Hay 4 pedidos con entrega fuera de este mes que no se ven en la tabla con el filtro puesto»</b>, con un botón <b>«ver septiembre de 2026 (4)»</b> que te lleva directo. Solo avisa de entregas de <b>hoy en adelante</b>: lo ya entregado de meses viejos no lo cuenta, porque para eso justamente filtrás por mes.</div>
   </div>
 
   <div class="card" id="1clic">

@@ -9,7 +9,14 @@
    ahí), así que nadie estaba en el modo rápido; y la tabla dibujaba UNA FILA POR VENTA DE
    LA HISTORIA, y se repinta sola cada dos minutos y en cada tilde.
 
-   Dos arreglos: arrancar en «Mes», y topar las filas con un «ver más».
+   Se hicieron dos arreglos: topar las filas con un «ver más», y arrancar en «Mes».
+   ⚠️ EL SEGUNDO SE REVIRTIÓ (§4bo, 31/08). Medida la velocidad DESPUÉS del tope, «Mes» y
+   «Todo» quedaron en 84 y 98 ms con 3.000 ventas: el tope fue lo que arregló la lentitud.
+   Y «Mes» corta por fecha de ENTREGA, así que el 31 de agosto escondía las entregas de
+   septiembre —justo las que se están preparando—. Catorce milisegundos no pagan eso.
+   Arranca de nuevo en «Todo», y como el orden de fábrica es por fecha descendente, las 150
+   filas que se dibujan son las entregas más próximas.
+
    ⚠️ Lo que este test cuida por encima de todo: que el BUSCADOR siga mirando TODA la
    planilla. Un tope que esconda lo que alguien está buscando sería mucho peor que la
    lentitud que vino a arreglar. */
@@ -71,15 +78,35 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     await new Promise(r=>setTimeout(r,120));
   }, m);
 
-  // ============ 1. arranca en MES, no en Todo ============
+  // ============ 1. arranca en TODO (§4bo) ============
   await prep(400);
   let f = await foto();
-  chk('el filtro arranca en «Mes», no en «Todo»', f.modo==='mes', f.modo);
-  chk('…y el campo del mes se ve (si no, no se sabría qué mes se está mirando)',
-      f.mesVisible===true, f.mesVisible);
+  chk('el filtro arranca en «Todo»: ningún pedido queda escondido de entrada',
+      f.modo==='todo', f.modo);
+  chk('…y con 400 pedidos ya está topado, así que arrancar en «Todo» no cuesta',
+      f.filas===150, f.filas);
+  /* ⚠️ Lo que hace seguro arrancar en «Todo» con tope: el orden de fábrica es por fecha
+     DESCENDENTE, así que las 150 dibujadas son las entregas MÁS PRÓXIMAS, no 150 pedidos
+     viejos. Si alguien cambia el orden por defecto, esto lo agarra. */
+  const arriba = await page.evaluate(() => {
+    /* Se compara la fecha MÁS VIEJA de las dibujadas contra la MÁS NUEVA de las que
+       quedaron afuera: si el orden es el correcto, todo lo dibujado es igual o más nuevo. */
+    var todas=admFilter();                                  // las 400, ya ordenadas
+    var n=document.querySelectorAll('#tbl-pedidos tbody tr').length;
+    var dentro=todas.slice(0,n).map(function(p){return p.fecha;});
+    var fuera =todas.slice(n).map(function(p){return p.fecha;});
+    return { dibujadas:n, masViejaDentro:dentro.sort()[0],
+             masNuevaFuera:fuera.sort()[fuera.length-1],
+             primeraFila:todas[0].fecha };
+  });
+  chk('⚠️ lo dibujado es lo MÁS PRÓXIMO: nada de lo escondido es más nuevo',
+      arriba.masViejaDentro >= arriba.masNuevaFuera,
+      'la más vieja dibujada '+arriba.masViejaDentro+' · la más nueva escondida '+arriba.masNuevaFuera);
+  chk('…y arriba de todo va la entrega más lejana en el futuro',
+      arriba.primeraFila===(await page.evaluate(()=>admFilter().map(function(p){return p.fecha;}).sort().pop())),
+      arriba.primeraFila);
 
   // ============ 2. el tope de filas ============
-  await modo('todo');
   f = await foto();
   chk('con 400 ventas la tabla dibuja 150, no 400', f.filas===150, f.filas);
   chk('…y avisa que hay más, con los dos números', /150 de 400/.test(f.aviso.replace(/\s+/g,' ')),
