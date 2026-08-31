@@ -2626,6 +2626,29 @@ adelante**: esconder lo viejo es para lo que sirve el filtro. Va en `#adm-fuera`
 > no una revisión. Antes de cambiar un filtro por defecto: preguntarse **qué queda afuera**,
 > y medir la ganancia *después* de los otros arreglos, no antes.
 
+## 4bp. 🧮 El Cuadre abre en «Mes» (2026-08-31)
+
+*"cuadre y conciliacion al abrir por defecto deberia salir en mes no en dia"*. Contabilidad
+cuadra el mes, no el día suelto. Se movió el `active` de `#cua-mode` a **Mes**, se dio vuelta
+el `display:none` de `#cua-wrap-dia` / `#cua-wrap-mes`, y el respaldo de `cuadrePeriodo()`
+pasó de `||'dia'` a `||'mes'` para que coincida con lo que marca el HTML.
+
+**⚠️ Por qué esto NO repite el error de §4bo.** Ahí el cambio de «Todo» a «Mes» *achicaba* la
+vista y escondía entregas. Acá va al revés: **el mes contiene al día**, así que abrir en Mes
+solo puede mostrar más plata, nunca menos. El test lo fija explícitamente
+(`mes 6 pagos · día 5`) para que nadie lo invierta por descuido.
+
+**Lo que sí se revisó antes de tocar** (era el riesgo real): el **arqueo** se guarda con clave
+`modo|valor|forma` — `dia|2026-08-31|Efectivo` y `mes|2026-08|Efectivo` son entradas
+distintas. O sea que los conteos por día que Contabilidad ya venía anotando **siguen ahí**,
+intactos, al tocar «Día». No se pisa nada. Queda dicho en la guía porque a simple vista el
+casillero del arqueo va a aparecer vacío al abrir, y eso asusta.
+
+- Tests: `test_cuadre.js` **24 → 28**. La sección 0 va **antes que todo lo demás** a propósito:
+  el helper `cuadrar()` fuerza el modo en cada llamada, así que medido después ya no se
+  sabría con cuál abrió. Contra lo publicado da 3 fallas.
+- Batería: **22 suites · 536 checks · 0 fallas**.
+
 ## 5. Pendientes
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.

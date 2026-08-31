@@ -92,6 +92,31 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
     };
   }, [modo,val,vend]);
 
+  /* ---------- 0. CÓMO ARRANCA (§4bp) ----------
+     Pedido del dueño: *"cuadre y conciliacion al abrir por defecto deberia salir en mes no
+     en dia"*. Contabilidad cuadra el mes, no el día suelto.
+     ⚠️ Se mide ANTES de que el test fuerce ningún modo — de ahí que vaya primero: apenas
+     se llame a `cuadrar(...)` el modo queda pisado y ya no se sabría con qué abrió.
+     A diferencia del filtro de Administración (§4bo), acá pasar de Día a Mes AMPLÍA la
+     vista —el mes contiene al día—, así que no puede esconder plata que antes se veía. */
+  const arranque = await page.evaluate(() => ({
+    modo: segVal('cua-mode'),
+    veMes: document.getElementById('cua-wrap-mes').style.display!=='none',
+    veDia: document.getElementById('cua-wrap-dia').style.display!=='none',
+    mes:   document.getElementById('cua-mes').value,
+    pagos: cuadrePagos().length
+  }));
+  chk('el Cuadre abre en «Mes», no en «Día»', arranque.modo==='mes', arranque.modo);
+  chk('…y se ve el campo del Mes, no el del Día',
+      arranque.veMes===true && arranque.veDia===false, 'mes '+arranque.veMes+' · día '+arranque.veDia);
+  chk('…con el mes en curso ya puesto', arranque.mes===F.hoy.slice(0,7), arranque.mes);
+  const soloHoy = await page.evaluate(() => {
+    segSet('cua-mode','dia'); document.getElementById('cua-dia').value=todayStr(); setCuadreModo('dia');
+    return cuadrePagos().length;
+  });
+  chk('⚠️ y abrir en «Mes» muestra MÁS plata que «Día», no menos (el mes contiene al día)',
+      arranque.pagos>soloHoy, 'mes '+arranque.pagos+' pagos · día '+soloHoy);
+
   // ---------- 1. LO QUE DEFINE LA PANTALLA: corta por la fecha del PAGO ----------
   let r = await cuadrar('dia', F.hoy, '');
   chk('la venta del mes pasado COBRADA HOY entra en el cuadre de hoy',

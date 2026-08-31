@@ -860,17 +860,22 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="filters">
           <div class="field">
             <label class="lb">Cuadrar por <span style="font-weight:400;color:var(--muted)">fecha del PAGO</span></label>
+            <!-- ⚠️ Arranca en MES (§4bp). Contabilidad cuadra el mes, no el día suelto.
+                 A diferencia del filtro de Administración (§4bo), acá el cambio AMPLÍA la
+                 vista: el mes contiene al día, así que no puede esconder nada que antes se
+                 viera. El arqueo se guarda con clave `modo|valor|forma`, o sea que los
+                 conteos por día siguen guardados en «Día», intactos. -->
             <div class="seg" id="cua-mode">
-              <button type="button" data-val="dia" class="active">Día</button>
-              <button type="button" data-val="mes">Mes</button>
+              <button type="button" data-val="dia">Día</button>
+              <button type="button" data-val="mes" class="active">Mes</button>
               <button type="button" data-val="todo">Todo</button>
             </div>
           </div>
-          <div class="field" id="cua-wrap-dia">
+          <div class="field" id="cua-wrap-dia" style="display:none">
             <label class="lb">Día</label>
             <input type="date" id="cua-dia" onchange="renderCuadre()">
           </div>
-          <div class="field" id="cua-wrap-mes" style="display:none">
+          <div class="field" id="cua-wrap-mes">
             <label class="lb">Mes</label>
             <input type="month" id="cua-mes" onchange="renderCuadre()">
           </div>
@@ -2315,7 +2320,7 @@ function setCuadreModo(m){
   renderCuadre();
 }
 function cuadrePeriodo(){
-  var modo=segVal('cua-mode')||'dia';
+  var modo=segVal('cua-mode')||'mes';   // el mismo arranque que marca el HTML (§4bp)
   if(modo==='dia') return {modo:modo, val:((document.getElementById('cua-dia')||{}).value||todayStr())};
   if(modo==='mes') return {modo:modo, val:(((document.getElementById('cua-mes')||{}).value)||todayStr().slice(0,7))};
   return {modo:'todo', val:''};
