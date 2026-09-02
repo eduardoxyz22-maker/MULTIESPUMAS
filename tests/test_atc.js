@@ -53,7 +53,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   const cargar = (o) => page.evaluate(async (o) => {
     showView('form'); resetForm();
     segSet('f-doc-tipo', o.tipo||'ATC'); setDocTipo();
-    document.getElementById('f-nota').value=o.nota||'1';
+    if((o.tipo||'ATC')!=='ATC') document.getElementById('f-nota').value=o.nota||'1';
     document.getElementById('f-vendedor').value=o.vendedor||'Mirian Salazar'; applyVendedorLite();
     document.getElementById('f-cliente').value=o.cliente||'CLIENTE';
     document.getElementById('f-celular').value='70000000';
@@ -154,6 +154,66 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y la aclaración', /sin una pata/.test(papel.rnota), papel.rnota);
   chk('⚠️ NO se pide N° de factura (el dueño dijo que no hace falta)', papel.hayFactura===false, papel.hayFactura);
   chk('⚠️ NI condiciones ambientales', papel.hayHumedad===false, papel.hayHumedad);
+
+  // ============ 3c. una ATC NO es una venta: sin nota y sin cobro (§4bt) ============
+  /* El dueño, con captura: *"nr de nota de venta no procede al llenar una atc, cobro
+     tampoco"*. Y el código le da la razón: `fueraDeConta` ya deja las ATC fuera de
+     Contabilidad y del Cuadre, así que lo que se anotara ahí no saldría en ningún total. */
+  const venta = await page.evaluate(() => {
+    var vis=function(id){ var e=document.getElementById(id); if(!e) return 'NO EXISTE';
+      return e.style.display!=='none'; };
+    showView('form'); resetForm();
+    var conOC={ nota:vis('wrap-nota'), cobro:vis('wrap-cobro-todo') };
+    segSet('f-doc-tipo','ATC'); if(typeof setDocTipo==='function') setDocTipo();
+    var conATC={ nota:vis('wrap-nota'), cobro:vis('wrap-cobro-todo') };
+    segSet('f-doc-tipo','OC'); if(typeof setDocTipo==='function') setDocTipo();
+    return { conOC:conOC, conATC:conATC, vuelve:{ nota:vis('wrap-nota'), cobro:vis('wrap-cobro-todo') } };
+  });
+  chk('en una venta normal siguen la nota y el cobro, como siempre',
+      venta.conOC.nota===true && venta.conOC.cobro===true, JSON.stringify(venta.conOC));
+  chk('⚠️ en una ATC se esconde el N° de nota de venta', venta.conATC.nota===false, venta.conATC.nota);
+  chk('⚠️ …y TODA la sección de cobro', venta.conATC.cobro===false, venta.conATC.cobro);
+  chk('…y al volver a OC reaparecen',
+      venta.vuelve.nota===true && venta.vuelve.cobro===true, JSON.stringify(venta.vuelve));
+
+  /* ⚠️ Esconder no alcanza: si alguien empieza una venta con plata y a mitad la pasa a
+     ATC, esos montos se guardarían igual, invisibles. */
+  const arrastre = await page.evaluate(async () => {
+    showView('form'); resetForm();
+    document.getElementById('f-nota').value='9999';
+    segSet('f-pagado','SI'); updateMetodoVisibility();
+    document.getElementById('f-acuenta').value='500';
+    document.getElementById('f-saldo').value='1500';
+    document.getElementById('f-envio').value='150';
+    segSet('f-doc-tipo','ATC'); setDocTipo();
+    await new Promise(r=>setTimeout(r,120));
+    return { nota:document.getElementById('f-nota').value,
+             acu:document.getElementById('f-acuenta').value,
+             sal:document.getElementById('f-saldo').value,
+             env:document.getElementById('f-envio').value,
+             pag:segVal('f-pagado') };
+  });
+  chk('⚠️ pasar una venta a ATC limpia la plata que ya se había tecleado',
+      arrastre.nota==='' && arrastre.pag==='NO' && arrastre.env==='' &&
+      Number(arrastre.acu)===0 && Number(arrastre.sal)===0, JSON.stringify(arrastre));
+
+  /* Y una ATC se guarda SIN nota, sin que el formulario la exija. */
+  const sinNota = await page.evaluate(() => STATE.length);
+  await cargar({ cliente:'SIN NOTA', motivo:'Ruido' });
+  const guardadaSinNota = await page.evaluate(() => {
+    var p=STATE.filter(function(x){return x.cliente==='SIN NOTA';})[0];
+    return p ? { hay:true, nota:p.nota||'', saldo:Number(p.saldo)||0, pagado:!!p.pagado } : { hay:false };
+  });
+  chk('⚠️ una ATC se guarda SIN nota de venta (antes el formulario se trababa pidiéndola)',
+      guardadaSinNota.hay===true && guardadaSinNota.nota==='', JSON.stringify(guardadaSinNota));
+  chk('…y sin plata', guardadaSinNota.saldo===0 && guardadaSinNota.pagado===false,
+      JSON.stringify(guardadaSinNota));
+  /* Se saca del escenario: las secciones que siguen cuentan sobre dos ATC. */
+  await page.evaluate(async () => {
+    STATE=STATE.filter(function(x){ return x.cliente!=='SIN NOTA'; });
+    window._pl=window._pl.filter(function(x){ return x.cliente!=='SIN NOTA'; });
+    saveMirror(); await new Promise(r=>setTimeout(r,120));
+  });
 
   // ============ 4. 🐛 el N° escrito A MANO también lleva el prefijo ============
   /* Sin esto, elegir 🎧 ATC y teclear el número dejaba `oc` sin "ATC ": `esATC()` daba
@@ -386,6 +446,57 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('…y tocando la FILA entera también se abre (en el celular es lo que se toca)',
       clic===true, clic);
+
+  // ============ 12. 🛏️ EL COMODÍN AVISA (§4bt) ============
+  /* *"«con comodín» debería parpadear para alertar a logística"*. Si no se recupera al
+     entregar, se pierde un colchón entero. Tiene que verse en los tres lugares donde
+     logística mira: la fila, la ficha y la ventana de anotar avance. */
+  const como = await page.evaluate(async () => {
+    if(typeof renderAtc!=='function') return { fila:'no existe renderAtc' };
+    var id=STATE.filter(function(x){return x.cliente==='LORENA OYOLA';})[0].id;
+    showView('atc'); await new Promise(r=>setTimeout(r,250));
+    var tr=[].slice.call(document.querySelectorAll('#tbl-atc tbody tr'))
+             .filter(function(t){ return /LORENA/.test(t.textContent); })[0];
+    var fila = tr ? !!tr.querySelector('.b-comodin') : 'no encontré la fila';
+    verAtc(id); await new Promise(r=>setTimeout(r,180));
+    var ficha = !!document.querySelector('#modal-box .b-comodin');
+    closeModal(); await new Promise(r=>setTimeout(r,120));
+    abrirDevolucionAtc(id); await new Promise(r=>setTimeout(r,180));
+    var box=document.getElementById('modal-box');
+    var avance = !!box.querySelector('.aviso-comodin');
+    /* Y la ventana nueva: encabezado propio y los campos escondidos hasta tildar. */
+    var conHeader = !!box.querySelector('.modal-h');
+    var devBox = document.getElementById('dev-box');
+    var ocultoAlPrincipio = devBox ? devBox.style.display==='none' : 'no existe dev-box';
+    var sinNumeracion = !/2\)/.test(box.textContent) && !/3\)/.test(box.textContent);
+    document.getElementById('dev-si').checked=true;
+    document.getElementById('dev-si').onchange({target:document.getElementById('dev-si')});
+    var seAbre = devBox ? devBox.style.display==='block' : false;
+    /* ⚠️ El parpadeo se comprueba en el ELEMENTO, no buscando la clase en el CSS: que la
+       regla exista no prueba que se aplique. `animationName` sale del navegador. */
+    var av=box.querySelector('.aviso-comodin');
+    var anim = av ? getComputedStyle(av).animationName : 'no hay aviso';
+    var dur  = av ? getComputedStyle(av).animationDuration : '';
+    closeModal();
+    var hojas=[].slice.call(document.querySelectorAll('style')).map(function(e){return e.textContent;}).join(' ');
+    return { fila:fila, ficha:ficha, avance:avance, conHeader:conHeader,
+             ocultoAlPrincipio:ocultoAlPrincipio, seAbre:seAbre, sinNumeracion:sinNumeracion,
+             anim:anim, dur:dur, respeta:/prefers-reduced-motion/.test(hojas) };
+  });
+  chk('🛏️ el comodín se ve en la FILA de la matriz', como.fila===true, como.fila);
+  chk('…y en la ficha', como.ficha===true, como.ficha);
+  chk('…y en la ventana de anotar avance, que es cuando hay que acordarse',
+      como.avance===true, como.avance);
+  chk('…y de verdad parpadea (animación aplicada, no solo la clase puesta)',
+      como.anim==='comodinLatido' && parseFloat(como.dur)>0, como.anim+' · '+como.dur);
+  chk('…respetando a quien pidió menos animaciones', como.respeta===true, como.respeta);
+  chk('la ventana de avance usa el molde con encabezado, como el resto del panel',
+      como.conHeader===true, como.conHeader);
+  chk('⚠️ …y ya no dice «2)» ni «3)» (quedaron sueltos al sacar el paso 1)',
+      como.sinNumeracion===true, como.sinNumeracion);
+  chk('los campos aparecen recién al tildar la casilla, no apagados de entrada',
+      como.ocultoAlPrincipio===true && como.seAbre===true,
+      'oculto '+como.ocultoAlPrincipio+' · se abre '+como.seAbre);
 
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

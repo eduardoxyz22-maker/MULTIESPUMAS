@@ -237,6 +237,12 @@ tbody tr:hover{background:var(--teal-lt)}
 /* 📦 «Lista para entregar» (§4br): volvió de fábrica y el cliente todavía no la tiene.
    Azul porque no es alarma (ámbar) ni cerrada (verde): es trabajo listo para salir. */
 .b-blue{background:#e8effd;color:#1d4ed8;border:1px solid #bfd0f7}
+/* 🛏️ EL COMODÍN PARPADEA (§4bt). Pedido del dueño: *"«con comodín» debería parpadear para
+   alertar a logística"*. Si no se recupera al entregar, se pierde un colchón entero.
+   Se respeta a quien pidió menos animaciones en su sistema: ahí queda fijo pero visible. */
+@keyframes comodinLatido{0%,100%{opacity:1}50%{opacity:.3}}
+.b-comodin,.aviso-comodin{animation:comodinLatido 1.15s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.b-comodin,.aviso-comodin{animation:none}}
 .b-verif{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc}
 .b-im{background:#fff8d6;color:#8a6d00;border:1px solid #f0d264}
 .b-atc{background:var(--atc-lt);color:var(--atc-dk);border:1px solid var(--atc-border)}
@@ -535,7 +541,8 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <label class="lb">Fecha de entrega <span class="req">*</span></label>
           <input type="date" id="f-fecha">
         </div>
-        <div class="field">
+        <!-- 🎧 En una ATC no hay nota de venta: no se está vendiendo nada (§4bt). -->
+        <div class="field" id="wrap-nota">
           <label class="lb">N° Nota de venta <span class="req req-lite">*</span></label>
           <input type="text" id="f-nota" placeholder="Ej. 1024" autocomplete="off" inputmode="numeric">
         </div>
@@ -667,6 +674,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <textarea id="f-direccion" placeholder="Calle, número, referencia…"></textarea>
       </div>
 
+      <!-- 🎧 TODA la sección se esconde en una ATC (§4bt): no se cobra nada, y de hecho
+           `fueraDeConta` ya deja las ATC fuera de Contabilidad y del Cuadre — o sea que lo
+           que se anotara acá no aparecería en ningún total. Eran campos decorativos. -->
+      <div id="wrap-cobro-todo">
       <div class="sec">💰 Cobro</div>
 
       <div class="field">
@@ -727,6 +738,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <label class="lb">Comprobante del QR <span class="req">*</span> <span class="hint">la captura del pago</span></label>
         <div id="f-comp-box"></div>
       </div>
+      </div><!-- /wrap-cobro-todo -->
 
       <div class="sec">📝 Observaciones</div>
       <div class="field">
@@ -4850,7 +4862,9 @@ function submitPedido(){
   // Salvo el N° de OC en ROHO: es lo que identifica el pedido y lo que va al Excel.
   var faltaOcRoho=false;
   if(esRoho(vendedor) && !document.getElementById('f-oc').value.trim()){ markErr('f-oc'); ok=false; faltaOcRoho=true; }
-  if(!lite && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
+  /* La nota de venta no se exige en una ATC: no hay venta que anotar, y el campo ni se
+     muestra — sin esta excepción el formulario se trababa pidiendo algo invisible (§4bt). */
+  if(!lite && docTipoSel()!=='ATC' && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
   if(!cliente){ markErr('f-cliente'); ok=false; }
   if(!lite && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
@@ -5453,11 +5467,30 @@ function pintarCampoOc(roho){
   // El selector no tiene sentido en ROHO: ahí el número lo manda el cliente.
   var wt=document.getElementById('f-doc-tipo'); if(wt) wt.style.display = roho ? 'none' : '';
 }
-function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarMotivoAtc(); }
+function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarMotivoAtc(true); }
 /* 🎧 El bloque del motivo solo tiene sentido en una ATC (§4bq). */
-function pintarMotivoAtc(){
+function pintarMotivoAtc(limpiar){
   var w=document.getElementById('wrap-atc-motivo'); if(!w) return;
-  w.style.display = (docTipoSel()==='ATC') ? '' : 'none';
+  var atc=(docTipoSel()==='ATC');
+  w.style.display = atc ? '' : 'none';
+  /* 🎧 Una ATC no es una venta (§4bt): no tiene N° de nota ni cobro. El dueño lo dijo
+     derecho —*"nr de nota de venta no procede al llenar una atc, cobro tampoco"*— y el
+     código le da la razón: `fueraDeConta` ya deja las ATC fuera de Contabilidad y del
+     Cuadre, así que lo que se anotara ahí no aparecería en ningún total. */
+  var wn=document.getElementById('wrap-nota');   if(wn) wn.style.display = atc ? 'none' : '';
+  var wc=document.getElementById('wrap-cobro-todo'); if(wc) wc.style.display = atc ? 'none' : '';
+  /* ⚠️ Escondidos NO alcanza: si quedaban valores de antes —alguien empieza a cargar una
+     venta y a mitad de camino la pasa a ATC— se guardarían igual, invisibles.
+     ⚠️ Pero se limpia SOLO cuando la persona cambia el tipo a mano (`limpiar`), NUNCA al
+     abrir una ATC vieja para editarla: ahí borraría en silencio lo que ya estaba. */
+  if(atc && limpiar){
+    var n=document.getElementById('f-nota'); if(n) n.value='';
+    segSet('f-pagado','NO');
+    ['f-acuenta','f-saldo','f-cobrado','f-envio'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.value=(id==='f-acuenta'||id==='f-saldo')?'0':'';
+    });
+    updateMetodoVisibility();
+  }
   pintarAntiguedadAtc();
 }
 /* Debajo de la fecha de compra dice hace cuánto fue. No decide nada solo —la garantía la
@@ -6854,7 +6887,8 @@ function renderAtc(){
     /* Fila clicable entera: en el celular es mucho más fácil que apuntarle a la lupa. */
     return '<tr class="'+(atcEntregada(p)?'':'row-atc')+'" style="cursor:pointer" onclick="verAtc(\''+esc(p.id)+'\')">'+
       '<td><span class="badge b-atc">🎧 '+esc(p.oc||'—')+'</span></td>'+
-      '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span></td>'+
+      '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
+        (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
       '<td style="white-space:nowrap;font-size:.8rem">'+esc(fmtFecha(atcEntro(p)))+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
       '<td style="font-size:.78rem">'+esc(prod)+'</td>'+
@@ -6904,46 +6938,68 @@ function llenarSelectAtcMotivo(id, conTodos){
 function abrirDevolucionAtc(id){
   var p=findById(id); if(!p){ toast('No encontré esa ATC','err'); return; }
   var a=atcDe(p)||{}, yaRec=atcFueRecogida(p);
+  /* Cada paso: la casilla manda, y los campos SALEN a la vista recién al tildarla. Antes
+     se mostraban apagados aunque no correspondieran y el panel se veía cargado (§4bt). */
+  /* ⚠️ La casilla y su caja se pasan ARMADAS por el que llama, con el id escrito entero.
+     Si se construyeran acá como `id="'+pref+'-si"`, el literal `id="dev-si"` no existiría en
+     el archivo y `test_onclicks` no podría comprobar que el id que busca el código existe.
+     Se prefirió repetir un poco antes que dejar ciego a ese test. */
+  var paso=function(chk, ico, titulo, txtCasilla, caja, verde){
+    return '<div style="background:'+(verde?'var(--green-lt)':'var(--gray-lt)')+';'+
+      'border:1px solid '+(verde?'var(--green-border)':'var(--gray-md)')+';border-radius:10px;padding:12px 13px;margin-bottom:11px">'+
+      '<label style="display:flex;align-items:center;gap:9px;font-size:.87rem;font-weight:700;cursor:pointer">'+
+        chk+' '+ico+' '+esc(titulo)+'</label>'+
+      '<div style="font-size:.76rem;color:var(--muted);margin:3px 0 0 27px">'+esc(txtCasilla)+'</div>'+
+      caja+
+    '</div>';
+  };
   openModal(
-    '<h3 style="margin:0 0 4px">🎧 ¿En qué anda esta ATC?</h3>'+
-    '<p style="color:var(--muted);font-size:.83rem;margin:0 0 14px">'+
-      esc(ocEtiq(p.oc))+' · <b>'+esc(p.cliente||'')+'</b> · '+esc(prodText(p.productos))+
-      '<br>Entró el <b>'+esc(fmtFecha(atcEntro(p)))+'</b>'+(atcMotivo(p)?(' · '+esc(atcMotivo(p))):'')+'</p>'+
+    '<div class="modal-h"><h3>📦 Anotar avance · '+esc(p.cliente||'')+'</h3>'+
+      '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
 
-    /* ⚠️ El recojo NO se marca acá: es la fecha para la que se programó el viaje, que ya
-       se puso al cargar la ATC. Se muestra para ubicarse, y se corrige editando la ATC. */
-    '<div style="background:var(--gray-lt);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:.82rem">'+
-      '🚚 <b>Recojo programado:</b> '+(atcRecogida(p)?esc(fmtFecha(atcRecogida(p))):'<i>sin fecha</i>')+
-      (yaRec?'':' <span style="color:var(--muted)">— todavía no llegó ese día</span>')+
-      '<div style="font-size:.75rem;color:var(--muted);margin-top:3px">Si hay que cambiarla, se corrige editando la ATC.</div>'+
-    '</div>'+
+      '<div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">'+
+        esc(ocEtiq(p.oc))+' · '+esc(prodText(p.productos))+
+        '<br>Entró el <b>'+esc(fmtFecha(atcEntro(p)))+'</b>'+(atcMotivo(p)?(' · '+esc(atcMotivo(p))):'')+'</div>'+
 
-    '<div style="background:var(--gray-lt);border-radius:10px;padding:12px 13px;margin-bottom:12px">'+
-      '<div style="font-size:.82rem;font-weight:800;margin-bottom:8px">🏭 2) Producción lo devolvió</div>'+
-      '<label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:8px">'+
-        '<input type="checkbox" id="dev-si" style="width:17px;height:17px"'+(a.dev?' checked':'')+' onchange="document.getElementById(\'dev-fecha\').disabled=!this.checked;document.getElementById(\'dev-hizo\').disabled=!this.checked"> '+
-        'Ya volvió de fábrica</label>'+
-      '<div class="field"><label class="lb">¿Qué día lo devolvieron?</label>'+
-        '<input type="date" id="dev-fecha" max="'+esc(todayStr())+'" value="'+esc(a.dev||todayStr())+'"'+(a.dev?'':' disabled')+'></div>'+
-      '<div class="field" style="margin-top:10px"><label class="lb">¿Qué se hizo? <span class="hint">(lo que informó producción)</span></label>'+
-        '<input type="text" id="dev-hizo" value="'+esc(a.hizo||'')+'" placeholder="Ej. se retapizó y se cambió la esponja del centro"'+(a.dev?'':' disabled')+'></div>'+
-    '</div>'+
+      /* El comodín, bien arriba y parpadeando: si no se recupera, se pierde un colchón. */
+      (atcComodin(p)
+        ? ('<div class="aviso-comodin" style="background:#e8effd;border:1px solid #bfd0f7;border-radius:10px;'+
+           'padding:10px 13px;margin-bottom:11px;font-size:.84rem;color:#1d4ed8;font-weight:700">'+
+           '🛏️ <b>Se le dejó un COMODÍN</b> — hay que traerlo de vuelta al entregarle el suyo.</div>')
+        : '')+
 
-    /* ⚠️ ESTE es el que cierra la ATC. Sin él, el colchón vuelve de fábrica y queda en el
-       depósito con el cliente esperando, y en el panel figuraría como "terminada". */
-    '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:12px 13px">'+
-      '<div style="font-size:.82rem;font-weight:800;margin-bottom:8px">✅ 3) Se le devolvió al CLIENTE</div>'+
-      '<label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:8px">'+
-        '<input type="checkbox" id="ent-si" style="width:17px;height:17px"'+(a.ent?' checked':'')+' onchange="document.getElementById(\'ent-fecha\').disabled=!this.checked"> '+
-        'El cliente ya lo tiene — ATC cerrada</label>'+
-      '<div class="field"><label class="lb">¿Qué día se lo llevaron?</label>'+
-        '<input type="date" id="ent-fecha" max="'+esc(todayStr())+'" value="'+esc(a.ent||todayStr())+'"'+(a.ent?'':' disabled')+'></div>'+
-    '</div>'+
+      /* El recojo no se marca: es la fecha del viaje, puesta al cargar la ATC. */
+      '<div style="background:var(--gray-lt);border-radius:10px;padding:10px 13px;margin-bottom:11px;font-size:.82rem">'+
+        '🚚 <b>Recojo programado:</b> '+(atcRecogida(p)?esc(fmtFecha(atcRecogida(p))):'<i>sin fecha</i>')+
+        (yaRec?'':' <span style="color:var(--muted)">— todavía no llegó ese día</span>')+
+        '<div style="font-size:.75rem;color:var(--muted);margin-top:3px">Se cambia editando la ATC, no acá.</div>'+
+      '</div>'+
 
-    '<div class="btn-row" style="margin-top:16px">'+
-      '<button class="btn btn-primary btn-sm" style="width:auto" onclick="guardarDevolucionAtc(\''+esc(p.id)+'\')">Guardar</button>'+
-      (a.dev||a.ent ? ('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="borrarDevolucionAtc(\''+esc(p.id)+'\')">↺ Borrar todo</button>') : '')+
-      '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cancelar</button>'+
+      paso('<input type="checkbox" id="dev-si" style="width:18px;height:18px"'+(a.dev?' checked':'')+
+             ' onchange="document.getElementById(\'dev-box\').style.display=this.checked?\'block\':\'none\'">',
+        '🏭','Volvió de fábrica','Producción ya devolvió el producto',
+        '<div id="dev-box" style="display:'+(a.dev?'block':'none')+';margin-top:10px">'+
+          '<div class="field"><label class="lb">¿Qué día lo devolvieron?</label>'+
+            '<input type="date" id="dev-fecha" max="'+esc(todayStr())+'" value="'+esc(a.dev||todayStr())+'"></div>'+
+          '<div class="field" style="margin-top:9px"><label class="lb">¿Qué se hizo? <span class="hint">(lo que informó producción)</span></label>'+
+            '<input type="text" id="dev-hizo" value="'+esc(a.hizo||'')+'" placeholder="Ej. se retapizó y se cambió la esponja del centro"></div>'+
+        '</div>', false)+
+
+      paso('<input type="checkbox" id="ent-si" style="width:18px;height:18px"'+(a.ent?' checked':'')+
+             ' onchange="document.getElementById(\'ent-box\').style.display=this.checked?\'block\':\'none\'">',
+        '✅','Se le devolvió al CLIENTE','Con esto la ATC queda cerrada',
+        '<div id="ent-box" style="display:'+(a.ent?'block':'none')+';margin-top:10px">'+
+          '<div class="field"><label class="lb">¿Qué día se lo llevaron?</label>'+
+            '<input type="date" id="ent-fecha" max="'+esc(todayStr())+'" value="'+esc(a.ent||todayStr())+'"></div>'+
+          (atcComodin(p)?'<div style="font-size:.78rem;color:#1d4ed8;font-weight:700;margin-top:8px">🛏️ No te olvides de traer el comodín.</div>':'')+
+        '</div>', true)+
+
+      '<div class="btn-row" style="margin-top:16px">'+
+        '<button class="btn btn-primary btn-sm" style="width:auto" onclick="guardarDevolucionAtc(\''+esc(p.id)+'\')">Guardar</button>'+
+        (a.dev||a.ent ? ('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="borrarDevolucionAtc(\''+esc(p.id)+'\')">↺ Borrar todo</button>') : '')+
+        '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cancelar</button>'+
+      '</div>'+
     '</div>');
 }
 function guardarDevolucionAtc(id){
@@ -7025,7 +7081,7 @@ function verAtc(id){
       '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px">'+
         '<span class="badge '+est.cls+'" style="font-size:.75rem">'+esc(est.lbl)+'</span>'+
         (d!=null?('<span style="font-size:.8rem;color:var(--muted)"><b>'+d+'</b> día'+(d===1?'':'s')+(atcEntregada(p)?' en total':' desde que entró')+'</span>'):'')+
-        (atcComodin(p)?'<span class="badge b-blue">🛏️ con comodín</span>':'')+
+        (atcComodin(p)?'<span class="badge b-blue b-comodin" title="Hay que traerlo de vuelta al entregarle el suyo">🛏️ con comodín</span>':'')+
       '</div>'+
 
       /* Los datos, en rejilla: ocupan un tercio de lo que ocupaban apilados. */

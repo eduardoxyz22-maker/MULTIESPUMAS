@@ -2795,6 +2795,47 @@ algo que leer, y el circuito como **cuatro tarjetas** en fila. De una columna la
   condiciones ambientales, para que nadie los reponga "por completitud".
 - Batería: **23 suites · 602 checks · 0 fallas**.
 
+## 4bt. 🎧 Una ATC no es una venta · el comodín parpadea · el panel de avance (2026-09-02)
+
+**1. Sin nota de venta y sin cobro.** *"nr de nota de venta no procede al llenar una atc,
+cobro tampoco"*. Se esconden `#wrap-nota` y `#wrap-cobro-todo` cuando el tipo es ATC, y la
+nota deja de ser obligatoria (el formulario se trababa pidiendo un campo invisible).
+
+El código ya le daba la razón antes de tocarlo: **`fueraDeConta` deja las ATC fuera de
+Contabilidad y del Cuadre**, así que lo que se anotara ahí no aparecía en ningún total. Eran
+campos decorativos. Lo verifiqué antes de esconderlos, porque en los datos de Trello hay una
+ATC que dice *"EL CLIENTE PAGAR 490 BS"* — si algún día hay que cobrar una ATC, hoy no habría
+dónde, y eso es una conversación aparte.
+
+**⚠️ Esconder no alcanza.** Si alguien empieza a cargar una venta con plata y a mitad la pasa
+a ATC, esos montos se guardarían igual, invisibles. Se limpian — **pero solo cuando la
+persona cambia el tipo a mano** (`pintarMotivoAtc(true)` desde `setDocTipo`), **nunca** al
+abrir una ATC vieja para editarla: ahí borraría en silencio lo que ya estaba.
+
+**2. 🛏️ El comodín parpadea.** *"«con comodín» debería parpadear para alertar a logística"*.
+Si no se recupera al entregar, se pierde un colchón entero. Aparece en los **tres** lugares
+donde logística mira —la fila de la matriz, la ficha y la ventana de anotar avance— con
+`@keyframes comodinLatido`, y un recordatorio extra dentro del paso "se le devolvió al
+cliente". Respeta `prefers-reduced-motion`.
+
+**3. 📐 «está medio raro el panel»** — el de anotar avance. Y sí: había quedado con un
+**«2)» y un «3)» sin «1)»** (huérfanos de cuando saqué el paso del recojo), sin el molde
+`.modal-h`/`.modal-b` que usa todo el resto, y con las fechas visibles-pero-apagadas aunque
+no correspondieran. Rehecho: encabezado, sin numeración, y **los campos salen recién al
+tildar la casilla**. De un bloque confuso a **494 px**.
+
+**🐛 `test_onclicks` me agarró.** Había armado los ids por concatenación
+(`id="'+pref+'-si"`), así que el literal `id="dev-si"` no existía en el archivo y el test
+—que comprueba que todo id buscado por el código exista— no podía verificarlo. Se podía
+"arreglar" metiendo una excepción en el test; preferí **escribir los ids enteros** aunque
+repita un poco, para no dejar ciego a ese control. Mismo criterio que con `<span'+` en §4bo:
+cuando el chequeo estático choca con código armado por concatenación, gana el chequeo.
+
+- Tests: `test_atc.js` **66 → 81**. Fija que en una ATC no hay nota ni cobro, que pasar una
+  venta a ATC limpia la plata tecleada, que el comodín **de verdad** parpadea (se lee
+  `animationName` del elemento, no la clase en el CSS) y que el panel ya no dice «2)» ni «3)».
+- Batería: **23 suites · 605 checks · 0 fallas**.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
