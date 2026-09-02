@@ -429,17 +429,28 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       <li><b>Detalle del desperfecto</b> (opcional) — lo que dijo el cliente, con sus palabras: <i>"hundido en el medio, no descansa bien"</i>.</li>
     </ul>
 
-    <h3 style="margin-top:16px">Cuando producción devuelve el producto</h3>
-    <p><b>Lo carga logística.</b> En la pestaña ATC, el botón <span class="kbd">📦</span> de la fila abre una ventanita con dos cosas: <b>qué día la devolvieron</b> y <b>qué se hizo</b> (<i>"se retapizó y se cambió la esponja del centro"</i>). Si se anotó por error, el mismo botón tiene <b>↺ Todavía no volvió</b> para deshacerlo.</p>
+    <h3 style="margin-top:16px">Los cuatro momentos de una ATC</h3>
+    <p><b>Los carga logística</b>, todos desde el mismo botón <span class="kbd">📦</span> de la fila:</p>
+    <ul>
+      <li><b>📝 Entró</b> — el día que se cargó la ATC. Se pone solo.</li>
+      <li><b>🚚 Se recogió el producto</b> — el día que se lo fueron a buscar al cliente.</li>
+      <li><b>🏭 Volvió de fábrica</b> — el día que producción lo devolvió, y <b>qué se hizo</b> (<i>"se retapizó y se cambió la esponja del centro"</i>).</li>
+      <li><b>✅ Se le devolvió al CLIENTE</b> — el día que el cliente lo recibió. <b>Este es el que cierra la ATC.</b></li>
+    </ul>
+    <div class="callout warn"><b>Que producción lo devuelva NO termina la ATC.</b> El colchón está en el depósito y el cliente sigue esperando. Por eso hay una ficha aparte, <b>📦 Listas para entregar</b>: son las que volvieron de fábrica y todavía no salieron. Es la cola de trabajo que antes no se veía en ningún lado.<br>
+      El panel <b>no deja saltear pasos</b>: no se puede marcar que volvió de fábrica algo que nunca se fue a buscar, ni entregarle al cliente algo que sigue en producción.</div>
+
+    <h3 style="margin-top:16px">🔍 Ver una ATC completa</h3>
+    <p>Tocá <b>cualquier lugar de la fila</b> (o la lupa 🔍) y se abre la ficha: el <b>motivo</b>, el <b>detalle del desperfecto completo</b> —sin cortar—, <b>qué se hizo</b> y las <b>cuatro fechas</b> del circuito, con lo que falta marcado en gris.</p>
     <div class="callout warn"><b>El botón 📦 solo lo ven quienes entraron a Administración.</b> Las vendedoras <b>ven</b> la matriz —para saber si ya volvió el colchón de su cliente— pero no pueden anotar devoluciones.<br>
       Tampoco se acepta una devolución con fecha <b>anterior</b> al día en que entró la ATC: descuadraría el promedio de días.</div>
 
     <h3 style="margin-top:16px">Qué muestra la matriz</h3>
     <ul>
-      <li><b>Cuatro números arriba:</b> cuántas ATC hay en el período, cuántas <b>🏭 siguen en fábrica</b>, cuántas <b>✅ volvieron</b> (con cuántos días tardaron en promedio) y cuántas quedaron <b>⚠️ sin motivo</b> anotado.</li>
+      <li><b>El embudo arriba:</b> cuántas ATC hay en el período, cuántas <b>🚚 faltan recoger</b>, cuántas <b>🏭 están en fábrica</b>, cuántas <b>📦 esperan salir</b> y cuántas <b>✅ se cerraron</b> (con cuánto tardó el circuito completo, en promedio). Si hay alguna <b>⚠️ sin motivo</b>, aparece una ficha roja.</li>
       <li><b>«Por qué se generaron»:</b> el conteo por motivo con su porcentaje. Es lo que permite decir <i>"el 33% de las ATC son por hundimiento"</i> y reclamarle a producción con números.</li>
-      <li><b>La tabla:</b> N° ATC · entró · cliente · producto · motivo · devuelta · <b>días</b> · detalle del desperfecto · qué se hizo. Las que todavía no volvieron llevan el filo fucsia.</li>
-      <li><b>Filtros:</b> por mes, por motivo, por estado (en fábrica / devueltas / sin motivo) y un buscador que mira cliente, N° ATC, producto y hasta el "qué se hizo".</li>
+      <li><b>La tabla:</b> N° ATC · estado · entró · cliente · producto · motivo · <b>🚚 recogido</b> · <b>🏭 volvió</b> · <b>✅ al cliente</b> · <b>días</b> · detalle · qué se hizo. Las que no están cerradas llevan el filo fucsia.</li>
+      <li><b>Filtros:</b> por mes, por motivo, por estado (⏳ sin cerrar / por recoger / en fábrica / listas para entregar / entregadas / sin motivo) y un buscador que mira cliente, N° ATC, producto y hasta el "qué se hizo".</li>
       <li><b>📋 Copiar</b> deja la matriz lista para pegar en Excel o mandar por WhatsApp.</li>
     </ul>
     <div class="callout tip">El filtro por <b>Mes</b> corta por <b>cuándo ENTRÓ</b> la ATC, no por cuándo se recogió: una ATC de agosto que se recoge en septiembre sigue siendo una ATC de agosto.</div>

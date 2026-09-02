@@ -147,7 +147,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /LORENA OYOLA/.test(m.txt) && /Hundimiento/.test(m.txt), m.txt.slice(0,120));
   chk('…y el detalle del desperfecto, que es el "por qué"',
       /hundido en el medio/.test(m.txt), m.txt.slice(0,140));
-  chk('las que no volvieron dicen «en fábrica»', /en fábrica/.test(m.txt), m.txt.slice(0,90));
+  /* Recién creadas, todavía nadie las fue a buscar: el estado correcto es «Por recoger».
+     Antes decían «en fábrica» —el modelo tenía dos estados y no distinguía—. */
+  chk('una ATC recién creada dice «Por recoger», no «en fábrica»',
+      /Por recoger/.test(m.txt) && !/En fábrica/.test(m.txt), m.txt.slice(0,90));
   chk('el resumen cuenta por motivo', /Hundimiento/.test(m.motivos) && /Ruido/.test(m.motivos),
       m.motivos.slice(0,90));
 
@@ -161,32 +164,55 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     await new Promise(r=>setTimeout(r,150));
     var abrio=document.getElementById('modal').classList.contains('on');
     /* Una devolución ANTERIOR a la entrada descuadraría el promedio de días. */
-    document.getElementById('dev-fecha').value='2020-01-01';
+    /* ⚠️ No se puede saltear el circuito: marcar "volvió de fábrica" sin haberlo recogido. */
+    document.getElementById('dev-si').checked=true;
+    document.getElementById('dev-fecha').disabled=false;
+    document.getElementById('dev-fecha').value=todayStr();
     guardarDevolucionAtc(id);
     await new Promise(r=>setTimeout(r,150));
-    var rechazo = !atcDevuelta(findById(id));
-    document.getElementById('dev-fecha').value=todayStr();
+    var saltarPaso = !atcDevuelta(findById(id));
+    /* Ahora en orden: recogido primero. Con fecha imposible → rechazo. */
+    document.getElementById('rec-si').checked=true;
+    document.getElementById('rec-fecha').disabled=false;
+    document.getElementById('rec-fecha').value='2020-01-01';
+    guardarDevolucionAtc(id);
+    await new Promise(r=>setTimeout(r,150));
+    var rechazo = !atcRecogida(findById(id));
+    /* Y ahora bien: recogido + volvió + entregado al cliente. */
+    document.getElementById('rec-fecha').value=todayStr();
+    document.getElementById('dev-hizo').disabled=false;
     document.getElementById('dev-hizo').value='se retapizó y se cambió la esponja';
+    document.getElementById('ent-si').checked=true;
+    document.getElementById('ent-fecha').disabled=false;
+    document.getElementById('ent-fecha').value=todayStr();
     guardarDevolucionAtc(id);
     await new Promise(r=>setTimeout(r,300));
     var p=findById(id);
-    return { abrio:abrio, rechazo:rechazo, dev:atcDevuelta(p), hizo:atcQueSeHizo(p),
-             estado:atcEstado(p), quien:(atcDe(p)||{}).devQ||'',
-             enPlanilla: atcDevuelta((window._pl.filter(function(x){return x.id===id;})[0])||{}) };
+    return { abrio:abrio, rechazo:rechazo, saltarPaso:saltarPaso,
+             rec:atcRecogida(p), dev:atcDevuelta(p), ent:atcEntregada(p), hizo:atcQueSeHizo(p),
+             estado:atcEstado(p), quien:(atcDe(p)||{}).devQ||'', entregadoChofer:!!p.entregado,
+             enPlanilla: atcEntregada((window._pl.filter(function(x){return x.id===id;})[0])||{}) };
   });
-  chk('se abre la ventana para anotar la devolución', dev.abrio===true, dev.abrio);
-  chk('⚠️ rechaza una devolución anterior al día en que entró la ATC', dev.rechazo===true, dev.rechazo);
-  chk('queda la fecha de devolución', !!dev.dev, dev.dev);
+  chk('se abre la ventana para anotar el avance', dev.abrio===true, dev.abrio);
+  chk('⚠️ no deja saltear el circuito: no puede volver de fábrica algo que no se fue a buscar',
+      dev.saltarPaso===true, dev.saltarPaso);
+  chk('⚠️ rechaza una fecha anterior al día en que entró la ATC', dev.rechazo===true, dev.rechazo);
+  chk('queda la fecha del RECOJO', !!dev.rec, dev.rec);
+  chk('…la de cuándo VOLVIÓ de fábrica', !!dev.dev, dev.dev);
+  chk('…y la de cuándo se le devolvió AL CLIENTE, que es la que cierra', !!dev.ent, dev.ent);
   chk('…y QUÉ SE HIZO, que es lo que nunca quedaba anotado',
       /retapizó/.test(dev.hizo), dev.hizo);
-  chk('…pasa a estado devuelta', dev.estado==='devuelta', dev.estado);
+  chk('…pasa a estado cerrada', dev.estado==='cerrada', dev.estado);
+  chk('⚠️ el ✅ del chofer queda en sincronía (el recojo es un solo hecho)',
+      dev.entregadoChofer===true, dev.entregadoChofer);
   chk('…queda quién la anotó', !!dev.quien, dev.quien);
-  chk('…y llega a la planilla (no se queda en esta compu)', dev.enPlanilla===dev.dev, dev.enPlanilla);
+  chk('…y llega a la planilla (no se queda en esta compu)', dev.enPlanilla===dev.ent, dev.enPlanilla);
 
   m = await matriz();
-  chk('en la matriz esa ATC ya figura devuelta', /✅/.test(m.txt), m.txt.slice(0,150));
-  chk('las fichas cuentan 1 devuelta y 1 sin devolver',
-      /Sin devolver/.test(m.fichas) && /Devueltas/.test(m.fichas), m.fichas.slice(0,120));
+  chk('en la matriz esa ATC ya figura entregada', /Entregada/.test(m.txt), m.txt.slice(0,160));
+  chk('las fichas muestran el embudo entero',
+      /Por recoger/.test(m.fichas) && /En fábrica/.test(m.fichas) &&
+      /Listas para entregar/.test(m.fichas) && /Entregadas/.test(m.fichas), m.fichas.slice(0,200));
 
   // ============ 7. ⚠️ LO QUE MÁS IMPORTA ============
   const tras = await page.evaluate(async () => {
@@ -199,13 +225,18 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     submitPedido();
     await new Promise(r=>setTimeout(r,400));
     var p=findById(id);
-    if(typeof atcDevuelta!=='function') return { dir:p.direccion, dev:'', hizo:'', mot:'' };
+    if(typeof atcDevuelta!=='function') return { dir:p.direccion, dev:'', hizo:'', mot:'', rec:'', ent:'' };
     return { dir:p.direccion, dev:atcDevuelta(p), hizo:atcQueSeHizo(p), mot:atcMotivo(p),
+             rec:atcRecogida(p), ent:atcEntregada(p),
              vista:true };
   });
   chk('la vendedora corrige la dirección', /999/.test(tras.dir), tras.dir);
   chk('⚠️ y NO se borra la devolución que anotó logística', !!tras.dev, tras.dev||'SE PERDIÓ');
   chk('⚠️ …ni el «qué se hizo»', /retapizó/.test(tras.hizo), tras.hizo||'SE PERDIÓ');
+  /* ⚠️ Estos dos se agregaron después y el rescate los dejó afuera: editar la ATC los
+     borraba en silencio. Por eso ahora se copia el objeto entero, no campo por campo. */
+  chk('⚠️ …ni la fecha del RECOJO', !!tras.rec, tras.rec||'SE PERDIÓ');
+  chk('⚠️ …ni la de la entrega al cliente (la que cierra la ATC)', !!tras.ent, tras.ent||'SE PERDIÓ');
   chk('…ni el motivo', tras.mot==='Hundimiento', tras.mot||'SE PERDIÓ');
 
   // ============ 8. los filtros ============
@@ -216,16 +247,18 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var n=function(){ return document.querySelectorAll('#tbl-atc tbody tr').length; };
     await set('atc-motivo','Hundimiento'); var porMot=n();
     await set('atc-motivo','');
-    await set('atc-estado','devuelta');    var porDev=n();
-    await set('atc-estado','fabrica');     var porFab=n();
+    await set('atc-estado','cerrada');     var porDev=n();
+    await set('atc-estado','sinrecoger');  var porFab=n();
+    await set('atc-estado','abiertas');    var porAbrir=n();
     await set('atc-estado','');
     await set('atc-search','LORENA');      var porBusca=n();
     await set('atc-search','');
-    return { porMot:porMot, porDev:porDev, porFab:porFab, porBusca:porBusca, total:n() };
+    return { porMot:porMot, porDev:porDev, porFab:porFab, porAbrir:porAbrir, porBusca:porBusca, total:n() };
   });
   chk('filtra por motivo', filtros.porMot===1, filtros.porMot);
-  chk('filtra las devueltas', filtros.porDev===1, filtros.porDev);
-  chk('filtra las que siguen en fábrica', filtros.porFab===1, filtros.porFab);
+  chk('filtra las cerradas', filtros.porDev===1, filtros.porDev);
+  chk('filtra las que todavía no se recogieron', filtros.porFab===1, filtros.porFab);
+  chk('⚠️ «sin cerrar» junta todo lo que da trabajo', filtros.porAbrir===1, filtros.porAbrir);
   chk('el buscador encuentra por cliente', filtros.porBusca===1, filtros.porBusca);
   chk('…y al limpiar vuelven todas', filtros.total===2, filtros.total);
 
@@ -237,10 +270,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     borrarDevolucionAtc(id);
     await new Promise(r=>setTimeout(r,250));
     var p=findById(id);
-    return { dev:atcDevuelta(p), estado:atcEstado(p), mot:atcMotivo(p) };
+    return { dev:atcDevuelta(p), estado:atcEstado(p), mot:atcMotivo(p), rec:atcRecogida(p), ent:atcEntregada(p) };
   });
   chk('se puede deshacer si se anotó por error', desh.dev==='', desh.dev||'(vacío)');
-  chk('…vuelve a "en fábrica"', desh.estado==='fabrica', desh.estado);
+  chk('…vuelve al principio del circuito', desh.estado==='sinrecoger', desh.estado);
   chk('…y deshacerlo NO se lleva puesto el motivo', desh.mot==='Hundimiento', desh.mot);
 
   // ============ 10. sin la llave de Administración no se puede tocar ============
@@ -255,6 +288,45 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('⚠️ una vendedora VE la matriz pero no puede anotar devoluciones',
       !/abrirDevolucionAtc/.test(sinLlave), sinLlave.slice(0,80));
+
+  // ============ 11. 🔍 LA FICHA: se abre y se LEE entera ============
+  /* El dueño: *"al dar click no se abre la ficha para leer o ver cuál era el motivo"*.
+     El 🔍 abría el formulario de edición, y en la tabla el detalle va cortado con «…»
+     que solo se ve pasando el mouse — invisible en un celular. */
+  const ficha = await page.evaluate(async () => {
+    if(typeof verAtc!=='function') return { abrio:false, txt:'no existe verAtc' };
+    var id=STATE.filter(function(x){return x.cliente==='LORENA OYOLA';})[0].id;
+    /* Se le vuelve a poner avance para que la ficha tenga las cuatro fechas. */
+    mergeAtcDatos(findById(id), { rec:todayStr(), dev:todayStr(), ent:todayStr(),
+                                  hizo:'se retapizó y se cambió la esponja' });
+    verAtc(id);
+    await new Promise(r=>setTimeout(r,200));
+    var box=document.getElementById('modal-box');
+    return { abrio:document.getElementById('modal').classList.contains('on'),
+             txt:box.textContent.replace(/\s+/g,' ') };
+  });
+  chk('🔍 se abre la ficha de la ATC', ficha.abrio===true, ficha.txt.slice(0,60));
+  chk('…y se lee el MOTIVO', /Hundimiento/.test(ficha.txt), ficha.txt.slice(0,110));
+  chk('…y el detalle del desperfecto COMPLETO, sin cortar con «…»',
+      /hundido en el medio, no descansa bien/.test(ficha.txt), ficha.txt.slice(0,200));
+  chk('…y qué se hizo', /retapizó/.test(ficha.txt), 'ok');
+  chk('…y los CUATRO momentos del circuito',
+      /Entró la ATC/.test(ficha.txt) && /Se recogió/.test(ficha.txt) &&
+      /Volvió de fábrica/.test(ficha.txt) && /devolvió al CLIENTE/.test(ficha.txt),
+      ficha.txt.slice(-200));
+  const clic = await page.evaluate(async () => {
+    closeModal();
+    await new Promise(r=>setTimeout(r,120));
+    var tr=document.querySelector('#tbl-atc tbody tr');
+    if(!tr) return 'no hay filas';
+    tr.click();
+    await new Promise(r=>setTimeout(r,200));
+    var ok=document.getElementById('modal').classList.contains('on');
+    closeModal();
+    return ok;
+  });
+  chk('…y tocando la FILA entera también se abre (en el celular es lo que se toca)',
+      clic===true, clic);
 
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

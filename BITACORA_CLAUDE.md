@@ -2698,8 +2698,57 @@ textos largos al final, topados con `text-overflow` y el completo en el `title`.
 - Batería: **23 suites · 577 checks · 0 fallas**.
 
 > **Pendiente de decisión del usuario:** si la pestaña **reemplaza** al tablero de Trello o
-> convive con él. Hoy conviven, y la doble carga sigue. También quedó sin definir si la
-> **vuelta al cliente** necesita su propio cupo en el camión (hoy una ATC = un viaje).
+> convive con él. Hoy conviven, y la doble carga sigue.
+
+## 4br. 🎧 Cuatro etapas, no dos · la ficha para leer · el motivo estaba escondido (2026-09-02)
+
+Cuatro correcciones seguidas del dueño, todas sobre §4bq. Las tres primeras son errores míos
+de diseño, no de código:
+
+**1. *"¿dónde sale en el formulario el motivo?"*** — Estaba, pero lo había puesto después de
+Garantía: medido, a **540 px del botón 🎧 ATC** (en un celular, pantalla y media de scroll).
+Tocabas ATC y visualmente no pasaba nada. Movido a **113 px**, pegado al selector que lo hace
+aparecer, con fondo teal para que se note que apareció algo.
+
+**2. *"¿dónde marcan que ya se atendió, recogió y devolvió?"*** — El recojo **ya se marcaba**
+(es el ✅ del chofer, que en una ATC significa "fue y lo trajo" aunque el botón diga
+"Entregado"), pero **no quedaba la fecha** y no estaba en la matriz.
+
+**3. *"¿y dónde marcan «producto devuelto al cliente»?"*** — Acá estaba el error de fondo:
+yo había modelado **dos** momentos y son **cuatro**.
+
+| | |
+|---|---|
+| 📝 Entró | se generó la ATC, con motivo |
+| 🚚 Se recogió | se lo fueron a buscar al cliente |
+| 🏭 Volvió de fábrica | producción lo devolvió + **qué se hizo** |
+| ✅ Se le devolvió al CLIENTE | **el único que cierra la ATC** |
+
+Que producción lo devuelva no termina nada: el colchón está en el depósito y el cliente sigue
+esperando. De ahí el estado **📦 Lista para entregar** y su ficha — la cola de trabajo que
+antes no se veía en ningún lado. El guardado **no deja saltear pasos** (no se puede entregar
+al cliente algo que sigue en producción).
+
+**4. *"al dar click no se abre la ficha para leer el motivo"*** — El 🔍 abría el formulario de
+edición, y en la tabla el detalle iba cortado con «…» y el texto completo solo en el `title`:
+**invisible en un celular**. Ahora `verAtc()` abre una ficha de lectura con el motivo, el
+detalle entero, qué se hizo y las cuatro fechas; y **la fila entera es clicable**, que es lo
+que se toca con el dedo.
+
+**🐛 El test agarró un bug mío antes que el usuario.** Al agregar `rec` y `ent`, el rescate de
+`submitPedido` seguía enumerando campo por campo (`dev`, `hizo`, `devQ`, `devH`) y los dos
+nuevos **quedaban fuera**: editar la ATC los borraba en silencio. Ahora se **copia el objeto
+entero** y se pisan solo los dos campos que maneja el formulario, así cualquier campo futuro
+sobrevive solo. Enumerar era la trampa.
+
+- Tests: `test_atc.js` **41 → 54**.
+- Batería: **23 suites · 590 checks · 0 fallas**.
+
+> **En curso:** el usuario pasó el `FORMATO_ATC_2026.xlsx` real y pidió que el formulario del
+> panel capture **los mismos datos**: N° de factura / nota de remisión, **fecha de compra**
+> (define la garantía), fecha de visita técnica, línea, plaza — más la **recepción de
+> productos** de logística (colchón / patas / somier / accesorios) y las **condiciones
+> ambientales** (humedad, desnivel, exposición al sol, tipo de somier).
 
 ## 5. Pendientes
 
