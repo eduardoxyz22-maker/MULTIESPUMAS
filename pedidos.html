@@ -574,6 +574,31 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <input type="text" id="f-atc-detalle" placeholder="Ej. hundido en el medio, no descansa bien" autocomplete="off">
           </div>
         </div>
+        <!-- Del formato en papel se toman SOLO estos dos (§4bs). El resto del Excel ya lo
+             tiene el pedido (cliente, teléfono, dirección, vendedora, producto, medida) y
+             el N° de factura el dueño dijo expresamente que no hace falta. -->
+        <div class="grid2">
+          <div class="field">
+            <label class="lb">Fecha de compra <span class="hint">(para saber si está en garantía)</span></label>
+            <input type="date" id="f-atc-compra" onchange="pintarAntiguedadAtc()">
+            <div id="atc-antiguedad" style="font-size:.76rem;margin-top:4px"></div>
+          </div>
+          <div class="field">
+            <label class="lb">¿Se le deja comodín?</label>
+            <div class="seg" id="f-atc-comodin">
+              <button type="button" data-val="NO" class="active">No</button>
+              <button type="button" data-val="SI">Sí, se le deja</button>
+            </div>
+          </div>
+        </div>
+        <!-- «Recepción de productos» del formato. Lo llena la VENDEDORA al generar la ATC
+             —el Excel lo llena ella—, y sirve para que al devolver se sepa qué hay que
+             llevar de vuelta: el clásico "faltan las patas". -->
+        <div class="field" style="margin-top:2px">
+          <label class="lb">¿Qué se le recoge al cliente?</label>
+          <div id="f-atc-piezas" style="display:flex;gap:14px;flex-wrap:wrap;padding:4px 0 6px"></div>
+          <input type="text" id="f-atc-rnota" placeholder="Aclaración, si hace falta (ej. sómier sin una pata)" autocomplete="off">
+        </div>
       </div>
 
       <div id="lite-hint" class="lite-only" style="font-size:.8rem;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:14px">✔️ <b>Modo simplificado</b> — para vos, la <b>Nota de venta</b>, <b>OC</b>, <b>celular</b> y <b>cobro</b> son opcionales, y podés <b>agendar para hoy mismo</b>.</div>
@@ -1354,11 +1379,48 @@ function atcQueSeHizo(p){ var a=atcDe(p); return (a&&a.hizo)||''; }
    que el chofer y la lista de carga sigan viendo lo mismo de siempre.
    ⚠️ Una ATC vieja marcada por el chofer cuenta como recogida aunque no tenga fecha: se
    muestra sin día antes que inventar uno. */
-function atcRecogida(p){ var a=atcDe(p); return (a&&a.rec)||''; }
-function atcFueRecogida(p){ return !!(atcRecogida(p) || (p&&p.entregado)); }
+/* ⚠️ EL RECOJO NO SE MARCA (§4bs). El dueño lo corrigió: *"el «recogido» es la fecha para
+   la que se programó la recogida; no hace falta que logística marque recogido"*. Al cargar
+   la ATC ya se pone la fecha del viaje («cargar 5/09») — que es el mismo campo `fecha` de
+   cualquier pedido. Pedirle a logística que lo vuelva a marcar era trabajo duplicado.
+   Se considera recogido cuando esa fecha ya pasó, o si el chofer igual lo tildó. */
+function atcRecogida(p){ return (p&&p.fecha)||''; }
+function atcFueRecogida(p){
+  var f=atcRecogida(p);
+  return !!((f && f<=todayStr()) || (p&&p.entregado));
+}
 /* El cierre de verdad: el producto de vuelta en manos del cliente. Que producción lo
    devuelva NO cierra la ATC — todavía hay que llevárselo (§4br). */
 function atcEntregada(p){ var a=atcDe(p); return (a&&a.ent)||''; }
+
+/* ---- Del formato en papel, SOLO lo que el pedido no tenía ya (§4bs) ----
+   El dueño lo acotó: *"una ATC no necesita número de factura, si te fijas es básico"* y
+   *"no nos interesan las condiciones ambientales"*. El resto del Excel (cliente, teléfono,
+   dirección, vendedora, producto, medida, detalle del reclamo) ya lo trae el pedido.
+   Quedan dos cosas al cargar y una lista al recoger. */
+function atcFechaCompra(p){ var a=atcDe(p); return (a&&a.fcom)||''; }
+function atcComodin(p){ var a=atcDe(p); return !!(atcDe(p)||{}).com; }
+/* Cuánto hace que lo compró, en palabras. Es lo que decide si hay garantía, y en los datos
+   reales aparece todo el tiempo ("COMPRO 2024-TIENE GARANTIA"). */
+function antiguedadTxt(desde, hasta){
+  if(!desde) return '';
+  var d=diasEntreFechas(desde, hasta||todayStr());
+  if(d>=1e9) return '';
+  var a=Math.floor(d/365), m=Math.floor((d%365)/30);
+  if(a<=0 && m<=0) return 'comprado hace pocos días';
+  var t=[];
+  if(a>0) t.push(a+' año'+(a===1?'':'s'));
+  if(m>0) t.push(m+' mes'+(m===1?'':'es'));
+  return 'comprado hace '+t.join(' y ');
+}
+/* Qué se trajo del domicilio. Es la "recepción de productos" del formato: sirve para saber
+   qué hay que devolver, y evita el clásico "faltan las patas". */
+var ATC_PIEZAS=[{k:'col',lbl:'Colchón'},{k:'som',lbl:'Sómier'},{k:'pat',lbl:'Patas'},{k:'acc',lbl:'Accesorios'}];
+function atcRecibido(p){
+  var a=atcDe(p)||{};
+  return ATC_PIEZAS.filter(function(x){ return !!a['r_'+x.k]; }).map(function(x){ return x.lbl; });
+}
+function atcRecibidoNota(p){ var a=atcDe(p); return (a&&a.rnota)||''; }
 /* Cuándo ENTRÓ la ATC: la fecha en que se cargó (`ts`), no la del recojo. Si por lo que
    fuera no hay `ts`, cae a la fecha de recojo antes que quedar vacía. */
 function atcEntro(p){
@@ -1371,7 +1433,7 @@ function atcEntro(p){
    está en el depósito y el cliente sigue esperando. «Lista para entregar» es justamente
    la cola de trabajo que antes no se veía en ningún lado. */
 var ATC_ESTADOS=[
-  {k:'sinrecoger', lbl:'🚚 Por recoger',       cls:'b-red'},
+  {k:'sinrecoger', lbl:'🚚 Por recoger',       cls:'b-red'},   // la fecha del viaje no llegó
   {k:'fabrica',    lbl:'🏭 En fábrica',        cls:'b-amber'},
   {k:'lista',      lbl:'📦 Lista para entregar',cls:'b-blue'},
   {k:'cerrada',    lbl:'✅ Entregada',          cls:'b-green'}
@@ -5065,8 +5127,12 @@ function submitPedido(){
        entrega al cliente quedaron fuera de la lista y editar la ATC los borraba en
        silencio. Copiando entero, cualquier campo futuro sobrevive solo. */
     var _n={}; for(var _k in _pAtc) _n[_k]=_pAtc[_k];
-    _n.mot = document.getElementById('f-atc-motivo').value||'';
-    _n.det = document.getElementById('f-atc-detalle').value.trim();
+    _n.mot  = document.getElementById('f-atc-motivo').value||'';
+    _n.det  = document.getElementById('f-atc-detalle').value.trim();
+    _n.fcom = document.getElementById('f-atc-compra').value||'';
+    _n.com  = segVal('f-atc-comodin')==='SI';
+    _n.rnota= document.getElementById('f-atc-rnota').value.trim();
+    var _pz=leerPiezasAtc(); for(var _k2 in _pz) _n[_k2]=_pz[_k2];
     setAtcDatos(rec, _n);
   }
 
@@ -5392,6 +5458,16 @@ function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor'
 function pintarMotivoAtc(){
   var w=document.getElementById('wrap-atc-motivo'); if(!w) return;
   w.style.display = (docTipoSel()==='ATC') ? '' : 'none';
+  pintarAntiguedadAtc();
+}
+/* Debajo de la fecha de compra dice hace cuánto fue. No decide nada solo —la garantía la
+   define la empresa, no el panel— pero le pone el dato adelante a quien atiende. */
+function pintarAntiguedadAtc(){
+  var el=document.getElementById('atc-antiguedad'); if(!el) return;
+  var f=(document.getElementById('f-atc-compra')||{}).value||'';
+  if(!f){ el.innerHTML=''; return; }
+  if(f>todayStr()){ el.innerHTML='<span style="color:var(--red);font-weight:700">⚠️ esa fecha es del futuro</span>'; return; }
+  el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
 function resetForm(){
   EDIT_ID=null; EDIT_DESDE='admin';
@@ -5403,6 +5479,10 @@ function resetForm(){
   segSet('f-doc-tipo','OC');
   document.getElementById('f-atc-motivo').value='';
   document.getElementById('f-atc-detalle').value='';
+  document.getElementById('f-atc-compra').value='';
+  document.getElementById('f-atc-rnota').value='';
+  segSet('f-atc-comodin','NO');
+  pintarPiezasAtc(); ponerPiezasAtc({});
   pintarMotivoAtc();
   document.getElementById('f-vendedor').value=getVendedorMem(); applyVendedorLite();
   document.getElementById('f-cliente').value='';
@@ -5448,6 +5528,10 @@ function editPedido(id){
      acá —es de logística, y se conserva sola por `mergeAtcDatos` (§4bq). */
   document.getElementById('f-atc-motivo').value=atcMotivo(rec);
   document.getElementById('f-atc-detalle').value=atcDetalle(rec);
+  document.getElementById('f-atc-compra').value=atcFechaCompra(rec);
+  document.getElementById('f-atc-rnota').value=atcRecibidoNota(rec);
+  segSet('f-atc-comodin', atcComodin(rec)?'SI':'NO');
+  pintarPiezasAtc(); ponerPiezasAtc(atcDe(rec)||{});
   pintarMotivoAtc();
   document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
@@ -6740,7 +6824,7 @@ function renderAtc(){
   /* Las CUATRO fechas del circuito, juntas y a la izquierda: es lo que se pidió ver.
      Van en formato corto (dd/mm) para que entren sin empujar nada fuera de la pantalla. */
   var head='<thead><tr><th>N° ATC</th><th>Estado</th><th>Entró</th><th>Cliente</th>'+
-    '<th>Producto</th><th>Motivo</th><th>🚚 Recogido</th><th>🏭 Volvió</th><th>✅ Al cliente</th>'+
+    '<th>Producto</th><th>Motivo</th><th>🚚 Recojo</th><th>🏭 Volvió</th><th>✅ Al cliente</th>'+
     '<th class="num">Días</th><th>Detalle del desperfecto</th><th>Qué se hizo</th>'+
     '<th>Vendedora</th><th></th></tr></thead>';
   var body=list.map(function(p){
@@ -6775,7 +6859,7 @@ function renderAtc(){
       '<td><b>'+esc(p.cliente||'')+'</b>'+(p.celular?('<br><span style="font-size:.72rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):'')+'</td>'+
       '<td style="font-size:.78rem">'+esc(prod)+'</td>'+
       '<td>'+badgeMot+'</td>'+
-      fch(atcRecogida(p), atcFueRecogida(p))+
+      fch(atcRecogida(p), false)+
       fch(atcDevuelta(p), false)+
       fch(atcEntregada(p), false)+
       '<td class="num">'+(d==null?'—':('<b>'+d+'</b>'))+'</td>'+
@@ -6787,6 +6871,24 @@ function renderAtc(){
   document.getElementById('tbl-atc').innerHTML=head+'<tbody>'+body+'</tbody>';
   document.getElementById('tbl-atc').style.display=list.length?'table':'none';
   document.getElementById('atc-empty').style.display=list.length?'none':'block';
+}
+/* Las casillas de «qué se le recoge», dibujadas desde ATC_PIEZAS para no repetir la lista. */
+function pintarPiezasAtc(){
+  var box=document.getElementById('f-atc-piezas'); if(!box) return;
+  if(box.children.length) return;                       // ya están dibujadas
+  box.innerHTML=ATC_PIEZAS.map(function(x){
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:.86rem">'+
+      '<input type="checkbox" id="f-pz-'+esc(x.k)+'" style="width:17px;height:17px"> '+esc(x.lbl)+'</label>';
+  }).join('');
+}
+function leerPiezasAtc(){
+  var o={};
+  ATC_PIEZAS.forEach(function(x){ o['r_'+x.k]=!!(document.getElementById('f-pz-'+x.k)||{}).checked; });
+  return o;
+}
+function ponerPiezasAtc(a){
+  a=a||{};
+  ATC_PIEZAS.forEach(function(x){ var e=document.getElementById('f-pz-'+x.k); if(e) e.checked=!!a['r_'+x.k]; });
 }
 /* Llena un desplegable con los motivos. `conTodos` agrega la opción vacía del filtro. */
 function llenarSelectAtcMotivo(id, conTodos){
@@ -6808,13 +6910,12 @@ function abrirDevolucionAtc(id){
       esc(ocEtiq(p.oc))+' · <b>'+esc(p.cliente||'')+'</b> · '+esc(prodText(p.productos))+
       '<br>Entró el <b>'+esc(fmtFecha(atcEntro(p)))+'</b>'+(atcMotivo(p)?(' · '+esc(atcMotivo(p))):'')+'</p>'+
 
-    '<div style="background:var(--gray-lt);border-radius:10px;padding:12px 13px;margin-bottom:12px">'+
-      '<div style="font-size:.82rem;font-weight:800;margin-bottom:8px">🚚 1) Se recogió el producto</div>'+
-      '<label style="display:flex;align-items:center;gap:8px;font-size:.85rem;margin-bottom:8px">'+
-        '<input type="checkbox" id="rec-si" style="width:17px;height:17px"'+(yaRec?' checked':'')+' onchange="document.getElementById(\'rec-fecha\').disabled=!this.checked"> '+
-        'Ya lo fueron a buscar</label>'+
-      '<div class="field"><label class="lb">¿Qué día?</label>'+
-        '<input type="date" id="rec-fecha" max="'+esc(todayStr())+'" value="'+esc(a.rec||(yaRec?(p.fecha||todayStr()):todayStr()))+'"'+(yaRec?'':' disabled')+'></div>'+
+    /* ⚠️ El recojo NO se marca acá: es la fecha para la que se programó el viaje, que ya
+       se puso al cargar la ATC. Se muestra para ubicarse, y se corrige editando la ATC. */
+    '<div style="background:var(--gray-lt);border-radius:10px;padding:10px 13px;margin-bottom:12px;font-size:.82rem">'+
+      '🚚 <b>Recojo programado:</b> '+(atcRecogida(p)?esc(fmtFecha(atcRecogida(p))):'<i>sin fecha</i>')+
+      (yaRec?'':' <span style="color:var(--muted)">— todavía no llegó ese día</span>')+
+      '<div style="font-size:.75rem;color:var(--muted);margin-top:3px">Si hay que cambiarla, se corrige editando la ATC.</div>'+
     '</div>'+
 
     '<div style="background:var(--gray-lt);border-radius:10px;padding:12px 13px;margin-bottom:12px">'+
@@ -6841,53 +6942,46 @@ function abrirDevolucionAtc(id){
 
     '<div class="btn-row" style="margin-top:16px">'+
       '<button class="btn btn-primary btn-sm" style="width:auto" onclick="guardarDevolucionAtc(\''+esc(p.id)+'\')">Guardar</button>'+
-      (yaRec||a.dev||a.ent ? ('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="borrarDevolucionAtc(\''+esc(p.id)+'\')">↺ Borrar todo</button>') : '')+
+      (a.dev||a.ent ? ('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="borrarDevolucionAtc(\''+esc(p.id)+'\')">↺ Borrar todo</button>') : '')+
       '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cancelar</button>'+
     '</div>');
 }
 function guardarDevolucionAtc(id){
   var p=findById(id); if(!p) return;
-  var recSi=!!(document.getElementById('rec-si')||{}).checked;
-  var recF =String((document.getElementById('rec-fecha')||{}).value||'');
+  /* El recojo ya no se marca: sale de la fecha programada del viaje (§4bs). */
+  var recSi=atcFueRecogida(p), recF=atcRecogida(p);
   var devSi=!!(document.getElementById('dev-si')||{}).checked;
   var devF =String((document.getElementById('dev-fecha')||{}).value||'');
   var entSi=!!(document.getElementById('ent-si')||{}).checked;
   var entF =String((document.getElementById('ent-fecha')||{}).value||'');
   var entro=atcEntro(p);
 
-  if(recSi && !recF){ toast('Falta el día en que se recogió el producto','err'); return; }
   if(devSi && !devF){ toast('Falta el día en que producción lo devolvió','err'); return; }
   if(entSi && !entF){ toast('Falta el día en que se le devolvió al cliente','err'); return; }
   /* ⚠️ Ninguna fecha puede ser anterior a la entrada: descuadraría los promedios. */
-  if(recSi && recF<entro){ toast('El recojo no puede ser anterior al día en que entró la ATC','err'); return; }
   if(devSi && devF<entro){ toast('La devolución no puede ser anterior al día en que entró la ATC','err'); return; }
   /* ⚠️ El orden del circuito no se puede saltear: recoger → volver de fábrica → entregar.
      Sin esto quedarían ATC "entregadas al cliente" que nunca se fueron a buscar. */
-  if(devSi && !recSi){ toast('Primero marcá que se recogió: no puede volver de fábrica algo que no se fue a buscar','err'); return; }
   if(entSi && !devSi){ toast('Primero marcá que volvió de fábrica: no se le puede devolver al cliente algo que sigue en producción','err'); return; }
-  if(devSi && recSi && devF<recF){ toast('La devolución no puede ser anterior al recojo','err'); return; }
+  if(devSi && recF && devF<recF){ toast('No pudo volver de fábrica antes del día en que se lo fueron a buscar ('+fmtFecha(recF)+')','err'); return; }
   if(entSi && devSi && entF<devF){ toast('No se le pudo devolver al cliente antes de que volviera de fábrica','err'); return; }
 
   mergeAtcDatos(p, {
-    rec:  recSi ? recF : '',
     dev:  devSi ? devF : '',
     hizo: devSi ? String((document.getElementById('dev-hizo')||{}).value||'').trim() : '',
     ent:  entSi ? entF : '',
-    devQ: (recSi||devSi||entSi) ? (getVendedorMem()||'logística') : '',
-    devH: (recSi||devSi||entSi) ? horaCorta() : ''
+    devQ: (devSi||entSi) ? (getVendedorMem()||'logística') : '',
+    devH: (devSi||entSi) ? horaCorta() : ''
   });
-  /* Se mantiene el ✅ del chofer en sincronía: es el mismo hecho contado una sola vez. */
-  p.entregado = recSi;
   persistPedido(p); closeModal(); renderAtc();
   toast(entSi ? 'ATC cerrada ✓ — el cliente ya lo tiene'
       : devSi ? 'Volvió de fábrica ✓ — falta llevárselo al cliente'
-      : recSi ? 'Recojo anotado ✓' : 'Se deshizo la marca','ok');
+      : 'Se deshizo la marca','ok');
 }
 /* Deshacer entero, para cuando se anotó en la ATC equivocada. */
 function borrarDevolucionAtc(id){
   var p=findById(id); if(!p) return;
-  mergeAtcDatos(p, { rec:'', dev:'', hizo:'', ent:'', devQ:'', devH:'' });
-  p.entregado=false;
+  mergeAtcDatos(p, { dev:'', hizo:'', ent:'', devQ:'', devH:'' });
   persistPedido(p); closeModal(); renderAtc();
   toast('Se deshizo la marca','ok');
 }
@@ -6899,53 +6993,76 @@ function editarDesdeAtc(id){ EDIT_DESDE='atc'; editPedido(id); }
 function verAtc(id){
   var p=findById(id); if(!p){ toast('No encontré esa ATC','err'); return; }
   var est=atcEstadoLbl(atcEstado(p)), d=atcDias(p);
-  /* Cada paso con su fecha, o el aviso de que todavía no pasó. */
+
+  /* Cada paso del circuito, en una tira compacta. Gris = todavía no pasó. */
   var paso=function(ico, txt, fecha, pendiente){
-    return '<div style="display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--gray-md)">'+
-      '<div style="font-size:1.05rem;line-height:1.2;width:22px;flex:none;'+(fecha?'':'opacity:.35')+'">'+ico+'</div>'+
-      '<div style="flex:1">'+
-        '<div style="font-size:.82rem;font-weight:700;'+(fecha?'':'color:var(--muted)')+'">'+esc(txt)+'</div>'+
-        '<div style="font-size:.8rem;color:'+(fecha?'var(--teal-dk)':'var(--muted)')+'">'+
-          (fecha ? esc(fmtFecha(fecha)) : ('<i>'+esc(pendiente)+'</i>'))+'</div>'+
-      '</div></div>';
+    var ok=!!fecha;
+    return '<div style="flex:1;min-width:118px;background:'+(ok?'var(--teal-lt)':'var(--gray-lt)')+';'+
+      'border:1px solid '+(ok?'var(--teal-border)':'var(--gray-md)')+';border-radius:9px;padding:8px 10px">'+
+      '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)">'+ico+' '+esc(txt)+'</div>'+
+      '<div style="font-size:.85rem;font-weight:800;margin-top:2px;'+(ok?'color:#065f5b':'color:var(--muted);font-weight:600;font-style:italic;font-size:.76rem')+'">'+
+        esc(ok?fmtFecha(fecha):pendiente)+'</div></div>';
   };
-  var bloque=function(titulo, texto, vacio){
-    return '<div style="margin-top:12px">'+
-      '<div class="lb" style="margin-bottom:4px">'+esc(titulo)+'</div>'+
-      '<div style="background:var(--gray-lt);border-radius:9px;padding:10px 12px;font-size:.86rem;line-height:1.5;white-space:pre-wrap;word-break:break-word'+(texto?'':';color:var(--muted)')+'">'+
-        esc(texto||vacio)+'</div></div>';
+  /* Un dato suelto de la cabecera. */
+  var dato=function(lbl, val){
+    return '<div><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)">'+esc(lbl)+'</div>'+
+      '<div style="font-size:.85rem;font-weight:700;margin-top:1px">'+val+'</div></div>';
   };
+  /* Un texto largo del cliente o de producción. Solo se dibuja si hay algo que leer. */
+  var texto=function(titulo, t){
+    if(!t) return '';
+    return '<div style="margin-top:12px"><div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:4px">'+esc(titulo)+'</div>'+
+      '<div style="background:var(--gray-lt);border-radius:9px;padding:10px 12px;font-size:.86rem;line-height:1.5;white-space:pre-wrap;word-break:break-word">'+esc(t)+'</div></div>';
+  };
+
+  var piezas=atcRecibido(p);
   openModal(
-    '<h3 style="margin:0 0 3px">🎧 '+esc(p.oc||'ATC')+' — '+esc(p.cliente||'')+'</h3>'+
-    '<p style="color:var(--muted);font-size:.83rem;margin:0 0 12px">'+
-      (p.celular?('📞 '+esc(p.celular)+' · '):'')+esc(p.vendedor||'')+
-      ' · <span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
-      (d!=null?(' · <b>'+d+'</b> día'+(d===1?'':'s')+(atcEntregada(p)?' en total':' hasta hoy')):'')+'</p>'+
+    '<div class="modal-h"><h3>🎧 '+esc(p.oc||'ATC')+' · '+esc(p.cliente||'')+'</h3>'+
+      '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
 
-    '<div class="lb">Producto</div>'+
-    '<div style="font-size:.88rem;font-weight:700;margin-bottom:10px">'+esc(prodText(p.productos)||'—')+'</div>'+
+      /* Estado + días, lo primero que se busca. */
+      '<div style="display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin-bottom:14px">'+
+        '<span class="badge '+est.cls+'" style="font-size:.75rem">'+esc(est.lbl)+'</span>'+
+        (d!=null?('<span style="font-size:.8rem;color:var(--muted)"><b>'+d+'</b> día'+(d===1?'':'s')+(atcEntregada(p)?' en total':' desde que entró')+'</span>'):'')+
+        (atcComodin(p)?'<span class="badge b-blue">🛏️ con comodín</span>':'')+
+      '</div>'+
 
-    '<div class="lb" style="margin-bottom:4px">Motivo del reclamo</div>'+
-    '<div style="margin-bottom:2px">'+(atcMotivo(p)
-      ? ('<span class="badge b-gray" style="font-size:.8rem">'+esc(atcMotivo(p))+'</span>')
-      : '<span class="badge b-red">⚠️ nadie anotó el motivo</span>')+'</div>'+
+      /* Los datos, en rejilla: ocupan un tercio de lo que ocupaban apilados. */
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px 14px;'+
+        'background:#fff;border:1px solid var(--gray-lt);border-radius:10px;padding:12px 14px">'+
+        dato('Producto', esc(prodText(p.productos)||'—'))+
+        dato('Cliente', esc(p.cliente||'—')+(p.celular?('<br><span style="font-weight:500;font-size:.78rem;color:var(--muted)">📞 '+esc(p.celular)+'</span>'):''))+
+        dato('Vendedora', esc(p.vendedor||'—'))+
+        dato('Motivo', atcMotivo(p)
+              ? ('<span class="badge b-gray">'+esc(atcMotivo(p))+'</span>')
+              : '<span class="badge b-red">⚠️ sin anotar</span>')+
+        dato('Comprado', atcFechaCompra(p)
+              ? (esc(fmtFecha(atcFechaCompra(p)))+'<br><span style="font-weight:500;font-size:.75rem;color:var(--muted)">'+esc(antiguedadTxt(atcFechaCompra(p)))+'</span>')
+              : '<span style="color:var(--muted);font-weight:500">sin anotar</span>')+
+        dato('Se le recogió', piezas.length
+              ? esc(piezas.join(' · '))+(atcRecibidoNota(p)?('<br><span style="font-weight:500;font-size:.75rem;color:var(--muted)">'+esc(atcRecibidoNota(p))+'</span>'):'')
+              : '<span style="color:var(--muted);font-weight:500">sin anotar</span>')+
+      '</div>'+
 
-    bloque('Detalle del desperfecto — lo que dijo el cliente',
-           atcDetalle(p)||p.observaciones, 'No quedó anotado.')+
-    bloque('Qué se hizo', atcQueSeHizo(p), 'Todavía no se anotó qué se hizo.')+
+      texto('Detalle del desperfecto — lo que dijo el cliente', atcDetalle(p)||p.observaciones)+
+      texto('Qué se hizo', atcQueSeHizo(p))+
 
-    '<div style="margin-top:14px"><div class="lb" style="margin-bottom:2px">Cómo viene</div>'+
-      paso('📝','Entró la ATC', atcEntro(p), '—')+
-      paso('🚚','Se recogió el producto', atcRecogida(p),
-           atcFueRecogida(p)?'Marcado como recogido, sin fecha anotada':'Todavía no se fue a buscar')+
-      paso('🏭','Volvió de fábrica', atcDevuelta(p), 'Sigue en producción')+
-      paso('✅','Se le devolvió al CLIENTE', atcEntregada(p), 'El cliente todavía no lo tiene')+
-    '</div>'+
+      '<div style="margin-top:14px">'+
+        '<div style="font-size:.66rem;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:5px">Cómo viene</div>'+
+        '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+          paso('📝','Entró', atcEntro(p), '—')+
+          paso('🚚','Recojo', atcRecogida(p), 'sin fecha')+
+          paso('🏭','Volvió de fábrica', atcDevuelta(p), 'sigue en producción')+
+          paso('✅','Al cliente', atcEntregada(p), 'todavía no lo tiene')+
+        '</div>'+
+      '</div>'+
 
-    '<div class="btn-row" style="margin-top:16px">'+
-      (UNLOCKED?('<button class="btn btn-primary btn-sm" style="width:auto" onclick="closeModal();abrirDevolucionAtc(\''+esc(p.id)+'\')">📦 Anotar avance</button>'+
-                 '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar la ATC</button>'):'')+
-      '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
+      '<div class="btn-row" style="margin-top:18px">'+
+        (UNLOCKED?('<button class="btn btn-primary btn-sm" style="width:auto" onclick="closeModal();abrirDevolucionAtc(\''+esc(p.id)+'\')">📦 Anotar avance</button>'+
+                   '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
+        '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
     '</div>');
 }
 /* Copia la matriz para pegarla en WhatsApp o Excel. */
@@ -9978,6 +10095,8 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('atc-search').addEventListener('input',renderAtc);
   llenarSelectAtcMotivo('atc-motivo', true);
   llenarSelectAtcMotivo('f-atc-motivo', false);
+  pintarPiezasAtc();
+  initSeg('f-atc-comodin');
   initSeg('adm-mode',function(val){
     document.getElementById('wrap-dia').style.display=(val==='dia')?'block':'none';
     document.getElementById('wrap-mes').style.display=(val==='mes')?'block':'none';

@@ -2744,11 +2744,56 @@ sobrevive solo. Enumerar era la trampa.
 - Tests: `test_atc.js` **41 → 54**.
 - Batería: **23 suites · 590 checks · 0 fallas**.
 
-> **En curso:** el usuario pasó el `FORMATO_ATC_2026.xlsx` real y pidió que el formulario del
-> panel capture **los mismos datos**: N° de factura / nota de remisión, **fecha de compra**
-> (define la garantía), fecha de visita técnica, línea, plaza — más la **recepción de
-> productos** de logística (colchón / patas / somier / accesorios) y las **condiciones
-> ambientales** (humedad, desnivel, exposición al sol, tipo de somier).
+## 4bs. 🎧 El formato en papel, acotado por el dueño · el recojo no se marca (2026-09-02)
+
+El usuario pasó el `FORMATO_ATC_2026.xlsx` real y pidió que el panel capture *"los mismos
+datos... además de los datos de recojo"*. Yo listé **todo** lo que traía la hoja y me frenó
+dos veces:
+
+> *"una ATC no necesita número de factura, si te fijas es **básico** el ATC formato en excel"*
+> *"no nos interesan las condiciones ambientales"*
+> *"de dónde sacás que hace falta «condiciones ambientales»?"* → **de su propio Excel**, filas
+> 42-44 (humedad · desnivel · tipo de somier · exposición al sol). Las listé porque estaban en
+> el archivo, no porque hicieran falta. Se lo dije y quedaron afuera.
+
+**Lección:** que un dato esté en el formato no significa que se use. Antes de portar un
+formulario en papel, preguntar **qué se llena de verdad**, no transcribirlo entero.
+
+Del Excel quedaron **solo tres cosas** —el resto (cliente, teléfono, dirección, vendedora,
+producto, medida, detalle del reclamo) ya lo traía el pedido—:
+
+| campo | por qué se queda |
+|---|---|
+| **Fecha de compra** | es lo que dice si hay garantía; debajo muestra *"comprado hace 2 años y 1 mes"* |
+| **¿Comodín?** | aparece todo el tiempo en los datos reales (*"LLEVAR COMODIN"*); hay que recuperarlo al devolver |
+| **Qué se le recoge** (colchón/sómier/patas/accesorios + nota) | la «recepción de productos» del formato: evita el clásico "faltan las patas" |
+
+**Y quién los llena:** *"ese excel esos datos llena la vendedora"*. Yo iba a poner la
+recepción en la ventana de logística; va en el formulario de carga.
+
+**🚚 EL RECOJO NO SE MARCA.** La otra corrección, y la que más simplificó:
+
+> *"el «recogido» es la fecha para la que se programó la recogida. No hace falta que
+> logística marque recogido. Ejemplo: al llenar el formulario ponen «cargar 5/09»"*
+
+O sea que **ya existía**: es el campo `fecha` del pedido, el mismo de cualquier entrega. Yo
+había agregado una casilla y una fecha aparte — trabajo duplicado sobre un dato que ya
+estaba. `atcRecogida(p)` pasó a ser `p.fecha`, se borró el paso 1 del modal (queda
+informativo) y `atcFueRecogida` se deduce de si esa fecha ya pasó. La validación cambió a
+"no puede volver de fábrica antes del día del viaje".
+
+**📐 «tu ficha se ve trambólica»** — y tenía razón: yo había armado el modal a mano, sin usar
+`.modal-h`/`.modal-b`, que es el molde que usa todo el resto del panel. Sin barra de título,
+todo apilado en una columna con separadores punteados. Rehecha: encabezado con el degradé de
+la casa, los datos en **rejilla** (`auto-fit minmax(150px)`), los textos largos solo si hay
+algo que leer, y el circuito como **cuatro tarjetas** en fila. De una columna larguísima a
+**687 px**.
+
+- Tests: `test_atc.js` **54 → 66**. Fija que **no existe** casilla de recojo, que el recojo
+  es `p.fecha`, y las dos transiciones por separado (volver de fábrica → *lista para
+  entregar*; entregar al cliente → *cerrada*). También que **no** hay campo de factura ni de
+  condiciones ambientales, para que nadie los reponga "por completitud".
+- Batería: **23 suites · 602 checks · 0 fallas**.
 
 ## 5. Pendientes
 

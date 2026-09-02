@@ -65,6 +65,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var cn=document.querySelector('#f-productos .prod-cant'); if(cn) cn.value='1';
     if(o.motivo!=null)  _el('f-atc-motivo').value=o.motivo;
     if(o.detalle!=null) _el('f-atc-detalle').value=o.detalle;
+    if(o.compra!=null)  _el('f-atc-compra').value=o.compra;
+    if(o.comodin)       segSet('f-atc-comodin','SI');
+    if(o.piezas)        o.piezas.forEach(function(k){ var e=document.getElementById('f-pz-'+k); if(e) e.checked=true; });
+    if(o.rnota!=null)   _el('f-atc-rnota').value=o.rnota;
     submitPedido();
     await new Promise(r=>setTimeout(r,350));
     return { n:STATE.length, ultimo: STATE.length?STATE[STATE.length-1].id:null };
@@ -106,7 +110,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   // ============ 3. con motivo sí, y el dato viaja en la planilla ============
   r = await cargar({ cliente:'LORENA OYOLA', motivo:'Hundimiento',
-                     detalle:'hundido en el medio, no descansa bien' });
+                     detalle:'hundido en el medio, no descansa bien',
+                     compra:'2024-07-13', comodin:true, piezas:['col','pat'],
+                     rnota:'sómier sin una pata' });
   chk('con motivo se guarda', r.n===1, r.n);
   const guardado = await page.evaluate(() => {
     if(typeof atcMotivo!=='function')
@@ -126,6 +132,28 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ viaja DENTRO del JSON de productos (sin columna nueva, sin republicar el Apps Script)',
       guardado.dentro===true, guardado.dentro);
   chk('…y llega a la planilla', guardado.enPlanilla==='Hundimiento', guardado.enPlanilla);
+
+  // ============ 3b. lo que se tomó del FORMATO EN PAPEL (§4bs) ============
+  /* El dueño acotó el alcance: *"una ATC no necesita número de factura, si te fijas es
+     básico"* y *"no nos interesan las condiciones ambientales"*. Del Excel quedan solo la
+     fecha de compra (define la garantía), el comodín y qué piezas se le llevan — el resto
+     (cliente, teléfono, dirección, vendedora, producto, medida) ya lo trae el pedido. */
+  const papel = await page.evaluate(() => {
+    if(typeof atcFechaCompra!=='function') return { fcom:'no existe atcFechaCompra' };
+    var p=STATE[0]||{};
+    return { fcom:atcFechaCompra(p), com:atcComodin(p), piezas:atcRecibido(p).join(' · '),
+             rnota:atcRecibidoNota(p), anti:antiguedadTxt('2024-07-13','2026-09-02'),
+             /* ⚠️ NO debe haber campo de factura ni de condiciones ambientales */
+             hayFactura: !!document.getElementById('f-atc-factura'),
+             hayHumedad: !!document.getElementById('f-atc-humedad') };
+  });
+  chk('queda la fecha de compra (es lo que dice si hay garantía)', papel.fcom==='2024-07-13', papel.fcom);
+  chk('…y se traduce a algo legible', /2 años/.test(papel.anti), papel.anti);
+  chk('queda si se le dejó comodín', papel.com===true, papel.com);
+  chk('quedan las piezas que se le recogen', papel.piezas==='Colchón · Patas', papel.piezas);
+  chk('…y la aclaración', /sin una pata/.test(papel.rnota), papel.rnota);
+  chk('⚠️ NO se pide N° de factura (el dueño dijo que no hace falta)', papel.hayFactura===false, papel.hayFactura);
+  chk('⚠️ NI condiciones ambientales', papel.hayHumedad===false, papel.hayHumedad);
 
   // ============ 4. 🐛 el N° escrito A MANO también lleva el prefijo ============
   /* Sin esto, elegir 🎧 ATC y teclear el número dejaba `oc` sin "ATC ": `esATC()` daba
@@ -160,56 +188,75 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     if(!_q || typeof abrirDevolucionAtc!=='function')
       return { abrio:'no existe abrirDevolucionAtc', rechazo:false, dev:'', hizo:'', estado:'', quien:'', enPlanilla:'' };
     var id=_q.id;
+    /* El formulario agenda para MAÑANA por defecto. Para probar la devolución hay que
+       simular que el viaje ya pasó: se corre el recojo cinco días atrás. */
+    var _d=new Date(); _d.setDate(_d.getDate()-5);
+    _q.fecha=isoLocal(_d); persistPedido(_q);
+    await new Promise(r=>setTimeout(r,200));
     abrirDevolucionAtc(id);
     await new Promise(r=>setTimeout(r,150));
     var abrio=document.getElementById('modal').classList.contains('on');
     /* Una devolución ANTERIOR a la entrada descuadraría el promedio de días. */
-    /* ⚠️ No se puede saltear el circuito: marcar "volvió de fábrica" sin haberlo recogido. */
+    /* ⚠️ El recojo YA NO se marca: es la fecha para la que se programó el viaje, que se
+       puso al cargar la ATC. En el modal solo se informa. */
+    var hayCasillaRecojo = !!document.getElementById('rec-si');
+    /* No se le puede entregar al cliente algo que sigue en producción. */
+    document.getElementById('ent-si').checked=true;
+    document.getElementById('ent-fecha').disabled=false;
+    document.getElementById('ent-fecha').value=todayStr();
+    guardarDevolucionAtc(id);
+    await new Promise(r=>setTimeout(r,150));
+    var saltarPaso = !atcEntregada(findById(id));
+    /* Volver de fábrica ANTES del día del recojo tampoco puede ser. */
     document.getElementById('dev-si').checked=true;
     document.getElementById('dev-fecha').disabled=false;
+    document.getElementById('dev-fecha').value='2020-01-01';
+    guardarDevolucionAtc(id);
+    await new Promise(r=>setTimeout(r,150));
+    var rechazo = !atcDevuelta(findById(id));
+    /* Primero SOLO que volvió de fábrica: tiene que quedar «lista para entregar», que es
+       el estado que antes no existía y por el que los colchones dormían en el depósito. */
+    document.getElementById('ent-si').checked=false;
     document.getElementById('dev-fecha').value=todayStr();
-    guardarDevolucionAtc(id);
-    await new Promise(r=>setTimeout(r,150));
-    var saltarPaso = !atcDevuelta(findById(id));
-    /* Ahora en orden: recogido primero. Con fecha imposible → rechazo. */
-    document.getElementById('rec-si').checked=true;
-    document.getElementById('rec-fecha').disabled=false;
-    document.getElementById('rec-fecha').value='2020-01-01';
-    guardarDevolucionAtc(id);
-    await new Promise(r=>setTimeout(r,150));
-    var rechazo = !atcRecogida(findById(id));
-    /* Y ahora bien: recogido + volvió + entregado al cliente. */
-    document.getElementById('rec-fecha').value=todayStr();
     document.getElementById('dev-hizo').disabled=false;
     document.getElementById('dev-hizo').value='se retapizó y se cambió la esponja';
+    guardarDevolucionAtc(id);
+    await new Promise(r=>setTimeout(r,300));
+    var estadoLista=atcEstado(findById(id));
+    /* Y recién al entregársela al cliente, se cierra. */
+    abrirDevolucionAtc(id);
+    await new Promise(r=>setTimeout(r,150));
     document.getElementById('ent-si').checked=true;
     document.getElementById('ent-fecha').disabled=false;
     document.getElementById('ent-fecha').value=todayStr();
     guardarDevolucionAtc(id);
     await new Promise(r=>setTimeout(r,300));
     var p=findById(id);
-    return { abrio:abrio, rechazo:rechazo, saltarPaso:saltarPaso,
-             rec:atcRecogida(p), dev:atcDevuelta(p), ent:atcEntregada(p), hizo:atcQueSeHizo(p),
-             estado:atcEstado(p), quien:(atcDe(p)||{}).devQ||'', entregadoChofer:!!p.entregado,
-             enPlanilla: atcEntregada((window._pl.filter(function(x){return x.id===id;})[0])||{}) };
+    return { abrio:abrio, rechazo:rechazo, saltarPaso:saltarPaso, hayCasillaRecojo:hayCasillaRecojo,
+             estadoLista:estadoLista,
+             rec:atcRecogida(p), recEsFecha:(atcRecogida(p)===p.fecha),
+             dev:atcDevuelta(p), ent:atcEntregada(p), hizo:atcQueSeHizo(p),
+             estado:atcEstado(p), quien:(atcDe(p)||{}).devQ||'',
+             enPlanilla: atcDevuelta((window._pl.filter(function(x){return x.id===id;})[0])||{}) };
   });
   chk('se abre la ventana para anotar el avance', dev.abrio===true, dev.abrio);
-  chk('⚠️ no deja saltear el circuito: no puede volver de fábrica algo que no se fue a buscar',
+  chk('⚠️ el recojo NO se marca a mano: no hay casilla para eso',
+      dev.hayCasillaRecojo===false, dev.hayCasillaRecojo);
+  chk('⚠️ el recojo ES la fecha programada del viaje', dev.recEsFecha===true, dev.rec);
+  chk('⚠️ no deja saltear el circuito: no se le entrega al cliente algo que sigue en producción',
       dev.saltarPaso===true, dev.saltarPaso);
-  chk('⚠️ rechaza una fecha anterior al día en que entró la ATC', dev.rechazo===true, dev.rechazo);
-  chk('queda la fecha del RECOJO', !!dev.rec, dev.rec);
-  chk('…la de cuándo VOLVIÓ de fábrica', !!dev.dev, dev.dev);
-  chk('…y la de cuándo se le devolvió AL CLIENTE, que es la que cierra', !!dev.ent, dev.ent);
+  chk('⚠️ rechaza que vuelva de fábrica antes del día del recojo', dev.rechazo===true, dev.rechazo);
+  chk('queda la fecha de cuándo VOLVIÓ de fábrica', !!dev.dev, dev.dev);
   chk('…y QUÉ SE HIZO, que es lo que nunca quedaba anotado',
       /retapizó/.test(dev.hizo), dev.hizo);
-  chk('…pasa a estado cerrada', dev.estado==='cerrada', dev.estado);
-  chk('⚠️ el ✅ del chofer queda en sincronía (el recojo es un solo hecho)',
-      dev.entregadoChofer===true, dev.entregadoChofer);
+  chk('⚠️ al volver de fábrica queda «lista para entregar», NO cerrada — el cliente todavía no lo tiene',
+      dev.estadoLista==='lista', dev.estadoLista);
+  chk('…y recién al entregársela al cliente se cierra', dev.estado==='cerrada', dev.estado);
   chk('…queda quién la anotó', !!dev.quien, dev.quien);
-  chk('…y llega a la planilla (no se queda en esta compu)', dev.enPlanilla===dev.ent, dev.enPlanilla);
+  chk('…y llega a la planilla (no se queda en esta compu)', dev.enPlanilla===dev.dev, dev.enPlanilla);
 
   m = await matriz();
-  chk('en la matriz esa ATC ya figura entregada', /Entregada/.test(m.txt), m.txt.slice(0,160));
+  chk('en la matriz esa ATC ya figura entregada', /Entregada/.test(m.txt), m.txt.slice(0,170));
   chk('las fichas muestran el embudo entero',
       /Por recoger/.test(m.fichas) && /En fábrica/.test(m.fichas) &&
       /Listas para entregar/.test(m.fichas) && /Entregadas/.test(m.fichas), m.fichas.slice(0,200));
@@ -238,6 +285,14 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ …ni la fecha del RECOJO', !!tras.rec, tras.rec||'SE PERDIÓ');
   chk('⚠️ …ni la de la entrega al cliente (la que cierra la ATC)', !!tras.ent, tras.ent||'SE PERDIÓ');
   chk('…ni el motivo', tras.mot==='Hundimiento', tras.mot||'SE PERDIÓ');
+  const papel2 = await page.evaluate(() => {
+    if(typeof atcFechaCompra!=='function') return {};
+    var p=STATE.filter(function(x){return x.cliente==='LORENA OYOLA';})[0];
+    return { fcom:atcFechaCompra(p), com:atcComodin(p), piezas:atcRecibido(p).join(' · ') };
+  });
+  chk('…ni la fecha de compra', papel2.fcom==='2024-07-13', papel2.fcom||'SE PERDIÓ');
+  chk('…ni el comodín ni las piezas',
+      papel2.com===true && papel2.piezas==='Colchón · Patas', papel2.com+' / '+papel2.piezas);
 
   // ============ 8. los filtros ============
   const filtros = await page.evaluate(async () => {
@@ -273,7 +328,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { dev:atcDevuelta(p), estado:atcEstado(p), mot:atcMotivo(p), rec:atcRecogida(p), ent:atcEntregada(p) };
   });
   chk('se puede deshacer si se anotó por error', desh.dev==='', desh.dev||'(vacío)');
-  chk('…vuelve al principio del circuito', desh.estado==='sinrecoger', desh.estado);
+  chk('…vuelve a antes de volver de fábrica', desh.estado!=='lista' && desh.estado!=='cerrada', desh.estado);
   chk('…y deshacerlo NO se lleva puesto el motivo', desh.mot==='Hundimiento', desh.mot);
 
   // ============ 10. sin la llave de Administración no se puede tocar ============
@@ -297,7 +352,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     if(typeof verAtc!=='function') return { abrio:false, txt:'no existe verAtc' };
     var id=STATE.filter(function(x){return x.cliente==='LORENA OYOLA';})[0].id;
     /* Se le vuelve a poner avance para que la ficha tenga las cuatro fechas. */
-    mergeAtcDatos(findById(id), { rec:todayStr(), dev:todayStr(), ent:todayStr(),
+    mergeAtcDatos(findById(id), { dev:todayStr(), ent:todayStr(),
                                   hizo:'se retapizó y se cambió la esponja' });
     verAtc(id);
     await new Promise(r=>setTimeout(r,200));
@@ -310,9 +365,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y el detalle del desperfecto COMPLETO, sin cortar con «…»',
       /hundido en el medio, no descansa bien/.test(ficha.txt), ficha.txt.slice(0,200));
   chk('…y qué se hizo', /retapizó/.test(ficha.txt), 'ok');
+  chk('…y la fecha de compra con su antigüedad',
+      /13\/07\/2024/.test(ficha.txt) && /comprado hace 2 años/.test(ficha.txt), 'ok');
+  chk('…y que se le dejó comodín', /comodín/.test(ficha.txt), 'ok');
+  chk('…y qué piezas se le llevaron', /Colchón · Patas/.test(ficha.txt), ficha.txt.slice(0,60));
   chk('…y los CUATRO momentos del circuito',
-      /Entró la ATC/.test(ficha.txt) && /Se recogió/.test(ficha.txt) &&
-      /Volvió de fábrica/.test(ficha.txt) && /devolvió al CLIENTE/.test(ficha.txt),
+      /ENTRÓ/i.test(ficha.txt) && /RECOJO/i.test(ficha.txt) &&
+      /VOLVIÓ DE FÁBRICA/i.test(ficha.txt) && /AL CLIENTE/i.test(ficha.txt),
       ficha.txt.slice(-200));
   const clic = await page.evaluate(async () => {
     closeModal();
