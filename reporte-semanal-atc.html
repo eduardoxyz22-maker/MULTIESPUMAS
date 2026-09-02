@@ -72,7 +72,7 @@ a:hover{text-decoration:underline}
     </div>
     <div class="htitle">
       <h1>Reporte Semanal ATC</h1>
-      <p>Semana 31/08 – 06/09/2026 &nbsp;·&nbsp; Generado: 01/09/2026 22:51</p>
+      <p>Semana 31/08 – 06/09/2026 &nbsp;·&nbsp; Generado: 02/09/2026 22:52</p>
     </div>
   </div>
   <div style="display:flex;gap:12px">
@@ -105,15 +105,15 @@ a:hover{text-decoration:underline}
       <td style="text-align:center;color:#22A06B">1</td>
       <td style="text-align:center;color:#808080">1</td>
     </tr><tr>
-      <td style="font-weight:600">ATC EN PRODUCCION</td>
-      <td style="text-align:center;font-weight:800;color:#00B5AD">4</td>
-      <td style="text-align:center;color:#22A06B">0</td>
-      <td style="text-align:center;color:#808080">1</td>
-    </tr><tr>
       <td style="font-weight:600">ATC LISTAS PARA DEVOLVER PROD</td>
       <td style="text-align:center;font-weight:800;color:#00B5AD">0</td>
       <td style="text-align:center;color:#22A06B">0</td>
       <td style="text-align:center;color:#808080">0</td>
+    </tr><tr>
+      <td style="font-weight:600">ATC EN PRODUCCION</td>
+      <td style="text-align:center;font-weight:800;color:#00B5AD">4</td>
+      <td style="text-align:center;color:#22A06B">0</td>
+      <td style="text-align:center;color:#808080">1</td>
     </tr><tr>
       <td style="font-weight:600">ATC DEVUELTAS LOG</td>
       <td style="text-align:center;font-weight:800;color:#00B5AD">53</td>
@@ -930,7 +930,7 @@ a:hover{text-decoration:underline}
   </table></div></div>
 </div>
 
-<div class="footer">HEAVEN Colchones · Reporte ATC Semanal · 01/09/2026</div>
+<div class="footer">HEAVEN Colchones · Reporte ATC Semanal · 02/09/2026</div>
 
 <button id="export-btn" onclick="exportCSV()">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -948,7 +948,7 @@ function exportCSV() {
   var blob = new Blob([CSV_DATA], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ATC_Semanal_20260901.csv';
+  a.download = 'ATC_Semanal_20260902.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
