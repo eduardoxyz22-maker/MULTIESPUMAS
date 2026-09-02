@@ -92,6 +92,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#tienda">🏪 Venta de tienda</a>
     <a href="#retiros">💵 Retiro de efectivo</a>
     <a href="#cuadre">🧮 Cuadre</a>
+    <a href="#atc">🎧 ATC</a>
     <a href="#banco">🏦 Banco QR</a>
     <a href="#combos">🚫 Combos</a>
     <a href="#envio">📤 Cierre / Mañana</a>
@@ -413,6 +414,35 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <div class="callout warn"><b>Dos cosas para saber:</b><br>
       <b>1)</b> Los archivos quedan como <b>“cualquiera con el enlace puede ver”</b> — es lo que permite que la foto se vea dentro del panel sin pedir contraseña. El enlace es imposible de adivinar, pero si se lo pasás a alguien, esa persona ve la foto.<br>
       <b>2)</b> Ocupan espacio en tu Drive: a ~150 KB por foto y 25 entregas por día, son unos <b>50 MB al mes</b>. Nada grave, pero conviene mirarlo una vez al año.</div>
+  </div>
+
+  <div class="card" id="atc">
+    <h3>🎧 ATC — la matriz de atención al cliente <span class="pill">nuevo</span></h3>
+    <p>Pestaña propia, al lado de Contabilidad. Responde tres preguntas que antes no tenían dónde vivir: <b>qué ATC entraron</b>, <b>por qué motivo se generó cada una</b>, y <b>cuándo la devolvió producción</b>.</p>
+
+    <div class="callout tip"><b>Antes de esto</b>, la ATC se creaba para ir a recoger el producto y ahí se cortaba el rastro. El motivo se escribía suelto en Trello, sin fecha, y las tarjetas se amontonaban en «DEVUELTAS» sin decir qué se había hecho. Ahora todo queda en el panel, con fecha.</div>
+
+    <h3 style="margin-top:16px">Al cargar la ATC</h3>
+    <p>En <b>Nuevo pedido</b>, al elegir <b>🎧 ATC</b> aparecen dos campos nuevos:</p>
+    <ul>
+      <li><b>Motivo del reclamo</b> <span class="req">*</span> — es <b>obligatorio</b>. Se elige de una lista: <b>Hundimiento · Resortes · Retapizado/costura · Ruido · Patas · Tela/pillow · Cambio de producto · Cotización · Otro</b>. Sin motivo el pedido no se guarda, porque justamente el motivo es lo que después permite contar por qué se generan las ATC.</li>
+      <li><b>Detalle del desperfecto</b> (opcional) — lo que dijo el cliente, con sus palabras: <i>"hundido en el medio, no descansa bien"</i>.</li>
+    </ul>
+
+    <h3 style="margin-top:16px">Cuando producción devuelve el producto</h3>
+    <p><b>Lo carga logística.</b> En la pestaña ATC, el botón <span class="kbd">📦</span> de la fila abre una ventanita con dos cosas: <b>qué día la devolvieron</b> y <b>qué se hizo</b> (<i>"se retapizó y se cambió la esponja del centro"</i>). Si se anotó por error, el mismo botón tiene <b>↺ Todavía no volvió</b> para deshacerlo.</p>
+    <div class="callout warn"><b>El botón 📦 solo lo ven quienes entraron a Administración.</b> Las vendedoras <b>ven</b> la matriz —para saber si ya volvió el colchón de su cliente— pero no pueden anotar devoluciones.<br>
+      Tampoco se acepta una devolución con fecha <b>anterior</b> al día en que entró la ATC: descuadraría el promedio de días.</div>
+
+    <h3 style="margin-top:16px">Qué muestra la matriz</h3>
+    <ul>
+      <li><b>Cuatro números arriba:</b> cuántas ATC hay en el período, cuántas <b>🏭 siguen en fábrica</b>, cuántas <b>✅ volvieron</b> (con cuántos días tardaron en promedio) y cuántas quedaron <b>⚠️ sin motivo</b> anotado.</li>
+      <li><b>«Por qué se generaron»:</b> el conteo por motivo con su porcentaje. Es lo que permite decir <i>"el 33% de las ATC son por hundimiento"</i> y reclamarle a producción con números.</li>
+      <li><b>La tabla:</b> N° ATC · entró · cliente · producto · motivo · devuelta · <b>días</b> · detalle del desperfecto · qué se hizo. Las que todavía no volvieron llevan el filo fucsia.</li>
+      <li><b>Filtros:</b> por mes, por motivo, por estado (en fábrica / devueltas / sin motivo) y un buscador que mira cliente, N° ATC, producto y hasta el "qué se hizo".</li>
+      <li><b>📋 Copiar</b> deja la matriz lista para pegar en Excel o mandar por WhatsApp.</li>
+    </ul>
+    <div class="callout tip">El filtro por <b>Mes</b> corta por <b>cuándo ENTRÓ</b> la ATC, no por cuándo se recogió: una ATC de agosto que se recoge en septiembre sigue siendo una ATC de agosto.</div>
   </div>
 
   <div class="card" id="contabilidad">

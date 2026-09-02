@@ -2649,6 +2649,58 @@ casillero del arqueo va a aparecer vacío al abrir, y eso asusta.
   sabría con cuál abrió. Contra lo publicado da 3 fallas.
 - Batería: **22 suites · 536 checks · 0 fallas**.
 
+## 4bq. 🎧 La matriz de ATC — qué entró, por qué, y cuándo volvió (2026-09-02)
+
+*"se genera la ATC que es para recoger el producto pero no hay el seguimiento de POR QUÉ se
+creó esa ATC… y cuándo producción devolvió el producto. Y QUÉ SE REALIZÓ."* → *"lo que
+queremos es una matriz de datos donde se vea qué ATC entraron y por qué motivo… y cuándo se
+devolvieron"*. Y: *"logística carga esa etapa cuando se devuelve"*.
+
+**El diagnóstico, medido sobre los datos reales (`atc-semanal.csv`, 85 tarjetas de Trello):**
+
+| lo que se creía | lo que decían los datos |
+|---|---|
+| "no se anota el motivo" | **Sí se anota** — en "DETALLES DEL RECLAMO" o en 📝 observaciones. Pero como texto suelto, en **dos formatos distintos**, donde el panel no lo ve. |
+| "faltan etapas" | **Ya existían** en Trello: SOLICITADAS → PROGRAMADAS RECOJO → EN PRODUCCION → DEVUELTAS. |
+| — | **0 de 85 tarjetas tienen fecha.** Ninguna. Por eso no se podía responder "¿hace cuánto está en fábrica?". |
+| — | **54 de 85 amontonadas en «DEVUELTAS LOG»**, sin decir qué se hizo. |
+| — | Hay tarjetas cuya descripción es **literalmente el texto de WhatsApp que genera el panel**, pegado a mano: doble carga. |
+
+O sea: lo que faltaba no era el motivo, eran **las fechas y el cierre**.
+
+**Lo hecho.** Pestaña propia `view-atc` (sin contraseña: una vendedora necesita saber si ya
+volvió el colchón de su cliente), con las cuatro fichas, el conteo **por qué se generaron**,
+la tabla y los filtros. En el formulario, al elegir 🎧 ATC aparecen **motivo** (obligatorio,
+lista cerrada) y **detalle del desperfecto**. Logística estampa la devolución con el botón
+📦: fecha + **qué se hizo**.
+
+**⚠️ Dónde viajan los datos.** Dentro del JSON de productos (columna 15), misma convención
+que `mod` y `precio`: la planilla tiene 29 columnas fijas y una nueva obligaría a republicar
+el Apps Script. **Sin redeploy.**
+
+**⚠️ EL RIESGO QUE CASI SE ME PASA.** Los productos que salen del formulario son objetos
+**nuevos**: sin rescatar lo anterior desde `prev`, la vendedora corrigiendo una dirección
+**borraba la devolución que anotó logística**, en silencio, y nadie se enteraría hasta que
+alguien preguntara "¿y este colchón dónde está?". De ahí `mergeAtcDatos` y el rescate
+explícito en `submitPedido`. Es el check que encabeza el test.
+
+**🐛 Bug encontrado de paso.** Eligiendo 🎧 ATC pero **escribiendo el N° a mano**, `ocSel`
+quedaba sin el prefijo `ATC `: `esATC()` daba false y la atención no habría aparecido nunca
+en su propia pestaña. El camino automático (`nextOcMes`) sí lo ponía; el manual no pasaba por
+ningún lado. ROHO queda afuera —ahí el N° lo manda el cliente—.
+
+**📐 Orden de las columnas, corregido tras mirarlo renderizado.** Con el detalle en el medio,
+**Devuelta · Días · Qué se hizo quedaban fuera de la pantalla** a 1500 px — justo las tres que
+se pidieron. Se movieron a la izquierda (entró → motivo → devuelta → días, juntas) y los dos
+textos largos al final, topados con `text-overflow` y el completo en el `title`.
+
+- Test: `tests/test_atc.js` (**41 checks**). Contra lo publicado: **36 fallas**.
+- Batería: **23 suites · 577 checks · 0 fallas**.
+
+> **Pendiente de decisión del usuario:** si la pestaña **reemplaza** al tablero de Trello o
+> convive con él. Hoy conviven, y la doble carga sigue. También quedó sin definir si la
+> **vuelta al cliente** necesita su propio cupo en el camión (hoy una ATC = un viaje).
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
