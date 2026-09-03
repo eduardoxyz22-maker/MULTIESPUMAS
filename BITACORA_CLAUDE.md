@@ -2836,6 +2836,49 @@ cuando el chequeo estático choca con código armado por concatenación, gana el
   `animationName` del elemento, no la clase en el CSS) y que el panel ya no dice «2)» ni «3)».
 - Batería: **23 suites · 605 checks · 0 fallas**.
 
+## 4bu. ⏳ El botón que parecía muerto (2026-09-03)
+
+*"al presionar «Probar de nuevo» o «Resolver uno» no sabe si está ejecutando o en proceso,
+ya que no aparece nada… pareciera como si el botón no funcionara"*.
+
+Era exactamente eso, y el defecto era de diseño mío: `resolverCortosRev()` mandaba la
+consulta, mostraba un `toast` de **2,8 segundos** y después **nada** — mientras el servidor
+abre los enlaces cortos **uno por uno** con `UrlFetchApp` y tarda entre 20 s y un minuto. El
+botón quedaba idéntico, el panel idéntico. Lo natural era volver a apretarlo.
+
+**⚠️ Y apretarlo de nuevo NO era inocuo.** Medido contra la versión publicada: tres clics =
+**tres consultas** de un minuto cada una, encimadas. Ese es el check que más importa del test
+nuevo (`3 llamadas` contra `1`).
+
+Lo que ahora pasa mientras el servidor trabaja:
+
+| | |
+|---|---|
+| el botón | se apaga, con `.spin` y *"Consultando el servidor… N s"* |
+| arriba | un bloque dice que los abre uno por uno, cuánto suele tardar y cuántos van |
+| el contador | sube cada segundo — es lo que prueba que no se colgó |
+| insistir | avisa *"Ya está consultando — lleva N s"* y **no** dispara otra consulta |
+| el aviso viejo | se retira: dejar *"no pudo con ninguno"* durante el reintento hacía creer que ya había fallado otra vez |
+
+**Dos decisiones que no son obvias:**
+
+1. **Cerrar la ventana no cancela nada** — con un minuto de espera es lo más probable que
+   hagan. Pero al terminar **NO se reabre sola**: saltarle una ventana encima a alguien que
+   se fue a otra cosa es peor que el problema. En su lugar, el `toast` dura **8 s** (contra
+   2,8) y dice dónde ver el resultado. De ahí el parámetro `ms` opcional en `toast()`.
+2. **El `catch` también apaga el estado.** Sin `revTerminar()` en la rama de error, un
+   servidor caído dejaba el botón apagado **para siempre** y había que recargar la página.
+   Es un check propio del test.
+
+- Test nuevo: `tests/test_ubic.js` (**27 checks**). Contra lo publicado: **16 fallas**.
+- Batería: **24 suites · 632 checks · 0 fallas**.
+
+> **Nota aparte:** el usuario confirmó que en Apps Script `probarUbicacion` corre bien y
+> devuelve coordenadas (`lat -17.8481375, lng -63.261265625`), o sea que **el permiso está
+> dado**. Que el panel siga marcando "0 de 15" con el servidor sano apunta a los enlaces en
+> sí, no al deploy. Queda por diagnosticar con el panel ya arreglado, que ahora sí deja ver
+> qué está pasando mientras consulta.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado

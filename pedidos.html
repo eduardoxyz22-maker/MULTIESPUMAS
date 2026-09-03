@@ -5931,10 +5931,12 @@ function autoArrancar(){
    Toast
    ========================================================================== */
 var _toastT=null;
-function toast(msg,kind){
+/* `ms` es opcional: un resultado que llega después de un minuto de espera merece quedarse
+   más que los 2,8 s de siempre, porque la persona puede haber salido a otra pestaña. */
+function toast(msg,kind,ms){
   var el=document.getElementById('toast');
   el.textContent=msg; el.className='toast show'+(kind?(' '+kind):'');
-  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.className='toast'; },2800);
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.className='toast'; }, ms||2800);
 }
 
 /* ============================================================================
@@ -9863,14 +9865,19 @@ function renderRevUbic(yaResolvio){
     '<div style="background:'+(d.cortos.length?'var(--amber-lt)':'var(--gray-lt)')+';border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:'+(d.cortos.length?'var(--amber)':'var(--gray)')+'">'+d.cortos.length+'</div><div style="font-size:.72rem;font-weight:700;color:'+(d.cortos.length?'#7c4b00':'var(--muted)')+'">LINK CORTO</div></div>'+
     '<div style="background:var(--gray-lt);border-radius:9px;padding:11px 13px;text-align:center"><div style="font-size:1.5rem;font-weight:800;color:var(--muted)">'+d.sinLink.length+'</div><div style="font-size:.72rem;color:var(--muted);font-weight:700">SIN ENLACE</div></div>'+
   '</div>';
-  if(REV_INTENTO) h+=revMotivoHtml();
+  /* Mientras el servidor trabaja, el resultado ANTERIOR ("no pudo con ninguno") se retira:
+     mostrarlo durante el reintento hacía creer que ya había fallado de nuevo. */
+  if(REV_EN_CURSO) h+=revEnCursoHtml();
+  else if(REV_INTENTO) h+=revMotivoHtml();
   h+=fijarUbicHtml();
   if(!d.conLink.length) h+='<div class="empty" style="padding:22px">Todavía no hay pedidos con enlace de ubicación.</div>';
   if(d.cortos.length){
     h+='<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
       '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
       '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.</div>'+
-      '<button class="btn btn-sm" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 '+(yaResolvio?'Probar de nuevo':'Resolverlos ahora')+'</button>'+
+      (REV_EN_CURSO
+        ? '<button class="btn btn-sm" id="rev-btn-resolver" disabled style="background:var(--amber);color:#fff;font-weight:700;opacity:.75;cursor:wait"><span class="spin"></span> Consultando el servidor… <span id="rev-elapsed">'+revSegundos()+'</span> s</button>'
+        : '<button class="btn btn-sm" id="rev-btn-resolver" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 '+(yaResolvio?'Probar de nuevo':'Resolverlos ahora')+'</button>')+
       '<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">A mano son 20 segundos y queda perfecto: tocá <b>↗ Abrir</b> → <b>en el celular</b> mantené apretado el punto de la casa; <b>en la computadora</b> hacé <b>clic derecho</b> sobre el punto → arriba de todo salen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve el código tipo <code>5P2Q+PFX</code>.</div>'+
       '<div style="margin-top:9px">'+d.cortos.map(fila).join('')+'</div></div>';
   }
@@ -9895,20 +9902,58 @@ function renderRevUbic(yaResolvio){
   if(d.conLink.length && !d.nores.length && !d.cortos.length && !d.lejos.length)
     h+='<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:14px;text-align:center;color:#0a6b47;font-weight:700">✅ Todos los enlaces cargados se ubican en el mapa.</div>';
   openModal('<div class="modal-h"><h3>📍 Revisar ubicaciones</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
+    '<div class="modal-b" id="rev-ubic-panel">'+h+'<button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="closeModal()">✓ Listo</button></div>');
+}
+/* El bloque que se ve mientras el servidor abre los enlaces. Dice qué está pasando, cuánto
+   suele tardar, cuánto va, y que se puede cerrar la ventana sin cortar nada. */
+function revEnCursoHtml(){
+  return '<div id="rev-en-curso" style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:11px 13px;margin:8px 0;font-size:.84rem;color:#7c4b00">'+
+    '<div style="display:flex;align-items:center;gap:9px;font-weight:800"><span class="spin" style="border-color:rgba(124,75,0,.25);border-top-color:#7c4b00"></span> Consultando el servidor por '+REV_TOT+' enlace'+(REV_TOT===1?'':'s')+'…</div>'+
+    '<div style="margin-top:5px">Los abre <b>uno por uno</b> para ver a dónde apuntan. Suele tardar <b>entre 20 segundos y un minuto</b>. Van <b><span id="rev-elapsed">'+revSegundos()+'</span> s</b>.</div>'+
+    '<div style="margin-top:4px;font-size:.78rem;color:var(--muted)">Podés cerrar esta ventana: la consulta sigue y te aviso cuando termine.</div>'+
+  '</div>';
 }
 /* Diagnóstico honesto de por qué fallaron: cuántos resolvió y QUÉ VERSIÓN del Apps Script
    está publicada (en Apps Script, guardar el código NO publica nada: hay que crear versión
    nueva). El resultado se conserva al cerrar y volver a abrir el panel. */
 var REV_MOTIVO='', REV_INTENTO=false, REV_N=0, REV_TOT=0, REV_RESPONDIO=false;
+/* ⏳ MIENTRAS EL SERVIDOR TRABAJA (§4bu). El dueño: *"al presionar Probar de nuevo no sabe si
+   está ejecutando o en proceso, ya que no aparece nada… pareciera como si el botón no
+   funcionara"*. Y tenía razón: se mostraba un cartelito de 2,8 s y después NADA, con un
+   servidor que tarda hasta un minuto abriendo enlaces uno por uno. Ahora el botón se apaga
+   con un girito, el aviso viejo se retira, y un contador de segundos deja claro que sigue
+   vivo. `REV_INICIO` es para el contador; `REV_TIMER` para poder apagarlo. */
+var REV_EN_CURSO=false, REV_INICIO=0, REV_TIMER=null;
+function revSegundos(){ return REV_INICIO ? Math.max(0, Math.round((Date.now()-REV_INICIO)/1000)) : 0; }
+/* Cada segundo actualiza el contador SI el panel está a la vista. Si lo cerraron, no hay
+   nada que pintar y no pasa nada: la consulta sigue igual. */
+function revTick(){ var e=document.getElementById('rev-elapsed'); if(e) e.textContent=revSegundos(); }
+function revEmpezar(){
+  REV_EN_CURSO=true; REV_INICIO=Date.now();
+  if(REV_TIMER) clearInterval(REV_TIMER);
+  REV_TIMER=setInterval(revTick, 1000);
+}
+function revTerminar(){
+  REV_EN_CURSO=false;
+  if(REV_TIMER){ clearInterval(REV_TIMER); REV_TIMER=null; }
+}
+/* ¿El panel de ubicaciones está abierto ahora mismo? Sirve para no volver a ABRIR la ventana
+   sola cuando la consulta termina: si la persona la cerró y se fue a otra cosa, con un minuto
+   de espera es lo más probable, y que le salte una ventana encima es molesto. */
+function revPanelAbierto(){ return !!document.getElementById('rev-ubic-panel') && document.getElementById('modal').classList.contains('on'); }
 function resolverCortosRev(){
   var d=revUbicDatos();
   var links=[], seen={};
   d.cortos.concat(d.nores).forEach(function(p){ var u=String(p.maps||'').trim(); if(u && !seen[u]){ seen[u]=1; links.push(u); } });
   if(!links.length) return;
   if(!CONNECTED){ toast('Sin conexión al servidor','err'); return; }
+  /* ⚠️ Dos clics = dos consultas al servidor, cada una de un minuto. Con el botón "muerto"
+     era lo más natural del mundo volver a apretarlo. */
+  if(REV_EN_CURSO){ toast('Ya está consultando — esperá el resultado, lleva '+revSegundos()+' s','err'); return; }
   REV_TOT=links.length; REV_INTENTO=true;
-  toast('Consultando el servidor por '+links.length+'…','ok');
+  revEmpezar();
+  renderRevUbic(true);                        // el panel pasa a "consultando…" YA, antes de esperar nada
+  toast('Consultando el servidor por '+links.length+'… puede tardar un minuto','ok');
   apiGeocode(links).then(function(res){
     REV_RESPONDIO = !!(res && res.ok);
     if(!res || !res.ok || !Array.isArray(res.geo)){
@@ -9920,9 +9965,20 @@ function resolverCortosRev(){
       REV_MOTIVO = n ? '' : (SERVER_VER===SCRIPT_VERSION_ESPERADA ? 'ninguno' : 'viejo');
       geoCacheSave();
     }
-    renderRevUbic(true);
-    toast(REV_N ? ('Ubicados '+REV_N+' de '+REV_TOT+' ✓') : ('No se pudo con ninguno de los '+REV_TOT), REV_N?'ok':'err');
-  }).catch(function(){ REV_MOTIVO='viejo'; REV_N=0; REV_RESPONDIO=false; renderRevUbic(true); toast('El servidor no respondió','err'); });
+    revTerminar();
+    var seg=revSegundos();
+    /* Si el panel sigue abierto se repinta ahí mismo. Si lo cerraron, NO se abre solo: se
+       avisa con un cartel largo (8 s) que dice qué hacer. */
+    if(revPanelAbierto()) renderRevUbic(true);
+    toast(REV_N ? ('Ubicados '+REV_N+' de '+REV_TOT+' ✓ ('+seg+' s)'+(revPanelAbierto()?'':' — abrí 📍 Revisar ubicaciones para guardarlas'))
+                : ('No se pudo con ninguno de los '+REV_TOT+(revPanelAbierto()?'':' — abrí 📍 Revisar ubicaciones para ver por qué')),
+          REV_N?'ok':'err', revPanelAbierto()?2800:8000);
+  }).catch(function(){
+    REV_MOTIVO='viejo'; REV_N=0; REV_RESPONDIO=false;
+    revTerminar();
+    if(revPanelAbierto()) renderRevUbic(true);
+    toast('El servidor no respondió'+(revPanelAbierto()?'':' — abrí 📍 Revisar ubicaciones'),'err', revPanelAbierto()?2800:8000);
+  });
 }
 /* Qué versión del Apps Script está PUBLICADA. Es el dato que aclara todo: si acá no dice
    la versión esperada, el "Implementar → Nueva versión" no se hizo (guardar no alcanza). */
