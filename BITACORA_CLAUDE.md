@@ -2879,6 +2879,35 @@ Lo que ahora pasa mientras el servidor trabaja:
 > sí, no al deploy. Queda por diagnosticar con el panel ya arreglado, que ahora sí deja ver
 > qué está pasando mientras consulta.
 
+## 4bv. 🔢 Las OC repetidas gritaban para siempre (2026-09-03)
+
+*"ESTO SIGUE SALIENDO, por más que ponga mes en curso… en teoría en septiembre no deberían
+haber duplicados"*. Con captura: el aviso rojo listando **25 números, todos `08-xxx`**,
+mientras el filtro estaba en septiembre.
+
+Dos fallas encadenadas:
+
+1. **`ocsRepetidas()` miraba TODA la planilla**, sin importar el filtro. En septiembre seguía
+   gritando los repetidos de agosto.
+2. **Escupía los 25 números en una línea, todos los días.** Eso es fatiga de alarma: el aviso
+   rojo permanente se deja de leer, y el día que aparezca uno NUEVO va a pasar desapercibido
+   — que es justo lo que el aviso venía a evitar.
+
+Ahora: los del período que se mira, **fuertes y con los números** (plegando arriba de 8); los
+de otros meses, **una línea corta con el conteo y un botón para ir**. Reusa `admIrAlMes` de
+§4bo. ⚠️ Acotar no puede ser esconder — es la lección de §4bo, y el test lo fija: un repetido
+NUEVO del mes en curso se ve fuerte, y los viejos siguen contados aparte sin taparlo.
+
+**Lo primero que descarté** antes de tocar nada: que fueran **falsos positivos míos**. Al
+numerar las ATC con el mismo contador mensual (§4bq), si `ocsRepetidas` comparara el número
+pelado, **cada ATC saldría como duplicado de la venta del mismo número** — cientos de falsos
+positivos. No pasa: compara el `oc` completo, con el prefijo `ATC ` incluido. Los 25 de
+agosto son reales. Queda fijado en el test para que nadie lo "simplifique" con `ocSinPre`.
+
+- Test nuevo: `tests/test_ocrep2.js` (**15 checks**). Contra lo publicado: **6 fallas**.
+  Los meses se arman relativos a HOY para que no caduque al cambiar de año.
+- Suites del panel de avisos (ocrepe, autoref, resumen, revisar, humo, tabla): **0 fallas**.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado

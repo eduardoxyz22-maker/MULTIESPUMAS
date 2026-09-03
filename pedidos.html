@@ -1491,15 +1491,35 @@ function nextOcMes(fecha, tipo){
 /* Si dos cargaron en el mismo instante puede repetirse un número. Es MUY poco
    probable (hay que guardar en el mismo segundo) pero no imposible sin tocar el
    Apps Script, así que se detecta y se muestra en Administración para corregirlo. */
-function ocsRepetidas(){
-  var vistas={}, rep={};
-  for(var i=0;i<STATE.length;i++){
-    var p=STATE[i]; if(!p || esRoho(p.vendedor)) continue;
+/* `lista` es opcional: sin ella mira TODA la planilla, como siempre. Se le pasa una lista
+   recortada para preguntar "¿y en el período que estoy mirando?" (§4bv).
+   ⚠️ Compara el `oc` COMPLETO, con el prefijo `ATC ` incluido: si comparara el número pelado
+   toda ATC chocaría con la venta del mismo número y saldrían 200 falsos duplicados. */
+function ocsRepetidas(lista){
+  var src=lista||STATE, vistas={}, rep={};
+  for(var i=0;i<src.length;i++){
+    var p=src[i]; if(!p || esRoho(p.vendedor)) continue;
     var oc=String(p.oc||'').trim(); if(!ocAuto(oc)) continue;
     var k=contaFecha(p).slice(0,7)+'|'+oc;
     if(vistas[k]) rep[oc]=(rep[oc]||1)+1; else vistas[k]=1;
   }
   return Object.keys(rep).sort();
+}
+/* En qué mes cayó cada OC repetida, para poder decir "hay 25 de agosto" y llevar ahí. */
+function mesDeOc(oc){
+  for(var i=0;i<STATE.length;i++){
+    var p=STATE[i];
+    if(p && String(p.oc||'').trim()===oc) return contaFecha(p).slice(0,7);
+  }
+  return '';
+}
+/* Los pedidos del período que el filtro tiene puesto — solo Día/Mes/Todo, SIN el buscador
+   ni los chips: esos son transitorios y no deberían cambiar de qué avisa el panel. */
+function admPeriodoList(){
+  var mode=segVal('adm-mode');
+  if(mode==='dia'){ var d=(document.getElementById('adm-dia')||{}).value; return d?STATE.filter(function(p){return p.fecha===d;}):STATE.slice(); }
+  if(mode==='mes'){ var m=(document.getElementById('adm-mes')||{}).value; return m?STATE.filter(function(p){return contaFecha(p).slice(0,7)===m;}):STATE.slice(); }
+  return STATE.slice();
 }
 function nextNroDia(fecha){ var mx=0,n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha){ n++; var v=Number(STATE[i].nroDia)||0; if(v>mx)mx=v; } } return Math.max(mx,n)+1; }
 // N° del día CALCULADO por posición (orden de carga) dentro de cada fecha de entrega.
@@ -6474,10 +6494,7 @@ function renderRevisar(){
   var man=tomorrowStr();
   var manList=STATE.filter(function(p){return p.fecha===man;});
   var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
-  var rep=ocsRepetidas();
-  var avisoOc = rep.length
-    ? '<div style="margin-top:6px;font-size:.78rem;color:var(--red);font-weight:700">🔢 N° de OC repetido: '+esc(rep.join(', '))+' — corregilo desde Editar.</div>'
-    : '';
+  var avisoOc = avisoOcRepetidasHtml();
   if(!manList.length || !probl.length){
     // Aunque no haya nada que revisar de mañana, una OC repetida SÍ hay que mostrarla.
     el.className = avisoOc ? 'revisar' : '';
@@ -6501,6 +6518,52 @@ function renderRevisar(){
   el.className='revisar'; el.innerHTML=head+detail+avisoOc;
 }
 function toggleRevisar(){ REVISAR_OPEN=!REVISAR_OPEN; renderRevisar(); }
+/* ============================================================================
+   🔢 LAS OC REPETIDAS, ACOTADAS A LO QUE SE ESTÁ MIRANDO (§4bv)
+   El dueño: *"esto sigue saliendo por más que ponga mes en curso… en teoría en septiembre
+   no deberían haber duplicados"*. Y tenía razón dos veces:
+     1. `ocsRepetidas()` miraba TODA la planilla, sin importar el filtro. En septiembre
+        seguía gritando los 25 repetidos de AGOSTO.
+     2. Escupía los 25 números en una línea, siempre. Eso es fatiga de alarma: cuando el
+        mismo aviso rojo aparece todos los días durante semanas, se deja de leer — y el día
+        que salga uno NUEVO va a pasar desapercibido.
+   Ahora: fuerte y con los números los del período que se está mirando; los de otros meses
+   en una línea corta, contados y con un botón para ir. No se esconde nada, se ordena. */
+var OCREP_OPEN=false;
+function toggleOcRep(){ OCREP_OPEN=!OCREP_OPEN; renderRevisar(); }
+var OCREP_TOPE=8;    // más que esto en una línea no se lee: se pliega
+function avisoOcRepetidasHtml(){
+  var enPeriodo=ocsRepetidas(admPeriodoList());
+  var todas=ocsRepetidas();
+  var dentro={}; enPeriodo.forEach(function(o){ dentro[o]=1; });
+  var fuera=todas.filter(function(o){ return !dentro[o]; });
+  var h='';
+
+  if(enPeriodo.length){
+    var muchos=(enPeriodo.length>OCREP_TOPE) && !OCREP_OPEN;
+    h+='<div style="margin-top:6px;font-size:.78rem;color:var(--red);font-weight:700">'+
+      '🔢 '+enPeriodo.length+' N° de OC repetido'+(enPeriodo.length===1?'':'s')+': '+
+      esc(muchos ? enPeriodo.slice(0,OCREP_TOPE).join(', ') : enPeriodo.join(', '))+
+      (muchos ? (' <button class="rv-toggle" onclick="toggleOcRep()">y '+(enPeriodo.length-OCREP_TOPE)+' más</button>') : '')+
+      (enPeriodo.length>OCREP_TOPE && OCREP_OPEN ? ' <button class="rv-toggle" onclick="toggleOcRep()">ocultar</button>' : '')+
+      ' — corregilo desde Editar.</div>';
+  }
+
+  /* Los de otros meses NO se tiran a la basura: se cuentan y se ofrece ir. Sin esto,
+     acotar al período sería esconder trabajo real — el error de §4bo otra vez. */
+  if(fuera.length){
+    var meses={};
+    fuera.forEach(function(o){ var m=mesDeOc(o); if(m) meses[m]=(meses[m]||0)+1; });
+    var claves=Object.keys(meses).sort();
+    var btns=claves.slice(0,3).map(function(m){
+      return '<button class="rv-toggle" style="margin-left:6px" onclick="admIrAlMes(\''+esc(m)+'\')">ver '+esc(mesNombre(m))+' ('+meses[m]+')</button>';
+    }).join('');
+    h+='<div style="margin-top:'+(enPeriodo.length?'3':'6')+'px;font-size:.76rem;color:var(--muted)">'+
+      '🔢 Además hay <b>'+fuera.length+'</b> N° repetido'+(fuera.length===1?'':'s')+' de otros meses'+
+      (claves.length ? ('.'+btns) : '.')+'</div>';
+  }
+  return h;
+}
 
 /* ---- Ocupación de cupos próximos 7 días ---- */
 function diaSemana(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
