@@ -2908,6 +2908,34 @@ agosto son reales. Queda fijado en el test para que nadie lo "simplifique" con `
   Los meses se arman relativos a HOY para que no caduque al cambiar de año.
 - Suites del panel de avisos (ocrepe, autoref, resumen, revisar, humo, tabla): **0 fallas**.
 
+## 4bw. 🗺️ El mapa por mes y por marca (2026-09-03)
+
+*"mapa de entrega debería poder filtrar por mes para ver dónde fueron las entregas del mes.
+Así como también poder separar las entregas de Sueña (Fernando, Juan Pablo y Mauricio) y las
+de Heaven (Carola, Jonathan, Mirian, Maria e Isabel), filtrando y quitando las de ROHO y
+otros, **para mapear las zonas de mayor entrega**"*.
+
+**⚠️ La última frase es la que manda**, no la primera. Filtrar por mes solo no alcanzaba: el
+mapa colorea por **chofer**, y un mes entero son veinte choferes y veinte colores — el mapa
+queda ilegible justo cuando más datos tiene. Por eso se agregó **colorear por ZONA**, y al
+elegir «Mes» el color **pasa solo a zona** (si después lo cambian a mano, se respeta).
+
+Y la leyenda pasó de **alfabética a por CANTIDAD, descendente**: la primera de la lista *es*
+la zona de mayor entrega. Sin eso había que leer los números uno por uno.
+
+**Lo que NO hizo falta:** un filtro aparte para sacar a ROHO. `marcaDe()` (§4bl) devuelve `''`
+para quien no esté en ninguna lista, así que elegir Sueña o Heaven ya los deja fuera. Un
+control menos.
+
+- El filtro por mes corta por **fecha de entrega**, no de carga: la pregunta es *dónde fue el
+  camión*, no cuándo se vendió.
+- 📐 El `<input type="month">` sin `flex:none` se estiraba y ocupaba una fila entera de la
+  barra. Medido en 1500 px: con `width:132px` entra todo en dos líneas.
+- Test nuevo: `tests/test_mapa.js` (**22 checks**). Contra lo publicado: **18 fallas**.
+  ⚠️ El fixture **esquiva el día de hoy** a propósito: sembraba entregas del 3 al 16 y el
+  check de «Hoy» fallaba solo los días en que el calendario coincidía.
+- Batería: **26 suites · 681 checks · 0 fallas**.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado

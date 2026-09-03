@@ -1108,7 +1108,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
-<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
+<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
 <div id="entregas-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -9712,6 +9712,16 @@ function backupJson(){
    El backend resuelve los links cortos de Maps a coordenadas.
    ========================================================================== */
 var MAPA=null, MAPA_LIST=[], MAPA_COORDS={}, MAPA_MARKERS={}, MAPA_COLOROF={}, MAPA_COLIDX=0, MAPA_SOLO_SIN=false, MAPA_DIA='manana';
+/* 🗺️ VER EL MES Y SEPARAR LAS MARCAS (§4bw).
+   Pedido del dueño: *"mapa de entrega debería poder filtrar por mes para ver dónde fueron
+   las entregas del mes… así como poder separar las de Sueña y las de Heaven, filtrando y
+   quitando las de ROHO y otros, para mapear las zonas de mayor entrega"*.
+   ⚠️ Elegir una marca YA saca a ROHO y a los que no están en ninguna lista: `marcaDe()`
+   les devuelve '' y no coinciden con ninguna. No hace falta un filtro aparte.
+   ⚠️ Y colorear por CHOFER, que es lo de siempre, no sirve para un mes entero: son decenas
+   de choferes y el mapa queda de todos colores. Por eso se puede colorear por ZONA — que es
+   literalmente "las zonas de mayor entrega" — o por marca. */
+var MAPA_MES='', MAPA_MARCA='', MAPA_COLOR_POR='chofer';
 /* Las ubicaciones que costó resolver (las que tuvo que abrir el servidor) se guardan en el
    teléfono. Sin esto, al cerrar y volver a abrir la página se perdía todo y había que
    resolverlas de nuevo. Al guardar se descartan las que ya no son de ningún pedido. */
@@ -9743,16 +9753,51 @@ function ensureLeaflet(cb){
 function mapaFilteredList(){
   return STATE.filter(function(p){
     if(!p.maps || !String(p.maps).trim()) return false;
-    if(MAPA_DIA==='hoy') return p.fecha===todayStr();
+    /* La marca sale del VENDEDOR (§4bl). ROHO y quien no esté en ninguna lista quedan
+       fuera solos en cuanto se elige una. */
+    if(MAPA_MARCA && marcaDe(p.vendedor)!==MAPA_MARCA) return false;
+    if(MAPA_DIA==='hoy')    return p.fecha===todayStr();
     if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
+    /* Por mes corta por fecha de ENTREGA: la pregunta es dónde fue el camión, no cuándo
+       se cargó la venta. */
+    if(MAPA_DIA==='mes')    return MAPA_MES ? String(p.fecha||'').slice(0,7)===MAPA_MES : true;
     return true;
   });
 }
-function exportMapa(){ if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; } mapaRefresh(); }
+function exportMapa(){ if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; } pintarMapaBotones(); mapaRefresh(); }
 function setMapaDia(d){
   MAPA_DIA=d;
-  ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('mapa-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } });
+  ['hoy','manana','mes','todos'].forEach(function(x){ var b=document.getElementById('mapa-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } });
+  var mi=document.getElementById('mapa-mes');
+  if(mi){ mi.style.display=(d==='mes')?'inline-block':'none'; if(d==='mes' && !mi.value){ mi.value=monthStr(); MAPA_MES=mi.value; } }
+  /* Mirando un mes entero, colorear por chofer no dice nada: se pasa a ZONA solo, que es
+     para lo que se pidió. Si después lo cambian a mano, se respeta. */
+  if(d==='mes' && MAPA_COLOR_POR==='chofer') MAPA_COLOR_POR='zona';
+  if(d!=='mes' && MAPA_COLOR_POR==='zona' && !MAPA_MES) MAPA_COLOR_POR='chofer';
+  pintarMapaBotones();
   mapaRefresh();
+}
+function setMapaMes(v){ MAPA_MES=v||''; MAPA_DIA='mes'; mapaRefresh(); }
+function setMapaMarca(k){ MAPA_MARCA=(MAPA_MARCA===k)?'':k; MAPA_COLOROF={}; MAPA_COLIDX=0; pintarMapaBotones(); mapaRefresh(); }
+function setMapaColorPor(k){ MAPA_COLOR_POR=k; MAPA_COLOROF={}; MAPA_COLIDX=0; pintarMapaBotones(); mapaRefresh(); }
+/* Dibuja los dos grupos de botones nuevos. Se rehacen enteros en cada cambio: son cuatro
+   botones, no vale la pena andar buscando cuál marcar. */
+function pintarMapaBotones(){
+  var bm=document.getElementById('mapa-marca-box');
+  if(bm){
+    var opts=[{k:'',lbl:'Todas'}].concat(MARCAS.map(function(g){ return {k:g.k, lbl:g.ico+' '+g.lbl}; }));
+    bm.innerHTML=opts.map(function(o){
+      var on=(MAPA_MARCA===o.k);
+      return '<button onclick="setMapaMarca(\''+esc(o.k)+'\')" style="border:none;background:'+(on?'#fff':'transparent')+';color:'+(on?'#00877f':'#fff')+';padding:5px 11px;cursor:pointer;font-weight:700">'+esc(o.lbl)+'</button>';
+    }).join('');
+  }
+  var bc=document.getElementById('mapa-colorpor');
+  if(bc){
+    bc.innerHTML=[{k:'chofer',lbl:'chofer'},{k:'zona',lbl:'zona'},{k:'marca',lbl:'marca'}].map(function(o){
+      var on=(MAPA_COLOR_POR===o.k);
+      return '<button onclick="setMapaColorPor(\''+o.k+'\')" style="border:none;background:'+(on?'#fff':'transparent')+';color:'+(on?'#00877f':'#fff')+';padding:4px 9px;cursor:pointer;font-weight:700;font-size:11px">'+o.lbl+'</button>';
+    }).join('');
+  }
 }
 /* ---- Coordenadas a partir del enlace, sin salir a internet ----
    Ojo con la prioridad: el "@lat,lng" es el CENTRO del mapa, no el pin; usarlo puede
@@ -10137,7 +10182,15 @@ function mapaRefresh(){
     ensureLeaflet(showMapaView);
   }).catch(function(){ if(btn){ btn.disabled=false; btn.textContent='🗺️ Mapa de entregas'; } toast('Error al resolver ubicaciones (¿backend actualizado?).','err'); ensureLeaflet(showMapaView); });
 }
-function mapaKey(p){ return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer'; }
+function mapaKey(p){
+  if(MAPA_COLOR_POR==='zona')  return String(p.zona||'').trim()||'Sin zona';
+  if(MAPA_COLOR_POR==='marca'){
+    var k=marcaDe(p.vendedor);
+    for(var i=0;i<MARCAS.length;i++) if(MARCAS[i].k===k) return MARCAS[i].ico+' '+MARCAS[i].lbl;
+    return 'Otros';
+  }
+  return String(p.chofer||p.vehiculo||'Sin chofer').trim()||'Sin chofer';
+}
 function mapaVisible(p){ return !MAPA_SOLO_SIN || mapaKey(p)==='Sin chofer'; }
 function mapaColorFor(k){ if(!MAPA_COLOROF[k]){ MAPA_COLOROF[k]=CHOFER_COLORS[MAPA_COLIDX % CHOFER_COLORS.length]; MAPA_COLIDX++; } return MAPA_COLOROF[k]; }
 function mapaGrupos(){
@@ -10150,8 +10203,13 @@ function mapaGrupos(){
 function renderMapaLegend(){
   var cnt={}, sin=0, ok=0;
   MAPA_LIST.forEach(function(p){ if(!mapaVisible(p)) return; if(!MAPA_COORDS[String(p.maps).trim()]){ sin++; return; } var k=mapaKey(p); cnt[k]=(cnt[k]||0)+1; ok++; });
-  document.getElementById('mapa-info').textContent=ok+(MAPA_SOLO_SIN?' sin chofer':' ubicados')+(sin?(' · '+sin+' sin ubicar'):'');
-  document.getElementById('mapa-legend').innerHTML=Object.keys(cnt).sort().map(function(k){ return '<span style="display:inline-flex;align-items:center;gap:4px"><span style="width:11px;height:11px;border-radius:50%;background:'+mapaColorFor(k)+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' ('+cnt[k]+')</span>'; }).join('');
+  var _per = (MAPA_DIA==='mes' && MAPA_MES) ? (' · '+mesNombre(MAPA_MES)) : '';
+  var _mar = MAPA_MARCA ? (' · '+((MARCAS.filter(function(g){return g.k===MAPA_MARCA;})[0]||{}).lbl||'')) : '';
+  document.getElementById('mapa-info').textContent=ok+(MAPA_SOLO_SIN?' sin chofer':' ubicados')+(sin?(' · '+sin+' sin ubicar'):'')+_per+_mar;
+  /* ⚠️ Ordenada por CANTIDAD, de mayor a menor. Alfabético no servía para lo que se pidió:
+     así la primera de la lista ES la zona de mayor entrega. */
+  var claves=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] || (a<b?-1:1); });
+  document.getElementById('mapa-legend').innerHTML=claves.map(function(k,i){ return '<span style="display:inline-flex;align-items:center;gap:4px"'+(i===0&&claves.length>1?' title="la de más entregas"':'')+'><span style="width:11px;height:11px;border-radius:50%;background:'+mapaColorFor(k)+';display:inline-block;border:1px solid #fff"></span>'+esc(k)+' <b>('+cnt[k]+')</b></span>'; }).join('');
 }
 function mapaPopup(p){
   var dn=dayNumMap();
