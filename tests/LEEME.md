@@ -82,3 +82,35 @@ dentro de seis meses ve *qué* falta, no un stack trace.
 **Si algo falla, es una regresión de verdad.** No hay "fallas conocidas" que normalizar: la
 línea de base es CERO. Si un test queda desactualizado porque el panel cambió a propósito,
 se **actualiza el test** —explicando en un comentario qué cambió y por qué— y vuelve a cero.
+
+## La auditoría (`test_auditoria.js`) y lo que enseñó
+
+Los otros tests prueban **una** función. `test_auditoria.js` hace lo contrario: recorre
+**todas** las vistas, ventanas y fichas con un pedido de cada forma, y después de cada paso
+mira tres cosas — errores JS, **ids repetidos en el DOM vivo**, y `onclick` que apunten a
+funciones que no existen. Cuatro pasadas: con llave, sin llave, planilla **vacía** y celular.
+Correrla después de cualquier cambio grande; tarda ~90 s.
+
+Reglas que salieron de armarla (cada una viene de un bug real, §4bx):
+
+- **Buscar funciones declaradas dos veces a nivel raíz** antes de dar algo por bueno. En JS
+  la última pisa a la primera para *todos* los llamadores, sin error ni aviso. Así
+  desapareció el día de la semana del panel de cupos: dos `diaSemana` con firmas distintas.
+  ```bash
+  grep -oE "^function [A-Za-z_$][A-Za-z0-9_$]*\(" pedidos.html | sort | uniq -d
+  ```
+- **Un id que sale dos veces a la vez es un bug**, aunque el HTML "se vea bien":
+  `getElementById` devuelve el primero y el otro queda muerto. Si algo tiene que salir
+  repetido (un contador en dos lugares), va como **clase**. Ojo: dos ramas de un ternario con
+  el mismo id **no** son duplicado — solo se dibuja una. La radiografía del DOM vivo distingue
+  las dos cosas; el grep estático no.
+- **El regex de `onclick` tiene que saltear palabras reservadas.** `onclick="if(...)"` no
+  llama a una función `if`. Sin la lista de excepciones, 168 pasos en rojo de golpe.
+- **Sin internet, Leaflet no carga nunca**: `ensureLeaflet` encola y el código de los pines
+  no se ejecuta jamás, así que queda sin probar. El test inyecta un **Leaflet mínimo de
+  mentira** (`window.L={map,tileLayer,circleMarker,…}`). Si el panel usa un método que el
+  falso no tiene, revienta — y eso es lo que se quiere ver.
+- **El fixture tiene que tener una entrega de HOY.** Sin ella, el Excel «Hoy», el cierre del
+  día y el mapa «Hoy» no tienen nada y pasan vacíos, o fallan por motivos que no son bugs.
+- **La pasada con la planilla vacía no es opcional.** Es donde viven los `STATE[0].id` y los
+  `lista[0].fecha` que con datos nunca se ven.

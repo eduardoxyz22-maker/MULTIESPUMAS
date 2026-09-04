@@ -2936,6 +2936,65 @@ control menos.
   check de «Hoy» fallaba solo los días en que el calendario coincidía.
 - Batería: **26 suites · 681 checks · 0 fallas**.
 
+## 4bx. 🔍 La auditoría: tres bugs que ningún test miraba (2026-09-04)
+
+*"audita que no existan errores"*. En vez de correr la batería y decir "todo verde", se hizo
+una auditoría en dos capas, y **las dos encontraron cosas** que 681 checks no habían visto.
+
+**Capa estática** (sobre el fuente, sin abrir el navegador):
+
+| chequeo | resultado |
+|---|---|
+| funciones declaradas **dos veces** a nivel raíz | 🐛 `diaSemana` |
+| globales `var` declaradas dos veces | ninguna |
+| nombre que es a la vez `var` y `function` | ninguno |
+| ids repetidos en el HTML | 🐛 `rev-elapsed` (y `rev-btn-resolver`, falso positivo: dos ramas de un ternario) |
+| llamadas a funciones inexistentes (sin comentarios ni strings) | ninguna |
+| `node --check` del panel y del `.gs` | OK |
+
+**🐛 1 — `diaSemana` declarada dos veces.** Una en la línea 6569 recibía un `Date` y devolvía
+`'vie'`; otra en la 8323 recibía texto ISO y devolvía `'viernes'`. En JS **la última pisa a
+la primera para todos**, así que las dos llamadas que pasaban un `Date` —el panel de cupos
+(`renderOcupacion`) y los encabezados de la Lista de carga— recibían `''`. **El día de la
+semana llevaba semanas sin aparecer ahí** y nadie lo notó: es un texto que se deja de mirar.
+La del `Date` pasó a llamarse `diaSemanaCorto`.
+
+**🐛 2 — `rev-elapsed` duplicado (mío, de §4bu, ayer).** El contador de segundos salía dos
+veces a la vez —en el botón y en el bloque— con el **mismo id**. `getElementById` devuelve el
+primero, así que **el del bloque quedaba congelado en 0**. El test de ayer pasó porque leía
+justamente el primero. Ahora es una clase y avanzan los dos; `test_ubic` lo fija.
+
+**Capa dinámica — `tests/test_auditoria.js`.** Lo contrario de los otros tests: no prueba
+una función, **recorre todo**. Con un pedido de cada forma (normal, pagada con flete, ATC
+completa, ATC vieja sin motivo, ROHO, venta de tienda, mayorista, entregada atrasada, sin
+ubicación, cobro de más, OC duplicada ×2, enlace corto, del mes que viene, de hoy) abre las
+6 vistas, las 3 pestañas de Contabilidad, las 10 ventanas, y **las 7 fichas de cada uno de
+los 15 pedidos**. Después de cada paso mira tres cosas: errores JS (excepción o
+`console.error`), **ids repetidos en el DOM vivo**, y `onclick` que apunten a funciones
+inexistentes. Y lo hace **cuatro veces**: con la llave, sin la llave, con la planilla
+**vacía** (donde viven los `STATE[0].id`), y en celular (390 px, sin desborde horizontal).
+
+**🐛 3 — `L is not defined`.** La barra del mapa se ve **antes** de que cargue Leaflet, y
+«Solo sin chofer» llamaba a `showMapaView()` directo: en ese segundo o dos revienta. En el
+sandbox la librería no carga nunca, así que saltó enseguida. Ahora `showMapaView` se encola
+sola si `L` no está.
+
+**⚠️ Para que el mapa quedara auditado de verdad**, el test inyecta un **Leaflet mínimo de
+mentira** (`map`, `tileLayer`, `circleMarker`…): así el código de los pines se ejecuta en
+vez de quedar encolado para siempre. Si usa un método que el falso no tiene, revienta y se
+ve.
+
+**Dos falsos positivos propios**, dichos para que no se repitan: el regex de `onclick` tomó
+`onclick="if(…)"` como llamada a una función `if` (168 pasos en rojo de golpe — se excluyen
+las palabras reservadas); y el fixture no tenía ninguna entrega de HOY, así que el Excel
+«Hoy» no generaba archivo. Ninguno era del panel.
+
+- Tests: `test_auditoria.js` nuevo (**176 checks**), `test_ubic.js` 27 → 28. Contra lo
+  publicado la auditoría da **3 fallas: exactamente los tres bugs** (los dos del día de la
+  semana y el de Leaflet — este último con un check que corre ANTES de inyectar el Leaflet
+  falso, porque después ya no se puede provocar).
+- Batería: **27 suites · 858 checks · 0 fallas**.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado

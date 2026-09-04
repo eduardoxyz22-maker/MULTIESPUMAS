@@ -6566,7 +6566,12 @@ function avisoOcRepetidasHtml(){
 }
 
 /* ---- Ocupación de cupos próximos 7 días ---- */
-function diaSemana(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
+/* ⚠️ Se llamaba `diaSemana` igual que la de abajo (§4bx), que recibe texto ISO y devuelve el
+   nombre largo. En JS la ÚLTIMA declaración pisa a la primera para todos, así que esta —que
+   recibe un Date— devolvía '' en silencio: el día de la semana desapareció del panel de
+   cupos y de la Lista de carga sin que ningún test lo mirara. Lo destapó la auditoría de
+   funciones repetidas. Ahora tiene nombre propio. */
+function diaSemanaCorto(d){ return ['dom','lun','mar','mié','jue','vie','sáb'][d.getDay()]; }
 function occBar(icon,used,max){
   if(max<=0){ return '<span style="flex:1;display:flex;align-items:center;gap:6px;opacity:.55">'+icon+'<span style="flex:1;height:13px;background:var(--gray-lt);border-radius:7px"></span><span style="width:42px;flex:none;font-size:.66rem;font-weight:700;color:var(--muted)">cerrado</span></span>'; }
   var pct=Math.min(100,Math.round(used/max*100)), full=used>=max;
@@ -6584,7 +6589,7 @@ function renderOcupacion(){
     var f=isoLocal(d), lAM=limTurno(f,'AM'), lPM=limTurno(f,'PM');
     var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f);
     rows+='<div class="occ-row"'+(dom?' style="opacity:.6"':'')+'>'+
-      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemana(d)+'</span></span>'+
+      '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemanaCorto(d)+'</span></span>'+
       (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>' : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
       '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+(dom?'—':(tot+'/'+totLim))+'</span></div>';
   }
@@ -6822,7 +6827,7 @@ function renderCarga(){
       var sub=byF[f], bultos=0;
       sub.forEach(function(p){ (p.productos||[]).forEach(function(x){ bultos+=Number(x.cant)||0; }); });
       var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(f||'');
-      var dia=m?diaSemana(new Date(+m[1],+m[2]-1,+m[3])):'';
+      var dia=m?diaSemanaCorto(new Date(+m[1],+m[2]-1,+m[3])):'';
       var hoyTxt = f===todayStr()?' · hoy' : (f===tomorrowStr()?' · mañana':'');
       return '<div class="carga-fecha">'+
         '<div class="carga-fecha-h">📅 '+esc(f?fmtFecha(f):'(sin fecha)')+(dia?(' · '+dia):'')+esc(hoyTxt)+
@@ -9984,7 +9989,7 @@ function renderRevUbic(yaResolvio){
       '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">🔗 '+d.cortos.length+' con enlace corto</div>'+
       '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Estos (maps.app.goo.gl) los tiene que abrir el servidor para saber a dónde apuntan.</div>'+
       (REV_EN_CURSO
-        ? '<button class="btn btn-sm" id="rev-btn-resolver" disabled style="background:var(--amber);color:#fff;font-weight:700;opacity:.75;cursor:wait"><span class="spin"></span> Consultando el servidor… <span id="rev-elapsed">'+revSegundos()+'</span> s</button>'
+        ? '<button class="btn btn-sm" id="rev-btn-resolver" disabled style="background:var(--amber);color:#fff;font-weight:700;opacity:.75;cursor:wait"><span class="spin"></span> Consultando el servidor… <span class="rev-elapsed">'+revSegundos()+'</span> s</button>'
         : '<button class="btn btn-sm" id="rev-btn-resolver" style="background:var(--amber);color:#fff;font-weight:700" onclick="resolverCortosRev()">🌐 '+(yaResolvio?'Probar de nuevo':'Resolverlos ahora')+'</button>')+
       '<div style="font-size:.8rem;color:#7c4b00;margin:8px 0 4px">A mano son 20 segundos y queda perfecto: tocá <b>↗ Abrir</b> → <b>en el celular</b> mantené apretado el punto de la casa; <b>en la computadora</b> hacé <b>clic derecho</b> sobre el punto → arriba de todo salen los números (ej. <code>-17.749444, -63.104556</code>) → copialos → <b>✏️ Corregir</b> y pegalos ahí. También sirve el código tipo <code>5P2Q+PFX</code>.</div>'+
       '<div style="margin-top:9px">'+d.cortos.map(fila).join('')+'</div></div>';
@@ -10017,7 +10022,7 @@ function renderRevUbic(yaResolvio){
 function revEnCursoHtml(){
   return '<div id="rev-en-curso" style="background:#fff;border-left:4px solid var(--amber);border-radius:8px;padding:11px 13px;margin:8px 0;font-size:.84rem;color:#7c4b00">'+
     '<div style="display:flex;align-items:center;gap:9px;font-weight:800"><span class="spin" style="border-color:rgba(124,75,0,.25);border-top-color:#7c4b00"></span> Consultando el servidor por '+REV_TOT+' enlace'+(REV_TOT===1?'':'s')+'…</div>'+
-    '<div style="margin-top:5px">Los abre <b>uno por uno</b> para ver a dónde apuntan. Suele tardar <b>entre 20 segundos y un minuto</b>. Van <b><span id="rev-elapsed">'+revSegundos()+'</span> s</b>.</div>'+
+    '<div style="margin-top:5px">Los abre <b>uno por uno</b> para ver a dónde apuntan. Suele tardar <b>entre 20 segundos y un minuto</b>. Van <b><span class="rev-elapsed">'+revSegundos()+'</span> s</b>.</div>'+
     '<div style="margin-top:4px;font-size:.78rem;color:var(--muted)">Podés cerrar esta ventana: la consulta sigue y te aviso cuando termine.</div>'+
   '</div>';
 }
@@ -10035,7 +10040,10 @@ var REV_EN_CURSO=false, REV_INICIO=0, REV_TIMER=null;
 function revSegundos(){ return REV_INICIO ? Math.max(0, Math.round((Date.now()-REV_INICIO)/1000)) : 0; }
 /* Cada segundo actualiza el contador SI el panel está a la vista. Si lo cerraron, no hay
    nada que pintar y no pasa nada: la consulta sigue igual. */
-function revTick(){ var e=document.getElementById('rev-elapsed'); if(e) e.textContent=revSegundos(); }
+/* ⚠️ Es una CLASE y no un id (§4bx): el contador sale dos veces a la vez —en el botón y en
+   el bloque— y con `getElementById` solo avanzaba el primero; el otro quedaba congelado en
+   0. Lo destapó la auditoría de ids repetidos en el DOM vivo. */
+function revTick(){ var s=revSegundos(); var es=document.querySelectorAll('.rev-elapsed'); for(var i=0;i<es.length;i++) es[i].textContent=s; }
 function revEmpezar(){
   REV_EN_CURSO=true; REV_INICIO=Date.now();
   if(REV_TIMER) clearInterval(REV_TIMER);
@@ -10224,6 +10232,11 @@ function mapaPopup(p){
     (p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>'):'');
 }
 function showMapaView(){
+  /* ⚠️ La barra del mapa se ve ANTES de que cargue Leaflet (uno o dos segundos con internet
+     normal, más con el celular en la calle). «Solo sin chofer» llamaba acá directo y en esa
+     ventana reventaba con `L is not defined`. Si la librería no está, se encola y listo:
+     `ensureLeaflet` vuelve a llamar cuando cargue. Lo destapó la auditoría (§4bx). */
+  if(!window.L){ ensureLeaflet(showMapaView); return; }
   var G=mapaGrupos();
   document.getElementById('mapa-overlay').style.display='flex';
   MAPA_COLOROF={}; MAPA_COLIDX=0; MAPA_MARKERS={};

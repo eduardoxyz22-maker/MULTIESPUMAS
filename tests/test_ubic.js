@@ -81,7 +81,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
              girito:!!(btn&&btn.querySelector('.spin')),
              hayBloque:!!bloque,
              bloque:bloque?bloque.textContent.replace(/\s+/g,' ').trim():'',
-             seg:(document.getElementById('rev-elapsed')||{}).textContent||'',
+             seg:(document.querySelector('.rev-elapsed')||{}).textContent||'',
              llamadas:window._geoLlamadas };
   });
 
@@ -106,11 +106,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /cerrar esta ventana/i.test(f.bloque), f.bloque.slice(-90));
 
   // ============ 3. el contador AVANZA: prueba de que sigue vivo ============
-  const t1 = await page.evaluate(() => (document.getElementById('rev-elapsed')||{}).textContent);
+  /* ⚠️ Hay DOS contadores a la vez —en el botón y en el bloque— y tienen que avanzar los
+     dos. La primera versión los tenía como id repetido y solo avanzaba el primero: el del
+     bloque quedaba congelado en 0. Lo agarró la auditoría de ids repetidos (§4bx). */
+  const leer = () => page.evaluate(() => [].slice.call(document.querySelectorAll('.rev-elapsed')).map(function(e){ return Number(e.textContent); }));
+  const t1 = await leer();
   await page.waitForTimeout(2200);
-  const t2 = await page.evaluate(() => (document.getElementById('rev-elapsed')||{}).textContent);
-  chk('⚠️ el contador de segundos AVANZA (es lo que prueba que no se colgó)',
-      Number(t2) > Number(t1), t1+' s → '+t2+' s');
+  const t2 = await leer();
+  chk('hay dos contadores a la vista (botón y bloque)', t1.length===2, t1.length+' contadores');
+  chk('⚠️ y AVANZAN LOS DOS (antes el del bloque quedaba congelado en 0)',
+      t2.length===2 && t2.every(function(v,i){ return v>t1[i]; }), JSON.stringify(t1)+' → '+JSON.stringify(t2));
 
   // ============ 4. ⚠️ INSISTIR NO DISPARA OTRA CONSULTA ============
   const insistir = await page.evaluate(() => {
