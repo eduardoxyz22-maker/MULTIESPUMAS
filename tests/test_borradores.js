@@ -245,10 +245,79 @@ const DIA = 86400000;
   chk('los borradores quedan guardados en el celular', r9.guardado===true);
   chk('…y vuelven al recargar sin internet', r9.recuperados===2, 'recuperados='+r9.recuperados);
 
+  // ══ 9b. ⚠️ PRIMERO EL PANEL, DESPUÉS KOMMO ════════════════════════════════
+  /* Pregunta del dueño: *"¿y si primero llenan el panel y luego el Kommo? ¿les aparecerá
+     el borrador de algo que ya tenían creado?"*. Es el orden que van a usar la mitad de
+     las veces. Sin esto, la misma venta quedaba cargada dos veces. */
+  console.log('\n── 9b. Si la vendedora ya la había cargado a mano ──');
+  const r9b = await page.evaluate(async ({man, viejo}) => {
+    const ped = (o) => Object.assign({
+      id:'p'+Math.random(), fecha:man, oc:'', vendedor:'Mirian Salazar', cliente:'C',
+      productos:[{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,precio:1000}],
+      celular:'70000000', turno:'AM', zona:'Norte', direccion:'x', maps:'', pagado:true,
+      saldo:0, ts:Date.now(), metodoPago:'Efectivo', observaciones:'', estado:'',
+      entregado:false, vehiculo:'', chofer:'', garantia:'', nota:'1', acuenta:0,
+      facturarA:'', nit:'', nroDia:1, verificado:false, fotos:[]
+    }, o);
+    const bor = (o) => ped(Object.assign({ fecha:'', turno:'', zona:'', direccion:'',
+      nota:'', nroDia:0, estado:'Borrador Kommo', pagado:false }, o));
+
+    window._pl=[
+      // Lo que la vendedora cargó A MANO, hace un rato. Kommo lo manda con +591.
+      ped({ id:'aMano', cliente:'ELENA VARGAS', celular:'70863187', nota:'700', saldo:3400, ts:Date.now() }),
+      // El mismo cliente, pero una compra de hace meses: NO tiene que confundirse.
+      ped({ id:'viejo', cliente:'ELENA VARGAS', celular:'70863187', nota:'120', ts:viejo }),
+      // Un cliente distinto, para que no matchee con nada.
+      ped({ id:'otro',  cliente:'PEDRO SUAREZ', celular:'71111111', nota:'701' }),
+
+      bor({ id:'kommo-55001', cliente:'ELENA VARGAS', vendedor:'Mirian Salazar',
+            celular:'+591 70863187', saldo:3400, ts:Date.now() }),
+      bor({ id:'kommo-55002', cliente:'CLIENTE NUEVO', vendedor:'Mirian Salazar',
+            celular:'79999999', saldo:1200, ts:Date.now() })
+    ];
+    STATE = mergePending(JSON.parse(JSON.stringify(window._pl)));
+    saveMirror(); updateStats();
+    showView('mis'); document.getElementById('mis-vendedor').value='Mirian Salazar';
+    MIS_TODOS=false; renderMis();
+    const g1=gemeloDe(BORRADORES.filter(b=>b.id==='kommo-55001')[0]);
+    const g2=gemeloDe(BORRADORES.filter(b=>b.id==='kommo-55002')[0]);
+    return { html: document.getElementById('mis-borradores').innerHTML,
+             gemelo1: g1?g1.id:null, gemelo2: g2?g2.id:null };
+  }, {man: dd(1), viejo: Date.now()-200*DIA});
+
+  chk('⚠️ reconoce la venta que YA estaba cargada a mano', r9b.gemelo1==='aMano', r9b.gemelo1);
+  chk('…aunque Kommo mande el celular con el +591', /Esto parece que ya lo cargaste/.test(r9b.html));
+  chk('…y le muestra cuál es (su nota)', /Nota 700/.test(r9b.html), r9b.html.slice(0,60));
+  chk('…con el botón para dejar una sola', /Sí, es la misma/.test(r9b.html));
+  chk('…y la salida por si de verdad es otra venta', /No, es otra venta/.test(r9b.html));
+  chk('⚠️ NO confunde una compra del mismo cliente de hace 200 días',
+      r9b.gemelo1!=='viejo', r9b.gemelo1);
+  chk('⚠️ una venta que NO estaba cargada sigue ofreciendo completarla',
+      r9b.gemelo2===null && /Completar la entrega/.test(r9b.html), r9b.gemelo2);
+
+  const r9c = await page.evaluate(async () => {
+    borrEsLaMisma('kommo-55001','aMano');
+    await new Promise(r=>setTimeout(r,250));
+    const p=STATE.filter(x=>x.id==='aMano')[0];
+    return { borradores: BORRADORES.length,
+             quedaElBorrador: BORRADORES.filter(b=>b.id==='kommo-55001').length,
+             pedidos: STATE.filter(x=>x.cliente==='ELENA VARGAS' && x.fecha).length,
+             marca: kleadDe(p), notaIntacta: p.nota, saldoIntacto: p.saldo };
+  });
+  chk('al decir «es la misma», el borrador se va', r9c.quedaElBorrador===0);
+  chk('⚠️ y queda UNA sola venta, la que ella cargó',
+      r9c.pedidos===2, 'de ELENA hay '+r9c.pedidos+' (la de hoy y la de hace 200 días)');
+  chk('el pedido que ya tenía no se tocó', r9c.notaIntacta==='700' && Number(r9c.saldoIntacto)===3400, r9c.notaIntacta);
+  chk('⚠️ queda marcado con el lead, para que el robot no lo vuelva a traer',
+      r9c.marca==='55001', r9c.marca);
+  chk('el otro borrador sigue esperando', r9c.borradores===1, r9c.borradores);
+
   // ══ 10. Los onclick están escapados ═══════════════════════════════════════
   console.log('\n── 10. Higiene ──');
   const r10 = await page.evaluate(() => {
-    showView('mis'); document.getElementById('mis-vendedor').value='Maria Flores';
+    /* Mirian, no Maria: la sección 9b reemplazó los datos y Maria ya no tiene borradores.
+       Con la bandeja vacía este check pasaba en falso (0 onclick y nada que revisar). */
+    showView('mis'); document.getElementById('mis-vendedor').value='Mirian Salazar';
     MIS_TODOS=false; renderMis();
     const h=document.getElementById('mis-borradores').innerHTML;
     return { onclicks: (h.match(/onclick="/g)||[]).length,

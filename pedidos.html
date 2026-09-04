@@ -6165,6 +6165,74 @@ function diasDeBorrador(p){
   return Math.floor((Date.now()-t)/86400000);
 }
 
+/* ============================================================================
+   ⚠️ LA MISMA VENTA CARGADA DOS VECES (§4ca)
+
+   Pregunta del dueño: *"¿y si primero llenan el panel y luego el Kommo? ¿les aparecerá
+   el borrador de algo que ya tenían creado?"*. Sí — y es el orden que van a usar la
+   mitad de las veces, porque la vendedora carga el pedido para que salga el camión y
+   recién después acomoda el lead en Kommo.
+
+   El panel no puede saberlo solo por el id: el pedido cargado a mano tiene id propio y
+   el borrador tiene `kommo-<lead>`. Lo que sí comparten es **el celular del cliente**,
+   que en Kommo está en 25 de 25 contactos y en el panel es obligatorio.
+
+   ⚠️ Y NO SE DECIDE SOLO. Un cliente que compró en marzo y vuelve en septiembre daría
+   el mismo celular sin ser la misma venta. Por eso: se busca dentro de una ventana de
+   45 días, y si aparece algo parecido **se le pregunta a la vendedora** mostrándole el
+   pedido que ya tiene (su nota, su fecha, su monto). Ella sabe. Equivocarse no cuesta
+   nada: dice "es otra venta" y sigue.
+   ========================================================================== */
+var BORR_VENTANA_DIAS=45;
+/* Los últimos 8 dígitos: "+591 70863187", "70863187" y "591-70863187" son el mismo. */
+function telClave(t){
+  var d=String(t==null?'':t).replace(/\D/g,'');
+  return d.length>=7 ? d.slice(-8) : '';
+}
+/* El lead que dio origen a un pedido, guardado adentro de los productos —la columna
+   que ya lleva el precio, la modificación y el seguimiento de ATC—. Sirve para que el
+   robot no vuelva a traer un lead que la vendedora ya resolvió a mano. */
+function kleadDe(p){
+  var a=(p&&p.productos)||[];
+  for(var i=0;i<a.length;i++) if(a[i]&&a[i].klead) return String(a[i].klead);
+  return '';
+}
+function setKlead(p, lead){
+  (p.productos||[]).forEach(function(x){ if(x) x.klead=String(lead||''); });
+}
+function leadDeBorrador(b){ return String((b&&b.id)||'').indexOf(BORRADOR_PREF)===0
+  ? String(b.id).slice(BORRADOR_PREF.length) : ''; }
+/* ¿Ya hay un pedido cargado a mano que sea esta misma venta? */
+function gemeloDe(b){
+  var tel=telClave(b&&b.celular), nom=normNombre((b&&b.cliente)||'');
+  if(!tel && !nom) return null;
+  var ts=Number(b&&b.ts)||Date.now(), vent=BORR_VENTANA_DIAS*86400000;
+  var lead=leadDeBorrador(b);
+  var mejor=null;
+  for(var i=0;i<STATE.length;i++){
+    var p=STATE[i];
+    if(!p || esFilaSistema(p)) continue;
+    if(kleadDe(p)===lead && lead) return p;              // ya se dijo que son la misma
+    if(Math.abs((Number(p.ts)||0)-ts)>vent) continue;    // demasiado lejos en el tiempo
+    var mismoTel = tel && telClave(p.celular)===tel;
+    var mismoNom = nom && normNombre(p.cliente)===nom;
+    if(mismoTel || mismoNom){ mejor=p; if(mismoTel) return p; }   // el celular manda
+  }
+  return mejor;
+}
+/* "Sí, es la misma": el pedido que ya existe se queda con la marca del lead —así el
+   robot no lo vuelve a traer— y el borrador se descarta. */
+function borrEsLaMisma(idBorr, idPed){
+  var b=borradorDe(idBorr), p=findById(idPed);
+  if(!b||!p){ toast('Ese borrador ya no está.','err'); return; }
+  setKlead(p, leadDeBorrador(b));
+  persistPedido(p);
+  BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
+  saveBorrMirror(); renderBorrSiActivo();
+  if(CONNECTED) apiDelete(idBorr).then(function(){},function(){});
+  toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
+}
+
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
   var resto=[], cie=null, arq=null, rets=[], car=null, borr=[];
@@ -7418,6 +7486,30 @@ function borrCardHtml(p, conDuena){
   var d=diasDeBorrador(p), viejo=d>=3;
   var espera = d<=0 ? 'llegó hoy' : (d===1 ? 'espera desde ayer' : 'esperando hace '+d+' días');
   var id=String(p.id);
+  /* ⚠️ ¿Ya lo había cargado a mano? Entonces NO se ofrece "Completar" de entrada: eso
+     crearía la segunda copia de la misma venta. Se le muestra la que ya tiene. */
+  var gem=gemeloDe(p);
+  var avisoGemelo='';
+  if(gem){
+    var det=[];
+    if(gem.nota)   det.push('Nota '+esc(gem.nota));
+    if(gem.oc)     det.push(esc(ocEtiq(gem.oc)));
+    if(gem.fecha)  det.push('entrega '+esc(fmtFecha(gem.fecha))+(gem.turno?(' '+esc(gem.turno)):''));
+    var _m=ventaTotal(gem); if(_m) det.push(fmtBs(_m));
+    avisoGemelo=
+      '<div style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:8px;'+
+        'padding:8px 11px;margin-top:8px;font-size:.83rem;color:var(--teal-dk)">'+
+        '✋ <b>Esto parece que ya lo cargaste.</b>'+
+        '<div style="margin-top:3px">Tenés este pedido de <b>'+esc(gem.cliente||'—')+'</b>'+
+          (det.length?(' — '+det.join(' · ')):'')+'</div>'+
+        '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+          '<button class="btn btn-primary btn-sm" style="width:auto;padding:5px 12px" onclick="'+
+            esc("borrEsLaMisma('"+id+"','"+String(gem.id)+"')")+'">Sí, es la misma → quitar de acá</button>'+
+          '<button class="btn btn-ghost btn-sm" style="width:auto;padding:5px 11px" onclick="'+
+            esc("verFichaGemela('"+String(gem.id)+"')")+'">Ver el que tengo</button>'+
+        '</div>'+
+      '</div>';
+  }
   return '<div style="background:#fff;border:1px solid '+(viejo?'var(--red-border)':'var(--amber-border)')+
            ';border-radius:10px;padding:10px 13px;margin-bottom:8px">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">'+
@@ -7427,14 +7519,17 @@ function borrCardHtml(p, conDuena){
     '</div>'+
     (conDuena&&p.vendedor ? '<div style="font-size:.78rem;color:var(--muted)">👤 '+esc(p.vendedor)+'</div>' : '')+
     borrResumenHtml(p)+
+    avisoGemelo+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
-      '<button class="btn btn-primary btn-sm" style="width:auto;padding:5px 14px" onclick="'+
-        esc("completarBorrador('"+id+"')")+'">Completar la entrega →</button>'+
+      '<button class="btn '+(gem?'btn-ghost':'btn-primary')+' btn-sm" style="width:auto;padding:5px 14px" onclick="'+
+        esc("completarBorrador('"+id+"')")+'">'+(gem?'No, es otra venta → cargarla':'Completar la entrega →')+'</button>'+
       '<button class="btn btn-ghost btn-sm" style="width:auto;padding:5px 11px" onclick="'+
         esc("descartarBorrador('"+id+"')")+'">Descartar</button>'+
     '</div>'+
   '</div>';
 }
+/* Abre la ficha del pedido que ya existe, para que pueda compararlos antes de decidir. */
+function verFichaGemela(id){ if(findById(id)) showMisModal(id); }
 function renderBorradoresMis(){
   var box=document.getElementById('mis-borradores'); if(!box) return;
   var mv=document.getElementById('mis-vendedor');

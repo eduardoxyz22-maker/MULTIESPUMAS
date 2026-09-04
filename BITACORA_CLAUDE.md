@@ -3246,7 +3246,33 @@ ahí, no en la pantalla donde se vio.
 - A los 3 días el borrador se pinta en rojo: una venta vieja sin cargar es una venta que
   quizá ya se entregó.
 
-`tests/test_borradores.js` — **48 checks**, 0 fallas.
+### ⚠️ Primero el panel, después Kommo — la misma venta cargada dos veces
+
+Pregunta del dueño, y es la que faltaba: *"¿y si primero llenan el panel y luego el Kommo?
+¿les aparecerá el borrador de algo que ya tenían creado?"*. **Sí, aparecía** — y es el orden
+que van a usar la mitad de las veces, porque la vendedora carga el pedido para que salga el
+camión y recién después acomoda el lead.
+
+Por id es indetectable: el pedido a mano tiene id propio y el borrador `kommo-<lead>`. Lo
+que sí comparten es **el celular**, que está en 25/25 contactos de Kommo y es obligatorio
+en el panel. `telClave()` compara los **últimos 8 dígitos**, así que `+591 70863187` y
+`70863187` son el mismo.
+
+**Y no se decide solo.** Un cliente que compró en marzo y vuelve en septiembre daría el
+mismo celular sin ser la misma venta. Por eso hay una **ventana de 45 días** y, si algo
+aparece, **se le pregunta a la vendedora** mostrándole el pedido que ya tiene —su nota, su
+fecha de entrega, su monto— con «Ver el que tengo» para comparar. Equivocarse no cuesta
+nada: dice «No, es otra venta» y sigue. El fallback, si no hay celular, es nombre +
+vendedora; el celular siempre gana.
+
+Al decir «Sí, es la misma», el pedido que YA existe se queda con la marca del lead
+(`klead`, adentro de `_productos_json`, la columna que ya lleva `precio`, `mod` y `atc`) y
+el borrador se descarta. **Esa marca es la que evita que el robot lo vuelva a traer.**
+
+**→ Requisito para la fase 3 (el robot):** antes de crear un borrador tiene que saltear el
+lead si existe un pedido con id `kommo-<lead>` **o** con `klead` igual a ese lead.
+
+`tests/test_borradores.js` — **60 checks**, 0 fallas.
 
 ## 5. Pendientes
 
