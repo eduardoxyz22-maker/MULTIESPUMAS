@@ -6220,6 +6220,159 @@ function gemeloDe(b){
   }
   return mejor;
 }
+/* ============================================================================
+   🔍 LA REVISIÓN DEL BORRADOR (§4ca)
+
+   *"¿qué otras comprobaciones podemos agregar? porque colocar esto y que haya errores
+   es grave"*. Tiene razón, y la respuesta empieza por lo que NO puede pasar:
+
+   1. El robot **solo crea borradores**. Nunca toca un pedido que ya existe.
+   2. Un borrador **nunca se vuelve pedido solo**: alguien tiene que apretar Guardar.
+
+   O sea que el peor error posible es una tarjeta de más en la bandeja, y eso se
+   descarta con un clic. Lo que sigue es para que además no se cargue MAL.
+
+   ⚠️ Todo lo de acá abajo AVISA, no bloquea. Un aviso que frena a la vendedora cuando
+   el dato en realidad estaba bien es peor que el error que evita: dejaría de usar la
+   bandeja y volvería a cargar todo a mano.
+   ========================================================================== */
+/* Índice de precios recientes por código, para detectar el 651 en vez de 6510.
+   Se arma una vez por dibujado: recorrer STATE por cada producto de cada tarjeta
+   serían cien mil vueltas en una planilla grande. */
+var PREC_IDX=null;
+function precIdxReset(){ PREC_IDX=null; }
+function precIdx(){
+  if(PREC_IDX) return PREC_IDX;
+  var m={};
+  for(var i=0;i<STATE.length;i++){
+    var pr=(STATE[i]&&STATE[i].productos)||[];
+    for(var j=0;j<pr.length;j++){
+      var c=String(pr[j].codigo||'').trim().toUpperCase(), v=prodPrecio(pr[j]);
+      if(c && v>0){ (m[c]||(m[c]=[])).push(v); }
+    }
+  }
+  PREC_IDX=m; return m;
+}
+/* La MEDIANA, no el promedio: un solo precio mal cargado no corre la referencia. */
+function precioTipico(codigo){
+  var a=precIdx()[String(codigo||'').trim().toUpperCase()];
+  if(!a || a.length<3) return 0;               // con menos de 3 ventas no hay referencia
+  var b=a.slice().sort(function(x,y){return x-y;});
+  return b[Math.floor(b.length/2)];
+}
+/* Busca el producto en el catálogo del panel (250 códigos, el del Excel de la empresa).
+   Primero por código; si no, por descripción + medida. */
+function buscaCatalogo(x){
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase();
+  if(cod && CODIGOS[cod]) return { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m, por:'codigo' };
+  var d=normNombre((x&&x.desc)||''), me=normMedida((x&&x.medida)||'');
+  if(!d) return null;
+  var suelto=null;
+  for(var k in CODIGOS){
+    var v=CODIGOS[k];
+    if(normNombre(v.d)!==d) continue;
+    if(me && normMedida(v.m)===me) return { code:k, d:v.d, m:v.m, por:'nombre' };
+    if(!suelto) suelto={ code:k, d:v.d, m:v.m, por:'nombre-sin-medida' };
+  }
+  return suelto;
+}
+/* Un celular boliviano al que se pueda llamar: 8 dígitos que empiezan en 6 o 7.
+   Lo usa el chofer para avisar que está llegando; si está mal, la entrega se cae. */
+function celularUsable(t){
+  var d=String(t==null?'':t).replace(/\D/g,'');
+  if(d.length>8) d=d.slice(-8);
+  return d.length===8 && /^[67]/.test(d);
+}
+/* Lo que ese cliente dejó en el panel de compras anteriores. */
+function historialCliente(tel){
+  var k=telClave(tel); if(!k) return [];
+  return STATE.filter(function(p){ return p && !esFilaSistema(p) && telClave(p.celular)===k; })
+              .sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+}
+function saldoPendienteCliente(tel){
+  var t=0;
+  historialCliente(tel).forEach(function(p){ if(!p.pagado) t+=Number(p.saldo)||0; });
+  return r2(t);
+}
+function atcAbiertaCliente(tel){
+  var h=historialCliente(tel);
+  for(var i=0;i<h.length;i++) if(esATC(h[i].oc) && atcEstado(h[i])!=='cerrada') return h[i];
+  return null;
+}
+/* La última entrega con dirección: de ahí salen zona, dirección y Maps, que son
+   justo los tres datos que Kommo no tiene. */
+function ultimaEntregaCliente(tel){
+  var h=historialCliente(tel);
+  for(var i=0;i<h.length;i++) if(h[i].zona || h[i].direccion || h[i].maps) return h[i];
+  return null;
+}
+
+/* Devuelve la lista de cosas para mirar. nivel 'alto' = plata o entrega en juego. */
+function revisarBorrador(b){
+  var out=[], prods=((b&&b.productos)||[]).filter(function(x){ return x && (x.desc||x.codigo); });
+
+  // ── Los productos, contra el catálogo del panel ──────────────────────────
+  var desconocidos=[], noCoinciden=[], sinPrecio=0, suma=0, raros=[];
+  prods.forEach(function(x){
+    var cat=buscaCatalogo(x);
+    var etq=String(x.desc||x.codigo||'—');
+    if(!cat){ desconocidos.push(etq); }
+    else if(cat.por==='codigo' && normNombre(x.desc) && normNombre(cat.d)!==normNombre(x.desc)){
+      noCoinciden.push(etq+' → el código '+cat.code+' es «'+cat.d+'»');
+    }
+    var cant=Number(x.cant)||0;
+    if(cant<=0 || cant>20) raros.push(etq+' × '+cant);
+    var pr=prodPrecio(x);
+    if(pr>0){
+      suma+=pr*(cant||1);
+      var tip=precioTipico(cat?cat.code:x.codigo);
+      if(tip>0 && (pr>tip*1.6 || pr<tip*0.4))
+        out.push({n:'alto', t:'💲 <b>'+esc(etq)+'</b> viene a '+fmtBs(pr)+
+                             ', y se viene vendiendo cerca de '+fmtBs(tip)+'. Revisá que no falte o sobre un cero.'});
+    } else sinPrecio++;
+  });
+  if(desconocidos.length)
+    out.push({n:'alto', t:'📦 '+(desconocidos.length===1?'Este producto no está':'Estos productos no están')+
+      ' en el catálogo del panel: <b>'+esc(desconocidos.join(', '))+'</b>. Elegilo de la lista al completar, o el almacén no va a saber qué sacar.'});
+  if(noCoinciden.length)
+    out.push({n:'alto', t:'🏷️ El código no coincide con el producto: '+esc(noCoinciden.join(' · '))+'.'});
+  if(raros.length)
+    out.push({n:'alto', t:'🔢 Cantidad rara: <b>'+esc(raros.join(', '))+'</b>.'});
+  if(sinPrecio && prods.length)
+    out.push({n:'medio', t:'🏷️ '+sinPrecio+(sinPrecio===1?' producto viene':' productos vienen')+' sin precio. Cargalo al completar.'});
+
+  // ── La plata: lo que suman los productos vs lo que dice Kommo ────────────
+  var monto=Number(b&&b.saldo)||0;
+  if(monto>0 && suma>0 && !sinPrecio && Math.abs(suma-monto)>1){
+    var d=r2(suma-monto);
+    out.push({n:'alto', t:'💰 Los productos suman <b>'+fmtBs(r2(suma))+'</b> pero en Kommo la venta figura en <b>'+
+      fmtBs(monto)+'</b> — hay '+fmtBs(Math.abs(d))+' de '+(d>0?'más':'menos')+'. Puede ser un descuento; si no, revisá antes de guardar.'});
+  }
+
+  // ── El celular, que es con lo que el chofer avisa ────────────────────────
+  if(!b.celular) out.push({n:'alto', t:'📱 <b>Sin celular.</b> El chofer no va a poder avisar que está llegando.'});
+  else if(!celularUsable(b.celular))
+    out.push({n:'alto', t:'📱 El celular <b>'+esc(b.celular)+'</b> no parece un celular boliviano (8 dígitos que empiezan en 6 o 7). Confirmalo con el cliente.'});
+
+  // ── Lo que el panel ya sabe de ese cliente ───────────────────────────────
+  var deuda=saldoPendienteCliente(b.celular);
+  if(deuda>0.01)
+    out.push({n:'alto', t:'💵 Este cliente debe <b>'+fmtBs(deuda)+'</b> de otra venta. Avisale al chofer que cobre.'});
+  var atc=atcAbiertaCliente(b.celular);
+  if(atc)
+    out.push({n:'medio', t:'🎧 Este cliente tiene una <b>ATC sin cerrar</b>'+(atc.oc?(' ('+esc(ocEtiq(atc.oc))+')'):'')+'. Fijate si tiene que ver con esta venta.'});
+
+  return out;
+}
+/* Lo que el panel puede llenar solo, de compras anteriores del mismo cliente:
+   zona, dirección y Maps son EXACTAMENTE los tres datos que Kommo no tiene. */
+function autoDeCliente(b){
+  var u=ultimaEntregaCliente(b&&b.celular);
+  if(!u) return null;
+  return { zona:u.zona||'', direccion:u.direccion||'', maps:u.maps||'',
+           nit:u.nit||'', facturarA:u.facturarA||'', de:u };
+}
+
 /* "Sí, es la misma": el pedido que ya existe se queda con la marca del lead —así el
    robot no lo vuelve a traer— y el borrador se descarta. */
 function borrEsLaMisma(idBorr, idPed){
@@ -7510,6 +7663,27 @@ function borrCardHtml(p, conDuena){
         '</div>'+
       '</div>';
   }
+  /* 🔍 Lo que hay que mirar antes de guardar. Avisa, no bloquea. */
+  var revs=revisarBorrador(p);
+  var altos=revs.filter(function(r){ return r.n==='alto'; }).length;
+  var revHtml = revs.length
+    ? ('<div style="background:'+(altos?'var(--red-lt)':'var(--amber-lt)')+';border:1px solid '+
+         (altos?'var(--red-border)':'var(--amber-border)')+';border-radius:8px;padding:8px 11px;margin-top:8px;'+
+         'font-size:.82rem;color:'+(altos?'#8a1c24':'#7a5b00')+'">'+
+         '<b>'+(altos?'⚠️ Mirá esto antes de guardar':'Para tener en cuenta')+'</b>'+
+         revs.map(function(r){ return '<div style="margin-top:4px">• '+r.t+'</div>'; }).join('')+
+       '</div>')
+    : '';
+  /* Lo que el panel puede llenar solo de una entrega anterior a ese mismo cliente. */
+  var auto=autoDeCliente(p);
+  var autoHtml = (auto && (auto.zona||auto.direccion))
+    ? ('<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:8px;'+
+         'padding:7px 11px;margin-top:8px;font-size:.82rem;color:#0a6b47">'+
+         '✅ <b>Ya le entregaste antes a este cliente.</b> Al completar, el panel le pone la '+
+         'zona'+(auto.direccion?', la dirección':'')+(auto.maps?' y la ubicación de Maps':'')+
+         ' de esa entrega'+(auto.zona?(' — <b>'+esc(auto.zona)+'</b>'):'')+'. Cambialas si esta vez es otro lado.'+
+       '</div>')
+    : '';
   return '<div style="background:#fff;border:1px solid '+(viejo?'var(--red-border)':'var(--amber-border)')+
            ';border-radius:10px;padding:10px 13px;margin-bottom:8px">'+
     '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">'+
@@ -7519,6 +7693,8 @@ function borrCardHtml(p, conDuena){
     '</div>'+
     (conDuena&&p.vendedor ? '<div style="font-size:.78rem;color:var(--muted)">👤 '+esc(p.vendedor)+'</div>' : '')+
     borrResumenHtml(p)+
+    revHtml+
+    autoHtml+
     avisoGemelo+
     '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
       '<button class="btn '+(gem?'btn-ghost':'btn-primary')+' btn-sm" style="width:auto;padding:5px 14px" onclick="'+
@@ -7538,6 +7714,7 @@ function renderBorradoresMis(){
   var lista = todos ? BORRADORES.slice().sort(function(a,b){ return (b.ts||0)-(a.ts||0); })
                     : borradoresDe(v);
   if(!lista.length){ box.innerHTML=''; return; }
+  precIdxReset();                      // los precios de referencia se recalculan por dibujado
   var n=lista.length;
   box.innerHTML=
     '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
@@ -7557,6 +7734,7 @@ function renderBorradoresHuerfanos(){
   var box=document.getElementById('adm-borradores'); if(!box) return;
   var lista=borradoresHuerfanos();
   if(!lista.length){ box.innerHTML=''; return; }
+  precIdxReset();                      // los precios de referencia se recalculan por dibujado
   var n=lista.length;
   box.innerHTML=
     '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
@@ -7584,9 +7762,30 @@ function completarBorrador(id){
   document.getElementById('f-celular').value=rec.celular||'';
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-obs').value=rec.observaciones||'';
+  /* 📍 Lo que Kommo NO tiene, sacado de una entrega anterior al mismo cliente.
+     Es el mayor ahorro disponible: zona, dirección y Maps son exactamente los tres
+     datos que faltan. Se llenan como SUGERENCIA — la vendedora los ve y los cambia
+     si esta vez es otro lado. Nunca pisa lo que sí vino de Kommo. */
+  var _auto=autoDeCliente(rec), _lleno=[];
+  if(_auto){
+    if(_auto.zona)      { document.getElementById('f-zona').value=_auto.zona; _lleno.push('zona'); }
+    if(!rec.direccion && _auto.direccion){ document.getElementById('f-direccion').value=_auto.direccion; _lleno.push('dirección'); }
+    if(_auto.maps)      { document.getElementById('f-maps').value=_auto.maps; _lleno.push('Maps'); }
+    if(_auto.nit)       { document.getElementById('f-nit').value=_auto.nit; }
+    if(_auto.facturarA) { document.getElementById('f-facturar').value=_auto.facturarA; }
+  }
   var box=document.getElementById('f-productos'); box.innerHTML='';
   var prods=(rec.productos||[]).filter(function(x){ return x && (x.desc||x.codigo); });
-  if(prods.length){ for(var i=0;i<prods.length;i++){ var pr=prods[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio); } }
+  if(prods.length){
+    for(var i=0;i<prods.length;i++){
+      var pr=prods[i];
+      /* 📦 Se normaliza contra el catálogo del panel: si el producto de Kommo existe acá,
+         entra con el código, la descripción y la medida como las conoce el almacén. Si no
+         existe, entra tal cual vino y la revisión ya avisó que hay que elegirlo a mano. */
+      var cat=buscaCatalogo(pr);
+      addProdRow(cat?cat.d:pr.desc, (cat&&cat.m)?cat.m:pr.medida, cat?cat.code:pr.codigo, pr.cant, pr.precio);
+    }
+  }
   else addProdRow();
   /* El monto que Kommo trae es el de la venta, no un cobro: entra como saldo por cobrar
      y la vendedora lo corrige si ya cobró algo. */
@@ -7594,7 +7793,9 @@ function completarBorrador(id){
   if(monto){ document.getElementById('f-saldo').value=String(monto); }
   pintarMotivoAtc(); renderCupoForm(); refreshDatalists();
   var ff=document.getElementById('f-fecha'); if(ff) try{ ff.focus(); }catch(e){}
-  toast('Vino de Kommo. Falta la fecha de entrega, el turno y la zona.','ok', 5000);
+  toast(_lleno.length
+    ? ('Vino de Kommo. Le puse '+_lleno.join(', ')+' de una entrega anterior — revisalas. Falta la fecha y el turno.')
+    : 'Vino de Kommo. Falta la fecha de entrega, el turno y la zona.','ok', 6000);
 }
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;

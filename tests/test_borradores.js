@@ -312,6 +312,111 @@ const DIA = 86400000;
       r9c.marca==='55001', r9c.marca);
   chk('el otro borrador sigue esperando', r9c.borradores===1, r9c.borradores);
 
+  // ══ 9d. 🔍 LAS COMPROBACIONES ═════════════════════════════════════════════
+  /* *"¿qué otras comprobaciones podemos agregar? porque colocar esto y que haya errores
+     es grave"*. Estas avisan, no bloquean: un aviso que frena a la vendedora cuando el
+     dato estaba bien es peor que el error que evita. */
+  console.log('\n── 9d. Lo que el panel revisa antes de que lo guarde ──');
+  const revisar = (b) => page.evaluate((b) => {
+    precIdxReset();
+    return revisarBorrador(b).map(r => r.n+'|'+r.t.replace(/<[^>]*>/g,''));
+  }, b);
+
+  const base = { id:'kommo-1', cliente:'X', vendedor:'Mirian Salazar', celular:'70863187',
+                 saldo:0, ts:Date.now(), productos:[] };
+
+  const rProd = await revisar(Object.assign({}, base, {
+    productos:[{desc:'JUEGO DE SABANAS TEKA',medida:'2,5 PLZ',codigo:'SB99',cant:1,precio:250}] }));
+  chk('⚠️ avisa cuando el producto no está en el catálogo del panel',
+      rProd.some(t=>/no está en el catálogo/.test(t)), rProd.join(' ~ ').slice(0,120));
+  chk('…y dice cuál es', rProd.some(t=>/JUEGO DE SABANAS TEKA/.test(t)));
+
+  const rOk = await revisar(Object.assign({}, base, {
+    productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2,precio:6510}], saldo:13020 }));
+  chk('⚠️ un producto correcto NO genera ningún aviso', rOk.length===0, rOk.join(' ~ '));
+
+  const rCod = await revisar(Object.assign({}, base, {
+    productos:[{desc:'SOFT ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:6510}], saldo:6510 }));
+  chk('⚠️ avisa si el código no coincide con el producto',
+      rCod.some(t=>/código no coincide/.test(t) && /TITANIO ICE/.test(t)), rCod.join(' ~ ').slice(0,130));
+
+  const rMonto = await revisar(Object.assign({}, base, {
+    productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2,precio:6510}], saldo:9000 }));
+  chk('⚠️ avisa si los productos no suman lo que dice Kommo',
+      rMonto.some(t=>/13\.020.*9\.000|9\.000.*13\.020/.test(t)), rMonto.join(' ~ ').slice(0,150));
+
+  const rCant = await revisar(Object.assign({}, base, {
+    productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:0,precio:6510}] }));
+  chk('⚠️ avisa una cantidad imposible', rCant.some(t=>/Cantidad rara/.test(t)), rCant.join(' ~ ').slice(0,90));
+
+  const rTel = await revisar(Object.assign({}, base, { celular:'3345678',
+    productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:6510}], saldo:6510 }));
+  chk('⚠️ avisa si el celular no sirve para que el chofer llame',
+      rTel.some(t=>/no parece un celular boliviano/.test(t)), rTel.join(' ~ ').slice(0,110));
+  const rSinTel = await revisar(Object.assign({}, base, { celular:'',
+    productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:6510}], saldo:6510 }));
+  chk('…y si directamente no hay celular', rSinTel.some(t=>/Sin celular/.test(t)));
+
+  const rPrecio = await page.evaluate((man) => {
+    // Historial: el mismo colchón vendido 4 veces cerca de Bs 6.500
+    const p=(n,pr)=>({id:'h'+n,fecha:man,oc:'',vendedor:'Mirian Salazar',cliente:'C'+n,
+      productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:pr}],
+      celular:'7000000'+n,turno:'AM',zona:'Norte',direccion:'x',maps:'',pagado:true,saldo:0,
+      ts:Date.now(),metodoPago:'Efectivo',observaciones:'',estado:'',entregado:false,vehiculo:'',
+      chofer:'',garantia:'',nota:String(n),acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:false,fotos:[]});
+    STATE=[p(1,6510),p(2,6510),p(3,6400),p(4,6600)];
+    precIdxReset();
+    const malo=revisarBorrador({id:'kommo-9',cliente:'X',vendedor:'Mirian Salazar',celular:'70863187',
+      saldo:651,productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:651}]});
+    const bueno=revisarBorrador({id:'kommo-9',cliente:'X',vendedor:'Mirian Salazar',celular:'70863187',
+      saldo:6510,productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:6510}]});
+    return { malo: malo.map(r=>r.t.replace(/<[^>]*>/g,'')), bueno: bueno.length };
+  }, dd(1));
+  chk('⚠️ agarra el cero que falta (651 en vez de 6.510)',
+      rPrecio.malo.some(t=>/se viene vendiendo cerca de/.test(t)), rPrecio.malo.join(' ~ ').slice(0,140));
+  chk('…y el precio correcto no molesta', rPrecio.bueno===0, rPrecio.bueno);
+
+  // ══ 9e. 📍 EL AUTOCOMPLETADO DE LO QUE KOMMO NO TIENE ═════════════════════
+  console.log('\n── 9e. Lo que el panel llena solo ──');
+  const r9e = await page.evaluate((man) => {
+    const prev={id:'antes',fecha:man,oc:'',vendedor:'Mirian Salazar',cliente:'ELENA VARGAS',
+      productos:[{desc:'ALMOHADA',medida:'50x70',codigo:'CD1403',cant:1,precio:25}],
+      celular:'70863187',turno:'AM',zona:'Equipetrol',direccion:'Av. San Martín 456, dpto 3B',
+      maps:'https://maps.app.goo.gl/ABC',pagado:false,saldo:2000,ts:Date.now()-30*86400000,
+      metodoPago:'',observaciones:'',estado:'',entregado:true,vehiculo:'',chofer:'Juan',
+      garantia:'',nota:'500',acuenta:0,facturarA:'ELENA VARGAS SRL',nit:'99887766',
+      nroDia:1,verificado:true,fotos:[]};
+    window._pl=[prev];
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
+    apiSave=function(rec){ var g=JSON.parse(JSON.stringify(rec));
+      window._pl=window._pl.filter(x=>x.id!==g.id).concat([g]); return Promise.resolve({ok:true}); };
+    STATE=mergePending(JSON.parse(JSON.stringify(window._pl)));
+    BORRADORES=[{id:'kommo-77001',cliente:'ELENA VARGAS',vendedor:'Mirian Salazar',
+      celular:'+591 70863187',saldo:6510,ts:Date.now(),estado:'Borrador Kommo',fecha:'',
+      turno:'',zona:'',direccion:'',maps:'',nota:'',nroDia:0,pagado:false,acuenta:0,
+      productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'',cant:1,precio:6510}],
+      observaciones:'',oc:'',metodoPago:'',entregado:false,vehiculo:'',chofer:'',
+      garantia:'',facturarA:'',nit:'',verificado:false,fotos:[]}];
+    saveBorrMirror();
+    completarBorrador('kommo-77001');
+    const g=(id)=>{ const e=document.getElementById(id); return e?e.value:'NO EXISTE #'+id; };
+    return { zona:g('f-zona'), direccion:g('f-direccion'), maps:g('f-maps'),
+             nit:g('f-nit'), facturar:g('f-facturar'), fecha:g('f-fecha'),
+             codigo:(document.querySelector('#f-productos .prod-codigo')||{}).value,
+             desc:(document.querySelector('#f-productos .prod-desc')||{}).value,
+             medida:(document.querySelector('#f-productos .prod-medida')||{}).value,
+             deuda:saldoPendienteCliente('70863187') };
+  }, dd(1));
+  chk('⚠️ le pone la ZONA de la entrega anterior', r9e.zona==='Equipetrol', r9e.zona);
+  chk('⚠️ …y la DIRECCIÓN', /San Martín 456/.test(r9e.direccion), r9e.direccion);
+  chk('⚠️ …y la ubicación de MAPS', /maps\.app\.goo\.gl/.test(r9e.maps), r9e.maps);
+  chk('…y los datos de factura', r9e.nit==='99887766' && /ELENA VARGAS SRL/.test(r9e.facturar), r9e.nit);
+  chk('⚠️ pero la fecha de entrega sigue VACÍA: eso no se adivina', r9e.fecha==='', r9e.fecha);
+  chk('⚠️ completa el CÓDIGO del producto desde el catálogo del panel',
+      r9e.codigo==='CH1201', r9e.codigo+' / '+r9e.desc+' / '+r9e.medida);
+  chk('detecta que el cliente quedó debiendo de la venta anterior',
+      Number(r9e.deuda)===2000, r9e.deuda);
+
   // ══ 10. Los onclick están escapados ═══════════════════════════════════════
   console.log('\n── 10. Higiene ──');
   const r10 = await page.evaluate(() => {

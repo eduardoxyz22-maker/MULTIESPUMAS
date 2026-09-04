@@ -3272,7 +3272,47 @@ el borrador se descarta. **Esa marca es la que evita que el robot lo vuelva a tr
 **→ Requisito para la fase 3 (el robot):** antes de crear un borrador tiene que saltear el
 lead si existe un pedido con id `kommo-<lead>` **o** con `klead` igual a ese lead.
 
-`tests/test_borradores.js` — **60 checks**, 0 fallas.
+### 🔍 Las comprobaciones antes de guardar
+
+*"¿qué otras comprobaciones podemos agregar? porque colocar esto y que haya errores es
+grave"*. La respuesta empieza por lo que **no puede pasar**:
+
+1. **El robot solo crea borradores.** Nunca toca un pedido que ya existe.
+2. **Un borrador nunca se vuelve pedido solo**: alguien tiene que apretar Guardar.
+
+Con eso, el peor error posible es una tarjeta de más en la bandeja, y se descarta con un
+clic. El resto es para que además no se cargue mal:
+
+| Comprobación | Por qué importa |
+|---|---|
+| Producto que **no está en el catálogo del panel** (250 códigos) | El almacén no sabría qué sacar. **Va a pasar**: el catálogo de Kommo tiene cosas como «JUEGO DE SABANAS TEKA» que en el panel no existen |
+| **El código no coincide** con la descripción | Se cargaría otro colchón |
+| **Precio fuera de lo normal** (mediana de las últimas ventas del mismo código) | Agarra el cero que falta: 651 en vez de 6.510 |
+| **Los productos no suman** lo que dice Kommo | Error de facturación (avisa que puede ser un descuento) |
+| **Cantidad imposible** (0, negativa, >20) | Typo |
+| **Celular que no sirve** (8 dígitos que empiecen en 6 o 7) | El chofer no puede avisar que llega |
+| **El cliente debe plata** de otra venta | Que el chofer cobre |
+| **El cliente tiene una ATC sin cerrar** | Puede tener que ver con esta venta |
+
+**⚠️ Todo AVISA, nada BLOQUEA.** Un aviso que frena a la vendedora cuando el dato estaba
+bien es peor que el error que evita: dejaría de usar la bandeja y volvería a cargar todo a
+mano. Un producto correcto no genera **ningún** aviso (hay un check para eso).
+
+### 📍 Lo que el panel llena solo
+
+**De una entrega anterior al mismo cliente (por celular): zona, dirección, Maps, NIT y
+«facturar a».** Son exactamente los tres datos que Kommo **no tiene** — el mayor ahorro
+disponible, y sale del propio historial del panel, sin depender de Kommo. Entra como
+sugerencia y la tarjeta lo dice antes de abrir el formulario.
+
+**Los productos se normalizan contra el catálogo del panel**: si el producto de Kommo
+existe acá, entra con el código, la descripción y la medida como las conoce el almacén
+(`buscaCatalogo` busca por código y, si no, por descripción + medida).
+
+**La fecha de entrega sigue vacía a propósito.** Eso no se adivina, y es lo único que de
+verdad tiene que poner la vendedora.
+
+`tests/test_borradores.js` — **77 checks**, 0 fallas.
 
 ## 5. Pendientes
 
