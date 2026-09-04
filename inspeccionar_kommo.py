@@ -32,6 +32,15 @@ TOKEN     = os.environ.get("KOMMO_TOKEN", "").strip()
 # no hace falta más para ver la estructura, y menos llamadas es menos riesgo de rate limit.
 MUESTRA = 25
 
+# En Kommo estos dos ids son FIJOS en todos los embudos: la etapa ganada siempre es 142 y la
+# perdida siempre 143, aunque el negocio les cambie el nombre. Se ven a simple vista porque
+# son números chiquitos al lado de los ids de 9 dígitos de las etapas creadas por el usuario.
+#
+# ⚠️ NO usar `status.type` para esto: en Kommo `type=1` significa «Leads Entrantes»
+#    (lo no clasificado), NO «ganado». La primera versión de este script se equivocó
+#    justo ahí y marcó «Leads Entrantes» como el cierre de venta.
+ID_GANADO, ID_PERDIDO = 142, 143
+
 
 def api_get(path, params=None, _retry=0):
     """Mismo patrón que generar.py: reintenta ante 429 y no explota por un 404."""
@@ -120,16 +129,27 @@ def main():
     pipes = emb(api_get("/leads/pipelines"), "pipelines")
     if not pipes:
         print("   ✗ No devolvió pipelines.")
+    pipe_principal, etapa_ganada, etapa_compradores = None, None, None
     for p in pipes:
+        es_main = bool(p.get("is_main"))
+        if es_main or pipe_principal is None:
+            pipe_principal = p.get("id")
         print(f"\n   ▸ PIPELINE «{p.get('name')}»   id={p.get('id')}"
-              + ("   [principal]" if p.get("is_main") else ""))
+              + ("   [principal]" if es_main else ""))
         for s in emb(p, "statuses"):
+            sid, nom = s.get("id"), (s.get("name") or "")
             marca = ""
-            if s.get("type") == 1:
+            if sid == ID_GANADO:
                 marca = "  ← ✅ GANADO (cierre de venta)"
-            elif s.get("type") == 2:
+                if es_main or etapa_ganada is None:
+                    etapa_ganada = sid
+            elif sid == ID_PERDIDO:
                 marca = "  ← ❌ PERDIDO"
-            print(f"        etapa id={str(s.get('id')):<12} «{s.get('name')}»{marca}")
+            elif s.get("type") == 1:
+                marca = "  ← 📥 sin clasificar (Leads Entrantes)"
+            if "comprador" in nom.lower() and (es_main or etapa_compradores is None):
+                etapa_compradores = sid
+            print(f"        etapa id={str(sid):<12} type={s.get('type')}  «{nom}»{marca}")
 
     # ── 3. Campos del LEAD: acá está lo que se puede mapear al pedido ─────────
     titulo("3 · CAMPOS PERSONALIZADOS DEL LEAD")
@@ -149,19 +169,32 @@ def main():
 
     # ── 5. ¿Qué le falta a Kommo para armar un pedido completo? ───────────────
     titulo("5 · ¿ESTÁN LOS DATOS DE ENTREGA?")
-    nombres = " | ".join((c.get("name") or "").lower() for c in campos_lead)
-    busca = {
-        "fecha de entrega": ["entrega", "fecha entrega", "delivery"],
-        "turno AM/PM":      ["turno", "horario", "am/pm"],
-        "zona":             ["zona", "barrio", "sector"],
-        "dirección":        ["direccion", "dirección", "domicilio"],
-        "link de Maps":     ["maps", "ubicacion", "ubicación", "gps", "coordenada"],
-    }
+    # ⚠️ Ojo con este bloque: la primera versión juntaba todos los nombres en un solo texto y
+    #    preguntaba si aparecía la palabra. Así, «Dirección entrega» daba por buenos DOS
+    #    casilleros a la vez —dirección y fecha de entrega— y el relevamiento dijo que Kommo
+    #    tenía fecha de entrega cuando no la tiene. Ahora se mira campo por campo, se exige el
+    #    tipo correcto, y se imprime CUÁL campo dio la coincidencia para poder auditarlo.
+    FECHAS = ("date", "date_time", "birthday")
+    busca = [
+        ("fecha de entrega", ["entrega", "delivery", "despacho"], FECHAS),
+        ("turno AM/PM",      ["turno", "horario", "am/pm"],       None),
+        ("zona",             ["zona", "barrio", "sector"],        None),
+        ("dirección",        ["direccion", "dirección", "domicilio"], None),
+        ("link de Maps",     ["maps", "ubicacion", "ubicación", "gps", "coordenada"], None),
+    ]
     faltan = []
-    for etiqueta, claves in busca.items():
-        hay = any(k in nombres for k in claves)
-        print(f"   {'✓' if hay else '✗'} {etiqueta}")
-        if not hay:
+    for etiqueta, claves, tipos in busca:
+        hallado = None
+        for c in campos_lead:
+            n = (c.get("name") or "").lower()
+            if any(k in n for k in claves) and (tipos is None or c.get("type") in tipos):
+                hallado = c
+                break
+        if hallado:
+            print(f"   ✓ {etiqueta}   → lo cubre «{hallado.get('name')}» "
+                  f"(id={hallado.get('id')}, tipo={hallado.get('type')})")
+        else:
+            print(f"   ✗ {etiqueta}")
             faltan.append(etiqueta)
     if faltan:
         print(f"\n   → Kommo NO tiene: {', '.join(faltan)}.")
@@ -187,13 +220,26 @@ def main():
             print(f"          · «{e.get('name')}»  id={e.get('id')}")
 
     # ── 7. Cómo viene un lead de verdad (SIN datos personales) ────────────────
+    #
+    # ⚠️ La primera versión pedía /leads sin ordenar. Kommo devuelve los MÁS VIEJOS primero,
+    #    así que la muestra eran los primeros leads de la historia de la cuenta —casi vacíos—
+    #    y de ahí salió el "0 de 25 con productos", que no decía nada de cómo se trabaja hoy.
+    #    Ahora se pide de lo más nuevo hacia atrás Y se mira aparte la etapa donde la venta
+    #    ya está cerrada, que es la única muestra que sirve para decidir la integración.
     titulo("7 · FORMA DE UN LEAD REAL  (qué campos vienen llenos — sin mostrar contenido)")
-    leads = emb(api_get("/leads", {"limit": MUESTRA, "with": "contacts,catalog_elements"}), "leads")
-    print(f"   Leads mirados: {len(leads)}")
-    if leads:
-        nombre_de = {c.get("id"): c.get("name") for c in campos_lead}
-        lleno, con_prod, con_contacto = {}, 0, 0
-        formas = {}
+    nombre_de = {c.get("id"): c.get("name") for c in campos_lead}
+    BASE = {"limit": MUESTRA, "with": "contacts,catalog_elements", "order[id]": "desc"}
+
+    def mirar(etiqueta, extra=None):
+        params = dict(BASE)
+        if extra:
+            params.update(extra)
+        leads = emb(api_get("/leads", params), "leads")
+        print(f"\n   ▸ {etiqueta}")
+        if not leads:
+            print("      (no devolvió ninguno)")
+            return
+        lleno, formas, con_prod, con_contacto, con_precio = {}, {}, 0, 0, 0
         for L in leads:
             for cv in (L.get("custom_fields_values") or []):
                 fid = cv.get("field_id")
@@ -206,25 +252,62 @@ def main():
                 con_prod += 1
             if emb(L, "contacts"):
                 con_contacto += 1
-        print(f"   Con productos del catálogo enganchados: {con_prod} de {len(leads)}")
-        print(f"   Con contacto vinculado:                 {con_contacto} de {len(leads)}")
-        print("\n   Qué tan seguido viene lleno cada campo:")
-        for fid, n in sorted(lleno.items(), key=lambda x: -x[1]):
-            nom = nombre_de.get(fid, f"(campo {fid})")
-            print(f"      {n:>3}/{len(leads)}  «{nom}»   → {', '.join(sorted(formas.get(fid, [])))}")
+            if L.get("price"):
+                con_precio += 1
+        n = len(leads)
+        print(f"      leads mirados: {n}")
+        print(f"      con productos del catálogo enganchados: {con_prod} de {n}"
+              + ("   ⚠️ ← acá se cae la carga automática de productos" if not con_prod else ""))
+        print(f"      con contacto vinculado:                 {con_contacto} de {n}")
+        print(f"      con monto (price) cargado:              {con_precio} de {n}")
+        if lleno:
+            print("      qué tan seguido viene lleno cada campo:")
+            for fid, veces in sorted(lleno.items(), key=lambda x: -x[1]):
+                nom = nombre_de.get(fid, f"(campo {fid})")
+                print(f"         {veces:>3}/{n}  «{nom}»   → {', '.join(sorted(formas.get(fid, [])))}")
+        else:
+            print("      ⚠️ ningún campo personalizado viene lleno en esta muestra.")
 
-        # La forma EXACTA de los productos de un lead: cantidad y precio, sin nombres de cliente.
         ej = next((L for L in leads if emb(L, "catalog_elements")), None)
         if ej:
-            print("\n   Un lead con productos, campo por campo:")
+            print("      un lead con productos, elemento por elemento:")
             for ce in emb(ej, "catalog_elements"):
                 meta = ce.get("metadata") or {}
-                print(f"      · elemento id={ce.get('id')}  cantidad={meta.get('quantity')}"
+                print(f"         · elemento id={ce.get('id')}  cantidad={meta.get('quantity')}"
                       f"  precio={'sí' if meta.get('price_id') or meta.get('price') else 'no'}"
                       f"  catálogo={ce.get('catalog_id')}")
-        else:
-            print("\n   ⚠️ Ningún lead de la muestra tiene productos del catálogo enganchados.")
-            print("      O se cargan de otra forma, o solo los leads ya cerrados los tienen.")
+
+    mirar("LOS 25 MÁS NUEVOS (cualquier etapa)")
+    if pipe_principal and etapa_ganada:
+        mirar(f"LOS 25 MÁS NUEVOS YA GANADOS (etapa {etapa_ganada}) ← la muestra que decide",
+              {"filter[statuses][0][pipeline_id]": pipe_principal,
+               "filter[statuses][0][status_id]":  etapa_ganada})
+    if pipe_principal and etapa_compradores:
+        mirar(f"LOS 25 MÁS NUEVOS EN «Compradores» (etapa {etapa_compradores})",
+              {"filter[statuses][0][pipeline_id]": pipe_principal,
+               "filter[statuses][0][status_id]":  etapa_compradores})
+
+    # ── 7b. ¿El celular está cargado en el contacto? ──────────────────────────
+    titulo("7b · CONTACTOS  (¿viene el celular, que en el panel es obligatorio?)")
+    cts = emb(api_get("/contacts", {"limit": MUESTRA, "order[id]": "desc"}), "contacts")
+    print(f"   Contactos mirados: {len(cts)}")
+    if cts:
+        campos_ct = emb(api_get("/contacts/custom_fields", {"limit": 250}), "custom_fields")
+        nom_ct = {c.get("id"): c.get("name") for c in campos_ct}
+        lleno_ct, formas_ct = {}, {}
+        for c in cts:
+            for cv in (c.get("custom_fields_values") or []):
+                fid = cv.get("field_id")
+                vals = cv.get("values") or []
+                v = vals[0].get("value") if vals else None
+                if v not in (None, ""):
+                    lleno_ct[fid] = lleno_ct.get(fid, 0) + 1
+                    formas_ct.setdefault(fid, set()).add(forma(v))
+        for fid, veces in sorted(lleno_ct.items(), key=lambda x: -x[1]):
+            print(f"      {veces:>3}/{len(cts)}  «{nom_ct.get(fid, f'(campo {fid})')}»"
+                  f"   → {', '.join(sorted(formas_ct.get(fid, [])))}")
+        if not lleno_ct:
+            print("      ⚠️ ningún campo del contacto viene lleno en esta muestra.")
 
     # ── 8. Vendedoras ─────────────────────────────────────────────────────────
     titulo("8 · USUARIOS  (para cruzar el responsable del lead con la vendedora del panel)")
@@ -242,8 +325,15 @@ def main():
         lista = emb(wh, "webhooks")
         print(f"   Webhooks configurados hoy: {len(lista)}")
         for w in lista:
-            print(f"      · {w.get('destination')}  eventos={w.get('settings')}")
-        print("   ✓ El plan permite webhooks." if not lista else "")
+            print(f"      · id={w.get('id')}  {w.get('destination')}")
+            print(f"        eventos={w.get('settings')}"
+                  f"   {'⛔ DESACTIVADO' if w.get('disabled') else '✓ activo'}")
+        if lista:
+            print("   ✓ El plan SÍ permite webhooks (hay al menos uno andando).")
+            print("     Si alguno escucha 'status_lead', Kommo ya avisa solo cuando una venta")
+            print("     cambia de etapa: no haría falta preguntarle cada 10 minutos.")
+        else:
+            print("   ✓ El plan permite webhooks, pero hoy no hay ninguno configurado.")
 
     titulo("LISTO")
     print("   Este relevamiento no modificó nada en Kommo.")

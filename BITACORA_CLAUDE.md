@@ -3043,6 +3043,84 @@ alcanza para un pedido completo.** O se crean esos campos en Kommo, o el lead en
 **borrador** y una persona completa la entrega en el panel. Esa decisión es del usuario y
 define cuánto trabajo es la fase 2.
 
+## 4bz. 🔌 Kommo — el relevamiento corrió, y lo que dijo (2026-09-04)
+
+El usuario corrió *Relevar Kommo (solo lectura)* (run 33893469199, ✅ 16 s).
+**Verificado primero lo que importa: el registro público NO tiene ni un dato de cliente.**
+Lo único que salió de un valor real fue *"texto de 16 caracteres"*.
+
+### Lo que se supo (cuenta id=36212623)
+
+- **Un solo embudo**: «Embudo de ventas» `id=13349719` (principal). Etapas:
+  `102961055` Leads Entrantes · `102961403` Nueva consulta · `108461343` Atendido ·
+  `103451379` No Responden · `102961423` Interesado · `102961411` Cotización enviada ·
+  `102961407` Agendado / Visita · `103450711` Compradores ·
+  **`142` «Pedido enviado – ganado»** · **`143` «Pedido cancelado – perdido»**.
+- **Campos del lead que sirven**: `1685406` «Dirección entrega» (text) ·
+  `1685416` «Fecha contrato» (date) · `1685408` «Método de pago» (Factura / Pago con
+  tarjeta / Efectivo) · `1685418` «Pago» (Completo / Déposito) · `1685410` «Descuento»
+  (5/10/15%) · `1750116` «Sucursal» (las 5 vendedoras con su tienda) ·
+  `2049570` «Canal» (Facebook, **Instagram bien escrito acá**, Tiktok, Visita tienda,
+  Referido, Cliente antiguo) · `1685412` «Razón de pérdida» · 12 campos `tracking_data` (utm/fbclid).
+- **Contacto**: `1685346` «Teléfono» (multitext) y `1685348` «Email». **24 de 25 leads
+  tienen contacto vinculado** → el celular está donde tiene que estar.
+- **Catálogo «Productos» `id=10902` tipo=products** — existe, con SKU, Descripción, PRECIO,
+  Grupo, External ID, Unit, Oferta especial, Precio al por mayor, Imagen.
+- **Vendedoras**: `14992439` Maria Flores · `14992447` Carola Chavez · `14992455` Isabel
+  Robledo · `14992463` Mirian Salazar · `15341099` Jonathan Monje · `14962271` Principal.
+  **No hay usuarios de Sueña** (Fernando, Juan Pablo, Mauricio) → ese Kommo es solo Heaven.
+- **⚠️ HAY UN WEBHOOK ANDANDO**: `https://tight-limit-134e.eduardoxyz22.workers.dev/kommo-hook`
+  con eventos `add_message`, **`status_lead`**, `update_talk`. Es un Worker de Cloudflare del
+  propio usuario. **Esto tumba la recomendación de §4by**: el plan SÍ permite webhooks, ya
+  hay un endpoint escuchando cambios de etapa, y `status_lead` es exactamente el disparador
+  que hace falta. Antes de elegir consulta periódica hay que preguntarle al usuario qué hace
+  ese Worker.
+
+### ⚠️ DOS ERRORES DEL PROPIO INSPECTOR — corregidos el mismo día
+
+1. **Marcó «Leads Entrantes» como el cierre de venta.** El script leía `status.type == 1`
+   como "ganado". **En Kommo `type=1` significa «sin clasificar» (Leads Entrantes)**, no
+   ganado. La etapa ganada es **siempre el id `142`** y la perdida el `143`, fijos en todos
+   los embudos (por eso son números chiquitos al lado de ids de 9 dígitos). Si esto no se
+   agarraba, toda la integración arrancaba disparando desde la etapa equivocada.
+2. **Informó «✓ fecha de entrega» cuando Kommo no la tiene.** El chequeo juntaba todos los
+   nombres de campo en un solo texto y preguntaba si aparecía la palabra; **«Dirección
+   entrega» contiene "entrega"**, así que daba por buenos dos casilleros a la vez. Ahora se
+   mira campo por campo, se exige el tipo (una fecha tiene que ser `date`) y se imprime
+   **cuál** campo dio la coincidencia, para poder auditarlo.
+
+**Lección**: el molde de `tests/test_kommo.py` estaba mal —ponía `type:1` en «Compradores»—
+y por eso el test no vio ninguno de los dos errores. Un molde que no se parece al sistema
+real no prueba nada. Ahora el molde imita a Kommo de verdad (ids 142/143, un campo de texto
+con la palabra "entrega" adentro) y hay regresiones explícitas para los dos errores.
+
+### ⚠️ Lo que la muestra NO pudo decir (y por qué hace falta correrlo de nuevo)
+
+Dijo **"0 de 25 leads con productos del catálogo enganchados"**, y **solo «Sucursal» venía
+llena** — ni Canal ni Fecha contrato, que `generar.py` lee todos los días sin problema. La
+explicación: **`/leads` sin ordenar devuelve los MÁS VIEJOS primero**, así que la muestra
+eran los primeros leads de la historia de la cuenta, casi vacíos. No decía nada de cómo se
+trabaja hoy. Corregido: ahora pide `order[id]=desc` y mira **tres** muestras — los 25 más
+nuevos, los 25 más nuevos **ya ganados (etapa 142)** ← la que decide, y los 25 más nuevos en
+«Compradores» — más una muestra de contactos para ver si el celular viene cargado.
+
+**Hasta que eso se corra, la pregunta clave sigue abierta: ¿las vendedoras enganchan los
+productos del catálogo al lead, o no?** De eso depende todo: si no lo hacen, el borrador
+llega sin productos y la integración pierde la mitad de la gracia.
+
+### Mapeo Kommo → pedido, con lo que hoy se sabe
+
+| Campo del panel | De dónde sale |
+|---|---|
+| cliente | `lead.name` o el contacto vinculado |
+| celular | contacto, campo `1685346` |
+| vendedor | `responsible_user_id` (tabla de arriba) o «Sucursal» `1750116` |
+| productos | `catalog_elements` + `metadata.quantity` — **por confirmar** |
+| dirección | campo `1685406` «Dirección entrega» |
+| canal | campo `2049570` |
+| pagado / a cuenta | campos `1685418` «Pago» + `lead.price` |
+| **fecha entrega, turno, zona, Maps, N° nota** | **no existen en Kommo** |
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
@@ -3057,18 +3135,29 @@ define cuánto trabajo es la fase 2.
 
 1. **Reactivar `--bake-ai`** en panel.yml cuando terminen los ajustes de diseño (el usuario avisará).
 2. **Conversión global** (ficha del Pulso, hoy = cierres÷leads "caja"): decidir si pasa a cohorte. Pendiente de decisión del usuario.
-3. Corregir el typo **"Instragram" → "Instagram"** en el campo Canal de Kommo (el código lo tolera).
+3. ~~Corregir el typo "Instragram" → "Instagram" en el campo Canal de Kommo~~ — **el
+   relevamiento del 04/09 lo mostró bien escrito** en las opciones del campo `2049570`.
+   Si el typo aparece todavía, está en las **tags** de algún lead viejo, no en el campo.
 4. Borrar `.pages-redeploy` (archivo basura de los redeploys forzados) en algún commit futuro.
 5. Token Kommo expira ~2026-10-28 (secret `KOMMO_TOKEN`).
-6. **Integración Kommo → panel de pedidos** — ▶️ EN MARCHA desde el 04/09 (ver §4by).
-   - **Paso 1 hecho:** `inspeccionar_kommo.py` + workflow `relevar-kommo.yml` (solo lectura).
-     **Falta que el usuario lo corra:** Actions → *Relevar Kommo (solo lectura)* → Run workflow,
-     y pegue el resultado. Sin eso, el mapeo se diseñaría a ciegas.
-   - **Paso 2 (bloqueado por el 1):** definir qué etapa dispara el pedido y el mapeo de campos.
-   - **Paso 3:** la integración por consulta periódica (no webhook — ver §4by el porqué).
-   - **Decisión pendiente del usuario:** a Kommo le faltan fecha de entrega, turno, zona,
-     dirección y Maps. ¿Se crean esos campos en Kommo, o el lead entra al panel como BORRADOR
-     y alguien completa la entrega ahí?
+6. **Integración Kommo → panel de pedidos** — ▶️ EN MARCHA desde el 04/09 (ver §4by y §4bz).
+   - **Paso 1 hecho y CORRIDO** (run 33893469199): estructura relevada, sin filtrar datos.
+     Los hallazgos, el mapeo y los dos errores del inspector están en **§4bz**.
+   - **Paso 1b — FALTA CORRERLO DE NUEVO:** el inspector se arregló (etapa ganada = id 142,
+     no `type==1`; y la muestra ahora pide los leads **más nuevos** y mira la etapa ganada
+     aparte). Actions → *Relevar Kommo (solo lectura)* → Run workflow.
+     **La pregunta que tiene que contestar: ¿los leads ganados traen productos del catálogo
+     enganchados?** Si no, el borrador llega sin productos.
+   - **Preguntar al usuario:** ¿qué hace el Worker
+     `tight-limit-134e.eduardoxyz22.workers.dev/kommo-hook`? Ya escucha `status_lead`, o sea
+     que Kommo **sí** puede avisar solo cuando una venta cambia de etapa. Eso puede reemplazar
+     la consulta periódica que recomendaba §4by.
+   - **Paso 2 (bloqueado por 1b):** qué etapa dispara el pedido. Candidatas: `142` «Pedido
+     enviado – ganado» (el cierre formal) o `103450711` «Compradores».
+   - **Decisión pendiente del usuario:** a Kommo le faltan **fecha de entrega, turno, zona,
+     link de Maps y N° de nota de venta** (dirección SÍ la tiene: campo `1685406`).
+     ¿Se crean esos campos en Kommo, o el lead entra al panel como BORRADOR y alguien
+     completa la entrega ahí? Ya se le explicó el camino del borrador paso a paso.
    - (Diferida el 2026-07-24 por decisión del usuario; retomada el 2026-09-04.)
    - Objetivo: que crear/mover un lead en Kommo genere el pedido en el panel (`pedidos.html`) automáticamente.
    - Diseño propuesto: webhook de Kommo por cambio de etapa → `doPost` del Apps Script del panel →

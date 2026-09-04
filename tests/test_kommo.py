@@ -36,20 +36,29 @@ SECRETOS = {
 
 RESP = {
     "/account": {"id": 31234567, "name": "Heaven Colchones"},
+    # ⚠️ Este molde imita a Kommo DE VERDAD, y eso importa: la primera versión ponía
+    #    type=1 en «Compradores», el script leyó type=1 como "ganado" y el relevamiento
+    #    real terminó marcando «Leads Entrantes» como el cierre de venta. En Kommo type=1
+    #    es «sin clasificar»; la etapa ganada SIEMPRE es el id 142 y la perdida el 143.
     "/leads/pipelines": {"_embedded": {"pipelines": [{
         "id": 9911, "name": "Ventas", "is_main": True,
         "_embedded": {"statuses": [
-            {"id": 1, "name": "Incoming leads", "type": 0},
-            {"id": 2, "name": "Nueva consulta", "type": 0},
-            {"id": 3, "name": "Cotizacion enviada", "type": 0},
-            {"id": 4, "name": "Compradores", "type": 1},
-            {"id": 5, "name": "No Responden", "type": 2},
+            {"id": 102961055, "name": "Leads Entrantes", "type": 1},
+            {"id": 102961403, "name": "Nueva consulta", "type": 0},
+            {"id": 102961411, "name": "Cotizacion enviada", "type": 0},
+            {"id": 103450711, "name": "Compradores", "type": 0},
+            {"id": 103451379, "name": "No Responden", "type": 0},
+            {"id": 142, "name": "Pedido enviado - ganado", "type": 1},
+            {"id": 143, "name": "Pedido cancelado - perdido", "type": 2},
         ]}}]}},
     "/leads/custom_fields": {"_embedded": {"custom_fields": [
         {"id": 501, "name": "Canal", "type": "select",
          "enums": [{"id": 1, "value": "Facebook"}, {"id": 2, "value": "Instragram"}]},
         {"id": 502, "name": "Observaciones", "type": "textarea"},
         {"id": 503, "name": "Fecha de compra", "type": "date"},
+        # La trampa que hizo fallar al relevamiento real: este campo tiene la palabra
+        # "entrega" pero es TEXTO, no fecha. No puede contar como "fecha de entrega".
+        {"id": 504, "name": "Dirección entrega", "type": "text"},
     ]}},
     "/contacts/custom_fields": {"_embedded": {"custom_fields": [
         {"id": 601, "name": "Teléfono", "type": "multitext"},
@@ -82,6 +91,12 @@ RESP = {
             "id": 44002, "name": "OTRO CLIENTE",
             "custom_fields_values": [{"field_id": 997, "values": [{"value": SECRETOS["telefono"]}]}],
             "_embedded": {"contacts": [], "catalog_elements": []}},
+    ]}},
+    "/contacts": {"_embedded": {"contacts": [
+        {"id": 5501, "name": SECRETOS["nombre"], "custom_fields_values": [
+            {"field_id": 601, "values": [{"value": SECRETOS["telefono"]}]},
+            {"field_id": 602, "values": [{"value": SECRETOS["email"]}]}]},
+        {"id": 5502, "name": "OTRO CLIENTE", "custom_fields_values": []},
     ]}},
     "/users": {"_embedded": {"users": [
         {"id": 101, "name": "Maria Flores"}, {"id": 102, "name": "Isabel Robledo"}]}},
@@ -138,6 +153,19 @@ for k, v in SECRETOS.items():
 # 2) …pero sí la estructura, que es para lo que sirve
 chk("dice las etapas del pipeline", "Compradores" in salida and "Cotizacion enviada" in salida)
 chk("marca cuál es la etapa de venta ganada", "GANADO" in salida)
+
+# ⚠️ REGRESIÓN: el relevamiento real marcó «Leads Entrantes» como el cierre de venta porque
+# el script leía type=1 como "ganado". En Kommo type=1 es "sin clasificar". La etapa ganada
+# es la 142. Si esto vuelve a romperse, todo el diseño de la integración arranca torcido.
+_lin_ganado = [l for l in salida.splitlines() if "✅ GANADO" in l]
+chk("⚠️ el ✅ GANADO cae en la etapa 142, no en «Leads Entrantes»",
+    len(_lin_ganado) == 1 and "id=142" in _lin_ganado[0],
+    "" if len(_lin_ganado) == 1 and "id=142" in _lin_ganado[0] else _lin_ganado)
+chk("…y «Leads Entrantes» queda marcada como sin clasificar",
+    any("Leads Entrantes" in l and "sin clasificar" in l for l in salida.splitlines()))
+chk("marca también la etapa perdida (143)",
+    any("PERDIDO" in l and "id=143" in l for l in salida.splitlines()))
+
 chk("lista los campos del lead con su id", "id=501" in salida and "Canal" in salida)
 chk("…y las opciones de los desplegables", "Facebook" in salida)
 chk("lista los campos del contacto", "Teléfono" in salida or "id=601" in salida)
@@ -147,11 +175,26 @@ chk("dice la cantidad de un producto enganchado", "cantidad=2" in salida)
 chk("lista las vendedoras", "Maria Flores" in salida)
 
 # 3) el diagnóstico de lo que FALTA en Kommo
-chk("⚠️ avisa que Kommo NO tiene fecha de entrega", "✗ fecha de entrega" in salida)
+#    ⚠️ REGRESIÓN: el molde tiene «Dirección entrega», un campo de TEXTO con la palabra
+#    "entrega" adentro. Tiene que contar como dirección y NO como fecha de entrega. La
+#    primera versión juntaba todos los nombres en un solo texto y ese campo daba por buenos
+#    los dos casilleros: el relevamiento real informó una fecha de entrega que no existe.
+chk("⚠️ un campo de TEXTO con la palabra «entrega» no cuenta como fecha de entrega",
+    "✗ fecha de entrega" in salida)
+chk("…pero sí cuenta como dirección, y dice qué campo la cubre",
+    any(l.strip().startswith("✓ dirección") and "Dirección entrega" in l
+        for l in salida.splitlines()))
 chk("…ni turno", "✗ turno AM/PM" in salida)
-chk("…ni zona ni dirección ni maps",
-    "✗ zona" in salida and "✗ dirección" in salida and "✗ link de Maps" in salida)
+chk("…ni zona ni maps", "✗ zona" in salida and "✗ link de Maps" in salida)
 chk("…y lo resume en una línea accionable", "Kommo NO tiene:" in salida)
+
+# 3b) la muestra de leads tiene que pedirse de lo MÁS NUEVO hacia atrás y mirar la etapa
+#     ganada aparte. Sin eso la muestra son los primeros leads de la historia de la cuenta.
+chk("⚠️ pide los leads del más nuevo al más viejo", "MÁS NUEVOS" in salida)
+chk("…y mira aparte la etapa donde la venta ya está cerrada",
+    "YA GANADOS" in salida and "la muestra que decide" in salida)
+chk("mira los contactos para ver si el celular viene cargado",
+    "Contactos mirados" in salida)
 
 # 4) los valores se describen sin mostrarse
 chk("los valores se describen por su FORMA, no por su contenido",
