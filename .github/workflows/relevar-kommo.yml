@@ -1,0 +1,36 @@
+name: Relevar Kommo (solo lectura)
+
+# Botón manual en la pestaña Actions. NO tiene cron a propósito: se corre cuando hace falta
+# ver cómo está armado Kommo, no todos los días.
+#
+# ⚠️ El repositorio es PÚBLICO, así que este registro lo puede leer cualquiera.
+#    `inspeccionar_kommo.py` está escrito para no imprimir NINGÚN dato de clientes:
+#    solo estructura (etapas, nombres de campos, catálogos) y la FORMA de los valores.
+#    Si algún día se le agrega algo que imprima contenido de un lead, hay que volver a
+#    mirar esto primero.
+on:
+  workflow_dispatch:
+
+# Solo lectura: este workflow no commitea nada.
+permissions:
+  contents: read
+
+concurrency:
+  group: relevar-kommo
+  cancel-in-progress: false
+
+jobs:
+  relevar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Preguntarle a Kommo cómo está armado
+        env:
+          KOMMO_TOKEN: ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+        run: python inspeccionar_kommo.py

@@ -2995,6 +2995,54 @@ las palabras reservadas); y el fixture no tenía ninguna entrega de HOY, así qu
   falso, porque después ya no se puede provocar).
 - Batería: **27 suites · 858 checks · 0 fallas**.
 
+## 4by. 🔌 Kommo — paso 1: relevar antes de integrar (2026-09-04)
+
+*"ahora cómo procedemos a integrar kommo"*. El obstáculo real no es el código: es que
+**nadie sabe todavía cómo está armado Kommo por dentro**, y desde el sandbox no se puede
+mirar (el proxy bloquea `eanez.kommo.com` con 403). Diseñar el mapeo a ciegas sería
+inventarlo dos veces.
+
+**⚠️ EL DATO QUE CAMBIÓ EL DISEÑO: el repositorio es PÚBLICO** (`visibility: public`,
+confirmado por la API de GitHub). Los registros de Actions de un repo público **los lee
+cualquiera**. Un inspector que volcara leads al log estaría publicando nombres, teléfonos y
+direcciones de clientes en internet. Por eso `inspeccionar_kommo.py`:
+
+- imprime **estructura**: pipelines, etapas con su id, campos personalizados con id/tipo/
+  opciones, campos del contacto, catálogos y nombres de producto, vendedoras, webhooks;
+- de los valores de un lead imprime solo **la forma** — *"texto de 43 caracteres"*,
+  *"número de 8 dígitos"*, *"enlace"* — nunca el contenido;
+- del token dice solo cuántos caracteres tiene.
+
+`tests/test_kommo.py` lo corre contra un Kommo de mentira **cargado a propósito con datos
+personales realistas** y comprueba que ninguno salga. Verificado con dientes: inyectando un
+`print` del lead crudo, el test marca 3 fallas. **22 checks.**
+
+El workflow `relevar-kommo.yml` es `workflow_dispatch` puro (sin cron) y
+`permissions: contents: read` — no commitea nada, no toca nada en Kommo.
+
+**Lo que ya se sabe y no hace falta relevar** (de §4b/§4c): los productos viven en el
+catálogo como `catalog_elements` con `metadata.quantity`, y `doSave` upsertea por `id`, así
+que un id `kommo-<leadId>` da idempotencia gratis — el mismo lead procesado dos veces no
+duplica el pedido.
+
+**Lo que el relevamiento tiene que decidir** (por eso se corre antes de escribir la
+integración): qué etapa dispara el pedido, qué campos existen de verdad, y si el plan
+permite webhooks.
+
+**Arquitectura recomendada — CONSULTA PERIÓDICA, no webhook.** Un workflow lee cada N
+minutos los leads en la etapa disparadora y los manda al Apps Script. Contra el webhook
+tiene tres ventajas: no depende de que el plan de Kommo los incluya, no hay que exponer ni
+asegurar un endpoint público, y el código vive en Python al lado de `generar.py`, que ya le
+habla a Kommo todos los días y funciona. El costo es un retraso de minutos, que para un
+pedido no es nada.
+
+**⚠️ Y la advertencia de fondo, que ya estaba anotada desde julio:** a Kommo le faltan
+*fecha de entrega, turno, zona, dirección y link de Maps*. Son exactamente los datos con los
+que el panel arma la ruta, controla los cupos y decide sábados y domingos. **Un lead no
+alcanza para un pedido completo.** O se crean esos campos en Kommo, o el lead entra como
+**borrador** y una persona completa la entrega en el panel. Esa decisión es del usuario y
+define cuánto trabajo es la fase 2.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
@@ -3012,7 +3060,16 @@ las palabras reservadas); y el fixture no tenía ninguna entrega de HOY, así qu
 3. Corregir el typo **"Instragram" → "Instagram"** en el campo Canal de Kommo (el código lo tolera).
 4. Borrar `.pages-redeploy` (archivo basura de los redeploys forzados) en algún commit futuro.
 5. Token Kommo expira ~2026-10-28 (secret `KOMMO_TOKEN`).
-6. **Integración Kommo → panel de pedidos** (diferida 2026-07-24, decisión del usuario "dejarlo pendiente").
+6. **Integración Kommo → panel de pedidos** — ▶️ EN MARCHA desde el 04/09 (ver §4by).
+   - **Paso 1 hecho:** `inspeccionar_kommo.py` + workflow `relevar-kommo.yml` (solo lectura).
+     **Falta que el usuario lo corra:** Actions → *Relevar Kommo (solo lectura)* → Run workflow,
+     y pegue el resultado. Sin eso, el mapeo se diseñaría a ciegas.
+   - **Paso 2 (bloqueado por el 1):** definir qué etapa dispara el pedido y el mapeo de campos.
+   - **Paso 3:** la integración por consulta periódica (no webhook — ver §4by el porqué).
+   - **Decisión pendiente del usuario:** a Kommo le faltan fecha de entrega, turno, zona,
+     dirección y Maps. ¿Se crean esos campos en Kommo, o el lead entra al panel como BORRADOR
+     y alguien completa la entrega ahí?
+   - (Diferida el 2026-07-24 por decisión del usuario; retomada el 2026-09-04.)
    - Objetivo: que crear/mover un lead en Kommo genere el pedido en el panel (`pedidos.html`) automáticamente.
    - Diseño propuesto: webhook de Kommo por cambio de etapa → `doPost` del Apps Script del panel →
      callback `GET /leads/{id}?with=catalog_elements,contacts` con `KOMMO_TOKEN` → escribir la fila del pedido.
