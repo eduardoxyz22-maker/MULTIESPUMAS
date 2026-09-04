@@ -345,6 +345,31 @@ const DIA = 86400000;
     productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2,precio:6510}], saldo:13020 }));
   chk('⚠️ un producto correcto NO genera ningún aviso', rOk.length===0, rOk.join(' ~ '));
 
+  /* ⚠️ KOMMO ESCRIBE TODO JUNTO. El nombre real que mandó Kommo en la primera prueba con
+     datos de verdad fue «TITANIO LATEX Med.Esp. 3.0PLZ 180X200CM». Comparando el texto
+     entero no coincidía con nada y el aviso «no está en el catálogo» saltaba en casi
+     todas las ventas — peor que no avisar, porque se aprende a ignorarlo. */
+  const rJunto = await revisar(Object.assign({}, base, {
+    productos:[{desc:'TITANIO ICE 160x190',medida:'',codigo:'',cant:1,precio:6510}], saldo:6510 }));
+  chk('⚠️ reconoce el producto aunque Kommo mande la medida pegada al nombre',
+      !rJunto.some(t=>/no está en el catálogo/.test(t)), rJunto.join(' ~ ').slice(0,120));
+
+  const rEsp = await revisar(Object.assign({}, base, {
+    productos:[{desc:'TITANIO LATEX Med.Esp. 3.0PLZ 180X200CM',medida:'',codigo:'',cant:1,precio:9000}],
+    saldo:9000 }));
+  chk('⚠️ el caso real: entiende que es TITANIO LATEX, no un desconocido',
+      !rEsp.some(t=>/no está en el catálogo/.test(t)), rEsp.join(' ~ ').slice(0,140));
+  chk('…y avisa que la medida 180x200 es ESPECIAL, que es el dato útil',
+      rEsp.some(t=>/Medida especial/.test(t) && /180x200/.test(t)), rEsp.join(' ~ ').slice(0,160));
+  chk('…sin gritar: es un aviso, no una alarma',
+      !rEsp.some(t=>/^alto\|📐/.test(t)), rEsp.filter(t=>/📐/.test(t)));
+
+  const rSabanas = await revisar(Object.assign({}, base, {
+    productos:[{desc:'JUEGO DE SABANAS TEKA 2,5 PLZ - PLOMO CL',medida:'',codigo:'',cant:1,precio:250}],
+    saldo:250 }));
+  chk('⚠️ pero lo que DE VERDAD no está sigue avisando',
+      rSabanas.some(t=>/no está en el catálogo/.test(t)), rSabanas.join(' ~ ').slice(0,120));
+
   const rCod = await revisar(Object.assign({}, base, {
     productos:[{desc:'SOFT ICE',medida:'160x190',codigo:'CH1201',cant:1,precio:6510}], saldo:6510 }));
   chk('⚠️ avisa si el código no coincide con el producto',

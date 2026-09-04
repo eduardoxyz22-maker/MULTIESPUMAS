@@ -6260,21 +6260,48 @@ function precioTipico(codigo){
   var b=a.slice().sort(function(x,y){return x-y;});
   return b[Math.floor(b.length/2)];
 }
+/* ⚠️ KOMMO ESCRIBE TODO JUNTO EN EL NOMBRE (§4cc).
+   El panel guarda producto y medida por separado («TITANIO LATEX» + «180x190»), pero en
+   Kommo el mismo producto se llama «TITANIO LATEX Med.Esp. 3.0PLZ 180X200CM». Comparando
+   el texto entero NADA coincidía, y el aviso «no está en el catálogo» saltaba en casi
+   todas las ventas — que es peor que no avisar: la vendedora aprende a ignorarlo.
+   Así que primero se parte el nombre: la medida por un lado, el producto por otro. */
+function medidaDeTexto(t){
+  var s=String(t==null?'':t).toLowerCase().replace(/[×✕✖]/g,'x');
+  var m=s.match(/(\d{2,3})\s*x\s*(\d{2,3})/);       // "180X200CM", "160 x 190"
+  return m ? (m[1]+'x'+m[2]) : '';
+}
+function limpiaNombreProd(t){
+  var s=String(t==null?'':t);
+  s=s.replace(/(\d{2,3})\s*[xX×✕✖]\s*(\d{2,3})\s*(cm)?/gi,' ');  // la medida en cm
+  s=s.replace(/\d+([.,]\d+)?\s*plz\.?/gi,' ');                    // "2,5 PLZ", "3.0PLZ"
+  s=s.replace(/med\.?\s*esp\.?/gi,' ');                           // "Med.Esp."
+  s=s.replace(/\s*-\s*[^-]{2,20}$/,' ');                          // " - PLOMO CL" (el color al final)
+  return s.replace(/\s+/g,' ').trim();
+}
 /* Busca el producto en el catálogo del panel (250 códigos, el del Excel de la empresa).
-   Primero por código; si no, por descripción + medida. */
+   Devuelve `por` para que quien pregunte sepa CUÁNTA confianza tenerle:
+     'codigo'          → el código coincide, es seguro
+     'nombre'          → producto y medida coinciden
+     'medida-especial' → el producto existe pero con OTRA medida (colchón a medida).
+                         En ese caso NO se devuelve el código: sería el de otra medida. */
 function buscaCatalogo(x){
   var cod=String((x&&x.codigo)||'').trim().toUpperCase();
   if(cod && CODIGOS[cod]) return { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m, por:'codigo' };
-  var d=normNombre((x&&x.desc)||''), me=normMedida((x&&x.medida)||'');
+
+  var crudo=String((x&&x.desc)||'');
+  var d=normNombre(limpiaNombreProd(crudo));
+  // La medida puede venir en su campo o escondida adentro del nombre (así la manda Kommo).
+  var me=normMedida((x&&x.medida)||'') || medidaDeTexto(crudo);
   if(!d) return null;
-  var suelto=null;
+  var especial=null;
   for(var k in CODIGOS){
     var v=CODIGOS[k];
     if(normNombre(v.d)!==d) continue;
-    if(me && normMedida(v.m)===me) return { code:k, d:v.d, m:v.m, por:'nombre' };
-    if(!suelto) suelto={ code:k, d:v.d, m:v.m, por:'nombre-sin-medida' };
+    if(!me || normMedida(v.m)===me) return { code:k, d:v.d, m:(me?v.m:''), por:'nombre' };
+    if(!especial) especial={ code:'', d:v.d, m:me, por:'medida-especial' };
   }
-  return suelto;
+  return especial;
 }
 /* Un celular boliviano al que se pueda llamar: 8 dígitos que empiezan en 6 o 7.
    Lo usa el chofer para avisar que está llegando; si está mal, la entrega se cae. */
@@ -6312,12 +6339,17 @@ function revisarBorrador(b){
   var out=[], prods=((b&&b.productos)||[]).filter(function(x){ return x && (x.desc||x.codigo); });
 
   // ── Los productos, contra el catálogo del panel ──────────────────────────
-  var desconocidos=[], noCoinciden=[], sinPrecio=0, suma=0, raros=[];
+  var desconocidos=[], noCoinciden=[], sinPrecio=0, suma=0, raros=[], especiales=[];
   prods.forEach(function(x){
     var cat=buscaCatalogo(x);
     var etq=String(x.desc||x.codigo||'—');
     if(!cat){ desconocidos.push(etq); }
-    else if(cat.por==='codigo' && normNombre(x.desc) && normNombre(cat.d)!==normNombre(x.desc)){
+    else if(cat.por==='medida-especial'){
+      /* El producto existe pero con otra medida: es un colchón A MEDIDA, que acá se
+         hacen seguido. NO es un error — es un dato que producción tiene que saber. */
+      especiales.push(esc(cat.d)+' en <b>'+esc(cat.m)+'</b>');
+    }
+    else if(cat.por==='codigo' && normNombre(x.desc) && normNombre(cat.d)!==normNombre(limpiaNombreProd(x.desc))){
       noCoinciden.push(etq+' → el código '+cat.code+' es «'+cat.d+'»');
     }
     var cant=Number(x.cant)||0;
@@ -6334,6 +6366,9 @@ function revisarBorrador(b){
   if(desconocidos.length)
     out.push({n:'alto', t:'📦 '+(desconocidos.length===1?'Este producto no está':'Estos productos no están')+
       ' en el catálogo del panel: <b>'+esc(desconocidos.join(', '))+'</b>. Elegilo de la lista al completar, o el almacén no va a saber qué sacar.'});
+  if(especiales.length)
+    out.push({n:'medio', t:'📐 <b>Medida especial</b> — '+especiales.join(' · ')+
+      '. El producto existe, pero no en esa medida: va a fábrica como pedido a medida. Confirmá la medida con el cliente.'});
   if(noCoinciden.length)
     out.push({n:'alto', t:'🏷️ El código no coincide con el producto: '+esc(noCoinciden.join(' · '))+'.'});
   if(raros.length)
@@ -7798,7 +7833,13 @@ function completarBorrador(id){
          entra con el código, la descripción y la medida como las conoce el almacén. Si no
          existe, entra tal cual vino y la revisión ya avisó que hay que elegirlo a mano. */
       var cat=buscaCatalogo(pr);
-      addProdRow(cat?cat.d:pr.desc, (cat&&cat.m)?cat.m:pr.medida, cat?cat.code:pr.codigo, pr.cant, pr.precio);
+      /* ⚠️ Con medida especial NO se copia el código: el del catálogo es el de OTRA
+         medida y el almacén sacaría el colchón equivocado. Va el producto y la medida
+         que pidió el cliente, y el código lo pone la vendedora si corresponde. */
+      addProdRow(cat ? cat.d : limpiaNombreProd(pr.desc)||pr.desc,
+                 (cat&&cat.m) ? cat.m : (pr.medida||medidaDeTexto(pr.desc)),
+                 (cat&&cat.code) ? cat.code : pr.codigo,
+                 pr.cant, pr.precio);
     }
   }
   else addProdRow();

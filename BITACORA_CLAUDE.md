@@ -3375,7 +3375,59 @@ dice explícitamente.
 - El celular sale del **contacto** (Kommo no lo tiene en el lead), los productos del
   catálogo `10902`, y a la vendedora se le saca la sucursal («Mirian Salazar - Mia Plaza»).
 
-### ⚠️ Requiere publicar el Apps Script — `SCRIPT_VERSION` = `2026-09-04-a`
+### ✅ CONFIGURADO Y ANDANDO — 2026-09-04 21:38 UTC
+
+El usuario hizo los cuatro pasos. La primera corrida del repaso
+(run **33921976316**, `workflow_dispatch`) lo confirma todo de una:
+
+```
+leads en la ventana: 3
+borradores NUEVOS creados: 2 de 3
+```
+
+Eso prueba **tres cosas a la vez**: Kommo contesta, el Apps Script `2026-09-04-a`
+**está publicado** (si no, la llamada habría rebotado), y la clave coincide (si no, habría
+devuelto «clave incorrecta»). El «2 de 3» prueba además que la deduplicación anda: la
+tercera venta ya estaba cargada.
+
+**El aviso «estos los perdió el webhook» en esta primera corrida es normal**: esas ventas
+pasaron a «Compradores» *antes* de que existiera el webhook. De acá en adelante, si ese
+aviso aparece seguido, el webhook no está entrando.
+
+El panel muestra el cartel de versión en **verde** (confirmado por el usuario).
+
+**✅ El webhook también quedó confirmado**: el usuario movió un lead de prueba a
+«Compradores» y apareció solo en la bandeja, sin correr nada. **La integración está
+completa y andando.**
+
+### ⚠️ Lo que enseñó la primera venta real: Kommo escribe todo junto
+
+El producto llegó como **«TITANIO LATEX Med.Esp. 3.0PLZ 180X200CM»** y el panel avisó
+*"no está en el catálogo"*. **TITANIO LATEX sí está** — lo que pasa es que el panel guarda
+producto y medida **por separado** y Kommo los manda pegados, con ruido en el medio
+(`Med.Esp.`, `3.0PLZ`) y a veces el color al final (`- PLOMO CL`).
+
+Comparando el texto entero **nada** coincidía, así que ese aviso iba a saltar en casi todas
+las ventas. **Eso es peor que no avisar**: la vendedora aprende a ignorarlo y el día que el
+aviso sea de verdad, tampoco lo mira.
+
+Ahora `buscaCatalogo()` primero **parte el nombre**: `medidaDeTexto()` saca la medida
+(«180X200CM» → `180x200`) y `limpiaNombreProd()` limpia el resto. Y aparece un tercer
+resultado además de "está" / "no está":
+
+- **`medida-especial`** — el producto existe pero **no en esa medida**. Acá se hacen
+  colchones a medida seguido, así que **no es un error**: es un dato que producción tiene
+  que saber. Sale como aviso suave: *"📐 Medida especial — TITANIO LATEX en 180x200… va a
+  fábrica como pedido a medida"*.
+- **⚠️ Y en ese caso NO se copia el código del catálogo**, porque el que hay es el de
+  **otra** medida (CH1131 es 180x190, no 180x200) y el almacén sacaría el colchón
+  equivocado.
+
+«JUEGO DE SABANAS TEKA» sigue avisando que no está, porque de verdad no está.
+
+### Los pasos de configuración (por si hay que rehacerlos)
+
+`SCRIPT_VERSION` = `2026-09-04-a`
 
 Es la primera vez desde el 22/08. Pasos, en orden:
 
