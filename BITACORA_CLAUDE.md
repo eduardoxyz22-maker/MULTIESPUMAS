@@ -3094,7 +3094,32 @@ y por eso el test no vio ninguno de los dos errores. Un molde que no se parece a
 real no prueba nada. Ahora el molde imita a Kommo de verdad (ids 142/143, un campo de texto
 con la palabra "entrega" adentro) y hay regresiones explícitas para los dos errores.
 
-### ⚠️ Lo que la muestra NO pudo decir (y por qué hace falta correrlo de nuevo)
+### ✅ La segunda corrida (run 33894331125) — acá se decide todo
+
+Con el inspector arreglado, las tres muestras dicen esto:
+
+| muestra | productos | contacto | monto | Fecha contrato | Canal |
+|---|---|---|---|---|---|
+| 25 más nuevos (cualquier etapa) | 2/25 | 25/25 | 2/25 | 2/25 | 13/25 |
+| **etapa GANADA (142)** | **0/5** | 5/5 | 2/5 | 3/5 | 1/5 |
+| **«Compradores» (103450711)** | **10/25** | **25/25** | **25/25** | **25/25** | **25/25** |
+
+**⚠️ EL DISPARADOR ES «Compradores», NO la etapa 142.** La 142 es la etapa "ganada" de
+sistema de Kommo, pero **este negocio no la usa**: tiene 5 leads en toda su historia y casi
+vacíos. Donde la venta queda registrada de verdad es **«Compradores»**, y ahí el dato está
+completo: 25/25 con monto, fecha de contrato, canal y contacto. Coincide con lo que
+`generar.py` ya asume desde siempre.
+
+*Nota sobre §4bz punto 1: la corrección era correcta sobre cómo funciona Kommo (142 es la
+etapa ganada de sistema) y equivocada sobre cómo trabaja el negocio. El dato mandó.*
+
+**Los productos: 10 de 25 (40%).** No es cero ni es todo — las vendedoras a veces enganchan
+los productos del catálogo al lead y a veces no. Cuando los enganchan, viene todo lo que
+hace falta: `cantidad=1`, `cantidad=2`, `precio=sí`. **El resto del pedido llega siempre.**
+
+**El celular: 25/25 contactos tienen Teléfono** (8 dígitos, o 11 con el 591). Nunca falta.
+
+### ⚠️ Lo que la primera muestra NO pudo decir (por qué hizo falta correr de nuevo)
 
 Dijo **"0 de 25 leads con productos del catálogo enganchados"**, y **solo «Sucursal» venía
 llena** — ni Canal ni Fecha contrato, que `generar.py` lee todos los días sin problema. La
@@ -3104,22 +3129,25 @@ trabaja hoy. Corregido: ahora pide `order[id]=desc` y mira **tres** muestras —
 nuevos, los 25 más nuevos **ya ganados (etapa 142)** ← la que decide, y los 25 más nuevos en
 «Compradores» — más una muestra de contactos para ver si el celular viene cargado.
 
-**Hasta que eso se corra, la pregunta clave sigue abierta: ¿las vendedoras enganchan los
-productos del catálogo al lead, o no?** De eso depende todo: si no lo hacen, el borrador
-llega sin productos y la integración pierde la mitad de la gracia.
+### Mapeo Kommo → pedido — CONFIRMADO con datos
 
-### Mapeo Kommo → pedido, con lo que hoy se sabe
+Disparador: el lead entra a **«Compradores» (`103450711`)** del embudo `13349719`.
 
-| Campo del panel | De dónde sale |
-|---|---|
-| cliente | `lead.name` o el contacto vinculado |
-| celular | contacto, campo `1685346` |
-| vendedor | `responsible_user_id` (tabla de arriba) o «Sucursal» `1750116` |
-| productos | `catalog_elements` + `metadata.quantity` — **por confirmar** |
-| dirección | campo `1685406` «Dirección entrega» |
-| canal | campo `2049570` |
-| pagado / a cuenta | campos `1685418` «Pago» + `lead.price` |
-| **fecha entrega, turno, zona, Maps, N° nota** | **no existen en Kommo** |
+| Campo del panel | De dónde sale | Llega |
+|---|---|---|
+| cliente | `lead.name` / contacto vinculado | 25/25 |
+| celular | contacto, campo `1685346` | **25/25** |
+| vendedor | `responsible_user_id` (o «Sucursal» `1750116`) | siempre |
+| canal | campo `2049570` | **25/25** |
+| monto de la venta | `lead.price` | **25/25** |
+| fecha de la venta | campo `1685416` «Fecha contrato» | **25/25** |
+| dirección | campo `1685406` «Dirección entrega» | a veces |
+| productos (código + cantidad + precio) | `catalog_elements` + `metadata.quantity` | **10/25 (40%)** |
+| forma de pago | `1685408` «Método de pago» + `1685418` «Pago» | a veces |
+| **fecha entrega, turno, zona, Maps, N° nota** | **no existen en Kommo** | nunca |
+
+**Idempotencia**: `doSave` upsertea por `id`, así que `id = 'kommo-<leadId>'` hace que el
+mismo lead procesado dos veces no duplique el pedido. No hace falta tocar el Apps Script.
 
 ## 5. Pendientes
 
@@ -3143,21 +3171,20 @@ llega sin productos y la integración pierde la mitad de la gracia.
 6. **Integración Kommo → panel de pedidos** — ▶️ EN MARCHA desde el 04/09 (ver §4by y §4bz).
    - **Paso 1 hecho y CORRIDO** (run 33893469199): estructura relevada, sin filtrar datos.
      Los hallazgos, el mapeo y los dos errores del inspector están en **§4bz**.
-   - **Paso 1b — FALTA CORRERLO DE NUEVO:** el inspector se arregló (etapa ganada = id 142,
-     no `type==1`; y la muestra ahora pide los leads **más nuevos** y mira la etapa ganada
-     aparte). Actions → *Relevar Kommo (solo lectura)* → Run workflow.
-     **La pregunta que tiene que contestar: ¿los leads ganados traen productos del catálogo
-     enganchados?** Si no, el borrador llega sin productos.
+   - **Paso 1b hecho** (run 33894331125, inspector corregido): el mapeo quedó **confirmado
+     con datos** — ver la tabla de §4bz. **El disparador es «Compradores» (`103450711`)**,
+     no la etapa 142 (que este negocio no usa: 5 leads en toda su historia).
    - **Preguntar al usuario:** ¿qué hace el Worker
-     `tight-limit-134e.eduardoxyz22.workers.dev/kommo-hook`? Ya escucha `status_lead`, o sea
-     que Kommo **sí** puede avisar solo cuando una venta cambia de etapa. Eso puede reemplazar
-     la consulta periódica que recomendaba §4by.
-   - **Paso 2 (bloqueado por 1b):** qué etapa dispara el pedido. Candidatas: `142` «Pedido
-     enviado – ganado» (el cierre formal) o `103450711` «Compradores».
+     `tight-limit-134e.eduardoxyz22.workers.dev/kommo-hook` (webhook id=47362831, activo)?
+     Ya escucha `status_lead`, o sea que Kommo **sí** puede avisar solo cuando una venta
+     cambia de etapa. Eso reemplazaría la consulta periódica que recomendaba §4by.
    - **Decisión pendiente del usuario:** a Kommo le faltan **fecha de entrega, turno, zona,
      link de Maps y N° de nota de venta** (dirección SÍ la tiene: campo `1685406`).
      ¿Se crean esos campos en Kommo, o el lead entra al panel como BORRADOR y alguien
      completa la entrega ahí? Ya se le explicó el camino del borrador paso a paso.
+   - **Lo que el borrador NO va a traer siempre: los productos (40%).** O la vendedora los
+     carga en el panel para el otro 60% (que es lo que hace hoy con el 100%), o se acostumbra
+     al equipo a enganchar siempre el catálogo en Kommo. Decisión del usuario.
    - (Diferida el 2026-07-24 por decisión del usuario; retomada el 2026-09-04.)
    - Objetivo: que crear/mover un lead en Kommo genere el pedido en el panel (`pedidos.html`) automáticamente.
    - Diseño propuesto: webhook de Kommo por cambio de etapa → `doPost` del Apps Script del panel →
