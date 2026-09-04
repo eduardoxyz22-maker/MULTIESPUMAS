@@ -3149,6 +3149,73 @@ Disparador: el lead entra a **«Compradores» (`103450711`)** del embudo `133497
 **Idempotencia**: `doSave` upsertea por `id`, así que `id = 'kommo-<leadId>'` hace que el
 mismo lead procesado dos veces no duplique el pedido. No hace falta tocar el Apps Script.
 
+## 4cb. 🛡️ Corregir un pedido borraba pagos, recibos y fotos (2026-09-04)
+
+Reportado por el dueño con capturas, en medio de otra tarea: *"algo importante y un bug
+grave! cuando un vendedor corrige un precio o algo se borran los archivos subidos y pagos
+realizados"* y *"cuando marcan pagado, y suben los respaldos sale esa alerta abajo, y si
+corrigen esa alerta se borra todos los pagos hechos"*.
+
+Eran **tres bugs encadenados**. Los tres reproducidos con Playwright **antes** de tocar
+nada — y el primer intento de reproducción dio un falso "✓ las fotos se conservaron"
+porque escribí el historial de pagos a mano y `anticipoDe()` leyó 0: el molde tiene que
+armarse con `textoCobros()`, la función del propio panel.
+
+### 1 · La falsa alarma
+
+Al marcar «SÍ, pagado» en el formulario, el pago entero se guarda como **ANTICIPO en el
+historial** y `p.acuenta` queda en **0** — a propósito, está comentado en `submitPedido`.
+Pero `ctaEditHtml` sembraba el campo «A cuenta» desde `p.acuenta` y `ctaRecalc` calculaba
+`total = acuenta + totalCobrado + saldo`. Como `cobrosDe()` **excluye el anticipo** por
+diseño, una venta de **Bs 16.920 ya cobrada** daba total **Bs 0** y avisaba:
+
+> ⚠️ Los precios suman Bs 16.920,00 — hay Bs 16.920,00 de más que el total.
+
+Sobre una venta perfecta. `ventaTotal()` siempre estuvo bien porque lee `anticipoDe()`;
+este panel era el único que se lo perdía.
+
+### 2 · Y «corregir» esa alerta borraba el pago
+
+`ctaGuardarMontos` compara el campo con `anticipoDe(p)`. Como el campo decía 0 y el
+anticipo real era 16.920, **cualquier guardado desde ese panel reescribía el historial**, y
+en `aplicarMontos` el renglón del anticipo solo se conserva `if(acu>0)` → con 0 **el pago y
+sus dos comprobantes desaparecían**, sin una sola pregunta, y la venta volvía a figurar por
+cobrar.
+
+**⚠️ Lo más grave, que el test destapó y yo no había visto:** no hacía falta tocar los
+montos. **Corregir SOLO un precio ya borraba el pago**, porque el guardado reescribe el
+historial igual. El check «⚠️ el pago no se movió» da `Bs 0` contra la versión publicada.
+
+### 3 · Editar desde el formulario borraba las fotos de la entrega
+
+`rec` se arma **de cero enumerando campos**, y `fotos` (columna 29, las que sube el chofer
+como prueba de entrega) **no estaba en la lista**. `recToRow` escribía la celda vacía y las
+imágenes quedaban huérfanas en Drive. Corregir una dirección bastaba. Nadie se enteraba
+hasta que alguien reclamaba una entrega y la prueba ya no estaba.
+
+### Los arreglos
+
+1. `ctaEditHtml` siembra «A cuenta» desde `anticipoDe(p)`, la misma fuente que `ventaTotal()`.
+2. `ctaGuardarMontos` **pregunta** antes de bajar o borrar un anticipo registrado, diciendo
+   cuánta plata se va, cuántos comprobantes tiene, y *"si solo querías corregir un PRECIO,
+   cancelá y tocá únicamente el precio"*.
+3. `rec` lleva `fotos: prev ? fotosDe(prev).slice() : []`, **y** —esto es lo que importa a
+   futuro— un **rescate general**: `if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }`.
+
+**La lección, que ya se pagó tres veces (§4bt fue la primera): enumerar campos a mano no
+escala.** Cada campo que alguien agregue a la planilla y olvide agregar a `rec` se borra en
+silencio al editar. El rescate general lo cubre solo. Lo que el formulario SÍ maneja ya
+está en `rec` y no se pisa — `test_noborra.js` §5 y §6 lo comprueban: lo corregido gana, y
+un pedido nuevo no hereda nada de otro.
+
+### El test
+
+`tests/test_noborra.js` — **35 checks**. Verificado con dientes: contra `origin/main`
+marca **16 fallas**; con el arreglo, 0. Cubre la falsa alarma, el aviso antes de borrar,
+que cancelar deje todo intacto, que corregir solo un precio no toque la plata, que editar
+por el formulario conserve fotos/pagos/recibos/NIT/**un campo inventado que el formulario
+no conoce**, y que un pedido nuevo nazca limpio.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado

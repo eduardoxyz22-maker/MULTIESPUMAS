@@ -4327,14 +4327,25 @@ function ctaEditHtml(p){
     '</div>';
   }).join('');
   var pagos=totalCobrado(p);
-  return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+  /* ⚠️ EL ADELANTO SE LEE DEL HISTORIAL, NO DE p.acuenta (§4cb).
+     Cuando la vendedora marca «SÍ, pagado» en el formulario, el pago entero se escribe
+     como un ANTICIPO en el historial —con su recibo y su foto— y `p.acuenta` queda en 0
+     a propósito (ver el comentario de submitPedido). Leyendo p.acuenta este panel veía
+     una venta de Bs 16.920 pagada como si el total fuera Bs 0 y gritaba «hay Bs 16.920
+     de más que el total»: una FALSA ALARMA sobre una venta perfecta. Y peor: quien
+     intentaba callarla tocando estos campos borraba el pago y sus recibos.
+     `anticipoDe()` es la misma fuente que usa ventaTotal(), que siempre estuvo bien. */
+  var _ant=anticipoDe(p);
+  var acuReal=r2(_ant ? (Number(_ant.monto)||0) : (Number(p.acuenta)||0));
+  var compsAnt=_ant ? compsArr(_ant.comps!=null?_ant.comps:_ant.comp).length : 0;
+  return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
     '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
       '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
     (prods.length?filas:'<div style="color:var(--muted);font-size:.83rem;padding:4px 0">Este pedido no tiene productos cargados.</div>')+
     '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-      '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto)</span></label>'+
-        '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+r2(Number(p.acuenta)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+      '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+')</span></label>'+
+        '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
         '<input type="number" id="cta-saldo" min="0" step="0.01" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
     '</div>'+
@@ -4382,6 +4393,24 @@ function ctaGuardarMontos(id){
   if(!acuEl||!salEl) return;
   var acu=parseFloat(acuEl.value)||0, sal=parseFloat(salEl.value)||0;
   if(acu<0||sal<0){ toast('Los montos no pueden ser negativos','err'); return; }
+  /* ⚠️ EL FRENO QUE FALTABA (§4cb).
+     Bajar el adelanto REESCRIBE el historial, y si queda en 0 el anticipo desaparece
+     con su recibo y su foto — plata que el contador ya dio por cobrada. Antes esto
+     pasaba en silencio: un clic y se iban Bs 16.920 y dos comprobantes, sin preguntar.
+     El formulario ya avisaba en un caso parecido; acá no había nada. */
+  var _antAct=anticipoDe(p);
+  var _montoAnt=r2(_antAct?(Number(_antAct.monto)||0):0);
+  var _compsAnt=_antAct?compsArr(_antAct.comps!=null?_antAct.comps:_antAct.comp).length:0;
+  if(_montoAnt>0.01 && acu<_montoAnt-0.01){
+    var _pierde = acu<=0.01;
+    if(!confirm('⚠️ '+(_pierde?'SE VA A BORRAR EL PAGO YA REGISTRADO':'SE VA A BAJAR EL PAGO YA REGISTRADO')+'\n\n'+
+        'Hoy figura cobrado: '+fmtBs(_montoAnt)+
+        (_compsAnt?('  ('+_compsAnt+(_compsAnt===1?' comprobante adjunto':' comprobantes adjuntos')+')'):'')+'\n'+
+        'Vos estás poniendo:  '+fmtBs(acu)+'\n\n'+
+        (_pierde ? 'Ese pago y su respaldo se borran y la venta vuelve a quedar por cobrar.\n\n'
+                 : 'Se reescribe el pago con el monto nuevo.\n\n')+
+        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')) return;
+  }
   // Los precios: se copian los productos para no dejar el pedido a medias si algo falla.
   var prods=(p.productos||[]).map(function(x,i){
     var el=document.getElementById('cta-pr-'+i);
@@ -5148,8 +5177,21 @@ function submitPedido(){
     vehiculo: prev ? (prev.vehiculo||'') : '',
     chofer: prev ? (prev.chofer||'') : '',
     nroDia: (_tienda || isEdit) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
-    ts: isEdit ? (prev?prev.ts:0) : Date.now()
+    ts: isEdit ? (prev?prev.ts:0) : Date.now(),
+    /* 📎 LAS FOTOS DE LA ENTREGA (§4cb).
+       Las sube el chofer con `pedirFoto()`, viven en la columna 29 y son el respaldo de
+       que el pedido llegó. `rec` se arma de CERO desde el formulario, así que sin esta
+       línea la vendedora las borraba con solo corregir un precio: `recToRow` escribía la
+       celda vacía y las imágenes quedaban huérfanas en Drive. Nadie se enteraba hasta que
+       alguien reclamaba una entrega y la prueba ya no estaba. */
+    fotos: prev ? fotosDe(prev).slice() : []
   };
+  /* ⚠️ RESCATE GENERAL — el mismo error ya se cometió tres veces (§4bt, §4cb).
+     `rec` se arma enumerando campos a mano, y CADA campo que alguien agregue mañana a la
+     planilla y olvide agregar acá se borra en silencio al editar. Enumerar no escala:
+     esto copia del pedido anterior cualquier campo que el formulario no maneje. Lo que el
+     formulario SÍ maneja ya está en `rec` y no se pisa. */
+  if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
