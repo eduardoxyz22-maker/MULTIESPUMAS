@@ -3330,9 +3330,89 @@ red que agarra las que se le pasaron, no un paso obligatorio.
 
 `tests/test_borradores.js` — **80 checks**, 0 fallas.
 
+## 4cc. ⚡ El aviso instantáneo de Kommo (2026-09-04)
+
+El dueño insistió tres veces con lo mismo, y tenía razón: *"un vendedor carga en Kommo y al
+minuto se va al panel… no le va a aparecer, ¿no?"*. **Si tiene que esperar, no lo usa.** Y
+si no lo usa, la bandeja solo sirve para las ventas que carga al día siguiente — la mitad
+del valor.
+
+Kommo **sí** avisa al instante: el Worker de Cloudflare del usuario lo demuestra (recibe
+`status_lead` en segundos). El problema nunca fue Kommo, era por dónde entra ese aviso.
+
+### La decisión: webhook nuevo → Apps Script, y repaso como red
+
+Se descartó **usar el Worker existente**: hoy mide el tiempo de primera respuesta, su código
+vive en Cloudflare y desde acá no se puede ver ni probar. Tocarlo pondría dos trabajos
+importantes en la misma canasta. Además el usuario avisó que le preocupaba el cupo de
+llamadas de Cloudflare — **este camino no le suma ni una**: Kommo permite varios webhooks y
+el nuevo apunta a Google, no a Cloudflare.
+
+Se descartó **solo el repaso periódico**: es exactamente lo que él objetaba.
+
+**⚠️ El repaso NO es opcional aunque el webhook ande.** Los webhooks se pierden —Kommo falla
+un envío, Google está caído medio minuto, la red se corta— y sin red de seguridad esa venta
+desaparecería hasta que el cliente reclame. `traer_kommo.py` corre cada 10 minutos con una
+ventana de **30** (más ancha que el intervalo a propósito: si una corrida falla, la
+siguiente alcanza a las que se le pasaron) y llama al **mismo** camino que el webhook
+(`action:'kommoLeads'`), así que hay **una sola implementación del borrador**.
+
+Si el repaso empieza a crear borradores seguido, el webhook no está andando: el registro lo
+dice explícitamente.
+
+### Lo que el backend hace, y lo que NO hace
+
+- **NUNCA toca una fila que ya existe.** Solo agrega, y solo si el lead no está cargado
+  (por id `kommo-<lead>` o por la marca `klead` que deja el panel). El peor error posible es
+  una fila de más, que se descarta con un clic.
+- **El borrador va con la FECHA VACÍA.** Ahí está la seguridad de fondo: `doSave` mira
+  `p.fecha` para el portero de cupos y el de días cerrados, así que sin fecha **no ocupa
+  lugar en ningún camión** ni le aparece al chofer. Con fecha sería un pedido fantasma en la
+  ruta de mañana.
+- **Sin clave configurada no acepta nada.** La dirección del Apps Script está dentro de
+  `pedidos.html`, que es una **página pública**: sin clave, cualquiera podría meter pedidos
+  falsos en la planilla. Falla cerrado a propósito.
+- El celular sale del **contacto** (Kommo no lo tiene en el lead), los productos del
+  catálogo `10902`, y a la vendedora se le saca la sucursal («Mirian Salazar - Mia Plaza»).
+
+### ⚠️ Requiere publicar el Apps Script — `SCRIPT_VERSION` = `2026-09-04-a`
+
+Es la primera vez desde el 22/08. Pasos, en orden:
+
+1. **Apps Script → ⚙️ Configuración del proyecto → Propiedades del script**, agregar:
+   `KOMMO_TOKEN` (el token largo), `KOMMO_HOOK_KEY` (una clave inventada y larga),
+   y opcionalmente `KOMMO_SUBDOMAIN` (`eanez`) y `KOMMO_ETAPA` (`103450711`).
+   **⚠️ El token NO va en el código: el repositorio es público.**
+2. **Implementar → Administrar implementaciones → ✏️ → Nueva versión → Implementar.**
+3. **Kommo → Configuración → Integraciones → Webhooks → Agregar**: la URL `/exec` del panel
+   con `?k=<la misma KOMMO_HOOK_KEY>`, evento *«Etapa del lead cambiada»* (`status_lead`).
+   **Es un webhook NUEVO**: el que apunta a Cloudflare no se toca.
+4. **Secrets de GitHub** para el repaso: `KOMMO_HOOK_KEY` y `PANEL_URL` (la misma URL `/exec`).
+
+Hasta que 1 y 2 no estén, el panel va a mostrar el aviso de versión vieja.
+
+### Los tests
+
+- `tests/test_hook.js` — **49 checks**. Carga el `.gs` en Node con Google simulado (planilla
+  en memoria, Kommo de mentira, propiedades de mentira). Comprueba lo que más importa: que
+  **no toque la fila que ya existía** (se compara byte a byte), que la fecha vaya vacía, que
+  sin clave o con clave equivocada no escriba nada, que el mismo lead dos veces no duplique,
+  que reconozca la marca `klead`, que si Kommo no contesta no deje una fila a medias, y que
+  `list`/`save`/`delete` sigan funcionando igual.
+- `tests/test_traer.py` — **19 checks**. Kommo de mentira con datos personales realistas:
+  ninguno sale al registro público, y tampoco el token, la clave ni la dirección del panel.
+  Verificado con dientes: inyectando un `print` del lead crudo, marca 2 fallas. Comprueba
+  además que al panel le manden **solo ids**, nunca nombres ni teléfonos.
+
 ## 5. Pendientes
 
-> **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
+> ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-04)
+> `SCRIPT_VERSION` pasó a **`2026-09-04-a`** por los borradores de Kommo (§4cc). **Los pasos
+> completos —propiedades del script, publicación y webhook en Kommo— están en §4cc.**
+> Hasta que se haga, el panel muestra el aviso de versión vieja y los borradores no llegan.
+> Lo de abajo es el historial de la publicación anterior.
+>
+> **✅ NO era pendiente hasta hoy: el Apps Script estaba publicado.** Deploy `2026-08-22-a`, confirmado
 > en verde el **22/08/2026** (§ del candado). Verificado de nuevo el 31/08: `SCRIPT_VERSION`
 > del `.gs` y `SCRIPT_VERSION_ESPERADA` del panel coinciden, y **nada tocó
 > `google-apps-script.gs` desde entonces** (`git log 96e9d05..main -- google-apps-script.gs`

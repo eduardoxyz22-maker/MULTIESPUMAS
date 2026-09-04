@@ -1,0 +1,42 @@
+name: Traer ventas de Kommo (respaldo)
+
+# El aviso INSTANTÁNEO lo manda Kommo por webhook directo al panel. Esto es la RED DE
+# SEGURIDAD: cada 10 minutos revisa si quedó alguna venta sin traer y la trae.
+#
+# ⚠️ No es opcional aunque el webhook ande bien: los webhooks se pierden —Kommo falla un
+#    envío, Google está caído medio minuto, la red se corta— y sin este repaso esa venta
+#    desaparecería sin que nadie se entere hasta que el cliente reclame.
+#
+# ⚠️ El repositorio es PÚBLICO y este registro también. `traer_kommo.py` no imprime
+#    ningún dato de clientes: solo cuántos leads miró y cuántos mandó.
+on:
+  schedule:
+    - cron: '*/10 * * * *'      # cada 10 minutos
+  workflow_dispatch:            # y a mano, para probar
+
+# Solo lectura: este workflow no commitea nada al repositorio.
+permissions:
+  contents: read
+
+# Que no se pisen dos corridas: si una tarda, la siguiente espera en vez de duplicar.
+concurrency:
+  group: traer-kommo
+  cancel-in-progress: false
+
+jobs:
+  traer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Traer las ventas que el webhook haya perdido
+        env:
+          KOMMO_TOKEN:     ${{ secrets.KOMMO_TOKEN }}
+          KOMMO_SUBDOMAIN: ${{ secrets.KOMMO_SUBDOMAIN }}
+          KOMMO_HOOK_KEY:  ${{ secrets.KOMMO_HOOK_KEY }}
+          PANEL_URL:       ${{ secrets.PANEL_URL }}
+        run: python traer_kommo.py

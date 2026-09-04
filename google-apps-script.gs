@@ -50,7 +50,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-08-22-a';
+var SCRIPT_VERSION = '2026-09-04-a';   // ⬅️ borradores de Kommo (§4cc)
 
 function jsonOut(obj) {
   return ContentService
@@ -65,9 +65,20 @@ function doGet(e) {
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
 function doPost(e) {
+  /* 📥 EL AVISO DE KOMMO (§4cc).
+     Kommo NO manda JSON: manda un formulario con claves tipo
+     "leads[status][0][id]". Por eso se mira ANTES del JSON.parse — si no, caía
+     siempre en "bad json" y el aviso se perdía en silencio.
+     ⚠️ La dirección de este script está dentro del panel, que es una página PÚBLICA:
+     cualquiera podría mandar pedidos falsos. Por eso exige una clave (?k=…) que solo
+     conocen Kommo y quien la configuró. Sin clave guardada, NO acepta nada. */
+  if (e && e.parameter && (e.parameter.k || e.parameter.kommo)) return kommoHook(e);
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { return jsonOut({ ok:false, error:'bad json' }); }
   var action = body.action || 'save';
+  // El repaso de respaldo (workflow de GitHub) manda los ids que encontró. Mismo camino
+  // que el webhook: una sola implementación, dos formas de disparar.
+  if (action === 'kommoLeads') return kommoLeads(body);
   // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
   // Devuelve tambien la VERSION: asi el panel sabe si lo que esta publicado es este archivo
   // o una implementacion vieja (guardar el codigo NO alcanza, hay que crear version nueva).
@@ -593,4 +604,202 @@ function purgeBackups_(folder, keep) {
   while (it.hasNext()) files.push(it.next());
   files.sort(function (a, b) { return b.getDateCreated() - a.getDateCreated(); });
   for (var i = keep; i < files.length; i++) files[i].setTrashed(true);
+}
+
+/* ============================================================================
+ * 📥 BORRADORES DE KOMMO (§4cc)
+ *
+ * Cuando una venta pasa a «Compradores» en Kommo, Kommo avisa acá y esta parte deja
+ * el BORRADOR en la planilla: cliente, celular, productos y monto ya cargados. La
+ * vendedora solo completa la entrega (fecha, turno, zona) en el panel.
+ *
+ * ⚠️ UN BORRADOR NO ES UN PEDIDO. Va con la fecha VACÍA y con la marca
+ * `Estado stock = "Borrador Kommo"`. Con la fecha vacía no pasa por el portero de
+ * cupos ni por el de días cerrados (mirá doSave: los dos preguntan por p.fecha), así
+ * que NO ocupa lugar en ningún camión. Y el panel los saca de la lista de pedidos
+ * antes de que lleguen a ninguna pantalla.
+ *
+ * ⚠️ LO QUE ESTE CÓDIGO NUNCA HACE: tocar un pedido que ya existe. Solo agrega filas
+ * nuevas, y solo si ese lead no está ya cargado. El peor error posible es una fila de
+ * más, que se descarta con un clic desde el panel.
+ *
+ * ── CÓMO SE CONFIGURA (una sola vez) ────────────────────────────────────────
+ * 1. Apps Script → ⚙️ Configuración del proyecto → Propiedades del script → Agregar:
+ *      KOMMO_TOKEN      = el token largo de Kommo   (NUNCA en el código: esto es público)
+ *      KOMMO_HOOK_KEY   = una clave inventada, larga, ej. "hv7Kq2pR9mZx4Ln8"
+ *      KOMMO_SUBDOMAIN  = eanez                     (opcional, ya viene por defecto)
+ *      KOMMO_ETAPA      = 103450711                 (opcional, «Compradores»)
+ * 2. Implementar → Administrar implementaciones → ✏️ → Nueva versión → Implementar.
+ * 3. Kommo → Configuración → Integraciones → Webhooks → Agregar:
+ *      dirección: <la URL /exec del panel>?k=<la misma KOMMO_HOOK_KEY>
+ *      evento:    "Etapa del lead cambiada" (status_lead)
+ *    ⚠️ Es un webhook NUEVO. El que ya apunta a Cloudflare no se toca ni se reemplaza.
+ * ========================================================================== */
+var BORRADOR_EST = 'Borrador Kommo';
+var BORRADOR_PREF = 'kommo-';
+var KOMMO_ETAPA_DEFAULT = '103450711';   // «Compradores» del embudo 13349719
+var KOMMO_CATALOGO = 10902;              // catálogo «Productos»
+var KOMMO_CF_PRECIO = 1685378;           // campo PRECIO del catálogo
+var KOMMO_CF_TEL = 1685346;              // campo Teléfono del contacto
+var KOMMO_CF_DIR = 1685406;              // campo «Dirección entrega» del lead
+
+function kProp_(k, def) {
+  var v = PropertiesService.getScriptProperties().getProperty(k);
+  return (v == null || v === '') ? (def || '') : String(v);
+}
+
+/** Llamada a la API de Kommo. Devuelve null si algo falla (nunca revienta el webhook). */
+function kGet_(path) {
+  var tok = kProp_('KOMMO_TOKEN');
+  if (!tok) return null;
+  var url = 'https://' + kProp_('KOMMO_SUBDOMAIN', 'eanez') + '.kommo.com/api/v4' + path;
+  try {
+    var r = UrlFetchApp.fetch(url, {
+      method: 'get', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok }
+    });
+    if (r.getResponseCode() !== 200) return null;
+    return JSON.parse(r.getContentText());
+  } catch (err) { return null; }
+}
+
+function kEmb_(o, k) { return ((o || {})._embedded || {})[k] || []; }
+
+/** El valor de un campo personalizado, por id. */
+function kCampo_(o, fid) {
+  var a = (o && o.custom_fields_values) || [];
+  for (var i = 0; i < a.length; i++) {
+    if (String(a[i].field_id) === String(fid)) {
+      var v = (a[i].values || [])[0];
+      return v ? String(v.value == null ? '' : v.value) : '';
+    }
+  }
+  return '';
+}
+
+/* ── El webhook de Kommo ──────────────────────────────────────────────────── */
+function kommoHook(e) {
+  var clave = kProp_('KOMMO_HOOK_KEY');
+  // Sin clave configurada NO se acepta nada: es preferible que no funcione a que
+  // cualquiera pueda meter pedidos falsos en la planilla.
+  if (!clave) return jsonOut({ ok:false, error:'sin clave configurada' });
+  if (String(e.parameter.k || e.parameter.kommo || '') !== clave) return jsonOut({ ok:false, error:'clave incorrecta' });
+
+  var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT);
+  var p = e.parameter || {}, ids = [], i = 0;
+  /* Kommo manda "leads[status][0][id]", "leads[status][1][id]"… Se recorre hasta que
+     no haya más. El tope de 50 es para que un aviso raro no cuelgue el script. */
+  while (i < 50) {
+    var pre = 'leads[status][' + i + ']';
+    var id = p[pre + '[id]'];
+    if (!id) break;
+    if (String(p[pre + '[status_id]'] || '') === String(etapa)) ids.push(String(id));
+    i++;
+  }
+  return kommoProcesar_(ids, 'webhook');
+}
+
+/* ── El repaso de respaldo (workflow de GitHub) ───────────────────────────── */
+function kommoLeads(body) {
+  var clave = kProp_('KOMMO_HOOK_KEY');
+  if (!clave) return jsonOut({ ok:false, error:'sin clave configurada' });
+  if (String(body.key || '') !== clave) return jsonOut({ ok:false, error:'clave incorrecta' });
+  var ids = (body.leads || []).map(function (x) { return String(x); }).slice(0, 100);
+  return kommoProcesar_(ids, 'repaso');
+}
+
+function kommoProcesar_(ids, origen) {
+  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[] });
+  var lock = LockService.getScriptLock();
+  try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
+  try {
+    var hechos = [], saltados = [];
+    for (var i = 0; i < ids.length; i++) {
+      var r = crearBorradorDeLead_(ids[i]);
+      if (r === true) hechos.push(ids[i]); else saltados.push(ids[i] + ':' + r);
+    }
+    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
+                     creados:hechos.length, ids:hechos, saltados:saltados });
+  } finally { lock.releaseLock(); }
+}
+
+/** ¿Ese lead ya está cargado? Por id `kommo-<lead>` o por la marca `klead` que deja
+ *  el panel cuando la vendedora dice "esta venta ya la tenía cargada a mano". */
+function leadYaCargado_(sh, leadId) {
+  var last = sh.getLastRow();
+  if (last < 2) return false;
+  var idCol = sh.getRange(2, 1, last - 1, 1).getValues();
+  var buscado = BORRADOR_PREF + leadId;
+  for (var i = 0; i < idCol.length; i++) if (String(idCol[i][0]) === buscado) return true;
+  // La marca viaja adentro del JSON de productos (col 15), igual que el precio y las ATC.
+  var jsonCol = sh.getRange(2, 15, last - 1, 1).getValues();
+  var marca = '"klead":"' + leadId + '"';
+  for (var j = 0; j < jsonCol.length; j++) {
+    var t = String(jsonCol[j][0] || '');
+    if (t && t.replace(/\s/g, '').indexOf(marca) >= 0) return true;
+  }
+  return false;
+}
+
+/** Devuelve true si creó el borrador, o un texto con el motivo por el que no. */
+function crearBorradorDeLead_(leadId) {
+  var sh = getSheet();
+  if (leadYaCargado_(sh, leadId)) return 'ya estaba';
+
+  var lead = kGet_('/leads/' + leadId + '?with=contacts,catalog_elements');
+  if (!lead || !lead.id) return 'no se pudo leer el lead';
+
+  // ── El celular vive en el CONTACTO, no en el lead ──
+  var cel = '', cli = String(lead.name || '').trim();
+  var cts = kEmb_(lead, 'contacts');
+  if (cts.length) {
+    var ct = kGet_('/contacts/' + cts[0].id);
+    if (ct) {
+      cel = kCampo_(ct, KOMMO_CF_TEL);
+      if (!cli && ct.name) cli = String(ct.name);
+    }
+  }
+
+  // ── Los productos del catálogo, si la vendedora los enganchó ──
+  var prods = [], els = kEmb_(lead, 'catalog_elements');
+  if (els.length) {
+    var q = [];
+    for (var i = 0; i < els.length; i++) q.push('filter[id][]=' + encodeURIComponent(els[i].id));
+    var cat = kGet_('/catalogs/' + KOMMO_CATALOGO + '/elements?' + q.join('&'));
+    var porId = {};
+    kEmb_(cat, 'elements').forEach(function (el) { porId[String(el.id)] = el; });
+    for (var j = 0; j < els.length; j++) {
+      var meta = els[j].metadata || {}, el = porId[String(els[j].id)] || {};
+      var precio = Number(meta.price);
+      if (!(precio > 0)) precio = Number(kCampo_(el, KOMMO_CF_PRECIO)) || 0;
+      prods.push({ desc: String(el.name || '').trim(), medida: '', codigo: '',
+                   cant: Number(meta.quantity) || 1, precio: precio > 0 ? precio : undefined });
+    }
+  }
+
+  // ── La vendedora: Kommo la llama «Maria Flores - Buenos Aires» ──
+  var vend = '';
+  var us = kGet_('/users/' + lead.responsible_user_id);
+  if (us && us.name) vend = String(us.name).split(/\s+[-–]\s+/)[0].trim();
+
+  var borrador = {
+    id: BORRADOR_PREF + leadId,
+    fecha: '',                       // ⚠️ vacía: así no ocupa cupo ni pasa por el portero
+    oc: '', turno: '', zona: '', maps: '', nota: '', nroDia: 0,
+    vendedor: vend, cliente: cli, celular: cel,
+    productos: prods,
+    direccion: kCampo_(lead, KOMMO_CF_DIR),
+    pagado: false,
+    saldo: Number(lead.price) || 0,  // el monto de la venta, para que ella lo confirme
+    acuenta: 0, cobradoBs: 0, metodoPago: '',
+    observaciones: '',
+    estado: BORRADOR_EST,            // ⚠️ ESTA es la marca que lo distingue de un pedido
+    entregado: false, verificado: false,
+    vehiculo: '', chofer: '', garantia: '', facturarA: '', nit: '',
+    ts: Date.now(), fotos: []
+  };
+
+  var sh2 = getSheet();
+  sh2.appendRow(recToRow(borrador));
+  return true;
 }
