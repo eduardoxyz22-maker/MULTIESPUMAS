@@ -3456,6 +3456,54 @@ Hasta que 1 y 2 no estén, el panel va a mostrar el aviso de versión vieja.
   Verificado con dientes: inyectando un `print` del lead crudo, marca 2 fallas. Comprueba
   además que al panel le manden **solo ids**, nunca nombres ni teléfonos.
 
+## 4cd. 👯 El aviso de duplicada no decía qué ni con quién (2026-09-04)
+
+Reportado por el dueño: *"el bot que revisa duplicados solo dice «pepito está duplicado»,
+pero no dice QUÉ está duplicado —si el n° de nota, el comprobante— y CON QUIÉN. Pasé 10
+minutos buscando qué salía duplicado y resulta que pepito y juanito tenían el mismo número
+de nota."*
+
+**El sistema sabía las dos respuestas y no las mostraba.** Dos fallas del mismo tipo:
+
+1. **El chip.** `dupChip()` pintaba «⚠️ ¿DUPLICADA?» y el motivo vivía en el atributo
+   `title`, o sea **en el globito del mouse**. En el celular —que es donde miran esto— el
+   globito **no existe**. Además `marca[p.id]` guardaba solo el motivo (`'nota'`), un texto:
+   el grupo con los otros pedidos se calculaba y se tiraba.
+2. **El detalle de la auditoría.** Nombraba solo `g.ps[0]`, la primera del grupo. Con
+   PEPITO y JUANITO compartiendo la nota 645 decía literalmente
+   `"PEPITO PEREZ · Bs 3.400,00 · 2 veces (misma nota 645)"` — **Juanito no aparecía**.
+
+**Arreglo.** `marca[p.id]` ahora guarda `{motivo, clave, otros:[...]}` con el grupo entero,
+así el chip dice las tres cosas y se puede tocar para ir a la otra venta:
+
+> ⚠️ ¿DUPLICADA? misma **nota 645** que **JUANITO GOMEZ**
+
+Y el detalle de la auditoría nombra a **todos** los del grupo:
+`misma NOTA 645:  PEPITO PEREZ  ↔  JUANITO GOMEZ`.
+
+**La lección**: un aviso que obliga a buscar a mano lo que el sistema ya calculó es medio
+aviso, y entrena a la gente a no mirarlo. Ya había un comentario en el código diciendo
+justo eso sobre el aviso de huecos del talonario (*"listarlos ensucia el aviso — que es
+exactamente lo que le pasaba al de duplicados y por lo que nadie lo miraba"*): el problema
+era el mismo y estaba escrito ahí.
+
+**Y el chip distingue los dos casos**, porque el dato útil no es el mismo:
+- **misma nota** → los clientes son distintos, lo que hace falta es **quién**:
+  *«misma nota 645 que JUANITO GOMEZ»*.
+- **mismo cliente y monto** → el cliente ya está en la fila, repetirlo no aporta; lo que
+  sirve es **cuándo**: *«otra igual de Bs 2.000,00 el 13/08»*.
+
+**⚠️ Y una regresión mía que atrapó `test_revisar.js`:** al reescribir el detalle para
+nombrar a los dos en el caso de la nota, **le saqué el nombre del cliente al otro caso** y
+cambié «nota» por «NOTA», rompiendo cuatro checks que ya existían. Es exactamente para eso
+que están. Quedó anclado también en el test nuevo.
+
+`tests/test_dupaviso.js` — **18 checks**. Con dientes: contra `origin/main` marca **8
+fallas**. Comprueba que el chip diga qué coincide, cuál es el valor y con quién; que lleve
+a la otra venta sin abrir también la fila; y —mirando el bloque de `cuadreAlertas`, **no**
+el texto de la pantalla, porque los nombres también están en la tabla y el check pasaría
+en falso— que el detalle nombre a los dos.
+
 ## 5. Pendientes
 
 > ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-04)

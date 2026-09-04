@@ -2206,9 +2206,18 @@ function indiceDuplicados(list){
   });
   function marcar(g, motivo, clave){
     grupos.push({motivo:motivo, clave:clave, ps:g.slice()});
-    // La primera señal que marca una venta manda su etiqueta: la nota repetida es la
-    // más fuerte, así que se junta primero.
-    g.forEach(function(p){ if(!marca[p.id]) marca[p.id]=motivo; });
+    /* La primera señal que marca una venta manda su etiqueta: la nota repetida es la
+       más fuerte, así que se junta primero.
+       ⚠️ Se guarda el GRUPO ENTERO, no solo el motivo (§4cd). Antes acá iba
+       `marca[p.id]=motivo` —un texto— y el aviso terminaba diciendo "¿DUPLICADA?" a secas:
+       ni qué estaba repetido ni con quién. El dueño perdió 10 minutos buscando a mano para
+       descubrir que dos clientes distintos tenían el mismo número de nota. El dato ya
+       estaba acá y se tiraba. */
+    g.forEach(function(p){
+      if(marca[p.id]) return;
+      marca[p.id] = { motivo:motivo, clave:clave,
+                      otros: g.filter(function(q){ return q.id!==p.id; }) };
+    });
   }
   for(var kn in porNota) if(porNota[kn].length>1) marcar(porNota[kn],'nota',kn);
   for(var kv in porVenta){
@@ -2279,12 +2288,35 @@ function huecosTalonario(list){
 /* Se recalcula UNA vez por render: mirarlo fila por fila sería recorrer toda la lista
    por cada fila. */
 var DUP_IDX={grupos:[], marca:{}, n:0};
+/* ⚠️ EL AVISO TIENE QUE DECIR QUÉ Y CON QUIÉN (§4cd).
+   *"solo dice pepito está duplicado, pero no dice QUÉ está duplicado —si el n° de nota, el
+   comprobante— y CON QUIÉN. Pasé 10 minutos buscando y resulta que pepito y juanito tenían
+   el mismo número de nota."*
+   Antes el motivo vivía en el `title` (el globito del mouse), que en el celular —donde
+   miran esto— NO EXISTE. Y el nombre del otro no aparecía en ningún lado. Un aviso que
+   obliga a buscar a mano lo que el sistema ya sabe es medio aviso.
+   Ahora dice las tres cosas: qué coincide, cuál es el valor, y con quién. Y se puede tocar
+   para ir directo a la otra venta. */
 function dupChip(p){
   var m=DUP_IDX.marca[p&&p.id]; if(!m) return '';
-  return '<br><span class="badge b-amber" title="'+(m==='nota'
-      ? 'Hay otra venta con el MISMO N° de nota de venta — un recibo no se repite'
-      : 'Hay otra venta del mismo cliente y por el mismo monto, con pocos días de diferencia')+
-    '">⚠️ ¿DUPLICADA?</span>';
+  var otros=(m.otros||[]);
+  var txt;
+  if(m.motivo==='nota'){
+    /* Con la misma nota los clientes son DISTINTOS: lo que hace falta saber es quién. */
+    var quien = otros.slice(0,2).map(function(q){ return esc(q.cliente||'—'); }).join(' y ') +
+                (otros.length>2 ? (' y '+(otros.length-2)+' más') : '');
+    txt = 'misma <b>nota '+esc(m.clave)+'</b>'+(quien?(' que <b>'+quien+'</b>'):'');
+  }else{
+    /* Acá el cliente es el MISMO, así que repetir su nombre no aporta nada: lo que sirve
+       es CUÁNDO es la otra, para poder ir a mirarla. */
+    var cuando = otros.map(function(q){ return esc(fmtFechaCorta(contaFecha(q))); }).join(' y ');
+    txt = 'otra igual de <b>'+esc(fmtBs(ventaTotal(p)))+'</b>'+(cuando?(' el <b>'+cuando+'</b>'):'');
+  }
+  var ir = otros.length===1
+      ? (' onclick="event.stopPropagation();showContaModal(\''+esc(String(otros[0].id))+'\')" '+
+         'style="cursor:pointer;text-decoration:underline" title="Abrir la otra venta"')
+      : '';
+  return '<br><span class="badge b-amber"'+ir+'>⚠️ ¿DUPLICADA? '+txt+'</span>';
 }
 function contaProdTxt(prods){
   return (prods||[]).map(function(x){
@@ -2846,12 +2878,18 @@ function cuadreAlertas(pagos){
   if(dup.n){
     A.push({k:'dup', sev:'plata', ico:'👯', txt:'<b>'+dup.n+'</b> venta'+(dup.n===1?'':'s')+' que puede'+(dup.n===1?'':'n')+
       ' estar <b>cargada'+(dup.n===1?'':'s')+' dos veces</b> — revisalas antes de facturar',
+      /* ⚠️ Nombra a TODOS los del grupo (§4cd). Antes mostraba solo `g.ps[0]`, así que si
+         PEPITO y JUANITO compartían la nota 645 el aviso decía "PEPITO · 2 veces" y había
+         que salir a buscar quién era el otro. */
       det:dup.grupos.map(function(g){
         var q=g.ps[0];
-        return { txt:(q.cliente||'—')+' · '+fmtBs(ventaTotal(q))+' · '+g.ps.length+' veces'+
-                     (g.motivo==='nota'
-                       ? (' (misma nota '+g.clave+')')
-                       : (' (mismo cliente y monto · '+g.ps.map(function(x){ return fmtFechaCorta(contaFecha(x)); }).join(' y ')+')')),
+        var quienes=g.ps.map(function(x){ return (x.cliente||'—'); }).join('  ↔  ');
+        return { txt: (g.motivo==='nota'
+                       /* Clientes distintos con la misma nota: los nombres son el dato. */
+                       ? ('misma nota ' + g.clave + ':  ' + quienes)
+                       /* Mismo cliente: su nombre una vez, y las dos fechas para comparar. */
+                       : ((q.cliente||'—') + ' · mismo cliente y monto ' + fmtBs(ventaTotal(q)) + ':  ' +
+                          g.ps.map(function(x){ return fmtFechaCorta(contaFecha(x)); }).join('  ↔  '))),
                  id:q.id };
       })});
   }
