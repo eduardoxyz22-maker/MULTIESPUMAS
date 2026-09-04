@@ -876,6 +876,8 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
              Plegar el resumen no puede esconder entregas que vienen. -->
         <div id="adm-fuera"></div>
+        <!-- 📥 Borradores de Kommo que quedaron sin vendedora (§4ca) -->
+        <div id="adm-borradores"></div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -899,6 +901,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-ghost btn-sm" onclick="refreshMis()">🔄 Actualizar</button>
         </div>
       </div>
+      <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
+           Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
+      <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
       <div class="qchips" id="mis-chips"></div>
       <div class="metrics" id="mis-metrics"></div>
@@ -1289,7 +1294,7 @@ function loadMirror(){
   try{ STATE=JSON.parse(localStorage.getItem(LS_KEY))||[]; }catch(e){ STATE=[]; }
   if(!Array.isArray(STATE))STATE=[];
   STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
-  loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror();
+  loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror(); loadBorrMirror();
 }
 function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
@@ -5176,8 +5181,12 @@ function submitPedido(){
     verificado: _tienda ? true : (prev ? !!prev.verificado : false),
     vehiculo: prev ? (prev.vehiculo||'') : '',
     chofer: prev ? (prev.chofer||'') : '',
-    nroDia: (_tienda || isEdit) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
-    ts: isEdit ? (prev?prev.ts:0) : Date.now(),
+    /* 📥 `isEdit` sin `prev` = un BORRADOR de Kommo que se está completando (§4ca): los
+       borradores no viven en STATE, así que no hay pedido anterior del cual heredar. Es un
+       pedido que nace ahora y necesita su número del día y su hora, no ceros — con nroDia 0
+       quedaba fuera del orden de carga del camión y con ts 0 aparecía como el más viejo. */
+    nroDia: (_tienda || (isEdit && prev)) ? (prev?(prev.nroDia||0):0) : nextNroDia(document.getElementById('f-fecha').value||todayStr()),
+    ts: (isEdit && prev) ? prev.ts : Date.now(),
     /* 📎 LAS FOTOS DE LA ENTREGA (§4cb).
        Las sube el chofer con `pedirFoto()`, viven en la columna 29 y son el respaldo de
        que el pedido llegó. `rec` se arma de CERO desde el formulario, así que sin esta
@@ -5351,6 +5360,12 @@ function submitPedido(){
   }
   function after(wasEdit){
     var _desde=EDIT_DESDE, _cam=_difEdit;      // resetForm() los pisa
+    /* 📥 Si era un borrador de Kommo, ya es un pedido: sale de la bandeja (§4ca).
+       Sin esto quedaba en las dos listas y parecía que no se había guardado. */
+    if(borradorDe(rec.id)){
+      BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(rec.id); });
+      saveBorrMirror(); renderBorrSiActivo();
+    }
     EDIT_ID=null; resetForm(); refreshDatalists();
     /* ⚠️ La venta de TIENDA también necesita el mensaje para el grupo. Antes se iba
        derecho a Contabilidad —el razonamiento era "no hay camión al que avisarle"— pero
@@ -6076,18 +6091,94 @@ function filaSistema(id, titulo, texto){
            vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'',
            nroDia:0, verificado:false, fotos:[] };
 }
+/* ============================================================================
+   📥 BORRADORES DE KOMMO (§4ca)
+
+   Una venta que en Kommo pasa a «Compradores» llega acá sola, con lo que Kommo
+   sí sabe —cliente, celular, canal, monto, vendedora, y los productos cuando la
+   vendedora los enganchó del catálogo—. Lo que Kommo NO tiene (fecha de entrega,
+   turno, zona, link de Maps, N° de nota) lo completa la vendedora en el panel.
+
+   ⚠️ UN BORRADOR NO ES UN PEDIDO. No ocupa cupo del camión, no le aparece al
+   chofer, no entra al cuadre, ni al mapa, ni a Contabilidad, ni a las estadísticas.
+   Eso NO se consigue poniendo `if(!esBorrador(p))` en cuarenta lugares —esa cuenta
+   se paga una vez y se olvida—: se consigue sacándolos de STATE en el único
+   embudo por el que pasa TODA lista que llega, igual que las filas del sistema.
+   Si un borrador aparece en algún lado donde no debe, el problema está acá y no
+   en la pantalla donde se vio.
+
+   El id es `kommo-<id del lead>`: como `doSave` upsertea por id, el mismo lead
+   procesado dos veces no duplica el pedido. La marca es `estado`, no la falta de
+   fecha, porque una venta de tienda también va sin fecha y se confundirían.
+
+   Al completarlo, el pedido conserva ese id (sigue atado a su lead) pero deja de
+   ser borrador solo: `submitPedido` arma `estado` desde el pedido anterior, y como
+   los borradores no están en STATE no hay anterior, así que sale en blanco.
+   ========================================================================== */
+var BORRADOR_EST='Borrador Kommo';
+var BORRADOR_PREF='kommo-';
+var LS_BORR='ME_BORRADORES_V1';
+var BORRADORES=[];
+function esBorrador(p){ return !!p && normNombre(p.estado)===normNombre(BORRADOR_EST); }
+function saveBorrMirror(){ try{ localStorage.setItem(LS_BORR, JSON.stringify(BORRADORES)); }catch(e){} }
+function loadBorrMirror(){
+  try{ var a=JSON.parse(localStorage.getItem(LS_BORR)||'[]'); BORRADORES=Array.isArray(a)?a:[]; }catch(e){ BORRADORES=[]; }
+}
+function borradorDe(id){
+  for(var i=0;i<BORRADORES.length;i++) if(String(BORRADORES[i].id)===String(id)) return BORRADORES[i];
+  return null;
+}
+/* ¿La vendedora que Kommo puso es una de las de la lista del panel? En Kommo se
+   llaman «Maria Flores - Buenos Aires» y acá «Maria Flores»: sin sacarle la
+   sucursal no le aparecería a nadie. El robot ya manda el nombre limpio, pero si
+   algún día llega con la sucursal pegada esto lo salva igual. */
+function vendedorDeBorrador(p){
+  var v=String((p&&p.vendedor)||'').trim();
+  if(!v) return '';
+  if(nombreConocido(v)) return nombreCanonico(v);
+  var corto=v.split(/\s+[-–]\s+/)[0].trim();      // "Maria Flores - Buenos Aires" → "Maria Flores"
+  return nombreConocido(corto) ? nombreCanonico(corto) : '';
+}
+function nombreConocido(v){
+  var k=normNombre(v);
+  for(var i=0;i<VENDEDORES.length;i++) if(normNombre(VENDEDORES[i])===k) return true;
+  return false;
+}
+/* Los de una vendedora, del más nuevo al más viejo. */
+function borradoresDe(v){
+  var k=normNombre(v);
+  if(!k) return [];
+  return BORRADORES.filter(function(p){ return normNombre(vendedorDeBorrador(p))===k; })
+                   .sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+}
+/* Los que quedaron sin dueña: en Kommo el responsable es la cuenta genérica, o alguien
+   que no está en la lista del panel. Si no se mostraran en algún lado, nadie los vería
+   nunca — por eso van a Administración. */
+function borradoresHuerfanos(){
+  return BORRADORES.filter(function(p){ return !vendedorDeBorrador(p); })
+                   .sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+}
+/* Cuántos días lleva esperando. Un borrador viejo es una venta que quizá ya se entregó
+   y nadie cargó: a partir de 3 días se pinta en rojo. */
+function diasDeBorrador(p){
+  var t=Number(p&&p.ts)||0; if(!t) return 0;
+  return Math.floor((Date.now()-t)/86400000);
+}
+
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
-  var resto=[], cie=null, arq=null, rets=[], car=null;
+  var resto=[], cie=null, arq=null, rets=[], car=null, borr=[];
   (lista||[]).forEach(function(p){
     if(esFilaCierre(p)) cie=p;
     else if(p && String(p.id)===ARQUEO_ID) arq=p;
     else if(p && String(p.id)===CARGA_ID) car=p;
     else if(esFilaRetiro(p)) rets.push(p);
+    else if(esBorrador(p)) borr.push(p);     // 📥 no es un pedido todavía (§4ca)
     else resto.push(p);
   });
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
+  BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
   if(cie){
     var crudoCie=String(cie.observaciones||'').trim();
     var delServidor=crudoCie.split(/[^\d-]+/)
@@ -6378,7 +6469,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -7296,6 +7387,132 @@ function misPendientes(mine){
   });
   return {sinStock:sinStock, sinGps:sinGps, sinFlete:sinFlete};
 }
+/* ============================================================================
+   📥 LA BANDEJA DE BORRADORES (§4ca)
+
+   Vive DENTRO de «Mis pedidos», que ya es una pantalla personal: cada vendedora
+   elige su nombre una vez y el celular se lo acuerda. Por eso no se mezclan —
+   Carola no ve los de Mirian— sin hacer nada nuevo: es el mismo filtro de siempre.
+   ========================================================================== */
+function renderBorrSiActivo(){
+  if(document.getElementById('mis-borradores')) renderBorradoresMis();
+  if(UNLOCKED && document.getElementById('adm-borradores')) renderBorradoresHuerfanos();
+}
+/* Lo que Kommo SÍ trajo, para que se vea de un vistazo qué hay que completar. */
+function borrResumenHtml(p){
+  var prods=(p.productos||[]).filter(function(x){ return x && (x.desc||x.codigo); });
+  var linea = prods.length
+    ? prods.map(function(x){
+        return esc(x.desc||x.codigo||'')+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(String(x.cant||1))+'</b>';
+      }).join('<br>')
+    : '<span style="color:#8a1c24;font-weight:700">Sin productos en Kommo — cargalos vos</span>';
+  var monto=Number(p.saldo)||Number(p.acuenta)||0;
+  var extras=[];
+  if(p.celular)   extras.push('📱 '+esc(p.celular));
+  if(monto)       extras.push('💵 '+fmtBs(monto));
+  if(p.direccion) extras.push('📍 '+esc(p.direccion));
+  return '<div style="font-size:.86rem;line-height:1.5">'+linea+'</div>'+
+         (extras.length ? '<div style="font-size:.8rem;color:var(--muted);margin-top:3px">'+extras.join(' &nbsp;·&nbsp; ')+'</div>' : '');
+}
+function borrCardHtml(p, conDuena){
+  var d=diasDeBorrador(p), viejo=d>=3;
+  var espera = d<=0 ? 'llegó hoy' : (d===1 ? 'espera desde ayer' : 'esperando hace '+d+' días');
+  var id=String(p.id);
+  return '<div style="background:#fff;border:1px solid '+(viejo?'var(--red-border)':'var(--amber-border)')+
+           ';border-radius:10px;padding:10px 13px;margin-bottom:8px">'+
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap">'+
+      '<b style="font-size:.96rem">'+esc(p.cliente||'(sin nombre)')+'</b>'+
+      '<span style="font-size:.76rem;color:'+(viejo?'var(--red)':'var(--muted)')+';font-weight:'+(viejo?'700':'400')+'">'+
+        (viejo?'⚠️ ':'')+esc(espera)+'</span>'+
+    '</div>'+
+    (conDuena&&p.vendedor ? '<div style="font-size:.78rem;color:var(--muted)">👤 '+esc(p.vendedor)+'</div>' : '')+
+    borrResumenHtml(p)+
+    '<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">'+
+      '<button class="btn btn-primary btn-sm" style="width:auto;padding:5px 14px" onclick="'+
+        esc("completarBorrador('"+id+"')")+'">Completar la entrega →</button>'+
+      '<button class="btn btn-ghost btn-sm" style="width:auto;padding:5px 11px" onclick="'+
+        esc("descartarBorrador('"+id+"')")+'">Descartar</button>'+
+    '</div>'+
+  '</div>';
+}
+function renderBorradoresMis(){
+  var box=document.getElementById('mis-borradores'); if(!box) return;
+  var mv=document.getElementById('mis-vendedor');
+  var v=(mv&&mv.value||'').trim();
+  var todos=MIS_TODOS && UNLOCKED;
+  var lista = todos ? BORRADORES.slice().sort(function(a,b){ return (b.ts||0)-(a.ts||0); })
+                    : borradoresDe(v);
+  if(!lista.length){ box.innerHTML=''; return; }
+  var n=lista.length;
+  box.innerHTML=
+    '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
+      'border-radius:10px;padding:12px 15px;margin-bottom:12px">'+
+      '<div style="font-size:.95rem;color:#7a5b00;margin-bottom:9px">'+
+        '📥 <b>'+n+(n===1?' venta vino':' ventas vinieron')+' de Kommo'+(todos?'':' a tu nombre')+
+        '</b> y '+(n===1?'le falta':'les falta')+' la entrega.'+
+        '<div style="font-size:.82rem;opacity:.9;margin-top:2px">'+
+          'Todavía no ocupan lugar en ningún camión: eso pasa cuando les pongas la fecha y guardes.</div>'+
+      '</div>'+
+      lista.slice(0,12).map(function(p){ return borrCardHtml(p, todos); }).join('')+
+      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')+
+    '</div>';
+}
+/* Los sin dueña van a Administración: si no, nadie los vería nunca. */
+function renderBorradoresHuerfanos(){
+  var box=document.getElementById('adm-borradores'); if(!box) return;
+  var lista=borradoresHuerfanos();
+  if(!lista.length){ box.innerHTML=''; return; }
+  var n=lista.length;
+  box.innerHTML=
+    '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
+      'border-radius:10px;padding:12px 15px;margin-bottom:12px">'+
+      '<div style="font-size:.95rem;color:#7a5b00;margin-bottom:9px">'+
+        '📥 <b>'+n+(n===1?' venta de Kommo quedó':' ventas de Kommo quedaron')+' sin vendedora.</b>'+
+        '<div style="font-size:.82rem;opacity:.9;margin-top:2px">'+
+          'En Kommo el responsable no es ninguna de las vendedoras del panel, así que no le aparece a nadie. '+
+          'Completala vos o corregí el responsable en Kommo.</div>'+
+      '</div>'+
+      lista.slice(0,12).map(function(p){ return borrCardHtml(p, true); }).join('')+
+      (n>12 ? ('<div style="font-size:.8rem;color:var(--muted)">… y '+(n-12)+' más</div>') : '')+
+    '</div>';
+}
+/* Abre el formulario con lo que Kommo trajo ya puesto. Conserva el id `kommo-…`:
+   así el pedido sigue atado a su lead y el robot no lo vuelve a crear. */
+function completarBorrador(id){
+  var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
+  showView('form'); resetForm();
+  EDIT_ID=String(rec.id); EDIT_DESDE='mis';
+  document.getElementById('edit-banner').classList.add('on');
+  var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value='';
+  document.getElementById('f-vendedor').value=vendedorDeBorrador(rec)||rec.vendedor||''; applyVendedorLite();
+  document.getElementById('f-cliente').value=rec.cliente||'';
+  document.getElementById('f-celular').value=rec.celular||'';
+  document.getElementById('f-direccion').value=rec.direccion||'';
+  document.getElementById('f-obs').value=rec.observaciones||'';
+  var box=document.getElementById('f-productos'); box.innerHTML='';
+  var prods=(rec.productos||[]).filter(function(x){ return x && (x.desc||x.codigo); });
+  if(prods.length){ for(var i=0;i<prods.length;i++){ var pr=prods[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio); } }
+  else addProdRow();
+  /* El monto que Kommo trae es el de la venta, no un cobro: entra como saldo por cobrar
+     y la vendedora lo corrige si ya cobró algo. */
+  var monto=Number(rec.saldo)||0;
+  if(monto){ document.getElementById('f-saldo').value=String(monto); }
+  pintarMotivoAtc(); renderCupoForm(); refreshDatalists();
+  var ff=document.getElementById('f-fecha'); if(ff) try{ ff.focus(); }catch(e){}
+  toast('Vino de Kommo. Falta la fecha de entrega, el turno y la zona.','ok', 5000);
+}
+function descartarBorrador(id){
+  var rec=borradorDe(id); if(!rec) return;
+  if(!confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
+  BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
+  saveBorrMirror(); renderBorrSiActivo();
+  if(CONNECTED){
+    apiDelete(id).then(function(res){ if(!(res&&res.ok)) toast('No se pudo descartar en el servidor. Actualizá.','err'); },
+                       function(){ toast('Sin conexión: puede reaparecer al actualizar.','err'); });
+  }
+  toast('Borrador descartado','ok');
+}
+
 function avisoMisHtml(mine){
   var q=misPendientes(mine), n=q.sinStock.length, g=q.sinGps.length, f=q.sinFlete.length;
   var fBs=0; q.sinFlete.forEach(function(p){ fBs=r2(fBs+envioPorCobrar(p)); });
@@ -7948,6 +8165,7 @@ function renderMis(){
   setVendedorMem(v);
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-lista'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
+  renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
   mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });

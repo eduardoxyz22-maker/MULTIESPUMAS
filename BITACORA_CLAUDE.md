@@ -3216,6 +3216,38 @@ que cancelar deje todo intacto, que corregir solo un precio no toque la plata, q
 por el formulario conserve fotos/pagos/recibos/NIT/**un campo inventado que el formulario
 no conoce**, y que un pedido nuevo nazca limpio.
 
+## 4ca. 📥 Borradores de Kommo — la bandeja (2026-09-04, EN CURSO, sin publicar)
+
+*"ok ejecuta y muestrame como quedaria antes de publicarlo y subirlo"*, después de
+*"¿y cómo sabrá cada vendedor cuál es su borrador? se mezclarán y aparecerán de todos"*.
+
+**No se mezclan** porque la bandeja vive **dentro de «Mis pedidos»**, que ya es una pantalla
+personal: cada vendedora elige su nombre una vez y el celular se lo acuerda. Kommo siempre
+dice de quién es cada venta (`responsible_user_id`), así que el borrador nace con dueña.
+
+**La invariante, y cómo se sostiene:** un borrador **no es un pedido** — no ocupa cupo, no
+le aparece al chofer, no entra al cuadre, ni al mapa, ni a Contabilidad. Eso **no** se
+consigue poniendo `if(!esBorrador(p))` en cuarenta pantallas: se consigue sacándolos de
+`STATE` dentro de **`leerCierresDeLista`**, el único embudo por el que pasa toda lista que
+llega (espejo local y servidor). Si un borrador aparece donde no debe, el problema está
+ahí, no en la pantalla donde se vio.
+
+- Marca: `estado = 'Borrador Kommo'`. **No** la falta de fecha: una venta de tienda también
+  va sin fecha y se confundirían.
+- Id: `kommo-<id del lead>` → como `doSave` upsertea por id, el mismo lead procesado dos
+  veces no duplica el pedido.
+- Al completarlo conserva ese id pero deja de ser borrador **solo**: `submitPedido` arma
+  `estado` desde el pedido anterior, y como los borradores no están en `STATE` no hay
+  anterior. Requirió un arreglo: `nroDia`/`ts` se heredaban del anterior y con `isEdit`
+  sin `prev` quedaban en **0** — el pedido salía fuera del orden de carga del camión.
+- Nombres: Kommo dice «Maria Flores - Buenos Aires» y el panel «Maria Flores».
+  `vendedorDeBorrador()` le saca la sucursal; sin eso no le aparecería a nadie.
+- Sin dueña (responsable = la cuenta genérica) → bandeja aparte en **Administración**.
+- A los 3 días el borrador se pinta en rojo: una venta vieja sin cargar es una venta que
+  quizá ya se entregó.
+
+`tests/test_borradores.js` — **48 checks**, 0 fallas.
+
 ## 5. Pendientes
 
 > **✅ NO es pendiente: el Apps Script YA está publicado.** Deploy `2026-08-22-a`, confirmado
