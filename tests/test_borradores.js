@@ -142,7 +142,17 @@ const DIA = 86400000;
   chk('⚠️ NO ve los de Mirian', !maria.txt.includes('LEAD DE MIRIAN'));
 
   const carola = await verComo('Carola Chavez');
-  chk('Carola no tiene borradores: no le aparece la bandeja', carola.html.trim()==='', carola.html.slice(0,60));
+  chk('Carola no tiene borradores: no le aparece la franja amarilla',
+      !/vinieron de Kommo/.test(carola.txt), carola.txt.slice(0,60));
+  /* *"¿y si llena Comprador en el CRM y a los 30 segundos va al panel? No le va a
+     aparecer, ¿no?"*. No. El riesgo no es el retraso —la entrega es para mañana— sino
+     que se quede esperando una bandeja vacía, o que piense que se rompió. */
+  chk('⚠️ pero sí le dice que NO espere: que cargue como siempre',
+      /No la esperes/.test(carola.txt), carola.txt.slice(0,110));
+  chk('…y le explica que el panel avisa si después llega de Kommo',
+      /ya la tenías/.test(carola.txt));
+  const nadie = await verComo('');
+  chk('sin elegir nombre no se muestra nada', nadie.html.trim()==='', nadie.html.slice(0,60));
 
   // ══ 4. Lo que la tarjeta le dice a la vendedora ════════════════════════════
   console.log('\n── 4. Qué dice la tarjeta ──');

@@ -3312,7 +3312,23 @@ existe acá, entra con el código, la descripción y la medida como las conoce e
 **La fecha de entrega sigue vacía a propósito.** Eso no se adivina, y es lo único que de
 verdad tiene que poner la vendedora.
 
-`tests/test_borradores.js` — **77 checks**, 0 fallas.
+### ⏱️ La vendedora no tiene que esperar nada
+
+*"¿y qué pasa si un vendedor llena Comprador en el CRM y a los 30 segundos va al panel? No
+le va a aparecer, ¿no?"*. **No le aparece**: el robot le pregunta a Kommo cada varios
+minutos, no al instante. Y el panel **no puede** preguntarle solo —el token es un secret de
+GitHub Actions y la página es pública; meterlo ahí sería regalarlo—.
+
+**El riesgo no es el retraso** (la entrega es para mañana) **sino que se quede mirando una
+bandeja vacía pensando que se rompió**, o que espere en vez de cargar. Por eso, cuando no
+hay borradores, «Mis pedidos» muestra una línea sola: *el panel revisa cada pocos minutos,
+no la esperes — cargala como siempre; si después llega de Kommo, el panel se da cuenta de
+que ya la tenías*. Que es exactamente lo que hace `gemeloDe()`.
+
+El orden natural (**panel primero, Kommo después**) sigue siendo el bueno. La bandeja es la
+red que agarra las que se le pasaron, no un paso obligatorio.
+
+`tests/test_borradores.js` — **80 checks**, 0 fallas.
 
 ## 5. Pendientes
 

@@ -7706,6 +7706,21 @@ function borrCardHtml(p, conDuena){
 }
 /* Abre la ficha del pedido que ya existe, para que pueda compararlos antes de decidir. */
 function verFichaGemela(id){ if(findById(id)) showMisModal(id); }
+/* ⚠️ LA VENDEDORA NO TIENE QUE ESPERAR NADA (§4ca).
+   Pregunta del dueño: *"¿y qué pasa si un vendedor llena Comprador en el CRM y a los 30
+   segundos va al panel? No le va a aparecer, ¿no?"*. No, no le aparece: el robot le
+   pregunta a Kommo cada varios minutos, no al instante.
+   El riesgo NO es el retraso —la entrega es para mañana— sino que se quede mirando una
+   bandeja vacía pensando que se rompió, o que espere en vez de cargar. Por eso, cuando no
+   hay nada, va una línea sola diciéndole justo eso: cargá nomás, el panel se da cuenta
+   después si ya la tenías. El orden natural (panel primero, Kommo después) sigue siendo
+   el bueno; la bandeja es la red que agarra las que se le pasaron. */
+function borrPieHtml(){
+  return '<div style="font-size:.78rem;color:var(--muted);margin:2px 0 12px;line-height:1.45">'+
+    '📥 <b>Kommo</b>: el panel revisa cada pocos minutos, así que una venta recién cerrada '+
+    'puede tardar en aparecer. <b>No la esperes</b> — cargala como siempre; si después llega '+
+    'de Kommo, el panel se da cuenta de que ya la tenías y te lo avisa.</div>';
+}
 function renderBorradoresMis(){
   var box=document.getElementById('mis-borradores'); if(!box) return;
   var mv=document.getElementById('mis-vendedor');
@@ -7713,7 +7728,7 @@ function renderBorradoresMis(){
   var todos=MIS_TODOS && UNLOCKED;
   var lista = todos ? BORRADORES.slice().sort(function(a,b){ return (b.ts||0)-(a.ts||0); })
                     : borradoresDe(v);
-  if(!lista.length){ box.innerHTML=''; return; }
+  if(!lista.length){ box.innerHTML = (v||todos) ? borrPieHtml() : ''; return; }
   precIdxReset();                      // los precios de referencia se recalculan por dibujado
   var n=lista.length;
   box.innerHTML=
