@@ -4013,6 +4013,35 @@ luz verde falsa sobre la única prueba que existe de que el test sirve.
 
 `tests/test_roho.js` **69 → 90**.
 
+## 4cm. 💡 Ideas para logística — sin empezar, para conversar (2026-09-05)
+
+El dueño pidió *"anda pensando cómo y qué más podemos implementar para mejorar a
+logística"*. Esto NO está empezado ni decidido: son candidatos, ordenados por lo que dicen
+**sus propios números** (los chips de Administración del 05/09: `Todos 106 · Por cobrar 60 ·
+Sin chofer 105 · No entregados 103 · Por verificar 71 · AM 74 · PM 32`).
+
+1. **🚚 Asignar chofer de a muchos, por zona.** `Sin chofer 105 de 106` es el número más
+   fuerte del panel. Si asignar es entrar ficha por ficha, nadie lo va a hacer. Una pantalla
+   «armar el camión del martes»: elegís día → ves los pedidos agrupados por zona → un chofer
+   a toda una zona de un toque. **Es el de mayor impacto por esfuerzo.**
+2. **📦 Los 71 «por verificar».** Almacén tiene que tildar producto por producto antes de
+   cargar. Si va atrasado, el camión sale con lo que no es. Una vista para almacén: qué hay
+   que revisar del camión de mañana, **agrupado por producto** (no por pedido), para contar
+   bultos de una.
+3. **🗺️ Orden de las paradas.** Ya hay coordenadas y mapa. Falta que la hoja de ruta salga
+   **numerada por cercanía** desde el depósito. Ahorra kilómetros y hace medible el día.
+4. **🚫 Entrega fallida con motivo.** Hoy un pedido está entregado o no. Falta «no se pudo,
+   porque…» (no estaba, dirección mal, rechazó). Sin eso no se puede saber cuánto se pierde
+   por dirección mala ni a quién avisarle antes de salir.
+5. **📲 Aviso al cliente el día de la entrega.** El panel ya arma mensajes de WhatsApp. Un
+   «salimos, llegamos entre las X y las Y» por parada baja las entregas fallidas — pero
+   depende de (3) para poder decir una hora creíble.
+6. **⏱️ Tiempos.** Nada mide entregas por chofer por día, ni % entregado en la fecha
+   pactada. Es lo que después permite discutir si hacen falta más camiones o no.
+
+⚠️ **Antes de construir cualquiera hay que preguntarle al dueño cómo se hace HOY.** El error
+de §4ck (inventar la zona por el nombre de una avenida) salió de suponer en vez de preguntar.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
