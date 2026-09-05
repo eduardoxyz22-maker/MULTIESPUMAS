@@ -3696,13 +3696,23 @@ el test, no por el panel (verificado con un script aparte: el refresco sí resta
 
 ## 5. Pendientes
 
-> ## ⚠️ HAY QUE VOLVER A PUBLICAR EL APPS SCRIPT: `2026-09-05-b` (2026-09-05)
-> Por §4cg: el sello ya no se puede omitir, forzar exige `ADMIN_KEY` con la puerta con
-> llave, y el aviso de Kommo lee `leads[add]`/`leads[update]`. Además, en Kommo hay que
-> agregar el evento **«Lead agregado»** al webhook. Verificación: Run workflow de «Traer
-> ventas de Kommo (respaldo)» → la línea `servidor del panel: versión 2026-09-05-b`.
+> ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-b` (2026-09-05, 14:55 UTC)
+> Confirmado en el registro del repaso (run 33973242047): `servidor del panel: versión
+> 2026-09-05-b`. Rige §4cg completo: el sello no se puede omitir, forzar exige `ADMIN_KEY`
+> con la puerta con llave, y el aviso de Kommo lee `leads[add]`/`leads[update]`.
+> En Kommo, «Lead agregado» **ya estaba tildado** (lo verificó el dueño con una captura):
+> el aviso llegaba y era el servidor el que no lo leía.
 >
-> ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-a` (2026-09-05, 14:23 UTC)
+> **La venta perdida se recuperó**: el repaso de las 14:48 UTC (run 33972925411) la creó
+> —`borradores NUEVOS creados: 1 de 1`, con el `.gs` viejo todavía—, y el de las 14:55 ya
+> dijo `0 de 1`. Es la primera vez que la red de seguridad de §4cf se usa de verdad, y
+> sirvió: sin la ventana de 12 horas no la habría alcanzado.
+>
+> **Lo que queda por ver**: que la PRÓXIMA venta creada directo en «Compradores» llegue
+> sola, sin correr el workflow. Si el repaso vuelve a decir `creados: 1 de 1`, el webhook
+> sigue sin llegar y hay que mirar Kommo, no el servidor.
+>
+> ## ✅ Publicación anterior: `2026-09-05-a` (2026-09-05, 14:23 UTC)
 > El dueño pegó el `.gs` e hizo *Nueva versión*. Confirmado desde afuera con el repaso de
 > Kommo (run 33971648264): `servidor del panel: versión 2026-09-05-a`. **Así se verifica de
 > ahora en más**: Actions → «Traer ventas de Kommo (respaldo)» → Run workflow → leer la
