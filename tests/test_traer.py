@@ -3,7 +3,8 @@
 """
 🔒 EL REPASO DE RESPALDO NO PUEDE FILTRAR DATOS DE CLIENTES.
 
-`traer_kommo.py` corre en GitHub Actions cada 10 minutos, y **este repositorio es público**:
+`traer_kommo.py` corre en GitHub Actions (el cron dice cada 10 minutos; en la práctica GitHub
+lo corre cada ~3,5 horas), y **este repositorio es público**:
 el registro de cada corrida lo puede leer cualquiera. Este test lo corre contra un Kommo de
 mentira cargado a propósito con datos personales realistas y comprueba que ninguno salga —
 ni el token, ni la clave del webhook, ni la dirección del panel.
@@ -58,7 +59,7 @@ def falso_urlopen(req, timeout=None):
     if "script.google.com" in url:
         ENVIADO.update(json.loads(req.data.decode()))
         ENVIADO["_url"] = url
-        return FalsaResp({"ok": True, "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"]})
+        return FalsaResp({"ok": True, "version": "2026-09-05-a", "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"]})
     PEDIDAS.append(url)
     return FalsaResp(LEADS)
 
@@ -100,8 +101,11 @@ chk("…y solo de su embudo", "13349719" in pedida)
 chk("…de lo más nuevo hacia atrás", "updated_at" in pedida and "desc" in pedida)
 chk("…con una ventana acotada en el tiempo", "filter%5Bupdated_at%5D%5Bfrom%5D" in pedida
     or "filter[updated_at][from]" in pedida, pedida[:130])
-chk("⚠️ la ventana es MÁS ANCHA que el intervalo del cron (si una corrida falla, la otra alcanza)",
-    traer_kommo.VENTANA_MIN >= 20, f"{traer_kommo.VENTANA_MIN} min vs cron de 10")
+"""⚠️ La cadencia REAL del cron en GitHub es ~3,5 horas, no 10 minutos (05/09/2026: 05:16,
+   09:08, 12:41 UTC), y a veces salta una corrida. La ventana tiene que cubrir DOS corridas
+   salteadas; con los 30 minutos de la primera versión el repaso no alcanzaba a nada."""
+chk("⚠️ la ventana cubre la cadencia REAL del cron (~3,5 h) aunque se salte dos corridas",
+    traer_kommo.VENTANA_MIN >= 8 * 60, f"{traer_kommo.VENTANA_MIN} min")
 
 chk("le manda los ids al panel", ENVIADO.get("leads") == ["44001", "44002"], ENVIADO.get("leads"))
 chk("…por el mismo camino que el webhook", ENVIADO.get("action") == "kommoLeads", ENVIADO.get("action"))
@@ -111,6 +115,8 @@ chk("⚠️ NO le manda nombres ni teléfonos al panel: solo ids",
 
 # 3) lo que informa en el registro
 chk("dice cuántos leads miró", "leads en la ventana: 2" in salida, salida[:200])
+chk("dice qué versión del Apps Script contestó (para verificar publicaciones desde afuera)",
+    "versión 2026-09-05-a" in salida, salida[-160:])
 chk("dice cuántos borradores nuevos creó", "borradores NUEVOS creados: 1 de 2" in salida)
 chk("⚠️ avisa que esos los perdió el webhook", "los perdió el webhook" in salida)
 

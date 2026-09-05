@@ -3615,6 +3615,25 @@ rechaza y la cola lo reencolaba igual — quedó en `try`.
    guarden mientras tanto queda en la cola y entra al ingresarla.
    Para mirar la planilla desde el navegador: `…/exec?k=LA_CLAVE`.
 
+## 4cf. ⏱️ El repaso «cada 10 minutos» corría cada 3,5 horas, y su ventana era de 30 (2026-09-05)
+
+Al buscar cómo verificar desde afuera que el dueño publicó el `.gs` (el sandbox no llega a
+Google), miré las corridas de `traer-kommo.yml`: **05:16, 09:08 y 12:41 UTC**. El cron dice
+`*/10 * * * *`, pero GitHub demora los crons frecuentes en repos gratuitos: **una corrida
+cada ~3,5 horas**, y a veces salta una. `traer_kommo.py` miraba **30 minutos** hacia atrás,
+elegidos con la idea de «más ancho que 10 minutos». Resultado: **la red de seguridad no
+alcanzaba a nada** que el webhook hubiera perdido más de media hora antes de la corrida.
+
+- `VENTANA_MIN` pasó a **12 horas** (cubre dos corridas salteadas) y `TOPE` a 100 (lo que
+  acepta `kommoLeads`). Repetir no cuesta: el panel descarta lo que ya tiene.
+- El script ahora le avisa al panel **siempre**, aunque no haya ids (con lista vacía no toca
+  nada), e imprime **`servidor del panel: versión …`**. Es la única forma de ver desde acá
+  qué Apps Script está publicado; la versión no es dato de nadie.
+- `test_traer.py` exige ventana ≥ 8 h y la línea de versión (20 checks).
+
+**Lección**: la cadencia de un cron se mira en las corridas, no en el yml. El «cada 10
+minutos» de §4cc era una suposición escrita como hecho.
+
 ## 5. Pendientes
 
 > ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-05)

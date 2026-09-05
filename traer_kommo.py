@@ -8,12 +8,16 @@ Esto NO reemplaza a ese aviso: lo respalda. **Los webhooks se pierden** —Kommo
 envío, Google está caído medio minuto, la red se corta— y sin una red de seguridad esa
 venta desaparecería sin que nadie se entere hasta que el cliente reclame.
 
-Cada corrida le pregunta a Kommo qué leads están en «Compradores» y se movieron en la
-última media hora, y le pasa los ids al panel. El panel ya sabe descartar los que están
+Cada corrida le pregunta a Kommo qué leads están en «Compradores» y se movieron en las
+últimas horas, y le pasa los ids al panel. El panel ya sabe descartar los que están
 cargados (por id `kommo-<lead>` o por la marca `klead`), así que repetir no duplica nada.
 
-La ventana es MÁS ANCHA que el intervalo a propósito: si una corrida falla, la siguiente
-igual alcanza a los que se le pasaron.
+⚠️ La ventana es MUCHO más ancha que el intervalo del cron a propósito. El cron dice
+«cada 10 minutos», pero GitHub demora los crons frecuentes en repos gratuitos: el 05/09
+las corridas reales fueron 05:16, 09:08 y 12:41 UTC — **una cada ~3,5 horas**, y a veces
+salta una. Con la ventana de 30 minutos de la primera versión, el repaso no alcanzaba a
+NADA de lo que el webhook hubiera perdido. Doce horas cubren dos corridas salteadas.
+Repetir no cuesta nada: el panel descarta lo que ya tiene.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ⚠️  ESTE REPOSITORIO ES PÚBLICO, ASÍ QUE EL REGISTRO DE ACTIONS TAMBIÉN LO ES.
@@ -35,9 +39,9 @@ HOOK_KEY  = os.environ.get("KOMMO_HOOK_KEY", "").strip()
 PIPELINE = os.environ.get("KOMMO_PIPELINE", "13349719").strip()
 ETAPA    = os.environ.get("KOMMO_ETAPA", "103450711").strip()   # «Compradores»
 
-# Cuánto hacia atrás mirar. Más ancha que el intervalo del cron a propósito (ver arriba).
-VENTANA_MIN = int(os.environ.get("VENTANA_MIN", "30"))
-TOPE = 50          # cuántos leads como mucho por corrida
+# Cuánto hacia atrás mirar. Más ancha que la cadencia REAL del cron (ver arriba).
+VENTANA_MIN = int(os.environ.get("VENTANA_MIN", str(12 * 60)))
+TOPE = 100         # cuántos leads como mucho por corrida (el panel acepta hasta 100)
 
 
 def api_get(path, params=None, _retry=0):
@@ -102,13 +106,18 @@ def main():
     leads = ((r.get("_embedded") or {}).get("leads") or [])
     ids = [str(x.get("id")) for x in leads if x.get("id")]
     print(f"   leads en la ventana: {len(ids)}")
-    if not ids:
-        print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")
-        return
 
+    # Se le avisa al panel SIEMPRE, aunque no haya ids: con la lista vacía no toca nada y
+    # contesta su versión. Es la única forma de ver desde afuera qué Apps Script está
+    # publicado (el sandbox de Claude no llega a Google), y la versión no es dato de nadie.
     res = avisar_al_panel(ids)
     if not res.get("ok"):
         sys.exit(f"✗ El panel no aceptó el aviso: {res.get('error')}")
+    print(f"   servidor del panel: versión {res.get('version') or '(no dice: es un Apps Script viejo)'}")
+
+    if not ids:
+        print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")
+        return
 
     creados = res.get("creados", 0)
     print(f"   borradores NUEVOS creados: {creados} de {len(ids)}")

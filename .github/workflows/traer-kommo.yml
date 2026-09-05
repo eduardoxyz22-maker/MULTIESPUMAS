@@ -1,7 +1,11 @@
 name: Traer ventas de Kommo (respaldo)
 
 # El aviso INSTANTÁNEO lo manda Kommo por webhook directo al panel. Esto es la RED DE
-# SEGURIDAD: cada 10 minutos revisa si quedó alguna venta sin traer y la trae.
+# SEGURIDAD: revisa si quedó alguna venta sin traer y la trae.
+#
+# ⚠️ El cron dice «cada 10 minutos», pero GitHub demora los crons frecuentes en repos
+#    gratuitos: en la práctica corre una vez cada ~3,5 horas (05/09: 05:16, 09:08, 12:41
+#    UTC). Por eso traer_kommo.py mira 12 horas hacia atrás y no 30 minutos.
 #
 # ⚠️ No es opcional aunque el webhook ande bien: los webhooks se pierden —Kommo falla un
 #    envío, Google está caído medio minuto, la red se corta— y sin este repaso esa venta
