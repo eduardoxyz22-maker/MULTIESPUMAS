@@ -237,8 +237,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     filas:[].slice.call(document.querySelectorAll('#modal-box tbody tr')).map(t=>t.textContent.replace(/\s+/g,' ').trim()),
     botones:[].slice.call(document.querySelectorAll('#modal-box .modal-actions button')).map(b=>b.textContent.trim())
   }));
+  /* El título dice «en la planilla» y ya no «creados» (§4cl): «creado» era ambiguo —lo
+     decía igual de uno que solo había quedado en la cola de este dispositivo—. */
   chk('⚠️ al terminar, el resultado ocupa la ventana entera (no un renglón perdido abajo)',
-      fin.abierto && /pedidos? de ROHO creados?/.test(fin.txt), fin.txt.slice(0,90));
+      fin.abierto && /pedidos? de ROHO en la planilla/.test(fin.txt), fin.txt.slice(0,90));
   chk('⚠️ …y dice, día por día, cómo quedó el CUPO del turno después de importar',
       /Cupo del turno/.test(fin.txt) && fin.filas.some(t=>/de \d+/.test(t)), fin.filas[0]||'');
   chk('…y qué notas entraron en cada día', fin.filas.some(t=>/1887\d\d|1888\d\d/.test(t)), fin.filas[0]||'');
@@ -334,6 +336,164 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y que se pueden volver a subir con el mismo Excel',
       /volv[ée] a subir el mismo Excel/.test(rech.resultado), rech.resultado.replace(/\s+/g,' ').slice(-160));
   chk('los demás sí entran', rech.guardados===rech.aCrear-2, rech.guardados+' de '+(rech.aCrear-2));
+
+  /* ══ 11. LOS CUATRO HALLAZGOS DE LA AUDITORÍA EXTERNA (§4cl) ══════════════
+     Los cuatro se reprodujeron antes de tocar nada, con los números exactos que decía el
+     informe. Quedan anclados acá porque ninguno de ellos rompe nada visible: el pedido se
+     crea igual, solo que con el turno, la cantidad o el estado equivocados. */
+  const armarLista = (page, notas) => page.evaluate((notas) => {
+    var c=document.getElementById('conn-form'); if(c) c.style.display='none';
+    CONNECTED=true; UNLOCKED=true; NO_ENCOLAR={};
+    try{ localStorage.removeItem(LS_PEND); }catch(e){}
+    STATE=[]; saveMirror(); window._g=[];
+    apiSave=function(rec){ window._g.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(STATE))}); };
+    ROHO_IMP={nuevos:notas, viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:notas.length};
+    ROHO_VIEJOS=false;
+  }, notas);
+
+  console.log('\n── 11. Reparto AM/PM: cada pedido se cuenta UNA vez ──');
+  let rep = await page.evaluate(async () => {
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var F=isoLocal(d), lista=[];
+    for(var i=0;i<12;i++) lista.push({ oc:'N'+i, fecha:F, cliente:'C', celular:'70000000',
+      direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] });
+    STATE=[]; saveMirror(); window._g=[];
+    apiSave=function(rec){ window._g.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
+    ROHO_IMP={nuevos:lista, viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:12};
+    ROHO_TURNO='repartir'; ROHO_VIEJOS=false;
+    confirmarImportRoho();
+    await new Promise(r=>setTimeout(r,2600));
+    return { am:window._g.filter(p=>p.turno==='AM').length, pm:window._g.filter(p=>p.turno==='PM').length,
+             lim:limTurno(F,'AM') };
+  });
+  chk('⚠️ con 12 lugares libres, los 12 van a AM (antes repartía 6 y 6)',
+      rep.am===12 && rep.pm===0, 'AM '+rep.am+' · PM '+rep.pm+' · límite AM '+rep.lim);
+
+  let sab = await page.evaluate(async () => {
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()!==6);
+    var F=isoLocal(d), lista=[];
+    for(var i=0;i<10;i++) lista.push({ oc:'S'+i, fecha:F, cliente:'C', celular:'70000000',
+      direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] });
+    STATE=[]; saveMirror(); window._g=[];
+    apiSave=function(rec){ window._g.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
+    ROHO_IMP={nuevos:lista, viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:10};
+    ROHO_TURNO='repartir';
+    confirmarImportRoho();
+    await new Promise(r=>setTimeout(r,2400));
+    return { am:window._g.filter(p=>p.turno==='AM').length, pm:window._g.filter(p=>p.turno==='PM').length,
+             limPM:limTurno(F,'PM') };
+  });
+  chk('⚠️ el SÁBADO no tiene turno PM: ninguno se manda ahí', sab.pm===0 && sab.am===10,
+      'AM '+sab.am+' · PM '+sab.pm+' · límite PM del sábado '+sab.limPM);
+
+  let parcial = await page.evaluate(async () => {
+    /* El AM ya tiene 10 de 12 ocupados por pedidos de otras vendedoras: solo 2 caben. */
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    var F=isoLocal(d);
+    STATE=[];
+    for(var k=0;k<10;k++) STATE.push({id:'otro'+k,fecha:F,turno:'AM',vendedor:'Mirian Salazar',
+      cliente:'X',oc:'x'+k,productos:[],celular:'',zona:'',direccion:'',maps:'',pagado:true,saldo:0,
+      ts:1,metodoPago:'',observaciones:'',estado:'',entregado:false,vehiculo:'',chofer:'',garantia:'',
+      nota:'',acuenta:0,facturarA:'',nit:'',nroDia:k+1,verificado:false,fotos:[]});
+    saveMirror(); window._g=[];
+    apiSave=function(rec){ window._g.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
+    var lista=[];
+    for(var i=0;i<5;i++) lista.push({ oc:'P'+i, fecha:F, cliente:'C', celular:'70000000',
+      direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] });
+    ROHO_IMP={nuevos:lista, viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:5};
+    ROHO_TURNO='repartir';
+    confirmarImportRoho();
+    await new Promise(r=>setTimeout(r,1800));
+    return { am:window._g.filter(p=>p.turno==='AM').length, pm:window._g.filter(p=>p.turno==='PM').length };
+  });
+  chk('⚠️ con el AM a 10 de 12, entran 2 al AM y el resto al PM', parcial.am===2 && parcial.pm===3,
+      'AM '+parcial.am+' · PM '+parcial.pm);
+
+  console.log('\n── 12. Creado ≠ guardado en la planilla ──');
+  let red = await page.evaluate(async () => {
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    STATE=[]; saveMirror(); try{ localStorage.removeItem(LS_PEND); }catch(e){}
+    window._g=[]; CONNECTED=true;
+    apiSave=function(){ return Promise.reject(new Error('sin señal')); };
+    ROHO_IMP={nuevos:[{ oc:'R1', fecha:isoLocal(d), cliente:'SIN RED', celular:'70000000',
+      direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] }], viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:1};
+    ROHO_TURNO='AM';
+    confirmarImportRoho();
+    await new Promise(r=>setTimeout(r,900));
+    var t=(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ');
+    return { confirmados:window._g.length, enCola:getPending().length, txt:t,
+             titulo:(document.querySelector('#modal-box .modal-h h3')||{}).textContent||'',
+             pie:(document.getElementById('footer').textContent||'') };
+  });
+  chk('⚠️ si se corta la red, NO dice que están en la planilla',
+      !/Ya están en la planilla/.test(red.txt), red.titulo);
+  chk('…lo dice al revés: no llegaron al servidor todavía',
+      /NO llegaron al servidor/.test(red.txt), red.txt.slice(0,120));
+  chk('⚠️ …y avisa que todavía NO ocupan lugar en ningún camión',
+      /no ocupan lugar/i.test(red.txt), red.txt.slice(0,220));
+  chk('el pedido no se pierde: queda en la cola de «sin enviar»', red.enCola===1, red.enCola);
+  chk('…y el pie de página lo muestra', /sin enviar/.test(red.pie), red.pie.slice(0,90));
+  chk('…y dice qué nota quedó pendiente', /R1/.test(red.txt), '');
+
+  let local = await page.evaluate(async () => {
+    var d=new Date(); do{ d.setDate(d.getDate()+1); }while(d.getDay()===0||d.getDay()===6);
+    STATE=[]; saveMirror(); try{ localStorage.removeItem(LS_PEND); }catch(e){}
+    CONNECTED=false;
+    ROHO_IMP={nuevos:[{ oc:'R2', fecha:isoLocal(d), cliente:'SIN PLANILLA', celular:'70000000',
+      direccion:'x', zona:'Norte', nit:'', pagado:true, obs:'', combos:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] }], viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:1};
+    ROHO_TURNO='AM';
+    confirmarImportRoho();
+    await new Promise(r=>setTimeout(r,700));
+    var t=(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ');
+    CONNECTED=true;
+    return { enCola:getPending().length, afirma:/Ya están en la planilla/.test(t) };
+  });
+  chk('⚠️ sin planilla conectada tampoco dice que están guardadas allá', local.afirma===false);
+  chk('…y queda en la cola, no solo en la pantalla (antes se perdía)', local.enCola===1, local.enCola);
+
+  console.log('\n── 13. La cantidad no se inventa ──');
+  const cant = await page.evaluate(() => {
+    var hdr={A:'FECHA PROGRAMADA',B:'# NOTA DE VENTA',C:'DESCRIPCION',D:'CANTIDAD',E:'NOMBRE CLIENTE',F:'DIRECCION',G:'STATUS'};
+    var d=new Date(); d.setDate(d.getDate()+3);
+    var serial=Math.round((d-new Date(Date.UTC(1899,11,30)))/86400000);
+    var fila=function(n,c){ return {A:String(serial),B:n,C:'COLCHON ECO FLEX 2 PLAZAS 140X190CM',D:c,E:'CLI',F:'calle',G:'PAGADA'}; };
+    STATE=[];
+    var res=rohoArmarPedidos([hdr, fila('Q1','0'), fila('Q2','-3'), fila('Q3','2,5'),
+                              fila('Q4','abc'), fila('Q5','4'), fila('Q6','2,0'), fila('Q7','1.0')]);
+    var imp={}; (res.nuevos||[]).forEach(function(p){ imp[p.oc]=(p.productos[0]||{}).cant; });
+    var mal={}; (res.malos||[]).forEach(function(p){ mal[p.oc]=p.malo; });
+    ROHO_IMP=res; ROHO_TURNO='AM'; ROHO_VIEJOS=false; renderImportRoho();
+    return { imp:imp, mal:mal, pantalla:(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ') };
+  });
+  chk('⚠️ «0», «-3», «2,5» y «abc» NO se convierten en 1', Object.keys(cant.mal).sort().join(',')==='Q1,Q2,Q3,Q4',
+      'rechazadas: '+Object.keys(cant.mal).join(',')+' · importadas: '+JSON.stringify(cant.imp));
+  chk('…esas notas no se importan', !('Q3' in cant.imp) && !('Q1' in cant.imp), JSON.stringify(cant.imp));
+  chk('⚠️ …y la vista previa dice cuál y por qué', /cantidad ilegible/.test(cant.pantalla) && /Q3/.test(cant.pantalla),
+      cant.pantalla.slice(cant.pantalla.indexOf('no se importa'), cant.pantalla.indexOf('no se importa')+150));
+  chk('«4» y «1.0» se leen bien', cant.imp.Q5===4 && cant.imp.Q7===1, JSON.stringify(cant.imp));
+  chk('…y «2,0» con coma también', cant.imp.Q6===2, cant.imp.Q6);
+
+  console.log('\n── 14. «NO PAGADO» no es pagado ──');
+  const pago = await page.evaluate(() => ({
+    pagada:rohoPagado('PAGADA'), pagado:rohoPagado('PAGADO'),
+    noPagado:rohoPagado('NO PAGADO'), noPagada:rohoPagado('NO PAGADA'),
+    pend:rohoPagado('PENDIENTE'), parcial:rohoPagado('PAGO PARCIAL'),
+    vacio:rohoPagado(''), raro:rohoPagado('EN REVISION'),
+    conocido:rohoEstadoConocido('EN REVISION'), conocido2:rohoEstadoConocido('PAGADA')
+  }));
+  chk('⚠️ «NO PAGADO» ya NO se lee como pagado', pago.noPagado===false && pago.noPagada===false,
+      'NO PAGADO→'+pago.noPagado+' · NO PAGADA→'+pago.noPagada);
+  chk('«PAGADA» y «PAGADO» sí', pago.pagada===true && pago.pagado===true);
+  chk('«PENDIENTE» y «PAGO PARCIAL» no', pago.pend===false && pago.parcial===false);
+  chk('⚠️ un estado que no se entiende queda como NO pagado (que el chofer pregunte es recuperable)',
+      pago.raro===false && pago.vacio===false);
+  chk('…y se sabe que no se entendió', pago.conocido===false && pago.conocido2===true);
 
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

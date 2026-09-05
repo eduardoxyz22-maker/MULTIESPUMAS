@@ -10132,6 +10132,37 @@ function rohoCel(t){
   var s=String(t==null?'':t).replace(/\D+/g,'').replace(/^591/,'');
   return /^[67]\d{7}$/.test(s) ? s : '';
 }
+/* 🔢 LA CANTIDAD NO SE INVENTA (§4cl).
+   Antes era `Math.max(1, Math.round(Number(v)||1))`, que convertía en **1** todo lo que no
+   entendía: «0», «-3», «abc» y —la peligrosa— «2,5», que es como escribe los decimales una
+   planilla en español. Una cantidad inventada manda el camión con 1 colchón cuando se
+   vendieron 4, y nadie se entera hasta que el cliente reclama.
+   Devuelve un entero positivo, o null si no se puede leer: ese pedido NO se importa y se
+   dice cuál es en la vista previa. */
+function rohoCant(v){
+  var s=String(v==null?'':v).trim().replace(',','.');
+  if(!s) return null;
+  var n=Number(s);
+  if(!isFinite(n) || n<=0) return null;
+  if(Math.abs(n-Math.round(n))>1e-9) return null;   // media unidad de un colchón no existe
+  return Math.round(n);
+}
+/* 💰 «NO PAGADO» NO ES PAGADO (§4cl).
+   Era `/PAGAD/i`, que da verdadero también para «NO PAGADO» — el chofer no cobraría.
+   Lo que no se reconoce queda como NO pagado a propósito: que el chofer pregunte es
+   recuperable; que no cobre porque el panel dijo «PAGADO», no. */
+function rohoPagado(t){
+  var s=String(t==null?'':t).toUpperCase().replace(/\s+/g,' ').trim();
+  if(!s) return false;
+  if(/\bNO\b|PENDIENTE|IMPAG|DEBE|SIN PAGAR|A CUENTA|PARCIAL/.test(s)) return false;
+  return /\bPAGAD[AO]S?\b/.test(s);
+}
+/* ¿El estado del Excel es uno que sabemos leer? Si no, se cuenta aparte y se avisa. */
+function rohoEstadoConocido(t){
+  var s=String(t==null?'':t).toUpperCase().replace(/\s+/g,' ').trim();
+  if(!s) return false;
+  return /\bPAGAD[AO]S?\b|\bNO\b|PENDIENTE|IMPAG|DEBE|SIN PAGAR|A CUENTA|PARCIAL/.test(s);
+}
 /* Las zonas que el equipo YA escribió en sus pedidos, de la más usada a la menos. */
 function zonasDelEquipo(){
   var c={}; STATE.forEach(function(p){ var z=String((p&&p.zona)||'').trim(); if(z) c[z]=(c[z]||0)+1; });
@@ -10259,13 +10290,21 @@ function rohoArmarPedidos(filas){
         celular: tel || wa,
         direccion: dir || ref, zona: rohoZona(dir+' '+ref),
         nit: String((col.nit?f[col.nit]:'')||'').replace(/\s+/g,' ').trim(),
-        pagado: /PAGAD/i.test(String((col.status?f[col.status]:'')||'')),
-        obs: obs.join(' · '), productos:[], combos:0
+        pagado: rohoPagado(col.status?f[col.status]:''),
+        estadoRaro: !rohoEstadoConocido(col.status?f[col.status]:''),
+        estadoTxt: String((col.status?f[col.status]:'')||'').trim(),
+        obs: obs.join(' · '), productos:[], combos:0, malo:''
       };
       orden.push(oc);
     }
     var p=porNota[oc];
-    var cant=Math.max(1, Math.round(Number(f[col.cant])||1));
+    var cant=rohoCant(f[col.cant]);
+    if(cant===null){
+      // No se inventa un 1: se marca la nota entera y no se importa (ver `rohoCant`).
+      var crudo=String(f[col.cant]==null?'':f[col.cant]).trim();
+      p.malo='cantidad ilegible'+(crudo?(' («'+crudo+'»)'):' (vacía)')+' en «'+desc.slice(0,38)+'»';
+      cant=1;
+    }
     var codRoho=String((col.cod?f[col.cod]:'')||'').trim();
     var partes=rohoPartirCombo(desc);
     if(partes.length>1) p.combos++;
@@ -10285,16 +10324,18 @@ function rohoArmarPedidos(filas){
      ⚠️ Y ANTES QUE NADA: si esa nota YA está cargada, no se toca. Se compara por N° de
      nota (en ROHO es el N° de OC) sin importar la fecha, así importar el mismo Excel todas
      las semanas solo agrega lo nuevo. */
-  var desde=tomorrowStr(), nuevos=[], viejos=[], yaEstan=[], sinFecha=[];
+  var desde=tomorrowStr(), nuevos=[], viejos=[], yaEstan=[], sinFecha=[], malos=[];
   orden.forEach(function(oc){
     var p=porNota[oc];
     var dup=ocRepetidaRoho(p.oc, null);
     if(dup){ p.dup=dup; yaEstan.push(p); }
+    else if(p.malo) malos.push(p);              // dato ilegible: no se importa (§4cl)
     else if(!p.fecha) sinFecha.push(p);
     else if(p.fecha<desde) viejos.push(p);
     else nuevos.push(p);
   });
-  return { nuevos:nuevos, viejos:viejos, yaEstan:yaEstan, sinFecha:sinFecha, filas:filas.length-iHdr-1 };
+  return { nuevos:nuevos, viejos:viejos, yaEstan:yaEstan, sinFecha:sinFecha, malos:malos,
+           filas:filas.length-iHdr-1 };
 }
 /* Los que se van a crear con lo que está elegido ahora. */
 function rohoElegidos(){
@@ -10356,6 +10397,14 @@ function renderImportRoho(){
         (R.viejos.length?lin('🕓 <b>'+R.viejos.length+'</b> para hoy o para días que ya pasaron'):'')+
         (R.sinFecha.length?lin('⚠️ <b>'+R.sinFecha.length+'</b> sin fecha de entrega — no se pueden importar'):'')+
       '</div>'+
+      /* 🔢 Datos que no se pueden leer: NO se importan y se dice cuáles. Inventar una
+         cantidad manda el camión con lo que no es (§4cl). */
+      ((R.malos&&R.malos.length)?('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
+        'border-radius:10px;padding:10px 13px;margin-top:11px;font-size:.83rem;color:#8a1c24">'+
+        '🔢 <b>'+R.malos.length+'</b> no se importa'+(R.malos.length===1?'':'n')+' porque el Excel trae un dato que no se puede leer. '+
+        'No se inventa nada: corregilo en ROHO y volvé a subir el archivo.<br>'+
+        R.malos.slice(0,6).map(function(p){ return '· Nota <b>'+esc(p.oc)+'</b> ('+esc(p.cliente||'sin cliente')+'): '+esc(p.malo); }).join('<br>')+
+        (R.malos.length>6?('<br>… y '+(R.malos.length-6)+' más'):'')+'</div>'):'')+
       (R.viejos.length?('<label style="display:flex;gap:8px;align-items:flex-start;margin-top:10px;font-size:.82rem;cursor:pointer">'+
         '<input type="checkbox" '+(ROHO_VIEJOS?'checked':'')+' onchange="rohoToggleViejos()" style="margin-top:3px">'+
         '<span>Traer también las <b>'+R.viejos.length+'</b> de hoy o de antes (la más vieja: '+esc(fmtFecha(R.viejos.map(function(p){return p.fecha;}).sort()[0]))+'). '+
@@ -10383,21 +10432,31 @@ function confirmarImportRoho(){
   var lista=rohoElegidos();
   if(!lista.length){ toast('No hay nada para importar.','err'); return; }
   var prog=document.getElementById('roho-progreso');
-  var ok=0, fallos=[], creados=[], i=0;
-  // Para "repartir": se llena el AM de cada día hasta el tope y el resto va a PM.
-  var usadosAM={};
+  var fallos=[], creados=[], pendientes=[], i=0;
+  /* ⚖️ REPARTIR: se llena el AM de cada día hasta el tope y recién ahí se pasa a PM.
+     ⚠️ Se cuenta UNA sola vez. La versión anterior restaba `cuposUsadosTurno` **y** un
+     contador propio, pero cada pedido ya entra a STATE con `upsert()` antes del siguiente
+     —y `cuposUsadosTurno` cuenta STATE—, así que cada uno se descontaba dos veces: con 12
+     lugares libres repartía 6 AM y 6 PM en vez de 12 AM. Reproducido antes de tocarlo.
+     Como el bucle es de a uno (`uno()` se vuelve a llamar recién cuando el servidor
+     contestó, y un rechazo saca la fila de STATE), `cuposUsadosTurno` sola ya dice la
+     verdad en cada paso.
+     ⚠️ Y si el día NO tiene turno PM (el sábado, límite 0), no se manda ahí: quedaría en un
+     turno inexistente y el rechazo diría «PM lleno», que no explica nada. Se deja en AM y
+     el servidor rechaza diciendo lo que de verdad pasa: que el AM está lleno. */
   var turnoDe=function(p){
     if(ROHO_TURNO!=='repartir') return ROHO_TURNO;
-    var libre=Math.max(0, limTurno(p.fecha,'AM')-cuposUsadosTurno(p.fecha,'AM')-(usadosAM[p.fecha]||0));
-    if(libre>0){ usadosAM[p.fecha]=(usadosAM[p.fecha]||0)+1; return 'AM'; }
-    return 'PM';
+    if(cuposUsadosTurno(p.fecha,'AM') < limTurno(p.fecha,'AM')) return 'AM';
+    return limTurno(p.fecha,'PM')>0 ? 'PM' : 'AM';
   };
   var pintar=function(txt){ if(prog) prog.innerHTML=txt; };
   var uno=function(){
     if(i>=lista.length){
-      saveMirror(); updateStats(); renderAdmin(); refreshCarga();
-      renderImportRohoFin(creados, fallos);
-      toast(fallos.length?('Importados '+ok+' · '+fallos.length+' con problema'):('✅ '+ok+' pedidos de ROHO importados'), fallos.length?'err':'ok', 6000);
+      saveMirror(); updateStats(); renderAdmin(); refreshCarga(); updateFooter();
+      renderImportRohoFin(creados, pendientes, fallos);
+      var malas=fallos.length+pendientes.length;
+      toast(malas?('Importados '+creados.length+' · '+malas+' sin confirmar')
+                 :('✅ '+creados.length+' pedidos de ROHO importados'), malas?'err':'ok', 6000);
       return;
     }
     var p=lista[i++];
@@ -10412,9 +10471,13 @@ function confirmarImportRoho(){
       nroDia:nextNroDia(p.fecha), ts:Date.now(), fotos:[]
     };
     upsert(rec);
-    if(!CONNECTED){ ok++; creados.push(rec); setTimeout(uno,0); return; }
+    /* ⚠️ CREADO ≠ GUARDADO EN LA PLANILLA (§4cl).
+       Sin planilla conectada no hay a dónde mandarlo: queda en este dispositivo y en la
+       cola. Antes se contaba como creado y la pantalla afirmaba «ya está en la planilla»,
+       que era falso. Ahora va a `pendientes` y se dice lo que es. */
+    if(!CONNECTED){ queuePending(rec); pendientes.push(rec); setTimeout(uno,0); return; }
     apiSave(rec).then(function(res){
-      if(res && res.ok){ ok++; creados.push(rec); }
+      if(res && res.ok){ creados.push(rec); }
       else{
         STATE=STATE.filter(function(x){ return x.id!==rec.id; });
         var e=res?String(res.error||''):'';
@@ -10426,8 +10489,10 @@ function confirmarImportRoho(){
       }
       setTimeout(uno,0);
     }, function(){
-      // Sin red: queda en la cola y se manda solo al reconectar.
-      queuePending(rec); ok++; creados.push(rec); setTimeout(uno,0);
+      /* Se cayó la red (o falta la clave del equipo): el pedido NO llegó al servidor.
+         Queda en la cola y se manda solo al reconectar — pero NO se cuenta como creado:
+         nadie puede decir que ocupa lugar en el camión hasta que el servidor lo acepte. */
+      queuePending(rec); pendientes.push(rec); setTimeout(uno,0);
     });
   };
   uno();
@@ -10437,7 +10502,8 @@ function confirmarImportRoho(){
    pantalla justo cuando más importa. Ahora reemplaza el contenido de la ventana y contesta
    sola la pregunta que uno se hace: *¿de verdad entraron y ocupan lugar en el camión?* —
    por eso muestra, día por día, cómo quedó el cupo DESPUÉS de importar. */
-function renderImportRohoFin(creados, fallos){
+function renderImportRohoFin(creados, pendientes, fallos){
+  pendientes=pendientes||[];
   var porDia={};
   creados.forEach(function(p){
     var k=p.fecha+'|'+normTurno(p.turno);
@@ -10456,12 +10522,24 @@ function renderImportRohoFin(creados, fallos){
         (lleno?' · <b>lleno</b>':(' · quedan '+Math.max(0,lim-usados)))+'</td>'+
       '<td style="color:var(--muted)">'+esc(d.notas.join(', '))+'</td></tr>';
   }).join('');
-  var mesIr=(creados[0]||{}).fecha ? creados[0].fecha.slice(0,7) : '';
-  var html='<div class="modal-h" style="background:'+(fallos.length?'#8a5a00':'#0f766e')+'">'+
-      '<h3>'+(creados.length?('✅ '+creados.length+' pedido'+(creados.length===1?'':'s')+' de ROHO creado'+(creados.length===1?'':'s')):'Nada se creó')+'</h3>'+
+  var primero=(creados[0]||pendientes[0]||{});
+  var mesIr=primero.fecha ? primero.fecha.slice(0,7) : '';
+  var hayLio=(fallos.length||pendientes.length);
+  var html='<div class="modal-h" style="background:'+(hayLio?'#8a5a00':'#0f766e')+'">'+
+      '<h3>'+(creados.length?('✅ '+creados.length+' pedido'+(creados.length===1?'':'s')+' de ROHO en la planilla'):'Nada llegó a la planilla')+'</h3>'+
       '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
-      (creados.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Ya están en la planilla y <b>ocupan lugar en el camión</b> de su día. Así quedó cada turno:</p>'+
+      /* ⏳ Lo que NO confirmó el servidor va primero y aparte: decir «ya están en la
+         planilla» de algo que solo está en este dispositivo es lo que había que arreglar. */
+      (pendientes.length?('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);'+
+        'border-radius:10px;padding:11px 14px;margin-bottom:12px;font-size:.84rem;color:#7a5b00">'+
+        '⏳ <b>'+pendientes.length+' NO llegaron al servidor todavía</b> — se cortó la conexión. '+
+        'Están guardados en <b>este dispositivo</b> y en la lista de «sin enviar»: se mandan solos cuando vuelva la señal. '+
+        '<b>Todavía no ocupan lugar en ningún camión</b>, así que revisá el pie de página hasta que diga que no queda nada sin enviar.<br>'+
+        'Notas: '+esc(pendientes.map(function(p){ return p.oc; }).join(', '))+'</div>'):'')+
+      (creados.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">'+
+        (pendientes.length?'Los <b>'+creados.length+'</b> que sí entraron ya están':'Ya están')+
+        ' en la planilla y <b>ocupan lugar en el camión</b> de su día. Así quedó cada turno:</p>'+
         '<div class="roho-wrap" style="min-width:0"><table class="roho-tabla" style="min-width:560px">'+
         '<colgroup><col style="width:100px"><col style="width:62px"><col style="width:72px"><col style="width:150px"><col style="width:176px"></colgroup>'+
         '<thead><tr><th>Entrega</th><th>Turno</th><th>Nuevos</th><th>Cupo del turno</th><th>Notas</th></tr></thead>'+

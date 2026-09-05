@@ -3950,6 +3950,69 @@ observaciones y marcada PAGADO. `tests/test_roho.js` **62 → 69**.
 (el proxy bloquea todo Google). Verificar «se creó de verdad» es siempre o una captura del
 dueño, o ponerlo en la pantalla para que lo vea él — que es lo que se hizo acá.
 
+## 4cl. 🔍 Auditoría del importador ROHO: cuatro errores míos, los cuatro reales (2026-09-05)
+
+Tercer informe externo del día, esta vez sobre el importador (§4ci–§4ck). **Los cuatro
+hallazgos eran ciertos**, y los cuatro se reprodujeron antes de tocar nada — con los
+números exactos que decía el informe. Ninguno rompía nada visible: el pedido se creaba
+igual, solo que con el turno, la cantidad o el estado equivocados. Ese es justo el tipo de
+error que nadie encuentra hasta que el camión llega mal.
+
+### 1. ⚖️ «Repartir AM/PM» contaba cada pedido dos veces
+
+```js
+var libre = limTurno(...) - cuposUsadosTurno(p.fecha,'AM') - (usadosAM[p.fecha]||0);
+```
+`upsert(rec)` mete el pedido en `STATE` **antes** del siguiente, y `cuposUsadosTurno` cuenta
+`STATE`. O sea que cada pedido ya colocado se restaba **dos veces**: una por STATE y otra
+por mi contador. Medido: **con 12 lugares libres repartía 6 AM y 6 PM**, en vez de 12 AM.
+Y el **sábado** —que tiene 15 lugares AM y **ningún PM**— mandaba 2 de 10 a un turno que no
+existe, garantizando el rechazo con un motivo que no explica nada («PM lleno»).
+
+Arreglo: contar una sola vez (`cuposUsadosTurno` sola ya dice la verdad, porque el bucle es
+de a uno y un rechazo saca la fila de STATE antes del siguiente), y **no mandar a PM un día
+sin PM**: se queda en AM y el servidor rechaza diciendo lo que de verdad pasa.
+
+### 2. ⏳ «Creado» decía lo mismo de algo que nunca llegó al servidor
+
+Si la red se caía, el pedido iba a la cola —bien— pero **se contaba como creado**, y la
+pantalla afirmaba *«Ya están en la planilla y ocupan lugar en el camión»*. Medido: **0
+confirmaciones del servidor, 1 en la cola, y la pantalla decía «✅ 1 pedido creado»**. Con
+`CONNECTED=false` era peor: **ni siquiera se encolaba** — quedaba solo en la pantalla.
+
+Arreglo: **confirmados y pendientes son dos listas distintas**. Solo entra a «creados» lo
+que el servidor aceptó. Lo pendiente se muestra arriba, en ámbar, diciendo que **todavía no
+ocupa lugar en ningún camión**, con las notas y la instrucción de mirar el «sin enviar» del
+pie. Y sin planilla conectada ahora **sí** se encola, así que no se pierde.
+
+### 3. 🔢 Las cantidades ilegibles se volvían 1 en silencio
+
+`Math.max(1, Math.round(Number(v)||1))` convertía en **1** todo lo que no entendía: `0`,
+`-3`, `abc` y —la peligrosa— **`2,5`**, que es como escribe los decimales una planilla en
+español. Un camión con 1 colchón cuando se vendieron 4, y nadie se entera hasta el reclamo.
+
+Arreglo: `rohoCant()` devuelve un entero positivo o **null**. Si es null, esa nota **no se
+importa** y sale en rojo en la vista previa con el valor crudo que vino
+(*«cantidad ilegible («2,5») en COLCHON ECO FLEX…»*). `2,0` y `1.0` se siguen leyendo bien.
+
+### 4. 💰 «NO PAGADO» se leía como pagado
+
+`/PAGAD/i` da verdadero para «NO PAGADO». El chofer no cobraría. Arreglo: `rohoPagado()`
+descarta primero lo negado (`NO`, `PENDIENTE`, `IMPAGO`, `PARCIAL`, `A CUENTA`) y **lo que
+no se entiende queda como NO pagado** — que el chofer pregunte es recuperable; que no cobre
+porque el panel dijo «PAGADO», no.
+
+### El chequeo de dientes que casi doy por bueno
+
+Corrí `git stash` y el test dio **0 fallas contra el código publicado**, que parecía decir
+que no probaba nada. El `stash` se había llevado **también el test**: estaba corriendo el
+test viejo contra el código viejo. Guardando solo `pedidos.html`, el test nuevo contra lo
+publicado da **14 fallas y revienta** (`rohoPagado is not defined`), cada una reproduciendo
+un hallazgo del informe. **Un chequeo de dientes mal hecho es peor que no hacerlo**: da una
+luz verde falsa sobre la única prueba que existe de que el test sirve.
+
+`tests/test_roho.js` **69 → 90**.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
