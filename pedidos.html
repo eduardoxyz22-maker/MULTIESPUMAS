@@ -871,6 +871,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
           <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
+          <button class="btn btn-ghost btn-sm" onclick="pedirClaveEquipo()" title="La clave que el servidor exige para leer y guardar pedidos (PANEL_KEY). Se ingresa una vez por dispositivo.">🔐 Clave del equipo</button>
         </div>
 
         <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
@@ -1166,6 +1167,7 @@ function mismoVendedor(a,b){ return normNombre(a)===normNombre(b); }
 var LS_KEY   = 'ME_PEDIDOS_V1';   // cache local (espejo)
 var LS_ADMIN = 'ME_ADMIN_HASH_V1';
 var LS_PEND  = 'ME_PENDING_V1';   // cola de pedidos sin enviar (offline)
+var LS_CLAVE = 'ME_CLAVE_EQUIPO_V1';  // 🔐 la clave del equipo, una vez por dispositivo (§4ce)
 /* SHA-256 de la contraseña por defecto "heaven2026". Cambiala desde el panel. */
 var DEFAULT_HASH = '081b7038bb21341f34f82b5d3538e12571184381f3317754ca4c23259b2ffd20';
 
@@ -1302,7 +1304,13 @@ function upsert(rec){ for(var i=0;i<STATE.length;i++){ if(STATE[i].id===rec.id){
 
 function getPending(){ try{ return JSON.parse(localStorage.getItem(LS_PEND))||[]; }catch(e){ return []; } }
 function setPending(a){ try{ localStorage.setItem(LS_PEND, JSON.stringify(a)); }catch(e){} }
-function queuePending(rec){ var a=getPending().filter(function(p){return p.id!==rec.id;}); a.push(rec); setPending(a); updateFooter(); }
+/* ⚠️ Un «no» FIRME del servidor (conflicto, día cerrado, cupos, OC repetida) no se encola:
+   reintentarlo es exactamente pisar lo que el servidor protegió, y además quedaría de
+   zombi para siempre. `apiSave` lo anota en NO_ENCOLAR y acá se respeta (§4ce). */
+function queuePending(rec){
+  if(NO_ENCOLAR[rec.id] && Date.now()-NO_ENCOLAR[rec.id]<10000) return;
+  var a=getPending().filter(function(p){return p.id!==rec.id;}); a.push(rec); setPending(a); updateFooter();
+}
 
 function todayStr(){ return isoLocal(new Date()); }
 function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return isoLocal(d); }
@@ -1537,18 +1545,100 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-04-a';
+var SCRIPT_VERSION_ESPERADA='2026-09-05-a';
+/* 🔐 LA CLAVE DEL EQUIPO (§4ce).
+   La dirección del script está acá arriba, en una página pública: con ella sola,
+   cualquiera podía leer, guardar y borrar la planilla. Ahora el servidor exige una clave
+   que se ingresa UNA vez por dispositivo y viaja en cada llamada. Si el servidor la
+   rechaza, se trata como si no hubiera red: lo guardado queda en la cola y se manda solo
+   cuando la ingresan. Nada se pierde y nada se descarta. */
+var CLAVE_EQUIPO=''; try{ CLAVE_EQUIPO=localStorage.getItem(LS_CLAVE)||''; }catch(e){}
+var SERVER_AUTH='';          // '' todavía no sé · 'abierto' (sin clave configurada) · 'clave'
+var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
+var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1};
 function apiPost(payload){
+  if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
-    .then(function(j){ if(j && j.version) SERVER_VER=String(j.version); return j; });
+    .then(function(j){
+      if(j && j.version) SERVER_VER=String(j.version);
+      if(j && j.auth && String(j.auth)!==SERVER_AUTH){ SERVER_AUTH=String(j.auth); renderConnEstado(); }
+      if(j && j.ok===false && j.error==='clave'){
+        var primera=!CLAVE_RECHAZADA;
+        CLAVE_RECHAZADA=true; renderConnEstado();
+        if(primera) toast('🔐 El servidor pide la clave del equipo. Lo que guardes queda en esta compu hasta que la ingreses.','err',8000);
+        throw new Error('clave');
+      }
+      if(CLAVE_RECHAZADA){ CLAVE_RECHAZADA=false; renderConnEstado(); }
+      return j;
+    });
 }
 function apiList(){ return apiPost({action:'list'}); }
-function apiSave(rec){ return apiPost({action:'save', pedido:rec}); }
+/* `opts.forzar`: solo cuando quien tiene la clave de administración confirmó mover un
+   pedido a un día cerrado o a un turno lleno. El servidor lo respeta; a nadie más. */
+function apiSave(rec, opts){
+  var payload={action:'save', pedido:rec};
+  if(opts && opts.forzar) payload.forzar=true;
+  return apiPost(payload).then(function(res){
+    if(res && res.ok && res.pedido) aplicarSello(rec, res.pedido);
+    else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
+    return res;
+  });
+}
+/* Lo que el servidor decidió sobre el pedido y el panel tiene que quedarse: el sello de
+   revisión (sin él, el PRÓXIMO guardado de esta misma compu chocaría consigo mismo), el
+   N° del día y, si hubo que cambiarla, la OC. Se copia en todas las copias que anden
+   dando vueltas: la que se mandó, la de STATE y la de la bandeja de borradores. */
+function aplicarSello(rec, srv){
+  var copias=[rec, findById(rec.id), (typeof borradorDe==='function')?borradorDe(rec.id):null];
+  copias.forEach(function(o){
+    if(!o) return;
+    if(srv.rev!=null) o.rev=srv.rev;
+    if(srv.nroDia) o.nroDia=srv.nroDia;
+    if(srv.ocCambiada && srv.oc) o.oc=srv.oc;
+  });
+  saveMirror();
+  if(srv.ocCambiada) toast('🔢 La OC '+srv.ocCambiada.de+' ya la había usado '+(srv.ocCambiada.con||'otra persona')+' hace un instante: este pedido quedó con la OC '+srv.ocCambiada.a+'.','err',9000);
+}
+/* El servidor dijo que NO y va en serio: no se reintenta, y la pantalla vuelve a lo que
+   hay en la planilla. Para un CONFLICTO trae la fila actual y se pone esa. */
+function rechazoFirme(rec, res){
+  NO_ENCOLAR[rec.id]=Date.now();
+  setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
+  if(res.error==='conflicto'){
+    var actual=res.pedido;
+    if(actual && actual.id){
+      actual.oc=cleanOC(actual.oc);
+      if(typeof esBorrador==='function' && esBorrador(actual)){
+        STATE=STATE.filter(function(p){ return p.id!==actual.id; });
+        BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(actual.id); }).concat([actual]);
+        saveBorrMirror();
+      }else upsert(actual);
+      saveMirror();
+    }
+    toast('⚠️ Este pedido ('+((actual&&actual.cliente)||rec.cliente||'')+') lo modificó otra persona hace un momento. Se recargó con los datos nuevos — revisá y volvé a hacer tu cambio.','err',9000);
+    updateStats(); updateFooter(); autoRepintar();
+  }else{
+    var m={cupos_llenos:'el turno '+(res.turno||'')+' del '+fmtFecha(res.fecha)+' está lleno',
+           dia_cerrado:'el '+fmtFecha(res.fecha)+' está cerrado',
+           oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')}[res.error]||res.error;
+    toast('❌ El servidor no aceptó el cambio: '+m+'. Se recargó la planilla.','err',8000);
+    /* En try: si el refresco falla, este «no» tiene que seguir siendo un «no». Una
+       excepción acá rechazaría la promesa de apiSave y la cola lo REENCOLARÍA. */
+    try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); }, function(){}); }catch(e){}
+  }
+}
 function apiDelete(id){ return apiPost({action:'delete', id:id}); }
 function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
 function apiFoto(id, cliente, dataUrl){ return apiPost({action:'foto', id:id, cliente:cliente, dataUrl:dataUrl}); }
-function apiBorrarFoto(fotoId){ return apiPost({action:'borrarFoto', fotoId:fotoId}); }
+function apiBorrarFoto(fotoId){
+  return apiPost({action:'borrarFoto', fotoId:fotoId}).then(function(r){
+    // Antes contestaba «ok» pasara lo que pasara. Ahora, si Drive no la borró, se dice.
+    if(r && r.ok===false) toast('La foto salió del pedido, pero no se pudo borrar de Drive ('+(r.error||'error')+').','err');
+    return r;
+  });
+}
 
 function flushPending(){
   if(!CONNECTED) return Promise.resolve();
@@ -1556,8 +1646,10 @@ function flushPending(){
   var remaining=[];
   return a.reduce(function(chain,rec){
     return chain.then(function(){
-      return apiSave(rec).then(function(res){ if(!res||!res.ok) remaining.push(rec); },
-                               function(){ remaining.push(rec); });
+      return apiSave(rec).then(function(res){
+        // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
+        if(!res||!res.ok){ if(!(res && RECHAZOS_FIRMES[res.error])) remaining.push(rec); }
+      }, function(){ remaining.push(rec); });
     });
   },Promise.resolve()).then(function(){ setPending(remaining); updateFooter(); });
 }
@@ -1589,17 +1681,48 @@ function showView(v){
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
 }
 function initConnUI(){
-  var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
-  if(CONNECTED){
-    f.className='conn on'; a.className='conn on';
-    document.getElementById('conn-form-txt').innerHTML='Conectado al equipo — tu pedido se guarda en la planilla compartida.';
-    document.getElementById('conn-admin-txt').innerHTML='Conectado a Google Sheets. Todos los pedidos del equipo aparecen acá.';
-  }else{
-    f.className='conn off'; a.className='conn off';
-    document.getElementById('conn-form-txt').innerHTML='Modo local (solo este dispositivo). Falta conectar Google Sheets para compartir con el equipo.';
-    document.getElementById('conn-admin-txt').innerHTML='Modo local: mostrando solo los pedidos de este dispositivo.';
-  }
+  renderConnEstado();
   document.getElementById('adm-refresh').style.display=CONNECTED?'inline-block':'none';
+}
+/* El cartel de conexión, con los tres estados: sin planilla, con planilla pero SIN la
+   clave del equipo (botón para ingresarla), y conectado. En administración, además, avisa
+   en rojo si el servidor está ABIERTO (sin PANEL_KEY configurada). */
+function renderConnEstado(){
+  var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
+  var ft=document.getElementById('conn-form-txt'), at=document.getElementById('conn-admin-txt');
+  if(!f||!a||!ft||!at) return;
+  if(!CONNECTED){
+    f.className='conn off'; a.className='conn off';
+    ft.innerHTML='Modo local (solo este dispositivo). Falta conectar Google Sheets para compartir con el equipo.';
+    at.innerHTML='Modo local: mostrando solo los pedidos de este dispositivo.';
+    return;
+  }
+  if(CLAVE_RECHAZADA){
+    var btn=' <button type="button" class="btn btn-primary btn-sm" style="width:auto;margin-left:8px" onclick="pedirClaveEquipo()">🔐 Ingresar clave</button>';
+    f.className='conn off'; a.className='conn off';
+    ft.innerHTML='<b>El servidor pide la clave del equipo.</b> Pedísela al administrador e ingresala una vez en este dispositivo. Lo que guardes mientras tanto queda acá y se manda solo.'+btn;
+    at.innerHTML='<b>El servidor pide la clave del equipo</b> — sin ella no se pueden ver ni guardar pedidos.'+btn;
+    return;
+  }
+  f.className='conn on'; a.className='conn on';
+  ft.innerHTML='Conectado al equipo — tu pedido se guarda en la planilla compartida.';
+  at.innerHTML='Conectado a Google Sheets. Todos los pedidos del equipo aparecen acá.'+
+    (SERVER_AUTH==='abierto'
+      ? '<br><span style="color:var(--red)">🚨 <b>El servidor acepta pedidos SIN clave:</b> cualquiera con la dirección del script puede leer y borrar la planilla.</span> '+
+        'Configurá <code>PANEL_KEY</code> en Apps Script (⚙️ Configuración del proyecto → Propiedades del script) y después ingresá esa misma clave acá con 🔐 Clave del equipo.'
+      : '');
+}
+function pedirClaveEquipo(){
+  var c=prompt('Clave del equipo (te la da el administrador):',''); if(c==null) return;
+  c=c.trim(); if(!c){ toast('Sin clave no se puede.','err'); return; }
+  CLAVE_EQUIPO=c; try{ localStorage.setItem(LS_CLAVE,c); }catch(e){}
+  CLAVE_RECHAZADA=false; renderConnEstado();
+  if(!CONNECTED) return;
+  toast('Clave guardada en este dispositivo. Probando…','ok');
+  flushPending().then(apiList).then(function(res){
+    if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); updateStats(); autoRepintar(); updateFooter(); }
+    if(!CLAVE_RECHAZADA) toast('✅ Conectado con la clave del equipo','ok');
+  }).catch(function(){ if(CLAVE_RECHAZADA) toast('❌ Esa clave no es. Pedila de nuevo.','err',6000); });
 }
 
 /* ============================================================================
@@ -1895,6 +2018,12 @@ function prodText(prods){ return (prods||[]).map(function(p){
    Guardar / editar (optimista + sincroniza en segundo plano)
    ========================================================================== */
 var EDIT_ID=null;
+/* El sello de revisión del pedido TAL COMO ESTABA AL ABRIR la edición (§4ce). Se manda
+   al guardar: si alguien guardó esa fila en el medio, el servidor rechaza y el formulario
+   se vuelve a abrir con lo nuevo. ⚠️ Tiene que ser el de la apertura y no el de STATE al
+   guardar: la pantalla se refresca sola cada 2 minutos y traería el sello nuevo — con
+   los valores VIEJOS que siguen en el formulario. */
+var EDIT_REV=null;
 /* ⚠️ DE DÓNDE SALIÓ LA EDICIÓN (§4bl).
    `after()` terminaba SIEMPRE en `showView('admin')` porque editar era cosa de
    administración. Desde que las vendedoras editan sus pedidos (§4bc), guardar las
@@ -5231,7 +5360,10 @@ function submitPedido(){
        línea la vendedora las borraba con solo corregir un precio: `recToRow` escribía la
        celda vacía y las imágenes quedaban huérfanas en Drive. Nadie se enteraba hasta que
        alguien reclamaba una entrega y la prueba ya no estaba. */
-    fotos: prev ? fotosDe(prev).slice() : []
+    fotos: prev ? fotosDe(prev).slice() : [],
+    /* 🤝 El sello con el que se ABRIÓ la edición, no el que tenga `prev` ahora (ver
+       EDIT_REV). Va acá adentro a propósito: así el rescate de abajo no lo pisa. */
+    rev: (isEdit && EDIT_REV!=null) ? EDIT_REV : undefined
   };
   /* ⚠️ RESCATE GENERAL — el mismo error ya se cometió tres veces (§4bt, §4cb).
      `rec` se arma enumerando campos a mano, y CADA campo que alguien agregue mañana a la
@@ -5342,8 +5474,25 @@ function submitPedido(){
 
   if(CONNECTED){
     setSubmitting(true);
-    apiSave(rec).then(function(res){
+    /* Con la clave de administración, mover a un día cerrado o a un turno lleno ya se
+       confirmó arriba: se le dice al servidor que lo deje pasar. Sin la clave, no. */
+    apiSave(rec, {forzar: !!(isEdit && UNLOCKED && (_mueveFecha || _mueveTurno))}).then(function(res){
       setSubmitting(false);
+      /* 🤝 Otra persona guardó este pedido después de que se abrió la edición. `apiSave`
+         ya puso en pantalla la versión nueva; el formulario se vuelve a abrir con ella
+         para que lo que se corrija sea sobre lo actual y no pise nada. */
+      if(res && res.error==='conflicto'){
+        if(borradorDe(rec.id)) completarBorrador(rec.id); else editPedido(rec.id);
+        return;
+      }
+      /* 🔢 Escribió a mano un N° de OC que ya tiene otro pedido (ROHO, o tipeado). */
+      if(res && res.error==='oc_repetida'){
+        STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
+        markErr('f-oc');
+        toast('🚫 La OC '+res.oc+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')+((res.otro&&res.otro.fecha)?(' (entrega '+fmtFecha(res.otro.fecha)+')'):'')+'. Verificá el número.','err',8000);
+        var foc=document.getElementById('f-oc'); if(foc){ foc.focus(); foc.scrollIntoView({block:'center'}); }
+        return;
+      }
       /* El servidor dice que ese día está CERRADO. Solo llega si la planilla ya tiene
          el Apps Script nuevo; con el viejo el freno queda del lado del panel. */
       if(res && res.error==='dia_cerrado'){
@@ -5365,7 +5514,12 @@ function submitPedido(){
         var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
         return;
       }
-      if(res&&res.ok){ if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); } toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok'); flushPending(); }
+      if(res&&res.ok){
+        if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
+        // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
+        if(!(res.pedido && res.pedido.ocCambiada)) toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');
+        flushPending();
+      }
       /* ⚠️ EL SERVIDOR CONTESTÓ Y DIJO QUE NO. Eso NO se encola.
          Antes cualquier rechazo que no fuera "día cerrado" o "cupos llenos" caía en un
          `else` que lo metía en la cola y mostraba **"Guardado ✓" en verde**. O sea: el
@@ -5618,7 +5772,7 @@ function pintarAntiguedadAtc(){
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
 function resetForm(){
-  EDIT_ID=null; EDIT_DESDE='admin';
+  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin';
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
@@ -5665,7 +5819,7 @@ function resetForm(){
 function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
-  EDIT_ID=id;
+  EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null;
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
@@ -7115,7 +7269,8 @@ function reproConfirmar(){
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
-  persistPedido(p);
+  // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
+  persistPedido(p, {forzar: avisos.length>0});
   toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
   reproVolver();                          // vuelve a la ficha desde la que se abrió
 }
@@ -7842,7 +7997,7 @@ function renderBorradoresHuerfanos(){
 function completarBorrador(id){
   var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
   showView('form'); resetForm();
-  EDIT_ID=String(rec.id); EDIT_DESDE='mis';
+  EDIT_ID=String(rec.id); EDIT_DESDE='mis'; EDIT_REV=(rec.rev!=null)?rec.rev:null;
   document.getElementById('edit-banner').classList.add('on');
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value='';
   document.getElementById('f-vendedor').value=vendedorDeBorrador(rec)||rec.vendedor||''; applyVendedorLite();
@@ -10220,9 +10375,9 @@ function choferSelect(p){
 }
 function setVehiculo(id,v){ var p=findById(id); if(!p)return; p.vehiculo=v; p.chofer=(VEHICULOS[v]&&VEHICULOS[v][0])||''; persistPedido(p); reabrirFicha(id); }
 function setChofer(id,c){ var p=findById(id); if(!p)return; p.chofer=c; var vh=vehiculoDeChofer(c); if(vh) p.vehiculo=vh; persistPedido(p); reabrirFicha(id); }
-function persistPedido(p){
+function persistPedido(p, opts){
   upsert(p); saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo(); renderContaSiActiva();
-  if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
+  if(CONNECTED){ apiSave(p, opts).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
 }
 
 /* ============================================================================

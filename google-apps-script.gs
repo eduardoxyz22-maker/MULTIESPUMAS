@@ -14,10 +14,20 @@
  *           Turno | Zona | Dirección | Link Maps | Pagado | Saldo (Bs) |
  *           ts | _productos_json | Método pago | Observaciones |
  *           Estado stock | Entregado | Vehículo | Chofer | Garantía (a nombre de) |
- *           Nota de venta | A cuenta (Bs) | Facturar a | NIT | N° del día
+ *           Nota de venta | A cuenta (Bs) | Facturar a | NIT | N° del día |
+ *           Verificado | Fotos entrega | Revisión
  *           (medida y código van dentro del texto de Productos)
  * El servidor hace cumplir el límite por turno (12 AM / 13 PM = 25 por día)
  * y asigna el N° del día correlativo (1,2,3…) de forma atómica.
+ *
+ * 🔐 CLAVE DEL EQUIPO (§4ce). La dirección /exec de este script está dentro del panel,
+ * que es una página PÚBLICA: cualquiera que mire el código fuente la tiene. Por eso
+ * TODO lo que lee o escribe pedidos exige una clave, guardada en
+ *    Configuración del proyecto → Propiedades del script → PANEL_KEY
+ * y que cada dispositivo del equipo ingresa UNA vez (el panel la pide sola).
+ * ⚠️ Sin PANEL_KEY configurada el script sigue ABIERTO como antes — a propósito, para
+ * que publicar esta versión no deje al equipo sin poder trabajar — y el panel lo avisa
+ * en rojo hasta que se configure. La integración con Kommo tiene SU clave aparte.
  * ============================================================================
  */
 
@@ -30,7 +40,11 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
                'ts','_productos_json','Método pago','Observaciones',
                'Estado stock','Entregado','Vehículo','Chofer','Garantía (a nombre de)',
                'Nota de venta','A cuenta (Bs)','Facturar a','NIT','N° del día','Verificado',
-               'Fotos entrega'];
+               'Fotos entrega','Revisión'];
+/* 'Revisión' (col 30): sello que pone el SERVIDOR en cada guardado. El panel lo devuelve
+   tal cual lo recibió; si mientras tanto otra persona guardó, los sellos no coinciden y
+   el guardado se rechaza en vez de pisar la fila entera (§4ce). */
+var REV_COL = HEADERS.indexOf('Revisión') + 1;
 var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
 function getSheet() {
@@ -50,17 +64,32 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-04-a';   // ⬅️ borradores de Kommo (§4cc)
+var SCRIPT_VERSION = '2026-09-05-a';   // ⬅️ clave del equipo, conflictos, porteros al mover, OC repetida (§4ce)
 
 function jsonOut(obj) {
+  // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
+  if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-/** GET: útil para ver los datos desde el navegador (mismo formato que 'list'). */
+/* ── 🔐 La clave del equipo ──────────────────────────────────────────────── */
+function panelKey_() {
+  try { return String(PropertiesService.getScriptProperties().getProperty('PANEL_KEY') || '').trim(); }
+  catch (e) { return ''; }
+}
+/** ¿Esta llamada trae la clave correcta? Sin clave configurada, pasa todo (ver cabecera). */
+function claveOk_(recibida) {
+  var k = panelKey_();
+  return !k || String(recibida || '') === k;
+}
+
+/** GET: útil para ver los datos desde el navegador (mismo formato que 'list').
+ *  Con la clave configurada hay que agregarle ?k=LA_CLAVE a la dirección. */
 function doGet(e) {
-  return jsonOut({ ok: true, pedidos: readAll() });
+  if (!claveOk_(e && e.parameter && e.parameter.k)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
+  return jsonOut({ ok: true, version:SCRIPT_VERSION, pedidos: readAll() });
 }
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
@@ -79,6 +108,10 @@ function doPost(e) {
   // El repaso de respaldo (workflow de GitHub) manda los ids que encontró. Mismo camino
   // que el webhook: una sola implementación, dos formas de disparar.
   if (action === 'kommoLeads') return kommoLeads(body);
+  /* 🔐 De acá para abajo, TODO exige la clave del equipo (§4ce): leer la lista es leer
+     nombres, celulares y direcciones de clientes; guardar y borrar, ni hablar. El panel
+     trata este "no" como si no hubiera red: encola y reintenta cuando le den la clave. */
+  if (!claveOk_(body.key)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
   // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
   // Devuelve tambien la VERSION: asi el panel sabe si lo que esta publicado es este archivo
   // o una implementacion vieja (guardar el codigo NO alcanza, hay que crear version nueva).
@@ -91,7 +124,7 @@ function doPost(e) {
   try {
     if (action === 'list')   return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
     if (action === 'delete') return doDelete(body.id);
-    return doSave(body.pedido);
+    return doSave(body.pedido, !!body.forzar);
   } finally {
     lock.releaseLock();
   }
@@ -365,9 +398,15 @@ function readAll() {
   var values = sh.getDataRange().getValues();
   var out = [];
   for (var i = 1; i < values.length; i++) {
-    var r = values[i];
-    if (!r[0]) continue; // sin id -> ignorar
-    out.push({
+    if (!values[i][0]) continue; // sin id -> ignorar
+    out.push(rowToRec_(values[i]));
+  }
+  return out;
+}
+
+/** Una fila de la hoja -> el pedido como lo entiende el panel. */
+function rowToRec_(r) {
+  return {
       id: String(r[0]),
       fecha: fmtDate(r[1]),
       oc: String(r[2] == null ? '' : r[2]),
@@ -395,10 +434,9 @@ function readAll() {
       nit: String(r[25] == null ? '' : r[25]),
       nroDia: Number(r[26]) || 0,
       verificado: (String(r[27]).toUpperCase().charAt(0) === 'S'),
-      fotos: String(r[28] || '').split(/[\s|]+/).filter(function (x) { return x; })
-    });
-  }
-  return out;
+      fotos: String(r[28] || '').split(/[\s|]+/).filter(function (x) { return x; }),
+      rev: Number(r[29]) || 0
+  };
 }
 
 /* ¿Administración cerró esa fecha de entrega?
@@ -418,7 +456,96 @@ function diaCerradoGs(sh, last, ids, fecha) {
   }
   return false;
 }
-function doSave(p) {
+/* ── Normalizadores chicos que usan los porteros ─────────────────────────── */
+function turnoNorm_(t) { return String(t || '').toUpperCase().indexOf('PM') >= 0 ? 'PM' : 'AM'; }
+function ocTexto_(v) {
+  // Una celda que Sheets convirtió en Fecha no es un N° de OC (el panel hace lo mismo: cleanOC).
+  if (v == null || Object.prototype.toString.call(v) === '[object Date]') return '';
+  var s = String(v).trim();
+  return /\bGMT\b/.test(s) ? '' : s;
+}
+function anioDeTs_(ts) { ts = Number(ts) || 0; return ts ? new Date(ts).getFullYear() : 0; }
+
+/* 🔢 ¿ESA OC YA LA TIENE OTRA FILA? (§4ce)
+   Mismo texto completo (con el «ATC » incluido: la ATC 09-001 y la venta 09-001 son dos
+   cosas distintas) y mismo año de carga — el correlativo arranca de nuevo cada año.
+   Devuelve la fila que la tiene, o null. `excluir` es la fila del propio pedido. */
+function ocRepetidaGs_(sh, last, oc, ts, excluir) {
+  oc = ocTexto_(oc);
+  if (!oc || last < 2) return null;
+  var ocs = sh.getRange(2, 3, last - 1, 1).getValues();     // col C = N° OC
+  var tss = sh.getRange(2, 14, last - 1, 1).getValues();    // col N = ts (hora de carga)
+  var anio = anioDeTs_(ts);
+  for (var i = 0; i < ocs.length; i++) {
+    if (i + 2 === excluir) continue;
+    if (ocTexto_(ocs[i][0]) !== oc) continue;
+    var a2 = anioDeTs_(tss[i][0]);
+    if (anio && a2 && anio !== a2) continue;               // misma OC, otro año: no es repetida
+    var f = sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0];
+    return { fila: i + 2, id: String(f[0]), cliente: String(f[4] || ''), fecha: fmtDate(f[1]) };
+  }
+  return null;
+}
+/* ¿Es un número que el panel generó solo ("09-045" o "ATC 09-045")? A esos, si chocan,
+   se les da el siguiente libre. A los escritos a mano (ROHO manda su propio N°) no se
+   les toca nada: se rechaza y que la persona mire. */
+function ocAutoGs_(oc) { return /^(ATC\s+)?\d{2}-\d{3,}$/i.test(ocTexto_(oc)); }
+/* El siguiente libre de la MISMA serie (con/sin ATC, mismo mes del número, mismo año). */
+function ocSiguienteGs_(sh, last, oc, ts) {
+  var m = ocTexto_(oc).match(/^(ATC\s+)?(\d{2})-(\d+)$/i);
+  var pre = m[1] ? 'ATC ' : '', mes = m[2], mx = 0;
+  var ocs = sh.getRange(2, 3, last - 1, 1).getValues();
+  var tss = sh.getRange(2, 14, last - 1, 1).getValues();
+  var anio = anioDeTs_(ts);
+  for (var i = 0; i < ocs.length; i++) {
+    var t = ocTexto_(ocs[i][0]).match(/^(ATC\s+)?(\d{2})-(\d+)$/i);
+    if (!t || (!!t[1] !== !!m[1]) || t[2] !== mes) continue;
+    var a2 = anioDeTs_(tss[i][0]);
+    if (anio && a2 && anio !== a2) continue;
+    var n = parseInt(t[3], 10); if (n > mx) mx = n;
+  }
+  var s = String(mx + 1); while (s.length < 3) s = '0' + s;
+  return pre + mes + '-' + s;
+}
+
+/* 🚪 EL PORTERO DE LA FECHA: día cerrado y cupos por turno (§4ce).
+   Corre para un pedido NUEVO con entrega y también cuando uno existente se MUEVE de
+   fecha o de turno — antes solo para los nuevos, y mover a domingo, a un día cerrado o
+   a un turno lleno entraba sin que nadie lo aprobara. `excluir` es la fila del propio
+   pedido, para que no se cuente a sí mismo. Devuelve el rechazo (jsonOut) o null, y si
+   pasa deja en p.nroDia el correlativo del día cuando corresponde. */
+function porteroFecha_(sh, last, ids, p, excluir, asignarNro) {
+  if (diaCerradoGs(sh, last, ids, p.fecha)) return jsonOut({ ok:false, error:'dia_cerrado', fecha:p.fecha });
+  var usados = 0, usadosAM = 0, usadosPM = 0, maxNro = 0;
+  if (last >= 2) {
+    var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
+    var turnos = sh.getRange(2, 8, last - 1, 1).getValues();             // col H = Turno
+    var nros   = sh.getRange(2, NRO_COL, last - 1, 1).getValues();        // col N° del día
+    for (var j = 0; j < fechas.length; j++) {
+      if (j + 2 === excluir) continue;
+      if (fmtDate(fechas[j][0]) === String(p.fecha)) {
+        usados++;
+        if (turnoNorm_(turnos[j][0]) === 'PM') usadosPM++; else usadosAM++;
+        var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n;
+      }
+    }
+  }
+  var tSel = turnoNorm_(p.turno);
+  var dow = dowDeGs(p.fecha);                                  // 0=domingo, 6=sábado
+  var limT;
+  if (dow === 0) limT = 0;                                     // domingo: cerrado
+  else if (dow === 6) limT = (tSel === 'AM') ? 15 : 0;         // sábado: 15 AM, sin PM
+  else limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;           // resto: 12 AM / 13 PM
+  var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
+  if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
+  if (asignarNro) p.nroDia = Math.max(maxNro, usados) + 1;   // correlativo del día (atómico por el lock)
+  return null;
+}
+
+/* `forzar` lo manda el panel SOLO cuando quien mueve el pedido tiene la clave de
+   administración y confirmó el aviso: es la que arma el camión y puede meterle un bulto
+   más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
+function doSave(p, forzar) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -434,39 +561,57 @@ function doSave(p) {
     ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) { if (String(ids[i][0]) === String(p.id)) { foundRow = i + 2; break; } }
   }
-  // PORTERO DE DÍAS CERRADOS: administración cierra una fecha cuando ese camión ya está
-  // armado. El aviso vive en la fila __dias_cerrados__ de esta misma hoja. Se revisa ACÁ
-  // y no solo en el panel porque una compu con la página abierta desde antes del cierre
-  // no se entera y guardaba igual: es el único lugar donde el "no" es definitivo.
-  if (foundRow < 0 && p.fecha && diaCerradoGs(sh, last, ids, p.fecha)) {
-    return jsonOut({ ok:false, error:'dia_cerrado', fecha:p.fecha });
+  var viejo = null;
+  if (foundRow > 0) {
+    viejo = sh.getRange(foundRow, 1, 1, HEADERS.length).getValues()[0];
+    /* 🤝 ¿ALGUIEN GUARDÓ ESTA FILA DESPUÉS DE QUE EL PANEL LA LEYÓ? (§4ce)
+       Cada guardado reemplaza la fila ENTERA. Sin este freno, logística cambiando el
+       chofer con una copia de hace una hora pisaba el pago que contabilidad acababa de
+       registrar: un saldo cancelado volvía a deber. El panel manda el sello con el que
+       leyó la fila; si ya no es el de la hoja, se rechaza y se le devuelve la fila actual.
+       Si el panel no manda sello (versión vieja cacheada) o la fila nunca lo tuvo, pasa:
+       este freno no puede dejar a nadie sin trabajar. */
+    var revHoja = Number(viejo[REV_COL - 1]) || 0;
+    if (revHoja && p.rev != null && Number(p.rev) !== revHoja) {
+      return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
+    }
   }
-  // PORTERO DE CUPOS POR TURNO: si es NUEVO, contar los del día por turno y rechazar si el turno elegido está lleno (12 AM / 13 PM).
-  // Esto corre dentro del lock de doPost => atómico: aunque 3 carguen a la vez, entran de a uno y nunca se pasa del límite.
-  if (foundRow < 0 && p.fecha) {
-    var usados = 0, usadosAM = 0, usadosPM = 0, maxNro = 0;
-    if (last >= 2) {
-      var fechas = sh.getRange(2, 2, last - 1, 1).getValues();              // col B = Fecha
-      var turnos = sh.getRange(2, 8, last - 1, 1).getValues();             // col H = Turno
-      var nros   = sh.getRange(2, NRO_COL, last - 1, 1).getValues();        // col N° del día (ya no es la última)
-      for (var j = 0; j < fechas.length; j++) {
-        if (fmtDate(fechas[j][0]) === String(p.fecha)) {
-          usados++;
-          if (String(turnos[j][0] || '').toUpperCase().indexOf('PM') >= 0) usadosPM++; else usadosAM++;
-          var n = Number(nros[j][0]) || 0; if (n > maxNro) maxNro = n;
-        }
+  // PORTERO DE DÍAS CERRADOS Y CUPOS. Administración cierra una fecha cuando ese camión ya
+  // está armado (fila __dias_cerrados__ de esta hoja). Se revisa ACÁ y no solo en el panel
+  // porque una compu con la página abierta desde antes del cierre no se entera y guardaba
+  // igual: es el único lugar donde el "no" es definitivo. Corre dentro del lock de doPost
+  // => atómico: aunque 3 carguen a la vez, entran de a uno y nunca se pasa del límite.
+  if (p.fecha) {
+    var esNuevo = foundRow < 0;
+    var cambiaFecha = !esNuevo && fmtDate(viejo[1]) !== String(p.fecha);
+    var cambiaTurno = !esNuevo && turnoNorm_(viejo[7]) !== turnoNorm_(p.turno);
+    /* Mover de fecha o de turno es volver a cargar la entrega: pasa por el mismo portero
+       que un pedido nuevo. Corregir un precio en un día cerrado NO es mover y no se toca. */
+    if (esNuevo || ((cambiaFecha || cambiaTurno) && !forzar)) {
+      var no = porteroFecha_(sh, last, ids, p, foundRow, esNuevo || cambiaFecha);
+      if (no) return no;
+    } else if (cambiaFecha) {
+      // Administración forzó el cambio de día: igual necesita su número en el día nuevo.
+      porteroFecha_(sh, last, ids, p, foundRow, true);
+    }
+  }
+  // 🔢 N° DE OC REPETIDO. El panel calcula el siguiente con la planilla que tiene en
+  // memoria; dos personas guardando en la misma ventana sacaban el mismo número (25 en
+  // agosto). Acá, dentro del lock, se mira la hoja de verdad.
+  var ocNueva = ocTexto_(p.oc), ocVieja = viejo ? ocTexto_(viejo[2]) : '';
+  if (ocNueva && (foundRow < 0 || ocNueva !== ocVieja)) {
+    var choque = ocRepetidaGs_(sh, last, ocNueva, p.ts, foundRow);
+    if (choque) {
+      if (foundRow < 0 && ocAutoGs_(ocNueva)) {
+        // Número generado por el panel: se le da el siguiente libre y se le avisa.
+        p.oc = ocSiguienteGs_(sh, last, ocNueva, p.ts);
+        p.ocCambiada = { de: ocNueva, a: p.oc, con: choque.cliente };
+      } else {
+        return jsonOut({ ok:false, error:'oc_repetida', oc:ocNueva, otro:{ id:choque.id, cliente:choque.cliente, fecha:choque.fecha } });
       }
     }
-    var tSel = String(p.turno || '').toUpperCase().indexOf('PM') >= 0 ? 'PM' : 'AM';
-    var dow = dowDeGs(p.fecha);                                  // 0=domingo, 6=sábado
-    var limT;
-    if (dow === 0) limT = 0;                                     // domingo: cerrado
-    else if (dow === 6) limT = (tSel === 'AM') ? 15 : 0;         // sábado: 15 AM, sin PM
-    else limT = (tSel === 'PM') ? CUPOS_PM : CUPOS_AM;           // resto: 12 AM / 13 PM
-    var usadosT = (tSel === 'PM') ? usadosPM : usadosAM;
-    if (usadosT >= limT) return jsonOut({ ok:false, error:'cupos_llenos', fecha:p.fecha, turno:tSel, cupos:limT, usados:usadosT });
-    p.nroDia = Math.max(maxNro, usados) + 1; // N° correlativo del día (server-assigned, atómico por el lock)
   }
+  p.rev = Math.max((viejo ? (Number(viejo[REV_COL - 1]) || 0) : 0) + 1, Date.now());
   var row = recToRow(p);
   if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); return jsonOut({ ok:true, pedido:p, mode:'update' }); }
   sh.appendRow(row);
@@ -496,7 +641,8 @@ function recToRow(p) {
     p.vehiculo || '', p.chofer || '', p.garantia || '',
     p.nota || '', Number(p.acuenta) || 0, p.facturarA || '', p.nit || '', Number(p.nroDia) || 0,
     p.verificado ? 'SÍ' : 'NO',
-    (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : ''
+    (p.fotos && p.fotos.length) ? p.fotos.join(' | ') : '',
+    Number(p.rev) || 0
   ];
 }
 
@@ -589,9 +735,24 @@ function guardarFoto(body) {
   }
 }
 
+/* Manda a la papelera una foto de entrega. SOLO si el archivo vive en la carpeta de fotos:
+   este script corre con la cuenta del dueño y `getFileById` alcanza cualquier archivo de
+   ese Drive — antes, con un id ajeno, borraba lo que fuera y contestaba «ok». Ahora
+   revisa la carpeta y dice la verdad si algo falla (§4ce). */
 function borrarFoto(body) {
-  try { DriveApp.getFileById(String(body.fotoId)).setTrashed(true); } catch (e) {}
-  return jsonOut({ ok:true, version:SCRIPT_VERSION });
+  var id = String((body && body.fotoId) || '').trim();
+  if (!id) return jsonOut({ ok:false, error:'sin id', version:SCRIPT_VERSION });
+  try {
+    var f = DriveApp.getFileById(id);
+    var carpeta = fotosFolder_().getId(), nuestra = false;
+    var padres = f.getParents();
+    while (padres.hasNext()) { if (padres.next().getId() === carpeta) nuestra = true; }
+    if (!nuestra) return jsonOut({ ok:false, error:'no_es_foto', version:SCRIPT_VERSION });
+    f.setTrashed(true);
+    return jsonOut({ ok:true, version:SCRIPT_VERSION });
+  } catch (e) {
+    return jsonOut({ ok:false, error:String(e), version:SCRIPT_VERSION });
+  }
 }
 
 function backupFolder_() {

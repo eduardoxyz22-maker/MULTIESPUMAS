@@ -27,6 +27,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - Subdominio: `eanez`
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
 
+## Panel de pedidos (`pedidos.html` + `google-apps-script.gs`)
+- El backend exige la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
+  sin ella configurada queda abierto y el panel lo avisa en rojo. Kommo usa `KOMMO_HOOK_KEY` aparte.
+  Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
+- Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
+  y `SCRIPT_VERSION_ESPERADA` juntos.
+
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
 ("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)

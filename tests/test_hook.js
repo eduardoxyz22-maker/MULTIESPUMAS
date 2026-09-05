@@ -277,7 +277,7 @@ console.log('\n── 9. Lo que ya funcionaba sigue funcionando ──');
   chk('…con el celular que sacó del contacto', String(borr.celular)===SECRETOS.tel, borr.celular);
   const malJson = f.leer(f.ctx.doPost({ parameter:{}, postData:{contents:'esto no es json'} }));
   chk('un cuerpo roto sigue dando el error de siempre', malJson.ok===false && malJson.error==='bad json');
-  chk('la versión del script subió', f.ctx.SCRIPT_VERSION==='2026-09-04-a', f.ctx.SCRIPT_VERSION);
+  chk('la versión del script subió', f.ctx.SCRIPT_VERSION>='2026-09-04-a', f.ctx.SCRIPT_VERSION);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

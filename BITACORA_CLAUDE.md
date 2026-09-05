@@ -3504,12 +3504,126 @@ a la otra venta sin abrir también la fila; y —mirando el bloque de `cuadreAle
 el texto de la pantalla, porque los nombres también están en la tabla y el check pasaría
 en falso— que el detalle nombre a los dos.
 
+## 4ce. 🛡️ La auditoría del servidor: cinco agujeros confirmados (2026-09-05)
+
+El dueño trajo una tabla con cinco errores **confirmados y reproducidos** en el backend
+(`google-apps-script.gs`). Los cinco se verificaron contra el código antes de tocar nada:
+
+| Prioridad | Error | Dónde estaba |
+|---|---|---|
+| **Crítica** | Consultar, guardar y borrar pedidos no exigía autenticación. Solo Kommo verificaba una clave. | `doPost`: `list`/`save`/`delete`/`foto`/`borrarFoto`/`geocode` abiertos; `doGet` volcaba la planilla entera. |
+| **Crítica** | `borrarFoto` aceptaba cualquier id sin comprobar que fuera una foto de entrega, y contestaba «ok» aunque fallara. | `DriveApp.getFileById(id).setTrashed(true)` en un `try{}catch(e){}` vacío. |
+| **Alta** | Cada edición reemplazaba la fila entera sin mirar si alguien la había cambiado. **Un cambio de chofer pisaba un pago reciente.** | `doSave` → `recToRow(p)` → `setValues` sin ninguna comparación. |
+| **Alta** | Los porteros de cupos y días cerrados solo miraban pedidos nuevos. Mover uno a domingo entraba. | `if (foundRow < 0 && ...)` en los dos porteros. |
+| **Alta** | El servidor aceptaba OC repetidas. | No había ningún chequeo; el panel solo avisaba después (§4bv: 25 en agosto). |
+
+**Por qué el primero era el peor.** La contraseña de administración es un hash **solo del
+lado del navegador** (`tryUnlock`, `sha256(pass)===stored`): el servidor nunca la ve.
+Y la dirección `/exec` del script está en la línea 1145 de `pedidos.html`, que es una página
+**pública en GitHub Pages**. Con solo mirar el código fuente, cualquiera podía bajar nombres,
+celulares y direcciones de todos los clientes —o borrar la planilla— sin ninguna contraseña.
+
+### Los cinco arreglos
+
+**1. 🔐 La clave del equipo (`PANEL_KEY`).** Una propiedad del script. Con ella configurada,
+`doPost` exige `body.key` para todo lo que no sea Kommo (que tiene SU clave aparte,
+`KOMMO_HOOK_KEY`), y `doGet` exige `?k=`. **⚠️ Sin `PANEL_KEY` configurada el servidor sigue
+ABIERTO como antes — a propósito**: si fallara cerrado, publicar esta versión dejaría a todo
+el equipo sin poder trabajar hasta que alguien configure la propiedad, y la última vez el
+dueño se perdió en esos pasos. A cambio, cada respuesta lleva `auth:'abierto'|'clave'` y el
+panel lo muestra **en rojo en Administración** hasta que se configure.
+Del lado del panel: la clave se guarda **una vez por dispositivo** (`LS_CLAVE`) y viaja en
+cada `apiPost`. Si el servidor contesta `error:'clave'`, se trata **como si no hubiera red**:
+`apiPost` rechaza la promesa, los guardados van a la cola de siempre y el cartel de conexión
+muestra el botón **🔐 Ingresar clave**. Al ingresarla, `flushPending()` manda lo acumulado.
+**Nada se pierde y nada se descarta.**
+
+**2. 🗑️ `borrarFoto` mira la carpeta.** Recorre `getParents()` del archivo y solo lo manda a
+la papelera si uno de ellos es «Fotos entregas MultiEspumas». Cualquier otra cosa →
+`error:'no_es_foto'`. Y cualquier fallo se devuelve como fallo: `apiBorrarFoto` en el panel
+ahora avisa *«La foto salió del pedido, pero no se pudo borrar de Drive»*.
+
+**3. 🤝 El sello de revisión (columna 30, `Revisión`).** El servidor pone `rev` en cada
+guardado y lo devuelve; el panel lo guarda (`aplicarSello`) y lo manda en el próximo. Si el
+`rev` que llega no es el de la hoja → `error:'conflicto'` **con la fila actual adentro**, para
+que el panel la muestre en vez de la vieja. Reglas de compatibilidad, para no dejar a nadie
+sin trabajar: si el panel **no manda** `rev` (versión vieja cacheada) o la fila **nunca tuvo**
+sello (todas las de antes de hoy), pasa.
+
+⚠️ **El detalle que hacía o rompía todo: el sello que se manda al editar es el de cuando se
+ABRIÓ el formulario (`EDIT_REV`), no el de `prev` al guardar.** `prev` se lee al momento de
+guardar (`findById(EDIT_ID)`), y la pantalla se refresca sola cada 2 minutos: si en el medio
+contabilidad registró el pago, `prev` traía el sello NUEVO —y el servidor lo aceptaría— con
+los valores VIEJOS de plata que seguían en el formulario. `_plataIgual` compara el formulario
+contra `prev`, así que los habría mandado. Con el sello de la apertura, ese guardado choca,
+y el formulario **se vuelve a abrir con los datos nuevos** (`editPedido`/`completarBorrador`).
+La persona rehace su cambio en diez segundos; el pago no se pierde nunca.
+
+**4. 🚪 Mover pasa por el portero.** `porteroFecha_` (la lógica de antes, extraída) corre
+para un pedido nuevo con fecha **y** cuando uno existente cambia de fecha o de turno,
+excluyéndose a sí mismo de la cuenta y reasignando el N° del día si cambió el día.
+Corregir un precio en un día cerrado **no** es mover y sigue entrando. Completar un borrador
+de Kommo (fecha vacía → fecha) sí pasa por el portero, que es lo correcto.
+`body.forzar`: el panel lo manda **solo** cuando quien tiene la clave de administración
+confirmó el aviso (formulario con `UNLOCKED` moviendo fecha/turno; «Reprogramar» con
+avisos confirmados). Es la que arma el camión y puede meterle un bulto más a sabiendas.
+
+**5. 🔢 OC repetida, dentro del lock.** `ocRepetidaGs_` compara el texto **completo** (con
+el «ATC » incluido, como §4bv) y el **año de carga** (`ts`): el correlativo arranca de nuevo
+cada año y «08-001» de 2027 no choca con la de 2026. Dos comportamientos:
+- Número **generado por el panel** (`MM-NNN` o `ATC MM-NNN`) en un pedido **nuevo** que
+  choca → se le da **el siguiente libre de su serie** y se devuelve `ocCambiada:{de,a,con}`;
+  el panel cambia la OC del pedido y avisa 9 segundos. Es el cierre atómico de las 25 de
+  agosto: la ventana de horas de §4bv pasó a ~1 s con la bajada previa, y ahora a cero.
+- Número **escrito a mano** (ROHO manda el suyo) o **cambio de OC en una edición** que
+  choca → `error:'oc_repetida'` con quién y cuándo; el formulario marca el campo.
+- Editar un pedido **sin cambiarle** la OC entra siempre, aunque esa OC ya estuviera
+  repetida de antes: las repetidas viejas se corrigen, no se traban.
+
+### Lo que casi sale mal, del lado del panel
+
+Dieciséis lugares llaman a `apiSave` y casi todos hacen `if(!ok) queuePending(p)`. Con los
+rechazos nuevos, eso reencolaba un «no» firme y lo reintentaba **para siempre** —un zombi en
+el pie del panel, y en el caso del conflicto, **reintentar es exactamente pisar el pago**.
+Se resolvió en un solo lugar: `apiSave` anota el id en `NO_ENCOLAR` ante `conflicto`,
+`cupos_llenos`, `dia_cerrado` u `oc_repetida`; `queuePending` lo respeta 10 segundos y
+`flushPending` saca de la cola lo que vuelve con un «no» firme. `test_conflicto.js` atrapó
+además que si `refrescarEstado()` lanza dentro de `rechazoFirme`, la promesa de `apiSave` se
+rechaza y la cola lo reencolaba igual — quedó en `try`.
+
+### Tests
+
+- `tests/test_servidor.js` — **60 checks**, carga el `.gs` con un Google de mentira
+  (planilla, Drive con un archivo ajeno, propiedades). Contra el `.gs` de `origin/main`
+  (`GS=viejo.gs node tests/test_servidor.js`) falla en todo lo que tiene que fallar.
+- `tests/test_conflicto.js` — **31 checks** en Chromium, con `fetch` interceptado: la clave
+  viaja, el rechazo encola sin perder, el botón aparece, el sello se guarda, el conflicto
+  reemplaza y no reencola, el sello de la apertura gana al del refresco, el formulario se
+  reabre con lo nuevo, la OC corregida se refleja, reprogramar confirmado manda `forzar`.
+  Contra `origin/main`: `pedirClaveEquipo is not defined`.
+- `test_hook.js`: un check comparaba la versión exacta; pasó a `>=`.
+
+### ⚠️ Orden de despliegue (el `.gs` lo publica el dueño a mano)
+
+1. Publicar el panel (hecho en este commit). Con el `.gs` viejo todo sigue igual; el panel
+   muestra «versión vieja» hasta el paso 2.
+2. Pegar el `.gs` nuevo → **Implementar → Administrar implementaciones → ✏️ → Nueva versión
+   → Implementar.** Desde acá: conflictos, porteros al mover, OC y `borrarFoto` ya rigen.
+   El servidor sigue abierto y Administración lo dice en rojo.
+3. **Propiedades del script → `PANEL_KEY`** = una clave larga inventada. Desde ese instante
+   cada dispositivo pide la clave una vez (botón 🔐 en el cartel de conexión); lo que
+   guarden mientras tanto queda en la cola y entra al ingresarla.
+   Para mirar la planilla desde el navegador: `…/exec?k=LA_CLAVE`.
+
 ## 5. Pendientes
 
-> ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-04)
-> `SCRIPT_VERSION` pasó a **`2026-09-04-a`** por los borradores de Kommo (§4cc). **Los pasos
-> completos —propiedades del script, publicación y webhook en Kommo— están en §4cc.**
-> Hasta que se haga, el panel muestra el aviso de versión vieja y los borradores no llegan.
+> ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-05)
+> `SCRIPT_VERSION` pasó a **`2026-09-05-a`** por los cinco arreglos de seguridad (§4ce).
+> **Los tres pasos —publicar, configurar `PANEL_KEY`, ingresar la clave en cada
+> dispositivo— están al final de §4ce.** Hasta el paso 2 el servidor sigue con los cinco
+> agujeros; hasta el paso 3 sigue abierto (y el panel lo marca en rojo en Administración).
+>
+> (Historial: `2026-09-04-a` fue por los borradores de Kommo, §4cc — pasos ahí.)
 > Lo de abajo es el historial de la publicación anterior.
 >
 > **✅ NO era pendiente hasta hoy: el Apps Script estaba publicado.** Deploy `2026-08-22-a`, confirmado

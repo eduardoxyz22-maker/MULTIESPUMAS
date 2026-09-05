@@ -77,6 +77,15 @@ Que el test **reviente** contra la versión vieja también alcanza como prueba, 
 que degrade a checks en rojo (`if(typeof loNuevo!=='function') return -1;`): quien lo corra
 dentro de seis meses ve *qué* falta, no un stack trace.
 
+Los tests del **backend** (`test_hook.js`, `test_servidor.js`) no abren Chromium: cargan
+`google-apps-script.gs` con `vm` y un Google de mentira (planilla, Drive, propiedades).
+`test_servidor.js` acepta la ruta del `.gs` por variable, para los dientes:
+
+```bash
+git show origin/main:google-apps-script.gs > /tmp/viejo.gs
+GS=/tmp/viejo.gs node tests/test_servidor.js
+```
+
 ## La regla de oro
 
 **Si algo falla, es una regresión de verdad.** No hay "fallas conocidas" que normalizar: la
