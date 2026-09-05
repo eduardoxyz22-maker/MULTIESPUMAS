@@ -3926,6 +3926,30 @@ textos se dibujaban **unos encima de otros**. Dos causas:
 Verificado con captura y midiendo el DOM: **0 celdas desbordadas**, y en computadora la
 tabla entra entera sin scroll horizontal. Un problema visual se comprueba mirando.
 
+### Y el resultado, que era un renglón perdido
+
+*"ese letrero abajo de «4 pedidos creados» ni se ve ahí abajo. Debería salir una ventana
+flotante llevando a ver los pedidos"*. Tenía razón: el resultado era un `<div>` **debajo del
+botón**, o sea fuera de la pantalla justo en el momento en que uno más quiere saber qué pasó.
+
+`renderImportRohoFin()` reemplaza el contenido de la ventana y contesta sola la pregunta que
+uno se hace —*¿de verdad entraron y ocupan lugar en el camión?*—: una tabla **día por día**
+con cuántos entraron, **cómo quedó el cupo de ese turno después de importar** (`4 de 12 ·
+quedan 8`) y qué notas cayeron ahí. Abajo, un botón que lleva a la tabla de Administración
+al mes de esas entregas y buscando ROHO, que es donde se les asigna chofer.
+
+Si el servidor rechazó alguno, sale en rojo con el motivo por nota **y** con lo que hay que
+saber para no dudar: *«Esos no quedaron a medias: no están en la planilla. Corregí lo que
+dice el motivo y volvé a subir el mismo Excel — se van a crear solo los que faltan.»*
+
+**Verificado en producción por el dueño**: la nota 188807 quedó con **N° del día #4** para el
+09/09 —o sea que sí ocupó lugar en el camión—, con dirección, celular, «Recibe: …» en
+observaciones y marcada PAGADO. `tests/test_roho.js` **62 → 69**.
+
+⚠️ Y una limitación que conviene tener escrita: **desde acá no se puede ver la planilla**
+(el proxy bloquea todo Google). Verificar «se creó de verdad» es siempre o una captura del
+dueño, o ponerlo en la pantalla para que lo vea él — que es lo que se hizo acá.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

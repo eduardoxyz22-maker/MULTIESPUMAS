@@ -228,7 +228,35 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       !imp.ocs.some(oc=>r.viejos.some(p=>p.oc===oc)), imp.ocs.join(','));
   chk('⚠️ NO tocó el pedido que ya estaba', imp.viejo && imp.viejo.observaciones==='NO ME TOQUES',
       imp.viejo && imp.viejo.observaciones);
-  chk('avisa cuántos creó', /pedidos? creados?|pedido creado/.test(imp.progreso), imp.progreso.slice(0,90));
+  /* ✅ EL RESULTADO TIENE QUE VERSE Y CONTESTAR «¿de verdad entraron?».
+     El dueño: *"ese letrero abajo de «4 pedidos creados» ni se ve ahí abajo"* — era un
+     renglón debajo del botón, o sea fuera de la pantalla justo cuando más importa. */
+  const fin = await page.evaluate(() => ({
+    txt:(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' '),
+    abierto:document.getElementById('modal').classList.contains('on'),
+    filas:[].slice.call(document.querySelectorAll('#modal-box tbody tr')).map(t=>t.textContent.replace(/\s+/g,' ').trim()),
+    botones:[].slice.call(document.querySelectorAll('#modal-box .modal-actions button')).map(b=>b.textContent.trim())
+  }));
+  chk('⚠️ al terminar, el resultado ocupa la ventana entera (no un renglón perdido abajo)',
+      fin.abierto && /pedidos? de ROHO creados?/.test(fin.txt), fin.txt.slice(0,90));
+  chk('⚠️ …y dice, día por día, cómo quedó el CUPO del turno después de importar',
+      /Cupo del turno/.test(fin.txt) && fin.filas.some(t=>/de \d+/.test(t)), fin.filas[0]||'');
+  chk('…y qué notas entraron en cada día', fin.filas.some(t=>/1887\d\d|1888\d\d/.test(t)), fin.filas[0]||'');
+  chk('…con un botón para ir a verlos en la tabla',
+      fin.botones.some(b=>/Ver los pedidos/.test(b)), JSON.stringify(fin.botones));
+
+  const irA = await page.evaluate(() => {
+    var mes=(window._guardados[0]||{}).fecha.slice(0,7);
+    irAImportadosRoho(mes);
+    return { modal:document.getElementById('modal').classList.contains('on'),
+             vista:document.getElementById('view-admin').classList.contains('active'),
+             modo:segVal('adm-mode'), mes:(document.getElementById('adm-mes')||{}).value,
+             busca:(document.getElementById('adm-search')||{}).value,
+             enTabla:(document.getElementById('tbl-pedidos').textContent||'').indexOf('ROHO')>=0 };
+  });
+  chk('el botón cierra la ventana y lleva a Administración', irA.modal===false && irA.vista===true, JSON.stringify(irA));
+  chk('…al mes de las entregas importadas y buscando ROHO', irA.busca==='ROHO' && irA.modo==='mes', irA.modo+' · '+irA.mes+' · '+irA.busca);
+  chk('⚠️ …y ahí están, en la tabla', irA.enTabla===true, irA.enTabla);
 
   /* ⚠️ EL PEDIDO GUARDADO TIENE QUE LLEVAR TODO LO QUE EL EXCEL TRAE. El dueño preguntó
      dos veces si la dirección y el teléfono se importaban: sí se importaban, pero la vista
@@ -295,12 +323,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     await new Promise(r=>setTimeout(r,1500));
     return { aCrear:aCrear, guardados:window._guardados.length,
              enState:STATE.filter(p=>p.vendedor==='ROHO'&&p.id!=='ya1').length,
-             progreso:(document.getElementById('roho-progreso')||{}).textContent||'' };
+             /* El detalle de los rechazos vive en la pantalla de resultado, no en el
+                renglón de progreso: ese quedaba debajo del botón y no se veía. */
+             resultado:(document.getElementById('modal-box')||{}).textContent||'' };
   }, bytes);
   chk('los que el servidor rechaza NO quedan en pantalla como si hubieran entrado',
       rech.enState===rech.guardados, rech.enState+' en pantalla vs '+rech.guardados+' guardados');
-  chk('⚠️ …y se dice cuáles fallaron y por qué', /no entraron/.test(rech.progreso) && /lleno/.test(rech.progreso),
-      rech.progreso.replace(/\s+/g,' ').slice(0,140));
+  chk('⚠️ …y se dice cuáles fallaron y por qué', /no entraron/.test(rech.resultado) && /lleno/.test(rech.resultado),
+      rech.resultado.replace(/\s+/g,' ').slice(0,160));
+  chk('…y que se pueden volver a subir con el mismo Excel',
+      /volv[ée] a subir el mismo Excel/.test(rech.resultado), rech.resultado.replace(/\s+/g,' ').slice(-160));
   chk('los demás sí entran', rech.guardados===rech.aCrear-2, rech.guardados+' de '+(rech.aCrear-2));
 
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));

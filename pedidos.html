@@ -10383,7 +10383,7 @@ function confirmarImportRoho(){
   var lista=rohoElegidos();
   if(!lista.length){ toast('No hay nada para importar.','err'); return; }
   var prog=document.getElementById('roho-progreso');
-  var ok=0, fallos=[], i=0;
+  var ok=0, fallos=[], creados=[], i=0;
   // Para "repartir": se llena el AM de cada día hasta el tope y el resto va a PM.
   var usadosAM={};
   var turnoDe=function(p){
@@ -10396,10 +10396,7 @@ function confirmarImportRoho(){
   var uno=function(){
     if(i>=lista.length){
       saveMirror(); updateStats(); renderAdmin(); refreshCarga();
-      var res='<b>'+ok+'</b> pedido'+(ok===1?'':'s')+' creado'+(ok===1?'':'s')+'.';
-      if(fallos.length) res+='<br><span style="color:var(--red)">'+fallos.length+' no entraron:</span><br>'+
-        fallos.map(function(f){ return '· Nota '+esc(f.oc)+': '+esc(f.motivo); }).join('<br>');
-      pintar(res);
+      renderImportRohoFin(creados, fallos);
       toast(fallos.length?('Importados '+ok+' · '+fallos.length+' con problema'):('✅ '+ok+' pedidos de ROHO importados'), fallos.length?'err':'ok', 6000);
       return;
     }
@@ -10415,9 +10412,9 @@ function confirmarImportRoho(){
       nroDia:nextNroDia(p.fecha), ts:Date.now(), fotos:[]
     };
     upsert(rec);
-    if(!CONNECTED){ ok++; setTimeout(uno,0); return; }
+    if(!CONNECTED){ ok++; creados.push(rec); setTimeout(uno,0); return; }
     apiSave(rec).then(function(res){
-      if(res && res.ok){ ok++; }
+      if(res && res.ok){ ok++; creados.push(rec); }
       else{
         STATE=STATE.filter(function(x){ return x.id!==rec.id; });
         var e=res?String(res.error||''):'';
@@ -10430,10 +10427,70 @@ function confirmarImportRoho(){
       setTimeout(uno,0);
     }, function(){
       // Sin red: queda en la cola y se manda solo al reconectar.
-      queuePending(rec); ok++; setTimeout(uno,0);
+      queuePending(rec); ok++; creados.push(rec); setTimeout(uno,0);
     });
   };
   uno();
+}
+/* ✅ EL RESULTADO, DONDE SE VE (§4ck).
+   Antes el «4 pedidos creados» era un renglón chico DEBAJO del botón, o sea fuera de la
+   pantalla justo cuando más importa. Ahora reemplaza el contenido de la ventana y contesta
+   sola la pregunta que uno se hace: *¿de verdad entraron y ocupan lugar en el camión?* —
+   por eso muestra, día por día, cómo quedó el cupo DESPUÉS de importar. */
+function renderImportRohoFin(creados, fallos){
+  var porDia={};
+  creados.forEach(function(p){
+    var k=p.fecha+'|'+normTurno(p.turno);
+    (porDia[k]||(porDia[k]={fecha:p.fecha, turno:normTurno(p.turno), n:0, notas:[]}));
+    porDia[k].n++; porDia[k].notas.push(p.oc);
+  });
+  var dias=Object.keys(porDia).sort().map(function(k){ return porDia[k]; });
+  var filas=dias.map(function(d){
+    var lim=limTurno(d.fecha,d.turno), usados=cuposUsadosTurno(d.fecha,d.turno);
+    var lleno=(usados>=lim);
+    return '<tr>'+
+      '<td><b>'+esc(fmtFecha(d.fecha))+'</b></td>'+
+      '<td>'+esc(d.turno)+'</td>'+
+      '<td><b>'+d.n+'</b></td>'+
+      '<td style="color:'+(lleno?'var(--red)':'var(--muted)')+'">'+usados+' de '+lim+
+        (lleno?' · <b>lleno</b>':(' · quedan '+Math.max(0,lim-usados)))+'</td>'+
+      '<td style="color:var(--muted)">'+esc(d.notas.join(', '))+'</td></tr>';
+  }).join('');
+  var mesIr=(creados[0]||{}).fecha ? creados[0].fecha.slice(0,7) : '';
+  var html='<div class="modal-h" style="background:'+(fallos.length?'#8a5a00':'#0f766e')+'">'+
+      '<h3>'+(creados.length?('✅ '+creados.length+' pedido'+(creados.length===1?'':'s')+' de ROHO creado'+(creados.length===1?'':'s')):'Nada se creó')+'</h3>'+
+      '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      (creados.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Ya están en la planilla y <b>ocupan lugar en el camión</b> de su día. Así quedó cada turno:</p>'+
+        '<div class="roho-wrap" style="min-width:0"><table class="roho-tabla" style="min-width:560px">'+
+        '<colgroup><col style="width:100px"><col style="width:62px"><col style="width:72px"><col style="width:150px"><col style="width:176px"></colgroup>'+
+        '<thead><tr><th>Entrega</th><th>Turno</th><th>Nuevos</th><th>Cupo del turno</th><th>Notas</th></tr></thead>'+
+        '<tbody>'+filas+'</tbody></table></div>'):'')+
+      (fallos.length?('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
+        'border-radius:10px;padding:10px 13px;margin-top:12px;font-size:.83rem;color:#8a1c24">'+
+        '<b>'+fallos.length+' no entraron</b> — el servidor los rechazó:<br>'+
+        fallos.map(function(f){ return '· Nota <b>'+esc(f.oc)+'</b>: '+esc(f.motivo); }).join('<br>')+
+        '<div style="margin-top:6px">Esos <b>no</b> quedaron a medias: no están en la planilla. Corregí lo que dice el motivo y volvé a subir el mismo Excel — se van a crear solo los que faltan.</div></div>'):'')+
+      '<div class="modal-actions" style="margin-top:15px">'+
+        (creados.length?('<button class="btn btn-primary btn-sm" style="flex:1;min-width:200px;background:#0f766e" onclick="irAImportadosRoho(\''+esc(mesIr)+'\')">👀 Ver los pedidos en la tabla</button>'):'')+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button>'+
+      '</div>'+
+    '</div>';
+  openModal(html, true);
+}
+/* Lleva a la tabla de Administración, al mes de las entregas importadas y buscando ROHO:
+   es el lugar donde se les asigna chofer y se los tilda, o sea donde hay que verlos. */
+function irAImportadosRoho(mes){
+  closeModal();
+  var sb=document.getElementById('adm-search'); if(sb) sb.value='ROHO';
+  if(mes){
+    segSet('adm-mode','mes');
+    document.getElementById('wrap-dia').style.display='none';
+    document.getElementById('wrap-mes').style.display='block';
+    var em=document.getElementById('adm-mes'); if(em) em.value=mes;
+  }
+  admTopeReset(); showView('admin'); renderAdmin();
+  var t=document.getElementById('tbl-pedidos'); if(t) t.scrollIntoView({block:'start',behavior:'smooth'});
 }
 
 /* `ancha` = esta ventana lleva una tabla y no entra en el ancho de una ficha (§4ck). */
