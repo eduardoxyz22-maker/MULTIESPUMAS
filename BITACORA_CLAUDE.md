@@ -3636,11 +3636,15 @@ minutos» de §4cc era una suposición escrita como hecho.
 
 ## 5. Pendientes
 
-> ## ⚠️ SÍ HAY QUE PUBLICAR EL APPS SCRIPT (2026-09-05)
-> `SCRIPT_VERSION` pasó a **`2026-09-05-a`** por los cinco arreglos de seguridad (§4ce).
-> **Los tres pasos —publicar, configurar `PANEL_KEY`, ingresar la clave en cada
-> dispositivo— están al final de §4ce.** Hasta el paso 2 el servidor sigue con los cinco
-> agujeros; hasta el paso 3 sigue abierto (y el panel lo marca en rojo en Administración).
+> ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-a` (2026-09-05, 14:23 UTC)
+> El dueño pegó el `.gs` e hizo *Nueva versión*. Confirmado desde afuera con el repaso de
+> Kommo (run 33971648264): `servidor del panel: versión 2026-09-05-a`. **Así se verifica de
+> ahora en más**: Actions → «Traer ventas de Kommo (respaldo)» → Run workflow → leer la
+> línea de versión en el registro (§4cf). Rigen los cuatro arreglos de §4ce que no dependen
+> de la clave (borrarFoto, conflictos, porteros al mover, OC repetida).
+>
+> (Antes de confirmarse decía: `SCRIPT_VERSION` pasó a `2026-09-05-a` por los cinco arreglos
+> de seguridad; los tres pasos están al final de §4ce.)
 >
 > **⏸️ LA CLAVE DEL EQUIPO QUEDÓ EN ESPERA por decisión del dueño (2026-09-05):** *"de
 > momento no implementemos eso, dejamos standby"*. O sea: **hacer solo el paso 1** (publicar
