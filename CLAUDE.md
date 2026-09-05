@@ -28,8 +28,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - Token: secret `KOMMO_TOKEN` de GitHub Actions (env var; NO está en el código). Expira ~2026-10-28.
 
 ## Panel de pedidos (`pedidos.html` + `google-apps-script.gs`)
-- El backend exige la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
-  sin ella configurada queda abierto y el panel lo avisa en rojo. Kommo usa `KOMMO_HOOK_KEY` aparte.
+- El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
+  sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
+  no configurarla hasta que él lo pida.** Kommo usa `KOMMO_HOOK_KEY` aparte.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
 - Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
   y `SCRIPT_VERSION_ESPERADA` juntos.

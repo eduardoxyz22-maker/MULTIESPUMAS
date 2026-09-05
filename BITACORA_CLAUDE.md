@@ -3623,6 +3623,14 @@ rechaza y la cola lo reencolaba igual — quedó en `try`.
 > dispositivo— están al final de §4ce.** Hasta el paso 2 el servidor sigue con los cinco
 > agujeros; hasta el paso 3 sigue abierto (y el panel lo marca en rojo en Administración).
 >
+> **⏸️ LA CLAVE DEL EQUIPO QUEDÓ EN ESPERA por decisión del dueño (2026-09-05):** *"de
+> momento no implementemos eso, dejamos standby"*. O sea: **hacer solo el paso 1** (publicar
+> el `.gs`), que activa los otros cuatro arreglos. No configurar `PANEL_KEY` — sin ella el
+> servidor sigue abierto como siempre y ningún dispositivo pide nada. El código queda listo
+> para el día que decida activarla (pasos 2 y 3 de §4ce). Mientras tanto, Administración va
+> a mostrar el aviso rojo de «servidor sin clave» cada vez que se abra; si molesta, bajarlo a
+> un aviso discreto (está en `renderConnEstado`).
+>
 > (Historial: `2026-09-04-a` fue por los borradores de Kommo, §4cc — pasos ahí.)
 > Lo de abajo es el historial de la publicación anterior.
 >
