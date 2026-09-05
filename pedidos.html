@@ -415,6 +415,22 @@ th.sortable:hover{color:var(--teal-dk)}
 .modal-x{background:rgba(255,255,255,.22);border:none;color:#fff;width:30px;height:30px;min-width:30px;border-radius:50%;font-size:1rem;cursor:pointer;line-height:1}
 .modal-x:hover{background:rgba(255,255,255,.35)}
 .modal-b{padding:20px}
+/* 📥 La ventana de importar ROHO muestra una tabla de 8 columnas: con los 540 px de una
+   ficha normal los textos se aplastaban hasta montarse unos sobre otros. */
+.modal.ancha{max-width:min(1180px,96vw)}
+.roho-tabla{width:100%;min-width:1040px;border-collapse:collapse;font-size:.78rem;table-layout:fixed}
+/* ⚠️ `white-space:normal` es lo que de verdad arregla el amontonamiento: la regla global
+   `table{white-space:nowrap}` (la que hace que la tabla de Administración no se parta) la
+   heredaba también esta, y las direcciones largas se salían de su columna y se dibujaban
+   encima de la de al lado. `table-layout:fixed` sin esto no alcanza. */
+.roho-tabla th,.roho-tabla td{padding:7px 9px;text-align:left;vertical-align:top;
+  white-space:normal;word-break:break-word;overflow-wrap:anywhere;border-top:1px solid var(--gray-md)}
+.roho-tabla thead th{background:var(--gray-lt);border-top:none;position:sticky;top:0;z-index:1;
+  font-weight:700;color:var(--muted);text-transform:uppercase;font-size:.72rem;letter-spacing:.02em}
+/* El N° de nota y la fecha son cortos y NO se parten: «188807» cortado en «18880 / 7» se
+   lee como otro número, y es justo el dato con el que se busca el pedido. */
+.roho-tabla th:nth-child(-n+2),.roho-tabla td:nth-child(-n+2){white-space:nowrap}
+.roho-wrap{max-height:46vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px;margin-top:10px}
 .wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .wa-btn{background:#25D366;color:#fff}
@@ -875,7 +891,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirProds()">🛏️ Productos más entregados</button>
           <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
-          <button class="btn btn-primary btn-sm" style="width:auto;background:#6d28d9" onclick="abrirImportRoho()" title="Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» que bajás del sistema de ROHO y se crean los pedidos.">📥 Importar ROHO</button>
+          <!-- Rojo chillón (el propio del panel, #CE2939 · 5,3:1 sobre blanco) y NO el rojo
+               oscuro de «Cerrar día»: los dos son rojos, pero se distinguen de un vistazo y
+               no se confunde importar con cerrar. -->
+          <button class="btn btn-primary btn-sm" style="width:auto;background:var(--red)" onclick="abrirImportRoho()" title="Subí el Excel «DETALLE NOTA DE VENTA PARA PROVEEDOR» que bajás del sistema de ROHO y se crean los pedidos.">📥 Importar ROHO</button>
           <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 Imprimir</button>
           <button class="btn btn-ghost btn-sm" onclick="backupJson()">💾 Respaldar (JSON)</button>
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
@@ -10306,22 +10325,25 @@ function renderImportRoho(){
 
   var tb=function(k,l){ return '<button type="button" class="btn btn-sm" style="'+(ROHO_TURNO===k?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="rohoSetTurno(\''+k+'\')">'+l+'</button>'; };
 
-  var tabla=elegidos.length ? ('<div style="max-height:38vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px;margin-top:10px">'+
-    '<table style="width:100%;border-collapse:collapse;font-size:.78rem">'+
-    '<thead><tr style="background:var(--gray-lt)"><th style="text-align:left;padding:6px">Nota</th><th style="text-align:left;padding:6px">Entrega</th>'+
-    '<th style="text-align:left;padding:6px">Cliente</th><th style="text-align:left;padding:6px">Celular</th>'+
-    '<th style="text-align:left;padding:6px">Zona</th><th style="text-align:left;padding:6px">Dirección</th>'+
-    '<th style="text-align:left;padding:6px">Productos</th><th style="text-align:left;padding:6px">Observaciones</th></tr></thead><tbody>'+
+  /* ⚠️ `table-layout:fixed` con anchos declarados en el `<colgroup>`: sin eso el navegador
+     reparte las 8 columnas a ojo, las aplasta y los textos largos (dirección, productos)
+     se montan unos sobre otros. Lo que no entra se lee bajando el scroll de al lado. */
+  var tabla=elegidos.length ? ('<div class="roho-wrap"><table class="roho-tabla">'+
+    '<colgroup><col style="width:78px"><col style="width:94px"><col style="width:148px"><col style="width:80px">'+
+    '<col style="width:96px"><col style="width:206px"><col style="width:190px"><col style="width:206px"></colgroup>'+
+    '<thead><tr><th>Nota</th><th>Entrega</th><th>Cliente</th><th>Celular</th>'+
+    '<th>Zona</th><th>Dirección</th><th>Productos</th><th>Observaciones</th></tr></thead><tbody>'+
     elegidos.map(function(p){
-      return '<tr style="border-top:1px solid var(--gray-md)">'+
-        '<td style="padding:6px"><b>'+esc(p.oc)+'</b></td>'+
-        '<td style="padding:6px">'+esc(fmtFecha(p.fecha))+'</td>'+
-        '<td style="padding:6px">'+esc(p.cliente||'—')+'</td>'+
-        '<td style="padding:6px">'+(p.celular?esc(p.celular):'<span style="color:var(--red);font-weight:700">falta</span>')+'</td>'+
-        '<td style="padding:6px">'+(p.zona?esc(p.zona):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
-        '<td style="padding:6px;max-width:260px">'+(p.direccion?esc(p.direccion):'<span style="color:var(--red);font-weight:700">falta</span>')+'</td>'+
-        '<td style="padding:6px">'+p.productos.map(function(x){ return esc(x.desc)+' <b>×'+esc(String(x.cant))+'</b>'; }).join('<br>')+'</td>'+
-        '<td style="padding:6px;max-width:280px;color:var(--muted)">'+esc(p.obs)+'</td>'+
+      var falta=function(t){ return '<span style="color:var(--red);font-weight:700">'+t+'</span>'; };
+      return '<tr>'+
+        '<td><b>'+esc(p.oc)+'</b></td>'+
+        '<td>'+esc(fmtFecha(p.fecha))+'</td>'+
+        '<td>'+esc(p.cliente||'—')+'</td>'+
+        '<td>'+(p.celular?esc(p.celular):falta('falta'))+'</td>'+
+        '<td>'+(p.zona?esc(p.zona):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
+        '<td>'+(p.direccion?esc(p.direccion):falta('falta'))+'</td>'+
+        '<td>'+p.productos.map(function(x){ return esc(x.desc)+' <b>×'+esc(String(x.cant))+'</b>'; }).join('<br>')+'</td>'+
+        '<td style="color:var(--muted)">'+esc(p.obs)+'</td>'+
       '</tr>';
     }).join('')+'</tbody></table></div>') : '';
 
@@ -10355,7 +10377,7 @@ function renderImportRoho(){
       '</div>'+
       '<div id="roho-progreso" style="margin-top:10px;font-size:.82rem"></div>'+
     '</div>';
-  openModal(html);
+  openModal(html, true);          // ancha: la tabla tiene 8 columnas
 }
 function confirmarImportRoho(){
   var lista=rohoElegidos();
@@ -10414,8 +10436,11 @@ function confirmarImportRoho(){
   uno();
 }
 
-function openModal(html){
-  document.getElementById('modal-box').innerHTML=html;
+/* `ancha` = esta ventana lleva una tabla y no entra en el ancho de una ficha (§4ck). */
+function openModal(html, ancha){
+  var box=document.getElementById('modal-box');
+  box.innerHTML=html;
+  box.classList.toggle('ancha', !!ancha);
   document.getElementById('modal').classList.add('on');
   acomodarFichas();                        // el reporte y los productos traen sus fichas
 }

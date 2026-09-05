@@ -3908,6 +3908,24 @@ qué pieza le tienen que entregar, y eso el chofer lo necesita en la mano. Va si
 
 `tests/test_roho.js` **55 → 62**.
 
+### Y la ventana, que salía ilegible
+
+*"la ventana podría ser más ancha y grande… y sale con errores"*, con una captura donde los
+textos se dibujaban **unos encima de otros**. Dos causas:
+
+1. `.modal` está fijo en **540 px** —el ancho de una ficha— y esta ventana lleva una tabla
+   de 8 columnas. `openModal(html, ancha)` toma ahora un segundo parámetro y esta usa
+   `.modal.ancha` (`min(1180px, 96vw)`).
+2. **La culpable de verdad**: la regla global `table{white-space:nowrap}` (la que hace que
+   la tabla de Administración no se parta) la heredaban también estas celdas, así que las
+   direcciones largas se salían de su columna y se dibujaban encima de la de al lado.
+   `table-layout:fixed` con `<colgroup>` **no alcanzaba** sin `white-space:normal`.
+   El N° de nota y la fecha sí van `nowrap`: «188807» partido en «18880 / 7» se lee como
+   otro número, y es justo el dato con el que se busca el pedido.
+
+Verificado con captura y midiendo el DOM: **0 celdas desbordadas**, y en computadora la
+tabla entra entera sin scroll horizontal. Un problema visual se comprueba mirando.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
