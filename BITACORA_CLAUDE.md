@@ -3777,13 +3777,22 @@ faltaba tildar «Lead agregado» y él mostró que estaba tildado.
 
 ## 5. Pendientes
 
-> ## ⚠️ HAY QUE VOLVER A PUBLICAR EL APPS SCRIPT: `2026-09-05-c` (2026-09-05)
-> Por §4ch: el borrador trae el NOMBRE del cliente y no «Lead #123», se verifica el embudo,
-> los avisos sin etapa ya no se pierden, y el servidor deja rastro del último aviso de
-> Kommo. Al publicarlo, el borrador de Erwin se corrige solo en el próximo aviso o repaso.
-> Verificación: Run workflow de «Traer ventas de Kommo (respaldo)» → `versión 2026-09-05-c`.
+> ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
+> Run 33975079467 del repaso:
+> ```
+> leads en la ventana: 2
+> servidor del panel: versión 2026-09-05-c
+> último aviso de Kommo al panel: 2026-09-05T15:31:31.824Z
+> borradores NUEVOS creados: 0 de 2
+> ```
+> **🔔 EL WEBHOOK LLEGA.** `kMarcaHook_` solo lo escribe `kommoHook` (el repaso NO lo toca),
+> así que ese sello es un aviso real de Kommo, 35 segundos antes de la corrida. Queda
+> descartada de una vez la hipótesis «Kommo no avisa» — que sostuve dos veces sin datos y el
+> dueño desmintió las dos. Lo que faltaba era procesarlo bien, que es §4cg + §4ch.
+> **Falta medir** el camino completo (crear en «Compradores» → aparece solo): hasta ahora
+> todos los casos reales entraron por el repaso.
 >
-> ## ✅ Publicación anterior: `2026-09-05-b` (2026-09-05, 14:55 UTC)
+> ## ✅ Publicación anterior: `2026-09-05-b` (2026-09-05, 14:55 UTC, run 33973242047)
 > Confirmado en el registro del repaso (run 33973242047): `servidor del panel: versión
 > 2026-09-05-b`. Rige §4cg completo: el sello no se puede omitir, forzar exige `ADMIN_KEY`
 > con la puerta con llave, y el aviso de Kommo lee `leads[add]`/`leads[update]`.

@@ -129,6 +129,11 @@ def main():
 
     creados = res.get("creados", 0)
     print(f"   borradores NUEVOS creados: {creados} de {len(ids)}")
+    # Borradores que estaban con el número que pone Kommo («Lead #39357288») y quedaron
+    # con el nombre del cliente. Solo la cantidad: el nombre no se imprime nunca.
+    rep = res.get("reparados", 0)
+    if rep:
+        print(f"   nombres corregidos (venían como «Lead #…»): {rep}")
     if creados:
         # Son los que el webhook perdió. Si esto no es casi siempre 0, el webhook no
         # está andando bien y hay que mirarlo.

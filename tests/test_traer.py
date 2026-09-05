@@ -60,7 +60,7 @@ def falso_urlopen(req, timeout=None):
         ENVIADO.update(json.loads(req.data.decode()))
         ENVIADO["_url"] = url
         return FalsaResp({"ok": True, "version": "2026-09-05-c", "ultimoHook": "2026-09-05T14:55:00.000Z",
-                          "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"]})
+                          "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"], "reparados": 1})
     PEDIDAS.append(url)
     return FalsaResp(LEADS)
 
@@ -121,6 +121,9 @@ chk("dice qué versión del Apps Script contestó (para verificar publicaciones 
 # 🔎 Sin esto no se puede distinguir «Kommo no avisa» de «el servidor no procesa el aviso».
 chk("dice cuándo fue el último aviso de Kommo al panel",
     "último aviso de Kommo al panel: 2026-09-05T14:55" in salida, salida[-200:])
+chk("dice cuántos nombres «Lead #…» corrigió", "nombres corregidos" in salida, salida[-200:])
+chk("⚠️ …sin imprimir ningún nombre de cliente",
+    SECRETOS["nombre"] not in salida, "")
 chk("dice cuántos borradores nuevos creó", "borradores NUEVOS creados: 1 de 2" in salida)
 chk("⚠️ avisa que esos los perdió el webhook", "los perdió el webhook" in salida)
 
