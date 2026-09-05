@@ -214,13 +214,38 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
   chk('el sello cambió otra vez', r.pedido.rev>selloConta, r.pedido.rev+' > '+selloConta);
 }
 {
-  // Un panel VIEJO (cacheado) que no sabe de sellos no se queda sin poder guardar.
-  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
+  /* ⚠️ §4cg — la auditoría reprodujo que bastaba OMITIR el sello para pisar el pago igual.
+     La primera versión dejaba pasar los guardados sin `rev` «para no trabar a un panel
+     viejo cacheado»; pero el panel viejo que más daño hace es justo el de la pestaña
+     abierta desde ayer. Ahora: fila sellada + guardado sin sello = rechazado. */
+  const a = cargar([HDR, fila({id:'p1', saldo:100})], { PANEL_KEY: CLAVE });
   const l = a.post(conClave({ action:'list' })).pedidos[0];
-  a.post(conClave({ action:'save', pedido: l }));                        // deja sello
+  const pagado = JSON.parse(JSON.stringify(l)); pagado.saldo=0; pagado.pagado=true;
+  a.post(conClave({ action:'save', pedido: pagado }));                   // contabilidad cobra: deja sello
   const viejo = JSON.parse(JSON.stringify(l)); delete viejo.rev; viejo.chofer='ANA';
   const r = a.post(conClave({ action:'save', pedido: viejo }));
-  chk('un panel viejo que no manda sello sigue pudiendo guardar', r.ok===true, JSON.stringify(r).slice(0,80));
+  chk('⚠️ una copia vieja SIN sello sobre una fila sellada: RECHAZADA', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,80));
+  chk('⚠️ …y el pago sigue ahí', pedido(a.ctx,a.sh,'p1').saldo===0 && pedido(a.ctx,a.sh,'p1').pagado===true);
+}
+{
+  // Las filas de ANTES (nunca selladas) aceptan su primer guardado, con o sin sello, y quedan selladas.
+  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
+  const l = a.post(conClave({ action:'list' })).pedidos[0]; delete l.rev; l.chofer='ANA';
+  let r = a.post(conClave({ action:'save', pedido: l }));
+  chk('una fila de antes (sin sello) acepta su primer guardado aunque venga sin sello', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
+  delete l.rev; l.chofer='BETO';
+  r = a.post(conClave({ action:'save', pedido: l }));
+  chk('…pero el segundo sin sello ya no entra: la fila quedó sellada', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,80));
+}
+{
+  // Las filas del sistema (días cerrados, arqueo) se reescriben enteras a propósito: no exigen sello.
+  const a = cargar([HDR], { PANEL_KEY: CLAVE });
+  const cierre = { id:'__dias_cerrados__', fecha:'', observaciones:'🔒 '+JUEVES };
+  let r = a.post(conClave({ action:'save', pedido: cierre }));
+  chk('la fila de días cerrados entra la primera vez', r.ok===true);
+  cierre.observaciones='🔒 '+JUEVES+' '+MIERCOLES;
+  r = a.post(conClave({ action:'save', pedido: cierre }));
+  chk('…y la segunda también, sin sello (es una fila del sistema)', r.ok===true, JSON.stringify(r).slice(0,80));
 }
 
 // ══ 4. 🚪 MOVER PASA POR EL PORTERO ═════════════════════════════════════════
@@ -251,10 +276,26 @@ console.log('\n── 4. Mover un pedido de fecha o turno ──');
   p = cerr.post(conClave({ action:'list' })).pedidos.find(x=>x.id==='c1'); p.chofer='LUIS';
   r = cerr.post(conClave({ action:'save', pedido:p }));
   chk('corregir un pedido que YA está en un día cerrado (sin moverlo): entra', r.ok===true, JSON.stringify(r).slice(0,80));
-  // Administración confirmó y forzó: pasa.
+  /* 🛡️ §4cg — la auditoría reprodujo que `forzar:true` pasaba con solo la clave del EQUIPO,
+     que no dice quién es administración. Con la puerta con llave, forzar exige ADMIN_KEY. */
   p = base(); p.fecha=JUEVES;
   r = a.post(conClave({ action:'save', pedido:p, forzar:true }));
-  chk('con «forzar» (administración confirmó) entra al día cerrado', r.ok===true, JSON.stringify(r).slice(0,80));
+  chk('⚠️ «forzar» con la clave del equipo pero SIN ADMIN_KEY configurada: rechazado', r.ok===false && r.error==='admin' && r.motivo==='sin_clave', JSON.stringify(r).slice(0,90));
+  chk('…y el pedido no se movió', pedido(a.ctx,a.sh,'p1').fecha!==JUEVES, pedido(a.ctx,a.sh,'p1').fecha);
+  const adm = cargar([HDR, fila({id:'p1', fecha:MARTES, turno:'AM'}),
+    ['__dias_cerrados__','','','','','','','','','','','NO',0,0,'','','🔒 '+JUEVES,'','NO','','','','',0,'','',0,'NO',''] ],
+    { PANEL_KEY: CLAVE, ADMIN_KEY:'la-de-administracion' });
+  p = adm.post(conClave({ action:'list' })).pedidos.find(x=>x.id==='p1'); p.fecha=JUEVES;
+  r = adm.post(conClave({ action:'save', pedido:p, forzar:true, adminKey:'otra' }));
+  chk('⚠️ con ADMIN_KEY configurada y una clave EQUIVOCADA: rechazado', r.ok===false && r.error==='admin' && r.motivo==='clave_mal', JSON.stringify(r).slice(0,90));
+  r = adm.post(conClave({ action:'save', pedido:p, forzar:true, adminKey:'la-de-administracion' }));
+  chk('con la clave de administración correcta entra al día cerrado', r.ok===true && pedido(adm.ctx,adm.sh,'p1').fecha===JUEVES, JSON.stringify(r).slice(0,80));
+  chk('la respuesta dice que la puerta interna tiene llave (adminAuth: clave)', r.adminAuth==='clave', r.adminAuth);
+  const abierta = cargar([HDR, fila({id:'p1', fecha:MARTES, turno:'AM'}),
+    ['__dias_cerrados__','','','','','','','','','','','NO',0,0,'','','🔒 '+JUEVES,'','NO','','','','',0,'','',0,'NO',''] ], {});
+  p = abierta.post({ action:'list' }).pedidos.find(x=>x.id==='p1'); p.fecha=JUEVES;
+  r = abierta.post({ action:'save', pedido:p, forzar:true });
+  chk('con la puerta ABIERTA (sin PANEL_KEY) forzar sigue como siempre — no hay candado interno sin candado externo', r.ok===true, JSON.stringify(r).slice(0,80));
   // Un pedido NUEVO sigue teniendo el mismo portero de siempre.
   r = a.post(conClave({ action:'save', pedido:{ id:'n1', fecha:MIERCOLES, turno:'AM', cliente:'N', ts:AHORA } }));
   chk('un pedido NUEVO a un turno lleno: rechazado como siempre', r.ok===false && r.error==='cupos_llenos');
@@ -314,7 +355,7 @@ console.log('\n── 6. La columna Revisión ──');
   a.post(conClave({ action:'list' }));
   chk('la hoja de 29 columnas recibe el encabezado «Revisión» (col 30) sola', a.sh._datos[0][29]==='Revisión', a.sh._datos[0][29]);
   chk('las filas viejas se leen igual que antes', a.post(conClave({action:'list'})).pedidos[0].cliente==='CLIENTE');
-  chk('la versión del script subió', a.ctx.SCRIPT_VERSION>='2026-09-05-a', a.ctx.SCRIPT_VERSION);
+  chk('la versión del script subió', a.ctx.SCRIPT_VERSION>='2026-09-05-b', a.ctx.SCRIPT_VERSION);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

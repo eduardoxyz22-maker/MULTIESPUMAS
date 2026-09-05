@@ -37,7 +37,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     CONNECTED=true; UNLOCKED=true;
     try{ localStorage.removeItem(LS_PEND); localStorage.removeItem(LS_CLAVE); }catch(e){}
     CLAVE_EQUIPO=''; CLAVE_RECHAZADA=false; SERVER_AUTH=''; NO_ENCOLAR={};
-    window._bodies=[]; window._toasts=[];
+    window._bodies=[]; window._toasts=[]; window._apiListOrig=apiList;
     if(!window._toastOrig) window._toastOrig=window.toast;
     window.toast=function(m,k){ window._toasts.push(String(m)); return window._toastOrig.apply(null,arguments); };
     window._resp=function(b){ return {ok:true, version:SCRIPT_VERSION_ESPERADA, auth:'clave', pedido:b.pedido}; };
@@ -202,19 +202,79 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   // ══ 6. 📅 Reprogramar confirmando avisos manda «forzar» ════════════════════
   console.log('\n── 6. Reprogramar ──');
-  r = await page.evaluate(async () => {
-    window._bodies=[];
-    window._resp=function(b){ return {ok:true, version:SCRIPT_VERSION_ESPERADA, auth:'clave', pedido:b.pedido}; };
-    var p=findById('juan');
-    var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()!==0) d.setDate(d.getDate()+1);   // el próximo domingo: avisa
-    REPRO={ id:'juan', kind:'admin', fecha:isoLocal(d), turno:'AM' };
+  const domingo = await page.evaluate(() => { var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()!==0) d.setDate(d.getDate()+1); return isoLocal(d); });
+  r = await page.evaluate(async (dom) => {
+    window._bodies=[]; window._prompts=0;
+    ADMIN_KEY_LOCAL=''; try{ localStorage.removeItem(LS_ADMIN_KEY); }catch(e){}
+    SERVER_AUTH='abierto';                              // la puerta está abierta: no hay candado interno
+    window.prompt=function(){ window._prompts++; return 'no-deberia-pedirla'; };
+    window._resp=function(b){ return {ok:true, version:SCRIPT_VERSION_ESPERADA, auth:'abierto', adminAuth:'abierto', pedido:b.pedido}; };
+    REPRO={ id:'juan', kind:'admin', fecha:dom, turno:'AM' };
     reproConfirmar();                                   // el confirm() se acepta solo
     await new Promise(r=>setTimeout(r,150));
     var s=window._bodies.filter(b=>b.action==='save')[0];
-    return { forzar: s && s.forzar, fecha: s && s.pedido.fecha, esperada: isoLocal(d) };
-  });
+    return { forzar: s && s.forzar, adminKey: s && s.adminKey, fecha: s && s.pedido.fecha, prompts: window._prompts };
+  }, domingo);
   chk('reprogramar a domingo, confirmando el aviso, manda «forzar» al servidor', r.forzar===true, JSON.stringify(r));
-  chk('…con la fecha nueva', r.fecha===r.esperada);
+  chk('…con la fecha nueva', r.fecha===domingo);
+  chk('con la puerta ABIERTA no pide ninguna clave de administración', r.prompts===0 && !r.adminKey, JSON.stringify(r));
+
+  // ══ 7. 🛡️ Con la puerta con llave, forzar pide la clave de administración ══
+  console.log('\n── 7. La clave de administración del servidor ──');
+  r = await page.evaluate(async (dom) => {
+    window._bodies=[]; window._prompts=0; window._toasts=[];
+    /* ⚠️ La sección 4 dejó `apiList` apuntando a un stub que devuelve el STATE actual; con
+       eso, «recargar la planilla» devolvería la fecha equivocada y el check de abajo
+       fallaría por culpa del test, no del panel (pasó). Vuelve al de verdad (el fetch). */
+    apiList=window._apiListOrig;
+    STATE=JSON.parse(JSON.stringify(window._pl)); saveMirror();
+    SERVER_AUTH='clave';                                // el servidor tiene PANEL_KEY
+    window.prompt=function(){ window._prompts++; return 'clave-admin-123'; };
+    window._resp=function(b){ return {ok:true, version:SCRIPT_VERSION_ESPERADA, auth:'clave', adminAuth:'clave', pedido:b.pedido}; };
+    REPRO={ id:'juan', kind:'admin', fecha:dom, turno:'AM' };
+    reproConfirmar();
+    await new Promise(r=>setTimeout(r,150));
+    var s=window._bodies.filter(b=>b.action==='save')[0];
+    var g=''; try{ g=localStorage.getItem(LS_ADMIN_KEY); }catch(e){}
+    return { prompts: window._prompts, forzar: s && s.forzar, adminKey: s && s.adminKey, guardada: g };
+  }, domingo);
+  chk('⚠️ con la puerta con llave, pide la clave de administración ANTES de guardar', r.prompts===1, r.prompts);
+  chk('…y la manda junto con «forzar»', r.forzar===true && r.adminKey==='clave-admin-123', JSON.stringify(r));
+  chk('…y la guarda en el dispositivo para no pedirla otra vez', r.guardada==='clave-admin-123', r.guardada);
+
+  r = await page.evaluate(async (dom) => {
+    window._bodies=[]; window._prompts=0; window._toasts=[]; try{ localStorage.removeItem(LS_PEND); }catch(e){}
+    STATE=JSON.parse(JSON.stringify(window._pl)); saveMirror();
+    window._resp=function(b){
+      if(b.action!=='save') return {ok:true, version:SCRIPT_VERSION_ESPERADA, auth:'clave', adminAuth:'clave', pedidos:JSON.parse(JSON.stringify(window._pl))};
+      return {ok:false, error:'admin', motivo:'clave_mal', version:SCRIPT_VERSION_ESPERADA, auth:'clave', adminAuth:'clave'};
+    };
+    REPRO={ id:'juan', kind:'admin', fecha:dom, turno:'AM' };
+    reproConfirmar();                                   // la clave guardada viaja sola (sin prompt)…
+    await new Promise(r=>setTimeout(r,300));
+    var g=''; try{ g=localStorage.getItem(LS_ADMIN_KEY); }catch(e){}
+    return { prompts: window._prompts, pend: getPending().length, clave: ADMIN_KEY_LOCAL, guardada: g,
+             fecha: findById('juan').fecha, esperada: window._F, toasts: window._toasts.join(' | ') };
+  }, domingo);
+  chk('la clave guardada viaja sin volver a preguntar', r.prompts===0, r.prompts);
+  chk('⚠️ si el servidor dice que la clave está MAL, no se reencola', r.pend===0, r.pend);
+  chk('…y la clave mala se olvida, para pedirla de nuevo la próxima', r.clave==='' && !r.guardada, JSON.stringify({clave:r.clave, guardada:r.guardada}));
+  chk('…y avisa que la clave no es la del servidor', /clave de administración/.test(r.toasts), r.toasts.slice(0,160));
+  chk('…y el pedido vuelve a su fecha de antes (se recargó la planilla)', r.fecha===r.esperada, r.fecha+' vs '+r.esperada);
+
+  r = await page.evaluate(async (dom) => {
+    window._bodies=[]; window._prompts=0; window._toasts=[];
+    STATE=JSON.parse(JSON.stringify(window._pl)); saveMirror();
+    window.prompt=function(){ window._prompts++; return null; };   // cancela el prompt
+    REPRO={ id:'juan', kind:'admin', fecha:dom, turno:'AM' };
+    reproConfirmar();
+    await new Promise(r=>setTimeout(r,150));
+    return { prompts: window._prompts, saves: window._bodies.filter(b=>b.action==='save').length,
+             fecha: findById('juan').fecha, toasts: window._toasts.join(' | ') };
+  }, domingo);
+  chk('si cancela el pedido de clave, NO se manda nada', r.prompts===1 && r.saves===0, JSON.stringify(r));
+  chk('…el pedido no se toca', r.fecha!==domingo, r.fecha);
+  chk('…y le dice que reabra el día si no tiene la clave', /Cerrar día/.test(r.toasts), r.toasts.slice(0,160));
 
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

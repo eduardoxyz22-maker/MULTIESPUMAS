@@ -30,7 +30,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 ## Panel de pedidos (`pedidos.html` + `google-apps-script.gs`)
 - El backend puede exigir la **clave del equipo** (`PANEL_KEY`, propiedad del script) en toda lectura/escritura;
   sin ella configurada queda abierto y el panel lo avisa en rojo. **En espera por decisión del dueño (05/09/2026):
-  no configurarla hasta que él lo pida.** Kommo usa `KOMMO_HOOK_KEY` aparte.
+  no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además
+  `ADMIN_KEY` (bitácora §4cg). Kommo usa `KOMMO_HOOK_KEY` aparte.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
 - Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
   y `SCRIPT_VERSION_ESPERADA` juntos.

@@ -150,6 +150,27 @@ console.log('\n── 2. Solo «Compradores» dispara ──');
   chk('…y ni le preguntó a Kommo (no gasta llamadas)', a.llamadas.length===0, a.llamadas.length);
 }
 
+// ══ 2b. La venta CREADA directo en «Compradores» ══════════════════════════
+console.log('\n── 2b. Creada directo en «Compradores» (leads[add]) ──');
+{
+  /* ⚠️ §4cg — el 05/09 una vendedora creó el lead YA en «Compradores». Kommo no manda
+     eso como cambio de etapa (leads[status]) sino como alta (leads[add]), y el aviso solo
+     leía el primero: la venta no llegó. Ahora lee status, add y update. */
+  const a = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  let r = a.leer(hook(a.ctx, {k:CLAVE, 'leads[add][0][id]':'44001', 'leads[add][0][status_id]':ETAPA}));
+  chk('⚠️ un lead creado directo en «Compradores» (leads[add]) crea el borrador', r.ok===true && r.creados===1, JSON.stringify(r).slice(0,110));
+  chk('…con su fila', a.sh._datos.length===3 && a.sh._datos[2][0]==='kommo-44001', a.sh._datos.length);
+  r = a.leer(hook(a.ctx, {k:CLAVE, 'leads[add][0][id]':'44002', 'leads[add][0][status_id]':'102961403'}));
+  chk('un lead creado en OTRA etapa no crea nada', r.creados===0 && a.sh._datos.length===3, JSON.stringify(r).slice(0,80));
+  const b = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = b.leer(hook(b.ctx, {k:CLAVE, 'leads[update][0][id]':'44001', 'leads[update][0][status_id]':ETAPA}));
+  chk('una EDICIÓN de un lead que está en «Compradores» (leads[update]) también lo trae si faltaba', r.creados===1, JSON.stringify(r).slice(0,80));
+  const c = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = c.leer(hook(c.ctx, {k:CLAVE, 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':ETAPA,
+                          'leads[add][0][id]':'44001', 'leads[add][0][status_id]':ETAPA}));
+  chk('el mismo lead en dos tipos de aviso a la vez crea UNA sola fila', r.creados===1 && c.sh._datos.length===3, JSON.stringify(r).slice(0,80));
+}
+
 // ══ 3. La venta llega ═════════════════════════════════════════════════════
 console.log('\n── 3. La venta llega ──');
 const A = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});

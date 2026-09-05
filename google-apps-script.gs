@@ -28,6 +28,9 @@
  * ⚠️ Sin PANEL_KEY configurada el script sigue ABIERTO como antes — a propósito, para
  * que publicar esta versión no deje al equipo sin poder trabajar — y el panel lo avisa
  * en rojo hasta que se configure. La integración con Kommo tiene SU clave aparte.
+ * 🛡️ ADMIN_KEY (segunda propiedad): con PANEL_KEY puesta, forzar un pedido a un día
+ * cerrado o turno lleno exige además esta clave, que solo tienen los dispositivos de
+ * administración. Ver forzarOk_().
  * ============================================================================
  */
 
@@ -64,25 +67,41 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-05-a';   // ⬅️ clave del equipo, conflictos, porteros al mover, OC repetida (§4ce)
+var SCRIPT_VERSION = '2026-09-05-b';   // ⬅️ sin sello no se pisa una fila sellada · forzar exige ADMIN_KEY (§4cg)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
   if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
+  if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
   return ContentService
     .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
 /* ── 🔐 La clave del equipo ──────────────────────────────────────────────── */
-function panelKey_() {
-  try { return String(PropertiesService.getScriptProperties().getProperty('PANEL_KEY') || '').trim(); }
+function prop_(k) {
+  try { return String(PropertiesService.getScriptProperties().getProperty(k) || '').trim(); }
   catch (e) { return ''; }
 }
+function panelKey_() { return prop_('PANEL_KEY'); }
+function adminKey_() { return prop_('ADMIN_KEY'); }
 /** ¿Esta llamada trae la clave correcta? Sin clave configurada, pasa todo (ver cabecera). */
 function claveOk_(recibida) {
   var k = panelKey_();
   return !k || String(recibida || '') === k;
+}
+/* 🛡️ ¿Puede FORZAR (meter un pedido en un día cerrado o un turno lleno)? (§4cg)
+   La clave del equipo dice «sos del equipo», no «sos administración»: la contraseña de
+   Administración vive solo en el navegador y el servidor nunca la ve. Por eso forzar exige
+   una SEGUNDA clave, ADMIN_KEY, que solo tienen los dispositivos de administración.
+   Mientras la puerta esté abierta (sin PANEL_KEY) no tiene sentido un candado interno:
+   forzar sigue como siempre. Con PANEL_KEY puesta y sin ADMIN_KEY, nadie puede forzar —
+   se reabre el día desde «Cerrar día», o se configura ADMIN_KEY. */
+function forzarOk_(body) {
+  if (!panelKey_()) return { ok:true };
+  var ak = adminKey_();
+  if (!ak) return { ok:false, motivo:'sin_clave' };
+  return String(body.adminKey || '') === ak ? { ok:true } : { ok:false, motivo:'clave_mal' };
 }
 
 /** GET: útil para ver los datos desde el navegador (mismo formato que 'list').
@@ -112,6 +131,10 @@ function doPost(e) {
      nombres, celulares y direcciones de clientes; guardar y borrar, ni hablar. El panel
      trata este "no" como si no hubiera red: encola y reintenta cuando le den la clave. */
   if (!claveOk_(body.key)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
+  if (body.forzar) {
+    var fz = forzarOk_(body);
+    if (!fz.ok) return jsonOut({ ok:false, error:'admin', motivo:fz.motivo, version:SCRIPT_VERSION });
+  }
   // 'geocode' resuelve links cortos de Maps -> coordenadas. Va SIN lock (es lento y no toca los pedidos).
   // Devuelve tambien la VERSION: asi el panel sabe si lo que esta publicado es este archivo
   // o una implementacion vieja (guardar el codigo NO alcanza, hay que crear version nueva).
@@ -569,10 +592,16 @@ function doSave(p, forzar) {
        chofer con una copia de hace una hora pisaba el pago que contabilidad acababa de
        registrar: un saldo cancelado volvía a deber. El panel manda el sello con el que
        leyó la fila; si ya no es el de la hoja, se rechaza y se le devuelve la fila actual.
-       Si el panel no manda sello (versión vieja cacheada) o la fila nunca lo tuvo, pasa:
-       este freno no puede dejar a nadie sin trabajar. */
+       ⚠️ Un guardado SIN sello sobre una fila sellada también se rechaza (§4cg). La primera
+       versión lo dejaba pasar «para no trabar a un panel viejo cacheado», y la auditoría
+       lo reprodujo: bastaba omitir `rev` para pisar el pago igual. Y el panel viejo que más
+       daño hace es justo el de la pestaña abierta desde ayer. Lo que sí pasa: una fila que
+       NUNCA tuvo sello (todas las de antes de hoy) acepta su primer guardado y queda
+       sellada; y las filas del sistema (`__dias_cerrados__`, `__arqueo_cuadre__`), que se
+       reescriben enteras a propósito y las maneja una sola persona. */
     var revHoja = Number(viejo[REV_COL - 1]) || 0;
-    if (revHoja && p.rev != null && Number(p.rev) !== revHoja) {
+    var filaSistema = String(p.id).indexOf('__') === 0;
+    if (revHoja && !filaSistema && (Number(p.rev) || 0) !== revHoja) {
       return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
     }
   }
@@ -847,16 +876,20 @@ function kommoHook(e) {
   if (String(e.parameter.k || e.parameter.kommo || '') !== clave) return jsonOut({ ok:false, error:'clave incorrecta' });
 
   var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT);
-  var p = e.parameter || {}, ids = [], i = 0;
-  /* Kommo manda "leads[status][0][id]", "leads[status][1][id]"… Se recorre hasta que
-     no haya más. El tope de 50 es para que un aviso raro no cuelgue el script. */
-  while (i < 50) {
-    var pre = 'leads[status][' + i + ']';
-    var id = p[pre + '[id]'];
-    if (!id) break;
-    if (String(p[pre + '[status_id]'] || '') === String(etapa)) ids.push(String(id));
-    i++;
-  }
+  var p = e.parameter || {}, ids = [];
+  /* Kommo manda "leads[status][0][id]" cuando una venta CAMBIA de etapa. Pero cuando la
+     vendedora la CREA ya en «Compradores» manda "leads[add][0][id]", y cuando la edita
+     "leads[update][0][id]" — y el aviso solo miraba el primero: así se perdió una venta
+     el 05/09 (§4cg). Se miran los tres; repetir no duplica, el panel descarta lo que ya
+     tiene. El tope de 50 por tipo es para que un aviso raro no cuelgue el script. */
+  ['status', 'add', 'update'].forEach(function (tipo) {
+    for (var i = 0; i < 50; i++) {
+      var pre = 'leads[' + tipo + '][' + i + ']';
+      var id = p[pre + '[id]'];
+      if (!id) break;
+      if (String(p[pre + '[status_id]'] || '') === String(etapa) && ids.indexOf(String(id)) < 0) ids.push(String(id));
+    }
+  });
   return kommoProcesar_(ids, 'webhook');
 }
 

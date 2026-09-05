@@ -3614,6 +3614,9 @@ rechaza y la cola lo reencolaba igual — quedó en `try`.
    cada dispositivo pide la clave una vez (botón 🔐 en el cartel de conexión); lo que
    guarden mientras tanto queda en la cola y entra al ingresarla.
    Para mirar la planilla desde el navegador: `…/exec?k=LA_CLAVE`.
+   **En el mismo paso, `ADMIN_KEY`** = otra clave, solo para los dispositivos de
+   administración (botón 🛡️): sin ella, con la puerta con llave nadie puede forzar un
+   pedido a un día cerrado o turno lleno (§4cg).
 
 ## 4cf. ⏱️ El repaso «cada 10 minutos» corría cada 3,5 horas, y su ventana era de 30 (2026-09-05)
 
@@ -3634,8 +3637,71 @@ alcanzaba a nada** que el webhook hubiera perdido más de media hora antes de la
 **Lección**: la cadencia de un cron se mira en las corridas, no en el yml. El «cada 10
 minutos» de §4cc era una suposición escrita como hecho.
 
+## 4cg. 🛡️ La segunda auditoría: dos P1 que yo mismo dejé, un contador, y la venta que Kommo no avisó (2026-09-05)
+
+El dueño trajo un segundo informe externo (revisión del panel publicado, commit `1403f45`),
+con 120 comprobaciones pasadas y tres hallazgos de código. Los tres eran ciertos.
+
+**P1 — «Una copia antigua sin revisión todavía puede sobrescribir un pago».** Exacto: en
+§4ce dejé pasar los guardados sin `rev` «para no trabar a un panel viejo cacheado». El
+auditor lo reprodujo: bastaba **omitir** el sello para pisar el pago igual. Y el panel viejo
+que más daño hace es justo el de la pestaña abierta desde ayer — el escenario de la
+copia vieja. Ahora: fila sellada + guardado sin sello = `conflicto`. Siguen pasando: el
+**primer** guardado de una fila que nunca tuvo sello (todas las de antes de hoy), y las
+**filas del sistema** (`__dias_cerrados__`, `__arqueo_cuadre__`), que se reescriben enteras
+a propósito y las maneja una sola persona. Un panel viejo que reciba el rechazo lo muestra
+como «el servidor NO aceptó» (formulario) o lo deja «sin enviar» hasta recargar la página;
+al recargar, el panel nuevo lo saca de la cola con aviso. Se pierde ese cambio, no el pago.
+
+**P1 — «Forzar una fecha cerrada no exige autorización administrativa en el servidor».**
+También exacto: `body.forzar` pasaba con solo la clave del equipo, que dice «sos del
+equipo», no «sos administración» (la contraseña de Administración es un hash en el
+navegador; el servidor nunca la vio). Arreglo: una segunda propiedad, **`ADMIN_KEY`**, y
+`forzarOk_()`:
+- **Puerta abierta (sin `PANEL_KEY`): forzar sigue como siempre.** Un candado interno sin
+  candado externo no protege nada y solo molestaría — y la clave está en espera (§4ce).
+- **Puerta con llave y sin `ADMIN_KEY`: nadie puede forzar** (`error:'admin'`, motivo
+  `sin_clave`). Se reabre el día desde 🔒 Cerrar día, o se configura la clave.
+- **Con `ADMIN_KEY`: forzar exige `adminKey`** (motivo `clave_mal` si no coincide).
+Del lado del panel: `asegurarClaveAdmin()` pide la clave **antes** de mandar un guardado
+que fuerza (para no perder el formulario en un rechazo), solo si el servidor tiene la puerta
+con llave; se guarda una vez por dispositivo (`LS_ADMIN_KEY`, botón 🛡️ en Administración);
+una clave que el servidor rechaza se olvida para pedirla de nuevo. `_forzar` en el
+formulario se calcula por el DESTINO (cerrado, domingo, sábado PM, turno lleno), no por
+«movió algo»: mover a un día normal no fuerza nada y no pide clave.
+**Cuando el dueño active `PANEL_KEY`, que configure `ADMIN_KEY` en el mismo paso** — está
+en el aviso de Administración y en los pasos de §4ce.
+
+**P2 — «Con saldo» contaba registros sin monto.** La tarjeta decía 5 y el resumen 7; en
+Mayoristas «Con saldo: 3» al lado de «no queda saldo pendiente». `renderConta` contaba
+cualquier venta no marcada pagada; la tarjeta usaba `contaFaltaCobrar`. Ahora las dos usan
+la misma regla, y el resumen separa **«Sin monto anotado»** y **«Cobradas sin marcar
+pagadas»** para que las cuatro categorías sumen el total. `tests/test_consaldo.js` (10).
+
+**⚡ Y la venta que Kommo no avisó (mismo día).** Una vendedora creó un lead **directamente
+en «Compradores»** y no apareció en el panel. Dos causas, las dos mías:
+1. `kommoHook` solo leía `leads[status][…]` (cambio de etapa). Un lead **creado ya en esa
+   etapa** llega como `leads[add][…]`, y una edición como `leads[update][…]`. Ahora lee
+   los tres (mismo lead en dos tipos → una sola fila). `test_hook.js` §2b.
+2. En §4cc le indiqué al dueño configurar el webhook de Kommo **solo** con «Etapa del lead
+   cambiada». Hay que agregar **«Lead agregado»** (y no viene mal «Lead modificado»).
+   Sin eso, Kommo ni siquiera manda el aviso, lea lo que lea el servidor.
+Mientras tanto la trajo el repaso de respaldo (§4cf), que para eso está.
+
+**Corrección de un test mío:** `test_conflicto.js` §4 dejaba `apiList` apuntando a un
+stub que devuelve el STATE actual; el check «el pedido vuelve a su fecha» de §7 fallaba por
+el test, no por el panel (verificado con un script aparte: el refresco sí restaura).
+
+`SCRIPT_VERSION` → **`2026-09-05-b`**. Hay que volver a publicar el `.gs`.
+
 ## 5. Pendientes
 
+> ## ⚠️ HAY QUE VOLVER A PUBLICAR EL APPS SCRIPT: `2026-09-05-b` (2026-09-05)
+> Por §4cg: el sello ya no se puede omitir, forzar exige `ADMIN_KEY` con la puerta con
+> llave, y el aviso de Kommo lee `leads[add]`/`leads[update]`. Además, en Kommo hay que
+> agregar el evento **«Lead agregado»** al webhook. Verificación: Run workflow de «Traer
+> ventas de Kommo (respaldo)» → la línea `servidor del panel: versión 2026-09-05-b`.
+>
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-a` (2026-09-05, 14:23 UTC)
 > El dueño pegó el `.gs` e hizo *Nueva versión*. Confirmado desde afuera con el repaso de
 > Kommo (run 33971648264): `servidor del panel: versión 2026-09-05-a`. **Así se verifica de

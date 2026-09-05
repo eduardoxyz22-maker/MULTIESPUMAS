@@ -872,6 +872,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="window.open('guia-admin.html','_blank')">❓ Guía</button>
           <button class="btn btn-ghost btn-sm" onclick="changePass()">🔑 Cambiar contraseña</button>
           <button class="btn btn-ghost btn-sm" onclick="pedirClaveEquipo()" title="La clave que el servidor exige para leer y guardar pedidos (PANEL_KEY). Se ingresa una vez por dispositivo.">🔐 Clave del equipo</button>
+          <button class="btn btn-ghost btn-sm" onclick="pedirClaveAdmin()" title="La clave que el servidor exige para forzar un pedido a un día cerrado o turno lleno (ADMIN_KEY). Solo dispositivos de administración.">🛡️ Clave de administración</button>
         </div>
 
         <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
@@ -1545,7 +1546,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-05-a';
+var SCRIPT_VERSION_ESPERADA='2026-09-05-b';
 /* 🔐 LA CLAVE DEL EQUIPO (§4ce).
    La dirección del script está acá arriba, en una página pública: con ella sola,
    cualquiera podía leer, guardar y borrar la planilla. Ahora el servidor exige una clave
@@ -1556,13 +1557,21 @@ var CLAVE_EQUIPO=''; try{ CLAVE_EQUIPO=localStorage.getItem(LS_CLAVE)||''; }catc
 var SERVER_AUTH='';          // '' todavía no sé · 'abierto' (sin clave configurada) · 'clave'
 var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
-var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1};
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1};
+/* 🛡️ LA CLAVE DE ADMINISTRACIÓN DEL SERVIDOR (§4cg). La contraseña de Administración vive
+   solo en este navegador; el servidor no la ve. Para FORZAR un pedido a un día cerrado o
+   un turno lleno, el servidor —cuando tiene la puerta con llave— exige esta segunda clave
+   (ADMIN_KEY), que se ingresa una vez por dispositivo de administración. */
+var LS_ADMIN_KEY='ME_CLAVE_ADMIN_V1';
+var ADMIN_KEY_LOCAL=''; try{ ADMIN_KEY_LOCAL=localStorage.getItem(LS_ADMIN_KEY)||''; }catch(e){}
+var SERVER_ADMIN_AUTH='';    // '' no sé · 'abierto' (sin ADMIN_KEY) · 'clave'
 function apiPost(payload){
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){ return r.json(); })
     .then(function(j){
       if(j && j.version) SERVER_VER=String(j.version);
+      if(j && j.adminAuth) SERVER_ADMIN_AUTH=String(j.adminAuth);
       if(j && j.auth && String(j.auth)!==SERVER_AUTH){ SERVER_AUTH=String(j.auth); renderConnEstado(); }
       if(j && j.ok===false && j.error==='clave'){
         var primera=!CLAVE_RECHAZADA;
@@ -1579,7 +1588,7 @@ function apiList(){ return apiPost({action:'list'}); }
    pedido a un día cerrado o a un turno lleno. El servidor lo respeta; a nadie más. */
 function apiSave(rec, opts){
   var payload={action:'save', pedido:rec};
-  if(opts && opts.forzar) payload.forzar=true;
+  if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
   return apiPost(payload).then(function(res){
     if(res && res.ok && res.pedido) aplicarSello(rec, res.pedido);
     else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
@@ -1620,10 +1629,15 @@ function rechazoFirme(rec, res){
     toast('⚠️ Este pedido ('+((actual&&actual.cliente)||rec.cliente||'')+') lo modificó otra persona hace un momento. Se recargó con los datos nuevos — revisá y volvé a hacer tu cambio.','err',9000);
     updateStats(); updateFooter(); autoRepintar();
   }else{
+    // Una clave de administración que el servidor rechazó no sirve: que la vuelva a pedir.
+    if(res.error==='admin' && res.motivo==='clave_mal'){ ADMIN_KEY_LOCAL=''; try{ localStorage.removeItem(LS_ADMIN_KEY); }catch(e){} }
     var m={cupos_llenos:'el turno '+(res.turno||'')+' del '+fmtFecha(res.fecha)+' está lleno',
            dia_cerrado:'el '+fmtFecha(res.fecha)+' está cerrado',
-           oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')}[res.error]||res.error;
-    toast('❌ El servidor no aceptó el cambio: '+m+'. Se recargó la planilla.','err',8000);
+           oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido'),
+           admin:(res.motivo==='sin_clave'
+             ? 'el servidor no tiene ADMIN_KEY configurada, así que nadie puede forzar un día cerrado o un turno lleno. Reabrí el día desde 🔒 Cerrar día, o configurá ADMIN_KEY en Apps Script'
+             : 'la clave de administración no es la del servidor')}[res.error]||res.error;
+    toast('❌ El servidor no aceptó el cambio: '+m+'. Se recargó la planilla.','err',9000);
     /* En try: si el refresco falla, este «no» tiene que seguir siendo un «no». Una
        excepción acá rechazaría la promesa de apiSave y la cola lo REENCOLARÍA. */
     try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); }, function(){}); }catch(e){}
@@ -1710,7 +1724,30 @@ function renderConnEstado(){
     (SERVER_AUTH==='abierto'
       ? '<br><span style="color:var(--red)">🚨 <b>El servidor acepta pedidos SIN clave:</b> cualquiera con la dirección del script puede leer y borrar la planilla.</span> '+
         'Configurá <code>PANEL_KEY</code> en Apps Script (⚙️ Configuración del proyecto → Propiedades del script) y después ingresá esa misma clave acá con 🔐 Clave del equipo.'
+      : '')+
+    (SERVER_AUTH==='clave' && SERVER_ADMIN_AUTH==='abierto'
+      ? '<br><span style="color:#7c4b00">🛡️ Falta <code>ADMIN_KEY</code> en el servidor: nadie puede forzar un pedido a un día cerrado o turno lleno. '+
+        'Se reabre el día desde 🔒 Cerrar día, o se configura esa clave en Apps Script y se ingresa acá con 🛡️ Clave de administración.</span>'
       : '');
+}
+/* 🛡️ Antes de mandar un guardado que FUERZA el portero (día cerrado, domingo, sábado PM,
+   turno lleno): si el servidor tiene la puerta con llave, también va a pedir la clave de
+   administración. Se pide ACÁ, antes de guardar, para no perder el formulario en un
+   rechazo. Con la puerta abierta el servidor no pide nada y esto no molesta. */
+function asegurarClaveAdmin(){
+  if(!CONNECTED || SERVER_AUTH!=='clave') return true;
+  if(!ADMIN_KEY_LOCAL) pedirClaveAdmin();
+  if(!ADMIN_KEY_LOCAL){
+    toast('Para forzar un día cerrado o un turno lleno hace falta la clave de administración del servidor. Si no la tenés, reabrí el día desde 🔒 Cerrar día.','err',8000);
+    return false;
+  }
+  return true;
+}
+function pedirClaveAdmin(){
+  var c=prompt('Clave de administración del servidor (ADMIN_KEY):',''); if(c==null) return;
+  c=c.trim(); if(!c) return;
+  ADMIN_KEY_LOCAL=c; try{ localStorage.setItem(LS_ADMIN_KEY,c); }catch(e){}
+  toast('Clave de administración guardada en este dispositivo.','ok');
 }
 function pedirClaveEquipo(){
   var c=prompt('Clave del equipo (te la da el administrador):',''); if(c==null) return;
@@ -2519,15 +2556,22 @@ function renderContaMetrics(list, vSel){
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
   var list=contaLista();
-  var nPag=0, nDebe=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0;
+  var nPag=0, nDebe=0, nSinMonto=0, nSinMarcar=0, aCuenta=0, saldo=0, porMet={}, nReg=0, envios=0, enviosCob=0, enviosFalta=0;
   list.forEach(function(p){
     envios=r2(envios+envioTotal(p));
     enviosCob=r2(enviosCob+envioCobrado(p));
     enviosFalta=r2(enviosFalta+envioPorCobrar(p));
     if(regEnSistema(p)) nReg++;
-    if(p.pagado) nPag++; else nDebe++;
+    /* ⚠️ «Con saldo» con la MISMA regla que las tarjetas de arriba (`contaFaltaCobrar`).
+       Antes contaba cualquier venta no marcada pagada, incluidas las que no tienen monto
+       anotado o ya están cobradas sin marcar: la tarjeta decía 5 y el resumen 7, y en
+       Mayoristas «Con saldo: 3» al lado de «no queda saldo pendiente» (§4cg). */
+    if(p.pagado) nPag++;
+    else if(contaFaltaCobrar(p)>0.01) nDebe++;
+    else if(sinMontoAnotado(p)) nSinMonto++;
+    else nSinMarcar++;                       // cobrada del todo, pero nadie la marcó pagada
     aCuenta+=Number(p.acuenta)||0;
-    if(!p.pagado) saldo+=Number(p.saldo)||0;
+    saldo=r2(saldo+contaFaltaCobrar(p));
     contaPagos(p).forEach(function(c){ var k=cobroMetodoTxt(c); if(k) porMet[k]=(porMet[k]||0)+1; });
   });
   // En Mayoristas no hay desplegable que leer: el "vendedor" es siempre el mayorista,
@@ -2541,7 +2585,10 @@ function renderConta(){
   document.getElementById('cta-resumen').innerHTML=
     (vSel?('👤 <b>'+esc(vSel)+'</b> &nbsp;·&nbsp; '):'')+
     '<b>'+list.length+'</b> pedido'+(list.length===1?'':'s')+' &nbsp;·&nbsp; ✅ Pagados: <b>'+nPag+'</b> &nbsp;·&nbsp; ⏳ Con saldo: <b>'+nDebe+'</b>'+
-    (saldo>0?(' ('+fmtBs(saldo)+')'):'')+(aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
+    (saldo>0?(' ('+fmtBs(saldo)+')'):'')+
+    (nSinMonto?(' &nbsp;·&nbsp; ❓ Sin monto anotado: <b>'+nSinMonto+'</b>'):'')+
+    (nSinMarcar?(' &nbsp;·&nbsp; ⚪ Cobradas sin marcar pagadas: <b>'+nSinMarcar+'</b>'):'')+
+    (aCuenta>0?(' &nbsp;·&nbsp; A cuenta: <b>'+fmtBs(aCuenta)+'</b>'):'')+
     (envios>0?(' &nbsp;·&nbsp; 🚚 Recargos de entrega: <b>'+fmtBs(envios)+'</b>'+
       ' <span style="color:var(--muted)">(cobrado '+fmtBs(enviosCob)+
       (enviosFalta>0.01?(' · <b style="color:var(--red)">por cobrar '+fmtBs(enviosFalta)+'</b>'):'')+')</span>'):'')+
@@ -5231,6 +5278,7 @@ function submitPedido(){
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
      ni día cerrado, ni cupo del camión que ocupar. Se saltea todo ese bloque. */
+  var _forzar=false;   // ¿esta edición le pide al servidor que deje pasar algo que su portero rechazaría? (§4cg)
   if(!VENTA_TIENDA){
   /* ✏️ LA EDICIÓN NO ES UNA PUERTA TRASERA (§4be). Desde que las vendedoras editan sus
      pedidos (§4bc), CAMBIAR la fecha o el turno equivale a cargar la entrega de nuevo:
@@ -5282,6 +5330,13 @@ function submitPedido(){
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
     return;
   }
+  /* 🛡️ Solo con la clave de administración, y solo si el DESTINO es algo que el portero
+     del servidor rechazaría (cerrado, domingo, sábado PM, turno lleno). Mover a un día
+     normal no fuerza nada y no pide ninguna clave. */
+  _forzar = !!(isEdit && UNLOCKED && (_mueveFecha || _mueveTurno) &&
+             (diaCerrado(fechaSel) || diaDomingo(fechaSel) || (diaSabado(fechaSel) && turnoSel==='PM') ||
+              cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)));
+  if(_forzar && !asegurarClaveAdmin()) return;
   }
   // Los combos se sacaron de la lista de precios: cada producto va cargado por separado,
   // porque un "COMBO" en una sola línea no deja revisar stock ni contar bultos por producto.
@@ -5475,9 +5530,17 @@ function submitPedido(){
   if(CONNECTED){
     setSubmitting(true);
     /* Con la clave de administración, mover a un día cerrado o a un turno lleno ya se
-       confirmó arriba: se le dice al servidor que lo deje pasar. Sin la clave, no. */
-    apiSave(rec, {forzar: !!(isEdit && UNLOCKED && (_mueveFecha || _mueveTurno))}).then(function(res){
+       confirmó arriba: se le dice al servidor que lo deje pasar (y va la clave de
+       administración del servidor, si la pide). Sin la clave, no. */
+    apiSave(rec, {forzar: _forzar}).then(function(res){
       setSubmitting(false);
+      /* 🛡️ El servidor no dejó forzar (sin ADMIN_KEY configurada, o clave equivocada).
+         `rechazoFirme` ya avisó y recargó; acá solo se deshace lo optimista. */
+      if(res && res.error==='admin'){
+        if(prev) upsert(prev); else STATE=STATE.filter(function(p){return p.id!==rec.id;});
+        saveMirror(); updateStats(); if(UNLOCKED) renderAdmin(); renderCupoForm();
+        return;
+      }
       /* 🤝 Otra persona guardó este pedido después de que se abrió la edición. `apiSave`
          ya puso en pantalla la versión nueva; el formulario se vuelve a abrir con ella
          para que lo que se corrija sea sobre lo actual y no pise nada. */
@@ -5487,7 +5550,8 @@ function submitPedido(){
       }
       /* 🔢 Escribió a mano un N° de OC que ya tiene otro pedido (ROHO, o tipeado). */
       if(res && res.error==='oc_repetida'){
-        STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
+        if(prev) upsert(prev); else STATE=STATE.filter(function(p){return p.id!==rec.id;});
+        saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
         markErr('f-oc');
         toast('🚫 La OC '+res.oc+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')+((res.otro&&res.otro.fecha)?(' (entrega '+fmtFecha(res.otro.fecha)+')'):'')+'. Verificá el número.','err',8000);
         var foc=document.getElementById('f-oc'); if(foc){ foc.focus(); foc.scrollIntoView({block:'center'}); }
@@ -7266,6 +7330,7 @@ function reproConfirmar(){
   if(f===p.fecha && t===normTurno(p.turno)){ toast('Es la misma fecha y el mismo turno','err'); return; }
   var avisos=reproAvisos(p,f,t);
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
+  if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
