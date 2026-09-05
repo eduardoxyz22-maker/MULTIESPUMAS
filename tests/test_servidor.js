@@ -40,6 +40,7 @@ function hacerPlanilla(filas){
     deleteRow: (n) => { datos.splice(n-1, 1); },
     getRange: (fila, col, nFilas, nCols) => ({
       getValue: () => (datos[fila-1]||[])[col-1],
+      setValue: (v) => { if(!datos[fila-1]) datos[fila-1]=[]; datos[fila-1][col-1]=v; },
       getValues: () => {
         const out=[];
         for(let i=0;i<(nFilas||1);i++){
@@ -81,7 +82,9 @@ function cargar(filas, props){
   const ctx = {
     console, Date,
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sh, insertSheet: () => sh }) },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: (k) => (props && props[k] != null) ? props[k] : null }) },
+    PropertiesService: { getScriptProperties: () => ({
+      getProperty: (k) => (props && props[k] != null) ? props[k] : null,
+      setProperty: (k, v) => { props[k] = v; } }) },
     UrlFetchApp: { fetch: () => ({ getResponseCode: () => 404, getContentText: () => '{}' }) },
     LockService: { getScriptLock: () => ({ waitLock(){}, releaseLock(){} }) },
     ContentService: { MimeType:{JSON:'json'}, createTextOutput: (t) => ({ _t:t, setMimeType(){ return this; } }) },

@@ -114,6 +114,14 @@ def main():
     if not res.get("ok"):
         sys.exit(f"✗ El panel no aceptó el aviso: {res.get('error')}")
     print(f"   servidor del panel: versión {res.get('version') or '(no dice: es un Apps Script viejo)'}")
+    # 🔎 Cuándo fue la última vez que Kommo le avisó al servidor. Es el dato que separa
+    # «el webhook no llega» de «el webhook llega y el servidor no lo procesa». Solo una
+    # fecha: no dice de qué venta ni de quién.
+    ult = res.get("ultimoHook")
+    if ult:
+        print(f"   último aviso de Kommo al panel: {ult}")
+    elif ult is not None:
+        print("   ⚠️ el servidor NUNCA recibió un aviso de Kommo — revisar el webhook en Kommo")
 
     if not ids:
         print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")

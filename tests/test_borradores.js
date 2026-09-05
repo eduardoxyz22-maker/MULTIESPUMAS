@@ -123,6 +123,10 @@ const DIA = 86400000;
   const verComo = (v) => page.evaluate((v) => {
     showView('mis');
     document.getElementById('mis-vendedor').value=v;
+    /* ⚠️ Desde §4ch el campo vacío se rellena con el nombre RECORDADO en el dispositivo
+       (era la falla de «Elegí tu nombre» con el nombre puesto arriba). Así que para probar
+       «nadie se identificó todavía» hay que vaciar también la memoria, no solo el campo. */
+    if(!v) setVendedorMem('');
     MIS_TODOS=false; renderMis();
     const box=document.getElementById('mis-borradores');
     return { html: box ? box.innerHTML : 'NO EXISTE #mis-borradores',

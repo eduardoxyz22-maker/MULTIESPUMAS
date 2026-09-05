@@ -3694,9 +3694,96 @@ el test, no por el panel (verificado con un script aparte: el refresco sí resta
 
 `SCRIPT_VERSION` → **`2026-09-05-b`**. Hay que volver a publicar el `.gs`.
 
+## 4ch. 🏷️ «Lead #39357288» en vez del cliente · y «Mis pedidos» que no mostraba lo tuyo (2026-09-05)
+
+Tercer informe externo del día, con un caso real: Carola creó el lead de **Erwin Marcelo
+Meschwitz Lino** (39357288, Bs 6.660) directamente en «Compradores». No llegó sola; la trajo
+el repaso (§4cg) y apareció como **«Lead #39357288»**. Además, dos capturas del dueño
+mostraban «Mis pedidos» con el nombre de Carola arriba y *«Elegí tu nombre para ver tus
+pedidos»* abajo, y el pie diciendo «actualizado hace 20 min».
+
+### 🏷️ El nombre: el número de Kommo llegaba tal cual
+
+`crearBorradorDeLead_` hacía `cli = lead.name` y solo caía al contacto **si `cli` estaba
+vacío**. Cuando la venta nace del chat, Kommo la titula sola «Lead #39357288»: no está
+vacío, así que el contacto nunca ganaba. Ahora `nombreDeLead_()` detecta los títulos que
+pone Kommo (`Lead #N`, `Negocio #N`, el número pelado, «Sin nombre»…) y usa el **contacto
+principal** (`is_main`). Un título escrito a mano no se toca.
+
+**Y el borrador de Erwin, que ya existía**: `repararNombreBorrador_()` le corrige **solo la
+celda del cliente**, y solo si sigue siendo un borrador sin completar **y** su nombre sigue
+siendo genérico. Si alguien ya lo escribió a mano, o ya lo completaron, no se toca nada.
+⚠️ **No le pone sello de revisión a propósito**: el borrador nace con sello 0 («nunca
+guardado»), y ponérselo haría que completarlo diera conflicto (§4ce). Corre solo, en el
+próximo aviso o repaso de ese lead.
+
+### 🚪 El portero de la etapa, movido al lugar correcto
+
+§4cg leía `leads[add]`, pero filtraba por el `status_id` **del aviso**: si el aviso no lo
+traía, el lead se descartaba en silencio. Ahora el hook deja pasar el id cuando no viene la
+etapa (solo para alta y cambio de etapa, con tope de 10), y el portero de verdad es
+`leadEnEtapa_()` **con el lead en la mano**, que además comprueba el **embudo**. Un lead de
+otro embudo con una etapa del mismo número ya no entra. Cuando el aviso sí dice la etapa, se
+filtra ahí y no se gasta una llamada a Kommo.
+
+### 📥 «Mis pedidos»: tres fallas, las tres reproducidas
+
+1. **`renderMis()` borraba el nombre recordado.** Hacía `setVendedorMem(v)` **siempre**,
+   también con `v` vacío. Y a `renderMis()` la llaman desde muchos lados —repintado
+   automático, borrar un pedido, el panel del chofer— con esa pestaña **sin abrir** y el
+   campo vacío. Medido: «Carola Chavez» → «» con **una sola** llamada. Ahora solo se
+   recuerda un nombre de verdad, y si el campo está vacío se rellena con el recordado
+   (`misVendedorSel()`), que es lo que también hacía falta para que **los borradores de
+   Kommo aparecieran sin volver a tipear el nombre**.
+2. **`refreshMis()` no dibujaba hasta que contestaba el servidor.** Entre entrar y la
+   respuesta quedaba el cartel viejo —el «Elegí tu nombre» de la captura— y si la red
+   fallaba se quedaba así para siempre. Ahora dibuja primero con lo guardado en el equipo,
+   muestra «Buscando tus pedidos…», y vuelve a dibujar al llegar.
+3. **El sello del pie mentía.** `refreshMis` bajaba la planilla por su cuenta sin tocar
+   `ULTIMO_REFRESCO`. Ahora pasa por `refrescarEstado()`, el único lugar que lo mueve (y que
+   respeta la cola de lo no enviado). Un fallo de red se ve en rojo, dice que lo cargado no
+   se pierde, y ofrece reintentar.
+
+**Refresco cada 30 s** (`MIS_MS`) **solo en esa pestaña, solo visible y solo si no hay nada
+a medio hacer** (`misAlAire()` reusa `autoOcupado()`: ficha abierta, foto subiendo, guardado
+en curso). `MIS_CARGANDO` evita consultas encimadas — probado: tres refrescos a la vez hacen
+**una** consulta. ⚠️ Y queda dicho en el código: **que la pantalla mire cada 30 s no hace que
+la venta ENTRE más rápido**; eso lo decide el aviso de Kommo al servidor. Son dos pasos.
+
+### 🔎 Para diagnosticar el webhook sin adivinar
+
+El servidor anota el **último aviso recibido** (fecha, tipos, cuántos leads — nada de
+nombres ni teléfonos) y lo devuelve como `ultimoHook`; el repaso lo imprime. Si dice «hace
+tres días», el problema está en Kommo; si dice «hace un minuto» y la venta no entró, está en
+el servidor. Antes eso se adivinaba, y **adiviné mal dos veces**: le dije al dueño que
+faltaba tildar «Lead agregado» y él mostró que estaba tildado.
+
+### Tests
+
+- `test_hook.js` **78** (era 54): nombre genérico, reparación del borrador existente,
+  avisos sin etapa, embudo ajeno, rastro sin datos personales. Con `GS=` para los dientes:
+  contra el `.gs` de `origin/main` falla con `Lead #39357288`, el síntoma exacto.
+- `test_mispedidos.js` **33**, nuevo. Contra `origin/main` falla en 3 y revienta.
+- `test_traer.py` **21**.
+- **Dos fallos del andamiaje de los tests, no del código**: la planilla simulada de
+  `test_hook` copiaba las filas con `slice()` —o sea, **compartidas** con el fixture—, así
+  que escribir una celda mutaba el array del test y el caso siguiente arrancaba sucio (me
+  dio un ✗ falso); y a `PropertiesService` le faltaba `setProperty`. Y el fixture **no traía
+  `status_id` ni `pipeline_id`**, que Kommo manda siempre: por eso nunca habría detectado el
+  agujero del embudo. Es la tercera vez que un fixture que no refleja a Kommo esconde un
+  bug (§4bz).
+
+`SCRIPT_VERSION` → **`2026-09-05-c`**.
+
 ## 5. Pendientes
 
-> ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-b` (2026-09-05, 14:55 UTC)
+> ## ⚠️ HAY QUE VOLVER A PUBLICAR EL APPS SCRIPT: `2026-09-05-c` (2026-09-05)
+> Por §4ch: el borrador trae el NOMBRE del cliente y no «Lead #123», se verifica el embudo,
+> los avisos sin etapa ya no se pierden, y el servidor deja rastro del último aviso de
+> Kommo. Al publicarlo, el borrador de Erwin se corrige solo en el próximo aviso o repaso.
+> Verificación: Run workflow de «Traer ventas de Kommo (respaldo)» → `versión 2026-09-05-c`.
+>
+> ## ✅ Publicación anterior: `2026-09-05-b` (2026-09-05, 14:55 UTC)
 > Confirmado en el registro del repaso (run 33973242047): `servidor del panel: versión
 > 2026-09-05-b`. Rige §4cg completo: el sello no se puede omitir, forzar exige `ADMIN_KEY`
 > con la puerta con llave, y el aviso de Kommo lee `leads[add]`/`leads[update]`.

@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-05-b';   // ⬅️ sin sello no se pisa una fila sellada · forzar exige ADMIN_KEY (§4cg)
+var SCRIPT_VERSION = '2026-09-05-c';   // ⬅️ el borrador trae el NOMBRE del cliente, no «Lead #123» (§4ch)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -828,6 +828,7 @@ function purgeBackups_(folder, keep) {
 var BORRADOR_EST = 'Borrador Kommo';
 var BORRADOR_PREF = 'kommo-';
 var KOMMO_ETAPA_DEFAULT = '103450711';   // «Compradores» del embudo 13349719
+var KOMMO_EMBUDO_DEFAULT = '13349719';   // embudo «Ventas» (el único que usa el negocio)
 var KOMMO_CATALOGO = 10902;              // catálogo «Productos»
 var KOMMO_CF_PRECIO = 1685378;           // campo PRECIO del catálogo
 var KOMMO_CF_TEL = 1685346;              // campo Teléfono del contacto
@@ -876,21 +877,52 @@ function kommoHook(e) {
   if (String(e.parameter.k || e.parameter.kommo || '') !== clave) return jsonOut({ ok:false, error:'clave incorrecta' });
 
   var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT);
-  var p = e.parameter || {}, ids = [];
+  var embudo = kProp_('KOMMO_EMBUDO', KOMMO_EMBUDO_DEFAULT);
+  var p = e.parameter || {}, ids = [], sinEtapa = 0, tipos = [];
   /* Kommo manda "leads[status][0][id]" cuando una venta CAMBIA de etapa. Pero cuando la
      vendedora la CREA ya en «Compradores» manda "leads[add][0][id]", y cuando la edita
-     "leads[update][0][id]" — y el aviso solo miraba el primero: así se perdió una venta
-     el 05/09 (§4cg). Se miran los tres; repetir no duplica, el panel descarta lo que ya
-     tiene. El tope de 50 por tipo es para que un aviso raro no cuelgue el script. */
+     "leads[update][0][id]" — y el aviso solo miraba el primero: así se perdió la venta de
+     Erwin el 05/09 (§4cg). Se miran los tres; repetir no duplica, `leadYaCargado_`
+     descarta lo que ya está. El tope de 50 por tipo es para que un aviso raro no cuelgue. */
   ['status', 'add', 'update'].forEach(function (tipo) {
     for (var i = 0; i < 50; i++) {
       var pre = 'leads[' + tipo + '][' + i + ']';
       var id = p[pre + '[id]'];
       if (!id) break;
-      if (String(p[pre + '[status_id]'] || '') === String(etapa) && ids.indexOf(String(id)) < 0) ids.push(String(id));
+      if (i === 0) tipos.push(tipo);
+      var st = String(p[pre + '[status_id]'] || '');
+      var pi = String(p[pre + '[pipeline_id]'] || '');
+      var pasa;
+      if (st) {
+        // El aviso dice en qué etapa quedó: se filtra acá sin gastar una llamada a Kommo.
+        pasa = (st === String(etapa)) && (!pi || !embudo || pi === String(embudo));
+      } else {
+        /* El aviso NO dice la etapa. Pasa solo para el alta y el cambio de etapa (los dos
+           que crean ventas), con tope, y el que decide de verdad es crearBorradorDeLead_:
+           lee el lead y comprueba etapa y embudo. Así un aviso incompleto no se pierde en
+           silencio, y tampoco entra una venta de otra etapa. */
+        pasa = (tipo !== 'update') && (sinEtapa < 10);
+        if (pasa) sinEtapa++;
+      }
+      if (pasa && ids.indexOf(String(id)) < 0) ids.push(String(id));
     }
   });
+  /* 🔎 Rastro para diagnosticar el webhook SIN guardar datos de nadie: cuándo llegó el
+     último aviso, de qué tipo y cuántos leads traía. Si el repaso de respaldo dice
+     «último aviso hace 3 días», el problema está en Kommo y no en este script. */
+  kMarcaHook_(tipos, ids.length);
   return kommoProcesar_(ids, 'webhook');
+}
+
+/** Anota el último aviso recibido (fecha, tipos y cuántos). Nunca nombres ni teléfonos. */
+function kMarcaHook_(tipos, n) {
+  try {
+    PropertiesService.getScriptProperties().setProperty('KOMMO_ULTIMO_HOOK',
+      JSON.stringify({ ts: new Date().toISOString(), tipos: tipos, leads: n }));
+  } catch (e) {}
+}
+function kUltimoHook_() {
+  try { return JSON.parse(prop_('KOMMO_ULTIMO_HOOK') || '{}'); } catch (e) { return {}; }
 }
 
 /* ── El repaso de respaldo (workflow de GitHub) ───────────────────────────── */
@@ -903,18 +935,84 @@ function kommoLeads(body) {
 }
 
 function kommoProcesar_(ids, origen) {
-  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[] });
+  var hook = kUltimoHook_();
+  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '' });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    var hechos = [], saltados = [];
+    var hechos = [], saltados = [], reparados = [];
     for (var i = 0; i < ids.length; i++) {
       var r = crearBorradorDeLead_(ids[i]);
-      if (r === true) hechos.push(ids[i]); else saltados.push(ids[i] + ':' + r);
+      if (r === true) { hechos.push(ids[i]); continue; }
+      saltados.push(ids[i] + ':' + r);
+      // Ya estaba, pero quizá quedó con el nombre que le puso Kommo sola («Lead #123»).
+      if (r === 'ya estaba' && repararNombreBorrador_(getSheet(), ids[i])) reparados.push(ids[i]);
     }
     return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
-                     creados:hechos.length, ids:hechos, saltados:saltados });
+                     creados:hechos.length, ids:hechos, saltados:saltados,
+                     reparados:reparados.length, ultimoHook:hook.ts || '' });
   } finally { lock.releaseLock(); }
+}
+
+/* 🏷️ EL NOMBRE DEL CLIENTE (§4ch).
+   Cuando la vendedora crea la venta desde el chat, Kommo la titula sola: «Lead #39357288».
+   Ese título llegaba tal cual al panel y la vendedora veía un número en vez de su cliente
+   (reportado con la venta de Erwin). El nombre de verdad está en el CONTACTO. */
+function nombreGenerico_(t) {
+  var s = String(t || '').trim();
+  if (!s) return true;
+  // «Lead #39357288», «Negocio 123», «#123», «39357288»
+  if (/^(lead|deal|trato|negocio|venta|prospecto|oportunidad|cliente)?\s*#?\s*\d{3,}$/i.test(s)) return true;
+  if (/^(sin nombre|sin titulo|sin título|nuevo lead|new lead|unsorted|sin clasificar|desconocido)$/i.test(s)) return true;
+  return false;
+}
+/** El nombre del lead si sirve; si no, el del contacto principal. Puede devolver ''. */
+function nombreDeLead_(lead) {
+  var cli = String((lead && lead.name) || '').trim();
+  if (!nombreGenerico_(cli)) return cli;
+  var cts = kEmb_(lead, 'contacts');
+  if (!cts.length) return cli;
+  var principal = cts[0];
+  for (var i = 0; i < cts.length; i++) if (cts[i].is_main) { principal = cts[i]; break; }
+  // El nombre puede venir en el propio vínculo; si no, se lee el contacto.
+  var nom = String(principal.name || '').trim();
+  if (!nom) {
+    var ct = kGet_('/contacts/' + principal.id);
+    nom = String((ct && ct.name) || '').trim();
+  }
+  return nombreGenerico_(nom) ? cli : nom;
+}
+/** ¿Este lead está en la etapa (y el embudo) que disparan el pedido? */
+function leadEnEtapa_(lead) {
+  var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT);
+  var embudo = kProp_('KOMMO_EMBUDO', KOMMO_EMBUDO_DEFAULT);
+  if (String((lead && lead.status_id) || '') !== String(etapa)) return false;
+  // El embudo solo se exige si el lead lo trae: un lead sin ese dato no se descarta.
+  if (embudo && lead.pipeline_id && String(lead.pipeline_id) !== String(embudo)) return false;
+  return true;
+}
+/* Le corrige el nombre a un borrador que YA existe y quedó con el número de Kommo.
+   Se toca ÚNICAMENTE la celda del cliente, y solo si el borrador sigue sin completar y su
+   nombre sigue siendo genérico: si alguien ya lo escribió a mano, no se toca nada.
+   ⚠️ NO se le pone sello de revisión a propósito. El borrador nace con sello 0 («nunca
+   guardado»), y así quien lo complete no choca contra un conflicto por esta corrección. */
+function repararNombreBorrador_(sh, leadId) {
+  var last = sh.getLastRow();
+  if (last < 2) return false;
+  var ids = sh.getRange(2, 1, last - 1, 1).getValues();
+  var buscado = BORRADOR_PREF + leadId, fila = -1;
+  for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === buscado) { fila = i + 2; break; }
+  if (fila < 0) return false;
+  var colCli = HEADERS.indexOf('Cliente') + 1, colEst = HEADERS.indexOf('Estado stock') + 1;
+  if (String(sh.getRange(fila, colEst).getValue() || '') !== BORRADOR_EST) return false;  // ya lo completaron
+  var actual = String(sh.getRange(fila, colCli).getValue() || '').trim();
+  if (!nombreGenerico_(actual)) return false;                                             // ya tiene nombre propio
+  var lead = kGet_('/leads/' + leadId + '?with=contacts');
+  if (!lead || !lead.id) return false;
+  var nombre = nombreDeLead_(lead);
+  if (!nombre || nombreGenerico_(nombre) || nombre === actual) return false;
+  sh.getRange(fila, colCli).setValue(nombre);
+  return true;
 }
 
 /** ¿Ese lead ya está cargado? Por id `kommo-<lead>` o por la marca `klead` que deja
@@ -942,15 +1040,21 @@ function crearBorradorDeLead_(leadId) {
 
   var lead = kGet_('/leads/' + leadId + '?with=contacts,catalog_elements');
   if (!lead || !lead.id) return 'no se pudo leer el lead';
+  /* ⚠️ La etapa se comprueba ACÁ, con el lead en la mano, y no solo en el aviso: algunos
+     avisos de Kommo llegan sin `status_id` y el hook los deja pasar a propósito para no
+     perderlos. Este es el portero de verdad (§4ch). */
+  if (!leadEnEtapa_(lead)) return 'no está en la etapa que dispara';
 
-  // ── El celular vive en el CONTACTO, no en el lead ──
-  var cel = '', cli = String(lead.name || '').trim();
+  // ── El celular vive en el CONTACTO, no en el lead. El nombre, casi siempre también ──
+  var cel = '', cli = nombreDeLead_(lead);
   var cts = kEmb_(lead, 'contacts');
   if (cts.length) {
-    var ct = kGet_('/contacts/' + cts[0].id);
+    var princ = cts[0];
+    for (var ci = 0; ci < cts.length; ci++) if (cts[ci].is_main) { princ = cts[ci]; break; }
+    var ct = kGet_('/contacts/' + princ.id);
     if (ct) {
       cel = kCampo_(ct, KOMMO_CF_TEL);
-      if (!cli && ct.name) cli = String(ct.name);
+      if (nombreGenerico_(cli) && ct.name) cli = String(ct.name).trim();
     }
   }
 

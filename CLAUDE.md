@@ -35,6 +35,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
 - Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
   y `SCRIPT_VERSION_ESPERADA` juntos.
+- **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
+  → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
+  (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
 
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`

@@ -905,6 +905,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       </div>
       <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
            Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
+      <div id="mis-estado"></div>
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
       <div class="qchips" id="mis-chips"></div>
@@ -1691,7 +1692,7 @@ function showView(v){
   if(v==='conta') refreshConta();
   if(v==='atc') refreshAtc();
   if(v==='admin' && UNLOCKED) loadFromServer(false);
-  if(v==='mis'){ var mv=document.getElementById('mis-vendedor'); if(mv && !mv.value){ mv.value=getVendedorMem(); } refreshMis(); }
+  if(v==='mis'){ misVendedorSel(); refreshMis(); }
   if(v==='chofer'){ var cs=document.getElementById('cho-nombre'); if(cs && !cs.value){ llenarSelectChoferes(); var m=getChoferMem(); if(m) cs.value=m; } refreshChofer(); }
 }
 function initConnUI(){
@@ -6183,10 +6184,26 @@ function updateFooter(){
       vuelve a mirar y tiene que ver lo de ahora, no lo de hace tres horas.
    ========================================================================== */
 var AUTO_MS=120000;          // cada 2 minutos mientras la pestaña esté a la vista
+/* 📥 «Mis pedidos» mira más seguido que el resto: es la pantalla donde la vendedora
+   espera que aparezca la venta que acaba de cerrar en Kommo (§4ch). No cuesta nada
+   —una consulta corta, y solo mientras ESA pestaña está a la vista.
+   ⚠️ Que la pantalla mire cada 30 s no hace que la venta ENTRE más rápido: eso lo decide
+   el aviso de Kommo al servidor. Son dos pasos distintos. */
+var MIS_MS=30000;
+var MIS_TIMER=null;
 var AUTO_VUELTA_MS=15000;    // al volver a la pestaña, no más seguido que esto
 var AUTO_TIMER=null;
 /* Qué está haciendo la persona ahora mismo, si es que está haciendo algo. Devuelve ''
    cuando la pantalla está quieta y se puede refrescar sin molestar. */
+/* ¿Corresponde refrescar «Mis pedidos» sola? Solo si esa pestaña está abierta, a la vista,
+   y no hay nada a medio hacer (ficha abierta, foto subiendo, guardado en curso): repintar
+   debajo de una ficha abierta es hacerle perder el lugar a la persona. */
+function misAlAire(){
+  if(!CONNECTED || document.hidden) return false;
+  var vw=document.getElementById('view-mis');
+  if(!vw || !vw.classList.contains('active')) return false;
+  return !autoOcupado();
+}
 function autoOcupado(){
   var m=document.getElementById('modal');
   if(m && m.classList.contains('on')) return 'ficha abierta';
@@ -6246,10 +6263,13 @@ function autoSelloHtml(){
 function autoArrancar(){
   if(AUTO_TIMER) clearInterval(AUTO_TIMER);
   AUTO_TIMER=setInterval(function(){ autoRefrescar('tic'); updateFooter(); }, AUTO_MS);
+  if(MIS_TIMER) clearInterval(MIS_TIMER);
+  MIS_TIMER=setInterval(function(){ if(misAlAire()) refreshMis(); }, MIS_MS);
   document.addEventListener('visibilitychange', function(){
     if(document.hidden) return;
     // Al volver a la pestaña: al toque, salvo que se haya mirado recién.
     if(Date.now()-ULTIMO_REFRESCO < AUTO_VUELTA_MS){ updateFooter(); return; }
+    if(misAlAire()){ refreshMis().then(updateFooter); return; }
     autoRefrescar('volvió a la pestaña').then(updateFooter);
   });
   /* Y en cuanto el navegador dice que volvió la señal, se manda lo que haya en la cola
@@ -7859,9 +7879,45 @@ function copiarAtc(){
 /* ============================================================================
    Mis pedidos (lado vendedora) — cada quien ve los suyos + su total
    ========================================================================== */
+/* 🔄 ACTUALIZAR «MIS PEDIDOS» (§4ch).
+   Tres cosas que estaban mal y se reprodujeron una por una:
+   1. NO dibujaba nada hasta que contestaba el servidor. Al entrar con el nombre ya puesto
+      se veía «Elegí tu nombre para ver tus pedidos» —con el nombre escrito arriba— hasta
+      que llegaba la respuesta, y si la red fallaba se quedaba así. Ahora dibuja PRIMERO
+      con lo que hay guardado en el dispositivo, y vuelve a dibujar cuando llega lo nuevo.
+   2. Bajaba la planilla por su cuenta y NO tocaba el sello del pie: decía «actualizado
+      hace 20 min» con datos recién traídos. Ahora pasa por `refrescarEstado()`, que es el
+      único lugar que mueve `ULTIMO_REFRESCO` (y que respeta la cola de lo no enviado).
+   3. Un fallo de red se veía igual que un éxito. Ahora se avisa arriba de la lista. */
+var MIS_CARGANDO=false;
 function refreshMis(){
-  if(!CONNECTED){ renderMis(); return; }
-  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } renderMis(); }).catch(function(){ renderMis(); });
+  renderMis();                                   // 1. lo que ya hay, sin esperar a nadie
+  if(!CONNECTED) return Promise.resolve(false);
+  if(MIS_CARGANDO) return Promise.resolve(false);   // no dos consultas encimadas
+  MIS_CARGANDO=true; misEstado('cargando');
+  return refrescarEstado().then(function(ok){
+    MIS_CARGANDO=false;
+    misEstado(ok?'':'error');
+    if(ok) renderMis();
+    updateFooter();                              // el sello del pie, siempre
+    return ok;
+  }, function(){ MIS_CARGANDO=false; misEstado('error'); updateFooter(); return false; });
+}
+/* El cartelito de arriba de la lista: cargando, o no se pudo. Vacío = todo bien. */
+function misEstado(k){
+  var el=document.getElementById('mis-estado'); if(!el) return;
+  if(k==='cargando'){
+    el.innerHTML='<div style="color:var(--muted);font-size:.82rem;padding:6px 2px">'+
+      '<span class="spin" style="border-color:rgba(0,0,0,.15);border-top-color:var(--teal)"></span> Buscando tus pedidos…</div>';
+  }else if(k==='error'){
+    var min=ULTIMO_REFRESCO?Math.floor((Date.now()-ULTIMO_REFRESCO)/60000):-1;
+    el.innerHTML='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
+      'border-radius:10px;padding:10px 13px;margin-bottom:10px;font-size:.83rem;color:#8a1c24">'+
+      '📴 <b>No se pudo actualizar</b> — no hay conexión con la planilla. Estás viendo la última copia guardada en este equipo'+
+      (min>=0?(' (de hace '+(min<1?'menos de un minuto':(min+' min'))+')'):'')+'. '+
+      'Lo que cargues ahora NO se pierde: se manda solo al volver la señal. '+
+      '<a onclick="refreshMis()" style="text-decoration:underline;cursor:pointer">Reintentar</a></div>';
+  }else el.innerHTML='';
 }
 /* Filtro rápido de Mis pedidos: hoy / mañana / todos */
 var MIS_FILTER='todos';
@@ -8014,10 +8070,18 @@ function borrPieHtml(){
     'puede tardar en aparecer. <b>No la esperes</b> — cargala como siempre; si después llega '+
     'de Kommo, el panel se da cuenta de que ya la tenías y te lo avisa.</div>';
 }
+/* Quién está mirando «Mis pedidos». Si el campo está vacío pero hay un nombre recordado,
+   se pone en el campo: es el nombre de esta persona, no hace falta que lo escriba otra vez
+   —y sin esto los borradores de Kommo no aparecían hasta volver a tipearlo (§4ch). */
+function misVendedorSel(mv){
+  mv=mv||document.getElementById('mis-vendedor'); if(!mv) return '';
+  var v=(mv.value||'').trim();
+  if(!v){ v=getVendedorMem(); if(v) mv.value=v; }
+  return v;
+}
 function renderBorradoresMis(){
   var box=document.getElementById('mis-borradores'); if(!box) return;
-  var mv=document.getElementById('mis-vendedor');
-  var v=(mv&&mv.value||'').trim();
+  var v=misVendedorSel();
   var todos=MIS_TODOS && UNLOCKED;
   var lista = todos ? BORRADORES.slice().sort(function(a,b){ return (b.ts||0)-(a.ts||0); })
                     : borradoresDe(v);
@@ -8770,9 +8834,14 @@ function choDeshacerCobro(id){
 }
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
-  var v=(mv.value||'').trim();
+  var v=misVendedorSel(mv);
   var todos=MIS_TODOS && UNLOCKED;                 // modo administración: ve los pedidos de todas
-  setVendedorMem(v);
+  /* ⚠️ Solo se recuerda un nombre DE VERDAD (§4ch). Antes guardaba también el vacío, y a
+     `renderMis()` la llaman desde muchos lados —repintar automático, borrar un pedido, el
+     panel del chofer— con la pestaña de Mis pedidos SIN abrir y el campo vacío: cada una
+     de esas veces le borraba el nombre recordado a la vendedora. Reproducido: la memoria
+     pasaba de «Carola Chavez» a «» con un solo `renderMis()`. */
+  if(v) setVendedorMem(v);
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-lista'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)

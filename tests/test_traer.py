@@ -59,7 +59,8 @@ def falso_urlopen(req, timeout=None):
     if "script.google.com" in url:
         ENVIADO.update(json.loads(req.data.decode()))
         ENVIADO["_url"] = url
-        return FalsaResp({"ok": True, "version": "2026-09-05-a", "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"]})
+        return FalsaResp({"ok": True, "version": "2026-09-05-c", "ultimoHook": "2026-09-05T14:55:00.000Z",
+                          "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"]})
     PEDIDAS.append(url)
     return FalsaResp(LEADS)
 
@@ -116,7 +117,10 @@ chk("⚠️ NO le manda nombres ni teléfonos al panel: solo ids",
 # 3) lo que informa en el registro
 chk("dice cuántos leads miró", "leads en la ventana: 2" in salida, salida[:200])
 chk("dice qué versión del Apps Script contestó (para verificar publicaciones desde afuera)",
-    "versión 2026-09-05-a" in salida, salida[-160:])
+    "versión 2026-09-05-c" in salida, salida[-160:])
+# 🔎 Sin esto no se puede distinguir «Kommo no avisa» de «el servidor no procesa el aviso».
+chk("dice cuándo fue el último aviso de Kommo al panel",
+    "último aviso de Kommo al panel: 2026-09-05T14:55" in salida, salida[-200:])
 chk("dice cuántos borradores nuevos creó", "borradores NUEVOS creados: 1 de 2" in salida)
 chk("⚠️ avisa que esos los perdió el webhook", "los perdió el webhook" in salida)
 

@@ -29,7 +29,11 @@ const ETAPA = '103450711';          // «Compradores»
 
 /* ── La planilla de mentira ────────────────────────────────────────────────── */
 function hacerPlanilla(filas){
-  const datos = filas.slice();                    // [0] son los encabezados
+  /* ⚠️ COPIA DE VERDAD, fila por fila. Con `filas.slice()` las filas quedaban COMPARTIDAS
+     con quien las armó: al escribir una celda se mutaba el array original del test, y el
+     caso siguiente arrancaba con el valor del anterior. Me dio un falso ✗ (el borrador ya
+     completado parecía haber sido tocado, cuando lo tocado había sido el fixture). */
+  const datos = filas.map(f => f.slice());        // [0] son los encabezados
   return {
     _datos: datos,
     getLastRow: () => datos.length,
@@ -39,6 +43,7 @@ function hacerPlanilla(filas){
     appendRow: (r) => { datos.push(r.slice()); },
     getRange: (fila, col, nFilas, nCols) => ({
       getValue: () => (datos[fila-1]||[])[col-1],
+      setValue: (v) => { if(!datos[fila-1]) datos[fila-1]=[]; datos[fila-1][col-1]=v; },
       getValues: () => {
         const out=[];
         for(let i=0;i<(nFilas||1);i++){
@@ -55,10 +60,15 @@ function hacerPlanilla(filas){
 }
 
 /* ── Kommo de mentira ─────────────────────────────────────────────────────── */
-const SECRETOS = { nombre:'INES GUTIERREZ SUAREZ', tel:'62241536', dir:'Av. Banzer 4to anillo' };
+const SECRETOS = { nombre:'INES GUTIERREZ SUAREZ', tel:'62241536', dir:'Av. Banzer 4to anillo',
+                   nombreErwin:'Erwin Marcelo Meschwitz Lino' };
 const KOMMO = {
+  /* ⚠️ `status_id` y `pipeline_id` van SIEMPRE: Kommo los manda en todo lead, y el
+     servidor los usa para no importar ventas de otras etapas. El fixture no los tenía y
+     por eso no habría atrapado nunca ese agujero (§4ch). */
   '/leads/44001?with=contacts,catalog_elements': {
     id:44001, name:SECRETOS.nombre, price:13020, responsible_user_id:14992463,
+    status_id:103450711, pipeline_id:13349719,
     custom_fields_values:[{field_id:1685406, values:[{value:SECRETOS.dir}]}],
     _embedded:{ contacts:[{id:5501}], catalog_elements:[
       {id:342406, metadata:{quantity:2, price:6510}},
@@ -67,6 +77,29 @@ const KOMMO = {
   },
   '/contacts/5501': { id:5501, name:SECRETOS.nombre,
     custom_fields_values:[{field_id:1685346, values:[{value:SECRETOS.tel}]}] },
+  /* 🏷️ EL CASO DE ERWIN: la vendedora creó la venta desde el chat y Kommo la tituló sola
+     «Lead #39357288». El nombre de verdad está en el contacto. */
+  '/leads/39357288?with=contacts,catalog_elements': {
+    id:39357288, name:'Lead #39357288', price:6660, responsible_user_id:14992463,
+    status_id:103450711, pipeline_id:13349719,
+    _embedded:{ contacts:[{id:5502, name:SECRETOS.nombreErwin, is_main:true}], catalog_elements:[] }
+  },
+  '/leads/39357288?with=contacts': {
+    id:39357288, name:'Lead #39357288', status_id:103450711, pipeline_id:13349719,
+    _embedded:{ contacts:[{id:5502, name:SECRETOS.nombreErwin, is_main:true}] }
+  },
+  '/contacts/5502': { id:5502, name:SECRETOS.nombreErwin,
+    custom_fields_values:[{field_id:1685346, values:[{value:'76317574'}]}] },
+  // Un lead de OTRA etapa: aunque el aviso llegue sin decir la etapa, no se importa.
+  '/leads/44050?with=contacts,catalog_elements': {
+    id:44050, name:'OTRA ETAPA', price:100, responsible_user_id:14992463,
+    status_id:102961403, pipeline_id:13349719, _embedded:{ contacts:[], catalog_elements:[] }
+  },
+  // Un lead de OTRO embudo, pero en una etapa con el mismo número: tampoco.
+  '/leads/44060?with=contacts,catalog_elements': {
+    id:44060, name:'OTRO EMBUDO', price:100, responsible_user_id:14992463,
+    status_id:103450711, pipeline_id:99999999, _embedded:{ contacts:[], catalog_elements:[] }
+  },
   '/catalogs/10902/elements?filter[id][]=342406&filter[id][]=342524': {
     _embedded:{ elements:[
       {id:342406, name:'TITANIO ICE 160x190', custom_fields_values:[{field_id:1685378,values:[{value:6510}]}]},
@@ -77,6 +110,7 @@ const KOMMO = {
   // Un lead cuya venta ya fue cargada a mano por la vendedora
   '/leads/44009?with=contacts,catalog_elements': {
     id:44009, name:'CLIENTE YA CARGADO', price:1000, responsible_user_id:14992463,
+    status_id:103450711, pipeline_id:13349719,
     _embedded:{ contacts:[], catalog_elements:[] } }
 };
 
@@ -89,7 +123,8 @@ function cargar(filas, props){
     SpreadsheetApp: { getActiveSpreadsheet: () => ({
       getSheetByName: () => sh, insertSheet: () => sh }) },
     PropertiesService: { getScriptProperties: () => ({
-      getProperty: (k) => (props && props[k] != null) ? props[k] : null }) },
+      getProperty: (k) => (props && props[k] != null) ? props[k] : null,
+      setProperty: (k, v) => { props[k] = v; } }) },
     UrlFetchApp: { fetch: (url) => {
       llamadas.push(url);
       const ruta = decodeURIComponent(url.split('/api/v4')[1] || '');
@@ -106,7 +141,8 @@ function cargar(filas, props){
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(path.resolve('google-apps-script.gs'),'utf8'), ctx);
+  /* GS=/ruta/viejo.gs para probarle los dientes al test contra una versión anterior. */
+  vm.runInContext(fs.readFileSync(process.env.GS || path.resolve('google-apps-script.gs'),'utf8'), ctx);
   return { ctx, sh, llamadas, leer: (r) => JSON.parse(r._t) };
 }
 
@@ -169,6 +205,89 @@ console.log('\n── 2b. Creada directo en «Compradores» (leads[add]) ──'
   r = c.leer(hook(c.ctx, {k:CLAVE, 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':ETAPA,
                           'leads[add][0][id]':'44001', 'leads[add][0][status_id]':ETAPA}));
   chk('el mismo lead en dos tipos de aviso a la vez crea UNA sola fila', r.creados===1 && c.sh._datos.length===3, JSON.stringify(r).slice(0,80));
+}
+
+// ══ 2c. 🏷️ EL NOMBRE DEL CLIENTE, NO EL NÚMERO DE KOMMO (§4ch) ═════════════
+console.log('\n── 2c. «Lead #39357288» tiene que ser el nombre del cliente ──');
+{
+  /* Reportado con la venta de Erwin: el borrador le apareció a Carola como
+     «Lead #39357288». Kommo titula sola las ventas que nacen del chat; el nombre de
+     verdad vive en el contacto principal. */
+  const a = cargar([HDR, PEDIDO_REAL], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  const r = a.leer(hook(a.ctx, {k:CLAVE, 'leads[add][0][id]':'39357288',
+                                'leads[add][0][status_id]':ETAPA}));
+  chk('la venta entra', r.creados===1, JSON.stringify(r).slice(0,110));
+  const f = a.sh._datos[2];
+  chk('⚠️ el cliente es el NOMBRE, no «Lead #39357288»',
+      f[HDR.indexOf('Cliente')]===SECRETOS.nombreErwin, f[HDR.indexOf('Cliente')]);
+  chk('…y trae su celular del contacto', String(f[HDR.indexOf('Celular')])==='76317574', f[HDR.indexOf('Celular')]);
+  chk('un título escrito a mano NO se reemplaza por el del contacto',
+      (() => { const b = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+               b.leer(hook(b.ctx, {k:CLAVE, 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':ETAPA}));
+               return b.sh._datos[1][HDR.indexOf('Cliente')]===SECRETOS.nombre; })());
+  // Qué cuenta como título puesto por Kommo y qué no.
+  // (Si se corre contra un .gs viejo, esta función no existe: se avisa en vez de reventar.)
+  const gen = a.ctx.nombreGenerico_ || (() => 'no existe nombreGenerico_ en este .gs');
+  chk('«Lead #39357288» se reconoce como título de Kommo', gen('Lead #39357288')===true, gen('Lead #39357288'));
+  chk('…«39357288» pelado también', gen('39357288')===true);
+  chk('…«Negocio #123» también', gen('Negocio #123')===true);
+  chk('…y el vacío', gen('')===true && gen(null)===true);
+  chk('⚠️ un nombre de persona NO es genérico', gen('Erwin Marcelo Meschwitz Lino')===false);
+  chk('…ni una empresa con números', gen('ROHO SRL 2')===false, gen('ROHO SRL 2'));
+}
+
+// ══ 2d. 🔧 Reparar el borrador que YA quedó con el número ══════════════════
+console.log('\n── 2d. El borrador de Erwin, que ya existe ──');
+{
+  const BORR = ['kommo-39357288','','','Carola Chavez','Lead #39357288','','76317574','','','','','NO',6660,
+    Date.now(),'[]','','','Borrador Kommo','NO','','','','',0,'','',0,'NO',''];
+  const a = cargar([HDR, PEDIDO_REAL, BORR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  const r = a.leer(hook(a.ctx, {k:CLAVE, 'leads[add][0][id]':'39357288', 'leads[add][0][status_id]':ETAPA}));
+  chk('⚠️ NO lo duplica: sigue habiendo una sola fila del lead', a.sh._datos.length===3, a.sh._datos.length);
+  chk('…dice que ya estaba', /ya estaba/.test(JSON.stringify(r.saltados||[])), JSON.stringify(r.saltados));
+  chk('⚠️ pero le CORRIGE el nombre', a.sh._datos[2][HDR.indexOf('Cliente')]===SECRETOS.nombreErwin, a.sh._datos[2][HDR.indexOf('Cliente')]);
+  chk('…y lo informa', r.reparados===1, r.reparados);
+  chk('⚠️ NO le toca el monto ni nada más', Number(a.sh._datos[2][HDR.indexOf('Saldo (Bs)')])===6660);
+  chk('⚠️ ni le pone sello de revisión (si no, completarlo daría conflicto)',
+      !Number(a.sh._datos[2][HDR.indexOf('Revisión')]||0), a.sh._datos[2][HDR.indexOf('Revisión')]);
+  // Si la vendedora ya le escribió el nombre, no se le toca.
+  const conNombre = BORR.slice(); conNombre[HDR.indexOf('Cliente')]='ERWIN M. (lo escribí yo)';
+  const b = cargar([HDR, conNombre], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  b.leer(hook(b.ctx, {k:CLAVE, 'leads[add][0][id]':'39357288', 'leads[add][0][status_id]':ETAPA}));
+  chk('⚠️ si alguien ya le puso nombre a mano, NO se lo pisa',
+      b.sh._datos[1][HDR.indexOf('Cliente')]==='ERWIN M. (lo escribí yo)', b.sh._datos[1][HDR.indexOf('Cliente')]);
+  // Si ya lo completaron (dejó de ser borrador), tampoco.
+  const completo = BORR.slice(); completo[HDR.indexOf('Estado stock')]='';
+  const c = cargar([HDR, completo], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  c.leer(hook(c.ctx, {k:CLAVE, 'leads[add][0][id]':'39357288', 'leads[add][0][status_id]':ETAPA}));
+  chk('⚠️ si ya lo completaron, tampoco se le toca nada',
+      c.sh._datos[1][HDR.indexOf('Cliente')]==='Lead #39357288', c.sh._datos[1][HDR.indexOf('Cliente')]);
+}
+
+// ══ 2e. 🚪 El aviso sin etapa, y las etapas y embudos ajenos ═══════════════
+console.log('\n── 2e. Avisos incompletos y ventas de otra etapa ──');
+{
+  /* Algunos avisos de alta llegan SIN decir en qué etapa quedó el lead. Antes se perdían
+     en silencio. Ahora pasan al portero de verdad, que lee el lead. */
+  const a = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  let r = a.leer(hook(a.ctx, {k:CLAVE, 'leads[add][0][id]':'44001'}));   // sin status_id
+  chk('⚠️ un aviso de alta SIN etapa no se pierde: se consulta el lead y entra', r.creados===1, JSON.stringify(r).slice(0,110));
+  const b = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = b.leer(hook(b.ctx, {k:CLAVE, 'leads[add][0][id]':'44050'}));       // sin etapa, y el lead está en otra
+  chk('⚠️ …pero si el lead está en OTRA etapa, no entra', r.creados===0 && b.sh._datos.length===1, JSON.stringify(r).slice(0,110));
+  const c = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = c.leer(hook(c.ctx, {k:CLAVE, 'leads[add][0][id]':'44060', 'leads[add][0][status_id]':ETAPA}));
+  chk('⚠️ un lead de OTRO EMBUDO en una etapa con el mismo número: no entra', r.creados===0, JSON.stringify(r).slice(0,110));
+  const d = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = d.leer(hook(d.ctx, {k:CLAVE, 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':ETAPA,
+                          'leads[status][0][pipeline_id]':'99999999'}));
+  chk('…y si el aviso mismo dice otro embudo, ni se consulta', r.creados===0 && d.llamadas.length===0, d.llamadas.length);
+  // El aviso deja rastro para diagnosticar, sin datos de nadie.
+  const e = cargar([HDR], {KOMMO_HOOK_KEY:CLAVE, KOMMO_TOKEN:'tok'});
+  r = e.leer(hook(e.ctx, {k:CLAVE, 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':ETAPA}));
+  chk('el servidor informa cuándo recibió el último aviso de Kommo', !!r.ultimoHook, r.ultimoHook);
+  chk('⚠️ ese rastro no lleva nombres ni teléfonos',
+      !new RegExp(SECRETOS.nombre).test(JSON.stringify(r)) && !new RegExp(SECRETOS.tel).test(JSON.stringify(r)));
 }
 
 // ══ 3. La venta llega ═════════════════════════════════════════════════════
