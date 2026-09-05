@@ -3847,6 +3847,67 @@ vocabulario y no del mío). Lo que queda sin zona se cuenta en la vista previa.
 `tests/test_roho.js` — **54 checks** contra el Excel real. Contra `origin/main` revienta con
 `xlsxDescomprimir is not defined`.
 
+## 4cj. ⚡ Administración abre en «Mes» — y la lentitud no era el filtro (2026-09-05)
+
+*"administración abre en «todo» por defecto, y tarda en cargar, que abra en «mes»"*.
+
+**Se hicieron las dos cosas, pero no son la misma cosa**, y conviene que quede escrito
+porque §4bn ya se equivocó con esto:
+
+**1. La lentitud NO era el filtro.** Medido acá (3 renders de descarte + mediana de 5, con
+el tope de 150 filas ya puesto):
+
+| ventas | Todo | Mes |
+|---|---|---|
+| 500 | 19 ms | 14 ms |
+| 1.500 | 30 ms | 17 ms |
+| 3.000 | 42 ms | 21 ms |
+
+Veintiún milisegundos no se sienten. **Lo que se sentía era otra cosa**: `loadFromServer()`
+**no dibujaba nada hasta que Google contestaba**. Se ponía la clave y quedaba una tabla
+vacía mirándote los segundos que tarda el Apps Script en leer la hoja entera — teniendo la
+copia local ya cargada en memoria desde el arranque (`loadMirror`). La espera era gratis.
+Ahora dibuja primero lo que hay y repinta al llegar lo nuevo. **Es exactamente el mismo bug
+que el de «Mis pedidos» (§4ch), en otra pantalla**: dibujar antes de pedir. Dos apariciones
+del mismo error en un día — vale la pena revisar si queda alguna tercera.
+
+**2. El filtro sí cambió a «Mes»**, porque lo pidió el dueño y ahora es seguro. Lo que lo
+hacía peligroso en §4bn era que a fin de mes escondía en silencio las entregas del mes
+siguiente. Desde §4bo existe `renderFueraDelMes()`, el aviso ámbar que dice cuántas quedan
+afuera y lleva a ellas de un toque. **Ese aviso es la condición**: si algún día desaparece,
+hay que volver a «Todo». Quedó escrito en el HTML, en `test_tabla.js` y en `test_finmes.js`,
+cuyos checks pasaron de «abre en Todo, no hace falta aviso» a «abre en Mes, el aviso TIENE
+que estar».
+
+## 4ck. 📥 ROHO: la zona que mandaba el camión a media hora de distancia (2026-09-05)
+
+Con la primera vista previa de verdad, el dueño vio tres cosas.
+
+**🔴 El error mío que importaba.** A una clienta de **«AV. VIRGEN DE COTOCA»** le puse zona
+**«Cotoca»** — que es un pueblo a media hora para el otro lado. `rohoZona()` buscaba el
+nombre de una zona conocida **suelto adentro** de la dirección, y «Cotoca» aparece dentro
+del nombre de la avenida. Es justamente el error de ruta que en §4ci escribí que quería
+evitar, y lo cometí igual una línea más abajo de haberlo escrito. **Arreglo: el nombre de la
+zona tiene que ser un TRAMO ENTERO** de la dirección (entre comas), no una palabra adentro
+de otra. «AV.VIRGEN DE COTOCA…» ya no da zona; «…, COTOCA, …» sí.
+
+**La lección**: escribir el principio no alcanza. `zonasDelEquipo()` parecía seguro porque
+usa el vocabulario del equipo y no el mío — pero el vocabulario correcto aplicado con una
+búsqueda floja sigue dando una respuesta inventada.
+
+**🟡 «¿También importa la dirección? Solo veo zona. ¿Y el teléfono?»** Sí, las dos —
+**siempre se importaron**. Pero la vista previa mostraba cinco columnas (nota, entrega,
+cliente, zona, productos) y no estaban a la vista, así que no había forma de saberlo sin
+confiar en mi palabra. Ahora la tabla muestra **Celular, Dirección y Observaciones**. Y el
+test dejó de comprobarlo solo en la pantalla: ahora mira el **pedido guardado** (6 de 6 con
+dirección, celular y «quién recibe»).
+
+**🟢 «Quien recibe» va siempre a observaciones.** Antes lo salteaba cuando era igual al
+nombre del cliente, para no repetir. Pero esa columna a veces dice *«… O MICAELA GUZMAN»* o
+qué pieza le tienen que entregar, y eso el chofer lo necesita en la mano. Va siempre.
+
+`tests/test_roho.js` **55 → 62**.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

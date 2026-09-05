@@ -74,14 +74,32 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     admTopeReset(); renderAdmin();
     await new Promise(r=>setTimeout(r,150));
   });
+  const aTodo = () => page.evaluate(async () => {
+    segSet('adm-mode','todo');
+    document.getElementById('wrap-dia').style.display='none';
+    document.getElementById('wrap-mes').style.display='none';
+    admTopeReset(); renderAdmin();
+    await new Promise(r=>setTimeout(r,150));
+  });
 
   const info = await prep();
 
-  // ============ 1. de fábrica no se esconde nada ============
+  /* ============ 1. de fábrica abre en «Mes» — y JUSTO POR ESO tiene que avisar ============
+     ⚠️ CAMBIÓ EL 05/09 (§4cj): el dueño pidió que abriera en «Mes». Con eso, las entregas
+     del mes que viene quedan escondidas de entrada — el bug del 31/08 (§4bo). Lo único que
+     lo vuelve aceptable es este aviso: si algún día desaparece, hay que volver a «Todo».
+     Por eso el check dejó de ser «no hace falta aviso» y pasó a ser «TIENE que estar». */
   let f = await foto();
-  chk('el panel abre en «Todo», así que las entregas del mes que viene SE VEN',
-      f.modo==='todo' && f.filas===8, f.modo+' · '+f.filas+' filas');
-  chk('…y por lo tanto no hace falta ningún aviso', f.txt==='', f.txt.slice(0,70));
+  chk('el panel abre en «Mes», como pidió el dueño', f.modo==='mes', f.modo+' · '+f.filas+' filas');
+  chk('⚠️ …y como eso esconde las entregas de otros meses, el aviso TIENE que estar',
+      /entrega fuera de este mes/.test(f.txt), f.txt.slice(0,90));
+  chk('…diciendo cuántas son', /Hay\s*4\s*pedidos/.test(f.txt.replace(/\s+/g,' ')), f.txt.replace(/\s+/g,' ').slice(0,80));
+  /* Y en «Todo» se ven las 8, sin aviso: es la vía de escape. */
+  await aTodo();
+  let g = await foto();
+  chk('con «Todo» se ven las 8 y el aviso se va', g.modo==='todo' && g.filas===8 && g.txt==='',
+      g.modo+' · '+g.filas+' filas · aviso: "'+g.txt.slice(0,40)+'"');
+  await aMes();
 
   // ============ 2. eligiendo «Mes» aparece el aviso ============
   await aMes();

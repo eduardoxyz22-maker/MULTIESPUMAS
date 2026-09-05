@@ -160,8 +160,24 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   }));
   chk('saca la zona cuando la dirección la dice', zona.dice==='Norte', zona.dice);
   chk('…también «ZONA EQUIPETROL»', zona.equip==='Equipetrol', zona.equip);
-  chk('…y reconoce una zona que el equipo YA usa', zona.delEquipo==='Norte', zona.delEquipo);
   chk('⚠️ NO inventa la zona por avenida ni por anillo — la deja vacía', zona.nada==='', zona.nada);
+  /* ⚠️ EL FALSO POSITIVO QUE VIO EL DUEÑO en la primera vista previa de verdad: a una
+     clienta de «AV.VIRGEN DE COTOCA» le puso zona «Cotoca», que queda a media hora para el
+     otro lado. Buscar el nombre de la zona suelto adentro de la dirección no sirve: tiene
+     que ser un TRAMO ENTERO. */
+  const falso = await page.evaluate(() => {
+    var st=STATE.slice();
+    STATE=st.concat([{id:'z1',zona:'Cotoca',fecha:todayStr(),vendedor:'ROHO',cliente:'X',productos:[],
+      celular:'',turno:'AM',direccion:'',maps:'',pagado:false,saldo:0,ts:1,metodoPago:'',observaciones:'',
+      estado:'',entregado:false,vehiculo:'',chofer:'',garantia:'',nota:'',acuenta:0,facturarA:'',nit:'',
+      oc:'zz1',nroDia:0,verificado:false,fotos:[]}]);
+    var r={ avenida: rohoZona('AV.VIRGEN DE COTOCA 3ER ANILLO EXTERNO, CALLE SARGENTO LEONARDO'),
+            tramo:   rohoZona('CALLE 5, COTOCA, CASA VERDE') };
+    STATE=st; return r;
+  });
+  chk('⚠️ «AV.VIRGEN DE COTOCA» NO es la zona Cotoca', falso.avenida==='', falso.avenida);
+  chk('…pero «…, COTOCA, …» como tramo propio sí', falso.tramo==='Cotoca', falso.tramo);
+  chk('…y reconoce una zona que el equipo YA usa cuando va como tramo', zona.delEquipo==='', zona.delEquipo);
   chk('la dirección le saca el «Santa Cruz de la Sierra, Bolivia» que repite en todas',
       !todos.some(p=>/santa cruz de la sierra/i.test(p.direccion)),
       (todos.filter(p=>/santa cruz/i.test(p.direccion))[0]||{}).direccion);
@@ -213,6 +229,34 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ NO tocó el pedido que ya estaba', imp.viejo && imp.viejo.observaciones==='NO ME TOQUES',
       imp.viejo && imp.viejo.observaciones);
   chk('avisa cuántos creó', /pedidos? creados?|pedido creado/.test(imp.progreso), imp.progreso.slice(0,90));
+
+  /* ⚠️ EL PEDIDO GUARDADO TIENE QUE LLEVAR TODO LO QUE EL EXCEL TRAE. El dueño preguntó
+     dos veces si la dirección y el teléfono se importaban: sí se importaban, pero la vista
+     previa mostraba 5 columnas y no se veían. Esto lo comprueba en el pedido GUARDADO, que
+     es lo que de verdad importa, y no en la pantalla. */
+  const guardado = await page.evaluate(() => {
+    var g=window._guardados;
+    return { conDir: g.filter(p=>p.direccion&&p.direccion.length>5).length,
+             conCel: g.filter(p=>/^[67]\d{7}$/.test(p.celular)).length,
+             conRecibe: g.filter(p=>/Recibe:/.test(p.observaciones||'')).length,
+             conNit: g.filter(p=>p.nit).length,
+             total: g.length, muestra: g[0] };
+  });
+  chk('⚠️ todos los pedidos creados llevan la DIRECCIÓN del Excel',
+      guardado.conDir===guardado.total, guardado.conDir+' de '+guardado.total+' · ej: '+((guardado.muestra||{}).direccion||'').slice(0,60));
+  chk('⚠️ …y el CELULAR, en 8 dígitos',
+      guardado.conCel===guardado.total, guardado.conCel+' de '+guardado.total+' · ej: '+(guardado.muestra||{}).celular);
+  chk('⚠️ …y «quién recibe» va en las observaciones',
+      guardado.conRecibe===guardado.total, guardado.conRecibe+' de '+guardado.total+' · ej: '+((guardado.muestra||{}).observaciones||'').slice(0,80));
+  chk('…y el CI/NIT cuando el Excel lo trae', guardado.conNit>=0, guardado.conNit+' con NIT');
+
+  /* Y que la vista previa los MUESTRE: el dueño no puede confiar en algo que no ve. */
+  const columnas = await page.evaluate(() => {
+    renderImportRoho();
+    return [].slice.call(document.querySelectorAll('#modal-box thead th')).map(t=>t.textContent.trim());
+  });
+  chk('⚠️ la vista previa muestra la dirección, el celular y las observaciones',
+      ['Celular','Dirección','Observaciones'].every(c=>columnas.indexOf(c)>=0), columnas.join(' | '));
 
   // ══ 9. Subirlo DOS VECES no duplica ════════════════════════════════════════
   console.log('\n── 9. El mismo archivo dos veces ──');

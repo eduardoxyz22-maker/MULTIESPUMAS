@@ -14,8 +14,15 @@
    «Todo» quedaron en 84 y 98 ms con 3.000 ventas: el tope fue lo que arregló la lentitud.
    Y «Mes» corta por fecha de ENTREGA, así que el 31 de agosto escondía las entregas de
    septiembre —justo las que se están preparando—. Catorce milisegundos no pagan eso.
-   Arranca de nuevo en «Todo», y como el orden de fábrica es por fecha descendente, las 150
-   filas que se dibujan son las entregas más próximas.
+
+   ⚠️⚠️ Y VOLVIÓ A «MES» el 05/09 (§4cj), pedido por el dueño. Lo que lo hacía peligroso ya
+   no existe: desde §4bo hay un aviso ámbar (`renderFueraDelMes`) que dice cuántas entregas
+   quedan afuera del mes filtrado y lleva a ellas de un toque — o sea que a fin de mes ya no
+   desaparecen en silencio, que era el daño real. La lentitud que motivó el pedido NO era el
+   filtro (medido: Todo 42 ms · Mes 21 ms con 3.000 ventas) sino la pantalla en blanco
+   mientras bajaba la planilla; eso se arregló aparte, en `loadFromServer`.
+   El tope de 150 filas sigue siendo lo que de verdad sostiene la velocidad, y el orden por
+   fecha descendente sigue poniendo arriba las entregas más próximas.
 
    ⚠️ Lo que este test cuida por encima de todo: que el BUSCADOR siga mirando TODA la
    planilla. Un tope que esconda lo que alguien está buscando sería mucho peor que la
@@ -78,16 +85,28 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     await new Promise(r=>setTimeout(r,120));
   }, m);
 
-  // ============ 1. arranca en TODO (§4bo) ============
+  // ============ 1. arranca en MES (§4cj) ============
   await prep(400);
   let f = await foto();
-  chk('el filtro arranca en «Todo»: ningún pedido queda escondido de entrada',
-      f.modo==='todo', f.modo);
-  chk('…y con 400 pedidos ya está topado, así que arrancar en «Todo» no cuesta',
-      f.filas===150, f.filas);
-  /* ⚠️ Lo que hace seguro arrancar en «Todo» con tope: el orden de fábrica es por fecha
-     DESCENDENTE, así que las 150 dibujadas son las entregas MÁS PRÓXIMAS, no 150 pedidos
-     viejos. Si alguien cambia el orden por defecto, esto lo agarra. */
+  chk('el filtro arranca en «Mes»', f.modo==='mes', f.modo);
+  chk('…y el selector de mes se ve de entrada (si no, no se sabe qué mes se está mirando)',
+      f.mesVisible===true, f.mesVisible);
+  /* ⚠️ ARRANCAR EN «MES» ESCONDE LAS ENTREGAS DE LOS OTROS MESES. Eso se aguanta SOLO
+     porque hay un aviso que lo dice y lleva ahí. Sin ese aviso, esto vuelve a ser el bug
+     del 31/08 (§4bo) y hay que volver a «Todo». */
+  const avisoFuera = await page.evaluate(() => (document.getElementById('adm-fuera')||{}).textContent||'');
+  chk('⚠️ …y avisa cuántas entregas quedan afuera del mes que se está mirando',
+      /entrega fuera de este mes/.test(avisoFuera), avisoFuera.replace(/\s+/g,' ').slice(0,110));
+  chk('…con un botón para ir a verlas', /ver \w+/i.test(avisoFuera), avisoFuera.replace(/\s+/g,' ').slice(0,140));
+
+  // A partir de acá se mide el tope, que es lo que sostiene la velocidad: se necesita
+  // «Todo» para tener las 400 en la lista.
+  await modo('todo');
+  f = await foto();
+  chk('con «Todo» quedan las 400 a la vista y el tope las corta en 150', f.filas===150, f.filas);
+  /* ⚠️ Lo que hace seguro «Todo» con tope: el orden de fábrica es por fecha DESCENDENTE,
+     así que las 150 dibujadas son las entregas MÁS PRÓXIMAS, no 150 pedidos viejos. Si
+     alguien cambia el orden por defecto, esto lo agarra. */
   const arriba = await page.evaluate(() => {
     /* Se compara la fecha MÁS VIEJA de las dibujadas contra la MÁS NUEVA de las que
        quedaron afuera: si el orden es el correcto, todo lo dibujado es igual o más nuevo. */
@@ -206,6 +225,30 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('📊 el Excel sigue exportando las 400 (el tope es solo de la tabla)',
       fuentes.excel===400, fuentes.filas+' filas dibujadas · admFilter() da '+fuentes.excel);
   chk('📦 la Lista de carga también ve las 400', fuentes.carga===400, fuentes.carga);
+
+  /* ============ ⚡ ENTRAR NO PUEDE SER UNA PANTALLA EN BLANCO (§4cj) ============
+     Lo que el dueño sentía como «tarda en cargar» NO era el filtro (medido: Todo 42 ms ·
+     Mes 21 ms con 3.000 ventas — 21 ms no se sienten). Era que `loadFromServer` no dibujaba
+     nada hasta que Google contestaba, y bajar la planilla tarda segundos… teniendo la copia
+     local ya cargada en memoria desde el arranque. La espera era gratis. */
+  const blanco = await page.evaluate(async () => {
+    var pintados=0, orig=window.renderAdmin;
+    window.renderAdmin=function(){ pintados++; return orig.apply(null,arguments); };
+    var resolver=null;
+    apiList=function(){ return new Promise(function(r){ resolver=r; }); };   // el servidor todavía no contesta
+    loadFromServer(false);
+    await new Promise(r=>setTimeout(r,120));
+    var mientrasViaja=document.querySelectorAll('#tbl-pedidos tbody tr').length;
+    resolver({ok:true, pedidos:JSON.parse(JSON.stringify(STATE))});
+    await new Promise(r=>setTimeout(r,250));
+    window.renderAdmin=orig;
+    return { mientrasViaja:mientrasViaja, pintados:pintados,
+             despues:document.querySelectorAll('#tbl-pedidos tbody tr').length };
+  });
+  chk('⚠️ mientras la planilla viaja, la tabla YA muestra la copia local',
+      blanco.mientrasViaja>0, blanco.mientrasViaja+' filas a la vista');
+  chk('…o sea que dibuja antes de pedir, y otra vez al llegar', blanco.pintados>=2, blanco.pintados+' repintados');
+  chk('…y al llegar la respuesta sigue habiendo pedidos', blanco.despues>0, blanco.despues);
 
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

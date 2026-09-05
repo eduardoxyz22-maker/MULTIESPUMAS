@@ -779,18 +779,26 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
                  así que el 31 de agosto escondía las entregas de septiembre —justo las que se
                  están preparando—. No vale 14 ms.
                  El orden de fábrica es por fecha DESCENDENTE, así que las 150 filas que se
-                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba. -->
+                 dibujan son las entregas más próximas: lo que hay que mirar queda arriba.
+
+                 ⚠️ 05/09: VUELVE A ARRANCAR EN «MES», pedido por el dueño (§4cj). Lo que
+                 hacía peligroso el de §4bn ya no existe: `renderFueraDelMes()` avisa en
+                 ámbar cuáles entregas quedan afuera del mes filtrado y lleva a ellas de un
+                 toque, así que a fin de mes ya no desaparecen en silencio. La lentitud que
+                 el dueño sentía NO era el filtro (Todo 42 ms vs Mes 21 ms con 3.000 ventas)
+                 sino la pantalla en blanco mientras bajaba la planilla — eso se arregló en
+                 `loadFromServer`. -->
             <div class="seg" id="adm-mode">
               <button type="button" data-val="dia">Día</button>
-              <button type="button" data-val="mes">Mes</button>
-              <button type="button" data-val="todo" class="active">Todo</button>
+              <button type="button" data-val="mes" class="active">Mes</button>
+              <button type="button" data-val="todo">Todo</button>
             </div>
           </div>
           <div class="field" id="wrap-dia" style="display:none">
             <label class="lb">Fecha de entrega</label>
             <input type="date" id="adm-dia">
           </div>
-          <div class="field" id="wrap-mes" style="display:none">
+          <div class="field" id="wrap-mes">
             <label class="lb">Mes</label>
             <input type="month" id="adm-mes">
           </div>
@@ -6886,20 +6894,29 @@ function pintarBotonCierre(){
   b.textContent = vig.length ? ('🔒 Cerrar día · '+vig.length+' cerrado'+(vig.length===1?'':'s')) : '🔒 Cerrar día';
   b.title = vig.length ? ('Días cerrados: '+vig.map(fmtFecha).join(', ')) : 'Cerrar un día de entrega para que no entren más pedidos';
 }
+/* ⚡ ENTRAR A ADMINISTRACIÓN NO PUEDE SER UNA PANTALLA EN BLANCO (§4cj).
+   Bajar la planilla de Google tarda SEGUNDOS (el Apps Script lee la hoja entera). Antes no
+   se dibujaba nada hasta que contestaba: se ponía la clave y quedaba una tabla vacía
+   mirándote. Y la copia local, con todos los pedidos, ya estaba cargada en memoria desde
+   el arranque (`loadMirror`) — o sea que la espera era gratis y no hacía falta.
+   Ahora se dibuja PRIMERO lo que hay, y se repinta cuando llega lo nuevo. Es el mismo
+   arreglo que el de «Mis pedidos» (§4ch): dibujar antes de pedir. */
 function loadFromServer(showToastOk){
-  if(!CONNECTED){ renderAdmin(); return; }
+  renderAdmin();                       // lo que ya está, sin esperar a nadie
+  if(!CONNECTED) return;
   setAdminLoading(true);
   flushPending().then(apiList).then(function(res){
     setAdminLoading(false);
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       STATE=mergePending(res.pedidos);
       STATE.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
-      saveMirror(); updateStats(); renderAdmin();
+      ULTIMO_REFRESCO=Date.now();
+      saveMirror(); updateStats(); renderAdmin(); updateFooter();
       if(showToastOk) toast('Actualizado ✓','ok');
     }else{ renderAdmin(); toast('Respuesta inesperada del servidor','err'); }
   }).catch(function(){
     setAdminLoading(false); renderAdmin();
-    toast('Sin conexión: mostrando copia local','err');
+    toast('Sin conexión: estás viendo la copia guardada en este equipo','err');
   });
 }
 
@@ -10111,10 +10128,15 @@ function rohoZona(dir){
   var s=String(dir||'').toUpperCase();
   var m=s.match(/ZONA\s+([A-ZÁÉÍÓÚÑ]{3,})/);
   if(m) return m[1].charAt(0)+m[1].slice(1).toLowerCase();
+  /* ⚠️ El nombre de la zona tiene que ser un TRAMO ENTERO de la dirección, no una palabra
+     suelta adentro de otra cosa. Buscándola suelta, «AV. VIRGEN DE COTOCA» —que es una
+     avenida— daba la zona «Cotoca», que queda a media hora para el otro lado. Lo vio el
+     dueño en la primera vista previa de verdad, con la venta de una clienta. */
+  var tramos=s.split(/[,;]/).map(function(t){ return t.replace(/\s+/g,' ').trim(); });
   var usadas=zonasDelEquipo();
   for(var i=0;i<usadas.length;i++){
-    var u=usadas[i].toUpperCase().trim();
-    if(u.length>=4 && s.indexOf(u)>=0) return usadas[i];
+    var u=usadas[i].toUpperCase().replace(/\s+/g,' ').trim();
+    if(u.length>=4 && tramos.indexOf(u)>=0) return usadas[i];
   }
   return '';
 }
@@ -10206,7 +10228,11 @@ function rohoArmarPedidos(filas){
       var tel=rohoCel(col.tel?f[col.tel]:''), wa=rohoCel(col.wa?f[col.wa]:'');
       var obs=[];
       if(ref) obs.push('📍 '+ref);
-      if(recibe && normNombre(recibe)!==normNombre(cliente)) obs.push('Recibe: '+recibe);
+      /* La columna «NOTAS / QUIEN RECIBE» del Excel va SIEMPRE a las observaciones —pedido
+         del dueño—. A veces es solo el nombre del cliente, pero otras dice quién más puede
+         recibir («… O MICAELA GUZMAN») o qué le tienen que entregar, y eso el chofer lo
+         necesita en la mano. */
+      if(recibe) obs.push('Recibe: '+recibe);
       if(tel && wa && tel!==wa) obs.push('WhatsApp: '+wa);
       obs.push('Importado del Excel de ROHO');
       porNota[oc]={
@@ -10283,14 +10309,19 @@ function renderImportRoho(){
   var tabla=elegidos.length ? ('<div style="max-height:38vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px;margin-top:10px">'+
     '<table style="width:100%;border-collapse:collapse;font-size:.78rem">'+
     '<thead><tr style="background:var(--gray-lt)"><th style="text-align:left;padding:6px">Nota</th><th style="text-align:left;padding:6px">Entrega</th>'+
-    '<th style="text-align:left;padding:6px">Cliente</th><th style="text-align:left;padding:6px">Zona</th><th style="text-align:left;padding:6px">Productos</th></tr></thead><tbody>'+
+    '<th style="text-align:left;padding:6px">Cliente</th><th style="text-align:left;padding:6px">Celular</th>'+
+    '<th style="text-align:left;padding:6px">Zona</th><th style="text-align:left;padding:6px">Dirección</th>'+
+    '<th style="text-align:left;padding:6px">Productos</th><th style="text-align:left;padding:6px">Observaciones</th></tr></thead><tbody>'+
     elegidos.map(function(p){
       return '<tr style="border-top:1px solid var(--gray-md)">'+
         '<td style="padding:6px"><b>'+esc(p.oc)+'</b></td>'+
         '<td style="padding:6px">'+esc(fmtFecha(p.fecha))+'</td>'+
-        '<td style="padding:6px">'+esc(p.cliente||'—')+(p.celular?'':' <span style="color:var(--red)">sin celular</span>')+'</td>'+
+        '<td style="padding:6px">'+esc(p.cliente||'—')+'</td>'+
+        '<td style="padding:6px">'+(p.celular?esc(p.celular):'<span style="color:var(--red);font-weight:700">falta</span>')+'</td>'+
         '<td style="padding:6px">'+(p.zona?esc(p.zona):'<span style="color:var(--amber);font-weight:700">falta</span>')+'</td>'+
+        '<td style="padding:6px;max-width:260px">'+(p.direccion?esc(p.direccion):'<span style="color:var(--red);font-weight:700">falta</span>')+'</td>'+
         '<td style="padding:6px">'+p.productos.map(function(x){ return esc(x.desc)+' <b>×'+esc(String(x.cant))+'</b>'; }).join('<br>')+'</td>'+
+        '<td style="padding:6px;max-width:280px;color:var(--muted)">'+esc(p.obs)+'</td>'+
       '</tr>';
     }).join('')+'</tbody></table></div>') : '';
 
