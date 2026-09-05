@@ -3775,6 +3775,78 @@ faltaba tildar «Lead agregado» y él mostró que estaba tildado.
 
 `SCRIPT_VERSION` → **`2026-09-05-c`**.
 
+## 4ci. 📥 Importar los pedidos de ROHO desde su Excel (2026-09-05)
+
+Pedido del dueño: *"logística extrae de otro panel que no tiene api ni conector sus pedidos
+para entregar. ¿Podemos adicionar un botón de importar pedidos de ROHO y ellos con subir el
+Excel cree los pedidos?"*. ROHO trabaja en Zoho; el reporte se llama **«DETALLE NOTA DE
+VENTA PARA PROVEEDOR»**.
+
+**El primer Excel no servía**: traía qué entregar (fecha, nota, código, producto, cantidad)
+pero **no a quién ni dónde**. Se le dijo qué columnas pedir y trajo el segundo, con
+`NOMBRE CLIENTE`, `TELEFONO`, `WHATSAPP`, `DIRECCION`, `DESCRIPCION DE DOMICILIO`,
+`NOTAS / QUIEN RECIBE` y `CI/NIT`. Con eso alcanza.
+
+### Lo que el archivo tiene de particular (y por qué el test corre contra el de verdad)
+
+- **Los textos van «en línea»** (`t="inlineStr"`), no en la tabla de cadenas compartidas.
+  Mi primer analizador leía solo lo compartido y **todas las columnas de texto salieron
+  vacías** — el mismo tipo de error que ya había escondido bugs con Kommo (§4bz). Por eso
+  `tests/datos/roho.xlsx` es el archivo REAL (con nombres, teléfonos y correos cambiados:
+  el repo es público). Un Excel inventado por mí probaría que entiendo lo que yo mismo
+  escribí.
+- **Una nota puede ocupar varias filas**: la 185088 son tres. Se agrupa por N° de nota →
+  un pedido con tres líneas, no tres pedidos.
+- **La columna `RESUMEN` trae 30.000 caracteres de HTML** con imágenes de Zoho. Se descarta.
+- **Teléfonos como `+59171039979`** → los 8 dígitos de acá.
+- **De 35 líneas, 25 tenían la entrega ya pasada** (la más vieja de diciembre 2025).
+
+**La regla de la fecha, dicha por el dueño**: *«si hoy es 05 de septiembre, agendar los de
+06 en adelante»*. O sea **entregas futuras: de MAÑANA en adelante**, no de hoy — el camión de
+hoy ya está armado y salió, y meterle una entrega más no la hace llegar. Las de hoy y las
+anteriores se listan aparte con una casilla, por si alguna quedó sin entregar.
+
+### Los combos
+
+14 de 35 líneas son «COMBO …», y **el panel prohíbe cargar un combo en una sola línea**:
+almacén no puede tickear stock ni contar bultos de algo que son dos cosas. Diez dicen
+`+SOMIER` y se parten por ahí; **cuatro no lo dicen, y el dueño confirmó que igual llevan
+somier**, así que se les arma. La medida vive al final del nombre y vale para las dos piezas:
+`COMBO COLCHON PILLOWFLEX+SOMIER 3 PLAZAS 180X190CM FLEX` →
+`COLCHON PILLOWFLEX 3 PLAZAS 180X190CM FLEX` + `SOMIER 3 PLAZAS 180X190CM FLEX`.
+El test comprueba que ninguna línea importada le caiga mal a `esCombo()` — **la función del
+propio panel**, no un regex mío: es la que va a rechazar el pedido si mañana alguien lo edita.
+
+### La zona: lo que decidí NO hacer
+
+El panel arma las rutas por zona, y **29 de 35 direcciones no la dicen**. Podía deducirla
+por avenida o por anillo, pero **mandar un camión a la ruta equivocada es peor que dejar la
+zona vacía**: la vacía se ve y se completa, la equivocada viaja. Así que la zona sale solo de
+dos lugares seguros: que la dirección lo diga (`ZONA NORTE`), o que nombre una zona **que el
+equipo ya usa en sus pedidos** (`zonasDelEquipo()` las saca de `STATE`, o sea de su propio
+vocabulario y no del mío). Lo que queda sin zona se cuenta en la vista previa.
+
+### Cómo está hecho
+
+- **Sin ninguna librería.** Un `.xlsx` es un ZIP con XML, y el navegador descomprime solo
+  (`DecompressionStream`). Una dependencia externa es una cosa más que se cae justo cuando
+  hace falta. (Detalle que costó: los largos de nombre/extra de la cabecera **local** del
+  ZIP pueden no ser los del directorio central; leyendo los del directorio, los datos salen
+  corridos.)
+- **Vista previa obligatoria.** Antes de guardar nada muestra: cuántos nuevos, cuántos ya
+  estaban, cuántos con fecha pasada, cuántos combos partió, cuántos quedan sin zona, sin
+  celular o sin dirección, y **si algún día se pasa de cupo**. Recién ahí hay botón.
+- **Nunca pisa.** Solo crea lo que no existe; compara por N° de nota, que en ROHO es el N°
+  de OC. Subir el mismo archivo dos veces no crea ni un pedido de más — y el servidor lo
+  vuelve a comprobar por su cuenta (§4ce), así que hay dos redes.
+- **Turno a elección** (todos AM, todos PM, o repartir llenando el AM de cada día hasta el
+  tope): el Excel de ROHO no trae turno y no se inventa.
+- Un rechazo del servidor (cupo lleno, día cerrado, nota repetida) **saca el pedido de la
+  pantalla y se informa cuál y por qué**, en vez de dejarlo como si hubiera entrado.
+
+`tests/test_roho.js` — **54 checks** contra el Excel real. Contra `origin/main` revienta con
+`xlsxDescomprimir is not defined`.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
