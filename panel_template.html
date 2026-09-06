@@ -7725,7 +7725,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
     }, /*#__PURE__*/React.createElement(SectionHead, {
       eb: "Duplicados",
       h3: `${D.metrics.duplicadosTel} ${D.metrics.duplicadosTel === 1 ? "teléfono" : "teléfonos"} en 2+ fichas`,
-      p: "Mismo cliente registrado por varias vendedoras o en varias etapas. Fusionar evita doble trabajo y disputas de comisi\xF3n. Toca una fila para abrir el lead en Kommo."
+      p: `Mismo cliente en dos o m\xE1s fichas. ${D.metrics.duplicadosChoques || 0} ${(D.metrics.duplicadosChoques || 0) === 1 ? "es un choque entre dos vendedoras" : "son choques entre dos vendedoras"} (disputa de cartera y de comisi\xF3n); ${D.metrics.duplicadosAuto || 0} ${(D.metrics.duplicadosAuto || 0) === 1 ? "es la misma vendedora duplicando su propia ficha" : "son la misma vendedora duplicando su propia ficha"} (forma de registrar). Toca el nombre para abrir esa ficha en Kommo.`
     }), !D.dupRows || D.dupRows.length === 0 ? /*#__PURE__*/React.createElement(EmptyState, {
       title: "Sin tel\xE9fonos duplicados",
       desc: "Ning\xFAn cliente del mes aparece con el mismo tel\xE9fono en dos o m\xE1s fichas. Buena se\xF1al de higiene de datos.",
@@ -7737,7 +7737,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       }
     }, /*#__PURE__*/React.createElement("thead", null, /*#__PURE__*/React.createElement("tr", null, /*#__PURE__*/React.createElement("th", null, "Tel\xE9fono"), /*#__PURE__*/React.createElement("th", {
       className: "r"
-    }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Vendedoras involucradas"), /*#__PURE__*/React.createElement("th", null, "Etapas"), /*#__PURE__*/React.createElement("th", {
+    }, "Fichas"), /*#__PURE__*/React.createElement("th", null, "Tipo"), /*#__PURE__*/React.createElement("th", null, "Qui\xE9n tiene cada ficha"), /*#__PURE__*/React.createElement("th", {
       className: "r"
     }, "Estado"))), /*#__PURE__*/React.createElement("tbody", null, D.dupRows.map((r, i) => /*#__PURE__*/React.createElement("tr", {
       key: i,
@@ -7755,9 +7755,24 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       className: "r num"
     }, r.fichas), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, r.vendedoras), /*#__PURE__*/React.createElement("td", {
+    }, /*#__PURE__*/React.createElement("b", {
+      style: { color: r.tipo === "Choque" ? "var(--red)" : "var(--text)" }
+    }, r.tipo || "\u2014"), /*#__PURE__*/React.createElement("div", {
+      style: { fontSize: ".72rem", color: "var(--muted)", marginTop: 2 }
+    }, r.tipo === "Choque" ? "dos vendedoras" : r.tipo === "Auto-duplicado" ? "la misma vendedora" : "")), /*#__PURE__*/React.createElement("td", {
       className: "ww"
-    }, r.etapas), /*#__PURE__*/React.createElement("td", {
+    }, r.detalle && r.detalle.length ? r.detalle.map((d, j) => /*#__PURE__*/React.createElement("div", {
+      key: j,
+      style: { marginBottom: 3, lineHeight: 1.35 }
+    }, /*#__PURE__*/React.createElement("a", {
+      className: "lead-link",
+      href: `${D.kommoBase}/leads/detail/${d.id}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: e => e.stopPropagation()
+    }, d.vend), /*#__PURE__*/React.createElement("span", {
+      style: { color: "var(--muted)" }
+    }, " \xB7 ", d.etapa))) : `${r.vendedoras} \u2014 ${r.etapas}`), /*#__PURE__*/React.createElement("td", {
       className: "r"
     }, /*#__PURE__*/React.createElement(Pill, {
       tone: r.estado === "Fusionar" ? "amber" : "red"
@@ -7766,7 +7781,7 @@ REGLAS ANTI-REPETICIÓN: NO menciones los totales globales (leads, conversión g
       style: {
         marginTop: 12
       }
-    }, D.metrics.duplicadosFichas, " fichas en ", D.metrics.duplicadosTel, " grupos de tel\xE9fono repetido (hasta 50 mostrados). Detecci\xF3n real desde los contactos de Kommo.")));
+    }, D.metrics.duplicadosFichas, " fichas en ", D.metrics.duplicadosTel, " grupos de tel\xE9fono repetido (hasta 50 mostrados). Detecci\xF3n real desde los contactos de Kommo, comparando el n\xFAmero normalizado (+591, espacios y guiones no cuentan). Solo mira los contactos creados dentro del mes: un cliente que volvi\xF3 a escribir meses despu\xE9s no aparece ac\xE1.")));
   };
 
   // ── Evolución mes a mes ──────────────────────────────────────────────────

@@ -11,6 +11,17 @@ node tests/test_plata.js   # uno solo, con el detalle
 
 > ⚠️ **Siempre desde la raíz del repo**: los tests abren `./pedidos.html`.
 
+## Los que NO entran en `correr.sh`
+
+Prueban el **panel de ventas** (`generar.py` + `panel_template.html`), no `pedidos.html`,
+y se corren de a uno:
+
+```bash
+python3 tests/test_kommo.py        # que el inspector de Kommo no filtre datos de clientes
+python3 tests/test_duplicados.py   # el detector de duplicados: teléfonos y quién tiene qué ficha
+node    tests/test_paneldup.js     # la tabla de duplicados como se ve en el panel
+```
+
 ## ⚠️ POR QUÉ ESTÁN ACÁ Y NO EN UNA CARPETA TEMPORAL
 
 El 21/08/2026 se perdieron **~117 suites** de golpe. Vivían en el directorio temporal de la
