@@ -11666,7 +11666,7 @@ function stockAsignar(){
     im[o.k]=Math.max(0, o.enOtros||0);
   });
   var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0, descont:0};
-  var faltaPorProd={}, imPorProd={}, sinPorProd={}, descPorProd={};
+  var faltaPorProd={}, imPorProd={}, sinPorProd={}, descPorProd={}, revisadas=[];
   // Lo revisado conserva su reserva incluso fuera del filtro de fechas actual.
   // No se vuelve a repartir ese stock a una línea nueva ni se cambia su marca.
   tot.revisadas=0;
@@ -11696,7 +11696,12 @@ function stockAsignar(){
       var antes=(x.chk==='ok'||x.chk==='no'||x.chk==='im') ? x.chk : '';
       if(enProduccion(x)){ tot.aFab++; return; }          // la trae la fábrica para este cliente
       if(p.fecha && p.fecha<todayStr() && antes!=='no') return;
-      if(REVSTK_SOLO_VACIOS && antes){ tot.revisadas++; return; }
+      if(REVSTK_SOLO_VACIOS && antes){
+        tot.revisadas++; tot[antes]++;
+        var kr=stockClave(x), ir=info[kr]||{};
+        revisadas.push({id:p.id,cliente:p.cliente||'',fecha:p.fecha||'',k:kr,nom:ir.desc?stockNombre(ir):(x.desc||''),u:c,marca:antes});
+        return;
+      }
       var k=stockClave(x), o=info[k]||{};
       tot.lineas++;
       if(dep[k]==null && !im[k]){                          // nunca se contó: no se inventa
@@ -11762,7 +11767,7 @@ function stockAsignar(){
     tot.atc++;
   });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
-  return { firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
+  return { revisadas:revisadas, firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), descont:ord(descPorProd), sobraDep:dep, sobraIM:im };
 }
 /* «1 acá · 2 recoger de Moreno · 1 fabricar» — de dónde saldría cada unidad. */
@@ -11801,10 +11806,10 @@ function renderStockRevisar(){
     'Primero lo que está <b>acá en fábrica</b>, después lo de <b>Moreno</b>, y lo que no alcanza queda como <b>✗ no hay</b> — eso es lo que hay que fabricar.</p>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+seg('hoy','Hoy')+seg('manana','Mañana')+seg('semana','Esta semana')+seg('todos','Todos')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
-      mc2('var(--green)','Con stock acá',R.tot.ok,'líneas pendientes de revisar')+
+      mc2('var(--green)','Con stock acá',R.tot.ok,'líneas marcadas + propuestas nuevas')+
       (R.tot.revisadas?mc2('var(--gray)','Ya revisadas',R.tot.revisadas,'se conservan sin cambios'):'')+
-      mc2('#a67c00','Recoger de Moreno',R.tot.im,'están allá, hay que ir a buscarlos')+
-      mc2('var(--red)','Sin stock',R.tot.no,'hay que fabricar')+
+      mc2('#a67c00','Recoger de Moreno',R.tot.im,'líneas marcadas + propuestas nuevas')+
+      mc2('var(--red)','Sin stock',R.tot.no,'líneas marcadas + propuestas nuevas')+
       (R.tot.sinContar?mc2('var(--gray)','Sin contar',R.tot.sinContar,'no se tocan'):'')+
       (R.tot.atc?mc2('#7c3aed','🎧 ATC',R.tot.atc,'reclamos: no se fabrican'):'')+
       (R.tot.tienda?mc2('#92400e','🏪 De tienda',R.tot.tienda,'protectores, sábanas, mantas'):'')+
@@ -11839,6 +11844,13 @@ function renderStockRevisar(){
         }).join('');
       }).join('')+
       '</tbody></table></div>';
+  }
+  if(R.revisadas && R.revisadas.length){
+    var pendientesMarcados=R.revisadas.filter(function(r){return r.marca!=='ok';});
+    html+='<details '+(pendientesMarcados.length?'open':'')+' style="margin-top:12px;padding:12px;border:1px solid var(--gray-md);border-radius:9px"><summary><b>Ya revisadas · '+R.revisadas.length+' líneas · '+pendientesMarcados.length+' con recogida o falta de stock</b></summary>'+
+      '<p style="margin:8px 0">Estas marcas se conservan. «Recoger de Moreno» sigue pendiente hasta registrar la llegada y actualizar el pedido. La cantidad mostrada es la del pedido; si parte sale de acá, confirmá el reparto antes de recoger.</p>'+
+      '<div style="max-height:32vh;overflow:auto"><table class="roho-tabla stk-tabla"><thead><tr><th>Cliente</th><th>Fecha</th><th>Producto</th><th>Cantidad del pedido</th><th>Marca guardada</th><th></th></tr></thead><tbody>'+
+      R.revisadas.slice().sort(function(a,b){return (a.marca==='ok')-(b.marca==='ok');}).map(function(r){return '<tr><td>'+esc(r.cliente)+'</td><td>'+esc(r.fecha?fmtFechaCorta(r.fecha):'Sin fecha')+'</td><td>'+esc(r.nom)+'</td><td>'+r.u+'</td><td>'+revStkMarca(r.marca)+'</td><td><button class="btn btn-sm" data-id="'+esc(r.id)+'" onclick="showPedidoModal(this.dataset.id)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div></details>';
   }
   if(R.traerIM.length){
     html+='<div style="margin-top:12px;background:#fffbe9;border:1px solid #f0d264;border-radius:9px;padding:10px 13px;font-size:.84rem">'+
