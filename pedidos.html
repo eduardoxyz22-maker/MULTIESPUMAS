@@ -11030,6 +11030,43 @@ function stockPedidosDetalle(k){
   Object.keys(grupos).forEach(function(g){grupos[g].sort(function(a,b){return String(a.p.fecha||'9999').localeCompare(String(b.p.fecha||'9999')) || String(a.p.id).localeCompare(String(b.p.id));});});
   return grupos;
 }
+
+function stockSaldoDetalleHtml(o){
+  var conocido=o.deposito!=null, dep=conocido?o.deposito:0, comp=o.comp||0;
+  var saldo=dep-comp, cobertura=o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir);
+  var previsto=o.porDia*cobertura, objetivo=Math.max(comp,previsto);
+  var bruto=conocido?Math.max(0,Math.ceil(objetivo-dep-(o.enCamino||0)-1e-9)):0;
+  var tarjeta=function(t,v,sub){return '<div style="flex:1 1 145px;padding:12px;background:#fff;border:1px solid var(--gray-md);border-radius:9px"><div style="font-size:.76rem;color:var(--muted)">'+t+'</div><b style="font-size:1.5rem">'+v+'</b><div style="font-size:.75rem">'+sub+'</div></div>';};
+  var html='<section style="margin-bottom:16px;padding:14px;background:var(--gray-lt);border-radius:12px"><h3 style="margin-bottom:10px">Saldos de este producto</h3><div style="display:flex;gap:8px;flex-wrap:wrap">'+
+    tarjeta('Acá en fábrica',conocido?stockUnid(dep):'Sin contar','Saldo calculado del inventario')+
+    tarjeta('En Moreno / otros almacenes',stockUnid(o.enOtros||0),'Requiere recogida; no está acá')+
+    tarjeta('En camino',stockUnid(o.enCamino||0),'Pendiente de recepción')+
+    tarjeta('Comprometido',stockUnid(comp),'Vendido sin entregar; consume depósito')+'</div>';
+  if(conocido){
+    html+='<p style="margin-top:12px;font-size:1.02rem"><b>Saldo después de los pedidos: '+stockUnid(dep)+' − '+stockUnid(comp)+' = '+stockUnid(saldo)+'</b>'+(saldo<0?' · faltan '+stockUnid(-saldo)+' acá.':' · quedan '+stockUnid(saldo)+' acá.')+'</p>';
+    html+='<p style="font-size:.8rem;color:var(--muted)">Este saldo no incluye Moreno ni llegadas futuras. Considera todos los pedidos pendientes del producto.</p>';
+  }
+  if(o.pedidos&&o.pedidos.length) html+='<p style="margin-top:8px"><b>Llegadas previstas:</b> '+o.pedidos.map(function(q){return stockUnid(q.u)+' el '+esc(q.llega?fmtFecha(q.llega):'día sin definir')+(q.fab?' · '+esc(q.fab):'');}).join(' / ')+'. Una fecha prevista no confirma que haya llegado.</p>';
+  if(o.revisarStock){
+    html+='<p style="margin-top:12px;padding:12px;background:#fff4d6;color:#7c4b00"><b>Por qué pide revisar:</b> hay '+stockUnid(o.confirmadoAqui||0)+' unidades marcadas «hay acá», pero el inventario muestra '+stockUnid(dep)+'. La diferencia es '+stockUnid((o.confirmadoAqui||0)-Math.max(0,dep))+' unidades. Primero confirmar el conteo o corregir la marca; la recomendación de fabricación queda detenida.</p>';
+  }else if(!conocido){
+    html+='<p><b>No se puede calcular el faltante sin un conteo de fábrica.</b></p>';
+  }else if(o.descont){
+    html+='<p><b>Este producto ya no se fabrica.</b> Se vende lo disponible; un faltante requiere revisar alternativas con ventas.</p>';
+  }else{
+    html+='<div style="margin-top:12px"><b>Cómo se calcula la reposición</b><p>'+stockUnid(comp)+' unidades ya vendidas';
+    if(o.porDia>0) html+=' frente a '+stockNum(previsto,2)+' estimadas para '+cobertura+' días ('+o.lead+' de fábrica + '+o.margen+' de margen + '+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)+' de reserva). Se toma el mayor; no se suman.';
+    else html+='. Poca rotación: no se añade reserva por ventas futuras.';
+    html+='</p><p>Necesidad '+stockNum(objetivo,2)+' − '+stockUnid(dep)+' acá − '+stockUnid(o.enCamino||0)+' en camino = <b>'+bruto+' unidades adicionales</b> (redondeado hacia arriba, mínimo cero).</p>';
+    if(o.aviso==='traer') html+='<p><b>Recoger '+stockUnid(o.pedir)+' de Moreno / otros almacenes</b>: hay '+stockUnid(o.enOtros||0)+' allí.</p>';
+    else if(o.aviso==='urgente'||o.aviso==='pedir') html+='<p><b>El panel propone pedir '+stockUnid(o.pedir)+'.</b>'+(o.enOtros?' Hay además '+stockUnid(o.enOtros)+' en Moreno / otros almacenes: revisar la recogida para cubrir parte del faltante.':'')+(o.pedir>bruto?' Hay un faltante antes de la llegada prevista; por eso se mantiene una reposición mínima.':'')+'</p>';
+    else html+='<p><b>No hay una orden de reposición urgente.</b> '+(o.enCamino?'Ya hay unidades pendientes de llegada.':'Se mantiene vigilancia según la rotación y los pedidos.')+'</p>';
+    if(o.corte) html+='<p>Primer faltante proyectado: <b>'+esc(fmtFecha(o.corte))+'</b>. Plazo de fábrica: '+o.lead+' días'+(o.leadMedido?' (medido).':' (estimado).')+'</p>';
+    html+='</div>';
+  }
+  return html+'</section>';
+}
+
 function abrirStockPedidos(k){
   var o=stockData().lista.filter(function(x){return x.k===k;})[0], grupos=stockPedidosDetalle(k);
   var nombre=o?stockNombre(o):stockNombreClave(k);
@@ -11038,6 +11075,7 @@ function abrirStockPedidos(k){
       lista.map(function(r){var p=r.p;return '<tr><td><b>'+esc(p.cliente||'Sin cliente')+'</b><br>'+esc(p.oc?ocEtiq(p.oc):(p.nota?'Nota '+p.nota:p.id))+'</td><td>'+esc(p.fecha?fmtFecha(p.fecha):'Sin fecha')+'</td><td>'+r.u+'</td><td>'+esc(p.entregado?'Entregado':(stockSalio(p)&&r.marcas.indexOf('No hay')<0?'Fecha pasada: se considera salido':r.marcas.join(' · ')))+'</td><td><button class="btn btn-sm" data-id="'+esc(p.id)+'" data-k="'+esc(k)+'" onclick="stockAbrirPedidoDesdeLista(this.dataset.id,this.dataset.k)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div>';
   }
   var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
+  if(o) html+=stockSaldoDetalleHtml(o);
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'primero revisar la diferencia entre las marcas y el inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
