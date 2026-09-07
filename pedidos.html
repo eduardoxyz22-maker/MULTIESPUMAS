@@ -11868,6 +11868,26 @@ function copiarTraerIM(){
   copyText(t); toast('Lista para traer de IM copiada ✓','ok');
 }
 /* Aplica los tildes. De a uno y con progreso: son muchos pedidos y cada uno viaja. */
+
+/* Avance fijo: visible aunque la lista esté desplazada hasta abajo. */
+function revStkMostrarAvance(hechos,total,cliente,resultado,aviso){
+  var el=document.getElementById('revstk-avance');
+  if(!el){
+    el=document.createElement('div');el.id='revstk-avance';
+    el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Avance de revisión');
+    el.style.cssText='position:fixed;inset:0;z-index:6000;background:rgba(15,40,45,.60);display:flex;align-items:center;justify-content:center;padding:20px';
+    el.innerHTML='<div style="width:100%;max-width:510px;padding:30px;background:white;border-radius:18px;box-shadow:0 20px 70px #0005;text-align:center"><div id="revstk-avance-titulo" role="status" aria-live="polite" style="font-size:1.45rem;font-weight:800;color:#0f766e"></div><div id="revstk-avance-cuenta" style="font-size:1.15rem;font-weight:700;margin:16px 0"></div><progress id="revstk-avance-barra" style="width:100%;height:22px;accent-color:#0f766e"></progress><div id="revstk-avance-cliente" style="margin-top:16px;font-size:1rem;overflow-wrap:anywhere"></div><p id="revstk-avance-ayuda" style="margin:14px 0;color:#666"></p><button id="revstk-avance-listo" class="btn btn-primary" style="display:none" onclick="document.getElementById(\'revstk-avance\').remove()">Entendido</button></div>';
+    document.body.appendChild(el);
+  }
+  document.getElementById('revstk-avance-titulo').textContent=resultado?(aviso?'⚠️ Revisión terminada con pendientes':'✅ Revisión terminada'):'Guardando las marcas…';
+  document.getElementById('revstk-avance-cuenta').textContent=hechos+' de '+total+' pedidos procesados';
+  var barra=document.getElementById('revstk-avance-barra');barra.max=total;barra.value=hechos;
+  document.getElementById('revstk-avance-cliente').textContent=resultado||('Ahora: '+cliente);
+  document.getElementById('revstk-avance-ayuda').textContent=resultado?'':(CONNECTED?'Esperá a que termine. No hace falta volver a pulsar Aplicar.':'Sin conexión: las marcas quedarán en la cola para sincronizar.');
+  var listo=document.getElementById('revstk-avance-listo');listo.style.display=resultado?'':'none';
+  if(resultado) listo.focus();
+}
+
 function aplicarStockRevisar(){
   if(REVSTK_GUARDANDO) return;
   if(!REVSTK || REVSTK.firma!==JSON.stringify([STATE,STOCK])){
@@ -11878,19 +11898,25 @@ function aplicarStockRevisar(){
   var cambios=revStkCambios();
   if(!cambios.length){ closeModal(); return; }
   REVSTK_GUARDANDO=true;
+  var aplicar=document.querySelector('[onclick="aplicarStockRevisar()"]');
+  if(aplicar){aplicar.disabled=true;aplicar.textContent='Guardando…';}
+  var sinConexion=!CONNECTED;
   var prog=document.getElementById('revstk-prog'), i=0, ok=0, fallos=0, omitidos=0, lineas=0;
   var uno=function(){
     if(i>=cambios.length){
       REVSTK_GUARDANDO=false;
       saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo();
       renderStock(); closeModal();
-      toast((fallos?('Marcados '+ok+' pedidos · '+fallos+' no se pudieron guardar')
-                  :('✅ '+lineas+' líneas marcadas en '+ok+' pedidos'))+
-                  (omitidos?' · '+omitidos+' omitidos porque cambiaron durante la revisión':''), (fallos||omitidos)?'err':'ok', 7000);
+      var resultado=(fallos?('Marcados '+ok+' pedidos · '+fallos+' no se pudieron guardar')
+                  :(lineas+' líneas marcadas en '+ok+' pedidos'))+
+                  (omitidos?' · '+omitidos+' omitidos porque cambiaron durante la revisión':'')+
+                  (sinConexion?' · Pendientes de sincronizar: sin conexión.':'');
+      revStkMostrarAvance(cambios.length,cambios.length,'',resultado,fallos||omitidos||sinConexion);
       REVSTK=null;
       return;
     }
     var g=cambios[i++];
+    revStkMostrarAvance(i-1,cambios.length,g.p.cliente||'Pedido '+i);
     if(prog) prog.textContent='Guardando '+i+' de '+cambios.length+'… ('+(g.p.cliente||'')+')';
     var p=findById(g.p.id);
     if(!p || p.entregado || JSON.stringify(p)!==g.firma){
