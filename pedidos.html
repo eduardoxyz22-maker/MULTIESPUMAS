@@ -10170,6 +10170,16 @@ var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
 var STOCK_RECONTAR=21;        // un conteo más viejo que esto pide que se cuente de nuevo
 var STOCK_MUESTRAS=6;         // cuántas llegadas se miran para medir lo que tarda cada fábrica
 var STOCK_VENTA_MIN=8;
+/* 🔁 CUÁNTAS ENTREGAS DISTINTAS HACEN FALTA PARA LLAMARLO «ROTACIÓN» (§4da).
+   El dueño, mirando el MORFEO: *"el colchón morfeo ya se entregó y dice mandar a pedir…
+   solo debés mandar a producir PRODUCTOS que tienen ROTACIÓN. Una única entrega o 2 en 1
+   mes no es tener rotación, eso es pedido único."*
+   Tiene razón y era un error de fondo: el panel dividía lo vendido por los 28 días y daba
+   un ritmo. 45 colchones en UNA venta mayorista daban «1,6 por día», y de ahí «se corta
+   hoy → pedí 23 ya» de algo que ya se entregó y que nadie más pidió.
+   Con menos de 3 entregas distintas en el mes no se estima ningún ritmo: se cubre lo que
+   está VENDIDO Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más. */
+var STOCK_VENTAS_MIN=3;
 var STOCK_HIST=14;            // cuántos cortes se recuerdan (solo el resumen: fecha, hora, cuántos)        // con menos vendidos que esto, «venta pareja / a los saltos» no dice nada y no se muestra
 /* El almacén de donde SALEN LOS CAMIONES. Es el único que contesta «¿puedo entregar esto
    mañana?»; lo que está en la fábrica hay que ir a traerlo primero (§4cp). */
@@ -10740,7 +10750,7 @@ function stockData(){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, nVentas:0, ventas:{}, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       salidas:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
@@ -10764,7 +10774,12 @@ function stockData(){
       var c=Number(x.cant)||0; if(!(c>0)) return;
       var hecho=enProduccion(x), salio=stockSalio(p);
       // VENTA: cuenta se haya entregado o no — lo que faltó también se vendió (§4co)
-      if(fs>=desde && fs<=hoy){ o.vendidos+=c; o.sem[Math.min(3, Math.max(0, Math.floor(stockDias(fs,hoy)/7)))]+=c; }
+      // Se cuentan las UNIDADES y, aparte, en cuántas ENTREGAS distintas salieron (§4da):
+      // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
+      if(fs>=desde && fs<=hoy){
+        o.vendidos+=c; o.sem[Math.min(3, Math.max(0, Math.floor(stockDias(fs,hoy)/7)))]+=c;
+        if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
+      }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
       // haya pasado — es la contradicción con el conteo, y sin reprogramar se avisa aparte.
@@ -10805,7 +10820,14 @@ function stockData(){
   Object.keys(STOCK.c.u||{}).forEach(function(k){ if(!esTextoDeTienda(k)) grupo(k); });
   var lista=Object.keys(g).map(function(k){
     var o=g[k];
-    o.porDia=o.vendidos/STOCK_VENTANA;
+    /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN (§4da). `porDiaReal` es la cuenta cruda, para
+       mostrarla; `porDia` es la que usan la proyección y el «cuánto pedir», y con menos de
+       3 entregas en el mes vale CERO: de un pedido único no se deduce ninguna demanda
+       futura. Lo vendido y sin entregar (`comp`) sigue contando igual — eso no se estima,
+       está vendido. */
+    o.porDiaReal=o.vendidos/STOCK_VENTANA;
+    o.rota=(o.nVentas>=STOCK_VENTAS_MIN);
+    o.porDia=o.rota?o.porDiaReal:0;
     o.deposito=stockDeposito(k, o.salidas);
     o.enCorte=((STOCK.c.u||{})[k]!=null);   // si no, el 0 sale de «no figura en el corte»
     o.fab=o.fabUlt.fab||'';
@@ -10878,13 +10900,19 @@ function stockContradice(o){
   return true;
 }
 /* Plata parada: hay para más de 60 días, o hay y no se vendió ninguno en 4 semanas. */
+/* ⚠️ ACÁ SÍ SE USA EL RITMO CRUDO, Y ES A PROPÓSITO (§4da). «Plata parada» mira PARA ATRÁS:
+   cuánto tardaría en salir lo que hay, al ritmo al que salió hasta ahora. No promete que se
+   vaya a vender —no se pide nada por esto—, así que no necesita rotación: al contrario, el
+   caso que más importa es justamente el que casi no rota. Si se usara `porDia` (que vale 0
+   sin rotación), el producto que se vendió 2 veces en el mes no podría decir «hay para 14
+   meses», que es exactamente lo que hay que decirle al dueño. */
 function stockSobra(o){
   if(o.deposito==null || o.deposito<=0) return false;
   var libre=o.deposito+o.enCamino-o.comp; if(libre<=0) return false;
-  if(!(o.porDia>0)) return true;
-  return libre/o.porDia > STOCK_DIAS_SOBRA;
+  if(!(o.porDiaReal>0)) return true;
+  return libre/o.porDiaReal > STOCK_DIAS_SOBRA;
 }
-function stockMesesSobra(o){ return (o.porDia>0) ? ((o.deposito+o.enCamino-o.comp)/o.porDia/30) : null; }
+function stockMesesSobra(o){ return (o.porDiaReal>0) ? ((o.deposito+o.enCamino-o.comp)/o.porDiaReal/30) : null; }
 /* Qué hay que hacer con este producto. Pocas respuestas, para que se entienda de un
    vistazo — un semáforo con seis colores no lo mira nadie. */
 function stockAvisoDe(o){
@@ -10899,9 +10927,12 @@ function stockAvisoDe(o){
   if(falta) return 'pedir';                                     // se corta dentro de fábrica + margen
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
+  /* 📦 Se vendió, pero en una o dos entregas: no hay ritmo que reponer (§4da). No es una
+     alarma, es una aclaración — si no, el renglón decía «✓ alcanza» teniendo cero. */
+  if(!o.rota && o.vendidos>0) return 'unico';
   return '';
 }
-function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, traer:4, sincontar:3, pedido:2, '':1, sobra:0 }[o.aviso]||0; }
+function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, sobra:0 }[o.aviso]||0; }
 /* " · 8 en MORENO" — dónde está lo que se puede ir a buscar. */
 function stockOtrosTxt(o){
   return Object.keys(o.otrosAlm||{}).map(function(nm){ return o.otrosAlm[nm]+' en '+stockAlmCorto(nm); }).join(' · ');
@@ -11026,6 +11057,7 @@ function renderStock(){
     if(o.aviso==='traer')   return '<button class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd;cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" data-k="'+esc(o.k)+'" onclick="abrirStockRecogida(this.getAttribute(\'data-k\'))" title="Anotar que se va a buscar a Moreno: deja de avisar y queda pendiente hasta que llegue.">🚚 Programar recogida</button>';
     if(o.aviso==='pedido')  return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Ya pedido</span>';
     if(o.aviso==='agotado') return '<span class="badge" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca" title="Discontinuado: la fábrica ya no lo hace. Se vende lo que queda y nada más.">🛑 Se acaba y no se fabrica más</span>';
+    if(o.aviso==='unico')   return '<span class="badge" style="background:#f5f5f4;color:#7c4b00;border:1px solid #e7e5e4" title="Se vendió en una o dos entregas: no hay una venta repetida de la que deducir cuánto reponer. No se pide por las dudas.">📦 Pedido único</span>';
     if(o.aviso==='sobra')   return '<span class="badge" style="background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe">💤 Sobra</span>';
     if(o.aviso==='sincontar') return '<span class="badge" style="background:var(--gray-lt);color:var(--muted)">sin contar</span>';
     return '<span class="badge b-green">✓ alcanza</span>';
@@ -11038,7 +11070,8 @@ function renderStock(){
     if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
     if(o.aviso==='pedido')  return chico((q?(q.u+' llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' de '+esc(q.fab)):'')):'')+(o.sinCamino!=null?('<br>sin ese pedido se cortaba '+stockEnDias(o.sinCamino)):''),'#075985');
     if(o.aviso==='agotado') return chico('quedan <b>'+stockUnid(Math.max(0,o.deposito))+'</b>'+(o.dias!=null?(' y se cortan '+stockEnDias(o.dias)):'')+(o.comp?(' con '+stockUnid(o.comp)+' ya vendidos'):'')+'. La fábrica ya no lo hace: que ventas no ofrezca más de lo que hay.','#7f1d1d');
-    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en 4 semanas'))+(o.descont?' · ya no se fabrica: vender lo que queda':''),'#5b21b6'); }
+    if(o.aviso==='unico')   return chico('<b>'+o.vendidos+'</b> unidad'+(o.vendidos===1?'':'es')+' en <b>'+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+'</b> en '+STOCK_VENTANA+' días: es un pedido puntual, no una venta que se repita. No se repone por las dudas — si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
+    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en 4 semanas'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     if(o.descont) return chico('ya no se fabrica: se vende lo que queda');
     return '';
@@ -11057,7 +11090,11 @@ function renderStock(){
           ((!o.cat && o.nativo) ? ('<br><button class="btn btn-sm" style="padding:2px 8px;font-size:.7rem;margin-top:3px" data-k="'+esc(o.k)+'" onclick="abrirStockUnir(this.getAttribute(\'data-k\'))" title="No está en el catálogo con ese nombre. Si es el mismo que otro de la lista, unilos.">🔗 unir</button>') : '')+
         '</td>'+
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
-          '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+(o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+'</span></td>'+
+          '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
+          (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
+          (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
+          ((!o.rota&&o.vendidos>0)?'<br><b style="color:#7c4b00">pedido único: no se estima ritmo</b>':'')+
+          '</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
                 : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'+
@@ -11183,7 +11220,9 @@ function copiarStock(){
          '\n   pedir '+o.pedir+' — quedan '+(o.deposito==null?'?':stockUnid(o.deposito))+
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
-         ', se venden '+stockNum(o.porDia)+' por día'+
+         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día')
+                 : (o.vendidos>0 ? (', pedido puntual — '+o.vendidos+' en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s'))
+                                 : ', es para un pedido puntual'))+
          (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
          (o.comp?(', '+stockUnid(o.comp)+' ya vendidos sin entregar'):'')+'\n';
     });
@@ -11655,7 +11694,12 @@ function renderStockRevisar(){
         return g.lineas.map(function(l,j){
           return '<tr'+(l.contra?' style="background:#fff8e6"':'')+'>'+
             '<td>'+(j===0?('<b>'+esc(g.p.cliente||'(sin cliente)')+'</b>'+(g.p.oc?('<br><span style="color:var(--muted);font-size:.9em">'+esc(ocEtiq(g.p.oc))+'</span>'):'')+'<br><span style="color:var(--muted);font-size:.9em">'+(g.p.fecha?fmtFechaCorta(g.p.fecha):'sin fecha')+'</span>'):'')+'</td>'+
+            /* ⚠️ El PORQUÉ va en TODAS las líneas, también en las ✔ (§4da). Antes la línea que
+               pasaba a «✔ hay» no decía nada, y cuando encima contradecía a una persona
+               —«estaba 📥 recoger, queda ✔ hay»— parecía un capricho del panel. Ahora dice
+               «hay 2 acá», que es el dato con el que quien mira decide si le cree. */
             '<td>'+esc(l.nom)+' <b>× '+l.cant+'</b>'+
+              (l.ahora==='ok'?('<br><span style="color:#0a6b47;font-size:.88em">'+(l.hayDep>=l.cant?('hay '+l.hayDep+' acá en fábrica'):(l.hayDep+' acá'))+'</span>'):'')+
               (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de Moreno</span>'):'')+
               (l.ahora==='no'?('<br><span style="color:var(--red);font-size:.88em">'+revStkDesglose(l)+'</span>'):'')+'</td>'+
             '<td>'+revStkMarca(l.antes)+'</td>'+

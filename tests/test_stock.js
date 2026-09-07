@@ -79,7 +79,14 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     for(var r=21;r<=27;r++) STATE.push(P({id:'r'+r, fecha:atras(r), entregado:true, productos:ecoR(1)}));
     STATE.push(P({id:'q1', fecha:atras(3), entregado:true, productos:pill(1)}));
     STATE.push(P({id:'q2', fecha:atras(9), entregado:true, productos:pill(1)}));
-    STATE.push(P({id:'m1', fecha:atras(2), entregado:true, productos:mem(28)}));
+    /* ⚠️ EL MEMORY VENDE A LOS SALTOS, PERO VENDE (§4da). Antes eran 28 unidades en UNA sola
+       entrega, y desde que el panel distingue rotación de pedido único eso ya no es un
+       ritmo: es una venta mayorista suelta, de la que no se deduce nada (el dueño: «una
+       única entrega o 2 en 1 mes no es tener rotación, eso es pedido único»). Para seguir
+       probando lo que este fixture quiere probar —la venta DESPAREJA, que necesita más
+       margen— las 28 se reparten en 4 entregas de la última semana y las otras 3 semanas
+       quedan en cero. Eso sí es rotación, y sigue siendo «a los saltos». */
+    for(var m=1;m<=4;m++) STATE.push(P({id:'m'+m, fecha:atras(m), entregado:true, productos:mem(7)}));
     STATE.push(P({id:'x1', fecha:atras(1), entregado:true, productos:[{desc:'COLCHON XYZ',medida:'140x190',codigo:'',cant:3}]}));
     STATE.push(P({id:'x2', fecha:atras(2), entregado:true, productos:[{desc:'XYZ PLUS',medida:'140x190',codigo:'',cant:2}]}));
     STATE.push(P({id:'v1', fecha:adel(2), entregado:false, productos:eco(5)}));
@@ -499,7 +506,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     return { margen:mem.margen, cv:mem.cv, txt:stockVentaTxt(mem), aviso:mem.aviso, dias:mem.dias, lead:mem.lead, esperado:dias, ecoMargen:eco.margen, ecoTxt:stockVentaTxt(eco) };
   });
-  chk('⚠️ el MEMORY vendió 28 en un solo día: «a los saltos» → margen de 5 días, no 2', r.margen===5 && r.cv>1 && r.txt==='venta a los saltos', r.margen+' · cv '+r.cv+' · '+r.txt);
+  chk('⚠️ el MEMORY vendió las 28 en una sola semana (4 entregas) y nada en las otras 3: «a los saltos» → margen de 5 días, no 2',
+      r.margen===5 && r.cv>1 && r.txt==='venta a los saltos', r.margen+' · cv '+r.cv+' · '+r.txt);
   chk('⚠️ …así que con stock para '+r.esperado+' días (fábrica '+r.lead+' + margen 5 − 1) ya hay que pedir; con margen fijo de 2 no avisaba',
       r.aviso==='pedir' && r.dias===r.esperado && r.esperado>=5, r.aviso+' · corte en '+r.dias);
   chk('el ECO FLEX, parejo, sigue con 2', r.ecoMargen===2 && r.ecoTxt==='venta pareja', r.ecoMargen+' · '+r.ecoTxt);

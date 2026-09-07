@@ -4932,6 +4932,82 @@ un antialérgico se llevaba un JUNIOR «porque había».
 no hay, los 2 que faltan van a «no se fabrica más» y no al pedido a fábrica; el
 antialérgico sí va; «1.0PLZ 90X190CM» es el CH2396; CH1137 no existe.
 
+## 4da. 🔁 Rotación ≠ pedido único: 45 en una venta no son «1,6 por día» (2026-09-07)
+
+El dueño subió los dos Excel y encontró esto en la tabla:
+
+> MORFEO · 140x190 — vende 1,6 por día · 45 en 28 días · venta a los saltos · **0 acá** ·
+> se corta **hoy** · 🚨 **PEDIR YA — la fábrica tarda 3 días → pedí 23 ya**
+
+> *"El colchón morfeo ya se entregó y dice mandar a pedir. ¿Qué pasa si es un pedido único?
+> Que ya se entregó, es más está entregado, y lo marcás como mandar a pedir… Solo debés
+> pedir mandar a producir PRODUCTOS que tienen ROTACIÓN. Una única entrega o 2 en 1 mes no
+> es tener rotación, eso es pedido único."*
+
+**Error de fondo, no de detalle.** Desde §4co el panel medía la demanda dividiendo lo
+vendido por los 28 días de la ventana, y **nunca se preguntó en cuántas ENTREGAS** se había
+vendido. Una venta mayorista de 45 colchones, ya entregada y sin nada pendiente, daba
+`45/28 = 1,6 por día`; de ahí «se corta hoy» y «pedí 23 ya» de algo que nadie más pidió. Es
+la peor clase de error de este panel: **manda a producir plata contra una demanda que no
+existe.**
+
+### La regla
+
+Menos de **3 entregas distintas** en el mes (`STOCK_VENTAS_MIN`) = no hay rotación. Se
+cuenta `nVentas` —pedidos distintos, no unidades— junto con `vendidos`.
+
+| | rota (≥3 entregas) | no rota (1 o 2) |
+|---|---|---|
+| `porDiaReal` (crudo, para mostrar) | se calcula | se calcula |
+| `porDia` (proyección y cuánto pedir) | = `porDiaReal` | **0** |
+| lo vendido y sin entregar (`comp`) | se cubre | **se cubre igual** |
+| aviso sin nada pendiente | según se corte | 📦 **Pedido único** |
+
+⚠️ **Lo vendido sin entregar NO es una estimación: está vendido.** Si alguien vende 6 de algo
+que nunca se vendió antes y no hay stock, el panel sigue diciendo que hay que conseguirlos —
+solo que por los 6 que existen, no por un ritmo inventado. Esa es la línea divisoria de todo
+el cambio: **no se estima demanda futura; sí se cubre la vendida.**
+
+⚠️ **«Plata parada» sigue usando el ritmo crudo (`porDiaReal`), y es a propósito.** Mira para
+atrás —cuánto tardaría en salir lo que hay, al ritmo al que salió— y no promete nada ni pide
+nada. Justamente el caso que más importa ahí es el que casi no rota: con `porDia` (que vale 0)
+el producto vendido 2 veces en el mes no podría decir «hay para 14 meses», que es lo que hay
+que decirle al dueño.
+
+### Lo que se ve
+
+- La columna de venta muestra **«45 en 28 días · 1 entrega»** y debajo, en ámbar, «pedido
+  único: no se estima ritmo». El dato no desaparece.
+- El aviso pasa de 🚨 PEDIR YA a **📦 Pedido único**, con la explicación: *«45 unidades en 1
+  entrega en 28 días: es un pedido puntual, no una venta que se repita. No se repone por las
+  dudas — si vuelven a pedir, se pide contra ese pedido.»*
+- El mensaje a la fábrica no lo nombra. Si entra por unidades comprometidas, dice «pedido
+  puntual — N en M entregas» en vez de «se venden X por día».
+
+Medido sobre los dos Excel reales con tres ventas mayoristas: **3 «PEDIR YA» falsos
+desaparecen, 0 avisos reales se pierden.**
+
+### Dos fixtures que mentían
+
+`test_stock.js` modelaba «el MEMORY vende 1 por día» como **una sola entrega de 28
+unidades** — que es exactamente lo que la regla nueva descarta. La prueba no estaba mal de
+intención (quería probar el margen más grande de la venta despareja, §4co) sino de datos:
+se repartieron las 28 en 4 entregas de la última semana, con las otras 3 en cero. Sigue
+siendo «a los saltos» (cv 1,73 → margen 5) y ahora además es rotación de verdad.
+
+`tests/test_rotacion.js`: 22 checks — el caso del MORFEO tal cual, 2 entregas tampoco rotan,
+15 entregas sí, y el que no rota pero tiene 6 vendidos sin entregar igual se pide.
+
+### Y de paso, la otra pregunta del dueño
+
+Sobre la revisión automática: *"pide tickear algo que ya estaba tickeado o marcado"*. Se
+revisaron las líneas contra los dos Excel: **el panel tenía razón en las tres verificables**
+(SOMIER FLEX 180x190 no está en ningún almacén → ✗; SOMIER TITANIO LATEX 140x190 tiene 0 acá
+y 3 en Moreno → 📥; SOMIER NEGRO 140x190 tiene 2 acá → ✔). Los tildes viejos eran de antes de
+que existiera el inventario. Lo que sí faltaba era **decir por qué**: la línea que pasaba a
+«✔ hay» no mostraba nada, y contradecir a una persona sin dar el dato parece un capricho.
+Ahora las tres marcas llevan su explicación («hay 2 acá en fábrica»).
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
