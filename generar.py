@@ -332,6 +332,19 @@ def _median(vals):
     mid = n // 2
     return s[mid] if (n % 2) else (s[mid - 1] + s[mid]) / 2.0
 
+def norm_phone(raw):
+    """Teléfono → clave comparable, para que el detector de duplicados no trate
+    '+591 69118641', '69118641' y '691-18641' como tres clientes distintos.
+    Quita todo lo que no sea dígito, el prefijo de país 591 (con o sin ceros
+    delante) y los ceros iniciales. Devuelve None si no queda un número usable
+    (menos de 7 dígitos: fijos de Bolivia son 7-8, celulares 8)."""
+    d = re.sub(r"\D", "", raw or "")
+    d = d.lstrip("0")                       # 00591… → 591…
+    if len(d) > 8 and d.startswith("591"):
+        d = d[3:]
+    d = d.lstrip("0")
+    return d if len(d) >= 7 else None
+
 def lead_units(ld):
     """Unidades de producto del lead (pestaña Productos de Kommo = catalog_elements).
     Cada elemento trae metadata.quantity; si falta, cuenta como 1 unidad."""
@@ -560,30 +573,46 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
     _dup_fichas    = sum(n for c, n in _contact_leads.items() if n >= 2)
 
     # ── duplicados por TELÉFONO (mismo cliente en 2+ fichas) ──
+    # contact_phone: {contact_id: [(clave_normalizada, tel_como_lo_escribieron), …]}
     contact_phone = contact_phone or {}
-    phone_groups = defaultdict(list)   # phone -> [(lead_id, vendor, stage)]
+    phone_groups = defaultdict(list)   # clave normalizada -> [(lead_id, vendedora, etapa)]
+    phone_shown  = {}                  # clave normalizada -> cómo lo escribieron (para mostrar)
     for ld in cur:
         rn = user_map.get(ld.get("responsible_user_id"), "")
         vend = rn.split(" - ")[0].strip() if rn else "—"
         stg = stage_map.get(ld.get("status_id"), {"name": "—"})["name"]
+        seen = set()   # un lead entra una sola vez por teléfono, aunque lo repitan sus contactos
         for c in ((ld.get("_embedded", {}) or {}).get("contacts") or []):
-            ph = contact_phone.get(c.get("id"))
-            if ph:
-                phone_groups[ph].append((ld.get("id"), vend, stg))
-                break
+            for key, shown in (contact_phone.get(c.get("id")) or []):
+                if key in seen:
+                    continue
+                seen.add(key)
+                phone_groups[key].append((ld.get("id"), vend, stg))
+                phone_shown.setdefault(key, shown)
     dup_rows = []
-    for ph, items in phone_groups.items():
+    for key, items in phone_groups.items():
         if len(items) >= 2:
             vends = sorted(set(i[1] for i in items))
             stgs  = sorted(set(i[2] for i in items))
-            dup_rows.append({"phone": ph, "fichas": len(items),
+            dup_rows.append({"phone": phone_shown.get(key, key), "phoneNorm": key,
+                             "fichas": len(items),
                              "vendedoras": " · ".join(vends), "etapas": " · ".join(stgs),
                              "leadIds": [i[0] for i in items],
+                             # responsable y etapa FICHA POR FICHA: sin esto la tabla dice
+                             # "Isabel · Mirian" sin decir cuál ficha es de quién (bitácora §4cd)
+                             "detalle": [{"id": i[0], "vend": i[1], "etapa": i[2]} for i in items],
+                             # dos problemas distintos: una vendedora que se duplica a sí misma
+                             # es método de registro; dos vendedoras es disputa de cartera
+                             "tipo": "Auto-duplicado" if len(vends) == 1 else "Choque",
                              "estado": "Fusionar" if "Compradores" in stgs else "Revisar"})
-    dup_rows.sort(key=lambda r: -r["fichas"])
+    # más fichas primero; a igual cantidad, los choques antes que los auto-duplicados
+    dup_rows.sort(key=lambda r: (-r["fichas"], r["tipo"] != "Choque", r["phone"]))
+    _dup_choques = sum(1 for r in dup_rows if r["tipo"] == "Choque")
+    _dup_auto    = len(dup_rows) - _dup_choques
     if contact_phone:   # solo si pudimos leer teléfonos, sustituye el conteo por el real
         _dup_contactos = len(dup_rows)
-        _dup_fichas    = sum(r["fichas"] for r in dup_rows)
+        # fichas DISTINTAS: un lead con dos teléfonos puede caer en dos grupos
+        _dup_fichas    = len({i for r in dup_rows for i in r["leadIds"]})
 
     team = []
     for i, name in enumerate(names):
@@ -686,6 +715,7 @@ def build_panel_data(cur, prev, stage_map, user_map, events, source_field_id, co
         "abiertosSinValor": _abiertos_sin_valor,
         "abiertosSinValorPct": round(_abiertos_sin_valor / G_leads * 100) if G_leads else 0,
         "duplicadosTel": _dup_contactos, "duplicadosFichas": _dup_fichas,
+        "duplicadosChoques": _dup_choques, "duplicadosAuto": _dup_auto,
         "interesado": interes_tot, "agendado": agendado_tot,
     }
 
@@ -1698,14 +1728,22 @@ def main():
             "filter[created_at][from]": int(m_start.timestamp()),
             "filter[created_at][to]":   int(m_end.timestamp())}, "contacts")
         for c in raw_contacts:
-            cid = c.get("id"); phone = None
+            cid = c.get("id")
+            if not cid:
+                continue
+            # TODOS los teléfonos del contacto (Kommo guarda varios valores en el
+            # mismo campo PHONE: móvil, casa, trabajo), no solo el primero.
+            phones = []
             for fld in (c.get("custom_fields_values") or []):
-                if fld.get("field_code") == "PHONE":
-                    vals = fld.get("values") or []
-                    if vals: phone = str(vals[0].get("value") or "").strip()
-                    break
-            if cid and phone:
-                contact_phone[cid] = phone
+                if fld.get("field_code") != "PHONE":
+                    continue
+                for v in (fld.get("values") or []):
+                    shown = str(v.get("value") or "").strip()
+                    key = norm_phone(shown)
+                    if key and key not in [k for k, _ in phones]:
+                        phones.append((key, shown))
+            if phones:
+                contact_phone[cid] = phones
         print(f"     → {len(contact_phone)} con teléfono")
     except Exception as e:
         print(f"     ⚠ no se pudieron leer contactos ({e}); duplicados quedará vacío")

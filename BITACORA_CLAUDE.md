@@ -4013,6 +4013,66 @@ luz verde falsa sobre la única prueba que existe de que el test sirve.
 
 `tests/test_roho.js` **69 → 90**.
 
+## 4cn. 👯 Duplicados del panel de ventas: no decía cuál ficha era de quién (2026-09-06)
+
+**Es la misma falla de §4cd, en el otro panel.** Preguntando por los duplicados de agosto,
+el dueño leyó la tabla y saltó: *"ahí me decís Maria pero sólo mencionás a Maria"*. Y tenía
+razón: la tabla tenía una columna «Vendedoras involucradas» y otra «Etapas», las dos con la
+lista **sin repetidos**, así que:
+
+- Con dos vendedoras decía `Isabel Robledo · Mirian Salazar` y `Agendado/Visita ·
+  Compradores`, y **no había forma de saber cuál ficha era de quién** sin abrir las dos en
+  Kommo.
+- Con una sola vendedora decía `Maria Flores` una sola vez — que **se leía como si el
+  duplicado fuera con otra persona**, cuando en realidad ella tenía las dos fichas.
+
+Esa segunda confusión tapaba el dato más útil de los tres meses: de los 14 duplicados de
+junio–agosto, **9 eran auto-duplicados** (7 de ellos de Maria Flores, que abre ficha nueva
+por cada pedido del mismo cliente en vez de reusar la existente) y solo **5 eran choques**
+entre dos vendedoras. Son **dos problemas distintos con dueños distintos**: el primero es
+forma de registrar, el segundo es reparto de cartera. La tabla los mostraba iguales.
+
+**Arreglo — `dupRows` ahora guarda el responsable ficha por ficha:**
+
+```
+detalle: [{id, vend, etapa}, …]   ← quién tiene cada ficha
+tipo:    "Choque" | "Auto-duplicado"
+```
+
+Y la tabla cambió las dos columnas viejas por **Tipo** + **Quién tiene cada ficha**, con un
+renglón por ficha (`Carola Chavez · Agendado / Visita`) donde **cada nombre abre SU ficha**,
+no la primera del grupo — que era el otro pedazo de §4cd. `vendedoras` y `etapas` siguen
+existiendo, y el template cae a ellas si `detalle` no está (paneles viejos).
+
+**Y de paso, dos cosas que hacían que el conteo fuera un piso y no el total:**
+
+1. **Los teléfonos se comparaban como texto crudo.** Un duplicado de julio salió como
+   `+59169118641` — o sea que `69118641` escrito sin el prefijo contaba como **otro
+   cliente**. Ahora `norm_phone()` saca el `+591`, los ceros, espacios y guiones antes de
+   comparar; el panel sigue mostrando el número **como lo escribieron**.
+2. **Solo se leía el primer teléfono del primer contacto** de cada lead. Ahora se leen
+   todos los valores del campo PHONE (móvil/casa/trabajo) y todos los contactos del lead.
+   Como un lead puede caer en dos grupos, `duplicadosFichas` cuenta **fichas distintas**,
+   no apariciones.
+
+**Lo que sigue siendo un piso, y está escrito en la nota al pie del panel:** solo mira los
+contactos **creados dentro del mes**. Un cliente que entró en julio y volvió a escribir en
+agosto no aparece. Cruzar meses es otro cambio, más caro (hay que traer contactos de una
+ventana amplia); no se hizo.
+
+**Métricas nuevas:** `duplicadosChoques` y `duplicadosAuto`, para que el encabezado de la
+tarjeta diga la separación sin que haya que contar filas.
+
+**Tests** (mismo commit, `tests/LEEME.md`): `test_duplicados.py` (21) sobre `build_panel_data`
+con Kommo de mentira — normalización, responsable por ficha, los dos tipos, tres falsos
+positivos y el conteo de fichas distintas. `test_paneldup.js` (13) abre el panel de verdad
+en Chromium y comprueba que se lea quién tiene qué y que cada nombre lleve a su ficha.
+
+**La lección es la de §4cd otra vez**, y por eso quedó anotada: *un aviso que obliga a
+buscar a mano lo que el sistema ya calculó es medio aviso*. Estaba escrita hacía dos días
+para `pedidos.html` y el panel de ventas tenía exactamente el mismo agujero. Cuando algo se
+arregla en un panel, **vale preguntarse si el otro tiene la misma falla**.
+
 ## 4cm. 💡 Ideas para logística — sin empezar, para conversar (2026-09-05)
 
 El dueño pidió *"anda pensando cómo y qué más podemos implementar para mejorar a
