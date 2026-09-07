@@ -10163,7 +10163,7 @@ window.addEventListener('resize', function(){
 var STOCK_ID='__stock__';
 var STOCK_DIAS_FABRICA=3;     // lo que tarda la fábrica mientras no se haya medido (dicho por el dueño, 07/09)
 var STOCK_COLCHON=2;          // margen base sobre el tiempo de fábrica; sube si la venta es a los saltos
-var STOCK_VENTANA=28;         // sobre cuántos días se mide la venta
+var STOCK_VENTANA=15;         // sobre cuántos días se mide la venta
 var STOCK_HORIZONTE=45;       // hasta cuántos días adelante se proyecta el corte
 var STOCK_CUBRIR=7;           // al pedir, cuántos días de venta cubrir después de que llegue
 var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
@@ -10745,12 +10745,12 @@ function stockEsperado(q, T){
 
 /* ---- La foto completa, un renglón por producto ---- */
 function stockData(){
-  var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas();
+  var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA-1), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas();
   var T=stockTiemposFabrica();
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, nVentas:0, ventas:{}, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, nVentas:0, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
@@ -10777,7 +10777,7 @@ function stockData(){
       // Se cuentan las UNIDADES y, aparte, en cuántas ENTREGAS distintas salieron (§4da):
       // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
       if(fs>=desde && fs<=hoy){
-        o.vendidos+=c; o.sem[Math.min(3, Math.max(0, Math.floor(stockDias(fs,hoy)/7)))]+=c;
+        o.vendidos+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
         if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
@@ -10827,7 +10827,7 @@ function stockData(){
        futura. Lo vendido y sin entregar (`comp`) sigue contando igual — eso no se estima,
        está vendido. */
     o.porDiaReal=o.vendidos/STOCK_VENTANA;
-    o.rotacion=(o.nVentas<STOCK_VENTAS_MIN || o.vendidos<=4)?'baja':(o.vendidos>=28 && o.sem.filter(function(n){return n>0;}).length>=3?'alta':'media');
+    o.rotacion=(o.nVentas<STOCK_VENTAS_MIN || o.vendidos<=2)?'baja':(o.vendidos>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
     o.rota=(o.rotacion!=='baja');
     o.porDia=o.rota?o.porDiaReal:0;
     o.deposito=stockDeposito(k, o.salidas);
@@ -10886,10 +10886,10 @@ function stockProyectar(o){
    si la venta es a los saltos (semanas en cero y una grande). Es el desvío relativo de la
    venta semanal, redondeado a días — nadie tiene que configurar nada. */
 function stockMargen(o){
-  var m=o.vendidos/4; o.cv=0;
+  var m=o.vendidos/3; o.cv=0;
   if(!(m>0)) return STOCK_COLCHON;
-  var v=0; for(var i=0;i<4;i++) v+=(o.sem[i]-m)*(o.sem[i]-m);
-  o.cv=Math.sqrt(v/4)/m;
+  var v=0; for(var i=0;i<3;i++) v+=(o.sem[i]-m)*(o.sem[i]-m);
+  o.cv=Math.sqrt(v/3)/m;
   if(o.rotacion==='baja') return 0;
   if(o.rotacion==='media') return STOCK_COLCHON;
   return STOCK_COLCHON+Math.round(STOCK_COLCHON*Math.min(o.cv,1.5));
@@ -10965,7 +10965,7 @@ function stockAlmCorto(nm){
 /* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
    si es más), menos lo que hay y lo que viene. */
 function stockCuantoPedir(o){
-  if(o.deposito==null || o.descont || o.revisarStock) return 0;       // lo discontinuado no se pide: no lo hacen más
+  if(o.deposito==null || o.descont) return 0;       // lo discontinuado no se pide: no lo hacen más
   var necesario=Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)));
   var falta=Math.ceil(necesario-(o.deposito+o.enCamino)-1e-9);
   if(o.aviso==='urgente'||o.aviso==='pedir') return Math.max(1,falta);
@@ -11008,7 +11008,7 @@ function stockFabricasTxt(T){
 
 /* Pedidos que explican una fila de stock: misma identidad y exclusiones que stockData. */
 function stockPedidosDetalle(k){
-  var grupos={pendientes:[],produccion:[],atrasados:[],historico:[]}, desde=diasAtras(STOCK_VENTANA), hoy=todayStr();
+  var grupos={pendientes:[],produccion:[],atrasados:[],historico:[]}, desde=diasAtras(STOCK_VENTANA-1), hoy=todayStr();
   STATE.forEach(function(p){
     if(!stockCuenta(p)) return;
     var por={};
@@ -11048,8 +11048,9 @@ function stockSaldoDetalleHtml(o){
   }
   if(o.pedidos&&o.pedidos.length) html+='<p style="margin-top:8px"><b>Llegadas previstas:</b> '+o.pedidos.map(function(q){return stockUnid(q.u)+' el '+esc(q.llega?fmtFecha(q.llega):'día sin definir')+(q.fab?' · '+esc(q.fab):'');}).join(' / ')+'. Una fecha prevista no confirma que haya llegado.</p>';
   if(o.revisarStock){
-    html+='<p style="margin-top:12px;padding:12px;background:#fff4d6;color:#7c4b00"><b>Por qué pide revisar:</b> hay '+stockUnid(o.confirmadoAqui||0)+' unidades marcadas «hay acá», pero el inventario muestra '+stockUnid(dep)+'. La diferencia es '+stockUnid((o.confirmadoAqui||0)-Math.max(0,dep))+' unidades. Primero confirmar el conteo o corregir la marca; la recomendación de fabricación queda detenida.</p>';
-  }else if(!conocido){
+    html+='<p style="margin-top:12px;padding:12px;background:#fff4d6;color:#7c4b00"><b>Por qué pide revisar:</b> hay '+stockUnid(o.confirmadoAqui||0)+' unidades marcadas «hay acá», pero el inventario muestra '+stockUnid(dep)+'. La diferencia es '+stockUnid((o.confirmadoAqui||0)-Math.max(0,dep))+' unidades. Primero confirmar el conteo o corregir la marca; la cantidad calculada es provisional hasta confirmar ese saldo.</p>';
+  }
+  if(!conocido){
     html+='<p><b>No se puede calcular el faltante sin un conteo de fábrica.</b></p>';
   }else if(o.descont){
     html+='<p><b>Este producto ya no se fabrica.</b> Se vende lo disponible; un faltante requiere revisar alternativas con ventas.</p>';
@@ -11059,7 +11060,7 @@ function stockSaldoDetalleHtml(o){
     else html+='. Poca rotación: no se añade reserva por ventas futuras.';
     html+='</p><p>Necesidad '+stockNum(objetivo,2)+' − '+stockUnid(dep)+' acá − '+stockUnid(o.enCamino||0)+' en camino = <b>'+bruto+' unidades adicionales</b> (redondeado hacia arriba, mínimo cero).</p>';
     if(o.aviso==='traer') html+='<p><b>Recoger '+stockUnid(o.pedir)+' de Moreno / otros almacenes</b>: hay '+stockUnid(o.enOtros||0)+' allí.</p>';
-    else if(o.aviso==='urgente'||o.aviso==='pedir') html+='<p><b>El panel propone pedir '+stockUnid(o.pedir)+'.</b>'+(o.enOtros?' Hay además '+stockUnid(o.enOtros)+' en Moreno / otros almacenes: revisar la recogida para cubrir parte del faltante.':'')+(o.pedir>bruto?' Hay un faltante antes de la llegada prevista; por eso se mantiene una reposición mínima.':'')+'</p>';
+    else if(o.revisarStock||o.aviso==='urgente'||o.aviso==='pedir') html+='<p><b>El panel propone pedir '+stockUnid(o.pedir)+'.</b>'+(o.enOtros?' Hay además '+stockUnid(o.enOtros)+' en Moreno / otros almacenes: revisar la recogida para cubrir parte del faltante.':'')+(o.pedir>bruto?' Hay un faltante antes de la llegada prevista; por eso se mantiene una reposición mínima.':'')+'</p>';
     else html+='<p><b>No hay una orden de reposición urgente.</b> '+(o.enCamino?'Ya hay unidades pendientes de llegada.':'Se mantiene vigilancia según la rotación y los pedidos.')+'</p>';
     if(o.corte) html+='<p>Primer faltante proyectado: <b>'+esc(fmtFecha(o.corte))+'</b>. Plazo de fábrica: '+o.lead+' días'+(o.leadMedido?' (medido).':' (estimado).')+'</p>';
     html+='</div>';
@@ -11076,7 +11077,7 @@ function abrirStockPedidos(k){
   }
   var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
   if(o) html+=stockSaldoDetalleHtml(o);
-  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'primero revisar la diferencia entre las marcas y el inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
+  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
   [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
@@ -11147,7 +11148,7 @@ function renderStock(){
   };
   html+=renderRevisionFija();
   var badge=function(o){
-    if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar existencias</button>';
+    if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='lenta') return '<span class="badge b-gray">Poca rotación · solo contra pedido</span>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
       'Llamá a la fábrica y anotá acá lo que pediste: el producto deja de avisar y el panel aprende cuánto tarda.');
@@ -11164,7 +11165,7 @@ function renderStock(){
   var chico=function(t,color){ return '<div style="font-size:.78rem;color:'+(color||'var(--muted)')+';margin-top:3px;line-height:1.35">'+t+'</div>'; };
   var porque=function(o){
     var q=o.pedidos[0];
-    if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito))+'</b>. Revisá el conteo o la marca antes de fabricar.','#7c4b00');
+    if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito))+'</b>. Reposición calculada: <b>'+stockUnid(o.pedir)+'</b> unidades, incluyendo cobertura por rotación. Confirmá el saldo antes de pedir.','#7c4b00');
     if(o.aviso==='lenta') return chico(o.vendidos+' unidades en '+STOCK_VENTANA+' días: no se añade reserva por previsión. Se cubren únicamente faltantes de pedidos confirmados.');
     if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.pedir+'</b> ya'+(o.enOtros?('; hay '+stockOtrosTxt(o)+' para traer ya mismo'):''),'#8a1c24');
     if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.pedir+'</b> esta semana'+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
