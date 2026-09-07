@@ -72,7 +72,7 @@ a:hover{text-decoration:underline}
     </div>
     <div class="htitle">
       <h1>Reporte Semanal ATC</h1>
-      <p>Semana 31/08 – 06/09/2026 &nbsp;·&nbsp; Generado: 06/09/2026 22:29</p>
+      <p>Semana 07/09 – 13/09/2026 &nbsp;·&nbsp; Generado: 07/09/2026 23:05</p>
     </div>
   </div>
   <div style="display:flex;gap:12px">
@@ -930,7 +930,7 @@ a:hover{text-decoration:underline}
   </table></div></div>
 </div>
 
-<div class="footer">HEAVEN Colchones · Reporte ATC Semanal · 06/09/2026</div>
+<div class="footer">HEAVEN Colchones · Reporte ATC Semanal · 07/09/2026</div>
 
 <button id="export-btn" onclick="exportCSV()">
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
@@ -948,7 +948,7 @@ function exportCSV() {
   var blob = new Blob([CSV_DATA], {type:'text/csv;charset=utf-8;'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ATC_Semanal_20260906.csv';
+  a.download = 'ATC_Semanal_20260907.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
