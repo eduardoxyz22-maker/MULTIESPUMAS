@@ -10300,8 +10300,9 @@ window.addEventListener('resize', function(){
 
    La cuenta, en criollo (§4co la rehízo entera; entre ~~rayas~~ va lo que decía la primera
    versión y por qué estaba mal):
-     · VENTA        → unidades VENDIDAS por día en las últimas 4 semanas: todos los pedidos
-                      cargados con entrega en esos días, se hayan entregado o no.
+     · VENTA        → unidades VENDIDAS en la ventana de venta (`STOCK_VENTANA` días —
+                      15 hoy, §4dc): todos los pedidos cargados con entrega en esos días,
+                      se hayan entregado o no.
                       ~~Entregadas~~: medir por lo entregado hacía que un producto agotado
                       dejara de «rotar» y el aviso desapareciera justo cuando más faltaba.
                       Lo que un chofer tildó «✗ no hay» también se vendió.
@@ -10316,10 +10317,26 @@ window.addEventListener('resize', function(){
                       lo vendido para la semana que viene.
      · LA FÁBRICA TARDA → lo que tardó de verdad las últimas veces (la mediana), fábrica
                       por fábrica. 3 días (dicho por el dueño) mientras no haya medidas.
-     · MARGEN       → 2 días si la venta es pareja; hasta 5 si es a los saltos.
+     · ROTACIÓN     → §4da+§4dc: cuántas ENTREGAS distintas (no unidades) tuvo el producto
+                      en la ventana. `baja` (<3 entregas) no estima ningún ritmo — el
+                      caso del dueño: 45 colchones en UNA venta mayorista no son «1,6 por
+                      día», son un pedido puntual (aviso `unico`). `media` y `alta` (≥3
+                      entregas, ≥15 unidades y repartidas en ≥2 de los 3 tramos de la
+                      ventana) sí estiman, y dan además cuánto MARGEN (2 días fijo en
+                      `media`; en `alta` sube hasta 5 si la venta es a los saltos — el
+                      desvío de la venta por tramos) y cuánta RESERVA extra pedir además
+                      de lo justo (`cubrir`: 0 en `baja`, 3 en `media`, 7 en `alta`).
+                      Lo vendido y SIN ENTREGAR (`comp`) se cubre en las tres, igual:
+                      eso no es una estimación, ya está vendido.
+     · REVISAR SALDO → si hay más unidades marcadas «✔ hay» a mano (`confirmadoAqui`) que
+                      las que dice el inventario, algo quedó desactualizado: se avisa
+                      ANTES de proponer una reposición basada en un saldo que no cierra.
      · AVISA  🚨 si se corta antes de que la fábrica pueda llegar
               🏭 si se corta dentro de fábrica + margen
               🚚 si ya está pedido y con eso alcanza (no molesta más)
+              📦 si es rotación `baja` con algo vendido: pedido puntual, no se repone
+              ⚠️ (Revisar saldo) si las marcas a mano y el inventario no cierran
+              🛑 si está discontinuado (§4cz): se vende lo que queda, no se fabrica más
               💤 si hay para más de 60 días: plata parada
               ⚠️ si el conteo tiene más de 21 días, o un chofer marcó «✗ no hay» de
                  algo que según el panel hay.
@@ -11006,11 +11023,26 @@ function stockData(){
   Object.keys(STOCK.c.u||{}).forEach(function(k){ if(!esTextoDeTienda(k)) grupo(k); });
   var lista=Object.keys(g).map(function(k){
     var o=g[k];
-    /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN (§4da). `porDiaReal` es la cuenta cruda, para
-       mostrarla; `porDia` es la que usan la proyección y el «cuánto pedir», y con menos de
-       3 entregas en el mes vale CERO: de un pedido único no se deduce ninguna demanda
-       futura. Lo vendido y sin entregar (`comp`) sigue contando igual — eso no se estima,
-       está vendido. */
+    /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN (§4da, tres niveles desde §4dc). `porDiaReal`
+       es la cuenta cruda, para mostrarla y para «plata parada» (que mira para atrás, no
+       promete nada — sigue valiendo con una sola venta). `porDia` es la que usan la
+       proyección y el «cuánto pedir», y solo vale algo si `rotacion` no es `baja`.
+         · `baja`  — menos de `STOCK_VENTAS_MIN` entregas distintas en la ventana: de un
+                     pedido único (o dos) no se deduce ninguna demanda futura. `porDia`=0,
+                     `margen`=0, `cubrir`=0 — no se estima ni se reserva nada por las dudas.
+         · `media` — ≥3 entregas, pero sin volumen sostenido: `porDia` sí vale, con un
+                     margen FIJO (sin mirar el desvío — con pocos datos un desvío grande
+                     puede ser ruido) y una reserva chica (`cubrir`=3).
+         · `alta`  — ≥15 unidades repartidas en ≥2 de los 3 tramos de la ventana: acá sí se
+                     confía en el desvío (`stockMargen` lo usa para escalar el margen hasta
+                     5 días) y la reserva es la completa (`cubrir`=`STOCK_CUBRIR`).
+       En LAS TRES, lo vendido y sin entregar (`comp`) se cubre igual — eso no se estima,
+       está vendido. ⚠️ La condición `vendidos<=2` de acá abajo es redundante con
+       `nVentas<STOCK_VENTAS_MIN`: cada entrega aporta ≥1 unidad (las cantidades del
+       formulario son siempre enteras ≥1), así que `nVentas<=vendidos` siempre, y
+       `vendidos<=2` nunca agrega un caso de `baja` que `nVentas<3` no cubriera ya
+       (verificado por barrido exhaustivo, §4dc). Queda igual, sin tocar: no está mal, y
+       tocar un umbral que no está roto es más riesgo que guardarlo con esta nota. */
     o.porDiaReal=o.vendidos/STOCK_VENTANA;
     o.rotacion=(o.nVentas<STOCK_VENTAS_MIN || o.vendidos<=2)?'baja':(o.vendidos>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
     o.rota=(o.rotacion!=='baja');
@@ -11067,9 +11099,14 @@ function stockProyectar(o){
   }
   return { corte:corte, dias:dias, saldoHoy:saldoHoy, sinCamino:sinCamino };
 }
-/* El margen sobre el tiempo de fábrica: 2 días si las 4 semanas vendieron parejo, hasta 5
-   si la venta es a los saltos (semanas en cero y una grande). Es el desvío relativo de la
-   venta semanal, redondeado a días — nadie tiene que configurar nada. */
+/* El margen sobre el tiempo de fábrica, gateado por rotación (§4dc): sin rotación (`baja`)
+   no hay ritmo del que fiarse, así que 0 — la reserva ahí es `cubrir`, no margen. Con
+   `media` (pocas entregas todavía) un margen fijo de `STOCK_COLCHON` días, sin mirar el
+   desvío: con tan pocos datos, un desvío grande podría ser ruido, no un patrón real. Solo
+   con `alta` (bastante volumen Y repartido en al menos 2 de los 3 tramos de la ventana) se
+   confía en el desvío y el margen escala hasta 5 días si la venta es a los saltos (tramos
+   en cero y uno grande). El desvío es relativo a la venta por tramo, redondeado a días —
+   nadie tiene que configurar nada. */
 function stockMargen(o){
   var m=o.vendidos/3; o.cv=0;
   if(!(m>0)) return STOCK_COLCHON;
@@ -11090,7 +11127,7 @@ function stockContradice(o){
   if(ult && o.noHayF<ult) return false;
   return true;
 }
-/* Plata parada: hay para más de 60 días, o hay y no se vendió ninguno en 4 semanas. */
+/* Plata parada: hay para más de 60 días, o hay y no se vendió ninguno en STOCK_VENTANA días. */
 /* ⚠️ ACÁ SÍ SE USA EL RITMO CRUDO, Y ES A PROPÓSITO (§4da). «Plata parada» mira PARA ATRÁS:
    cuánto tardaría en salir lo que hay, al ritmo al que salió hasta ahora. No promete que se
    vaya a vender —no se pide nada por esto—, así que no necesita rotación: al contrario, el
@@ -11120,11 +11157,17 @@ function stockAvisoDe(o){
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
   /* 📦 Se vendió, pero en una o dos entregas: no hay ritmo que reponer (§4da). No es una
-     alarma, es una aclaración — si no, el renglón decía «✓ alcanza» teniendo cero. */
-  if(!o.rota && o.vendidos>0) return o.nVentas<STOCK_VENTAS_MIN?'unico':'lenta';
+     alarma, es una aclaración — si no, el renglón decía «✓ alcanza» teniendo cero.
+     ⚠️ Antes había acá un segundo aviso, «lenta», para «≥3 entregas pero pocas unidades» —
+     matemáticamente IMPOSIBLE con las reglas actuales: cada entrega aporta ≥1 unidad, así
+     que nVentas≤vendidos siempre, y `rotacion` da 'baja' exactamente cuando nVentas<3 (ver
+     comentario en `stockData`). Verificado por barrido exhaustivo antes de sacarlo (§4dc):
+     0 casos en miles de combinaciones. No es una simplificación editorial, es sacar una
+     rama que el código nunca podía tomar. */
+  if(!o.rota && o.vendidos>0) return 'unico';
   return '';
 }
-function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, revisar:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, lenta:1, sobra:0 }[o.aviso]||0; }
+function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, revisar:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, sobra:0 }[o.aviso]||0; }
 /* " · 8 en MORENO" — dónde está lo que se puede ir a buscar. */
 function stockOtrosTxt(o){
   return Object.keys(o.otrosAlm||{}).map(function(nm){ return o.otrosAlm[nm]+' en '+stockAlmCorto(nm); }).join(' · ');
@@ -11335,7 +11378,6 @@ function renderStock(){
   html+=renderRevisionFija();
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
-    if(o.aviso==='lenta') return '<span class="badge b-gray">Poca rotación · solo contra pedido</span>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
       'Llamá a la fábrica y anotá acá lo que pediste: el producto deja de avisar y el panel aprende cuánto tarda.');
     if(o.aviso==='pedir')   return bpedir(o,'🏭 Pedir esta semana','background:var(--amber-lt,#fff4d6);color:#7c4b00;border:1px solid #f0d264',
@@ -11352,14 +11394,17 @@ function renderStock(){
   var porque=function(o){
     var q=o.pedidos[0];
     if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito))+'</b>. Reposición calculada: <b>'+stockUnid(o.pedir)+'</b> unidades, incluyendo cobertura por rotación. Confirmá el saldo antes de pedir.','#7c4b00');
-    if(o.aviso==='lenta') return chico(o.vendidos+' unidades en '+STOCK_VENTANA+' días: no se añade reserva por previsión. Se cubren únicamente faltantes de pedidos confirmados.');
     if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.pedir+'</b> ya'+(o.enOtros?('; hay '+stockOtrosTxt(o)+' para traer ya mismo'):''),'#8a1c24');
     if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.pedir+'</b> esta semana'+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
     if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
     if(o.aviso==='pedido')  return chico((q?(q.u+' llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' de '+esc(q.fab)):'')):'')+(o.sinCamino!=null?('<br>sin ese pedido se cortaba '+stockEnDias(o.sinCamino)):''),'#075985');
     if(o.aviso==='agotado') return chico('quedan <b>'+stockUnid(Math.max(0,o.deposito))+'</b>'+(o.dias!=null?(' y se cortan '+stockEnDias(o.dias)):'')+(o.comp?(' con '+stockUnid(o.comp)+' ya vendidos'):'')+'. La fábrica ya no lo hace: que ventas no ofrezca más de lo que hay.','#7f1d1d');
-    if(o.aviso==='unico')   return chico('<b>'+o.vendidos+'</b> unidad'+(o.vendidos===1?'':'es')+' en <b>'+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+'</b> en '+STOCK_VENTANA+' días: es un pedido puntual, no una venta que se repita. No se repone por las dudas — si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
-    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en 4 semanas'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
+    /* ⚠️ Sin repetir «45 en 15 días · 1 entrega» ni «Poca rotación»: las dos ya se ven, una
+       columna a la izquierda, en la MISMA fila (§4dc — antes esto era un texto aparte que
+       decía lo mismo con otras palabras, y con la fila de ChatGPT al lado quedaban DOS
+       explicaciones distintas de un mismo hecho). Acá solo la consecuencia. */
+    if(o.aviso==='unico')   return chico('Es un pedido puntual, no una venta que se repita: no se repone por las dudas. Si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
+    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     if(o.descont) return chico('ya no se fabrica: se vende lo que queda');
     return '';
@@ -11424,7 +11469,7 @@ function renderStock(){
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px;font-size:.86rem">'+
       '<b style="color:#5b21b6">💤 Plata parada:</b> '+sob.length+' producto'+(sob.length===1?'':'s')+' · <b>'+stockUnid(unidSob)+'</b> unidades con stock para más de '+STOCK_DIAS_SOBRA+' días. '+
       '<span style="color:var(--muted)">Los que más tienen:</span><br>'+
-      sob.slice(0,tope).map(function(o){ var ms=stockMesesSobra(o); return '<b>'+esc(stockNombre(o))+'</b> ('+stockUnid(o.deposito)+' unid.'+(ms!=null?(', ~'+stockNum(ms,1)+' meses'):', sin entregas en 4 semanas')+')'; }).join(' · ')+
+      sob.slice(0,tope).map(function(o){ var ms=stockMesesSobra(o); return '<b>'+esc(stockNombre(o))+'</b> ('+stockUnid(o.deposito)+' unid.'+(ms!=null?(', ~'+stockNum(ms,1)+' meses'):', sin entregas en '+STOCK_VENTANA+' días')+')'; }).join(' · ')+
       (sob.length>tope?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">y '+(sob.length-tope)+' más</button>')
                       :(STOCK_VER_SOBRA&&sob.length>8?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">mostrar menos</button>'):''))+
       '<div style="color:var(--muted);margin-top:5px">Conviene no pedir más de estos y empujarlos en la venta. «Sin entregas» es sin salir por este panel: lo que se vende en tienda no se ve acá.</div></div>';

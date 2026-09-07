@@ -48,7 +48,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
        · ARES     — 45 unidades en 15 entregas: eso SÍ es rotación.
        · ARTEMISA — 1 sola entrega, pero de 6 unidades TODAVÍA SIN ENTREGAR y sin stock:
                     no hay ritmo, pero la venta existe y hay que conseguirlas.
-     Ninguno figura en el corte del almacén, así que todos están en cero (§4ct). */
+     Ninguno figura en el corte del almacén, así que todos están en cero (§4ct).
+     ⚠️ LAS 15 ENTREGAS DE ARES SE REPARTEN DENTRO DE LA VENTANA ACTUAL, LEÍDA EN VIVO
+     (§4dc) — no en los días 1 a 15 fijos. `STOCK_VENTANA` ya bajó una vez de 28 a 15 sin
+     avisar a este test (day 15 quedó FUERA de una ventana de 15: el borde es
+     `diasAtras(STOCK_VENTANA-1)`), y las 15 entregas de ARES pasaron de contar 15 a contar
+     14 sin que nadie tocara este archivo. Si la ventana vuelve a cambiar, este reparto
+     sigue cayendo adentro solo. */
   const armar = () => page.evaluate(() => {
     var c=document.getElementById('conn-form'); if(c) c.style.display='none';
     CONNECTED=true; UNLOCKED=true;
@@ -65,7 +71,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
             P({id:'h1', fecha:atras(9), entregado:true, productos:pr('HERA',20)}),
             P({id:'h2', fecha:atras(4), entregado:true, productos:pr('HERA',25)}),
             P({id:'x1', fecha:adel(2), cliente:'Espera 6', productos:pr('ARTEMISA',6)}) ];
-    for(var i=1;i<=15;i++) STATE.push(P({id:'a'+i, fecha:atras(i), entregado:true, productos:pr('ARES',3)}));
+    for(var i=0;i<15;i++){
+      var off=Math.round(i*(STOCK_VENTANA-1)/14);      // 0..14 → siempre 0..(ventana−1)
+      STATE.push(P({id:'a'+i, fecha:atras(off), entregado:true, productos:pr('ARES',3)}));
+    }
     STOCK={ c:{f:todayStr(), u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.', cod:{}}, e:[], p:[], a:{}, g:{}, al:{}, h:[] };
     saveMirror(); updateStats();
   });
@@ -85,8 +94,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('se siguen viendo las 45 unidades vendidas', M.vend===45, JSON.stringify(M.vend));
   chk('…y que salieron en 1 sola entrega', M.n===1, M.n);
   chk('⚠️ NO cuenta como rotación', M.rota===false, 'rota='+M.rota);
-  chk('⚠️ no se le inventa un ritmo: 0 por día (la cuenta cruda daría 1,6)',
-      M.porDia===0 && Math.abs(M.porDiaReal-1.61)<0.02, M.porDia+' · crudo '+M.porDiaReal);
+  /* §4dc: la cuenta cruda (45÷STOCK_VENTANA) ya no da 1,6 — con la ventana de 15 días da 3
+     exacto (45÷15). El número cambia con la ventana; lo que NO puede cambiar es que
+     `porDia` (la que se usa de verdad) se quede en 0 igual, aunque la cruda sea alta. */
+  chk('⚠️ no se le inventa un ritmo: 0 por día (la cuenta cruda da 3, no 0)',
+      M.porDia===0 && M.porDiaReal>0, M.porDia+' · crudo '+M.porDiaReal);
   chk('⚠️ y entonces NO «se corta hoy»: no hay nada que se corte', M.dias===null, JSON.stringify(M.dias));
   chk('⚠️ el aviso deja de ser 🚨 PEDIR YA y pasa a «pedido único»', M.aviso==='unico', M.aviso);
   chk('⚠️ no sugiere pedir 23 ni nada', M.pedir===0, M.pedir);
@@ -124,9 +136,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   // ══ 5. En la pantalla se ve el dato, no desaparece ════════════════════════
   console.log('\n── 5. Lo que se ve en la tabla ──');
-  r = await page.evaluate(() => { abrirStock(); return ((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' '); });
+  const rr = await page.evaluate(() => ({ v:STOCK_VENTANA, txt:(()=>{ abrirStock(); return ((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' '); })() }));
+  r = rr.txt;
   chk('el MORFEO sigue en la tabla con sus 45 vendidas y 1 entrega',
-      /MORFEO/.test(r) && /45 en 28 días · 1 entrega/.test(r), (r.match(/MORFEO[^·]*·[^0-9]*[^|]{0,90}/)||[''])[0].slice(0,110));
+      /MORFEO/.test(r) && r.indexOf('45 en '+rr.v+' días · 1 entrega')>=0, (r.match(/MORFEO[^·]*·[^0-9]*[^|]{0,90}/)||[''])[0].slice(0,110));
   chk('…con el cartel «📦 Pedido único» y la explicación', /📦 Pedido único/.test(r) && /pedido puntual, no una venta que se repita/.test(r));
   chk('…y ya NO dice «PEDIR YA» para él', !/MORFEO · 140x190[\s\S]{0,240}PEDIR YA/.test(r));
   chk('el ARES, que rota, sí muestra su ritmo por día', /ARES · 140x190 [\s\S]{0,80}15 entregas/.test(r) || /15 entregas/.test(r), (r.match(/[^ ]*15 entregas[^·]*/)||[''])[0]);

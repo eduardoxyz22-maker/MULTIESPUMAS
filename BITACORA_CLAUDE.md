@@ -5065,6 +5065,118 @@ entrar (un día antes, un día después, otro cliente, CARIOCA RIO cuando se pid
 PREMIER, un borrador), porque en una hoja que se le manda al cliente un renglón de más es una
 discusión.
 
+## 4dc. 🔀 Dos manos en el mismo panel: la ventana de 15 días, la rotación en 3 niveles, y
+     hacer que convivan (2026-09-07)
+
+Entre el §4db y esta entrada, el dueño usó **otra herramienta de IA** (dicho con sus propias
+palabras: *"chat gpt trabajo y corrigio cosas que tú no podías"*) para seguir tocando
+`pedidos.html` mientras yo no estaba corriendo. Tres commits sin bitácora:
+
+- **`03bde11` — ventana de 15 días y rotación en 3 niveles.** `STOCK_VENTANA` de 28→15;
+  `o.sem` de 4 tramos semanales a 3 tramos de 5 días; y el `rota` binario de §4da se abre en
+  `o.rotacion`: `baja` (poca rotación, como antes), `media` (≥3 entregas pero sin volumen
+  sostenido: margen FIJO de `STOCK_COLCHON`, sin mirar el desvío) y `alta` (≥15 unidades
+  repartidas en ≥2 de los 3 tramos: recién ahí se confía en el desvío para escalar el
+  margen). Cada nivel también fija cuánta reserva pedir además de lo justo (`cubrir`: 0/3/7
+  días). Y una revisión nueva, `revisarStock`/aviso `revisar`: si hay más unidades marcadas
+  «✔ hay» a mano que las que dice el inventario, avisa ANTES de proponer una reposición
+  sobre un saldo que no cierra.
+- **`d239037` — Carioca Río/Premier/Bahía discontinuados.** Marca esos códigos con `x:1`
+  (el mismo campo de §4cz para el JUNIOR) y agrega `stockCariocaDescontinuado`: por nombre,
+  no por código puntual, así que cualquier código nuevo de esas líneas también queda
+  cubierto. `abrirStockPedido`/`abrirStockPedidos` rechazan pedirlos a fábrica.
+- **`0e3e334` — no esconder lo ya revisado.** Los contadores de la revisión automática
+  (§4cq) ahora suman también las líneas YA marcadas, no solo las propuestas nuevas — antes,
+  con «tocar solo lo sin marcar» activado, una línea marcada «📥 recoger» que seguía
+  pendiente de ir a buscarse desaparecía del conteo. Y un detalle plegable lista esas líneas
+  ya revisadas, con acceso directo al pedido.
+
+**Nada de esto pisó lo mío**: usaron los mismos campos que dejé (`nVentas`, `x:1`,
+`stockDescontinuadoK`) y construyeron encima, no en contra. Mi propio rebase conservó su
+trabajo sin conflictos. Pero dos cosas se rompieron por el efecto combinado, y son
+precisamente el tipo de daño que nadie ve hasta que alguien mira con lupa:
+
+### 1. Mis tests quedaron desactualizados, no el panel
+
+`test_rotacion.js` y `test_stock.js` fallaban 8 comprobaciones. Verifiqué una por una antes
+de tocar nada: **ninguna era un bug real**, todas eran fixtures construidos para una ventana
+de 28 días que ahora mide 15. El caso más ilustrativo: `test_rotacion.js` armaba «ARES, 45
+unidades en 15 entregas» con `atras(1..15)` — quince ENTREGAS, pero abarcando quince DÍAS
+DISTINTOS empezando en «ayer», o sea que la entrega más vieja caía en «hace 15 días». Con la
+ventana en 28 días eso entraba entero; con la ventana en 15 (el borde es `diasAtras(14)`,
+o sea desde «hace 14 días»), la entrega de «hace 15» quedó **un día afuera** — y el test
+pasó de contar 15 entregas a contar 14 sin que nadie tocara el archivo. Reescribí el reparto
+para que lea `STOCK_VENTANA` en vivo y calcule las fechas desde ahí (`Math.round(i*(V-1)/14)`
+en vez de `i` a secas), así que la próxima vez que alguien —yo, la otra herramienta, quien
+sea— cambie el ancho de la ventana, este test sigue cayendo adentro solo.
+
+`test_stock.js` fue más laborioso: el ECO FLEX del escenario vendía 28 unidades a lo largo de
+28 días exactos (una por día) para probar «vende parejo, margen 2 días» y el proyectar «se
+corta en 4 días con 12 en depósito, comprometidos 26». Con la ventana en 15, la mitad de esa
+historia (las entregas «de ROHO», días 21 a 27) quedaba afuera. Reescribí el reparto para que
+entre completo en 15 días —5 días del sistema/pendiente, 5 «de vendedora», 5 «de ROHO», uno
+por tramo— y **verifiqué a mano, antes de escribir un solo assert, que `porDia` sigue dando
+exactamente 1 y `cv` exactamente 0**: con eso, TODAS las cuentas derivadas (corte en 4 días,
+pedir 14, margen 2) dan los mismos números que antes de que la ventana cambiara, sin
+coincidencia — las elegí así a propósito para que el test siguiera siendo comparable con sus
+versiones anteriores. El MEMORY FLEX (venta a los saltos) necesitó el mismo trabajo: con solo
+1 de sus 3 tramos con ventas ya no calificaba para rotación `alta` (hacen falta ≥2 tramos), y
+sin `alta` el margen queda FIJO en 2 —el desvío ya no se mira— así que dejó de dar el margen
+de 5 que el test esperaba. Lo repartí en 2 tramos (14 unidades recientes + 1 unidad hace 6
+días) para que siguiera siendo genuinamente disparejo Y calificara. Los únicos números que
+cambian de verdad (no por mi elección, sino porque la ventana más corta pesa distinto) son la
+plata parada del PILLOW: 30 unidades para 2 ventas dan ~7,5 meses de cobertura, no ~14 —
+menos ventana, el mismo ritmo pesa más por día.
+
+### 2. El texto «4 semanas» quedó mintiendo
+
+`STOCK_VENTANA` bajó a 15 días (~2 semanas), pero dos avisos —«plata parada» en la ficha del
+producto y en el resumen de Administración— seguían escritos con el número **literal** «4
+semanas» en vez de leer la constante. Nadie lo iba a notar mirando el código (el texto
+compila igual), pero el dueño sí lo iba a leer, y es información que le llega directo:
+un producto sin ventas en 15 días pasaría por sin ventas en «4 semanas» (28 días), que es
+casi el doble. Corregido a interpolar `STOCK_VENTANA` en las dos, como ya hacían otros
+avisos de la misma pantalla.
+
+### 3. Un aviso que nunca podía aparecer
+
+`stockAvisoDe` tenía una rama `'lenta'` (badge, explicación y prioridad completos) para
+«≥3 entregas pero pocas unidades». Comprobé por barrido exhaustivo (todas las combinaciones
+de entregas/unidades/tramos que la fórmula puede recibir) que es **matemáticamente
+imposible**: cada entrega aporta ≥1 unidad (las cantidades del formulario son siempre
+enteras), así que `nVentas≤vendidos` siempre — y `rotacion` da `baja` exactamente cuando
+`nVentas<3`, nunca por volumen bajo con muchas entregas. La rama `'lenta'` nunca se
+ejecutó ni se iba a ejecutar. La saqué (era la única simplificación de este tipo que hice:
+el resto de reglas de umbral quedaron intactas, documentadas pero sin tocar).
+
+### Y para que las dos «rotaciones» no se pisen
+
+Con `rotacion` de tres niveles Y mi aviso `unico` conviviendo en la misma fila, un producto
+de pedido único mostraba DOS explicaciones distintas del mismo hecho: la leyenda fija
+(«Poca rotación: solo pedidos confirmados») Y mi texto («45 unidades en 1 entrega… no se
+repone por las dudas»), repitiendo el mismo dato con otras palabras. Recorté el segundo para
+que diga solo la CONSECUENCIA (qué se hace con eso), no el dato que ya está a la vista dos
+líneas más arriba. Y escribí un comentario único, arriba de donde se calcula `o.rotacion`,
+que explica el sistema completo —los tres niveles, el margen, la reserva, `revisarStock`—
+en un solo lugar, en vez de dos mitades de explicación de dos sesiones distintas.
+
+### Y `correr.sh` no corría las suites de la otra herramienta
+
+Los 4 tests que trajo la otra sesión (`test_stock_quince.cjs`, `test_stock_rotacion.cjs`,
+`test_stock_detalle.cjs`, `test_stock_revisadas.cjs` — 62 comprobaciones en total) usan
+`require('playwright')` a secas y `process.env.CHROME_PATH`, no la ruta absoluta que uso yo.
+Corren perfecto con las variables puestas, pero **`correr.sh` nunca los mandaba a correr**
+(buscaba solo `*.js`) y ni siquiera podían correr sueltos en este sandbox sin las variables.
+Agregué una segunda pasada a `correr.sh` (`unoCjs`, con `NODE_PATH`/`CHROME_PATH` por default
+pero pisables) que entiende su formato de salida («OK »/«FALLO » y un `assert()` que corta
+con `exit≠0`) y lo traduce al mismo «N bien · N mal» de siempre. Las 4 suites corrían bien
+—las escribieron con cuidado— pero durante horas nadie las estaba corriendo.
+
+**Resultado:** 46 suites `.js` + 4 `.cjs` (nuevas en la batería) + 3 Python. Los 8 checks
+viejos, corregidos con su comentario explicando qué cambió y por qué (nunca solo el número).
+Batería completa: **50 suites (46 `.js` + 4 `.cjs`, más 3 de Python aparte), 1.747 checks,
+0 fallas.**
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

@@ -38,18 +38,23 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     console.log('\n'+PASS+' bien · '+FAIL+' mal'); await browser.close(); process.exit(1);
   }
 
-  /* El escenario. El ECO FLEX 140x190 es el que más se vende: 28 en 28 días, parejito (7
-     por semana), y con TRES nombres: «ECO FLEX» a mano, «COLCHON ECO FLEX 2 PLAZAS 140X190CM
-     FLEX» del Excel de ROHO, y en el catálogo es «NUEVO ECO FLEX» (CH1332).
+  /* El escenario. El ECO FLEX 140x190 es el que más se vende: 15 en 15 días (la ventana
+     completa, §4dc), parejito, y con TRES nombres: «ECO FLEX» a mano, «COLCHON ECO FLEX 2
+     PLAZAS 140X190CM FLEX» del Excel de ROHO, y en el catálogo es «NUEVO ECO FLEX» (CH1332).
        · 4 pedidos pendientes marcados ✗ NO HAY (hace 1 a 4 días) — se vendieron igual
        · 1 pedido para HOY sin entregar todavía
-       · 16 entregados por vendedoras (hace 5 a 20 días; el de hace 6 quedó sin marcar ✓,
-         y como el día ya pasó se da por entregado) + 7 entregados de ROHO (21 a 27)
+       · 5 entregados por vendedoras (hace 5 a 9 días; el de hace 6 quedó sin marcar ✓,
+         y como el día ya pasó se da por entregado) + 5 entregados de ROHO (10 a 14)
        · vendidos sin entregar: 5 para pasado mañana y 20 para dentro de 4 días
        · 3 hechos a pedido (🏭 Moreno): los trae la fábrica, no salen del depósito
-     El PILLOW FLEX vende poco (2 en 28 días). El MEMORY FLEX vendió 28 pero todos en un solo
-     pedido hace 2 días (venta a los saltos). Y «COLCHON XYZ» / «XYZ PLUS» no están en el
-     catálogo. */
+     Con 1 unidad por día, exactos 15 días, sale «rotación alta» y venta pareja (cv=0):
+     ⚠️ ES A PROPÓSITO — así el `porDia` da 1 exacto y las cuentas de abajo (corte, margen,
+     cuánto pedir) dan los mismos números redondos que antes de §4dc, aunque la ventana se
+     redujo de 28 a 15 días y `vendidos` bajó de 28 a 15.
+     El PILLOW FLEX vende poco (2 en 15 días). El MEMORY FLEX vendió 15 —14 repartidas en 3
+     pedidos de los últimos 3 días, 1 sola hace 6— así que es «rotación alta» (¡vendió mucho
+     Y en más de un tramo!) pero MUY dispareja (venta a los saltos). Y «COLCHON XYZ» /
+     «XYZ PLUS» no están en el catálogo. */
   const armar = () => page.evaluate(() => {
     var c=document.getElementById('conn-form'); if(c) c.style.display='none';
     CONNECTED=true; UNLOCKED=true;
@@ -74,9 +79,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     STATE=[];
     for(var i=1;i<=4;i++) STATE.push(P({id:'nh'+i, fecha:atras(i), entregado:false, estado:'No hay', verificado:false, productos:eco(1,{chk:'no'})}));
     STATE.push(P({id:'hoy1', fecha:atras(0), entregado:false, productos:eco(1)}));
-    // El de hace 6 días quedó SIN marcar «Entregado ✓» (pasa todo el tiempo): salió igual.
-    for(var j=5;j<=20;j++) STATE.push(P({id:'e'+j, fecha:atras(j), entregado:(j!==6), productos:eco(1)}));
-    for(var r=21;r<=27;r++) STATE.push(P({id:'r'+r, fecha:atras(r), entregado:true, productos:ecoR(1)}));
+    /* ⚠️ TODO ESTO CABE EN LOS 15 DÍAS DE LA VENTANA (§4dc: antes eran 28). Antes se
+       repartía en 16 «de vendedora» (días 5 a 20) + 7 «de ROHO» (21 a 27); ahora, para que
+       las dos formas de escribir el mismo colchón sigan probándose y para que caigan una en
+       cada tramo de 5 días, 5 «de vendedora» en el tramo del medio (días 5-9) y 5 «de ROHO»
+       en el último (10-14). El de hace 6 días sigue sin marcar ✓ (pasa igual: el día pasó). */
+    for(var j=5;j<=9;j++) STATE.push(P({id:'e'+j, fecha:atras(j), entregado:(j!==6), productos:eco(1)}));
+    for(var r=10;r<=14;r++) STATE.push(P({id:'r'+r, fecha:atras(r), entregado:true, productos:ecoR(1)}));
     STATE.push(P({id:'q1', fecha:atras(3), entregado:true, productos:pill(1)}));
     STATE.push(P({id:'q2', fecha:atras(9), entregado:true, productos:pill(1)}));
     /* ⚠️ EL MEMORY VENDE A LOS SALTOS, PERO VENDE (§4da). Antes eran 28 unidades en UNA sola
@@ -84,9 +93,17 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
        ritmo: es una venta mayorista suelta, de la que no se deduce nada (el dueño: «una
        única entrega o 2 en 1 mes no es tener rotación, eso es pedido único»). Para seguir
        probando lo que este fixture quiere probar —la venta DESPAREJA, que necesita más
-       margen— las 28 se reparten en 4 entregas de la última semana y las otras 3 semanas
-       quedan en cero. Eso sí es rotación, y sigue siendo «a los saltos». */
-    for(var m=1;m<=4;m++) STATE.push(P({id:'m'+m, fecha:atras(m), entregado:true, productos:mem(7)}));
+       margen— se reparte en varias entregas de la última semana, la mayoría en un solo
+       tramo y una sola unidad en otro. Eso sí es rotación (2 de los 3 tramos con ventas), y
+       sigue siendo «a los saltos».
+       §4dc: con la ventana de 15 días, 15 unidades exactas (no 28) mantienen `porDia`=1 —
+       las cuentas de más abajo («corte en 4 días», «pedir 14», etc.) siguen dando lo mismo
+       que antes de que la ventana cambiara, aposta, para que este test siga siendo legible
+       comparado con versiones viejas de esta misma historia. */
+    STATE.push(P({id:'m1', fecha:atras(1), entregado:true, productos:mem(5)}));
+    STATE.push(P({id:'m2', fecha:atras(2), entregado:true, productos:mem(5)}));
+    STATE.push(P({id:'m3', fecha:atras(3), entregado:true, productos:mem(4)}));
+    STATE.push(P({id:'m4', fecha:atras(6), entregado:true, productos:mem(1)}));
     STATE.push(P({id:'x1', fecha:atras(1), entregado:true, productos:[{desc:'COLCHON XYZ',medida:'140x190',codigo:'',cant:3}]}));
     STATE.push(P({id:'x2', fecha:atras(2), entregado:true, productos:[{desc:'XYZ PLUS',medida:'140x190',codigo:'',cant:2}]}));
     STATE.push(P({id:'v1', fecha:adel(2), entregado:false, productos:eco(5)}));
@@ -125,8 +142,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y en la pantalla es UN renglón, con el nombre del catálogo', r.n===1 && r.desc==='NUEVO ECO FLEX' && r.medida==='140x190', r.n+' · '+r.desc+' · '+r.medida);
   chk('…con el código de la empresa aunque nadie lo haya escrito', r.cod==='CH1332', r.cod);
   chk('…y dice qué otros nombres juntó', (r.otros||[]).some(t=>/ROHO|COLCHON ECO FLEX 2 PLAZAS/.test(t)) && (r.otros||[]).indexOf('ECO FLEX')>=0, JSON.stringify(r.otros));
-  chk('⚠️ vende 1 por día: 28 en 28 días contando los ✗ NO HAY, lo de ROHO y lo de hoy sin entregar',
-      Math.abs(r.porDia-1)<0.02 && r.vendidos===28, r.porDia+' · '+r.vendidos+' vendidos');
+  chk('⚠️ vende 1 por día: 15 en 15 días contando los ✗ NO HAY, lo de ROHO y lo de hoy sin entregar',
+      Math.abs(r.porDia-1)<0.02 && r.vendidos===15, r.porDia+' · '+r.vendidos+' vendidos');
   chk('…y el PILLOW mucho menos', r.pillPorDia<0.1, r.pillPorDia);
   chk('⚠️ el borrador de Kommo (50 unidades) NO cuenta como venta', r.comp===26, r.comp+' comprometidas (1 de hoy + 5 + 20)');
   chk('⚠️ un pedido de hace 6 días SIN marcar ✓ se da por entregado: no es «vendido sin entregar» (así se contaban 41 almohadas de más)',
@@ -234,7 +251,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ …4 días es más que los 3 de fábrica pero menos que 3 + 2 de margen → PEDIR ESTA SEMANA',
       r.eco.aviso==='pedir' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
   chk('…y dice cuánto pedir: los 26 vendidos menos los 12 que hay = 14', r.eco.pedir===14, r.eco.pedir);
-  chk('el ECO FLEX vende parejo (7 por semana) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
+  chk('el ECO FLEX vende parejo (1 por tramo de 5 días) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
   chk('⚠️ el PILLOW con 30 en depósito y 2 vendidos en 4 semanas es PLATA PARADA', r.pill.aviso==='sobra' && r.pill.sobra===true, r.pill.aviso);
   chk('el MEMORY FLEX con 40 (para 40 días) ni sobra ni falta', r.mem.aviso==='', r.mem.aviso+' · corte en '+r.mem.dias+' días');
   chk('lo que hay que pedir va primero en la lista', /ECO FLEX/.test(r.primero), r.primero);
@@ -479,19 +496,26 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ══ 11. Plata parada ═══════════════════════════════════════════════════════
   console.log('\n── 11. Lo que sobra también se ve ──');
   r = await page.evaluate(() => {
-    STOCK.c.u['TITANIO ICE|160X190']=6;       // contado, sin una sola venta en 4 semanas
+    STOCK.c.u['TITANIO ICE|160X190']=6;       // contado, sin una sola venta en la ventana
     var d=stockData(); renderStock();
     var pill=d.lista.filter(o=>/PILLOW/.test(o.desc))[0], tit=d.lista.filter(o=>/TITANIO/.test(o.desc))[0];
     return { n:d.sobran.length, pill:pill.aviso, meses:stockMesesSobra(pill), tit:tit&&tit.aviso, ultimo:d.lista[d.lista.length-1].desc,
-             pantalla:((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' ') };
+             ventana:STOCK_VENTANA, pantalla:((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' ') };
   });
-  chk('⚠️ el PILLOW (30 para 14 meses) y el TITANIO (6 sin ventas) son plata parada', r.n===2 && r.pill==='sobra' && r.tit==='sobra', r.n+' · '+r.pill+' · '+r.tit);
-  chk('…dice para cuántos meses', r.meses>13 && r.meses<15, stockNumTxt(r.meses));
+  /* §4dc: con la ventana de 15 días (no 28), el mismo PILLOW (2 vendidos, 30 en depósito)
+     da menos meses de cobertura — el ritmo crudo se mide sobre una ventana más corta, así
+     que «2 ventas» pesan más por día. 30÷(2/15)÷30 = 7,5 meses, no ~14. Sigue siendo,
+     bien de sobra: no cambia que sea plata parada, cambia CUÁNTA. */
+  chk('⚠️ el PILLOW (30 para ~7,5 meses) y el TITANIO (6 sin ventas) son plata parada', r.n===2 && r.pill==='sobra' && r.tit==='sobra', r.n+' · '+r.pill+' · '+r.tit);
+  chk('…dice para cuántos meses', Math.abs(r.meses-7.5)<0.1, stockNumTxt(r.meses));
   chk('…van al final de la lista, no molestan arriba', /PILLOW|TITANIO/.test(r.ultimo), r.ultimo);
-  /* §4cp cambió el texto a propósito: «sin ENTREGAS en 4 semanas», no «sin ventas». Con el
+  /* §4cp cambió el texto a propósito: «sin ENTREGAS en N días», no «sin ventas». Con el
      Excel del almacén entero cargado, casi todo figura sin movimiento porque las tiendas
-     venden por afuera de este panel — decir «sin ventas» era engañoso. */
-  chk('…y hay un renglón «Plata parada» en la pantalla', /Plata parada/.test(r.pantalla) && /sin entregas en 4 semanas/.test(r.pantalla), (r.pantalla.match(/Plata parada[^.]*/)||[''])[0].slice(0,140));
+     venden por afuera de este panel — decir «sin ventas» era engañoso.
+     ⚠️ §4dc: el número de días es `STOCK_VENTANA` (hoy 15, antes era literalmente «4
+     semanas» — 28 días). Se lee la constante en vez de escribir el número a mano para no
+     repetir el mismo error de hardcodear un número que después cambia otra vez. */
+  chk('…y hay un renglón «Plata parada» en la pantalla', /Plata parada/.test(r.pantalla) && r.pantalla.indexOf('sin entregas en '+r.ventana+' días')>=0, (r.pantalla.match(/Plata parada[^.]*/)||[''])[0].slice(0,140));
   function stockNumTxt(n){ return String(Math.round(n*10)/10); }
 
   // ══ 12. El margen crece si la venta es a los saltos ════════════════════════
@@ -506,7 +530,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     return { margen:mem.margen, cv:mem.cv, txt:stockVentaTxt(mem), aviso:mem.aviso, dias:mem.dias, lead:mem.lead, esperado:dias, ecoMargen:eco.margen, ecoTxt:stockVentaTxt(eco) };
   });
-  chk('⚠️ el MEMORY vendió las 28 en una sola semana (4 entregas) y nada en las otras 3: «a los saltos» → margen de 5 días, no 2',
+  /* §4dc: 14 de las 15 unidades cayeron en el tramo de los últimos 5 días, 1 sola en el
+     tramo del medio y ninguna en el más viejo — vendió MUCHO (≥15, «rotación alta») pero a
+     los saltos (cv≈1,27). Con «rotación media» este margen sería fijo (2), sin mirar el
+     desvío: acá lo mira porque hay volumen de sobra para confiar en el patrón. */
+  chk('⚠️ el MEMORY vendió 14 de 15 en el último tramo de 5 días y nada en el más viejo: «a los saltos» → margen de 5 días, no 2',
       r.margen===5 && r.cv>1 && r.txt==='venta a los saltos', r.margen+' · cv '+r.cv+' · '+r.txt);
   chk('⚠️ …así que con stock para '+r.esperado+' días (fábrica '+r.lead+' + margen 5 − 1) ya hay que pedir; con margen fijo de 2 no avisaba',
       r.aviso==='pedir' && r.dias===r.esperado && r.esperado>=5, r.aviso+' · corte en '+r.dias);

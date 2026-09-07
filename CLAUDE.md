@@ -73,15 +73,35 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     `tests/test_identidad.js`. Para verificar con los Excel reales: prueba en el scratchpad,
     nunca en el repo (público).
   - **`x:1` en `CODIGOS` = ya no se fabrica** (§4cz): el ESPECIAL JUNIOR (CH1075/76/78) es
-    otro colchón que el antialérgico (CH2391–CH2396) y está discontinuado. Se reparte y se
-    vende lo que queda, pero nunca entra en «hay que fabricar» (aviso `agotado`).
-  - **Rotación ≠ pedido único** (§4da): con menos de `STOCK_VENTAS_MIN`=3 **entregas
-    distintas** en el mes no se estima ritmo — `porDia`=0 y el aviso es 📦 `unico`. Lo
-    vendido y sin entregar (`comp`) se cubre igual: eso no se estima, está vendido.
+    otro colchón que el antialérgico (CH2391–CH2396) y está discontinuado. `stockDescontinuadoK`
+    por clave puntual; `stockCariocaDescontinuado` (§4dc) por NOMBRE para Carioca
+    Río/Premier/Bahía, así que un código nuevo de esas líneas queda cubierto solo. Se
+    reparte y se vende lo que queda, pero nunca entra en «hay que fabricar» (aviso `agotado`).
+  - **Rotación en 3 niveles** (§4da, ampliado a 3 niveles en §4dc): `STOCK_VENTANA`=15 días,
+    en 3 tramos de 5. `o.rotacion`: `baja` (<`STOCK_VENTAS_MIN`=3 entregas distintas — no
+    unidades) no estima ningún ritmo, `porDia`=0, margen=0, sin reserva extra (`cubrir`=0) —
+    aviso 📦 `unico`. `media` (≥3 entregas, poco volumen) sí estima, margen FIJO
+    (`STOCK_COLCHON`, sin mirar el desvío — con pocos datos podría ser ruido), `cubrir`=3.
+    `alta` (≥15 unidades Y en ≥2 de los 3 tramos) confía en el desvío: el margen escala hasta
+    5 días si la venta es a los saltos, `cubrir`=`STOCK_CUBRIR`(7). Lo vendido y sin entregar
+    (`comp`) se cubre igual en las tres: eso no se estima, está vendido.
     ⚠️ `stockSobra`/`stockMesesSobra` usan `porDiaReal` (crudo) a propósito: «plata parada»
-    mira para atrás y no pide nada. `tests/test_rotacion.js`.
+    mira para atrás y no pide nada — no le importa el nivel de rotación.
+    `revisarStock`/aviso `revisar` (§4dc): si hay más marcado «✔ hay» a mano que lo que dice
+    el inventario, avisa ANTES de proponer una reposición sobre un saldo que no cierra.
+    `tests/test_rotacion.js` + los `.cjs` de §4dc (ver abajo).
+  - **⚠️ Si volvés a tocar `STOCK_VENTANA` o los umbrales de rotación**: revisá que ningún
+    texto quede con un número hardcodeado (pasó dos veces, §4dc — «4 semanas» sobrevivió un
+    cambio de ventana entero) y que los fixtures de `test_stock.js`/`test_rotacion.js`, que
+    reparten entregas en días fijos, sigan cayendo DENTRO de la ventana nueva.
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
+  - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
+    tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
+    `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
+    no la ruta absoluta que uso yo — y `correr.sh` ya los corre (antes no: buscaba solo
+    `*.js`). Antes de asumir que algo está roto porque un test propio falla, verificar si
+    cambió una constante compartida (como `STOCK_VENTANA`) desde otra sesión.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
