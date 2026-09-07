@@ -4260,8 +4260,19 @@ ritmo hecho realidad. El primer día negativo es el corte.
   cuenta como comprometido. Lo trae la fábrica para ese cliente. La pantalla lo dice abajo:
   *lo que llega para un pedido puntual NO se anota en «Llegó de fábrica»*. Si alguien lo
   anota igual, el depósito queda inflado en esas unidades hasta el próximo conteo.
-- Un pedido con la **fecha vencida y sin marcar entregado** sigue contando como
-  comprometido HOY (lado conservador) y la columna lo muestra («N con la fecha vencida»).
+- ~~Un pedido con la fecha vencida y sin marcar entregado sigue contando como comprometido
+  HOY (lado conservador).~~ **Duró una hora.** La primera pantalla con datos reales decía
+  «ALMOHADA: 66 en los próximos 3 días», y el dueño preguntó *"¿seguro que estás tomando en
+  cuenta los pedidos que FALTAN ENTREGAR?"*. Tenía razón: de 68 «vendidas sin entregar»,
+  **41 eran de pedidos con la fecha ya pasada que nadie marcó ✓** — la marca «Entregado ✓»
+  no se pone siempre, y el lado «conservador» era en realidad una alarma falsa en todos los
+  productos. Regla nueva (`stockSalio`): un pedido **salió** si está marcado ✓, si salió de
+  tienda, **o si su día de entrega ya pasó y nadie lo movió de fecha** (lo que no se entrega
+  se reprograma; lo que queda con fecha vieja, salió). Lo de hoy todavía no. Esos pedidos
+  descuentan del depósito como cualquier entrega, y la columna dice cuántos son («N de días
+  pasados sin marcar ✓: se dan por entregados»). Lo tildado **✗ no hay** de días pasados no
+  salió ni cuenta como comprometido hasta que se reprograme; se muestra aparte («N ✗ no hay
+  de días pasados, sin reprogramar») y sigue alimentando la contradicción con el conteo.
 - Al recibir menos unidades de las pedidas se anota lo que llegó; el resto no se persigue.
 - Muestras de fábrica de 0 días (pedido y llegada el mismo día) cuentan; las de más de 60
   se descartan como error de carga.

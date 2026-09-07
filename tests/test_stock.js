@@ -43,7 +43,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
      FLEX» del Excel de ROHO, y en el catálogo es «NUEVO ECO FLEX» (CH1332).
        · 4 pedidos pendientes marcados ✗ NO HAY (hace 1 a 4 días) — se vendieron igual
        · 1 pedido para HOY sin entregar todavía
-       · 16 entregados por vendedoras (hace 5 a 20 días) + 7 entregados de ROHO (21 a 27)
+       · 16 entregados por vendedoras (hace 5 a 20 días; el de hace 6 quedó sin marcar ✓,
+         y como el día ya pasó se da por entregado) + 7 entregados de ROHO (21 a 27)
        · vendidos sin entregar: 5 para pasado mañana y 20 para dentro de 4 días
        · 3 hechos a pedido (🏭 Moreno): los trae la fábrica, no salen del depósito
      El PILLOW FLEX vende poco (2 en 28 días). El MEMORY FLEX vendió 28 pero todos en un solo
@@ -73,7 +74,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     STATE=[];
     for(var i=1;i<=4;i++) STATE.push(P({id:'nh'+i, fecha:atras(i), entregado:false, estado:'No hay', verificado:false, productos:eco(1,{chk:'no'})}));
     STATE.push(P({id:'hoy1', fecha:atras(0), entregado:false, productos:eco(1)}));
-    for(var j=5;j<=20;j++) STATE.push(P({id:'e'+j, fecha:atras(j), entregado:true, productos:eco(1)}));
+    // El de hace 6 días quedó SIN marcar «Entregado ✓» (pasa todo el tiempo): salió igual.
+    for(var j=5;j<=20;j++) STATE.push(P({id:'e'+j, fecha:atras(j), entregado:(j!==6), productos:eco(1)}));
     for(var r=21;r<=27;r++) STATE.push(P({id:'r'+r, fecha:atras(r), entregado:true, productos:ecoR(1)}));
     STATE.push(P({id:'q1', fecha:atras(3), entregado:true, productos:pill(1)}));
     STATE.push(P({id:'q2', fecha:atras(9), entregado:true, productos:pill(1)}));
@@ -98,7 +100,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData(), ecos=d.lista.filter(o=>/ECO FLEX/.test(o.desc)), eco=ecos[0]||{};
     var pill=d.lista.filter(o=>/PILLOW/.test(o.desc))[0]||{};
     return { n:ecos.length, desc:eco.desc, medida:eco.medida, cod:eco.cod, cat:eco.cat, otros:eco.otros,
-             porDia:eco.porDia, vendidos:eco.vendidos, comp:eco.comp, aFab:eco.aFab, atrasados:eco.atrasados, noHay:eco.noHay,
+             porDia:eco.porDia, vendidos:eco.vendidos, comp:eco.comp, aFab:eco.aFab, atrasados:eco.atrasados, noHay:eco.noHay, noHayViejo:eco.noHayViejo,
              pillPorDia:pill.porDia, ventana:STOCK_VENTANA,
              k1:stockClave({desc:'ECO FLEX',medida:'140x190'}),
              k2:stockClave({desc:'COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX',medida:'140X190',codigo:'RH-77'}),
@@ -119,8 +121,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ vende 1 por día: 28 en 28 días contando los ✗ NO HAY, lo de ROHO y lo de hoy sin entregar',
       Math.abs(r.porDia-1)<0.02 && r.vendidos===28, r.porDia+' · '+r.vendidos+' vendidos');
   chk('…y el PILLOW mucho menos', r.pillPorDia<0.1, r.pillPorDia);
-  chk('⚠️ el borrador de Kommo (50 unidades) NO cuenta como venta', r.comp===30, r.comp+' comprometidas (1 de hoy + 4 no hay + 5 + 20)');
-  chk('los 4 ✗ NO HAY pendientes cuentan como vendidos sin entregar, con la fecha vencida', r.noHay===4 && r.atrasados===4, r.noHay+' · '+r.atrasados);
+  chk('⚠️ el borrador de Kommo (50 unidades) NO cuenta como venta', r.comp===26, r.comp+' comprometidas (1 de hoy + 5 + 20)');
+  chk('⚠️ un pedido de hace 6 días SIN marcar ✓ se da por entregado: no es «vendido sin entregar» (así se contaban 41 almohadas de más)',
+      r.atrasados===1 && r.comp===26, r.atrasados+' de días pasados sin marcar');
+  chk('los 4 ✗ NO HAY de días pasados se ven aparte, sin reprogramar, y no inflan lo comprometido', r.noHay===4 && r.noHayViejo===4, r.noHay+' · '+r.noHayViejo);
   chk('⚠️ lo hecho a pedido (🏭) se aparta: la fábrica lo trae para ese cliente', r.aFab===3, r.aFab);
   chk('«PILLOW» solo NO se confunde con PILLOW FLEX ni PILLOW PEDIC', r.pilloSolo==='PILLOW|140X190', r.pilloSolo);
   chk('un SOMIER FLEX no es un ECO FLEX', r.somier!==r.k1 && /SOMIER FLEX/.test(r.somier), r.somier);
@@ -159,7 +163,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       r.eco.dias===4 && r.eco.corte===r.corte4, r.eco.dias+' días · '+r.eco.corte);
   chk('⚠️ …4 días es más que los 3 de fábrica pero menos que 3 + 2 de margen → PEDIR ESTA SEMANA',
       r.eco.aviso==='pedir' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
-  chk('…y dice cuánto pedir: los 30 vendidos menos los 12 que hay = 18', r.eco.pedir===18, r.eco.pedir);
+  chk('…y dice cuánto pedir: los 26 vendidos menos los 12 que hay = 14', r.eco.pedir===14, r.eco.pedir);
   chk('el ECO FLEX vende parejo (7 por semana) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
   chk('⚠️ el PILLOW con 30 en depósito y 2 vendidos en 4 semanas es PLATA PARADA', r.pill.aviso==='sobra' && r.pill.sobra===true, r.pill.aviso);
   chk('el MEMORY FLEX con 40 (para 40 días) ni sobra ni falta', r.mem.aviso==='', r.mem.aviso+' · corte en '+r.mem.dias+' días');
@@ -167,19 +171,20 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ y avisa en Administración, diciendo cuál', /para pedir esta semana/.test(r.banner) && /ECO FLEX/.test(r.banner), r.banner.replace(/\s+/g,' ').slice(0,140));
 
   r = await page.evaluate(() => {
-    STOCK.c.u[K]=4;
+    STOCK.c.u[K]=0;
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     renderAdmin(); renderStock();
     return { eco:eco, banner:(document.getElementById('adm-stock')||{}).textContent||'',
              fila:((document.getElementById('stock-body')||{}).textContent||'').replace(/\s+/g,' ') };
   });
-  chk('⚠️ con 4 y 5 vendidos para HOY se corta hoy → PEDIR YA', r.eco.aviso==='urgente' && r.eco.dias===0 && r.eco.saldoHoy<0, r.eco.aviso+' · '+r.eco.dias+' · saldo hoy '+r.eco.saldoHoy);
+  chk('⚠️ con 0 en depósito y 1 vendido para HOY se corta hoy → PEDIR YA', r.eco.aviso==='urgente' && r.eco.dias===0 && r.eco.saldoHoy<0, r.eco.aviso+' · '+r.eco.dias+' · saldo hoy '+r.eco.saldoHoy);
   chk('…el aviso de Administración lo dice con todas las letras', /se acaba/.test(r.banner) && /ECO FLEX/.test(r.banner), r.banner.replace(/\s+/g,' ').slice(0,120));
   chk('…y la pantalla muestra la fecha del corte y «PEDIR YA»', /PEDIR YA/.test(r.fila) && /Se corta/.test(r.fila) && /En camino/.test(r.fila), r.fila.slice(0,100));
 
   // ══ 4. La cuenta es idempotente ════════════════════════════════════════════
   console.log('\n── 4. Recalcular no cambia el resultado ──');
   r = await page.evaluate(() => {
+    STOCK.c.u[K]=4;
     var v=[]; for(var i=0;i<10;i++) v.push(stockDeposito(K));
     for(var j=0;j<5;j++){ renderAdmin(); renderStock(); }
     v.push(stockDeposito(K));
@@ -463,7 +468,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ══ 14. El mensaje para la fábrica ═════════════════════════════════════════
   console.log('\n── 14. El pedido a fábrica ──');
   r = await page.evaluate(() => {
-    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[{id:'fp9', k:K, u:6, fab:'MORENO', f:todayStr(), esp:'', r:''}], a:{} }; STOCK.c.u[K]=4;
+    STOCK={ c:{f:todayStr(), u:{}}, e:[], p:[{id:'fp9', k:K, u:6, fab:'MORENO', f:todayStr(), esp:'', r:''}], a:{} }; STOCK.c.u[K]=0;
     var copiado='';
     if(!window._copyOrig) window._copyOrig=window.copyText;
     window.copyText=function(t){ copiado=t; };
@@ -472,9 +477,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return copiado;
   });
   chk('arma el mensaje para la fábrica', /PEDIDO A F[ÁA]BRICA/.test(r), r.split('\n')[0]);
-  chk('⚠️ dice cuántas unidades pedir: 30 vendidos − 4 que hay − 6 en camino = 20', /pedir 20/.test(r), (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100));
+  chk('⚠️ dice cuántas unidades pedir: 26 vendidos − 0 que hay − 6 en camino = 20', /pedir 20/.test(r), (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100));
   chk('…y por qué: lo que queda, lo que viene, lo que se vende por día y cuándo se corta',
-      /quedan 4/.test(r) && /6 en camino/.test(r) && /por día/.test(r) && /se corta hoy/.test(r), (r.match(/quedan[^\n]*/)||[''])[0].slice(0,140));
+      /quedan 0/.test(r) && /6 en camino/.test(r) && /por día/.test(r) && /se corta hoy/.test(r), (r.match(/quedan[^\n]*/)||[''])[0].slice(0,140));
 
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

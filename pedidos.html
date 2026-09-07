@@ -10258,24 +10258,36 @@ function stockDias(a,b){   // días de a → b (ISO)
 function stockSumarDias(iso, n){ var x=String(iso||'').split('-'); if(x.length<3) return ''; return isoLocal(new Date(+x[0],+x[1]-1,+x[2]+n)); }
 
 /* ---- Movimientos del depósito ---- */
-/* Unidades entregadas de un producto entre dos fechas (inclusive). Lo hecho a pedido
-   (🏭 en la ficha) no sale del depósito: lo trajo la fábrica para ese cliente. */
+/* ¿Este pedido ya SALIÓ del depósito? La marca «Entregado ✓» no se pone siempre: en la
+   primera pantalla con datos reales (07/09), de 68 almohadas «vendidas sin entregar» 41
+   eran de pedidos con la fecha YA PASADA que nadie marcó — y el dueño lo vio al toque.
+   Así que además de la marca: salió de tienda, o el día de entrega ya pasó y nadie lo
+   movió de fecha (lo que no se entrega se reprograma; lo que queda con fecha vieja,
+   salió). Lo de HOY todavía no: se está entregando. */
+function stockSalio(p){
+  if(!p) return false;
+  if(p.entregado || esVentaTienda(p)) return true;
+  return !!p.fecha && p.fecha<todayStr();
+}
+/* Unidades que salieron de un producto entre dos fechas (inclusive). Lo hecho a pedido
+   (🏭 en la ficha) no sale del depósito: lo trajo la fábrica para ese cliente. Y un
+   renglón tildado ✗ no hay tampoco salió: no había. */
 function stockSalidas(k, desde, hasta){
   var n=0;
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p) || !p.entregado) return;
+    if(!p || esFilaSistema(p) || esBorrador(p) || !stockSalio(p)) return;
     var f=fechaSalida(p);
     if(desde && f<desde) return;
     if(hasta && f>hasta) return;
-    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && stockClave(x)===k) n+=Number(x.cant)||0; });
+    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && x.chk!=='no' && stockClave(x)===k) n+=Number(x.cant)||0; });
   });
   return n;
 }
-/* Unidades ya vendidas y todavía NO entregadas, con entrega hasta esa fecha. */
+/* Unidades ya vendidas y todavía NO salidas, con entrega hasta esa fecha. */
 function stockComprometido(k, hasta){
   var n=0;
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado) return;
+    if(!p || esFilaSistema(p) || esBorrador(p) || stockSalio(p)) return;
     var f=p.fecha||''; if(!f || (hasta && f>hasta)) return;
     (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && stockClave(x)===k) n+=Number(x.cant)||0; });
   });
@@ -10355,7 +10367,7 @@ function stockData(){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'',
+      vendidos:0, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       salidas:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''} }; }
     return g[k];
   };
@@ -10375,16 +10387,22 @@ function stockData(){
     (p.productos||[]).forEach(function(x){
       var o=meter(x); if(!o) return;
       var c=Number(x.cant)||0; if(!(c>0)) return;
-      var hecho=enProduccion(x);
+      var hecho=enProduccion(x), salio=stockSalio(p);
       // VENTA: cuenta se haya entregado o no — lo que faltó también se vendió (§4co)
       if(fs>=desde && fs<=hoy){ o.vendidos+=c; o.sem[Math.min(3, Math.max(0, Math.floor(stockDias(fs,hoy)/7)))]+=c; }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
-      if(p.entregado){ if(!hecho && conteo && fs>=conteo) o.salidas+=c; return; }
+      // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
+      // haya pasado — es la contradicción con el conteo, y sin reprogramar se avisa aparte.
+      if(!p.entregado && !hecho && x.chk==='no'){ o.noHay+=c; if(fs>o.noHayF) o.noHayF=fs; if(salio) o.noHayViejo+=c; }
+      if(salio){
+        // Ya salió del depósito (entregado, o de un día que pasó). Lo hecho a pedido y lo
+        // tildado ✗ no hay no salieron de acá.
+        if(!hecho && x.chk!=='no'){ if(conteo && fs>=conteo) o.salidas+=c; if(!p.entregado && !esVentaTienda(p)) o.atrasados+=c; }
+        return;
+      }
       if(hecho){ o.aFab+=c; return; }         // lo trae la fábrica para ese cliente: no sale del depósito
-      var fd=p.fecha||hoy;
-      if(fd<hoy){ fd=hoy; o.atrasados+=c; }   // sin fecha o con la fecha vencida: consume hoy
+      var fd=p.fecha||hoy;                    // sin fecha: consume hoy
       o.comp+=c; o.compPor[fd]=(o.compPor[fd]||0)+c;
-      if(x.chk==='no'){ o.noHay+=c; if(fs>o.noHayF) o.noHayF=fs; }
     });
   });
   (STOCK.e||[]).forEach(function(x){ if(x&&x.k&&x.fab) ultFab(grupo(x.k), x.f, x.fab); });
@@ -10582,8 +10600,10 @@ function renderStock(){
                 : ('<b style="font-size:1.05em">'+o.deposito+'</b>'))+
           (o.contradice?('<br><span style="color:var(--red);font-size:.9em">⚠️ un chofer marcó ✗ no hay — contá de nuevo</span>'):'')+'</td>'+
         '<td>'+(o.enCamino?('<b>'+o.enCamino+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
-        '<td>'+(o.comp?('<b>'+o.comp+'</b>'+(o.compPronto?('<br><span style="color:#8a1c24;font-size:.92em">'+o.compPronto+' en los próximos '+o.lead+' días</span>'):'')+(o.atrasados?('<br><span style="color:#7c4b00;font-size:.9em">'+o.atrasados+' con la fecha vencida</span>'):'')):'<span style="color:var(--muted)">—</span>')+
-          (o.aFab?('<br><span style="color:#a67c00;font-size:.9em">+'+o.aFab+' que trae la fábrica para clientes</span>'):'')+'</td>'+
+        '<td>'+(o.comp?('<b>'+o.comp+'</b>'+(o.compPronto?('<br><span style="color:#8a1c24;font-size:.92em">'+o.compPronto+' en los próximos '+o.lead+' días</span>'):'')):'<span style="color:var(--muted)">—</span>')+
+          (o.noHayViejo?('<br><span style="color:#8a1c24;font-size:.9em">'+o.noHayViejo+' ✗ no hay de días pasados, sin reprogramar</span>'):'')+
+          (o.aFab?('<br><span style="color:#a67c00;font-size:.9em">+'+o.aFab+' que trae la fábrica para clientes</span>'):'')+
+          (o.atrasados?('<br><span style="color:var(--muted);font-size:.85em">'+o.atrasados+' de días pasados sin marcar ✓: se dan por entregados</span>'):'')+'</td>'+
         '<td>'+(o.deposito==null ? '<span style="color:var(--muted)">—</span>'
                 : o.dias!=null ? ('<b>'+fmtFechaCorta(o.corte)+'</b><br><span style="font-size:.92em;color:'+(o.aviso==='urgente'?'var(--red)':'var(--muted)')+'">'+stockEnDias(o.dias)+'</span>')
                 : ('<span style="color:var(--green);font-weight:700">no en '+STOCK_HORIZONTE+' días</span>'))+'</td>'+
@@ -10610,6 +10630,7 @@ function renderStock(){
     '🚨 <b>PEDIR YA</b> = se corta antes de que la fábrica pueda llegar. &nbsp; 🏭 <b>Pedir esta semana</b> = se corta dentro de lo que tarda la fábrica más el margen (2 días si la venta es pareja, hasta 5 si es a los saltos).<br>'+
     '🚚 <b>Ya pedido</b> = anotaste el pedido con «🏭 Pedí a fábrica» y con eso alcanza; cuando llegue, tocá «📥 Llegó de fábrica» — así el panel aprende cuánto tarda cada fábrica. &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
     '«Vende por día» = todo lo vendido en los últimos '+STOCK_VENTANA+' días (entregado o no) ÷ '+STOCK_VENTANA+'. «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
+    'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
     'Lo que llega para un pedido puntual (marcado 🏭 en la ficha) NO se anota acá: va derecho al cliente y no pasa por el depósito.</div>';
   body.innerHTML=html;
 }
