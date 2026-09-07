@@ -10751,7 +10751,7 @@ function stockData(){
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
       vendidos:0, nVentas:0, ventas:{}, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
-      salidas:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
+      salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
   var meter=function(x){
@@ -10791,6 +10791,7 @@ function stockData(){
         return;
       }
       if(hecho){ o.aFab+=c; return; }         // lo trae la fábrica para ese cliente: no sale del depósito
+      if(x.chk==='ok') o.confirmadoAqui+=c;
       var fd=p.fecha||hoy;                    // sin fecha: consume hoy
       o.comp+=c; o.compPor[fd]=(o.compPor[fd]||0)+c;
     });
@@ -10826,13 +10827,16 @@ function stockData(){
        futura. Lo vendido y sin entregar (`comp`) sigue contando igual — eso no se estima,
        está vendido. */
     o.porDiaReal=o.vendidos/STOCK_VENTANA;
-    o.rota=(o.nVentas>=STOCK_VENTAS_MIN);
+    o.rotacion=(o.nVentas<STOCK_VENTAS_MIN || o.vendidos<=4)?'baja':(o.vendidos>=28 && o.sem.filter(function(n){return n>0;}).length>=3?'alta':'media');
+    o.rota=(o.rotacion!=='baja');
     o.porDia=o.rota?o.porDiaReal:0;
     o.deposito=stockDeposito(k, o.salidas);
     o.enCorte=((STOCK.c.u||{})[k]!=null);   // si no, el 0 sale de «no figura en el corte»
     o.fab=o.fabUlt.fab||'';
     var lt=T.de(o.fab); o.lead=lt.dias; o.leadMedido=lt.medido; o.leadN=lt.n; o.leadPrestado=!!lt.prestado;
     o.margen=stockMargen(o);
+    o.cubrir=o.rotacion==='alta'?STOCK_CUBRIR:(o.rotacion==='media'?3:0);
+    o.revisarStock=o.deposito!=null && (o.confirmadoAqui||0)>Math.max(0,o.deposito);
     o.compPronto=0; Object.keys(o.compPor).forEach(function(f){ if(stockDias(hoy,f)<=o.lead) o.compPronto+=o.compPor[f]; });
     o.pedidos.sort(function(a,b){ return a.llega<b.llega?-1:(a.llega>b.llega?1:0); });
     var pr=stockProyectar(o); o.corte=pr.corte; o.dias=pr.dias; o.saldoHoy=pr.saldoHoy; o.sinCamino=pr.sinCamino;
@@ -10886,6 +10890,8 @@ function stockMargen(o){
   if(!(m>0)) return STOCK_COLCHON;
   var v=0; for(var i=0;i<4;i++) v+=(o.sem[i]-m)*(o.sem[i]-m);
   o.cv=Math.sqrt(v/4)/m;
+  if(o.rotacion==='baja') return 0;
+  if(o.rotacion==='media') return STOCK_COLCHON;
   return STOCK_COLCHON+Math.round(STOCK_COLCHON*Math.min(o.cv,1.5));
 }
 function stockVentaTxt(o){ return o.cv>=1 ? 'venta a los saltos' : o.cv>=0.5 ? 'venta despareja' : 'venta pareja'; }
@@ -10916,6 +10922,7 @@ function stockMesesSobra(o){ return (o.porDiaReal>0) ? ((o.deposito+o.enCamino-o
 /* Qué hay que hacer con este producto. Pocas respuestas, para que se entienda de un
    vistazo — un semáforo con seis colores no lo mira nadie. */
 function stockAvisoDe(o){
+  if(o.revisarStock) return 'revisar';
   if(o.deposito==null) return o.vendidos>0 ? 'sincontar' : '';
   var falta = (o.dias!=null && o.dias<o.lead+o.margen);
   /* Falta acá, pero en la fábrica hay de sobra: no es un pedido a fábrica, es mandar la
@@ -10929,10 +10936,10 @@ function stockAvisoDe(o){
   if(o.sobra) return 'sobra';
   /* 📦 Se vendió, pero en una o dos entregas: no hay ritmo que reponer (§4da). No es una
      alarma, es una aclaración — si no, el renglón decía «✓ alcanza» teniendo cero. */
-  if(!o.rota && o.vendidos>0) return 'unico';
+  if(!o.rota && o.vendidos>0) return o.nVentas<STOCK_VENTAS_MIN?'unico':'lenta';
   return '';
 }
-function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, sobra:0 }[o.aviso]||0; }
+function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, revisar:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, lenta:1, sobra:0 }[o.aviso]||0; }
 /* " · 8 en MORENO" — dónde está lo que se puede ir a buscar. */
 function stockOtrosTxt(o){
   return Object.keys(o.otrosAlm||{}).map(function(nm){ return o.otrosAlm[nm]+' en '+stockAlmCorto(nm); }).join(' · ');
@@ -10958,8 +10965,8 @@ function stockAlmCorto(nm){
 /* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
    si es más), menos lo que hay y lo que viene. */
 function stockCuantoPedir(o){
-  if(o.deposito==null || o.descont) return 0;       // lo discontinuado no se pide: no lo hacen más
-  var necesario=Math.max(o.comp, o.porDia*(o.lead+o.margen+STOCK_CUBRIR));
+  if(o.deposito==null || o.descont || o.revisarStock) return 0;       // lo discontinuado no se pide: no lo hacen más
+  var necesario=Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)));
   var falta=Math.ceil(necesario-(o.deposito+o.enCamino)-1e-9);
   if(o.aviso==='urgente'||o.aviso==='pedir') return Math.max(1,falta);
   return Math.max(0,falta);
@@ -11031,6 +11038,7 @@ function abrirStockPedidos(k){
       lista.map(function(r){var p=r.p;return '<tr><td><b>'+esc(p.cliente||'Sin cliente')+'</b><br>'+esc(p.oc?ocEtiq(p.oc):(p.nota?'Nota '+p.nota:p.id))+'</td><td>'+esc(p.fecha?fmtFecha(p.fecha):'Sin fecha')+'</td><td>'+r.u+'</td><td>'+esc(p.entregado?'Entregado':(stockSalio(p)&&r.marcas.indexOf('No hay')<0?'Fecha pasada: se considera salido':r.marcas.join(' · ')))+'</td><td><button class="btn btn-sm" data-id="'+esc(p.id)+'" data-k="'+esc(k)+'" onclick="stockAbrirPedidoDesdeLista(this.dataset.id,this.dataset.k)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div>';
   }
   var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
+  if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'primero revisar la diferencia entre las marcas y el inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
   [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
@@ -11101,6 +11109,8 @@ function renderStock(){
   };
   html+=renderRevisionFija();
   var badge=function(o){
+    if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar existencias</button>';
+    if(o.aviso==='lenta') return '<span class="badge b-gray">Poca rotación · solo contra pedido</span>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
       'Llamá a la fábrica y anotá acá lo que pediste: el producto deja de avisar y el panel aprende cuánto tarda.');
     if(o.aviso==='pedir')   return bpedir(o,'🏭 Pedir esta semana','background:var(--amber-lt,#fff4d6);color:#7c4b00;border:1px solid #f0d264',
@@ -11116,6 +11126,8 @@ function renderStock(){
   var chico=function(t,color){ return '<div style="font-size:.78rem;color:'+(color||'var(--muted)')+';margin-top:3px;line-height:1.35">'+t+'</div>'; };
   var porque=function(o){
     var q=o.pedidos[0];
+    if(o.revisarStock) return chico('Hay <b>'+o.confirmadoAqui+'</b> unidades marcadas como disponibles, pero el inventario indica <b>'+stockUnid(Math.max(0,o.deposito))+'</b>. Revisá el conteo o la marca antes de fabricar.','#7c4b00');
+    if(o.aviso==='lenta') return chico(o.vendidos+' unidades en '+STOCK_VENTANA+' días: no se añade reserva por previsión. Se cubren únicamente faltantes de pedidos confirmados.');
     if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.pedir+'</b> ya'+(o.enOtros?('; hay '+stockOtrosTxt(o)+' para traer ya mismo'):''),'#8a1c24');
     if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.pedir+'</b> esta semana'+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
     if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
@@ -11144,12 +11156,12 @@ function renderStock(){
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
-          ((!o.rota&&o.vendidos>0)?'<br><b style="color:#7c4b00">pedido único: no se estima ritmo</b>':'')+
+          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?'Poca rotación: solo pedidos confirmados':o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
                 : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'+
-                   ((!o.enCorte&&o.deposito===0)?('<br><span style="color:var(--muted);font-size:.88em">no figura en el corte'+(o.enOtros?'':' → hay que fabricarlo')+'</span>'):'')))+
+                   ((!o.enCorte&&o.deposito===0)?('<br><span style="color:var(--muted);font-size:.88em">no figura en el corte'+(o.enOtros?'':'')+'</span>'):'')))+
           (o.contradice?('<br><span style="color:var(--red);font-size:.9em">⚠️ un chofer marcó ✗ no hay — contá de nuevo</span>'):'')+'</td>'+
         (d.otrosAlm.length?('<td>'+(o.enOtros?('<b>'+stockUnid(o.enOtros)+'</b><br><span style="color:var(--muted);font-size:.9em">'+esc(stockOtrosTxt(o))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'):'')+
         '<td>'+(o.enCamino?('<b>'+stockUnid(o.enCamino)+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
