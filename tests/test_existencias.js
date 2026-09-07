@@ -172,6 +172,31 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('…pero avisa igual que hay 1 en la fábrica, y que no alcanza',
       /hay 1 en Moreno/.test(r.texto) && /no alcanza/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);
 
+  // ══ 4b. Lo que NO está en el reporte está en CERO, no «sin contar» ════════
+  console.log('\n── 4b. Lo que no figura en el corte ──');
+  r = await page.evaluate(() => {
+    /* El reporte lo dice él mismo: «(Productos con existencia <> 0)». Entonces un producto
+       DEL CATÁLOGO que no aparece está agotado; uno que el catálogo no conoce puede estar
+       ahí con otro nombre, y ese sí queda sin contar (§4cs). */
+    var kCat=stockClave({codigo:'CH2299'});                       // DYNAMIC PEDIC 200x200: en el catálogo, no en el archivo
+    var kNo =stockClave({desc:'MORFEO',medida:'140x190'});        // fuera del catálogo y del archivo
+    return { solo0:STOCK.c.solo0, enCorte:(STOCK.c.u||{})[kCat]!=null,
+             cat:stockDeposito(kCat), noCat:stockDeposito(kNo),
+             esDelCatalogo:stockClaveDeCatalogo(kCat), noEsDelCatalogo:stockClaveDeCatalogo(kNo) };
+  });
+  chk('el panel se da cuenta de que el reporte solo lista lo que tiene existencia', r.solo0===true);
+  chk('⚠️ un producto DEL CATÁLOGO que no figura en el corte está en CERO, no «sin contar»',
+      r.enCorte===false && r.cat===0 && r.esDelCatalogo===true, 'depósito='+JSON.stringify(r.cat));
+  chk('⚠️ …pero uno que el catálogo no conoce sigue «sin contar»: puede estar con otro nombre',
+      r.noCat===null && r.noEsDelCatalogo===false, JSON.stringify(r.noCat));
+  r = await page.evaluate(() => {
+    STOCK.c.solo0=false;
+    var v=stockDeposito(stockClave({codigo:'CH2299'}));
+    STOCK.c.solo0=true;
+    return v;
+  });
+  chk('…y si el reporte NO lo declara, se vuelve a no inventar nada', r===null, JSON.stringify(r));
+
   // ══ 5. Un archivo que no es de existencias ════════════════════════════════
   console.log('\n── 5. El archivo equivocado ──');
   r = await page.evaluate(() => {

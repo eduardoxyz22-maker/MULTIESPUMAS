@@ -10141,6 +10141,7 @@ function leerStock(p){
       if(o.c && typeof o.c==='object'){
         d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{};
         if(o.c.hora) d.c.hora=String(o.c.hora); if(o.c.inc) d.c.inc=true; if(o.c.alm) d.c.alm=String(o.c.alm);
+        if(o.c.solo0) d.c.solo0=true;
       }
       if(o.e && o.e.length) d.e=o.e.filter(function(x){ return x && x.k; });
       if(o.p && o.p.length) d.p=o.p.filter(function(x){ return x && x.k; });
@@ -10240,6 +10241,20 @@ function stockEnCatalogo(x){
   }
   if(!mejor) return null;
   return { code:mejor.code, d:mejor.d, m:(me?mejor.m:''), por:'nombre' };
+}
+/* Las claves canónicas del catálogo. Sirven para saber si un producto que NO está en el
+   Excel es «cero» (el catálogo lo conoce, el reporte lista todo lo que tiene existencia,
+   luego está agotado) o «sin contar» (nadie sabe con qué nombre estaría). */
+var STOCK_CAT_KEYS=null;
+function stockClaveDeCatalogo(k){
+  if(!STOCK_CAT_KEYS){
+    STOCK_CAT_KEYS={};
+    stockCatalogo().forEach(function(c){
+      STOCK_CAT_KEYS[stockNorm(c.d)+'|'+stockNorm(c.m)]=1;
+      STOCK_CAT_KEYS[stockNorm(c.d)+'|']=1;
+    });
+  }
+  return !!STOCK_CAT_KEYS[k];
 }
 var STOCK_MEMO={};   // desc|medida|código → {auto, cat}. Se calcula una vez por nombre distinto.
 function stockInfo(x){
@@ -10343,7 +10358,14 @@ function stockDesdeSalidas(){
 }
 function stockDeposito(k, salidas){
   var base=Number((STOCK.c.u||{})[k]);
-  if(!isFinite(base)) return null;                  // nunca se contó: no se inventa
+  if(!isFinite(base)){
+    /* No está en el corte. Si el reporte declara que lista TODO lo que tiene existencia y
+       el catálogo conoce este producto, entonces está en CERO — no «sin contar» (§4cs).
+       Para lo que el catálogo no conoce se sigue sin inventar: puede estar en el archivo
+       con otro nombre, y ahí lo que hace falta es unirlo a mano. */
+    if(!(STOCK.c.solo0 && STOCK.c.f && stockClaveDeCatalogo(k))) return null;
+    base=0;
+  }
   var s=(salidas==null) ? stockSalidas(k, stockDesdeSalidas(), '') : salidas;
   return base + stockEntradas(k) - s;
 }
@@ -10472,6 +10494,7 @@ function stockData(){
     var o=g[k];
     o.porDia=o.vendidos/STOCK_VENTANA;
     o.deposito=stockDeposito(k, o.salidas);
+    o.enCorte=((STOCK.c.u||{})[k]!=null);   // si no, el 0 sale de «no figura en el corte»
     o.fab=o.fabUlt.fab||'';
     var lt=T.de(o.fab); o.lead=lt.dias; o.leadMedido=lt.medido; o.leadN=lt.n; o.leadPrestado=!!lt.prestado;
     o.margen=stockMargen(o);
@@ -10704,7 +10727,8 @@ function renderStock(){
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+(o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+'</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
-                : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'))+
+                : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'+
+                   ((!o.enCorte&&o.deposito===0)?'<br><span style="color:var(--muted);font-size:.88em">no figura en el corte</span>':'')))+
           (o.contradice?('<br><span style="color:var(--red);font-size:.9em">⚠️ un chofer marcó ✗ no hay — contá de nuevo</span>'):'')+'</td>'+
         (d.otrosAlm.length?('<td>'+(o.enOtros?('<b>'+stockUnid(o.enOtros)+'</b><br><span style="color:var(--muted);font-size:.9em">'+esc(stockOtrosTxt(o))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'):'')+
         '<td>'+(o.enCamino?('<b>'+stockUnid(o.enCamino)+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
@@ -11134,7 +11158,7 @@ function stockAsignar(){
     im[o.k]=Math.max(0, o.enOtros||0);
   });
   var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0};
-  var faltaPorProd={}, imPorProd={};
+  var faltaPorProd={}, imPorProd={}, sinPorProd={};
   revStkPedidos().forEach(function(p){
     var lineas=[];
     (p.productos||[]).forEach(function(x,i){
@@ -11145,7 +11169,10 @@ function stockAsignar(){
       tot.lineas++;
       if(dep[k]==null && !im[k]){                          // nunca se contó: no se inventa
         tot.sinContar++;
-        lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:'', sinContar:true});
+        var nomS=(o.desc?stockNombre(o):(x.desc||''));
+        if(!sinPorProd[k]) sinPorProd[k]={k:k, nom:nomS, cod:(o.cod||x.codigo||''), cat:!!(o.cat), u:0, ped:[]};
+        sinPorProd[k].u+=c; if(sinPorProd[k].ped.length<12) sinPorProd[k].ped.push(p);
+        lineas.push({i:i, k:k, nom:nomS, cant:c, antes:antes, ahora:'', sinContar:true});
         return;
       }
       var deDep=Math.min(dep[k]||0, c), resto=c-deDep;
@@ -11190,7 +11217,7 @@ function stockAsignar(){
   });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
   return { pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
-           sobraDep:dep, sobraIM:im };
+           sinContar:ord(sinPorProd), sobraDep:dep, sobraIM:im };
 }
 /* «1 acá · 2 recoger de Moreno · 1 fabricar» — de dónde saldría cada unidad. */
 function revStkDesglose(l){
@@ -11270,6 +11297,20 @@ function renderStockRevisar(){
       '<b style="color:#8a1c24">✗ No alcanza — hay que mandar a fabricar:</b> '+
       R.faltan.map(function(o){ return '<b>'+esc(o.nom)+'</b> × '+o.u; }).join(' · ')+
       ' <button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;margin-left:6px" onclick="copiarStock()">📋 Copiar pedido a fábrica</button></div>';
+  }
+  if(R.sinContar && R.sinContar.length){
+    html+='<div style="margin-top:10px;background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:9px;padding:10px 13px;font-size:.84rem">'+
+      '<b>❔ Sin contar — el panel no los toca:</b> '+R.sinContar.length+' producto'+(R.sinContar.length===1?'':'s')+
+      ' que no aparecen en ningún Excel de almacén.<br>'+
+      '<div style="margin-top:5px;max-height:22vh;overflow:auto">'+
+      R.sinContar.map(function(o){
+        return '<div style="padding:3px 0;border-bottom:1px solid var(--gray-md)"><b>'+esc(o.nom)+'</b> × '+o.u+
+          (o.cod?(' <span style="color:var(--muted)">cód '+esc(o.cod)+'</span>'):'')+
+          ' <span style="color:var(--muted)">· '+o.ped.length+' pedido'+(o.ped.length===1?'':'s')+'</span>'+
+          (o.cat?'':(' <button class="btn btn-sm" style="padding:2px 8px;font-size:.7rem" data-k="'+esc(o.k)+'" onclick="closeModal();abrirStockUnir(this.getAttribute(\'data-k\'))" title="Si en el almacén está con otro nombre, unilos y el panel lo va a contar.">🔗 unir</button>'))+
+          '</div>';
+      }).join('')+'</div>'+
+      '<div style="color:var(--muted);margin-top:6px">Si el producto está en el almacén <b>con otro nombre</b>, tocá 🔗 unir. Si de verdad no lo tiene, hay que agregarlo al Excel o dejarlo así.</div></div>';
   }
   html+='<div id="revstk-prog" style="font-size:.82rem;color:var(--muted);margin-top:10px"></div>'+
     '<div class="modal-actions" style="margin-top:12px">'+
@@ -11422,6 +11463,11 @@ function existLeer(filas){
     return {error:'Ese es el reporte de VENTAS, no el de existencias. En el sistema de Moreno sacá «EXISTENCIAS ALMACEN» eligiendo UN almacén.'};
   if(!/EXISTENCIAS/.test(cab))
     return {error:'No parece el reporte «EXISTENCIAS ALMACEN». Fijate que sea ese y que salga con los títulos.'};
+  /* ⚠️ EL REPORTE LO DICE ÉL MISMO: «(Productos con existencia <> 0)». O sea que lo que NO
+     figura en el archivo no es «no se sabe cuánto hay»: es CERO. Sin esto, cada producto
+     del catálogo que se agotó quedaba «sin contar» y el panel no lo tildaba ni avisaba —
+     justo el que más falta hace (§4cs). */
+  var solo0=/EXISTENCIA\s*<>\s*0|CON EXISTENCIA/.test(cab);
 
   var fecha='', almIni='', almFin='';
   for(var i=0;i<Math.min(filas.length,14);i++){
@@ -11491,7 +11537,7 @@ function existLeer(filas){
   }
   if(!items.length) return {error:'No encontré ningún producto con existencia en el archivo.'};
   return { fecha:fecha||todayStr(), sinFecha:!fecha, almacen:alm, items:items, total:total,
-           repetidos:repetidos, malos:malos, colCant:cCant,
+           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0,
            esLog: normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log',
            conocido: normNombre(alm)===normNombre(STOCK_ALM_LOG) || !!(STOCK.al||{})[alm] };
 }
@@ -11581,10 +11627,10 @@ function confirmarImportExist(){
     /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
     delete STOCK.g[R.almacen];
     Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
-    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen };
+    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0 };
     STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
   }else{
-    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'' };
+    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0 };
   }
   /* 📜 HISTORIAL DE CORTES. Solo el resumen —fecha, hora, cuántos productos y unidades—,
      no los items: la fila del sistema es UNA celda de la planilla y guardar cada inventario

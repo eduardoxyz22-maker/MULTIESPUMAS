@@ -4505,6 +4505,45 @@ restan de Moreno** — si no, se contarían dos veces hasta el próximo Excel.
 Tests actualizados por los textos nuevos (`test_stock`, `test_existencias`, `test_revstock`),
 cada uno con la nota de qué cambió y por qué, como manda el LEEME.
 
+## 4cs. ❔ «20 sin contar»: qué eran, y por qué la mayoría estaban en cero (2026-09-07)
+
+Con el almacén cargado, el panel del robot decía **«20 sin contar»** y el dueño preguntó dos
+cosas seguidas: *"¿y qué son esos 20 sin contar?"* y *"¿cómo sé qué productos son, si no me
+deja ver el listado siquiera?"*. Las dos tenían razón, y por motivos distintos.
+
+### 1. El número estaba y la lista no
+
+Un contador sin lista no sirve para nada: dice que hay un problema y esconde cuál. Ahora la
+ventana de revisión lista los productos sin contar —nombre, cuántas unidades, en cuántos
+pedidos— con su botón **🔗 unir** al lado, que es lo que casi siempre hay que hacer con
+ellos.
+
+### 2. La mitad no estaban «sin contar»: estaban en CERO
+
+El reporte del sistema de Moreno **lo dice él mismo**, en la fila 4:
+`(Productos con existencia <> 0)`. Es decir que **lista todo lo que tiene stock**. Entonces
+un producto que no figura en el archivo no es «no se sabe cuánto hay»: **está agotado**.
+
+Yo lo estaba tratando como desconocido, y el efecto era el peor posible: **justo el producto
+que se acabó era el que el panel no tildaba ni avisaba**. El mismo error de fondo que §4co,
+en otro lugar.
+
+La regla nueva (`stockDeposito`), con dos condiciones para no pasarse de listo:
+
+- el reporte tiene que **declarar** que solo lista lo que tiene existencia (`STOCK.c.solo0`,
+  detectado del propio archivo — si algún día sacan el reporte completo, esto se apaga solo), y
+- el producto tiene que estar **en el catálogo** (`stockClaveDeCatalogo`): así se sabe con qué
+  nombre habría aparecido. Lo que el catálogo no conoce puede estar en el Excel con otro
+  nombre, así que ahí se sigue sin inventar nada — y para eso está 🔗 unir.
+
+Probado con el archivo real: `DYNAMIC PEDIC 200x200` (en el catálogo, no en el archivo) pasa
+a **0** y el panel lo marca ✗ no hay; `MORFEO` y `RECOGER POCKET DE MAXIKING` (que el catálogo
+no conoce) siguen sin contar **y ahora se ven en la lista**. En la tabla, un cero que sale de
+esta regla lo dice: «no figura en el corte».
+
+`tests/test_existencias.js` — **47 checks** (4 nuevos, incluido que si el reporte NO declara
+lo de la existencia se vuelve a no inventar nada).
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
