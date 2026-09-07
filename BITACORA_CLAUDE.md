@@ -4588,6 +4588,68 @@ El índice se rehace cuando cambia el inventario (`stockOlvidarIndice`), no en c
 `tests/test_existencias.js` — **50 checks**, con el caso BI RELAX / BiRELAX tal cual apareció
 en los archivos reales.
 
+## 4cu. 📏 «2,5 plz» ES «160x190» — y unir tiene que ser automático (2026-09-07)
+
+Dos correcciones del dueño, seguidas, sobre lo mismo: *"viscolástico 2.5 es el viscolástico
+160x190"* y después *"no debería unirse manual, debería ser automático; por algo tenés las
+tablas de medidas y sus nombres en plazas, plz o P"*.
+
+Las dos veces tenía razón, y las dos apuntaban a la misma pereza mía: dejarle a una persona
+un trabajo que el panel puede hacer con datos que ya tiene.
+
+### 1. Plazas y centímetros eran dos medidas distintas
+
+`MEDIDAS` y `MEDIDAS_LEGACY` estaban en el código **desde siempre y en el mismo orden**
+—90x190/105x190/140x190/160x190/180x190/200x200 y 1/1.5/2/2.5/3/3.5 plz— y nadie había unido
+las dos listas. Resultado: un pedido cargado en plazas y otro en centímetros eran **dos
+productos**; ninguno rotaba lo suficiente y ninguno encontraba su stock.
+
+No lo di por sabido: lo verifiqué contra los archivos del propio dueño, donde el Excel de
+ROHO escribe las dos formas juntas en el mismo nombre.
+
+| | veces que aparece en sus archivos |
+|---|---|
+| 1 plz = 90x190 | 2 |
+| 1,5 plz = 105x190 | 6 |
+| **2 plz = 140x190** | **15** |
+| **2,5 plz = 160x190** | **8** |
+| 3 plz = 180x190 | 6 |
+| 3,5 plz = 200x200 | (completa la serie que ya estaba en las dos listas) |
+
+`normMedida` traduce, así que la equivalencia vale en **todo** el panel —clave de producto,
+catálogo, ranking, medidas especiales— y no solo en el stock. `medidaDeTexto` también saca la
+medida cuando viene en plazas adentro del nombre y sin centímetros.
+
+### 2. El nombre al que le falta una palabra
+
+Su caso: el pedido dice `COLCHON ORO VISCOLASTICO 2,5 PLZ 160X190CM HEAVEN` y el catálogo
+`ORO ANATOMICO VISCOLASTICO 160x190`. Falta **ANATOMICO**, así que la regla de §4co (todas
+las palabras del catálogo adentro del nombre) no lo encontraba y quedaba para 🔗 unir a mano.
+
+Ahora se une solo, pero **con el freno puesto**, porque acá el panel adivina:
+
+- tiene que haber **medida**, y coincidir — sin medida no se arriesga nada;
+- al menos **dos palabras en común**, así «CARIOCA» a secas nunca se une a CARIOCA PREMIER ni
+  a CARIOCA RIO, que son colchones distintos;
+- y un **ganador claro**: el doble de palabras en común que cualquier otro candidato.
+
+Se marca `por:'parecido'` y la tabla lo muestra con **≈ (unidos por parecido)**, para poder
+desconfiar y separarlos si hace falta. Comprobado que **no** une CARIOCA sola, PILLOW sola, ni
+confunde ESPECIAL ORTOPEDICO con ESPECIAL SEMIORTOPEDICO ni con ORTOPEDICO D/C.
+
+Con esto, el viscolástico del dueño encuentra sus **3 unidades** en el almacén, sin que nadie
+toque nada.
+
+### Y de yapa, 🔗 unir dejó de ser una lista alfabética de 180 productos
+
+Cuando algo igual queda sin unir, el desplegable ahora ordena por **parecido** —palabras en
+común, misma medida, que tenga stock—, marca los mejores con ⭐ y avisa arriba a cuáles se
+parece. Buscar a mano entre 180 nombres no lo hace nadie; ese era el motivo real por el que
+el botón no se usaba.
+
+`tests/test_stock.js` — **101 checks** (8 nuevos, incluidos los que comprueban lo que NO se
+debe unir). Batería: 40 suites, 1521 checks.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

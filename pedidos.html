@@ -1830,7 +1830,19 @@ var MEDIDAS_LEGACY = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz'];
    PERFECTAMENTE normales quedaban marcadas como "especiales": el pedido se pintaba de
    color, entraba en el filtro 🔵 Especiales y confundía a producción. Se normaliza antes
    de comparar: minúsculas, ×/X → x, y sin espacios. */
-function normMedida(m){ return String(m==null?'':m).trim().toLowerCase().replace(/[×✕✖]/g,'x').replace(/\s+/g,''); }
+/* «2,5 PLZ» y «160X190» son LA MISMA MEDIDA (§4cu). El dueño: *"viscolástico 2.5 es el
+   viscolástico 160x190"*. Confirmado con sus propios archivos —el Excel de ROHO escribe las
+   dos cosas juntas—: 1→90x190 (2 veces), 1.5→105x190 (6), 2→140x190 (15), 2.5→160x190 (8),
+   3→180x190 (6); 3.5→200x200 completa la serie que ya estaba en MEDIDAS/MEDIDAS_LEGACY.
+   Sin esto, un pedido cargado en plazas y otro en centímetros eran dos productos distintos:
+   ninguno de los dos rotaba lo suficiente y ninguno encontraba su stock. */
+var MEDIDA_PLZ={'1':'90x190','1.5':'105x190','2':'140x190','2.5':'160x190','3':'180x190','3.5':'200x200'};
+function normMedida(m){
+  var t=String(m==null?'':m).trim().toLowerCase().replace(/[×✕✖]/g,'x').replace(/\s+/g,'');
+  var p=t.match(/^(\d+(?:[.,]\d+)?)(?:plz|plazas|plaza|pl|p)\.?$/);
+  if(p){ var k=p[1].replace(',','.'); if(MEDIDA_PLZ[k]) return MEDIDA_PLZ[k]; }
+  return t;
+}
 function esMedidaConocida(m){
   var k=normMedida(m); if(!k) return false;
   for(var i=0;i<MEDIDAS.length;i++) if(normMedida(MEDIDAS[i])===k) return true;
@@ -6585,7 +6597,11 @@ function precioTipico(codigo){
 function medidaDeTexto(t){
   var s=String(t==null?'':t).toLowerCase().replace(/[×✕✖]/g,'x');
   var m=s.match(/(\d{2,3})\s*x\s*(\d{2,3})/);       // "180X200CM", "160 x 190"
-  return m ? (m[1]+'x'+m[2]) : '';
+  if(m) return m[1]+'x'+m[2];
+  // Sin centímetros, la medida puede venir en plazas: «COLCHON ORO VISCOLASTICO 2,5 PLZ».
+  var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?)\b/);
+  if(p){ var k=p[1].replace(',','.'); if(MEDIDA_PLZ[k]) return MEDIDA_PLZ[k]; }
+  return '';
 }
 function limpiaNombreProd(t){
   var s=String(t==null?'':t);
@@ -10241,8 +10257,31 @@ function stockEnCatalogo(x){
     if(!todas) continue;
     if(!mejor || c.n>mejor.n || (c.n===mejor.n && c.nd===nd && mejor.nd!==nd)) mejor=c;
   }
-  if(!mejor) return null;
-  return { code:mejor.code, d:mejor.d, m:(me?mejor.m:''), por:'nombre' };
+  if(mejor) return { code:mejor.code, d:mejor.d, m:(me?mejor.m:''), por:'nombre' };
+
+  /* ⚠️ ÚLTIMO RECURSO: EL NOMBRE INCOMPLETO (§4cu). El dueño: *"no debería unirse manual,
+     debería ser automático"*. Caso real suyo: el pedido dice «COLCHON ORO VISCOLASTICO
+     2,5 PLZ 160X190CM HEAVEN» y el catálogo «ORO ANATOMICO VISCOLASTICO 160x190» — le falta
+     ANATOMICO, así que la regla de arriba (todas las palabras del catálogo adentro del
+     nombre) no lo encuentra.
+     Se une igual, pero solo con el freno puesto, porque acá se está ADIVINANDO:
+       · tiene que haber MEDIDA, y coincidir — sin medida no se arriesga nada;
+       · al menos DOS palabras en común, así «CARIOCA» solo nunca se une a
+         «CARIOCA PREMIER» ni a «CARIOCA RIO», que son colchones distintos;
+       · y un ganador CLARO: el doble de palabras en común que cualquier otro candidato.
+     Se marca `por:'parecido'` y la pantalla lo muestra con «≈», para poder desconfiar. */
+  if(!me) return null;
+  var mejorP=null, segundo=0;
+  for(var j=0;j<cat.length;j++){
+    var e=cat[j]; if(e.nm!==me) continue;
+    var com=0; for(var w2 in e.toks){ if(tk.set[w2]) com++; }
+    if(com<2) continue;
+    if(!mejorP || com>mejorP.com){ segundo=mejorP?mejorP.com:0; mejorP={e:e, com:com}; }
+    else if(com>segundo) segundo=com;
+  }
+  if(mejorP && mejorP.com>=2*Math.max(1,segundo) && mejorP.com>segundo)
+    return { code:mejorP.e.code, d:mejorP.e.d, m:mejorP.e.m, por:'parecido' };
+  return null;
 }
 /* Las claves canónicas del catálogo. Sirven para saber si un producto que NO está en el
    Excel es «cero» (el catálogo lo conoce, el reporte lista todo lo que tiene existencia,
@@ -10483,6 +10522,7 @@ function stockData(){
   var meter=function(x){
     var info=stockInfo(x); if(info.k==='|') return null;
     var o=grupo(info.k), nom=stockNombreDe(info,x), esNativo=(info.k===info.auto);
+    if(info.cat && info.cat.por==='parecido') o.parecido=true;
     if(esNativo && !o.nativo){ o.nativo=true; o.desc=nom.desc; o.medida=nom.medida; o.cod=nom.cod||o.cod; o.cat=!!info.cat; }
     else if(!o.cod && nom.cod) o.cod=nom.cod;
     var crudo=String((x&&x.desc)||'').replace(/\s+/g,' ').trim();
@@ -10764,7 +10804,7 @@ function renderStock(){
       return '<tr'+(o.aviso==='urgente'?' style="background:var(--red-lt)"':'')+'>'+
         '<td><b>'+esc(stockNombre(o))+'</b>'+
           (o.cod?('<br><span style="color:var(--muted);font-size:.92em">cód '+esc(o.cod)+'</span>'):'')+
-          (o.otros.length?('<br><span style="color:var(--muted);font-size:.8em">también: '+esc(o.otros.join(' / '))+'</span>'):'')+
+          (o.otros.length?('<br><span style="color:var(--muted);font-size:.8em">'+(o.parecido?'≈ ':'')+'también: '+esc(o.otros.join(' / '))+(o.parecido?' <span title="El panel los unió por parecido: mismo tamaño y casi el mismo nombre. Si no son el mismo, separalos con 🔗 unir.">(unidos por parecido)</span>':'')+'</span>'):'')+
           ((!o.cat && o.nativo) ? ('<br><button class="btn btn-sm" style="padding:2px 8px;font-size:.7rem;margin-top:3px" data-k="'+esc(o.k)+'" onclick="abrirStockUnir(this.getAttribute(\'data-k\'))" title="No está en el catálogo con ese nombre. Si es el mismo que otro de la lista, unilos.">🔗 unir</button>') : '')+
         '</td>'+
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
@@ -11099,8 +11139,27 @@ function recibirStockPedido(id){
 function abrirStockUnir(k){
   var d=stockData(), yo=d.lista.filter(function(o){ return o.k===k; })[0];
   if(!yo){ toast('No encuentro ese producto.','err'); return; }
-  var otros=d.lista.filter(function(o){ return o.k!==k; });
-  var ops=otros.map(function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+(o.cat?' · catálogo':'')+'</option>'; }).join('');
+  /* Ordenados por PARECIDO, no alfabéticamente: con 180 productos, encontrar «ORO ANATOMICO
+     VISCOLASTICO» para unirlo a «ORO VISCOLASTICO 2,5 PLZ» a mano no lo hace nadie. Se
+     cuentan las palabras en común y la medida; los que se parecen van arriba y marcados. */
+  var mias=stockTokens(yo.desc), miMed=normMedida(yo.medida);
+  var puntaje=function(o){
+    var t=stockTokens(o.desc), com=0;
+    for(var w in t.set){ if(mias.set[w]) com++; }
+    if(!com) return 0;
+    var p=com/Math.max(1, Math.max(t.n, mias.n));
+    if(miMed && normMedida(o.medida)===miMed) p+=0.6;      // la misma medida pesa mucho
+    if(o.deposito>0 || o.enOtros>0) p+=0.15;               // y que tenga stock, un poco
+    return p;
+  };
+  var otros=d.lista.filter(function(o){ return o.k!==k; })
+                   .map(function(o){ o._p=puntaje(o); return o; })
+                   .sort(function(a,b){ return b._p-a._p || a.desc.localeCompare(b.desc); });
+  var ops=otros.map(function(o){
+    var hay=(o.deposito>0?(' · hay '+stockUnid(o.deposito)+' acá'):'')+(o.enOtros>0?(' · '+stockUnid(o.enOtros)+' en Moreno'):'');
+    return '<option value="'+esc(o.k)+'">'+(o._p>=0.5?'⭐ ':'')+esc(stockNombre(o))+(o.cat?' · catálogo':'')+esc(hay)+'</option>';
+  }).join('');
+  var sug=otros.filter(function(o){ return o._p>=0.5; }).slice(0,3);
   var unidos=Object.keys(STOCK.a||{}).map(function(src){
     return '<div style="display:flex;gap:8px;align-items:center;margin-top:5px;font-size:.8rem"><span style="flex:1">'+esc(stockNombreClave(src))+' → <b>'+esc(stockNombreClave(STOCK.a[src]))+'</b></span>'+
       '<button class="btn btn-ghost btn-sm" data-k="'+esc(src)+'" onclick="stockSeparar(this.getAttribute(\'data-k\'))">✕ separar</button></div>';
@@ -11108,6 +11167,9 @@ function abrirStockUnir(k){
   var html='<div class="modal-h" style="background:#0f766e"><h3>🔗 Unir productos</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">«<b>'+esc(stockNombre(yo))+'</b>» no está en el catálogo con ese nombre. Si es el mismo producto que otro de la lista, unilos: se cuentan juntos y lo contado se suma.</p>'+
+      (sug.length?('<div style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:8px;padding:8px 12px;margin-bottom:9px;font-size:.83rem">'+
+        '⭐ <b>Se parece'+(sug.length===1?'':'n')+' a:</b> '+sug.map(function(o){ return esc(stockNombre(o)); }).join(' · ')+
+        ' <span style="color:var(--muted)">— están primero en la lista.</span></div>'):'')+
       (otros.length ? ('<div><label class="lb">Es el mismo que…</label><select id="stk-unir-a" style="width:100%">'+ops+'</select></div>') : '<div style="color:var(--muted)">No hay otro producto con quién unirlo.</div>')+
       '<div class="modal-actions" style="margin-top:14px">'+
         (otros.length ? ('<button class="btn btn-primary btn-sm" style="flex:1;min-width:160px;background:#0f766e" data-k="'+esc(k)+'" onclick="guardarStockUnir(this.getAttribute(\'data-k\'))">🔗 Unir</button>') : '')+

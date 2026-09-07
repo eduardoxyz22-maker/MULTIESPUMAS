@@ -133,6 +133,34 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('«Colchón Bahía 140x190» (medida adentro del nombre, con tilde) es el COLCHON BAHIA del catálogo',
       r.bahia==='COLCHON BAHIA|140X190' && r.somierBahia==='SOMIER BAHIA|140X190', r.bahia+' · '+r.somierBahia);
 
+  // ── 1b. Plazas y centímetros, y el nombre al que le falta una palabra (§4cu) ──
+  console.log('\n── 1b. «2,5 plz» es «160x190», y se une solo ──');
+  r = await page.evaluate(() => {
+    var f=function(d,m){ var i=stockInfo({desc:d,medida:m}); return {k:i.k, por:i.cat&&i.cat.por}; };
+    return { m25:normMedida('2,5 plz'), m2:normMedida('2 PLAZAS'), m35:normMedida('3.5 plz'),
+             txt:medidaDeTexto('COLCHON ORO VISCOLASTICO 2,5 PLZ'),
+             plz:f('ORO ANATOMICO VISCOLASTICO','2,5 plz'), cm:f('ORO ANATOMICO VISCOLASTICO','160x190'),
+             oro:f('COLCHON ORO VISCOLASTICO 2.5PLZ 160X190CM HEAVEN',''),
+             carioca:f('COLCHON CARIOCA','160x190'), pillow:f('PILLOW','140x190'),
+             ortop:f('ESPECIAL ORTOPEDICO','180x190'), semi:f('ESPECIAL SEMIORTOPEDICO','160x190'),
+             sinMed:f('ORO VISCOLASTICO','') };
+  });
+  /* Confirmado con los archivos reales del dueño (el Excel de ROHO escribe las dos formas
+     juntas): 2 plz = 140x190 quince veces, 2,5 plz = 160x190 ocho veces. */
+  chk('⚠️ «2,5 plz» y «160x190» son la MISMA medida', r.m25==='160x190' && r.m2==='140x190' && r.m35==='200x200',
+      r.m25+' · '+r.m2+' · '+r.m35);
+  chk('…también cuando la medida viene en plazas adentro del nombre', r.txt==='160x190', r.txt);
+  chk('⚠️ el mismo colchón cargado en plazas y en centímetros es UN producto',
+      r.plz.k===r.cm.k, r.plz.k+' vs '+r.cm.k);
+  chk('⚠️ «COLCHON ORO VISCOLASTICO 2.5PLZ 160X190CM HEAVEN» se une solo al del catálogo, sin tocar nada',
+      r.oro.k==='ORO ANATOMICO VISCOLASTICO|160X190' && r.oro.por==='parecido', r.oro.k+' ['+r.oro.por+']');
+  chk('⚠️ …pero «CARIOCA» a secas NO se une: hay CARIOCA PREMIER y CARIOCA RIO, son distintos',
+      !r.carioca.por && /^COLCHON CARIOCA\|/.test(r.carioca.k), r.carioca.k);
+  chk('…ni «PILLOW» a secas (PILLOW FLEX y PILLOW PEDIC)', !r.pillow.por, r.pillow.k);
+  chk('…y ORTOPEDICO y SEMIORTOPEDICO siguen siendo dos colchones',
+      r.ortop.k!==r.semi.k && r.ortop.por==='nombre' && r.semi.por==='nombre', r.ortop.k+' vs '+r.semi.k);
+  chk('⚠️ sin medida no se arriesga a adivinar', !r.sinMed.por, r.sinMed.k);
+
   // ══ 2. Sin conteo NO se inventa nada ═══════════════════════════════════════
   console.log('\n── 2. Sin haber contado el depósito ──');
   r = await page.evaluate(() => {
