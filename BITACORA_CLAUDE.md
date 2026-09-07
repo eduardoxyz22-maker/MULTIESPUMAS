@@ -4175,6 +4175,116 @@ nada estuviera roto**. Es la trampa que el LEEME avisa desde agosto. Arreglado t
 «traer también las viejas» para ese check: así los 14 combos del archivo están siempre en
 juego y el aviso deja de depender del calendario.
 
+## 4co. 📦 Stock, segunda vuelta: la crítica que pidió el dueño y el «Todo» (2026-09-07)
+
+Después de publicar §4cn el dueño preguntó *"¿cómo mejorarías lo que acabamos de hacer?"*.
+Le contesté con una lista ordenada por daño, empezando por reconocer que lo que armé tenía
+**un defecto de fondo**, y él respondió con una palabra: *"Todo"*. Esto es lo que cambió.
+
+### 1. La demanda se mide por lo VENDIDO, no por lo entregado (el defecto de fondo)
+
+La rotación de §4cn contaba unidades **entregadas**. Un producto que se agota deja de
+entregarse, la rotación baja y **el aviso desaparecía justo cuando más faltaba**. Ahora
+«vende por día» cuenta **todos los pedidos con entrega en los últimos 28 días, se hayan
+entregado o no**: lo que un chofer tildó ✗ NO HAY también se vendió. El depósito, en cambio,
+sigue moviéndose solo con entregas reales (eso no cambió, y está bien así).
+
+### 2. Un solo producto, venga de donde venga
+
+Lo verifiqué antes de decirlo: «ECO FLEX» de una vendedora y «COLCHON ECO FLEX 2 PLAZAS
+140X190CM FLEX» del Excel de ROHO daban **dos claves distintas** (`prodRankKey`), y en el
+catálogo el mismo colchón se llama «NUEVO ECO FLEX» (CH1332). Tres renglones, ninguno rotaba
+lo suficiente, ninguno avisaba.
+
+Ahora la clave es la del **catálogo** (`stockInfo` → `stockEnCatalogo`):
+- por **código** si lo trae;
+- si no, por **nombre**: la entrada del catálogo cuyas palabras están **todas** en el nombre
+  del producto, con la **misma medida** (la medida puede venir adentro del nombre, como
+  «Colchón Bahía 140x190»), y si hay varias gana **la más específica** («ESPECIAL
+  ORTOPEDICO D/C» le gana a «ESPECIAL ORTOPEDICO»). Las palabras de relleno no cuentan:
+  COLCHON, 2 PLAZAS, CM, NUEVO, el color al final. La dirección importa: «PILLOW» solo NO se
+  une a PILLOW FLEX ni a PILLOW PEDIC — el catálogo tiene que estar entero adentro del
+  nombre, no al revés.
+- lo que el catálogo no conoce queda con su clave cruda, y se puede **unir a mano** («🔗
+  unir» en el renglón): la unión vive en la misma fila `__stock__` (`a`), lo contado se suma
+  y «✕ separar» la deshace (lo contado queda junto: para eso está «contá de nuevo»).
+
+**Migración sola**: al leer la fila del stock, las claves guardadas se vuelven a resolver;
+dos claves viejas que caen en la misma nueva **se suman** (eran dos renglones del mismo
+conteo). Es idempotente. El ranking «🛏️ Productos más entregados» usa la misma clave, así que
+también muestra el nombre del catálogo.
+
+### 3. «Ya lo pedí» y cuánto tarda cada fábrica de verdad
+
+- **🏭 Pedí a fábrica** anota `{producto, unidades, fábrica, fecha}` (`STOCK.p`). El producto
+  pasa a **🚚 Ya pedido** y deja de gritar mientras lo pedido alcance; lo que viene entra en
+  la proyección con su fecha estimada.
+- **📥 Llegó de fábrica** ofrece primero lo que estaba pedido (con la cantidad editable): al
+  marcarlo se cierra el pedido, se suma al depósito y queda **medido cuánto tardó**.
+- El tiempo de fábrica es la **mediana de las últimas 6 llegadas, fábrica por fábrica**
+  (`stockTiemposFabrica`). Sin medidas de una, se usan las de la otra y la pantalla lo dice
+  («según la otra fábrica»); sin ninguna, los 3 días del dueño. Segunda fuente de medidas: las
+  líneas marcadas 🏭 en la ficha de un pedido se sellan solas el día que se marcan (`prodF`)
+  y el día que pasan a ✔ hay (`prodR`) — van adentro del JSON de productos, sin columnas.
+
+### 4. Se corta EL DÍA que se corta (proyección día por día)
+
+§4cn miraba 3 días adelante. Ahora `stockProyectar` recorre 45 días: **depósito + lo que
+llega − lo que se va**, donde lo que se va cada día es **lo mayor** entre lo ya vendido para
+ese día (se sabe) y el ritmo de venta (se estima) — no la suma, porque lo vendido *es* el
+ritmo hecho realidad. El primer día negativo es el corte.
+- 🚨 **PEDIR YA** si se corta antes de lo que tarda la fábrica (ni pidiendo hoy llega).
+- 🏭 **Pedir esta semana** si se corta dentro de fábrica + margen.
+- Cuánto pedir: lo que cubre fábrica + margen + 7 días de venta (o todo lo vendido, si es
+  más), menos lo que hay y lo que viene.
+
+### 5. Cuándo hay que volver a contar
+
+- Conteo de más de **21 días** → aviso en Administración y cartel en la pantalla.
+- Un chofer marcó **✗ no hay** en un pedido pendiente pero según el conteo **hay** → uno de
+  los dos miente: «contá de nuevo». Solo si el pedido es de después del conteo y no llegó
+  nada de fábrica desde entonces (si llegó, el ✗ puede ser de antes).
+
+### 6. Plata parada y 7. margen según la venta
+
+- 💤 **Sobra**: hay para más de 60 días, o hay y no se vendió ninguno en 4 semanas. Va al
+  final de la lista y en un renglón aparte; no entra al aviso de Administración.
+- El margen sobre el tiempo de fábrica es **2 días si las 4 semanas vendieron parejo y hasta
+  5 si la venta es a los saltos** (desvío relativo de la venta semanal, redondeado a días).
+  Nadie configura nada. La etiqueta «venta pareja / a los saltos» solo se muestra con 8 o más
+  vendidos: con 2 unidades no dice nada.
+
+### Decisiones que conviene conocer
+
+- **Lo hecho a pedido (🏭 en la ficha) no toca el depósito**: ni descuenta al entregarse ni
+  cuenta como comprometido. Lo trae la fábrica para ese cliente. La pantalla lo dice abajo:
+  *lo que llega para un pedido puntual NO se anota en «Llegó de fábrica»*. Si alguien lo
+  anota igual, el depósito queda inflado en esas unidades hasta el próximo conteo.
+- Un pedido con la **fecha vencida y sin marcar entregado** sigue contando como
+  comprometido HOY (lado conservador) y la columna lo muestra («N con la fecha vencida»).
+- Al recibir menos unidades de las pedidas se anota lo que llegó; el resto no se persigue.
+- Muestras de fábrica de 0 días (pedido y llegada el mismo día) cuentan; las de más de 60
+  se descartan como error de carga.
+- La fila `__stock__` guarda ahora `{c, e, p, a}`; una fila vieja `{c, e}` se lee igual.
+
+### Los tests
+
+`tests/test_stock.js` reescrito: **91 checks**. Contra `origin/main` (sin §4co) no revienta:
+un solo check rojo que dice **qué funciones faltan** (patrón del LEEME). El test viejo de
+§4cn contra el panel nuevo: 23 pasan y las 11 que fallan son todas las que sembraban el
+conteo con la clave cruda — exactamente lo que cambió. Batería completa en verde.
+
+**Diseño que salió de la captura, no del test**: las tablas del stock heredaban el `nowrap`
+de las dos primeras columnas de la tabla de ROHO y «también: COLCHON ECO FLEX 2 PLAZAS…» se
+metía en la columna de al lado. Clase `.stk-tabla` que deja envolver en todas.
+
+### Qué tiene que hacer el dueño
+
+1. **Contar el depósito una vez** (📋 Conté el depósito): sin conteo no avisa nada.
+2. Cuando llame a Moreno o a Multi, **anotarlo** (🏭 Pedí a fábrica) y cuando llegue tocar
+   **📥 Llegó**. Con eso el panel deja de molestar y aprende cuánto tarda cada fábrica.
+3. Si ve dos renglones del mismo producto, **🔗 unir**.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
