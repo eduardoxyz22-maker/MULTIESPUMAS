@@ -4884,10 +4884,12 @@ migra las claves viejas al leer la fila (test 7 de `test_stock.js`); las **union
 - Cuatro checks viejos cambiaron de expectativa, cada uno con su comentario (§4cy).
 - Batería: **44 suites, 1.649 checks, 0 fallas** (41 de `correr.sh` + 3 de Python).
 
-**Para preguntarle al dueño:** el almacén llama «COLCHON ESPECIAL **JUNIOR**» a los códigos
-`CH1075`/`CH1078`, que en su tabla figuran como ESPECIAL **ANTIALERGICO** 105/140. Hoy se
-suman como antialérgico porque el código manda. Si JUNIOR es otro colchón, hay que sacarlos
-del catálogo o darles su nombre.
+**Preguntado y resuelto:** el almacén llama «COLCHON ESPECIAL **JUNIOR**» a los códigos
+`CH1075`/`CH1078`, que en la tabla del dueño figuran como ESPECIAL **ANTIALERGICO** 105/140.
+El dueño (07/09): *"Ya no se fabrica el Jr, ahora es antialérgico."* O sea: **el JUNIOR es
+el nombre viejo del mismo código**, y esas unidades cuentan como antialérgico — que es
+exactamente lo que hace el panel al resolver por código. ⚠️ No «corregir» esto sacando
+CH1075/CH1078 del catálogo ni dándoles nombre propio: `test_identidad.js` lo cuida.
 
 ## 5. Pendientes
 

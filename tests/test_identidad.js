@@ -90,7 +90,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
            {G:'ch1280',  W:'COLCHON TITANIO ICE 140X200',AY:'1'},
            {G:'CH1195',  W:'ALMOHADA VISCOLASTICA NASA',AY:'33'},
            {G:'CH1246',  W:'ALMOHADA TRAVESSEIRO ANTISOFOCANTE NASA',AY:'19'},
-           {G:'CH1129',  W:'COLCHON TITANIO LATEX 140X190',AY:'6'}];
+           {G:'CH1129',  W:'COLCHON TITANIO LATEX 140X190',AY:'6'},
+           /* El almacén todavía llama JUNIOR al CH1075. El dueño (07/09): «Ya no se fabrica el
+              Jr, ahora es antialérgico». Mismo código = mismo producto: se suman. */
+           {G:'CH1075',  W:'COLCHON ESPECIAL JUNIOR 105X190',AY:'4'},
+           {G:'CH2391',  W:'COLCHON ESPECIAL ANTIALERGICO 105X190',AY:'1'}];
     var R=existLeer(f); if(R.error) return {error:R.error};
     var por={}; R.items.forEach(function(i){ por[String(i.cod).toUpperCase()]={k:i.k, cant:i.cant, cat:i.cat}; });
     EXIST_IMP=R; renderImportExist(); confirmarImportExist();
@@ -100,7 +104,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   if(r.error){ chk('el reporte sintético se lee', false, r.error); }
   const P=(c)=>r.por[c]||{};
-  chk('el reporte se lee entero (20 renglones) y NINGÚN renglón se sumó a otro', r.n===20 && r.rep===0, r.n+' items · repetidos='+r.rep);
+  chk('el reporte se lee entero (22 renglones) y el ÚNICO que se sumó es el que el catálogo declara igual', r.n===21 && r.rep===1, r.n+' items · repetidos='+r.rep);
+  chk('⚠️ el «ESPECIAL JUNIOR» (CH1075) ES el ESPECIAL ANTIALERGICO 105: mismo código en la tabla del dueño, se suman (4+1=5)',
+      P('CH1075').k==='ESPECIAL ANTIALERGICO|105X190' && P('CH1075').cant===5 && P('CH1075').cat===true, P('CH1075').k+' ×'+P('CH1075').cant);
   chk('⚠️ SOMIER PARRILLA NEGRO (CH1297) NO es el SOMIER NEGRO (SR2012): 10 y 3, no 13',
       P('CH1297').k!==r.sr && P('SR2012').k===r.sr && P('CH1297').cant===10 && P('SR2012').cant===3, P('CH1297').k+' vs '+r.sr);
   chk('…y queda con su nombre crudo, con la medida aparte', P('CH1297').k==='SOMIER PARRILLA NEGRO|140X190', P('CH1297').k);
