@@ -35,10 +35,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
 - Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
   y `SCRIPT_VERSION_ESPERADA` juntos.
-- **📦 Stock y reposición** (bitácora §4cn y §4co): fila del sistema `__stock__` con JSON `{c,e,p,a}`
-  (conteo, entradas, pedidos a fábrica, uniones). La identidad de un producto es `stockInfo(x)`:
-  catálogo `CODIGOS` por código o por nombre (palabras del catálogo ⊆ nombre, misma medida), y
-  `prodRankKey` solo como crudo. `tests/test_stock.js`.
+- **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
+  `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
+  existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es
+  `stockInfo(x)`: catálogo `CODIGOS` por código o por nombre (palabras del catálogo ⊆ nombre,
+  misma medida), y `prodRankKey` solo como crudo.
+  - **El depósito se carga subiendo el reporte «EXISTENCIAS ALMACEN» del sistema de Moreno**
+    (📥 Subir existencias). `PRODUCTOS TERMINADOS FAB.` = de ahí salen los camiones = «en
+    depósito»; `IM - PRODUCTOTERMINADO` = la fábrica = «en fábrica», **no se suma**.
+  - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
+    **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
+  - `tests/test_stock.js` y `tests/test_existencias.js` (fixtures sintéticos: el repo es
+    público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

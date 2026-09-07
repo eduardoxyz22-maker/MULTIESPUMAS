@@ -413,7 +413,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ el PILLOW (30 para 14 meses) y el TITANIO (6 sin ventas) son plata parada', r.n===2 && r.pill==='sobra' && r.tit==='sobra', r.n+' · '+r.pill+' · '+r.tit);
   chk('…dice para cuántos meses', r.meses>13 && r.meses<15, stockNumTxt(r.meses));
   chk('…van al final de la lista, no molestan arriba', /PILLOW|TITANIO/.test(r.ultimo), r.ultimo);
-  chk('…y hay un renglón «Plata parada» en la pantalla', /Plata parada/.test(r.pantalla) && /sin ventas en 4 semanas/.test(r.pantalla), (r.pantalla.match(/Plata parada[^.]*/)||[''])[0].slice(0,120));
+  /* §4cp cambió el texto a propósito: «sin ENTREGAS en 4 semanas», no «sin ventas». Con el
+     Excel del almacén entero cargado, casi todo figura sin movimiento porque las tiendas
+     venden por afuera de este panel — decir «sin ventas» era engañoso. */
+  chk('…y hay un renglón «Plata parada» en la pantalla', /Plata parada/.test(r.pantalla) && /sin entregas en 4 semanas/.test(r.pantalla), (r.pantalla.match(/Plata parada[^.]*/)||[''])[0].slice(0,140));
   function stockNumTxt(n){ return String(Math.round(n*10)/10); }
 
   // ══ 12. El margen crece si la venta es a los saltos ════════════════════════

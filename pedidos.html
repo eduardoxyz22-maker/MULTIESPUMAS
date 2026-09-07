@@ -1161,6 +1161,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <input type="file" id="comp-input" accept="image/*" style="display:none" onchange="onCompElegido(event)">
 <!-- 📥 El Excel de ROHO (§4ci) -->
 <input type="file" id="roho-input" accept=".xlsx" style="display:none" onchange="onRohoArchivo(event)">
+<input type="file" id="exist-input" accept=".xlsx" style="display:none" onchange="onExistArchivo(event)">
 <input type="file" id="fcomp-input" accept="image/*" style="display:none" onchange="onCompFormElegido(event)">
 <div id="carga-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#0f766e;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Lista de carga por camión</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="carga-dia-hoy" onclick="setCargaDia('hoy')" style="border:none;background:#fff;color:#0f766e;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="carga-dia-manana" onclick="setCargaDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="carga-dia-todos" onclick="setCargaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="carga-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="limpiarCargaChk()">↺ Destildar todo</button><button class="btn btn-sm" style="background:#fff;color:#0f766e;font-weight:700" onclick="printCarga()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeCarga()">✕ Cerrar</button></div><div id="carga-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="faltantes-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#b45309;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🏭 Faltantes / producción</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="falt-dia-hoy" onclick="setFaltDia('hoy')" style="border:none;background:#fff;color:#b45309;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="falt-dia-manana" onclick="setFaltDia('manana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="falt-dia-todos" onclick="setFaltDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="falt-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#b45309;font-weight:700" onclick="copiarFaltantes()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printFaltantes()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeFaltantes()">✕ Cerrar</button></div><div id="faltantes-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -1169,7 +1170,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <input type="file" id="ret-foto-input" accept="image/*" style="display:none" onchange="onRetFotoElegida(event)">
 <div id="retiros-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c3aed;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">💵 Retiros de efectivo</b><input type="month" id="ret-mes" onchange="renderRetiros()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"><select id="ret-filtro-vend" onchange="renderRetiros()" style="flex:0 0 auto;max-width:200px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"></select><span id="ret-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c3aed;font-weight:700" onclick="copiarRetiros()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printRetiros()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRetiros()">✕ Cerrar</button></div><div id="retiros-body" style="flex:1;overflow:auto;padding:14px"><div id="ret-form"></div><div id="ret-lista"></div></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
-<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c2d12;font-weight:700" onclick="abrirStockConteo()">📋 Conté el depósito</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
@@ -10118,19 +10119,32 @@ var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
 var STOCK_RECONTAR=21;        // un conteo más viejo que esto pide que se cuente de nuevo
 var STOCK_MUESTRAS=6;         // cuántas llegadas se miran para medir lo que tarda cada fábrica
 var STOCK_VENTA_MIN=8;        // con menos vendidos que esto, «venta pareja / a los saltos» no dice nada y no se muestra
-var STOCK={ c:{f:'',u:{}}, e:[], p:[], a:{} };   // c=último conteo · e=entradas · p=pedidos a fábrica · a=productos unidos a mano
+/* El almacén de donde SALEN LOS CAMIONES. Es el único que contesta «¿puedo entregar esto
+   mañana?»; lo que está en la fábrica hay que ir a traerlo primero (§4cp). */
+var STOCK_ALM_LOG='PRODUCTOS TERMINADOS FAB.';
+var STOCK={ c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{} };
+/* c = último conteo del almacén de logística · e = entradas · p = pedidos a fábrica
+   a = productos unidos a mano · g = existencias de los OTROS almacenes {nombre:{f,u}}
+   al = qué es cada almacén ('log' o 'otro'), para no volver a preguntarlo */
 
 function esFilaStock(p){ return !!p && String(p.id)===STOCK_ID; }
-function stockVacio(){ return { c:{f:'',u:{}}, e:[], p:[], a:{} }; }
+function stockVacio(){ return { c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{} }; }
 function leerStock(p){
   var d=stockVacio();
   try{
     var o=JSON.parse(String((p&&p.observaciones)||'{}'));
     if(o && typeof o==='object'){
       if(o.a && typeof o.a==='object') d.a=o.a;
+      if(o.al && typeof o.al==='object') d.al=o.al;
       if(o.c && typeof o.c==='object'){ d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{}; }
       if(o.e && o.e.length) d.e=o.e.filter(function(x){ return x && x.k; });
       if(o.p && o.p.length) d.p=o.p.filter(function(x){ return x && x.k; });
+      if(o.g && typeof o.g==='object'){
+        for(var nm in o.g){
+          var s=o.g[nm]; if(!s || typeof s!=='object') continue;
+          d.g[nm]={ f:String(s.f||''), u:(s.u&&typeof s.u==='object')?s.u:{} };
+        }
+      }
     }
   }catch(e){}
   return stockMigrar(d);
@@ -10142,9 +10156,13 @@ function leerStock(p){
    misma. */
 function stockMigrar(d){
   var cl=function(k){ var pa=String(k||'').split('|'); return stockAliasDe(stockClaveAuto({desc:pa[0]||'', medida:pa[1]||''}), d.a); };
-  var u={};
-  Object.keys(d.c.u||{}).forEach(function(k){ var v=Number(d.c.u[k]); if(!isFinite(v)) return; var nk=cl(k); u[nk]=(u[nk]||0)+v; });
-  d.c.u=u;
+  var juntar=function(src){
+    var u={};
+    Object.keys(src||{}).forEach(function(k){ var v=Number(src[k]); if(!isFinite(v)) return; var nk=cl(k); u[nk]=(u[nk]||0)+v; });
+    return u;
+  };
+  d.c.u=juntar(d.c.u);
+  Object.keys(d.g||{}).forEach(function(nm){ d.g[nm].u=juntar(d.g[nm].u); });
   (d.e||[]).forEach(function(x){ x.k=cl(x.k); });
   (d.p||[]).forEach(function(x){ x.k=cl(x.k); });
   return d;
@@ -10156,7 +10174,7 @@ function guardarStock(){
   /* Los pedidos a fábrica ya recibidos se guardan 4 meses: son los que miden cuánto tarda. */
   var lim=diasAtras(120);
   STOCK.p=(STOCK.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=lim); });
-  STOCK.a=STOCK.a||{};
+  STOCK.a=STOCK.a||{}; STOCK.g=STOCK.g||{}; STOCK.al=STOCK.al||{};
   var fila=filaSistema(STOCK_ID, '📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR', JSON.stringify(STOCK));
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
@@ -10246,6 +10264,9 @@ function stockNombreDe(info, x){
 function stockNombreClave(k){ var pa=String(k||'').split('|'); return (pa[0]||String(k||''))+(pa[1]?(' · '+pa[1]):''); }
 function stockNombre(o){ return o.desc + (o.medida?(' · '+o.medida):''); }
 function stockNum(n, dec){ var v=Number(n)||0; return v.toFixed(dec==null?1:dec).replace('.',','); }
+/* Unidades: los colchones son enteros, pero el almacén también tiene esponja por metro
+   («0,38»). Se muestra entero cuando es entero y con decimales solo cuando los tiene. */
+function stockUnid(n){ var v=Number(n)||0; return Math.abs(v-Math.round(v))<1e-9 ? String(Math.round(v)) : stockNum(v,2); }
 
 /* ---- Fechas, sin líos de horario ---- */
 function diasAtras(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); }
@@ -10324,7 +10345,9 @@ function stockFabNorm(f){
 function stockMuestrasFabrica(){
   var m={};
   var add=function(fab,f,r){ if(!f||!r) return; var d=stockDias(f,r); if(!(d>=0)||d>60) return; fab=stockFabNorm(fab); (m[fab]=m[fab]||[]).push({f:f,r:r,d:d}); };
-  (STOCK.p||[]).forEach(function(q){ if(q&&q.r) add(q.fab,q.f,q.r); });
+  /* `enConteo` = se dio por llegado al subir un Excel de existencias: se sabe que ya estaba,
+     NO cuándo llegó. Medir con eso inventaría un tiempo de fábrica que nadie observó. */
+  (STOCK.p||[]).forEach(function(q){ if(q&&q.r&&!q.enConteo) add(q.fab,q.f,q.r); });
   STATE.forEach(function(p){
     if(!p||esFilaSistema(p)||esBorrador(p)) return;
     (p.productos||[]).forEach(function(x){
@@ -10368,7 +10391,7 @@ function stockData(){
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
       vendidos:0, sem:[0,0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
-      salidas:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''} }; }
+      salidas:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
   var meter=function(x){
@@ -10413,6 +10436,16 @@ function stockData(){
     o.enCamino+=Number(q.u)||0;
     o.pedidos.push({ id:q.id, u:Number(q.u)||0, fab:stockFabNorm(q.fab), f:q.f, llega:stockEsperado(q,T) });
   });
+  /* Lo que hay en los OTROS almacenes (la fábrica). NO se suma al depósito: de ahí no sale
+     ningún camión — primero hay que traerlo. Pero cambia qué hacer: si falta acá y hay allá,
+     no se le pide a la fábrica, se manda a buscar (§4cp). */
+  Object.keys(STOCK.g||{}).forEach(function(nm){
+    var s=STOCK.g[nm]||{};
+    Object.keys(s.u||{}).forEach(function(k){
+      var v=Number(s.u[k])||0; if(!(v>0)) return;
+      var o=grupo(k); o.enOtros+=v; o.otrosAlm[nm]=(o.otrosAlm[nm]||0)+v;
+    });
+  });
   // Los que se contaron alguna vez pero hoy no aparecen en ningún pedido, igual se listan.
   Object.keys(STOCK.c.u||{}).forEach(function(k){ grupo(k); });
   var lista=Object.keys(g).map(function(k){
@@ -10437,7 +10470,9 @@ function stockData(){
     return (b.vendidos-a.vendidos) || a.desc.localeCompare(b.desc);
   });
   var edad = conteo ? stockDias(conteo, hoy) : null;
-  return { lista:lista, desde:desde, hoy:hoy, contado:conteo, diasConteo:edad,
+  var otrosAlm=Object.keys(STOCK.g||{}).filter(function(nm){ return Object.keys((STOCK.g[nm]||{}).u||{}).length; });
+  return { lista:lista, desde:desde, hoy:hoy, contado:conteo, diasConteo:edad, otrosAlm:otrosAlm,
+           traer:lista.filter(function(o){ return o.aviso==='traer'; }),
            conteoViejo:(edad!=null && edad>STOCK_RECONTAR), nConteo:Object.keys(STOCK.c.u||{}).length,
            fabricas:T, abiertos:lista.reduce(function(a,o){ return a.concat(o.pedidos.map(function(q){ return { id:q.id, u:q.u, fab:q.fab, f:q.f, llega:q.llega, k:o.k, nombre:stockNombre(o) }; })); },[]),
            sobran:lista.filter(function(o){ return o.sobra; }) };
@@ -10497,13 +10532,26 @@ function stockMesesSobra(o){ return (o.porDia>0) ? ((o.deposito+o.enCamino-o.com
    vistazo — un semáforo con seis colores no lo mira nadie. */
 function stockAvisoDe(o){
   if(o.deposito==null) return o.vendidos>0 ? 'sincontar' : '';
+  var falta = (o.dias!=null && o.dias<o.lead+o.margen);
+  /* Falta acá, pero en la fábrica hay de sobra: no es un pedido a fábrica, es mandar la
+     camioneta. Es una acción distinta y mucho más rápida, así que se dice distinto. */
+  if(falta && o.enOtros>=Math.max(1, stockCuantoPedir(o))) return 'traer';
   if(o.dias!=null && o.dias<o.lead) return 'urgente';           // ni pidiendo hoy llega a tiempo
-  if(o.dias!=null && o.dias<o.lead+o.margen) return 'pedir';    // se corta dentro de fábrica + margen
+  if(falta) return 'pedir';                                     // se corta dentro de fábrica + margen
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
   return '';
 }
-function stockPrioridad(o){ return { urgente:5, pedir:4, sincontar:3, pedido:2, '':1, sobra:0 }[o.aviso]||0; }
+function stockPrioridad(o){ return { urgente:6, pedir:5, traer:4, sincontar:3, pedido:2, '':1, sobra:0 }[o.aviso]||0; }
+/* " · 8 en MORENO" — dónde está lo que se puede ir a buscar. */
+function stockOtrosTxt(o){
+  return Object.keys(o.otrosAlm||{}).map(function(nm){ return o.otrosAlm[nm]+' en '+stockAlmCorto(nm); }).join(' · ');
+}
+/* «01-05-003 PRODUCTOS TERMINADOS FAB.» es ilegible en una tabla: se deja lo esencial. */
+function stockAlmCorto(nm){
+  var t=String(nm||'').replace(/^\s*[\d-]+\s+/,'').replace(/\s+/g,' ').trim();
+  return t.length>22 ? t.slice(0,21)+'…' : t;
+}
 /* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
    si es más), menos lo que hay y lo que viene. */
 function stockCuantoPedir(o){
@@ -10522,11 +10570,13 @@ function renderStockAviso(){
   var d=stockData();
   var urge=d.lista.filter(function(o){ return o.aviso==='urgente'; });
   var pide=d.lista.filter(function(o){ return o.aviso==='pedir'; });
+  var trae=d.traer||[];
   var contra=d.lista.filter(function(o){ return o.contradice; });
   var nombres=function(a){ return a.slice(0,3).map(function(o){ return '<b>'+esc(stockNombre(o))+'</b>'; }).join(', ')+(a.length>3?(' y '+(a.length-3)+' más'):''); };
   var partes=[];
   if(urge.length) partes.push('<b style="color:var(--red)">'+urge.length+' producto'+(urge.length===1?'':'s')+' se '+(urge.length===1?'acaba':'acaban')+'</b> antes de que llegue la fábrica: '+nombres(urge)+'.');
   if(pide.length) partes.push((urge.length?'También hay ':'Hay ')+'<b>'+pide.length+'</b> para pedir esta semana: '+nombres(pide)+'.');
+  if(trae.length) partes.push('🚚 <b>'+trae.length+'</b> ya '+(trae.length===1?'está fabricado':'están fabricados')+' y hay que <b>traerlo'+(trae.length===1?'':'s')+' de la fábrica</b>: '+nombres(trae)+'.');
   if(d.conteoViejo) partes.push('⚠️ El conteo del depósito tiene <b>'+d.diasConteo+' días</b>: contá de nuevo.');
   if(contra.length) partes.push('⚠️ Un chofer marcó <b>✗ no hay</b> de '+nombres(contra)+' y según el panel hay: contá de nuevo.');
   if(!partes.length){ el.className=''; el.innerHTML=''; return; }
@@ -10548,23 +10598,30 @@ function renderStock(){
   var d=stockData(), T=d.fabricas;
   var inf=document.getElementById('stock-info');
   if(inf) inf.textContent = (d.contado
-    ? ('contado el '+fmtFecha(d.contado)+' (hace '+d.diasConteo+' día'+(d.diasConteo===1?'':'s')+') · '+d.nConteo+' producto'+(d.nConteo===1?'':'s'))
+    ? ('contado el '+fmtFecha(d.contado)+' ('+(d.diasConteo===0?'hoy':(d.diasConteo===1?'ayer':('hace '+d.diasConteo+' días')))+') · '+d.nConteo+' producto'+(d.nConteo===1?'':'s'))
     : 'sin contar todavía')+' · venta de los últimos '+STOCK_VENTANA+' días · '+stockFabricasTxt(T);
-  var conMov=d.lista.filter(function(o){ return o.vendidos>0 || o.deposito!=null || o.comp>0 || o.enCamino>0; });
+  /* Un reporte de existencias trae TODO el almacén —forros, patas, esponja por metro—, y
+     200 renglones que nadie vende tapan los seis que importan. Por defecto se muestra lo
+     que se mueve o tiene aviso; el resto está a un botón (§4cp). */
+  var conAlgo=d.lista.filter(function(o){ return o.vendidos>0 || o.deposito!=null || o.comp>0 || o.enCamino>0 || o.enOtros>0; });
+  var conMov=STOCK_VER_TODO ? conAlgo : conAlgo.filter(function(o){ return o.vendidos>0 || o.comp>0 || o.enCamino>0 || o.aviso==='urgente' || o.aviso==='pedir' || o.aviso==='traer'; });
+  var quietos=conAlgo.length-conMov.length;
+  var nCols=d.otrosAlm.length?8:7;
   var html='';
   if(!d.contado){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
-      '<b>Todavía no se contó el depósito.</b> Abajo ya se ve <b>qué se vende más</b> y <b>qué hay comprometido</b>, que sale solo de los pedidos. '+
-      'Para que además avise <b>antes de quedarte sin</b>, tocá <b>📋 Conté el depósito</b> una vez y anotá cuántas unidades hay de los que más salen. '+
-      'Después solo hay que anotar lo que se pide y lo que llega de fábrica.</div>';
+      '<b>Todavía no se cargó el depósito.</b> Abajo ya se ve <b>qué se vende más</b> y <b>qué hay comprometido</b>, que sale solo de los pedidos. '+
+      'Para que además avise <b>antes de quedarte sin</b>, subí el reporte <b>EXISTENCIAS ALMACEN</b> del sistema de Moreno con <b>📥 Subir existencias</b> '+
+      '(el del almacén de donde salen los camiones), o contá a mano los que más salen.</div>';
   }else if(d.conteoViejo){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
       '<b>El conteo tiene '+d.diasConteo+' días.</b> Desde entonces el panel viene descontando entregas y sumando llegadas, y cada error chico se acumula. '+
-      'Tocá <b>📋 Conté el depósito</b> y listo: el conteo nuevo borra la deriva.</div>';
+      'Subí el Excel de existencias del día y listo: el conteo nuevo borra la deriva.</div>';
   }
   var badge=function(o){
     if(o.aviso==='urgente') return '<span class="badge" style="background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)">🚨 PEDIR YA</span>';
     if(o.aviso==='pedir')   return '<span class="badge b-amber">🏭 Pedir esta semana</span>';
+    if(o.aviso==='traer')   return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Traer de fábrica</span>';
     if(o.aviso==='pedido')  return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Ya pedido</span>';
     if(o.aviso==='sobra')   return '<span class="badge" style="background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe">💤 Sobra</span>';
     if(o.aviso==='sincontar') return '<span class="badge" style="background:var(--gray-lt);color:var(--muted)">sin contar</span>';
@@ -10573,17 +10630,18 @@ function renderStock(){
   var chico=function(t,color){ return '<div style="font-size:.78rem;color:'+(color||'var(--muted)')+';margin-top:3px;line-height:1.35">'+t+'</div>'; };
   var porque=function(o){
     var q=o.pedidos[0];
-    if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.pedir+'</b> ya','#8a1c24');
-    if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.pedir+'</b> esta semana','#7c4b00');
+    if(o.aviso==='urgente') return chico('la fábrica tarda '+o.lead+' día'+(o.lead===1?'':'s')+(q?('; los '+o.enCamino+' en camino llegan el '+fmtFechaCorta(q.llega)+', tarde'):'')+' → pedí <b>'+o.pedir+'</b> ya'+(o.enOtros?('; hay '+stockOtrosTxt(o)+' para traer ya mismo'):''),'#8a1c24');
+    if(o.aviso==='pedir')   return chico('se corta antes de fábrica + margen ('+o.lead+' + '+o.margen+' días) → pedí <b>'+o.pedir+'</b> esta semana'+(o.enOtros?('; hay '+stockOtrosTxt(o)+', pero no alcanza'):''),'#7c4b00');
+    if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
     if(o.aviso==='pedido')  return chico((q?(q.u+' llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' de '+esc(q.fab)):'')):'')+(o.sinCamino!=null?('<br>sin ese pedido se cortaba '+stockEnDias(o.sinCamino)):''),'#075985');
-    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico(ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+o.deposito+' y no se vendió ninguno en 4 semanas'),'#5b21b6'); }
+    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico(ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en 4 semanas'),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     return '';
   };
   html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
     '<table class="roho-tabla stk-tabla" style="min-width:1080px">'+
-    '<colgroup><col style="width:250px"><col style="width:112px"><col style="width:104px"><col style="width:112px"><col style="width:124px"><col style="width:120px"><col style="width:220px"></colgroup>'+
-    '<thead><tr><th>Producto</th><th>Vende por día</th><th>En depósito</th><th>En camino</th>'+
+    '<colgroup><col style="width:250px"><col style="width:112px"><col style="width:104px">'+(d.otrosAlm.length?'<col style="width:104px">':'')+'<col style="width:112px"><col style="width:124px"><col style="width:120px"><col style="width:220px"></colgroup>'+
+    '<thead><tr><th>Producto</th><th>Vende por día</th><th>En depósito</th>'+(d.otrosAlm.length?'<th>En fábrica</th>':'')+'<th>En camino</th>'+
     '<th>Vendido sin entregar</th><th>Se corta</th><th>Qué hacer</th></tr></thead><tbody>'+
     (conMov.length ? conMov.map(function(o){
       var q=o.pedidos[0];
@@ -10596,11 +10654,12 @@ function renderStock(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+(o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+'</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
-                : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+Math.abs(o.deposito)+' más de lo contado — volvé a contar</span>')
-                : ('<b style="font-size:1.05em">'+o.deposito+'</b>'))+
+                : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
+                : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'))+
           (o.contradice?('<br><span style="color:var(--red);font-size:.9em">⚠️ un chofer marcó ✗ no hay — contá de nuevo</span>'):'')+'</td>'+
-        '<td>'+(o.enCamino?('<b>'+o.enCamino+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
-        '<td>'+(o.comp?('<b>'+o.comp+'</b>'+(o.compPronto?('<br><span style="color:#8a1c24;font-size:.92em">'+o.compPronto+' en los próximos '+o.lead+' días</span>'):'')):'<span style="color:var(--muted)">—</span>')+
+        (d.otrosAlm.length?('<td>'+(o.enOtros?('<b>'+stockUnid(o.enOtros)+'</b><br><span style="color:var(--muted);font-size:.9em">'+esc(stockOtrosTxt(o))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'):'')+
+        '<td>'+(o.enCamino?('<b>'+stockUnid(o.enCamino)+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
+        '<td>'+(o.comp?('<b>'+stockUnid(o.comp)+'</b>'+(o.compPronto?('<br><span style="color:#8a1c24;font-size:.92em">'+o.compPronto+' en los próximos '+o.lead+' días</span>'):'')):'<span style="color:var(--muted)">—</span>')+
           (o.noHayViejo?('<br><span style="color:#8a1c24;font-size:.9em">'+o.noHayViejo+' ✗ no hay de días pasados, sin reprogramar</span>'):'')+
           (o.aFab?('<br><span style="color:#a67c00;font-size:.9em">+'+o.aFab+' que trae la fábrica para clientes</span>'):'')+
           (o.atrasados?('<br><span style="color:var(--muted);font-size:.85em">'+o.atrasados+' de días pasados sin marcar ✓: se dan por entregados</span>'):'')+'</td>'+
@@ -10608,26 +10667,48 @@ function renderStock(){
                 : o.dias!=null ? ('<b>'+fmtFechaCorta(o.corte)+'</b><br><span style="font-size:.92em;color:'+(o.aviso==='urgente'?'var(--red)':'var(--muted)')+'">'+stockEnDias(o.dias)+'</span>')
                 : ('<span style="color:var(--green);font-weight:700">no en '+STOCK_HORIZONTE+' días</span>'))+'</td>'+
         '<td>'+badge(o)+porque(o)+'</td></tr>';
-    }).join('') : '<tr><td colspan="7" style="padding:26px;text-align:center;color:var(--muted)">Todavía no hay pedidos con productos para medir.</td></tr>')+
-    '</tbody></table></div>';
+    }).join('') : '<tr><td colspan="'+nCols+'" style="padding:26px;text-align:center;color:var(--muted)">Todavía no hay pedidos con productos para medir.</td></tr>')+
+    '</tbody></table></div>'+
+    (quietos||STOCK_VER_TODO ? ('<div style="margin-top:8px"><button class="btn btn-ghost btn-sm" onclick="stockVerTodo()">'+
+      (STOCK_VER_TODO ? '🙈 Mostrar solo lo que se mueve' : ('👁️ Ver también los '+quietos+' que no se venden (forros, patas, esponja…)'))+'</button></div>') : '');
   if(d.abiertos.length){
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px">'+
       '<div style="font-weight:800;color:#075985;margin-bottom:8px">🚚 Pedido a fábrica, en camino</div>'+
       '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th>Unidades</th><th>Fábrica</th><th>Pedido el</th><th>Llega ~</th><th></th></tr></thead><tbody>'+
       d.abiertos.map(function(q){
-        return '<tr><td><b>'+esc(q.nombre)+'</b></td><td><b>'+q.u+'</b></td><td>'+esc(q.fab||'—')+'</td><td>'+fmtFecha(q.f)+'</td><td>'+fmtFecha(q.llega)+'</td>'+
+        return '<tr><td><b>'+esc(q.nombre)+'</b></td><td><b>'+stockUnid(q.u)+'</b></td><td>'+esc(q.fab||'—')+'</td><td>'+fmtFecha(q.f)+'</td><td>'+fmtFecha(q.llega)+'</td>'+
           '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó</button> '+
           '<button class="btn btn-ghost btn-sm" data-id="'+esc(q.id)+'" onclick="cancelarStockPedido(this.getAttribute(\'data-id\'))">✕</button></td></tr>';
       }).join('')+'</tbody></table></div>';
   }
   if(d.sobran.length){
+    /* ⚠️ Con un almacén de verdad esto son 145 productos: la lista entera tapaba la pantalla
+       y lo que importa —los que más plata tienen quieta— quedaba enterrado. Se muestran los
+       que más unidades tienen y el resto queda a un botón (§4cp). */
+    var sob=d.sobran.slice().sort(function(a,b){ return (b.deposito||0)-(a.deposito||0); });
+    var tope=STOCK_VER_SOBRA?sob.length:8, unidSob=0;
+    sob.forEach(function(o){ unidSob+=(o.deposito||0); });
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px;font-size:.86rem">'+
-      '<b style="color:#5b21b6">💤 Plata parada:</b> '+d.sobran.length+' producto'+(d.sobran.length===1?'':'s')+' con stock para más de '+STOCK_DIAS_SOBRA+' días — '+
-      d.sobran.map(function(o){ var ms=stockMesesSobra(o); return '<b>'+esc(stockNombre(o))+'</b> ('+o.deposito+' unid.'+(ms!=null?(', ~'+stockNum(ms,1)+' meses'):', sin ventas en 4 semanas')+')'; }).join(' · ')+
-      '. Conviene no pedir más de estos y empujarlos en la venta.</div>';
+      '<b style="color:#5b21b6">💤 Plata parada:</b> '+sob.length+' producto'+(sob.length===1?'':'s')+' · <b>'+stockUnid(unidSob)+'</b> unidades con stock para más de '+STOCK_DIAS_SOBRA+' días. '+
+      '<span style="color:var(--muted)">Los que más tienen:</span><br>'+
+      sob.slice(0,tope).map(function(o){ var ms=stockMesesSobra(o); return '<b>'+esc(stockNombre(o))+'</b> ('+stockUnid(o.deposito)+' unid.'+(ms!=null?(', ~'+stockNum(ms,1)+' meses'):', sin entregas en 4 semanas')+')'; }).join(' · ')+
+      (sob.length>tope?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">y '+(sob.length-tope)+' más</button>')
+                      :(STOCK_VER_SOBRA&&sob.length>8?(' <button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:.72rem" onclick="stockVerSobra()">mostrar menos</button>'):''))+
+      '<div style="color:var(--muted);margin-top:5px">Conviene no pedir más de estos y empujarlos en la venta. «Sin entregas» es sin salir por este panel: lo que se vende en tienda no se ve acá.</div></div>';
+  }
+  if(d.otrosAlm.length){
+    html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px;font-size:.86rem">'+
+      '<b style="color:#075985">🏭 Otros almacenes cargados:</b> '+
+      d.otrosAlm.map(function(nm){
+        var s=STOCK.g[nm]||{}, n=Object.keys(s.u||{}).length, t=0;
+        Object.keys(s.u||{}).forEach(function(k){ t+=Number(s.u[k])||0; });
+        return '<b>'+esc(stockAlmCorto(nm))+'</b> ('+n+' productos, '+stockUnid(t)+' unid.'+(s.f?(', al '+fmtFecha(s.f)):'')+')';
+      }).join(' · ')+
+      '. <span style="color:var(--muted)">Lo de acá NO se suma al depósito: de estos almacenes no sale ningún camión, primero hay que ir a buscarlo.</span></div>';
   }
   html+='<div style="margin-top:12px;font-size:.8rem;color:var(--muted);line-height:1.6">'+
     '🚨 <b>PEDIR YA</b> = se corta antes de que la fábrica pueda llegar. &nbsp; 🏭 <b>Pedir esta semana</b> = se corta dentro de lo que tarda la fábrica más el margen (2 días si la venta es pareja, hasta 5 si es a los saltos).<br>'+
+    '🚚 <b>Traer de fábrica</b> = falta acá pero ya está fabricado en el otro almacén: mandá la camioneta en vez de pedir. &nbsp; '+
     '🚚 <b>Ya pedido</b> = anotaste el pedido con «🏭 Pedí a fábrica» y con eso alcanza; cuando llegue, tocá «📥 Llegó de fábrica» — así el panel aprende cuánto tarda cada fábrica. &nbsp; 💤 <b>Sobra</b> = hay para más de '+STOCK_DIAS_SOBRA+' días.<br>'+
     '«Vende por día» = todo lo vendido en los últimos '+STOCK_VENTANA+' días (entregado o no) ÷ '+STOCK_VENTANA+'. «Se corta» mira día por día lo que hay, lo que llega y lo que se va.<br>'+
     'Un pedido con la fecha ya pasada que nadie marcó ✓ se da por entregado (lo que no se entrega se reprograma). Lo tildado ✗ no hay de días pasados no cuenta hasta que se reprograme.<br>'+
@@ -10638,19 +10719,35 @@ function renderStock(){
 function copiarStock(){
   var d=stockData();
   var a=d.lista.filter(function(o){ return o.aviso==='urgente'||o.aviso==='pedir'; });
-  if(!a.length){ toast('No hay nada para pedir: nada se corta dentro de lo que tarda la fábrica más el margen.','ok',5000); return; }
-  var t='🏭 PEDIDO A FÁBRICA — '+fmtFecha(todayStr())+'\n\n';
-  a.forEach(function(o){
-    t+=(o.aviso==='urgente'?'🚨 ':'• ')+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+(o.fab?(' — '+o.fab):'')+
-       '\n   pedir '+o.pedir+' — quedan '+(o.deposito==null?'?':o.deposito)+
-       (o.enCamino?(' + '+o.enCamino+' en camino'):'')+
-       ', se venden '+stockNum(o.porDia)+' por día'+
-       (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
-       (o.comp?(', '+o.comp+' ya vendidos sin entregar'):'')+'\n';
-  });
-  t+='\nCubre lo que tarda la fábrica + el margen + '+STOCK_CUBRIR+' días de venta.';
+  var tr=d.traer||[];
+  if(!a.length && !tr.length){ toast('No hay nada para pedir ni traer: nada se corta dentro de lo que tarda la fábrica más el margen.','ok',5000); return; }
+  var t='';
+  /* Traer y pedir son DOS mandados distintos, a dos personas distintas: lo que ya está
+     fabricado se va a buscar hoy, lo que no hay que producirlo. Van separados (§4cp). */
+  if(tr.length){
+    t+='🚚 TRAER DE FÁBRICA (ya está hecho) — '+fmtFecha(todayStr())+'\n\n';
+    tr.forEach(function(o){
+      t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+
+         '\n   traer '+Math.max(1,o.pedir)+' — hay '+stockOtrosTxt(o)+', quedan '+stockUnid(o.deposito||0)+' acá'+
+         (o.dias!=null?(', se corta '+stockEnDias(o.dias)):'')+'\n';
+    });
+    if(a.length) t+='\n';
+  }
+  if(a.length){
+    t+='🏭 PEDIDO A FÁBRICA — '+fmtFecha(todayStr())+'\n\n';
+    a.forEach(function(o){
+      t+=(o.aviso==='urgente'?'🚨 ':'• ')+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+(o.fab?(' — '+o.fab):'')+
+         '\n   pedir '+o.pedir+' — quedan '+(o.deposito==null?'?':stockUnid(o.deposito))+
+         (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
+         (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
+         ', se venden '+stockNum(o.porDia)+' por día'+
+         (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
+         (o.comp?(', '+stockUnid(o.comp)+' ya vendidos sin entregar'):'')+'\n';
+    });
+    t+='\nCubre lo que tarda la fábrica + el margen + '+STOCK_CUBRIR+' días de venta.';
+  }
   copyText(t);
-  toast('Pedido a fábrica copiado ✓','ok');
+  toast((tr.length&&a.length)?'Copiado: lo que hay que traer y lo que hay que pedir ✓':(tr.length?'Lo que hay que traer, copiado ✓':'Pedido a fábrica copiado ✓'),'ok');
 }
 /* Los que vale la pena ofrecer en los formularios: con movimiento o ya contados. */
 function stockConMovimiento(d){
@@ -10836,6 +10933,245 @@ function stockSeparar(src){
 }
 
 /* ============================================================================
+   📥 SUBIR EL EXCEL DE EXISTENCIAS DEL SISTEMA DE MORENO (§4cp)
+
+   El dueño: *"estos son los almacenes… uno es de industrias moreno y el otro productos
+   terminado fabrica que es el almacén de logística de donde salen los camiones. Subiendo
+   este excel deberían ellos actualizar cada día el almacén."*
+
+   O sea: el conteo a mano deja de ser la única forma de cargar el depósito. El sistema de
+   Moreno saca el reporte **EXISTENCIAS ALMACEN**, y ese reporte ES un conteo con fecha —
+   justo la forma que ya usa el panel (§4cn): se reemplaza entero, no se va sumando, así
+   que subirlo dos veces no descuenta dos veces y cada archivo nuevo borra la deriva.
+
+   ⚠️ LOS DOS ALMACENES NO SE SUMAN. De `PRODUCTOS TERMINADOS FAB.` salen los camiones: ese
+   es «en depósito» y es el que contesta «¿puedo entregar mañana?». Lo que está en
+   `IM - PRODUCTOTERMINADO` (la fábrica) existe, pero primero hay que ir a buscarlo —
+   sumarlo diría «tenés 20» cuando en el camión entran 5. Va en su propia columna, y cambia
+   el consejo: si falta acá y hay allá, no se le pide a la fábrica, se manda la camioneta.
+
+   La estructura del reporte, que no es la de una tabla común:
+     · fila «EXISTENCIAS ALMACEN AL» + la fecha al costado
+     · fila «Almacén Inicial :» / «Almacén Final :» — si no son el mismo, el archivo mezcla
+       almacenes y no sirve para contar ninguno
+     · fila de encabezados: «Código Producto», «Nombre Producto», CUI, Unidad, Ubicación, Marca
+     · ⚠️ LA CANTIDAD NO TIENE ENCABEZADO ARRIBA: el título «Cantidad» está una fila más
+       arriba y CORRIDO varias columnas (celdas combinadas). Por eso la columna se busca por
+       lo que hay en los datos —la única columna numérica que no es de ningún encabezado— y
+       no por el título.
+     · filas de agrupación (línea de productos), SUBTOTAL y TOTAL, que no son productos.
+   ========================================================================== */
+var EXIST_IMP=null;   // lo leído del Excel, esperando que alguien confirme
+var STOCK_VER_TODO=false;   // mostrar también lo que nunca se vende (insumos del almacén)
+function stockVerTodo(){ STOCK_VER_TODO=!STOCK_VER_TODO; renderStock(); }
+var STOCK_VER_SOBRA=false;
+function stockVerSobra(){ STOCK_VER_SOBRA=!STOCK_VER_SOBRA; renderStock(); }
+
+function abrirImportExist(){
+  var el=document.getElementById('exist-input'); if(!el) return;
+  el.value=''; el.click();
+}
+function onExistArchivo(ev){
+  var f=ev.target.files && ev.target.files[0]; if(!f) return;
+  toast('Leyendo '+f.name+'…','ok');
+  f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
+    var r=existLeer(xlsxHoja(archivos));
+    if(r.error){ toast('❌ '+r.error,'err',9000); return; }
+    EXIST_IMP=r; renderImportExist();
+  }).catch(function(e){
+    toast('❌ No se pudo leer el archivo: '+(e&&e.message?e.message:'error'),'err',8000);
+  });
+}
+/* Letra de columna → número, para poder hablar de "la columna más cercana". */
+function colNum(c){ var n=0, s=String(c||''); for(var i=0;i<s.length;i++) n=n*26+(s.charCodeAt(i)-64); return n; }
+function existTxt(f){ var t=[]; for(var k in f) t.push(String(f[k])); return t.join(' | ').toUpperCase(); }
+/* dd/mm/aaaa → aaaa-mm-dd. El reporte la escribe así; si viniera como número de Excel, se
+   lee igual. Una fecha futura no se acepta: sería un conteo que todavía no pasó. */
+function existFecha(v){
+  var s=String(v==null?'':v).trim();
+  var m=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  var f='';
+  if(m) f=m[3]+'-'+(m[2].length<2?'0':'')+m[2]+'-'+(m[1].length<2?'0':'')+m[1];
+  else if(/^\d+(\.\d+)?$/.test(s)) f=xlsxFecha(s);
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return '';
+  return f>todayStr() ? '' : f;
+}
+function existLeer(filas){
+  if(!filas || !filas.length) return {error:'El archivo está vacío.'};
+  var cab=filas.slice(0,14).map(existTxt).join(' ~ ');
+  if(/DETALLE VENTAS|NOTA DE VENTA PARA PROVEEDOR/.test(cab) && !/EXISTENCIAS/.test(cab))
+    return {error:'Ese es el reporte de VENTAS, no el de existencias. En el sistema de Moreno sacá «EXISTENCIAS ALMACEN» eligiendo UN almacén.'};
+  if(!/EXISTENCIAS/.test(cab))
+    return {error:'No parece el reporte «EXISTENCIAS ALMACEN». Fijate que sea ese y que salga con los títulos.'};
+
+  var fecha='', almIni='', almFin='';
+  for(var i=0;i<Math.min(filas.length,14);i++){
+    var f=filas[i], ks=Object.keys(f).sort(function(a,b){ return colNum(a)-colNum(b); });
+    for(var j=0;j<ks.length;j++){
+      var v=String(f[ks[j]]||'').toUpperCase(), sig=(j+1<ks.length)?String(f[ks[j+1]]||''):'';
+      if(!fecha && /EXISTENCIAS ALMACEN\s*AL/.test(v)) fecha=existFecha(sig);
+      if(!almIni && /ALMAC[ÉE]N INICIAL/.test(v)) almIni=sig;
+      if(/ALMAC[ÉE]N FINAL/.test(v)) almFin=sig;
+    }
+  }
+  var limpiar=function(t){ return String(t||'').replace(/^\s*[\d]+(?:-[\d]+)+\s+/,'').replace(/\s+/g,' ').trim(); };
+  var alm=limpiar(almIni)||limpiar(almFin);
+  if(!alm) return {error:'No encontré de qué almacén es el reporte (falta la fila «Almacén Inicial»).'};
+  if(limpiar(almIni) && limpiar(almFin) && limpiar(almIni)!==limpiar(almFin))
+    return {error:'El reporte mezcla almacenes («'+limpiar(almIni)+'» a «'+limpiar(almFin)+'»). Sacá uno por vez: en el sistema poné el MISMO almacén como inicial y final.'};
+
+  // Encabezados de la tabla de productos
+  var iHdr=-1, cCod='', cNom='', conocidas={}, cCant='';
+  for(var h=0;h<Math.min(filas.length,25);h++){
+    var fh=filas[h], cod='', nom='';
+    for(var k in fh){
+      var t=String(fh[k]||'').toUpperCase().replace(/\s+/g,' ').trim();
+      if(/^C[ÓO]DIGO PRODUCTO$/.test(t)) cod=k;
+      else if(/^NOMBRE PRODUCTO$/.test(t)) nom=k;
+    }
+    if(cod && nom){ iHdr=h; cCod=cod; cNom=nom; conocidas=fh; break; }
+  }
+  if(iHdr<0) return {error:'No encontré la fila de títulos «Código Producto» / «Nombre Producto».'};
+  // Dónde dice «Cantidad» (arriba y corrido): solo sirve para desempatar.
+  var cerca=0;
+  for(var y=0;y<=iHdr;y++){ for(var kk in filas[y]){ if(/^CANTIDAD$/.test(String(filas[y][kk]||'').toUpperCase().trim())) cerca=colNum(kk); } }
+
+  /* La columna de la cantidad: la única columna numérica de las filas de producto que no
+     pertenece a ningún encabezado. Se cuentan y gana la que aparece en más filas. */
+  var voto={};
+  for(var r=iHdr+1;r<filas.length;r++){
+    var fr=filas[r];
+    if(!fr[cCod] || !fr[cNom]) continue;
+    for(var c in fr){
+      if(conocidas[c]!==undefined) continue;
+      var n=Number(String(fr[c]).replace(',','.'));
+      if(isFinite(n)) voto[c]=(voto[c]||0)+1;
+    }
+  }
+  Object.keys(voto).forEach(function(c){
+    if(!cCant){ cCant=c; return; }
+    if(voto[c]>voto[cCant] || (voto[c]===voto[cCant] && cerca && Math.abs(colNum(c)-cerca)<Math.abs(colNum(cCant)-cerca))) cCant=c;
+  });
+  if(!cCant) return {error:'No encontré la columna de cantidades.'};
+
+  var items=[], repetidos=0, malos=0, total=0, vistos={};
+  for(var q=iHdr+1;q<filas.length;q++){
+    var fq=filas[q];
+    var cod2=String(fq[cCod]==null?'':fq[cCod]).trim();
+    var nom2=String(fq[cNom]==null?'':fq[cNom]).replace(/\s+/g,' ').trim();
+    if(!cod2 || !nom2) continue;                       // agrupación, SUBTOTAL, TOTAL
+    var cant=Number(String(fq[cCant]==null?'':fq[cCant]).replace(',','.'));
+    if(!isFinite(cant) || cant<0){ malos++; continue; }
+    var it={ cod:cod2, desc:nom2, medida:medidaDeTexto(nom2), cant:cant,
+             unidad:String(fq[conocidasCol(conocidas,'UNIDAD')]||'').trim() };
+    it.k=stockClave({desc:it.desc, medida:it.medida, codigo:it.cod});
+    it.cat=!!(stockInfo({desc:it.desc, medida:it.medida, codigo:it.cod}).cat);
+    if(vistos[it.k]!=null){ items[vistos[it.k]].cant+=cant; repetidos++; }  // mismo producto en dos renglones
+    else { vistos[it.k]=items.length; items.push(it); }
+    total+=cant;
+  }
+  if(!items.length) return {error:'No encontré ningún producto con existencia en el archivo.'};
+  return { fecha:fecha||todayStr(), sinFecha:!fecha, almacen:alm, items:items, total:total,
+           repetidos:repetidos, malos:malos, colCant:cCant,
+           esLog: normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log',
+           conocido: normNombre(alm)===normNombre(STOCK_ALM_LOG) || !!(STOCK.al||{})[alm] };
+}
+function conocidasCol(hdr, txt){
+  for(var k in hdr){ if(String(hdr[k]||'').toUpperCase().replace(/\s+/g,' ').trim()===txt) return k; }
+  return '__no__';
+}
+/* Los pedidos a fábrica que ya deberían haber llegado: si llegaron, están DENTRO de este
+   conteo y dejarlos abiertos los contaría dos veces (§4cp). */
+function existPedidosVencidos(fecha){
+  var T=stockTiemposFabrica();
+  return (STOCK.p||[]).filter(function(q){ return q && !q.r && stockEsperado(q,T)<=fecha; });
+}
+function renderImportExist(){
+  var R=EXIST_IMP; if(!R) return;
+  var enCat=R.items.filter(function(i){ return i.cat; }).length;
+  var venc=existPedidosVencidos(R.fecha);
+  var previo = R.esLog ? STOCK.c : ((STOCK.g||{})[R.almacen]||{f:'',u:{}});
+  var hab=Object.keys(previo.u||{}).length;
+  var lin=function(t){ return '<div style="font-size:.84rem;margin:3px 0">'+t+'</div>'; };
+  /* Control de sanidad: los que cambian MUCHO contra el conteo anterior. Un archivo del
+     almacén equivocado, o de otra fecha, se nota acá antes de aplicarlo. */
+  var saltos=[];
+  if(hab){
+    R.items.forEach(function(i){
+      var v=Number((previo.u||{})[i.k]); if(!isFinite(v)) return;
+      var d=i.cant-v; if(Math.abs(d)>=Math.max(6, v*0.6)) saltos.push({i:i, antes:v, dif:d});
+    });
+    saltos.sort(function(a,b){ return Math.abs(b.dif)-Math.abs(a.dif); });
+  }
+  var html='<div class="modal-h" style="background:#7c2d12"><h3>📥 Existencias de almacén</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+    '<div style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:11px 14px;margin-bottom:12px">'+
+      lin('🏬 Almacén: <b>'+esc(R.almacen)+'</b>')+
+      lin('📅 Existencias al <b>'+fmtFecha(R.fecha)+'</b>'+(R.sinFecha?' <span style="color:var(--amber);font-weight:700">· el archivo no traía fecha, se usa la de hoy</span>':(R.fecha!==todayStr()?(' <span style="color:var(--muted)">· hace '+stockDias(R.fecha,todayStr())+' día(s)</span>'):'')))+
+      lin('📦 <b>'+R.items.length+'</b> productos · <b>'+stockUnid(R.total)+'</b> unidades'+(enCat<R.items.length?(' · <span style="color:var(--muted)">'+enCat+' se reconocen del catálogo, '+(R.items.length-enCat)+' quedan con su nombre</span>'):''))+
+      (R.repetidos?lin('<span style="color:var(--muted)">'+R.repetidos+' renglones eran del mismo producto: se sumaron</span>'):'')+
+      (R.malos?lin('<span style="color:var(--amber)">'+R.malos+' renglones sin cantidad legible: se saltean</span>'):'')+
+    '</div>'+
+    '<div style="margin-bottom:12px"><label class="lb">¿Qué almacén es este?</label>'+
+      '<select id="exist-rol" style="width:100%">'+
+        '<option value="log"'+(R.esLog?' selected':'')+'>📦 El de logística — de acá salen los camiones (es «en depósito»)</option>'+
+        '<option value="otro"'+(R.esLog?'':' selected')+'>🏭 Otro (la fábrica) — está, pero hay que ir a traerlo</option>'+
+      '</select>'+
+      (R.conocido?'':'<div style="font-size:.78rem;color:var(--amber);margin-top:4px">Es la primera vez que subís este almacén: elegí qué es y el panel lo recuerda.</div>')+
+    '</div>'+
+    (hab?('<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Reemplaza el conteo anterior de este almacén ('+(previo.f?('del '+fmtFecha(previo.f)):'sin fecha')+', '+hab+' productos). Lo que no esté en este archivo queda en cero: el reporte trae todo lo que tiene existencia.</div>')
+        :'<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Es el primer conteo de este almacén.</div>')+
+    (saltos.length?('<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.8rem;color:#7c4b00">'+
+      '<b>Cambios grandes contra el conteo anterior</b> — miralos antes de aplicar, por si el archivo es de otro almacén o de otra fecha:<br>'+
+      saltos.slice(0,6).map(function(s){ return '· '+esc(stockNombreClave(s.i.k))+': '+stockUnid(s.antes)+' → <b>'+stockUnid(s.i.cant)+'</b> ('+(s.dif>0?'+':'')+stockUnid(s.dif)+')'; }).join('<br>')+
+      (saltos.length>6?('<br>… y '+(saltos.length-6)+' más'):'')+'</div>'):'')+
+    (venc.length?('<div style="background:#e0f2fe;border:1px solid #bae6fd;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.82rem;color:#075985">'+
+      '🚚 Tenés <b>'+venc.length+'</b> pedido'+(venc.length===1?'':'s')+' a fábrica que ya debería'+(venc.length===1?'':'n')+' haber llegado. Si llegaron, ya están contados en este archivo.<br>'+
+      '<label style="display:inline-flex;align-items:center;gap:6px;margin-top:6px;font-weight:700"><input type="checkbox" id="exist-cerrar-ped" checked> Darlos por llegados (no suma nada, solo los saca de «en camino»)</label></div>'):'')+
+    '<div style="max-height:38vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px">'+
+      '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th style="width:90px">Cantidad</th></tr></thead><tbody>'+
+      R.items.slice(0,80).map(function(i){
+        return '<tr><td><b>'+esc(stockNombreClave(i.k))+'</b>'+(i.cat?'':' <span style="color:var(--muted);font-size:.9em">· fuera del catálogo</span>')+
+          '<br><span style="color:var(--muted);font-size:.88em">cód '+esc(i.cod)+' · '+esc(i.desc)+'</span></td>'+
+          '<td><b>'+stockUnid(i.cant)+'</b></td></tr>';
+      }).join('')+
+      '</tbody></table></div>'+
+      (R.items.length>80?('<div style="font-size:.78rem;color:var(--muted);margin-top:6px">Se muestran los primeros 80 de '+R.items.length+'.</div>'):'')+
+    '<div class="modal-actions" style="margin-top:14px">'+
+      '<button class="btn btn-primary btn-sm" style="flex:1;min-width:200px;background:#7c2d12" onclick="confirmarImportExist()">💾 Usar estas existencias</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+    '</div></div>';
+  openModal(html, true);
+}
+function confirmarImportExist(){
+  var R=EXIST_IMP; if(!R){ closeModal(); return; }
+  var rol=(document.getElementById('exist-rol')||{}).value||'otro';
+  var cerrarPed=!!(document.getElementById('exist-cerrar-ped')||{}).checked;
+  var u={};
+  R.items.forEach(function(i){ u[i.k]=(u[i.k]||0)+i.cant; });
+  STOCK.al=STOCK.al||{}; STOCK.al[R.almacen]=rol;
+  STOCK.g=STOCK.g||{};
+  if(rol==='log'){
+    /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
+    delete STOCK.g[R.almacen];
+    Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
+    STOCK.c={ f:R.fecha, u:u };
+    STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
+  }else{
+    STOCK.g[R.almacen]={ f:R.fecha, u:u };
+  }
+  var cerrados=0;
+  if(cerrarPed){
+    existPedidosVencidos(R.fecha).forEach(function(q){ q.r=R.fecha; q.ru=Number(q.u)||0; q.enConteo=true; cerrados++; });
+  }
+  guardarStock(); closeModal(); renderStock(); renderAdmin();
+  EXIST_IMP=null;
+  toast('✅ '+(rol==='log'?'Depósito actualizado':'Existencias de '+stockAlmCorto(R.almacen)+' actualizadas')+': '+
+        R.items.length+' productos, '+stockUnid(R.total)+' unidades al '+fmtFecha(R.fecha)+
+        (cerrados?('. Se dieron por llegados '+cerrados+' pedidos a fábrica.'):''),'ok',8000);
+}
+
+/* ============================================================================
    📥 IMPORTAR LOS PEDIDOS DE ROHO DESDE SU EXCEL (§4ci)
 
    ROHO trabaja en otro sistema (Zoho) que no tiene ni API ni conector con este
@@ -10889,18 +11225,23 @@ function xmlTextos(frag){ return (String(frag).match(/<t[^>]*>([\s\S]*?)<\/t>/g)
    ⚠️ El texto de una celda puede venir de DOS formas: por índice a la tabla
    compartida (`t="s"`) o escrito adentro de la celda (`t="inlineStr"`). El Excel
    de ROHO usa la SEGUNDA — leyendo solo la primera, salían todas las columnas de
-   texto vacías (me pasó al analizarlo). */
+   texto vacías (me pasó al analizarlo).
+   ⚠️ Y LOS ATRIBUTOS PUEDEN IR CON COMILLAS SIMPLES. El XML las acepta iguales, pero
+   el reporte de existencias del sistema de Moreno escribe `<c r='C2' t='s'>` y con el
+   regex de comillas dobles TODAS las celdas salían vacías: el archivo se leía «bien»
+   (352 filas) y no tenía un solo dato (§4cp). Lo mismo con las filas vacías
+   `<row r="1"/>`, que sin la rama del cierre solo se juntaban con la siguiente. */
 function xlsxHoja(archivos){
   var hoja=archivos['xl/worksheets/sheet1.xml'];
   if(!hoja){ for(var k in archivos){ if(/^xl\/worksheets\/.*\.xml$/i.test(k)){ hoja=archivos[k]; break; } } }
   if(!hoja) return [];
   var comp=(archivos['xl/sharedStrings.xml']||'').match(/<si>[\s\S]*?<\/si>/g)||[];
   comp=comp.map(xmlTextos);
-  return (hoja.match(/<row[^>]*>[\s\S]*?<\/row>/g)||[]).map(function(r){
+  return (hoja.match(/<row[^>]*\/>|<row[^>]*>[\s\S]*?<\/row>/g)||[]).map(function(r){
     var o={};
     (r.match(/<c\b[^>]*(?:\/>|>[\s\S]*?<\/c>)/g)||[]).forEach(function(c){
-      var ref=(c.match(/\sr="([A-Z]+)\d+"/)||[])[1]; if(!ref) return;
-      var tipo=(c.match(/\st="([^"]+)"/)||[])[1]||'';
+      var ref=(c.match(/\sr=["']([A-Z]+)\d+["']/)||[])[1]; if(!ref) return;
+      var tipo=(c.match(/\st=["']([^"']+)["']/)||[])[1]||'';
       if(tipo==='inlineStr'){ o[ref]=xmlTextos(c); return; }
       var m=c.match(/<v>([\s\S]*?)<\/v>/); if(!m) return;
       o[ref]= tipo==='s' ? (comp[parseInt(m[1],10)]||'') : xmlDes(m[1]);

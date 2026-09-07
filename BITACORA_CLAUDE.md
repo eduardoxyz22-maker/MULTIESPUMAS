@@ -4296,6 +4296,84 @@ metía en la columna de al lado. Clase `.stk-tabla` que deja envolver en todas.
    **📥 Llegó**. Con eso el panel deja de molestar y aprende cuánto tarda cada fábrica.
 3. Si ve dos renglones del mismo producto, **🔗 unir**.
 
+## 4cp. 📥 El almacén se actualiza subiendo el Excel del sistema de Moreno (2026-09-07)
+
+El dueño, con dos archivos: *"estos son los almacenes, que existen uno es de industrias
+moreno y el otro productos terminado fábrica que es el almacén de logística de donde salen
+los camiones. Subiendo este excel deberían ellos actualizar cada día el almacén."*
+
+O sea: contar a mano deja de ser la única forma de cargar el depósito. El sistema de Moreno
+saca el reporte **EXISTENCIAS ALMACEN**, y ese reporte **ya es un conteo con fecha** — justo
+la forma que §4cn eligió a propósito: se reemplaza entero, no se va sumando, así que subirlo
+dos veces no descuenta dos veces y cada archivo nuevo borra la deriva del anterior.
+
+### Los dos almacenes NO se suman
+
+| Almacén | Qué es | Dónde entra |
+|---|---|---|
+| `01-05-003 PRODUCTOS TERMINADOS FAB.` | de acá **salen los camiones** | **En depósito** — el que contesta «¿puedo entregar mañana?» |
+| `01-05-103 IM - PRODUCTOTERMINADO` | Industrias Moreno, la fábrica | **En fábrica** — existe, pero hay que ir a buscarlo |
+
+Sumarlos diría «tenés 28» cuando en el camión entran 4. Separados, además, aparece un
+consejo que antes no existía: **🚚 Traer de fábrica** — si falta acá y allá hay de sobra, no
+se le pide a la fábrica, se manda la camioneta. Son dos mandados distintos, a dos personas
+distintas, y el mensaje de «Copiar» ahora los escribe en dos listas separadas.
+
+El almacén de logística se reconoce por su nombre; cualquier otro se pregunta **una vez** al
+subirlo (en la misma pantalla de confirmación) y queda recordado en `STOCK.al`.
+
+### ⚠️ El bug que casi pasa desapercibido: comillas simples
+
+El primer intento leyó el archivo «bien» —352 filas, sin ningún error— y **no trajo un solo
+dato**. El generador de Moreno escribe los atributos del XML con **comillas simples**
+(`<c r='C2' t='s'>`), y `xlsxHoja` los buscaba solo con dobles. Un archivo que se abre y sale
+vacío es peor que uno que falla: parece que el almacén está vacío. Arreglado en el lector
+compartido (también acepta `<row r="1"/>` vacías, que antes se pegaban con la fila siguiente);
+el importador de ROHO sigue en verde.
+
+### Y el otro detalle de forma: la cantidad no tiene encabezado
+
+El título «Cantidad» está **una fila más arriba y corrido varias columnas** (celdas
+combinadas): los datos caen en `AY` y el título vive en `BA`. Buscar la columna por el título
+lee la columna equivocada. Se busca por lo que hay en los datos —la única columna numérica
+que no pertenece a ningún encabezado— y el título solo desempata. Es lo que hace el test.
+
+### Lo que la pantalla hace antes de aplicar
+
+- Dice **de qué almacén** es, **a qué fecha** y cuántos productos/unidades trae.
+- Marca los **cambios grandes** contra el conteo anterior (así se nota un archivo del almacén
+  equivocado, o de otra fecha, antes de aplicarlo).
+- Si hay **pedidos a fábrica que ya deberían haber llegado**, ofrece darlos por llegados: si
+  llegaron, ya están adentro de este conteo y dejarlos abiertos los contaría dos veces. Ojo:
+  cerrarlos así **no** mide el tiempo de fábrica (`enConteo`) — se sabe que ya estaban, no
+  cuándo llegaron, y una medida inventada ensuciaría el promedio de §4co.
+- Rechaza con un mensaje concreto el **reporte de ventas** (el dueño subió ese primero), el
+  Excel de ROHO, y cualquier reporte que **mezcle almacenes** (inicial ≠ final).
+
+### Dos cosas que aparecieron recién con datos reales
+
+1. **147 productos tapan la pantalla.** El reporte trae TODO el almacén: forros, patas,
+   esponja por metro. Por defecto se listan los que se mueven o tienen aviso, y el resto
+   queda detrás de un botón que dice cuántos son.
+2. **«Plata parada» pasó a 145 productos.** Casi todo el almacén no sale por este panel
+   (las tiendas venden aparte). Ahora se muestran los 8 con más unidades, el total, y el
+   resto a un botón; y el texto dice **«sin entregas»**, no «sin ventas», que era engañoso.
+
+También: las cantidades pueden ser **decimales** (`ESPONJA SIN PICAR 0,38`), así que se
+guardan tal cual y se muestran enteras solo cuando lo son (`stockUnid`).
+
+### Qué tiene que hacer el equipo, cada día
+
+1. En el sistema de Moreno: **EXISTENCIAS ALMACEN**, eligiendo **un** almacén (el mismo como
+   inicial y final), y bajar el Excel.
+2. En el panel: Administración → 📦 Stock y reposición → **📥 Subir existencias (Excel)**.
+3. Repetir con el otro almacén si se quiere ver la columna «En fábrica».
+
+`tests/test_existencias.js` — **43 checks**, con dos fixtures **sintéticos**
+(`tests/datos/existencias_*.xlsx`): misma estructura exacta que el reporte real —comillas
+simples incluidas— y cantidades inventadas, porque **el repo es público y el inventario de la
+empresa no va acá**. Contra `origin/main` el test no revienta: dice qué funciones faltan.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
