@@ -56,6 +56,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **Recoger ≠ fabricar**: `STOCK.p` lleva `tipo:'recogida'|'fabrica'`. Una recogida tarda
     1 día, no cuenta para medir el tiempo de fábrica, y al llegar **suma acá y resta de
     Moreno**. §4cr explica qué se tomó de la versión que trajo el dueño y qué no.
+  - **Lo que NO entra al stock** (§4cx): `stockCuenta(p)` deja afuera filas del sistema,
+    borradores de Kommo y **🎧 ATC** (son reparaciones: no se vende otro colchón), y
+    `esProdDeTienda(x)` deja afuera **protectores, sábanas, mantas, cubrecamas y MDF** (se
+    entregan en tienda, no se piden a fábrica). Se cuentan y se muestran como fichas para
+    que no parezca que el panel los perdió.
+    ⚠️ `PROD_TIENDA` es **lista negra a propósito**: los colchones del catálogo casi nunca
+    dicen COLCHON (TITANIO LATEX, MEMORY FLEX), así que una lista blanca no sirve.
+    ⚠️ MDF lleva guarda `PROD_MUEBLE`: una **cabecera/respaldar de MDF sí se fabrica**.
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»

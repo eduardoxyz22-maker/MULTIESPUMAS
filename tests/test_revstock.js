@@ -213,6 +213,52 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ un ✗ no hay de días pasados sigue esperando stock: entra, y primero',
       r.entra===true && r.primero==='viejo', r.primero);
 
+  // ══ 8. Lo que NO se le pide a la fábrica (§4cx) ═══════════════════════════
+  /* Dos cosas que el dueño encontró en la primera lista de «hay que fabricar» y que no
+     tenían que estar ahí:
+     · *"estás mezclando las ATC diciéndole que deben pedir a fábrica cuando eso son
+        reparaciones o entregas. Las ATC no deberían entrar COMO PRODUCTOS A MANDAR A
+        FABRICAR."*
+     · *"los pedidos a fábrica son solo colchón, somier, almohadas o cabeceras:
+        protectores, sábanas, manta, MDF, juego sábana no son para pedir a fábrica, eso se
+        entregan en tienda. No tomar en cuenta."*
+     ⚠️ Y la contracara, que es lo fácil de romper: una CABECERA de MDF **sí** se fabrica.
+     Si la palabra MDF sola alcanzara para sacar la línea, se dejarían de pedir cabeceras. */
+  console.log('\n── 8. Ni las ATC ni lo que se entrega en tienda ──');
+  await armar();
+  r = await page.evaluate(() => {
+    var P=function(o){ return Object.assign({}, findById('d1'), o); };
+    STATE.push(P({id:'atc9', cliente:'Reclamo', oc:'ATC 09-014', fecha:window._adel(1),
+      productos:[{desc:'NUEVO ECO FLEX',medida:'140x190',codigo:'CH1332',cant:2}]}));
+    STATE.push(P({id:'acc', cliente:'Con accesorios', oc:'188999', fecha:window._adel(1), productos:[
+      {desc:'PROTECTOR DE COLCHON',medida:'140x190',codigo:'',cant:2},
+      {desc:'JUEGO DE SABANAS 2 PLAZAS',medida:'',codigo:'',cant:1},
+      {desc:'MANTA POLAR',medida:'',codigo:'',cant:1},
+      {desc:'CABECERA MDF 2 PLAZAS',medida:'140x190',codigo:'',cant:1}]}));
+    saveMirror();
+    var R=stockAsignar(), por={};
+    R.pedidos.forEach(function(g){ por[g.p.id]=g.lineas.map(function(l){ return l.nom; }); });
+    return { tot:R.tot, por:por,
+             faltan:R.faltan.map(function(o){ return {nom:o.nom, u:o.u}; }),
+             enLista:stockData().lista.map(function(o){ return o.desc; }) };
+  });
+  const eco = r.faltan.filter(o => /ECO FLEX/i.test(o.nom))[0];
+  chk('⚠️ una ATC no entra en el reparto: es un reclamo, no una venta',
+      !r.por.atc9, JSON.stringify(r.por.atc9||null));
+  chk('⚠️ …y sus 2 colchones NO se suman a lo que hay que fabricar: siguen siendo 2, no 4',
+      !!eco && eco.u===2, JSON.stringify(r.faltan));
+  chk('⚠️ pero se dice cuántas son, para que no parezca que el panel las perdió',
+      r.tot.atc===1, 'atc='+r.tot.atc);
+  chk('⚠️ protector, sábanas y manta salen del reparto: se entregan en tienda',
+      r.tot.tienda===3 && (r.por.acc||[]).length===1, 'tienda='+r.tot.tienda+' '+JSON.stringify(r.por.acc||null));
+  chk('⚠️ y NO figuran entre lo que hay que fabricar',
+      !r.faltan.some(o => /PROTECTOR|SABANA|MANTA/i.test(o.nom)), JSON.stringify(r.faltan));
+  chk('⚠️ tampoco entran a la tabla de stock: no se les mide rotación',
+      !r.enLista.some(n => /PROTECTOR|SABANA|MANTA/i.test(n)),
+      r.enLista.filter(n => /PROTECTOR|SABANA|MANTA/i.test(n)).join(', '));
+  chk('⚠️ pero una CABECERA DE MDF sí se fabrica: la palabra MDF sola no la saca',
+      (r.por.acc||[]).length===1 && /CABECERA/i.test(r.por.acc[0]), JSON.stringify(r.por.acc||null));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

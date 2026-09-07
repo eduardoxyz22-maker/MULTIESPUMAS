@@ -10175,6 +10175,44 @@ var STOCK={ c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{}, h:[] };
    al = qué es cada almacén ('log' o 'otro'), para no volver a preguntarlo */
 
 function esFilaStock(p){ return !!p && String(p.id)===STOCK_ID; }
+/* ⚠️ LAS ATC NO SON VENTAS (§4cx). El dueño, viendo que el panel mandaba a fabricar contra
+   una ATC: *"estás mezclando las ATC diciéndole que deben pedir a fábrica cuando eso son
+   reparaciones o entregas. Las ATC no deberían entrar COMO PRODUCTOS A MANDAR A FABRICAR."*
+   Tiene razón: los motivos son hundimiento, resortes, retapizado, ruido, patas, tela — se
+   arregla lo que el cliente ya tiene, no se le vende otro. Contarlas inflaba la rotación, el
+   «vendido sin entregar» y —lo peor— la lista de lo que hay que mandar a fabricar.
+   Quedan afuera de TODO el cálculo de stock: rotación, comprometido, salidas y la revisión.
+   ⚠️ Si una ATC de «Cambio de producto» sí saca un colchón del depósito, ese descuento no se
+   hace acá — y no hace falta: el corte del Excel del día siguiente ya lo refleja, porque
+   mide lo que hay de verdad en el almacén. */
+function esATCPedido(p){ return !!p && esATC(p.oc); }
+/* El embudo por el que pasa TODO lo que el stock mira: ni filas del sistema, ni borradores
+   de Kommo, ni reclamos. */
+function stockCuenta(p){ return !!p && !esFilaSistema(p) && !esBorrador(p) && !esATCPedido(p); }
+/* 🏪 LO QUE SE ENTREGA EN TIENDA — NO SE FABRICA NI SALE DEL DEPÓSITO (§4cx)
+   Pedido textual del dueño: *"los pedidos a fábrica son solo colchón, somier, almohadas o
+   cabeceras: protectores, sábanas, manta, MDF, juego sábana no son para pedir a fábrica,
+   eso se entregan en tienda. No tomar en cuenta."*
+   Son accesorios que el cliente se lleva del local: no viajan en el camión, no salen del
+   almacén de logística y «pedirlos a fábrica» no quiere decir nada. Mientras entraban al
+   cálculo aparecían en la lista de «hay que fabricar» y ensuciaban justo la única lista
+   que la fábrica mira.
+   ⚠️ ES UNA LISTA NEGRA A PROPÓSITO, no una lista blanca. Preguntar «¿esto es un colchón?»
+   NO funciona: los colchones del catálogo casi nunca dicen COLCHON — se llaman TITANIO
+   LATEX, MEMORY FLEX, ORO BI RELAX, PILLOW PEDIC. Preguntar «¿esto es un accesorio?» sí
+   funciona, porque a los accesorios siempre se los nombra por lo que son.
+   ⚠️ Y por eso mismo PROTECTOR gana aunque el renglón diga COLCHON: «PROTECTOR DE COLCHON»
+   es un protector.
+   ⚠️ MDF LLEVA GUARDA. El dueño lo nombró entre los accesorios, pero una CABECERA o un
+   RESPALDAR de MDF sí se fabrica: si el renglón nombra el mueble, manda el mueble. */
+var PROD_TIENDA=/\b(PROTECTOR|PROTECTORES|SABANA|SABANAS|SABANILLA|SABANILLAS|MANTA|MANTAS|FRAZADA|FRAZADAS|CUBRECAMA|CUBRECAMAS|EDREDON|EDREDONES)\b/;
+var PROD_MUEBLE=/\b(CABECERA|CABECERAS|RESPALDAR|RESPALDARES)\b/;
+function esTextoDeTienda(t){
+  var s=stockNorm(t);
+  if(PROD_TIENDA.test(s)) return true;
+  return /\bMDF\b/.test(s) && !PROD_MUEBLE.test(s);
+}
+function esProdDeTienda(x){ return esTextoDeTienda((x&&x.desc)||''); }
 function stockVacio(){ return { c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{}, h:[] }; }
 function leerStock(p){
   var d=stockVacio();
@@ -10458,11 +10496,11 @@ function stockSalio(p){
 function stockSalidas(k, desde, hasta){
   var n=0;
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p) || !stockSalio(p)) return;
+    if(!stockCuenta(p) || !stockSalio(p)) return;
     var f=fechaSalida(p);
     if(desde && f<desde) return;
     if(hasta && f>hasta) return;
-    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && x.chk!=='no' && stockClave(x)===k) n+=Number(x.cant)||0; });
+    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && !esProdDeTienda(x) && x.chk!=='no' && stockClave(x)===k) n+=Number(x.cant)||0; });
   });
   return n;
 }
@@ -10470,9 +10508,9 @@ function stockSalidas(k, desde, hasta){
 function stockComprometido(k, hasta){
   var n=0;
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p) || stockSalio(p)) return;
+    if(!stockCuenta(p) || stockSalio(p)) return;
     var f=p.fecha||''; if(!f || (hasta && f>hasta)) return;
-    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && stockClave(x)===k) n+=Number(x.cant)||0; });
+    (p.productos||[]).forEach(function(x){ if(!enProduccion(x) && !esProdDeTienda(x) && stockClave(x)===k) n+=Number(x.cant)||0; });
   });
   return n;
 }
@@ -10542,7 +10580,7 @@ function stockMuestrasFabrica(){
      NO cuándo llegó. Medir con eso inventaría un tiempo de fábrica que nadie observó. */
   (STOCK.p||[]).forEach(function(q){ if(q&&q.r&&!q.enConteo&&q.tipo!=='recogida') add(q.fab,q.f,q.r); });
   STATE.forEach(function(p){
-    if(!p||esFilaSistema(p)||esBorrador(p)) return;
+    if(!stockCuenta(p)) return;
     (p.productos||[]).forEach(function(x){
       if(!enProduccion(x)||!x.prodF) return;
       var r=x.prodR||(p.entregado?fechaSalida(p):'');
@@ -10604,9 +10642,10 @@ function stockData(){
   };
   var ultFab=function(o,f,fab){ fab=stockFabNorm(fab); if(!fab||!f) return; if(f>=o.fabUlt.f) o.fabUlt={f:f,fab:fab}; };
   STATE.forEach(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p)) return;
+    if(!stockCuenta(p)) return;
     var fs=fechaSalida(p);
     (p.productos||[]).forEach(function(x){
+      if(esProdDeTienda(x)) return;         // 🏪 se entrega en tienda: ni rotación ni fábrica (§4cx)
       var o=meter(x); if(!o) return;
       var c=Number(x.cant)||0; if(!(c>0)) return;
       var hecho=enProduccion(x), salio=stockSalio(p);
@@ -10642,11 +10681,14 @@ function stockData(){
     var s=STOCK.g[nm]||{};
     Object.keys(s.u||{}).forEach(function(k){
       var v=Number(s.u[k])||0; if(!(v>0)) return;
+      if(esTextoDeTienda(k)) return;        // 🏪 la misma puerta de atrás que el conteo (§4cx)
       var o=grupo(k); o.enOtros+=v; o.otrosAlm[nm]=(o.otrosAlm[nm]||0)+v;
     });
   });
-  // Los que se contaron alguna vez pero hoy no aparecen en ningún pedido, igual se listan.
-  Object.keys(STOCK.c.u||{}).forEach(function(k){ grupo(k); });
+  /* Los que se contaron alguna vez pero hoy no aparecen en ningún pedido, igual se listan.
+     Menos los de tienda: el Excel del almacén trae protectores y sábanas, y si se listan
+     acá vuelven a la tabla por la puerta de atrás (§4cx). */
+  Object.keys(STOCK.c.u||{}).forEach(function(k){ if(!esTextoDeTienda(k)) grupo(k); });
   var lista=Object.keys(g).map(function(k){
     var o=g[k];
     o.porDia=o.vendidos/STOCK_VENTANA;
@@ -10986,6 +11028,8 @@ function renderRevisionFija(){
       ficha('var(--red)',A.tot.no,'sin stock — hay que fabricar')+
       ficha('var(--gray)',A.tot.sinContar,'sin contar')+
       ficha('#075985',A.tot.aFab,'ya pedidos a fábrica')+
+      ficha('#7c3aed',A.tot.atc,'🎧 ATC — reclamos, no entran')+
+      ficha('#92400e',A.tot.tienda,'🏪 se entregan en tienda')+
     '</div>'+
     '<div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:7px">'+
       (cambian?('<button class="btn btn-primary btn-sm" style="background:#0f766e" onclick="abrirStockRevisar()">🤖 Ver y aplicar '+cambian+' cambio'+(cambian===1?'':'s')+'</button>')
@@ -11326,7 +11370,7 @@ function revStkPedidos(){
   else if(REVSTK_DIAS==='manana') lim=tomorrowStr();
   else if(REVSTK_DIAS==='semana') lim=diasAdelante(7);
   var lista=STATE.filter(function(p){
-    if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado) return false;
+    if(!stockCuenta(p) || p.entregado) return false;      // ⚠️ las ATC quedan afuera (§4cx)
     if(!(p.productos||[]).length) return false;
     var f=p.fecha||'';
     /* Lo de días pasados ya se dio por entregado (§4co) — salvo lo que quedó tildado
@@ -11350,12 +11394,16 @@ function stockAsignar(){
     dep[o.k]= (o.deposito==null) ? null : Math.max(0, o.deposito);
     im[o.k]=Math.max(0, o.enOtros||0);
   });
-  var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0};
+  var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0};
   var faltaPorProd={}, imPorProd={}, sinPorProd={};
   revStkPedidos().forEach(function(p){
     var lineas=[];
     (p.productos||[]).forEach(function(x,i){
       var c=Number(x.cant)||0; if(!(c>0)) return;
+      /* 🏪 Se entrega en tienda: no sale del depósito, no se le pide a nadie y no se tilda.
+         Va ANTES que el 🏭 a propósito — un protector marcado «en producción» sigue siendo
+         un protector, y contarlo como pedido a fábrica es el error que se está sacando. */
+      if(esProdDeTienda(x)){ tot.tienda++; return; }
       var antes=(x.chk==='ok'||x.chk==='no'||x.chk==='im') ? x.chk : '';
       if(enProduccion(x)){ tot.aFab++; return; }          // la trae la fábrica para este cliente
       var k=stockClave(x), o=info[k]||{};
@@ -11408,6 +11456,14 @@ function stockAsignar(){
     faltaPorProd[k].u=Math.max(0, faltaPorProd[k].u-suelto);
     if(!faltaPorProd[k].u) delete faltaPorProd[k];
   });
+  /* Cuántos reclamos se saltearon, para poder decirlo: que no entren no significa que no
+     existan, y si no se nombran parece que el panel los perdió. */
+  var hoyA=todayStr();
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado || !esATCPedido(p)) return;
+    if((p.fecha||'')<hoyA && !(p.productos||[]).some(function(x){ return x.chk==='no' && !enProduccion(x); })) return;
+    tot.atc++;
+  });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
   return { pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), sobraDep:dep, sobraIM:im };
@@ -11452,6 +11508,8 @@ function renderStockRevisar(){
       mc2('#a67c00','Recoger de Moreno',R.tot.im,'están allá, hay que ir a buscarlos')+
       mc2('var(--red)','Sin stock',R.tot.no,'hay que fabricar')+
       (R.tot.sinContar?mc2('var(--gray)','Sin contar',R.tot.sinContar,'no se tocan'):'')+
+      (R.tot.atc?mc2('#7c3aed','🎧 ATC',R.tot.atc,'reclamos: no se fabrican'):'')+
+      (R.tot.tienda?mc2('#92400e','🏪 De tienda',R.tot.tienda,'protectores, sábanas, mantas'):'')+
     '</div>'+
     (R.tot.contra?('<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.82rem;color:#7c4b00">'+
       '⚠️ En <b>'+R.tot.contra+'</b> línea'+(R.tot.contra===1?'':'s')+' el panel dice algo <b>distinto de lo que alguien ya había marcado a mano</b>. Están resaltadas abajo. '+

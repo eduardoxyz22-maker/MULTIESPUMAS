@@ -4719,6 +4719,77 @@ nombre o por código**, y al elegirla se completan producto, medida y código. E
 
 Batería: **43 suites, 1.605 checks, 0 fallas.**
 
+## 4cx. 🚫 Qué NO se le pide a la fábrica: ni las ATC ni lo de tienda (2026-09-07)
+
+El dueño miró la primera lista real de «hay que fabricar» y encontró dos clases de renglones
+que no tenían nada que hacer ahí. Las dos son del mismo tipo de error: el panel estaba
+contando **líneas de pedido**, cuando lo que la fábrica necesita es **productos a producir**.
+
+### 1. Las ATC no son ventas
+
+> *"Estás mezclando las ATC diciéndole que deben pedir a fábrica cuando eso son reparaciones
+> o entregas. Las ATC no deberían entrar COMO PRODUCTOS A MANDAR A FABRICAR."*
+
+Tiene razón, y es obvio una vez dicho: los motivos de una ATC son hundimiento, resortes,
+retapizado, ruido, patas, tela. **Se arregla lo que el cliente ya tiene** — no se le vende
+otro. Contarlas inflaba tres cosas a la vez: la rotación (venta que no existió), el
+«vendido sin entregar», y —lo que importa— la lista que se le manda a fábrica.
+
+Quedan afuera de **todo** el cálculo de stock: rotación, comprometido, salidas y la revisión
+automática. El embudo es uno solo, `stockCuenta(p)`: ni filas del sistema, ni borradores de
+Kommo, ni reclamos.
+
+> ⚠️ **El caso que sí saca mercadería y aun así queda afuera**: una ATC de «cambio de
+> producto» se lleva un colchón del depósito de verdad. Ese descuento **no se hace acá**, y
+> no hace falta: el corte del Excel del día siguiente ya lo refleja, porque mide lo que hay
+> en el almacén, no lo que el panel cree que debería haber.
+
+### 2. Protectores y sábanas no se fabrican, se entregan en tienda
+
+> *"Y los pedidos a fábrica son solo colchón, somier, almohadas o cabeceras: protectores,
+> sábanas, manta, MDF, juego sábana no son para pedir a fábrica, eso se entregan en tienda.
+> No tomar en cuenta."*
+
+Son accesorios que el cliente se lleva del local. No viajan en el camión, no salen del
+almacén de logística, y «pedirlos a fábrica» no quiere decir nada. `esProdDeTienda(x)` los
+saca de las salidas, del comprometido, de la tabla de stock y del reparto automático.
+
+> ⚠️ **ES UNA LISTA NEGRA A PROPÓSITO, y esto es lo que hay que entender antes de tocarlo.**
+> La pregunta natural sería «¿esto es un colchón?» — y **no funciona**: los colchones del
+> catálogo casi nunca dicen COLCHON. Se llaman TITANIO LATEX, MEMORY FLEX, ORO BI RELAX,
+> PILLOW PEDIC, SEMIPEDIC. Una lista blanca dejaría afuera medio catálogo.
+> La pregunta «¿esto es un accesorio?» **sí** funciona, porque a los accesorios siempre se
+> los nombra por lo que son: PROTECTOR, SÁBANA, MANTA, CUBRECAMA.
+> Por lo mismo, **PROTECTOR gana aunque el renglón diga COLCHON**: «PROTECTOR DE COLCHON» es
+> un protector.
+
+> ⚠️ **MDF lleva guarda.** El dueño lo nombró entre los accesorios, pero una **CABECERA o un
+> RESPALDAR de MDF sí se fabrica** (RESPALDAR PRAG. está en el catálogo, con 9 códigos). Si
+> la palabra MDF sola alcanzara para sacar la línea, se dejarían de pedir cabeceras. La regla
+> es: si el renglón nombra el mueble, manda el mueble.
+
+### Que no parezca que el panel las perdió
+
+Sacar cosas del cálculo sin decirlo es peor que no sacarlas: alguien cuenta 8 líneas en el
+pedido, ve 5 en la revisión y deja de confiar. Así que se cuentan y se muestran, arriba de
+todo, al lado de las otras: **🎧 ATC — reclamos, no entran** y **🏪 se entregan en tienda**.
+Están en el panel fijo y en la ventana de la revisión.
+
+### Y la puerta de atrás que casi queda abierta
+
+El Excel del almacén trae protectores y sábanas. `stockData()` lista **también** lo que se
+contó alguna vez aunque hoy no esté en ningún pedido (§4co) — y por ahí los accesorios
+volvían a la tabla sin pasar por ningún pedido. Lo mismo con el almacén de Moreno. Los dos
+recorridos filtran ahora por la misma regla.
+
+**Dientes verificados** (apagando las dos funciones y recalculando sobre el mismo escenario):
+lo que hay que fabricar pasa de 2 a 4 colchones, las líneas del pedido con accesorios de 1 a
+4, y aparecen 3 accesorios en la lista para fábrica y 3 en la tabla de stock. O sea: los
+checks nuevos fallan si se apaga la función, que es lo único que los hace valer algo.
+
+Batería: **43 suites, 1.612 checks, 0 fallas** (40 de `correr.sh` + las 3 de Python, que van
+aparte). `tests/test_revstock.js` pasó de 30 a 37 checks — la sección 8 es esta.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
