@@ -4790,6 +4790,105 @@ checks nuevos fallan si se apaga la función, que es lo único que los hace vale
 Batería: **43 suites, 1.612 checks, 0 fallas** (40 de `correr.sh` + las 3 de Python, que van
 aparte). `tests/test_revstock.js` pasó de 30 a 37 checks — la sección 8 es esta.
 
+## 4cy. 🔬 La prueba con los Excel reales, y lo que sacó a la luz (2026-09-07)
+
+El dueño pidió *"prueba de que el bot ahora detecta automático los productos, indica qué
+falta, qué recoger, qué mandar a pedir, sin errores en los productos/listas, y marca los
+pedidos"*. Se hizo de punta a punta, **con los dos Excel reales del 07/09** (logística
+08:59, Moreno 09:15) subidos por el mismo botón que usa el equipo, y con pedidos escritos
+como los escriben las vendedoras: por código, por nombre con plazas («PILLOW PEDIC 2
+PLAZAS»), con el alias («oro vicolastico 2.5», «somier pedic 2 plz»), al estilo ROHO
+(«COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX»), una ATC, un protector, una línea 🏭.
+Cada número se cotejó **a mano** contra los archivos (14 productos, acá y Moreno).
+
+> ⚠️ La prueba vive en el scratchpad, **no en el repo**: usa el inventario real y el repo es
+> público. Lo que sí queda en el repo es `tests/test_identidad.js`, con nombres reales del
+> almacén y cantidades inventadas.
+
+### Lo que falló la primera vez (15 de 71 checks)
+
+Cuatro eran míos: mi lectura de control de los Excel saltó los códigos escritos en
+**minúscula** (`ch1201` en Moreno, `ch1682` en logística) y el panel tenía razón. Los otros
+eran del panel, y de tres clases:
+
+**1. Renglones con un código que el catálogo no conoce se sumaban POR NOMBRE a otro
+producto.** El caso que lo delata: Moreno tiene `SR2012 SOMIER ROHO PEDIC 140X190` (3) y
+`CH1297 SOMIER PARRILLA NEGRO 140X190` (10). «SOMIER NEGRO» ⊆ «SOMIER PARRILLA NEGRO», así
+que el panel decía **«hay 13 somieres negros»**. Igual: `CH1001 Almohada Heaven Celeste`
+(28) sumada a la `ALMOHADA 50x70` (21) → «hay 49»; `CH2151 SOMIER SEMIPEDIC` sumado a un
+**colchón**; `ICH2195 FORRO COLCHON PILLOW PEDIC` —una funda— sumado al colchón PILLOW
+PEDIC; `CH1311 SUEÑA CONFORT PLUS +2CM` al CONFORT PLUS.
+
+> **La regla nueva: dos códigos son dos productos.** El sistema del almacén no se equivoca
+> con sus propios códigos. Un renglón cuyo código el catálogo no conoce queda **con su nombre
+> crudo, en su propio renglón** (`stockClaveCruda`), y nunca se une «por parecerse». Si de
+> verdad es el mismo producto, el dueño lo une mandando el código —como hizo en §4cw— y
+> mientras tanto se ve como renglón aparte, que es un error visible y barato. Sumar en
+> silencio era el error caro. Los únicos renglones con códigos distintos que siguen sumándose
+> son los que **el propio catálogo del dueño** declara iguales: los colores del RESPALDAR
+> PRAG. y los dos códigos del ESPECIAL ANTIALERGICO (CH1075/CH2391, CH1078/CH2392).
+
+**2. Medidas que no se leían.** El almacén escribe «SOMIER BAHIA BEIGE **2,0 - T.A.**»,
+«CONFORT PLUS **1,5 [Pr.]**», «FORTE FLEX **2,0 VER. 2026**», «COLCHON SOFT **140\*190**».
+El número suelto solo se entendía al final del nombre, y el asterisco no era una X. Así el
+SOMIER BAHIA 1,5 y el 2,0 terminaban en **un** renglón sin medida. `medidaDeTexto` entiende
+las cuatro formas; «VER. 2026» y «22 CM» no son medidas.
+
+**3. «ALMOHADA NASA» no encontraba la `CH1195`.** El catálogo la abrevia «ALM/NASA», el
+almacén la llama «ALMOHADA VISCOLASTICA NASA» y la vendedora «ALMOHADA NASA». Caía en la
+ALMOHADA a secas sin medida y el panel **mandaba a fabricar 2 almohadas habiendo 33**. Alias
+`ALM/NASA → ALMOHADA NASA` (y `ALM/HEAVEN`), aplicado a los dos lados.
+
+### Las tres reglas que faltaban en `stockEnCatalogo`
+
+- **La familia manda.** SOMIER, RESPALDAR, CABECERA, ALMOHADA, COLCHONETA, FORRO, ARMAZON,
+  COMBO. Un producto solo puede ser una entrada del catálogo de su misma familia; la familia
+  «vacía» es el colchón (el catálogo casi nunca escribe COLCHON, §4cx).
+- **Empate = no se adivina.** «SOMIER BAHIA NEGRO» tiene adentro «SOMIER BAHIA» y «SOMIER
+  NEGRO», dos somieres distintos. Elegir el primero de la lista era elegir al azar.
+- **Una palabra de más que es de OTRO producto = no es este.** «SUEÑA CONFORT PLUS»: SUEÑA
+  es de los SUEÑA ESSENTIAL/PREMIER, así que no es el CONFORT PLUS. Las marcas (HEAVEN, BY,
+  ROHO) no cuentan: «SEMIPEDIC BY HEAVEN» sigue siendo el SEMIPEDIC.
+
+Y una cuarta, en `stockInfo`: **el nombre exacto del almacén gana sobre lo que el catálogo
+«cree»**. Si el pedido dice «SOMIER PARRILLA NEGRO 2 PLAZAS» y en el almacén hay un «SOMIER
+PARRILLA NEGRO 140X190» con su código, ES ese —aunque por palabras también parezca el
+SOMIER NEGRO—. Solo cuando el nombre crudo no está en ningún almacén se usa el catálogo.
+
+### Dos detalles del índice que estaban mal
+
+- `stockPartes` compara ahora sin la medida adentro del nombre: «COLCHON TITANIO ICE
+  140X200|140X200» y «TITANIO ICE|140X200» son lo mismo. Efecto colateral bueno: «SOMIER
+  RARO 180X190 **CM**» se une al «SOMIER RARO 180X190» también sin el código (el test de
+  §4cv documentaba esa limitación; se actualizó).
+- La misma clave en los dos almacenes contaba como **dos candidatas** y «ALMOHADA» sin medida
+  creía que había duda. Ahora es una.
+
+### La clave cruda cambia de forma
+
+Lo que no es del catálogo pasa de `COLCHON XYZ|140X190` a `XYZ|140X190`: sin medida adentro
+del nombre, sin relleno (COLCHON, CM, NUEVO…), sin el color colgado con guion. `leerStock`
+migra las claves viejas al leer la fila (test 7 de `test_stock.js`); las **uniones a mano**
+(`STOCK.a`) hechas sobre claves crudas viejas dejarían de aplicar — no se conoce ninguna.
+
+### Resultado
+
+- Prueba de punta a punta con los Excel reales: **76 checks, 0 fallas** (tras los arreglos).
+  Detecta las 11 formas de escribir, reparte por fecha, la lista de Moreno y la de fábrica
+  salen con sus unidades y códigos, Aplicar deja los tildes y los estados, PEDIR YA y
+  Programar recogida anotan y el producto pasa a «en camino».
+- Sobre los archivos reales ya **no queda ninguna suma entre códigos distintos** que el
+  catálogo no autorice (se verificó renglón por renglón, envolviendo `stockClave`).
+- `tests/test_identidad.js`: 37 checks nuevos. Contra el panel anterior fallan (las funciones
+  no existen); la evidencia fuerte es la prueba real: 15 fallas antes, 0 después.
+- Cuatro checks viejos cambiaron de expectativa, cada uno con su comentario (§4cy).
+- Batería: **44 suites, 1.649 checks, 0 fallas** (41 de `correr.sh` + 3 de Python).
+
+**Para preguntarle al dueño:** el almacén llama «COLCHON ESPECIAL **JUNIOR**» a los códigos
+`CH1075`/`CH1078`, que en su tabla figuran como ESPECIAL **ANTIALERGICO** 105/140. Hoy se
+suman como antialérgico porque el código manda. Si JUNIOR es otro colchón, hay que sacarlos
+del catálogo o darles su nombre.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

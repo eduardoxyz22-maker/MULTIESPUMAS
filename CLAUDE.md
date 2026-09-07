@@ -64,6 +64,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     ⚠️ `PROD_TIENDA` es **lista negra a propósito**: los colchones del catálogo casi nunca
     dicen COLCHON (TITANIO LATEX, MEMORY FLEX), así que una lista blanca no sirve.
     ⚠️ MDF lleva guarda `PROD_MUEBLE`: una **cabecera/respaldar de MDF sí se fabrica**.
+  - **Dos códigos son dos productos** (§4cy): un renglón del Excel con un código que
+    `CODIGOS` no conoce queda con su **nombre crudo** (`stockClaveCruda`: sin medida adentro,
+    sin relleno, medida aparte) y nunca se suma «por parecerse». `stockEnCatalogo` exige
+    misma **familia** (SOMIER/RESPALDAR/ALMOHADA/FORRO…), no adivina en empates ni cuando
+    sobra una palabra de otro producto; y el nombre exacto del almacén gana sobre el
+    catálogo. `medidaDeTexto` entiende «2,0 - T.A.», «1,5 [Pr.]», «140*190».
+    `tests/test_identidad.js`. Para verificar con los Excel reales: prueba en el scratchpad,
+    nunca en el repo (público).
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»

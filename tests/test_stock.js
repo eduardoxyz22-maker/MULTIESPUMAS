@@ -157,8 +157,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
      explícito — se resuelve por nombre, que es más firme. */
   chk('⚠️ «COLCHON ORO VISCOLASTICO 2.5PLZ 160X190CM HEAVEN» se une solo al del catálogo, sin tocar nada',
       r.oro.k==='ORO ANATOMICO VISCOLASTICO|160X190' && r.oro.por==='nombre', r.oro.k+' ['+r.oro.por+']');
+  /* §4cy: la clave cruda ya no lleva el relleno (COLCHON, CM…): «COLCHON CARIOCA» queda como
+     «CARIOCA|160X190», que es lo mismo que escribiría el almacén. Lo que importa acá sigue
+     igual: NO se unió a ningún CARIOCA del catálogo. */
   chk('⚠️ …pero «CARIOCA» a secas NO se une: hay CARIOCA PREMIER y CARIOCA RIO, son distintos',
-      !r.carioca.por && /^COLCHON CARIOCA\|/.test(r.carioca.k), r.carioca.k);
+      !r.carioca.por && /^CARIOCA\|/.test(r.carioca.k), r.carioca.k);
   chk('…ni «PILLOW» a secas (PILLOW FLEX y PILLOW PEDIC)', !r.pillow.por, r.pillow.k);
   chk('…y ORTOPEDICO y SEMIORTOPEDICO siguen siendo dos colchones',
       r.ortop.k!==r.semi.k && r.ortop.por==='nombre' && r.semi.por==='nombre', r.ortop.k+' vs '+r.semi.k);
@@ -337,8 +340,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var leido=leerStock({observaciones:JSON.stringify(vieja)});
     return { u:leido.c.u, ek:leido.e[0].k, k:K };
   });
+  /* §4cy: lo que no es del catálogo también cambia a la clave cruda, sin el relleno:
+     «COLCHON XYZ» pasa a «XYZ|140X190». Sigue siendo un renglón aparte, con su unidad. */
   chk('⚠️ un conteo viejo con las claves crudas se junta solo bajo la clave del catálogo (3+4=7)',
-      r.u[r.k]===7 && r.u['COLCHON XYZ|140X190']===1 && Object.keys(r.u).length===2, JSON.stringify(r.u));
+      r.u[r.k]===7 && r.u['XYZ|140X190']===1 && Object.keys(r.u).length===2, JSON.stringify(r.u));
   chk('…y la entrada vieja también cambia de clave', r.ek===r.k, r.ek);
 
   // ══ 8. «Ya lo pedí»: el pedido a fábrica anotado ═══════════════════════════

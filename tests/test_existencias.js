@@ -208,6 +208,10 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
        adentro del nombre, campo medida vacío) y el Excel dice «SOMIER BiRELAX 160X200» con
        la medida aparte. Sin unirlos, el panel mandaba a fabricar un somier que estaba (§4ct). */
     STOCK.c.u['SOMIER BIRELAX 160X200|160X200']=1;
+    /* §4cy: «varias candidatas» tiene que ser verdad para que el check pruebe algo. Con UNA
+       sola candidata el nombre sin medida SÍ se une a ella (regla de §4ct: «solo si hay una
+       sola»), y desde §4cy la medida adentro del nombre ya no separa las claves. */
+    STOCK.c.u['SOMIER BIRELAX 180X200|180X200']=1;
     stockOlvidarIndice();
     var kPedido=stockClave({desc:'SOMIER BI RELAX 160X200', medida:''});
     var otro   =stockClave({desc:'SOMIER BIRELAX 160X190', medida:''});   // otra medida: NO se une
@@ -217,9 +221,9 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('⚠️ el somier del pedido se une al del almacén aunque cambie el espacio',
       r.k==='SOMIER BIRELAX 160X200|160X200' && r.hay===1, r.k+' → '+r.hay);
   chk('⚠️ …pero otra MEDIDA no se une: sería decir que hay algo que no hay',
-      r.otro!=='SOMIER BIRELAX 160X200|160X200', r.otro);
-  chk('…y un nombre sin medida, con varias candidatas, tampoco', /^SOMIER BIRELAX\|/.test(r.dudoso), r.dudoso);
-  await page.evaluate(() => { delete STOCK.c.u['SOMIER BIRELAX 160X200|160X200']; stockOlvidarIndice(); });
+      r.otro!=='SOMIER BIRELAX 160X200|160X200' && r.otro!=='SOMIER BIRELAX 180X200|180X200', r.otro);
+  chk('…y un nombre sin medida, con varias candidatas, tampoco', /^SOMIER BIRELAX\|$/.test(r.dudoso), r.dudoso);
+  await page.evaluate(() => { delete STOCK.c.u['SOMIER BIRELAX 160X200|160X200']; delete STOCK.c.u['SOMIER BIRELAX 180X200|180X200']; stockOlvidarIndice(); });
 
   // ══ 4d. EL CÓDIGO MANDA sobre cualquier nombre ════════════════════════════
   console.log('\n── 4d. El código del almacén gana ──');
@@ -239,8 +243,12 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('el importador guarda el código de cada producto del almacén', r.nCods>1, r.nCods+' códigos');
   chk('⚠️ un pedido con ESE código encuentra el producto aunque el nombre no coincida',
       r.conCod==='SOMIER RARO 180X190|180X190' && r.hay===3, r.conCod+' → '+r.hay);
-  chk('…sin el código, el nombre distinto no alcanza y queda aparte',
-      r.sinCod!=='SOMIER RARO 180X190|180X190', r.sinCod);
+  /* Hasta §4cv, sin el código este pedido quedaba aparte: «SOMIER RARO 180X190 CM» y «SOMIER
+     RARO 180X190» se comparaban letra por letra y sobraba el CM. Desde §4cy la clave cruda
+     saca la medida y el relleno (CM) de los dos lados, así que son el mismo nombre y se unen
+     también sin el código. El código sigue mandando cuando los nombres NO coinciden. */
+  chk('…sin el código, el mismo nombre (aunque sobre un «CM») también lo encuentra',
+      r.sinCod==='SOMIER RARO 180X190|180X190', r.sinCod);
   chk('…y un código que el almacén no tiene no inventa nada',
       r.otroCod===r.sinCod, r.otroCod);
   r = await page.evaluate(() => {

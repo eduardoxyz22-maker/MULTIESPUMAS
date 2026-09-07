@@ -6619,15 +6619,19 @@ function precioTipico(codigo){
    Así que primero se parte el nombre: la medida por un lado, el producto por otro. */
 function medidaDeTexto(t){
   var s=String(t==null?'':t).toLowerCase().replace(/[×✕✖]/g,'x');
-  var m=s.match(/(\d{2,3})\s*x\s*(\d{2,3})/);       // "180X200CM", "160 x 190"
+  /* «140*190»: así separa el sistema de Moreno (COLCHON SOFT 140*190, COLCHON BB 75*110).
+     Un asterisco es una X para lo que importa acá (§4cy). */
+  var m=s.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/);    // "180X200CM", "160 x 190", "140*190"
   if(m) return m[1]+'x'+m[2];
   // Sin centímetros, la medida puede venir en plazas: «COLCHON ORO VISCOLASTICO 2,5 PLZ».
   var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?)\b/);
   if(p){ var k=medidaPlzNum(p[1]); if(k) return k; }
-  /* …o como un número suelto AL FINAL, que es como está escrita la tabla de códigos del
-     dueño: «SOMIER NEGRO 2,5», «PILLOW PEDIC 3,0». Solo al final y solo si es una de las
-     seis medidas, para no comerse un número que sea parte del nombre. */
-  var q=s.match(/(\d(?:[.,]\d)?)\s*$/);
+  /* …o como un número suelto: AL FINAL, como la tabla de códigos del dueño («SOMIER NEGRO
+     2,5», «PILLOW PEDIC 3,0»), o seguido de lo que el almacén de Moreno le cuelga al nombre:
+     «SOMIER BAHIA BEIGE 2,0 - T.A.», «CONFORT PLUS 1,5 [Pr.]», «FORTE FLEX 2,0 VER. 2026»,
+     «Muestra 1,0[Con Chulo…» (§4cy). Un solo dígito con su decimal y solo si es una de las
+     seis medidas: «VER. 2026» no es una medida, «22 CM» tampoco. */
+  var q=s.match(/(?:^|\s)(\d(?:[.,]\d)?)\s*(?=$|-|\[|\(|ver\b|t\.a)/);
   if(q){ var k2=medidaPlzNum(q[1]); if(k2) return k2; }
   return '';
 }
@@ -6659,7 +6663,8 @@ function buscaCatalogo(x){
   var especial=null;
   for(var k in CODIGOS){
     var v=CODIGOS[k];
-    if(normNombre(v.d)!==d) continue;
+    /* El alias se aplica a los DOS lados: «ALM/NASA» del catálogo es «ALMOHADA NASA» (§4cy). */
+    if(normNombre(prodAlias(String(v.d).toUpperCase()))!==d) continue;
     if(!me || normMedida(v.m)===me) return { code:k, d:v.d, m:(me?v.m:''), por:'nombre' };
     if(!especial) especial={ code:'', d:v.d, m:me, por:'medida-especial' };
   }
@@ -10289,7 +10294,12 @@ var STOCK_RELLENO={COLCHON:1,COLCHONES:1,PLAZA:1,PLAZAS:1,PLZ:1,NUEVO:1,CM:1,DE:
        coinciden uno por uno. */
 var PROD_ALIAS=[
   { de:/\bSOMIER\s+PEDIC\b/g,            a:'SOMIER NEGRO' },
-  { de:/\bORO\s+VIS?COLASTICO\b/g,       a:'ORO ANATOMICO VISCOLASTICO' }
+  { de:/\bORO\s+VIS?COLASTICO\b/g,       a:'ORO ANATOMICO VISCOLASTICO' },
+  /* El catálogo abrevia «ALM/NASA» y «ALM/HEAVEN»; el almacén escribe «ALMOHADA VISCOLASTICA
+     NASA» y las vendedoras «ALMOHADA NASA». Sin esto, «ALMOHADA NASA» caía en la ALMOHADA a
+     secas y el panel mandaba a fabricar almohadas que había 33 (§4cy). */
+  { de:/\bALM\/NASA\b/g,                 a:'ALMOHADA NASA' },
+  { de:/\bALM\/HEAVEN\b/g,               a:'ALMOHADA HEAVEN' }
 ];
 function prodAlias(t){
   var s=String(t==null?'':t);
@@ -10305,10 +10315,10 @@ function stockNorm(t){
    sin el color al final. «COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX» → {ECO, FLEX}. */
 function stockTokens(t){
   t=prodAlias(stockNorm(t));
-  t=t.replace(/\d{2,3}\s*[X×✕✖]\s*\d{2,3}(\s*[X×✕✖]\s*\d+)?\s*(CM)?/g,' ');   // la medida, "140X190CM", "70X190X3"
+  t=t.replace(/\d{2,3}\s*[X×✕✖*]\s*\d{2,3}(\s*[X×✕✖*]\s*\d+)?\s*(CM)?/g,' ');  // la medida, "140X190CM", "70X190X3", "140*190"
   t=t.replace(/\s*-\s*[^-]{2,20}$/,' ');                                    // " - PLOMO CL": el color al final
   var set={}, n=0;
-  t.split(/[\s,;()]+/).forEach(function(w){
+  t.split(/[\s,;()\[\]]+/).forEach(function(w){
     w=w.replace(/^[.\-]+|[.\-]+$/g,'');                                     // "SEMIORTOP." → "SEMIORTOP"
     if(!w) return;
     if(/^\d+([.,]\d+)?(P|PL|PLZ|PLAZAS?)?$/.test(w)) return;                // "2", "2,5", "2P", "3PLZ"
@@ -10317,32 +10327,74 @@ function stockTokens(t){
   });
   return { set:set, n:n };
 }
-var STOCK_CAT=null;
+/* 🧭 LA FAMILIA DEL PRODUCTO (§4cy). «SOMIER SEMIPEDIC» no es el colchón SEMIPEDIC, «FORRO
+   COLCHON PILLOW PEDIC» (una funda) no es el PILLOW PEDIC, y una ALMOHADA no es más que una
+   almohada. La regla de «todas las palabras del catálogo adentro del nombre» los unía —y el
+   almacén de Moreno trae los tres casos—. Antes de comparar palabras se compara la familia.
+   COLCHON no es una familia porque el catálogo casi nunca lo escribe (§4cx): la familia
+   «vacía» es el colchón. */
+var PROD_FAMILIAS=['SOMIER','RESPALDAR','CABECERA','ALMOHADA','COLCHONETA','FORRO','ARMAZON','COMBO'];
+function stockFamilia(toks){
+  for(var i=0;i<PROD_FAMILIAS.length;i++) if(toks[PROD_FAMILIAS[i]]) return PROD_FAMILIAS[i];
+  return '';
+}
+/* Palabras de marca que se le cuelgan a cualquier nombre sin distinguir nada: «SEMIPEDIC BY
+   HEAVEN», «FORTE FLEX … FLEX». No cuentan como «palabra de más». */
+var STOCK_MARCA={HEAVEN:1,BY:1,ROHO:1,MULTI:1,MULTIESPUMAS:1};
+var STOCK_CAT=null, STOCK_CAT_PAL=null;
 function stockCatalogo(){
   if(STOCK_CAT) return STOCK_CAT;
   var lista=[];
   for(var k in CODIGOS){
     var v=CODIGOS[k], tk=stockTokens(v.d); if(!tk.n) continue;
-    lista.push({ code:k, d:v.d, m:v.m||'', nd:stockNorm(v.d), nm:normMedida(v.m||''), toks:tk.set, n:tk.n });
+    lista.push({ code:k, d:v.d, m:v.m||'', nd:stockNorm(v.d), nm:normMedida(v.m||''), toks:tk.set, n:tk.n, fam:stockFamilia(tk.set) });
   }
   STOCK_CAT=lista; return lista;
 }
+/* Para cada palabra del catálogo, de QUÉ productos es (por familia). Sirve para saber si una
+   palabra que sobra en el nombre nombra a OTRO producto: en «SOMIER BAHIA NEGRO», BAHIA es de
+   «SOMIER BAHIA», así que no es el «SOMIER NEGRO» aunque tenga esas dos palabras adentro. */
+function stockPalabrasCat(){
+  if(STOCK_CAT_PAL) return STOCK_CAT_PAL;
+  var m={};
+  stockCatalogo().forEach(function(c){
+    var f=m[c.fam]=m[c.fam]||{};
+    for(var w in c.toks){ (f[w]=f[w]||{})[c.nd]=1; }
+  });
+  STOCK_CAT_PAL=m; return m;
+}
 /* La entrada del catálogo que ES este producto, o null. Por código si lo trae; si no, la
-   entrada cuyas palabras están TODAS en el nombre del producto (misma medida), y entre
-   varias la más específica. Así «ECO FLEX» encuentra «NUEVO ECO FLEX» pero «PILLOW» solo no
-   encuentra nada: PILLOW FLEX y PILLOW PEDIC son dos colchones distintos. */
+   entrada cuyas palabras están TODAS en el nombre del producto (misma familia, misma medida),
+   y entre varias la más específica. Así «ECO FLEX» encuentra «NUEVO ECO FLEX» pero «PILLOW»
+   solo no encuentra nada: PILLOW FLEX y PILLOW PEDIC son dos colchones distintos.
+   ⚠️ Y CUANDO HAY DUDA NO SE ADIVINA (§4cy): si dos productos distintos empatan, o si al
+   nombre le sobra una palabra que es de otro producto, se devuelve null y el producto queda
+   con su nombre. Adivinar acá es lo que sumaba somieres a colchones. */
 function stockEnCatalogo(x){
   var cod=String((x&&x.codigo)||'').trim().toUpperCase();
   if(cod && CODIGOS[cod]) return { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m||'', por:'codigo' };
   var crudo=String((x&&x.desc)||''), tk=stockTokens(crudo); if(!tk.n) return null;
   var me=normMedida((x&&x.medida)||'') || normMedida(medidaDeTexto(crudo));
-  var nd=stockNorm(crudo), cat=stockCatalogo(), mejor=null;
+  var nd=stockNorm(crudo), cat=stockCatalogo(), mejor=null, otros=0, fam=stockFamilia(tk.set);
   for(var i=0;i<cat.length;i++){
     var c=cat[i];
+    if(c.fam!==fam) continue;                       // un somier no es un colchón
     if(me && c.nm!==me) continue;
     var todas=true; for(var w in c.toks){ if(!tk.set[w]){ todas=false; break; } }
     if(!todas) continue;
-    if(!mejor || c.n>mejor.n || (c.n===mejor.n && c.nd===nd && mejor.nd!==nd)) mejor=c;
+    if(!mejor || c.n>mejor.n){ mejor=c; otros=0; }
+    else if(c.n===mejor.n && c.nd!==mejor.nd){
+      if(c.nd===nd){ mejor=c; otros=0; }            // el nombre exacto gana
+      else if(mejor.nd!==nd) otros++;               // empate entre dos productos distintos
+    }
+  }
+  if(mejor && otros) return null;                   // «SOMIER BAHIA NEGRO» con SOMIER BAHIA y SOMIER NEGRO: no se elige al azar
+  if(mejor && mejor.nd!==nd){
+    var pal=stockPalabrasCat()[fam]||{};
+    for(var w2 in tk.set){
+      if(mejor.toks[w2] || STOCK_MARCA[w2] || !pal[w2]) continue;
+      for(var d2 in pal[w2]){ if(d2!==mejor.nd) return null; }   // sobra una palabra que es de OTRO producto
+    }
   }
   if(mejor) return { code:mejor.code, d:mejor.d, m:(me?mejor.m:''), por:'nombre' };
 
@@ -10360,7 +10412,7 @@ function stockEnCatalogo(x){
   if(!me) return null;
   var mejorP=null, segundo=0;
   for(var j=0;j<cat.length;j++){
-    var e=cat[j]; if(e.nm!==me) continue;
+    var e=cat[j]; if(e.nm!==me || e.fam!==fam) continue;
     var com=0; for(var w2 in e.toks){ if(tk.set[w2]) com++; }
     if(com<2) continue;
     if(!mejorP || com>mejorP.com){ segundo=mejorP?mejorP.com:0; mejorP={e:e, com:com}; }
@@ -10392,7 +10444,13 @@ var STOCK_APRET=null;
 function stockApretar(t){ return String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
 function stockPartes(k){
   var s=String(k||''), i=s.lastIndexOf('|');
-  return { d:stockApretar(i<0?s:s.slice(0,i)), m:stockApretar(i<0?'':s.slice(i+1)) };
+  var d=i<0?s:s.slice(0,i), m=i<0?'':s.slice(i+1);
+  /* La medida adentro del nombre no distingue nada: «COLCHON TITANIO ICE 140X200|140X200» y
+     «TITANIO ICE|140X200» son el mismo colchón. Se saca del nombre y, si la clave no traía
+     medida, se toma de ahí (§4cy). */
+  if(!m) m=medidaDeTexto(d);
+  d=d.replace(/\d{2,3}\s*[X×✕✖*]\s*\d{2,3}(\s*[X×✕✖*]\s*\d+)?\s*(CM)?/gi,' ');
+  return { d:stockApretar(d), m:stockApretar(normMedida(m)) };
 }
 function stockIndiceApretado(){
   if(STOCK_APRET) return STOCK_APRET;
@@ -10401,7 +10459,10 @@ function stockIndiceApretado(){
     Object.keys((s||{}).u||{}).forEach(function(k){
       var p=stockPartes(k), f=p.d+'|'+p.m;
       if(!STOCK_APRET.full[f]) STOCK_APRET.full[f]=k;
-      (STOCK_APRET.desc[p.d]=STOCK_APRET.desc[p.d]||[]).push({k:k, m:p.m});
+      /* ⚠️ La misma clave en los dos almacenes es UNA entrada, no dos: si no, «ALMOHADA» sin
+         medida veía dos candidatos iguales, creía que había duda y no se unía a nada (§4cy). */
+      var lista=(STOCK_APRET.desc[p.d]=STOCK_APRET.desc[p.d]||[]);
+      if(!lista.some(function(e){ return e.k===k; })) lista.push({k:k, m:p.m});
     });
     /* ⚠️ EL CÓDIGO MANDA (§4cv). El Excel del almacén trae el código de cada producto y es
        el identificador más fuerte que hay: no depende de cómo lo escribió cada uno. El
@@ -10435,16 +10496,53 @@ function stockClaveInv(k, cod){
   return m.length===1 ? m[0].k : k;
 }
 function stockOlvidarIndice(){ STOCK_APRET=null; }
-var STOCK_MEMO={};   // desc|medida|código → {auto, cat}. Se calcula una vez por nombre distinto.
+/* 🏷️ EL NOMBRE «CRUDO» DE UN PRODUCTO QUE NO ESTÁ EN EL CATÁLOGO (§4cy): las palabras del
+   nombre sin la medida, sin «2,5 PLZ», sin el relleno (COLCHON, CM, NUEVO…) y sin el color
+   colgado con guion, más la medida aparte. «COLCHON TITANIO ICE 140X200» y «TITANIO ICE
+   140x200» dan la misma clave, «SOMIER BAHIA BEIGE 2,0 - T.A.» y «somier bahia beige 2
+   plazas» también. Es la clave con la que un renglón del almacén con código desconocido se
+   guarda, y con la que un pedido lo encuentra. */
+function stockClaveCruda(x){
+  var desc=String((x&&x.desc)||'');
+  var me=normMedida((x&&x.medida)||'') || normMedida(medidaDeTexto(desc));
+  var d=stockNorm(desc)
+    .replace(/\s+-\s+[^-]{2,20}$/,' ')                                          // « - T.A.», « - PLOMO CL»
+    .replace(/\d{2,3}\s*[X×✕✖*]\s*\d{2,3}(\s*[X×✕✖*]\s*\d+)?\s*(CM)?/g,' ')    // la medida en cm
+    .replace(/(^|\s)\d(?:[.,]\d)?\s*(?:PLZ|PLAZAS?|PL|P)?\b\.?/g,' ');           // «2,5 PLZ», «2P», «2,0»
+  var palabras=[];
+  d.split(/[\s,;()\[\]]+/).forEach(function(w){
+    w=w.replace(/^[.\-]+|[.\-]+$/g,'');
+    if(w && !STOCK_RELLENO[w]) palabras.push(w);
+  });
+  return palabras.join(' ')+'|'+stockNorm(me);
+}
+function stockHayEnInventario(k){
+  if((STOCK.c.u||{})[k]!=null) return true;
+  var g=STOCK.g||{};
+  for(var nm in g){ if(((g[nm]||{}).u||{})[k]!=null) return true; }
+  return false;
+}
+var STOCK_MEMO={};   // desc|medida|código → {auto, cat, cruda}. Se calcula una vez por nombre distinto.
 function stockInfo(x){
   var raw=stockNorm(x&&x.desc)+'|'+stockNorm(x&&x.medida)+'|'+stockNorm(x&&x.codigo);
   var m=STOCK_MEMO[raw];
   if(!m){
-    var c=stockEnCatalogo(x);
-    m={ auto: c ? (stockNorm(c.d)+'|'+stockNorm(c.m)) : prodRankKey(x), cat:c };
+    var c=stockEnCatalogo(x), cruda=stockClaveCruda(x);
+    m={ auto: c ? (stockNorm(c.d)+'|'+stockNorm(c.m)) : cruda, cat:c, cruda:cruda };
     STOCK_MEMO[raw]=m;
   }
-  return { k:stockClaveInv(stockAliasDe(m.auto), x&&x.codigo), auto:m.auto, cat:m.cat };
+  var cod=x&&x.codigo, k;
+  if(m.cat && m.cat.por==='codigo') k=stockClaveInv(stockAliasDe(m.auto), cod);
+  else {
+    /* ⚠️ EL NOMBRE EXACTO DEL ALMACÉN GANA SOBRE LA ADIVINANZA DEL CATÁLOGO (§4cy). Si el
+       pedido dice «SOMIER PARRILLA NEGRO 2 PLAZAS» y en el Excel hay un «SOMIER PARRILLA
+       NEGRO 140X190» con su propio código, ES ese — aunque por palabras también «parezca» el
+       SOMIER NEGRO del catálogo. Solo cuando el nombre crudo no está en ningún almacén se
+       usa lo que dice el catálogo. */
+    var kc=stockClaveInv(stockAliasDe(m.cruda), cod);
+    k = stockHayEnInventario(kc) ? kc : stockClaveInv(stockAliasDe(m.auto), cod);
+  }
+  return { k:k, auto:m.auto, cat:m.cat };
 }
 function stockClaveAuto(x){ return stockInfo(x).auto; }
 function stockClave(x){ return stockInfo(x).k; }
@@ -10458,7 +10556,9 @@ function stockAliasDe(k, a){
    ven el mismo); si se unió a mano, con el nombre de la clave destino. */
 function stockNombreDe(info, x){
   if(info.k!==info.auto){ var pa=info.k.split('|'); return { desc:pa[0]||info.k, medida:pa[1]||'', cod:'' }; }
-  if(info.cat) return { desc:info.cat.d, medida:info.cat.m, cod:info.cat.code };
+  /* Sin medida no hay código: el que devuelve el catálogo es el de UNA de las medidas, y
+     mostrarlo ponía el mismo código en dos renglones de la tabla (§4cy). */
+  if(info.cat) return { desc:info.cat.d, medida:info.cat.m, cod:(info.cat.m||info.cat.por==='codigo')?info.cat.code:'' };
   return { desc:String((x&&x.desc)||'').trim(), medida:String((x&&x.medida)||'').trim(), cod:String((x&&x.codigo)||'').trim() };
 }
 function stockNombreClave(k){ var pa=String(k||'').split('|'); return (pa[0]||String(k||''))+(pa[1]?(' · '+pa[1]):''); }
@@ -11784,8 +11884,17 @@ function existLeer(filas){
     if(!isFinite(cant) || cant<0){ malos++; continue; }
     var it={ cod:cod2, desc:nom2, medida:medidaDeTexto(nom2), cant:cant,
              unidad:String(fq[conocidasCol(conocidas,'UNIDAD')]||'').trim() };
-    it.k=stockClave({desc:it.desc, medida:it.medida, codigo:it.cod});
-    it.cat=!!(stockInfo({desc:it.desc, medida:it.medida, codigo:it.cod}).cat);
+    /* ⚠️ UN CÓDIGO QUE EL CATÁLOGO NO CONOCE ES OTRO PRODUCTO (§4cy). Antes, un renglón con
+       código desconocido se unía POR NOMBRE a lo que pareciera del catálogo, y así el
+       «CH1297 SOMIER PARRILLA NEGRO» se sumó al «SR2012 SOMIER NEGRO» (13 en vez de 3), la
+       «CH1001 Almohada Heaven Celeste» a la ALMOHADA 50x70 (49 en vez de 21) y un «FORRO
+       COLCHON PILLOW PEDIC» —una funda— al colchón PILLOW PEDIC. El sistema del almacén no
+       se equivoca con sus propios códigos: dos códigos son dos productos. El que el catálogo
+       no conoce queda con su nombre crudo, en su propio renglón, y el dueño lo une mandando
+       el código (como hizo en §4cw). Sumar en silencio era el error caro. */
+    it.cat=!!CODIGOS[String(it.cod).toUpperCase()];
+    it.k=it.cat ? stockClave({desc:it.desc, medida:it.medida, codigo:it.cod})
+                : stockClaveCruda({desc:it.desc, medida:it.medida});
     if(it.cod) cods[it.cod.toUpperCase()]=it.k;   // ⚠️ el código es el identificador más fuerte (§4cv)
     if(vistos[it.k]!=null){ items[vistos[it.k]].cant+=cant; repetidos++; }  // mismo producto en dos renglones
     else { vistos[it.k]=items.length; items.push(it); }
