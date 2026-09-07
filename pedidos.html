@@ -1837,10 +1837,19 @@ var MEDIDAS_LEGACY = ['1 plz','1.5 plz','2 plz','2.5 plz','3 plz','3.5 plz'];
    Sin esto, un pedido cargado en plazas y otro en centímetros eran dos productos distintos:
    ninguno de los dos rotaba lo suficiente y ninguno encontraba su stock. */
 var MEDIDA_PLZ={'1':'90x190','1.5':'105x190','2':'140x190','2.5':'160x190','3':'180x190','3.5':'200x200'};
+/* ⚠️ «2,0» y «2» son el mismo número y la tabla solo tiene uno. Sin `parseFloat`, la tabla
+   de códigos del dueño —que escribe «SEMIPEDIC 2,0»— no encontraba nada. */
+function medidaPlzNum(t){
+  var n=parseFloat(String(t||'').replace(',','.'));
+  return isFinite(n) ? (MEDIDA_PLZ[String(n)]||'') : '';
+}
 function normMedida(m){
   var t=String(m==null?'':m).trim().toLowerCase().replace(/[×✕✖]/g,'x').replace(/\s+/g,'');
-  var p=t.match(/^(\d+(?:[.,]\d+)?)(?:plz|plazas|plaza|pl|p)\.?$/);
-  if(p){ var k=p[1].replace(',','.'); if(MEDIDA_PLZ[k]) return MEDIDA_PLZ[k]; }
+  /* «2,5 plz», «2.5 PLAZAS» y «2,5» a secas son lo mismo: así lo escribe la tabla de
+     códigos que pasó el dueño (SOMIER NEGRO 2,5) y así lo cargan las vendedoras. Solo se
+     traduce si el número está en la tabla, así «50x70» o «77x88» no se tocan. */
+  var p=t.match(/^(\d+(?:[.,]\d+)?)(?:plz|plazas|plaza|pl|p)?\.?$/);
+  if(p){ var k=medidaPlzNum(p[1]); if(k) return k; }
   return t;
 }
 function esMedidaConocida(m){
@@ -1854,8 +1863,22 @@ function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i+
 // Un pedido lleva medida 50x70 si algún producto tiene esa medida (resalte naranja claro).
 function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ if(normMedida(pr[i].medida)==='50x70') return true; } return false; }
 // Tabla de codigos -> producto + medida (autollenado). Generada desde el Excel de la empresa.
-var CODIGOS = {"CH1129":{d:"TITANIO LATEX",m:"140x190"}, "CH1130":{d:"TITANIO LATEX",m:"160x190"}, "CH1131":{d:"TITANIO LATEX",m:"180x190"}, "CH1132":{d:"TITANIO LATEX",m:"200x200"}, "CH1224":{d:"TITANIO ICE",m:"105x190"}, "CH1220":{d:"TITANIO ICE",m:"140x190"}, "CH1201":{d:"TITANIO ICE",m:"160x190"}, "CH1221":{d:"TITANIO ICE",m:"180x190"}, "CH1222":{d:"TITANIO ICE",m:"200x200"}, "CH1042":{d:"ORO ANATOMICO VISCOLASTICO",m:"90x190"}, "CH1031":{d:"ORO ANATOMICO VISCOLASTICO",m:"105x190"}, "CH1036":{d:"ORO ANATOMICO VISCOLASTICO",m:"140x190"}, "CH1037":{d:"ORO ANATOMICO VISCOLASTICO",m:"160x190"}, "CH1038":{d:"ORO ANATOMICO VISCOLASTICO",m:"180x190"}, "CH1039":{d:"ORO ANATOMICO VISCOLASTICO",m:"200x200"}, "CH1787":{d:"ORO BI RELAX",m:"90x190"}, "CH1778":{d:"ORO BI RELAX",m:"105x190"}, "CH1761":{d:"ORO BI RELAX",m:"140x190"}, "CH1770":{d:"ORO BI RELAX",m:"160x190"}, "CH1775":{d:"ORO BI RELAX",m:"180x190"}, "CH1780":{d:"ORO BI RELAX",m:"200x200"}, "CH1043":{d:"ORO ORTOPEDICO",m:"90x190"}, "CH1048":{d:"ORO ORTOPEDICO",m:"105x190"}, "CH1051":{d:"ORO ORTOPEDICO",m:"140x190"}, "CH1052":{d:"ORO ORTOPEDICO",m:"160x190"}, "CH1053":{d:"ORO ORTOPEDICO",m:"180x190"}, "CH1054":{d:"ORO ORTOPEDICO",m:"200x200"}, "CH1464":{d:"ESPECIAL ORTOPEDICO D/C",m:"105x190"}, "CH1452":{d:"ESPECIAL ORTOPEDICO D/C",m:"140x190"}, "CH1456":{d:"ESPECIAL ORTOPEDICO D/C",m:"160x190"}, "CH1087":{d:"ESPECIAL ORTOPEDICO D/C",m:"180x190"}, "CH1473":{d:"ESPECIAL ORTOPEDICO D/C",m:"200x200"}, "CH1472":{d:"ESPECIAL ORTOPEDICO",m:"180x190"}, "CH1096":{d:"ESPECIAL SEMIORTOPEDICO",m:"90x190"}, "CH1098":{d:"ESPECIAL SEMIORTOPEDICO",m:"105x190"}, "CH1107":{d:"ESPECIAL SEMIORTOPEDICO",m:"140x190"}, "CH1101":{d:"ESPECIAL SEMIORTOPEDICO",m:"160x190"}, "CH1102":{d:"ESPECIAL SEMIORTOPEDICO",m:"180x190"}, "CH1093":{d:"ESPECIAL SEMIORTOPEDICO",m:"200x200"}, "CH1109":{d:"HEAVEN TROPICAL",m:"90x190"}, "CH1117":{d:"HEAVEN TROPICAL",m:"105x190"}, "CH1121":{d:"HEAVEN TROPICAL",m:"140x190"}, "CH2144":{d:"HEAVEN TROPICAL",m:"160x190"}, "CH1137":{d:"ESPECIAL ANTIALERGICO",m:"90x190"}, "CH1075":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH1078":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH2391":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH2392":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH1883":{d:"DREAM REFORZADO",m:"180x190"}, "CH2086":{d:"COLCHONETA HEAVEN",m:"68x89"}, "CH1149":{d:"SOMIER TITANIO LATEX",m:"140x190"}, "CH1150":{d:"SOMIER TITANIO LATEX",m:"160x190"}, "CH1255":{d:"SOMIER TITANIO LATEX",m:"180x190"}, "CH1151":{d:"SOMIER TITANIO LATEX",m:"200x200"}, "CH1407":{d:"SOMIER TITANIO ICE",m:"105x190"}, "CH1212":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1208":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1223":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1232":{d:"SOMIER TITANIO ICE",m:"200x200"}, "CH1281":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1521":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1606":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1737":{d:"SOMIER ORO",m:"90x190"}, "CH1165":{d:"SOMIER ORO",m:"105x190"}, "CH1144":{d:"SOMIER ORO",m:"140x190"}, "CH1145":{d:"SOMIER ORO",m:"160x190"}, "CH1146":{d:"SOMIER ORO",m:"180x190"}, "CH1147":{d:"SOMIER ORO",m:"200x200"}, "CH1795":{d:"SOMIER BiRELAX",m:"105x190"}, "CH1766":{d:"SOMIER BiRELAX",m:"140x190"}, "CH1771":{d:"SOMIER BiRELAX",m:"160x190"}, "CH2172":{d:"SOMIER BiRELAX",m:"ESPECIAL"}, "CH1803":{d:"SOMIER BiRELAX",m:"200x200"}, "CH1159":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"105x190"}, "CH1168":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"140x190"}, "CH1160":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"160x190"}, "49":{d:"SOMIER PLATA SEMIORTOPEDICO",m:""}, "CH1156":{d:"SOMIER ESPECIAL",m:"180x190"}, "CH2159":{d:"SOMIER TROPICAL",m:"105x190"}, "CH2142":{d:"SOMIER TROPICAL",m:"140x190"}, "CH2143":{d:"SOMIER TROPICAL",m:"160x190"}, "CD1403":{d:"ALMOHADA",m:"50x70"}, "CD1459":{d:"ALMOHADA FIBRA SILICONADA",m:"50x90"}, "CH1253":{d:"ALM/HEAVEN",m:"30x40"}, "CH1195":{d:"ALM/NASA",m:"50x70"}, "CD1918":{d:"SEMIPEDIC",m:"90x190"}, "CD1913":{d:"SEMIPEDIC",m:"105x190"}, "CD1911":{d:"SEMIPEDIC",m:"140x190"}, "CD1912":{d:"SEMIPEDIC",m:"160x190"}, "CH1686":{d:"PILLOW PEDIC",m:"105x190"}, "CH1682":{d:"PILLOW PEDIC",m:"140x190"}, "CH1683":{d:"PILLOW PEDIC",m:"160x190"}, "CH1684":{d:"PILLOW PEDIC",m:"180x190"}, "CH1702":{d:"PILLOW PEDIC",m:"200x200"}, "CH1765":{d:"EUROPEDIC",m:"140x190"}, "CH1767":{d:"EUROPEDIC",m:"160x190"}, "CH1768":{d:"EUROPEDIC",m:"180x190"}, "CH1769":{d:"EUROPEDIC",m:"200x200"}, "CH2284":{d:"DYNAMIC PEDIC",m:"140x190"}, "CH2297":{d:"DYNAMIC PEDIC",m:"160x190"}, "CH2298":{d:"DYNAMIC PEDIC",m:"180x190"}, "CH2299":{d:"DYNAMIC PEDIC",m:"200x200"}, "CH2239":{d:"SOMIER NEGRO",m:"90x190"}, "SR2011":{d:"SOMIER NEGRO",m:"105x190"}, "SR2012":{d:"SOMIER NEGRO",m:"140x190"}, "SR2013":{d:"SOMIER NEGRO",m:"160x190"}, "SR2014":{d:"SOMIER NEGRO",m:"180x190"}, "SR2016":{d:"SOMIER NEGRO",m:"200x200"}, "CH2101":{d:"PILLOW FLEX",m:"90x190"}, "CH2102":{d:"PILLOW FLEX",m:"105x190"}, "CH2103":{d:"PILLOW FLEX",m:"140x190"}, "CH2104":{d:"PILLOW FLEX",m:"160x190"}, "CH2105":{d:"PILLOW FLEX",m:"180x190"}, "CH2106":{d:"PILLOW FLEX",m:"200x200"}, "CH2107":{d:"FORTE FLEX",m:"90x190"}, "CH2108":{d:"FORTE FLEX",m:"105x190"}, "CH2109":{d:"FORTE FLEX",m:"140x190"}, "CH2110":{d:"FORTE FLEX",m:"160x190"}, "CH2113":{d:"SOMIER FLEX",m:"90x190"}, "CH2114":{d:"SOMIER FLEX",m:"105x190"}, "CH2115":{d:"SOMIER FLEX",m:"140x190"}, "CH2116":{d:"SOMIER FLEX",m:"160x190"}, "CH2117":{d:"SOMIER FLEX",m:"180x190"}, "CH2118":{d:"SOMIER FLEX",m:"200x200"}, "CH2290":{d:"MEMORY FLEX",m:"105x190"}, "CH2283":{d:"MEMORY FLEX",m:"140x190"}, "CH2291":{d:"MEMORY FLEX",m:"160x190"}, "CH2292":{d:"MEMORY FLEX",m:"180x190"}, "CH2293":{d:"MEMORY FLEX",m:"200x200"}, "CH1330":{d:"NUEVO ECO FLEX",m:"90x190"}, "CH1331":{d:"NUEVO ECO FLEX",m:"105x190"}, "CH1332":{d:"NUEVO ECO FLEX",m:"140x190"}, "CH1333":{d:"NUEVO ECO FLEX",m:"160x190"}, "CD1951":{d:"COLCHON BAHIA",m:"140x190"}, "CD1954":{d:"COLCHON BAHIA",m:"160x190"}, "CD1972":{d:"COLCHON BAHIA",m:"180x190"}, "CD2034":{d:"COLCHON BAHIA",m:"200x200"}, "CH1681":{d:"COLCHON CARIOCA PREMIER",m:"105x190"}, "CH1672":{d:"COLCHON CARIOCA PREMIER",m:"140x190"}, "CH1689":{d:"COLCHON CARIOCA PREMIER",m:"160x190"}, "CH1688":{d:"COLCHON CARIOCA PREMIER",m:"180x190"}, "CH1720":{d:"COLCHON CARIOCA PREMIER",m:"200x200"}, "CH2030":{d:"COLCHON CARIOCA RIO",m:"105x190"}, "CH1928":{d:"COLCHON CARIOCA RIO",m:"140x190"}, "COLT0045":{d:"COLCHON SEMIORTOP.",m:"90x190"}, "COLT0037":{d:"COLCHON SEMIORTOP.",m:"105x190"}, "COLT0038":{d:"COLCHON SEMIORTOP.",m:"140x190"}, "COLT0040":{d:"COLCHON SEMIORTOP.",m:"160x190"}, "COLT0069":{d:"COLCHON SEMIORTOP.",m:"180x190"}, "COLT0058":{d:"COLCHON SEMIORTOP.",m:"200x200"}, "COLT0059":{d:"COLCHON SOFT",m:"90x190"}, "COLT0062":{d:"COLCHON SOFT",m:"105x190"}, "COLT0048":{d:"COLCHON SOFT",m:"140x190"}, "COLT0060":{d:"COLCHON SOFT",m:"160x190"}, "COLT0061":{d:"COLCHON SOFT",m:"180x190"}, "COLT0085":{d:"COLCHON SOFT",m:"200x200"}, "COLT0054":{d:"COLCHON ORTOPEDICO SUEÑA",m:"90x190"}, "COLT0029":{d:"COLCHON ORTOPEDICO SUEÑA",m:"105x190"}, "COLT0028":{d:"COLCHON ORTOPEDICO SUEÑA",m:"140x190"}, "COLT0044":{d:"COLCHON ORTOPEDICO SUEÑA",m:"160x190"}, "COLT0047":{d:"COLCHON ORTOPEDICO SUEÑA",m:"180x190"}, "COLT0041":{d:"COLCHON ORTOPEDICO SUEÑA",m:"200x200"}, "CH1506":{d:"SOMIER BAHIA",m:"140x190"}, "CH1499":{d:"SOMIER BAHIA",m:"160x190"}, "CH2158":{d:"SOMIER CARIOCA PREMIER",m:"105x190"}, "CH2157":{d:"SOMIER CARIOCA PREMIER",m:"140x190"}, "CH2156":{d:"SOMIER CARIOCA PREMIER",m:"160x190"}, "CH1740":{d:"SOMIER CARIOCA PREMIER",m:"180x190"}, "CH1741":{d:"SOMIER CARIOCA PREMIER",m:"200x200"}, "SM001":{d:"SOMIER MOVEL PRO",m:"105x190"}, "SM002":{d:"SOMIER MOVEL PRO",m:"140x190"}, "SM003":{d:"SOMIER MOVEL PRO",m:"160x190"}, "SM004":{d:"SOMIER MOVEL PRO",m:"180x190"}, "SM005":{d:"SOMIER MOVEL PRO",m:"200x200"}, "CH1685":{d:"COLCHONETA CAMPING",m:"70X190X3"}, "COLT0081":{d:"COLCHON CUNA",m:"65x100"}, "CD1433":{d:"COLCHONETA",m:"90x190"}, "COLT0064":{d:"COLCHON SOFT",m:"180x200"}, "CS1001":{d:"SOMIER SUEÑA",m:"105x190"}, "CS1004":{d:"SOMIER SUEÑA",m:"140x190"}, "CS1005":{d:"SOMIER SUEÑA",m:"160x190"}, "CH1942":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1943":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH1951":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH1952":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1953":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH2441":{d:"RESPALDAR PRAG.",m:"150x190"}, "CH2442":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH2451":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2452":{d:"RESPALDAR PRAG.",m:"140x190"}, "CMBSE001":{d:"COMBO SUEÑA ESSENTIAL",m:"105x190"}, "CMBSE002":{d:"COMBO SUEÑA ESSENTIAL",m:"140x190"}, "CMBSE003":{d:"COMBO SUEÑA ESSENTIAL",m:"160x190"}, "CMBSS001":{d:"COMBO SEMIORTOP.",m:"105x190"}, "CMBSS002":{d:"COMBO SEMIORTOP.",m:"140x190"}, "CMBSS003":{d:"COMBO SEMIORTOP.",m:"160x190"}, "CMBSO001":{d:"COMBO ORTOPEDICO",m:"105x190"}, "CMBSO002":{d:"COMBO ORTOPEDICO",m:"140x190"}, "CMBSO003":{d:"COMBO ORTOPEDICO",m:"160x190"}, "CMBSP001":{d:"COMBO SUEÑA PREMIER DELUXE",m:"105x190"}, "CMBSP002":{d:"COMBO SUEÑA PREMIER DELUXE",m:"140x190"}, "CMBSP003":{d:"COMBO SUEÑA PREMIER DELUXE",m:"160x190"}, "CMBSE011":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"105x190"}, "CMBSE012":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"140x190"}, "CMBSE013":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"160x190"}, "CMBSE014":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"105x190"}, "CMBSE015":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"140x190"}, "CMBSE016":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"160x190"}, "CMBSE017":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE018":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE019":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSE020":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE021":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE022":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSS004":{d:"COMBO SEMIORTOP SUEÑA CAFÉ",m:"105x190"}, "CMBSS005":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"140x190"}, "CMBSS006":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"160x190"}, "CMBSS007":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"105x190"}, "CMBSS008":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"140x190"}, "CMBSS009":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"160x190"}, "CMBSS010":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"105x190"}, "CMBSS011":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"140x190"}, "CMBSS012":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"160x190"}, "CMBSS013":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"105x190"}, "CMBSS014":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"140x190"}, "CMBSS015":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"160x190"}, "CMBSO004":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"105x190"}, "CMBSO005":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"140x190"}, "CMBSO006":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"160x190"}, "CMBSO007":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"105x190"}, "CMBSO008":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"140x190"}, "CMBSO009":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"160x190"}, "CMBSO010":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"105x190"}, "CMBSO011":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"140x190"}, "CMBSO012":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"160x190"}, "CMBSO013":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"105x190"}, "CMBSO014":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"140x190"}, "CMBSO015":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"160x190"}, "CMBSP004":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"105x190"}, "CMBSP005":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"140x190"}, "CMBSP006":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"160x190"}, "CMBSP007":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"105x190"}, "CMBSP008":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"140x190"}, "CMBSP009":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"160x190"}, "CMBSP010":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"105x190"}, "CMBSP011":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"140x190"}, "CMBSP012":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"160x190"}, "CMBSP013":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"105x190"}, "CMBSP014":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"140x190"}, "CMBSP015":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"160x190"}, "CS1027":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"90x190"}, "CS1028":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"105x190"}, "CS1029":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"140x190"}, "CS1030":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"160x190"}, "CS1031":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"180x190"}, "CS1032":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"200x200"}, "CS1011":{d:"COLCHON CONFORT PLUS",m:"105x190"}, "CS1012":{d:"COLCHON CONFORT PLUS",m:"140x190"}, "CS1013":{d:"COLCHON CONFORT PLUS",m:"160x190"}, "CS1014":{d:"COLCHON CONFORT PLUS",m:"180x190"}, "CS1015":{d:"COLCHON CONFORT PLUS",m:"200x200"}, "CC1000":{d:"COLCHON SUEÑA ESSENTIAL",m:"90x190"}, "CC1001":{d:"COLCHON SUEÑA ESSENTIAL",m:"105x190"}, "CC1002":{d:"COLCHON SUEÑA ESSENTIAL",m:"140x190"}, "CC1003":{d:"COLCHON SUEÑA ESSENTIAL",m:"160x190"}, "CC1004":{d:"COLCHON SUEÑA ESSENTIAL",m:"180x190"}, "CC1005":{d:"COLCHON SUEÑA ESSENTIAL",m:"200x200"}, "CS1000":{d:"SOMIER SUEÑA",m:"90x190"}, "CS1006":{d:"SOMIER SUEÑA",m:"180x190"}, "CS1007":{d:"SOMIER SUEÑA",m:"200x200"}, "CH1941":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2443":{d:"RESPALDAR PRAG.",m:"160x190"}};
-var NOMBRES = {}; (function(){ for(var _k in CODIGOS){ var _v=CODIGOS[_k]; var _lb=_v.d+(_v.m?(' '+_v.m):''); if(!NOMBRES[_lb]) NOMBRES[_lb]={code:_k,d:_v.d,m:_v.m}; } })();
+var CODIGOS = {"CH1129":{d:"TITANIO LATEX",m:"140x190"}, "CH1130":{d:"TITANIO LATEX",m:"160x190"}, "CH1131":{d:"TITANIO LATEX",m:"180x190"}, "CH1132":{d:"TITANIO LATEX",m:"200x200"}, "CH1224":{d:"TITANIO ICE",m:"105x190"}, "CH1220":{d:"TITANIO ICE",m:"140x190"}, "CH1201":{d:"TITANIO ICE",m:"160x190"}, "CH1221":{d:"TITANIO ICE",m:"180x190"}, "CH1222":{d:"TITANIO ICE",m:"200x200"}, "CH1042":{d:"ORO ANATOMICO VISCOLASTICO",m:"90x190"}, "CH1031":{d:"ORO ANATOMICO VISCOLASTICO",m:"105x190"}, "CH1036":{d:"ORO ANATOMICO VISCOLASTICO",m:"140x190"}, "CH1037":{d:"ORO ANATOMICO VISCOLASTICO",m:"160x190"}, "CH1038":{d:"ORO ANATOMICO VISCOLASTICO",m:"180x190"}, "CH1039":{d:"ORO ANATOMICO VISCOLASTICO",m:"200x200"}, "CH1787":{d:"ORO BI RELAX",m:"90x190"}, "CH1778":{d:"ORO BI RELAX",m:"105x190"}, "CH1761":{d:"ORO BI RELAX",m:"140x190"}, "CH1770":{d:"ORO BI RELAX",m:"160x190"}, "CH1775":{d:"ORO BI RELAX",m:"180x190"}, "CH1780":{d:"ORO BI RELAX",m:"200x200"}, "CH1043":{d:"ORO ORTOPEDICO",m:"90x190"}, "CH1048":{d:"ORO ORTOPEDICO",m:"105x190"}, "CH1051":{d:"ORO ORTOPEDICO",m:"140x190"}, "CH1052":{d:"ORO ORTOPEDICO",m:"160x190"}, "CH1053":{d:"ORO ORTOPEDICO",m:"180x190"}, "CH1054":{d:"ORO ORTOPEDICO",m:"200x200"}, "CH1464":{d:"ESPECIAL ORTOPEDICO D/C",m:"105x190"}, "CH1452":{d:"ESPECIAL ORTOPEDICO D/C",m:"140x190"}, "CH1456":{d:"ESPECIAL ORTOPEDICO D/C",m:"160x190"}, "CH1087":{d:"ESPECIAL ORTOPEDICO D/C",m:"180x190"}, "CH1473":{d:"ESPECIAL ORTOPEDICO D/C",m:"200x200"}, "CH1472":{d:"ESPECIAL ORTOPEDICO",m:"180x190"}, "CH1096":{d:"ESPECIAL SEMIORTOPEDICO",m:"90x190"}, "CH1098":{d:"ESPECIAL SEMIORTOPEDICO",m:"105x190"}, "CH1107":{d:"ESPECIAL SEMIORTOPEDICO",m:"140x190"}, "CH1101":{d:"ESPECIAL SEMIORTOPEDICO",m:"160x190"}, "CH1102":{d:"ESPECIAL SEMIORTOPEDICO",m:"180x190"}, "CH1093":{d:"ESPECIAL SEMIORTOPEDICO",m:"200x200"}, "CH1109":{d:"HEAVEN TROPICAL",m:"90x190"}, "CH1117":{d:"HEAVEN TROPICAL",m:"105x190"}, "CH1121":{d:"HEAVEN TROPICAL",m:"140x190"}, "CH2144":{d:"HEAVEN TROPICAL",m:"160x190"}, "CH1137":{d:"ESPECIAL ANTIALERGICO",m:"90x190"}, "CH1075":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH1078":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH2391":{d:"ESPECIAL ANTIALERGICO",m:"105x190"}, "CH2392":{d:"ESPECIAL ANTIALERGICO",m:"140x190"}, "CH2393":{d:"ESPECIAL ANTIALERGICO",m:"160x190"}, "CH2394":{d:"ESPECIAL ANTIALERGICO",m:"180x190"}, "CH2395":{d:"ESPECIAL ANTIALERGICO",m:"200x200"}, "CH1034":{d:"ORO ANATOMICO VISCOLASTICO ESPECIAL",m:""}, "CH1883":{d:"DREAM REFORZADO",m:"180x190"}, "CH2086":{d:"COLCHONETA HEAVEN",m:"68x89"}, "CH1149":{d:"SOMIER TITANIO LATEX",m:"140x190"}, "CH1150":{d:"SOMIER TITANIO LATEX",m:"160x190"}, "CH1255":{d:"SOMIER TITANIO LATEX",m:"180x190"}, "CH1151":{d:"SOMIER TITANIO LATEX",m:"200x200"}, "CH1407":{d:"SOMIER TITANIO ICE",m:"105x190"}, "CH1212":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1208":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1223":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1232":{d:"SOMIER TITANIO ICE",m:"200x200"}, "CH1281":{d:"SOMIER TITANIO ICE",m:"140x190"}, "CH1521":{d:"SOMIER TITANIO ICE",m:"160x190"}, "CH1606":{d:"SOMIER TITANIO ICE",m:"180x190"}, "CH1737":{d:"SOMIER ORO",m:"90x190"}, "CH1165":{d:"SOMIER ORO",m:"105x190"}, "CH1144":{d:"SOMIER ORO",m:"140x190"}, "CH1145":{d:"SOMIER ORO",m:"160x190"}, "CH1146":{d:"SOMIER ORO",m:"180x190"}, "CH1147":{d:"SOMIER ORO",m:"200x200"}, "CH1795":{d:"SOMIER BiRELAX",m:"105x190"}, "CH1766":{d:"SOMIER BiRELAX",m:"140x190"}, "CH1771":{d:"SOMIER BiRELAX",m:"160x190"}, "CH2172":{d:"SOMIER BiRELAX",m:"ESPECIAL"}, "CH1803":{d:"SOMIER BiRELAX",m:"200x200"}, "CH1159":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"105x190"}, "CH1168":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"140x190"}, "CH1160":{d:"SOMIER PLATA SEMIORTOPEDICO",m:"160x190"}, "49":{d:"SOMIER PLATA SEMIORTOPEDICO",m:""}, "CH1156":{d:"SOMIER ESPECIAL",m:"180x190"}, "CH2159":{d:"SOMIER TROPICAL",m:"105x190"}, "CH2142":{d:"SOMIER TROPICAL",m:"140x190"}, "CH2143":{d:"SOMIER TROPICAL",m:"160x190"}, "CD1403":{d:"ALMOHADA",m:"50x70"}, "CD1459":{d:"ALMOHADA FIBRA SILICONADA",m:"50x90"}, "CH1253":{d:"ALM/HEAVEN",m:"30x40"}, "CH1195":{d:"ALM/NASA",m:"50x70"}, "CD1918":{d:"SEMIPEDIC",m:"90x190"}, "CD1913":{d:"SEMIPEDIC",m:"105x190"}, "CD1911":{d:"SEMIPEDIC",m:"140x190"}, "CD1912":{d:"SEMIPEDIC",m:"160x190"}, "CH1686":{d:"PILLOW PEDIC",m:"105x190"}, "CH1682":{d:"PILLOW PEDIC",m:"140x190"}, "CH1683":{d:"PILLOW PEDIC",m:"160x190"}, "CH1684":{d:"PILLOW PEDIC",m:"180x190"}, "CH1702":{d:"PILLOW PEDIC",m:"200x200"}, "CH1765":{d:"EUROPEDIC",m:"140x190"}, "CH1767":{d:"EUROPEDIC",m:"160x190"}, "CH1768":{d:"EUROPEDIC",m:"180x190"}, "CH1769":{d:"EUROPEDIC",m:"200x200"}, "CH2284":{d:"DYNAMIC PEDIC",m:"140x190"}, "CH2297":{d:"DYNAMIC PEDIC",m:"160x190"}, "CH2298":{d:"DYNAMIC PEDIC",m:"180x190"}, "CH2299":{d:"DYNAMIC PEDIC",m:"200x200"}, "CH2239":{d:"SOMIER NEGRO",m:"90x190"}, "SR2011":{d:"SOMIER NEGRO",m:"105x190"}, "SR2012":{d:"SOMIER NEGRO",m:"140x190"}, "SR2013":{d:"SOMIER NEGRO",m:"160x190"}, "SR2014":{d:"SOMIER NEGRO",m:"180x190"}, "SR2016":{d:"SOMIER NEGRO",m:"200x200"}, "CH2101":{d:"PILLOW FLEX",m:"90x190"}, "CH2102":{d:"PILLOW FLEX",m:"105x190"}, "CH2103":{d:"PILLOW FLEX",m:"140x190"}, "CH2104":{d:"PILLOW FLEX",m:"160x190"}, "CH2105":{d:"PILLOW FLEX",m:"180x190"}, "CH2106":{d:"PILLOW FLEX",m:"200x200"}, "CH2107":{d:"FORTE FLEX",m:"90x190"}, "CH2108":{d:"FORTE FLEX",m:"105x190"}, "CH2109":{d:"FORTE FLEX",m:"140x190"}, "CH2110":{d:"FORTE FLEX",m:"160x190"}, "CH2113":{d:"SOMIER FLEX",m:"90x190"}, "CH2114":{d:"SOMIER FLEX",m:"105x190"}, "CH2115":{d:"SOMIER FLEX",m:"140x190"}, "CH2116":{d:"SOMIER FLEX",m:"160x190"}, "CH2117":{d:"SOMIER FLEX",m:"180x190"}, "CH2118":{d:"SOMIER FLEX",m:"200x200"}, "CH2290":{d:"MEMORY FLEX",m:"105x190"}, "CH2283":{d:"MEMORY FLEX",m:"140x190"}, "CH2291":{d:"MEMORY FLEX",m:"160x190"}, "CH2292":{d:"MEMORY FLEX",m:"180x190"}, "CH2293":{d:"MEMORY FLEX",m:"200x200"}, "CH1330":{d:"NUEVO ECO FLEX",m:"90x190"}, "CH1331":{d:"NUEVO ECO FLEX",m:"105x190"}, "CH1332":{d:"NUEVO ECO FLEX",m:"140x190"}, "CH1333":{d:"NUEVO ECO FLEX",m:"160x190"}, "CD1951":{d:"COLCHON BAHIA",m:"140x190"}, "CD1954":{d:"COLCHON BAHIA",m:"160x190"}, "CD1972":{d:"COLCHON BAHIA",m:"180x190"}, "CD2034":{d:"COLCHON BAHIA",m:"200x200"}, "CH1681":{d:"COLCHON CARIOCA PREMIER",m:"105x190"}, "CH1672":{d:"COLCHON CARIOCA PREMIER",m:"140x190"}, "CH1689":{d:"COLCHON CARIOCA PREMIER",m:"160x190"}, "CH1688":{d:"COLCHON CARIOCA PREMIER",m:"180x190"}, "CH1720":{d:"COLCHON CARIOCA PREMIER",m:"200x200"}, "CH2030":{d:"COLCHON CARIOCA RIO",m:"105x190"}, "CH1928":{d:"COLCHON CARIOCA RIO",m:"140x190"}, "COLT0045":{d:"COLCHON SEMIORTOP.",m:"90x190"}, "COLT0037":{d:"COLCHON SEMIORTOP.",m:"105x190"}, "COLT0038":{d:"COLCHON SEMIORTOP.",m:"140x190"}, "COLT0040":{d:"COLCHON SEMIORTOP.",m:"160x190"}, "COLT0069":{d:"COLCHON SEMIORTOP.",m:"180x190"}, "COLT0058":{d:"COLCHON SEMIORTOP.",m:"200x200"}, "COLT0059":{d:"COLCHON SOFT",m:"90x190"}, "COLT0062":{d:"COLCHON SOFT",m:"105x190"}, "COLT0048":{d:"COLCHON SOFT",m:"140x190"}, "COLT0060":{d:"COLCHON SOFT",m:"160x190"}, "COLT0061":{d:"COLCHON SOFT",m:"180x190"}, "COLT0085":{d:"COLCHON SOFT",m:"200x200"}, "COLT0054":{d:"COLCHON ORTOPEDICO SUEÑA",m:"90x190"}, "COLT0029":{d:"COLCHON ORTOPEDICO SUEÑA",m:"105x190"}, "COLT0028":{d:"COLCHON ORTOPEDICO SUEÑA",m:"140x190"}, "COLT0044":{d:"COLCHON ORTOPEDICO SUEÑA",m:"160x190"}, "COLT0047":{d:"COLCHON ORTOPEDICO SUEÑA",m:"180x190"}, "COLT0041":{d:"COLCHON ORTOPEDICO SUEÑA",m:"200x200"}, "CH1506":{d:"SOMIER BAHIA",m:"140x190"}, "CH1499":{d:"SOMIER BAHIA",m:"160x190"}, "CH2158":{d:"SOMIER CARIOCA PREMIER",m:"105x190"}, "CH2157":{d:"SOMIER CARIOCA PREMIER",m:"140x190"}, "CH2156":{d:"SOMIER CARIOCA PREMIER",m:"160x190"}, "CH1740":{d:"SOMIER CARIOCA PREMIER",m:"180x190"}, "CH1741":{d:"SOMIER CARIOCA PREMIER",m:"200x200"}, "SM001":{d:"SOMIER MOVEL PRO",m:"105x190"}, "SM002":{d:"SOMIER MOVEL PRO",m:"140x190"}, "SM003":{d:"SOMIER MOVEL PRO",m:"160x190"}, "SM004":{d:"SOMIER MOVEL PRO",m:"180x190"}, "SM005":{d:"SOMIER MOVEL PRO",m:"200x200"}, "CH1685":{d:"COLCHONETA CAMPING",m:"70X190X3"}, "COLT0081":{d:"COLCHON CUNA",m:"65x100"}, "CD1433":{d:"COLCHONETA",m:"90x190"}, "COLT0064":{d:"COLCHON SOFT",m:"180x200"}, "CS1001":{d:"SOMIER SUEÑA",m:"105x190"}, "CS1004":{d:"SOMIER SUEÑA",m:"140x190"}, "CS1005":{d:"SOMIER SUEÑA",m:"160x190"}, "CH1942":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1943":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH1951":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH1952":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH1953":{d:"RESPALDAR PRAG.",m:"160x190"}, "CH2441":{d:"RESPALDAR PRAG.",m:"150x190"}, "CH2442":{d:"RESPALDAR PRAG.",m:"140x190"}, "CH2451":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2452":{d:"RESPALDAR PRAG.",m:"140x190"}, "CMBSE001":{d:"COMBO SUEÑA ESSENTIAL",m:"105x190"}, "CMBSE002":{d:"COMBO SUEÑA ESSENTIAL",m:"140x190"}, "CMBSE003":{d:"COMBO SUEÑA ESSENTIAL",m:"160x190"}, "CMBSS001":{d:"COMBO SEMIORTOP.",m:"105x190"}, "CMBSS002":{d:"COMBO SEMIORTOP.",m:"140x190"}, "CMBSS003":{d:"COMBO SEMIORTOP.",m:"160x190"}, "CMBSO001":{d:"COMBO ORTOPEDICO",m:"105x190"}, "CMBSO002":{d:"COMBO ORTOPEDICO",m:"140x190"}, "CMBSO003":{d:"COMBO ORTOPEDICO",m:"160x190"}, "CMBSP001":{d:"COMBO SUEÑA PREMIER DELUXE",m:"105x190"}, "CMBSP002":{d:"COMBO SUEÑA PREMIER DELUXE",m:"140x190"}, "CMBSP003":{d:"COMBO SUEÑA PREMIER DELUXE",m:"160x190"}, "CMBSE011":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"105x190"}, "CMBSE012":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"140x190"}, "CMBSE013":{d:"COMBO SUEÑA ESSENTIAL CAFÉ",m:"160x190"}, "CMBSE014":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"105x190"}, "CMBSE015":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"140x190"}, "CMBSE016":{d:"COMBO SUEÑA ESSENTIAL PLOMO",m:"160x190"}, "CMBSE017":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE018":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE019":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSE020":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"105x190"}, "CMBSE021":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"140x190"}, "CMBSE022":{d:"COMBO SUEÑA ESSENTIAL BEIGE",m:"160x190"}, "CMBSS004":{d:"COMBO SEMIORTOP SUEÑA CAFÉ",m:"105x190"}, "CMBSS005":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"140x190"}, "CMBSS006":{d:"COMBO SEMIORTOP. SUEÑA CAFÉ",m:"160x190"}, "CMBSS007":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"105x190"}, "CMBSS008":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"140x190"}, "CMBSS009":{d:"COMBO SEMIORTOP. SUEÑA PLOMO",m:"160x190"}, "CMBSS010":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"105x190"}, "CMBSS011":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"140x190"}, "CMBSS012":{d:"COMBO SEMIORTOP. SUEÑA BEIGE",m:"160x190"}, "CMBSS013":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"105x190"}, "CMBSS014":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"140x190"}, "CMBSS015":{d:"COMBO SEMIORTOP. SUEÑA NEGRO",m:"160x190"}, "CMBSO004":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"105x190"}, "CMBSO005":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"140x190"}, "CMBSO006":{d:"COMBO ORTOPEDICO  SUEÑA CAFÉ",m:"160x190"}, "CMBSO007":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"105x190"}, "CMBSO008":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"140x190"}, "CMBSO009":{d:"COMBO ORTOPEDICO  SUEÑA PLOMO",m:"160x190"}, "CMBSO010":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"105x190"}, "CMBSO011":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"140x190"}, "CMBSO012":{d:"COMBO ORTOPEDICO  SUEÑA BEIGE",m:"160x190"}, "CMBSO013":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"105x190"}, "CMBSO014":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"140x190"}, "CMBSO015":{d:"COMBO ORTOPEDICO  SUEÑA NEGRO",m:"160x190"}, "CMBSP004":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"105x190"}, "CMBSP005":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"140x190"}, "CMBSP006":{d:"COMBO SUEÑA PREMIER DELUXE CAFÉ",m:"160x190"}, "CMBSP007":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"105x190"}, "CMBSP008":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"140x190"}, "CMBSP009":{d:"COMBO SUEÑA PREMIER DELUXE PLOMO",m:"160x190"}, "CMBSP010":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"105x190"}, "CMBSP011":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"140x190"}, "CMBSP012":{d:"COMBO SUEÑA PREMIER DELUXE BEIGE",m:"160x190"}, "CMBSP013":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"105x190"}, "CMBSP014":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"140x190"}, "CMBSP015":{d:"COMBO SUEÑA PREMIER DELUXE NEGRO",m:"160x190"}, "CS1027":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"90x190"}, "CS1028":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"105x190"}, "CS1029":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"140x190"}, "CS1030":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"160x190"}, "CS1031":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"180x190"}, "CS1032":{d:"COLCHON SUEÑA PREMIER DELUXE",m:"200x200"}, "CS1011":{d:"COLCHON CONFORT PLUS",m:"105x190"}, "CS1012":{d:"COLCHON CONFORT PLUS",m:"140x190"}, "CS1013":{d:"COLCHON CONFORT PLUS",m:"160x190"}, "CS1014":{d:"COLCHON CONFORT PLUS",m:"180x190"}, "CS1015":{d:"COLCHON CONFORT PLUS",m:"200x200"}, "CC1000":{d:"COLCHON SUEÑA ESSENTIAL",m:"90x190"}, "CC1001":{d:"COLCHON SUEÑA ESSENTIAL",m:"105x190"}, "CC1002":{d:"COLCHON SUEÑA ESSENTIAL",m:"140x190"}, "CC1003":{d:"COLCHON SUEÑA ESSENTIAL",m:"160x190"}, "CC1004":{d:"COLCHON SUEÑA ESSENTIAL",m:"180x190"}, "CC1005":{d:"COLCHON SUEÑA ESSENTIAL",m:"200x200"}, "CS1000":{d:"SOMIER SUEÑA",m:"90x190"}, "CS1006":{d:"SOMIER SUEÑA",m:"180x190"}, "CS1007":{d:"SOMIER SUEÑA",m:"200x200"}, "CH1941":{d:"RESPALDAR PRAG.",m:"105x190"}, "CH2443":{d:"RESPALDAR PRAG.",m:"160x190"}};
+/* La lista que se le ofrece a la vendedora. Cada opción lleva el CÓDIGO al final —
+   «ESPECIAL ANTIALERGICO 160x190 · CH2393»— así el mismo campo sirve para buscar por nombre
+   o por código, que es lo que pidió el dueño al ver que un código nuevo no aparecía. Se
+   aceptan las dos escrituras al resolver: con código y sin él (los pedidos viejos y los
+   que se cargan a mano no lo traen). */
+var NOMBRES = {}, NOMBRES_LISTA = [];
+(function(){
+  for(var _k in CODIGOS){
+    var _v=CODIGOS[_k], _lb=_v.d+(_v.m?(' '+_v.m):''), _lc=_lb+' · '+_k;
+    if(!NOMBRES[_lb]) NOMBRES[_lb]={code:_k,d:_v.d,m:_v.m};
+    NOMBRES[_lc]={code:_k,d:_v.d,m:_v.m};
+    NOMBRES_LISTA.push(_lc);
+  }
+  NOMBRES_LISTA.sort();
+})();
 function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
 function addProdRow(desc,medida,codigo,cant,precio){
   var box=document.getElementById('f-productos');
@@ -6058,7 +6081,7 @@ function realDelete(id){
    Datalists / stats / footer
    ========================================================================== */
 function refreshDatalists(){
-  var dp=document.getElementById('dl-productos'); if(dp && !dp.childNodes.length){ Object.keys(NOMBRES).sort().forEach(function(lb){ var o=document.createElement('option'); o.value=lb; dp.appendChild(o); }); }
+  var dp=document.getElementById('dl-productos'); if(dp && !dp.childNodes.length){ NOMBRES_LISTA.forEach(function(lb){ var o=document.createElement('option'); o.value=lb; dp.appendChild(o); }); }
   // Una sola sugerencia por persona, con la escritura oficial: si no, la lista ofrecía
   // "Carola Chavez" y "Carola Chávez" y cada una arrastraba la mitad de los pedidos.
   var dv=document.getElementById('dl-vendedores'); dv.innerHTML='';
@@ -6600,7 +6623,12 @@ function medidaDeTexto(t){
   if(m) return m[1]+'x'+m[2];
   // Sin centímetros, la medida puede venir en plazas: «COLCHON ORO VISCOLASTICO 2,5 PLZ».
   var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?)\b/);
-  if(p){ var k=p[1].replace(',','.'); if(MEDIDA_PLZ[k]) return MEDIDA_PLZ[k]; }
+  if(p){ var k=medidaPlzNum(p[1]); if(k) return k; }
+  /* …o como un número suelto AL FINAL, que es como está escrita la tabla de códigos del
+     dueño: «SOMIER NEGRO 2,5», «PILLOW PEDIC 3,0». Solo al final y solo si es una de las
+     seis medidas, para no comerse un número que sea parte del nombre. */
+  var q=s.match(/(\d(?:[.,]\d)?)\s*$/);
+  if(q){ var k2=medidaPlzNum(q[1]); if(k2) return k2; }
   return '';
 }
 function limpiaNombreProd(t){
@@ -6622,7 +6650,9 @@ function buscaCatalogo(x){
   if(cod && CODIGOS[cod]) return { code:cod, d:CODIGOS[cod].d, m:CODIGOS[cod].m, por:'codigo' };
 
   var crudo=String((x&&x.desc)||'');
-  var d=normNombre(limpiaNombreProd(crudo));
+  /* «SOMIER PEDIC» escrito por una vendedora tiene que encontrar el «SOMIER NEGRO» del
+     catálogo, igual que en el stock (§4cw). */
+  var d=normNombre(prodAlias(limpiaNombreProd(crudo).toUpperCase()));
   // La medida puede venir en su campo o escondida adentro del nombre (así la manda Kommo).
   var me=normMedida((x&&x.medida)||'') || medidaDeTexto(crudo);
   if(!d) return null;
@@ -10158,13 +10188,15 @@ function leerStock(p){
         d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{};
         if(o.c.hora) d.c.hora=String(o.c.hora); if(o.c.inc) d.c.inc=true; if(o.c.alm) d.c.alm=String(o.c.alm);
         if(o.c.solo0) d.c.solo0=true;
+        if(o.c.cod && typeof o.c.cod==='object') d.c.cod=o.c.cod;
       }
       if(o.e && o.e.length) d.e=o.e.filter(function(x){ return x && x.k; });
       if(o.p && o.p.length) d.p=o.p.filter(function(x){ return x && x.k; });
       if(o.g && typeof o.g==='object'){
         for(var nm in o.g){
           var s=o.g[nm]; if(!s || typeof s!=='object') continue;
-          d.g[nm]={ f:String(s.f||''), u:(s.u&&typeof s.u==='object')?s.u:{} };
+          d.g[nm]={ f:String(s.f||''), u:(s.u&&typeof s.u==='object')?s.u:{},
+                    hora:String(s.hora||''), solo0:!!s.solo0, cod:(s.cod&&typeof s.cod==='object')?s.cod:{} };
         }
       }
     }
@@ -10209,6 +10241,23 @@ function guardarStock(){
    La clave de un renglón es la del CATÁLOGO cuando el catálogo lo reconoce; si no, su
    descripción y medida tal cual (como `prodRankKey`). Encima de eso van las uniones a mano. */
 var STOCK_RELLENO={COLCHON:1,COLCHONES:1,PLAZA:1,PLAZAS:1,PLZ:1,NUEVO:1,CM:1,DE:1,MED:1,ESP:1};
+/* 📇 CÓMO LE DICE EL EQUIPO A CADA COSA (§4cw). El dueño pasó la tabla de códigos que usan
+   ROHO y Heaven *"para facilitar la búsqueda por código o por nombre o similar"*, y de ahí
+   salieron estos: el mismo colchón tiene un nombre en el catálogo viejo y otro en la boca de
+   todos. Se traduce ANTES de comparar, así el panel entiende las dos formas.
+     · «SOMIER PEDIC» es el «SOMIER NEGRO» — lo dijo él con todas las letras.
+     · «ORO VISCOLASTICO» (y «ORO VICOLASTICO», sin la S, como lo escriben) es el
+       «ORO ANATOMICO VISCOLASTICO» del catálogo: los seis códigos CH1031/36/37/38/39/1042
+       coinciden uno por uno. */
+var PROD_ALIAS=[
+  { de:/\bSOMIER\s+PEDIC\b/g,            a:'SOMIER NEGRO' },
+  { de:/\bORO\s+VIS?COLASTICO\b/g,       a:'ORO ANATOMICO VISCOLASTICO' }
+];
+function prodAlias(t){
+  var s=String(t==null?'':t);
+  for(var i=0;i<PROD_ALIAS.length;i++) s=s.replace(PROD_ALIAS[i].de, PROD_ALIAS[i].a);
+  return s;
+}
 function stockNorm(t){
   t=String(t==null?'':t).replace(/\s+/g,' ').trim().toUpperCase();
   if(t.normalize) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
@@ -10217,7 +10266,7 @@ function stockNorm(t){
 /* Las palabras que identifican al producto: sin la medida, sin «2 PLAZAS», sin COLCHON,
    sin el color al final. «COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX» → {ECO, FLEX}. */
 function stockTokens(t){
-  t=stockNorm(t);
+  t=prodAlias(stockNorm(t));
   t=t.replace(/\d{2,3}\s*[X×✕✖]\s*\d{2,3}(\s*[X×✕✖]\s*\d+)?\s*(CM)?/g,' ');   // la medida, "140X190CM", "70X190X3"
   t=t.replace(/\s*-\s*[^-]{2,20}$/,' ');                                    // " - PLOMO CL": el color al final
   var set={}, n=0;
@@ -10309,14 +10358,25 @@ function stockPartes(k){
 }
 function stockIndiceApretado(){
   if(STOCK_APRET) return STOCK_APRET;
-  STOCK_APRET={full:{}, desc:{}};
-  var meter=function(u){ Object.keys(u||{}).forEach(function(k){
-    var p=stockPartes(k), f=p.d+'|'+p.m;
-    if(!STOCK_APRET.full[f]) STOCK_APRET.full[f]=k;
-    (STOCK_APRET.desc[p.d]=STOCK_APRET.desc[p.d]||[]).push({k:k, m:p.m});
-  }); };
-  meter((STOCK.c||{}).u);
-  Object.keys(STOCK.g||{}).forEach(function(nm){ meter((STOCK.g[nm]||{}).u); });
+  STOCK_APRET={full:{}, desc:{}, cod:{}};
+  var meter=function(s){
+    Object.keys((s||{}).u||{}).forEach(function(k){
+      var p=stockPartes(k), f=p.d+'|'+p.m;
+      if(!STOCK_APRET.full[f]) STOCK_APRET.full[f]=k;
+      (STOCK_APRET.desc[p.d]=STOCK_APRET.desc[p.d]||[]).push({k:k, m:p.m});
+    });
+    /* ⚠️ EL CÓDIGO MANDA (§4cv). El Excel del almacén trae el código de cada producto y es
+       el identificador más fuerte que hay: no depende de cómo lo escribió cada uno. El
+       dueño lo dijo mirando la lista de «sin contar»: *"tienen hasta CÓDIGO"*. Caso real:
+       CH2356 está en Moreno con 1 unidad, pero el pedido decía «SOMIER TROPICAL 180X190 CM»
+       y el Excel «SOMIER TROPICAL 180X190» —sobraba un «CM»— y ese código no está en el
+       catálogo viejo, así que el panel lo daba por no contado teniéndolo. */
+    Object.keys((s||{}).cod||{}).forEach(function(c){
+      var cc=String(c).toUpperCase(); if(!STOCK_APRET.cod[cc]) STOCK_APRET.cod[cc]=s.cod[c];
+    });
+  };
+  meter(STOCK.c);
+  Object.keys(STOCK.g||{}).forEach(function(nm){ meter(STOCK.g[nm]); });
   return STOCK_APRET;
 }
 /* La clave con la que ese producto figura en el inventario, si figura con otra escritura.
@@ -10324,9 +10384,12 @@ function stockIndiceApretado(){
    «SOMIER BI RELAX 160X200» con la medida vacía, y en el almacén «SOMIER BiRELAX 160X200»
    con medida 160x200. Por eso se compara primero la clave entera apretada y, si no da, solo
    la descripción — y ahí únicamente cuando NO queda ninguna duda (§4ct). */
-function stockClaveInv(k){
+function stockClaveInv(k, cod){
+  var idx=stockIndiceApretado();
+  cod=String(cod||'').trim().toUpperCase();
+  if(cod && idx.cod[cod]) return idx.cod[cod];     // el código gana sobre cualquier nombre
   if((STOCK.c.u||{})[k]!=null) return k;
-  var idx=stockIndiceApretado(), p=stockPartes(k);
+  var p=stockPartes(k);
   var f=idx.full[p.d+'|'+p.m]; if(f) return f;
   var c=idx.desc[p.d]; if(!c || !c.length) return k;
   if(!p.m) return c.length===1 ? c[0].k : k;      // el pedido no dijo la medida: solo si hay una sola
@@ -10343,7 +10406,7 @@ function stockInfo(x){
     m={ auto: c ? (stockNorm(c.d)+'|'+stockNorm(c.m)) : prodRankKey(x), cat:c };
     STOCK_MEMO[raw]=m;
   }
-  return { k:stockClaveInv(stockAliasDe(m.auto)), auto:m.auto, cat:m.cat };
+  return { k:stockClaveInv(stockAliasDe(m.auto), x&&x.codigo), auto:m.auto, cat:m.cat };
 }
 function stockClaveAuto(x){ return stockInfo(x).auto; }
 function stockClave(x){ return stockInfo(x).k; }
@@ -10430,6 +10493,16 @@ function stockEntradas(k){
    pregunta si ese reporte YA incluye las entregas de ese día (la idea, y la pregunta casi
    textual, salen de la versión que mandó el dueño). Si las incluye, se cuenta desde el día
    siguiente; si no, desde el mismo día, como antes. */
+/* Un corte cargado a mano, o con una versión del panel anterior a §4cs/§4cv, no trae ni el
+   «lo que no figura está en cero» ni los códigos del almacén. Se avisa en vez de dejar al
+   equipo mirando una lista de «sin contar» que no entiende de dónde sale. */
+function stockCorteViejo(){
+  /* Solo para cortes que VINIERON de un Excel (por eso `alm`) y les faltan los datos que
+     el panel aprendió después. A un conteo hecho a mano no se le reprocha nada: se le
+     ofrece, aparte y en tono suave, que suba el Excel. */
+  return !!(STOCK.c && STOCK.c.f && STOCK.c.alm) && !(STOCK.c.solo0 && STOCK.c.cod && Object.keys(STOCK.c.cod).length);
+}
+function stockConteoAMano(){ return !!(STOCK.c && STOCK.c.f && !STOCK.c.alm); }
 function stockDesdeSalidas(){
   var f=STOCK.c.f||''; if(!f) return '';
   return STOCK.c.inc ? stockSumarDias(f,1) : f;
@@ -10759,6 +10832,20 @@ function renderStock(){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
       '<b>El corte tiene '+d.diasConteo+' días.</b> Desde entonces el panel viene descontando entregas y sumando llegadas, y cada error chico se acumula. '+
       'Subí el Excel de existencias del día y listo: el conteo nuevo borra la deriva.</div>';
+  }
+  /* ⚠️ Estos dos NO van con `else`: un corte puede estar viejo Y venir de una versión
+     anterior a la vez, y el segundo aviso tapaba al primero (§4cw). */
+  if(stockCorteViejo()){
+    html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
+      '<b>Volvé a subir el Excel de existencias.</b> Este corte se cargó con una versión anterior del panel, así que le faltan dos cosas: '+
+      'los <b>códigos</b> del almacén (con ellos el panel encuentra productos aunque el nombre esté escrito distinto) y saber que '+
+      '<b>lo que no figura en el Excel está en cero</b> — o sea, que hay que fabricarlo. Mientras tanto, esos productos salen como «sin contar».'+
+      ' <button class="btn btn-sm" style="background:#7c2d12;color:#fff;font-weight:700;margin-left:6px" onclick="abrirImportExist()">📥 Subir existencias</button></div>';
+  }else if(stockConteoAMano()){
+    html+='<div style="background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:.84rem;color:var(--muted)">'+
+      'Este conteo se hizo <b>a mano</b>, así que solo sabe de los productos que alguien anotó. '+
+      'Si subís el Excel de existencias, el panel además usa los <b>códigos</b> del almacén y sabe que lo que no figura está en cero.'+
+      ' <button class="btn btn-sm" style="background:#7c2d12;color:#fff;font-weight:700;margin-left:6px" onclick="abrirImportExist()">📥 Subir existencias</button></div>';
   }
   /* ⚠️ ANTES ESTOS AVISOS ERAN CARTELES CON FORMA DE BOTÓN, y el dueño hizo la pregunta
      obvia: *"el botón PEDIR YA no hace nada, ¿deben pedir manual?"*. Tenía razón: si se ve
@@ -11416,7 +11503,11 @@ function renderStockRevisar(){
           (o.cat?'':(' <button class="btn btn-sm" style="padding:2px 8px;font-size:.7rem" data-k="'+esc(o.k)+'" onclick="closeModal();abrirStockUnir(this.getAttribute(\'data-k\'))" title="Si en el almacén está con otro nombre, unilos y el panel lo va a contar.">🔗 unir</button>'))+
           '</div>';
       }).join('')+'</div>'+
-      '<div style="color:var(--muted);margin-top:6px">Si el producto está en el almacén <b>con otro nombre</b>, tocá 🔗 unir. Si de verdad no lo tiene, hay que agregarlo al Excel o dejarlo así.</div></div>';
+      '<div style="color:var(--muted);margin-top:6px">Si el producto está en el almacén <b>con otro nombre</b>, tocá 🔗 unir. Si de verdad no lo tiene, hay que agregarlo al Excel o dejarlo así.</div>'+
+      (stockCorteViejo()?('<div style="margin-top:7px;background:#fff4d6;border:1px solid #f0d264;border-radius:7px;padding:7px 11px;color:#7c4b00">'+
+        '⚠️ El corte cargado no trae los <b>códigos</b> del almacén. Volvé a subir el Excel y la mayoría de estos se van a resolver solos.'+
+        ' <button class="btn btn-sm" style="background:#7c2d12;color:#fff;font-weight:700" onclick="closeModal();abrirImportExist()">📥 Subir existencias</button></div>'):'')+
+      '</div>';
   }
   html+='<div id="revstk-prog" style="font-size:.82rem;color:var(--muted);margin-top:10px"></div>'+
     '<div class="modal-actions" style="margin-top:12px">'+
@@ -11625,7 +11716,7 @@ function existLeer(filas){
   });
   if(!cCant) return {error:'No encontré la columna de cantidades.'};
 
-  var items=[], repetidos=0, malos=0, total=0, vistos={};
+  var items=[], repetidos=0, malos=0, total=0, vistos={}, cods={};
   for(var q=iHdr+1;q<filas.length;q++){
     var fq=filas[q];
     var cod2=String(fq[cCod]==null?'':fq[cCod]).trim();
@@ -11637,13 +11728,14 @@ function existLeer(filas){
              unidad:String(fq[conocidasCol(conocidas,'UNIDAD')]||'').trim() };
     it.k=stockClave({desc:it.desc, medida:it.medida, codigo:it.cod});
     it.cat=!!(stockInfo({desc:it.desc, medida:it.medida, codigo:it.cod}).cat);
+    if(it.cod) cods[it.cod.toUpperCase()]=it.k;   // ⚠️ el código es el identificador más fuerte (§4cv)
     if(vistos[it.k]!=null){ items[vistos[it.k]].cant+=cant; repetidos++; }  // mismo producto en dos renglones
     else { vistos[it.k]=items.length; items.push(it); }
     total+=cant;
   }
   if(!items.length) return {error:'No encontré ningún producto con existencia en el archivo.'};
   return { fecha:fecha||todayStr(), sinFecha:!fecha, almacen:alm, items:items, total:total,
-           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0,
+           repetidos:repetidos, malos:malos, colCant:cCant, solo0:solo0, cods:cods,
            esLog: normNombre(alm)===normNombre(STOCK_ALM_LOG) || (STOCK.al||{})[alm]==='log',
            conocido: normNombre(alm)===normNombre(STOCK_ALM_LOG) || !!(STOCK.al||{})[alm] };
 }
@@ -11734,10 +11826,10 @@ function confirmarImportExist(){
     /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
     delete STOCK.g[R.almacen];
     Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
-    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0 };
+    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0, cod:R.cods||{} };
     STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
   }else{
-    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0 };
+    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0, cod:R.cods||{} };
   }
   /* 📜 HISTORIAL DE CORTES. Solo el resumen —fecha, hora, cuántos productos y unidades—,
      no los items: la fila del sistema es UNA celda de la planilla y guardar cada inventario

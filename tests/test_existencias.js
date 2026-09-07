@@ -221,6 +221,38 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('…y un nombre sin medida, con varias candidatas, tampoco', /^SOMIER BIRELAX\|/.test(r.dudoso), r.dudoso);
   await page.evaluate(() => { delete STOCK.c.u['SOMIER BIRELAX 160X200|160X200']; stockOlvidarIndice(); });
 
+  // ══ 4d. EL CÓDIGO MANDA sobre cualquier nombre ════════════════════════════
+  console.log('\n── 4d. El código del almacén gana ──');
+  r = await page.evaluate(() => {
+    /* Caso real del dueño: en Moreno está «CH2356 SOMIER TROPICAL 180X190» con 1 unidad, y
+       el pedido decía «SOMIER TROPICAL 180X190 CM» — sobraba un «CM» y ese código no está
+       en el catálogo viejo, así que el panel lo daba por no contado TENIÉNDOLO (§4cv). */
+    STOCK.c.cod=STOCK.c.cod||{}; STOCK.c.u['SOMIER RARO 180X190|180X190']=3;
+    STOCK.c.cod['CH9999']='SOMIER RARO 180X190|180X190';
+    stockOlvidarIndice();
+    var conCod =stockClave({desc:'SOMIER RARO 180X190 CM', medida:'180x190', codigo:'CH9999'});
+    var sinCod =stockClave({desc:'SOMIER RARO 180X190 CM', medida:'180x190', codigo:''});
+    var otroCod=stockClave({desc:'SOMIER RARO 180X190 CM', medida:'180x190', codigo:'NOEXISTE'});
+    return { conCod:conCod, hay:stockDeposito(conCod), sinCod:sinCod, otroCod:otroCod,
+             nCods:Object.keys(STOCK.c.cod).length };
+  });
+  chk('el importador guarda el código de cada producto del almacén', r.nCods>1, r.nCods+' códigos');
+  chk('⚠️ un pedido con ESE código encuentra el producto aunque el nombre no coincida',
+      r.conCod==='SOMIER RARO 180X190|180X190' && r.hay===3, r.conCod+' → '+r.hay);
+  chk('…sin el código, el nombre distinto no alcanza y queda aparte',
+      r.sinCod!=='SOMIER RARO 180X190|180X190', r.sinCod);
+  chk('…y un código que el almacén no tiene no inventa nada',
+      r.otroCod===r.sinCod, r.otroCod);
+  r = await page.evaluate(() => {
+    var antes=stockCorteViejo();
+    var guardado=JSON.parse(JSON.stringify(STOCK.c.cod));
+    delete STOCK.c.cod; var sinCods=stockCorteViejo();
+    STOCK.c.cod=guardado; stockOlvidarIndice();
+    return { antes:antes, sinCods:sinCods };
+  });
+  chk('⚠️ un corte cargado con una versión vieja (sin códigos) se detecta y se avisa',
+      r.antes===false && r.sinCods===true, 'al día='+r.antes+' · viejo='+r.sinCods);
+
   // ══ 5. Un archivo que no es de existencias ════════════════════════════════
   console.log('\n── 5. El archivo equivocado ──');
   r = await page.evaluate(() => {

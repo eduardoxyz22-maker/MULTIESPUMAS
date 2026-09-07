@@ -152,14 +152,46 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…también cuando la medida viene en plazas adentro del nombre', r.txt==='160x190', r.txt);
   chk('⚠️ el mismo colchón cargado en plazas y en centímetros es UN producto',
       r.plz.k===r.cm.k, r.plz.k+' vs '+r.cm.k);
+  /* §4cw: el dueño pasó la tabla de códigos y ahí «ORO VISCOLASTICO» figura como el nombre
+     que usa el equipo, así que dejó de ser una adivinanza por parecido y pasó a ser un ALIAS
+     explícito — se resuelve por nombre, que es más firme. */
   chk('⚠️ «COLCHON ORO VISCOLASTICO 2.5PLZ 160X190CM HEAVEN» se une solo al del catálogo, sin tocar nada',
-      r.oro.k==='ORO ANATOMICO VISCOLASTICO|160X190' && r.oro.por==='parecido', r.oro.k+' ['+r.oro.por+']');
+      r.oro.k==='ORO ANATOMICO VISCOLASTICO|160X190' && r.oro.por==='nombre', r.oro.k+' ['+r.oro.por+']');
   chk('⚠️ …pero «CARIOCA» a secas NO se une: hay CARIOCA PREMIER y CARIOCA RIO, son distintos',
       !r.carioca.por && /^COLCHON CARIOCA\|/.test(r.carioca.k), r.carioca.k);
   chk('…ni «PILLOW» a secas (PILLOW FLEX y PILLOW PEDIC)', !r.pillow.por, r.pillow.k);
   chk('…y ORTOPEDICO y SEMIORTOPEDICO siguen siendo dos colchones',
       r.ortop.k!==r.semi.k && r.ortop.por==='nombre' && r.semi.por==='nombre', r.ortop.k+' vs '+r.semi.k);
-  chk('⚠️ sin medida no se arriesga a adivinar', !r.sinMed.por, r.sinMed.k);
+  /* Con el alias ya no hay nada que adivinar: «ORO VISCOLASTICO» ES ese producto, con
+     medida o sin ella. Lo que sigue sin adivinarse es lo que NO tiene alias (ver CARIOCA). */
+  chk('sin medida y con alias, igual lo reconoce por nombre', r.sinMed.k==='ORO ANATOMICO VISCOLASTICO|', r.sinMed.k);
+
+  // ── 1c. La tabla de códigos que pasó el dueño (§4cw) ──
+  console.log('\n── 1c. «somier pedic es el somier negro» ──');
+  r = await page.evaluate(() => {
+    var f=function(d,m,c){ var i=stockInfo({desc:d,medida:m,codigo:c}); return {k:i.k, por:i.cat&&i.cat.por, d:i.cat&&i.cat.d}; };
+    return { pedic:f('SOMIER PEDIC','2,5',''), negro:f('SOMIER NEGRO','160x190',''),
+             typo:f('ORO VICOLASTICO','1,0',''),           // así lo escriben, sin la S
+             semi:f('SEMIPEDIC','2,0',''), euro:f('EUROPEDIC','3,5',''), dyn:f('DYNAMIC PEDIC','3,5',''),
+             anti:f('','','CH2393'), esp:f('','','CH1034'),
+             m20:normMedida('2,0'), m10:normMedida('1,0'), m30:normMedida('3,0'),
+             m5070:normMedida('50x70'), mRara:normMedida('77x88') };
+  });
+  /* «2,0» y «2» son el mismo número, pero la tabla solo tenía uno: sin normalizar, la tabla
+     de códigos del dueño —que escribe «SEMIPEDIC 2,0»— no encontraba nada. */
+  chk('⚠️ «2,0» y «1,0» y «3,0» también son medidas', r.m20==='140x190' && r.m10==='90x190' && r.m30==='180x190',
+      r.m20+' · '+r.m10+' · '+r.m30);
+  chk('…y una medida de verdad no se toca', r.m5070==='50x70' && r.mRara==='77x88', r.m5070+' · '+r.mRara);
+  chk('⚠️ «SOMIER PEDIC» es el «SOMIER NEGRO» — lo dijo el dueño',
+      r.pedic.k===r.negro.k && r.pedic.d==='SOMIER NEGRO', r.pedic.k+' vs '+r.negro.k);
+  chk('⚠️ «ORO VICOLASTICO» (sin la S, como lo escriben) es el ORO ANATOMICO VISCOLASTICO',
+      r.typo.d==='ORO ANATOMICO VISCOLASTICO' && r.typo.k==='ORO ANATOMICO VISCOLASTICO|90X190', r.typo.k);
+  chk('la tabla en plazas resuelve SEMIPEDIC, EUROPEDIC y DYNAMIC PEDIC',
+      r.semi.k==='SEMIPEDIC|140X190' && r.euro.k==='EUROPEDIC|200X200' && r.dyn.k==='DYNAMIC PEDIC|200X200',
+      r.semi.k+' · '+r.euro.k+' · '+r.dyn.k);
+  chk('los códigos nuevos que pasó están en el catálogo',
+      r.anti.d==='ESPECIAL ANTIALERGICO' && r.anti.k==='ESPECIAL ANTIALERGICO|160X190' && /ESPECIAL/.test(r.esp.d||''),
+      r.anti.k+' · '+r.esp.d);
 
   // ══ 2. Sin conteo NO se inventa nada ═══════════════════════════════════════
   console.log('\n── 2. Sin haber contado el depósito ──');

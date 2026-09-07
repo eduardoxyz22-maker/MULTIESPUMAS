@@ -4650,6 +4650,75 @@ el botón no se usaba.
 `tests/test_stock.js` — **101 checks** (8 nuevos, incluidos los que comprueban lo que NO se
 debe unir). Batería: 40 suites, 1521 checks.
 
+## 4cv. 🔢 El CÓDIGO manda sobre cualquier nombre (2026-09-07)
+
+El dueño, mirando la lista de «sin contar»: *"sigo viendo productos ahí que dicen sin marcar
+—un somier flex, oro bi relax, etc.— **que tienen hasta CÓDIGO**"*.
+
+Lo busqué en sus archivos y tenía toda la razón, con un caso que dolía:
+
+| | |
+|---|---|
+| En el pedido | `SOMIER TROPICAL 180X190 **CM**` · cód CH2356 |
+| En el Excel de Moreno | `SOMIER TROPICAL 180X190` · cód CH2356 · **1 unidad** |
+
+Sobraba un «CM». El código era idéntico en los dos lados, y el panel lo daba por no contado
+**teniéndolo**. El código es el identificador más fuerte que existe —no depende de cómo lo
+escribió cada uno— y yo no lo estaba usando contra el almacén: solo contra el catálogo viejo
+de 250 códigos, y CH2356 no está ahí.
+
+Ahora el importador guarda **código → clave** de cada producto del Excel (`STOCK.c.cod`,
+`STOCK.g[…].cod`) y `stockClaveInv` lo consulta **antes que cualquier nombre**. De los 286
+productos de los dos almacenes, **60 tienen códigos que el catálogo no conoce**: esos eran
+los que se perdían. El índice completo ocupa 8,7 KB y la fila del sistema quedó en 19.180 de
+50.000 caracteres.
+
+Además: un corte cargado **antes** de este cambio no trae los códigos, así que el panel lo
+detecta (`stockCorteViejo`) y avisa con un botón para volver a subir el Excel, en vez de
+dejar al equipo mirando una lista de «sin contar» sin entender de dónde sale. A un conteo
+hecho **a mano** no se le reprocha nada: se le ofrece, en tono suave, que suba el Excel.
+
+## 4cw. 📇 La tabla de códigos del equipo, y «somier pedic es el somier negro» (2026-09-07)
+
+El dueño pasó la tabla de códigos que usan ROHO y Heaven *"para facilitar la búsqueda por
+código o por nombre o similar"*, más un dato suelto: *"el somier pedic es el somier negro"*.
+
+Comparada contra el catálogo del panel, la tabla es una **verificación independiente**:
+
+- **74 códigos coinciden exactamente**, medida incluida.
+- **0 discrepancias de medida** — o sea que la equivalencia plazas↔centímetros de §4cu está
+  bien en los 74 casos.
+- **4 códigos nuevos**: CH2393/CH2394/CH2395 (ESPECIAL ANTIALERGICO 2,5/3,0/3,5) y CH1034.
+- **6 con otro nombre**: lo que el catálogo llama `ORO ANATOMICO VISCOLASTICO`, el equipo lo
+  llama `ORO VISCOLASTICO` — y a veces `ORO VICOLASTICO`, sin la S.
+
+Lo que se hizo:
+
+1. Los 4 códigos nuevos entraron al catálogo.
+2. `PROD_ALIAS`: **SOMIER PEDIC = SOMIER NEGRO** y **ORO (VI)SCOLASTICO = ORO ANATOMICO
+   VISCOLASTICO**. Se traduce antes de comparar, así que vale tanto para el stock como para
+   lo que escribe una vendedora a mano. El viscolástico dejó de resolverse «por parecido»
+   (una adivinanza, §4cu) y pasó a resolverse **por nombre**, que es más firme.
+3. La medida ahora también se entiende escrita como en esa tabla: **«2,5» a secas**, sin
+   «plz», y como número al final del nombre («SOMIER NEGRO 2,5»). ⚠️ Y el bug que casi se
+   escapa: `MEDIDA_PLZ` tiene la clave `'2'` pero el texto trae `'2,0'` → sin `parseFloat`,
+   la tabla del propio dueño no encontraba nada. Con eso resueltos SEMIPEDIC, PILLOW PEDIC,
+   EUROPEDIC y DYNAMIC PEDIC, que estaban todos escritos así.
+
+### Y el autocompletar de las vendedoras
+
+*"tampoco el código del antialérgico sale en la lista de autocompletar; revisá que salgan los
+nombres según el código o nombre"*. Dos cosas: el código faltaba en el catálogo (arreglado
+arriba), y la lista solo se podía buscar por nombre. Ahora cada opción lleva el código al
+final —`ESPECIAL ANTIALERGICO 160x190 · CH2393`—, así el **mismo campo sirve para buscar por
+nombre o por código**, y al elegirla se completan producto, medida y código. Escribir
+`ch2393` en el campo Código ya completa el nombre solo.
+
+**Y algo que estaba tapando avisos**: el cartel de «volvé a subir el Excel» se comió con un
+`else if` al de «el corte tiene N días». Los dos pueden pasar a la vez.
+
+Batería: **43 suites, 1.605 checks, 0 fallas.**
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
