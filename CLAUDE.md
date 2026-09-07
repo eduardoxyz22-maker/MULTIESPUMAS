@@ -86,6 +86,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
 
+## Buscar pedidos y sacar un PDF
+Administración → **🔎 Buscar pedidos** (§4db): cliente + productos (separados por coma, entra
+el que tenga cualquiera) + desde/hasta. El cliente se compara **por palabras** (encuentra el
+segundo apellido) y los productos sin acentos («bahía» = «BAHIA»). Sale el **renglón** que
+coincide, no el pedido entero. El PDF sale por 🖨 Imprimir → «Guardar como PDF» (sin
+librerías, igual que la hoja de ruta); la carátula impresa lleva cliente, período y totales
+porque los filtros no se imprimen. `tests/test_buscar.js`.
+
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
 ("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)

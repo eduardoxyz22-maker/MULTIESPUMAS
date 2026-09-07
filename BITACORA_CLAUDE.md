@@ -5008,6 +5008,63 @@ que existiera el inventario. Lo que sí faltaba era **decir por qué**: la líne
 «✔ hay» no mostraba nada, y contradecir a una persona sin dar el dato parece un capricho.
 Ahora las tres marcas llevan su explicación («hay 2 acá en fábrica»).
 
+## 4db. 🔎 Buscar pedidos: por cliente, por producto y entre dos fechas (2026-09-07)
+
+> *"Extrae del panel todos los pedidos de Juan Pablo Paredes que digan carioca premier,
+> carioca bahía, premier deluxe, desde el primero de agosto al seis de septiembre, y después
+> dale un PDF."*
+
+**Lo primero fue decir que yo no podía hacerlo.** Los pedidos viven en la planilla de Google
+del dueño y desde el sandbox el proxy bloquea todos los dominios de Google: no tengo —ni tuve
+nunca— acceso a los datos reales. Lo que sí se puede es dejar el panel haciendo esa consulta,
+que además sirve para la próxima vez y para cualquier otro cliente.
+
+No existía nada parecido: había reportes por día y por mes (📊 Reporte, 🛏️ Productos), pero
+ninguno que cruzara **cliente + producto + rango de fechas**. Ahora está en Administración →
+**🔎 Buscar pedidos**.
+
+### Cómo busca, y por qué así
+
+- **El cliente, por PALABRAS y no letra por letra.** «juan pablo paredes» encuentra «JUAN
+  PABLO PAREDES ROJAS» y «Paredes, Juan Pablo»: tienen que estar todas las palabras
+  escritas, en cualquier orden. Comparar el texto entero fallaba con el segundo apellido, que
+  es como está cargada media planilla. El campo tiene autocompletado con los clientes que ya
+  existen.
+- **Los productos, separados por COMA**, y entra el renglón que tenga **cualquiera** de
+  ellos; dentro de cada término tienen que estar todas sus palabras. Sin acentos ni
+  mayúsculas (`stockNorm`), así **«bahía» encuentra «BAHIA»** — que es exactamente el caso
+  que pidió el dueño.
+- **La fecha es la de salida** (`fechaSalida`), la misma de todo el panel: la de entrega si la
+  tiene, la de carga en una venta de tienda.
+- **Sale el RENGLÓN que coincide, no el pedido entero.** Si un pedido trae un CARIOCA PREMIER
+  y cuatro almohadas, en una búsqueda por «carioca premier» sale el colchón y no las
+  almohadas: es una cuenta, no un remito.
+- **Los borradores de Kommo quedan afuera** (todavía no son ventas). **Las ATC entran**,
+  marcadas, porque para cerrar una cuenta hay que verlas.
+- ⚠️ **Sin cliente ni producto no devuelve el panel entero: pide un dato.** Un listado de
+  3.000 renglones no es una respuesta.
+
+### El PDF
+
+Por **🖨 Imprimir / PDF → «Guardar como PDF»**, igual que la hoja de ruta: el navegador ya lo
+hace y no hay que cargar ninguna librería (§4cp ya evitó esa dependencia para el xlsx, por lo
+mismo). La hoja impresa lleva su propia carátula —cliente, productos, período, totales y
+fecha de emisión— porque la barra de filtros no se imprime y sin eso el papel no diría de qué
+es. También hay **📋 Copiar** para mandarlo por WhatsApp.
+
+Las cuentas van con precio unitario, subtotal y total, y si algún renglón no tiene precio
+cargado lo dice arriba en ámbar en vez de sumar mal en silencio.
+
+⚠️ Dos detalles que el papel no perdona y por eso están cuidados: los importes van con
+`nowrap` (un «Bs 1.500,00» partido en dos renglones en una hoja de cobro es inaceptable), y
+el plural de «renglón» es **«renglones»**, sin acento — el atajo de pegarle «es» al singular,
+que se usa en todo el panel, acá escribía «renglónes» en la carátula impresa.
+
+`tests/test_buscar.js`: 28 checks. Los que más importan son los de lo que **no** tiene que
+entrar (un día antes, un día después, otro cliente, CARIOCA RIO cuando se pidió CARIOCA
+PREMIER, un borrador), porque en una hoja que se le manda al cliente un renglón de más es una
+discusión.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

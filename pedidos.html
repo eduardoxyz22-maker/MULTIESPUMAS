@@ -508,6 +508,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
   body.printing-prods > *{ display:none !important; }
   body.printing-prods #prods-overlay{ display:block !important; position:static !important; background:#fff !important; }
   body.printing-prods #prods-overlay .no-print{ display:none !important; }
+  body.printing-busca > *{ display:none !important; }
+  body.printing-busca #busca-overlay{ display:block !important; position:static !important; background:#fff !important; }
+  body.printing-busca #busca-overlay .no-print{ display:none !important; }
+  body.printing-busca #busca-body{ overflow:visible !important; padding:0 !important; }
   body.printing-prods #prods-body{ overflow:visible !important; padding:0 !important; }
   body.printing-parte > *{ display:none !important; }
   body.printing-parte #parte-overlay{ display:block !important; position:static !important; background:#fff !important; }
@@ -893,6 +897,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#25D366;color:#0b3d2c" onclick="abrirEnvio('manana')">📤 Mañana</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirProds()">🛏️ Productos más entregados</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="abrirBuscar()" title="Buscar los pedidos de un cliente, o de un producto, entre dos fechas. Sirve para cerrar cuentas con un mayorista.">🔎 Buscar pedidos</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#7c2d12" onclick="abrirStock()" title="Lo que más sale, cuánto queda en depósito y qué hay que pedir a fábrica antes de quedarse sin.">📦 Stock y reposición</button>
           <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
           <!-- Rojo chillón (el propio del panel, #CE2939 · 5,3:1 sobre blanco) y NO el rojo
@@ -1169,6 +1174,21 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div id="envio-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#128C7E;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b id="envio-tit" style="font-size:.95rem">📤 Enviar</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-modo-hoy" onclick="setEnvioModo('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Cierre de hoy</button><button id="envio-modo-manana" onclick="setEnvioModo('manana')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button></div><div id="envio-partes" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="envio-parte-todo" onclick="setEnvioParte('todo')" style="border:none;background:#fff;color:#128C7E;padding:5px 11px;cursor:pointer;font-weight:700">Todo</button><button id="envio-parte-AM" onclick="setEnvioParte('AM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌅 Solo AM</button><button id="envio-parte-PM" onclick="setEnvioParte('PM')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">🌆 Solo PM</button></div><span id="envio-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#128C7E;font-weight:700" onclick="copiarEnvio()">📋 Copiar</button><button class="btn btn-sm" style="background:#25D366;color:#fff;font-weight:700" onclick="enviarEnvioWA()">📲 Abrir WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEnvio()">✕ Cerrar</button></div><div id="envio-body" style="flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column"><div id="envio-aviso" style="display:none;background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00"></div><div style="font-size:.78rem;color:#666;margin-bottom:7px">Este es el mensaje tal cual se va a copiar. Podés editarlo antes.</div><textarea id="envio-texto" spellcheck="false" style="flex:1;min-height:340px;width:100%;box-sizing:border-box;border:1px solid #d7dee2;border-radius:10px;padding:12px 14px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.82rem;line-height:1.5;background:#fff;resize:vertical"></textarea></div></div>
 <input type="file" id="ret-foto-input" accept="image/*" style="display:none" onchange="onRetFotoElegida(event)">
 <div id="retiros-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c3aed;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">💵 Retiros de efectivo</b><input type="month" id="ret-mes" onchange="renderRetiros()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"><select id="ret-filtro-vend" onchange="renderRetiros()" style="flex:0 0 auto;max-width:200px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"></select><span id="ret-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c3aed;font-weight:700" onclick="copiarRetiros()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printRetiros()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRetiros()">✕ Cerrar</button></div><div id="retiros-body" style="flex:1;overflow:auto;padding:14px"><div id="ret-form"></div><div id="ret-lista"></div></div></div>
+<!-- 🔎 BUSCAR PEDIDOS (§4db): por cliente, por producto y entre dos fechas. Nació de un
+     pedido concreto del dueño —«todos los pedidos de Juan Pablo Paredes que digan carioca
+     premier, carioca bahía, premier deluxe, del 1/8 al 6/9, y después dale un PDF»—, que
+     es cerrar cuentas con un mayorista. El PDF sale por Imprimir → «Guardar como PDF»,
+     igual que la hoja de ruta: el navegador ya lo hace y no hace falta ninguna librería. -->
+<div id="busca-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#5b21b6;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔎 Buscar pedidos</b><span id="busca-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#5b21b6;font-weight:700" onclick="printBusca()">🖨 Imprimir / PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarBusca()">📋 Copiar</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeBusca()">✕ Cerrar</button></div>
+<div class="no-print" style="padding:11px 14px;background:#fff;border-bottom:1px solid var(--gray-md);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+  <div style="flex:2;min-width:190px"><label class="lb">Cliente</label><input type="text" id="bus-cli" list="dl-clientes" placeholder="Ej. Juan Pablo Paredes" autocomplete="off" style="width:100%" onkeydown="if(event.key==='Enter')renderBuscar()"></div>
+  <div style="flex:3;min-width:230px"><label class="lb">Productos <span style="font-weight:400;color:var(--muted)">— separados por coma, entra el que tenga cualquiera</span></label><input type="text" id="bus-prod" placeholder="Ej. carioca premier, carioca bahia, premier deluxe" autocomplete="off" style="width:100%" onkeydown="if(event.key==='Enter')renderBuscar()"></div>
+  <div style="min-width:135px"><label class="lb">Desde</label><input type="date" id="bus-desde" style="width:100%"></div>
+  <div style="min-width:135px"><label class="lb">Hasta</label><input type="date" id="bus-hasta" style="width:100%"></div>
+  <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="renderBuscar()">🔎 Buscar</button>
+</div>
+<datalist id="dl-clientes"></datalist>
+<div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -9745,6 +9765,166 @@ function prodsText(){
 }
 function copiarProds(){ copyText(prodsText()); }
 function printProds(){ document.body.classList.add('printing-prods'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-prods'); },600); }
+
+/* ============================================================================
+   🔎 BUSCAR PEDIDOS — por cliente, por producto y entre dos fechas (§4db)
+
+   Pedido textual del dueño: *"Extrae del panel todos los pedidos de Juan Pablo Paredes que
+   digan carioca premier, carioca bahía, premier deluxe, desde el primero de agosto al seis
+   de septiembre, y después dale un PDF."* O sea: cerrar cuentas con un mayorista.
+
+   ⚠️ CÓMO SE BUSCA, Y POR QUÉ ASÍ:
+   · El nombre se compara por PALABRAS, no letra por letra: «juan pablo paredes» encuentra
+     «JUAN PABLO PAREDES ROJAS» y «Paredes, Juan Pablo». Tienen que estar todas las palabras
+     que se escribieron, en cualquier orden. Buscar el texto entero fallaba con el segundo
+     apellido, que es como está cargada la mitad de la planilla.
+   · Los productos van separados por COMA y entra el renglón que tenga CUALQUIERA («carioca
+     premier, carioca bahía»); dentro de cada uno tienen que estar todas sus palabras. Sin
+     acentos y sin mayúsculas: «bahía» encuentra «BAHIA».
+   · La fecha es la de SALIDA (`fechaSalida`), la misma que usa todo el panel: la de entrega
+     si la tiene, y la de carga en una venta de tienda —que no tiene entrega pero salió—.
+   · Los borradores de Kommo NO entran: todavía no son una venta. Las ATC sí, marcadas 🎧,
+     porque para cerrar una cuenta hay que verlas.
+   ⚠️ Si no se escribe cliente NI producto no devuelve todo el panel: pide un dato. Un
+   listado de 3.000 renglones no es una respuesta.
+   ========================================================================== */
+function abrirBuscar(){
+  var d=document.getElementById('bus-desde'), h=document.getElementById('bus-hasta');
+  if(d && !d.value) d.value=diasAtras(30);
+  if(h && !h.value) h.value=todayStr();
+  var dl=document.getElementById('dl-clientes');
+  if(dl){
+    var vistos={}, nom=[];
+    STATE.forEach(function(p){
+      if(!p || esFilaSistema(p) || esBorrador(p)) return;
+      var c=String(p.cliente||'').trim(); if(!c) return;
+      var k=normNombre(c); if(vistos[k]) return; vistos[k]=1; nom.push(c);
+    });
+    nom.sort(function(a,b){ return a.localeCompare(b); });
+    dl.innerHTML=nom.slice(0,900).map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
+  }
+  document.getElementById('busca-overlay').style.display='flex';
+  renderBuscar();
+}
+function closeBusca(){ var ov=document.getElementById('busca-overlay'); if(ov) ov.style.display='none'; }
+function printBusca(){ document.body.classList.add('printing-busca'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-busca'); },600); }
+/* Todas las palabras de `busca` adentro de `texto`, sin acentos ni mayúsculas. */
+function busCoincide(texto, palabras){
+  var t=stockNorm(texto);
+  for(var i=0;i<palabras.length;i++) if(t.indexOf(palabras[i])<0) return false;
+  return true;
+}
+function busPalabras(s){ return stockNorm(s).split(/[\s,;]+/).filter(function(w){ return w; }); }
+/* Los términos de producto: «carioca premier, carioca bahia» → [[CARIOCA,PREMIER],[CARIOCA,BAHIA]] */
+function busTerminos(s){
+  return String(s||'').split(',').map(function(t){ return busPalabras(t); }).filter(function(a){ return a.length; });
+}
+var BUSCA=null;
+function buscarData(){
+  var cli=busPalabras((document.getElementById('bus-cli')||{}).value||'');
+  var terms=busTerminos((document.getElementById('bus-prod')||{}).value||'');
+  var desde=String((document.getElementById('bus-desde')||{}).value||'');
+  var hasta=String((document.getElementById('bus-hasta')||{}).value||'');
+  if(!cli.length && !terms.length) return { pedir:true, filas:[] };
+  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={};
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p)) return;
+    if(cli.length && !busCoincide(p.cliente||'', cli)) return;
+    var f=fechaSalida(p);
+    if(desde && (!f || f<desde)) return;
+    if(hasta && (!f || f>hasta)) return;
+    (p.productos||[]).forEach(function(x,i){
+      var nom=String((x&&x.desc)||'')+' '+String((x&&x.medida)||'')+' '+String((x&&x.codigo)||'');
+      if(terms.length && !terms.some(function(t){ return busCoincide(nom, t); })) return;
+      var c=Number(x.cant)||0, pr=prodPrecio(x), sub=r2(pr*c);
+      uni+=c; plata+=sub; if(!(pr>0)) sinPrecio+=c;
+      pedidos[p.id]=1;
+      filas.push({ f:f, p:p, x:x, i:i, cant:c, precio:pr, sub:sub });
+    });
+  });
+  filas.sort(function(a,b){
+    if(a.f!==b.f) return a.f<b.f?-1:1;
+    return (Number(a.p.nroDia)||0)-(Number(b.p.nroDia)||0) || (Number(a.p.ts)||0)-(Number(b.p.ts)||0);
+  });
+  return { filas:filas, uni:uni, plata:r2(plata), sinPrecio:sinPrecio, nPed:Object.keys(pedidos).length,
+           cli:(document.getElementById('bus-cli')||{}).value||'', prod:(document.getElementById('bus-prod')||{}).value||'',
+           desde:desde, hasta:hasta };
+}
+function busRangoTxt(d){
+  if(d.desde && d.hasta) return 'del '+fmtFecha(d.desde)+' al '+fmtFecha(d.hasta);
+  if(d.desde) return 'desde el '+fmtFecha(d.desde);
+  if(d.hasta) return 'hasta el '+fmtFecha(d.hasta);
+  return 'todas las fechas';
+}
+function renderBuscar(){
+  var d=buscarData(); BUSCA=d;
+  var body=document.getElementById('busca-body'), info=document.getElementById('busca-info');
+  if(!body) return;
+  if(d.pedir){
+    if(info) info.textContent='';
+    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">Escribí un <b>cliente</b> o un <b>producto</b> (o los dos) y tocá 🔎 Buscar.'+
+      '<br><span style="font-size:.85rem">Los productos van separados por coma: entra el pedido que tenga cualquiera de ellos.</span></div>';
+    return;
+  }
+  if(info) info.textContent=d.filas.length+' '+(d.filas.length===1?'renglón':'renglones')+' · '+d.nPed+' pedido'+(d.nPed===1?'':'s');
+  if(!d.filas.length){
+    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">No hay pedidos que cumplan con eso.'+
+      '<br><span style="font-size:.85rem">Probá con menos palabras en el nombre, o ampliá las fechas.</span></div>';
+    return;
+  }
+  /* El encabezado se imprime: es la carátula de la hoja que se le manda al cliente. */
+  var html='<div style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
+    '<div style="font-size:1.05rem;font-weight:800;color:#5b21b6">MULTIESPUMAS · Detalle de pedidos</div>'+
+    '<div style="font-size:.9rem;margin-top:5px">'+
+      (d.cli?('<b>Cliente:</b> '+esc(d.cli)+'<br>'):'')+
+      (d.prod?('<b>Productos:</b> '+esc(d.prod)+'<br>'):'')+
+      '<b>Período:</b> '+esc(busRangoTxt(d))+'</div>'+
+    /* ⚠️ El plural de «renglón» pierde el acento: «renglones», no «renglónes». Pegarle una
+       «es» al singular es el atajo que se usa en todo el panel y acá no sirve. */
+    '<div style="margin-top:8px;font-size:.95rem"><b>'+d.filas.length+'</b> '+(d.filas.length===1?'renglón':'renglones')+
+      ' en <b>'+d.nPed+'</b> pedido'+(d.nPed===1?'':'s')+' &nbsp;·&nbsp; <b>'+d.uni+'</b> unidad'+(d.uni===1?'':'es')+
+      ' &nbsp;·&nbsp; <b style="color:#5b21b6">'+fmtBs(d.plata)+'</b>'+
+      (d.sinPrecio?('<br><span style="color:var(--amber);font-size:.85rem">⚠️ '+d.sinPrecio+' unidad'+(d.sinPrecio===1?'':'es')+' sin precio cargado: no suman al total.</span>'):'')+
+    '</div>'+
+    '<div style="font-size:.75rem;color:var(--muted);margin-top:6px">Emitido el '+fmtFecha(todayStr())+'</div></div>';
+  html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
+    /* ⚠️ Las columnas de plata van con `nowrap` y con ancho de sobra: «Bs 1.500,00» partido en
+       dos renglones es exactamente lo que no puede pasar en una hoja que se le manda a un
+       cliente a cobrar. Lo mismo el título «Cant.», que se partía en «CAN / T.». */
+    '<table class="roho-tabla" style="min-width:850px"><thead><tr>'+
+    '<th style="width:86px">Fecha</th><th style="width:96px">Nota</th><th>Producto</th>'+
+    '<th style="width:58px;white-space:nowrap">Cant.</th><th style="width:104px;white-space:nowrap">P. unit.</th>'+
+    '<th style="width:112px;white-space:nowrap">Subtotal</th><th style="width:104px">Estado</th></tr></thead><tbody>'+
+    d.filas.map(function(r){
+      var p=r.p, x=r.x;
+      return '<tr>'+
+        '<td style="white-space:nowrap">'+esc(fmtFecha(r.f))+(esVentaTienda(p)?'<br><span style="color:var(--muted);font-size:.82em">tienda</span>':'')+'</td>'+
+        '<td>'+(p.oc?('<span style="'+(esATC(p.oc)?'color:#7c3aed;font-weight:700':'')+'">'+esc(ocEtiq(p.oc))+'</span>'):'<span style="color:var(--muted)">—</span>')+
+          '<br><span style="color:var(--muted);font-size:.82em">'+esc(p.vendedor||'')+'</span></td>'+
+        '<td><b>'+esc(x.desc||'—')+'</b>'+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?('<br><span style="color:var(--muted);font-size:.82em">cód '+esc(x.codigo)+'</span>'):'')+'</td>'+
+        '<td style="text-align:right;white-space:nowrap"><b>'+r.cant+'</b></td>'+
+        '<td style="text-align:right;white-space:nowrap">'+(r.precio>0?esc(fmtBs(r.precio)):'<span style="color:var(--muted)">—</span>')+'</td>'+
+        '<td style="text-align:right;white-space:nowrap">'+(r.sub>0?('<b>'+esc(fmtBs(r.sub))+'</b>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
+        '<td>'+(p.entregado?'<span style="color:var(--green);font-weight:700">✔ entregado</span>':'<span style="color:var(--amber);font-weight:700">pendiente</span>')+
+          (p.pagado?'':'<br><span style="color:var(--red);font-size:.82em">saldo '+esc(fmtBs(p.saldo))+'</span>')+'</td></tr>';
+    }).join('')+
+    '<tr style="background:#f6f3ff;font-weight:800"><td colspan="3" style="text-align:right">TOTAL</td>'+
+      '<td style="text-align:right;white-space:nowrap">'+d.uni+'</td><td></td><td style="text-align:right;white-space:nowrap;color:#5b21b6">'+esc(fmtBs(d.plata))+'</td><td></td></tr>'+
+    '</tbody></table></div>';
+  body.innerHTML=html;
+}
+function copiarBusca(){
+  var d=BUSCA;
+  if(!d || d.pedir || !d.filas.length){ toast('No hay nada para copiar.','err'); return; }
+  var t='MULTIESPUMAS — detalle de pedidos\n'+(d.cli?('Cliente: '+d.cli+'\n'):'')+(d.prod?('Productos: '+d.prod+'\n'):'')+
+        'Período: '+busRangoTxt(d)+'\n\n';
+  d.filas.forEach(function(r){
+    t+=fmtFecha(r.f)+'  '+(r.p.oc?ocEtiq(r.p.oc):'—')+'  '+String((r.x.desc||'')+(r.x.medida?(' '+r.x.medida):''))+
+       ' × '+r.cant+(r.precio>0?('  '+fmtBs(r.sub)):'')+(r.p.entregado?'  ✔':'  (pendiente)')+'\n';
+  });
+  t+='\nTOTAL: '+d.uni+' unidades'+(d.plata>0?('  '+fmtBs(d.plata)):'')+'  ·  '+d.nPed+' pedidos';
+  copyText(t); toast('Detalle copiado ✓','ok');
+}
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
