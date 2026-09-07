@@ -4884,12 +4884,53 @@ migra las claves viejas al leer la fila (test 7 de `test_stock.js`); las **union
 - Cuatro checks viejos cambiaron de expectativa, cada uno con su comentario (§4cy).
 - Batería: **44 suites, 1.649 checks, 0 fallas** (41 de `correr.sh` + 3 de Python).
 
-**Preguntado y resuelto:** el almacén llama «COLCHON ESPECIAL **JUNIOR**» a los códigos
-`CH1075`/`CH1078`, que en la tabla del dueño figuran como ESPECIAL **ANTIALERGICO** 105/140.
-El dueño (07/09): *"Ya no se fabrica el Jr, ahora es antialérgico."* O sea: **el JUNIOR es
-el nombre viejo del mismo código**, y esas unidades cuentan como antialérgico — que es
-exactamente lo que hace el panel al resolver por código. ⚠️ No «corregir» esto sacando
-CH1075/CH1078 del catálogo ni dándoles nombre propio: `test_identidad.js` lo cuida.
+**Preguntado y resuelto — en §4cz.** El almacén llama «COLCHON ESPECIAL **JUNIOR**» a
+`CH1075`/`CH1078`, que el catálogo viejo tenía como ESPECIAL ANTIALERGICO. Primero leí la
+respuesta del dueño como «mismo código, nombre viejo» y los dejé sumando al antialérgico;
+con la tabla que mandó después quedó claro que **no**: son otro colchón, discontinuado.
+
+## 4cz. 🛑 El JUNIOR ya no se fabrica: el antialérgico es CH2391…CH2396 (2026-09-07)
+
+A la pregunta de §4cy el dueño contestó *"Ya no se fabrica el Jr, ahora es antialérgico"* y,
+cuando le dije que entonces sumaba `CH1075`/`CH1078` como antialérgico, mandó la tabla:
+
+| Código | ESPECIAL ANTIALERGICO |
+|---|---|
+| CH2396 | 1.0 PLZ · 90x190 |
+| CH2391 | 1.5 PLZ · 105x190 |
+| CH2392 | 2.0 PLZ · 140x190 |
+| CH2393 | 2.5 PLZ · 160x190 |
+| CH2394 | 3.0 PLZ · 180x190 |
+| CH2395 | 3.5 PLZ · 200x200 |
+| (sin código) | Med.Esp. 140x200 / 160x200 / 180x200 |
+
+*"Ese es el antialérgico que se fabrica y sus códigos."* O sea: **el JUNIOR es OTRO colchón**,
+discontinuado, con sus propios códigos (`CH1075` 105, `CH1076` 90, `CH1078` 140 — los del
+almacén), del que quedan unidades (4 + 1 + 6 en logística) y que se vende hasta agotar.
+Sumarlo al antialérgico era justo el error de §4cy con otro disfraz: un cliente que compra
+un antialérgico se llevaba un JUNIOR «porque había».
+
+### Lo que cambió
+
+- **Catálogo:** `CH1075`/`CH1078` pasan a **ESPECIAL JUNIOR** (105/140), entra `CH1076`
+  (JUNIOR 90) y entra **`CH2396`** (antialérgico 90, faltaba). **Sale `CH1137`**: el
+  catálogo viejo lo tenía como antialérgico 90 y no está en la tabla del dueño; si algún día
+  aparece en un Excel, se ve con el nombre que le ponga el almacén.
+- **`x:1` en el catálogo = ya no se fabrica.** Los tres JUNIOR lo llevan
+  (`stockDescontinuadoK`). Con eso:
+  - el 🤖 lo reparte y lo tilda como a cualquiera (✔ hay / ✗ no hay), pero lo que falta **no
+    va a la lista de «hay que fabricar»**: va a una lista aparte, «🛑 No alcanza y ya no se
+    fabrica», con la ficha correspondiente en el panel fijo y en la ventana;
+  - en la tabla de stock el aviso es **«🛑 Se acaba y no se fabrica más»** (`agotado`), en
+    vez de PEDIR YA, y `stockCuantoPedir` devuelve 0; con stock de sobra dice «Sobra · ya no se
+    fabrica: vender lo que queda»;
+  - el mensaje a la fábrica nunca lo nombra. Traerlo de Moreno sí sigue valiendo: existe.
+- Las medidas especiales del antialérgico (140x200, 160x200, 180x200) no tienen código: se
+  hacen a pedido y la vendedora las marca 🏭, como hasta ahora.
+
+`tests/test_identidad.js` sección 5 (7 checks): 6 JUNIOR vendidos con 4 en el almacén → ✗
+no hay, los 2 que faltan van a «no se fabrica más» y no al pedido a fábrica; el
+antialérgico sí va; «1.0PLZ 90X190CM» es el CH2396; CH1137 no existe.
 
 ## 5. Pendientes
 

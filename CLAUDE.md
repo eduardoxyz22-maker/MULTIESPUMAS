@@ -72,6 +72,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     catálogo. `medidaDeTexto` entiende «2,0 - T.A.», «1,5 [Pr.]», «140*190».
     `tests/test_identidad.js`. Para verificar con los Excel reales: prueba en el scratchpad,
     nunca en el repo (público).
+  - **`x:1` en `CODIGOS` = ya no se fabrica** (§4cz): el ESPECIAL JUNIOR (CH1075/76/78) es
+    otro colchón que el antialérgico (CH2391–CH2396) y está discontinuado. Se reparte y se
+    vende lo que queda, pero nunca entra en «hay que fabricar» (aviso `agotado`).
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»

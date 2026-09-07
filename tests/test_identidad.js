@@ -91,8 +91,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
            {G:'CH1195',  W:'ALMOHADA VISCOLASTICA NASA',AY:'33'},
            {G:'CH1246',  W:'ALMOHADA TRAVESSEIRO ANTISOFOCANTE NASA',AY:'19'},
            {G:'CH1129',  W:'COLCHON TITANIO LATEX 140X190',AY:'6'},
-           /* El almacén todavía llama JUNIOR al CH1075. El dueño (07/09): «Ya no se fabrica el
-              Jr, ahora es antialérgico». Mismo código = mismo producto: se suman. */
+           /* El dueño (07/09): «Ya no se fabrica el Jr, ahora es antialérgico» + la tabla del
+              antialérgico con sus códigos (CH2391…CH2396). O sea: el JUNIOR (CH1075) es OTRO
+              colchón, discontinuado, y NO se suma al antialérgico (§4cz). */
            {G:'CH1075',  W:'COLCHON ESPECIAL JUNIOR 105X190',AY:'4'},
            {G:'CH2391',  W:'COLCHON ESPECIAL ANTIALERGICO 105X190',AY:'1'}];
     var R=existLeer(f); if(R.error) return {error:R.error};
@@ -104,9 +105,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   if(r.error){ chk('el reporte sintético se lee', false, r.error); }
   const P=(c)=>r.por[c]||{};
-  chk('el reporte se lee entero (22 renglones) y el ÚNICO que se sumó es el que el catálogo declara igual', r.n===21 && r.rep===1, r.n+' items · repetidos='+r.rep);
-  chk('⚠️ el «ESPECIAL JUNIOR» (CH1075) ES el ESPECIAL ANTIALERGICO 105: mismo código en la tabla del dueño, se suman (4+1=5)',
-      P('CH1075').k==='ESPECIAL ANTIALERGICO|105X190' && P('CH1075').cant===5 && P('CH1075').cat===true, P('CH1075').k+' ×'+P('CH1075').cant);
+  chk('el reporte se lee entero (22 renglones) y NINGÚN renglón se sumó a otro', r.n===22 && r.rep===0, r.n+' items · repetidos='+r.rep);
+  chk('⚠️ el «ESPECIAL JUNIOR» (CH1075) NO es el ESPECIAL ANTIALERGICO (CH2391): 4 y 1, no 5',
+      P('CH1075').k==='ESPECIAL JUNIOR|105X190' && P('CH1075').cant===4 && P('CH2391').k==='ESPECIAL ANTIALERGICO|105X190' && P('CH2391').cant===1,
+      P('CH1075').k+' ×'+P('CH1075').cant+' · '+P('CH2391').k+' ×'+P('CH2391').cant);
   chk('⚠️ SOMIER PARRILLA NEGRO (CH1297) NO es el SOMIER NEGRO (SR2012): 10 y 3, no 13',
       P('CH1297').k!==r.sr && P('SR2012').k===r.sr && P('CH1297').cant===10 && P('SR2012').cant===3, P('CH1297').k+' vs '+r.sr);
   chk('…y queda con su nombre crudo, con la medida aparte', P('CH1297').k==='SOMIER PARRILLA NEGRO|140X190', P('CH1297').k);
@@ -170,6 +172,36 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return k;
   });
   chk('«ALMOHADA» sin medida, estando la 50x70 acá Y en Moreno, igual la encuentra (no ve «dos candidatas»)', r==='ALMOHADA|50X70', r);
+
+  // ══ 5. Lo que ya no se fabrica (§4cz) ═════════════════════════════════════
+  /* «Ya no se fabrica el Jr, ahora es antialérgico». Quedan 4 JUNIOR 105 en el almacén. Si
+     alguien vende 6, faltan 2 — y esos 2 NO pueden ir al pedido a fábrica. */
+  console.log('\n── 5. El JUNIOR: se vende lo que queda, no se pide ──');
+  r = await page.evaluate(() => {
+    var adel=function(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
+    var P=function(o){ return Object.assign({id:'p'+Math.random(),fecha:adel(1),oc:'190100',vendedor:'V',cliente:'C',celular:'70000000',
+      turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,saldo:0,ts:Date.now(),metodoPago:'',observaciones:'',estado:'',entregado:false,
+      vehiculo:'',chofer:'',garantia:'',nota:'',acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:false,fotos:[]},o); };
+    STATE=[ P({id:'j1',cliente:'Vende 6 junior',productos:[{desc:'ESPECIAL JUNIOR',medida:'105x190',codigo:'CH1075',cant:6}]}),
+            P({id:'a1',cliente:'Vende 3 antialergico',productos:[{desc:'ESPECIAL ANTIALERGICO 1.5PLZ 105X190CM',medida:'',codigo:'',cant:3}]}),
+            P({id:'a0',cliente:'Vende 1 antialergico 1 plz',productos:[{desc:'ESPECIAL ANTIALERGICO 1.0PLZ 90X190CM',medida:'',codigo:'',cant:1}]}) ];
+    saveMirror(); REVSTK_DIAS='todos';
+    var R=stockAsignar(), lin={};
+    R.pedidos.forEach(function(g){ lin[g.p.id]=g.lineas[0]; });
+    var d=stockData(), jr=d.lista.filter(function(o){ return o.k==='ESPECIAL JUNIOR|105X190'; })[0]||{};
+    var t=''; var o=window.copyText; window.copyText=function(x){ t=x; }; copiarStock(); window.copyText=o;
+    return { jr:lin.j1, anti:lin.a1, a0:lin.a0, k90:stockClave({desc:'ESPECIAL ANTIALERGICO 1.0PLZ 90X190CM',medida:''}),
+             faltan:R.faltan.map(function(x){ return x.nom+' ×'+x.u; }), descont:R.descont.map(function(x){ return x.nom+' ×'+x.u; }),
+             tot:R.tot.descont, aviso:jr.aviso, pedir:jr.pedir, ch1137:!!CODIGOS.CH1137, msg:t };
+  });
+  chk('⚠️ 6 JUNIOR con 4 en el almacén → ✗ no hay, y la línea dice que ya no se fabrica', r.jr && r.jr.ahora==='no' && r.jr.falta===2 && r.jr.descont===true, JSON.stringify(r.jr));
+  chk('⚠️ …y esos 2 NO van a la lista de «hay que fabricar»: van a la de «no se fabrica más»',
+      !r.faltan.some(function(s){ return /JUNIOR/.test(s); }) && r.descont.length===1 && /JUNIOR.*×2/.test(r.descont[0]) && r.tot===1, 'faltan='+r.faltan.join('|')+' · descont='+r.descont.join('|'));
+  chk('el antialérgico 105 (CH2391) sí: 3 vendidos con 1 → ✗ y a fábrica', r.anti && r.anti.ahora==='no' && r.faltan.some(function(s){ return /ESPECIAL ANTIALERGICO · 105x190 ×2/i.test(s); }), JSON.stringify(r.faltan));
+  chk('«ESPECIAL ANTIALERGICO 1.0PLZ 90X190CM» es el CH2396 nuevo', r.k90==='ESPECIAL ANTIALERGICO|90X190' && r.a0 && r.a0.ahora==='no', r.k90);
+  chk('el CH1137 (que no está en la tabla del dueño) ya no existe en el catálogo', r.ch1137===false);
+  chk('en la tabla el JUNIOR dice «se acaba y no se fabrica más», y no sugiere pedir', r.aviso==='agotado' && r.pedir===0, r.aviso+' · pedir '+r.pedir);
+  chk('⚠️ el mensaje a la fábrica pide el antialérgico y NO el JUNIOR', /ESPECIAL ANTIALERGICO · 105x190/i.test(r.msg) && !/JUNIOR/.test(r.msg), r.msg.split('\n').filter(function(l){ return /^[•🚨]/.test(l); }).join(' / '));
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
