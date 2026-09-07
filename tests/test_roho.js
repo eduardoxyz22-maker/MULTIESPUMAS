@@ -204,7 +204,21 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('dice cuántos son para hoy o para días pasados', /para hoy o para días que ya pasaron/.test(vp.txt), vp.txt.slice(120,300));
   chk('⚠️ y dice desde qué fecha va a agendar (mañana)',
       vp.txt.indexOf(await page.evaluate(()=>fmtFecha(tomorrowStr())))>=0, await page.evaluate(()=>fmtFecha(tomorrowStr())));
-  chk('⚠️ avisa de los combos que partió', /combos? partidos?/.test(vp.txt), '');
+  /* ⚠️ EL AVISO DE COMBOS SE MIRA CON TODO EL EXCEL A LA VISTA, no solo con las futuras.
+     El Excel de prueba tiene fechas fijas de septiembre 2026, así que a medida que pasa el
+     tiempo quedan menos filas «futuras» — y llegó el día (07/09) en que entre las pocas que
+     quedaban no había ningún combo, y el check falló sin que nada estuviera roto. Es la
+     trampa de las fechas fijas que avisa el LEEME. Tildando «traer también las viejas»,
+     los 14 combos del archivo están siempre en juego y el aviso deja de depender del
+     calendario. */
+  const vpCombos = await page.evaluate(() => {
+    ROHO_VIEJOS=true; renderImportRoho();
+    var t=(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ');
+    ROHO_VIEJOS=false; renderImportRoho();
+    return t;
+  });
+  chk('⚠️ avisa de los combos que partió', /combos? partidos?/.test(vpCombos),
+      (vpCombos.match(/\d+ combos? partidos?[^·]*/)||[''])[0].slice(0,70));
   chk('⚠️ avisa de los que quedan sin zona', /sin zona/.test(vp.txt), '');
   chk('deja elegir el turno', /Todos AM/.test(vp.txt) && /Repartir/.test(vp.txt), '');
 

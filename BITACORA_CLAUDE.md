@@ -4102,6 +4102,79 @@ Sin chofer 105 · No entregados 103 · Por verificar 71 · AM 74 · PM 32`).
 ⚠️ **Antes de construir cualquiera hay que preguntarle al dueño cómo se hace HOY.** El error
 de §4ck (inventar la zona por el nombre de una avenida) salió de suponer en vez de preguntar.
 
+## 4cn. 📦 Avisar ANTES de quedarse sin lo que más sale (2026-09-07)
+
+Pedido del dueño, después de descartar dos listas de ideas mías: *"el de fábrica me interesa
+pero **más tipo moda que se entrega más seguido y alerte sobre tener stock**"*.
+
+**No es la pantalla de faltantes**, que ya existe y mira lo que **ya** falta (alguien tildó
+✗ en un pedido). Esto mira lo que **está por faltar**, que es lo único que llega a tiempo.
+
+### Los dos datos que faltaban, y que él dio
+
+| Pregunta | Respuesta | Para qué sirve |
+|---|---|---|
+| ¿Cuánto tarda la fábrica (MORENO / MULTI)? | **2 a 3 días** | Es el umbral del aviso: si lo que hay no cubre 3 días, hay que pedir ya |
+| ¿Dónde se anota cuánto hay en depósito? | **«Lo quiero llevar en el panel»** | Justificó construir el conteo, no solo el ranking |
+
+### La cuenta
+
+- **Rotación** = unidades **entregadas** en los últimos 28 días ÷ 28.
+- **En depósito** = último conteo + lo que llegó de fábrica − lo entregado desde ese conteo.
+- **Alcanza para** = depósito ÷ rotación, en días.
+- 🚨 **PEDIR YA** si alcanza para menos de 3 días (lo que tarda la fábrica) o si lo ya
+  vendido para los próximos 3 días no entra en lo que hay.
+- 🏭 **Pedir esta semana** si alcanza para menos de 5 (3 de fábrica + 2 de margen).
+
+### Tres decisiones que valen más que el código
+
+**1. Un CONTEO con fecha, no un saldo que se descuenta solo.** Un saldo se desvía para
+siempre con un solo error —una entrega no marcada, una unidad rota, un descuento doble desde
+dos celulares— y nadie lo nota hasta que falta. Guardando el último conteo con su fecha y
+recalculando desde ahí, **cada conteo nuevo borra el error acumulado**, y el cálculo es
+idempotente: repetirlo no descuenta dos veces. El test lo comprueba llamándolo 10 veces y
+repintando 5.
+
+**2. Sin conteo NO se inventa un número.** «Sin contar» no es cero. Un depósito inventado es
+peor que no decir nada, porque se le cree. Y sin conteo no salta ningún aviso.
+
+**3. Lo entregado el mismo día del conteo se descuenta igual.** Si se cuenta a las 8 el
+camión no salió; a las 6 sí. Como no se sabe la hora, se elige el lado que **no deja sin
+avisar**: quedar corto y pedir de más a fábrica cuesta mucho menos que quedarse sin vender.
+Puede dar **negativo** — y eso no es un error de cuenta sino la señal de que el conteo quedó
+viejo, así que la pantalla lo dice con todas las letras («se entregaron 5 más de lo contado
+— volvé a contar») en vez de mostrar un número raro.
+
+### Cómo se guarda
+
+Fila del sistema `__stock__`, con JSON en Observaciones — el mismo patrón que los días
+cerrados y el arqueo, así que **no hizo falta tocar el Apps Script ni agregar columnas**.
+Va sin fecha, o sea que no ocupa cupo de ningún camión, y `esFilaSistema` la excluye de
+todos los listados.
+
+### Dónde se ve
+
+- **Aviso en Administración** (fuera del resumen plegable): *«📦 1 producto se acaba antes
+  de que llegue la fábrica: COLCHON ECO FLEX 2 PLAZAS · 140x190»* con botón para entrar.
+- **Pantalla «📦 Stock y reposición»**: sale por día, en depósito, alcanza para, vendido sin
+  entregar, qué hacer. Ordenada por urgencia.
+- **«📋 Copiar pedido a fábrica»**: el mensaje listo con cuánto pedir de cada uno y por qué.
+- Cargar datos: **«Conté el depósito»** (ofrece los 40 que más mueven, no los 250 del
+  catálogo — contar 250 no lo hace nadie) y **«Llegó de fábrica»**.
+
+`tests/test_stock.js` — **34 checks**.
+
+⚠️ **Pendiente de conversar**: hoy la salida se cuenta por `fechaSalida` (la fecha de entrega
+programada), no por cuándo se marcó entregado de verdad. Si una entrega se atrasa mucho, el
+descuento queda con la fecha vieja. No molesta para el aviso, pero conviene saberlo.
+
+**Y una del andamiaje, otra vez la misma**: `test_roho` falló ese día porque el Excel de
+prueba tiene fechas fijas de septiembre y, al llegar el 07, entre las pocas filas que
+quedaban «futuras» ya no había ningún combo — el check del aviso de combos se cayó **sin que
+nada estuviera roto**. Es la trampa que el LEEME avisa desde agosto. Arreglado tildando
+«traer también las viejas» para ese check: así los 14 combos del archivo están siempre en
+juego y el aviso deja de depender del calendario.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

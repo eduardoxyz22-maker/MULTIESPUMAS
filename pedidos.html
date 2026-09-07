@@ -890,6 +890,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#25D366;color:#0b3d2c" onclick="abrirEnvio('manana')">📤 Mañana</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirProds()">🛏️ Productos más entregados</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#7c2d12" onclick="abrirStock()" title="Lo que más sale, cuánto queda en depósito y qué hay que pedir a fábrica antes de quedarse sin.">📦 Stock y reposición</button>
           <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
           <!-- Rojo chillón (el propio del panel, #CE2939 · 5,3:1 sobre blanco) y NO el rojo
                oscuro de «Cerrar día»: los dos son rojos, pero se distinguen de un vistazo y
@@ -906,6 +907,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <!-- ⚠️ VA FUERA de #adm-resumen a propósito: es una alerta, no un consolidado.
              Plegar el resumen no puede esconder entregas que vienen. -->
         <div id="adm-fuera"></div>
+        <!-- 📦 Lo que más sale y se está por acabar (§4cn). Va acá arriba, FUERA del
+             resumen plegable: quedarse sin el colchón que más se vende es una venta
+             perdida, no un detalle. -->
+        <div id="adm-stock"></div>
         <!-- 📥 Borradores de Kommo que quedaron sin vendedora (§4ca) -->
         <div id="adm-borradores"></div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
@@ -1161,6 +1166,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <input type="file" id="ret-foto-input" accept="image/*" style="display:none" onchange="onRetFotoElegida(event)">
 <div id="retiros-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c3aed;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">💵 Retiros de efectivo</b><input type="month" id="ret-mes" onchange="renderRetiros()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"><select id="ret-filtro-vend" onchange="renderRetiros()" style="flex:0 0 auto;max-width:200px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#7c3aed"></select><span id="ret-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c3aed;font-weight:700" onclick="copiarRetiros()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printRetiros()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRetiros()">✕ Cerrar</button></div><div id="retiros-body" style="flex:1;overflow:auto;padding:14px"><div id="ret-form"></div><div id="ret-lista"></div></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
+<div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#7c2d12;font-weight:700" onclick="abrirStockConteo()">📋 Conté el depósito</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">🏭 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
 <script>
@@ -6388,7 +6394,7 @@ function esFilaCierre(p){ return !!p && String(p.id)===CIERRE_ID; }
 /* Los RETIROS DE EFECTIVO también viajan como filas del sistema, una por retiro
    (ver §RETIROS más abajo). Van con prefijo para que puedan ser muchas. */
 function esFilaRetiro(p){ return !!p && String((p&&p.id)||'').indexOf(RETIRO_PREF)===0; }
-function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || esFilaRetiro(p)); }
+function esFilaSistema(p){ return !!p && (String(p.id)===CIERRE_ID || String(p.id)===ARQUEO_ID || String(p.id)===CARGA_ID || String(p.id)===STOCK_ID || esFilaRetiro(p)); }
 /* Molde de las filas del sistema: SIEMPRE con fecha vacía (ver el comentario de arriba). */
 function filaSistema(id, titulo, texto){
   return { id:id, fecha:'', turno:'', vendedor:'', productos:[], cliente:titulo,
@@ -6729,15 +6735,17 @@ function borrEsLaMisma(idBorr, idPed){
 
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
-  var resto=[], cie=null, arq=null, rets=[], car=null, borr=[];
+  var resto=[], cie=null, arq=null, rets=[], car=null, borr=[], stk=null;
   (lista||[]).forEach(function(p){
     if(esFilaCierre(p)) cie=p;
     else if(p && String(p.id)===ARQUEO_ID) arq=p;
     else if(p && String(p.id)===CARGA_ID) car=p;
+    else if(esFilaStock(p)) stk=p;           // 📦 el conteo del depósito (§4cn)
     else if(esFilaRetiro(p)) rets.push(p);
     else if(esBorrador(p)) borr.push(p);     // 📥 no es un pedido todavía (§4ca)
     else resto.push(p);
   });
+  if(stk) STOCK=leerStock(stk);
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
@@ -7040,7 +7048,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -10047,6 +10055,303 @@ window.addEventListener('resize', function(){
   if(_acomodaT) clearTimeout(_acomodaT);
   _acomodaT=setTimeout(acomodarFichas, 120);
 });
+/* ============================================================================
+   📦 STOCK Y REPOSICIÓN — «lo que más sale, avisame antes de quedarme sin» (§4cn)
+
+   Pedido del dueño: *"más tipo moda, que se entrega más seguido, y alerte sobre tener
+   stock"*. O sea: no una lista de faltantes (eso ya existe, «🏭 Faltantes / producción»,
+   y mira lo que YA falta), sino el aviso ANTES — cuando lo que más rota se está por acabar.
+
+   La cuenta, en criollo:
+     · ROTACIÓN  → cuántas unidades de ese producto salen por día (últimas 4 semanas).
+     · EN DEPÓSITO → el último conteo a mano, + lo que llegó de fábrica, − lo entregado
+                     desde ese conteo.
+     · ALCANZA PARA → depósito ÷ rotación, en días.
+     · AVISA si «alcanza para» es menos que lo que tarda la fábrica (3 días, dicho por el
+       dueño) más un colchón — o si lo ya vendido para los próximos días no entra en lo
+       que hay.
+
+   ⚠️ POR QUÉ UN CONTEO Y NO UN SALDO QUE SE VA SUMANDO. Un saldo que se descuenta solo se
+   desvía para siempre con un solo error (una entrega no marcada, una unidad rota, un
+   descuento doble desde dos celulares). Guardando el ÚLTIMO CONTEO con su fecha y
+   recalculando desde ahí, cada conteo nuevo borra el error acumulado. Es la forma en que
+   se cuenta un depósito de verdad, y además el cálculo es idempotente: repetirlo no
+   descuenta dos veces.
+   ========================================================================== */
+var STOCK_ID='__stock__';
+var STOCK_DIAS_FABRICA=3;     // lo que tarda MORENO o MULTI (dicho por el dueño, 07/09)
+var STOCK_COLCHON=2;          // días de margen sobre el tiempo de fábrica
+var STOCK_VENTANA=28;         // sobre cuántos días se mide la rotación
+var STOCK={ c:{f:'',u:{}}, e:[] };   // c = último conteo · e = entradas de fábrica
+
+function esFilaStock(p){ return !!p && String(p.id)===STOCK_ID; }
+function leerStock(p){
+  var d={ c:{f:'',u:{}}, e:[] };
+  try{
+    var o=JSON.parse(String((p&&p.observaciones)||'{}'));
+    if(o && typeof o==='object'){
+      if(o.c && typeof o.c==='object'){ d.c.f=String(o.c.f||''); d.c.u=(o.c.u&&typeof o.c.u==='object')?o.c.u:{}; }
+      if(o.e && o.e.length) d.e=o.e.filter(function(x){ return x && x.k; });
+    }
+  }catch(e){}
+  return d;
+}
+function guardarStock(){
+  /* Las entradas anteriores al último conteo ya están DENTRO del conteo: dejarlas las
+     sumaría dos veces. Se podan al guardar, que es cuando se sabe cuál es el conteo. */
+  STOCK.e=(STOCK.e||[]).filter(function(x){ return !STOCK.c.f || String(x.f||'')>=STOCK.c.f; });
+  var fila=filaSistema(STOCK_ID, '📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR', JSON.stringify(STOCK));
+  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
+  else queuePending(fila);
+}
+/* Unidades entregadas de un producto entre dos fechas (inclusive). */
+function stockSalidas(k, desde, hasta){
+  var n=0;
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || !p.entregado) return;
+    var f=fechaSalida(p);
+    if(desde && f<desde) return;
+    if(hasta && f>hasta) return;
+    (p.productos||[]).forEach(function(x){ if(prodRankKey(x)===k) n+=Number(x.cant)||0; });
+  });
+  return n;
+}
+/* Unidades ya vendidas y todavía NO entregadas, con entrega hasta esa fecha. */
+function stockComprometido(k, hasta){
+  var n=0;
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p) || p.entregado) return;
+    var f=p.fecha||''; if(!f || (hasta && f>hasta)) return;
+    (p.productos||[]).forEach(function(x){ if(prodRankKey(x)===k) n+=Number(x.cant)||0; });
+  });
+  return n;
+}
+function stockEntradas(k){
+  var n=0;
+  (STOCK.e||[]).forEach(function(x){ if(x && x.k===k) n+=Number(x.u)||0; });
+  return n;
+}
+/* ⚠️ LO ENTREGADO EL MISMO DÍA DEL CONTEO SE DESCUENTA IGUAL, y es una decisión, no un
+   descuido: si se cuenta a las 8 de la mañana el camión todavía no salió y esas unidades
+   están en el depósito; si se cuenta a las 6 de la tarde ya no. Como no se sabe la hora,
+   se elige el lado que NO deja sin avisar: descontarlas. El error posible es quedarse
+   corto y pedir de más a fábrica, que cuesta mucho menos que quedarse sin vender.
+   Puede dar NEGATIVO — eso no es un error de cuenta: significa que se entregó más de lo
+   que decía el último conteo, o sea que ese conteo quedó viejo. La pantalla lo dice así. */
+function stockDeposito(k){
+  var base=Number((STOCK.c.u||{})[k]);
+  if(!isFinite(base)) return null;                  // nunca se contó: no se inventa
+  return base + stockEntradas(k) - stockSalidas(k, STOCK.c.f, '');
+}
+function diasAtras(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); }
+function diasAdelante(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); }
+/* La foto completa, un renglón por producto, ordenada por lo que más sale. */
+function stockData(){
+  var desde=diasAtras(STOCK_VENTANA), hoy=todayStr();
+  var g={};
+  var meter=function(x){
+    var k=prodRankKey(x); if(k==='|') return null;
+    if(!g[k]) g[k]={ k:k, desc:String((x&&x.desc)||'').trim(), medida:String((x&&x.medida)||'').trim(),
+                     cod:String((x&&x.codigo)||'').trim(), salieron:0, comp:0, compPronto:0 };
+    if(!g[k].cod && x.codigo) g[k].cod=String(x.codigo).trim();
+    return g[k];
+  };
+  var corte=diasAdelante(STOCK_DIAS_FABRICA);
+  STATE.forEach(function(p){
+    if(!p || esFilaSistema(p) || esBorrador(p)) return;
+    (p.productos||[]).forEach(function(x){
+      var o=meter(x); if(!o) return;
+      var c=Number(x.cant)||0, f=fechaSalida(p);
+      if(p.entregado && f>=desde && f<=hoy) o.salieron+=c;
+      if(!p.entregado && p.fecha){ o.comp+=c; if(p.fecha<=corte) o.compPronto+=c; }
+    });
+  });
+  // Los que se contaron alguna vez pero hoy no aparecen en ningún pedido, igual se listan.
+  Object.keys(STOCK.c.u||{}).forEach(function(k){
+    if(g[k]) return;
+    var pa=k.split('|');
+    g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', salieron:0, comp:0, compPronto:0 };
+  });
+  var lista=Object.keys(g).map(function(k){
+    var o=g[k];
+    o.porDia = o.salieron/STOCK_VENTANA;
+    o.deposito = stockDeposito(k);
+    o.alcanza = (o.deposito!=null && o.porDia>0) ? (o.deposito/o.porDia) : null;
+    o.aviso = stockAvisoDe(o);
+    return o;
+  }).sort(function(a,b){
+    var pa=stockPrioridad(a), pb=stockPrioridad(b);
+    if(pa!==pb) return pb-pa;
+    return (b.salieron-a.salieron) || a.desc.localeCompare(b.desc);
+  });
+  return { lista:lista, desde:desde, hoy:hoy, corte:corte,
+           contado:STOCK.c.f||'', nConteo:Object.keys(STOCK.c.u||{}).length };
+}
+/* Qué hay que hacer con este producto. Solo tres respuestas, para que se entienda de un
+   vistazo — un semáforo con seis colores no lo mira nadie. */
+function stockAvisoDe(o){
+  if(o.deposito==null) return o.salieron>0 ? 'sincontar' : '';
+  var margen=STOCK_DIAS_FABRICA+STOCK_COLCHON;
+  if(o.deposito < o.compPronto) return 'urgente';        // ya vendido más de lo que hay
+  if(o.alcanza!=null && o.alcanza < STOCK_DIAS_FABRICA) return 'urgente';
+  if(o.alcanza!=null && o.alcanza < margen) return 'pedir';
+  return '';
+}
+function stockPrioridad(o){
+  return o.aviso==='urgente' ? 3 : o.aviso==='pedir' ? 2 : o.aviso==='sincontar' ? 1 : 0;
+}
+function stockNombre(o){ return o.desc + (o.medida?(' · '+o.medida):''); }
+function stockNum(n, dec){ var v=Number(n)||0; return v.toFixed(dec==null?1:dec).replace('.',','); }
+
+/* ---- El aviso en Administración: solo lo que hay que pedir, y nada más ---- */
+function renderStockAviso(){
+  var el=document.getElementById('adm-stock'); if(!el) return;
+  if(!UNLOCKED || !STOCK.c.f){ el.className=''; el.innerHTML=''; return; }
+  var d=stockData();
+  var urge=d.lista.filter(function(o){ return o.aviso==='urgente'; });
+  var pide=d.lista.filter(function(o){ return o.aviso==='pedir'; });
+  if(!urge.length && !pide.length){ el.className=''; el.innerHTML=''; return; }
+  var nombres=function(a){ return a.slice(0,3).map(function(o){ return '<b>'+esc(stockNombre(o))+'</b>'; }).join(', ')+(a.length>3?(' y '+(a.length-3)+' más'):''); };
+  el.className='revisar';
+  el.innerHTML='📦 '+
+    (urge.length?('<b style="color:var(--red)">'+urge.length+' producto'+(urge.length===1?'':'s')+' se '+(urge.length===1?'acaba':'acaban')+'</b> antes de que llegue la fábrica: '+nombres(urge)+'. '):'')+
+    (pide.length?((urge.length?'También hay ':'Hay ')+'<b>'+pide.length+'</b> para pedir esta semana: '+nombres(pide)+'. '):'')+
+    '<button class="rv-toggle" style="margin-left:8px" onclick="abrirStock()">📦 Ver stock</button>';
+}
+
+/* ---- La pantalla ---- */
+function abrirStock(){ document.getElementById('stock-overlay').style.display='flex'; renderStock(); }
+function closeStock(){ var ov=document.getElementById('stock-overlay'); if(ov) ov.style.display='none'; }
+function renderStock(){
+  var body=document.getElementById('stock-body'); if(!body) return;
+  var d=stockData();
+  var inf=document.getElementById('stock-info');
+  if(inf) inf.textContent = d.contado
+    ? ('contado el '+fmtFecha(d.contado)+' · '+d.nConteo+' producto'+(d.nConteo===1?'':'s')+' · rotación de los últimos '+STOCK_VENTANA+' días')
+    : ('sin contar todavía · rotación de los últimos '+STOCK_VENTANA+' días');
+  var conMov=d.lista.filter(function(o){ return o.salieron>0 || o.deposito!=null || o.comp>0; });
+  var html='';
+  if(!d.contado){
+    html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
+      '<b>Todavía no se contó el depósito.</b> Abajo ya se ve <b>qué sale más</b> y <b>qué hay comprometido</b>, que sale solo de los pedidos. '+
+      'Para que además avise <b>antes de quedarte sin</b>, tocá <b>📋 Conté el depósito</b> una vez y anotá cuántas unidades hay de los que más salen. '+
+      'Después solo hay que marcar lo que llega de fábrica.</div>';
+  }
+  var badge=function(o){
+    if(o.aviso==='urgente') return '<span class="badge" style="background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)">🚨 PEDIR YA</span>';
+    if(o.aviso==='pedir')   return '<span class="badge b-amber">🏭 Pedir esta semana</span>';
+    if(o.aviso==='sincontar') return '<span class="badge" style="background:var(--gray-lt);color:var(--muted)">sin contar</span>';
+    return '<span class="badge b-green">✓</span>';
+  };
+  html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
+    '<table class="roho-tabla" style="min-width:900px">'+
+    '<colgroup><col style="width:250px"><col style="width:96px"><col style="width:96px"><col style="width:110px"><col style="width:120px"><col style="width:150px"></colgroup>'+
+    '<thead><tr><th>Producto</th><th>Sale por día</th><th>En depósito</th><th>Alcanza para</th>'+
+    '<th>Vendido sin entregar</th><th>Qué hacer</th></tr></thead><tbody>'+
+    (conMov.length ? conMov.map(function(o){
+      return '<tr'+(o.aviso==='urgente'?' style="background:var(--red-lt)"':'')+'>'+
+        '<td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?('<br><span style="color:var(--muted);font-size:.92em">cód '+esc(o.cod)+'</span>'):'')+'</td>'+
+        '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
+          '<br><span style="color:var(--muted);font-size:.92em">'+o.salieron+' en '+STOCK_VENTANA+' días</span></td>'+
+        '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
+                : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+Math.abs(o.deposito)+' más de lo contado — volvé a contar</span>')
+                : ('<b style="font-size:1.05em">'+o.deposito+'</b>'))+'</td>'+
+        '<td>'+(o.alcanza!=null?('<b>'+stockNum(o.alcanza)+'</b> día'+(o.alcanza===1?'':'s')):'<span style="color:var(--muted)">—</span>')+'</td>'+
+        '<td>'+(o.comp?('<b>'+o.comp+'</b>'+(o.compPronto?('<br><span style="color:#8a1c24;font-size:.92em">'+o.compPronto+' en '+STOCK_DIAS_FABRICA+' días</span>'):'')):'<span style="color:var(--muted)">—</span>')+'</td>'+
+        '<td>'+badge(o)+'</td></tr>';
+    }).join('') : '<tr><td colspan="6" style="padding:26px;text-align:center;color:var(--muted)">Todavía no hay entregas ni pedidos con productos para medir.</td></tr>')+
+    '</tbody></table></div>'+
+    '<div style="margin-top:12px;font-size:.8rem;color:var(--muted);line-height:1.6">'+
+      '🚨 <b>PEDIR YA</b> = lo que hay no llega a cubrir ni los '+STOCK_DIAS_FABRICA+' días que tarda la fábrica, o ya está vendido y no alcanza.<br>'+
+      '🏭 <b>Pedir esta semana</b> = alcanza para menos de '+(STOCK_DIAS_FABRICA+STOCK_COLCHON)+' días ('+STOCK_DIAS_FABRICA+' de fábrica + '+STOCK_COLCHON+' de margen).<br>'+
+      '«Sale por día» son las unidades <b>entregadas</b> en los últimos '+STOCK_VENTANA+' días dividido '+STOCK_VENTANA+'.</div>';
+  body.innerHTML=html;
+}
+/* El mensaje para mandarle a la fábrica, con lo que hay que pedir y por qué. */
+function copiarStock(){
+  var d=stockData();
+  var a=d.lista.filter(function(o){ return o.aviso==='urgente'||o.aviso==='pedir'; });
+  if(!a.length){ toast('No hay nada para pedir: todo tiene stock para más de '+(STOCK_DIAS_FABRICA+STOCK_COLCHON)+' días.','ok',5000); return; }
+  var t='🏭 PEDIDO A FÁBRICA — '+fmtFecha(todayStr())+'\n\n';
+  a.forEach(function(o){
+    var falta=Math.max(1, Math.ceil(o.porDia*(STOCK_DIAS_FABRICA+STOCK_COLCHON)) - (o.deposito||0));
+    t+=(o.aviso==='urgente'?'🚨 ':'• ')+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+
+       '\n   pedir '+falta+' — quedan '+(o.deposito==null?'?':o.deposito)+
+       ', salen '+stockNum(o.porDia)+' por día'+(o.compPronto?(', '+o.compPronto+' ya vendidos para los próximos '+STOCK_DIAS_FABRICA+' días'):'')+'\n';
+  });
+  copyText(t);
+  toast('Pedido a fábrica copiado ✓','ok');
+}
+
+/* ---- Cargar el conteo del depósito ---- */
+function abrirStockConteo(){
+  var d=stockData();
+  /* Se ofrecen los que MÁS SALEN primero: contar 250 códigos no lo hace nadie, contar los
+     15 que mueven sí. Los ya contados vienen con su número puesto. */
+  var lista=d.lista.filter(function(o){ return o.salieron>0 || o.comp>0 || (STOCK.c.u||{})[o.k]!=null; }).slice(0,40);
+  var filas=lista.map(function(o,i){
+    var v=(STOCK.c.u||{})[o.k];
+    return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">salen '+stockNum(o.porDia)+' por día</span>'):'')+'</td>'+
+      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
+  }).join('');
+  var html='<div class="modal-h" style="background:#7c2d12"><h3>📋 Conté el depósito</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Anotá cuántas unidades hay <b>hoy</b> de cada uno. Lo que dejes vacío queda sin contar y no se avisa por ese producto. '+
+      'Desde este conteo, el panel descuenta solo lo que se va entregando.</p>'+
+      (lista.length?('<div style="max-height:52vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px"><table class="roho-tabla" style="min-width:0"><tbody>'+filas+'</tbody></table></div>')
+                   :'<div style="color:var(--muted);padding:14px">Todavía no hay productos con movimiento para contar.</div>')+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:180px;background:#7c2d12" onclick="guardarStockConteo()">💾 Guardar el conteo de hoy</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+      '</div></div>';
+  openModal(html, true);
+}
+function guardarStockConteo(){
+  var u={}, n=0;
+  [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).forEach(function(el){
+    var t=String(el.value||'').trim(); if(t==='') return;
+    var v=Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
+    u[el.getAttribute('data-k')]=v; n++;
+  });
+  if(!n){ toast('No anotaste ninguna cantidad.','err'); return; }
+  STOCK.c={ f:todayStr(), u:u };
+  STOCK.e=[];                       // el conteo de hoy ya incluye todo lo que llegó antes
+  guardarStock(); closeModal(); renderStock(); renderAdmin();
+  toast('✅ Conteo guardado: '+n+' producto'+(n===1?'':'s')+'. Desde acá el panel lleva la cuenta solo.','ok',6000);
+}
+/* ---- Cargar lo que llegó de fábrica ---- */
+function abrirStockEntrada(){
+  var d=stockData();
+  var lista=d.lista.filter(function(o){ return o.salieron>0 || o.comp>0 || (STOCK.c.u||{})[o.k]!=null; }).slice(0,40);
+  if(!lista.length){ toast('Todavía no hay productos con movimiento.','err'); return; }
+  var ops=lista.map(function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; }).join('');
+  var html='<div class="modal-h" style="background:#b45309"><h3>🏭 Llegó de fábrica</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Sumá lo que entró al depósito. Se agrega a lo que ya había contado.</p>'+
+      '<div><label class="lb">Producto</label><select id="stk-ent-k" style="width:100%">'+ops+'</select></div>'+
+      '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades llegaron?</label>'+
+        '<input type="number" min="1" step="1" inputmode="numeric" id="stk-ent-u" placeholder="Ej. 10" style="width:100%"></div>'+
+      '<div style="margin-top:10px"><label class="lb">¿De qué fábrica? (opcional)</label>'+
+        '<input type="text" id="stk-ent-fab" list="dl-fabricas" placeholder="MORENO / MULTI" style="width:100%">'+
+        '<datalist id="dl-fabricas"><option value="MORENO"><option value="MULTI"></datalist></div>'+
+      '<div class="modal-actions" style="margin-top:14px">'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:180px;background:#b45309" onclick="guardarStockEntrada()">💾 Sumar al depósito</button>'+
+        '<button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancelar</button>'+
+      '</div></div>';
+  openModal(html);
+}
+function guardarStockEntrada(){
+  var k=(document.getElementById('stk-ent-k')||{}).value||'';
+  var u=Math.round(Number((document.getElementById('stk-ent-u')||{}).value)||0);
+  var fab=String((document.getElementById('stk-ent-fab')||{}).value||'').trim().toUpperCase();
+  if(!k){ toast('Elegí el producto.','err'); return; }
+  if(!(u>0)){ toast('Poné cuántas unidades llegaron.','err'); return; }
+  if(!STOCK.c.f){ toast('Primero contá el depósito una vez: sin un punto de partida, sumar no dice cuánto hay.','err',7000); return; }
+  STOCK.e=(STOCK.e||[]).concat([{ f:todayStr(), k:k, u:u, fab:fab }]);
+  guardarStock(); closeModal(); renderStock(); renderAdmin();
+  toast('✅ Sumadas '+u+' unidades al depósito'+(fab?(' ('+fab+')'):''),'ok');
+}
+
 /* ============================================================================
    📥 IMPORTAR LOS PEDIDOS DE ROHO DESDE SU EXCEL (§4ci)
 
