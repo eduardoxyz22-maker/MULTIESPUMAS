@@ -4446,6 +4446,65 @@ mismo producto**, y esas 50 se descontaban del depósito (correctísimo) dejando
 en cero. Los cuatro primeros checks fallaron y parecía un bug del reparto. El pedido
 entregado usa ahora otro producto, y quedó anotado en el propio test.
 
+## 4cr. 🤖 Lo mejor de la versión que trajo el dueño, adentro del panel (2026-09-07)
+
+El dueño mandó un `.zip` con una versión del panel hecha con ChatGPT: *"chat gpt hizo esto
+pero no lo publicó, creo que está mejor, revisá"*.
+
+**Lo revisé midiéndolo, no opinando**: le corrí la batería completa. Resultado honesto —
+**está bien hecho y no rompe nada**: 35 suites en verde, y su `.gs` pasó también los dos
+tests de backend (78 y 70 checks). Las únicas rojas eran mis dos funciones de hoy que él no
+tiene y un texto que yo había cambiado esa misma mañana.
+
+### Lo que hacía mejor que yo (y ahora está adentro)
+
+| | Suyo | Lo que yo tenía |
+|---|---|---|
+| Nombres | «Acá en fábrica» / «Industrias Moreno · recoger allá» | «En depósito» / «En fábrica» — no decían dónde está parado el que mira |
+| Corte | con **hora** (07:00:00) y pregunta si el Excel ya trae las entregas del día | solo la fecha, y yo **adivinaba** la respuesta |
+| Historial | guarda los cortes anteriores | pisaba una sola fila, sin historial |
+| Recoger vs. fabricar | dos acciones distintas y programables | un consejo de texto que mezclaba las dos |
+| Detalle | «3 recoger de Moreno · 1 para fabricar» | «✗ no hay» y listo |
+| Dónde se ve | panel fijo arriba de la tabla | una ventana que había que acordarse de abrir |
+
+Todo eso quedó implementado. **El robot 🤖 también es suyo** y lo pidió expresamente el
+dueño: *"el emoticón y la imagen de robot me gusta que salga"*.
+
+### Lo que NO se tomó, y por qué
+
+- **Su versión no tilda ningún pedido.** Lo verifiqué: no hay una sola escritura sobre
+  `x.chk` en su código, y el propio archivo lo pone como principio («nunca escribe
+  entregado/verificado»). Calcula y muestra muy bien, pero después alguien tiene que ir a
+  marcar a mano — que es justo de lo que el dueño se había quejado. La escritura de los
+  tildes (§4cq) se queda.
+- **Su `.gs` cambia** (`2026-09-07-inventario-a`), o sea que habría que republicar el Apps
+  Script a mano. Todo lo de §4cr se hizo **sin tocar el backend**.
+- **Parte el panel en 5 archivos** (`inventario.js`, `stock-bot.js`…). El panel es un archivo
+  solo a propósito: si uno de los cuatro no carga, la función desaparece sin avisar.
+- **Sus ~33 KB de lógica nueva no tienen tests.**
+
+### El detalle que más me gustó de lo suyo
+
+La pregunta **«¿este Excel ya incluye las entregas de hoy?»**. §4cn tenía una decisión
+documentada y adivinada («descontarlas igual, porque no se sabe la hora»). Ya no hace falta
+adivinar: el nombre del archivo trae la hora (`Excel_07092026_08_59_57_…` → 08:59:57), el
+panel la muestra, propone la respuesta según sea antes o después del mediodía, y quien sube
+el archivo confirma. Se guarda en `STOCK.c.inc` y `stockDesdeSalidas()` decide desde qué día
+descontar. Una adivinanza menos.
+
+### Cambios de datos
+
+`STOCK` pasó a `{c:{f,u,hora,inc,alm}, e, p, a, g, al, h}`. `h` es el **historial de cortes**
+—solo el resumen: fecha, hora, almacén, cuántos productos y cuántas unidades— porque la fila
+del sistema es UNA celda de la planilla y guardar cada inventario entero la reventaría (con
+los dos almacenes reales va por 8.246 de 50.000 caracteres). `STOCK.p` ahora distingue
+`tipo:'recogida'|'fabrica'`: una recogida tarda 1 día, no lo que tarda fabricar, **no cuenta**
+para medir el tiempo de fábrica, y al registrar su llegada las unidades se suman acá **y se
+restan de Moreno** — si no, se contarían dos veces hasta el próximo Excel.
+
+Tests actualizados por los textos nuevos (`test_stock`, `test_existencias`, `test_revstock`),
+cada uno con la nota de qué cambió y por qué, como manda el LEEME.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

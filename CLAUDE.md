@@ -45,10 +45,17 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     depósito»; `IM - PRODUCTOTERMINADO` = la fábrica = «en fábrica», **no se suma**.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
-  - **🎯 Revisar pedidos** (§4cq): `stockAsignar()` reparte el stock entre los pedidos
-    pendientes **por fecha de entrega** (FIFO) y marca solo ✔ hay / 📥 recoger de IM / ✗ no
-    hay. Una línea que no se cubre entera NO reserva nada. No toca líneas 🏭, entregados,
-    borradores ni productos sin contar; muestra la propuesta antes de aplicar.
+  - **🤖 Revisión automática** (§4cq, §4cr): `stockAsignar()` reparte el stock entre los
+    pedidos pendientes **por fecha de entrega** (FIFO) y marca solo ✔ hay / 📥 recoger de
+    Moreno / ✗ no hay. Una línea que no se cubre entera NO reserva nada. No toca líneas 🏭,
+    entregados, borradores ni productos sin contar. El resultado se ve **fijo** arriba de la
+    tabla (`renderRevisionFija`) y los tildes se escriben recién al Aplicar.
+  - **Nombres**: «Acá en fábrica» (de ahí salen los camiones) y «Moreno» (hay que ir a
+    buscarlo). El corte guarda **hora**, y al subir el Excel se pregunta si ya incluye las
+    entregas de ese día (`STOCK.c.inc` → `stockDesdeSalidas()`), en vez de adivinar.
+  - **Recoger ≠ fabricar**: `STOCK.p` lleva `tipo:'recogida'|'fabrica'`. Una recogida tarda
+    1 día, no cuenta para medir el tiempo de fábrica, y al llegar **suma acá y resta de
+    Moreno**. §4cr explica qué se tomó de la versión que trajo el dueño y qué no.
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»

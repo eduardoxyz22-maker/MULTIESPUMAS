@@ -111,7 +111,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ la lista para ir a IM dice 3 (lo que hay que traer), no 4 (lo del pedido)',
       r.traerIM.length===1 && r.traerIM[0].u===3, JSON.stringify(r.traerIM));
   const listaIM = await page.evaluate(() => { var t=''; var o=window.copyText; window.copyText=function(x){t=x;}; copiarTraerIM(); window.copyText=o; return t; });
-  chk('…y el mensaje dice para qué pedido es', /TRAER DE IM/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
+  /* §4cr: el mensaje pasó a llamarse «TRAER DE MORENO» — el equipo dice «Moreno», no «IM». */
+  chk('…y el mensaje dice para qué pedido es', /TRAER DE MORENO/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
       (listaIM.match(/•[^\n]*/)||[''])[0]);
 
   // ══ 3. Lo que no le corresponde tocar ═════════════════════════════════════
@@ -162,7 +163,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await page.evaluate(() => {
     abrirStockRevisar();
     var txt=(document.getElementById('modal-box')||{}).textContent||'';
-    return { abre:/Revisar los pedidos con el stock/.test(txt), boton:/Aplicar: marcar/.test(txt),
+    /* §4cr: la ventana pasó a llamarse «🤖 Revisión automática», y el resultado se ve
+       además fijo arriba de la tabla sin abrir nada. */
+    return { abre:/Revisión automática/.test(txt), boton:/Aplicar: marcar/.test(txt),
              dice:/por fecha de entrega/.test(txt) };
   });
   chk('la pantalla se abre y explica la regla', r.abre && r.dice && r.boton);

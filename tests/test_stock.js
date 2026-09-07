@@ -298,7 +298,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…llegan el día que la fábrica suele tardar', r.eco.pedidos[0].llega===r.llega, r.eco.pedidos[0].llega);
   chk('…y recuerda que sin ese pedido se cortaba en 4 días', r.eco.sinCamino===4, r.eco.sinCamino);
   chk('el aviso de Administración se calla', r.banner.trim()==='', r.banner.slice(0,80));
-  chk('la pantalla lo lista «en camino» con la fecha', /Ya pedido/.test(r.pantalla) && /en camino/.test(r.pantalla), r.pantalla.slice(0,60));
+  /* §4cr renombró la sección: «🚚 En camino — recogidas de Moreno y pedidos a fábrica»,
+     porque ahora conviven las dos cosas. */
+  chk('la pantalla lo lista «en camino» con la fecha', /Ya pedido/.test(r.pantalla) && /En camino/i.test(r.pantalla), r.pantalla.slice(0,60));
   r = await page.evaluate(() => {
     STOCK.p[0].esp=window._adel(6);        // la fábrica avisó que llega recién en 6 días: tarde
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
@@ -382,7 +384,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('⚠️ un conteo de hace 25 días (más de '+r.tope+') pide contar de nuevo', r.viejo===true && r.edad===25, r.edad);
   chk('…lo dice en Administración', /25 días/.test(r.banner) && /contá de nuevo/.test(r.banner), r.banner.replace(/\s+/g,' ').slice(0,120));
-  chk('…y en la pantalla', /El conteo tiene 25 días/.test(r.pantalla), r.pantalla.slice(0,80));
+  /* §4cr: se dice «corte» y no «conteo» — es lo que sale del sistema de Moreno, con hora. */
+  chk('…y en la pantalla', /El corte tiene 25 días/.test(r.pantalla), r.pantalla.slice(0,80));
   chk('con 5 días, no', r.viejo2===false && !/tiene \d+ días/.test(r.banner2), r.banner2.replace(/\s+/g,' ').slice(0,80));
   r = await page.evaluate(() => {
     /* Conteo de hace 5 días: 40. Pero hay 4 pedidos de estos días con ✗ NO HAY marcado por el

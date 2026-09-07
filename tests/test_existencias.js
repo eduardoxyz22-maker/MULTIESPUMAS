@@ -145,7 +145,9 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('queda como almacén aparte', r.otros.length===1 && r.otros[0]==='IM - PRODUCTOTERMINADO', JSON.stringify(r.otros));
   chk('⚠️ los 25 de la fábrica NO se suman al depósito (de ahí no sale ningún camión)',
       r.deposito===4 && r.dep2===4, 'depósito '+r.deposito);
-  chk('…se ven en su propia columna', r.enOtros===25 && /En fábrica/.test(r.texto), r.enOtros);
+  /* §4cr renombró las columnas con las palabras del dueño: «Acá en fábrica» y «En Moreno»
+     (antes «En depósito» / «En fábrica», que no decían dónde está parado el que mira). */
+  chk('…se ven en su propia columna', r.enOtros===25 && /En Moreno/.test(r.texto) && /Acá en fábrica/.test(r.texto), r.enOtros);
   chk('⚠️ y como ya está fabricado, el consejo cambia: TRAER, no pedir',
       r.aviso==='traer' && /Traer de f[áa]brica/.test(r.texto), r.aviso);
   chk('el panel recuerda qué es ese almacén', r.rol==='otro', r.rol);
@@ -168,7 +170,7 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
      traer ya mismo» es el del rojo (PEDIR YA). Lo que importa en los dos casos: que no
      esconda que en la fábrica hay unidades. */
   chk('…pero avisa igual que hay 1 en la fábrica, y que no alcanza',
-      /hay 1 en IM/.test(r.texto) && /no alcanza/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);
+      /hay 1 en Moreno/.test(r.texto) && /no alcanza/.test(r.texto), (r.texto.match(/hay 1[^·]{0,45}/)||[''])[0]);
 
   // ══ 5. Un archivo que no es de existencias ════════════════════════════════
   console.log('\n── 5. El archivo equivocado ──');
