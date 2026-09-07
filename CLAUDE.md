@@ -45,8 +45,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     depósito»; `IM - PRODUCTOTERMINADO` = la fábrica = «en fábrica», **no se suma**.
   - ⚠️ Ese generador escribe el XML con **comillas simples** y pone la cantidad en una columna
     **sin encabezado** — ver §4cp antes de tocar `xlsxHoja` o `existLeer`.
-  - `tests/test_stock.js` y `tests/test_existencias.js` (fixtures sintéticos: el repo es
-    público y el inventario real no va ahí).
+  - **🎯 Revisar pedidos** (§4cq): `stockAsignar()` reparte el stock entre los pedidos
+    pendientes **por fecha de entrega** (FIFO) y marca solo ✔ hay / 📥 recoger de IM / ✗ no
+    hay. Una línea que no se cubre entera NO reserva nada. No toca líneas 🏭, entregados,
+    borradores ni productos sin contar; muestra la propuesta antes de aplicar.
+  - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
+    sintéticos: el repo es público y el inventario real no va ahí).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

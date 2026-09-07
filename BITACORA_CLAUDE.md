@@ -4374,6 +4374,78 @@ guardan tal cual y se muestran enteras solo cuando lo son (`stockUnid`).
 simples incluidas— y cantidades inventadas, porque **el repo es público y el inventario de la
 empresa no va acá**. Contra `origin/main` el test no revienta: dice qué funciones faltan.
 
+## 4cq. 🎯 Que el panel revise los pedidos y tilde solo (2026-09-07)
+
+Con los dos almacenes ya cargados, el dueño puso el dedo en lo que faltaba: *"como que el
+agente no revisa los pedidos creo, y selecciona o tickea lo que hay, y lo que falta por
+pedir. Y regulariza. Que se tiene que traer de IM."*
+
+Tenía razón. El panel sabía qué había en cada almacén y no lo usaba para **nada de lo que
+logística hace a mano todos los días**: abrir pedido por pedido y marcar ✔ hay / ✗ no hay /
+📥 recoger de IM. Esas tres marcas ya existían desde §4bx —incluso la de IM, que decía
+literalmente «sí hay, pero está en otro almacén y hay que ir a recoger»—; lo único que
+faltaba era alguien que supiera llenarlas.
+
+### La regla del reparto: por fecha de entrega
+
+1. Del **DEPÓSITO** primero (de ahí sale el camión) → ✔ hay
+2. De **IM** si en el depósito no alcanza → 📥 recoger de IM
+3. Si no alcanza en ninguno → ✗ no hay, **y eso es lo que hay que pedir a fábrica**
+
+FIFO por fecha de entrega es lo único explicable cuando dos clientes quieren el mismo
+colchón: *«el tuyo sale el martes, el de él salía el lunes»*. Por el orden de la planilla, el
+pedido del viernes se llevaría el stock del de mañana.
+
+**Una línea que no se puede cubrir entera no reserva nada.** Con 4 en depósito: el de mañana
+(×3) se lleva 3, el del miércoles (×2) no entra en el 1 que queda y va a ✗ — pero **ese 1 no
+queda trabado**: el del viernes (×1) sí se lo lleva. Reservar 1 de 3 deja el colchón parado
+sin servirle a nadie.
+
+### Los tres números que estaban mal a la primera
+
+- **La lista para ir a IM dice lo que hay que TRAER, no lo del pedido.** Si de 4 uno sale del
+  depósito, se van a buscar 3. Un número de más manda a alguien a cargar un colchón que ya
+  estaba acá.
+- **Lo que falta pedir descuenta lo que quedó suelto.** Un pedido de 5 con 4 en depósito
+  necesita que se pidan **1**, no 5: los 4 están ahí, solo que no alcanzan para esa línea.
+- Y el que se prueba solo: **el reparto va por fecha**, no por el orden en que están cargados.
+
+### Lo que no toca
+
+Líneas 🏭 pedidas a fábrica para ese cliente (no salen del depósito), pedidos entregados,
+borradores de Kommo, y **productos sin contar** — sin un número no se inventa un tilde.
+
+Y no pisa a una persona en silencio: si alguien marcó a mano y el stock dice otra cosa, la
+línea sale **resaltada** («⚠️ cambia lo marcado a mano») y hay una casilla para tocar **solo**
+lo que está sin marcar. Antes de aplicar se ve la propuesta entera.
+
+Al aplicar, `syncVerificado` deja el pedido igual que si lo hubiera marcado una persona:
+«En stock» + verificado, o «No hay» y rojo en la tabla. Volver a revisar después no propone
+nada — es idempotente.
+
+### Y los carteles que parecían botones
+
+El dueño, en la misma vuelta: *"el botón PEDIR YA no hace nada, ¿deben pedir manual? Lo mismo
+de traer de IM. ¿El botón unir qué hace?"*. Los avisos de «Qué hacer» tenían forma de botón
+y no eran botones — el error de diseño es mío. Ahora:
+
+- **🚨 PEDIR YA / 🏭 Pedir esta semana** abren «Pedí a fábrica» con el producto y la cantidad
+  sugerida ya puestos.
+- **🚚 Traer de fábrica** abre esta revisión, que es donde sale la lista para ir a IM.
+- Y el anotador de pedidos dice ahora, con todas las letras, que **no le avisa a la fábrica**:
+  el pedido lo hace una persona por teléfono, el panel lo anota, deja de molestar y aprende
+  cuánto tarda cada fábrica.
+- **🔗 unir** (la otra pregunta): junta dos renglones que son el mismo producto con distinto
+  nombre, cuando el catálogo no los reconoce solo. En su pantalla salía en «RECOGER POCKET DE
+  MAXIKING» y «MORFEO», que no están en `CODIGOS`.
+
+`tests/test_revstock.js` — **30 checks**. Contra `origin/main` no revienta: dice qué falta.
+
+**Del andamiaje, otra vez:** el fixture tenía un pedido «Entregado» con 50 unidades **del
+mismo producto**, y esas 50 se descontaban del depósito (correctísimo) dejando el escenario
+en cero. Los cuatro primeros checks fallaron y parecía un bug del reparto. El pedido
+entregado usa ahora otro producto, y quedó anotado en el propio test.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
