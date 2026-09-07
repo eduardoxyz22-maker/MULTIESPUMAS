@@ -11521,14 +11521,15 @@ function stockSeparar(src){
    ========================================================================== */
 var REVSTK=null;          // la propuesta calculada, esperando confirmación
 var REVSTK_DIAS='todos';  // hoy · manana · semana · todos
-var REVSTK_SOLO_VACIOS=false;   // true = solo llenar lo que está sin marcar
+var REVSTK_SOLO_VACIOS=true;    // proteger lo revisado es el comportamiento normal
+var REVSTK_GUARDANDO=false;
 
 /* Los pedidos que entran en el reparto, en el orden en que se llevan el stock. */
-function revStkPedidos(){
+function revStkPedidos(todos){
   var hoy=todayStr(), lim='';
-  if(REVSTK_DIAS==='hoy') lim=hoy;
-  else if(REVSTK_DIAS==='manana') lim=tomorrowStr();
-  else if(REVSTK_DIAS==='semana') lim=diasAdelante(7);
+  if(!todos && REVSTK_DIAS==='hoy') lim=hoy;
+  else if(!todos && REVSTK_DIAS==='manana') lim=tomorrowStr();
+  else if(!todos && REVSTK_DIAS==='semana') lim=diasAdelante(7);
   var lista=STATE.filter(function(p){
     if(!stockCuenta(p) || p.entregado) return false;      // ⚠️ las ATC quedan afuera (§4cx)
     if(!(p.productos||[]).length) return false;
@@ -11536,7 +11537,7 @@ function revStkPedidos(){
     /* Lo de días pasados ya se dio por entregado (§4co) — salvo lo que quedó tildado
        ✗ no hay, que es una venta viva esperando stock. Esa sí entra, y primero. */
     if(f && f<hoy) return (p.productos||[]).some(function(x){ return x.chk==='no' && !enProduccion(x); });
-    if(REVSTK_DIAS==='manana' && f!==tomorrowStr()) return false;
+    if(!todos && REVSTK_DIAS==='manana' && f!==tomorrowStr()) return false;
     if(lim && REVSTK_DIAS!=='manana' && f>lim) return false;
     return true;
   });
@@ -11556,6 +11557,24 @@ function stockAsignar(){
   });
   var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0, descont:0};
   var faltaPorProd={}, imPorProd={}, sinPorProd={}, descPorProd={};
+  // Lo revisado conserva su reserva incluso fuera del filtro de fechas actual.
+  // No se vuelve a repartir ese stock a una línea nueva ni se cambia su marca.
+  tot.revisadas=0;
+  if(REVSTK_SOLO_VACIOS) revStkPedidos(true).forEach(function(p){
+    (p.productos||[]).forEach(function(x){
+      if(enProduccion(x)||esProdDeTienda(x)) return;
+      var c=Number(x.cant)||0, k=stockClave(x);
+      if(!(c>0)) return;
+      // En pedidos vencidos solo sigue pendiente la línea «no hay».
+      if(p.fecha && p.fecha<todayStr() && x.chk!=='no') return;
+      if(x.chk==='ok' && dep[k]!=null) dep[k]=Math.max(0,dep[k]-c);
+      else if(x.chk==='im'){
+        var deIM=Math.min(im[k]||0,c);
+        im[k]=Math.max(0,(im[k]||0)-deIM);
+        if(c>deIM && dep[k]!=null) dep[k]=Math.max(0,dep[k]-(c-deIM));
+      }
+    });
+  });
   revStkPedidos().forEach(function(p){
     var lineas=[];
     (p.productos||[]).forEach(function(x,i){
@@ -11566,6 +11585,8 @@ function stockAsignar(){
       if(esProdDeTienda(x)){ tot.tienda++; return; }
       var antes=(x.chk==='ok'||x.chk==='no'||x.chk==='im') ? x.chk : '';
       if(enProduccion(x)){ tot.aFab++; return; }          // la trae la fábrica para este cliente
+      if(p.fecha && p.fecha<todayStr() && antes!=='no') return;
+      if(REVSTK_SOLO_VACIOS && antes){ tot.revisadas++; return; }
       var k=stockClave(x), o=info[k]||{};
       tot.lineas++;
       if(dep[k]==null && !im[k]){                          // nunca se contó: no se inventa
@@ -11609,7 +11630,7 @@ function stockAsignar(){
       lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora,
                    deDep:deDep, deIM:deIM, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
     });
-    if(lineas.length) pedidos.push({p:p, lineas:lineas});
+    if(lineas.length) pedidos.push({p:p, lineas:lineas, firma:JSON.stringify(p)});
   });
   /* Lo que hay que PEDIR no es todo lo que quedó en ✗: una línea que no se pudo cubrir no
      reservó nada, así que lo que quedó suelto en el depósito y en IM sigue disponible para
@@ -11631,7 +11652,7 @@ function stockAsignar(){
     tot.atc++;
   });
   var ord=function(m){ return Object.keys(m).map(function(k){ return m[k]; }).filter(function(o){ return o.u>0; }).sort(function(a,b){ return b.u-a.u; }); };
-  return { pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
+  return { firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), descont:ord(descPorProd), sobraDep:dep, sobraIM:im };
 }
 /* «1 acá · 2 recoger de Moreno · 1 fabricar» — de dónde saldría cada unidad. */
@@ -11648,14 +11669,14 @@ function revStkMarca(m){
        : m==='no' ? '<span class="badge b-red">✗ no hay</span>'
                   : '<span class="badge b-gray">sin marcar</span>';
 }
-function abrirStockRevisar(){ REVSTK=stockAsignar(); renderStockRevisar(); }
+function abrirStockRevisar(){ REVSTK_SOLO_VACIOS=true; REVSTK=stockAsignar(); renderStockRevisar(); }
 function revStkDias(v){ REVSTK_DIAS=v; REVSTK=stockAsignar(); renderStockRevisar(); }
-function revStkSoloVacios(){ REVSTK_SOLO_VACIOS=!REVSTK_SOLO_VACIOS; renderStockRevisar(); }
+function revStkSoloVacios(){ REVSTK_SOLO_VACIOS=!REVSTK_SOLO_VACIOS; REVSTK=stockAsignar(); renderStockRevisar(); }
 function revStkCambios(){
   if(!REVSTK) return [];
   return REVSTK.pedidos.map(function(g){
     var ls=g.lineas.filter(function(l){ return l.cambia && !l.sinContar && !(REVSTK_SOLO_VACIOS && l.antes!==''); });
-    return ls.length ? {p:g.p, lineas:ls} : null;
+    return ls.length ? {p:g.p, lineas:ls, firma:g.firma} : null;
   }).filter(Boolean);
 }
 function renderStockRevisar(){
@@ -11670,7 +11691,8 @@ function renderStockRevisar(){
     'Primero lo que está <b>acá en fábrica</b>, después lo de <b>Moreno</b>, y lo que no alcanza queda como <b>✗ no hay</b> — eso es lo que hay que fabricar.</p>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+seg('hoy','Hoy')+seg('manana','Mañana')+seg('semana','Esta semana')+seg('todos','Todos')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
-      mc2('var(--green)','Con stock acá',R.tot.ok,'salen de acá en fábrica')+
+      mc2('var(--green)','Con stock acá',R.tot.ok,'líneas pendientes de revisar')+
+      (R.tot.revisadas?mc2('var(--gray)','Ya revisadas',R.tot.revisadas,'se conservan sin cambios'):'')+
       mc2('#a67c00','Recoger de Moreno',R.tot.im,'están allá, hay que ir a buscarlos')+
       mc2('var(--red)','Sin stock',R.tot.no,'hay que fabricar')+
       (R.tot.sinContar?mc2('var(--gray)','Sin contar',R.tot.sinContar,'no se tocan'):'')+
@@ -11685,7 +11707,7 @@ function renderStockRevisar(){
 
   if(!cambios.length){
     html+='<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:16px;text-align:center;color:#0a6b47;font-size:.9rem">'+
-      '✅ No hay nada que cambiar: los tildes de estos pedidos ya coinciden con el stock.</div>';
+      (REVSTK_SOLO_VACIOS?'✅ No quedan líneas sin marcar que el panel pueda resolver. Lo ya revisado se conserva.':'✅ No hay nada que cambiar: los tildes de estos pedidos ya coinciden con el stock.')+'</div>';
   }else{
     html+='<div style="font-weight:800;font-size:.9rem;margin:6px 0 6px">Va a cambiar <b>'+nL+'</b> línea'+(nL===1?'':'s')+' en <b>'+cambios.length+'</b> pedido'+(cambios.length===1?'':'s')+'</div>'+
       '<div style="max-height:40vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px">'+
@@ -11784,21 +11806,33 @@ function copiarTraerIM(){
 }
 /* Aplica los tildes. De a uno y con progreso: son muchos pedidos y cada uno viaja. */
 function aplicarStockRevisar(){
+  if(REVSTK_GUARDANDO) return;
+  if(!REVSTK || REVSTK.firma!==JSON.stringify([STATE,STOCK])){
+    REVSTK=stockAsignar(); renderStockRevisar();
+    toast('Los pedidos o las existencias cambiaron. Revisá la propuesta actualizada antes de aplicar.','err',7000);
+    return;
+  }
   var cambios=revStkCambios();
   if(!cambios.length){ closeModal(); return; }
-  var prog=document.getElementById('revstk-prog'), i=0, ok=0, fallos=0, lineas=0;
+  REVSTK_GUARDANDO=true;
+  var prog=document.getElementById('revstk-prog'), i=0, ok=0, fallos=0, omitidos=0, lineas=0;
   var uno=function(){
     if(i>=cambios.length){
+      REVSTK_GUARDANDO=false;
       saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderChoferSiActivo(); renderEntregasSiActivo();
       renderStock(); closeModal();
-      toast(fallos?('Marcados '+ok+' pedidos · '+fallos+' no se pudieron guardar (quedaron en la cola)')
-                  :('✅ '+lineas+' líneas marcadas en '+ok+' pedidos'), fallos?'err':'ok', 7000);
+      toast((fallos?('Marcados '+ok+' pedidos · '+fallos+' no se pudieron guardar')
+                  :('✅ '+lineas+' líneas marcadas en '+ok+' pedidos'))+
+                  (omitidos?' · '+omitidos+' omitidos porque cambiaron durante la revisión':''), (fallos||omitidos)?'err':'ok', 7000);
       REVSTK=null;
       return;
     }
     var g=cambios[i++];
     if(prog) prog.textContent='Guardando '+i+' de '+cambios.length+'… ('+(g.p.cliente||'')+')';
-    var p=findById(g.p.id)||g.p;
+    var p=findById(g.p.id);
+    if(!p || p.entregado || JSON.stringify(p)!==g.firma){
+      omitidos++; setTimeout(uno,0); return;
+    }
     g.lineas.forEach(function(l){
       var x=(p.productos||[])[l.i]; if(!x) return;
       x.chk=l.ahora; lineas++;
