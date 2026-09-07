@@ -10998,6 +10998,57 @@ function stockFabricasTxt(T){
     return L.corto+' tarda ~'+t.dias+' día'+(t.dias===1?'':'s')+(t.medido ? (t.prestado ? ' (según la otra fábrica)' : (' (medido '+t.n+(t.n===1?' vez':' veces')+')')) : ' (sin medir)');
   }).join(' · ');
 }
+
+/* Pedidos que explican una fila de stock: misma identidad y exclusiones que stockData. */
+function stockPedidosDetalle(k){
+  var grupos={pendientes:[],produccion:[],atrasados:[],historico:[]}, desde=diasAtras(STOCK_VENTANA), hoy=todayStr();
+  STATE.forEach(function(p){
+    if(!stockCuenta(p)) return;
+    var por={};
+    (p.productos||[]).forEach(function(x){
+      var n=Number(x.cant)||0;
+      if(!n || esProdDeTienda(x) || stockClave(x)!==k) return;
+      var salio=stockSalio(p), fs=fechaSalida(p), grupo;
+      if(!salio) grupo=enProduccion(x)?'produccion':'pendientes';
+      else if(!p.entregado && !esVentaTienda(p) && x.chk==='no' && !enProduccion(x)) grupo='atrasados';
+      else if(fs>=desde && fs<=hoy) grupo='historico';
+      if(!grupo) return;
+      if(!por[grupo]) por[grupo]={p:p,u:0,marcas:[]};
+      por[grupo].u+=n;
+      var marca=enProduccion(x)?'Pedido a fábrica':x.chk==='ok'?'Hay acá':x.chk==='im'?'Recoger de Moreno':x.chk==='no'?'No hay':'Sin revisar';
+      if(por[grupo].marcas.indexOf(marca)<0) por[grupo].marcas.push(marca);
+    });
+    Object.keys(por).forEach(function(g){grupos[g].push(por[g]);});
+  });
+  Object.keys(grupos).forEach(function(g){grupos[g].sort(function(a,b){return String(a.p.fecha||'9999').localeCompare(String(b.p.fecha||'9999')) || String(a.p.id).localeCompare(String(b.p.id));});});
+  return grupos;
+}
+function abrirStockPedidos(k){
+  var o=stockData().lista.filter(function(x){return x.k===k;})[0], grupos=stockPedidosDetalle(k);
+  var nombre=o?stockNombre(o):stockNombreClave(k);
+  function tabla(lista){
+    return '<div style="overflow:auto"><table class="roho-tabla stk-tabla"><thead><tr><th>Pedido / cliente</th><th>Fecha</th><th>Cantidad</th><th>Estado</th><th></th></tr></thead><tbody>'+
+      lista.map(function(r){var p=r.p;return '<tr><td><b>'+esc(p.cliente||'Sin cliente')+'</b><br>'+esc(p.oc?ocEtiq(p.oc):(p.nota?'Nota '+p.nota:p.id))+'</td><td>'+esc(p.fecha?fmtFecha(p.fecha):'Sin fecha')+'</td><td>'+r.u+'</td><td>'+esc(p.entregado?'Entregado':(stockSalio(p)&&r.marcas.indexOf('No hay')<0?'Fecha pasada: se considera salido':r.marcas.join(' · ')))+'</td><td><button class="btn btn-sm" data-id="'+esc(p.id)+'" data-k="'+esc(k)+'" onclick="stockAbrirPedidoDesdeLista(this.dataset.id,this.dataset.k)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div>';
+  }
+  var html='<div class="modal-h"><h3>Pedidos · '+esc(nombre)+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div><div class="modal-b">';
+  html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
+  if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
+  [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
+    var ls=grupos[g[0]];if(!ls.length)return;
+    var u=ls.reduce(function(n,r){return n+r.u;},0);
+    html+='<details '+(g[0]==='historico'?'':'open')+' style="margin:14px 0"><summary><b>'+g[1]+' · '+u+' unidades en '+ls.length+' pedidos</b></summary>'+tabla(ls)+'</details>';
+  });
+  html+='<button class="btn btn-ghost btn-sm" onclick="closeModal()">Volver al stock</button></div>';
+  openModal(html,true);
+}
+function stockAbrirPedidoDesdeLista(id,k){
+  if(!findById(id)){toast('Este pedido ya no está en la lista. Actualizá el panel.','err');return;}
+  showPedidoModal(id);
+  var boton=document.createElement('button');boton.className='btn btn-ghost btn-sm';boton.textContent='← Volver a los pedidos del producto';
+  boton.onclick=function(){abrirStockPedidos(k);};
+  document.querySelector('#modal-box .modal-b').prepend(boton);
+}
+
 function renderStock(){
   var body=document.getElementById('stock-body'); if(!body) return;
   var d=stockData(), T=d.fabricas;
@@ -11083,8 +11134,8 @@ function renderStock(){
     '<th>Vendido sin entregar</th><th>Se corta</th><th>Qué hacer</th></tr></thead><tbody>'+
     (conMov.length ? conMov.map(function(o){
       var q=o.pedidos[0];
-      return '<tr'+(o.aviso==='urgente'?' style="background:var(--red-lt)"':'')+'>'+
-        '<td><b>'+esc(stockNombre(o))+'</b>'+
+      return '<tr data-stock-k="'+esc(o.k)+'" onclick="if(!event.target.closest(\'button,a,input,select\'))abrirStockPedidos(this.dataset.stockK)" style="cursor:pointer;'+(o.aviso==='urgente'?'background:var(--red-lt)':'')+'">'+
+        '<td><button type="button" class="btn btn-sm" style="padding:0;background:none;color:inherit;text-align:left;font-weight:800;text-decoration:underline" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)" title="Ver los pedidos de este producto">'+esc(stockNombre(o))+'</button>'+
           (o.cod?('<br><span style="color:var(--muted);font-size:.92em">cód '+esc(o.cod)+'</span>'):'')+
           (o.otros.length?('<br><span style="color:var(--muted);font-size:.8em">'+(o.parecido?'≈ ':'')+'también: '+esc(o.otros.join(' / '))+(o.parecido?' <span title="El panel los unió por parecido: mismo tamaño y casi el mismo nombre. Si no son el mismo, separalos con 🔗 unir.">(unidos por parecido)</span>':'')+'</span>'):'')+
           ((!o.cat && o.nativo) ? ('<br><button class="btn btn-sm" style="padding:2px 8px;font-size:.7rem;margin-top:3px" data-k="'+esc(o.k)+'" onclick="abrirStockUnir(this.getAttribute(\'data-k\'))" title="No está en el catálogo con ese nombre. Si es el mismo que otro de la lista, unilos.">🔗 unir</button>') : '')+
