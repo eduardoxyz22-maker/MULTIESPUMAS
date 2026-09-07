@@ -187,8 +187,12 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
   chk('el panel se da cuenta de que el reporte solo lista lo que tiene existencia', r.solo0===true);
   chk('⚠️ un producto DEL CATÁLOGO que no figura en el corte está en CERO, no «sin contar»',
       r.enCorte===false && r.cat===0 && r.esDelCatalogo===true, 'depósito='+JSON.stringify(r.cat));
-  chk('⚠️ …pero uno que el catálogo no conoce sigue «sin contar»: puede estar con otro nombre',
-      r.noCat===null && r.noEsDelCatalogo===false, JSON.stringify(r.noCat));
+  /* §4ct: al principio esto solo valía para lo que estuviera en el catálogo viejo de 250
+     códigos, y los productos nuevos (SMART, LITE, medidas especiales) quedaban «sin contar»
+     — o sea que nadie se enteraba de que había que fabricarlos. El dueño lo corrigió: *"si
+     no hay en el Excel es porque no hay stock y SE DEBE PRODUCIR"*. Ahora vale para todo. */
+  chk('⚠️ …y uno que el catálogo NO conoce y tampoco está en el almacén también es CERO: hay que fabricarlo',
+      r.noCat===0 && r.noEsDelCatalogo===false, JSON.stringify(r.noCat));
   r = await page.evaluate(() => {
     STOCK.c.solo0=false;
     var v=stockDeposito(stockClave({codigo:'CH2299'}));
@@ -196,6 +200,26 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     return v;
   });
   chk('…y si el reporte NO lo declara, se vuelve a no inventar nada', r===null, JSON.stringify(r));
+
+  // ══ 4c. El mismo nombre escrito distinto ══════════════════════════════════
+  console.log('\n── 4c. «BI RELAX» y «BiRELAX» son el mismo somier ──');
+  r = await page.evaluate(() => {
+    /* Caso real del almacén del dueño: el pedido dice «SOMIER BI RELAX 160X200» (medida
+       adentro del nombre, campo medida vacío) y el Excel dice «SOMIER BiRELAX 160X200» con
+       la medida aparte. Sin unirlos, el panel mandaba a fabricar un somier que estaba (§4ct). */
+    STOCK.c.u['SOMIER BIRELAX 160X200|160X200']=1;
+    stockOlvidarIndice();
+    var kPedido=stockClave({desc:'SOMIER BI RELAX 160X200', medida:''});
+    var otro   =stockClave({desc:'SOMIER BIRELAX 160X190', medida:''});   // otra medida: NO se une
+    var dudoso =stockClave({desc:'SOMIER BIRELAX', medida:''});           // sin medida: no se puede saber
+    return { k:kPedido, hay:stockDeposito(kPedido), otro:otro, dudoso:dudoso };
+  });
+  chk('⚠️ el somier del pedido se une al del almacén aunque cambie el espacio',
+      r.k==='SOMIER BIRELAX 160X200|160X200' && r.hay===1, r.k+' → '+r.hay);
+  chk('⚠️ …pero otra MEDIDA no se une: sería decir que hay algo que no hay',
+      r.otro!=='SOMIER BIRELAX 160X200|160X200', r.otro);
+  chk('…y un nombre sin medida, con varias candidatas, tampoco', /^SOMIER BIRELAX\|/.test(r.dudoso), r.dudoso);
+  await page.evaluate(() => { delete STOCK.c.u['SOMIER BIRELAX 160X200|160X200']; stockOlvidarIndice(); });
 
   // ══ 5. Un archivo que no es de existencias ════════════════════════════════
   console.log('\n── 5. El archivo equivocado ──');

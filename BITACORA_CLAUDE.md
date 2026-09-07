@@ -4544,6 +4544,50 @@ esta regla lo dice: «no figura en el corte».
 `tests/test_existencias.js` — **47 checks** (4 nuevos, incluido que si el reporte NO declara
 lo de la existencia se vuelve a no inventar nada).
 
+## 4ct. 🏭 Lo que no está en el Excel HAY QUE FABRICARLO (2026-09-07)
+
+§4cs se quedó a mitad de camino y el dueño lo corrigió de una: *"pero si no hay en el Excel
+es porque no hay stock de ese producto y **SE DEBE PRODUCIR**. Ejemplo el colchón smart, el
+somier bi relax 160x200… **los pedidos son los que mandan**, y algo que figura que no hay en
+los Excel de almacén es porque **no se han fabricado**, en especial si es colchón o somier."*
+
+Tenía razón. Yo había puesto una condición de más: tratar como cero solo lo que estuviera en
+el catálogo `CODIGOS` —250 códigos de un Excel viejo—. Resultado: los productos **nuevos**
+(COLCHON SMART, COLCHON LITE, SOFT ICE, medidas especiales como 160X200 o 140X211) quedaban
+«sin contar», el panel no los tildaba, y **nadie se enteraba de que había que fabricarlos**.
+Es el mismo error de fondo de §4co una tercera vez: el caso que más importa era justo el que
+se caía por el agujero.
+
+Ahora la única condición es que el reporte **declare** que lista todo lo que tiene existencia
+(`(Productos con existencia <> 0)`, se detecta del propio archivo). Todo lo demás que no
+figure está en **cero → ✗ no hay → hay que fabricarlo**.
+
+### ⚠️ El riesgo que eso abría, y cómo se cerró
+
+Decir «no hay» de algo que SÍ está —escrito distinto— manda a fabricar un colchón que está en
+el depósito. No es hipotético: lo busqué en los archivos reales del dueño y de los 7 productos
+que quedaban sin contar, **uno sí estaba**:
+
+| En el pedido | En el Excel del almacén |
+|---|---|
+| `SOMIER BI RELAX 160X200` | `CH2259 SOMIER BiRELAX 160X200` — **1 unidad** |
+
+Solo cambia un espacio. Los otros seis (SMART, LITE, SOFT ICE, SOMIER 3.5P 200X200, SOMIER
+TROPICAL 160X200, ORO VISCOLASTICO 2.5PLZ) no están en ninguno de los dos almacenes: hay que
+fabricarlos, como decía el dueño.
+
+`stockClaveInv` cierra ese agujero comparando **apretado** —sin espacios ni signos—:
+`SOMIERBIRELAX160X200` en los dos casos. Y como la medida a veces va en su campo y a veces
+adentro del nombre (en el pedido el campo medida venía vacío), compara primero la clave
+entera y después solo la descripción, uniendo **únicamente cuando no queda ninguna duda**:
+si el pedido trae medida, tiene que coincidir; si no la trae, solo se une si hay una sola
+candidata. Otra medida nunca se une — decir que hay algo que no hay es peor.
+
+El índice se rehace cuando cambia el inventario (`stockOlvidarIndice`), no en cada consulta.
+
+`tests/test_existencias.js` — **50 checks**, con el caso BI RELAX / BiRELAX tal cual apareció
+en los archivos reales.
+
 ## 5. Pendientes
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)

@@ -10153,6 +10153,7 @@ function leerStock(p){
       }
     }
   }catch(e){}
+  stockOlvidarIndice();
   return stockMigrar(d);
 }
 /* Las claves guardadas se vuelven a resolver al leer: si el catálogo ahora reconoce un
@@ -10174,6 +10175,7 @@ function stockMigrar(d){
   return d;
 }
 function guardarStock(){
+  stockOlvidarIndice();
   /* Las entradas anteriores al último conteo ya están DENTRO del conteo: dejarlas las
      sumaría dos veces. Se podan al guardar, que es cuando se sabe cuál es el conteo. */
   STOCK.e=(STOCK.e||[]).filter(function(x){ return !STOCK.c.f || String(x.f||'')>=stockDesdeSalidas(); });
@@ -10256,6 +10258,43 @@ function stockClaveDeCatalogo(k){
   }
   return !!STOCK_CAT_KEYS[k];
 }
+/* ⚠️ EL MISMO NOMBRE ESCRITO DISTINTO (§4ct). En un pedido dice «SOMIER BI RELAX 160X200»
+   y en el Excel del almacén «SOMIER BiRELAX 160X200» — el mismo somier, y hay 1. Sin esto
+   el panel decía «no hay» y mandaba a fabricar algo que estaba en el depósito, que es el
+   error caro. Se compara sin espacios ni signos: SOMIERBIRELAX160X200 en los dos casos. */
+var STOCK_APRET=null;
+function stockApretar(t){ return String(t||'').toUpperCase().replace(/[^A-Z0-9]/g,''); }
+function stockPartes(k){
+  var s=String(k||''), i=s.lastIndexOf('|');
+  return { d:stockApretar(i<0?s:s.slice(0,i)), m:stockApretar(i<0?'':s.slice(i+1)) };
+}
+function stockIndiceApretado(){
+  if(STOCK_APRET) return STOCK_APRET;
+  STOCK_APRET={full:{}, desc:{}};
+  var meter=function(u){ Object.keys(u||{}).forEach(function(k){
+    var p=stockPartes(k), f=p.d+'|'+p.m;
+    if(!STOCK_APRET.full[f]) STOCK_APRET.full[f]=k;
+    (STOCK_APRET.desc[p.d]=STOCK_APRET.desc[p.d]||[]).push({k:k, m:p.m});
+  }); };
+  meter((STOCK.c||{}).u);
+  Object.keys(STOCK.g||{}).forEach(function(nm){ meter((STOCK.g[nm]||{}).u); });
+  return STOCK_APRET;
+}
+/* La clave con la que ese producto figura en el inventario, si figura con otra escritura.
+   ⚠️ La medida a veces viene en su campo y a veces adentro del nombre: en el pedido decía
+   «SOMIER BI RELAX 160X200» con la medida vacía, y en el almacén «SOMIER BiRELAX 160X200»
+   con medida 160x200. Por eso se compara primero la clave entera apretada y, si no da, solo
+   la descripción — y ahí únicamente cuando NO queda ninguna duda (§4ct). */
+function stockClaveInv(k){
+  if((STOCK.c.u||{})[k]!=null) return k;
+  var idx=stockIndiceApretado(), p=stockPartes(k);
+  var f=idx.full[p.d+'|'+p.m]; if(f) return f;
+  var c=idx.desc[p.d]; if(!c || !c.length) return k;
+  if(!p.m) return c.length===1 ? c[0].k : k;      // el pedido no dijo la medida: solo si hay una sola
+  var m=c.filter(function(x){ return x.m===p.m; });
+  return m.length===1 ? m[0].k : k;
+}
+function stockOlvidarIndice(){ STOCK_APRET=null; }
 var STOCK_MEMO={};   // desc|medida|código → {auto, cat}. Se calcula una vez por nombre distinto.
 function stockInfo(x){
   var raw=stockNorm(x&&x.desc)+'|'+stockNorm(x&&x.medida)+'|'+stockNorm(x&&x.codigo);
@@ -10265,7 +10304,7 @@ function stockInfo(x){
     m={ auto: c ? (stockNorm(c.d)+'|'+stockNorm(c.m)) : prodRankKey(x), cat:c };
     STOCK_MEMO[raw]=m;
   }
-  return { k:stockAliasDe(m.auto), auto:m.auto, cat:m.cat };
+  return { k:stockClaveInv(stockAliasDe(m.auto)), auto:m.auto, cat:m.cat };
 }
 function stockClaveAuto(x){ return stockInfo(x).auto; }
 function stockClave(x){ return stockInfo(x).k; }
@@ -10359,11 +10398,16 @@ function stockDesdeSalidas(){
 function stockDeposito(k, salidas){
   var base=Number((STOCK.c.u||{})[k]);
   if(!isFinite(base)){
-    /* No está en el corte. Si el reporte declara que lista TODO lo que tiene existencia y
-       el catálogo conoce este producto, entonces está en CERO — no «sin contar» (§4cs).
-       Para lo que el catálogo no conoce se sigue sin inventar: puede estar en el archivo
-       con otro nombre, y ahí lo que hace falta es unirlo a mano. */
-    if(!(STOCK.c.solo0 && STOCK.c.f && stockClaveDeCatalogo(k))) return null;
+    /* ⚠️ NO ESTÁ EN EL CORTE = NO HAY. Lo dijo el dueño y tiene razón: *"si no hay en el
+       Excel es porque no hay stock de ese producto y SE DEBE PRODUCIR, en especial si es
+       colchón o somier"*. El Excel es la verdad de lo que existe; los pedidos son los que
+       mandan. §4cs solo lo aplicaba a lo que estaba en el catálogo viejo de 250 códigos, y
+       así los productos nuevos —SMART, LITE, medidas especiales— quedaban «sin contar» y
+       nadie se enteraba de que había que fabricarlos (§4ct).
+       Lo único que se comprueba antes es que el reporte DECLARE que lista todo lo que tiene
+       existencia; si algún día sacan otro reporte, esto se apaga solo. Y el riesgo de decir
+       «no hay» de algo que está con otro nombre lo cubre `stockClaveInv`. */
+    if(!(STOCK.c.solo0 && STOCK.c.f)) return null;
     base=0;
   }
   var s=(salidas==null) ? stockSalidas(k, stockDesdeSalidas(), '') : salidas;
@@ -10728,7 +10772,7 @@ function renderStock(){
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
                 : ('<b style="font-size:1.05em">'+stockUnid(o.deposito)+'</b>'+
-                   ((!o.enCorte&&o.deposito===0)?'<br><span style="color:var(--muted);font-size:.88em">no figura en el corte</span>':'')))+
+                   ((!o.enCorte&&o.deposito===0)?('<br><span style="color:var(--muted);font-size:.88em">no figura en el corte'+(o.enOtros?'':' → hay que fabricarlo')+'</span>'):'')))+
           (o.contradice?('<br><span style="color:var(--red);font-size:.9em">⚠️ un chofer marcó ✗ no hay — contá de nuevo</span>'):'')+'</td>'+
         (d.otrosAlm.length?('<td>'+(o.enOtros?('<b>'+stockUnid(o.enOtros)+'</b><br><span style="color:var(--muted);font-size:.9em">'+esc(stockOtrosTxt(o))+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'):'')+
         '<td>'+(o.enCamino?('<b>'+stockUnid(o.enCamino)+'</b><br><span style="color:var(--muted);font-size:.92em">llegan ~'+fmtFechaCorta(q.llega)+(q.fab?(' · '+esc(q.fab)):'')+'</span>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
@@ -11623,6 +11667,7 @@ function confirmarImportExist(){
   STOCK.al=STOCK.al||{}; STOCK.al[R.almacen]=rol;
   STOCK.g=STOCK.g||{};
   var inc=!!(document.getElementById('exist-inc')||{}).checked;
+  stockOlvidarIndice();
   if(rol==='log'){
     /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
     delete STOCK.g[R.almacen];
