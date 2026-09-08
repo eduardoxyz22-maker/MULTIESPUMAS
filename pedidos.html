@@ -11058,6 +11058,7 @@ function stockData(){
        futura. Lo vendido y sin entregar (`comp`) sigue contando igual — eso no se estima,
        está vendido. */
     o.porDiaReal=o.vendidosRotacion/STOCK_VENTANA;
+    o.porDiaTodo=o.vendidos/STOCK_VENTANA;      // TODO lo que salió, Eduardo incluido: solo para «plata parada» (stockSobra)
     o.rotacion=o.vendidosRotacion<=2?'baja':(o.vendidosRotacion>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
     o.rota=(o.rotacion!=='baja');
     o.porDia=o.rota?o.porDiaReal:0;
@@ -11152,13 +11153,20 @@ function stockContradice(o){
    caso que más importa es justamente el que casi no rota. Si se usara `porDia` (que vale 0
    sin rotación), el producto que se vendió 2 veces en el mes no podría decir «hay para 14
    meses», que es exactamente lo que hay que decirle al dueño. */
+/* ⚠️ «Plata parada» mira PARA ATRÁS y cuenta TODO lo que salió del depósito, también lo
+   de Eduardo. Desde 91ddcd8 `porDiaReal` deja afuera sus ventas (bien para no inventar
+   una reserva con sus pedidos), pero sus colchones salieron igual: con `porDiaReal` un
+   producto que solo vendió él decía «no se entregó ninguno en 15 días» teniendo 45
+   entregados. Por eso acá va `porDiaTodo`, la cuenta cruda de verdad. */
+function stockPorDiaTodo(o){ return (o.porDiaTodo!=null) ? o.porDiaTodo : (Number(o.porDiaReal)||0); }
 function stockSobra(o){
   if(o.deposito==null || o.deposito<=0) return false;
   var libre=o.deposito+o.enCamino-o.comp; if(libre<=0) return false;
-  if(!(o.porDiaReal>0)) return true;
-  return libre/o.porDiaReal > STOCK_DIAS_SOBRA;
+  var pd=stockPorDiaTodo(o);
+  if(!(pd>0)) return true;
+  return libre/pd > STOCK_DIAS_SOBRA;
 }
-function stockMesesSobra(o){ return (o.porDiaReal>0) ? ((o.deposito+o.enCamino-o.comp)/o.porDiaReal/30) : null; }
+function stockMesesSobra(o){ var pd=stockPorDiaTodo(o); return (pd>0) ? ((o.deposito+o.enCamino-o.comp)/pd/30) : null; }
 /* Qué hay que hacer con este producto. Pocas respuestas, para que se entienda de un
    vistazo — un semáforo con seis colores no lo mira nadie. */
 function stockAvisoDe(o){
@@ -11417,7 +11425,7 @@ function renderStock(){
     if(o.aviso==='pedido') return chico((q?(q.u+' pendientes · '+(q.llega<todayStr()?'llegada atrasada desde ':'fecha prevista ')+fmtFechaCorta(q.llega)+(q.fab?(' de '+esc(q.fab)):'')):'')+(o.corte?'<br>Confirmar la llegada: hay un faltante antes de recibir. No duplicar la orden.':''),'#075985');
     if(o.aviso==='agotado') return chico('quedan <b>'+stockUnid(Math.max(0,o.deposito))+'</b>'+(o.dias!=null?(' y se cortan '+stockEnDias(o.dias)):'')+(o.comp?(' con '+stockUnid(o.comp)+' ya vendidos'):'')+'. La fábrica ya no lo hace: que ventas no ofrezca más de lo que hay.','#7f1d1d');
     if(o.aviso==='unico') return chico('Eduardo: se cubren sus pedidos confirmados, sin añadir reserva por previsión.','#7c4b00');
-    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en 4 semanas'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
+    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     if(o.descont) return chico('ya no se fabrica: se vende lo que queda');
     return '';

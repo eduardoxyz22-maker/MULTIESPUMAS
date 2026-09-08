@@ -145,10 +145,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ vende 1 por día: 15 en 15 días contando los ✗ NO HAY, lo de ROHO y lo de hoy sin entregar',
       Math.abs(r.porDia-1)<0.02 && r.vendidos===15, r.porDia+' · '+r.vendidos+' vendidos');
   chk('…y el PILLOW mucho menos', r.pillPorDia<0.1, r.pillPorDia);
-  chk('⚠️ el borrador de Kommo (50 unidades) NO cuenta como venta', r.comp===26, r.comp+' comprometidas (1 de hoy + 5 + 20)');
+  /* ⚠️ 26 → 30 desde el commit 91ddcd8 de la otra herramienta (08/09, §4de): un renglón
+     tildado «✗ no hay» (o «📥 recoger») en un pedido con la fecha YA PASADA ya no se da por
+     salido — el cliente no lo recibió, la venta sigue viva esperando stock — y consume
+     depósito HOY. Los 4 «nh» de días pasados pasan de «atrasados, aparte» a «comprometidos»:
+     1 de hoy + 5 + 20 + esos 4 = 30. La regla de §4co sigue igual para lo SIN MARCAR (e6):
+     fecha pasada y nadie lo tildó = salió. */
+  chk('⚠️ el borrador de Kommo (50 unidades) NO cuenta como venta', r.comp===30, r.comp+' comprometidas (1 de hoy + 5 + 20 + 4 ✗ no hay de días pasados)');
   chk('⚠️ un pedido de hace 6 días SIN marcar ✓ se da por entregado: no es «vendido sin entregar» (así se contaban 41 almohadas de más)',
-      r.atrasados===1 && r.comp===26, r.atrasados+' de días pasados sin marcar');
-  chk('los 4 ✗ NO HAY de días pasados se ven aparte, sin reprogramar, y no inflan lo comprometido', r.noHay===4 && r.noHayViejo===4, r.noHay+' · '+r.noHayViejo);
+      r.atrasados===1 && r.comp===30, r.atrasados+' de días pasados sin marcar');
+  chk('los 4 ✗ NO HAY de días pasados siguen siendo una venta viva: comprometidos, no «atrasados» aparte (91ddcd8)', r.noHay===4 && r.noHayViejo===0, r.noHay+' · '+r.noHayViejo);
   chk('⚠️ lo hecho a pedido (🏭) se aparta: la fábrica lo trae para ese cliente', r.aFab===3, r.aFab);
   chk('«PILLOW» solo NO se confunde con PILLOW FLEX ni PILLOW PEDIC', r.pilloSolo==='PILLOW|140X190', r.pilloSolo);
   chk('un SOMIER FLEX no es un ECO FLEX', r.somier!==r.k1 && /SOMIER FLEX/.test(r.somier), r.somier);
@@ -250,7 +256,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       r.eco.dias===4 && r.eco.corte===r.corte4, r.eco.dias+' días · '+r.eco.corte);
   chk('⚠️ …4 días es más que los 3 de fábrica pero menos que 3 + 2 de margen → PEDIR ESTA SEMANA',
       r.eco.aviso==='pedir' && r.eco.margen===2, r.eco.aviso+' · margen '+r.eco.margen);
-  chk('…y dice cuánto pedir: los 26 vendidos menos los 12 que hay = 14', r.eco.pedir===14, r.eco.pedir);
+  // 30 comprometidos desde 91ddcd8 (los 4 ✗ no hay de días pasados ya cuentan, ver §1): 30 − 12 = 18.
+  chk('…y dice cuánto pedir: los 30 comprometidos menos los 12 que hay = 18', r.eco.pedir===18, r.eco.pedir);
   chk('el ECO FLEX vende parejo (1 por tramo de 5 días) → margen de 2 días, «venta pareja»', r.eco.cv<0.01, 'cv '+r.eco.cv);
   chk('⚠️ el PILLOW con 30 en depósito y 2 vendidos en 4 semanas es PLATA PARADA', r.pill.aviso==='sobra' && r.pill.sobra===true, r.pill.aviso);
   chk('el MEMORY FLEX con 40 (para 40 días) ni sobra ni falta', r.mem.aviso==='', r.mem.aviso+' · corte en '+r.mem.dias+' días');
@@ -395,7 +402,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var d=stockData(), eco=d.lista.filter(o=>/ECO FLEX/.test(o.desc))[0];
     return { aviso:eco.aviso, dias:eco.dias };
   });
-  chk('⚠️ si lo pedido llega DESPUÉS del corte, sigue avisando que hay que pedir', r.aviso==='pedir' && r.dias===4, r.aviso+' · corte en '+r.dias);
+  /* Desde 91ddcd8 (§4de) lo que YA está pedido no se vuelve a pedir aunque llegue tarde: el
+     corte sigue a la vista (4 días) pero el aviso queda en «🚚 Ya pedido» con «Confirmar la
+     llegada: hay un faltante antes de recibir. No duplicar la orden.» Antes decía «pedir», y
+     eso podía terminar en DOS órdenes de fábrica por el mismo faltante. */
+  chk('⚠️ si lo pedido llega DESPUÉS del corte, el corte sigue a la vista pero NO se pide dos veces', r.aviso==='pedido' && r.dias===4, r.aviso+' · corte en '+r.dias);
   r = await page.evaluate(() => {
     STOCK.p[0].esp='';
     abrirStockEntrada();
@@ -584,7 +595,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return copiado;
   });
   chk('arma el mensaje para la fábrica', /PEDIDO A F[ÁA]BRICA/.test(r), r.split('\n')[0]);
-  chk('⚠️ dice cuántas unidades pedir: 26 vendidos − 0 que hay − 6 en camino = 20', /pedir 20/.test(r), (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100));
+  // 30 comprometidos desde 91ddcd8 (§1): 30 − 0 − 6 = 24.
+  chk('⚠️ dice cuántas unidades pedir: 30 comprometidos − 0 que hay − 6 en camino = 24', /pedir 24/.test(r), (r.match(/pedir \d+[^\n]*/)||[''])[0].slice(0,100));
   chk('…y por qué: lo que queda, lo que viene, lo que se vende por día y cuándo se corta',
       /quedan 0/.test(r) && /6 en camino/.test(r) && /por día/.test(r) && /se corta hoy/.test(r), (r.match(/quedan[^\n]*/)||[''])[0].slice(0,140));
 

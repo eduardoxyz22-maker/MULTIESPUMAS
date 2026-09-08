@@ -1,31 +1,5 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-## Productos del mes en Contabilidad → Ventas (2026-09-08)
-
-Botón junto a Excel: abre consolidado y detalle del mes/vendedor, con el mismo criterio
-Ingreso/Entrega de Ventas. Consulta la lista completa por `apiList`, superpone pendientes
-por id y congela el resultado para que la pantalla y las dos hojas del Excel coincidan.
-No modifica `STATE`, los filtros ni los pagos. Día/Todo piden elegir Mes.
-
-`productos-mes.js` usa `fueraDeConta`, `esBorrador`, `ventaTotal`, `prodPrecio`/`prodSub`
-e `indiceDuplicados`. Agrupa por código + medida exactos (sin código, nombre + medida),
-nunca por parecido al catálogo. Cada pedido cuenta una vez por producto y en el resumen.
-Precios ausentes/0 conservan la semántica actual: sin dato, no producto gratis. Cantidades
-vacías no se convierten en 1. Ajustes respecto al total de venta se presentan aparte;
-cuando falta desglose no se los etiqueta como descuentos. El flete no entra a la venta.
-
-Limitación de la fuente: no hay campo de descuento por línea ni registro independiente
-de anulaciones/devoluciones comerciales. Se conservan las reglas de Ventas: bajas ya
-borradas ausentes; ATC, borradores, ROHO y mayoristas excluidos. Se explica en ambas hojas.
-No se cambian permisos ni Apps Script, no se cargan datos reales de prueba.
-
-Pruebas: `tests/test_productos_mes.cjs`, 29 checks con datos sintéticos, lectura del XLSX
-generado, Fernando/Juan Pablo/Todos, fechas, variantes, pagos, faltantes, duplicados,
-pendientes, carga/error/vacío y celular. Contra el panel anterior falla por función ausente.
-Regresiones: `test_plata.js` 11/11; `test_auditoria.js` 176/176. Sintaxis válida y sin
-funciones raíz duplicadas. Los tests aceptan NODE_PATH y CHROME_PATH para Windows.
-
-
 Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-07-13**.
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
 
@@ -5203,7 +5177,118 @@ viejos, corregidos con su comentario explicando qué cambió y por qué (nunca s
 Batería completa: **50 suites (46 `.js` + 4 `.cjs`, más 3 de Python aparte), 1.747 checks,
 0 fallas.**
 
+## 4dd. 📦 Productos del mes en Contabilidad → Ventas (2026-09-08) — lo escribió la otra herramienta
+
+> Sección escrita por la otra herramienta de IA del dueño (commit `1cb4973`, PR #20). Estaba
+> pegada ARRIBA de todo el archivo, antes del índice; la moví acá, a su lugar cronológico,
+> sin cambiarle una palabra (§4de).
+
+Botón junto a Excel: abre consolidado y detalle del mes/vendedor, con el mismo criterio
+Ingreso/Entrega de Ventas. Consulta la lista completa por `apiList`, superpone pendientes
+por id y congela el resultado para que la pantalla y las dos hojas del Excel coincidan.
+No modifica `STATE`, los filtros ni los pagos. Día/Todo piden elegir Mes.
+
+`productos-mes.js` usa `fueraDeConta`, `esBorrador`, `ventaTotal`, `prodPrecio`/`prodSub`
+e `indiceDuplicados`. Agrupa por código + medida exactos (sin código, nombre + medida),
+nunca por parecido al catálogo. Cada pedido cuenta una vez por producto y en el resumen.
+Precios ausentes/0 conservan la semántica actual: sin dato, no producto gratis. Cantidades
+vacías no se convierten en 1. Ajustes respecto al total de venta se presentan aparte;
+cuando falta desglose no se los etiqueta como descuentos. El flete no entra a la venta.
+
+Limitación de la fuente: no hay campo de descuento por línea ni registro independiente
+de anulaciones/devoluciones comerciales. Se conservan las reglas de Ventas: bajas ya
+borradas ausentes; ATC, borradores, ROHO y mayoristas excluidos. Se explica en ambas hojas.
+No se cambian permisos ni Apps Script, no se cargan datos reales de prueba.
+
+Pruebas: `tests/test_productos_mes.cjs`, 29 checks con datos sintéticos, lectura del XLSX
+generado, Fernando/Juan Pablo/Todos, fechas, variantes, pagos, faltantes, duplicados,
+pendientes, carga/error/vacío y celular. Contra el panel anterior falla por función ausente.
+Regresiones: `test_plata.js` 11/11; `test_auditoria.js` 176/176. Sintaxis válida y sin
+funciones raíz duplicadas. Los tests aceptan NODE_PATH y CHROME_PATH para Windows.
+
+## 4de. 🔀 Segunda ronda de dos manos: «Productos del mes» verificado, y la rotación que volvió a cambiar (2026-09-08)
+
+El dueño pidió un botón en Contabilidad → Ventas que, con el vendedor y el mes elegidos, muestre
+la lista y el consolidado de todo lo vendido. Antes de que yo lo armara, avisó: *«Chat gpt corrigió
+y ejecutó»*. Así que esta sección es de VERIFICACIÓN, no de construcción.
+
+### Qué trajo la otra herramienta desde `afd1d1f`
+
+- **`1cb4973` (PR #20) — 📦 Productos del mes** (§4dd, su propia nota). Lo verifiqué contra el
+  panel real con datos sintéticos (Fernando/Juan Pablo, mes, Ingreso/Entrega, celular a 390px):
+  las cantidades por producto salen bien (una línea repetida en el mismo pedido suma unidades y
+  cuenta UN pedido; misma medida distinta = otro renglón), el «Importe total vendido» coincide
+  con la tarjeta «Vendido en el período» de la misma pantalla (misma `ventaTotal`, mismo
+  `fueraDeConta`), precio 0 = «Sin dato» y nunca un producto gratis, y sin errores de JS. Sus
+  29 checks pasan. Dos cosas para saber: **ignora el cuadro Buscar** y **exige el modo Mes**
+  (en Día/Todo avisa y no abre). Y el panel **dejó de ser un solo archivo**: la lógica vive
+  en `productos-mes.js` con `?v=` de caché — anotado en CLAUDE.md.
+- **`91ddcd8` — «Corrige rotación por vendedor y saldos de recogidas y recepciones parciales».**
+  Sin entrada en la bitácora. Tres cambios de fondo en el stock, más varios menores:
+  - **(a) Rotación.** `o.rotacion` pasó a mirar UNIDADES del equipo (`vendidosRotacion`, con
+    los pedidos de Eduardo aparte en `vendidosUnicos`, `stockPedidoUnico`): `baja` si ≤2
+    unidades. Sacó la condición de **≥3 entregas distintas** (`STOCK_VENTAS_MIN` quedó
+    definida y sin usar) y volvió el aviso `lenta` (ahora sí alcanzable: 1–2 unidades del
+    equipo). `unico` quedó solo para «todo lo vendió Eduardo».
+  - **(b) Vencidos.** `stockSalio(p,x)` es por RENGLÓN: uno tildado «✗ no hay» o «📥 recoger»
+    con la fecha pasada ya no se da por salido — sigue comprometido y consume depósito HOY
+    (`fd = fecha>hoy ? fecha : hoy`). Lo SIN MARCAR con fecha pasada sigue contando como
+    salido (la regla de §4co, la de las 41 almohadas, no se tocó).
+  - **(c) Ya pedido.** Lo que ya está en camino no se vuelve a pedir aunque llegue tarde:
+    `stockCuantoPedir` sin el «mínimo 1», aviso `pedido` con «Confirmar la llegada… No
+    duplicar la orden», y las llegadas vencidas no cuentan en la proyección
+    (`stockProyectar` filtra `llega>=hoy`).
+  - Menores: recepciones parciales (`q.total`, `q.ru` acumulado, `q.u` = lo pendiente),
+    recogidas con `f=hoy` y `esp=fecha`, `stockLibreOrigen` (Moreno menos lo ya programado),
+    `o.recoger`/`o.fabricar` separados, `copiarRevStkFabricar`, discontinuados con aviso
+    `traer` cuando Moreno tiene, y `SCRIPT_VERSION_ESPERADA` alineada a `2026-09-05-c` (el
+    `.gs` ya decía `c` desde §4ch; el panel había quedado en `b`: bien alineado).
+- **Batería sobre `4506bdc` (main con todo eso):** 3 suites rojas, **19 checks**:
+  `test_rotacion.js` 11, `test_stock.js` 6, y `test_stock_rotacion.cjs` 2 — **de la propia
+  herramienta**, escritos en §4dc: «venta grande única no crea ritmo ficticio» (40 en una
+  venta → esperaba `baja`, ahora da `media`) y «2 unidades en 2 pedidos… `unico`» (ahora da
+  `lenta`). O sea: el commit del domingo contradice lo que la misma herramienta había
+  codificado el sábado, y lo que el dueño dijo el 07/09 (§4da).
+
+### Qué acepté, qué arreglé — y qué NO publiqué
+
+- **(b) y (c) los acepto**: son defendibles (una venta tildada «✗ no hay» es demanda viva; dos
+  órdenes de fábrica por el mismo faltante es peor que un aviso de «confirmá la llegada»).
+  `test_stock.js`: 6 checks actualizados **con el comentario de por qué** (26→30 comprometidos,
+  pedir 14→18, «pedir 20»→«pedir 24», «llega después del corte» → `pedido`, `noHayViejo` 4→0).
+- **Plata parada decía una mentira.** `porDiaReal` ahora excluye a Eduardo, y `stockSobra`/
+  `stockMesesSobra` lo usaban: un producto que solo vendió él (45 entregados) decía «hay 10 y
+  no se entregó ninguno». «Plata parada» mira para atrás y cuenta TODO lo que salió: nuevo
+  `o.porDiaTodo` (= `vendidos/STOCK_VENTANA`) y `stockPorDiaTodo(o)`, solo para eso.
+- **«4 semanas» volvió** por tercera vez (91ddcd8 pisó el texto de §4dc) → `STOCK_VENTANA` días.
+- `correr.sh`: `xargs -n 1 -I{}` tiraba un aviso en cada corrida (son excluyentes) → sin `-n 1`.
+- §4dd estaba pegada ARRIBA del archivo, antes del índice → movida a su lugar, sin cambiarla.
+- CLAUDE.md: sección «📦 Productos del mes» (segundo archivo, `?v=`, `node --check` aparte).
+
+**(a) NO es mío para decidir.** Le pregunté al dueño con tres opciones: (1) las dos condiciones
+juntas — ≥3 entregas distintas del equipo Y Eduardo afuera (mi recomendación: es todo lo que él
+dijo, y lo único que rompe son 12 checks de `test_circuito.cjs` que afirman «Fernando aporta
+rotación incluso en una venta»); (2) como quedó (cualquier venta del equipo es rotación; vuelve
+el MORFEO de una vendedora → «pedí 24 ya»); (3) como el 07/09 (≥3 entregas, Eduardo incluido).
+Contestó: *«Hoy modifico cosas chat gpt»* → hoy está trabajando la otra herramienta sobre el
+mismo archivo. **No publiqué nada a `main`**: todo lo de esta sección está en la rama
+`claude/pedidos-fecha-entrega-bgt0em`, para rebasar sobre lo que ella deje y publicar cuando
+el dueño diga. Batería local con mis cambios: `test_stock.js` 106/106; siguen rojos
+`test_rotacion.js` (11) y `test_stock_rotacion.cjs` (2) hasta que haya regla.
+
+**Pendiente cuando se decida (a):** `o.rotacion` en `stockData` (y el comentario de arriba,
+que hoy dice «menos de 3 entregas» sobre un código que mira unidades), el comentario maestro
+del bloque STOCK (líneas «ROTACIÓN» y la cita del dueño sobre `STOCK_VENTAS_MIN`), los textos
+«Eduardo: pedido único» (badge, `porque`, fila, `copiarStock`), `stockPrioridad` (`lenta` no
+figura), CLAUDE.md «Rotación en 3 niveles», y los tests de los dos lados para que digan LO
+MISMO: `test_rotacion.js`, `test_stock_rotacion.cjs` (2), `test_circuito.cjs` (12).
+
 ## 5. Pendientes
+
+> ⏳ **08/09 — decisión del dueño pendiente: la regla de rotación (§4de).** Hasta entonces
+> `test_rotacion.js` y `test_stock_rotacion.cjs` quedan rojos a propósito, y la rama
+> `claude/pedidos-fecha-entrega-bgt0em` tiene lo mío sin publicar. La otra herramienta está
+> tocando `pedidos.html` hoy: rebasar antes de publicar.
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
 > Run 33975079467 del repaso:

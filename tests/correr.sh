@@ -38,5 +38,5 @@ unoCjs(){
   fi
 }
 export -f unoCjs
-ls tests/test_*"$1"*.js | xargs -P 4 -n 1 -I{} bash -c 'uno "$@"' _ {}
-ls tests/test_*"$1"*.cjs 2>/dev/null | xargs -r -P 4 -n 1 -I{} bash -c 'unoCjs "$@"' _ {}
+ls tests/test_*"$1"*.js | xargs -P 4 -I{} bash -c 'uno "$@"' _ {}
+ls tests/test_*"$1"*.cjs 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoCjs "$@"' _ {}

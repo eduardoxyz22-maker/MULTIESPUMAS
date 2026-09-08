@@ -114,6 +114,16 @@ coincide, no el pedido entero. El PDF sale por 🖨 Imprimir → «Guardar como 
 librerías, igual que la hoja de ruta); la carátula impresa lleva cliente, período y totales
 porque los filtros no se imprimen. `tests/test_buscar.js`.
 
+## 📦 Productos del mes (Contabilidad → Ventas)
+Botón al lado de ⬇️ Excel (lo hizo la otra herramienta, bitácora §4dd): consolidado por
+producto (código + medida) y detalle por renglón de lo vendido en el **mes** elegido, para el
+**vendedor** elegido, con el mismo corte Ingreso/Entrega de la tabla. Ignora el cuadro Buscar,
+y en Día/Todo pide elegir Mes. Pide la lista entera al servidor (`apiList`), no usa `STATE`.
+⚠️ **Vive en un SEGUNDO archivo, `productos-mes.js`** — `pedidos.html` ya no es uno solo:
+se carga con `<script src="productos-mes.js?v=…">`, así que al tocarlo hay que subir el
+`?v=` (si no, el celular sigue con el viejo en caché) y validarlo aparte con
+`node --check productos-mes.js`. `tests/test_productos_mes.cjs`.
+
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
 ("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)
