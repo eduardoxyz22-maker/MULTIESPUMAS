@@ -1114,6 +1114,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
         <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="exportConta()">⬇️ Excel</button>
+          <button id="cta-productos-mes" class="btn btn-primary btn-sm" style="width:auto;background:#0f766e" onclick="abrirProductosMes()">📦 Productos del mes</button>
         </div>
         <div class="field">
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirVentaTienda()">🏪 Registrar venta de tienda</button>
@@ -1193,6 +1194,18 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="reporte-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#00877f;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📊 Reporte</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="rep-per-7d" onclick="setRepPeriodo('7d')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">7 días</button><button id="rep-per-mes" onclick="setRepPeriodo('mes')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Este mes</button><button id="rep-per-mespasado" onclick="setRepPeriodo('mespasado')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes pasado</button></div><span id="rep-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#00877f;font-weight:700" onclick="printReporte()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeReporte()">✕ Cerrar</button></div><div id="reporte-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 
+<style>
+.pm-overlay{position:fixed;inset:0;z-index:3500;background:#f4f6f7;display:flex;flex-direction:column;color:#17324d}
+.pm-cabecera{padding:12px 20px;background:#0f766e;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.pm-body{padding:20px;overflow:auto;flex:1}.pm-body h2{font-size:1.25rem;margin:0 0 8px}.pm-body p{font-size:.85rem;margin:8px 0}
+.pm-resumen{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}.pm-resumen>div{padding:16px;background:#fff;border:1px solid #dce3e6;border-left:4px solid #00b5ad;border-radius:10px}
+.pm-resumen small{display:block;color:#687780}.pm-resumen strong{display:block;font-size:1.4rem;margin-top:8px;color:#0f766e}
+.pm-avisos{background:#fff8e8;border:1px solid #f0d6a4;padding:8px 14px;border-radius:9px}.pm-avisos p{font-size:.78rem}
+.pm-acciones{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:16px 0}.pm-acciones>.btn{width:auto}.pm-tabla{overflow:auto;background:#fff;border:1px solid #dce3e6;border-radius:9px}
+.pm-tabla table{width:100%;min-width:850px}.pm-tabla th,.pm-tabla td{padding:10px;white-space:normal!important}.pm-tabla tfoot{font-weight:bold;background:#e8f5f2}
+@media(max-width:650px){.pm-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-body{padding:12px}.pm-resumen strong{font-size:1.1rem}}
+</style>
+<script src="productos-mes.js?v=20260908a"></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -2866,6 +2879,7 @@ function setContaTab(t){
 }
 /* Lo poquito que cambia entre una planilla y la otra. */
 function pintarAmbitoConta(mayor){
+  var pm=document.getElementById('cta-productos-mes');if(pm)pm.style.display=mayor?'none':'';
   // El desplegable de vendedor no tiene nada que elegir en Mayoristas: es de una sola
   // persona. Se esconde Y se limpia, para que no quede filtrando por detrás.
   var w=document.getElementById('cta-wrap-vend');

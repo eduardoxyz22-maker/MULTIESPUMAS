@@ -1,5 +1,31 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
+## Productos del mes en Contabilidad → Ventas (2026-09-08)
+
+Botón junto a Excel: abre consolidado y detalle del mes/vendedor, con el mismo criterio
+Ingreso/Entrega de Ventas. Consulta la lista completa por `apiList`, superpone pendientes
+por id y congela el resultado para que la pantalla y las dos hojas del Excel coincidan.
+No modifica `STATE`, los filtros ni los pagos. Día/Todo piden elegir Mes.
+
+`productos-mes.js` usa `fueraDeConta`, `esBorrador`, `ventaTotal`, `prodPrecio`/`prodSub`
+e `indiceDuplicados`. Agrupa por código + medida exactos (sin código, nombre + medida),
+nunca por parecido al catálogo. Cada pedido cuenta una vez por producto y en el resumen.
+Precios ausentes/0 conservan la semántica actual: sin dato, no producto gratis. Cantidades
+vacías no se convierten en 1. Ajustes respecto al total de venta se presentan aparte;
+cuando falta desglose no se los etiqueta como descuentos. El flete no entra a la venta.
+
+Limitación de la fuente: no hay campo de descuento por línea ni registro independiente
+de anulaciones/devoluciones comerciales. Se conservan las reglas de Ventas: bajas ya
+borradas ausentes; ATC, borradores, ROHO y mayoristas excluidos. Se explica en ambas hojas.
+No se cambian permisos ni Apps Script, no se cargan datos reales de prueba.
+
+Pruebas: `tests/test_productos_mes.cjs`, 29 checks con datos sintéticos, lectura del XLSX
+generado, Fernando/Juan Pablo/Todos, fechas, variantes, pagos, faltantes, duplicados,
+pendientes, carga/error/vacío y celular. Contra el panel anterior falla por función ausente.
+Regresiones: `test_plata.js` 11/11; `test_auditoria.js` 176/176. Sintaxis válida y sin
+funciones raíz duplicadas. Los tests aceptan NODE_PATH y CHROME_PATH para Windows.
+
+
 Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-07-13**.
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
 
