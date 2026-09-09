@@ -33,12 +33,19 @@ unoCjs(){
   rc=$?
   ok=$(echo "$out" | grep -c '^OK ')
   fallo=$(echo "$out" | grep -c '^FALLO ')
-  if [ "$rc" -ne 0 ] && [ "$((ok+fallo))" -eq 0 ]; then
+  # ⚠️ No todos los .cjs hablan "OK "/"FALLO ": algunos usan ✓/✗ y cierran con la misma
+  # línea "N bien · N mal" que los .js. Sin esta línea salían como "ok (sin resumen)" y
+  # el resumen de la batería escondía cuántas comprobaciones habían corrido de verdad —
+  # y con qué resultado, si el proceso igual terminaba en 0.
+  line=$(echo "$out" | grep -oE '[0-9]+ bien · [0-9]+ mal' | tail -1)
+  if [ "$rc" -ne 0 ] && [ "$((ok+fallo))" -eq 0 ] && [ -z "$line" ]; then
     echo "$n :: FALLA (exit $rc) · $(echo "$out" | tail -1)"
   elif [ "$rc" -ne 0 ]; then
-    echo "$n :: $ok bien · $fallo mal · (exit $rc)"
+    echo "$n :: ${line:-"$ok bien · $fallo mal"} · (exit $rc)"
   elif [ "$((ok+fallo))" -gt 0 ]; then
     echo "$n :: $ok bien · $fallo mal"
+  elif [ -n "$line" ]; then
+    echo "$n :: $line"
   else
     echo "$n :: ok (sin resumen)"
   fi

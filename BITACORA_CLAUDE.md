@@ -5702,10 +5702,26 @@ pedidos nuevos: editando no se toca nada). Era un bug latente de la ATC desde §
   los estilos del `.xlsx` son compartidos y §4dk les agregó 10 nuevos.
 - **Un renglón sin código ni medida**: sale con «Reposición» por defecto.
 
+### 4. Y de punta a punta, con clics de verdad
+Prueba manual en un celular simulado: tocar 🏪 RPT → llenar → guardar → la ventana de
+«pedido guardado» ya trae el mensaje de reposición → el botón ⬇️ Excel del formato baja
+`RPT-09-001-Mia-Plaza.xlsx` (28 KB). Y aparece donde tiene que aparecer: **tabla de
+Administración** (con su franja ámbar), **lista de carga por camión**, **ficha del chofer**,
+**Mis pedidos** y **el mapa** — todos con el chip 🏪 RPT — y en **Contabilidad, cero**.
+El `.xlsx` se validó parte por parte: todas las partes con su tipo declarado, todos los
+`r:id` resueltos, ningún destino roto, los contadores de estilos cuadrados, y se relee con
+el propio lector del panel. (En este sandbox LibreOffice no abre `.xlsx` —tampoco el archivo
+original del dueño—, así que la prueba final es abrirlo él.)
+
 ### Pruebas
 `tests/test_rpt.js` pasa de 74 a **84 checks** (sección 9). `tests/test_buscar.js` reescrito
 para la regla nueva (43): la ATC ya no entra, pero **se dice**; los totales bajan de 20 a 19
-unidades y de 8 a 7 pedidos. Batería completa en verde (52 suites).
+unidades y de 8 a 7 pedidos. Batería completa: **1.884 comprobaciones, 0 mal**.
+
+⚠️ Y `tests/correr.sh` mentía un poco: `unoCjs` solo sabía leer `OK `/`FALLO `, así que las
+suites `.cjs` que usan ✓/✗ y cierran con «N bien · N mal» salían como **«ok (sin resumen)»**
+—`test_productos_mes` escondía sus 29 comprobaciones—. Ahora también lee esa línea. Queda
+una sola sin resumen (`test_stock_detalle`, que imprime una frase y ya).
 
 ## 5. Pendientes
 
