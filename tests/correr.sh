@@ -3,6 +3,12 @@
 #   ./tests/correr.sh            → todos, en paralelo
 #   ./tests/correr.sh plata      → solo los que digan "plata"
 cd "$(dirname "$0")/.." || exit 1
+# ⚠️ El panel vive en hora de Bolivia (los tests abren la página con timezoneId
+# America/La_Paz), pero Node acá corre en UTC. Entre las 00:00 y las 04:00 UTC (20:00 a
+# 24:00 en Bolivia) «hoy» es un día distinto para el test que para la página, y las
+# suites que arman fechas con `new Date()` en Node (roho, existencias) fallan sin que
+# nada esté roto (§4de). Se fija la zona para que los dos relojes digan lo mismo.
+export TZ="${TZ:-America/La_Paz}"
 uno(){
   f="$1"; n=$(basename "$f" .js)
   out=$(timeout 220 node "$f" 2>&1)

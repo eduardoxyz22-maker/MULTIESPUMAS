@@ -5307,6 +5307,20 @@ bolsa sin mirar), y el 09/09: **«Dale»** a la opción 1.
   y nadie los corrió antes de mergear. Correr `./tests/correr.sh` completo antes de aceptar
   cualquier commit ajeno, no solo «los dos que menciona el mensaje del commit».
 
+### Y la batería tiene una hora en la que miente: de 20:00 a 24:00 de Bolivia
+
+La batería completa con la regla nueva dio 2 suites rojas que NO tenían nada que ver:
+`test_roho.js` (importó «0 de 0» pedidos y se cayó) y `test_existencias.js` (5 checks). Las dos
+habían pasado una hora antes, sin tocar nada de lo suyo. La diferencia era el reloj: eran las
+00:15 UTC = 20:15 en Bolivia. La página corre con `timezoneId:'America/La_Paz'` (hoy = 08/09),
+pero Node en este sandbox corre en UTC (hoy = 09/09), y las suites que arman fechas con
+`new Date()` del lado de Node —«mañana», «el sábado que viene», «dentro de 3 días»— le mandan
+a la página fechas de OTRO día. Cuatro horas por día en las que la batería falla sola.
+Arreglo: `correr.sh` exporta `TZ=America/La_Paz` (pisable) para que los dos relojes digan lo
+mismo, y el único check que comparaba contra `new Date().toISOString()` (UTC, siempre mal en
+esa franja) ahora compara contra el `todayStr()` de la página. Con eso, a las 00:21 UTC:
+`test_existencias` 55/55 y `test_roho` 90/90.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

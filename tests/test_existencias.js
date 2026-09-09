@@ -285,12 +285,15 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     var futuro=[{},{C:'MORENO',X:'EXISTENCIAS ALMACEN  AL ',AR:'31/12/2099'},
            {F:'Almacén Inicial :',P:'01-05-003  PRODUCTOS TERMINADOS FAB.'},
            {G:'Código Producto',W:'Nombre Producto'},{G:'CH1129',W:'COLCHON TITANIO LATEX 140X190',AY:'3'}];
-    return { mezcla:existLeer(f).error, futuro:existLeer(futuro) };
+    return { mezcla:existLeer(f).error, futuro:existLeer(futuro), hoy:todayStr() };
   });
   chk('⚠️ un reporte que MEZCLA almacenes se rechaza: no serviría para contar ninguno',
       /mezcla almacenes/i.test(r.mezcla), r.mezcla);
+  /* «Hoy» es el de la PÁGINA (hora de Bolivia), no `new Date().toISOString()` de Node, que
+     es UTC: entre las 20:00 y las 24:00 de Bolivia son dos días distintos y este check
+     fallaba sin que nada estuviera roto (§4de). */
   chk('una fecha futura no se acepta: se usa la de hoy y se avisa',
-      r.futuro.sinFecha===true && r.futuro.fecha===new Date().toISOString().slice(0,10).replace(/x/,''), r.futuro.fecha);
+      r.futuro.sinFecha===true && r.futuro.fecha===r.hoy, r.futuro.fecha+' vs hoy '+r.hoy);
 
   // ══ 6. Los pedidos a fábrica que ya deberían haber llegado ════════════════
   console.log('\n── 6. Pedidos a fábrica y el conteo nuevo ──');
