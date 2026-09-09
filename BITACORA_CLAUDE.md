@@ -5842,6 +5842,73 @@ lo que mandó el dueño, y las seis a entre 384 m y 3,4 km entre sí — ninguna
 De las zonas: que cada tienda traiga la que él dictó, **textual**, y que «Centro»/«centro»/
 «CENTRO» cuenten como UNA. Batería completa: **1.902 comprobaciones, 0 mal**.
 
+## 4do. Dónde ve logística las reposiciones, el aviso a los 3 días, y el Excel que no era (2026-09-09, noche)
+
+Tres cosas del dueño en un mismo mensaje, más una pregunta que resultó ser lo más grave.
+
+### 1. «¿Dónde o cómo ve logística las reposiciones? ¿O filtran por solo reposiciones?»
+Estaban mezcladas con todo, con su franja ámbar y nada más. Ahora hay un chip
+**🏪 Reposiciones** en Administración, al lado de «Especiales» (`QUICK_DEFS`, `esRPT`).
+
+### 2. «Un letrero, AVISO ALERTA flotante a los 3-4 días si no programaron entrega, o no lo marcaron entregado»
+`rptAtrasadas()` + `renderRptAtrasadas()` → caja ámbar en `#adm-rpt`, **`position:sticky`**
+(el «flotante»: queda pegada arriba mientras se baja la tabla) con cuántas son, hace cuántos
+días la peor, de qué tiendas, y un botón que aplica el filtro.
+
+⚠️ **«No programaron entrega» no existe como estado**: la fecha es obligatoria, así que toda
+reposición nace con una. Lo que sí pasa —y para el negocio es lo mismo— es que **la fecha
+llegue y pase sin que nadie la marque entregada**: o no salió, o salió y no se anotó. Por eso
+el corte se mide desde la **fecha de entrega**, no desde que se cargó: una reposición pedida
+hace 10 días para entregar mañana está perfecta y no tiene que gritar. `RPT_DIAS_AVISO`=3.
+
+### 3. «¿Qué paja es ese Excel que genera? Yo te pasé un formato»
+Mandó una captura de Excel con **el mensaje de WhatsApp pegado en la columna A**. El Excel
+estaba bien —lo verifiqué contra su formato fila por fila en §4dk— pero **la culpa del error
+es del panel**: la ventana de «pedido guardado» ponía adelante un `<textarea>` enorme con el
+mensaje, y el botón del Excel chiquito, al costado, entre otros tres. Lo natural era copiar
+de ahí y pegar.
+
+En una RPT, ahora el Excel va **primero, ancho y solo**, y dice para qué es: *«Bajar el Excel
+del formato — es lo que va por correo a logística»*, con el nombre del archivo debajo. El
+cuadro de texto queda abajo, rotulado *«Y este es el mensaje para WhatsApp — para avisar, no
+para el correo»*, y el botón dice «📋 Copiar el mensaje» (antes, «📋 Copiar» a secas).
+
+⚠️ Y `bajarRptExcel` **fallaba en silencio**: si el pedido no estaba en `STATE` hacía `return`
+sin decir nada — tocabas el botón y no pasaba NADA. Ahora avisa.
+
+### 4. Lo que apareció al mirar el «¿por qué pierdo conexión con Google Sheets?»
+La captura del cartel decía 404 otra vez. Pero el registro del respaldo de Kommo desmiente
+que el Apps Script esté caído:
+
+```
+17:53  ✗ HTTP 404        (corrida #41)
+20:26  ✓ contestó bien   (corrida #42)
+```
+
+A las 20:26 el **mismo** `/exec` le contestó a un servidor de GitHub, y a esa misma hora el
+navegador del dueño recibía 404. **La implementación está viva y bien publicada: lo que falla
+es el navegador.** La diferencia entre los dos es la sesión de Google: con varias cuentas
+abiertas, Google antepone `/u/0/`, `/u/1/`… y devuelve 404 si la app no es de la cuenta que
+quedó primera. Es el motivo clásico de «anda en una compu y en otra no» con Apps Script, y
+explica también el «entro de otra PC y aparece todo en 0» de §4di.
+
+Dos cambios: `apiPost` pide con **`credentials:'omit'`** (la app está publicada como
+«Cualquier persona», así que la petición no necesita —ni debe— arrastrar la sesión de Google
+de cada uno), y los reintentos pasan de 3 a **4, con el último a los 45 s**: se vio que la
+caída va y viene, y rendirse a los 31 segundos deja al equipo mirando un cartel rojo por algo
+que se arregla solo.
+
+⚠️ **Lo que NO hay que hacer es volver a implementar**: cada «Nueva implementación» estrena
+otra dirección y empeora el enredo. La prueba de 20 segundos es abrir el panel en una
+**ventana de incógnito**: si ahí anda, es la sesión de Google del navegador.
+
+### Pruebas
+`tests/test_rpt.js` pasa de 96 a **109 checks**: el chip trae las reposiciones y ninguna
+venta; el aviso agarra las de 3+ días y **no** la de ayer, **no** una ya entregada por vieja
+que sea, **no** una para mañana, **no** una venta común atrasada; el cartel nombra tiendas y
+días y es `sticky`; el Excel va antes que el texto en la ventana de guardado; y el botón
+avisa en vez de quedarse mudo. Batería completa: **1.915 comprobaciones, 0 mal**.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

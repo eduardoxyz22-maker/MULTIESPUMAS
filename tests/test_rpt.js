@@ -413,6 +413,37 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…marca el tipo de cada renglón', /\[Adicional\]|\[Reposición\]/.test(wa.t));
   chk('…y recuerda los 7 días hábiles de los adicionales', /7 días hábiles/.test(wa.t));
   chk('una venta normal sigue con su mensaje de siempre', /📦 \*PEDIDO/.test(wa.tv), wa.tv.split('\n')[0]);
+  /* §4do — el dueño bajó «el Excel» y encontró el mensaje de WhatsApp en la columna A:
+     había copiado del cuadro de texto, que ocupaba toda la ventana. El Excel va primero. */
+  const guardada = await page.evaluate(() => {
+    var p=STATE.filter(function(x){return esRPT(x.oc);})[0];
+    var vistos=[]; var orig=window.openModal;
+    window.openModal=function(h){ vistos.push(h); };
+    showWhatsappModal(p);
+    window.openModal=orig;
+    var h=vistos[0]||'';
+    var iExcel=h.indexOf('bajarRptExcel'), iTexto=h.indexOf('<textarea');
+    var d=document.createElement('div'); d.innerHTML=h;
+    var b1=d.querySelectorAll('button')[1];   // el primero es la ✕ del encabezado
+    return { antes: iExcel>=0 && iTexto>=0 && iExcel<iTexto,
+             primero: b1?b1.textContent.replace(/\s+/g,' ').trim():'(no hay)',
+             dice: /va por correo a log/.test(h), archivo:/\.xlsx/.test(h),
+             wa: /mensaje para WhatsApp/.test(h), titulo:/Reposición guardada/.test(h) };
+  });
+  chk('⚠️ al guardar una reposición, el Excel va PRIMERO, arriba del texto de WhatsApp',
+      guardada.antes===true && /Excel del formato/.test(guardada.primero), guardada.primero);
+  chk('…y dice para qué es (el correo a logística), con el nombre del archivo',
+      guardada.dice && guardada.archivo, guardada.dice+' / '+guardada.archivo);
+  chk('…y el cuadro de abajo queda marcado como «mensaje para WhatsApp», no como el Excel',
+      guardada.wa===true && guardada.titulo===true, guardada.wa+' / '+guardada.titulo);
+  const mudo = await page.evaluate(() => {
+    var dicho=''; var o=window.toast; window.toast=function(m){ dicho=String(m); };
+    bajarRptExcel('no-existe-este-id');
+    window.toast=o; return dicho;
+  });
+  chk('⚠️ si no encuentra el pedido lo DICE, en vez de no hacer nada al tocar el botón',
+      /No encuentro ese pedido/.test(mudo), mudo||'(no dijo nada)');
+
   chk('la ficha de una RPT ofrece Excel y WhatsApp',
       /bajarRptExcel/.test(wa.botones) && /whatsappUrl/.test(wa.botones), wa.botones.length+' car.');
   chk('…y una venta normal no muestra esos botones', wa.sinBotones==='', wa.sinBotones);
@@ -476,6 +507,53 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('⚠️ sin sucursal no se guarda: el camión no sabría a dónde ir', falta.guardo===false, falta.guardo);
   chk('…y el campo queda marcado en rojo', falta.marcado===true, falta.marcado);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  console.log('\n── 8b. Logística las encuentra, y le gritan si se quedan (§4do) ──');
+  const logi = await page.evaluate(() => {
+    var hoy=todayStr();
+    var rpt=function(id,dias,tienda,entregado){
+      return {id:id, oc:'RPT '+hoy.slice(5,7)+'-'+id, cliente:tienda, vendedor:'Mirian Salazar',
+              fecha:diasAtras(dias), ts:Date.now(), entregado:!!entregado,
+              productos:[{desc:'COLCHON',medida:'140x190',codigo:'CH1',cant:1}]};
+    };
+    STATE=[
+      rpt('001', 6, 'Mia Plaza'),          // 6 días atrasada
+      rpt('002', 4, 'Charcas'),            // 4 días
+      rpt('003', 4, 'Charcas'),            // otra de la misma tienda
+      rpt('004', 1, 'Central'),            // 1 día: todavía no grita
+      rpt('005', 9, 'Carmelo', true),      // vieja pero YA ENTREGADA
+      {id:'v1', oc:hoy.slice(5,7)+'-001', nota:'1', cliente:'Juana', vendedor:'Mirian Salazar',
+       fecha:diasAtras(9), ts:Date.now(), productos:[{desc:'COLCHON',medida:'140x190',codigo:'CH1',cant:1}]}
+    ];
+    // el pedido de mañana no puede contar como atrasado
+    STATE.push(rpt('006', -1, 'Mutualista'));
+    var atras=rptAtrasadas(STATE).map(function(p){ return p.id; });
+    var chip=QUICK_DEFS.filter(function(d){ return d.k==='rpt'; })[0];
+    var filtra=chip ? STATE.filter(chip.test).map(function(p){ return p.id; }) : [];
+    showView('admin');
+    var al=document.getElementById('admin-lock'); if(al) al.style.display='none';
+    var ac=document.getElementById('admin-content'); if(ac) ac.style.display='block';
+    renderRptAtrasadas();
+    var caja=document.getElementById('adm-rpt');
+    var css=caja?getComputedStyle(caja).position:'(no existe)';
+    return { atras:atras, filtra:filtra, txt:(caja?caja.textContent:'').replace(/\s+/g,' '),
+             pos:css, chipLbl:chip?chip.lbl:'(no hay chip)' };
+  });
+  chk('⚠️ hay un filtro «solo reposiciones»', /Reposiciones/.test(logi.chipLbl), logi.chipLbl);
+  chk('…y trae las 6 reposiciones, ninguna venta', logi.filtra.length===6 && logi.filtra.indexOf('v1')<0,
+      logi.filtra.join(','));
+  chk('⚠️ el aviso agarra las que pasaron 3 días o más sin entregar',
+      logi.atras.join(',')==='001,002,003', logi.atras.join(','));
+  chk('⚠️ …NO la de ayer (todavía no es tarde)', logi.atras.indexOf('004')<0);
+  chk('⚠️ …NO una ya entregada, por vieja que sea', logi.atras.indexOf('005')<0);
+  chk('⚠️ …NO una para mañana (el corte es la fecha de ENTREGA, no cuándo se cargó)',
+      logi.atras.indexOf('006')<0);
+  chk('…ni una venta común atrasada: esto es solo de reposiciones', logi.atras.indexOf('v1')<0);
+  chk('el cartel dice cuántas, hace cuánto la peor y de qué tiendas',
+      /3 reposiciones de tienda sin entregar/.test(logi.txt) && /6 días/.test(logi.txt) &&
+      /Mia Plaza/.test(logi.txt) && /Charcas \(2\)/.test(logi.txt), logi.txt.slice(0,150));
+  chk('⚠️ …y queda flotando arriba al bajar la tabla', logi.pos==='sticky', logi.pos);
 
   // ─────────────────────────────────────────────────────────────────────────
   console.log('\n── 9. Que no se cuele como venta, y que no quede a medias (§4dl) ──');

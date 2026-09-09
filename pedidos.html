@@ -389,6 +389,9 @@ tbody tr.row-rpt{box-shadow:inset 4px 0 0 var(--rpt) !important}
 .qchip.active{background:var(--teal);color:#fff;border-color:var(--teal)}
 /* Chips pegados a la tabla: quedan fijos al desplazar la página para filtrar sin subir */
 .qchips-tabla{position:sticky;top:0;z-index:6;background:#fff;padding:10px 0 12px;margin:0;border-bottom:1px solid var(--gray-lt)}
+/* 🏪 §4do — «un letrero, AVISO ALERTA flotante». Queda pegado arriba mientras se baja la
+   tabla: si hay que bajar para descubrir que una tienda está sin mercadería, no sirve. */
+.rpt-alerta{position:sticky;top:0;z-index:7;border-left:5px solid var(--rpt) !important;background:var(--rpt-lt) !important;color:var(--rpt-dk) !important}
 .qchip .n{opacity:.7;font-weight:600}
 .qchip.active .n{opacity:.95}
 .revisar{background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:var(--r-md);padding:11px 16px;margin-bottom:18px;font-size:.82rem;color:#7c4b00;line-height:1.5}
@@ -957,6 +960,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div id="adm-stock"></div>
         <!-- 📥 Borradores de Kommo que quedaron sin vendedora (§4ca) -->
         <div id="adm-borradores"></div>
+        <!-- 🏪 Reposiciones de tienda que se quedaron sin entregar (§4do). Va acá arriba y
+             pegado al borde superior al hacer scroll: una tienda sin mercadería no es un
+             detalle que se descubra bajando la tabla. -->
+        <div id="adm-rpt"></div>
         <div class="qchips qchips-tabla" id="adm-chips"></div>
         <div class="tw tw-tall"><table id="tbl-pedidos"></table></div>
         <div id="adm-mas"></div>
@@ -1812,7 +1819,15 @@ var ADMIN_KEY_LOCAL=''; try{ ADMIN_KEY_LOCAL=localStorage.getItem(LS_ADMIN_KEY)|
 var SERVER_ADMIN_AUTH='';    // '' no sé · 'abierto' (sin ADMIN_KEY) · 'clave'
 function apiPost(payload){
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
-  return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+  /* ⚠️ `credentials:'omit'` (§4do). El 09/09 a la noche el panel daba 404 en el navegador
+     del dueño mientras, a la MISMA hora, el mismo Apps Script contestaba bien a la consulta
+     que hace GitHub Actions desde un servidor (corrida #42, 20:26). O sea: la implementación
+     está viva y bien publicada — lo que falla es el navegador. La diferencia entre los dos
+     es la sesión de Google: con varias cuentas abiertas, Google mete el `/u/0/`, `/u/1/`…
+     adelante y devuelve 404 si la app no es de la cuenta que quedó primera. Pidiendo la
+     planilla SIN credenciales, la petición es anónima —que es justo como está publicada,
+     «Cualquier persona»— y deja de depender de con qué cuenta esté logueado cada uno. */
+  return fetch(SHEETS_URL,{method:'POST',credentials:'omit',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){
       /* ⚠️ ANTES ESTO IBA DERECHO A `r.json()` (§4dm). Cuando Google contesta 404 —la
          implementación del Apps Script se borró, se archivó, o se hizo una NUEVA (que
@@ -6604,7 +6619,11 @@ function refrescarEstado(){
    mostrando el MOTIVO y un botón para reintentar ya; y «Conectado» se dice recién cuando
    el servidor contestó de verdad.
    ========================================================================== */
-var CARGA_INTENTOS=[3000, 8000, 20000];   // reintentos después del primer fallo
+/* ⚠️ CUATRO REINTENTOS, NO TRES, Y EL ÚLTIMO A LOS 45 s (§4do). Con el 404 del 09/09 se
+   vio que la caída va y viene: el mismo servidor contestaba a GitHub Actions y no al
+   navegador. Rendirse a los 31 segundos deja al equipo mirando un cartel rojo por algo que
+   se arregla solo un minuto después. El cartel sigue diciendo el motivo mientras tanto. */
+var CARGA_INTENTOS=[3000, 8000, 20000, 45000];   // reintentos después del primer fallo
 var CARGA_ESTADO='';                       // '' · 'cargando' · 'reintento' · 'error' · 'ok'
 var CARGA_TIMER=null, CARGA_TIC=null, CARGA_PROXIMO=0;
 /* Cada arranque de `cargaInicial` es una «generación»: si alguien toca «Volver a intentar»
@@ -7453,7 +7472,10 @@ var QUICK_DEFS=[
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
   {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
   {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
-  {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}}
+  {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}},
+  /* 🏪 §4do — pregunta del dueño: «¿dónde ve logística las reposiciones? ¿o filtran por
+     solo reposiciones?». Estaban mezcladas con todo, con su franja ámbar y nada más. */
+  {k:'rpt',         lbl:'🏪 Reposiciones',  test:function(p){return esRPT(p&&p.oc);}}
 ];
 function quickTest(k){ for(var i=0;i<QUICK_DEFS.length;i++) if(QUICK_DEFS[i].k===k) return QUICK_DEFS[i].test; return function(){return true;}; }
 /* Cuántas filas se dibujan de una. 150 entra de sobra en el uso diario (el mes en curso
@@ -7483,6 +7505,40 @@ function fueraDelMes(){
   if(!meses.length) return null;
   var total=0; meses.forEach(function(k){ total+=por[k]; });
   return { meses:meses, por:por, total:total };
+}
+/* ============================================================================
+   🏪 REPOSICIONES QUE SE QUEDARON SIN ENTREGAR (§4do)
+   Pedido del dueño: *«un letrero, AVISO ALERTA flotante a los 3-4 días si no programaron
+   entrega, o no lo marcaron entregado»*.
+
+   ⚠️ «No programaron entrega» no existe como estado: la fecha es obligatoria, así que toda
+   reposición nace con una. Lo que SÍ pasa —y es lo mismo para el negocio— es que **la fecha
+   llegue y pase sin que nadie la marque entregada**: o no salió, o salió y no se anotó. Las
+   dos son igual de malas: la tienda se quedó sin mercadería y nadie se enteró.
+   Por eso el corte se mide desde la FECHA DE ENTREGA, no desde que se cargó: una reposición
+   pedida hace 10 días para entregar mañana está perfecta y no tiene que gritar. */
+var RPT_DIAS_AVISO=3;   // «a los 3-4 días», dijo el dueño
+function rptAtrasadas(lista){
+  var hoy=todayStr();
+  return (lista||STATE).filter(function(p){
+    if(!p || !esRPT(p.oc) || p.entregado || esFilaSistema(p) || esBorrador(p)) return false;
+    var f=String(p.fecha||''); if(!f || f>hoy) return false;
+    return diasEntreFechas(f, hoy) >= RPT_DIAS_AVISO;
+  }).sort(function(a,b){ return String(a.fecha)<String(b.fecha)?-1:1; });
+}
+function renderRptAtrasadas(){
+  var el=document.getElementById('adm-rpt'); if(!el) return;
+  var list=rptAtrasadas(STATE);
+  if(!list.length){ el.className=''; el.innerHTML=''; return; }
+  var uno=(list.length===1), peor=diasEntreFechas(String(list[0].fecha), todayStr());
+  var quien={}; list.forEach(function(p){ var t=String(p.cliente||'?').trim(); quien[t]=(quien[t]||0)+1; });
+  var tiendas=Object.keys(quien).map(function(t){ return esc(t)+(quien[t]>1?(' ('+quien[t]+')'):''); }).join(' · ');
+  el.className='revisar rpt-alerta';
+  el.innerHTML='🏪 <b>'+list.length+' reposici'+(uno?'ón':'ones')+' de tienda sin entregar</b> — '+
+    (uno?'la fecha pasó hace ':'la más vieja, hace ')+'<b>'+peor+' día'+(peor===1?'':'s')+'</b>. '+
+    'O no salió el camión, o salió y nadie la marcó entregada: la tienda se quedó sin mercadería.<br>'+
+    '<span style="color:var(--muted)">'+tiendas+'</span>'+
+    ' <button class="rv-toggle" style="margin-left:8px" onclick="setQuick(\'rpt\')">ver las reposiciones</button>';
 }
 function renderFueraDelMes(){
   var el=document.getElementById('adm-fuera'); if(!el) return;
@@ -7541,7 +7597,7 @@ function admSort(list){
 }
 function admFilter(){ return admSort(admBaseList().filter(quickTest(QUICK_FILTER))); }
 function renderAdmin(){
-  renderChips(); renderRevisar(); renderFueraDelMes(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
+  renderChips(); renderRevisar(); renderFueraDelMes(); renderRptAtrasadas(); renderStockAviso(); renderBorradoresHuerfanos(); renderOcupacion(); renderZonas(); autoAbrirParte(); pintarBotonCierre();
   var list=admFilter();
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
@@ -13691,14 +13747,27 @@ function closeModal(){ document.getElementById('modal').classList.remove('on'); 
 function showWhatsappModal(rec, volverA, reenvio){
   var text=pedidoText(rec);
   var salir = esc(volverA || 'closeModal()');
-  var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':'✅ Pedido guardado')+'</h3>'+
+  var _rpt=esRPT(rec&&rec.oc), _rid=String((rec&&rec.id)||'').replace(/'/g,'');
+  /* 🏪 §4do — EN UNA REPOSICIÓN, EL EXCEL VA PRIMERO Y GRANDE. El dueño abrió el archivo que
+     bajó y encontró el mensaje de WhatsApp pegado en la columna A: *«¿qué paja es ese Excel
+     que genera? yo te pasé un formato»*. El Excel estaba bien —es otro botón—, pero esta
+     ventana ponía adelante un cuadro de texto enorme con el mensaje y el Excel chiquito al
+     costado, así que lo natural era copiar de ahí. Lo que sale por correo a logística es el
+     formato; el WhatsApp es el aviso. En ese orden. */
+  var _excel = _rpt
+    ? ('<button class="btn" style="width:100%;background:var(--rpt);color:#fff;font-weight:800;font-size:.95rem;padding:13px" onclick="bajarRptExcel(\''+_rid+'\')">⬇️ Bajar el Excel del formato — es lo que va por correo a logística</button>'+
+       '<p style="font-size:.78rem;color:var(--muted);margin:9px 0 14px;text-align:center">Se baja como <b>'+esc(nombreArchivoRpt(rec))+'</b>. Adjuntalo al correo tal cual.</p>')
+    : '';
+  var html='<div class="modal-h"><h3>'+(reenvio?'📲 Reenviar la venta':(_rpt?'✅ Reposición guardada':'✅ Pedido guardado'))+'</h3>'+
       '<button class="modal-x" onclick="'+salir+'">✕</button></div>'+
     '<div class="modal-b">'+
-      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copiá'+(reenvio?' la venta':' el pedido')+' y pegalo en WhatsApp, o abrí WhatsApp directo:</p>'+
+      _excel+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">'+
+        (_rpt ? '📲 Y este es el <b>mensaje para WhatsApp</b> — para avisar, no para el correo:'
+              : ('Copiá'+(reenvio?' la venta':' el pedido')+' y pegalo en WhatsApp, o abrí WhatsApp directo:'))+'</p>'+
       '<textarea class="wa-text" id="wa-text" readonly>'+esc(text)+'</textarea>'+
       '<div class="modal-actions">'+
-        (esRPT(rec&&rec.oc)?('<button class="btn btn-sm" style="background:var(--rpt);color:#fff;font-weight:700" onclick="bajarRptExcel(\''+String(rec.id).replace(/'/g,'')+'\')">⬇️ Excel del formato</button>'):'')+
-        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar</button>'+
+        '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar el mensaje</button>'+
         '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="'+salir+'">'+(reenvio?'Volver a la venta':'Cerrar')+'</button>'+
       '</div>'+
@@ -14360,7 +14429,12 @@ function nombreArchivoRpt(p){
   return 'RPT-'+id+'-'+suc+'.xlsx';
 }
 function bajarRptExcel(id){
-  var p=findById(id); if(!p) return;
+  var p=findById(id);
+  /* ⚠️ NO FALLAR EN SILENCIO (§4do). Antes, si el pedido todavía no estaba en la lista
+     —recién guardado, o la planilla sin bajar— esto hacía `return` sin decir nada: la
+     persona tocaba el botón, no pasaba NADA, y terminaba copiando el texto de WhatsApp a
+     mano. Si no se encuentra, se dice. */
+  if(!p){ toast('No encuentro ese pedido para armar el Excel. Refrescá la página y abrilo desde la lista.','err'); return; }
   if(!esRPT(p.oc)){ toast('Ese pedido no es una reposición de tienda.','err'); return; }
   downloadBlob(buildXlsx([rptHoja(p)]), nombreArchivoRpt(p), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del formato descargado ✓ — mandalo a '+RPT_MAIL_PARA[0],'ok');

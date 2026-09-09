@@ -157,6 +157,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   nueva. Pasó de verdad el 09/09 entre las 14:23 y las 17:53.
   ⚠️ Todo doble de `fetch` en los tests tiene que traer `ok:true, status:200`: una `Response`
   real siempre los trae, y sin ellos el doble simula un 404 (rompió `test_conflicto.js`).
+  ⚠️ **Un 404 en el navegador NO significa que el Apps Script esté caído** (§4do): el 09/09 a
+  las 20:26 el mismo `/exec` le contestaba bien a GitHub Actions mientras el navegador del
+  dueño recibía 404. Es la sesión de Google del navegador (varias cuentas → `/u/0/`, `/u/1/`).
+  Por eso `apiPost` pide con **`credentials:'omit'`** y `CARGA_INTENTOS` llega a 45 s.
+  **Prueba de 20 segundos: abrir el panel en incógnito.** Y **NO volver a implementar**: cada
+  «Nueva implementación» estrena otra dirección y empeora el enredo.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
@@ -224,7 +230,14 @@ correo + el mensaje de **WhatsApp**.
   del medio repinta todos los otros Excel del panel.
 - ⚠️ `xlsxHoja` tenía la regex de celdas glotona: una **celda vacía con estilo** se tragaba
   la de al lado (valor corrido de columna, en silencio). Arreglado en §4dk.
-- `tests/test_rpt.js` (96 checks).
+- **§4do — logística las encuentra y le gritan**: chip **🏪 Reposiciones** en Administración
+  (`QUICK_DEFS`), y aviso ámbar `sticky` en `#adm-rpt` (`rptAtrasadas`/`renderRptAtrasadas`,
+  `RPT_DIAS_AVISO`=3) con las que pasaron 3+ días **desde la fecha de entrega** sin marcarse
+  entregadas. ⚠️ El corte NO se mide desde que se cargó: una pedida hace 10 días para mañana
+  está bien. Y al guardar una RPT, **el Excel va primero y ancho** — el dueño copió el texto
+  de WhatsApp y lo pegó en una hoja creyendo que era el formato; `bajarRptExcel` además ya no
+  falla en silencio.
+- `tests/test_rpt.js` (109 checks).
 - **§4dl** — repaso: (1) **«Quién vendió qué» ya no cuenta ATC ni RPT como ventas**
   (`buscarData`); lo que queda afuera se dice con `busFueraTxt`, abajo del cuadro y en la
   carátula impresa. ⚠️ Hasta el 09/09 las ATC SÍ entraban marcadas — está anotado en la
