@@ -159,7 +159,30 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y esconde el precio', form.despues.lineaPrecio===false, form.despues.lineaPrecio);
   chk('el Tipo ofrece exactamente Reposición y Adicional, como el formato en papel',
       form.despues.tipos.join(',')==='Reposición,Adicional', form.despues.tipos.join(','));
-  chk('la sucursal trae sugerencias', form.despues.sucs.length>=4, form.despues.sucs.join(' · '));
+  /* §4dn — el dueño las nombró una por una: «falta mutualista, charcas, carmelo». */
+  chk('el desplegable trae las SIETE tiendas',
+      ['Tiendas Roho','Mia Plaza','Buenos Aires','Central','Mutualista','Charcas','Carmelo']
+        .every(function(x){ return form.despues.sucs.indexOf(x)>=0; }) && form.despues.sucs.length===7,
+      form.despues.sucs.join(' · '));
+  /* ⚠️ §4dn: las zonas de las tiendas van VACÍAS hasta que el dueño dé las de verdad. Una
+     zona inventada se autocompleta sola, nadie la corrige y le desvía la ruta al chofer. */
+  const suc = await page.evaluate(() => {
+    showView('form'); resetForm(); segSet('f-doc-tipo','RPT'); setDocTipo();
+    document.getElementById('f-rpt-suc').value='Mia Plaza'; sucursalElegida();
+    var vacio=(document.getElementById('f-zona')||{}).value;
+    // y cuando una tienda SÍ tenga datos, se completan… sin pisar lo ya escrito
+    SUCURSALES[1].z='ZONA REAL'; SUCURSALES[1].d='Calle Falsa 123';
+    document.getElementById('f-zona').value=''; document.getElementById('f-direccion').value='ya escrito';
+    sucursalElegida();
+    var r={ vacio:vacio, zona:document.getElementById('f-zona').value,
+            dir:document.getElementById('f-direccion').value };
+    SUCURSALES[1].z=''; SUCURSALES[1].d='';
+    return r;
+  });
+  chk('⚠️ elegir una tienda NO inventa una zona', suc.vacio==='', '«'+suc.vacio+'»');
+  chk('…y cuando la tienda tenga su zona de verdad, se completa sola', suc.zona==='ZONA REAL', suc.zona);
+  chk('…sin pisar lo que ya estaba escrito', suc.dir==='ya escrito', suc.dir);
+
   chk('volviendo a OC vuelve todo a su lugar',
       form.vuelta.rpt===false && form.vuelta.cli===true && form.vuelta.nota===true && form.vuelta.lineaPrecio===true,
       JSON.stringify(form.vuelta));
@@ -181,7 +204,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('le tocó un número de la serie RPT', rec.esRpt===true, rec.oc);
   chk('⚠️ el destino quedó guardado como «cliente» (la sucursal)', rec.cliente==='Mia Plaza', rec.cliente);
-  chk('la zona se completó sola al elegir la sucursal', !!rec.zona, rec.zona);
+  chk('la zona quedó como se escribió', rec.zona==='Norte', rec.zona);
   chk('no quedó ni nota de venta ni cobro', !rec.nota && !rec.pagado && !(Number(rec.saldo)>0),
       rec.nota+' / '+rec.pagado+' / '+rec.saldo);
   chk('cada renglón guardó su tipo', rec.prods.length===2 && rec.prods[0].t==='Reposición' && rec.prods[1].t==='Adicional',

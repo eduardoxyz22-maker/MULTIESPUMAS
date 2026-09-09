@@ -1565,11 +1565,19 @@ var RPT_TIPOS=['Reposición','Adicional'];
 /* Las sucursales a las que se repone. Es una lista de sugerencias, no un candado: si
    mañana abren otra, se escribe a mano y funciona igual. La zona/dirección/maps se
    autocompletan al elegirla para que logística no tenga que buscarlas. */
+/* ⚠️ LAS ZONAS VAN VACÍAS A PROPÓSITO (§4dn). La primera versión traía «Norte», «Centro»…
+   que YO inventé: el dueño nunca las dio. Una zona equivocada no se nota —se autocompleta
+   sola y nadie la corrige— y le desvía la ruta al chofer. Vacío obliga a escribirla, que es
+   peor de tipear pero no miente. Para llenarlas hace falta, de cada tienda, la ZONA con la
+   que trabaja logística y el link de Google Maps; ahí `sucursalElegida()` empieza a servir. */
 var SUCURSALES=[
-  {n:'Tiendas Roho',    z:'Roho',        d:'', m:''},
-  {n:'Mia Plaza',       z:'Norte',       d:'', m:''},
-  {n:'Buenos Aires',    z:'Centro',      d:'', m:''},
-  {n:'Central',         z:'Centro',      d:'', m:''}
+  {n:'Tiendas Roho',  z:'', d:'', m:''},
+  {n:'Mia Plaza',     z:'', d:'', m:''},
+  {n:'Buenos Aires',  z:'', d:'', m:''},
+  {n:'Central',       z:'', d:'', m:''},
+  {n:'Mutualista',    z:'', d:'', m:''},
+  {n:'Charcas',       z:'', d:'', m:''},
+  {n:'Carmelo',       z:'', d:'', m:''}
 ];
 function sucursalDe(nombre){
   var k=normNombre(nombre||''); if(!k) return null;

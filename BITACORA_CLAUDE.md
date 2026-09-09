@@ -5777,6 +5777,32 @@ contra el JSON. Batería completa: **1.890 comprobaciones, 0 mal**.
 5. Verificar sin entrar a Google: Actions → «Traer ventas de Kommo (respaldo)» → Run workflow.
    Tiene que imprimir `servidor del panel: versión …`.
 
+## 4dn. Las tiendas son SIETE, y las zonas que puse eran inventadas (2026-09-09, noche)
+
+El dueño, mirando el desplegable de «Sucursal de destino» recién publicado: *«falta
+mutualista, charcas, carmelo»*.
+
+`SUCURSALES` queda con las siete: **Tiendas Roho, Mia Plaza, Buenos Aires, Central,
+Mutualista, Charcas, Carmelo**. (El campo es un `input` con lista, así que escribir una que
+no esté siempre funcionó — pero si hay que escribirla a mano, la lista no sirve.)
+
+### Y de paso, lo que estaba mal y él no pidió
+Las cuatro que ya estaban traían zona: `Roho`, `Norte`, `Centro`, `Centro`. **Las inventé
+yo**: el dueño nunca dio esas zonas. Y una zona inventada es peor que ninguna, porque
+`sucursalElegida()` la escribe SOLA en el formulario: nadie la corrige, y la zona es lo que
+agrupa la ruta del chofer. Se vacían las cuatro.
+
+El mecanismo queda intacto y probado: cuando una tienda tenga su zona/dirección/Maps de
+verdad, se completan solas al elegirla, y **nunca pisan** lo que ya esté escrito. Falta el
+dato del dueño: de cada tienda, la **zona con la que trabaja logística** y el **link de
+Google Maps**.
+
+### Pruebas
+`tests/test_rpt.js` pasa de 84 a **87 checks**: que estén las siete con nombre y apellido,
+que elegir una **no invente** una zona, que cuando la tenga sí la complete, y que no pise lo
+escrito. El check viejo «la zona se completó sola» era mentira —el propio test le ponía
+«Norte» dos líneas antes— y ahora comprueba lo que dice. Batería completa en verde.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

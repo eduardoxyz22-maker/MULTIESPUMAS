@@ -192,8 +192,13 @@ correo + el mensaje de **WhatsApp**.
 - **El tipo viaja en el propio número** (`RPT 09-001`), igual que la ATC: ninguna columna
   nueva en la planilla. `esRPT`/`ocTipoDe`/`ocPrefijo`; `nextOcMes(fecha,tipo)` lleva **tres
   series independientes**. El **destino se guarda en `cliente`** (la sucursal): así entra
-  solo a la lista de carga, la ficha del chofer y el mapa. `SUCURSALES` autocompleta
-  zona/dirección/maps sin pisar lo escrito.
+  solo a la lista de carga, la ficha del chofer y el mapa. `SUCURSALES` (§4dn) son **siete**:
+  Tiendas Roho, Mia Plaza, Buenos Aires, Central, Mutualista, Charcas, Carmelo — el campo es
+  un `input` con lista, así que se puede escribir otra. Autocompleta zona/dirección/maps sin
+  pisar lo escrito, pero ⚠️ **van vacías**: las zonas que había («Norte», «Centro») las
+  inventé yo y `sucursalElegida()` las escribía solas en el formulario, desviando la ruta del
+  chofer sin que nadie lo notara. **Falta que el dueño dé, de cada tienda, la zona real y el
+  link de Maps.**
 - **NO es una venta** → `fueraDeConta` la deja afuera de Contabilidad y del Cuadre.
   **SÍ sale del depósito** → `stockCuenta` la deja pasar y lo pendiente se cubre.
   ⚠️ **Pero NO es rotación**: va por `stockPedidoUnico` (como los pedidos de Eduardo, §4dj)
