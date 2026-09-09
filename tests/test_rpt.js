@@ -183,6 +183,35 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y cuando la tienda tenga su zona de verdad, se completa sola', suc.zona==='ZONA REAL', suc.zona);
   chk('…sin pisar lo que ya estaba escrito', suc.dir==='ya escrito', suc.dir);
 
+  /* Las 6 ubicaciones las dio el dueño con el pin exacto de cada tienda (§4dn). Lo que se
+     comprueba no es el número: es que el MAPA las pueda leer y caigan en Santa Cruz. */
+  const ubic = await page.evaluate(() => {
+    return SUCURSALES.map(function(s){
+      var c=s.m?coordsDeLink(s.m):null;
+      return { n:s.n, tiene:!!s.m, lat:c&&c.lat, lng:c&&c.lng };
+    });
+  });
+  const conUbic=ubic.filter(function(x){ return x.tiene; });
+  chk('las 6 tiendas propias tienen su ubicación (Tiendas Roho no es tienda propia)',
+      conUbic.length===6 && ubic.filter(function(x){return !x.tiene;})[0].n==='Tiendas Roho',
+      conUbic.map(function(x){return x.n;}).join(' · '));
+  chk('⚠️ el mapa las lee todas (si el formato no sirviera, el chofer no las vería)',
+      conUbic.every(function(x){ return x.lat!=null && x.lng!=null; }),
+      conUbic.filter(function(x){return x.lat==null;}).map(function(x){return x.n;}).join(',')||'todas');
+  chk('⚠️ …y todas caen en Santa Cruz (un signo cambiado las mandaría a otro continente)',
+      conUbic.every(function(x){ return x.lat>-18.1 && x.lat<-17.4 && x.lng>-63.5 && x.lng<-62.9; }),
+      conUbic.map(function(x){return x.n+' '+x.lat.toFixed(4)+','+x.lng.toFixed(4);}).join(' | '));
+  const puestas = await page.evaluate(() => {
+    showView('form'); resetForm(); segSet('f-doc-tipo','RPT'); setDocTipo();
+    document.getElementById('f-rpt-suc').value='Carmelo'; sucursalElegida();
+    var puso=(document.getElementById('f-maps')||{}).value;
+    // …y no pisa una ubicación ya escrita
+    document.getElementById('f-rpt-suc').value='Charcas'; sucursalElegida();
+    return { puso:puso, tras:(document.getElementById('f-maps')||{}).value };
+  });
+  chk('elegir la tienda pone su ubicación sola', /-17\.79174/.test(puestas.puso), puestas.puso);
+  chk('…y cambiar de tienda NO pisa la ubicación ya puesta', puestas.tras===puestas.puso, puestas.tras);
+
   chk('volviendo a OC vuelve todo a su lugar',
       form.vuelta.rpt===false && form.vuelta.cli===true && form.vuelta.nota===true && form.vuelta.lineaPrecio===true,
       JSON.stringify(form.vuelta));

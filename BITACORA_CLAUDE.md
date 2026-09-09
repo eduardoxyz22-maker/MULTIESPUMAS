@@ -5793,15 +5793,30 @@ yo**: el dueño nunca dio esas zonas. Y una zona inventada es peor que ninguna, 
 agrupa la ruta del chofer. Se vacían las cuatro.
 
 El mecanismo queda intacto y probado: cuando una tienda tenga su zona/dirección/Maps de
-verdad, se completan solas al elegirla, y **nunca pisan** lo que ya esté escrito. Falta el
-dato del dueño: de cada tienda, la **zona con la que trabaja logística** y el **link de
-Google Maps**.
+verdad, se completan solas al elegirla, y **nunca pisan** lo que ya esté escrito.
+
+### Y esa misma noche llegaron las ubicaciones
+El dueño mandó el pin exacto de las seis tiendas propias (Central, Mia Plaza, Buenos Aires,
+Charcas, Carmelo, Mutualista). Van en `m` con el formato que produce `normalizaUbicacion` y
+que lee `coordsDeLink` (`?q=lat,lng`), **sin** el `&aprox=1` de §4dh: no son «la cuadra»,
+son la puerta. Elegir la tienda pone la ubicación sola y el pedido entra al mapa del chofer
+sin pasar por el geocodificador. **Tiendas Roho queda sin ubicación**: es el único destino
+que no es tienda propia.
+
+⚠️ **La ZONA sigue faltando** y es la que agrupa la ruta del chofer: hace falta la palabra
+exacta que usa logística hoy, no una que yo deduzca del mapa.
 
 ### Pruebas
-`tests/test_rpt.js` pasa de 84 a **87 checks**: que estén las siete con nombre y apellido,
+`tests/test_rpt.js` pasa de 84 a **92 checks**: que estén las siete con nombre y apellido,
 que elegir una **no invente** una zona, que cuando la tenga sí la complete, y que no pise lo
 escrito. El check viejo «la zona se completó sola» era mentira —el propio test le ponía
-«Norte» dos líneas antes— y ahora comprueba lo que dice. Batería completa en verde.
+«Norte» dos líneas antes— y ahora comprueba lo que dice.
+De las ubicaciones no se prueba el número (sería copiarlo dos veces) sino **que sirvan**: que
+`coordsDeLink` las lea todas —si el formato no sirviera, el chofer no las vería— y que
+**todas caigan en Santa Cruz** (un signo cambiado las manda a otro continente y nadie lo
+nota hasta que el camión sale). Aparte, verificado fuera del test: transcripción idéntica a
+lo que mandó el dueño, y las seis a entre 384 m y 3,4 km entre sí — ninguna repetida.
+Batería completa en verde.
 
 ## 5. Pendientes
 

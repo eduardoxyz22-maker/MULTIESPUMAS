@@ -195,10 +195,11 @@ correo + el mensaje de **WhatsApp**.
   solo a la lista de carga, la ficha del chofer y el mapa. `SUCURSALES` (§4dn) son **siete**:
   Tiendas Roho, Mia Plaza, Buenos Aires, Central, Mutualista, Charcas, Carmelo — el campo es
   un `input` con lista, así que se puede escribir otra. Autocompleta zona/dirección/maps sin
-  pisar lo escrito, pero ⚠️ **van vacías**: las zonas que había («Norte», «Centro») las
-  inventé yo y `sucursalElegida()` las escribía solas en el formulario, desviando la ruta del
-  chofer sin que nadie lo notara. **Falta que el dueño dé, de cada tienda, la zona real y el
-  link de Maps.**
+  pisar lo escrito. Las **ubicaciones** son las que dio el dueño (pin exacto, `?q=lat,lng` sin
+  `&aprox=1`); Tiendas Roho va sin ubicación porque no es tienda propia. ⚠️ Las **zonas van
+  vacías**: las que había («Norte», «Centro») las inventé yo y `sucursalElegida()` las
+  escribía solas, desviando la ruta del chofer sin que nadie lo notara. **Falta que el dueño
+  dé la zona real de cada tienda** — la palabra exacta que usa logística.
 - **NO es una venta** → `fueraDeConta` la deja afuera de Contabilidad y del Cuadre.
   **SÍ sale del depósito** → `stockCuenta` la deja pasar y lo pendiente se cubre.
   ⚠️ **Pero NO es rotación**: va por `stockPedidoUnico` (como los pedidos de Eduardo, §4dj)

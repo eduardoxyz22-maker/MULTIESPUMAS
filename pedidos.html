@@ -1570,14 +1570,19 @@ var RPT_TIPOS=['Reposición','Adicional'];
    sola y nadie la corrige— y le desvía la ruta al chofer. Vacío obliga a escribirla, que es
    peor de tipear pero no miente. Para llenarlas hace falta, de cada tienda, la ZONA con la
    que trabaja logística y el link de Google Maps; ahí `sucursalElegida()` empieza a servir. */
+/* Las ubicaciones las dio el dueño una por una (§4dn), con el pin exacto de cada tienda.
+   Van en el formato que produce `normalizaUbicacion` y que lee `coordsDeLink`
+   (`?q=lat,lng`), así el pedido entra al mapa del chofer sin pasar por el geocodificador
+   — y SIN el `&aprox=1`, porque no son «la cuadra»: son la puerta.
+   ⚠️ Tiendas Roho va sin ubicación: es el único destino que no es tienda propia. */
 var SUCURSALES=[
   {n:'Tiendas Roho',  z:'', d:'', m:''},
-  {n:'Mia Plaza',     z:'', d:'', m:''},
-  {n:'Buenos Aires',  z:'', d:'', m:''},
-  {n:'Central',       z:'', d:'', m:''},
-  {n:'Mutualista',    z:'', d:'', m:''},
-  {n:'Charcas',       z:'', d:'', m:''},
-  {n:'Carmelo',       z:'', d:'', m:''}
+  {n:'Mia Plaza',     z:'', d:'', m:'https://www.google.com/maps?q=-17.770160793680894,-63.17008791821695'},
+  {n:'Buenos Aires',  z:'', d:'', m:'https://www.google.com/maps?q=-17.780648363028185,-63.18369352382509'},
+  {n:'Central',       z:'', d:'', m:'https://www.google.com/maps?q=-17.772220746893716,-63.16718045701694'},
+  {n:'Mutualista',    z:'', d:'', m:'https://www.google.com/maps?q=-17.765770114394787,-63.16208746136678'},
+  {n:'Charcas',       z:'', d:'', m:'https://www.google.com/maps?q=-17.78004506388288,-63.17633322858442'},
+  {n:'Carmelo',       z:'', d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'}
 ];
 function sucursalDe(nombre){
   var k=normNombre(nombre||''); if(!k) return null;
