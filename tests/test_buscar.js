@@ -183,6 +183,21 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y una línea por renglón del detalle, con su fecha', (txt.match(/^\d{2}\/\d{2}\/\d{4}/gm)||[]).length===8,
       (txt.match(/^\d{2}\/\d{2}\/\d{4}[^\n]*/m)||[''])[0]);
 
+  // ══ 6. Tocar para ver el pedido, tocar para filtrar ═══════════════════════
+  /* El dueño, con la pantalla recién publicada: «¿y cómo veo los pedidos que vendió eso, si
+     no deja dar clic?». Cada renglón abre la ficha del pedido por encima de la búsqueda. */
+  console.log('\n── 6. Cada renglón abre el pedido; cada vendedor del cuadro filtra ──');
+  r = await buscar('','carioca premier, carioca bahía, premier deluxe','2026-08-01','2026-09-06');
+  await page.click('#busca-body tr[data-id="a1"] td:nth-child(4)');
+  const modal = await page.evaluate(() => { var m=document.getElementById('modal'); var on=m.classList.contains('on'); var t=(m.textContent||'').replace(/\s+/g,' '); closeModal(); return { on:on, t:t }; });
+  chk('⚠️ tocar un renglón abre la ficha de ESE pedido, por encima de la búsqueda', modal.on && /190001/.test(modal.t) && /JUAN PABLO PAREDES/.test(modal.t), modal.t.slice(0,100));
+  chk('…y al cerrarla la búsqueda sigue ahí, intacta', await page.evaluate(() => document.getElementById('busca-overlay').style.display==='flex' && BUSCA.filas.length===8));
+  chk('cada renglón tiene además un botón «Ver pedido», que no se imprime',
+      await page.evaluate(() => { var b=document.querySelectorAll('#busca-body tr[data-id] button.no-print'); return b.length===8 && /Ver pedido/.test(b[0].textContent); }));
+  await page.click('#busca-body tr[data-v="Mirian Salazar"] td:first-child');
+  const sel = await page.evaluate(() => ({ v:document.getElementById('bus-vend').value, ids:BUSCA.filas.map(function(r){ return r.p.id; }) }));
+  chk('⚠️ tocar un vendedor en el cuadro lo deja como filtro', sel.v==='Mirian Salazar' && JSON.stringify(sel.ids)===JSON.stringify(['m1']), sel.v+' · '+sel.ids.join(','));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

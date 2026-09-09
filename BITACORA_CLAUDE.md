@@ -5359,6 +5359,16 @@ afuera; que las cuentas cierren y avise el sin precio; que sin dato pida un dato
 vendedora que no vendió eso lo diga sin inventar; y que Copiar lleve el cuadro y el total con
 los vendedores. Capturas a 1300px y 390px: el cuadro y el detalle se leen en los dos.
 
+### Y que se pueda tocar (misma noche)
+
+El dueño, ya con la pantalla en el iPad (Almohada · Fernando · 8 renglones): *"¿y cómo veo
+los pedidos que vendió eso, si no deja dar clic?"*. Cada renglón del detalle abre ahora la
+ficha del pedido (`busAbrirPedido` → `showPedidoModal`, la misma de Administración) por
+encima de la búsqueda —el modal está en z-index 4000 y el overlay en 3000, como ya lo hace
+«Ver pedido» en Stock— y al cerrarla la búsqueda sigue intacta. Como en el iPad nadie adivina
+que una fila se toca, cada renglón lleva además un botón «Ver pedido» (`no-print`). Y tocar un
+vendedor en el cuadro lo deja como filtro (`busElegirVendedor`). `test_buscar.js` +4 → **41**.
+
 ## 4dg. 🔁 La rotación da la vuelta entera: queda la regla de la otra herramienta (2026-09-09)
 
 Una hora después de publicar §4de, el dueño mandó una captura del detalle de un producto en

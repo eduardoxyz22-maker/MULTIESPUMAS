@@ -9828,6 +9828,20 @@ function busLlenarVendedores(){
   if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
 }
 function closeBusca(){ var ov=document.getElementById('busca-overlay'); if(ov) ov.style.display='none'; }
+/* Cada renglón del detalle abre el pedido (la misma ficha que Administración) POR ENCIMA de
+   esta pantalla: el modal está en z-index 4000 y el overlay en 3000, así que al cerrar la
+   ficha se vuelve acá con la búsqueda intacta. Pedido del dueño (09/09), con la pantalla
+   recién publicada: «¿y cómo veo los pedidos que vendió eso, si no deja dar clic?». */
+function busAbrirPedido(id){
+  if(!findById(id)){ toast('Este pedido ya no está en la lista. Actualizá el panel.','err'); return; }
+  showPedidoModal(id);
+}
+/* Tocar un vendedor en el cuadro lo deja como filtro (si está en el desplegable). */
+function busElegirVendedor(v){
+  var sel=document.getElementById('bus-vend'); if(!sel) return;
+  for(var i=0;i<sel.options.length;i++){ if(sel.options[i].value && mismoVendedor(sel.options[i].value, v)){ sel.value=sel.options[i].value; renderBuscar(); return; } }
+  toast('Ese vendedor no está en la lista para elegir.','err');
+}
 function printBusca(){ document.body.classList.add('printing-busca'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-busca'); },600); }
 /* Todas las palabras de `busca` adentro de `texto`, sin acentos ni mayúsculas. */
 function busCoincide(texto, palabras){
@@ -9932,7 +9946,7 @@ function renderBuscar(){
     '<th style="width:170px">Vendedor</th><th>Qué vendió</th><th style="width:80px;white-space:nowrap">Pedidos</th>'+
     '<th style="width:86px;white-space:nowrap">Unidades</th><th style="width:124px;white-space:nowrap">Total</th></tr></thead><tbody>'+
     d.porVend.map(function(g){
-      return '<tr><td><b>'+esc(g.vend)+'</b></td>'+
+      return '<tr data-v="'+esc(g.vend)+'" onclick="busElegirVendedor(this.dataset.v)" style="cursor:pointer" title="Ver solo lo de este vendedor"><td><b style="text-decoration:underline dotted">'+esc(g.vend)+'</b></td>'+
         '<td style="font-size:.85em;color:var(--muted)">'+g.lista.map(function(q){ return esc(q.nom)+' <b style="color:#111">× '+q.uni+'</b>'; }).join('<br>')+'</td>'+
         '<td style="text-align:right">'+g.nPed+'</td>'+
         '<td style="text-align:right"><b>'+g.uni+'</b></td>'+
@@ -9953,11 +9967,14 @@ function renderBuscar(){
     '<th style="width:112px;white-space:nowrap">Subtotal</th><th style="width:104px">Estado</th></tr></thead><tbody>'+
     d.filas.map(function(r,i){
       var p=r.p, x=r.x, primero=(i===0 || d.filas[i-1].vk!==r.vk);
-      return '<tr'+((primero&&i>0)?' style="border-top:2px solid #ddd6fe"':'')+'>'+
+      /* La fila entera abre el pedido (y hay un botón visible, porque en el iPad nadie
+         adivina que una fila se toca). El botón no se imprime. */
+      return '<tr data-id="'+esc(String(p.id))+'" onclick="busAbrirPedido(this.dataset.id)" title="Tocá para abrir el pedido" style="cursor:pointer'+((primero&&i>0)?';border-top:2px solid #ddd6fe':'')+'">'+
         '<td>'+(primero?('<b>'+esc(r.vend)+'</b>'):('<span style="color:var(--muted);font-size:.82em">'+esc(r.vend)+'</span>'))+'</td>'+
         '<td style="white-space:nowrap">'+esc(fmtFecha(r.f))+(esVentaTienda(p)?'<br><span style="color:var(--muted);font-size:.82em">tienda</span>':'')+'</td>'+
         '<td>'+(p.oc?('<span style="'+(esATC(p.oc)?'color:#7c3aed;font-weight:700':'')+'">'+esc(ocEtiq(p.oc))+'</span>'):'<span style="color:var(--muted)">—</span>')+
-          '<br><span style="color:var(--muted);font-size:.82em">'+esc(p.cliente||'')+'</span></td>'+
+          '<br><span style="color:var(--muted);font-size:.82em">'+esc(p.cliente||'')+'</span>'+
+          '<br><button type="button" class="btn btn-sm no-print" style="padding:2px 8px;font-size:.7rem;margin-top:3px;width:auto" data-id="'+esc(String(p.id))+'" onclick="event.stopPropagation();busAbrirPedido(this.dataset.id)">Ver pedido</button></td>'+
         '<td><b>'+esc(x.desc||'—')+'</b>'+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?('<br><span style="color:var(--muted);font-size:.82em">cód '+esc(x.codigo)+'</span>'):'')+'</td>'+
         '<td style="text-align:right;white-space:nowrap"><b>'+r.cant+'</b></td>'+
         '<td style="text-align:right;white-space:nowrap">'+(r.precio>0?esc(fmtBs(r.precio)):'<span style="color:var(--muted)">—</span>')+'</td>'+

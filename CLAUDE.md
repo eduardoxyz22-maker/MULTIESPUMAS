@@ -127,9 +127,11 @@ la lista fija + los que aparezcan en los pedidos, Eduardo y ROHO incluidos — S
 cliente queda chiquito bajo la nota. La respuesta es el **cuadro por vendedor** (`porVend`:
 pedidos, unidades, plata, qué productos; el que más vendió primero, empate por plata) y abajo
 el detalle por **renglón**, agrupado por vendedor y por fecha. Sin producto ni vendedor pide un
-dato. El PDF sale por 🖨 Imprimir → «Guardar como PDF» (sin librerías); la carátula impresa
-lleva productos, vendedor, período y totales porque los filtros no se imprimen.
-`tests/test_buscar.js`.
+dato. **Cada renglón del detalle abre el pedido** (`busAbrirPedido` → `showPedidoModal`, el
+modal está en z-index 4000 sobre el overlay 3000) y hay un botón «Ver pedido» `no-print`;
+**tocar un vendedor del cuadro lo deja como filtro** (`busElegirVendedor`). El PDF sale por
+🖨 Imprimir → «Guardar como PDF» (sin librerías); la carátula impresa lleva productos,
+vendedor, período y totales porque los filtros no se imprimen. `tests/test_buscar.js`.
 
 ## 📦 Productos del mes (Contabilidad → Ventas)
 Botón al lado de ⬇️ Excel (lo hizo la otra herramienta, bitácora §4dd): consolidado por
