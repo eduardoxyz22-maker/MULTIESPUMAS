@@ -112,13 +112,17 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
 
-## Buscar pedidos y sacar un PDF
-Administración → **🔎 Buscar pedidos** (§4db): cliente + productos (separados por coma, entra
-el que tenga cualquiera) + desde/hasta. El cliente se compara **por palabras** (encuentra el
-segundo apellido) y los productos sin acentos («bahía» = «BAHIA»). Sale el **renglón** que
-coincide, no el pedido entero. El PDF sale por 🖨 Imprimir → «Guardar como PDF» (sin
-librerías, igual que la hoja de ruta); la carátula impresa lleva cliente, período y totales
-porque los filtros no se imprimen. `tests/test_buscar.js`.
+## Quién vendió qué (buscar por producto) y sacar un PDF
+Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
+el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +
+la lista fija + los que aparezcan en los pedidos, Eduardo y ROHO incluidos — SIN
+`contaExcluido`) + desde/hasta. **El filtro de cliente se fue** (09/09, pedido del dueño): el
+cliente queda chiquito bajo la nota. La respuesta es el **cuadro por vendedor** (`porVend`:
+pedidos, unidades, plata, qué productos; el que más vendió primero, empate por plata) y abajo
+el detalle por **renglón**, agrupado por vendedor y por fecha. Sin producto ni vendedor pide un
+dato. El PDF sale por 🖨 Imprimir → «Guardar como PDF» (sin librerías); la carátula impresa
+lleva productos, vendedor, período y totales porque los filtros no se imprimen.
+`tests/test_buscar.js`.
 
 ## 📦 Productos del mes (Contabilidad → Ventas)
 Botón al lado de ⬇️ Excel (lo hizo la otra herramienta, bitácora §4dd): consolidado por

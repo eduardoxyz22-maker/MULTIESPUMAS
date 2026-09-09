@@ -897,7 +897,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <button class="btn btn-primary btn-sm" style="width:auto;background:#25D366;color:#0b3d2c" onclick="abrirEnvio('manana')">📤 Mañana</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#00877f" onclick="abrirReporte()">📊 Reporte</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#155e75" onclick="abrirProds()">🛏️ Productos más entregados</button>
-          <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="abrirBuscar()" title="Buscar los pedidos de un cliente, o de un producto, entre dos fechas. Sirve para cerrar cuentas con un mayorista.">🔎 Buscar pedidos</button>
+          <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="abrirBuscar()" title="Escribí un producto (o varios, separados por coma) y un período: te dice qué vendedor vendió cuánto, con el detalle de cada pedido. También podés elegir un vendedor y ver todo lo que vendió.">🔎 Quién vendió qué</button>
           <button class="btn btn-primary btn-sm" style="width:auto;background:#7c2d12" onclick="abrirStock()" title="Lo que más sale, cuánto queda en depósito y qué hay que pedir a fábrica antes de quedarse sin.">📦 Stock y reposición</button>
           <button id="btn-cerrar-dia" class="btn btn-primary btn-sm" style="width:auto;background:#8a1c24" onclick="abrirCierreDias()">🔒 Cerrar día</button>
           <!-- Rojo chillón (el propio del panel, #CE2939 · 5,3:1 sobre blanco) y NO el rojo
@@ -1180,15 +1180,14 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
      premier, carioca bahía, premier deluxe, del 1/8 al 6/9, y después dale un PDF»—, que
      es cerrar cuentas con un mayorista. El PDF sale por Imprimir → «Guardar como PDF»,
      igual que la hoja de ruta: el navegador ya lo hace y no hace falta ninguna librería. -->
-<div id="busca-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#5b21b6;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔎 Buscar pedidos</b><span id="busca-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#5b21b6;font-weight:700" onclick="printBusca()">🖨 Imprimir / PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarBusca()">📋 Copiar</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeBusca()">✕ Cerrar</button></div>
+<div id="busca-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#5b21b6;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🔎 Quién vendió qué</b><span id="busca-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#5b21b6;font-weight:700" onclick="printBusca()">🖨 Imprimir / PDF</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarBusca()">📋 Copiar</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeBusca()">✕ Cerrar</button></div>
 <div class="no-print" style="padding:11px 14px;background:#fff;border-bottom:1px solid var(--gray-md);display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
-  <div style="flex:2;min-width:190px"><label class="lb">Cliente</label><input type="text" id="bus-cli" list="dl-clientes" placeholder="Ej. Juan Pablo Paredes" autocomplete="off" style="width:100%" onkeydown="if(event.key==='Enter')renderBuscar()"></div>
   <div style="flex:3;min-width:230px"><label class="lb">Productos <span style="font-weight:400;color:var(--muted)">— separados por coma, entra el que tenga cualquiera</span></label><input type="text" id="bus-prod" placeholder="Ej. carioca premier, carioca bahia, premier deluxe" autocomplete="off" style="width:100%" onkeydown="if(event.key==='Enter')renderBuscar()"></div>
+  <div style="flex:1;min-width:190px"><label class="lb">Vendedor</label><select id="bus-vend" style="width:100%" onchange="renderBuscar()"><option value="">Todos</option></select></div>
   <div style="min-width:135px"><label class="lb">Desde</label><input type="date" id="bus-desde" style="width:100%"></div>
   <div style="min-width:135px"><label class="lb">Hasta</label><input type="date" id="bus-hasta" style="width:100%"></div>
   <button class="btn btn-primary btn-sm" style="width:auto;background:#5b21b6" onclick="renderBuscar()">🔎 Buscar</button>
 </div>
-<datalist id="dl-clientes"></datalist>
 <div id="busca-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="prods-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#155e75;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🛏️ Productos más entregados</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" id="prod-mode"><button type="button" data-val="dia" onclick="setProdModo('dia')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Día</button><button type="button" data-val="semana" onclick="setProdModo('semana')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Semana</button><button type="button" data-val="mes" class="active" onclick="setProdModo('mes')" style="border:none;background:#fff;color:#155e75;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button></div><input type="date" id="prod-dia" onchange="renderProds()" style="flex:0 0 auto;width:132px;display:none;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><input type="month" id="prod-mes" onchange="renderProds()" style="flex:0 0 auto;width:140px;border:none;border-radius:7px;padding:4px 8px;font-size:12px;font-weight:700;color:#155e75"><span id="prod-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:#155e75;font-weight:700" onclick="copiarProds()">📋 Copiar para WhatsApp</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="printProds()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeProds()">✕ Cerrar</button></div><div id="prods-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="stock-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#7c2d12;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">📦 Stock y reposición</b><span id="stock-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#0f766e;color:#fff;font-weight:700" onclick="abrirStockRevisar()" title="Recorre los pedidos pendientes y marca solo ✔ hay / 📥 recoger de IM / ✗ no hay, repartiendo el stock por fecha de entrega.">🤖 Revisión automática</button><button class="btn btn-sm" style="background:#fff;color:#7c2d12;font-weight:700" onclick="abrirImportExist()" title="Subí el reporte «EXISTENCIAS ALMACEN» que sacás del sistema de Moreno. Reemplaza el conteo de ese almacén.">📥 Subir existencias (Excel)</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockConteo()">📋 Conté a mano</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockRecogida()" title="Anotar que se va a buscar algo a Moreno.">🚚 Programar recogida</button><button class="btn btn-sm" style="background:#e0f2fe;color:#075985;font-weight:700" onclick="abrirStockPedido()">🏭 Pedí a fábrica</button><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó de fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="abrirStockHistorial()" title="Cuándo se subió cada inventario y cuánto trajo.">📜 Historial de cortes</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarStock()">📋 Copiar pedido a fábrica</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeStock()">✕ Cerrar</button></div><div id="stock-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -9781,44 +9780,52 @@ function copiarProds(){ copyText(prodsText()); }
 function printProds(){ document.body.classList.add('printing-prods'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-prods'); },600); }
 
 /* ============================================================================
-   🔎 BUSCAR PEDIDOS — por cliente, por producto y entre dos fechas (§4db)
+   🔎 QUIÉN VENDIÓ QUÉ — por producto, por vendedor y entre dos fechas (§4db → §4df)
 
-   Pedido textual del dueño: *"Extrae del panel todos los pedidos de Juan Pablo Paredes que
-   digan carioca premier, carioca bahía, premier deluxe, desde el primero de agosto al seis
-   de septiembre, y después dale un PDF."* O sea: cerrar cuentas con un mayorista.
+   Nació (§4db) como «los pedidos de un cliente con tales productos entre dos fechas», para
+   cerrar cuentas con un mayorista. El dueño lo dio vuelta el 09/09: *"a mí no me interesa
+   buscar por cliente, quiero poner el producto y que vendedores vendieron ese producto o
+   esos productos; en vez de cliente que se elija vendedor."* Así que el cliente se fue del
+   filtro (queda chiquito bajo la nota, como dato), en su lugar hay un desplegable de
+   VENDEDOR (Todos + la lista fija + los que aparezcan en los pedidos, Eduardo y ROHO
+   incluidos: la pregunta es quién vendió), y LA RESPUESTA es el cuadro POR VENDEDOR:
+   pedidos, unidades y plata de cada uno, con qué productos, el que más vendió primero. El
+   detalle renglón por renglón sigue abajo como respaldo, agrupado por vendedor y por fecha.
 
    ⚠️ CÓMO SE BUSCA, Y POR QUÉ ASÍ:
-   · El nombre se compara por PALABRAS, no letra por letra: «juan pablo paredes» encuentra
-     «JUAN PABLO PAREDES ROJAS» y «Paredes, Juan Pablo». Tienen que estar todas las palabras
-     que se escribieron, en cualquier orden. Buscar el texto entero fallaba con el segundo
-     apellido, que es como está cargada la mitad de la planilla.
    · Los productos van separados por COMA y entra el renglón que tenga CUALQUIERA («carioca
      premier, carioca bahía»); dentro de cada uno tienen que estar todas sus palabras. Sin
      acentos y sin mayúsculas: «bahía» encuentra «BAHIA».
+   · El vendedor se compara con `mismoVendedor` (sin acentos ni mayúsculas), igual que en
+     Contabilidad: «Carola Chávez» y «carola chavez» son la misma, y en el cuadro sale con
+     el nombre de la lista (`nombreCanonico`), no como lo tipearon.
    · La fecha es la de SALIDA (`fechaSalida`), la misma que usa todo el panel: la de entrega
      si la tiene, y la de carga en una venta de tienda —que no tiene entrega pero salió—.
-   · Los borradores de Kommo NO entran: todavía no son una venta. Las ATC sí, marcadas 🎧,
-     porque para cerrar una cuenta hay que verlas.
-   ⚠️ Si no se escribe cliente NI producto no devuelve todo el panel: pide un dato. Un
-   listado de 3.000 renglones no es una respuesta.
+   · Los borradores de Kommo NO entran: todavía no son una venta. Las ATC sí, marcadas 🎧.
+   ⚠️ Sin producto NI vendedor no devuelve todo el panel: pide un dato. Un listado de
+   3.000 renglones no es una respuesta.
    ========================================================================== */
 function abrirBuscar(){
   var d=document.getElementById('bus-desde'), h=document.getElementById('bus-hasta');
   if(d && !d.value) d.value=diasAtras(30);
   if(h && !h.value) h.value=todayStr();
-  var dl=document.getElementById('dl-clientes');
-  if(dl){
-    var vistos={}, nom=[];
-    STATE.forEach(function(p){
-      if(!p || esFilaSistema(p) || esBorrador(p)) return;
-      var c=String(p.cliente||'').trim(); if(!c) return;
-      var k=normNombre(c); if(vistos[k]) return; vistos[k]=1; nom.push(c);
-    });
-    nom.sort(function(a,b){ return a.localeCompare(b); });
-    dl.innerHTML=nom.slice(0,900).map(function(c){ return '<option value="'+esc(c)+'">'; }).join('');
-  }
+  busLlenarVendedores();
   document.getElementById('busca-overlay').style.display='flex';
   renderBuscar();
+}
+/* El desplegable de vendedor: la lista fija más los que aparezcan en los pedidos — SIN
+   `contaExcluido`, a diferencia de Contabilidad: acá la pregunta es quién vendió, y si
+   Eduardo o ROHO vendieron, tienen que poder elegirse. Agrupado por nombre normalizado para
+   que «Carola Chavez» y «Carola Chávez» no salgan dos veces, y sin perder lo elegido. */
+function busLlenarVendedores(){
+  var sel=document.getElementById('bus-vend'); if(!sel) return;
+  var actual=sel.value||'', seen={}, list=[];
+  var meter=function(v){ var k=normNombre(v); if(!k||seen[k]) return; seen[k]=1; list.push(nombreCanonico(v)); };
+  VENDEDORES.forEach(meter);
+  STATE.forEach(function(p){ if(p && !esFilaSistema(p) && !esBorrador(p)) meter(p.vendedor); });
+  list.sort(function(a,b){ return a.localeCompare(b,'es'); });
+  sel.innerHTML='<option value="">Todos</option>'+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
+  if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
 }
 function closeBusca(){ var ov=document.getElementById('busca-overlay'); if(ov) ov.style.display='none'; }
 function printBusca(){ document.body.classList.add('printing-busca'); window.print(); setTimeout(function(){ document.body.classList.remove('printing-busca'); },600); }
@@ -9835,15 +9842,15 @@ function busTerminos(s){
 }
 var BUSCA=null;
 function buscarData(){
-  var cli=busPalabras((document.getElementById('bus-cli')||{}).value||'');
+  var vend=String((document.getElementById('bus-vend')||{}).value||'').trim();
   var terms=busTerminos((document.getElementById('bus-prod')||{}).value||'');
   var desde=String((document.getElementById('bus-desde')||{}).value||'');
   var hasta=String((document.getElementById('bus-hasta')||{}).value||'');
-  if(!cli.length && !terms.length) return { pedir:true, filas:[] };
-  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={};
+  if(!vend && !terms.length) return { pedir:true, filas:[], porVend:[] };
+  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={};
   STATE.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p)) return;
-    if(cli.length && !busCoincide(p.cliente||'', cli)) return;
+    if(vend && !mismoVendedor(p.vendedor, vend)) return;
     var f=fechaSalida(p);
     if(desde && (!f || f<desde)) return;
     if(hasta && (!f || f>hasta)) return;
@@ -9853,16 +9860,31 @@ function buscarData(){
       var c=Number(x.cant)||0, pr=prodPrecio(x), sub=r2(pr*c);
       uni+=c; plata+=sub; if(!(pr>0)) sinPrecio+=c;
       pedidos[p.id]=1;
-      filas.push({ f:f, p:p, x:x, i:i, cant:c, precio:pr, sub:sub });
+      var vn=nombreCanonico(p.vendedor||'')||'(sin vendedor)', vk=normNombre(vn)||'(sin vendedor)';
+      filas.push({ f:f, p:p, x:x, i:i, cant:c, precio:pr, sub:sub, vend:vn, vk:vk });
+      /* El cuadro por vendedor: pedidos, unidades y plata de cada uno, y con qué productos. */
+      if(!pv[vk]) pv[vk]={ vend:vn, vk:vk, pedidos:{}, uni:0, plata:0, sinPrecio:0, prods:{} };
+      var g=pv[vk]; g.pedidos[p.id]=1; g.uni+=c; g.plata=r2(g.plata+sub); if(!(pr>0)) g.sinPrecio+=c;
+      var pk=stockNorm(String((x&&x.desc)||'')+' '+String((x&&x.medida)||''));
+      if(!g.prods[pk]) g.prods[pk]={ nom:String((x&&x.desc)||'—')+(x&&x.medida?(' '+x.medida):''), uni:0 };
+      g.prods[pk].uni+=c;
     });
   });
+  var porVend=Object.keys(pv).map(function(k){
+    var g=pv[k]; g.nPed=Object.keys(g.pedidos).length;
+    g.lista=Object.keys(g.prods).map(function(q){ return g.prods[q]; }).sort(function(a,b){ return b.uni-a.uni || a.nom.localeCompare(b.nom); });
+    return g;
+  }).sort(function(a,b){ return b.uni-a.uni || b.plata-a.plata || a.vend.localeCompare(b.vend,'es'); });
+  /* Agrupado por vendedor (en el orden del cuadro: el que más vendió, primero) y adentro por
+     fecha: la tabla se lee vendedor por vendedor, que es lo que se preguntó. */
+  var orden={}; porVend.forEach(function(g,i){ orden[g.vk]=i; });
   filas.sort(function(a,b){
+    if(a.vk!==b.vk) return orden[a.vk]-orden[b.vk];
     if(a.f!==b.f) return a.f<b.f?-1:1;
     return (Number(a.p.nroDia)||0)-(Number(b.p.nroDia)||0) || (Number(a.p.ts)||0)-(Number(b.p.ts)||0);
   });
-  return { filas:filas, uni:uni, plata:r2(plata), sinPrecio:sinPrecio, nPed:Object.keys(pedidos).length,
-           cli:(document.getElementById('bus-cli')||{}).value||'', prod:(document.getElementById('bus-prod')||{}).value||'',
-           desde:desde, hasta:hasta };
+  return { filas:filas, porVend:porVend, uni:uni, plata:r2(plata), sinPrecio:sinPrecio, nPed:Object.keys(pedidos).length,
+           vend:vend, prod:(document.getElementById('bus-prod')||{}).value||'', desde:desde, hasta:hasta };
 }
 function busRangoTxt(d){
   if(d.desde && d.hasta) return 'del '+fmtFecha(d.desde)+' al '+fmtFecha(d.hasta);
@@ -9876,45 +9898,66 @@ function renderBuscar(){
   if(!body) return;
   if(d.pedir){
     if(info) info.textContent='';
-    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">Escribí un <b>cliente</b> o un <b>producto</b> (o los dos) y tocá 🔎 Buscar.'+
-      '<br><span style="font-size:.85rem">Los productos van separados por coma: entra el pedido que tenga cualquiera de ellos.</span></div>';
+    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">Escribí un <b>producto</b> o elegí un <b>vendedor</b> (o las dos cosas) y tocá 🔎 Buscar.'+
+      '<br><span style="font-size:.85rem">Los productos van separados por coma: entra el pedido que tenga cualquiera de ellos. Te dice qué vendedor vendió cuánto.</span></div>';
     return;
   }
-  if(info) info.textContent=d.filas.length+' '+(d.filas.length===1?'renglón':'renglones')+' · '+d.nPed+' pedido'+(d.nPed===1?'':'s');
+  var nv=d.porVend.length;
+  if(info) info.textContent=d.filas.length+' '+(d.filas.length===1?'renglón':'renglones')+' · '+d.nPed+' pedido'+(d.nPed===1?'':'s')+' · '+nv+' vendedor'+(nv===1?'':'es');
   if(!d.filas.length){
-    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">No hay pedidos que cumplan con eso.'+
-      '<br><span style="font-size:.85rem">Probá con menos palabras en el nombre, o ampliá las fechas.</span></div>';
+    body.innerHTML='<div style="text-align:center;color:#888;padding:44px">Nadie vendió eso en ese período.'+
+      '<br><span style="font-size:.85rem">Probá con menos palabras en el producto, con «Todos» en vendedor, o ampliá las fechas.</span></div>';
     return;
   }
-  /* El encabezado se imprime: es la carátula de la hoja que se le manda al cliente. */
+  /* El encabezado se imprime: es la carátula de la hoja. */
   var html='<div style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
-    '<div style="font-size:1.05rem;font-weight:800;color:#5b21b6">MULTIESPUMAS · Detalle de pedidos</div>'+
+    '<div style="font-size:1.05rem;font-weight:800;color:#5b21b6">MULTIESPUMAS · Quién vendió qué</div>'+
     '<div style="font-size:.9rem;margin-top:5px">'+
-      (d.cli?('<b>Cliente:</b> '+esc(d.cli)+'<br>'):'')+
       (d.prod?('<b>Productos:</b> '+esc(d.prod)+'<br>'):'')+
+      '<b>Vendedor:</b> '+esc(d.vend||'Todos')+'<br>'+
       '<b>Período:</b> '+esc(busRangoTxt(d))+'</div>'+
     /* ⚠️ El plural de «renglón» pierde el acento: «renglones», no «renglónes». Pegarle una
        «es» al singular es el atajo que se usa en todo el panel y acá no sirve. */
     '<div style="margin-top:8px;font-size:.95rem"><b>'+d.filas.length+'</b> '+(d.filas.length===1?'renglón':'renglones')+
       ' en <b>'+d.nPed+'</b> pedido'+(d.nPed===1?'':'s')+' &nbsp;·&nbsp; <b>'+d.uni+'</b> unidad'+(d.uni===1?'':'es')+
       ' &nbsp;·&nbsp; <b style="color:#5b21b6">'+fmtBs(d.plata)+'</b>'+
+      ' &nbsp;·&nbsp; <b>'+nv+'</b> vendedor'+(nv===1?'':'es')+
       (d.sinPrecio?('<br><span style="color:var(--amber);font-size:.85rem">⚠️ '+d.sinPrecio+' unidad'+(d.sinPrecio===1?'':'es')+' sin precio cargado: no suman al total.</span>'):'')+
     '</div>'+
     '<div style="font-size:.75rem;color:var(--muted);margin-top:6px">Emitido el '+fmtFecha(todayStr())+'</div></div>';
+  /* ⚠️ LA RESPUESTA ES ESTE CUADRO: quién vendió cuánto, el que más vendió primero. El detalle
+     de abajo es el respaldo, pedido por pedido. */
+  html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:12px">'+
+    '<table class="roho-tabla" style="min-width:640px"><thead><tr>'+
+    '<th style="width:170px">Vendedor</th><th>Qué vendió</th><th style="width:80px;white-space:nowrap">Pedidos</th>'+
+    '<th style="width:86px;white-space:nowrap">Unidades</th><th style="width:124px;white-space:nowrap">Total</th></tr></thead><tbody>'+
+    d.porVend.map(function(g){
+      return '<tr><td><b>'+esc(g.vend)+'</b></td>'+
+        '<td style="font-size:.85em;color:var(--muted)">'+g.lista.map(function(q){ return esc(q.nom)+' <b style="color:#111">× '+q.uni+'</b>'; }).join('<br>')+'</td>'+
+        '<td style="text-align:right">'+g.nPed+'</td>'+
+        '<td style="text-align:right"><b>'+g.uni+'</b></td>'+
+        '<td style="text-align:right;white-space:nowrap"><b style="color:#5b21b6">'+esc(fmtBs(g.plata))+'</b>'+
+          (g.sinPrecio?('<br><span style="color:var(--amber);font-size:.78em">'+g.sinPrecio+' sin precio</span>'):'')+'</td></tr>';
+    }).join('')+
+    '<tr style="background:#f6f3ff;font-weight:800"><td colspan="2" style="text-align:right">TOTAL</td><td style="text-align:right">'+d.nPed+'</td>'+
+      '<td style="text-align:right">'+d.uni+'</td><td style="text-align:right;white-space:nowrap;color:#5b21b6">'+esc(fmtBs(d.plata))+'</td></tr>'+
+    '</tbody></table></div>';
   html+='<div style="overflow:auto;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08)">'+
+    '<div style="padding:10px 14px 0;font-weight:800;color:#5b21b6;font-size:.9rem">Detalle, pedido por pedido</div>'+
     /* ⚠️ Las columnas de plata van con `nowrap` y con ancho de sobra: «Bs 1.500,00» partido en
-       dos renglones es exactamente lo que no puede pasar en una hoja que se le manda a un
-       cliente a cobrar. Lo mismo el título «Cant.», que se partía en «CAN / T.». */
-    '<table class="roho-tabla" style="min-width:850px"><thead><tr>'+
-    '<th style="width:86px">Fecha</th><th style="width:96px">Nota</th><th>Producto</th>'+
+       dos renglones es exactamente lo que no puede pasar en una hoja impresa. Lo mismo el
+       título «Cant.», que se partía en «CAN / T.». */
+    '<table class="roho-tabla" style="min-width:920px"><thead><tr>'+
+    '<th style="width:130px">Vendedor</th><th style="width:86px">Fecha</th><th style="width:110px">Nota</th><th>Producto</th>'+
     '<th style="width:58px;white-space:nowrap">Cant.</th><th style="width:104px;white-space:nowrap">P. unit.</th>'+
     '<th style="width:112px;white-space:nowrap">Subtotal</th><th style="width:104px">Estado</th></tr></thead><tbody>'+
-    d.filas.map(function(r){
-      var p=r.p, x=r.x;
-      return '<tr>'+
+    d.filas.map(function(r,i){
+      var p=r.p, x=r.x, primero=(i===0 || d.filas[i-1].vk!==r.vk);
+      return '<tr'+((primero&&i>0)?' style="border-top:2px solid #ddd6fe"':'')+'>'+
+        '<td>'+(primero?('<b>'+esc(r.vend)+'</b>'):('<span style="color:var(--muted);font-size:.82em">'+esc(r.vend)+'</span>'))+'</td>'+
         '<td style="white-space:nowrap">'+esc(fmtFecha(r.f))+(esVentaTienda(p)?'<br><span style="color:var(--muted);font-size:.82em">tienda</span>':'')+'</td>'+
         '<td>'+(p.oc?('<span style="'+(esATC(p.oc)?'color:#7c3aed;font-weight:700':'')+'">'+esc(ocEtiq(p.oc))+'</span>'):'<span style="color:var(--muted)">—</span>')+
-          '<br><span style="color:var(--muted);font-size:.82em">'+esc(p.vendedor||'')+'</span></td>'+
+          '<br><span style="color:var(--muted);font-size:.82em">'+esc(p.cliente||'')+'</span></td>'+
         '<td><b>'+esc(x.desc||'—')+'</b>'+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?('<br><span style="color:var(--muted);font-size:.82em">cód '+esc(x.codigo)+'</span>'):'')+'</td>'+
         '<td style="text-align:right;white-space:nowrap"><b>'+r.cant+'</b></td>'+
         '<td style="text-align:right;white-space:nowrap">'+(r.precio>0?esc(fmtBs(r.precio)):'<span style="color:var(--muted)">—</span>')+'</td>'+
@@ -9922,7 +9965,7 @@ function renderBuscar(){
         '<td>'+(p.entregado?'<span style="color:var(--green);font-weight:700">✔ entregado</span>':'<span style="color:var(--amber);font-weight:700">pendiente</span>')+
           (p.pagado?'':'<br><span style="color:var(--red);font-size:.82em">saldo '+esc(fmtBs(p.saldo))+'</span>')+'</td></tr>';
     }).join('')+
-    '<tr style="background:#f6f3ff;font-weight:800"><td colspan="3" style="text-align:right">TOTAL</td>'+
+    '<tr style="background:#f6f3ff;font-weight:800"><td colspan="4" style="text-align:right">TOTAL</td>'+
       '<td style="text-align:right;white-space:nowrap">'+d.uni+'</td><td></td><td style="text-align:right;white-space:nowrap;color:#5b21b6">'+esc(fmtBs(d.plata))+'</td><td></td></tr>'+
     '</tbody></table></div>';
   body.innerHTML=html;
@@ -9930,13 +9973,18 @@ function renderBuscar(){
 function copiarBusca(){
   var d=BUSCA;
   if(!d || d.pedir || !d.filas.length){ toast('No hay nada para copiar.','err'); return; }
-  var t='MULTIESPUMAS — detalle de pedidos\n'+(d.cli?('Cliente: '+d.cli+'\n'):'')+(d.prod?('Productos: '+d.prod+'\n'):'')+
+  var t='MULTIESPUMAS — quién vendió qué\n'+(d.prod?('Productos: '+d.prod+'\n'):'')+'Vendedor: '+(d.vend||'Todos')+'\n'+
         'Período: '+busRangoTxt(d)+'\n\n';
+  d.porVend.forEach(function(g){
+    t+='• '+g.vend+': '+g.uni+' unidad'+(g.uni===1?'':'es')+' en '+g.nPed+' pedido'+(g.nPed===1?'':'s')+(g.plata>0?('  '+fmtBs(g.plata)):'')+'\n'+
+       g.lista.map(function(q){ return '    - '+q.nom+' × '+q.uni; }).join('\n')+'\n';
+  });
+  t+='\nDetalle:\n';
   d.filas.forEach(function(r){
-    t+=fmtFecha(r.f)+'  '+(r.p.oc?ocEtiq(r.p.oc):'—')+'  '+String((r.x.desc||'')+(r.x.medida?(' '+r.x.medida):''))+
+    t+=fmtFecha(r.f)+'  '+r.vend+'  '+(r.p.oc?ocEtiq(r.p.oc):'—')+'  '+String((r.x.desc||'')+(r.x.medida?(' '+r.x.medida):''))+
        ' × '+r.cant+(r.precio>0?('  '+fmtBs(r.sub)):'')+(r.p.entregado?'  ✔':'  (pendiente)')+'\n';
   });
-  t+='\nTOTAL: '+d.uni+' unidades'+(d.plata>0?('  '+fmtBs(d.plata)):'')+'  ·  '+d.nPed+' pedidos';
+  t+='\nTOTAL: '+d.uni+' unidades'+(d.plata>0?('  '+fmtBs(d.plata)):'')+'  ·  '+d.nPed+' pedidos  ·  '+d.porVend.length+' vendedor'+(d.porVend.length===1?'':'es');
   copyText(t); toast('Detalle copiado ✓','ok');
 }
 

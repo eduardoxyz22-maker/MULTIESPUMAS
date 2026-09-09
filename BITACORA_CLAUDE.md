@@ -5325,6 +5325,40 @@ esa franja) ahora compara contra el `todayStr()` de la página. Con eso, a las 0
 **49 suites (43 `.js` + 6 `.cjs`), 1.711 checks, 0 fallas.** Publicado a `main` con el
 workflow del panel libre.
 
+## 4df. 🔎 «Quién vendió qué»: el buscador deja el cliente y pasa a producto + vendedor (2026-09-09)
+
+El dueño, con la pantalla de §4db abierta (Juan Pablo Paredes · carioca premier…): *"el botón
+de búsqueda que armaste ayer a mí no me interesa buscar por cliente, quiero poner el producto
+y que vendedores vendieron ese producto o esos productos; en vez de cliente que se elija
+vendedor."* La pregunta cambió de «qué le vendimos a X» a «quién vendió X».
+
+### Qué cambió
+- **Filtros:** Productos (igual: coma = cualquiera, sin acentos) + **Vendedor** (desplegable
+  `bus-vend`, `busLlenarVendedores`: Todos + `VENDEDORES` + los que aparezcan en los pedidos,
+  agrupados por `normNombre` y mostrados con `nombreCanonico`) + desde/hasta. **Sin
+  `contaExcluido`**, a diferencia de Contabilidad: si Eduardo o ROHO vendieron, tienen que
+  poder elegirse — la pregunta es quién vendió. El campo Cliente y su `datalist` se fueron; el
+  cliente queda chiquito bajo la nota, como dato.
+- **La respuesta es un cuadro nuevo, `porVend`:** por vendedor, pedidos · unidades · plata
+  (con «N sin precio» si corresponde) y **qué vendió** (producto + medida × unidades), el que
+  más vendió primero (empate en unidades → más plata). Abajo, el detalle renglón por renglón
+  agrupado por vendedor en ese mismo orden y por fecha adentro, con una raya entre vendedores.
+- Encabezado impreso, resumen de la barra («7 renglones · 7 pedidos · 3 vendedores»), texto
+  de 📋 Copiar (el cuadro con viñetas y el detalle debajo) y los mensajes de «pedí un dato» /
+  «Nadie vendió eso en ese período», todos en la misma lógica. El botón de Administración y
+  el título pasan a **🔎 Quién vendió qué**.
+- `mismoVendedor` para comparar (como Contabilidad): «carola chávez» se suma a Carola Chavez.
+
+### Pruebas
+`tests/test_buscar.js` reescrito: **37 checks** (eran 28). Cuida, en este orden: que el cuadro
+diga quién vendió cuánto y en qué orden (Carola 9 u / Bs 13.900 en 6 pedidos, Mirian 9 u /
+Bs 13.500, Eduardo 2 u — Carola primero por plata); que un vendedor en minúsculas o con acento
+sea el mismo y salga con el nombre de la lista; que con un vendedor elegido no se cuelen los
+otros; que fechas, RIO, TITANIO, borrador y la almohada del pedido de dos renglones sigan
+afuera; que las cuentas cierren y avise el sin precio; que sin dato pida un dato; que con una
+vendedora que no vendió eso lo diga sin inventar; y que Copiar lleve el cuadro y el total con
+los vendedores. Capturas a 1300px y 390px: el cuadro y el detalle se leen en los dos.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
