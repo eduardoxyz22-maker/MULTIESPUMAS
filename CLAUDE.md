@@ -139,7 +139,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
   (`CARGA_INTENTOS` = 3 s, 8 s, 20 s) y el cartel `#carga-banner` (arriba de todas las
   pestañas) dice el MOTIVO en castellano (`motivoDeError`: sin red / Google devolvió una
-  página / pide clave / otro) con «🔄 Reintentar ahora»; `renderConnEstado` dice «Conectado»
+  página / pide clave / otro) con «🔄 Volver a intentar»; `renderConnEstado` dice «Conectado»
   recién cuando el servidor contestó (`CARGA_ESTADO`), antes decía «Conectado» con solo
   mirar la forma de la URL. `refrescarEstado` deja `ULTIMO_ERROR` y, si `STATE` está vacío,
   pone el cartel en error desde cualquier refresco. `CARGA_GEN` descarta resultados tardíos

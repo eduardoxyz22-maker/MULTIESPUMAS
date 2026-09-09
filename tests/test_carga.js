@@ -67,7 +67,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   r = await leer();
   chk('⚠️ después del primer fallo el cartel dice que NO pudo, y por qué', r.estado==='reintento' && r.visible && /No se pudo leer la planilla/.test(r.banner) && /no hay conexión con Google/.test(r.banner), r.banner.slice(0,140));
   chk('…que va a reintentar solo, y que por eso la pantalla está en 0', /Reintento solo en \d+ s/.test(r.banner) && /la pantalla está en 0/.test(r.banner), r.banner.slice(0,200));
-  chk('…con un botón para reintentar ya', r.boton===true);
+  chk('…con un botón para volver a intentar ya (que NO se llama «Reintentar»: ese nombre es del botón de Productos del mes y su test cuenta uno solo)',
+      r.boton===true && /Volver a intentar/.test(r.banner) && !/Reintentar/.test(r.banner), r.banner.slice(-60));
   chk('⚠️ el cartel de conexión NO dice «Conectado»: dice «Sin respuesta del servidor»', /Sin respuesta del servidor/.test(r.cartel) && !/Conectado al equipo/.test(r.cartel) && /off/.test(r.verde), r.cartel.slice(0,100));
   await page.waitForTimeout(500);
   r = await leer();
@@ -89,7 +90,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await page.click('#carga-banner button');
   await page.waitForTimeout(120);
   r = await leer();
-  chk('⚠️ «Reintentar ahora» carga y limpia el cartel', r.estado==='ok' && r.state===1 && !r.visible && /Conectado al equipo/.test(r.cartel), 'estado '+r.estado+' · pedidos '+r.state);
+  chk('⚠️ «Volver a intentar» carga y limpia el cartel', r.estado==='ok' && r.state===1 && !r.visible && /Conectado al equipo/.test(r.cartel), 'estado '+r.estado+' · pedidos '+r.state);
 
   // ══ 3. Con copia guardada, se dice que es la copia ════════════════════════
   console.log('\n── 3. La compu de siempre: hay copia guardada pero el servidor no contesta ──');

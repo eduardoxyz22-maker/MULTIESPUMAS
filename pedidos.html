@@ -6294,7 +6294,7 @@ function refrescarEstado(){
 var CARGA_INTENTOS=[3000, 8000, 20000];   // reintentos después del primer fallo
 var CARGA_ESTADO='';                       // '' · 'cargando' · 'reintento' · 'error' · 'ok'
 var CARGA_TIMER=null, CARGA_TIC=null, CARGA_PROXIMO=0;
-/* Cada arranque de `cargaInicial` es una «generación»: si alguien toca «Reintentar ahora»
+/* Cada arranque de `cargaInicial` es una «generación»: si alguien toca «Volver a intentar»
    mientras un intento viejo sigue en el aire, el resultado viejo llega después y NO pisa
    al nuevo. (Sin esto, un intento arrancado con la red cortada podía volver tarde y tapar
    con «Sin respuesta» a una carga que ya había andado.) */
@@ -6313,7 +6313,9 @@ function cargaBanner(){
     : CARGA_ESTADO==='reintento' ? '⚠️ <b>No se pudo leer la planilla:</b> '+esc(ULTIMO_ERROR||'sin respuesta')+'. Reintento solo en <b>'+seg+' s</b>. '+copia
     : '❌ <b>No se pudo leer la planilla</b> después de '+(CARGA_INTENTOS.length+1)+' intentos: '+esc(ULTIMO_ERROR||'sin respuesta')+'. '+copia)+
     '</span>'+
-    (CARGA_ESTADO==='cargando' ? '' : '<button type="button" class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--amber-border);color:#7c4b00;font-weight:700" onclick="cargaInicial(0)">🔄 Reintentar ahora</button>');
+    /* «Volver a intentar» y no «Reintentar»: la pantalla de Productos del mes tiene su propio
+       botón «Reintentar», y su test cuenta que haya UNO solo con ese nombre. */
+    (CARGA_ESTADO==='cargando' ? '' : '<button type="button" class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--amber-border);color:#7c4b00;font-weight:700" onclick="cargaInicial(0)">🔄 Volver a intentar</button>');
 }
 function cargaInicial(intento){
   if(!CONNECTED){ renderCupoForm(); return Promise.resolve(false); }

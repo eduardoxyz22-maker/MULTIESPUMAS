@@ -5512,7 +5512,7 @@ automático desde GitHub lee el servidor sin ninguna cuenta, §4ch).
   (solo cuando no hay copia: con copia, cargar no molesta), «⚠️ No se pudo leer la planilla:
   MOTIVO. Reintento solo en N s. Por eso la pantalla está en 0 / Mientras tanto ves la copia
   guardada» y, después del cuarto intento, «❌ … después de 4 intentos» — siempre con
-  «🔄 Reintentar ahora». Se va solo en cuanto una lectura (la que sea) anda.
+  «🔄 Volver a intentar». Se va solo en cuanto una lectura (la que sea) anda.
 - **`motivoDeError`**: el «Failed to fetch» del navegador se traduce a «no hay conexión con
   Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)»;
   una respuesta que no es JSON a «Google devolvió una página en vez de los datos (suele ser
@@ -5527,7 +5527,7 @@ automático desde GitHub lee el servidor sin ninguna cuenta, §4ch).
 `tests/test_carga.js` (**18 checks**): al abrir ya está intentando; falla dos veces y a la
 tercera contesta (cartel con motivo y cuenta regresiva, «Sin respuesta» en vez de
 «Conectado», y al contestar todo entra y el cartel se va); no contesta nunca (se rinde a los
-4 intentos, ofrece reintentar, y «Reintentar ahora» carga y limpia); con copia guardada dice
+4 intentos, ofrece reintentar, y «Volver a intentar» carga y limpia); con copia guardada dice
 que es la copia; y los cuatro motivos traducidos. `test_conflicto.js` da por hecha la carga
 de arranque en su setup (`CARGA_GEN++; CARGA_ESTADO='ok'`), porque su red está cortada y el
 intento de arranque volvía tarde a tapar el cartel que el test mira.
