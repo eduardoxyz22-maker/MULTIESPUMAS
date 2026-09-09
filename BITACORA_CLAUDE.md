@@ -5321,6 +5321,10 @@ mismo, y el único check que comparaba contra `new Date().toISOString()` (UTC, s
 esa franja) ahora compara contra el `todayStr()` de la página. Con eso, a las 00:21 UTC:
 `test_existencias` 55/55 y `test_roho` 90/90.
 
+**Resultado (09/09, 00:40 UTC — adentro de la franja, a propósito):** batería completa
+**49 suites (43 `.js` + 6 `.cjs`), 1.711 checks, 0 fallas.** Publicado a `main` con el
+workflow del panel libre.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
