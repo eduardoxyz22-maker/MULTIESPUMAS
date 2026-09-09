@@ -10379,19 +10379,20 @@ window.addEventListener('resize', function(){
                       lo vendido para la semana que viene.
      · LA FÁBRICA TARDA → lo que tardó de verdad las últimas veces (la mediana), fábrica
                       por fábrica. 3 días (dicho por el dueño) mientras no haya medidas.
-     · ROTACIÓN     → §4da+§4dc+§4de: cuántas ENTREGAS distintas (no unidades) DEL EQUIPO
-                      tuvo el producto en la ventana — los pedidos de Eduardo no cuentan
-                      (`stockPedidoUnico`): son puntuales suyos, se cubre lo que vendió y
-                      nada más. `baja` (<3 entregas) no estima ningún ritmo — el
-                      caso del dueño: 45 colchones en UNA venta mayorista no son «1,6 por
-                      día», son un pedido puntual (aviso `unico`). `media` y `alta` (≥3
-                      entregas, ≥15 unidades y repartidas en ≥2 de los 3 tramos de la
-                      ventana) sí estiman, y dan además cuánto MARGEN (2 días fijo en
-                      `media`; en `alta` sube hasta 5 si la venta es a los saltos — el
-                      desvío de la venta por tramos) y cuánta RESERVA extra pedir además
-                      de lo justo (`cubrir`: 0 en `baja`, 3 en `media`, 7 en `alta`).
-                      Lo vendido y SIN ENTREGAR (`comp`) se cubre en las tres, igual:
-                      eso no es una estimación, ya está vendido.
+     · ROTACIÓN     → cuántas UNIDADES vendió EL EQUIPO en la ventana (regla de la otra
+                      herramienta, 91ddcd8; el dueño la confirmó el 09/09, §4dg). Los
+                      pedidos de Eduardo no cuentan (`stockPedidoUnico`): son puntuales
+                      suyos, se cubre lo que vendió y nada más. `baja` (≤2 unidades del
+                      equipo) no estima ningún ritmo: aviso `unico` si fue todo de Eduardo,
+                      `lenta` si fue del equipo. `media` y `alta` (≥15 unidades y
+                      repartidas en ≥2 de los 3 tramos de la ventana) sí estiman, y dan
+                      además cuánto MARGEN (2 días fijo en `media`; en `alta` sube hasta 5
+                      si la venta es a los saltos — el desvío de la venta por tramos) y
+                      cuánta RESERVA extra pedir además de lo justo (`cubrir`: 0 en `baja`,
+                      3 en `media`, 7 en `alta`). Lo vendido y SIN ENTREGAR (`comp`) se
+                      cubre en las tres, igual: eso no es una estimación, ya está vendido.
+                      ⚠️ La regla de «≥3 entregas distintas» de §4da/§4de ya no está: el
+                      dueño la sacó el 09/09 («Deja como lo dejó ChatGPT nomás»).
      · REVISAR SALDO → si hay más unidades marcadas «✔ hay» a mano (`confirmadoAqui`) que
                       las que dice el inventario, algo quedó desactualizado: se avisa
                       ANTES de proponer una reposición basada en un saldo que no cierra.
@@ -10431,20 +10432,15 @@ var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
 var STOCK_RECONTAR=21;        // un conteo más viejo que esto pide que se cuente de nuevo
 var STOCK_MUESTRAS=6;         // cuántas llegadas se miran para medir lo que tarda cada fábrica
 var STOCK_VENTA_MIN=8;
-/* 🔁 CUÁNTAS ENTREGAS DISTINTAS HACEN FALTA PARA LLAMARLO «ROTACIÓN» (§4da).
-   El dueño, mirando el MORFEO: *"el colchón morfeo ya se entregó y dice mandar a pedir…
-   solo debés mandar a producir PRODUCTOS que tienen ROTACIÓN. Una única entrega o 2 en 1
-   mes no es tener rotación, eso es pedido único."*
-   Tiene razón y era un error de fondo: el panel dividía lo vendido por los 28 días y daba
-   un ritmo. 45 colchones en UNA venta mayorista daban «1,6 por día», y de ahí «se corta
-   hoy → pedí 23 ya» de algo que ya se entregó y que nadie más pidió.
-   Con menos de 3 entregas distintas en el mes no se estima ningún ritmo: se cubre lo que
-   está VENDIDO Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más.
-   Y la segunda mitad de la regla (08/09 vía la otra herramienta, confirmada por el dueño el
-   09/09, §4de): los pedidos de EDUARDO no cuentan para la rotación aunque sean cinco — son
-   pedidos puntuales suyos. `stockPedidoUnico(p)` los aparta; las entregas que se cuentan
-   acá son solo las del equipo (`nVentasRotacion`). */
-var STOCK_VENTAS_MIN=3;
+/* 🔁 HISTORIA DE LA REGLA DE «ROTACIÓN», para no volver a dar la vuelta entera (§4da → §4dg).
+   07/09, el dueño mirando el MORFEO: *"una única entrega o 2 en 1 mes no es tener rotación,
+   eso es pedido único"* → §4da puso «hacen falta 3 entregas distintas» (`STOCK_VENTAS_MIN`).
+   08/09, la otra herramienta (91ddcd8) la cambió por «unidades del equipo, Eduardo afuera».
+   09/09, con la pantalla en la mano, el dueño eligió esa: *"que las ventas de Eduardo no
+   entran a pedir productos ni rotación ni nada. Deja como lo dejó ChatGPT nomás"*.
+   Así que hoy la regla es la de `stockData` (unidades del equipo, ≤2 = sin rotación) y esta
+   constante NO SE USA: queda solo para que el nombre no desaparezca de la historia. */
+var STOCK_VENTAS_MIN=3;         // sin uso desde el 09/09 (§4dg)
 var STOCK_HIST=14;            // cuántos cortes se recuerdan (solo el resumen: fecha, hora, cuántos)        // con menos vendidos que esto, «venta pareja / a los saltos» no dice nada y no se muestra
 /* El almacén de donde SALEN LOS CAMIONES. Es el único que contesta «¿puedo entregar esto
    mañana?»; lo que está en la fábrica hay que ir a traerlo primero (§4cp). */
@@ -11020,8 +11016,6 @@ function stockEsperado(q, T){
 function stockPedidoUnico(p){
   return /(^|\s)EDUARDO(\s|$)/i.test(normNombre((p&&p.vendedor)||''));
 }
-/* ¿Todo lo vendido en la ventana fue de Eduardo? Para que el cartel diga de quién es. */
-function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendidosUnicos>0; }
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
   if(!isFinite(n)) return 0;
@@ -11110,28 +11104,26 @@ function stockData(){
   Object.keys(STOCK.c.u||{}).forEach(function(k){ if(!esTextoDeTienda(k)) grupo(k); });
   var lista=Object.keys(g).map(function(k){
     var o=g[k];
-    /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN (§4da, tres niveles §4dc, Eduardo afuera §4de).
-       Dos condiciones, las dos dichas por el dueño:
-         1. ENTREGAS DISTINTAS DEL EQUIPO: hacen falta ≥`STOCK_VENTAS_MIN` (3) en la ventana.
-            «Una única entrega o 2 en 1 mes no es tener rotación, eso es pedido único» (07/09).
-            45 en UNA venta no son «3 por día».
-         2. LOS PEDIDOS DE EDUARDO NO CUENTAN (`stockPedidoUnico`; 08/09 vía la otra
-            herramienta, confirmado por el dueño el 09/09): son pedidos puntuales suyos. Van a
-            `vendidosUnicos`; se cubre lo que él vendió y sin entregar (`comp`), nada más.
-       `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo. `porDiaReal` es la
-       cuenta cruda DEL EQUIPO (se muestra); `porDia` es la que usan la proyección y el
-       «cuánto pedir», y vale CERO con rotación `baja`. `porDiaTodo` cuenta todo lo que salió
-       (Eduardo incluido) y sirve solo para «plata parada», que mira para atrás.
-         · `baja`  — <3 entregas del equipo: porDia=0, margen=0, cubrir=0. Aviso 📦 `unico`.
-         · `media` — ≥3 entregas, poco volumen: margen fijo (`STOCK_COLCHON`), cubrir=3.
+    /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN — y la rotación es la del EQUIPO. Regla de la
+       otra herramienta (91ddcd8, 08/09) que el dueño confirmó el 09/09 con la pantalla en la
+       mano: «Deja como lo dejó ChatGPT nomás» (§4dg). Los pedidos de Eduardo
+       (`stockPedidoUnico`) van aparte, a `vendidosUnicos`: no arman ritmo ni reserva; lo
+       suyo vendido y sin entregar (`comp`) sí se cubre. `vendidosRotacion`/`sem` son solo
+       del equipo. `porDiaReal` es la cuenta cruda del equipo (se muestra); `porDia` es la
+       que usan la proyección y el «cuánto pedir», y vale CERO con rotación `baja`.
+       `porDiaTodo` cuenta todo lo que salió (Eduardo incluido) y sirve solo para «plata
+       parada», que mira para atrás (§4de).
+         · `baja`  — ≤2 unidades del equipo en la ventana: porDia=0, margen=0, cubrir=0.
+                     Aviso 📦 `unico` si lo vendido fue todo de Eduardo, `lenta` si fue del equipo.
+         · `media` — más de 2 unidades, sin volumen sostenido: margen fijo, cubrir=3.
          · `alta`  — ≥15 unidades del equipo en ≥2 de los 3 tramos: el margen escala con el
                      desvío (`stockMargen`), cubrir=`STOCK_CUBRIR`.
-       `vendidosRotacion<=2` es redundante con `nVentasRotacion<3` (cada entrega trae ≥1
-       unidad) y queda como cinturón. Lo vendido y sin entregar (`comp`) se cubre en los tres
-       niveles: eso no se estima, está vendido. */
+       ⚠️ Hubo una condición de «≥3 entregas distintas» (§4da → §4de, `STOCK_VENTAS_MIN`)
+       que el dueño SACÓ el 09/09: una venta grande del equipo SÍ cuenta como rotación. No
+       volver a ponerla sin que él lo pida. */
     o.porDiaReal=o.vendidosRotacion/STOCK_VENTANA;
     o.porDiaTodo=o.vendidos/STOCK_VENTANA;
-    o.rotacion=(o.nVentasRotacion<STOCK_VENTAS_MIN || o.vendidosRotacion<=2)?'baja':(o.vendidosRotacion>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
+    o.rotacion=o.vendidosRotacion<=2?'baja':(o.vendidosRotacion>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
     o.rota=(o.rotacion!=='baja');
     o.porDia=o.rota?o.porDiaReal:0;
     o.deposito=stockDeposito(k, o.salidas);
@@ -11255,12 +11247,11 @@ function stockAvisoDe(o){
   if(falta) return 'pedir';                                     // se corta dentro de fábrica + margen
   if(o.enCamino>0) return 'pedido';                             // ya está pedido y con eso alcanza
   if(o.sobra) return 'sobra';
-  /* 📦 Se vendió, pero sin rotación: en una o dos entregas del equipo, o solo lo vendió
-     Eduardo (§4da, §4de). No es una alarma, es una aclaración — si no, el renglón decía
-     «✓ alcanza» teniendo cero. Es UN solo aviso: el dueño llama «pedido único» a las dos
-     cosas, y el texto de la fila dice cuál de las dos es. (Hubo un `lenta` aparte para «1–2
-     unidades del equipo»: con la regla de las 3 entregas es el mismo caso, así que no va.) */
-  if(!o.rota && o.vendidos>0) return 'unico';
+  /* 📦 Se vendió, pero sin rotación. No es una alarma, es una aclaración — si no, el renglón
+     decía «✓ alcanza» teniendo cero. Dos casos con dos nombres (regla de la otra herramienta,
+     confirmada por el dueño el 09/09, §4dg): `unico` si lo vendido fue TODO de Eduardo (sus
+     pedidos son puntuales), `lenta` si el equipo vendió 1 o 2 unidades en la ventana. */
+  if(!o.rota && o.vendidos>0) return !o.vendidosRotacion && o.vendidosUnicos>0?'unico':'lenta';
   return '';
 }
 function stockPrioridad(o){ return { urgente:6, pedir:5, agotado:5, revisar:5, traer:4, sincontar:3, pedido:2, '':1, unico:1, sobra:0 }[o.aviso]||0; }
@@ -11484,7 +11475,7 @@ function renderStock(){
     if(o.aviso==='traer')   return '<button class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd;cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" data-k="'+esc(o.k)+'" onclick="abrirStockRecogida(this.getAttribute(\'data-k\'))" title="Anotar que se va a buscar a Moreno: deja de avisar y queda pendiente hasta que llegue.">🚚 Programar recogida</button>';
     if(o.aviso==='pedido')  return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Ya pedido</span>';
     if(o.aviso==='agotado') return '<span class="badge" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca" title="Discontinuado: la fábrica ya no lo hace. Se vende lo que queda y nada más.">🛑 Se acaba y no se fabrica más</span>';
-    if(o.aviso==='unico')   return '<span class="badge" style="background:#f5f5f4;color:#7c4b00;border:1px solid #e7e5e4" title="'+(stockSoloEduardo(o)?'Lo vendió Eduardo: es un pedido puntual suyo, no una venta que se repita. Se cubre lo que vendió y nada más.':'Se vendió en una o dos entregas: no hay una venta repetida de la que deducir cuánto reponer. No se pide por las dudas.')+'">📦 Pedido único'+(stockSoloEduardo(o)?' · Eduardo':'')+'</span>';
+    if(o.aviso==='unico')   return '<span class="badge" style="background:#f5f5f4;color:#7c4b00;border:1px solid #e7e5e4" title="Lo vendió Eduardo: es un pedido puntual suyo, no una venta que se repita. Se cubre lo que vendió y nada más.">📦 Pedido único · Eduardo</span>';
     if(o.aviso==='sobra')   return '<span class="badge" style="background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe">💤 Sobra</span>';
     if(o.aviso==='sincontar') return '<span class="badge" style="background:var(--gray-lt);color:var(--muted)">sin contar</span>';
     return '<span class="badge b-green">✓ alcanza</span>';
@@ -11498,10 +11489,9 @@ function renderStock(){
     if(o.aviso==='traer')   return chico('se corta '+stockEnDias(o.dias)+', pero <b>ya está fabricado</b>: '+stockOtrosTxt(o)+' → traé <b>'+Math.max(1,o.pedir)+'</b>, no hace falta pedir','#075985');
     if(o.aviso==='pedido') return chico((q?(q.u+' pendientes · '+(q.llega<todayStr()?'llegada atrasada desde ':'fecha prevista ')+fmtFechaCorta(q.llega)+(q.fab?(' de '+esc(q.fab)):'')):'')+(o.corte?'<br>Confirmar la llegada: hay un faltante antes de recibir. No duplicar la orden.':''),'#075985');
     if(o.aviso==='agotado') return chico('quedan <b>'+stockUnid(Math.max(0,o.deposito))+'</b>'+(o.dias!=null?(' y se cortan '+stockEnDias(o.dias)):'')+(o.comp?(' con '+stockUnid(o.comp)+' ya vendidos'):'')+'. La fábrica ya no lo hace: que ventas no ofrezca más de lo que hay.','#7f1d1d');
-    /* Solo la CONSECUENCIA (§4dc): el dato («45 en 15 días · 1 entrega») ya está dos líneas
-       más arriba, en la misma fila. Y de quién es, si es de Eduardo (§4de). */
-    if(o.aviso==='unico') return chico(stockSoloEduardo(o) ? 'Lo vendió Eduardo: se cubre lo que él ya vendió, sin reserva por las dudas.' : 'Es un pedido puntual, no una venta que se repita: no se repone por las dudas. Si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
-    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(stockSoloEduardo(o)?' · lo vendió Eduardo: no es rotación, no se repone':(' · lo del equipo salió en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+': no es rotación, no se repone')):''),'#5b21b6'); }
+    if(o.aviso==='lenta') return chico(o.vendidos+' unidades en '+STOCK_VENTANA+' días: no se añade reserva por previsión. Se cubren únicamente faltantes de pedidos confirmados.');
+    if(o.aviso==='unico') return chico('Eduardo: se cubren sus pedidos confirmados, sin añadir reserva por previsión.','#7c4b00');
+    if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
     if(o.descont) return chico('ya no se fabrica: se vende lo que queda');
     return '';
@@ -11522,9 +11512,9 @@ function renderStock(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
-          (o.vendidosUnicos?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+' · Eduardo: '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')+
+          (o.vendidosUnicos?('<br>Rotación: '+o.vendidosRotacion+' · Eduardo: '+o.vendidosUnicos+' excluidas de reserva'):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
-          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?'Eduardo: pedido único':'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
+          ('<br><b style="color:#7c4b00">'+(o.aviso==='unico'?'Eduardo: pedido único':o.rotacion==='baja'?'Poca rotación: solo pedidos confirmados':o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
@@ -11652,9 +11642,7 @@ function copiarStock(){
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
          (o.rota ? (', se venden '+stockNum(o.porDia)+' por día')
-                 : (stockSoloEduardo(o) ? ', Eduardo: pedido único'
-                    : o.vendidos>0 ? (', pedido puntual — '+o.vendidos+' en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s'))
-                                   : ', es para un pedido puntual'))+
+                 : (o.vendidosUnicos>0&&!o.vendidosRotacion?', Eduardo: pedido único':', poca rotación: solo demanda confirmada'))+
          (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
          (o.comp?(', '+stockUnid(o.comp)+' ya vendidos sin entregar'):'')+'\n';
     });

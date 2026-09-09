@@ -5359,6 +5359,49 @@ afuera; que las cuentas cierren y avise el sin precio; que sin dato pida un dato
 vendedora que no vendió eso lo diga sin inventar; y que Copiar lleve el cuadro y el total con
 los vendedores. Capturas a 1300px y 390px: el cuadro y el detalle se leen en los dos.
 
+## 4dg. 🔁 La rotación da la vuelta entera: queda la regla de la otra herramienta (2026-09-09)
+
+Una hora después de publicar §4de, el dueño mandó una captura del detalle de un producto en
+su panel — «Necesidad 16,80 − 6 acá − 0 ya pedidas = **11 unidades adicionales** … El panel
+propone fabricar 11 … Base de rotación: 21 unidades de los demás vendedores en 15 días; 0 de
+Eduardo» — y escribió: *"Y que las ventas de Eduardo no entran a pedir productos ni rotación
+ni nada! Se vendieron 3 y pedís 11? Deja como lo dejo chat gpt nomas!"*
+
+### Dos cosas distintas en un mensaje
+
+1. **«Deja como lo dejó ChatGPT»** — es la decisión: la regla de 91ddcd8 (rotación = unidades
+   del equipo, ≤2 = sin rotación; Eduardo afuera), sin la condición de «≥3 entregas distintas»
+   que yo había vuelto a poner en §4de. Hecho: `o.rotacion` vuelve a la línea de la otra
+   herramienta, `stockAvisoDe` vuelve a `unico` (todo de Eduardo) / `lenta` (1–2 del equipo),
+   los textos vuelven a los suyos («📦 Pedido único · Eduardo», «Rotación: N · Eduardo: K
+   excluidas de reserva», el porqué de `lenta`), `stockSoloEduardo` se va, `STOCK_VENTAS_MIN`
+   queda definida y sin uso con la historia de la regla arriba, para que nadie la vuelva a
+   poner sin que el dueño lo pida. Se quedan las cosas que no eran regla sino error:
+   `porDiaTodo` para «plata parada», «4 semanas» → `STOCK_VENTANA`, la zona horaria de la
+   batería, y (b)/(c) de §4de.
+2. **«Se vendieron 3 y pedís 11»** — esto NO cambia con la regla, y hay que decírselo con
+   todas las letras en vez de dejar que crea que se arregló: ese producto tiene **21 unidades
+   del equipo en 15 entregas** (rotación alta bajo cualquiera de las dos reglas), o sea 1,4
+   por día; la reposición cubre fábrica (3) + margen (2) + reserva (7) = 12 días → 16,8, y
+   como hay 6 en depósito pide 11. Los «3» que él ve son los pendientes de hoy (1 sin entregar
+   + 2 a fábrica); los otros 19–21 ya salieron. Es la reserva por rotación que él mismo pidió
+   en §4co («solo debés mandar a producir productos que tienen rotación»), no un invento. Si
+   lo que quiere es que el panel pida SOLO lo vendido y sin cubrir, sin reserva, eso es otra
+   regla (cubrir=0 para todos) y se hace en una línea — pero se la tiene que pedir él.
+
+### Tests, otra vez de acuerdo con el código
+- `test_rotacion.js` reescrito para la regla que quedó (**30 checks**): MORFEO 45 en una
+  entrega → rota (media), 3/día, pide 24 y entra al mensaje; HERA 45 en 2 entregas en dos
+  tramos → alta; ARES alta; ARTEMISA (0 vendidas, 6 sin entregar) se cubre igual; HERMES (2
+  del equipo) → `lenta`, sin pedir; y la sección de Eduardo: HADES (45 suyos en 5 entregas) →
+  `unico`, sin pedir, «📦 Pedido único · Eduardo»; POSEIDON (80 suyos + 8 de Carola) rota
+  solo por los 8 y lo que pide sale de los 8; ATENEA 1+1+1 → media. La cabecera del test
+  cuenta las tres vueltas de la regla con fecha, para que el próximo no la dé de nuevo.
+- `test_circuito.cjs`: las 12 líneas vuelven a como las escribió la otra herramienta.
+- `test_stock_rotacion.cjs` (de la otra herramienta, del sábado): sus 2 checks que
+  contradecían su propio commit del domingo quedan alineados con la regla confirmada
+  (`seed([1,1])` → `lenta`; `seed([40])` → media y pide), con el comentario del 09/09.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
