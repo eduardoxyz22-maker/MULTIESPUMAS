@@ -204,7 +204,13 @@ correo + el mensaje de **WhatsApp**.
   del medio repinta todos los otros Excel del panel.
 - ⚠️ `xlsxHoja` tenía la regex de celdas glotona: una **celda vacía con estilo** se tragaba
   la de al lado (valor corrido de columna, en silencio). Arreglado en §4dk.
-- `tests/test_rpt.js` (74 checks).
+- `tests/test_rpt.js` (84 checks).
+- **§4dl** — repaso: (1) **«Quién vendió qué» ya no cuenta ATC ni RPT como ventas**
+  (`buscarData`); lo que queda afuera se dice con `busFueraTxt`, abajo del cuadro y en la
+  carátula impresa. ⚠️ Hasta el 09/09 las ATC SÍ entraban marcadas — está anotado en la
+  bitácora y volver atrás es una línea. (2) Con **ROHO** el tipo vuelve solo a OC: el
+  selector se esconde y el formulario quedaba sin salida. (3) Verificado: 25 productos en
+  una RPT (la hoja crece), y los Excel de siempre siguen saliendo.
 
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`

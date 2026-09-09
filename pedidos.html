@@ -6049,6 +6049,10 @@ function applyVendedorLite(){
      sacara en editPedido(), volvería a aparecer sola. */
   var ff=document.getElementById('f-fecha');
   if(ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min = lite ? todayStr() : tomorrowStr(); }
+  /* ⚠️ En ROHO el selector de tipo SE ESCONDE (el N° lo manda el cliente). Si alguien había
+     elegido 🎧 ATC o 🏪 RPT y recién después escribe ROHO, quedaba el formulario a medias:
+     el bloque abierto y el botón para volver, escondido. Vuelve solo a OC (§4dl). */
+  if(roho && !EDIT_ID && docTipoSel()!=='OC'){ segSet('f-doc-tipo','OC'); pintarDocTipo(true); }
   pintarCampoOc(roho);
   /* 🏪 «Solicitado por» del formato de reposición es el vendedor: se copia solo mientras
      lo escribe, si no queda vacío en el Excel (§4dk). */
@@ -10206,10 +10210,24 @@ function buscarData(){
   var desde=String((document.getElementById('bus-desde')||{}).value||'');
   var hasta=String((document.getElementById('bus-hasta')||{}).value||'');
   if(!vend && !terms.length) return { pedir:true, filas:[], porVend:[] };
-  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={};
+  var filas=[], uni=0, plata=0, sinPrecio=0, pedidos={}, pv={}, fuera={atc:0, rpt:0};
   STATE.forEach(function(p){
     if(!p || esFilaSistema(p) || esBorrador(p)) return;
     if(vend && !mismoVendedor(p.vendedor, vend)) return;
+    /* ⚠️ ESTA PANTALLA SE LLAMA «QUIÉN VENDIÓ QUÉ» (§4dl). Una 🎧 ATC es un servicio —el
+       colchón vuelve, no se vende— y una 🏪 RPT es mercadería que cambió de almacén: las dos
+       sumaban unidades como si fueran ventas, e inflaban el cuadro del vendedor. Se cuentan
+       aparte y se dicen abajo, para que no parezca que el panel las perdió. */
+    if(esATC(p.oc) || esRPT(p.oc)){
+      var _c=0; (p.productos||[]).forEach(function(x){
+        var nom=String((x&&x.desc)||'')+' '+String((x&&x.medida)||'')+' '+String((x&&x.codigo)||'');
+        if(terms.length && !terms.some(function(t){ return busCoincide(nom, t); })) return;
+        _c+=Number(x.cant)||0;
+      });
+      if(_c){ var _f=fechaSalida(p);
+        if(!(desde && (!_f || _f<desde)) && !(hasta && (!_f || _f>hasta))) fuera[esATC(p.oc)?'atc':'rpt']+=_c; }
+      return;
+    }
     var f=fechaSalida(p);
     if(desde && (!f || f<desde)) return;
     if(hasta && (!f || f>hasta)) return;
@@ -10243,6 +10261,7 @@ function buscarData(){
     return (Number(a.p.nroDia)||0)-(Number(b.p.nroDia)||0) || (Number(a.p.ts)||0)-(Number(b.p.ts)||0);
   });
   return { filas:filas, porVend:porVend, uni:uni, plata:r2(plata), sinPrecio:sinPrecio, nPed:Object.keys(pedidos).length,
+           fuera:fuera,
            vend:vend, prod:(document.getElementById('bus-prod')||{}).value||'', desde:desde, hasta:hasta };
 }
 function busRangoTxt(d){
@@ -10250,6 +10269,15 @@ function busRangoTxt(d){
   if(d.desde) return 'desde el '+fmtFecha(d.desde);
   if(d.hasta) return 'hasta el '+fmtFecha(d.hasta);
   return 'todas las fechas';
+}
+/* Lo que se dejó AFUERA del cuadro y por qué (§4dl). Si no se dijera, el que busca un
+   producto que solo se movió por reposiciones vería «nadie vendió eso» y pensaría que el
+   panel se comió los datos. */
+function busFueraTxt(d){
+  var f=(d&&d.fuera)||{}, t=[];
+  if(f.rpt) t.push('<b>'+f.rpt+'</b> unidad'+(f.rpt===1?'':'es')+' en 🏪 reposiciones de tienda');
+  if(f.atc) t.push('<b>'+f.atc+'</b> unidad'+(f.atc===1?'':'es')+' en 🎧 ATC');
+  return t.length ? (t.join(' y ')+' — no son ventas, no entran en el cuadro') : '';
 }
 function renderBuscar(){
   var d=buscarData(); BUSCA=d;
@@ -10265,6 +10293,7 @@ function renderBuscar(){
   if(info) info.textContent=d.filas.length+' '+(d.filas.length===1?'renglón':'renglones')+' · '+d.nPed+' pedido'+(d.nPed===1?'':'s')+' · '+nv+' vendedor'+(nv===1?'':'es');
   if(!d.filas.length){
     body.innerHTML='<div style="text-align:center;color:#888;padding:44px">Nadie vendió eso en ese período.'+
+      (busFueraTxt(d)?('<br><span style="font-size:.9rem;color:var(--rpt-dk)">Sí hubo '+busFueraTxt(d)+'.</span>'):'')+
       '<br><span style="font-size:.85rem">Probá con menos palabras en el producto, con «Todos» en vendedor, o ampliá las fechas.</span></div>';
     return;
   }
@@ -10282,6 +10311,7 @@ function renderBuscar(){
       ' &nbsp;·&nbsp; <b style="color:#5b21b6">'+fmtBs(d.plata)+'</b>'+
       ' &nbsp;·&nbsp; <b>'+nv+'</b> vendedor'+(nv===1?'':'es')+
       (d.sinPrecio?('<br><span style="color:var(--amber);font-size:.85rem">⚠️ '+d.sinPrecio+' unidad'+(d.sinPrecio===1?'':'es')+' sin precio cargado: no suman al total.</span>'):'')+
+      (busFueraTxt(d)?('<br><span style="color:var(--muted);font-size:.85rem">'+busFueraTxt(d)+'.</span>'):'')+
     '</div>'+
     '<div style="font-size:.75rem;color:var(--muted);margin-top:6px">Emitido el '+fmtFecha(todayStr())+'</div></div>';
   /* ⚠️ LA RESPUESTA ES ESTE CUADRO: quién vendió cuánto, el que más vendió primero. El detalle

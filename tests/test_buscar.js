@@ -10,7 +10,12 @@
    2. Que NO se cuele lo que no pidió: otro vendedor (si se eligió uno), otro producto, otra
       fecha. Y que no se PIERDA lo que sí pidió por cómo esté escrito: «bahía» con acento, la
       medida pegada al nombre, el vendedor en minúsculas.
-   3. Que los borradores de Kommo queden afuera (no son ventas) y las ATC entren marcadas.
+   3. Que quede afuera lo que NO es una venta: los borradores de Kommo, las 🎧 ATC (un
+      servicio: el colchón vuelve) y las 🏪 reposiciones de tienda (mercadería que cambió de
+      almacén). ⚠️ Hasta el 09/09 las ATC SÍ entraban, marcadas — y le sumaban unidades al
+      vendedor como si las hubiera vendido. Se sacaron al agregar el RPT (§4dl): las dos se
+      cuentan aparte y se dicen abajo del cuadro, así no parece que el panel las perdió (y
+      para buscar una ATC por producto está su propia pestaña 🎧 ATC).
    4. Que las cuentas cierren: unidades, plata, y aviso si algún renglón no tiene precio.
    5. Que sin producto ni vendedor NO devuelva el panel entero.
 
@@ -99,19 +104,19 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   // ══ 1. La pregunta del dueño: ¿quién vendió estos productos entre estas fechas? ═══════
   console.log('\n── 1. «carioca premier, carioca bahía, premier deluxe · 1/8 al 6/9 · Todos» ──');
   let r = await buscar('','carioca premier, carioca bahía, premier deluxe','2026-08-01','2026-09-06');
-  chk('⚠️ trae los 8 renglones de los 3 vendedores, y ninguno más',
-      r.ids.length===8 && ['a1','a2','a3','a4','a5','a6','m1','e1'].every(i=>r.ids.indexOf(i)>=0), r.ids.join(','));
-  chk('…de 8 pedidos distintos, de 3 vendedores', r.nPed===8 && r.porVend.length===3, r.nPed+' · '+r.porVend.length);
-  chk('⚠️ EL CUADRO: cada vendedor con lo suyo — Carola 9 u / Bs 13.900 en 6 pedidos, Mirian 9 u / Bs 13.500, Eduardo 2 u / Bs 4.000',
-      JSON.stringify(r.porVend.map(g=>[g.v,g.uni,g.plata,g.nPed]))===JSON.stringify([['Carola Chavez',9,13900,6],['Mirian Salazar',9,13500,1],['Eduardo Añez',2,4000,1]]),
+  chk('⚠️ trae los 7 renglones VENDIDOS de los 3 vendedores, y ninguno más',
+      r.ids.length===7 && ['a1','a2','a3','a4','a6','m1','e1'].every(i=>r.ids.indexOf(i)>=0), r.ids.join(','));
+  chk('…de 7 pedidos distintos, de 3 vendedores', r.nPed===7 && r.porVend.length===3, r.nPed+' · '+r.porVend.length);
+  chk('⚠️ EL CUADRO: cada vendedor con lo suyo — Mirian 9 u / Bs 13.500, Carola 8 u / Bs 13.900 en 5 pedidos, Eduardo 2 u / Bs 4.000',
+      JSON.stringify(r.porVend.map(g=>[g.v,g.uni,g.plata,g.nPed]))===JSON.stringify([['Mirian Salazar',9,13500,1],['Carola Chavez',8,13900,5],['Eduardo Añez',2,4000,1]]),
       JSON.stringify(r.porVend.map(g=>[g.v,g.uni,g.plata,g.nPed])));
-  chk('⚠️ el que más vendió va primero (empate en unidades: desempata la plata)', r.porVend[0].v==='Carola Chavez' && r.porVend[1].v==='Mirian Salazar');
+  chk('⚠️ el que más vendió va primero (empate en unidades: desempata la plata)', r.porVend[0].v==='Mirian Salazar' && r.porVend[1].v==='Carola Chavez');
   chk('⚠️ «mirian salazar» en minúsculas sale con el nombre de la lista', r.porVend.some(g=>g.v==='Mirian Salazar') && !r.porVend.some(g=>g.v==='mirian salazar'));
-  chk('⚠️ «carola chávez» con acento se suma a Carola Chavez, no es otra vendedora', r.porVend.filter(g=>/carola/i.test(g.v)).length===1 && r.porVend[0].uni===9);
-  chk('…y dice QUÉ vendió cada uno, con unidades', r.porVend[0].lista.indexOf('COLCHON CARIOCA PREMIER 140x190 × 2')>=0 &&
-      r.porVend[0].lista.indexOf('COLCHON SUEÑA PREMIER DELUXE 160x190 × 3')>=0, r.porVend[0].lista.join(' | '));
+  chk('⚠️ «carola chávez» con acento se suma a Carola Chavez, no es otra vendedora', r.porVend.filter(g=>/carola/i.test(g.v)).length===1 && r.porVend[1].uni===8);
+  chk('…y dice QUÉ vendió cada uno, con unidades', r.porVend[1].lista.indexOf('COLCHON CARIOCA PREMIER 140x190 × 2')>=0 &&
+      r.porVend[1].lista.indexOf('COLCHON SUEÑA PREMIER DELUXE 160x190 × 3')>=0, r.porVend[1].lista.join(' | '));
   chk('la tabla del detalle va agrupada por vendedor, en el orden del cuadro',
-      JSON.stringify(r.vends)===JSON.stringify(['Carola Chavez','Carola Chavez','Carola Chavez','Carola Chavez','Carola Chavez','Carola Chavez','Mirian Salazar','Eduardo Añez']), r.vends.join(','));
+      JSON.stringify(r.vends)===JSON.stringify(['Mirian Salazar','Carola Chavez','Carola Chavez','Carola Chavez','Carola Chavez','Carola Chavez','Eduardo Añez']), r.vends.join(','));
   chk('⚠️ «bahía» con acento encuentra «BAHIA» sin acento', r.prods.some(s=>/BAHIA/.test(s)), r.prods.join(' | '));
   chk('⚠️ la medida pegada al nombre no molesta («…2 PLAZAS 140X190CM»)', r.ids.indexOf('a4')>=0);
   chk('el desplegable tiene a Eduardo (salió de los pedidos) y a Carola (de la lista fija), y a Mirian UNA sola vez',
@@ -125,37 +130,46 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ el CARIOCA RIO no es el CARIOCA PREMIER', r.ids.indexOf('x4')<0 && !/CARIOCA RIO/.test(r.texto));
   chk('un producto que no pidió (TITANIO LATEX) no aparece', r.ids.indexOf('x5')<0 && !/TITANIO/.test(r.texto));
   chk('⚠️ un borrador de Kommo no es una venta: no entra', r.ids.indexOf('kommo-5')<0);
+  /* §4dl — lo que cambió el 09/09 con el RPT. */
+  chk('⚠️ una 🎧 ATC tampoco: es un servicio, el colchón vuelve — no se vendió otro',
+      r.ids.indexOf('a5')<0 && !/ATC 08-011/.test(r.texto), r.ids.join(','));
+  chk('⚠️ …pero el panel LO DICE, para que no parezca que se perdió',
+      /1 unidad en 🎧 ATC/.test(r.texto) && /no son ventas/.test(r.texto),
+      (r.texto.match(/[^.]*no son ventas[^.]*/)||[''])[0].slice(0,90));
   chk('⚠️ del pedido con dos renglones sale SOLO el que coincide, no la almohada',
       r.prods.filter(s=>/ALMOHADA/.test(s)).length===0 && r.ids.filter(i=>i==='a6').length===1, r.prods.join(' | '));
 
   // ══ 3. Eligiendo un vendedor ══════════════════════════════════════════════
   console.log('\n── 3. Solo Carola ──');
   r = await buscar('Carola Chavez','carioca premier, carioca bahía, premier deluxe','2026-08-01','2026-09-06');
-  chk('⚠️ con Carola elegida salen sus 6 renglones y no los de Mirian ni Eduardo',
-      r.ids.length===6 && r.ids.indexOf('m1')<0 && r.ids.indexOf('e1')<0, r.ids.join(','));
+  chk('⚠️ con Carola elegida salen sus 5 renglones vendidos y no los de Mirian ni Eduardo',
+      r.ids.length===5 && r.ids.indexOf('m1')<0 && r.ids.indexOf('e1')<0, r.ids.join(','));
   chk('…incluido el «carola chávez» con acento y minúsculas', r.ids.indexOf('a3')>=0);
   chk('salen ordenados por fecha', JSON.stringify(r.fechas)===JSON.stringify(r.fechas.slice().sort()), r.fechas.join(' '));
-  /* 2×1500 + 1×900 + 3×2000 + 1×1500 + 1×0 + 1×2500 = 3000+900+6000+1500+0+2500 = 13.900 */
-  chk('⚠️ suma 9 unidades y Bs 13.900', r.uni===9 && Math.abs(r.plata-13900)<0.01, r.uni+' u · '+r.plata);
-  chk('⚠️ y avisa que 1 unidad no tiene precio cargado (la ATC)', r.sinPrecio===1 && /sin precio cargado/.test(r.texto), r.sinPrecio);
+  /* 2×1500 + 1×900 + 3×2000 + 1×1500 + 1×2500 = 3000+900+6000+1500+2500 = 13.900
+     (la ATC de 1 unidad sin precio ya no entra — §4dl) */
+  chk('⚠️ suma 8 unidades y Bs 13.900', r.uni===8 && Math.abs(r.plata-13900)<0.01, r.uni+' u · '+r.plata);
+  chk('⚠️ ya no quedan unidades sin precio: la única era la ATC', r.sinPrecio===0 && !/sin precio cargado/.test(r.texto), r.sinPrecio);
   chk('el encabezado dice productos, vendedor y período', /Vendedor: Carola Chavez/.test(r.texto) &&
       /Período: del 01\/08\/2026 al 06\/09\/2026/.test(r.texto), (r.texto.match(/Período:[^E]*/)||[''])[0].slice(0,60));
   /* ⚠️ El encabezado es lo que se IMPRIME: ahí no puede decir «6 renglónes». */
   chk('…y el plural del encabezado impreso está bien escrito',
-      /6 renglones en 6 pedidos/.test(r.texto) && !/renglónes/.test(r.texto),
+      /5 renglones en 5 pedidos/.test(r.texto) && !/renglónes/.test(r.texto),
       (r.texto.match(/\d+ rengl[^·]*/)||[''])[0].slice(0,40));
-  chk('la ATC se ve marcada como tal', /ATC 08-011/.test(r.texto), (r.texto.match(/ATC[^ ]* ?[^ ]*/)||[''])[0]);
+  chk('la ATC de Carola se cuenta aparte, también con un vendedor elegido',
+      /1 unidad en 🎧 ATC/.test(r.texto), (r.texto.match(/[^.]*🎧[^.]*/)||[''])[0].slice(0,80));
   chk('el pendiente se ve como pendiente y con su saldo', /pendiente/.test(r.texto) && /saldo/.test(r.texto));
   chk('el cliente sigue a la vista, chiquito, bajo la nota', /JUAN PABLO PAREDES/.test(r.texto) && /Otro Cliente/.test(r.texto));
-  chk('el resumen de arriba cuenta renglones, pedidos y vendedores', /6 renglones · 6 pedidos · 1 vendedor$/.test(r.info), r.info);
+  chk('el resumen de arriba cuenta renglones, pedidos y vendedores', /5 renglones · 5 pedidos · 1 vendedor$/.test(r.info), r.info);
 
   // ══ 4. Con un solo dato ═══════════════════════════════════════════════════
   console.log('\n── 4. Con un solo dato ──');
   r = await buscar('Carola Chavez','','2026-08-01','2026-09-06');
-  /* Son 9 y no 7: x4 (CARIOCA RIO) y x5 (TITANIO LATEX) también los vendió Carola — quedaban
-     afuera por el PRODUCTO, no por el vendedor. Sin filtro de producto tienen que entrar. */
+  /* Son 8 y no 6: x4 (CARIOCA RIO) y x5 (TITANIO LATEX) también los vendió Carola — quedaban
+     afuera por el PRODUCTO, no por el vendedor. Sin filtro de producto tienen que entrar.
+     Su ATC (a5) sigue afuera: no es una venta, la cuente quien la cuente (§4dl). */
   chk('solo vendedor: trae TODO lo que vendió en el período, también lo que no se pidió por producto',
-      r.ids.length===9 && r.prods.some(s=>/ALMOHADA/.test(s)) && r.ids.indexOf('x4')>=0 && r.ids.indexOf('x5')>=0,
+      r.ids.length===8 && r.prods.some(s=>/ALMOHADA/.test(s)) && r.ids.indexOf('x4')>=0 && r.ids.indexOf('x5')>=0 && r.ids.indexOf('a5')<0,
       r.ids.length+' renglones: '+r.ids.join(','));
   chk('…y el cuadro dice qué vendió, producto por producto', r.porVend.length===1 && r.porVend[0].lista.length>=6, r.porVend[0].lista.join(' | '));
   r = await buscar('','','','');
@@ -176,11 +190,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('🖨 Imprimir prepara la hoja (de ahí sale «Guardar como PDF»)', impr===true);
   const txt = await page.evaluate(() => { var t=''; var o=window.copyText; window.copyText=function(s){t=s;}; copiarBusca(); window.copyText=o; return t; });
   chk('📋 Copiar arma el texto con el cuadro por vendedor',
-      /Vendedor: Todos/.test(txt) && /• Carola Chavez: 9 unidades en 6 pedidos  Bs 13\.900/.test(txt) && /• Mirian Salazar: 9 unidades en 1 pedido/.test(txt),
+      /Vendedor: Todos/.test(txt) && /• Carola Chavez: 8 unidades en 5 pedidos  Bs 13\.900/.test(txt) && /• Mirian Salazar: 9 unidades en 1 pedido/.test(txt),
       txt.split('\n').filter(l=>/^•/.test(l)).join(' / '));
-  chk('…con el total y cuántos vendedores', /TOTAL: 20 unidades  Bs 31\.400,00  ·  8 pedidos  ·  3 vendedores/.test(txt),
+  chk('…con el total y cuántos vendedores', /TOTAL: 19 unidades  Bs 31\.400,00  ·  7 pedidos  ·  3 vendedores/.test(txt),
       txt.split('\n').filter(l=>/TOTAL/.test(l)).join(''));
-  chk('…y una línea por renglón del detalle, con su fecha', (txt.match(/^\d{2}\/\d{2}\/\d{4}/gm)||[]).length===8,
+  chk('…y una línea por renglón del detalle, con su fecha', (txt.match(/^\d{2}\/\d{2}\/\d{4}/gm)||[]).length===7,
       (txt.match(/^\d{2}\/\d{2}\/\d{4}[^\n]*/m)||[''])[0]);
 
   // ══ 6. Tocar para ver el pedido, tocar para filtrar ═══════════════════════
@@ -191,9 +205,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await page.click('#busca-body tr[data-id="a1"] td:nth-child(4)');
   const modal = await page.evaluate(() => { var m=document.getElementById('modal'); var on=m.classList.contains('on'); var t=(m.textContent||'').replace(/\s+/g,' '); closeModal(); return { on:on, t:t }; });
   chk('⚠️ tocar un renglón abre la ficha de ESE pedido, por encima de la búsqueda', modal.on && /190001/.test(modal.t) && /JUAN PABLO PAREDES/.test(modal.t), modal.t.slice(0,100));
-  chk('…y al cerrarla la búsqueda sigue ahí, intacta', await page.evaluate(() => document.getElementById('busca-overlay').style.display==='flex' && BUSCA.filas.length===8));
+  chk('…y al cerrarla la búsqueda sigue ahí, intacta', await page.evaluate(() => document.getElementById('busca-overlay').style.display==='flex' && BUSCA.filas.length===7));
   chk('cada renglón tiene además un botón «Ver pedido», que no se imprime',
-      await page.evaluate(() => { var b=document.querySelectorAll('#busca-body tr[data-id] button.no-print'); return b.length===8 && /Ver pedido/.test(b[0].textContent); }));
+      await page.evaluate(() => { var b=document.querySelectorAll('#busca-body tr[data-id] button.no-print'); return b.length===7 && /Ver pedido/.test(b[0].textContent); }));
   await page.click('#busca-body tr[data-v="Mirian Salazar"] td:first-child');
   const sel = await page.evaluate(() => ({ v:document.getElementById('bus-vend').value, ids:BUSCA.filas.map(function(r){ return r.p.id; }) }));
   chk('⚠️ tocar un vendedor en el cuadro lo deja como filtro', sel.v==='Mirian Salazar' && JSON.stringify(sel.ids)===JSON.stringify(['m1']), sel.v+' · '+sel.ids.join(','));

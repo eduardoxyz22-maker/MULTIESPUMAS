@@ -395,6 +395,91 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ sin sucursal no se guarda: el camión no sabría a dónde ir', falta.guardo===false, falta.guardo);
   chk('…y el campo queda marcado en rojo', falta.marcado===true, falta.marcado);
 
+  // ─────────────────────────────────────────────────────────────────────────
+  console.log('\n── 9. Que no se cuele como venta, y que no quede a medias (§4dl) ──');
+  const bus = await page.evaluate(() => {
+    var h=todayStr();
+    STATE=[
+      {id:'s1',oc:h.slice(5,7)+'-010',nota:'1',cliente:'Juana',vendedor:'Fernando Peinado',fecha:h,ts:Date.now(),
+        productos:[{desc:'COLCHON TITANIO',medida:'140x190',codigo:'CH1129',cant:1,precio:1000}]},
+      {id:'s2',oc:'RPT '+h.slice(5,7)+'-060',cliente:'Mia Plaza',vendedor:'Fernando Peinado',fecha:h,ts:Date.now(),
+        productos:[{desc:'COLCHON TITANIO',medida:'140x190',codigo:'CH1129',cant:30}]},
+      {id:'s3',oc:'ATC '+h.slice(5,7)+'-002',cliente:'Pedro',vendedor:'Fernando Peinado',fecha:h,ts:Date.now(),
+        productos:[{desc:'COLCHON TITANIO',medida:'140x190',codigo:'CH1129',cant:2}]}];
+    showView('admin');
+    document.getElementById('bus-prod').value='TITANIO';
+    document.getElementById('bus-vend').value='';
+    document.getElementById('bus-desde').value=''; document.getElementById('bus-hasta').value='';
+    var d=buscarData();
+    renderBuscar();
+    var conTodo=(document.getElementById('busca-body')||{}).textContent.replace(/\s+/g,' ');
+    STATE=[STATE[1]];   // solo la reposición
+    renderBuscar();
+    var soloRpt=(document.getElementById('busca-body')||{}).textContent.replace(/\s+/g,' ');
+    return { uni:d.uni, plata:d.plata, nPed:d.nPed, fuera:d.fuera,
+             txt:busFueraTxt(d).replace(/<[^>]+>/g,''), conTodo:conTodo, soloRpt:soloRpt };
+  });
+  chk('⚠️ «Quién vendió qué» ya NO cuenta la reposición como venta',
+      bus.uni===1 && bus.plata===1000 && bus.nPed===1,
+      bus.uni+' unidades · '+bus.plata+' · '+bus.nPed+' pedido');
+  chk('…ni la ATC (es un servicio, el colchón vuelve)', bus.fuera.atc===2, JSON.stringify(bus.fuera));
+  chk('⚠️ …pero lo DICE, para que no parezca que el panel las perdió',
+      /30 unidades en 🏪 reposiciones/.test(bus.txt) && /2 unidades en 🎧 ATC/.test(bus.txt), bus.txt);
+  chk('…y también en la carátula que se imprime', /reposiciones de tienda/.test(bus.conTodo));
+  chk('⚠️ si SOLO hubo reposiciones no dice «nadie vendió eso» a secas',
+      /Sí hubo/.test(bus.soloRpt) && /reposiciones de tienda/.test(bus.soloRpt),
+      bus.soloRpt.slice(0,110));
+
+  const roho = await page.evaluate(() => {
+    showView('form'); resetForm();
+    segSet('f-doc-tipo','RPT'); setDocTipo();
+    var antes=docTipoSel();
+    document.getElementById('f-vendedor').value='ROHO'; applyVendedorLite();
+    return { antes:antes, tipo:docTipoSel(),
+      selector:(document.getElementById('f-doc-tipo')||{style:{}}).style.display,
+      bloque:(document.getElementById('wrap-rpt')||{style:{}}).style.display };
+  });
+  chk('⚠️ con ROHO (que esconde el selector) el tipo vuelve solo a OC, sin dejar el formulario a medias',
+      roho.antes==='RPT' && roho.tipo==='OC' && roho.selector==='none' && roho.bloque==='none',
+      roho.antes+' → '+roho.tipo+' · selector '+roho.selector+' · bloque '+roho.bloque);
+
+  const grande = await page.evaluate(async () => {
+    var prods=[]; for(var i=0;i<25;i++) prods.push({desc:'PROD '+(i+1),medida:'',codigo:'C'+i,cant:2,rtipo:'Reposición'});
+    var p={id:'b1',oc:'RPT 09-050',cliente:'Central',vendedor:'Mirian',fecha:tomorrowStr(),ts:Date.now(),productos:prods};
+    var h=rptHoja(p), bytes=buildXlsx([h]);
+    var ab=bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength);
+    var l=xlsxHoja(await xlsxDescomprimir(ab));
+    return { dv:h.dv[0].sqref, ultimo:(l[35]||{}).C, items:(l[37]||{}).E, uni:(l[37]||{}).H,
+             pie:(l[l.length-1]||{}).A };
+  });
+  chk('⚠️ un pedido de 25 productos no se corta en el renglón 20: la hoja crece',
+      grande.ultimo==='PROD 25' && grande.dv==='E12:E36',
+      grande.ultimo+' · lista '+grande.dv);
+  chk('…y el resumen y el pie se corren con ella',
+      String(grande.items)==='25' && String(grande.uni)==='50' && /MultiESPUMAS/.test(grande.pie||''),
+      grande.items+' ítems · '+grande.uni+' unidades');
+
+  const viejos = await page.evaluate(() => {
+    /* ⚠️ Los estilos del .xlsx son COMPARTIDOS: al agregar los del formato de reposición,
+       los Excel de siempre tienen que seguir saliendo igual. */
+    var h=todayStr(), sacado={};
+    STATE=[{id:'v1',oc:h.slice(5,7)+'-001',nota:'5',cliente:'Juana',vendedor:'Mirian Salazar',fecha:h,turno:'AM',
+      zona:'Norte',direccion:'Av 1',celular:'700',ts:Date.now(),pagado:true,cobradoBs:900,saldo:0,acuenta:0,
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'CH1',cant:1,precio:900}]}];
+    var orig=window.downloadBlob;
+    window.downloadBlob=function(b,n){ sacado[n]=b.length; };
+    try{ exportExcel('todos'); }catch(e){ sacado.errPedidos=String(e&&e.message||e); }
+    try{ exportConta(); }catch(e){ sacado.errConta=String(e&&e.message||e); }
+    window.downloadBlob=orig;
+    return sacado;
+  });
+  chk('⚠️ el Excel de pedidos de siempre sigue saliendo',
+      Object.keys(viejos).some(function(k){ return /^pedidos-.*\.xlsx$/.test(k) && viejos[k]>5000; }),
+      Object.keys(viejos).join(' · '));
+  chk('…y el de Contabilidad también',
+      Object.keys(viejos).some(function(k){ return /^contabilidad-.*\.xlsx$/.test(k) && viejos[k]>5000; }),
+      Object.keys(viejos).join(' · '));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

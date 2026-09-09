@@ -5667,6 +5667,46 @@ Excel —releído con `xlsxHoja` del propio panel, con el diente de la celda vac
 WhatsApp; que **editarla no le borra el tipo ni la observación** de cada renglón; y que sin
 sucursal no se guarda. Batería completa en verde (52 suites).
 
+## 4dl. Repaso del RPT ya publicado: tres cosas que no cerraban (2026-09-09, mediodía)
+
+El dueño: *«si a todo, no me pidas permiso, realiza pruebas, y mira que todo esté bien, me
+iré a almorzar»*. Repaso sobre lo publicado en §4dk. Salieron tres.
+
+### 1. «Quién vendió qué» contaba como venta lo que no lo era
+`buscarData` solo dejaba afuera los borradores de Kommo. Una 🏪 reposición de 30 unidades a
+Mia Plaza aparecía como **«Fernando vendió 30 TITANIO»**, y una 🎧 ATC sumaba su unidad al
+cuadro del vendedor. Las dos quedan afuera del cuadro y de los totales.
+
+⚠️ **Esto cambia algo del 09/09 a la mañana**: hasta hoy las ATC SÍ entraban, *marcadas*
+(estaba escrito así, a propósito, en el encabezado de `test_buscar.js`). La pantalla se
+llama «quién **vendió** qué» y una ATC es un servicio —el colchón vuelve, no se vendió otro—,
+así que le inflaba las unidades al vendedor. Para buscar una ATC por producto está su propia
+pestaña 🎧 ATC, que tiene buscador. **Si el dueño prefiere que vuelvan, es una línea.**
+
+Para que nada desaparezca en silencio, `busFueraTxt` dice abajo del cuadro —y en la carátula
+que se imprime— *«30 unidades en 🏪 reposiciones de tienda y 2 unidades en 🎧 ATC — no son
+ventas, no entran en el cuadro»*. Y si lo ÚNICO que hubo fueron reposiciones, en vez de
+«nadie vendió eso» a secas ahora agrega **«Sí hubo …»**: si no, parecería que el panel
+perdió los datos.
+
+### 2. Con ROHO el formulario quedaba a medias
+En ROHO el selector de tipo **se esconde** (el N° lo manda el cliente). Si alguien elegía
+🏪 RPT o 🎧 ATC y **recién después** escribía ROHO, quedaba el bloque abierto y el botón para
+volver, escondido: sin salida. Ahora `applyVendedorLite` lo devuelve solo a OC (solo en
+pedidos nuevos: editando no se toca nada). Era un bug latente de la ATC desde §4bq.
+
+### 3. Comprobado, no supuesto
+- **25 productos en una RPT**: la hoja crece (52 filas), la lista desplegable se estira a
+  `E12:E36`, y el resumen y el pie se corren con ella. No se corta en el renglón 20.
+- **Los Excel de siempre**: `exportExcel` y `exportConta` siguen saliendo. Importaba porque
+  los estilos del `.xlsx` son compartidos y §4dk les agregó 10 nuevos.
+- **Un renglón sin código ni medida**: sale con «Reposición» por defecto.
+
+### Pruebas
+`tests/test_rpt.js` pasa de 74 a **84 checks** (sección 9). `tests/test_buscar.js` reescrito
+para la regla nueva (43): la ATC ya no entra, pero **se dice**; los totales bajan de 20 a 19
+unidades y de 8 a 7 pedidos. Batería completa en verde (52 suites).
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
