@@ -5402,6 +5402,9 @@ ni nada! Se vendieron 3 y pedís 11? Deja como lo dejo chat gpt nomas!"*
   contradecían su propio commit del domingo quedan alineados con la regla confirmada
   (`seed([1,1])` → `lenta`; `seed([40])` → media y pide), con el comentario del 09/09.
 
+**Resultado:** batería completa **49 suites, 1.721 checks, 0 fallas** (incluye §4df, el
+buscador por producto + vendedor). Publicado a `main` junto con §4df, con el workflow libre.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
