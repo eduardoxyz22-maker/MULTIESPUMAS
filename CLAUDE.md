@@ -166,6 +166,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   `doPost` desviaría al webhook de Kommo y el panel dejaría de guardar.
   **Prueba de 20 segundos: abrir el panel en incógnito.** Y **NO volver a implementar**: cada
   «Nueva implementación» estrena otra dirección y empeora el enredo.
+- **📷 Subir una foto (§4dq)**: las 4 rutas pasan por `fotoCronometro` → `achicarFoto`
+  (`createImageBitmap`, con `achicarFotoLento` de reserva) y `conTopeDuro(…, 90 s)`. ⚠️ Un
+  `fetch` **no tiene tope**: sin él, si Google se cuelga el cartel dice «subiendo» para
+  siempre — eso eran los «4 minutos» que reportaron las vendedoras. Al terminar, el aviso
+  dice **«achicar Ns · subir Ns»**: sin separar las dos mitades no se puede saber si el
+  problema es el celular o Google. Si el tiempo está en **subir**, lo que queda es el `.gs`
+  (guardar el id de la carpeta en propiedades — `fotosFolder_()` busca en Drive en CADA foto
+  — y sacar `setSharing` del camino crítico); eso exige republicar.
 - ⚠️ **Si publicaste algo y «no se ve», mirá el deploy de Pages ANTES de tocar el código**
   (§4dp): el 09/09 falló con `Failed to get ID Token. Request timeout` — infraestructura de
   GitHub dentro de `actions/deploy-pages@v5`, nada del repo. Se arregla con cualquier push

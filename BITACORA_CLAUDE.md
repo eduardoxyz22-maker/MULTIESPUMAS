@@ -5953,6 +5953,50 @@ tabla. La captura que mandó cortaba justo antes.
 se repita, que se pida con `no-store` y sin credenciales, y que el parámetro **no se llame
 `k` ni `kommo`**. Batería completa: **1.918 comprobaciones, 0 mal**.
 
+## 4dq. «A veces tardan hasta 4 minutos en subir una foto» (2026-09-09, noche)
+
+Reporte de las vendedoras, con captura: el botón clavado en **«⏳ Subiendo la imagen… esperá
+un momento»** y, escrito abajo, *«LLEVO 5 MINUTOS ASÍ»*.
+
+### Lo que NO era
+Lo primero que uno mira es el tamaño, y ahí estaba bien: las **cuatro** rutas de subida ya
+achicaban a 1280 px con calidad 0,72 → una foto queda en ~150-200 KB. Tampoco era el candado
+del servidor: `action:'foto'` está a propósito FUERA del `LockService` (línea 143 del `.gs`).
+
+### Lo que sí es — tres cosas, en orden de culpa
+1. **`fetch` no tiene tope de tiempo.** Si Google se cuelga o la red se corta a mitad, la
+   promesa **nunca** resuelve: el cartel dice «subiendo» para siempre. Los «5 minutos» no son
+   5 minutos de trabajo, son 5 minutos de espera colgada. Es la causa más probable de lo que
+   fotografió el dueño.
+2. **Achicar ahogaba al celular.** El camino viejo lee la foto entera a un **texto base64 de
+   ~13 MB**, se lo pasa a un `<img>` que lo vuelve a decodificar, y recién ahí achica. En un
+   celular barato eso son decenas de segundos y mucha memoria — y todo ANTES de empezar a
+   subir, con el cartel ya diciendo «subiendo».
+3. **El servidor tiene dos frenos evitables** (necesitan republicar el `.gs`, no se tocaron):
+   `fotosFolder_()` hace una **búsqueda en Drive en cada foto**, y `setSharing(ANYONE_WITH_LINK)`
+   es una operación de Drive notoriamente lenta, ahí en el camino crítico.
+
+### Qué se hizo (solo navegador — no hace falta republicar nada)
+- **`createImageBitmap`**: decodifica el archivo directo, sin texto intermedio y sin bloquear
+  la pantalla. Si el navegador no lo tiene, cae al camino viejo (`achicarFotoLento`).
+- **`conTopeDuro(prom, 90 s)`** en las cuatro rutas: a los 90 segundos corta y dice
+  *«Google tardó más de 90 segundos y se cortó la espera. Probá de nuevo: la imagen no se
+  subió»*. Nunca más un cartel eterno.
+- **Cronómetro**: al terminar, el aviso dice **«achicar 1,2 s · subir 3,4 s»**. ⚠️ Esto es lo
+  más importante del arreglo: sin separar las dos mitades, «está lento» no se puede arreglar
+  — no se sabe si es el celular o Google. La próxima vez que pase, el número lo dice.
+
+### Lo que queda pendiente del lado del servidor
+Si con esto sigue lento y el cronómetro marca el tiempo en **subir**, el próximo paso es el
+`.gs`: guardar el id de la carpeta en las propiedades del script (mata una búsqueda de Drive
+por foto) y sacar `setSharing` del camino crítico. Eso sí exige Implementar → Versión nueva.
+
+### Pruebas
+`tests/test_carga.js` pasa de 27 a **32 checks** (sección 6): que la espera se corte sola y
+no quede colgada, que el motivo se diga en castellano con los segundos, que una subida que sí
+anda pase igual, y que el cronómetro reporte las dos mitades por separado. Batería completa:
+**1.923 comprobaciones, 0 mal**.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

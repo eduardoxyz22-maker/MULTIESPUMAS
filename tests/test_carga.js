@@ -167,6 +167,36 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ el parámetro no se llama «k» ni «kommo» (eso desviaría al camino de Kommo)',
       !/[?&](k|kommo)=/.test(cache.u1), cache.u1.replace(/^.*\/exec/,'…/exec'));
 
+  /* §4dq — «a veces tardan hasta 4 min en subir una foto», con el botón clavado en
+     «⏳ Subiendo la imagen…». Un `fetch` no tiene tope: si Google se cuelga, se espera
+     para siempre. Y el celular achicaba pasando la foto por un texto base64 gigante. */
+  console.log('\n── 6. La foto: tope de espera y cuánto tardó cada mitad ──');
+  const foto = await page.evaluate(async () => {
+    var out={};
+    out.rapido = (typeof createImageBitmap==='function');
+    // el tope corta y dice «tardo», en vez de esperar para siempre
+    var t0=Date.now();
+    var colgada=new Promise(function(){});          // no resuelve nunca
+    out.corto = await conTopeDuro(colgada, 60).then(function(){ return 'no cortó'; },
+                                                    function(e){ return String(e&&e.message); });
+    out.ms = Date.now()-t0;
+    // …y el motivo se dice en castellano, no como «tardo»
+    out.motivo = motivoDeError(new Error('tardo'));
+    // el cronómetro deja los dos tiempos
+    FOTO_T={achicar:1.2, subir:0, t1:Date.now()-3400};
+    out.txt = fotoTiempoTxt();
+    // una promesa que sí resuelve pasa igual
+    out.pasa = await conTopeDuro(Promise.resolve('ok'), 500);
+    return out;
+  });
+  chk('⚠️ la espera por una foto se corta sola, no queda colgada para siempre',
+      foto.corto==='tardo' && foto.ms<2000, foto.corto+' en '+foto.ms+' ms');
+  chk('…y lo explica en castellano, con los segundos', /Google tardó más de \d+ segundos/.test(foto.motivo), foto.motivo);
+  chk('…sin romper una subida que sí anda', foto.pasa==='ok', foto.pasa);
+  chk('⚠️ el panel mide y dice cuánto tardó CADA mitad (achicar vs subir)',
+      /achicar 1\.2s · subir 3\.[34]s/.test(foto.txt), foto.txt);
+  chk('el navegador tiene el camino rápido para achicar (createImageBitmap)', foto.rapido===true, foto.rapido);
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

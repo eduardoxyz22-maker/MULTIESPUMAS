@@ -4085,8 +4085,8 @@ function onRetFotoElegida(ev){
   retLeerForm();
   if(compsArr(RET_FORM.fotos).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo la foto del recibo…','ok');
-  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
-    return apiFoto('retiro_'+(RET_FORM.entrega||''), 'recibo_retiro', dataUrl);
+  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+    return conTopeDuro(apiFoto('retiro_'+(RET_FORM.entrega||''), 'recibo_retiro', dataUrl));
   }).then(function(res){
     if(!res || !res.ok || !res.fotoId){
       toast(res && res.version ? ('No se pudo guardar la foto ('+(res.error||'error')+')')
@@ -4095,8 +4095,8 @@ function onRetFotoElegida(ev){
     }
     RET_FORM.fotos=compsArr(compsArr(RET_FORM.fotos).concat([res.fotoId]));
     renderRetiros();
-    toast(RET_FORM.fotos.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar otra' : 'Las '+COMP_MAX+' imágenes listas ✓','ok');
-  }).catch(function(e){ toast('No se pudo subir la foto: '+(e&&e.message?e.message:'error'),'err'); });
+    toast((RET_FORM.fotos.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar otra' : 'Las '+COMP_MAX+' imágenes listas ✓')+' · '+fotoTiempoTxt(),'ok');
+  }).catch(function(e){ toast('No se pudo subir la foto: '+motivoDeError(e),'err'); });
 }
 function retQuitarFoto(i){
   retLeerForm();
@@ -4493,8 +4493,8 @@ function onCompElegido(ev){
   if(yaTiene>=COMP_MAX){ toast('Ese pago ya tiene las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; showContaModal(p.id);          // que se vea "⏳ Subiendo…" desde ya
-  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
-    return apiFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl);
+  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+    return conTopeDuro(apiFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl));
   }).then(function(res){
     COMP_SUBIENDO--;
     if(!res || !res.ok || !res.fotoId){
@@ -4539,7 +4539,7 @@ function onCompElegido(ev){
   }).catch(function(e){
     if(COMP_SUBIENDO>0) COMP_SUBIENDO--;          // que no quede colgado en "Subiendo…"
     showContaModal(p.id);
-    toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err');
+    toast('No se pudo subir el comprobante: '+motivoDeError(e),'err');
   });
 }
 /* idx = qué pago; k = cuál de sus imágenes (sin k, todas). */
@@ -5464,8 +5464,8 @@ function onCompFormElegido(ev){
   if(compsArr(FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   toast('Achicando y subiendo el comprobante…','ok');
   COMP_SUBIENDO++; renderCompForm(true);          // que se vea "⏳ Subiendo…" desde ya
-  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
-    return apiFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl);
+  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+    return conTopeDuro(apiFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl));
   }).then(function(res){
     COMP_SUBIENDO--;
     if(!res || !res.ok || !res.fotoId){
@@ -5477,11 +5477,11 @@ function onCompFormElegido(ev){
     FORM_COMPS=compsArr(compsArr(FORM_COMPS).concat([res.fotoId]));
     var w=document.getElementById('wrap-comp'); if(w) w.classList.remove('seg-err');
     renderCompForm(true);
-    toast(FORM_COMPS.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar el recibo' : 'Las '+COMP_MAX+' imágenes listas ✓','ok');
+    toast((FORM_COMPS.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar el recibo' : 'Las '+COMP_MAX+' imágenes listas ✓')+' · '+fotoTiempoTxt(),'ok');
   }).catch(function(e){
     if(COMP_SUBIENDO>0) COMP_SUBIENDO--;          // que no quede colgado en "Subiendo…"
     renderCompForm(true);
-    toast('No se pudo subir el comprobante: '+(e&&e.message?e.message:'error'),'err');
+    toast('No se pudo subir el comprobante: '+motivoDeError(e),'err');
   });
 }
 
@@ -6589,6 +6589,7 @@ var ULTIMO_ERROR='';          // por qué falló la última lectura de la planil
 function motivoDeError(e){
   var m=String((e&&e.message)||e||'');
   if(m==='clave') return 'el servidor pide la clave del equipo';
+  if(m==='tardo') return 'Google tardó más de '+Math.round(FOTO_TOPE/1000)+' segundos y se cortó la espera. Probá de nuevo: la imagen no se subió';
   /* Los códigos de Google, en castellano y con QUÉ HACER (§4dm). Un 404 acá no es «probá
      más tarde»: la dirección del panel dejó de existir y no se arregla sola. */
   if(m==='http404') return 'la dirección del panel ya no existe (404). Suele pasar cuando se crea una implementación NUEVA del Apps Script en vez de actualizar la de siempre: cada una estrena su propia dirección. En Apps Script → Implementar → Administrar implementaciones, editar la que ya estaba (✏️) y elegir «Versión nueva»';
@@ -9260,7 +9261,61 @@ function fotoImgHtml(fid, o){
     (o.onclick?(' onclick="'+esc(o.onclick)+'"'):'')+
     ' onerror="'+esc("fotoFallback(this,'"+f+"',"+w+")")+'">';
 }
+/* ============================================================================
+   📷 ACHICAR LA FOTO SIN AHOGAR EL CELULAR (§4dq)
+   Reporte de las vendedoras: *«a veces tardan hasta 4 min en subir una foto»*, con el
+   botón clavado en «⏳ Subiendo la imagen…».
+
+   El camino viejo (abajo, `achicarFotoLento`) hace esto con una foto de 12 megapíxeles:
+     1. la lee entera a un TEXTO base64 de ~13 MB,
+     2. le pasa ese texto a un `<img>`, que lo vuelve a decodificar,
+     3. y recién ahí la achica.
+   En un celular barato el paso 1 y el 2 son decenas de segundos y un montón de memoria —
+   y todo eso pasa ANTES de que empiece a subir nada, con el cartel diciendo «subiendo».
+
+   `createImageBitmap` decodifica el archivo directo, sin texto intermedio y sin bloquear
+   la pantalla. Si el navegador no lo tiene, se usa el camino de siempre: no se rompe nada. */
 function achicarFoto(file, maxPx, calidad){
+  if(typeof createImageBitmap==='function'){
+    return createImageBitmap(file).then(function(bm){
+      var w=bm.width||1, h=bm.height||1, k=Math.min(1, maxPx/Math.max(w,h));
+      var c=document.createElement('canvas');
+      c.width=Math.max(1,Math.round(w*k)); c.height=Math.max(1,Math.round(h*k));
+      c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+      if(bm.close) bm.close();
+      return c.toDataURL('image/jpeg', calidad);
+    }).catch(function(){ return achicarFotoLento(file, maxPx, calidad); });
+  }
+  return achicarFotoLento(file, maxPx, calidad);
+}
+/* ⏱️ Cuánto tardó cada mitad. Sin esto, «está lento» no se puede arreglar: no se sabe si
+   el problema es el celular achicando o Google recibiendo. El panel lo dice al terminar. */
+var FOTO_T={ achicar:0, subir:0 };
+function fotoCronometro(file, maxPx, calidad){
+  var t0=Date.now();
+  return achicarFoto(file, maxPx, calidad).then(function(d){
+    FOTO_T.achicar=Math.round((Date.now()-t0)/100)/10; FOTO_T.subir=0;
+    FOTO_T.t1=Date.now();
+    return d;
+  });
+}
+function fotoTiempoTxt(){
+  FOTO_T.subir=FOTO_T.t1?Math.round((Date.now()-FOTO_T.t1)/100)/10:0;
+  return 'achicar '+FOTO_T.achicar+'s · subir '+FOTO_T.subir+'s';
+}
+/* ⏳ Un `fetch` NO tiene tope de tiempo: si Google se cuelga, el cartel queda en «subiendo»
+   para siempre y la vendedora espera 5 minutos sin saber qué pasa. Con tope, a los 90 s se
+   corta y se le dice que vuelva a intentar. */
+var FOTO_TOPE=90000;
+function conTopeDuro(prom, ms, queHacer){
+  return new Promise(function(res, rej){
+    var listo=false;
+    var t=setTimeout(function(){ if(!listo){ listo=true; rej(new Error('tardo')); } }, ms||FOTO_TOPE);
+    prom.then(function(v){ if(!listo){ listo=true; clearTimeout(t); res(v); } },
+              function(e){ if(!listo){ listo=true; clearTimeout(t); rej(e); } });
+  });
+}
+function achicarFotoLento(file, maxPx, calidad){
   return new Promise(function(res, rej){
     var fr=new FileReader();
     fr.onerror=function(){ rej(new Error('no se pudo leer el archivo')); };
@@ -9290,8 +9345,8 @@ function onFotoElegida(ev){
   var p=findById(FOTO_PEDIDO_ID); if(!p) return;
   if(!CONNECTED){ toast('Sin conexión: conectate al servidor para subir la foto','err'); return; }
   toast('Achicando y subiendo la foto…','ok');
-  achicarFoto(f, 1280, 0.72).then(function(dataUrl){
-    return apiFoto(p.id, p.cliente||'', dataUrl);
+  fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
+    return conTopeDuro(apiFoto(p.id, p.cliente||'', dataUrl));
   }).then(function(res){
     if(!res || !res.ok || !res.fotoId){
       toast(res && res.version ? ('No se pudo guardar la foto ('+(res.error||'error')+')')
@@ -9302,7 +9357,7 @@ function onFotoElegida(ev){
     persistPedido(p); renderChoferSiActivo(); renderMis();
     if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
     toast('Foto guardada ✓','ok');
-  }).catch(function(e){ toast('No se pudo subir la foto: '+(e&&e.message?e.message:'error'),'err'); });
+  }).catch(function(e){ toast('No se pudo subir la foto: '+motivoDeError(e),'err'); });
 }
 function quitarFoto(id, idx){
   var p=findById(id); if(!p) return;
