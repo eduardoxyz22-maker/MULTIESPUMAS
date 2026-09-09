@@ -13760,7 +13760,7 @@ function showPedidoModal(id){
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
-    row(esATC(p.oc)?'N° ATC':esRPT(p.oc)?'N° de pedido':'N° OC', esc(ocEtiq(p.oc)))+row(esRPT(p.oc)?'Solicitado por':'Vendedor', esc(p.vendedor))+row(esRPT(p.oc)?'Sucursal de destino':'Cliente', '<b>'+esc(p.cliente)+'</b>')+
+    row(esATC(p.oc)?'N° ATC':esRPT(p.oc)?'N° de pedido':'N° OC', esc(p.oc))+row(esRPT(p.oc)?'Solicitado por':'Vendedor', esc(p.vendedor))+row(esRPT(p.oc)?'Sucursal de destino':'Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos'+PROD_AYUDA, prod+prodResumen(p))+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
