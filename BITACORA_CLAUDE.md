@@ -5532,6 +5532,50 @@ que es la copia; y los cuatro motivos traducidos. `test_conflicto.js` da por hec
 de arranque en su setup (`CARGA_GEN++; CARGA_ESTADO='ok'`), porque su red está cortada y el
 intento de arranque volvía tarde a tapar el cartel que el test mira.
 
+## 4dj. 🔁 La regla de rotación, definitiva: las dos condiciones juntas (2026-09-09, tarde)
+
+Captura del MORFEO en su panel: **15 unidades en 1 entrega**, «Rotación media: reserva de 3
+días», «🚨 PEDIR YA · la fábrica tarda 3 días → pedí 8 ya». Y el mensaje: *"el morfeo solo
+tiene una única entrega y está mandado a pedir, creí que ya teníamos bien definido cuándo
+pedir fabricar…"*.
+
+Tenía razón, y es consecuencia directa de una decisión mía de esa misma mañana: cuando dijo
+«deja como lo dejó ChatGPT nomás» (§4dg) yo lo leí como «la regla entera de 91ddcd8», y esa
+regla **no incluía** la condición de las 3 entregas. Lo que él quería sacar era otra cosa —
+que las ventas de Eduardo no cuenten— y lo dijo en la misma frase. Las dos mitades venían
+juntas en su cabeza desde el 07/09; yo las traté como excluyentes.
+
+**La regla, que ya no se toca sin que él lo pida:**
+```
+rotación = (entregas DISTINTAS del equipo ≥ 3)  Y  (los pedidos de Eduardo no cuentan)
+```
+`o.rotacion = (nVentasRotacion<STOCK_VENTAS_MIN || vendidosRotacion<=2) ? 'baja' : …`, con
+`stockPedidoUnico` apartando lo de Eduardo a `vendidosUnicos` (eso quedó tal cual lo dejó la
+otra herramienta: es la mitad que él confirmó). `STOCK_VENTAS_MIN` vuelve a usarse.
+
+### Lo que se ve
+- Aviso **`unico`** para los dos casos —el dueño llama «pedido único» a las dos cosas— y
+  `stockSoloEduardo(o)` decide el texto: «📦 Pedido único · Eduardo» cuando todo lo vendido
+  fue suyo, «📦 Pedido único» a secas cuando el equipo vendió en menos de 3 entregas.
+  `lenta` se va de nuevo (con las 3 entregas es el mismo caso: redundante).
+- La leyenda de la fila vuelve a «Poca rotación: solo pedidos confirmados», y el renglón deja
+  de decir «venta a los saltos» (eso solo tiene sentido con rotación).
+- Fila con ventas de los dos: «Equipo: 8 en 1 entrega · Eduardo: 80 (no cuentan para la
+  reserva)». En el detalle, **Base de rotación** ahora dice también en cuántas entregas y, si
+  son menos de 3, que por eso no se estima ningún ritmo — que es la pregunta que hizo él.
+- El mensaje a fábrica vuelve a «pedido puntual — 15 en 1 entrega» en vez de «poca rotación».
+
+### Pruebas
+`tests/test_rotacion.js` reescrito para esta regla (**32 checks**): MORFEO 45 en 1 entrega →
+`unico`, porDia 0, pedir 0, fuera del mensaje, cartel sin «· Eduardo»; HERA 45 en 2 entregas
+→ igual; ARES 45 en 15 → alta y pide; **HERMES 3 unidades en 3 entregas → SÍ rota** (pocas
+unidades no es lo mismo que pocas entregas); ARTEMISA (0 vendidas, 6 sin entregar) se cubre
+igual; y la sección de Eduardo: HADES (45 suyos en 5 entregas) → `unico · Eduardo`, POSEIDON
+(80 suyos + 8 del equipo en 1 entrega) → `unico` sin su nombre, ATENEA 1+1+1 → rota.
+`test_circuito.cjs` (31) y `test_stock_rotacion.cjs` (15) vuelven a lo que probaban el 08/09.
+La cabecera de `test_rotacion.js` y el comentario de `STOCK_VENTAS_MIN` guardan las tres
+vueltas con las frases textuales, para que el próximo no la vuelva a dar.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
