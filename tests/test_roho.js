@@ -31,7 +31,14 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   const bytes = Array.from(fs.readFileSync(XLSX));
 
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
-  const page = await browser.newPage({ viewport:{width:1500,height:1000} });
+  const page = await browser.newPage({ viewport:{width:1500,height:1000}, timezoneId:'America/La_Paz' });
+  /* ⚠️ EL EXCEL DE VERDAD TIENE FECHAS DE VERDAD — la última entrega que trae es el 09/09/2026,
+     y «nuevas» son solo las de MAÑANA en adelante. El 08/09 este test pasaba entero; el 09/09
+     amaneció con «Crear 0 pedidos» en la primera pantalla y 8 fallas en cadena, sin que nadie
+     hubiera tocado nada (§4dh). Así que el reloj de la página queda clavado en el 08/09 a las
+     10:00 de Bolivia: los relojes de los timers siguen andando (setFixedTime, no install), solo
+     `new Date()` devuelve ese día. Si se cambia el Excel por uno más nuevo, mover esta fecha. */
+  await page.clock.setFixedTime(new Date('2026-09-08T14:00:00Z'));
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   page.on('dialog',d=>d.accept());
   await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });

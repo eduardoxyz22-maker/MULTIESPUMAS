@@ -115,6 +115,23 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     no la ruta absoluta que uso yo — y `correr.sh` ya los corre (antes no: buscaba solo
     `*.js`). Antes de asumir que algo está roto porque un test propio falla, verificar si
     cambió una constante compartida (como `STOCK_VENTANA`) desde otra sesión.
+- **🗺️ Mapa de entregas y ubicar por la dirección** (§4dh): el mapa dibuja SOLO los pedidos
+  con link en `maps`; los de ROHO entran del Excel con la dirección escrita y `maps:''`, así
+  que no estaban. Ahora la barra cuenta «N sin ubicación» (`mapaSinLinkList`: del período,
+  sin entregar, sin link — distinto de «sin ubicar» = con link ilegible) y el botón **📍 Ubicar
+  por dirección** (`ubicarSinLinkMapa` → `ubicarPorDireccion`) manda las direcciones al
+  servidor (`action:'geocode'` → `geocodeTexto`, geocoder de Google acotado a Santa Cruz) y
+  guarda lo encontrado ADENTRO del pedido como `https://www.google.com/maps?q=LAT,LNG&aprox=1`.
+  Ese `&aprox=1` (`esUbicAprox`) es la marca de «por la dirección escrita, la cuadra y no la
+  puerta»: la muestran el globo del mapa, la tarjeta del chofer («≈ aproximada: preguntá la
+  casa») y 📍 Revisar ubicaciones (sección «≈ ubicados por la dirección», y botón para ubicar
+  los sin link). El importador de ROHO lo hace solo al terminar (`ubicarImportadosRoho`, caja
+  `#roho-geo`). Reglas: no pisa un `maps` existente; dirección de ≥8 letras (`ubicables`);
+  misma dirección = una consulta; se guarda DE A UNO (`guardarEnFila`); tope 80 por toque en
+  el mapa, los más nuevos primero. `tests/test_ubicar.js`.
+  ⚠️ `tests/test_roho.js` corre contra un Excel real con fechas reales (última entrega
+  09/09/2026): el reloj de la página está clavado en el 08/09 (`page.clock.setFixedTime`).
+  Si se cambia ese Excel, mover esa fecha.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

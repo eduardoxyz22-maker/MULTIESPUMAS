@@ -1158,7 +1158,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 <div class="footer" id="footer">MultiEspumas · Registro de pedidos</div>
 <div class="toast" id="toast"></div>
 <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal-box"></div></div>
-<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
+<div id="mapa-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#fff;flex-direction:column"><div style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🗺️ Mapa de entregas</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"><button id="mapa-dia-hoy" onclick="setMapaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="mapa-dia-manana" onclick="setMapaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="mapa-dia-mes" onclick="setMapaDia('mes')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Mes</button><button id="mapa-dia-todos" onclick="setMapaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><input type="month" id="mapa-mes" onchange="setMapaMes(this.value)" style="display:none;flex:none;width:132px;border:none;border-radius:6px;padding:4px 7px;font-size:12px;font-weight:700;color:#00877f"><div id="mapa-marca-box" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px"></div><div style="display:flex;align-items:center;gap:5px;font-size:11px;opacity:.9"><span>color:</span><div id="mapa-colorpor" style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden"></div></div><span id="mapa-info" style="font-size:.78rem;opacity:.92"></span><div id="mapa-legend" style="display:flex;gap:9px;flex-wrap:wrap;font-size:.72rem;align-items:center"></div><button id="mapa-solosin" class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="toggleSoloSin()">◻ Solo sin chofer</button><button id="mapa-ubicar" class="btn btn-sm" style="display:none;background:#fff;color:#7c3aed;font-weight:700" onclick="ubicarSinLinkMapa()" title="Busca en el servidor la dirección escrita de los pedidos que no tienen link de Maps y los pone en el mapa, marcados como aproximados (la cuadra, no la puerta).">📍 Ubicar por dirección</button><button class="btn btn-sm" style="background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="downloadMapaKml()">⬇ KML</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeMapa()">✕ Cerrar</button></div><div id="mapa-canvas" style="flex:1;min-height:0"></div></div>
 <div id="ruta-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:var(--teal,#00B5AD);color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🧾 Hoja de ruta</b><div style="display:flex;background:rgba(255,255,255,.18);border-radius:7px;overflow:hidden;font-size:12px" class="no-print"><button id="ruta-dia-hoy" onclick="setRutaDia('hoy')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Hoy</button><button id="ruta-dia-manana" onclick="setRutaDia('manana')" style="border:none;background:#fff;color:#00877f;padding:5px 11px;cursor:pointer;font-weight:700">Mañana</button><button id="ruta-dia-todos" onclick="setRutaDia('todos')" style="border:none;background:transparent;color:#fff;padding:5px 11px;cursor:pointer;font-weight:700">Todos</button></div><span id="ruta-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:#fff;color:var(--teal-dk,#00877f);font-weight:700" onclick="printRuta()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeRuta()">✕ Cerrar</button></div><div id="ruta-body" style="flex:1;overflow:auto;padding:14px"></div></div>
 <div id="visor" style="display:none;position:fixed;inset:0;z-index:5000;background:rgba(0,0,0,.92);flex-direction:column" onclick="if(event.target===this)cerrarVisor()"><div style="display:flex;align-items:center;gap:10px;padding:10px 14px;color:#fff;flex-wrap:wrap"><b id="visor-tit" style="font-size:.92rem"></b><span id="visor-n" style="font-size:.8rem;opacity:.75"></span><a id="visor-drive" href="#" target="_blank" rel="noopener" style="margin-left:auto;color:#fff;font-size:.8rem;font-weight:700;text-decoration:none;background:rgba(255,255,255,.16);padding:6px 12px;border-radius:20px">⬇ Original</a><button onclick="cerrarVisor()" style="border:none;background:rgba(255,255,255,.16);color:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:.8rem;font-weight:700;cursor:pointer">✕ Cerrar</button></div><div style="flex:1;min-height:0;display:flex;align-items:center;gap:6px;padding:0 8px 14px"><button id="visor-ant" onclick="visorMover(-1)" class="visor-nav">‹</button><img id="visor-img" alt="Foto de la entrega" style="flex:1;min-width:0;max-height:100%;object-fit:contain;border-radius:10px"><button id="visor-sig" onclick="visorMover(1)" class="visor-nav">›</button></div></div>
 <div id="entregas-overlay" style="display:none;position:fixed;inset:0;z-index:3000;background:#f4f6f7;flex-direction:column"><div class="no-print" style="padding:9px 12px;background:#22A06B;color:#fff;display:flex;align-items:center;gap:10px;flex-wrap:wrap"><b style="font-size:.95rem">🚚 Entregado</b><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(-1)">‹</button><input type="date" id="entregas-fecha" onchange="setEntregasFecha(this.value)" style="flex:0 0 auto;width:150px;border:none;border-radius:7px;padding:5px 9px;font:inherit;font-size:.84rem;font-weight:700;color:#0a6b47"><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="entregasDia(1)">›</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="setEntregasFecha(todayStr())">Hoy</button><span id="entregas-info" style="font-size:.78rem;opacity:.92"></span><button class="btn btn-sm" style="margin-left:auto;background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="copiarEntregas()">📋 Copiar</button><button class="btn btn-sm" style="background:#fff;color:#0a6b47;font-weight:700" onclick="printEntregas()">🖨 Imprimir</button><button class="btn btn-sm" style="background:rgba(255,255,255,.22);color:#fff;font-weight:700" onclick="closeEntregas()">✕ Cerrar</button></div><div id="entregas-body" style="flex:1;overflow:auto;padding:14px"></div></div>
@@ -8517,7 +8517,10 @@ function renderChofer(){
       cobroChoferHtml(p)+
       fotosHtml(p, true)+
       '<div class="cho-links">'+
-        (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Ir en Maps</a>'):'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">⚠️ sin ubicación</span>')+
+        (p.maps?('<a class="cho-link" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Ir en Maps'+(esUbicAprox(p.maps)?' ≈':'')+'</a>'+
+                 /* ≈ por la dirección escrita (§4dh): el chofer tiene que saber que es la cuadra, no la puerta. */
+                 (esUbicAprox(p.maps)?'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">≈ aproximada: preguntá la casa</span>':''))
+               :'<span class="cho-link" style="background:var(--amber-lt);border-color:var(--amber-border);color:#7c4b00">⚠️ sin ubicación</span>')+
         (p.celular?('<a class="cho-link" href="tel:'+esc(String(p.celular).replace(/[^0-9+]/g,''))+'">📞 Llamar</a>'):'')+
       '</div>'+
       '<div class="cho-acc">'+
@@ -13046,6 +13049,7 @@ function confirmarImportRoho(){
       var malas=fallos.length+pendientes.length;
       toast(malas?('Importados '+creados.length+' · '+malas+' sin confirmar')
                  :('✅ '+creados.length+' pedidos de ROHO importados'), malas?'err':'ok', 6000);
+      ubicarImportadosRoho(creados);        // al mapa por la dirección escrita (§4dh)
       return;
     }
     var p=lista[i++];
@@ -13132,7 +13136,8 @@ function renderImportRohoFin(creados, pendientes, fallos){
         '<div class="roho-wrap" style="min-width:0"><table class="roho-tabla" style="min-width:560px">'+
         '<colgroup><col style="width:100px"><col style="width:62px"><col style="width:72px"><col style="width:150px"><col style="width:176px"></colgroup>'+
         '<thead><tr><th>Entrega</th><th>Turno</th><th>Nuevos</th><th>Cupo del turno</th><th>Notas</th></tr></thead>'+
-        '<tbody>'+filas+'</tbody></table></div>'):'')+
+        '<tbody>'+filas+'</tbody></table></div>'+
+        '<div id="roho-geo" style="font-size:.83rem;color:#0f766e;margin-top:10px"></div>'):'')+
       (fallos.length?('<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);'+
         'border-radius:10px;padding:10px 13px;margin-top:12px;font-size:.83rem;color:#8a1c24">'+
         '<b>'+fallos.length+' no entraron</b> — el servidor los rechazó:<br>'+
@@ -13853,19 +13858,28 @@ function ensureLeaflet(cb){
     document.head.appendChild(js);
   } else { var t=setInterval(function(){ if(window.L){ clearInterval(t); cb(); } },120); setTimeout(function(){ clearInterval(t); },12000); }
 }
+/* Período y marca del mapa, SIN mirar si el pedido tiene link: lo usan la lista que se dibuja
+   (con link) y la de «sin ubicación» (sin link, §4dh). */
+function mapaEntra(p){
+  if(!p) return false;
+  /* La marca sale del VENDEDOR (§4bl). ROHO y quien no esté en ninguna lista quedan
+     fuera solos en cuanto se elige una. */
+  if(MAPA_MARCA && marcaDe(p.vendedor)!==MAPA_MARCA) return false;
+  if(MAPA_DIA==='hoy')    return p.fecha===todayStr();
+  if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
+  /* Por mes corta por fecha de ENTREGA: la pregunta es dónde fue el camión, no cuándo
+     se cargó la venta. */
+  if(MAPA_DIA==='mes')    return MAPA_MES ? String(p.fecha||'').slice(0,7)===MAPA_MES : true;
+  return true;
+}
 function mapaFilteredList(){
-  return STATE.filter(function(p){
-    if(!p.maps || !String(p.maps).trim()) return false;
-    /* La marca sale del VENDEDOR (§4bl). ROHO y quien no esté en ninguna lista quedan
-       fuera solos en cuanto se elige una. */
-    if(MAPA_MARCA && marcaDe(p.vendedor)!==MAPA_MARCA) return false;
-    if(MAPA_DIA==='hoy')    return p.fecha===todayStr();
-    if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
-    /* Por mes corta por fecha de ENTREGA: la pregunta es dónde fue el camión, no cuándo
-       se cargó la venta. */
-    if(MAPA_DIA==='mes')    return MAPA_MES ? String(p.fecha||'').slice(0,7)===MAPA_MES : true;
-    return true;
-  });
+  return STATE.filter(function(p){ return !!(p && p.maps && String(p.maps).trim()) && mapaEntra(p); });
+}
+/* Los que el mapa NO puede dibujar: del período elegido, sin entregar y sin link. Antes ni
+   se contaban — logística miraba el mapa y creía que eso era todo, y los de ROHO (que entran
+   del Excel sin link) no estaban (§4dh). */
+function mapaSinLinkList(){
+  return STATE.filter(function(p){ return p && !esFilaSistema(p) && !esBorrador(p) && !p.entregado && !String(p.maps||'').trim() && mapaEntra(p); });
 }
 function exportMapa(){ if(!CONNECTED){ toast('El mapa necesita conexión al servidor.','err'); return; } pintarMapaBotones(); mapaRefresh(); }
 function setMapaDia(d){
@@ -14032,11 +14046,121 @@ function kmDeSantaCruz(lat,lng){
   return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
 }
 var KM_SOSPECHOSO=60;   // toda la mancha urbana + Cotoca, Porongo, La Guardia, Warnes entran holgados
+
+/* ============================================================================
+   📍 UBICAR POR LA DIRECCIÓN ESCRITA (§4dh)
+   Los pedidos de ROHO entran del Excel con la dirección escrita y SIN link de Maps, y el
+   mapa dibuja solo los que tienen link: logística no los veía. El dueño, 09/09: «¿el botón
+   Todos muestra las entregas de ROHO? Debería… logística usa este mapa para ver sus
+   entregas». El servidor ya sabe buscar una dirección escrita (`geocodeTexto`, acotado a
+   Santa Cruz), así que acá se le mandan las direcciones de los pedidos sin link y lo que
+   encuentra se guarda ADENTRO del pedido como link con coordenadas, con la marca
+   `&aprox=1`: cualquier dispositivo sabe así que es «por la dirección escrita» (la cuadra,
+   no la puerta). Google ignora ese parámetro y el link abre igual.
+   ⚠️ NO pisa una ubicación existente: solo pedidos sin `maps`. Y no se busca lo que no tiene
+   dirección o tiene menos de 8 letras («casa 3» no alcanza — mismo umbral que el servidor).
+   ⚠️ Se guarda DE A UNO: cuarenta `apiSave` a la vez se pisan el lock del servidor.
+   ========================================================================== */
+var UBIC_EN_CURSO=false;
+function ubicables(lista){
+  return (lista||[]).filter(function(p){
+    return !!p && !esFilaSistema(p) && !esBorrador(p) && !String(p.maps||'').trim() && String(p.direccion||'').replace(/\s+/g,' ').trim().length>=8;
+  });
+}
+/* La dirección tal cual la escribieron, más la zona si no la dice ya: «Barrio Las Palmas»
+   y «Norte» juntos buscan mejor que la dirección sola. El servidor agrega la ciudad. */
+function ubicConsulta(p){
+  var d=String(p.direccion||'').replace(/\s+/g,' ').trim(), z=String(p.zona||'').trim();
+  return d+((z && d.toLowerCase().indexOf(z.toLowerCase())<0) ? (', '+z) : '');
+}
+function linkAprox(lat,lng){ return 'https://www.google.com/maps?q='+lat+','+lng+'&aprox=1'; }
+function esUbicAprox(u){ return /[?&]aprox=1/.test(String(u||'')); }
+function guardarEnFila(lista, cb){
+  var i=0;
+  (function sig(){
+    if(i>=lista.length){ if(cb) cb(); return; }
+    var p=lista[i++];
+    if(!CONNECTED){ queuePending(p); sig(); return; }
+    apiSave(p).then(function(r){ if(!(r&&r.ok)) queuePending(p); sig(); }, function(){ queuePending(p); sig(); });
+  })();
+}
+function ubicarPorDireccion(lista, onFin, onProgreso){
+  var pend=ubicables(lista);
+  if(!pend.length){ if(onFin) onFin({n:0, de:0, sin:[]}); return; }
+  if(!CONNECTED){ toast('Para ubicar por la dirección hace falta conexión al servidor.','err'); if(onFin) onFin({n:0, de:pend.length, sin:pend.slice(), sinConexion:true}); return; }
+  if(UBIC_EN_CURSO){ toast('Ya está ubicando — esperá que termine.','err'); return; }
+  UBIC_EN_CURSO=true;
+  var LOTE=40, i=0, n=0, sin=[];
+  var paso=function(){
+    if(i>=pend.length){
+      UBIC_EN_CURSO=false;
+      saveMirror(); geoCacheSave(); updateStats(); if(UNLOCKED) renderAdmin(); refreshCarga(); renderChoferSiActivo(); mapaRefreshSiActivo();
+      if(onFin) onFin({n:n, de:pend.length, sin:sin});
+      return;
+    }
+    var grupo=pend.slice(i, i+LOTE); i+=grupo.length;
+    // Misma dirección escrita → UNA consulta (varios pedidos del mismo cliente en un Excel).
+    var consultas=[], vistas={};
+    grupo.forEach(function(p){ var q=ubicConsulta(p); if(!vistas[q]){ vistas[q]=1; consultas.push(q); } });
+    if(onProgreso) onProgreso(Math.min(i,pend.length), pend.length);
+    apiGeocode(consultas).then(function(res){
+      var porLink={};
+      ((res&&res.ok&&Array.isArray(res.geo))?res.geo:[]).forEach(function(g){ if(g&&g.link&&g.lat!=null&&g.lng!=null) porLink[g.link]=g; });
+      var guardar=[];
+      grupo.forEach(function(p){
+        var g=porLink[ubicConsulta(p)];
+        if(g){ p.maps=linkAprox(g.lat,g.lng); MAPA_COORDS[p.maps]={lat:g.lat, lng:g.lng, aprox:true}; upsert(p); guardar.push(p); n++; }
+        else sin.push(p);
+      });
+      guardarEnFila(guardar, paso);
+    }, function(){ grupo.forEach(function(p){ sin.push(p); }); paso(); });
+  };
+  paso();
+}
+/* El botón del mapa: los de este período sin link y con dirección, los más nuevos primero. */
+function ubicarSinLinkMapa(){
+  var l=ubicables(mapaSinLinkList());
+  if(!l.length){ toast('No hay pedidos sin ubicación con una dirección para buscar.','err'); return; }
+  l.sort(function(a,b){ return String(b.fecha||'').localeCompare(String(a.fecha||'')); });
+  var TOPE=80, lote=l.slice(0,TOPE);
+  if(!confirm('Se van a buscar '+lote.length+' direcciones escritas en el servidor (tarda ~1 minuto cada 40).\n\n'+
+              'Lo que encuentre queda guardado en el pedido como ubicación APROXIMADA (la cuadra, no la puerta) y aparece en el mapa.'+
+              (l.length>TOPE?('\n\nSon '+l.length+': se hacen los '+TOPE+' más nuevos; volvé a tocar para seguir.'):'')+'\n\n¿Seguimos?')) return;
+  var bu=document.getElementById('mapa-ubicar'); if(bu) bu.disabled=true;
+  ubicarPorDireccion(lote, function(r){
+    if(bu) bu.disabled=false;
+    toast(r.n ? ('📍 '+r.n+' de '+r.de+' ubicados por la dirección (≈ aproximados)'+(r.sin.length?(' · '+r.sin.length+' sin ubicar: cargales el link desde la ficha'):''))
+              : ('No se pudo ubicar ninguna de las '+r.de+' direcciones'), r.n?'ok':'err', 8000);
+  }, function(hecho,total){ if(bu) bu.textContent='📍 Ubicando… '+hecho+' de '+total; });
+}
+/* Desde 📍 Revisar ubicaciones: los pendientes sin link que tengan dirección. */
+function ubicarDesdeRev(){
+  var l=ubicables(revUbicDatos().sinLink); if(!l.length) return;
+  toast('Buscando '+l.length+' direcciones en el servidor… puede tardar un minuto','ok');
+  ubicarPorDireccion(l, function(r){
+    if(revPanelAbierto()) renderRevUbic(REV_INTENTO);
+    toast(r.n?('Ubicados '+r.n+' de '+r.de+' por la dirección ✓ (≈ aproximados)'):('No se pudo ubicar ninguna de las '+r.de+' direcciones'), r.n?'ok':'err', 6000);
+  });
+}
+/* Recién importados de ROHO: se buscan sus direcciones y quedan en el mapa sin que nadie
+   tenga que cargar link por link. El resultado se escribe en el panel del importador. */
+function ubicarImportadosRoho(creados){
+  var cand=ubicables(creados);
+  var pinta=function(h){ var b=document.getElementById('roho-geo'); if(b) b.innerHTML=h; };
+  if(!cand.length){ pinta(creados.length?'📍 Ninguno trae una dirección que se pueda buscar: cargales la ubicación desde la ficha.':''); return; }
+  if(!CONNECTED){ pinta('📍 Sin conexión: cuando vuelva la señal, en el mapa tocá «📍 Ubicar por dirección».'); return; }
+  pinta('<span class="spin"></span> 📍 Ubicando en el mapa '+cand.length+' direccion'+(cand.length===1?'':'es')+'… (puede tardar un minuto)');
+  ubicarPorDireccion(cand, function(r){
+    pinta((r.n?('📍 <b>'+r.n+' de '+r.de+'</b> quedaron en el mapa por su dirección escrita (≈ aproximados: es la cuadra, no la puerta).'):('📍 No se pudo ubicar ninguna de las '+r.de+' direcciones.'))+
+      (r.sin.length?('<br>Sin ubicar: '+esc(r.sin.map(function(p){ return p.oc||p.cliente||''; }).join(', '))+' — cargales el link desde la ficha.'):''));
+  }, function(hecho,total){ pinta('<span class="spin"></span> 📍 Ubicando… '+hecho+' de '+total); });
+}
+
 function revUbicDatos(){
   var conLink=[], sinLink=[];
   STATE.forEach(function(p){
     var u=String(p.maps||'').trim();
-    if(u) conLink.push(p); else if(!p.entregado) sinLink.push(p);
+    if(u) conLink.push(p); else if(!p.entregado && !esFilaSistema(p) && !esBorrador(p)) sinLink.push(p);
   });
   var ok=[], nores=[], cortos=[], lejos=[];
   conLink.forEach(function(p){
@@ -14047,7 +14171,8 @@ function revUbicDatos(){
     else if(esLinkCorto(u)) cortos.push(p);   // hay que resolverlos en el servidor
     else nores.push(p);
   });
-  return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos, lejos:lejos};
+  return {conLink:conLink, sinLink:sinLink, ok:ok, nores:nores, cortos:cortos, lejos:lejos,
+          aprox:conLink.filter(function(p){ return esUbicAprox(p.maps); })};
 }
 function abrirRevUbic(){ renderRevUbic(REV_INTENTO); }
 /* Corregir SIN salir del panel: se arregla la ubicación y la lista se actualiza en el lugar,
@@ -14104,9 +14229,19 @@ function renderRevUbic(yaResolvio){
       '<div style="font-size:.82rem;color:#8a1c24;margin-bottom:9px">Lo guardado no tiene coordenadas (suele ser texto pegado por error, o un link de otro buscador). El botón <b>🌐 Resolverlos</b> de arriba también los intenta: si es una dirección escrita, el servidor la busca. Si no, tocá <b>✏️ Corregir</b> y pegá los números, el link o el código del lugar.</div>'+
       d.nores.map(fila).join('')+'</div>';
   }
+  if(d.aprox.length){
+    h+='<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+      '<div style="font-weight:800;color:#7c4b00;margin-bottom:3px">≈ '+d.aprox.length+' ubicad'+(d.aprox.length===1?'o':'os')+' por la dirección escrita</div>'+
+      '<div style="font-size:.82rem;color:#7c4b00;margin-bottom:9px">Es la cuadra, no la puerta. Sirven para ver el mapa y armar la ruta; si el chofer confirma el punto, pegalo con <b>✏️ Corregir</b> y deja de ser aproximado.</div>'+
+      d.aprox.slice(0,40).map(fila).join('')+
+      (d.aprox.length>40?('<div style="font-size:.78rem;color:var(--muted)">…y '+(d.aprox.length-40)+' más</div>'):'')+'</div>';
+  }
   if(d.sinLink.length){
+    var busc=ubicables(d.sinLink).length;
     h+='<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px">'+
       '<div style="font-weight:800;color:var(--muted);margin-bottom:9px">📭 '+d.sinLink.length+' pedidos sin entregar y sin enlace</div>'+
+      (busc?('<div style="margin-bottom:9px"><button class="btn btn-sm" style="background:#7c3aed;color:#fff;font-weight:700" onclick="ubicarDesdeRev()">📍 Ubicar por la dirección '+(busc===1?'el 1 que la tiene':'los '+busc+' que la tienen')+'</button>'+
+        '<div style="font-size:.78rem;color:var(--muted);margin-top:4px">El servidor busca la dirección escrita y la guarda como ubicación aproximada.</div></div>'):'')+
       d.sinLink.slice(0,40).map(fila).join('')+
       (d.sinLink.length>40?('<div style="font-size:.78rem;color:var(--muted)">…y '+(d.sinLink.length-40)+' más</div>'):'')+'</div>';
   }
@@ -14311,7 +14446,12 @@ function renderMapaLegend(){
   MAPA_LIST.forEach(function(p){ if(!mapaVisible(p)) return; if(!MAPA_COORDS[String(p.maps).trim()]){ sin++; return; } var k=mapaKey(p); cnt[k]=(cnt[k]||0)+1; ok++; });
   var _per = (MAPA_DIA==='mes' && MAPA_MES) ? (' · '+mesNombre(MAPA_MES)) : '';
   var _mar = MAPA_MARCA ? (' · '+((MARCAS.filter(function(g){return g.k===MAPA_MARCA;})[0]||{}).lbl||'')) : '';
-  document.getElementById('mapa-info').textContent=ok+(MAPA_SOLO_SIN?' sin chofer':' ubicados')+(sin?(' · '+sin+' sin ubicar'):'')+_per+_mar;
+  /* «sin ubicar» = tiene link pero no se pudo leer · «sin ubicación» = no tiene link (§4dh).
+     Son dos problemas distintos y el segundo era invisible. */
+  var sinLink=mapaSinLinkList(), busc=ubicables(sinLink);
+  document.getElementById('mapa-info').textContent=ok+(MAPA_SOLO_SIN?' sin chofer':' ubicados')+(sin?(' · '+sin+' sin ubicar'):'')+(sinLink.length?(' · '+sinLink.length+' sin ubicación'):'')+_per+_mar;
+  var bu=document.getElementById('mapa-ubicar');
+  if(bu && !UBIC_EN_CURSO){ bu.style.display=busc.length?'inline-block':'none'; bu.textContent='📍 Ubicar '+busc.length+' por dirección'; }
   /* ⚠️ Ordenada por CANTIDAD, de mayor a menor. Alfabético no servía para lo que se pidió:
      así la primera de la lista ES la zona de mayor entrega. */
   var claves=Object.keys(cnt).sort(function(a,b){ return cnt[b]-cnt[a] || (a<b?-1:1); });
@@ -14327,7 +14467,8 @@ function mapaPopup(p){
     (p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+
     (prodText(p.productos)?(esc(prodText(p.productos))+'<br>'):'')+
     '<div style="margin:7px 0 3px"><b>🚛 Chofer:</b> <select onchange="asignarChoferMapa(\''+p.id+'\',this.value)" style="font:inherit;padding:3px 5px;max-width:150px">'+choferOpts+'</select></div>'+
-    (p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>'):'');
+    (p.maps?('<a href="'+esc(p.maps)+'" target="_blank" rel="noopener">Abrir en Maps ↗</a>'+
+             (esUbicAprox(p.maps)?' <span style="color:#7c4b00;font-size:.85em">≈ aproximada, por la dirección escrita</span>':'')):'');
 }
 function showMapaView(){
   /* ⚠️ La barra del mapa se ve ANTES de que cargue Leaflet (uno o dos segundos con internet

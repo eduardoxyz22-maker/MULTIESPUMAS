@@ -5415,6 +5415,65 @@ ni nada! Se vendieron 3 y pedís 11? Deja como lo dejo chat gpt nomas!"*
 **Resultado:** batería completa **49 suites, 1.721 checks, 0 fallas** (incluye §4df, el
 buscador por producto + vendedor). Publicado a `main` junto con §4df, con el workflow libre.
 
+## 4dh. 🗺️ Los pedidos de ROHO no estaban en el mapa: ubicar por la dirección escrita (2026-09-09)
+
+El dueño, con el mapa en «Todos» (304 ubicados · 5 sin ubicar · Heaven 188 · Sueña 104 ·
+Otros 12): *"¿El botón Todos en el mapa muestra las entregas de ROHO? Debería… logística usa
+este mapa para ver sus entregas."*
+
+### Qué pasaba
+No las mostraba, y tampoco decía que no. El importador de ROHO (§4ci) crea los pedidos con la
+dirección escrita del Excel y `maps:''` — el Excel no trae link de Maps — y `mapaFilteredList`
+dibuja SOLO los pedidos con link. Los que no tienen link no entran ni en «sin ubicar» (eso son
+links que no se pudieron leer): desaparecen sin dejar rastro. Los 12 «Otros» rojos eran los
+pedidos de ROHO/Eduardo a los que alguien les había cargado el link a mano. Logística miraba
+el mapa y creía que eso era todo.
+
+### Qué se hizo
+El servidor ya sabía buscar una dirección escrita: `geocodeTexto` (§4bx), con el geocoder de
+Google acotado al recuadro de Santa Cruz, lo usaba `editarUbicacion` cuando alguien pegaba un
+texto en vez de un link. Solo faltaba mandarle las direcciones de los pedidos sin link.
+- **`ubicarPorDireccion(lista)`**: filtra los ubicables (`ubicables`: sin `maps`, con dirección
+  de ≥8 letras — mismo umbral que el servidor, «casa 3» no alcanza; ni filas del sistema ni
+  borradores), arma la consulta (`ubicConsulta`: dirección + zona si no la dice ya), manda
+  lotes de 40 a `action:'geocode'` con UNA consulta por dirección repetida, y lo que vuelve
+  con coordenadas lo guarda ADENTRO del pedido: `https://www.google.com/maps?q=LAT,LNG&aprox=1`.
+  Se guarda **de a uno** (`guardarEnFila`): cuarenta `apiSave` a la vez se pisan el lock del
+  servidor. Nunca pisa un `maps` existente.
+- **`&aprox=1` es la marca.** Google ignora el parámetro (el link abre igual), `coordsDeLink`
+  lo lee sin servidor (`?q=lat,lng`), y cualquier dispositivo sabe que es «por la dirección
+  escrita»: el globo del mapa dice «≈ aproximada, por la dirección escrita», la tarjeta del
+  chofer «📍 Ir en Maps ≈» + «≈ aproximada: preguntá la casa», y 📍 Revisar ubicaciones los
+  lista aparte («≈ N ubicados por la dirección escrita — es la cuadra, no la puerta; si el
+  chofer confirma el punto, pegalo con ✏️ Corregir»). Guardar la marca en el link y no en la
+  caché de coordenadas (`MAPA_COORDS`, que es por dispositivo) fue a propósito: el chofer la
+  ve desde su celular.
+- **El mapa cuenta lo que no puede dibujar**: `mapaEntra` (período + marca, sin mirar el link)
+  se separó de `mapaFilteredList`, y `mapaSinLinkList` = del período, sin entregar, sin link.
+  La barra dice «· N sin ubicación», y aparece el botón **📍 Ubicar N por dirección**
+  (`ubicarSinLinkMapa`: confirma, tope 80 por toque —los más nuevos primero, por la cuota del
+  geocoder—, y repinta el mapa). Lo mismo desde 📍 Revisar ubicaciones (`ubicarDesdeRev`).
+- **El importador de ROHO lo hace solo**: al terminar de crear los pedidos,
+  `ubicarImportadosRoho` busca sus direcciones y escribe el resultado en la misma ventana
+  (`#roho-geo`: «📍 N de M quedaron en el mapa por su dirección escrita (≈ aproximados)» y
+  cuáles no, para cargarles el link desde la ficha). Si falla, los pedidos ya están creados
+  igual: la ubicación es un paso aparte.
+
+### Pruebas
+`tests/test_ubicar.js` (**23 checks**): el mapa cuenta 4 sin ubicación y ofrece ubicar 3
+(«casa 3» afuera, el entregado no molesta, el que ya tiene link no se pisa); una consulta al
+servidor con 2 direcciones (la repetida va una vez); r1 y r2 quedan con `?q=…&aprox=1`, se
+leen sin servidor y se guardan de a uno; el mapa los dibuja y la barra baja a 2; el globo y
+Revisar ubicaciones dicen «aproximada»; y un Excel de ROHO importado queda en el mapa solo
+(primero se guarda el pedido, después su ubicación).
+
+### Y `test_roho.js` se rompió solo con el calendario
+Corre contra el Excel real de ROHO (§4ci), cuya última entrega es el **09/09/2026**, y
+«nuevas» son solo las de mañana en adelante: el 08/09 pasaba entero, el 09/09 amaneció con
+«Crear 0 pedidos» y 8 fallas en cadena sin que nadie tocara nada. El reloj de la página queda
+clavado en el 08/09 a las 10:00 de Bolivia con `page.clock.setFixedTime` (los timers siguen
+andando; solo `new Date()` devuelve ese día). Si se cambia el Excel, mover esa fecha.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
