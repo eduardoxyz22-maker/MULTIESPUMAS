@@ -178,6 +178,34 @@ se carga con `<script src="productos-mes.js?v=…">`, así que al tocarlo hay qu
 `?v=` (si no, el celular sigue con el viejo en caché) y validarlo aparte con
 `node --check productos-mes.js`. `tests/test_productos_mes.cjs`.
 
+## 🏪 RPT — Reposición de tienda (§4dk)
+Tercer botón junto a 📄 OC y 🎧 ATC. El vendedor pide lo que necesita su tienda, logística lo
+ve y lo **agenda como cualquier entrega**, y sale el **Excel del formato** para mandar por
+correo + el mensaje de **WhatsApp**.
+- **El tipo viaja en el propio número** (`RPT 09-001`), igual que la ATC: ninguna columna
+  nueva en la planilla. `esRPT`/`ocTipoDe`/`ocPrefijo`; `nextOcMes(fecha,tipo)` lleva **tres
+  series independientes**. El **destino se guarda en `cliente`** (la sucursal): así entra
+  solo a la lista de carga, la ficha del chofer y el mapa. `SUCURSALES` autocompleta
+  zona/dirección/maps sin pisar lo escrito.
+- **NO es una venta** → `fueraDeConta` la deja afuera de Contabilidad y del Cuadre.
+  **SÍ sale del depósito** → `stockCuenta` la deja pasar y lo pendiente se cubre.
+  ⚠️ **Pero NO es rotación**: va por `stockPedidoUnico` (como los pedidos de Eduardo, §4dj)
+  porque el colchón **cambió de lugar, no se vendió** — contarlo como venta lo contaría dos
+  veces y el panel mandaría a fabricar el doble. `vendidosRpt` la separa de la de Eduardo
+  solo para que el cartel diga la verdad (`stockUnicoEtq`).
+- Por renglón: `rtipo` (Reposición/Adicional) y `robs`, adentro del JSON de productos con la
+  misma convención que `precio` (si no corresponde, la clave no se guarda).
+- `pintarDocTipo(limpiar)` es el repartidor: esconde **y limpia** lo que ATC y RPT no usan
+  (nota, cobro) — esconder solo no alcanza, se guardaba invisible.
+- **El Excel** (`rptHoja`) copia el formato del dueño fila por fila, con el logo adentro
+  (`LOGO_B64`) y la lista `"Reposición,Adicional"` en `E12:E31`. ⚠️ El orden dentro de
+  `<worksheet>` **no es libre**: cols → sheetData → mergeCells → dataValidations → drawing.
+  Los estilos nuevos van **al final** de `STYLES_XML` (`XS_TIT`…`XS_MAIL`, 18–27): mover uno
+  del medio repinta todos los otros Excel del panel.
+- ⚠️ `xlsxHoja` tenía la regex de celdas glotona: una **celda vacía con estilo** se tragaba
+  la de al lado (valor corrido de columna, en silencio). Arreglado en §4dk.
+- `tests/test_rpt.js` (74 checks).
+
 ## Etapas del pipeline
 `Incoming leads` → `Nueva consulta` → `Atendido` → `Interesado` → `Cotizacion enviada` → `Agendado / Visita` → `Compradores` → `No Responden`
 ("Atendido" = consulta respondida; cuenta para el tiempo de 1ª respuesta pero NO como calificado)

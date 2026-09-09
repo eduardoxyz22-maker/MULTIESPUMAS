@@ -5576,6 +5576,97 @@ igual; y la sección de Eduardo: HADES (45 suyos en 5 entregas) → `unico · Ed
 La cabecera de `test_rotacion.js` y el comentario de `STOCK_VENTAS_MIN` guardan las tres
 vueltas con las frases textuales, para que el próximo no la vuelva a dar.
 
+## 4dk. 🏪 RPT — reposición de tienda: el tercer botón (2026-09-09, noche)
+
+Pedido del dueño, con el formato en Excel adjunto: *«necesitamos un 3er boton RPT
+(REPOSICION DE TIENDA) donde los vendedores coloquen los productos que requieren para sus
+tiendas y logistica pueda tenerlo en el panel y agendarlo. y una ves hecho se genere un
+excel para envira por correo como te subi el archivo. y tb el boton de whatsap»*.
+
+### Qué había antes
+El formato «FORMATO DE PEDIDO / REPOSICIÓN DE TIENDA» vive en un Excel que se llena a mano
+y se manda por correo a logística. Fuera del panel: nadie sabe qué pidió cada tienda, no se
+agenda con el resto del camión y el stock no se entera de que esa mercadería sale del
+depósito.
+
+### La decisión de fondo: qué ES y qué NO ES una reposición
+Esto es lo único que importa entender antes de tocar nada:
+
+- **NO es una venta.** No tiene cliente, ni nota de venta, ni cobro, ni precio. Sale de
+  Contabilidad y del Cuadre por la misma puerta que las ATC (`fueraDeConta`): sumarla
+  inflaría los totales con una plata que nunca entró.
+- **SÍ es mercadería que sale del depósito.** `stockCuenta` la deja pasar: lo pedido y sin
+  entregar se cubre, ese camión sale igual.
+- **…pero NO es rotación.** Va por `stockPedidoUnico`, el mismo camino que los pedidos de
+  Eduardo (§4dj), y por una razón distinta: **el colchón que va a una sucursal no se vendió,
+  solo cambió de lugar** — sigue siendo de la empresa. Contarlo como venta lo contaría DOS
+  VECES (ahora, y cuando la tienda lo venda de verdad) y el panel mandaría a fabricar el
+  doble. `test_rpt.js` lo prueba con el caso que más duele: **60 unidades en 3 reposiciones**
+  —que como ventas serían «rotación alta»— no piden fabricar nada.
+- **SÍ se agenda como cualquier entrega** (fecha, turno, cupo del camión, zona, mapa), que
+  es exactamente lo que pidió el dueño: *«logística pueda tenerlo en el panel y agendarlo»*.
+
+### Cómo viaja (sin tocar la planilla)
+Tercer tipo con la misma mecánica que la ATC: **el prefijo va adentro del propio número**
+(`RPT 09-001`) y no hizo falta ninguna columna nueva. `esRPT`, `ocTipoDe`, `ocPrefijo`;
+`nextOcMes(fecha, tipo)` ahora lleva **tres series independientes** (una OC no corre el
+contador de las RPT ni al revés). Los dos datos por renglón que pide el formato —**Tipo**
+(Reposición/Adicional) y **Observaciones**— viajan adentro del JSON de productos como
+`rtipo`/`robs`, con la misma convención que `precio`: si no corresponde, la clave no se
+guarda y el renglón queda idéntico a los de siempre.
+
+**El destino se guarda en `cliente`** (la sucursal). No es un abuso del campo: es
+literalmente a dónde va el camión, y así aparece solo en la lista de carga, en la ficha del
+chofer y en el mapa sin tocar nada de eso. `SUCURSALES` autocompleta zona/dirección/maps al
+elegirla, **sin pisar** lo que ya esté escrito.
+
+### El formulario
+Botón `🏪 RPT` en `#f-doc-tipo`. Al tocarlo: aparece `#wrap-rpt` (pegado al selector, por lo
+mismo que el bloque de la ATC, §4br) y **desaparecen** nota de venta, cobro, nombre del
+cliente, celular, garantía, facturación y el precio de cada renglón. `pintarDocTipo(limpiar)`
+es el nuevo repartidor: esconde lo que las dos —ATC y RPT— no usan, y **las limpia** cuando
+la persona cambia el tipo a mano (esconder no alcanza: si alguien empezó una venta y a mitad
+de camino la pasó a RPT, esos valores se guardaban igual, invisibles). `pintarMotivoAtc` y
+`pintarRpt` quedan para lo propio de cada una.
+
+### El Excel y el WhatsApp
+`rptHoja(p)` reproduce el formato del dueño **fila por fila**: logo adentro del archivo,
+título, cabecera (sucursal / fecha de solicitud / solicitado por / N.º de pedido),
+observación general, la tabla de 7 columnas con sus **20 renglones** y la lista desplegable
+`"Reposición,Adicional"` en `E12:E31`, el resumen (ítems y unidades), el aviso de los **7
+días hábiles** y los correos a los que va (DIRIGIDO A / CON COPIA A). Las 28 celdas
+combinadas son las mismas. `pedidoText` desvía a `rptText` para el mensaje de WhatsApp, así
+que los botones que ya existían en todas las fichas funcionan solos; `botonesRpt(p)` agrega
+«⬇️ Excel del formato» en la ficha de la vendedora, en la de administración y en la ventana
+de «pedido guardado».
+
+⚠️ **El formato del dueño calcula el código con un `XLOOKUP` contra una hoja de catálogo. El
+del panel NO**: el código ya está en el pedido, así que se escribe el valor. El archivo abre
+en cualquier lado —celular incluido— sin fórmulas que se rompan.
+
+Para esto `buildXlsx`/`buildSheetXml` aprendieron tres cosas nuevas: **alto de fila**
+(`rowH`), **listas desplegables** (`dv`) e **imágenes** (`img` → `drawing1.xml` + rels +
+`xl/media`). ⚠️ El orden de los bloques dentro de `<worksheet>` **no es libre**: cols →
+sheetData → mergeCells → dataValidations → drawing. Fuera de orden, Excel dice que el
+archivo está dañado. Los estilos nuevos se agregaron **al final** de `STYLES_XML` (índices
+`XS_TIT`…`XS_MAIL`, 18 a 27): mover uno del medio repinta todos los demás Excel del panel.
+
+### Un bug viejo que apareció de paso
+El lector de `.xlsx` del propio panel (`xlsxHoja`, el que abre los reportes de Moreno y el
+de ROHO) tenía la regex de celdas glotona: con una **celda vacía pero con estilo**
+(`<c r="B12" s="22"/>`) se pasaba de largo la barra y **se tragaba la celda de al lado** —el
+valor de C aparecía en B y C quedaba vacía. Un renglón corrido, en silencio. Se separaron
+las dos alternativas (`<c…/>` primero, `<c…>…</c>` después). Lo encontró el test del RPT al
+releer con ese lector el Excel que el panel acababa de generar.
+
+### Pruebas
+`tests/test_rpt.js` — **74 checks** en 8 secciones: el número y las tres series; qué se ve y
+qué desaparece en el formulario (y que **volviendo a OC vuelve todo a su lugar**); qué queda
+guardado; que está fuera de Contabilidad pero dentro del stock **sin armar rotación**; el
+Excel —releído con `xlsxHoja` del propio panel, con el diente de la celda vacía—; el
+WhatsApp; que **editarla no le borra el tipo ni la observación** de cada renglón; y que sin
+sucursal no se guarda. Batería completa en verde (52 suites).
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

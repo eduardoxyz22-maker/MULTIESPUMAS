@@ -14,6 +14,7 @@
   --amber:#D97706; --amber-lt:#FEF3E2; --amber-border:#FCD34D;
   /* Fucsia = 🎧 ATC. Es el único tono que no estaba usado por ningún estado de stock. */
   --atc:#D946EF; --atc-lt:#FDF0FC; --atc-dk:#A21CAF; --atc-border:#F0ABFC;
+  --rpt:#F59E0B; --rpt-lt:#FFF7E6; --rpt-dk:#B45309; --rpt-border:#FCD34D;
   --green:#22A06B; --green-lt:#E6F9F0; --green-border:#b8e6d0;
   --font-sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:20px;
@@ -126,6 +127,9 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 @media(max-width:520px){ .prod-sub{grid-template-columns:1fr 1fr;} }
 .prod-card .prod-precio{text-align:right}
 /* Subtotal de la línea: se actualiza solo al escribir el precio o la cantidad. */
+.prod-rpt{display:grid;grid-template-columns:150px 1fr;gap:2px 8px;align-items:end;margin-top:8px;padding-top:8px;border-top:1px dashed var(--rpt-border)}
+.prod-rpt .mini-lb{margin-bottom:0}
+@media(max-width:520px){ .prod-rpt{grid-template-columns:1fr} }
 .prod-sub-tot{margin-top:7px;text-align:right;font-size:.76rem;font-weight:700;color:var(--teal-dk);min-height:1em}
 .prod-sub-tot.vacio{color:var(--muted);font-weight:600}
 .prod-card select.prod-medida{width:100%;padding:10px 11px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.86rem;background:#fff;color:var(--text)}
@@ -246,6 +250,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .b-verif{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc}
 .b-im{background:#fff8d6;color:#8a6d00;border:1px solid #f0d264}
 .b-atc{background:var(--atc-lt);color:var(--atc-dk);border:1px solid var(--atc-border)}
+.b-rpt{background:var(--rpt-lt);color:var(--rpt-dk);border:1px solid var(--rpt-border)}
 /* Revisión producto por producto (logística): ✔ hay / ✗ no hay */
 .chkbtn{width:34px;height:30px;flex:none;border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:7px;font:inherit;font-size:.95rem;font-weight:800;cursor:pointer;transition:all .12s}
 .chkbtn:hover{background:var(--gray-lt)}
@@ -262,6 +267,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .cho-card{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:14px 15px;margin-bottom:12px;box-shadow:var(--sh-card)}
 /* 🎧 ATC: se ve de lejos por el filo fucsia, sin tocar el gris de "ya entregado". */
 .cho-card.atc{border-left:5px solid var(--atc)}
+.cho-card.rpt{border-left:5px solid var(--rpt)}
 /* En pantalla ancha las fichas van en columnas. Estiradas a lo largo de toda la
    pantalla el nombre del cliente queda a un palmo de sus etiquetas y no se lee
    de un vistazo. En el celular sigue siendo una sola columna (el min(...,100%)) */
@@ -305,6 +311,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .ent-sub .ent-card:last-child{margin-bottom:9px}
 .ent-card{border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 12px;margin-bottom:9px;background:var(--gray-lt)}
 .ent-card.atc{border-left:5px solid var(--atc)}
+.ent-card.rpt{border-left:5px solid var(--rpt)}
 .ent-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.9rem}
 .ent-n{background:var(--teal);color:#fff;border-radius:var(--r-pill);padding:1px 9px;font-size:.76rem;font-weight:800}
 .ent-prod{font-size:.85rem;margin-top:5px}
@@ -342,6 +349,7 @@ tbody tr:hover{background:var(--teal-lt)}
 .carga-fecha-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:2;background:#0f766e;color:#fff;font-weight:800;font-size:1rem;padding:9px 14px;border-radius:9px;margin-bottom:10px;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .carga-stop{padding:6px 0;border-bottom:1px dashed #eee;font-size:.85rem;cursor:pointer;border-radius:6px;transition:background .12s}
 .carga-stop.atc{box-shadow:inset 4px 0 0 var(--atc);padding-left:9px}
+.carga-stop.rpt{box-shadow:inset 4px 0 0 var(--rpt);padding-left:9px}
 .carga-stop:hover{background:#f0fbfa;box-shadow:inset 3px 0 0 var(--teal)}
 .b-amber{background:var(--amber-lt);color:var(--amber);border:1px solid var(--amber-border)}
 /* Resaltado suave de fila según estado de stock */
@@ -367,7 +375,9 @@ tbody tr.row-entregado td b{color:#55636b}
    Se lleva la barrita fucsia del borde izquierdo, que ningún otro estado usa. Va última
    a propósito: con igual peso, la regla de más abajo es la que pinta la barra. */
 tbody tr.row-atc{box-shadow:inset 4px 0 0 var(--atc) !important}
+tbody tr.row-rpt{box-shadow:inset 4px 0 0 var(--rpt) !important}
 #tbl-pedidos tbody tr.row-atc td:first-child{box-shadow:inset 4px 0 0 var(--atc),1px 0 0 var(--gray-lt)}
+#tbl-pedidos tbody tr.row-rpt td:first-child{box-shadow:inset 4px 0 0 var(--rpt),1px 0 0 var(--gray-lt)}
 .rowbtn{padding:4px 9px;border:1px solid var(--gray-md);background:#fff;border-radius:6px;font:inherit;font-size:.7rem;font-weight:600;color:var(--muted);cursor:pointer;margin-right:3px}
 .rowbtn:hover{background:var(--gray-lt);color:var(--text)}
 .rowbtn.del:hover{background:var(--red-lt);color:var(--red);border-color:var(--red-border)}
@@ -580,6 +590,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <div class="seg" id="f-doc-tipo" style="margin-bottom:7px">
             <button type="button" data-val="OC" class="active">📄 OC</button>
             <button type="button" data-val="ATC">🎧 ATC</button>
+            <button type="button" data-val="RPT">🏪 RPT</button>
           </div>
           <input type="text" id="f-oc" placeholder="Ej. 1024" autocomplete="off">
         </div>
@@ -634,9 +645,31 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
       </div>
 
+      <!-- 🏪 Reposición de tienda. Va pegado al selector que lo hace aparecer, por lo mismo
+           que el bloque de la ATC (§4br): en un celular, ponerlo abajo es media pantalla de
+           scroll y parece que el botón no hizo nada. -->
+      <div id="wrap-rpt" style="display:none;background:var(--rpt-lt);border:1px solid var(--rpt-border);border-radius:10px;padding:12px 13px 4px;margin-bottom:14px">
+        <div style="font-size:.8rem;color:var(--rpt-dk);margin-bottom:9px">🏪 <b>Reposición de tienda</b> — la mercadería va a una <b>sucursal</b>, no a un cliente. No lleva nota de venta ni cobro: no se está vendiendo nada todavía.</div>
+        <div class="grid2">
+          <div class="field">
+            <label class="lb">Sucursal de destino <span class="req">*</span></label>
+            <input type="text" id="f-rpt-suc" list="dl-sucursales" placeholder="Ej. Mia Plaza" autocomplete="off" oninput="sucursalElegida()">
+            <datalist id="dl-sucursales"></datalist>
+          </div>
+          <div class="field">
+            <label class="lb">Solicitado por <span class="hint">(quien pide, arriba)</span></label>
+            <input type="text" id="f-rpt-quien" placeholder="Se toma del vendedor" autocomplete="off" readonly style="background:var(--gray-lt);color:var(--muted)">
+          </div>
+        </div>
+        <div class="field" style="margin-top:2px">
+          <label class="lb">📧 Al guardar</label>
+          <div style="font-size:.78rem;color:var(--rpt-dk);line-height:1.5">Se puede bajar el <b>Excel del formato</b> para mandarlo por correo a <b>logística</b>, y pasarlo por <b>WhatsApp</b>, desde la ficha del pedido.<br>⏳ <span style="color:var(--muted)">Adicionales (protectores, cabeceras…): 7 días hábiles.</span></div>
+        </div>
+      </div>
+
       <div id="lite-hint" class="lite-only" style="font-size:.8rem;color:#065f5b;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:9px 13px;margin-bottom:14px">✔️ <b>Modo simplificado</b> — para vos, la <b>Nota de venta</b>, <b>OC</b>, <b>celular</b> y <b>cobro</b> son opcionales, y podés <b>agendar para hoy mismo</b>.</div>
 
-      <div class="grid2">
+      <div class="grid2" id="wrap-cliente">
         <div class="field">
           <label class="lb">Nombre del cliente <span class="req">*</span></label>
           <input type="text" id="f-cliente" placeholder="Nombre y apellido" autocomplete="off">
@@ -648,7 +681,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       </div>
 
       <div class="field">
-        <label class="lb">Productos <span class="req">*</span> <span class="hint">producto · medida · código · cantidad · precio</span></label>
+        <label class="lb">Productos <span class="req">*</span> <span class="hint" id="f-prods-hint">producto · medida · código · cantidad · precio</span></label>
         <div id="f-productos"></div>
         <div id="f-prods-total" style="display:none;background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:var(--r-md);padding:9px 13px;margin:2px 0 10px;font-size:.82rem;color:var(--teal-dk)"></div>
         <datalist id="dl-productos"></datalist>
@@ -663,14 +696,14 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <button type="button" data-val="PM">🌆 PM</button>
           </div>
         </div>
-        <div class="field">
+        <div class="field" id="wrap-garantia">
           <label class="lb">🛡️ Garantía — a nombre de <span class="hint">(opcional)</span></label>
           <input type="text" id="f-garantia" placeholder="Nombre a quien va la garantía" autocomplete="off">
         </div>
       </div>
 
 
-      <div class="grid2">
+      <div class="grid2" id="wrap-factura">
         <div class="field">
           <label class="lb">🧾 Facturar a <span class="hint">(opcional)</span></label>
           <input type="text" id="f-facturar" placeholder="Nombre / razón social" autocomplete="off">
@@ -1332,26 +1365,63 @@ function cellXml(ref,cv){
   if(cv.t==='n') return '<c r="'+ref+'"'+s+'><v>'+cv.v+'</v></c>';
   return '<c r="'+ref+'"'+s+' t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(cv.v)+'</t></is></c>';
 }
-var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="5"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font></fonts><fills count="12"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFECE8FD"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="18"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="11" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="11" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+/* Estilos con nombre, para no escribir números sueltos en el generador del RPT (§4dk).
+   Los índices son posiciones dentro de `cellXfs` de STYLES_XML: si se agrega uno nuevo,
+   va AL FINAL y se suma acá — mover uno del medio repinta todos los Excel del panel. */
+var XS_TIT=18, XS_BAR=19, XS_LB=20, XS_VAL=21, XS_CEN=22, XS_TH=23, XS_NOTA=24, XS_PIE=25, XS_TOT=26, XS_MAIL=27;
+var STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="&quot;Bs &quot;#,##0.00"/></numFmts><fonts count="9"><font><sz val="11"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C0006"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF006100"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF9C6500"/><name val="Calibri"/></font><font><b/><sz val="16"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font><font><b/><sz val="11"/><color rgb="FF0F172A"/><name val="Calibri"/></font><font><sz val="9"/><color rgb="FF64748B"/><name val="Calibri"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Calibri"/></font></fonts><fills count="14"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00B5AD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFE3F6EC"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFF176"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFBE1E4"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFD6ECFB"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFE6C7"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFC7CE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFC6EFCE"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFFFEB9C"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFECE8FD"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF00877F"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FFF1F5F9"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFCBD5E1"/></left><right style="thin"><color rgb="FFCBD5E1"/></right><top style="thin"><color rgb="FFCBD5E1"/></top><bottom style="thin"><color rgb="FFCBD5E1"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="28"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="0" borderId="0" xfId="0" applyNumberFormat="1"/><xf numFmtId="0" fontId="0" fillId="3" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="4" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="5" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="3" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="4" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="5" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="6" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="6" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="7" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="7" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="2" fillId="8" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="3" fillId="9" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="4" fillId="10" borderId="0" xfId="0" applyFont="1" applyFill="1"/><xf numFmtId="0" fontId="0" fillId="11" borderId="0" xfId="0" applyFill="1"/><xf numFmtId="164" fontId="0" fillId="11" borderId="0" xfId="0" applyNumberFormat="1" applyFill="1"/><xf numFmtId="0" fontId="5" fillId="12" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="8" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="13" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="left" vertical="top" wrapText="1"/></xf><xf numFmtId="0" fontId="7" fillId="0" borderId="0" xfId="0" applyFont="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="6" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
 function buildSheetXml(sheet){
-  var rowsXml='';
+  var rowsXml='', alto=sheet.rowH||{};
   for(var r=0;r<sheet.matrix.length;r++){
     var row=sheet.matrix[r],cells='';
     for(var c=0;c<row.length;c++) cells+=cellXml(colLetter(c)+(r+1),row[c]);
-    rowsXml+='<row r="'+(r+1)+'">'+cells+'</row>';
+    var _ht=alto[r]?(' ht="'+alto[r]+'" customHeight="1"'):'';
+    rowsXml+='<row r="'+(r+1)+'"'+_ht+'>'+cells+'</row>';
   }
   var cols='';
   if(sheet.cols){cols='<cols>';for(var i=0;i<sheet.cols.length;i++){var _c=sheet.cols[i],_w=(_c&&typeof _c==='object')?_c.w:_c,_h=(_c&&typeof _c==='object'&&_c.h)?' hidden="1"':'';cols+='<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+_w+'" customWidth="1"'+_h+'/>';}cols+='</cols>';}
   var merges='';
   if(sheet.merges&&sheet.merges.length){ merges='<mergeCells count="'+sheet.merges.length+'">'; for(var m=0;m<sheet.merges.length;m++) merges+='<mergeCell ref="'+sheet.merges[m]+'"/>'; merges+='</mergeCells>'; }
-  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+cols+'<sheetData>'+rowsXml+'</sheetData>'+merges+'</worksheet>';
+  /* Listas desplegables (el «Tipo» del formato de reposición: Reposición / Adicional). */
+  var dv='';
+  if(sheet.dv&&sheet.dv.length){
+    dv='<dataValidations count="'+sheet.dv.length+'">';
+    for(var d=0;d<sheet.dv.length;d++) dv+='<dataValidation type="list" allowBlank="1" showInputMessage="1" showErrorMessage="1" sqref="'+sheet.dv[d].sqref+'"><formula1>'+xmlEsc(sheet.dv[d].list)+'</formula1></dataValidation>';
+    dv+='</dataValidations>';
+  }
+  /* ⚠️ EL ORDEN DE LOS BLOQUES NO ES LIBRE: el esquema de Excel exige
+     cols → sheetData → mergeCells → dataValidations → drawing. Fuera de orden, Excel
+     dice que el archivo está dañado y ofrece "repararlo" (que es tirar la mitad). */
+  var draw=sheet.img?'<drawing r:id="rId1"/>':'';
+  var ns='xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"'+
+         (sheet.img?' xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"':'');
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<worksheet '+ns+'>'+cols+'<sheetData>'+rowsXml+'</sheetData>'+merges+dv+draw+'</worksheet>';
+}
+/* Una imagen anclada a una celda (el logo del formato de reposición). `cx`/`cy` van en
+   EMU — 12700 por punto — y hay que respetar la proporción del PNG o sale estirado. */
+function drawingXml(img){
+  return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+
+    '<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'+
+    '<xdr:oneCellAnchor><xdr:from><xdr:col>'+(img.col||0)+'</xdr:col><xdr:colOff>'+(img.dx||0)+'</xdr:colOff>'+
+    '<xdr:row>'+(img.row||0)+'</xdr:row><xdr:rowOff>'+(img.dy||0)+'</xdr:rowOff></xdr:from>'+
+    '<xdr:ext cx="'+img.cx+'" cy="'+img.cy+'"/>'+
+    '<xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="logo"/><xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr></xdr:nvPicPr>'+
+    '<xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId1"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill>'+
+    '<xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+img.cx+'" cy="'+img.cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr>'+
+    '</xdr:pic><xdr:clientData/></xdr:oneCellAnchor></xdr:wsDr>';
 }
 function buildXlsx(sheets){
   var enc=new TextEncoder(),files=[];
   var add=function(name,str){files.push({name:name,data:enc.encode(str)});};
   var ov='',i;
   for(i=0;i<sheets.length;i++) ov+='<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>';
-  add('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ov+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+  /* Las hojas con logo suman el dibujo y el PNG. Se numeran por hoja para que dos hojas
+     con imagen no se pisen el archivo. */
+  var conImg=[];
+  for(i=0;i<sheets.length;i++) if(sheets[i].img) conImg.push(i);
+  for(i=0;i<conImg.length;i++) ov+='<Override PartName="/xl/drawings/drawing'+(conImg[i]+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>';
+  var defPng=conImg.length?'<Default Extension="png" ContentType="image/png"/>':'';
+  add('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/>'+defPng+'<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+ov+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
   add('_rels/.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
   var shx='';
   for(i=0;i<sheets.length;i++) shx+='<sheet name="'+xmlEsc(sheets[i].name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>';
@@ -1362,7 +1432,25 @@ function buildXlsx(sheets){
   add('xl/_rels/workbook.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+rels+'</Relationships>');
   add('xl/styles.xml',STYLES_XML);
   for(i=0;i<sheets.length;i++) add('xl/worksheets/sheet'+(i+1)+'.xml',buildSheetXml(sheets[i]));
+  for(i=0;i<conImg.length;i++){
+    var _n=conImg[i]+1, _img=sheets[conImg[i]].img;
+    add('xl/worksheets/_rels/sheet'+_n+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing'+_n+'.xml"/></Relationships>');
+    add('xl/drawings/drawing'+_n+'.xml',drawingXml(_img));
+    add('xl/drawings/_rels/drawing'+_n+'.xml.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image'+_n+'.png"/></Relationships>');
+    files.push({name:'xl/media/image'+_n+'.png', data:_img.data});
+  }
   return makeZip(files);
+}
+/* El logo, en base64, para poder meterlo dentro del .xlsx sin salir a buscarlo a la red
+   (el panel se abre en celulares con señal mala: un logo que no carga es un archivo roto). */
+/* El logo de MultiESPUMAS Viscarra S.R.L., el mismo que trae el formato en papel del
+   dueño. 742×413 px. Va acá adentro y no en un archivo aparte para que el .xlsx salga
+   completo aunque la página se haya abierto sin señal. */
+var LOGO_B64='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';
+function bytesDeB64(b64){
+  var bin=atob(b64), out=new Uint8Array(bin.length);
+  for(var i=0;i<bin.length;i++) out[i]=bin.charCodeAt(i);
+  return out;
 }
 
 /* ============================================================================
@@ -1416,11 +1504,20 @@ function ocMesDe(f){ var m=String(f||todayStr()).match(/^\d{4}-(\d{2})/); return
    OC  = orden de compra (una venta).      → "08-001"
    ATC = atención al cliente (un servicio). → "ATC 08-001"
    El tipo viaja en el propio número, así que no hizo falta ninguna columna nueva. */
-var ATC_PRE='ATC ';
+/* RPT = reposición de tienda (§4dk).  → "RPT 09-001"
+   Tercer tipo, misma mecánica: el prefijo viaja adentro del propio número y NO hizo falta
+   ninguna columna nueva en la planilla. */
+var ATC_PRE='ATC ', RPT_PRE='RPT ';
 function esATC(oc){ return /^ATC\b/i.test(String(oc||'').trim()); }
-function ocSinPre(oc){ return String(oc||'').trim().replace(/^ATC\s*/i,''); }
-/* Cómo se muestra: "OC 08-001" o "ATC 08-001" (el ATC ya trae su etiqueta adentro). */
-function ocEtiq(oc){ oc=String(oc||'').trim(); return oc ? (esATC(oc)?oc:('OC '+oc)) : ''; }
+function esRPT(oc){ return /^RPT\b/i.test(String(oc||'').trim()); }
+function ocSinPre(oc){ return String(oc||'').trim().replace(/^(ATC|RPT)\s*/i,''); }
+/* Qué tipo de documento es, mirando el número. Es la única fuente de verdad: el tipo no se
+   guarda en ningún campo aparte. */
+function ocTipoDe(oc){ return esATC(oc)?'ATC':(esRPT(oc)?'RPT':'OC'); }
+function ocPrefijo(tipo){ return tipo==='ATC'?ATC_PRE:(tipo==='RPT'?RPT_PRE:''); }
+/* Cómo se muestra: "OC 08-001", "ATC 08-001" o "RPT 09-001" (los dos últimos ya traen su
+   etiqueta adentro). */
+function ocEtiq(oc){ oc=String(oc||'').trim(); return oc ? ((esATC(oc)||esRPT(oc))?oc:('OC '+oc)) : ''; }
 /* ¿Es un número generado por el panel (y no algo que escribieron a mano)? */
 function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
 /* Chip fucsia para las listas. El fucsia es el único tono que no estaba ocupado por
@@ -1432,6 +1529,61 @@ function atcChip(p){
 }
 /* La clase del resaltado, para pegarla donde haga falta. */
 function atcCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : ''; }
+/* 🏪 Chip ámbar de la reposición de tienda. Ámbar porque el fucsia ya es de las ATC y los
+   verdes/rojos son estados de stock: los tres se distinguen de un vistazo en la misma lista. */
+function rptChip(p){
+  return esRPT(p&&p.oc)
+    ? '<span class="badge b-rpt" title="Reposición de tienda — la mercadería va a una sucursal, no a un cliente">🏪 RPT</span>'
+    : '';
+}
+/* Los dos chips juntos, para las listas: un pedido es ATC o RPT, nunca las dos. */
+function docChip(p){ return atcChip(p)+rptChip(p); }
+function docCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : (esRPT(p&&p.oc) ? 'rpt' : ''); }
+
+/* ============================================================================
+   🏪 RPT — REPOSICIÓN DE TIENDA (§4dk)
+   Pedido del dueño: *"necesitamos un 3er boton RPT (REPOSICION DE TIENDA) donde los
+   vendedores coloquen los productos que requieren para sus tiendas y logistica pueda
+   tenerlo en el panel y agendarlo. y una vez hecho se genere un excel para enviar por
+   correo… y tb el botón de whatsapp"*.
+
+   Qué es y qué NO es:
+   · NO es una venta — no tiene cliente, ni nota de venta, ni cobro, ni precio. Queda
+     fuera de Contabilidad y del Cuadre igual que una ATC (`fueraDeConta`).
+   · SÍ es mercadería que sale del depósito, así que el stock la cuenta como comprometida
+     (`stockCuenta` la deja pasar) — pero NO como rotación: el colchón sigue siendo de la
+     empresa, solo cambió de lugar. Contarlo como venta lo contaría dos veces, cuando la
+     tienda lo venda de verdad. Por eso `stockPedidoUnico` la trata como los pedidos de
+     Eduardo: se cubre lo pendiente, no arma ritmo ni reserva.
+   · SÍ se agenda como cualquier entrega (fecha + turno), que es lo que pidió el dueño:
+     "logística pueda tenerlo en el panel y agendarlo".
+
+   El destino se guarda en `cliente` (la sucursal). No es un abuso del campo: es
+   literalmente a dónde va el camión, y así aparece solo en la lista de carga, en la
+   ficha del chofer y en el mapa, sin tocar nada. */
+var RPT_TIPOS=['Reposición','Adicional'];
+/* Las sucursales a las que se repone. Es una lista de sugerencias, no un candado: si
+   mañana abren otra, se escribe a mano y funciona igual. La zona/dirección/maps se
+   autocompletan al elegirla para que logística no tenga que buscarlas. */
+var SUCURSALES=[
+  {n:'Tiendas Roho',    z:'Roho',        d:'', m:''},
+  {n:'Mia Plaza',       z:'Norte',       d:'', m:''},
+  {n:'Buenos Aires',    z:'Centro',      d:'', m:''},
+  {n:'Central',         z:'Centro',      d:'', m:''}
+];
+function sucursalDe(nombre){
+  var k=normNombre(nombre||''); if(!k) return null;
+  for(var i=0;i<SUCURSALES.length;i++) if(normNombre(SUCURSALES[i].n)===k) return SUCURSALES[i];
+  return null;
+}
+/* A quién va el correo del formato. Salen del propio Excel que trajo el dueño. */
+var RPT_MAIL_PARA=['logistica@colchonesheaven.com','e.anez@colchonesheaven.com','ernesto.flores@colchonesheaven.com','daniel.garnica@colchonesheaven.com'];
+var RPT_MAIL_CC=['eliana.vargas@colchonesheaven.com','alberto.pareja@colchonesheaven.com'];
+var RPT_AVISO='Para adicionales como protectores, cabeceras, etc., tomar en cuenta que son 7 días hábiles para su adquisición y repartición.';
+/* Tipo y observación de cada renglón. Viajan adentro del JSON de productos, con la misma
+   convención que `precio` y `atc`: si no están, el renglón queda como cualquier otro. */
+function rptTipo(x){ return (x&&x.rtipo) || RPT_TIPOS[0]; }
+function rptObs(x){ return (x&&x.robs) || ''; }
 
 /* ============================================================================
    🎧 SEGUIMIENTO DE ATC — el motivo y la devolución (§4bq)
@@ -1566,17 +1718,17 @@ function atcDias(p){
    si no, el "08" del año pasado seguiría sumando al de este año. */
 function nextOcMes(fecha, tipo){
   var f=fecha||todayStr(), pre=ocMesDe(f), mes=String(f).slice(0,7), mx=0;
-  var atc = String(tipo||'OC').toUpperCase()==='ATC';
+  var t=String(tipo||'OC').toUpperCase(); if(t!=='ATC' && t!=='RPT') t='OC';
   for(var i=0;i<STATE.length;i++){
     var p=STATE[i];
     if(!p || esRoho(p.vendedor)) continue;
     if(contaFecha(p).slice(0,7)!==mes) continue;
-    if(esATC(p.oc)!==atc) continue;              // cada serie cuenta la suya
+    if(ocTipoDe(p.oc)!==t) continue;             // cada serie cuenta la suya
     var m=ocSinPre(p.oc).match(/^(\d{2})-(\d+)$/);
     if(!m || m[1]!==pre) continue;
     var v=parseInt(m[2],10); if(v>mx) mx=v;
   }
-  return (atc?ATC_PRE:'')+pre+'-'+pad3(mx+1);
+  return ocPrefijo(t)+pre+'-'+pad3(mx+1);
 }
 /* Si dos cargaron en el mismo instante puede repetirse un número. Es MUY poco
    probable (hay que guardar en el mismo segundo) pero no imposible sin tocar el
@@ -1929,7 +2081,7 @@ var NOMBRES = {}, NOMBRES_LISTA = [];
   NOMBRES_LISTA.sort();
 })();
 function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
-function addProdRow(desc,medida,codigo,cant,precio){
+function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
   // fila superior: producto + borrar
@@ -1959,13 +2111,24 @@ function addProdRow(desc,medida,codigo,cant,precio){
   qW.appendChild(qL); qW.appendChild(q);
   // Precio UNITARIO. Se puede dejar vacío: los pedidos viejos no lo tienen y no por eso
   // están mal. El subtotal se muestra abajo para que se vea qué está cobrando.
-  var pW=document.createElement('div');
+  var pW=document.createElement('div'); pW.className='prod-precio-w';
   var pL=document.createElement('div'); pL.className='mini-lb'; pL.textContent='Precio c/u';
   var pIn=document.createElement('input'); pIn.type='number'; pIn.className='prod-precio';
   pIn.min='0'; pIn.step='0.01'; pIn.placeholder='Bs'; pIn.autocomplete='off';
   if(Number(precio)>0) pIn.value=r2(precio);
   pW.appendChild(pL); pW.appendChild(pIn);
   sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW); sub.appendChild(pW);
+  /* 🏪 Los dos datos que el formato de reposición pide POR RENGLÓN (§4dk): si es una
+     reposición o un adicional, y la aclaración de ese producto. Solo se ven en una RPT;
+     en una venta normal ni existen y el renglón queda igual que siempre. */
+  var rW=document.createElement('div'); rW.className='prod-rpt'; rW.style.display='none';
+  var rtL=document.createElement('div'); rtL.className='mini-lb'; rtL.textContent='Tipo';
+  var rtS=document.createElement('select'); rtS.className='prod-rtipo';
+  rtS.innerHTML=RPT_TIPOS.map(function(t){ return '<option'+((rtipo===t)?' selected':'')+'>'+t+'</option>'; }).join('');
+  var roL=document.createElement('div'); roL.className='mini-lb'; roL.textContent='Observaciones del renglón';
+  var roIn=document.createElement('input'); roIn.type='text'; roIn.className='prod-robs'; roIn.autocomplete='off';
+  roIn.placeholder='Ej. para las camas de 2,5 plazas'; if(robs) roIn.value=robs;
+  rW.appendChild(rtL); rW.appendChild(rtS); rW.appendChild(roL); rW.appendChild(roIn);
   var tot=document.createElement('div'); tot.className='prod-sub-tot';
   function pintarSub(){
     var pr=parseFloat(pIn.value)||0, ct=parseInt(q.value,10)||0;
@@ -1994,8 +2157,18 @@ function addProdRow(desc,medida,codigo,cant,precio){
     cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Escrito a mano y sin elegir de la lista: se revisa al salir del campo.
   d.addEventListener('blur',function(){ rechazarCombo(d.value, d, cIn); });
-  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(tot);
-  box.appendChild(card); refreshDelButtons(); pintarTotalProds();
+  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(rW); card.appendChild(tot);
+  box.appendChild(card); refreshDelButtons(); pintarTotalProds(); pintarProdRpt();
+}
+/* Muestra/esconde lo que es propio de cada tipo en TODOS los renglones a la vez: en una
+   reposición no hay precio (no se está vendiendo) y sí hay tipo y observación. */
+function pintarProdRpt(){
+  var rpt=(docTipoSel()==='RPT');
+  var q=function(sel,ver){ var n=document.querySelectorAll('#f-productos '+sel); for(var i=0;i<n.length;i++) n[i].style.display=ver?'':'none'; };
+  q('.prod-rpt', rpt); q('.prod-precio-w', !rpt); q('.prod-sub-tot', !rpt);
+  var hint=document.getElementById('f-prods-hint');
+  if(hint) hint.textContent = rpt ? 'producto · medida · código · cantidad · tipo' : 'producto · medida · código · cantidad · precio';
+  var caja=document.getElementById('f-prods-total'); if(caja && rpt) caja.style.display='none';
 }
 /* Suma de los ítems, debajo de la lista. Es solo informativa: el total de la venta lo
    sigue mandando "A cuenta + Saldo". El botón la copia a los montos para no tipear. */
@@ -2009,7 +2182,8 @@ function pintarTotalProds(){
     var ct=parseInt(cards[i].querySelector('.prod-cant').value,10)||0;
     if(pr>0){ t+=pr*ct; con++; } else sin++;
   }
-  if(!con){ cja.style.display='none'; cja.innerHTML=''; return; }
+  // 🏪 En una reposición no hay precios: la caja del total no tiene nada que decir.
+  if(!con || docTipoSel()==='RPT'){ cja.style.display='none'; cja.innerHTML=''; return; }
   cja.style.display='block';
   cja.innerHTML='<b>Los ítems suman '+fmtBs(r2(t))+'</b>'+
     (sin?(' <span style="color:var(--amber);font-weight:700">· '+sin+' '+(sin===1?'ítem sin precio':'ítems sin precio')+'</span>'):'')+
@@ -2033,7 +2207,7 @@ function usarTotalProds(){
 }
 function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
 function getProductos(){
-  var cards=document.querySelectorAll('#f-productos .prod-card'),out=[];
+  var cards=document.querySelectorAll('#f-productos .prod-card'),out=[],rptForm=(docTipoSel()==='RPT');
   for(var i=0;i<cards.length;i++){
     var desc=cards[i].querySelector('.prod-desc').value.trim();
     var mSel=cards[i].querySelector('.prod-medida');
@@ -2043,6 +2217,15 @@ function getProductos(){
     var precio=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
     if(desc){ var it={desc:desc, medida:medida, codigo:codigo, cant:cant};
       if(precio>0) it.precio=r2(precio);          // sin precio no se guarda la clave: los viejos quedan igual
+      /* 🏪 Solo en una reposición (§4dk), y con la misma convención que el precio: si no
+         corresponde, la clave no se guarda y el renglón queda idéntico a los de siempre.
+         Se mira el tipo del formulario y no lo que quedó en el select: alguien pudo pasar
+         de RPT a OC y esos dos datos ya no significan nada. */
+      if(rptForm){
+        var _rt=cards[i].querySelector('.prod-rtipo'), _ro=cards[i].querySelector('.prod-robs');
+        if(_rt && _rt.value) it.rtipo=_rt.value;
+        if(_ro && _ro.value.trim()) it.robs=_ro.value.trim();
+      }
       out.push(it); }
   }
   return out;
@@ -2298,7 +2481,10 @@ function contaAmbito(){ return contaTab()==='mayor' ? 'mayor' : 'tienda'; }
    Todo lo que filtre por contabilidad tiene que pasar por acá, no por contaExcluido.
    El Cuadre llama sin `ambito` a propósito: cuadra la caja del equipo de tienda. */
 function fueraDeConta(p, ambito){
-  if(!p || esATC(p.oc)) return true;
+  /* 🏪 Las REPOSICIONES DE TIENDA salen por la misma puerta que las ATC (§4dk): mover
+     mercadería a una sucursal no es vender nada — la venta la hará la tienda después.
+     Contarla acá inflaría los totales y descuadraría la caja con una plata que no entró. */
+  if(!p || esATC(p.oc) || esRPT(p.oc)) return true;
   if(ambito==='mayor') return !esMayorista(p);
   return contaExcluido(p.vendedor);
 }
@@ -5249,7 +5435,11 @@ function onCompFormElegido(ev){
 function submitPedido(){
   clearErr();
   var vendedor=document.getElementById('f-vendedor').value.trim();
-  var cliente=document.getElementById('f-cliente').value.trim();
+  /* 🏪 En una reposición el «cliente» es la SUCURSAL de destino, y se escribe en su propio
+     campo (§4dk): el de cliente está escondido y traería lo que quedó de antes. */
+  var _rpt=(docTipoSel()==='RPT');
+  var cliente=_rpt ? document.getElementById('f-rpt-suc').value.trim()
+                   : document.getElementById('f-cliente').value.trim();
   var productos=getProductos();
   var ok=true;
   var lite=esVendedorLite(vendedor); // Eduardo Añez y ROHO: nota, celular y cobro NO obligatorios
@@ -5258,10 +5448,11 @@ function submitPedido(){
   if(esRoho(vendedor) && !document.getElementById('f-oc').value.trim()){ markErr('f-oc'); ok=false; faltaOcRoho=true; }
   /* La nota de venta no se exige en una ATC: no hay venta que anotar, y el campo ni se
      muestra — sin esta excepción el formulario se trababa pidiendo algo invisible (§4bt). */
-  if(!lite && docTipoSel()!=='ATC' && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
+  if(!lite && docTipoSel()==='OC' && !document.getElementById('f-nota').value.trim()){ markErr('f-nota'); ok=false; }
   if(!vendedor){ markErr('f-vendedor'); ok=false; }
-  if(!cliente){ markErr('f-cliente'); ok=false; }
-  if(!lite && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
+  if(!cliente){ markErr(_rpt?'f-rpt-suc':'f-cliente'); ok=false; }
+  // 🏪 A una sucursal no se la llama por teléfono para coordinar: el celular no aplica.
+  if(!lite && !_rpt && !document.getElementById('f-celular').value.trim()){ markErr('f-celular'); ok=false; }
   if(!VENTA_TIENDA && !document.getElementById('f-zona').value.trim()){ markErr('f-zona'); ok=false; }
   if(productos.length===0){ var pd=document.querySelector('#f-productos .prod-desc'); if(pd)pd.classList.add('err'); ok=false; }
   /* 🎧 Sin motivo la ATC no sirve para lo que se pidió: no habría con qué contar POR QUÉ
@@ -5270,10 +5461,13 @@ function submitPedido(){
   if(docTipoSel()==='ATC' && !document.getElementById('f-atc-motivo').value){
     markErr('f-atc-motivo'); ok=false; faltaMotivo=true;
   }
+  var faltaSuc = _rpt && !cliente;
   if(!ok){
     toast(faltaOcRoho ? 'Para ROHO el N° de OC es obligatorio — es lo que identifica el pedido.'
         : faltaMotivo ? '🎧 Elegí el motivo del reclamo — es lo que después permite saber por qué se generan las ATC.'
+        : faltaSuc ? '🏪 Poné a qué SUCURSAL va la reposición — es a dónde tiene que ir el camión.'
         : 'Completá los campos marcados (*)','err');
+    if(faltaSuc){ var fs2=document.getElementById('f-rpt-suc'); if(fs2){ fs2.focus(); fs2.scrollIntoView({block:'center'}); } }
     if(faltaMotivo){ var fm=document.getElementById('f-atc-motivo'); if(fm){ fm.focus(); fm.scrollIntoView({block:'center'}); } }
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
     return;
@@ -5487,11 +5681,13 @@ function submitPedido(){
      bajada — ver "EL N° DE OC SE ASIGNA ACÁ". Ver también §OC REPETIDAS en la bitácora. */
   var _ocAuto = !isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo();
   if(_ocAuto) ocSel=nextOcMes(null, docTipoSel());
-  /* ⚠️ Si eligió 🎧 ATC pero ESCRIBIÓ el número a mano, `ocSel` viene sin el prefijo y
-     `esATC()` daría false: la ATC no aparecería en su pestaña ni contaría en su serie.
-     El camino automático ya lo pone (`nextOcMes`); el manual no pasaba por ningún lado.
+  /* ⚠️ Si eligió 🎧 ATC (o 🏪 RPT) pero ESCRIBIÓ el número a mano, `ocSel` viene sin el
+     prefijo y `esATC()`/`esRPT()` darían false: el pedido no aparecería en su pestaña ni
+     contaría en su serie. El camino automático ya lo pone (`nextOcMes`); el manual no
+     pasaba por ningún lado.
      ROHO queda afuera: ahí el N° es el que manda el cliente y no se le toca nada (§4bq). */
-  if(!esRoho(vendedor) && docTipoSel()==='ATC' && ocSel && !esATC(ocSel)) ocSel=ATC_PRE+ocSel;
+  var _tipoDoc=docTipoSel();
+  if(!esRoho(vendedor) && _tipoDoc!=='OC' && ocSel && ocTipoDe(ocSel)!==_tipoDoc) ocSel=ocPrefijo(_tipoDoc)+ocSinPre(ocSel);
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -5854,6 +6050,9 @@ function applyVendedorLite(){
   var ff=document.getElementById('f-fecha');
   if(ff){ if(EDIT_ID) ff.removeAttribute('min'); else ff.min = lite ? todayStr() : tomorrowStr(); }
   pintarCampoOc(roho);
+  /* 🏪 «Solicitado por» del formato de reposición es el vendedor: se copia solo mientras
+     lo escribe, si no queda vacío en el Excel (§4dk). */
+  var q=document.getElementById('f-rpt-quien'); if(q && v) q.value=v.value;
 }
 /* ============================================================================
    🏪 VENTA DE TIENDA — el cliente se lo lleva del local
@@ -5905,28 +6104,87 @@ function cancelarVentaTienda(){
 }
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
-function docTipoSel(){ return segVal('f-doc-tipo')==='ATC' ? 'ATC' : 'OC'; }
+function docTipoSel(){ var v=segVal('f-doc-tipo'); return (v==='ATC'||v==='RPT') ? v : 'OC'; }
 /* ATC = atención al cliente. Es un servicio, no una venta, así que lleva su propia
    numeración: cada serie corre por su cuenta y se distingue de un vistazo. */
 function pintarCampoOc(roho){
   var fo=document.getElementById('f-oc'), hint=document.getElementById('f-oc-hint');
   if(!fo) return;
-  var atc=docTipoSel()==='ATC';
+  var tipo=docTipoSel();
   var manual = roho || !!EDIT_ID || !ocAutoActivo();
   fo.readOnly=!manual;
   fo.style.background = manual ? '' : 'var(--gray-lt)';
   fo.style.color      = manual ? '' : 'var(--muted)';
   fo.placeholder = manual ? 'Ej. 1024' : 'Se asigna solo al guardar';
   var lb=document.getElementById('f-oc-lb');
-  if(lb) lb.childNodes[0].nodeValue = atc ? 'N° ATC ' : 'N° OC ';
+  if(lb) lb.childNodes[0].nodeValue = tipo==='ATC' ? 'N° ATC ' : tipo==='RPT' ? 'N° de pedido ' : 'N° OC ';
   // En ROHO el cartel lo pone el "* obligatorio para ROHO": si no, se contradicen.
   if(hint) hint.textContent = roho ? ''
-    : (manual ? (atc?'(atención al cliente)':'(orden de compra, opcional)')
-              : ('(se asigna solo — va por '+nextOcMes(null, docTipoSel())+')'));
+    : (manual ? (tipo==='ATC'?'(atención al cliente)':tipo==='RPT'?'(reposición de tienda)':'(orden de compra, opcional)')
+              : ('(se asigna solo — va por '+nextOcMes(null, tipo)+')'));
   // El selector no tiene sentido en ROHO: ahí el número lo manda el cliente.
   var wt=document.getElementById('f-doc-tipo'); if(wt) wt.style.display = roho ? 'none' : '';
 }
-function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarMotivoAtc(true); }
+function setDocTipo(){ pintarCampoOc(esRoho(document.getElementById('f-vendedor').value)); pintarDocTipo(true); }
+/* Los dos bloques que dependen del tipo de documento, y lo que los tres tipos comparten
+   (una ATC y una RPT no son ventas: ni nota ni cobro). `limpiar` = la persona cambió el
+   tipo a mano; al abrir un pedido viejo va en falso para no borrarle nada. */
+function pintarDocTipo(limpiar){
+  var tipo=docTipoSel(), sinVenta=(tipo!=='OC');
+  /* 🎧 Una ATC no es una venta (§4bt) y una RPT tampoco (§4dk): no tienen N° de nota ni
+     cobro. `fueraDeConta` ya las deja a las dos fuera de Contabilidad y del Cuadre, así
+     que lo que se anotara ahí no aparecería en ningún total. */
+  var wn=document.getElementById('wrap-nota');       if(wn) wn.style.display = sinVenta ? 'none' : '';
+  var wc=document.getElementById('wrap-cobro-todo'); if(wc) wc.style.display = sinVenta ? 'none' : '';
+  /* ⚠️ Escondidos NO alcanza: si quedaban valores de antes —alguien empieza a cargar una
+     venta y a mitad de camino la pasa a ATC o a RPT— se guardarían igual, invisibles.
+     ⚠️ Pero se limpia SOLO cuando la persona cambia el tipo a mano (`limpiar`), NUNCA al
+     abrir un pedido viejo para editarlo: ahí borraría en silencio lo que ya estaba. */
+  if(sinVenta && limpiar){
+    var n=document.getElementById('f-nota'); if(n) n.value='';
+    segSet('f-pagado','NO');
+    ['f-acuenta','f-saldo','f-cobrado','f-envio'].forEach(function(id){
+      var e=document.getElementById(id); if(e) e.value=(id==='f-acuenta'||id==='f-saldo')?'0':'';
+    });
+    updateMetodoVisibility();
+  }
+  pintarMotivoAtc(limpiar);
+  pintarRpt(limpiar);
+}
+/* 🏪 El bloque de la reposición: sucursal de destino en vez de cliente, y afuera todo lo
+   que es de una venta a una persona (celular, garantía, factura, precios). */
+function pintarRpt(limpiar){
+  var w=document.getElementById('wrap-rpt'); if(!w) return;
+  var rpt=(docTipoSel()==='RPT');
+  w.style.display = rpt ? '' : 'none';
+  var wcl=document.getElementById('wrap-cliente');  if(wcl) wcl.style.display = rpt ? 'none' : '';
+  var wg =document.getElementById('wrap-garantia'); if(wg)  wg.style.display  = rpt ? 'none' : '';
+  var wf =document.getElementById('wrap-factura');  if(wf)  wf.style.display  = rpt ? 'none' : '';
+  llenarSucursales();
+  var q=document.getElementById('f-rpt-quien');
+  if(q) q.value=(document.getElementById('f-vendedor')||{}).value||'';
+  /* Igual que en la ATC: esconder no alcanza. Si alguien empezó una venta y a mitad de
+     camino la pasó a RPT, el cliente y el celular se guardarían igual, invisibles. */
+  if(rpt && limpiar){
+    var fc=document.getElementById('f-cliente');  if(fc) fc.value='';
+    var fce=document.getElementById('f-celular'); if(fce) fce.value='';
+    ['f-garantia','f-facturar','f-nit'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  }
+  pintarProdRpt();
+}
+function llenarSucursales(){
+  var dl=document.getElementById('dl-sucursales'); if(!dl) return;
+  dl.innerHTML=SUCURSALES.map(function(s){ return '<option value="'+esc(s.n)+'"></option>'; }).join('');
+}
+/* Al elegir una sucursal conocida se completan zona, dirección y ubicación: logística no
+   tiene que buscarlas, y el pedido entra al mapa igual que cualquier entrega.
+   ⚠️ NO pisa lo que ya esté escrito: si alguien corrigió la dirección, se respeta. */
+function sucursalElegida(){
+  var v=(document.getElementById('f-rpt-suc')||{}).value||'';
+  var s=sucursalDe(v); if(!s) return;
+  var poner=function(id, val){ var e=document.getElementById(id); if(e && !e.value.trim() && val) e.value=val; };
+  poner('f-zona', s.z); poner('f-direccion', s.d); poner('f-maps', s.m);
+}
 /* 🎧 El bloque del motivo solo tiene sentido en una ATC (§4bq). */
 function pintarMotivoAtc(limpiar){
   var w=document.getElementById('wrap-atc-motivo'); if(!w) return;
@@ -5935,21 +6193,9 @@ function pintarMotivoAtc(limpiar){
   /* 🎧 Una ATC no es una venta (§4bt): no tiene N° de nota ni cobro. El dueño lo dijo
      derecho —*"nr de nota de venta no procede al llenar una atc, cobro tampoco"*— y el
      código le da la razón: `fueraDeConta` ya deja las ATC fuera de Contabilidad y del
-     Cuadre, así que lo que se anotara ahí no aparecería en ningún total. */
-  var wn=document.getElementById('wrap-nota');   if(wn) wn.style.display = atc ? 'none' : '';
-  var wc=document.getElementById('wrap-cobro-todo'); if(wc) wc.style.display = atc ? 'none' : '';
-  /* ⚠️ Escondidos NO alcanza: si quedaban valores de antes —alguien empieza a cargar una
-     venta y a mitad de camino la pasa a ATC— se guardarían igual, invisibles.
-     ⚠️ Pero se limpia SOLO cuando la persona cambia el tipo a mano (`limpiar`), NUNCA al
-     abrir una ATC vieja para editarla: ahí borraría en silencio lo que ya estaba. */
-  if(atc && limpiar){
-    var n=document.getElementById('f-nota'); if(n) n.value='';
-    segSet('f-pagado','NO');
-    ['f-acuenta','f-saldo','f-cobrado','f-envio'].forEach(function(id){
-      var e=document.getElementById(id); if(e) e.value=(id==='f-acuenta'||id==='f-saldo')?'0':'';
-    });
-    updateMetodoVisibility();
-  }
+     Cuadre, así que lo que se anotara ahí no aparecería en ningún total.
+     ⚠️ Esconder esos dos campos —y limpiarlos— ahora lo hace `pintarDocTipo`: la RPT
+     necesita exactamente lo mismo. */
   pintarAntiguedadAtc();
 }
 /* Debajo de la fecha de compra dice hace cuánto fue. No decide nada solo —la garantía la
@@ -5969,13 +6215,14 @@ function resetForm(){
   document.getElementById('f-nota').value='';
   document.getElementById('f-oc').value='';
   segSet('f-doc-tipo','OC');
+  var _frs=document.getElementById('f-rpt-suc'); if(_frs) _frs.value='';
   document.getElementById('f-atc-motivo').value='';
   document.getElementById('f-atc-detalle').value='';
   document.getElementById('f-atc-compra').value='';
   document.getElementById('f-atc-rnota').value='';
   segSet('f-atc-comodin','NO');
   pintarPiezasAtc(); ponerPiezasAtc({});
-  pintarMotivoAtc();
+  pintarDocTipo();
   document.getElementById('f-vendedor').value=getVendedorMem(); applyVendedorLite();
   document.getElementById('f-cliente').value='';
   document.getElementById('f-productos').innerHTML='';
@@ -6015,7 +6262,9 @@ function editPedido(id){
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
-  segSet('f-doc-tipo', esATC(rec.oc)?'ATC':'OC');
+  segSet('f-doc-tipo', ocTipoDe(rec.oc));
+  /* 🏪 En una RPT el destino vive en `cliente` (la sucursal): vuelve a su propio campo. */
+  var _ers=document.getElementById('f-rpt-suc'); if(_ers) _ers.value=esRPT(rec.oc)?(rec.cliente||''):'';
   /* 🎧 El motivo y el detalle vuelven al formulario al editar; la DEVOLUCIÓN no se toca
      acá —es de logística, y se conserva sola por `mergeAtcDatos` (§4bq). */
   document.getElementById('f-atc-motivo').value=atcMotivo(rec);
@@ -6024,11 +6273,11 @@ function editPedido(id){
   document.getElementById('f-atc-rnota').value=atcRecibidoNota(rec);
   segSet('f-atc-comodin', atcComodin(rec)?'SI':'NO');
   pintarPiezasAtc(); ponerPiezasAtc(atcDe(rec)||{});
-  pintarMotivoAtc();
+  pintarDocTipo();
   document.getElementById('f-vendedor').value=rec.vendedor||''; applyVendedorLite();
   document.getElementById('f-cliente').value=rec.cliente||'';
   var box=document.getElementById('f-productos'); box.innerHTML='';
-  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio); } } else addProdRow();
+  if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio,pr.rtipo,pr.robs); } } else addProdRow();
   document.getElementById('f-celular').value=rec.celular||'';
   segSet('f-turno',rec.turno||'AM');
   document.getElementById('f-zona').value=rec.zona||'';
@@ -7297,6 +7546,7 @@ function renderAdmin(){
     if(p.entregado) cls=(cls?cls+' ':'')+'row-entregado';
     // La ATC se suma al final: no reemplaza el color de stock, le pone la barra fucsia.
     if(esATC(p.oc)) cls=(cls?cls+' ':'')+'row-atc';
+    else if(esRPT(p.oc)) cls=(cls?cls+' ':'')+'row-rpt';
     return '<tr class="'+cls+'" onclick="showPedidoModal(\''+p.id+'\')" style="cursor:pointer">'+
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
         '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
@@ -7306,7 +7556,7 @@ function renderAdmin(){
         '<button class="rowbtn" onclick="EDIT_DESDE=\'admin\';editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
       '</td>'+
-      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
+      '<td><b style="color:var(--teal-dk)">'+(dn[p.id]||'—')+'</b></td><td style="white-space:nowrap">'+(esVentaTienda(p)?badgeTienda(p):esc(fmtFecha(p.fecha)))+'</td><td>'+(esATC(p.oc)?('<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 '+esc(p.oc)+'</span>'):esRPT(p.oc)?('<span class="badge b-rpt" title="Reposición de tienda — va a una sucursal, no a un cliente">🏪 '+esc(p.oc)+'</span>'):esc(p.oc||'—'))+'</td><td>'+esc(p.vendedor||'')+'</td>'+
       '<td><b>'+esc(p.cliente||'')+'</b></td><td class="prod-cell">'+esc(prodText(p.productos))+'</td>'+
       '<td style="white-space:nowrap">'+estadoCell+'</td>'+
       '<td>'+esc(p.celular||'—')+'</td><td>'+turno+'</td><td>'+esc(p.zona||'—')+'</td>'+
@@ -7699,7 +7949,7 @@ function cargaBloquesHtml(list, fecha){
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger IM</span>'):'')+'</label>'; }).join('')+'</div>';
     html+='<div class="lb" style="margin:8px 0 4px">📍 Paradas (orden de entrega)</div>';
     o.stops.slice().sort(function(a,b){ var ta=normTurno(a.turno),tb=normTurno(b.turno); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }).forEach(function(p,i){
-      html+='<div class="carga-stop '+atcCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+atcChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+(esModificado(p)?' <span style="color:var(--red);font-weight:800">⚠️ MODIFICADO</span>':'')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
+      html+='<div class="carga-stop '+docCls(p)+'" onclick="showCargaModal(\''+p.id+'\')" title="Tocá para ver la ficha del pedido, marcar qué hay y reprogramar"><b>'+(i+1)+') '+esc(p.cliente||'—')+'</b> '+docChip(p)+(p.turno?(' <span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.72rem">'+esc(normTurno(p.turno))+'</span>'):'')+(p.verificado?' <span style="color:#0369a1;font-weight:700">✅ listo</span>':' <span style="color:#c47f00;font-weight:700">⚠️ sin verificar</span>')+(esModificado(p)?' <span style="color:var(--red);font-weight:800">⚠️ MODIFICADO</span>':'')+' — '+prodTextCarga(p.productos)+(p.zona?(' <span style="color:#888">· '+esc(p.zona)+'</span>'):'')+'</div>';
     });
     html+='</div>';
   });
@@ -8396,7 +8646,7 @@ function completarBorrador(id){
      y la vendedora lo corrige si ya cobró algo. */
   var monto=Number(rec.saldo)||0;
   if(monto){ document.getElementById('f-saldo').value=String(monto); }
-  pintarMotivoAtc(); renderCupoForm(); refreshDatalists();
+  pintarDocTipo(); renderCupoForm(); refreshDatalists();
   var ff=document.getElementById('f-fecha'); if(ff) try{ ff.focus(); }catch(e){}
   toast(_lleno.length
     ? ('Vino de Kommo. Le puse '+_lleno.join(', ')+' de una entrega anterior — revisalas. Falta la fecha y el turno.')
@@ -8594,12 +8844,12 @@ function renderChofer(){
       return t;
     }).join('<br>');
     var deuda=Number(p.saldo)||0;
-    return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+atcCls(p)+'">'+
+    return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+docCls(p)+'">'+
       '<div class="cho-top">'+
         '<div class="cho-n" style="'+(p.entregado?'background:var(--gray)':'')+'">'+(i+1)+'</div>'+
         '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
           '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+(p.turno?(' · '+esc(normTurno(p.turno))):'')+(p.zona?(' · '+esc(p.zona)):'')+'</div></div>'+
-        atcChip(p)+
+        docChip(p)+
         (todos?('<span class="badge b-gray">🚚 '+esc(p.chofer||'sin chofer')+'</span>'):'')+
         (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ Pendiente</span>')+
       '</div>'+
@@ -8715,11 +8965,11 @@ function entregaCardHtml(p, dn, pendiente){
        : sinMontoAnotado(p) ? badgeSinMonto()
                   : '<span class="badge b-gray">Sin saldo</span>');
   var fotos=fotosDe(p);
-  return '<div class="ent-card '+atcCls(p)+'">'+
+  return '<div class="ent-card '+docCls(p)+'">'+
     '<div class="ent-top">'+
       (dn?('<span class="ent-n">#'+dn+'</span>'):'')+
       '<b style="cursor:pointer;text-decoration:underline;text-decoration-style:dotted" title="Ver la ficha completa" onclick="showPedidoModal(\''+p.id+'\')">'+esc(p.cliente||'—')+'</b>'+
-      (p.oc?('<span class="badge '+(esATC(p.oc)?'b-atc">🎧 ':'b-gray">')+esc(ocEtiq(p.oc))+'</span>'):'')+
+      (p.oc?('<span class="badge '+(esATC(p.oc)?'b-atc">🎧 ':esRPT(p.oc)?'b-rpt">🏪 ':'b-gray">')+esc(ocEtiq(p.oc))+'</span>'):'')+
       (p.nota?('<span class="badge b-gray">Nota '+esc(p.nota)+'</span>'):'')+
       '<span style="color:var(--muted);font-size:.8rem">'+esc(normTurno(p.turno))+(p.zona?(' · '+esc(p.zona)):'')+(p.vendedor?(' · '+esc(p.vendedor)):'')+'</span>'+
       '<span style="margin-left:auto">'+cobTxt+'</span>'+
@@ -9131,13 +9381,13 @@ function misCardHtml(p, n, todos){
     : (p.pagado ? ('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>')
       : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
                     : '<span class="badge b-gray">Sin saldo</span>'));
-  return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+atcCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
+  return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
-      atcChip(p)+
+      docChip(p)+
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
@@ -9275,7 +9525,7 @@ function showMisModal(id){
       : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionMis(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>'+esc(p.cliente||'Pedido')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+
+    '<div class="modal-b">'+alertas+body+fleteSec+ubicSec+botonesRpt(p)+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm" style="background:var(--teal);color:#fff;font-weight:700" onclick="editarDesdeMis(\''+p.id+'\')">✏️ Editar el pedido</button>'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar para WhatsApp</button>'+
@@ -10391,7 +10641,30 @@ function plataLineaWa(p){
   if(falta<=0.01) return '💰 PAGADO'+(met?('  —  '+met):'');
   return '💰 POR COBRAR: '+fmtBs(falta)+(met?('  ·  ya pagó '+met):'');
 }
+/* 🏪 El mensaje de una reposición no habla de cliente, ni de cobro, ni de garantía: dice a
+   qué tienda va, qué se pide y de qué tipo es cada renglón (§4dk). */
+function rptText(p){
+  var prod=(p.productos||[]).map(function(x){
+    var s='   • '+x.desc;
+    if(x.medida) s+=' '+x.medida;
+    if(x.codigo) s+=' (cód '+x.codigo+')';
+    s+=' × '+x.cant+'  ['+rptTipo(x)+']';
+    if(rptObs(x)) s+='\n      ↳ '+rptObs(x);
+    return s;
+  }).join('\n');
+  return ['🏪 *REPOSICIÓN DE TIENDA'+(p.oc?(' · '+ocEtiq(p.oc)):'')+'*',
+    '🏬 Sucursal: '+(p.cliente||''),
+    '📅 Fecha requerida: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+normTurno(p.turno)):''),
+    '🧑‍💼 Solicitado por: '+(p.vendedor||''),
+    '📦 Productos:', prod,
+    p.zona||p.direccion ? ('📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||'')) : '',
+    p.maps?('🗺️ '+p.maps):'',
+    p.observaciones?('📝 '+p.observaciones):'',
+    '⏳ '+RPT_AVISO
+  ].filter(Boolean).join('\n');
+}
 function pedidoText(p){
+  if(esRPT(p&&p.oc)) return rptText(p);
   var prod=(p.productos||[]).map(function(x){
     var s='   • '+x.desc;
     if(x.medida) s+=' '+x.medida;
@@ -11132,13 +11405,26 @@ function stockEsperado(q, T){
 
 /* ---- La foto completa, un renglón por producto ---- */
 /* Los pedidos de Eduardo (el dueño) no son rotación: son pedidos puntuales suyos (§4de).
-   Se cubren si están vendidos y sin entregar, pero no arman ni ritmo ni reserva. */
+   Se cubren si están vendidos y sin entregar, pero no arman ni ritmo ni reserva.
+   🏪 Las REPOSICIONES DE TIENDA van por el mismo camino (§4dk), y por una razón distinta:
+   el colchón que va a una sucursal NO se vendió, solo cambió de lugar — sigue siendo de la
+   empresa. Si contara como venta, se contaría DOS VECES: ahora y cuando la tienda lo venda
+   de verdad, y el panel pediría fabricar el doble. Lo pendiente de entregar sí se cubre:
+   ese camión sale igual. */
 function stockPedidoUnico(p){
+  if(esRPT(p&&p.oc)) return true;
   return /(^|\s)EDUARDO(\s|$)/i.test(normNombre((p&&p.vendedor)||''));
 }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
    «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
 function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendidosUnicos>0; }
+/* …y de QUIÉN es ese pedido único: de Eduardo, de una reposición de tienda, o de los dos
+   (§4dk). `vendidosUnicos` junta a ambos porque para la reserva dan lo mismo —ninguno arma
+   ritmo—, pero el cartel tiene que decir la verdad de dónde salieron esas unidades. */
+function stockUnicoEtq(o){
+  var rpt=(o&&o.vendidosRpt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt;
+  return (edu>0&&rpt>0) ? 'Eduardo y reposición' : (rpt>0 ? 'Reposición de tienda' : 'Eduardo');
+}
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
   if(!isFinite(n)) return 0;
@@ -11152,7 +11438,7 @@ function stockData(){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
@@ -11180,7 +11466,7 @@ function stockData(){
       // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
       if(fs>=desde && fs<=hoy){
         o.vendidos+=c;
-        if(stockPedidoUnico(p)) o.vendidosUnicos+=c;
+        if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
 
@@ -11528,7 +11814,7 @@ function abrirStockPedidos(k){
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
-    '; '+stockUnid(o.vendidosUnicos||0)+' de Eduardo, excluidas de la reserva. Sus pedidos pendientes sí se cubren.</p>';
+    '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
   [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
@@ -11607,7 +11893,7 @@ function renderStock(){
     if(o.aviso==='traer')   return '<button class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd;cursor:pointer;font:inherit;font-size:.68rem;font-weight:700" data-k="'+esc(o.k)+'" onclick="abrirStockRecogida(this.getAttribute(\'data-k\'))" title="Anotar que se va a buscar a Moreno: deja de avisar y queda pendiente hasta que llegue.">🚚 Programar recogida</button>';
     if(o.aviso==='pedido')  return '<span class="badge" style="background:#e0f2fe;color:#075985;border:1px solid #bae6fd">🚚 Ya pedido</span>';
     if(o.aviso==='agotado') return '<span class="badge" style="background:#fee2e2;color:#7f1d1d;border:1px solid #fecaca" title="Discontinuado: la fábrica ya no lo hace. Se vende lo que queda y nada más.">🛑 Se acaba y no se fabrica más</span>';
-    if(o.aviso==='unico')   return '<span class="badge" style="background:#f5f5f4;color:#7c4b00;border:1px solid #e7e5e4" title="'+(stockSoloEduardo(o)?'Lo vendió Eduardo: es un pedido puntual suyo, no una venta que se repita. Se cubre lo que vendió y nada más.':'Salió en menos de 3 entregas: no hay una venta repetida de la que deducir cuánto reponer. No se pide por las dudas.')+'">📦 Pedido único'+(stockSoloEduardo(o)?' · Eduardo':'')+'</span>';
+    if(o.aviso==='unico')   return '<span class="badge" style="background:#f5f5f4;color:#7c4b00;border:1px solid #e7e5e4" title="'+(stockSoloEduardo(o)?'No es una venta que se repita: '+stockUnicoEtq(o)+'. Se cubre lo que está comprometido y nada más.':'Salió en menos de 3 entregas: no hay una venta repetida de la que deducir cuánto reponer. No se pide por las dudas.')+'">📦 Pedido único'+(stockSoloEduardo(o)?(' · '+stockUnicoEtq(o)):'')+'</span>';
     if(o.aviso==='sobra')   return '<span class="badge" style="background:#ede9fe;color:#5b21b6;border:1px solid #ddd6fe">💤 Sobra</span>';
     if(o.aviso==='sincontar') return '<span class="badge" style="background:var(--gray-lt);color:var(--muted)">sin contar</span>';
     return '<span class="badge b-green">✓ alcanza</span>';
@@ -11624,7 +11910,7 @@ function renderStock(){
     /* Solo la CONSECUENCIA (§4dc): el dato («15 en 15 días · 1 entrega») ya está dos líneas
        más arriba, en la misma fila. Y de quién es, si es de Eduardo (§4dj). */
     if(o.aviso==='unico') return chico(stockSoloEduardo(o)
-      ? 'Lo vendió Eduardo: se cubre lo que él ya vendió, sin reserva por las dudas.'
+      ? ((o.vendidosRpt>=o.vendidosUnicos ? 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.' : 'Lo vendió Eduardo:')+' se cubre lo comprometido, sin reserva por las dudas.')
       : 'Es un pedido puntual, no una venta que se repita: no se repone por las dudas. Si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
     if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(o.deposito)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
@@ -11647,9 +11933,9 @@ function renderStock(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
-          (o.vendidosUnicos?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+' · Eduardo: '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')+
+          (o.vendidosUnicos?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
-          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?'Eduardo: pedido único':'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
+          ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?(stockUnicoEtq(o)+': pedido único'):'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
         '<td>'+(o.deposito==null?'<span style="color:var(--muted)">sin contar</span>'
                 : o.deposito<0 ? ('<b style="color:var(--red)">0</b><br><span style="color:var(--red);font-size:.9em">se entregaron '+stockUnid(Math.abs(o.deposito))+' más de lo contado — volvé a contar</span>')
@@ -11777,7 +12063,7 @@ function copiarStock(){
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
          (o.rota ? (', se venden '+stockNum(o.porDia)+' por día')
-                 : (stockSoloEduardo(o) ? ', Eduardo: pedido único'
+                 : (stockSoloEduardo(o) ? (', '+stockUnicoEtq(o)+': pedido único')
                     : o.vendidosRotacion>0 ? (', pedido puntual — '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s'))
                                            : ', es para un pedido puntual'))+
          (o.dias!=null?(', se corta '+stockEnDias(o.dias)+' ('+fmtFechaCorta(o.corte)+')'):'')+
@@ -12819,7 +13105,14 @@ function xlsxHoja(archivos){
   comp=comp.map(xmlTextos);
   return (hoja.match(/<row[^>]*\/>|<row[^>]*>[\s\S]*?<\/row>/g)||[]).map(function(r){
     var o={};
-    (r.match(/<c\b[^>]*(?:\/>|>[\s\S]*?<\/c>)/g)||[]).forEach(function(c){
+    /* ⚠️ LA CELDA VACÍA QUE SE COMÍA A LA SIGUIENTE (§4dk).
+       Esto era `<c\b[^>]*(?:\/>|>[\s\S]*?<\/c>)`, y con una celda vacía CON ESTILO
+       —`<c r="B12" s="22"/>`— el `[^>]*` glotón se pasaba de largo la barra, tomaba el `>`
+       por la otra alternativa y se tragaba la celda de al lado: el valor de C aparecía en
+       B y la columna C quedaba vacía. Un renglón entero corrido, en silencio.
+       Con las dos alternativas separadas no hay ambigüedad: `[^>]*` no puede cruzar un `>`,
+       así que la primera solo puede casar una celda que se cierra sola. */
+    (r.match(/<c\b[^>]*\/>|<c\b[^>]*>[\s\S]*?<\/c>/g)||[]).forEach(function(c){
       var ref=(c.match(/\sr=["']([A-Z]+)\d+["']/)||[])[1]; if(!ref) return;
       var tipo=(c.match(/\st=["']([^"']+)["']/)||[])[1]||'';
       if(tipo==='inlineStr'){ o[ref]=xmlTextos(c); return; }
@@ -13303,6 +13596,7 @@ function showWhatsappModal(rec, volverA, reenvio){
       '<p style="font-size:.8rem;color:var(--muted);margin-bottom:10px">Copiá'+(reenvio?' la venta':' el pedido')+' y pegalo en WhatsApp, o abrí WhatsApp directo:</p>'+
       '<textarea class="wa-text" id="wa-text" readonly>'+esc(text)+'</textarea>'+
       '<div class="modal-actions">'+
+        (esRPT(rec&&rec.oc)?('<button class="btn btn-sm" style="background:var(--rpt);color:#fff;font-weight:700" onclick="bajarRptExcel(\''+String(rec.id).replace(/'/g,'')+'\')">⬇️ Excel del formato</button>'):'')+
         '<button class="btn btn-primary btn-sm" style="flex:1;min-width:120px" onclick="copyText(document.getElementById(\'wa-text\').value)">📋 Copiar</button>'+
         '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(document.getElementById(\'wa-text\').value),\'_blank\')">📲 Abrir WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="'+salir+'">'+(reenvio?'Volver a la venta':'Cerrar')+'</button>'+
@@ -13436,14 +13730,14 @@ function showPedidoModal(id){
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
-    row(esATC(p.oc)?'N° ATC':'N° OC', esc(p.oc))+row('Vendedor', esc(p.vendedor))+row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
+    row(esATC(p.oc)?'N° ATC':esRPT(p.oc)?'N° de pedido':'N° OC', esc(ocEtiq(p.oc)))+row(esRPT(p.oc)?'Solicitado por':'Vendedor', esc(p.vendedor))+row(esRPT(p.oc)?'Sucursal de destino':'Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+row('Productos'+PROD_AYUDA, prod+prodResumen(p))+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano acá abajo">a mano: '+esc(p.estado)+'</span>'):''))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
-  var mark = !p.pagado ? (
+  var mark = (!p.pagado && !esRPT(p.oc)) ? (
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div class="lb" style="margin-bottom:8px">💵 Marcar como pagado — ¿con qué pagó?</div>'+
       '<div class="modal-actions">'+
@@ -13452,6 +13746,7 @@ function showPedidoModal(id){
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
       '</div>'+
     '</div>') : '';
+  var rptSec = botonesRpt(p);
   var stockSec =
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div class="lb" style="margin-bottom:8px">📦 Estado de stock</div>'+
@@ -13482,7 +13777,7 @@ function showPedidoModal(id){
         : '<button class="btn btn-sm" style="background:var(--amber);color:#fff;width:100%;font-weight:700" onclick="editarUbicacionAdmin(\''+p.id+'\')">📍 Agregar enlace de ubicación</button>')+
     '</div>';
   var html='<div class="modal-h"><h3>Pedido'+(p.oc?(' N° '+esc(p.oc)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
-    '<div class="modal-b">'+avisoModifHtml(p)+body+mark+stockSec+despachoSec+ubicSec+
+    '<div class="modal-b">'+avisoModifHtml(p)+body+rptSec+mark+stockSec+despachoSec+ubicSec+
       '<div class="modal-actions" style="margin-top:16px">'+
         '<button class="btn btn-sm wa-btn" onclick="copyPedido(\''+p.id+'\')">📋 Copiar WhatsApp</button>'+
         '<button class="btn btn-ghost btn-sm" onclick="EDIT_DESDE=\'admin\';closeModal();editPedido(\''+p.id+'\')">✏️ Editar</button>'+
@@ -13864,6 +14159,120 @@ function exportExcel(scope){
   else { var mode=segVal('adm-mode'); tag=mode==='dia'?(document.getElementById('adm-dia').value||'dia'):mode==='mes'?(document.getElementById('adm-mes').value||'mes'):'todos'; }
   downloadBlob(bytes,'pedidos-'+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel de '+(info?info.lbl:'la vista actual')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
+}
+/* ============================================================================
+   🏪 EL EXCEL DE LA REPOSICIÓN DE TIENDA (§4dk)
+   Reproduce el «FORMATO DE PEDIDO / REPOSICIÓN DE TIENDA» que trajo el dueño —el mismo
+   que hoy llenan a mano y mandan por correo a logística—: logo, cabecera, la tabla de
+   renglones con su lista Reposición/Adicional, el resumen, el aviso de los 7 días hábiles
+   y a qué correos va. Sale del pedido que ya está cargado en el panel, así que no hay que
+   volver a tipear nada ni se puede pedir algo que el panel no sepa.
+   ⚠️ El formato del dueño calcula el código con un XLOOKUP contra una hoja de catálogo.
+   Acá NO hace falta: el panel ya tiene el código de cada producto, así que se escribe el
+   valor y el archivo abre igual en cualquier lado (celular incluido), sin fórmulas rotas.
+   ========================================================================== */
+var RPT_FILAS_MIN=20;   // los renglones que trae el formato en papel; con más productos, crece
+function rptFechaSolicitud(p){ return (p&&p.ts) ? isoLocal(new Date(p.ts)) : todayStr(); }
+function rptNombreProd(x){
+  return String((x&&x.desc)||'').trim()+(((x&&x.medida)||'').trim()?(' '+String(x.medida).trim()):'');
+}
+function rptHoja(p){
+  var items=(p.productos||[]).filter(function(x){ return x && String(x.desc||'').trim(); });
+  var nFilas=Math.max(RPT_FILAS_MIN, items.length), C=8;
+  var M=[], merges=[], rowH={};
+  var nueva=function(){ var r=[]; for(var i=0;i<C;i++) r.push(''); M.push(r); return M.length-1; };
+  var set=function(r,c,v,st,num){ var cv={v:v,s:st}; if(num) cv.t='n'; M[r][c]=cv; };
+  var une=function(r1,c1,r2,c2){ merges.push(colLetter(c1)+(r1+1)+':'+colLetter(c2)+(r2+1)); };
+
+  var rLogo=nueva(); nueva(); nueva(); var rLogo4=nueva();
+  for(var i=rLogo;i<=rLogo4;i++) rowH[i]=24;
+  une(rLogo,0,rLogo4,C-1);
+
+  var rT=nueva(); set(rT,0,'FORMATO DE PEDIDO / REPOSICIÓN DE TIENDA',XS_TIT); rowH[rT]=30; une(rT,0,rT,C-1);
+  nueva();
+
+  var rL=nueva(); rowH[rL]=20;
+  ['Sucursal de destino','Fecha de solicitud','Solicitado por','N.º de pedido'].forEach(function(t,i){ set(rL,i*2,t,XS_LB); une(rL,i*2,rL,i*2+1); });
+  var rV=nueva(); rowH[rV]=20;
+  [p.cliente||'', fmtFecha(rptFechaSolicitud(p)), p.vendedor||'', ocEtiq(p.oc)||''].forEach(function(t,i){ set(rV,i*2,t,XS_CEN); une(rV,i*2,rV,i*2+1); });
+
+  var rO=nueva(); rowH[rO]=24;
+  set(rO,0,'Observación general:',XS_LB); une(rO,0,rO,3);
+  set(rO,4,p.observaciones||'',XS_VAL);   une(rO,4,rO,C-1);
+  nueva();
+
+  var rH=nueva(); rowH[rH]=28;
+  ['N°','Código del producto','Nombre del producto','Cantidad','Tipo','Observaciones','Fecha requerida']
+    .forEach(function(t,c){ set(rH,c,t,XS_TH); });
+
+  var unidades=0, r1=null, rN=null;
+  for(i=0;i<nFilas;i++){
+    var x=items[i], r=nueva(); if(r1===null) r1=r; rN=r;
+    set(r,0,i+1,XS_CEN,true);
+    set(r,1, x?(x.codigo||''):'', XS_CEN);
+    set(r,2, x?rptNombreProd(x):'', XS_VAL);
+    if(x && Number(x.cant)>0){ set(r,3,Number(x.cant),XS_CEN,true); unidades+=Number(x.cant); }
+    else set(r,3,'',XS_CEN);
+    set(r,4, x?rptTipo(x):'', XS_CEN);
+    set(r,5, x?rptObs(x):'', XS_VAL);
+    set(r,6, x?fmtFecha(p.fecha):'', XS_CEN);
+  }
+
+  nueva();
+  var rR=nueva(); rowH[rR]=22;
+  set(rR,0,'RESUMEN DEL PEDIDO',XS_BAR); une(rR,0,rR,2);
+  set(rR,3,'Ítems cargados',XS_LB);
+  set(rR,4,items.length,XS_TOT,true);
+  set(rR,5,'Total unidades',XS_LB); une(rR,5,rR,6);
+  set(rR,7,unidades,XS_TOT,true);
+
+  nueva();
+  var rI=nueva(); rowH[rI]=20; set(rI,0,'IMPORTANTE',XS_BAR); une(rI,0,rI,C-1);
+  var rA=nueva(); set(rA,0,RPT_AVISO,XS_NOTA); nueva(); var rA3=nueva(); une(rA,0,rA3,C-1);
+
+  nueva();
+  var rC=nueva(); rowH[rC]=20; set(rC,0,'ENVÍO DEL PEDIDO POR CORREO',XS_BAR); une(rC,0,rC,C-1);
+  var rD=nueva(); rowH[rD]=20;
+  set(rD,0,'DIRIGIDO A',XS_LB); une(rD,0,rD,3);
+  set(rD,4,'CON COPIA A',XS_LB); une(rD,4,rD,C-1);
+  var nMail=Math.max(RPT_MAIL_PARA.length, RPT_MAIL_CC.length);
+  for(i=0;i<nMail;i++){
+    var rM=nueva();
+    set(rM,0,RPT_MAIL_PARA[i]||'',XS_MAIL); une(rM,0,rM,3);
+    set(rM,4,RPT_MAIL_CC[i]||'',XS_MAIL);   une(rM,4,rM,C-1);
+  }
+  nueva();
+  var rP=nueva(); set(rP,0,'MultiESPUMAS Viscarra S.R.L. • Formato interno de reposición de tienda',XS_PIE); une(rP,0,rP,C-1);
+
+  return { name:'Formato de Pedido', matrix:M, merges:merges, rowH:rowH,
+    cols:[6,21,28,14.25,15,28,16,15],
+    dv:[{ sqref:'E'+(r1+1)+':E'+(rN+1), list:'"'+RPT_TIPOS.join(',')+'"' }],
+    /* El logo, proporcional al PNG (742×413): estirarlo se nota y queda feo en el correo. */
+    img:{ col:0, row:0, dx:38100, dy:38100, cx:1962224, cy:1092200, data:bytesDeB64(LOGO_B64) } };
+}
+function nombreArchivoRpt(p){
+  var id=(ocSinPre(p&&p.oc)||'').replace(/[^\w-]+/g,'') || 'sin-numero';
+  /* Sin tildes ni ñ: el archivo viaja por correo y hay clientes de mail que rompen el
+     nombre si trae acentos. */
+  var suc=String((p&&p.cliente)||'tienda');
+  suc=(suc.normalize?suc.normalize('NFD').replace(/[̀-ͯ]/g,''):suc).replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'') || 'tienda';
+  return 'RPT-'+id+'-'+suc+'.xlsx';
+}
+function bajarRptExcel(id){
+  var p=findById(id); if(!p) return;
+  if(!esRPT(p.oc)){ toast('Ese pedido no es una reposición de tienda.','err'); return; }
+  downloadBlob(buildXlsx([rptHoja(p)]), nombreArchivoRpt(p), 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('Excel del formato descargado ✓ — mandalo a '+RPT_MAIL_PARA[0],'ok');
+}
+/* Los dos botones que pidió el dueño, para pegarlos en cualquier ficha. */
+function botonesRpt(p){
+  if(!esRPT(p&&p.oc)) return '';
+  var id=String(p.id).replace(/'/g,'');
+  return '<div class="modal-actions" style="margin-top:14px">'+
+    '<button class="btn btn-sm" style="background:var(--rpt);color:#fff;font-weight:700" onclick="bajarRptExcel(\''+id+'\')">⬇️ Excel del formato</button>'+
+    '<button class="btn btn-sm wa-btn" onclick="window.open(whatsappUrl(pedidoText(findById(\''+id+'\'))),\'_blank\')">📲 WhatsApp</button>'+
+    '<button class="btn btn-ghost btn-sm" onclick="copyPedido(\''+id+'\')">📋 Copiar</button>'+
+    '</div>';
 }
 function downloadBlob(bytes,filename,mime){
   var blob=new Blob([bytes],{type:mime||'application/octet-stream'});
