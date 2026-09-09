@@ -129,9 +129,11 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   `#roho-geo`). Reglas: no pisa un `maps` existente; dirección de ≥8 letras (`ubicables`);
   misma dirección = una consulta; se guarda DE A UNO (`guardarEnFila`); tope 80 por toque en
   el mapa, los más nuevos primero. `tests/test_ubicar.js`.
-  ⚠️ `tests/test_roho.js` corre contra un Excel real con fechas reales (última entrega
-  09/09/2026): el reloj de la página está clavado en el 08/09 (`page.clock.setFixedTime`).
-  Si se cambia ese Excel, mover esa fecha.
+  ⚠️ `tests/test_roho.js` y `tests/test_existencias.js` corren contra Excel con FECHAS
+  FIJAS (última entrega de ROHO 09/09/2026; reporte de existencias del 07/09/2026) mezcladas
+  con pedidos de fechas relativas: se pudren solos con el calendario. Los dos tienen el reloj
+  de la página clavado en el 08/09 (`page.clock.setFixedTime`). Si se cambia un Excel, mover
+  esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

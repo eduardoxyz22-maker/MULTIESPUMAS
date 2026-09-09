@@ -33,7 +33,13 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
-  const page = await browser.newPage({ viewport:{width:1500,height:1000} });
+  const page = await browser.newPage({ viewport:{width:1500,height:1000}, timezoneId:'America/La_Paz' });
+  /* ⚠️ EL REPORTE DE EXISTENCIAS TIENE FECHA FIJA (07/09/2026) Y LOS PEDIDOS FECHAS RELATIVAS
+     (`atras(n)`): cada día que pasa, una entrega más cae DESPUÉS del corte y el depósito baja
+     solo (4 → 3 el 09/09, sin que nadie tocara nada — §4dh). El reloj de la página queda
+     clavado en el 08/09 a las 10:00 de Bolivia; los timers siguen andando. Si se cambia el
+     Excel de existencias por uno con otra fecha, mover esta. */
+  await page.clock.setFixedTime(new Date('2026-09-08T14:00:00Z'));
   const errores=[]; page.on('pageerror',e=>errores.push(e.message));
   page.on('dialog',d=>d.accept());
   await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });

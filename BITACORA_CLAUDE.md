@@ -5474,6 +5474,14 @@ Corre contra el Excel real de ROHO (§4ci), cuya última entrega es el **09/09/2
 clavado en el 08/09 a las 10:00 de Bolivia con `page.clock.setFixedTime` (los timers siguen
 andando; solo `new Date()` devuelve ese día). Si se cambia el Excel, mover esa fecha.
 
+Y `test_existencias.js`, lo mismo con otra cara: el reporte de existencias del fixture tiene
+fecha fija (07/09/2026) y los pedidos fechas relativas (`atras(n)`), así que cada día que pasa
+una entrega más cae DESPUÉS del corte y el depósito baja solo — 4 el 08/09, 3 el 09/09, cinco
+checks rojos. Lo comprobé corriéndolo contra el `pedidos.html` publicado la noche anterior:
+fallaba igual, no era el cambio del mapa. Mismo remedio: reloj clavado en el 08/09. Regla
+para el próximo test que mezcle una fecha fija con `atras(n)`: clavar el reloj desde el
+primer día, no cuando amanezca rojo.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
