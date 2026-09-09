@@ -195,11 +195,17 @@ correo + el mensaje de **WhatsApp**.
   solo a la lista de carga, la ficha del chofer y el mapa. `SUCURSALES` (§4dn) son **siete**:
   Tiendas Roho, Mia Plaza, Buenos Aires, Central, Mutualista, Charcas, Carmelo — el campo es
   un `input` con lista, así que se puede escribir otra. Autocompleta zona/dirección/maps sin
-  pisar lo escrito. Las **ubicaciones** son las que dio el dueño (pin exacto, `?q=lat,lng` sin
-  `&aprox=1`); Tiendas Roho va sin ubicación porque no es tienda propia. ⚠️ Las **zonas van
-  vacías**: las que había («Norte», «Centro») las inventé yo y `sucursalElegida()` las
-  escribía solas, desviando la ruta del chofer sin que nadie lo notara. **Falta que el dueño
-  dé la zona real de cada tienda** — la palabra exacta que usa logística.
+  pisar lo escrito. **Ubicaciones y zonas las dictó el dueño** (§4dn) — no se tocan sin
+  preguntarle: `Central→Central · Mia Plaza→Mia Plaza · Buenos Aires→Centro ·
+  Mutualista→Mutualista · Charcas→Centro · Carmelo→Feria`, y Buenos Aires y Charcas
+  comparten «Centro» **a propósito**. Las ubicaciones son el pin exacto (`?q=lat,lng`, sin
+  el `&aprox=1` de §4dh); Tiendas Roho va sin ubicación ni zona porque no es tienda propia.
+  ⚠️ Antes había ahí zonas que **inventé yo** («Norte», «Centro») y `sucursalElegida()` las
+  escribía solas, desviando la ruta del chofer sin que nadie lo notara.
+- ⚠️ **Las zonas se agrupan sin mayúsculas ni acentos** (§4dn, `zonasDeLista`/`zonaCanonica`):
+  antes «Centro», «centro» y «CENTRO» eran tres zonas — tres sugerencias en `dl-zonas` y los
+  pedidos repartidos en tres barras de «Concentración por zona». Mismo bug que el de «Carola
+  Chavez»/«Carola Chávez», en otro campo. Se muestra la escritura que más se repite.
 - **NO es una venta** → `fueraDeConta` la deja afuera de Contabilidad y del Cuadre.
   **SÍ sale del depósito** → `stockCuenta` la deja pasar y lo pendiente se cubre.
   ⚠️ **Pero NO es rotación**: va por `stockPedidoUnico` (como los pedidos de Eduardo, §4dj)

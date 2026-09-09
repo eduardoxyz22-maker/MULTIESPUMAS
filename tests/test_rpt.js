@@ -170,18 +170,45 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     showView('form'); resetForm(); segSet('f-doc-tipo','RPT'); setDocTipo();
     document.getElementById('f-rpt-suc').value='Mia Plaza'; sucursalElegida();
     var vacio=(document.getElementById('f-zona')||{}).value;
+    document.getElementById('f-zona').value='';
     // y cuando una tienda SÍ tenga datos, se completan… sin pisar lo ya escrito
+    var _z0=SUCURSALES[1].z, _d0=SUCURSALES[1].d;   // se restauran al final: son datos reales
     SUCURSALES[1].z='ZONA REAL'; SUCURSALES[1].d='Calle Falsa 123';
     document.getElementById('f-zona').value=''; document.getElementById('f-direccion').value='ya escrito';
     sucursalElegida();
     var r={ vacio:vacio, zona:document.getElementById('f-zona').value,
             dir:document.getElementById('f-direccion').value };
-    SUCURSALES[1].z=''; SUCURSALES[1].d='';
+    SUCURSALES[1].z=_z0; SUCURSALES[1].d=_d0;
     return r;
   });
-  chk('⚠️ elegir una tienda NO inventa una zona', suc.vacio==='', '«'+suc.vacio+'»');
-  chk('…y cuando la tienda tenga su zona de verdad, se completa sola', suc.zona==='ZONA REAL', suc.zona);
+  chk('la tienda pone su zona sola (§4dn: las dio el dueño)', suc.vacio==='Mia Plaza', '«'+suc.vacio+'»');
+  chk('…y sigue funcionando si mañana cambia una', suc.zona==='ZONA REAL', suc.zona);
   chk('…sin pisar lo que ya estaba escrito', suc.dir==='ya escrito', suc.dir);
+
+  /* Las zonas son las que dictó el dueño, textual: Buenos Aires y Charcas comparten
+     «Centro» A PROPÓSITO — es para lo que sirve agrupar la ruta. */
+  const zonas = await page.evaluate(() => {
+    var z={}; SUCURSALES.forEach(function(s){ z[s.n]=s.z; });
+    return z;
+  });
+  chk('⚠️ cada tienda con la zona que dio el dueño, textual',
+      zonas['Central']==='Central' && zonas['Mia Plaza']==='Mia Plaza' &&
+      zonas['Buenos Aires']==='Centro' && zonas['Mutualista']==='Mutualista' &&
+      zonas['Charcas']==='Centro' && zonas['Carmelo']==='Feria',
+      Object.keys(zonas).map(function(k){return k+'→'+(zonas[k]||'—');}).join(' · '));
+
+  /* ⚠️ El mismo problema que ya tuvieron con «Carola Chavez» / «Carola Chávez», en las
+     zonas: se agrupaba por texto EXACTO, así que «Centro» y «centro» eran dos zonas. */
+  const may = await page.evaluate(() => {
+    STATE=[{id:'z1',zona:'Centro',productos:[]},{id:'z2',zona:'centro',productos:[]},
+           {id:'z3',zona:'CENTRO',productos:[]},{id:'z4',zona:'Feria',productos:[]}];
+    return { lista:zonasDeLista(STATE), canon:zonaCanonica('CENTRO',STATE), nueva:zonaCanonica('Plan 3000',STATE) };
+  });
+  chk('⚠️ «Centro», «centro» y «CENTRO» son UNA zona, no tres',
+      may.lista.length===2 && may.lista.indexOf('Feria')>=0, may.lista.join(' · '));
+  chk('…y se ofrece la escritura que más se repite, no la que yo elija',
+      may.lista.indexOf('Centro')>=0, may.lista.join(' · '));
+  chk('…una zona nueva se respeta tal cual', may.nueva==='Plan 3000', may.nueva);
 
   /* Las 6 ubicaciones las dio el dueño con el pin exacto de cada tienda (§4dn). Lo que se
      comprueba no es el número: es que el MAPA las pueda leer y caigan en Santa Cruz. */
@@ -233,7 +260,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('le tocó un número de la serie RPT', rec.esRpt===true, rec.oc);
   chk('⚠️ el destino quedó guardado como «cliente» (la sucursal)', rec.cliente==='Mia Plaza', rec.cliente);
-  chk('la zona quedó como se escribió', rec.zona==='Norte', rec.zona);
+  chk('la zona la puso la sucursal, sin tipear', rec.zona==='Mia Plaza', rec.zona);
   chk('no quedó ni nota de venta ni cobro', !rec.nota && !rec.pagado && !(Number(rec.saldo)>0),
       rec.nota+' / '+rec.pagado+' / '+rec.saldo);
   chk('cada renglón guardó su tipo', rec.prods.length===2 && rec.prods[0].t==='Reposición' && rec.prods[1].t==='Adicional',

@@ -5803,11 +5803,29 @@ son la puerta. Elegir la tienda pone la ubicación sola y el pedido entra al map
 sin pasar por el geocodificador. **Tiendas Roho queda sin ubicación**: es el único destino
 que no es tienda propia.
 
-⚠️ **La ZONA sigue faltando** y es la que agrupa la ruta del chofer: hace falta la palabra
-exacta que usa logística hoy, no una que yo deduzca del mapa.
+### Y las zonas, dictadas también
+`Central → Central · Mia Plaza → Mia Plaza · Buenos Aires → Centro · Mutualista → Mutualista
+· Charcas → Centro · Carmelo → Feria`. **Buenos Aires y Charcas comparten «Centro» a
+propósito** — es lo que dijo él, y es justamente para lo que sirve agrupar la ruta.
+
+### El bug que apareció al ir a cargarlas
+El panel agrupaba las zonas por **texto EXACTO**: `renderZonas` usaba `String(p.zona).trim()`
+de clave y `dl-zonas` juntaba `p.zona` tal cual. O sea, «Centro», «centro» y «CENTRO» eran
+**tres zonas distintas**: tres sugerencias en la lista, y en «Concentración por zona» los
+pedidos repartidos entre las tres — con lo que la zona más cargada podía no salir ni en el
+top 12. Es **exactamente el mismo bug** que ya se había arreglado en las vendedoras («Carola
+Chavez» / «Carola Chávez», cada una con la mitad de los pedidos), en otro campo.
+
+`zonasDeLista(lista)` agrupa por `normNombre` y devuelve **una** escritura por zona: la que
+más se repite en la planilla (a igualdad, la primera). `zonaCanonica(z, lista)` da la forma
+con la que mostrar una zona; una que no existe todavía vuelve tal cual. `renderZonas` agrupa
+igual y rotula con la forma más frecuente.
+
+Gracias a eso, **da lo mismo con qué mayúsculas escriba yo las zonas de las tiendas**: si el
+equipo ya venía poniendo «centro», no se parte en dos.
 
 ### Pruebas
-`tests/test_rpt.js` pasa de 84 a **92 checks**: que estén las siete con nombre y apellido,
+`tests/test_rpt.js` pasa de 84 a **96 checks**: que estén las siete con nombre y apellido,
 que elegir una **no invente** una zona, que cuando la tenga sí la complete, y que no pise lo
 escrito. El check viejo «la zona se completó sola» era mentira —el propio test le ponía
 «Norte» dos líneas antes— y ahora comprueba lo que dice.
@@ -5816,7 +5834,8 @@ De las ubicaciones no se prueba el número (sería copiarlo dos veces) sino **qu
 **todas caigan en Santa Cruz** (un signo cambiado las manda a otro continente y nadie lo
 nota hasta que el camión sale). Aparte, verificado fuera del test: transcripción idéntica a
 lo que mandó el dueño, y las seis a entre 384 m y 3,4 km entre sí — ninguna repetida.
-Batería completa en verde.
+De las zonas: que cada tienda traiga la que él dictó, **textual**, y que «Centro»/«centro»/
+«CENTRO» cuenten como UNA. Batería completa: **1.902 comprobaciones, 0 mal**.
 
 ## 5. Pendientes
 

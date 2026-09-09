@@ -1565,11 +1565,13 @@ var RPT_TIPOS=['Reposición','Adicional'];
 /* Las sucursales a las que se repone. Es una lista de sugerencias, no un candado: si
    mañana abren otra, se escribe a mano y funciona igual. La zona/dirección/maps se
    autocompletan al elegirla para que logística no tenga que buscarlas. */
-/* ⚠️ LAS ZONAS VAN VACÍAS A PROPÓSITO (§4dn). La primera versión traía «Norte», «Centro»…
-   que YO inventé: el dueño nunca las dio. Una zona equivocada no se nota —se autocompleta
-   sola y nadie la corrige— y le desvía la ruta al chofer. Vacío obliga a escribirla, que es
-   peor de tipear pero no miente. Para llenarlas hace falta, de cada tienda, la ZONA con la
-   que trabaja logística y el link de Google Maps; ahí `sucursalElegida()` empieza a servir. */
+/* ⚠️ ESTAS ZONAS LAS DIO EL DUEÑO, UNA POR UNA (§4dn) — no se tocan sin preguntarle.
+   La primera versión traía «Norte», «Centro»… que YO inventé, y una zona inventada no se
+   nota: `sucursalElegida()` la escribe SOLA, nadie la corrige, y la zona es lo que agrupa
+   la ruta del chofer. Dos tiendas comparten zona a propósito (Buenos Aires y Charcas van
+   las dos en «Centro»): es lo que dijo él, y es justamente para lo que sirve agrupar.
+   ⚠️ La escritura no es un candado: `zonasDeLista`/`renderZonas` agrupan sin mayúsculas ni
+   acentos, así que si el equipo ya venía escribiendo «centro», no se parte en dos. */
 /* Las ubicaciones las dio el dueño una por una (§4dn), con el pin exacto de cada tienda.
    Van en el formato que produce `normalizaUbicacion` y que lee `coordsDeLink`
    (`?q=lat,lng`), así el pedido entra al mapa del chofer sin pasar por el geocodificador
@@ -1577,12 +1579,12 @@ var RPT_TIPOS=['Reposición','Adicional'];
    ⚠️ Tiendas Roho va sin ubicación: es el único destino que no es tienda propia. */
 var SUCURSALES=[
   {n:'Tiendas Roho',  z:'', d:'', m:''},
-  {n:'Mia Plaza',     z:'', d:'', m:'https://www.google.com/maps?q=-17.770160793680894,-63.17008791821695'},
-  {n:'Buenos Aires',  z:'', d:'', m:'https://www.google.com/maps?q=-17.780648363028185,-63.18369352382509'},
-  {n:'Central',       z:'', d:'', m:'https://www.google.com/maps?q=-17.772220746893716,-63.16718045701694'},
-  {n:'Mutualista',    z:'', d:'', m:'https://www.google.com/maps?q=-17.765770114394787,-63.16208746136678'},
-  {n:'Charcas',       z:'', d:'', m:'https://www.google.com/maps?q=-17.78004506388288,-63.17633322858442'},
-  {n:'Carmelo',       z:'', d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'}
+  {n:'Mia Plaza',     z:'Mia Plaza',  d:'', m:'https://www.google.com/maps?q=-17.770160793680894,-63.17008791821695'},
+  {n:'Buenos Aires',  z:'Centro',     d:'', m:'https://www.google.com/maps?q=-17.780648363028185,-63.18369352382509'},
+  {n:'Central',       z:'Central',    d:'', m:'https://www.google.com/maps?q=-17.772220746893716,-63.16718045701694'},
+  {n:'Mutualista',    z:'Mutualista', d:'', m:'https://www.google.com/maps?q=-17.765770114394787,-63.16208746136678'},
+  {n:'Charcas',       z:'Centro',     d:'', m:'https://www.google.com/maps?q=-17.78004506388288,-63.17633322858442'},
+  {n:'Carmelo',       z:'Feria',      d:'', m:'https://www.google.com/maps?q=-17.79174000668275,-63.153902622899'}
 ];
 function sucursalDe(nombre){
   var k=normNombre(nombre||''); if(!k) return null;
@@ -6417,9 +6419,35 @@ function refreshDatalists(){
   STATE.forEach(function(p){ meterV(p.vendedor); });
   orden.sort(function(x,y){ return x.localeCompare(y,'es'); });
   orden.forEach(function(v){ var o=document.createElement('option'); o.value=v; dv.appendChild(o); });
+  /* ⚠️ MISMO PROBLEMA QUE EL DE LAS VENDEDORAS, EN LAS ZONAS (§4dn). Esto juntaba por texto
+     EXACTO, así que «Centro», «centro» y «CENTRO» eran tres zonas distintas: tres sugerencias
+     en la lista, y en «Concentración por zona» los pedidos repartidos entre las tres. Se
+     agrupa por `normNombre` (sin mayúsculas ni acentos) y se ofrece UNA escritura. */
   var dz=document.getElementById('dl-zonas'); dz.innerHTML='';
-  var zonas={}; STATE.forEach(function(p){ if(p.zona)zonas[p.zona]=1; });
-  Object.keys(zonas).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
+  zonasDeLista(STATE).forEach(function(z){ var o=document.createElement('option'); o.value=z; dz.appendChild(o); });
+}
+/* Las zonas que hay, una por escritura. Gana la forma que más se repite (y a igualdad, la
+   primera que aparece): la que el equipo usa de verdad, no la que yo elegiría. */
+function zonasDeLista(lista){
+  var g={}, orden=[];
+  (lista||[]).forEach(function(p){
+    var z=String((p&&p.zona)||'').replace(/\s+/g,' ').trim(); if(!z) return;
+    var k=normNombre(z);
+    if(!g[k]){ g[k]={n:0, formas:{}}; orden.push(k); }
+    g[k].n++; g[k].formas[z]=(g[k].formas[z]||0)+1;
+  });
+  return orden.map(function(k){
+    var f=g[k].formas;
+    return Object.keys(f).sort(function(a,b){ return f[b]-f[a]; })[0];
+  });
+}
+/* La escritura con la que se muestra una zona, mirando lo que ya hay cargado. Sin nada
+   parecido en la planilla, se devuelve tal cual vino. */
+function zonaCanonica(z, lista){
+  var k=normNombre(z); if(!k) return '';
+  var hay=zonasDeLista(lista||STATE);
+  for(var i=0;i<hay.length;i++) if(normNombre(hay[i])===k) return hay[i];
+  return String(z).replace(/\s+/g,' ').trim();
 }
 function updateStats(){
   // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
@@ -7775,15 +7803,26 @@ function renderOcupacion(){
 /* ---- Concentración por zona (mapa de calor textual) ---- */
 function renderZonas(){
   var el=document.getElementById('adm-zonas'); if(!el) return;
-  var list=admFilter(), byZ={};
-  list.forEach(function(p){ var z=String(p.zona||'').trim()||'(sin zona)'; if(!byZ[z])byZ[z]={n:0,pend:0}; byZ[z].n++; if(!p.entregado)byZ[z].pend++; });
+  /* Agrupado sin mayúsculas ni acentos (§4dn): antes «Centro» y «centro» eran dos barras
+     con la mitad de los pedidos cada una, y la zona más cargada podía no salir ni en la
+     lista. El rótulo usa la escritura que más se repite en la planilla. */
+  var list=admFilter(), byZ={}, rot={};
+  list.forEach(function(p){
+    var z=String(p.zona||'').replace(/\s+/g,' ').trim();
+    var k=z?normNombre(z):'(sin zona)';
+    if(!byZ[k]){ byZ[k]={n:0,pend:0}; rot[k]={}; }
+    byZ[k].n++; if(!p.entregado)byZ[k].pend++;
+    var f=z||'(sin zona)'; rot[k][f]=(rot[k][f]||0)+1;
+  });
+  var etiq=function(k){ var f=rot[k]||{}; return Object.keys(f).sort(function(a,b){return f[b]-f[a];})[0]||k; };
   var keys=Object.keys(byZ).sort(function(a,b){return byZ[b].n-byZ[a].n;});
   if(!keys.length){ el.innerHTML='<div class="empty" style="padding:14px;color:var(--muted)">Sin datos</div>'; return; }
   var maxN=byZ[keys[0]].n;
   el.innerHTML=keys.slice(0,12).map(function(z){
     var o=byZ[z], pct=Math.max(6,Math.round(o.n/maxN*100)), intens=o.n/maxN;
     var col='hsl('+Math.round(28-intens*28)+','+Math.round(75+intens*15)+'%,'+Math.round(62-intens*17)+'%)';
-    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(z)+'">'+esc(z)+'</span>'+
+    var lbl=etiq(z);
+    return '<div class="occ-row"><span style="width:120px;flex:none;font-weight:700;color:var(--text);font-size:.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(lbl)+'">'+esc(lbl)+'</span>'+
       '<span style="flex:1;height:15px;background:var(--gray-lt);border-radius:7px;overflow:hidden"><span style="display:block;height:100%;width:'+pct+'%;background:'+col+'"></span></span>'+
       '<span style="width:104px;flex:none;text-align:right;font-size:.74rem;color:var(--muted)"><b style="color:var(--text)">'+o.n+'</b> pedidos'+(o.pend?(' · '+o.pend+' pend'):'')+'</span></div>';
   }).join('');
