@@ -134,6 +134,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   con pedidos de fechas relativas: se pudren solos con el calendario. Los dos tienen el reloj
   de la página clavado en el 08/09 (`page.clock.setFixedTime`). Si se cambia un Excel, mover
   esa fecha. Un test nuevo que mezcle una fecha fija con `atras(n)` tiene que hacer lo mismo.
+- **⏳ Primera carga con reintentos y cartel** (§4di): al abrir, el panel muestra la copia
+  guardada en el dispositivo (`loadMirror`; en una compu nueva, nada = todo en 0) y pide la
+  planilla con `cargaInicial()` → `refrescarEstado()`. Si falla, reintenta solo
+  (`CARGA_INTENTOS` = 3 s, 8 s, 20 s) y el cartel `#carga-banner` (arriba de todas las
+  pestañas) dice el MOTIVO en castellano (`motivoDeError`: sin red / Google devolvió una
+  página / pide clave / otro) con «🔄 Reintentar ahora»; `renderConnEstado` dice «Conectado»
+  recién cuando el servidor contestó (`CARGA_ESTADO`), antes decía «Conectado» con solo
+  mirar la forma de la URL. `refrescarEstado` deja `ULTIMO_ERROR` y, si `STATE` está vacío,
+  pone el cartel en error desde cualquier refresco. `CARGA_GEN` descarta resultados tardíos
+  de un intento viejo. ⚠️ En un test con la red cortada, la carga de arranque queda
+  reintentando: si el test lee el cartel de conexión, que haga `CARGA_GEN++; CARGA_ESTADO='ok'`
+  y limpie `CARGA_TIMER`/`CARGA_TIC` en su setup (ver `test_conflicto.js`). `tests/test_carga.js`.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

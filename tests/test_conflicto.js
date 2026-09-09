@@ -37,6 +37,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     CONNECTED=true; UNLOCKED=true;
     try{ localStorage.removeItem(LS_PEND); localStorage.removeItem(LS_CLAVE); }catch(e){}
     CLAVE_EQUIPO=''; CLAVE_RECHAZADA=false; SERVER_AUTH=''; NO_ENCOLAR={};
+    /* La primera carga real (§4di) arrancó contra una red cortada y estaría reintentando:
+       acá el servidor es de mentira y ya «contestó», así que se la da por hecha. */
+    if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; } if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
+    CARGA_GEN++; CARGA_ESTADO='ok';           // y si el intento de arranque vuelve tarde, se ignora
     window._bodies=[]; window._toasts=[]; window._apiListOrig=apiList;
     if(!window._toastOrig) window._toastOrig=window.toast;
     window.toast=function(m,k){ window._toasts.push(String(m)); return window._toastOrig.apply(null,arguments); };

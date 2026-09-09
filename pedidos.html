@@ -539,6 +539,9 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 </div>
 
 <div class="wrap">
+  <!-- ⏳ Cómo viene la planilla: cargando / no se pudo (con el motivo) / nada. Se ve en todas
+       las pestañas, porque «todo en 0» sin explicación era el problema (§4di). -->
+  <div id="carga-banner" style="display:none"></div>
   <!-- ============ FORM VIEW ============ -->
   <div id="view-form" class="view active">
     <div class="card form-card">
@@ -1789,6 +1792,20 @@ function renderConnEstado(){
     f.className='conn off'; a.className='conn off';
     ft.innerHTML='<b>El servidor pide la clave del equipo.</b> Pedísela al administrador e ingresala una vez en este dispositivo. Lo que guardes mientras tanto queda acá y se manda solo.'+btn;
     at.innerHTML='<b>El servidor pide la clave del equipo</b> — sin ella no se pueden ver ni guardar pedidos.'+btn;
+    return;
+  }
+  /* «Conectado» recién cuando el servidor contestó de verdad (§4di). Antes lo decía mirando
+     solo que la dirección tuviera forma de Apps Script, aunque nadie hubiera respondido — y
+     una compu nueva veía el cartel verde con todo en 0. */
+  if(CARGA_ESTADO==='reintento' || CARGA_ESTADO==='error'){
+    f.className='conn off'; a.className='conn off';
+    ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'. Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.';
+    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'. '+(STATE.length?'Estás viendo la copia guardada en este dispositivo.':'Por eso no se ve ningún pedido.');
+    return;
+  }
+  if(CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO){
+    f.className='conn off'; a.className='conn off';
+    ft.innerHTML='⏳ Conectando con la planilla del equipo…'; at.innerHTML='⏳ Conectando con Google Sheets…';
     return;
   }
   f.className='conn on'; a.className='conn on';
@@ -6233,16 +6250,89 @@ function renderCupoForm(){
    ⚠️ Es la única forma de que un celular con la página abierta desde ayer se entere
    de que administración cerró un día: el cierre viaja en la planilla, no hay push. */
 var ULTIMO_REFRESCO=0;
+var ULTIMO_ERROR='';          // por qué falló la última lectura de la planilla, en castellano
+/* Qué falló, dicho para una persona: es lo que ve quien abre el panel en una compu nueva
+   y tiene todo en 0 (§4di). El mensaje crudo del navegador («Failed to fetch») no le sirve
+   a nadie; estos tres casos son los que pasan de verdad. */
+function motivoDeError(e){
+  var m=String((e&&e.message)||e||'');
+  if(m==='clave') return 'el servidor pide la clave del equipo';
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)';
+  if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
+  return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
+}
 function refrescarEstado(){
   if(!CONNECTED) return Promise.resolve(false);
   return apiList().then(function(res){
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       STATE=mergePending(res.pedidos); saveMirror(); updateStats();
-      ULTIMO_REFRESCO=Date.now();
+      ULTIMO_REFRESCO=Date.now(); ULTIMO_ERROR='';
+      cargaEstado('ok');
       return true;
     }
+    ULTIMO_ERROR=(res&&res.error)?('el servidor contestó: '+String(res.error).slice(0,80)):'respuesta inesperada del servidor';
+    if(!STATE.length) cargaEstado('error');      // una pantalla en 0 nunca se queda sin explicación
     return false;
-  }).catch(function(){ return false; });
+  }).catch(function(e){ ULTIMO_ERROR=motivoDeError(e); if(!STATE.length) cargaEstado('error'); return false; });
+}
+
+/* ============================================================================
+   PRIMERA CARGA: QUE SE VEA QUÉ PASA (§4di)
+   El dueño: «a veces entro de otra pc o lugar y aparece todo en 0, no carga el servidor,
+   ¿o qué pasa?». Pasaba esto: al abrir, el panel muestra la copia guardada en el
+   dispositivo (en una compu nueva: nada, todo en 0) y le pide la planilla al servidor UNA
+   sola vez. Si esa vez falla —Google tarda en despertar el script, una red que bloquea
+   script.google.com, un bloqueador de anuncios, un corte de internet— no decía nada: el
+   cartel verde seguía diciendo «Conectado» (miraba solo que la dirección tuviera forma de
+   Apps Script, no que hubiera contestado) y el próximo intento era el del reloj, dos
+   minutos después. En la compu de siempre no se nota porque la copia guardada tapa el
+   hueco; en una compu nueva es «todo en 0».
+   Ahora: mientras carga se dice que carga; si falla se reintenta solo (3 s, 8 s, 20 s)
+   mostrando el MOTIVO y un botón para reintentar ya; y «Conectado» se dice recién cuando
+   el servidor contestó de verdad.
+   ========================================================================== */
+var CARGA_INTENTOS=[3000, 8000, 20000];   // reintentos después del primer fallo
+var CARGA_ESTADO='';                       // '' · 'cargando' · 'reintento' · 'error' · 'ok'
+var CARGA_TIMER=null, CARGA_TIC=null, CARGA_PROXIMO=0;
+/* Cada arranque de `cargaInicial` es una «generación»: si alguien toca «Reintentar ahora»
+   mientras un intento viejo sigue en el aire, el resultado viejo llega después y NO pisa
+   al nuevo. (Sin esto, un intento arrancado con la red cortada podía volver tarde y tapar
+   con «Sin respuesta» a una carga que ya había andado.) */
+var CARGA_GEN=0;
+function cargaEstado(k){ CARGA_ESTADO=k; cargaBanner(); renderConnEstado(); }
+function cargaBanner(){
+  var b=document.getElementById('carga-banner'); if(!b) return;
+  var visible = CONNECTED && (CARGA_ESTADO==='reintento' || CARGA_ESTADO==='error' || (CARGA_ESTADO==='cargando' && !STATE.length));
+  if(!visible){ b.style.display='none'; b.innerHTML=''; return; }
+  var copia = STATE.length ? 'Mientras tanto ves la <b>copia guardada en este dispositivo</b>, que puede estar vieja.'
+                           : 'Por eso <b>la pantalla está en 0</b>: todavía no llegó nada.';
+  var seg=Math.max(0, Math.ceil((CARGA_PROXIMO-Date.now())/1000));
+  b.style.display='flex'; b.className='conn '+(CARGA_ESTADO==='cargando'?'on':'off'); b.style.marginBottom='14px';
+  b.innerHTML='<span class="dot"></span><span style="flex:1">'+
+    (CARGA_ESTADO==='cargando' ? '⏳ <b>Cargando la planilla del equipo…</b> Google tarda unos segundos en despertar.'
+    : CARGA_ESTADO==='reintento' ? '⚠️ <b>No se pudo leer la planilla:</b> '+esc(ULTIMO_ERROR||'sin respuesta')+'. Reintento solo en <b>'+seg+' s</b>. '+copia
+    : '❌ <b>No se pudo leer la planilla</b> después de '+(CARGA_INTENTOS.length+1)+' intentos: '+esc(ULTIMO_ERROR||'sin respuesta')+'. '+copia)+
+    '</span>'+
+    (CARGA_ESTADO==='cargando' ? '' : '<button type="button" class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--amber-border);color:#7c4b00;font-weight:700" onclick="cargaInicial(0)">🔄 Reintentar ahora</button>');
+}
+function cargaInicial(intento){
+  if(!CONNECTED){ renderCupoForm(); return Promise.resolve(false); }
+  intento=intento||0;
+  if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
+  if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
+  var gen=++CARGA_GEN;
+  cargaEstado('cargando');
+  return refrescarEstado().then(function(ok){
+    if(gen!==CARGA_GEN) return ok;               // llegó tarde: ya hay un intento más nuevo
+    if(ok){ cargaEstado('ok'); renderCupoForm(); pintarBotonCierre(); autoRepintar(); updateFooter(); return true; }
+    if(intento<CARGA_INTENTOS.length){
+      var ms=CARGA_INTENTOS[intento]; CARGA_PROXIMO=Date.now()+ms;
+      cargaEstado('reintento');
+      CARGA_TIC=setInterval(cargaBanner, 1000);                 // la cuenta regresiva del cartel
+      CARGA_TIMER=setTimeout(function(){ cargaInicial(intento+1); }, ms);
+    } else { cargaEstado('error'); renderCupoForm(); }
+    return false;
+  });
 }
 /* Al entrar al formulario, si hace más de un minuto que no se mira la planilla. */
 var REFRESCO_MS=60000;
@@ -14600,7 +14690,7 @@ document.addEventListener('DOMContentLoaded',function(){
   refreshDatalists();
   resetForm();
   updateStats();
-  refreshCupos();
+  cargaInicial();      // la planilla, con reintentos y cartel de qué pasa (§4di)
   if(CONNECTED) flushPending();
   autoArrancar();      // que la pantalla se mantenga al día sola (ver §ACTUALIZACIÓN AUTOMÁTICA)
 });

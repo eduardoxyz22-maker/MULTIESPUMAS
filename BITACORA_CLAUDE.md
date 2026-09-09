@@ -5482,6 +5482,56 @@ fallaba igual, no era el cambio del mapa. Mismo remedio: reloj clavado en el 08/
 para el próximo test que mezcle una fecha fija con `atras(n)`: clavar el reloj desde el
 primer día, no cuando amanezca rojo.
 
+## 4di. ⏳ «Entro de otra compu y aparece todo en 0»: la primera carga, con reintentos y cartel (2026-09-09)
+
+El dueño: *"A veces entro de otra pc o lugar y aparece todo en 0, no carga el servidor, ¿o
+qué pasa?"*
+
+### Qué pasaba
+Al abrir, el panel carga la copia guardada en el dispositivo (`loadMirror`) y le pide la
+planilla al servidor **una sola vez** (`refreshCupos` → `refrescarEstado` → `apiList`). Si
+esa vez fallaba, `refrescarEstado` devolvía `false` en silencio: sin cartel, sin toast, y el
+próximo intento era el del reloj de la actualización automática, **dos minutos** después. Y
+el cartel de conexión decía «Conectado al equipo» en verde igual, porque `renderConnEstado`
+miraba solo que `SHEETS_URL` tuviera forma de Apps Script, no que alguien hubiera contestado.
+En la compu de siempre no se nota: la copia guardada tapa el hueco y se ven los pedidos de
+la última vez. En una compu nueva no hay copia: **todo en 0, cartel verde, y nada que
+explique** — exactamente lo que describió.
+Por qué falla esa primera vez, en orden de frecuencia: Google tarda en despertar el script
+(la primera llamada del día puede tardar o cortarse), la red del lugar bloquea
+`script.google.com` (oficinas, hoteles) o un bloqueador de anuncios lo corta, o no hay
+internet en ese momento. Lo que NO es: no hace falta estar logueado en Google (el repaso
+automático desde GitHub lee el servidor sin ninguna cuenta, §4ch).
+
+### Qué se hizo
+- **`cargaInicial()`** en el arranque, en vez de `refreshCupos()`: si la lectura falla,
+  reintenta sola a los 3, 8 y 20 segundos (`CARGA_INTENTOS`), y entre medio muestra la cuenta
+  regresiva. `CARGA_GEN` descarta el resultado tardío de un intento viejo (un «Reintentar
+  ahora» no puede quedar tapado por el intento anterior que vuelve después).
+- **`#carga-banner`**, arriba de todas las pestañas: «⏳ Cargando la planilla del equipo…»
+  (solo cuando no hay copia: con copia, cargar no molesta), «⚠️ No se pudo leer la planilla:
+  MOTIVO. Reintento solo en N s. Por eso la pantalla está en 0 / Mientras tanto ves la copia
+  guardada» y, después del cuarto intento, «❌ … después de 4 intentos» — siempre con
+  «🔄 Reintentar ahora». Se va solo en cuanto una lectura (la que sea) anda.
+- **`motivoDeError`**: el «Failed to fetch» del navegador se traduce a «no hay conexión con
+  Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)»;
+  una respuesta que no es JSON a «Google devolvió una página en vez de los datos (suele ser
+  momentáneo)»; `clave` a «el servidor pide la clave del equipo». `refrescarEstado` guarda
+  el motivo en `ULTIMO_ERROR` y, si `STATE` está vacío, pone el cartel en error desde
+  cualquier refresco, no solo el del arranque.
+- **`renderConnEstado`** dice «Conectado al equipo» recién cuando el servidor contestó de
+  verdad; mientras reintenta dice «Sin respuesta del servidor — MOTIVO», y en Administración
+  agrega si está mostrando la copia guardada o por eso no se ve ningún pedido.
+
+### Pruebas
+`tests/test_carga.js` (**18 checks**): al abrir ya está intentando; falla dos veces y a la
+tercera contesta (cartel con motivo y cuenta regresiva, «Sin respuesta» en vez de
+«Conectado», y al contestar todo entra y el cartel se va); no contesta nunca (se rinde a los
+4 intentos, ofrece reintentar, y «Reintentar ahora» carga y limpia); con copia guardada dice
+que es la copia; y los cuatro motivos traducidos. `test_conflicto.js` da por hecha la carga
+de arranque en su setup (`CARGA_GEN++; CARGA_ESTADO='ok'`), porque su red está cortada y el
+intento de arranque volvía tarde a tapar el cartel que el test mira.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
