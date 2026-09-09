@@ -77,19 +77,25 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     por clave puntual; `stockCariocaDescontinuado` (§4dc) por NOMBRE para Carioca
     Río/Premier/Bahía, así que un código nuevo de esas líneas queda cubierto solo. Se
     reparte y se vende lo que queda, pero nunca entra en «hay que fabricar» (aviso `agotado`).
-  - **Rotación en 3 niveles** (§4da, ampliado a 3 niveles en §4dc): `STOCK_VENTANA`=15 días,
-    en 3 tramos de 5. `o.rotacion`: `baja` (<`STOCK_VENTAS_MIN`=3 entregas distintas — no
-    unidades) no estima ningún ritmo, `porDia`=0, margen=0, sin reserva extra (`cubrir`=0) —
-    aviso 📦 `unico`. `media` (≥3 entregas, poco volumen) sí estima, margen FIJO
-    (`STOCK_COLCHON`, sin mirar el desvío — con pocos datos podría ser ruido), `cubrir`=3.
-    `alta` (≥15 unidades Y en ≥2 de los 3 tramos) confía en el desvío: el margen escala hasta
-    5 días si la venta es a los saltos, `cubrir`=`STOCK_CUBRIR`(7). Lo vendido y sin entregar
-    (`comp`) se cubre igual en las tres: eso no se estima, está vendido.
-    ⚠️ `stockSobra`/`stockMesesSobra` usan `porDiaReal` (crudo) a propósito: «plata parada»
-    mira para atrás y no pide nada — no le importa el nivel de rotación.
+  - **Rotación en 3 niveles, y Eduardo afuera** (§4da, §4dc, §4de): `STOCK_VENTANA`=15 días,
+    en 3 tramos de 5. Dos condiciones, las dos del dueño: (1) hacen falta ≥`STOCK_VENTAS_MIN`=3
+    **entregas distintas DEL EQUIPO** (no unidades); (2) **los pedidos de Eduardo nunca
+    cuentan** (`stockPedidoUnico`, `vendidosUnicos`): son pedidos puntuales suyos, se cubre lo
+    que vendió y sin entregar y nada más. `vendidosRotacion`/`nVentasRotacion`/`sem` son solo
+    del equipo. `o.rotacion`: `baja` no estima ningún ritmo, `porDia`=0, margen=0, sin reserva
+    extra (`cubrir`=0) — aviso 📦 `unico` (UN solo aviso para las dos cosas; el cartel agrega
+    «· Eduardo» cuando `stockSoloEduardo`). `media` (≥3 entregas, poco volumen) sí estima,
+    margen FIJO (`STOCK_COLCHON`), `cubrir`=3. `alta` (≥15 unidades del equipo Y en ≥2 de los
+    3 tramos) confía en el desvío: el margen escala hasta 5 días, `cubrir`=`STOCK_CUBRIR`(7).
+    Lo vendido y sin entregar (`comp`) se cubre igual en las tres: no se estima, está vendido.
+    ⚠️ `porDiaReal` es la cuenta cruda DEL EQUIPO; `stockSobra`/`stockMesesSobra` usan
+    `porDiaTodo` (todo lo que salió, Eduardo incluido): «plata parada» mira para atrás.
+    También de 91ddcd8 (§4de): un «✗ no hay»/«📥 recoger» con fecha pasada sigue comprometido
+    (lo SIN marcar con fecha pasada sigue = salió, §4co); lo ya pedido no se pide dos veces
+    (aviso `pedido` + «confirmar la llegada»); recepciones parciales (`q.ru`, `q.total`).
     `revisarStock`/aviso `revisar` (§4dc): si hay más marcado «✔ hay» a mano que lo que dice
     el inventario, avisa ANTES de proponer una reposición sobre un saldo que no cierra.
-    `tests/test_rotacion.js` + los `.cjs` de §4dc (ver abajo).
+    `tests/test_rotacion.js` (sección 6 = Eduardo), `test_circuito.cjs`, `test_stock_rotacion.cjs`.
   - **⚠️ Si volvés a tocar `STOCK_VENTANA` o los umbrales de rotación**: revisá que ningún
     texto quede con un número hardcodeado (pasó dos veces, §4dc — «4 semanas» sobrevivió un
     cambio de ventana entero) y que los fixtures de `test_stock.js`/`test_rotacion.js`, que

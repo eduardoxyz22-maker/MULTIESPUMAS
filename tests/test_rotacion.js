@@ -144,6 +144,39 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y ya NO dice «PEDIR YA» para él', !/MORFEO · 140x190[\s\S]{0,240}PEDIR YA/.test(r));
   chk('el ARES, que rota, sí muestra su ritmo por día', /ARES · 140x190 [\s\S]{0,80}15 entregas/.test(r) || /15 entregas/.test(r), (r.match(/[^ ]*15 entregas[^·]*/)||[''])[0]);
 
+  // ══ 6. Los pedidos de Eduardo no cuentan (§4de, 08/09 vía la otra herramienta, «Dale» del dueño 09/09) ══
+  /* La segunda mitad de la regla: lo que vende Eduardo (el dueño) son pedidos puntuales suyos,
+     aunque sean cinco entregas. No arman ritmo ni reserva; lo suyo vendido y sin entregar se
+     cubre igual. Y las dos condiciones van JUNTAS: 8 de Carola en UNA entrega tampoco rotan. */
+  console.log('\n── 6. Eduardo: sus pedidos son puntuales, aunque sean cinco ──');
+  await page.evaluate(() => {
+    var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
+    var P=function(o){ return Object.assign({id:'p'+Math.random().toString(36).slice(2),fecha:todayStr(),oc:'',
+      vendedor:'Carola Chavez',cliente:'C',celular:'70000000',turno:'AM',zona:'N',direccion:'x',maps:'',pagado:true,
+      saldo:0,ts:Date.now(),metodoPago:'',observaciones:'',estado:'',entregado:true,vehiculo:'',chofer:'',garantia:'',
+      nota:'',acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:false,fotos:[]},o); };
+    var pr=function(d,n){ return [{desc:d,medida:'140x190',codigo:'',cant:n}]; };
+    // HADES: Eduardo, 45 en 5 entregas · POSEIDON: Eduardo 80 + Carola 8 en UNA · ATENEA: Carola 1+1+1
+    for(var i=1;i<=5;i++) STATE.push(P({id:'hd'+i, fecha:atras(i), vendedor:'Eduardo Añez', productos:pr('HADES',9)}));
+    STATE.push(P({id:'ps1', fecha:atras(2), vendedor:'Eduardo Añez', productos:pr('POSEIDON',80)}));
+    STATE.push(P({id:'ps2', fecha:atras(3), productos:pr('POSEIDON',8)}));
+    for(var j=1;j<=3;j++) STATE.push(P({id:'at'+j, fecha:atras(j*2), productos:pr('ATENEA',1)}));
+    saveMirror();
+  });
+  r = await foto();
+  const HD=r.o.HADES||{}, PS=r.o.POSEIDON||{}, AT=r.o.ATENEA||{};
+  chk('HADES: Eduardo vendió 45 en 5 entregas — se ve, pero NO es rotación', HD.vend===45 && HD.n===5 && HD.rota===false && HD.porDia===0, 'vend='+HD.vend+' n='+HD.n+' rota='+HD.rota+' porDia='+HD.porDia);
+  chk('…aviso «pedido único», sin pedir ni entrar al mensaje', HD.aviso==='unico' && HD.pedir===0 && !/HADES/.test(r.msg), HD.aviso+' · pedir '+HD.pedir);
+  chk('POSEIDON: los 80 de Eduardo no cuentan y los 8 de Carola son UNA entrega → tampoco rota', PS.vend===88 && PS.rota===false && PS.porDia===0 && PS.aviso==='unico', 'vend='+PS.vend+' rota='+PS.rota+' '+PS.aviso);
+  chk('ATENEA: 3 entregas del equipo, de 1 unidad cada una, SÍ es rotación', AT.n===3 && AT.rota===true && AT.porDia>0, 'n='+AT.n+' rota='+AT.rota+' porDia='+AT.porDia);
+  const t6 = await page.evaluate(() => {
+    abrirStock();
+    var fila=function(nombre){ var tr=Array.prototype.filter.call(document.querySelectorAll('tr[data-stock-k]'), function(t){ return (t.getAttribute('data-stock-k')||'').indexOf(nombre)===0; })[0]; return tr ? tr.textContent.replace(/\s+/g,' ') : ''; };
+    return { hades:fila('HADES'), morfeo:fila('MORFEO') };
+  });
+  chk('en la tabla, el HADES dice de quién es: «📦 Pedido único · Eduardo»', /📦 Pedido único · Eduardo/.test(t6.hades), t6.hades.slice(0,140));
+  chk('…y el MORFEO de Carola lleva «📦 Pedido único» sin el «· Eduardo»', /📦 Pedido único/.test(t6.morfeo) && !/· Eduardo/.test(t6.morfeo), t6.morfeo.slice(0,140));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

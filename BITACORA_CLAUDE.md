@@ -5270,25 +5270,49 @@ juntas — ≥3 entregas distintas del equipo Y Eduardo afuera (mi recomendació
 dijo, y lo único que rompe son 12 checks de `test_circuito.cjs` que afirman «Fernando aporta
 rotación incluso en una venta»); (2) como quedó (cualquier venta del equipo es rotación; vuelve
 el MORFEO de una vendedora → «pedí 24 ya»); (3) como el 07/09 (≥3 entregas, Eduardo incluido).
-Contestó: *«Hoy modifico cosas chat gpt»* → hoy está trabajando la otra herramienta sobre el
-mismo archivo. **No publiqué nada a `main`**: todo lo de esta sección está en la rama
-`claude/pedidos-fecha-entrega-bgt0em`, para rebasar sobre lo que ella deje y publicar cuando
-el dueño diga. Batería local con mis cambios: `test_stock.js` 106/106; siguen rojos
-`test_rotacion.js` (11) y `test_stock_rotacion.cjs` (2) hasta que haya regla.
+Contestó primero *«Hoy modifico cosas chat gpt»* (leí «hoy está trabajando la otra herramienta»
+y frené sin publicar; era «hoy modifiqué cosas con ChatGPT», o sea, lo que ya tenía adelante),
+después *«Revisa que hizo»* (y de paso me corrigió: el dashboard de agosto de ese día era MÍO,
+de otra sesión, no de ChatGPT — los tres commits van con su usuario y los metí en la misma
+bolsa sin mirar), y el 09/09: **«Dale»** a la opción 1.
 
-**Pendiente cuando se decida (a):** `o.rotacion` en `stockData` (y el comentario de arriba,
-que hoy dice «menos de 3 entregas» sobre un código que mira unidades), el comentario maestro
-del bloque STOCK (líneas «ROTACIÓN» y la cita del dueño sobre `STOCK_VENTAS_MIN`), los textos
-«Eduardo: pedido único» (badge, `porque`, fila, `copiarStock`), `stockPrioridad` (`lenta` no
-figura), CLAUDE.md «Rotación en 3 niveles», y los tests de los dos lados para que digan LO
-MISMO: `test_rotacion.js`, `test_stock_rotacion.cjs` (2), `test_circuito.cjs` (12).
+### La regla que quedó (09/09): las dos condiciones juntas
+
+- `o.rotacion` en `stockData`: `baja` si `nVentasRotacion < STOCK_VENTAS_MIN` (3 entregas
+  distintas **del equipo**) o `vendidosRotacion <= 2` (cinturón redundante, se deja); `alta`
+  con ≥15 unidades del equipo en ≥2 tramos; `media` en el medio. Los campos de la otra
+  herramienta (`vendidosRotacion`, `nVentasRotacion`, `vendidosUnicos`, `stockPedidoUnico`)
+  se quedan: son exactamente lo que hacía falta para la segunda condición.
+- **Un solo aviso `unico`** para «1–2 entregas del equipo» y para «solo lo vendió Eduardo»
+  (el dueño llama «pedido único» a las dos cosas). `lenta` afuera de nuevo. Nuevo
+  `stockSoloEduardo(o)` decide el texto: cartel «📦 Pedido único · Eduardo», el porqué
+  («Lo vendió Eduardo: se cubre lo que él ya vendió, sin reserva por las dudas» / mi texto de
+  §4dc para el equipo), la leyenda de la fila («Eduardo: pedido único» solo si es todo suyo;
+  si no «Poca rotación: solo pedidos confirmados», que es lo que espera el test de la otra
+  herramienta), el texto de «sobra» y el mensaje a fábrica (`copiarStock` vuelve a decir
+  «pedido puntual — 45 en 1 entrega» / «es para un pedido puntual», que era lo que probaba
+  `test_rotacion.js`).
+- Fila: «Equipo: N en M entregas · Eduardo: K (no cuentan para la reserva)» cuando hay de
+  los dos. Comentario maestro del bloque STOCK, el de `STOCK_VENTAS_MIN` y el de `stockData`
+  reescritos con las dos condiciones y la fecha de cada una. CLAUDE.md, ídem.
+- **Tests de los dos lados diciendo lo mismo:** `test_rotacion.js` +6 (sección 6: HADES =
+  Eduardo 45 en 5 entregas → único; POSEIDON = Eduardo 80 + Carola 8 en una → único;
+  ATENEA = Carola 1+1+1 → rota; y el cartel «· Eduardo» solo en el de Eduardo) → **28/28**.
+  `test_circuito.cjs`: los 11 «X aporta rotación incluso en una venta» invertidos con el
+  comentario de la decisión (+1 nuevo: 3 entregas de Fernando sí rotan) y «poca venta no se
+  etiqueta pedido único» dado vuelta → **31/31**. `test_stock_rotacion.cjs` volvió a verde
+  **sin tocarlo** (15/15): lo que probaba el sábado era esta regla. `test_stock.js` 106/106.
+- Lección para la próxima: cuando la otra herramienta cambia una regla de negocio, **sus
+  propios tests del día anterior son el mejor detector** — dos de los suyos se pusieron rojos
+  y nadie los corrió antes de mergear. Correr `./tests/correr.sh` completo antes de aceptar
+  cualquier commit ajeno, no solo «los dos que menciona el mensaje del commit».
 
 ## 5. Pendientes
 
-> ⏳ **08/09 — decisión del dueño pendiente: la regla de rotación (§4de).** Hasta entonces
-> `test_rotacion.js` y `test_stock_rotacion.cjs` quedan rojos a propósito, y la rama
-> `claude/pedidos-fecha-entrega-bgt0em` tiene lo mío sin publicar. La otra herramienta está
-> tocando `pedidos.html` hoy: rebasar antes de publicar.
+> 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
+> julio 3 bloques de JavaScript que fallan en silencio («React is not defined» ×3, un
+> «missing )») y 29 imágenes con dirección `blob:` muerta. Se ven completos igual, pero es
+> basura que conviene limpiar un día tranquilo (visto el 09/09 al revisar el de agosto).
 
 > ## ✅ APPS SCRIPT PUBLICADO Y CONFIRMADO: `2026-09-05-c` (2026-09-05, 15:32 UTC)
 > Run 33975079467 del repaso:
