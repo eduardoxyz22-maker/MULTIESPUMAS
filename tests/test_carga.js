@@ -114,6 +114,33 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('clave → «pide la clave del equipo»', /pide la clave del equipo/.test(r[2]), r[2]);
   chk('otro error → se muestra tal cual, y sin nada → «no respondió»', /otra cosa rara/.test(r[3]) && /no respondió/.test(r[4]), r[3]+' | '+r[4]);
 
+  /* §4dm — el 09/09 a la tarde el Apps Script empezó a dar 404 (a las 14:23 contestaba,
+     a las 17:53 ya no): la implementación había dejado de existir. El panel decía «Google
+     devolvió una página… suele ser momentáneo» y todo el mundo reintentaba para siempre.
+     Un 404 NO se arregla solo: el cartel tiene que decir qué hacer. */
+  console.log('\n── 5. Los códigos de Google, con qué hacer ──');
+  const cod = await page.evaluate(async () => {
+    // y que apiPost de verdad los tire, en vez de reventar contra r.json()
+    var origFetch=window.fetch;
+    window.fetch=function(){ return Promise.resolve({ ok:false, status:404,
+      json:function(){ return Promise.reject(new SyntaxError('Unexpected token <')); } }); };
+    var lanzado=await apiPost({action:'list'}).then(function(){ return 'no falló'; },
+                                                    function(e){ return String(e&&e.message); });
+    window.fetch=origFetch;
+    return { m404: motivoDeError(new Error('http404')), m403: motivoDeError(new Error('http403')),
+             m401: motivoDeError(new Error('http401')), m500: motivoDeError(new Error('http500')),
+             m418: motivoDeError(new Error('http418')), lanzado: lanzado };
+  });
+  const lanzado = cod.lanzado;
+  chk('⚠️ 404 → dice que la dirección ya no existe y CÓMO arreglarlo (implementación nueva vs. actualizar)',
+      /ya no existe/.test(cod.m404) && /Administrar implementaciones/.test(cod.m404) && !/momentáneo/.test(cod.m404), cod.m404.slice(0,110));
+  chk('403 → dice que hay que poner «Cualquier persona»', /Cualquier persona/.test(cod.m403), cod.m403.slice(0,80));
+  chk('401 → dice que quedó restringida', /restringida/.test(cod.m401), cod.m401.slice(0,70));
+  chk('5xx → dice que es de Google y que suele arreglarse solo', /Google está caído/.test(cod.m500) && /solo/.test(cod.m500), cod.m500.slice(0,70));
+  chk('cualquier otro código se muestra igual, no se traga', /error 418/.test(cod.m418), cod.m418);
+  chk('⚠️ apiPost avisa del código HTTP en vez de reventar contra el JSON',
+      lanzado==='http404', lanzado);
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

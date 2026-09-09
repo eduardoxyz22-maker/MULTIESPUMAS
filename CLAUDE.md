@@ -150,6 +150,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   de un intento viejo. ⚠️ En un test con la red cortada, la carga de arranque queda
   reintentando: si el test lee el cartel de conexión, que haga `CARGA_GEN++; CARGA_ESTADO='ok'`
   y limpie `CARGA_TIMER`/`CARGA_TIC` en su setup (ver `test_conflicto.js`). `tests/test_carga.js`.
+- **🚨 Si el panel no carga nada (§4dm)**: mirar el cartel. Desde el 09/09 `apiPost` mira el
+  código HTTP y `motivoDeError` lo traduce con QUÉ HACER. Un **404** = la dirección `/exec`
+  del Apps Script ya no existe (crear una implementación NUEVA estrena otra dirección en vez
+  de reemplazarla): Implementar → Administrar implementaciones → ✏️ la de siempre → Versión
+  nueva. Pasó de verdad el 09/09 entre las 14:23 y las 17:53.
+  ⚠️ Todo doble de `fetch` en los tests tiene que traer `ok:true, status:200`: una `Response`
+  real siempre los trae, y sin ellos el doble simula un 404 (rompió `test_conflicto.js`).
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

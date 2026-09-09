@@ -1796,7 +1796,17 @@ var SERVER_ADMIN_AUTH='';    // '' no sé · 'abierto' (sin ADMIN_KEY) · 'clave
 function apiPost(payload){
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
   return fetch(SHEETS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
-    .then(function(r){ return r.json(); })
+    .then(function(r){
+      /* ⚠️ ANTES ESTO IBA DERECHO A `r.json()` (§4dm). Cuando Google contesta 404 —la
+         implementación del Apps Script se borró, se archivó, o se hizo una NUEVA (que
+         estrena otra dirección /exec)— lo que vuelve es una página de error de Google, y
+         `r.json()` reventaba con «Unexpected token». El cartel entonces decía «Google
+         devolvió una página… suele ser momentáneo» y la vendedora reintentaba para siempre.
+         Pasó de verdad el 09/09: a las 14:23 el servidor contestaba y a las 17:53 daba 404.
+         Con el código HTTP adelante, el cartel puede decir QUÉ hacer. */
+      if(!r.ok) throw new Error('http'+r.status);
+      return r.json();
+    })
     .then(function(j){
       if(j && j.version) SERVER_VER=String(j.version);
       if(j && j.adminAuth) SERVER_ADMIN_AUTH=String(j.adminAuth);
@@ -6510,6 +6520,13 @@ var ULTIMO_ERROR='';          // por qué falló la última lectura de la planil
 function motivoDeError(e){
   var m=String((e&&e.message)||e||'');
   if(m==='clave') return 'el servidor pide la clave del equipo';
+  /* Los códigos de Google, en castellano y con QUÉ HACER (§4dm). Un 404 acá no es «probá
+     más tarde»: la dirección del panel dejó de existir y no se arregla sola. */
+  if(m==='http404') return 'la dirección del panel ya no existe (404). Suele pasar cuando se crea una implementación NUEVA del Apps Script en vez de actualizar la de siempre: cada una estrena su propia dirección. En Apps Script → Implementar → Administrar implementaciones, editar la que ya estaba (✏️) y elegir «Versión nueva»';
+  if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
+  if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
+  if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
+  if(/^http\d+$/.test(m)) return 'Google respondió con un error '+m.slice(4);
   if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)';
   if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
   return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';

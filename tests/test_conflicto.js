@@ -48,7 +48,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     window.fetch=function(url,o){
       var body=JSON.parse(o.body); window._bodies.push(body);
       var r=window._resp(body);
-      return Promise.resolve({ json:function(){ return Promise.resolve(r); } });
+      /* ⚠️ `ok`/`status` van sí o sí: una Response de verdad siempre los trae, y desde
+         §4dm `apiPost` los mira para poder decir «404: la dirección ya no existe» en vez
+         de reventar contra el JSON. Sin ellos, este doble simula un 404 sin querer. */
+      return Promise.resolve({ ok:true, status:200, json:function(){ return Promise.resolve(r); } });
     };
     var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0||d.getDay()===6) d.setDate(d.getDate()+1);
     window._F=isoLocal(d);

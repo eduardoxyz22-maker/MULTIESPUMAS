@@ -5723,6 +5723,60 @@ suites `.cjs` que usan ✓/✗ y cierran con «N bien · N mal» salían como **
 —`test_productos_mes` escondía sus 29 comprobaciones—. Ahora también lee esa línea. Queda
 una sola sin resumen (`test_stock_detalle`, que imprime una frase y ya).
 
+## 4dm. 🚨 El servidor del panel dejó de responder (404) — y el cartel decía la mentira cómoda (2026-09-09, tarde)
+
+Revisando el estado general apareció esto, que **no tiene nada que ver con el RPT** y es
+mucho más urgente:
+
+```
+14:23  ✓ servidor del panel: versión 2026-09-05-c
+       último aviso de Kommo al panel: 2026-09-09T14:20:53Z
+17:53  ✗ El panel no aceptó el aviso: HTTP 404
+```
+
+(Workflow «Traer ventas de Kommo (respaldo)», corridas #40 y #41.) Entre esas dos horas el
+`/exec` del Apps Script dejó de existir. **El `.gs` del repo no se tocó desde el 05/09**
+(último commit `e412b39`), así que el cambio fue del lado de Google: una implementación
+nueva —que **estrena otra dirección**—, una archivada, o el acceso cambiado.
+
+Mientras esté así, **el panel entero no lee ni guarda nada**: es la misma cara de «entro de
+otra PC y aparece todo en 0» de §4di. Lo que se cargue queda en el dispositivo y se manda
+cuando vuelva.
+
+### Lo que sí se pudo arreglar desde acá: que el cartel diga la verdad
+`apiPost` iba derecho a `r.json()` **sin mirar el código HTTP**. Con un 404, Google devuelve
+una página de error, `r.json()` reventaba con «Unexpected token» y `motivoDeError` lo
+clasificaba como *«Google devolvió una página… suele ser momentáneo»*. Momentáneo no era: la
+vendedora reintentaba para siempre y nadie se enteraba de que había que tocar Google.
+
+Ahora `apiPost` tira `http<código>` y el cartel dice **qué hacer**:
+- **404** → «la dirección del panel ya no existe. Suele pasar cuando se crea una
+  implementación NUEVA del Apps Script en vez de actualizar la de siempre: cada una estrena
+  su propia dirección. Implementar → Administrar implementaciones → editar la que ya estaba
+  (✏️) → Versión nueva».
+- **403** → «Quién tiene acceso» tiene que decir «Cualquier persona».
+- **401** → la implementación quedó restringida.
+- **5xx** → es de Google, suele arreglarse solo.
+
+⚠️ Y apareció un **doble de prueba incompleto**: el `fetch` falso de `test_conflicto.js`
+devolvía `{json:…}` sin `ok`/`status`. Una `Response` de verdad SIEMPRE los trae, así que el
+doble estaba simulando un 404 sin querer y tiró 5 checks abajo. Cualquier doble de `fetch`
+nuevo tiene que traer `ok:true, status:200`.
+
+### Pruebas
+`tests/test_carga.js` pasa de 18 a **24 checks** (sección 5): los cuatro códigos traducidos,
+que el 404 **no** diga «momentáneo», y que `apiPost` avise del código en vez de reventar
+contra el JSON. Batería completa: **1.890 comprobaciones, 0 mal**.
+
+### Lo que tiene que hacer el dueño
+1. Abrir la planilla → **Extensiones → Apps Script**.
+2. **Implementar → Administrar implementaciones**.
+3. Si la de siempre está ahí: ✏️ → **Versión nueva** → Implementar. La dirección no cambia.
+4. Si no está (o se creó una nueva): copiar la dirección `/exec` que quede y actualizar
+   `SHEETS_URL` en `pedidos.html` **y** el secret `PANEL_URL` de Actions.
+5. Verificar sin entrar a Google: Actions → «Traer ventas de Kommo (respaldo)» → Run workflow.
+   Tiene que imprimir `servidor del panel: versión …`.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
