@@ -194,7 +194,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ cada tienda con la zona que dio el dueño, textual',
       zonas['Central']==='Central' && zonas['Mia Plaza']==='Mia Plaza' &&
       zonas['Buenos Aires']==='Centro' && zonas['Mutualista']==='Mutualista' &&
-      zonas['Charcas']==='Centro' && zonas['Carmelo']==='Feria',
+      zonas['Charcas']==='Centro' && zonas['Carmelo']==='Feria' &&
+      zonas['Tiendas Roho']==='Norte',
       Object.keys(zonas).map(function(k){return k+'→'+(zonas[k]||'—');}).join(' · '));
 
   /* ⚠️ El mismo problema que ya tuvieron con «Carola Chavez» / «Carola Chávez», en las
@@ -219,7 +220,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     });
   });
   const conUbic=ubic.filter(function(x){ return x.tiene; });
-  chk('las 6 tiendas propias tienen su ubicación (Tiendas Roho no es tienda propia)',
+  /* Tiendas Roho tiene ZONA pero no pin: no es tienda propia y sus entregas no van
+     siempre al mismo lugar (§4dn). Que siga sin pin es a propósito, no un olvido. */
+  chk('las 6 tiendas propias tienen su ubicación; Tiendas Roho tiene zona pero no pin',
       conUbic.length===6 && ubic.filter(function(x){return !x.tiene;})[0].n==='Tiendas Roho',
       conUbic.map(function(x){return x.n;}).join(' · '));
   chk('⚠️ el mapa las lee todas (si el formato no sirviera, el chofer no las vería)',

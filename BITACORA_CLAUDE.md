@@ -5805,8 +5805,13 @@ que no es tienda propia.
 
 ### Y las zonas, dictadas también
 `Central → Central · Mia Plaza → Mia Plaza · Buenos Aires → Centro · Mutualista → Mutualista
-· Charcas → Centro · Carmelo → Feria`. **Buenos Aires y Charcas comparten «Centro» a
-propósito** — es lo que dijo él, y es justamente para lo que sirve agrupar la ruta.
+· Charcas → Centro · Carmelo → Feria · **Tiendas Roho → Norte**`. **Buenos Aires y Charcas
+comparten «Centro» a propósito** — es lo que dijo él, y es justamente para lo que sirve
+agrupar la ruta.
+
+**Tiendas Roho tiene zona pero NO pin**, y también a propósito: es el único destino que no es
+tienda propia y sus entregas no van siempre al mismo lugar. Que le falte la ubicación no es
+un olvido — el test lo dice con todas las letras para que nadie «lo complete» más adelante.
 
 ### El bug que apareció al ir a cargarlas
 El panel agrupaba las zonas por **texto EXACTO**: `renderZonas` usaba `String(p.zona).trim()`

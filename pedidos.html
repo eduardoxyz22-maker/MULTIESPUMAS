@@ -1571,14 +1571,16 @@ var RPT_TIPOS=['Reposición','Adicional'];
    la ruta del chofer. Dos tiendas comparten zona a propósito (Buenos Aires y Charcas van
    las dos en «Centro»): es lo que dijo él, y es justamente para lo que sirve agrupar.
    ⚠️ La escritura no es un candado: `zonasDeLista`/`renderZonas` agrupan sin mayúsculas ni
-   acentos, así que si el equipo ya venía escribiendo «centro», no se parte en dos. */
+   acentos, así que si el equipo ya venía escribiendo «centro», no se parte en dos.
+   Tiendas Roho es el único destino que NO es tienda propia: tiene zona (Norte) pero no un
+   pin fijo — sus entregas no van siempre al mismo lugar. */
 /* Las ubicaciones las dio el dueño una por una (§4dn), con el pin exacto de cada tienda.
    Van en el formato que produce `normalizaUbicacion` y que lee `coordsDeLink`
    (`?q=lat,lng`), así el pedido entra al mapa del chofer sin pasar por el geocodificador
    — y SIN el `&aprox=1`, porque no son «la cuadra»: son la puerta.
    ⚠️ Tiendas Roho va sin ubicación: es el único destino que no es tienda propia. */
 var SUCURSALES=[
-  {n:'Tiendas Roho',  z:'', d:'', m:''},
+  {n:'Tiendas Roho',  z:'Norte',      d:'', m:''},
   {n:'Mia Plaza',     z:'Mia Plaza',  d:'', m:'https://www.google.com/maps?q=-17.770160793680894,-63.17008791821695'},
   {n:'Buenos Aires',  z:'Centro',     d:'', m:'https://www.google.com/maps?q=-17.780648363028185,-63.18369352382509'},
   {n:'Central',       z:'Central',    d:'', m:'https://www.google.com/maps?q=-17.772220746893716,-63.16718045701694'},

@@ -197,9 +197,10 @@ correo + el mensaje de **WhatsApp**.
   un `input` con lista, así que se puede escribir otra. Autocompleta zona/dirección/maps sin
   pisar lo escrito. **Ubicaciones y zonas las dictó el dueño** (§4dn) — no se tocan sin
   preguntarle: `Central→Central · Mia Plaza→Mia Plaza · Buenos Aires→Centro ·
-  Mutualista→Mutualista · Charcas→Centro · Carmelo→Feria`, y Buenos Aires y Charcas
-  comparten «Centro» **a propósito**. Las ubicaciones son el pin exacto (`?q=lat,lng`, sin
-  el `&aprox=1` de §4dh); Tiendas Roho va sin ubicación ni zona porque no es tienda propia.
+  Mutualista→Mutualista · Charcas→Centro · Carmelo→Feria · Tiendas Roho→Norte`, y Buenos
+  Aires y Charcas comparten «Centro» **a propósito**. Las ubicaciones son el pin exacto
+  (`?q=lat,lng`, sin el `&aprox=1` de §4dh); **Tiendas Roho tiene zona pero NO pin**, también
+  a propósito: no es tienda propia y sus entregas no van siempre al mismo lugar.
   ⚠️ Antes había ahí zonas que **inventé yo** («Norte», «Centro») y `sucursalElegida()` las
   escribía solas, desviando la ruta del chofer sin que nadie lo notara.
 - ⚠️ **Las zonas se agrupan sin mayúsculas ni acentos** (§4dn, `zonasDeLista`/`zonaCanonica`):
@@ -223,7 +224,7 @@ correo + el mensaje de **WhatsApp**.
   del medio repinta todos los otros Excel del panel.
 - ⚠️ `xlsxHoja` tenía la regex de celdas glotona: una **celda vacía con estilo** se tragaba
   la de al lado (valor corrido de columna, en silencio). Arreglado en §4dk.
-- `tests/test_rpt.js` (84 checks).
+- `tests/test_rpt.js` (96 checks).
 - **§4dl** — repaso: (1) **«Quién vendió qué» ya no cuenta ATC ni RPT como ventas**
   (`buscarData`); lo que queda afuera se dice con `busFueraTxt`, abajo del cuadro y en la
   carátula impresa. ⚠️ Hasta el 09/09 las ATC SÍ entraban marcadas — está anotado en la
