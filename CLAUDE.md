@@ -157,12 +157,19 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   nueva. Pasó de verdad el 09/09 entre las 14:23 y las 17:53.
   ⚠️ Todo doble de `fetch` en los tests tiene que traer `ok:true, status:200`: una `Response`
   real siempre los trae, y sin ellos el doble simula un 404 (rompió `test_conflicto.js`).
-  ⚠️ **Un 404 en el navegador NO significa que el Apps Script esté caído** (§4do): el 09/09 a
-  las 20:26 el mismo `/exec` le contestaba bien a GitHub Actions mientras el navegador del
-  dueño recibía 404. Es la sesión de Google del navegador (varias cuentas → `/u/0/`, `/u/1/`).
-  Por eso `apiPost` pide con **`credentials:'omit'`** y `CARGA_INTENTOS` llega a 45 s.
+  ⚠️ **Un 404 en el navegador NO significa que el Apps Script esté caído** (§4do, §4dp): el
+  09/09 el mismo `/exec` le contestaba bien a GitHub Actions mientras el navegador del dueño
+  daba 404, **y en incógnito andaba**. Era la **caché**: `/exec` contesta con un redirect a
+  `script.googleusercontent.com` que el navegador guarda, y al reimplementar esa dirección
+  muere. Por eso `apiPost` agrega `?_=<ms>` + `cache:'no-store'` (y `credentials:'omit'`), y
+  `CARGA_INTENTOS` llega a 45 s. ⚠️ Ese parámetro **no puede llamarse `k` ni `kommo`**:
+  `doPost` desviaría al webhook de Kommo y el panel dejaría de guardar.
   **Prueba de 20 segundos: abrir el panel en incógnito.** Y **NO volver a implementar**: cada
   «Nueva implementación» estrena otra dirección y empeora el enredo.
+- ⚠️ **Si publicaste algo y «no se ve», mirá el deploy de Pages ANTES de tocar el código**
+  (§4dp): el 09/09 falló con `Failed to get ID Token. Request timeout` — infraestructura de
+  GitHub dentro de `actions/deploy-pages@v5`, nada del repo. Se arregla con cualquier push
+  nuevo. Workflow `273388817` en `mcp__github__actions_list`.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.

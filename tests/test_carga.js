@@ -141,6 +141,32 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ apiPost avisa del código HTTP en vez de reventar contra el JSON',
       lanzado==='http404', lanzado);
 
+  /* §4dp — el 09/09 el panel daba 404 en el navegador del dueño y andaba en INCÓGNITO, con
+     el mismo Apps Script contestándole bien a GitHub Actions. Era la caché del navegador:
+     un `/exec` contesta con un redirect que el navegador guarda, y al reimplementar la
+     dirección guardada muere. Con un número distinto por pedido no hay redirect reusable. */
+  const cache = await page.evaluate(async () => {
+    var urls=[], ini=[];
+    var orig=window.fetch;
+    window.fetch=function(u,o){ urls.push(String(u)); ini.push(o||{});
+      return Promise.resolve({ok:true,status:200,json:function(){ return Promise.resolve({ok:true}); }}); };
+    await apiPost({action:'list'});
+    await new Promise(function(r){ setTimeout(r,3); });
+    await apiPost({action:'list'});
+    window.fetch=orig;
+    var n=function(u){ var m=String(u).match(/[?&]_=(\d+)/); return m?m[1]:''; };
+    return { u1:urls[0]||'', u2:urls[1]||'', t1:n(urls[0]), t2:n(urls[1]),
+             cache:(ini[0]||{}).cache, cred:(ini[0]||{}).credentials };
+  });
+  chk('⚠️ cada pedido lleva su propio número: el navegador no puede reusar una dirección guardada',
+      !!cache.t1 && !!cache.t2 && cache.t1!==cache.t2, cache.t1+' ≠ '+cache.t2);
+  chk('…y se pide sin caché y sin arrastrar la sesión de Google',
+      cache.cache==='no-store' && cache.cred==='omit', cache.cache+' / '+cache.cred);
+  /* ⚠️ El Apps Script desvía al camino de Kommo si ve `k` o `kommo` en la dirección: el
+     número de la caché NO puede llamarse así o el panel entero dejaría de guardar. */
+  chk('⚠️ el parámetro no se llama «k» ni «kommo» (eso desviaría al camino de Kommo)',
+      !/[?&](k|kommo)=/.test(cache.u1), cache.u1.replace(/^.*\/exec/,'…/exec'));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

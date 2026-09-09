@@ -5909,6 +5909,50 @@ que sea, **no** una para mañana, **no** una venta común atrasada; el cartel no
 días y es `sticky`; el Excel va antes que el texto en la ventana de guardado; y el botón
 avisa en vez de quedarse mudo. Batería completa: **1.915 comprobaciones, 0 mal**.
 
+## 4dp. El 404 era la CACHÉ del navegador (y el chip que no se veía era Pages) (2026-09-09, noche)
+
+### La prueba que faltaba
+El dueño probó lo que le pedí: **en incógnito abre**. Con eso más lo de §4do (el mismo
+`/exec` contestándole bien a GitHub Actions a las 20:26 mientras su navegador daba 404), el
+cerco se cierra: **ni el servidor, ni la red, ni la implementación — el perfil del navegador**.
+
+⚠️ En §4do escribí que era la sesión de Google (varias cuentas → `/u/0/`, `/u/1/`). **Eso no
+se sostiene**: un `fetch` a otro dominio no manda cookies por defecto, así que la sesión no
+viajaba. Lo que sí explica todo es la **caché**: un `/exec` de Apps Script contesta con un
+**redirect** a `script.googleusercontent.com`, y ese redirect el navegador lo guarda. Al
+reimplementar, la dirección guardada muere → el navegador la sigue usando y recibe 404 para
+siempre, mientras una ventana de incógnito (sin caché) anda perfecto.
+
+`apiPost` agrega `?_=<milisegundos>` y pide con `cache:'no-store'`: sin dos pedidos iguales,
+no hay redirect reusable. ⚠️ El parámetro **no puede llamarse `k` ni `kommo`**: `doPost` del
+Apps Script desvía al camino del webhook de Kommo si los ve, y el panel entero dejaría de
+guardar. Hay un check que lo cuida.
+(`credentials:'omit'` queda: no arregla esto, pero saca una ambigüedad de encima y no cuesta.)
+
+### Y el chip que «no se veía»
+El dueño: *«no veo el chip de reposiciones»*. Estaba en `main` desde `76b4b18` — lo que falló
+fue el **despliegue de Pages**, con un error de infraestructura de GitHub que no tiene nada
+que ver con el código:
+
+```
+Error message: Failed to get ID Token. Request timeout: /147//idtoken/…
+##[error]Ensure GITHUB_TOKEN has permission "id-token: write".
+```
+
+Es el servicio OIDC de GitHub tardando de más dentro de `actions/deploy-pages@v5`. Se arregla
+volviendo a desplegar (cualquier push nuevo alcanza). **Antes de tocar el código porque «no
+se ve algo que publiqué», mirar si el deploy de Pages salió verde**: `mcp__github__actions_list`
+sobre el workflow `273388817`.
+
+⚠️ Y la otra mitad: el chip **no está en la barra de botones** (Excel, Mapa, Lista de carga…)
+sino en la fila de filtros de abajo, junto a «Todos · Por cobrar · Sin chofer…», arriba de la
+tabla. La captura que mandó cortaba justo antes.
+
+### Pruebas
+`tests/test_carga.js` pasa de 24 a **27 checks**: que cada pedido lleve su propio número y no
+se repita, que se pida con `no-store` y sin credenciales, y que el parámetro **no se llame
+`k` ni `kommo`**. Batería completa: **1.918 comprobaciones, 0 mal**.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

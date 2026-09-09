@@ -1827,7 +1827,18 @@ function apiPost(payload){
      adelante y devuelve 404 si la app no es de la cuenta que quedó primera. Pidiendo la
      planilla SIN credenciales, la petición es anónima —que es justo como está publicada,
      «Cualquier persona»— y deja de depender de con qué cuenta esté logueado cada uno. */
-  return fetch(SHEETS_URL,{method:'POST',credentials:'omit',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
+  /* ⚠️ `?_=<milisegundos>` — LA CACHÉ DEL NAVEGADOR, QUE GUARDÓ UNA DIRECCIÓN MUERTA (§4dp).
+     El 09/09 el panel daba 404 en el navegador del dueño y andaba en INCÓGNITO, con el
+     mismo Apps Script contestándole bien a GitHub Actions a la misma hora. O sea: ni el
+     servidor ni la red — algo del perfil del navegador.
+     Un `/exec` de Apps Script contesta con un REDIRECT a `script.googleusercontent.com`, y
+     ese redirect el navegador SÍ lo puede guardar. Al reimplementar, la dirección vieja
+     muere: el navegador sigue mandando a la guardada y recibe 404 para siempre, mientras
+     una ventana nueva (sin caché) anda perfecto. Con un número distinto en cada pedido, no
+     hay redirect reusable que valga.
+     El `_` no molesta al Apps Script: `doPost` lee el cuerpo, no los parámetros. */
+  var _url=SHEETS_URL+(SHEETS_URL.indexOf('?')>=0?'&':'?')+'_='+Date.now();
+  return fetch(_url,{method:'POST',credentials:'omit',cache:'no-store',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload)})
     .then(function(r){
       /* ⚠️ ANTES ESTO IBA DERECHO A `r.json()` (§4dm). Cuando Google contesta 404 —la
          implementación del Apps Script se borró, se archivó, o se hizo una NUEVA (que
