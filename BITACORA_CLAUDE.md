@@ -6090,6 +6090,23 @@ contra `main` sin este cambio**: el test agenda un pedido nuevo para `D(3)` = ho
 calendario de §4dh, en otro test; anotado en Pendientes.
 Publicado en `main` (`c129f1e`).
 
+### Segunda vuelta, misma tarde: el pie se abre por medida
+El dueño mandó una captura del pie con sus números reales (TOTAL 22 · 110 · 316 · 211 ·
+105) y pidió: *"dar click mostrar el desglose de esas medidas, qué modelos, sería ideal"*.
+- Cada fila **«▸ por medida · 140x190 · 2 modelos»** del pie se toca y despliega debajo los
+  modelos que la componen (`tr.producir-modelo`: nombre, código, «hay» y los cinco números);
+  se vuelve a tocar y se cierra. Qué medidas están abiertas vive en `PRODUCIR_MED_ABIERTA`
+  (por bloque + medida) y sobrevive al redibujo, porque `producirMedida()` llama a
+  `renderStock()` como todo lo demás.
+- En esa misma captura la medida venía escrita de tres formas —«105×190», «130X190CM»,
+  «160X200»—, porque los nombres sueltos traen la medida tal cual la escribe el almacén.
+  `producirMedidaEtq()` la deja de una sola forma (`130x190`, `70x190x3`, «sin medida») para
+  el pie, el desglose y el texto copiado; el nombre del producto sigue mostrando la medida
+  como la conoce el panel.
+- `tests/test_producir.js`: **52 checks** (+7: la escritura de la medida, un nombre suelto
+  con «130X190CM» que cae en «sin asignar» como `130x190`, abrir y cerrar una medida del pie
+  con sus números, y el texto copiado con la medida unificada).
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de

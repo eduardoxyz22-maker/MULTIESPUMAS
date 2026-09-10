@@ -124,7 +124,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     (`stockMarcaDeNombre`; lista de los catálogos del sistema que viven en `rotacion.html`),
     si no de la última fábrica pedida (`o.fab`), y si no → «❓ Sin fábrica asignada» (las
     líneas FLEX/PEDIC de ROHO: **falta que el dueño diga dónde se hacen**). Sin conteo no
-    se calcula nada. `tests/test_producir.js` (45, reloj clavado en el 10/09/2026).
+    se calcula nada. El pie «por medida» se **toca y despliega los modelos** que la componen
+    (`producirMedida`, estado en `PRODUCIR_MED_ABIERTA`); la medida del pie va unificada por
+    `producirMedidaEtq` («130X190CM» = `130x190`). `tests/test_producir.js` (52, reloj
+    clavado en el 10/09/2026).
     ⚠️ `rotacion.html` (12/08, matriz Ene-25 a Jul-26, proyección a 5 meses con backtest)
     es una FOTO: no se alimenta sola y el dueño no quiere subir reportes; por producto se
     equivoca 62% a un mes (13% en el total), así que no sirve para pedir por producto.
