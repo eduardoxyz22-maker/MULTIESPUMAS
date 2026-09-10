@@ -50,6 +50,14 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   que sostiene que `lh3.googleusercontent.com/d/<id>` muestre la foto sin sesión (§4cd).
   `tests/test_servidor.js` sección 7 mide el **orden** con dobles que anotan cada paso: contra
   el `.gs` viejo fallan 4 y el detalle dice el bug (`candado → kommo → suelta`).
+- **📡 `doGet` de afuera** (§4du, `2026-09-10-b`): el 10/09 Ejecuciones mostró un `doGet` cada
+  3-4 s, de 3-5 s cada uno (la planilla entera), con los `doPost` del panel en 0,5 s. **Nada
+  del repo llama al `/exec` con GET** — es alguien de afuera, sin identificar, y sin
+  `PANEL_KEY` se lleva la lista de clientes. Ahora cada GET se **anota** (`getRegistrar_`:
+  nombres de parámetros, nunca valores) y la respuesta sale de **`CacheService`** 20 s
+  (`GET_CACHE_SEG`, trozos de 64 KB); guardar/borrar/borrador la invalidan
+  (`getCacheOlvidar_`). El `list` por POST no usa caché. ⚠️ En el test, el doble de
+  `CacheService` devuelve UNA instancia. Sección 8 de `test_servidor.js`.
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es

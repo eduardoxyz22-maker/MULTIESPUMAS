@@ -79,6 +79,11 @@ function hacerDrive(){
 
 function cargar(filas, props){
   const sh = hacerPlanilla(filas), drive = hacerDrive();
+  const cache = { _m: {},
+    get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
+    put(k, v){ this._m[k] = String(v); },
+    putAll(o){ for (const k in o) this._m[k] = String(o[k]); },
+    remove(k){ delete this._m[k]; } };
   const ctx = {
     console, Date,
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sh, insertSheet: () => sh }) },
@@ -91,6 +96,11 @@ function cargar(filas, props){
       deleteProperty: (k) => { if (props) delete props[k]; } }) },
     UrlFetchApp: { fetch: () => ({ getResponseCode: () => 404, getContentText: () => '{}' }) },
     LockService: { getScriptLock: () => ({ waitLock(){}, releaseLock(){} }) },
+    /* La caché del script (§4du): un mapa en memoria; el vencimiento no se simula.
+       ⚠️ UNA sola instancia por planilla: en Google `getScriptCache()` devuelve siempre la
+       misma caché. Devolver un objeto nuevo por llamada hacía que guardar y leer cayeran en
+       mapas distintos, y el test decía «3 lecturas» con el servidor bien. */
+    CacheService: { getScriptCache: () => cache },
     ContentService: { MimeType:{JSON:'json'}, createTextOutput: (t) => ({ _t:t, setMimeType(){ return this; } }) },
     DriveApp: drive,
     Utilities: { formatDate: (d)=>String(d), base64Decode: () => [], newBlob: () => ({}) },
@@ -429,6 +439,36 @@ console.log('\n── 7. El candado no traba las lecturas ni espera a Kommo ─�
   a.post(foto); a.post(foto); a.post(foto);
   chk('⚠️ la carpeta de fotos se busca en Drive UNA sola vez, no en cada foto',
       busquedas===1 && props.FOTOS_FOLDER_ID==='CARPETA1', busquedas+' búsquedas · id '+props.FOTOS_FOLDER_ID);
+}
+
+/* ══ 8. Los GET de afuera: se anotan y no leen la hoja entera cada vez (§4du) ════════
+   El registro de Ejecuciones del 10/09 mostró un chorro de `doGet` cada 3-4 segundos, de
+   3 a 5 s cada uno, y NADA de este repositorio llama al /exec con GET. Mientras se
+   identifica al que llama, el servidor tiene que (1) decir qué parámetros trae cada GET
+   —sin valores: pueden ser claves— y (2) contestar desde la caché en vez de leer la
+   planilla entera por cada uno. Un guardado borra la caché: nadie lee nada viejo. */
+console.log('\n── 8. Los GET de afuera ──');
+{
+  const a = cargar([HDR, fila({id:'p1'}), fila({id:'p2'})], { PANEL_KEY: '' });
+  let lecturas = 0; const orig = a.sh.getDataRange; a.sh.getDataRange = function(){ lecturas++; return orig.call(this); };
+  const logs = []; a.ctx.console = { log: (t) => logs.push(String(t)), error: () => {}, warn: () => {} };
+  const g1 = a.get({}), g2 = a.get({}), g3 = a.get({ _: '123', k: 'secreto-que-no-va-al-registro' });
+  chk('⚠️ tres GET seguidos leen la planilla UNA sola vez (los otros dos salen de la caché)',
+      lecturas===1 && g1.ok===true && g1.pedidos.length===2 && g3.ok===true && g3.pedidos.length===2, lecturas+' lecturas');
+  chk('…y cada GET queda anotado con los NOMBRES de sus parámetros, nunca los valores',
+      logs.length===3 && /parámetros: ninguno/.test(logs[0]) && /parámetros: _,k/.test(logs[2]) && !logs.join(' ').includes('secreto'), logs.join(' | ').slice(0,160));
+  // Se guarda un pedido → la caché se borra → el próximo GET vuelve a leer, y ya lo trae.
+  const s = a.post(conClave({ action:'save', pedido:{ id:'p3', fecha:MARTES, turno:'AM', cliente:'N', ts:AHORA } }));
+  const g4 = a.get({});
+  chk('un guardado borra la caché: el GET siguiente lee de nuevo y ya trae el pedido nuevo',
+      s.ok===true && lecturas===2 && g4.pedidos.length===3, lecturas+' lecturas · '+g4.pedidos.length+' pedidos');
+  // El POST 'list' del panel NO pasa por la caché: siempre la hoja de verdad.
+  a.post(conClave({ action:'list' })); a.post(conClave({ action:'list' }));
+  chk('la lista por POST (la del panel) no usa la caché: lee la hoja siempre', lecturas===4, lecturas+' lecturas');
+  // Sin CacheService (un Google raro) sigue contestando, solo que leyendo cada vez.
+  delete a.ctx.CacheService;
+  const g5 = a.get({});
+  chk('sin caché disponible contesta igual, leyendo la hoja', g5.ok===true && g5.pedidos.length===3);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

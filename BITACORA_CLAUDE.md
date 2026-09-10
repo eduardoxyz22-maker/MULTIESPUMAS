@@ -6269,6 +6269,54 @@ Es un cambio de servidor: el dueño tiene que pegar el `.gs` y hacer
 panel va a avisar que el servidor está viejo — `SCRIPT_VERSION_ESPERADA` ya subió a
 `2026-09-10-a` en `pedidos.html`, como manda la regla de subir las dos juntas.
 
+## 4du. El chorro de `doGet`: alguien de afuera lee la planilla entera cada 3 segundos (2026-09-10)
+
+Con el `.gs` de §4dt ya publicado (Versión 23), el panel seguía sin conectar, **también en
+incógnito**, con el servidor sin contestar en 45 s. El dueño mandó la captura del registro de
+**Ejecuciones** de Apps Script, y ahí estaba la respuesta de verdad:
+
+- `doPost` (lo del panel): **0,5 a 1 s** cada uno. El servidor atiende rápido.
+- `doGet`: **uno cada 3 o 4 segundos**, de **3,3 a 5,7 s** cada uno, varios «En proceso» a la
+  vez. En 50 segundos, 14. Cada `doGet` es `readAll()`: la planilla ENTERA.
+
+Eso es lo que ahoga al servidor: tres o cuatro lecturas completas de la hoja siempre en el
+aire, y los guardados del equipo esperando detrás. Y **NADA de este repositorio llama al
+`/exec` con GET**: `pedidos.html` solo hace POST (`apiPost`), `traer_kommo.py` hace POST, el
+worker de Cloudflare habla con Kommo y no con el panel, `productos-mes.js` ni tiene la
+dirección, y ningún dashboard la usa (se buscó el id del script y `/exec` en todo el repo).
+**El que llama es de afuera**: un Google Sheet con `IMPORTDATA`, algo que armó la otra
+herramienta, un monitor de «uptime», una pestaña con el `/exec` abierto refrescándose…
+⚠️ Y como `PANEL_KEY` está apagada por decisión del dueño (§4ce), cada uno de esos GET se
+lleva **la lista entera de clientes**. Hay que saber quién es.
+
+### Qué se hizo (`google-apps-script.gs` → `2026-09-10-b`)
+1. **Cada `doGet` se anota en el registro** (`getRegistrar_`): los NOMBRES de los parámetros y
+   el largo de la consulta — nunca los valores, que pueden ser claves. En Ejecuciones, abrir
+   una fila de `doGet` muestra `doGet · parámetros: ninguno` (un `IMPORTDATA` o un pinger),
+   `_` (algo que copia al panel) o `k` (Kommo).
+2. **La respuesta del GET sale de la caché** (`CacheService`, `GET_CACHE_SEG`=20 s, partida en
+   trozos de 64 KB porque cada clave admite 100 KB y con acentos un carácter puede ser 2
+   bytes): diez GET seguidos leen la hoja UNA vez. **Un guardado, un borrado o un borrador
+   nuevo la borran** (`getCacheOlvidar_`), así el que lee por GET no ve nada viejo. El `list`
+   por POST —el del panel— NO pasa por la caché: siempre la hoja de verdad. Sin
+   `CacheService` (un Google raro) contesta igual, leyendo.
+3. Solo el camino GET cambió. El de §4dt (candado sin lecturas ni Kommo) sigue.
+
+### Pruebas
+`tests/test_servidor.js` pasa de 76 a **81 checks**, sección 8: tres GET seguidos leen la hoja
+una sola vez, cada uno queda anotado con nombres y sin valores (se manda `k:'secreto…'` y se
+comprueba que no aparezca), un guardado borra la caché y el GET siguiente ya trae el pedido
+nuevo, el `list` por POST no usa la caché, y sin `CacheService` contesta igual. Contra el
+`.gs` publicado `2026-09-05-c` fallan **8** (los 4 de §4dt más estos 4).
+⚠️ El doble de `CacheService` tiene que devolver **la misma instancia** en cada
+`getScriptCache()`: devolver un objeto nuevo por llamada hacía que guardar y leer cayeran en
+mapas distintos y el test acusara «3 lecturas» con el servidor bien.
+
+### Lo que falta: identificar al que llama
+Con `2026-09-10-b` publicado, el dueño abre Ejecuciones → una fila de `doGet` → el registro
+dice qué parámetros trae. Con eso se sabe si es Kommo, algo que imita al panel, o un lector
+sin parámetros (planilla/pinger). Hasta entonces, la caché lo vuelve inofensivo.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de

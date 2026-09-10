@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-10-a';   // ⬅️ el candado deja de trabar las lecturas y de esperar a Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-10-b';   // ⬅️ los GET de afuera se anotan y salen de la caché (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -105,10 +105,68 @@ function forzarOk_(body) {
 }
 
 /** GET: útil para ver los datos desde el navegador (mismo formato que 'list').
- *  Con la clave configurada hay que agregarle ?k=LA_CLAVE a la dirección. */
+ *  Con la clave configurada hay que agregarle ?k=LA_CLAVE a la dirección.
+ *
+ *  📡 QUIÉN LO LLAMA, Y QUE NO LEA LA HOJA ENTERA CADA VEZ (§4du).
+ *  El 10/09 el registro de Ejecuciones mostró un chorro de `doGet` —uno cada 3 o 4 segundos,
+ *  de 3 a 5 s cada uno— mientras los `doPost` del panel tardaban medio segundo. NADA de este
+ *  repositorio llama al /exec con GET (el panel, el repaso de Kommo y el worker usan POST):
+ *  es algo de afuera, y cada llamada suya leía la planilla entera. Eso era lo que tenía al
+ *  servidor ahogado y al equipo mirando «Enviando…».
+ *  Dos cosas: (1) se anota en el registro QUÉ parámetros trae cada GET —solo los nombres,
+ *  nunca los valores, que pueden ser claves— para poder identificar al que llama; (2) la
+ *  respuesta se guarda `GET_CACHE_SEG` segundos en la caché del script, así diez GET seguidos
+ *  leen la hoja UNA vez. Un guardado la borra, para que el que lee por GET no vea nada viejo. */
+var GET_CACHE_SEG = 20;              // cuánto vale una respuesta de GET antes de volver a leer la hoja
+var GET_CACHE_TROZO = 64 * 1024;     // CacheService acepta 100 KB por clave; con acentos un char puede ser 2 bytes
 function doGet(e) {
   if (!claveOk_(e && e.parameter && e.parameter.k)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
-  return jsonOut({ ok: true, version:SCRIPT_VERSION, pedidos: readAll() });
+  getRegistrar_(e);
+  var txt = getCacheLeer_();
+  if (!txt) {
+    txt = jsonTexto_({ ok: true, version:SCRIPT_VERSION, pedidos: readAll() });
+    getCacheGuardar_(txt);
+  }
+  return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
+}
+/* Solo los NOMBRES de los parámetros: `k` puede ser una clave y no va al registro. */
+function getRegistrar_(e) {
+  try {
+    var p = (e && e.parameter) || {};
+    console.log('doGet · parámetros: ' + (Object.keys(p).join(',') || 'ninguno') +
+                ' · largo de la consulta: ' + String((e && e.queryString) || '').length);
+  } catch (err) {}
+}
+function jsonTexto_(obj) {
+  if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
+  if (obj && obj.adminAuth == null) obj.adminAuth = adminKey_() ? 'clave' : 'abierto';
+  return JSON.stringify(obj);
+}
+function getCache_() {
+  try { return (typeof CacheService !== 'undefined') ? CacheService.getScriptCache() : null; } catch (e) { return null; }
+}
+function getCacheLeer_() {
+  var c = getCache_(); if (!c) return '';
+  try {
+    var n = Number(c.get('get_n')); if (!(n > 0)) return '';
+    var partes = [];
+    for (var i = 0; i < n; i++) { var t = c.get('get_' + i); if (t == null) return ''; partes.push(t); }
+    return partes.join('');
+  } catch (e) { return ''; }
+}
+function getCacheGuardar_(txt) {
+  var c = getCache_(); if (!c) return;
+  try {
+    var todo = {}, n = 0;
+    for (var i = 0; i < txt.length; i += GET_CACHE_TROZO) { todo['get_' + n] = txt.slice(i, i + GET_CACHE_TROZO); n++; }
+    todo['get_n'] = String(n);
+    c.putAll(todo, GET_CACHE_SEG);
+  } catch (e) {}
+}
+/* Después de escribir la hoja: que el próximo GET la lea de nuevo. */
+function getCacheOlvidar_() {
+  var c = getCache_(); if (!c) return;
+  try { c.remove('get_n'); } catch (e) {}
 }
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
@@ -650,6 +708,7 @@ function doSave(p, forzar) {
   }
   p.rev = Math.max((viejo ? (Number(viejo[REV_COL - 1]) || 0) : 0) + 1, Date.now());
   var row = recToRow(p);
+  getCacheOlvidar_();
   if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); return jsonOut({ ok:true, pedido:p, mode:'update' }); }
   sh.appendRow(row);
   return jsonOut({ ok:true, pedido:p, mode:'add' });
@@ -661,7 +720,7 @@ function doDelete(id) {
   if (last >= 2) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) {
-      if (String(ids[i][0]) === String(id)) { sh.deleteRow(i + 2); return jsonOut({ ok:true }); }
+      if (String(ids[i][0]) === String(id)) { sh.deleteRow(i + 2); getCacheOlvidar_(); return jsonOut({ ok:true }); }
     }
   }
   return jsonOut({ ok:false, error:'not found' });
@@ -997,6 +1056,7 @@ function kommoProcesar_(ids, origen) {
       sh.appendRow(recToRow(listos[i].rec));
       hechos.push(listos[i].id);
     }
+    if (hechos.length) getCacheOlvidar_();
     // Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
     for (var k = 0; k < yaEstaban.length; k++) if (repararNombreBorrador_(sh, yaEstaban[k])) reparados.push(yaEstaban[k]);
     return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
