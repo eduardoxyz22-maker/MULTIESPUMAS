@@ -126,8 +126,11 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     líneas FLEX/PEDIC de ROHO: **falta que el dueño diga dónde se hacen**). Sin conteo no
     se calcula nada. El pie «por medida» se **toca y despliega los modelos** que la componen
     (`producirMedida`, estado en `PRODUCIR_MED_ABIERTA`); la medida del pie va unificada por
-    `producirMedidaEtq` («130X190CM» = `130x190`). `tests/test_producir.js` (52, reloj
-    clavado en el 10/09/2026).
+    `producirMedidaEtq` («130X190CM» = `130x190`). Cada bloque scrollea dentro de `.prod-wrap`
+    (`max-height:70vh`) para que el encabezado quede **clavado arriba** y el TOTAL **abajo**:
+    ⚠️ `position:sticky` sin una caja con altura tope NO se clava en nada — se clava contra el
+    scrollport más cercano, que sin `max-height` se va entero con la página (le pasa también
+    a la tabla grande de stock). `tests/test_producir.js` (56, reloj clavado en el 10/09/2026).
     ⚠️ `rotacion.html` (12/08, matriz Ene-25 a Jul-26, proyección a 5 meses con backtest)
     es una FOTO: no se alimenta sola y el dueño no quiere subir reportes; por producto se
     equivoca 62% a un mes (13% en el total), así que no sirve para pedir por producto.

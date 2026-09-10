@@ -6107,6 +6107,32 @@ El dueño mandó una captura del pie con sus números reales (TOTAL 22 · 110 ·
   con «130X190CM» que cae en «sin asignar» como `130x190`, abrir y cerrar una medida del pie
   con sus números, y el texto copiado con la medida unificada).
 
+### Tercera vuelta: los títulos no se pueden ir de la pantalla
+Con la tabla real (Heaven: 22 · 110 · 316 · 211 · 105) el dueño bajó al desglose por medida:
+*"cuando bajo a ver el detalle por medida me pierdo al ver solo números sin saber si es para
+la semana, quincena o qué: no se ven los títulos de arriba"*. Con cinco columnas de números
+pelados, el encabezado no es decoración.
+- ⚠️ **`position:sticky` en el `thead` ya estaba** (`.roho-tabla thead th`, top:0) **y no
+  hacía nada**: el que scrollea es `#stock-body`, y el `<div style="overflow:auto">` que
+  envuelve la tabla es su propio scrollport — el `thead` se clavaba al borde de ese div, que
+  se iba entero para arriba con la página. Sticky se clava contra **el scrollport más
+  cercano**, así que sin altura tope no hay nada contra qué clavarse. La misma trampa está en
+  la tabla grande de stock (§4co) y en la de `renderStock`: si algún día molesta, es este
+  mismo arreglo.
+- **`.prod-wrap`** (`max-height:70vh; overflow:auto`) hace que cada bloque de fábrica
+  scrollee adentro de su caja; recién ahí el encabezado queda clavado arriba (verificado:
+  con la caja scrolleada 637 px, el `thead` queda a 1 px del borde).
+- La fila del **TOTAL** se clava abajo (`tr.prod-total`, `bottom:0`) mientras se recorre la
+  lista, dice **de qué fábrica es** («TOTAL Industrias Moreno · Heaven») y repite en chiquito
+  qué es cada número (`7 d · 15 d · octubre · 1ª q · 2ª q`). Al llegar al pie se despega sola
+  y queda arriba de las medidas, que es su lugar natural.
+- `tests/test_producir.js`: **56 checks**. Los cuatro nuevos leen `getComputedStyle` de
+  verdad (posición, `top`/`bottom`, `z-index` y que el fondo sea opaco), no el HTML: un
+  sticky sin caja con altura pasa cualquier prueba de texto y no se clava en la pantalla.
+  ⚠️ Al agregarlos pisé la variable `r` que usaban los checks de más abajo y dos empezaron a
+  medir `undefined` (uno en rojo, el otro en verde por casualidad). En este archivo cada
+  bloque nuevo usa su propio nombre (`r5b`, `r5c`, `rf`).
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de

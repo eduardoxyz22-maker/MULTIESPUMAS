@@ -447,6 +447,16 @@ th.sortable:hover{color:var(--teal-dk)}
    los saltos»): con el nowrap de las dos primeras se metían en la columna de al lado. */
 .stk-tabla th:nth-child(-n+2),.stk-tabla td:nth-child(-n+2){white-space:normal}
 .roho-wrap{max-height:46vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px;margin-top:10px}
+/* 🏭 «Qué producir» (§4dr): la tabla scrollea DENTRO de su propia caja para que el
+   encabezado quede clavado arriba. ⚠️ Sin la altura tope, `position:sticky` del `thead` no
+   hace nada: el que scrollea es `#stock-body` y la caja se le va entera para arriba, así
+   que al bajar al desglose por medida quedaban cinco columnas de números sin título —
+   *«me pierdo al ver solo números sin saber si es para la semana, quincena o qué»* (dueño,
+   10/09). La fila del TOTAL y las de «por medida» viven en el `tfoot` y se clavan abajo por
+   la misma razón: son el renglón que se compara con todo lo demás. */
+.prod-wrap{max-height:70vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px}
+.prod-wrap thead th{top:0;z-index:3}
+.prod-wrap tfoot tr.prod-total td{position:sticky;bottom:0;z-index:2;background:#f4f6f7;border-top:2px solid var(--gray-md);font-weight:700}
 .wa-text{width:100%;min-height:210px;font-family:inherit;font-size:.82rem;line-height:1.5;border:1px solid var(--gray-md);border-radius:var(--r-md);padding:12px;white-space:pre-wrap;background:var(--gray-lt);color:var(--text);resize:vertical}
 .modal-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
 .wa-btn{background:#25D366;color:#fff}
@@ -12497,7 +12507,7 @@ function renderProducir(d){
       '</div>'+
       (B.k==='otros' ? '<div style="font-size:.78rem;color:#7c4b00;background:#fff4d6;border-radius:6px;padding:5px 8px;margin-bottom:6px">Estos no dicen de qué marca son (líneas Flex y Pedic que vende ROHO, o nombres fuera del catálogo) y nunca se les anotó un pedido a fábrica. Decí en cuál se hacen y pasan a su bloque.</div>' : '');
     if(!filas.length){ html+='<div style="font-size:.82rem;color:var(--muted)">Nada que producir: lo que hay cubre la semana, los 15 días y '+esc(MS.nombre)+'.</div></div>'; return; }
-    html+='<div style="overflow:auto"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
+    html+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
       '<thead><tr><th>Producto</th><th>Vende por día</th><th>Hay</th><th>Cubre hasta</th>'+
       '<th>7 días<br><span style="font-weight:400;font-size:.85em">hasta el '+fmtFechaCorta(h7)+'</span></th>'+
       '<th>15 días<br><span style="font-weight:400;font-size:.85em">hasta el '+fmtFechaCorta(h15)+'</span></th>'+
@@ -12518,7 +12528,7 @@ function renderProducir(d){
           '<td>'+num(f.mes1)+'</td><td>'+num(f.mes2)+'</td></tr>';
       }).join('')+
       '</tbody><tfoot>'+
-      '<tr><td colspan="4"><b>TOTAL</b></td><td><b>'+B.tot.sem+'</b></td><td><b>'+B.tot.quin+'</b></td><td><b>'+B.tot.mes+'</b></td><td><b>'+B.tot.mes1+'</b></td><td><b>'+B.tot.mes2+'</b></td></tr>'+
+      '<tr class="prod-total"><td colspan="4"><b>TOTAL '+esc(B.titulo)+'</b></td><td><b>'+B.tot.sem+'</b> <span style="font-weight:400;color:var(--muted)">7 d</span></td><td><b>'+B.tot.quin+'</b> <span style="font-weight:400;color:var(--muted)">15 d</span></td><td><b>'+B.tot.mes+'</b> <span style="font-weight:400;color:var(--muted)">'+esc(MS.nombre)+'</span></td><td><b>'+B.tot.mes1+'</b> <span style="font-weight:400;color:var(--muted)">1ª q</span></td><td><b>'+B.tot.mes2+'</b> <span style="font-weight:400;color:var(--muted)">2ª q</span></td></tr>'+
       Object.keys(B.medidas).sort().map(function(md){
         var M=B.medidas[md], abierta=!!PRODUCIR_MED_ABIERTA[B.k+'|'+md];
         var modelos=abierta ? filas.filter(function(f){ return f.algo && f.md===md; }) : [];

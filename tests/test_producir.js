@@ -208,6 +208,27 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('tocar «por medida · 160x190» de Heaven despliega el TITANIO ICE con sus cinco números (1 · 9 · 19 · 14 · 5) y lo que hay', !r5b.sinFila && r5b.sub.length===1 && /↳ TITANIO ICE cód CH1201 · hay 5/.test(r5b.sub[0][0]) && r5b.sub[0].slice(1).join(' ')==='1 9 19 14 5', JSON.stringify(r5b.sub));
   chk('la fila abierta marca ▾ y las otras medidas siguen cerradas', /▾ por medida · 160x190/.test(r5b.med) && r5b.otrosCerrado===true, r5b.med);
   chk('tocarla de nuevo la cierra', r5c===0, String(r5c));
+
+  /* ---------- 5c. Los títulos no se pierden al bajar ----------
+     El dueño, con la tabla real: «cuando bajo a ver el detalle por medida me pierdo al ver
+     solo números sin saber si es para la semana, quincena o qué: no se ven los títulos de
+     arriba». La tabla scrollea dentro de su caja y el encabezado queda clavado. */
+  const rf = await page.evaluate(() => {
+    var el=document.getElementById('producir');
+    var wrap=el.querySelector('.prod-wrap');
+    if(!wrap) return { sinCaja:true };
+    var th=wrap.querySelector('thead th');
+    var tot=wrap.querySelector('tfoot tr.prod-total td');
+    var cs=function(n,p){ return n?getComputedStyle(n)[p]:''; };
+    return { alto:getComputedStyle(wrap).maxHeight, scroll:getComputedStyle(wrap).overflowY,
+             thPos:cs(th,'position'), thTop:cs(th,'top'), thZ:cs(th,'zIndex'), thFondo:cs(th,'backgroundColor'),
+             totPos:cs(tot,'position'), totBottom:cs(tot,'bottom'), totFondo:cs(tot,'backgroundColor'),
+             totTxt:(wrap.querySelector('tfoot tr.prod-total')||{}).textContent.replace(/\s+/g,' ').trim() };
+  });
+  chk('la tabla scrollea dentro de su propia caja (si no, el encabezado clavado no sirve de nada)', rf && !rf.sinCaja && /vh|px/.test(rf.alto) && (rf.scroll==='auto'||rf.scroll==='scroll'), JSON.stringify(rf&&{alto:rf.alto,scroll:rf.scroll}));
+  chk('el encabezado queda clavado arriba, con fondo propio y por encima de las filas', rf && rf.thPos==='sticky' && rf.thTop==='0px' && Number(rf.thZ)>=2 && /rgb/.test(rf.thFondo), JSON.stringify(rf&&{p:rf.thPos,t:rf.thTop,z:rf.thZ,f:rf.thFondo}));
+  chk('la fila del TOTAL queda clavada abajo mientras se recorre la lista', rf && rf.totPos==='sticky' && rf.totBottom==='0px' && /rgb/.test(rf.totFondo), JSON.stringify(rf&&{p:rf.totPos,b:rf.totBottom,f:rf.totFondo}));
+  chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /1 7 d/.test(rf.totTxt) && /9 15 d/.test(rf.totTxt) && /19 octubre/.test(rf.totTxt) && /14 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
   chk('el bloque «sin fábrica asignada» pide que el dueño diga dónde se hacen', r && /Decí en cuál se hacen/.test(r.t) && /línea que vende ROHO/.test(r.t));
   chk('nada de plata en el cuadro: ni Bs ni montos', r && !/Bs\b/.test(r.t) && !/\$/.test(r.t));
   chk('la pantalla no tiró errores', errors.length===0, errors.join(' | '));
