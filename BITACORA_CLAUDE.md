@@ -6388,6 +6388,21 @@ el panel: ⚙️ Configuración del proyecto → Propiedades del script → `GET
 decide si va `GET_CERRADO = 1`. ⚠️ Mientras `PANEL_KEY` siga apagada (decisión suya, §4ce),
 cada GET de afuera sigue llevándose la lista de clientes.
 
+## 4dw. Catálogo: COLCHON SUEÑA LITE 140x190 · CH2532 (2026-09-10)
+
+Pedido del dueño: *"agrega a la lista de productos el colchon sueña lite código CH2532 medida
+2 plazas 140x190"*. Una entrada más en `CODIGOS` (`pedidos.html`), al final:
+`"CH2532":{d:"COLCHON SUEÑA LITE",m:"140x190"}`. Con eso la vendedora la ve en la lista como
+«COLCHON SUEÑA LITE 140x190 · CH2532» (`NOMBRES_LISTA` se arma sola desde `CODIGOS`), y el
+código la resuelve.
+- El nombre lleva **SUEÑA** a propósito: `stockMarcaDeNombre` la manda al bloque **Sueña →
+  Multiespumas** de 🏭 Qué producir (§4dr) por esa palabra; «COLCHON LITE» a secas habría
+  quedado «❓ Sin fábrica asignada».
+- El reporte de existencias la llama «COLCHON LITE …» (§4ct): entra **por código** (`stockInfo`
+  por `CH2532`), no por nombre. Las **otras medidas** del LITE siguen sin código en el catálogo
+  y quedan con su nombre crudo (§4cy) hasta que el dueño pase sus códigos.
+- Ningún test cuenta las entradas del catálogo; la batería sigue igual.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
