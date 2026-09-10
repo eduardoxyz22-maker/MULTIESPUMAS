@@ -35,6 +35,20 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
 - Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
   y `SCRIPT_VERSION_ESPERADA` juntos.
+- **🔒 El candado del servidor: qué SÍ y qué NO** (§4dt, `2026-09-10-a`). `doPost` toma
+  `LockService` con `waitLock(30000)` — necesario para **guardar** y **borrar**, veneno para
+  todo lo demás, porque el panel entero espera. Quedaron **fuera** del candado, a propósito:
+  · **`list`** (`readAll` es un solo `getValues`: foto atómica, y cada dispositivo lee al
+  entrar y cada minuto — era el cuello de botella);
+  · **todo lo que le pregunta a Kommo** (`borradorDeLead_` hace hasta 4 llamadas de red por
+  venta y el repaso corre **cada 10 min**): `kommoProcesar_` arma los borradores afuera y
+  toma el candado solo para escribir. ⚠️ `leadYaCargado_` se **revalida dentro** del candado:
+  ahí vive la garantía de no duplicar. Si no hay nada que escribir, ni lo toma.
+  · Fotos y geocode ya estaban afuera. La carpeta de fotos se busca **una vez**
+  (`FOTOS_FOLDER_ID` en propiedades). ⚠️ El `setSharing` **por archivo** se mantiene: es lo
+  que sostiene que `lh3.googleusercontent.com/d/<id>` muestre la foto sin sesión (§4cd).
+  `tests/test_servidor.js` sección 7 mide el **orden** con dobles que anotan cada paso: contra
+  el `.gs` viejo fallan 4 y el detalle dice el bug (`candado → kommo → suelta`).
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es

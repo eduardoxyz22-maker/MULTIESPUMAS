@@ -6206,6 +6206,65 @@ segundos, deja el reintento agendado, muestra los segundos mientras espera, ofre
 intentar», la cuenta regresiva **baja y coincide en los dos carteles**, y `busy` se dice en
 castellano. ⚠️ El chip vive en `#conn-form-txt` / `#conn-admin-txt`, no en `#adm-conn-txt`.
 
+## 4dt. El servidor tardaba minutos: el candado trababa lo que no tenía que trabar (2026-09-10)
+
+*"qué pasa con el servidor, al subir fotos, al entrar, al cambiar algo tarda minutos"*, con
+una captura del botón clavado en **«⟳ Enviando…»**.
+
+### La causa
+El Apps Script atiende **de a uno**: `doPost` toma `LockService.getScriptLock()` con
+`waitLock(30000)`. Eso está bien para guardar —dos personas no pueden pisar la misma fila—,
+pero adentro del candado había **dos cosas que no lo necesitan**, y son justo las que más
+corren:
+
+1. **LEER la planilla.** `readAll()` es UN solo `getDataRange().getValues()`: una foto
+   atómica, no una lectura fila por fila que se pueda mezclar con un guardado a medias.
+   Cada dispositivo pide la lista **al entrar y cada minuto**. Con el equipo conectado, las
+   lecturas se hacían de a una **y hacían esperar a cualquiera que quisiera guardar**.
+2. **HABLAR CON KOMMO.** Armar un borrador son hasta **cuatro pedidos de red** a
+   `eanez.kommo.com` (el lead, el contacto, el catálogo y la vendedora), y se hacían con el
+   candado tomado. El repaso de respaldo corre **cada 10 minutos** (`traer-kommo.yml`): con
+   5 ventas eran ~20 llamadas seguidas con la planilla cerrada. Eso son los «minutos».
+   Peor: aunque no hubiera nada que cargar, igual tomaba el candado — 144 veces por día.
+
+Y aparte, cada foto hacía una **búsqueda de carpeta en Drive** (`getFoldersByName`), o sea
+cuatro búsquedas por entrega. Estaba anotado como pendiente desde §4dq.
+
+### Qué se hizo (`google-apps-script.gs` → `2026-09-10-a`)
+- **`list` sale del candado.** Es una línea movida arriba del `waitLock`.
+- **Kommo, antes del candado.** `crearBorradorDeLead_` se partió en dos: `borradorDeLead_`
+  (todo lo que se le pregunta a Kommo, sin candado, devuelve el pedido armado o el motivo) y
+  la escritura. `kommoProcesar_` arma todo afuera y toma el candado **solo para escribir**.
+  ⚠️ La garantía de «no duplicar» NO se aflojó: `leadYaCargado_` se vuelve a comprobar
+  **dentro** del candado, porque entre que se armó el borrador y el momento de escribirlo
+  puede entrar otro aviso con el mismo lead.
+- **Si no hay nada que escribir, ni se toma el candado.**
+- **La carpeta de fotos se busca una vez** y el id queda en las propiedades del script
+  (`FOTOS_FOLDER_ID`); si alguien la borra o la mueve, el `try` la vuelve a buscar sola. De
+  paso se comparte **la carpeta** «cualquiera con el link». ⚠️ El `setSharing` por archivo
+  **se mantiene**: es el que sostiene hoy que `lh3.googleusercontent.com/d/<id>` muestre la
+  foto sin sesión de Google (§4cd), y romperlo dejaría a los choferes sin fotos. Sacarlo es
+  el próximo paso, y hay que probarlo con UNA foto antes.
+
+### Lo que NO se tocó
+El candado de **guardar** y de **borrar** sigue igual: ahí sí hace falta.
+
+### Pruebas
+`tests/test_servidor.js` pasa de 70 a **76 checks**, sección 7. No miran el código: miran el
+**orden de lo que pasa**, reemplazando `LockService` y `UrlFetchApp` por dobles que anotan
+cada paso. Contra el `.gs` publicado (`2026-09-05-c`) **fallan cuatro**, y el detalle dice
+exactamente el bug viejo: `candado → kommo → suelta`, «3 búsquedas» de carpeta para 3 fotos.
+⚠️ Dos trampas del doble de Google: sin `deleteProperty` en `PropertiesService` reventaba con
+«not a function», y sin `KOMMO_TOKEN` configurado `kGet_` ni sale a la red, así que el test
+del orden pasaba sin haber probado nada.
+
+### Para que sirva de algo hay que PUBLICARLO
+Es un cambio de servidor: el dueño tiene que pegar el `.gs` y hacer
+**Implementar → Administrar implementaciones → ✏️ la de siempre → Versión nueva**.
+⚠️ NO «Nueva implementación»: eso estrena otra dirección (§4dp). Hasta que lo publique, el
+panel va a avisar que el servidor está viejo — `SCRIPT_VERSION_ESPERADA` ya subió a
+`2026-09-10-a` en `pedidos.html`, como manda la regla de subir las dos juntas.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de

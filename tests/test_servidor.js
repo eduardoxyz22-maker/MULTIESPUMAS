@@ -84,7 +84,11 @@ function cargar(filas, props){
     SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sh, insertSheet: () => sh }) },
     PropertiesService: { getScriptProperties: () => ({
       getProperty: (k) => (props && props[k] != null) ? props[k] : null,
-      setProperty: (k, v) => { props[k] = v; } }) },
+      setProperty: (k, v) => { props[k] = v; },
+      /* ⚠️ El doble tiene que tener TODO lo que el .gs usa: sin `deleteProperty`, el
+         camino que olvida la carpeta de fotos cacheada reventaba con «not a function»
+         y el test lo leía como si el servidor estuviera roto (§4dt). */
+      deleteProperty: (k) => { if (props) delete props[k]; } }) },
     UrlFetchApp: { fetch: () => ({ getResponseCode: () => 404, getContentText: () => '{}' }) },
     LockService: { getScriptLock: () => ({ waitLock(){}, releaseLock(){} }) },
     ContentService: { MimeType:{JSON:'json'}, createTextOutput: (t) => ({ _t:t, setMimeType(){ return this; } }) },
@@ -359,6 +363,72 @@ console.log('\n── 6. La columna Revisión ──');
   chk('la hoja de 29 columnas recibe el encabezado «Revisión» (col 30) sola', a.sh._datos[0][29]==='Revisión', a.sh._datos[0][29]);
   chk('las filas viejas se leen igual que antes', a.post(conClave({action:'list'})).pedidos[0].cliente==='CLIENTE');
   chk('la versión del script subió', a.ctx.SCRIPT_VERSION>='2026-09-05-b', a.ctx.SCRIPT_VERSION);
+}
+
+/* ══ 7. El candado: lo que NO tiene que trabar (§4dt) ═══════════════════════════
+   El dueño, con el botón clavado en «Enviando…»: *"qué pasa con el servidor, al subir
+   fotos, al entrar, al cambiar algo tarda minutos"*. El servidor atiende de a uno, y con
+   el candado tomado estaban dos cosas que no lo necesitan:
+     · LEER la planilla (`readAll` es un solo `getValues`, una foto atómica), y cada
+       dispositivo lee al entrar y cada minuto;
+     · HABLAR CON KOMMO (hasta 4 pedidos de red por venta), con el repaso corriendo cada
+       10 minutos.
+   Nadie se da cuenta mirando el código: hay que mirar el ORDEN de lo que pasa. */
+console.log('\n── 7. El candado no traba las lecturas ni espera a Kommo ──');
+{
+  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
+  let ev = [];
+  a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ ev.push('candado'); }, releaseLock(){ ev.push('suelta'); } }) };
+  ev = [];
+  const l = a.post(conClave({ action:'list' }));
+  chk('⚠️ LEER la planilla no toma el candado (era el cuello de botella del panel)',
+      l.ok===true && Array.isArray(l.pedidos) && ev.length===0, ev.join(',') || 'ninguno');
+  ev = [];
+  const s = a.post(conClave({ action:'save', pedido:{ id:'p9', fecha:MARTES, turno:'AM', cliente:'N', ts:AHORA } }));
+  chk('…pero GUARDAR sí lo toma (dos personas no pueden pisarse)', s.ok===true && ev[0]==='candado' && ev.indexOf('suelta')>0, ev.join(','));
+  ev = [];
+  a.post(conClave({ action:'delete', id:'p1' }));
+  chk('…y borrar también', ev[0]==='candado', ev.join(','));
+}
+{
+  // ⚠️ Sin `KOMMO_TOKEN` configurado, `kGet_` ni sale a la red: el test no probaría nada.
+  const a = cargar([HDR], { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' });
+  const orden = [];
+  a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ orden.push('candado'); }, releaseLock(){ orden.push('suelta'); } }) };
+  a.ctx.UrlFetchApp = { fetch: () => { orden.push('kommo'); return { getResponseCode: () => 200,
+    getContentText: () => JSON.stringify({ id:111, status_id:1, pipeline_id:1, responsible_user_id:9, price:0 }) }; } };
+  const r = a.post({ action:'kommoLeads', key:'kk', leads:['111'] });
+  const iC = orden.indexOf('candado');
+  chk('⚠️ lo que se le pregunta a Kommo pasa ANTES de tomar el candado, no adentro',
+      r.ok===true && orden.indexOf('kommo')>=0 && (iC<0 || orden.indexOf('kommo')<iC) && (iC<0 || orden.slice(iC).indexOf('kommo')<0),
+      orden.join(' → '));
+}
+{
+  /* El caso de TODOS los días: el repaso corre, mira una venta que no da para borrador
+     (Kommo no la devuelve, o no está en la etapa que dispara) y no hay nada que escribir.
+     ⚠️ Con `leads:[]` este test no probaría nada: esa puerta ya existía. Hace falta que la
+     lista TRAIGA ids y que igual no quede nada por escribir. */
+  const a = cargar([HDR], { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' });
+  const orden = [];
+  a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ orden.push('candado'); }, releaseLock(){ orden.push('suelta'); } }) };
+  const r = a.post({ action:'kommoLeads', key:'kk', leads:['999'] });
+  chk('un repaso que no encuentra nada para cargar ni toca el candado (corre 144 veces por día)',
+      r.ok===true && r.creados===0 && orden.length===0, orden.join(',') || 'ninguno');
+}
+{
+  // La carpeta de fotos se busca UNA vez y su id queda guardado.
+  const props = { PANEL_KEY: CLAVE };
+  const a = cargar([HDR], props);
+  let busquedas = 0;
+  const carpeta = { getId: () => 'CARPETA1', createFile: () => ({ getId: () => 'F1', setSharing(){}, getParents: () => ({ hasNext: () => false }) }), setSharing(){} };
+  a.ctx.DriveApp = { getFoldersByName: () => { busquedas++; return { hasNext: () => true, next: () => carpeta }; },
+                     getFolderById: (id) => { if(id!=='CARPETA1') throw new Error('no existe'); return carpeta; },
+                     createFolder: () => carpeta, Access:{ANYONE_WITH_LINK:1}, Permission:{VIEW:1} };
+  a.ctx.Utilities.base64Decode = () => [1,2,3];
+  const foto = { action:'foto', key:CLAVE, dataUrl:'data:image/jpeg;base64,AAAA', cliente:'C' };
+  a.post(foto); a.post(foto); a.post(foto);
+  chk('⚠️ la carpeta de fotos se busca en Drive UNA sola vez, no en cada foto',
+      busquedas===1 && props.FOTOS_FOLDER_ID==='CARPETA1', busquedas+' búsquedas · id '+props.FOTOS_FOLDER_ID);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

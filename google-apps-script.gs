@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-05-c';   // ⬅️ el borrador trae el NOMBRE del cliente, no «Lead #123» (§4ch)
+var SCRIPT_VERSION = '2026-09-10-a';   // ⬅️ el candado deja de trabar las lecturas y de esperar a Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -142,10 +142,18 @@ function doPost(e) {
   // Fotos de la entrega: van a Drive (en una celda no entran). Tambien sin lock: es lento.
   if (action === 'foto')       return guardarFoto(body);
   if (action === 'borrarFoto') return borrarFoto(body);
+  /* 📖 LEER NO NECESITA CANDADO (§4dt).
+     `readAll()` es UN solo `getDataRange().getValues()`: una foto de la planilla en un
+     instante, no una lectura fila por fila que se pueda mezclar con un guardado a medias.
+     Pedir el candado exclusivo para eso era el cuello de botella del panel entero: cada
+     dispositivo pide la lista al entrar y cada minuto, así que las lecturas de todo el
+     equipo se hacían de a una Y hacían esperar a cualquiera que quisiera guardar.
+     El dueño, con el botón clavado en «Enviando…»: *"que pasa con el servidor al subir
+     fotos, al entrar, al cambiar algo tarda minutos"*. */
+  if (action === 'list') return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'list')   return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
     if (action === 'delete') return doDelete(body.id);
     return doSave(body.pedido, !!body.forzar);
   } finally {
@@ -739,9 +747,28 @@ function backupDiario() {
  * ========================================================================== */
 var FOTOS_FOLDER = 'Fotos entregas MultiEspumas';
 
+/* 📁 LA CARPETA DE FOTOS, BUSCADA UNA SOLA VEZ (§4dt).
+   `getFoldersByName` recorre el Drive del dueño en CADA foto — con cuatro fotos por entrega
+   son cuatro búsquedas al pedo. El id queda guardado en las propiedades del script; si
+   alguien borra o mueve la carpeta, el `try` lo detecta y la vuelve a buscar sola.
+   De paso se comparte LA CARPETA «cualquiera con el link»: los archivos que se crean adentro
+   heredan ese permiso, que es lo que necesita `lh3.googleusercontent.com/d/<id>` para
+   mostrar la foto sin sesión de Google (§4cd). El `setSharing` por archivo se mantiene igual
+   —es el que está probado y funcionando— pero con la carpeta ya compartida deja de ser el
+   único que sostiene el permiso. */
+var FOTOS_PROP = 'FOTOS_FOLDER_ID';
 function fotosFolder_() {
+  var props = PropertiesService.getScriptProperties();
+  var id = props.getProperty(FOTOS_PROP);
+  if (id) {
+    try { return DriveApp.getFolderById(id); }
+    catch (e) { try { props.deleteProperty(FOTOS_PROP); } catch (e2) {} }
+  }
   var it = DriveApp.getFoldersByName(FOTOS_FOLDER);
-  return it.hasNext() ? it.next() : DriveApp.createFolder(FOTOS_FOLDER);
+  var f = it.hasNext() ? it.next() : DriveApp.createFolder(FOTOS_FOLDER);
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  try { props.setProperty(FOTOS_PROP, f.getId()); } catch (e) {}
+  return f;
 }
 
 function guardarFoto(body) {
@@ -934,20 +961,44 @@ function kommoLeads(body) {
   return kommoProcesar_(ids, 'repaso');
 }
 
+/* ⚠️ TODO LO QUE HABLA CON KOMMO VA **ANTES** DEL CANDADO (§4dt).
+   Armar UN borrador son hasta CUATRO pedidos de red a eanez.kommo.com (el lead, el contacto,
+   el catálogo y la vendedora). Hacerlos con el candado tomado dejaba la planilla trabada todo
+   ese rato — y el repaso de respaldo corre **cada 10 minutos**, así que el equipo entero
+   esperaba a que Kommo contestara para entrar o para guardar. Con 5 leads eran ~20 llamadas
+   seguidas: minutos con la planilla cerrada.
+   Ahora se arma todo afuera y el candado se toma SOLO para escribir las filas.
+   ⚠️ La garantía de «no duplicar» NO se afloja: `leadYaCargado_` se vuelve a comprobar
+   DENTRO del candado, porque entre que se armó el borrador y el momento de escribirlo pudo
+   entrar otro aviso de Kommo con el mismo lead. */
 function kommoProcesar_(ids, origen) {
   var hook = kUltimoHook_();
   if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '' });
+  var shPre = getSheet(), listos = [], saltados = [], yaEstaban = [];
+  for (var j = 0; j < ids.length; j++) {
+    if (leadYaCargado_(shPre, ids[j])) { saltados.push(ids[j] + ':ya estaba'); yaEstaban.push(ids[j]); continue; }
+    var arm = borradorDeLead_(ids[j]);              // ← sin candado: acá se habla con Kommo
+    if (typeof arm === 'string') { saltados.push(ids[j] + ':' + arm); continue; }
+    listos.push({ id: ids[j], rec: arm });
+  }
+  /* Y si no hay NADA que escribir, ni se toma el candado. Es el caso normal: el repaso
+     corre cada 10 minutos y casi siempre no encuentra ventas nuevas — antes trababa la
+     planilla igual, 144 veces por día, para no hacer nada. */
+  if (!listos.length && !yaEstaban.length) {
+    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
+                     creados:0, ids:[], saltados:saltados, reparados:0, ultimoHook:hook.ts || '' });
+  }
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    var hechos = [], saltados = [], reparados = [];
-    for (var i = 0; i < ids.length; i++) {
-      var r = crearBorradorDeLead_(ids[i]);
-      if (r === true) { hechos.push(ids[i]); continue; }
-      saltados.push(ids[i] + ':' + r);
-      // Ya estaba, pero quizá quedó con el nombre que le puso Kommo sola («Lead #123»).
-      if (r === 'ya estaba' && repararNombreBorrador_(getSheet(), ids[i])) reparados.push(ids[i]);
+    var sh = getSheet(), hechos = [], reparados = [];
+    for (var i = 0; i < listos.length; i++) {
+      if (leadYaCargado_(sh, listos[i].id)) { saltados.push(listos[i].id + ':ya estaba'); yaEstaban.push(listos[i].id); continue; }
+      sh.appendRow(recToRow(listos[i].rec));
+      hechos.push(listos[i].id);
     }
+    // Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
+    for (var k = 0; k < yaEstaban.length; k++) if (repararNombreBorrador_(sh, yaEstaban[k])) reparados.push(yaEstaban[k]);
     return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
                      creados:hechos.length, ids:hechos, saltados:saltados,
                      reparados:reparados.length, ultimoHook:hook.ts || '' });
@@ -1034,10 +1085,20 @@ function leadYaCargado_(sh, leadId) {
 }
 
 /** Devuelve true si creó el borrador, o un texto con el motivo por el que no. */
+/* Arma el borrador y lo escribe. Se mantiene por compatibilidad y para probarlo suelto;
+   el camino de verdad (`kommoProcesar_`) usa `borradorDeLead_` + `appendRow` para no hablar
+   con Kommo con el candado tomado (§4dt). */
 function crearBorradorDeLead_(leadId) {
   var sh = getSheet();
   if (leadYaCargado_(sh, leadId)) return 'ya estaba';
-
+  var rec = borradorDeLead_(leadId);
+  if (typeof rec === 'string') return rec;
+  getSheet().appendRow(recToRow(rec));
+  return true;
+}
+/* Todo lo que hay que preguntarle a Kommo para armar un borrador. NO toca la planilla para
+   escribir: devuelve el pedido listo, o el motivo por el que no se puede. */
+function borradorDeLead_(leadId) {
   var lead = kGet_('/leads/' + leadId + '?with=contacts,catalog_elements');
   if (!lead || !lead.id) return 'no se pudo leer el lead';
   /* ⚠️ La etapa se comprueba ACÁ, con el lead en la mano, y no solo en el aviso: algunos
@@ -1096,8 +1157,5 @@ function crearBorradorDeLead_(leadId) {
     vehiculo: '', chofer: '', garantia: '', facturarA: '', nit: '',
     ts: Date.now(), fotos: []
   };
-
-  var sh2 = getSheet();
-  sh2.appendRow(recToRow(borrador));
-  return true;
+  return borrador;
 }
