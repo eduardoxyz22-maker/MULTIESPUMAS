@@ -41,7 +41,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   · **`list`** (`readAll` es un solo `getValues`: foto atómica, y cada dispositivo lee al
   entrar y cada minuto — era el cuello de botella);
   · **todo lo que le pregunta a Kommo** (`borradorDeLead_` hace hasta 4 llamadas de red por
-  venta y el repaso corre **cada 10 min**): `kommoProcesar_` arma los borradores afuera y
+  venta, y el **webhook** de Kommo entra a cada rato — el cron del repaso dice 10 min pero
+  GitHub lo demora a ~3,5 h): `kommoProcesar_` arma los borradores afuera y
   toma el candado solo para escribir. ⚠️ `leadYaCargado_` se **revalida dentro** del candado:
   ahí vive la garantía de no duplicar. Si no hay nada que escribir, ni lo toma.
   · Fotos y geocode ya estaban afuera. La carpeta de fotos se busca **una vez**

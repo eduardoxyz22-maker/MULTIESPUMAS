@@ -6223,9 +6223,13 @@ corren:
    lecturas se hacían de a una **y hacían esperar a cualquiera que quisiera guardar**.
 2. **HABLAR CON KOMMO.** Armar un borrador son hasta **cuatro pedidos de red** a
    `eanez.kommo.com` (el lead, el contacto, el catálogo y la vendedora), y se hacían con el
-   candado tomado. El repaso de respaldo corre **cada 10 minutos** (`traer-kommo.yml`): con
-   5 ventas eran ~20 llamadas seguidas con la planilla cerrada. Eso son los «minutos».
-   Peor: aunque no hubiera nada que cargar, igual tomaba el candado — 144 veces por día.
+   candado tomado: con 5 ventas eran ~20 llamadas seguidas con la planilla cerrada. Eso son
+   los «minutos». Peor: aunque no hubiera nada que cargar, igual tomaba el candado.
+   ⚠️ **Quién lo dispara seguido es el WEBHOOK, no el repaso.** El cron de `traer-kommo.yml`
+   dice «cada 10 minutos», pero GitHub demora los crons frecuentes en repos gratuitos y en
+   la práctica corre **una vez cada ~3,5 horas** (está anotado en el propio yml, y se
+   confirmó el 10/09: corridas 14:03 y 17:39 UTC). El que entra a cada rato es el aviso de
+   Kommo por cambio de etapa — el registro de las 17:40 mostró el último 2 minutos antes.
 
 Y aparte, cada foto hacía una **búsqueda de carpeta en Drive** (`getFoldersByName`), o sea
 cuatro búsquedas por entrega. Estaba anotado como pendiente desde §4dq.
