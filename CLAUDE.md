@@ -58,6 +58,20 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   (`GET_CACHE_SEG`, trozos de 64 KB); guardar/borrar/borrador la invalidan
   (`getCacheOlvidar_`). El `list` por POST no usa caché. ⚠️ En el test, el doble de
   `CacheService` devuelve UNA instancia. Sección 8 de `test_servidor.js`.
+  - **🔎 Quién lee, visible sin Cloud Logging** (§4dv, `2026-09-10-c`): al dueño Ejecuciones
+    **no le despliega** las filas de `doGet` y «Registros de Cloud» está en gris, así que el
+    `console.log` no le sirvió. Cada GET se anota además en la **caché** (`get_log`: últimas
+    40 firmas + conteo por firma = nombres de parámetros + ruta; `Session.
+    getTemporaryActiveUserKey()` recortada a 6 letras como «dispositivo»; de dónde salió la
+    respuesta: caché/hoja/clave/cerrado) y, **como mucho una vez por minuto**, un resumen va a
+    las **Propiedades del script** `GET_RESUMEN`/`GET_ULTIMOS` (se leen en ⚙️ Configuración
+    del proyecto). El panel lo pide con `{action:'getlog'}` → Administración → **📡 ¿Quién
+    lee la planilla?** (`verLecturasGet`/`renderGetLog`: cuántas, desde cuándo, cada cuánto,
+    por firma, y qué hacer). **`GET_CERRADO=1`** en Propiedades cierra la puerta GET **sin
+    reimplementar** (`{error:'get_cerrado'}`, sin leer la hoja; el panel no usa GET). ⚠️ El
+    registro va sin candado: dos GET a la vez pueden pisarse una anotación, es diagnóstico.
+    Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
+    `tests/test_getlog.js`.
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es

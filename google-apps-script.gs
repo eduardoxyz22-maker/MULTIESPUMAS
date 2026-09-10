@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-10-b';   // ⬅️ los GET de afuera se anotan y salen de la caché (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-10-c';   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -116,26 +116,133 @@ function forzarOk_(body) {
  *  Dos cosas: (1) se anota en el registro QUÉ parámetros trae cada GET —solo los nombres,
  *  nunca los valores, que pueden ser claves— para poder identificar al que llama; (2) la
  *  respuesta se guarda `GET_CACHE_SEG` segundos en la caché del script, así diez GET seguidos
- *  leen la hoja UNA vez. Un guardado la borra, para que el que lee por GET no vea nada viejo. */
+ *  leen la hoja UNA vez. Un guardado la borra, para que el que lee por GET no vea nada viejo.
+ *
+ *  🔎 Y QUE SE PUEDA VER SIN CLOUD LOGGING (§4dv, 2026-09-10-c).
+ *  El dueño abrió Ejecuciones y no pudo leer la línea del `console.log`: las filas de `doGet`
+ *  no se despliegan y «Registros de Cloud» está en gris (el script corre en el proyecto de
+ *  Google por defecto, sin visor). Entonces cada GET se anota ADEMÁS en la caché del script
+ *  —las últimas `GET_LOG_MAX` firmas y un conteo por firma— y, a lo sumo una vez por minuto,
+ *  un resumen se copia a las Propiedades del script (`GET_RESUMEN`, `GET_ULTIMOS`), que se
+ *  leen en ⚙️ Configuración del proyecto sin ninguna herramienta. El panel lo pide con
+ *  {action:'getlog'} (Administración → 📡 ¿Quién lee la planilla?).
+ *  Una firma = hora · NOMBRES de parámetros · largo de la consulta · ruta · marca del navegador
+ *  (`Session.getTemporaryActiveUserKey()` recortada: distingue un navegador de otro sin decir
+ *  quién es) · de dónde salió la respuesta (caché / hoja / clave mal / cerrado). NUNCA valores.
+ *  🚪 `GET_CERRADO` = 1 en Propiedades le cierra la puerta al GET sin volver a implementar:
+ *  contesta {ok:false, error:'get_cerrado'} sin leer la hoja. Nada de este repositorio usa GET,
+ *  así que al equipo no le cambia nada; se sigue anotando, para ver si el de afuera insiste.
+ *  Para reabrir, se borra la propiedad. ⚠️ El registro va SIN candado (§4dt): dos GET al
+ *  mismo tiempo pueden pisarse una anotación — es un diagnóstico, no contabilidad. */
 var GET_CACHE_SEG = 20;              // cuánto vale una respuesta de GET antes de volver a leer la hoja
 var GET_CACHE_TROZO = 64 * 1024;     // CacheService acepta 100 KB por clave; con acentos un char puede ser 2 bytes
+var GET_LOG_MAX = 40;                // últimas lecturas GET que se guardan (firmas, no datos)
+var GET_LOG_FIRMAS_MAX = 15;         // firmas distintas como mucho; el resto cae en «otras»
+var GET_LOG_SEG = 6 * 3600;          // vida del registro en la caché (tope de CacheService); cada GET la renueva
+var GET_LOG_PROP_SEG = 60;           // cada cuánto, como mucho, se copia el resumen a las Propiedades del script
 function doGet(e) {
-  if (!claveOk_(e && e.parameter && e.parameter.k)) return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION });
-  getRegistrar_(e);
+  if (!claveOk_(e && e.parameter && e.parameter.k)) { getRegistrar_(e, 'clave'); return jsonOut({ ok:false, error:'clave', version:SCRIPT_VERSION }); }
+  if (getCerrado_()) { getRegistrar_(e, 'cerrado'); return jsonOut({ ok:false, error:'get_cerrado', version:SCRIPT_VERSION }); }
   var txt = getCacheLeer_();
+  getRegistrar_(e, txt ? 'cache' : 'hoja');
   if (!txt) {
     txt = jsonTexto_({ ok: true, version:SCRIPT_VERSION, pedidos: readAll() });
     getCacheGuardar_(txt);
   }
   return ContentService.createTextOutput(txt).setMimeType(ContentService.MimeType.JSON);
 }
+/* 🚪 Propiedades del script → GET_CERRADO = 1 (cualquier cosa que no sea vacío, 0 o no). */
+function getCerrado_() { var v = prop_('GET_CERRADO').toLowerCase(); return !!v && v !== '0' && v !== 'no'; }
 /* Solo los NOMBRES de los parámetros: `k` puede ser una clave y no va al registro. */
-function getRegistrar_(e) {
+function getRegistrar_(e, como) {
+  var f = null;
+  try { f = getFirma_(e, como); } catch (err) { return; }
+  try { console.log('doGet · ' + getFirmaTxt_(f)); } catch (err) {}
+  try { getLogAnotar_(f); } catch (err) {}
+}
+function getFirma_(e, como) {
+  var p = (e && e.parameter) || {};
+  var ruta = String((e && e.pathInfo) || '');
+  if (ruta.indexOf('=') >= 0) ruta = ruta.slice(0, ruta.indexOf('='));   // por si alguien mete un valor en la ruta
+  return { t: Date.now(), p: Object.keys(p).sort().join(',') || 'ninguno',
+           q: String((e && e.queryString) || '').length, r: ruta.slice(0, 30),
+           d: getDispositivo_(), c: String(como || '') };
+}
+/* Una marca por navegador que no dice quién es (rota cada 30 días y es de este script). Un
+   cliente sin cookies —un servicio, un IMPORTDATA— no la trae o la cambia a cada rato: eso
+   también es una pista. */
+function getDispositivo_() {
+  try { var k = String(Session.getTemporaryActiveUserKey() || ''); return k ? k.slice(0, 6) : '?'; } catch (e) { return '?'; }
+}
+function getHora_(t) {
+  try { return Utilities.formatDate(new Date(Number(t)), Session.getScriptTimeZone(), 'dd/MM HH:mm:ss'); } catch (e) { return String(t); }
+}
+function getFirmaTxt_(f) {
+  return getHora_(f.t) + ' · parámetros: ' + f.p + ' · largo de la consulta: ' + f.q +
+         (f.r ? ' · ruta: ' + f.r : '') + ' · dispositivo: ' + f.d + ' · ' + (f.c || '?');
+}
+function getLogVacio_() { return { desde: Date.now(), n: 0, ult: [], firmas: {} }; }
+/* null = no hay caché (un Google raro): el informe lo dice en vez de inventar un cero. */
+function getLogLeer_() {
+  var c = getCache_(); if (!c) return null;
+  try { var t = c.get('get_log'); if (!t) return getLogVacio_(); var o = JSON.parse(t); return (o && o.ult && o.firmas) ? o : getLogVacio_(); }
+  catch (e) { return getLogVacio_(); }
+}
+function getLogAnotar_(f) {
+  var c = getCache_(); if (!c) return;
+  var log = getLogLeer_() || getLogVacio_();
+  log.n++;
+  log.ult.push(f);
+  if (log.ult.length > GET_LOG_MAX) log.ult.splice(0, log.ult.length - GET_LOG_MAX);
+  var k = f.p + (f.r ? ' /' + f.r : '');
+  if (!log.firmas[k] && Object.keys(log.firmas).length >= GET_LOG_FIRMAS_MAX) k = 'otras';
+  var fi = log.firmas[k];
+  if (!fi) fi = log.firmas[k] = { p: f.p, r: f.r, n: 0, pri: f.t, ult: f.t, disp: [], masDisp: false, como: {} };
+  fi.n++; fi.ult = f.t;
+  if (fi.disp.indexOf(f.d) < 0) { if (fi.disp.length < 8) fi.disp.push(f.d); else fi.masDisp = true; }
+  fi.como[f.c] = (fi.como[f.c] || 0) + 1;
+  c.put('get_log', JSON.stringify(log), GET_LOG_SEG);
+  getLogAProps_(c, log);
+}
+/* A las Propiedades del script, para leerlo en ⚙️ Configuración del proyecto. Una vez por
+   minuto como mucho: escribir propiedades tiene cupo diario y el chorro es de miles por hora. */
+function getLogAProps_(c, log) {
   try {
-    var p = (e && e.parameter) || {};
-    console.log('doGet · parámetros: ' + (Object.keys(p).join(',') || 'ninguno') +
-                ' · largo de la consulta: ' + String((e && e.queryString) || '').length);
-  } catch (err) {}
+    if (c.get('get_log_prop')) return;
+    c.put('get_log_prop', '1', GET_LOG_PROP_SEG);
+    PropertiesService.getScriptProperties().setProperties({
+      GET_RESUMEN: getLogResumenTxt_(log),
+      GET_ULTIMOS: log.ult.slice(-12).map(getFirmaTxt_).join('  |  ')
+    });
+  } catch (e) {}
+}
+function getCadaTxt_(s) {
+  return s < 90 ? (Math.round(s * 10) / 10 + ' s') : s < 5400 ? (Math.round(s / 60) + ' min') : (Math.round(s / 360) / 10 + ' h');
+}
+function getLogResumenTxt_(log) {
+  var ahora = Date.now(), seg = Math.max(1, (ahora - log.desde) / 1000);
+  var partes = ['actualizado ' + getHora_(ahora),
+                'desde ' + getHora_(log.desde) + ': ' + log.n + (log.n === 1 ? ' lectura GET' : ' lecturas GET') + (log.n > 1 ? ' (una cada ' + getCadaTxt_(seg / log.n) + ')' : '')];
+  var ks = Object.keys(log.firmas).sort(function (a, b) { return log.firmas[b].n - log.firmas[a].n; });
+  for (var i = 0; i < ks.length; i++) {
+    var fi = log.firmas[ks[i]];
+    partes.push('«' + ks[i] + '» ×' + fi.n + ' · última ' + getHora_(fi.ult) +
+                ' · dispositivos: ' + (fi.disp.join(',') || '?') + (fi.masDisp ? ',…' : '') +
+                ' · ' + Object.keys(fi.como).map(function (q) { return q + ' ' + fi.como[q]; }).join(', '));
+  }
+  return partes.join('  ||  ');
+}
+/* Lo que ve el panel con {action:'getlog'}: firmas y conteos, ni un valor. */
+function getLogInforme_() {
+  var log = getLogLeer_();
+  var out = { ahora: Date.now(), cerrado: getCerrado_(), max: GET_LOG_MAX, resumenProp: prop_('GET_RESUMEN'), sinCache: !log };
+  if (!log) log = getLogVacio_();
+  out.desde = log.desde; out.n = log.n; out.ult = log.ult.slice(-15);
+  out.firmas = Object.keys(log.firmas).map(function (k) {
+    var fi = log.firmas[k];
+    return { k: k, p: fi.p, r: fi.r, n: fi.n, pri: fi.pri, ult: fi.ult, disp: fi.disp, masDisp: !!fi.masDisp, como: fi.como };
+  }).sort(function (a, b) { return b.n - a.n; });
+  return out;
 }
 function jsonTexto_(obj) {
   if (obj && obj.auth == null) obj.auth = panelKey_() ? 'clave' : 'abierto';
@@ -209,6 +316,8 @@ function doPost(e) {
      El dueño, con el botón clavado en «Enviando…»: *"que pasa con el servidor al subir
      fotos, al entrar, al cambiar algo tarda minutos"*. */
   if (action === 'list') return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
+  // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
+  if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {

@@ -93,7 +93,8 @@ function cargar(filas, props){
       /* ⚠️ El doble tiene que tener TODO lo que el .gs usa: sin `deleteProperty`, el
          camino que olvida la carpeta de fotos cacheada reventaba con «not a function»
          y el test lo leía como si el servidor estuviera roto (§4dt). */
-      deleteProperty: (k) => { if (props) delete props[k]; } }) },
+      deleteProperty: (k) => { if (props) delete props[k]; },
+      setProperties: (o) => { if (props) Object.assign(props, o); } }) },
     UrlFetchApp: { fetch: () => ({ getResponseCode: () => 404, getContentText: () => '{}' }) },
     LockService: { getScriptLock: () => ({ waitLock(){}, releaseLock(){} }) },
     /* La caché del script (§4du): un mapa en memoria; el vencimiento no se simula.
@@ -104,7 +105,8 @@ function cargar(filas, props){
     ContentService: { MimeType:{JSON:'json'}, createTextOutput: (t) => ({ _t:t, setMimeType(){ return this; } }) },
     DriveApp: drive,
     Utilities: { formatDate: (d)=>String(d), base64Decode: () => [], newBlob: () => ({}) },
-    Session: { getScriptTimeZone: () => 'America/La_Paz' }
+    /* `getTemporaryActiveUserKey` (§4dv): la marca del navegador que el .gs recorta a 6 letras. */
+    Session: { getScriptTimeZone: () => 'America/La_Paz', getTemporaryActiveUserKey: () => 'ABCDEFGHIJKLMNOP' }
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -469,6 +471,80 @@ console.log('\n── 8. Los GET de afuera ──');
   delete a.ctx.CacheService;
   const g5 = a.get({});
   chk('sin caché disponible contesta igual, leyendo la hoja', g5.ok===true && g5.pedidos.length===3);
+}
+
+/* ══ 9. Quién lee por GET, visible sin Cloud Logging (§4dv) ═══════════════════════
+   El dueño no pudo desplegar las filas de Ejecuciones («Registros de Cloud» en gris), así
+   que el console.log de §4du no le sirvió de nada. El servidor tiene que anotar cada GET en
+   la caché —firmas, nunca valores—, copiar un resumen a las Propiedades del script (que sí
+   se ven en ⚙️ Configuración) como mucho una vez por minuto, contestarlo por POST con
+   {action:'getlog'} y, con GET_CERRADO puesto, negarse sin leer la hoja. */
+console.log('\n── 9. Quién lee por GET ──');
+{
+  const props = { PANEL_KEY: '' };
+  const a = cargar([HDR, fila({id:'p1'})], props);
+  let escrituras = 0;
+  a.ctx.PropertiesService = { getScriptProperties: () => ({
+    getProperty: (k) => (props[k] != null) ? props[k] : null,
+    setProperty: (k, v) => { props[k] = v; },
+    deleteProperty: (k) => { delete props[k]; },
+    setProperties: (o) => { escrituras++; Object.assign(props, o); } }) };
+  a.ctx.console = { log: () => {}, error: () => {}, warn: () => {} };
+  let lecturas = 0; const orig = a.sh.getDataRange; a.sh.getDataRange = function(){ lecturas++; return orig.call(this); };
+  a.get({}); a.get({}); a.get({ _: '1', k: 'secreto-valor' });
+  a.ctx.Session.getTemporaryActiveUserKey = () => 'ZZZZZZ999';                 // otro navegador
+  a.ctx.doGet({ parameter: { hoja: 'x' }, queryString: 'hoja=x', pathInfo: 'pedidos' });
+  const r = a.post(conClave({ action:'getlog' }));
+  const g = r.get || {};
+  const firmas = g.firmas || [];
+  chk('⚠️ {action:"getlog"} cuenta los GET y los agrupa por firma (nombres de parámetros + ruta), la más repetida primero',
+      r.ok===true && g.n===4 && firmas.length===3 && firmas[0].p==='ninguno' && firmas[0].n===2, JSON.stringify(firmas).slice(0,200));
+  chk('…y en toda la respuesta no hay UN valor de parámetro', !JSON.stringify(r).includes('secreto') && !JSON.stringify(r).includes('=x'), '');
+  const fk = firmas.find(f => f.p==='_,k'), fh = firmas.find(f => f.p==='hoja');
+  chk('cada firma dice qué dispositivos y de dónde salió la respuesta (hoja / caché)',
+      fk && fk.disp.length===1 && fk.disp[0]==='ABCDEF' && fk.como.cache===1 && firmas[0].como.hoja===1 && firmas[0].como.cache===1 && fh && fh.r==='pedidos' && fh.disp[0]==='ZZZZZZ',
+      JSON.stringify([fk&&fk.disp, fk&&fk.como, fh&&fh.r, fh&&fh.disp]));
+  chk('la marca del navegador va recortada (6 letras): distingue, no identifica', JSON.stringify(g).indexOf('ABCDEFG')<0 && JSON.stringify(g).indexOf('ABCDEF')>=0, '');
+  chk('las últimas lecturas vienen con hora, largo de consulta y ruta',
+      (g.ult||[]).length===4 && g.ult[3].q==='hoja=x'.length && g.ult[3].r==='pedidos' && typeof g.ult[0].t==='number' && g.ult[3].c==='cache', JSON.stringify((g.ult||[])[3]));
+  /* La copia a las Propiedades sale con el PRIMER GET y después como mucho una vez por
+     minuto: con cuatro GET en el mismo minuto hay UNA escritura, que dice «1 lectura». */
+  chk('⚠️ el resumen se copia a las Propiedades del script UNA vez por minuto, no en cada GET (tienen cupo diario)',
+      escrituras===1 && /1 lectura GET/.test(props.GET_RESUMEN||'') && /«ninguno» ×1/.test(props.GET_RESUMEN||'') && !String(props.GET_RESUMEN+props.GET_ULTIMOS).includes('secreto'),
+      escrituras+' escrituras · '+String(props.GET_RESUMEN).slice(0,140));
+  // 🚪 GET_CERRADO. Pasó el minuto (se vence la marca en la caché): el GET siguiente vuelve a copiar.
+  a.ctx.CacheService.getScriptCache().remove('get_log_prop');
+  props.GET_CERRADO = '1';
+  const antes = lecturas;
+  const gc = a.get({});
+  chk('⚠️ con GET_CERRADO=1 el GET vuelve con «no», SIN pedidos y sin leer la hoja',
+      gc.ok===false && gc.error==='get_cerrado' && !gc.pedidos && lecturas===antes, JSON.stringify(gc).slice(0,100));
+  chk('…pasado el minuto, el resumen en las Propiedades se actualiza (5 lecturas, «ninguno» ×3) y GET_ULTIMOS lista las firmas legibles',
+      escrituras===2 && /5 lecturas GET/.test(props.GET_RESUMEN||'') && /«ninguno» ×3/.test(props.GET_RESUMEN||'') && /cerrado 1/.test(props.GET_RESUMEN||'') &&
+      /parámetros: _,k/.test(props.GET_ULTIMOS||'') && /dispositivo: ABCDEF/.test(props.GET_ULTIMOS||'') && /ruta: pedidos/.test(props.GET_ULTIMOS||'') && !String(props.GET_RESUMEN+props.GET_ULTIMOS).includes('secreto'),
+      escrituras+' escrituras · '+String(props.GET_RESUMEN).slice(0,200));
+  const rl = a.post(conClave({ action:'list' }));
+  chk('…el panel (POST list) sigue leyendo como siempre', rl.ok===true && rl.pedidos.length===1, '');
+  const r2 = a.post(conClave({ action:'getlog' }));
+  chk('…y el informe dice que la puerta está cerrada y que igual insistieron',
+      r2.get.cerrado===true && r2.get.n===5 && r2.get.firmas[0].como.cerrado===1, JSON.stringify(r2.get.firmas[0].como));
+  props.GET_CERRADO = '0';
+  chk('GET_CERRADO=0 (o borrarla) reabre', a.get({}).ok===true, '');
+  // Con PANEL_KEY puesta, un GET con la clave mal también queda anotado (como «clave»), sin el valor.
+  props.PANEL_KEY = CLAVE;
+  const gm = a.get({ k: 'clave-equivocada' });
+  const r3 = a.post(conClave({ action:'getlog' }));
+  const fc = (r3.get.firmas||[]).find(f => f.p==='k');
+  chk('un GET con la clave mal se anota como «clave mal», sin el valor', gm.ok===false && gm.error==='clave' && fc && fc.como.clave===1 && !JSON.stringify(r3).includes('equivocada'), JSON.stringify(fc&&fc.como));
+}
+{
+  // Sin CacheService: el GET contesta igual y el informe lo dice, sin reventar.
+  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: '' });
+  delete a.ctx.CacheService;
+  a.ctx.console = { log: () => {}, error: () => {}, warn: () => {} };
+  const g = a.get({});
+  const r = a.post(conClave({ action:'getlog' }));
+  chk('sin caché disponible el GET contesta igual y el informe avisa que no pudo anotar', g.ok===true && r.ok===true && r.get.sinCache===true && r.get.n===0, JSON.stringify(r.get).slice(0,120));
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

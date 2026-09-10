@@ -6316,6 +6316,77 @@ mapas distintos y el test acusara «3 lecturas» con el servidor bien.
 Con `2026-09-10-b` publicado, el dueño abre Ejecuciones → una fila de `doGet` → el registro
 dice qué parámetros trae. Con eso se sabe si es Kommo, algo que imita al panel, o un lector
 sin parámetros (planilla/pinger). Hasta entonces, la caché lo vuelve inofensivo.
+**No funcionó así** — ver §4dv.
+
+## 4dv. Quién lee por GET, visible sin Cloud Logging + `GET_CERRADO` (2026-09-10)
+
+El dueño publicó `2026-09-10-b` (Versión 24) y los `doGet` bajaron a 0,7 s (salen de la caché).
+Pero el plan de §4du —abrir una fila de `doGet` en Ejecuciones y leer el `console.log`— **no
+le sirvió**: *"doy click en dopost y no sale nada ni abre nada.... no salen parametros ni
+nada"*, *"doget igual.... no deja abrir nada"*. En el menú ⋮ de cada fila, **«Registros de
+Cloud» y «Errores de Cloud» están en gris**: el script corre en el proyecto de Google por
+defecto, sin visor de registros, y las ejecuciones disparadas por gente de afuera (un GET
+anónimo) no despliegan nada en esa lista. O sea: el registro existe, pero él no lo puede ver.
+
+### Qué se hizo (`google-apps-script.gs` → `2026-09-10-c`, `pedidos.html`)
+1. **Cada GET se anota en la caché del script** (`getLogAnotar_`, clave `get_log`): las últimas
+   `GET_LOG_MAX`=40 **firmas** y un conteo **por firma**. Una firma es hora · NOMBRES de los
+   parámetros (ordenados) · largo de la consulta · ruta (`pathInfo`, cortada antes de un `=`) ·
+   **dispositivo** (`Session.getTemporaryActiveUserKey()` recortada a 6 letras: distingue un
+   navegador de otro sin decir quién es; rota cada 30 días) · de dónde salió la respuesta
+   (`cache` / `hoja` / `clave` mal / `cerrado`). **Nunca un valor**: `k` puede ser una clave.
+   Cada GET renueva la vida del registro (6 h, tope de `CacheService`); si el chorro para, se
+   borra solo. Como mucho 15 firmas distintas; el resto cae en «otras».
+2. **Un resumen va a las Propiedades del script** (`getLogAProps_`: `GET_RESUMEN` y
+   `GET_ULTIMOS`, texto legible) **como mucho una vez por minuto** (marca `get_log_prop` en la
+   caché): escribir propiedades tiene cupo diario y el chorro era de miles por hora. Se leen en
+   Apps Script → ⚙️ Configuración del proyecto → Propiedades del script, sin herramienta alguna.
+3. **El panel lo pide con `{action:'getlog'}`** (en `doPost`, antes del candado, después de la
+   clave del equipo): Administración → **📡 ¿Quién lee la planilla?** (`verLecturasGet` →
+   `renderGetLog`): cuántas desde cuándo, ritmo total y de las últimas 15, cuadro por firma
+   (veces, primera, última, dispositivos, de dónde salió la respuesta), detalle desplegable, y
+   **cómo leerlo**: «sin parámetros» + mismo dispositivo cada pocos segundos = una pestaña/app en
+   bucle; dispositivo «?» o cambiante = un servicio (Make/Zapier, `IMPORTDATA`, monitor);
+   parámetros con nombre = alguien que conoce la dirección. Con el `.gs` viejo (sin `get` en la
+   respuesta) dice que hay que republicar y qué versión falta; un error de red pasa por
+   `motivoDeError`; dos toques seguidos son un solo pedido (`GETLOG_EN_CURSO`).
+4. **`GET_CERRADO`** (`getCerrado_`): con `GET_CERRADO = 1` en las Propiedades, `doGet` contesta
+   `{ok:false, error:'get_cerrado'}` **sin leer la hoja** y **sin volver a implementar** (las
+   propiedades se leen en cada ejecución). El panel, el repaso de Kommo y el worker usan POST:
+   al equipo no le cambia nada. Se sigue anotando (`como:'cerrado'`), para ver si el de afuera
+   insiste. Para reabrir: borrar la propiedad (o ponerla en `0`/`no`). **Es decisión del dueño
+   cerrarla**: si la otra herramienta armó algo legítimo que lee por GET, se entera al toque.
+5. Un GET con la clave mal (con `PANEL_KEY` puesta) también queda anotado, sin el valor.
+
+⚠️ El registro va **sin candado** (§4dt manda): dos GET al mismo tiempo pueden pisarse una
+anotación. Es un diagnóstico, no contabilidad — con un GET cada 3 s alcanza y sobra.
+⚠️ `Session.getTemporaryActiveUserKey()` no está probada contra un GET anónimo real: si Google
+no la da, el dispositivo sale «?» (está envuelto en try/catch) y eso también es una pista.
+
+### Pruebas
+- `tests/test_servidor.js` de 81 a **94 checks**, sección 9: cuatro GET (dos sin parámetros,
+  uno con `_,k` y un valor «secreto», uno con ruta y otro dispositivo) → `getlog` los agrupa
+  por firma con la más repetida primero, en TODA la respuesta no aparece un valor, cada firma
+  trae dispositivos y caché/hoja, la marca va recortada, UNA escritura a Propiedades por
+  minuto (con el primer GET; pasado el minuto se actualiza y `GET_ULTIMOS` lista las firmas),
+  `GET_CERRADO=1` niega sin leer la hoja mientras el `list` por POST sigue, `0` reabre, la
+  clave mal se anota sin el valor, y sin `CacheService` contesta igual con `sinCache:true`.
+  Dientes: contra el `.gs` publicado `2026-09-05-c` fallan **15**; contra el `-b` de `main`, 7.
+  ⚠️ Los dobles ganaron `setProperties` y `Session.getTemporaryActiveUserKey`.
+- `tests/test_getlog.js` (**21 checks**, nuevo): el botón manda exactamente `{action:'getlog'}`,
+  el informe dice 1812 lecturas desde hace 2 h, «una cada ~3,4 s, la última hace 5 s», la firma
+  «sin parámetros» ×1810 con un dispositivo primero, de la caché/leyó la hoja, el detalle, cómo
+  leerlo y `GET_CERRADO`; un solo pedido por vez; `.gs` viejo → «hay que republicar» con la
+  versión; 404 traducido; `busy`; puerta cerrada arriba de todo; ninguna lectura con el último
+  resumen de las propiedades; sin caché avisa; textos de tiempo. ⚠️ Las celdas del cuadro se
+  pegan en `textContent` («_,k215:28:50»): la firma se busca en el HTML, no en el texto.
+
+### Qué tiene que hacer el dueño
+Pegar el `.gs`, **Implementar → Administrar implementaciones → ✏️ → Nueva versión** (Versión 25),
+abrir el panel → Administración → **📡 ¿Quién lee la planilla?** y mandar la captura. Si no abre
+el panel: ⚙️ Configuración del proyecto → Propiedades del script → `GET_RESUMEN`. Con eso se
+decide si va `GET_CERRADO = 1`. ⚠️ Mientras `PANEL_KEY` siga apagada (decisión suya, §4ce),
+cada GET de afuera sigue llevándose la lista de clientes.
 
 ## 5. Pendientes
 

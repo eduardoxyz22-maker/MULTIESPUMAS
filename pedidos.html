@@ -839,6 +839,10 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
     <div id="admin-content" style="display:none">
       <div class="card" style="border-radius:0 var(--r-lg) var(--r-lg) var(--r-lg)">
         <div id="conn-admin" class="conn off"><span class="dot"></span><span id="conn-admin-txt"></span></div>
+        <!-- 📡 Quién lee la planilla por GET (§4dv): el servidor anota firmas (nunca valores)
+             y acá se muestran, porque Ejecuciones no le deja ver el registro al dueño. -->
+        <div style="margin:4px 0 8px"><button type="button" id="getlog-btn" class="btn btn-ghost btn-sm" style="width:auto" onclick="verLecturasGet()">📡 ¿Quién lee la planilla?</button></div>
+        <div id="getlog-box" style="display:none"></div>
         <div id="cupo-admin" class="cupo ok"></div>
 
         <div class="filters">
@@ -1808,7 +1812,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-10-b';
+var SCRIPT_VERSION_ESPERADA='2026-09-10-c';
 /* 🔐 LA CLAVE DEL EQUIPO (§4ce).
    La dirección del script está acá arriba, en una página pública: con ella sola,
    cualquiera podía leer, guardar y borrar la planilla. Ahora el servidor exige una clave
@@ -1992,6 +1996,91 @@ function initConnUI(){
 /* El cartel de conexión, con los tres estados: sin planilla, con planilla pero SIN la
    clave del equipo (botón para ingresarla), y conectado. En administración, además, avisa
    en rojo si el servidor está ABIERTO (sin PANEL_KEY configurada). */
+/* 📡 QUIÉN LEE LA PLANILLA POR GET (§4dv).
+   El panel, el repaso de Kommo y el worker hablan con el Apps Script por POST: cualquier GET
+   es OTRO programa, y el 10/09 había uno cada 3 segundos llevándose la lista entera (§4du).
+   El servidor anota solo FIRMAS —hora, NOMBRES de parámetros, largo, ruta, marca del
+   navegador, de dónde salió la respuesta—, nunca valores, y acá se cuentan para poder decir
+   «uno solo, sin parámetros, cada 3 s, desde las 16:02» en vez de mirar filas sueltas en
+   Ejecuciones (que además al dueño no se le despliegan: «Registros de Cloud» en gris). */
+var GETLOG_EN_CURSO=false;
+var GETLOG_COMO={cache:'de la caché',hoja:'leyó la hoja',clave:'clave mal',cerrado:'puerta cerrada'};
+function verLecturasGet(){
+  var box=document.getElementById('getlog-box'); if(!box||GETLOG_EN_CURSO) return;
+  GETLOG_EN_CURSO=true;
+  box.style.display='';
+  box.innerHTML='<div style="font-size:.8rem;color:var(--muted);margin:6px 0">⏳ Preguntándole al servidor quién lo lee…</div>';
+  apiPost({action:'getlog'}).then(function(res){
+    GETLOG_EN_CURSO=false;
+    box.innerHTML=renderGetLog(res&&res.ok?res.get:null, res, null);
+  }).catch(function(e){
+    GETLOG_EN_CURSO=false;
+    box.innerHTML=renderGetLog(null, null, e||new Error('sin respuesta'));
+  });
+}
+function getlogHace(ms){
+  var s=Math.max(0,Math.round(ms/1000));
+  if(s<60) return 'hace '+s+' s';
+  if(s<3600) return 'hace '+Math.round(s/60)+' min';
+  var h=Math.floor(s/3600), m=Math.round((s%3600)/60);
+  return 'hace '+h+' h'+(m?' '+m+' min':'');
+}
+function getlogCada(s){
+  if(s<90) return 'cada ~'+String(Math.round(s*10)/10).replace('.',',')+' s';
+  if(s<5400) return 'cada ~'+Math.round(s/60)+' min';
+  return 'cada ~'+String(Math.round(s/360)/10).replace('.',',')+' h';
+}
+function getlogHora(t){ var d=new Date(Number(t)), z=function(n){return (n<10?'0':'')+n;}; return z(d.getHours())+':'+z(d.getMinutes())+':'+z(d.getSeconds()); }
+function getlogParams(p){ return (!p||p==='ninguno')?'sin parámetros':p; }
+function renderGetLog(g, res, err){
+  var cerrar='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;float:right;padding:2px 8px" onclick="document.getElementById(\'getlog-box\').style.display=\'none\'">✕</button>';
+  var caja=function(txt,color){ return '<div style="background:#fff;border:1px solid var(--gray-md);border-left:4px solid '+(color||'var(--teal)')+';border-radius:8px;padding:9px 12px;margin:4px 0 8px;font-size:.8rem;line-height:1.45">'+cerrar+txt+'</div>'; };
+  var reimpl='Implementar → Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar (guardar el código no alcanza)';
+  if(!g){
+    if(err) return caja('<b>El servidor no contestó</b> — '+esc(motivoDeError(err))+'.','var(--red)');
+    if(res&&res.ok) return caja('<b>El servidor todavía no anota quién lo lee por GET.</b> Tiene publicada la versión <code>'+esc(SERVER_VER||'?')+'</code> y hace falta la <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>: '+reimpl+'.','#7c4b00');
+    return caja('<b>El servidor contestó que no</b>'+(res&&res.error?' ('+esc(String(res.error))+')':'')+'.','var(--red)');
+  }
+  var ahora=Number(g.ahora)||Date.now(), u=g.ult||[], firmas=g.firmas||[];
+  var h='<b>📡 Lecturas por GET</b> <span style="color:var(--muted)">— de afuera: el panel, Kommo y el repaso usan POST, así que todo esto es otro programa.</span><br>';
+  if(g.cerrado) h+='<div style="color:#0a6b47;margin:4px 0">🚪 <b>La puerta GET está cerrada</b> (<code>GET_CERRADO</code> en las propiedades del script): contesta «no» sin leer la planilla. Lo de abajo son los que igual insisten.</div>';
+  if(!g.n){
+    h+='<div style="margin:4px 0">Ninguna lectura por GET desde que se publicó esta versión'+(g.sinCache?' (la caché del script no está disponible, así que tampoco se pudo anotar)':'')+'.</div>';
+    if(g.resumenProp) h+='<div style="color:var(--muted)">Último resumen que quedó guardado en las propiedades: '+esc(g.resumenProp)+'</div>';
+    return caja(h);
+  }
+  var seg=Math.max(1,(ahora-Number(g.desde))/1000);
+  h+='<div style="margin:4px 0">Desde las <b>'+getlogHora(g.desde)+'</b> ('+getlogHace(ahora-Number(g.desde))+'): <b>'+g.n+' lectura'+(g.n===1?'':'s')+'</b>'+(g.n>1?', una '+getlogCada(seg/g.n):'')+'.';
+  if(u.length>=3){
+    var r=(Number(u[u.length-1].t)-Number(u[0].t))/1000/(u.length-1);
+    h+=' Las últimas '+u.length+': una '+getlogCada(r)+', la última '+getlogHace(ahora-Number(u[u.length-1].t))+'.';
+  }
+  h+='</div>';
+  h+='<div style="overflow-x:auto"><table style="width:100%;font-size:.78rem;border-collapse:collapse"><thead><tr>'+
+     '<th style="text-align:left">Parámetros</th><th>Veces</th><th>Primera</th><th>Última</th><th style="text-align:left">Dispositivos</th><th style="text-align:left">Respuesta</th></tr></thead><tbody>';
+  firmas.forEach(function(f){
+    var disp=(f.disp||[]).slice(), nd=disp.length+(f.masDisp?'+':'');
+    var como=Object.keys(f.como||{}).map(function(k){ return (GETLOG_COMO[k]||k)+' '+f.como[k]; }).join(' · ');
+    h+='<tr><td>'+esc(getlogParams(f.p))+(f.r?' <span style="color:var(--muted)">/'+esc(f.r)+'</span>':'')+'</td>'+
+       '<td style="text-align:center"><b>'+Number(f.n||0)+'</b></td>'+
+       '<td style="text-align:center;white-space:nowrap">'+(f.pri?getlogHora(f.pri):'')+'</td>'+
+       '<td style="text-align:center;white-space:nowrap">'+(f.ult?getlogHace(ahora-Number(f.ult)):'')+'</td>'+
+       '<td>'+esc(nd+' ('+(disp.join(', ')||'?')+')')+'</td><td>'+esc(como)+'</td></tr>';
+  });
+  h+='</tbody></table></div>';
+  if(u.length){
+    h+='<details style="margin-top:6px"><summary style="cursor:pointer">Últimas '+u.length+' (hora · parámetros · largo · dispositivo · respuesta)</summary>'+
+       '<div style="font-family:monospace;font-size:.72rem;white-space:pre-wrap;margin-top:4px">'+
+       u.map(function(f){ return esc(getlogHora(f.t)+' · '+getlogParams(f.p)+' · largo '+Number(f.q||0)+(f.r?' · /'+f.r:'')+' · disp '+(f.d||'?')+' · '+(GETLOG_COMO[f.c]||f.c||'?')); }).join('\n')+
+       '</div></details>';
+  }
+  h+='<div style="margin-top:8px;color:var(--muted)">'+
+     '<b>Cómo leerlo:</b> «sin parámetros» y el <b>mismo dispositivo</b> cada pocos segundos = una página o app abierta en un navegador que pide en bucle (cerrar esa pestaña lo corta). '+
+     'Dispositivo «?» o que cambia todo el tiempo = un servicio (Make/Zapier, un <code>IMPORTDATA</code> en otra planilla, un monitor de «uptime»). Parámetros con nombre = lo armó alguien que conoce la dirección.<br>'+
+     '<b>Cerrarle la puerta sin volver a implementar:</b> Apps Script → ⚙️ Configuración del proyecto → Propiedades del script → Agregar <code>GET_CERRADO</code> = <code>1</code> → Guardar. Al panel no le cambia nada (usa POST). Para reabrir, borrar esa propiedad.<br>'+
+     'Este mismo resumen queda en las propiedades <code>GET_RESUMEN</code> y <code>GET_ULTIMOS</code>, por si el panel no abre.</div>';
+  return caja(h);
+}
 function renderConnEstado(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
   var ft=document.getElementById('conn-form-txt'), at=document.getElementById('conn-admin-txt');
