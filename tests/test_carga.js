@@ -197,6 +197,48 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /achicar 1\.2s · subir 3\.[34]s/.test(foto.txt), foto.txt);
   chk('el navegador tiene el camino rápido para achicar (createImageBitmap)', foto.rapido===true, foto.rapido);
 
+  /* §4ds — «lleva 3 intentos y no conecta», con el cartel clavado en «⏳ Conectando con la
+     planilla del equipo…». Es el MISMO agujero de la foto, en el camino de los datos: si
+     Google abre la conexión y no contesta nunca, el `fetch` no resuelve NI falla, y el
+     reintento —que se agenda recién cuando el intento anterior termina— no llega nunca.
+     Sin tope, el panel se queda diciendo «conectando» para siempre. */
+  console.log('\n── 7. Una lectura colgada se corta sola y reintenta ──');
+  const colgado = await page.evaluate(async () => {
+    var out={}, esperar=function(ms){ return new Promise(function(r){ setTimeout(r,ms); }); };
+    CONNECTED=true; STATE=[]; CARGA_GEN++;
+    if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
+    if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
+    var topeOrig=CARGA_TOPE, listOrig=window.apiList;
+    CARGA_TOPE=2000;
+    window.apiList=function(){ return new Promise(function(){}); };   // no contesta nunca
+    var t0=Date.now();
+    var p=cargaInicial(0);
+    await esperar(1100);
+    out.mientras = CARGA_ESTADO;
+    out.chip = (document.getElementById('conn-admin-txt')||{}).innerHTML||'';
+    out.seg = cargaSeg();
+    await p;                                    // el tope tiene que hacerla terminar sola
+    out.ms = Date.now()-t0;
+    out.despues = CARGA_ESTADO;
+    out.motivo = ULTIMO_ERROR;
+    out.reintenta = !!CARGA_TIMER;
+    out.banner = (document.getElementById('carga-banner')||{}).innerHTML||'';
+    out.chip2 = (document.getElementById('conn-admin-txt')||{}).innerHTML||'';
+    if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
+    if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
+    CARGA_TOPE=topeOrig; window.apiList=listOrig; CARGA_GEN++; CARGA_ESTADO='ok';
+    return out;
+  });
+  chk('⚠️ una lectura que no contesta NUNCA se corta sola (antes: «Conectando…» para siempre)',
+      colgado.despues==='reintento' && colgado.ms>=2000 && colgado.ms<6000, colgado.despues+' en '+colgado.ms+' ms');
+  chk('…y dice el motivo en castellano, con los segundos que esperó',
+      /Google no contestó en 2 segundos/.test(colgado.motivo), colgado.motivo);
+  chk('…y deja agendado el reintento solo, sin que nadie toque nada', colgado.reintenta===true);
+  chk('mientras espera, el cartel muestra los segundos que lleva (no un texto quieto)',
+      colgado.mientras==='cargando' && colgado.seg>=1 && /\d+ s/.test(colgado.chip), colgado.mientras+' · '+colgado.seg+' s · '+colgado.chip.slice(0,90));
+  chk('al cortarse, el cartel dice en cuánto reintenta y ofrece «Volver a intentar»',
+      /Reintenta solo en/.test(colgado.chip2) && /Volver a intentar/.test(colgado.banner), colgado.chip2.slice(0,120));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

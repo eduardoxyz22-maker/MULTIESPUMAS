@@ -6133,6 +6133,58 @@ pelados, el encabezado no es decoración.
   medir `undefined` (uno en rojo, el otro en verde por casualidad). En este archivo cada
   bloque nuevo usa su propio nombre (`r5b`, `r5c`, `rf`).
 
+## 4ds. «Lleva 3 intentos y no conecta»: el mismo agujero de la foto, en los datos (2026-09-10)
+
+Captura del dueño: el chip amarillo clavado en **«⏳ Conectando con la planilla del equipo…»**,
+con los cupos abajo (o sea: la copia del dispositivo sí estaba). *"lleva 3 intentos y no
+conecta"*.
+
+### Lo que NO era
+- **No era Pages.** El deploy `1401` del cambio anterior terminó en verde a las 16:45, y
+  `pedidos.html` en `main` seguía siendo el mío (mismo hash).
+- **No era el cambio del cuadro de producir**: eso es CSS y una fila del `tfoot`, no toca
+  ninguna llamada al servidor. Y la página estaba viva (dibujaba los cupos).
+- **No era un 404 ni la caché** (§4dp): un 404 se ve, dice el motivo y reintenta. Acá el
+  cartel decía «conectando», que es el estado de **en curso**.
+
+### Lo que sí es
+`refrescarEstado()` llamaba a `apiList()` → `apiPost` → `fetch` **sin tope de tiempo**. Si
+Google abre la conexión y no contesta nunca, esa promesa **no resuelve ni falla**. Y el
+reintento se agenda dentro del `.then` de ese mismo intento (`cargaInicial`), así que **nunca
+llega**: ni el reintento de 3 s, ni el de 8, ni el cartel rojo con el motivo. El panel se
+queda diciendo «conectando» para siempre, y quien lo mira solo puede recargar a mano.
+
+Es **exactamente el agujero de §4dq** (las fotos, «4 minutos subiendo»), que se tapó en el
+camino de las imágenes y quedó abierto en el de los datos. `conTopeDuro` ya existía desde
+entonces; faltaba usarlo acá.
+
+### Qué se hizo
+- **`CARGA_TOPE`=30 s** en `refrescarEstado`, vía `conTopeDuro(apiList(), CARGA_TOPE,
+  'tardo_datos')`. Cubre también el refresco periódico, no solo la primera carga.
+  ⚠️ **Solo la LECTURA lleva tope**, y es a propósito: pedir la lista de nuevo no rompe nada,
+  pero cortar un **guardado** que el servidor quizá ya grabó y reintentarlo a ciegas sí.
+- `conTopeDuro` ya recibía un tercer parámetro `queHacer` **y lo ignoraba**: ahora es el
+  código del error, así el motivo del corte de una foto y el de una lectura se dicen distinto.
+  `motivoDeError('tardo_datos')` → «Google no contestó en 30 segundos y se cortó la espera».
+- **Los segundos a la vista** (`cargaSeg`, `cargaTic`): mientras espera, el chip dice
+  «⏳ Conectando… **12 s**» y el cartel «12 s de hasta 30». Un texto quieto es indistinguible
+  de una pantalla colgada — eso es lo que hizo que el dueño contara los intentos a ojo.
+- Al cortarse, el chip dice **en cuánto reintenta solo** («Reintenta solo en 8 s»): «sin
+  respuesta» a secas se lee como «se rindió».
+
+### Lo que queda igual
+Esto **no hace que Google conteste**: hace que el panel lo diga y siga intentando. Si el
+servidor está caído de verdad, el camino sigue siendo el de §4dm/§4dp: incógnito primero, y
+Actions → «Traer ventas de Kommo (respaldo)» para ver si contesta desde afuera del navegador.
+⚠️ Desde acá **no se puede** disparar ese workflow: `actions_run_trigger` devuelve
+`403 Resource not accessible by integration`. Lo corre el dueño.
+
+### Pruebas
+`tests/test_carga.js`, sección 7, **37 checks** (+5): una lectura que no contesta nunca se
+corta sola a los 2 s (tope bajado en el test), pasa a `reintento`, dice el motivo con los
+segundos, deja el reintento agendado, muestra los segundos mientras espera y ofrece «Volver a
+intentar». ⚠️ El chip vive en `#conn-form-txt` / `#conn-admin-txt`, no en `#adm-conn-txt`.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de

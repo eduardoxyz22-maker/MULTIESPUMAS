@@ -171,6 +171,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   de un intento viejo. ⚠️ En un test con la red cortada, la carga de arranque queda
   reintentando: si el test lee el cartel de conexión, que haga `CARGA_GEN++; CARGA_ESTADO='ok'`
   y limpie `CARGA_TIMER`/`CARGA_TIC` en su setup (ver `test_conflicto.js`). `tests/test_carga.js`.
+- **⏱️ Una lectura colgada se corta sola** (§4ds): `refrescarEstado` envuelve `apiList()` en
+  `conTopeDuro(…, CARGA_TOPE=30 s, 'tardo_datos')`. ⚠️ Sin eso, un `fetch` que no resuelve NI
+  falla dejaba el panel en «⏳ Conectando con la planilla del equipo…» **para siempre**: el
+  reintento se agenda dentro del `.then` del intento anterior, así que no llegaba nunca (mismo
+  agujero que las fotos, §4dq). **Solo la LECTURA lleva tope**: cortar un guardado que el
+  servidor quizá ya grabó y reintentarlo a ciegas es peor. El chip muestra los **segundos**
+  que lleva (`cargaSeg`/`cargaTic`) y, al cortarse, en cuánto reintenta solo.
 - **🚨 Si el panel no carga nada (§4dm)**: mirar el cartel. Desde el 09/09 `apiPost` mira el
   código HTTP y `motivoDeError` lo traduce con QUÉ HACER. Un **404** = la dirección `/exec`
   del Apps Script ya no existe (crear una implementación NUEVA estrena otra dirección en vez

@@ -2014,13 +2014,19 @@ function renderConnEstado(){
      una compu nueva veía el cartel verde con todo en 0. */
   if(CARGA_ESTADO==='reintento' || CARGA_ESTADO==='error'){
     f.className='conn off'; a.className='conn off';
-    ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'. Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.';
-    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'. '+(STATE.length?'Estás viendo la copia guardada en este dispositivo.':'Por eso no se ve ningún pedido.');
+    /* Que el chip diga TAMBIÉN que va a reintentar solo y en cuánto: si no, «sin respuesta»
+       se lee como «se rindió» y alguien se queda recargando la página a mano (§4ds). */
+    var _re=(CARGA_ESTADO==='reintento' && CARGA_PROXIMO)
+      ? (' Reintenta solo en <b>'+Math.max(0,Math.ceil((CARGA_PROXIMO-Date.now())/1000))+' s</b>.') : '';
+    ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.';
+    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' '+(STATE.length?'Estás viendo la copia guardada en este dispositivo.':'Por eso no se ve ningún pedido.');
     return;
   }
   if(CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO){
     f.className='conn off'; a.className='conn off';
-    ft.innerHTML='⏳ Conectando con la planilla del equipo…'; at.innerHTML='⏳ Conectando con Google Sheets…';
+    var _s=(typeof cargaSeg==='function')?cargaSeg():0;
+    ft.innerHTML='⏳ Conectando con la planilla del equipo… <b>'+_s+' s</b>';
+    at.innerHTML='⏳ Conectando con Google Sheets… <b>'+_s+' s</b> (se corta a los '+Math.round(CARGA_TOPE/1000)+' y reintenta solo)';
     return;
   }
   f.className='conn on'; a.className='conn on';
@@ -6600,6 +6606,11 @@ function motivoDeError(e){
   var m=String((e&&e.message)||e||'');
   if(m==='clave') return 'el servidor pide la clave del equipo';
   if(m==='tardo') return 'Google tardó más de '+Math.round(FOTO_TOPE/1000)+' segundos y se cortó la espera. Probá de nuevo: la imagen no se subió';
+  /* ⏱️ El mismo agujero que las fotos (§4dq), en el camino de los DATOS (§4ds): un `fetch`
+     no tiene tope, así que si Google abre la conexión y no contesta nunca, la promesa no
+     resuelve NI falla — y el cartel se queda en «⏳ Conectando…» para siempre, sin reintentar,
+     porque el reintento se agenda recién cuando el intento anterior termina. */
+  if(m==='tardo_datos') return 'Google no contestó en '+Math.round(CARGA_TOPE/1000)+' segundos y se cortó la espera';
   /* Los códigos de Google, en castellano y con QUÉ HACER (§4dm). Un 404 acá no es «probá
      más tarde»: la dirección del panel dejó de existir y no se arregla sola. */
   if(m==='http404') return 'la dirección del panel ya no existe (404). Suele pasar cuando se crea una implementación NUEVA del Apps Script en vez de actualizar la de siempre: cada una estrena su propia dirección. En Apps Script → Implementar → Administrar implementaciones, editar la que ya estaba (✏️) y elegir «Versión nueva»';
@@ -6611,9 +6622,14 @@ function motivoDeError(e){
   if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
   return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
+/* ⏱️ Cuánto se espera a que Google conteste la planilla antes de cortar y reintentar (§4ds).
+   Una lectura es idempotente: cortarla y volver a pedirla no rompe nada, y es la única forma
+   de salir de un `fetch` colgado. (Los guardados NO llevan tope: si el servidor ya lo grabó,
+   reintentarlo a ciegas es peor que esperar.) */
+var CARGA_TOPE=30000;
 function refrescarEstado(){
   if(!CONNECTED) return Promise.resolve(false);
-  return apiList().then(function(res){
+  return conTopeDuro(apiList(), CARGA_TOPE, 'tardo_datos').then(function(res){
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       STATE=mergePending(res.pedidos); saveMirror(); updateStats();
       ULTIMO_REFRESCO=Date.now(); ULTIMO_ERROR='';
@@ -6647,7 +6663,12 @@ function refrescarEstado(){
    se arregla solo un minuto después. El cartel sigue diciendo el motivo mientras tanto. */
 var CARGA_INTENTOS=[3000, 8000, 20000, 45000];   // reintentos después del primer fallo
 var CARGA_ESTADO='';                       // '' · 'cargando' · 'reintento' · 'error' · 'ok'
-var CARGA_TIMER=null, CARGA_TIC=null, CARGA_PROXIMO=0;
+var CARGA_TIMER=null, CARGA_TIC=null, CARGA_PROXIMO=0, CARGA_DESDE=0;
+/* Los segundos que lleva el intento en curso. Sin esto, «⏳ Conectando…» es indistinguible
+   de una pantalla colgada: el dueño avisó *«lleva 3 intentos y no conecta»* mirando un
+   cartel que no se movía nunca (§4ds). */
+function cargaSeg(){ return CARGA_DESDE ? Math.max(0, Math.round((Date.now()-CARGA_DESDE)/1000)) : 0; }
+function cargaTic(){ cargaBanner(); renderConnEstado(); }
 /* Cada arranque de `cargaInicial` es una «generación»: si alguien toca «Volver a intentar»
    mientras un intento viejo sigue en el aire, el resultado viejo llega después y NO pisa
    al nuevo. (Sin esto, un intento arrancado con la red cortada podía volver tarde y tapar
@@ -6663,7 +6684,7 @@ function cargaBanner(){
   var seg=Math.max(0, Math.ceil((CARGA_PROXIMO-Date.now())/1000));
   b.style.display='flex'; b.className='conn '+(CARGA_ESTADO==='cargando'?'on':'off'); b.style.marginBottom='14px';
   b.innerHTML='<span class="dot"></span><span style="flex:1">'+
-    (CARGA_ESTADO==='cargando' ? '⏳ <b>Cargando la planilla del equipo…</b> Google tarda unos segundos en despertar.'
+    (CARGA_ESTADO==='cargando' ? '⏳ <b>Cargando la planilla del equipo…</b> Google tarda unos segundos en despertar. <b>'+cargaSeg()+' s</b> de hasta '+Math.round(CARGA_TOPE/1000)+'.'
     : CARGA_ESTADO==='reintento' ? '⚠️ <b>No se pudo leer la planilla:</b> '+esc(ULTIMO_ERROR||'sin respuesta')+'. Reintento solo en <b>'+seg+' s</b>. '+copia
     : '❌ <b>No se pudo leer la planilla</b> después de '+(CARGA_INTENTOS.length+1)+' intentos: '+esc(ULTIMO_ERROR||'sin respuesta')+'. '+copia)+
     '</span>'+
@@ -6677,9 +6698,12 @@ function cargaInicial(intento){
   if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
   if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
   var gen=++CARGA_GEN;
+  CARGA_DESDE=Date.now();
   cargaEstado('cargando');
+  CARGA_TIC=setInterval(cargaTic, 1000);         // que se vea que sigue vivo, segundo a segundo
   return refrescarEstado().then(function(ok){
     if(gen!==CARGA_GEN) return ok;               // llegó tarde: ya hay un intento más nuevo
+    if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
     if(ok){ cargaEstado('ok'); renderCupoForm(); pintarBotonCierre(); autoRepintar(); updateFooter(); return true; }
     if(intento<CARGA_INTENTOS.length){
       var ms=CARGA_INTENTOS[intento]; CARGA_PROXIMO=Date.now()+ms;
@@ -9320,7 +9344,7 @@ var FOTO_TOPE=90000;
 function conTopeDuro(prom, ms, queHacer){
   return new Promise(function(res, rej){
     var listo=false;
-    var t=setTimeout(function(){ if(!listo){ listo=true; rej(new Error('tardo')); } }, ms||FOTO_TOPE);
+    var t=setTimeout(function(){ if(!listo){ listo=true; rej(new Error(queHacer||'tardo')); } }, ms||FOTO_TOPE);
     prom.then(function(v){ if(!listo){ listo=true; clearTimeout(t); res(v); } },
               function(e){ if(!listo){ listo=true; clearTimeout(t); rej(e); } });
   });
