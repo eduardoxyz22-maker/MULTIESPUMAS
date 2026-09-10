@@ -5997,6 +5997,94 @@ no quede colgada, que el motivo se diga en castellano con los segundos, que una 
 anda pase igual, y que el cronómetro reporte las dos mitades por separado. Batería completa:
 **1.923 comprobaciones, 0 mal**.
 
+## 4dr. 🏭 Qué producir: la semana, los 15 días y el mes que viene, por fábrica (2026-09-10)
+
+### De dónde viene
+Retomamos la proyección de stock. Primero repasé lo que había: la maqueta de Producción y el
+análisis con las ventas del sistema (artefactos, sin código), y el dueño mostró
+**`rotacion.html`** — la página que armé el **12/08** con su matriz mensual (Ene-25 a
+**Jul-26**; agosto NO está), con proyección a 5 meses por promedio de 3/6/12 meses y backtest.
+No está enlazada desde ningún lado ni anotada en esta bitácora hasta hoy.
+
+**Medí esa proyección producto por producto** (corriendo su mismo método contra su propia
+historia, Heaven + Sueña, error a un mes): total **13%**, por medida **25%**, por familia
+**53%**, por producto **62%** (TITANIO ICE 160×190: 42%; Forte Flex 140×190: 233%). O sea:
+sirve para «cuántas 140×190 va a hacer falta este mes», no para «cuántos TITANIO ICE 160×190
+pedir». Y no sabe de stock, ni de fábrica, ni de discontinuados (pediría Bahía y Carioca).
+
+### Lo que pidió el dueño (10/09), textual
+- *"la idea es tener eso para tener el pedido mensual, y quincenal y/o faltantes para la
+  semana y anticiparnos"*.
+- *"yo no quiero subir cada mes el reporte de ventas, las ventas ya las tienes en el panel
+  mismo... agosto está al 100% en el panel"* → **la fuente son los pedidos del panel**, nada
+  de Excel de ventas. `rotacion.html` queda como estaba (foto de Ene-25 a Jul-26).
+- *"no por bs perdido ni montos, solo queremos saber qué producir"* → unidades, sin plata.
+- *"separado sueña y heaven porque heaven se produce en IM y sueña en fábrica productos
+  terminados"* → **Heaven → Industrias Moreno (`MORENO`) · Sueña → Multiespumas (`MULTI`)**
+  (`MARCA_FABRICA`). Es la primera vez que se dice qué fábrica hace qué marca.
+- *"lógicamente descartando las ventas puntuales... como las mías"* → la misma regla de
+  rotación de §4dj, sin cambios.
+- *"así logística pide la producción para el mes de octubre, por ejemplo, y conforme rote,
+  aumente o disminuya la rotación por pedidos puntuales o picos, sabe qué necesita para los
+  siguientes 15 días y 7 días y qué cubre"*.
+- *"si en septiembre se vendieron 70 soft, en octubre necesitaríamos el 70% por lo menos
+  para la primera quincena"* → `PRODUCIR_1RA=0.7`. ⚠️ Leí «el 70%» como porcentaje; el
+  número 70 de unidades y el 70% podrían ser una coincidencia. Se le preguntó. Lo medido en
+  el sistema (jul-25 a ago-26) da **~60%** para «del 29 al 15» (la primera quincena más el
+  pico de cobro de fin de mes, que sale del stock de octubre). Es UNA constante.
+
+### Qué se hizo — el cuadro «🏭 Qué producir», arriba de la tabla de stock
+Un bloque por fábrica (**💚 Industrias Moreno · Heaven**, **🛏️ Multiespumas · Sueña** y
+**❓ Sin fábrica asignada**), y por producto **tres números**:
+- **7 días** = exactamente `o.fabricar` de la tabla (🚨 PEDIR YA / 🏭 Pedir esta semana).
+  Una sola verdad para la semana; si no, el dueño pregunta «¿por qué acá dice 5 y abajo 3?».
+- **15 días** = max(vendido sin entregar hasta hoy+15+fábrica, ritmo de 15 días ×
+  (fábrica + margen + 15)) − lo que hay. Acumulada: nunca menor que la de 7.
+- **El mes que viene** (se nombra: «octubre») = ritmo de **30 días** (`porDiaMes`: misma
+  regla de rotación, ≥3 entregas del equipo, medida sobre `STOCK_VENTANA_MES`=30) × los días
+  del mes, o lo ya vendido para ese mes si es más, **menos lo que va a quedar el día 1** (lo
+  que hay menos lo que se consume hasta fin de mes). De eso, el **70% para la 1ª quincena**
+  y el resto para la 2ª. Los días entre hoy+15 y fin de mes no los produce nadie en esta
+  corrida: entran en la próxima quincena (la ventana rueda).
+- **«Hay»** = acá + Moreno + en camino. Lo de Moreno es de la fábrica de Heaven: se recoge,
+  no se produce (misma lógica que `recoger`/`fabricar` de §4cr).
+- **«Cubre hasta»** = el corte día por día de la tabla; si el ritmo de 15 días es cero pero el
+  del mes no, una estimación gruesa con el del mes.
+- Pie por bloque: **total y por medida** (eso es lo que la fábrica mira para espuma y tela).
+- Botones **📋 7 días / 📋 15 días / 📋 octubre** por fábrica: el texto para WhatsApp con
+  producto, código, cantidad, reparto por quincena y total por medida. Sin plata.
+- Sin conteo del depósito no se calcula nada (§4co: el panel no inventa un número). Lo
+  discontinuado no aparece (§4cz); lo de tienda y las ATC tampoco (§4cx).
+
+**La fábrica de cada producto** sale de la **marca por el nombre del catálogo**
+(`stockMarcaDeNombre`: Sueña primero —SUEÑA/COMBO/SOFT/SEMIORTOP./ESSENTIAL/PREMIER DELUXE/
+BAHIA/CARIOCA/MOVEL PRO/RESPALDAR PRAG.—, después las líneas de ROHO —FLEX/PEDIC/SOMIER
+NEGRO—, después Heaven —TITANIO/ORO/ESPECIAL/HEAVEN/TROPICAL/ALM/DREAM/BIRELAX/PLATA—). La
+lista la saqué de los **catálogos del sistema** que están dentro de `rotacion.html` (102
+códigos Heaven, 80 Sueña, y 42 de las líneas que vende ROHO). Si el nombre no dice nada, va
+por la **última fábrica a la que se le pidió** (`o.fab`), marcado «acá por la última vez que
+se pidió a X». Lo que no cae en ninguna —**las líneas FLEX/PEDIC de ROHO** y los nombres
+sueltos— va al bloque «sin fábrica asignada», con el cartel pidiendo que el dueño diga dónde
+se hacen. ⚠️ **Pendiente de él**: en qué fábrica se hacen Pillow Flex, Forte Flex, Memory
+Flex, Eco Flex, Somier Flex, Pillow Pedic, Europedic, Dynamic Pedic, Semipedic y Somier
+Negro. Con la respuesta, es una línea en `stockMarcaDeNombre` (o en `MARCA_FABRICA`).
+
+### Lo que NO se hizo, a propósito
+- Ni estacionalidad (dic ×1,29 / oct ×0,75 del sistema: un solo año, y el backtest de
+  `rotacion.html` mostró que empeora) ni reserva hasta el día de cobro ni tope de fábrica.
+  Quedan como mejoras; el dueño no las pidió esta vez.
+- `stockData` cambió lo mínimo: tres campos nuevos (`v30`, `n30`, `ventas30`) y dos
+  derivados (`rotaMes`, `porDiaMes`). Nada de lo de §4dj se tocó.
+
+### Pruebas
+`tests/test_producir.js`, **45 checks**, reloj clavado en el 10/09/2026: marca por nombre
+(22 casos), cambio de año y febrero, escenario con Heaven (10 en 5 entregas + 18 en 30 días,
+3 acá + 2 en Moreno → 1 · 9 · 19 (14+5)), Sueña que solo rota en 30 días (→ 0 · 0 · 7),
+el MORFEO de Eduardo (se cubren los 4 vendidos, nada de ritmo), la reposición y la ATC que
+no cuentan, Carioca/protector que no aparecen, la línea ROHO que cae en «sin asignar» y pasa
+a Sueña con un pedido previo a MULTI, la quincena nunca menor que la semana, la pantalla, el
+texto copiado, «ver cubiertos» y que sin conteo no hay cuadro.
+
 ## 5. Pendientes
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de

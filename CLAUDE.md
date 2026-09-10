@@ -113,6 +113,21 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     reparten entregas en días fijos, sigan cayendo DENTRO de la ventana nueva.
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
+  - **🏭 Qué producir** (§4dr, 10/09): cuadro arriba de la tabla de stock, un bloque por
+    fábrica —**Heaven → Industrias Moreno (`MORENO`), Sueña → Multiespumas (`MULTI`)**
+    (`MARCA_FABRICA`, dicho por el dueño el 10/09)— y por producto **7 días** (= `o.fabricar`
+    de la tabla, una sola verdad), **15 días** (acumulada, nunca menor) y **el mes que viene**
+    (ritmo de `STOCK_VENTANA_MES`=30 días con la MISMA regla de rotación, × los días del mes,
+    menos lo que queda el día 1; el `PRODUCIR_1RA`=70% para la 1ª quincena — «si en
+    septiembre se vendieron 70 soft, en octubre el 70% para la primera quincena»). Solo
+    unidades: el dueño no quiere plata ahí. La marca sale del NOMBRE del catálogo
+    (`stockMarcaDeNombre`; lista de los catálogos del sistema que viven en `rotacion.html`),
+    si no de la última fábrica pedida (`o.fab`), y si no → «❓ Sin fábrica asignada» (las
+    líneas FLEX/PEDIC de ROHO: **falta que el dueño diga dónde se hacen**). Sin conteo no
+    se calcula nada. `tests/test_producir.js` (45, reloj clavado en el 10/09/2026).
+    ⚠️ `rotacion.html` (12/08, matriz Ene-25 a Jul-26, proyección a 5 meses con backtest)
+    es una FOTO: no se alimenta sola y el dueño no quiere subir reportes; por producto se
+    equivoca 62% a un mes (13% en el total), así que no sirve para pedir por producto.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

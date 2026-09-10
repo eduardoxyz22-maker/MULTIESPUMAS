@@ -11040,6 +11040,11 @@ var STOCK_DIAS_SOBRA=60;      // stock para más de esto = plata parada
 var STOCK_RECONTAR=21;        // un conteo más viejo que esto pide que se cuente de nuevo
 var STOCK_MUESTRAS=6;         // cuántas llegadas se miran para medir lo que tarda cada fábrica
 var STOCK_VENTA_MIN=8;
+/* 🏭 QUÉ PRODUCIR (§4dr): la semana, los próximos 15 días y el mes que viene. */
+var PRODUCIR_SEMANA=7;        // «para la semana»
+var PRODUCIR_QUINCENA=15;     // «para los próximos 15 días»
+var STOCK_VENTANA_MES=30;     // sobre cuántos días se mide la venta para el plan del mes («si en septiembre se vendieron 70 soft…»)
+var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para la 1ª quincena (dueño, 10/09: «el 70% por lo menos»)
 /* 🔁 CUÁNTAS ENTREGAS DISTINTAS DEL EQUIPO HACEN FALTA PARA LLAMARLO «ROTACIÓN».
    ⚠️ HISTORIA, para no volver a dar la vuelta entera (§4da → §4dg → §4dj):
    · 07/09 — el dueño, mirando el MORFEO: *"solo debés mandar a producir PRODUCTOS que tienen
@@ -11657,11 +11662,13 @@ function stockLibreOrigen(k,alm){
 
 function stockData(){
   var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA-1), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas();
+  var desde30=diasAtras(STOCK_VENTANA_MES-1);   // la ventana larga, solo para el plan del mes que viene (§4dr)
   var T=stockTiemposFabrica();
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
       vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
   };
@@ -11694,6 +11701,12 @@ function stockData(){
           if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
 
         if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
+      }
+      /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo, sin Eduardo
+         ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
+         se piensa por mes, no por quincena. */
+      if(fs>=desde30 && fs<=hoy && !stockPedidoUnico(p)){
+        o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
@@ -11761,6 +11774,10 @@ function stockData(){
     o.rotacion=(o.nVentasRotacion<STOCK_VENTAS_MIN || o.vendidosRotacion<=2)?'baja':(o.vendidosRotacion>=15 && o.sem.filter(function(n){return n>0;}).length>=2?'alta':'media');
     o.rota=(o.rotacion!=='baja');
     o.porDia=o.rota?o.porDiaReal:0;
+    /* El ritmo del MES (§4dr): la misma regla de rotación del dueño —«2 en 1 mes no es
+       rotación»— pero medida sobre 30 días. Solo lo usa el plan del mes que viene. */
+    o.rotaMes=(o.n30>=STOCK_VENTAS_MIN && o.v30>2);
+    o.porDiaMes=o.rotaMes?o.v30/STOCK_VENTANA_MES:0;
     o.deposito=stockDeposito(k, o.salidas);
     o.enCorte=((STOCK.c.u||{})[k]!=null);   // si no, el 0 sale de «no figura en el corte»
     o.fab=o.fabUlt.fab||'';
@@ -12107,6 +12124,7 @@ function renderStock(){
       'data-k="'+esc(o.k)+'" onclick="abrirStockPedido(this.getAttribute(\'data-k\'))" title="'+esc(tit)+'">'+txt+'</button>';
   };
   html+=renderRevisionFija();
+  html+=renderProducir(d);
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
@@ -12296,6 +12314,228 @@ function copiarStock(){
   }
   copyText(t);
   toast((tr.length&&a.length)?'Copiado: lo que hay que traer y lo que hay que pedir ✓':(tr.length?'Lo que hay que traer, copiado ✓':'Pedido a fábrica copiado ✓'),'ok');
+}
+
+/* ============================================================================
+   🏭 QUÉ PRODUCIR — la semana, los próximos 15 días y el mes que viene, por fábrica (§4dr)
+
+   Lo pidió el dueño el 10/09, después de ver `rotacion.html` (la proyección por mes que
+   armé el 12/08 con la matriz del sistema): *"la idea es tener eso para tener el pedido
+   mensual, y quincenal y/o faltantes para la semana y anticiparnos"*. Con tres reglas:
+     · *"yo no quiero subir cada mes el reporte de ventas, las ventas ya las tienes en el
+       panel mismo"* → todo sale de los PEDIDOS del panel, nada de Excel de ventas.
+     · *"no por bs perdido ni montos, solo queremos saber qué producir"* → unidades, y nada
+       de plata en esta pantalla.
+     · *"separado sueña y heaven porque heaven se produce en IM y sueña en fábrica
+       productos terminados"* → un bloque por fábrica. Y *"descartando las ventas puntuales,
+       como las mías"* → la MISMA regla de rotación de siempre (§4dj): equipo, sin Eduardo
+       ni reposiciones, 3+ entregas.
+   Y la cuenta del mes con sus palabras: *"si en septiembre se vendieron 70 soft, en
+   octubre necesitaríamos el 70% por lo menos para la primera quincena"*: el mes que viene
+   entero al ritmo de los últimos 30 días, menos lo que va a quedar el día 1, y de eso el
+   70% (`PRODUCIR_1RA`) para la 1ª quincena.
+   ⚠️ Lo medido en el sistema (ventas jul-25 a ago-26) da ~60% para «del 29 al 15», que es
+   lo que hay que tener hecho para la primera quincena contando el pico de cobro de fin de
+   mes. Se dejó el 70% del dueño; es UN número y se cambia acá.
+
+   Las tres columnas y de dónde sale cada una:
+     · 7 DÍAS   = exactamente lo que ya dice la tabla de abajo (🚨 PEDIR YA / 🏭 Pedir esta
+                  semana): `o.fabricar`. Una sola verdad para la semana.
+     · 15 DÍAS  = lo vendido sin entregar hasta hoy+15+fábrica, o el ritmo de 15 días ×
+                  (fábrica + margen + 15), lo que sea mayor; menos lo que hay. Nunca menor
+                  que la de 7 días: es acumulada.
+     · EL MES   = ritmo de 30 días × los días del mes que viene (o lo ya vendido para ese
+                  mes, si es más), menos lo que va a quedar el día 1 (lo que hay, menos lo
+                  que se consume hasta fin de mes). Los días entre hoy+15 y fin de mes no
+                  los produce nadie en esta corrida: entran en la próxima quincena.
+   «Hay» = acá + Moreno + en camino (lo que está en Moreno es de la fábrica de Heaven: se
+   recoge, no se produce). Sin conteo del depósito no se calcula nada — el panel no inventa
+   un número (§4co). Lo discontinuado no se produce nunca (§4cz).
+
+   La fábrica de cada producto sale de la MARCA (`stockMarcaDeNombre`, por el nombre del
+   catálogo: TITANIO/ORO/ESPECIAL → Heaven; SUEÑA/COMBO/SOFT/SEMIORTOP. → Sueña) y, si el
+   nombre no dice nada, de la última fábrica a la que se le pidió (`o.fab`). Lo que no cae
+   en ninguna —las líneas FLEX/PEDIC que vende ROHO y los nombres sueltos— va a un bloque
+   «sin fábrica asignada» para que el dueño diga dónde se hacen, en vez de adivinar.
+   ========================================================================== */
+var MARCA_FABRICA={ heaven:'MORENO', suena:'MULTI' };   // dueño, 10/09
+var PRODUCIR_BLOQUES=[
+  {k:'heaven', fab:'MORENO', ico:'💚', titulo:'Industrias Moreno · Heaven', col:'#0f766e'},
+  {k:'suena',  fab:'MULTI',  ico:'🛏️', titulo:'Multiespumas · Sueña',      col:'#a16207'},
+  {k:'otros',  fab:'',       ico:'❓', titulo:'Sin fábrica asignada',        col:'#6b7280'}
+];
+/* La marca por el nombre. Sueña primero (ORTOPEDICO SUEÑA no es el ORO ORTOPEDICO), después
+   las líneas de ROHO (FLEX/PEDIC), después Heaven. Vacío = no se sabe. */
+function stockMarcaDeNombre(t){
+  var s=stockNorm(t).replace(/[^A-Z0-9 ]+/g,' ').replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  if(/\b(SUENA|COMBO|CONFORT PLUS|ESSENTIAL|PREMIER DELUXE|BAHIA|CARIOCA|MOVEL PRO|RESPALDAR PRAG|COLCHON SEMIORTOP|COLCHON SOFT|COLCHON CUNA|COLCHONETA CAMPING)\b/.test(s)) return 'suena';
+  if(/\b(FLEX|PEDIC|EUROPEDIC|SEMIPEDIC|SOMIER NEGRO)\b/.test(s)) return 'roho';
+  if(/\b(TITANIO|ORO|ESPECIAL|HEAVEN|TROPICAL|ALM|ALMOHADA|DREAM|BIRELAX|BI RELAX|PLATA)\b/.test(s)) return 'heaven';
+  return '';
+}
+function stockMarcaDe(o){
+  var m=stockMarcaDeNombre(o&&o.desc);
+  for(var i=0;!m && i<((o&&o.otros)||[]).length;i++) m=stockMarcaDeNombre(o.otros[i]);
+  return m;
+}
+/* En qué bloque cae: por la marca; si el nombre no dice, por la última fábrica a la que se le pidió. */
+function stockBloqueDe(o){
+  var m=stockMarcaDe(o);
+  if(MARCA_FABRICA[m]) return { k:m, por:'marca', marca:m };
+  var f=stockFabNorm((o&&o.fab)||'');
+  for(var k in MARCA_FABRICA) if(f && MARCA_FABRICA[k]===f) return { k:k, por:'fabrica', marca:m, fab:f };
+  return { k:'otros', por:'', marca:m };
+}
+/* El mes que viene, con su primer y último día, y el último día del mes actual. */
+function stockMesSiguiente(hoy){
+  hoy=hoy||todayStr();
+  var y=+hoy.slice(0,4), m=+hoy.slice(5,7);
+  var y2=(m===12)?y+1:y, m2=(m===12)?1:m+1;
+  var pad=function(n){ return (n<10?'0':'')+n; };
+  var dias=new Date(y2,m2,0).getDate();
+  return { y:y2, m:m2, ini:y2+'-'+pad(m2)+'-01', fin:y2+'-'+pad(m2)+'-'+pad(dias), dias:dias,
+           nombre:MESES_ES[m2-1], finActual:y+'-'+pad(m)+'-'+pad(new Date(y,m,0).getDate()) };
+}
+/* Lo vendido sin entregar con fecha hasta `hasta` (y desde `desde`, si se da). */
+function stockCompHasta(o, hasta, desde){
+  var t=0; Object.keys((o&&o.compPor)||{}).forEach(function(f){ if(f<=hasta && (!desde || f>=desde)) t+=o.compPor[f]; });
+  return t;
+}
+function stockProducirDe(o, MS){
+  var hoy=todayStr();
+  var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false };
+  if(o.deposito==null || o.descont) return r;
+  var hay=o.deposito+(o.enCamino||0)+(o.enOtros||0);
+  r.hay=Math.max(0,hay); r.ok=true;
+  r.sem=Math.max(0, o.fabricar||0);
+  var nec15=Math.max(stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)), o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA));
+  r.quin=Math.max(r.sem, Math.ceil(nec15-hay-1e-9), 0);
+  var pdm=o.porDiaMes||0, diasResto=stockDias(hoy, MS.finActual)+1;
+  var consumoResto=Math.max(stockCompHasta(o, MS.finActual), pdm*diasResto);
+  r.mesQueda=Math.max(0, hay-consumoResto);
+  r.mesNec=Math.max(stockCompHasta(o, MS.fin, MS.ini), pdm*MS.dias);
+  r.mes=Math.max(0, Math.ceil(r.mesNec-r.mesQueda-1e-9));
+  r.mes1=Math.min(r.mes, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-r.mesQueda-1e-9)));
+  r.mes2=r.mes-r.mes1;
+  return r;
+}
+var PRODUCIR_COLS=['sem','quin','mes','mes1','mes2'];
+function stockProducir(d){
+  var MS=stockMesSiguiente(d.hoy), bloques={};
+  PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,mes:0,mes1:0,mes2:0}, medidas:{} }; });
+  var cubiertos=0, sinContar=0;
+  d.lista.forEach(function(o){
+    if(o.descont) return;
+    if(!(o.rota || o.porDiaMes>0 || o.comp>0)) return;     // ni rota ni hay vendido pendiente: nada que planificar
+    if(o.deposito==null){ sinContar++; return; }
+    var r=stockProducirDe(o, MS), b=stockBloqueDe(o), B=bloques[b.k];
+    var f={ o:o, bloque:b, algo:(r.sem>0||r.quin>0||r.mes>0) };
+    PRODUCIR_COLS.forEach(function(c){ f[c]=r[c]; }); f.mesNec=r.mesNec; f.mesQueda=r.mesQueda; f.hay=r.hay;
+    if(!f.algo) cubiertos++;
+    B.filas.push(f);
+    if(f.algo){
+      var md=o.medida||'sin medida', M=B.medidas[md]=B.medidas[md]||{sem:0,quin:0,mes:0,mes1:0,mes2:0};
+      PRODUCIR_COLS.forEach(function(c){ B.tot[c]+=r[c]; M[c]+=r[c]; });
+    }
+  });
+  Object.keys(bloques).forEach(function(k){
+    bloques[k].filas.sort(function(a,b){ return (b.sem-a.sem)||(b.quin-a.quin)||(b.mes-a.mes)||a.o.desc.localeCompare(b.o.desc); });
+  });
+  return { mes:MS, hoy:d.hoy, bloques:PRODUCIR_BLOQUES.map(function(b){ return bloques[b.k]; }), cubiertos:cubiertos, sinContar:sinContar };
+}
+/* «Cubre hasta»: el corte día por día de la tabla (ritmo de 15 días); si ese ritmo es cero
+   pero el del mes no, una estimación gruesa con el del mes. */
+function producirCubreTxt(f){
+  var o=f.o;
+  if(o.dias!=null) return '<b>'+fmtFechaCorta(o.corte)+'</b><br><span style="font-size:.9em;color:'+(o.dias<o.lead?'var(--red)':'var(--muted)')+'">'+stockEnDias(o.dias)+'</span>';
+  if(o.porDiaMes>0){ var n=Math.floor(Math.max(0, f.hay-o.comp)/o.porDiaMes); return '<b>~'+n+' días</b><br><span style="font-size:.9em;color:var(--muted)">al ritmo del mes</span>'; }
+  return '<span style="color:var(--green);font-weight:700">más de '+STOCK_HORIZONTE+' días</span>';
+}
+var PRODUCIR_VER_TODO=false;
+function producirVerTodo(){ PRODUCIR_VER_TODO=!PRODUCIR_VER_TODO; renderStock(); }
+function renderProducir(d){
+  if(!d.contado) return '';
+  var R=stockProducir(d), MS=R.mes, hoy=R.hoy;
+  var h7=stockSumarDias(hoy,PRODUCIR_SEMANA), h15=stockSumarDias(hoy,PRODUCIR_QUINCENA);
+  var conAlgo=0; R.bloques.forEach(function(B){ B.filas.forEach(function(f){ if(f.algo) conAlgo++; }); });
+  var num=function(n,fuerte){ return n>0 ? ('<b style="font-size:1.05em'+(fuerte?';color:#7c2d12':'')+'">'+n+'</b>') : '<span style="color:var(--muted)">—</span>'; };
+  var html='<div id="producir" style="border:2px solid #7c2d12;border-radius:11px;padding:12px 14px;margin-bottom:14px;background:#fff">'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+
+      '<div style="font-weight:800;font-size:.98rem;color:#7c2d12">🏭 Qué producir · esta semana, los próximos '+PRODUCIR_QUINCENA+' días y '+esc(MS.nombre)+'</div>'+
+      '<span style="font-size:.78rem;color:var(--muted)">'+conAlgo+' producto'+(conAlgo===1?'':'s')+' con algo que producir · '+R.cubiertos+' cubierto'+(R.cubiertos===1?'':'s')+(R.sinContar?(' · '+R.sinContar+' sin contar'):'')+'</span>'+
+      '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
+    '</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo ni reposiciones de tienda, y solo productos con '+STOCK_VENTAS_MIN+'+ entregas. '+
+      '<b>Hay</b> suma lo de acá, lo de Moreno y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
+      '<b>'+esc(MS.nombre)+'</b> se calcula con lo vendido en los últimos '+STOCK_VENTANA_MES+' días, descontando lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena.</div>';
+  R.bloques.forEach(function(B){
+    var filas=B.filas.filter(function(f){ return f.algo || PRODUCIR_VER_TODO; });
+    if(!filas.length && B.k==='otros') return;
+    html+='<div style="border:1px solid var(--gray-md);border-left:4px solid '+B.col+';border-radius:9px;padding:10px 12px;margin-top:10px">'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">'+
+        '<b style="color:'+B.col+';font-size:.92rem">'+B.ico+' '+esc(B.titulo)+'</b>'+
+        '<span style="font-size:.78rem;color:var(--muted)">7 días: <b>'+B.tot.sem+'</b> · 15 días: <b>'+B.tot.quin+'</b> · '+esc(MS.nombre)+': <b>'+B.tot.mes+'</b>'+(B.tot.mes?(' (1ª quincena '+B.tot.mes1+' · 2ª '+B.tot.mes2+')'):'')+'</span>'+
+        (B.tot.sem||B.tot.quin||B.tot.mes ? ('<span style="margin-left:auto;display:flex;gap:5px;flex-wrap:wrap">'+
+          (B.tot.sem?('<button class="btn btn-sm" style="background:#fff;border:1px solid '+B.col+';color:'+B.col+';font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'sem\')">📋 7 días</button>'):'')+
+          (B.tot.quin?('<button class="btn btn-sm" style="background:#fff;border:1px solid '+B.col+';color:'+B.col+';font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'quin\')">📋 15 días</button>'):'')+
+          (B.tot.mes?('<button class="btn btn-sm" style="background:'+B.col+';color:#fff;font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'mes\')">📋 '+esc(MS.nombre)+'</button>'):'')+
+        '</span>') : '<span style="margin-left:auto;font-size:.8rem;color:#0a6b47;font-weight:700">✅ Cubierto</span>')+
+      '</div>'+
+      (B.k==='otros' ? '<div style="font-size:.78rem;color:#7c4b00;background:#fff4d6;border-radius:6px;padding:5px 8px;margin-bottom:6px">Estos no dicen de qué marca son (líneas Flex y Pedic que vende ROHO, o nombres fuera del catálogo) y nunca se les anotó un pedido a fábrica. Decí en cuál se hacen y pasan a su bloque.</div>' : '');
+    if(!filas.length){ html+='<div style="font-size:.82rem;color:var(--muted)">Nada que producir: lo que hay cubre la semana, los 15 días y '+esc(MS.nombre)+'.</div></div>'; return; }
+    html+='<div style="overflow:auto"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
+      '<thead><tr><th>Producto</th><th>Vende por día</th><th>Hay</th><th>Cubre hasta</th>'+
+      '<th>7 días<br><span style="font-weight:400;font-size:.85em">hasta el '+fmtFechaCorta(h7)+'</span></th>'+
+      '<th>15 días<br><span style="font-weight:400;font-size:.85em">hasta el '+fmtFechaCorta(h15)+'</span></th>'+
+      '<th>'+esc(MS.nombre)+'<br><span style="font-weight:400;font-size:.85em">necesita · queda el '+fmtFechaCorta(MS.ini)+' · producir</span></th>'+
+      '<th>1ª quincena</th><th>2ª quincena</th></tr></thead><tbody>'+
+      filas.map(function(f){
+        var o=f.o, b=f.bloque;
+        return '<tr data-producir-k="'+esc(o.k)+'" style="cursor:pointer" onclick="if(!event.target.closest(\'button,a,input,select\'))abrirStockPedidos(this.dataset.producirK)">'+
+          '<td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?('<br><span style="color:var(--muted);font-size:.9em">cód '+esc(o.cod)+'</span>'):'')+
+            (b.por==='fabrica'?('<br><span style="color:#7c4b00;font-size:.8em">acá por la última vez que se pidió a '+esc(b.fab)+'</span>'):(B.k==='otros'&&b.marca==='roho'?'<br><span style="color:#7c4b00;font-size:.8em">línea que vende ROHO</span>':''))+'</td>'+
+          '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
+            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
+          '<td><b>'+stockUnid(f.hay)+'</b><br><span style="color:var(--muted);font-size:.88em">'+stockUnid(Math.max(0,o.deposito))+' acá'+(o.enOtros?(' · '+stockUnid(o.enOtros)+' Moreno'):'')+(o.enCamino?(' · '+stockUnid(o.enCamino)+' en camino'):'')+(o.comp?('<br>'+stockUnid(o.comp)+' vendidos sin entregar'):'')+'</span></td>'+
+          '<td>'+producirCubreTxt(f)+'</td>'+
+          '<td>'+num(f.sem,true)+'</td>'+
+          '<td>'+num(f.quin,true)+'</td>'+
+          '<td><span style="color:var(--muted)">'+Math.round(f.mesNec)+' · '+stockUnid(Math.round(f.mesQueda))+' · </span>'+num(f.mes,true)+'</td>'+
+          '<td>'+num(f.mes1)+'</td><td>'+num(f.mes2)+'</td></tr>';
+      }).join('')+
+      '</tbody><tfoot>'+
+      '<tr><td colspan="4"><b>TOTAL</b></td><td><b>'+B.tot.sem+'</b></td><td><b>'+B.tot.quin+'</b></td><td><b>'+B.tot.mes+'</b></td><td><b>'+B.tot.mes1+'</b></td><td><b>'+B.tot.mes2+'</b></td></tr>'+
+      Object.keys(B.medidas).sort().map(function(md){ var M=B.medidas[md]; return '<tr style="color:var(--muted)"><td colspan="4">por medida · '+esc(md)+'</td><td>'+(M.sem||'—')+'</td><td>'+(M.quin||'—')+'</td><td>'+(M.mes||'—')+'</td><td>'+(M.mes1||'—')+'</td><td>'+(M.mes2||'—')+'</td></tr>'; }).join('')+
+      '</tfoot></table></div></div>';
+  });
+  html+='</div>';
+  return html;
+}
+/* El texto para la fábrica: un bloque, una columna. */
+function copiarProducir(k, h){
+  var d=stockData(), R=stockProducir(d), MS=R.mes, hoy=R.hoy;
+  var B=R.bloques.filter(function(b){ return b.k===k; })[0]; if(!B) return;
+  var col=(h==='sem')?'sem':(h==='quin')?'quin':'mes';
+  var filas=B.filas.filter(function(f){ return f[col]>0; });
+  var etq=(h==='sem')?('esta semana (hasta el '+fmtFechaCorta(stockSumarDias(hoy,PRODUCIR_SEMANA))+')')
+         :(h==='quin')?('los próximos '+PRODUCIR_QUINCENA+' días (hasta el '+fmtFechaCorta(stockSumarDias(hoy,PRODUCIR_QUINCENA))+')')
+         :(MS.nombre+' (todo el mes)');
+  if(!filas.length){ toast('Nada que producir para '+etq+' en '+B.titulo+'.','ok',5000); return; }
+  var t='🏭 PRODUCIR PARA '+etq.toUpperCase()+' — '+B.titulo.toUpperCase()+' — '+fmtFecha(hoy)+'\n\n';
+  var tot=0, porMed={};
+  filas.forEach(function(f){
+    var o=f.o; tot+=f[col]; porMed[o.medida||'sin medida']=(porMed[o.medida||'sin medida']||0)+f[col];
+    t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+f[col]+
+       (col==='mes'?(' — 1ª quincena '+f.mes1+' · 2ª quincena '+f.mes2):'')+
+       ' — hay '+stockUnid(f.hay)+(o.comp?(', '+stockUnid(o.comp)+' vendidos sin entregar'):'')+
+       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'):(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'):''))+'\n';
+  });
+  t+='\nTotal: '+tot+(tot===1?' unidad':' unidades')+' · por medida: '+Object.keys(porMed).sort().map(function(m){ return m+' '+porMed[m]; }).join(' · ');
+  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Cuenta con lo vendido en los últimos '+STOCK_VENTANA_MES+' días, sin pedidos puntuales.';
+  else t+='\nCubre lo vendido sin entregar y lo que tarda la fábrica + margen + '+(col==='sem'?'la semana':(PRODUCIR_QUINCENA+' días'))+' de venta, menos lo que hay acá, en Moreno y en camino.';
+  copyText(t);
+  toast('Copiado: producir para '+etq+' ✓','ok');
 }
 /* Los que vale la pena ofrecer en los formularios: con movimiento o ya contados. */
 function stockConMovimiento(d){
