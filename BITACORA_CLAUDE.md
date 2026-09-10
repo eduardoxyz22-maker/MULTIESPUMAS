@@ -6084,8 +6084,18 @@ el MORFEO de Eduardo (se cubren los 4 vendidos, nada de ritmo), la reposición y
 no cuentan, Carioca/protector que no aparecen, la línea ROHO que cae en «sin asignar» y pasa
 a Sueña con un pedido previo a MULTI, la quincena nunca menor que la semana, la pantalla, el
 texto copiado, «ver cubiertos» y que sin conteo no hay cuadro.
+Batería completa: **1.966 bien · 2 mal**, y las 2 son de `test_noborra` y **fallan igual
+contra `main` sin este cambio**: el test agenda un pedido nuevo para `D(3)` = hoy + 3, que el
+10/09 cae **domingo**, y el panel no agenda domingos (§ portero). Es el mismo mal de
+calendario de §4dh, en otro test; anotado en Pendientes.
+Publicado en `main` (`c129f1e`).
 
 ## 5. Pendientes
+
+> 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
+> la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
+> también contra `main`). Arreglo: que `D(n)` salte el domingo sin pisar los otros `D(n)` que
+> usa el test. No se tocó porque no es del cambio de §4dr.
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
 > julio 3 bloques de JavaScript que fallan en silencio («React is not defined» ×3, un
