@@ -6179,11 +6179,32 @@ Actions → «Traer ventas de Kommo (respaldo)» para ver si contesta desde afue
 ⚠️ Desde acá **no se puede** disparar ese workflow: `actions_run_trigger` devuelve
 `403 Resource not accessible by integration`. Lo corre el dueño.
 
+### Segunda vuelta, con el cartel nuevo en la mano
+El dueño mandó la captura con el arreglo funcionando: *«No se pudo leer la planilla: Google no
+contestó en 30 segundos y se cortó la espera. Reintento solo en 7 s»*. Dos cosas más, que solo
+se ven con el cartel andando:
+- ⚠️ **El tope del panel tiene que ser MAYOR que la espera del servidor.** El `.gs` toma un
+  candado con `waitLock(30000)` para leer y para guardar: si otro pedido lo tiene, espera 30 s
+  y recién ahí contesta **`busy`**. Con `CARGA_TOPE`=30 s el panel cortaba **justo antes** de
+  esa respuesta, así que «el servidor está ocupado» era invisible y se leía como «Google no
+  contestó» — que manda a buscar el problema al lado equivocado (la red, el navegador). Ahora
+  `CARGA_TOPE`=**45 s** y `motivoDelServidor` traduce `busy`, `clave` y `bad json`.
+- ⚠️ **La misma cuenta regresiva se dibuja en DOS lugares** (el cartel de arriba y el chip de
+  adentro de la pestaña) y el `setInterval` del reintento repintaba solo el cartel: en la
+  captura del dueño se ve **«7 s» arriba y «20 s» abajo**, al mismo tiempo. Ahora las dos
+  laten con `cargaTic`.
+- **Lo que NO se tocó**: el `list` del `.gs` sigue tomando el candado exclusivo. `readAll()` es
+  un solo `getDataRange().getValues()` —una foto atómica—, así que **leer no necesita
+  candado**, y sacárselo quitaría la mayor fuente de `busy` (cada panel abierto pide la lista
+  al entrar y cada minuto). Es un cambio de servidor: exige Implementar → **la implementación
+  de siempre** → Versión nueva. Queda propuesto, no hecho.
+
 ### Pruebas
-`tests/test_carga.js`, sección 7, **37 checks** (+5): una lectura que no contesta nunca se
+`tests/test_carga.js`, sección 7, **39 checks** (+7): una lectura que no contesta nunca se
 corta sola a los 2 s (tope bajado en el test), pasa a `reintento`, dice el motivo con los
-segundos, deja el reintento agendado, muestra los segundos mientras espera y ofrece «Volver a
-intentar». ⚠️ El chip vive en `#conn-form-txt` / `#conn-admin-txt`, no en `#adm-conn-txt`.
+segundos, deja el reintento agendado, muestra los segundos mientras espera, ofrece «Volver a
+intentar», la cuenta regresiva **baja y coincide en los dos carteles**, y `busy` se dice en
+castellano. ⚠️ El chip vive en `#conn-form-txt` / `#conn-admin-txt`, no en `#adm-conn-txt`.
 
 ## 5. Pendientes
 

@@ -208,8 +208,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     CONNECTED=true; STATE=[]; CARGA_GEN++;
     if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
     if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
-    var topeOrig=CARGA_TOPE, listOrig=window.apiList;
-    CARGA_TOPE=2000;
+    var topeOrig=CARGA_TOPE, listOrig=window.apiList, intOrig=CARGA_INTENTOS;
+    CARGA_TOPE=2000; CARGA_INTENTOS=[8000];      // la espera larga, para poder mirar la cuenta regresiva
     window.apiList=function(){ return new Promise(function(){}); };   // no contesta nunca
     var t0=Date.now();
     var p=cargaInicial(0);
@@ -224,9 +224,17 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     out.reintenta = !!CARGA_TIMER;
     out.banner = (document.getElementById('carga-banner')||{}).innerHTML||'';
     out.chip2 = (document.getElementById('conn-admin-txt')||{}).innerHTML||'';
+    /* ⚠️ La MISMA cuenta regresiva se dibuja en dos lugares: el cartel de arriba y el chip
+       de adentro de la pestaña. Si solo late uno, quedan diciendo números distintos. */
+    await esperar(2200);
+    var seg=function(t){ var m=String(t).match(/(\d+)\s*<\/b>\s*s|(\d+)\s*s\b/); return m?(m[1]||m[2]):''; };
+    out.segBanner=seg((document.getElementById('carga-banner')||{}).innerHTML||'');
+    out.segChip  =seg((document.getElementById('conn-form-txt')||{}).innerHTML||'');
+    out.bajo = (out.segBanner!=='' && Number(out.segBanner)<8);   // de verdad bajó
+    out.busy = motivoDelServidor('busy');
     if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; }
     if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; }
-    CARGA_TOPE=topeOrig; window.apiList=listOrig; CARGA_GEN++; CARGA_ESTADO='ok';
+    CARGA_TOPE=topeOrig; CARGA_INTENTOS=intOrig; window.apiList=listOrig; CARGA_GEN++; CARGA_ESTADO='ok';
     return out;
   });
   chk('⚠️ una lectura que no contesta NUNCA se corta sola (antes: «Conectando…» para siempre)',
@@ -238,6 +246,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       colgado.mientras==='cargando' && colgado.seg>=1 && /\d+ s/.test(colgado.chip), colgado.mientras+' · '+colgado.seg+' s · '+colgado.chip.slice(0,90));
   chk('al cortarse, el cartel dice en cuánto reintenta y ofrece «Volver a intentar»',
       /Reintenta solo en/.test(colgado.chip2) && /Volver a intentar/.test(colgado.banner), colgado.chip2.slice(0,120));
+  chk('⚠️ la cuenta regresiva baja y dice LO MISMO en el cartel de arriba y en el chip de la pestaña',
+      colgado.segBanner!=='' && colgado.segBanner===colgado.segChip && colgado.bajo,
+      'cartel '+colgado.segBanner+' s · chip '+colgado.segChip+' s');
+  chk('«busy» del servidor se dice en castellano, no como código', /ocupado con otra operación/.test(colgado.busy), colgado.busy.slice(0,80));
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

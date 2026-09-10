@@ -172,7 +172,13 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   reintentando: si el test lee el cartel de conexión, que haga `CARGA_GEN++; CARGA_ESTADO='ok'`
   y limpie `CARGA_TIMER`/`CARGA_TIC` en su setup (ver `test_conflicto.js`). `tests/test_carga.js`.
 - **⏱️ Una lectura colgada se corta sola** (§4ds): `refrescarEstado` envuelve `apiList()` en
-  `conTopeDuro(…, CARGA_TOPE=30 s, 'tardo_datos')`. ⚠️ Sin eso, un `fetch` que no resuelve NI
+  `conTopeDuro(…, CARGA_TOPE=45 s, 'tardo_datos')`. ⚠️ **`CARGA_TOPE` tiene que ser MAYOR que
+  el `waitLock(30000)` del `.gs`**: con los dos en 30 s el panel cortaba justo antes del
+  `busy` del servidor y «está ocupado» no se veía nunca. `motivoDelServidor` traduce `busy`.
+  La cuenta regresiva se dibuja en DOS lugares (cartel y chip): las dos laten con `cargaTic`.
+  📌 Propuesto y NO hecho: sacarle el candado al `list` del `.gs` (`readAll` es un solo
+  `getValues`, o sea una foto atómica: leer no necesita candado, y es la mayor fuente de
+  `busy`). Exige republicar. ⚠️ Sin eso, un `fetch` que no resuelve NI
   falla dejaba el panel en «⏳ Conectando con la planilla del equipo…» **para siempre**: el
   reintento se agenda dentro del `.then` del intento anterior, así que no llegaba nunca (mismo
   agujero que las fotos, §4dq). **Solo la LECTURA lleva tope**: cortar un guardado que el

@@ -6626,7 +6626,21 @@ function motivoDeError(e){
    Una lectura es idempotente: cortarla y volver a pedirla no rompe nada, y es la única forma
    de salir de un `fetch` colgado. (Los guardados NO llevan tope: si el servidor ya lo grabó,
    reintentarlo a ciegas es peor que esperar.) */
-var CARGA_TOPE=30000;
+/* ⚠️ TIENE QUE SER MAYOR QUE LA ESPERA DEL SERVIDOR. El Apps Script toma un candado con
+   `waitLock(30000)` para leer y guardar: si otro pedido lo tiene, espera 30 s y recién ahí
+   contesta `busy`. Con el tope en 30 s el panel cortaba justo antes de esa respuesta y
+   «ocupado» no se veía nunca — se leía como «Google no contestó», que manda a buscar el
+   problema al lado equivocado. 45 s deja llegar el `busy`. */
+var CARGA_TOPE=45000;
+/* Lo que contesta el servidor, en castellano. `busy` no es un error del panel ni de la red:
+   el Apps Script atiende de a uno (candado) y otro pedido lo tenía tomado (§4ds). */
+function motivoDelServidor(err){
+  var m=String(err||'');
+  if(m==='busy') return 'el servidor estaba ocupado con otra operación y no llegó a contestar. Pasa cuando varios guardan al mismo tiempo, o cuando quedó una operación larga colgada';
+  if(m==='clave') return 'el servidor pide la clave del equipo';
+  if(m==='bad json') return 'el servidor no entendió el pedido (bad json)';
+  return 'el servidor contestó: '+m.slice(0,80);
+}
 function refrescarEstado(){
   if(!CONNECTED) return Promise.resolve(false);
   return conTopeDuro(apiList(), CARGA_TOPE, 'tardo_datos').then(function(res){
@@ -6636,7 +6650,7 @@ function refrescarEstado(){
       cargaEstado('ok');
       return true;
     }
-    ULTIMO_ERROR=(res&&res.error)?('el servidor contestó: '+String(res.error).slice(0,80)):'respuesta inesperada del servidor';
+    ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
     if(!STATE.length) cargaEstado('error');      // una pantalla en 0 nunca se queda sin explicación
     return false;
   }).catch(function(e){ ULTIMO_ERROR=motivoDeError(e); if(!STATE.length) cargaEstado('error'); return false; });
@@ -6708,7 +6722,11 @@ function cargaInicial(intento){
     if(intento<CARGA_INTENTOS.length){
       var ms=CARGA_INTENTOS[intento]; CARGA_PROXIMO=Date.now()+ms;
       cargaEstado('reintento');
-      CARGA_TIC=setInterval(cargaBanner, 1000);                 // la cuenta regresiva del cartel
+      /* ⚠️ `cargaTic`, no `cargaBanner`: el cartel de arriba y el chip de adentro de la
+         pestaña muestran LA MISMA cuenta regresiva, y si solo se repinta uno quedan
+         diciendo cosas distintas — el dueño mandó una captura con «7 s» arriba y «20 s»
+         abajo, en la misma pantalla (§4ds). */
+      CARGA_TIC=setInterval(cargaTic, 1000);
       CARGA_TIMER=setTimeout(function(){ cargaInicial(intento+1); }, ms);
     } else { cargaEstado('error'); renderCupoForm(); }
     return false;
