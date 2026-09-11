@@ -5868,7 +5868,12 @@ function submitPedido(){
   /* ⚠️ Acá se calcula un número PROVISORIO, con la planilla que esta computadora tenga
      en memoria. El DEFINITIVO se vuelve a calcular más abajo, con la planilla recién
      bajada — ver "EL N° DE OC SE ASIGNA ACÁ". Ver también §OC REPETIDAS en la bitácora. */
-  var _ocAuto = !isEdit && !esRoho(vendedor) && !ocSel && ocAutoActivo();
+  /* ⚠️ UN BORRADOR DE KOMMO QUE SE COMPLETA ES UN PEDIDO NUEVO (§4dt). `completarBorrador`
+     lo abre con EDIT_ID puesto (para pisar el borrador y no duplicarlo), y eso lo hacía
+     pasar por «edición»: sin OC automática y con el campo en modo manual. Las vendedoras
+     lo reportaron: «lo que viene de Kommo no genera N° de OC». */
+  var _deBorrador = isEdit && (typeof borradorDe==='function') && !!borradorDe(EDIT_ID);
+  var _ocAuto = (!isEdit || _deBorrador) && !esRoho(vendedor) && !ocSel && ocAutoActivo();
   if(_ocAuto) ocSel=nextOcMes(null, docTipoSel());
   /* ⚠️ Si eligió 🎧 ATC (o 🏪 RPT) pero ESCRIBIÓ el número a mano, `ocSel` viene sin el
      prefijo y `esATC()`/`esRPT()` darían false: el pedido no aparecería en su pestaña ni
@@ -6304,7 +6309,9 @@ function pintarCampoOc(roho){
   var fo=document.getElementById('f-oc'), hint=document.getElementById('f-oc-hint');
   if(!fo) return;
   var tipo=docTipoSel();
-  var manual = roho || !!EDIT_ID || !ocAutoActivo();
+  // Un borrador de Kommo que se está completando NO es una edición: la OC se asigna sola (§4dt).
+  var _editReal = !!EDIT_ID && !((typeof borradorDe==='function') && borradorDe(EDIT_ID));
+  var manual = roho || _editReal || !ocAutoActivo();
   fo.readOnly=!manual;
   fo.style.background = manual ? '' : 'var(--gray-lt)';
   fo.style.color      = manual ? '' : 'var(--muted)';
@@ -11825,8 +11832,22 @@ function stockEsperado(q, T){
    empresa. Si contara como venta, se contaría DOS VECES: ahora y cuando la tienda lo venda
    de verdad, y el panel pediría fabricar el doble. Lo pendiente de entregar sí se cubre:
    ese camión sale igual. */
+/* 📌 PEDIDOS PUNTUALES QUE NO SON DE EDUARDO NI LLEVAN RPT (§4dt, dueño 11/09):
+   · ROHO a «TIENDA 1/2/3» es reposición de tienda (una venta de ROHO trae el nombre de
+     una persona y una ubicación, no «TIENDA n»);
+   · MULTICENTER y CONSIGNACIÓN «no entran en la rotación, son pedidos puntuales».
+   Se cubre lo vendido y sin entregar, pero no arman ritmo ni reserva. */
+var STOCK_PUNTUAL=/\bMULTICENTER\b|\bCONSIGNACI/i;
+var STOCK_ROHO_TIENDA=/\bTIENDA\s*\d\b/i;
+function stockPuntual(p){
+  if(!p) return false;
+  var cli=normNombre(p.cliente||'');
+  if(STOCK_PUNTUAL.test(cli)) return true;
+  return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(cli);
+}
 function stockPedidoUnico(p){
   if(esRPT(p&&p.oc)) return true;
+  if(stockPuntual(p)) return true;
   return /(^|\s)EDUARDO(\s|$)/i.test(normNombre((p&&p.vendedor)||''));
 }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
@@ -11836,8 +11857,9 @@ function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendido
    (§4dk). `vendidosUnicos` junta a ambos porque para la reserva dan lo mismo —ninguno arma
    ritmo—, pero el cartel tiene que decir la verdad de dónde salieron esas unidades. */
 function stockUnicoEtq(o){
-  var rpt=(o&&o.vendidosRpt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt;
-  return (edu>0&&rpt>0) ? 'Eduardo y reposición' : (rpt>0 ? 'Reposición de tienda' : 'Eduardo');
+  var rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt-pun;
+  var l=[]; if(edu>0) l.push('Eduardo'); if(rpt>0) l.push('reposición de tienda'); if(pun>0) l.push('pedido puntual');
+  return l.length ? l.join(' y ') : 'Eduardo';
 }
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
@@ -11853,7 +11875,7 @@ function stockData(){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{} }; }
     return g[k];
@@ -11882,7 +11904,7 @@ function stockData(){
       // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
       if(fs>=desde && fs<=hoy){
         o.vendidos+=c;
-        if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; }
+        if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
 
