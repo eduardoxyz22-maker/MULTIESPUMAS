@@ -6437,6 +6437,22 @@ programen la devolución… y marque y ocupe espacio en ese día"*.
   «Era OC 08-xxx (repetida; renumerada el 11/09/2026)» en observaciones. Verificado contra
   la planilla: cero repetidas.
 
+## 4ea/4eb. ATC: abre en «Mes» con las viejas sin cerrar; aviso «recoger de fábrica» (2026-09-11)
+
+- §4ea — La pestaña ATC esperaba la planilla entera para dibujar («tarda en cargar»). Ahora
+  `refreshAtc` dibuja con lo que hay y baja atrás (no si se bajó hace <1 min). Abre en «Mes»,
+  y «Mes» incluye las ATC de meses anteriores que siguen sin cerrar, con «⏳ de ago-26».
+- §4eb — El dueño: *"volvió de fábrica significa un turno para logística: ir a recoger a la
+  fábrica y ese día llevar al cliente… mejor una alerta 2 días hábiles antes"*. Sábado cuenta
+  como hábil; el recojo en fábrica NO ocupa cupo. Con la devolución programada (`a.pdev`),
+  `atcRecogerFabDesde` = 2 días hábiles antes; desde ese día y hasta que alguien tilde
+  «✓ Recogido» (`a.rf`, `marcarRecogidoFab`) la ATC está en estado `recogerfab` (🏭, rojo) y
+  aparece como bloque «🏭 Recoger de fábrica» arriba de la ficha del chofer y de la lista de
+  carga (`recogerFabHtml`). El ✅ del chofer el día de la entrega anota `rf` si faltaba.
+  «Volvió de fábrica» pasó a «Listo en fábrica» (`a.dev`), opcional: no frena nada.
+  Probado en local (persistencia en memoria): lunes 14 → aviso desde viernes 11; martes 15 →
+  sábado 12; miércoles 16 → lunes 14.
+
 ## 4dy. QA del módulo Stock en vivo: buscador por palabras y tabla «En camino» con scroll (2026-09-11)
 
 Pasada de pruebas sobre todo lo que cambió el 11/09 en «Stock y reposición», contra los datos
