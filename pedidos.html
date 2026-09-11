@@ -7265,7 +7265,10 @@ function medidaDeTexto(t){
   var m=s.match(/(\d{2,3})\s*[x*]\s*(\d{2,3})/);    // "180X200CM", "160 x 190", "140*190"
   if(m) return m[1]+'x'+m[2];
   // Sin centímetros, la medida puede venir en plazas: «COLCHON ORO VISCOLASTICO 2,5 PLZ».
-  var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?)\b/);
+  /* «2.5P HEAVEN» (así lo escribe el Excel de ROHO) es lo mismo que «2,5 PLZ» (§4ds):
+     sin la P suelta, el viscolástico 2.5P quedaba como un producto SIN medida, aparte del
+     160x190 que sí tenía stock, y salía en rojo «PEDIR YA» teniendo. */
+  var p=s.match(/(\d+(?:[.,]\d+)?)\s*(?:plz|plazas?|pl|p)\b/);
   if(p){ var k=medidaPlzNum(p[1]); if(k) return k; }
   /* …o como un número suelto: AL FINAL, como la tabla de códigos del dueño («SOMIER NEGRO
      2,5», «PILLOW PEDIC 3,0»), o seguido de lo que el almacén de Moreno le cuelga al nombre:
@@ -11281,7 +11284,18 @@ function esTextoDeTienda(t){
   if(PROD_TIENDA.test(s)) return true;
   return /\bMDF\b/.test(s) && !PROD_MUEBLE.test(s);
 }
-function esProdDeTienda(x){ return esTextoDeTienda((x&&x.desc)||''); }
+/* 🧹 LO QUE NO ES UN PRODUCTO (§4ds). En el panel se cargan también tareas de logística
+   con el mismo formulario: «VARIOS», «RECOGER FIBRA», «colchon a recoger para tapizado»,
+   «RECOGER DESPERDICIOS». Ninguna es un colchón que se pueda contar, vender o mandar a
+   fabricar — y aun así aparecían en rojo «🚨 PEDIR YA · pedí 1». Salen por la misma puerta
+   que los productos de tienda: ni rotación, ni comprometido, ni fábrica. */
+var PROD_NO_STOCK=/^VARIOS$|^(?:A\s+)?RECOGER\b|\bTAPIZADO\b|\bDESPERDICIOS?\b|\bESPONJA PICADA\b/;
+function esProdDeTienda(x){
+  var t=String((x&&x.desc)||''); if(esTextoDeTienda(t)) return true;
+  // Con un código del catálogo es un producto aunque el nombre diga «VARIOS»: el código manda.
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase();
+  return !(cod && CODIGOS[cod]) && PROD_NO_STOCK.test(stockNorm(t));
+}
 function stockVacio(){ return { c:{f:'',u:{}}, e:[], p:[], a:{}, g:{}, al:{}, h:[] }; }
 function leerStock(p){
   var d=stockVacio();
@@ -11991,6 +12005,7 @@ function stockData(){
    pedido te quedabas sin el martes». */
 function stockProyectar(o){
   if(o.deposito==null) return { corte:null, dias:null, saldoHoy:null, sinCamino:null };
+  var dep=Math.max(0,o.deposito);   // negativo = conteo viejo, no un faltante (§4ds)
   var hoy=todayStr(), fechas=Object.keys(o.compPor).sort(), llegan=(o.pedidos||[]).filter(function(q){return q.llega>=hoy;});
   var comp=0, iF=0, llega=0, iL=0, corte=null, dias=null, saldoHoy=null, sinCamino=null;
   for(var n=0;n<=STOCK_HORIZONTE;n++){
@@ -11998,9 +12013,9 @@ function stockProyectar(o){
     while(iF<fechas.length && fechas[iF]<=d){ comp+=o.compPor[fechas[iF]]; iF++; }
     while(iL<llegan.length && llegan[iL].llega<=d){ llega+=Number(llegan[iL].u)||0; iL++; }
     var consumo=Math.max(comp, o.porDia*(n+1));
-    var saldo=o.deposito+llega-consumo;
+    var saldo=dep+llega-consumo;
     if(n===0) saldoHoy=saldo;
-    if(sinCamino==null && o.deposito-consumo < -1e-9) sinCamino=n;
+    if(sinCamino==null && dep-consumo < -1e-9) sinCamino=n;
     if(corte==null && saldo < -1e-9){ corte=d; dias=n; }
     if(corte!=null && sinCamino!=null) break;
   }
@@ -12112,7 +12127,9 @@ function stockCuantoPedir(o){
   var necesario=Math.max(o.comp, o.porDia*(o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir)));
   // Una llegada atrasada requiere seguimiento, no duplicar la orden de fabricación.
   var camino=o.enCamino||0;
-  var falta=Math.ceil(necesario-(o.deposito+camino)-1e-9);
+  /* Un depósito NEGATIVO (se entregó más de lo que decía el conteo) es un conteo viejo, no
+     una deuda: pedir «1» para volver a cero no compra nada (§4ds). Se cuenta como cero. */
+  var falta=Math.ceil(necesario-(Math.max(0,o.deposito)+camino)-1e-9);
   return Math.max(0,falta);
 }
 function stockEnDias(n){ return n===0 ? 'hoy' : n===1 ? 'mañana' : ('en '+n+' días'); }
@@ -12578,17 +12595,22 @@ function stockProducirDe(o, MS){
   var hoy=todayStr();
   var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false };
   if(o.deposito==null || o.descont) return r;
-  var hay=o.deposito+(o.enCamino||0)+(o.enOtros||0);
-  r.hay=Math.max(0,hay); r.ok=true;
+  var hay=Math.max(0, o.deposito+(o.enCamino||0)+(o.enOtros||0));
+  r.hay=hay; r.ok=true;
   r.sem=Math.max(0, o.fabricar||0);
   var nec15=Math.max(stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)), o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA));
   r.quin=Math.max(r.sem, Math.ceil(nec15-hay-1e-9), 0);
   var pdm=o.porDiaMes||0, diasResto=stockDias(hoy, MS.finActual)+1;
   var consumoResto=Math.max(stockCompHasta(o, MS.finActual), pdm*diasResto);
-  r.mesQueda=Math.max(0, hay-consumoResto);
-  r.mesNec=Math.max(stockCompHasta(o, MS.fin, MS.ini), pdm*MS.dias);
-  r.mes=Math.max(0, Math.ceil(r.mesNec-r.mesQueda-1e-9));
-  r.mes1=Math.min(r.mes, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-r.mesQueda-1e-9)));
+  /* ⚠️ EN ENTEROS, Y QUE CIERREN (§4ds). Antes «necesita» y «queda» se redondeaban cada
+     uno por su lado y «producir» salía de los decimales: el SOFT decía «72 · 0 · 73» y el
+     dueño no podía restar. Ahora se necesita lo que da el ritmo redondeado PARA ARRIBA
+     (un colchón a medias es un colchón), queda lo que seguro va a quedar (para abajo), y
+     producir es la resta, tal cual se lee. */
+  r.mesQueda=Math.floor(Math.max(0, hay-consumoResto)+1e-9);
+  r.mesNec=Math.ceil(Math.max(stockCompHasta(o, MS.fin, MS.ini), pdm*MS.dias)-1e-9);
+  r.mes=Math.max(0, r.mesNec-r.mesQueda);
+  r.mes1=Math.min(r.mes, Math.max(0, Math.ceil(r.mesNec*PRODUCIR_1RA-1e-9)-r.mesQueda));
   r.mes2=r.mes-r.mes1;
   return r;
 }
@@ -12686,7 +12708,7 @@ function renderProducir(d){
           '<td>'+producirCubreTxt(f)+'</td>'+
           '<td>'+num(f.sem,true)+'</td>'+
           '<td>'+num(f.quin,true)+'</td>'+
-          '<td><span style="color:var(--muted)">'+Math.round(f.mesNec)+' · '+stockUnid(Math.round(f.mesQueda))+' · </span>'+num(f.mes,true)+'</td>'+
+          '<td><span style="color:var(--muted)">'+f.mesNec+' · '+f.mesQueda+' · </span>'+num(f.mes,true)+'</td>'+
           '<td>'+num(f.mes1)+'</td><td>'+num(f.mes2)+'</td></tr>';
       }).join('')+
       '</tbody><tfoot>'+
