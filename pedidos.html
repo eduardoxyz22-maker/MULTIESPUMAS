@@ -177,7 +177,7 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .edit-banner.on{display:flex}
 .edit-banner b{color:var(--amber)}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:200;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:7000;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.ok{background:#0f766e}
 .toast.err{background:var(--red)}
@@ -1881,7 +1881,38 @@ function apiPost(payload){
 function apiList(){ return apiPost({action:'list'}); }
 /* `opts.forzar`: solo cuando quien tiene la clave de administración confirmó mover un
    pedido a un día cerrado o a un turno lleno. El servidor lo respeta; a nadie más. */
+/* ⚠️ UN GUARDADO A LA VEZ POR PEDIDO (§4dq). Cada toque a ✔/✗/IM/MORENO/MULTI mandaba
+   su propio `save` al instante. Tocando dos o tres veces seguidas, el segundo salía ANTES
+   de que volviera la respuesta del primero, así que iba con el `rev` viejo: el servidor lo
+   tomaba por un choque con «otra persona» (`conflicto`), la ficha se recargaba con lo del
+   primer toque y el cartel de aviso quedaba escondido detrás del modal. Resultado: la
+   marca se deshacía sola y «Listo» no guardaba nada.
+   Ahora los guardados de un mismo pedido van en fila: el siguiente arranca cuando volvió
+   el anterior (con el `rev` ya sellado) y manda el estado ACTUAL del pedido. Si ya hay uno
+   esperando turno, no se suma otro: ese mismo va a llevar lo último que se tocó. */
+var SAVE_EN_VUELO={};   // id → promesa del guardado que está en el servidor ahora
+var SAVE_EN_ESPERA={};  // id → promesa del guardado que espera turno (lleva lo último)
 function apiSave(rec, opts){
+  var id=rec&&rec.id;
+  if(!id || (opts&&opts.forzar)) return apiSaveAhora(rec, opts);
+  if(!SAVE_EN_VUELO[id]){
+    var p=apiSaveAhora(rec, opts);
+    SAVE_EN_VUELO[id]=p;
+    var fin=function(){ if(SAVE_EN_VUELO[id]===p) delete SAVE_EN_VUELO[id]; };
+    p.then(fin, fin);
+    return p;
+  }
+  if(SAVE_EN_ESPERA[id]) return SAVE_EN_ESPERA[id];
+  var run=function(){
+    delete SAVE_EN_ESPERA[id];
+    var actual=findById(id)||rec;   // lo último que quedó en pantalla, con el rev sellado
+    return apiSave(actual, opts);
+  };
+  var q=SAVE_EN_VUELO[id].then(run, run);
+  SAVE_EN_ESPERA[id]=q;
+  return q;
+}
+function apiSaveAhora(rec, opts){
   var payload={action:'save', pedido:rec};
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
   return apiPost(payload).then(function(res){
