@@ -11340,7 +11340,7 @@ function stockCuenta(p){ return !!p && !esFilaSistema(p) && !esBorrador(p) && !e
    es un protector.
    ⚠️ MDF LLEVA GUARDA. El dueño lo nombró entre los accesorios, pero una CABECERA o un
    RESPALDAR de MDF sí se fabrica: si el renglón nombra el mueble, manda el mueble. */
-var PROD_TIENDA=/\b(PROTECTOR|PROTECTORES|SABANA|SABANAS|SABANILLA|SABANILLAS|MANTA|MANTAS|FRAZADA|FRAZADAS|CUBRECAMA|CUBRECAMAS|EDREDON|EDREDONES)\b/;
+var PROD_TIENDA=/\b(PROTECTOR|PROTECTORES|SABANA|SABANAS|SABANILLA|SABANILLAS|MANTA|MANTAS|FRAZADA|FRAZADAS|CUBRECAMA|CUBRECAMAS|CUBRE|CUBRES|CUBRECOLCHON|CUBRECOLCHONES|EDREDON|EDREDONES)\b/;
 var PROD_MUEBLE=/\b(CABECERA|CABECERAS|RESPALDAR|RESPALDARES)\b/;
 function esTextoDeTienda(t){
   var s=stockNorm(t);
@@ -12923,8 +12923,11 @@ function stockTiendas(MS){
     t.filas=Object.keys(t.prods).map(function(k){
       var f=t.prods[k];
       f.sobra=Math.max(0, f.r-f.v);                                 // le mandaron y no vendió todavía
-      f.q15=Math.max(0, Math.ceil(f.v/30*PRODUCIR_QUINCENA-f.sobra-1e-9));
-      f.mes=Math.max(0, Math.ceil(f.v/30*MS.dias-f.sobra-1e-9));
+      /* Al entero MÁS CERCANO, no para arriba: con 23 productos, redondear cada uno para
+         arriba le sumaba 7 colchones de la nada a Charcas (61 en vez de 54). Un producto que
+         vendió 1 en el mes da 0,5 en 15 días → 1; el que vendió 0 no pide. (dueño, 11/09) */
+      f.q15=Math.max(0, Math.round(f.v/30*PRODUCIR_QUINCENA-f.sobra));
+      f.mes=Math.max(0, Math.round(f.v/30*MS.dias-f.sobra));
       f.st=f.r>0 ? Math.min(1, f.v/f.r) : null;                     // sell-through de lo repuesto
       return f;
     }).sort(function(a,b){ return (b.v-a.v)||(b.r-a.r)||a.k.localeCompare(b.k); });
