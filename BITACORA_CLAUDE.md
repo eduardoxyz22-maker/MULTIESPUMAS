@@ -6403,6 +6403,18 @@ código la resuelve.
   y quedan con su nombre crudo (§4cy) hasta que el dueño pase sus códigos.
 - Ningún test cuenta las entradas del catálogo; la batería sigue igual.
 
+## 4dx. Catálogo: COLCHON SMART 105x190 · CH2521 (2026-09-11)
+
+Pedido del dueño, al ver que la reposición del 08/09 («3 SMART de 1,5 plazas a cada tienda
+Sueña») entraba sin código: *"CH2521"*. Una entrada más en `CODIGOS`, al final:
+`"CH2521":{d:"COLCHON SMART",m:"105x190"}`. Mismo camino que el LITE (§4dw): la vendedora la ve
+como «COLCHON SMART 105x190 · CH2521», y el reporte de existencias la encuentra por código.
+- Las tres reposiciones RPT 09-004 (Mutualista), 09-008 (Charcas) y 09-009 (Carmelo) ya
+  llevan el código en su renglón de SMART; se corrigieron desde la consola contra la planilla.
+- El nombre NO lleva «SUEÑA»: `stockMarcaDeNombre` no lo reconoce y el SMART cae en «❓ Sin
+  fábrica asignada» de 🏭 Qué producir hasta que se le anote un pedido a fábrica o el dueño
+  diga en cuál se hace. Las otras medidas del SMART siguen sin código.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
