@@ -1027,11 +1027,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div class="field">
           <label class="lb">Ver por</label>
           <div class="seg" id="atc-mode">
-            <button type="button" data-val="mes">Mes</button>
-            <button type="button" data-val="todo" class="active">Todo</button>
+            <button type="button" data-val="mes" class="active">Mes</button>
+            <button type="button" data-val="todo">Todo</button>
           </div>
         </div>
-        <div class="field" id="atc-wrap-mes" style="display:none">
+        <div class="field" id="atc-wrap-mes" style="display:block">
           <label class="lb">Mes</label>
           <input type="month" id="atc-mes">
         </div>
@@ -8383,9 +8383,16 @@ function printCarga(){ document.body.classList.add('printing-carga'); window.pri
    exactamente lo que se pidió.
    ========================================================================== */
 function refreshAtc(){
-  if(!CONNECTED){ renderAtc(); return; }
-  apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } renderAtc(); })
-           .catch(function(){ renderAtc(); });
+  /* ⚠️ ANTES ESPERABA LA PLANILLA ENTERA PARA DIBUJAR (§4ea): 700 filas de ida y vuelta al
+     Apps Script, o sea varios segundos de pestaña en blanco cada vez que se entraba. El dueño:
+     *"tarda en cargar"*. Ahora se dibuja al instante con lo que ya está en memoria y la
+     planilla se baja atrás; si se bajó hace menos de un minuto, ni eso. */
+  renderAtc();
+  if(!CONNECTED) return;
+  if(typeof ULTIMO_REFRESCO!=='undefined' && Date.now()-ULTIMO_REFRESCO<60000) return;
+  apiList().then(function(res){
+    if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); ULTIMO_REFRESCO=Date.now(); saveMirror(); renderAtc(); }
+  }).catch(function(){});
 }
 function atcLista(){
   var mode=segVal('atc-mode')||'todo';
@@ -8397,7 +8404,10 @@ function atcLista(){
   /* ⚠️ Corta por cuándo ENTRÓ la ATC, no por la fecha de recojo: la pregunta es
      "qué ATC entraron este mes", y una ATC de agosto que se recoge en septiembre
      sigue siendo una ATC de agosto. */
-  if(mode==='mes' && mes) list=list.filter(function(p){ return atcEntro(p).slice(0,7)===mes; });
+  /* …y las de MESES ANTERIORES QUE SIGUEN ABIERTAS (§4ea, dueño 11/09: *"lógicamente en el mes
+     mostrar de meses pasados que no se entregaron"*): una ATC de agosto sin devolver es
+     trabajo de septiembre. Las cerradas viejas sí quedan en su mes. */
+  if(mode==='mes' && mes) list=list.filter(function(p){ var e=atcEntro(p).slice(0,7); return e===mes || (e<mes && atcEstado(p)!=='cerrada'); });
   if(mot) list=list.filter(function(p){ return atcMotivo(p)===mot; });
   if(est==='sinmotivo')      list=list.filter(function(p){ return !atcMotivo(p); });
   /* «Sin cerrar» junta los tres estados que todavía dan trabajo: es la vista del día a día. */
@@ -8427,8 +8437,10 @@ function renderAtc(){
     if(!atcMotivo(p)) sinMot++;
   });
   var prom = nDias ? Math.round(sumDias/nDias) : null;
+  var mesSel=(segVal('atc-mode')==='mes') ? ((document.getElementById('atc-mes')||{}).value||'') : '';
+  var viejas=mesSel ? list.filter(function(p){ return atcEntro(p).slice(0,7)<mesSel; }).length : 0;
   document.getElementById('atc-metrics').innerHTML=
-    mc('var(--teal)','ATC en el período',list.length,'atenciones al cliente')+
+    mc('var(--teal)','ATC en el período',list.length, viejas?('incluye '+viejas+' de meses anteriores sin cerrar'):'atenciones al cliente')+
     mc('var(--red)','🚚 Por recoger',porRec, porRec?'todavía no se fue a buscar':'ninguna pendiente')+
     mc('var(--amber)','🏭 En fábrica',enFab, enFab?'esperando a producción':'ninguna en producción')+
     /* ⚠️ La ficha más accionable: volvieron de fábrica y el cliente NO las tiene. Antes
@@ -8496,7 +8508,8 @@ function renderAtc(){
     };
     /* Fila clicable entera: en el celular es mucho más fácil que apuntarle a la lupa. */
     return '<tr class="'+(atcEntregada(p)?'':'row-atc')+'" style="cursor:pointer" onclick="verAtc(\''+esc(p.id)+'\')">'+
-      '<td><span class="badge b-atc">🎧 '+esc(p.oc||'—')+'</span></td>'+
+      '<td><span class="badge b-atc">🎧 '+esc(p.oc||'—')+'</span>'+
+        ((mesSel && atcEntro(p).slice(0,7)<mesSel) ? '<br><span class="badge b-amber" title="Entró en un mes anterior y sigue sin cerrar">⏳ de '+esc(mesNombreCorto(atcEntro(p).slice(0,7)))+'</span>' : '')+'</td>'+
       '<td style="white-space:nowrap"><span class="badge '+est.cls+'">'+esc(est.lbl)+'</span>'+
         (atcComodin(p)?'<br><span class="badge b-blue b-comodin" style="margin-top:3px" title="Se le dejó un comodín: hay que traerlo de vuelta">🛏️ comodín</span>':'')+'</td>'+
       '<td style="white-space:nowrap;font-size:.8rem">'+esc(fmtFecha(atcEntro(p)))+'</td>'+
