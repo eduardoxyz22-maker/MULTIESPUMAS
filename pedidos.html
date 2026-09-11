@@ -12476,14 +12476,14 @@ function renderStock(){
   if(d.abiertos.length){
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px">'+
       '<div style="font-weight:800;color:#075985;margin-bottom:8px">🚚 En camino — recogidas de Moreno y pedidos a fábrica</div>'+
-      '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th>Unidades</th><th>Qué es</th><th>Anotado el</th><th>Llega ~</th><th></th></tr></thead><tbody>'+
+      '<div style="overflow:auto"><table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th>Unidades</th><th>Qué es</th><th>Anotado el</th><th>Llega ~</th><th></th></tr></thead><tbody>'+
       d.abiertos.map(function(q){
         return '<tr><td><b>'+esc(q.nombre)+'</b></td><td><b>'+stockUnid(q.u)+'</b></td>'+
           '<td>'+(q.tipo==='recogida'?('🚚 recoger de '+esc(stockAlmCorto(q.de||'Moreno'))):('🏭 fabricar'+(q.fab?(' · '+esc(q.fab)):'')))+'</td>'+
           '<td>'+fmtFecha(q.f)+'</td><td>'+fmtFecha(q.llega)+'</td>'+
           '<td style="white-space:nowrap"><button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700" onclick="abrirStockEntrada()">📥 Llegó</button> '+
           '<button class="btn btn-ghost btn-sm" data-id="'+esc(q.id)+'" onclick="cancelarStockPedido(this.getAttribute(\'data-id\'))">✕</button></td></tr>';
-      }).join('')+'</tbody></table></div>';
+      }).join('')+'</tbody></table></div></div>';
   }
   if(d.sobran.length){
     /* ⚠️ Con un almacén de verdad esto son 145 productos: la lista entera tapaba la pantalla
@@ -13743,7 +13743,9 @@ function stockAplicarFiltro(lista){
     if(F.aviso && !(STOCK_AVISO_GRUPO[F.aviso]||{})[o.aviso||'']) return false;
     if(F.marca && (stockMarcaDe(o)||'otros')!==F.marca) return false;
     if(F.medida && producirMedidaEtq(o.medida)!==F.medida) return false;
-    if(q){ var t=stockNorm(stockNombre(o)+' '+(o.cod||'')+' '+(o.otros||[]).join(' ')); if(t.indexOf(q)<0) return false; }
+    /* Palabra por palabra: «titanio 160» tiene que encontrar «TITANIO ICE · 160x190» aunque
+       en el nombre haya un « · » en el medio. Todas las palabras tienen que estar. */
+    if(q){ var t=stockNorm(stockNombre(o)+' '+(o.cod||'')+' '+(o.otros||[]).join(' ')), ws=q.split(' '); for(var i=0;i<ws.length;i++) if(ws[i] && t.indexOf(ws[i])<0) return false; }
     return true;
   });
   if(F.orden){

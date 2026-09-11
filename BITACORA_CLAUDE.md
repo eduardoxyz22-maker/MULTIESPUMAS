@@ -6415,6 +6415,35 @@ como «COLCHON SMART 105x190 · CH2521», y el reporte de existencias la encuent
   fábrica asignada» de 🏭 Qué producir hasta que se le anote un pedido a fábrica o el dueño
   diga en cuál se hace. Las otras medidas del SMART siguen sin código.
 
+## 4dy. QA del módulo Stock en vivo: buscador por palabras y tabla «En camino» con scroll (2026-09-11)
+
+Pasada de pruebas sobre todo lo que cambió el 11/09 en «Stock y reposición», contra los datos
+reales (703 filas, corte del 10/09, 272 productos en `stockData().lista`), sin guardar nada en
+la planilla. Invariantes verificadas en 272 filas: `porDiaReal = vendidosRotacion/15`, la regla
+baja/media/alta, `pedir = recoger + fabricar`, el corte de `stockProyectar` recomputado aparte,
+el depósito negativo tratado como 0. En `stockProducir` (104 filas): `mes = max(0, mesNec −
+mesQueda)`, `mes1 + mes2 = mes`, enteros, `sem = fabricar`, `quin ≥ sem`, totales por bloque,
+`mesMin ≤ mes ≤ mesMax`, `prob` = mediana. COLCHON SOFT 140x190 para octubre: 5 estimaciones
+(30 d 61,0 · 60 d 48,4 = (54+41)/2×31/30,4 · 90 d 42,1 · oct-25 34 · tendencia 30,9) →
+probable 42,1, rango 31–61, necesita 43, queda 0, producir 43 (31 + 12). Tiendas: ninguna venta
+de tienda de los últimos 30 días quedó «Sin tienda»; `q15`/`mes`/`sobra` cuadran por fila y por
+tienda (Charcas vendió 105, recibió 30, va a pedir 59 en 15 d y 108 en octubre). Formulario de
+tienda, Kommo (borrador → OC bloqueada; edición real → editable) y filtros: bien.
+
+Dos cosas se corrigieron:
+- **El buscador de la tabla buscaba la frase entera.** «titanio 160» o «titanio ice 160» daban
+  0 filas porque el nombre es «TITANIO ICE · 160x190» y el « · » cortaba la coincidencia. Ahora
+  `stockAplicarFiltro` parte lo escrito en palabras y exige que estén todas (en nombre, código
+  o «también:»). Una sola palabra y el código siguen igual.
+- **La tabla «🚚 En camino» no tenía caja con scroll**: en un celular desbordaba el panel 51 px
+  y aparecía scroll horizontal en toda la pantalla. Va envuelta en un `div` con `overflow:auto`,
+  como la tabla principal.
+
+Dudoso, no tocado: `sugerirTiendaSuc` solo sugiere si el selector está vacío, así que si se
+cambia de vendedora después de que se sugirió una tienda, la tienda no cambia (es para no pisar
+una elección a mano). El «30 d» del rango es el ritmo del equipo (sin Eduardo ni puntuales) y
+el 60/90 d cuenta todas las ventas menos RPT: son medidas distintas a propósito.
+
 ## 5. Pendientes
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
