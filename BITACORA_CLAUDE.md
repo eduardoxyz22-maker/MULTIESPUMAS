@@ -6415,6 +6415,28 @@ como «COLCHON SMART 105x190 · CH2521», y el reporte de existencias la encuent
   fábrica asignada» de 🏭 Qué producir hasta que se le anote un pedido a fábrica o el dueño
   diga en cuál se hace. Las otras medidas del SMART siguen sin código.
 
+## 4dz. ATC: 🔁 Programar devolución, y las 28 OC repetidas de agosto (2026-09-11)
+
+Dueño: *"en las ATC falta el botón programar devolución, para que logística, una vez recojan,
+programen la devolución… y marque y ocupe espacio en ese día"*.
+- La ATC vive en UN pedido. Al programar, `p.fecha`/`p.turno` pasan a ser el viaje de vuelta
+  (así entra sola a cupos, lista de carga, chofer y mapa) y el recojo queda en `a.rec`.
+  `p.entregado` vuelve a falso: el ✅ del chofer ese día cierra la ATC (`a.ent`), y destildar
+  la reabre (`atcAlMarcarEntregado`, llamado desde `choEntregado`, `quickEntregado` y
+  `toggleEntregado`). Datos nuevos dentro de `x.atc`: `rec, pdev, pturno, pdevQ, pdevH`.
+- `atcRecogida` = `a.rec || p.fecha`; `atcFueRecogida` es verdadero si hay `a.rec`. Estado nuevo
+  `programada` (🔁) entre «lista» y «cerrada»; filtro y ficha de la pestaña ATC lo muestran.
+  El chip en las listas dice «🔁 ATC · devolución» el día de la vuelta.
+- El botón está en la ficha (`verAtc`), habilitado solo después del recojo. El modal
+  (`abrirProgramarDevAtc`) muestra los cupos AM/PM del día elegido; el servidor valida el
+  cambio de fecha como un pedido nuevo (día cerrado, turno lleno) y avisa si no entra.
+  «Quitar la devolución» vuelve al día del recojo. Probado en local con `persistPedido` en
+  memoria: programar → programada y cupo ocupado → ✅ cierra → destildar reabre → quitar.
+- Las 28 OC repetidas de agosto (33 pedidos) se renumeraron desde la consola: el que se
+  cargó primero conservó el número; los demás pasaron a 08-265…08-297 en orden, con
+  «Era OC 08-xxx (repetida; renumerada el 11/09/2026)» en observaciones. Verificado contra
+  la planilla: cero repetidas.
+
 ## 4dy. QA del módulo Stock en vivo: buscador por palabras y tabla «En camino» con scroll (2026-09-11)
 
 Pasada de pruebas sobre todo lo que cambió el 11/09 en «Stock y reposición», contra los datos

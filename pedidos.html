@@ -1047,6 +1047,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
             <option value="sinrecoger">🚚 Por recoger</option>
             <option value="fabrica">🏭 En fábrica</option>
             <option value="lista">📦 Listas para entregar</option>
+            <option value="programada">🔁 Devolución programada</option>
             <option value="cerrada">✅ Entregadas al cliente</option>
             <option value="sinmotivo">⚠️ Sin motivo anotado</option>
           </select>
@@ -1545,9 +1546,9 @@ function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
 /* Chip fucsia para las listas. El fucsia es el único tono que no estaba ocupado por
    ningún estado de stock, así que se distingue del rojo de "falta" de un vistazo. */
 function atcChip(p){
-  return esATC(p&&p.oc)
-    ? '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>'
-    : '';
+  if(!esATC(p&&p.oc)) return '';
+  if(atcEnDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>';
+  return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>';
 }
 /* La clase del resaltado, para pegarla donde haga falta. */
 function atcCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : ''; }
@@ -1677,10 +1678,27 @@ function atcQueSeHizo(p){ var a=atcDe(p); return (a&&a.hizo)||''; }
    la ATC ya se pone la fecha del viaje («cargar 5/09») — que es el mismo campo `fecha` de
    cualquier pedido. Pedirle a logística que lo vuelva a marcar era trabajo duplicado.
    Se considera recogido cuando esa fecha ya pasó, o si el chofer igual lo tildó. */
-function atcRecogida(p){ return (p&&p.fecha)||''; }
+/* 🔁 LA DEVOLUCIÓN PROGRAMADA (§4dz, dueño 11/09): *"en las ATC falta el botón programar
+   devolución, para que logística, una vez recojan, programen la devolución… y marque y
+   ocupe espacio en ese día"*. Cuando se programa, la ATC pasa a vivir en el día de la
+   devolución: `p.fecha`/`p.turno` son los del viaje de vuelta (así entra sola a cupos,
+   lista de carga, chofer y mapa, sin tocar nada), y el día del recojo queda guardado en
+   `a.rec`. `p.entregado` vuelve a falso: el ✅ del chofer ese día es «se lo devolvimos». */
+function atcDevProg(p){ var a=atcDe(p); return (a && a.pdev && !a.ent) ? a.pdev : ''; }
+function atcDevTurno(p){ var a=atcDe(p); return (a&&a.pturno)||''; }
+function atcEnDevolucion(p){ return !!(atcDevProg(p) && p && p.fecha===atcDevProg(p)); }
+function atcRecogida(p){ var a=atcDe(p); return (a&&a.rec) || (p&&p.fecha) || ''; }
 function atcFueRecogida(p){
+  var a=atcDe(p)||{};
+  if(a.rec) return true;                         // se programó la devolución: el recojo ya pasó
   var f=atcRecogida(p);
   return !!((f && f<=todayStr()) || (p&&p.entregado));
+}
+/* El ✅ del chofer en el día de la devolución cierra la ATC (y destildarlo la reabre). */
+function atcAlMarcarEntregado(p){
+  var a=p && esATC(p.oc) ? atcDe(p) : null;
+  if(!a || !a.pdev || p.fecha!==a.pdev) return;   // se mira el día programado en crudo: con `ent` puesto, destildar tiene que poder reabrirla
+  mergeAtcDatos(p, { ent: p.entregado ? p.fecha : '' });
 }
 /* El cierre de verdad: el producto de vuelta en manos del cliente. Que producción lo
    devuelva NO cierra la ATC — todavía hay que llevárselo (§4br). */
@@ -1729,10 +1747,12 @@ var ATC_ESTADOS=[
   {k:'sinrecoger', lbl:'🚚 Por recoger',       cls:'b-red'},   // la fecha del viaje no llegó
   {k:'fabrica',    lbl:'🏭 En fábrica',        cls:'b-amber'},
   {k:'lista',      lbl:'📦 Lista para entregar',cls:'b-blue'},
+  {k:'programada', lbl:'🔁 Devolución programada',cls:'b-blue'},  // ya tiene día y turno para volver al cliente
   {k:'cerrada',    lbl:'✅ Entregada',          cls:'b-green'}
 ];
 function atcEstado(p){
   if(atcEntregada(p))   return 'cerrada';
+  if(atcDevProg(p))     return 'programada';
   if(atcDevuelta(p))    return 'lista';
   if(atcFueRecogida(p)) return 'fabrica';
   return 'sinrecoger';
@@ -8396,12 +8416,13 @@ function renderAtc(){
   llenarSelectAtcMotivo('atc-motivo', true);
   var list=atcLista();
   /* El embudo completo: dónde está trabada cada una. */
-  var porRec=0, enFab=0, listas=0, cerradas=0, sinMot=0, sumDias=0, nDias=0;
+  var porRec=0, enFab=0, listas=0, prog=0, cerradas=0, sinMot=0, sumDias=0, nDias=0;
   list.forEach(function(p){
     var e=atcEstado(p);
     if(e==='sinrecoger') porRec++;
     else if(e==='fabrica') enFab++;
     else if(e==='lista') listas++;
+    else if(e==='programada') prog++;
     else { cerradas++; var d=atcDias(p); if(d!=null){ sumDias+=d; nDias++; } }
     if(!atcMotivo(p)) sinMot++;
   });
@@ -8412,7 +8433,8 @@ function renderAtc(){
     mc('var(--amber)','🏭 En fábrica',enFab, enFab?'esperando a producción':'ninguna en producción')+
     /* ⚠️ La ficha más accionable: volvieron de fábrica y el cliente NO las tiene. Antes
        esta cola no se veía en ningún lado y los colchones dormían en el depósito. */
-    mc('#1d4ed8','📦 Listas para entregar',listas, listas?'volvieron, falta llevárselas':'nada esperando salida')+
+    mc('#1d4ed8','📦 Listas para entregar',listas, listas?'volvieron, falta programar la devolución':'nada esperando salida')+
+    (prog?mc('#0369a1','🔁 Devolución programada',prog,'ya tienen día y turno: ocupan cupo del camión'):'')+
     mc('var(--green)','✅ Entregadas',cerradas,
        prom!=null?('el circuito tardó '+prom+' día'+(prom===1?'':'s')+' en promedio'):'—')+
     (sinMot?mc('var(--red)','⚠️ Sin motivo',sinMot,'no se sabe por qué se generaron'):'');
@@ -8562,6 +8584,7 @@ function abrirDevolucionAtc(id){
         '🚚 <b>Recojo programado:</b> '+(atcRecogida(p)?esc(fmtFecha(atcRecogida(p))):'<i>sin fecha</i>')+
         (yaRec?'':' <span style="color:var(--muted)">— todavía no llegó ese día</span>')+
         '<div style="font-size:.75rem;color:var(--muted);margin-top:3px">Se cambia editando la ATC, no acá.</div>'+
+        (atcDevProg(p)?('<div style="margin-top:6px;color:#075985">🔁 <b>Devolución programada:</b> '+esc(fmtFecha(atcDevProg(p)))+' '+esc(atcDevTurno(p))+' <span style="color:var(--muted)">— ocupa cupo ese día; el ✅ del chofer la cierra</span></div>'):'')+
       '</div>'+
 
       paso('<input type="checkbox" id="dev-si" style="width:18px;height:18px"'+(a.dev?' checked':'')+
@@ -8579,7 +8602,7 @@ function abrirDevolucionAtc(id){
         '✅','Se le devolvió al CLIENTE','Con esto la ATC queda cerrada',
         '<div id="ent-box" style="display:'+(a.ent?'block':'none')+';margin-top:10px">'+
           '<div class="field"><label class="lb">¿Qué día se lo llevaron?</label>'+
-            '<input type="date" id="ent-fecha" max="'+esc(todayStr())+'" value="'+esc(a.ent||todayStr())+'"></div>'+
+            '<input type="date" id="ent-fecha" max="'+esc(todayStr())+'" value="'+esc(a.ent||((a.pdev&&a.pdev<=todayStr())?a.pdev:todayStr()))+'"></div>'+
           (atcComodin(p)?'<div style="font-size:.78rem;color:#1d4ed8;font-weight:700;margin-top:8px">🛏️ No te olvides de traer el comodín.</div>':'')+
         '</div>', true)+
 
@@ -8621,6 +8644,61 @@ function guardarDevolucionAtc(id){
   toast(entSi ? 'ATC cerrada ✓ — el cliente ya lo tiene'
       : devSi ? 'Volvió de fábrica ✓ — falta llevárselo al cliente'
       : 'Se deshizo la marca','ok');
+}
+/* 🔁 PROGRAMAR LA DEVOLUCIÓN (§4dz): día y turno del viaje para llevarle el producto de
+   vuelta al cliente. Ocupa un cupo del camión como cualquier entrega: el servidor lo
+   valida igual que un pedido nuevo (día cerrado, turno lleno) y, si no entra, avisa. */
+function abrirProgramarDevAtc(id){
+  var p=findById(id); if(!p){ toast('No encontré esa ATC','err'); return; }
+  if(!atcFueRecogida(p)){ toast('Primero hay que recogerlo: la devolución se programa después del recojo','err'); return; }
+  var a=atcDe(p)||{}, hoy=todayStr(), f0=a.pdev||tomorrowStr(), t0=normTurno(a.pturno||'AM');
+  var cuposTxt=function(f){
+    var am=cuposUsadosTurno(f,'AM'), pm=cuposUsadosTurno(f,'PM');
+    var propio=(atcDevProg(p)===f && p.fecha===f) ? 1 : 0;   // si ya está programada ese día, no se cuenta a sí misma
+    var amL=am-(propio&&normTurno(p.turno)==='AM'?1:0), pmL=pm-(propio&&normTurno(p.turno)==='PM'?1:0);
+    var c=function(n,max){ return '<b style="color:'+(n>=max?'var(--red)':(n>=max-2?'#b45309':'var(--green)'))+'">'+n+' de '+max+'</b>'; };
+    return '🌅 AM '+c(amL,CUPOS_AM)+' · 🌆 PM '+c(pmL,CUPOS_PM)+' cupos usados el '+fmtFecha(f);
+  };
+  openModal(
+    '<div class="modal-h"><h3>🔁 Programar devolución · '+esc(p.cliente||'')+'</h3>'+
+      '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<div class="modal-b">'+
+      '<div style="font-size:.82rem;color:var(--muted);margin-bottom:12px">'+esc(ocEtiq(p.oc))+' · '+esc(prodText(p.productos))+
+        '<br>Recogido el <b>'+esc(fmtFecha(atcRecogida(p)))+'</b>'+(atcDevuelta(p)?(' · volvió de fábrica el <b>'+esc(fmtFecha(atcDevuelta(p)))+'</b>'):' · <span style="color:#b45309">todavía no se anotó que volvió de fábrica</span>')+'</div>'+
+      '<div class="field"><label class="lb">¿Qué día se le lleva de vuelta?</label>'+
+        '<input type="date" id="pdev-fecha" min="'+esc(hoy)+'" value="'+esc(f0)+'" onchange="document.getElementById(\'pdev-cupos\').innerHTML=abrirProgramarDevAtc._cupos(this.value)"></div>'+
+      '<div class="field" style="margin-top:9px"><label class="lb">Turno</label>'+
+        '<div class="seg" id="pdev-turno"><button type="button" data-val="AM"'+(t0==='AM'?' class="active"':'')+' onclick="segSet(\'pdev-turno\',\'AM\')">🌅 AM</button><button type="button" data-val="PM"'+(t0==='PM'?' class="active"':'')+' onclick="segSet(\'pdev-turno\',\'PM\')">🌆 PM</button></div></div>'+
+      '<div id="pdev-cupos" style="font-size:.8rem;margin-top:8px">'+cuposTxt(f0)+'</div>'+
+      '<div style="font-size:.78rem;color:var(--muted);margin-top:8px">La ATC pasa a la lista de carga y al chofer de ese día como <b>🔁 devolución</b> y ocupa un cupo. Cuando el chofer la tilde ✅, queda cerrada.'+(atcComodin(p)?' <b style="color:#1d4ed8">🛏️ Traer el comodín.</b>':'')+'</div>'+
+      '<div class="btn-row" style="margin-top:16px">'+
+        '<button class="btn btn-primary btn-sm" style="width:auto" onclick="guardarProgramarDevAtc(\''+esc(p.id)+'\')">Programar</button>'+
+        (atcDevProg(p)?('<button class="btn btn-ghost btn-sm" style="width:auto" onclick="quitarProgramarDevAtc(\''+esc(p.id)+'\')">↺ Quitar la devolución</button>'):'')+
+        '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cancelar</button>'+
+      '</div>'+
+    '</div>');
+  abrirProgramarDevAtc._cupos=cuposTxt;
+}
+function guardarProgramarDevAtc(id){
+  var p=findById(id); if(!p) return;
+  var f=String((document.getElementById('pdev-fecha')||{}).value||''), t=segVal('pdev-turno')||'AM';
+  if(!f){ toast('Falta el día de la devolución','err'); return; }
+  if(f<todayStr()){ toast('La devolución no puede programarse para un día que ya pasó','err'); return; }
+  if(atcDevuelta(p) && f<atcDevuelta(p)){ toast('No se le puede devolver antes de que volviera de fábrica ('+fmtFecha(atcDevuelta(p))+')','err'); return; }
+  var a=atcDe(p)||{};
+  var rec=a.rec || p.fecha || '';                 // el día del recojo se guarda antes de mover la fecha
+  mergeAtcDatos(p, { rec:rec, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
+  p.fecha=f; p.turno=t; p.entregado=false;
+  persistPedido(p); closeModal(); renderAtc();
+  toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
+}
+function quitarProgramarDevAtc(id){
+  var p=findById(id); if(!p) return;
+  var a=atcDe(p)||{}; if(!a.pdev) return;
+  p.fecha=a.rec||p.fecha; p.turno=''; p.entregado=true;   // vuelve al día del recojo, ya recogido
+  mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'' });
+  persistPedido(p); closeModal(); renderAtc();
+  toast('Se quitó la devolución programada','ok');
 }
 /* Deshacer entero, para cuando se anotó en la ATC equivocada. */
 function borrarDevolucionAtc(id){
@@ -8698,12 +8776,20 @@ function verAtc(id){
           paso('📝','Entró', atcEntro(p), '—')+
           paso('🚚','Recojo', atcRecogida(p), 'sin fecha')+
           paso('🏭','Volvió de fábrica', atcDevuelta(p), 'sigue en producción')+
-          paso('✅','Al cliente', atcEntregada(p), 'todavía no lo tiene')+
+          (atcDevProg(p) && !atcEntregada(p)
+            ? '<div style="flex:1;min-width:118px;background:#e0f2fe;border:1px solid #bae6fd;border-radius:9px;padding:8px 10px">'+
+                '<div style="font-size:.68rem;text-transform:uppercase;letter-spacing:.03em;color:var(--muted)">🔁 Devolución</div>'+
+                '<div style="font-size:.85rem;font-weight:800;margin-top:2px;color:#075985">'+esc(fmtFecha(atcDevProg(p)))+' '+esc(atcDevTurno(p))+'</div>'+
+                '<div style="font-size:.72rem;color:var(--muted)">programada · ocupa cupo</div></div>'
+            : paso('✅','Al cliente', atcEntregada(p), 'todavía no lo tiene'))+
         '</div>'+
       '</div>'+
 
       '<div class="btn-row" style="margin-top:18px">'+
         (UNLOCKED?('<button class="btn btn-primary btn-sm" style="width:auto" onclick="closeModal();abrirDevolucionAtc(\''+esc(p.id)+'\')">📦 Anotar avance</button>'+
+                   (atcEntregada(p) ? '' : (atcFueRecogida(p)
+                     ? '<button class="btn btn-sm" style="width:auto;background:#0369a1;color:#fff;font-weight:700" onclick="closeModal();abrirProgramarDevAtc(\''+esc(p.id)+'\')">🔁 '+(atcDevProg(p)?'Cambiar devolución':'Programar devolución')+'</button>'
+                     : '<button class="btn btn-sm" style="width:auto;opacity:.55;cursor:not-allowed" disabled title="Primero hay que recogerlo: la devolución se programa después del recojo">🔁 Programar devolución</button>'))+
                    '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="closeModal();editarDesdeAtc(\''+esc(p.id)+'\')">✏️ Editar</button>'):'')+
         '<button class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="closeModal()">Cerrar</button>'+
       '</div>'+
@@ -9730,7 +9816,7 @@ function choQuitarCobro(id, idx){
 }
 function choEntregado(id){
   var p=findById(id); if(!p) return;
-  p.entregado=!p.entregado;
+  p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   persistPedido(p); renderChofer();
   toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
 }
@@ -10806,7 +10892,7 @@ function copiarBusca(){
 
 /* ---- Acciones rápidas de fila: verificado / entregado / cobrado ---- */
 function quickVerificado(id){ var p=findById(id); if(!p) return; p.verificado=!p.verificado; persistPedido(p); toast(p.verificado?'Verificado ✓ · listo para cargar':'Verificación deshecha','ok'); }
-function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
+function quickEntregado(id){ var p=findById(id); if(!p) return; p.entregado=!p.entregado; atcAlMarcarEntregado(p); persistPedido(p); toast(p.entregado?'Entregado ✓':'Entrega deshecha','ok'); }
 /* ============================================================================
    COBROS — el chofer puede registrar VARIOS pagos en un mismo pedido (efectivo +
    QR + tarjeta), cada uno con su monto. Se guardan como texto en el campo
@@ -14854,7 +14940,7 @@ function setEstado(id,val){
 }
 function toggleEntregado(id){
   var p=findById(id); if(!p) return;
-  p.entregado=!p.entregado;
+  p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
   if(CONNECTED){ apiSave(p).then(function(res){ if(!(res&&res.ok)) queuePending(p); }, function(){ queuePending(p); }); }
   toast(p.entregado?'Marcado como entregado ✓':'Entrega deshecha','ok');
