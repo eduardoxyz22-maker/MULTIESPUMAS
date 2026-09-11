@@ -580,6 +580,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="tienda-banner">
         <span>🏪 <b>Venta de tienda</b> — el cliente se lo lleva del local. No lleva fecha de entrega, turno ni dirección: queda como <b>SALIÓ DE TIENDA</b> y <b>no ocupa cupo del camión</b>.</span>
+        <label style="display:flex;align-items:center;gap:6px;font-weight:700;white-space:nowrap">Tienda <select id="f-tienda-suc" style="padding:5px 8px;border:1px solid #a9cfdf;border-radius:7px;font:inherit;font-size:.82rem"></select></label>
         <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="cancelarVentaTienda()">Cancelar</button>
       </div>
 
@@ -609,7 +610,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
         <div class="field">
           <label class="lb">Vendedor <span class="req">*</span></label>
-          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value);applyVendedorLite()">
+          <input type="text" id="f-vendedor" list="dl-vendedores" placeholder="Elegí tu nombre" autocomplete="off" oninput="setVendedorMem(this.value);applyVendedorLite();sugerirTiendaSuc()">
           <datalist id="dl-vendedores"></datalist>
         </div>
       </div>
@@ -5902,7 +5903,7 @@ function submitPedido(){
     celular: document.getElementById('f-celular').value.trim(),
     turno: _tienda ? '' : segVal('f-turno'),
     zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
-    direccion: _tienda ? DIR_TIENDA : document.getElementById('f-direccion').value.trim(),
+    direccion: _tienda ? dirTiendaConSucursal() : document.getElementById('f-direccion').value.trim(),
     maps: _tienda ? '' : (normalizaUbicacion(document.getElementById('f-maps').value)||''),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: _metodoPago,
@@ -6271,7 +6272,53 @@ var VENTA_TIENDA=false;
    tildes: "SALIO DE TIENDA" también entra. */
 function esVentaTienda(p){
   if(!p) return false;
-  return normNombre(p.direccion)===normNombre(DIR_TIENDA) || normNombre(p.zona)===normNombre(ZONA_TIENDA);
+  // «SALIÓ DE TIENDA · Carmelo» también es venta de tienda: la sucursal va después del punto (§4dv).
+  return normNombre(p.direccion).indexOf(normNombre(DIR_TIENDA))===0 || normNombre(p.zona)===normNombre(ZONA_TIENDA);
+}
+/* 🏪 DE QUÉ TIENDA ES CADA VENTA DE TIENDA (§4dv, dueño 11/09). Las ventas nuevas la traen
+   en la dirección («SALIÓ DE TIENDA · Carmelo»); las viejas no la tienen, así que se deduce
+   por la vendedora — el mapa lo dio el dueño, una por una:
+     Mauricio Mérida → Mutualista · Fernando Peinado → Charcas · Juan Pablo Paredes → Carmelo
+     Carola Chávez y Jonathan Monje → Central · María Flores → Buenos Aires
+     Mirian Salazar e Isabel Robledo → Mia Plaza */
+var VENDEDOR_SUCURSAL=[
+  [/MAURICIO/i, 'Mutualista'], [/PEINADO/i, 'Charcas'], [/JUAN PABLO/i, 'Carmelo'],
+  [/CAROLA/i, 'Central'], [/JONATHAN/i, 'Central'], [/MARIA FLORES|FLORES/i, 'Buenos Aires'],
+  [/MIRIAN|MIRIAM/i, 'Mia Plaza'], [/ISABEL/i, 'Mia Plaza']
+];
+function sucursalDeVendedor(v){
+  var n=normNombre(v||''); if(!n) return '';
+  for(var i=0;i<VENDEDOR_SUCURSAL.length;i++) if(VENDEDOR_SUCURSAL[i][0].test(n)) return VENDEDOR_SUCURSAL[i][1];
+  return '';
+}
+function sucursalDeVenta(p){
+  if(!p || !esVentaTienda(p)) return '';
+  var d=String(p.direccion||''), i=d.indexOf('·');
+  if(i>=0){ var s=sucursalDe(d.slice(i+1).trim()); if(s) return s.n; }
+  return sucursalDeVendedor(p.vendedor);
+}
+/* A qué sucursal fue una reposición: por el cliente («Charcas», «TIENDA CHARCAS», «REPOSICION MIA PLAZA»). */
+function sucursalDeRpt(p){
+  var c=normNombre((p&&p.cliente)||''); if(!c) return '';
+  for(var i=0;i<SUCURSALES.length;i++){ var n=normNombre(SUCURSALES[i].n); if(n && c.indexOf(n)>=0) return SUCURSALES[i].n; }
+  if(/ROHO|TIENDA\s*\d/i.test(c)) return 'Tiendas Roho';
+  return '';
+}
+function dirTiendaConSucursal(){
+  var e=document.getElementById('f-tienda-suc'), v=e?e.value:'';
+  return v ? (DIR_TIENDA+' · '+v) : DIR_TIENDA;
+}
+function llenarTiendaSuc(){
+  var e=document.getElementById('f-tienda-suc'); if(!e) return;
+  var actual=e.value;
+  e.innerHTML='<option value="">¿de qué tienda?</option>'+SUCURSALES.filter(function(x){ return x.n!=='Tiendas Roho'; }).map(function(x){ return '<option value="'+esc(x.n)+'">'+esc(x.n)+'</option>'; }).join('');
+  e.value=actual;
+  if(!e.value) sugerirTiendaSuc();
+}
+function sugerirTiendaSuc(){
+  var e=document.getElementById('f-tienda-suc'); if(!e || e.value) return;
+  var v=(document.getElementById('f-vendedor')||{}).value||'';
+  var sug=sucursalDeVendedor(v); if(sug) e.value=sug;
 }
 /* El cartelito 🏪 con el que se distingue de un pedido con entrega. */
 function badgeTienda(p){ return esVentaTienda(p) ? '<span class="badge b-gray" title="Venta de tienda — salió del local, sin entrega">🏪 TIENDA</span>' : ''; }
@@ -6288,6 +6335,7 @@ function fechaSalida(p){ return (p&&p.fecha) ? p.fecha : contaFecha(p); }
 function pintarModoTienda(){
   var view=document.getElementById('view-form');
   if(view) view.classList.toggle('venta-tienda', !!VENTA_TIENDA);
+  if(VENTA_TIENDA) llenarTiendaSuc();
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
 }
@@ -6459,6 +6507,7 @@ function editPedido(id){
   EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null;
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
+  if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value=rec.fecha||todayStr();
   document.getElementById('f-nota').value=rec.nota||'';
   document.getElementById('f-oc').value=rec.oc||'';
@@ -11920,7 +11969,11 @@ function stockData(){
       /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo, sin Eduardo
          ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
          se piensa por mes, no por quincena. */
-      if(fs>=desde30 && fs<=hoy && !stockPedidoUnico(p)){
+      /* Por FECHA DE VENTA (§4dv): lo que se vendió a fin de mes para entregar el mes que
+         viene se vendió este mes. El sistema de facturación lo cuenta así, y el plan del
+         mes tiene que cuadrar con él. La rotación de 15 días sigue por fecha de salida. */
+      var fv=contaFecha(p)||fs;
+      if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
         o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
@@ -12346,6 +12399,7 @@ function renderStock(){
   html+=renderStockHoy(d);
   html+=renderRevisionFija();
   html+=renderProducir(d);
+  html+=renderTiendas(d, stockMesSiguiente(d.hoy));   // no depende del conteo: sale de las ventas y las reposiciones
   var badge=function(o){
     if(o.aviso==='revisar') return '<button class="badge b-gray" data-k="'+esc(o.k)+'" onclick="abrirStockPedidos(this.dataset.k)">⚠️ Revisar saldo · reposición '+stockUnid(o.pedir)+'</button>';
     if(o.aviso==='urgente') return bpedir(o,'🚨 PEDIR YA','background:var(--red-lt);color:#8a1c24;border:1px solid var(--red-border)',
@@ -12646,7 +12700,7 @@ function ventasPanelIndex(){
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
     if(!stockCuenta(p) || esRPT(p.oc)) return;
-    var m=String(fechaSalida(p)||'').slice(0,7); if(!m || m<desde) return;
+    var m=String(contaFecha(p)||fechaSalida(p)||'').slice(0,7); if(!m || m<desde) return;   // por fecha de venta (§4dv)
     (p.productos||[]).forEach(function(x){
       if(esProdDeTienda(x)) return;
       var c=Number(x.cant)||0; if(!(c>0)) return;
@@ -12837,6 +12891,83 @@ function renderProducir(d){
   });
   html+='</div>';
   return html;
+}
+/* 🏪 QUÉ VA A PEDIR CADA TIENDA (§4dv). Por sucursal y producto: lo que la tienda vendió en
+   los últimos 30 días (sus ventas de tienda), lo que le mandaron (reposiciones RPT) y, con
+   eso, lo que va a pedir en 15 días y en el mes. Lo que recibió y todavía no vendió se
+   descuenta. La venta de tienda YA está contada en «Qué producir» (es una venta): esto no
+   suma producción, dice a dónde va a ir y muestra el sell-through de cada reposición —
+   «pidió 20 y vendió 5» se ve acá. */
+var TIENDAS_ABIERTAS={};
+function tiendaAbrir(n){ if(TIENDAS_ABIERTAS[n]) delete TIENDAS_ABIERTAS[n]; else TIENDAS_ABIERTAS[n]=1; renderStock(); }
+function stockTiendas(MS){
+  var hoy=todayStr(), desde=diasAtras(29), T={};
+  var fila=function(suc,k){ var t=T[suc]=T[suc]||{n:suc, prods:{}, v:0, r:0}; var f=t.prods[k]=t.prods[k]||{k:k, v:0, r:0, nv:0}; return f; };
+  STATE.forEach(function(p){
+    if(!stockCuenta(p)) return;
+    var f=contaFecha(p); if(f<desde || f>hoy) return;
+    var rpt=esRPT(p.oc);
+    if(!rpt && !esVentaTienda(p)) return;
+    var suc = rpt ? sucursalDeRpt(p) : sucursalDeVenta(p);
+    if(!suc) suc = rpt ? 'Sin tienda (reposición)' : 'Sin tienda (venta)';
+    (p.productos||[]).forEach(function(x){
+      if(esProdDeTienda(x)) return;
+      var c=Number(x.cant)||0; if(!(c>0)) return;
+      var k=stockClave(x); if(!k||k==='|') return;
+      var r=fila(suc,k);
+      if(rpt){ r.r+=c; T[suc].r+=c; } else { r.v+=c; r.nv++; T[suc].v+=c; }
+    });
+  });
+  var lista=Object.keys(T).map(function(n){
+    var t=T[n];
+    t.filas=Object.keys(t.prods).map(function(k){
+      var f=t.prods[k];
+      f.sobra=Math.max(0, f.r-f.v);                                 // le mandaron y no vendió todavía
+      f.q15=Math.max(0, Math.ceil(f.v/30*PRODUCIR_QUINCENA-f.sobra-1e-9));
+      f.mes=Math.max(0, Math.ceil(f.v/30*MS.dias-f.sobra-1e-9));
+      f.st=f.r>0 ? Math.min(1, f.v/f.r) : null;                     // sell-through de lo repuesto
+      return f;
+    }).sort(function(a,b){ return (b.v-a.v)||(b.r-a.r)||a.k.localeCompare(b.k); });
+    t.q15=t.filas.reduce(function(a,f){ return a+f.q15; },0);
+    t.mes=t.filas.reduce(function(a,f){ return a+f.mes; },0);
+    return t;
+  }).sort(function(a,b){ return (b.v-a.v)||(b.r-a.r); });
+  return lista;
+}
+function renderTiendas(d, MS){
+  var L=stockTiendas(MS); if(!L.length) return '';
+  var totV=0, totR=0, tot15=0, totM=0; L.forEach(function(t){ totV+=t.v; totR+=t.r; tot15+=t.q15; totM+=t.mes; });
+  var html='<div id="tiendas" style="border:2px solid #155e75;border-radius:11px;padding:12px 14px;margin-bottom:14px;background:#fff">'+
+    '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:4px">'+
+      '<div style="font-weight:800;font-size:.98rem;color:#155e75">🏪 Qué va a pedir cada tienda · próximos '+PRODUCIR_QUINCENA+' días y '+esc(MS.nombre)+'</div>'+
+      '<span style="font-size:.78rem;color:var(--muted)">últimos 30 días: las tiendas vendieron <b>'+totV+'</b> y recibieron <b>'+totR+'</b> · van a pedir ~<b>'+tot15+'</b> en 15 días y ~<b>'+totM+'</b> en '+esc(MS.nombre)+'</span>'+
+    '</div>'+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Por tienda: lo que vendió en 30 días (sus ventas de tienda), lo que le mandaron (reposiciones) y lo que va a pedir, descontando lo que recibió y todavía no vendió. '+
+      '<b>Esto no suma a «Qué producir»</b> —la venta de tienda ya está contada ahí—: dice a qué tienda va a ir y cómo rota cada reposición (<b>vendió / recibió</b>). Las ventas viejas sin tienda se asignan por la vendedora; las nuevas la traen en el formulario. Tocá una tienda para ver el detalle.</div>';
+  L.forEach(function(t){
+    var ab=!!TIENDAS_ABIERTAS[t.n];
+    html+='<div style="border:1px solid var(--gray-md);border-left:4px solid #155e75;border-radius:9px;padding:8px 12px;margin-top:8px">'+
+      '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;cursor:pointer" data-n="'+esc(t.n)+'" onclick="tiendaAbrir(this.dataset.n)">'+
+        '<b style="color:#155e75;font-size:.92rem">'+(ab?'▾':'▸')+' '+esc(t.n)+'</b>'+
+        '<span style="font-size:.78rem;color:var(--muted)">vendió <b>'+t.v+'</b> · recibió <b>'+t.r+'</b> · va a pedir ~<b>'+t.q15+'</b> en 15 d y ~<b>'+t.mes+'</b> en '+esc(MS.nombre)+' · '+t.filas.length+' producto'+(t.filas.length===1?'':'s')+'</span>'+
+        (t.r>0 ? ('<span style="margin-left:auto;font-size:.76rem;color:'+(t.v>=t.r?'#0a6b47':'#7c4b00')+';font-weight:700">vendió '+Math.round(100*Math.min(1,t.v/t.r))+'% de lo repuesto</span>') : '')+
+      '</div>';
+    if(ab){
+      html+='<div class="prod-wrap" style="margin-top:8px"><table class="roho-tabla stk-tabla" style="min-width:720px"><thead><tr><th>Producto</th><th>Vendió 30 d</th><th>Recibió 30 d</th><th>Sin vender aún</th><th>Va a pedir 15 d</th><th>Va a pedir '+esc(MS.nombre)+'</th></tr></thead><tbody>'+
+        t.filas.map(function(f){
+          var o=d.lista.filter(function(x){ return x.k===f.k; })[0], nombre=o?stockNombre(o):stockNombreClave(f.k);
+          return '<tr data-k="'+esc(f.k)+'" style="cursor:pointer" onclick="if(!event.target.closest(\'button,a\'))abrirStockPedidos(this.dataset.k)"><td><b>'+esc(nombre)+'</b></td>'+
+            '<td><b>'+f.v+'</b>'+(f.nv?('<br><span style="color:var(--muted);font-size:.88em">'+f.nv+' venta'+(f.nv===1?'':'s')+'</span>'):'')+'</td>'+
+            '<td>'+(f.r?('<b>'+f.r+'</b>'+(f.st!=null?('<br><span style="font-size:.88em;color:'+(f.st>=0.8?'#0a6b47':(f.st>=0.4?'#7c4b00':'#8a1c24'))+'">vendió '+Math.round(f.st*100)+'%</span>'):'')):'<span style="color:var(--muted)">—</span>')+'</td>'+
+            '<td>'+(f.sobra?('<b style="color:#7c4b00">'+f.sobra+'</b>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
+            '<td>'+(f.q15?('<b style="color:#155e75">'+f.q15+'</b>'):'<span style="color:var(--muted)">—</span>')+'</td>'+
+            '<td>'+(f.mes?('<b style="color:#155e75">'+f.mes+'</b>'):'<span style="color:var(--muted)">—</span>')+'</td></tr>';
+        }).join('')+
+        '</tbody><tfoot><tr class="prod-total"><td><b>TOTAL '+esc(t.n)+'</b></td><td><b>'+t.v+'</b></td><td><b>'+t.r+'</b></td><td></td><td><b>'+t.q15+'</b></td><td><b>'+t.mes+'</b></td></tr></tfoot></table></div>';
+    }
+    html+='</div>';
+  });
+  return html+'</div>';
 }
 /* «73 (34–90) · 0 · 73» con el detalle de cada estimación al pasar el mouse. */
 function producirRangoTxt(f){
