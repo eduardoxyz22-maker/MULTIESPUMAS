@@ -6593,3 +6593,36 @@ el 60/90 d cuenta todas las ventas menos RPT: son medidas distintas a propósito
    - No se pudo relevar Kommo en vivo desde el sandbox (token es secret de GH Actions + el proxy bloquea
      `eanez.kommo.com` con 403). Para inspeccionar sin exponer claves: workflow de solo-lectura
      (`workflow_dispatch`) que imprima pipelines/etapas/campos/catálogo al log de Actions.
+
+## 4ec. El resumen mensual del panel se armaba con datos viejos (2026-09-12) — LOCAL, sin publicar
+
+Lo encontró ChatGPT revisando la predicción de stock, y tenía razón. `ventasPanelIndex()`
+(lo vendido por producto y mes según el panel, §4du) guardaba el resultado y lo reusaba
+mientras `STATE.length` no cambiara. La cantidad de pedidos no dice nada de su contenido:
+corregir 2 → 20 unidades, cambiar el producto, cambiar el mes de venta, recibir del servidor
+la planilla corregida con la misma cantidad de filas (`refrescarEstado`), o borrar uno y
+agregar otro, dejaban el resumen viejo — y con él las estimaciones de 60 d, 90 d y
+tendencia del plan del mes (🏭 Qué producir). `stockOlvidarIndice()` tampoco lo borraba.
+
+**Alcance real:** solo el rango del plan del mes que viene. La rotación de 15 días, «cuánto
+pedir», el corte y la columna 30 d salen de `stockData()`, que siempre recorre STATE de
+cero: no estaban afectados. En el uso diario el bug se tapaba solo porque cada pedido nuevo
+cambia la longitud, pero dentro de una misma sesión una corrección podía no verse.
+
+**Arreglo:** se saca la caché. `ventasPanelIndex()` recorre STATE cada vez (700 pedidos,
+un par de milisegundos) y `stockProducir()` lo arma UNA sola vez por plan y se lo pasa a
+`stockProducirDe(o, MS, PI)` → `stockRangoMes(o, MS, PI)`; sin `PI` (llamada suelta) se
+arma en el momento. `copiarProducir` pasa por `stockProducir`, así que pantalla, desglose y
+texto para fábrica salen del mismo cálculo. Fórmulas, exclusiones y reglas: sin cambios.
+
+**Prueba:** `tests/test_ventas_panel.js` (red cortada, servidor simulado, datos sintéticos):
+cantidad arriba/abajo, producto, mes de venta, fecha de entrega (no mueve el mes: manda
+`contaFecha`), `refrescarEstado` con mismas filas, reemplazo a igual longitud, repetición,
+unión a mano (STOCK.a), plan del mes (60 d) y reconstrucción independiente. Corrida a mano
+en el browser contra las dos versiones: **vieja 1 bien · 11 mal**, **corregida 12 bien · 0
+mal**. Ejemplo sintético: 2 SOFT 140x190 en agosto corregidos a 20 → antes el 60 d del plan
+daba 21,9 (seguía con 2); ahora 31,1.
+
+⚠️ `tests/test_producir.js` espera `mesNec` 18,6 (decimal) y el plan sin rango: esas
+expectativas quedaron viejas desde §4ds (enteros que cierran) y §4du (rango), no por este
+arreglo. Hay que actualizarlas aparte, con criterio, no para que «pase».

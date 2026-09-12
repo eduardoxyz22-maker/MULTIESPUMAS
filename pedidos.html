@@ -12860,10 +12860,14 @@ function ventasHistIndex(){
   });
   return (VENTAS_HIST_IDX=idx);
 }
-/* Lo vendido por mes según el PANEL (todas las ventas, como el histórico), desde agosto 2026. */
-var VENTAS_PANEL_IDX=null, VENTAS_PANEL_N=-1;
+/* Lo vendido por mes según el PANEL (todas las ventas, como el histórico), desde agosto 2026.
+   ⚠️ SIN CACHÉ (§4ec). La primera versión guardaba el resumen y lo reusaba mientras
+   `STATE.length` no cambiara — y la cantidad de pedidos no dice nada de su contenido:
+   corregir 2 → 20 unidades, cambiar el producto o el mes de venta, o recibir del servidor
+   la planilla corregida con la misma cantidad de filas, dejaban el plan del mes con los
+   números viejos. Ahora se arma de cero cada vez (700 pedidos: un par de milisegundos), y
+   `stockProducir` lo arma UNA sola vez por plan y se lo pasa a cada producto. */
 function ventasPanelIndex(){
-  if(VENTAS_PANEL_IDX && VENTAS_PANEL_N===STATE.length) return VENTAS_PANEL_IDX;
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
     if(!stockCuenta(p) || esRPT(p.oc)) return;
@@ -12875,7 +12879,7 @@ function ventasPanelIndex(){
       var s=idx[k]=idx[k]||{}; s[m]=(s[m]||0)+c;
     });
   });
-  VENTAS_PANEL_N=STATE.length; return (VENTAS_PANEL_IDX=idx);
+  return idx;
 }
 function mesRestar(ym, n){ var y=+ym.slice(0,4), m=+ym.slice(5,7)-n; while(m<1){ m+=12; y--; } return y+'-'+(m<10?'0':'')+m; }
 function mesNombreCorto(ym){ return MESES_ES[+ym.slice(5,7)-1].slice(0,3)+'-'+ym.slice(2,4); }
@@ -12888,9 +12892,9 @@ function mesNombreCorto(ym){ return MESES_ES[+ym.slice(5,7)-1].slice(0,3)+'-'+ym
      · tendencia → el año pasado, corregido por cómo viene este mes contra el mismo del año anterior.
    mínimo = la más baja, máximo = la más alta, probable = la MEDIANA. Se produce sobre el
    probable. Sin historia suficiente, se cae al ritmo de 30 días de siempre. */
-function stockRangoMes(o, MS){
+function stockRangoMes(o, MS, PI){
   var hoy=todayStr(), actual=hoy.slice(0,7), obj=MS.ini.slice(0,7);
-  var H=ventasHistIndex()[o.k]||{}, P=ventasPanelIndex()[o.k]||{};
+  var H=ventasHistIndex()[o.k]||{}, P=(PI||ventasPanelIndex())[o.k]||{};   // PI: el resumen armado una vez por plan (§4ec)
   var de=function(ym){ return (P[ym]!=null) ? P[ym] : (H[ym]||0); };
   var est=[];
   if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo, últimos 30 días'});
@@ -12912,7 +12916,7 @@ function stockRangoMes(o, MS){
   var med=vs.length%2 ? vs[(vs.length-1)/2] : (vs[vs.length/2-1]+vs[vs.length/2])/2;
   return { est:est, min:vs[0], max:vs[vs.length-1], prob:med, n:est.length };
 }
-function stockProducirDe(o, MS){
+function stockProducirDe(o, MS, PI){
   var hoy=todayStr();
   var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false };
   if(o.deposito==null || o.descont) return r;
@@ -12931,7 +12935,7 @@ function stockProducirDe(o, MS){
   r.mesQueda=Math.floor(Math.max(0, hay-consumoResto)+1e-9);
   /* 🎯 El rango (§4du): se necesita lo PROBABLE; el mínimo y el máximo se muestran al lado
      para que quien decide vea cuánto puede moverse. Lo ya vendido para ese mes es piso. */
-  var comp=stockCompHasta(o, MS.fin, MS.ini), R=stockRangoMes(o, MS);
+  var comp=stockCompHasta(o, MS.fin, MS.ini), R=stockRangoMes(o, MS, PI);
   r.rango=R;
   r.mesNec=Math.ceil(Math.max(comp, R?R.prob:pdm*MS.dias)-1e-9);
   r.mesMin=R ? Math.max(0, Math.ceil(Math.max(comp,R.min)-1e-9)-r.mesQueda) : null;
@@ -12950,14 +12954,14 @@ function producirMedidaEtq(m){
   return r ? (r[1]+'x'+r[2]+(r[3]?('x'+r[3]):'')) : s;
 }
 function stockProducir(d){
-  var MS=stockMesSiguiente(d.hoy), bloques={};
+  var MS=stockMesSiguiente(d.hoy), bloques={}, PI=ventasPanelIndex();   // una sola pasada por STATE para todo el plan (§4ec)
   PRODUCIR_BLOQUES.forEach(function(b){ bloques[b.k]={ k:b.k, fab:b.fab, ico:b.ico, titulo:b.titulo, col:b.col, filas:[], tot:{sem:0,quin:0,mes:0,mes1:0,mes2:0,mesMin:0,mesMax:0}, medidas:{} }; });
   var cubiertos=0, sinContar=0;
   d.lista.forEach(function(o){
     if(o.descont) return;
     if(!(o.rota || o.porDiaMes>0 || o.comp>0 || (ventasHistIndex()[o.k]||{})[mesRestar(MS.ini.slice(0,7),12)]>0)) return;     // ni rota, ni vendido pendiente, ni historia del mismo mes: nada que planificar
     if(o.deposito==null){ sinContar++; return; }
-    var r=stockProducirDe(o, MS), b=stockBloqueDe(o), B=bloques[b.k];
+    var r=stockProducirDe(o, MS, PI), b=stockBloqueDe(o), B=bloques[b.k];
     var f={ o:o, bloque:b, algo:(r.sem>0||r.quin>0||r.mes>0), md:producirMedidaEtq(o.medida) };
     PRODUCIR_COLS.forEach(function(c){ f[c]=r[c]; }); f.mesNec=r.mesNec; f.mesQueda=r.mesQueda; f.hay=r.hay; f.rango=r.rango; f.mesMin=r.mesMin; f.mesMax=r.mesMax;
     if(!f.algo) cubiertos++;
