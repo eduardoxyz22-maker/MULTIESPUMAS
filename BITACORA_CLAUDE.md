@@ -6505,15 +6505,14 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 
 ## 5. Pendientes
 
-> 🔴 **12 checks en rojo en `main` que NO son de §4ee** (medido el 14/09 sobre `6794cf0`, sin mi
-> commit, y con él: idénticos). Vienen de los commits de la otra herramienta del 11 al 14/09
-> (`7ed3f6f` y anteriores): `test_producir` 6 (🏭 Qué producir ahora arma «octubre» como un
-> RANGO con los últimos 30/60/90 días y la mediana — cambió la regla de §4dr y los fixtures
-> esperan la vieja), `test_atc` 4 (el circuito deja entregar algo en producción; embudo y
-> «cuatro momentos» con otro texto; campos que ya no arrancan ocultos), `test_onclicks` 1
-> (grupo `pdev-turno` sin `initSeg`), `test_rpt` 1 (el cartel dice «reposición de tienda» en
-> minúscula). Hay que decidir con el dueño qué regla vale (la de §4dr/§4dj o la nueva) y
-> actualizar los tests o el código; hasta entonces la línea de base NO es cero.
+> 🔴 **12 checks en rojo en `main` que NO son de §4ee** (medido el 14/09 sobre `6794cf0`, sin ese
+> commit, y con él: idénticos). Vienen de OTRA sesión mía del 11 al 14/09 (§4dx–§4ed: 🏭 Qué
+> producir con «octubre» como RANGO de 30/60/90 días y mediana, el circuito de ATC, el módulo de
+> ventas con `pdev-turno`, el texto de RPT). **El dueño confirmó el 14/09 que esos cambios están
+> bien** (*"eso lo hiciste tú en otra charla. Está bien"*): no hay nada que decidir, lo que falta
+> es poner al día los tests que quedaron con la regla vieja: `test_producir` 6, `test_atc` 4,
+> `test_onclicks` 1 (`initSeg` para `pdev-turno`), `test_rpt` 1 («reposición de tienda» en
+> minúscula). Hasta entonces la línea de base NO es cero.
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
