@@ -6594,7 +6594,7 @@ el 60/90 d cuenta todas las ventas menos RPT: son medidas distintas a propósito
      `eanez.kommo.com` con 403). Para inspeccionar sin exponer claves: workflow de solo-lectura
      (`workflow_dispatch`) que imprima pipelines/etapas/campos/catálogo al log de Actions.
 
-## 4ec. El resumen mensual del panel se armaba con datos viejos (2026-09-12) — LOCAL, sin publicar
+## 4ec. El resumen mensual del panel se armaba con datos viejos (2026-09-12) — publicado el 13/09 (b7e5d0e)
 
 Lo encontró ChatGPT revisando la predicción de stock, y tenía razón. `ventasPanelIndex()`
 (lo vendido por producto y mes según el panel, §4du) guardaba el resultado y lo reusaba
@@ -6626,3 +6626,30 @@ daba 21,9 (seguía con 2); ahora 31,1.
 ⚠️ `tests/test_producir.js` espera `mesNec` 18,6 (decimal) y el plan sin rango: esas
 expectativas quedaron viejas desde §4ds (enteros que cierran) y §4du (rango), no por este
 arreglo. Hay que actualizarlas aparte, con criterio, no para que «pase».
+
+## 4ed. Mis pedidos: «no me deja borrar esa letra» en Tu nombre (2026-09-14)
+
+El dueño, con captura: borra el nombre para cambiar de vendedora y la última letra («C»)
+no se deja borrar. Dos cosas se juntaban:
+
+1. `misVendedorSel()` rellenaba el campo con el nombre recordado (§4ch) cada vez que lo
+   encontraba vacío — y `renderMis()` corre con cada tecla (`oninput`). Al borrar la última
+   letra el campo quedaba vacío un instante y volvía a llenarse.
+2. `setVendedorMem()` guardaba lo que hubiera, letra por letra, desde los dos campos de
+   nombre (formulario y Mis pedidos). Por eso lo recordado era justamente «C», y no el
+   nombre completo. Ese pedazo también se usa como «quién lo hizo» en las ATC
+   (`rfQ`/`devQ`/`pdevQ`), así que ahí podía quedar «C» o «Car».
+
+**Arreglo:** el relleno automático no toca el campo mientras tiene el foco
+(`document.activeElement!==mv`): con la persona escribiendo, vacío es vacío. Y la memoria
+solo guarda un nombre completo: conocido (VENDEDORES o cualquier vendedor de STATE, con la
+escritura oficial de `nombreCanonico`) o nuevo de verdad (tres letras o más y que no sea el
+comienzo de ningún conocido). Vacío sigue olvidando. Sin cambios en la lista desplegable.
+
+**Prueba (browser local, eventos `input`):** memoria «Carola Chavez» + `setVendedorMem('C')`
+y `('Car')` → sigue «Carola Chavez»; `('mauricio merida')` → «Mauricio Merida»;
+`('Ximena Lopez')` → se guarda; `('Xi')` → no; `('')` → olvida. Caso del dueño: memoria «C»,
+al entrar a la pestaña el campo muestra «C», con foco se borra y queda vacío, se tipea «Ma»
+y la memoria no cambia, «Mauricio Merida» completo sí. ⚠️ El simulador de teclas del
+navegador embebido no ejecuta Backspace (tampoco en un input suelto), así que la prueba de
+tecla real no sirve ahí; la lógica quedó cubierta con los eventos.

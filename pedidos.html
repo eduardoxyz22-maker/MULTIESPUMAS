@@ -6224,7 +6224,25 @@ function submitPedido(){
 
 /* Identidad de la vendedora, recordada en ESTA computadora (localStorage). */
 function getVendedorMem(){ try{ return localStorage.getItem('me_mis_vendedor')||''; }catch(e){ return ''; } }
-function setVendedorMem(v){ try{ localStorage.setItem('me_mis_vendedor', String(v||'').trim()); }catch(e){} }
+/* Se recuerda un nombre COMPLETO, no lo que se va tipeando (§4ed). Los dos campos de nombre
+   llaman a esto con cada tecla, así que la memoria quedaba en «C» o «Car» a mitad de camino;
+   y ese pedazo después aparecía como «quién lo hizo» en las ATC y volvía solo al campo de
+   Mis pedidos (el dueño, 14/09: *"no me deja borrar esa letra"*). Se guarda si es un nombre
+   conocido (con su escritura oficial), o si es un nombre nuevo de verdad: tres letras o más
+   y que no sea el comienzo de ninguno conocido. Vacío = olvidar, como antes. */
+function setVendedorMem(v){
+  v=String(v||'').trim();
+  if(v){
+    var k=normNombre(v), conocidos=[];
+    (typeof VENDEDORES!=='undefined'?VENDEDORES:[]).forEach(function(x){ conocidos.push(x); });
+    (typeof STATE!=='undefined'&&Array.isArray(STATE)?STATE:[]).forEach(function(p){ if(p&&p.vendedor) conocidos.push(p.vendedor); });
+    var exacto=null, prefijo=false;
+    conocidos.forEach(function(x){ var kx=normNombre(x); if(!kx) return; if(kx===k) exacto=exacto||x; else if(kx.indexOf(k)===0) prefijo=true; });
+    if(exacto) v=(typeof nombreCanonico==='function')?nombreCanonico(exacto):exacto;
+    else if(prefijo || k.length<3) return;                 // a mitad de tipear: no se guarda
+  }
+  try{ localStorage.setItem('me_mis_vendedor', v); }catch(e){}
+}
 /* ============================================================================
    Combos: están en la lista de precios pero NO se pueden cargar
    Los combos siguen en `CODIGOS` (la lista de precios es la de la empresa y se
@@ -9092,7 +9110,11 @@ function borrPieHtml(){
 function misVendedorSel(mv){
   mv=mv||document.getElementById('mis-vendedor'); if(!mv) return '';
   var v=(mv.value||'').trim();
-  if(!v){ v=getVendedorMem(); if(v) mv.value=v; }
+  /* ⚠️ NUNCA mientras la persona está escribiendo en el campo (§4ed): `renderMis()` corre
+     con cada tecla, y al borrar la última letra el campo quedaba vacío un instante, se
+     rellenaba con el nombre recordado y la letra «volvía». Con el campo enfocado, vacío es
+     vacío; el relleno automático queda para cuando se llega a la pestaña sin nombre. */
+  if(!v && document.activeElement!==mv){ v=getVendedorMem(); if(v) mv.value=v; }
   return v;
 }
 function renderBorradoresMis(){
