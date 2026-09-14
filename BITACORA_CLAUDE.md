@@ -6481,8 +6481,39 @@ Dudoso, no tocado: `sugerirTiendaSuc` solo sugiere si el selector está vacío, 
 cambia de vendedora después de que se sugirió una tienda, la tienda no cambia (es para no pisar
 una elección a mano). El «30 d» del rango es el ritmo del equipo (sin Eduardo ni puntuales) y
 el 60/90 d cuenta todas las ventas menos RPT: son medidas distintas a propósito.
+## 4ee. Los N° de nota que faltan se ven al TOCAR, no solo con el mouse (2026-09-14)
+
+El dueño, con una captura del Cuadre (aviso «16 N° de nota salteados en el talonario», chip
+«Juan Pablo Paredes · 16 faltantes» y el globito del `title` abierto): *"Solo aparece al pasar
+el mouse, debería salir una ventana desplegable al dar click para ver bien"*. §4bk había
+resumido ese aviso a un chip por vendedora con los números en el `title` para no hacer un muro
+de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
+
+### Qué se hizo (`pedidos.html`)
+- Un `det` de aviso puede traer **`numeros`** (+ `vendedor`). `alertaDetHtml(det, k)` lo dibuja
+  como chip **que se abre** (`cuaToggleChip`, estado en `CUA_CHIP_ABIERTO[k+'|'+i]`, sobrevive
+  al re-render de `renderCuadre`) y, abierto, despliega `numerosSubHtml`: quién y cuántos, los
+  números en grande (`.cua-num`, monoespaciado) corridos en **rangos** («1564–1566»,
+  `rangosNumeros`/`rangosTexto`), un texto de qué hacer con cada recibo, y **📋 Copiar los
+  números**. `stopPropagation` para que tocar el chip o la caja no pliegue el aviso.
+- El globito sigue (con los rangos y «tocá para verlos»): en la compu ayuda; en el celular ya no
+  es la única vía. La ayuda de abajo del panel dice también «y un “N faltantes” para ver qué N°
+  de nota son».
+- `tests/test_cuadre.js` de 28 a **33 checks** (sección 10): chip plegado con el conteo, tocar
+  despliega «3–4 · 6» y dice de quién, botón copiar, el aviso no se pliega, el chip queda
+  marcado, tocar de nuevo cierra, y `rangosTexto` con un repetido.
 
 ## 5. Pendientes
+
+> 🔴 **12 checks en rojo en `main` que NO son de §4ee** (medido el 14/09 sobre `6794cf0`, sin mi
+> commit, y con él: idénticos). Vienen de los commits de la otra herramienta del 11 al 14/09
+> (`7ed3f6f` y anteriores): `test_producir` 6 (🏭 Qué producir ahora arma «octubre» como un
+> RANGO con los últimos 30/60/90 días y la mediana — cambió la regla de §4dr y los fixtures
+> esperan la vieja), `test_atc` 4 (el circuito deja entregar algo en producción; embudo y
+> «cuatro momentos» con otro texto; campos que ya no arrancan ocultos), `test_onclicks` 1
+> (grupo `pdev-turno` sin `initSeg`), `test_rpt` 1 (el cartel dice «reposición de tienda» en
+> minúscula). Hay que decidir con el dueño qué regla vale (la de §4dr/§4dj o la nueva) y
+> actualizar los tests o el código; hasta entonces la línea de base NO es cero.
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,

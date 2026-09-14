@@ -199,6 +199,38 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
   chk('el texto para copiar dice el día del que habla', /\d{2}\/\d{2}\/\d{4}/.test(r.dia), r.dia.split('\n')[0]);
   chk('  y en «Todo» lo dice también', /todo el historial/i.test(r.todo), r.todo.split('\n')[0]);
 
+  /* ---------- 10. los N° de nota que faltan se ven al TOCAR, no solo con el mouse (§4ee) ----------
+     El dueño, con la captura del globito: *"Solo aparece al pasar el mouse, debería salir una
+     ventana desplegable al dar click para ver bien"*. En el celular no hay mouse.
+     Con la planilla del test, Carola tiene las notas 1, 2, 5 y 7 → faltan 3, 4 y 6. */
+  r = await page.evaluate(()=>{
+    segSet('cua-mode','todo'); setCuadreModo('todo');
+    var sv=document.getElementById('cua-vendedor'); if(sv) sv.value='';
+    CUA_AV_ABIERTO={talonario:true}; CUA_CHIP_ABIERTO={};
+    renderCuadre();
+    var box=document.getElementById('cua-alertas')||document.body;
+    var chips=[].slice.call(box.querySelectorAll('.cua-chip')).filter(function(c){ return /faltante/.test(c.textContent); });
+    var carola=chips.filter(function(c){ return /Carola/.test(c.textContent); })[0];
+    var antes={ n:chips.length, txt:carola?carola.textContent.replace(/\s+/g,' ').trim():'', sub:!!box.querySelector('.cua-sub'), rangos:rangosTexto([1559,1564,1565,1566,1569,1569]) };
+    if(carola) carola.click();
+    var sub=box.querySelector('.cua-sub');
+    var despues={ sub:!!sub, txt:sub?sub.textContent.replace(/\s+/g,' ').trim():'', nums:sub?[].slice.call(sub.querySelectorAll('.cua-num')).map(function(x){ return x.textContent; }):[],
+                  copiar:!!(sub&&sub.querySelector('button')), avisoAbierto:!![].slice.call(document.querySelectorAll('.cua-av.on')).filter(function(a){ return /talonario/.test(a.textContent); }).length,
+                  chipOn:!![].slice.call(box.querySelectorAll('.cua-chip.on')).filter(function(c){ return /Carola/.test(c.textContent); }).length };
+    var c2=[].slice.call(box.querySelectorAll('.cua-chip')).filter(function(c){ return /Carola.*faltante/.test(c.textContent); })[0];
+    if(c2) c2.click();
+    var cerrado=!box.querySelector('.cua-sub');
+    return { antes:antes, despues:despues, cerrado:cerrado };
+  });
+  chk('el aviso del talonario lista un chip por vendedora con CUÁNTOS le faltan, y arranca plegado',
+      r.antes.n>=2 && /Carola Chavez · 3 faltantes/.test(r.antes.txt) && r.antes.sub===false, r.antes.txt);
+  chk('⚠️ tocar el chip despliega los números en grande, corridos en rangos (3–4 · 6), y dice de quién son',
+      r.despues.sub===true && r.despues.nums.join(' · ')==='3–4 · 6' && /Carola Chavez — faltan 3 N° de nota/.test(r.despues.txt), r.despues.nums.join(' · ')+' · '+r.despues.txt.slice(0,60));
+  chk('…con un botón para copiarlos, sin plegar el aviso, y el chip queda marcado',
+      r.despues.copiar===true && r.despues.avisoAbierto===true && r.despues.chipOn===true, JSON.stringify([r.despues.copiar, r.despues.avisoAbierto, r.despues.chipOn]));
+  chk('tocarlo de nuevo lo cierra', r.cerrado===true, '');
+  chk('los rangos: 1559 · 1564–1566 · 1569 (y un repetido no rompe nada)', r.antes.rangos==='1559 · 1564–1566 · 1569', r.antes.rangos);
+
   chk('sin errores JS', errors.length===0, errors.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

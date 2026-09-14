@@ -492,6 +492,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 .cua-chip:hover{background:var(--teal-lt);border-color:var(--teal);color:var(--teal-dk)}
 .cua-chip.plano{cursor:default}
 .cua-chip.plano:hover{background:#fff;border-color:var(--gray-md);color:var(--muted)}
+/* Un chip que se ABRE (§4ee): los N° de nota que faltan se despliegan abajo al tocarlo,
+   no solo en el globito del mouse (en el celular no hay mouse). */
+.cua-chip.on{background:var(--teal-lt);border-color:var(--teal);color:var(--teal-dk)}
+.cua-sub{display:block;background:#fff;border:1px solid var(--teal);border-left-width:4px;border-radius:10px;padding:9px 12px;margin:2px 0 8px;font-size:.8rem;cursor:default}
+.cua-num{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.95rem;font-weight:700;background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:6px;padding:2px 9px;margin:0 6px 6px 0;color:var(--teal-dk)}
 /* Los avisos tienen texto largo; «Por cobrar» es una tabla angosta de tres columnas.
    Repartir mitad y mitad hacía que el texto de los avisos envolviera de más. */
 .cua-2col{grid-template-columns:1.8fr 1fr}
@@ -3692,10 +3697,13 @@ function cuadreAlertas(pagos){
     A.push({k:'talonario', sev:'mirar', ico:'🔢', txt:'<b>'+nFalt+'</b> N° de nota <b>salteado'+(nFalt===1?'':'s')+' en el talonario</b>'+
       ' — puede ser una venta que nunca se cargó, o un recibo anulado',
       /* Resumido: un chip por vendedora con CUÁNTOS le faltan, y los números en el globito.
-         Con 8 vendedoras y 82 faltantes, listarlos era un muro de ocho renglones. */
+         Con 8 vendedoras y 82 faltantes, listarlos era un muro de ocho renglones.
+         §4ee: el globito solo sale con el mouse —*"debería salir una ventana desplegable al
+         dar click para ver bien"*— así que el chip además se ABRE al tocarlo (`numeros`). */
       det:huecos.map(function(h){
         return { txt:h.vendedor+' · '+h.faltan.length+' faltante'+(h.faltan.length===1?'':'s'),
-                 tip:'Falta'+(h.faltan.length===1?' la':'n las')+' '+h.faltan.join(', ') };
+                 tip:'Falta'+(h.faltan.length===1?' la':'n las')+' '+rangosTexto(h.faltan)+' — tocá para verlos',
+                 numeros:h.faltan, vendedor:h.vendedor };
       })});
   }
   var exceso=[];
@@ -3746,16 +3754,54 @@ function avisosHtml(al){
         '<div class="av-txt">'+a.txt+'</div>'+
         (n?('<span class="av-n">'+(abierto?'▾':'▸')+' '+n+'</span>'):'')+
       '</div>';
-      if(abierto && n) out+='<div class="cua-det">'+alertaDetHtml(a.det)+'</div>';
+      if(abierto && n) out+='<div class="cua-det">'+alertaDetHtml(a.det, a.k)+'</div>';
     });
   });
   return out;
 }
-function alertaDetHtml(det){
+/* 🔢 UN CHIP QUE SE ABRE (§4ee). Los N° de nota que faltan en el talonario iban solo en el
+   `title` del chip: con el mouse encima se leían, con el dedo nunca. El dueño: *"Solo aparece
+   al pasar el mouse, debería salir una ventana desplegable al dar click para ver bien"*.
+   Un `det` con `numeros` se abre al tocarlo y despliega los números en grande, corridos en
+   rangos («1564–1566»), con un botón para copiarlos. El estado sobrevive al re-render
+   (`renderCuadre` redibuja todo) y tocarlo NO pliega el aviso (stopPropagation). */
+var CUA_CHIP_ABIERTO={};
+function cuaToggleChip(key){ CUA_CHIP_ABIERTO[key]=!CUA_CHIP_ABIERTO[key]; renderCuadre(); }
+/* [1559,1564,1565,1566,1569] → [[1559,1559],[1564,1566],[1569,1569]] */
+function rangosNumeros(nums){
+  var out=[];
+  (nums||[]).map(Number).filter(function(n){ return !isNaN(n); }).sort(function(a,b){ return a-b; }).forEach(function(n){
+    var u=out[out.length-1];
+    if(u && n===u[1]) return;                       // repetido
+    if(u && n===u[1]+1) u[1]=n; else out.push([n,n]);
+  });
+  return out;
+}
+function rangosTexto(nums){
+  return rangosNumeros(nums).map(function(r){ return r[0]===r[1] ? String(r[0]) : (r[0]+'–'+r[1]); }).join(' · ');
+}
+function numerosSubHtml(d){
+  var nums=(d.numeros||[]), n=nums.length;
+  var quien=d.vendedor?('<b>'+esc(d.vendedor)+'</b> — '):'';
+  return '<div class="cua-sub" onclick="event.stopPropagation()">'+
+    '<div style="margin-bottom:6px">'+quien+'falta'+(n===1?'':'n')+' <b>'+n+'</b> N° de nota:</div>'+
+    '<div>'+rangosNumeros(nums).map(function(r){ return '<span class="cua-num">'+(r[0]===r[1]?r[0]:(r[0]+'–'+r[1]))+'</span>'; }).join('')+'</div>'+
+    '<div style="font-size:.72rem;color:var(--muted);margin:2px 0 8px">Buscá esos recibos en el talonario: si es una venta, cargala con ese N° de nota; si el recibo está anulado, no hay nada que cargar. '+
+      'Se detectan porque hay notas cargadas antes y después del hueco.</div>'+
+    '<button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="event.stopPropagation();copyText('+JSON.stringify((d.vendedor?d.vendedor+': ':'')+'faltan las notas '+rangosTexto(nums)).replace(/"/g,'&quot;')+')">📋 Copiar los números</button>'+
+  '</div>';
+}
+function alertaDetHtml(det, k){
   det=det||[];
-  var html=det.slice(0,ALERTA_DET_MAX).map(function(d){
+  var html=det.slice(0,ALERTA_DET_MAX).map(function(d, i){
     var t=esc(typeof d==='string' ? d : (d&&d.txt)||'');
     var tip=(d&&d.tip)?(' title="'+esc(d.tip)+'"'):'';
+    if(d && d.numeros && d.numeros.length){
+      var key=String(k||'')+'|'+i, on=!!CUA_CHIP_ABIERTO[key];
+      return '<span class="cua-chip'+(on?' on':'')+'" onclick="event.stopPropagation();cuaToggleChip('+JSON.stringify(key).replace(/"/g,'&quot;')+')"'+
+        (tip||' title="Tocá para ver cuáles faltan"')+'>'+t+' '+(on?'▾':'▸')+'</span>'+
+        (on?numerosSubHtml(d):'');
+    }
     if(!d || !d.id) return '<span class="cua-chip plano"'+(tip||' title="'+t+'"')+'>'+t+'</span>';
     return '<span class="cua-chip" onclick="event.stopPropagation();showContaModal('+
       JSON.stringify(String(d.id)).replace(/"/g,'&quot;')+')"'+
@@ -3910,7 +3956,7 @@ function renderCuadre(){
   av.innerHTML='<div class="cua-box" style="margin-bottom:0"><div class="cua-t">🔎 Revisar antes de cerrar'+
     ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">— '+esc(cuadrePeriodoTxt())+'</span></div>'+
     (al.length ? avisosHtml(al)+
-      '<div style="font-size:.72rem;color:var(--muted);margin-top:10px">💡 Tocá un <b>renglón</b> para ver los nombres, y un <b>nombre</b> para abrir esa venta y corregirla.</div>'
+      '<div style="font-size:.72rem;color:var(--muted);margin-top:10px">💡 Tocá un <b>renglón</b> para ver los nombres, un <b>nombre</b> para abrir esa venta y corregirla, y un «<b>N faltantes</b>» para ver qué N° de nota son.</div>'
     : '<div class="empty" style="padding:16px 0">✅ Todo en orden: nada pendiente de revisar.</div>')+
     '</div>';
 
