@@ -6683,3 +6683,30 @@ al entrar a la pestaña el campo muestra «C», con foco se borra y queda vacío
 y la memoria no cambia, «Mauricio Merida» completo sí. ⚠️ El simulador de teclas del
 navegador embebido no ejecuta Backspace (tampoco en un input suelto), así que la prueba de
 tecla real no sirve ahí; la lógica quedó cubierta con los eventos.
+
+## 4ee. El letrero rojo de «Cerrar día» mentía: versión distinta no es candado roto (2026-09-15)
+
+El dueño, con captura de la ventana Cerrar día: *"🚨 OJO: el candado está SOLO en los
+navegadores. Lo publicado en Google es una versión vieja (dice 2026-09-10-b, tendría que decir
+2026-09-10-c), y esa versión no rechaza los pedidos de un día cerrado"* — *"¿qué pedo, si ya lo
+habíamos arreglado?"*.
+
+**Qué pasaba de verdad.** El Apps Script publicado es `2026-09-10-b` (Versión 24, la que él
+publicó el 10/09, §4dv). El mismo día quedó en el repo la `-c`, que solo agrega el registro de
+quién lee por GET y `GET_CERRADO` (§4dv) — nunca se publicó, y no hacía falta para nada del
+candado. El candado del servidor existe desde `2026-08-21-a` (§4ce) y está en la `-b`.
+**Probado el 15/09 contra el servidor real**: un `save` de prueba con fecha 16/09 (cerrado)
+volvió `{ok:false, error:'dia_cerrado'}` sin escribir nada. El letrero comparaba lo publicado
+con `SCRIPT_VERSION_ESPERADA` y ante CUALQUIER diferencia decía en rojo que el candado no
+estaba. Falsa alarma; y los dos avisos de «Revisar ubicaciones» tenían el mismo defecto.
+
+**Arreglo (`pedidos.html`, 7ed3f6f→este commit):** cada aviso pregunta por LA función que le
+importa, con la versión desde la que existe: `SCRIPT_CANDADO_DESDE='2026-08-21-a'`,
+`SCRIPT_GEO_DESDE='2026-07-27-c'`, `servidorTiene(desde)` (las versiones son fecha-letra:
+comparar como texto ordena). Si lo publicado tiene la función pero no es la última, sale
+verde con una línea gris «ℹ️ hay una versión más nueva sin publicar; lo que agrega no toca
+esto» (`scriptPendienteHtml`), con los pasos por si la quiere. El rojo queda solo para un
+servidor anterior a la función. Sin versión sigue el «⏳ todavía no sé».
+
+**Pendiente del dueño (opcional):** publicar la `-c` (Implementar → Administrar
+implementaciones → ✏️ → Nueva versión) para tener «📡 ¿Quién lee la planilla?». No urge.

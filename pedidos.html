@@ -1887,6 +1887,24 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
 var SCRIPT_VERSION_ESPERADA='2026-09-10-c';
+/* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
+   publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
+   servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
+   rechaza (probado el 15/09 contra el servidor real: `dia_cerrado`), porque en el repo ya
+   había una `-c` que solo agrega el registro de lecturas GET (§4dv). El dueño: *"¿qué pedo,
+   si ya lo habíamos arreglado?"*. Cada aviso pregunta por LA función que le importa: desde
+   qué versión existe. Las versiones son fecha-letra, así que comparar como texto ordena. */
+var SCRIPT_CANDADO_DESDE='2026-08-21-a';   // el servidor rechaza días cerrados y turnos llenos (§4ce)
+var SCRIPT_GEO_DESDE='2026-07-27-c';       // sabe resolver enlaces cortos y buscar por dirección
+function servidorTiene(desde){ return !!SERVER_VER && String(SERVER_VER)>=String(desde); }
+/* Lo que falta publicar, cuando el servidor anda pero no es la última: una línea en gris. */
+function scriptPendienteHtml(){
+  if(!SERVER_VER || SERVER_VER===SCRIPT_VERSION_ESPERADA) return '';
+  return '<div style="margin-top:6px;font-size:.76rem;color:var(--muted)">ℹ️ Hay una versión más nueva del script sin publicar '+
+    '(está <code>'+esc(SERVER_VER)+'</code>, la última es <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>). '+
+    'Lo que agrega no toca esto. Cuando quieras tenerla: <b>Extensiones → Apps Script → Implementar → '+
+    'Administrar implementaciones → ✏️ → Versión: Nueva versión → Implementar</b>.</div>';
+}
 /* 🔐 LA CLAVE DEL EQUIPO (§4ce).
    La dirección del script está acá arriba, en una página pública: con ella sola,
    cualquiera podía leer, guardar y borrar la planilla. Ahora el servidor exige una clave
@@ -7748,9 +7766,9 @@ function cierreCandadoHtml(){
     '📴 <b>Sin conexión.</b> Lo que cierres queda anotado en esta computadora y se manda al reconectar.');
   if(!SERVER_VER) return caja('#FEF3E2','#FCD34D','#7c4b00',
     '⏳ <b>Todavía no sé si el candado está puesto en el servidor.</b> Tocá <b>🔄 Actualizar</b> y volvé a abrir esta ventana.');
-  if(SERVER_VER===SCRIPT_VERSION_ESPERADA) return caja('var(--green-lt)','var(--green-border)','#0a6b47',
-    '✅ <b>El candado está en el servidor.</b> Aunque una vendedora tenga el panel abierto desde antes, '+
-    'el servidor le va a rechazar el pedido. No se puede saltear.');
+  if(servidorTiene(SCRIPT_CANDADO_DESDE)) return caja('var(--green-lt)','var(--green-border)','#0a6b47',
+    '✅ <b>El candado está en el servidor</b> (versión <code>'+esc(SERVER_VER)+'</code>). Aunque una vendedora tenga el panel abierto desde antes, '+
+    'el servidor le va a rechazar el pedido. No se puede saltear.'+scriptPendienteHtml());
   return caja('var(--red-lt)','var(--red-border)','#8a1c24',
     '🚨 <b>OJO: el candado está SOLO en los navegadores.</b> Lo publicado en Google es una versión vieja '+
     '(dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>), '+
@@ -16119,7 +16137,7 @@ function resolverCortosRev(){
       var n=0; res.geo.forEach(function(g){ if(g&&g.lat!=null&&g.lng!=null){ MAPA_COORDS[g.link]={lat:g.lat,lng:g.lng,aprox:!!g.aprox}; n++; } });
       REV_N=n;
       // Si no resolvió NINGUNO, lo primero a mirar es si lo publicado es la versión nueva.
-      REV_MOTIVO = n ? '' : (SERVER_VER===SCRIPT_VERSION_ESPERADA ? 'ninguno' : 'viejo');
+      REV_MOTIVO = n ? '' : (servidorTiene(SCRIPT_GEO_DESDE) ? 'ninguno' : 'viejo');
       geoCacheSave();
     }
     revTerminar();
@@ -16146,9 +16164,9 @@ function revVersionHtml(){
        'Ojo con esto: en Apps Script <b>guardar el código NO publica nada</b>. Hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.</div>')
     : ('<div style="background:#fff;border-left:4px solid var(--gray);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.8rem;color:var(--muted)">'+
        'El servidor no contestó, así que no sé qué versión tiene publicada.</div>');
-  var ok=(SERVER_VER===SCRIPT_VERSION_ESPERADA);
+  var ok=servidorTiene(SCRIPT_GEO_DESDE);   // lo que importa acá es que sepa geocodificar, no que sea la última (§4ee)
   return '<div style="background:#fff;border-left:4px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.82rem;color:'+(ok?'#0a6b47':'#8a1c24')+'">'+
-    (ok ? '<b>✅ El servidor está actualizado</b> (versión <code>'+esc(SERVER_VER)+'</code>). Ya sabe leer los códigos <code>5P2Q+PFX</code> y buscar por dirección.'
+    (ok ? '<b>✅ El servidor sabe resolver ubicaciones</b> (versión <code>'+esc(SERVER_VER)+'</code>). Lee los códigos <code>5P2Q+PFX</code> y busca por dirección.'+scriptPendienteHtml()
         : '<b>⚠️ El servidor está corriendo una versión vieja</b> (dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>).<br>'+
           'Pasa cuando se pega el código y se GUARDA, pero no se publica. Guardar no publica: hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.')+
     '</div>';
