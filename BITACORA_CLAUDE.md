@@ -6710,3 +6710,15 @@ servidor anterior a la función. Sin versión sigue el «⏳ todavía no sé».
 
 **Pendiente del dueño (opcional):** publicar la `-c` (Implementar → Administrar
 implementaciones → ✏️ → Nueva versión) para tener «📡 ¿Quién lee la planilla?». No urge.
+
+## 4ef. Guía de la vendedora: el retiro de efectivo (2026-09-16)
+
+El dueño: *"falta en la guía lo de registrar RETIRO efectivo en las novedades"*. Las
+«Novedades» son `guia-vendedor.html` (el enlace 🆕 del formulario); la guía del administrador
+ya lo explicaba (§retiros) pero la de la vendedora no decía nada. Se agregó la sección
+**💵 La plata en efectivo → Retiro de efectivo** (`#retiro`, también en el índice): qué queda
+anotado (fecha, quién entrega/retira, monto, N° de notas, facturado o no, foto del recibo),
+qué tener listo cuando pasan (efectivo separado por nota, todos los cobros en efectivo
+cargados con el método correcto, pedir ver el registro como comprobante), cómo se controla
+(cobrado − retirado = le queda en la mano) y que QR/tarjeta no entran. Solo la guía; el
+panel no cambia.
