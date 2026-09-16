@@ -6767,7 +6767,7 @@ disparador crea los borradores (fecha vacía, marcados), vacía la cola y se bor
 lead de nuevo no duplica; sin clave no encola; sin `ScriptApp` crea en el momento; el
 repaso consulta etapa+embudo+`updated_at` de 6 h, vacía la cola primero, no duplica lo que
 ya estaba, deja el resumen sin nombres; 204 no es error; Kommo caído se anota; instalar
-dos veces deja uno. Dientes contra el `.gs` viejo: fallan las nuevas. `tests/test_hook.js`
+dos veces deja uno. Dientes contra el `.gs` viejo: la sección se declara ausente (1 mal) en vez de reventar. `tests/test_hook.js`
 sigue en 78/78 (su Google de mentira no tiene `ScriptApp`: cubre el camino «en el momento»).
 
 **Pendiente del dueño (obligatorio para que rinda).** (1) Kommo → Webhooks → **Encender**.

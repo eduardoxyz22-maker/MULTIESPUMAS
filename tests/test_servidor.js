@@ -563,6 +563,9 @@ console.log('\n── 9. Quién lee por GET ──');
 
 /* ── ⚡ El webhook de Kommo contesta al instante y el trabajo lo hace un disparador (§4eg) ── */
 console.log('\n── El aviso de Kommo: encolar y contestar; repaso cada 5 minutos ──');
+if (typeof cargar([HDR], {}).ctx.kommoRepaso !== 'function') {
+  chk('⚠️ el .gs tiene la cola del webhook y el repaso cada 5 minutos (§4eg)', false, 'faltan kommoRepaso / kommoProcesarCola: es el .gs viejo');
+} else {
 {
   const props = { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' };
   const a = cargar([HDR], props);
@@ -639,5 +642,6 @@ console.log('\n── El aviso de Kommo: encolar y contestar; repaso cada 5 minu
   chk('estadoKommo dice si el repaso está instalado', a.ctx.estadoKommo().repasoInstalado===true);
 }
 
+}
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
 process.exit(FAIL?1:0);
