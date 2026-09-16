@@ -122,6 +122,13 @@ def main():
         print(f"   último aviso de Kommo al panel: {ult}")
     elif ult is not None:
         print("   ⚠️ el servidor NUNCA recibió un aviso de Kommo — revisar el webhook en Kommo")
+    # 🔎 Y el repaso que hace el PROPIO script cada 5 minutos (§4eg): si está vacío, falta
+    # correr instalarDisparadores() en el editor de Apps Script.
+    rep = res.get("ultimoRepaso")
+    if rep:
+        print(f"   último repaso del script (cada 5 min): {rep}")
+    elif rep is not None:
+        print("   ⚠️ el script todavía no repasa Kommo por su cuenta — correr instalarDisparadores() en Apps Script")
 
     if not ids:
         print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")

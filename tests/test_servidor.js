@@ -77,6 +77,17 @@ function hacerDrive(){
   };
 }
 
+function hacerScriptApp(){
+  const triggers = [];
+  const crear = (fn, tipo, v) => { const t = { fn, tipo, v, getHandlerFunction: () => fn }; triggers.push(t); return t; };
+  return {
+    _triggers: triggers,
+    newTrigger: (fn) => ({ timeBased: () => ({ after: (ms) => ({ create: () => crear(fn, 'after', ms) }),
+                                               everyMinutes: (n) => ({ create: () => crear(fn, 'every', n) }) }) }),
+    getProjectTriggers: () => triggers.slice(),
+    deleteTrigger: (t) => { const i = triggers.indexOf(t); if (i >= 0) triggers.splice(i, 1); }
+  };
+}
 function cargar(filas, props){
   const sh = hacerPlanilla(filas), drive = hacerDrive();
   const cache = { _m: {},
@@ -106,7 +117,10 @@ function cargar(filas, props){
     DriveApp: drive,
     Utilities: { formatDate: (d)=>String(d), base64Decode: () => [], newBlob: () => ({}) },
     /* `getTemporaryActiveUserKey` (§4dv): la marca del navegador que el .gs recorta a 6 letras. */
-    Session: { getScriptTimeZone: () => 'America/La_Paz', getTemporaryActiveUserKey: () => 'ABCDEFGHIJKLMNOP' }
+    Session: { getScriptTimeZone: () => 'America/La_Paz', getTemporaryActiveUserKey: () => 'ABCDEFGHIJKLMNOP' },
+    /* Los disparadores de tiempo (§4eg): una lista en memoria. `after` y `everyMinutes`
+       solo anotan; nada se dispara solo, el test llama a la función a mano. */
+    ScriptApp: hacerScriptApp()
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
@@ -545,6 +559,84 @@ console.log('\n── 9. Quién lee por GET ──');
   const g = a.get({});
   const r = a.post(conClave({ action:'getlog' }));
   chk('sin caché disponible el GET contesta igual y el informe avisa que no pudo anotar', g.ok===true && r.ok===true && r.get.sinCache===true && r.get.n===0, JSON.stringify(r.get).slice(0,120));
+}
+
+/* ── ⚡ El webhook de Kommo contesta al instante y el trabajo lo hace un disparador (§4eg) ── */
+console.log('\n── El aviso de Kommo: encolar y contestar; repaso cada 5 minutos ──');
+{
+  const props = { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' };
+  const a = cargar([HDR], props);
+  const red = [], ev = [];
+  a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ ev.push('candado'); }, releaseLock(){ ev.push('suelta'); } }) };
+  a.ctx.UrlFetchApp = { fetch: (url) => { red.push(url); return { getResponseCode: () => 200,
+    getContentText: () => JSON.stringify({ id:44001, name:'CLIENTE DE PRUEBA', status_id:103450711, pipeline_id:13349719, responsible_user_id:9, price:100 }) }; } };
+  const hook = (params) => a.leer(a.ctx.doPost({ parameter: params }));
+  const r = hook({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711', 'leads[status][0][pipeline_id]':'13349719' });
+  chk('⚠️ el webhook contesta OK sin hablar con Kommo ni tomar el candado (Kommo lo apagaba por tardar)',
+      r.ok===true && r.encolados===1 && red.length===0 && ev.length===0, JSON.stringify(r).slice(0,100)+' · red '+red.length+' · '+ev.join(','));
+  chk('…y no escribió nada todavía', a.sh._datos.length===1, a.sh._datos.length);
+  chk('…el id quedó en la cola', JSON.parse(props.KOMMO_COLA||'[]').join(',')==='44001', props.KOMMO_COLA);
+  chk('…y dejó UN disparador para procesarla', a.ctx.ScriptApp._triggers.filter(t => t.fn==='kommoProcesarCola').length===1, a.ctx.ScriptApp._triggers.length);
+  hook({ k:'kk', 'leads[status][0][id]':'44002', 'leads[status][0][status_id]':'103450711' });
+  chk('un segundo aviso se suma a la cola y NO agrega otro disparador', JSON.parse(props.KOMMO_COLA).length===2 && a.ctx.ScriptApp._triggers.length===1, props.KOMMO_COLA+' · '+a.ctx.ScriptApp._triggers.length);
+  const rc = a.ctx.kommoProcesarCola();
+  chk('⚠️ el disparador procesa la cola: habla con Kommo y crea los borradores', rc.ok===true && rc.creados===2 && red.length>0 && a.sh._datos.length===3, JSON.stringify(rc).slice(0,100));
+  chk('…con la fecha vacía y marcados como borrador', a.sh._datos[1][HDR.indexOf('Fecha')]==='' && a.sh._datos[1][HDR.indexOf('Estado stock')]==='Borrador Kommo');
+  chk('…vacía la cola y se borra a sí mismo', JSON.parse(props.KOMMO_COLA).length===0 && a.ctx.ScriptApp._triggers.length===0, props.KOMMO_COLA+' · '+a.ctx.ScriptApp._triggers.length);
+  const rc2 = a.ctx.kommoProcesarCola();
+  chk('procesar la cola vacía no hace nada', rc2.creados===0 && a.sh._datos.length===3);
+  hook({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711' });
+  const rc3 = a.ctx.kommoProcesarCola();
+  chk('⚠️ el mismo lead avisado de nuevo NO se duplica', rc3.creados===0 && a.sh._datos.length===3, JSON.stringify(rc3).slice(0,90));
+  chk('sin clave sigue sin aceptar nada (ni encola)', hook({ k:'mala', 'leads[status][0][id]':'5' }).ok===false && JSON.parse(props.KOMMO_COLA).length===0);
+}
+{
+  // Sin ScriptApp (no autorizado todavía): el webhook hace el trabajo en el momento, como antes.
+  const props = { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' };
+  const a = cargar([HDR], props);
+  delete a.ctx.ScriptApp;
+  a.ctx.UrlFetchApp = { fetch: () => ({ getResponseCode: () => 200,
+    getContentText: () => JSON.stringify({ id:44009, name:'OTRO', status_id:103450711, pipeline_id:13349719, responsible_user_id:9, price:100 }) }) };
+  const r = a.leer(a.ctx.doPost({ parameter: { k:'kk', 'leads[status][0][id]':'44009', 'leads[status][0][status_id]':'103450711' } }));
+  chk('sin disparadores disponibles el webhook crea el borrador en el momento (como antes)', r.ok===true && r.creados===1 && a.sh._datos.length===2, JSON.stringify(r).slice(0,90));
+  chk('…y no deja nada colgado en la cola', JSON.parse(props.KOMMO_COLA||'[]').length===0, props.KOMMO_COLA);
+}
+{
+  // El repaso cada 5 minutos: le pregunta a Kommo por «Compradores» de las últimas horas.
+  const props = { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira', KOMMO_COLA:'["777"]' };
+  const a = cargar([HDR, fila({ id:'kommo-555', cli:'YA ESTABA' })], props);
+  const urls = [];
+  a.ctx.UrlFetchApp = { fetch: (url) => { urls.push(url);
+    if (/\/leads\?/.test(url)) return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ _embedded:{ leads:[{ id:555 }, { id:556 }] } }) };
+    const id = Number((url.match(/\/leads\/(\d+)/)||[])[1]);
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify({ id, name:'CLI '+id, status_id:103450711, pipeline_id:13349719, responsible_user_id:9, price:50 }) }; } };
+  const r = a.ctx.kommoRepaso();
+  const consulta = urls.find(u => /\/leads\?/.test(u)) || '';
+  chk('⚠️ pregunta por la etapa «Compradores» del embudo de ventas, ordenado por actualización',
+      /status_id\]=103450711/.test(consulta) && /pipeline_id\]=13349719/.test(consulta) && /order\[updated_at\]=desc/.test(consulta),
+      consulta.slice(consulta.indexOf('/leads'), consulta.indexOf('/leads')+120));
+  chk('…con una ventana de tiempo hacia atrás (from = ahora − 6 h)', (() => { const m = consulta.match(/updated_at\]\[from\]=(\d+)/); const v = m && Number(m[1]); return !!v && Math.abs((Math.floor(Date.now()/1000) - 6*3600) - v) < 30; })(), consulta.slice(-40));
+  chk('⚠️ primero vacía la cola del webhook (777) y después lo que vio en Kommo (556); 555 ya estaba', r.creados===2 && r.cola===1 && r.vistos===2 && a.sh._datos.length===4, JSON.stringify(r));
+  chk('…los nuevos son 777 y 556, y 555 no se duplicó', a.sh._datos.map(f => f[0]).sort().join(',')==='id,kommo-555,kommo-556,kommo-777', a.sh._datos.map(f => f[0]).join(','));
+  chk('deja el resumen del último repaso, sin nombres', /"vistos":2/.test(props.KOMMO_REPASO_ULTIMO) && !/CLI /.test(props.KOMMO_REPASO_ULTIMO), props.KOMMO_REPASO_ULTIMO);
+  const r2 = a.ctx.kommoRepaso();
+  chk('repasar de nuevo no crea nada más', r2.creados===0 && a.sh._datos.length===4, JSON.stringify(r2));
+  chk('el repaso de GitHub se entera del último repaso del script', !!a.post({ action:'kommoLeads', key:'kk', leads:[] }).ultimoRepaso);
+}
+{
+  // Kommo contesta 204 cuando no hay nada: no es un error.
+  const a = cargar([HDR], { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' });
+  a.ctx.UrlFetchApp = { fetch: () => ({ getResponseCode: () => 204, getContentText: () => '' }) };
+  const r = a.ctx.kommoRepaso();
+  chk('sin ventas en la ventana (204) el repaso dice 0 y sin error', r.vistos===0 && r.error==='' && r.creados===0, JSON.stringify(r));
+  a.ctx.UrlFetchApp = { fetch: () => ({ getResponseCode: () => 500, getContentText: () => '' }) };
+  const r3 = a.ctx.kommoRepaso();
+  chk('si Kommo falla, el repaso lo anota y no revienta', /kommo/.test(r3.error), r3.error);
+  const msg = a.ctx.instalarDisparadores();
+  chk('instalarDisparadores deja UN repaso cada 5 minutos', a.ctx.ScriptApp._triggers.filter(t => t.fn==='kommoRepaso' && t.tipo==='every' && t.v===5).length===1 && /5 minutos/.test(msg), msg);
+  a.ctx.instalarDisparadores();
+  chk('…y correrlo dos veces no deja dos', a.ctx.ScriptApp._triggers.filter(t => t.fn==='kommoRepaso').length===1, a.ctx.ScriptApp._triggers.length);
+  chk('estadoKommo dice si el repaso está instalado', a.ctx.estadoKommo().repasoInstalado===true);
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

@@ -6722,3 +6722,58 @@ qué tener listo cuando pasan (efectivo separado por nota, todos los cobros en e
 cargados con el método correcto, pedir ver el registro como comprobante), cómo se controla
 (cobrado − retirado = le queda en la mano) y que QR/tarjeta no entran. Solo la guía; el
 panel no cambia.
+
+## 4eg. Kommo apagó el webhook; el script contesta al instante y repasa solo cada 5 min (2026-09-16)
+
+El dueño: *"al crear el lead y cargar los datos en el CRM debería salir en el panel… he subido
+2 y no aparecen hace 10 min"* (Freddy Cori Mollo). Y después, captura de Kommo: **«Webhook
+está desactivado debido a una respuesta no válida»**.
+
+**Lo que se vio.**
+- Las últimas 14 corridas de `traer-kommo.yml`: desde el 14/09, CADA ventana con ventas
+  nuevas dice «estos los perdió el webhook» (2/2, 4/6, 3/3, 1/4, 4/4). El webhook no traía
+  nada; lo único que traía era el repaso de GitHub, que corre cada ~4 h (no cada 10 min).
+- La corrida de las 18:24 UTC falló: el Apps Script contestó **HTTP 404** con 3 leads.
+- Apps Script lento: `list` por POST tardó 24 s, 125 s; un GET cacheado 3 s, sin caché 15-21 s.
+  Kommo espera pocos segundos y apaga el webhook tras varios fallos seguidos.
+- Se corrió el repaso a mano (workflow_dispatch, run 35143716328): 4 leads, 4 borradores
+  nuevos, entre ellos `kommo-40001308` (Freddy, Carola Chávez).
+
+**Arreglo (`google-apps-script.gs` → `2026-09-16-a`, `pedidos.html`, `traer_kommo.py`).**
+1. **El webhook contesta ya.** `kommoHook` valida la clave, arma los ids como antes y llama
+   a `kommoEncolar_`: guarda los ids en la propiedad `KOMMO_COLA` (tope 200) y deja UN
+   disparador de una vez (`ScriptApp.newTrigger('kommoProcesarCola').after(1000)`), solo si
+   no hay otro esperando. Ni Kommo ni el candado en ese camino. Si no hay `ScriptApp` o no
+   deja crear disparadores (falta autorizar), hace el trabajo en el momento, como antes.
+2. **`kommoProcesarCola()`** (disparador de una vez): se borra a sí mismo primero, lee la
+   cola, `kommoProcesarObj_` (el de siempre: sin duplicar, fecha vacía, Borrador Kommo),
+   y saca de la cola SOLO los que procesó.
+3. **`kommoRepaso()`** (disparador cada 5 min): procesa la cola y después consulta Kommo
+   `/leads?limit=100&order[updated_at]=desc&filter[statuses][0][pipeline_id]=…&
+   filter[statuses][0][status_id]=…&filter[updated_at][from]=ahora−KOMMO_REPASO_MIN(360)`,
+   mismo filtro que el repaso de GitHub. Deja `KOMMO_REPASO_ULTIMO` (ts, cola, vistos,
+   creados, error; sin nombres). `kGet_` ahora trata **204** como «sin resultados» (Kommo
+   contesta 204 cuando no hay nada; antes era «falló»).
+4. **`instalarDisparadores()`** (correr una vez desde el editor): borra los viejos y deja el
+   de 5 min. **`estadoKommo()`**: último aviso, último repaso, cola, si está instalado.
+5. `kommoProcesar_` quedó como envoltorio de `kommoProcesarObj_` (objeto plano) para que los
+   disparadores puedan usar el resultado; la respuesta trae `ultimoRepaso`, y
+   `traer_kommo.py` lo imprime (o avisa que falta correr `instalarDisparadores`).
+6. El repaso de GitHub sigue igual, como tercera red.
+
+**Pruebas.** `tests/test_servidor.js` de 94 a **119 checks** (sección nueva): el webhook
+contesta OK sin red ni candado y encola; un segundo aviso no duplica el disparador; el
+disparador crea los borradores (fecha vacía, marcados), vacía la cola y se borra; el mismo
+lead de nuevo no duplica; sin clave no encola; sin `ScriptApp` crea en el momento; el
+repaso consulta etapa+embudo+`updated_at` de 6 h, vacía la cola primero, no duplica lo que
+ya estaba, deja el resumen sin nombres; 204 no es error; Kommo caído se anota; instalar
+dos veces deja uno. Dientes contra el `.gs` viejo: fallan las nuevas. `tests/test_hook.js`
+sigue en 78/78 (su Google de mentira no tiene `ScriptApp`: cubre el camino «en el momento»).
+
+**Pendiente del dueño (obligatorio para que rinda).** (1) Kommo → Webhooks → **Encender**.
+(2) Apps Script: pegar el `.gs`, Implementar → Administrar implementaciones → ✏️ → Nueva
+versión. (3) En el editor: elegir `instalarDisparadores` → Ejecutar → autorizar. (4)
+Verificar: Cerrar día muestra `2026-09-16-a`, y en 5 min `estadoKommo()` trae un repaso.
+
+⚠️ Sigue abierto: el GET del `/exec` devuelve la planilla entera sin clave (`GET_CERRADO` no
+está puesto, §4dv). Y la lentitud de fondo del Apps Script no se tocó acá.

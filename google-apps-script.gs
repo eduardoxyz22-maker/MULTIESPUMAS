@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-10-c';   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-16-a';   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -1044,7 +1044,9 @@ function kGet_(path) {
       method: 'get', muteHttpExceptions: true,
       headers: { Authorization: 'Bearer ' + tok }
     });
-    if (r.getResponseCode() !== 200) return null;
+    var code = r.getResponseCode();
+    if (code === 204) return {};                 // Kommo contesta 204 cuando la consulta no trae nada
+    if (code !== 200) return null;
     return JSON.parse(r.getContentText());
   } catch (err) { return null; }
 }
@@ -1106,7 +1108,106 @@ function kommoHook(e) {
      último aviso, de qué tipo y cuántos leads traía. Si el repaso de respaldo dice
      «último aviso hace 3 días», el problema está en Kommo y no en este script. */
   kMarcaHook_(tipos, ids.length);
-  return kommoProcesar_(ids, 'webhook');
+  /* ⚡ CONTESTAR YA (§4eg). Kommo espera la respuesta unos pocos segundos y, si no llega,
+     da el aviso por fallido; tras varios seguidos APAGA el webhook sin avisar («desactivado
+     debido a una respuesta no válida», 16/09). Armar el borrador acá adentro son hasta
+     cuatro llamadas a Kommo más el candado de la planilla: con Google lento, minutos.
+     Ahora el aviso solo ANOTA los ids en la cola y contesta; un disparador de tiempo
+     procesa la cola enseguida (kommoProcesarCola) y, pase lo que pase, kommoRepaso los
+     agarra en el próximo repaso de 5 minutos. Sin disparadores (falta autorizar ScriptApp)
+     se hace como antes, en el momento. */
+  return kommoEncolar_(ids);
+}
+
+/* ── La cola del webhook y los disparadores de tiempo (§4eg) ─────────────── */
+var KOMMO_COLA_TOPE = 200;               // ids como mucho; una propiedad aguanta 9 KB
+function kColaLeer_() {
+  try { var a = JSON.parse(prop_('KOMMO_COLA') || '[]'); return Array.isArray(a) ? a.map(String) : []; }
+  catch (e) { return []; }
+}
+function kColaGuardar_(ids) {
+  try { PropertiesService.getScriptProperties().setProperty('KOMMO_COLA', JSON.stringify(ids.slice(-KOMMO_COLA_TOPE))); } catch (e) {}
+}
+/* Saca de la cola SOLO los que se procesaron: uno que entró mientras tanto se queda. */
+function kColaQuitar_(ids) {
+  kColaGuardar_(kColaLeer_().filter(function (id) { return ids.indexOf(String(id)) < 0; }));
+}
+function kTriggersDe_(fn) {
+  try { return ScriptApp.getProjectTriggers().filter(function (t) { return t.getHandlerFunction() === fn; }); }
+  catch (e) { return []; }
+}
+/** Deja UN solo disparador de una vez para procesar la cola. false = no se pudo. */
+function kDespertar_() {
+  if (typeof ScriptApp === 'undefined') return false;
+  try {
+    if (kTriggersDe_('kommoProcesarCola').length) return true;      // ya hay uno esperando
+    ScriptApp.newTrigger('kommoProcesarCola').timeBased().after(1000).create();
+    return true;
+  } catch (e) { return false; }
+}
+function kommoEncolar_(ids) {
+  var hook = kUltimoHook_();
+  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:'webhook', creados:0, ids:[], encolados:0, ultimoHook:hook.ts || '' });
+  var cola = kColaLeer_();
+  ids.forEach(function (id) { if (cola.indexOf(id) < 0) cola.push(id); });
+  kColaGuardar_(cola);
+  if (kDespertar_()) {
+    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:'webhook', creados:0, ids:[], encolados:ids.length, cola:cola.length, ultimoHook:hook.ts || '' });
+  }
+  var r = kommoProcesarObj_(ids, 'webhook');       // sin disparadores: como antes, en el momento
+  kColaQuitar_(ids);
+  return jsonOut(r);
+}
+/** Disparador de una vez: procesa lo que dejó el webhook. Se borra a sí mismo primero,
+    así un aviso que llegue mientras tanto deja uno nuevo. */
+function kommoProcesarCola() {
+  kTriggersDe_('kommoProcesarCola').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
+  var ids = kColaLeer_();
+  if (!ids.length) return { ok:true, creados:0 };
+  var r = kommoProcesarObj_(ids, 'cola');
+  kColaQuitar_(ids);
+  return r;
+}
+/** Disparador cada 5 minutos: la cola primero y después le pregunta a Kommo qué hay en
+    «Compradores» de las últimas horas (KOMMO_REPASO_MIN, 6 h por defecto). Mismo camino que
+    el webhook y que el repaso de GitHub: no duplica. Deja un resumen en KOMMO_REPASO_ULTIMO
+    (sin nombres ni teléfonos). */
+function kommoRepaso() {
+  var res = { ts:new Date().toISOString(), cola:0, vistos:0, creados:0, error:'' };
+  try {
+    var cola = kColaLeer_();
+    if (cola.length) { var rc = kommoProcesarObj_(cola, 'cola'); kColaQuitar_(cola); res.cola = cola.length; res.creados += (rc.creados || 0); }
+    var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT), embudo = kProp_('KOMMO_EMBUDO', KOMMO_EMBUDO_DEFAULT);
+    var min = Number(kProp_('KOMMO_REPASO_MIN', '360')) || 360;
+    var desde = Math.floor(Date.now() / 1000) - min * 60;
+    var r = kGet_('/leads?limit=100&order[updated_at]=desc' +
+                  '&filter[statuses][0][pipeline_id]=' + encodeURIComponent(embudo) +
+                  '&filter[statuses][0][status_id]=' + encodeURIComponent(etapa) +
+                  '&filter[updated_at][from]=' + desde);
+    if (r === null) { res.error = 'kommo no contestó'; }
+    else {
+      var ids = kEmb_(r, 'leads').map(function (x) { return String(x.id || ''); }).filter(function (x) { return !!x; });
+      res.vistos = ids.length;
+      if (ids.length) { var rr = kommoProcesarObj_(ids, 'repaso-script'); res.creados += (rr.creados || 0); res.saltados = (rr.saltados || []).length; }
+    }
+  } catch (e) { res.error = String((e && e.message) || e); }
+  try { PropertiesService.getScriptProperties().setProperty('KOMMO_REPASO_ULTIMO', JSON.stringify(res)); } catch (e) {}
+  return res;
+}
+/** ▶️ CORRER UNA VEZ desde el editor (Ejecutar ▸ instalarDisparadores): deja el repaso
+    cada 5 minutos. Pide autorización la primera vez; es normal. */
+function instalarDisparadores() {
+  ['kommoRepaso', 'kommoProcesarCola'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
+  ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
+  var msg = '✅ Listo: kommoRepaso corre cada 5 minutos. Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
+  if (typeof Logger !== 'undefined') Logger.log(msg);
+  return msg;
+}
+/** ▶️ Para mirar desde el editor cómo anda Kommo: último aviso, último repaso, cola. */
+function estadoKommo() {
+  var s = { ultimoHook: prop_('KOMMO_ULTIMO_HOOK'), ultimoRepaso: prop_('KOMMO_REPASO_ULTIMO'), enCola: kColaLeer_().length, repasoInstalado: kTriggersDe_('kommoRepaso').length > 0 };
+  if (typeof Logger !== 'undefined') Logger.log(JSON.stringify(s, null, 2));
+  return s;
 }
 
 /** Anota el último aviso recibido (fecha, tipos y cuántos). Nunca nombres ni teléfonos. */
@@ -1139,9 +1240,10 @@ function kommoLeads(body) {
    ⚠️ La garantía de «no duplicar» NO se afloja: `leadYaCargado_` se vuelve a comprobar
    DENTRO del candado, porque entre que se armó el borrador y el momento de escribirlo pudo
    entrar otro aviso de Kommo con el mismo lead. */
-function kommoProcesar_(ids, origen) {
+function kommoProcesar_(ids, origen) { return jsonOut(kommoProcesarObj_(ids, origen)); }
+function kommoProcesarObj_(ids, origen) {
   var hook = kUltimoHook_();
-  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '' });
+  if (!ids.length) return ({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
   var shPre = getSheet(), listos = [], saltados = [], yaEstaban = [];
   for (var j = 0; j < ids.length; j++) {
     if (leadYaCargado_(shPre, ids[j])) { saltados.push(ids[j] + ':ya estaba'); yaEstaban.push(ids[j]); continue; }
@@ -1153,11 +1255,11 @@ function kommoProcesar_(ids, origen) {
      corre cada 10 minutos y casi siempre no encuentra ventas nuevas — antes trababa la
      planilla igual, 144 veces por día, para no hacer nada. */
   if (!listos.length && !yaEstaban.length) {
-    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
-                     creados:0, ids:[], saltados:saltados, reparados:0, ultimoHook:hook.ts || '' });
+    return ({ ok:true, version:SCRIPT_VERSION, origen:origen,
+                     creados:0, ids:[], saltados:saltados, reparados:0, ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
   }
   var lock = LockService.getScriptLock();
-  try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
+  try { lock.waitLock(30000); } catch (err) { return ({ ok:false, error:'busy' }); }
   try {
     var sh = getSheet(), hechos = [], reparados = [];
     for (var i = 0; i < listos.length; i++) {
@@ -1168,9 +1270,9 @@ function kommoProcesar_(ids, origen) {
     if (hechos.length) getCacheOlvidar_();
     // Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
     for (var k = 0; k < yaEstaban.length; k++) if (repararNombreBorrador_(sh, yaEstaban[k])) reparados.push(yaEstaban[k]);
-    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen,
+    return ({ ok:true, version:SCRIPT_VERSION, origen:origen,
                      creados:hechos.length, ids:hechos, saltados:saltados,
-                     reparados:reparados.length, ultimoHook:hook.ts || '' });
+                     reparados:reparados.length, ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
   } finally { lock.releaseLock(); }
 }
 
