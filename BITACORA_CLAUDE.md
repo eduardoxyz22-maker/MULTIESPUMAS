@@ -6978,3 +6978,35 @@ Otras formas de perder una imagen que SÍ avisan: un choque de versión al guard
 (`rechazoFirme` recarga la copia del servidor; ahora queda en «Guardados rechazados», §4el)
 y la cola sin enviar (ahora visible en Mis pedidos). En Contabilidad, la imagen de un pago
 NUEVO queda pegada recién al tocar «Registrar pago» (el cartel lo dice).
+
+## 4en. El «✓» ya no puede mentir: el panel verifica el eco de cada guardado (2026-09-18)
+
+El dueño: *"cuando haces revisión me decís que no hay errores, y siguen apareciendo. ¿Cómo
+puedo confiar que ya no hay errores? En especial en el guardado. Es tiempo valioso que un
+vendedor pierde revisando 2-3 veces si subió y volviéndolo a subir."*
+
+Respuesta honesta: las pruebas cubren lo que cubren (§4em no estaba cubierto). Lo que sí se
+puede garantizar es que el panel COMPARE lo que la persona vio con lo que la planilla
+devolvió, y grite si falta algo. El servidor contesta cada guardado con la fila tal como
+quedó (`res.pedido`).
+
+**Arreglo (`pedidos.html`).** `ecoFaltantes(imgs, fotos, srv, nota, nProd)`: imágenes de
+pago (`%id` en `metodoPago`), fotos de entrega, N° de nota y cantidad de productos que
+tendrían que estar y no están. `ecoAvisar`: cartel rojo de 15 s «⚠️ SE GUARDÓ INCOMPLETO
+(cliente). La planilla NO tiene: … Abrí el pedido, revisá y volvé a cargar lo que falte» y
+anotación en `ME_RECHAZOS_V1` (se ve en Mis pedidos, §4el). Dos puntos de control:
+- `verificarEcoForm(res.pedido, rec, prev)` en `submitPedido`, DESPUÉS del «✓»: compara
+  `FORM_COMPS`+`FORM_COMPS2` (lo que la vendedora subió), las fotos de entrega que el pedido
+  ya tenía, el N° de nota tipeado y la cantidad de productos. Este es el que habría gritado
+  con el comprobante perdido de §4em.
+- `verificarEco(rec, srv)` en `apiSaveAhora` para TODO guardado (chofer, contabilidad,
+  retiros): las imágenes de pago y fotos que iban en el registro enviado vs lo que volvió.
+
+**Prueba:** `tests/test_comp_perdido.js` de 8 a **12 checks**: si la planilla devuelve el
+pedido sin la imagen subida → cartel «SE GUARDÓ INCOMPLETO … 1 imagen de pago» y anotación
+local con el cliente; con el eco completo, ni cartel ni anotación; si vuelve sin una foto de
+entrega que ya tenía → también avisa. Browser local 12/12.
+
+En paralelo corre un agente auditando TODOS los caminos de guardado (mensajes optimistas,
+pérdidas silenciosas, carreras con el refresco automático, eco del servidor) con propuesta
+de pruebas de punta a punta; lo que encuentre va en §4eo.

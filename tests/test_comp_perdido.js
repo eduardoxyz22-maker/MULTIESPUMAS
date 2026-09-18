@@ -59,6 +59,27 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     chk('con dos imágenes previas el formulario abre con las DOS (antes solo la primera)', FORM_COMPS.join(',')==='IMG_A,IMG_B', FORM_COMPS.join(','));
     FORM_COMPS=compsArr(FORM_COMPS.concat(['IMG_C'])); var q2=await guardar();
     chk('…y al guardar quedan las tres', compsArr(anticipoDe(q2).comps).join(',')==='IMG_A,IMG_B,IMG_C', q2.metodoPago);
+    // 🔍 el eco (§4en): si la planilla devolviera el pedido SIN la imagen, el ✓ no puede quedar solo
+    localStorage.removeItem('ME_RECHAZOS_V1');
+    armar(hist); await new Promise(r=>setTimeout(r,250));
+    FORM_COMPS=compsArr(FORM_COMPS.concat(['IMG_QUE_SE_PIERDE'])); renderCompForm(true);
+    var apiSaveBien=apiSave;
+    apiSave=function(r){ var g=JSON.parse(JSON.stringify(r)); g.metodoPago=String(g.metodoPago).replace(/ %IMG_QUE_SE_PIERDE/,''); window._pl=[g]; return Promise.resolve({ok:true, pedido:g}); };
+    var qe=await guardar(); apiSave=apiSaveBien;
+    var rojo=window._toasts.filter(function(x){ return /INCOMPLETO/.test(x) && /1 imagen de pago/.test(x); });
+    chk('⚠️ si la planilla devuelve el pedido sin la imagen, sale el cartel rojo «SE GUARDÓ INCOMPLETO … 1 imagen de pago»', rojo.length===1, window._toasts.join(' | ').slice(0,200));
+    chk('…y queda anotado en los rechazos locales de Mis pedidos', rechazosLocales().length===1 && /incompleto/.test(rechazosLocales()[0].error) && rechazosLocales()[0].cliente==='DON COMPROBANTE', JSON.stringify(rechazosLocales()));
+    localStorage.removeItem('ME_RECHAZOS_V1');
+    armar(hist); await new Promise(r=>setTimeout(r,250));
+    FORM_COMPS=compsArr(FORM_COMPS.concat(['IMG_OK'])); var qok=await guardar();
+    chk('con el eco completo no hay cartel rojo ni anotación', !window._toasts.some(function(x){ return /INCOMPLETO/.test(x); }) && rechazosLocales().length===0 && /IMG_OK/.test(qok.metodoPago), window._toasts.join(' | ').slice(0,120));
+    // el eco también vigila las fotos de entrega que el pedido ya tenía
+    armar(hist, { fotos:['FOTO_ENTREGA_1'] }); await new Promise(r=>setTimeout(r,250));
+    apiSave=function(r){ var g=JSON.parse(JSON.stringify(r)); g.fotos=[]; window._pl=[g]; return Promise.resolve({ok:true, pedido:g}); };
+    document.getElementById('f-direccion').value='Av. Z'; await guardar(); apiSave=apiSaveBien;
+    chk('…si vuelve sin una foto de entrega que ya tenía, también avisa', window._toasts.some(function(x){ return /INCOMPLETO/.test(x) && /foto de entrega/.test(x); }), window._toasts.join(' | ').slice(0,160));
+    localStorage.removeItem('ME_RECHAZOS_V1');
+
     // guardar sin imagen nueva no cambia nada
     armar(hist); await new Promise(r=>setTimeout(r,250));
     document.getElementById('f-direccion').value='Av. Y'; var q3=await guardar();

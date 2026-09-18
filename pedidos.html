@@ -2046,7 +2046,7 @@ function apiSaveAhora(rec, opts){
   var payload={action:'save', pedido:rec};
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
   return apiPost(payload).then(function(res){
-    if(res && res.ok && res.pedido) aplicarSello(rec, res.pedido);
+    if(res && res.ok && res.pedido){ aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido); }   // 🔍 §4en
     else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
     return res;
   });
@@ -2055,6 +2055,56 @@ function apiSaveAhora(rec, opts){
    revisión (sin él, el PRÓXIMO guardado de esta misma compu chocaría consigo mismo), el
    N° del día y, si hubo que cambiarla, la OC. Se copia en todas las copias que anden
    dando vueltas: la que se mandó, la de STATE y la de la bandeja de borradores. */
+/* ============================================================================
+   🔍 VERIFICAR EL ECO — que el «✓» no pueda mentir (§4en)
+   El dueño: *"cuando haces revisión me decís que no hay errores, y siguen apareciendo.
+   ¿Cómo puedo confiar? En especial en el guardado."* Mis pruebas cubren lo que cubren.
+   Lo que sí se puede garantizar es que el panel COMPARE lo que la persona vio en pantalla
+   con lo que la planilla devolvió después de guardar, y avise fuerte si falta algo. El
+   servidor contesta cada guardado con la fila tal como quedó (`res.pedido`): acá se mira
+   que estén las imágenes de pago que se subieron, las fotos de entrega que ya tenía, el
+   N° de nota y la cantidad de productos. Si falta algo: cartel rojo largo y queda anotado
+   en «Mis pedidos» (rechazos locales) para que no dependa de leerlo en el momento.
+   ========================================================================== */
+function imgsPagoDe(p){
+  return (String((p&&p.metodoPago)||'').match(/%\s*[A-Za-z0-9_-]+/g)||[]).map(function(s){ return fidLimpio(s.replace(/^%\s*/,'')); });
+}
+function ecoFaltantes(quieroImgs, quieroFotos, srv, nota, nProd){
+  var faltan=[];
+  var imgs=imgsPagoDe(srv), fotos=fotosDe(srv).map(fidLimpio);
+  var sinImg=compsArr(quieroImgs).map(fidLimpio).filter(function(id){ return id && imgs.indexOf(id)<0; });
+  if(sinImg.length) faltan.push(sinImg.length+' imagen'+(sinImg.length>1?'es':'')+' de pago');
+  var sinFoto=compsArr(quieroFotos).map(fidLimpio).filter(function(id){ return id && fotos.indexOf(id)<0; });
+  if(sinFoto.length) faltan.push(sinFoto.length+' foto'+(sinFoto.length>1?'s':'')+' de entrega');
+  if(nota!=null && limpiaNota(nota) && limpiaNota(srv.nota)!==limpiaNota(nota)) faltan.push('el N° de nota '+limpiaNota(nota)+' (quedó «'+limpiaNota(srv.nota)+'»)');
+  if(nProd!=null && (srv.productos||[]).length!==nProd) faltan.push('productos ('+nProd+' enviados, '+(srv.productos||[]).length+' guardados)');
+  return faltan;
+}
+function ecoAvisar(rec, faltan, donde){
+  if(!faltan.length) return false;
+  var quien=String(rec.id||'').indexOf('__ret_')===0 ? ('el retiro de '+(rec.vendedor||'')) : (rec.cliente||rec.id||'');
+  toast('⚠️ SE GUARDÓ INCOMPLETO ('+quien+'). La planilla NO tiene: '+faltan.join(' · ')+'. Abrí el pedido, revisá y volvé a cargar lo que falte. Quedó anotado en Mis pedidos.','err',15000);
+  rechazoRecordar(rec, { error:'incompleto — falta '+faltan.join(', ')+(donde?(' ('+donde+')'):'') });
+  return true;
+}
+/* Guardado genérico (chofer, contabilidad, retiros…): lo que se mandó vs lo que quedó. */
+function verificarEco(rec, srv){
+  try{
+    if(!rec || !srv || String(srv.id)!==String(rec.id)) return;
+    ecoAvisar(rec, ecoFaltantes(imgsPagoDe(rec), fotosDe(rec), srv, null, null), 'al guardar');
+  }catch(e){}
+}
+/* El formulario: lo que la vendedora VIO (las imágenes subidas, la nota, los productos y
+   las fotos que el pedido ya tenía) vs lo que la planilla devolvió. Este es el que habría
+   gritado con el comprobante perdido de §4em. */
+function verificarEcoForm(srv, rec, prev){
+  try{
+    if(!srv) return;
+    var imgs=compsArr(FORM_COMPS).concat(typeof FORM_COMPS2!=='undefined'?compsArr(FORM_COMPS2):[]);
+    var faltan=ecoFaltantes(imgs, prev?fotosDe(prev):[], srv, (document.getElementById('f-nota')||{}).value, (rec.productos||[]).length);
+    ecoAvisar(rec, faltan, 'formulario');
+  }catch(e){}
+}
 function aplicarSello(rec, srv){
   var copias=[rec, findById(rec.id), (typeof borradorDe==='function')?borradorDe(rec.id):null];
   copias.forEach(function(o){
@@ -6509,6 +6559,7 @@ function submitPedido(){
         if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
         // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
         if(!(res.pedido && res.pedido.ocCambiada)) toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');
+        verificarEcoForm(res.pedido, rec, prev);    // 🔍 lo que se vio vs lo que quedó (§4en); si falta algo, pisa el ✓ con el rojo
         flushPending();
       }
       /* ⚠️ EL SERVIDOR CONTESTÓ Y DIJO QUE NO. Eso NO se encola.
