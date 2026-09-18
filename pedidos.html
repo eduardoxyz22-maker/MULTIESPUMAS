@@ -3023,12 +3023,23 @@ function compRepetidos(list){
      dos números; ocho seguidos es un talonario nuevo, y listarlos ensucia el aviso — que es
      exactamente lo que le pasaba al de duplicados y por lo que nadie lo miraba. */
 var HUECO_MAX=3;
+/* ⚠️ LOS RECIBOS DE LOS PAGOS TAMBIÉN SON DEL TALONARIO (§4eh). Cuando el cliente paga el
+   saldo después, ese cobro lleva su propio recibo (el «#1758» dentro del pago), y ese número
+   sale del mismo talonario que la nota de la venta. Esto miraba SOLO la nota de la venta,
+   así que un recibo de saldo bien cargado seguía figurando como «salteado» — el dueño:
+   *"la nota 1758 ya se corrigió y añadió pero sigue saliendo como sugerencia"*. Ahora se
+   cuentan los dos: la nota de la venta y la de cada pago. */
+function notasDelTalonario(p){
+  var out=[], n=notaNumero(p&&p.nota); if(n) out.push(n);
+  try { parseCobros(p&&p.metodoPago).forEach(function(c){ var m=notaNumero(c.nota); if(m && out.indexOf(m)<0) out.push(m); }); } catch(e){}
+  return out;
+}
 function huecosTalonario(list){
   var porVend={};
   (list||[]).forEach(function(p){
-    var n=notaNumero(p&&p.nota); if(!n) return;
+    var ns=notasDelTalonario(p); if(!ns.length) return;
     var v=nombreCanonico(p.vendedor)||String(p.vendedor||'').trim()||'(sin vendedor)';
-    (porVend[v]=porVend[v]||{})[n]=1;
+    ns.forEach(function(n){ (porVend[v]=porVend[v]||{})[n]=1; });
   });
   var out=[];
   Object.keys(porVend).forEach(function(v){

@@ -6777,3 +6777,26 @@ Verificar: Cerrar día muestra `2026-09-16-a`, y en 5 min `estadoKommo()` trae u
 
 ⚠️ Sigue abierto: el GET del `/exec` devuelve la planilla entera sin clave (`GET_CERRADO` no
 está puesto, §4dv). Y la lentitud de fondo del Apps Script no se tocó acá.
+
+## 4eh. Huecos del talonario: los recibos de los pagos también cuentan (2026-09-18)
+
+El dueño, con captura de «Revisar antes de cerrar»: *"la nota 1758 ya se corrigió y añadió
+pero sigue saliendo como sugerencia. ¿No revisa en tiempo real?"*. Sí revisa en tiempo real
+(se recalcula en cada dibujado desde STATE); el problema era QUÉ miraba. En la planilla no
+hay ninguna venta con nota 1758: el número quedó como recibo del PAGO del saldo (QR BISA
+3000 del 14/09, «#1758») en la venta de nota 1753 de Isabel Robledo. `huecosTalonario` miraba
+solo `p.nota`, y los recibos de los pagos posteriores salen del mismo talonario.
+
+**Arreglo (`pedidos.html`):** `notasDelTalonario(p)` = la nota de la venta + la nota de cada
+pago (`parseCobros(p.metodoPago)[].nota`, anticipo incluido), todas por `notaNumero` (solo
+números pelados). `huecosTalonario` usa eso. Las reglas siguen: por vendedora, huecos de
+hasta HUECO_MAX, nada en las puntas.
+
+**Prueba:** `tests/test_talonario.js` (nuevo, Playwright, 10 checks): el recibo de un pago
+tapa su hueco; una venta sin nota pero con recibo en el pago cuenta; anticipo `~`; otra
+vendedora no tapa; «001-08» no entra; salto grande = otro talonario; puntas. Corrido a mano
+en el browser local: los 9 casos en verde (una expectativa mía estaba mal y se corrigió:
+con 1753, 1757, 1758 y 1760 faltan 1754-1756 y 1759).
+
+Vistos de paso en los datos de Isabel (septiembre): una nota «17478» (casi seguro 1748 mal
+tipeada) y cuatro ventas con la nota vacía. Se le dijo al dueño; no se tocó nada.
