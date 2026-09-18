@@ -6858,3 +6858,8 @@ día, imágenes, total, pagada sin exceso, `cobradoBs`), las seis negativas, la 
 (vuelve a mostrar, conserva sin tocar, rehace al cambiar el reparto: 4000 + 990), el
 adelanto mixto (1500 + 500, saldo 2990, total 4990), el desglose por método y el caso sin
 mixto. Guía de la vendedora: tarjeta «💳 Pagó con dos métodos» (`#mixto`).
+
+**Ajuste (mismo día):** el botón estaba al final del bloque de cobro, debajo del recargo
+por entrega, y el dueño lo vio confuso. Ahora vive en el título «¿Con qué pagó?»
+(`mixtoBtnHtml()` dentro de `updateMetodoVisibility`); el bloque del segundo método sigue
+abriéndose al final del cobro y la pantalla baja hasta él.

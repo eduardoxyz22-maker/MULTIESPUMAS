@@ -819,9 +819,6 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       <!-- 💳 PAGO MIXTO (§4ej): el cliente paga una parte con un método y el resto con otro
            (QR + tarjeta es el caso típico). Los dos pagos van en la MISMA venta, con el
            mismo N° de nota; el segundo lleva su propio monto y su propia imagen. -->
-      <div class="field" id="wrap-mixto-btn" style="display:none">
-        <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="toggleMixto()">➕ Pagó con dos métodos <span class="hint">(ej. QR + tarjeta)</span></button>
-      </div>
       <div id="wrap-mixto" style="display:none;border:1px dashed var(--teal-border);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--teal-lt)">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:.85rem">💳 Segundo método de pago</b><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="toggleMixto(false)">✕ Quitar</button></div>
         <div class="field">
@@ -2695,7 +2692,7 @@ function updateMetodoVisibility(){
   var acuenta = parseFloat(document.getElementById('f-acuenta').value)||0;
   var show = pagado || (acuenta>0);
   document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
-  if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'; }
+  if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'+mixtoBtnHtml(); }
   var sl=document.getElementById('lbl-saldo'); if(sl) sl.innerHTML='Saldo por cobrar'+((acuenta>0 && !pagado)?' <span class="req">*</span>':'');
   /* Cuánto cobró. Solo con "SÍ, pagado": si hay adelanto, el monto ya es "A cuenta".
      Sin este campo la venta quedaba SIN el monto en ningún lado (el famoso
@@ -5703,6 +5700,10 @@ function quitarCompForm(i){
    cuadre los ven por separado, cada uno contra su banco o su POS.
    ========================================================================== */
 var MIXTO=false, FORM_COMPS2=[], COMP_DESTINO=1, BANCO_EXTRA2='';
+/* El botón vive AL LADO de «¿Con qué pagó?» (el dueño, 18/09: abajo del recargo confundía). */
+function mixtoBtnHtml(){
+  return '<button type="button" id="btn-mixto" class="btn btn-ghost btn-sm" style="width:auto;margin-left:10px;font-size:.72rem;padding:3px 9px;vertical-align:middle;display:'+(MIXTO?'none':'inline-block')+'" onclick="toggleMixto()" title="El cliente pagó una parte con un método y el resto con otro (ej. QR + tarjeta)">➕ Pagó con dos métodos</button>';
+}
 function toggleMixto(on){
   MIXTO = (on==null) ? !MIXTO : !!on;
   if(!MIXTO){ FORM_COMPS2=[]; segSet('f-metodo2',''); segSet('f-banco2',''); var m=document.getElementById('f-monto2'); if(m){ m.value=''; m.classList.remove('err'); } }
@@ -5725,10 +5726,10 @@ function renderBancos2(){
   if(prev && lista.indexOf(prev)>=0) segSet('f-banco2', prev);
 }
 function pintarMixto(){
-  var btnW=document.getElementById('wrap-mixto-btn'), box=document.getElementById('wrap-mixto'); if(!btnW||!box) return;
+  var box=document.getElementById('wrap-mixto'); if(!box) return;
   var wm=document.getElementById('wrap-metodo');
   var metodoVisible=!!wm && wm.style.display!=='none';
-  btnW.style.display=(metodoVisible && !MIXTO)?'block':'none';
+  var btn=document.getElementById('btn-mixto'); if(btn) btn.style.display=(metodoVisible && !MIXTO)?'inline-block':'none';
   box.style.display=(metodoVisible && MIXTO)?'block':'none';
   if(!(metodoVisible && MIXTO)) return;
   var esQR=segVal('f-metodo2')==='QR';
