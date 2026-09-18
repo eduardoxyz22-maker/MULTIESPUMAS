@@ -6513,6 +6513,12 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 > es poner al día los tests que quedaron con la regla vieja: `test_producir` 6, `test_atc` 4,
 > `test_onclicks` 1 (`initSeg` para `pdev-turno`), `test_rpt` 1 («reposición de tienda» en
 > minúscula). Hasta entonces la línea de base NO es cero.
+> 🔴 **Y desde el 18/09, 9 más, también de `main` y no de §4eq** (medido sobre `3e0a164` sin ese
+> commit, y con él: idénticos): `test_borradores` 8 (el borrador de Kommo ya no se convierte
+> en pedido: queda «Borrador Kommo», sin fecha ni N° del día, y el descartado no desaparece) y
+> `test_conflicto` 1 (tras un conflicto el pedido no vuelve a su fecha de antes). Vienen de la
+> auditoría de guardados de §4en–§4eo (el ✓ verificado y el eco del servidor cambiaron cómo se
+> aplica la respuesta). Revisar contra esa regla nueva antes de tocar el código.
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
@@ -7115,3 +7121,70 @@ curso de Contabilidad se conserva por venta y avisa al volver. `test_guardado.js
 **Pendiente del dueño:** publicar el `.gs` `2026-09-18-d` (Nueva versión) y volver a correr
 `instalarDisparadores` desde el editor (instala el barrido diario; el de Kommo se reinstala
 igual).
+
+## 4eq. El efectivo que recibe el chofer: quién tiene la plata, y el retiro a Contabilidad (2026-09-18)
+
+El dueño: *"En la lista de personas que retiran efectivo faltan los choferes. A veces le pagan a
+ellos el cliente y las vendedoras hacen también una nota de ese efectivo, pero ¿cómo hacemos que
+reporten que fue el chofer que recibió? ¿Agregamos «efectivo recibido del cliente» y luego
+«efectivo recogido por el chofer»? ¿En dónde reportan retiro de efectivo?"*. Y el circuito, al
+preguntarle: *"el chofer la recibe y entrega a Contabilidad; no la recibe ni la vendedora ni
+Eduardo. Eduardo recoge [a las vendedoras] y también rinde a Contabilidad"*. Y: Giordano ya no
+está en el equipo.
+
+### Lo que pasaba
+El panel no guardaba **quién recibió físicamente** un cobro en efectivo: todo se contaba como de
+la vendedora de la venta. Entonces (1) el cobro que el chofer anotaba desde su ficha nacía **sin
+fecha y sin nota** (no entraba en ningún cuadre por día ni por mes, y sonaba el aviso «pago sin
+fecha»); (2) esa plata le quedaba «en la mano» a la vendedora, que nunca la tocó; (3) el retiro
+tenía «Quién entrega» como lista cerrada de vendedoras: a un chofer no se le podía anotar nada.
+
+### Qué se hizo (`pedidos.html`)
+1. **Un dato por cobro en efectivo: `recibio`** (quién lo recibió). Viaja en el mismo texto de
+   `metodoPago`, pegado a la nota después de un `>`: `Efectivo 500 @2026-09-18 #1004 >Luis
+   Pierre %IMG`. **Va ahí a propósito**: un panel viejo (celular con caché) lo lee como parte de
+   la nota y sigue viendo el pago; cualquier separador nuevo antes del `#` hacía que el pago
+   entero desapareciera del parser viejo. `parseCobros` lo separa, `textoCobros` lo escribe,
+   `limpiaNota`/`limpiaRecibio` prohíben el `>` en lo tipeado. Sin `>` = la vendedora (todo lo
+   anterior). `pagoRecibio(c,p)` = en la mano de quién está.
+2. **El chofer no hace nada nuevo**: `choCobrarMetodo` anota el cobro **con la fecha de hoy** y,
+   si es efectivo, a su nombre (el que eligió en «Elegí tu nombre», o el asignado). QR y tarjeta
+   no llevan nombre: van al banco.
+3. **Contabilidad puede decirlo**: en «Registrar pago» y en «✏️ Corregir este pago», con método
+   Efectivo aparece **«¿Quién recibió la plata?» · la vendedora / 🚚 El chofer** (propone al de
+   la entrega, se puede elegir otro de los camiones). `CTA_PAGO.recibio` / `CTA_EDIT_R`,
+   `ctaRecibioHtml`, `ctaSetRecibio`, `ctaEditRecibio`. La ficha, el detalle del Cuadre, el
+   Excel («EFECTIVO EN MANO DE») y el mensaje de WhatsApp lo muestran («🚚 recibió X»).
+4. **El Cuadre agrupa por quién TIENE la plata** (`cuadreEfectivo` → `{filas, fuera}`;
+   `cuadreEfectivoPorVendedor` queda como envoltorio): filas de vendedoras y, marcadas
+   🚚 chofer, filas de choferes con lo que recibieron y lo que se les retiró. **Con filtro por
+   vendedora**, lo que de sus ventas recibió un chofer se aparta en `fuera` (no es plata que
+   haya que recogerle a ella): la tabla lo dice en ámbar («Bs X lo recibió un chofer … se ve en
+   Todos») y la ficha «Efectivo por retirar» lo descuenta. `choferesConocidos()` = los de los
+   camiones + los que aparecen en pedidos o como `recibio` (Giordano sigue teniendo su historial).
+5. **El retiro**: «Quién entrega» tiene un grupo **🚚 Choferes (rinden a Contabilidad)**, y al
+   elegir uno, «Quién retira» pasa solo a **Contabilidad** (`RETIRA_CHOFER`; una vendedora vuelve
+   a Eduardo; lo escrito a mano se respeta — `retEntregaCambio`). Nada más cambia: el retiro se
+   guarda igual y descuenta de la mano del chofer.
+6. **Giordano fuera de `VEHICULOS`** (Foton nuevo queda con Luis Eyzaguirre). `choferesParaSelect(p)`
+   agrega el chofer guardado de un pedido viejo para que ese pedido no muestre «Chofer…» vacío.
+
+Lo que NO se hizo: el panel sigue sin llevar la mano de **Eduardo** (lo que recogió a las
+vendedoras y todavía no rindió a Contabilidad). Es el mismo mecanismo (un retiro de Eduardo a
+Contabilidad) y se agrega cuando el dueño lo pida. Tampoco cambió «💵 Rendición por chofer» de
+Administración (mide entregas, no efectivo en mano).
+
+### Pruebas
+`tests/test_chofer_efectivo.js` (**35 checks**): el formato («#1004 >Luis Pierre», sin nota,
+lo viejo, varios cobros, ida y vuelta, el `>` prohibido); el cobro del chofer con fecha de hoy y
+a su nombre, y su QR sin nombre; el Cuadre por quién tiene la plata (Carola 1.000, Luis 500−200,
+Miguel 300, Giordano 100, Maria sin nada por el QR; primero vendedoras) y la ficha «Efectivo por
+retirar» 1.700; con filtro por Carola: solo ella con 1.000, la nota «lo recibió un chofer» y la
+ficha 1.000 (no 1.500); el detalle y el WhatsApp; el retiro (grupo de choferes con Giordano, sin
+vendedores repetidos; Contabilidad/Eduardo solos; lo tipeado se respeta; un retiro a Miguel deja
+su mano en cero); Contabilidad (la pregunta, «El chofer» propone a Cristhian sin ofrecer a
+Giordano, el pago queda `#50 >Cristhian %R1`, la ficha y el WhatsApp lo dicen, con QR
+desaparece, «Corregir» arranca en Miguel y vuelve a la vendedora); los camiones sin Giordano.
+⚠️ En el test el doble de `apiList` toma la foto de la planilla **al resolver**, no al llamarse
+(`showView` pide la lista y en el mismo tirón se anota un cobro: con la foto de antes, al
+resolver pisaba el cobro), y devuelve también las filas `__ret_…`.

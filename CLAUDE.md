@@ -253,6 +253,22 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
 
+## 💵 Efectivo: quién tiene la plata (§4eq)
+Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
+o un **chofer** (`>Nombre` pegado a la nota en `metodoPago`: `Efectivo 500 @… #1004 >Luis
+Pierre %IMG`). ⚠️ Va DESPUÉS del `#` a propósito: un panel viejo lo lee como parte de la nota y
+sigue viendo el pago; un separador nuevo antes del `#` le borraba el pago entero. `parseCobros`
+→ `c.recibio`, `pagoRecibio(c,p)` = en la mano de quién está. El chofer no hace nada: su cobro
+desde la ficha sale con **fecha de hoy** y a su nombre (QR/tarjeta sin nombre: van al banco).
+Contabilidad lo marca en «Registrar pago»/«Corregir» (**¿Quién recibió la plata?**). El Cuadre
+«Efectivo cobrado vs. retirado» agrupa por quién la tiene (`cuadreEfectivo` → `{filas, fuera}`;
+con filtro por vendedora, lo de sus ventas que tiene un chofer va a `fuera` y se dice). El
+retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilidad** solo
+(`RETIRA_CHOFER`): **el chofer rinde a Contabilidad, no a la vendedora ni a Eduardo** (dueño,
+18/09). `choferesConocidos()` incluye a los que ya no están (Giordano salió de `VEHICULOS` el
+18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
+Eduardo. `tests/test_chofer_efectivo.js`.
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +

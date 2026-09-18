@@ -3550,7 +3550,8 @@ function contaNotaTxt(c){ var n=limpiaNota(c&&c.nota); return n?('nota '+n):'sin
 /* Los pagos en una sola línea, para la celda del Excel. */
 function contaPagosTxt(p){
   return contaPagos(p).map(function(c){
-    return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
+    return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c)+
+           (limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'');
   }).join('  |  ');
 }
 function contaPagosCelda(p){
@@ -3565,6 +3566,7 @@ function contaPagosCelda(p){
       esc(contaMetodoTxt(c))+' <b>'+esc(contaMontoTxt(c))+'</b>'+
       (n?(' <span class="badge b-gray" style="font-size:.62rem">🧾 '+esc(n)+'</span>')
         :' <span style="color:var(--amber);font-size:.72rem">sin nota</span>')+
+      recibioBadge(c,true)+
       compsArr(c.comps!=null?c.comps:c.comp).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del pago" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+
     '</div>';
   }).join('');
@@ -3658,7 +3660,7 @@ function cuadrePagos(){
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
-                 monto:Number(c.monto)||0, nota:limpiaNota(c.nota),
+                 monto:Number(c.monto)||0, nota:limpiaNota(c.nota), recibio:limpiaRecibio(c.recibio),
                  comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''),
                  anticipo:!!c.anticipo, envio:esEnvio(c) });
     });
@@ -4085,7 +4087,11 @@ function renderCuadre(){
   var fletesPend=cuadreFletesPend(), fletePend=cuadreFletesPendTotal(), fletesN=fletesPend.length;
   var pe=cuadrePeriodo();
   var rets=retirosDe(pe, vendSel), retirado=retirosTotal(rets);
-  var porRetirar=r2(efectivo-retirado);
+  /* §4eq: con filtro por vendedora, lo que de sus ventas recibió un CHOFER no está en la
+     mano de ella (él lo rinde a Contabilidad y su retiro se ve en «Todos»). */
+  var enChofer=0; if(vendSel) cuadreEfectivo().fuera.forEach(function(f){ enChofer=r2(enChofer+f.monto); });
+  var porRetirar=r2(efectivo-enChofer-retirado);
+  var chTxt=enChofer>0.01?(' · '+fmtBs(enChofer)+' lo tiene el chofer (ver en Todos)'):'';
   var deQuien=vendSel?('de '+vendSel):'del equipo';
 
   box.innerHTML=
@@ -4099,8 +4105,8 @@ function renderCuadre(){
     mc(Math.abs(porRetirar)<0.01?'var(--green)':(porRetirar>0?'var(--amber)':'var(--red)'),
        porRetirar<-0.01?'Se retiró de más':'Efectivo por retirar',
        Math.abs(porRetirar)<0.01?'✅ Nada':fmtBs(Math.abs(porRetirar)),
-       Math.abs(porRetirar)<0.01 ? 'se recogió todo el efectivo'
-         : (porRetirar>0 ? ('sigue en la mano '+esc(deQuien)+' — hay que recogerlo')
+       Math.abs(porRetirar)<0.01 ? ('se recogió todo el efectivo'+chTxt)
+         : (porRetirar>0 ? ('sigue en la mano '+esc(deQuien)+' — hay que recogerlo'+chTxt)
                          : 'se retiró más de lo que se cobró en efectivo'))+
     mc(recargos>0?'#0d9488':'var(--muted)','🚚 Transporte cobrado',fmtBs(recargos),
        recargos>0?'flete que ya entró — va aparte de la venta':'no entró nada de flete en el período')+
@@ -4235,7 +4241,7 @@ function renderCuadre(){
             '<td>'+(c.nota?('<span class="badge b-gray">🧾 '+esc(c.nota)+'</span>'):'<span style="color:var(--amber)">sin nota</span>')+
               compsArr(c.comps!=null?c.comps:c.comp).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del pago" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+'</td>'+
             '<td>'+esc(c.p.vendedor||'—')+'</td>'+
-            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+
+            '<td style="white-space:nowrap">'+esc(cuadreForma(c))+recibioBadge(c,true)+(c.anticipo?' <span class="badge b-gray" style="font-size:.6rem">ANTICIPO</span>':'')+
               (esEnvio(c)?' <span class="badge b-amber" style="font-size:.6rem">🚚 RECARGO</span>':'')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(c.monto)+'</b></td>'+
             '<td>'+(c.p.nota?esc(c.p.nota):'—')+'</td>'+
@@ -4265,6 +4271,7 @@ function cuaTextoFila(c){
   return [ c.p.cliente, c.nota, c.p.nota, c.p.vendedor, cuadreForma(c),
            c.fecha, fmtFechaCorta(c.fecha), fmtBs(m), String(m), String(r2(m)).replace('.',','),
            (c.anticipo?'anticipo':''), (c.envio?'recargo flete envio':''),
+           (c.recibio||''), (c.recibio?'chofer recibio':''),
            (regEnSistema(c.p)?'registrado sistema':'falta sistema'),
            (esVentaTienda(c.p)?'tienda':'domicilio entrega')
          ].join(' ');
@@ -4323,7 +4330,7 @@ function renderCuadreDetRetiros(){
 function cobrarFlete(id){
   closeModal();
   CTA_ULTIMA=String(id);
-  CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+  CTA_PAGO={metodo:'Efectivo', banco:'', comps:[], recibio:''};
   CTA_TIPO='envio';
   irAContaDe(findById(id));      // la planilla que corresponda: tienda o mayoristas
   showContaModal(id);
@@ -4347,13 +4354,15 @@ function cuadreTexto(){
     L.push('', '*TOTAL: '+fmtBs(total)+'*');
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
-  var efe=cuadreEfectivoPorVendedor().filter(function(o){ return o.cobrado>0.01 || o.ret>0.01; });
-  if(efe.length){
+  var E=cuadreEfectivo();
+  var efe=E.filas.filter(function(o){ return o.cobrado>0.01 || o.ret>0.01; });
+  if(efe.length || E.fuera.length){
     L.push('', '💵 *Efectivo — cobrado vs. retirado:*');
     efe.forEach(function(o){
-      L.push('• '+o.nombre+': cobró '+fmtBs(o.cobrado)+' · se le retiró '+fmtBs(o.ret)+
+      L.push('• '+o.nombre+(o.chofer?' (chofer)':'')+': cobró '+fmtBs(o.cobrado)+' · se le retiró '+fmtBs(o.ret)+
              (Math.abs(o.falta)<0.01 ? '  ✅' : (o.falta>0 ? ('  ⚠️ le quedan '+fmtBs(o.falta)) : ('  ⚠️ se retiró '+fmtBs(Math.abs(o.falta))+' de más'))));
     });
+    E.fuera.forEach(function(f){ L.push('• 🚚 '+f.nombre+' (chofer) recibió '+fmtBs(f.monto)+' de estas ventas — ver en Todos'); });
   }
   var _rec=0; pagos.forEach(function(c){ if(esEnvio(c)) _rec=r2(_rec+c.monto); });
   if(_rec>0) L.push('', '🚚 De eso, *'+fmtBs(_rec)+'* son recargos por entrega (flete, no es de la venta)');
@@ -4368,11 +4377,12 @@ function exportCuadre(){
   var pagos=cuadrePagos();
   if(!pagos.length){ toast('No hay pagos para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
-  var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE'].map(function(t){return {v:t,s:H};})];
+  var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE','EFECTIVO EN MANO DE'].map(function(t){return {v:t,s:H};})];
   pagos.forEach(function(c){
     rows.push([c.fecha, c.p.cliente||'', tipoVenta(c.p), c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
                {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO',
-               compsArr(c.comps!=null?c.comps:c.comp).map(fotoVer).join('  |  ')]);
+               compsArr(c.comps!=null?c.comps:c.comp).map(fotoVer).join('  |  '),
+               (c.metodo==='Efectivo'?pagoRecibio(c, c.p):'')]);
   });
   var formas=cuadrePorForma(pagos);
   rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO',s:H}]);
@@ -4381,14 +4391,16 @@ function exportCuadre(){
     rows.push([f.forma, '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
   });
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
-  var efe=cuadreEfectivoPorVendedor();
-  if(efe.length){
+  var E=cuadreEfectivo(), efe=E.filas;
+  if(efe.length || E.fuera.length){
     rows.push([]); rows.push([{v:'EFECTIVO COBRADO VS. RETIRADO',s:H}]);
-    rows.push(['VENDEDOR','','EFECTIVO COBRADO','RETIRADO FACTURADO','RETIRADO NO FACTURADO','RETIRADO TOTAL','LE QUEDA EN LA MANO'].map(function(t){return {v:t,s:H};}));
+    rows.push(['QUIÉN TIENE LA PLATA','CHOFER','EFECTIVO COBRADO','RETIRADO FACTURADO','RETIRADO NO FACTURADO','RETIRADO TOTAL','LE QUEDA EN LA MANO'].map(function(t){return {v:t,s:H};}));
     efe.forEach(function(o){
-      rows.push([o.nombre, '', {v:o.cobrado,t:'n',s:fc}, {v:o.fac,t:'n',s:fc},
+      rows.push([o.nombre, o.chofer?'SÍ':'', {v:o.cobrado,t:'n',s:fc}, {v:o.fac,t:'n',s:fc},
                  {v:o.nofac,t:'n',s:fc}, {v:o.ret,t:'n',s:fc}, {v:o.falta,t:'n',s:fc}]);
     });
+    // Con filtro por vendedora: lo que de SUS ventas recibió un chofer (no está en su mano).
+    E.fuera.forEach(function(f){ rows.push([f.nombre+' (chofer, ver en Todos)', 'SÍ', {v:f.monto,t:'n',s:fc}]); });
   }
   var rets=retirosDe(cuadrePeriodo(), cuadreVendedor());
   if(rets.length){
@@ -4402,7 +4414,7 @@ function exportCuadre(){
   }
   var pe=cuadrePeriodo();
   var bytes=buildXlsx([{name:'Cuadre',
-    cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44}],
+    cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20}],
     matrix:rows}]);
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+' ✓','ok');
@@ -4434,6 +4446,10 @@ var RETIRO_PREF='__ret_';
 var LS_RETIROS='ME_RETIROS_V1';
 var RETIROS=[];                       // las filas crudas, tal cual vienen de la planilla
 var RETIRA_DEFECTO='Eduardo Añez';    // quien pasa a recoger, salvo que pongan otro
+/* §4eq: el efectivo que recibió un CHOFER no lo recoge Eduardo ni la vendedora: el chofer lo
+   rinde directo a Contabilidad (dicho por el dueño el 18/09). Al elegir un chofer en «Quién
+   entrega», «Quién retira» se pone solo. */
+var RETIRA_CHOFER='Contabilidad';
 var RET_TIPOS=['Facturado','No facturado'];
 /* Lo que se está cargando en el formulario. id≠'' = se está editando uno. */
 var RET_FORM=null;
@@ -4533,22 +4549,41 @@ function renderRetirosSiActivo(){
   var ov=document.getElementById('retiros-overlay');
   if(ov && ov.style.display==='flex') renderRetiros();
 }
-/* Los vendedores que pueden ENTREGAR efectivo: los de la lista más los que ya
-   aparecen en pedidos o en retiros viejos. */
+/* Los que pueden ENTREGAR efectivo: los vendedores de la lista más los que ya aparecen en
+   pedidos o en retiros viejos y, en su propio grupo, los CHOFERES (§4eq): el que les paga
+   el cliente en la puerta lo tienen ellos, y lo rinden a Contabilidad. El dueño, 18/09:
+   *"En la lista de personas que retiran efectivo faltan los choferes"*. */
 function llenarSelectRetVendedor(){
   ['ret-entrega','ret-filtro-vend'].forEach(function(id){
     var sel=document.getElementById(id); if(!sel) return;
     var actual=sel.value||'';
-    var seen={}, list=[];
+    var seen={}, list=[], chs=[];
     var meter=function(v){ var k=normNombre(v); if(!k||seen[k]) return; seen[k]=1; list.push(nombreCanonico(v)); };
     VENDEDORES.forEach(meter);
     STATE.forEach(function(p){ meter(p.vendedor); });
+    // Los choferes ANTES de los retiros viejos: un retiro que ya le hicieron a un chofer no lo
+    // tiene que colar entre los vendedores.
+    choferesConocidos().forEach(function(c){ var k=normNombre(c); if(!k||seen[k]) return; seen[k]=1; chs.push(c); });
     RETIROS.forEach(function(f){ meter(f.vendedor); });
     list.sort(function(a,b){ return a.localeCompare(b,'es'); });
+    chs.sort(function(a,b){ return a.localeCompare(b,'es'); });
+    var opt=function(v){ return '<option>'+esc(v)+'</option>'; };
     var head = (id==='ret-filtro-vend') ? '<option value="">Todos</option>' : '<option value="">Elegí…</option>';
-    sel.innerHTML=head+list.map(function(v){ return '<option>'+esc(v)+'</option>'; }).join('');
-    if(actual){ for(var i=0;i<list.length;i++) if(mismoVendedor(list[i],actual)){ sel.value=list[i]; break; } }
+    sel.innerHTML=head+'<optgroup label="Vendedores">'+list.map(opt).join('')+'</optgroup>'+
+      (chs.length?('<optgroup label="🚚 Choferes (rinden a Contabilidad)">'+chs.map(opt).join('')+'</optgroup>'):'');
+    var todos=list.concat(chs);
+    if(actual){ for(var i=0;i<todos.length;i++) if(mismoVendedor(todos[i],actual)){ sel.value=todos[i]; break; } }
   });
+}
+/* Al elegir quién entrega: un chofer rinde a Contabilidad, una vendedora a quien recoge
+   (Eduardo). Solo se toca «Quién retira» si tiene uno de esos dos valores o está vacío —
+   lo que escribieron a mano se respeta. */
+function retEntregaCambio(){
+  retLeerForm();
+  var esCh=esChoferNombre(RET_FORM.entrega), r=String(RET_FORM.retira||'').trim();
+  if(esCh && (!r || mismoVendedor(r, RETIRA_DEFECTO))) RET_FORM.retira=RETIRA_CHOFER;
+  else if(!esCh && mismoVendedor(r, RETIRA_CHOFER)) RET_FORM.retira=RETIRA_DEFECTO;
+  var inp=document.getElementById('ret-retira'); if(inp) inp.value=RET_FORM.retira;
 }
 function retLeerForm(){
   if(!RET_FORM) RET_FORM=retFormVacio();
@@ -4709,8 +4744,8 @@ function renderRetiros(){
       '<div class="cua-t">'+(editando?'✏️ Editando un retiro':'➕ Registrar un retiro de efectivo')+'</div>'+
       '<div class="filters" style="margin-bottom:10px">'+
         '<div class="field"><label class="lb">Fecha del retiro</label><input type="date" id="ret-fecha" value="'+esc(R.fecha)+'"></div>'+
-        '<div class="field" style="min-width:180px"><label class="lb">Quién ENTREGA <span class="req">*</span> <span class="hint">el vendedor</span></label><select id="ret-entrega"></select></div>'+
-        '<div class="field" style="min-width:170px"><label class="lb">Quién RETIRA <span class="req">*</span></label><input type="text" id="ret-retira" value="'+esc(R.retira)+'" autocomplete="off"></div>'+
+        '<div class="field" style="min-width:180px"><label class="lb">Quién ENTREGA <span class="req">*</span> <span class="hint">vendedor o chofer</span></label><select id="ret-entrega" onchange="retEntregaCambio()"></select></div>'+
+        '<div class="field" style="min-width:170px"><label class="lb">Quién RETIRA <span class="req">*</span> <span class="hint">un chofer rinde a Contabilidad</span></label><input type="text" id="ret-retira" value="'+esc(R.retira)+'" autocomplete="off"></div>'+
         '<div class="field" style="min-width:130px"><label class="lb">Monto <span class="req">*</span></label><div class="num-money"><input type="number" id="ret-monto" min="0" step="0.01" value="'+esc(R.monto)+'" placeholder="Ej. 5000"></div></div>'+
       '</div>'+
       '<div class="field" style="margin-bottom:10px">'+
@@ -4772,30 +4807,46 @@ function renderRetiros(){
     '</div>';
 }
 
-/* ---- Efectivo cobrado vs. retirado, vendedor por vendedor ----
-   Es la pregunta del usuario: "¿se recogió todo el efectivo de cada vendedor?" */
-function cuadreEfectivoPorVendedor(){
-  var pe=cuadrePeriodo(), vend=cuadreVendedor(), m={}, orden=[];
+/* ---- Efectivo cobrado vs. retirado, persona por persona ----
+   Es la pregunta del usuario: "¿se recogió todo el efectivo de cada vendedor?"
+   §4eq: se agrupa por QUIÉN TIENE LA PLATA (`pagoRecibio`), no por la vendedora de la
+   venta: el efectivo que el cliente le pagó al chofer en la puerta está en la mano del
+   chofer, que lo rinde a Contabilidad. Con el filtro por vendedora, esa parte de sus ventas
+   se aparta en `fuera` (no es plata que haya que recogerle a ella) y se dice dónde está. */
+function cuadreEfectivo(){
+  var pe=cuadrePeriodo(), vend=cuadreVendedor(), m={}, lista=[];
+  var CH=choferesConocidosSet();
+  var esCh=function(n){ return !!CH[normNombre(n)]; };
   var meter=function(v){
     var k=normNombre(v)||'(sin vendedor)';
-    if(!m[k]){ m[k]={ nombre:(nombreCanonico(v)||v||'(sin vendedor)'), cobrado:0, fac:0, nofac:0, ret:0, nRet:0 }; orden.push(k); }
+    if(!m[k]){ m[k]={ nombre:(nombreCanonico(v)||v||'(sin vendedor)'), chofer:esCh(v), cobrado:0, fac:0, nofac:0, ret:0, nRet:0 }; lista.push(k); }
     return m[k];
   };
+  var fuera={}, fueraOrden=[];
   cuadrePagos().forEach(function(c){
     if(c.metodo!=='Efectivo') return;
-    var o=meter(c.p&&c.p.vendedor); o.cobrado=r2(o.cobrado+c.monto);
+    var q=pagoRecibio(c, c.p);
+    if(vend && esCh(q)){
+      var kq=normNombre(q);
+      if(!fuera[kq]){ fuera[kq]={nombre:q, monto:0}; fueraOrden.push(kq); }
+      fuera[kq].monto=r2(fuera[kq].monto+c.monto);
+      return;
+    }
+    var o=meter(q); o.cobrado=r2(o.cobrado+c.monto);
   });
   retirosDe(pe, vend).forEach(function(r){
     var o=meter(r.entrega);
     o.ret=r2(o.ret+r.monto); o.nRet++;
     if(r.tipo==='Facturado') o.fac=r2(o.fac+r.monto); else o.nofac=r2(o.nofac+r.monto);
   });
-  return orden.map(function(k){ var o=m[k]; o.falta=r2(o.cobrado-o.ret); return o; })
-              .sort(function(a,b){ return b.cobrado-a.cobrado || a.nombre.localeCompare(b.nombre,'es'); });
+  var filas=lista.map(function(k){ var o=m[k]; o.falta=r2(o.cobrado-o.ret); return o; })
+    .sort(function(a,b){ return (a.chofer?1:0)-(b.chofer?1:0) || b.cobrado-a.cobrado || a.nombre.localeCompare(b.nombre,'es'); });
+  return { filas:filas, fuera:fueraOrden.map(function(k){ return fuera[k]; }) };
 }
+function cuadreEfectivoPorVendedor(){ return cuadreEfectivo().filas; }
 function renderCuadreRetiros(){
   var box=document.getElementById('cua-retiros'); if(!box) return;
-  var filas=cuadreEfectivoPorVendedor();
+  var E=cuadreEfectivo(), filas=E.filas, fuera=E.fuera, vendSel=cuadreVendedor();
   var tot={cobrado:0, fac:0, nofac:0, ret:0, falta:0};
   filas.forEach(function(o){ tot.cobrado=r2(tot.cobrado+o.cobrado); tot.fac=r2(tot.fac+o.fac);
     tot.nofac=r2(tot.nofac+o.nofac); tot.ret=r2(tot.ret+o.ret); tot.falta=r2(tot.falta+o.falta); });
@@ -4804,6 +4855,12 @@ function renderCuadreRetiros(){
     return n>0 ? '<span class="cua-dif-mal">'+fmtBs(n)+'</span>'
                : '<span class="cua-dif-mal">⚠️ se retiró '+fmtBs(Math.abs(n))+' de más</span>';
   };
+  var fueraTot=0; fuera.forEach(function(f){ fueraTot=r2(fueraTot+f.monto); });
+  var notaFuera = fuera.length
+    ? ('<div style="font-size:.76rem;color:#7c4b00;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:7px 10px;margin-top:8px">'+
+       '🚚 De las ventas de <b>'+esc(vendSel)+'</b>, <b>'+fmtBs(fueraTot)+'</b> lo recibió un chofer ('+
+       fuera.map(function(f){ return esc(f.nombre)+' '+fmtBs(f.monto); }).join(' · ')+'): no está en la mano de ella. Se ve en <b>Todos</b>.</div>')
+    : '';
   box.innerHTML='<div class="cua-box">'+
     '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">'+
       '<div class="cua-t" style="margin:0">💵 Efectivo cobrado vs. retirado — '+esc(cuadrePeriodoTxt())+'</div>'+
@@ -4811,11 +4868,13 @@ function renderCuadreRetiros(){
     '</div>'+
     (filas.length
       ? '<div class="tw" style="margin-top:10px"><table class="mini"><thead><tr>'+
-          '<th>Vendedor</th><th style="text-align:right">Efectivo cobrado</th>'+
+          '<th>Quién tiene la plata</th><th style="text-align:right">Efectivo cobrado</th>'+
           '<th style="text-align:right">🧾 Retirado facturado</th><th style="text-align:right">📄 Retirado no facturado</th>'+
           '<th style="text-align:right">Retirado total</th><th style="text-align:right">Le queda en la mano</th></tr></thead><tbody>'+
         filas.map(function(o){
-          return '<tr><td><b>'+esc(o.nombre)+'</b>'+(o.nRet?('<br><span style="color:var(--muted);font-size:.78rem">'+o.nRet+' retiro'+(o.nRet===1?'':'s')+'</span>'):'')+'</td>'+
+          return '<tr><td><b>'+esc(o.nombre)+'</b>'+
+            (o.chofer?' <span class="badge b-amber" style="font-size:.6rem" title="Chofer: recibe en la puerta del cliente y rinde a Contabilidad">🚚 chofer</span>':'')+
+            (o.nRet?('<br><span style="color:var(--muted);font-size:.78rem">'+o.nRet+' retiro'+(o.nRet===1?'':'s')+'</span>'):'')+'</td>'+
             '<td style="text-align:right"><b>'+fmtBs(o.cobrado)+'</b></td>'+
             '<td style="text-align:right">'+(o.fac?fmtBs(o.fac):'<span style="color:var(--muted)">—</span>')+'</td>'+
             '<td style="text-align:right">'+(o.nofac?fmtBs(o.nofac):'<span style="color:var(--muted)">—</span>')+'</td>'+
@@ -4829,8 +4888,10 @@ function renderCuadreRetiros(){
           '<td style="text-align:right"><b>'+fmtBs(tot.ret)+'</b></td>'+
           '<td style="text-align:right">'+enMano(tot.falta)+'</td></tr>'+
         '</tbody></table></div>'+
-        '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 «Le queda en la mano» = lo que cobró en efectivo menos lo que ya se le retiró. En cero, se recogió todo.</div>'
+        '<div style="font-size:.72rem;color:var(--muted);margin-top:8px">💡 «Le queda en la mano» = lo que cobró en efectivo menos lo que ya se le retiró. En cero, se recogió todo. '+
+          'Los <b>choferes</b> rinden a <b>Contabilidad</b>: ese retiro se anota con entrega = el chofer y retira = Contabilidad.</div>'
       : '<div class="empty" style="padding:18px 0">No hubo efectivo ni retiros en '+esc(cuadrePeriodoTxt())+'.</div>')+
+    notaFuera+
     '</div>';
 }
 
@@ -4926,6 +4987,7 @@ function contaPagosHtml(p){
         '</div>'+
         '<div style="margin-top:8px"><label class="lb">Método</label>'+
           '<div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb2).join('')+'</div></div>'+
+        (CTA_EDIT_M==='Efectivo' ? ctaRecibioHtml(p, {edit:true}) : '')+
         (CTA_EDIT_M==='QR' ? ('<div style="margin-top:8px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancosV.map(bb2).join('')+'</div></div>') : '')+
         /* 📎 El comprobante, acá adentro. Antes había que buscar el botón afuera —y para
            el ANTICIPO no existía— así que un pago al que se le olvidaron la captura se
@@ -4967,6 +5029,7 @@ function contaPagosHtml(p){
       ((Number(c.monto)||0)>0 ? esc(contaMontoTxt(c)) : '<b style="color:var(--amber)">'+esc(contaMontoTxt(c))+'</b>')+
       (n?(' · <span class="badge b-gray">🧾 nota '+esc(n)+'</span>')
         :' · <span style="color:var(--amber);font-weight:700">sin nota</span>')+
+      recibioBadge(c)+
       (c.anticipo?' <span class="badge b-gray" style="font-size:.62rem">ANTICIPO</span>':'')+
       (esEnvio(c)?' <span class="badge b-amber" style="font-size:.62rem">🚚 RECARGO POR ENTREGA</span>':'')+
       wa+
@@ -4981,7 +5044,7 @@ function contaPagosHtml(p){
 /* ---- Ventana flotante de contabilidad ----
    Se maneja distinto a la ficha de pedidos: acá no se toca stock, chofer ni entrega.
    Solo se ve la venta y se registran los pagos (que pueden entrar en otra fecha). */
-var CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+var CTA_PAGO={metodo:'Efectivo', banco:'', comps:[], recibio:''};   // recibio: '' = la vendedora · nombre = el chofer (§4eq)
 /* ⚠️ Adjuntar una imagen repinta la ficha entera (`showContaModal`), y eso borraba el
    MONTO, la FECHA y el N° DE RECIBO que se estuvieran tipeando. El monto parecía
    sobrevivir solo porque vuelve a nacer con el saldo; la fecha volvía a HOY sin avisar,
@@ -5104,6 +5167,7 @@ function ctaQuitarComp(id, idx, k){
    ------------------------------------------------------------------------- */
 var CTA_EDIT_I=-1;                        // qué renglón está abierto (-1 = ninguno)
 var CTA_EDIT_M='', CTA_EDIT_B='';         // método y banco mientras se edita
+var CTA_EDIT_R='';                        // quién recibió el efectivo mientras se edita ('' = la vendedora, §4eq)
 /* ⚠️ Subir o quitar una imagen repinta la ficha entera, y eso borraba la fecha, el monto
    y el n° de recibo que se estuvieran tipeando. Se guardan antes de repintar. */
 var CTA_EDIT_V=null;
@@ -5143,9 +5207,10 @@ function ctaEditarPago(id, i){
   CTA_EDIT_I=i; CTA_EDIT_V=null;
   CTA_EDIT_M=metodoBase(c.metodo)||String(c.metodo||'')||'Efectivo';
   CTA_EDIT_B=c.banco||'';
+  CTA_EDIT_R=limpiaRecibio(c.recibio);
   showContaModal(id);
 }
-function ctaEditMetodo(id,m){ CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; showContaModal(id); }
+function ctaEditMetodo(id,m){ CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
 function ctaEditBanco(id,b){ CTA_EDIT_B=b; showContaModal(id); }
 /* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
    existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
@@ -5174,6 +5239,7 @@ function ctaGuardarPago(id, i, igual){
   var todos=contaPagos(p), c=todos[i];
   if(!c){ CTA_EDIT_I=-1; showContaModal(id); return; }
   var banco=(CTA_EDIT_M==='QR')?CTA_EDIT_B:'';
+  var recibio=(CTA_EDIT_M==='Efectivo')?limpiaRecibio(CTA_EDIT_R):'';      // §4eq
   /* 🐱 Sin imagen de respaldo: se avisa con el gato, pero NO se traba — ver memeCompConta. */
   if(!igual && !compsArr(c.comps!=null?c.comps:c.comp).length){
     ctaEditRecordar();
@@ -5197,7 +5263,7 @@ function ctaGuardarPago(id, i, igual){
     /* El recargo vive en su propio renglón: se reescribe solo ese y no toca el saldo. */
     var ae=enviosDe(p);
     if(ae.length){
-      ae[0].fecha=f; ae[0].monto=monto; ae[0].nota=nota; ae[0].metodo=CTA_EDIT_M; ae[0].banco=banco;
+      ae[0].fecha=f; ae[0].monto=monto; ae[0].nota=nota; ae[0].metodo=CTA_EDIT_M; ae[0].banco=banco; ae[0].recibio=recibio;
       aplicarEnvios(p, ae);
     }
   }else if(c.anticipo){
@@ -5206,7 +5272,7 @@ function ctaGuardarPago(id, i, igual){
     var ventaAntes=ventaTotal(p);
     var ant=anticipoDe(p); if(!ant) return;
     ant=JSON.parse(JSON.stringify(ant));
-    ant.fecha=f; ant.monto=monto; ant.nota=nota; ant.metodo=CTA_EDIT_M; ant.banco=banco; ant.anticipo=true;
+    ant.fecha=f; ant.monto=monto; ant.nota=nota; ant.metodo=CTA_EDIT_M; ant.banco=banco; ant.recibio=recibio; ant.anticipo=true;
     var cobros=ctaCobrosConFecha(p), env=enviosDe(p);
     p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
     p.acuenta=monto;
@@ -5219,12 +5285,12 @@ function ctaGuardarPago(id, i, igual){
     /* Mismo criterio: el total de la venta no se mueve, se ajusta lo que falta cobrar. */
     var objetivo=objetivoCobro(p);
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
-    arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco;
+    arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco; arr[idx].recibio=recibio;
     aplicarCobros(p, arr, objetivo);
   }
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
   renderCuadreSiActivo(); renderContaSiActiva();
-  toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota+(notaVentaTocada?(' · y el N° de nota de la venta también pasó a '+nota):''),'ok', notaVentaTocada?6000:undefined);
+  toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota+(recibio?(' · lo tiene el chofer '+recibio):'')+(notaVentaTocada?(' · y el N° de nota de la venta también pasó a '+nota):''),'ok', notaVentaTocada?6000:undefined);
   reabrirFicha(id);
 }
 /* ⚠️ Los cobros del formato viejo vienen sin fecha. Si se los reescribe así, nacen como
@@ -5359,7 +5425,7 @@ function showContaModal(id){
   if(CTA_ULTIMA!==String(id)){
     if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length) CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
     CTA_ULTIMA=String(id);
-    CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[]};
+    CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[], recibio:''};
     if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+' esperando que toques «Registrar pago».','ok',6000);
     CTA_TIPO='pago';
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
@@ -5396,6 +5462,7 @@ function showContaModal(id){
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
          '<div style="margin-top:9px"><label class="lb">Método</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+METODOS.map(mb).join('')+'</div></div>'+
+         (CTA_PAGO.metodo==='Efectivo' ? ctaRecibioHtml(p) : '')+
          (CTA_PAGO.metodo==='QR' ? ('<div style="margin-top:9px"><label class="lb">Banco</label><div style="display:flex;gap:6px;flex-wrap:wrap">'+bancos.map(bb).join('')+'</div></div>') : '')+
          (metodoConComprobante(CTA_PAGO.metodo) ? (
             '<div style="margin-top:9px"><label class="lb">Comprobante <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">hasta '+COMP_MAX+' imágenes</span></label>'+
@@ -5619,7 +5686,39 @@ function ctaEliminarVenta(id){
   closeModal();
   realDelete(id);
 }
-function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
+function ctaSetMetodo(id,m){ ctaPagoRecordar(); CTA_PAGO.metodo=m; if(m!=='QR') CTA_PAGO.banco=''; if(m!=='Efectivo') CTA_PAGO.recibio=''; if(!metodoConComprobante(m)) CTA_PAGO.comps=[]; showContaModal(id); }
+/* 🚚 ¿QUIÉN RECIBIÓ LA PLATA? (§4eq) Solo para efectivo: el QR y la tarjeta van al banco.
+   El dueño: *"a veces le pagan a ellos [los choferes] el cliente y las vendedoras hacen
+   también una nota de ese efectivo, pero ¿cómo hacemos que reporten que fue el chofer que
+   recibió?"*. Acá. Por defecto la vendedora; con «El chofer» se elige cuál (el asignado a la
+   entrega viene primero). Sirve para el pago nuevo (`CTA_PAGO`) y para corregir uno
+   anotado (`CTA_EDIT_R`). */
+function ctaRecibioHtml(p, opts){
+  opts=opts||{};
+  var actual=String((opts.edit?CTA_EDIT_R:CTA_PAGO.recibio)||'').trim(), esCh=!!actual;
+  var fn=opts.edit?'ctaEditRecibio':'ctaSetRecibio';
+  var vend=nombreCanonico(p.vendedor)||'la vendedora';
+  // Los choferes de HOY (más el de este pedido y el ya anotado): uno que ya no está no se ofrece.
+  var lista=choferesParaSelect(p); if(esCh && lista.indexOf(actual)<0) lista=lista.concat([actual]);
+  var primero=String(p.chofer||'').trim(); if(!primero || lista.indexOf(primero)<0) primero=lista[0]||'';
+  var b=function(on,txt,quien){
+    return '<button type="button" class="btn btn-sm" style="width:auto;padding:5px 11px;font-size:.76rem;'+
+      (on?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+
+      '" onclick="'+esc(fn+'('+JSON.stringify(String(p.id))+','+JSON.stringify(quien)+')')+'">'+txt+'</button>';
+  };
+  return '<div style="margin-top:8px" id="cta-recibio"><label class="lb">¿Quién recibió la plata?</label>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">'+
+      b(!esCh,'🧑‍💼 '+esc(vend),'')+
+      (primero ? b(esCh,'🚚 El chofer',primero) : '')+
+      (esCh ? ('<select id="cta-recibio-sel" onchange="'+esc(fn+'('+JSON.stringify(String(p.id))+',this.value)')+'" style="width:auto;padding:5px 8px;font-size:.8rem">'+
+                 lista.map(function(c){ return '<option'+(c===actual?' selected':'')+'>'+esc(c)+'</option>'; }).join('')+'</select>') : '')+
+    '</div>'+
+    (esCh ? ('<div style="font-size:.72rem;color:var(--muted);margin-top:3px">🚚 El efectivo queda <b>en la mano de '+esc(actual)+'</b> hasta que lo rinda a Contabilidad. '+
+             'Ese retiro se anota en Cuadre → 💵 Retiro de efectivo (entrega: el chofer · retira: Contabilidad).</div>') : '')+
+  '</div>';
+}
+function ctaSetRecibio(id, quien){ ctaPagoRecordar(); CTA_PAGO.recibio=limpiaRecibio(quien); showContaModal(id); }
+function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(quien); showContaModal(id); }
 /* compTiraHtml llama con un solo argumento (el índice), así que va este puente. */
 function ctaSacarCompIdx(id, i){ ctaSacarComp(id, i); }
 /* i = cuál de las imágenes se quita; sin i, todas. */
@@ -5653,6 +5752,7 @@ function ctaRegistrarPago(id){
   }
   var falta=Number(p.saldo)||0;
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
+             recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
              comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])};
   /* RECARGO POR ENTREGA: es plata que entró, pero NO es de la venta. No le baja el saldo,
      no cuenta como cobro de más y no entra en lo facturado. Va en su propio renglón. */
@@ -5661,7 +5761,7 @@ function ctaRegistrarPago(id){
        lo que se está haciendo es justamente reportar que ya se cobró. */
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
-    CTA_PAGO.comps=[]; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
+    CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
     toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
@@ -5671,9 +5771,10 @@ function ctaRegistrarPago(id){
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
-  CTA_PAGO.comps=[]; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
+  CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   aplicarCobros(p, arr);
-  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
+  toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
+        (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
   // Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
   showPagoWhatsapp(id, contaPagos(p).length-1);
 }
@@ -5697,6 +5798,7 @@ function pagoTexto(p, c){
   var n=limpiaNota(c.nota);
   if(n) L.push('🧾 Recibo N° '+n);
   if(p.vendedor) L.push('🧾 Vendedor: '+p.vendedor);
+  if(limpiaRecibio(c.recibio)) L.push('🚚 La plata la recibió el chofer: '+limpiaRecibio(c.recibio)+' (la rinde a Contabilidad)');
   if(!esEnvio(c) && c.anticipo && !completo) L.push('📌 Es el adelanto que dejó al comprar');
   L.push('');
   L.push(esEnvio(c) ? '📌 Es el flete: va aparte de la venta, no se factura'
@@ -10480,9 +10582,13 @@ function choCobrarMetodo(id, metodo){
       '¿Lo anoto igual?')) return;
   }
   var arr=cobrosVisibles(p).slice();
-  arr.push({metodo:metodo, monto:monto});
+  /* §4eq: el cobro del chofer lleva la FECHA de hoy (el cuadre corta por fecha del pago; sin
+     fecha esta plata no entraba en ningún día ni mes y quedaba como «pago sin fecha») y, si
+     es efectivo, QUIÉN la tiene: el chofer que está mirando su ficha, o el asignado. */
+  var quien=String(((document.getElementById('cho-nombre')||{}).value)||p.chofer||'').trim();
+  arr.push({metodo:metodo, monto:monto, fecha:todayStr(), recibio:(metodo==='Efectivo'?quien:'')});
   aplicarCobros(p, arr); renderChofer();
-  toast('Anotado: '+metodo+' '+fmtBs(monto)+' ✓','ok');
+  toast('Anotado: '+metodo+' '+fmtBs(monto)+' ✓'+((metodo==='Efectivo'&&quien)?(' — queda en tu mano hasta rendirlo a Contabilidad'):''),'ok');
 }
 function choQuitarCobro(id, idx){
   var p=findById(id); if(!p) return;
@@ -11695,7 +11801,14 @@ function regEnSistema(p){ return /·\s*REGISTRADO\s*$/i.test(String((p&&p.metodo
 function conMarcaReg(txt, on){ var base=sinMarcaReg(txt); return on ? (base+(base?' ':'')+'· '+MARCA_REG) : base; }
 /* El n° de nota/recibo viaja dentro del mismo texto, así que no puede traer los
    caracteres que separan el formato. Se limpian en vez de rechazar el pago. */
-function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~%]/g,' ').replace(/\s+/g,' ').trim(); }
+function limpiaNota(n){ return String(n==null?'':n).replace(/[+·#@~%>]/g,' ').replace(/\s+/g,' ').trim(); }
+/* 🚚 QUIÉN RECIBIÓ LA PLATA (§4eq). Un cobro en efectivo lo recibe la vendedora (lo normal) o
+   el CHOFER en la puerta del cliente, y el que la tiene es el que después la rinde. Viaja
+   pegado a la nota, después de un `>`: "Efectivo 500 @2026-09-18 #1004 >Luis Pierre %IMG".
+   Va AHÍ y no antes del `#`, a propósito: un panel viejo (un celular con caché) lo lee como
+   parte de la nota y sigue viendo el pago; con un separador nuevo delante del `#` el pago
+   entero le desaparecía. Sin `>` = lo recibió la vendedora (todo lo de antes). */
+function limpiaRecibio(s){ return String(s==null?'':s).replace(/[+·#@~%>]/g,' ').replace(/\s+/g,' ').trim(); }
 function parseCobros(txt){
   var out=[];
   sinMarcaReg(txt).split('+').forEach(function(s){
@@ -11712,18 +11825,20 @@ function parseCobros(txt){
     if(!met && !ant && !env) return;
     var n=parseMonto(m[3]); if(!(n>0)) return;
     var cs=idsDeTexto(m[6]);
-    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'', nota:limpiaNota(m[5]),
+    var notaRaw=String(m[5]||''), gt=notaRaw.indexOf('>');
+    out.push({metodo:met, banco:esBanco(m[2])||'', monto:n, fecha:m[4]||'',
+              nota:limpiaNota(gt>=0?notaRaw.slice(0,gt):notaRaw), recibio:(gt>=0?limpiaRecibio(notaRaw.slice(gt+1)):''),
               comps:cs, comp:(cs[0]||''), anticipo:ant, envio:env});
   });
   return out;
 }
 function textoCobros(arr){
   return (arr||[]).map(function(c){
-    var nota=limpiaNota(c.nota);
+    var nota=limpiaNota(c.nota), rec=limpiaRecibio(c.recibio);
     var comps=compsArr(c.comps!=null?c.comps:c.comp);
     var met=(c.metodo||'')+(c.banco?(' '+c.banco):'');
     return (c.anticipo?'~':(c.envio?'^':''))+met+(met?' ':'')+r2(c.monto)+
-           (c.fecha?(' @'+c.fecha):'')+(nota?(' #'+nota):'')+
+           (c.fecha?(' @'+c.fecha):'')+((nota||rec)?(' #'+nota+(rec?(' >'+rec):'')):'')+
            comps.map(function(id){ return ' %'+id; }).join('');
   }).join(' + ');
 }
@@ -11764,6 +11879,18 @@ function cobrosDe(p){
     return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comps:cd.comps, comp:cd.comp}];
   }
   return [];
+}
+/* 💵 En la mano de quién está un cobro en efectivo (§4eq): del chofer que lo recibió en la
+   puerta, o —sin marca— de la vendedora de la venta. Es lo que el cuadre suma por persona
+   y lo que un retiro descuenta. */
+function pagoRecibio(c, p){
+  var r=limpiaRecibio(c&&c.recibio);
+  if(r) return r;
+  return nombreCanonico(p&&p.vendedor)||String((p&&p.vendedor)||'').replace(/\s+/g,' ').trim()||'(sin vendedor)';
+}
+function recibioBadge(c, chico){
+  var r=limpiaRecibio(c&&c.recibio); if(!r) return '';
+  return ' <span class="badge b-amber" style="font-size:'+(chico?'.58rem':'.62rem')+'" title="El efectivo lo recibió el chofer: lo tiene él hasta que lo rinda a Contabilidad">🚚 recibió '+esc(r)+'</span>';
 }
 /* El ANTICIPO: lo que el cliente dejó al comprar. Si todavía no está escrito en el
    ledger se arma con lo que hay: el monto de "A cuenta", el método suelto que anotó
@@ -15869,10 +15996,30 @@ function toggleVerificado(id){
 /* ---- Vehículo + chofer (despacho) ---- */
 var VEHICULOS = {
   'Carry':           ['Luis Pierre','Ysrael'],
-  'Foton nuevo':     ['Luis Eyzaguirre','Giordano'],
+  'Foton nuevo':     ['Luis Eyzaguirre'],            // Giordano ya no está en el equipo (sacado el 18/09/2026 a pedido del dueño, §4eq)
   'Foton encarpado': ['Cristhian','Miguel'],
   'Foton insumo':    ['Fernando']
 };
+/* Los choferes para un desplegable de UN pedido: los de los camiones más el que ese pedido
+   ya tenga guardado, aunque no esté más en la lista — si no, un pedido viejo mostraba
+   «Chofer…» como si no tuviera ninguno. */
+function choferesParaSelect(p){
+  var list=allChoferes().slice(), c=String((p&&p.chofer)||'').trim();
+  if(c && list.indexOf(c)<0) list.push(c);
+  return list;
+}
+/* Todos los choferes que el panel conoce (§4eq): los de los camiones más los que aparezcan
+   en pedidos o como receptores de un cobro en efectivo — uno que ya no está sigue teniendo
+   su historial y su efectivo por rendir. */
+function choferesConocidos(){
+  var seen={}, out=[];
+  var meter=function(c){ c=String(c||'').replace(/\s+/g,' ').trim(); var k=normNombre(c); if(!k||seen[k]) return; seen[k]=1; out.push(c); };
+  allChoferes().forEach(meter);
+  STATE.forEach(function(p){ meter(p.chofer); parseCobros(p&&p.metodoPago).forEach(function(c){ meter(c.recibio); }); });
+  return out;
+}
+function choferesConocidosSet(){ var s={}; choferesConocidos().forEach(function(c){ s[normNombre(c)]=c; }); return s; }
+function esChoferNombre(n){ return !!choferesConocidosSet()[normNombre(n)]; }
 function vehiculoSelect(p){
   var opts='<option value="">Vehículo…</option>';
   Object.keys(VEHICULOS).forEach(function(v){ opts+='<option'+(p.vehiculo===v?' selected':'')+'>'+v+'</option>'; });
@@ -15888,7 +16035,7 @@ function vehiculoDeChofer(c){ c=String(c||'').trim(); if(!c) return ''; var ks=O
 /* Vehículo efectivo de un pedido: el guardado, o el que corresponde al chofer. */
 function vehiculoDe(p){ return String((p&&p.vehiculo)||'').trim() || vehiculoDeChofer(p&&p.chofer) || ''; }
 function choferSelect(p){
-  var list=allChoferes(); // TODOS los choferes, para poder cambiarlo por cualquiera aunque se autollene
+  var list=choferesParaSelect(p); // TODOS los choferes, para poder cambiarlo por cualquiera aunque se autollene
   var opts='<option value="">'+(p.vehiculo?'Chofer…':'(elegí vehículo)')+'</option>';
   list.forEach(function(c){ opts+='<option'+(p.chofer===c?' selected':'')+'>'+c+'</option>'; });
   return '<select class="msel"'+(p.vehiculo?'':' disabled')+' onchange="setChofer(\''+p.id+'\',this.value)">'+opts+'</select>';
@@ -16817,7 +16964,7 @@ function mapaPopup(p){
   var dn=dayNumMap();
   var ident=p.oc?ocEtiq(p.oc):(p.nota?('Nota '+p.nota):('Pedido '+(dn[p.id]||'')));
   var title=ident+(p.cliente?(' · '+p.cliente):'')+(p.turno?(' · '+p.turno):'');
-  var choferOpts='<option value=""'+(p.chofer?'':' selected')+'>Sin chofer</option>'+allChoferes().map(function(c){ return '<option'+(p.chofer===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
+  var choferOpts='<option value=""'+(p.chofer?'':' selected')+'>Sin chofer</option>'+choferesParaSelect(p).map(function(c){ return '<option'+(p.chofer===c?' selected':'')+'>'+esc(c)+'</option>'; }).join('');
   return '<b>'+esc(title)+'</b><br>'+
     (p.celular?('📞 '+esc(p.celular)+'<br>'):'')+
     (p.direccion?('📍 '+esc(p.direccion)+'<br>'):'')+
