@@ -6800,3 +6800,24 @@ con 1753, 1757, 1758 y 1760 faltan 1754-1756 y 1759).
 
 Vistos de paso en los datos de Isabel (septiembre): una nota «17478» (casi seguro 1748 mal
 tipeada) y cuatro ventas con la nota vacía. Se le dijo al dueño; no se tocó nada.
+
+## 4ei. Corregir el recibo del primer pago corrige la nota de la venta (2026-09-18)
+
+El dueño, con la ficha de Carolina Loayza Vargas: *"Isabel corrigió el pago y el N° de nota,
+pero en el título no se corrigió"*. El pago decía «nota 1748» y la ficha seguía titulada
+«Nota 17478»: la venta tiene su propio campo `nota` y «✏️ Corregir» del pago no lo tocaba.
+Regla del dueño: *"debe ser la primera como pago o anticipo, porque los vendedores a veces
+cargan hasta 3 notas de pago en un mismo cliente"*.
+
+**Arreglo (`pedidos.html`, `ctaGuardarPago`):** si el pago que se corrige es el ANTICIPO —o,
+si la venta no tiene anticipo, el PRIMER cobro (`ctaIdxCobro`===0)— y el N° cambió, la nota
+de la venta pasa a ser ese recibo (`p.nota=nota`, antes de `aplicarCobros`, así viaja en el
+mismo guardado). Un segundo o tercer pago, y el recargo por entrega, no la tocan. El cartel
+lo dice: «… y el N° de nota de la venta también pasó a 1748».
+
+**Prueba (browser local, `persistPedido`/`apiSave` simulados):** anticipo 100→150 ⇒ venta
+150; 2º cobro 101→199 ⇒ venta sigue 100; sin anticipo, 1º cobro 200→250 ⇒ 250; 2º cobro ⇒
+queda 200; venta sin nota + anticipo 300→301 ⇒ 301.
+
+**Dato corregido a mano** en la planilla: `kommo-39452846` (Carolina Loayza Vargas, Isabel)
+nota «17478» → «1748», que era la nota faltante del talonario (§4eh).

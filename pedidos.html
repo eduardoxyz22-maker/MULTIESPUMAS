@@ -4927,6 +4927,18 @@ function ctaGuardarPago(id, i, igual){
     return;
   }
 
+  /* 🔢 LA NOTA DE LA VENTA ES EL RECIBO DEL PRIMER PAGO (§4ei). Isabel corrigió el N° del
+     pago (17478 → 1748) y la ficha siguió titulada «Nota 17478»: la venta tiene su propio
+     campo de nota y nadie lo tocaba. El dueño: *"debe ser la primera como pago o anticipo,
+     porque los vendedores a veces cargan hasta 3 notas de pago en un mismo cliente"*. Así
+     que: si lo que se corrige es el ANTICIPO —o, si no hay anticipo, el PRIMER cobro—, la
+     nota de la venta pasa a ser ese recibo. Un segundo o tercer pago tiene su recibo propio
+     y no toca la nota de la venta. El recargo por entrega tampoco. */
+  var notaVieja=limpiaNota(c.nota), notaVentaTocada=false;
+  if(!esEnvio(c) && nota!==notaVieja){
+    var esPrimero = c.anticipo ? true : (!anticipoDe(p) && ctaIdxCobro(p, i, c)===0);
+    if(esPrimero && limpiaNota(p.nota)!==nota){ p.nota=nota; notaVentaTocada=true; }
+  }
   if(esEnvio(c)){
     /* El recargo vive en su propio renglón: se reescribe solo ese y no toca el saldo. */
     var ae=enviosDe(p);
@@ -4958,7 +4970,7 @@ function ctaGuardarPago(id, i, igual){
   }
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
   renderCuadreSiActivo(); renderContaSiActiva();
-  toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota,'ok');
+  toast('Pago corregido: '+fmtFecha(f)+' · '+CTA_EDIT_M+(banco?(' '+banco):'')+' · '+fmtBs(monto)+' · recibo '+nota+(notaVentaTocada?(' · y el N° de nota de la venta también pasó a '+nota):''),'ok', notaVentaTocada?6000:undefined);
   reabrirFicha(id);
 }
 /* ⚠️ Los cobros del formato viejo vienen sin fecha. Si se los reescribe así, nacen como
