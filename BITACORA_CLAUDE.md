@@ -6938,3 +6938,32 @@ cola y rechazos (y vacío cuando no hay nada), y el payload del `list` con quien
 **Pendiente del dueño:** publicar el `.gs` (Nueva versión) para que el servidor empiece a
 anotar; hasta entonces el botón avisa que falta la `2026-09-18-a`. Los latidos y la hoja
 «Rechazos» aparecen solos.
+
+## 4em. El comprobante que «salió listo» y después no estaba (2026-09-18)
+
+El dueño: *"a veces uno sube un comprobante de pago y cuando volvés a abrir el pedido nunca
+subió, no aparece, se borra, siendo que cargó y salió LISTO"* (le pasa a él y a Mirian).
+
+**Reproducido** (browser local): la vendedora abre su pedido con ✏️ Editar desde Mis pedidos,
+sube la imagen (Drive la acepta, «Imagen lista ✓»), guarda sin tocar montos («Cambios
+guardados ✓»)… y el historial de pagos quedaba tal cual, SIN la imagen. Causa: en
+`submitPedido`, si el pedido ya tiene historial y la plata no cambió (`_plataIgual`), se
+conserva `prev.metodoPago` entero — y `FORM_COMPS` con la imagen nueva se tiraba. Segundo
+defecto: `metodoFormulario` devolvía solo `comp` (una imagen), así que el formulario abría
+con la primera y, cuando sí se rehacía el historial, las demás desaparecían.
+
+**Arreglo (`pedidos.html`):** `metodoFormulario` devuelve `comps` (todas). En `submitPedido`,
+con `_plataIgual`, las imágenes de `FORM_COMPS` que no estaban se pegan al ADELANTO
+(`anticipoDe(prev)`) reescribiendo el historial con `textoCobros([ant + cobros + envíos])`:
+la plata, las fechas, los recibos y las imágenes de los otros pagos siguen iguales.
+
+**Prueba:** `tests/test_comp_perdido.js` (Playwright, 8 checks + sin errores JS), corrida en
+el browser local 8/8: la imagen nueva queda en el adelanto sin tocar la plata; el cobro
+posterior conserva la suya; anticipo/cobrado/saldo/total iguales; con dos imágenes previas
+el formulario abre con las dos y al guardar quedan tres; guardar sin imagen nueva deja el
+historial idéntico. `tests/test_mixto.js` sigue 22/22.
+
+Otras formas de perder una imagen que SÍ avisan: un choque de versión al guardar
+(`rechazoFirme` recarga la copia del servidor; ahora queda en «Guardados rechazados», §4el)
+y la cola sin enviar (ahora visible en Mis pedidos). En Contabilidad, la imagen de un pago
+NUEVO queda pegada recién al tocar «Registrar pago» (el cartel lo dice).

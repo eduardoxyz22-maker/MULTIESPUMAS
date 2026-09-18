@@ -6134,6 +6134,23 @@ function submitPedido(){
               }).join('\n')+
               '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
   var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
+  /* 📎 LA IMAGEN QUE «SALIÓ LISTA» Y DESPUÉS NO ESTABA (§4em). El dueño y Mirian: *"uno
+     sube un comprobante y cuando volvés a abrir el pedido nunca subió, siendo que cargó y
+     salió LISTO"*. Al EDITAR un pedido con historial de pagos sin tocar los montos, el
+     historial se conserva tal cual (arriba: `_plataIgual`) — y con él se tiraban las
+     imágenes recién subidas al formulario: «Imagen lista ✓», «Cambios guardados ✓», y en
+     la planilla nada. Ahora las nuevas se pegan al adelanto (el pago de la venta), que es
+     donde el formulario las muestra. */
+  if(_plataIgual && prev){
+    var _cPrev=compsArr(metodoFormulario(prev).comps), _cNow=compsArr(FORM_COMPS);
+    var _nuevas=_cNow.filter(function(id){ return _cPrev.indexOf(id)<0; });
+    var _antPrev=anticipoDe(prev);
+    if(_nuevas.length && _antPrev){
+      var _ant=JSON.parse(JSON.stringify(_antPrev));
+      _ant.comps=compsArr(compsArr(_antPrev.comps!=null?_antPrev.comps:_antPrev.comp).concat(_nuevas)); _ant.comp=_ant.comps[0]||'';
+      _metodoPago=conMarcaReg(textoCobros([_ant].concat(ctaCobrosConFecha(prev)).concat(enviosDe(prev))), regEnSistema(prev));
+    }
+  }
   /* 🚚 RECARGO POR ENTREGA. Va como un renglón aparte al final del historial (`^…`):
      no le baja el saldo a la venta, no se factura y no lo toca ninguna otra cuenta.
      Se reescribe desde el formulario conservando el método, la fecha y las fotos que
@@ -11588,7 +11605,9 @@ function metodoFormulario(rec){
   var t=sinEnvios(sinMarcaReg(rec&&rec.metodoPago));
   if(!parseCobros(t).length){ var cd=compDeTexto(t); return { metodo:metodoBase(cd.txt), banco:bancoDe(cd.txt), comp:cd.comp }; }
   var c=anticipoDe(rec)||parseCobros(t)[0]||{};
-  return { metodo:c.metodo||'', banco:c.banco||'', comp:c.comp||'' };
+  // ⚠️ TODAS las imágenes (§4em): con solo `comp` el formulario abría con la primera y, al
+  // rehacer el historial, las demás desaparecían.
+  return { metodo:c.metodo||'', banco:c.banco||'', comp:c.comp||'', comps:compsArr(c.comps!=null?c.comps:c.comp) };
 }
 function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
 /* Lo que el vendedor dijo que hay que cobrar = lo que falta + lo ya cobrado.
