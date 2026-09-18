@@ -83,7 +83,8 @@ function hacerScriptApp(){
   return {
     _triggers: triggers,
     newTrigger: (fn) => ({ timeBased: () => ({ after: (ms) => ({ create: () => crear(fn, 'after', ms) }),
-                                               everyMinutes: (n) => ({ create: () => crear(fn, 'every', n) }) }) }),
+                                               everyMinutes: (n) => ({ create: () => crear(fn, 'every', n) }),
+                                               everyDays: (n) => ({ atHour: (h) => ({ create: () => crear(fn, 'daily', h) }), create: () => crear(fn, 'daily', 0) }) }) }),
     getProjectTriggers: () => triggers.slice(),
     deleteTrigger: (t) => { const i = triggers.indexOf(t); if (i >= 0) triggers.splice(i, 1); }
   };
@@ -714,6 +715,58 @@ if (typeof cargar([HDR], {}).ctx.rechazosInforme_ !== 'function') {
   chk('⚠️ lo que vuelve en `pedido` es lo que quedó en la hoja: mismos campos que el list', r.ok===true && r.mode==='add' && r.pedido.chofer==='Pepe' && r.pedido.fotos.join(',')==='F1,F2' && r.pedido.productos.length===1 && r.pedido.rev===l.rev && r.pedido.nota==='55' && r.pedido.nroDia===l.nroDia, JSON.stringify(r.pedido).slice(0,160));
   const r2 = a.post(conClave({ action:'save', pedido:Object.assign({}, l, { chofer:'Juan' }) }));
   chk('…también al ACTUALIZAR (mode update, chofer nuevo, rev nuevo)', r2.ok===true && r2.mode==='update' && r2.pedido.chofer==='Juan' && r2.pedido.rev>l.rev, JSON.stringify(r2.pedido).slice(0,120));
+}
+}
+
+/* ── 🖼️ El barrido de fotos huérfanas (§4ep) ── */
+console.log('\n── Fotos huérfanas: el barrido diario ──');
+if (typeof cargar([HDR], {}).ctx.barrerFotosHuerfanas !== 'function') {
+  chk('⚠️ el .gs tiene el barrido de fotos huérfanas (§4ep)', false, 'falta barrerFotosHuerfanas: es el .gs viejo');
+} else {
+{
+  const DIA = 86400000, ahora = Date.now();
+  // un pedido usa F_PAGO en su pago y F_ENT como foto de entrega; F_HUERF_VIEJA y F_HUERF_NUEVA no las nombra nadie
+  const props = { PANEL_KEY: CLAVE };
+  const a = cargar([HDR, fila({ id:'p1', obs:'' })], props);
+  a.sh._datos[1][15] = '~QR BISA 100 @2026-09-10 #1 %F_PAGO';
+  a.sh._datos[1][28] = 'F_ENT';
+  // Drive de mentira: carpetas con archivos que se pueden mover y tirar
+  const hacerArchivo = (id, nombre, creado) => ({ _id:id, _nombre:nombre, _creado:creado, _papelera:false, _carpeta:null,
+    getId(){ return this._id; }, getName(){ return this._nombre; }, getDateCreated(){ return new Date(this._creado); },
+    setTrashed(v){ this._papelera=!!v; }, moveTo(f){ this._carpeta._archivos = this._carpeta._archivos.filter(x => x!==this); this._carpeta=f; f._archivos.push(this); } });
+  const hacerCarpeta = (id, nombre) => { const c = { _id:id, _nombre:nombre, _archivos:[], getId(){ return this._id; }, getName(){ return this._nombre; },
+    getFiles(){ const arr=this._archivos.slice(); let i=0; return { hasNext:()=>i<arr.length, next:()=>arr[i++] }; },
+    createFile(){ return hacerArchivo('nuevo', 'x', ahora); }, setSharing(){}, addFile(f){ this._archivos.push(f); f._carpeta=this; }, removeFile(f){ this._archivos=this._archivos.filter(x=>x!==f); } }; return c; };
+  const fotos = hacerCarpeta('CF', 'Fotos entregas MultiEspumas'), huerf = hacerCarpeta('CH', 'Fotos huérfanas MultiEspumas');
+  [['F_PAGO', 'entrega_DON_A__p1__por_Carola_20260910_100000.jpg', ahora-5*DIA], ['F_ENT', 'entrega_DON_A_20260911_100000.jpg', ahora-3*DIA],
+   ['F_HUERF_VIEJA', 'entrega_DON_B__por_Mirian_Salazar_20260915_150000.jpg', ahora-2*DIA], ['F_HUERF_NUEVA', 'entrega_DON_C_20260918_100000.jpg', ahora-3600000]]
+    .forEach(([id, n, t]) => fotos.addFile(hacerArchivo(id, n, t)));
+  huerf.addFile(hacerArchivo('F_MUY_VIEJA', 'entrega_x.jpg', ahora-40*DIA));
+  huerf.addFile(hacerArchivo('F_RECIENTE_HU', 'entrega_y.jpg', ahora-10*DIA));
+  a.ctx.DriveApp = { getFoldersByName: (n) => { const c = n==='Fotos huérfanas MultiEspumas' ? huerf : fotos; let done=false; return { hasNext:()=>!done, next:()=>{ done=true; return c; } }; },
+                     getFolderById: (id) => { if(id==='CF') return fotos; throw new Error('no existe'); }, createFolder: (n) => hacerCarpeta('CX', n), Access:{ANYONE_WITH_LINK:1}, Permission:{VIEW:1} };
+  props.FOTOS_FOLDER_ID = 'CF';
+  const r = a.ctx.barrerFotosHuerfanas();
+  const enFotos = fotos._archivos.map(f => f._id).sort().join(','), enHuerf = huerf._archivos.map(f => f._id).sort().join(',');
+  chk('⚠️ solo la huérfana con más de un día se mueve a «Fotos huérfanas»; las usadas y la recién subida se quedan', enFotos==='F_ENT,F_HUERF_NUEVA,F_PAGO' && /F_HUERF_VIEJA/.test(enHuerf), enFotos+' | '+enHuerf);
+  chk('…la de más de 30 días en huérfanas va a la papelera y la de 10 días no', huerf._archivos.filter(f => f._id==='F_MUY_VIEJA')[0].getName && huerf._archivos.find(f => f._id==='F_MUY_VIEJA')._papelera===true && huerf._archivos.find(f => f._id==='F_RECIENTE_HU')._papelera===false, JSON.stringify(huerf._archivos.map(f => [f._id, f._papelera])));
+  chk('el resumen dice cuántas revisó, cuántas movió y cuántas tiró', r.revisadas===4 && r.movidas===1 && r.papelera===1 && r.error==='' && r.lista.length===1 && /Mirian_Salazar/.test(r.lista[0].nombre), JSON.stringify(r).slice(0,160));
+  chk('…y queda guardado para la pestaña de Administración', /"movidas":1/.test(props.HUERFANAS_ULTIMO||''), (props.HUERFANAS_ULTIMO||'').slice(0,80));
+  const inf = a.post(conClave({ action:'rechazos' }));
+  chk('action:rechazos lo incluye', inf.ok===true && inf.rechazos.huerfanas && inf.rechazos.huerfanas.movidas===1, JSON.stringify(inf.rechazos.huerfanas).slice(0,100));
+  const r2 = a.ctx.barrerFotosHuerfanas();
+  chk('correrlo de nuevo no mueve nada más', r2.movidas===0 && fotos._archivos.length===3, JSON.stringify(r2).slice(0,100));
+  a.ctx.instalarDisparadores();
+  chk('instalarDisparadores deja el barrido diario además del repaso de Kommo', a.ctx.ScriptApp._triggers.some(t => t.fn==='barrerFotosHuerfanas' && t.tipo==='daily') && a.ctx.ScriptApp._triggers.some(t => t.fn==='kommoRepaso'), JSON.stringify(a.ctx.ScriptApp._triggers.map(t => t.fn)));
+  // el nombre lleva dueño y pedido
+  a.ctx.Utilities.base64Decode = () => [1,2,3];
+  let nombre = '';
+  a.ctx.DriveApp.getFolderById = () => ({ getId: () => 'CF', createFile: (blob) => ({ getId: () => 'FNEW', setSharing(){} , getName(){ return nombre; } }), setSharing(){} });
+  a.ctx.Utilities.newBlob = (b, mime, n) => { nombre = n; return {}; };
+  const f = a.post(conClave({ action:'foto', id:'pmx123', cliente:'Doña Rosa', quien:'Mirian Salazar', dataUrl:'data:image/jpeg;base64,AAAA' }));
+  chk('el archivo se nombra con cliente, pedido y quién lo subió', f.ok===true && /^entrega_Do_a_Rosa__pmx123__por_Mirian_Salazar_.+\.jpg$/.test(nombre)   /* la fecha la pone Utilities.formatDate (simulado acá) */, nombre);
+  const f2 = a.post(conClave({ action:'foto', id:'form', cliente:'Nuevo', quien:'Carola Chavez', dataUrl:'data:image/jpeg;base64,AAAA' }));
+  chk('…y desde el formulario (sin pedido todavía) va sin id pero con quién', f2.ok===true && /^entrega_Nuevo__por_Carola_Chavez_/.test(nombre), nombre);
 }
 }
 

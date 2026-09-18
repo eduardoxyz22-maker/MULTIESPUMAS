@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-18-c';   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-18-d';   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -375,7 +375,8 @@ function rechazosInforme_() {
   var L = latidosLeer_(), lat = [];
   for (var k in L) lat.push({ dispositivo: k, ts: L[k].ts, quien: L[k].quien, cola: L[k].cola, ids: L[k].ids || [], clave: !!L[k].clave });
   lat.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
-  return { ahora: Date.now(), total: Number(prop_('RECHAZOS_N')) || 0, rechazos: rechazosLeer_(200), latidos: lat };
+  var hu = null; try { hu = JSON.parse(prop_('HUERFANAS_ULTIMO') || 'null'); } catch (e) { hu = null; }
+  return { ahora: Date.now(), total: Number(prop_('RECHAZOS_N')) || 0, rechazos: rechazosLeer_(200), latidos: lat, huerfanas: hu };
 }
 
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano.
@@ -1075,7 +1076,12 @@ function guardarFoto(body) {
   catch (e) { return jsonOut({ ok:false, error:'ilegible', version:SCRIPT_VERSION }); }
   if (bytes.length > 6 * 1024 * 1024) return jsonOut({ ok:false, error:'muy_pesada', version:SCRIPT_VERSION });
   var ext = (m[1].indexOf('png') >= 0) ? 'png' : 'jpg';
-  var nombre = 'entrega_' + String((body.cliente || body.id || 'x')).replace(/[^\w\-]+/g, '_').slice(0, 40) +
+  /* El nombre lleva de quién y de qué pedido es (§4ep): si la foto queda huérfana, el barrido
+     puede decir «era de Mirian, del pedido tal» en vez de un archivo anónimo. */
+  var limpio = function (s, n) { return String(s == null ? '' : s).replace(/[^\w\-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, n); };
+  var nombre = 'entrega_' + (limpio(body.cliente || body.id || 'x', 40) || 'x') +
+               (body.id && body.id !== 'form' ? ('__' + limpio(body.id, 24)) : '') +
+               (body.quien ? ('__por_' + limpio(body.quien, 24)) : '') +
                '_' + Utilities.formatDate(new Date(), 'GMT-4', 'yyyyMMdd_HHmmss') + '.' + ext;
   try {
     var f = fotosFolder_().createFile(Utilities.newBlob(bytes, m[1], nombre));
@@ -1104,6 +1110,62 @@ function borrarFoto(body) {
   } catch (e) {
     return jsonOut({ ok:false, error:String(e), version:SCRIPT_VERSION });
   }
+}
+
+/* ============================================================================
+   🖼️ FOTOS HUÉRFANAS — el barrido diario (§4ep)
+   Una foto sube a Drive apenas se elige y se vincula al pedido recién al guardar. Si el
+   formulario se abandona, el guardado se rechaza, o en Contabilidad se cambia de venta con
+   una imagen «lista», el archivo queda en la carpeta sin que ninguna fila lo nombre: la
+   vendedora se va convencida de que está, y Drive se llena. Una vez por día:
+   · se juntan TODOS los ids nombrados en la planilla (los «%id» de los pagos y la columna
+     de fotos de entrega, retiros incluidos);
+   · cada archivo de la carpeta de fotos con más de HUERFANAS_DIAS_MIN día(s) y sin fila que
+     lo nombre se mueve a «Fotos huérfanas MultiEspumas» (no a la papelera: por si alguien
+     lo necesita);
+   · lo que lleva más de HUERFANAS_PAPELERA_DIAS días subido y sigue sin dueño va a la
+     papelera;
+   · el resumen queda en HUERFANAS_ULTIMO y lo muestra la pestaña de Administración.
+   ========================================================================== */
+var HUERFANAS_FOLDER = 'Fotos huérfanas MultiEspumas';
+var HUERFANAS_DIAS_MIN = 1;        // más nuevas que esto pueden estar «en camino» a un pedido
+var HUERFANAS_PAPELERA_DIAS = 30;
+function idsFotoEnUso_() {
+  var vals = getSheet().getDataRange().getValues(), set = {};
+  for (var i = 1; i < vals.length; i++) {
+    (String(vals[i][15] || '').match(/%\s*[A-Za-z0-9_-]+/g) || []).forEach(function (s) { set[s.replace(/^%\s*/, '')] = 1; });
+    String(vals[i][28] || '').split(/[\s|]+/).forEach(function (x) { if (x) set[x] = 1; });
+  }
+  return set;
+}
+function huerfanasFolder_() {
+  var it = DriveApp.getFoldersByName(HUERFANAS_FOLDER);
+  return it.hasNext() ? it.next() : DriveApp.createFolder(HUERFANAS_FOLDER);
+}
+/** ▶️ Corre solo cada día (instalarDisparadores). También se puede correr a mano desde el editor. */
+function barrerFotosHuerfanas() {
+  var res = { ts: new Date().toISOString(), revisadas: 0, movidas: 0, papelera: 0, lista: [], error: '' };
+  try {
+    var enUso = idsFotoEnUso_(), ahora = Date.now();
+    var lim = ahora - HUERFANAS_DIAS_MIN * 86400000, limPap = ahora - HUERFANAS_PAPELERA_DIAS * 86400000;
+    var carpeta = fotosFolder_(), hu = huerfanasFolder_();
+    var it = carpeta.getFiles();
+    while (it.hasNext()) {
+      var f = it.next(); res.revisadas++;
+      var t = f.getDateCreated().getTime();
+      if (t > lim || enUso[f.getId()]) continue;
+      try { f.moveTo(hu); } catch (e1) { try { hu.addFile(f); carpeta.removeFile(f); } catch (e2) { continue; } }
+      res.movidas++;
+      if (res.lista.length < 50) res.lista.push({ id: f.getId(), nombre: f.getName(), ts: t });
+    }
+    var it2 = hu.getFiles();
+    while (it2.hasNext()) {
+      var h = it2.next();
+      if (h.getDateCreated().getTime() < limPap && !enUso[h.getId()]) { h.setTrashed(true); res.papelera++; }
+    }
+  } catch (e) { res.error = String((e && e.message) || e); }
+  try { PropertiesService.getScriptProperties().setProperty('HUERFANAS_ULTIMO', JSON.stringify(res)); } catch (e3) {}
+  return res;
 }
 
 function backupFolder_() {
@@ -1324,9 +1386,10 @@ function kommoRepaso() {
 /** ▶️ CORRER UNA VEZ desde el editor (Ejecutar ▸ instalarDisparadores): deja el repaso
     cada 5 minutos. Pide autorización la primera vez; es normal. */
 function instalarDisparadores() {
-  ['kommoRepaso', 'kommoProcesarCola'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
+  ['kommoRepaso', 'kommoProcesarCola', 'barrerFotosHuerfanas'].forEach(function (fn) { kTriggersDe_(fn).forEach(function (t) { ScriptApp.deleteTrigger(t); }); });
   ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
-  var msg = '✅ Listo: kommoRepaso corre cada 5 minutos. Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
+  ScriptApp.newTrigger('barrerFotosHuerfanas').timeBased().everyDays(1).atHour(3).create();   // 🖼️ §4ep, de madrugada
+  var msg = '✅ Listo: kommoRepaso corre cada 5 minutos y barrerFotosHuerfanas una vez por día (3 am). Último repaso: ' + (prop_('KOMMO_REPASO_ULTIMO') || '(todavía ninguno; el primero sale en 5 minutos)');
   if (typeof Logger !== 'undefined') Logger.log(msg);
   return msg;
 }

@@ -1917,7 +1917,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-18-c';
+var SCRIPT_VERSION_ESPERADA='2026-09-18-d';
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2228,7 +2228,41 @@ function flushPending(){
 /* ============================================================================
    Navegación / conexión UI
    ========================================================================== */
+/* ============================================================================
+   🖼️ IMÁGENES SUBIDAS Y SIN PEGAR A NINGÚN PEDIDO (§4ep)
+   La imagen sube a Drive apenas se elige; se pega al pedido al guardar. Si la vendedora se
+   va a otra pestaña con imágenes «listas» y el pedido sin guardar, se iba convencida de que
+   estaban. Ahora se la frena, y si sale igual, las imágenes se borran de Drive en el momento:
+   sin foto y sin duda.
+   ========================================================================== */
+function imagenesSinPegar(){
+  var todas=compsArr(FORM_COMPS).concat(typeof FORM_COMPS2!=='undefined'?compsArr(FORM_COMPS2):[]);
+  if(!todas.length) return [];
+  var ya=[];
+  if(EDIT_ID){ var prev=findById(EDIT_ID); if(prev){ ya=compsArr(metodoFormulario(prev).comps); var mx=(typeof mixtoDe==='function')?mixtoDe(prev):null; if(mx) ya=ya.concat(compsArr(mx.comps!=null?mx.comps:mx.comp)); } }
+  return todas.filter(function(id){ return ya.indexOf(id)<0; });
+}
+function descartarImagenesSinPegar(){
+  var ids=imagenesSinPegar(); if(!ids.length) return 0;
+  FORM_COMPS=compsArr(FORM_COMPS).filter(function(id){ return ids.indexOf(id)<0; });
+  if(typeof FORM_COMPS2!=='undefined') FORM_COMPS2=compsArr(FORM_COMPS2).filter(function(id){ return ids.indexOf(id)<0; });
+  if(CONNECTED) ids.forEach(function(id){ apiBorrarFoto(id).catch(function(){}); });
+  toast('🗑️ Se '+(ids.length===1?'borró 1 imagen que no quedó':('borraron '+ids.length+' imágenes que no quedaron'))+' en ningún pedido.','err',6000);
+  return ids.length;
+}
 function showView(v){
+  var enForm=document.getElementById('view-form').classList.contains('active');
+  if(enForm && v!=='form'){
+    var sinPegar=imagenesSinPegar();
+    if(sinPegar.length){
+      var una=sinPegar.length===1;
+      if(!confirm('⚠️ Tenés '+(una?'1 imagen subida':(sinPegar.length+' imágenes subidas'))+' y el pedido SIN GUARDAR.\n\nSi salís, '+(una?'esa imagen se borra y no queda':'esas imágenes se borran y no quedan')+' en ningún pedido.\n\n¿Salir igual?')) return;
+      descartarImagenesSinPegar();
+    }
+  }
+  showViewAhora(v);
+}
+function showViewAhora(v){
   document.getElementById('view-form').classList.toggle('active',v==='form');
   document.getElementById('view-admin').classList.toggle('active',v==='admin');
   document.getElementById('view-mis').classList.toggle('active',v==='mis');
@@ -2292,6 +2326,15 @@ function renderRechazos(R, res, err){
   else h+='<table class="mini" style="width:100%;font-size:.78rem"><tr><th>Quién</th><th>Sin enviar</th><th>Último aviso</th><th>Clave</th><th>Qué</th></tr>'+lat.map(function(l){
       return '<tr><td><b>'+esc(l.quien||'(sin nombre)')+'</b> <span style="color:var(--muted)">'+esc(l.dispositivo)+'</span></td><td><b style="color:var(--amber)">'+esc(l.cola)+'</b></td><td>'+esc(getlogHace(ahora-(Number(l.ts)||0)))+'</td><td>'+(l.clave?'✓':'<b style="color:var(--red)">sin clave</b>')+'</td><td style="color:var(--muted)">'+esc((l.ids||[]).join(', '))+'</td></tr>';
     }).join('')+'</table><div style="font-size:.74rem;color:var(--muted)">Lo que está «sin enviar» existe SOLO en ese dispositivo. Si dice «sin clave», hay que ingresar la clave del equipo ahí; si no, que toque «Reintentar» en Mis pedidos con señal.</div>';
+  var hu=R.huerfanas;
+  h+='<div style="margin:10px 0 4px;font-weight:800">🖼️ Fotos sin pedido (barrido de la madrugada)</div>';
+  if(!hu) h+='<div style="color:#7c4b00">Todavía no corrió ningún barrido. En Apps Script: Ejecutar ▸ <code>instalarDisparadores</code> (una vez) y desde ahí corre solo cada día a las 3 am.</div>';
+  else if(hu.error) h+='<div style="color:var(--red)">El último barrido falló: '+esc(hu.error)+'</div>';
+  else {
+    var dh=new Date(hu.ts), zz=function(n){return (n<10?'0':'')+n;};
+    h+='<div>'+esc(fmtFechaCorta(isoLocal(dh))+' '+zz(dh.getHours())+':'+zz(dh.getMinutes()))+' · revisó '+esc(hu.revisadas)+' archivos · <b>'+esc(hu.movidas)+'</b> quedaron sin pedido'+(hu.papelera?(' · '+esc(hu.papelera)+' a la papelera (más de 30 días)'):'')+'.'+(hu.movidas?' Están en la carpeta <b>Fotos huérfanas MultiEspumas</b> de Drive por 30 días. Si alguna es tuya, abrí el pedido y subila de nuevo.':' ✅')+'</div>';
+    if((hu.lista||[]).length) h+='<div style="font-size:.76rem;color:var(--muted);margin-top:4px">'+hu.lista.slice(0,20).map(function(f){ var d2=new Date(Number(f.ts)||0); return esc(fmtFechaCorta(isoLocal(d2)))+' · '+esc(String(f.nombre||'').replace(/^entrega_/,'').replace(/_\d{8}_\d{6}\.\w+$/,'').replace(/__por_/,' · por ').replace(/__/,' · pedido ').replace(/_/g,' '))+' · <a href="'+esc(fotoVer(f.id))+'" target="_blank" rel="noopener">ver</a>'; }).join('<br>')+(hu.lista.length>20?'<br>…':'')+'</div>';
+  }
   h+='<div style="margin:10px 0 4px;font-weight:800">❌ Guardados que el servidor rechazó ('+esc(R.total||rs.length)+' en total, últimos '+rs.length+')</div>';
   if(!rs.length) h+='<div style="color:#0a6b47">✅ Ninguno.</div>';
   else h+='<div class="tw" style="max-height:340px;overflow:auto"><table class="mini" style="width:100%;font-size:.78rem"><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Motivo</th><th>Detalle</th></tr>'+rs.map(function(r){
@@ -4987,6 +5030,7 @@ function onCompElegido(ev){
     return conTopeDuro(apiFoto(p.id, 'comprobante_'+(p.cliente||''), dataUrl));
   }).then(function(res){
     COMP_SUBIENDO--;
+    p=findById(pid)||p;                             // 🖼️ §4ep: el refresco pudo cambiar el objeto mientras subía
     if(!res || !res.ok || !res.fotoId){
       showContaModal(p.id);
       toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
@@ -5303,14 +5347,20 @@ function ctaAnotarMonto(id, idx){
   toast('Monto anotado: '+fmtBs(monto)+(puso?(' · con la fecha de la venta ('+fmtFechaCorta(c.fecha)+')'):'')+' ✓','ok');
 }
 var CTA_ULTIMA='';
+/* 📎 El pago EN CURSO de cada venta (§4ep): antes, cambiar de venta con una imagen «lista» y
+   sin tocar «Registrar pago» la tiraba (quedaba huérfana en Drive). Ahora cada venta guarda
+   lo suyo y al volver sigue ahí. */
+var CTA_PAGO_POR_ID={};
 function showContaModal(id){
   var p=findById(id); if(!p) return;
   MODAL_KIND='conta';
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
      un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
   if(CTA_ULTIMA!==String(id)){
+    if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length) CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
     CTA_ULTIMA=String(id);
-    CTA_PAGO={metodo:'Efectivo', banco:'', comps:[]};
+    CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[]};
+    if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+' esperando que toques «Registrar pago».','ok',6000);
     CTA_TIPO='pago';
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
@@ -5611,7 +5661,7 @@ function ctaRegistrarPago(id){
        lo que se está haciendo es justamente reportar que ya se cobró. */
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
-    CTA_PAGO.comps=[]; CTA_PAGO_V=null;
+    CTA_PAGO.comps=[]; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
     aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
     toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
@@ -5621,7 +5671,7 @@ function ctaRegistrarPago(id){
   if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
-  CTA_PAGO.comps=[]; CTA_PAGO_V=null;                // que no se peguen al pago siguiente
+  CTA_PAGO.comps=[]; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):''),'ok');
   // Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
@@ -16854,6 +16904,14 @@ function buildMapaKml(list, coords){
 /* ============================================================================
    Init
    ========================================================================== */
+/* Cerrar o recargar la pestaña con imágenes sin pegar (formulario o pago en curso de
+   Contabilidad): el navegador pregunta. Lo que igual se escape lo agarra el barrido (§4ep). */
+window.addEventListener('beforeunload', function(e){
+  try{
+    var n=imagenesSinPegar().length + Object.keys(CTA_PAGO_POR_ID||{}).reduce(function(a,k){ return a+compsArr((CTA_PAGO_POR_ID[k]||{}).comps).length; },0) + (CTA_PAGO?compsArr(CTA_PAGO.comps).length:0);
+    if(n){ e.preventDefault(); e.returnValue=''; }
+  }catch(err){}
+});
 document.addEventListener('DOMContentLoaded',function(){
   loadMirror();
   geoCacheLoad();

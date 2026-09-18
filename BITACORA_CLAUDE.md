@@ -7068,3 +7068,50 @@ avisando. `tests/test_servidor.js` 135→**137**: el eco es la fila releída (ad
 `test_comp_perdido.js` 12/12, `test_mixto.js` 22/22, `test_hook.js` 78/78.
 
 **Pendiente del dueño:** publicar el `.gs` `2026-09-18-c` (Nueva versión).
+
+## 4ep. Fotos huérfanas: aviso al abandonar, pago en curso por venta y barrido diario (2026-09-18)
+
+El dueño: *"¿cómo solucionamos lo de las fotos huérfanas?"* (pendiente M3 de la auditoría
+§4eo). La imagen sube a Drive apenas se elige y se pega al pedido al guardar: si el
+formulario se abandona, el guardado se rechaza, o en Contabilidad se cambia de venta con una
+imagen «lista», el archivo queda sin fila que lo nombre y la vendedora cree que está.
+
+**Panel (`pedidos.html`).**
+1. `showView` pasó a ser una guardia sobre `showViewAhora`: al salir del formulario con
+   imágenes subidas y sin pegar (`imagenesSinPegar()`: FORM_COMPS+FORM_COMPS2 menos las que
+   el pedido en edición ya tenía) pregunta «Tenés N imágenes subidas y el pedido SIN
+   GUARDAR… ¿Salir igual?»; si sale, `descartarImagenesSinPegar()` las borra de Drive
+   (`apiBorrarFoto`) y del formulario, con cartel. Después de guardar bien no pregunta
+   (las imágenes ya están en el pedido). `beforeunload` frena al cerrar la pestaña con
+   imágenes sin pegar (formulario o pago en curso).
+2. Contabilidad: `CTA_PAGO_POR_ID` guarda el pago en curso (método, banco, imágenes) POR
+   VENTA; al cambiar de venta y volver sigue ahí, con aviso «N imágenes esperando que toques
+   Registrar pago». Se limpia al registrar. `onCompElegido` vuelve a resolver la venta
+   (`findById(pid)`) después del upload: el refresco pudo cambiar el objeto.
+3. La pestaña «Guardados rechazados / sin enviar» muestra el último barrido: cuándo, cuántos
+   archivos revisó, cuántos quedaron sin pedido (con nombre legible «cliente · pedido · por
+   quién» y enlace «ver»), cuántos fueron a la papelera; o que falta instalar el disparador.
+
+**Servidor (`google-apps-script.gs` → `2026-09-18-d`).** `guardarFoto` nombra el archivo
+`entrega_<cliente>__<id pedido>__por_<quien>_<fecha>` (desde el formulario, sin id).
+`barrerFotosHuerfanas()` (disparador diario 3 am, `instalarDisparadores` lo instala junto al
+de Kommo): junta los ids nombrados en la planilla (`%id` de los pagos y la columna de fotos,
+retiros incluidos), mueve a «Fotos huérfanas MultiEspumas» los archivos de la carpeta de
+fotos con más de 1 día y sin fila, manda a la papelera los de esa carpeta con más de 30 días
+desde la subida, y deja `HUERFANAS_ULTIMO` (ts, revisadas, movidas, papelera, lista ≤50,
+error); `action:'rechazos'` lo devuelve como `huerfanas`.
+
+**Pruebas.** `tests/test_servidor.js` 137→**146**: con un Drive simulado (carpetas, archivos
+con fecha, mover, papelera) solo la huérfana de más de un día se mueve, las usadas y la
+recién subida se quedan, la de más de 30 días va a la papelera y la de 10 no, el resumen y
+la propiedad, `rechazos` lo incluye, correrlo de nuevo no mueve nada, `instalarDisparadores`
+deja el barrido diario, y el nombre lleva cliente/pedido/quién (desde el formulario, sin id).
+`tests/test_huerfanas.js` (Playwright, 7 checks + sin errores JS; browser local 7/7): salir
+pregunta y si dice NO se queda; si dice SÍ borra de Drive y saca del formulario; al editar
+las que ya tenía no cuentan y una nueva sí; después de guardar bien no pregunta; el pago en
+curso de Contabilidad se conserva por venta y avisa al volver. `test_guardado.js` 13/13,
+`test_comp_perdido.js` 12/12.
+
+**Pendiente del dueño:** publicar el `.gs` `2026-09-18-d` (Nueva versión) y volver a correr
+`instalarDisparadores` desde el editor (instala el barrido diario; el de Kommo se reinstala
+igual).
