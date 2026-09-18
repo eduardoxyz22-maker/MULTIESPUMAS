@@ -6863,3 +6863,35 @@ mixto. Guía de la vendedora: tarjeta «💳 Pagó con dos métodos» (`#mixto`)
 por entrega, y el dueño lo vio confuso. Ahora vive en el título «¿Con qué pagó?»
 (`mixtoBtnHtml()` dentro de `updateMetodoVisibility`); el bloque del segundo método sigue
 abriéndose al final del cobro y la pantalla baja hasta él.
+
+## 4ek. Los retiros de Mirian: estaban, pero en otro mes; y un retiro en cola se perdía de la vista (2026-09-18)
+
+El dueño: *"Mirian indica que cargó retiros de efectivo pero no aparecen en el panel… ¿es
+eso posible?"*. Un agente revisó la planilla y el código (informe en el scratchpad):
+- **Los 4 retiros de Mirian SÍ están** (`__ret_…`, guardados el 16/09 15:32-15:55) pero con
+  fecha **17 y 18 de agosto**. La ventana de retiros abre filtrada en el **mes actual**: en
+  septiembre no se ven los de agosto. Ella no los vio y los **cargó dos veces**: Bs 400
+  (nota 973) y Bs 2.650 (nota 2426) duplicados → **Bs 3.050 de más** en el cuadre. Ids a
+  borrar (decisión del dueño): `__ret_pmu4hysn86zk__` (sin foto) y `__ret_pmu4isuf73r6a__`.
+- Sus ventas y pagos de septiembre (25 ventas, 22 con comprobante) llegaron todos; nada perdido.
+- **Agujero real:** `mergePending` → `leerCierresDeLista` dejaba en RETIROS solo lo del
+  servidor; un retiro en la cola (sin señal, `busy`, sin clave) desaparecía de la ventana en
+  el primer refresco aunque siguiera en `ME_PENDING_V1`.
+- El «registrado ✓» de `guardarRetiroForm` salía ANTES de que el servidor contestara.
+
+**Arreglos (`pedidos.html`):** (1) `mergePending` vuelve a sumar a RETIROS los pendientes
+`__ret_` hasta que se manden. (2) `persistRetiro` devuelve la respuesta; el cartel dice
+«⏳ Guardando…» y después «guardado en la planilla ✓», «❌ el servidor NO aceptó (motivo)» o
+«⚠️ quedó SOLO en este dispositivo… las demás no lo ven». (3) Al guardar un retiro de otro
+mes la ventana **se va a ese mes** y lo dice. (4) **Aviso de duplicado** antes de guardar:
+misma vendedora, mismo monto y una nota en común → confirm con el retiro que ya está y en qué
+mes mirar. (5) El encabezado dice «N en otros meses o vendedoras» cuando el filtro esconde
+retiros.
+
+**Prueba (browser local, servidor simulado):** guardar uno de agosto desde septiembre → la
+ventana pasa a ago-26 y el cartel lo dice; en septiembre el encabezado dice «1 en otros
+meses»; el mismo retiro de nuevo → confirm y, si dice no, no se guarda; servidor `busy` →
+queda en cola con el cartel rojo y **sigue en la ventana después de un refresco** con la
+lista del servidor vacía.
+
+Sigue: registro de rechazos en el servidor + latido de la cola + pestaña en Administración.

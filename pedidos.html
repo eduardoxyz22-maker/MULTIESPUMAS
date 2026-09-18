@@ -4298,12 +4298,15 @@ function retirosTotal(list){ var t=0; (list||[]).forEach(function(r){ t=r2(t+r.m
 function retirosPorTipo(list, tipo){ return retirosTotal((list||[]).filter(function(r){ return r.tipo===tipo; })); }
 
 /* ---- Guardar / borrar ---- */
+/* Devuelve la respuesta del servidor (o {ok:false, local:true} si quedó en la cola), para
+   que el que guarda pueda decir la verdad (§4ek). */
 function persistRetiro(fila){
   var i=-1; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(fila.id)){ i=k; break; }
   if(i>=0) RETIROS[i]=fila; else RETIROS.push(fila);
   saveRetirosMirror();
-  if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-  else queuePending(fila);
+  if(!CONNECTED){ queuePending(fila); return Promise.resolve({ ok:false, local:true }); }
+  return apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); return res||{ ok:false, local:true }; },
+                            function(){ queuePending(fila); return { ok:false, local:true }; });
 }
 function borrarRetiro(id){
   var f=null; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)){ f=RETIROS[k]; break; }
@@ -4431,13 +4434,43 @@ function guardarRetiroForm(){
   if(!(monto>0))      return falla('ret-monto','Poné el monto retirado');
   if(!r.notas.length) return falla('ret-nota-nueva','Anotá al menos un N° de nota — es lo que respalda el retiro');
   var esNuevo=!r.id;
+  /* ⚠️ EL MISMO RETIRO DOS VECES (§4ek). Mirian cargó dos retiros de agosto el 16/09; la
+     ventana abre en el mes actual, no los vio y los volvió a cargar: Bs 3.050 de más en el
+     cuadre. Misma vendedora, mismo monto y alguna nota en común = casi seguro el mismo. */
+  if(esNuevo){
+    var dup=retirosTodos().filter(function(x){
+      return mismoVendedor(x.entrega, r.entrega) && r2(x.monto)===r2(monto) &&
+             x.notas.some(function(n){ return r.notas.indexOf(n)>=0; });
+    })[0];
+    if(dup && !confirm('⚠️ YA HAY UN RETIRO IGUAL cargado: '+fmtBs(dup.monto)+' de '+dup.entrega+' del '+fmtFecha(dup.fecha)+' (nota '+dup.notas.join(', ')+').\n\n'+
+                       'Si es el mismo, NO lo cargues de nuevo: la ventana está mostrando '+(((document.getElementById('ret-mes')||{}).value)?('el mes '+mesNombreCorto(document.getElementById('ret-mes').value)):'otro período')+' y por eso no lo ves.\n\n'+
+                       '¿Cargarlo igual, como un retiro DISTINTO?')) return false;
+  }
   var fila=filaDeRetiro({ id: r.id || (RETIRO_PREF+uid()+'__'), fecha:r.fecha, entrega:r.entrega,
                           retira:r.retira, monto:monto, notas:r.notas, tipo:r.tipo, fotos:r.fotos, obs:r.obs });
-  persistRetiro(fila);
+  var guardando=persistRetiro(fila);
   RET_FORM=retFormVacio();
   RET_FORM.retira=r.retira;          // quien retira suele ser el mismo: se deja puesto
+  /* 📅 Que se VEA lo que acaba de cargar: si el retiro es de otro mes, la ventana se va a
+     ese mes (antes quedaba en el mes actual y el retiro «no aparecía»). */
+  var mesRet=String(r.fecha||'').slice(0,7), selMes=document.getElementById('ret-mes');
+  var cambioMes=false;
+  if(selMes && mesRet && selMes.value && selMes.value!==mesRet){ selMes.value=mesRet; cambioMes=true; }
   renderRetiros(); renderCuadreSiActivo();
-  toast(esNuevo ? ('Retiro de '+fmtBs(monto)+' registrado ✓') : 'Retiro actualizado ✓','ok');
+  /* La verdad y no el «✓» optimista: se dice cuando el servidor contestó, y si no
+     contestó, dónde quedó. */
+  toast('⏳ Guardando el retiro de '+fmtBs(monto)+' en la planilla…','ok');
+  guardando.then(function(res){
+    if(res && res.ok){
+      toast((esNuevo?('Retiro de '+fmtBs(monto)+' guardado en la planilla ✓'):'Retiro actualizado en la planilla ✓')+
+            (cambioMes?(' · la ventana pasó a '+mesNombreCorto(mesRet)+' para que lo veas'):''),'ok', cambioMes?7000:undefined);
+    }else if(res && RECHAZOS_FIRMES[res.error]){
+      toast('❌ El servidor NO aceptó el retiro ('+res.error+'). Revisá la lista: no quedó guardado.','err',9000);
+    }else{
+      toast('⚠️ El retiro quedó guardado SOLO en este dispositivo (sin señal, servidor ocupado o falta la clave del equipo). Se manda solo al reconectar; hasta entonces las demás computadoras no lo ven.','err',10000);
+    }
+    renderRetiros(); renderCuadreSiActivo();
+  });
   return true;
 }
 function editarRetiro(id){
@@ -4512,8 +4545,9 @@ function renderRetiros(){
   // ---- la lista de lo ya registrado
   var list=retirosFiltrados(), tot=retirosTotal(list);
   var fac=retirosPorTipo(list,'Facturado'), nof=retirosPorTipo(list,'No facturado');
+  var fueraMes=retirosTodos().length-retirosFiltrados().length;   // los que el filtro no muestra (§4ek)
   document.getElementById('ret-info').textContent=
-    list.length+' retiro'+(list.length===1?'':'s')+' · '+fmtBs(tot);
+    list.length+' retiro'+(list.length===1?'':'s')+' · '+fmtBs(tot)+(fueraMes>0?(' · '+fueraMes+' en otros meses o vendedoras'):'');
   document.getElementById('ret-lista').innerHTML=
     '<div class="cua-box"><div class="cua-t">📄 Retiros registrados — '+fmtBs(tot)+
       ' <span style="font-weight:400;color:var(--muted);font-size:.8rem">('+
@@ -7432,6 +7466,17 @@ function mergePending(serverList){
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
   var pend=getPending().filter(function(p){return !ids[p.id];});
+  /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
+     solo lo que vino del servidor; un retiro que quedó en la cola (sin señal, sin clave,
+     servidor ocupado) desaparecía de la ventana de retiros en el primer refresco aunque
+     siguiera pendiente — la vendedora veía «1 sin enviar» abajo y el retiro no estaba en
+     ningún lado. Se vuelve a sumar hasta que se mande. */
+  var pendRet=pend.filter(esFilaRetiro);
+  if(pendRet.length){
+    var idsR={}; RETIROS.forEach(function(r){ idsR[String(r.id)]=1; });
+    pendRet.forEach(function(r){ if(!idsR[String(r.id)]) RETIROS.push(r); });
+    saveRetirosMirror(); renderRetirosSiActivo();
+  }
   return serverList.concat(pend);
 }
 
