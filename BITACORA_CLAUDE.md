@@ -6939,6 +6939,17 @@ cola y rechazos (y vacío cuando no hay nada), y el payload del `list` con quien
 anotar; hasta entonces el botón avisa que falta la `2026-09-18-a`. Los latidos y la hoja
 «Rechazos» aparecen solos.
 
+**Publicado por el dueño el 18/09 (`2026-09-18-a`) y verificado contra el servidor real:**
+`action:'rechazos'` contesta, un `save` de prueba a un día cerrado volvió `dia_cerrado`, no
+se escribió y quedó como primera fila de «Rechazos» (cliente «PRUEBA RECHAZO (no debe
+guardarse)», quién «Mirian Salazar» porque el navegador de prueba tenía ese nombre recordado).
+**Defecto visto ahí:** `Session.getTemporaryActiveUserKey()` da «?» para un POST anónimo, así
+que TODOS los dispositivos caían en un solo latido. → `2026-09-18-b`: el panel inventa un id
+por navegador (`ME_DISPOSITIVO_V1`, `dispositivoId()`, 6 letras) y lo manda en cada llamada
+(`payload.dispositivo`); el servidor lo usa en latidos y rechazos (`dispositivoDe_`), con el
+de Google solo de respaldo. Test: dos dispositivos de la misma persona → dos latidos; el
+rechazo lleva el id (135 checks). Falta republicar la `-b`.
+
 ## 4em. El comprobante que «salió listo» y después no estaba (2026-09-18)
 
 El dueño: *"a veces uno sube un comprobante de pago y cuando volvés a abrir el pedido nunca

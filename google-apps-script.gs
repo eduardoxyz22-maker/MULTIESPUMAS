@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-18-a';   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el)   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-18-b';   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -320,6 +320,13 @@ function rechazoDetalle_(body, o) {
   if (String(p.id || '').indexOf('__ret_') === 0) d.push('RETIRO DE EFECTIVO ' + (p.acuenta != null ? ('Bs ' + p.acuenta) : ''));
   return d.join(' · ');
 }
+/* Qué dispositivo: lo manda el panel (un id que se inventa una vez por navegador, §4el).
+   `Session.getTemporaryActiveUserKey()` da «?» para un POST anónimo (probado el 18/09), así
+   que con eso todos los dispositivos se pisaban en un solo latido. */
+function dispositivoDe_(body) {
+  var d = String((body && body.dispositivo) || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 12);
+  return d || getDispositivo_();
+}
 function rechazoAnotar_(body, action, o) {
   try {
     var p = (body && body.pedido) || {};
@@ -327,7 +334,7 @@ function rechazoAnotar_(body, action, o) {
     var sh = getSheetRechazos_();
     sh.appendRow([new Date(), String(action || ''), String(o.error || ''), id,
                   String(p.cliente || ''), String(p.vendedor || ''), String((body && body.quien) || ''),
-                  rechazoDetalle_(body, o), getDispositivo_()]);
+                  rechazoDetalle_(body, o), dispositivoDe_(body)]);
     var n = sh.getLastRow() - 1;
     if (n > RECHAZOS_MAX) sh.deleteRow(2);            // la más vieja
     try { var pr = PropertiesService.getScriptProperties(); pr.setProperty('RECHAZOS_N', String((Number(pr.getProperty('RECHAZOS_N')) || 0) + 1)); } catch (e2) {}
@@ -352,7 +359,7 @@ function rechazosLeer_(max) {
 function latidosLeer_() { try { return JSON.parse(prop_('LATIDOS') || '{}') || {}; } catch (e) { return {}; } }
 function latidoAnotar_(body) {
   try {
-    var cola = Number(body && body.cola) || 0, dev = getDispositivo_();
+    var cola = Number(body && body.cola) || 0, dev = dispositivoDe_(body);
     var L = latidosLeer_();
     if (!cola) { if (!L[dev]) return; delete L[dev]; }
     else {

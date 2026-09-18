@@ -689,6 +689,15 @@ if (typeof cargar([HDR], {}).ctx.rechazosInforme_ !== 'function') {
   a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:2, colaIds:['__ret_x__','p7'] }));
   let L = JSON.parse(props.LATIDOS||'{}');
   chk('⚠️ un list con cola>0 deja el latido: quién, cuántos y qué ids', Object.keys(L).length===1 && L.ABCDEF && L.ABCDEF.cola===2 && L.ABCDEF.quien==='Mirian Salazar' && L.ABCDEF.ids.join(',')==='__ret_x__,p7' && L.ABCDEF.clave===true, props.LATIDOS);
+  // dos dispositivos distintos de la misma persona: dos latidos (el id lo manda el panel)
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:1, colaIds:['p9'], dispositivo:'CEL01' }));
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:3, colaIds:['p1','p2','p3'], dispositivo:'PC02' }));
+  L = JSON.parse(props.LATIDOS||'{}');
+  chk('⚠️ el id de dispositivo que manda el panel separa el celular de la compu (Google da «?» al POST anónimo)', L.CEL01 && L.CEL01.cola===1 && L.PC02 && L.PC02.cola===3, Object.keys(L).join(','));
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:0, dispositivo:'CEL01' }));
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:0, dispositivo:'PC02' }));
+  a.post(conClave({ action:'save', pedido:{ id:'z1', fecha:DOMINGO, turno:'AM', cliente:'DOMINGO', ts:AHORA }, dispositivo:'CEL01' }));
+  chk('…y el rechazo también lleva ese id', a.shR._datos.length>=2 && a.shR._datos[a.shR._datos.length-1][8]==='CEL01', JSON.stringify(a.shR._datos[a.shR._datos.length-1]||[]).slice(0,120));
   const inf = a.post(conClave({ action:'rechazos' }));
   chk('…y el informe lo muestra', inf.rechazos.latidos.length===1 && inf.rechazos.latidos[0].cola===2 && inf.rechazos.latidos[0].quien==='Mirian Salazar', JSON.stringify(inf.rechazos.latidos));
   a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:0 }));
