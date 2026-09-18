@@ -788,7 +788,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="field" id="wrap-cobrado" style="display:none">
         <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">cuánto entró por esta venta</span></label>
-        <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000"></div>
+        <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
       </div>
 
       <!-- ⚠️ El flete NO depende de cómo se pagó la mercadería: se cobra igual aunque la
@@ -815,6 +815,36 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       <div class="field" id="wrap-comp" style="display:none">
         <label class="lb">Comprobante del QR <span class="req">*</span> <span class="hint">la captura del pago</span></label>
         <div id="f-comp-box"></div>
+      </div>
+      <!-- 💳 PAGO MIXTO (§4ej): el cliente paga una parte con un método y el resto con otro
+           (QR + tarjeta es el caso típico). Los dos pagos van en la MISMA venta, con el
+           mismo N° de nota; el segundo lleva su propio monto y su propia imagen. -->
+      <div class="field" id="wrap-mixto-btn" style="display:none">
+        <button type="button" class="btn btn-ghost btn-sm" style="width:auto" onclick="toggleMixto()">➕ Pagó con dos métodos <span class="hint">(ej. QR + tarjeta)</span></button>
+      </div>
+      <div id="wrap-mixto" style="display:none;border:1px dashed var(--teal-border);border-radius:10px;padding:10px 12px;margin-top:8px;background:var(--teal-lt)">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px"><b style="font-size:.85rem">💳 Segundo método de pago</b><button type="button" class="btn btn-ghost btn-sm" style="width:auto;margin-left:auto" onclick="toggleMixto(false)">✕ Quitar</button></div>
+        <div class="field">
+          <label class="lb">¿Con qué pagó la otra parte? <span class="req">*</span></label>
+          <div class="seg mtd" id="f-metodo2">
+            <button type="button" data-val="Efectivo">💵 Efectivo</button>
+            <button type="button" data-val="QR">📱 QR</button>
+            <button type="button" data-val="Tarjeta">💳 Tarjeta</button>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lb">¿Cuánto pagó con este método? <span class="req">*</span> <span class="hint" id="f-monto2-hint"></span></label>
+          <div class="num-money"><input type="number" id="f-monto2" min="0" step="0.01" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
+        </div>
+        <div class="field" id="wrap-banco2" style="display:none">
+          <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
+          <div class="seg mtd" id="f-banco2"></div>
+        </div>
+        <div class="field" id="wrap-comp2">
+          <label class="lb">Comprobante de este pago <span class="req">*</span></label>
+          <div id="f-comp-box2"></div>
+        </div>
+        <div style="font-size:.75rem;color:var(--muted)">Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. Lo que no pongas acá queda con el primer método.</div>
       </div>
       </div><!-- /wrap-cobro-todo -->
 
@@ -5614,6 +5644,7 @@ function updateBancoVisibility(){
   // El banco es solo del QR; la imagen del pago se pide con CUALQUIER método.
   renderCompForm(metodoVisible && metodoConComprobante(segVal('f-metodo')));
   pintarEnvioCobrado();
+  pintarMixto();                                    // 💳 el segundo método sigue al primero (§4ej)
 }
 /* ---- Imagen del pago en el formulario de carga (OBLIGATORIA con cualquier método) ----
    QR → la captura, Tarjeta → el voucher, Efectivo → el recibo que se le dio al cliente.
@@ -5660,6 +5691,66 @@ function quitarCompForm(i){
   var a=compsArr(FORM_COMPS);
   if(i==null) a=[]; else a.splice(i,1);
   FORM_COMPS=a; renderCompForm(true);
+}
+/* ============================================================================
+   💳 PAGO MIXTO — dos métodos en la misma venta (§4ej)
+   El dueño: *"hay clientes que pagan de manera mixta"* (QR + tarjeta). Cargar la venta dos
+   veces la duplica en todo el panel; agregar el segundo pago desde Contabilidad eran dos
+   pasos y dos personas. Ahora la vendedora lo carga de una: el primer método es el de
+   siempre y se lleva EL RESTO; el segundo lleva su método, su monto y su imagen. Los dos
+   pagos van con el N° de nota de la venta. En el historial quedan como el anticipo
+   («~método monto») más un cobro del mismo día y mismo recibo — así Contabilidad y el
+   cuadre los ven por separado, cada uno contra su banco o su POS.
+   ========================================================================== */
+var MIXTO=false, FORM_COMPS2=[], COMP_DESTINO=1, BANCO_EXTRA2='';
+function toggleMixto(on){
+  MIXTO = (on==null) ? !MIXTO : !!on;
+  if(!MIXTO){ FORM_COMPS2=[]; segSet('f-metodo2',''); segSet('f-banco2',''); var m=document.getElementById('f-monto2'); if(m){ m.value=''; m.classList.remove('err'); } }
+  pintarMixto();
+  if(MIXTO){ var w=document.getElementById('wrap-mixto'); if(w) w.scrollIntoView({block:'center'}); }
+}
+/* Sobre qué total se reparte: lo cobrado (pagado) o el adelanto (a cuenta). */
+function mixtoTotalBase(){
+  return (segVal('f-pagado')==='SI') ? (parseFloat((document.getElementById('f-cobrado')||{}).value)||0)
+                                     : (parseFloat((document.getElementById('f-acuenta')||{}).value)||0);
+}
+function mixtoMonto2(){ return parseFloat((document.getElementById('f-monto2')||{}).value)||0; }
+function renderBancos2(){
+  var box=document.getElementById('f-banco2'); if(!box) return;
+  var v=(document.getElementById('f-vendedor')||{}).value||'';
+  var lista=bancosDeVendedor(v).slice(), prev=segVal('f-banco2');
+  var extra=esBanco(BANCO_EXTRA2); if(extra && lista.indexOf(extra)<0) lista.push(extra);
+  box.innerHTML=lista.map(function(b){ return '<button type="button" data-val="'+esc(b)+'">🏦 '+esc(b)+'</button>'; }).join('');
+  initSeg('f-banco2',null);
+  if(prev && lista.indexOf(prev)>=0) segSet('f-banco2', prev);
+}
+function pintarMixto(){
+  var btnW=document.getElementById('wrap-mixto-btn'), box=document.getElementById('wrap-mixto'); if(!btnW||!box) return;
+  var wm=document.getElementById('wrap-metodo');
+  var metodoVisible=!!wm && wm.style.display!=='none';
+  btnW.style.display=(metodoVisible && !MIXTO)?'block':'none';
+  box.style.display=(metodoVisible && MIXTO)?'block':'none';
+  if(!(metodoVisible && MIXTO)) return;
+  var esQR=segVal('f-metodo2')==='QR';
+  if(esQR) renderBancos2();
+  document.getElementById('wrap-banco2').style.display=esQR?'block':'none';
+  if(!esQR) segSet('f-banco2','');
+  var b2=document.getElementById('f-comp-box2');
+  if(b2) b2.innerHTML=compTiraHtml(FORM_COMPS2,'quitarCompForm2','adjuntarCompForm2()','La imagen de ESTE pago: '+nombreComprobante(segVal('f-metodo2')||'')+'. <b>Al menos una es obligatoria.</b>');
+  var base=mixtoTotalBase(), m2=mixtoMonto2(), h=document.getElementById('f-monto2-hint');
+  if(h) h.innerHTML = !(base>0) ? (segVal('f-pagado')==='SI' ? 'primero poné el monto total cobrado' : 'primero poné el A cuenta')
+       : (m2>0 && m2<base-0.009) ? ('el resto, <b>'+fmtBs(r2(base-m2))+'</b>, queda con '+esc(segVal('f-metodo')||'el primer método'))
+       : ('de los '+fmtBs(base)+' que entraron en total');
+}
+function adjuntarCompForm2(){ adjuntarCompForm(2); }
+function quitarCompForm2(i){ var a=compsArr(FORM_COMPS2); if(i==null) a=[]; else a.splice(i,1); FORM_COMPS2=a; pintarMixto(); }
+function compRepintar(){ if(COMP_DESTINO===2) pintarMixto(); else renderCompForm(true); }
+/* ¿La venta ya tiene un pago mixto? Es el cobro del MISMO día y el MISMO recibo que el
+   anticipo. Sirve para volver a mostrarlo al editar. */
+function mixtoDe(p){
+  var a=anticipoDe(p); if(!a || !a.fecha) return null;
+  var cs=cobrosDe(p).filter(function(c){ return !esEnvio(c) && c.fecha===a.fecha && limpiaNota(c.nota)===limpiaNota(a.nota) && (Number(c.monto)||0)>0; });
+  return cs.length===1 ? cs[0] : null;
 }
 /* ¿Hay que frenar el guardado por falta de imagen?
    ⚠️ Los pedidos VIEJOS en efectivo no tienen ninguna (antes no se pedía) y son casi todos.
@@ -5744,26 +5835,35 @@ function focoComprobante(){
     try{ w.scrollIntoView({block:'center'}); }catch(e){}
   }, 0);
 }
-function adjuntarCompForm(){
+function adjuntarCompForm(destino){
+  COMP_DESTINO = (destino===2) ? 2 : 1;                       // 💳 a qué pago va la imagen (§4ej)
   if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
-  if(compsArr(FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
+  if(compsArr(COMP_DESTINO===2?FORM_COMPS2:FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
   var el=document.getElementById('fcomp-input'); if(!el) return;
   el.value=''; el.click();
 }
 function onCompFormElegido(ev){
   var f=(ev.target.files||[])[0]; if(!f) return;
   // El tope va acá y no solo en el botón: así no se sube nada a Drive de más.
-  if(compsArr(FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
+  if(compsArr(COMP_DESTINO===2?FORM_COMPS2:FORM_COMPS).length>=COMP_MAX){ toast('Ya subiste las '+COMP_MAX+' imágenes','err'); return; }
+  var _dest=COMP_DESTINO;                          // por si cambian de bloque mientras sube
   toast('Achicando y subiendo el comprobante…','ok');
-  COMP_SUBIENDO++; renderCompForm(true);          // que se vea "⏳ Subiendo…" desde ya
+  COMP_SUBIENDO++; compRepintar();                 // que se vea "⏳ Subiendo…" desde ya
   fotoCronometro(f, 1280, 0.72).then(function(dataUrl){
     return conTopeDuro(apiFoto('form', 'comprobante_'+(document.getElementById('f-cliente').value||''), dataUrl));
   }).then(function(res){
     COMP_SUBIENDO--;
     if(!res || !res.ok || !res.fotoId){
-      renderCompForm(true);
+      compRepintar();
       toast(res && res.version ? ('No se pudo guardar el comprobante ('+(res.error||'error')+')')
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
+      return;
+    }
+    if(_dest===2){
+      FORM_COMPS2=compsArr(compsArr(FORM_COMPS2).concat([res.fotoId]));
+      var w2=document.getElementById('wrap-comp2'); if(w2) w2.classList.remove('seg-err');
+      pintarMixto();
+      toast('Imagen del segundo pago lista ✓ · '+fotoTiempoTxt(),'ok');
       return;
     }
     FORM_COMPS=compsArr(compsArr(FORM_COMPS).concat([res.fotoId]));
@@ -5772,7 +5872,7 @@ function onCompFormElegido(ev){
     toast((FORM_COMPS.length<COMP_MAX ? 'Imagen lista ✓ — podés sumar el recibo' : 'Las '+COMP_MAX+' imágenes listas ✓')+' · '+fotoTiempoTxt(),'ok');
   }).catch(function(e){
     if(COMP_SUBIENDO>0) COMP_SUBIENDO--;          // que no quede colgado en "Subiendo…"
-    renderCompForm(true);
+    compRepintar();
     toast('No se pudo subir el comprobante: '+motivoDeError(e),'err');
   });
 }
@@ -5833,6 +5933,18 @@ function submitPedido(){
       memeComprobante(vendedor, segVal('f-metodo'));
       return;
     }
+    /* 💳 El segundo método (§4ej): método, monto (mayor a 0 y menor al total), banco si
+       es QR, imagen propia, y que no sea el mismo método que el primero. */
+    if(MIXTO){
+      var _mx2=segVal('f-metodo2'), _mm2=mixtoMonto2(), _mbase=mixtoTotalBase();
+      var _irA=function(id){ var e=document.getElementById(id); if(e){ e.classList.add('seg-err'); setTimeout(function(){ e.classList.remove('seg-err'); },1600); e.scrollIntoView({block:'center'}); } };
+      if(!_mx2){ toast('Elegí con qué pagó la OTRA parte (segundo método), o quitá el segundo método','err'); _irA('wrap-mixto'); return; }
+      if(!(_mbase>0)){ toast(segVal('f-pagado')==='SI' ? 'Poné primero el MONTO TOTAL COBRADO: el segundo pago es una parte de eso' : 'Poné primero el A CUENTA: el segundo pago es una parte de eso','err'); _irA('wrap-mixto'); return; }
+      if(!(_mm2>0) || _mm2>=_mbase-0.009){ markErr('f-monto2'); toast('El segundo pago tiene que ser mayor a 0 y menor a '+fmtBs(_mbase)+' (el total). El resto queda con el primer método.','err'); var _fmm=document.getElementById('f-monto2'); _fmm.focus(); _fmm.scrollIntoView({block:'center'}); return; }
+      if(_mx2==='QR' && !segVal('f-banco2')){ toast('Elegí a qué banco entró el QR del segundo pago','err'); _irA('wrap-banco2'); return; }
+      if(_mx2===segVal('f-metodo') && (_mx2!=='QR' || segVal('f-banco2')===segVal('f-banco'))){ toast('El segundo método es igual al primero. Si pagó todo con '+_mx2+', quitá el segundo método.','err'); _irA('wrap-mixto'); return; }
+      if(!compsArr(FORM_COMPS2).length){ toast('Falta la imagen del SEGUNDO pago: '+nombreComprobante(_mx2),'err'); _irA('wrap-comp2'); return; }
+    }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
     if(segVal('f-pagado')!=='SI' && _acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
@@ -5884,7 +5996,19 @@ function submitPedido(){
   /* Con "SÍ, pagado" el monto se guarda como un PAGO de verdad en el historial
      (`~método monto @fecha #nota %comprobante`), no como texto suelto. Así aparece
      en Contabilidad y en el cuadre con su monto, su fecha y su comprobante. */
-  var _metForm = (_pagSI && _cobVal>0)
+  /* 💳 Pago mixto (§4ej): el anticipo se lleva EL RESTO y el segundo método va como un
+     cobro del mismo día y el mismo recibo. Vale tanto para «SÍ, pagado» (sobre lo cobrado)
+     como para el adelanto (sobre el «A cuenta»). */
+  var _mixOn = MIXTO && !lite && (_pagSI ? _cobVal>0 : _acuVal>0);
+  var _metForm = _mixOn
+        ? (function(){
+            var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), hoy=todayStr(), nota=document.getElementById('f-nota').value;
+            return textoCobros([
+              { anticipo:true, metodo:segVal('f-metodo'),  banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),   monto:r2(base-m2), fecha:hoy, nota:nota, comps:compsArr(FORM_COMPS) },
+              { anticipo:false, metodo:segVal('f-metodo2'), banco:(segVal('f-metodo2')==='QR'?segVal('f-banco2'):''), monto:r2(m2),      fecha:hoy, nota:nota, comps:compsArr(FORM_COMPS2) }
+            ]);
+          })()
+        : (_pagSI && _cobVal>0)
         ? textoCobros([{ anticipo:true,
                          metodo:segVal('f-metodo'),
                          banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
@@ -5897,7 +6021,18 @@ function submitPedido(){
      que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
      pedido ya venía pagado, se conservan el anticipo y el historial. */
   var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)===0;
-  var _plataIgual = _tieneHist && ( _seguiaPagado ||
+  /* 💳 ¿Cambió el pago mixto? (§4ej) Agregar o quitar el segundo método, o cambiarle el
+     monto, el método, el banco o las imágenes, no mueve el TOTAL cobrado — y «la plata está
+     igual» lo dejaba pasar conservando el historial viejo. Se compara el segundo pago. */
+  var _mxPrev = (_tieneHist && prev) ? mixtoDe(prev) : null;
+  var _mixCambio = _tieneHist && (
+      (!!_mxPrev !== !!_mixOn) ||
+      (!!_mxPrev && !!_mixOn && (
+         r2(Number(_mxPrev.monto)||0)!==r2(mixtoMonto2()) ||
+         String(_mxPrev.metodo||'')!==segVal('f-metodo2') ||
+         String(_mxPrev.banco||'')!==(segVal('f-metodo2')==='QR'?segVal('f-banco2'):'') ||
+         compsArr(_mxPrev.comps!=null?_mxPrev.comps:_mxPrev.comp).join(',')!==compsArr(FORM_COMPS2).join(','))));
+  var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
                     ((Number(prev.acuenta)||0)===_acuVal &&
                      (Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
   if(_tieneHist && !_plataIgual &&
@@ -6663,6 +6798,9 @@ function resetForm(){
   document.getElementById('wrap-metodo').style.display='none';
   document.getElementById('wrap-banco').style.display='none'; segSet('f-banco','');
   FORM_COMPS=[]; renderCompForm(false);
+  MIXTO=false; FORM_COMPS2=[]; BANCO_EXTRA2=''; COMP_DESTINO=1; segSet('f-metodo2',''); segSet('f-banco2','');
+  var _fm2=document.getElementById('f-monto2'); if(_fm2){ _fm2.value=''; _fm2.classList.remove('err'); }
+  pintarMixto();
   var _fcb=document.getElementById('f-cobrado'); if(_fcb){ _fcb.value=''; _fcb.classList.remove('err'); }
   var _fen=document.getElementById('f-envio'); if(_fen) _fen.value='';
   segSet('f-envio-cob','NO'); pintarEnvioCobrado();
@@ -6735,6 +6873,19 @@ function editPedido(id){
      recién después se marca el banco. */
   updateMetodoVisibility();
   segSet('f-banco', _mf.banco);
+  /* 💳 Si la venta ya tiene un pago mixto (§4ej), se muestra el segundo método con su
+     monto y sus imágenes, y el monto cobrado es la SUMA de los dos (el anticipo solo era
+     una parte). Mismo orden que arriba: primero se pinta el bloque, después el banco. */
+  var _mx=mixtoDe(rec);
+  MIXTO=!!_mx; FORM_COMPS2=_mx?compsArr(_mx.comps!=null?_mx.comps:_mx.comp):[]; BANCO_EXTRA2=_mx?(_mx.banco||''):'';
+  if(_mx){
+    var _a2=anticipoDe(rec);
+    if(_cb && _a2 && rec.pagado) _cb.value=r2((Number(_a2.monto)||0)+(Number(_mx.monto)||0));
+    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=_mx.monto;
+    segSet('f-metodo2', _mx.metodo||'');
+  }
+  pintarMixto();
+  if(_mx) segSet('f-banco2', _mx.banco||'');
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -16411,6 +16562,7 @@ document.addEventListener('DOMContentLoaded',function(){
     updateMetodoVisibility();
   });
   initSeg('f-metodo',updateBancoVisibility);
+  initSeg('f-metodo2',pintarMixto);                 // 💳 pago mixto (§4ej)
   initSeg('f-envio-cob',pintarEnvioCobrado);
   initSeg('f-doc-tipo',setDocTipo);
   initSeg('cta-mode',setContaModo);

@@ -6821,3 +6821,40 @@ queda 200; venta sin nota + anticipo 300→301 ⇒ 301.
 
 **Dato corregido a mano** en la planilla: `kommo-39452846` (Carolina Loayza Vargas, Isabel)
 nota «17478» → «1748», que era la nota faltante del talonario (§4eh).
+
+## 4ej. Pago mixto: dos métodos en la misma venta desde el formulario (2026-09-18)
+
+El dueño: *"hay clientes que pagan de manera mixta"* (QR + tarjeta) y proponía cargar la
+venta dos veces con el mismo recibo y sacarle el aviso de duplicada. No: dos pedidos son dos
+ventas (unidades, totales, cupos, facturación) y el aviso de duplicada tendría razón. La
+venta ya guardaba varios pagos (el ledger `+`), pero el formulario admitía UN método.
+
+**Arreglo (`pedidos.html`).**
+- Debajo del bloque de cobro: botón **«➕ Pagó con dos métodos»** (`wrap-mixto-btn`, visible
+  cuando hay método) que abre `wrap-mixto`: `f-metodo2` (Efectivo/QR/Tarjeta), `f-monto2`
+  («¿cuánto con este método?» — el primero se lleva el resto), `f-banco2` si es QR
+  (`renderBancos2`, con `BANCO_EXTRA2` al editar) y `f-comp-box2` con sus imágenes
+  (`FORM_COMPS2`; `adjuntarCompForm(2)` / `COMP_DESTINO` reusa el mismo input de archivo).
+  `pintarMixto()` corre desde `updateBancoVisibility`, `f-metodo2`, `f-monto2`, `f-cobrado`.
+- Al guardar (`submitPedido`): valida método, base (> 0), monto (0 < m2 < base), banco del
+  QR, mismo método dos veces (dos QR a bancos distintos sí), imagen del segundo pago. El
+  historial se arma con `textoCobros([anticipo(resto, comps1), cobro(m2, comps2)])`, los dos
+  con la fecha de hoy y la nota de la venta. Vale para «SÍ, pagado» (sobre lo cobrado) y para
+  el adelanto (sobre «A cuenta»; el saldo queda como lo tipeó).
+- Editar: `mixtoDe(p)` (el cobro del mismo día y mismo recibo que el anticipo) vuelve a
+  mostrar el bloque con su monto, método, banco e imágenes, y `f-cobrado` muestra la SUMA.
+  `_mixCambio`: agregar/quitar el segundo método o cambiarle monto, método, banco o imágenes
+  rehace el historial aunque el total no cambie (antes «la plata está igual» lo conservaba).
+- `resetForm` limpia todo; sin tocar el botón, la venta se guarda como siempre.
+
+**Cuentas.** `anticipoDe` = el primero (resto), `cobrosDe` = [el segundo]; `ventaTotal` =
+saldo + cobros + anticipo = lo cobrado; `excesoCobro` 0. Contabilidad y el cuadre ven cada
+parte con su método y su banco (lo que preguntó el dueño: *"¿la fórmula y el cuadro tomarán
+lo que entró a efectivo, a QR y a tarjeta si fue mixto?"* — sí).
+
+**Prueba:** `tests/test_mixto.js` (Playwright, 22 checks + sin errores JS), corrida a mano en
+el browser local: 22 bien · 0 mal. Cubre el guardado (una venta, dos pagos, mismo recibo y
+día, imágenes, total, pagada sin exceso, `cobradoBs`), las seis negativas, la edición
+(vuelve a mostrar, conserva sin tocar, rehace al cambiar el reparto: 4000 + 990), el
+adelanto mixto (1500 + 500, saldo 2990, total 4990), el desglose por método y el caso sin
+mixto. Guía de la vendedora: tarjeta «💳 Pagó con dos métodos» (`#mixto`).

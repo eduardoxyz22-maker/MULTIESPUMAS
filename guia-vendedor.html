@@ -74,6 +74,7 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
     <a href="#producto">⚡ Cargar producto</a>
     <a href="#banco">🏦 Banco del QR</a>
     <a href="#monto">💰 Monto cobrado</a>
+    <a href="#mixto">💳 Pagó con dos métodos</a>
     <a href="#comprobante">📎 Comprobante</a>
     <a href="#recargo">🚚 Recargo entrega</a>
     <a href="#medidas">📏 Medidas</a>
@@ -206,6 +207,19 @@ body{font-family:var(--font-sans);color:var(--text);line-height:1.55;-webkit-fon
       Antes esa venta salía como <b>“DEBE Bs 0,00”</b> y parecía que estaba todo bien — <b>y no lo estaba</b>: el camión salía a entregar sin saber cuánto cobrar, y esa plata no la reclamaba nadie.<br>
       👉 Abrí la venta y completala: si el cliente <b>ya pagó</b>, registrale el pago con su comprobante; si <b>debe</b>, poné cuánto en <b>“Saldo por cobrar”</b>. En cuanto pongas el monto, el aviso se va solo.<br>
       🚚 Mientras tanto, al chofer le sale <b>“⚠️ Sin monto anotado — preguntá antes de entregar”</b> en vez de mandarlo callado.</div>
+  </div>
+
+  <div class="card" id="mixto">
+    <h3>💳 Pagó con dos métodos (QR + tarjeta, efectivo + QR…) <span class="pill new">nuevo</span></h3>
+    <p>Hay clientes que pagan una parte con un método y el resto con otro. <b>No cargues la venta dos veces</b>: serían dos ventas para el sistema (doble producto, doble total, dos cupos del camión). Cargala <b>una sola vez</b> y, debajo de "¿Con qué pagó?", tocá <b>➕ Pagó con dos métodos</b>.</p>
+    <ul>
+      <li>El <b>primer método</b> es el de siempre, con su comprobante. Se lleva <b>el resto</b> de lo cobrado.</li>
+      <li>En el <b>segundo bloque</b> elegís el otro método, ponés <b>cuánto pagó con ese</b> y subís <b>su</b> comprobante (la captura del QR o el voucher de la tarjeta).</li>
+      <li>El panel te muestra cuánto queda con el primero: si cobraste <span class="kbd">4990</span> y con tarjeta pagó <span class="kbd">1990</span>, dice "el resto, Bs 3.000, queda con QR".</li>
+      <li>Los dos pagos llevan el <b>mismo N° de nota</b> de la venta. No hace falta un recibo aparte.</li>
+    </ul>
+    <p>Sirve también para el <b>adelanto</b>: si dejó "a cuenta" con dos métodos, se reparte igual sobre el monto a cuenta.</p>
+    <div class="callout tip">✅ En Contabilidad cada parte queda con su método: lo del QR va contra el banco, lo de tarjeta contra el POS y lo de efectivo, en efectivo. Si después hay que corregir el reparto, se edita la venta y se cambia el monto del segundo pago.</div>
   </div>
 
   <div class="card" id="comprobante">
