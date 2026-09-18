@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-18-b';   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-18-c';   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -939,9 +939,15 @@ function doSave(p, forzar) {
   p.rev = Math.max((viejo ? (Number(viejo[REV_COL - 1]) || 0) : 0) + 1, Date.now());
   var row = recToRow(p);
   getCacheOlvidar_();
-  if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); return jsonOut({ ok:true, pedido:p, mode:'update' }); }
-  sh.appendRow(row);
-  return jsonOut({ ok:true, pedido:p, mode:'add' });
+  /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
+     panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.
+     Ahora se vuelve a leer la fila recién escrita y se devuelve ESO. */
+  var filaEco;
+  if (foundRow > 0) { sh.getRange(foundRow, 1, 1, row.length).setValues([row]); filaEco = foundRow; }
+  else { sh.appendRow(row); filaEco = sh.getLastRow(); }
+  var eco = p;
+  try { eco = rowToRec_(sh.getRange(filaEco, 1, 1, HEADERS.length).getValues()[0]); if (p.ocCambiada) eco.ocCambiada = p.ocCambiada; } catch (e) { eco = p; }
+  return jsonOut({ ok:true, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add') });
 }
 
 function doDelete(id) {

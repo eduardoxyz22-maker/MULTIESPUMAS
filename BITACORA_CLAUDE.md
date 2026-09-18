@@ -7010,3 +7010,61 @@ entrega que ya tenía → también avisa. Browser local 12/12.
 En paralelo corre un agente auditando TODOS los caminos de guardado (mensajes optimistas,
 pérdidas silenciosas, carreras con el refresco automático, eco del servidor) con propuesta
 de pruebas de punta a punta; lo que encuentre va en §4eo.
+
+## 4eo. Auditoría de TODOS los caminos de guardado: seis arreglos y una prueba de punta a punta (2026-09-18)
+
+Un agente auditó los 20 caminos de guardado del panel y el servidor (informe
+`auditoria-guardado.md` en el scratchpad de la sesión; base `fec8bf5`). Hallazgos por
+gravedad y qué se hizo:
+
+**A1 (alta) — una edición rechazada pisaba la fila entera.** Si el servidor rechazaba una
+EDICIÓN (`busy`, día cerrado, cupos, otro), el panel hacía `STATE=STATE.filter(...)` sin
+mirar `isEdit`; el formulario quedaba abierto («tocá Guardar de nuevo») y el segundo Guardar
+armaba `rec` con `prev=null`: fotos vacías, sin chofer, sin marcas de stock, sin ATC, y el
+servidor lo escribía. **Arreglo:** en los tres rechazos `if(prev) upsert(prev)`; y si
+`isEdit && !prev` se frena con aviso «volvé a abrirlo desde Mis pedidos».
+**A2 (alta) — sin respuesta salía el modal verde.** El `catch` (sin red, 404, 500, clave)
+encolaba y después llamaba `after()`: «✓ Pedido guardado» y el botón de pasar la venta al
+grupo, sin estar en la planilla. **Arreglo:** `afterEnCola()`: cierra el formulario, va a
+Mis pedidos y abre «⏳ Quedó en cola en este dispositivo — NO está en la planilla; no lo
+pases al grupo todavía» con Reintentar. Lo mismo para una respuesta rara sin `ok`.
+**A3 (alta) — el `list` tardío deshacía lo recién marcado y el reintento lo revertía.**
+Cada refresco reemplaza los objetos de STATE; el guardado que esperaba turno mandaba
+`findById(id)` = la copia vieja. Es exactamente «revisa 2-3 veces y lo vuelve a subir».
+**Arreglo:** `SAVE_ULTIMO[id]` (lo último que tocó la persona) y `SAVE_REV[id]` (último
+sello); `mergePending` conserva la copia local para los ids con guardado en vuelo, en
+espera o de hace <90 s y para los que están en la cola; el guardado en espera manda
+`SAVE_ULTIMO` con el rev sellado. Los retiros en vuelo también se conservan.
+**M1 (media) — imágenes al editar sin adelanto, y quitar.** El pegado de §4em exigía
+anticipo; sin adelanto (venta pagada desde Contabilidad) la imagen nueva se tiraba, y
+quitar una imagen con «la plata igual» nunca se guardaba. **Arreglo:** destino = adelanto
+o, si no hay, el primer cobro; se aplican altas y bajas.
+**M2 (media, `.gs` → `2026-09-18-c`) — el eco no era eco.** `doSave` devolvía el objeto
+recibido; el panel comparaba lo enviado con lo enviado. **Arreglo:** se relee la fila
+recién escrita (`rowToRec_`) y se devuelve eso (con `ocCambiada` si hubo).
+**M5 (media) — 25+ «✓» optimistas.** `persistPedido` ahora devuelve la promesa y, si el
+servidor no aceptó o no contestó, cartel rojo «⚠️ <cliente>: NO se guardó en la planilla
+todavía… quedó en cola» (los rechazos firmes ya los decía `rechazoFirme`).
+**M6 (media) — respuesta perdida = «lo modificó otra persona» = duplicado.** Google grababa,
+la respuesta se perdía, la cola reenviaba con rev viejo → conflicto → la persona rehacía el
+cambio. **Arreglo:** `mismoContenido(rec, res.pedido)` (todo salvo rev/nroDia/ts/oc/
+cobradoBs): si es la misma fila, es un ok tardío: sello y silencio.
+
+**Pendientes de la auditoría (no tocados):** M3 fotos huérfanas en Drive (`guardarFoto`
+contesta ok sin vínculo; `onCompElegido` captura `p` antes del upload), M4 borrar la foto
+de Drive antes de que el save/delete confirme, M7 `mergePending` resucita pedidos borrados
+si otro dispositivo tenía una edición en cola (falta `error:'borrado'` en el servidor),
+`doPost` sin try/catch (un 500 cae como «sin red»), y las 12 suites propuestas en §7 del
+informe (se hicieron 6 en `test_guardado.js`).
+
+**Pruebas.** `tests/test_guardado.js` (Playwright, 13 checks + sin errores JS; browser local
+13/13): A1 rechazo `busy` al editar conserva fotos/chofer/marcas y el segundo Guardar entra
+completo; sin copia original no guarda; A2 sin respuesta → modal «Quedó en cola», sin verde
+ni WhatsApp, pedido en cola; A3 list viejo no deshace la marca en vuelo y el guardado en
+espera manda entregado+chofer nuevo (2 saves, no la copia vieja); M1 sin adelanto la imagen
+va al primer cobro y quitar se guarda; M5 guardado del chofer sin respuesta en rojo y en
+cola; M6 conflicto con la misma fila = sin aviso, sello aplicado; conflicto real sigue
+avisando. `tests/test_servidor.js` 135→**137**: el eco es la fila releída (add y update).
+`test_comp_perdido.js` 12/12, `test_mixto.js` 22/22, `test_hook.js` 78/78.
+
+**Pendiente del dueño:** publicar el `.gs` `2026-09-18-c` (Nueva versión).

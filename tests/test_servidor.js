@@ -706,6 +706,15 @@ if (typeof cargar([HDR], {}).ctx.rechazosInforme_ !== 'function') {
   a.post(conClave({ action:'list', quien:'Carola Chavez' }));
   chk('un list sin el dato de cola no escribe nada', !props.LATIDOS || props.LATIDOS==='{}', props.LATIDOS);
 }
+{
+  // 🔍 el eco del guardado es la fila RELEÍDA (§4eo), no el objeto que llegó
+  const a = cargar([HDR], { PANEL_KEY: CLAVE });
+  const r = a.post(conClave({ action:'save', pedido:{ id:'e1', fecha:MARTES, turno:'AM', cliente:'ECO', vendedor:'Carola Chavez', chofer:'Pepe', fotos:['F1','F2'], productos:[{desc:'X',medida:'1x1',codigo:'A',cant:2}], ts:AHORA, nota:'55', saldo:100, pagado:false } }));
+  const l = a.post(conClave({ action:'list' })).pedidos.filter(x => x.id==='e1')[0];
+  chk('⚠️ lo que vuelve en `pedido` es lo que quedó en la hoja: mismos campos que el list', r.ok===true && r.mode==='add' && r.pedido.chofer==='Pepe' && r.pedido.fotos.join(',')==='F1,F2' && r.pedido.productos.length===1 && r.pedido.rev===l.rev && r.pedido.nota==='55' && r.pedido.nroDia===l.nroDia, JSON.stringify(r.pedido).slice(0,160));
+  const r2 = a.post(conClave({ action:'save', pedido:Object.assign({}, l, { chofer:'Juan' }) }));
+  chk('…también al ACTUALIZAR (mode update, chofer nuevo, rev nuevo)', r2.ok===true && r2.mode==='update' && r2.pedido.chofer==='Juan' && r2.pedido.rev>l.rev, JSON.stringify(r2.pedido).slice(0,120));
+}
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
