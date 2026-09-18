@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-16-a';   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-18-a';   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el)   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -276,8 +276,120 @@ function getCacheOlvidar_() {
   try { c.remove('get_n'); } catch (e) {}
 }
 
-/** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano. */
+/* ============================================================================
+   ⚠️ GUARDADOS RECHAZADOS Y COLAS SIN ENVIAR — que quede rastro en el servidor (§4el)
+   El dueño: *"indican que cargan comprobantes o ventas o pagos, recargan la página y les
+   salió cargado, pero no aparecen"*. Hasta acá un guardado rechazado (choque de versión,
+   día cerrado, cupo lleno, OC repetida, clave) era un cartel de 9 segundos en el navegador
+   de quien guardó, y una cola sin enviar (sin señal, sin clave) era un «N sin enviar» al
+   pie de SU pantalla. Nadie más se enteraba. Ahora:
+   · cada respuesta {ok:false} de doPost se anota en la hoja «Rechazos» (fecha, acción,
+     motivo, id, cliente, vendedor, quién guardaba, detalle, dispositivo);
+   · cada `list` trae cuántos guardados tiene ese dispositivo en la cola (`cola`) y se
+     anota en LATIDOS (propiedades del script), y se borra cuando la cola llega a 0;
+   · `action:'rechazos'` devuelve las dos cosas para la pestaña de Administración.
+   Nunca se anotan teléfonos ni direcciones; los nombres de cliente sí (hay que ubicar la venta).
+   ========================================================================== */
+var RECHAZOS_HOJA = 'Rechazos';
+var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1 };
+var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
+var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
+
+function getSheetRechazos_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(RECHAZOS_HOJA);
+  if (!sh) sh = ss.insertSheet(RECHAZOS_HOJA);
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, RECHAZOS_HEADERS.length).setValues([RECHAZOS_HEADERS]);
+    sh.setFrozenRows(1);
+    sh.getRange(1, 1, 1, RECHAZOS_HEADERS.length).setFontWeight('bold');
+  }
+  return sh;
+}
+/** Qué se guardaba: cliente, vendedor y un detalle corto, sin datos de contacto. */
+function rechazoDetalle_(body, o) {
+  var p = (body && body.pedido) || {};
+  var d = [];
+  if (p.fecha) d.push('fecha ' + p.fecha + (p.turno ? (' ' + p.turno) : ''));
+  if (p.oc) d.push('OC ' + p.oc);
+  if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
+  if (o.error === 'oc_repetida' && o.otro) d.push('la tiene ' + (o.otro.cliente || 'otro pedido'));
+  if (o.error === 'cupos_llenos' && o.turno) d.push('turno ' + o.turno + ' lleno');
+  if (o.motivo) d.push(String(o.motivo));
+  if (String(p.id || '').indexOf('__ret_') === 0) d.push('RETIRO DE EFECTIVO ' + (p.acuenta != null ? ('Bs ' + p.acuenta) : ''));
+  return d.join(' · ');
+}
+function rechazoAnotar_(body, action, o) {
+  try {
+    var p = (body && body.pedido) || {};
+    var id = String(p.id || (body && body.id) || '');
+    var sh = getSheetRechazos_();
+    sh.appendRow([new Date(), String(action || ''), String(o.error || ''), id,
+                  String(p.cliente || ''), String(p.vendedor || ''), String((body && body.quien) || ''),
+                  rechazoDetalle_(body, o), getDispositivo_()]);
+    var n = sh.getLastRow() - 1;
+    if (n > RECHAZOS_MAX) sh.deleteRow(2);            // la más vieja
+    try { var pr = PropertiesService.getScriptProperties(); pr.setProperty('RECHAZOS_N', String((Number(pr.getProperty('RECHAZOS_N')) || 0) + 1)); } catch (e2) {}
+  } catch (e) {}
+}
+/** Los últimos rechazos, del más nuevo al más viejo. */
+function rechazosLeer_(max) {
+  var sh = getSheetRechazos_(), last = sh.getLastRow();
+  if (last < 2) return [];
+  var n = Math.min(max || 200, last - 1);
+  var vals = sh.getRange(last - n + 1, 1, n, RECHAZOS_HEADERS.length).getValues();
+  var out = [];
+  for (var i = vals.length - 1; i >= 0; i--) {
+    var r = vals[i], f = r[0];
+    out.push({ ts: (f && f.getTime) ? f.getTime() : (Date.parse(f) || 0), accion: String(r[1] || ''), error: String(r[2] || ''), id: String(r[3] || ''),
+               cliente: String(r[4] || ''), vendedor: String(r[5] || ''), quien: String(r[6] || ''), detalle: String(r[7] || ''), dispositivo: String(r[8] || '') });
+  }
+  return out;
+}
+/* Los latidos: qué dispositivo tiene guardados sin enviar. Una entrada por dispositivo,
+   se pisa con cada `list` y se borra cuando la cola llega a 0. */
+function latidosLeer_() { try { return JSON.parse(prop_('LATIDOS') || '{}') || {}; } catch (e) { return {}; } }
+function latidoAnotar_(body) {
+  try {
+    var cola = Number(body && body.cola) || 0, dev = getDispositivo_();
+    var L = latidosLeer_();
+    if (!cola) { if (!L[dev]) return; delete L[dev]; }
+    else {
+      L[dev] = { ts: Date.now(), quien: String((body && body.quien) || ''), cola: cola,
+                 ids: ((body && body.colaIds) || []).slice(0, 5).map(String), clave: !!(body && body.key) };
+      var ks = Object.keys(L);
+      if (ks.length > LATIDOS_MAX) { ks.sort(function (a, b) { return (L[a].ts || 0) - (L[b].ts || 0); }); while (ks.length > LATIDOS_MAX) delete L[ks.shift()]; }
+    }
+    PropertiesService.getScriptProperties().setProperty('LATIDOS', JSON.stringify(L));
+  } catch (e) {}
+}
+function rechazosInforme_() {
+  var L = latidosLeer_(), lat = [];
+  for (var k in L) lat.push({ dispositivo: k, ts: L[k].ts, quien: L[k].quien, cola: L[k].cola, ids: L[k].ids || [], clave: !!L[k].clave });
+  lat.sort(function (a, b) { return (b.ts || 0) - (a.ts || 0); });
+  return { ahora: Date.now(), total: Number(prop_('RECHAZOS_N')) || 0, rechazos: rechazosLeer_(200), latidos: lat };
+}
+
+/** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano.
+    Envuelve al cuerpo real para anotar cada «no» (§4el). */
 function doPost(e) {
+  var out = doPostCuerpo_(e);
+  try {
+    var txt = (out && typeof out.getContent === 'function') ? out.getContent() : (out && out._t);
+    var o = txt ? JSON.parse(txt) : null;
+    if (o && o.ok === false && o.error && RECHAZOS_REGISTRAR[o.error]) {
+      var body = {}; try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+      var action = body.action || 'save';
+      /* Una clave que falta en un `list` es un dispositivo que todavía no la ingresó y
+         refresca cada 2 minutos: anotarlo llenaría la hoja sin decir nada nuevo. La clave
+         que falta al GUARDAR sí importa: es un guardado que se quedó en una cola. */
+      if (!(o.error === 'clave' && action !== 'save' && action !== 'delete' && action !== 'foto')) rechazoAnotar_(body, action, o);
+    }
+  } catch (err2) {}
+  return out;
+}
+function doPostCuerpo_(e) {
   /* 📥 EL AVISO DE KOMMO (§4cc).
      Kommo NO manda JSON: manda un formulario con claves tipo
      "leads[status][0][id]". Por eso se mira ANTES del JSON.parse — si no, caía
@@ -315,7 +427,9 @@ function doPost(e) {
      equipo se hacían de a una Y hacían esperar a cualquiera que quisiera guardar.
      El dueño, con el botón clavado en «Enviando…»: *"que pasa con el servidor al subir
      fotos, al entrar, al cambiar algo tarda minutos"*. */
-  if (action === 'list') return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() });
+  if (action === 'list') { latidoAnotar_(body); return jsonOut({ ok:true, version:SCRIPT_VERSION, pedidos: readAll() }); }
+  // ⚠️ Los guardados rechazados y las colas sin enviar (§4el). Sin candado: solo lee.
+  if (action === 'rechazos') return jsonOut({ ok:true, version:SCRIPT_VERSION, rechazos: rechazosInforme_() });
   // 📡 Quién lee por GET (§4dv): lo anotado en la caché, sin valores. Sin candado: no toca la hoja.
   if (action === 'getlog') return jsonOut({ ok:true, version:SCRIPT_VERSION, get: getLogInforme_() });
   var lock = LockService.getScriptLock();

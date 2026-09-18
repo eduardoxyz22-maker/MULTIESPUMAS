@@ -90,6 +90,7 @@ function hacerScriptApp(){
 }
 function cargar(filas, props){
   const sh = hacerPlanilla(filas), drive = hacerDrive();
+  const shR = hacerPlanilla([]);                       // la hoja «Rechazos» (§4el), aparte de la de pedidos
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
     put(k, v){ this._m[k] = String(v); },
@@ -97,7 +98,7 @@ function cargar(filas, props){
     remove(k){ delete this._m[k]; } };
   const ctx = {
     console, Date,
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: () => sh, insertSheet: () => sh }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: (n) => n==='Rechazos' ? shR : sh, insertSheet: (n) => n==='Rechazos' ? shR : sh }) },
     PropertiesService: { getScriptProperties: () => ({
       getProperty: (k) => (props && props[k] != null) ? props[k] : null,
       setProperty: (k, v) => { props[k] = v; },
@@ -128,7 +129,7 @@ function cargar(filas, props){
   const leer = (r) => JSON.parse(r._t);
   const post = (body) => leer(ctx.doPost({ postData:{ contents: JSON.stringify(body) }, parameter:{} }));
   const get  = (params) => leer(ctx.doGet({ parameter: params||{} }));
-  return { ctx, sh, drive, post, get, leer };
+  return { ctx, sh, shR, drive, post, get, leer };
 }
 
 const HDR = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona',
@@ -643,5 +644,60 @@ if (typeof cargar([HDR], {}).ctx.kommoRepaso !== 'function') {
 }
 
 }
+/* ── ⚠️ Guardados rechazados y colas sin enviar quedan anotados en el servidor (§4el) ── */
+console.log('\n── Guardados rechazados y latidos de la cola ──');
+if (typeof cargar([HDR], {}).ctx.rechazosInforme_ !== 'function') {
+  chk('⚠️ el .gs anota los guardados rechazados (§4el)', false, 'falta rechazosInforme_: es el .gs viejo');
+} else {
+{
+  const props = { PANEL_KEY: CLAVE };
+  const a = cargar([HDR, fila({id:'p1', cli:'DON CERRADO'})], props);
+  // día cerrado
+  a.post(conClave({ action:'save', pedido:{ id:'__dias_cerrados__', fecha:'', observaciones:'CERRADOS '+MARTES, ts:AHORA } }));
+  const r = a.post(conClave({ action:'save', pedido:{ id:'p2', fecha:MARTES, turno:'AM', cliente:'DOÑA NUEVA', vendedor:'Mirian Salazar', celular:'70000000', direccion:'x', ts:AHORA }, quien:'Mirian Salazar' }));
+  chk('un pedido a un día cerrado sigue rechazado', r.ok===false && r.error==='dia_cerrado', JSON.stringify(r).slice(0,80));
+  const filas = a.shR._datos;
+  chk('⚠️ …y queda ANOTADO en la hoja Rechazos: motivo, id, cliente, vendedor y quién guardaba', filas.length===2 && filas[1][2]==='dia_cerrado' && filas[1][3]==='p2' && filas[1][4]==='DOÑA NUEVA' && filas[1][5]==='Mirian Salazar' && filas[1][6]==='Mirian Salazar', JSON.stringify(filas[1]||[]).slice(0,160));
+  chk('…con la fecha y turno en el detalle, y sin teléfono ni dirección', /fecha /.test(String(filas[1][7])) && !/70000000/.test(JSON.stringify(filas[1])) , String(filas[1][7]));
+  chk('…los encabezados quedaron en la fila 1', filas[0][0]==='Fecha' && filas[0][2]==='Motivo');
+  // conflicto
+  const l = a.post(conClave({ action:'list' }));
+  const p1 = l.pedidos.filter(x => x.id==='p1')[0];
+  a.post(conClave({ action:'save', pedido:Object.assign({}, p1, { chofer:'A' }) }));
+  const c = a.post(conClave({ action:'save', pedido:Object.assign({}, p1, { chofer:'B' }), quien:'Carola Chavez' }));
+  chk('un choque de versión también queda anotado, con el rev enviado y el de la hoja', c.error==='conflicto' && filas.length===3 && filas[2][2]==='conflicto' && /rev enviado/.test(String(filas[2][7])), String(filas[2][7]));
+  // guardado bien: nada
+  a.post(conClave({ action:'save', pedido:{ id:'p9', fecha:MIERCOLES, turno:'AM', cliente:'BIEN', ts:AHORA } }));
+  chk('un guardado que entra NO se anota', filas.length===3, filas.length);
+  // el informe
+  const inf = a.post(conClave({ action:'rechazos' }));
+  chk('action:rechazos devuelve los rechazos del más nuevo al más viejo', inf.ok===true && inf.rechazos.rechazos.length===2 && inf.rechazos.rechazos[0].error==='conflicto' && inf.rechazos.rechazos[1].error==='dia_cerrado' && inf.rechazos.total===2, JSON.stringify(inf.rechazos).slice(0,160));
+  chk('…cada uno con quién guardaba y el cliente', inf.rechazos.rechazos[1].quien==='Mirian Salazar' && inf.rechazos.rechazos[1].cliente==='DOÑA NUEVA');
+}
+{
+  // la clave: en un list NO se anota (refresca cada 2 min sin clave); al guardar SÍ
+  const a = cargar([HDR], { PANEL_KEY: CLAVE });
+  a.post({ action:'list' }); a.post({ action:'list' });
+  chk('un list sin clave no llena la hoja de rechazos', a.shR._datos.length<=1, a.shR._datos.length);
+  const r = a.post({ action:'save', pedido:{ id:'q1', cliente:'SIN CLAVE', vendedor:'Mirian Salazar', ts:AHORA }, quien:'Mirian Salazar' });
+  chk('⚠️ un guardado sin clave sí queda anotado (es una venta que se quedó en la cola de alguien)', r.error==='clave' && a.shR._datos.length===2 && a.shR._datos[1][2]==='clave' && a.shR._datos[1][4]==='SIN CLAVE', JSON.stringify(a.shR._datos[1]||[]).slice(0,120));
+}
+{
+  // los latidos: la cola de cada dispositivo
+  const props = { PANEL_KEY: CLAVE };
+  const a = cargar([HDR], props);
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:2, colaIds:['__ret_x__','p7'] }));
+  let L = JSON.parse(props.LATIDOS||'{}');
+  chk('⚠️ un list con cola>0 deja el latido: quién, cuántos y qué ids', Object.keys(L).length===1 && L.ABCDEF && L.ABCDEF.cola===2 && L.ABCDEF.quien==='Mirian Salazar' && L.ABCDEF.ids.join(',')==='__ret_x__,p7' && L.ABCDEF.clave===true, props.LATIDOS);
+  const inf = a.post(conClave({ action:'rechazos' }));
+  chk('…y el informe lo muestra', inf.rechazos.latidos.length===1 && inf.rechazos.latidos[0].cola===2 && inf.rechazos.latidos[0].quien==='Mirian Salazar', JSON.stringify(inf.rechazos.latidos));
+  a.post(conClave({ action:'list', quien:'Mirian Salazar', cola:0 }));
+  L = JSON.parse(props.LATIDOS||'{}');
+  chk('cuando la cola llega a 0 el latido se borra', Object.keys(L).length===0, props.LATIDOS);
+  a.post(conClave({ action:'list', quien:'Carola Chavez' }));
+  chk('un list sin el dato de cola no escribe nada', !props.LATIDOS || props.LATIDOS==='{}', props.LATIDOS);
+}
+}
+
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
 process.exit(FAIL?1:0);

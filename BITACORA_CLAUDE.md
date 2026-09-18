@@ -6895,3 +6895,46 @@ queda en cola con el cartel rojo y **sigue en la ventana después de un refresco
 lista del servidor vacía.
 
 Sigue: registro de rechazos en el servidor + latido de la cola + pestaña en Administración.
+
+## 4el. Guardados rechazados y colas sin enviar: registro en el servidor y pestaña en Administración (2026-09-18)
+
+El dueño: *"¿cómo hacemos para tener una pestaña de administración para ver las
+modificaciones o correcciones fallidas?… indican que cargan comprobantes o ventas o pagos,
+recargan la página y les salió cargado pero no aparecen"*. Hasta acá un «no» del servidor
+era un cartel de 9 s en el navegador de quien guardó, y una cola sin enviar era un «N sin
+enviar» al pie de SU pantalla.
+
+**Servidor (`google-apps-script.gs` → `2026-09-18-a`).** `doPost` pasó a ser un envoltorio
+de `doPostCuerpo_`: lee la respuesta y, si es `{ok:false}` con un motivo de
+`RECHAZOS_REGISTRAR` (conflicto, dia_cerrado, cupos_llenos, oc_repetida, admin, clave, busy,
+bad json, no id, drive…), `rechazoAnotar_` agrega una fila a la hoja **«Rechazos»** (Fecha,
+Acción, Motivo, Id, Cliente, Vendedor, Quién guardaba, Detalle, Dispositivo). El detalle lleva
+fecha/turno, OC, «rev enviado / rev hoja» en un conflicto, y «RETIRO DE EFECTIVO Bs X» si es
+un `__ret_`; nunca teléfono ni dirección. Tope 2000 filas (se borra la más vieja). La clave
+que falta en un `list` NO se anota (un dispositivo sin clave refresca cada 2 min); al
+guardar sí. **Latidos:** cada `list` trae `cola` y `colaIds` del dispositivo; `latidoAnotar_`
+guarda en la propiedad `LATIDOS` (por dispositivo: ts, quién, cuántos, ids, si mandó clave) y
+la borra cuando la cola llega a 0. `action:'rechazos'` devuelve `{total, rechazos (200, del
+más nuevo), latidos}` sin candado.
+
+**Panel (`pedidos.html`).** `apiPost` manda `quien` (el nombre recordado) siempre y, en el
+`list`, `cola`/`colaIds`. Administración: botón **«⚠️ Guardados rechazados / sin enviar»**
+(`verRechazos` → `renderRechazos`): tabla de dispositivos con cola (quién, cuántos, hace
+cuánto, si tiene clave, qué ids) y tabla de rechazos (cuándo, quién, qué —con «abrir» si el
+pedido existe—, motivo en castellano, detalle); con el `.gs` viejo dice qué versión falta.
+Mis pedidos: `#mis-cola` (`renderColaAviso`, desde `updateFooter` y `renderMis`) muestra
+arriba de todo «⏳ N guardados de este dispositivo todavía NO llegaron a la planilla (motivo)»
+con Reintentar y 🔐 Ingresar la clave, y «❌ El servidor NO aceptó N guardados desde este
+dispositivo» con los últimos 7 días (`ME_RECHAZOS_V1`, que `rechazoFirme` alimenta).
+
+**Pruebas.** `tests/test_servidor.js` de 119 a **133**: día cerrado y conflicto quedan
+anotados con motivo/id/cliente/vendedor/quién y el detalle (sin teléfono); un guardado que
+entra no se anota; `rechazos` los devuelve del más nuevo al más viejo con el total; `list`
+sin clave no llena la hoja pero `save` sin clave sí; el latido queda con quién/cuántos/ids/
+clave, el informe lo muestra, con cola 0 se borra, y sin el dato no escribe. En el browser
+local: informe con datos simulados, mensaje de «.gs viejo», el aviso de Mis pedidos con
+cola y rechazos (y vacío cuando no hay nada), y el payload del `list` con quien/cola/ids.
+
+**Pendiente del dueño:** publicar el `.gs` (Nueva versión) para que el servidor empiece a
+anotar; hasta entonces el botón avisa que falta la `2026-09-18-a`. Los latidos y la hoja
+«Rechazos» aparecen solos.

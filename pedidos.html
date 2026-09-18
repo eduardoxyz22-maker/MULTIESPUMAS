@@ -874,8 +874,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         <div id="conn-admin" class="conn off"><span class="dot"></span><span id="conn-admin-txt"></span></div>
         <!-- 📡 Quién lee la planilla por GET (§4dv): el servidor anota firmas (nunca valores)
              y acá se muestran, porque Ejecuciones no le deja ver el registro al dueño. -->
-        <div style="margin:4px 0 8px"><button type="button" id="getlog-btn" class="btn btn-ghost btn-sm" style="width:auto" onclick="verLecturasGet()">📡 ¿Quién lee la planilla?</button></div>
+        <div style="margin:4px 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" id="getlog-btn" class="btn btn-ghost btn-sm" style="width:auto" onclick="verLecturasGet()">📡 ¿Quién lee la planilla?</button>
+          <!-- ⚠️ Guardados rechazados y colas sin enviar (§4el): lo que el servidor dijo que no, y qué dispositivo tiene cosas sin mandar. -->
+          <button type="button" id="rechazos-btn" class="btn btn-ghost btn-sm" style="width:auto;border-color:var(--red-border);color:#8a1c24" onclick="verRechazos()">⚠️ Guardados rechazados / sin enviar</button></div>
         <div id="getlog-box" style="display:none"></div>
+        <div id="rechazos-box" style="display:none"></div>
         <div id="cupo-admin" class="cupo ok"></div>
 
         <div class="filters">
@@ -1037,6 +1040,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       <!-- 📥 Ventas que llegaron de Kommo y les falta la entrega (§4ca).
            Va ARRIBA de todo: es lo primero que la vendedora tiene que resolver. -->
       <div id="mis-estado"></div>
+      <div id="mis-cola"></div>
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
       <div class="qchips" id="mis-chips"></div>
@@ -1913,7 +1917,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-16-a';
+var SCRIPT_VERSION_ESPERADA='2026-09-18-a';
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -1952,6 +1956,12 @@ var ADMIN_KEY_LOCAL=''; try{ ADMIN_KEY_LOCAL=localStorage.getItem(LS_ADMIN_KEY)|
 var SERVER_ADMIN_AUTH='';    // '' no sé · 'abierto' (sin ADMIN_KEY) · 'clave'
 function apiPost(payload){
   if(CLAVE_EQUIPO) payload.key=CLAVE_EQUIPO;
+  /* 🫀 Quién guarda y cuánto tiene sin enviar (§4el): el servidor lo anota para que
+     Administración vea desde SU pantalla qué dispositivo tiene una cola trabada y de quién es. */
+  try {
+    payload.quien = getVendedorMem()||'';
+    if(payload.action==='list'){ var _pq=getPending(); payload.cola=_pq.length; payload.colaIds=_pq.slice(0,5).map(function(x){ return String(x.id||''); }); }
+  } catch(e){}
   /* ⚠️ `credentials:'omit'` (§4do). El 09/09 a la noche el panel daba 404 en el navegador
      del dueño mientras, a la MISMA hora, el mismo Apps Script contestaba bien a la consulta
      que hace GitHub Actions desde un servidor (corrida #42, 20:26). O sea: la implementación
@@ -2057,7 +2067,17 @@ function aplicarSello(rec, srv){
 }
 /* El servidor dijo que NO y va en serio: no se reintenta, y la pantalla vuelve a lo que
    hay en la planilla. Para un CONFLICTO trae la fila actual y se pone esa. */
+var LS_RECHAZOS='ME_RECHAZOS_V1';
+function rechazosLocales(){ try{ var a=JSON.parse(localStorage.getItem(LS_RECHAZOS)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+function rechazoRecordar(rec, res){
+  try{
+    var a=rechazosLocales(); a.unshift({ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 });
+    localStorage.setItem(LS_RECHAZOS, JSON.stringify(a.slice(0,20)));
+  }catch(e){}
+  renderColaAviso();
+}
 function rechazoFirme(rec, res){
+  rechazoRecordar(rec, res);                       // que quede en ESTE dispositivo, no solo en un cartel (§4el)
   NO_ENCOLAR[rec.id]=Date.now();
   setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
   if(res.error==='conflicto'){
@@ -2155,6 +2175,43 @@ function initConnUI(){
    Ejecuciones (que además al dueño no se le despliegan: «Registros de Cloud» en gris). */
 var GETLOG_EN_CURSO=false;
 var GETLOG_COMO={cache:'de la caché',hoja:'leyó la hoja',clave:'clave mal',cerrado:'puerta cerrada'};
+/* ⚠️ GUARDADOS RECHAZADOS / SIN ENVIAR (§4el) — la pestaña que pidió el dueño. */
+var RECHAZOS_EN_CURSO=false;
+function verRechazos(){
+  var box=document.getElementById('rechazos-box'); if(!box||RECHAZOS_EN_CURSO) return;
+  RECHAZOS_EN_CURSO=true; box.style.display='';
+  box.innerHTML='<div style="font-size:.8rem;color:var(--muted);margin:6px 0">⏳ Preguntándole al servidor qué guardados rechazó…</div>';
+  apiPost({action:'rechazos'}).then(function(res){ RECHAZOS_EN_CURSO=false; box.innerHTML=renderRechazos(res&&res.ok?res.rechazos:null, res, null); })
+                              .catch(function(e){ RECHAZOS_EN_CURSO=false; box.innerHTML=renderRechazos(null, null, e||new Error('sin respuesta')); });
+}
+function renderRechazos(R, res, err){
+  var cerrar='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;float:right;padding:2px 8px" onclick="document.getElementById(\'rechazos-box\').style.display=\'none\'">✕</button>';
+  var caja=function(txt,color){ return '<div style="background:#fff;border:1px solid var(--gray-md);border-left:4px solid '+(color||'var(--red)')+';border-radius:8px;padding:9px 12px;margin:4px 0 8px;font-size:.8rem;line-height:1.45">'+cerrar+txt+'</div>'; };
+  var reimpl='Implementar → Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar';
+  if(!R){
+    if(err) return caja('<b>El servidor no contestó</b> — '+esc(motivoDeError(err))+'.');
+    if(res&&res.ok) return caja('<b>El servidor todavía no anota los guardados rechazados.</b> Tiene publicada la versión <code>'+esc(SERVER_VER||'?')+'</code> y hace falta la <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>: '+reimpl+'.','#7c4b00');
+    return caja('<b>El servidor contestó que no</b>'+(res&&res.error?' ('+esc(String(res.error))+')':'')+'.');
+  }
+  var ahora=Number(R.ahora)||Date.now(), lat=R.latidos||[], rs=R.rechazos||[];
+  var h='<b>⚠️ Guardados rechazados y colas sin enviar</b> <span style="color:var(--muted)">— lo que el servidor dijo que NO, y qué dispositivo tiene cosas sin mandar. Desde que se publicó la versión '+esc(SERVER_VER||'')+'.</span><br>';
+  h+='<div style="margin:8px 0 4px;font-weight:800">🫀 Dispositivos con guardados sin enviar ahora</div>';
+  if(!lat.length) h+='<div style="color:#0a6b47">✅ Ninguno: todos los dispositivos que consultaron la planilla tienen la cola en 0.</div>';
+  else h+='<table class="mini" style="width:100%;font-size:.78rem"><tr><th>Quién</th><th>Sin enviar</th><th>Último aviso</th><th>Clave</th><th>Qué</th></tr>'+lat.map(function(l){
+      return '<tr><td><b>'+esc(l.quien||'(sin nombre)')+'</b> <span style="color:var(--muted)">'+esc(l.dispositivo)+'</span></td><td><b style="color:var(--amber)">'+esc(l.cola)+'</b></td><td>'+esc(getlogHace(ahora-(Number(l.ts)||0)))+'</td><td>'+(l.clave?'✓':'<b style="color:var(--red)">sin clave</b>')+'</td><td style="color:var(--muted)">'+esc((l.ids||[]).join(', '))+'</td></tr>';
+    }).join('')+'</table><div style="font-size:.74rem;color:var(--muted)">Lo que está «sin enviar» existe SOLO en ese dispositivo. Si dice «sin clave», hay que ingresar la clave del equipo ahí; si no, que toque «Reintentar» en Mis pedidos con señal.</div>';
+  h+='<div style="margin:10px 0 4px;font-weight:800">❌ Guardados que el servidor rechazó ('+esc(R.total||rs.length)+' en total, últimos '+rs.length+')</div>';
+  if(!rs.length) h+='<div style="color:#0a6b47">✅ Ninguno.</div>';
+  else h+='<div class="tw" style="max-height:340px;overflow:auto"><table class="mini" style="width:100%;font-size:.78rem"><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Motivo</th><th>Detalle</th></tr>'+rs.map(function(r){
+      var d=new Date(Number(r.ts)||0), z=function(n){return (n<10?'0':'')+n;};
+      var cuando=(r.ts?(fmtFechaCorta(isoLocal(d))+' '+z(d.getHours())+':'+z(d.getMinutes())):'—');
+      var que=(String(r.id).indexOf('__ret_')===0?'💵 retiro de '+esc(r.vendedor):(esc(r.cliente||r.id||'')+(r.vendedor?(' <span style="color:var(--muted)">· '+esc(r.vendedor)+'</span>'):'')));
+      var abrir=(r.id && findById(r.id))?(' <a onclick="showPedidoModal(\''+esc(r.id)+'\')" style="text-decoration:underline;cursor:pointer">abrir</a>'):'';
+      return '<tr><td style="white-space:nowrap">'+cuando+'</td><td>'+esc(r.quien||'—')+' <span style="color:var(--muted)">'+esc(r.dispositivo)+'</span></td><td>'+que+abrir+'</td><td><b>'+esc(rechazoTxt(r.error))+'</b> <span style="color:var(--muted)">('+esc(r.accion)+')</span></td><td style="color:var(--muted)">'+esc(r.detalle||'')+'</td></tr>';
+    }).join('')+'</table></div>'+
+    '<div style="font-size:.74rem;color:var(--muted);margin-top:4px">«Lo modificó otra persona antes» = la pantalla de quien guardaba estaba vieja: el panel se recargó y el cambio hay que volver a hacerlo. «Día cerrado» / «turno lleno» / «OC repetida» = el panel lo avisó en el momento y no entró.</div>';
+  return caja(h,'var(--red)');
+}
 function verLecturasGet(){
   var box=document.getElementById('getlog-box'); if(!box||GETLOG_EN_CURSO) return;
   GETLOG_EN_CURSO=true;
@@ -7287,7 +7344,38 @@ function refreshCupos(){
   if(!CONNECTED){ renderCupoForm(); return; }
   refrescarEstado().then(function(){ renderCupoForm(); });
 }
+/* ⚠️ LA COLA Y LOS RECHAZOS, A LA VISTA DE LA VENDEDORA (§4el). El «N sin enviar» del pie
+   se pasaba de largo. En Mis pedidos, arriba de todo: cuántos guardados de este dispositivo
+   todavía no llegaron a la planilla y por qué, y los últimos que el servidor rechazó. */
+function rechazoTxt(err){
+  return { conflicto:'lo modificó otra persona antes', dia_cerrado:'el día estaba cerrado', cupos_llenos:'el turno estaba lleno',
+           oc_repetida:'el N° de OC ya existía', admin:'faltaba la clave de administración', clave:'faltaba la clave del equipo',
+           busy:'el servidor estaba ocupado' }[err] || err;
+}
+function renderColaAviso(){
+  var el=document.getElementById('mis-cola'); if(!el) return;
+  var pend=getPending(), rech=rechazosLocales().filter(function(r){ return Date.now()-r.ts<7*86400000; });
+  if(!pend.length && !rech.length){ el.innerHTML=''; return; }
+  var h='';
+  if(pend.length){
+    var motivo = !CONNECTED ? 'no hay conexión con la planilla' : (CLAVE_RECHAZADA ? 'este dispositivo no tiene la clave del equipo' : 'el servidor no contestó');
+    h+='<div style="background:#FEF3E2;border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:10px;padding:10px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00">'+
+       '⏳ <b>'+pend.length+' guardado'+(pend.length===1?'':'s')+' de este dispositivo todavía NO '+(pend.length===1?'llegó':'llegaron')+' a la planilla</b> ('+motivo+'). '+
+       'Las demás computadoras no lo ven hasta que se mande. No cierres esto sin que diga 0. '+
+       '<a onclick="flushPending().then(function(){ toast(\'Reintentado\',\'ok\'); renderColaAviso(); })" style="text-decoration:underline;cursor:pointer">Reintentar ahora</a>'+
+       (CLAVE_RECHAZADA?' · <a onclick="pedirClaveEquipo()" style="text-decoration:underline;cursor:pointer">🔐 Ingresar la clave</a>':'')+
+       '<div style="font-size:.76rem;margin-top:4px">'+pend.slice(0,5).map(function(x){ return esc((String(x.id||'').indexOf('__ret_')===0?'💵 retiro de '+(x.vendedor||''):(x.cliente||x.id||''))); }).join(' · ')+(pend.length>5?' …':'')+'</div></div>';
+  }
+  if(rech.length){
+    h+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:10px;padding:10px 13px;margin-bottom:10px;font-size:.83rem;color:#8a1c24">'+
+       '❌ <b>El servidor NO aceptó '+rech.length+' guardado'+(rech.length===1?'':'s')+' desde este dispositivo</b> (últimos 7 días). Revisá cada uno: si hacía falta, hay que volver a hacerlo.'+
+       '<div style="font-size:.76rem;margin-top:4px">'+rech.slice(0,6).map(function(r){ return esc(fmtFechaCorta(isoLocal(new Date(r.ts))))+' · '+esc(r.retiro?('💵 retiro'):(r.cliente||r.id))+' — '+esc(rechazoTxt(r.error)); }).join('<br>')+'</div>'+
+       '<a onclick="localStorage.removeItem(LS_RECHAZOS);renderColaAviso()" style="text-decoration:underline;cursor:pointer;font-size:.76rem">Ya los revisé, limpiar</a></div>';
+  }
+  el.innerHTML=h;
+}
 function updateFooter(){
+  renderColaAviso();
   var pend=getPending().length;
   var base='MultiEspumas · Registro de pedidos';
   document.getElementById('footer').innerHTML = (pend
@@ -10225,6 +10313,7 @@ function renderMis(){
   if(v) setVendedorMem(v);
   var box=document.getElementById('mis-metrics'), tbl=document.getElementById('mis-lista'), empty=document.getElementById('mis-empty'), av=document.getElementById('mis-ubic-aviso');
   var chips=document.getElementById('mis-chips');
+  renderColaAviso();                                // ⏳ lo que este dispositivo no mandó (§4el)
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
