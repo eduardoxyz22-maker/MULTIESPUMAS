@@ -13,6 +13,10 @@ Y al revés: que haga su trabajo. Que pida solo la etapa correcta, que mire una 
 ancha que el intervalo (si una corrida falla, la siguiente tiene que alcanzar a las que se
 le pasaron), y que le mande los ids al panel con la clave.
 
+Desde §4et el servidor ENCOLA los ids y contesta al instante (`diferido`), y el script exige
+que la respuesta venga del repaso de Kommo (`origen:'repaso'`): un `ok:true` de otro camino
+no puede pasar como éxito.
+
 Se corre solo:  python3 tests/test_traer.py
 """
 import io, json, os, sys, contextlib, urllib.request, urllib.error
@@ -45,6 +49,9 @@ LEADS = {"_embedded": {"leads": [
 
 PEDIDAS = []      # las URLs que le pidió a Kommo
 ENVIADO = {}      # lo que le mandó al panel
+# Lo que contesta el panel de mentira. Se cambia entre corridas (ver la sección 4).
+RESPUESTA = {"ok": True, "version": "2026-09-05-c", "origen": "repaso", "ultimoHook": "2026-09-05T14:55:00.000Z",
+             "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"], "reparados": 1}
 
 
 class FalsaResp:
@@ -59,8 +66,7 @@ def falso_urlopen(req, timeout=None):
     if "script.google.com" in url:
         ENVIADO.update(json.loads(req.data.decode()))
         ENVIADO["_url"] = url
-        return FalsaResp({"ok": True, "version": "2026-09-05-c", "ultimoHook": "2026-09-05T14:55:00.000Z",
-                          "creados": 1, "ids": ["44001"], "saltados": ["44002:ya estaba"], "reparados": 1})
+        return FalsaResp(dict(RESPUESTA))
     PEDIDAS.append(url)
     return FalsaResp(LEADS)
 
@@ -69,16 +75,23 @@ urllib.request.urlopen = falso_urlopen
 import traer_kommo
 traer_kommo._rq.urlopen = falso_urlopen
 
-buf = io.StringIO()
-try:
-    with contextlib.redirect_stdout(buf):
-        traer_kommo.main()
-except SystemExit as e:
-    if e.code:
-        print("✗ el script salió con error:", e.code)
 
-salida = buf.getvalue()
+def correr():
+    """Una corrida del script: devuelve (lo que imprimió, con qué código salió)."""
+    PEDIDAS.clear(); ENVIADO.clear()
+    buf = io.StringIO(); codigo = 0
+    try:
+        with contextlib.redirect_stdout(buf):
+            traer_kommo.main()
+    except SystemExit as e:
+        codigo = e.code
+    return buf.getvalue(), codigo
+
+
+salida, codigo = correr()
 print(salida)
+if codigo:
+    print("✗ el script salió con error:", codigo)
 
 print("\n" + "=" * 78)
 print("  VERIFICACIONES")
@@ -115,6 +128,7 @@ chk("⚠️ NO le manda nombres ni teléfonos al panel: solo ids",
     set(ENVIADO.keys()) <= {"action", "key", "leads", "_url"}, list(ENVIADO.keys()))
 
 # 3) lo que informa en el registro
+chk("termina bien", codigo == 0, codigo)
 chk("dice cuántos leads miró", "leads en la ventana: 2" in salida, salida[:200])
 chk("dice qué versión del Apps Script contestó (para verificar publicaciones desde afuera)",
     "versión 2026-09-05-c" in salida, salida[-160:])
@@ -126,6 +140,34 @@ chk("⚠️ …sin imprimir ningún nombre de cliente",
     SECRETOS["nombre"] not in salida, "")
 chk("dice cuántos borradores nuevos creó", "borradores NUEVOS creados: 1 de 2" in salida)
 chk("⚠️ avisa que esos los perdió el webhook", "los perdió el webhook" in salida)
+
+# 4) §4et: el servidor encola y contesta al instante; y un «ok» ajeno no pasa como éxito
+RESPUESTA.clear()
+RESPUESTA.update({"ok": True, "version": "2026-09-20-a", "origen": "repaso", "diferido": True, "encolados": 2,
+                  "cola": 2, "creados": 0, "ids": [], "ultimoHook": "2026-09-20T12:00:00.000Z",
+                  "ultimoRepaso": json.dumps({"ts": "2026-09-20T11:58:00.000Z", "cola": 0, "vistos": 3, "creados": 0, "error": ""})})
+s2, c2 = correr()
+chk("⚠️ con la respuesta diferida (§4et) termina bien y dice que el panel encoló los ids",
+    c2 == 0 and "encoló 2 ids" in s2, s2[-220:])
+chk("…sin inventar «creados» (el disparador del servidor todavía no corrió)",
+    "borradores NUEVOS creados" not in s2 and "los perdió el webhook" not in s2)
+chk("…y sigue diciendo versión, último aviso y último repaso",
+    "versión 2026-09-20-a" in s2 and "último aviso de Kommo al panel: 2026-09-20T12:00" in s2 and "último repaso del script" in s2, s2[-300:])
+for k, v in SECRETOS.items():
+    chk(f"⚠️ (diferido) NO se filtra el {k}", v not in s2)
+
+RESPUESTA.clear()
+RESPUESTA.update({"ok": True})          # un ok:true que no viene de kommoLeads (otra implementación / script viejo)
+s3, c3 = correr()
+chk("⚠️ un ok:true que NO viene del repaso de Kommo (sin origen) corta con error, no pasa como éxito",
+    bool(c3) and "no vino del repaso de Kommo" in str(c3), str(c3)[:140])
+chk("…y ese mensaje tampoco filtra la dirección del panel ni la clave",
+    SECRETOS["panel"] not in str(c3) + s3 and SECRETOS["clave"] not in str(c3) + s3)
+
+RESPUESTA.clear()
+RESPUESTA.update({"ok": False, "error": "busy"})
+s4, c4 = correr()
+chk("si el servidor contesta busy, la corrida falla a la vista (como antes)", bool(c4) and "busy" in str(c4), str(c4)[:100])
 
 print(f"\n{PASS} bien · {FAIL} mal")
 sys.exit(1 if FAIL else 0)

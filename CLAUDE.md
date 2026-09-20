@@ -50,6 +50,18 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   que sostiene que `lh3.googleusercontent.com/d/<id>` muestre la foto sin sesión (§4cd).
   `tests/test_servidor.js` sección 7 mide el **orden** con dobles que anotan cada paso: contra
   el `.gs` viejo fallan 4 y el detalle dice el bug (`candado → kommo → suelta`).
+  - **📥 Kommo en el `.gs`, segunda vuelta** (§4et, `2026-09-20-a`): (1) **«Descartar»
+    descarta de verdad**: `doDelete` de un `kommo-<lead>` lo anota en la propiedad
+    `KOMMO_DESCARTADOS` (`{lead: día}`, 60 días, tope 300) y el repaso lo saltea como
+    `descartado` — antes lo volvía a crear en el próximo repaso. (2) El repaso «ya estaba» **no
+    toma el candado** ni habla con Kommo adentro: `repararNombrePrep_` (afuera) +
+    `repararNombreAplicar_` (adentro, revalida). (3) El **repaso de GitHub encola** como el
+    webhook (`kommoLeads` → `kommoEncolar_(ids,'repaso')`, respuesta `diferido:true`) y
+    `traer_kommo.py` **exige `origen:'repaso'`** (un `ok:true` ajeno corta la corrida).
+    (4) `busy` **no vacía la cola** (`kColaQuitar_` solo con `ok!==false`) y el resumen lo
+    dice. (5) El `busy` del webhook **no va a Rechazos** (`doPost` devuelve el camino Kommo
+    directo). (6) Productos por `metadata.catalog_id`, una consulta por catálogo. Sección 10 de
+    `test_servidor.js` (19 dientes contra el `.gs` viejo) y `tests/test_traer.py`.
 - **📡 `doGet` de afuera** (§4du, `2026-09-10-b`): el 10/09 Ejecuciones mostró un `doGet` cada
   3-4 s, de 3-5 s cada uno (la planilla entera), con los `doPost` del panel en 0,5 s. **Nada
   del repo llama al `/exec` con GET** — es alguien de afuera, sin identificar, y sin
@@ -252,6 +264,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
 - **Verificar qué `.gs` está publicado sin entrar a Google**: Actions → «Traer ventas de Kommo (respaldo)»
   → Run workflow. El registro imprime `servidor del panel: versión …` y `último aviso de Kommo al panel: …`
   (ese segundo dato separa «Kommo no avisa» de «el servidor no procesa el aviso»). Ver §4ch.
+  Desde §4et con leads en la ventana dice «el panel encoló N ids» (lo creado se lee en «último
+  repaso del script»), y si la respuesta no trae `origen:'repaso'` la corrida **falla a
+  propósito**: `PANEL_URL` apunta a otra implementación o el `.gs` publicado es viejo.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)

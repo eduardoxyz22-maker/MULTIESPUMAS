@@ -7380,12 +7380,115 @@ terminar. Esta sección es el registro de avance: lo hecho arriba, lo que sigue 
   planilla; con el guardado en curso el `list` viejo no saca el pedido de `STATE` y pasados los
   90 s vuelve a mandar el servidor).
 
+### ✅ 6. Todo lo del `.gs` de Kommo, junto (§4er MEDIA ×2 + BAJA ×3, Kommo) — 20/09 → **§4et**
+`google-apps-script.gs` `2026-09-20-a` + `SCRIPT_VERSION_ESPERADA`: descartar se respeta
+(`KOMMO_DESCARTADOS`), el repaso «ya estaba» no toma el candado ni habla con Kommo adentro, el
+repaso de GitHub encola y contesta al instante (`traer_kommo.py` exige `origen:'repaso'`),
+`busy` no vacía la cola, el `busy` del hook no va a Rechazos, productos por `catalog_id`.
+**Exige que el dueño vuelva a implementar** (Nueva versión sobre la implementación de siempre).
+`tests/test_servidor.js` sección 10 (146 → 177 checks), `tests/test_traer.py` (23 → 37).
+
 ### Lo que sigue (orden)
-6. Kommo `.gs` · descartar no
-   descarta (`KOMMO_DESCARTADOS`), el repaso «ya estaba» toma el candado y habla con Kommo
-   adentro, el repaso de GitHub síncrono, `busy` vacía la cola, el `busy` del hook en Rechazos —
-   todo lo del `.gs` junto, porque exige que el dueño vuelva a implementar. 7. Conta ALTA ×4
-   (flete cobrado al editar, pago mixto a cuenta, corregir cobro sin monto, corregir anticipo
-   desmarca pagada). 8. Adm ALTA ×3 (stock en vuelo, recogida desde el Excel, plan del mes con
-   Eduardo). 9. Las MEDIA y BAJA de §4er, y poner al día los tests viejos (producir, onclicks,
-   atc, rpt).
+7. Conta ALTA ×4 (flete cobrado al editar, pago mixto a cuenta, corregir cobro sin monto,
+   corregir anticipo desmarca pagada). 8. Adm ALTA ×3 (stock en vuelo, recogida desde el
+   Excel, plan del mes con Eduardo). 9. Las MEDIA y BAJA de §4er, y poner al día los tests
+   viejos (producir, onclicks, atc, rpt).
+
+## 4et. Kommo en el servidor: descartar descarta, el candado no espera a Kommo, el repaso de GitHub encola (2026-09-20)
+
+Bloque 6 de §4es: los cinco hallazgos de §4er que viven en `google-apps-script.gs`, juntos
+porque cualquiera de ellos exige que el dueño vuelva a implementar. `SCRIPT_VERSION` y
+`SCRIPT_VERSION_ESPERADA` pasan a **`2026-09-20-a`**; hasta que el dueño haga Implementar →
+Administrar implementaciones → ✏️ (la de siempre) → Nueva versión, el panel avisa «servidor
+viejo» y todo sigue andando como hasta ahora.
+
+### 1. «Descartar» no descartaba (§4er MEDIA)
+- **Qué pasaba**: `descartarBorrador` → `apiDelete('kommo-<lead>')` borraba la fila, pero el
+  lead seguía en «Compradores» con `updated_at` reciente; `kommoRepaso` (cada 5 min, ventana
+  6 h) y el repaso de GitHub (12 h) lo veían como nuevo y lo volvían a crear. Reproducido: lo
+  descartás, vuelve; lo descartás otra vez, vuelve otra vez.
+- **Arreglo**: `doDelete` de un id `kommo-…` anota el lead en la propiedad `KOMMO_DESCARTADOS`
+  (`{ lead: día }`, `kDescartar_`) y `kommoProcesarObj_` lo saltea como `descartado` sin
+  preguntarle nada a Kommo (`kDescartado_`). Se olvida a los **60 días** (`KOMMO_DESCARTE_DIAS`):
+  una venta que vuelva de verdad meses después entra sola; antes de eso la vendedora la carga a
+  mano (y «Sí, es la misma» la cubre con `klead`). Tope **300** entradas (`KOMMO_DESCARTE_TOPE`),
+  las más viejas se sueltan primero: 300 × ~14 caracteres entran holgado en los 9 KB de una
+  propiedad. Se anota TODO borrado de `kommo-…` —también el de «Sí, es la misma»—, es inocuo:
+  ahí `klead` ya lo cubre.
+- ⚠️ La memoria vive en el **servidor** a propósito: el mirror de borradores del panel es por
+  dispositivo, y el que descarta desde el celular no puede ser el único que no lo vuelve a ver.
+
+### 2. El repaso «ya estaba» tomaba el candado y hablaba con Kommo adentro (§4er MEDIA)
+- **Qué pasaba**: contra §4dt. Con TODOS los leads «ya estaban» (el caso de cada 5 minutos)
+  `kommoProcesarObj_` tomaba el candado igual para no escribir nada, y `repararNombreBorrador_`
+  (el borrador que quedó como «Lead #39357288») hacía hasta 2 llamadas de red **con el
+  candado tomado**, en cada repaso, mientras el contacto siguiera sin nombre.
+- **Arreglo**: `repararNombrePrep_` (afuera: mira la hoja y le pregunta a Kommo, devuelve
+  `{id, nombre}` o null) + `repararNombreAplicar_` (adentro: vuelve a mirar la fila y escribe
+  solo la celda del cliente). El candado se toma **solo si hay filas nuevas o nombres para
+  escribir**. `borradorGenerico_` es la mirada común (fila, sigue borrador, nombre genérico).
+  Si mientras se hablaba con Kommo la vendedora completó el borrador, adentro no se pisa nada.
+
+### 3. El repaso de GitHub era síncrono (§4er MEDIA)
+- **Qué pasaba**: `kommoLeads` armaba los borradores en el momento (hasta 4 llamadas a Kommo
+  por lead). Con 9 leads el `urlopen(timeout=90)` de `traer_kommo.py` cortaba (run 101) y el
+  registro decía «✗ El panel no aceptó el aviso» mientras el script seguía escribiendo la
+  planilla a ciegas. Y un `ok:true` de OTRO camino (run 110, sin `ultimoHook`: PANEL_URL a
+  otra implementación) pasaba como éxito.
+- **Arreglo**: `kommoLeads` → `kommoEncolar_(ids, 'repaso')`: mismo camino que el webhook,
+  encola, deja el disparador y contesta al instante con `diferido:true`, `encolados`, `cola`,
+  `version`, `ultimoHook`, `ultimoRepaso`. Sin disparadores (ScriptApp sin autorizar) procesa
+  en el momento, como antes. `traer_kommo.py` **exige `origen:'repaso'`** (si no, corta con
+  error a la vista) y con `diferido` imprime «el panel encoló N ids» en vez de inventar
+  «creados». Lo creado se lee en «último repaso del script».
+  ⚠️ La sección 7 de `test_servidor.js` («Kommo antes del candado») ahora llama a
+  `kommoProcesarCola()` a mano cuando la respuesta viene `diferido`.
+
+### 4. `busy` vaciaba la cola del webhook (§4er BAJA)
+- **Qué pasaba**: `kommoProcesarCola` y `kommoRepaso` hacían `kColaQuitar_(ids)` aunque
+  `kommoProcesarObj_` hubiera devuelto `{ok:false, error:'busy'}`: los ids salían de la cola
+  sin haberse escrito, y si además Kommo no contestaba en el repaso, la venta quedaba sin nada
+  que la trajera hasta el repaso de GitHub (horas). El resumen `KOMMO_REPASO_ULTIMO` decía
+  `creados:0` sin explicación.
+- **Arreglo**: la cola se quita **solo si `r.ok!==false`**. `kommoProcesarCola` con busy deja
+  la cola y otro disparador (`reintento`); `kommoRepaso` con busy deja la cola y lo dice en
+  `error` («busy (la cola queda para el próximo repaso)»); si además la consulta a Kommo
+  falla, los dos motivos se acumulan con « · » (antes el segundo pisaba al primero).
+  `kommoProcesarObj_` con busy devuelve también `version` y `origen`.
+
+### 5. El `busy` del hook quedaba en Rechazos como un «save» vacío (§4er BAJA)
+- `doPost` envolvía TODO con `rechazoAnotar_`, incluido el aviso de Kommo (formulario, sin
+  JSON): un `busy` del webhook quedaba como acción `save`, sin id ni cliente, y Administración
+  lo leía como un guardado perdido de alguien. Ahora el camino de Kommo (`?k=`/`?kommo=`)
+  devuelve `doPostCuerpo_(e)` directo: su rastro es `KOMMO_ULTIMO_HOOK` y la cola. Un guardado
+  del panel con busy se sigue anotando igual.
+
+### 6. Catálogo fijo (§4er BAJA)
+- `borradorDeLead_` preguntaba SIEMPRE al catálogo `10902` y un elemento de otro catálogo
+  (`metadata.catalog_id`) llegaba al panel con `desc:''`. Ahora agrupa los elementos por
+  `catalog_id` (sin dato → `KOMMO_CATALOGO`), una consulta por catálogo, y `porId` va con la
+  clave `catálogo:id`. El precio sigue igual: `metadata.price` y si no el campo
+  `KOMMO_CF_PRECIO` (que es del catálogo de Productos; en otro catálogo puede no existir → sin
+  precio, la vendedora lo pone).
+
+### Tests
+- `tests/test_servidor.js` **sección 10** (146 → **177** checks), adaptada de los reproductores
+  del revisor: A descartar (anota, no vuelve, ni por GitHub, sin red, vence a los 60 días, no
+  anota pedidos comunes, tope 300 y < 9 KB); B candado (ya estaba sin nombre: Kommo sin
+  candado; con nombre: Kommo antes del candado y la celda escrita; todo con nombre: ni red ni
+  candado; revalidación adentro); C busy (cola se queda, otro disparador, el resumen lo dice,
+  al liberarse se procesa); D el busy del hook no va a Rechazos y el del panel sí; E catálogo
+  por `catalog_id` con dos consultas; F repaso de GitHub diferido (sin red ni candado, cola +
+  disparador, lista vacía, sin disparadores en el momento). **Dientes**: contra el `.gs` de
+  `origin/main` la sección da 19 rojos, cada uno con el comportamiento viejo en el detalle.
+- `tests/test_traer.py` (23 → **37**): respuesta diferida (termina bien, «encoló 2 ids», sin
+  inventar creados, sin filtrar secretos), `ok:true` sin `origen` corta con error, `busy`
+  falla a la vista. `test_hook.js` 78/78 y `test_kommo.py` 29/29 sin tocar.
+- Contra un `.gs` viejo publicado, el panel solo muestra el aviso de versión: ninguno de estos
+  cambios rompe la compatibilidad (el panel no manda nada nuevo).
+
+### Para el dueño
+Implementar → Administrar implementaciones → ✏️ en la implementación de siempre → Versión
+«Nueva versión» → Implementar. **No** crear una implementación nueva (§4dm: estrena otra
+dirección). Después, Actions → «Traer ventas de Kommo (respaldo)» → Run workflow tiene que
+imprimir `versión 2026-09-20-a`.

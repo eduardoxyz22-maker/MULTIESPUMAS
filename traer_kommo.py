@@ -114,6 +114,12 @@ def main():
     if not res.get("ok"):
         sys.exit(f"✗ El panel no aceptó el aviso: {res.get('error')}")
     print(f"   servidor del panel: versión {res.get('version') or '(no dice: es un Apps Script viejo)'}")
+    # 🔎 Que la respuesta sea DE VERDAD la del repaso de Kommo (§4et). Un `ok:true` de otro
+    # camino (PANEL_URL apuntando a otra implementación, o un Apps Script viejo) pasaba
+    # como éxito sin haber hecho nada — la corrida 110 dijo «ok» sin traer ni el último aviso.
+    if res.get("origen") != "repaso":
+        sys.exit("✗ La respuesta no vino del repaso de Kommo (origen="
+                 f"{res.get('origen')!r}): ¿PANEL_URL apunta a otra implementación, o el Apps Script publicado es viejo?")
     # 🔎 Cuándo fue la última vez que Kommo le avisó al servidor. Es el dato que separa
     # «el webhook no llega» de «el webhook llega y el servidor no lo procesa». Solo una
     # fecha: no dice de qué venta ni de quién.
@@ -132,6 +138,14 @@ def main():
 
     if not ids:
         print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")
+        return
+
+    # ⚡ Desde §4et el servidor ENCOLA los ids y contesta al instante (antes armaba los
+    # borradores acá adentro: con 9 leads este script cortaba a los 90 s mientras el servidor
+    # seguía trabajando a ciegas). Lo que creó se lee en el próximo «último repaso del script».
+    if res.get("diferido"):
+        print(f"   el panel encoló {res.get('encolados', len(ids))} ids (en cola: {res.get('cola', '?')}): "
+              "su disparador los procesa en segundos, y el repaso cada 5 minutos los agarra si algo falla")
         return
 
     creados = res.get("creados", 0)

@@ -425,7 +425,11 @@ console.log('\n── 7. El candado no traba las lecturas ni espera a Kommo ─�
   a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ orden.push('candado'); }, releaseLock(){ orden.push('suelta'); } }) };
   a.ctx.UrlFetchApp = { fetch: () => { orden.push('kommo'); return { getResponseCode: () => 200,
     getContentText: () => JSON.stringify({ id:111, status_id:1, pipeline_id:1, responsible_user_id:9, price:0 }) }; } };
-  const r = a.post({ action:'kommoLeads', key:'kk', leads:['111'] });
+  /* Desde §4et el repaso de GitHub ENCOLA y contesta (como el webhook): el trabajo lo hace
+     el disparador. Se llama a mano acá para mirar el orden; contra un .gs anterior la
+     respuesta ya viene procesada. */
+  const r0 = a.post({ action:'kommoLeads', key:'kk', leads:['111'] });
+  const r = r0.diferido ? a.ctx.kommoProcesarCola() : r0;
   const iC = orden.indexOf('candado');
   chk('⚠️ lo que se le pregunta a Kommo pasa ANTES de tomar el candado, no adentro',
       r.ok===true && orden.indexOf('kommo')>=0 && (iC<0 || orden.indexOf('kommo')<iC) && (iC<0 || orden.slice(iC).indexOf('kommo')<0),
@@ -439,7 +443,8 @@ console.log('\n── 7. El candado no traba las lecturas ni espera a Kommo ─�
   const a = cargar([HDR], { PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' });
   const orden = [];
   a.ctx.LockService = { getScriptLock: () => ({ waitLock(){ orden.push('candado'); }, releaseLock(){ orden.push('suelta'); } }) };
-  const r = a.post({ action:'kommoLeads', key:'kk', leads:['999'] });
+  const r0 = a.post({ action:'kommoLeads', key:'kk', leads:['999'] });
+  const r = r0.diferido ? a.ctx.kommoProcesarCola() : r0;
   chk('un repaso que no encuentra nada para cargar ni toca el candado (corre 144 veces por día)',
       r.ok===true && r.creados===0 && orden.length===0, orden.join(',') || 'ninguno');
 }
@@ -767,6 +772,155 @@ if (typeof cargar([HDR], {}).ctx.barrerFotosHuerfanas !== 'function') {
   chk('el archivo se nombra con cliente, pedido y quién lo subió', f.ok===true && /^entrega_Do_a_Rosa__pmx123__por_Mirian_Salazar_.+\.jpg$/.test(nombre)   /* la fecha la pone Utilities.formatDate (simulado acá) */, nombre);
   const f2 = a.post(conClave({ action:'foto', id:'form', cliente:'Nuevo', quien:'Carola Chavez', dataUrl:'data:image/jpeg;base64,AAAA' }));
   chk('…y desde el formulario (sin pedido todavía) va sin id pero con quién', f2.ok===true && /^entrega_Nuevo__por_Carola_Chavez_/.test(nombre), nombre);
+}
+}
+
+/* ── 📥 10. Kommo en el servidor (§4et): descartar se respeta, el candado no espera a Kommo,
+      el repaso de GitHub encola, busy no vacía la cola, el busy del hook no va a Rechazos,
+      y los productos de otro catálogo llegan con nombre ── */
+console.log('\n── 10. Kommo en el servidor (§4et) ──');
+if (typeof cargar([HDR], {}).ctx.kommoRepaso !== 'function') {
+  chk('⚠️ el .gs tiene el repaso de Kommo (§4eg) — la sección 10 lo necesita', false, 'es el .gs viejo');
+} else {
+const LEAD10 = (id, extra) => Object.assign({ id, name:'CLIENTE '+id, status_id:103450711, pipeline_id:13349719,
+  responsible_user_id:9, price:100, _embedded:{ contacts:[], catalog_elements:[] } }, extra || {});
+/* Kommo de mentira: `fn(url)` devuelve el JSON, o null = 404. Devuelve la lista de URLs pedidas. */
+const kommoFake10 = (a, fn) => { const red = []; a.ctx.UrlFetchApp = { fetch: (url) => { red.push(url); const r = fn(url);
+  return { getResponseCode: () => r ? 200 : 404, getContentText: () => JSON.stringify(r || {}) }; } }; return red; };
+const hook10 = (a) => (params) => a.leer(a.ctx.doPost({ parameter: params, postData:{ contents:'' } }));
+const candadoQue = (ev, ocupado) => ({ getScriptLock: () => ({ waitLock(){ ev.push('candado'); if (ocupado) throw new Error('busy'); }, releaseLock(){ ev.push('suelta'); } }) });
+const KPROPS = () => ({ PANEL_KEY: CLAVE, KOMMO_HOOK_KEY:'kk', KOMMO_TOKEN:'tok-de-mentira' });
+const DIA = 86400000, hoyDia = Math.floor(Date.now() / DIA);
+{
+  // A. «Descartar» tiene que descartar: el repaso no lo vuelve a traer
+  const props = KPROPS();
+  const a = cargar([HDR], props);
+  delete a.ctx.ScriptApp;                       // sin disparadores el hook crea en el momento (más corto de leer)
+  const red = kommoFake10(a, (url) => {
+    if (/\/leads\?/.test(url)) return { _embedded:{ leads:[{ id:44001 }] } };   // sigue en «Compradores», tocado hace poco
+    if (/\/leads\/44001/.test(url)) return LEAD10(44001);
+    return null; });
+  const r1 = hook10(a)({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711' });
+  chk('el webhook crea el borrador kommo-44001', r1.creados===1 && a.sh._datos.length===2 && a.sh._datos[1][0]==='kommo-44001', JSON.stringify(r1).slice(0,80));
+  const d = a.post(conClave({ action:'delete', id:'kommo-44001' }));
+  const memo = JSON.parse(props.KOMMO_DESCARTADOS || '{}');
+  chk('⚠️ la vendedora lo descarta: la fila se va y el lead queda anotado en KOMMO_DESCARTADOS (con el día)', d.ok===true && a.sh._datos.length===1 && memo['44001']===hoyDia, props.KOMMO_DESCARTADOS);
+  const n0 = red.length;
+  const rep = a.ctx.kommoRepaso();
+  chk('⚠️ el repaso de 5 minutos NO lo vuelve a crear (antes reaparecía en cada repaso)', rep.creados===0 && a.sh._datos.length===1, JSON.stringify(rep));
+  const rg = a.post({ action:'kommoLeads', key:'kk', leads:['44001'] });
+  chk('…ni el repaso de GitHub: lo saltea como «descartado»', rg.creados===0 && a.sh._datos.length===1 && /44001:descartado/.test(JSON.stringify(rg.saltados||[])), JSON.stringify(rg.saltados));
+  chk('…y por ese lead ya no le pregunta nada a Kommo', red.slice(n0).filter(u => /\/leads\/44001/.test(u)).length===0, red.slice(n0).join(' '));
+  props.KOMMO_DESCARTADOS = JSON.stringify({ '44001': hoyDia - 61 });
+  const rep2 = a.ctx.kommoRepaso();
+  chk('un descarte de hace más de 60 días ya no cuenta: si la venta vuelve, entra', rep2.creados===1 && a.sh._datos.length===2, JSON.stringify(rep2));
+  const pb = { PANEL_KEY: CLAVE };
+  const b = cargar([HDR, fila({ id:'p1' })], pb);
+  b.post(conClave({ action:'delete', id:'p1' }));
+  chk('borrar un pedido que no vino de Kommo no anota nada', b.sh._datos.length===1 && pb.KOMMO_DESCARTADOS==null, pb.KOMMO_DESCARTADOS);
+  // tope: 300 leads; se olvidan los más viejos y la propiedad entra en los 9 KB de Google
+  const pc = KPROPS(), c = cargar([HDR], pc), o = {};
+  for (let i = 0; i < 300; i++) o['5' + String(i).padStart(4, '0')] = hoyDia - (i % 50);
+  pc.KOMMO_DESCARTADOS = JSON.stringify(o);
+  if (typeof c.ctx.kDescartar_ === 'function') c.ctx.kDescartar_('60001');
+  const o2 = JSON.parse(pc.KOMMO_DESCARTADOS), idos = Object.keys(o).filter(k => o2[k]==null);
+  chk('la memoria tiene tope (300) y suelta primero el más viejo', o2['60001']===hoyDia && Object.keys(o2).length===300 && idos.length===1 && o[idos[0]]===hoyDia-49, idos.join(',')+' · '+Object.keys(o2).length);
+  chk('…y entra en el límite de 9 KB de una propiedad', pc.KOMMO_DESCARTADOS.length < 9000, pc.KOMMO_DESCARTADOS.length);
+}
+{
+  // B. El repaso «ya estaba» no toma el candado para hablar con Kommo
+  const BORR = fila({ id:'kommo-39357288', cli:'Lead #39357288', fecha:'', turno:'' }); BORR[HDR.indexOf('Estado stock')] = 'Borrador Kommo';
+  const leadGen = LEAD10(39357288, { name:'Lead #39357288', _embedded:{ contacts:[{ id:5502, is_main:true }], catalog_elements:[] } });
+  const conContacto = (nombre) => (url) => /\/contacts\//.test(url) ? { id:5502, name:nombre } : leadGen;
+  const a = cargar([HDR, BORR], KPROPS()); delete a.ctx.ScriptApp;
+  const orden = []; a.ctx.LockService = candadoQue(orden, false);
+  a.ctx.UrlFetchApp = { fetch: (url) => { orden.push('kommo'); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(conContacto('')(url)) }; } };
+  const r = a.post({ action:'kommoLeads', key:'kk', leads:['39357288'] });
+  chk('⚠️ un lead que YA ESTABA sin nombre (y el contacto tampoco): le pregunta a Kommo SIN tomar el candado (antes: candado → kommo → suelta, en cada repaso)',
+      r.ok===true && r.creados===0 && orden.indexOf('kommo')>=0 && orden.indexOf('candado')<0, orden.join(' → '));
+  const b = cargar([HDR, BORR], KPROPS()); delete b.ctx.ScriptApp;
+  const orden2 = []; b.ctx.LockService = candadoQue(orden2, false);
+  b.ctx.UrlFetchApp = { fetch: (url) => { orden2.push('kommo'); return { getResponseCode: () => 200, getContentText: () => JSON.stringify(conContacto('ERWIN DE PRUEBA')(url)) }; } };
+  const r2 = b.post({ action:'kommoLeads', key:'kk', leads:['39357288'] });
+  const iC = orden2.indexOf('candado');
+  chk('⚠️ …y cuando SÍ hay nombre para reparar: Kommo ANTES del candado y nada de red adentro', r2.reparados===1 && iC>0 && orden2.slice(0, iC).indexOf('kommo')>=0 && orden2.slice(iC).indexOf('kommo')<0, orden2.join(' → '));
+  chk('…con el nombre escrito en la hoja', b.sh._datos[1][HDR.indexOf('Cliente')]==='ERWIN DE PRUEBA', b.sh._datos[1][HDR.indexOf('Cliente')]);
+  const OK = BORR.slice(); OK[HDR.indexOf('Cliente')] = 'DOÑA CON NOMBRE';
+  const c = cargar([HDR, OK], KPROPS()); delete c.ctx.ScriptApp;
+  const ev = []; c.ctx.LockService = candadoQue(ev, false);
+  const red = kommoFake10(c, () => ({}));
+  const r3 = c.post({ action:'kommoLeads', key:'kk', leads:['39357288'] });
+  chk('⚠️ el caso de cada 5 minutos —todo «ya estaba» y con nombre— no toma el candado ni sale a la red', r3.ok===true && r3.creados===0 && ev.length===0 && red.length===0, (ev.join(',')||'sin candado')+' · red '+red.length);
+  // adentro se vuelve a mirar: si mientras se hablaba con Kommo alguien completó el borrador, no se le pisa el nombre
+  const d = cargar([HDR, BORR], KPROPS()); delete d.ctx.ScriptApp;
+  d.ctx.UrlFetchApp = { fetch: (url) => {
+    d.sh._datos[1][HDR.indexOf('Estado stock')] = ''; d.sh._datos[1][HDR.indexOf('Cliente')] = 'LA COMPLETÓ LA VENDEDORA';
+    return { getResponseCode: () => 200, getContentText: () => JSON.stringify(conContacto('NOMBRE DE KOMMO')(url)) }; } };
+  const r4 = d.post({ action:'kommoLeads', key:'kk', leads:['39357288'] });
+  chk('si mientras tanto la vendedora completó el borrador, adentro del candado no se le pisa el nombre', r4.reparados===0 && d.sh._datos[1][HDR.indexOf('Cliente')]==='LA COMPLETÓ LA VENDEDORA', d.sh._datos[1][HDR.indexOf('Cliente')]);
+}
+{
+  // C. Servidor ocupado: la cola del webhook se queda
+  const props = Object.assign(KPROPS(), { KOMMO_COLA:'["44001"]' });
+  const a = cargar([HDR], props);
+  a.ctx.LockService = candadoQue([], true);
+  kommoFake10(a, (url) => /\/leads\/44001/.test(url) ? LEAD10(44001) : (/\/leads\?/.test(url) ? { _embedded:{ leads:[] } } : null));
+  const r = a.ctx.kommoProcesarCola();
+  chk('con el candado ocupado el disparador contesta busy y no escribe', r.ok===false && r.error==='busy' && a.sh._datos.length===1, JSON.stringify(r));
+  chk('⚠️ …y el id SE QUEDA en la cola (antes salía igual, y la venta quedaba sin nada que la trajera)', JSON.parse(props.KOMMO_COLA).join(',')==='44001', props.KOMMO_COLA);
+  chk('…con otro disparador esperando para reintentar', a.ctx.ScriptApp._triggers.filter(t => t.fn==='kommoProcesarCola').length===1, a.ctx.ScriptApp._triggers.length);
+  const rr = a.ctx.kommoRepaso();
+  chk('⚠️ kommoRepaso con busy: la cola sigue y el resumen DICE «busy» (antes: cola vacía y 0 creados sin explicación)', JSON.parse(props.KOMMO_COLA).join(',')==='44001' && rr.creados===0 && /busy/.test(rr.error), JSON.stringify(rr));
+  a.ctx.LockService = candadoQue([], false);
+  const r2 = a.ctx.kommoProcesarCola();
+  chk('cuando el candado se libera, la cola se procesa y se vacía', r2.creados===1 && a.sh._datos.length===2 && JSON.parse(props.KOMMO_COLA).length===0, JSON.stringify(r2).slice(0,80));
+}
+{
+  // D. El busy del hook no va a la hoja Rechazos
+  const a = cargar([HDR], KPROPS()); delete a.ctx.ScriptApp;
+  a.ctx.LockService = candadoQue([], true);
+  kommoFake10(a, (url) => /\/leads\/44001/.test(url) ? LEAD10(44001) : null);
+  const r = hook10(a)({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711' });
+  chk('sin disparadores y con el candado ocupado, el hook contesta busy', r.ok===false && r.error==='busy', JSON.stringify(r));
+  chk('⚠️ …y NO queda en la hoja Rechazos como un «save» sin id ni cliente (confundía a Administración)', a.shR._datos.length<=1, JSON.stringify(a.shR._datos[1]||[]));
+  const s = a.post(conClave({ action:'save', pedido:{ id:'z1', fecha:MARTES, turno:'AM', cliente:'DE VERDAD', ts:AHORA } }));
+  chk('…mientras que un guardado del panel con el candado ocupado sí se sigue anotando', s.error==='busy' && a.shR._datos.length===2 && a.shR._datos[1][1]==='save' && a.shR._datos[1][4]==='DE VERDAD', JSON.stringify(a.shR._datos[1]||[]).slice(0,100));
+}
+{
+  // E. Productos de otro catálogo
+  const a = cargar([HDR], KPROPS()); delete a.ctx.ScriptApp;
+  const red = kommoFake10(a, (url) => {
+    if (/\/leads\/44001/.test(url)) return LEAD10(44001, { _embedded:{ contacts:[], catalog_elements:[
+      { id:777, metadata:{ quantity:2, catalog_id:12345 } }, { id:888, metadata:{ quantity:1, catalog_id:10902 } }, { id:999, metadata:{ quantity:3 } }] } });
+    if (/\/catalogs\/12345\/elements/.test(url)) return { _embedded:{ elements:[{ id:777, name:'SOMMIER DE OTRO CATALOGO' }] } };
+    if (/\/catalogs\/10902\/elements/.test(url)) return { _embedded:{ elements:[{ id:888, name:'COLCHON DEL CATALOGO' }, { id:999, name:'ALMOHADA SIN CATALOG_ID' }] } };
+    return null; });
+  const r = hook10(a)({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711' });
+  const prods = JSON.parse(a.sh._datos[1] ? a.sh._datos[1][HDR.indexOf('_productos_json')] : '[]');
+  chk('⚠️ un producto de OTRO catálogo (metadata.catalog_id) llega con su nombre (antes: desc vacía)', r.creados===1 && prods.length===3 && prods[0].desc==='SOMMIER DE OTRO CATALOGO' && prods[0].cant===2, JSON.stringify(prods));
+  chk('…los del catálogo de siempre y los que no dicen catálogo siguen saliendo del 10902', prods.length===3 && prods[1].desc==='COLCHON DEL CATALOGO' && prods[2].desc==='ALMOHADA SIN CATALOG_ID' && prods[2].cant===3, JSON.stringify(prods));
+  const cats = red.filter(u => /\/catalogs\//.test(u));
+  chk('…una consulta por catálogo, cada una con sus ids', cats.length===2 && /12345\/elements.*777/.test(cats.find(u => /12345/.test(u))||'') && !/777/.test(cats.find(u => /10902/.test(u))||'x777'), cats.join(' '));
+}
+{
+  // F. El repaso de GitHub encola y contesta al instante
+  const props = KPROPS();
+  const a = cargar([HDR], props);
+  const ev = []; a.ctx.LockService = candadoQue(ev, false);
+  const red = kommoFake10(a, (url) => { const id = Number((url.match(/\/leads\/(\d+)/)||[])[1]); return id ? LEAD10(id) : null; });
+  const r = a.post({ action:'kommoLeads', key:'kk', leads:['44001', '44002'] });
+  chk('⚠️ el repaso de GitHub contesta al instante: encola sin hablar con Kommo ni tomar el candado (con 9 leads cortaba a los 90 s)',
+      r.ok===true && r.origen==='repaso' && r.diferido===true && r.encolados===2 && red.length===0 && ev.length===0, JSON.stringify(r).slice(0,140));
+  chk('…dice la versión, el último aviso y el último repaso (lo que imprime el workflow)', r.version===a.ctx.SCRIPT_VERSION && ('ultimoHook' in r) && ('ultimoRepaso' in r), Object.keys(r).join(','));
+  chk('…los ids quedaron en la cola con un disparador esperando', JSON.parse(props.KOMMO_COLA).join(',')==='44001,44002' && a.ctx.ScriptApp._triggers.filter(t => t.fn==='kommoProcesarCola').length===1, props.KOMMO_COLA);
+  const rc = a.ctx.kommoProcesarCola();
+  chk('…y el disparador crea los dos borradores', rc.creados===2 && a.sh._datos.length===3 && JSON.parse(props.KOMMO_COLA).length===0, JSON.stringify(rc).slice(0,100));
+  const r0 = a.post({ action:'kommoLeads', key:'kk', leads:[] });
+  chk('con la lista vacía contesta sin encolar nada (así el workflow mira la versión igual)', r0.ok===true && r0.origen==='repaso' && r0.encolados===0 && a.ctx.ScriptApp._triggers.length===0, JSON.stringify(r0).slice(0,100));
+  const b = cargar([HDR], KPROPS()); delete b.ctx.ScriptApp;
+  kommoFake10(b, (url) => /\/leads\/44003/.test(url) ? LEAD10(44003) : null);
+  const rb = b.post({ action:'kommoLeads', key:'kk', leads:['44003'] });
+  chk('sin disparadores el repaso de GitHub crea en el momento, como antes', rb.ok===true && rb.origen==='repaso' && !rb.diferido && rb.creados===1 && b.sh._datos.length===2, JSON.stringify(rb).slice(0,100));
 }
 }
 

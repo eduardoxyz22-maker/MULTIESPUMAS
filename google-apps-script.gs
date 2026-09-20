@@ -67,7 +67,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-18-d';   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-20-a';   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -382,6 +382,10 @@ function rechazosInforme_() {
 /** POST: el formulario envía {action:'list'|'save'|'delete', ...} como texto plano.
     Envuelve al cuerpo real para anotar cada «no» (§4el). */
 function doPost(e) {
+  /* 📥 El aviso de Kommo NO se anota en «Rechazos» (§4et): un `busy` del webhook quedaba
+     como un guardado «save» sin id ni cliente, y Administración lo leía como una venta
+     perdida de alguien. El hook tiene su propio rastro (KOMMO_ULTIMO_HOOK) y su cola. */
+  if (e && e.parameter && (e.parameter.k || e.parameter.kommo)) return doPostCuerpo_(e);
   var out = doPostCuerpo_(e);
   try {
     var txt = (out && typeof out.getContent === 'function') ? out.getContent() : (out && out._t);
@@ -957,7 +961,14 @@ function doDelete(id) {
   if (last >= 2) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) {
-      if (String(ids[i][0]) === String(id)) { sh.deleteRow(i + 2); getCacheOlvidar_(); return jsonOut({ ok:true }); }
+      if (String(ids[i][0]) === String(id)) {
+        sh.deleteRow(i + 2); getCacheOlvidar_();
+        /* 📥 Borrar una fila `kommo-<lead>` es DESCARTAR esa venta de Kommo (§4et): se anota
+           el lead para que ni el repaso de 5 minutos ni el de GitHub la vuelvan a traer.
+           Antes «Descartar» solo borraba la fila y el repaso siguiente la recreaba. */
+        if (String(id).indexOf(BORRADOR_PREF) === 0) kDescartar_(String(id).slice(BORRADOR_PREF.length));
+        return jsonOut({ ok:true });
+      }
     }
   }
   return jsonOut({ ok:false, error:'not found' });
@@ -1321,6 +1332,42 @@ function kColaGuardar_(ids) {
 function kColaQuitar_(ids) {
   kColaGuardar_(kColaLeer_().filter(function (id) { return ids.indexOf(String(id)) < 0; }));
 }
+/* ── Los descartados (§4et) ──────────────────────────────────────────────────
+   «Descartar» en el panel borra la fila `kommo-<lead>`. Pero el lead sigue en «Compradores»
+   y el repaso (cada 5 min el del script, cada ~3,5 h el de GitHub) lo veía como nuevo y lo
+   volvía a traer: descartar no descartaba. Ahora `doDelete` anota el lead en la propiedad
+   KOMMO_DESCARTADOS ({ lead: día }) y `kommoProcesarObj_` lo saltea como «descartado».
+   · Se olvida a los KOMMO_DESCARTE_DIAS (60): una venta que de verdad vuelva meses después
+     entra de nuevo; antes de eso la vendedora la carga a mano (y si la carga a mano, la
+     marca `klead` de «Sí, es la misma» la cubre igual).
+   · Tope de KOMMO_DESCARTE_TOPE (300) entradas, las más viejas primero: una propiedad
+     aguanta 9 KB y cada entrada son ~16 caracteres.
+   · ⚠️ La memoria vive en el SERVIDOR a propósito: el mirror del panel es por dispositivo. */
+var KOMMO_DESCARTE_TOPE = 300, KOMMO_DESCARTE_DIAS = 60;
+function kDiaHoy_() { return Math.floor(Date.now() / 86400000); }
+function kDescartadosLeer_() {
+  try { var o = JSON.parse(prop_('KOMMO_DESCARTADOS') || '{}'); return (o && typeof o === 'object' && !Array.isArray(o)) ? o : {}; }
+  catch (e) { return {}; }
+}
+function kDescartar_(leadId) {
+  try {
+    var o = kDescartadosLeer_(), hoy = kDiaHoy_(), k;
+    for (k in o) if (!(hoy - Number(o[k]) <= KOMMO_DESCARTE_DIAS)) delete o[k];   // los vencidos se olvidan
+    o[String(leadId)] = hoy;
+    var ks = Object.keys(o);
+    if (ks.length > KOMMO_DESCARTE_TOPE) {
+      ks.sort(function (a, b) { return Number(o[a]) - Number(o[b]); });
+      while (ks.length > KOMMO_DESCARTE_TOPE) delete o[ks.shift()];
+    }
+    PropertiesService.getScriptProperties().setProperty('KOMMO_DESCARTADOS', JSON.stringify(o));
+  } catch (e) {}
+}
+/** ¿Ese lead lo descartó una vendedora hace menos de KOMMO_DESCARTE_DIAS? */
+function kDescartado_(leadId) {
+  var d = kDescartadosLeer_()[String(leadId)];
+  if (d == null) return false;
+  return (kDiaHoy_() - Number(d)) <= KOMMO_DESCARTE_DIAS;
+}
 function kTriggersDe_(fn) {
   try { return ScriptApp.getProjectTriggers().filter(function (t) { return t.getHandlerFunction() === fn; }); }
   catch (e) { return []; }
@@ -1334,26 +1381,34 @@ function kDespertar_() {
     return true;
   } catch (e) { return false; }
 }
-function kommoEncolar_(ids) {
-  var hook = kUltimoHook_();
-  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:'webhook', creados:0, ids:[], encolados:0, ultimoHook:hook.ts || '' });
+/* Encola y contesta. `origen` = 'webhook' (Kommo) o 'repaso' (el workflow de GitHub, §4et):
+   los dos caminos contestan al instante y el disparador hace el trabajo. Si no hay
+   disparadores (ScriptApp sin autorizar), se procesa en el momento, como siempre. */
+function kommoEncolar_(ids, origen) {
+  origen = origen || 'webhook';
+  var hook = kUltimoHook_(), ultRep = prop_('KOMMO_REPASO_ULTIMO');
+  if (!ids.length) return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], encolados:0, ultimoHook:hook.ts || '', ultimoRepaso:ultRep });
   var cola = kColaLeer_();
   ids.forEach(function (id) { if (cola.indexOf(id) < 0) cola.push(id); });
   kColaGuardar_(cola);
   if (kDespertar_()) {
-    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:'webhook', creados:0, ids:[], encolados:ids.length, cola:cola.length, ultimoHook:hook.ts || '' });
+    return jsonOut({ ok:true, version:SCRIPT_VERSION, origen:origen, diferido:true, creados:0, ids:[], encolados:ids.length, cola:cola.length, ultimoHook:hook.ts || '', ultimoRepaso:ultRep });
   }
-  var r = kommoProcesarObj_(ids, 'webhook');       // sin disparadores: como antes, en el momento
-  kColaQuitar_(ids);
+  var r = kommoProcesarObj_(ids, origen);          // sin disparadores: como antes, en el momento
+  if (r.ok !== false) kColaQuitar_(ids);           // con busy la cola se queda (§4et)
   return jsonOut(r);
 }
 /** Disparador de una vez: procesa lo que dejó el webhook. Se borra a sí mismo primero,
-    así un aviso que llegue mientras tanto deja uno nuevo. */
+    así un aviso que llegue mientras tanto deja uno nuevo.
+    ⚠️ Con el candado ocupado (`busy`) la cola NO se vacía (§4et): antes los ids salían
+    igual y, si además Kommo no contestaba en el repaso, la venta quedaba sin nada que la
+    trajera hasta el repaso de GitHub (horas). Queda la cola y se deja otro disparador. */
 function kommoProcesarCola() {
   kTriggersDe_('kommoProcesarCola').forEach(function (t) { try { ScriptApp.deleteTrigger(t); } catch (e) {} });
   var ids = kColaLeer_();
   if (!ids.length) return { ok:true, creados:0 };
   var r = kommoProcesarObj_(ids, 'cola');
+  if (r.ok === false) { r.cola = ids.length; r.reintento = kDespertar_(); return r; }
   kColaQuitar_(ids);
   return r;
 }
@@ -1365,7 +1420,13 @@ function kommoRepaso() {
   var res = { ts:new Date().toISOString(), cola:0, vistos:0, creados:0, error:'' };
   try {
     var cola = kColaLeer_();
-    if (cola.length) { var rc = kommoProcesarObj_(cola, 'cola'); kColaQuitar_(cola); res.cola = cola.length; res.creados += (rc.creados || 0); }
+    if (cola.length) {
+      var rc = kommoProcesarObj_(cola, 'cola');
+      res.cola = cola.length; res.creados += (rc.creados || 0);
+      // busy: la cola se queda para el próximo repaso, y el resumen lo dice (§4et)
+      if (rc.ok === false) res.error = String(rc.error || 'busy') + ' (la cola queda para el próximo repaso)';
+      else kColaQuitar_(cola);
+    }
     var etapa = kProp_('KOMMO_ETAPA', KOMMO_ETAPA_DEFAULT), embudo = kProp_('KOMMO_EMBUDO', KOMMO_EMBUDO_DEFAULT);
     var min = Number(kProp_('KOMMO_REPASO_MIN', '360')) || 360;
     var desde = Math.floor(Date.now() / 1000) - min * 60;
@@ -1373,11 +1434,15 @@ function kommoRepaso() {
                   '&filter[statuses][0][pipeline_id]=' + encodeURIComponent(embudo) +
                   '&filter[statuses][0][status_id]=' + encodeURIComponent(etapa) +
                   '&filter[updated_at][from]=' + desde);
-    if (r === null) { res.error = 'kommo no contestó'; }
+    if (r === null) { res.error = (res.error ? res.error + ' · ' : '') + 'kommo no contestó'; }
     else {
       var ids = kEmb_(r, 'leads').map(function (x) { return String(x.id || ''); }).filter(function (x) { return !!x; });
       res.vistos = ids.length;
-      if (ids.length) { var rr = kommoProcesarObj_(ids, 'repaso-script'); res.creados += (rr.creados || 0); res.saltados = (rr.saltados || []).length; }
+      if (ids.length) {
+        var rr = kommoProcesarObj_(ids, 'repaso-script');
+        res.creados += (rr.creados || 0); res.saltados = (rr.saltados || []).length;
+        if (rr.ok === false) res.error = (res.error ? res.error + ' · ' : '') + String(rr.error || 'busy') + ' (Kommo se vuelve a mirar en el próximo repaso)';
+      }
     }
   } catch (e) { res.error = String((e && e.message) || e); }
   try { PropertiesService.getScriptProperties().setProperty('KOMMO_REPASO_ULTIMO', JSON.stringify(res)); } catch (e) {}
@@ -1417,7 +1482,11 @@ function kommoLeads(body) {
   if (!clave) return jsonOut({ ok:false, error:'sin clave configurada' });
   if (String(body.key || '') !== clave) return jsonOut({ ok:false, error:'clave incorrecta' });
   var ids = (body.leads || []).map(function (x) { return String(x); }).slice(0, 100);
-  return kommoProcesar_(ids, 'repaso');
+  /* ⚡ Igual que el webhook (§4et): encola y contesta. Procesar acá adentro eran hasta 4
+     llamadas a Kommo por lead; con 9 leads el workflow de GitHub cortaba a los 90 s (run
+     101) mientras el script seguía trabajando a ciegas, y el registro decía «no aceptó el
+     aviso» con la planilla bien. Sin disparadores se hace en el momento, como antes. */
+  return kommoEncolar_(ids, 'repaso');
 }
 
 /* ⚠️ TODO LO QUE HABLA CON KOMMO VA **ANTES** DEL CANDADO (§4dt).
@@ -1434,32 +1503,43 @@ function kommoProcesar_(ids, origen) { return jsonOut(kommoProcesarObj_(ids, ori
 function kommoProcesarObj_(ids, origen) {
   var hook = kUltimoHook_();
   if (!ids.length) return ({ ok:true, version:SCRIPT_VERSION, origen:origen, creados:0, ids:[], ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
-  var shPre = getSheet(), listos = [], saltados = [], yaEstaban = [];
+  var shPre = getSheet(), listos = [], saltados = [], reparar = [];
   for (var j = 0; j < ids.length; j++) {
-    if (leadYaCargado_(shPre, ids[j])) { saltados.push(ids[j] + ':ya estaba'); yaEstaban.push(ids[j]); continue; }
+    if (leadYaCargado_(shPre, ids[j])) {
+      saltados.push(ids[j] + ':ya estaba');
+      /* Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
+         Lo que hay que preguntarle a Kommo se pregunta ACÁ, afuera (§4et): antes iba adentro
+         del candado y cada repaso trababa la planilla dos llamadas de red por borrador
+         mientras el contacto siguiera sin nombre. */
+      var rep = repararNombrePrep_(shPre, ids[j]);
+      if (rep) reparar.push(rep);
+      continue;
+    }
+    if (kDescartado_(ids[j])) { saltados.push(ids[j] + ':descartado'); continue; }   // lo descartó una vendedora (§4et)
     var arm = borradorDeLead_(ids[j]);              // ← sin candado: acá se habla con Kommo
     if (typeof arm === 'string') { saltados.push(ids[j] + ':' + arm); continue; }
     listos.push({ id: ids[j], rec: arm });
   }
   /* Y si no hay NADA que escribir, ni se toma el candado. Es el caso normal: el repaso
-     corre cada 10 minutos y casi siempre no encuentra ventas nuevas — antes trababa la
-     planilla igual, 144 veces por día, para no hacer nada. */
-  if (!listos.length && !yaEstaban.length) {
+     corre cada 5 minutos y casi siempre no encuentra ventas nuevas — antes trababa la
+     planilla igual, cientos de veces por día, para no hacer nada. Un lead que «ya estaba»
+     con nombre propio tampoco lo toma (§4et). */
+  if (!listos.length && !reparar.length) {
     return ({ ok:true, version:SCRIPT_VERSION, origen:origen,
                      creados:0, ids:[], saltados:saltados, reparados:0, ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
   }
   var lock = LockService.getScriptLock();
-  try { lock.waitLock(30000); } catch (err) { return ({ ok:false, error:'busy' }); }
+  try { lock.waitLock(30000); } catch (err) { return ({ ok:false, error:'busy', version:SCRIPT_VERSION, origen:origen }); }
   try {
     var sh = getSheet(), hechos = [], reparados = [];
     for (var i = 0; i < listos.length; i++) {
-      if (leadYaCargado_(sh, listos[i].id)) { saltados.push(listos[i].id + ':ya estaba'); yaEstaban.push(listos[i].id); continue; }
+      if (leadYaCargado_(sh, listos[i].id)) { saltados.push(listos[i].id + ':ya estaba'); continue; }
       sh.appendRow(recToRow(listos[i].rec));
       hechos.push(listos[i].id);
     }
     if (hechos.length) getCacheOlvidar_();
-    // Los que ya estaban pueden haber quedado con el nombre que les puso Kommo («Lead #123»).
-    for (var k = 0; k < yaEstaban.length; k++) if (repararNombreBorrador_(sh, yaEstaban[k])) reparados.push(yaEstaban[k]);
+    // Adentro solo se escribe la celda, revalidando que siga siendo un borrador sin nombre.
+    for (var k = 0; k < reparar.length; k++) if (repararNombreAplicar_(sh, reparar[k])) reparados.push(reparar[k].id);
     return ({ ok:true, version:SCRIPT_VERSION, origen:origen,
                      creados:hechos.length, ids:hechos, saltados:saltados,
                      reparados:reparados.length, ultimoHook:hook.ts || '', ultimoRepaso:prop_('KOMMO_REPASO_ULTIMO') });
@@ -1509,21 +1589,41 @@ function leadEnEtapa_(lead) {
    ⚠️ NO se le pone sello de revisión a propósito. El borrador nace con sello 0 («nunca
    guardado»), y así quien lo complete no choca contra un conflicto por esta corrección. */
 function repararNombreBorrador_(sh, leadId) {
+  var rep = repararNombrePrep_(sh, leadId);
+  return !!(rep && repararNombreAplicar_(sh, rep));
+}
+/* La fila del borrador `kommo-<lead>` y su nombre actual, solo si sigue siendo un borrador
+   con nombre genérico. {fila, actual} o null. */
+function borradorGenerico_(sh, leadId) {
   var last = sh.getLastRow();
-  if (last < 2) return false;
+  if (last < 2) return null;
   var ids = sh.getRange(2, 1, last - 1, 1).getValues();
   var buscado = BORRADOR_PREF + leadId, fila = -1;
   for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === buscado) { fila = i + 2; break; }
-  if (fila < 0) return false;
+  if (fila < 0) return null;
   var colCli = HEADERS.indexOf('Cliente') + 1, colEst = HEADERS.indexOf('Estado stock') + 1;
-  if (String(sh.getRange(fila, colEst).getValue() || '') !== BORRADOR_EST) return false;  // ya lo completaron
+  if (String(sh.getRange(fila, colEst).getValue() || '') !== BORRADOR_EST) return null;   // ya lo completaron
   var actual = String(sh.getRange(fila, colCli).getValue() || '').trim();
-  if (!nombreGenerico_(actual)) return false;                                             // ya tiene nombre propio
+  if (!nombreGenerico_(actual)) return null;                                              // ya tiene nombre propio
+  return { fila: fila, actual: actual };
+}
+/** AFUERA del candado (§4et): mira la hoja y le pregunta a Kommo. Devuelve {id, nombre} si
+    hay un nombre mejor para escribir, o null (y entonces no hace falta ni tomar el candado). */
+function repararNombrePrep_(sh, leadId) {
+  var b = borradorGenerico_(sh, leadId);
+  if (!b) return null;
   var lead = kGet_('/leads/' + leadId + '?with=contacts');
-  if (!lead || !lead.id) return false;
+  if (!lead || !lead.id) return null;
   var nombre = nombreDeLead_(lead);
-  if (!nombre || nombreGenerico_(nombre) || nombre === actual) return false;
-  sh.getRange(fila, colCli).setValue(nombre);
+  if (!nombre || nombreGenerico_(nombre) || nombre === b.actual) return null;
+  return { id: String(leadId), nombre: nombre };
+}
+/** ADENTRO del candado: vuelve a mirar la fila (pudo completarse o cambiar de nombre
+    mientras se hablaba con Kommo) y escribe solo la celda del cliente. */
+function repararNombreAplicar_(sh, rep) {
+  var b = borradorGenerico_(sh, rep.id);
+  if (!b || rep.nombre === b.actual) return false;
+  sh.getRange(b.fila, HEADERS.indexOf('Cliente') + 1).setValue(rep.nombre);
   return true;
 }
 
@@ -1552,6 +1652,7 @@ function leadYaCargado_(sh, leadId) {
 function crearBorradorDeLead_(leadId) {
   var sh = getSheet();
   if (leadYaCargado_(sh, leadId)) return 'ya estaba';
+  if (kDescartado_(leadId)) return 'descartado';
   var rec = borradorDeLead_(leadId);
   if (typeof rec === 'string') return rec;
   getSheet().appendRow(recToRow(rec));
@@ -1583,13 +1684,22 @@ function borradorDeLead_(leadId) {
   // ── Los productos del catálogo, si la vendedora los enganchó ──
   var prods = [], els = kEmb_(lead, 'catalog_elements');
   if (els.length) {
-    var q = [];
-    for (var i = 0; i < els.length; i++) q.push('filter[id][]=' + encodeURIComponent(els[i].id));
-    var cat = kGet_('/catalogs/' + KOMMO_CATALOGO + '/elements?' + q.join('&'));
+    /* El elemento dice de qué catálogo es (`metadata.catalog_id`); si no lo dice, el de
+       «Productos». Antes se preguntaba SIEMPRE al catálogo fijo y un producto de otro
+       catálogo llegaba al panel sin nombre (§4et). Una consulta por catálogo. */
+    var porCat = {}, cats = [];
+    for (var i = 0; i < els.length; i++) {
+      var cid = String((els[i].metadata || {}).catalog_id || KOMMO_CATALOGO);
+      if (!porCat[cid]) { porCat[cid] = []; cats.push(cid); }
+      porCat[cid].push('filter[id][]=' + encodeURIComponent(els[i].id));
+    }
     var porId = {};
-    kEmb_(cat, 'elements').forEach(function (el) { porId[String(el.id)] = el; });
+    for (var c = 0; c < cats.length; c++) {
+      var cat = kGet_('/catalogs/' + cats[c] + '/elements?' + porCat[cats[c]].join('&'));
+      kEmb_(cat, 'elements').forEach(function (el) { porId[cats[c] + ':' + String(el.id)] = el; });
+    }
     for (var j = 0; j < els.length; j++) {
-      var meta = els[j].metadata || {}, el = porId[String(els[j].id)] || {};
+      var meta = els[j].metadata || {}, el = porId[String(meta.catalog_id || KOMMO_CATALOGO) + ':' + String(els[j].id)] || {};
       var precio = Number(meta.price);
       if (!(precio > 0)) precio = Number(kCampo_(el, KOMMO_CF_PRECIO)) || 0;
       prods.push({ desc: String(el.name || '').trim(), medida: '', codigo: '',
