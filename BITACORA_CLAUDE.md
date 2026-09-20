@@ -6505,6 +6505,12 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 
 ## 5. Pendientes
 
+> 🔎 **Revisión con cuatro agentes del 19/09 (§4er)**: 9 hallazgos ALTA, 17 MEDIA, 7 BAJA, todos
+> sin arreglar. Los dos más urgentes: **ningún borrador de Kommo se puede completar desde el 18/09**
+> (guarda A1 de §4eo) y el rechazo firme que deja la copia rechazada en pantalla (`SAVE_ULTIMO`).
+> Los rojos de `test_borradores` y `test_conflicto` son bugs reales; los de `test_producir`,
+> `test_onclicks`, `test_atc` y `test_rpt` son tests viejos.
+
 > 🔴 **12 checks en rojo en `main` que NO son de §4ee** (medido el 14/09 sobre `6794cf0`, sin ese
 > commit, y con él: idénticos). Vienen de OTRA sesión mía del 11 al 14/09 (§4dx–§4ed: 🏭 Qué
 > producir con «octubre» como RANGO de 30/60/90 días y mediana, el circuito de ATC, el módulo de
@@ -7188,3 +7194,125 @@ desaparece, «Corregir» arranca en Miguel y vuelve a la vendedora); los camione
 ⚠️ En el test el doble de `apiList` toma la foto de la planilla **al resolver**, no al llamarse
 (`showView` pide la lista y en el mismo tirón se anota un cobro: con la foto de antes, al
 resolver pisaba el cobro), y devuelve también las filas `__ret_…`.
+
+## 4er. Revisión de errores con cuatro agentes (19/09/2026): lo encontrado, pendiente de arreglar
+
+Pedido del dueño (`/loop`): *"un agente para revisar contabilidad, otro entregas, otro kommo, otro
+administración. busca errores"*. Cuatro revisores en paralelo, solo lectura, cada uno con scripts de
+reproducción (fixtures sintéticos). Se cortaron por el límite de uso de la sesión y se retomaron
+desde donde iban. CONFIRMADO = reproducido con script o suite; PLAUSIBLE = por lectura. Las líneas
+son de `pedidos.html` en `6450818` salvo que se diga otro archivo. **Nada de esto está arreglado
+todavía**: se arregla en el orden de abajo cuando el dueño lo pida.
+
+### Veredicto sobre los tests rojos de `main`
+- `test_borradores` (8) → **BUG REAL**: la guarda A1 de §4eo (`6295-6298`, `if(isEdit && !prev)`)
+  corta `submitPedido` antes de `apiSave`, y un borrador de Kommo nunca está en `STATE` (§4ca,
+  `6579`). **Desde el 18/09 ningún borrador de Kommo se puede completar** (cartel «El pedido que
+  estabas editando ya no está en este dispositivo»). Contra `fec8bf5` el test da 85/0. Arreglo:
+  exceptuar `borradorDe(EDIT_ID)` en la guarda (y tratar al borrador como `!isEdit` en los porteros
+  de fecha/cupos del formulario, que con `prev=null` se saltean).
+- `test_conflicto` (1) → **BUG REAL**: tras un rechazo firme (`rechazoFirme` `2188-2201`) el refresco
+  no repone la fila del servidor porque `mergePending` (`7855`) conserva la copia local de todo id
+  con `saveReciente` (`2030`, 90 s). Queda en pantalla la fecha/turno rechazados, se cuentan en los
+  cupos y cualquier acción rápida los reenvía. Arreglo: borrar `SAVE_ULTIMO[id]`/`SAVE_REV[id]` en
+  `rechazoFirme` antes de `refrescarEstado()` (con eso el test pasa).
+- `test_producir` (6) → test viejo: los fixtures esperan la regla del 10/09 (`porDiaMes × 31`
+  decimal); el código de §4ec (mediana del rango 30/60/90 d + mismo mes año pasado + tendencia,
+  enteros) es coherente consigo mismo (invariantes verificados: `sem=o.fabricar`, `quin≥sem`,
+  `1ª+2ª=mes`, todo entero ≥0). Reescribir expectativas. Pero ver H-Adm3.
+- `test_onclicks` (1, `pdev-turno`) → test viejo: los botones llaman `segSet` inline, no hace
+  falta `initSeg`. `test_atc` (4) → tests viejos (§4dz/§4ea/§4eb renombraron pasos y fichas; con
+  `b2810b9` da 81/0). `test_rpt` (1) → test viejo (`stockUnicoEtq` en minúscula, `cf7c844`).
+
+### 🔴 ALTA
+- **Kommo/Entregas** · completar un borrador está bloqueado (ver arriba) · `6295-6298` · CONFIRMADO.
+- **Conta** · editar el pedido desde el formulario borra el flete YA COBRADO cuando además hay un
+  flete pactado sin cobrar (`submitPedido` `6426-6437`, `editPedido` `7237`): Bs que entraron
+  desaparecen del Cuadre y al chofer se le manda a cobrar de más · CONFIRMADO.
+- **Conta** · pago mixto «a cuenta»: «Guardar precios y montos» sin tocar nada pisa `p.acuenta` con
+  solo el primer método (`aplicarMontos` `5661`, `ctaEditHtml` `5542`, `ctaGuardarPago` `5278`) y
+  la próxima edición del pedido tira la parte del segundo método · CONFIRMADO.
+- **Conta** · «✏️ Corregir» sobre el cobro de una venta PAGADA SIN MONTO deja saldo negativo y un
+  «cobro de más» falso (`ctaGuardarPago` `5286`: objetivo congelado en 0; `ctaAnotarMonto` lo hace
+  bien) · CONFIRMADO.
+- **Conta** · corregir fecha/nota del ANTICIPO de una venta pagada por completo la desmarca de
+  PAGADA (`5272-5280` → `11965` `p.pagado = total>0 && …` con `cobros=[]`) y el formulario ya no
+  deja guardarla («poné el saldo por cobrar») · CONFIRMADO.
+- **Kommo** · «Sí, es la misma» apuntando al MISMO id (pedido convertido en cola + copia del
+  servidor todavía borrador) borra en la planilla la fila recién guardada (`gemeloDe` `8018-8034`,
+  `borrEsLaMisma` `8244-8253`) · CONFIRMADO a nivel de función.
+- **Adm** · la fila `__stock__` en vuelo la pisa cualquier `list` y la siguiente anotación borra la
+  anterior del servidor (`leerCierresDeLista` `8267`, `mergePending` `7844`; `autoOcupado` `7723`
+  no incluye el stock) · CONFIRMADO.
+- **Adm** · recogida «dada por llegada» desde el Excel de existencias no se descuenta de Moreno: se
+  cuenta dos veces (`confirmarImportExist` `14954-14956` vs `recibirStockPedido` `14106-14110`) ·
+  CONFIRMADO.
+- **Adm (H-Adm3)** · el plan del mes de 🏭 Qué producir cuenta a Eduardo y a los pedidos puntuales
+  (`ventasPanelIndex` `13601` no excluye `stockPedidoUnico`; `13690` mete productos solo por
+  historia) mientras el cartel `13735` dice lo contrario; contradice §4dj · CONFIRMADO.
+
+### 🟡 MEDIA
+- **Conta** · el arqueo no tiene la protección §4eo: un `list` en vuelo revierte lo anotado y la
+  siguiente anotación manda el valor viejo (`leerCierresDeLista` `8298`) · CONFIRMADO.
+- **Conta** · tras «Registrar pago», la ventana «✅ Guardado» y el WhatsApp muestran el FLETE si la
+  venta tiene recargo cobrado (`showPagoWhatsapp(id, contaPagos(p).length-1)` `5779`; los envíos
+  van al final) · CONFIRMADO.
+- **Conta** · con filtro por vendedora, `cuadreTexto` `4350` y `exportCuadre` `4390` comparan el
+  arqueo GLOBAL con un total parcial (la pantalla sí lo evita con `arqueoOn`) · CONFIRMADO.
+- **Conta** · borrar un retiro no mira la respuesta del servidor (`4526`): «Retiro borrado» y vuelve
+  con la próxima lista · CONFIRMADO.
+- **Entregas** · la plata cobrada por el chofer aparece en Bs 0 cuando la lista vuelve del servidor:
+  cinco cuentas suman `p.cobradoBs`, que no tiene columna (`10064`, `8642-8644`, `10970`, `10977`,
+  `11241`); usar `totalCobrado(p)` · CONFIRMADO.
+- **Entregas** · la foto de la entrega se pierde si otro dispositivo guardó ese pedido mientras
+  subía (conflicto → `rechazoFirme` pisa; «Foto guardada ✓» sale antes de la respuesta)
+  (`10446-10458`) · CONFIRMADO.
+- **Entregas** · cambiar solo el turno de un pedido que YA está en un día cerrado: el panel dice ✓ y
+  el servidor rechaza (`cambiarTurno` `15629-15647` sin `forzar`; `.gs` `916-918` → `porteroFecha_`
+  mira `diaCerradoGs` aunque la fecha no cambie) · CONFIRMADO.
+- **Entregas** · «Quitar la devolución» de una ATC vuelve al día del recojo sin `forzar`: si ya pasó
+  o está cerrado, el servidor rechaza y la devolución sigue (`9470-9477`) · CONFIRMADO.
+- **Entregas** · en «👑 Ver todos» con un nombre elegido en el desplegable, el efectivo de un pedido
+  de OTRO chofer se anota como recibido por ese nombre (`choCobrarMetodo` `10588-10589`, §4eq):
+  en modo todos usar `p.chofer` · CONFIRMADO.
+- **Kommo** · «Descartar» no descarta: el repaso de 5 min lo vuelve a crear porque `leadYaCargado_`
+  ya no encuentra fila ni marca (`.gs` `1364-1385`, `1532-1546`, `doDelete` `954-964`); guardar los
+  descartados en una propiedad · CONFIRMADO.
+- **Kommo** · editar desde el formulario un pedido marcado «es la misma» pierde `klead`
+  (`heredarMarcas` `2765-2778` no lo copia) y el borrador vuelve · CONFIRMADO.
+- **Kommo** · un `list` tardío resucita el borrador recién convertido: `leerCierresDeLista` corre
+  antes de la regla de guardado reciente (`7843-7858`, `8256-8270`) · CONFIRMADO.
+- **Kommo** · el repaso «ya estaba» toma el candado sin nada que escribir y `repararNombreBorrador_`
+  habla con Kommo adentro (`.gs` `1447-1462`, `1511-1528`; contra §4dt) · CONFIRMADO.
+- **Kommo** · el repaso de GitHub es síncrono: con 9 leads se corta a los 90 s (run 101) y hubo un
+  404 (run 104); encolar como el webhook (`.gs` `1415-1421`, `traer_kommo.py:78`) · CONFIRMADO por
+  registros. Y `traer_kommo.py:113-149` no distingue una respuesta de `kommoLeads` de otro
+  `ok:true` (run 110 sin `ultimoHook`) · PLAUSIBLE.
+- **Adm** · filas del sistema en cola (`__stock__`, retiros) se cuelan en `STATE` y se dibujan como
+  pedidos (`mergePending` `7859-7874`) · CONFIRMADO.
+- **Adm** · el aviso «reposiciones sin entregar» recorre todo `STATE` pero el chip y la tabla van por
+  el filtro Mes: «1 sin entregar» y la tabla vacía (`8530`, `8548`, `8741`) · CONFIRMADO.
+- **Adm** · 🔄 Actualizar (`loadFromServer` `8450-8467`) sin `conTopeDuro`: un `fetch` colgado deja
+  «Cargando…» para siempre · CONFIRMADO (mecanismo).
+
+### ⚪ BAJA
+- **Conta** · adjuntar imagen al anticipo (o reescribir envíos) de una venta vieja «PAGADA sin
+  monto» hace desaparecer el cobro sin monto y su aviso (`5352`, `5386`, fallback `11876`) ·
+  CONFIRMADO. «Registrar pago» acepta fecha a futuro (`5735`; «Corregir» la rechaza) · CONFIRMADO.
+- **Entregas** · sábado: «Mañana» es domingo en chofer, carga, ruta, mapa, WhatsApp y parte
+  (`10017`, `8982`, `16261`, `16372`, `11048`, `10964`); falta un `proximoDiaEntrega()` · CONFIRMADO.
+- **Kommo** · `busy` vacía la cola del webhook sin haber escrito (`.gs` `1352-1359`); el `busy` del
+  hook queda en «Rechazos» como un `save` vacío (`384-399`); catálogo fijo `10902` (`1216`,
+  `1584-1598`); `generar.py` corta el mes en UTC y no en Bolivia (`233-240`, `.timestamp()` naive) ·
+  CONFIRMADO.
+- **Adm** · «Hay» del plan con depósito negativo se come lo de Moreno (`13651`); el buscador de la
+  tabla no saca acentos (`8584`) · CONFIRMADO.
+
+### Revisado y quedó bien (resumen)
+Ida y vuelta de `parseCobros`/`textoCobros` con todos los tokens; `aplicarCobros`/`aplicarEnvios`
+releen antes de pisar; corte del Cuadre por fecha del pago; cupos (retiros, cierres, stock y
+borradores no ocupan cupo en ninguno de los dos lados); día cerrado y `forzar`; chofer por nombre
+sin mayúsculas; textos de WhatsApp = pantalla; mapa/ubicar; fotos con tope; webhook de Kommo
+(formulario antes del JSON, clave, dedupe, `leadYaCargado_` dentro del candado); borrador con
+`fecha=''`/`nroDia=0`; `traer_kommo.py` sin datos de clientes; `generar.py` paginación y
+`monthrange`; Excel de Administración sin celdas corridas; chips = tabla; primera carga y getlog.
