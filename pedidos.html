@@ -7804,7 +7804,8 @@ function autoOcupado(){
   if(typeof COMP_SUBIENDO!=='undefined' && COMP_SUBIENDO>0) return 'subiendo una imagen';
   var b=document.getElementById('f-submit');
   if(b && b.disabled) return 'guardando el pedido';
-  var ids=['mapa','ruta','carga','faltantes','entregas','retiros','prods','reporte','parte','envio'];
+  // 📦 «stock» también (§4ev): con la pantalla de stock abierta se anotan recogidas y conteos.
+  var ids=['mapa','ruta','carga','faltantes','entregas','retiros','prods','reporte','parte','envio','stock'];
   for(var i=0;i<ids.length;i++){
     var o=document.getElementById(ids[i]+'-overlay');
     if(o && o.style.display && o.style.display!=='none') return ids[i];
@@ -7955,7 +7956,13 @@ function mergePending(serverList){
     pendRet.forEach(function(r){ if(!idsR[String(r.id)]){ RETIROS.push(r); idsR[String(r.id)]=1; } });
     saveRetirosMirror(); renderRetirosSiActivo();
   }
-  return serverList.concat(pend);
+  /* ⚠️ Las filas del sistema en cola NO son pedidos (§4ev, §4er MEDIA): la del stock con el
+     servidor ocupado quedaba en la cola, `leerCierresDeLista` la sacaba de la lista del
+     servidor y este `concat` la volvía a meter en STATE — Administración en «Todo» dibujaba
+     «📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR» como un pedido y las fichas
+     contaban un pedido de más. Los retiros ya se sumaron a RETIROS arriba; el stock en
+     memoria manda mientras esté en cola (`filaSistemaEnVuelo`). */
+  return serverList.concat(pend.filter(function(p){ return !esFilaSistema(p); }));
 }
 
 /* ============================================================================
@@ -8348,6 +8355,18 @@ function borrEsLaMisma(idBorr, idPed){
   toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
 }
 
+/* 📦 UNA FILA DEL SISTEMA EN VUELO NO LA PISA EL `list` (§4ev). Igual que los pedidos (§4eo):
+   si la fila del stock (o la del arqueo) tiene un guardado en vuelo, en espera, de hace menos
+   de 90 s, o está en la cola sin enviar, lo que hay en memoria es más nuevo que lo que trae
+   el servidor. Antes cualquier refresco (el tic de 2 min, entrar al formulario, un rechazo)
+   leía la fila vieja y la recogida recién anotada desaparecía de la memoria; la siguiente
+   anotación se guardaba desde esa memoria pisada y BORRABA la anterior en el servidor. */
+function filaSistemaEnVuelo(id){
+  if(typeof saveReciente==='function' && saveReciente(id)) return true;
+  var pend=getPending();
+  for(var i=0;i<pend.length;i++) if(pend[i] && String(pend[i].id)===String(id)) return true;
+  return false;
+}
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
 function leerCierresDeLista(lista){
   var resto=[], cie=null, arq=null, rets=[], car=null, borr=[], stk=null;
@@ -8367,7 +8386,7 @@ function leerCierresDeLista(lista){
     }
     else resto.push(p);
   });
-  if(stk) STOCK=leerStock(stk);
+  if(stk && !filaSistemaEnVuelo(STOCK_ID)) STOCK=leerStock(stk);     // en vuelo, manda la memoria (§4ev)
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
@@ -8398,7 +8417,10 @@ function leerCierresDeLista(lista){
     DIAS_CERRADOS=delServidor;
     saveCierresMirror();
   }
-  if(arq){ ARQUEO=parseArqueo(arq.observaciones); saveArqueoMirror(); renderCuadreSiActivo(); }
+  /* 🧮 El arqueo también (§4ev, §4er MEDIA): contabilidad anotaba Efectivo=600, un `list` en
+     vuelo traía la fila vieja (1000), la pantalla decía «sobra Bs 400» y la siguiente
+     anotación mandaba el 1000 al servidor: el 600 se deshacía con su propia tecla. */
+  if(arq && !filaSistemaEnVuelo(ARQUEO_ID)){ ARQUEO=parseArqueo(arq.observaciones); saveArqueoMirror(); renderCuadreSiActivo(); }
   return resto;
 }
 function saveCierresMirror(){ try{ localStorage.setItem(LS_CIERRES, JSON.stringify(DIAS_CERRADOS)); }catch(e){} }
@@ -13706,7 +13728,11 @@ function ventasHistIndex(){
 function ventasPanelIndex(){
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
-    if(!stockCuenta(p) || esRPT(p.oc)) return;
+    /* ⚠️ Sin los pedidos únicos (§4ev): Eduardo, MULTICENTER/consignación, ROHO a tienda y
+       las reposiciones. Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
+       con una venta única de 40 de Eduardo en agosto, «producir en octubre» subía de 9 a 24
+       por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
+    if(!stockCuenta(p) || stockPedidoUnico(p)) return;
     var m=String(contaFecha(p)||fechaSalida(p)||'').slice(0,7); if(!m || m<desde) return;   // por fecha de venta (§4dv)
     (p.productos||[]).forEach(function(x){
       if(esProdDeTienda(x)) return;
@@ -13840,7 +13866,7 @@ function renderProducir(d){
       '<span style="font-size:.78rem;color:var(--muted)">'+conAlgo+' producto'+(conAlgo===1?'':'s')+' con algo que producir · '+R.cubiertos+' cubierto'+(R.cubiertos===1?'':'s')+(R.sinContar?(' · '+R.sinContar+' sin contar'):'')+'</span>'+
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo ni reposiciones de tienda, y solo productos con '+STOCK_VENTAS_MIN+'+ entregas. '+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo, pedidos puntuales ni reposiciones de tienda; productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
       '<b>Hay</b> suma lo de acá, lo de Moreno y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       '<b>'+esc(MS.nombre)+'</b> es un <b>rango</b>: lo que dan los últimos 30, 60 y 90 días, el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
@@ -15060,7 +15086,19 @@ function confirmarImportExist(){
           .concat(STOCK.h||[]).slice(0,STOCK_HIST);
   var cerrados=0;
   if(cerrarPed && rol==='log'){
-    existPedidosVencidos(R.fecha).forEach(function(q){ q.r=R.fecha; q.ru=(Number(q.ru)||0)+(Number(q.u)||0); q.u=q.total||q.u; q.enConteo=true; cerrados++; });
+    existPedidosVencidos(R.fecha).forEach(function(q){
+      var uPend=Number(q.u)||0;
+      /* 🚚 Una RECOGIDA no crea unidades: las mueve (§4cr). Darla por llegada desde el Excel
+         de acá tiene que restarla de Moreno igual que «Llegaron» (`recibirStockPedido`); si
+         no, el corte de Moreno sigue con las 10 y el panel ve 7 acá + 10 allá = 17 cuando
+         la realidad es 12: «Traer de Moreno» unidades que no están, la revisión automática
+         reservando de allá lo que no existe y «Qué producir» produciendo de menos (§4ev). */
+      if(q.tipo==='recogida'){
+        var alm=q.de || Object.keys(STOCK.g||{})[0], s=(STOCK.g||{})[alm];
+        if(s && s.u && s.u[q.k]!=null) s.u[q.k]=Math.max(0,(Number(s.u[q.k])||0)-uPend);
+      }
+      q.r=R.fecha; q.ru=(Number(q.ru)||0)+uPend; q.u=q.total||q.u; q.enConteo=true; cerrados++;
+    });
   }
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   EXIST_IMP=null;

@@ -183,6 +183,17 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     ⚠️ `rotacion.html` (12/08, matriz Ene-25 a Jul-26, proyección a 5 meses con backtest)
     es una FOTO: no se alimenta sola y el dueño no quiere subir reportes; por producto se
     equivoca 62% a un mes (13% en el total), así que no sirve para pedir por producto.
+  - **📦 La fila del stock en vuelo manda la memoria** (§4ev): `filaSistemaEnVuelo(id)`
+    (`saveReciente` o en la cola) frena el `STOCK=leerStock(stk)` de `leerCierresDeLista` —y
+    el `ARQUEO=parseArqueo(...)`— mientras haya un guardado en curso; antes un `list` tardío
+    borraba la recogida recién anotada y la siguiente anotación la borraba del servidor.
+    `autoOcupado` incluye `stock`; `mergePending` no mete filas del sistema en `STATE`.
+    ⚠️ En un test de «en vuelo», el doble de `apiSave` NO anota `SAVE_ULTIMO`: usar el
+    `apiSave` real y simular `apiPost` (`tests/test_adm_alta.js`).
+  - **Recogida cerrada desde el Excel** (§4ev): `confirmarImportExist` resta lo pendiente de
+    `STOCK.g[de].u[k]` como «Llegaron»; si no, Moreno se cuenta dos veces.
+  - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
+    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

@@ -7394,9 +7394,77 @@ mixto a cuenta que perdía el 2° método, «Corregir» un cobro sin monto con s
 corregir el anticipo de una venta pagada que la desmarcaba. `tests/test_conta_alta.js` (29
 checks; contra el panel de `ab5e84a` da 8/21).
 
+### ✅ 8. Administración y stock, los tres ALTA (+ dos MEDIA del mismo mecanismo) — 20/09 → **§4ev**
+La fila `__stock__` (y la del arqueo) en vuelo ya no la pisa el `list`, la fila del sistema en
+cola no se dibuja como pedido, la recogida cerrada desde el Excel se descuenta de Moreno, y el
+plan del mes de «Qué producir» deja afuera a Eduardo, los puntuales y las reposiciones.
+`tests/test_adm_alta.js` (18 checks; contra el panel de `b632321` da 9/9).
+
 ### Lo que sigue (orden)
-8. Adm ALTA ×3 (stock en vuelo, recogida desde el Excel, plan del mes con Eduardo). 9. Las
-   MEDIA y BAJA de §4er, y poner al día los tests viejos (producir, onclicks, atc, rpt).
+9. Las MEDIA y BAJA de §4er que quedan, y poner al día los tests viejos (producir, onclicks,
+   atc, rpt).
+
+## 4ev. Administración y stock: la fila en vuelo, la recogida del Excel y el plan sin Eduardo (2026-09-20)
+
+Bloque 8 de §4es: los tres hallazgos 🔴 ALTA de Administración de §4er, más dos MEDIA que
+salen del mismo mecanismo (la fila del sistema en cola que se colaba en STATE, y el arqueo del
+Cuadre que un `list` en vuelo pisaba — este último era de Contabilidad). Todo en `pedidos.html`.
+
+### 1. La fila `__stock__` en vuelo la pisaba cualquier `list`
+- **Qué pasaba**: se anota una recogida de 5 (`guardarStockRecogida` → `guardarStock` →
+  `apiSave`, que tarda segundos con la hoja cargada). En el medio entra un refresco
+  cualquiera (el tic de 2 min, entrar al formulario, un rechazo, abrir «Cerrar día»…):
+  `leerCierresDeLista` hacía `STOCK=leerStock(stk)` con la fila VIEJA y la recogida
+  desaparecía de la memoria. El servidor sí la recibía — pero la siguiente anotación (otra
+  recogida de 2) se guardaba desde la memoria pisada y **borraba la primera en el
+  servidor**. `mergePending` protegía los pedidos (§4eo) y los retiros, no el stock; y
+  `autoOcupado` no miraba `stock-overlay`, así que el tic refrescaba con el stock a la vista.
+- **Arreglo**: `filaSistemaEnVuelo(id)` = `saveReciente(id)` (en vuelo, en espera, o guardado
+  hace menos de 90 s) o la fila en la cola sin enviar. `leerCierresDeLista` no reemplaza
+  `STOCK` mientras eso valga (pasados los 90 s, manda el servidor), y `autoOcupado` incluye
+  `stock`. **El arqueo** (`ARQUEO_ID`) tiene la misma guarda: contabilidad anotaba
+  Efectivo=600, el `list` en vuelo traía 1000, la pantalla decía «sobra Bs 400» y la
+  siguiente anotación mandaba el 1000 (§4er Conta MEDIA 5).
+- **La fila en cola** (§4er Adm MEDIA H5): con el servidor `busy`, `guardarStock` la dejaba
+  en la cola; el refresco sacaba la del servidor de la lista y el `concat` de `mergePending`
+  metía la de la cola en `STATE`: Administración en «Todo» dibujaba «📦 STOCK DEL DEPÓSITO —
+  fila del sistema, NO BORRAR» como un pedido más. Ahora el `concat` filtra `esFilaSistema`
+  (los retiros ya se suman a `RETIROS` arriba).
+
+### 2. La recogida «dada por llegada» desde el Excel no se descontaba de Moreno
+- **Qué pasaba**: Moreno 10, recogida programada de 5 (acá 2, en camino 5, libres allá 5 =
+  12 reales). Llegan; logística sube su Excel con 7 y deja tildado «Darlos por llegados» →
+  `confirmarImportExist` cerraba la recogida (`q.r`, `enConteo`) sin tocar
+  `STOCK.g[de].u[k]` → `stockLibreOrigen` dejaba de restarla → Moreno volvía a 10 y el panel
+  veía 7 + 10 = **17**: «🚚 Traer de Moreno» unidades que no están, la revisión automática
+  reservando de allá lo que no existe, y «Qué producir» produciendo de menos hasta el próximo
+  Excel de Moreno. `recibirStockPedido` («Llegaron») sí restaba.
+- **Arreglo**: al cerrar un `q.tipo==='recogida'` desde el Excel se resta lo pendiente de
+  `STOCK.g[q.de].u[q.k]` (con piso 0), igual que «Llegaron».
+
+### 3. El plan del mes contaba a Eduardo y a los pedidos puntuales
+- **Qué pasaba**: `ventasPanelIndex` (la historia mensual del panel para las estimaciones de
+  60 d / 90 d / tendencia del rango, §4du) excluía ATC y RPT pero no `stockPedidoUnico`
+  (Eduardo, MULTICENTER/consignación, ROHO a tienda). Con una venta única de 40 de Eduardo en
+  agosto, «producir en octubre» del TITANIO ICE pasaba de 9 a 24 con el mismo ritmo de 30
+  días, y el cartel decía «sin Eduardo». Contradecía §4dj y la pantalla.
+- **Arreglo**: `ventasPanelIndex` saltea `stockPedidoUnico(p)` (que ya incluye las RPT). La
+  cabecera del cuadro ahora dice la verdad entera: «sin Eduardo, pedidos puntuales ni
+  reposiciones de tienda; productos con 3+ entregas, algo vendido sin entregar, o ventas el
+  mismo mes del año pasado» (ese último grupo entraba y el cartel no lo decía).
+- **No se tocó** (PLAUSIBLE del revisor, es decisión de diseño): un mes ≥ 2026-08 sin ventas
+  en el panel se sigue tomando como «sin dato» y no como 0. Cambiarlo baja las estimaciones
+  de 60/90 d de los productos que no vendieron en agosto, y no tengo cómo verificar que
+  agosto esté completo en el panel. Si el dueño lo confirma, es una línea en `stockRangoMes`.
+
+### Tests
+`tests/test_adm_alta.js` (Playwright, 18 checks, reloj clavado en el 20/09/2026 por las
+ventas de agosto del fixture; `PEDIDOS=…` para los dientes: contra `b632321` da **9 bien · 9
+mal**). ⚠️ Los escenarios «en vuelo» usan el `apiSave` REAL y simulan solo `apiPost`: el
+doble de `apiSave` de los tests no anota `SAVE_ULTIMO`, y con él la protección de §4eo no
+existe (el primer intento reventó por eso). Las suites del área siguen igual: stock 106,
+existencias 55, revstock 37, rotación 32, identidad 45, tabla 30, resumen 29, conflicto 43,
+cuadre 33, guardado 14; `test_producir` sigue con sus 6 rojos viejos (§4er, pendiente 9).
 
 ## 4eu. Contabilidad: cuatro formas de perder plata anotada, arregladas (2026-09-20)
 
