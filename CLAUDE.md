@@ -320,6 +320,12 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   `max(0,deposito)+…`; buscador con `sinTildes()`.
   ⚠️ En un test, `showView(...)` dispara un refresco con la foto de STATE de ese momento:
   esperar ~120 ms antes de armar el fixture o el `list` tardío lo pisa.
+- **«Mañana» de entrega = `proximoDiaEntrega()`** (§4ex): mañana, y si es domingo, el lunes.
+  Va en todo lo que mira el camión (chofer, carga, ruta, mapa, faltantes, parte, WhatsApp,
+  Excel, estadísticas); el formulario, «Cerrar día», la recogida de Moreno y el importador de
+  ROHO siguen con `tomorrowStr()`. Un test que arme un pedido «para mañana» y lo espere en el
+  chip «Mañana» tiene que usar `proximoDiaEntrega()` o se pone rojo los sábados.
+  `tests/test_sabado.js` (reloj clavado).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

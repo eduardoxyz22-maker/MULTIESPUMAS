@@ -60,7 +60,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
                  featureGroup:function(){ return { addTo:function(){return this;}, getBounds:function(){return {};} }; }, divIcon:function(){ return {}; } };
     }
     if(opts.vacio){ STATE=[]; saveMirror(); MAPA_COORDS={}; return 0; }
-    var hoy=todayStr(), man=tomorrowStr(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
+    var hoy=todayStr(), man=proximoDiaEntrega(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
     var ay=new Date(); ay.setDate(ay.getDate()-3); var ayer=isoLocal(ay);
     var mp=new Date(); mp.setMonth(mp.getMonth()-1); mp.setDate(10); var mesPas=isoLocal(mp);
     var sig=new Date(); sig.setMonth(sig.getMonth()+1); sig.setDate(3); var mesSig=isoLocal(sig);

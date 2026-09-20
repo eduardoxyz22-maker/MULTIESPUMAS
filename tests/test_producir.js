@@ -138,24 +138,29 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('7 días = exactamente lo que dice la tabla de stock (fabricar 1: pedir 3, 2 se recogen de Moreno)', r.H && r.H.sem===1 && r.H.o.fabricar===1, r.H && (r.H.sem+' vs '+r.H.o.fabricar));
   // 15 días: 0,667×(3+2+15)=13,33 − 5 → 9
   chk('15 días: ritmo × (fábrica 3 + margen 2 + 15) = 13,3, menos lo que hay (5) → 9', r.H && r.H.quin===9, r.H && r.H.quin);
-  // octubre: 0,6×31 = 18,6; quedan 0 el 1/10 (5 − 0,6×21 días de septiembre) → 19; 70% → 14 y 5
-  chk('octubre necesita 18,6 (0,6 × 31), no queda nada el 1/10 → producir 19', r.H && Math.abs(r.H.mesNec-18.6)<1e-9 && r.H.mesQueda===0 && r.H.mes===19, r.H && JSON.stringify([r.H.mesNec,r.H.mesQueda,r.H.mes]));
+  /* octubre: la regla es la de §4ec/§4ds (revisada en §4er: coherente): se necesita lo PROBABLE del
+     rango (mediana de 30 d / 60 d / 90 d / año pasado / tendencia), EN ENTEROS para arriba. Sin
+     historia del TITANIO ICE, el rango sale del ritmo de 30 d: 0,6×31 = 18,6 → 19; quedan 0 el
+     1/10 (5 − 0,6×21 días de septiembre) → producir 19; 70% → 14 y 5 */
+  chk('octubre necesita 19 (0,6 × 31 = 18,6, entero para arriba), no queda nada el 1/10 → producir 19', r.H && r.H.mesNec===19 && r.H.mesQueda===0 && r.H.mes===19, r.H && JSON.stringify([r.H.mesNec,r.H.mesQueda,r.H.mes]));
   chk('el 70% (14) para la 1ª quincena y el resto (5) para la 2ª', r.H && r.H.mes1===14 && r.H.mes2===5, r.H && (r.H.mes1+' · '+r.H.mes2));
   // Sueña: nada en 15 días (no rota), 6 en 3 entregas en 30 → 0,2/día. Solo el mes
   chk('COLCHON SOFT: sin rotación en 15 días → 7 y 15 días en cero', r.S && r.S.o.rota===false && r.S.sem===0 && r.S.quin===0, r.S && JSON.stringify([r.S.sem,r.S.quin]));
-  chk('…pero 3 entregas en 30 días sí es ritmo del mes: 0,2 × 31 = 6,2, queda 0 → producir 7 (5 + 2)', r.S && Math.abs(r.S.o.porDiaMes-0.2)<1e-9 && r.S.mes===7 && r.S.mes1===5 && r.S.mes2===2, r.S && JSON.stringify([r.S.o.porDiaMes,r.S.mes,r.S.mes1,r.S.mes2]));
+  /* El SOFT (COLT0048) SÍ tiene historia en VENTAS_HIST (oct-25 = 34): el rango junta 30 d (6,2), el
+     año pasado (34) y la tendencia (17); la MEDIANA es 17 → producir 17 (70% → 12 + 5). */
+  chk('…pero 3 entregas en 30 días sí es ritmo del mes: 0,2/día; con la historia (oct-25 = 34, tendencia 17) el probable es 17 → producir 17 (12 + 5)', r.S && Math.abs(r.S.o.porDiaMes-0.2)<1e-9 && r.S.mes===17 && r.S.mes1===12 && r.S.mes2===5, r.S && JSON.stringify([r.S.o.porDiaMes,r.S.mes,r.S.mes1,r.S.mes2]));
   chk('COLCHON SOFT cae en el bloque de Sueña (Multiespumas)', r.S && r.S.bloque==='suena');
   // Eduardo: el MORFEO vendido sin entregar se cubre (4), pero no arma ritmo ni mes
   chk('el MORFEO de Eduardo: se cubren los 4 vendidos sin entregar en 7 y 15 días, nada para octubre', r.M && r.M.sem===4 && r.M.quin===4 && r.M.mes===0 && r.M.o.porDia===0 && r.M.o.porDiaMes===0, r.M && JSON.stringify([r.M.sem,r.M.quin,r.M.mes]));
   chk('…y como el nombre no dice de qué marca es, va a «sin fábrica asignada»', r.M && r.M.bloque==='otros');
-  // ROHO line: rota (12 en 4 entregas) pero hay 20: cubierto en la semana y la quincena; octubre 1
-  chk('PILLOW FLEX (línea ROHO) rota pero hay 20: 7 y 15 días en cero, octubre pide 1', r.F && r.F.sem===0 && r.F.quin===0 && r.F.mes===1, r.F && JSON.stringify([r.F.sem,r.F.quin,r.F.mes,r.F.mesNec,r.F.mesQueda]));
+  // ROHO line: rota (12 en 4 entregas) pero hay 20: cubierto en la semana y la quincena; octubre con su historia (oct-25 = 19) necesita 18, quedan 11 → 7
+  chk('PILLOW FLEX (línea ROHO) rota pero hay 20: 7 y 15 días en cero; octubre necesita 18 (historia), quedan 11 → pide 7', r.F && r.F.sem===0 && r.F.quin===0 && r.F.mes===7 && r.F.mesNec===18 && r.F.mesQueda===11, r.F && JSON.stringify([r.F.sem,r.F.quin,r.F.mes,r.F.mesNec,r.F.mesQueda]));
   chk('…y sin pedidos previos a ninguna fábrica cae en «sin fábrica asignada»', r.F && r.F.bloque==='otros' && r.F.por==='');
   chk('lo discontinuado (CARIOCA PREMIER), lo de tienda (PROTECTOR) y la ATC no aparecen en ningún bloque', !r.claves.some(function(k){ return /CARIOCA|PROTECTOR/.test(k); }), r.claves.join(' | '));
   chk('la quincena nunca pide menos que la semana', [r.H,r.S,r.M,r.F].every(function(f){ return f && f.quin>=f.sem; }));
-  // XYZ PLUS: 4 en 4 entregas en 15 días (0,27/día, media) → 0,27×8=2,1 → 3; 0,27×20=5,3 → 6; mes 0,13×31=4,1 → 5 (3+2)
-  chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 3 · 6 · 5 (3+2), en «sin fábrica asignada», y la medida queda 130x190', r.X && r.X.sem===3 && r.X.quin===6 && r.X.mes===5 && r.X.mes1===3 && r.X.mes2===2 && r.X.bloque==='otros' && r.X.md==='130x190', r.X && JSON.stringify([r.X.sem,r.X.quin,r.X.mes,r.X.mes1,r.X.mes2,r.X.bloque,r.X.md]));
-  chk('totales por bloque: Heaven 1 · 9 · 19 (14+5); Sueña 0 · 0 · 7; sin asignar 7 · 10 · 6', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===19 && r.tot.heaven.mes1===14 && r.tot.heaven.mes2===5 && r.tot.suena.mes===7 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===6 && r.tot.otros.mes1===3 && r.tot.otros.mes2===3, JSON.stringify(r.tot));
+  // XYZ PLUS: 4 en 4 entregas en 15 días (0,27/día, media) → 0,27×8=2,1 → 3; 0,27×20=5,3 → 6; mes 0,13×31=4,1 → 5; el 70% de 5 es 3,5 → 4 y 1 (§4ds, enteros para arriba)
+  chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 3 · 6 · 5 (4+1), en «sin fábrica asignada», y la medida queda 130x190', r.X && r.X.sem===3 && r.X.quin===6 && r.X.mes===5 && r.X.mes1===4 && r.X.mes2===1 && r.X.bloque==='otros' && r.X.md==='130x190', r.X && JSON.stringify([r.X.sem,r.X.quin,r.X.mes,r.X.mes1,r.X.mes2,r.X.bloque,r.X.md]));
+  chk('totales por bloque: Heaven 1 · 9 · 19 (14+5); Sueña 0 · 0 · 17 (12+5); sin asignar 7 · 10 · 12 (6+6)', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===19 && r.tot.heaven.mes1===14 && r.tot.heaven.mes2===5 && r.tot.suena.mes===17 && r.tot.suena.mes1===12 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===12 && r.tot.otros.mes1===6 && r.tot.otros.mes2===6, JSON.stringify(r.tot));
   chk('el pie de «sin asignar» reparte por medida: 130x190 y 140x190', r.tot.otros.medidas.length===2 && r.tot.otros.medidas.indexOf('130x190')>=0 && r.tot.otros.medidas.indexOf('140x190')>=0, JSON.stringify(r.tot.otros.medidas));
   chk('el ORO BI RELAX rota pero tiene 60: queda como cubierto y no suma nada a Heaven', r.cubiertos===1 && r.tot.heaven.n===1 && r.claves.some(function(k){ return /ORO BI RELAX/.test(k); }), r.cubiertos+' cubiertos');
   chk('el total por medida del bloque Heaven es 160x190', r.tot.heaven.medidas.length===1 && r.tot.heaven.medidas[0]==='160x190', JSON.stringify(r.tot.heaven.medidas));
@@ -182,7 +187,8 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   });
   chk('la pantalla de stock muestra el cuadro «🏭 Qué producir» con los tres bloques', r && r.bloques===3 && /Industrias Moreno · Heaven/.test(r.t) && /Multiespumas · Sueña/.test(r.t) && /Sin fábrica asignada/.test(r.t), r && r.t.slice(0,200));
   chk('el título nombra la semana, los 15 días y octubre', r && /esta semana, los próximos 15 días y octubre/.test(r.t));
-  chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 19 (1ª quincena 14 · 2ª 5)', r && /7 días: 1 · 15 días: 9 · octubre: 19 \(1ª quincena 14 · 2ª 5\)/.test(r.t), r && r.t.slice(0,600));
+  // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 19 (rango 8–24)».
+  chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 19 (rango 8–24) · 1ª quincena 14 · 2ª 5', r && /7 días: 1 · 15 días: 9 · octubre: 19 \(rango 8–24\) · 1ª quincena 14 · 2ª 5/.test(r.t), r && r.t.slice(0,600));
   chk('las columnas dicen hasta qué día llega cada horizonte (17/09 y 25/09) y qué queda el 01/10', r && /hasta el 17\/09/.test(r.t) && /hasta el 25\/09/.test(r.t) && /queda el 01\/10/.test(r.t));
   chk('la fila del TITANIO ICE muestra ritmo, hay 5 (3 acá · 2 Moreno) y los cinco números', r && /TITANIO ICE/.test(r.filaH) && /3 acá · 2 Moreno/.test(r.filaH) && /15 d: 10 en 5 entregas/.test(r.filaH) && /30 d: 18 en 9 entregas/.test(r.filaH), r && r.filaH);
   chk('hay botones para copiar cada horizonte por fábrica (7 días, 15 días, octubre)', r && r.botones.some(function(b){ return /📋 7 días/.test(b); }) && r.botones.some(function(b){ return /📋 15 días/.test(b); }) && r.botones.some(function(b){ return /📋 octubre/.test(b); }), r && r.botones.join(' | '));

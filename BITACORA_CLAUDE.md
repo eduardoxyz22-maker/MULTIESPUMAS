@@ -6505,26 +6505,14 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 
 ## 5. Pendientes
 
-> 🔎 **Revisión con cuatro agentes del 19/09 (§4er)**: 9 hallazgos ALTA, 17 MEDIA, 7 BAJA, todos
-> sin arreglar. Los dos más urgentes: **ningún borrador de Kommo se puede completar desde el 18/09**
-> (guarda A1 de §4eo) y el rechazo firme que deja la copia rechazada en pantalla (`SAVE_ULTIMO`).
-> Los rojos de `test_borradores` y `test_conflicto` son bugs reales; los de `test_producir`,
-> `test_onclicks`, `test_atc` y `test_rpt` son tests viejos.
-
-> 🔴 **12 checks en rojo en `main` que NO son de §4ee** (medido el 14/09 sobre `6794cf0`, sin ese
-> commit, y con él: idénticos). Vienen de OTRA sesión mía del 11 al 14/09 (§4dx–§4ed: 🏭 Qué
-> producir con «octubre» como RANGO de 30/60/90 días y mediana, el circuito de ATC, el módulo de
-> ventas con `pdev-turno`, el texto de RPT). **El dueño confirmó el 14/09 que esos cambios están
-> bien** (*"eso lo hiciste tú en otra charla. Está bien"*): no hay nada que decidir, lo que falta
-> es poner al día los tests que quedaron con la regla vieja: `test_producir` 6, `test_atc` 4,
-> `test_onclicks` 1 (`initSeg` para `pdev-turno`), `test_rpt` 1 («reposición de tienda» en
-> minúscula). Hasta entonces la línea de base NO es cero.
-> 🔴 **Y desde el 18/09, 9 más, también de `main` y no de §4eq** (medido sobre `3e0a164` sin ese
-> commit, y con él: idénticos): `test_borradores` 8 (el borrador de Kommo ya no se convierte
-> en pedido: queda «Borrador Kommo», sin fecha ni N° del día, y el descartado no desaparece) y
-> `test_conflicto` 1 (tras un conflicto el pedido no vuelve a su fecha de antes). Vienen de la
-> auditoría de guardados de §4en–§4eo (el ✓ verificado y el eco del servidor cambiaron cómo se
-> aplica la respuesta). Revisar contra esa regla nueva antes de tocar el código.
+> ✅ **La revisión con cuatro agentes del 19/09 (§4er) quedó arreglada el 20/09** (§4es, bloques
+> 1–9: §4et Kommo en el `.gs`, §4eu Contabilidad, §4ev Administración/stock, §4ew los MEDIA/BAJA,
+> §4ex sábado). Los 12 rojos viejos de `main` (`test_producir` 6, `test_atc` 4, `test_onclicks` 1,
+> `test_rpt` 1) y los 9 del 18/09 (`test_borradores` 8, `test_conflicto` 1) están en verde: **la
+> línea de base de la batería vuelve a ser CERO rojos.** Queda a decisión del dueño: BAJA 9 de
+> Contabilidad (fallback de `cobrosDe`, §4eu) y «mes sin ventas = sin dato» del plan (§4ev).
+> ⚠️ **El `.gs` `2026-09-20-a` (§4et) sigue esperando que el dueño lo implemente** (Nueva versión
+> sobre la implementación de siempre): hasta entonces el panel avisa «servidor viejo».
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
@@ -7409,9 +7397,47 @@ borrar un retiro sin mirar la respuesta, fecha a futuro en «Registrar pago». A
 sin acentos. `tests/test_medias.js` (23 checks; contra el panel de `1e1d4ce` da 3/20). Y
 `generar.py` (el dashboard) corta el mes en hora de Bolivia, no en UTC (Kommo BAJA).
 
-### Lo que sigue (orden)
-9b. Sábado → «Mañana» es domingo (§4er Entregas BAJA, seis lugares, con test de reloj
-    clavado). 9c. Poner al día los tests viejos (producir 6, onclicks 1, atc 4, rpt 1).
+### ✅ 9b. Sábado: «mañana» es el lunes — 20/09 → **§4ex**
+`proximoDiaEntrega()` en 25 lugares de entrega (chofer, Mis pedidos, carga, ruta, mapa,
+faltantes, parte, WhatsApp, Excel, reprogramar, ATC, revisión de stock, estadísticas); el
+formulario, el cierre de días, la recogida de Moreno y el importador de ROHO siguen con
+`tomorrowStr()`. `tests/test_sabado.js` (14 checks, reloj clavado; contra `750229c` da 5/9).
+
+### ✅ 9c. Los tests viejos, al día — 20/09
+`test_producir` (56/56: la regla de §4ec/§4ds, enteros y rango), `test_onclicks` (5/5: acepta
+`segSet(\'id\'` inline), `test_atc` (81/81: §4eb «listo en fábrica» opcional, ficha «Listas»
+solo si hay, «Recogido de fábrica», y limpiar `dev` antes de probar la caja escondida),
+`test_rpt` (109/109: «reposición de tienda» en minúscula). **La batería queda en 0 rojos.**
+
+### Lo que sigue
+Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabilidad (el
+fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
+decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
+
+## 4ex. Sábado: «mañana» es el lunes, no el domingo (2026-09-20)
+
+Bloque 9b de §4es (§4er Entregas BAJA «con impacto real los sábados a la noche»). El domingo
+no se entrega —el panel lo sabe: `limTurno` da 0 y el formulario no lo deja agendar—, pero
+`tomorrowStr()` no lo saltaba: un sábado a la tarde el chofer veía «No tenés entregas para
+mañana (20/09)», la lista de carga y la hoja de ruta «0 pedidos · mañana 20/09», el mensaje al
+grupo «PEDIDOS DE MAÑANA · domingo 20/09 … Todavía no hay pedidos cargados», con dos
+entregas el lunes. No había forma de ver ni mandar lo del lunes salvo «Todos».
+
+- **`proximoDiaEntrega()`** = mañana, y si es domingo, el lunes. ⚠️ Los días cerrados por
+  Administración NO se saltean: ese camión existe, solo que ya está armado.
+- Reemplaza a `tomorrowStr()` en **25 lugares**, todos de ENTREGA: chips «Mañana» del chofer y
+  de Mis pedidos (y sus textos vacíos), lista de carga (`cargaLista`, `cargaDiaKey`, etiqueta,
+  «recoger de fábrica», «· mañana»), hoja de ruta (lista y etiquetas), mapa (`mapaEntra`),
+  faltantes, parte del día, WhatsApp «pedidos de mañana» (`envioFecha`), Excel «Mañana»
+  (`exportScopeInfo`), el botón «Mañana» de reprogramar, la fecha por defecto de la
+  devolución de una ATC, la revisión de stock «mañana», y las estadísticas de cupos (que
+  ahora dicen «Cupos el lunes 21/09/2026 · 🌅11 🌆12» cuando no es literalmente mañana).
+- **Siguen con `tomorrowStr()`** a propósito: el mínimo del formulario (el domingo lo frena el
+  portero, y así la vendedora ve el mensaje de siempre), «Cerrar día», la fecha de una recogida
+  de Moreno (no es una entrega) y el importador de ROHO («desde mañana»).
+- `tests/test_sabado.js`: reloj clavado en el sábado 19/09/2026 18:00 con dos entregas el
+  lunes 21 (chofer, Mis pedidos, carga, ruta, faltantes, WhatsApp, parte, Excel, mapa,
+  estadísticas), un martes de control, y el formulario sin cambios. Contra `750229c` da 5/9.
 
 ## 4ew. Los MEDIA y BAJA de §4er del panel, trece de una vez (2026-09-20)
 

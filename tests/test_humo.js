@@ -26,7 +26,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(STATE))}); };
     apiGeocode=function(){ return Promise.resolve({ok:true,geo:[]}); };
     apiFoto=function(){ return Promise.resolve({ok:true,fotoId:'IMG_X'}); };
-    var hoy=todayStr(), man=tomorrowStr(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
+    var hoy=todayStr(), man=proximoDiaEntrega(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
     var ay=new Date(); ay.setDate(ay.getDate()-3); var ayer=isoLocal(ay);
     var b={celular:'70011122',nit:'1023456',zona:'Norte',direccion:'Av. Banzer 5to anillo',
            maps:'https://maps.app.goo.gl/AAA',ts:ts};

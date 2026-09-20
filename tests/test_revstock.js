@@ -65,11 +65,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var tit=function(n,x){ return [Object.assign({desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:n},x||{})]; };
     STATE=[
       P({id:'d5', cliente:'Viernes',  fecha:adel(5), productos:eco(1)}),
-      P({id:'d1', cliente:'Mañana',   fecha:adel(1), productos:eco(3)}),
+      P({id:'d1', cliente:'Mañana',   fecha:proximoDiaEntrega(), productos:eco(3)}),
       P({id:'d3', cliente:'Miércoles',fecha:adel(3), productos:eco(2)}),
-      P({id:'im', cliente:'Con IM',   fecha:adel(1), productos:tit(4)}),
-      P({id:'fab',cliente:'A fábrica',fecha:adel(1), productos:eco(9,{chk:'no',enProd:true,prodEn:'Moreno',prodF:atras(1)})}),
-      P({id:'ent',cliente:'Entregado',fecha:adel(1), entregado:true,
+      P({id:'im', cliente:'Con IM',   fecha:proximoDiaEntrega(), productos:tit(4)}),
+      P({id:'fab',cliente:'A fábrica',fecha:proximoDiaEntrega(), productos:eco(9,{chk:'no',enProd:true,prodEn:'Moreno',prodF:atras(1)})}),
+      P({id:'ent',cliente:'Entregado',fecha:proximoDiaEntrega(), entregado:true,
          productos:[{desc:'OTRO COLCHON QUE NO ESTA EN JUEGO',medida:'',codigo:'',cant:50}]}),
       P({id:'kommo-9',cliente:'Borrador',fecha:'', turno:'', estado:'Borrador Kommo', productos:eco(50)}),
       P({id:'sin',cliente:'Sin contar',fecha:adel(6), productos:[{desc:'PRODUCTO QUE NADIE CONTO',medida:'',codigo:'',cant:2}]})
@@ -228,9 +228,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await armar();
   r = await page.evaluate(() => {
     var P=function(o){ return Object.assign({}, findById('d1'), o); };
-    STATE.push(P({id:'atc9', cliente:'Reclamo', oc:'ATC 09-014', fecha:window._adel(1),
+    STATE.push(P({id:'atc9', cliente:'Reclamo', oc:'ATC 09-014', fecha:proximoDiaEntrega(),
       productos:[{desc:'NUEVO ECO FLEX',medida:'140x190',codigo:'CH1332',cant:2}]}));
-    STATE.push(P({id:'acc', cliente:'Con accesorios', oc:'188999', fecha:window._adel(1), productos:[
+    STATE.push(P({id:'acc', cliente:'Con accesorios', oc:'188999', fecha:proximoDiaEntrega(), productos:[
       {desc:'PROTECTOR DE COLCHON',medida:'140x190',codigo:'',cant:2},
       {desc:'JUEGO DE SABANAS 2 PLAZAS',medida:'',codigo:'',cant:1},
       {desc:'MANTA POLAR',medida:'',codigo:'',cant:1},

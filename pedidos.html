@@ -1539,6 +1539,12 @@ function queuePending(rec){
 
 function todayStr(){ return isoLocal(new Date()); }
 function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return isoLocal(d); }
+/* 🚚 EL PRÓXIMO DÍA DE ENTREGA (§4ex): «mañana» para el camión. El domingo no se entrega
+   (`limTurno` da 0 y el formulario no lo deja agendar), así que un SÁBADO «mañana» es el
+   LUNES: el chofer, la lista de carga, la hoja de ruta, el mapa, los faltantes, el parte y el
+   WhatsApp «pedidos de mañana» miraban el domingo y decían «no hay entregas». Los días
+   cerrados por Administración NO se saltean: ese camión existe, solo que ya está armado. */
+function proximoDiaEntrega(){ var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0) d.setDate(d.getDate()+1); return isoLocal(d); }
 function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
 /* Muestra la fecha como día/mes/año (guarda internamente ISO AAAA-MM-DD). */
 function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):String(iso||''); }
@@ -7474,10 +7480,11 @@ function zonaCanonica(z, lista){
 }
 function updateStats(){
   // El equipo agenda entregas con 1 día de anticipación: mostramos los cupos LIBRES de mañana (por turno).
-  var man=tomorrowStr();
+  var man=proximoDiaEntrega();   // un sábado es el LUNES (§4ex): los cupos que importan son los del próximo camión
   var rAM=Math.max(0,limTurno(man,'AM')-cuposUsadosTurno(man,'AM')), rPM=Math.max(0,limTurno(man,'PM')-cuposUsadosTurno(man,'PM'));
   document.getElementById('stat-hoy').textContent=(diaDomingo(man)?'0':(rAM+rPM));
-  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos mañana · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM));
+  var _cuando = (man===tomorrowStr()) ? 'mañana' : ('el '+['domingo','lunes','martes','miércoles','jueves','viernes','sábado'][dowDe(man)]+' '+fmtFecha(man));
+  var lbl=document.getElementById('stat-hoy-l'); if(lbl) lbl.innerHTML= diaDomingo(man) ? 'Mañana: domingo (cerrado)' : ('Cupos '+_cuando+' · 🌅'+rAM+(diaSabado(man)?' (solo AM)':' 🌆'+rPM));
   updateFooter();
 }
 
@@ -8905,7 +8912,7 @@ function pedidoIssues(p){
 }
 function renderRevisar(){
   var el=document.getElementById('adm-revisar'); if(!el) return;
-  var man=tomorrowStr();
+  var man=proximoDiaEntrega();
   var manList=STATE.filter(function(p){return p.fecha===man;});
   var probl=manList.map(function(p){return {p:p,miss:pedidoIssues(p)};}).filter(function(o){return o.miss.length>0;});
   var avisoOc = avisoOcRepetidasHtml();
@@ -9087,7 +9094,7 @@ function showReproModal(){
       '<div class="dl-row"><div class="dl-k">Ahora</div><div class="dl-v">'+esc(fmtFecha(p.fecha))+' · '+esc(normTurno(p.turno)||'—')+'</div></div>'+
       '<div style="margin-top:14px"><label class="lb">Nueva fecha</label>'+
         '<input type="date" id="repro-fecha" value="'+esc(f)+'" onchange="reproSetFecha(this.value)" style="width:100%">'+
-        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+rapido(todayStr(),'Hoy')+rapido(tomorrowStr(),'Mañana')+'</div>'+
+        '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">'+rapido(todayStr(),'Hoy')+rapido(proximoDiaEntrega(),'Mañana')+'</div>'+
       '</div>'+
       '<div style="margin-top:12px"><label class="lb">Turno</label><div style="display:flex;gap:6px">'+tb('AM')+tb('PM')+'</div></div>'+
       (avisos.length
@@ -9124,7 +9131,7 @@ function reproConfirmar(){
    Lista de carga por camión (picking) — qué productos suben a cada vehículo
    ========================================================================== */
 var CARGA_DIA='hoy';   // arranca en HOY: es la carga/salida que se controla en el día
-function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
 /* Si la lista de carga está abierta, refrescarla al cambiar algo desde la ficha del pedido */
 function cargaAbierta(){ var ov=document.getElementById('carga-overlay'); return !!(ov && ov.style.display==='flex'); }
@@ -9155,7 +9162,7 @@ var CARGA_ID='__carga_chk__';
 var LS_CARGA='me_carga_chk';
 var CARGA_CHK={};
 var CARGA_DIAS_GUARDA=10;
-function cargaDiaKey(){ return CARGA_DIA==='hoy'?todayStr():CARGA_DIA==='manana'?tomorrowStr():'todos'; }
+function cargaDiaKey(){ return CARGA_DIA==='hoy'?todayStr():CARGA_DIA==='manana'?proximoDiaEntrega():'todos'; }
 /* El `;` separa entradas: si un producto lo trae en el nombre, se cambia por coma. */
 function cargaChkKey(fecha,veh,prod){
   return [fecha,veh,prod].map(function(x){ return String(x==null?'':x).replace(/;/g,','); }).join('|');
@@ -9240,11 +9247,11 @@ function cargaBloquesHtml(list, fecha){
 }
 function renderCarga(){
   var list=cargaLista();
-  var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todas las fechas';
+  var diaLbl=CARGA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):CARGA_DIA==='manana'?('mañana '+fmtFecha(proximoDiaEntrega())):'todas las fechas';
   document.getElementById('carga-info').textContent=list.length+' pedidos · '+diaLbl;
   var html='';
   if(CARGA_DIA!=='todos'){
-    html=recogerFabHtml(CARGA_DIA==='manana' ? tomorrowStr() : todayStr())+cargaBloquesHtml(list, cargaDiaKey());
+    html=recogerFabHtml(CARGA_DIA==='manana' ? proximoDiaEntrega() : todayStr())+cargaBloquesHtml(list, cargaDiaKey());
   }else{
     // "Todos" mezcla varias fechas: se agrupa por día para no sumar productos de días distintos
     var byF={}, fechas=[];
@@ -9255,7 +9262,7 @@ function renderCarga(){
       sub.forEach(function(p){ (p.productos||[]).forEach(function(x){ bultos+=Number(x.cant)||0; }); });
       var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(f||'');
       var dia=m?diaSemanaCorto(new Date(+m[1],+m[2]-1,+m[3])):'';
-      var hoyTxt = f===todayStr()?' · hoy' : (f===tomorrowStr()?' · mañana':'');
+      var hoyTxt = f===todayStr()?' · hoy' : (f===proximoDiaEntrega()?' · mañana':'');
       return '<div class="carga-fecha">'+
         '<div class="carga-fecha-h">📅 '+esc(f?fmtFecha(f):'(sin fecha)')+(dia?(' · '+dia):'')+esc(hoyTxt)+
           ' <span style="margin-left:auto;font-weight:700">'+sub.length+' pedido'+(sub.length===1?'':'s')+' · '+bultos+' bulto'+(bultos===1?'':'s')+'</span></div>'+
@@ -9571,7 +9578,7 @@ function guardarDevolucionAtc(id){
 function abrirProgramarDevAtc(id){
   var p=findById(id); if(!p){ toast('No encontré esa ATC','err'); return; }
   if(!atcFueRecogida(p)){ toast('Primero hay que recogerlo: la devolución se programa después del recojo','err'); return; }
-  var a=atcDe(p)||{}, hoy=todayStr(), f0=a.pdev||tomorrowStr(), t0=normTurno(a.pturno||'AM');
+  var a=atcDe(p)||{}, hoy=todayStr(), f0=a.pdev||proximoDiaEntrega(), t0=normTurno(a.pturno||'AM');
   var cuposTxt=function(f){
     var am=cuposUsadosTurno(f,'AM'), pm=cuposUsadosTurno(f,'PM');
     var propio=(atcDevProg(p)===f && p.fecha===f) ? 1 : 0;   // si ya está programada ese día, no se cuenta a sí misma
@@ -9785,7 +9792,7 @@ function misEstado(k){
 var MIS_FILTER='todos';
 var MIS_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',      test:function(p){ return p.fecha===todayStr(); }},
-  {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===tomorrowStr(); }},
+  {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===proximoDiaEntrega(); }},
   {k:'pend',   lbl:'⏳ No entregados', test:function(p){ return !p.entregado; }},
   {k:'atras',  lbl:'⏰ Atrasados', test:function(p){ return minutosAtraso(p)>0; }},
   {k:'ent',    lbl:'🚚 Entregados',    test:function(p){ return !!p.entregado; }},
@@ -10164,7 +10171,7 @@ var LS_CHOFER='me_chofer_nombre';
 var CHO_FILTER='hoy';
 var CHO_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',           test:function(p){ return p.fecha===todayStr(); }},
-  {k:'manana', lbl:'🌅 Mañana',        test:function(p){ return p.fecha===tomorrowStr(); }},
+  {k:'manana', lbl:'🌅 Mañana',        test:function(p){ return p.fecha===proximoDiaEntrega(); }},
   {k:'pend',   lbl:'⏳ Sin entregar',  test:function(p){ return !p.entregado; }},
   {k:'todos',  lbl:'📋 Todos',         test:function(){ return true; }}
 ];
@@ -10209,7 +10216,7 @@ function renderChofer(){
     return String(a.zona||'')<String(b.zona||'')?-1:1;
   });
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
-  var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? tomorrowStr() : todayStr());
+  var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());
   var ent=0, porCobrar=0, cobrado=0;
   list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=totalCobrado(p); else porCobrar+=Number(p.saldo)||0; });
   box.innerHTML=
@@ -10221,7 +10228,7 @@ function renderChofer(){
     cont.innerHTML=recFabHtml; empty.style.display='block';
     empty.textContent = todos ? ('No hay entregas para ese filtro.')
       : CHO_FILTER==='hoy' ? 'No tenés entregas para hoy ('+fmtFecha(todayStr())+').'
-      : CHO_FILTER==='manana' ? 'No tenés entregas para mañana ('+fmtFecha(tomorrowStr())+').'
+      : CHO_FILTER==='manana' ? 'No tenés entregas para mañana ('+fmtFecha(proximoDiaEntrega())+').'
       : CHO_FILTER==='pend' ? '✅ ¡Listo! No te queda ninguna entrega pendiente.'
       : 'Todavía no tenés entregas asignadas.';
     return;
@@ -10816,7 +10823,7 @@ function renderMis(){
   if(!lista.length){
     tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block';
     empty.textContent = MIS_FILTER==='hoy' ? 'No tenés pedidos para entregar hoy ('+fmtFecha(todayStr())+').'
-      : MIS_FILTER==='manana' ? 'No tenés pedidos para entregar mañana ('+fmtFecha(tomorrowStr())+').'
+      : MIS_FILTER==='manana' ? 'No tenés pedidos para entregar mañana ('+fmtFecha(proximoDiaEntrega())+').'
       : MIS_FILTER==='pend' ? '✅ No te queda ningún pedido pendiente de entrega.'
       : MIS_FILTER==='atras' ? '✅ Ningún pedido tuyo pasó su turno sin entregar.'
       : MIS_FILTER==='ent' ? 'Todavía no tenés pedidos entregados.'
@@ -11024,12 +11031,12 @@ var FALT_DIA='hoy';
 function abrirFaltantes(){ document.getElementById('faltantes-overlay').style.display='flex'; renderFaltantes(); }
 function closeFaltantes(){ var ov=document.getElementById('faltantes-overlay'); if(ov) ov.style.display='none'; }
 function setFaltDia(d){ FALT_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('falt-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#b45309':'#fff'; } }); renderFaltantes(); }
-function faltDiaLbl(){ return FALT_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):FALT_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todas las fechas'; }
+function faltDiaLbl(){ return FALT_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):FALT_DIA==='manana'?('mañana '+fmtFecha(proximoDiaEntrega())):'todas las fechas'; }
 function faltantesData(){
   var list=STATE.filter(function(p){
     if(p.entregado) return false;
     if(FALT_DIA==='hoy') return p.fecha===todayStr();
-    if(FALT_DIA==='manana') return p.fecha===tomorrowStr();
+    if(FALT_DIA==='manana') return p.fecha===proximoDiaEntrega();
     return true;
   });
   var g={}, totFab={};  // producto -> {cant, prod, fab:{fábrica:unidades}, pedidos:[]}
@@ -11132,7 +11139,7 @@ function autoAbrirParte(){
 function abrirParte(){ document.getElementById('parte-overlay').style.display='flex'; renderParte(); }
 function closeParte(){ var ov=document.getElementById('parte-overlay'); if(ov) ov.style.display='none'; }
 function parteData(){
-  var hoy=todayStr(), man=tomorrowStr();
+  var hoy=todayStr(), man=proximoDiaEntrega();
   var dh=STATE.filter(function(p){ return p.fecha===hoy; });
   var dm=STATE.filter(function(p){ return p.fecha===man; });
   var ent=0, cob=0, pend=0, pendN=0, sinChof=0, sinGps=0, noVerif=0;
@@ -11216,7 +11223,7 @@ var ENVIO_MODO='manana';
 var ENVIO_PARTE='todo';
 var DIAS_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
 function diaSemana(iso){ var d=dowDe(iso); return d>=0?DIAS_SEM[d]:''; }
-function envioFecha(modo){ return modo==='hoy'?todayStr():tomorrowStr(); }
+function envioFecha(modo){ return modo==='hoy'?todayStr():proximoDiaEntrega(); }
 function envioCliente(p){ return String(p.cliente||'').trim()||'—'; }
 function envioQuien(p){
   return esRoho(p.vendedor) ? (ocEtiq(cleanOC(p.oc))) : String(p.vendedor||'').trim();
@@ -14400,7 +14407,7 @@ var REVSTK_GUARDANDO=false;
 function revStkPedidos(todos){
   var hoy=todayStr(), lim='';
   if(!todos && REVSTK_DIAS==='hoy') lim=hoy;
-  else if(!todos && REVSTK_DIAS==='manana') lim=tomorrowStr();
+  else if(!todos && REVSTK_DIAS==='manana') lim=proximoDiaEntrega();
   else if(!todos && REVSTK_DIAS==='semana') lim=diasAdelante(7);
   var lista=STATE.filter(function(p){
     if(!stockCuenta(p) || p.entregado) return false;      // ⚠️ las ATC quedan afuera (§4cx)
@@ -14409,7 +14416,7 @@ function revStkPedidos(todos){
     /* Lo de días pasados ya se dio por entregado (§4co) — salvo lo que quedó tildado
        ✗ no hay, que es una venta viva esperando stock. Esa sí entra, y primero. */
     if(f && f<hoy) return (p.productos||[]).some(function(x){ return (x.chk==='no'||x.chk==='im') && !enProduccion(x); });
-    if(!todos && REVSTK_DIAS==='manana' && f!==tomorrowStr()) return false;
+    if(!todos && REVSTK_DIAS==='manana' && f!==proximoDiaEntrega()) return false;
     if(lim && REVSTK_DIAS!=='manana' && f>lim) return false;
     return true;
   });
@@ -16269,7 +16276,7 @@ function persistPedido(p, opts){
 function exportScopeInfo(scope){
   var t=todayStr(), m=t.slice(0,7);
   if(scope==='hoy')  return {list:STATE.filter(function(p){return p.fecha===t;}), lbl:'hoy '+fmtFecha(t), tag:'hoy-'+t};
-  if(scope==='manana'){ var mn=tomorrowStr(); return {list:STATE.filter(function(p){return p.fecha===mn;}), lbl:'mañana '+fmtFecha(mn), tag:'manana-'+mn}; }
+  if(scope==='manana'){ var mn=proximoDiaEntrega(); return {list:STATE.filter(function(p){return p.fecha===mn;}), lbl:'mañana '+fmtFecha(mn), tag:'manana-'+mn}; }
   if(scope==='mes')  return {list:STATE.filter(function(p){return (p.fecha||'').slice(0,7)===m;}), lbl:'este mes', tag:'mes-'+m};
   if(scope==='todo') return {list:STATE.slice(), lbl:'todo el histórico', tag:'todos'};
   return null;
@@ -16459,7 +16466,7 @@ function downloadBlob(bytes,filename,mime){
   setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
 var RUTA_DIA='manana', RUTA_ORDER=[], RUTA_BYC={};
-function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===tomorrowStr(); return true; }); }
+function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirRuta(){ document.getElementById('ruta-overlay').style.display='flex'; renderRuta(); }
 function closeRuta(){ var ov=document.getElementById('ruta-overlay'); if(ov) ov.style.display='none'; }
 function setRutaDia(d){ RUTA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('ruta-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderRuta(); }
@@ -16469,7 +16476,7 @@ function renderRuta(){
   list.forEach(function(p){ var k=String(p.chofer||'Sin chofer').trim()||'Sin chofer'; if(!RUTA_BYC[k]){ RUTA_BYC[k]=[]; RUTA_ORDER.push(k); } RUTA_BYC[k].push(p); });
   RUTA_ORDER.sort(function(a,b){ if(a==='Sin chofer') return 1; if(b==='Sin chofer') return -1; return a<b?-1:1; });
   RUTA_ORDER.forEach(function(k){ RUTA_BYC[k].sort(function(a,b){ var ta=(a.turno||'ZZ'),tb=(b.turno||'ZZ'); if(ta!==tb) return ta<tb?-1:1; return String(a.zona||'')<String(b.zona||'')?-1:1; }); });
-  var diaLbl=RUTA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):RUTA_DIA==='manana'?('mañana '+fmtFecha(tomorrowStr())):'todos';
+  var diaLbl=RUTA_DIA==='hoy'?('hoy '+fmtFecha(todayStr())):RUTA_DIA==='manana'?('mañana '+fmtFecha(proximoDiaEntrega())):'todos';
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
   var html='';
   RUTA_ORDER.forEach(function(k, idx){
@@ -16498,7 +16505,7 @@ function renderRuta(){
 }
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
-  var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(tomorrowStr()):'';
+  var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
   var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
   var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
@@ -16570,7 +16577,7 @@ function mapaEntra(p){
      fuera solos en cuanto se elige una. */
   if(MAPA_MARCA && marcaDe(p.vendedor)!==MAPA_MARCA) return false;
   if(MAPA_DIA==='hoy')    return p.fecha===todayStr();
-  if(MAPA_DIA==='manana') return p.fecha===tomorrowStr();
+  if(MAPA_DIA==='manana') return p.fecha===proximoDiaEntrega();
   /* Por mes corta por fecha de ENTREGA: la pregunta es dónde fue el camión, no cuándo
      se cargó la venta. */
   if(MAPA_DIA==='mes')    return MAPA_MES ? String(p.fecha||'').slice(0,7)===MAPA_MES : true;

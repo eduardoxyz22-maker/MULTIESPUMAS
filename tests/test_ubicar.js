@@ -50,7 +50,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       if(/Cusis/.test(l))  return {link:l, lat:-17.7700, lng:-63.1950, aprox:true};
       return {link:l, lat:null, lng:null}; })}); };
     window.confirm=function(){ return true; };
-    var man=tomorrowStr();
+    var man=proximoDiaEntrega();
     var P=function(o){ return Object.assign({id:'p'+Math.random().toString(36).slice(2),fecha:man,oc:'',vendedor:'ROHO',cliente:'C',
       celular:'70000000',turno:'AM',zona:'Norte',direccion:'',maps:'',pagado:true,saldo:0,ts:Date.now(),metodoPago:'',observaciones:'',
       estado:'',entregado:false,vehiculo:'',chofer:'',garantia:'',nota:'',acuenta:0,facturarA:'',nit:'',nroDia:1,verificado:false,fotos:[],
@@ -126,7 +126,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   console.log('\n── 4. Importar de ROHO y que aparezca en el mapa sin cargar nada ──');
   r = await page.evaluate(async () => {
     STATE=[]; saveMirror(); window._saves=[]; window._geo=[];
-    var man=tomorrowStr(), lista=[
+    var man=proximoDiaEntrega(), lista=[
       { oc:'N1', fecha:man, cliente:'Cliente uno', celular:'70000000', direccion:'Calle Los Cusis 456, Barrio Equipetrol', zona:'Norte', nit:'', pagado:true, obs:'', combos:0, productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] },
       { oc:'N2', fecha:man, cliente:'Cliente dos', celular:'70000001', direccion:'Calle Falsa 123', zona:'Sur', nit:'', pagado:true, obs:'', combos:0, productos:[{desc:'COLCHON',medida:'140x190',codigo:'',cant:1}] } ];
     ROHO_IMP={nuevos:lista, viejos:[], yaEstan:[], sinFecha:[], malos:[], filas:2};

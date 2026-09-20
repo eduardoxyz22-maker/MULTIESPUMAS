@@ -23,7 +23,7 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
     apiSave=function(){ return Promise.resolve({ok:true}); };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(STATE))}); };
     apiFoto=function(){ return Promise.resolve({ok:true,fotoId:'IMG_ENT'}); };
-    var hoy=todayStr(), man=tomorrowStr(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
+    var hoy=todayStr(), man=proximoDiaEntrega(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
     var b={turno:'AM',nit:'1',zona:'Norte',ts:ts};
     function P(o){ var q={}; for(var k in b)q[k]=b[k]; for(var k in o)q[k]=o[k]; return q; }
     STATE=[

@@ -62,7 +62,10 @@ const NAVEGADOR = new Set(['event','this','window','document','console','alert',
   // ---------- 3. los segmentos (Día/Mes/Todo y compañía) responden ----------
   /* Un <div class="seg"> sin su initSeg() se ve igual pero no hace nada al tocarlo. */
   const segs = [...new Set([...src.matchAll(/class="seg[^"]*"\s+id="([a-z0-9-]+)"/g)].map(m=>m[1]))];
-  const segsSinInit = segs.filter(id => !new RegExp("initSeg\\('"+id+"'").test(src));
+  /* Un segmento también está enganchado si sus botones llaman a `segSet('<id>', …)` inline
+     (el de «Programar devolución», `pdev-turno`, se arma dentro de un modal así — §4er). */
+  // El inline va dentro de un string JS, con las comillas escapadas: segSet(\'pdev-turno\',\'AM\').
+  const segsSinInit = segs.filter(id => !new RegExp("initSeg\\('"+id+"'").test(src) && !new RegExp("segSet\\(\\\\?'"+id+"\\\\?'").test(src));
   chk('cada grupo de botones Día/Mes/Todo está enganchado', segsSinInit.length===0,
       segsSinInit.length ? ('sin initSeg: '+segsSinInit.join(', ')) : segs.length+' grupos');
 

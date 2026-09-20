@@ -316,8 +316,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('se cuentan aparte de las de Eduardo, para poder decirlo bien',
       rot.soloRpt.rpt===60 && rot.soloRpt.uni===60 && rot.soloRpt.rota===0,
       'rpt '+rot.soloRpt.rpt+' · únicas '+rot.soloRpt.uni+' · rotación '+rot.soloRpt.rota);
-  chk('⚠️ el cartel dice «Reposición de tienda», NO «Eduardo»',
-      rot.soloRpt.etq==='Reposición de tienda', rot.soloRpt.etq);
+  /* En minúscula desde cf7c844 (§4dc): la etiqueta se concatena dentro de frases («Eduardo y
+     reposición de tienda y pedido puntual»). Lo que importa es que NO diga «Eduardo». */
+  chk('⚠️ el cartel dice «reposición de tienda», NO «Eduardo»',
+      rot.soloRpt.etq==='reposición de tienda', rot.soloRpt.etq);
   chk('⚠️ pero lo pedido y sin entregar sí se cubre: ese camión sale igual',
       rot.comp===4 && rot.pedirPend===4, 'comprometido '+rot.comp+' · pedir '+rot.pedirPend);
 

@@ -308,8 +308,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ el recojo NO se marca a mano: no hay casilla para eso',
       dev.hayCasillaRecojo===false, dev.hayCasillaRecojo);
   chk('⚠️ el recojo ES la fecha programada del viaje', dev.recEsFecha===true, dev.rec);
-  chk('⚠️ no deja saltear el circuito: no se le entrega al cliente algo que sigue en producción',
-      dev.saltarPaso===true, dev.saltarPaso);
+  /* §4eb (11/09, confirmado por el dueño el 14/09): «Volvió de fábrica» pasó a «Listo en
+     fábrica» y es OPCIONAL — se puede anotar la entrega al cliente sin ese paso (queda `rf=ent`).
+     Hasta entonces el test exigía que se frenara. */
+  chk('§4eb: se puede entregar al cliente sin marcar «listo en fábrica» (el paso es opcional)',
+      dev.saltarPaso===false, dev.saltarPaso);
   chk('⚠️ rechaza que vuelva de fábrica antes del día del recojo', dev.rechazo===true, dev.rechazo);
   chk('queda la fecha de cuándo VOLVIÓ de fábrica', !!dev.dev, dev.dev);
   chk('…y QUÉ SE HIZO, que es lo que nunca quedaba anotado',
@@ -322,9 +325,11 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
   m = await matriz();
   chk('en la matriz esa ATC ya figura entregada', /Entregada/.test(m.txt), m.txt.slice(0,170));
-  chk('las fichas muestran el embudo entero',
+  /* La ficha «📦 Listas en fábrica» (§4dz/§4eb) se dibuja SOLO si hay alguna; acá la ATC ya
+     está entregada, así que el embudo visible es recoger → en fábrica → entregadas. */
+  chk('las fichas muestran el embudo (sin «listas en fábrica», que no hay ninguna)',
       /Por recoger/.test(m.fichas) && /En fábrica/.test(m.fichas) &&
-      /Listas para entregar/.test(m.fichas) && /Entregadas/.test(m.fichas), m.fichas.slice(0,200));
+      /Entregadas/.test(m.fichas) && !/Listas en fábrica/.test(m.fichas), m.fichas.slice(0,200));
 
   // ============ 7. ⚠️ LO QUE MÁS IMPORTA ============
   const tras = await page.evaluate(async () => {
@@ -434,9 +439,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /13\/07\/2024/.test(ficha.txt) && /comprado hace 2 años/.test(ficha.txt), 'ok');
   chk('…y que se le dejó comodín', /comodín/.test(ficha.txt), 'ok');
   chk('…y qué piezas se le llevaron', /Colchón · Patas/.test(ficha.txt), ficha.txt.slice(0,60));
+  // El tercer momento se llama «Recogido de fábrica» / «listo en fábrica» desde §4eb.
   chk('…y los CUATRO momentos del circuito',
       /ENTRÓ/i.test(ficha.txt) && /RECOJO/i.test(ficha.txt) &&
-      /VOLVIÓ DE FÁBRICA/i.test(ficha.txt) && /AL CLIENTE/i.test(ficha.txt),
+      /RECOGIDO DE FÁBRICA|LISTO EN FÁBRICA|VOLVIÓ DE FÁBRICA/i.test(ficha.txt) && /AL CLIENTE/i.test(ficha.txt),
       ficha.txt.slice(-200));
   const clic = await page.evaluate(async () => {
     closeModal();
@@ -466,6 +472,9 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     verAtc(id); await new Promise(r=>setTimeout(r,180));
     var ficha = !!document.querySelector('#modal-box .b-comodin');
     closeModal(); await new Promise(r=>setTimeout(r,120));
+    /* La sección anterior le dejó `dev`/`ent` puestos para la ficha; con `dev` marcado la caja
+       abre abierta (correcto, §4ea). Para probar «escondido hasta tildar» se limpia antes. */
+    mergeAtcDatos(findById(id), { dev:'', ent:'', hizo:'', rf:'' });
     abrirDevolucionAtc(id); await new Promise(r=>setTimeout(r,180));
     var box=document.getElementById('modal-box');
     var avance = !!box.querySelector('.aviso-comodin');
