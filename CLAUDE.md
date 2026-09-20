@@ -17,6 +17,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   2. Calcula KPIs: conversión por cohorte, canales, origen manual/bot, rendimiento y disciplina por vendedora
   3. Inyecta `window.PANEL_DATA` (JSON) en `panel_template.html` y escribe `index.html`, `panel.html` y `panel_YYYY_MM.html`
   4. Con `--month M --year YYYY` regenera SOLO el archivo histórico de ese mes (no pisa el index)
+  - ⚠️ Los límites del mes (`m_start`/`m_end`/`p_start`/`p_end`) llevan `tzinfo=BOL_TZ` (UTC−4,
+    §4ew): un datetime naive con `.timestamp()` se interpreta en la zona del runner (UTC en
+    Actions) y el mes cortaba a las 20:00 de Bolivia. No volver a crearlos sin tzinfo.
 
 - **`panel_template.html`** — Template React (JSX precompilado a `React.createElement`; validar con `node --check` sobre los bloques `<script>` antes de commitear). Tema claro, header teal `#00B5AD`.
 
@@ -307,6 +310,16 @@ Eduardo. `tests/test_chofer_efectivo.js`.
 - **`aplicarCobros`**: una venta cuyo precio entero fue el adelanto (objetivo 0) está pagada;
   corregir un cobro SIN monto suma el monto al objetivo (como `ctaAnotarMonto`).
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
+- **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
+  la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo
+  va a `p.chofer`; la foto de la entrega reintenta una vez tras `conflicto` y el «✓» sale con
+  el `ok`; `cambiarTurno` en día cerrado y `quitarProgramarDevAtc` van con `forzar`;
+  `showPagoWhatsapp` recibe el índice del cobro (los recargos van al final); `cuadreTexto`/
+  `exportCuadre` no comparan con el arqueo con filtro por vendedora; `borrarRetiro` mira la
+  respuesta; `loadFromServer` con `conTopeDuro`; `admVerRptAtrasadas()`; «Hay» =
+  `max(0,deposito)+…`; buscador con `sinTildes()`.
+  ⚠️ En un test, `showView(...)` dispara un refresco con la foto de STATE de ese momento:
+  esperar ~120 ms antes de armar el fixture o el `list` tardío lo pisa.
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

@@ -151,7 +151,10 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
              rendicion:(document.getElementById('tbl-rendicion')||{}).textContent||'' };
   });
   chk('el admin ve la venta como PAGADO · QR', r.ficha===true, '');
-  chk('  y entra en la rendición del chofer', /1\.500/.test(r.rendicion) && /Luis Pierre/.test(r.rendicion),
+  /* «Cobrado» de la rendición suma `totalCobrado(p)` (§4ew): los 1.500 que cobró el chofer en
+     «a» MÁS los 900 del QR de «c» que están en el historial (antes sumaba `p.cobradoBs`, que no
+     viaja en la planilla: desde otra compu daba Bs 0). */
+  chk('  y entra en la rendición del chofer (1.500 + 900 del historial = 2.400)', /2\.400/.test(r.rendicion) && /Luis Pierre/.test(r.rendicion),
       r.rendicion.replace(/\s+/g,' ').slice(0,80));
 
   // ---------- 8. los filtros de la pantalla ----------

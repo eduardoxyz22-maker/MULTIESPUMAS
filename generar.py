@@ -230,14 +230,21 @@ YEAR  = ARGS.year  or now.year
 MONTH = ARGS.month or now.month
 DIM   = calendar.monthrange(YEAR, MONTH)[1]
 CURDAY = now.day if (YEAR == now.year and MONTH == now.month) else DIM
-m_start = datetime.datetime(YEAR, MONTH, 1)
-m_end   = datetime.datetime(YEAR, MONTH, DIM, 23, 59, 59)
+# ⚠️ Los límites del mes van con huso horario de BOLIVIA (§4ew). Eran datetimes "naive", y
+# `.timestamp()` los interpreta en la zona del runner (UTC en GitHub Actions): el mes
+# empezaba y terminaba a las 20:00 del día anterior en Bolivia, así que las ventas cargadas
+# entre las 20:00 y las 24:00 del último día caían en el mes siguiente (y las del 1° entre
+# las 00:00 y las 04:00 UTC en el anterior). Con tzinfo el epoch es el mismo en cualquier
+# máquina. Todo lo que usa estas fechas lo hace por `.timestamp()`.
+BOL_TZ  = datetime.timezone(datetime.timedelta(hours=-4))
+m_start = datetime.datetime(YEAR, MONTH, 1, tzinfo=BOL_TZ)
+m_end   = datetime.datetime(YEAR, MONTH, DIM, 23, 59, 59, tzinfo=BOL_TZ)
 pmo = MONTH - 1 or 12
 pyr = YEAR if MONTH > 1 else YEAR - 1
-p_start = datetime.datetime(pyr, pmo, 1)
+p_start = datetime.datetime(pyr, pmo, 1, tzinfo=BOL_TZ)
 # Mes anterior COMPLETO (para comparativo semanal real). La métrica "mismo día"
 # se calcula aparte filtrando por día <= CURDAY (leads_sd).
-p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 59)
+p_end   = datetime.datetime(pyr, pmo, calendar.monthrange(pyr, pmo)[1], 23, 59, 59, tzinfo=BOL_TZ)
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  AGREGACIÓN POR VENDEDORA

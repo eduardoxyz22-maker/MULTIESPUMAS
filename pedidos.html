@@ -4352,16 +4352,17 @@ function verRetiro(id){ abrirRetiros(); editarRetiro(id); }
 function cuadreTexto(){
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos), total=0;
   pagos.forEach(function(c){ total=r2(total+c.monto); });
-  var v=cuadreVendedor();
+  var v=cuadreVendedor(), arqueoOn=!v;     // el arqueo se hace con Todos (§4ew): con filtro no se compara
   var L=['🧮 *CUADRE — '+cuadrePeriodoTxt().toUpperCase()+'*'+(v?('\n👤 '+v):''),''];
   if(!formas.length){ L.push('No entró plata en el período.'); }
   else {
     formas.forEach(function(f){
-      var a=cuadreArqueo(f.forma), dif=(a==null)?null:r2(a-f.monto);
+      var a=arqueoOn?cuadreArqueo(f.forma):null, dif=(a==null)?null:r2(a-f.monto);
       L.push('• '+f.forma+': *'+fmtBs(f.monto)+'*  ('+f.n+' pago'+(f.n===1?'':'s')+')'+
              (dif==null?'':(dif===0?'  ✅ cuadra':('  ⚠️ '+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))))));
     });
     L.push('', '*TOTAL: '+fmtBs(total)+'*');
+    if(!arqueoOn) L.push('(solo lo de '+v+' — el arqueo contra la caja se hace con Todos)');
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
   var E=cuadreEfectivo();
@@ -4394,10 +4395,10 @@ function exportCuadre(){
                compsArr(c.comps!=null?c.comps:c.comp).map(fotoVer).join('  |  '),
                (c.metodo==='Efectivo'?pagoRecibio(c, c.p):'')]);
   });
-  var formas=cuadrePorForma(pagos);
-  rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO',s:H}]);
+  var formas=cuadrePorForma(pagos), arqueoOn=!cuadreVendedor();   // con filtro por vendedora no se compara con la caja (§4ew)
+  rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO'+(arqueoOn?'':' (solo '+cuadreVendedor()+' — el arqueo se hace con Todos)'),s:H}]);
   formas.forEach(function(f){
-    var a=cuadreArqueo(f.forma);
+    var a=arqueoOn?cuadreArqueo(f.forma):null;
     rows.push([f.forma, '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
   });
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
@@ -4533,10 +4534,16 @@ function borrarRetiro(id){
   if(!confirm('¿Borrar el retiro de '+fmtBs(r.monto)+' de '+(r.entrega||'—')+' del '+fmtFecha(r.fecha)+'?\n\nEsto no se puede deshacer.')) return;
   RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(id); });
   saveRetirosMirror();
-  if(CONNECTED) apiDelete(id);
-  if(CONNECTED) r.fotos.forEach(function(fid){ apiBorrarFoto(fid); });
+  /* ⚠️ Se mira la respuesta (§4ew): antes decía «Retiro borrado» sin esperar al servidor, y
+     con {ok:false} o sin red el retiro volvía con la próxima lista y restaba de nuevo en el
+     cuadre (y el `reject` sin catch salía como error JS). */
+  if(CONNECTED){
+    apiDelete(id).then(function(res){
+      if(res&&res.ok){ r.fotos.forEach(function(fid){ apiBorrarFoto(fid).then(function(){},function(){}); }); toast('Retiro borrado','ok'); }
+      else toast('No se pudo borrar el retiro en el servidor ('+((res&&res.error)||'sin respuesta')+'): va a reaparecer al actualizar. Probá de nuevo.','err',8000);
+    }, function(){ toast('Sin conexión: el retiro puede reaparecer al actualizar. Probá de nuevo con señal.','err',8000); });
+  } else toast('Sin conexión: el retiro se sacó de esta pantalla, pero sigue en la planilla.','err',8000);
   renderRetiros(); renderCuadreSiActivo();
-  toast('Retiro borrado','ok');
 }
 
 /* ---- La ventana ---- */
@@ -5765,6 +5772,8 @@ function ctaRegistrarPago(id){
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
   var nota=limpiaNota((document.getElementById('cta-pago-nota')||{}).value);
   if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
+  // Misma regla que «Corregir» (§4ew): un pago con fecha a futuro caía en el cuadre de ese día.
+  if(fecha>todayStr()){ toast('La fecha no puede ser a futuro: es el día en que YA entró la plata','err'); var _fe=document.getElementById('cta-pago-fecha'); if(_fe) _fe.focus(); return; }
   if(CTA_PAGO.metodo==='QR' && !CTA_PAGO.banco){ toast('Elegí a qué banco entró el QR','err'); return; }
   // El recibo es OBLIGATORIO: sin él contabilidad no puede cruzar el pago con su
   // talonario, que es justamente para lo que sirve esta pantalla.
@@ -5805,8 +5814,11 @@ function ctaRegistrarPago(id){
   aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
         (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
-  // Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
-  showPagoWhatsapp(id, contaPagos(p).length-1);
+  /* Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
+     ⚠️ El índice es el del COBRO recién agregado, no el último de `contaPagos`: los recargos
+     van al final, y con un flete ya cobrado la ventana «✅ Guardado» y el WhatsApp mostraban
+     el flete (Bs 50) en vez del pago (Bs 700) — e invitaban a registrarlo dos veces (§4ew). */
+  showPagoWhatsapp(id, (anticipoDe(p)?1:0)+cobrosDe(p).length-1);
 }
 /* ---- El pago, listo para pegar en el grupo de WhatsApp ----
    Se manda el mensaje Y el link de la imagen: WhatsApp no puede adjuntar el archivo desde
@@ -8576,7 +8588,9 @@ function loadFromServer(showToastOk){
   renderAdmin();                       // lo que ya está, sin esperar a nadie
   if(!CONNECTED) return;
   setAdminLoading(true);
-  flushPending().then(apiList).then(function(res){
+  /* ⏱️ Con tope, como `refrescarEstado` (§4ds): un `fetch` que no resuelve ni falla dejaba
+     el botón en «Cargando…» deshabilitado para siempre (§4ew). */
+  flushPending().then(function(){ return conTopeDuro(apiList(), CARGA_TOPE, 'tardo_datos'); }).then(function(res){
     setAdminLoading(false);
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       STATE=mergePending(res.pedidos);
@@ -8585,9 +8599,9 @@ function loadFromServer(showToastOk){
       saveMirror(); updateStats(); renderAdmin(); updateFooter();
       if(showToastOk) toast('Actualizado ✓','ok');
     }else{ renderAdmin(); toast('Respuesta inesperada del servidor','err'); }
-  }).catch(function(){
+  }).catch(function(e){
     setAdminLoading(false); renderAdmin();
-    toast('Sin conexión: estás viendo la copia guardada en este equipo','err');
+    toast('No se pudo actualizar ('+motivoDeError(e)+'): estás viendo la copia guardada en este equipo','err',8000);
   });
 }
 
@@ -8670,8 +8684,12 @@ function renderRptAtrasadas(){
     (uno?'la fecha pasó hace ':'la más vieja, hace ')+'<b>'+peor+' día'+(peor===1?'':'s')+'</b>. '+
     'O no salió el camión, o salió y nadie la marcó entregada: la tienda se quedó sin mercadería.<br>'+
     '<span style="color:var(--muted)">'+tiendas+'</span>'+
-    ' <button class="rv-toggle" style="margin-left:8px" onclick="setQuick(\'rpt\')">ver las reposiciones</button>';
+    ' <button class="rv-toggle" style="margin-left:8px" onclick="admVerRptAtrasadas()">ver las reposiciones</button>';
 }
+/* El aviso recorre TODO el historial; el chip y la tabla van por el filtro Mes/Día. Con una
+   RPT de agosto sin entregar en septiembre el botón dejaba la tabla vacía y el chip en 0
+   (§4ew): se pasa a «Todo» y se deja el filtro puesto (sin el toggle de `setQuick`). */
+function admVerRptAtrasadas(){ QUICK_FILTER='rpt'; admVerTodoElHistorial(); }
 function renderFueraDelMes(){
   var el=document.getElementById('adm-fuera'); if(!el) return;
   var d=fueraDelMes();
@@ -8702,13 +8720,15 @@ function admVerTodos(){ ADM_TOPE=1e9; renderAdmin(); }
 function admTopeReset(){ ADM_TOPE=ADM_TOPE_BASE; }
 function admBaseList(){
   var mode=segVal('adm-mode');
-  var q=document.getElementById('adm-search').value.trim().toLowerCase();
+  var q=sinTildes(document.getElementById('adm-search').value);
   var list=STATE.slice();
   if(mode==='dia'){ var d=document.getElementById('adm-dia').value; if(d) list=list.filter(function(p){return p.fecha===d;}); }
   else if(mode==='mes'){ var m=document.getElementById('adm-mes').value; if(m) list=list.filter(function(p){return (p.fecha||'').slice(0,7)===m;}); }
-  if(q) list=list.filter(function(p){ return [p.oc,p.nota,p.vendedor,p.cliente,p.celular,p.zona,p.direccion,prodText(p.productos)].join(' ').toLowerCase().indexOf(q)>=0; });
+  // Sin acentos ni mayúsculas (§4ew): «perez» encuentra a PÉREZ y «colchon» al COLCHÓN, como en «Quién vendió qué».
+  if(q) list=list.filter(function(p){ return sinTildes([p.oc,p.nota,p.vendedor,p.cliente,p.celular,p.zona,p.direccion,prodText(p.productos)].join(' ')).indexOf(q)>=0; });
   return list;
 }
+function sinTildes(s){ s=String(s==null?'':s); try{ s=s.normalize('NFD').replace(/[̀-ͯ]/g,''); }catch(e){} return s.toLowerCase().trim(); }
 function admSort(list){
   if(!SORT_KEY){ list.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); }); return list; }
   var dn = SORT_KEY==='num' ? dayNumMap() : null;
@@ -8764,7 +8784,7 @@ function renderAdmin(){
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
   var byCh={};
-  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=Number(p.cobradoBs)||0; else byCh[c].pend+=Number(p.saldo)||0; });
+  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=totalCobrado(p); else byCh[c].pend+=Number(p.saldo)||0; });
   var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
   document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
 
@@ -9595,9 +9615,14 @@ function guardarProgramarDevAtc(id){
 function quitarProgramarDevAtc(id){
   var p=findById(id); if(!p) return;
   var a=atcDe(p)||{}; if(!a.pdev) return;
-  p.fecha=a.rec||p.fecha; p.turno=''; p.entregado=true;   // vuelve al día del recojo, ya recogido
+  /* Vuelve a una fecha que YA PASÓ (o cerrada): no le suma bultos a ningún camión, pero el
+     portero del servidor la trataba como un pedido nuevo y contestaba «día cerrado» o «AM
+     lleno» — la devolución seguía programada en la planilla (§4ew). Va con `forzar`. */
+  var _dest=a.rec||p.fecha, _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest));
+  if(_forzar && !asegurarClaveAdmin()) return;
+  p.fecha=_dest; p.turno=''; p.entregado=true;   // vuelve al día del recojo, ya recogido
   mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'' });
-  persistPedido(p); closeModal(); renderAtc();
+  persistPedido(p, _forzar?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Se quitó la devolución programada','ok');
 }
 /* Deshacer entero, para cuando se anotó en la ATC equivocada. */
@@ -10186,7 +10211,7 @@ function renderChofer(){
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? tomorrowStr() : todayStr());
   var ent=0, porCobrar=0, cobrado=0;
-  list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=Number(p.cobradoBs)||0; else porCobrar+=Number(p.saldo)||0; });
+  list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=totalCobrado(p); else porCobrar+=Number(p.saldo)||0; });
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
@@ -10576,10 +10601,27 @@ function onFotoElegida(ev){
                                : 'El Apps Script no está actualizado: pegalo de nuevo e implementá una versión nueva','err');
       return;
     }
-    p.fotos=fotosDe(p).concat([res.fotoId]);
-    persistPedido(p); renderChoferSiActivo(); renderMis();
-    if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
-    toast('Foto guardada ✓','ok');
+    /* 📷 LA FOTO ES UN DATO ADITIVO (§4ew). Achicar y subir tarda 30-90 s; si en el medio
+       otro dispositivo guardó este pedido (contabilidad registró el pago), el guardado con el
+       sello viejo daba `conflicto`, `rechazoFirme` pisaba con la fila del servidor y la foto
+       no quedaba ni en la planilla ni en la pantalla — con el chofer ya viendo «Foto guardada
+       ✓» (salía antes de que el servidor contestara). Ahora se pega sobre la copia más nueva
+       que haya en STATE, se reintenta UNA vez sobre la fila del servidor si hay conflicto, y
+       el «✓» sale recién cuando el servidor dijo que sí. */
+    var pegar=function(intento){
+      var q=findById(p.id)||p;
+      if(fotosDe(q).indexOf(res.fotoId)<0) q.fotos=fotosDe(q).concat([res.fotoId]);
+      renderChoferSiActivo(); renderMis();
+      return persistPedido(q).then(function(r){
+        if(r&&r.ok){
+          if(document.getElementById('modal').classList.contains('on')) reabrirFicha(q.id);
+          toast('Foto guardada ✓','ok'); return;
+        }
+        if(r&&r.error==='conflicto'&&intento<1) return pegar(intento+1);   // la fila del servidor ya está en STATE (rechazoFirme)
+        if(!(r&&r.local)) toast('⚠️ La foto subió pero NO quedó en el pedido ('+((r&&r.error)||'sin respuesta')+'). Volvé a intentar.','err',9000);
+      });
+    };
+    return pegar(0);
   }).catch(function(e){ toast('No se pudo subir la foto: '+motivoDeError(e),'err'); });
 }
 function quitarFoto(id, idx){
@@ -10710,7 +10752,11 @@ function choCobrarMetodo(id, metodo){
   /* §4eq: el cobro del chofer lleva la FECHA de hoy (el cuadre corta por fecha del pago; sin
      fecha esta plata no entraba en ningún día ni mes y quedaba como «pago sin fecha») y, si
      es efectivo, QUIÉN la tiene: el chofer que está mirando su ficha, o el asignado. */
-  var quien=String(((document.getElementById('cho-nombre')||{}).value)||p.chofer||'').trim();
+  /* ⚠️ En «👑 Ver todos» (administración mirando las entregas de TODOS) el nombre del
+     desplegable es el que quedó recordado, no el del chofer de ESTE pedido: el efectivo de un
+     pedido de Giordano quedaba en la mano de Luis (§4ew). En ese modo manda `p.chofer`. */
+  var _sel=String(((document.getElementById('cho-nombre')||{}).value)||'').trim();
+  var quien=(CHO_TODOS && UNLOCKED) ? String(p.chofer||_sel||'').trim() : String(_sel||p.chofer||'').trim();
   arr.push({metodo:metodo, monto:monto, fecha:todayStr(), recibio:(metodo==='Efectivo'?quien:'')});
   aplicarCobros(p, arr); renderChofer();
   toast('Anotado: '+metodo+' '+fmtBs(monto)+' ✓'+((metodo==='Efectivo'&&quien)?(' — queda en tu mano hasta rendirlo a Contabilidad'):''),'ok');
@@ -11092,14 +11138,14 @@ function parteData(){
   var ent=0, cob=0, pend=0, pendN=0, sinChof=0, sinGps=0, noVerif=0;
   dh.forEach(function(p){
     if(p.entregado) ent++;
-    if(p.pagado) cob+=Number(p.cobradoBs)||0; else { pend+=Number(p.saldo)||0; pendN++; }
+    if(p.pagado) cob+=totalCobrado(p); else { pend+=Number(p.saldo)||0; pendN++; }
     if(!vehiculoDe(p)) sinChof++;
   });
   var faltHoy=dh.filter(function(p){ return (p.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
   var am=0, pm=0;
   dm.forEach(function(p){ if(normTurno(p.turno)==='PM') pm++; else am++; if(!p.maps) sinGps++; if(!p.verificado) noVerif++; });
   var byCh={};
-  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=Number(p.cobradoBs)||0; });
+  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=totalCobrado(p); });
   return {hoy:hoy, man:man, nHoy:dh.length, ent:ent, cob:cob, pend:pend, pendN:pendN, sinChof:sinChof, faltHoy:faltHoy,
           nMan:dm.length, am:am, pm:pm, sinGps:sinGps, noVerif:noVerif, byCh:byCh};
 }
@@ -11363,11 +11409,11 @@ function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(o
 function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
-  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=Number(p.cobradoBs)||0; else pend+=Number(p.saldo)||0; });
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=totalCobrado(p); else pend+=Number(p.saldo)||0; });
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
   var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
-  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=Number(p.cobradoBs)||0; else byC[c].pend+=Number(p.saldo)||0; });
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=totalCobrado(p); else byC[c].pend+=Number(p.saldo)||0; });
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   document.getElementById('reporte-body').innerHTML=
     '<div class="metrics" style="margin-bottom:16px">'+
@@ -13782,7 +13828,10 @@ function stockProducirDe(o, MS, PI){
   var hoy=todayStr();
   var r={ sem:0, quin:0, mesNec:0, mesQueda:0, mes:0, mes1:0, mes2:0, hay:0, ok:false };
   if(o.deposito==null || o.descont) return r;
-  var hay=Math.max(0, o.deposito+(o.enCamino||0)+(o.enOtros||0));
+  /* El tope en 0 va sobre el DEPÓSITO solo (§4ew): con conteo viejo (contados 3, salieron 8 →
+     −5) y 5 en Moreno, «Hay» decía 0 y el negativo se comía lo de Moreno, mientras la tabla de
+     abajo (`stockCuantoPedir`, con `max(0,deposito)` aparte) decía «recoger 5». */
+  var hay=Math.max(0, o.deposito)+(o.enCamino||0)+(o.enOtros||0);
   r.hay=hay; r.ok=true;
   r.sem=Math.max(0, o.fabricar||0);
   var nec15=Math.max(stockCompHasta(o, stockSumarDias(hoy, PRODUCIR_QUINCENA+o.lead)), o.porDia*(o.lead+o.margen+PRODUCIR_QUINCENA));
@@ -15786,8 +15835,14 @@ function cambiarTurno(id, turno){
     toast('El turno '+turno+' del '+fmtFecha(p.fecha)+' está lleno ('+lim+'/'+lim+'). Reprogramá a otro día.','err');
     return;
   }
+  /* 🔒 El pedido que YA está en un día cerrado se sigue corrigiendo EN ese día (§4be) — pero
+     el portero del servidor mira «día cerrado» también cuando solo cambia el turno, y el
+     panel decía «✓» y el servidor «❌ está cerrado» (§4ew). Se manda con `forzar`, que exige
+     la clave de administración si el servidor tiene la del equipo puesta. */
+  var _forzar=diaCerrado(p.fecha);
+  if(_forzar && !asegurarClaveAdmin()) return;
   p.turno=turno;
-  persistPedido(p);
+  persistPedido(p, _forzar?{forzar:true}:undefined);
   reabrirFicha(id);
   toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
 }

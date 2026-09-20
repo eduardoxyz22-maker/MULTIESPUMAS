@@ -7400,9 +7400,99 @@ cola no se dibuja como pedido, la recogida cerrada desde el Excel se descuenta d
 plan del mes de «Qué producir» deja afuera a Eduardo, los puntuales y las reposiciones.
 `tests/test_adm_alta.js` (18 checks; contra el panel de `b632321` da 9/9).
 
+### ✅ 9a. Los MEDIA y BAJA del panel, juntos (13 hallazgos) — 20/09 → **§4ew**
+Entregas: la plata del chofer en Bs 0 desde otra compu, «Ver todos» y la mano equivocada, la
+foto perdida por conflicto, el turno en día cerrado y «Quitar la devolución» con `forzar`.
+Contabilidad: la ventana tras el pago mostraba el flete, cuadre filtrado vs. arqueo global,
+borrar un retiro sin mirar la respuesta, fecha a futuro en «Registrar pago». Administración:
+🔄 Actualizar con tope, el aviso de reposiciones vs. el filtro Mes, «Hay» negativo, buscador
+sin acentos. `tests/test_medias.js` (23 checks; contra el panel de `1e1d4ce` da 3/20). Y
+`generar.py` (el dashboard) corta el mes en hora de Bolivia, no en UTC (Kommo BAJA).
+
 ### Lo que sigue (orden)
-9. Las MEDIA y BAJA de §4er que quedan, y poner al día los tests viejos (producir, onclicks,
-   atc, rpt).
+9b. Sábado → «Mañana» es domingo (§4er Entregas BAJA, seis lugares, con test de reloj
+    clavado). 9c. Poner al día los tests viejos (producir 6, onclicks 1, atc 4, rpt 1).
+
+## 4ew. Los MEDIA y BAJA de §4er del panel, trece de una vez (2026-09-20)
+
+Bloque 9a de §4es. Trece hallazgos chicos, todos en `pedidos.html`, cada uno con su escenario
+en `tests/test_medias.js` (23 checks; `PEDIDOS=…` para los dientes: contra `1e1d4ce` da **3
+bien · 20 mal**).
+
+### Entregas
+- **La plata cobrada por el chofer en Bs 0 desde otra compu** (MEDIA): cinco cuentas sumaban
+  `p.cobradoBs`, que no tiene columna en la planilla (vive solo en el navegador que hizo el
+  cobro): la métrica «Cobrado» del chofer, la rendición por chofer de Administración, el parte
+  del día (pantalla y WhatsApp) y el reporte. Ahora suman `totalCobrado(p)` (el historial),
+  como ya hacían `agruparPorCamion`/`envioDatos`. ⚠️ `test_chofer` cambió una expectativa:
+  la rendición del fixture da 2.400 (1.500 del chofer + 900 del QR que está en el historial
+  de la otra venta), no 1.500 — antes ese QR no se veía porque no tenía `cobradoBs`.
+- **«👑 Ver todos» anotaba el efectivo en la mano del nombre del desplegable** (MEDIA-BAJA):
+  `choCobrarMetodo` usaba `select.value || p.chofer`; con «Luis Pierre» recordado y «Ver
+  todos» activo, un cobro sobre un pedido de Jonathan quedaba «>Luis Pierre» en el Cuadre. En
+  modo todos manda `p.chofer`.
+- **La foto de la entrega se perdía por conflicto** (MEDIA): achicar y subir tarda 30-90 s;
+  si mientras tanto Contabilidad registró el pago (rev 3→4), el `persistPedido` de la foto iba
+  con el sello viejo → `conflicto` → `rechazoFirme` pisaba con la fila del servidor, la foto
+  no quedaba en ningún lado (archivo huérfano en Drive) y el chofer ya había visto «Foto
+  guardada ✓» (salía antes de la respuesta). Ahora `onFotoElegida` pega la foto sobre la copia
+  más nueva de STATE, **reintenta UNA vez** sobre la fila del servidor si hay conflicto (la
+  foto es un dato aditivo: no hay nada que «volver a hacer»), y el «✓» sale recién con el
+  `ok`; si no, cartel rojo «la foto subió pero NO quedó en el pedido».
+- **Cambiar solo el turno en un día cerrado** (MEDIA): el panel decía «✓» y el servidor «❌
+  está cerrado» (`porteroFecha_` mira `diaCerradoGs` aunque la fecha no cambie). `cambiarTurno`
+  manda `{forzar:true}` cuando `diaCerrado(p.fecha)`, pidiendo la clave de administración si
+  el servidor tiene la del equipo puesta (`asegurarClaveAdmin`, hoy pasa de largo: no hay
+  `PANEL_KEY`).
+- **«Quitar la devolución» de una ATC** (MEDIA): vuelve al día del recojo, que ya pasó (o está
+  cerrado): el portero contestaba `dia_cerrado`/`cupos_llenos` y la devolución seguía
+  programada en la planilla. Va con `forzar` cuando el destino es pasado o cerrado.
+
+### Contabilidad
+- **Tras «Registrar pago», la ventana y el WhatsApp mostraban el flete** (MEDIA): el índice
+  era `contaPagos(p).length-1` y los recargos van al final: con un flete cobrado antes, la
+  ventana decía «el recargo ya quedó guardado · Bs 50» por un pago de 700 (e invitaba a
+  registrarlo dos veces). Ahora `(anticipoDe(p)?1:0)+cobrosDe(p).length-1`.
+- **Cuadre filtrado por vendedora vs. arqueo global** (MEDIA): la pantalla ya lo evitaba
+  (`arqueoOn=!vendSel`); `cuadreTexto` y `exportCuadre` no: el WhatsApp decía «⚠️ sobra Bs
+  600» y el Excel escribía contado 1200 / diferencia 600 con lo de una sola vendedora. Ahora
+  los dos usan la misma regla y lo dicen («solo lo de Carola — el arqueo se hace con Todos»).
+- **Borrar un retiro no miraba la respuesta** (MEDIA): `apiDelete(id)` sin `then/catch`:
+  «Retiro borrado» y volvía con la próxima lista (y el `reject` salía como error JS). Ahora
+  el «Retiro borrado» sale con el `ok`, y con `{ok:false}` o sin red avisa que va a
+  reaparecer.
+- **«Registrar pago» aceptaba fecha a futuro** (BAJA): mismo freno que «Corregir».
+
+### Administración
+- **🔄 Actualizar sin tope** (MEDIA): `loadFromServer` hacía `flushPending().then(apiList)`
+  sin `conTopeDuro`; un `fetch` colgado dejaba el botón «Cargando…» para siempre. Ahora va con
+  `CARGA_TOPE` y `motivoDeError`, como `refrescarEstado` (§4ds).
+- **El aviso de reposiciones vs. el filtro Mes** (MEDIA): `rptAtrasadas` recorre todo STATE
+  pero el chip y la tabla van por `admBaseList` (Mes/Día): «1 sin entregar» y la tabla vacía.
+  El botón ahora es `admVerRptAtrasadas()` = filtro `rpt` + «Todo».
+- **«Hay» del plan con depósito negativo** (BAJA): `max(0, deposito+enCamino+enOtros)` se
+  comía lo de Moreno; ahora `max(0,deposito)+enCamino+enOtros`, como `stockCuantoPedir`.
+- **El buscador de la tabla no sacaba acentos** (BAJA): `sinTildes()` (NFD sin diacríticos,
+  minúsculas) sobre la consulta y el pajar: «perez» encuentra a PÉREZ, «colchon» al COLCHÓN.
+
+### El dashboard: `generar.py` cortaba el mes en UTC (Kommo BAJA de §4er)
+`m_start`/`m_end`/`p_start`/`p_end` eran datetimes «naive» y `.timestamp()` los interpreta en
+la zona del runner (UTC en GitHub Actions): el mes empezaba y terminaba a las 20:00 del día
+anterior en Bolivia, así que un lead cargado el 30 a las 22:00 caía en octubre. Ahora llevan
+`tzinfo=BOL_TZ` (UTC−4): el epoch es el mismo en cualquier máquina (verificado: 1/9 00:00
+Bolivia = 04:00Z). Todo lo que usa esas fechas lo hace por `.timestamp()` (y `wide_start`
+sale de `m_start`, así que también). `tests/test_duplicados.py` (importa `generar`) 21/21 y
+`test_kommo.py` 29/29. Efecto: el próximo panel puede mover una o dos ventas de borde entre
+meses respecto del anterior — es la corrección, no un error.
+
+### Lo que se probó, y una trampa del test
+`tests/test_medias.js`: 23 checks, un escenario por hallazgo, más las suites del área (chofer
+18, chofer_efectivo 35, cuadre 33, compconta 29, mispedidos 33, cerrardia 21, carga 39, tabla
+30, stock 106, resumen 29, plata 11, banco 16, finmes 17, humo 40, conflicto 43, noborra 35).
+⚠️ `showView(...)` dispara un refresco cuya foto de STATE/RETIROS es de ANTES de lo que el
+test arma después: sin un `await` de 120 ms entre el `showView` y el fixture, el `list` tardío
+pisaba el cobro recién hecho y el segundo retiro «no existía». Es §4eo en el propio test (el
+doble de `apiSave` no anota `SAVE_ULTIMO`, así que la protección no corre).
 
 ## 4ev. Administración y stock: la fila en vuelo, la recogida del Excel y el plan sin Eduardo (2026-09-20)
 
