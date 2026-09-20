@@ -7316,3 +7316,76 @@ sin mayúsculas; textos de WhatsApp = pantalla; mapa/ubicar; fotos con tope; web
 (formulario antes del JSON, clave, dedupe, `leadYaCargado_` dentro del candado); borrador con
 `fecha=''`/`nroDia=0`; `traer_kommo.py` sin datos de clientes; `generar.py` paginación y
 `monthrange`; Excel de Administración sin celdas corridas; chips = tabla; primera carga y getlog.
+
+## 4es. Los arreglos de §4er, uno por uno (desde el 20/09/2026)
+
+Pedido del dueño (`/loop`): *"Cuando tengamos tokens y disponibilidad realiza los arreglos uno a
+uno desde el más grave al más sencillo, en especial lo de Kommo"*. Cada arreglo va con su test,
+la batería completa y la publicación a `main`. Si el límite de uso corta el trabajo, una rutina
+horaria del servidor («Retomar los arreglos si el límite los cortó») lo retoma; se borra al
+terminar. Esta sección es el registro de avance: lo hecho arriba, lo que sigue abajo.
+
+### ✅ 1. Completar un borrador de Kommo vuelve a funcionar (§4er ALTA, Kommo) — 20/09
+- **Qué pasaba**: la guarda A1 de §4eo (`submitPedido`: `if(isEdit && !prev)` → «el pedido que
+  estabas editando ya no está en este dispositivo») cortaba TODO borrador, porque los borradores
+  no viven en `STATE` (§4ca) y `prev` es null a propósito. Desde el 18/09 ninguna venta de Kommo
+  se podía completar.
+- **Arreglo**: `_deBorrador` se calcula ANTES de la guarda y la guarda lo exceptúa
+  (`if(isEdit && !prev && !_deBorrador)`). Y de paso lo que el revisor marcó PLAUSIBLE: con
+  `prev` null, `_mueveFecha` no decía nada y el borrador se salteaba fecha mínima, domingo,
+  sábado PM, día cerrado y cupos. Ahora `_nuevo = !isEdit || _deBorrador` y esos cinco porteros
+  lo tratan como un pedido nuevo (que es lo que es).
+- **Test**: `tests/test_borradores.js` de 85 a **88 checks**: los 8 rojos vuelven a verde sin
+  tocarlos, y la sección 7b nueva prueba que un borrador con fecha domingo o en un día cerrado
+  se rechaza con el cartel de siempre y sigue en la bandeja (⚠️ fechas en hora LOCAL: `dd()`
+  del test usa `toISOString` y de noche corre un día).
+
+### ✅ 2. Un rechazo firme ya no deja la copia rechazada en pantalla (§4er ALTA, Adm) — 20/09
+- **Qué pasaba**: `apiSave` anota `SAVE_ULTIMO[id]` («lo último que tocó la persona», §4eo) y
+  `mergePending` respeta esa copia 90 s (`saveReciente`). Tras un rechazo firme (`admin`,
+  `dia_cerrado`, `cupos_llenos`, `oc_repetida`, `conflicto`), `rechazoFirme` decía «se recargó
+  la planilla» pero el refresco no reponía la fila del servidor: la fecha o el turno rechazados
+  quedaban a la vista, contaban en los cupos y cualquier toque rápido los reenviaba. Era el
+  rojo de `test_conflicto` («vuelve a su fecha de antes»).
+- **Arreglo**: en `rechazoFirme`, después de `NO_ENCOLAR`, `delete SAVE_ULTIMO[rec.id]; delete
+  SAVE_REV[rec.id];` — un «no» firme es definitivo, el servidor manda. Un guardado que esperaba
+  turno manda ahora la copia fresca (`findById`) en vez de la rechazada.
+- **Test**: `tests/test_conflicto.js` 43/43 sin tocarlo.
+
+### ✅ 3. «Sí, es la misma» ya no puede apuntar al mismo id (§4er ALTA, Kommo) — 20/09
+- **Qué pasaba**: el pedido recién convertido está en `STATE` (guardado en cola) y el `list`
+  trajo la copia vieja, todavía borrador, con el MISMO id: `gemeloDe` lo encontraba por el
+  celular y la tarjeta ofrecía «Sí, es la misma»; al tocarlo, `borrEsLaMisma` hacía
+  `apiDelete` de la fila que se acababa de guardar.
+- **Arreglo**: `gemeloDe` saltea `p.id===b.id`; y `borrEsLaMisma` con el mismo id solo saca la
+  copia de la bandeja, sin borrar nada en el servidor.
+
+### ✅ 4. Editar un pedido ya no le borra la marca del lead (§4er MEDIA, Kommo) — 20/09
+- **Qué pasaba**: `klead` vive adentro de los productos y `submitPedido` los rearma de cero;
+  `heredarMarcas` copiaba solo `chk/enProd/prodEn`. Cualquier corrección del pedido perdía la
+  marca y el repaso volvía a traer el borrador (y si la vendedora lo completaba, la venta
+  quedaba dos veces).
+- **Arreglo**: `heredarMarcas` copia `klead` (también cuando cambia la cantidad: no es una
+  revisión), y `submitPedido` la rescata de `prev` si ningún renglón la trajo (`setKlead`).
+
+### ✅ 5. Un `list` tardío ya no resucita el borrador recién convertido (§4er MEDIA, Kommo) — 20/09
+- **Qué pasaba**: `leerCierresDeLista` corre antes que la regla de guardado reciente de
+  `mergePending` (§4eo) y mandaba a la bandeja la fila del servidor que todavía era
+  borrador: el pedido desaparecía de `STATE` hasta el próximo refresco.
+- **Arreglo**: si la fila viene como borrador pero acá ya es un pedido con `saveReciente`,
+  va a `resto` la copia local; pasados los 90 s, manda el servidor.
+- **Tests (3, 4 y 5)**: `tests/test_borradores.js` de 88 a **95 checks** (secciones 9e, 9f y
+  9g: `gemeloDe` nunca devuelve el mismo id y «es la misma» sobre sí mismo no borra nada;
+  `heredarMarcas` conserva `klead` y editar cambiando el producto entero lo conserva en la
+  planilla; con el guardado en curso el `list` viejo no saca el pedido de `STATE` y pasados los
+  90 s vuelve a mandar el servidor).
+
+### Lo que sigue (orden)
+6. Kommo `.gs` · descartar no
+   descarta (`KOMMO_DESCARTADOS`), el repaso «ya estaba» toma el candado y habla con Kommo
+   adentro, el repaso de GitHub síncrono, `busy` vacía la cola, el `busy` del hook en Rechazos —
+   todo lo del `.gs` junto, porque exige que el dueño vuelva a implementar. 7. Conta ALTA ×4
+   (flete cobrado al editar, pago mixto a cuenta, corregir cobro sin monto, corregir anticipo
+   desmarca pagada). 8. Adm ALTA ×3 (stock en vuelo, recogida desde el Excel, plan del mes con
+   Eduardo). 9. Las MEDIA y BAJA de §4er, y poner al día los tests viejos (producir, onclicks,
+   atc, rpt).

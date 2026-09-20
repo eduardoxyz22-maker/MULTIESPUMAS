@@ -239,6 +239,41 @@ const DIA = 86400000;
   chk('al volver a bajar la planilla, ya viene como pedido de verdad', r7b.state===1);
   chk('…y quedan 3 borradores', r7b.borr===3, 'borradores='+r7b.borr);
 
+  // ══ 7b. El borrador pasa por los mismos porteros que un pedido nuevo (§4es) ══
+  /* Desde el 18/09 (§4eo) el formulario frenaba TODO borrador con «el pedido que estabas
+     editando ya no está» (los borradores no viven en STATE). Al exceptuarlos, tienen que
+     seguir siendo un pedido NUEVO para los porteros: con `prev` vacío, «mueve fecha» no dice
+     nada y antes se salteaban domingo, día cerrado, fecha mínima y cupos. */
+  console.log('\n── 7b. Un borrador no se agenda en domingo ni en un día cerrado ──');
+  /* ⚠️ Fechas en hora LOCAL (Bolivia): `dd()` usa toISOString (UTC) y de noche corre un día,
+     con lo que «el domingo» caía en lunes y el pedido se guardaba de verdad. */
+  const isoLoc = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const enDias = (n) => { const d=new Date(HOY); d.setDate(d.getDate()+n); return d; };
+  const domingo = (() => { for(let n=1;n<=7;n++){ if(enDias(n).getDay()===0) return isoLoc(enDias(n)); } })();
+  const cerrado = (() => { for(let n=2;n<=8;n++){ const d=enDias(n); if(d.getDay()!==0 && d.getDay()!==6) return isoLoc(d); } })();
+  const r7c = await page.evaluate(async (a) => {
+    const [dom, cer] = a;
+    const fila = () => window._pl.filter(x => x.id === 'kommo-44003')[0] || {};
+    const orig = toast; window._t = []; toast = function(m){ window._t.push(String(m)); return orig.apply(this, arguments); };
+    completarBorrador('kommo-44003');
+    document.getElementById('f-fecha').value = dom; document.getElementById('f-nota').value = '9003';
+    document.getElementById('f-zona').value = 'Norte'; segSet('f-turno', 'AM');
+    submitPedido(); await new Promise(r => setTimeout(r, 150));
+    const t1 = window._t.slice(); window._t = [];
+    DIAS_CERRADOS = (DIAS_CERRADOS || []).concat([cer]);
+    document.getElementById('f-fecha').value = cer;
+    submitPedido(); await new Promise(r => setTimeout(r, 150));
+    const t2 = window._t.slice(); window._t = [];
+    DIAS_CERRADOS = DIAS_CERRADOS.filter(x => x !== cer);
+    toast = orig; resetForm(); EDIT_ID = '';
+    const f = fila();
+    return { estado: f.estado, fecha: f.fecha, enBandeja: BORRADORES.filter(p => p.id === 'kommo-44003').length,
+             t1: t1.join(' | '), t2: t2.join(' | ') };
+  }, [domingo, cerrado]);
+  chk('⚠️ un borrador con fecha DOMINGO se rechaza como un pedido nuevo', /No se agenda los DOMINGOS/.test(r7c.t1) && !/ya no está en este dispositivo/.test(r7c.t1), r7c.t1.slice(0,120));
+  chk('…y con un día CERRADO también', /está CERRADO/.test(r7c.t2), r7c.t2.slice(0,120));
+  chk('…el borrador sigue en la bandeja y en la planilla sigue siendo borrador, sin fecha', r7c.enBandeja===1 && /borrador/i.test(r7c.estado||'') && !r7c.fecha, 'en bandeja='+r7c.enBandeja+' · estado='+r7c.estado+' · fecha='+r7c.fecha);
+
   // ══ 8. Descartar ══════════════════════════════════════════════════════════
   console.log('\n── 8. Descartar ──');
   const r8 = await page.evaluate(async () => {
@@ -325,6 +360,77 @@ const DIA = 86400000;
   chk('⚠️ queda marcado con el lead, para que el robot no lo vuelva a traer',
       r9c.marca==='55001', r9c.marca);
   chk('el otro borrador sigue esperando', r9c.borradores===1, r9c.borradores);
+
+  // ══ 9e. «Sí, es la misma» nunca apunta al mismo id (§4es) ═════════════════
+  /* El pedido recién convertido está en STATE (guardado en cola) y el list trajo la copia
+     vieja, todavía borrador, con el MISMO id. Ofrecer «Sí, es la misma» ahí terminaba en
+     `apiDelete` de la venta que se acababa de guardar. */
+  console.log('\n── 9e. Un borrador no es «la misma» que él mismo ──');
+  const r9m1 = await page.evaluate(async () => {
+    const conv = Object.assign({}, STATE.filter(x=>x.id==='aMano')[0]);
+    conv.id='kommo-55009'; conv.cliente='LA MISMA VENTA'; conv.celular='72222222'; conv.nota='709'; conv.estado=''; conv.fecha=todayStr();
+    conv.productos=[{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,precio:900}];
+    STATE.push(conv);
+    const copiaVieja = Object.assign({}, conv, { estado:'Borrador Kommo', fecha:'', nota:'', nroDia:0 });
+    BORRADORES.push(copiaVieja);
+    window._pl.push(JSON.parse(JSON.stringify(conv)));
+    const g = gemeloDe(copiaVieja);
+    const origDel = apiDelete; window._dels=[]; apiDelete=function(id){ window._dels.push(id); return origDel(id); };
+    borrEsLaMisma('kommo-55009','kommo-55009');
+    await new Promise(r=>setTimeout(r,150));
+    apiDelete=origDel;
+    const out = { gemelo: g?g.id:null, dels: window._dels, enPlanilla: window._pl.filter(x=>x.id==='kommo-55009').length,
+                  enState: STATE.filter(x=>x.id==='kommo-55009').length, enBandeja: BORRADORES.filter(b=>b.id==='kommo-55009').length };
+    STATE=STATE.filter(x=>x.id!=='kommo-55009'); window._pl=window._pl.filter(x=>x.id!=='kommo-55009');
+    return out;
+  });
+  chk('⚠️ gemeloDe nunca devuelve el pedido con el MISMO id que el borrador', r9m1.gemelo!=='kommo-55009', r9m1.gemelo);
+  chk('⚠️ y «es la misma» sobre el mismo id NO borra la venta en la planilla', r9m1.dels.length===0 && r9m1.enPlanilla===1 && r9m1.enState===1, JSON.stringify(r9m1));
+  chk('…solo saca la copia vieja de la bandeja', r9m1.enBandeja===0, r9m1.enBandeja);
+
+  // ══ 9f. Editar el pedido no le borra la marca del lead (§4es) ════════════
+  /* La marca vive adentro de los productos y `submitPedido` los rearma de cero: sin el
+     rescate, corregir cualquier cosa del pedido la perdía y el robot volvía a traer el
+     borrador (o peor, la vendedora lo completaba y la venta quedaba dos veces). */
+  console.log('\n── 9f. Editar el pedido no le borra la marca del lead ──');
+  const r9m2 = await page.evaluate(async () => {
+    const antes = kleadDe(findById('aMano'));
+    const h = heredarMarcas([{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:5}],
+                            [{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,klead:'55001',chk:'ok'}]);
+    editPedido('aMano');
+    const d=document.querySelector('#f-productos .prod-desc'); d.value='ALMOHADA NUEVA';
+    // el molde de 9b es «pagado» con saldo (incoherente a propósito para lo que probaba): el formulario pide el total cobrado
+    const fc=document.getElementById('f-cobrado'); if(fc) fc.value='3400';
+    const orig = toast; window._t=[]; toast=function(m){ window._t.push(String(m)); return orig.apply(this, arguments); };
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    toast=orig;
+    const fila = window._pl.filter(x=>x.id==='aMano')[0]||{};
+    return { antes:antes, hered:(h[0]||{}).klead, heredChk:(h[0]||{}).chk, despues:kleadDe(fila),
+             prod:((fila.productos||[])[0]||{}).desc, toasts:window._t.join(' | ') };
+  });
+  chk('heredarMarcas conserva la marca del lead aunque cambie la cantidad (y suelta la revisión)', r9m2.hered==='55001' && !r9m2.heredChk, JSON.stringify([r9m2.hered, r9m2.heredChk]));
+  chk('⚠️ tras editar cambiando el producto entero, la marca del lead sigue en la planilla', r9m2.antes==='55001' && r9m2.despues==='55001' && /ALMOHADA/.test(r9m2.prod||''), JSON.stringify(r9m2).slice(0,220));
+
+  // ══ 9g. Un list tardío no resucita el borrador recién convertido (§4es) ═══
+  console.log('\n── 9g. Un list tardío no resucita el borrador recién convertido ──');
+  const r9m3 = await page.evaluate(async () => {
+    const conv = Object.assign({}, STATE.filter(x=>x.id==='aMano')[0]);
+    conv.id='kommo-55010'; conv.cliente='CONVERTIDO'; conv.celular='73333333'; conv.nota='710'; conv.estado=''; conv.fecha=todayStr();
+    conv.productos=[{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,precio:900}];
+    STATE.push(conv);
+    const copiaVieja = Object.assign({}, conv, { estado:'Borrador Kommo', fecha:'', nota:'', nroDia:0 });
+    SAVE_ULTIMO['kommo-55010']={rec:conv, t:Date.now()};          // el guardado recién salió (§4eo)
+    const lista = JSON.parse(JSON.stringify(window._pl)).concat([copiaVieja]);
+    STATE = mergePending(JSON.parse(JSON.stringify(lista)));
+    const a = { enState: STATE.filter(x=>x.id==='kommo-55010' && !esBorrador(x)).length, enBandeja: BORRADORES.filter(b=>b.id==='kommo-55010').length };
+    SAVE_ULTIMO['kommo-55010']={rec:conv, t:Date.now()-120000};   // pasaron los 90 s
+    STATE = mergePending(JSON.parse(JSON.stringify(lista)));
+    const b = { enState: STATE.filter(x=>x.id==='kommo-55010').length, enBandeja: BORRADORES.filter(b=>b.id==='kommo-55010').length };
+    delete SAVE_ULTIMO['kommo-55010']; STATE=STATE.filter(x=>x.id!=='kommo-55010'); BORRADORES=BORRADORES.filter(x=>x.id!=='kommo-55010');
+    return { a:a, b:b };
+  });
+  chk('⚠️ con el guardado en curso, el list viejo no saca el pedido de STATE ni lo devuelve a la bandeja', r9m3.a.enState===1 && r9m3.a.enBandeja===0, JSON.stringify(r9m3.a));
+  chk('…pasados los 90 s, manda el servidor otra vez', r9m3.b.enState===0 && r9m3.b.enBandeja===1, JSON.stringify(r9m3.b));
 
   // ══ 9d. 🔍 LAS COMPROBACIONES ═════════════════════════════════════════════
   /* *"¿qué otras comprobaciones podemos agregar? porque colocar esto y que haya errores

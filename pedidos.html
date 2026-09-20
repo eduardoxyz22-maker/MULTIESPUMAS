@@ -2171,6 +2171,12 @@ function rechazoFirme(rec, res){
   }
   rechazoRecordar(rec, res);                       // que quede en ESTE dispositivo, no solo en un cartel (§4el)
   NO_ENCOLAR[rec.id]=Date.now();
+  /* 🚫 Un rechazo firme es un «no» definitivo: lo que la persona tocó ya no vale y el
+     servidor manda. Si esto quedara anotado como «lo último que tocó» (§4eo), el refresco de
+     abajo lo respetaría 90 s (`saveReciente`) y la pantalla seguiría mostrando la fecha o el
+     turno rechazados, contándolos en los cupos y reenviándolos con el próximo toque (§4es;
+     era el rojo de test_conflicto «vuelve a su fecha de antes»). */
+  delete SAVE_ULTIMO[rec.id]; delete SAVE_REV[rec.id];
   setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
   if(res.error==='conflicto'){
     var actual=res.pedido;
@@ -2770,10 +2776,14 @@ function heredarMarcas(nuevos, viejos){
     if(!v) return x;                                   // producto nuevo: nadie lo revisó
     /* ⚠️ La CANTIDAD también cuenta. El almacén no dijo "hay ALMOHADA", dijo "hay 2
        almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
-    if((Number(v.cant)||0)!==(Number(x.cant)||0)) return x;
+    if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return x; }
     if(v.chk)    x.chk=v.chk;
     if(v.enProd) x.enProd=v.enProd;
     if(v.prodEn) x.prodEn=v.prodEn;
+    /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque
+       cambie la cantidad. Sin esto, corregir cualquier cosa del pedido la perdía y el robot
+       volvía a traer el borrador (§4es). */
+    if(v.klead)  x.klead=v.klead;
     return x;
   });
 }
@@ -6288,11 +6298,17 @@ function submitPedido(){
 
   var isEdit=!!EDIT_ID;
   var prev = isEdit ? findById(EDIT_ID) : null;
+  /* 📥 UN BORRADOR DE KOMMO QUE SE COMPLETA ES UN PEDIDO NUEVO (§4dt, §4es). `completarBorrador`
+     lo abre con EDIT_ID puesto (para pisar el borrador y no duplicarlo), pero los borradores no
+     viven en STATE (§4ca): `prev` es null a propósito. Se calcula ACÁ, antes de la guarda de
+     abajo, porque esa guarda lo confundía con «el pedido que estabas editando ya no está» y
+     desde el 18/09 ningún borrador se podía completar (8 rojos de test_borradores). */
+  var _deBorrador = isEdit && (typeof borradorDe==='function') && !!borradorDe(EDIT_ID);
   /* ⚠️ EDITAR SIN LA COPIA ORIGINAL PISA LA FILA ENTERA (§4eo). Si el pedido que se estaba
      editando ya no está en este dispositivo (un rechazo lo sacó de la lista, o un refresco),
      `rec` se arma con fotos vacías, sin chofer, sin marcas de stock, sin ATC… y el servidor
-     lo escribe tal cual. Se frena antes. */
-  if(isEdit && !prev){
+     lo escribe tal cual. Se frena antes. El borrador de Kommo es la excepción: nace ahora. */
+  if(isEdit && !prev && !_deBorrador){
     toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
     setSubmitting(false); return;
   }
@@ -6459,17 +6475,21 @@ function submitPedido(){
   var _mueveFecha = isEdit && prev && String(prev.fecha||'')!==fechaSel;
   var _mueveTurno = isEdit && prev && normTurno(prev.turno)!==turnoSel;
   var _mueveVend  = isEdit && !UNLOCKED && (_mueveFecha || _mueveTurno);
-  if((!isEdit || (!UNLOCKED && _mueveFecha)) && fechaSel < minFecha){
+  /* 📥 El borrador de Kommo pasa por los MISMOS porteros que un pedido nuevo (§4es): con
+     `prev` null, `_mueveFecha` no dice nada y antes se salteaba fecha mínima, domingo,
+     sábado PM, día cerrado y cupos. */
+  var _nuevo = !isEdit || _deBorrador;
+  if((_nuevo || (!UNLOCKED && _mueveFecha)) && fechaSel < minFecha){
     toast(lite ? 'La fecha no puede ser anterior a hoy.' : 'La fecha de ENTREGA debe ser desde mañana — no se agenda para el mismo día.','err');
     var feMin=document.getElementById('f-fecha'); feMin.classList.add('err'); feMin.focus(); feMin.scrollIntoView({block:'center'});
     return;
   }
-  if((!isEdit || (!UNLOCKED && _mueveFecha)) && diaDomingo(fechaSel)){
+  if((_nuevo || (!UNLOCKED && _mueveFecha)) && diaDomingo(fechaSel)){
     toast('🚫 No se agenda los DOMINGOS. Elegí otra fecha.','err');
     var feD=document.getElementById('f-fecha'); feD.classList.add('err'); feD.focus(); feD.scrollIntoView({block:'center'});
     return;
   }
-  if((!isEdit || _mueveVend) && diaSabado(fechaSel) && turnoSel==='PM'){
+  if((_nuevo || _mueveVend) && diaSabado(fechaSel) && turnoSel==='PM'){
     toast('Los SÁBADOS solo hay turno AM. Cambiá a AM o elegí otra fecha.','err');
     var ftS=document.getElementById('f-turno'); if(ftS){ ftS.classList.add('seg-err'); setTimeout(function(){ ftS.classList.remove('seg-err'); },1600); ftS.scrollIntoView({block:'center'}); }
     return;
@@ -6479,8 +6499,8 @@ function submitPedido(){
   /* Solo cuenta si el pedido está ENTRANDO a ese día (nuevo, o movido de otra fecha).
      El que ya estaba ahí se corrige en el lugar sin preguntar nada: logística vive
      retocando pedidos de días cerrados y el confirm de antes solo molestaba. */
-  if(diaCerrado(fechaSel) && (!isEdit || _mueveFecha)){
-    if(!isEdit || !UNLOCKED){
+  if(diaCerrado(fechaSel) && (_nuevo || _mueveFecha)){
+    if(_nuevo || !UNLOCKED){
       toast('🔒 El '+fmtFecha(fechaSel)+' está CERRADO — ese camión ya está armado y no se le agregan entregas. Elegí otra fecha.','err');
       var feC=document.getElementById('f-fecha'); feC.classList.add('err'); feC.focus(); feC.scrollIntoView({block:'center'});
       renderCupoForm();
@@ -6488,7 +6508,7 @@ function submitPedido(){
     }
     if(!confirm('🔒 El '+fmtFecha(fechaSel)+' está CERRADO: ese camión ya está armado.\n\n¿Mover igual el pedido a ese día?')) return;
   }
-  if((!isEdit || _mueveVend) && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
+  if((_nuevo || _mueveVend) && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
     var lim=limTurno(fechaSel, turnoSel);
     toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+lim+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');
     renderCupoForm();
@@ -6528,8 +6548,8 @@ function submitPedido(){
   /* ⚠️ UN BORRADOR DE KOMMO QUE SE COMPLETA ES UN PEDIDO NUEVO (§4dt). `completarBorrador`
      lo abre con EDIT_ID puesto (para pisar el borrador y no duplicarlo), y eso lo hacía
      pasar por «edición»: sin OC automática y con el campo en modo manual. Las vendedoras
-     lo reportaron: «lo que viene de Kommo no genera N° de OC». */
-  var _deBorrador = isEdit && (typeof borradorDe==='function') && !!borradorDe(EDIT_ID);
+     lo reportaron: «lo que viene de Kommo no genera N° de OC». `_deBorrador` se calcula
+     arriba, antes de la guarda de §4eo (§4es). */
   var _ocAuto = (!isEdit || _deBorrador) && !esRoho(vendedor) && !ocSel && ocAutoActivo();
   if(_ocAuto) ocSel=nextOcMes(null, docTipoSel());
   /* ⚠️ Si eligió 🎧 ATC (o 🏪 RPT) pero ESCRIBIÓ el número a mano, `ocSel` viene sin el
@@ -6599,6 +6619,10 @@ function submitPedido(){
      esto copia del pedido anterior cualquier campo que el formulario no maneje. Lo que el
      formulario SÍ maneja ya está en `rec` y no se pisa. */
   if(prev){ for(var _kr in prev){ if(!(_kr in rec)) rec[_kr]=prev[_kr]; } }
+  /* 📥 La marca del lead de Kommo va adentro de los productos, y `productos` se rearma de cero:
+     si la vendedora cambió TODOS los renglones, `heredarMarcas` no tiene a quién copiársela.
+     Se rescata del pedido anterior para que el robot no vuelva a traer el borrador (§4es). */
+  if(prev && typeof kleadDe==='function' && kleadDe(prev) && !kleadDe(rec)) setKlead(rec, kleadDe(prev));
   /* 🎧 EL SEGUIMIENTO DE LA ATC (§4bq).
      ⚠️ Va DESPUÉS de armar `rec` y rescatando lo anterior a propósito: los productos que
      salen del formulario son objetos NUEVOS, así que sin este rescate la vendedora
@@ -8024,6 +8048,10 @@ function gemeloDe(b){
   for(var i=0;i<STATE.length;i++){
     var p=STATE[i];
     if(!p || esFilaSistema(p)) continue;
+    /* ⚠️ Nunca él mismo (§4es): el pedido recién convertido puede estar en STATE (guardado en
+       cola) mientras la copia del servidor sigue en la bandeja con el MISMO id; ofrecer «Sí, es
+       la misma» ahí terminaba borrando en la planilla la fila que se acababa de guardar. */
+    if(String(p.id)===String(b&&b.id)) continue;
     if(kleadDe(p)===lead && lead) return p;              // ya se dijo que son la misma
     if(Math.abs((Number(p.ts)||0)-ts)>vent) continue;    // demasiado lejos en el tiempo
     var mismoTel = tel && telClave(p.celular)===tel;
@@ -8244,6 +8272,14 @@ function autoDeCliente(b){
 function borrEsLaMisma(idBorr, idPed){
   var b=borradorDe(idBorr), p=findById(idPed);
   if(!b||!p){ toast('Ese borrador ya no está.','err'); return; }
+  /* El mismo id = la fila ya es este pedido (la conversión está en camino y el list trajo la
+     copia vieja): solo se saca de la bandeja. Borrarla en el servidor borraría la venta (§4es). */
+  if(String(idBorr)===String(idPed)){
+    BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
+    saveBorrMirror(); renderBorrSiActivo();
+    toast('Ese borrador ya es este pedido: no hay nada que unir.','ok', 4500);
+    return;
+  }
   setKlead(p, leadDeBorrador(b));
   persistPedido(p);
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
@@ -8261,7 +8297,14 @@ function leerCierresDeLista(lista){
     else if(p && String(p.id)===CARGA_ID) car=p;
     else if(esFilaStock(p)) stk=p;           // 📦 el conteo del depósito (§4cn)
     else if(esFilaRetiro(p)) rets.push(p);
-    else if(esBorrador(p)) borr.push(p);     // 📥 no es un pedido todavía (§4ca)
+    else if(esBorrador(p)){
+      /* 📥 Un `list` que salió antes de que se escribiera la conversión trae la fila todavía
+         como borrador. Si acá ya es un pedido con guardado reciente, manda la copia local
+         (§4es): si no, el pedido desaparecía de STATE y la tarjeta volvía a la bandeja hasta
+         el próximo refresco. Pasado el guardado (90 s), el servidor vuelve a mandar. */
+      var _loc=(typeof saveReciente==='function' && saveReciente(p.id)) ? findById(p.id) : null;
+      if(_loc && !esBorrador(_loc)) resto.push(_loc); else borr.push(p);     // no es un pedido todavía (§4ca)
+    }
     else resto.push(p);
   });
   if(stk) STOCK=leerStock(stk);
