@@ -284,6 +284,19 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
 
+## 💰 Plata anotada que no se puede perder (§4eu)
+- **`p.acuenta` = TODO el adelanto** (anticipo + 2° método del pago mixto, §4ej); la ficha
+  de Contabilidad muestra solo el anticipo (`anticipoDe`), así que `aplicarMontos` y la rama
+  del anticipo de `ctaGuardarPago` vuelven a sumar `mixtoDe(p)`. Una venta cargada «SÍ,
+  pagado» lleva `acuenta` en 0 a propósito (§4cb): no se le inventa uno.
+- **El flete cobrado no se reescribe desde el formulario**: `submitPedido` separa `cobrados`
+  y `pactados`; el campo mueve solo lo pactado (`monto − envioCobrado`), vaciarlo no borra lo
+  cobrado, y `editPedido` marca «¿ya lo cobraste?» DESPUÉS de mostrar el método (si no,
+  `pintarEnvioCobrado` lo fuerza a «NO» y guardar sin tocar borraba un flete cobrado entero).
+- **`aplicarCobros`**: una venta cuyo precio entero fue el adelanto (objetivo 0) está pagada;
+  corregir un cobro SIN monto suma el monto al objetivo (como `ctaAnotarMonto`).
+- `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +

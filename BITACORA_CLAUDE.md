@@ -7388,11 +7388,100 @@ repaso de GitHub encola y contesta al instante (`traer_kommo.py` exige `origen:'
 **Exige que el dueño vuelva a implementar** (Nueva versión sobre la implementación de siempre).
 `tests/test_servidor.js` sección 10 (146 → 177 checks), `tests/test_traer.py` (23 → 37).
 
+### ✅ 7. Contabilidad, los cuatro ALTA (+ uno que apareció probando) — 20/09 → **§4eu**
+Flete cobrado que se borraba al editar (y el flete cobrado ENTERO que abría en «NO»), pago
+mixto a cuenta que perdía el 2° método, «Corregir» un cobro sin monto con saldo negativo, y
+corregir el anticipo de una venta pagada que la desmarcaba. `tests/test_conta_alta.js` (29
+checks; contra el panel de `ab5e84a` da 8/21).
+
 ### Lo que sigue (orden)
-7. Conta ALTA ×4 (flete cobrado al editar, pago mixto a cuenta, corregir cobro sin monto,
-   corregir anticipo desmarca pagada). 8. Adm ALTA ×3 (stock en vuelo, recogida desde el
-   Excel, plan del mes con Eduardo). 9. Las MEDIA y BAJA de §4er, y poner al día los tests
-   viejos (producir, onclicks, atc, rpt).
+8. Adm ALTA ×3 (stock en vuelo, recogida desde el Excel, plan del mes con Eduardo). 9. Las
+   MEDIA y BAJA de §4er, y poner al día los tests viejos (producir, onclicks, atc, rpt).
+
+## 4eu. Contabilidad: cuatro formas de perder plata anotada, arregladas (2026-09-20)
+
+Bloque 7 de §4es: los cuatro hallazgos 🔴 ALTA de Contabilidad de §4er, reproducidos por el
+revisor con `rev_conta/repro.js` y ahora cubiertos por `tests/test_conta_alta.js`. Todo en
+`pedidos.html`; nada del servidor.
+
+### 1. Editar el pedido borraba el flete YA COBRADO
+- **Qué pasaba**: con una parte del flete cobrada (`^Efectivo 50 @… #700 %FL1`, con su
+  comprobante) y otra pactada sin cobrar (`^100`) —el estado que deja «✏️ Cambiar lo que
+  falta cobrar» de la ficha—, el formulario muestra el TOTAL (150) y «NO» en «¿ya lo
+  cobraste?». `submitPedido` tomaba el PRIMER renglón (el cobrado), lo veía «cobrado» con el
+  segmento en NO, le sacaba método, fecha, recibo y foto y le ponía 150: con solo corregir la
+  observación, Bs 50 desaparecían del Cuadre, el comprobante quedaba huérfano y al chofer se
+  le mandaba a cobrar 150.
+- **Arreglo** (`submitPedido`, bloque del recargo): `cobrados` y `pactados` por separado.
+  Con las dos cosas, los cobrados quedan tal cual y el formulario solo mueve lo pactado
+  (`monto − envioCobrado(prev)`; si no queda nada, sin pactado). El SI/NO sigue valiendo para
+  el renglón único: sin nada cobrado, «SI» lo cobra ahora (método del pago, hoy, nota,
+  imágenes); con TODO cobrado, «NO» lo deshace, como siempre. En el estado mixto, «SI»
+  cobra AHORA lo que faltaba (queda un segundo renglón cobrado) y no toca el anterior.
+  **Vaciar el campo saca lo pactado, nunca lo cobrado.** `pintarEnvioCobrado` lo dice al
+  editar: «Ya entraron Bs 50 de flete (no se tocan desde acá)».
+- **El que apareció probando** («todo cobrado abre en SI» dio rojo también en el panel
+  nuevo): `editPedido` marcaba `f-envio-cob` y llamaba `pintarEnvioCobrado()` ANTES de
+  `updateMetodoVisibility()`, y `pintarEnvioCobrado` fuerza «NO» si el bloque del método no
+  está a la vista. Resultado: **un flete cobrado ENTERO abría en «NO», y guardar el pedido
+  sin tocar nada le sacaba el método y el comprobante** (Bs 150 borrados). Mismo bug de
+  orden que el del banco (§ comentario en `editPedido`). Ahora el segmento se marca después
+  de mostrar el método.
+
+### 2. Pago mixto «a cuenta»: «Guardar precios y montos» perdía el 2° método
+- **Qué pasaba**: `p.acuenta` es TODO el adelanto (anticipo + segundo método, §4ej: así lo
+  escribe y lo lee el formulario). La ficha muestra en «A cuenta» solo el anticipo
+  (`anticipoDe`, 1.500) y `aplicarMontos` hacía `p.acuenta=acu` → 2.000 pasaba a 1.500 sin
+  tocar nada. La próxima edición del pedido (acuenta 1.500, monto2 500) rehacía el historial
+  con 1.000 + 500: **Bs 500 de efectivo fuera de todo cuadre**.
+- **Arreglo**: `aplicarMontos` y la rama del anticipo de `ctaGuardarPago` vuelven a sumar el
+  2° método (`mixtoDe(p)`): `p.acuenta = acu + mixto`. La ficha lo dice en el rótulo («solo el
+  1er método: el 2° puso Bs 500 aparte»). Corregir el monto del anticipo (1.500 → 1.600) deja
+  el A cuenta en 2.100 y el total de la venta igual (baja lo que falta cobrar, como siempre).
+  ⚠️ Queda un hueco chico y a propósito: corregir el MONTO del 2° método desde la ficha no
+  mueve `p.acuenta` (la rama de cobros no lo toca). Para cerrarlo habría que confiar en la
+  heurística de `mixtoDe` (mismo día y mismo recibo) para escribir datos, y ese mismo criterio
+  toma por «mixto» un saldo cobrado el mismo día con el mismo recibo. Si el dueño lo pide, se
+  hace con una marca explícita en el renglón.
+
+### 3. «Corregir» el cobro de una venta PAGADA SIN MONTO dejaba saldo −1.500
+- **Qué pasaba**: venta vieja `pagado, saldo 0, 'Efectivo %IMG'` (sin `cobradoBs`, que no
+  viaja). `ctaGuardarPago` congelaba el objetivo en `saldo + totalCobrado = 0` y forzaba el
+  1.500 contra 0: saldo −1.500, «⚠️ Bs 1.500 de más» en la ficha y «exceso» en el Cuadre.
+  «💵 Anotar el monto» hacía bien lo mismo.
+- **Arreglo**: si el cobro que se corrige no tenía monto, el monto anotado ES el total
+  (`objetivo = objetivoCobro(p) + monto`), igual que `ctaAnotarMonto`.
+
+### 4. Corregir la fecha del anticipo de una venta pagada la desmarcaba
+- **Qué pasaba**: venta cargada «SÍ, pagado» (`~Efectivo 1500 …`, `acuenta 0`, saldo 0).
+  Corregirle solo la fecha (el camino que §4ei fomenta para arreglar el recibo) llamaba
+  `aplicarCobros(p, [], 0)` → `p.pagado = total>0 && …` = **false**, y además `p.acuenta=1500`:
+  la tabla decía «A CUENTA Bs 1.500», el resumen «Cobradas sin marcar pagadas: 1», el Excel
+  PAGADO=NO, y el formulario ya no dejaba guardar ese pedido por nada («Hay pago a cuenta:
+  poné el saldo por cobrar»). Variante: la venta vieja con A cuenta suelto + PAGADA sin monto.
+- **Arreglo**: `aplicarCobros`: `p.pagado = total>=objetivo−0.01 && (total>0 || (anticipo>0 &&
+  objetivo<=0.01))` — una venta cuyo precio entero fue el adelanto está pagada. El «deshacer
+  cobro» del chofer no cambia (ahí el objetivo es lo que había que cobrar, > 0); y en una venta
+  pagada entera con el adelanto ya no la deja «por cobrar Bs 0». Y la rama del anticipo no
+  pisa `p.acuenta` cuando la venta estaba pagada con acuenta 0 (queda en 0 a propósito, §4cb).
+  `aplicarMontos` tiene la misma guarda («Guardar precios y montos» sin tocar el adelanto).
+
+### Tests
+`tests/test_conta_alta.js` (Playwright, 29 checks; `PEDIDOS=/ruta/al/viejo.html` para los
+dientes: contra `ab5e84a` da **8 bien · 21 mal**). Cubre los cuatro caminos con los fixtures
+del revisor, más: subir/bajar/vaciar el flete, «SI» en el estado mixto, el flete entero que
+abre en «SI» y se guarda sin tocar, el «deshacer» del chofer, «Anotar el monto» = «Corregir»,
+y el A cuenta del mixto tras corregir el anticipo. Las suites del área (mixto 23, sinmonto 32,
+compedit 32, compconta 29, cuadre 33, plata 11, consaldo 10, chofer_efectivo 35, guardado 14,
+modif 38) siguen en verde.
+
+### Lo que NO se tocó (BAJA de §4er, con motivo)
+El fallback de `cobrosDe` para la venta «PAGADA sin monto» (§4er BAJA 9: adjuntar imagen al
+anticipo hace desaparecer el aviso) NO se cambió como proponía el revisor (mirar solo que no
+haya cobros no-anticipo): con esa condición una venta pagada entera con el adelanto
+(`~Efectivo 1500 …`, el caso de §4cb) también caería en el fallback y la ficha inventaría un
+«Efectivo 0» con el aviso «sin monto» sobre una venta perfecta. Queda para pensarlo con una
+marca explícita.
 
 ## 4et. Kommo en el servidor: descartar descarta, el candado no espera a Kommo, el repaso de GitHub encola (2026-09-20)
 

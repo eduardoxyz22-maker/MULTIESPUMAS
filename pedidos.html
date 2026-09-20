@@ -5281,19 +5281,27 @@ function ctaGuardarPago(id, i, igual){
        falta cobrar. Por eso se guarda el total de antes y se le fuerza el objetivo. */
     var ventaAntes=ventaTotal(p);
     var ant=anticipoDe(p); if(!ant) return;
+    var mx=mixtoDe(p), mxM=r2(mx?(Number(mx.monto)||0):0);     // el 2° método del pago mixto, si hay (§4ej)
     ant=JSON.parse(JSON.stringify(ant));
     ant.fecha=f; ant.monto=monto; ant.nota=nota; ant.metodo=CTA_EDIT_M; ant.banco=banco; ant.recibio=recibio; ant.anticipo=true;
     var cobros=ctaCobrosConFecha(p), env=enviosDe(p);
     p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
-    p.acuenta=monto;
+    /* `p.acuenta` = TODO el adelanto (anticipo + segundo método, §4ej) — salvo que la venta se
+       haya cargado «SÍ, pagado»: ahí queda en 0 a propósito (§4cb) y no se toca. Antes
+       corregirle la fecha al anticipo de una venta pagada le inventaba un «A cuenta» (§4eu). */
+    if(!(p.pagado && !((Number(p.acuenta)||0)>0.01))) p.acuenta=r2(monto+mxM);
     // aplicarCobros relee el anticipo del ledger, que ya quedó actualizado arriba.
     aplicarCobros(p, cobros, r2(ventaAntes-monto));
   }else{
     var idx=ctaIdxCobro(p, i, c);
     var arr=ctaCobrosConFecha(p);
     if(idx<0 || idx>=arr.length) return;
-    /* Mismo criterio: el total de la venta no se mueve, se ajusta lo que falta cobrar. */
-    var objetivo=objetivoCobro(p);
+    /* Mismo criterio: el total de la venta no se mueve, se ajusta lo que falta cobrar…
+       salvo que el cobro que se corrige NO TENÍA monto (venta vieja «PAGADA sin monto»): ahí
+       el monto que se anota ES el total, igual que en «💵 Anotar el monto» (`ctaAnotarMonto`).
+       Sin esto el objetivo quedaba congelado en 0 y la venta pasaba a saldo −1.500 con un
+       «cobro de más» falso en la ficha y en el Cuadre (§4eu). */
+    var objetivo=((Number(c.monto)||0)>0.01) ? objetivoCobro(p) : r2(objetivoCobro(p)+monto);
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
     arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco; arr[idx].recibio=recibio;
     aplicarCobros(p, arr, objetivo);
@@ -5551,13 +5559,16 @@ function ctaEditHtml(p){
   var _ant=anticipoDe(p);
   var acuReal=r2(_ant ? (Number(_ant.monto)||0) : (Number(p.acuenta)||0));
   var compsAnt=_ant ? compsArr(_ant.comps!=null?_ant.comps:_ant.comp).length : 0;
+  /* 💳 Con pago mixto (§4ej) este campo es SOLO el primer método; el segundo se ve en los
+     pagos registrados y `aplicarMontos` lo vuelve a sumar a p.acuenta (§4eu). Se dice. */
+  var _mxE=mixtoDe(p), _mxEM=_mxE?r2(Number(_mxE.monto)||0):0;
   return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
     '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
       '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
     (prods.length?filas:'<div style="color:var(--muted);font-size:.83rem;padding:4px 0">Este pedido no tiene productos cargados.</div>')+
     '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
-      '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+')</span></label>'+
+      '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+(_mxEM?(' · solo el 1er método: el 2° puso '+fmtBs(_mxEM)+' aparte'):'')+')</span></label>'+
         '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
         '<input type="number" id="cta-saldo" min="0" step="0.01" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
@@ -5649,6 +5660,15 @@ function aplicarMontos(p, acu, sal){
   var yaCobrado = totalCobrado(p) || (Number(p.cobradoBs)||0);
   var ant=anticipoDe(p);
   var antesAcu=r2(ant?(Number(ant.monto)||0):0);
+  /* 💳 `p.acuenta` es TODO el adelanto: el anticipo MÁS el segundo método del pago mixto
+     (§4ej: así lo escribe y lo lee el formulario). Acá `acu` es solo el anticipo (lo que
+     muestra la ficha), así que el segundo método se vuelve a sumar (§4eu). Antes «Guardar»
+     sin tocar nada bajaba p.acuenta de 2.000 a 1.500, y la próxima edición del pedido
+     rehacía el historial con 1.000 + 500: Bs 500 que entraron ya no estaban en ningún cuadre. */
+  var mx=mixtoDe(p), mxM=r2(mx?(Number(mx.monto)||0):0);
+  /* Una venta cargada «SÍ, pagado» lleva p.acuenta en 0 a propósito (§4cb): si el adelanto
+     no cambió, no se le inventa un «A cuenta». */
+  var _pagSinAcu = !!p.pagado && !((Number(p.acuenta)||0)>0.01);
   /* El ledger SOLO se reescribe si el adelanto cambió de verdad. Reescribirlo de gusto
      convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
      fecha — plata que después no aparece en los filtros por día ni por mes. */
@@ -5668,7 +5688,7 @@ function aplicarMontos(p, acu, sal){
     var t=0; cobros.forEach(function(c){ t+=Number(c.monto)||0; });
     p.cobradoBs=r2(t);
   }
-  p.acuenta=acu;
+  if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.01)) p.acuenta=r2(acu+mxM);
   p.saldo=sal;
   p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0);
   persistPedido(p);
@@ -6023,7 +6043,15 @@ function pintarEnvioCobrado(){
   w.style.display=(hay && hayCobro)?'block':'none';
   if(!hayCobro) segSet('f-envio-cob','NO');
   var h=document.getElementById('f-envio-hint');
-  if(h) h.innerHTML = segVal('f-envio-cob')==='SI'
+  /* 💸 Editando un pedido con una parte del flete YA COBRADA y otra pactada (§4eu): lo
+     cobrado no se toca desde acá, el formulario solo mueve lo que falta. */
+  var _pe=(EDIT_ID && typeof findById==='function') ? findById(EDIT_ID) : null;
+  var _cobY=_pe ? envioCobrado(_pe) : 0, _pendY=_pe ? envioPorCobrar(_pe) : 0;
+  if(h) h.innerHTML = (_cobY>0 && _pendY>0)
+    ? ('Ya entraron <b>'+fmtBs(_cobY)+'</b> de flete (con su comprobante: no se tocan desde acá). '+
+       (segVal('f-envio-cob')==='SI' ? 'Lo que falta se guarda como <b>cobrado ahora</b>, con el comprobante del pago.'
+                                     : 'Lo que pongas de más queda <b>por cobrar</b>.'))
+    : segVal('f-envio-cob')==='SI'
     ? 'Se guarda como <b>cobrado</b>, con el mismo comprobante del pago.'
     : 'Queda <b>por cobrar</b>: te va a aparecer en «Mis pedidos» hasta que lo registres con su comprobante.';
   var hp=document.getElementById('f-envio-pend');
@@ -6434,26 +6462,53 @@ function submitPedido(){
     var prevEnv = prev ? enviosDe(prev) : [];
     if(!(monto>0) && !prevEnv.length) return;                 // no hay recargo ni lo hubo
     var base=sinEnvios(sinMarcaReg(_metodoPago));
-    var linea=null;
+    /* 💸 LO QUE YA ENTRÓ NO SE REESCRIBE DESDE EL FORMULARIO (§4eu). Con una parte del flete
+       COBRADA (con método, fecha, recibo y foto) y otra PACTADA sin cobrar —lo que deja
+       «Cambiar lo que falta cobrar» de la ficha—, el formulario muestra el TOTAL y «NO» en
+       «¿ya lo cobraste?» (porque falta una parte). Antes tomaba el PRIMER renglón —el
+       cobrado—, le sacaba método y respaldo y le ponía el total: Bs 50 que entraron
+       desaparecían del Cuadre con solo corregir la observación, el comprobante quedaba
+       huérfano y al chofer se le mandaba a cobrar el total. Ahora los cobrados quedan tal
+       cual y el formulario solo mueve lo pactado (monto − lo cobrado). El SI/NO sigue
+       valiendo para el renglón único: sin nada cobrado, SI lo cobra ahora; con TODO cobrado,
+       NO lo deshace (como siempre). Y vaciar el campo tampoco borra lo cobrado. */
+    var cobrados=prevEnv.filter(envioYaCobrado), pactados=prevEnv.filter(function(x){ return !envioYaCobrado(x); });
+    var _cobrarAhora=function(l){
+      l.metodo=(segVal('f-metodo')||'Efectivo');
+      l.banco=(segVal('f-metodo')==='QR'?segVal('f-banco'):'');
+      l.fecha=todayStr();
+      l.nota=document.getElementById('f-nota').value;
+      l.comps=(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]);
+    };
+    var lineas=[];
     if(monto>0){
       var yaCob = segVal('f-envio-cob')==='SI';
-      /* ⚠️ Un recargo SIN método es el que todavía NO se cobró: así lo distingue todo el
-         panel. Con método (y su fecha, recibo y comprobante) es el que ya entró. */
-      linea = prevEnv.length ? prevEnv[0]
-            : { fecha:'', nota:'', comps:[] };
-      if(yaCob && !envioYaCobrado(linea)){
-        linea.metodo=(segVal('f-metodo')||'Efectivo');
-        linea.banco=(segVal('f-metodo')==='QR'?segVal('f-banco'):'');
-        linea.fecha=todayStr();
-        linea.nota=document.getElementById('f-nota').value;
-        linea.comps=(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]);
-      }else if(!yaCob && envioYaCobrado(linea)){
-        // lo pasó de "cobrado" a "por cobrar": se le saca el método (y su respaldo)
-        linea.metodo=''; linea.banco=''; linea.fecha=''; linea.nota=''; linea.comps=[];
+      if(cobrados.length && pactados.length){
+        lineas=cobrados.slice();
+        var pend=r2(monto-envioCobrado(prev));
+        if(pend>0.01){
+          var pl=pactados[0]; pl.monto=pend; pl.envio=true; pl.anticipo=false;
+          if(yaCob) _cobrarAhora(pl);                       // «ya lo cobré»: lo que faltaba entró ahora
+          lineas.push(pl);
+        }
+      }else{
+        /* ⚠️ Un recargo SIN método es el que todavía NO se cobró: así lo distingue todo el
+           panel. Con método (y su fecha, recibo y comprobante) es el que ya entró. */
+        var linea = cobrados.length ? cobrados[0] : (pactados[0] || { fecha:'', nota:'', comps:[] });
+        if(yaCob && !envioYaCobrado(linea)){
+          _cobrarAhora(linea);
+        }else if(!yaCob && envioYaCobrado(linea)){
+          // lo pasó de "cobrado" a "por cobrar": se le saca el método (y su respaldo)
+          linea.metodo=''; linea.banco=''; linea.fecha=''; linea.nota=''; linea.comps=[];
+        }
+        linea.monto=monto; linea.envio=true; linea.anticipo=false;
+        lineas=[linea];
+        for(var _kc=1;_kc<cobrados.length;_kc++) lineas.push(cobrados[_kc]);   // si hubiera más de uno cobrado, se conservan
       }
-      linea.monto=monto; linea.envio=true; linea.anticipo=false;
+    }else{
+      lineas=cobrados.slice();                                // campo vacío: se va lo pactado, nunca lo cobrado
     }
-    var txt = base + (linea ? ((base?' + ':'')+textoCobros([linea])) : '');
+    var txt = base + (lineas.length ? ((base?' + ':'')+textoCobros(lineas)) : '');
     _metodoPago = conMarcaReg(txt, !!(prev && regEnSistema(prev)));
   })();
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
@@ -7258,8 +7313,10 @@ function editPedido(id){
   if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
   var _ce=document.getElementById('f-envio');
   if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
-  segSet('f-envio-cob', (envioTotal(rec)>0 && !envioPendiente(rec))?'SI':'NO');
-  pintarEnvioCobrado();
+  /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
+     método (§4eu): `pintarEnvioCobrado` lo fuerza a «NO» si el método no está a la vista, y
+     acá todavía no lo está. Así, un flete cobrado ENTERO abría en «NO» y guardar el pedido sin
+     tocar nada le sacaba el método y el comprobante: Bs 150 que entraron, borrados. */
   document.getElementById('f-obs').value=rec.observaciones||'';
   document.getElementById('f-garantia').value=rec.garantia||'';
   document.getElementById('f-facturar').value=rec.facturarA||'';
@@ -7280,6 +7337,9 @@ function editPedido(id){
      recién después se marca el banco. */
   updateMetodoVisibility();
   segSet('f-banco', _mf.banco);
+  // 🚚 Recién ahora, con el método a la vista (ver arriba, §4eu).
+  segSet('f-envio-cob', (envioTotal(rec)>0 && !envioPendiente(rec))?'SI':'NO');
+  pintarEnvioCobrado();
   /* 💳 Si la venta ya tiene un pago mixto (§4ej), se muestra el segundo método con su
      monto y sus imágenes, y el monto cobrado es la SUMA de los dos (el anticipo solo era
      una parte). Mismo orden que arriba: primero se pinta el bloque, después el banco. */
@@ -12005,7 +12065,12 @@ function aplicarCobros(p, arr, objetivoForzado){
   p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
   p.cobradoBs=total;
   p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
-  p.pagado = total>0 && total>=objetivo-0.01;
+  /* Una venta cuyo precio entero fue el ADELANTO (objetivo 0, sin cobros) está PAGADA (§4eu):
+     con `total>0` a secas, corregirle la fecha al anticipo (cobros=[]) la desmarcaba, la tabla
+     decía «A CUENTA Bs 1.500» y el formulario ya no la dejaba guardar («poné el saldo por
+     cobrar»). El «deshacer» del chofer no cambia: ahí el objetivo es lo que había que cobrar. */
+  var antM=ant?(Number(ant.monto)||0):0;
+  p.pagado = total>=objetivo-0.01 && (total>0 || (antM>0 && objetivo<=0.01));
   persistPedido(p);
 }
 function applyPaid(p, metodo){
