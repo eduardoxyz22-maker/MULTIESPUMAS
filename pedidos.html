@@ -2784,6 +2784,10 @@ function heredarMarcas(nuevos, viejos){
        almohadas". Si la vendedora las pasa a 5, esa revisión ya no vale para nada. */
     if((Number(v.cant)||0)!==(Number(x.cant)||0)){ if(v.klead) x.klead=v.klead; return x; }
     if(v.chk)    x.chk=v.chk;
+    /* 📥 …y DE DÓNDE se recoge (§4ey). Va pegado a `chk`: sin esta línea, corregir cualquier
+       cosa del pedido desde el formulario dejaba el producto marcado «hay que ir a buscarlo»
+       pero sin almacén, o sea de vuelta en IM — y el chofer iba al lugar equivocado. */
+    if(v.chk==='im' && v.chkDe) x.chkDe=v.chkDe;
     if(v.enProd) x.enProd=v.enProd;
     if(v.prodEn) x.prodEn=v.prodEn;
     /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque

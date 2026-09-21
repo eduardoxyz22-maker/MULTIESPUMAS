@@ -7456,6 +7456,14 @@ almacén sin tocar eso habría mandado al chofer a Moreno a buscar algo que est�
   almacenes y dos fábricas) se iba **fuera de la pantalla** y 🏭 MORENO y 🏭 MULTI quedaban
   sin tocar. Con `flex:0 1 auto;min-width:0;max-width:100%` y `wrap` bajan solos a la línea de
   abajo. Verificado con captura a 412 px.
+- ⚠️ **`heredarMarcas` tiene que heredar TAMBIÉN el almacén** (encontrado al revisar, antes de
+  que lo viera nadie): esa función es la que conserva las revisiones cuando se guarda el
+  pedido desde el formulario (§4cw). Copiaba `chk`, `enProd`, `prodEn` y `klead`… y no
+  `chkDe`. O sea: alguien corregía la dirección de un pedido y el producto quedaba marcado
+  «hay que ir a buscarlo» **pero sin almacén = IM otra vez**, y el chofer iba al lugar
+  equivocado sin que nada lo avisara. Se hereda pegado a `chk` (`if(v.chk==='im' && v.chkDe)`)
+  y solo mientras la marca siga siendo «recoger»; si cambia la cantidad, la marca entera se
+  cae como siempre y el almacén con ella. Sección 5 del test.
 
 ### Si algún día sube el Excel de Banzer
 No hay que tocar nada: el almacén aparece solo en el botón con su nombre real (el del Excel
@@ -7464,10 +7472,11 @@ gana sobre el de `RECOGER_EXTRA`), entra en `enOtros`, la revisión automática 
 tanto el botón sirve para marcarlo a mano, que es lo que pidió.
 
 ### Tests
-`tests/test_banzer.js` (23 checks; contra el panel de `a5de88a` da **3 bien · 20 mal**):
+`tests/test_banzer.js` (25 checks; contra el panel de `a5de88a` da **3 bien · 20 mal**):
 botones, marcar/cambiar de lugar/desmarcar, que lo viejo siga diciendo IM, los textos en las
-seis pantallas, que la marca viaje a la planilla, el reparto por almacén y el caso de dos
-pedidos donde cada uno va a un almacén distinto. ⚠️ Los helpers del test están envueltos en
+seis pantallas, que la marca viaje a la planilla, el reparto por almacén, el caso de dos
+pedidos donde cada uno va a un almacén distinto, y (sección 5) que **corregir el pedido desde
+el formulario conserva el almacén**, pero cambiar la cantidad borra marca y almacén juntos. ⚠️ Los helpers del test están envueltos en
 `typeof …==='function'` para que contra un panel viejo salgan **rojos legibles** en vez de
 reventar el test entero. `test_revstock` pasó a 37 (el mensaje para copiar ahora dice de qué
 almacén sale cada renglón).

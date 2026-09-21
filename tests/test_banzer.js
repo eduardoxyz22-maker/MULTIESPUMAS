@@ -229,6 +229,33 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 5. Editar el pedido no cambia de almacén ════════════════════════════════════
+  console.log('\n── 5. Editar el pedido desde el formulario conserva el almacén ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var f=proximoDiaEntrega();
+      // ⚠️ sin pagar: un pedido `pagado:true` hace que el formulario exija el MONTO COBRADO
+      STATE=[ window._P({ fecha:f, pagado:false, saldo:1000, productos:prod(2,{chk:'im', chkDe:'Banzer'}) }) ];
+      showView('mis'); editPedido('p1'); await new Promise(r=>setTimeout(r,120));
+      document.getElementById('f-obs').value='cambio la observación nomás';
+      window._toasts=[]; window._saves=[]; submitPedido(); await new Promise(r=>setTimeout(r,250));
+      var x=findById('p1').productos[0];
+      var out={ sinTocar:{ chk:x.chk, de:RD(x), obs:findById('p1').observaciones, toasts:window._toasts.slice(0,2) } };
+      // …y si cambia la CANTIDAD, la revisión ya no vale: se borra la marca Y el almacén
+      editPedido('p1'); await new Promise(r=>setTimeout(r,120));
+      var cant=document.querySelector('#f-productos .prod-cant'); if(cant) cant.value='5';
+      submitPedido(); await new Promise(r=>setTimeout(r,250));
+      var y=findById('p1').productos[0];
+      out.otraCant={ chk:y.chk||'', de:RD(y), tieneCampo:('chkDe' in y), cant:y.cant };
+      return out;
+    }, BASE);
+    chk('⚠️ corregir cualquier cosa del pedido conserva «recoger de Banzer» (antes volvía a IM)', r.sinTocar.chk==='im' && r.sinTocar.de==='Banzer' && /observación/.test(r.sinTocar.obs), J(r.sinTocar));
+    chk('…y si cambia la cantidad, la revisión se borra entera: ni marca ni almacén colgado', r.otraCant.chk==='' && r.otraCant.de==='' && r.otraCant.tieneCampo===false && Number(r.otraCant.cant)===5, J(r.otraCant));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
