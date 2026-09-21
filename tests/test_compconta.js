@@ -170,6 +170,32 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y avisa que quedó corregido', final.toasts.some(t=>/Pago corregido/.test(t)),
       JSON.stringify(final.toasts));
 
+  /* ══ Un 404 al subir la foto se reintenta UNA vez (§4fa) ════════════════════════
+     21/09: a un vendedor le salió «la dirección del panel ya no existe (404)» al subir un
+     comprobante, con el servidor perfecto y el resto del equipo guardando bien. El `/exec`
+     contesta con un redirect a una dirección TEMPORAL; subir una foto es lo más lento del
+     panel, y si la conexión se corta esa dirección ya no vale. Un reintento lo resuelve. */
+  const rr = await page.evaluate(async () => {
+    var errs=['http404','http500','Failed to fetch','tardo','clave'];
+    var out=[];
+    for(var i=0;i<errs.length;i++){
+      (function(){
+        var n=0, e=errs[i];
+        apiFoto=function(){ n++; return (n===1) ? Promise.reject(new Error(e)) : Promise.resolve({ok:true, fotoId:'F'+e}); };
+        window._n=function(){ return n; };
+      })();
+      var res=await subirFoto('p1','comprobante_X','data:,x').then(
+        function(r){ return {ok:!!(r&&r.ok), intentos:window._n()}; },
+        function(er){ return {ok:false, err:String(er&&er.message), intentos:window._n()}; });
+      out.push({ error:errs[i], res:res });
+    }
+    return out;
+  });
+  const porErr = {}; rr.forEach(function(x){ porErr[x.error]=x.res; });
+  chk('⚠️ un 404 al subir la foto se reintenta solo y la segunda entra', porErr.http404.ok===true && porErr.http404.intentos===2, JSON.stringify(porErr.http404));
+  chk('…lo mismo con un 500 de Google, sin red y con la espera agotada', porErr.http500.ok && porErr['Failed to fetch'].ok && porErr.tardo.ok, JSON.stringify([porErr.http500, porErr['Failed to fetch'], porErr.tardo]));
+  chk('⚠️ …pero un «no» firme del servidor (falta la clave) NO se reintenta: se dice y listo', porErr.clave.ok===false && porErr.clave.intentos===1, JSON.stringify(porErr.clave));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

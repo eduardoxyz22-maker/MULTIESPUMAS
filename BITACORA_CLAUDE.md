@@ -7471,10 +7471,51 @@ dirección y **deja sin panel a todo el equipo**. Ahora el mensaje va en este or
 implementaciones», que esté la advertencia de no crear una nueva, y que siga sin decir que
 es momentáneo (un 404 de verdad no se arregla solo).
 
+### 🔁 Y POR QUÉ PASA DE VERDAD — el redirect temporal, y el reintento
+El dueño no se conformó con «es su navegador», y tenía razón: *«entonces porque pasa? ya lo
+dejo y el sin hacer nada»*. La causa, ahora con el mecanismo:
+
+Un `/exec` de Apps Script **no contesta derecho**: devuelve un **302 a una dirección
+temporal** de `script.googleusercontent.com`, propia de ESA petición y con vida corta. Subir
+una foto es de lejos lo más lento y pesado que hace el panel —achicar, subir el base64,
+escribir en Drive, `setSharing` (§4dq)—: decenas de segundos. Si en el medio la conexión se
+corta un instante o Google tarda de más, esa dirección temporal ya no vale y el navegador
+recibe un **404 del REDIRECT, no del panel**.
+
+Eso explica todo lo que no cerraba:
+- le pasa a **una persona en una foto** y el resto guarda bien → un `save` tarda ~0,5 s y
+  nunca llega a que la dirección expire; una foto sí;
+- el servidor está perfecto y la dirección nunca cambió;
+- **volver a intentarlo suele funcionar**, que es lo que la persona hacía a mano.
+
+**El arreglo**: `subirFoto(id, nombre, dataUrl)` envuelve a `conTopeDuro(apiFoto(...))` y
+**reintenta UNA vez** cuando el error es de los que se arreglan reintentando
+(`fotoReintentable`: `http404`, `http5xx`, sin red, `tardo`). Un «no» firme del servidor
+—`clave`, por ejemplo— **no** se reintenta. Las **cuatro** rutas de foto pasan por ahí:
+comprobante desde Contabilidad, comprobante desde el formulario, recibo de retiro y foto de
+entrega.
+⚠️ **El precio**: si la primera subida SÍ había llegado, queda un archivo suelto en Drive.
+Lo junta el barrido de la madrugada (§4ep, «Fotos sin pedido»), y un archivo de más es
+muchísimo mejor que perder el comprobante de un pago.
+`tests/test_compconta.js` (32): el 404 reintenta y la segunda entra; lo mismo con 5xx, sin
+red y espera agotada; y `clave` NO se reintenta.
+
+### 📌 Las 14 fotos huérfanas son TODAS comprobantes — y en buena parte no son un error
+En la misma pantalla el barrido mostró 14 archivos sin pedido, **ninguno** foto de entrega.
+Buena parte se explica sin ningún fallo: en el formulario de un pedido nuevo el comprobante
+se sube con id **`'form'`** (línea ~6269) **antes** de que el pedido exista; si la vendedora
+no llega a guardarlo, la imagen ya está en Drive y no queda pegada a nada. **Propuesto y NO
+hecho**: no subir la imagen hasta que el pedido se guarde (guardarla en memoria y subirla
+después). Preguntado al dueño, sin respuesta todavía.
+⚠️ No confundir esas huérfanas con el 404: pueden coincidir, pero la causa habitual es esta.
+
 ### Lo que se revisó y estaba bien
-- La subida del comprobante va por `ctaAdjuntar` → `conTopeDuro(apiFoto(...))` → `apiPost`:
+- La subida del comprobante va por `ctaAdjuntar` → `subirFoto` → `apiFoto` → `apiPost`:
   **el mismo canal** que todo lo demás, con `credentials:'omit'` y `?_=<ms>` (§4do, §4dp), y
   con tope de `FOTO_TOPE`=90 s. Las cuatro rutas de foto lo tienen.
+- ⚠️ Y la página de ese vendedor **no era vieja**: `credentials:'omit'`, `cache:'no-store'`
+  y el texto del 404 entraron todos en el mismo commit (`6794cf0`, 14/09), así que si vio
+  ese mensaje tenía las tres protecciones. Por eso hubo que buscar la causa en otro lado.
 - ⚠️ Mientras tanto la venta **no se pierde**: el pedido se carga igual, lo que no salga
   queda en la cola y se manda solo; el comprobante se adjunta después desde
   Contabilidad → Corregir.
