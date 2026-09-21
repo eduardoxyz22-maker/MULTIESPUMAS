@@ -8816,7 +8816,7 @@ function renderAdmin(){
     var manual=(p.estado && p.estado!==eSt.txt.split(' ·')[0].split(' (')[0])
       ? (' <span class="badge b-gray" title="Estado marcado a mano en la ficha">'+esc(p.estado)+'</span>') : '';
     var estadoCell='<span class="badge '+eSt.badge+'">'+(eSt.emo?(eSt.emo+' '):'')+esc(eSt.txt)+'</span>'+manual+
-      (nIM&&eSt.badge!=='b-im'?' <span class="badge b-im" title="Hay que recoger de IM">📥 IM</span>':'')+
+      (nIM&&eSt.badge!=='b-im'?' <span class="badge b-im" title="Hay que ir a buscarlo">📥 '+esc(recogerLugaresTxt(p))+'</span>':'')+
       (p.verificado?' <span class="badge b-verif">✅ Verificado</span>':'')+
       avisoModifHtml(p, true)+
       (p.entregado?' <span class="badge b-green">🚚✓</span>':'');
@@ -9144,7 +9144,7 @@ function prodTextCarga(prods){ return (prods||[]).map(function(x){
   var s=esc(x.desc||'')+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · cód '+esc(x.codigo)):'')+' × '+esc(x.cant);
   var pr = enProduccion(x) ? ' <span style="color:#a67c00;font-weight:800">🏭 EN PRODUCCIÓN'+esc(prodLugarTxt(x))+'</span>' : '';
   if(x.chk==='no')      return '<span style="color:#c0392b;font-weight:800">'+s+' ⛔ NO HAY</span>'+pr;
-  if(esRecoger(x))      return '<span style="color:#a67c00;font-weight:800">'+s+' 📥 RECOGER IM</span>'+pr;
+  if(esRecoger(x))      return '<span style="color:#a67c00;font-weight:800">'+s+' 📥 RECOGER '+esc(recogerCorto(x).toUpperCase())+'</span>'+pr;
   if(x.chk==='ok')      return s+' <span style="color:var(--green);font-weight:800">✔</span>'+pr;
   return s+pr;
 }).join('   |   '); }
@@ -10238,7 +10238,7 @@ function renderChofer(){
     var prod=(p.productos||[]).map(function(x){
       var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
       if(x.chk==='no') t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
-      else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de IM</span>';
+      else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de '+esc(recogerCorto(x))+'</span>';
       return t;
     }).join('<br>');
     var deuda=Number(p.saldo)||0;
@@ -10848,7 +10848,7 @@ function misCardHtml(p, n, todos){
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
-    else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de IM</span>';
+    else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de '+esc(recogerCorto(x))+'</span>';
     else if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
     return t;
   }).join('<br>');
@@ -10960,7 +10960,7 @@ function showMisModal(id){
   var prod=(p.productos||[]).map(function(x){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no')   t='<span style="color:var(--red);font-weight:700">'+t+' — no hay</span>';
-    else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 se recoge de IM</span>';
+    else if(esRecoger(x)) t=t+' <span style="color:#a67c00;font-weight:700">📥 se recoge de '+esc(recogerCorto(x))+'</span>';
     if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
     return prodChkIcon(x)+t;
   }).join('<br>');
@@ -13343,7 +13343,7 @@ function stockPedidosDetalle(k){
       if(!grupo) return;
       if(!por[grupo]) por[grupo]={p:p,u:0,marcas:[]};
       por[grupo].u+=n;
-      var marca=enProduccion(x)?'Pedido a fábrica':x.chk==='ok'?'Hay acá':x.chk==='im'?'Recoger de Moreno':x.chk==='no'?'No hay':'Sin revisar';
+      var marca=enProduccion(x)?'Pedido a fábrica':x.chk==='ok'?'Hay acá':x.chk==='im'?('Recoger de '+recogerCorto(x)):x.chk==='no'?'No hay':'Sin revisar';
       if(por[grupo].marcas.indexOf(marca)<0) por[grupo].marcas.push(marca);
     });
     Object.keys(por).forEach(function(g){grupos[g].push(por[g]);});
@@ -13553,7 +13553,7 @@ function renderStock(){
       (STOCK_VER_TODO ? '🙈 Mostrar solo lo que se mueve' : ('👁️ Ver también los '+quietos+' que no se venden (forros, patas, esponja…)'))+'</button></div>') : '');
   if(d.abiertos.length){
     html+='<div style="background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);padding:12px 14px;margin-top:14px">'+
-      '<div style="font-weight:800;color:#075985;margin-bottom:8px">🚚 En camino — recogidas de Moreno y pedidos a fábrica</div>'+
+      '<div style="font-weight:800;color:#075985;margin-bottom:8px">🚚 En camino — recogidas de otros almacenes y pedidos a fábrica</div>'+
       '<div style="overflow:auto"><table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Producto</th><th>Unidades</th><th>Qué es</th><th>Anotado el</th><th>Llega ~</th><th></th></tr></thead><tbody>'+
       d.abiertos.map(function(q){
         return '<tr><td><b>'+esc(q.nombre)+'</b></td><td><b>'+stockUnid(q.u)+'</b></td>'+
@@ -13620,7 +13620,7 @@ function renderRevisionFija(){
     '<div style="font-size:.8rem;color:var(--muted);margin-bottom:8px">Reparte lo que hay por fecha de entrega: el que entrega antes se lleva el stock. Se recalcula sola; los tildes se ponen recién cuando tocás Aplicar.</div>'+
     '<div>'+
       ficha('var(--green)',A.tot.ok,'con stock acá')+
-      ficha('#a67c00',A.tot.im,'a recoger de Moreno')+
+      ficha('#a67c00',A.tot.im,'a recoger de otro almacén')+
       ficha('var(--red)',A.tot.no,'sin stock — hay que fabricar')+
       ficha('var(--gray)',A.tot.sinContar,'sin contar')+
       ficha('#075985',A.tot.aFab,'ya pedidos a fábrica')+
@@ -13923,7 +13923,7 @@ function renderProducir(d){
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
     '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo, pedidos puntuales ni reposiciones de tienda; productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
-      '<b>Hay</b> suma lo de acá, lo de Moreno y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
+      '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       '<b>'+esc(MS.nombre)+'</b> es un <b>rango</b>: lo que dan los últimos 30, 60 y 90 días, el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
   R.bloques.forEach(function(B){
@@ -14428,14 +14428,43 @@ function revStkPedidos(todos){
 }
 /* El reparto. Devuelve, por pedido, qué habría que marcar en cada línea y por qué. */
 function stockAsignar(){
-  var d=stockData(), dep={}, im={}, info={}, recogidas={}, encargados={};
+  var d=stockData(), dep={}, im={}, imAlm={}, info={}, recogidas={}, encargados={};
   d.lista.forEach(function(o){
     info[o.k]=o;
     dep[o.k]= (o.deposito==null) ? null : Math.max(0, o.deposito);
     im[o.k]=Math.max(0, o.enOtros||0);
+    /* 📥 De QUÉ almacén sale cada unidad (§4ey). `enOtros` es la suma de todos, y con eso
+       solo el panel marcaba «recoger de IM» aunque estuviera en Banzer. Acá queda el
+       desglose, del que más tiene al que menos, para reservar de un solo lugar si se puede. */
+    imAlm[o.k]=Object.keys(o.otrosAlm||{}).map(function(nm){ return { alm:nm, u:Math.max(0, o.otrosAlm[nm]||0) }; })
+                     .filter(function(e){ return e.u>0; }).sort(function(a,b){ return b.u-a.u; });
+    /* Si hay unidades pero no vino el desglose por almacén, se tratan como las de siempre
+       (IM): nunca se pierde stock por no saber de dónde sale. */
+    if(!imAlm[o.k].length && im[o.k]>0) imAlm[o.k]=[{ alm:'', u:im[o.k] }];
     recogidas[o.k]=(o.pedidos||[]).reduce(function(n,q){return n+(q.tipo==='recogida'?Number(q.u)||0:0);},0);
     encargados[o.k]=o.enCamino||0;
   });
+  /* Toma `n` unidades de los otros almacenes y dice DE CUÁL salieron: primero el que ya
+     estaba marcado a mano (`pref`), después el que más tenga, para que una línea se vaya a
+     buscar a un solo lugar siempre que alcance. Con `aplicar` en false solo mira. */
+  var tomarIM=function(k, n, pref, aplicar){
+    var arr=imAlm[k]||[], sacado=0, porAlm={};
+    if(!(n>0) || !arr.length) return { u:0, alm:'' };
+    var orden=arr.slice();
+    if(pref) orden.sort(function(a,b){
+      var pa=(normNombre(a.alm)===normNombre(pref))?1:0, pb=(normNombre(b.alm)===normNombre(pref))?1:0;
+      return (pb-pa) || (b.u-a.u);
+    });
+    orden.forEach(function(e){
+      if(sacado>=n) return;
+      var t=Math.min(e.u, n-sacado); if(!(t>0)) return;
+      sacado+=t; porAlm[e.alm]=(porAlm[e.alm]||0)+t;
+      if(aplicar) e.u-=t;
+    });
+    var alm='', mejor=0;
+    Object.keys(porAlm).forEach(function(a){ if(porAlm[a]>mejor){ mejor=porAlm[a]; alm=a; } });
+    return { u:sacado, alm:alm };
+  };
   var pedidos=[], tot={ok:0, im:0, no:0, sinContar:0, aFab:0, cambian:0, contra:0, lineas:0, atc:0, tienda:0, descont:0};
   var faltaPorProd={}, imPorProd={}, sinPorProd={}, descPorProd={}, revisadas=[];
   // Lo revisado conserva su reserva incluso fuera del filtro de fechas actual.
@@ -14453,7 +14482,7 @@ function stockAsignar(){
         var programado=Math.min(recogidas[k]||0,c);
         encargados[k]=Math.max(0,(encargados[k]||0)-programado);
         recogidas[k]=(recogidas[k]||0)-programado; c-=programado;
-        var deIM=Math.min(im[k]||0,c);
+        var deIM=tomarIM(k, c, recogerDe(x), true).u;         // del almacén que ya tenía marcado, si alcanza
         im[k]=Math.max(0,(im[k]||0)-deIM);
         if(c>deIM && dep[k]!=null) dep[k]=Math.max(0,dep[k]-(c-deIM));
       }
@@ -14474,7 +14503,7 @@ function stockAsignar(){
       if(REVSTK_SOLO_VACIOS && antes){
         tot.revisadas++; tot[antes]++;
         var kr=stockClave(x), ir=info[kr]||{};
-        revisadas.push({id:p.id,cliente:p.cliente||'',fecha:p.fecha||'',k:kr,nom:ir.desc?stockNombre(ir):(x.desc||''),u:c,marca:antes});
+        revisadas.push({id:p.id,cliente:p.cliente||'',fecha:p.fecha||'',k:kr,nom:ir.desc?stockNombre(ir):(x.desc||''),u:c,marca:antes,alm:(antes==='im'?recogerDe(x):'')});
         return;
       }
       var k=stockClave(x), o=info[k]||{};
@@ -14488,16 +14517,20 @@ function stockAsignar(){
         return;
       }
       var deDep=Math.min(dep[k]||0, c), resto=c-deDep;
-      var deIM=Math.min(im[k]||0, resto);
+      /* Se MIRA cuánto habría en los otros almacenes y de cuál; se descuenta más abajo, y
+         solo si la línea se cubre entera (una línea a medias no reserva nada). */
+      var vistaIM=tomarIM(k, resto, recogerDe(x), false);
+      var deIM=vistaIM.u, almIM=vistaIM.alm;
       var falta=resto-deIM, ahora;
       /* Lo que HABRÍA de cada lado aunque no alcance: es lo que le sirve a quien mira
          («de 4: 1 acá, 2 en Moreno, 1 hay que fabricar»). La idea es de la versión de
          ChatGPT, que lo desglosaba y la mía decía solo «no hay» (§4cr). */
       var hayDep=deDep, hayIM=deIM, aFabricar=falta>0?falta:0;
-      if(falta>0){ ahora='no'; deDep=0; deIM=0; }          // no alcanza: no se reserva nada
+      if(falta>0){ ahora='no'; deDep=0; deIM=0; almIM=''; }          // no alcanza: no se reserva nada
       else if(deIM>0) ahora='im';
       else ahora='ok';
-      dep[k]=(dep[k]||0)-deDep; im[k]=(im[k]||0)-deIM;
+      dep[k]=(dep[k]||0)-deDep;
+      if(deIM>0){ tomarIM(k, deIM, almIM, true); im[k]=(im[k]||0)-deIM; }   // recién acá se reserva
       if(ahora==='ok') tot.ok++; else if(ahora==='im') tot.im++; else tot.no++;
       /* 🛑 Lo que no alcanza de un producto discontinuado queda ✗ igual (no hay), pero NO va a
          la lista de fábrica: no lo hacen más. Va a su propia lista, para avisar (§4cz). */
@@ -14505,11 +14538,13 @@ function stockAsignar(){
       if(ahora==='no' && desc) tot.descont++;
       if(ahora!=='ok'){
         var reg=(ahora==='im'?imPorProd:(desc?descPorProd:faltaPorProd));
-        if(!reg[k]) reg[k]={k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cod:o.cod||x.codigo||'', u:0, ped:[]};
+        if(!reg[k]) reg[k]={k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cod:o.cod||x.codigo||'', u:0, ped:[], alm:{}};
         /* ⚠️ De IM se traen las unidades que salen de IM, NO las del pedido entero: si de 4
            una sale del depósito, se van a buscar 3. Un número de más manda a alguien a
            cargar un colchón que ya estaba acá. */
         reg[k].u += (ahora==='im' ? deIM : c);
+        // …y de qué almacén hay que traerlas, para que la lista diga adónde ir (§4ey).
+        if(ahora==='im'){ reg[k].alm=reg[k].alm||{}; var _a=recogerAlmCorto(almIM); reg[k].alm[_a]=(reg[k].alm[_a]||0)+deIM; }
         if(reg[k].ped.length<12) reg[k].ped.push(p);
       }
       var cambia=(antes!==ahora);
@@ -14517,7 +14552,7 @@ function stockAsignar(){
       // Contradice a una persona: había un tilde puesto a mano y decía otra cosa.
       var contra=(cambia && antes!=='');
       if(contra) tot.contra++;
-      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora,
+      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almAntes:(antes==='im'?recogerDe(x):''),
                    deDep:deDep, deIM:deIM, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
     });
     if(lineas.length) pedidos.push({p:p, lineas:lineas, firma:JSON.stringify(p)});
@@ -14530,8 +14565,11 @@ function stockAsignar(){
       var encargado=Math.max(0,encargados[k]||0);
       var libresIM=Math.min(Math.max(0,im[k]||0),Math.max(0,lista[k].u-Math.max(0,dep[k]||0)-encargado));
       if(libresIM>0){
-        if(!imPorProd[k]) imPorProd[k]={k:k,nom:lista[k].nom,cod:lista[k].cod,u:0,ped:lista[k].ped};
+        if(!imPorProd[k]) imPorProd[k]={k:k,nom:lista[k].nom,cod:lista[k].cod,u:0,ped:lista[k].ped,alm:{}};
         imPorProd[k].u+=libresIM;
+        // de qué almacén saldrían esas unidades sueltas (§4ey)
+        var _s=tomarIM(k, libresIM, '', false), _sa=recogerAlmCorto(_s.alm);
+        imPorProd[k].alm=imPorProd[k].alm||{}; imPorProd[k].alm[_sa]=(imPorProd[k].alm[_sa]||0)+libresIM;
       }
       var suelto=Math.max(0,(dep[k]||0))+Math.max(0,(im[k]||0))+encargado;
       lista[k].suelto=suelto;
@@ -14551,11 +14589,11 @@ function stockAsignar(){
   return { revisadas:revisadas, firma:JSON.stringify([STATE,STOCK]), pedidos:pedidos, tot:tot, faltan:ord(faltaPorProd), traerIM:ord(imPorProd),
            sinContar:ord(sinPorProd), descont:ord(descPorProd), sobraDep:dep, sobraIM:im };
 }
-/* «1 acá · 2 recoger de Moreno · 1 fabricar» — de dónde saldría cada unidad. */
+/* «1 acá · 2 recoger de Banzer · 1 fabricar» — de dónde saldría cada unidad. */
 function revStkDesglose(l){
   var t=[];
   if(l.hayDep) t.push(l.hayDep+' acá');
-  if(l.hayIM)  t.push(l.hayIM+' recoger de Moreno');
+  if(l.hayIM)  t.push(l.hayIM+' recoger de '+recogerAlmCorto(l.alm));
   if(l.falta)  t.push('<b>'+l.falta+(l.descont?' no hay — y ya no se fabrica':' hay que fabricar')+'</b>');
   return t.length?('de '+l.cant+': '+t.join(' · ')):'no hay nada';
 }
@@ -14563,9 +14601,9 @@ function copiarRevStkFabricar(){
   var r=stockAsignar();
   copyText('PEDIDO A FÁBRICA — faltantes de esta revisión\n'+r.faltan.map(function(o){return '• '+o.nom+' × '+o.u;}).join('\n'));
 }
-function revStkMarca(m){
+function revStkMarca(m, alm){
   return m==='ok' ? '<span class="badge b-green">✔ hay</span>'
-       : m==='im' ? '<span class="badge b-im">📥 recoger de Moreno</span>'
+       : m==='im' ? '<span class="badge b-im">📥 recoger de '+esc(recogerAlmCorto(alm))+'</span>'
        : m==='no' ? '<span class="badge b-red">✗ no hay</span>'
                   : '<span class="badge b-gray">sin marcar</span>';
 }
@@ -14588,12 +14626,12 @@ function renderStockRevisar(){
   var html='<div class="modal-h" style="background:#0f766e"><h3>🤖 Revisión automática — los pedidos contra el stock</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
     '<p style="font-size:.83rem;color:var(--muted);margin-bottom:9px">El panel reparte lo que hay <b>por fecha de entrega</b>: el que entrega antes se lleva el stock. '+
-    'Primero lo que está <b>acá en fábrica</b>, después lo de <b>Moreno</b>, y lo que no alcanza queda como <b>✗ no hay</b> — eso es lo que hay que fabricar.</p>'+
+    'Primero lo que está <b>acá en fábrica</b>, después lo de los <b>otros almacenes</b> (Moreno, Banzer…), y lo que no alcanza queda como <b>✗ no hay</b> — eso es lo que hay que fabricar.</p>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">'+seg('hoy','Hoy')+seg('manana','Mañana')+seg('semana','Esta semana')+seg('todos','Todos')+'</div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+
       mc2('var(--green)','Con stock acá',R.tot.ok,'líneas marcadas + propuestas nuevas')+
       (R.tot.revisadas?mc2('var(--gray)','Ya revisadas',R.tot.revisadas,'se conservan sin cambios'):'')+
-      mc2('#a67c00','Recoger de Moreno',R.tot.im,'líneas marcadas + propuestas nuevas')+
+      mc2('#a67c00','A recoger de otro almacén',R.tot.im,'líneas marcadas + propuestas nuevas')+
       mc2('var(--red)','Sin stock',R.tot.no,'líneas marcadas + propuestas nuevas')+
       (R.tot.sinContar?mc2('var(--gray)','Sin contar',R.tot.sinContar,'no se tocan'):'')+
       (R.tot.atc?mc2('#7c3aed','🎧 ATC',R.tot.atc,'reclamos: no se fabrican'):'')+
@@ -14622,10 +14660,10 @@ function renderStockRevisar(){
                «hay 2 acá», que es el dato con el que quien mira decide si le cree. */
             '<td>'+esc(l.nom)+' <b>× '+l.cant+'</b>'+
               (l.ahora==='ok'?('<br><span style="color:#0a6b47;font-size:.88em">'+(l.hayDep>=l.cant?('hay '+l.hayDep+' acá en fábrica'):(l.hayDep+' acá'))+'</span>'):'')+
-              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de Moreno</span>'):'')+
+              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de '+esc(recogerAlmCorto(l.alm))+'</span>'):'')+
               (l.ahora==='no'?('<br><span style="color:var(--red);font-size:.88em">'+revStkDesglose(l)+'</span>'):'')+'</td>'+
             '<td>'+revStkMarca(l.antes)+'</td>'+
-            '<td>'+revStkMarca(l.ahora)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+'</td></tr>';
+            '<td>'+revStkMarca(l.ahora, l.alm)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+'</td></tr>';
         }).join('');
       }).join('')+
       '</tbody></table></div>';
@@ -14633,14 +14671,14 @@ function renderStockRevisar(){
   if(R.revisadas && R.revisadas.length){
     var pendientesMarcados=R.revisadas.filter(function(r){return r.marca!=='ok';});
     html+='<details '+(pendientesMarcados.length?'open':'')+' style="margin-top:12px;padding:12px;border:1px solid var(--gray-md);border-radius:9px"><summary><b>Ya revisadas · '+R.revisadas.length+' líneas · '+pendientesMarcados.length+' con recogida o falta de stock</b></summary>'+
-      '<p style="margin:8px 0">Estas marcas se conservan. «Recoger de Moreno» sigue pendiente hasta registrar la llegada y actualizar el pedido. La cantidad mostrada es la del pedido; si parte sale de acá, confirmá el reparto antes de recoger.</p>'+
+      '<p style="margin:8px 0">Estas marcas se conservan. «Recoger» sigue pendiente hasta registrar la llegada y actualizar el pedido. La cantidad mostrada es la del pedido; si parte sale de acá, confirmá el reparto antes de recoger.</p>'+
       '<div style="max-height:32vh;overflow:auto"><table class="roho-tabla stk-tabla"><thead><tr><th>Cliente</th><th>Fecha</th><th>Producto</th><th>Cantidad del pedido</th><th>Marca guardada</th><th></th></tr></thead><tbody>'+
-      R.revisadas.slice().sort(function(a,b){return (a.marca==='ok')-(b.marca==='ok');}).map(function(r){return '<tr><td>'+esc(r.cliente)+'</td><td>'+esc(r.fecha?fmtFechaCorta(r.fecha):'Sin fecha')+'</td><td>'+esc(r.nom)+'</td><td>'+r.u+'</td><td>'+revStkMarca(r.marca)+'</td><td><button class="btn btn-sm" data-id="'+esc(r.id)+'" onclick="showPedidoModal(this.dataset.id)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div></details>';
+      R.revisadas.slice().sort(function(a,b){return (a.marca==='ok')-(b.marca==='ok');}).map(function(r){return '<tr><td>'+esc(r.cliente)+'</td><td>'+esc(r.fecha?fmtFechaCorta(r.fecha):'Sin fecha')+'</td><td>'+esc(r.nom)+'</td><td>'+r.u+'</td><td>'+revStkMarca(r.marca, r.alm)+'</td><td><button class="btn btn-sm" data-id="'+esc(r.id)+'" onclick="showPedidoModal(this.dataset.id)">Ver pedido</button></td></tr>';}).join('')+'</tbody></table></div></details>';
   }
   if(R.traerIM.length){
     html+='<div style="margin-top:12px;background:#fffbe9;border:1px solid #f0d264;border-radius:9px;padding:10px 13px;font-size:.84rem">'+
-      '<b style="color:#a67c00">📥 Hay que traer de Moreno:</b> '+
-      R.traerIM.map(function(o){ return '<b>'+esc(o.nom)+'</b> × '+o.u; }).join(' · ')+
+      '<b style="color:#a67c00">📥 Hay que ir a buscar:</b> '+
+      R.traerIM.map(function(o){ return '<b>'+esc(o.nom)+'</b> × '+o.u+' <span style="color:var(--muted)">('+esc(revStkAlmTxt(o))+')</span>'; }).join(' · ')+
       ' <button class="btn btn-sm" style="background:#f59e0b;color:#3b2000;font-weight:700;margin-left:6px" onclick="copiarTraerIM()">📋 Copiar la lista</button>'+
       ' <button class="btn btn-sm" style="background:#075985;color:#fff;font-weight:700" onclick="closeModal();abrirStockRecogida()">🚚 Programar la recogida</button></div>';
   }
@@ -14702,14 +14740,21 @@ function abrirStockHistorial(){
     '<div class="modal-actions" style="margin-top:14px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Cerrar</button></div></div>';
   openModal(html, true);
 }
+/* «IM», «Banzer» o «IM 2 + Banzer 1» — de dónde hay que traer las unidades de un producto. */
+function revStkAlmTxt(o){
+  var m=(o&&o.alm)||{}, ks=Object.keys(m);
+  if(!ks.length) return 'IM';
+  if(ks.length===1) return ks[0];
+  return ks.sort(function(a,b){ return m[b]-m[a]; }).map(function(a){ return a+' '+m[a]; }).join(' + ');
+}
 function copiarTraerIM(){
-  if(!REVSTK || !REVSTK.traerIM.length){ toast('No hay nada para traer de Moreno.','ok'); return; }
-  var t='📥 TRAER DE MORENO — '+fmtFecha(todayStr())+'\n\n';
+  if(!REVSTK || !REVSTK.traerIM.length){ toast('No hay nada para ir a buscar a otro almacén.','ok'); return; }
+  var t='📥 TRAER DE OTRO ALMACÉN — '+fmtFecha(todayStr())+'\n\n';
   REVSTK.traerIM.forEach(function(o){
-    t+='• '+o.nom+(o.cod?(' (cód '+o.cod+')'):'')+' × '+o.u+'\n'+
+    t+='• '+o.nom+(o.cod?(' (cód '+o.cod+')'):'')+' × '+o.u+' — de '+revStkAlmTxt(o)+'\n'+
        '   para: '+o.ped.map(function(p){ return (p.cliente||'(sin cliente)')+(p.fecha?(' '+fmtFechaCorta(p.fecha)):''); }).join(' · ')+'\n';
   });
-  copyText(t); toast('Lista para traer de IM copiada ✓','ok');
+  copyText(t); toast('Lista para ir a buscar copiada ✓','ok');
 }
 /* Aplica los tildes. De a uno y con progreso: son muchos pedidos y cada uno viaja. */
 
@@ -14769,6 +14814,8 @@ function aplicarStockRevisar(){
     g.lineas.forEach(function(l){
       var x=(p.productos||[])[l.i]; if(!x) return;
       x.chk=l.ahora; lineas++;
+      // 📥 …y de qué almacén se va a buscar (§4ey). Vacío = IM, como siempre.
+      if(l.ahora==='im') x.chkDe=String(l.alm||''); else delete x.chkDe;
     });
     syncVerificado(p); upsert(p);
     if(!CONNECTED){ queuePending(p); ok++; setTimeout(uno,0); return; }
@@ -14870,7 +14917,7 @@ function renderStockHoy(d){
   };
   return '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">'+
     col('🚨 Pedir a fábrica hoy','#8a1c24','var(--red-lt)',pedir,function(o){ return item(o,'× '+o.fabricar+(o.aviso==='pedir'?' (esta semana)':''),'#8a1c24'); })+
-    col('🚚 Traer de Moreno','#075985','#e0f2fe',traer,function(o){ return item(o,'× '+Math.max(1,o.recoger||o.pedir),'#075985'); })+
+    col('🚚 Traer de otro almacén','#075985','#e0f2fe',traer,function(o){ return item(o,'× '+Math.max(1,o.recoger||o.pedir),'#075985'); })+
     col('⚠️ Revisar el saldo','#7c4b00','#fff4d6',revisar,function(o){ return item(o,o.contradice?'✗ no hay vs conteo':(o.confirmadoAqui+' marcados ✔ vs '+stockUnid(Math.max(0,o.deposito))+' contados'),'#7c4b00'); })+
     '</div>';
 }
@@ -15776,7 +15823,7 @@ function showCargaModal(id){
     row('Vendedor', esc(p.vendedor))+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+
     row('Celular', esc(p.celular))+
-    row('Productos'+PROD_AYUDA, prodRevList(p)+prodResumen(p))+
+    row('Productos'+prodAyuda(), prodRevList(p)+prodResumen(p))+
     row('Zona', '<b>'+esc(p.zona||'—')+'</b>')+
     row('Dirección', '<b>'+esc(p.direccion||'—')+'</b>')+
     row('Ubicación', maps)+
@@ -15876,7 +15923,7 @@ function showPedidoModal(id){
     row('Ingresado', esc(tsFmt(p.ts)))+
     row('Nota de venta', esc(p.nota))+
     row(esATC(p.oc)?'N° ATC':esRPT(p.oc)?'N° de pedido':'N° OC', esc(p.oc))+row(esRPT(p.oc)?'Solicitado por':'Vendedor', esc(p.vendedor))+row(esRPT(p.oc)?'Sucursal de destino':'Cliente', '<b>'+esc(p.cliente)+'</b>')+
-    row('Celular', esc(p.celular))+row('Productos'+PROD_AYUDA, prod+prodResumen(p))+row('Zona', esc(p.zona))+
+    row('Celular', esc(p.celular))+row('Productos'+prodAyuda(), prod+prodResumen(p))+row('Zona', esc(p.zona))+
     row('Dirección', esc(p.direccion))+row('Observaciones', esc(p.observaciones))+row('Garantía a', esc(p.garantia))+
     row('Facturar a', esc(p.facturarA))+row('NIT', esc(p.nit))+row('Cobro', cobro)+
     row('Estado', estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano acá abajo">a mano: '+esc(p.estado)+'</span>'):''))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
@@ -15972,6 +16019,43 @@ function toggleEntregado(id){
    así que se guarda en la planilla sin columnas nuevas. */
 /* Sí hay, pero está en otro almacén y hay que ir a recoger ('prod' = valor viejo, se respeta) */
 function esRecoger(x){ return !!x && x.chk==='im'; }
+/* 📥 DE DÓNDE SE VA A BUSCAR (§4ey). «Recoger» era UN solo lugar —IM, el almacén de
+   Industrias Moreno— y la marca `x.chk='im'` no decía de dónde. Con dos almacenes eso manda
+   al chofer al lugar equivocado, así que el almacén viaja al lado, en `x.chkDe`:
+     · vacío  = IM, como siempre (nada de lo ya marcado cambia, no hay que migrar nada);
+     · texto  = ese almacén, con el nombre que tiene en el stock.
+   Va DENTRO del producto, como `prodEn` y `precio`: viaja en el JSON de productos, así que
+   no hace falta ni una columna nueva ni volver a implementar el Apps Script. */
+var RECOGER_EXTRA=['Banzer'];        // almacenes conocidos aunque todavía no se haya subido su Excel
+function recogerDe(x){ return String((x&&x.chkDe)||'').trim(); }
+function recogerAlmCorto(nm){ return nm ? stockAlmCorto(nm) : 'IM'; }
+function recogerCorto(x){ return recogerAlmCorto(recogerDe(x)); }
+/* Los botones: el de siempre (IM) + cada almacén que aparezca al subir un Excel de
+   existencias + los conocidos que todavía no estén. Sin repetir: si el Excel de Moreno ya
+   está cargado, no aparece un segundo botón para el mismo lugar. */
+function recogerLista(){
+  var out=[{ v:'', corto:'IM' }], vistos={ im:1, moreno:1 };
+  var meter=function(nm){
+    var c=recogerAlmCorto(nm), k=normNombre(c);
+    if(!k || vistos[k]) return;
+    vistos[k]=1; out.push({ v:nm, corto:c });
+  };
+  Object.keys(STOCK.g||{}).forEach(function(nm){ if(!stockEsLog(nm)) meter(nm); });
+  RECOGER_EXTRA.forEach(meter);
+  return out;
+}
+/* Los almacenes distintos marcados en un pedido: «IM», «IM + Banzer». Para los carteles que
+   hablan del pedido entero y no de un renglón. */
+function recogerLugares(p){
+  var l=[], vistos={};
+  ((p&&p.productos)||[]).forEach(function(x){
+    if(!esRecoger(x)) return;
+    var c=recogerCorto(x), k=normNombre(c);
+    if(k && !vistos[k]){ vistos[k]=1; l.push(c); }
+  });
+  return l;
+}
+function recogerLugaresTxt(p){ var l=recogerLugares(p); return l.length?l.join(' + '):'IM'; }
 /* "Se pidió a producción" es una marca APARTE: convive con ✗ no hay (se pidió pero todavía
    no está) o con cualquier otra. x.chk==='prod' es el valor viejo, cuando era un estado. */
 function enProduccion(x){ return !!x && (x.enProd===true || x.chk==='prod'); }
@@ -16024,7 +16108,7 @@ function estadoStock(p){
   if(noSinPedir) return {emo:'🔴', txt:'No hay'+de(noSinPedir), badge:'b-red'};
   if(nProd)      return {emo:'🏭', txt:'En producción'+(lugares.length?(' · '+lugares.join(' + ')):' · sin marcar dónde')+de(nProd), badge:'b-amber'};
   if(nSin)       return {emo:'⬜', txt:'Sin revisar'+de(nSin), badge:'b-gray'};
-  if(nIM)        return {emo:'📥', txt:'Recoger de IM'+de(nIM), badge:'b-im'};
+  if(nIM)        return {emo:'📥', txt:'Recoger de '+recogerLugaresTxt(p)+de(nIM), badge:'b-im'};
   return {emo:'🟢', txt:'En stock', badge:'b-green'};
 }
 function estadoStockBadge(p){
@@ -16066,10 +16150,15 @@ function syncVerificado(p){
   else if(todosOk) p.estado='En stock';
   else if(algunoMarcado && !algunoSin && (p.estado==='No hay'||p.estado==='En producción')) p.estado='';   // se corrigió
 }
-function setProdChk(id, idx, val){
+function setProdChk(id, idx, val, de){
   var p=findById(id); if(!p||!p.productos||!p.productos[idx]) return;
   var x=p.productos[idx];
-  x.chk=(x.chk===val)?'':val;              // tocar el mismo lo desmarca
+  de=String(de==null?'':de).trim();
+  /* Tocar el MISMO botón lo desmarca. Con dos almacenes, «el mismo» es la misma marca Y el
+     mismo lugar: tocar 📥 Banzer en algo marcado 📥 IM lo cambia de almacén, no lo apaga (§4ey). */
+  var mismo=(x.chk===val) && (val!=='im' || recogerDe(x)===de);
+  x.chk = mismo ? '' : val;
+  if(x.chk==='im') x.chkDe=de; else delete x.chkDe;
   if(x.chk==='ok' && enProduccion(x) && x.prodF && !x.prodR) x.prodR=todayStr();   // llegó lo pedido a fábrica (§4co)
   syncVerificado(p);
   upsert(p); saveMirror(); renderAdmin(); refreshCarga();
@@ -16146,10 +16235,21 @@ function prodRevList(p){
     return '<div class="prod-rev">'+
       '<span style="flex:1;min-width:130px">'+prodChkIcon(x)+esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+(x.codigo?(' · <span style="color:var(--muted)">cód '+esc(x.codigo)+'</span>'):'')+' <b>× '+esc(x.cant)+'</b>'+
         (prodPrecio(x)>0?(' <span style="color:var(--teal-dk);font-weight:700">· '+fmtBs(prodPrecio(x))+' c/u = '+fmtBs(prodSub(x))+'</span>'):'')+'</span>'+
-      '<span style="display:flex;gap:5px;flex:none">'+
+      /* ⚠️ `flex:none` hacía que la tira de botones tomara SIEMPRE el ancho de todos juntos:
+         con seis (dos almacenes y dos fábricas) se iba fuera de la pantalla del celular y
+         🏭 MORENO y 🏭 MULTI quedaban sin tocar (§4ey). Con un ancho tope y `wrap` bajan
+         solos a la línea de abajo. */
+      '<span style="display:flex;gap:5px;flex:0 1 auto;min-width:0;max-width:100%;flex-wrap:wrap;justify-content:flex-end">'+
         '<button class="chkbtn'+(x.chk==='ok'?' ok':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'ok\')" title="Hay stock acá">✔</button>'+
         '<button class="chkbtn'+(x.chk==='no'?' no':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'no\')" title="No hay stock">✗</button>'+
-        '<button class="chkbtn wide'+(esRecoger(x)?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\')" title="Sí hay, pero hay que recogerlo del almacén IM">📥 IM</button>'+
+        /* Un botón por almacén de donde se puede ir a buscar (§4ey). El nombre va como texto
+           JSON escapado: un almacén del Excel se llama «01-05-004 BANZER» y romper el onclick
+           con un espacio o un guion dejaría el botón mudo. */
+        recogerLista().map(function(A){
+          var on=esRecoger(x) && recogerDe(x)===A.v;
+          var arg=JSON.stringify(String(A.v)).replace(/"/g,'&quot;');
+          return '<button class="chkbtn wide'+(on?' im':'')+'" onclick="setProdChk(\''+p.id+'\','+i+',\'im\','+arg+')" title="Sí hay, pero hay que recogerlo del almacén '+esc(A.corto)+'">📥 '+esc(A.corto)+'</button>';
+        }).join('')+
         '<span class="chk-sep"></span>'+
         PROD_LUGARES.map(function(L){
           var on=(prodDondeSePide(x)===L.v);
@@ -16164,7 +16264,12 @@ function prodRevList(p){
       '</span></div>';
   }).join('');
 }
-var PROD_AYUDA='<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay · ✗ no hay · 📥 recoger de IM &nbsp;|&nbsp; 🏭 ya se pidió a fábrica: MORENO o MULTI (se combina)</div>';
+/* El renglón de ayuda debajo de «Productos». Es una FUNCIÓN y no una constante porque los
+   almacenes de donde se recoge cambian: aparece uno nuevo apenas se sube su Excel (§4ey). */
+function prodAyuda(){
+  var almacenes=recogerLista().map(function(A){ return A.corto; }).join(' o ');
+  return '<div style="font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);font-size:.66rem;margin-top:3px;line-height:1.35">marcá: ✔ hay · ✗ no hay · 📥 recoger de '+esc(almacenes)+' &nbsp;|&nbsp; 🏭 ya se pidió a fábrica: MORENO o MULTI (se combina)</div>';
+}
 /* Resumen de la revisión: cuántos hay / faltan / hay que recoger */
 function prodResumen(p){
   var pr=p.productos||[]; if(!pr.length) return '';
@@ -16173,7 +16278,7 @@ function prodResumen(p){
   var t='<div style="font-size:.74rem;color:var(--muted);margin-top:7px">'+
     '<b style="color:var(--green)">'+nOk+'</b> de '+pr.length+' con stock'+
     (nNo?(' · <b style="color:var(--red)">'+nNo+' sin stock</b>'):'')+
-    (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de IM</b>'):'')+
+    (nIM?(' · <b style="color:#a67c00">'+nIM+' por recoger de '+esc(recogerLugaresTxt(p))+'</b>'):'')+
     (nSin?(' · <b style="color:var(--amber)">'+nSin+' sin revisar</b>'):'')+
     (nProd?(' · <b style="color:#a67c00">🏭 '+nProd+' pedido'+(nProd===1?'':'s')+' a fábrica'+esc(lugaresProd(p))+'</b>'):'')+'</div>';
   // Los precios, si están cargados. Se avisa cuando no cuadran con lo anotado como venta.
@@ -16189,7 +16294,7 @@ function prodResumen(p){
 function prodChkIcon(x){
   var base = x.chk==='ok' ? '<span style="color:var(--green);font-weight:800">✔</span> '
     : (x.chk==='no' ? '<span style="color:var(--red);font-weight:800">✗</span> '
-    : (esRecoger(x) ? '<span title="Sí hay, pero hay que recogerlo de IM">📥</span> ' : ''));
+    : (esRecoger(x) ? '<span title="Sí hay, pero hay que recogerlo de '+esc(recogerCorto(x))+'">📥</span> ' : ''));
   return base + (enProduccion(x) ? ('<span title="Ya se pidió a fábrica'+esc(prodLugarTxt(x)||' (sin marcar dónde)')+'">🏭</span> ') : '');
 }
 function toggleVerificado(id){
@@ -16311,7 +16416,7 @@ function exportExcel(scope){
       var rs = noHay?BAD:(enProd?WIP:(siHay?GOOD:fs));          // estilo de la celda REVISIÓN
       var prodCell={v:prodCol, s:ps};
       var cantCell=(x.cant===''||x.cant==null)?{v:'',s:ps}:{v:(Number(x.cant)||0),t:'n',s:ps};
-      var revTxt=(noHay?'✗ NO HAY':(enProd?'📥 RECOGER IM':(siHay?'✔ HAY':'')));
+      var revTxt=(noHay?'✗ NO HAY':(enProd?('📥 RECOGER '+recogerCorto(x).toUpperCase()):(siHay?'✔ HAY':'')));
       if(enProduccion(x)) revTxt=(revTxt?revTxt+' · ':'')+'🏭 EN PRODUCCIÓN'+prodLugarTxt(x);
       var revCell={v:revTxt, s:rs};
       if(idx===0){

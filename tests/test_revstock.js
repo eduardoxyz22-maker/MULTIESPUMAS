@@ -111,8 +111,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ la lista para ir a IM dice 3 (lo que hay que traer), no 4 (lo del pedido)',
       r.traerIM.length===1 && r.traerIM[0].u===3, JSON.stringify(r.traerIM));
   const listaIM = await page.evaluate(() => { var t=''; var o=window.copyText; window.copyText=function(x){t=x;}; copiarTraerIM(); window.copyText=o; return t; });
-  /* §4cr: el mensaje pasó a llamarse «TRAER DE MORENO» — el equipo dice «Moreno», no «IM». */
-  chk('…y el mensaje dice para qué pedido es', /TRAER DE MORENO/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
+  /* §4cr: el mensaje pasó a llamarse «TRAER DE MORENO» — el equipo dice «Moreno», no «IM».
+     §4ey: y con más de un almacén de donde recoger, el título es genérico y cada renglón
+     dice de dónde sale («— de Moreno», «— de Banzer»). */
+  chk('…y el mensaje dice para qué pedido es y de qué almacén sale', /TRAER DE OTRO ALMACÉN/.test(listaIM) && /de Moreno/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
       (listaIM.match(/•[^\n]*/)||[''])[0]);
 
   // ══ 3. Lo que no le corresponde tocar ═════════════════════════════════════

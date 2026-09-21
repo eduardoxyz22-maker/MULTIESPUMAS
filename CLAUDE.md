@@ -197,6 +197,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     `STOCK.g[de].u[k]` como «Llegaron»; si no, Moreno se cuenta dos veces.
   - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
     va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice).
+  - **📥 De qué almacén se va a buscar** (§4ey): la marca del producto es `x.chk='im'` +
+    **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra).
+    `recogerLista()` arma un botón por almacén en la ficha — IM + los de `STOCK.g` + los de
+    `RECOGER_EXTRA` (hoy `Banzer`), sin repetir; `recogerCorto(x)` es el nombre para un
+    renglón y `recogerLugaresTxt(p)` para el pedido entero. `stockAsignar` reparte por
+    almacén (`imAlm`/`tomarIM`: primero el ya marcado, después el que más tenga, todo de un
+    solo lugar si alcanza) y guarda de cuál salió. ⚠️ Si `enOtros` trae unidades sin el
+    desglose `otrosAlm`, se cuentan como IM: no se pierde stock. ⚠️ La tira de botones no
+    puede llevar `flex:none` — con seis botones se sale de la pantalla del celular.
+    `tests/test_banzer.js`.
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

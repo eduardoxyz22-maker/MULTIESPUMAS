@@ -7414,6 +7414,64 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ey. El almacén Banzer: «recoger» ya dice DE DÓNDE (2026-09-21)
+
+Pedido del dueño, sobre una captura de la ficha de un pedido: *"añade el almacén banzer"*.
+Confirmó que Banzer es **un lugar de donde se va a BUSCAR** mercadería ya hecha (como Moreno),
+no una fábrica a la que se le pide fabricar, y que **todavía no sabe** si va a subir su Excel
+de existencias.
+
+### Qué estaba mal antes de agregarlo
+La marca del producto era `x.chk='im'` a secas: «hay, pero hay que ir a buscarlo». El almacén
+no se guardaba en ningún lado porque **había uno solo**, y todos los textos decían «IM» o
+«Moreno» fijo: la lista de carga, la tarjeta del chofer, «Mis pedidos», la tabla de
+Administración, el Excel que se manda por correo y la revisión automática. Agregar un segundo
+almacén sin tocar eso habría mandado al chofer a Moreno a buscar algo que está en Banzer.
+
+### Lo que se hizo
+- **El almacén viaja al lado de la marca**: `x.chkDe`. Vacío = IM, como siempre, así que
+  **nada de lo ya marcado cambia y no hay que migrar nada**. Va DENTRO del producto, como
+  `prodEn` y `precio`: viaja en el JSON de productos, sin columna nueva ni reimplementar el
+  Apps Script.
+- **Un botón por almacén** en la ficha (`recogerLista`): 📥 IM (el de siempre) + cada almacén
+  que aparezca al subir un Excel de existencias + los de `RECOGER_EXTRA` (hoy, `Banzer`) que
+  todavía no estén. Sin repetir: si el Excel de Moreno ya está cargado, no sale un segundo
+  botón para el mismo lugar (`vistos` arranca con `im` y `moreno`).
+  · Tocar OTRO almacén **cambia de lugar**; tocar el MISMO **desmarca** (`setProdChk` compara
+  marca Y almacén).
+- **Todos los textos nombran el almacén real**: `recogerCorto(x)` en la lista de carga, la
+  tarjeta del chofer, «Mis pedidos», el ícono del producto y el Excel; `recogerLugaresTxt(p)`
+  donde se habla del pedido entero (estado «Recoger de Banzer + IM», badge de la tabla,
+  resumen debajo de los productos).
+- **La revisión automática reparte POR ALMACÉN** (`imAlm` + `tomarIM` en `stockAsignar`):
+  prioriza el almacén que ya estaba marcado a mano y después el que más tenga, para que una
+  línea se vaya a buscar a **un solo lugar** siempre que alcance. Guarda de cuál salió
+  (`l.alm` → `x.chkDe` al aplicar) y la lista para ir a buscar dice el almacén por producto
+  (`revStkAlmTxt`: «IM», «Banzer», o «IM 2 + Banzer 1»).
+  ⚠️ Si `enOtros` trae unidades pero no vino el desglose `otrosAlm`, se tratan como las de
+  siempre (IM): nunca se pierde stock por no saber de dónde sale. Sin esa guarda, el stub de
+  `tests/test_stock_revisadas.cjs` (que arma `{deposito:1, enOtros:1}` sin `otrosAlm`) dejaba
+  de repartir.
+- **El celular**: la tira de botones tenía `flex:none`, así que con seis botones (dos
+  almacenes y dos fábricas) se iba **fuera de la pantalla** y 🏭 MORENO y 🏭 MULTI quedaban
+  sin tocar. Con `flex:0 1 auto;min-width:0;max-width:100%` y `wrap` bajan solos a la línea de
+  abajo. Verificado con captura a 412 px.
+
+### Si algún día sube el Excel de Banzer
+No hay que tocar nada: el almacén aparece solo en el botón con su nombre real (el del Excel
+gana sobre el de `RECOGER_EXTRA`), entra en `enOtros`, la revisión automática lo reparte y
+«🚚 Programar recogida» ya elegía el almacén de origen desde `otrosAlm` (§4cr). Mientras
+tanto el botón sirve para marcarlo a mano, que es lo que pidió.
+
+### Tests
+`tests/test_banzer.js` (23 checks; contra el panel de `a5de88a` da **3 bien · 20 mal**):
+botones, marcar/cambiar de lugar/desmarcar, que lo viejo siga diciendo IM, los textos en las
+seis pantallas, que la marca viaje a la planilla, el reparto por almacén y el caso de dos
+pedidos donde cada uno va a un almacén distinto. ⚠️ Los helpers del test están envueltos en
+`typeof …==='function'` para que contra un panel viejo salgan **rojos legibles** en vez de
+reventar el test entero. `test_revstock` pasó a 37 (el mensaje para copiar ahora dice de qué
+almacén sale cada renglón).
+
 ## 4ex. Sábado: «mañana» es el lunes, no el domingo (2026-09-20)
 
 Bloque 9b de §4es (§4er Entregas BAJA «con impacto real los sábados a la noche»). El domingo
