@@ -7621,9 +7621,18 @@ function motivoDeError(e){
      resuelve NI falla — y el cartel se queda en «⏳ Conectando…» para siempre, sin reintentar,
      porque el reintento se agenda recién cuando el intento anterior termina. */
   if(m==='tardo_datos') return 'Google no contestó en '+Math.round(CARGA_TOPE/1000)+' segundos y se cortó la espera';
-  /* Los códigos de Google, en castellano y con QUÉ HACER (§4dm). Un 404 acá no es «probá
-     más tarde»: la dirección del panel dejó de existir y no se arregla sola. */
-  if(m==='http404') return 'la dirección del panel ya no existe (404). Suele pasar cuando se crea una implementación NUEVA del Apps Script en vez de actualizar la de siempre: cada una estrena su propia dirección. En Apps Script → Implementar → Administrar implementaciones, editar la que ya estaba (✏️) y elegir «Versión nueva»';
+  /* Los códigos de Google, en castellano y con QUÉ HACER (§4dm).
+     ⚠️ ESTE MENSAJE ACUSABA A LA CAUSA EQUIVOCADA, y dos veces (09/09 y 21/09). Decía
+     «la dirección del panel ya no existe» y mandaba a tocar la implementación. Las dos
+     veces la dirección estaba VIVA —el mismo `/exec` le contestaba bien a GitHub Actions a
+     la misma hora, y en incógnito andaba—: el 404 lo pone el navegador de esa persona
+     (varias cuentas de Google metiendo el `/u/N/`, o un redirect guardado, §4do y §4dp).
+     Y el consejo era peligroso: alguien que «arregla» creando una implementación NUEVA
+     estrena otra dirección y rompe el panel **para todo el equipo**. Por eso ahora va
+     primero la prueba de 20 segundos, y lo de la implementación recién si le pasa a TODOS.
+     El 21/09 le pasó a un solo vendedor: la dirección nunca había cambiado (verificado
+     contra las 400 versiones anteriores de la página) y el resto del equipo guardaba bien. */
+  if(m==='http404') return 'Google contestó 404 en ESTE navegador. Casi siempre no es el panel: probá abrirlo en una ventana de incógnito. Si ahí funciona, es este navegador — cerrá las otras cuentas de Google abiertas o borrá los datos del sitio. Si NO anda para nadie del equipo, recién ahí mirá Apps Script → Implementar → Administrar implementaciones y editá la de siempre (✏️) → «Versión nueva». ⚠️ Nunca crear una implementación NUEVA: estrena otra dirección y deja sin panel a todo el equipo';
   if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
   if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
   if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';

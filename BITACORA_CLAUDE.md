@@ -7430,6 +7430,61 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fa. El cartel del 404 acusaba a la causa equivocada — y el consejo era peligroso (2026-09-21)
+
+A un vendedor (Juan Pablo) le salió al subir un comprobante: *«No se pudo subir el
+comprobante: la dirección del panel ya no existe (404). Suele pasar cuando se crea una
+implementación NUEVA del Apps Script…»*. El dueño preguntó qué pasó.
+
+**No era el Apps Script.** Tres comprobaciones, en este orden:
+
+1. **La dirección nunca cambió.** `SHEETS_URL` está FIJA en `pedidos.html` (línea ~1316), no
+   es por dispositivo. Recorriendo las últimas 400 versiones del archivo aparece **una sola**
+   dirección `AKfycb…`, la misma desde el primer día. O sea: la «implementación nueva» que el
+   mensaje acusa no existió nunca.
+   ```
+   for c in $(git log --format=%h -- pedidos.html | head -400); do
+     git show $c:pedidos.html | grep -m1 -oE "AKfycb[A-Za-z0-9_-]+"; done | sort -u
+   ```
+2. **El servidor contestaba**: el repaso de Kommo corrió a las 20:53 desde GitHub Actions y
+   habló con el `/exec` sin problema (§4ch).
+3. **Le pasó a UNO solo.** Como la dirección va fija en la página, si estuviera muerta
+   fallarían todos a la vez.
+
+Conclusión: el 404 lo pone **el navegador de esa persona** — varias cuentas de Google
+metiendo el `/u/N/` (§4do) o un redirect guardado (§4dp). Exactamente lo del 09/09 con el
+navegador del dueño, donde el mismo `/exec` le contestaba bien a Actions y en incógnito
+andaba.
+
+### Lo que se cambió
+El texto de `motivoDeError('http404')`. **El consejo viejo era peligroso**: empujaba a ir a
+Apps Script, y alguien que «arregla» creando una implementación **NUEVA** estrena otra
+dirección y **deja sin panel a todo el equipo**. Ahora el mensaje va en este orden:
+1. probá en **incógnito** (la prueba de 20 segundos);
+2. si ahí anda, es ese navegador → cerrar las otras cuentas de Google o borrar los datos del
+   sitio;
+3. **solo si no anda para NADIE**, mirar la implementación — editando la de siempre (✏️) →
+   «Versión nueva»;
+4. ⚠️ **nunca crear una implementación NUEVA.**
+
+`tests/test_carga.js`: tres checks — que «incógnito» aparezca **antes** que «Administrar
+implementaciones», que esté la advertencia de no crear una nueva, y que siga sin decir que
+es momentáneo (un 404 de verdad no se arregla solo).
+
+### Lo que se revisó y estaba bien
+- La subida del comprobante va por `ctaAdjuntar` → `conTopeDuro(apiFoto(...))` → `apiPost`:
+  **el mismo canal** que todo lo demás, con `credentials:'omit'` y `?_=<ms>` (§4do, §4dp), y
+  con tope de `FOTO_TOPE`=90 s. Las cuatro rutas de foto lo tienen.
+- ⚠️ Mientras tanto la venta **no se pierde**: el pedido se carga igual, lo que no salga
+  queda en la cola y se manda solo; el comprobante se adjunta después desde
+  Contabilidad → Corregir.
+
+### 📌 Y el deploy de Pages falló de nuevo
+La corrida 1494 (`b420f61`) terminó en `failure` — infraestructura de GitHub, como el 09/09
+(§4dp). **La página sigue en vivo con el último deploy que SÍ salió**, así que nadie se
+queda sin panel; lo que no sube es el cambio nuevo. Se destraba con cualquier push
+posterior. Mirar el deploy ANTES de tocar código.
+
 ## 4ez. «Rechazados» mezclaba lo perdido con lo que se reenvió solo (2026-09-21)
 
 El dueño, mirando Administración → ⚠️ Guardados rechazados: *«esos no deberían estar

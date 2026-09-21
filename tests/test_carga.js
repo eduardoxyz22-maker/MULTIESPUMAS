@@ -132,8 +132,15 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
              m418: motivoDeError(new Error('http418')), lanzado: lanzado };
   });
   const lanzado = cod.lanzado;
-  chk('⚠️ 404 → dice que la dirección ya no existe y CÓMO arreglarlo (implementación nueva vs. actualizar)',
-      /ya no existe/.test(cod.m404) && /Administrar implementaciones/.test(cod.m404) && !/momentáneo/.test(cod.m404), cod.m404.slice(0,110));
+  /* ⚠️ 21/09: el mensaje acusaba a la implementación y las DOS veces que pasó (09/09 y
+     21/09) la dirección estaba viva — el 404 lo ponía el navegador de esa persona. Peor:
+     el consejo empujaba a crear una implementación nueva, que estrena otra dirección y
+     deja sin panel a TODO el equipo. Ahora va primero la prueba de incógnito. */
+  chk('⚠️ 404 → primero manda a probar en incógnito, no a tocar la implementación',
+      /incógnito/.test(cod.m404) && cod.m404.indexOf('incógnito') < cod.m404.indexOf('Administrar implementaciones'), cod.m404.slice(0,120));
+  chk('…y advierte que crear una implementación NUEVA rompe el panel para todo el equipo',
+      /Nunca crear una implementación NUEVA/.test(cod.m404) && /todo el equipo/.test(cod.m404), cod.m404.slice(-120));
+  chk('…sin decir que es momentáneo (un 404 de verdad no se arregla solo)', !/momentáneo/.test(cod.m404) && /Administrar implementaciones/.test(cod.m404));
   chk('403 → dice que hay que poner «Cualquier persona»', /Cualquier persona/.test(cod.m403), cod.m403.slice(0,80));
   chk('401 → dice que quedó restringida', /restringida/.test(cod.m401), cod.m401.slice(0,70));
   chk('5xx → dice que es de Google y que suele arreglarse solo', /Google está caído/.test(cod.m500) && /solo/.test(cod.m500), cod.m500.slice(0,70));
