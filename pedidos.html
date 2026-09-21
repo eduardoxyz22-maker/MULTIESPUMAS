@@ -13291,6 +13291,11 @@ function stockAlmNombre(nm){
   return t;
 }
 function stockAlmLimpio(nm){ return String(nm||'').replace(/^\s*[\d]+(?:-[\d]+)+\s+/,'').replace(/\s+/g,' ').trim(); }
+/* Palabras que no distinguen a un almacén de otro. Solo se sacan cuando el nombre no entra
+   y hay que recortarlo (§4ey): «Almacen Distribucion Banzer» → «Banzer». */
+/* ⚠️ Acá NO van «PRODUCTOS» ni «TERMINADOS»: sacarlas dejaba el almacén de logística
+   («01-05-003 PRODUCTOS TERMINADOS FAB.») como «FAB.», que no le dice nada a nadie. */
+var ALM_GENERICAS=/^(ALMACEN|ALMACENES|DEPOSITO|DISTRIBUCION|SUCURSAL|DE|DEL|LA|EL|LOS|LAS)$/i;
 /* Una recogida vieja puede no traer anotado de dónde salía (`q.de`). Antes se le restaba al
    PRIMER almacén de la lista, que con dos cargados puede ser Banzer y descontarle unidades
    que estaban en Moreno. El lugar de siempre es Industrias Moreno: ese es el valor por
@@ -13304,6 +13309,15 @@ function stockAlmPorDefecto(){
 function stockAlmCorto(nm){
   var t=stockAlmNombre(nm);
   if(t==='Industrias Moreno') return 'Moreno';
+  /* ⚠️ Recortar por la derecha borraba justo lo que distingue al almacén. El reporte real de
+     Moreno llama al de Banzer «01-05-025  Almacen Distribucion Banzer» (27 letras): el corte
+     a 22 dejaba «Almacen Distribucion …», o sea SIN la palabra Banzer — en la tarjeta del
+     chofer, en la lista de carga y en el botón de la ficha. Primero se sacan las palabras
+     que no dicen nada y recién ahí, si todavía no entra, se recorta. */
+  if(t.length>22){
+    var p=t.split(' ').filter(function(w){ return w && !ALM_GENERICAS.test(w); });
+    if(p.length) t=p.join(' ');
+  }
   return t.length>22 ? t.slice(0,21)+'…' : t;
 }
 /* Cuánto pedir: lo que cubre fábrica + margen + una semana de venta (o todo lo ya vendido,
@@ -16150,7 +16164,11 @@ function recogerCanon(nm){
   return (!nm || stockAlmNombre(nm)==='Industrias Moreno') ? '' : nm;
 }
 function recogerAlmCorto(nm){ return recogerCanon(nm) ? stockAlmCorto(nm) : 'IM'; }
-function recogerClave(nm){ return normNombre(recogerAlmCorto(nm)); }
+/* ⚠️ La identidad va por el nombre ENTERO, no por el corto: el corto puede venir recortado
+   («Almacen Distribucion …») y dos almacenes distintos con nombre largo parecido quedarían
+   con la misma clave — o, peor, el mismo almacén escrito de dos maneras con claves
+   distintas, que es lo que dejaba huérfana una marca puesta a mano. */
+function recogerClave(nm){ return recogerCanon(nm) ? normNombre(stockAlmLimpio(nm)) : 'im'; }
 function recogerMismo(a,b){
   var ka=recogerClave(a), kb=recogerClave(b);
   if(ka===kb) return true;

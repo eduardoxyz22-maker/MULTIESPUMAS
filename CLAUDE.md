@@ -227,7 +227,17 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
       almacén que no tiene esas unidades: se reservan del otro igual, pero se dice.
     - ⚠️ La tira de botones no puede llevar `flex:none` —con seis botones se sale de la
       pantalla del celular— y el nombre del botón va recortado a 12 letras.
-    `tests/test_banzer.js` (45).
+    - ⚠️ **Los nombres largos del reporte de Moreno**: el de Banzer es
+      `01-05-025  Almacen Distribucion Banzer` (27 letras, dos espacios tras el código) y el
+      corte a 22 lo dejaba como «Almacen Distribucion …», **sin la palabra Banzer** — dos
+      botones para el mismo lugar y las marcas a mano huérfanas. `stockAlmCorto` saca primero
+      las palabras que no distinguen (`ALM_GENERICAS`) y recorta después; `recogerClave` va
+      por el nombre **entero**, nunca por el corto. ⚠️ En `ALM_GENERICAS` no van «PRODUCTOS»
+      ni «TERMINADOS»: dejaban el almacén de logística como «FAB.».
+    - **Dónde está ≠ dónde se hace** (dueño, 21/09): las líneas FLEX/PEDIC se fabrican en
+      Moreno pero pueden estar guardadas en Banzer o Multiespumas. La fábrica sale de
+      `MARCA_FABRICA`, el lugar de `STOCK.g` + `x.chkDe`. No se mezclan.
+    `tests/test_banzer.js` (55).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —

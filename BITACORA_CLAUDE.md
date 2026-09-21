@@ -7586,6 +7586,61 @@ nada y conviene sacarlo de ahí.
 También preguntó por los nombres de los botones (📥 IM vs 🏭 MORENO) y **no quiso cambiarlos**:
 quedan como estaban.
 
+### 🔴 El nombre real del almacén casi rompe todo (21/09, con el reporte en la mano)
+El dueño mandó el **PDF del reporte de existencias de Banzer** («EXISTENCIAS ALMACEN AL
+21/09/2026»). Ahí apareció el nombre de verdad, que yo había adivinado mal:
+
+> `01-05-025  Almacen Distribucion Banzer`  ← **27 letras, y dos espacios tras el código**
+
+`stockAlmCorto` recortaba a 22 letras por la derecha: quedaba **«Almacen Distribucion …»**,
+o sea **sin la palabra Banzer**. Medido antes del arreglo:
+`recogerMismo('Banzer', '01-05-025  Almacen Distribucion Banzer')` → **false**.
+
+El día que subiera ese Excel, sin tocar nada más, habría pasado esto:
+- **dos botones** en la ficha para el mismo lugar: 📥 Banzer y 📥 Almacen Distr…;
+- la tarjeta del chofer y la lista de carga diciendo «RECOGER ALMACEN DISTRIBUCION …»;
+- y lo peor: **toda marca puesta a mano como «Banzer» quedaba huérfana** — el botón no se
+  veía encendido y la reserva se descontaba del OTRO almacén, con el pedido apuntando a
+  Banzer. Exactamente el agujero de §4ey punto 4, que creía cubierto.
+
+Dos arreglos:
+1. **`stockAlmCorto` saca primero las palabras que no distinguen nada** (`ALM_GENERICAS`:
+   ALMACEN, DEPOSITO, DISTRIBUCION, SUCURSAL, artículos) y recorta **después**, solo si
+   todavía no entra. «Almacen Distribucion Banzer» → **«Banzer»**; «ALMACEN DISTRIBUCION
+   MUTUALISTA» → «MUTUALISTA».
+   ⚠️ **NO van ahí «PRODUCTOS» ni «TERMINADOS»**: sacarlas dejaba el almacén de logística
+   («01-05-003 PRODUCTOS TERMINADOS FAB.») como **«FAB.»**, que no le dice nada a nadie.
+   Hay un check que lo cuida.
+2. **`recogerClave` va por el nombre ENTERO** (`normNombre(stockAlmLimpio(nm))`) y no por el
+   corto. El corto puede venir recortado, y entonces dos almacenes largos parecidos caen en
+   la misma clave —o el mismo almacén escrito de dos formas cae en claves distintas, que es
+   lo que dejaba huérfana la marca—.
+
+Sección 12 de `tests/test_banzer.js` (55 checks), con el nombre real del reporte.
+
+### Lo que el dueño aclaró del stock de ROHO
+> *«ojo que aveces hay en multiespumas o banzer pedic, flex y etc, porque se sacaron del
+> almacen de moreno para tener cerca en multiepsumas y la banzer»*
+
+Es una advertencia sobre **dónde ESTÁ** un colchón, no sobre **dónde se HACE**, y el panel ya
+no los mezcla: la fábrica sale de `MARCA_FABRICA` (FLEX/PEDIC → Industrias Moreno, para «Qué
+producir») y el lugar sale de `STOCK.g` + `x.chkDe` (para ir a buscarlo). El reporte lo
+confirma: en Banzer hay 85 unidades de líneas ROHO —Pillow Pedic, Pillow Flex, Forte Flex,
+Dynamic Pedic, Memory Flex, Eco Flex, Somier Roho Pedic, Somier Parrilla Flex— sobre 298 en
+total. Fabricadas en Moreno, guardadas en Banzer: las dos cosas a la vez, y correcto.
+
+📌 **Pendiente menor**: si en **Multiespumas** también queda stock para ir a buscar, hoy no
+tiene botón (`RECOGER_EXTRA` solo trae `Banzer`). Aparece solo si se sube su reporte de
+existencias; si no, hay que agregarlo a mano ahí. ⚠️ Ojo que un 📥 MULTIESPUMAS quedaría
+pegado al 🏭 MULTI en la misma fila — el mismo choque de nombres que 📥 IM / 🏭 MORENO.
+**Preguntarle antes de agregarlo.**
+
+⚠️ **El reporte llegó en PDF y el panel lee el Excel.** 📥 Subir existencias parsea el XML que
+escribe el generador de Moreno (§4cp), no un PDF. Para cargarlo hay que **exportar el mismo
+reporte como Excel**. El PDF sirvió igual: de ahí salió el nombre real del almacén.
+⚠️ El PDF y sus cantidades viven **solo en el scratchpad**: el repo es público y el
+inventario real no va ahí (ni en fixtures, ni en commits).
+
 ### Tests
 `tests/test_banzer.js` (45 checks): botones, marcar/cambiar de lugar/desmarcar, que lo viejo
 siga diciendo IM, los textos en las seis pantallas, que la marca viaje a la planilla, el

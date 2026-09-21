@@ -454,6 +454,47 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 12. El nombre REAL del reporte de Moreno ════════════════════════════════════
+  /* ⚠️ El 21/09 el dueño mandó el reporte de existencias de Banzer y el almacén se llama
+     «01-05-025  Almacen Distribucion Banzer» — 27 letras. El corte a 22 dejaba «Almacen
+     Distribucion …», o sea SIN la palabra Banzer: dos botones para el mismo lugar, la
+     tarjeta del chofer sin decir adónde ir, y toda marca puesta a mano como «Banzer»
+     huérfana (la reserva salía del otro almacén). Solo hay UNA oportunidad de que esto
+     esté bien: el día que suba el Excel. */
+  console.log('\n── 12. El nombre largo del reporte real no pierde lo que distingue ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var real='01-05-025  Almacen Distribucion Banzer';
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} } }; STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=4;
+      STOCK.g[real]={ f:todayStr(), u:{} }; STOCK.g[real].u[K]=3;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro' }; STOCK.al[real]='otro';
+      stockOlvidarIndice();
+      // un pedido marcado A MANO como «Banzer» ANTES de que existiera el Excel
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:prod(2,{chk:'im', chkDe:'Banzer'}) }) ];
+      REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+      var R=stockAsignar();
+      var out={ corto:stockAlmCorto(real), mismo:recogerMismo('Banzer', real),
+                botones:RL().map(function(A){ return A.corto; }),
+                almMal:(R.almMal||[]).length, sobra:R.sobraIM[K],
+                log:stockAlmCorto('01-05-003 PRODUCTOS TERMINADOS FAB.') };
+      showView('admin'); showPedidoModal('a'); await new Promise(r=>setTimeout(r,150));
+      out.marcados=botonesRecoger().filter(function(b){ return b.on; }).map(function(b){ return b.txt; });
+      out.estado=estadoStock(findById('a')).txt;
+      return out;
+    }, BASE);
+    chk('⚠️ «01-05-025  Almacen Distribucion Banzer» se muestra como «Banzer», no «Almacen Distribucion …»', r.corto==='Banzer', r.corto);
+    chk('⚠️ …así la marca puesta a mano como «Banzer» sigue siendo el mismo almacén', r.mismo===true, J(r.mismo));
+    chk('⚠️ …un solo botón para ese lugar (no «Banzer» + «Almacen Distr…»)', r.botones.join(',')==='IM,Banzer', J(r.botones));
+    chk('…el botón queda encendido y el pedido dice adónde ir', r.marcados.join(',')==='📥 Banzer' && /Banzer/.test(r.estado), J([r.marcados, r.estado]));
+    chk('⚠️ …y la reserva sale de Banzer, no del otro almacén (quedan 4 de IM)', r.almMal===0 && r.sobra===5, J([r.almMal, r.sobra]));
+    chk('⚠️ el almacén de logística NO se convirtió en «FAB.» al sacarle las palabras genéricas', r.log==='PRODUCTOS TERMINADOS …', r.log);
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
