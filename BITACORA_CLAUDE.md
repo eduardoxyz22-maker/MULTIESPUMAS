@@ -6063,11 +6063,27 @@ NEGRO—, después Heaven —TITANIO/ORO/ESPECIAL/HEAVEN/TROPICAL/ALM/DREAM/BIRE
 lista la saqué de los **catálogos del sistema** que están dentro de `rotacion.html` (102
 códigos Heaven, 80 Sueña, y 42 de las líneas que vende ROHO). Si el nombre no dice nada, va
 por la **última fábrica a la que se le pidió** (`o.fab`), marcado «acá por la última vez que
-se pidió a X». Lo que no cae en ninguna —**las líneas FLEX/PEDIC de ROHO** y los nombres
-sueltos— va al bloque «sin fábrica asignada», con el cartel pidiendo que el dueño diga dónde
-se hacen. ⚠️ **Pendiente de él**: en qué fábrica se hacen Pillow Flex, Forte Flex, Memory
-Flex, Eco Flex, Somier Flex, Pillow Pedic, Europedic, Dynamic Pedic, Semipedic y Somier
-Negro. Con la respuesta, es una línea en `stockMarcaDeNombre` (o en `MARCA_FABRICA`).
+se pidió a X». Lo que no cae en ninguna —los nombres sueltos— va al bloque «sin fábrica
+asignada», con el cartel pidiendo que el dueño diga dónde se hacen.
+
+✅ **RESUELTO el 21/09** (estuvo pendiente desde el 10/09). El dueño, textual: *«flex pedic
+de roho se fabrica en industrias moreno»*. Así que `MARCA_FABRICA` pasó a
+`{heaven:'MORENO', roho:'MORENO', suena:'MULTI'}` y hay un **cuarto bloque**, «🔷 Industrias
+Moreno · ROHO (FLEX / PEDIC)», pegado al de Heaven.
+- Va en bloque **aparte y no dentro de Heaven** aunque sea la misma fábrica: son la línea que
+  vende ROHO y meterlas bajo el título «Heaven» sería mentir en el papel que se manda. Al
+  estar pegados, se mandan juntos a Moreno si se quiere.
+- ⚠️ `stockBloqueDe` ya no recorre las **claves** de `MARCA_FABRICA` para el respaldo «por la
+  última fábrica a la que se le pidió», sino `PRODUCIR_BLOQUES` **en orden**: desde que dos
+  marcas comparten fábrica, un producto que no dice su marca y solo trae «se pidió a MORENO»
+  tiene que caer en **Heaven** (la marca de la casa) y no en el que el navegador devuelva
+  primero.
+- El cartel del bloque «sin fábrica asignada» ya no nombra a ROHO (decía «líneas Flex y Pedic
+  que vende ROHO, o nombres fuera del catálogo»).
+- `tests/test_producir.js` pasó de 56 a **62 checks**: sección 8 nueva, y se corrigieron seis
+  expectativas que usaban el PILLOW FLEX justamente como ejemplo de «sin fábrica». ⚠️ El
+  respaldo «por la última fábrica» ahora se prueba con el **MORFEO** (nombre sin marca): al
+  PILLOW FLEX un pedido viejo a MULTI **no** lo mueve, porque el nombre manda.
 
 ### Lo que NO se hizo, a propósito
 - Ni estacionalidad (dic ×1,29 / oct ×0,75 del sistema: un solo año, y el backtest de

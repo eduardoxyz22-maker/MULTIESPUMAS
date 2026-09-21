@@ -155,25 +155,33 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y como el nombre no dice de qué marca es, va a «sin fábrica asignada»', r.M && r.M.bloque==='otros');
   // ROHO line: rota (12 en 4 entregas) pero hay 20: cubierto en la semana y la quincena; octubre con su historia (oct-25 = 19) necesita 18, quedan 11 → 7
   chk('PILLOW FLEX (línea ROHO) rota pero hay 20: 7 y 15 días en cero; octubre necesita 18 (historia), quedan 11 → pide 7', r.F && r.F.sem===0 && r.F.quin===0 && r.F.mes===7 && r.F.mesNec===18 && r.F.mesQueda===11, r.F && JSON.stringify([r.F.sem,r.F.quin,r.F.mes,r.F.mesNec,r.F.mesQueda]));
-  chk('…y sin pedidos previos a ninguna fábrica cae en «sin fábrica asignada»', r.F && r.F.bloque==='otros' && r.F.por==='');
+  /* 21/09: el dueño dijo dónde se hacen las líneas de ROHO — *«flex pedic de roho se
+     fabrica en industrias moreno»*. Antes caían en «❓ Sin fábrica asignada». */
+  chk('⚠️ …y va al bloque de ROHO en Industrias Moreno, por su NOMBRE (ya no a «sin asignar»)', r.F && r.F.bloque==='roho' && r.F.por==='marca', r.F && JSON.stringify([r.F.bloque, r.F.por]));
   chk('lo discontinuado (CARIOCA PREMIER), lo de tienda (PROTECTOR) y la ATC no aparecen en ningún bloque', !r.claves.some(function(k){ return /CARIOCA|PROTECTOR/.test(k); }), r.claves.join(' | '));
   chk('la quincena nunca pide menos que la semana', [r.H,r.S,r.M,r.F].every(function(f){ return f && f.quin>=f.sem; }));
   // XYZ PLUS: 4 en 4 entregas en 15 días (0,27/día, media) → 0,27×8=2,1 → 3; 0,27×20=5,3 → 6; mes 0,13×31=4,1 → 5; el 70% de 5 es 3,5 → 4 y 1 (§4ds, enteros para arriba)
   chk('XYZ PLUS (nombre suelto, medida «130X190CM»): 3 · 6 · 5 (4+1), en «sin fábrica asignada», y la medida queda 130x190', r.X && r.X.sem===3 && r.X.quin===6 && r.X.mes===5 && r.X.mes1===4 && r.X.mes2===1 && r.X.bloque==='otros' && r.X.md==='130x190', r.X && JSON.stringify([r.X.sem,r.X.quin,r.X.mes,r.X.mes1,r.X.mes2,r.X.bloque,r.X.md]));
-  chk('totales por bloque: Heaven 1 · 9 · 19 (14+5); Sueña 0 · 0 · 17 (12+5); sin asignar 7 · 10 · 12 (6+6)', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===19 && r.tot.heaven.mes1===14 && r.tot.heaven.mes2===5 && r.tot.suena.mes===17 && r.tot.suena.mes1===12 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===12 && r.tot.otros.mes1===6 && r.tot.otros.mes2===6, JSON.stringify(r.tot));
+  chk('totales por bloque: Heaven 1 · 9 · 19 (14+5); Sueña 0 · 0 · 17 (12+5); sin asignar 7 · 10 · 5 (4+1)', r.tot.heaven.sem===1 && r.tot.heaven.quin===9 && r.tot.heaven.mes===19 && r.tot.heaven.mes1===14 && r.tot.heaven.mes2===5 && r.tot.suena.mes===17 && r.tot.suena.mes1===12 && r.tot.suena.mes2===5 && r.tot.suena.sem===0 && r.tot.otros.sem===7 && r.tot.otros.quin===10 && r.tot.otros.mes===5 && r.tot.otros.mes1===4 && r.tot.otros.mes2===1, JSON.stringify(r.tot));
+  chk('⚠️ …y el PILLOW FLEX ya no está en «sin asignar»: hace bloque aparte con sus 7 de octubre (2+5)', r.tot.roho && r.tot.roho.n===1 && r.tot.roho.sem===0 && r.tot.roho.quin===0 && r.tot.roho.mes===7 && r.tot.roho.mes1===2 && r.tot.roho.mes2===5, JSON.stringify(r.tot.roho));
   chk('el pie de «sin asignar» reparte por medida: 130x190 y 140x190', r.tot.otros.medidas.length===2 && r.tot.otros.medidas.indexOf('130x190')>=0 && r.tot.otros.medidas.indexOf('140x190')>=0, JSON.stringify(r.tot.otros.medidas));
   chk('el ORO BI RELAX rota pero tiene 60: queda como cubierto y no suma nada a Heaven', r.cubiertos===1 && r.tot.heaven.n===1 && r.claves.some(function(k){ return /ORO BI RELAX/.test(k); }), r.cubiertos+' cubiertos');
   chk('el total por medida del bloque Heaven es 160x190', r.tot.heaven.medidas.length===1 && r.tot.heaven.medidas[0]==='160x190', JSON.stringify(r.tot.heaven.medidas));
 
   /* ---------- 4. Un pedido anterior a una fábrica manda el producto a ese bloque ---------- */
   r = await page.evaluate(() => {
-    STOCK.p=[{ id:'fp1', k:window._K.F, u:5, fab:'MULTI', f:window._atras(10), esp:'', r:window._atras(7) }];
-    var d=stockData(), R=stockProducir(d), out=null;
-    R.bloques.forEach(function(B){ B.filas.forEach(function(f){ if(f.o.k===window._K.F) out={bloque:B.k, por:f.bloque.por, fab:f.bloque.fab, mes:f.mes}; }); });
+    STOCK.p=[{ id:'fp1', k:window._K.F, u:5, fab:'MULTI', f:window._atras(10), esp:'', r:window._atras(7) },
+             { id:'fp2', k:window._K.M, u:5, fab:'MULTI', f:window._atras(10), esp:'', r:window._atras(7) }];
+    var d=stockData(), R=stockProducir(d), out={};
+    R.bloques.forEach(function(B){ B.filas.forEach(function(f){
+      var q=(f.o.k===window._K.F)?'F':((f.o.k===window._K.M)?'M':'');
+      if(q) out[q]={bloque:B.k, por:f.bloque.por, fab:f.bloque.fab, mes:f.mes};
+    }); });
     STOCK.p=[];
     return out;
   });
-  chk('PILLOW FLEX con un pedido anterior a MULTI pasa al bloque de Sueña, marcado «por la última vez que se pidió»', r && r.bloque==='suena' && r.por==='fabrica' && r.fab==='MULTI', JSON.stringify(r));
+  chk('⚠️ el NOMBRE manda: al PILLOW FLEX un pedido viejo a MULTI no lo saca de Industrias Moreno', r && r.F && r.F.bloque==='roho' && r.F.por==='marca', JSON.stringify(r && r.F));
+  chk('…pero el que NO dice su marca (MORFEO) sí cae donde se le pidió la última vez', r && r.M && r.M.bloque==='suena' && r.M.por==='fabrica' && r.M.fab==='MULTI', JSON.stringify(r && r.M));
 
   /* ---------- 5. La pantalla ---------- */
   await page.evaluate(() => { abrirStock(); });
@@ -185,14 +193,16 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { t:t, html:el.innerHTML, bloques:el.querySelectorAll('table').length, botones:Array.from(el.querySelectorAll('button')).map(function(b){ return b.textContent.trim(); }),
              filaH:(function(){ var tr=el.querySelector('tr[data-producir-k="'+window._K.H.replace(/"/g,'\\"')+'"]'); return tr?tr.textContent.replace(/\s+/g,' '):''; })() };
   });
-  chk('la pantalla de stock muestra el cuadro «🏭 Qué producir» con los tres bloques', r && r.bloques===3 && /Industrias Moreno · Heaven/.test(r.t) && /Multiespumas · Sueña/.test(r.t) && /Sin fábrica asignada/.test(r.t), r && r.t.slice(0,200));
+  chk('la pantalla de stock muestra el cuadro «🏭 Qué producir» con los cuatro bloques', r && r.bloques===4 && /Industrias Moreno · Heaven/.test(r.t) && /Industrias Moreno · ROHO \(FLEX \/ PEDIC\)/.test(r.t) && /Multiespumas · Sueña/.test(r.t) && /Sin fábrica asignada/.test(r.t), r && r.t.slice(0,240));
   chk('el título nombra la semana, los 15 días y octubre', r && /esta semana, los próximos 15 días y octubre/.test(r.t));
   // Desde §4du el resumen del bloque trae el RANGO del mes: «octubre: 19 (rango 8–24)».
   chk('el bloque Heaven resume 7 días: 1 · 15 días: 9 · octubre: 19 (rango 8–24) · 1ª quincena 14 · 2ª 5', r && /7 días: 1 · 15 días: 9 · octubre: 19 \(rango 8–24\) · 1ª quincena 14 · 2ª 5/.test(r.t), r && r.t.slice(0,600));
   chk('las columnas dicen hasta qué día llega cada horizonte (17/09 y 25/09) y qué queda el 01/10', r && /hasta el 17\/09/.test(r.t) && /hasta el 25\/09/.test(r.t) && /queda el 01\/10/.test(r.t));
   chk('la fila del TITANIO ICE muestra ritmo, hay 5 (3 acá · 2 Moreno) y los cinco números', r && /TITANIO ICE/.test(r.filaH) && /3 acá · 2 Moreno/.test(r.filaH) && /15 d: 10 en 5 entregas/.test(r.filaH) && /30 d: 18 en 9 entregas/.test(r.filaH), r && r.filaH);
   chk('hay botones para copiar cada horizonte por fábrica (7 días, 15 días, octubre)', r && r.botones.some(function(b){ return /📋 7 días/.test(b); }) && r.botones.some(function(b){ return /📋 15 días/.test(b); }) && r.botones.some(function(b){ return /📋 octubre/.test(b); }), r && r.botones.join(' | '));
-  chk('el pie del bloque trae el total y el reparto por medida, cerrado, diciendo cuántos modelos hay', r && /TOTAL/.test(r.t) && /▸ por medida · 160x190 · 1 modelo/.test(r.t) && /▸ por medida · 140x190 · 2 modelos/.test(r.t), r && r.t.slice(-700));
+  /* ⚠️ Desde que el PILLOW FLEX se fue a su bloque, en este fixture ninguna medida junta
+     dos modelos dentro del MISMO bloque, así que el plural no se ve acá. */
+  chk('el pie del bloque trae el total y el reparto por medida, cerrado, diciendo cuántos modelos hay', r && /TOTAL/.test(r.t) && /▸ por medida · 160x190 · 1 modelo/.test(r.t) && /▸ por medida · 130x190 · 1 modelo/.test(r.t), r && r.t.slice(-700));
   /* ---------- 5b. Tocar una medida del pie abre sus modelos ---------- */
   const r5b = await page.evaluate(() => {
     var el=document.getElementById('producir');
@@ -235,7 +245,7 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('el encabezado queda clavado arriba, con fondo propio y por encima de las filas', rf && rf.thPos==='sticky' && rf.thTop==='0px' && Number(rf.thZ)>=2 && /rgb/.test(rf.thFondo), JSON.stringify(rf&&{p:rf.thPos,t:rf.thTop,z:rf.thZ,f:rf.thFondo}));
   chk('la fila del TOTAL queda clavada abajo mientras se recorre la lista', rf && rf.totPos==='sticky' && rf.totBottom==='0px' && /rgb/.test(rf.totFondo), JSON.stringify(rf&&{p:rf.totPos,b:rf.totBottom,f:rf.totFondo}));
   chk('el TOTAL dice de qué fábrica es y repite qué es cada número (7 d · 15 d · octubre · 1ª q · 2ª q)', rf && /TOTAL Industrias Moreno · Heaven/.test(rf.totTxt) && /1 7 d/.test(rf.totTxt) && /9 15 d/.test(rf.totTxt) && /19 octubre/.test(rf.totTxt) && /14 1ª q/.test(rf.totTxt) && /5 2ª q/.test(rf.totTxt), rf && rf.totTxt);
-  chk('el bloque «sin fábrica asignada» pide que el dueño diga dónde se hacen', r && /Decí en cuál se hacen/.test(r.t) && /línea que vende ROHO/.test(r.t));
+  chk('el bloque «sin fábrica asignada» pide que el dueño diga dónde se hacen', r && /Decí en cuál se hacen/.test(r.t) && /nombres fuera del catálogo/.test(r.t) && !/Flex y Pedic/.test(r.t));
   chk('nada de plata en el cuadro: ni Bs ni montos', r && !/Bs\b/.test(r.t) && !/\$/.test(r.t));
   chk('la pantalla no tiró errores', errors.length===0, errors.join(' | '));
 
@@ -270,6 +280,33 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     return { sinConteo:hay, conConteo:!!document.getElementById('producir') };
   });
   chk('sin conteo del depósito no se calcula nada (no se inventa un número); con conteo vuelve', r.sinConteo===false && r.conConteo===true, JSON.stringify(r));
+
+  /* ---------- 8. FLEX / PEDIC de ROHO: Industrias Moreno (dueño, 21/09) ----------
+     Antes caían en «❓ Sin fábrica asignada» porque faltaba que él dijera dónde se hacen.
+     Van en su propio bloque y NO bajo el título «Heaven»: son la línea que vende ROHO. */
+  r = await page.evaluate(() => {
+    var d=function(n){ return stockBloqueDe({desc:n}).k; };
+    return {
+      flex:d('COLCHON MEMORY FLEX 140X190'), europedic:d('COLCHON EUROPEDIC 160X200'),
+      semipedic:d('COLCHON SEMIPEDIC 100X190'), somier:d('SOMIER NEGRO 140X190'),
+      titanio:d('COLCHON TITANIO ICE 160X190'), suena:d('COLCHON ORTOPEDICO SUEÑA 140X190'),
+      raro:d('MESA DE LUZ RARA'),
+      /* ⚠️ Heaven y ROHO comparten fábrica: el que no dice su marca y solo trae «se pidió a
+         MORENO» tiene que caer en Heaven, la marca de la casa, no en ROHO. */
+      sinMarcaMoreno:stockBloqueDe({desc:'ARTICULO SIN MARCA', fab:'MORENO'}).k,
+      sinMarcaMulti:stockBloqueDe({desc:'ARTICULO SIN MARCA', fab:'MULTI'}).k,
+      bloques:PRODUCIR_BLOQUES.map(function(b){ return b.k+':'+(b.fab||'-'); }).join(' ')
+    };
+  });
+  chk('⚠️ FLEX, PEDIC, EUROPEDIC, SEMIPEDIC y SOMIER NEGRO van a Industrias Moreno, no a «sin asignar»',
+      r.flex==='roho' && r.europedic==='roho' && r.semipedic==='roho' && r.somier==='roho', JSON.stringify(r));
+  chk('…en su propio bloque, que apunta a la MISMA fábrica que Heaven (MORENO)',
+      r.bloques==='heaven:MORENO roho:MORENO suena:MULTI otros:-', r.bloques);
+  chk('Heaven y Sueña siguen donde estaban, y lo que no se sabe sigue sin asignar',
+      r.titanio==='heaven' && r.suena==='suena' && r.raro==='otros', JSON.stringify([r.titanio,r.suena,r.raro]));
+  chk('⚠️ el que no dice su marca y se pidió a MORENO cae en Heaven, no en ROHO',
+      r.sinMarcaMoreno==='heaven' && r.sinMarcaMulti==='suena', JSON.stringify([r.sinMarcaMoreno,r.sinMarcaMulti]));
+
   chk('sin errores en la página al final', errors.length===0, errors.join(' | '));
 
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

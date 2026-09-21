@@ -166,17 +166,19 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - `tests/test_stock.js`, `tests/test_existencias.js` y `tests/test_revstock.js` (fixtures
     sintéticos: el repo es público y el inventario real no va ahí).
   - **🏭 Qué producir** (§4dr, 10/09): cuadro arriba de la tabla de stock, un bloque por
-    fábrica —**Heaven → Industrias Moreno (`MORENO`), Sueña → Multiespumas (`MULTI`)**
-    (`MARCA_FABRICA`, dicho por el dueño el 10/09)— y por producto **7 días** (= `o.fabricar`
+    fábrica —**Heaven → Industrias Moreno (`MORENO`), ROHO/FLEX/PEDIC → Industrias Moreno
+    también pero en bloque aparte (dueño, 21/09), Sueña → Multiespumas (`MULTI`)**
+    (`MARCA_FABRICA`)— y por producto **7 días** (= `o.fabricar`
     de la tabla, una sola verdad), **15 días** (acumulada, nunca menor) y **el mes que viene**
     (ritmo de `STOCK_VENTANA_MES`=30 días con la MISMA regla de rotación, × los días del mes,
     menos lo que queda el día 1; el `PRODUCIR_1RA`=70% para la 1ª quincena — «si en
     septiembre se vendieron 70 soft, en octubre el 70% para la primera quincena»). Solo
     unidades: el dueño no quiere plata ahí. La marca sale del NOMBRE del catálogo
     (`stockMarcaDeNombre`; lista de los catálogos del sistema que viven en `rotacion.html`),
-    si no de la última fábrica pedida (`o.fab`), y si no → «❓ Sin fábrica asignada» (las
-    líneas FLEX/PEDIC de ROHO: **falta que el dueño diga dónde se hacen**). Sin conteo no
-    se calcula nada. El pie «por medida» se **toca y despliega los modelos** que la componen
+    si no de la última fábrica pedida (`o.fab`), y si no → «❓ Sin fábrica asignada». Sin
+    conteo no se calcula nada. ⚠️ El respaldo «por la última fábrica» recorre
+    `PRODUCIR_BLOQUES` **en orden**, no las claves de `MARCA_FABRICA`: dos marcas comparten
+    fábrica (Heaven y ROHO), y el que no dice su marca tiene que caer en Heaven. El pie «por medida» se **toca y despliega los modelos** que la componen
     (`producirMedida`, estado en `PRODUCIR_MED_ABIERTA`); la medida del pie va unificada por
     `producirMedidaEtq` («130X190CM» = `130x190`). Cada bloque scrollea dentro de `.prod-wrap`
     (`max-height:70vh`) para que el encabezado quede **clavado arriba** y el TOTAL **abajo**:

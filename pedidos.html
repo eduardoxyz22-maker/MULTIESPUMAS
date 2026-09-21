@@ -13737,12 +13737,17 @@ function copiarStock(){
    La fábrica de cada producto sale de la MARCA (`stockMarcaDeNombre`, por el nombre del
    catálogo: TITANIO/ORO/ESPECIAL → Heaven; SUEÑA/COMBO/SOFT/SEMIORTOP. → Sueña) y, si el
    nombre no dice nada, de la última fábrica a la que se le pidió (`o.fab`). Lo que no cae
-   en ninguna —las líneas FLEX/PEDIC que vende ROHO y los nombres sueltos— va a un bloque
-   «sin fábrica asignada» para que el dueño diga dónde se hacen, en vez de adivinar.
+   en ninguna —los nombres sueltos— va a un bloque «sin fábrica asignada» para que el dueño
+   diga dónde se hacen, en vez de adivinar.
    ========================================================================== */
-var MARCA_FABRICA={ heaven:'MORENO', suena:'MULTI' };   // dueño, 10/09
+/* `roho` (FLEX/PEDIC): **Industrias Moreno**, dicho por el dueño el 21/09 — *«flex pedic de
+   roho se fabrica en industrias moreno»*. Es la MISMA fábrica que Heaven, pero va en su
+   propio bloque: son la línea que vende ROHO y meterlas bajo el título «Heaven» sería
+   mentir. Los dos bloques van pegados, así se mandan juntos a Moreno si se quiere. */
+var MARCA_FABRICA={ heaven:'MORENO', roho:'MORENO', suena:'MULTI' };   // dueño, 10/09 y 21/09
 var PRODUCIR_BLOQUES=[
   {k:'heaven', fab:'MORENO', ico:'💚', titulo:'Industrias Moreno · Heaven', col:'#0f766e'},
+  {k:'roho',   fab:'MORENO', ico:'🔷', titulo:'Industrias Moreno · ROHO (FLEX / PEDIC)', col:'#1d4ed8'},
   {k:'suena',  fab:'MULTI',  ico:'🛏️', titulo:'Multiespumas · Sueña',      col:'#a16207'},
   {k:'otros',  fab:'',       ico:'❓', titulo:'Sin fábrica asignada',        col:'#6b7280'}
 ];
@@ -13766,7 +13771,14 @@ function stockBloqueDe(o){
   var m=stockMarcaDe(o);
   if(MARCA_FABRICA[m]) return { k:m, por:'marca', marca:m };
   var f=stockFabNorm((o&&o.fab)||'');
-  for(var k in MARCA_FABRICA) if(f && MARCA_FABRICA[k]===f) return { k:k, por:'fabrica', marca:m, fab:f };
+  /* ⚠️ Se recorre PRODUCIR_BLOQUES y no las claves de `MARCA_FABRICA`: desde que Heaven y
+     ROHO comparten fábrica (MORENO), el que no dice su marca en el nombre y solo trae «se
+     pidió a MORENO» tiene que caer en el PRIMER bloque de esa fábrica —Heaven, la marca de
+     la casa— y no en el que el navegador devuelva primero. */
+  for(var i=0; f && i<PRODUCIR_BLOQUES.length; i++){
+    if(PRODUCIR_BLOQUES[i].fab && PRODUCIR_BLOQUES[i].fab===f)
+      return { k:PRODUCIR_BLOQUES[i].k, por:'fabrica', marca:m, fab:f };
+  }
   return { k:'otros', por:'', marca:m };
 }
 /* El mes que viene, con su primer y último día, y el último día del mes actual. */
@@ -13965,7 +13977,7 @@ function renderProducir(d){
           (B.tot.mes?('<button class="btn btn-sm" style="background:'+B.col+';color:#fff;font-weight:700;padding:2px 8px;font-size:.72rem" onclick="copiarProducir(\''+B.k+'\',\'mes\')">📋 '+esc(MS.nombre)+'</button>'):'')+
         '</span>') : '<span style="margin-left:auto;font-size:.8rem;color:#0a6b47;font-weight:700">✅ Cubierto</span>')+
       '</div>'+
-      (B.k==='otros' ? '<div style="font-size:.78rem;color:#7c4b00;background:#fff4d6;border-radius:6px;padding:5px 8px;margin-bottom:6px">Estos no dicen de qué marca son (líneas Flex y Pedic que vende ROHO, o nombres fuera del catálogo) y nunca se les anotó un pedido a fábrica. Decí en cuál se hacen y pasan a su bloque.</div>' : '');
+      (B.k==='otros' ? '<div style="font-size:.78rem;color:#7c4b00;background:#fff4d6;border-radius:6px;padding:5px 8px;margin-bottom:6px">Estos no dicen de qué marca son (nombres fuera del catálogo) y nunca se les anotó un pedido a fábrica. Decí en cuál se hacen y pasan a su bloque.</div>' : '');
     if(!filas.length){ html+='<div style="font-size:.82rem;color:var(--muted)">Nada que producir: lo que hay cubre la semana, los 15 días y '+esc(MS.nombre)+'.</div></div>'; return; }
     html+='<div class="prod-wrap"><table class="roho-tabla stk-tabla" style="min-width:1040px">'+
       '<thead><tr><th>Producto</th><th>Vende por día</th><th>Hay</th><th>Cubre hasta</th>'+
