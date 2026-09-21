@@ -94,7 +94,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   await page.evaluate(() => { apiPost=function(){ return Promise.reject(new Error('http404')); }; document.getElementById('getlog-btn').click(); });
   await page.waitForTimeout(80);
   r = await leer();
-  chk('un error de red se traduce con motivoDeError (404 = la dirección ya no existe)', /no contestó/.test(r.txt) && /ya no existe \(404\)/.test(r.txt), r.txt.slice(0,160));
+  /* §4fa: el texto del 404 cambió — ya no afirma que la dirección murió (las dos veces que
+     pasó, estaba viva) y manda primero a probar en incógnito. Lo que este check cuida sigue
+     siendo lo mismo: que el error llegue traducido por `motivoDeError`, no como código. */
+  chk('un error de red se traduce con motivoDeError (el 404 manda a probar en incógnito)', /no contestó/.test(r.txt) && /404/.test(r.txt) && /incógnito/.test(r.txt), r.txt.slice(0,160));
   await page.evaluate(() => { apiPost=function(){ return Promise.resolve({ok:false, error:'busy'}); }; document.getElementById('getlog-btn').click(); });
   await page.waitForTimeout(80);
   r = await leer();
