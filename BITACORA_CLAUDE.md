@@ -7625,9 +7625,10 @@ Sección 12 de `tests/test_banzer.js` (55 checks), con el nombre real del report
 Es una advertencia sobre **dónde ESTÁ** un colchón, no sobre **dónde se HACE**, y el panel ya
 no los mezcla: la fábrica sale de `MARCA_FABRICA` (FLEX/PEDIC → Industrias Moreno, para «Qué
 producir») y el lugar sale de `STOCK.g` + `x.chkDe` (para ir a buscarlo). El reporte lo
-confirma: en Banzer hay 85 unidades de líneas ROHO —Pillow Pedic, Pillow Flex, Forte Flex,
-Dynamic Pedic, Memory Flex, Eco Flex, Somier Roho Pedic, Somier Parrilla Flex— sobre 298 en
-total. Fabricadas en Moreno, guardadas en Banzer: las dos cosas a la vez, y correcto.
+confirma: en Banzer hay existencias de varias líneas ROHO (Pillow Pedic, Pillow Flex, Forte
+Flex, Dynamic Pedic, Memory Flex, Eco Flex, Somier Roho Pedic, Somier Parrilla Flex).
+Fabricadas en Moreno, guardadas en Banzer: las dos cosas a la vez, y correcto.
+⚠️ **Las cantidades no se anotan acá**: el repo es público (ver el aviso del final).
 
 📌 **Pendiente menor**: si en **Multiespumas** también queda stock para ir a buscar, hoy no
 tiene botón (`RECOGER_EXTRA` solo trae `Banzer`). Aparece solo si se sube su reporte de
