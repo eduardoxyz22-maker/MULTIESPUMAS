@@ -420,6 +420,40 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 11. El orden que dictó el dueño: acá → Banzer → IM ══════════════════════════
+  /* 21/09, textual: *«la idea es tener primero a la mano en fábrica que es de donde salen
+     los camiones, luego banzer y si no hay pedir fabricar a IM o recoger de IM»*.
+     ⚠️ No cambiar sin que él lo pida: antes el panel elegía «el que más tenga» y mandaba a
+     IM con 5 aunque en Banzer alcanzara con 4. */
+  console.log('\n── 11. Primero lo de acá, después Banzer, IM al final ──');
+  {
+    const page = await nueva();
+    const casos = [
+      { g:[0,5,4], n:2, espera:'BANZER 2',         que:'con lugar en los dos, va a Banzer aunque IM tenga más' },
+      { g:[0,5,1], n:2, espera:'IM 2',             que:'…pero si en Banzer no alcanza, va entero a IM (un viaje, no dos)' },
+      { g:[0,5,4], n:7, espera:'BANZER 4 + IM 3',  que:'si no alcanza en ninguno, vacía Banzer y completa con IM' },
+      { g:[3,5,4], n:5, espera:'BANZER 2',         que:'⚠️ lo que está ACÁ EN FÁBRICA se usa primero que todo' }
+    ];
+    for (const c of casos) {
+      const r = await page.evaluate(async (s) => {
+        eval(s.base);
+        STOCK=stockVacio();
+        STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=s.g[0];
+        STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} }, 'BANZER':{ f:todayStr(), u:{} } };
+        STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=s.g[1]; STOCK.g['BANZER'].u[K]=s.g[2];
+        STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro', 'BANZER':'otro' };
+        stockOlvidarIndice();
+        STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:prod(s.n) }) ];
+        REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+        var l=stockAsignar().pedidos[0].lineas[0];
+        return { aca:l.deDep, donde:(l.almPor||[]).map(function(e){ return recogerAlmCorto(e.alm)+' '+e.u; }).join(' + ') };
+      }, { base:BASE, g:c.g, n:c.n });
+      chk(c.que, r.donde===c.espera && (c.g[0]===0 || r.aca===c.g[0]),
+          'acá '+c.g[0]+' · IM '+c.g[1]+' · Banzer '+c.g[2]+' → pedido de '+c.n+': '+(r.aca?(r.aca+' de acá + '):'')+r.donde);
+    }
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

@@ -203,10 +203,16 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     `recogerLista()` arma un botón por almacén en la ficha — IM + los de `STOCK.g` + los de
     `RECOGER_EXTRA` (hoy `Banzer`), sin repetir; `recogerCorto(x)` es el nombre para un
     renglón («Moreno», o «IM 3 + BANZER 1») y `recogerLugaresTxt(p)` para el pedido entero.
-    `stockAsignar` reparte por almacén (`imAlm`/`tomarIM`: primero el ya marcado, después
-    **el que la cubre entera**, después el que más tenga) y devuelve el desglose, no un
+    `stockAsignar` reparte por almacén (`imAlm`/`tomarIM`) y devuelve el desglose, no un
     nombre. ⚠️ Si `enOtros` trae unidades sin el desglose `otrosAlm`, se cuentan como IM: no
     se pierde stock.
+    - **🥇 El orden lo dictó el dueño (21/09) y no se toca sin que lo pida**: *«primero a la
+      mano en fábrica que es de donde salen los camiones, luego banzer y si no hay pedir
+      fabricar a IM o recoger de IM»*. O sea **acá en fábrica → Banzer → IM**: IM es la
+      FÁBRICA además del almacén, su stock repone a todos los demás y se gasta al final.
+      El depósito se descuenta antes de `tomarIM`; dentro, el orden es `pref` → **el que la
+      cubre entera** → **el que NO es IM** → el que más tenga. ⚠️ «Cubre entera» va ANTES que
+      «IM último»: partir una línea son dos viajes.
     - ⚠️ **IM y «Industrias Moreno» son EL MISMO LUGAR** y hay que unificarlos: el histórico
       (`chkDe` vacío) y el del Excel (`IM - PRODUCTOTERMINADO`). **Todo** lo que compare o
       guarde un almacén pasa por `recogerCanon` (IM/Moreno → `''`) y **`recogerMismo`**, que

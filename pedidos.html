@@ -14494,7 +14494,16 @@ function stockAsignar(){
       var pa=recogerMismo(a.alm,pref)?1:0, pb=recogerMismo(b.alm,pref)?1:0;
       if(hayPref && pa!==pb) return pb-pa;           // lo que ya estaba marcado a mano, primero
       var ca=(a.u>=n)?1:0, cb=(b.u>=n)?1:0;
-      return (cb-ca) || (b.u-a.u);
+      if(ca!==cb) return cb-ca;                      // el que la cubre entera: un viaje, no dos
+      /* 🥈 IM VA ÚLTIMO entre los almacenes de recoger. El dueño, 21/09: *«la idea es tener
+         primero a la mano en fábrica que es de donde salen los camiones, luego banzer y si
+         no hay pedir fabricar a IM o recoger de IM»*. IM es la FÁBRICA además del almacén:
+         su stock es el colchón que repone a todos los demás, así que se gasta al final; lo
+         de Banzer está parado sin hacer nada y conviene sacarlo de ahí.
+         ⚠️ Lo que está ACÁ EN FÁBRICA (el depósito de logística) sigue yendo primero que
+         todo esto: se descuenta antes de llamar a `tomarIM`, no acá. */
+      var ia=recogerCanon(a.alm)?0:1, ib=recogerCanon(b.alm)?0:1;
+      return (ia-ib) || (b.u-a.u);
     });
     orden.forEach(function(e){
       if(sacado>=n) return;

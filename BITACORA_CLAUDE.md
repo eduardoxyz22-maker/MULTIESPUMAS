@@ -7537,6 +7537,39 @@ mismo). Todo lo encontrado era **de dónde sale cada unidad y qué se muestra**.
 Moreno» en la tabla de stock. La unificación con IM vive **solo** en las funciones `recoger*`,
 que son las del «hay que ir a buscarlo».
 
+### 🥇 El orden lo dictó el dueño: acá → Banzer → IM (21/09)
+Al preguntarle si el circuito andaba bien, aclaró dos cosas. La primera, el mapa mental:
+**«MORENO ES LA FABRICA Y TB ALMACEN»** — para el panel son dos cosas distintas y ahí no se
+mezclan nunca (📥 IM = hay hecho, hay que ir a buscarlo · 🏭 MORENO = se le pidió a la
+fábrica que lo produzca), pero es el mismo Moreno.
+
+La segunda, textual y **es una regla, no una sugerencia**:
+
+> *«la idea es tener primero a la mano en fabrica que es de donde salen los camiones, luego
+> banzer y si no hay pedir fabricar a im o recoger de im»*
+
+O sea: **1º acá en fábrica** (el depósito de logística, de donde salen los camiones) → **2º
+Banzer** → **3º IM**. La lógica: IM es la FÁBRICA además del almacén, así que su stock es el
+colchón que repone a todo lo demás y se gasta al final; lo de Banzer está parado sin hacer
+nada y conviene sacarlo de ahí.
+
+- El paso 1 ya estaba: el depósito se descuenta **antes** de llamar a `tomarIM` y eso no
+  cambió.
+- Lo que sí cambió es el desempate entre los almacenes de recoger. Antes era «el que más
+  tenga»: con Banzer 4 e IM 5 mandaba a **IM**. Ahora, en `tomarIM`, el orden es
+  **`pref` → el que la cubre entera → el que NO es IM → el que más tenga**.
+- ⚠️ «El que la cubre entera» sigue **antes** que «IM último»: con Banzer 1 e IM 5 y una
+  línea de 2 va entera a IM. Partirla 1+1 serían dos viajes para dos colchones.
+- Ejemplos verificados (sección 11 de `tests/test_banzer.js`): `Banzer 4 · IM 5 → pedido 2`
+  = Banzer 2 · `Banzer 1 · IM 5 → pedido 2` = IM 2 · `Banzer 4 · IM 5 → pedido 7` = Banzer 4
+  + IM 3 · `acá 3 · Banzer 4 · IM 5 → pedido 5` = 3 de acá + Banzer 2.
+- ⚠️ **Esto cambia de qué almacén sale cada unidad, NO cuánto.** Verificado: 388/400 y
+  397/400 escenarios al azar dan lo mismo que el panel anterior, y los que difieren lo hacen
+  solo en `cambia`/`contra`.
+
+También preguntó por los nombres de los botones (📥 IM vs 🏭 MORENO) y **no quiso cambiarlos**:
+quedan como estaban.
+
 ### Tests
 `tests/test_banzer.js` (45 checks): botones, marcar/cambiar de lugar/desmarcar, que lo viejo
 siga diciendo IM, los textos en las seis pantallas, que la marca viaje a la planilla, el
