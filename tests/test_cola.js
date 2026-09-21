@@ -149,6 +149,48 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('si la señal no vuelve, el pedido sigue esperando (no se descarta)',
       r.cola===1 && r.enPantalla===true, 'cola='+r.cola);
 
+  /* ══ «El servidor estaba ocupado» no es un guardado perdido ═════════════════════
+     21/09: el dueño vio 14 «rechazados» en Administración y preguntó si no deberían
+     guardarse cuando el servidor vuelva. Cuatro eran `busy`. El panel los reencola y los
+     reenvía solo —`busy` no está en `RECHAZOS_FIRMES`—, pero el servidor los anota igual
+     en su lista, y mezclados con los firmes parecía que se habían perdido catorce. */
+  r = await page.evaluate(async () => {
+    try{ localStorage.removeItem(LS_PEND); }catch(e){}
+    window._hayRed=true; window._ocupado=true;
+    var real=apiSave;
+    apiSave=function(rec){ if(window._ocupado) return Promise.resolve({ok:false, error:'busy'}); return real(rec); };
+    var p={id:'busy1', fecha:todayStr(), oc:'', vendedor:'Carola Chavez', cliente:'OCUPADO', celular:'70000000',
+      turno:'AM', zona:'Norte', direccion:'Av. X', maps:'', pagado:true, saldo:0, ts:Date.now(), metodoPago:'',
+      observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'', nota:'1', acuenta:0,
+      facturarA:'', nit:'', nroDia:1, verificado:false, fotos:[],
+      productos:[{desc:'SOFT ICE', medida:'140x190', codigo:'', cant:1}]};
+    upsert(p);
+    var res=await apiSave(p);
+    if(!(res&&res.ok)) queuePending(p);
+    var enCola=getPending().length;
+    // vuelve el servidor: el reintento automático lo manda solo, sin que nadie toque nada
+    window._ocupado=false;
+    await autoRefrescar('tic'); await new Promise(x=>setTimeout(x,250));
+    apiSave=real;
+    return { firme:!!RECHAZOS_FIRMES['busy'], enCola:enCola, quedaEnCola:getPending().length,
+             enPlanilla:window._planilla.some(function(x){ return x.id==='busy1'; }) };
+  });
+  chk('⚠️ «el servidor estaba ocupado» NO es un rechazo firme: el pedido vuelve a la cola', r.firme===false && r.enCola===1, JSON.stringify(r));
+  chk('⚠️ …y cuando el servidor se desocupa, el panel lo manda SOLO (queda guardado, cola en 0)', r.quedaEnCola===0 && r.enPlanilla===true, JSON.stringify(r));
+
+  r = await page.evaluate(() => {
+    var R={ ahora:Date.now(), total:14, latidos:[], huerfanas:null, rechazos:[
+      { ts:Date.now(), quien:'MULTIESPUMA', dispositivo:'8W7X8N', id:'z1', cliente:'UNO',   vendedor:'V', error:'busy',      accion:'save', detalle:'' },
+      { ts:Date.now(), quien:'MULTIESPUMA', dispositivo:'8W7X8N', id:'z2', cliente:'DOS',   vendedor:'V', error:'busy',      accion:'save', detalle:'' },
+      { ts:Date.now(), quien:'Isabel',      dispositivo:'I0K4VG', id:'z3', cliente:'TRES',  vendedor:'V', error:'conflicto', accion:'save', detalle:'' }
+    ] };
+    var h=renderRechazos(R, {ok:true}, null);
+    return { txt:h.replace(/<[^>]+>/g,' ').replace(/\s+/g,' '), verdes:(h.match(/🔁 el panel lo reenvió solo/g)||[]).length };
+  });
+  chk('⚠️ la pantalla separa los dos: dice cuántos hay que rehacer y cuántos se reenviaron solos', /De estos 3: 1 no entraron y hay que volver a hacerlos/.test(r.txt) && /2 fueron solo una demora/.test(r.txt), r.txt.slice(r.txt.indexOf('De estos'), r.txt.indexOf('De estos')+170));
+  chk('…y marca cada renglón de «servidor ocupado» como reenviado solo', r.verdes===2, 'renglones marcados: '+r.verdes);
+  chk('…la nota del pie explica que ese motivo no se pierde', /«El servidor estaba ocupado» no se pierde/.test(r.txt));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

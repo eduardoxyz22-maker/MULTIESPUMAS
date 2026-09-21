@@ -1953,6 +1953,11 @@ var SERVER_AUTH='';          // '' todavía no sé · 'abierto' (sin clave confi
 var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
 var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1};
+/* «El servidor estaba ocupado» NO es un guardado perdido: al no estar en `RECHAZOS_FIRMES`,
+   el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
+   anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
+   de Administración tiene que decir cuál es cuál. */
+function rechazoSeReintentaSolo(err){ return err==='busy'; }
 /* 🛡️ LA CLAVE DE ADMINISTRACIÓN DEL SERVIDOR (§4cg). La contraseña de Administración vive
    solo en este navegador; el servidor no la ve. Para FORZAR un pedido a un día cerrado o
    un turno lleno, el servidor —cuando tiene la puerta con llave— exige esta segunda clave
@@ -2349,14 +2354,28 @@ function renderRechazos(R, res, err){
   }
   h+='<div style="margin:10px 0 4px;font-weight:800">❌ Guardados que el servidor rechazó ('+esc(R.total||rs.length)+' en total, últimos '+rs.length+')</div>';
   if(!rs.length) h+='<div style="color:#0a6b47">✅ Ninguno.</div>';
-  else h+='<div class="tw" style="max-height:340px;overflow:auto"><table class="mini" style="width:100%;font-size:.78rem"><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Motivo</th><th>Detalle</th></tr>'+rs.map(function(r){
+  else {
+    /* ⚠️ No todos los «no» del servidor son un guardado PERDIDO, y mezclarlos asustaba: el
+       dueño vio «14 rechazados» y preguntó si no deberían guardarse cuando el servidor
+       vuelva (21/09). «El servidor estaba ocupado» no está en `RECHAZOS_FIRMES`, así que el
+       panel lo devuelve a la cola y lo reenvía SOLO; el servidor lo anota igual porque su
+       lista registra todo lo que contestó que no. Acá se separan las dos cosas. */
+    var nSolo=rs.filter(function(r){ return rechazoSeReintentaSolo(r.error); }).length;
+    var nFirme=rs.length-nSolo;
+    h+='<div style="font-size:.79rem;margin-bottom:5px">De estos '+rs.length+': '+
+       '<b style="color:var(--red)">'+nFirme+'</b> no entraron y hay que volver a hacerlos'+
+       (nSolo?(' · <b style="color:#0a6b47">'+nSolo+'</b> fueron solo una demora y <b>el panel los reenvió solo</b> (mirá arriba: si los dispositivos tienen la cola en 0, ya están guardados)'):'')+'.</div>';
+    h+='<div class="tw" style="max-height:340px;overflow:auto"><table class="mini" style="width:100%;font-size:.78rem"><tr><th>Cuándo</th><th>Quién</th><th>Qué</th><th>Motivo</th><th>Detalle</th></tr>'+rs.map(function(r){
       var d=new Date(Number(r.ts)||0), z=function(n){return (n<10?'0':'')+n;};
       var cuando=(r.ts?(fmtFechaCorta(isoLocal(d))+' '+z(d.getHours())+':'+z(d.getMinutes())):'—');
       var que=(String(r.id).indexOf('__ret_')===0?'💵 retiro de '+esc(r.vendedor):(esc(r.cliente||r.id||'')+(r.vendedor?(' <span style="color:var(--muted)">· '+esc(r.vendedor)+'</span>'):'')));
       var abrir=(r.id && findById(r.id))?(' <a onclick="showPedidoModal(\''+esc(r.id)+'\')" style="text-decoration:underline;cursor:pointer">abrir</a>'):'';
-      return '<tr><td style="white-space:nowrap">'+cuando+'</td><td>'+esc(r.quien||'—')+' <span style="color:var(--muted)">'+esc(r.dispositivo)+'</span></td><td>'+que+abrir+'</td><td><b>'+esc(rechazoTxt(r.error))+'</b> <span style="color:var(--muted)">('+esc(r.accion)+')</span></td><td style="color:var(--muted)">'+esc(r.detalle||'')+'</td></tr>';
+      var solo=rechazoSeReintentaSolo(r.error);
+      return '<tr'+(solo?' style="background:#f0fdf4"':'')+'><td style="white-space:nowrap">'+cuando+'</td><td>'+esc(r.quien||'—')+' <span style="color:var(--muted)">'+esc(r.dispositivo)+'</span></td><td>'+que+abrir+'</td><td><b'+(solo?' style="color:#0a6b47"':'')+'>'+esc(rechazoTxt(r.error))+'</b> <span style="color:var(--muted)">('+esc(r.accion)+')</span>'+
+        (solo?'<br><span style="color:#0a6b47;font-size:.92em">🔁 el panel lo reenvió solo</span>':'')+'</td><td style="color:var(--muted)">'+esc(r.detalle||'')+'</td></tr>';
     }).join('')+'</table></div>'+
-    '<div style="font-size:.74rem;color:var(--muted);margin-top:4px">«Lo modificó otra persona antes» = la pantalla de quien guardaba estaba vieja: el panel se recargó y el cambio hay que volver a hacerlo. «Día cerrado» / «turno lleno» / «OC repetida» = el panel lo avisó en el momento y no entró.</div>';
+    '<div style="font-size:.74rem;color:var(--muted);margin-top:4px">«Lo modificó otra persona antes» = la pantalla de quien guardaba estaba vieja: el panel se recargó y el cambio hay que volver a hacerlo. «Día cerrado» / «turno lleno» / «OC repetida» = el panel lo avisó en el momento y no entró. <b>«El servidor estaba ocupado» no se pierde</b>: vuelve a la cola y se reenvía solo, por eso está en verde.</div>';
+  }
   return caja(h,'var(--red)');
 }
 function verLecturasGet(){

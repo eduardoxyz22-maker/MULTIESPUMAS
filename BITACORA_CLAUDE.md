@@ -7430,6 +7430,37 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ez. «Rechazados» mezclaba lo perdido con lo que se reenvió solo (2026-09-21)
+
+El dueño, mirando Administración → ⚠️ Guardados rechazados: *«esos no deberían estar
+guardados una vez vuelva el servidor? demasiados rechazados creo yo. fijate si estan»*.
+
+Tenía razón en desconfiar del número, aunque no había nada roto. La lista juntaba **dos
+cosas muy distintas** bajo el mismo título:
+
+| Motivo | ¿Se guardó? | Qué pasa |
+|---|---|---|
+| **`busy`** — «el servidor estaba ocupado» | **SÍ** | No está en `RECHAZOS_FIRMES`, así que `queuePending` lo devuelve a la cola y el tic lo reenvía solo hasta que entra |
+| `conflicto` — «lo modificó otra persona antes» | **NO, a propósito** | Dos pantallas sobre el mismo pedido; se frena al segundo para no pisar al primero. Hay que rehacer el cambio |
+| `dia_cerrado` · `cupos_llenos` · `oc_repetida` · `admin` | NO | El panel lo avisó en el momento |
+
+El `.gs` anota en la hoja `Rechazos` **todo** lo que contestó que no (`RECHAZOS_REGISTRAR`
+incluye `busy:1`), que para diagnosticar está bien. El problema era la pantalla: catorce
+renglones iguales, y cuatro de ellos ya estaban guardados.
+
+- **`rechazoSeReintentaSolo(err)`** (hoy: solo `busy`). `renderRechazos` cuenta aparte
+  —«De estos 14: 10 no entraron y hay que volver a hacerlos · 4 fueron solo una demora y el
+  panel los reenvió solo»—, pinta esos renglones en verde con «🔁 el panel lo reenvió solo»,
+  y la nota del pie explica el motivo, que antes **ni figuraba** ahí.
+- El dato que cierra la cuenta ya estaba arriba en la misma pantalla y no se leía junto:
+  si los dispositivos tienen la **cola en 0**, lo de `busy` salió. El cartel ahora lo dice.
+- ⚠️ **No tocar el servidor**: que registre `busy` es correcto, y sacarlo escondería el
+  síntoma de que varios guardan al mismo tiempo (§4dt, §4ds).
+- Tests: `tests/test_cola.js` (16) — que `busy` no sea firme, que el tic lo mande solo al
+  desocuparse el servidor, y los tres checks de la pantalla.
+- 📌 Lo que SÍ merece mirarse de esa lista son los `conflicto`: ahí el cambio se perdió si la
+  persona no se dio cuenta de que el panel se le recargó.
+
 ## 4ey. El almacén Banzer: «recoger» ya dice DE DÓNDE (2026-09-21)
 
 Pedido del dueño, sobre una captura de la ficha de un pedido: *"añade el almacén banzer"*.
