@@ -7471,12 +7471,82 @@ gana sobre el de `RECOGER_EXTRA`), entra en `enOtros`, la revisión automática 
 «🚚 Programar recogida» ya elegía el almacén de origen desde `otrosAlm` (§4cr). Mientras
 tanto el botón sirve para marcarlo a mano, que es lo que pidió.
 
+### La revisión del 21/09: 13 cosas más, y una que se rompía HOY
+El dueño pidió revisar el botón nuevo («que no produce errores con algo y todo funciona bien
+igual que los demás»). Dos revisiones en paralelo —una sobre el botón y el circuito de
+marcar, otra sobre el reparto— encontraron **trece** cosas. Lo numérico estaba bien y lo
+sigue estando: con UN almacén, 397/400 escenarios al azar idénticos al panel de `a5de88a`
+(los 3 que difieren, solo en `cambia`/`contra`, a propósito); con DOS, 381/400 (los 19, lo
+mismo). Todo lo encontrado era **de dónde sale cada unidad y qué se muestra**.
+
+1. **🔴 IM y «Industrias Moreno» eran dos lugares distintos, con el único Excel de hoy.**
+   La revisión automática guardaba en `chkDe` el nombre crudo del Excel
+   (`IM - PRODUCTOTERMINADO`, que `stockAlmNombre` llama «Industrias Moreno») y el botón
+   guardaba `''`. Resultado, sin Banzer ni nada: un pedido con una línea marcada por el panel
+   y otra a mano decía **«Recoger de Moreno + IM»** —dos viajes al mismo galpón—, la lista de
+   carga pasaba de «RECOGER IM» a «RECOGER MORENO», en la ficha **no quedaba ningún botón 📥
+   encendido** y había que tocar dos veces para apagar una marca. Ahora **todo** lo que
+   compara o guarda un almacén pasa por `recogerCanon` (IM/Moreno → `''`, el vacío de
+   siempre) y `recogerMismo`.
+2. **🔴 Una línea repartida entre dos almacenes se mandaba a buscar entera a UNO.** `tomarIM`
+   sacaba de varios y devolvía el nombre del que más puso. Con 3 en Moreno y 1 en Banzer, un
+   pedido de 4 decía «📥 RECOGER MORENO × 4»: el que iba volvía con 3, el pedido salía
+   incompleto y el panel seguía creyendo que estaba cubierto (la unidad de Banzer ya estaba
+   reservada, así que tampoco le quedaba a otro). Pasaba en ~8% de los escenarios al azar.
+   Ahora `tomarIM` devuelve el **desglose entero** (`por`), la línea lo guarda (`almPor`) y
+   al aplicar, si salió de dos lugares, el producto guarda **`x.chkDes`** (`[{de,u}]`) y todo
+   dice «IM 3 + BANZER 1».
+3. **El «que más tenga» no se recalculaba**: `imAlm` se ordenaba una sola vez y las unidades
+   se descuentan sobre esos mismos objetos, así que una línea que entraba **entera** en un
+   almacén se partía igual. Ahora se ordena en cada llamada y antes que «el que más tenga»
+   va **«el que la cubre entera»**: un viaje en vez de dos.
+4. **El botón decía «Banzer» y el Excel dirá «01-05-006 ALMACEN BANZER».** Con la comparación
+   cruda, el día que suban ese Excel **toda marca puesta a mano quedaba huérfana**: el botón
+   no se veía encendido, tocarlo re-marcaba, y la reserva se descontaba de Moreno mientras el
+   pedido seguía diciendo Banzer. `recogerMismo` acepta que un nombre contenga al otro (tope
+   de 4 letras para que «IM» no se parezca a cualquier cosa) y `recogerLista` no duplica el
+   botón.
+5. **Cambiar de almacén no contaba como cambio** (`cambia=(antes!==ahora)`): la tabla proponía
+   «recoger de Moreno» sobre una línea marcada en Banzer y **Aplicar no tocaba nada**. Ahora
+   `cambia` mira también el lugar (`recogerMismosLugares`), así que se propone **y** se aplica.
+   ⚠️ Esas líneas ahora cuentan además como «⚠️ cambia lo marcado a mano», que es la verdad.
+6. **La columna «Estaba» decía siempre IM**: `almAntes` se calculaba y no lo usaba nadie.
+7. **El desglose de «✗ no hay» decía siempre IM**: cuando no alcanza se limpia la reserva y
+   con ella se iba el nombre. Ahora la **mirada** guarda su propio desglose (`hayIMPor`), así
+   «de 3: 2 recoger de BANZER · 1 hay que fabricar» dice la verdad.
+8. **Una marca a mano sobre un almacén vacío se servía del otro en silencio.** Se sigue
+   reservando —las unidades existen— pero ahora el panel lo **dice**: `stockAsignar` devuelve
+   `almMal` y la pantalla de la revisión muestra un cartel ámbar con «dice X, está en Y».
+9. **Textos con el almacén fijo**, los tres que faltaban: el **WhatsApp del grupo**
+   (`envioProd` decía «📥 RECOGER DE IM» para cualquier almacén — es el mensaje que lee el
+   que va a buscar) y su resumen de arriba; la **lista de carga**, que se contradecía sola
+   («📥 1 por recoger IM» arriba y «📥 RECOGER BANZER» abajo, en la misma pantalla); y el
+   botón «📋 Lista para ir a Moreno».
+10. **🚚 Programar recogida**: el título salía de `d.otrosAlm[0]` («de Industrias Moreno»
+    aunque el producto esté solo en Banzer) y el desplegable decía «hay 4 allá» sumando
+    almacenes, para después rebotar con «ningún almacén tiene esa cantidad libre». Ahora dice
+    «3 en Moreno · 1 en BANZER».
+11. **Una recogida vieja sin `de:`** se restaba del PRIMER almacén de la lista, que con dos
+    cargados puede ser Banzer. `stockAlmPorDefecto()` devuelve el de Industrias Moreno.
+12. **El celular, otra vez**: con un tercer almacén de nombre largo la tira se salía de la
+    tarjeta a 360 px. El botón muestra el nombre recortado a 12 letras (el entero queda en el
+    `title` y en el renglón de ayuda).
+13. **`heredarMarcas` también hereda `chkDes`**, no solo `chkDe`.
+
+⚠️ **Lo que NO se tocó**: `stockAlmCorto`/`stockAlmNombre` siguen diciendo «Industrias
+Moreno» en la tabla de stock. La unificación con IM vive **solo** en las funciones `recoger*`,
+que son las del «hay que ir a buscarlo».
+
 ### Tests
-`tests/test_banzer.js` (25 checks; contra el panel de `a5de88a` da **3 bien · 20 mal**):
-botones, marcar/cambiar de lugar/desmarcar, que lo viejo siga diciendo IM, los textos en las
-seis pantallas, que la marca viaje a la planilla, el reparto por almacén, el caso de dos
-pedidos donde cada uno va a un almacén distinto, y (sección 5) que **corregir el pedido desde
-el formulario conserva el almacén**, pero cambiar la cantidad borra marca y almacén juntos. ⚠️ Los helpers del test están envueltos en
+`tests/test_banzer.js` (45 checks): botones, marcar/cambiar de lugar/desmarcar, que lo viejo
+siga diciendo IM, los textos en las seis pantallas, que la marca viaje a la planilla, el
+reparto por almacén, el caso de dos pedidos donde cada uno va a un almacén distinto, que
+**corregir el pedido desde el formulario conserva el almacén** (y que cambiar la cantidad
+borra marca y almacén juntos), y las secciones **6 a 10** de la revisión del 21/09: IM y
+Moreno son un solo lugar con el único Excel de hoy, una línea repartida nombra los dos
+almacenes de punta a punta (línea → producto → planilla → lista de carga), cambiar de almacén
+se propone **y** se aplica, el aviso de la marca que apunta a un almacén vacío, el nombre del
+botón contra el del Excel, y el WhatsApp del grupo. ⚠️ Los helpers del test están envueltos en
 `typeof …==='function'` para que contra un panel viejo salgan **rojos legibles** en vez de
 reventar el test entero. `test_revstock` pasó a 37 (el mensaje para copiar ahora dice de qué
 almacén sale cada renglón).

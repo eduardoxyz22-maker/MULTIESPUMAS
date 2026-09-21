@@ -113,8 +113,12 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   const listaIM = await page.evaluate(() => { var t=''; var o=window.copyText; window.copyText=function(x){t=x;}; copiarTraerIM(); window.copyText=o; return t; });
   /* §4cr: el mensaje pasó a llamarse «TRAER DE MORENO» — el equipo dice «Moreno», no «IM».
      §4ey: y con más de un almacén de donde recoger, el título es genérico y cada renglón
-     dice de dónde sale («— de Moreno», «— de Banzer»). */
-  chk('…y el mensaje dice para qué pedido es y de qué almacén sale', /TRAER DE OTRO ALMACÉN/.test(listaIM) && /de Moreno/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
+     dice de dónde sale («— de IM», «— de Banzer»).
+     ⚠️ El almacén de siempre se nombra **IM** en todo lo de «ir a buscar», aunque el Excel
+     lo traiga como «IM - PRODUCTOTERMINADO» y la tabla de stock lo llame «Industrias
+     Moreno»: son el mismo galpón, y si acá dijera «Moreno» un pedido con una línea marcada
+     a mano y otra por el panel diría que hay que ir a dos lugares distintos. */
+  chk('…y el mensaje dice para qué pedido es y de qué almacén sale', /TRAER DE OTRO ALMACÉN/.test(listaIM) && /— de IM/.test(listaIM) && /Con IM/.test(listaIM) && /× 3/.test(listaIM),
       (listaIM.match(/•[^\n]*/)||[''])[0]);
 
   // ══ 3. Lo que no le corresponde tocar ═════════════════════════════════════

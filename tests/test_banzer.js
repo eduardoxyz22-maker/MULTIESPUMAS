@@ -256,6 +256,170 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 6. IM y «Industrias Moreno» son EL MISMO LUGAR ══════════════════════════════
+  /* Lo encontró la revisión del 21/09. Es lo que se rompía HOY, con un solo Excel cargado:
+     la revisión automática guardaba el nombre largo del Excel y el botón guardaba vacío, así
+     que el mismo galpón quedaba con dos nombres. */
+  console.log('\n── 6. IM y Moreno son el mismo lugar (un solo Excel cargado) ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:[
+        { desc:'TITANIO ICE', medida:'160x190', codigo:'CH1201', cant:2 },
+        { desc:'TITANIO ICE', medida:'160x190', codigo:'CH1201', cant:1, chk:'im' } ] }) ];
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} } };   // el ÚNICO Excel de hoy
+      STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=9;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro' };
+      stockOlvidarIndice();
+      REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+      REVSTK=stockAsignar(); aplicarStockRevisar(); await new Promise(r=>setTimeout(r,500));
+      var p=findById('a'), x=p.productos[0];
+      var out={ chkDe:('chkDe' in x)?x.chkDe:'(no existe)', corto:RC(x),
+                estado:estadoStock(p), lugares:(typeof recogerLugaresTxt==='function')?recogerLugaresTxt(p):'?' };
+      abrirCarga(); setCargaDia('manana'); await new Promise(r=>setTimeout(r,200));
+      out.carga=(document.getElementById('carga-body')||{textContent:''}).textContent.replace(/\s+/g,' ');
+      closeCarga(); showView('admin'); showPedidoModal('a'); await new Promise(r=>setTimeout(r,150));
+      out.marcados=botonesRecoger().filter(function(b){ return b.on; }).map(function(b){ return b.txt; });
+      tocarRecoger('📥 IM'); await new Promise(r=>setTimeout(r,150));
+      out.trasUnToque=findById('a').productos[0].chk||'';
+      return out;
+    }, BASE);
+    chk('⚠️ la revisión NO guarda el nombre largo del Excel: IM sigue siendo el vacío de siempre', r.chkDe==='(no existe)' && r.corto==='IM', J([r.chkDe, r.corto]));
+    chk('⚠️ el pedido NO dice «Recoger de Moreno + IM»: es un solo lugar', r.lugares==='IM' && !/Moreno/.test(r.estado), J([r.lugares, r.estado]));
+    chk('…y la lista de carga sigue diciendo RECOGER IM, como siempre', /RECOGER IM/.test(r.carga) && !/RECOGER MORENO/.test(r.carga), (r.carga.match(/📥 RECOGER [A-ZÁÉÍÓÚ +0-9]+/)||[''])[0]);
+    chk('⚠️ en la ficha queda encendido el botón 📥 IM de las dos líneas (antes no se encendía ninguno)', r.marcados.length===2 && r.marcados.every(function(t){ return t==='📥 IM'; }), J(r.marcados));
+    chk('…y UN solo toque lo desmarca (antes hacían falta dos)', r.trasUnToque==='', J(r.trasUnToque));
+    await page.close();
+  }
+
+  // ═══ 7. Una línea repartida entre dos almacenes dice LOS DOS ═════════════════════
+  /* El peor de los hallazgos: con 3 en Moreno y 1 en Banzer, un pedido de 4 decía «RECOGER
+     MORENO × 4». El que iba volvía con 3 y el panel seguía creyendo que estaba cubierto. */
+  console.log('\n── 7. Una línea que sale de dos almacenes los nombra a los dos ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:prod(4) }) ];
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} }, 'BANZER':{ f:todayStr(), u:{} } };
+      STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=3; STOCK.g['BANZER'].u[K]=1;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro', 'BANZER':'otro' };
+      stockOlvidarIndice();
+      REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+      var R=stockAsignar(), l=R.pedidos[0].lineas[0];
+      var out={ deIM:l.deIM, por:(l.almPor||[]).map(function(e){ return (e.alm||'IM')+':'+e.u; }),
+                traer:R.traerIM.map(function(o){ return o.u+' — '+RAT(o); }) };
+      REVSTK=R; aplicarStockRevisar(); await new Promise(r=>setTimeout(r,500));
+      var p=findById('a'), x=p.productos[0];
+      out.corto=RC(x); out.des=(x.chkDes||[]).map(function(e){ return (e.de||'IM')+':'+e.u; });
+      var g=(window._saves[window._saves.length-1]||{}).productos||[];
+      out.guardado=((g[0]||{}).chkDes||[]).map(function(e){ return (e.de||'IM')+':'+e.u; });
+      abrirCarga(); setCargaDia('manana'); await new Promise(r=>setTimeout(r,200));
+      out.carga=(document.getElementById('carga-body')||{textContent:''}).textContent.replace(/\s+/g,' ');
+      return out;
+    }, BASE);
+    chk('⚠️ las 4 se reparten 3 Moreno + 1 Banzer, y la línea guarda el desglose', r.deIM===4 && r.por.join(' ')==='IM - PRODUCTOTERMINADO:3 BANZER:1', J(r.por));
+    chk('…la lista para ir a buscar dice cuántas hay en cada uno', /IM 3/.test(r.traer.join('')) && /BANZER 1/.test(r.traer.join('')), J(r.traer));
+    chk('⚠️ el pedido queda diciendo los dos lugares (antes mandaba a buscar 4 donde había 3)', /IM 3/.test(r.corto) && /BANZER 1/.test(r.corto), r.corto);
+    chk('…el desglose viaja a la planilla dentro del producto', r.des.join(' ')==='IM:3 BANZER:1' && r.guardado.join(' ')==='IM:3 BANZER:1', J([r.des, r.guardado]));
+    chk('…y la lista de carga lo dice también', /BANZER/.test(r.carga) && /IM 3/.test(r.carga), (r.carga.match(/📥 RECOGER [^·]{0,30}/)||[''])[0]);
+    await page.close();
+  }
+
+  // ═══ 8. Cambiar de almacén ES un cambio, y se avisa lo que no cierra ═════════════
+  console.log('\n── 8. Cambiar de almacén se propone Y se aplica ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      // marcado a mano «Banzer», pero en Banzer no queda ninguno: están todos en Moreno
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:prod(2,{chk:'im', chkDe:'BANZER'}) }) ];
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} }, 'BANZER':{ f:todayStr(), u:{} } };
+      STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=5; STOCK.g['BANZER'].u[K]=0;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro', 'BANZER':'otro' };
+      stockOlvidarIndice();
+      REVSTK_DIAS='todos';
+      // (a) con «revisar también lo ya marcado»: se propone Y se aplica
+      REVSTK_SOLO_VACIOS=false;
+      REVSTK=stockAsignar();
+      var l=REVSTK.pedidos[0].lineas[0];
+      var out={ cambia:l.cambia, contra:l.contra, nCambios:revStkCambios().length };
+      renderStockRevisar(); await new Promise(r=>setTimeout(r,150));
+      var filas=[].slice.call(document.querySelectorAll('#modal-box tbody tr')).map(function(t){ return t.textContent.replace(/\s+/g,' '); });
+      out.estaba=(filas[0]||'');
+      aplicarStockRevisar(); await new Promise(r=>setTimeout(r,500));
+      out.tras=RC(findById('a').productos[0]);
+      // (b) con «solo las sin marcar»: no la toca, pero AVISA que apunta a un almacén vacío
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), productos:prod(2,{chk:'im', chkDe:'BANZER'}) }) ];
+      REVSTK_SOLO_VACIOS=true;
+      REVSTK=stockAsignar();
+      out.almMal=(REVSTK.almMal||[]).map(function(m){ return m.dice+'→'+m.esta; });
+      renderStockRevisar(); await new Promise(r=>setTimeout(r,150));
+      out.cartel=(document.getElementById('modal-box')||{textContent:''}).textContent.replace(/\s+/g,' ');
+      return out;
+    }, BASE);
+    chk('⚠️ cambiar de almacén cuenta como cambio y Aplicar SÍ lo toca (antes se proponía y no pasaba nada)', r.cambia===true && r.nCambios===1 && r.tras==='IM', J([r.cambia, r.nCambios, r.tras]));
+    chk('…y la columna «Estaba» dice el almacén que estaba marcado, no IM', /recoger de BANZER/.test(r.estaba), r.estaba.slice(0,110));
+    chk('⚠️ sin tocar nada, el panel avisa que la marca apunta a un almacén que no tiene esas unidades', r.almMal.join(',')==='BANZER→IM', J(r.almMal));
+    chk('…y el aviso se ve en la pantalla de la revisión', /el almacén que dice la marca no tiene esas unidades/.test(r.cartel), /almacén que dice la marca/.test(r.cartel));
+    await page.close();
+  }
+
+  // ═══ 9. «Banzer» a mano y «01-05-006 BANZER» del Excel son el mismo almacén ══════
+  console.log('\n── 9. El nombre del botón y el del Excel son el mismo lugar ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      // marcado a mano con el literal del botón, ANTES de que existiera el Excel de Banzer
+      STATE=[ window._P({ id:'a', fecha:proximoDiaEntrega(), cliente:'PRIMERO', productos:prod(2,{chk:'im', chkDe:'Banzer'}) }),
+              window._P({ id:'b', fecha:diasAdelante(3), cliente:'SEGUNDO', productos:prod(2) }) ];
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      // …y ahora sube el Excel, que lo llama con el código adelante y otra palabra
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} }, '01-05-006 ALMACEN BANZER':{ f:todayStr(), u:{} } };
+      STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=4; STOCK.g['01-05-006 ALMACEN BANZER'].u[K]=2;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro', '01-05-006 ALMACEN BANZER':'otro' };
+      stockOlvidarIndice();
+      REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+      var R=stockAsignar();
+      var out={ botones:RL().map(function(A){ return A.corto; }),
+                sobra:R.sobraIM[K], almMal:(R.almMal||[]).length,
+                segundo:(R.pedidos[0]||{lineas:[{}]}).lineas[0] };
+      out.segundo={ id:R.pedidos[0].p.id, ahora:out.segundo.ahora, alm:out.segundo.alm };
+      showView('admin'); showPedidoModal('a'); await new Promise(r=>setTimeout(r,150));
+      out.marcados=botonesRecoger().filter(function(b){ return b.on; }).map(function(b){ return b.txt; });
+      return out;
+    }, BASE);
+    chk('⚠️ el Excel no agrega un SEGUNDO botón para el mismo almacén', r.botones.join(',')==='IM,ALMACEN BANZER', J(r.botones));
+    chk('⚠️ la marca vieja «Banzer» sigue reservando de Banzer: nadie avisa que apunte a otro lado', r.almMal===0, J([r.almMal, r.sobra]));
+    chk('…así que el pedido siguiente va a Moreno con razón', r.segundo.id==='b' && r.segundo.alm==='IM - PRODUCTOTERMINADO', J(r.segundo));
+    chk('⚠️ y en la ficha el botón del almacén se ve encendido igual (con el nombre recortado para que entre)', r.marcados.length===1 && /^📥 ALMACEN BAN…$/.test(r.marcados[0]), J(r.marcados));
+    await page.close();
+  }
+
+  // ═══ 10. El mensaje de WhatsApp que lee el que va a buscar ═══════════════════════
+  console.log('\n── 10. El WhatsApp del grupo dice de qué almacén ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var f=proximoDiaEntrega();
+      STATE=[ window._P({ id:'a', fecha:f, productos:prod(2,{chk:'im', chkDe:'Banzer'}) }) ];
+      return { txt:String(envioTexto('manana')).replace(/\s+/g,' ') };
+    }, BASE);
+    chk('⚠️ el mensaje dice «RECOGER DE BANZER», no «RECOGER DE IM» para todo', /RECOGER DE BANZER/.test(r.txt) && !/RECOGER DE IM/.test(r.txt), (r.txt.match(/📥 RECOGER DE [A-ZÁÉÍÓÚ +0-9]+/)||['(no salió el mensaje)'])[0]);
+    chk('…y el resumen de arriba también', /📥 1 de Banzer/.test(r.txt), (r.txt.match(/📥 \d+ de [^·]{0,22}/)||[''])[0]);
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

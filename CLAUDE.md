@@ -198,15 +198,28 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
     va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice).
   - **📥 De qué almacén se va a buscar** (§4ey): la marca del producto es `x.chk='im'` +
-    **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra).
+    **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
+    si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
     `recogerLista()` arma un botón por almacén en la ficha — IM + los de `STOCK.g` + los de
     `RECOGER_EXTRA` (hoy `Banzer`), sin repetir; `recogerCorto(x)` es el nombre para un
-    renglón y `recogerLugaresTxt(p)` para el pedido entero. `stockAsignar` reparte por
-    almacén (`imAlm`/`tomarIM`: primero el ya marcado, después el que más tenga, todo de un
-    solo lugar si alcanza) y guarda de cuál salió. ⚠️ Si `enOtros` trae unidades sin el
-    desglose `otrosAlm`, se cuentan como IM: no se pierde stock. ⚠️ La tira de botones no
-    puede llevar `flex:none` — con seis botones se sale de la pantalla del celular.
-    `tests/test_banzer.js`.
+    renglón («Moreno», o «IM 3 + BANZER 1») y `recogerLugaresTxt(p)` para el pedido entero.
+    `stockAsignar` reparte por almacén (`imAlm`/`tomarIM`: primero el ya marcado, después
+    **el que la cubre entera**, después el que más tenga) y devuelve el desglose, no un
+    nombre. ⚠️ Si `enOtros` trae unidades sin el desglose `otrosAlm`, se cuentan como IM: no
+    se pierde stock.
+    - ⚠️ **IM y «Industrias Moreno» son EL MISMO LUGAR** y hay que unificarlos: el histórico
+      (`chkDe` vacío) y el del Excel (`IM - PRODUCTOTERMINADO`). **Todo** lo que compare o
+      guarde un almacén pasa por `recogerCanon` (IM/Moreno → `''`) y **`recogerMismo`**, que
+      además acepta que un nombre contenga al otro («Banzer» a mano vs «01-05-006 ALMACEN
+      BANZER» del Excel). Sin eso: «Recoger de Moreno + IM» en un solo galpón, ningún botón
+      encendido en la ficha, y marcas huérfanas el día que suban un Excel nuevo.
+    - `cambia` mira la marca **y el lugar** (`recogerMismosLugares`): si no, un cambio de
+      almacén se proponía en la tabla y Aplicar no lo tocaba.
+    - `almMal` (cartel ámbar en la revisión) avisa cuando una marca a mano apunta a un
+      almacén que no tiene esas unidades: se reservan del otro igual, pero se dice.
+    - ⚠️ La tira de botones no puede llevar `flex:none` —con seis botones se sale de la
+      pantalla del celular— y el nombre del botón va recortado a 12 letras.
+    `tests/test_banzer.js` (45).
   - **Dos manos en el mismo panel** (§4dc): el dueño también usa otra herramienta de IA para
     tocar `pedidos.html` cuando yo no estoy. Sus tests (`tests/test_stock_*.cjs`) usan
     `require('playwright')` a secas + `CHROME_PATH`/`NODE_PATH` por variable de entorno —
