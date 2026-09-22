@@ -7688,13 +7688,25 @@ function motivoDeError(e){
      El 21/09 le pasó a un solo vendedor: la dirección nunca había cambiado (verificado
      contra las 400 versiones anteriores de la página) y el resto del equipo guardaba bien. */
   if(m==='http404') return 'Google contestó 404 en ESTE navegador. Casi siempre no es el panel: probá abrirlo en una ventana de incógnito. Si ahí funciona, es este navegador — cerrá las otras cuentas de Google abiertas o borrá los datos del sitio. Si NO anda para nadie del equipo, recién ahí mirá Apps Script → Implementar → Administrar implementaciones y editá la de siempre (✏️) → «Versión nueva». ⚠️ Nunca crear una implementación NUEVA: estrena otra dirección y deja sin panel a todo el equipo';
+  if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
+  if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
+  if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
+  if(/^http\d+$/.test(m)) return 'Google respondió con un error '+m.slice(4);
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)';
+  if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
+  return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
 /* 🙋 EL MISMO MOTIVO, PERO PARA LA VENDEDORA (§4fa). `motivoDeError` está escrito para quien
    administra: le dice que mire Apps Script, que edite la implementación, que no cree una
    nueva. El 22/09 ese texto entero apareció dentro del cartel «Quedó en cola» de una
    vendedora que solo había guardado un pedido — nada de eso es cosa suya, y asusta.
    Acá va la versión corta: qué pasó y que NO se perdió nada. Lo largo queda en los carteles
-   de Administración, que es donde sirve. */
+   de Administración, que es donde sirve.
+   ⚠️ VA DESPUÉS DE `motivoDeError`, NUNCA ADENTRO. Al agregarla el 22/09 la metí en el
+   medio: cerré `motivoDeError` justo después del caso `http404` y sus otras ramas —403,
+   401, 5xx, sin red, «devolvió una página», el fallback— quedaron como código muerto detrás
+   de un `return`. Resultado en producción: `motivoDeError` devolvía **undefined** para todo
+   lo demás, y una vendedora sin señal leía «No se pudo subir la foto: undefined». */
 function motivoCorto(e){
   var m=String((e&&e.message)||e||'');
   if(m==='http404')            return 'Google cortó la respuesta a mitad (404). No se perdió nada';
@@ -7704,13 +7716,6 @@ function motivoCorto(e){
   if(m==='clave')              return 'falta la clave del equipo en esta computadora';
   if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google';
   return motivoDeError(e);
-  if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
-  if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
-  if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
-  if(/^http\d+$/.test(m)) return 'Google respondió con un error '+m.slice(4);
-  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)';
-  if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
-  return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
 /* ⏱️ Cuánto se espera a que Google conteste la planilla antes de cortar y reintentar (§4ds).
    Una lectura es idempotente: cortarla y volver a pedirla no rompe nada, y es la única forma

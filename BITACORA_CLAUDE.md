@@ -7430,6 +7430,49 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fc. Rompí `motivoDeError` y lo publiqué — y mi filtro de la batería estaba ciego (2026-09-22)
+
+Lo encontró el agente de revisión del 22/09, con el panel **ya en producción unas horas**.
+
+### Qué rompí
+Al agregar `motivoCorto` (§4fa) la metí **DENTRO** de `motivoDeError`: cerré la función con
+un `}` justo después del caso `http404`, y sus ramas siguientes —403, 401, 5xx, `http<otro>`,
+sin red, «devolvió una página» y el fallback— quedaron como **código muerto detrás de un
+`return`** dentro de `motivoCorto`.
+
+`motivoDeError` pasó a devolver **`undefined`** para todo salvo `clave`, `tardo`,
+`tardo_datos` y `http404`. En pantalla:
+- **«No se pudo subir la foto: undefined»** — el caso MÁS común, una vendedora sin señal;
+- «No se pudo subir el comprobante: undefined»; «No se pudo actualizar (undefined)»;
+- «El servidor no contestó — .» en Rechazos y en 📡 ¿Quién lee la planilla?;
+- y el cartel de primera carga (§4di) sin motivo.
+
+La ironía: §4di/§4dm/§4dp existen justamente para que el cartel diga QUÉ pasó y QUÉ hacer.
+Lo dejé mudo para todos los casos frecuentes, arreglando otra cosa.
+⚠️ **`motivoCorto` va DESPUÉS de `motivoDeError`, nunca adentro.** Queda dicho en el código.
+
+### Y por qué la batería no me frenó — el error es MÍO, no de `correr.sh`
+`correr.sh` lo reportó, fuerte y claro, en las **tres** corridas:
+```
+test_carga :: SIN RESUMEN · 5 fallas
+```
+(«sin resumen» porque el test se **cayó** antes de imprimirlo: `cod.m403.slice` sobre
+`undefined`.) Yo revisaba los rojos con `grep -E "· [1-9][0-9]* mal"` — **y ese formato no
+dice «mal»**. Di tres baterías por verdes con la regresión adentro.
+
+⚠️ **`correr.sh` emite CINCO formas de falla**, y hay que mirarlas todas:
+`N bien · N mal` · `SIN RESUMEN · N fallas` · `VACIO` · `FALLA (exit N)` · `· (exit N)`.
+La forma correcta de revisar es al revés: listar todo lo que **no** sea `N bien · 0 mal` ni
+`ok (sin resumen)`. Queda un script en el scratchpad (`revisar_bateria.sh`), pero lo que
+importa es la regla: **nunca dar una batería por verde filtrando por una palabra.**
+También conviene comparar cuántas suites REPORTARON contra cuántos archivos hay en `tests/`.
+
+### La lección de fondo
+Las dos veces que rompí algo hoy fue **editando alrededor de un `return`** en una función
+larga con `python3 - <<PY` y reemplazo de texto: el `node --check` pasa (la sintaxis es
+válida), los duplicados no saltan (no hay función repetida) y el daño es **semántico**. Después
+de insertar una función nueva al lado de otra, mirar con los ojos dónde quedó el `}`.
+
 ## 4fb. Cada vendedora tiene su propio talonario (2026-09-22)
 
 El dueño, textual: *«si dos vendedoras tienen la misma nota, no significa que sea repetido
