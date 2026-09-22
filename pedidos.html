@@ -2064,10 +2064,28 @@ function apiSave(rec, opts){
 function apiSaveAhora(rec, opts){
   var payload={action:'save', pedido:rec};
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
-  return apiPost(payload).then(function(res){
-    if(res && res.ok && res.pedido){ aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido); }   // 🔍 §4en
-    else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
-    return res;
+  /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
+     redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
+     petición. Si el guardado tarda —el servidor puede esperar hasta 30 s el candado cuando
+     otro está guardando—, esa dirección se vence y el navegador recibe un **404 del
+     redirect**, no del panel. El 22/09 le salió a una vendedora tras 40 segundos.
+     ⚠️ Reintentar un guardado es SEGURO acá, y es la única cosa que se reintenta a ciegas:
+     · si el primero NO llegó, el segundo lo guarda;
+     · si el primero SÍ llegó, el segundo va con el sello viejo → el servidor contesta
+       `conflicto` → `rechazoFirme` se queda con la fila del servidor, que es justamente
+       este pedido. En los dos casos el dato termina bien.
+     Solo se reintenta lo pasajero (404, 5xx, sin red, espera agotada). Un `busy` o un «no»
+     del servidor NO pasan por acá: vienen resueltos, no lanzados, y ya van a la cola. */
+  var pedir=function(){
+    return apiPost(payload).then(function(res){
+      if(res && res.ok && res.pedido){ aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido); }   // 🔍 §4en
+      else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
+      return res;
+    });
+  };
+  return pedir().catch(function(e){
+    if(!errorPasajero(e)) throw e;
+    return new Promise(function(r){ setTimeout(r, 1500); }).then(pedir);
   });
 }
 /* Lo que el servidor decidió sobre el pedido y el panel tiene que quedarse: el sello de
@@ -6904,7 +6922,8 @@ function submitPedido(){
       /* ⚠️ ANTES: «Sin internet: guardado» y acto seguido el modal verde «✓ Pedido guardado»
          con el botón para pasar la venta al grupo (§4eo). La venta se «pasaba» sin estar en
          la planilla. Ahora se dice dónde quedó y qué NO hacer todavía. */
-      afterEnCola(isEdit, (typeof motivoDeError==='function')?motivoDeError(e):'sin conexión');
+      // 🙋 La versión CORTA: este cartel lo lee la vendedora, no quien administra (§4fa).
+      afterEnCola(isEdit, (typeof motivoCorto==='function')?motivoCorto(e):'sin conexión');
     });
   }else{
     toast(isEdit?'Pedido actualizado ✓':'Pedido guardado (local) ✓','ok');
@@ -7633,6 +7652,22 @@ function motivoDeError(e){
      El 21/09 le pasó a un solo vendedor: la dirección nunca había cambiado (verificado
      contra las 400 versiones anteriores de la página) y el resto del equipo guardaba bien. */
   if(m==='http404') return 'Google contestó 404 en ESTE navegador. Casi siempre no es el panel: probá abrirlo en una ventana de incógnito. Si ahí funciona, es este navegador — cerrá las otras cuentas de Google abiertas o borrá los datos del sitio. Si NO anda para nadie del equipo, recién ahí mirá Apps Script → Implementar → Administrar implementaciones y editá la de siempre (✏️) → «Versión nueva». ⚠️ Nunca crear una implementación NUEVA: estrena otra dirección y deja sin panel a todo el equipo';
+}
+/* 🙋 EL MISMO MOTIVO, PERO PARA LA VENDEDORA (§4fa). `motivoDeError` está escrito para quien
+   administra: le dice que mire Apps Script, que edite la implementación, que no cree una
+   nueva. El 22/09 ese texto entero apareció dentro del cartel «Quedó en cola» de una
+   vendedora que solo había guardado un pedido — nada de eso es cosa suya, y asusta.
+   Acá va la versión corta: qué pasó y que NO se perdió nada. Lo largo queda en los carteles
+   de Administración, que es donde sirve. */
+function motivoCorto(e){
+  var m=String((e&&e.message)||e||'');
+  if(m==='http404')            return 'Google cortó la respuesta a mitad (404). No se perdió nada';
+  if(/^http5\d\d$/.test(m))    return 'Google está con problemas ('+m.slice(4)+')';
+  if(m==='busy')               return 'el servidor estaba ocupado con otra operación';
+  if(m==='tardo_datos' || m==='tardo') return 'Google tardó demasiado en contestar';
+  if(m==='clave')              return 'falta la clave del equipo en esta computadora';
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google';
+  return motivoDeError(e);
   if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
   if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
   if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
@@ -10645,13 +10680,13 @@ function achicarFotoLento(file, maxPx, calidad){
    ⚠️ Si la primera subida SÍ había llegado, queda un archivo suelto en Drive. Eso lo junta
    el barrido de la madrugada (§4ep, «Fotos sin pedido») y es muchísimo mejor que perder el
    comprobante de un pago. */
-function fotoReintentable(e){
+function errorPasajero(e){
   var m=String((e&&e.message)||e||'');
   return /^http(404|5\d\d)$/.test(m) || /tardo|Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m);
 }
 function subirFoto(id, nombre, dataUrl){
   return conTopeDuro(apiFoto(id, nombre, dataUrl)).catch(function(e){
-    if(!fotoReintentable(e)) throw e;
+    if(!errorPasajero(e)) throw e;
     return new Promise(function(r){ setTimeout(r, 1500); })
       .then(function(){ return conTopeDuro(apiFoto(id, nombre, dataUrl)); });
   });

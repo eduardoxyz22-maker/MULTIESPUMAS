@@ -7500,6 +7500,43 @@ muchísimo mejor que perder el comprobante de un pago.
 `tests/test_compconta.js` (32): el 404 reintenta y la segunda entra; lo mismo con 5xx, sin
 red y espera agotada; y `clave` NO se reintenta.
 
+### 🐌 22/09: el mismo 404, pero en un GUARDADO del dueño, tras 40 segundos
+*«fui yo subiendo un pedido y tardo mas de 40 seg y luego salio ese mensaje»*. Eso descarta
+«el dispositivo de ese vendedor» y deja a la vista la causa de fondo: **el servidor tarda**,
+y el 404 es el síntoma (la dirección temporal del redirect se vence en el camino).
+
+**De dónde salen los 40 segundos** (medido leyendo el `.gs`, no adivinando):
+`doPost` toma `LockService.waitLock(30000)` para guardar. Quien lo tiene agarrado mientras
+tanto suele ser `kommoProcesar_` (línea ~1532), y ahí está el problema — **adentro del
+candado**:
+```js
+for (var i = 0; i < listos.length; i++) {
+  if (leadYaCargado_(sh, listos[i].id)) { … }   // ⚠️ lee DOS columnas ENTERAS, por lead
+  sh.appendRow(recToRow(listos[i].rec));         // ⚠️ una escritura por lead
+}
+```
+`leadYaCargado_` hace `getRange(2,1,last-1,1).getValues()` **y** `getRange(2,15,last-1,1)
+.getValues()`. Con 3 leads en cola son **6 lecturas de columna entera + 3 `appendRow`**, y el
+guardado de cualquier persona espera detrás de eso.
+
+**Arreglado en el panel (sin tocar Google):**
+- `apiSaveAhora` **reintenta UNA vez** lo pasajero (`errorPasajero`: 404/5xx/sin red/tardó).
+  ⚠️ Es el único guardado que se reintenta a ciegas, y es seguro: si el primero no llegó, el
+  segundo guarda; si ya había llegado, el segundo va con el sello viejo → `conflicto` →
+  `rechazoFirme` se queda con la fila del servidor, que es este mismo pedido. `busy` y los
+  «no» del servidor NO pasan por acá (vienen resueltos, no lanzados, y ya van a la cola).
+- **`motivoCorto(e)`** para el cartel «Quedó en cola», que lo lee la VENDEDORA: el 22/09 le
+  apareció el texto entero de `motivoDeError` —Apps Script, administrar implementaciones, no
+  crear una nueva— a alguien que solo había guardado un pedido. Ahora dice «Google cortó la
+  respuesta a mitad (404). No se perdió nada». Lo largo queda en Administración.
+
+📌 **PENDIENTE, y es la cura de fondo** (exige que el dueño republique el `.gs`): sacar
+`leadYaCargado_` del loop —leer las dos columnas UNA vez antes— y escribir todos los leads
+con un solo `setValues` en vez de un `appendRow` por lead. Baja el candado de ~30 s a ~2 s.
+**Preguntado al dueño el 22/09, sin respuesta todavía.** ⚠️ Al hacerlo, subir `SCRIPT_VERSION`
+y `SCRIPT_VERSION_ESPERADA` juntos — y ojo que hasta que él republique el panel avisa a todo
+el equipo que el servidor está desactualizado.
+
 ### 📌 Las 14 fotos huérfanas son TODAS comprobantes — y en buena parte no son un error
 En la misma pantalla el barrido mostró 14 archivos sin pedido, **ninguno** foto de entrega.
 Buena parte se explica sin ningún fallo: en el formulario de un pedido nuevo el comprobante
