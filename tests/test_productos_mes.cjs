@@ -60,7 +60,13 @@ let PASS=0,FAIL=0;const chk=(t,c)=>{c?PASS++:FAIL++;console.log((c?'✓ ':'✗ '
   chk('la diferencia incompleta no se llama descuento',r.ajustes[0].motivo.includes('sin desglose'));
   await page.evaluate(()=>{pmCerrar();document.getElementById('cta-vendedor').value='';return abrirProductosMes();});r=await page.evaluate(()=>PM_REPORTE);
   chk('Todos respeta el alcance de Ventas: sin ROHO, mayoristas, ATC ni borradores',r.pedidos===5&&r.unidades===11);
-  chk('conserva y advierte las notas repetidas entre vendedores',r.avisos.some(t=>t.includes('2 ventas pueden estar duplicadas')));
+  /* ⚠️ CADA VENDEDORA TIENE SU PROPIO TALONARIO (§4fb, dueño 22/09). En el fixture la nota
+     «102» la comparten Fernando Peinado (Cliente 102) y Juan Pablo (Cliente 104): vendedoras
+     DISTINTAS y clientes DISTINTOS, o sea dos talonarios que coinciden en el número. Eso NO
+     es un duplicado y ya no se avisa. Lo que este check cuida sigue siendo lo importante:
+     que las dos ventas se CONSERVEN (nunca se deduplica por nota) y no se pierda ninguna. */
+  chk('dos vendedores con la misma nota se conservan y ya NO se avisan como duplicados',
+      r.pedidos===5 && !r.avisos.some(t=>t.includes('pueden estar duplicadas')));
   await page.evaluate(()=>{pmCerrar();pmElegir('cta-base','entrega');return abrirProductosMes();});r=await page.evaluate(()=>PM_REPORTE);
   chk('Entrega excluye lo cargado este mes con entrega en el siguiente',r.pedidos===4&&r.unidades===10);
   await page.getByRole('button',{name:'Detalle de ventas',exact:true}).click();
@@ -71,7 +77,10 @@ let PASS=0,FAIL=0;const chk=(t,c)=>{c?PASS++:FAIL++;console.log((c?'✓ ':'✗ '
     return {libro:f['xl/workbook.xml'],con:f['xl/worksheets/sheet1.xml'],det:f['xl/worksheets/sheet2.xml'],hojas:pmHojas(PM_REPORTE)};
   });
   chk('el Excel real tiene exactamente Consolidado y Detalle',(zip.libro.match(/<sheet /g)||[]).length===2&&zip.libro.includes('name="Consolidado"')&&zip.libro.includes('name="Detalle"'));
-  chk('exporta período, criterio y advertencias en ambas hojas',zip.con.includes('Fecha de entrega')&&zip.det.includes('Fecha de entrega')&&zip.con.includes('duplicadas')&&zip.det.includes('duplicadas'));
+  /* Las «advertencias» que se exportaban acá eran justamente las de duplicados por nota
+     (§4fb): con la regla nueva este fixture ya no genera ninguna. Se comprueba el período y
+     el criterio, que es lo que de verdad tiene que viajar en las dos hojas. */
+  chk('exporta período y criterio en ambas hojas',zip.con.includes('Fecha de entrega')&&zip.det.includes('Fecha de entrega'));
   chk('la exportación conserva Sin dato y precios numéricos',zip.det.includes('Sin dato')&&zip.det.includes('<v>100</v>'));
   chk('consolidado y detalle contienen los mismos importes conocidos',r.conocido===r.detalle.reduce((n,l)=>n+(l.importe||0),0)&&r.conocido===r.consolidado.reduce((n,g)=>n+g.conocido,0));
   // Cambiar filtros detrás no debe cambiar el corte ya abierto ni su Excel.

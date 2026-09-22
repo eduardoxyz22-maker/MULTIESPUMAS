@@ -7467,6 +7467,19 @@ nota. 📌 **Preguntado al dueño el 22/09, sin respuesta todavía.**
 motivos, y tres vendedoras con el mismo número sin marcar ninguna. ⚠️ El fixture viejo
 (PEPITO y JUANITO con la nota 645) sigue marcando porque las dos son de la MISMA vendedora.
 
+### El otro lugar que tenía la regla vieja
+La batería lo cazó sola: `tests/test_productos_mes.cjs` (de la otra herramienta, §4dd) se
+puso en rojo con *«conserva y advierte las notas repetidas entre vendedores»*. **El código
+no hacía falta tocarlo**: `productos-mes.js` llama al mismo `indiceDuplicados`, así que
+heredó la regla nueva sola. Lo que estaba viejo era **lo que el test esperaba** — su fixture
+tiene la nota «102» compartida por Fernando Peinado (Cliente 102) y Juan Pablo (Cliente
+104): vendedores distintos, clientes distintos, o sea el caso legítimo.
+Los dos checks se reescribieron conservando lo que de verdad cuidaban: que las dos ventas
+**se conserven** (ese archivo nunca deduplica por nota, y eso sigue firme) y que el período
+y el criterio viajen en las dos hojas del Excel. 29 checks, en verde.
+⚠️ Si la otra herramienta vuelve a tocar ese test, que no reponga el aviso: la regla la
+dictó el dueño.
+
 ## 4fa. El cartel del 404 acusaba a la causa equivocada — y el consejo era peligroso (2026-09-21)
 
 A un vendedor (Juan Pablo) le salió al subir un comprobante: *«No se pudo subir el
