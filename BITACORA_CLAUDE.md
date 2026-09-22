@@ -7430,6 +7430,231 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fi. El cartel decía «Conectado» con el 404 a la vista (2026-09-22)
+
+> *«y tb sale eso a pesar de estar conectado»* — el dueño, 22/09, con una captura donde arriba
+> dice en verde **«Conectado a Google Sheets. Todos los pedidos del equipo aparecen acá»** y
+> abajo, en la misma pantalla, el aviso naranja **«No se pudo actualizar (Google contestó 404
+> en ESTE navegador…)»**.
+
+### Qué pasaba
+`renderConnEstado` **sí** sabe ponerse en naranja: mira `CARGA_ESTADO`. Pero el que lo pone en
+`'error'` es `cargaInicial`/`refrescarEstado`, y **`loadFromServer` —el 🔄 Actualizar de
+Administración— no tocaba nada**: en su `.catch` solo tiraba el toast. Entonces el panel
+quedaba diciendo «Conectado» en verde mientras la lectura fallaba.
+
+Y no es cosmético. Si la planilla no se pudo leer, **todo lo que se está mirando es la copia
+guardada en el dispositivo**: los cupos, quién debe, el stock, el parte del día. Eso es
+exactamente lo que hace parecer que un pedido movido «no liberó el cupo» (§4fh): el pedido se
+movió, pero el número que se está leyendo es de una lectura vieja.
+
+### Lo que se hizo
+- `loadFromServer` ahora deja `ULTIMO_ERROR` y `cargaEstado('error')` cuando falla —y
+  `cargaEstado('ok')` + `renderCupoForm()` cuando anda—, así el cartel de arriba dice la
+  verdad y el de abajo se repinta. La rama «respuesta inesperada» hace lo mismo.
+- **`desdeCuandoLaCopia()`**: el cartel de error dice **de cuándo es** lo que se está mirando
+  («leída hace 1 hora — puede estar vieja», o «Nunca se pudo leer la planilla en este
+  dispositivo»). Sin eso, una copia de hace horas se lee como si fuera de ahora.
+- **`cupoViejoAviso()`** en el contador de cupos: «⚠️ Ojo: este número es de la copia guardada
+  en este equipo (leída hace N min), porque no se pudo leer la planilla (motivo). Tocá 🔄
+  Actualizar y mirá de nuevo». Va **donde se lo está mirando**, no solo arriba.
+
+### Tests
+`tests/test_cupos.js` (17 → **23**), sección 7: con `apiList` rechazando un `http404`, el
+cartel deja de decir «Conectado», dice el motivo en castellano y de cuándo es la copia; el
+contador de cupos lleva el aviso; y **cuando el servidor vuelve, todo vuelve a verde** y el
+aviso desaparece (esa última es la que cuida que el arreglo no deje el panel en naranja para
+siempre).
+
+### Lo que NO se arregló acá
+El **404 en sí** sigue siendo lo de §4do/§4dp: `/exec` contesta con un redirect a una dirección
+temporal de `script.googleusercontent.com` que el navegador guarda, y cuando esa dirección se
+vence el navegador devuelve 404 aunque el Apps Script esté perfecto. La prueba de 20 segundos
+sigue siendo **abrir el panel en incógnito**. Y **no volver a implementar**: cada
+«Nueva implementación» estrena otra dirección y empeora el enredo.
+
+## 4fh. Los cupos del camión: son DOS bolsas, y ahora se ve quién las ocupa (2026-09-22)
+
+> *«edité un pedido le puse fecha 24 y NO LIBERO EL ESPACIO DEL 23 que se supone que ya esta
+> libre. porque?»* — el dueño, 22/09, con la captura del cartel rojo «Turno AM lleno para el
+> 23/09/2026 (12/12) · AM: 0/12 · PM: 0/13 libres» y, al lado, el pedido ya movido al 24.
+
+### La regla, que el cartel no decía
+`cuposUsadosTurno(fecha, turno)` cuenta las filas de `STATE` con **esa fecha Y ese turno**, y
+el portero del `.gs` (`doSave`, col B = fecha, col H = turno) cuenta exactamente igual: los
+dos coinciden, no hay discrepancia entre panel y servidor. O sea que son **dos bolsas
+separadas** —12 en 🌅 AM, 13 en 🌆 PM, 15 el sábado y solo AM— y **mover un pedido de la tarde
+no destraba la mañana**. Con las dos llenas (0/12 y 0/13 = 25 pedidos) sacar uno de PM deja el
+cartel de AM igual de rojo, que es lo que se vio.
+
+Qué **no** ocupa cupo, y por qué: las **ventas de tienda**, los **retiros de efectivo**
+(`__ret_…__`) y los **borradores de Kommo** van con la **fecha vacía a propósito** — el
+portero solo cuenta `if (foundRow < 0 && p.fecha)`. Lo **entregado sí** sigue contando: ese
+bulto ya se subió al camión de ese día.
+
+Las otras dos causas reales, en orden: (1) **esa pantalla no volvió a bajar la planilla** —el
+contador mira la memoria de ese dispositivo, así que editar en el celular y mirar el cupo en
+la compu da el número viejo hasta que refresque—; (2) **otra vendedora agarró el lugar** en el
+minuto que pasó.
+
+### 🔴 Y la causa de verdad: el cartel mostraba el LÍMITE, no lo que hay
+> *«PERO YO MOVI UN PEDIDO DEL 23 QUE ERA AM PARA EL 24 y debio liberar el espacio para el 23
+> que estaba ocupando... O NO?»* — sí, y lo liberaba. Lo que no se movía era el cartel.
+
+`'('+limSel+'/'+limSel+')'` — el número salía del **límite**, imprimido dos veces, y los libres
+iban con `Math.max(0, …)`. O sea que un turno con **13** se veía EXACTAMENTE igual que uno con
+12: `(12/12)` y `0/12 libres` en los dos casos. Y 13 es un estado real y alcanzable:
+administración puede forzar un pedido de más en un turno lleno (`_forzar` + `asegurarClaveAdmin`,
+y el portero del `.gs` lo deja pasar con `forzar:true`). Entonces el 23 AM tenía 13, se movió
+uno al 24, quedaron 12 — **el cupo se liberó de verdad**— y el cartel siguió igual de rojo, sin
+una sola pista de que algo había cambiado.
+
+Ahora el cartel **cuenta** en vez de calcular: dice `(13/12)` y agrega en ámbar «Hay 13 pedidos
+en AM, 1 más de los 12 que entran — administración forzó alguno. **Sacando uno va a seguir
+lleno**». Lo mismo en el sábado (`/15`) y en el chip de Administración («⚠️ 1 forzado de más
+(13 AM · 9 PM)»).
+
+### Y para poder mirarlo uno mismo
+El cartel daba un número pelado: cuando no cuadra, no hay forma de averiguar por qué sin abrir
+la planilla. Ahora lleva **👀 Ver los N pedidos del turno** (`cupoVerBtn` → `verCuposTurno` →
+`cuposDelTurno`), que abre la lista ordenada por N° del día con OC, cliente, zona, vendedora,
+la marca de entregado y un botón **Ver** que abre cada pedido. El texto de arriba dice en
+letras que el cupo va **por fecha Y por turno** y qué significa que el pedido que se movió
+siga apareciendo («todavía no llegó a la planilla — tocá 🔄»).
+
+### Tests
+`tests/test_cupos.js` (17): la regla fecha+turno, mover de día libera el viejo y ocupa el
+nuevo, pasar de AM a PM descuenta de AM, lo sin fecha no ocupa, el cartel ofrece la lista, la
+lista trae exactamente los del turno pedido, el singular del botón con un solo pedido, y —el
+que cuida el hallazgo— **13 en un turno de 12**: el cartel dice `(13/12)`, avisa que sacar uno
+no alcanza, y al mover uno el número BAJA a 12.
+⚠️ El fixture busca el **próximo miércoles** a propósito: con una fecha fija, o con «mañana»,
+el test se pone rojo los sábados (límite 15 y sin PM) y los domingos (cerrado).
+
+## 4fg. El pago de MENTIRA de una venta «PAGADA sin monto» (2026-09-22)
+
+De la auditoría adversarial del ledger de cobros (la que pidió el dueño tras §4fd). Era el
+hallazgo ALTA-1 y es el caso **normal**, no un borde.
+
+### Qué pasaba
+Una venta que la vendedora marcó PAGADA sin anotar cuánto entró **no tiene renglón** en el
+historial: el campo guarda el método suelto, `Efectivo %IMG`. Para poder mostrarla, `cobrosDe`
+**fabrica** un pago con el monto sacado de `p.cobradoBs` — un campo que **no tiene columna en
+la planilla** (`rowToRec_` no lo devuelve), así que en cuanto el panel relee la lista (al
+abrir y cada minuto, en cualquier dispositivo) vale **0**.
+
+Cualquier cosa que reescribiera el historial escribía ese pago de mentira como renglón real de
+**Bs 0**, `parseCobros` lo tiraba por no tener monto, y `pagado` se recalculaba en **false**:
+
+| | antes | después |
+|---|---|---|
+| `pagado` | **true** | **false** |
+| pagos en la ficha | 1, con sus imágenes | **«— sin pagos registrados —»** |
+| «💵 Anotar el monto» | está | **desaparece** (la única vía de arreglo) |
+| Excel del contador | PAGADO = SÍ | **PAGADO = NO** |
+| aviso | — | **VERDE** «Comprobante adjuntado ✓» |
+
+Y las imágenes quedaban huérfanas en Drive. Lo disparaban **cuatro** caminos, todos ofrecidos
+por la propia pantalla: **📎 Adjuntar comprobante**, la **✕** de una imagen, anotarle un
+**recargo por entrega**, y el **cobro del chofer** desde su ficha.
+
+### El arreglo
+`cobrosDe` le pone la marca **`sinMonto:true`** a ese renglón fabricado, y de ahí sale todo:
+- **`cobrosReales(p)`** = los cobros que existen de verdad. **Todo lo que REESCRIBE
+  `metodoPago` usa esa lista**, nunca `cobrosDe`: `aplicarCobros`, `aplicarEnvios` y
+  `aplicarCompsAnticipo`.
+- **`sueltoDe(p)` + `textoHistorial(p, filas)`**: el anticipo y los cobros *absorben* el método
+  suelto (los dos lo leen del texto crudo), así que solo hace falta volver a ponerlo adelante
+  cuando no queda ninguno de los dos — si no, anotarle un flete le borraba el método y el
+  comprobante a la venta.
+- **`aplicarCompsSinMonto(p, comps)`**: adjuntar o quitar una imagen **no es una operación de
+  plata**. Reescribe solo las imágenes del método suelto y no toca monto, saldo, `pagado`,
+  adelanto ni recargos. `aplicarCobros` deriva ahí cuando, sacado el pago de mentira, **no
+  queda ningún cobro real que escribir**; y la función **se niega** (`return false`) si el
+  campo ya es un historial de verdad, para que el que llamó siga por el camino normal.
+- Si **sí** quedan cobros reales, las imágenes del suelto **se mudan al primero**: nunca
+  quedan huérfanas en Drive. Por eso `choCobrarMetodo` y `choQuitarCobro` pasan `cobrosDe`, no
+  `cobrosVisibles` (que descartaba el renglón —y sus fotos— antes de que nadie lo rescatara).
+- ⚠️ Los **dos** caminos que sí lo convierten en un pago de verdad —**💵 Anotar el monto**
+  (`ctaAnotarMonto`) y corregirle el monto desde la ficha (`ctaGuardarPago`)— hacen
+  `delete c.sinMonto` **a propósito** antes de llamar. Si se toca esa marca, esos dos dejan de
+  funcionar y la venta se queda sin forma de arreglarse.
+
+### Lo que NO se tocó
+La **variante en la misma sesión** (con `cobradoBs` todavía en memoria) ya no materializa un
+`Efectivo 1500` **sin fecha** —plata invisible para el Cuadre del día y del mes—: se queda como
+«sin monto anotado», que es la verdad, y el panel ya tiene el aviso y el botón para arreglarlo.
+La **duplicación de lectura** que nombra §4eu (A cuenta suelto + PAGADA sin monto muestran el
+mismo pago dos veces) sigue ahí y sigue a decisión del dueño; lo que se arregló es que
+`aplicarCompsAnticipo` **ya no la escribe** en la planilla.
+
+### Tests
+`tests/test_sinmonto.js` (32 → **42**), sección 8: adjuntar no despaga, quitar una imagen deja
+la otra, quitar la última no borra el método, solo se borran de Drive las que se quitaron, el
+flete no se lleva el pago, el cobro del chofer se queda con el comprobante, y **«Anotar el
+monto» sigue funcionando** (con fecha y con su comprobante) — ese último es el que cuida que
+el arreglo no haya roto el camino bueno.
+
+## 4ff. La batería daba VERDE con un test cortado por tiempo (2026-09-22)
+
+El mismo día que §4fc (el filtro que no veía «SIN RESUMEN · N fallas»), otra vez, por otro
+agujero. `test_conta_alta` creció con las comprobaciones nuevas del recargo y, con la máquina
+cargada por el `-P 4`, pasó del `timeout 220`. Lo mataron **antes del resumen y antes de su
+primer `✗`**, así que `uno()` cayó en la última rama y lo reportó como **«ok (sin resumen)»**
+—que el filtro daba por verde— con **3 comprobaciones en rojo adentro**.
+
+- `correr.sh` ahora **mira el código de salida**: `124` = cortado por `timeout` y lo dice con
+  todas las letras (`CORTADO POR TIEMPO (400 s)`), y cualquier `exit≠0` sin resumen sale como
+  `SIN RESUMEN (exit N)` con la última línea. El tope subió de 220 s a **400 s**.
+- El filtro de revisión solo acepta **«ok (sin resumen)»** para las suites que de verdad no
+  imprimen resumen (hoy: `test_stock_detalle.cjs`, que cierra con «…: OK»). Cualquier otra que
+  salga así es una falla.
+
+⚠️ La lección de fondo es la misma de §4fc y hay que leerla junto con ella: **una batería en
+verde solo prueba que pasaron los tests que existen, y solo si de verdad corrieron**. Las dos
+veces el error estuvo en cómo se LEE el resultado, no en el resultado.
+
+## 4fe. El recargo por entrega: cuatro maneras de mover plata en silencio (2026-09-22)
+
+Los tres botones del flete —**✏️ Cambiar lo que falta cobrar**, **📎/✕ comprobante** y
+**🗑 Quitar**— no tenían **ninguna** cobertura. Ahí vivían cuatro errores, dos de ellos de los
+más caros de la auditoría.
+
+### 1. El pago de la venta entraba como FLETE
+`CTA_TIPO` solo se reseteaba al **cambiar de venta**, y el camino natural de la pantalla no
+cambia de venta: anotar el flete → «✅ Listo, volver a la venta» (`showContaModal` de la
+MISMA) → registrar el pago. Los Bs 1.000 del cliente se guardaban como **recargo por entrega**:
+la venta seguía diciendo «por cobrar Bs 1.000» y **nunca se cerraba**, el Excel mostraba
+`RECARGO COBRADO 1.150` con `TOTAL COBRADO 0`, y el aviso salía en **verde**. Ahora
+`ctaRegistrarPago` deja `CTA_TIPO='pago'` después de anotar un recargo.
+
+### 2. Cobrar PARTE del flete pactado borraba el resto
+`var ae=enviosDe(p).filter(envioYaCobrado)` tiraba el renglón **pactado entero**: con 100
+pactados y el cliente dando 40, `envioPorCobrar` pasaba a **0**, los 60 que faltaban
+desaparecían y el chofer ya no los pedía. Ahora, si el cobro no cubre lo pactado, queda un
+renglón pactado por el resto.
+
+### 3. Con DOS renglones, ✏️ y ✕ pegaban siempre en el PRIMERO
+`ctaGuardarPago` escribía en `ae[0]` a secas y `ctaEnvioQuitarComp(id, k)` recibía el índice de
+la **imagen**, nunca el del renglón. Corrigiendo el segundo flete (QR 40 → 45): **Bs 60 salían
+de caja, Bs 45 entraban al banco y Bs 15 desaparecían**, y un cobro en efectivo pasaba a
+figurar como QR — justo el descuadre caja-contra-banco que ese botón existe para arreglar. La
+✕ del segundo **borraba de Drive la foto del primero**. Ahora hay **`ctaIdxEnvio(p, i)`** (el
+índice dentro de `enviosDe(p)`) y todos los caminos lo usan: `ctaGuardarPago`,
+`ctaEnvioQuitarComp(id, e, k)`, `ctaEnvioAdjuntar(id, e)` y `COMP_DESTINO={id, envio:true, e}`.
+
+### 4. 🗑 Quitar nombraba uno y se llevaba todos
+El confirm decía «¿Quitar el recargo de Bs 60,00?» y borraba los Bs 100, dejando la foto del
+otro huérfana en Drive. Ahora nombra el **total**, lista los renglones («Son 2 renglones: Bs
+60,00 Efectivo + Bs 45,00 QR») y junta **todas** las fotos antes de borrarlas.
+
+### Tests
+`tests/test_conta_alta.js` (35 → **41**), bloque «🚚 EL RECARGO POR ENTREGA».
+⚠️ Para registrar un pago desde la ficha en un test hay que poner **`CTA_PAGO.comps`**: la
+imagen del respaldo es obligatoria y `ctaRegistrarPago` se planta y abre el gato de
+comprobantes si falta — sin eso el pago no se registra y el test mide otra cosa (me costó tres
+comprobaciones en rojo que parecían del código).
+
 ## 4fd. Lo que encontró el agente del 22/09: el botón 💰 borraba plata (2026-09-22)
 
 Ocho hallazgos. El más caro no era mío y llevaba tiempo ahí.

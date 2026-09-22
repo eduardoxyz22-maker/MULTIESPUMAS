@@ -2481,6 +2481,19 @@ function renderGetLog(g, res, err){
      'Este mismo resumen queda en las propiedades <code>GET_RESUMEN</code> y <code>GET_ULTIMOS</code>, por si el panel no abre.</div>';
   return caja(h);
 }
+/* ---- De cuándo es lo que estoy viendo (§4fi) ----
+   Cuando la planilla no se puede leer, el panel sigue mostrando la copia del dispositivo. Sin
+   decir de cuándo es, esa copia se lee como si fuera de ahora: los cupos, quién debe y el
+   stock parecen al día. De ahí salió *«moví un pedido y no liberó el cupo»* — el pedido se
+   había movido, pero el número era de una lectura vieja. */
+function desdeCuandoLaCopia(){
+  if(!ULTIMO_REFRESCO) return ' <b>Nunca se pudo leer la planilla en este dispositivo.</b>';
+  var m=Math.floor((Date.now()-ULTIMO_REFRESCO)/60000);
+  if(m<1) return ' (leída hace menos de un minuto)';
+  if(m<60) return ' (leída hace <b>'+m+'</b> min)';
+  var h=Math.floor(m/60);
+  return ' (leída hace <b>'+h+(h===1?' hora':' horas')+'</b> — puede estar vieja)';
+}
 function renderConnEstado(){
   var f=document.getElementById('conn-form'), a=document.getElementById('conn-admin');
   var ft=document.getElementById('conn-form-txt'), at=document.getElementById('conn-admin-txt');
@@ -2507,8 +2520,8 @@ function renderConnEstado(){
        se lee como «se rindió» y alguien se queda recargando la página a mano (§4ds). */
     var _re=(CARGA_ESTADO==='reintento' && CARGA_PROXIMO)
       ? (' Reintenta solo en <b>'+Math.max(0,Math.ceil((CARGA_PROXIMO-Date.now())/1000))+' s</b>.') : '';
-    ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.';
-    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' '+(STATE.length?'Estás viendo la copia guardada en este dispositivo.':'Por eso no se ve ningún pedido.');
+    ft.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' Lo que guardes queda en este dispositivo y se manda solo cuando vuelva.'+desdeCuandoLaCopia();
+    at.innerHTML='<b>Sin respuesta del servidor</b> — '+esc(ULTIMO_ERROR||'no contestó')+'.'+_re+' '+(STATE.length?('Estás viendo la copia guardada en este dispositivo'+desdeCuandoLaCopia()+'.'):'Por eso no se ve ningún pedido.');
     return;
   }
   if(CARGA_ESTADO==='cargando' && !ULTIMO_REFRESCO){
@@ -5405,6 +5418,7 @@ function ctaGuardarPago(id, i, igual){
     var objetivo=((Number(c.monto)||0)>0.01) ? objetivoCobro(p) : r2(objetivoCobro(p)+monto);
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
     arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco; arr[idx].recibio=recibio;
+    delete arr[idx].sinMonto;   // §4fg: corregirle el monto es volverlo un pago de verdad
     aplicarCobros(p, arr, objetivo);
   }
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
@@ -5487,8 +5501,31 @@ function aplicarCompsAnticipo(p, comps){
   var ant=anticipoDe(p); if(!ant) return false;
   ant=JSON.parse(JSON.stringify(ant));
   ant.comps=compsArr(comps); ant.comp=ant.comps[0]||''; ant.anticipo=true;
-  var cobros=cobrosDe(p), env=enviosDe(p);          // ⚠️ leerlos ANTES de pisar metodoPago
+  // ⚠️ leerlos ANTES de pisar metodoPago; y `cobrosReales`, no `cobrosDe` (§4fg): el anticipo
+  // y el pago de mentira salen del MISMO texto suelto, así que escribir los dos lo duplicaba.
+  var cobros=cobrosReales(p), env=enviosDe(p);
   p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
+  persistPedido(p);
+  return true;
+}
+/* ---- 📎 Las imágenes de una venta «PAGADA sin monto» (§4fg) ----
+   Esas ventas no tienen renglón en el historial: el campo guarda el método suelto
+   («Efectivo %IMG»), y `cobrosDe` fabrica un pago de mentira para poder mostrarlo. Adjuntar
+   o quitar una imagen NO es una operación de plata: acá se reescriben solo las imágenes de
+   ese método suelto. No se toca el monto, ni el saldo, ni `pagado`, ni el adelanto, ni los
+   recargos. `aplicarCobros` deriva acá solo cuando no queda ningún cobro real que escribir. */
+function aplicarCompsSinMonto(p, comps){
+  var t=sinEnvios(sinMarcaReg(p.metodoPago));
+  /* ⚠️ Si el campo YA es un historial de verdad (alguien le anotó el monto, o el llamador
+     lo reescribió justo antes, como hace la rama del anticipo de `ctaGuardarPago`), acá no
+     hay nada que hacer: se dice que no y el que llamó sigue por el camino normal. */
+  if(parseCobros(t).length) return false;
+  var base=String(compDeTexto(t).txt||'').trim();
+  if(!base) return false;
+  var cs=compsArr(comps), env=enviosDe(p);      // ⚠️ los recargos, ANTES de pisar metodoPago
+  var txt=base+cs.map(function(id){ return ' %'+id; }).join('');
+  if(env.length) txt+=' + '+textoCobros(env);
+  p.metodoPago=conMarcaReg(txt, regEnSistema(p));
   persistPedido(p);
   return true;
 }
@@ -5521,10 +5558,13 @@ function ctaQuitarCompEdit(id, i, k){
   showContaModal(id);
 }
 function aplicarEnvios(p, arr){
-  var ant=anticipoDe(p), cobros=cobrosDe(p);
+  /* ⚠️ `cobrosReales`, no `cobrosDe` (§4fg): en una venta «PAGADA sin monto» el pago de
+     mentira se escribía como «Efectivo 0 %IMG» y la venta perdía el pago y la marca de
+     pagada por haberle anotado un flete. `textoHistorial` le devuelve el método suelto. */
+  var ant=anticipoDe(p), cobros=cobrosReales(p);
   var env=(arr||[]).map(function(c){ c.envio=true; c.anticipo=false; return c; })
                    .filter(function(c){ return (Number(c.monto)||0)>0; });
-  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
+  p.metodoPago=conMarcaReg(textoHistorial(p, (ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
   persistPedido(p);
 }
 /* Anotarle el monto a una venta que se marcó PAGADA sin decir cuánto entró.
@@ -5543,6 +5583,7 @@ function ctaAnotarMonto(id, idx){
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   var otros=0; arr.forEach(function(x,i){ if(i!==idx) otros=r2(otros+(Number(x.monto)||0)); });
   c.monto=monto;
+  delete c.sinMonto;      // §4fg: este es justamente el camino que lo vuelve un pago de verdad
   // Sin fecha propia no entraría en ningún cuadre: se le pone la de la venta.
   var puso=!c.fecha;
   if(puso) c.fecha=contaFecha(p)||todayStr();
@@ -7683,20 +7724,79 @@ function renderCupoForm(){
     var uAMs=cuposUsadosTurno(fecha,'AM'), rAMs=Math.max(0,15-uAMs);
     el.className='cupo '+(rAMs<=0?'full':(rAMs<=3?'warn':'ok'));
     el.innerHTML=(rAMs<=0
-      ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/15 AM). Elegí otra fecha.'
-      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>'+(rAMs<=0?_ed:'');
+      ? '🚫 <b>Sábado lleno</b> ('+uAMs+'/15 AM)'+(uAMs>15?(' — <b>'+(uAMs-15)+'</b> más de los 15 que entran'):'')+'. Elegí otra fecha.'
+      : '🎟️ <b>Sábado</b> '+fmtFecha(fecha)+' — solo turno 🌅 AM: <b>'+rAMs+'</b>/15 libres'+(rAMs<=3?' — ¡quedan pocos!':''))+' <span style="opacity:.75">· los sábados no hay PM</span>'+
+      cupoVerBtn(fecha,'AM')+(rAMs<=0?_ed:'');
     return;
   }
-  var rAM=Math.max(0,CUPOS_AM-cuposUsadosTurno(fecha,'AM')), rPM=Math.max(0,CUPOS_PM-cuposUsadosTurno(fecha,'PM'));
-  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM;
+  var uAM=cuposUsadosTurno(fecha,'AM'), uPM=cuposUsadosTurno(fecha,'PM');
+  var rAM=Math.max(0,CUPOS_AM-uAM), rPM=Math.max(0,CUPOS_PM-uPM);
+  var restSel=turno==='PM'?rPM:rAM, limSel=turno==='PM'?CUPOS_PM:CUPOS_AM, usaSel=turno==='PM'?uPM:uAM;
   var linea='🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres';
   if(restSel<=0){
+    /* ⚠️ El número REAL, no el límite (§4fh). Antes decía «(12/12)» calculado como
+       `lim+'/'+lim`, así que un día con 13 —administración puede forzar uno con la clave,
+       y el portero del servidor lo deja pasar con `forzar`— se veía IDÉNTICO a uno con 12.
+       De ahí el *«moví un pedido del 23 AM al 24 y NO liberó el espacio»*: liberaba, pero
+       de 13 pasaba a 12 y el cartel seguía igual de rojo, sin decir por qué. */
+    var _demas=(usaSel>limSel) ? ('<br>⚠️ Hay <b>'+usaSel+'</b> pedidos en '+turno+', <b>'+(usaSel-limSel)+'</b> más de los '+limSel+' que entran — administración forzó alguno. Sacando uno va a seguir lleno.') : '';
     el.className='cupo full';
-    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+limSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.<br>'+linea+_ed;
+    el.innerHTML='🚫 <b>Turno '+turno+' lleno</b> para el '+fmtFecha(fecha)+' ('+usaSel+'/'+limSel+'). Elegí el <b>otro turno</b> o <b>otra fecha</b>.'+_demas+'<br>'+linea+
+      cupoVerBtn(fecha, turno)+_ed;
   }else{
     el.className='cupo '+(restSel<=3?'warn':'ok');
-    el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'');
+    el.innerHTML='🎟️ Cupos del '+fmtFecha(fecha)+' — '+linea+(restSel<=3?(' — ¡quedan pocos en '+turno+'!'):'')+
+      cupoVerBtn(fecha, turno);
   }
+}
+/* ---- 👀 Quiénes ocupan el turno (§4fh) ----
+   *«edité un pedido, le puse fecha 24 y NO LIBERÓ EL ESPACIO DEL 23»* (dueño, 22/09). El
+   contador dice un número y nada más, así que cuando no cuadra no hay forma de saber POR QUÉ
+   sin abrir la planilla: el cupo se cuenta por FECHA **y TURNO**, y mover un pedido de la
+   mañana no destraba la tarde (ni al revés). Con la lista al lado del cartel se ve en dos
+   segundos si el que se movió sigue ahí, si lo agarró otra vendedora, o si el día está lleno
+   de verdad. Cuenta lo mismo que el portero del servidor: TODAS las filas de ese día y turno
+   (entregadas incluidas — el bulto ya fue al camión), salvo las que no llevan fecha (ventas
+   de tienda, retiros y borradores de Kommo, que por eso nunca ocupan cupo). */
+function cupoVerBtn(fecha, turno){
+  var n=cuposUsadosTurno(fecha, turno);
+  return cupoViejoAviso()+(n
+    ? ('<br><button type="button" class="btn btn-ghost btn-sm" style="margin-top:7px" onclick="verCuposTurno(\''+esc(fecha)+'\',\''+esc(turno)+'\')">👀 Ver '+(n===1?('el pedido del turno '):('los '+n+' pedidos del turno '))+esc(turno)+'</button>')
+    : '');
+}
+/* ⚠️ El cupo se cuenta sobre `STATE`, y si la última lectura falló eso es la COPIA GUARDADA
+   en el dispositivo (§4fi). Entonces el número puede ser de hace horas —de ahí *«moví un
+   pedido y no liberó el cupo»*— y hay que decirlo donde se lo está mirando, no solo arriba. */
+function cupoViejoAviso(){
+  if(!CONNECTED || (CARGA_ESTADO!=='error' && CARGA_ESTADO!=='reintento')) return '';
+  return '<br>⚠️ <b>Ojo: este número es de la copia guardada en este equipo</b>'+desdeCuandoLaCopia()+
+         ', porque no se pudo leer la planilla'+(ULTIMO_ERROR?(' ('+esc(ULTIMO_ERROR)+')'):'')+'. Tocá 🔄 Actualizar y mirá de nuevo.';
+}
+function cuposDelTurno(fecha, turno){
+  var t=normTurno(turno);
+  return STATE.filter(function(p){ return p && p.fecha===fecha && normTurno(p.turno)===t; })
+              .sort(function(a,b){ return (Number(a.nroDia)||0)-(Number(b.nroDia)||0); });
+}
+function verCuposTurno(fecha, turno){
+  var l=cuposDelTurno(fecha, turno), lim=limTurno(fecha, turno);
+  openModal('<div class="modal-h"><h3>🎟️ Turno '+esc(turno)+' del '+esc(fmtFecha(fecha))+'</h3>'+
+    '<button class="modal-x" onclick="closeModal()">✕</button></div>'+
+    '<p style="font-size:.85rem;color:var(--muted);margin:0 0 10px">'+l.length+' de '+lim+' cupos ocupados. '+
+    'El cupo se cuenta <b>por fecha Y por turno</b>: mover un pedido de 🌅 AM no libera lugar en 🌆 PM. '+
+    'Si moviste uno y sigue en esta lista, todavía no llegó a la planilla — tocá 🔄 y mirá de nuevo.</p>'+
+    (l.length ? ('<div style="max-height:60vh;overflow:auto">'+l.map(function(p,i){
+        return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-top:1px solid var(--line);font-size:.86rem">'+
+          '<b style="min-width:26px;color:var(--muted)">'+(i+1)+'.</b>'+
+          '<b>'+esc(ocEtiq(p.oc)||'—')+'</b>'+
+          '<span>'+esc(p.cliente||'(sin cliente)')+'</span>'+
+          '<span style="color:var(--muted)">'+esc(p.zona||'')+'</span>'+
+          '<span style="color:var(--muted)">'+esc(p.vendedor||'')+'</span>'+
+          (p.entregado?'<span class="badge b-green">entregado</span>':'')+
+          '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="closeModal();showPedidoModal(\''+esc(String(p.id))+'\')">Ver</button>'+
+        '</div>';
+      }).join('')+'</div>')
+     : '<p style="font-size:.9rem">No hay ningún pedido en este turno.</p>')+
+    '<div class="modal-actions"><button class="btn btn-sm" style="width:100%" onclick="closeModal()">Cerrar</button></div>', true);
 }
 /* Vuelve a bajar la planilla: así se entera de los DÍAS CERRADOS y de los cupos que
    cargó otra computadora. Devuelve una promesa que NUNCA rechaza — si falla la red se
@@ -8755,10 +8855,25 @@ function loadFromServer(showToastOk){
       ULTIMO_REFRESCO=Date.now();
       saveMirror(); updateStats(); renderAdmin(); updateFooter();
       if(showToastOk) toast('Actualizado ✓','ok');
-    }else{ renderAdmin(); toast('Respuesta inesperada del servidor','err'); }
+      ULTIMO_ERROR=''; cargaEstado('ok');           // §4fi: el cartel vuelve a verde recién acá
+      renderCupoForm();
+    }else{
+      renderAdmin();
+      ULTIMO_ERROR='el servidor contestó algo que el panel no entiende';
+      cargaEstado('error');
+      toast('Respuesta inesperada del servidor','err');
+    }
   }).catch(function(e){
     setAdminLoading(false); renderAdmin();
-    toast('No se pudo actualizar ('+motivoDeError(e)+'): estás viendo la copia guardada en este equipo','err',8000);
+    /* ⚠️ EL CARTEL TIENE QUE DECIR LA VERDAD (§4fi). Antes este camino solo tiraba el aviso
+       naranja abajo, sin tocar `CARGA_ESTADO` ni `ULTIMO_ERROR`: arriba seguía el cartel VERDE
+       «Conectado a Google Sheets. Todos los pedidos del equipo aparecen acá», con el 404 a la
+       vista en la misma pantalla. Y no es cosmético: si no se pudo leer la planilla, lo que se
+       está mirando —los cupos, quién debe, el stock— es la copia guardada en el dispositivo,
+       que es justo lo que hace parecer que un pedido movido «no liberó el cupo» (§4fh). */
+    ULTIMO_ERROR=motivoDeError(e);
+    cargaEstado('error');
+    toast('No se pudo actualizar ('+ULTIMO_ERROR+'): estás viendo la copia guardada en este equipo','err',8000);
   });
 }
 
@@ -9024,8 +9139,12 @@ function renderAdmin(){
       cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'');
     }else{
       var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
+      // §4fh: si administración forzó alguno, el día tiene MÁS de los que entran — y hay que decirlo.
+      var uA=cuposUsadosTurno(cdia,'AM'), uP=cuposUsadosTurno(cdia,'PM');
+      var demas=(uA>lAM?(uA-lAM):0)+(uP>lPM?(uP-lPM):0);
       cupoEl.className='cupo '+(full?'full':(pocos?'warn':'ok'));
-      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'');
+      cupoEl.innerHTML='🎟️ Cupos del '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/'+CUPOS_AM+' · 🌆 PM: <b>'+rPM+'</b>/'+CUPOS_PM+' libres'+(full?' — <b>LLENO</b>':'')+
+        (demas?(' · ⚠️ <b>'+demas+'</b> forzado'+(demas===1?'':'s')+' de más ('+uA+' AM · '+uP+' PM)'):'');
     }
   }
 }
@@ -10938,7 +11057,12 @@ function choCobrarMetodo(id, metodo){
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
       '¿Lo anoto igual?')) return;
   }
-  var arr=cobrosVisibles(p).slice();
+  /* ⚠️ `cobrosDe`, NO `cobrosVisibles` (§4fg): si la venta venía «PAGADA sin monto», el pago
+     de mentira que `cobrosVisibles` descarta se lleva consigo el comprobante que subió la
+     vendedora — el historial se reescribía como «Efectivo 300 @hoy» y el `%IMG` quedaba
+     huérfano en Drive. Pasándolo entero, `aplicarCobros` lo saca igual pero le muda las
+     imágenes a este cobro. */
+  var arr=cobrosDe(p).slice();
   /* §4eq: el cobro del chofer lleva la FECHA de hoy (el cuadre corta por fecha del pago; sin
      fecha esta plata no entraba en ningún día ni mes y quedaba como «pago sin fecha») y, si
      es efectivo, QUIÉN la tiene: el chofer que está mirando su ficha, o el asignado. */
@@ -10953,7 +11077,10 @@ function choCobrarMetodo(id, metodo){
 }
 function choQuitarCobro(id, idx){
   var p=findById(id); if(!p) return;
-  var arr=cobrosVisibles(p).slice();
+  /* El índice viene de `cobrosVisibles`, pero los dos arreglos son el MISMO salvo por el
+     pago de mentira (§4fg), que solo existe cuando no hay ningún cobro real: cuando este
+     botón se dibuja, coinciden. Se pasa el completo para no perderle las imágenes. */
+  var arr=cobrosDe(p).slice();
   if(idx<0 || idx>=arr.length) return;
   if(!confirm('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?')) return;
   arr.splice(idx,1);
@@ -12239,7 +12366,12 @@ function cobrosDe(p){
   if(p.pagado && t && !todo.filter(function(c){ return !esEnvio(c); }).length){
     var cd=compDeTexto(t);
     // Mismo cuidado que en anticipoDe(): van TODAS las imágenes, no solo la primera.
-    return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comps:cd.comps, comp:cd.comp}];
+    /* ⚠️ `sinMonto` = ESTE PAGO NO EXISTE EN LA PLANILLA (§4fg). Es un renglón fabricado acá
+       para poder MOSTRAR la venta; su monto sale de `p.cobradoBs`, un campo que `rowToRec_`
+       no devuelve, así que apenas el panel relee la lista vale 0. Escribirlo como renglón
+       de verdad dejaba la venta SIN PAGO y SIN PAGAR. `aplicarCobros` lo reconoce por esta
+       marca y nunca lo materializa. */
+    return [{metodo:metodoBase(cd.txt)||String(cd.txt), banco:bancoDe(cd.txt), monto:r2(p.cobradoBs), fecha:'', nota:'', comps:cd.comps, comp:cd.comp, sinMonto:true}];
   }
   return [];
 }
@@ -12286,6 +12418,29 @@ function metodoFormulario(rec){
   // rehacer el historial, las demás desaparecían.
   return { metodo:c.metodo||'', banco:c.banco||'', comp:c.comp||'', comps:compsArr(c.comps!=null?c.comps:c.comp) };
 }
+/* Los cobros que EXISTEN en la planilla: el pago de mentira de una venta «PAGADA sin monto»
+   (§4fg) queda afuera. Todo lo que REESCRIBE `metodoPago` usa esta lista, nunca `cobrosDe`:
+   escribirlo lo convertía en un renglón real de Bs 0 que `parseCobros` después tiraba. */
+function cobrosReales(p){ return cobrosDe(p).filter(function(c){ return !c.sinMonto; }); }
+/* El MÉTODO SUELTO: «Efectivo %IMG» a secas, sin renglón propio. Lo deja o la vendedora que
+   marcó la venta pagada sin anotar cuánto, o la que solo eligió con qué se va a pagar.
+   '' si el campo ya es un historial de verdad. */
+function sueltoDe(p){
+  var t=sinEnvios(sinMarcaReg(p&&p.metodoPago));
+  return (t && !parseCobros(t).length) ? String(t).trim() : '';
+}
+/* Arma el texto del historial SIN perder el método suelto (§4fg). El anticipo y los cobros
+   se lo absorben —los dos lo leen del texto crudo—, así que solo hace falta volver a
+   ponerlo adelante cuando no queda ninguno de los dos: si no, agregarle un recargo por
+   entrega a una venta «PAGADA sin monto» le borraba el método y el comprobante. */
+function textoHistorial(p, filas){
+  filas=filas||[];
+  var txt=textoCobros(filas);
+  if(filas.some(function(c){ return !esEnvio(c); })) return txt;
+  var s=sueltoDe(p);
+  if(!s) return txt;
+  return txt ? (s+' + '+txt) : s;
+}
 function totalCobrado(p){ var t=0; cobrosDe(p).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); }
 /* Lo que el vendedor dijo que hay que cobrar = lo que falta + lo ya cobrado.
    Se calcula así para que siga siendo el mismo número a medida que entran los pagos. */
@@ -12314,6 +12469,35 @@ function cobrosResumen(p){
 function aplicarCobros(p, arr, objetivoForzado){
   var objetivo=(objetivoForzado==null)?objetivoCobro(p):r2(objetivoForzado), total=0;
   var cobros=(arr||[]).filter(function(c){ return !c.anticipo; });
+  /* ⚠️ EL PAGO DE MENTIRA (§4fg). Una venta que la vendedora marcó «PAGADA» sin anotar
+     cuánto entró no tiene renglón en el historial: el campo guarda el método suelto
+     («Efectivo %IMG»). `cobrosDe` fabrica un pago para poder mostrarlo, con el monto sacado
+     de `p.cobradoBs` — que NO viaja en la planilla, así que en cualquier dispositivo que
+     releyó la lista vale 0. Escribirlo acá lo convertía en un renglón real de Bs 0,
+     `parseCobros` lo tiraba, y la venta quedaba sin pago, sin comprobantes visibles y
+     marcada como NO pagada — todo por tocarle una imagen, que no es una operación de plata.
+     Se lo saca de la lista; sus imágenes se mudan al primer cobro REAL para que no queden
+     huérfanas en Drive, y si no hay ninguno se reescribe solo el método suelto. */
+  var huboSuelto=false, sueltoComps=[];
+  cobros=cobros.filter(function(c){
+    if(c && c.sinMonto){
+      huboSuelto=true;
+      sueltoComps=sueltoComps.concat(compsArr(c.comps!=null?c.comps:c.comp));
+      return false;
+    }
+    return true;
+  });
+  /* Los DOS caminos que sí convierten ese pago de mentira en uno real —«💵 Anotar el monto»
+     (`ctaAnotarMonto`) y corregirle el monto desde la ficha (`ctaGuardarPago`)— le sacan la
+     marca a propósito antes de llamar acá, así que no entran en este filtro. */
+  if(huboSuelto){
+    if(!cobros.length && aplicarCompsSinMonto(p, sueltoComps)) return;
+    if(cobros.length){
+      var _c1=cobros[0];
+      _c1.comps=compsArr(compsArr(_c1.comps!=null?_c1.comps:_c1.comp).concat(sueltoComps));
+      _c1.comp=_c1.comps[0]||'';
+    }
+  }
   cobros.forEach(function(c){ total+=Number(c.monto)||0; });
   total=r2(total);
   // El anticipo se relee ANTES de reescribir el campo y se vuelve a escribir siempre,
@@ -12322,7 +12506,7 @@ function aplicarCobros(p, arr, objetivoForzado){
   /* ⚠️ Los recargos se releen ANTES de reescribir el campo y se vuelven a escribir
      siempre, igual que el anticipo: si no, el primer cobro se los llevaba puestos. */
   var env=enviosDe(p);
-  p.metodoPago=conMarcaReg(textoCobros((ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
+  p.metodoPago=conMarcaReg(textoHistorial(p, (ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
   p.cobradoBs=total;
   p.saldo=r2(objetivo-total);            // puede quedar NEGATIVO: cobraron de más y hay que verlo
   /* Una venta cuyo precio entero fue el ADELANTO (objetivo 0, sin cobros) está PAGADA (§4eu):

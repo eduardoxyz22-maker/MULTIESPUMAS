@@ -339,6 +339,27 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 18/09; `choferesParaSelect(p)` conserva el guardado en un pedido viejo). No se lleva la mano de
 Eduardo. `tests/test_chofer_efectivo.js`.
 
+## 🎟️ Cupos del camión (§4fh)
+- Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM, domingo cerrado).
+  `cuposUsadosTurno(fecha,turno)` y el portero del `.gs` (`porteroFecha_`) cuentan **igual**:
+  todas las filas de esa fecha **y ese turno**, entregadas incluidas. **Mover un pedido de AM
+  no libera lugar en PM.** Lo que va con **fecha vacía a propósito** —ventas de tienda, retiros
+  (`__ret_…__`), filas del sistema y borradores de Kommo— nunca ocupa cupo.
+- ⚠️ **Un turno puede tener MÁS de los que entran**: administración fuerza uno con la clave
+  (`_forzar`, y el `.gs` lo acepta con `forzar:true`). El cartel decía `(12/12)` porque
+  imprimía el **límite** dos veces, así que 13 se veía igual que 12 y sacar uno «no liberaba
+  nada». Ahora **cuenta**: `(13/12)` + aviso de cuántos sobran. No volver a armar ese texto
+  con `lim+'/'+lim`.
+- **👀 Ver los N pedidos del turno** (`cupoVerBtn` → `verCuposTurno`/`cuposDelTurno`) abre la
+  lista con OC, cliente, zona, vendedora y un botón para abrir cada pedido.
+- ⚠️ **El número sale de `STATE`, que puede ser la COPIA del dispositivo** (§4fi): si la última
+  lectura falló, el cupo puede ser de hace horas. `cupoViejoAviso()` lo dice ahí mismo, y
+  `loadFromServer` ya deja `CARGA_ESTADO='error'` + `ULTIMO_ERROR` (antes solo tiraba un toast
+  y el cartel seguía en verde diciendo «Conectado» con el 404 a la vista).
+  `desdeCuandoLaCopia()` dice de cuándo es lo que se mira.
+- `tests/test_cupos.js` (23). ⚠️ El fixture busca el **próximo miércoles**: con fecha fija o con
+  «mañana» se pone rojo los sábados (15 y sin PM) y los domingos.
+
 ## 💰 Plata anotada que no se puede perder (§4eu)
 - **`p.acuenta` = TODO el adelanto** (anticipo + 2° método del pago mixto, §4ej); la ficha
   de Contabilidad muestra solo el anticipo (`anticipoDe`), así que `aplicarMontos` y la rama
@@ -350,6 +371,27 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   `pintarEnvioCobrado` lo fuerza a «NO» y guardar sin tocar borraba un flete cobrado entero).
 - **`aplicarCobros`**: una venta cuyo precio entero fue el adelanto (objetivo 0) está pagada;
   corregir un cobro SIN monto suma el monto al objetivo (como `ctaAnotarMonto`).
+- **🚚 Los tres botones del recargo por entrega** (§4fe): `CTA_TIPO` vuelve a `'pago'` después
+  de anotar un flete (si no, el pago siguiente entraba como flete y la venta no se cerraba
+  nunca); un cobro PARCIAL deja el resto pactado; **`ctaIdxEnvio(p,i)`** dice CUÁL renglón se
+  está tocando (`ae[0]` a secas pisaba el primero: efectivo que figuraba como QR); y 🗑 Quitar
+  nombra el total, lista los renglones y junta TODAS las fotos. `tests/test_conta_alta.js`.
+  ⚠️ En un test, registrar un pago desde la ficha exige **`CTA_PAGO.comps`**: sin imagen,
+  `ctaRegistrarPago` se planta y abre el gato de comprobantes — el pago no se registra.
+- **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen
+  renglón —el campo guarda el método suelto, `Efectivo %IMG`— y `cobrosDe` fabrica uno con el
+  monto de **`p.cobradoBs`**, que NO viaja en la planilla (vale 0 apenas se relee la lista).
+  Lleva la marca **`sinMonto:true`**, y **todo lo que REESCRIBE `metodoPago` usa
+  `cobrosReales(p)`, nunca `cobrosDe`** (`aplicarCobros`, `aplicarEnvios`,
+  `aplicarCompsAnticipo`): escribirlo lo volvía un renglón de Bs 0 que `parseCobros` tiraba, y
+  la venta quedaba sin pago, sin comprobantes y NO pagada por tocarle una imagen.
+  `sueltoDe`/`textoHistorial` le devuelven el método suelto cuando no queda ni anticipo ni
+  cobro; `aplicarCompsSinMonto` reescribe SOLO las imágenes (adjuntar no es una operación de
+  plata); y si queda algún cobro real, las imágenes del suelto **se mudan al primero** (por eso
+  `choCobrarMetodo`/`choQuitarCobro` pasan `cobrosDe`, no `cobrosVisibles`).
+  ⚠️ **`ctaAnotarMonto` y `ctaGuardarPago` hacen `delete c.sinMonto` a propósito**: son los dos
+  caminos que SÍ lo vuelven un pago de verdad. Si se toca esa marca, dejan de funcionar.
+  `tests/test_sinmonto.js` sección 8.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo

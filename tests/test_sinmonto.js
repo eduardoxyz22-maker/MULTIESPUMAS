@@ -141,6 +141,80 @@ const chk=(l,c,extra)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, extra!
   chk('  y la pagada sigue siendo SÍ', r.s5==='SÍ', 'PAGADO='+r.s5);
   chk('  y el export de verdad lo usa (no solo el cálculo del test)', r.enFuente===true, '');
 
+  /* ══ 8. EL PAGO DE MENTIRA (§4fg) ════════════════════════════════════════════════
+     Una venta «PAGADA sin monto» no tiene renglón en el historial: el campo guarda el
+     método suelto («Efectivo %IMG»). `cobrosDe` fabrica un pago para poder mostrarlo, con
+     el monto sacado de `p.cobradoBs` — un campo que NO tiene columna en la planilla, así
+     que en cualquier dispositivo que releyó la lista vale 0. Escribirlo como renglón de
+     verdad lo convertía en «Efectivo 0», `parseCobros` lo tiraba, y la venta quedaba SIN
+     PAGO, SIN COMPROBANTES y marcada como NO PAGADA — por tocarle una imagen. */
+  r = await page.evaluate(async () => {
+    var hoy=todayStr(), ts=new Date(new Date().setHours(12,0,0,0)).getTime();
+    var base={fecha:hoy,turno:'AM',celular:'7',nit:'1',zona:'Norte',direccion:'X',
+              vendedor:'Carola Chavez',chofer:'Juan',productos:[{desc:'A',cant:1,precio:1500}],ts:ts};
+    var P=function(o){ var q={}; for(var k in base)q[k]=base[k]; for(var k2 in o)q[k2]=o[k2]; return q; };
+    var pagada=function(id,met){ return P({id:id, nota:'96'+id, oc:'09-96'+id, cliente:'PAGADA SIN MONTO '+id,
+                                           acuenta:0, saldo:0, pagado:true, metodoPago:met||'Efectivo %IMGV'}); };
+    var out={}, fuera=[];
+    apiBorrarFoto=function(f){ fuera.push(f); return Promise.resolve({ok:true}); };
+    var foto=function(p){ return {pagado:!!p.pagado, saldo:r2(Number(p.saldo)||0), txt:p.metodoPago,
+                                  comps:(cobrosDe(p)[0]||{}).comps||[], n:cobrosDe(p).length}; };
+
+    // (a) adjuntar una 2ª imagen (el camino real: COMP_DESTINO + onCompElegido)
+    STATE=[pagada('1')];
+    window.fotoCronometro=function(){ return Promise.resolve('data:image/jpeg;base64,AA'); };
+    window.subirFoto=function(){ return Promise.resolve({ok:true, fotoId:'NUEVA', version:'x'}); };
+    showContaModal('1');
+    COMP_DESTINO={id:'1', idx:0};
+    onCompElegido({ target:{ files:[{name:'x.jpg'}], dataset:{pedido:'1'} } });
+    await new Promise(r=>setTimeout(r,150));
+    out.adjuntar=foto(findById('1'));
+
+    // (b) quitar UNA de las dos imágenes
+    STATE=[pagada('2','Efectivo %I1 %I2')];
+    ctaQuitarComp('2', 0, 1);
+    out.quitarUna=foto(findById('2'));
+
+    // (c) quitar la ÚNICA imagen: la venta tiene que seguir pagada y con su método
+    STATE=[pagada('3','Efectivo %I1')];
+    ctaQuitarComp('3', 0, 0);
+    out.quitarTodas=foto(findById('3'));
+
+    // (d) anotarle un recargo por entrega encima
+    STATE=[pagada('4')];
+    aplicarEnvios(findById('4'), [{metodo:'Efectivo', monto:80, fecha:hoy, nota:'964', comps:['FL1']}]);
+    out.conFlete=foto(findById('4'));
+    out.flete=envioCobrado(findById('4'));
+
+    // (e) el chofer anota un cobro: el comprobante de la vendedora NO puede quedar huérfano
+    STATE=[pagada('5')];
+    CHO_TODOS=false;
+    var arr=cobrosDe(findById('5')).slice();
+    arr.push({metodo:'Efectivo', monto:300, fecha:hoy, recibio:'Luis Pierre'});
+    aplicarCobros(findById('5'), arr);
+    out.chofer=foto(findById('5'));
+
+    // (f) «💵 Anotar el monto» SÍ lo vuelve un pago de verdad (no se rompió el camino bueno)
+    STATE=[pagada('6')];
+    window.prompt=function(){ return '1500'; };
+    ctaAnotarMonto('6', 0);
+    var p6=findById('6');
+    out.anotar={ cobrado:totalCobrado(p6), pagado:!!p6.pagado, saldo:r2(Number(p6.saldo)||0),
+                 conFecha:!!(cobrosDe(p6)[0]||{}).fecha, comps:(cobrosDe(p6)[0]||{}).comps||[] };
+    out.borradas=fuera;
+    return out;
+  });
+  chk('§4fg · adjuntar un comprobante NO desmarca la venta de pagada', r.adjuntar.pagado===true && r.adjuntar.n===1, JSON.stringify(r.adjuntar));
+  chk('  …y la imagen nueva queda, sin inventar un renglón de Bs 0', r.adjuntar.txt==='Efectivo %IMGV %NUEVA', r.adjuntar.txt);
+  chk('§4fg · quitar UNA imagen deja la otra y la venta sigue pagada', r.quitarUna.txt==='Efectivo %I1' && r.quitarUna.pagado===true, r.quitarUna.txt);
+  chk('§4fg · quitar la ÚLTIMA imagen no borra el método ni despaga la venta', r.quitarTodas.txt==='Efectivo' && r.quitarTodas.pagado===true, r.quitarTodas.txt);
+  chk('  …y solo se borran de Drive las que se quitaron', JSON.stringify(r.borradas)==='["I2","I1"]', JSON.stringify(r.borradas));
+  chk('§4fg · anotarle el flete no se lleva el pago ni el comprobante', r.conFlete.pagado===true && /^Efectivo %IMGV \+ \^Efectivo 80/.test(r.conFlete.txt), r.conFlete.txt);
+  chk('  …y el flete sí queda cobrado', r.flete===80, r.flete);
+  chk('§4fg · el cobro del chofer se queda con el comprobante (nada huérfano en Drive)', JSON.stringify(r.chofer.comps)==='["IMGV"]', r.chofer.txt);
+  chk('§4fg · «Anotar el monto» SIGUE volviéndolo un pago de verdad', r.anotar.cobrado===1500 && r.anotar.pagado===true && r.anotar.saldo===0, JSON.stringify(r.anotar));
+  chk('  …con fecha (si no, no entra en ningún cuadre) y con su comprobante', r.anotar.conFecha===true && JSON.stringify(r.anotar.comps)==='["IMGV"]', JSON.stringify(r.anotar));
+
   chk('sin errores JS', errors.length===0, errors.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
