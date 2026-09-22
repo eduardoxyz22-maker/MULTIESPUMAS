@@ -9,14 +9,20 @@ cd "$(dirname "$0")/.." || exit 1
 # suites que arman fechas con `new Date()` en Node (roho, existencias) fallan sin que
 # nada esté roto (§4de). Se fija la zona para que los dos relojes digan lo mismo.
 export TZ="${TZ:-America/La_Paz}"
+# ⚠️ El 22/09 `test_conta_alta` creció, pasó de 220 s con la máquina cargada y `timeout` lo
+# mató ANTES del resumen y ANTES de su primer ✗: salía «ok (sin resumen)» —o sea, verde— con
+# 3 comprobaciones en rojo adentro. Por eso ahora se mira el CÓDIGO DE SALIDA: 124 es
+# `timeout`, y cualquier exit≠0 sin resumen se dice en voz alta. El tope subió a 400 s.
 uno(){
   f="$1"; n=$(basename "$f" .js)
-  out=$(timeout 220 node "$f" 2>&1)
+  out=$(timeout 400 node "$f" 2>&1); rc=$?
   bad=$(echo "$out" | grep -c '^✗')
   line=$(echo "$out" | grep -oE '[0-9]+ bien · [0-9]+ mal' | tail -1)
-  if [ -n "$line" ]; then echo "$n :: $line"
+  if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)${line:+ · llegó a $line}"
+  elif [ -n "$line" ]; then echo "$n :: $line"
   elif [ "$bad" -gt 0 ]; then echo "$n :: SIN RESUMEN · $bad fallas"
   elif [ -z "$out" ]; then echo "$n :: VACIO"
+  elif [ "$rc" -ne 0 ]; then echo "$n :: SIN RESUMEN (exit $rc) · $(echo "$out" | tail -1)"
   else echo "$n :: ok (sin resumen)"; fi
 }
 export -f uno
@@ -29,8 +35,9 @@ export -f uno
 # nadie lo notara.
 unoCjs(){
   f="$1"; n=$(basename "$f" .cjs)
-  out=$(NODE_PATH="${NODE_PATH:-/opt/node22/lib/node_modules}" CHROME_PATH="${CHROME_PATH:-/opt/pw-browsers/chromium-1194/chrome-linux/chrome}" timeout 220 node "$f" 2>&1)
+  out=$(NODE_PATH="${NODE_PATH:-/opt/node22/lib/node_modules}" CHROME_PATH="${CHROME_PATH:-/opt/pw-browsers/chromium-1194/chrome-linux/chrome}" timeout 400 node "$f" 2>&1)
   rc=$?
+  if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)"; return; fi
   ok=$(echo "$out" | grep -c '^OK ')
   fallo=$(echo "$out" | grep -c '^FALLO ')
   # ⚠️ No todos los .cjs hablan "OK "/"FALLO ": algunos usan ✓/✗ y cierran con la misma

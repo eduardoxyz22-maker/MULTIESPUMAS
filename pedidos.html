@@ -5043,7 +5043,7 @@ function contaPagosHtml(p){
                fotoImgHtml(fid,{alt:'Imagen '+(k+1)+' del pago', title:'Ver en grande',
                  onclick:"window.open('"+fotoVer(fidLimpio(fid))+"','_blank')"})+
                (idx>=0?('<button type="button" title="Quitar esta imagen" onclick="ctaQuitarComp(\''+pid+'\','+idx+','+k+')">✕</button>')
-                : (esEnvio(c)?('<button type="button" title="Quitar esta imagen" onclick="ctaEnvioQuitarComp(\''+pid+'\','+k+')">✕</button>'):''))+
+                : (esEnvio(c)?('<button type="button" title="Quitar esta imagen" onclick="ctaEnvioQuitarComp(\''+pid+'\','+ctaIdxEnvio(p,i)+','+k+')">✕</button>'):''))+
              '</span>';
            }).join('')+
            ((esQR && idx>=0 && cs.length<COMP_MAX)
@@ -5058,7 +5058,7 @@ function contaPagosHtml(p){
     var envBtns = esEnvio(c)
       ? ('<div style="margin-top:4px;display:flex;gap:6px;flex-wrap:wrap">'+
            (cs.length<COMP_MAX
-             ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaEnvioAdjuntar(\''+pid+'\')">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar comprobante')+'</button>'
+             ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaEnvioAdjuntar(\''+pid+'\','+ctaIdxEnvio(p,i)+')">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar comprobante')+'</button>'
              : '')+
            '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaBorrarEnvio(\''+pid+'\')">🗑 Quitar el recargo</button>'+
          '</div>')
@@ -5214,8 +5214,9 @@ function onCompElegido(ev){
       // Al RECARGO POR ENTREGA: se reescribe solo su renglón.
       var ae=enviosDe(p);
       if(ae.length){
-        ae[0].comps=compsArr(compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp).concat([res.fotoId]));
-        ae[0].comp=ae[0].comps[0]||'';
+        var _e=Number(destino.e)||0; if(_e<0 || _e>=ae.length) _e=0;
+        ae[_e].comps=compsArr(compsArr(ae[_e].comps!=null?ae[_e].comps:ae[_e].comp).concat([res.fotoId]));
+        ae[_e].comp=ae[_e].comps[0]||'';
         aplicarEnvios(p, ae);
       }
       toast('Comprobante del recargo adjuntado ✓','ok');
@@ -5371,9 +5372,9 @@ function ctaGuardarPago(id, i, igual){
   }
   if(esEnvio(c)){
     /* El recargo vive en su propio renglón: se reescribe solo ese y no toca el saldo. */
-    var ae=enviosDe(p);
-    if(ae.length){
-      ae[0].fecha=f; ae[0].monto=monto; ae[0].nota=nota; ae[0].metodo=CTA_EDIT_M; ae[0].banco=banco; ae[0].recibio=recibio;
+    var ae=enviosDe(p), ie=ctaIdxEnvio(p, i);
+    if(ae.length && ie>=0 && ie<ae.length){
+      ae[ie].fecha=f; ae[ie].monto=monto; ae[ie].nota=nota; ae[ie].metodo=CTA_EDIT_M; ae[ie].banco=banco; ae[ie].recibio=recibio;
       aplicarEnvios(p, ae);
     }
   }else if(c.anticipo){
@@ -5421,25 +5422,38 @@ function ctaCobrosConFecha(p){
     return q;
   });
 }
+/* ⚠️ CUÁL de los recargos por entrega se abrió: el índice DENTRO de `enviosDe(p)` (§4fe).
+   Antes `ctaGuardarPago`, `ctaEnvioQuitarComp` y el adjuntar escribían en **`ae[0]` a secas**.
+   Con DOS fletes —`^Efectivo 60 #995 %FL1 + ^QR BISA 40 #996 %FL2`— corregir el SEGUNDO
+   escribía monto, método y recibo en el PRIMERO: un cobro en efectivo pasaba a figurar como
+   QR (el descuadre caja-vs-banco que ese botón existe para arreglar), el renglón que se
+   quería tocar quedaba inalcanzable, y la ✕ del segundo borraba de Drive la imagen del
+   primero. Todo con un toast verde «Pago corregido ✓». */
+function ctaIdxEnvio(p, iEnContaPagos){
+  var ps=contaPagos(p), n=-1;
+  for(var j=0;j<ps.length && j<=iEnContaPagos;j++) if(esEnvio(ps[j])) n++;
+  return n;
+}
 function ctaIdxCobro(p, iEnContaPagos, c){
   if(esEnvio(c)) return -1;                       // el recargo tiene sus propios botones
   return anticipoDe(p) ? (iEnContaPagos-1) : iEnContaPagos;
 }
 /* ---- Botones del RECARGO POR ENTREGA en la ficha ---- */
-function ctaEnvioAdjuntar(id){
+function ctaEnvioAdjuntar(id, e){
   if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
-  COMP_DESTINO={id:id, envio:true};
+  COMP_DESTINO={id:id, envio:true, e:Number(e)||0};       // §4fe: a CUÁL de los recargos
   var el=document.getElementById('comp-input'); if(!el) return;
   el.value=''; el.dataset.pedido=id; el.click();
 }
-function ctaEnvioQuitarComp(id, k){
+function ctaEnvioQuitarComp(id, e, k){
   var p=findById(id); if(!p) return;
   var ae=enviosDe(p); if(!ae.length) return;
-  var cs=compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp);
+  e=Number(e)||0; if(e<0 || e>=ae.length) return;          // §4fe: el renglón, no siempre el primero
+  var cs=compsArr(ae[e].comps!=null?ae[e].comps:ae[e].comp);
   var fid=cs[k]; if(!fid) return;
   if(!confirm('¿Quitar esta imagen del recargo por entrega?')) return;
-  ae[0].comps=cs.filter(function(x){ return x!==fid; });
-  ae[0].comp=ae[0].comps[0]||'';
+  ae[e].comps=cs.filter(function(x){ return x!==fid; });
+  ae[e].comp=ae[e].comps[0]||'';
   aplicarEnvios(p, ae);
   if(CONNECTED) apiBorrarFoto(fid);
   toast('Imagen quitada','ok');
@@ -5448,8 +5462,14 @@ function ctaEnvioQuitarComp(id, k){
 function ctaBorrarEnvio(id){
   var p=findById(id); if(!p) return;
   var ae=enviosDe(p); if(!ae.length) return;
-  if(!confirm('¿Quitar el recargo por entrega de '+fmtBs(ae[0].monto)+'?\n\nEl resto de la venta no se toca.')) return;
-  var fotos=compsArr(ae[0].comps!=null?ae[0].comps:ae[0].comp);
+  /* ⚠️ Borra TODOS los renglones de flete, así que tiene que NOMBRARLOS todos (§4fe). Antes
+     decía «¿Quitar el recargo de Bs 60,00?» —el primero— y se llevaba también el de 40, y
+     solo borraba de Drive la foto de `ae[0]`: la otra quedaba huérfana. */
+  var tot=r2(envioTotal(p));
+  var det=(ae.length>1) ? ('\n\nSon '+ae.length+' renglones: '+ae.map(function(c){ return fmtBs(c.monto)+(envioYaCobrado(c)?(' '+(c.metodo||'')):' (pactado)'); }).join(' + ')) : '';
+  if(!confirm('¿Quitar el recargo por entrega de '+fmtBs(tot)+'?'+det+'\n\nEl resto de la venta no se toca.')) return;
+  var fotos=[];
+  ae.forEach(function(c){ compsArr(c.comps!=null?c.comps:c.comp).forEach(function(f){ if(fotos.indexOf(f)<0) fotos.push(f); }); });
   aplicarEnvios(p, []);
   if(CONNECTED) fotos.forEach(function(fid){ apiBorrarFoto(fid); });
   renderCuadreSiActivo(); renderContaSiActiva();
@@ -5489,7 +5509,7 @@ function ctaQuitarCompEdit(id, i, k){
   var p=findById(id); if(!p) return;
   var c=contaPagos(p)[i]; if(!c) return;
   ctaEditRecordar();
-  if(esEnvio(c))   return ctaEnvioQuitarComp(id, k);
+  if(esEnvio(c))   return ctaEnvioQuitarComp(id, ctaIdxEnvio(p, i), k);
   if(!c.anticipo)  return ctaQuitarComp(id, ctaIdxCobro(p, i, c), k);
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   if(k==null || k<0 || k>=cs.length) return;
@@ -5890,10 +5910,22 @@ function ctaRegistrarPago(id){
      no cuenta como cobro de más y no entra en lo facturado. Va en su propio renglón. */
   if(CTA_TIPO==='envio' || falta<=0.01){
     /* Si había un flete PACTADO sin cobrar, este cobro lo reemplaza (no se suma encima):
-       lo que se está haciendo es justamente reportar que ya se cobró. */
+       lo que se está haciendo es justamente reportar que ya se cobró.
+       ⚠️ PERO SOLO POR LO QUE SE COBRÓ (§4fe). Antes el `filter(envioYaCobrado)` tiraba el
+       pactado ENTERO: con 100 pactados y el cliente dando 40, los 60 que faltaban
+       desaparecían —`envioPorCobrar` pasaba a 0— y el chofer ya no los pedía. Ahora, si el
+       cobro no cubre lo pactado, queda un renglón pactado por el resto. */
+    var pactado=r2(envioTotal(p)-envioCobrado(p));
     var ae=enviosDe(p).filter(envioYaCobrado);
     linea.envio=true; ae.push(linea);
+    var resto=r2(pactado-monto);
+    if(resto>0.01) ae.push({ envio:true, metodo:'', monto:resto, fecha:'', nota:'', recibio:'', comps:[] });
     CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];
+    /* ⚠️ Y el selector vuelve a «Pago de la venta». `CTA_TIPO` solo se reseteaba al CAMBIAR
+       de venta, así que el camino natural —anotar el flete, «volver a la venta», registrar
+       el pago— metía el pago de Bs 1.000 como si fuera flete: la venta quedaba «por cobrar»
+       para siempre y el aviso salía en verde. */
+    CTA_TIPO='pago';
     aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
     toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');

@@ -269,6 +269,72 @@ const J = (o) => JSON.stringify(o);
     chk('…y si se dice que no, no se borra ninguno', r.deshacer.quedan===3, J(r.deshacer.quedan));
   }
 
+  /* ══ 🚚 EL RECARGO POR ENTREGA (§4fe) ═══════════════════════════════════════════
+     Los tres botones del flete no tenían NINGÚN test, y ahí vivían cuatro bugs:
+     el pago de la venta entraba como flete, cobrar una parte borraba el resto,
+     con dos renglones ✏️ y ✕ pegaban siempre en el primero, y 🗑 nombraba solo uno. */
+  {
+    const r = await page.evaluate(async () => {
+      var base=function(id, metodoPago, saldo, acuenta){
+        return P({ id:id, nota:'90'+id, oc:'09-9'+id, vendedor:'Maria Flores', cliente:'FLETE '+id, ts:ts0,
+          acuenta:acuenta||0, saldo:saldo, pagado:false, metodoPago:metodoPago,
+          productos:[{desc:'A',cant:1,precio:1000}] });
+      };
+      var out={};
+      // (a) anotar el flete y DESPUÉS el pago de la venta: el pago no puede entrar como flete
+      STATE=[ base('1','',1000,0) ]; RETIROS=[]; aConta(); await new Promise(r=>setTimeout(r,30));
+      showContaModal('1'); ctaSetTipo('1','envio');
+      // ⚠️ La imagen del respaldo es OBLIGATORIA (`ctaRegistrarPago` se planta y abre el gato
+      // de comprobantes si falta): sin `comps` el pago no se registra y el test miente.
+      CTA_PAGO.metodo='Efectivo'; CTA_PAGO.comps=['FL1'];
+      document.getElementById('cta-pago-monto').value='150';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='973';
+      ctaRegistrarPago('1');
+      out.trasFlete=CTA_TIPO;
+      showContaModal('1');                                  // «Listo, volver a la venta»
+      CTA_PAGO.metodo='Efectivo'; CTA_PAGO.comps=['P1'];
+      document.getElementById('cta-pago-monto').value='1000';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='974';
+      ctaRegistrarPago('1');
+      var p1=findById('1');
+      out.pago={ cobrado:totalCobrado(p1), envioCobrado:envioCobrado(p1), saldo:r2(Number(p1.saldo)||0) };
+      // (b) flete PACTADO de 100, el cliente da 40: tienen que quedar 60 por cobrar
+      STATE=[ base('2','^ 100',1000,0) ]; aConta(); await new Promise(r=>setTimeout(r,30));
+      showContaModal('2'); ctaSetTipo('2','envio');
+      CTA_PAGO.metodo='Efectivo'; CTA_PAGO.comps=['FL2'];
+      document.getElementById('cta-pago-monto').value='40';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='701';
+      ctaRegistrarPago('2');
+      var p2=findById('2');
+      out.parcial={ cobrado:envioCobrado(p2), porCobrar:envioPorCobrar(p2), total:envioTotal(p2) };
+      // (c) DOS fletes cobrados: corregir el SEGUNDO no puede tocar el primero
+      var t=hoy;
+      STATE=[ base('3','^Efectivo 60 @'+t+' #995 + ^QR BISA 40 @'+t+' #996',1000,0) ]; aConta(); await new Promise(r=>setTimeout(r,30));
+      showContaModal('3');
+      var ps=contaPagos(findById('3')), iEnv=[];
+      ps.forEach(function(c,i){ if(esEnvio(c)) iEnv.push(i); });
+      ctaEditarPago('3', iEnv[1]);                       // el SEGUNDO recargo
+      document.getElementById('cta-ed-monto').value='45';
+      ctaGuardarPago('3', iEnv[1], true);
+      var p3=findById('3');
+      out.dos=enviosDe(p3).map(function(c){ return [c.metodo, c.monto, limpiaNota(c.nota)]; });
+      // (d) 🗑 Quitar con dos renglones: el confirm los nombra a los dos
+      window.__c=[]; var _cf=window.confirm; window.confirm=function(m){ window.__c.push(String(m)); return false; };
+      ctaBorrarEnvio('3'); window.confirm=_cf;
+      out.borrar={ txt:(window.__c[0]||''), quedan:enviosDe(findById('3')).length };
+      return out;
+    });
+    chk('⚠️ tras anotar un flete el selector vuelve a «Pago de la venta»', r.trasFlete==='pago', r.trasFlete);
+    chk('⚠️ …y el pago siguiente entra como PAGO, no como flete (la venta queda saldada)', r.pago.cobrado===1000 && r.pago.envioCobrado===150 && r.pago.saldo===0, J(r.pago));
+    chk('⚠️ cobrar 40 de un flete pactado de 100 deja 60 por cobrar (antes desaparecían)', r.parcial.cobrado===40 && r.parcial.porCobrar===60 && r.parcial.total===100, J(r.parcial));
+    chk('⚠️ con DOS fletes, corregir el segundo NO toca el primero', J(r.dos)===J([['Efectivo',60,'995'],['QR',45,'996']]), J(r.dos));
+    chk('⚠️ 🗑 Quitar nombra el TOTAL y los dos renglones', /Bs 105,00/.test(r.borrar.txt) && /2 renglones/.test(r.borrar.txt), r.borrar.txt.replace(/\n/g,' ').slice(0,110));
+    chk('…y si se dice que no, no se borra ninguno', r.borrar.quedan===2, J(r.borrar.quedan));
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
