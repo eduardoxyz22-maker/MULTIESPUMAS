@@ -284,6 +284,34 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('…y le dice que reabra el día si no tiene la clave', /Cerrar día/.test(r.toasts), r.toasts.slice(0,160));
 
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
+  /* ══ El reintento que choca con MI PROPIA fila es un «ok», no un conflicto (§4fd) ══
+     Desde §4fa un guardado se reintenta cuando Google corta el redirect. Si el PRIMER
+     intento sí había entrado, el segundo choca con su propia fila y el servidor contesta
+     `conflicto`. `rechazoFirme` ya lo trataba como un ok tardío, pero no se lo decía a quien
+     llamó: `submitPedido` caía en la rama de conflicto y reabría el formulario EN SILENCIO,
+     sin ✓ y sin aviso — justo el síntoma que el dueño reclamó («reviso 2-3 veces si subió»). */
+  const tardio = await page.evaluate(async () => {
+    var rec={ id:'g1', fecha:tomorrowStr(), oc:'09-901', vendedor:'Maria Flores', cliente:'TARDIO',
+      celular:'7', turno:'AM', zona:'Norte', direccion:'x', maps:'', nota:'1', nit:'1', nroDia:1,
+      ts:Date.now(), observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'', garantia:'',
+      facturarA:'', verificado:false, fotos:[], acuenta:0, pagado:false, saldo:100, metodoPago:'',
+      productos:[{desc:'COLCHON',medida:'140x190',codigo:'C1',cant:1,precio:100}] };
+    STATE=[rec];
+    var _post=apiPost;
+    // (a) el servidor contesta «conflicto» devolviendo MI MISMA fila
+    apiPost=function(){ return Promise.resolve({ ok:false, error:'conflicto', pedido:JSON.parse(JSON.stringify(rec)) }); };
+    var mio=await apiSaveAhora(rec);
+    // (b) conflicto de verdad: otra persona cambió el cliente
+    var otro=JSON.parse(JSON.stringify(rec)); otro.cliente='LO CAMBIO OTRA PERSONA';
+    apiPost=function(){ return Promise.resolve({ ok:false, error:'conflicto', pedido:otro }); };
+    var ajeno=await apiSaveAhora(rec);
+    apiPost=_post;
+    return { mio:{ ok:!!(mio&&mio.ok), tardio:!!(mio&&mio.tardio) },
+             ajeno:{ ok:!!(ajeno&&ajeno.ok), error:(ajeno&&ajeno.error)||'' } };
+  });
+  chk('⚠️ un «conflicto» contra mi propia fila vuelve como OK (el guardado sí entró)', tardio.mio.ok===true && tardio.mio.tardio===true, JSON.stringify(tardio.mio));
+  chk('…y un conflicto DE VERDAD sigue siendo conflicto, no se lo traga', tardio.ajeno.ok===false && tardio.ajeno.error==='conflicto', JSON.stringify(tardio.ajeno));
+
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
   process.exit(FAIL?1:0);

@@ -226,6 +226,49 @@ const J = (o) => JSON.stringify(o);
   // corregir el adelanto no mueve el TOTAL de la venta (4.990): baja lo que falta cobrar (2.990 → 2.890)
   chk('corregir el monto del anticipo (1.500 → 1.600) desde la ficha deja el A cuenta en 2.100 y el total igual', r.corr.acuenta===2100 && r.corr.ant===1600 && r.corr.mixto===500 && r.corr.total===4990 && r.corr.saldo===2890, J(r.corr));
 
+  /* ══ 💰 «Marcar cobrado» SUMA, no reemplaza (§4fd) ══════════════════════════════
+     El botón 💰 de cada fila de Administración —el que más se toca— hacía
+     `aplicarCobros(p,[unCobro])`, y eso REESCRIBE el historial: borraba los pagos ya
+     registrados por Contabilidad con su recibo y su comprobante, SUBÍA el saldo, y el aviso
+     salía en verde. Además el cobro nacía sin fecha, así que no entraba a ningún Cuadre. */
+  {
+    const r = await page.evaluate(async () => {
+      CONNECTED=false;
+      var mk=function(id, metodoPago, saldo){
+        return { id:id, fecha:todayStr(), oc:'09-90'+id, vendedor:'Maria Flores', cliente:'CLIENTE '+id,
+          celular:'70000000', turno:'AM', zona:'Norte', direccion:'x', maps:'', nota:'180'+id, nit:'1',
+          nroDia:1, ts:Date.now(), observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'',
+          garantia:'', facturarA:'', verificado:false, fotos:[], acuenta:0, pagado:false,
+          productos:[{desc:'COLCHON',medida:'140x190',codigo:'C1',cant:1,precio:1000}],
+          metodoPago:metodoPago, saldo:saldo };
+      };
+      // (a) Contabilidad ya registró 600 por QR con recibo y comprobante; el cliente debe 400
+      var a=mk('1','QR BISA 600 @'+todayStr()+' #1750 %IMG1', 400);
+      STATE=[a]; quickCobrado('1'); var qa=findById('1');
+      // (b) tres pagos registrados y la venta pagada: «deshacer» tiene que preguntar
+      var t=todayStr();
+      var c=mk('3','QR BISA 600 @'+t+' %IMG1 + Efectivo 300 @'+t+' #99 + Tarjeta 100 @'+t, 0);
+      c.pagado=true; STATE=[c];
+      window.__conf=[]; var _cf=window.confirm; window.confirm=function(m){ window.__conf.push(String(m)); return false; };
+      quickCobrado('3'); var qc=findById('3');
+      window.confirm=_cf;
+      return {
+        sumo:{ cobrado:totalCobrado(qa), saldo:r2(Number(qa.saldo)||0), n:cobrosDe(qa).length,
+               pagado:!!qa.pagado, conservaComp:JSON.stringify(cobrosDe(qa)[0].comps||[]),
+               todosConFecha:cobrosDe(qa).every(function(x){ return !!x.fecha; }),
+               enCuadreMes:cobrosDe(qa).filter(function(x){ return enPeriodoCuadre(x.fecha,'mes'); })
+                            .reduce(function(n,x){ return n+(Number(x.monto)||0); },0) },
+        deshacer:{ preguntas:window.__conf.length, texto:(window.__conf[0]||''), quedan:cobrosDe(qc).length }
+      };
+    });
+    chk('⚠️ 💰 con un pago ya registrado SUMA el saldo en vez de borrarlo (600 + 400 = 1000)', r.sumo.cobrado===1000 && r.sumo.n===2, J([r.sumo.cobrado, r.sumo.n]));
+    chk('…el saldo BAJA a 0 y la venta queda pagada (antes el saldo SUBÍA a 600)', r.sumo.saldo===0 && r.sumo.pagado===true, J([r.sumo.saldo, r.sumo.pagado]));
+    chk('⚠️ …y el comprobante del pago viejo NO se pierde', r.sumo.conservaComp==='["IMG1"]', r.sumo.conservaComp);
+    chk('⚠️ el cobro nuevo nace CON fecha, así que entra al Cuadre del mes', r.sumo.todosConFecha===true && r.sumo.enCuadreMes===1000, J([r.sumo.todosConFecha, r.sumo.enCuadreMes]));
+    chk('⚠️ «deshacer» con 3 pagos registrados PREGUNTA antes de borrarlos', r.deshacer.preguntas===1 && /3 pagos/.test(r.deshacer.texto), J(r.deshacer));
+    chk('…y si se dice que no, no se borra ninguno', r.deshacer.quedan===3, J(r.deshacer.quedan));
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

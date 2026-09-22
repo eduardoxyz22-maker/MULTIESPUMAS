@@ -495,6 +495,34 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 13. 🚚 Programar recogida respeta el orden del dueño ════════════════════════
+  /* §4fd: el modal elegía el almacén por el ORDEN EN QUE SE CARGARON LOS EXCEL
+     (`Object.keys(otrosAlm)[0]`), no por la regla de §4ey. Con IM 9 y Banzer 9 agendaba
+     contra IM, gastaba el stock de la fábrica y lo de Banzer seguía parado. */
+  console.log('\n── 13. La recogida se agenda contra Banzer antes que contra IM ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var real='01-05-025  Almacen Distribucion Banzer';
+      STOCK=stockVacio();
+      STOCK.c={ f:todayStr(), hora:'09:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+      STOCK.g={ 'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{} } }; STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=9;
+      STOCK.g[real]={ f:todayStr(), u:{} }; STOCK.g[real].u[K]=9;
+      STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log', 'IM - PRODUCTOTERMINADO':'otro' }; STOCK.al[real]='otro';
+      STOCK.p=[]; stockOlvidarIndice(); STATE=[];
+      abrirStockRecogida(); await new Promise(r=>setTimeout(r,150));
+      document.getElementById('stk-rec-k').value=K;
+      document.getElementById('stk-rec-u').value='3';
+      document.getElementById('stk-rec-f').value=tomorrowStr();
+      guardarStockRecogida(); await new Promise(r=>setTimeout(r,200));
+      var q=(STOCK.p||[])[0]||{};
+      return { de:q.de||'', corto:recogerAlmCorto(q.de||''), u:q.u||0 };
+    }, BASE);
+    chk('⚠️ con IM y Banzer empatados, la recogida se agenda contra Banzer (IM va último)', r.corto==='Banzer' && r.u===3, J(r));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

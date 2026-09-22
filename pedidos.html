@@ -2079,7 +2079,14 @@ function apiSaveAhora(rec, opts){
   var pedir=function(){
     return apiPost(payload).then(function(res){
       if(res && res.ok && res.pedido){ aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido); }   // 🔍 §4en
-      else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]) rechazoFirme(rec, res);
+      else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]){
+        /* ⚠️ Si el «conflicto» es contra MI PROPIO guardado —el reintento de §4fa chocó con
+           la fila que dejó el primer intento—, `rechazoFirme` ya lo trató como un ok tardío.
+           Hay que DECÍRSELO a quien llamó: si no, `submitPedido` cae en la rama de conflicto
+           y reabre el formulario EN SILENCIO, sin ✓ y sin aviso. Es justo el síntoma que el
+           dueño reclamó («reviso 2-3 veces si subió») y quedaba peor que antes del reintento. */
+        if(rechazoFirme(rec, res)) return { ok:true, pedido:res.pedido, tardio:true };
+      }
       return res;
     });
   };
@@ -2192,11 +2199,13 @@ function mismoContenido(a, b){
   }
   return true;
 }
+/* Devuelve TRUE cuando el «conflicto» era en realidad MI PROPIO guardado que ya había
+   entrado (un «ok» tardío), para que quien llamó lo trate como éxito y no como choque. */
 function rechazoFirme(rec, res){
   if(res.error==='conflicto' && res.pedido && mismoContenido(rec, res.pedido)){
     aplicarSello(rec, res.pedido);                 // ya estaba guardado igual: es un «ok» tardío, no un choque
     setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
-    return;
+    return true;
   }
   rechazoRecordar(rec, res);                       // que quede en ESTE dispositivo, no solo en un cartel (§4el)
   NO_ENCOLAR[rec.id]=Date.now();
@@ -12292,14 +12301,41 @@ function aplicarCobros(p, arr, objetivoForzado){
   p.pagado = total>=objetivo-0.01 && (total>0 || (antM>0 && objetivo<=0.01));
   persistPedido(p);
 }
+/* 💰 MARCAR COBRADO **SUMA** UN PAGO, NO REEMPLAZA EL HISTORIAL (§4fd).
+   ⚠️ Antes hacía `aplicarCobros(p, [{…}])` con UN solo cobro, y `aplicarCobros` REESCRIBE
+   el historial entero. Con una venta de 1.000 donde Contabilidad ya había registrado 600 por
+   QR —con su recibo y su comprobante— y el cliente debía 400, un toque en 💰 dejaba un solo
+   «Efectivo 400»: cobrado 600 → **400**, saldo 400 → **600**, el comprobante **perdido**…
+   y el aviso salía en VERDE. Como nunca llegaba a marcar `pagado`, tocarlo de nuevo hacía
+   ping-pong con el saldo. Es el botón de cada fila de Administración, el que más se toca.
+   ⚠️ Y el cobro nacía SIN FECHA, así que no entraba ni al Cuadre del día ni al del mes
+   (`enPeriodoCuadre('')` solo es true en «todo»). El panel ya arreglaba eso en otros dos
+   lugares (`ctaCobrosConFecha`, `aplicarMontos`) y hasta lo denuncia en el aviso `sinfecha`;
+   a este se le había pasado.
+   Devuelve `false` si no había nada que cobrar, para que quien llama lo diga en vez de
+   anotar un pago de cero. */
 function applyPaid(p, metodo){
-  var monto = p.pagado ? (Number(p.cobradoBs)||totalCobrado(p)) : (Number(p.saldo)||0);
-  aplicarCobros(p, [{metodo:(normMetodo(metodo)||metodo), monto:monto}]);
+  var falta=r2(Number(p.saldo)||0);
+  if(!(falta>0.009)) return false;
+  var cobros=cobrosDe(p).slice();
+  cobros.push({ metodo:(normMetodo(metodo)||metodo), monto:falta, fecha:todayStr() });
+  aplicarCobros(p, cobros);
+  return true;
 }
 function quickCobrado(id){
   var p=findById(id); if(!p) return;
-  if(p.pagado){ aplicarCobros(p, []); toast('Cobro deshecho ✓','ok'); return; }
-  applyPaid(p,'Efectivo'); toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
+  if(p.pagado){
+    /* ⚠️ «Deshacer» borraba TODO el historial sin preguntar (§4fd). Está pensado para el
+       cobro único de la puerta, pero con tres pagos registrados —QR con foto, efectivo con
+       recibo, tarjeta— un toque se llevaba los tres, sin confirmación y sin deshacer del
+       deshacer. El botón está pegado a 📦 y 🚚 en la tabla. */
+    var n=cobrosDe(p).length;
+    if(n>1 && !confirm('Esta venta tiene '+n+' pagos registrados y se van a borrar TODOS.\n\n'+
+                       'Si solo querés corregir uno, cerrá esto y usá Contabilidad → Corregir.\n\n¿Borrar los '+n+'?')) return;
+    aplicarCobros(p, []); toast('Cobro deshecho ✓','ok'); return;
+  }
+  if(!applyPaid(p,'Efectivo')){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); return; }
+  toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
 }
 
 /* ============================================================================
@@ -14388,7 +14424,14 @@ function guardarStockRecogida(){
   var d=stockData(), o=d.lista.filter(function(x){ return x.k===k; })[0];
   if(!o || u>o.enOtros){ toast('Allá hay '+stockUnid(o?o.enOtros:0)+', no se pueden traer '+u+'.','err',6000); return; }
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f) || isNaN(Date.parse(f+'T12:00:00Z')) || new Date(f+'T12:00:00Z').toISOString().slice(0,10)!==f || f<todayStr()){toast('Elegí una fecha válida de hoy en adelante.','err');return;}
-  var origen=Object.keys(o.otrosAlm||{}).filter(function(alm){return stockLibreOrigen(k,alm)>=u;})[0];
+  /* ⚠️ EL MISMO ORDEN QUE EL RESTO DEL PANEL (§4ey, dueño 21/09): acá en fábrica → Banzer →
+     IM último, porque IM es la fábrica y su stock repone a todos los demás. Antes esto
+     tomaba el PRIMERO que devolviera `Object.keys`, o sea el orden en que se cargaron los
+     Excel: con 9 en IM y 9 en Banzer agendaba contra IM, gastaba el stock de la fábrica y
+     lo de Banzer seguía parado. `tomarIM` ya respetaba la regla; este modal no. */
+  var origen=Object.keys(o.otrosAlm||{})
+    .filter(function(alm){ return stockLibreOrigen(k,alm)>=u; })
+    .sort(function(a,b){ return (recogerCanon(a)?0:1)-(recogerCanon(b)?0:1); })[0];
   if(!origen){toast('Ningún almacén tiene esa cantidad libre. Programá una recogida por almacén.','err');return;}
   var id='rc'+Date.now().toString(36)+Math.floor(Math.random()*46656).toString(36);
   STOCK.p=(STOCK.p||[]).concat([{ id:id, k:k, u:u, tipo:'recogida', de:origen, fab:'', f:todayStr(), esp:f, r:'' }]);
@@ -16230,7 +16273,7 @@ function showPedidoModal(id){
 
 function markPaid(id, metodo){
   var p=findById(id); if(!p) return;
-  applyPaid(p, metodo);
+  if(!applyPaid(p, metodo)){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); showPedidoModal(id); return; }
   toast('Marcado como pagado ('+metodo+') ✓','ok');
   showPedidoModal(id);
 }

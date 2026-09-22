@@ -7430,6 +7430,72 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fd. Lo que encontró el agente del 22/09: el botón 💰 borraba plata (2026-09-22)
+
+Ocho hallazgos. El más caro no era mío y llevaba tiempo ahí.
+
+### 💰 «Marcar cobrado» REEMPLAZABA el historial en vez de sumar
+`applyPaid` hacía `aplicarCobros(p, [unCobro])`, y `aplicarCobros` **reescribe** el ledger.
+Es el botón 💰 de **cada fila de Administración** —pegado a 📦 y 🚚, el que más se toca— y
+también los tres de la ficha (Efectivo / QR / Tarjeta).
+
+Caso reproducido: venta Bs 1.000, Contabilidad ya había registrado **600 por QR con recibo
+#1750 y comprobante**, el cliente debe 400. Un toque:
+
+| | antes | después |
+|---|---|---|
+| cobrado | 600 | **400** |
+| saldo | 400 | **600** |
+| comprobante | guardado | **perdido** |
+| aviso | — | **verde** |
+
+Y como nunca llegaba a marcar `pagado`, los toques siguientes hacían ping-pong con el saldo
+(500 → 700 → 500 → 700). Ahora `applyPaid` **suma** un cobro por lo que falta
+(`cobrosDe(p).slice()` + push) y devuelve `false` si no hay saldo, para que quien llama lo
+diga en vez de anotar un pago de cero.
+
+### …y el cobro nacía SIN FECHA
+`enPeriodoCuadre('', pe)` solo es true en «todo», así que esa plata **no entraba al Cuadre
+del día ni al del mes** ni a «💵 Efectivo cobrado vs. retirado». El panel ya arreglaba esto en
+otros dos lugares (`ctaCobrosConFecha`, `aplicarMontos`) y hasta lo denuncia en el aviso
+`sinfecha`; a `applyPaid` se le había pasado. Ahora lleva `fecha:todayStr()`.
+
+### «Deshacer el cobro» borraba TODO sin preguntar
+`quickCobrado` con `p.pagado` hacía `aplicarCobros(p, [])`. Pensado para el cobro único de la
+puerta, pero con tres pagos registrados se llevaba los tres, sin confirmación y sin deshacer
+del deshacer. Ahora, con más de un pago, **pregunta** y nombra cuántos.
+
+### El reintento de §4fa dejaba el guardado MUDO
+Pedido NUEVO, Google graba la fila, el redirect se vence → 404 → reintento → `conflicto`
+contra su propia fila → `rechazoFirme` lo trataba como ok tardío **pero no se lo decía a
+quien llamó** → `submitPedido` caía en la rama de conflicto y reabría el formulario **en
+silencio**, sin ✓ y sin aviso. Antes salía al menos «Quedó en cola».
+⚠️ Es exactamente el síntoma que el dueño reclamó («reviso 2-3 veces si subió») y lo había
+dejado peor. `rechazoFirme` ahora devuelve `true` en ese caso y `apiSaveAhora` lo convierte
+en `{ok:true, tardio:true}`. Un conflicto DE VERDAD sigue siendo conflicto.
+
+### 🚚 Programar recogida no respetaba el orden del dueño
+`Object.keys(o.otrosAlm)[0]` = el orden en que se cargaron los Excel. Con IM 9 y Banzer 9
+agendaba contra **IM**, gastando el stock de la fábrica mientras lo de Banzer seguía parado.
+Ahora ordena con `recogerCanon` (IM último), igual que `tomarIM` (§4ey).
+
+### Lo que el agente revisó y estaba bien
+La regla nueva de las notas (§4fb) y que **ningún otro lugar** agrupe por número a secas
+(`huecosTalonario` va por vendedor; el `porNota` del importador de ROHO es un solo emisor =
+un talonario; `compRepetidos` va por imagen; `productos-mes.js` reutiliza `indiceDuplicados`).
+El orden acá → Banzer → IM, el desglose `chkDes`, `recogerCanon`/`recogerMismo`, «Qué
+producir», `contaPagos`↔`ctaIdxCobro`, el pago mixto y el flete cobrado vs. pactado.
+
+### Quedan sin hacer, a propósito (BAJA)
+- `heredarMarcas` con **dos renglones idénticos** le da a ambos la marca del último
+  (`porClave[prodClave(x)]=x` pisa): `["ok","no"]` → `["no","no"]`. Cargar dos renglones
+  iguales en vez de `cant:2` es raro y la revisión automática lo vuelve a marcar.
+- **PLAUSIBLE, no reproducido**: OC renumerada por el servidor + esa respuesta perdida → el
+  reintento recibe `conflicto` sin `ocCambiada`, y como `mismoContenido` saltea `oc` a
+  propósito, el panel se queda con la OC vieja y el próximo guardado rebota con `oc_repetida`.
+
+Tests: `tests/test_conta_alta.js` (35), `tests/test_conflicto.js` (45), `tests/test_banzer.js` (56).
+
 ## 4fc. Rompí `motivoDeError` y lo publiqué — y mi filtro de la batería estaba ciego (2026-09-22)
 
 Lo encontró el agente de revisión del 22/09, con el panel **ya en producción unas horas**.
