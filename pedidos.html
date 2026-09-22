@@ -3254,7 +3254,32 @@ function indiceDuplicados(list){
                       otros: g.filter(function(q){ return q.id!==p.id; }) };
     });
   }
-  for(var kn in porNota) if(porNota[kn].length>1) marcar(porNota[kn],'nota',kn);
+  /* ⚠️ CADA VENDEDORA TIENE SU PROPIO TALONARIO (dueño, 22/09): *«si dos vendedoras tienen
+     la misma nota, no significa que sea repetido salvo que tengan misma nota + mismo
+     cliente, recuerda que cada uno tiene su propio talonario y pueden coincidir»*.
+     Agrupar por el NÚMERO a secas marcaba «¿DUPLICADA?» a dos ventas legítimas de dos
+     personas distintas — y un aviso con más falsos que verdaderos se deja de mirar (ya
+     había pasado con la nota «0», ver `notaDeTalonario`). Ahora salta en dos casos, los
+     dos de verdad:
+       · **misma nota + misma vendedora** → un talonario NO repite número;
+       · **misma nota + mismo cliente** (aunque sean vendedoras distintas) → es la misma
+         venta cargada dos veces, que es lo que este aviso vino a cazar.
+     Dos vendedoras con el mismo número y clientes distintos: NO se marca. */
+  var juntarPorNota=function(ps, kn){
+    var yaEn={};
+    [['vendedor','nota'], ['cliente','notaCliente']].forEach(function(par){
+      var m={};
+      ps.forEach(function(p){ var k=normNombre(p&&p[par[0]]); if(k) (m[k]=m[k]||[]).push(p); });
+      Object.keys(m).forEach(function(k){
+        if(m[k].length<2) return;
+        // Si ese mismo conjunto ya se marcó por la otra señal, no se cuenta dos veces.
+        if(m[k].every(function(p){ return yaEn[p.id]; })) return;
+        marcar(m[k], par[1], kn);
+        m[k].forEach(function(p){ yaEn[p.id]=1; });
+      });
+    });
+  };
+  for(var kn in porNota) if(porNota[kn].length>1) juntarPorNota(porNota[kn], kn);
   for(var kv in porVenta){
     var g=porVenta[kv].slice().sort(function(a,b){ var fa=contaFecha(a), fb=contaFecha(b); return fa<fb?-1:(fa>fb?1:0); });
     var run=g.length?[g[0]]:[];
@@ -3348,10 +3373,17 @@ function dupChip(p){
   var otros=(m.otros||[]);
   var txt;
   if(m.motivo==='nota'){
-    /* Con la misma nota los clientes son DISTINTOS: lo que hace falta saber es quién. */
+    /* Misma nota y la MISMA vendedora: un talonario no repite número, así que lo que hace
+       falta saber es a qué otro cliente le tocó ese mismo número. */
     var quien = otros.slice(0,2).map(function(q){ return esc(q.cliente||'—'); }).join(' y ') +
                 (otros.length>2 ? (' y '+(otros.length-2)+' más') : '');
-    txt = 'misma <b>nota '+esc(m.clave)+'</b>'+(quien?(' que <b>'+quien+'</b>'):'');
+    txt = 'misma <b>nota '+esc(m.clave)+'</b> en el mismo talonario'+(quien?(', que <b>'+quien+'</b>'):'');
+  }else if(m.motivo==='notaCliente'){
+    /* Misma nota y el MISMO cliente, cargada por vendedoras distintas: es la misma venta
+       cargada dos veces. Lo que sirve es quién la cargó del otro lado (§4fb). */
+    var vs = otros.slice(0,2).map(function(q){ return esc(q.vendedor||'—'); }).join(' y ') +
+             (otros.length>2 ? (' y '+(otros.length-2)+' más') : '');
+    txt = 'misma <b>nota '+esc(m.clave)+'</b> y el <b>mismo cliente</b>'+(vs?(', cargada también por <b>'+vs+'</b>'):'');
   }else{
     /* Acá el cliente es el MISMO, así que repetir su nombre no aporta nada: lo que sirve
        es CUÁNDO es la otra, para poder ir a mirarla. */
@@ -3944,8 +3976,12 @@ function cuadreAlertas(pagos){
         var q=g.ps[0];
         var quienes=g.ps.map(function(x){ return (x.cliente||'—'); }).join('  ↔  ');
         return { txt: (g.motivo==='nota'
-                       /* Clientes distintos con la misma nota: los nombres son el dato. */
-                       ? ('misma nota ' + g.clave + ':  ' + quienes)
+                       /* Mismo talonario: los clientes son el dato. */
+                       ? ('misma nota ' + g.clave + ' en el talonario de ' + (q.vendedor||'—') + ':  ' + quienes)
+                       : g.motivo==='notaCliente'
+                       /* Mismo cliente y mismo número, por vendedoras distintas. */
+                       ? ('misma nota ' + g.clave + ' y el mismo cliente ' + (q.cliente||'—') + ':  ' +
+                          g.ps.map(function(x){ return (x.vendedor||'—'); }).join('  ↔  '))
                        /* Mismo cliente: su nombre una vez, y las dos fechas para comparar. */
                        : ((q.cliente||'—') + ' · mismo cliente y monto ' + fmtBs(ventaTotal(q)) + ':  ' +
                           g.ps.map(function(x){ return fmtFechaCorta(contaFecha(x)); }).join('  ↔  '))),

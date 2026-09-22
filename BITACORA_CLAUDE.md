@@ -7430,6 +7430,43 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fb. Cada vendedora tiene su propio talonario (2026-09-22)
+
+El dueño, textual: *«si dos vendedoras tienen la misma nota, no significa que sea repetido
+salvo que tengan misma nota + mismo cliente, recuerda que cada uno tiene su propio talonario.
+y pueden coincidir. lo mismo que los de sueña»*.
+
+Tenía razón y era un **falso positivo de los caros**: `indiceDuplicados` agrupaba por el
+NÚMERO de nota a secas (`porNota[n]`, línea ~3237) y marcaba «⚠️ ¿DUPLICADA?» a dos ventas
+legítimas de dos personas distintas. Es la segunda vuelta del mismo problema: en agosto ya
+había pasado con la nota «0» (ver el comentario de `notaDeTalonario`), y la conclusión de
+entonces vale igual — **un aviso con más falsos que verdaderos se deja de mirar**, y este
+avisa de lo más caro que hay (facturar dos veces).
+
+### La regla nueva
+Con el mismo número de nota, salta en **dos** casos y en ninguno más:
+
+| Caso | ¿Marca? | Por qué |
+|---|---|---|
+| Misma nota · **misma vendedora** · clientes distintos | **SÍ** (`nota`) | Un talonario no repite número: o es un error de tipeo o es la misma venta dos veces |
+| Misma nota · **mismo cliente** · vendedoras distintas | **SÍ** (`notaCliente`) | Es la misma venta cargada por dos personas |
+| Misma nota · vendedoras distintas · clientes distintos | **NO** | Dos talonarios distintos que coinciden en el número. Normal |
+
+`juntarPorNota(ps, kn)` agrupa el conjunto de la nota primero por `vendedor` y después por
+`cliente`; si el mismo conjunto ya se marcó por la primera señal, no se cuenta dos veces.
+`dupChip` y el detalle de la auditoría distinguen los dos motivos: «misma nota 1503 **en el
+mismo talonario**, que JUANITO» contra «misma nota 1503 y el **mismo cliente**, cargada
+también por **Carola Chavez**».
+
+⚠️ Lo de «misma nota + misma vendedora» **lo deduje yo**, no lo dijo él: se sigue de que un
+talonario es correlativo. Si resultara que una vendedora usa DOS talonarios (uno Heaven y
+otro Sueña), ese caso pasaría a ser legítimo y habría que mirar también de qué serie es la
+nota. 📌 **Preguntado al dueño el 22/09, sin respuesta todavía.**
+
+`tests/test_dupaviso.js` (24): los cuatro escenarios de la tabla, los textos de los dos
+motivos, y tres vendedoras con el mismo número sin marcar ninguna. ⚠️ El fixture viejo
+(PEPITO y JUANITO con la nota 645) sigue marcando porque las dos son de la MISMA vendedora.
+
 ## 4fa. El cartel del 404 acusaba a la causa equivocada — y el consejo era peligroso (2026-09-21)
 
 A un vendedor (Juan Pablo) le salió al subir un comprobante: *«No se pudo subir el

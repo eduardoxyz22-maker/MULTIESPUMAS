@@ -130,6 +130,40 @@ const D=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString()
       (aud.det||[]).some(t=>/ANA TORRES/.test(t) && /mismo cliente y monto/.test(t)),
       JSON.stringify(aud.det));
 
+  /* ══ CADA VENDEDORA TIENE SU PROPIO TALONARIO (§4fb) ════════════════════════════
+     El dueño, 22/09: *«si dos vendedoras tienen la misma nota, no significa que sea
+     repetido salvo que tengan misma nota + mismo cliente, recuerda que cada uno tiene su
+     propio talonario y pueden coincidir»*. Antes se agrupaba por el NÚMERO a secas y dos
+     ventas legítimas de dos personas distintas salían como «¿DUPLICADA?». Un aviso con más
+     falsos que verdaderos se deja de mirar — ya había pasado con la nota «0». */
+  console.log('\n── 5. Cada vendedora tiene su propio talonario ──');
+  const tal = await page.evaluate(() => {
+    var P=function(id,v,c,nota,tot){ return {id:id, fecha:todayStr(), oc:'', vendedor:v, cliente:c, nota:nota,
+      celular:'70000000', turno:'AM', zona:'Norte', direccion:'x', maps:'', pagado:true, saldo:0,
+      ts:Date.now(), metodoPago:'Efectivo '+tot, observaciones:'', estado:'', entregado:false,
+      vehiculo:'', chofer:'', garantia:'', acuenta:0, facturarA:'', nit:'', nroDia:1, verificado:false,
+      fotos:[], productos:[{desc:'COLCHON',medida:'2 plz',codigo:'C1',cant:1,precio:tot}]}; };
+    var mirar=function(ps){
+      var R=indiceDuplicados(ps);
+      var chips=ps.map(function(p){ var g=R.marca[p.id]; return g?g.motivo:''; });
+      return { n:R.n, motivos:R.grupos.map(function(g){ return g.motivo; }), chips:chips,
+               txt:(function(){ var o=DUP_IDX; DUP_IDX=R; var t=dupChip(ps[0]).replace(/<[^>]+>/g,''); DUP_IDX=o; return t; })() };
+    };
+    return {
+      distintas: mirar([ P('a','Maria Flores','PEPITO','1503',1000), P('b','Carola Chavez','JUANITO','1503',2000) ]),
+      mismoCli:  mirar([ P('c','Maria Flores','PEPITO','1503',1000), P('d','Carola Chavez','PEPITO','1503',2000) ]),
+      mismaVend: mirar([ P('e','Maria Flores','PEPITO','1503',1000), P('f','Maria Flores','JUANITO','1503',2000) ]),
+      tres:      mirar([ P('g','Maria Flores','PEPITO','1503',1000), P('h','Carola Chavez','JUANITO','1503',2000),
+                         P('i','Isabel Robledo','ROSA','1503',3000) ])
+    };
+  });
+  chk('⚠️ dos vendedoras con la MISMA nota y clientes distintos NO se marcan (cada una tiene su talonario)', tal.distintas.n===0, JSON.stringify(tal.distintas));
+  chk('⚠️ …pero misma nota + MISMO cliente sí: es la misma venta cargada dos veces', tal.mismoCli.n===2 && tal.mismoCli.motivos.join()==='notaCliente', JSON.stringify(tal.mismoCli.motivos));
+  chk('…y el aviso dice que la cargó también la otra vendedora', /mismo cliente/.test(tal.mismoCli.txt) && /Carola Chavez/.test(tal.mismoCli.txt), tal.mismoCli.txt);
+  chk('⚠️ la MISMA vendedora repitiendo un número de su talonario sí se marca', tal.mismaVend.n===2 && tal.mismaVend.motivos.join()==='nota', JSON.stringify(tal.mismaVend.motivos));
+  chk('…y el aviso lo dice: mismo talonario', /mismo talonario/.test(tal.mismaVend.txt), tal.mismaVend.txt);
+  chk('tres vendedoras distintas con el mismo número: ninguna marcada', tal.tres.n===0, JSON.stringify(tal.tres));
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
