@@ -392,6 +392,30 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   ⚠️ **`ctaAnotarMonto` y `ctaGuardarPago` hacen `delete c.sinMonto` a propósito**: son los dos
   caminos que SÍ lo vuelven un pago de verdad. Si se toca esa marca, dejan de funcionar.
   `tests/test_sinmonto.js` sección 8.
+- **🧮 La 2ª vuelta de la auditoría (§4fj…§4fr)** — `tests/test_cuadre_alta.js` y los bloques
+  nuevos de `tests/test_conta_alta.js`:
+  · **`mixtoDe` es una HEURÍSTICA** (mismo día + mismo recibo que el anticipo, §4ej): la rama
+  del anticipo de `ctaGuardarPago` mueve el 2° renglón JUNTO con el anticipo cuando le cambia
+  la fecha o el recibo. Sin eso, corregir el recibo —lo que §4ei recomienda— lo volvía
+  invisible y la corrección siguiente le borraba los Bs 500 (§4fj).
+  · **Una venta ya pagada NO convierte el pago en flete sola** (§4fk): al recargo se va solo
+  con `CTA_TIPO==='envio'`; con saldo 0 y tipo «pago» se PREGUNTA y queda como cobro de más.
+  · **`p.acuenta = acu + mxM` solo mientras quede anticipo** (§4fl): con `acu` en 0 fabricaba
+  un anticipo fantasma y contaba el 2° método dos veces.
+  · **El Excel de Contabilidad usa `contaCobrado(p)`** (§4fm), no `totalCobrado`: si no,
+  COBRADO + SALDO ≠ TOTAL VENTA (la brecha son todos los adelantos) y no coincide con la
+  tarjeta «Ya ingresó».
+  · **Un pago sin fecha no es de ningún mes** (§4fn): `cuadreAlertas` lo busca en TODAS las
+  ventas, no solo en las del período, y dice cuántos son de otro mes.
+  · **Un arqueo sin ningún pago detrás es una diferencia entera** (§4fo): antes quedaba
+  huérfano y el panel decía «El cuadre cierra ✅».
+  · **La ventana «✅ Guardado» se repinta en ámbar si el servidor rechazó** (§4fp):
+  `aplicarCobros`/`aplicarEnvios` devuelven la promesa y `pagoWaEstado` la mira.
+  · **Corregir el adelanto desde el FORMULARIO conserva fecha, recibo y `>chofer`** (§4fr) —
+  ⚠️ solo cuando el adelanto YA ERA un renglón del historial (`_antPrev`); una venta NUEVA con
+  «A cuenta» sigue guardándose como método suelto.
+  ⚠️ En un test, `editPedido` termina de llenar el formulario UN TIC después: esperar ~150 ms
+  antes de tocar `f-acuenta`, o se mide «guardar sin tocar la plata», que es otro camino.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo

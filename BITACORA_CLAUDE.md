@@ -7430,6 +7430,104 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fj → 4fr. La segunda vuelta de la auditoría de cobros y del cuadre (2026-09-23)
+
+Nueve arreglos, todos de plata, todos con su reproductor. Los reproductores viven en el
+scratchpad (`aud_cobro/`, `aud_cuadre/`) y NO van al repo: usan fixtures sintéticos pero el
+formato es el de los datos reales.
+
+### §4fj — Corregirle el RECIBO al anticipo borraba el 2° método del pago mixto · ALTA
+`mixtoDe(p)` reconoce al segundo método por **heurística**: mismo día y mismo recibo que el
+anticipo (no hay marca propia en el texto del ledger). La rama del anticipo de `ctaGuardarPago`
+le cambiaba al anticipo la fecha y el recibo **sin tocar el otro renglón**, así que en cuanto
+se corregía el recibo —que es justo lo que §4ei recomienda hacer— `mixtoDe` dejaba de
+encontrarlo:
+
+| paso | `p.acuenta` | `mixtoDe` |
+|---|---|---|
+| inicio (`~Efectivo 1500 @10 #1700 + QR 500 @10 #1700`) | 2000 | 500 |
+| corregir el recibo (1700 → 1750) | 2000 | **null** |
+| corregir la fecha | **1500** | null |
+| la vendedora corrige el saldo | 1500 | — y los Bs 500 **ya no están en el ledger** |
+
+Ahora los dos renglones se mueven juntos: es la MISMA plata del mismo adelanto pagado en dos
+veces. `tests/test_conta_alta.js` (recibo, fecha después, y que corregir solo el MONTO siga
+igual que antes).
+
+### §4fk — Un pago sobre una venta YA PAGADA se guardaba como flete · ALTA
+La condición era `CTA_TIPO==='envio' || falta<=0.01`. En una venta sin saldo, un pago
+registrado con **«💵 Pago de la venta» elegido** se guardaba como **recargo por entrega**, sin
+preguntar y con el aviso en verde: en el Excel del contador esos Bs 700 salían en «RECARGO
+COBRADO» y no en lo cobrado de la venta. Ahora al recargo se va **solo si el usuario lo
+eligió**; si no, se pregunta («Esta venta ya está pagada… ¿anotar igual estos Bs 700 como un
+cobro de MÁS? Si en realidad es el flete, usá 🚚») y el cobro de más queda como cobro de más,
+que el panel ya sabe mostrar (`excesoBadge`). El flete de verdad (🚚 elegido) no pregunta nada.
+
+### §4fl — Bajar el adelanto a 0 en un pago mixto inventaba un anticipo FANTASMA
+`p.acuenta = r2(acu + mxM)` se aplicaba también con `acu` en 0: el ledger se quedaba sin el
+renglón del anticipo pero `p.acuenta` quedaba en 500 —el 2° método— y `anticipoDe` fabricaba
+con eso un anticipo sin método ni comprobante. Los MISMOS Bs 500 contados dos veces y el total
+de la venta inflado. Sin anticipo no hay adelanto: el 2° método queda como lo que es, un cobro.
+
+### §4fm — El Excel de Contabilidad no cuadraba ni consigo mismo
+`TOTAL COBRADO` usaba `totalCobrado(p)` (que **no** incluye el anticipo) y `TOTAL VENTA` usaba
+`ventaTotal(p)` (que **sí**). Σ(COBRADO) + Σ(SALDO) daba menos que Σ(TOTAL VENTA) y la brecha
+era **la suma de todos los adelantos del mes** —en esta empresa, casi toda venta—; además el
+archivo decía un número distinto del que la pantalla muestra en «Ya ingresó». Ahora va
+`contaCobrado(p)`, la misma cuenta de la tarjeta, y las tres columnas cierran.
+
+### §4fn — El aviso «pago sin fecha» no se veía en el mes que se estaba cerrando · ALTA
+`cuadreAlertas` recorre solo las ventas cuya **fecha de venta** cae en el período, así que un
+pago sin fecha sobre una venta de OTRO mes no disparaba nada: no estaba en el cuadre de agosto,
+ni en el de septiembre, y al cerrar septiembre el panel no lo nombraba. Es exactamente la forma
+del bug de §4fd (el botón 💰 creaba cobros sin fecha, y se lo toca cuando el cliente paga
+DESPUÉS — o sea sobre ventas de meses anteriores). Un pago sin fecha no es de ningún mes:
+ahora se lo busca en TODAS las ventas y el aviso dice cuántos son «de ventas de otro mes».
+
+### §4fo — El arqueo anotado se perdía en silencio, y el panel decía «El cuadre cierra ✅»
+La comparación recorría `formas`, que sale de los **pagos del período**. Si se contaba la caja
+en Efectivo y después esos cobros se corregían a QR (o se les sacaba la fecha, o se borraba la
+venta), la fila de Efectivo desaparecía y los Bs 900 contados a mano quedaban huérfanos: no se
+comparaban contra nada y no entraban en la diferencia. Ahora un arqueo sin ningún pago detrás
+es una **diferencia entera** y se lo nombra en la ficha.
+
+### §4fp — La ventana verde «✅ Guardado» mentía cuando el servidor rechazaba
+`showPagoWhatsapp` se abre apenas el pago queda escrito **en memoria**; el guardado va después.
+Con `busy` o un 404 el modal igual decía «✅ Listo — el pago ya quedó guardado» y «No tenés que
+hacer nada más», y el aviso rojo salía **detrás del propio modal**. Ahora `aplicarCobros` y
+`aplicarEnvios` devuelven la promesa del guardado y `pagoWaEstado` repinta la ventana en ámbar
+con el motivo y con «**No lo vuelvas a registrar**: se duplicaría». La plata no se pierde
+(queda en cola), pero hay que saberlo — es justo lo que §4fa construyó.
+
+### §4fq — «Anotar el monto» se comía un saldo pendiente
+`ctaAnotarMonto` forzaba el objetivo a `otros+monto` sin sumar `p.saldo`. Normalmente una venta
+«PAGADA sin monto» tiene saldo 0 y no cambia nada; con un saldo pendiente (dato viejo o
+importado) lo dejaba en 0 sin decir nada.
+
+### §4fr — Corregir el adelanto desde el FORMULARIO le borraba el chofer y la fecha
+Con un «A cuenta» y sin mixto, `_metForm` caía en `_metSuelto` («Efectivo %IMG»): el renglón
+perdía su fecha, su N° de recibo propio y —lo más caro— el **`>Nombre` de quién tiene el
+efectivo** (§4eq). Los Bs 600 dejaban de estar en la mano del chofer y pasaban a la de la
+vendedora en «💵 Efectivo cobrado vs. retirado»: a él se le borraba lo que tiene que rendir y a
+ella se le reclamaba plata que nunca tocó. Y `anticipoDe` lo refechaba con el día de INGRESO de
+la venta, moviéndolo de día y de mes.
+⚠️ El arreglo es **angosto a propósito**: solo cuando el adelanto YA ERA un renglón del
+historial (`_antPrev`). Una venta NUEVA con «A cuenta» sigue guardándose como método suelto,
+como siempre — cambiar eso tocaría `cobrosDe`, `metodoFormulario`, `mixtoDe` y los borradores
+de Kommo de una vez.
+
+### Lo que se miró y se dejó como está
+- **El total de la venta con el adelanto en 0** (5.490 y no 4.990): con A cuenta 0 y saldo
+  4.990 tipeados a mano, y un QR de 500 ya registrado, «500 que entraron + 4.990 que se deben»
+  es la lectura honesta de lo que se escribió. Lo que estaba mal era contar esos 500 dos veces
+  (§4fl).
+- **`SUMA(columna MONTO)` del Excel del Cuadre duplica** porque el cierre por forma de pago
+  comparte columna con los pagos. Es de formato, no de plata, y arreglarlo mueve un archivo
+  que el dueño ya usa: queda anotado.
+- **La duplicación de lectura de `cobrosDe`** (A cuenta suelto + PAGADA sin monto muestran el
+  mismo pago dos veces) sigue a decisión del dueño, como dice §4eu. Lo que sí se arregló es que
+  `aplicarCompsAnticipo` **ya no la escribe** en la planilla (§4fg).
+
 ## 4fi. El cartel decía «Conectado» con el 404 a la vista (2026-09-22)
 
 > *«y tb sale eso a pesar de estar conectado»* — el dueño, 22/09, con una captura donde arriba

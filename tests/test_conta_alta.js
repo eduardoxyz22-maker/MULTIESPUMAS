@@ -226,6 +226,48 @@ const J = (o) => JSON.stringify(o);
   // corregir el adelanto no mueve el TOTAL de la venta (4.990): baja lo que falta cobrar (2.990 → 2.890)
   chk('corregir el monto del anticipo (1.500 → 1.600) desde la ficha deja el A cuenta en 2.100 y el total igual', r.corr.acuenta===2100 && r.corr.ant===1600 && r.corr.mixto===500 && r.corr.total===4990 && r.corr.saldo===2890, J(r.corr));
 
+  /* ══ §4fj — CORREGIRLE EL RECIBO O LA FECHA AL ANTICIPO ══════════════════════════
+     `mixtoDe` reconoce al 2° método por HEURÍSTICA: mismo día y mismo recibo que el
+     anticipo. Corregirle al anticipo el recibo —lo que §4ei recomienda hacer— y dejar el
+     otro renglón con el viejo lo volvía invisible: el «A cuenta» bajaba a 1.500 en la tabla
+     y la corrección SIGUIENTE, con `mxM=0`, borraba los Bs 500 del historial entero. */
+  {
+    const q = await page.evaluate(async () => {
+      var fx=function(){ return P({ id:'X1', nota:'1700', oc:'09-960', vendedor:'Carola Chavez', cliente:'MIXTO RECIBO', ts:ts0+8,
+        acuenta:2000, saldo:3000, pagado:false,
+        metodoPago:textoCobros([{ anticipo:true, metodo:'Efectivo', monto:1500, fecha:ayer, nota:'1700', comps:['A'] },
+                                { anticipo:false, metodo:'QR', banco:'BISA', monto:500, fecha:ayer, nota:'1700', comps:['B'] }]),
+        productos:[{desc:'C',cant:1,precio:5000}] }); };
+      var foto=function(){ var p=findById('X1'); var a=anticipoDe(p), m=mixtoDe(p);
+        return { txt:p.metodoPago, acuenta:r2(Number(p.acuenta)||0), ant:a?a.monto:null, mixto:m?m.monto:null,
+                 venta:ventaTotal(p), entro:r2(totalCobrado(p)+(a?(Number(a.monto)||0):0)) }; };
+      var out={};
+      // (a) corregirle el N° de recibo al anticipo: 1700 → 1750
+      STATE=[fx()]; aConta(); await new Promise(r=>setTimeout(r,30));
+      showContaModal('X1'); ctaEditarPago('X1',0);
+      document.getElementById('cta-ed-nota').value='1750';
+      ctaGuardarPago('X1',0,true);
+      out.recibo=foto();
+      // (b) y AHORA la fecha: con el mixto perdido, acá se borraban los 500
+      showContaModal('X1'); ctaEditarPago('X1',0);
+      document.getElementById('cta-ed-fecha').value=hoy;
+      ctaGuardarPago('X1',0,true);
+      out.fecha=foto();
+      // (c) el camino que ya andaba (solo el monto) no se tocó
+      STATE=[fx()]; aConta(); showContaModal('X1'); ctaEditarPago('X1',0);
+      document.getElementById('cta-ed-monto').value='1600';
+      ctaGuardarPago('X1',0,true);
+      out.monto=foto();
+      closeModal();
+      return out;
+    });
+    chk('§4fj · corregir el RECIBO del anticipo no despega al 2° método del pago mixto', q.recibo.mixto===500 && q.recibo.acuenta===2000 && q.recibo.entro===2000, J(q.recibo));
+    chk('  …y los dos renglones quedan con el recibo nuevo', /#1750/.test(q.recibo.txt) && !/#1700/.test(q.recibo.txt), q.recibo.txt);
+    chk('§4fj · corregir la FECHA después NO borra los Bs 500 (antes desaparecían del ledger)', q.fecha.mixto===500 && q.fecha.entro===2000 && q.fecha.venta===5000, J(q.fecha));
+    chk('  …y los dos pagos quedan en el mismo día', q.fecha.txt.split('@').length===3 && q.fecha.txt.indexOf('@'+q.fecha.txt.split('@')[1].slice(0,10))>=0, q.fecha.txt);
+    chk('§4fj · corregir solo el MONTO sigue funcionando igual que antes', q.monto.ant===1600 && q.monto.mixto===500 && q.monto.acuenta===2100 && q.monto.venta===5000, J(q.monto));
+  }
+
   /* ══ 💰 «Marcar cobrado» SUMA, no reemplaza (§4fd) ══════════════════════════════
      El botón 💰 de cada fila de Administración —el que más se toca— hacía
      `aplicarCobros(p,[unCobro])`, y eso REESCRIBE el historial: borraba los pagos ya
@@ -333,6 +375,84 @@ const J = (o) => JSON.stringify(o);
     chk('⚠️ con DOS fletes, corregir el segundo NO toca el primero', J(r.dos)===J([['Efectivo',60,'995'],['QR',45,'996']]), J(r.dos));
     chk('⚠️ 🗑 Quitar nombra el TOTAL y los dos renglones', /Bs 105,00/.test(r.borrar.txt) && /2 renglones/.test(r.borrar.txt), r.borrar.txt.replace(/\n/g,' ').slice(0,110));
     chk('…y si se dice que no, no se borra ninguno', r.borrar.quedan===2, J(r.borrar.quedan));
+  }
+
+  /* ══ §4fk — UN PAGO SOBRE UNA VENTA YA PAGADA NO ES UN FLETE ══════════════════════
+     La condición era `CTA_TIPO==='envio' || falta<=0.01`: en una venta sin saldo, un pago
+     registrado con «💵 Pago de la venta» elegido se guardaba como RECARGO POR ENTREGA sin
+     preguntar, con el aviso en verde. En el Excel del contador esos Bs 700 salían en
+     «RECARGO COBRADO» y no en lo cobrado de la venta.
+     ══ §4fl — y bajar el adelanto a 0 en un pago mixto inventaba un anticipo fantasma. */
+  {
+    const q = await page.evaluate(async () => {
+      var out={}, conf=[];
+      var _cf=window.confirm;
+      window.confirm=function(m){ conf.push(String(m)); return true; };
+      // (a) venta PAGADA (saldo 0), contabilidad registra otro pago de 700 con tipo «pago»
+      STATE=[ P({ id:'K1', nota:'800', oc:'09-800', vendedor:'Maria Flores', cliente:'YA PAGADA', ts:ts0+9,
+        acuenta:0, saldo:0, pagado:true, metodoPago:'~Efectivo 1000 @'+hoy+' #800 %V1',
+        productos:[{desc:'A',cant:1,precio:1000}] }) ];
+      RETIROS=[]; aConta(); await new Promise(r=>setTimeout(r,30));
+      showContaModal('K1');
+      out.tipo=CTA_TIPO;
+      CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['QR1'];
+      document.getElementById('cta-pago-monto').value='700';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='801';
+      ctaRegistrarPago('K1');
+      var k1=findById('K1');
+      out.pagada={ cobros:cobrosDe(k1).length, envios:enviosDe(k1).length, cobrado:totalCobrado(k1),
+                   envCob:envioCobrado(k1), exceso:excesoCobro(k1) };
+      out.pregunta=(conf[0]||'');
+      // (b) …y si se dice que NO, no se anota nada
+      conf.length=0; window.confirm=function(m){ conf.push(String(m)); return false; };
+      STATE=[ P({ id:'K2', nota:'802', oc:'09-802', vendedor:'Maria Flores', cliente:'YA PAGADA 2', ts:ts0+10,
+        acuenta:0, saldo:0, pagado:true, metodoPago:'~Efectivo 1000 @'+hoy+' #802 %V2',
+        productos:[{desc:'A',cant:1,precio:1000}] }) ];
+      aConta(); showContaModal('K2');
+      CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['QR2'];
+      document.getElementById('cta-pago-monto').value='700';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='803';
+      ctaRegistrarPago('K2');
+      var k2=findById('K2');
+      out.dijoNo={ cobros:cobrosDe(k2).length, envios:enviosDe(k2).length, txt:k2.metodoPago };
+      // (c) el flete de verdad (tipo «envio») sigue entrando como flete, sin preguntar nada
+      conf.length=0; window.confirm=function(m){ conf.push(String(m)); return true; };
+      STATE=[ P({ id:'K3', nota:'804', oc:'09-804', vendedor:'Maria Flores', cliente:'PAGADA CON FLETE', ts:ts0+11,
+        acuenta:0, saldo:0, pagado:true, metodoPago:'~Efectivo 1000 @'+hoy+' #804 %V3',
+        productos:[{desc:'A',cant:1,precio:1000}] }) ];
+      aConta(); showContaModal('K3'); ctaSetTipo('K3','envio');
+      CTA_PAGO.metodo='Efectivo'; CTA_PAGO.comps=['FL9'];
+      document.getElementById('cta-pago-monto').value='150';
+      document.getElementById('cta-pago-fecha').value=hoy;
+      document.getElementById('cta-pago-nota').value='805';
+      ctaRegistrarPago('K3');
+      var k3=findById('K3');
+      out.flete={ envCob:envioCobrado(k3), cobros:cobrosDe(k3).length, preguntas:conf.length };
+      // (d) §4fl: bajar el A cuenta a 0 en un pago mixto
+      STATE=[ P({ id:'K4', nota:'960', oc:'09-960', vendedor:'Maria Flores', cliente:'MIXTO A CERO', ts:ts0+12,
+        acuenta:2000, saldo:2990, pagado:false,
+        metodoPago:textoCobros([{ anticipo:true, metodo:'Efectivo', monto:1500, fecha:hoy, nota:'960', comps:['M1'] },
+                                { anticipo:false, metodo:'QR', banco:'BISA', monto:500, fecha:hoy, nota:'960', comps:['M2'] }]),
+        productos:[{desc:'C',cant:1,precio:4990}] }) ];
+      aConta(); showContaModal('K4');
+      document.getElementById('cta-acuenta').value='0';
+      document.getElementById('cta-saldo').value='4990';
+      ctaGuardarMontos('K4');
+      var k4=findById('K4');
+      out.aCero={ acuenta:r2(Number(k4.acuenta)||0), ant:anticipoDe(k4), cobrado:totalCobrado(k4),
+                  pagos:contaPagos(k4).length, txt:k4.metodoPago };
+      window.confirm=_cf; closeModal();
+      return out;
+    });
+    chk('§4fk · con «Pago de la venta» elegido, el pago NO se guarda como flete', q.pagada.cobros===1 && q.pagada.envios===0 && q.pagada.cobrado===700, J(q.pagada));
+    chk('  …se avisa que la venta ya está pagada y se ofrece el botón del flete', /ya está pagada/.test(q.pregunta) && /Recargo por entrega/.test(q.pregunta), q.pregunta.replace(/\n/g,' ').slice(0,130));
+    chk('  …y queda marcado como cobro de MÁS, que es lo que es', q.pagada.exceso===700, J(q.pagada.exceso));
+    chk('§4fk · si se dice que NO, no se anota nada de nada', q.dijoNo.cobros===0 && q.dijoNo.envios===0, q.dijoNo.txt);
+    chk('§4fk · el flete de verdad (🚚 elegido) entra como flete y sin preguntar', q.flete.envCob===150 && q.flete.cobros===0 && q.flete.preguntas===0, J(q.flete));
+    chk('§4fl · bajar el A cuenta a 0 en un pago mixto no deja un anticipo FANTASMA', q.aCero.acuenta===0 && q.aCero.ant===null, J({acuenta:q.aCero.acuenta, ant:q.aCero.ant}));
+    chk('  …y el 2° método sigue anotado como cobro, una sola vez', q.aCero.cobrado===500 && q.aCero.pagos===1, J({cobrado:q.aCero.cobrado, pagos:q.aCero.pagos, txt:q.aCero.txt}));
   }
 
   chk('sin errores JS', errores.length===0, J(errores));

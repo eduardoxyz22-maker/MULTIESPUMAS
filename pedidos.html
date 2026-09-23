@@ -3960,7 +3960,26 @@ function cuadreAlertas(pagos){
       else if(c.fecha>todayStr() || (contaFecha(p) && c.fecha<contaFecha(p))) fechaRara.push({p:p,c:c});
     });
   });
-  if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo', det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto), id:x.p.id}; })});
+  /* ⚠️ UN PAGO SIN FECHA NO ES DE NINGÚN MES (§4fn). El bucle de arriba recorre solo las
+     ventas cuya FECHA DE VENTA cae en el período elegido, así que un pago sin fecha sobre una
+     venta de OTRO mes no disparaba nada: esos bolivianos no estaban en el cuadre de agosto, ni
+     en el de septiembre, y al cerrar septiembre el panel no los nombraba — aparecían solo si
+     alguien volvía al mes de la venta o elegía «Todo». Es justo la forma del bug de §4fd: el
+     botón 💰 creaba cobros sin fecha, y se lo toca cuando el cliente paga DESPUÉS, o sea sobre
+     ventas de meses anteriores. Un pago sin fecha hay que verlo desde cualquier período. */
+  var _yaSF={}, _sfFuera=0;
+  sinFecha.forEach(function(x){ _yaSF[x.p.id+'|'+x.c.monto+'|'+limpiaNota(x.c.nota)]=1; });
+  STATE.forEach(function(p){
+    if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
+    if(enPeriodoCuadre(contaFecha(p), pe)) return;              // esas ya las miró el bucle de arriba
+    contaPagos(p).forEach(function(c){
+      if(!((Number(c.monto)||0)>0) || c.fecha) return;
+      var _k=p.id+'|'+c.monto+'|'+limpiaNota(c.nota);
+      if(_yaSF[_k]) return;
+      _yaSF[_k]=1; _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
+    });
+  });
+  if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo'+(_sfFuera?(' ('+_sfFuera+' de ven'+(_sfFuera===1?'ta':'tas')+' de otro mes)'):''), det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+(x.fuera?(' · venta del '+fmtFechaCorta(contaFecha(x.p))):''), id:x.p.id}; })});
   if(sinMonto.length) A.push({k:'sinmonto', sev:'datos', ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   if(sinNada.length) A.push({k:'sinnada', sev:'datos', ico:'❓', txt:'<b>'+sinNada.length+'</b> venta'+(sinNada.length===1?'':'s')+' <b>sin ningún monto anotado</b> — ni pagada, ni a cuenta, ni saldo. <b>No se sabe cuánto vale ni si el cliente pagó</b>: hay que abrirla y completarla antes de entregar', det:sinNada.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin
@@ -4192,8 +4211,24 @@ function renderCuadre(){
      no uno por vendedora. Filtrado se muestran los números pero no se deja anotar,
      porque el valor guardado es global y se pisaría con un total parcial. */
   var vendSel=cuadreVendedor(), arqueoOn=!vendSel;
-  var difTotal=0, anotadas=0;
-  if(arqueoOn) formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
+  var difTotal=0, anotadas=0, arqHuerfanos=[];
+  if(arqueoOn){
+    formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
+    /* ⚠️ UN ARQUEO SIN PAGOS NO SE PIERDE EN SILENCIO (§4fo). `formas` sale de los pagos del
+       período: si se contó la caja en Efectivo y después esos cobros se corrigieron a QR —o se
+       les sacó la fecha, o se borró la venta—, la fila de Efectivo desaparecía y los Bs 900
+       contados a mano quedaban huérfanos. No se comparaban contra nada, no entraban en la
+       diferencia, y el panel llegaba a decir «El cuadre cierra ✅» con plata contada sin
+       conciliar. Un arqueo sin ningún pago que lo respalde es una diferencia ENTERA. */
+    var _pref=cuadreArqueoKey(''), _hayForma={}, _arq=cuadreArqueoTodo();
+    formas.forEach(function(f){ _hayForma[f.forma]=1; });
+    Object.keys(_arq).forEach(function(k){
+      if(k.indexOf(_pref)!==0) return;
+      var _f=k.slice(_pref.length); if(!_f || _hayForma[_f]) return;
+      var a=Number(_arq[k]); if(!isFinite(a)) return;
+      anotadas++; arqHuerfanos.push({forma:_f, monto:a}); difTotal=r2(difTotal+a);
+    });
+  }
 
   /* ---- efectivo retirado y lo que todavía está en la mano ----
      El efectivo es el único que se puede perder de vista: entra a la mano de la vendedora
@@ -4248,7 +4283,9 @@ function renderCuadre(){
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
            difTotal===0?'✅ Cuadra':fmtBs(Math.abs(difTotal)),
-           anotadas+' de '+formas.length+' forma'+(formas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s'))
+           anotadas+' de '+Math.max(formas.length,anotadas)+' forma'+(Math.max(formas.length,anotadas)===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
+           // §4fo: el arqueo que quedó sin ningún pago detrás se nombra, o no se entiende la diferencia.
+           (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
       : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
            pend.length+' venta'+(pend.length===1?'':'s')+' de '+esc(cuadrePeriodoTxt())));
 
@@ -5396,9 +5433,25 @@ function ctaGuardarPago(id, i, igual){
     var ventaAntes=ventaTotal(p);
     var ant=anticipoDe(p); if(!ant) return;
     var mx=mixtoDe(p), mxM=r2(mx?(Number(mx.monto)||0):0);     // el 2° método del pago mixto, si hay (§4ej)
+    var antF=ant.fecha, antN=limpiaNota(ant.nota);             // cómo estaba el anticipo ANTES de tocarlo
     ant=JSON.parse(JSON.stringify(ant));
     ant.fecha=f; ant.monto=monto; ant.nota=nota; ant.metodo=CTA_EDIT_M; ant.banco=banco; ant.recibio=recibio; ant.anticipo=true;
     var cobros=ctaCobrosConFecha(p), env=enviosDe(p);
+    /* ⚠️ EL 2° MÉTODO DEL PAGO MIXTO VIAJA CON EL ANTICIPO (§4fj). `mixtoDe` lo reconoce por
+       HEURÍSTICA: mismo día y mismo recibo que el anticipo (no hay marca propia en el texto).
+       Corregirle al anticipo la fecha o el N° de recibo —que es justo lo que la bitácora
+       recomienda hacer, §4ei— y dejar el otro renglón con los viejos lo volvía invisible: el
+       «A cuenta» de la tabla bajaba Bs 500 en silencio, y la corrección SIGUIENTE, con
+       `mxM=0`, se los borraba del historial, del Cuadre y de los dos Excel. Es la MISMA plata
+       del mismo adelanto pagado en dos veces: se mueven juntos. */
+    if(mx && (f!==antF || nota!==antN)){
+      for(var _mi=0;_mi<cobros.length;_mi++){
+        var _mc=cobros[_mi];
+        if(!esEnvio(_mc) && _mc.fecha===antF && limpiaNota(_mc.nota)===antN && (Number(_mc.monto)||0)>0){
+          _mc.fecha=f; _mc.nota=nota; break;
+        }
+      }
+    }
     p.metodoPago=conMarcaReg(textoCobros([ant].concat(cobros).concat(env)), regEnSistema(p));
     /* `p.acuenta` = TODO el adelanto (anticipo + segundo método, §4ej) — salvo que la venta se
        haya cargado «SÍ, pagado»: ahí queda en 0 a propósito (§4cb) y no se toca. Antes
@@ -5565,7 +5618,7 @@ function aplicarEnvios(p, arr){
   var env=(arr||[]).map(function(c){ c.envio=true; c.anticipo=false; return c; })
                    .filter(function(c){ return (Number(c.monto)||0)>0; });
   p.metodoPago=conMarcaReg(textoHistorial(p, (ant?[ant]:[]).concat(cobros).concat(env)), regEnSistema(p));
-  persistPedido(p);
+  return persistPedido(p);          // §4fp: quien llama necesita saber si el guardado entró
 }
 /* Anotarle el monto a una venta que se marcó PAGADA sin decir cuánto entró.
    Sin esto quedaban en el limbo: el aviso "Revisar antes de cerrar" las nombraba pero no
@@ -5587,7 +5640,11 @@ function ctaAnotarMonto(id, idx){
   // Sin fecha propia no entraría en ningún cuadre: se le pone la de la venta.
   var puso=!c.fecha;
   if(puso) c.fecha=contaFecha(p)||todayStr();
-  aplicarCobros(p, arr, r2(otros+monto));
+  /* ⚠️ El objetivo suma lo que TODAVÍA falta cobrar (§4fq). Normalmente una venta «PAGADA sin
+     monto» tiene saldo 0 y esto no cambia nada; pero si la fila traía además un saldo
+     pendiente (dato viejo o importado), anotar el monto lo dejaba en 0 y se comía esa deuda
+     sin decir nada. */
+  aplicarCobros(p, arr, r2(otros+monto+Math.max(0, Number(p.saldo)||0)));
   showContaModal(id); renderCuadreSiActivo(); renderContaSiActiva();
   toast('Monto anotado: '+fmtBs(monto)+(puso?(' · con la fecha de la venta ('+fmtFechaCorta(c.fecha)+')'):'')+' ✓','ok');
 }
@@ -5849,7 +5906,13 @@ function aplicarMontos(p, acu, sal){
     var t=0; cobros.forEach(function(c){ t+=Number(c.monto)||0; });
     p.cobradoBs=r2(t);
   }
-  if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.01)) p.acuenta=r2(acu+mxM);
+  /* ⚠️ `acu + mxM` SOLO mientras quede un anticipo (§4fl). Bajando el adelanto a 0 en un pago
+     mixto, el ledger se queda sin el renglón del anticipo pero `p.acuenta` quedaba en 500
+     —el 2° método— y `anticipoDe` fabricaba con eso un ANTICIPO FANTASMA, sin método ni
+     comprobante: los MISMOS Bs 500 contados dos veces (una como «A cuenta», otra como el
+     cobro de QR que sigue en el historial), y el total de la venta inflado en 500. Sin
+     anticipo no hay adelanto: el 2° método queda como lo que es, un cobro más. */
+  if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.01)) p.acuenta = (acu>0.01) ? r2(acu+mxM) : 0;
   p.saldo=sal;
   p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0);
   persistPedido(p);
@@ -5947,9 +6010,19 @@ function ctaRegistrarPago(id){
   var linea={metodo:CTA_PAGO.metodo, banco:(CTA_PAGO.metodo==='QR'?CTA_PAGO.banco:''), monto:monto, fecha:fecha, nota:nota,
              recibio:(CTA_PAGO.metodo==='Efectivo'?limpiaRecibio(CTA_PAGO.recibio):''),      // §4eq: quién tiene el efectivo
              comps:(metodoConComprobante(CTA_PAGO.metodo)?compsArr(CTA_PAGO.comps):[])};
-  /* RECARGO POR ENTREGA: es plata que entró, pero NO es de la venta. No le baja el saldo,
-     no cuenta como cobro de más y no entra en lo facturado. Va en su propio renglón. */
-  if(CTA_TIPO==='envio' || falta<=0.01){
+  /* ⚠️ UNA VENTA YA PAGADA NO CONVIERTE EL PAGO EN FLETE SOLA (§4fk). Antes la condición
+     era `CTA_TIPO==='envio' || falta<=0.01`: en una venta sin saldo, un pago registrado con
+     «💵 Pago de la venta» elegido se guardaba como **recargo por entrega** sin preguntar
+     nada, con el aviso en verde. En el Excel del contador esos Bs 700 salían en «RECARGO
+     COBRADO» y no en lo cobrado de la venta. Ahora al recargo se va SOLO si el usuario lo
+     eligió; si no, se pregunta, y el cobro de más queda como cobro de más —que el panel ya
+     sabe mostrar («⚠️ Bs 700 de más», `excesoBadge`). */
+  if(CTA_TIPO!=='envio' && falta<=0.01){
+    if(!confirm('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
+                '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
+                'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.')) return;
+  }
+  if(CTA_TIPO==='envio'){
     /* Si había un flete PACTADO sin cobrar, este cobro lo reemplaza (no se suma encima):
        lo que se está haciendo es justamente reportar que ya se cobró.
        ⚠️ PERO SOLO POR LO QUE SE COBRÓ (§4fe). Antes el `filter(envioYaCobrado)` tiraba el
@@ -5967,17 +6040,19 @@ function ctaRegistrarPago(id){
        el pago— metía el pago de Bs 1.000 como si fuera flete: la venta quedaba «por cobrar»
        para siempre y el aviso salía en verde. */
     CTA_TIPO='pago';
-    aplicarEnvios(p, ae);
+    var _prE=aplicarEnvios(p, ae);
     renderCuadreSiActivo(); renderContaSiActiva();
     toast('Recargo por entrega anotado: '+fmtBs(monto)+' · '+fmtFecha(fecha),'ok');
     showPagoWhatsapp(id, contaPagos(p).length-1);
+    pagoWaEstado(_prE);                    // §4fp: si el guardado no entra, la ventana lo dice
     return;
   }
-  if(monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
+  // Con saldo 0 ya se preguntó arriba (§4fk): no se pregunta dos veces lo mismo.
+  if(falta>0.01 && monto>falta+0.01 && !confirm('El pago ('+fmtBs(monto)+') es mayor que el saldo ('+fmtBs(falta)+').\n\n¿Registrarlo igual?')) return;
   var arr=cobrosDe(p).slice();
   arr.push(linea);
   CTA_PAGO.comps=[]; CTA_PAGO.recibio=''; CTA_PAGO_V=null; delete CTA_PAGO_POR_ID[String(id)];   // que no se peguen al pago siguiente
-  aplicarCobros(p, arr);
+  var _prP=aplicarCobros(p, arr);
   toast('Pago registrado: '+CTA_PAGO.metodo+(CTA_PAGO.banco?(' '+CTA_PAGO.banco):'')+' '+fmtBs(monto)+' · '+fmtFecha(fecha)+(nota?(' · nota '+nota):'')+
         (linea.recibio?(' · lo tiene el chofer '+linea.recibio):''),'ok');
   /* Recién cobrado: lo que sigue es avisarle al grupo, así que se ofrece ya armado.
@@ -5985,6 +6060,7 @@ function ctaRegistrarPago(id){
      van al final, y con un flete ya cobrado la ventana «✅ Guardado» y el WhatsApp mostraban
      el flete (Bs 50) en vez del pago (Bs 700) — e invitaban a registrarlo dos veces (§4ew). */
   showPagoWhatsapp(id, (anticipoDe(p)?1:0)+cobrosDe(p).length-1);
+  pagoWaEstado(_prP);                      // §4fp: si el guardado no entra, la ventana lo dice
 }
 /* ---- El pago, listo para pegar en el grupo de WhatsApp ----
    Se manda el mensaje Y el link de la imagen: WhatsApp no puede adjuntar el archivo desde
@@ -6018,6 +6094,31 @@ function pagoTexto(p, c){
   }
   return L.join('\n');
 }
+/* ---- ⚠️ La ventana verde no puede mentir (§4fp) ----
+   `showPagoWhatsapp` se abre apenas el pago queda escrito EN MEMORIA; el guardado en la
+   planilla va después. Con el servidor ocupado (`busy`) o un 404 (§4dm), el modal igual decía
+   «✅ Listo — el pago ya quedó guardado» y «No tenés que hacer nada más», y el aviso rojo
+   salía DETRÁS del propio modal, donde nadie lo ve. Es justo lo que §4fa construyó para que
+   el dueño no tenga que «revisar 2-3 veces si subió». Ahora, si el guardado no entra, la
+   ventana se repinta en ámbar y dice qué pasó — la plata no se pierde (queda en cola y se
+   reintenta sola), pero hay que saberlo. */
+var PAGO_WA_GEN=0;
+function pagoWaEstado(prom){
+  if(!prom || !prom.then) return;
+  var gen=PAGO_WA_GEN;
+  prom.then(function(res){
+    if(gen!==PAGO_WA_GEN) return;                      // ya se abrió otra ventana: esta no manda
+    if(res && res.ok) return;
+    var box=document.getElementById('pago-wa-ok'); if(!box) return;
+    var h=document.getElementById('pago-wa-h');
+    if(h){ h.style.background='var(--amber)'; var hh=h.querySelector('h3'); if(hh) hh.textContent='⏳ Anotado, pero todavía NO en la planilla'; }
+    box.style.background='var(--amber-lt)'; box.style.borderColor='var(--amber-border)';
+    box.innerHTML='<div style="font-weight:800;color:#7c4b00;font-size:.95rem">⏳ Quedó anotado en este dispositivo, pero NO llegó a la planilla</div>'+
+      '<div style="font-size:.85rem;margin-top:5px">'+esc(motivoDelServidor?motivoDelServidor(res&&res.error):String((res&&res.error)||'sin respuesta'))+'</div>'+
+      '<div style="font-size:.85rem;margin-top:4px">Se reintenta solo. <b>No lo vuelvas a registrar</b>: se duplicaría. '+
+      'Si querés ver cómo va, mirá <b>⚠️ Guardados rechazados / sin enviar</b> en Administración.</div>';
+  });
+}
 function showPagoWhatsapp(id, i){
   var p=findById(id); if(!p) return;
   var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
@@ -6029,10 +6130,11 @@ function showPagoWhatsapp(id, i){
   var cs=compsArr(c.comps!=null?c.comps:c.comp);
   var falta=contaFaltaCobrar(p);
   var volver='showContaModal('+JSON.stringify(String(id)).replace(/"/g,'&quot;')+')';
-  openModal('<div class="modal-h" style="background:var(--green)"><h3>✅ Guardado</h3>'+
+  PAGO_WA_GEN++;                 // §4fp: solo la ventana MÁS NUEVA hace caso al guardado
+  openModal('<div class="modal-h" id="pago-wa-h" style="background:var(--green)"><h3>✅ Guardado</h3>'+
       '<button class="modal-x" onclick="'+volver+'">✕</button></div>'+
     '<div class="modal-b">'+
-      '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
+      '<div id="pago-wa-ok" style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:12px 14px;margin-bottom:12px">'+
         '<div style="font-weight:800;color:var(--green);font-size:.95rem">✅ Listo — '+(esEnvio(c)?'el recargo':'el pago')+' ya quedó guardado</div>'+
         '<div style="font-size:.85rem;margin-top:5px">'+
           esc(contaMetodoTxt(c))+' · <b>'+esc(fmtBs(c.monto))+'</b>'+
@@ -6083,7 +6185,12 @@ function exportConta(){
            como "no debe nada", que es justo al revés — a esa venta le falta el monto.
            Se mantiene corto y filtrable, que es para lo que usa esta columna. */
         i===0?(p.pagado?'SÍ':(sinMontoAnotado(p)?'SIN MONTO':'NO')):'', i===0?contaPagosTxt(p):'',
-        i===0?{v:totalCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
+        /* ⚠️ `contaCobrado`, no `totalCobrado` (§4fm). `totalCobrado` NO incluye el anticipo y
+           `ventaTotal` SÍ, así que las tres columnas no cerraban entre ellas —COBRADO + SALDO
+           daba menos que TOTAL VENTA, y la brecha era justo la suma de los adelantos del mes,
+           que en esta empresa es casi toda venta— y el archivo decía un número distinto del
+           que la pantalla muestra en «Ya ingresó». Es la misma cuenta de la tarjeta. */
+        i===0?{v:contaCobrado(p),t:'n'}:'', i===0?{v:(Number(p.saldo)||0),t:'n'}:'',
         i===0?{v:ventaTotal(p),t:'n'}:'', i===0?(tienePrecios(p)?{v:prodTotal(p),t:'n'}:''):'',
         i===0?{v:envioTotal(p),t:'n'}:'', i===0?{v:envioCobrado(p),t:'n'}:'', i===0?{v:envioPorCobrar(p),t:'n'}:'',
         i===0?(regEnSistema(p)?'SÍ':'NO'):'', i===0?(p.observaciones||''):''
@@ -6566,6 +6673,8 @@ function submitPedido(){
      cobro del mismo día y el mismo recibo. Vale tanto para «SÍ, pagado» (sobre lo cobrado)
      como para el adelanto (sobre el «A cuenta»). */
   var _mixOn = MIXTO && !lite && (_pagSI ? _cobVal>0 : _acuVal>0);
+  // §4fr: ¿el adelanto ya era un renglón DEL HISTORIAL (no uno reconstruido de `p.acuenta`)?
+  var _antPrev = prev ? (parseCobros(prev.metodoPago).filter(function(c){ return c.anticipo && !esEnvio(c); })[0]||null) : null;
   var _metForm = _mixOn
         ? (function(){
             var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), hoy=todayStr(), nota=document.getElementById('f-nota').value;
@@ -6581,6 +6690,27 @@ function submitPedido(){
                          monto:_cobVal, fecha:todayStr(),
                          nota:document.getElementById('f-nota').value,
                          comps:(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]) }])
+        : (_acuVal>0 && _antPrev)
+        ? (function(){
+            /* ⚠️ UN ADELANTO QUE YA ERA UN RENGLÓN NO VUELVE A SER TEXTO SUELTO (§4fr).
+               Acá caía `_metSuelto` («Efectivo %IMG»): corrigiendo el monto del adelanto desde
+               el formulario, ese renglón perdía su FECHA, su N° de recibo propio y —lo más
+               caro— el `>Nombre` de QUIÉN TIENE EL EFECTIVO (§4eq). Con eso los Bs 600 dejaban
+               de estar en la mano del chofer y pasaban a la de la vendedora en «💵 Efectivo
+               cobrado vs. retirado»: a él se le borraba lo que tiene que rendir y a ella se le
+               reclamaba plata que nunca tocó. Y `anticipoDe` lo refechaba con el día de
+               INGRESO de la venta, moviéndolo de día — y de mes, si la venta era de otro.
+               ⚠️ Solo cuando el adelanto YA ERA un renglón del historial: una venta nueva con
+               «A cuenta» sigue guardándose como método suelto, como siempre. */
+            var _met=segVal('f-metodo'), _mismoMet=String(_antPrev.metodo||'')===_met;
+            return textoCobros([{ anticipo:true, metodo:_met,
+              banco:(_met==='QR'?segVal('f-banco'):''),
+              monto:_acuVal,
+              fecha:_antPrev.fecha||contaFecha(prev)||todayStr(),
+              nota:(limpiaNota(_antPrev.nota)||document.getElementById('f-nota').value),
+              recibio:((_met==='Efectivo' && _mismoMet)?limpiaRecibio(_antPrev.recibio):''),
+              comps:(metodoConComprobante(_met)?compsArr(FORM_COMPS):[]) }]);
+          })()
         : _metSuelto;
   var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
@@ -12515,7 +12645,7 @@ function aplicarCobros(p, arr, objetivoForzado){
      cobrar»). El «deshacer» del chofer no cambia: ahí el objetivo es lo que había que cobrar. */
   var antM=ant?(Number(ant.monto)||0):0;
   p.pagado = total>=objetivo-0.01 && (total>0 || (antM>0 && objetivo<=0.01));
-  persistPedido(p);
+  return persistPedido(p);          // §4fp: quien llama necesita saber si el guardado entró
 }
 /* 💰 MARCAR COBRADO **SUMA** UN PAGO, NO REEMPLAZA EL HISTORIAL (§4fd).
    ⚠️ Antes hacía `aplicarCobros(p, [{…}])` con UN solo cobro, y `aplicarCobros` REESCRIBE
