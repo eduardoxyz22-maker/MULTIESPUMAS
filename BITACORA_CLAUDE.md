@@ -7502,8 +7502,11 @@ guardar, ejecutar `estadoKommo` y `kommoRepaso` desde el editor, sin Implementar
    mirarlo en Kommo → Webhooks.
 
 **Producción quedó en `ebc3eab` + `.gs` `2026-09-20-a` implementado**, que es lo que el panel
-publicado espera (`SCRIPT_VERSION_ESPERADA`). En el editor, lo pegado a las 11:24 hasta que el dueño
-lo reemplace.
+publicado espera (`SCRIPT_VERSION_ESPERADA`). **✅ Resuelto a las 16:59**: el dueño re-pegó la 20-a
+desde el raw de `main` y `estadoKommo` dijo `repasoInstalado: true`, `enCola: 0` y el último repaso
+recién hecho (20:59:04 UTC: 2 vistos, **1 creado** —la venta que esperaba—, 1 salteado). El último
+aviso del webhook (22/09 19:01 UTC) traía `leads: 0`: el webhook de Kommo no avisa ventas desde
+ayer y todo entra por los repasos (a mirar en Kommo → Webhooks; no urgente).
 
 ### Lo que estaba mal en la primera vuelta
 - La junta del stock contaba **multiconjuntos**: juntar DOS VECES el mismo cambio lo contaba dos.

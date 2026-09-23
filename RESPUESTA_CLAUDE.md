@@ -4,8 +4,8 @@
 **Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta: `5205ce8`** (código, pruebas y
 bitácora) **y `9ee9c2e`**, el del incidente (§0: `probarAntesDeImplementar`, la alarma del repaso
 parado y el procedimiento de §7).
-**Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a`. Pero
-el repaso de Kommo del script sigue parado desde las 11:24 (ver §0).
+**Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a`. El
+repaso de Kommo del script estuvo parado de 11:24 a 16:59 y **ya anda** (ver §0).
 
 > ⚠️ **Coordinación.** Trabajo en un servidor en la nube: no tengo acceso a `C:\Users\…` ni a OneDrive.
 > Leí lo que me pegaste en el chat: el informe original y la verificación de Codex del 23/09. Este
@@ -69,12 +69,18 @@ el repaso de Kommo del script sigue parado desde las 11:24 (ver §0).
 - `probarAntesDeImplementar` (§5) detecta justo esto, **si se corre**: su prueba C es un pegado
   cortado antes de `kommoRepaso`.
 
-### Qué se le pidió al dueño
+### Qué se le pidió al dueño, y ✅ RESUELTO a las 16:59
 Nada de esto afecta al equipo: guardar en el editor no cambia lo implementado.
-1. Captura del error de `kommoRepaso` en Ejecuciones.
-2. Pegar de nuevo la 20-a, sacada del raw de `main`, y guardar.
-3. Ejecutar `estadoKommo` y `kommoRepaso` desde el editor.
-4. **No tocar «Implementar».**
+1. Captura del error de `kommoRepaso` en Ejecuciones. ✅ Llegó.
+2. Pegar de nuevo la 20-a, sacada del raw de `main`, y guardar. ✅ Hecho.
+3. Ejecutar `estadoKommo` y `kommoRepaso` desde el editor. ✅ Hecho: la captura de `estadoKommo`
+   de las 16:59:18 dice:
+   - `repasoInstalado: true` y `enCola: 0`;
+   - `ultimoRepaso` = `2026-09-23T20:59:04Z`, o sea 16:59 de Bolivia: recién hecho. Vio 2 ventas de
+     «Compradores», **creó 1** (la que esperaba entró al panel como borrador de Kommo) y salteó 1
+     que ya estaba;
+   - `ultimoHook` = `2026-09-22T19:01:03Z`, con `leads: 0` (ver «Otras cosas»).
+4. **No tocar «Implementar».** ✅ No se tocó.
 
 ### Lo que cambié para que no se repita (§5 y §7)
 - **`.gs` 23-b: `probarAntesDeImplementar()`**, de solo lectura y arriba de todo. Se corre desde el
@@ -90,12 +96,15 @@ Nada de esto afecta al equipo: guardar en el editor no cambia lo implementado.
   sesión, Google devuelve una página sin el permiso CORS, y para el navegador eso es igual que no
   tener red. `motivoDeError` ahora lo dice (ver §5).
 - **Visto y sin conclusión.** «Último aviso de Kommo al panel» dice **22/09 19:01 UTC** en todas las
-  corridas del 23: el webhook no avisó nada en todo el día, y las ventas entraron por los repasos.
+  corridas del 23, y `estadoKommo` agrega que ese último aviso traía **0 leads**. El webhook no avisó
+  ninguna venta en todo el día, y las ventas entraron por los repasos.
   - Puede ser normal: el respaldo filtra por `updated_at`, no por cambio de etapa.
   - Igual hay que mirarlo en Kommo → Webhooks.
-- **Producción ahora:**
+  - No es urgente: el repaso de 5 minutos trae las ventas igual.
+- **Producción ahora (16:59):**
   - Implementado: panel `ebc3eab` + `.gs` `2026-09-20-a`, que es lo que ese panel espera.
-  - En el editor: lo pegado a las 11:24, hasta que el dueño lo reemplace.
+  - En el editor: la misma 20-a, re-pegada desde el raw y comprobada con `estadoKommo`. Los
+    disparadores andan otra vez.
   - En esta combinación el stock y el arqueo **se siguen pisando entre dispositivos**, y borrar no mira
     el sello. Es lo que se corrige acá, y hay que publicarlo todo junto (ver §7).
 
