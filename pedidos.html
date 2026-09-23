@@ -1522,6 +1522,7 @@ function loadMirror(){
   if(!Array.isArray(STATE))STATE=[];
   STATE=leerCierresDeLista(STATE);   // por si una copia vieja todavía trae filas del sistema
   loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror(); loadBorrMirror();
+  sisBaseCargarEspejo(); stockCargarEspejo();   // §4fz-b: el stock y la versión del servidor sobre la que se trabaja
 }
 function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
@@ -1534,6 +1535,14 @@ function setPending(a){ try{ localStorage.setItem(LS_PEND, JSON.stringify(a)); }
    zombi para siempre. `apiSave` lo anota en NO_ENCOLAR y acá se respeta (§4ce). */
 function queuePending(rec){
   if(NO_ENCOLAR[rec.id] && Date.now()-NO_ENCOLAR[rec.id]<10000) return;
+  /* §4fz-b: la cola guarda UNA fila por id. Si la que había del stock o del arqueo la dejó un
+     panel viejo, lo suyo no está en la memoria: se junta antes de reemplazarla, o se perdía. */
+  if(typeof SIS_FUSION!=='undefined' && SIS_FUSION[String(rec.id)]){
+    var vieja=getPending().filter(function(p){ return p && String(p.id)===String(rec.id) && !sisFilaPropia(p); })[0];
+    if(vieja) rec=sisPlegar(vieja);
+    // Lo que espera en la cola es la memoria de AHORA (con lo que haya juntado), no la foto del momento del toque.
+    else if(sisFilaPropia(rec) && SIS_FUSION[String(rec.id)].cargado()) rec=SIS_FUSION[String(rec.id)].fila();
+  }
   var a=getPending().filter(function(p){return p.id!==rec.id;}); a.push(rec); setPending(a); updateFooter();
 }
 
@@ -1937,6 +1946,11 @@ function servidorTiene(desde){ return !!SERVER_VER && String(SERVER_VER)>=String
 /* Lo que falta publicar, cuando el servidor anda pero no es la última: una línea en gris. */
 function scriptPendienteHtml(){
   if(!SERVER_VER || SERVER_VER===SCRIPT_VERSION_ESPERADA) return '';
+  /* El servidor es MÁS NUEVO que este panel: lo que está viejo es la página (quedó abierta desde
+     antes de publicar). Pasa en cada publicación que cambia los dos a la vez (§4fz-b). */
+  if(String(SERVER_VER)>String(SCRIPT_VERSION_ESPERADA))
+    return '<div style="margin-top:6px;font-size:.8rem;color:#7c4b00;font-weight:700">🔄 Hay una versión nueva del panel: recargá la página (F5). '+
+      '<span style="font-weight:400">El servidor ya está en <code>'+esc(SERVER_VER)+'</code> y esta página espera <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>.</span></div>';
   return '<div style="margin-top:6px;font-size:.76rem;color:var(--muted)">ℹ️ Hay una versión más nueva del script sin publicar '+
     '(está <code>'+esc(SERVER_VER)+'</code>, la última es <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>). '+
     'Lo que agrega no toca esto. Cuando quieras tenerla: <b>Extensiones → Apps Script → Implementar → '+
@@ -2075,7 +2089,15 @@ function apiSave(rec, opts){
   return q;
 }
 function apiSaveAhora(rec, opts){
-  var payload={action:'save', pedido:rec};
+  /* §4fz-b: el stock y el arqueo mandan la MEMORIA (`sisPlegar`), sin lo que es solo del panel
+     (`_base`, `_dev`, `_t`), y le dicen al servidor que saben juntar (`juntar`): el `.gs`
+     2026-09-23-b no deja guardar esas filas a un panel que no sepa (`actualizar`). */
+  var sis=!!(rec && typeof SIS_FUSION!=='undefined' && SIS_FUSION[String(rec.id)]);
+  if(sis) rec=sisPlegar(rec);
+  var envio=rec;
+  if(sis){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t') envio[_k]=rec[_k]; } }
+  var payload={action:'save', pedido:envio};
+  if(sis) payload.juntar=1;
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
@@ -2093,12 +2115,22 @@ function apiSaveAhora(rec, opts){
     return apiPost(payload).then(function(res){
       if(res && res.ok && res.pedido){
         aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido);   // 🔍 §4en
-        if(SIS_FUSION && SIS_FUSION[String(rec.id)]) sisBaseAnotar(rec.id, res.pedido);   // §4fz: lo guardado es la nueva base
+        if(sis){ sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec); }   // §4fz: lo guardado es la nueva base; §4fz-b: y lo de la cola ya está adentro
       }
       /* 🤝 §4fz: el stock o el arqueo chocaron con lo que guardó otro dispositivo: se juntan
-         las dos versiones y se vuelve a guardar. No es un «no»: no pasa por rechazoFirme. */
-      else if(res && res.ok===false && res.error==='conflicto' && res.pedido && SIS_FUSION && SIS_FUSION[String(rec.id)]){
+         las dos versiones y se vuelve a guardar. No es un «no»: no pasa por rechazoFirme.
+         §4fz-b: si lo que hay en la hoja es EXACTAMENTE lo que se mandó, es el propio guardado
+         que entró y cuya respuesta se perdió (§4fa): un ok tardío, no un choque. */
+      else if(sis && res && res.ok===false && res.error==='conflicto' && res.pedido){
+        if(String(res.pedido.observaciones||'')===String(envio.observaciones||'')){
+          aplicarSello(rec, res.pedido); sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec);
+          return { ok:true, pedido:res.pedido, tardio:true };
+        }
         return sisFusionarYGuardar(rec, res, opts);
+      }
+      // El servidor ya no deja guardar estas filas a un panel viejo: queda en la cola, y se avisa.
+      else if(sis && res && res.ok===false && res.error==='actualizar'){
+        toast('🔄 El '+SIS_FUSION[String(rec.id)].nombre+' no se guardó: '+motivoDelServidor('actualizar')+'. Quedó en la cola de este dispositivo.','err',10000);
       }
       else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]){
         /* ⚠️ Si el «conflicto» es contra MI PROPIO guardado —el reintento de §4fa chocó con
@@ -3954,6 +3986,8 @@ function loadArqueoMirror(){
 function filaArqueo(){
   var fila=filaSistema(ARQUEO_ID, '🧮 ARQUEO DEL CUADRE — fila del sistema, NO BORRAR', textoArqueo(ARQUEO));
   fila.rev=sisRev(ARQUEO_ID);                  // §4fz: con el sello de la versión sobre la que se trabajó
+  fila._base=sisBaseCopia(ARQUEO_ID);          // §4fz-b: y esa versión viaja con la fila, también en la cola
+  fila._dev=dispositivoId(); fila._t=Date.now();
   return fila;
 }
 function guardarArqueo(){
@@ -8242,7 +8276,12 @@ function motivoDeError(e){
   if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
   if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
   if(/^http\d+$/.test(m)) return 'Google respondió con un error '+m.slice(4);
-  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com)';
+  /* ⚠️ «Sin conexión» TAMBIÉN es lo que ve el navegador cuando el Apps Script no deja entrar sin
+     sesión o se cae al arrancar: la página de Google no trae el permiso para que el panel la lea,
+     y `fetch` falla igual que sin señal. Pasó el 23/09 a TODO el equipo justo después de subir el
+     código del servidor, y se arregló en la implementación de siempre (✏️): versión anterior,
+     «Ejecutar como: Yo», «Quién tiene acceso: Cualquier usuario». */
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com). Si le pasa a TODO el equipo a la vez —sobre todo justo después de subir el código del servidor—, no es internet: en Apps Script → Implementar → Administrar implementaciones → ✏️ la de siempre, revisá «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario», o volvé a la versión anterior';
   if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
   return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
@@ -8285,6 +8324,7 @@ function motivoDelServidor(err){
   if(m==='busy') return 'el servidor estaba ocupado con otra operación y no llegó a contestar. Pasa cuando varios guardan al mismo tiempo, o cuando quedó una operación larga colgada';
   if(m==='clave') return 'el servidor pide la clave del equipo';
   if(m==='bad json') return 'el servidor no entendió el pedido (bad json)';
+  if(m==='actualizar') return 'este panel es más viejo que el servidor y no puede tocar el stock, el arqueo ni borrar. Recargá la página (F5)';
   return 'el servidor contestó: '+m.slice(0,80);
 }
 function refrescarEstado(){
@@ -8605,7 +8645,7 @@ function cleanOC(v){
   return s;
 }
 function mergePending(serverList){
-  serverList=leerCierresDeLista(serverList);   // la fila de días cerrados NO es un pedido
+  serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
      el chofer marca Entregado, la consulta vuelve con la copia de ANTES y la pantalla le
@@ -9052,7 +9092,7 @@ function filaSistemaEnVuelo(id){
   return false;
 }
 /* Saca las filas del sistema de la lista del servidor y carga su contenido. */
-function leerCierresDeLista(lista){
+function leerCierresDeLista(lista, delServidor){
   var resto=[], cie=null, arq=null, rets=[], car=null, borr=[], stk=null;
   (lista||[]).forEach(function(p){
     if(esFilaCierre(p)) cie=p;
@@ -9070,8 +9110,13 @@ function leerCierresDeLista(lista){
     }
     else resto.push(p);
   });
-  if(stk && !filaSistemaEnVuelo(STOCK_ID)){ STOCK=leerStock(stk); sisBaseAnotar(STOCK_ID, stk); }     // en vuelo, manda la memoria (§4ev); la base de la junta, §4fz
-  else if(stk && sisMasNueva(STOCK_ID, stk)) STOCK=sisJuntarDeLista(STOCK_ID, stk);                  // §4fz: otro guardó DESPUÉS que nosotros
+  /* En vuelo, manda la memoria (§4ev); la base de la junta, §4fz. Pero una memoria que NUNCA se
+     cargó (compu nueva, o de antes del espejo) no es «lo último que tocó la persona»: está vacía,
+     y guardar desde ahí borraba el stock entero (§4fz-b, E2). Esa se carga igual; lo que esté en
+     la cola se junta con esto al salir. */
+  if(stk && (!STOCK_CARGADO || !filaSistemaEnVuelo(STOCK_ID))){ STOCK=leerStock(stk); sisBaseAnotar(STOCK_ID, stk); STOCK_CARGADO=true; stockGuardarEspejo(); }
+  else if(stk && sisMasNueva(STOCK_ID, stk)){ STOCK=sisJuntarDeLista(STOCK_ID, stk); stockGuardarEspejo(); }   // §4fz: otro guardó DESPUÉS que nosotros
+  else if(!stk && delServidor && !STOCK_CARGADO) STOCK_CARGADO=true;   // la planilla no tiene stock todavía: la memoria vacía ES el stock
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
@@ -13313,20 +13358,38 @@ function leerStock(p){
         if(o.c.hora) d.c.hora=String(o.c.hora); if(o.c.inc) d.c.inc=true; if(o.c.alm) d.c.alm=String(o.c.alm);
         if(o.c.solo0) d.c.solo0=true;
         if(o.c.cod && typeof o.c.cod==='object') d.c.cod=o.c.cod;
+        if(Number(o.c.t)>0) d.c.t=Number(o.c.t);        // §4fz-b: CUÁNDO se anotó el conteo (lo anterior ya está adentro)
       }
-      if(o.e && o.e.length) d.e=o.e.filter(function(x){ return x && x.k; });
-      if(o.p && o.p.length) d.p=o.p.filter(function(x){ return x && x.k; });
+      /* §4fz-b: lo que se guardó sin id (antes de esto) recibe uno FIJO, sacado del propio
+         contenido: el mismo en todos los dispositivos, así juntar dos copias no lo duplica. Va
+         ANTES de `stockMigrar`, que cambia las claves. Dos renglones iguales son #0 y #1. */
+      var idFijo=function(lista, campos){
+        var n={};
+        return lista.filter(function(x){ return x && x.k; }).map(function(x){
+          if(x.id==null || x.id===''){
+            var b='v:'+campos.map(function(c){ return x[c]==null?'':String(x[c]); }).join('|');
+            var i=n[b]||0; n[b]=i+1; x.id=b+'#'+i;
+          }
+          return x;
+        });
+      };
+      if(o.e && o.e.length) d.e=idFijo(o.e, ['f','k','u','fab','de']);
+      if(o.p && o.p.length) d.p=idFijo(o.p, ['f','k','u','tipo','de','fab','esp']);
       if(o.g && typeof o.g==='object'){
         for(var nm in o.g){
           var s=o.g[nm]; if(!s || typeof s!=='object') continue;
           d.g[nm]={ f:String(s.f||''), u:(s.u&&typeof s.u==='object')?s.u:{},
                     hora:String(s.hora||''), solo0:!!s.solo0, cod:(s.cod&&typeof s.cod==='object')?s.cod:{} };
+          if(Number(s.t)>0) d.g[nm].t=Number(s.t);                         // §4fz-b: cuándo se subió esa foto
+          if(s.rs && typeof s.rs==='object') d.g[nm].rs=s.rs;              // §4fz-b: qué recepciones ya se le restaron
         }
       }
     }
   }catch(e){}
   stockOlvidarIndice();
-  return stockMigrar(d);
+  d=stockMigrar(d);
+  stockNormalizarRecepciones(d);                  // §4fz-b: lo derivado de las recepciones, siempre al día
+  return d;
 }
 /* Las claves guardadas se vuelven a resolver al leer: si el catálogo ahora reconoce un
    nombre que antes no (o alguien unió dos productos), lo contado se junta bajo la clave
@@ -13341,16 +13404,29 @@ function stockMigrar(d){
     return u;
   };
   d.c.u=juntar(d.c.u);
-  Object.keys(d.g||{}).forEach(function(nm){ d.g[nm].u=juntar(d.g[nm].u); });
+  Object.keys(d.g||{}).forEach(function(nm){
+    d.g[nm].u=juntar(d.g[nm].u);
+    var rs=d.g[nm].rs; if(rs) Object.keys(rs).forEach(function(r){ if(rs[r]) rs[r].k=cl(rs[r].k); });   // §4fz-b
+  });
   (d.e||[]).forEach(function(x){ x.k=cl(x.k); });
   (d.p||[]).forEach(function(x){ x.k=cl(x.k); });
   return d;
+}
+/* ¿Esta entrada suma encima del conteo de acá? Lo anterior al conteo ya está DENTRO de él: por
+   fecha, como siempre (`stockDesdeSalidas`), y desde §4fz-b también por hora (`ts` ≤ `c.t`): una
+   entrada anotada en otro dispositivo ANTES de que acá se contara llegaba después por la junta y
+   se sumaba dos veces. Sin hora (lo de antes) manda solo la fecha. */
+function stockEntradaVale(S, f, ts){
+  var c=(S&&S.c)||{};
+  if(!c.f) return true;
+  if(String(f||'')<(c.inc ? stockSumarDias(c.f,1) : c.f)) return false;
+  return !(Number(ts)>0 && Number(c.t)>0 && Number(ts)<=Number(c.t));
 }
 function filaStock(){
   stockOlvidarIndice();
   /* Las entradas anteriores al último conteo ya están DENTRO del conteo: dejarlas las
      sumaría dos veces. Se podan al guardar, que es cuando se sabe cuál es el conteo. */
-  STOCK.e=(STOCK.e||[]).filter(function(x){ return !STOCK.c.f || String(x.f||'')>=stockDesdeSalidas(); });
+  STOCK.e=(STOCK.e||[]).filter(function(x){ return x && stockEntradaVale(STOCK, x.f, x.ts); });
   /* Los pedidos a fábrica ya recibidos se guardan 4 meses: son los que miden cuánto tarda. */
   var lim=diasAtras(120);
   STOCK.p=(STOCK.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=lim); });
@@ -13361,6 +13437,12 @@ function filaStock(){
   var fila=filaSistema(STOCK_ID, '📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR', JSON.stringify(STOCK));
   fila.rev=sisRev(STOCK_ID);                   // §4fz: con el sello de la versión sobre la que se trabajó
   fila._base=sisBaseCopia(STOCK_ID);           // §4fz-b: y esa versión viaja CON la fila (también en la cola), no al servidor
+  /* ⚠️ Con el stock SIN CARGAR (compu nueva sin señal), la memoria está vacía más el cambio de
+     ahora. Mandarla con un sello bueno borraba conteo, almacenes, pedidos y entradas de todos
+     (§4fz-b, E2). Sin sello y sin base, el servidor la rechaza (`conflicto`) y se JUNTA como
+     unión: queda lo de la planilla más este cambio. */
+  if(!STOCK_CARGADO){ fila.rev=0; fila._base=null; }
+  fila._dev=dispositivoId(); fila._t=Date.now();   // §4fz-b: de qué memoria salió y cuándo (sisPlegar)
   stockGuardarEspejo();
   return fila;
 }
@@ -13380,7 +13462,9 @@ function stockGuardarEspejo(){ try{ localStorage.setItem(LS_STOCK, JSON.stringif
 function sisBaseGuardarEspejo(){ try{ localStorage.setItem(LS_SIS_BASE, JSON.stringify(SIS_BASE||{})); }catch(e){} }
 function stockCargarEspejo(){
   try{ var t=localStorage.getItem(LS_STOCK); if(t){ STOCK=leerStock({ observaciones:t }); STOCK_CARGADO=true; } }catch(e){}
-  try{ var b=JSON.parse(localStorage.getItem(LS_SIS_BASE)||'{}'); if(b && typeof b==='object') SIS_BASE=b; }catch(e){}
+}
+function sisBaseCargarEspejo(){
+  try{ var b=JSON.parse(localStorage.getItem(LS_SIS_BASE)||'{}'); if(b && typeof b==='object' && !Array.isArray(b)) SIS_BASE=b; }catch(e){}
 }
 
 /* ============================================================================
@@ -13478,7 +13562,7 @@ function fusRecs(rm, rs, total){
   }
   return { recs:out, recortado:recortado };
 }
-var STOCK_FUS_AVISOS=[];
+var STOCK_FUS_AVISOS=[];      // {q, tipo:'recorte'|'doble'}: lo que la junta tiene que decir en voz alta
 function fusPedidoFab(xb, xm, xs){
   var r=JSON.parse(JSON.stringify(xm));
   var cm=JSON.parse(JSON.stringify(xm)), cs=JSON.parse(JSON.stringify(xs));
@@ -13488,26 +13572,43 @@ function fusPedidoFab(xb, xm, xs){
   if(!(total>0)) total=Math.round(Number(xb && xb.u)||Number(xm.u)||0);
   var J=fusRecs(rm, rs, total);
   r.recs=J.recs; r.total=total;
-  if(J.recortado) STOCK_FUS_AVISOS.push(r);
+  if(J.recortado) STOCK_FUS_AVISOS.push({ q:r, tipo:'recorte' });
+  else if(xb){
+    /* Dos llegadas DISTINTAS anotadas a la vez en dos dispositivos, que entre las dos no pasan lo
+       pedido: pueden ser dos camiones de verdad (1 y 2 de 3) o la misma anotada dos veces. No hay
+       forma de saberlo: se cuentan las dos y se avisa. */
+    var enB={}, enM={}, enS={};
+    stockRecsDe(JSON.parse(JSON.stringify(xb))).forEach(function(x){ enB[x.id]=1; });
+    rm.forEach(function(x){ enM[x.id]=1; }); rs.forEach(function(x){ enS[x.id]=1; });
+    var nm=rm.filter(function(x){ return !enB[x.id] && !enS[x.id]; }).length;
+    var ns=rs.filter(function(x){ return !enB[x.id] && !enM[x.id]; }).length;
+    if(nm && ns) STOCK_FUS_AVISOS.push({ q:r, tipo:'doble' });
+  }
   return r;
 }
 /* Lo que sale de las recepciones: `q.ru`/`q.u`/`q.r`, una entrada al depósito por recepción
    (`rec:1`, id = el de la recepción) y, en una recogida, la resta del almacén de origen contra
    la FOTO de ese almacén (`g[de].rs`: lo ya restado). Una recepción anterior a la foto (`ts` ≤
-   `g[de].t`) ya está adentro del Excel y no se resta. Idempotente: correrlo dos veces es igual. */
+   `g[de].t`) ya está adentro del Excel y no se resta; una anterior al conteo de acá, tampoco
+   suma entrada (`stockEntradaVale`). Idempotente: correrlo dos veces es igual. */
 function stockNormalizarRecepciones(S){
   (S.p||[]).forEach(function(q){
     if(!q || !Array.isArray(q.recs) || !q.recs.length) return;
     var total=Math.round(Number(q.total)||0) || Math.round(Number(q.u)||0);
     q.total=total;
-    var ru=0, ultima='';
-    q.recs.forEach(function(r){ ru+=Math.round(Number(r.u)||0); if(String(r.f||'')>ultima) ultima=String(r.f||''); });
+    var ru=0, ultima='', conLegacy=false;
+    q.recs.forEach(function(r){ ru+=Math.round(Number(r.u)||0); if(String(r.f||'')>ultima) ultima=String(r.f||''); if(r && r.id==='legacy') conLegacy=true; });
     q.ru=ru;
     var pend=total-ru;
     if(pend>0){ q.u=pend; q.r=''; } else { q.u=total; q.r=q.r||ultima||todayStr(); }
     var quiero={};
-    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && !r.se) quiero[r.id]=r; });
-    S.e=(S.e||[]).filter(function(x){ return !(x && x.rec && x.de===q.id && !quiero[x.id]); });
+    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && !r.se && stockEntradaVale(S, r.f, r.ts)) quiero[r.id]=r; });
+    /* Las entradas de una recepción vieja (`de:q.id`, sin `rec`) son de la `legacy`: si la junta
+       la sacó por repetida, se van con ella. */
+    S.e=(S.e||[]).filter(function(x){
+      if(!x || x.de!==q.id) return true;
+      return x.rec ? !!quiero[x.id] : conLegacy;
+    });
     var ya={}; S.e.forEach(function(x){ if(x && x.rec) ya[x.id]=1; });
     Object.keys(quiero).forEach(function(rid){
       if(ya[rid]) return; var r=quiero[rid];
@@ -13540,10 +13641,17 @@ function fusFoto(b, m, s, sinBase){
     if(!m || !s) return undefined;                // uno lo borró y el otro lo cambió: se respeta el borrado
   }
   if(!m) return s; if(!s) return m;
-  /* El MISMO corte cambiado de los dos lados solo puede ser por recepciones (restan del almacén
-     de origen): se toma el del servidor y `stockNormalizarRecepciones` aplica las que falten. */
-  if(fusIdFoto(m)===fusIdFoto(s)) return s;
-  return (String(m.f||'')+' '+String(m.hora||'')) >= (String(s.f||'')+' '+String(s.hora||'')) ? m : s;   // gana el corte más nuevo
+  /* El MISMO corte cambiado de los dos lados: o lo subieron dos veces (gana el que se subió
+     último, `t`), o le restaron recepciones distintas —cuáles, lo dice `rs`, y
+     `stockNormalizarRecepciones` pone las que falten—. Sin `t` (de antes) queda lo de acá:
+     si es una fila vieja de la cola, trae la resta hecha a mano y sin anotar. */
+  if(fusIdFoto(m)===fusIdFoto(s)){
+    var tm=Number(m.t)||0, ts=Number(s.t)||0;
+    return (tm && ts && ts>tm) ? s : m;
+  }
+  var km=String(m.f||'')+' '+String(m.hora||''), ks=String(s.f||'')+' '+String(s.hora||'');
+  if(km!==ks) return km>ks ? m : s;                                  // gana el corte más nuevo
+  return (Number(s.t)||0)>(Number(m.t)||0) ? s : m;                  // mismo día y hora, otro almacén: el último subido
 }
 function stockFusionar(b, m, s){
   var sinBase=!b; b=b||stockVacio(); m=m||stockVacio(); s=s||stockVacio();
@@ -13560,13 +13668,17 @@ function stockFusionar(b, m, s){
   out.h=fusPorId(b.h, m.h, s.h, sinBase)
         .sort(function(x,y){ return (Number(y&&y.ts)||0)-(Number(x&&x.ts)||0); }).slice(0,STOCK_HIST);
   out=JSON.parse(JSON.stringify(out));            // que no comparta objetos con ninguna de las tres
+  out=stockMigrar(out);                           // primero las claves nuevas (uniones), después las recepciones
   stockNormalizarRecepciones(out);
-  return stockMigrar(out);
+  return out;
 }
 function sisAvisarRecortes(){
   if(!STOCK_FUS_AVISOS.length) return;
-  var nom=STOCK_FUS_AVISOS.map(function(q){ return stockNombreClave(q.k); }).join(', ');
-  toast('⚠️ La llegada de '+nom+' la anotaron en DOS dispositivos y sumaba más de lo pedido: se contó una sola vez. Revisá en 📦 Stock que esté bien.','err',12000);
+  var nom=function(tipo){ var v={}; return STOCK_FUS_AVISOS.filter(function(a){ return a.tipo===tipo; })
+    .map(function(a){ return stockNombreClave(a.q.k); }).filter(function(n){ if(v[n]) return false; v[n]=1; return true; }).join(', '); };
+  var rec=nom('recorte'), dob=nom('doble');
+  if(rec) toast('⚠️ La llegada de '+rec+' la anotaron en DOS dispositivos y sumaba más de lo pedido: se contó una sola vez. Revisá en 📦 Stock que esté bien.','err',12000);
+  if(dob) toast('⚠️ Dos dispositivos anotaron llegadas de '+dob+' casi a la vez. Se contaron las dos: si era la MISMA llegada, corregí el depósito con 📋 Conté el depósito.','err',12000);
   STOCK_FUS_AVISOS=[];
 }
 /* Qué fila sabe juntarse y cómo. */
@@ -13574,15 +13686,21 @@ var SIS_FUSION={};
 SIS_FUSION[STOCK_ID]={ nombre:'stock',
   leer:function(obs){ return leerStock({ observaciones:obs }); },
   actual:function(){ return STOCK; },
+  cargado:function(){ return STOCK_CARGADO; },    // una memoria que nunca se cargó NO es «lo último»: está vacía (E2)
   fusionar:stockFusionar,
   poner:function(x){ STOCK=x; STOCK_CARGADO=true; stockOlvidarIndice(); stockGuardarEspejo(); try{ var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock(); }catch(e){} },
   fila:function(){ return filaStock(); } };
 SIS_FUSION[ARQUEO_ID]={ nombre:'arqueo',
   leer:parseArqueo,
   actual:function(){ return ARQUEO; },
+  cargado:function(){ return true; },             // el arqueo siempre tuvo su espejo en el dispositivo
   fusionar:function(b, m, s){ return fusMapa(b, m, s, !b); },
   poner:function(x){ ARQUEO=x; saveArqueoMirror(); renderCuadreSiActivo(); },
   fila:function(){ return filaArqueo(); } };
+/* ¿Esta fila salió de la memoria de ESTE navegador? (`_dev`, que filaStock/filaArqueo le ponen).
+   Si no —una fila que dejó en la cola un panel viejo, antes de actualizarse—, lo que tiene no
+   está en la memoria y hay que juntarlo. */
+function sisFilaPropia(rec){ return !!(rec && rec._dev && rec._dev===dispositivoId()); }
 /* ⚠️ «EN VUELO» NO ES «NO MIRAR» (§4fz). Después de guardar, §4ev deja 90 s la memoria por
    encima de lo que traiga el `list`, porque un `list` que salió ANTES del guardado vuelve con
    la versión vieja y la borraba de la pantalla. Pero con el sello se sabe cuál es cuál: si lo
@@ -13621,7 +13739,8 @@ function sisFusionarYGuardar(rec, res, opts){
   var baseR = rec._base ? F.leer(rec._base.obs) : null;
   var J = F.fusionar(baseR, F.leer(rec.observaciones), F.leer(res.pedido.observaciones));
   var bm = SIS_BASE && SIS_BASE[id];
-  var M = F.fusionar(bm ? F.leer(bm.obs) : null, F.actual(), J);
+  // Con la memoria sin cargar, «lo de acá» no es nada: juntarla sería decir «borré todo» (E2).
+  var M = F.cargado() ? F.fusionar(bm ? F.leer(bm.obs) : null, F.actual(), J) : J;
   sisBaseAnotar(id, res.pedido);                              // desde ahora se trabaja sobre la del servidor
   F.poner(M);
   var fila=F.fila();                                          // lo junto, con el sello nuevo
@@ -13629,6 +13748,52 @@ function sisFusionarYGuardar(rec, res, opts){
   sisAvisarRecortes();
   return apiSaveAhora(fila, opts).then(function(r){ if(r && r.ok) SIS_FUSION_N[id]=0; return r; });
 }
+/* 🧺 LO QUE SALE AL SERVIDOR ES LA MEMORIA (§4fz-b). Antes salía la fila tal como se armó, y eso
+   dejaba tres agujeros (auditoría del 23/09):
+     · la cola reenviaba una foto VIEJA —si un guardado falló y el siguiente entró, el primero
+       quedaba en la cola— y la junta revivía lo que se canceló después;
+     · el guardado que esperaba turno salía con contenido viejo y el sello nuevo (`SAVE_REV`, que
+       es para los pedidos, §4eo): pisaba sin choque lo que otro guardó en el medio;
+     · una fila de otra pestaña se juntaba con ESTA memoria y lo de la otra se perdía (E4).
+   Ahora, para el stock y el arqueo: la memoria está en el dispositivo (espejo, y las pestañas se
+   la pasan con `storage`), cada fila dice de qué navegador salió (`_dev`), y se manda SIEMPRE la
+   memoria con la última base conocida. Una fila que NO salió de esta memoria (la dejó en la cola
+   un panel viejo) primero se junta, con su base si la trae. */
+function sisPlegar(rec){
+  var id=String(rec&&rec.id||''), F=SIS_FUSION[id];
+  if(!F || !F.cargado()) return rec;                          // sin memoria no hay qué mandar en su lugar: va la fila (si choca, se junta)
+  if(!sisFilaPropia(rec)){
+    STOCK_FUS_AVISOS=[];
+    var bm=SIS_BASE && SIS_BASE[id], B=bm ? F.leer(bm.obs) : null;
+    var J=B ? F.fusionar(rec._base ? F.leer(rec._base.obs) : null, F.leer(rec.observaciones), B) : F.leer(rec.observaciones);
+    F.poner(F.fusionar(B, F.actual(), J));
+    sisAvisarRecortes();
+  }
+  return F.fila();
+}
+/* Guardó la memoria: las filas de ESTE navegador que esperaban en la cola ya están adentro
+   (salieron de la misma memoria, antes). Si se quedaban, se reenviaban como foto vieja. */
+function sisColaLimpiar(rec){
+  var id=String(rec&&rec.id||''), t=Number(rec&&rec._t)||0;
+  var a=getPending(), b=a.filter(function(p){ return !(p && String(p.id)===id && sisFilaPropia(p) && (Number(p._t)||0)<=t); });
+  if(b.length!==a.length){ setPending(b); try{ updateFooter(); }catch(e){} }
+}
+/* 🗂️ DOS PESTAÑAS DEL MISMO NAVEGADOR COMPARTEN EL ESPEJO (§4fz-b, E4): cuando una lo escribe,
+   la otra se pone al día (`storage` salta solo en las OTRAS pestañas). Si no, cada una tenía su
+   memoria y guardaba encima de lo de la otra. Queda una carrera de milisegundos (las dos anotan
+   a la vez): la segunda gana en el espejo, y la junta del servidor no ve la diferencia. */
+try{
+  window.addEventListener('storage', function(ev){
+    try{
+      if(ev.key===LS_STOCK && ev.newValue){
+        STOCK=leerStock({ observaciones:ev.newValue }); STOCK_CARGADO=true; stockOlvidarIndice();
+        var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock();
+      }
+      else if(ev.key===LS_SIS_BASE && ev.newValue){ var b=JSON.parse(ev.newValue); if(b && typeof b==='object' && !Array.isArray(b)) SIS_BASE=b; }
+      else if(ev.key===CUADRE_LS && ev.newValue){ var a=JSON.parse(ev.newValue); if(a && typeof a==='object' && !Array.isArray(a)){ ARQUEO=a; renderCuadreSiActivo(); } }
+    }catch(e){}
+  });
+}catch(e){}
 
 /* ---- Un solo producto, venga de donde venga (§4co) ----
    La clave de un renglón es la del CATÁLOGO cuando el catálogo lo reconoce; si no, su
@@ -14593,6 +14758,12 @@ function renderStock(){
   conMov=stockAplicarFiltro(conMov);
   var nCols=d.otrosAlm.length?8:7;
   var html='';
+  /* §4fz-b: sin haber leído nunca la planilla, lo de abajo NO es el stock del equipo (sale solo
+     de los pedidos). Lo que se anote igual se junta con la planilla al conectar (`filaStock`). */
+  if(!STOCK_CARGADO && CONNECTED){
+    html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
+      '<b>⏳ Esperando la planilla del equipo.</b> Lo que ves abajo sale solo de los pedidos; en cuanto diga «Conectado» aparece lo contado, lo pedido a fábrica y los almacenes.</div>';
+  }
   if(!d.contado){
     html+='<div style="background:#fff4d6;border:1px solid #f0d264;border-left:4px solid #f0a020;border-radius:10px;padding:13px 16px;margin-bottom:14px;font-size:.88rem;color:#7c4b00">'+
       '<b>Todavía no se cargó lo que hay acá en fábrica.</b> Abajo ya se ve <b>qué se vende más</b> y <b>qué hay comprometido</b>, que sale solo de los pedidos. '+
@@ -15299,7 +15470,7 @@ function guardarStockConteo(){
     u[el.getAttribute('data-k')]=v; n++;
   });
   if(!n){ toast('No anotaste ninguna cantidad.','err'); return; }
-  STOCK.c={ f:todayStr(), u:u };
+  STOCK.c={ f:todayStr(), u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
   STOCK.e=[];                       // el conteo de hoy ya incluye todo lo que llegó antes (lo pedido y no llegado sigue en camino)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Conteo guardado: '+n+' producto'+(n===1?'':'s')+'. Desde acá el panel lleva la cuenta solo.','ok',6000);
@@ -15444,7 +15615,7 @@ function guardarStockEntrada(){
   if(!k){ toast('Elegí el producto.','err'); return; }
   if(!(u>0)){ toast('Poné cuántas unidades llegaron.','err'); return; }
   if(!STOCK.c.f){ toast('Primero contá el depósito una vez: sin un punto de partida, sumar no dice cuánto hay.','err',7000); return; }
-  STOCK.e=(STOCK.e||[]).concat([{ f:todayStr(), k:k, u:u, fab:fab }]);
+  STOCK.e=(STOCK.e||[]).concat([{ id:'e'+uid(), f:todayStr(), k:k, u:u, fab:fab, ts:Date.now() }]);   // §4fz-b: con nombre y hora
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Sumadas '+u+' unidades al depósito'+(fab?(' ('+fab+')'):''),'ok');
 }
@@ -15463,18 +15634,21 @@ function recibirStockPedido(id){
     if(!fuente || !fuente.u || Number(fuente.u[q.k])<u || !isFinite(Number(fuente.u[q.k]))){toast('No alcanza el saldo del almacén de origen. Revisá el corte antes de recibir.','err');return;}
   }
   if(inp)inp.disabled=true;
-  q.total=q.total||Number(q.u); q.ru=(Number(q.ru)||0)+u;
-  var pendiente=Number(q.u)-u;
-  q.u=pendiente>0?pendiente:q.total; q.r=pendiente>0?'':todayStr();
-  STOCK.e=(STOCK.e||[]).concat([{ f:todayStr(), k:q.k, u:u, fab:stockFabNorm(q.fab), de:q.id }]);
-  /* ⚠️ Una RECOGIDA no crea unidades: las mueve. Si se suman acá y no se restan de allá,
-     el panel las cuenta dos veces hasta el próximo Excel de ese almacén (§4cr). */
-  var movido=false;
-  if(q.tipo==='recogida'){
-    var alm=q.de || stockAlmPorDefecto();
-    var s=(STOCK.g||{})[alm];
-    if(s && s.u && s.u[q.k]!=null){ s.u[q.k]=Math.max(0,(Number(s.u[q.k])||0)-u); movido=true; }
-  }
+  /* 📦 LA LLEGADA ES UNA RECEPCIÓN CON NOMBRE (§4fz-b). Antes se sumaba la entrada y se restaba
+     de Moreno a mano, acá mismo; si la misma llegada se anotaba en dos dispositivos, la junta
+     sumaba dos entradas y restaba dos veces (auditoría del 23/09 + Codex). Ahora se anota UNA
+     recepción con su id, y la entrada al depósito, la resta del almacén de origen y lo que queda
+     pendiente salen de la lista de recepciones (`stockNormalizarRecepciones`): anotarla dos
+     veces por la misma vía la cuenta una.
+     ⚠️ Una RECOGIDA no crea unidades: las mueve. Si se suman acá y no se restan de allá, el
+     panel las cuenta dos veces hasta el próximo Excel de ese almacén (§4cr). */
+  q.total=q.total||Number(q.u);
+  var rec=stockRecNuevo(u, todayStr());
+  stockRecsDe(q).push(rec);
+  stockNormalizarRecepciones(STOCK);
+  var pendiente=q.r ? 0 : (Number(q.u)||0);
+  var _g=(STOCK.g||{})[q.de || stockAlmPorDefecto()];
+  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id]);
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   var dias=stockDias(q.f, todayStr());
   toast('✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
@@ -16417,10 +16591,12 @@ function confirmarImportExist(){
     /* Si este almacén era «otro» hasta ahora, se saca de la lista de otros: es uno solo. */
     delete STOCK.g[R.almacen];
     Object.keys(STOCK.g).forEach(function(nm){ if(STOCK.al[nm]==='log') delete STOCK.g[nm]; });
-    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0, cod:R.cods||{} };
+    STOCK.c={ f:R.fecha, u:u, hora:R.hora||'', inc:inc, alm:R.almacen, solo0:!!R.solo0, cod:R.cods||{}, t:Date.now() };
     STOCK.e=[];                     // el conteo ya incluye todo lo que llegó hasta esa fecha
   }else{
-    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0, cod:R.cods||{} };
+    /* §4fz-b: `t` = cuándo se subió esta foto (una recepción anotada antes ya está adentro del
+       Excel: no se le resta), `rs` = qué recepciones se le restaron después. */
+    STOCK.g[R.almacen]={ f:R.fecha, u:u, hora:R.hora||'', solo0:!!R.solo0, cod:R.cods||{}, t:Date.now(), rs:{} };
   }
   /* 📜 HISTORIAL DE CORTES. Solo el resumen —fecha, hora, cuántos productos y unidades—,
      no los items: la fila del sistema es UNA celda de la planilla y guardar cada inventario
@@ -16436,13 +16612,14 @@ function confirmarImportExist(){
          de acá tiene que restarla de Moreno igual que «Llegaron» (`recibirStockPedido`); si
          no, el corte de Moreno sigue con las 10 y el panel ve 7 acá + 10 allá = 17 cuando
          la realidad es 12: «Traer de Moreno» unidades que no están, la revisión automática
-         reservando de allá lo que no existe y «Qué producir» produciendo de menos (§4ev). */
-      if(q.tipo==='recogida'){
-        var alm=q.de || stockAlmPorDefecto(), s=(STOCK.g||{})[alm];
-        if(s && s.u && s.u[q.k]!=null) s.u[q.k]=Math.max(0,(Number(s.u[q.k])||0)-uPend);
-      }
-      q.r=R.fecha; q.ru=(Number(q.ru)||0)+uPend; q.u=q.total||q.u; q.enConteo=true; cerrados++;
+         reservando de allá lo que no existe y «Qué producir» produciendo de menos (§4ev).
+         §4fz-b: es una recepción más, con nombre, SIN entrada (`se`: el Excel de acá ya la
+         cuenta); la resta de Moreno la hace `stockNormalizarRecepciones`, como en «Llegaron». */
+      q.total=q.total||uPend;
+      stockRecsDe(q).push(stockRecNuevo(uPend, R.fecha, true));
+      q.r=R.fecha; q.enConteo=true; cerrados++;
     });
+    stockNormalizarRecepciones(STOCK);
   }
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   EXIST_IMP=null;
