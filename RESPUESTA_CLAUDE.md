@@ -2,8 +2,8 @@
 
 **Para:** el dueño y Codex (revisión).
 **Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta: `5205ce8`** (código, pruebas y
-bitácora) **y el del incidente** (§0: `probarAntesDeImplementar`, la alarma del repaso parado y el
-procedimiento de §7; ver «Commit» al final).
+bitácora) **y `9ee9c2e`**, el del incidente (§0: `probarAntesDeImplementar`, la alarma del repaso
+parado y el procedimiento de §7).
 **Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a`. Pero
 el repaso de Kommo del script sigue parado desde las 11:24 (ver §0).
 
@@ -395,3 +395,10 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
   verla. De paso, la memoria del panel pasó a ser por pestaña: sincronizar pestañas reemplazando la
   memoria podía borrar un cambio propio todavía sin guardar.
 - **Escenarios de la auditoría** (arnés propio, fuera del repo): los 31 pasan contra este commit.
+- **`9ee9c2e`**: «Incidente del 23/09: el pegado del .gs no entró entero, y los disparadores
+  siguieron rotos».
+  - Toca `google-apps-script.gs` (`probarAntesDeImplementar` y la cabecera), `traer_kommo.py` (la
+    alarma del repaso parado), `tests/test_servidor.js` §11, `tests/test_traer.py` §6, este informe,
+    `BITACORA_CLAUDE.md` §4fz-b y `CLAUDE.md`.
+  - El panel (`pedidos.html`) no cambió.
+  - **Batería sobre este commit: 74/74 en verde, 2.776 comprobaciones.**
