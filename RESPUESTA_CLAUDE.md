@@ -338,8 +338,13 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 1. **Mergear la rama a `main`** y esperar el deploy de Pages, 1 a 2 minutos. El panel nuevo anda con el
    servidor de ahora (20-a), sin la protección del stock.
 2. **Pegar el `.gs` 23-b en el editor.**
-   - Copiarlo de https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/main/google-apps-script.gs
-     (después del merge es el 23-b): Ctrl+A y Ctrl+C.
+   - Copiarlo de este enlace, **fijo a un commit**:
+     https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/9ee9c2e29870af2f8ec1029604e5108809fdd91d/google-apps-script.gs
+     Después, Ctrl+A y Ctrl+C.
+     - Verificado: 1889 líneas, idéntico al de la rama, versión `2026-09-23-b`, con
+       `probarAntesDeImplementar`.
+     - No usar el enlace de `main`: GitHub lo guarda en caché unos 5 minutos, y justo después del
+       merge puede seguir dando la 20-a.
    - En el editor: clic en el código, Ctrl+A, Supr (tiene que quedar **vacío**), Ctrl+V y Ctrl+S.
      No tiene que salir ningún mensaje rojo.
    - La última línea con texto es la **1889** y dice `}`; justo antes dice `return borrador;`.

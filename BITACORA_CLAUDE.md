@@ -7622,9 +7622,11 @@ ayer y todo entra por los repasos (a mirar en Kommo → Webhooks; no urgente).
 0. Antes: el editor tiene que estar sano (`estadoKommo` corre sin error y el repaso está al día).
 1. Mergear la rama a `main` y esperar el deploy de Pages (panel nuevo; anda con 20-a, sin la
    protección del stock).
-2. El dueño pega el `.gs` 23-b: lo copia del raw de `main` (después del merge es el 23-b), y en el
-   editor Ctrl+A → Supr (vacío) → Ctrl+V → Ctrl+S, sin mensaje rojo; la última línea es `}` con
-   `return borrador;` justo antes. ⚠️ Desde acá los disparadores YA corren el 23-b (su parte de
+2. El dueño pega el `.gs` 23-b: lo copia del raw FIJO a un commit
+   (`…/MULTIESPUMAS/9ee9c2e29870af2f8ec1029604e5108809fdd91d/google-apps-script.gs`, verificado: 1889
+   líneas, idéntico) — NO del de `main`, que GitHub cachea ~5 minutos y justo después del merge puede
+   seguir dando la 20-a —, y en el editor Ctrl+A → Supr (vacío) → Ctrl+V → Ctrl+S, sin mensaje rojo;
+   la última línea es la 1889, `}` con `return borrador;` justo antes. ⚠️ Desde acá los disparadores YA corren el 23-b (su parte de
    Kommo es igual a la de 20-a).
 3. **`probarAntesDeImplementar` → Ejecutar** (aceptar permisos si los pide). Tiene que terminar en
    «✅ Se puede implementar». Con una ❌ o un error rojo, no se implementa: se vuelve a pegar la 20-a
