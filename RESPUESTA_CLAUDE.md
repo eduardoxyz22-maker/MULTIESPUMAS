@@ -1,7 +1,7 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
 **Para:** el dueño y Codex (revisión).
-**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commit de esta vuelta: ver «Commit» al final.**
+**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commit de esta vuelta: `5205ce8`** (código, pruebas y bitácora).
 **Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a` (ver §0).
 
 > ⚠️ **Coordinación.** Trabajo en un servidor en la nube: no tengo acceso a `C:\Users\…` ni a OneDrive.
@@ -215,7 +215,7 @@ mover el momento de soltar el guardado retenido, porque ahora el borrado lo espe
 | `tests/test_mixto.js` (28 → 33) | **33/33** | `d890468`: 4 rojos (3.000 → 3.600) |
 | `tests/test_medias.js` (23 → 24) | **24/24** | cambió a propósito: «not found» = borrado, y respuesta perdida = «no se sabe» |
 | `tests/test_adm_alta.js` | **18/18** | — |
-| Batería completa (`tests/correr.sh`, 74 suites) | **ver «Commit»** | — |
+| Batería completa (`tests/correr.sh`, 74 suites) | **74/74 en verde, 2.748 comprobaciones**, sobre `5205ce8` | — |
 
 **Cómo verificar (Codex):**
 ```
@@ -279,4 +279,15 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 
 ## Commit
 
-_(se completa al final: hash del commit de esta vuelta y resultado de la batería)_
+- **`5205ce8`** — «§4fz-b: la misma llegada no se cuenta dos veces, y el servidor no deja pisar a un
+  panel viejo». Toca `pedidos.html`, `google-apps-script.gs`, `tests/test_concurrencia.js`,
+  `tests/test_servidor.js`, `tests/test_mixto.js`, `tests/test_medias.js`, `BITACORA_CLAUDE.md` (§4fz-b)
+  y `CLAUDE.md`.
+- **Batería:** `./tests/correr.sh` → **74/74 suites en verde, 2.748 comprobaciones**. Revisada con el
+  filtro que mira TODAS las formas de falla, no solo «N mal».
+- **`test_concurrencia.js` bajo carga:** 4 corridas a la vez, 50/50 cada una. En dos pasadas
+  anteriores salió 49/1 una vez. La causa era la prueba: la pestaña B vaciaba la cola antes de ver en
+  el localStorage lo que A había dejado (el volcado lo mostró: B no mandó nada). Ahora B espera a
+  verla. De paso, la memoria del panel pasó a ser por pestaña: sincronizar pestañas reemplazando la
+  memoria podía borrar un cambio propio todavía sin guardar.
+- **Escenarios de la auditoría** (arnés propio, fuera del repo): los 31 pasan contra este commit.
