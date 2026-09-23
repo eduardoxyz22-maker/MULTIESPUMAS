@@ -87,23 +87,34 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     registro va sin candado: dos GET a la vez pueden pisarse una anotación, es diagnóstico.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
-- **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz, `.gs` `2026-09-23-a`, **espera
-  que el dueño lo implemente**). `tests/test_concurrencia.js` monta el `.gs` real + DOS navegadores.
-  · **`__stock__` y `__arqueo_cuadre__` llevan sello**: el panel guarda con `rev: sisRev(id)`
-  (`SIS_BASE` = la versión del servidor sobre la que trabajó; se anota al leer y con cada eco).
-  El `.gs` (`SISTEMA_CON_SELLO`) rechaza con `conflicto` SOLO si el panel manda `rev` (un panel
-  viejo pasa como antes) y no lo anota en «Rechazos». El panel junta (`sisFusionarYGuardar` →
-  `stockFusionar`/`fusMapa`) y reguarda. ⚠️ **Toda mutación del stock tiene que terminar en
-  `guardarStock()`** (→ `filaStock()`, que pone el sello), y **un campo NUEVO de `STOCK` tiene que
-  entrar en `stockFusionar`**: si no, la primera junta lo pierde. Las listas sin id se cuentan
-  como multiconjunto (dos entradas iguales son dos); los conteos son FOTOS (gana el corte más
-  nuevo). `sisMasNueva`: una fila «en vuelo» (§4ev) igual se junta si el servidor trae una
-  versión MÁS NUEVA que lo último guardado y no hay guardado propio en el aire ni en la cola.
-  · **Borrar relee y lleva sello**: todo borrado de una fila que la persona VIO pasa por
-  `borrarEnServidor(copia)` (relee con `apiList`; si cambió, no borra y devuelve `{conflicto,
-  actual}`) o, como mínimo, `apiDelete(id, rev)`. `doDelete(id, rev)` en el `.gs`; sin `rev`
-  borra como antes. `realDelete` devuelve una promesa y vuelve a poner la fila si no se borró.
-  ⚠️ «Descartar» un borrador de Kommo que otra ya completó (MISMO id, §4es) borraba la venta.
+- **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
+  **en la rama, sin publicar**; producción sigue en `ebc3eab` + `2026-09-20-a`). `tests/test_concurrencia.js`
+  (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
+  · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
+  (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
+  que es **de cada pestaña** (`sessionStorage` `ME_SIS_V2`: stock, arqueo y `SIS_BASE`; sobrevive a
+  recargar esa pestaña), `STOCK_CARGADO`/`ARQUEO_CARGADO`, y cada fila lleva `_base`/`_dev` (la
+  pestaña)/`_t` (no viajan): una fila de OTRA pestaña o de un panel viejo se junta antes.
+  ⚠️ No volver a sincronizar pestañas con el evento `storage`: reemplazar la memoria con la de la
+  otra pestaña borraba cambios propios sin guardar. Y en un test de dos pestañas, la segunda tiene
+  que ESPERAR a ver la cola de la primera (el localStorage entre pestañas llega con retraso). Ante `conflicto` junta
+  (`sisFusionarYGuardar`) y reguarda; si la hoja tiene EXACTAMENTE lo mandado, es un ok tardío.
+  ⚠️ **Toda mutación del stock termina en `guardarStock()`**, y **un campo NUEVO de `STOCK` tiene
+  que entrar en `stockFusionar`** (si no, la primera junta lo pierde).
+  · **La junta va por id** (idempotente: juntar dos veces el mismo cambio no lo cuenta dos): entradas
+  y pedidos con id (los viejos reciben uno FIJO al leer, `v:…#n`), historial por contenido.
+  **Las recepciones son una lista** (`q.recs`); ⚠️ una llegada nueva se anota con
+  `stockRecsDe(q).push(stockRecNuevo(u,f))` + `stockNormalizarRecepciones(STOCK)`, **nunca restando
+  a mano** de `g.u` ni sumando a `e`: la entrada (`rec:1`), la resta del origen (`g[de].rs` contra la
+  foto `g[de].t`) y lo pendiente salen de ahí. Conteo con hora (`c.t`) y `stockEntradaVale`.
+  · **Borrar**: todo borrado de una fila que la persona VIO pasa por `borrarEnServidor(copia)`: espera
+  un guardado propio en el aire, la saca de la cola, relee (si cambió no borra: `{conflicto, actual}`),
+  borra con el sello y ante un error pasajero reintenta una vez; si no se sabe, `incierto` y **no se
+  repone**. El `.gs` 23-b rechaza un borrado sin `rev` de una fila sellada (`actualizar`).
+  · Lo que NO queda protegido está en la bitácora §4fz-b («no decir todo protegido»).
+  · 🚨 **El 23/09 subir el `.gs` 23-a dejó a TODO el equipo sin conexión** («no hay conexión con
+  Google» en todos a la vez): se volvió a la versión anterior desde ✏️. Al subir el 23-b, mirar
+  «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario», y verificar al toque (§4fz-b).
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es
@@ -488,7 +499,12 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   cobrado el chofer) y MEDIA-5 (un cobro nuevo sobre una venta ya ✅ no avisa).
 - **§4fz (informe de la otra herramienta)**: corregir el **2° método del pago mixto** actualiza
   `p.acuenta` (`mixtoEn`, antes y después del cambio; «SÍ, pagado» sigue en 0, §4cb) — el
-  formulario sumaba 4.790 en vez de 4.990. El **cierre por forma de pago** sale de
+  formulario sumaba 4.790 en vez de 4.990. ⚠️ **§4fz-b: el pago mixto es SOLO con el anticipo
+  escrito («~», `anticipoEscrito`)** y `mixtoEn(a, cobros, p)` exige que «A cuenta» cierre con los
+  dos: con un adelanto reconstruido de `p.acuenta` (venta de antes del «~»), un cobro del mismo día
+  y recibo «parecía» el 2° método y corregirlo inflaba el total 3.000 → 3.600. `ctaGuardarPago`
+  toca `p.acuenta` solo si el renglón ERA el 2° método antes (sin la fecha que rellena
+  `ctaCobrosConFecha`). `tests/test_mixto.js` §4c. El **cierre por forma de pago** sale de
   `cuadreCierre()` para la pantalla, el texto y el Excel (con los arqueos SIN pagos, §4fo, y la
   diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
   reescribe al reprogramar.

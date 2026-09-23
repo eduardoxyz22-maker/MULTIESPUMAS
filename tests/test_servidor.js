@@ -284,35 +284,54 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
 }
 {
   /* 🤝 §4fz — EL STOCK Y EL ARQUEO SÍ PIDEN SELLO (informe del 23/09): dos dispositivos con la
-     misma copia guardaban los dos con ✓ y el segundo borraba lo del primero. Ahora, si el
-     panel manda el sello, se compara; el panel junta y reguarda (test_concurrencia.js). */
+     misma copia guardaban los dos con ✓ y el segundo borraba lo del primero. El panel manda el
+     sello y `juntar`; en conflicto, junta y reguarda (test_concurrencia.js).
+     §4fz-b (`2026-09-23-b`): sobre una fila ya sellada, un panel que NO sabe juntar (no manda
+     `juntar`) recibe `actualizar` y no toca nada. En `2026-09-23-a` pasaba «para no trabarlo»,
+     y era justo el que pisaba la fila entera; su 2° guardado seguido sí llevaba sello, chocaba
+     y el panel viejo lo tiraba (auditoría, #8). */
   const a = cargar([HDR], { PANEL_KEY: CLAVE });
   const stk = (obs, rev) => { const o = { id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:obs }; if (rev !== undefined) o.rev = rev; return o; };
-  let r = a.post(conClave({ action:'save', pedido: stk('{"e":[]}', 0) }));
+  const junta = (pedido) => conClave({ action:'save', pedido:pedido, juntar:1 });
+  let r = a.post(junta(stk('{"e":[]}', 0)));
   chk('§4fz · la fila del stock entra la primera vez (con rev 0)', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
   const base = r.pedido.rev;
-  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"A","u":5}]}', base) }));                   // A: entrada de 5
+  r = a.post(junta(stk('{"e":[{"k":"A","u":5}]}', base)));                   // A: entrada de 5
   chk('…A guarda su entrada con el sello de la versión que leyó', r.ok===true, JSON.stringify(r).slice(0,80));
   const deA = r.pedido.rev;
-  r = a.post(conClave({ action:'save', pedido: stk('{"e":[],"p":[{"id":"q1","k":"B","u":8}]}', base) }));   // B: con la copia VIEJA
+  r = a.post(junta(stk('{"e":[],"p":[{"id":"q1","k":"B","u":8}]}', base)));   // B: con la copia VIEJA
   chk('⚠️ §4fz · B, con la copia vieja del stock: RECHAZADO (antes pisaba la entrada de A)', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,80));
   chk('⚠️ …la entrada de A sigue en la planilla', /"u":5/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), pedido(a.ctx,a.sh,'__stock__').observaciones);
   chk('…y el rechazo trae la fila actual, para que el panel junte las dos', !!r.pedido && r.pedido.rev===deA && /"u":5/.test(r.pedido.observaciones), JSON.stringify(r.pedido||{}).slice(0,90));
   chk('…y NO se anota en «Rechazos»: el panel lo resuelve solo', !a.shR._datos.some(f => f[3]==='__stock__'), a.shR._datos.length+' filas');
-  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"A","u":5}],"p":[{"id":"q1","k":"B","u":8}]}', deA) }));
+  r = a.post(junta(stk('{"e":[{"k":"A","u":5}],"p":[{"id":"q1","k":"B","u":8}]}', deA)));
   chk('…con el sello nuevo (lo juntado), entra', r.ok===true && /"q1"/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), JSON.stringify(r).slice(0,80));
+  const junto = pedido(a.ctx,a.sh,'__stock__').observaciones, selloJunto = r.pedido.rev;
+  r = a.post(junta(stk('{"e":[]}')));
+  chk('§4fz-b · con `juntar` pero SIN sello sobre una fila sellada: conflicto (no pisa)', r.ok===false && r.error==='conflicto' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  // Un panel VIEJO (cacheado, sin `juntar`): con o sin sello, no toca la fila.
   r = a.post(conClave({ action:'save', pedido: stk('{"e":[]}') }));
-  chk('§4fz · un panel VIEJO (sin sello) sigue guardando el stock como antes', r.ok===true, JSON.stringify(r).slice(0,80));
+  chk('⚠️ §4fz-b · un panel VIEJO sin sello (el 1er guardado de ebc3eab): `actualizar`, y la fila NO se toca', r.ok===false && r.error==='actualizar' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"Z","u":6}]}', selloJunto) }));
+  chk('⚠️ §4fz-b · un panel VIEJO CON el sello bueno (su 2° guardado seguido, #8): `actualizar`, tampoco pisa', r.ok===false && r.error==='actualizar' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  const anot = a.shR._datos.filter(f => f[2]==='actualizar');
+  chk('…y eso SÍ se anota en «Rechazos» (una computadora con la página vieja), diciendo que hay que recargar', anot.length===2 && /recargar la página/.test(String(anot[0][7])), anot.length?String(anot[0][7]):'no se anotó');
+  const b2 = cargar([HDR], { PANEL_KEY: CLAVE });
+  r = b2.post(conClave({ action:'save', pedido: stk('{"e":[]}') }));
+  chk('§4fz-b · …pero la PRIMERA vez (la fila no existe o nunca se selló) entra igual: no hay nada que pisar', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
   const arq = { id:'__arqueo_cuadre__', fecha:'', cliente:'🧮 ARQUEO', observaciones:'mes|2026-09|Efectivo=900', rev:0 };
-  r = a.post(conClave({ action:'save', pedido: arq }));
+  r = a.post(junta(arq));
   const arqRev = r.pedido.rev;
   arq.observaciones='mes|2026-09|QR BISA=2000'; arq.rev=0;
-  r = a.post(conClave({ action:'save', pedido: arq }));
+  r = a.post(junta(arq));
   chk('§4fz · el arqueo con un sello viejo también se rechaza (el panel junta)', r.ok===false && r.error==='conflicto' && r.pedido.rev===arqRev, JSON.stringify(r).slice(0,80));
+  arq.rev=arqRev;
+  r = a.post(conClave({ action:'save', pedido: arq }));
+  chk('§4fz-b · …y un panel viejo tampoco lo pisa: `actualizar`', r.ok===false && r.error==='actualizar' && /Efectivo=900/.test(pedido(a.ctx,a.sh,'__arqueo_cuadre__').observaciones), JSON.stringify(r).slice(0,80));
   const cierre = { id:'__dias_cerrados__', fecha:'', observaciones:'🔒 '+JUEVES, rev:1 };
   r = a.post(conClave({ action:'save', pedido: cierre })); cierre.observaciones='🔒 '+MIERCOLES;
   r = a.post(conClave({ action:'save', pedido: cierre }));
-  chk('…pero los días cerrados siguen reescribiéndose enteros, aunque manden sello', r.ok===true, JSON.stringify(r).slice(0,80));
+  chk('…pero los días cerrados siguen reescribiéndose enteros, aunque manden sello y no `juntar`', r.ok===true, JSON.stringify(r).slice(0,80));
 }
 {
   /* 🗑 §4fz — BORRAR TAMBIÉN MIRA EL SELLO (informe del 23/09). Guardar lo exige desde §4ce,
@@ -336,16 +355,22 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
 }
 {
   const existe = (a, id) => a.sh._datos.some(f => f[0]===id);
-  // Un panel VIEJO (cacheado) borra sin sello: se lo deja, como siempre. Rechazarlo lo dejaría sin poder borrar nada.
+  /* §4fz-b: un panel VIEJO (cacheado) borra sin sello. En `2026-09-23-a` se lo dejaba «para no
+     trabarlo», y era justo el que se llevaba lo que otro acababa de cobrar sin mirar. Ahora, sobre
+     una fila sellada, recibe `actualizar` (recargar la página) y NO borra. */
   const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
   const l = a.post(conClave({ action:'list' })).pedidos[0]; l.chofer='ANA';
   a.post(conClave({ action:'save', pedido:l }));                           // la fila queda sellada
   let r = a.post(conClave({ action:'delete', id:'p1' }));
-  chk('§4fz · un borrado SIN sello (panel viejo) sigue borrando como antes', r.ok===true && !existe(a,'p1'), JSON.stringify(r));
-  // Una fila de antes, nunca sellada, se borra aunque el panel mande rev 0.
-  const a2 = cargar([HDR, fila({id:'p2'})], { PANEL_KEY: CLAVE });
+  chk('⚠️ §4fz-b · un borrado SIN sello (panel viejo) sobre una fila sellada: `actualizar`, y la fila sigue', r.ok===false && r.error==='actualizar' && existe(a,'p1'), JSON.stringify(r));
+  const anot = a.shR._datos.filter(f => f[1]==='delete' && f[2]==='actualizar');
+  chk('…y queda anotado en «Rechazos»', anot.length===1, a.shR._datos.length+' filas');
+  // Una fila de antes, nunca sellada, se borra con o sin sello: no hay con qué comparar.
+  const a2 = cargar([HDR, fila({id:'p2'}), fila({id:'p3'})], { PANEL_KEY: CLAVE });
   r = a2.post(conClave({ action:'delete', id:'p2', rev:0 }));
-  chk('…y una fila de antes (nunca sellada) se borra con rev 0', r.ok===true && !existe(a2,'p2'), JSON.stringify(r));
+  chk('…una fila de antes (nunca sellada) se borra con rev 0', r.ok===true && !existe(a2,'p2'), JSON.stringify(r));
+  r = a2.post(conClave({ action:'delete', id:'p3' }));
+  chk('…y también sin sello', r.ok===true && !existe(a2,'p3'), JSON.stringify(r));
 }
 
 // ══ 4. 🚪 MOVER PASA POR EL PORTERO ═════════════════════════════════════════

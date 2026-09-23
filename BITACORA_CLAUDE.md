@@ -1,8 +1,8 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-09-23** (§4fz).
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-09-23** (§4fz-b).
 ⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
-mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz`).
+mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz-b`, `## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
 
 ---
@@ -6530,9 +6530,11 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 > línea de base de la batería vuelve a ser CERO rojos.** Queda a decisión del dueño: BAJA 9 de
 > Contabilidad (fallback de `cobrosDe`, §4eu) y «mes sin ventas = sin dato» del plan (§4ev).
 > ✅ El `.gs` `2026-09-20-a` (§4et) **está publicado** (confirmado el 23/09 por el registro del
-> respaldo de Kommo, §4fx). ⚠️ **El `2026-09-23-a` (§4fz: borrar con sello, stock y arqueo con
-> sello) espera que el dueño lo implemente** (Nueva versión sobre la implementación de siempre):
-> hasta entonces el borrado ya se protege desde el panel, pero el stock y el arqueo no.
+> respaldo de Kommo, §4fx). ⚠️ El `2026-09-23-a` se subió el 23/09 y dejó a TODO el equipo sin
+> conexión: se volvió a 20-a (§4fz-b, «el incidente»). **El `2026-09-23-b` y el panel de la rama
+> `claude/pedidos-fecha-entrega-bgt0em` esperan la revisión de Codex y el OK del dueño**; se publican
+> JUNTOS y en el orden de §4fz-b «Publicar». Hasta entonces producción es `ebc3eab` + 20-a: el stock
+> y el arqueo se siguen pisando entre dispositivos y borrar no mira el sello.
 > `test_producir` ya no tiene rojos (62/62 desde §4es).
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
@@ -7434,6 +7436,145 @@ solo si hay, «Recogido de fábrica», y limpiar `dev` antes de probar la caja e
 Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabilidad (el
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
+
+## 4fz-b. Segunda vuelta: la junta que no cuenta dos veces, el servidor estricto y el incidente del 23/09 (2026-09-23)
+
+> Dos revisiones sobre la primera vuelta (§4fz, `d890468`): un **agente adversarial propio** (14
+> hallazgos + 2 de antes, arnés y escenarios en el scratchpad, `aud_4fz/`) y la **verificación de
+> Codex** (*«la misma recogida recibida en dos dispositivos se contabiliza dos veces… tratar la
+> recepción como una operación identificable e idempotente… el servidor debe rechazar mutaciones
+> sin revisión en filas protegidas»*). Las dos tenían razón. El informe para Codex y el dueño es
+> `RESPUESTA_CLAUDE.md` (raíz del repo, en la rama).
+
+### 🚨 El incidente del 23/09 (≈11:30–12:30 de Bolivia)
+El dueño subió el `.gs` `2026-09-23-a` y **todo el equipo** quedó con «no hay conexión con Google»
+(él y un vendedor a la vez; un pedido quedó en la cola del vendedor). El registro del respaldo de
+Kommo de las 08:05 decía `versión 2026-09-20-a`: andaba antes del cambio. Se arregló **editando la
+implementación de siempre (✏️)**: versión anterior + «Ejecutar como: Yo» + «Quién tiene acceso:
+Cualquier usuario». **La causa no está confirmada** (se le preguntó al dueño qué casilla estaba
+distinta; sin respuesta todavía). El código de 23-a era un cambio chico, en ES5, y pasaba los 194 de
+`test_servidor.js`: lo más probable es la configuración de la implementación.
+⚠️ **Lección**: `Failed to fetch` en TODOS los dispositivos a la vez NO es internet. Una página de
+error o de inicio de sesión de Google no trae el permiso CORS, y el navegador lo informa igual que
+«sin red». `motivoDeError` ahora lo dice (y qué revisar). **Producción quedó en `ebc3eab` + `.gs`
+`2026-09-20-a`**, que es lo que el panel publicado espera (`SCRIPT_VERSION_ESPERADA`).
+
+### Lo que estaba mal en la primera vuelta
+- La junta del stock contaba **multiconjuntos**: juntar DOS VECES el mismo cambio lo contaba dos.
+  Pasaba con una respuesta perdida (el reintento chocaba con el propio guardado: entrada de 5 → dos
+  de 5), con la misma recogida recibida en dos dispositivos (Moreno 10 → 4) y con el mismo «Unir».
+- La memoria del stock arrancaba **vacía** en cada carga: recargar con el stock en la cola y anotar
+  algo mandaba el stock vacío con el sello bueno (E2, de antes de §4fz).
+- Sin base conocida (se recargó con la fila en la cola) la junta hacía «gana lo mío» con una copia
+  vieja (E3); dos pestañas compartían la cola y la junta usaba la memoria de la otra (E4).
+- La cola reenviaba una **foto vieja** (un guardado falló, el siguiente entró): la junta revivía lo
+  que se canceló después. Y el guardado en espera salía con contenido viejo y el sello nuevo.
+- El `.gs` 23-a dejaba pasar al panel viejo «para no trabarlo», que es justo el que pisa; y su 2°
+  guardado seguido sí llevaba sello, chocaba y el panel viejo lo **tiraba** (#8).
+- Pago mixto con adelanto **implícito** (venta de antes del «~»): corregir un cobro del mismo día y
+  recibo le sumaba el cobro a `p.acuenta`, y como ese adelanto se lee de `p.acuenta`, el total crecía
+  3.000 → 3.600 (E6).
+- Borrar: con la respuesta perdida decía «sigue ahí» y, al corregirla, la **recreaba** (E9); con un
+  guardado propio en el aire, el guardado la recreaba (P1, de antes) o el borrado chocaba consigo
+  mismo (E10); retiros sin sello o todavía en la cola (E11, P2); «Descartar» sin red (E13).
+
+### Cómo quedó (panel)
+- **Todo tiene nombre.** Entradas `e` con id (`'e'+uid()`; las viejas reciben uno FIJO al leer,
+  `v:f|k|u|fab|de#n`, sacado del contenido y ANTES de `stockMigrar`: igual en todos los
+  dispositivos). Pedidos a fábrica `p` igual. Historial `h` por contenido.
+- **Las recepciones son una lista** (`q.recs`: `{id, u, f, ts, se}`). `recibirStockPedido` agrega
+  una; `confirmarImportExist` (dar por llegados desde el Excel de acá) agrega una con `se:1` (sin
+  entrada). Lo viejo (`q.ru` sin lista) es la recepción `legacy` (`ts 0`, `se 1`: no genera nada).
+  **`stockNormalizarRecepciones(S)`** deriva `q.ru/u/r`, una entrada `rec:1` por recepción (id = el
+  de la recepción) y, en una recogida, la resta del almacén de origen contra la FOTO (`g[de].rs` =
+  qué recepciones ya se le restaron; `g[de].t` = cuándo se subió esa foto: lo anterior ya está en el
+  Excel). Es idempotente; corre al leer (`leerStock`) y al final de cada junta.
+- **Junta** (`stockFusionar`): `fusPorId` para `e`, `p` (con `fusPedidoFab`: une las recepciones por
+  id; si suman más que lo pedido, saca las que trajo SOLO el otro lado —la más nueva primero— y avisa
+  «se contó una sola vez»; si los dos agregaron recepciones distintas que caben, cuenta las dos y
+  avisa «casi a la vez») y `h`. Fotos: el mismo corte gana el de `t` más nuevo, si no el de acá.
+  Primero `stockMigrar`, después normalizar.
+- **Conteo con hora** (`c.t`) y **`stockEntradaVale`**: una entrada (o recepción) de antes del conteo
+  ya está adentro, por fecha (como siempre) y por hora (`ts ≤ c.t`).
+- **Lo que sale al servidor es la memoria** (`sisPlegar`), y la memoria es **de cada pestaña**
+  (`sessionStorage` `ME_SIS_V2`: stock, arqueo y `SIS_BASE`; sobrevive a recargar esa pestaña, no se
+  comparte con otra). Cada fila lleva `_base`, `_dev` (= la pestaña, `pestanaId()`), `_t` (no viajan)
+  y el pedido `juntar:1`. Una fila que NO salió de esta memoria (`sisFilaEnMemoria`: otra pestaña, un
+  panel viejo, o anterior a una carga de la planilla con la cola llena, `SIS_MEM_T`) se junta primero
+  con su base.
+  ⚠️ La primera versión de esto era un espejo del NAVEGADOR (`ME_STOCK_V1`) con las pestañas
+  sincronizadas por el evento `storage`, que REEMPLAZABA la memoria con la de la otra pestaña: un
+  cambio propio todavía sin guardar se borraba. Por pestaña no hay nada que reemplazar y lo ajeno
+  siempre se junta.
+  ⚠️ Y el **49/1** de `test_concurrencia` §4 que salió en la batería (1 de cada 2–3 corridas en
+  paralelo) NO era eso: el volcado de la pestaña B mostró que vaciaba la cola 131 ms después de que A
+  anotó y todavía no VEÍA la fila de A (el localStorage entre pestañas llega con un instante de
+  retraso, más con la máquina cargada): no mandaba nada. Es del test —en la vida real B vacía la cola
+  a los 2 minutos o al tocar «Reintentar»—, y ahora B espera a verla. 4 de 4 en paralelo. `sisColaLimpiar` saca de la cola lo que ya entró; `queuePending`
+  guarda la memoria de ahora, no la foto del toque. Un `conflicto` cuya fila es EXACTAMENTE lo que se
+  mandó es un ok tardío. El tope de 3 juntas ya no es un «no» firme (`junta`: queda en la cola).
+  Con la memoria sin cargar se manda con `rev 0` y sin base: el servidor choca y se une (no borra).
+- Lo mismo para el arqueo (`ARQUEO_CARGADO`, `_base`).
+- **Mixto**: `anticipoEscrito(p)` (solo el «~»), y `mixtoEn(a, cobros, p)` exige que «A cuenta»
+  cierre con los dos (o 0 en «SÍ, pagado»). `ctaGuardarPago` toca `p.acuenta` solo si el renglón
+  ERA el 2° método antes de tocarlo, mirado sin la fecha que rellena `ctaCobrosConFecha`.
+- **Borrar**: `esperarGuardadoDe(id)` (tope 60 s) antes; saca de la cola DESPUÉS de esperar; usa
+  `SAVE_REV`; ante un error pasajero reintenta una vez (borrar dos veces con el mismo sello es
+  seguro) y si sigue sin saberse devuelve `incierto` y **no la repone**. `respuesta_de_lectura` y
+  `navigator.onLine===false` son «no» seguros (se repone). `borrarRetiro` pasa por
+  `borrarEnServidor`; `aplicarSello` sella también la copia de `RETIROS`; `descartarBorrador`
+  devuelve el borrador a la bandeja con un «no» claro. `motivoBorrar`.
+- `actualizar` en `motivoDelServidor`; `scriptPendienteHtml` avisa cuando el SERVIDOR es más nuevo
+  que la página («recargá con F5»).
+
+### Cómo quedó (servidor, `2026-09-23-b`)
+- `doSave(p, forzar, juntar)`: en `__stock__`/`__arqueo_cuadre__` ya sellados, **sin `juntar` →
+  `actualizar`** y no toca la hoja; con `juntar`, se compara el sello (sin sello = `conflicto`).
+- `doDelete(id, rev)`: en una fila sellada, **sin `rev` → `actualizar`**. Una fila nunca sellada se
+  borra como siempre.
+- `actualizar` va a «Rechazos» con «panel viejo: esa computadora tiene que recargar la página».
+
+### Pruebas
+- `tests/test_concurrencia.js` **rehecho** (50): arnés con `addInitScript` (sobrevive a recargar),
+  reglas `lose/drop/busy/hold`, pestañas, y el panel viejo `ebc3eab` sacado con `git show`.
+  Dientes: `d890468` + 23-a → **25 rojos**; `ebc3eab` + 20-a (producción) → **31 rojos**; panel nuevo
+  + 20-a → **20 rojos** (todo el stock y el arqueo: hay que publicar los dos); panel nuevo + 23-a →
+  4 rojos (el panel viejo).
+- `tests/test_servidor.js` 194 → **201** (7 rojos contra 23-a). `tests/test_mixto.js` 28 → **33**
+  (4 rojos contra `d890468`: el 3.000 → 3.600). `tests/test_medias.js` 23 → **24**: el borrado de un
+  retiro cambió A PROPÓSITO («not found» = borrado, porque sale de la cola antes; una respuesta
+  perdida = «no se sabe», ya no «sin conexión»), y el test ahora relee con una planilla que los tiene.
+- `test_adm_alta` (§4ev) se puso rojo en el medio: con el stock SIN cargar, una lectura vieja que
+  llegaba con un guardado en vuelo REEMPLAZABA la memoria (la recogida anotada desaparecía). Ahora,
+  sin cargar y en vuelo, se UNE (`stockFusionar(null, …)` / `fusMapa(null, …)`).
+- Los escenarios de la auditoría (`aud_4fz/`) pasan todos; en dos de borrado hubo que cambiar el
+  momento de soltar el guardado retenido (el borrado ahora espera al guardado a propósito).
+
+### ⚠️ Lo que NO queda protegido (no decir «todo protegido»)
+1. **Un panel viejo abierto** (página de antes de publicar) con el servidor 23-b: no puede guardar
+   el stock ni el arqueo ni borrar filas selladas hasta que recargue (F5). Lo del stock y el arqueo
+   espera en su cola y se junta al recargar (probado); los pedidos los sigue guardando.
+2. **Dos pestañas abiertas a la vez**: cada una trabaja con su memoria y ve lo de la otra recién
+   cuando la otra guarda y esta relee (o cuando junta lo que la otra dejó en la cola). No se pierde
+   nada, pero una pestaña puede mostrar el stock de hace un momento.
+3. **Dos parciales que son la misma llegada y no pasan lo pedido**: no se puede distinguir de dos
+   llegadas de verdad; se cuentan las dos y se avisa.
+4. **Relojes**: las reglas «antes/después del conteo» y «antes/después de la foto» usan la hora de
+   cada dispositivo.
+5. Una fila que dejó en la cola un panel viejo (sin base) se junta como **unión**: puede revivir algo
+   que otro borró en el medio (solo en la transición).
+6. La foto de un almacén vale desde que se SUBE (`g.t`), no desde la hora del reporte: una recogida
+   anotada entre las dos se da por incluida (igual que antes).
+7. `mixtoDe` sigue siendo una heurística para los anticipos escritos: decisión del dueño.
+
+### Publicar (orden)
+1. Mergear la rama a `main` y esperar el deploy de Pages (panel nuevo; anda con 20-a, sin la
+   protección del stock).
+2. El dueño sube el `.gs` 23-b: **Administrar implementaciones → ✏️ la de siempre → Versión nueva**,
+   y antes de Implementar mira «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario».
+3. Verificar al toque: el panel (F5) dice «Conectado» y el cuadro de 🔒 Cerrar día dice
+   `2026-09-23-b`; o Actions → «Traer ventas de Kommo (respaldo)» → Run workflow.
+4. Si alguien queda sin conexión: ✏️ → la versión anterior (20-a). El panel nuevo anda con ella.
 
 ## 4fz. El informe de la otra herramienta: el stock que se pisaba y el borrado a ciegas (2026-09-23)
 
