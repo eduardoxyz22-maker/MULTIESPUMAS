@@ -7631,9 +7631,11 @@ ayer y todo entra por los repasos (a mirar en Kommo → Webhooks; no urgente).
    y se manda la captura.
 4. **Administrar implementaciones → ✏️ la de siempre → Versión nueva → Implementar.** Nunca «Nueva
    implementación».
-5. Verificar al toque: el panel (F5) dice «Conectado» y el cuadro de 🔒 Cerrar día dice
-   `2026-09-23-b`; o Actions → «Traer ventas de Kommo (respaldo)» → Run workflow (sale en rojo si el
-   repaso del script está parado).
+5. Verificar al toque (condición de Codex: conexión, versión y una ejecución AUTOMÁTICA de Kommo
+   exitosa): el panel (F5) dice «Conectado»; el cuadro de 🔒 Cerrar día dice `2026-09-23-b` (o
+   Actions → «Traer ventas de Kommo (respaldo)» → Run workflow, que sale en rojo si el repaso del
+   script está parado); y, 5 minutos después y SIN ejecutar `kommoRepaso` a mano, Ejecuciones muestra
+   la fila más nueva de `kommoRepaso` «Basada en el tiempo» → **«Completada»** (no «Fallida»).
 6. Si alguien queda sin conexión, volver atrás son DOS cosas: ✏️ → la versión anterior (20-a) **y**
    pegar la 20-a en el editor, desde un commit FIJO (después del merge `main` ya es 23-b):
    `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/ebc3eab108594105b3d7db0013a3f4ff82edfafe/google-apps-script.gs`.

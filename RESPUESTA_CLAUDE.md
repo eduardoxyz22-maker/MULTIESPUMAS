@@ -352,11 +352,16 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
      captura.
 4. **Implementar → Administrar implementaciones → ✏️ la de siempre → Versión nueva → Implementar.**
    **Nunca «Nueva implementación».**
-5. **Verificar enseguida:**
-   - el panel (F5) dice «Conectado»;
-   - el cuadro de 🔒 Cerrar día dice `2026-09-23-b`;
-   - o se corre Actions → «Traer ventas de Kommo (respaldo)» → Run workflow: dice la versión, y ahora
-     sale en rojo si el repaso del script está parado.
+5. **Verificar enseguida** (condición de Codex: conexión, versión y una ejecución automática de
+   Kommo exitosa):
+   - **Conexión:** el panel (F5) dice «Conectado», sin el cartel rojo.
+   - **Versión:** el cuadro de 🔒 Cerrar día dice `2026-09-23-b`. O se corre Actions → «Traer ventas
+     de Kommo (respaldo)» → Run workflow: dice la versión, y ahora sale en rojo si el repaso del
+     script está parado.
+   - **Kommo automático:** esperar 5 minutos **sin** ejecutar `kommoRepaso` a mano. En
+     **Ejecuciones**, la fila más nueva de `kommoRepaso` tiene que decir «Basada en el tiempo» y
+     **«Completada»**, no «Fallida», con una hora posterior al pegado. Es la misma pantalla que
+     mostró el error del 23/09.
 6. **Si alguien queda sin conexión, volver atrás son DOS cosas:**
    - ✏️ → la versión anterior: arregla el panel;
    - **y** pegar de nuevo la 20-a en el editor: arregla los disparadores. Después del merge, `main` ya es
