@@ -221,6 +221,120 @@ const r2=n=>Math.round((Number(n)||0)*100)/100;
   chk('  …ni le borra el N° de recibo propio', r.corr.nota==='972' && r.corr.monto===600, J(r.corr));
   chk('  …y una venta NUEVA con «A cuenta» sigue guardándose como método suelto', r.nueva==='Efectivo %N1', r.nueva);
 
+  // ══ §4fs · un cobro PARCIAL suma en «Cobrado» del parte, del chofer, la rendición y el reporte ══
+  /* `if(p.pagado) cob+=totalCobrado(p); else pend+=saldo` — una entrega de Bs 1.000 donde el
+     cliente dio 400 en la puerta aportaba Bs 0 a «Cobrado» en SEIS lugares. */
+  r = await page.evaluate(async () => {
+    STATE=[
+      P({ id:'pa', nota:'70', oc:'09-070', cliente:'PAGÓ UNA PARTE', ts:ts0+20, fecha:hoy, chofer:'Luis Pierre', entregado:true,
+          acuenta:0, saldo:600, pagado:false, metodoPago:'Efectivo 400 @'+hoy+' #70 >Luis Pierre %P',
+          productos:[{desc:'C',cant:1,precio:1000}] }),
+      P({ id:'pb', nota:'71', oc:'09-071', cliente:'PAGÓ TODO', ts:ts0+21, fecha:hoy, chofer:'Luis Pierre', entregado:true,
+          acuenta:0, saldo:0, pagado:true, metodoPago:'Efectivo 900 @'+hoy+' #71 >Luis Pierre %Q',
+          productos:[{desc:'C',cant:1,precio:900}] })
+    ];
+    var out={};
+    var d=parteData(); out.parte={ cob:d.cob, pend:d.pend, pendN:d.pendN, ch:d.byCh['Luis Pierre']&&d.byCh['Luis Pierre'].cob };
+    // la rendición por chofer de Administración
+    showView('admin'); segSet('adm-mode','dia'); var ad=document.getElementById('adm-dia'); if(ad) ad.value=hoy;
+    renderAdmin(); await new Promise(r=>setTimeout(r,60));
+    var fila=[].slice.call(document.querySelectorAll('#tbl-rendicion tbody tr')).map(function(tr){ return tr.textContent.replace(/\s+/g,' '); })
+                .filter(function(t){ return /Luis Pierre/.test(t); })[0]||'';
+    out.rendicion=fila;
+    // la vista del chofer
+    showView('chofer'); var sel=document.getElementById('cho-nombre');
+    if(sel){ if(![].some.call(sel.options,function(o){ return o.value==='Luis Pierre'; })){ var o=document.createElement('option'); o.value=o.textContent='Luis Pierre'; sel.appendChild(o); } sel.value='Luis Pierre'; }
+    CHO_TODOS=false; CHO_FILTER='hoy'; renderChofer();
+    out.chofer=(document.getElementById('cho-metrics')||{}).textContent.replace(/\s+/g,' ');
+    return out;
+  });
+  chk('§4fs · el parte del día suma los 400 del cobro parcial en «Cobrado» (1.300, no 900)', r.parte.cob===1300 && r.parte.pend===600 && r.parte.pendN===1, J(r.parte));
+  chk('  …y el «Cobrado» por chofer del parte también', r.parte.ch===1300, J(r.parte.ch));
+  chk('§4fs · la rendición por chofer: salió a cobrar 1.900, cobrado 1.300, falta 600', /1\.900,00/.test(r.rendicion) && /1\.300,00/.test(r.rendicion) && /600,00/.test(r.rendicion), r.rendicion);
+  chk('§4fs · la tarjeta «Cobrado» de la vista del chofer incluye el parcial', /1\.300,00/.test(r.chofer), r.chofer.slice(0,200));
+
+  // ══ §4ft · un «A cuenta» sin método NO va a «Bancos y tarjeta» ══
+  r = await page.evaluate(async () => {
+    STATE=[
+      P({ id:'sm', nota:'80', oc:'09-080', cliente:'A CUENTA SIN MÉTODO', ts:ts0+22, acuenta:500, saldo:500, pagado:false,
+          metodoPago:'', productos:[{desc:'C',cant:1,precio:1000}] }),
+      P({ id:'ef', nota:'81', oc:'09-081', cliente:'EN EFECTIVO', ts:ts0+23, acuenta:0, saldo:0, pagado:true,
+          metodoPago:'Efectivo 1300 @'+hoy+' #81 %E', productos:[{desc:'C',cant:1,precio:1300}] })
+    ];
+    showView('conta'); segSet('cta-tab','cuadre'); setContaTab('cuadre');
+    segSet('cua-mode','mes'); document.getElementById('cua-mes').value=MES;
+    document.getElementById('cua-vendedor').value=''; setCuadreModo('mes'); ARQUEO={}; renderCuadre();
+    var t=document.getElementById('cua-metrics').textContent.replace(/\s+/g,' ');
+    var banco=(t.match(/Bancos y tarjetaBs ([\d.,]+)/)||[])[1]||'?';
+    var sin=(t.match(/Sin método anotadoBs ([\d.,]+)/)||[])[1]||'';
+    return { banco:banco, sin:sin, txt:t };
+  });
+  chk('§4ft · el «A cuenta» sin método ya NO se suma en «Bancos y tarjeta»', r.banco==='0,00', 'Bancos y tarjeta: Bs '+r.banco);
+  chk('  …sale en su propia tarjeta, con la plata y qué hacer', r.sin==='500,00' && /anotá con qué pagó/.test(r.txt), 'Sin método: Bs '+r.sin);
+
+  // ══ §4fv · el buscador de Contabilidad no se cuela callado en las tarjetas ni en el Excel ══
+  r = await page.evaluate(async () => {
+    STATE=[
+      P({ id:'b1', nota:'91', oc:'09-091', cliente:'CLIENTE UNO', ts:ts0+24, acuenta:0, saldo:0, pagado:true,
+          metodoPago:'Efectivo 1000 @'+hoy+' #91 %A', productos:[{desc:'TITANIO LATEX',cant:1,precio:1000}] }),
+      P({ id:'b2', nota:'92', oc:'09-092', cliente:'CLIENTE DOS', ts:ts0+25, acuenta:0, saldo:0, pagado:true,
+          metodoPago:'Efectivo 2000 @'+hoy+' #92 %B', productos:[{desc:'MEMORY FLEX',cant:1,precio:2000}] })
+    ];
+    var nombres=[]; downloadBlob=function(b,n){ nombres.push(n); };
+    showView('conta'); segSet('cta-tab','ventas'); setContaTab('ventas');
+    segSet('cta-mode','mes'); document.getElementById('cta-mes').value=MES; setContaModo('mes');
+    document.getElementById('cta-search').value=''; renderConta(); exportConta();
+    var sin=document.getElementById('cta-metrics').textContent.replace(/\s+/g,' ');
+    document.getElementById('cta-search').value='titanio'; renderConta(); exportConta();
+    var con=document.getElementById('cta-metrics').textContent.replace(/\s+/g,' ');
+    document.getElementById('cta-search').value=''; renderConta();
+    return { nombres:nombres, sin:sin, con:con };
+  });
+  chk('§4fv · con la búsqueda, las tarjetas dicen que muestran SOLO lo que coincide', /solo lo que coincide con «titanio»/.test(r.con) && !/solo lo que coincide/.test(r.sin), r.con.slice(0,110));
+  chk('§4fv · el Excel filtrado NO se llama igual que el del mes entero', r.nombres.length===2 && r.nombres[0]!==r.nombres[1] && /SOLO-titanio/.test(r.nombres[1]), J(r.nombres));
+
+  // ══ §4fw · «Productos del mes» no dice «Sin dato» por UNA venta sin monto ══
+  r = await page.evaluate(async () => {
+    STATE=[
+      P({ id:'q1', nota:'95', oc:'09-095', cliente:'CON MONTO', ts:ts0+26, acuenta:0, saldo:0, pagado:true,
+          metodoPago:'Efectivo 3000 @'+hoy+' #95 %A', productos:[{desc:'COLCHON',cant:1,precio:3000}] }),
+      P({ id:'q2', nota:'96', oc:'09-096', cliente:'SIN MONTO', ts:ts0+27, acuenta:0, saldo:0, pagado:false,
+          metodoPago:'', productos:[{desc:'COLCHON',cant:1}] })
+    ];
+    showView('conta'); segSet('cta-tab','ventas'); setContaTab('ventas');
+    segSet('cta-mode','mes'); document.getElementById('cta-mes').value=MES; setContaModo('mes');
+    document.getElementById('cta-vendedor').value='';
+    await abrirProductosMes();
+    await new Promise(r=>setTimeout(r,100));
+    var txt=(document.getElementById('pm-body')||{}).textContent||'';
+    var hojas=PM_REPORTE?pmHojas(PM_REPORTE):null;
+    var fila=hojas?hojas[0].matrix.filter(function(f){ return String(f[0]||'').indexOf('Importe total vendido')===0; })[0]:null;
+    pmCerrar();
+    return { card:(txt.match(/Importe total vendido\s*([^\n]*?)(Pedidos|$)/)||[])[1]||txt.slice(0,200),
+             fila:fila?[fila[0], (fila[1]&&fila[1].v!=null)?fila[1].v:fila[1]]:null, hayTxt:/Importe total vendido/.test(txt), txt:txt.replace(/\s+/g,' ').slice(0,300) };
+  });
+  chk('§4fw · con una venta sin monto, la tarjeta muestra lo conocido en vez de «Sin dato»', /Incompleto/.test(r.txt) && /3\.000,00/.test(r.txt) && !/Importe total vendidoSin dato/.test(r.txt), r.txt.slice(0,220));
+  chk('  …y el Excel trae el número conocido, con el rótulo de incompleto', r.fila && r.fila[1]===3000 && /INCOMPLETO/.test(r.fila[0]), J(r.fila));
+
+  // ══ §4fu · el día de la venta se lee en HORA DE BOLIVIA, aunque el dispositivo esté en otra zona ══
+  {
+    const pu = await browser.newPage({ viewport:{width:1300,height:900}, timezoneId:'UTC' });
+    pu.on('pageerror',e=>errores.push('UTC: '+e.message));
+    await pu.route(/^https?:/, r=>r.abort());
+    await pu.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
+    await pu.waitForTimeout(300);
+    const q = await pu.evaluate(() => {
+      // 31/08/2026 21:00 en Bolivia = 01/09/2026 01:00 UTC
+      var ts=Date.UTC(2026,8,1,1,0,0);
+      var p={ id:'tz', ts:ts, fecha:'2026-09-02' };
+      return { conta:contaFecha(p), atc:atcEntro(p), rpt:rptFechaSolicitud(p), local:isoLocal(new Date(ts)) };
+    });
+    await pu.close();
+    chk('§4fu · en un dispositivo con hora UTC, una venta del 31/08 21:00 (Bolivia) sigue siendo del 31/08', q.conta==='2026-08-31', J(q));
+    chk('  …y lo mismo la fecha de entrada de una ATC y la de solicitud de una RPT', q.atc==='2026-08-31' && q.rpt==='2026-08-31', J(q));
+    chk('  (el reloj del dispositivo, en cambio, dice 01/09: por eso no se usa)', q.local==='2026-09-01', q.local);
+  }
+
   chk('sin errores JS', errores.length===0, errores.slice(0,2).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

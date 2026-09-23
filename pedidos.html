@@ -1300,7 +1300,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 .pm-tabla table{width:100%;min-width:850px}.pm-tabla th,.pm-tabla td{padding:10px;white-space:normal!important}.pm-tabla tfoot{font-weight:bold;background:#e8f5f2}
 @media(max-width:650px){.pm-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-body{padding:12px}.pm-resumen strong{font-size:1.1rem}}
 </style>
-<script src="productos-mes.js?v=20260908a"></script>
+<script src="productos-mes.js?v=20260923a"></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -1825,7 +1825,7 @@ function atcRecibidoNota(p){ var a=atcDe(p); return (a&&a.rnota)||''; }
    fuera no hay `ts`, cae a la fecha de recojo antes que quedar vacía. */
 function atcEntro(p){
   var t=Number(p&&p.ts)||0;
-  return t ? isoLocal(new Date(t)) : ((p&&p.fecha)||'');
+  return t ? isoDeTsBolivia(t) : ((p&&p.fecha)||'');     // §4fu: en hora de Bolivia, no la del dispositivo
 }
 /* ---- EL CIRCUITO COMPLETO, en cuatro momentos (§4br) ----
    se generó → se recogió → volvió de fábrica → se le entregó al cliente.
@@ -2980,7 +2980,20 @@ function updateMetodoVisibility(){
    venta, no por cuándo sale el camión. Por eso la columna "Ingresado" va
    primera — sin ella el filtro no se entiende.
    ========================================================================== */
-function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoLocal(new Date(t)):(p&&p.fecha)||''; }
+/* ⚠️ EL DÍA DE LA VENTA SE LEE EN HORA DE BOLIVIA, no en la del dispositivo (§4fu). `p.ts` es
+   un instante absoluto; `isoLocal(new Date(t))` lo leía con el reloj del celular, así que una
+   venta cargada el 31/08 a las 21:00 de Bolivia (= 01/09 01:00 UTC) caía en SEPTIEMBRE en un
+   dispositivo con la zona mal puesta: dos personas mirando el mismo mes veían totales
+   distintos. Es el mismo bug que §4ew arregló en `generar.py`. Bolivia es UTC−4 fijo (no tiene
+   horario de verano), así que en un dispositivo bien configurado esto da EXACTAMENTE lo mismo
+   que antes. */
+function isoDeTsBolivia(t){
+  var d=new Date(Number(t)-4*3600000);
+  if(isNaN(d.getTime())) return '';
+  var m=d.getUTCMonth()+1, day=d.getUTCDate();
+  return d.getUTCFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day;
+}
+function contaFecha(p){ var t=Number(p&&p.ts)||0; return t?isoDeTsBolivia(t):(p&&p.fecha)||''; }
 /* ROHO y Eduardo Añez quedan FUERA de Contabilidad: no llevan nota de venta, NIT ni
    "facturar a" (por eso tienen el formulario simplificado), así que en esta vista
    aparecerían casi vacíos y ensuciarían los totales. Se los saca de la tabla, del
@@ -3469,6 +3482,11 @@ function renderContaMetrics(list, vSel){
     if(regEnSistema(p)) nReg++;
   });
   var n=(list||[]).length, porCargar=n-nReg, quien=vSel?('de '+vSel):'de todo el equipo';
+  /* ⚠️ EL BUSCADOR TAMBIÉN FILTRA ESTAS TARJETAS, y tiene que decirlo (§4fv). `contaLista` aplica
+     lo que se escribió en «Buscar», así que con «titanio» las cuatro tarjetas mostraban Bs 1.000
+     de los Bs 3.000 del mes y seguían diciendo «de todo el equipo». */
+  var _q=((document.getElementById('cta-search')||{}).value||'').trim();
+  if(_q) quien+=' · solo lo que coincide con «'+_q+'»';
   box.innerHTML=
     mc('var(--teal)','Vendido en el período', fmtBs(vendido),
        n+' venta'+(n===1?'':'s')+' '+esc(quien))+
@@ -3789,7 +3807,7 @@ function cuadrePorForma(pagos){
   var mapa={}, orden=[];
   (pagos||[]).forEach(function(c){
     var k=cuadreForma(c);
-    if(!mapa[k]){ mapa[k]={forma:k, n:0, monto:0, efectivo:(c.metodo==='Efectivo')}; orden.push(k); }
+    if(!mapa[k]){ mapa[k]={forma:k, n:0, monto:0, efectivo:(c.metodo==='Efectivo'), sinMetodo:!c.metodo}; orden.push(k); }
     mapa[k].n++; mapa[k].monto=r2(mapa[k].monto+c.monto);
   });
   orden.sort(function(a,b){
@@ -4200,8 +4218,17 @@ function renderCuadre(){
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos);
   var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
   var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
-  var efectivo=0, banco=0;
-  formas.forEach(function(f){ if(f.efectivo) efectivo=r2(efectivo+f.monto); else banco=r2(banco+f.monto); });
+  /* ⚠️ «Sin método anotado» NO es banco (§4ft). Todo lo que no era Efectivo caía en «Bancos
+     y tarjeta — para conciliar con el extracto»: un «A cuenta» viejo sin método (casi seguro
+     efectivo en la mano de la vendedora) aparecía como plata que tiene que estar en un
+     extracto donde nunca va a estar, y no aparecía en el efectivo por retirar. Va aparte y
+     se dice que falta anotar con qué se pagó. */
+  var efectivo=0, banco=0, sinMet=0;
+  formas.forEach(function(f){
+    if(f.efectivo) efectivo=r2(efectivo+f.monto);
+    else if(f.sinMetodo) sinMet=r2(sinMet+f.monto);
+    else banco=r2(banco+f.monto);
+  });
   var pend=cuadrePendientes(), pendTotal=cuadreSuma(pend);
   // El total de TODO el historial, para no perder de vista lo que se debe en general.
   var pendAll=cuadrePendientes(true), pendAllTotal=cuadreSuma(pendAll);
@@ -4250,6 +4277,7 @@ function renderCuadre(){
        (recargos>0?(' · 🚚 '+fmtBs(recargos)+' de recargos'):''))+
     mc('var(--green)','Efectivo (caja)',fmtBs(efectivo),'lo que se cobró en efectivo')+
     mc('var(--teal-dk)','Bancos y tarjeta',fmtBs(banco),'para conciliar con el extracto')+
+    (sinMet>0.01 ? mc('var(--amber)','⚠️ Sin método anotado',fmtBs(sinMet),'no se sabe si fue caja o banco — abrí la venta y anotá con qué pagó','#7c4b00') : '')+
     mc('#7c3aed','Efectivo retirado',fmtBs(retirado),
        rets.length ? (rets.length+' retiro'+(rets.length===1?'':'s')+' · 🧾 '+fmtBs(retirosPorTipo(rets,'Facturado'))+' facturado')
                    : 'todavía no se retiró nada')+
@@ -4378,7 +4406,10 @@ function renderCuadre(){
   vistos.forEach(function(c){ totVistos=r2(totVistos+(Number(c.monto)||0)); });
   det.innerHTML='<div class="cua-box"><div class="cua-t">📄 Detalle de los pagos — '+
       (CUA_BUSCA ? (vistos.length+' de '+pagos.length) : pagos.length)+
-      (CUA_BUSCA ? (' <span style="font-weight:400;color:var(--teal-dk)">· suman '+fmtBs(totVistos)+'</span>') : '')+'</div>'+
+      (CUA_BUSCA ? (' <span style="font-weight:400;color:var(--teal-dk)">· suman '+fmtBs(totVistos)+'</span>') : '')+
+      /* §4fv: el buscador filtra SOLO esta tabla; las tarjetas de arriba y el ⬇️ Excel del cuadre
+         son del período entero. Al revés que en Ventas —y sin decirlo, dos números distintos. */
+      (CUA_BUSCA ? ' <span style="font-weight:400;font-size:.78rem;color:var(--muted)">· la búsqueda filtra solo esta tabla: las tarjetas de arriba y el ⬇️ Excel son del período entero</span>' : '')+'</div>'+
     '<div style="display:flex;gap:8px;align-items:center;margin-bottom:9px;flex-wrap:wrap">'+
       '<input type="text" id="cua-buscar" value="'+esc(CUA_BUSCA)+'" placeholder="🔎 Buscar por cliente, N° de nota, vendedor, forma de pago o monto…" '+
         'oninput="cuaBuscar(this.value)" autocomplete="off" style="flex:1;min-width:220px">'+
@@ -6207,8 +6238,13 @@ function exportConta(){
           : modo==='mes' ? (document.getElementById('cta-mes').value||'mes') : 'todos';
   var vSel=mayor?'':((document.getElementById('cta-vendedor')||{}).value||'').trim();
   if(vSel) tag+='-'+vSel.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  /* ⚠️ Con algo escrito en «Buscar» el archivo sale FILTRADO (§4fv): antes se llamaba igual que
+     el del mes entero —`contabilidad-2026-09.xlsx` con Bs 1.000 de los Bs 3.000— y no había
+     forma de darse cuenta al abrirlo. Ahora el nombre lo dice. */
+  var _qx=sinTildes(((document.getElementById('cta-search')||{}).value||'').trim().toLowerCase()).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  if(_qx) tag+='-SOLO-'+_qx.slice(0,30);
   downloadBlob(bytes,(mayor?'mayoristas-':'contabilidad-')+tag+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('Excel de '+(mayor?'mayoristas':'contabilidad')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+' ✓','ok');
+  toast('Excel de '+(mayor?'mayoristas':'contabilidad')+' descargado — '+list.length+(list.length===1?' pedido':' pedidos')+(_qx?' · ⚠️ SOLO lo que coincide con la búsqueda, no el período entero':'')+' ✓','ok', _qx?7000:undefined);
 }
 
 /* ============================================================================
@@ -9186,7 +9222,7 @@ function renderAdmin(){
   document.getElementById('tbl-camion').innerHTML='<thead><tr><th>Camión</th><th class="num">Asignadas</th><th class="num">Entregadas</th><th class="num">Pendientes</th></tr></thead><tbody>'+(cRows||'<tr><td colspan="4" class="empty" style="padding:18px">Sin camión asignado todavía</td></tr>')+'</tbody>';
 
   var byCh={};
-  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=totalCobrado(p); else byCh[c].pend+=Number(p.saldo)||0; });
+  list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,pend:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); if(!p.pagado) byCh[c].pend+=Number(p.saldo)||0; });   // §4fs: lo cobrado suma SIEMPRE
   var chRows=Object.keys(byCh).sort(function(a,b){return byCh[b].n-byCh[a].n;}).map(function(c){ var o=byCh[c]; var salio=o.pend+o.cob; return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(salio)+'</td><td class="num" style="color:var(--green);font-weight:700">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>'; }).join('');
   document.getElementById('tbl-rendicion').innerHTML='<thead><tr><th>Chofer</th><th class="num">Asign.</th><th class="num">Entreg.</th><th class="num">Salió a cobrar</th><th class="num">Cobrado</th><th class="num">Falta</th></tr></thead><tbody>'+(chRows||'<tr><td colspan="6" class="empty" style="padding:18px">Sin chofer asignado todavía</td></tr>')+'</tbody>';
 
@@ -10627,7 +10663,7 @@ function renderChofer(){
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());
   var ent=0, porCobrar=0, cobrado=0;
-  list.forEach(function(p){ if(p.entregado)ent++; if(p.pagado) cobrado+=totalCobrado(p); else porCobrar+=Number(p.saldo)||0; });
+  list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
@@ -11585,14 +11621,20 @@ function parteData(){
   var ent=0, cob=0, pend=0, pendN=0, sinChof=0, sinGps=0, noVerif=0;
   dh.forEach(function(p){
     if(p.entregado) ent++;
-    if(p.pagado) cob+=totalCobrado(p); else { pend+=Number(p.saldo)||0; pendN++; }
+    /* ⚠️ Lo cobrado se suma SIEMPRE, no solo en las ventas saldadas (§4fs). Con
+       `if(p.pagado) cob+=… else pend+=…`, una entrega de Bs 1.000 donde el cliente dio 400 en
+       la puerta y quedó debiendo 600 aportaba Bs 0 a «Cobrado»: el Cuadre veía los 400, el
+       parte del día (pantalla y WhatsApp), la tarjeta del chofer, la rendición y el reporte
+       no. Mismo patrón en seis lugares; §4ew cambió `p.cobradoBs` por `totalCobrado(p)` en
+       todos pero dejó la guarda `p.pagado`. */
+    cob+=totalCobrado(p); if(!p.pagado){ pend+=Number(p.saldo)||0; pendN++; }
     if(!vehiculoDe(p)) sinChof++;
   });
   var faltHoy=dh.filter(function(p){ return (p.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
   var am=0, pm=0;
   dm.forEach(function(p){ if(normTurno(p.turno)==='PM') pm++; else am++; if(!p.maps) sinGps++; if(!p.verificado) noVerif++; });
   var byCh={};
-  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; if(p.pagado)byCh[c].cob+=totalCobrado(p); });
+  dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); });   // §4fs
   return {hoy:hoy, man:man, nHoy:dh.length, ent:ent, cob:cob, pend:pend, pendN:pendN, sinChof:sinChof, faltHoy:faltHoy,
           nMan:dm.length, am:am, pm:pm, sinGps:sinGps, noVerif:noVerif, byCh:byCh};
 }
@@ -11858,11 +11900,11 @@ function closeReporte(){ var ov=document.getElementById('reporte-overlay'); if(o
 function setRepPeriodo(p){ REP_PERIODO=p; ['7d','mes','mespasado'].forEach(function(x){ var b=document.getElementById('rep-per-'+x); if(b){ var on=(x===p); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderReporte(); }
 function renderReporte(){
   var r=repRango(), list=repLista(), tot=list.length, ent=0, unid=0, cob=0, pend=0;
-  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); if(p.pagado)cob+=totalCobrado(p); else pend+=Number(p.saldo)||0; });
+  list.forEach(function(p){ if(p.entregado)ent++; (p.productos||[]).forEach(function(x){unid+=Number(x.cant)||0;}); cob+=totalCobrado(p); if(!p.pagado) pend+=Number(p.saldo)||0; });   // §4fs
   document.getElementById('rep-info').textContent=r.lbl+' · '+fmtFecha(r.desde)+' a '+fmtFecha(r.hasta);
   var byV={}; list.forEach(function(p){ var k=nombreCanonico(p.vendedor)||'(sin vendedor)'; if(!byV[k])byV[k]={n:0,u:0,ent:0,pend:0}; byV[k].n++; (p.productos||[]).forEach(function(x){byV[k].u+=Number(x.cant)||0;}); if(p.entregado)byV[k].ent++; if(!p.pagado)byV[k].pend+=Number(p.saldo)||0; });
   var vr=Object.keys(byV).sort(function(a,b){return byV[b].n-byV[a].n;}).map(function(k){var o=byV[k];return '<tr><td>'+esc(k)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.u+'</td><td class="num">'+o.ent+'</td><td class="num">'+fmtBs(o.pend)+'</td></tr>';}).join('');
-  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; if(p.pagado)byC[c].cob+=totalCobrado(p); else byC[c].pend+=Number(p.saldo)||0; });
+  var byC={}; list.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c)return; if(!byC[c])byC[c]={n:0,ent:0,cob:0,pend:0}; byC[c].n++; if(p.entregado)byC[c].ent++; byC[c].cob+=totalCobrado(p); if(!p.pagado) byC[c].pend+=Number(p.saldo)||0; });   // §4fs
   var cr=Object.keys(byC).sort(function(a,b){return byC[b].ent-byC[a].ent;}).map(function(c){var o=byC[c];return '<tr><td>'+esc(c)+'</td><td class="num">'+o.n+'</td><td class="num">'+o.ent+'</td><td class="num" style="color:var(--green)">'+fmtBs(o.cob)+'</td><td class="num" style="color:var(--red)">'+fmtBs(o.pend)+'</td></tr>';}).join('');
   document.getElementById('reporte-body').innerHTML=
     '<div class="metrics" style="margin-bottom:16px">'+
@@ -17184,7 +17226,7 @@ function exportExcel(scope){
    valor y el archivo abre igual en cualquier lado (celular incluido), sin fórmulas rotas.
    ========================================================================== */
 var RPT_FILAS_MIN=20;   // los renglones que trae el formato en papel; con más productos, crece
-function rptFechaSolicitud(p){ return (p&&p.ts) ? isoLocal(new Date(p.ts)) : todayStr(); }
+function rptFechaSolicitud(p){ return (p&&p.ts) ? isoDeTsBolivia(p.ts) : todayStr(); }   // §4fu
 function rptNombreProd(x){
   return String((x&&x.desc)||'').trim()+(((x&&x.medida)||'').trim()?(' '+String(x.medida).trim()):'');
 }

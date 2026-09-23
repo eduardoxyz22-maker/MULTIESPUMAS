@@ -416,6 +416,23 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   «A cuenta» sigue guardándose como método suelto.
   ⚠️ En un test, `editPedido` termina de llenar el formulario UN TIC después: esperar ~150 ms
   antes de tocar `f-acuenta`, o se mide «guardar sin tocar la plata», que es otro camino.
+- **🧮 Lo que quedaba del cuadre (§4fs…§4fw)**, también en `tests/test_cuadre_alta.js`:
+  · **Lo cobrado se suma SIEMPRE** en el parte del día, la vista del chofer, la rendición y el
+  reporte (§4fs): con `if(p.pagado) cob+=…` un cobro parcial valía Bs 0. No volver a poner esa
+  guarda: lo PENDIENTE sí sale de las no saldadas (`if(!p.pagado) pend+=saldo`).
+  · **«Sin método anotado» no es banco** (§4ft): `cuadrePorForma` marca `sinMetodo` y va en su
+  propia tarjeta ámbar, no en «Bancos y tarjeta».
+  · **Un `ts` se lee en hora de Bolivia** (§4fu): `contaFecha`, `atcEntro` y
+  `rptFechaSolicitud` usan `isoDeTsBolivia(ts)` (UTC−4 fijo, sin horario de verano), no
+  `isoLocal(new Date(ts))`. `todayStr()` sigue siendo el reloj del dispositivo a propósito.
+  · **Con algo en «Buscar», las tarjetas y el Excel de Ventas lo dicen** (§4fv): «solo lo que
+  coincide con…» y el archivo `…-SOLO-<búsqueda>.xlsx`. En el Cuadre la búsqueda filtra solo la
+  tabla y lo aclara al lado.
+  · **«Productos del mes» muestra lo conocido** con «Incompleto» en vez de «Sin dato» (§4fw,
+  `productos-mes.js`, `?v=20260923a`).
+  · ⚠️ **Esperan al dueño**: «Entrega» corta por la fecha PROGRAMADA (no hay campo con el día
+  real de entrega), y el `SUMA` de la columna MONTO del Excel del Cuadre. El SALDO crudo del
+  Excel se deja **a propósito** (es lo que hace cerrar cada fila desde §4fm).
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo

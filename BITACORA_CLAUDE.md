@@ -7430,6 +7430,78 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fs → 4fw. Lo que quedaba del agente del cuadre (2026-09-23)
+
+> *«Ya arreglaste todo?»* — el dueño. No: quedaban siete del cuadre. Cinco se arreglaron acá;
+> dos esperan una decisión suya (abajo).
+
+### §4fs — Un cobro PARCIAL valía Bs 0 en «Cobrado» del parte, del chofer y de la rendición
+Seis lugares con el mismo patrón: `if(p.pagado) cob+=totalCobrado(p); else pend+=saldo`. Una
+entrega de Bs 1.000 donde el cliente dio 400 en la puerta y quedó debiendo 600 aportaba **0** a
+«Cobrado»: el Cuadre veía los 400; el **parte del día** (pantalla y WhatsApp), la tarjeta del
+**chofer**, la **rendición por chofer** de Administración y el **reporte por período**, no. Y
+«Salió a cobrar» (`pend+cob`) daba 1.500 cuando el chofer había salido a cobrar 1.900. §4ew
+había cambiado `p.cobradoBs` por `totalCobrado(p)` en todos pero dejó la guarda `p.pagado`.
+Ahora lo cobrado se suma **siempre** y lo pendiente sigue saliendo de las no saldadas, como
+antes (`pendN` cuenta igual).
+
+### §4ft — Un «A cuenta» sin método se reportaba como «Bancos y tarjeta»
+Todo lo que no era `Efectivo` caía en «Bancos y tarjeta — para conciliar con el extracto»: un
+adelanto viejo sin método (casi seguro efectivo en la mano de la vendedora) aparecía como plata
+que tiene que estar en un extracto donde nunca va a estar. `cuadrePorForma` marca `sinMetodo`
+y las tarjetas lo muestran aparte («⚠️ Sin método anotado — abrí la venta y anotá con qué
+pagó»). La tabla de formas ya lo listaba bien; eran las dos tarjetas grandes las que mentían.
+
+### §4fu — El día de la venta se leía con el reloj del DISPOSITIVO
+`contaFecha(p)` hacía `isoLocal(new Date(p.ts))`: una venta del 31/08 a las 21:00 de Bolivia
+(= 01/09 01:00 UTC) caía en **septiembre** en un celular con la zona mal puesta, y dos personas
+mirando el mismo mes veían totales distintos. Es el mismo bug que §4ew arregló en
+`generar.py`. Ahora `isoDeTsBolivia(ts)` resta 4 horas y lee en UTC: **Bolivia no tiene horario
+de verano, así que en un dispositivo bien configurado da exactamente lo mismo que antes**.
+También `atcEntro` y `rptFechaSolicitud`, que tenían el mismo `isoLocal(new Date(ts))`.
+«Productos del mes» usa `contaFecha`, así que hereda el arreglo solo.
+⚠️ `todayStr()` sigue siendo el reloj del dispositivo, a propósito: «hoy» es el de quien mira.
+Lo que se arregló es leer un INSTANTE guardado (`ts`) en la zona del negocio.
+
+### §4fv — El buscador se colaba en las tarjetas y en el Excel sin decirlo
+En Contabilidad → Ventas, `contaLista` aplica «Buscar», así que con «titanio» las cuatro
+tarjetas mostraban Bs 1.000 de los Bs 3.000 del mes **diciendo «de todo el equipo»**, y el Excel
+se llamaba igual que el del mes entero (`contabilidad-2026-09.xlsx`). Ahora las tarjetas agregan
+«· solo lo que coincide con «titanio»», el archivo se llama `contabilidad-2026-09-SOLO-titanio.xlsx`
+y el aviso de descarga lo dice. En el **Cuadre** era al revés (la búsqueda filtra solo la tabla
+de pagos; las tarjetas y el Excel son del período entero): ahora lo dice al lado del buscador.
+
+### §4fw — «Productos del mes» decía «Sin dato» donde Contabilidad decía Bs 3.000
+Bastaba UNA venta sin monto anotado para que «Importe total vendido» del mes entero saliera
+«Sin dato», aunque el valor conocido estaba calculado (`totalConocido`). Ahora la tarjeta dice
+«Incompleto · Bs 3.000,00 conocidos» —igual que ya hacía «Unidades vendidas»— y el Excel trae
+el número con el rótulo «INCOMPLETO: hay ventas sin monto». Vive en `productos-mes.js`: se subió
+el `?v=` a `20260923a`.
+
+### Tests
+`tests/test_cuadre_alta.js` (18 → **31**). **Dientes**: contra el panel de `origin/main` (antes
+de esta tanda) los 12 checks nuevos dan rojo, cada uno con el comportamiento viejo en el detalle
+(parte 900 en vez de 1.300, «Bancos» 500, el Excel con el mismo nombre, «Sin dato», y la venta
+del 31/08 leída como 01/09 en un dispositivo en UTC).
+⚠️ Los reproductores del auditor para §4fs y §4fw **no sirven para verificar el arreglo**:
+recalculan con la lógica vieja por su cuenta en vez de leer la pantalla. Por eso hay tests
+propios que leen `parteData()`, `#tbl-rendicion`, `#cho-metrics` y `#pm-body`.
+
+### Lo que espera una decisión del dueño
+- **§7 del auditor — «Entrega» corta por la fecha PROGRAMADA.** No existe ningún campo con el
+  día en que se entregó de verdad: `p.fecha` es la agendada y logística la reescribe cada vez
+  que mueve el pedido. Una venta cargada y cobrada el 30/09, agendada para el 01/10 y sin
+  entregar, suma en «Entrega» de **octubre**; si se reprograma al 05/11, octubre baja solo. Hay
+  tres salidas y las tres cambian lo que ve contabilidad: (a) dejarlo y rotularlo «por fecha de
+  entrega programada»; (b) contar en «Entrega» solo lo entregado; (c) guardar el día real al
+  marcar ✅ entregado, que necesita un lugar en la planilla y una versión nueva del `.gs`.
+- **§12 del auditor — el Excel escribe el SALDO crudo.** Se deja **a propósito**: desde §4fm es
+  lo que hace que COBRADO + SALDO = TOTAL VENTA en cada fila. Un saldo negativo es un **cobro de
+  más** y el contador lo tiene que ver; la pantalla («Falta cobrar») lo deja en 0 porque ahí la
+  pregunta es otra.
+- **§10 — `SUMA(columna MONTO)` del Excel del Cuadre duplica** (sigue como en §4fj→§4fr):
+  separarlo mueve un archivo que el dueño ya usa.
+
 ## 4fj → 4fr. La segunda vuelta de la auditoría de cobros y del cuadre (2026-09-23)
 
 Nueve arreglos, todos de plata, todos con su reproductor. Los reproductores viven en el

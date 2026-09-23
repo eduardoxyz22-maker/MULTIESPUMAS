@@ -104,7 +104,7 @@ var PM_HC=['Código','Producto','Medida / variante','Unidades vendidas','Cantida
 var PM_HD=['Fecha','Nota / pedido','Vendedor','Cliente','Código','Producto','Medida / variante','Cantidad','Precio unitario (Bs)','Importe línea (Bs)','Advertencias'];
 function pmRender(){
   var r=PM_REPORTE;if(!r)return;
-  var cards=[['Pedidos',r.pedidos],['Productos distintos',r.productos],['Unidades vendidas',r.sinCantidad?'Incompleto · '+pmCantidad(r.unidades)+' conocidas':pmCantidad(r.unidades)],['Importe total vendido',pmMonto(r.total)]];
+  var cards=[['Pedidos',r.pedidos],['Productos distintos',r.productos],['Unidades vendidas',r.sinCantidad?'Incompleto · '+pmCantidad(r.unidades)+' conocidas':pmCantidad(r.unidades)],['Importe total vendido',r.total==null?('Incompleto · '+pmMonto(r.totalConocido)+' conocidos'):pmMonto(r.total)]];
   var html='<h2>'+esc(r.titulo)+'</h2><p>'+esc(r.criterio)+' · Emitido: '+esc(r.emitido)+'</p><div class="pm-resumen">'+cards.map(function(c){return '<div><small>'+esc(c[0])+'</small><strong>'+esc(c[1])+'</strong></div>';}).join('')+'</div>';
   html+='<div class="pm-avisos">'+r.avisos.map(function(a){return '<p>'+esc(a)+'</p>';}).join('')+'</div>';
   if(!r.detalle.length)html+='<p role="status"><b>No hay productos vendidos para este mes y vendedor.</b></p>';
@@ -117,7 +117,7 @@ function pmRender(){
 function pmHojas(r){
   var n=function(v){return v==null?'Sin dato':{v:v,t:'n',s:2};};
   var meta=[[r.titulo],[r.criterio],['Mes',r.cfg.mes],['Vendedor',r.cfg.vendedor||'Todos los vendedores'],['Emitido',r.emitido],
-    ['Pedidos',r.pedidos],['Productos distintos',r.productos],['Unidades',r.sinCantidad?'Sin dato':{v:r.unidades,t:'n'}],['Importe total vendido (Bs)',n(r.total)],['Subtotal de líneas conocidas (Bs)',n(r.conocido)]];
+    ['Pedidos',r.pedidos],['Productos distintos',r.productos],['Unidades',r.sinCantidad?'Sin dato':{v:r.unidades,t:'n'}],[r.total==null?'Importe total vendido (Bs) — INCOMPLETO: hay ventas sin monto, ver advertencias':'Importe total vendido (Bs)',n(r.total==null?r.totalConocido:r.total)],['Subtotal de líneas conocidas (Bs)',n(r.conocido)]];
   r.avisos.forEach(function(a){meta.push(['Advertencia',a]);});meta.push([]);
   return ['consolidado','detalle'].map(function(tipo){
     var h=tipo==='detalle'?PM_HD:PM_HC,rows=meta.slice();rows.push(h.map(function(s){return {v:s,s:1};}));
