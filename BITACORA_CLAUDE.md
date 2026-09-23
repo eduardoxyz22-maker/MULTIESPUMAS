@@ -7430,6 +7430,59 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fy. Los ocho botones de plata que no tenían prueba (2026-09-23)
+
+> *«ya esta todo entonces?»* — el dueño. No lo sabía: había ocho botones que mueven plata sin
+> ningún test. Se largó un agente a romperlos (solo lectura, todo reproducido con Playwright,
+> informe en el scratchpad) y encontró **5 ALTAS, 3 MEDIAS confirmadas, 2 MEDIAS a decidir y
+> 4 BAJAS**. Una de las ALTAS (la 3b) la había metido YO en §4fe.
+
+| # | botón | qué pasaba | arreglo |
+|---|---|---|---|
+| ALTA-1 | ↺ «Borrar los cobros» (chofer) | `aplicarCobros(p, [])` se llevaba TODO: el QR de Bs 600 que registró Contabilidad con recibo y captura, el 2° método del adelanto mixto (el chofer le cobraba Bs 500 de más), y una venta pagada entera en la tienda pasaba a «Cobrar Bs 1.990» | `cobroDeLaPuerta(c)`: sin recibo, sin imagen, con monto, no anticipo ni flete ni `sinMonto`. ↺ y ✕ tocan SOLO esos; los otros muestran «🧾 registrado». El confirm nombra cada cobro, el total y cuántos «NO se tocan». «ya cobraste» → «ya entraron» |
+| ALTA-2 | ✕ imagen del flete / 🗑 Quitar el recargo / ✕ del adelanto | el flete «¿ya lo cobraste? SÍ» del formulario hereda **el mismo id** de imagen que el pago de la venta; quitárselo al flete mandaba a la papelera el comprobante de la venta | `fotoEnUso(fid)` + `borrarFotoSiNadieLaUsa(fid)`: se mira DESPUÉS de reescribir el renglón; si otro renglón (o una foto de entrega) la nombra, se desengancha y NO se borra. En los 5 lugares que borraban |
+| ALTA-3 | guardar el pedido desde el formulario | con DOS fletes cobrados (el camino normal desde §4fe), corregir la DIRECCIÓN convertía el efectivo de 40 en 100 (Bs 60 inventados en caja) o, con el «NO» que el formulario FUERZA cuando no se ve el método, le sacaba método, recibo e imagen y volvía «por cobrar 100» | los cobrados quedan TAL CUAL y el campo mueve solo lo pactado. El renglón ÚNICO con el control **a la vista** sigue como en §4eu (el SI/NO y el monto valen: se puede corregir 80 → 50). Si con varios cobrados alguien pone MENOS de lo cobrado, un confirm lo dice (se corrige en Contabilidad) y deja no guardar — antes bajar a 80 dejaba **140** |
+| ALTA-3b | ✏️ / 📎 / ✕ del flete | **mío (§4fe)**: `ctaIdxEnvio` devolvía el n-ésimo COBRADO y los que llaman lo usan como posición en `enviosDe`, que trae también los PACTADOS. Con [pactado 100, QR 60], corregir el QR a 65 convertía el pactado en «QR 65» (cobrado 125, por cobrar 0) | traduce a la posición de verdad dentro de `enviosDe(p)` |
+| ALTA-4 | 📎 dentro de «✏️ Corregir» (y «📎 Ya la adjunto» del gato) | `COMP_DESTINO={id, envio:true}` sin `e`: la imagen del 2° flete iba al 1°, con aviso verde | `e:ctaIdxEnvio(p,i)`; si el renglón no aparece, se dice y NO se pega en el primero |
+| MEDIA-1 | 🗑 Eliminar esta venta | no contaba el flete cobrado (con solo Bs 150 de flete, ni lo nombraba y pedía UNA confirmación); una «PAGADA sin monto» decía «Total Bs 0,00» | suma el flete y lo dice; avisa «PAGADA sin monto» y «ya está CARGADA en el sistema contable»; las tres piden la 2ª confirmación |
+| MEDIA-2 | ✅ REGISTRADO + formulario | `_metForm` se arma sin la marca: corregir la dirección de una venta con «A cuenta» (TODA venta nueva con adelanto) la devolvía a «sin cargar al sistema contable» → carga doble | `if(prev && regEnSistema(prev)) _metodoPago = conMarcaReg(_metodoPago, true)` |
+| MEDIA-3 | ✕ imagen del pago en curso / ✅ / ✏️ / ✏️ flete | repintaban la ficha sin `ctaPagoRecordar()`: «pagó 400 el sábado» se registraba como 1.000 de hoy y la venta quedaba PAGADA con Bs 600 de deuda borrados | `ctaPagoRecordar()` en los cuatro. ⚠️ Y el MONTO se recuerda solo si alguien lo TIPEÓ (`data-def`): si no, al cambiar el saldo quedaba pegado el viejo (pasaba también con el 📎 de §4ep) |
+| BAJA-1 | 📱 QR (ficha de Administración) | «QR» sin banco: fila suelta en el Cierre por forma de pago | un botón por banco de la vendedora (`bancosParaCobrar`: `bancosDeVendedor` + el banco que la venta ya tenga) |
+| BAJA-2 | 📎 del flete | el tope de 4 imágenes se medía en el PRIMER flete | se mide en el elegido (`destino.e`) |
+| BAJA-3 | 💵/📱/💳 y 💰 en ATC/RPT | a una ATC se le ofrecía «Marcar como pagado» y el aviso mandaba a Contabilidad, donde no aparece. **Y una RPT con precio se podía cobrar desde el 💰 de la tabla** | `markPaid`/`quickCobrado` se niegan con `noSeCobraTxt`; la ficha no ofrece el bloque; en la tabla el 💰 queda como hueco |
+| BAJA-4 | ↺ sobre «PAGADA sin monto» | en el dispositivo que la cargó la dejaba debiendo Bs 1.500 | cubierto por ALTA-1 (el pago de mentira no es de la puerta) |
+
+### ⚠️ Lo que NO se tocó: dos decisiones del dueño
+- **MEDIA-4**: 💵 Efectivo de la ficha de Administración anota el cobro **sin `recibio`**, así que en
+  un pedido que entregó el chofer la plata queda «en la mano de la vendedora» (§4eq dice que el
+  chofer le rinde a Contabilidad). Si logística toca ese botón DESPUÉS de que el chofer vuelve, ¿de
+  quién es la plata? Lo decide el dueño.
+- **MEDIA-5**: un cobro nuevo sobre una venta ya ✅ REGISTRADA no aparece en «sin cargar al sistema
+  contable» — la marca es por VENTA a propósito (§4j). ¿Se quiere por pago?
+
+### Tests
+`tests/test_botones.js` (50, nuevo): una comprobación por arreglo + controles (la imagen que usa
+UN solo renglón sí va a la papelera; el «NO» elegido a mano con el control a la vista sigue
+pasando el flete a «por cobrar»; un flete único se sigue corrigiendo de 80 a 50; a una venta sin
+marca el formulario no se la inventa…). El estado se arma por los mismos caminos que la gente
+(formulario, `ctaRegistrarPago`, `choCobrarMetodo`). **Dientes**: contra el panel de
+`origin/main` (ca32e3b) da **42 rojos**; los 8 verdes son los controles y los «estado de partida».
+
+### La batería dio un rojo que no era de este cambio — y no era azar
+La 2ª corrida dio `test_existencias :: 52 bien · 3 mal` (ya había pasado una vez, en otra corrida
+del día, y se había dejado pasar). Sola daba 55/0. **Seis corridas en paralelo: 6 de 6 en rojo, los
+mismos 3** («TRAER, no pedir» salía «sobra»). Midiendo: al llegar a esa parte, sola iba por los
+**3 s** con `STATE` = 30 pedidos; con la máquina cargada, por los **5-6 s** con `STATE` = **0**.
+Causa: el panel arranca con la URL del equipo, la carga de arranque falla (no hay red) y se
+**reintenta sola a los 3 s** (`CARGA_INTENTOS`) — y el reintento usa el `apiList` que el test puso,
+que devuelve la planilla VACÍA. Le borraba los 28 pedidos del ejemplo a mitad de la prueba.
+Defecto del **test**, no del panel (en la vida real el reintento trae la planilla de verdad). Se
+apaga en el setup, como ya hacían otras pruebas, en las SEIS que simulan la planilla vacía
+(`existencias`, `buscar`, `identidad`, `memes`, `revisar`, `rotacion`). Después: 6 de 6 en verde
+con la misma carga. ⚠️ Quedan unas 25 pruebas cuyo `apiList` devuelve un fixture (`window._pl`,
+`_FIX`, `_planilla`…) sin apagar el reintento (las ~15 que devuelven `STATE` no hacen daño): si
+un día el fixture y `STATE` difieren pasados los 3 s, van a fallar igual. Anotado en CLAUDE.md.
+
 ## 4fx. Google cambia el envío por una LECTURA — y el panel lo tomaba por guardado (2026-09-23)
 
 > *«ok dame el gs que tengo que subir»* — el dueño, aceptando el arreglo del `.gs` que le había

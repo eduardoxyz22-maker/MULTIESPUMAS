@@ -275,6 +275,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   de un intento viejo. ⚠️ En un test con la red cortada, la carga de arranque queda
   reintentando: si el test lee el cartel de conexión, que haga `CARGA_GEN++; CARGA_ESTADO='ok'`
   y limpie `CARGA_TIMER`/`CARGA_TIC` en su setup (ver `test_conflicto.js`). `tests/test_carga.js`.
+  ⚠️ **Y si el test reemplaza `apiList`, también** (§4fy): el reintento de los 3 s usa el `apiList`
+  del test, y si ese devuelve otra lista que `STATE` (la vacía, un fixture) le borra los pedidos
+  del ejemplo a mitad de la prueba. Sola llega antes de los 3 s y pasa; con la batería cargando la
+  máquina, no — `test_existencias` salió 52/3 así dos veces.
 - **⏱️ Una lectura colgada se corta sola** (§4ds): `refrescarEstado` envuelve `apiList()` en
   `conTopeDuro(…, CARGA_TOPE=45 s, 'tardo_datos')`. ⚠️ **`CARGA_TOPE` tiene que ser MAYOR que
   el `waitLock(30000)` del `.gs`**: con los dos en 30 s el panel cortaba justo antes del
@@ -446,6 +450,25 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   · ⚠️ **Esperan al dueño**: «Entrega» corta por la fecha PROGRAMADA (no hay campo con el día
   real de entrega), y el `SUMA` de la columna MONTO del Excel del Cuadre. El SALDO crudo del
   Excel se deja **a propósito** (es lo que hace cerrar cada fila desde §4fm).
+- **💰 Los ocho botones de plata (§4fy)**, `tests/test_botones.js` (50; 42 rojos contra el panel viejo):
+  · **El chofer toca SOLO lo suyo**: `cobroDeLaPuerta(c)` = sin recibo, sin imagen, con monto, ni
+  anticipo ni flete ni `sinMonto`. ↺ y ✕ de su ficha no pasan de ahí (antes ↺ hacía
+  `aplicarCobros(p,[])` y se llevaba el QR registrado por Contabilidad y el 2° método del mixto).
+  · **Nunca `apiBorrarFoto` a secas sobre una imagen de pago**: `borrarFotoSiNadieLaUsa(fid)`,
+  DESPUÉS de reescribir el renglón. El flete «¿ya lo cobraste? SÍ» del formulario comparte el id
+  con el pago de la venta.
+  · **El formulario no reescribe fletes cobrados**: quedan tal cual y el campo mueve lo pactado. Solo
+  el renglón ÚNICO con el control **a la vista** se corrige como en §4eu (SI/NO y monto). Poner
+  menos de lo cobrado en varios renglones pregunta (se corrige en Contabilidad) — `_cancelarEnvio`.
+  · **`ctaIdxEnvio` devuelve la posición en `enviosDe(p)`** (que trae los pactados), no el n-ésimo
+  cobrado. Todo `COMP_DESTINO` de flete lleva `e`.
+  · **Todo lo que repinta la ficha con un pago a medio cargar llama `ctaPagoRecordar()` antes**
+  (📎, ✕, ✅, ✏️, ✏️ flete), y el monto se recuerda solo si difiere de `data-def` (el que puso el panel).
+  · `submitPedido` repone ✅ REGISTRADO si el pedido ya la tenía.
+  · Ni una ATC ni una RPT se cobran (`noSeCobraTxt`), y el 📱 QR de la ficha de Administración va
+  con banco (`bancosParaCobrar`).
+  · **Esperan al dueño**: MEDIA-4 (💵 de Administración deja el efectivo en la vendedora aunque haya
+  cobrado el chofer) y MEDIA-5 (un cobro nuevo sobre una venta ya ✅ no avisa).
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo

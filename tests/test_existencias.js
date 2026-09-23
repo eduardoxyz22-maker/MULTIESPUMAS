@@ -64,6 +64,10 @@ const ROHO= path.resolve('tests/datos/roho.xlsx');
     window._guardadas=[];
     apiSave=function(rec){ window._guardadas.push(JSON.parse(JSON.stringify(rec))); return Promise.resolve({ok:true,pedido:rec}); };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:[]}); };
+    /* ⚠️ La carga de arranque del panel (acá sin red) se reintenta sola a los 3 s, 8 s…, y el
+       reintento usa ESTE apiList, que devuelve la planilla VACÍA: con la máquina cargada llegaba
+       a mitad de la prueba y borraba los pedidos del ejemplo (§4fy). Se apaga al arrancar. */
+    CARGA_GEN++; CARGA_ESTADO='ok'; if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; } if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; } if(AUTO_TIMER) clearInterval(AUTO_TIMER); if(MIS_TIMER) clearInterval(MIS_TIMER);
     var atras=function(n){ var d=new Date(); d.setDate(d.getDate()-n); return isoLocal(d); };
     var adel =function(n){ var d=new Date(); d.setDate(d.getDate()+n); return isoLocal(d); };
     window._adel=adel; window._atras=atras;

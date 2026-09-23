@@ -2260,6 +2260,30 @@ function rechazoFirme(rec, res){
 function apiDelete(id){ return apiPost({action:'delete', id:id}); }
 function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
 function apiFoto(id, cliente, dataUrl){ return apiPost({action:'foto', id:id, cliente:cliente, dataUrl:dataUrl}); }
+/* 🗑️ ¿SIGUE ALGUIEN USANDO ESTA IMAGEN? (§4fy)
+   Un mismo archivo de Drive puede respaldar DOS renglones: el flete que se marca «¿ya lo
+   cobraste? SÍ» en el formulario hereda el comprobante del pago de la venta (la ayuda de la
+   pantalla lo dice: «con el mismo comprobante del pago»). Quitarle la imagen al flete —o
+   🗑 el flete entero, que además avisaba «el resto de la venta no se toca»— mandaba a la
+   papelera la captura del QR de la VENTA, y la ficha seguía mostrando «imagen guardada»
+   apuntando a un archivo borrado. El barrido de huérfanas (§4ep) no lo arregla: busca al
+   revés, archivos que nadie nombra.
+   Se mira DESPUÉS de reescribir el renglón: si otro renglón de cualquier pedido, o una foto de
+   entrega, todavía la nombra, se desengancha pero NO se borra. */
+function fotoEnUso(fid){
+  fid=fidLimpio(fid); if(!fid) return false;
+  for(var i=0;i<STATE.length;i++){
+    var q=STATE[i]; if(!q) continue;
+    if(imgsPagoDe(q).indexOf(fid)>=0) return true;
+    var fs=q.fotos||[]; for(var j=0;j<fs.length;j++){ if(fidLimpio(fs[j])===fid) return true; }
+  }
+  return false;
+}
+function borrarFotoSiNadieLaUsa(fid){
+  if(!CONNECTED || !fidLimpio(fid) || fotoEnUso(fid)) return false;
+  apiBorrarFoto(fidLimpio(fid));
+  return true;
+}
 function apiBorrarFoto(fotoId){
   return apiPost({action:'borrarFoto', fotoId:fotoId}).then(function(r){
     // Antes contestaba «ok» pasara lo que pasara. Ahora, si Drive no la borró, se dice.
@@ -5261,7 +5285,15 @@ function ctaPagoRecordar(){
      hay nada que recordar y, sobre todo, no hay que BORRAR lo que ya se había recordado —
      era justo el caso que perdía la fecha y el recibo. Se limpia al registrar el pago,
      al cambiar de tipo y al pasar a otra venta, no acá. */
-  if(m&&f&&n) CTA_PAGO_V={monto:m.value, fecha:f.value, nota:n.value};
+  if(m&&f&&n){
+    /* ⚠️ El MONTO se recuerda solo si alguien lo TIPEÓ (§4fy). Si quedó el que puso el panel
+       —el saldo, o lo que falta del flete—, no: si en el medio cambia el saldo (se corrige otro
+       pago, se anota el flete), el formulario tiene que mostrar el NUEVO, no uno viejo que
+       parezca tipeado. */
+    var v={ fecha:f.value, nota:n.value };
+    if(String(m.value)!==String(m.getAttribute('data-def')||'')) v.monto=m.value;
+    CTA_PAGO_V=v;
+  }
 }
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
@@ -5285,7 +5317,7 @@ function onCompElegido(ev){
   // Cuántas tiene ya: las del pago que se está por registrar, o las del pago elegido.
   var yaTiene = !destino ? compsArr(CTA_PAGO.comps).length
     : destino.envio
-      ? (function(){ var c=enviosDe(p)[0]; return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
+      ? (function(){ var c=enviosDe(p)[Number(destino.e)||0]; return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()   // §4fy: el tope se mide en EL flete elegido, no en el primero
       : destino.anticipo
         ? (function(){ var c=anticipoDe(p); return c ? compsArr(c.comps!=null?c.comps:c.comp).length : 0; })()
         : (function(){ var a=cobrosDe(p), c=a[destino.idx];
@@ -5306,13 +5338,17 @@ function onCompElegido(ev){
     }
     if(destino && destino.envio){
       // Al RECARGO POR ENTREGA: se reescribe solo su renglón.
-      var ae=enviosDe(p);
-      if(ae.length){
-        var _e=Number(destino.e)||0; if(_e<0 || _e>=ae.length) _e=0;
-        ae[_e].comps=compsArr(compsArr(ae[_e].comps!=null?ae[_e].comps:ae[_e].comp).concat([res.fotoId]));
-        ae[_e].comp=ae[_e].comps[0]||'';
-        aplicarEnvios(p, ae);
+      var ae=enviosDe(p), _e=Number(destino.e)||0;
+      /* §4fy: si el renglón no aparece, NO se pega en el primero que haya (eso era poner la
+         captura de un QR como respaldo de un efectivo, con aviso verde): se dice. */
+      if(!ae.length || _e<0 || _e>=ae.length || !envioYaCobrado(ae[_e])){
+        toast('No encontré ese recargo por entrega: la imagen se subió pero no quedó pegada a ningún pago. Volvé a abrir la venta y adjuntala de nuevo.','err',8000);
+        showContaModal(p.id);
+        return;
       }
+      ae[_e].comps=compsArr(compsArr(ae[_e].comps!=null?ae[_e].comps:ae[_e].comp).concat([res.fotoId]));
+      ae[_e].comp=ae[_e].comps[0]||'';
+      aplicarEnvios(p, ae);
       toast('Comprobante del recargo adjuntado ✓','ok');
       showContaModal(p.id);
     }else if(destino && destino.anticipo){
@@ -5357,7 +5393,7 @@ function ctaQuitarComp(id, idx, k){
   c.comps = cs.filter(function(x){ return fuera.indexOf(x)<0; });
   c.comp  = c.comps[0]||'';
   aplicarCobros(p, arr);
-  if(CONNECTED) fuera.forEach(function(fid){ apiBorrarFoto(fid); });
+  fuera.forEach(function(fid){ borrarFotoSiNadieLaUsa(fid); });   // §4fy: si otro renglón la usa, no se borra
   toast(fuera.length>1?'Imágenes quitadas':'Imagen quitada','ok');
   showContaModal(id);
 }
@@ -5386,7 +5422,7 @@ var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recar
    Solo se podía poner al cargar el pedido. Si el flete cambiaba, o se lo olvidaban, no
    había cómo arreglarlo: a la vendedora le quedaba el aviso rojo de "flete sin cobrar"
    con el monto viejo (o sin aviso, si el olvido fue no ponerlo). */
-function ctaEditarEnvio(id, on){ CTA_ENV_EDIT=!!(on&&Number(on)); showContaModal(id); }
+function ctaEditarEnvio(id, on){ ctaPagoRecordar(); CTA_ENV_EDIT=!!(on&&Number(on)); showContaModal(id); }   // §4fy
 function ctaGuardarEnvio(id){
   var p=findById(id); if(!p) return;
   var el=document.getElementById('cta-env-monto'); if(!el) return;
@@ -5407,6 +5443,7 @@ function ctaGuardarEnvio(id){
 }
 function ctaEditarPago(id, i){
   var p=findById(id); if(!p) return;
+  ctaPagoRecordar();                 // §4fy: abrir o cerrar el editor de OTRO pago no borra el que se está cargando
   if(CTA_EDIT_I===i || i<0){ CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(id); return; }
   var c=contaPagos(p)[i]; if(!c) return;
   CTA_EDIT_I=i; CTA_EDIT_V=null;
@@ -5543,7 +5580,17 @@ function ctaCobrosConFecha(p){
 function ctaIdxEnvio(p, iEnContaPagos){
   var ps=contaPagos(p), n=-1;
   for(var j=0;j<ps.length && j<=iEnContaPagos;j++) if(esEnvio(ps[j])) n++;
-  return n;
+  if(n<0) return -1;
+  /* ⚠️ `contaPagos` trae solo los fletes COBRADOS, pero todos los que llaman buscan el renglón
+     en `enviosDe(p)`, que trae también los PACTADOS (§4fy). Mi arreglo de §4fe devolvía el
+     n-ésimo cobrado y lo usaban como posición en la otra lista: con el orden [pactado,
+     cobrado] —que deja el formulario al pasar a «NO» un flete cobrado—, corregir el QR de 60
+     convertía el PACTADO de 100 en «QR 65» (cobrado 125, por cobrar 0), el 📎 guardaba la
+     imagen en el pactado, que no se muestra en ningún lado, y la ✕ no hacía nada. Acá se
+     traduce a la posición de verdad dentro de `enviosDe(p)`. */
+  var ae=enviosDe(p), k=-1;
+  for(var q=0;q<ae.length;q++){ if(envioYaCobrado(ae[q])){ k++; if(k===n) return q; } }
+  return -1;
 }
 function ctaIdxCobro(p, iEnContaPagos, c){
   if(esEnvio(c)) return -1;                       // el recargo tiene sus propios botones
@@ -5566,7 +5613,7 @@ function ctaEnvioQuitarComp(id, e, k){
   ae[e].comps=cs.filter(function(x){ return x!==fid; });
   ae[e].comp=ae[e].comps[0]||'';
   aplicarEnvios(p, ae);
-  if(CONNECTED) apiBorrarFoto(fid);
+  borrarFotoSiNadieLaUsa(fid);                       // §4fy: la del pago de la venta puede ser la MISMA
   toast('Imagen quitada','ok');
   showContaModal(id);
 }
@@ -5582,7 +5629,7 @@ function ctaBorrarEnvio(id){
   var fotos=[];
   ae.forEach(function(c){ compsArr(c.comps!=null?c.comps:c.comp).forEach(function(f){ if(fotos.indexOf(f)<0) fotos.push(f); }); });
   aplicarEnvios(p, []);
-  if(CONNECTED) fotos.forEach(function(fid){ apiBorrarFoto(fid); });
+  fotos.forEach(function(fid){ borrarFotoSiNadieLaUsa(fid); });    // §4fy: el comprobante de la VENTA no se va con el flete
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Recargo por entrega quitado','ok');
   showContaModal(id);
@@ -5633,7 +5680,10 @@ function ctaAdjuntarEdit(id, i){
   if(!CONNECTED){ toast('Sin conexión: conectate para subir el comprobante','err'); return; }
   var c=contaPagos(p)[i]; if(!c) return;
   ctaEditRecordar();                                // que no se pierda lo tipeado al repintar
-  COMP_DESTINO = esEnvio(c)  ? {id:id, envio:true}
+  /* ⚠️ Con `e`: sin él, el 📎 de «Corregir» del SEGUNDO flete guardaba la imagen en el PRIMERO,
+     con aviso verde (§4fy). §4fe tapó el 📎 y la ✕ de la fila, pero no esta entrada ni la del
+     gato («📎 Ya la adjunto» → `ctaAdjuntarDespues`, que pasa por acá). */
+  COMP_DESTINO = esEnvio(c)  ? {id:id, envio:true, e:ctaIdxEnvio(p, i)}
                : c.anticipo  ? {id:id, anticipo:true}
                              : {id:id, idx:ctaIdxCobro(p, i, c)};
   var el=document.getElementById('comp-input'); if(!el) return;
@@ -5650,7 +5700,7 @@ function ctaQuitarCompEdit(id, i, k){
   if(!confirm('¿Quitar esta imagen del pago?')) return;
   var fuera=cs[k];
   aplicarCompsAnticipo(p, cs.filter(function(x,j){ return j!==k; }));
-  if(CONNECTED) apiBorrarFoto(fidLimpio(fuera));
+  borrarFotoSiNadieLaUsa(fuera);                     // §4fy: el flete puede estar usando la misma
   toast('Imagen quitada','ok');
   showContaModal(id);
 }
@@ -5737,7 +5787,7 @@ function showContaModal(id){
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -5967,18 +6017,26 @@ function aplicarMontos(p, acu, sal){
 function ctaEliminarVenta(id){
   var p=findById(id); if(!p) return;
   var ant=anticipoDe(p);
-  var plata=r2((ant?(Number(ant.monto)||0):0)+totalCobrado(p));
+  /* ⚠️ «Cuánta plata anotada se lleva» tiene que ser TODA (§4fy): antes no contaba el FLETE
+     cobrado —una venta con solo un flete de Bs 150 cobrado con su comprobante ni lo nombraba y
+     pedía UNA sola confirmación—, y una «PAGADA sin monto» decía «Total Bs 0,00» sin avisar
+     que estaba pagada. Tampoco decía si ya estaba cargada en el sistema contable. */
+  var fleteCob=envioCobrado(p);
+  var plata=r2((ant?(Number(ant.monto)||0):0)+totalCobrado(p)+fleteCob);
+  var pagSinMonto=!!(p.pagado && !((Number(p.cobradoBs)||0)>0.01) && cobrosDe(p).some(function(c){ return c.sinMonto; }));
   var quien=(p.cliente||'esta venta')+(p.nota?(' · Nota '+p.nota):'')+(p.oc?(' · '+ocEtiq(p.oc)):'');
   var txt='🗑 ELIMINAR ESTA VENTA\n\n'+quien+'\n'+
           'Total de la venta: '+fmtBs(ventaTotal(p))+'\n'+
           'Vendedor: '+(p.vendedor||'—')+'\n\n';
-  if(plata>0.01) txt+='⚠️ Tiene '+fmtBs(plata)+' en pagos anotados. Se borran también.\n\n';
+  if(plata>0.01) txt+='⚠️ Tiene '+fmtBs(plata)+' en pagos anotados'+(fleteCob>0.01?(' (incluye '+fmtBs(fleteCob)+' de flete cobrado)'):'')+'. Se borran también.\n\n';
+  if(pagSinMonto) txt+='⚠️ Está marcada PAGADA (sin el monto anotado), con su comprobante. Se borra también.\n\n';
+  if(regEnSistema(p)) txt+='⚠️ Ya está CARGADA en el sistema contable: allá hay que anularla aparte.\n\n';
   if(p.entregado) txt+='⚠️ Este pedido figura como YA ENTREGADO.\n\n';
   txt+='Se borra de la planilla y NO se puede deshacer.\n\n¿Eliminarla?';
   if(!confirm(txt)) return;
   /* Segunda vuelta solo cuando hay plata o ya se entregó: es lo que no se recupera y
      lo que más duele si el clic fue por error. */
-  if((plata>0.01 || p.entregado) &&
+  if((plata>0.01 || pagSinMonto || regEnSistema(p) || p.entregado) &&
      !confirm('Última confirmación.\n\nSe van a borrar '+
               (plata>0.01?(fmtBs(plata)+' en pagos anotados de '):'')+quien+'.\n\n¿Seguro?')) return;
   closeModal();
@@ -6021,6 +6079,11 @@ function ctaEditRecibio(id, quien){ ctaEditRecordar(); CTA_EDIT_R=limpiaRecibio(
 function ctaSacarCompIdx(id, i){ ctaSacarComp(id, i); }
 /* i = cuál de las imágenes se quita; sin i, todas. */
 function ctaSacarComp(id, i){
+  /* ⚠️ Antes de repintar, lo tipeado (§4fy): la ✕ de una imagen del pago en curso devolvía el
+     monto al saldo ENTERO, la fecha a HOY y el recibo a vacío — «pagó 400 el sábado» se
+     registraba como 1.000 de hoy y la venta quedaba PAGADA con Bs 600 de deuda desaparecidos.
+     Es lo mismo que §4ep arregló para el 📎. */
+  ctaPagoRecordar();
   var a=compsArr(CTA_PAGO.comps);
   if(i==null) a=[]; else a.splice(i,1);
   CTA_PAGO.comps=a; showContaModal(id);
@@ -6203,6 +6266,7 @@ function showPagoWhatsapp(id, i){
 }
 function ctaToggleRegistrado(id){
   var p=findById(id); if(!p) return;
+  ctaPagoRecordar();                 // §4fy: marcar ✅ con un pago a medio cargar no se lo borra
   var on=!regEnSistema(p);
   p.metodoPago=conMarcaReg(p.metodoPago, on);
   persistPedido(p);
@@ -6787,6 +6851,13 @@ function submitPedido(){
               }).join('\n')+
               '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
   var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
+  /* ⚠️ LA MARCA «REGISTRADO» NO SE PIERDE AL GUARDAR DESDE EL FORMULARIO (§4fy). `_metForm` se
+     arma sin ella, y solo el bloque del flete (más abajo) la reponía — que sale antes si el
+     pedido no tiene flete. Una venta con «A cuenta» (el formato de TODA venta nueva con
+     adelanto) que el contador ya había marcado ✅, y a la que la vendedora después le corregía
+     la dirección, volvía a «📥 sin cargar al sistema contable» y el Excel decía «EN SISTEMA =
+     NO»: se podía terminar cargando dos veces. `conMarcaReg` no la duplica. */
+  if(prev && regEnSistema(prev)) _metodoPago = conMarcaReg(_metodoPago, true);
   /* 📎 LA IMAGEN QUE «SALIÓ LISTA» Y DESPUÉS NO ESTABA (§4em). El dueño y Mirian: *"uno
      sube un comprobante y cuando volvés a abrir el pedido nunca subió, siendo que cargó y
      salió LISTO"*. Al EDITAR un pedido con historial de pagos sin tocar los montos, el
@@ -6813,6 +6884,7 @@ function submitPedido(){
      no le baja el saldo a la venta, no se factura y no lo toca ninguna otra cuenta.
      Se reescribe desde el formulario conservando el método, la fecha y las fotos que
      ya tenía, para no perder el comprobante al editar el pedido por otra cosa. */
+  var _cancelarEnvio=false;
   (function(){
     var el=document.getElementById('f-envio'); if(!el) return;
     var monto=parseFloat(el.value)||0;
@@ -6840,11 +6912,30 @@ function submitPedido(){
     var lineas=[];
     if(monto>0){
       var yaCob = segVal('f-envio-cob')==='SI';
-      if(cobrados.length && pactados.length){
+      /* ⚠️ LO COBRADO SOLO SE DESHACE SI ALGUIEN LO ELIGIÓ (§4fy). El «NO» de «¿ya lo cobraste?»
+         vale como decisión únicamente con el control A LA VISTA y sobre UN solo renglón
+         cobrado: `pintarEnvioCobrado` lo FUERZA a «NO» cuando la venta no muestra con qué se
+         pagó, y ese «NO» no lo eligió nadie. Antes, con DOS fletes cobrados (el camino normal
+         desde §4fe: 100 pactados, el cliente da 40 y después 60), corregir solo la DIRECCIÓN
+         convertía el efectivo de 40 en 100 (Bs 60 inventados en caja) o, con el «NO» forzado,
+         le sacaba método, recibo e imagen y el flete volvía a «por cobrar 100». Con un solo
+         renglón cobrado y el control escondido pasaba lo mismo. Ahora, salvo el renglón único
+         con el control a la vista (ahí el SI/NO y el monto siguen valiendo, como en §4eu), los
+         cobrados quedan TAL CUAL y el campo mueve solo lo pactado (monto − lo cobrado). */
+      var _wEC=document.getElementById('wrap-envio-cob'), _elegible=!!(_wEC && _wEC.style.display!=='none');
+      var _renglonUnico = _elegible && cobrados.length===1 && !pactados.length;
+      if(cobrados.length && !_renglonUnico){
         lineas=cobrados.slice();
+        /* Lo cobrado no se BAJA desde acá (no se sabe de cuál de los renglones): si alguien puso
+           menos, se le dice en vez de ignorarlo callado, y puede no guardar. */
+        if(monto<envioCobrado(prev)-0.01 &&
+           !confirm('🚚 El recargo por entrega ya tiene '+fmtBs(envioCobrado(prev))+' COBRADOS y pusiste '+fmtBs(monto)+'.\n\n'+
+                    'Lo cobrado no se baja desde el formulario: si un cobro está mal, corregilo en Contabilidad → ✏️ Corregir ese pago.\n\n'+
+                    '¿Guardar igual el resto del pedido (el flete queda en '+fmtBs(envioCobrado(prev))+')?')){ _cancelarEnvio=true; return; }
         var pend=r2(monto-envioCobrado(prev));
         if(pend>0.01){
-          var pl=pactados[0]; pl.monto=pend; pl.envio=true; pl.anticipo=false;
+          var pl=pactados[0] || { metodo:'', banco:'', fecha:'', nota:'', recibio:'', comps:[] };
+          pl.monto=pend; pl.envio=true; pl.anticipo=false;
           if(yaCob) _cobrarAhora(pl);                       // «ya lo cobré»: lo que faltaba entró ahora
           lineas.push(pl);
         }
@@ -6868,6 +6959,7 @@ function submitPedido(){
     var txt = base + (lineas.length ? ((base?' + ':'')+textoCobros(lineas)) : '');
     _metodoPago = conMarcaReg(txt, !!(prev && regEnSistema(prev)));
   })();
+  if(_cancelarEnvio) return;
   var fechaSel = document.getElementById('f-fecha').value||todayStr();
   var minFecha = lite ? todayStr() : tomorrowStr(); // Eduardo Añez y ROHO pueden agendar para HOY mismo
   /* Una venta de tienda ya salió: no hay fecha que validar, ni domingo, ni sábado PM,
@@ -9277,7 +9369,9 @@ function renderAdmin(){
       '<td style="white-space:nowrap" onclick="event.stopPropagation()">'+
         '<button class="rowbtn'+(p.verificado?' on':'')+'" onclick="quickVerificado(\''+p.id+'\')" title="'+(p.verificado?'Verificado · listo para cargar (clic para deshacer)':'Marcar verificado / listo para cargar')+'">📦'+(p.verificado?'✓':'')+'</button>'+
         '<button class="rowbtn'+(p.entregado?' on':'')+'" onclick="quickEntregado(\''+p.id+'\')" title="'+(p.entregado?'Entregado (clic para deshacer)':'Marcar entregado')+'">🚚'+(p.entregado?'✓':'')+'</button>'+
-        '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>'+
+        ((!p.pagado && (esATC(p.oc)||esRPT(p.oc)))
+          ? '<span class="rowbtn" style="visibility:hidden" aria-hidden="true">💰</span>'     // §4fy: una ATC o una RPT no se cobran (el hueco mantiene la fila alineada)
+          : '<button class="rowbtn'+(p.pagado?' on':'')+'" onclick="quickCobrado(\''+p.id+'\')" title="'+(p.pagado?'Cobrado (clic para deshacer)':'Marcar cobrado en efectivo')+'">💰'+(p.pagado?'✓':'')+'</button>')+
         '<button class="rowbtn" onclick="copyPedido(\''+p.id+'\')" title="Copiar para WhatsApp">📋</button>'+
         '<button class="rowbtn" onclick="EDIT_DESDE=\'admin\';editPedido(\''+p.id+'\')">✏️</button>'+
         '<button class="rowbtn del" onclick="deletePedido(\''+p.id+'\')">🗑</button>'+
@@ -10727,7 +10821,7 @@ function renderChofer(){
       '<div class="cho-acc">'+
         '<button class="cho-btn ent'+(p.entregado?' on':'')+'" onclick="choEntregado(\''+p.id+'\')">'+(p.entregado?'✓ Entregado':'✅ Marcar entregado')+'</button>'+
         '<button class="cho-btn foto" onclick="pedirFoto(\''+p.id+'\')">📷 '+(fotosDe(p).length?('Otra foto ('+fotosDe(p).length+')'):'Foto de la entrega')+'</button>'+
-        (cobrosVisibles(p).length?('<button class="cho-btn cob" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+
+        (cobrosDe(p).some(cobroDeLaPuerta)?('<button class="cho-btn cob" onclick="choDeshacerCobro(\''+p.id+'\')">↺ Borrar los cobros</button>'):'')+   // §4fy: solo los de la puerta
       '</div>'+
     '</div>';
   }).join('');
@@ -11122,7 +11216,7 @@ function quitarFoto(id, idx){
   if(!confirm('¿Borrar esta foto de la entrega?')) return;
   var fid=arr[idx]; arr.splice(idx,1); p.fotos=arr;
   persistPedido(p); renderChoferSiActivo(); renderMis();
-  if(CONNECTED) apiBorrarFoto(fid);
+  borrarFotoSiNadieLaUsa(fid);                       // §4fy
   if(document.getElementById('modal').classList.contains('on')) reabrirFicha(p.id);
   toast('Foto borrada','ok');
 }
@@ -11186,6 +11280,17 @@ function choMostrarCobro(id){ CHO_COBRO_ABIERTO[id]=true; renderChofer(); }
 /* Solo los cobros con monto: un pedido que el vendedor marcó pagado en la tienda queda
    con el método pero sin importe, y no tiene sentido mostrarle al chofer "Bs 0,00". */
 function cobrosVisibles(p){ return cobrosDe(p).filter(function(c){ return (Number(c.monto)||0)>0; }); }
+/* 🚪 ¿ES UN COBRO «DE LA PUERTA»? (§4fy) Los que anota el chofer —y los 💰 rápidos de
+   Administración— van SIN N° de recibo y SIN imagen. Todo renglón con recibo o con
+   comprobante lo registró Contabilidad o la vendedora (el 2° método de un pago MIXTO es parte
+   del ADELANTO cobrado en la tienda, §4ej): el chofer no lo puede borrar. Antes «↺ Borrar los
+   cobros» hacía `aplicarCobros(p, [])` y se llevaba TODO: el QR de Bs 600 que registró
+   Contabilidad con su recibo y su captura, o el 2° método del adelanto — y una venta pagada
+   entera en la tienda pasaba a «Cobrar Bs 1.990»: se le cobraba dos veces al cliente. */
+function cobroDeLaPuerta(c){
+  return !!c && !c.sinMonto && !c.anticipo && !esEnvio(c) && (Number(c.monto)||0)>0 &&
+         !limpiaNota(c.nota) && !compsArr(c.comps!=null?c.comps:c.comp).length;
+}
 function cobroChoferHtml(p){
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
   var cobros=cobrosVisibles(p);
@@ -11206,11 +11311,16 @@ function cobroChoferHtml(p){
     (falta<=0.01
       ? '<span class="badge b-green">COBRADO ✓ '+fmtBs(cobrado)+'</span>'
       : '<b style="color:var(--red);font-size:1.15rem">'+fmtBs(falta)+'</b>'+
-        (cobrado>0?(' <span style="color:var(--muted);font-size:.8rem">de '+fmtBs(objetivo)+' · ya cobraste '+fmtBs(cobrado)+'</span>'):''))+
+        /* «ya entraron», no «ya cobraste» (§4fy): ahí también cuentan los pagos que registró
+           Contabilidad o la tienda (el 2° método de un mixto), y el chofer leía que él ya había
+           cobrado Bs 500 antes de salir. */
+        (cobrado>0?(' <span style="color:var(--muted);font-size:.8rem">de '+fmtBs(objetivo)+' · ya entraron '+fmtBs(cobrado)+'</span>'):''))+
     excesoBadge(p)+'</div>';
   var lista=cobros.length?('<div class="cho-cobros">'+cobros.map(function(c,i){
       return '<span class="cho-cobro">'+esc(metodoIcono(c.metodo))+' '+esc(c.metodo)+' <b>'+fmtBs(c.monto)+'</b>'+
-        '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button></span>';
+        (cobroDeLaPuerta(c)
+          ? '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button>'
+          : ' <span title="Lo registró Contabilidad o la tienda, con recibo" style="font-size:.72rem;color:var(--muted)">🧾 registrado</span>')+'</span>';
     }).join('')+'</div>'):'';
   var btns=(falta>0.01 || CHO_COBRO_ABIERTO[p.id])
     ? ('<div class="cho-cobrar">'+METODOS.map(function(m){
@@ -11228,7 +11338,7 @@ function choCobrarMetodo(id, metodo){
   var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
     'Cliente: '+(p.cliente||'')+'\n'+
     'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
-    (cobrado>0?('Ya cobraste: '+fmtBs(cobrado)+'\n'):'')+
+    (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
     'Falta: '+fmtBs(falta)+'\n\nEscribí el monto:', falta>0?String(falta):'');
   if(txt==null) return;
   var monto=parseMonto(txt);
@@ -11264,6 +11374,8 @@ function choQuitarCobro(id, idx){
      botón se dibuja, coinciden. Se pasa el completo para no perderle las imágenes. */
   var arr=cobrosDe(p).slice();
   if(idx<0 || idx>=arr.length) return;
+  // §4fy: un pago con recibo o comprobante lo registró Contabilidad o la tienda: no es del chofer.
+  if(!cobroDeLaPuerta(arr[idx])){ toast('Ese pago lo registró Contabilidad o la tienda (tiene recibo o imagen): no se quita desde acá.','err',6000); return; }
   if(!confirm('¿Quitar el cobro de '+arr[idx].metodo+' '+fmtBs(arr[idx].monto)+'?')) return;
   arr.splice(idx,1);
   aplicarCobros(p, arr); renderChofer();
@@ -11277,9 +11389,19 @@ function choEntregado(id){
 }
 function choDeshacerCobro(id){
   var p=findById(id); if(!p) return;
-  if(!confirm('¿Deshacer el cobro de '+(p.cliente||'')+'?')) return;
-  aplicarCobros(p, []); renderChofer();
-  toast('Cobro deshecho','ok');
+  var todos=cobrosDe(p).slice(), fuera=todos.filter(cobroDeLaPuerta);
+  if(!fuera.length){ toast('No hay cobros de la puerta para borrar: los que quedan los registró Contabilidad o la tienda (con recibo e imagen).','err',7000); return; }
+  var tot=0; fuera.forEach(function(c){ tot=r2(tot+(Number(c.monto)||0)); });
+  var quedan=todos.length-fuera.length;
+  /* ⚠️ Nombra QUÉ se borra y cuánto (§4fy), igual que el ↺ de la tabla desde §4fd: antes decía
+     «¿Deshacer el cobro de X?», en singular y sin montos, y se llevaba todos los pagos. */
+  if(!confirm('¿Borrar '+(fuera.length===1?'el cobro':('los '+fuera.length+' cobros'))+' de la puerta de '+(p.cliente||'')+'?\n\n'+
+      fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
+      '\n\nTotal: '+fmtBs(tot)+
+      (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
+  aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); }));
+  renderChofer();
+  toast((fuera.length===1?'Cobro borrado: ':'Cobros borrados: ')+fmtBs(tot),'ok');
 }
 function renderMis(){
   var mv=document.getElementById('mis-vendedor'); if(!mv) return;
@@ -12718,11 +12840,11 @@ function aplicarCobros(p, arr, objetivoForzado){
    a este se le había pasado.
    Devuelve `false` si no había nada que cobrar, para que quien llama lo diga en vez de
    anotar un pago de cero. */
-function applyPaid(p, metodo){
+function applyPaid(p, metodo, banco){
   var falta=r2(Number(p.saldo)||0);
   if(!(falta>0.009)) return false;
-  var cobros=cobrosDe(p).slice();
-  cobros.push({ metodo:(normMetodo(metodo)||metodo), monto:falta, fecha:todayStr() });
+  var cobros=cobrosDe(p).slice(), m=(normMetodo(metodo)||metodo);
+  cobros.push({ metodo:m, banco:(m==='QR'?esBanco(banco):''), monto:falta, fecha:todayStr() });   // §4fy: el QR con su banco
   aplicarCobros(p, cobros);
   return true;
 }
@@ -12738,6 +12860,7 @@ function quickCobrado(id){
                        'Si solo querés corregir uno, cerrá esto y usá Contabilidad → Corregir.\n\n¿Borrar los '+n+'?')) return;
     aplicarCobros(p, []); toast('Cobro deshecho ✓','ok'); return;
   }
+  if(esATC(p.oc) || esRPT(p.oc)){ toast(noSeCobraTxt(p),'err',6000); return; }   // §4fy
   if(!applyPaid(p,'Efectivo')){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); return; }
   toast('Cobrado en efectivo ✓ — si fue QR/Tarjeta, cambialo en el detalle','ok');
 }
@@ -16623,12 +16746,19 @@ function showPedidoModal(id){
     row('Estado', estadoStockBadge(p)+(p.estado?(' <span class="badge b-gray" title="Marcado a mano acá abajo">a mano: '+esc(p.estado)+'</span>'):''))+row('Verificado', p.verificado?'<span class="badge b-verif">✅ Listo para cargar</span>':'<span class="badge b-gray">Sin verificar</span>')+row('Entrega', p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-gray">Pendiente</span>')+
     row('Fotos de la entrega', fotosHtml(p, true)+'<button class="btn btn-sm btn-ghost" onclick="pedirFoto(\''+p.id+'\')">📷 Agregar foto</button>')+
     row('Vehículo', esc(p.vehiculo))+row('Chofer', esc(p.chofer));
-  var mark = (!p.pagado && !esRPT(p.oc)) ? (
+  /* 🎧 Ni una ATC ni una RPT se cobran (§4fy): no son ventas y Contabilidad no las muestra, así
+     que lo que se anotara acá no aparecía en ningún lado — y el aviso mandaba a «revisá el monto
+     en Contabilidad», donde no están. */
+  var mark = (!p.pagado && !esRPT(p.oc) && !esATC(p.oc)) ? (
     '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
       '<div class="lb" style="margin-bottom:8px">💵 Marcar como pagado — ¿con qué pagó?</div>'+
       '<div class="modal-actions">'+
         '<button class="btn btn-sm" style="background:var(--green);color:#fff" onclick="markPaid(\''+p.id+'\',\'Efectivo\')">💵 Efectivo</button>'+
-        '<button class="btn btn-sm" style="background:var(--series-blue,#3B82F6);color:#fff" onclick="markPaid(\''+p.id+'\',\'QR\')">📱 QR</button>'+
+        /* 📱 Un botón POR BANCO (§4fy): «QR» a secas quedaba como una fila suelta en el Cierre
+           por forma de pago, al lado de «QR BISA», y no se podía cruzar con ningún extracto. */
+        bancosParaCobrar(p).map(function(b){
+          return '<button class="btn btn-sm" style="background:var(--series-blue,#3B82F6);color:#fff" onclick="markPaid(\''+p.id+'\',\'QR\',\''+esc(b)+'\')">📱 QR '+esc(b)+'</button>';
+        }).join('')+
         '<button class="btn btn-sm" style="background:var(--purple,#7C3AED);color:#fff" onclick="markPaid(\''+p.id+'\',\'Tarjeta\')">💳 Tarjeta</button>'+
       '</div>'+
     '</div>') : '';
@@ -16675,11 +16805,26 @@ function showPedidoModal(id){
   openModal(html);
 }
 
-function markPaid(id, metodo){
+function markPaid(id, metodo, banco){
   var p=findById(id); if(!p) return;
-  if(!applyPaid(p, metodo)){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); showPedidoModal(id); return; }
-  toast('Marcado como pagado ('+metodo+') ✓','ok');
+  if(esATC(p.oc) || esRPT(p.oc)){ toast(noSeCobraTxt(p),'err',6000); showPedidoModal(id); return; }   // §4fy
+  if(!applyPaid(p, metodo, banco)){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); showPedidoModal(id); return; }
+  toast('Marcado como pagado ('+metodo+(metodo==='QR'&&esBanco(banco)?(' '+esBanco(banco)):'')+') ✓','ok');
   showPedidoModal(id);
+}
+/* Los bancos del QR para cobrar una venta: los de SU vendedora (§ «Banco del QR») y, si la
+   venta ya tiene un pago por QR en otro banco, ese también — igual que el formulario con
+   `BANCO_EXTRA`: el pedido pudo pasar de otra vendedora. */
+function bancosParaCobrar(p){
+  var bs=bancosDeVendedor(p&&p.vendedor).slice();
+  cobrosDe(p||{}).concat(anticipoDe(p||{})?[anticipoDe(p)]:[]).forEach(function(c){
+    var b=esBanco(c&&c.banco); if(b && bs.indexOf(b)<0) bs.push(b);
+  });
+  return bs;
+}
+function noSeCobraTxt(p){
+  return (esATC(p.oc)?'Una ATC es una atención al cliente':'Una reposición de tienda mueve mercadería a una sucursal')+
+         ': no es una venta y no se cobra. Contabilidad no la muestra, así que un cobro acá no aparecería en ningún lado.';
 }
 
 /* ---- Estado de stock + entregado ---- */

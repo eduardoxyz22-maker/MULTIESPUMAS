@@ -49,6 +49,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     document.getElementById('admin-content').style.display='block';
     apiSave=function(r){ return Promise.resolve({ok:true,pedido:r}); };
     apiList=function(){ return Promise.resolve({ok:true,pedidos:[]}); };
+    /* ⚠️ La carga de arranque del panel (acá sin red) se reintenta sola a los 3 s, 8 s…, y el
+       reintento usa ESTE apiList, que devuelve la planilla VACÍA: con la máquina cargada llegaba
+       a mitad de la prueba y borraba los pedidos del ejemplo (§4fy). Se apaga al arrancar. */
+    CARGA_GEN++; CARGA_ESTADO='ok'; if(CARGA_TIMER){ clearTimeout(CARGA_TIMER); CARGA_TIMER=null; } if(CARGA_TIC){ clearInterval(CARGA_TIC); CARGA_TIC=null; } if(AUTO_TIMER) clearInterval(AUTO_TIMER); if(MIS_TIMER) clearInterval(MIS_TIMER);
     var P=function(o){ return Object.assign({id:'p'+Math.random().toString(36).slice(2),fecha:'2026-08-15',oc:'190000',
       vendedor:'Carola Chavez',cliente:'JUAN PABLO PAREDES',celular:'70000000',turno:'AM',zona:'Norte',direccion:'x',
       maps:'',pagado:true,saldo:0,ts:Date.now(),metodoPago:'',observaciones:'',estado:'',entregado:true,vehiculo:'',
