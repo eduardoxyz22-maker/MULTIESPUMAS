@@ -13356,8 +13356,12 @@ function filaStock(){
   STOCK.p=(STOCK.p||[]).filter(function(q){ return q && q.k && (!q.r || String(q.r)>=lim); });
   STOCK.a=STOCK.a||{}; STOCK.g=STOCK.g||{}; STOCK.al=STOCK.al||{};
   STOCK.h=(STOCK.h||[]).slice(0,STOCK_HIST);   // el historial guarda el RESUMEN, no los items
+  // §4fz-b: cada entrada con su id, para que juntar dos veces la MISMA no la cuente dos (ver abajo).
+  (STOCK.e||[]).forEach(function(x){ if(x && !x.id) x.id='e'+uid(); });
   var fila=filaSistema(STOCK_ID, '📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR', JSON.stringify(STOCK));
   fila.rev=sisRev(STOCK_ID);                   // §4fz: con el sello de la versión sobre la que se trabajó
+  fila._base=sisBaseCopia(STOCK_ID);           // §4fz-b: y esa versión viaja CON la fila (también en la cola), no al servidor
+  stockGuardarEspejo();
   return fila;
 }
 function guardarStock(){
@@ -13365,36 +13369,56 @@ function guardarStock(){
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
 }
+/* 📦 EL STOCK TAMBIÉN VIVE EN EL DISPOSITIVO (§4fz-b). Antes arrancaba VACÍO en cada carga y se
+   llenaba con la planilla; con un guardado del stock en la cola, la lista no lo cargaba («en
+   vuelo») y la siguiente anotación mandaba el stock vacío más el cambio: conteo, almacenes,
+   pedidos y entradas, borrados (auditoría del 23/09, E2). Ahora se guarda acá, junto con la
+   versión del servidor sobre la que se trabaja (`SIS_BASE`), como ya pasaba con el arqueo. */
+var LS_STOCK='ME_STOCK_V1', LS_SIS_BASE='ME_SIS_BASE_V1';
+var STOCK_CARGADO=false;                        // ¿la memoria del stock salió de algún lado (espejo, planilla, junta)?
+function stockGuardarEspejo(){ try{ localStorage.setItem(LS_STOCK, JSON.stringify(STOCK)); }catch(e){} }
+function sisBaseGuardarEspejo(){ try{ localStorage.setItem(LS_SIS_BASE, JSON.stringify(SIS_BASE||{})); }catch(e){} }
+function stockCargarEspejo(){
+  try{ var t=localStorage.getItem(LS_STOCK); if(t){ STOCK=leerStock({ observaciones:t }); STOCK_CARGADO=true; } }catch(e){}
+  try{ var b=JSON.parse(localStorage.getItem(LS_SIS_BASE)||'{}'); if(b && typeof b==='object') SIS_BASE=b; }catch(e){}
+}
 
 /* ============================================================================
-   🤝 STOCK Y ARQUEO: DOS DISPOSITIVOS NO SE PISAN (§4fz, informe del 23/09)
+   🤝 STOCK Y ARQUEO: DOS DISPOSITIVOS NO SE PISAN (§4fz → §4fz-b)
    `__stock__` y `__arqueo_cuadre__` son UNA fila cada una y cada guardado la reescribe
    entera. El servidor no les pedía sello («las maneja una sola persona»), pero el stock lo
    tocan logística, el dueño y quien suba el Excel: A anotaba una entrada de 5, B —con su
    copia de antes— anotaba un pedido a fábrica de 8, los dos recibían ✓ y la entrada de A
    desaparecía. Ahora:
-     · el panel recuerda la versión del SERVIDOR sobre la que hizo sus cambios (`SIS_BASE`) y
-       guarda con su sello;
-     · el servidor (`.gs` 2026-09-23-a) rechaza con `conflicto` si la fila cambió y devuelve
-       la actual;
-     · el panel JUNTA las dos (lo que cambió acá desde la base + lo que cambió allá) y vuelve a
-       guardar con el sello nuevo. No pregunta: son anotaciones distintas, van las dos.
-   Reglas de la junta, campo por campo (`stockFusionar`):
-     · mapas (uniones `a`, qué es cada almacén `al`, el arqueo entero): gana el lado que tocó
-       esa clave;
-     · listas sin id (entradas `e`, historial `h`): se suma lo que agregó cada lado y se saca lo
-       que sacó cada lado — CONTANDO repetidos: dos entradas iguales el mismo día son dos;
-     · pedidos a fábrica y recogidas `p` (con id): gana el lado que tocó ese pedido;
-     · conteos (`c` y cada almacén de `g`): son la FOTO de un corte. Si los dos lados subieron
-       uno, gana el más nuevo; si es el MISMO corte y los dos restaron (dos recogidas
-       recibidas), se restan las dos.
-   ⚠️ Sin base conocida (se recargó la página con el guardado en la cola) no se sabe qué sacó
-   cada lado: se UNE, sin contar dos veces lo que ya estaba en los dos.
+     · cada guardado lleva el sello de la versión sobre la que se hizo, y esa versión viaja CON
+       la fila (`_base`, también en la cola; no va al servidor);
+     · el servidor (`.gs` 2026-09-23-b) le exige el sello a quien sabe juntar (`juntar:1`) y
+       NO deja guardar estas filas a un panel viejo (`actualizar`), que las pisaría;
+     · ante `conflicto` el panel junta: el cambio de la fila, sobre lo que hay ahora; y encima,
+       lo que la memoria de este dispositivo tenga además (otra pestaña, otro cambio en espera).
+   ⚠️ LA JUNTA ES IDEMPOTENTE (§4fz-b, auditoría del 23/09 + Codex). La primera versión sumaba
+   «lo que agregó cada lado» contando repetidos, y juntar DOS VECES el mismo cambio lo contaba
+   dos: una respuesta perdida (el 404 de §4fa) hacía que el reintento chocara con el guardado
+   PROPIO y la entrada de 5 quedaba dos veces; la misma recogida recibida en dos dispositivos
+   restaba 6 de Moreno. Ahora todo tiene nombre y se junta por nombre:
+     · entradas `e` e historial `h`: por id (una entrada vieja sin id recibe uno fijo al leerla,
+       el mismo en todos los dispositivos);
+     · pedidos a fábrica y recogidas `p`: por id; si los dos lados tocaron el mismo, se juntan
+       sus RECEPCIONES (`q.recs`, cada una con su id). Dos parciales de verdad (1 y 2 de 3)
+       quedan las dos; si la suma pasa lo pedido, es la misma llegada anotada dos veces y se
+       cuenta una (se avisa);
+     · la entrada al depósito y la resta del almacén de origen NO se juntan aparte: salen de
+       las recepciones (`stockNormalizarRecepciones`), así nunca se contradicen;
+     · mapas (uniones `a`, qué es cada almacén `al`, el arqueo): gana el lado que tocó la clave;
+     · conteos (`c` y cada almacén de `g`): son la FOTO de un corte; si los dos subieron uno,
+       gana el más nuevo.
+   Sin base (una fila de antes de esto en la cola) no se sabe qué sacó cada lado: se UNE.
    ========================================================================== */
 var SIS_BASE={};                  // id → { rev, obs }: la versión del servidor sobre la que se trabaja
 var SIS_FUSION_N={};              // cuántas juntas seguidas lleva cada fila (tope 3)
-function sisBaseAnotar(id, fila){ if(!SIS_BASE) SIS_BASE={}; if(fila) SIS_BASE[String(id)]={ rev:Number(fila.rev)||0, obs:String(fila.observaciones||'') }; }
+function sisBaseAnotar(id, fila){ if(!SIS_BASE) SIS_BASE={}; if(fila){ SIS_BASE[String(id)]={ rev:Number(fila.rev)||0, obs:String(fila.observaciones||'') }; sisBaseGuardarEspejo(); } }
 function sisRev(id){ var b=SIS_BASE && SIS_BASE[String(id)]; return b ? b.rev : 0; }
+function sisBaseCopia(id){ var b=SIS_BASE && SIS_BASE[String(id)]; return b ? { rev:b.rev, obs:b.obs } : null; }
 function fusJ(x){ return JSON.stringify(x==null?null:x); }
 function fusTiene(o,k){ return !!o && Object.prototype.hasOwnProperty.call(o,k); }
 function fusClaves(){
@@ -13413,57 +13437,112 @@ function fusMapa(b, m, s, sinBase){
   });
   return out;
 }
-/* Una lista SIN id: se cuenta cada renglón (dos entradas iguales el mismo día son dos). */
-function fusLista(b, m, s, clave, sinBase){
-  var cuenta=function(a){ var c={}, o={}; (a||[]).forEach(function(x){ var k=clave(x); c[k]=(c[k]||0)+1; if(!o[k]) o[k]=x; }); return { c:c, o:o }; };
-  var B=cuenta(b), M=cuenta(m), S=cuenta(s), out=[], visto={};
-  (s||[]).concat(m||[]).forEach(function(x){
-    var k=clave(x); if(visto[k]) return; visto[k]=1;
-    var nb=B.c[k]||0, nm=M.c[k]||0, ns=S.c[k]||0;
-    var n = sinBase ? Math.max(nm, ns) : Math.max(0, ns+(nm-nb));
-    var x0=M.o[k]||S.o[k];
-    for(var i=0;i<n;i++) out.push(JSON.parse(JSON.stringify(x0)));
-  });
-  return out;
-}
-/* Pedidos a fábrica y recogidas, por id: gana el lado que tocó ESE pedido. */
-function fusPorId(b, m, s, sinBase){
+/* Una lista por id: gana el lado que tocó ESE elemento. Sin id, el contenido hace de id (dos
+   iguales son uno: por eso toda entrada lleva id). `ambos` junta un elemento que tocaron los dos. */
+function fusPorId(b, m, s, sinBase, ambos){
   var id=function(x){ return (x && x.id!=null && x.id!=='') ? ('#'+x.id) : ('='+fusJ(x)); };
   var mapa=function(a){ var o={}; (a||[]).forEach(function(x){ if(x) o[id(x)]=x; }); return o; };
   var B=mapa(b), M=mapa(m), S=mapa(s), out=[], visto={};
   (s||[]).concat(m||[]).forEach(function(x){
     if(!x) return; var k=id(x); if(visto[k]) return; visto[k]=1;
     var xb=B[k], xm=M[k], xs=S[k], r;
-    if(sinBase) r = xm || xs;
+    if(sinBase) r = (xm && xs && ambos) ? ambos(null, xm, xs) : (xm || xs);
     else if(fusJ(xm)===fusJ(xb)) r = xs;          // acá no se tocó: manda el servidor (aunque allá lo hayan borrado)
     else if(fusJ(xs)===fusJ(xb)) r = xm;          // allá no se tocó: manda lo de acá (aunque acá se haya borrado)
-    else r = xm || xs;                            // los dos lo tocaron: lo de acá, que es lo último que hizo esta persona
+    else r = (xm && xs && ambos) ? ambos(xb, xm, xs) : (xm || xs);   // los dos lo tocaron
     if(r) out.push(r);
   });
   return out;
 }
+/* 📦 LAS RECEPCIONES TIENEN NOMBRE (§4fz-b). Cada «✅ Llegaron» de un pedido a fábrica o de una
+   recogida es una recepción `{id, u, f, ts}` en `q.recs`. Una recepción de ANTES de esto (solo
+   `q.ru`, sin lista) queda como `legacy`, para que la cuenta total siga cerrando. `se:1` = no
+   suma una entrada al depósito (el Excel de acá ya la incluía, §4ev). */
+function stockRecNuevo(u, f, sinEntrada){ return { id:'r'+uid(), u:Math.round(Number(u)||0), f:f||todayStr(), ts:Date.now(), se:sinEntrada?1:0 }; }
+function stockRecsDe(q){
+  if(!q) return [];
+  if(!Array.isArray(q.recs)) q.recs = (Number(q.ru)||0)>0 ? [{ id:'legacy', u:Math.round(Number(q.ru)||0), f:String(q.r||''), ts:0, se:1 }] : [];
+  return q.recs;
+}
+/* Las recepciones de los dos lados, por id. Si suman más de lo pedido, la misma llegada se anotó
+   en los dos dispositivos: se sacan las que trajo SOLO el otro lado (la más nueva primero). */
+function fusRecs(rm, rs, total){
+  var out=[], visto={}, soloSuyo=[];
+  (rm||[]).forEach(function(r){ if(r && r.id!=null && !visto[r.id]){ visto[r.id]=1; out.push(r); } });
+  (rs||[]).forEach(function(r){ if(r && r.id!=null && !visto[r.id]){ visto[r.id]=1; out.push(r); soloSuyo.push(r); } });
+  var suma=function(){ var t=0; out.forEach(function(r){ t+=Math.round(Number(r.u)||0); }); return t; };
+  var recortado=false;
+  if(total>0 && suma()>total){
+    soloSuyo.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });
+    while(suma()>total && soloSuyo.length){ var x=soloSuyo.shift(); out.splice(out.indexOf(x),1); recortado=true; }
+  }
+  return { recs:out, recortado:recortado };
+}
+var STOCK_FUS_AVISOS=[];
+function fusPedidoFab(xb, xm, xs){
+  var r=JSON.parse(JSON.stringify(xm));
+  var cm=JSON.parse(JSON.stringify(xm)), cs=JSON.parse(JSON.stringify(xs));
+  var rm=stockRecsDe(cm), rs=stockRecsDe(cs);
+  if(!rm.length && !rs.length) return r;
+  var total=Math.max(Math.round(Number(xm.total)||0), Math.round(Number(xs.total)||0));
+  if(!(total>0)) total=Math.round(Number(xb && xb.u)||Number(xm.u)||0);
+  var J=fusRecs(rm, rs, total);
+  r.recs=J.recs; r.total=total;
+  if(J.recortado) STOCK_FUS_AVISOS.push(r);
+  return r;
+}
+/* Lo que sale de las recepciones: `q.ru`/`q.u`/`q.r`, una entrada al depósito por recepción
+   (`rec:1`, id = el de la recepción) y, en una recogida, la resta del almacén de origen contra
+   la FOTO de ese almacén (`g[de].rs`: lo ya restado). Una recepción anterior a la foto (`ts` ≤
+   `g[de].t`) ya está adentro del Excel y no se resta. Idempotente: correrlo dos veces es igual. */
+function stockNormalizarRecepciones(S){
+  (S.p||[]).forEach(function(q){
+    if(!q || !Array.isArray(q.recs) || !q.recs.length) return;
+    var total=Math.round(Number(q.total)||0) || Math.round(Number(q.u)||0);
+    q.total=total;
+    var ru=0, ultima='';
+    q.recs.forEach(function(r){ ru+=Math.round(Number(r.u)||0); if(String(r.f||'')>ultima) ultima=String(r.f||''); });
+    q.ru=ru;
+    var pend=total-ru;
+    if(pend>0){ q.u=pend; q.r=''; } else { q.u=total; q.r=q.r||ultima||todayStr(); }
+    var quiero={};
+    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && !r.se) quiero[r.id]=r; });
+    S.e=(S.e||[]).filter(function(x){ return !(x && x.rec && x.de===q.id && !quiero[x.id]); });
+    var ya={}; S.e.forEach(function(x){ if(x && x.rec) ya[x.id]=1; });
+    Object.keys(quiero).forEach(function(rid){
+      if(ya[rid]) return; var r=quiero[rid];
+      S.e.push({ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id });
+    });
+    if(q.tipo!=='recogida') return;
+    var alm=q.de || stockAlmPorDefecto(), g=(S.g||{})[alm];
+    if(!g || !g.u) return;
+    g.rs=g.rs||{};
+    var t=Number(g.t)||0, resta={};
+    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && (Number(r.ts)||0)>t) resta[r.id]=r; });
+    Object.keys(g.rs).forEach(function(rid){
+      var x=g.rs[rid]; if(!x || x.q!==q.id || resta[rid]) return;
+      g.u[x.k]=(Number(g.u[x.k])||0)+(Number(x.u)||0); delete g.rs[rid];      // la sacó la junta: se devuelve
+    });
+    Object.keys(resta).forEach(function(rid){
+      if(g.rs[rid] || g.u[q.k]==null) return;
+      var r=resta[rid];
+      g.u[q.k]=Math.max(0,(Number(g.u[q.k])||0)-(Number(r.u)||0));
+      g.rs[rid]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id };
+    });
+  });
+}
 /* Un conteo es la FOTO de un corte (fecha + hora + almacén). */
 function fusIdFoto(x){ return x ? (String(x.f||'')+' '+String(x.hora||'')+' '+String(x.alm||'')) : ''; }
-function fusFoto(b, m, s, sinBase, restar){
+function fusFoto(b, m, s, sinBase){
   if(!sinBase){
     if(fusJ(m)===fusJ(b)) return s;               // acá no se tocó
     if(fusJ(s)===fusJ(b)) return m;               // allá no se tocó
     if(!m || !s) return undefined;                // uno lo borró y el otro lo cambió: se respeta el borrado
   }
   if(!m) return s; if(!s) return m;
-  var im=fusIdFoto(m), is=fusIdFoto(s);
-  if(im===is){
-    /* El MISMO corte cambiado de los dos lados: solo puede ser por recogidas recibidas, que
-       restan unidades del almacén de origen. Se aplican las dos restas. */
-    if(!restar || sinBase || !b || fusIdFoto(b)!==im) return m;
-    var out=JSON.parse(JSON.stringify(s)); out.u=out.u||{};
-    var bu=b.u||{}, mu=m.u||{};
-    fusClaves(bu, mu).forEach(function(k){
-      var d=(Number(mu[k])||0)-(Number(bu[k])||0);
-      if(d) out.u[k]=Math.max(0, (Number(out.u[k])||0)+d);
-    });
-    return out;
-  }
+  /* El MISMO corte cambiado de los dos lados solo puede ser por recepciones (restan del almacén
+     de origen): se toma el del servidor y `stockNormalizarRecepciones` aplica las que falten. */
+  if(fusIdFoto(m)===fusIdFoto(s)) return s;
   return (String(m.f||'')+' '+String(m.hora||'')) >= (String(s.f||'')+' '+String(s.hora||'')) ? m : s;   // gana el corte más nuevo
 }
 function stockFusionar(b, m, s){
@@ -13471,16 +13550,24 @@ function stockFusionar(b, m, s){
   var out=stockVacio();
   out.a=fusMapa(b.a, m.a, s.a, sinBase);
   out.al=fusMapa(b.al, m.al, s.al, sinBase);
-  out.c=fusFoto(b.c, m.c, s.c, sinBase, false) || stockVacio().c;
+  out.c=fusFoto(b.c, m.c, s.c, sinBase) || stockVacio().c;
   fusClaves(b.g, m.g, s.g).forEach(function(nm){
-    var r=fusFoto((b.g||{})[nm], (m.g||{})[nm], (s.g||{})[nm], sinBase, true);
+    var r=fusFoto((b.g||{})[nm], (m.g||{})[nm], (s.g||{})[nm], sinBase);
     if(r) out.g[nm]=r;
   });
-  out.e=fusLista(b.e, m.e, s.e, fusJ, sinBase);
-  out.p=fusPorId(b.p, m.p, s.p, sinBase);
-  out.h=fusLista(b.h, m.h, s.h, function(x){ return String(x&&x.ts)+'|'+String(x&&x.alm); }, sinBase)
+  out.e=fusPorId(b.e, m.e, s.e, sinBase);
+  out.p=fusPorId(b.p, m.p, s.p, sinBase, fusPedidoFab);
+  out.h=fusPorId(b.h, m.h, s.h, sinBase)
         .sort(function(x,y){ return (Number(y&&y.ts)||0)-(Number(x&&x.ts)||0); }).slice(0,STOCK_HIST);
+  out=JSON.parse(JSON.stringify(out));            // que no comparta objetos con ninguna de las tres
+  stockNormalizarRecepciones(out);
   return stockMigrar(out);
+}
+function sisAvisarRecortes(){
+  if(!STOCK_FUS_AVISOS.length) return;
+  var nom=STOCK_FUS_AVISOS.map(function(q){ return stockNombreClave(q.k); }).join(', ');
+  toast('⚠️ La llegada de '+nom+' la anotaron en DOS dispositivos y sumaba más de lo pedido: se contó una sola vez. Revisá en 📦 Stock que esté bien.','err',12000);
+  STOCK_FUS_AVISOS=[];
 }
 /* Qué fila sabe juntarse y cómo. */
 var SIS_FUSION={};
@@ -13488,7 +13575,7 @@ SIS_FUSION[STOCK_ID]={ nombre:'stock',
   leer:function(obs){ return leerStock({ observaciones:obs }); },
   actual:function(){ return STOCK; },
   fusionar:stockFusionar,
-  poner:function(x){ STOCK=x; stockOlvidarIndice(); try{ var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock(); }catch(e){} },
+  poner:function(x){ STOCK=x; STOCK_CARGADO=true; stockOlvidarIndice(); stockGuardarEspejo(); try{ var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock(); }catch(e){} },
   fila:function(){ return filaStock(); } };
 SIS_FUSION[ARQUEO_ID]={ nombre:'arqueo',
   leer:parseArqueo,
@@ -13511,29 +13598,35 @@ function sisMasNueva(id, fila){
 }
 function sisJuntarDeLista(id, fila){
   var F=SIS_FUSION[String(id)];
+  STOCK_FUS_AVISOS=[];
   var junto=F.fusionar(F.leer(SIS_BASE[String(id)].obs), F.actual(), F.leer(fila.observaciones));
   sisBaseAnotar(id, fila);
+  sisAvisarRecortes();
   return junto;
 }
 /* El servidor dijo «conflicto» sobre una fila que se sabe juntar: se junta y se vuelve a
-   guardar con su sello. Devuelve la respuesta de ESE guardado (así quien llamó sabe si entró). */
+   guardar con su sello. Devuelve la respuesta de ESE guardado (así quien llamó sabe si entró).
+   ⚠️ La fila que chocó puede no ser de esta memoria (otra pestaña del mismo navegador comparte
+   la cola, o se recargó con ella en la cola): por eso primero se junta EL CAMBIO DE LA FILA,
+   con la base que viaja con ella, y recién después lo que esta memoria tenga además. */
 function sisFusionarYGuardar(rec, res, opts){
   var id=String(rec.id), F=SIS_FUSION[id];
   var n=(SIS_FUSION_N[id]||0)+1; SIS_FUSION_N[id]=n;
   if(n>3){
     SIS_FUSION_N[id]=0;
     toast('⚠️ No se pudo juntar el '+F.nombre+' con los cambios de otra persona (tres intentos seguidos). Quedó en la cola de este dispositivo; si el aviso sigue, recargá la página.','err',12000);
-    return res;
+    return { ok:false, error:'junta' };         // §4fz-b: NO es un «no» firme: la cola lo reintenta (antes lo tiraba)
   }
-  var conBase=!!SIS_BASE[id];
-  var base=conBase ? F.leer(SIS_BASE[id].obs) : null;
-  var mio=conBase ? F.actual() : F.leer(rec.observaciones);   // recargada con el guardado en la cola: lo que se quería guardar
-  var suyo=F.leer(res.pedido.observaciones);
-  var junto=F.fusionar(base, mio, suyo);
+  STOCK_FUS_AVISOS=[];
+  var baseR = rec._base ? F.leer(rec._base.obs) : null;
+  var J = F.fusionar(baseR, F.leer(rec.observaciones), F.leer(res.pedido.observaciones));
+  var bm = SIS_BASE && SIS_BASE[id];
+  var M = F.fusionar(bm ? F.leer(bm.obs) : null, F.actual(), J);
   sisBaseAnotar(id, res.pedido);                              // desde ahora se trabaja sobre la del servidor
-  F.poner(junto);
+  F.poner(M);
   var fila=F.fila();                                          // lo junto, con el sello nuevo
   if(SAVE_ULTIMO[id]) SAVE_ULTIMO[id]={ rec:fila, t:Date.now() };   // si hay otro guardado esperando, que mande lo junto
+  sisAvisarRecortes();
   return apiSaveAhora(fila, opts).then(function(r){ if(r && r.ok) SIS_FUSION_N[id]=0; return r; });
 }
 
