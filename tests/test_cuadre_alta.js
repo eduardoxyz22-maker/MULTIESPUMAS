@@ -131,6 +131,31 @@ const r2=n=>Math.round((Number(n)||0)*100)/100;
   chk('§4fo · un arqueo de Bs 900 sin ningún pago en efectivo NO deja decir «cierra»', !/El cuadre cierra/.test(r.con), r.con.slice(0,70));
   chk('  …se cuenta como diferencia entera y se nombra', /900/.test(r.con) && /sin ningún pago detrás/.test(r.con), (r.con.match(/(Falta plata|Sobra plata)[^·]*·[^·]*/)||[''])[0].slice(0,140));
 
+  // ══ §4fz · ese mismo arqueo huérfano, en la TABLA del cierre, en el texto y en el Excel ══
+  //    (informe del 23/09: la tarjeta lo contaba, pero las otras tres salidas no lo mostraban)
+  r = await page.evaluate(async () => {
+    renderCuadre();
+    var tabla=document.getElementById('cua-cierre').textContent.replace(/\s+/g,' ');
+    var txt=cuadreTexto();
+    window.__XLSX=null; exportCuadre();
+    var m=(window.__XLSX&&window.__XLSX[0]&&window.__XLSX[0].matrix)||[];
+    var celda=function(v){ return (v&&typeof v==='object')?v.v:v; };
+    var fila=m.filter(function(row){ return row && /^Efectivo/.test(String(celda(row[0])||'')); })[0]||null;
+    var tot=m.filter(function(row){ return row && /DIFERENCIA TOTAL/.test(String(celda(row[0])||'')); })[0]||null;
+    // …y sin NINGÚN pago en el período, el Excel igual se baja con el arqueo
+    STATE=[]; renderCuadre();
+    var tablaSin=document.getElementById('cua-cierre').textContent.replace(/\s+/g,' ');
+    window.__XLSX=null; exportCuadre();
+    var m2=(window.__XLSX&&window.__XLSX[0]&&window.__XLSX[0].matrix)||[];
+    var fila2=m2.filter(function(row){ return row && /^Efectivo/.test(String(celda(row[0])||'')); })[0]||null;
+    ARQUEO={};
+    return { tabla:tabla, txt:txt, fila:fila?fila.map(celda):null, tot:tot?tot.map(celda):null, tablaSin:tablaSin, fila2:fila2?fila2.map(celda):null };
+  });
+  chk('§4fz · la TABLA del cierre lista la fila del Efectivo contado sin pagos (antes solo la tarjeta)', /Efectivo/.test(r.tabla) && /sin ningún pago de esta forma/.test(r.tabla) && /sobra Bs 900,00/.test(r.tabla), r.tabla.slice(150,420));
+  chk('  …el texto para WhatsApp también, con la diferencia total', /Efectivo/.test(r.txt) && /900/.test(r.txt) && /Sobra Bs 900,00 en total/.test(r.txt), r.txt.split('\n').slice(0,8).join(' / '));
+  chk('  …y el Excel trae la fila (contado 900, diferencia 900) y la diferencia total', !!r.fila && r.fila[8]===900 && r.fila[9]===900 && !!r.tot && r.tot[9]===900, J({ fila:r.fila, total:r.tot }));
+  chk('  …sin ningún pago en el período: la tabla y el Excel igual lo muestran', /sin ningún pago de esta forma/.test(r.tablaSin) && !!r.fila2 && r.fila2[8]===900, J({ fila:r.fila2 }));
+
   // ══ §4fp · la ventana verde no puede decir «guardado» si el servidor lo rechazó ══
   r = await page.evaluate(async () => {
     var out={};

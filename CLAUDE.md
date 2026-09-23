@@ -87,6 +87,23 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     registro va sin candado: dos GET a la vez pueden pisarse una anotación, es diagnóstico.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
+- **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz, `.gs` `2026-09-23-a`, **espera
+  que el dueño lo implemente**). `tests/test_concurrencia.js` monta el `.gs` real + DOS navegadores.
+  · **`__stock__` y `__arqueo_cuadre__` llevan sello**: el panel guarda con `rev: sisRev(id)`
+  (`SIS_BASE` = la versión del servidor sobre la que trabajó; se anota al leer y con cada eco).
+  El `.gs` (`SISTEMA_CON_SELLO`) rechaza con `conflicto` SOLO si el panel manda `rev` (un panel
+  viejo pasa como antes) y no lo anota en «Rechazos». El panel junta (`sisFusionarYGuardar` →
+  `stockFusionar`/`fusMapa`) y reguarda. ⚠️ **Toda mutación del stock tiene que terminar en
+  `guardarStock()`** (→ `filaStock()`, que pone el sello), y **un campo NUEVO de `STOCK` tiene que
+  entrar en `stockFusionar`**: si no, la primera junta lo pierde. Las listas sin id se cuentan
+  como multiconjunto (dos entradas iguales son dos); los conteos son FOTOS (gana el corte más
+  nuevo). `sisMasNueva`: una fila «en vuelo» (§4ev) igual se junta si el servidor trae una
+  versión MÁS NUEVA que lo último guardado y no hay guardado propio en el aire ni en la cola.
+  · **Borrar relee y lleva sello**: todo borrado de una fila que la persona VIO pasa por
+  `borrarEnServidor(copia)` (relee con `apiList`; si cambió, no borra y devuelve `{conflicto,
+  actual}`) o, como mínimo, `apiDelete(id, rev)`. `doDelete(id, rev)` en el `.gs`; sin `rev`
+  borra como antes. `realDelete` devuelve una promesa y vuelve a poner la fila si no se borró.
+  ⚠️ «Descartar» un borrador de Kommo que otra ya completó (MISMO id, §4es) borraba la venta.
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es
@@ -469,6 +486,12 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   con banco (`bancosParaCobrar`).
   · **Esperan al dueño**: MEDIA-4 (💵 de Administración deja el efectivo en la vendedora aunque haya
   cobrado el chofer) y MEDIA-5 (un cobro nuevo sobre una venta ya ✅ no avisa).
+- **§4fz (informe de la otra herramienta)**: corregir el **2° método del pago mixto** actualiza
+  `p.acuenta` (`mixtoEn`, antes y después del cambio; «SÍ, pagado» sigue en 0, §4cb) — el
+  formulario sumaba 4.790 en vez de 4.990. El **cierre por forma de pago** sale de
+  `cuadreCierre()` para la pantalla, el texto y el Excel (con los arqueos SIN pagos, §4fo, y la
+  diferencia total). El botón de Contabilidad dice **«Entrega agendada»**: es `p.fecha`, que se
+  reescribe al reprogramar.
 - `tests/test_conta_alta.js` (`PEDIDOS=…` para los dientes contra un panel viejo).
 - **Los chicos de §4ew** (13 MEDIA/BAJA, `tests/test_medias.js`): `p.cobradoBs` NO viaja en
   la planilla — toda cuenta de «cobrado» usa `totalCobrado(p)`; en «👑 Ver todos» el efectivo

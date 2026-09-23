@@ -1,6 +1,8 @@
 # BITÁCORA — Dashboard Heaven Colchones
 
-Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-07-13**.
+Memoria de trabajo para Claude (y futuros mantenedores). Última actualización: **2026-09-23** (§4fz).
+⚠️ Las secciones NO están en orden: lo más nuevo del panel de pedidos (§4fe → §4fz) está hacia la
+mitad del archivo, arriba de §4es. Buscar por el número (`## 4fz`).
 Leer junto con `CLAUDE.md`. Aquí está el *porqué* de las cosas y los procedimientos operativos.
 
 ---
@@ -6527,8 +6529,11 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 > `test_rpt` 1) y los 9 del 18/09 (`test_borradores` 8, `test_conflicto` 1) están en verde: **la
 > línea de base de la batería vuelve a ser CERO rojos.** Queda a decisión del dueño: BAJA 9 de
 > Contabilidad (fallback de `cobrosDe`, §4eu) y «mes sin ventas = sin dato» del plan (§4ev).
-> ⚠️ **El `.gs` `2026-09-20-a` (§4et) sigue esperando que el dueño lo implemente** (Nueva versión
-> sobre la implementación de siempre): hasta entonces el panel avisa «servidor viejo».
+> ✅ El `.gs` `2026-09-20-a` (§4et) **está publicado** (confirmado el 23/09 por el registro del
+> respaldo de Kommo, §4fx). ⚠️ **El `2026-09-23-a` (§4fz: borrar con sello, stock y arqueo con
+> sello) espera que el dueño lo implemente** (Nueva versión sobre la implementación de siempre):
+> hasta entonces el borrado ya se protege desde el panel, pero el stock y el arqueo no.
+> `test_producir` ya no tiene rojos (62/62 desde §4es).
 
 > 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
@@ -7429,6 +7434,75 @@ solo si hay, «Recogido de fábrica», y limpiar `dev` antes de probar la caja e
 Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabilidad (el
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
+
+## 4fz. El informe de la otra herramienta: el stock que se pisaba y el borrado a ciegas (2026-09-23)
+
+> *«chat encontró esto, revisa»* — el dueño, con un informe de otra IA hecho sobre `ca32e3b`
+> (antes de §4fy): 2 ALTAS, 4 MEDIAS y 5 puntos para verificar. Se revisó uno por uno contra el
+> código de `ebc3eab` y se reprodujo cada uno antes de tocar nada.
+
+| # | qué decía | ¿es así? | qué se hizo |
+|---|---|---|---|
+| 1 ALTA | `__stock__` y `__arqueo_cuadre__` se saltean el sello: dos dispositivos se pisan | **Sí.** `doSave` exceptuaba toda fila `__…` («las maneja una sola persona»), pero el stock lo tocan logística, el dueño y quien sube el Excel. Reproducido con dos navegadores: la entrada de 5 de A desaparecía | panel + `.gs` (abajo) |
+| 2 ALTA | borrar manda solo el id: se lleva un pago que otro registró | **Sí.** `doDelete(id)` sin sello. Y peor de lo que decía: «Descartar» un borrador de Kommo que otra vendedora YA completó (mismo id, §4es) borraba la venta y además la marcaba descartada en Kommo | panel + `.gs` (abajo) |
+| 3 MEDIA | corregir el QR del pago mixto deja «A cuenta» viejo | **Sí**, y el formulario sumaba A cuenta 2.000 + saldo 2.790 = **4.790** en vez de 4.990 | `ctaGuardarPago` rama cobro + `mixtoEn` |
+| 4 MEDIA | `SUMA(H:H)` del Excel del Cuadre duplica | Sí, ya anotado (§4fs→§4fw): es de formato y mueve un archivo que el dueño usa | **se le pregunta** |
+| 5 MEDIA | el Excel no trae el arqueo sin pagos | **Sí**, y tampoco la TABLA del cierre ni el texto de WhatsApp: solo la tarjeta (§4fo) | `cuadreCierre()` compartido |
+| 6 MEDIA | «Entrega» es la fecha agendada | Sí (§4fs→§4fw) | se rotula **«Entrega agendada»**; contar lo entregado o guardar el día real sigue a decisión del dueño |
+| — | `claveOk_` abierto sin `PANEL_KEY` | decisión del dueño (05/09), sin cambios | — |
+| — | ¿qué `.gs` está publicado? | `2026-09-20-a`, confirmado por el respaldo de Kommo (§4fx) | ahora hay uno nuevo que publicar |
+| — | `panel.yml`: `git push \|\| echo` da verde aunque falle | Sí | reintenta con `pull --rebase` 3 veces y si no, **falla** con `::error::` |
+| — | bitácora: encabezado de julio, `test_producir` «6 rojos» | Sí, viejo | encabezado y §5 al día |
+
+### 2 · Borrar con sello
+- **`.gs`** (`2026-09-23-a`): `doDelete(id, rev)` — si viene `rev` y no es el de la hoja, NO borra
+  y contesta `conflicto` con la fila actual (queda en «Rechazos» con los dos sellos). **Sin `rev`
+  borra como antes**: un panel cacheado quedaría sin poder borrar nada, sin saber por qué.
+- **Panel**: `borrarEnServidor(loc)` **relee la planilla antes de borrar** (`apiList`, tope 20 s):
+  si la fila cambió y no es solo el sello (`mismoContenido`), no borra; si ya no estaba, cuenta
+  como borrado; si no pudo leer, borra con el sello visto y frena el servidor. `realDelete` borra
+  local primero (como siempre) y **vuelve a ponerla** si no se borró, con el aviso de QUÉ cambió
+  (`queCambioTxt`: pagada, cobrado, saldo, entrega, entregada, «la completó otra persona»).
+  `descartarBorrador` y `borrEsLaMisma` pasan por lo mismo; `borrarRetiro` manda su sello.
+- ⚠️ El releer protege **desde ya**, sin el `.gs` nuevo (queda la ventana de unos segundos entre
+  leer y borrar); el sello del servidor la cierra cuando se publique.
+
+### 1 · Stock y arqueo: se juntan, no se pisan
+- **`.gs`**: `SISTEMA_CON_SELLO = {__stock__, __arqueo_cuadre__}` piden sello **si el panel lo
+  manda** (un panel viejo no lo manda y pasa como antes). Ese `conflicto` **no se anota** en
+  «Rechazos»: lo resuelve el panel. Días cerrados y carga siguen reescribiéndose enteros.
+- **Panel**: `SIS_BASE[id]` = la versión del servidor sobre la que se trabaja (se anota al leer y
+  con el eco de cada guardado); `filaStock()`/`filaArqueo()` guardan con `rev: sisRev(id)`. Ante
+  `conflicto`, `apiSaveAhora` llama `sisFusionarYGuardar`: junta base/mío/suyo y reguarda con el
+  sello nuevo (tope 3 seguidas; `SAVE_ULTIMO` pasa a lo juntado para que un guardado en espera
+  no mande lo viejo). Reglas en el comentario de `SIS_FUSION`: mapas por clave, listas sin id
+  como multiconjunto con deltas (dos entradas iguales son dos), pedidos por id, conteos como
+  FOTOS (gana el corte más nuevo; mismo corte con dos recogidas recibidas → se restan las dos).
+  Sin base (recargó con el guardado en la cola) se UNE sin contar dos veces.
+- ⚠️ **«En vuelo» no es «no mirar»**: §4ev deja 90 s la memoria por encima del `list`; con el
+  sello se sabe si lo que llega es MÁS NUEVO que lo último guardado (`sisMasNueva`): entonces
+  otro guardó después y se junta al toque (`sisJuntarDeLista`), salvo que haya un guardado
+  propio en el aire o en la cola.
+- ⚠️ **Esto necesita las DOS mitades**: el panel nuevo solo, con el `.gs` viejo, sigue pisándose
+  (el servidor nunca dice «conflicto»). Con el `.gs` nuevo y un panel viejo cacheado, también.
+
+### Tests
+- `tests/test_concurrencia.js` (18, **nuevo**): dos navegadores con el panel de verdad contra el
+  `.gs` de verdad (en Node, planilla de mentira; el `fetch` entra por `doPost`). Stock (entrada +
+  pedido; dos recogidas del mismo corte: 10 − 3 − 2 = 5), arqueo, borrar (con y sin poder releer),
+  descartar un borrador ya completado. **Dientes**: con el `.gs` viejo **7 rojos** (stock, arqueo y
+  el sello del borrado; el releer del panel ya protege), con el panel viejo **14**.
+- `tests/test_servidor.js` 177 → **194** (+17; **9 rojos** contra el `.gs` viejo).
+- `tests/test_mixto.js` 23 → **28** (4 rojos contra el panel viejo); `tests/test_cuadre_alta.js`
+  31 → **35** (4 rojos).
+- **La batería dio un rojo que no era de este cambio** (§4fy lo cuenta): el reintento de la carga
+  de arranque borraba los datos de 6 pruebas con la máquina cargada; arreglado ahí.
+
+### Lo que queda para el dueño
+- **Publicar el `.gs` `2026-09-23-a`**: Implementar → Administrar implementaciones → ✏️ → Versión
+  nueva. Hasta entonces el panel muestra en gris «hay una versión más nueva sin publicar».
+- **El Excel del Cuadre** (hoja aparte para el cierre, o dejarlo) y **«Entrega»** (dejar agendada,
+  solo lo entregado, o guardar el día real): siguen siendo decisiones suyas.
 
 ## 4fy. Los ocho botones de plata que no tenían prueba (2026-09-23)
 

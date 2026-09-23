@@ -1178,7 +1178,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
           <label class="lb">Cortar por</label>
           <div class="seg" id="cta-base">
             <button type="button" data-val="ingreso" class="active">📝 Ingreso</button>
-            <button type="button" data-val="entrega">🚚 Entrega</button>
+            <button type="button" data-val="entrega" title="La fecha AGENDADA de entrega: si logística reprograma el pedido, la venta cambia de día o de mes. No hay un campo con el día en que se entregó de verdad.">🚚 Entrega agendada</button>
           </div>
         </div>
         <div class="field">
@@ -1923,7 +1923,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-20-a';
+var SCRIPT_VERSION_ESPERADA='2026-09-23-a';
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2091,7 +2091,15 @@ function apiSaveAhora(rec, opts){
      del servidor NO pasan por acá: vienen resueltos, no lanzados, y ya van a la cola. */
   var pedir=function(){
     return apiPost(payload).then(function(res){
-      if(res && res.ok && res.pedido){ aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido); }   // 🔍 §4en
+      if(res && res.ok && res.pedido){
+        aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido);   // 🔍 §4en
+        if(SIS_FUSION && SIS_FUSION[String(rec.id)]) sisBaseAnotar(rec.id, res.pedido);   // §4fz: lo guardado es la nueva base
+      }
+      /* 🤝 §4fz: el stock o el arqueo chocaron con lo que guardó otro dispositivo: se juntan
+         las dos versiones y se vuelve a guardar. No es un «no»: no pasa por rechazoFirme. */
+      else if(res && res.ok===false && res.error==='conflicto' && res.pedido && SIS_FUSION && SIS_FUSION[String(rec.id)]){
+        return sisFusionarYGuardar(rec, res, opts);
+      }
       else if(res && res.ok===false && RECHAZOS_FIRMES[res.error]){
         /* ⚠️ Si el «conflicto» es contra MI PROPIO guardado —el reintento de §4fa chocó con
            la fila que dejó el primer intento—, `rechazoFirme` ya lo trató como un ok tardío.
@@ -2257,7 +2265,59 @@ function rechazoFirme(rec, res){
     try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); }, function(){}); }catch(e){}
   }
 }
-function apiDelete(id){ return apiPost({action:'delete', id:id}); }
+/* `rev` = el sello con el que se VIO la fila (§4fz). El servidor nuevo no borra si ya no es el
+   de la hoja; uno viejo lo ignora y borra como siempre. Sin `rev` (null) no se manda. */
+function apiDelete(id, rev){
+  var b={action:'delete', id:id};
+  if(rev!=null) b.rev=Number(rev)||0;
+  return apiPost(b);
+}
+/* 🗑 BORRAR SIN LLEVARSE LO QUE OTRO CAMBIÓ (§4fz, informe del 23/09).
+   Guardar exige el sello desde §4ce; borrar mandaba solo el id. Con la venta abierta desde
+   antes, alguien confirmaba «Eliminar» y se llevaba el pago que Contabilidad acababa de
+   registrar en otra computadora: la fila que se borraba no era la que había visto.
+   Dos frenos, porque el del servidor recién anda cuando se publique el `.gs` nuevo:
+     1. ANTES de borrar se relee la planilla: si la fila cambió (y no es solo el sello), no
+        se borra y se devuelve la versión nueva.
+     2. El borrado lleva el sello con el que se vio la fila: el servidor nuevo lo compara
+        adentro del candado, que es el único lugar donde no hay carrera.
+   `loc` es la copia que la persona tenía en pantalla. Devuelve {ok} · {ok:false, conflicto,
+   actual} · {ok:false, error}. «Ya no estaba» cuenta como borrado. */
+function borrarEnServidor(loc){
+  var id=loc&&loc.id;
+  var leer=conTopeDuro(apiList(), 20000, 'tardo_datos')
+    .then(function(r){ return (r && r.ok && Array.isArray(r.pedidos)) ? r.pedidos : null; }, function(){ return null; });
+  return leer.then(function(lista){
+    var rev=Number(loc&&loc.rev)||0;
+    if(lista){
+      var srv=null; for(var i=0;i<lista.length;i++){ if(lista[i] && String(lista[i].id)===String(id)){ srv=lista[i]; break; } }
+      if(!srv) return { ok:true, yaNoEstaba:true };
+      if((Number(srv.rev)||0)!==rev && !mismoContenido(loc, srv)) return { ok:false, conflicto:true, actual:srv };
+      rev=Number(srv.rev)||0;       // lo mismo que se vio: se borra con el sello de la hoja
+    }
+    return apiDelete(id, rev).then(function(res){
+      if(res && res.ok) return { ok:true };
+      if(res && res.error==='conflicto' && res.pedido) return { ok:false, conflicto:true, actual:res.pedido };
+      if(res && res.error==='not found') return { ok:true, yaNoEstaba:true };
+      return { ok:false, error:(res && res.error) || 'sin respuesta' };
+    });
+  });
+}
+/* Qué cambió entre lo que se vio y lo que hay ahora, en palabras. */
+function queCambioTxt(a, b){
+  if(!a || !b) return 'otra persona la guardó después';
+  var d=[];
+  if(typeof esBorrador==='function' && esBorrador(a) && !esBorrador(b)) d.push('la completó otra persona: ya es un pedido');
+  if(!!a.pagado!==!!b.pagado) d.push(b.pagado?'ahora figura PAGADA':'ya no figura pagada');
+  var ca=contaCobrado(a), cb=contaCobrado(b);
+  if(Math.abs(ca-cb)>0.009) d.push('cobrado '+fmtBs(ca)+' → '+fmtBs(cb));
+  if(Math.abs((Number(a.saldo)||0)-(Number(b.saldo)||0))>0.009) d.push('saldo '+fmtBs(Number(a.saldo)||0)+' → '+fmtBs(Number(b.saldo)||0));
+  if(String(a.fecha||'')!==String(b.fecha||'') || String(a.turno||'')!==String(b.turno||'')) d.push('entrega '+(a.fecha?fmtFecha(a.fecha):'—')+' '+(a.turno||'')+' → '+(b.fecha?fmtFecha(b.fecha):'—')+' '+(b.turno||''));
+  if(!!a.entregado!==!!b.entregado) d.push(b.entregado?'ahora figura ENTREGADA':'ya no figura entregada');
+  if(!d.length && String(a.metodoPago||'')!==String(b.metodoPago||'')) d.push('cambió el historial de pagos (recibo o imagen)');
+  if(!d.length) d.push('otra persona la guardó después');
+  return d.join(' · ');
+}
 function apiGeocode(links){ return apiPost({action:'geocode', links:links}); }
 function apiFoto(id, cliente, dataUrl){ return apiPost({action:'foto', id:id, cliente:cliente, dataUrl:dataUrl}); }
 /* 🗑️ ¿SIGUE ALGUIEN USANDO ESTA IMAGEN? (§4fy)
@@ -3143,15 +3203,19 @@ function cuadreVendedor(){ return ((document.getElementById('cua-vendedor')||{})
 function cuadreEsDe(p, v){ return !v || mismoVendedor(p&&p.vendedor, v); }
 /* Con qué fecha cuenta Contabilidad una venta:
    - INGRESO: cuándo se cargó la venta (lo de siempre, y lo que se factura).
-   - ENTREGA: cuándo salió la mercadería. Sirve para el caso de la venta cargada a fin de
-     mes que se entrega al mes siguiente: con "Ingreso" cae en el mes viejo, con "Entrega"
-     aparece en el mes en que efectivamente salió.
+   - ENTREGA: la fecha AGENDADA de entrega (`p.fecha`). Sirve para el caso de la venta cargada
+     a fin de mes que se entrega al mes siguiente: con "Ingreso" cae en el mes viejo, con
+     "Entrega" en el mes de la entrega. ⚠️ Es la AGENDADA, no el día en que salió de verdad
+     (ese dato no existe): logística la reescribe al reprogramar, y la venta se muda de mes
+     aunque no se haya entregado nada (§4fs–§4fw, informe del 23/09). Por eso el botón dice
+     «Entrega agendada». Contar solo lo entregado, o guardar el día real, lo decide el dueño.
    Las ventas de tienda no tienen fecha de entrega: para ellas las dos son la misma. */
 function contaBase(){ return segVal('cta-base')==='entrega' ? 'entrega' : 'ingreso'; }
 function contaFechaBase(p){ return contaBase()==='entrega' ? (fechaSalida(p)||contaFecha(p)) : contaFecha(p); }
 function setContaBase(){
   var l=document.getElementById('cta-base-lbl');
-  if(l) l.textContent = contaBase()==='entrega' ? 'fecha de ENTREGA' : 'fecha de ingreso';
+  // §4fz: es la fecha AGENDADA (p.fecha), no la del día que salió: si se reprograma, la venta se muda de mes.
+  if(l) l.textContent = contaBase()==='entrega' ? 'fecha de entrega AGENDADA (si se reprograma, cambia)' : 'fecha de ingreso';
   renderConta();
 }
 function contaLista(){
@@ -3600,7 +3664,7 @@ function renderConta(){
   }
   tbl.style.display=list.length?'table':'none';
   if(!list.length){ tbl.innerHTML=''; return; }
-  var head='<thead><tr><th>Ingresado</th><th>Entregado el</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Entrega</th><th>Celular</th>'+
+  var head='<thead><tr><th>Ingresado</th><th>Entrega agendada</th><th>N° Nota</th><th>Vendedor</th><th>Cliente</th><th>Entrega</th><th>Celular</th>'+
            '<th>Productos</th><th>Facturar a</th><th>NIT</th><th>Pago</th><th>Pagos recibidos</th><th>Recargo entrega</th><th>Observaciones</th></tr></thead>';
   tbl.innerHTML=head+'<tbody>'+list.map(function(p){
     var reg=regEnSistema(p);
@@ -3887,14 +3951,50 @@ function loadArqueoMirror(){
   try{ ARQUEO=JSON.parse(localStorage.getItem(CUADRE_LS)||'{}')||{}; }catch(e){ ARQUEO={}; }
   if(typeof ARQUEO!=='object'||!ARQUEO) ARQUEO={};
 }
+function filaArqueo(){
+  var fila=filaSistema(ARQUEO_ID, '🧮 ARQUEO DEL CUADRE — fila del sistema, NO BORRAR', textoArqueo(ARQUEO));
+  fila.rev=sisRev(ARQUEO_ID);                  // §4fz: con el sello de la versión sobre la que se trabajó
+  return fila;
+}
 function guardarArqueo(){
   saveArqueoMirror();
-  var fila=filaSistema(ARQUEO_ID, '🧮 ARQUEO DEL CUADRE — fila del sistema, NO BORRAR', textoArqueo(ARQUEO));
+  var fila=filaArqueo();
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
   renderCuadre();
 }
 function cuadreArqueoTodo(){ return ARQUEO; }
+/* 🧮 EL CIERRE POR FORMA DE PAGO, CALCULADO UNA SOLA VEZ (§4fz). La pantalla, el texto de
+   WhatsApp y el Excel lo armaban cada uno por su cuenta a partir de las formas de pago que
+   tuvieron PAGOS, y solo la tarjeta de arriba sabía de los arqueos SIN ningún pago detrás
+   (§4fo): se contaron Bs 900 en efectivo, después esos cobros se corrigieron a QR, y la
+   diferencia entraba en la tarjeta pero ni la tabla, ni el texto, ni el Excel mostraban la
+   fila del efectivo — y sin ningún pago en el período, el Excel ni se bajaba (informe del
+   23/09). Ahora las tres salidas leen de acá. Con filtro por vendedora no hay arqueo (§4ew). */
+function cuadreCierre(pagos){
+  pagos=pagos||cuadrePagos();
+  var formas=cuadrePorForma(pagos), arqueoOn=!cuadreVendedor();
+  var filas=formas.map(function(f){
+    var a=arqueoOn?cuadreArqueo(f.forma):null;
+    return { forma:f.forma, n:f.n, monto:f.monto, efectivo:f.efectivo, sinMetodo:f.sinMetodo, arqueo:a, dif:(a==null)?null:r2(a-f.monto), huerfano:false };
+  });
+  if(arqueoOn){
+    var pref=cuadreArqueoKey(''), hay={}, arq=cuadreArqueoTodo();
+    formas.forEach(function(f){ hay[f.forma]=1; });
+    Object.keys(arq).forEach(function(k){
+      if(k.indexOf(pref)!==0) return;
+      var fm=k.slice(pref.length); if(!fm || hay[fm]) return;
+      if(arq[k]==='' || arq[k]==null) return;
+      var a=Number(arq[k]); if(!isFinite(a)) return;
+      filas.push({ forma:fm, n:0, monto:0, efectivo:fm.indexOf('Efectivo')===0, sinMetodo:false, arqueo:a, dif:r2(a), huerfano:true });
+    });
+  }
+  var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
+  var anotadas=0, difTotal=0;
+  filas.forEach(function(f){ if(f.arqueo!=null){ anotadas++; difTotal=r2(difTotal+f.dif); } });
+  return { filas:filas, formas:formas, total:total, anotadas:anotadas, difTotal:difTotal, arqueoOn:arqueoOn,
+           huerfanos:filas.filter(function(f){ return f.huerfano; }) };
+}
 function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
 function cuadreArqueo(forma){ var v=ARQUEO[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
 function setCuadreArqueo(forma, valor){
@@ -4274,25 +4374,14 @@ function renderCuadre(){
      El arqueo solo tiene sentido con "Todos": la caja y el extracto son UNO SOLO,
      no uno por vendedora. Filtrado se muestran los números pero no se deja anotar,
      porque el valor guardado es global y se pisaría con un total parcial. */
-  var vendSel=cuadreVendedor(), arqueoOn=!vendSel;
-  var difTotal=0, anotadas=0, arqHuerfanos=[];
-  if(arqueoOn){
-    formas.forEach(function(f){ var a=cuadreArqueo(f.forma); if(a!=null){ anotadas++; difTotal=r2(difTotal+(a-f.monto)); } });
-    /* ⚠️ UN ARQUEO SIN PAGOS NO SE PIERDE EN SILENCIO (§4fo). `formas` sale de los pagos del
-       período: si se contó la caja en Efectivo y después esos cobros se corrigieron a QR —o se
-       les sacó la fecha, o se borró la venta—, la fila de Efectivo desaparecía y los Bs 900
-       contados a mano quedaban huérfanos. No se comparaban contra nada, no entraban en la
-       diferencia, y el panel llegaba a decir «El cuadre cierra ✅» con plata contada sin
-       conciliar. Un arqueo sin ningún pago que lo respalde es una diferencia ENTERA. */
-    var _pref=cuadreArqueoKey(''), _hayForma={}, _arq=cuadreArqueoTodo();
-    formas.forEach(function(f){ _hayForma[f.forma]=1; });
-    Object.keys(_arq).forEach(function(k){
-      if(k.indexOf(_pref)!==0) return;
-      var _f=k.slice(_pref.length); if(!_f || _hayForma[_f]) return;
-      var a=Number(_arq[k]); if(!isFinite(a)) return;
-      anotadas++; arqHuerfanos.push({forma:_f, monto:a}); difTotal=r2(difTotal+a);
-    });
-  }
+  var vendSel=cuadreVendedor();
+  /* ⚠️ UN ARQUEO SIN PAGOS NO SE PIERDE EN SILENCIO (§4fo). `formas` sale de los pagos del
+     período: si se contó la caja en Efectivo y después esos cobros se corrigieron a QR —o se
+     les sacó la fecha, o se borró la venta—, la fila de Efectivo desaparecía y los Bs 900
+     contados a mano quedaban huérfanos. Un arqueo sin ningún pago que lo respalde es una
+     diferencia ENTERA. Desde §4fz lo calcula `cuadreCierre`, el mismo que usan el texto y el Excel. */
+  var CIE=cuadreCierre(pagos), arqueoOn=CIE.arqueoOn, difTotal=CIE.difTotal, anotadas=CIE.anotadas;
+  var arqHuerfanos=CIE.huerfanos.map(function(h){ return { forma:h.forma, monto:h.arqueo }; });
 
   /* ---- efectivo retirado y lo que todavía está en la mano ----
      El efectivo es el único que se puede perder de vista: entra a la mano de la vendedora
@@ -4356,7 +4445,7 @@ function renderCuadre(){
 
   // ---- cierre por forma de pago (lo que se tilda contra caja y extracto)
   var cie=document.getElementById('cua-cierre');
-  if(!formas.length){
+  if(!CIE.filas.length){
     cie.innerHTML='<div class="cua-box"><div class="cua-t">🧮 Cierre por forma de pago</div>'+
       '<div class="empty" style="padding:18px 0">No entró plata en '+esc(cuadrePeriodoTxt())+'.</div></div>';
   } else {
@@ -4365,9 +4454,10 @@ function renderCuadre(){
       '<div class="tw"><table class="mini"><thead><tr>'+
         '<th>Forma de pago</th><th style="text-align:right">Pagos</th><th style="text-align:right">Según el panel</th>'+
         '<th style="text-align:right">Contado / extracto</th><th style="text-align:right">Diferencia</th></tr></thead><tbody>'+
-      formas.map(function(f){
-        var a=arqueoOn?cuadreArqueo(f.forma):null, dif=(a==null)?null:r2(a-f.monto);
-        return '<tr><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b></td>'+
+      CIE.filas.map(function(f){
+        var a=f.arqueo, dif=f.dif;
+        return '<tr'+(f.huerfano?' style="background:var(--amber-bg,#fff7e6)"':'')+'><td><b>'+(f.efectivo?'💵 ':(f.forma.indexOf('QR')===0?'📱 ':(f.forma.indexOf('Tarjeta')===0?'💳 ':'❔ ')))+esc(f.forma)+'</b>'+
+          (f.huerfano?'<div style="font-size:.7rem;color:#7c4b00">⚠️ contado a mano, sin ningún pago de esta forma en el período</div>':'')+'</td>'+
           '<td style="text-align:right">'+f.n+'</td>'+
           '<td style="text-align:right"><b>'+fmtBs(f.monto)+'</b></td>'+
           '<td style="text-align:right">'+(arqueoOn
@@ -4561,18 +4651,21 @@ function cobrarFlete(id){
 function verRetiro(id){ abrirRetiros(); editarRetiro(id); }
 /* El cuadre listo para pegar en WhatsApp. */
 function cuadreTexto(){
-  var pagos=cuadrePagos(), formas=cuadrePorForma(pagos), total=0;
-  pagos.forEach(function(c){ total=r2(total+c.monto); });
-  var v=cuadreVendedor(), arqueoOn=!v;     // el arqueo se hace con Todos (§4ew): con filtro no se compara
+  var pagos=cuadrePagos(), CIE=cuadreCierre(pagos), total=CIE.total;
+  var v=cuadreVendedor(), arqueoOn=CIE.arqueoOn;     // el arqueo se hace con Todos (§4ew): con filtro no se compara
   var L=['🧮 *CUADRE — '+cuadrePeriodoTxt().toUpperCase()+'*'+(v?('\n👤 '+v):''),''];
-  if(!formas.length){ L.push('No entró plata en el período.'); }
+  if(!CIE.filas.length){ L.push('No entró plata en el período.'); }
   else {
-    formas.forEach(function(f){
-      var a=arqueoOn?cuadreArqueo(f.forma):null, dif=(a==null)?null:r2(a-f.monto);
+    if(!pagos.length) L.push('No entró plata en el período.');
+    CIE.filas.forEach(function(f){
+      var dif=f.dif;
       L.push('• '+f.forma+': *'+fmtBs(f.monto)+'*  ('+f.n+' pago'+(f.n===1?'':'s')+')'+
-             (dif==null?'':(dif===0?'  ✅ cuadra':('  ⚠️ '+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif))))));
+             (f.huerfano?(' — ⚠️ se contaron '+fmtBs(f.arqueo)+' a mano sin ningún pago de esta forma'):
+             (dif==null?'':(dif===0?'  ✅ cuadra':('  ⚠️ '+(dif>0?'sobra ':'falta ')+fmtBs(Math.abs(dif)))))));
     });
     L.push('', '*TOTAL: '+fmtBs(total)+'*');
+    // §4fz: la diferencia TOTAL, como la dice la pantalla (con los arqueos sin pagos adentro).
+    if(CIE.anotadas) L.push(CIE.difTotal===0 ? '✅ El cuadre cierra' : ('⚠️ '+(CIE.difTotal>0?'Sobra ':'Falta ')+fmtBs(Math.abs(CIE.difTotal))+' en total'));
     if(!arqueoOn) L.push('(solo lo de '+v+' — el arqueo contra la caja se hace con Todos)');
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
@@ -4596,8 +4689,9 @@ function cuadreTexto(){
 }
 function copiarCuadre(){ copyText(cuadreTexto()); }
 function exportCuadre(){
-  var pagos=cuadrePagos();
-  if(!pagos.length){ toast('No hay pagos para exportar en este período','err'); return; }
+  var pagos=cuadrePagos(), CIE=cuadreCierre(pagos);
+  // §4fz: un arqueo contado sin ningún pago detrás también es algo para bajar (la diferencia ENTERA).
+  if(!pagos.length && !CIE.huerfanos.length){ toast('No hay pagos para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
   var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE','EFECTIVO EN MANO DE'].map(function(t){return {v:t,s:H};})];
   pagos.forEach(function(c){
@@ -4606,12 +4700,15 @@ function exportCuadre(){
                compsArr(c.comps!=null?c.comps:c.comp).map(fotoVer).join('  |  '),
                (c.metodo==='Efectivo'?pagoRecibio(c, c.p):'')]);
   });
-  var formas=cuadrePorForma(pagos), arqueoOn=!cuadreVendedor();   // con filtro por vendedora no se compara con la caja (§4ew)
+  var arqueoOn=CIE.arqueoOn;   // con filtro por vendedora no se compara con la caja (§4ew)
   rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO'+(arqueoOn?'':' (solo '+cuadreVendedor()+' — el arqueo se hace con Todos)'),s:H}]);
-  formas.forEach(function(f){
-    var a=arqueoOn?cuadreArqueo(f.forma):null;
-    rows.push([f.forma, '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:r2(a-f.monto),t:'n',s:fc})]);
+  /* §4fz: las mismas filas que la pantalla, con el arqueo que quedó SIN pagos (§4fo) y la
+     diferencia total. Antes el Excel recorría solo las formas con pagos y ese arqueo no salía. */
+  CIE.filas.forEach(function(f){
+    var a=f.arqueo;
+    rows.push([f.forma+(f.huerfano?' — contado a mano, SIN pagos en el período':''), '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:f.dif,t:'n',s:fc})]);
   });
+  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)', '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
   var E=cuadreEfectivo(), efe=E.filas;
   if(efe.length || E.fuera.length){
@@ -4639,7 +4736,7 @@ function exportCuadre(){
     cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20}],
     matrix:rows}]);
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+' ✓','ok');
+  toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+(CIE.huerfanos.length?(' + '+CIE.huerfanos.length+' arqueo'+(CIE.huerfanos.length===1?'':'s')+' sin pagos'):'')+' ✓','ok');
 }
 /* ============================================================================
    💵 RETIROS DE EFECTIVO — cuánto efectivo se le recogió a cada vendedor
@@ -4749,8 +4846,14 @@ function borrarRetiro(id){
      con {ok:false} o sin red el retiro volvía con la próxima lista y restaba de nuevo en el
      cuadre (y el `reject` sin catch salía como error JS). */
   if(CONNECTED){
-    apiDelete(id).then(function(res){
+    // §4fz: con el sello con el que se vio: si otra persona lo corrigió, el servidor nuevo no lo borra.
+    apiDelete(id, (f.rev!=null)?f.rev:0).then(function(res){
       if(res&&res.ok){ r.fotos.forEach(function(fid){ apiBorrarFoto(fid).then(function(){},function(){}); }); toast('Retiro borrado','ok'); }
+      else if(res&&res.error==='conflicto'&&res.pedido){
+        RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(id); }).concat([res.pedido]); saveRetirosMirror();
+        renderRetiros(); renderCuadreSiActivo();
+        toast('⚠️ NO se borró: ese retiro lo corrigió otra persona hace un momento. Quedó en pantalla con los datos nuevos — revisalo y, si igual hay que borrarlo, volvé a intentar.','err',12000);
+      }
       else toast('No se pudo borrar el retiro en el servidor ('+((res&&res.error)||'sin respuesta')+'): va a reaparecer al actualizar. Probá de nuevo.','err',8000);
     }, function(){ toast('Sin conexión: el retiro puede reaparecer al actualizar. Probá de nuevo con señal.','err',8000); });
   } else toast('Sin conexión: el retiro se sacó de esta pantalla, pero sigue en la planilla.','err',8000);
@@ -5550,9 +5653,19 @@ function ctaGuardarPago(id, i, igual){
        Sin esto el objetivo quedaba congelado en 0 y la venta pasaba a saldo −1.500 con un
        «cobro de más» falso en la ficha y en el Cuadre (§4eu). */
     var objetivo=((Number(c.monto)||0)>0.01) ? objetivoCobro(p) : r2(objetivoCobro(p)+monto);
+    /* ⚠️ ¿ERA —o PASA A SER— EL 2° MÉTODO DEL ADELANTO (pago mixto, §4ej)? `p.acuenta` es TODO
+       el adelanto (anticipo + ese renglón), y solo la rama del anticipo lo recalculaba: corregir
+       el QR de un mixto de 500 a 700 bajaba bien el saldo (1.000 → 800) pero dejaba «A cuenta»
+       en 2.000 en vez de 2.200 (§4fz, informe del 23/09). Se mira antes y después del cambio con
+       la misma regla que `mixtoDe` —mismo día y mismo recibo que el anticipo—, y se respeta la
+       venta cargada «SÍ, pagado», que lleva el adelanto en 0 a propósito (§4cb). */
+    var _antX=anticipoDe(p), _acuFija=(p.pagado && !((Number(p.acuenta)||0)>0.01));
+    var _mxAntes=mixtoEn(_antX, arr);
     arr[idx].fecha=f; arr[idx].monto=monto; arr[idx].nota=nota;
     arr[idx].metodo=CTA_EDIT_M; arr[idx].banco=banco; arr[idx].recibio=recibio;
     delete arr[idx].sinMonto;   // §4fg: corregirle el monto es volverlo un pago de verdad
+    var _mxDesp=mixtoEn(_antX, arr);
+    if(_antX && (_mxAntes || _mxDesp) && !_acuFija) p.acuenta=r2((Number(_antX.monto)||0) + (_mxDesp?(Number(_mxDesp.monto)||0):0));
     aplicarCobros(p, arr, objetivo);
   }
   CTA_EDIT_I=-1; CTA_EDIT_V=null;
@@ -6519,9 +6632,12 @@ function quitarCompForm2(i){ var a=compsArr(FORM_COMPS2); if(i==null) a=[]; else
 function compRepintar(){ if(COMP_DESTINO===2) pintarMixto(); else renderCompForm(true); }
 /* ¿La venta ya tiene un pago mixto? Es el cobro del MISMO día y el MISMO recibo que el
    anticipo. Sirve para volver a mostrarlo al editar. */
-function mixtoDe(p){
-  var a=anticipoDe(p); if(!a || !a.fecha) return null;
-  var cs=cobrosDe(p).filter(function(c){ return !esEnvio(c) && c.fecha===a.fecha && limpiaNota(c.nota)===limpiaNota(a.nota) && (Number(c.monto)||0)>0; });
+function mixtoDe(p){ return mixtoEn(anticipoDe(p), cobrosDe(p)); }
+/* La misma regla sobre una lista de cobros cualquiera (§4fz): la usa quien está por
+   reescribir los cobros y necesita saber si el renglón que toca es parte del adelanto. */
+function mixtoEn(a, cobros){
+  if(!a || !a.fecha) return null;
+  var cs=(cobros||[]).filter(function(c){ return c && !esEnvio(c) && c.fecha===a.fecha && limpiaNota(c.nota)===limpiaNota(a.nota) && (Number(c.monto)||0)>0; });
   return cs.length===1 ? cs[0] : null;
 }
 /* ¿Hay que frenar el guardado por falta de imagen?
@@ -7852,18 +7968,38 @@ function deletePedido(id){
   realDelete(id);
 }
 function realDelete(id){
+  var loc=findById(id), copia=loc?JSON.parse(JSON.stringify(loc)):null;
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
   // Refrescar TODO: si no, el pedido borrado seguía apareciendo en la lista de carga,
   // en Mis pedidos, en el panel del chofer, en el mapa y —desde que se puede borrar
   // desde ahí— en la tabla de Contabilidad y en el Cuadre.
-  saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
-  renderContaSiActiva(); renderCuadreSiActivo();
-  if(CONNECTED){
-    apiDelete(id).then(function(res){ if(!(res&&res.ok)) toast('No se pudo borrar del servidor. Actualizá.','err'); },
-                       function(){ toast('Sin conexión: se borró local (puede reaparecer al actualizar).','err'); });
-  }
-  toast('Pedido eliminado','ok');
+  var repintar=function(){
+    saveMirror(); updateStats(); renderAdmin(); refreshCarga(); renderMis(); renderChoferSiActivo(); mapaRefreshSiActivo(); renderEntregasSiActivo();
+    renderContaSiActiva(); renderCuadreSiActivo();
+  };
+  repintar();
+  if(!CONNECTED){ toast('Pedido eliminado','ok'); return Promise.resolve({ ok:false, local:true }); }
+  toast('Eliminando… (primero se mira que nadie la haya cambiado)','ok');
+  /* §4fz: se borra en el servidor SOLO si la fila sigue siendo la que se vio. Si no, vuelve
+     a la pantalla con lo nuevo y se dice qué cambió: la persona decide de nuevo. */
+  var volver=function(rec){ if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
+  return borrarEnServidor(copia||{id:id}).then(function(r){
+    if(r.ok){ toast('Pedido eliminado ✓','ok'); return r; }
+    if(r.conflicto){
+      volver(r.actual);
+      toast('⚠️ NO se borró: '+((r.actual&&r.actual.cliente)||(copia&&copia.cliente)||'esta venta')+' cambió desde que la abriste — '+queCambioTxt(copia, r.actual)+
+            '. Quedó en pantalla con los datos nuevos: revisala y, si igual hay que borrarla, volvé a tocar Eliminar.','err',15000);
+      return r;
+    }
+    volver(copia);
+    toast('No se pudo borrar en la planilla ('+r.error+'): la venta sigue ahí. Probá de nuevo.','err',9000);
+    return r;
+  }, function(e){
+    volver(copia);
+    toast('No se borró de la planilla ('+motivoCorto(e)+'): la venta sigue ahí. Probá de nuevo con señal.','err',9000);
+    return { ok:false, error:'red' };
+  });
 }
 
 /* ============================================================================
@@ -8892,9 +9028,14 @@ function borrEsLaMisma(idBorr, idPed){
   }
   setKlead(p, leadDeBorrador(b));
   persistPedido(p);
+  var _copiaB=JSON.parse(JSON.stringify(b));
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
   saveBorrMirror(); renderBorrSiActivo();
-  if(CONNECTED) apiDelete(idBorr).then(function(){},function(){});
+  // §4fz: el borrador se borra solo si sigue siendo el que se vio (otra lo pudo haber completado).
+  if(CONNECTED) borrarEnServidor(_copiaB).then(function(r){
+    if(r && r.conflicto){ toast('⚠️ El borrador de Kommo no se borró: '+queCambioTxt(_copiaB, r.actual)+'. Revisá que no quede la venta dos veces.','err',10000);
+      try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} }
+  }, function(){});
   toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
 }
 
@@ -8929,7 +9070,8 @@ function leerCierresDeLista(lista){
     }
     else resto.push(p);
   });
-  if(stk && !filaSistemaEnVuelo(STOCK_ID)) STOCK=leerStock(stk);     // en vuelo, manda la memoria (§4ev)
+  if(stk && !filaSistemaEnVuelo(STOCK_ID)){ STOCK=leerStock(stk); sisBaseAnotar(STOCK_ID, stk); }     // en vuelo, manda la memoria (§4ev); la base de la junta, §4fz
+  else if(stk && sisMasNueva(STOCK_ID, stk)) STOCK=sisJuntarDeLista(STOCK_ID, stk);                  // §4fz: otro guardó DESPUÉS que nosotros
   if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
@@ -8963,7 +9105,8 @@ function leerCierresDeLista(lista){
   /* 🧮 El arqueo también (§4ev, §4er MEDIA): contabilidad anotaba Efectivo=600, un `list` en
      vuelo traía la fila vieja (1000), la pantalla decía «sobra Bs 400» y la siguiente
      anotación mandaba el 1000 al servidor: el 600 se deshacía con su propia tecla. */
-  if(arq && !filaSistemaEnVuelo(ARQUEO_ID)){ ARQUEO=parseArqueo(arq.observaciones); saveArqueoMirror(); renderCuadreSiActivo(); }
+  if(arq && !filaSistemaEnVuelo(ARQUEO_ID)){ ARQUEO=parseArqueo(arq.observaciones); sisBaseAnotar(ARQUEO_ID, arq); saveArqueoMirror(); renderCuadreSiActivo(); }
+  else if(arq && sisMasNueva(ARQUEO_ID, arq)){ ARQUEO=sisJuntarDeLista(ARQUEO_ID, arq); saveArqueoMirror(); renderCuadreSiActivo(); }   // §4fz
   return resto;
 }
 function saveCierresMirror(){ try{ localStorage.setItem(LS_CIERRES, JSON.stringify(DIAS_CERRADOS)); }catch(e){} }
@@ -10606,11 +10749,23 @@ function completarBorrador(id){
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;
   if(!confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
+  var copia=JSON.parse(JSON.stringify(rec));
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
   saveBorrMirror(); renderBorrSiActivo();
   if(CONNECTED){
-    apiDelete(id).then(function(res){ if(!(res&&res.ok)) toast('No se pudo descartar en el servidor. Actualizá.','err'); },
-                       function(){ toast('Sin conexión: puede reaparecer al actualizar.','err'); });
+    /* §4fz: un borrador que otra vendedora YA completó es un pedido con el MISMO id (§4es):
+       descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
+       descartada en Kommo. Se mira antes, y el borrado va con el sello. */
+    borrarEnServidor(copia).then(function(r){
+      if(r.ok) return;
+      if(r.conflicto){
+        toast('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
+        try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){}
+        return;
+      }
+      BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo();
+      toast('No se pudo descartar en el servidor ('+r.error+'): sigue en la bandeja. Probá de nuevo.','err');
+    }, function(){ toast('Sin conexión: puede reaparecer al actualizar.','err'); });
   }
   toast('Borrador descartado','ok');
 }
@@ -13191,7 +13346,7 @@ function stockMigrar(d){
   (d.p||[]).forEach(function(x){ x.k=cl(x.k); });
   return d;
 }
-function guardarStock(){
+function filaStock(){
   stockOlvidarIndice();
   /* Las entradas anteriores al último conteo ya están DENTRO del conteo: dejarlas las
      sumaría dos veces. Se podan al guardar, que es cuando se sabe cuál es el conteo. */
@@ -13202,8 +13357,184 @@ function guardarStock(){
   STOCK.a=STOCK.a||{}; STOCK.g=STOCK.g||{}; STOCK.al=STOCK.al||{};
   STOCK.h=(STOCK.h||[]).slice(0,STOCK_HIST);   // el historial guarda el RESUMEN, no los items
   var fila=filaSistema(STOCK_ID, '📦 STOCK DEL DEPÓSITO — fila del sistema, NO BORRAR', JSON.stringify(STOCK));
+  fila.rev=sisRev(STOCK_ID);                   // §4fz: con el sello de la versión sobre la que se trabajó
+  return fila;
+}
+function guardarStock(){
+  var fila=filaStock();
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
+}
+
+/* ============================================================================
+   🤝 STOCK Y ARQUEO: DOS DISPOSITIVOS NO SE PISAN (§4fz, informe del 23/09)
+   `__stock__` y `__arqueo_cuadre__` son UNA fila cada una y cada guardado la reescribe
+   entera. El servidor no les pedía sello («las maneja una sola persona»), pero el stock lo
+   tocan logística, el dueño y quien suba el Excel: A anotaba una entrada de 5, B —con su
+   copia de antes— anotaba un pedido a fábrica de 8, los dos recibían ✓ y la entrada de A
+   desaparecía. Ahora:
+     · el panel recuerda la versión del SERVIDOR sobre la que hizo sus cambios (`SIS_BASE`) y
+       guarda con su sello;
+     · el servidor (`.gs` 2026-09-23-a) rechaza con `conflicto` si la fila cambió y devuelve
+       la actual;
+     · el panel JUNTA las dos (lo que cambió acá desde la base + lo que cambió allá) y vuelve a
+       guardar con el sello nuevo. No pregunta: son anotaciones distintas, van las dos.
+   Reglas de la junta, campo por campo (`stockFusionar`):
+     · mapas (uniones `a`, qué es cada almacén `al`, el arqueo entero): gana el lado que tocó
+       esa clave;
+     · listas sin id (entradas `e`, historial `h`): se suma lo que agregó cada lado y se saca lo
+       que sacó cada lado — CONTANDO repetidos: dos entradas iguales el mismo día son dos;
+     · pedidos a fábrica y recogidas `p` (con id): gana el lado que tocó ese pedido;
+     · conteos (`c` y cada almacén de `g`): son la FOTO de un corte. Si los dos lados subieron
+       uno, gana el más nuevo; si es el MISMO corte y los dos restaron (dos recogidas
+       recibidas), se restan las dos.
+   ⚠️ Sin base conocida (se recargó la página con el guardado en la cola) no se sabe qué sacó
+   cada lado: se UNE, sin contar dos veces lo que ya estaba en los dos.
+   ========================================================================== */
+var SIS_BASE={};                  // id → { rev, obs }: la versión del servidor sobre la que se trabaja
+var SIS_FUSION_N={};              // cuántas juntas seguidas lleva cada fila (tope 3)
+function sisBaseAnotar(id, fila){ if(!SIS_BASE) SIS_BASE={}; if(fila) SIS_BASE[String(id)]={ rev:Number(fila.rev)||0, obs:String(fila.observaciones||'') }; }
+function sisRev(id){ var b=SIS_BASE && SIS_BASE[String(id)]; return b ? b.rev : 0; }
+function fusJ(x){ return JSON.stringify(x==null?null:x); }
+function fusTiene(o,k){ return !!o && Object.prototype.hasOwnProperty.call(o,k); }
+function fusClaves(){
+  var o={};
+  for(var i=0;i<arguments.length;i++){ var m=arguments[i]; if(m && typeof m==='object') Object.keys(m).forEach(function(k){ o[k]=1; }); }
+  return Object.keys(o);
+}
+/* Un mapa: por clave, gana el lado que la tocó (primero este dispositivo). */
+function fusMapa(b, m, s, sinBase){
+  b=b||{}; m=m||{}; s=s||{};
+  var out={};
+  fusClaves(b, m, s).forEach(function(k){
+    var toco = sinBase ? fusTiene(m,k) : (fusJ(fusTiene(m,k)?m[k]:null)!==fusJ(fusTiene(b,k)?b[k]:null));
+    if(toco){ if(fusTiene(m,k)) out[k]=m[k]; }
+    else if(fusTiene(s,k)) out[k]=s[k];
+  });
+  return out;
+}
+/* Una lista SIN id: se cuenta cada renglón (dos entradas iguales el mismo día son dos). */
+function fusLista(b, m, s, clave, sinBase){
+  var cuenta=function(a){ var c={}, o={}; (a||[]).forEach(function(x){ var k=clave(x); c[k]=(c[k]||0)+1; if(!o[k]) o[k]=x; }); return { c:c, o:o }; };
+  var B=cuenta(b), M=cuenta(m), S=cuenta(s), out=[], visto={};
+  (s||[]).concat(m||[]).forEach(function(x){
+    var k=clave(x); if(visto[k]) return; visto[k]=1;
+    var nb=B.c[k]||0, nm=M.c[k]||0, ns=S.c[k]||0;
+    var n = sinBase ? Math.max(nm, ns) : Math.max(0, ns+(nm-nb));
+    var x0=M.o[k]||S.o[k];
+    for(var i=0;i<n;i++) out.push(JSON.parse(JSON.stringify(x0)));
+  });
+  return out;
+}
+/* Pedidos a fábrica y recogidas, por id: gana el lado que tocó ESE pedido. */
+function fusPorId(b, m, s, sinBase){
+  var id=function(x){ return (x && x.id!=null && x.id!=='') ? ('#'+x.id) : ('='+fusJ(x)); };
+  var mapa=function(a){ var o={}; (a||[]).forEach(function(x){ if(x) o[id(x)]=x; }); return o; };
+  var B=mapa(b), M=mapa(m), S=mapa(s), out=[], visto={};
+  (s||[]).concat(m||[]).forEach(function(x){
+    if(!x) return; var k=id(x); if(visto[k]) return; visto[k]=1;
+    var xb=B[k], xm=M[k], xs=S[k], r;
+    if(sinBase) r = xm || xs;
+    else if(fusJ(xm)===fusJ(xb)) r = xs;          // acá no se tocó: manda el servidor (aunque allá lo hayan borrado)
+    else if(fusJ(xs)===fusJ(xb)) r = xm;          // allá no se tocó: manda lo de acá (aunque acá se haya borrado)
+    else r = xm || xs;                            // los dos lo tocaron: lo de acá, que es lo último que hizo esta persona
+    if(r) out.push(r);
+  });
+  return out;
+}
+/* Un conteo es la FOTO de un corte (fecha + hora + almacén). */
+function fusIdFoto(x){ return x ? (String(x.f||'')+' '+String(x.hora||'')+' '+String(x.alm||'')) : ''; }
+function fusFoto(b, m, s, sinBase, restar){
+  if(!sinBase){
+    if(fusJ(m)===fusJ(b)) return s;               // acá no se tocó
+    if(fusJ(s)===fusJ(b)) return m;               // allá no se tocó
+    if(!m || !s) return undefined;                // uno lo borró y el otro lo cambió: se respeta el borrado
+  }
+  if(!m) return s; if(!s) return m;
+  var im=fusIdFoto(m), is=fusIdFoto(s);
+  if(im===is){
+    /* El MISMO corte cambiado de los dos lados: solo puede ser por recogidas recibidas, que
+       restan unidades del almacén de origen. Se aplican las dos restas. */
+    if(!restar || sinBase || !b || fusIdFoto(b)!==im) return m;
+    var out=JSON.parse(JSON.stringify(s)); out.u=out.u||{};
+    var bu=b.u||{}, mu=m.u||{};
+    fusClaves(bu, mu).forEach(function(k){
+      var d=(Number(mu[k])||0)-(Number(bu[k])||0);
+      if(d) out.u[k]=Math.max(0, (Number(out.u[k])||0)+d);
+    });
+    return out;
+  }
+  return (String(m.f||'')+' '+String(m.hora||'')) >= (String(s.f||'')+' '+String(s.hora||'')) ? m : s;   // gana el corte más nuevo
+}
+function stockFusionar(b, m, s){
+  var sinBase=!b; b=b||stockVacio(); m=m||stockVacio(); s=s||stockVacio();
+  var out=stockVacio();
+  out.a=fusMapa(b.a, m.a, s.a, sinBase);
+  out.al=fusMapa(b.al, m.al, s.al, sinBase);
+  out.c=fusFoto(b.c, m.c, s.c, sinBase, false) || stockVacio().c;
+  fusClaves(b.g, m.g, s.g).forEach(function(nm){
+    var r=fusFoto((b.g||{})[nm], (m.g||{})[nm], (s.g||{})[nm], sinBase, true);
+    if(r) out.g[nm]=r;
+  });
+  out.e=fusLista(b.e, m.e, s.e, fusJ, sinBase);
+  out.p=fusPorId(b.p, m.p, s.p, sinBase);
+  out.h=fusLista(b.h, m.h, s.h, function(x){ return String(x&&x.ts)+'|'+String(x&&x.alm); }, sinBase)
+        .sort(function(x,y){ return (Number(y&&y.ts)||0)-(Number(x&&x.ts)||0); }).slice(0,STOCK_HIST);
+  return stockMigrar(out);
+}
+/* Qué fila sabe juntarse y cómo. */
+var SIS_FUSION={};
+SIS_FUSION[STOCK_ID]={ nombre:'stock',
+  leer:function(obs){ return leerStock({ observaciones:obs }); },
+  actual:function(){ return STOCK; },
+  fusionar:stockFusionar,
+  poner:function(x){ STOCK=x; stockOlvidarIndice(); try{ var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock(); }catch(e){} },
+  fila:function(){ return filaStock(); } };
+SIS_FUSION[ARQUEO_ID]={ nombre:'arqueo',
+  leer:parseArqueo,
+  actual:function(){ return ARQUEO; },
+  fusionar:function(b, m, s){ return fusMapa(b, m, s, !b); },
+  poner:function(x){ ARQUEO=x; saveArqueoMirror(); renderCuadreSiActivo(); },
+  fila:function(){ return filaArqueo(); } };
+/* ⚠️ «EN VUELO» NO ES «NO MIRAR» (§4fz). Después de guardar, §4ev deja 90 s la memoria por
+   encima de lo que traiga el `list`, porque un `list` que salió ANTES del guardado vuelve con
+   la versión vieja y la borraba de la pantalla. Pero con el sello se sabe cuál es cuál: si lo
+   que trae es MÁS NUEVO que lo último que guardamos, lo guardó OTRO después, y no hay por qué
+   esperar 90 s para verlo (ni para trabajar sobre eso). Mientras haya un guardado propio en el
+   aire o en la cola, se espera: la junta la hace ese guardado cuando el servidor conteste. */
+function sisMasNueva(id, fila){
+  var b=SIS_BASE && SIS_BASE[String(id)];
+  if(!b || !fila || !((Number(fila.rev)||0)>b.rev)) return false;
+  if(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id]) return false;
+  var pend=getPending(); for(var i=0;i<pend.length;i++) if(pend[i] && String(pend[i].id)===String(id)) return false;
+  return true;
+}
+function sisJuntarDeLista(id, fila){
+  var F=SIS_FUSION[String(id)];
+  var junto=F.fusionar(F.leer(SIS_BASE[String(id)].obs), F.actual(), F.leer(fila.observaciones));
+  sisBaseAnotar(id, fila);
+  return junto;
+}
+/* El servidor dijo «conflicto» sobre una fila que se sabe juntar: se junta y se vuelve a
+   guardar con su sello. Devuelve la respuesta de ESE guardado (así quien llamó sabe si entró). */
+function sisFusionarYGuardar(rec, res, opts){
+  var id=String(rec.id), F=SIS_FUSION[id];
+  var n=(SIS_FUSION_N[id]||0)+1; SIS_FUSION_N[id]=n;
+  if(n>3){
+    SIS_FUSION_N[id]=0;
+    toast('⚠️ No se pudo juntar el '+F.nombre+' con los cambios de otra persona (tres intentos seguidos). Quedó en la cola de este dispositivo; si el aviso sigue, recargá la página.','err',12000);
+    return res;
+  }
+  var conBase=!!SIS_BASE[id];
+  var base=conBase ? F.leer(SIS_BASE[id].obs) : null;
+  var mio=conBase ? F.actual() : F.leer(rec.observaciones);   // recargada con el guardado en la cola: lo que se quería guardar
+  var suyo=F.leer(res.pedido.observaciones);
+  var junto=F.fusionar(base, mio, suyo);
+  sisBaseAnotar(id, res.pedido);                              // desde ahora se trabaja sobre la del servidor
+  F.poner(junto);
+  var fila=F.fila();                                          // lo junto, con el sello nuevo
+  if(SAVE_ULTIMO[id]) SAVE_ULTIMO[id]={ rec:fila, t:Date.now() };   // si hay otro guardado esperando, que mande lo junto
+  return apiSaveAhora(fila, opts).then(function(r){ if(r && r.ok) SIS_FUSION_N[id]=0; return r; });
 }
 
 /* ---- Un solo producto, venga de donde venga (§4co) ----

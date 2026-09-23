@@ -282,6 +282,71 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
   r = a.post(conClave({ action:'save', pedido: cierre }));
   chk('…y la segunda también, sin sello (es una fila del sistema)', r.ok===true, JSON.stringify(r).slice(0,80));
 }
+{
+  /* 🤝 §4fz — EL STOCK Y EL ARQUEO SÍ PIDEN SELLO (informe del 23/09): dos dispositivos con la
+     misma copia guardaban los dos con ✓ y el segundo borraba lo del primero. Ahora, si el
+     panel manda el sello, se compara; el panel junta y reguarda (test_concurrencia.js). */
+  const a = cargar([HDR], { PANEL_KEY: CLAVE });
+  const stk = (obs, rev) => { const o = { id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:obs }; if (rev !== undefined) o.rev = rev; return o; };
+  let r = a.post(conClave({ action:'save', pedido: stk('{"e":[]}', 0) }));
+  chk('§4fz · la fila del stock entra la primera vez (con rev 0)', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
+  const base = r.pedido.rev;
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"A","u":5}]}', base) }));                   // A: entrada de 5
+  chk('…A guarda su entrada con el sello de la versión que leyó', r.ok===true, JSON.stringify(r).slice(0,80));
+  const deA = r.pedido.rev;
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[],"p":[{"id":"q1","k":"B","u":8}]}', base) }));   // B: con la copia VIEJA
+  chk('⚠️ §4fz · B, con la copia vieja del stock: RECHAZADO (antes pisaba la entrada de A)', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,80));
+  chk('⚠️ …la entrada de A sigue en la planilla', /"u":5/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), pedido(a.ctx,a.sh,'__stock__').observaciones);
+  chk('…y el rechazo trae la fila actual, para que el panel junte las dos', !!r.pedido && r.pedido.rev===deA && /"u":5/.test(r.pedido.observaciones), JSON.stringify(r.pedido||{}).slice(0,90));
+  chk('…y NO se anota en «Rechazos»: el panel lo resuelve solo', !a.shR._datos.some(f => f[3]==='__stock__'), a.shR._datos.length+' filas');
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"A","u":5}],"p":[{"id":"q1","k":"B","u":8}]}', deA) }));
+  chk('…con el sello nuevo (lo juntado), entra', r.ok===true && /"q1"/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), JSON.stringify(r).slice(0,80));
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[]}') }));
+  chk('§4fz · un panel VIEJO (sin sello) sigue guardando el stock como antes', r.ok===true, JSON.stringify(r).slice(0,80));
+  const arq = { id:'__arqueo_cuadre__', fecha:'', cliente:'🧮 ARQUEO', observaciones:'mes|2026-09|Efectivo=900', rev:0 };
+  r = a.post(conClave({ action:'save', pedido: arq }));
+  const arqRev = r.pedido.rev;
+  arq.observaciones='mes|2026-09|QR BISA=2000'; arq.rev=0;
+  r = a.post(conClave({ action:'save', pedido: arq }));
+  chk('§4fz · el arqueo con un sello viejo también se rechaza (el panel junta)', r.ok===false && r.error==='conflicto' && r.pedido.rev===arqRev, JSON.stringify(r).slice(0,80));
+  const cierre = { id:'__dias_cerrados__', fecha:'', observaciones:'🔒 '+JUEVES, rev:1 };
+  r = a.post(conClave({ action:'save', pedido: cierre })); cierre.observaciones='🔒 '+MIERCOLES;
+  r = a.post(conClave({ action:'save', pedido: cierre }));
+  chk('…pero los días cerrados siguen reescribiéndose enteros, aunque manden sello', r.ok===true, JSON.stringify(r).slice(0,80));
+}
+{
+  /* 🗑 §4fz — BORRAR TAMBIÉN MIRA EL SELLO (informe del 23/09). Guardar lo exige desde §4ce,
+     pero borrar mandaba solo el id: A tenía abierta la venta que debía Bs 1.000, B registró
+     el pago en otra computadora, y el «Eliminar» de A —con su vista vieja— se llevaba la
+     fila con el pago adentro. */
+  const existe = (a, id) => a.sh._datos.some(f => f[0]===id);
+  const a = cargar([HDR, fila({id:'p1', cli:'JUAN', saldo:1000})], { PANEL_KEY: CLAVE });
+  const b0 = a.post(conClave({ action:'list' })).pedidos[0]; b0.chofer='ANA';
+  const vista = a.post(conClave({ action:'save', pedido:b0 })).pedido;   // la fila, sellada, como la ve A
+  const deB = JSON.parse(JSON.stringify(vista)); deB.saldo=0; deB.pagado=true;
+  const rb = a.post(conClave({ action:'save', pedido:deB }));             // B cobra
+  let r = a.post(conClave({ action:'delete', id:'p1', rev:vista.rev }));  // A confirma «Eliminar» con su vista vieja
+  chk('⚠️ §4fz · borrar con el sello VIEJO (otra persona cobró en el medio): RECHAZADO', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,100));
+  chk('⚠️ …la venta sigue en la planilla, con el pago adentro', existe(a,'p1') && pedido(a.ctx,a.sh,'p1').saldo===0 && pedido(a.ctx,a.sh,'p1').pagado===true);
+  chk('…y el rechazo trae la fila ACTUAL, para que el panel diga qué cambió', !!r.pedido && r.pedido.saldo===0 && r.pedido.rev===rb.pedido.rev, JSON.stringify(r.pedido||{}).slice(0,90));
+  const anotado = a.shR._datos.filter(f => f[1]==='delete' && f[2]==='conflicto');
+  chk('…y queda anotado en «Rechazos» con los dos sellos', anotado.length===1 && /rev enviado \d+ \/ rev hoja \d+/.test(String(anotado[0][7])), anotado.length?String(anotado[0][7]):'no se anotó');
+  r = a.post(conClave({ action:'delete', id:'p1', rev:rb.pedido.rev }));
+  chk('con el sello actual, se borra', r.ok===true && !existe(a,'p1'), JSON.stringify(r));
+}
+{
+  const existe = (a, id) => a.sh._datos.some(f => f[0]===id);
+  // Un panel VIEJO (cacheado) borra sin sello: se lo deja, como siempre. Rechazarlo lo dejaría sin poder borrar nada.
+  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
+  const l = a.post(conClave({ action:'list' })).pedidos[0]; l.chofer='ANA';
+  a.post(conClave({ action:'save', pedido:l }));                           // la fila queda sellada
+  let r = a.post(conClave({ action:'delete', id:'p1' }));
+  chk('§4fz · un borrado SIN sello (panel viejo) sigue borrando como antes', r.ok===true && !existe(a,'p1'), JSON.stringify(r));
+  // Una fila de antes, nunca sellada, se borra aunque el panel mande rev 0.
+  const a2 = cargar([HDR, fila({id:'p2'})], { PANEL_KEY: CLAVE });
+  r = a2.post(conClave({ action:'delete', id:'p2', rev:0 }));
+  chk('…y una fila de antes (nunca sellada) se borra con rev 0', r.ok===true && !existe(a2,'p2'), JSON.stringify(r));
+}
 
 // ══ 4. 🚪 MOVER PASA POR EL PORTERO ═════════════════════════════════════════
 console.log('\n── 4. Mover un pedido de fecha o turno ──');

@@ -48,6 +48,9 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
    tal cual lo recibió; si mientras tanto otra persona guardó, los sellos no coinciden y
    el guardado se rechaza en vez de pisar la fila entera (§4ce). */
 var REV_COL = HEADERS.indexOf('Revisión') + 1;
+/* Las filas del sistema que tocan VARIAS personas y el panel sabe juntar (§4fz): piden sello
+   si el panel lo manda. Las otras (días cerrados, carga) siguen reescribiéndose enteras. */
+var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
 var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
 function getSheet() {
@@ -67,7 +70,7 @@ function getSheet() {
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
    este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-20-a';   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-23-a';   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -313,7 +316,7 @@ function rechazoDetalle_(body, o) {
   var d = [];
   if (p.fecha) d.push('fecha ' + p.fecha + (p.turno ? (' ' + p.turno) : ''));
   if (p.oc) d.push('OC ' + p.oc);
-  if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
+  if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || (body && body.rev) || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
   if (o.error === 'oc_repetida' && o.otro) d.push('la tiene ' + (o.otro.cliente || 'otro pedido'));
   if (o.error === 'cupos_llenos' && o.turno) d.push('turno ' + o.turno + ' lleno');
   if (o.motivo) d.push(String(o.motivo));
@@ -393,6 +396,9 @@ function doPost(e) {
     if (o && o.ok === false && o.error && RECHAZOS_REGISTRAR[o.error]) {
       var body = {}; try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
       var action = body.action || 'save';
+      /* §4fz: el choque del stock o del arqueo lo resuelve el panel solo (junta y reguarda): no
+         es un guardado perdido y anotarlo en «Rechazos» asustaría sin motivo. */
+      if (o.error === 'conflicto' && action === 'save' && body.pedido && SISTEMA_CON_SELLO[String(body.pedido.id)]) return out;
       /* Una clave que falta en un `list` es un dispositivo que todavía no la ingresó y
          refresca cada 2 minutos: anotarlo llenaría la hoja sin decir nada nuevo. La clave
          que falta al GUARDAR sí importa: es un guardado que se quedó en una cola. */
@@ -447,7 +453,7 @@ function doPostCuerpo_(e) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'delete') return doDelete(body.id);
+    if (action === 'delete') return doDelete(body.id, body.rev);
     return doSave(body.pedido, !!body.forzar);
   } finally {
     lock.releaseLock();
@@ -902,7 +908,14 @@ function doSave(p, forzar) {
        reescriben enteras a propósito y las maneja una sola persona. */
     var revHoja = Number(viejo[REV_COL - 1]) || 0;
     var filaSistema = String(p.id).indexOf('__') === 0;
-    if (revHoja && !filaSistema && (Number(p.rev) || 0) !== revHoja) {
+    /* 🤝 EL STOCK Y EL ARQUEO SÍ PIDEN SELLO (§4fz). No los maneja una sola persona: el stock
+       lo tocan logística, el dueño y quien suba el Excel. Dos dispositivos con la misma copia
+       guardaban los dos con ✓ y el segundo borraba lo del primero (una entrada de 5 unidades
+       desaparecía). Si el panel manda el sello, se compara; en conflicto devuelve la fila
+       actual y el panel JUNTA las dos versiones y vuelve a guardar. Un panel viejo (sin sello)
+       pasa como antes: rechazarlo lo dejaría sin poder guardar el stock nunca. */
+    var selloSistema = filaSistema && SISTEMA_CON_SELLO[String(p.id)] && p.rev != null && p.rev !== '';
+    if (revHoja && (!filaSistema || selloSistema) && (Number(p.rev) || 0) !== revHoja) {
       return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
     }
   }
@@ -955,13 +968,28 @@ function doSave(p, forzar) {
   return jsonOut({ ok:true, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add') });
 }
 
-function doDelete(id) {
+function doDelete(id, rev) {
   var sh = getSheet();
   var last = sh.getLastRow();
   if (last >= 2) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) {
       if (String(ids[i][0]) === String(id)) {
+        /* 🤝 BORRAR TAMBIÉN MIRA EL SELLO (§4fz). Guardar lo exige desde §4ce, pero borrar
+           mandaba solo el id: con la venta abierta desde antes, alguien confirmaba «Eliminar» y
+           se llevaba el pago que Contabilidad acababa de registrar en otra computadora — la
+           fila que se borraba no era la que había visto (informe del 23/09). El panel manda el
+           sello con el que leyó la fila; si ya no es el de la hoja, NO se borra y se le devuelve
+           la fila actual, igual que un guardado en conflicto.
+           ⚠️ Un pedido de borrado SIN sello (un panel viejo, cacheado) se deja pasar como
+           antes: rechazarlo lo dejaría sin poder borrar nada, sin decirle por qué. */
+        if (rev != null && rev !== '') {
+          var fila = sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0];
+          var revHoja = Number(fila[REV_COL - 1]) || 0;
+          if (revHoja && (Number(rev) || 0) !== revHoja) {
+            return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(fila) });
+          }
+        }
         sh.deleteRow(i + 2); getCacheOlvidar_();
         /* 📥 Borrar una fila `kommo-<lead>` es DESCARTAR esa venta de Kommo (§4et): se anota
            el lead para que ni el repaso de 5 minutos ni el de GitHub la vuelvan a traer.
