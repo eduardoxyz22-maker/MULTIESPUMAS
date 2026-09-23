@@ -25,6 +25,7 @@ os.environ["KOMMO_TOKEN"]    = "tok_de_mentira_1234567890"
 os.environ["KOMMO_SUBDOMAIN"] = "eanez"
 os.environ["KOMMO_HOOK_KEY"] = "clave-secreta-del-webhook-xyz"
 os.environ["PANEL_URL"]      = "https://script.google.com/macros/s/SECRETO_DEL_PANEL/exec"
+os.environ["ESPERA_REINTENTO"] = "0"      # el reintento de §4fx espera 8 s en Actions; acá no
 sys.path.insert(0, "/home/user/MULTIESPUMAS")
 
 SECRETOS = {
@@ -61,11 +62,23 @@ class FalsaResp:
     def __exit__(self, *a): return False
 
 
+# §4fx: una fila de respuestas para el panel, una por llamada (si está vacía, vale RESPUESTA).
+# Un entero en la fila = ese código HTTP (el 404 del redirect de Google).
+FILA = []
+AVISOS = [0]      # cuántas veces se le avisó al panel en la corrida
+
+
 def falso_urlopen(req, timeout=None):
     url = req.full_url if hasattr(req, "full_url") else str(req)
     if "script.google.com" in url:
         ENVIADO.update(json.loads(req.data.decode()))
         ENVIADO["_url"] = url
+        AVISOS[0] += 1
+        if FILA:
+            r = FILA.pop(0)
+            if isinstance(r, int):
+                raise urllib.error.HTTPError(url, r, "Not Found", {}, None)
+            return FalsaResp(r)
         return FalsaResp(dict(RESPUESTA))
     PEDIDAS.append(url)
     return FalsaResp(LEADS)
@@ -166,8 +179,35 @@ chk("…y ese mensaje tampoco filtra la dirección del panel ni la clave",
 
 RESPUESTA.clear()
 RESPUESTA.update({"ok": False, "error": "busy"})
+AVISOS[0] = 0
 s4, c4 = correr()
 chk("si el servidor contesta busy, la corrida falla a la vista (como antes)", bool(c4) and "busy" in str(c4), str(c4)[:100])
+chk("…y un busy NO se reintenta (no es un tropiezo de Google)", AVISOS[0] == 1, AVISOS[0])
+
+# 5) §4fx: Google cambia el aviso por una LECTURA (contesta `doGet`: la planilla entera)
+LECTURA = {"ok": True, "version": "2026-09-20-a",
+           "pedidos": [{"id": "p1", "cliente": SECRETOS["nombre"], "celular": SECRETOS["telefono"],
+                        "direccion": SECRETOS["direccion"], "observaciones": SECRETOS["nota"]}]}
+BUENA = {"ok": True, "version": "2026-09-20-a", "origen": "repaso", "diferido": True, "encolados": 2, "cola": 2,
+         "creados": 0, "ids": [], "ultimoHook": "2026-09-23T12:00:00.000Z", "ultimoRepaso": ""}
+RESPUESTA.clear(); RESPUESTA.update(BUENA)
+FILA[:] = [dict(LECTURA), dict(BUENA)]; AVISOS[0] = 0
+s5, c5 = correr()
+chk("⚠️ si Google contesta la LECTURA, se reintenta una vez y la corrida termina bien",
+    c5 == 0 and AVISOS[0] == 2 and "encoló 2 ids" in s5, f"avisos={AVISOS[0]} · {s5[-200:]}")
+chk("…y dice qué pasó, sin echarle la culpa a la clave ni al script",
+    "cambió el aviso por una lectura" in s5, s5[-260:])
+FILA[:] = [dict(LECTURA), dict(LECTURA)]; AVISOS[0] = 0
+s6, c6 = correr()
+chk("⚠️ si Google insiste, la corrida falla con el motivo VERDADERO (no «otra implementación»)",
+    bool(c6) and "LECTURA dos veces" in str(c6) and "otra implementación" not in str(c6) and AVISOS[0] == 2, str(c6)[:160])
+for k, v in SECRETOS.items():
+    chk(f"⚠️ (lectura) NO se filtra el {k} — esa respuesta trae la planilla entera", v not in s5 + s6 + str(c6))
+FILA[:] = [404, dict(BUENA)]; AVISOS[0] = 0
+s7, c7 = correr()
+chk("§4fx · un 404 del redirect de Google también se reintenta una vez (corridas 128 y 132)",
+    c7 == 0 and AVISOS[0] == 2 and "encoló" in s7, f"avisos={AVISOS[0]} · {str(c7)[:80]}")
+FILA[:] = []
 
 print(f"\n{PASS} bien · {FAIL} mal")
 sys.exit(1 if FAIL else 0)

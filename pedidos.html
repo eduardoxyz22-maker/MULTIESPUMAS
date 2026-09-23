@@ -2009,6 +2009,19 @@ function apiPost(payload){
       if(j && j.version) SERVER_VER=String(j.version);
       if(j && j.adminAuth) SERVER_ADMIN_AUTH=String(j.adminAuth);
       if(j && j.auth && String(j.auth)!==SERVER_AUTH){ SERVER_AUTH=String(j.auth); renderConnEstado(); }
+      /* 🔀 GOOGLE CAMBIÓ EL ENVÍO POR UNA LECTURA (§4fx). A veces un POST al `/exec` llega al
+         script como GET: contesta `doGet` —`{ok:true, version, pedidos:[…]}`, la planilla
+         entera— y `doPost` NUNCA corrió. Quedó escrito en el registro del respaldo de Kommo
+         (corridas 131 y 136, pedidas desde los servidores de GitHub: no es un navegador ni su
+         caché). Para un GUARDADO era lo peor posible: `ok:true` sin `pedido`, el panel lo
+         tomaba por guardado, ponía ✓ y no se había escrito nada — *«cargó, salió LISTO, y
+         cuando volvés a abrir el pedido nunca subió»*.
+         Si lo que se pidió NO era la lista y vuelve la lista (o el `get_cerrado` de §4dv, que
+         es la misma puerta cerrada), la petición no corrió: se lanza como error PASAJERO y
+         quien llamó reintenta una vez o la deja en la cola. Reintentar es seguro: si por
+         casualidad el primero sí se guardó, el segundo choca con su propia fila y `rechazoFirme`
+         lo toma como un ok tardío (§4fd). */
+      if(j && (Array.isArray(j.pedidos) || j.error==='get_cerrado') && (payload.action!=='list' || j.error==='get_cerrado')) throw new Error('respuesta_de_lectura');
       if(j && j.ok===false && j.error==='clave'){
         var primera=!CLAVE_RECHAZADA;
         CLAVE_RECHAZADA=true; renderConnEstado();
@@ -7995,6 +8008,8 @@ function motivoDeError(e){
      El 21/09 le pasó a un solo vendedor: la dirección nunca había cambiado (verificado
      contra las 400 versiones anteriores de la página) y el resto del equipo guardaba bien. */
   if(m==='http404') return 'Google contestó 404 en ESTE navegador. Casi siempre no es el panel: probá abrirlo en una ventana de incógnito. Si ahí funciona, es este navegador — cerrá las otras cuentas de Google abiertas o borrá los datos del sitio. Si NO anda para nadie del equipo, recién ahí mirá Apps Script → Implementar → Administrar implementaciones y editá la de siempre (✏️) → «Versión nueva». ⚠️ Nunca crear una implementación NUEVA: estrena otra dirección y deja sin panel a todo el equipo';
+  // 🔀 §4fx: Google convirtió el POST en un GET y contestó la lectura; el envío no corrió.
+  if(m==='respuesta_de_lectura') return 'Google cambió el envío por una lectura y no se guardó nada (le pasa a veces a Apps Script, también desde los servidores de GitHub). Se reintenta solo; no hace falta tocar la implementación';
   if(m==='http403') return 'Google no deja entrar (403). En Apps Script → Implementar → Administrar implementaciones, «Quién tiene acceso» tiene que decir «Cualquier persona»';
   if(m==='http401') return 'Google pide iniciar sesión (401): la implementación quedó restringida';
   if(/^http5\d\d$/.test(m)) return 'Google está caído o con problemas ('+m.slice(4)+'). Suele arreglarse solo en unos minutos';
@@ -8019,6 +8034,7 @@ function motivoCorto(e){
   if(m==='http404')            return 'Google cortó la respuesta a mitad (404). No se perdió nada';
   if(/^http5\d\d$/.test(m))    return 'Google está con problemas ('+m.slice(4)+')';
   if(m==='busy')               return 'el servidor estaba ocupado con otra operación';
+  if(m==='respuesta_de_lectura') return 'Google no dejó pasar el envío. No se perdió nada';
   if(m==='tardo_datos' || m==='tardo') return 'Google tardó demasiado en contestar';
   if(m==='clave')              return 'falta la clave del equipo en esta computadora';
   if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google';
@@ -11049,7 +11065,7 @@ function achicarFotoLento(file, maxPx, calidad){
    comprobante de un pago. */
 function errorPasajero(e){
   var m=String((e&&e.message)||e||'');
-  return /^http(404|5\d\d)$/.test(m) || /tardo|Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m);
+  return /^http(404|5\d\d)$/.test(m) || m==='respuesta_de_lectura' || /tardo|Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m);
 }
 function subirFoto(id, nombre, dataUrl){
   return conTopeDuro(apiFoto(id, nombre, dataUrl)).catch(function(e){
@@ -17139,7 +17155,8 @@ function persistPedido(p, opts){
     return res||{ ok:false };
   }, function(e){
     queuePending(p);
-    toast('⚠️ '+quien+': sin conexión — quedó en cola en este dispositivo, NO está en la planilla. Se manda solo al reconectar.','err',8000);
+    // El motivo real (§4fx): «sin conexión» a secas mentía cuando lo que pasó es que Google cambió el envío por una lectura.
+    toast('⚠️ '+quien+': '+((typeof motivoCorto==='function')?motivoCorto(e):'sin conexión')+' — quedó en cola en este dispositivo, NO está en la planilla. Se manda solo.','err',8000);
     return { ok:false, local:true, error:String(e&&e.message||e) };
   });
 }

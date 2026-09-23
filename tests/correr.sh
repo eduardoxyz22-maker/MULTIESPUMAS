@@ -58,5 +58,19 @@ unoCjs(){
   fi
 }
 export -f unoCjs
-ls tests/test_*"$1"*.js | xargs -P 4 -I{} bash -c 'uno "$@"' _ {}
+# ⚠️ Y los .py (§4fx): `test_traer.py`, `test_kommo.py` y `test_duplicados.py` cuidan lo que
+# corre en GitHub Actions —el repaso de Kommo, que es PÚBLICO y no puede filtrar datos de
+# clientes— y esta batería no los corría: había que acordarse de largarlos a mano.
+unoPy(){
+  f="$1"; n=$(basename "$f" .py)
+  out=$(timeout 400 python3 "$f" 2>&1); rc=$?
+  line=$(echo "$out" | grep -oE '[0-9]+ bien · [0-9]+ mal' | tail -1)
+  if [ "$rc" -eq 124 ]; then echo "$n :: CORTADO POR TIEMPO (400 s)"
+  elif [ -n "$line" ]; then echo "$n :: $line"
+  elif [ "$rc" -ne 0 ]; then echo "$n :: SIN RESUMEN (exit $rc) · $(echo "$out" | tail -1)"
+  else echo "$n :: ok (sin resumen)"; fi
+}
+export -f unoPy
+ls tests/test_*"$1"*.js 2>/dev/null | xargs -r -P 4 -I{} bash -c 'uno "$@"' _ {}
 ls tests/test_*"$1"*.cjs 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoCjs "$@"' _ {}
+ls tests/test_*"$1"*.py 2>/dev/null | xargs -r -P 4 -I{} bash -c 'unoPy "$@"' _ {}

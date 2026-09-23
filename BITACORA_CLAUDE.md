@@ -7430,6 +7430,76 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4fx. Google cambia el envío por una LECTURA — y el panel lo tomaba por guardado (2026-09-23)
+
+> *«ok dame el gs que tengo que subir»* — el dueño, aceptando el arreglo del `.gs` que le había
+> propuesto el 22/09 para los guardados de 30-40 segundos.
+
+### No había `.gs` que subir, y mi cuenta del 22/09 estaba mal
+El registro de «Traer ventas de Kommo (respaldo)» imprime la versión publicada: **`2026-09-20-a`,
+la misma del repo**. Lo que el 22/09 le prometí («sacar `leadYaCargado_` del loop baja el candado
+de ~30 s a ~2 s») estaba calculado sobre el `.gs` de ANTES de §4dt/§4et: desde el 20/09 las
+llamadas a Kommo ya están afuera del candado, y adentro quedan dos lecturas de columna y un
+`appendRow` por venta NUEVA — segundos, no 30. No valía una republicación (cada una arriesga que
+se cree una implementación nueva, §4dm). Se le dijo así, sin vueltas.
+
+### Lo que SÍ mostraban los registros: 4 corridas rotas de las últimas 16
+| corrida | cuándo (UTC) | leads | qué recibió |
+|---|---|---|---|
+| 128 | 22/09 01:56 | 5 | **HTTP 404** |
+| 131 | 22/09 17:22 | 12 | `ok:true` + versión, **sin `origen`** (tardó ~2 min) |
+| 132 | 22/09 20:21 | 13 | **HTTP 404** |
+| 136 | 23/09 12:05 | 0 | `ok:true` + versión, **sin `origen`** (23 s) |
+
+Las cuatro pedidas **desde los servidores de GitHub**: ni un navegador, ni una caché, ni una
+sesión de Google. ⚠️ Esto **corrige** lo que se venía diciendo desde §4do/§4dp («un 404 en el
+navegador no significa que el script esté caído: es la caché»): el 404 también le pasa a un
+cliente limpio. Es el redirect de Google, que a veces se pierde.
+
+Y el `ok:true` sin `origen` tiene una sola explicación posible: **lo contestó `doGet`**. Es la
+única respuesta del script con `{ok:true, version, pedidos}` y sin `origen` (el `list` por POST
+también, pero el repaso manda `kommoLeads`), y leer la planilla entera explica los 23 s. O sea:
+**Google convirtió el POST en un GET y `doPost` nunca corrió.**
+
+### Por qué eso era grave para el PANEL
+`apiSaveAhora` → `apiPost` → `{ok:true, version, pedidos:[…]}`: sin `pedido`, sin error. Nadie
+lo miraba: `persistPedido` y `submitPedido` lo daban por **guardado**, ✓ verde, y en la planilla
+no había nada. Al minuto el `list` traía la fila vieja y el cambio desaparecía. Es exactamente
+el reclamo de §4em: *«uno sube un comprobante y cuando volvés a abrir el pedido nunca subió,
+siendo que cargó y salió LISTO»*. Lo mismo con `apiDelete` (resolvía `ok:true`) y con las fotos.
+
+### El arreglo (sin republicar nada)
+- **`apiPost`**: si lo que se pidió NO era la lista y vuelve una lista (`Array.isArray(j.pedidos)`)
+  —o el `get_cerrado` de §4dv, que es la misma puerta cerrada—, la petición no corrió:
+  `throw new Error('respuesta_de_lectura')`. Solo `list` y `doGet` devuelven `pedidos` (verificado
+  en el `.gs`), así que la señal es exacta. Un `get_cerrado` a una LECTURA también es error (antes
+  era una planilla vacía).
+- **`errorPasajero`** lo reconoce: el guardado se **reintenta una vez** (§4fa) y, si Google
+  insiste, queda en la **cola** del dispositivo. Reintentar es seguro: si por casualidad el primero
+  sí entró, el segundo choca con su fila y `rechazoFirme` lo toma como ok tardío (§4fd).
+- **`motivoDeError`/`motivoCorto`** lo dicen en castellano, sin mandar a tocar la implementación,
+  y el aviso de `persistPedido` ya no dice «sin conexión» cuando no es eso.
+- **`traer_kommo.py`**: reintenta UNA vez (8 s) ante la lectura o un 404/5xx; si Google insiste,
+  falla con el motivo verdadero («Google cambió el aviso por una LECTURA dos veces seguidas… no es
+  la clave ni el script»), no con «¿PANEL_URL apunta a otra implementación?». ⚠️ Esa respuesta de
+  lectura trae la planilla ENTERA: el script no imprime nada de ella (test).
+- **La batería no corría los tests de Python** (`test_traer.py`, `test_kommo.py`,
+  `test_duplicados.py`): `correr.sh` buscaba solo `.js`/`.cjs`. Ahora corre los tres.
+
+### Tests
+`tests/test_lectura.js` (11, nuevo). **Dientes**: contra el panel de `origin/main` da 8 rojos —
+el guardado respondido con la lista resolvía `ok:true` en UN intento y con la cola vacía, y el
+borrado «resolvió ok=true». `tests/test_traer.py` 37 → **49** (lectura → reintento → bien;
+lectura dos veces → falla con el motivo real; 404 → reintento; `busy` NO se reintenta; ninguna
+de las respuestas de lectura filtra datos de clientes).
+
+### Lo que queda del lado de Google
+El `GET_CERRADO=1` de §4dv (una propiedad del script, **sin republicar**) haría que un POST
+convertido reciba `{ok:false, error:'get_cerrado'}` en vez de la planilla entera: el panel ya lo
+trata igual, y deja de viajar la lista de clientes a quien sea que llame por GET. Antes de
+ponerlo hay que mirar **Administración → 📡 ¿Quién lee la planilla?**: si alguien de confianza
+lee por GET, se le corta.
+
 ## 4fs → 4fw. Lo que quedaba del agente del cuadre (2026-09-23)
 
 > *«Ya arreglaste todo?»* — el dueño. No: quedaban siete del cuadre. Cinco se arreglaron acá;

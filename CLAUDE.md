@@ -304,6 +304,19 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   `doPost` desviaría al webhook de Kommo y el panel dejaría de guardar.
   **Prueba de 20 segundos: abrir el panel en incógnito.** Y **NO volver a implementar**: cada
   «Nueva implementación» estrena otra dirección y empeora el enredo.
+  ⚠️ **Pero el 404 no es SOLO del navegador** (§4fx, corrección del 23/09): el respaldo de Kommo,
+  pedido desde los servidores de GitHub, recibió 404 dos veces el 22/09 (corridas 128 y 132). El
+  redirect de Google a veces se pierde con cualquier cliente.
+- **🔀 Google a veces convierte un POST en GET** (§4fx): contesta `doGet` —`{ok:true, version,
+  pedidos:[…]}`, la planilla entera— y `doPost` nunca corre (corridas 131 y 136). El panel lo daba
+  por **guardado** (`ok:true` sin `pedido`): ✓ verde y nada en la planilla. Ahora `apiPost` lanza
+  `respuesta_de_lectura` cuando una acción que NO es `list` vuelve con `pedidos` (o con
+  `get_cerrado`), `errorPasajero` lo reintenta una vez y si no, a la cola. Solo `list` y `doGet`
+  devuelven `pedidos`: si algún día otra acción devuelve una lista, hay que cambiar esa señal.
+  `traer_kommo.py` reintenta una vez (lectura, 404, 5xx) y no imprime nada de esa respuesta.
+  `tests/test_lectura.js`, `tests/test_traer.py`.
+- **`correr.sh` corre también los `.py`** (§4fx): antes `test_traer.py`, `test_kommo.py` y
+  `test_duplicados.py` quedaban afuera de la batería.
 - **📷 Subir una foto (§4dq)**: las 4 rutas pasan por `fotoCronometro` → `achicarFoto`
   (`createImageBitmap`, con `achicarFotoLento` de reserva) y `conTopeDuro(…, 90 s)`. ⚠️ Un
   `fetch` **no tiene tope**: sin él, si Google se cuelga el cartel dice «subiendo» para

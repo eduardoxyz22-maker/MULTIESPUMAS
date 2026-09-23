@@ -42,6 +42,8 @@ ETAPA    = os.environ.get("KOMMO_ETAPA", "103450711").strip()   # «Compradores�
 # Cuánto hacia atrás mirar. Más ancha que la cadencia REAL del cron (ver arriba).
 VENTANA_MIN = int(os.environ.get("VENTANA_MIN", str(12 * 60)))
 TOPE = 100         # cuántos leads como mucho por corrida (el panel acepta hasta 100)
+# Cuánto esperar antes del ÚNICO reintento cuando Google no deja pasar el aviso (§4fx).
+ESPERA_REINTENTO = int(os.environ.get("ESPERA_REINTENTO", "8"))
 
 
 def api_get(path, params=None, _retry=0):
@@ -83,6 +85,22 @@ def avisar_al_panel(ids):
         return {"ok": False, "error": type(ex).__name__}
 
 
+def es_lectura(res):
+    """🔀 Google convirtió el POST en un GET (§4fx): contestó `doGet` —la planilla entera,
+    `{ok, version, pedidos:[…]}`— y el `doPost` del repaso NUNCA corrió. Pasó en las corridas
+    131 y 136 (22 y 23/09); se veía como «no vino del repaso de Kommo» y parecía que PANEL_URL
+    apuntaba a otra implementación o que el script publicado era viejo — no era ninguna de las
+    dos. ⚠️ Esa respuesta trae los datos de TODOS los clientes: no se imprime nada de ella."""
+    return isinstance(res, dict) and isinstance(res.get("pedidos"), list) and not res.get("origen")
+
+
+def pasajero(res):
+    """Lo que vale la pena reintentar UNA vez: la lectura de arriba, un 404 del redirect de
+    Google (corridas 128 y 132) o un 5xx. Un `busy`, una clave mala o un `ok` ajeno, no."""
+    err = str((res or {}).get("error") or "")
+    return es_lectura(res) or err == "HTTP 404" or err.startswith("HTTP 5")
+
+
 def main():
     faltan = [n for n, v in (("KOMMO_TOKEN", TOKEN), ("PANEL_URL", PANEL_URL),
                              ("KOMMO_HOOK_KEY", HOOK_KEY)) if not v]
@@ -111,6 +129,15 @@ def main():
     # contesta su versión. Es la única forma de ver desde afuera qué Apps Script está
     # publicado (el sandbox de Claude no llega a Google), y la versión no es dato de nadie.
     res = avisar_al_panel(ids)
+    if pasajero(res):
+        motivo = "cambió el aviso por una lectura" if es_lectura(res) else f"contestó {res.get('error')}"
+        print(f"   ⏳ Google {motivo}: se reintenta UNA vez en {ESPERA_REINTENTO} s (repetir no duplica nada)")
+        time.sleep(ESPERA_REINTENTO)
+        res = avisar_al_panel(ids)
+    if es_lectura(res):
+        sys.exit("✗ Google cambió el aviso por una LECTURA dos veces seguidas: contestó la planilla en vez de "
+                 "procesar el aviso (§4fx). No es la clave ni el script publicado. Esta corrida no pudo hacer su "
+                 "repaso; el del propio script, cada 5 minutos, sigue cubriendo.")
     if not res.get("ok"):
         sys.exit(f"✗ El panel no aceptó el aviso: {res.get('error')}")
     print(f"   servidor del panel: versión {res.get('version') or '(no dice: es un Apps Script viejo)'}")
