@@ -89,7 +89,7 @@ function hacerScriptApp(){
     deleteTrigger: (t) => { const i = triggers.indexOf(t); if (i >= 0) triggers.splice(i, 1); }
   };
 }
-function cargar(filas, props){
+function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: un pegado cortado)
   const sh = hacerPlanilla(filas), drive = hacerDrive();
   const shR = hacerPlanilla([]);                       // la hoja «Rechazos» (§4el), aparte de la de pedidos
   const cache = { _m: {},
@@ -126,7 +126,7 @@ function cargar(filas, props){
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(GS,'utf8'), ctx);
+  vm.runInContext(fuente != null ? fuente : fs.readFileSync(GS,'utf8'), ctx);
   const leer = (r) => JSON.parse(r._t);
   const post = (body) => leer(ctx.doPost({ postData:{ contents: JSON.stringify(body) }, parameter:{} }));
   const get  = (params) => leer(ctx.doGet({ parameter: params||{} }));
@@ -1012,6 +1012,74 @@ const DIA = 86400000, hoyDia = Math.floor(Date.now() / DIA);
   const rb = b.post({ action:'kommoLeads', key:'kk', leads:['44003'] });
   chk('sin disparadores el repaso de GitHub crea en el momento, como antes', rb.ok===true && rb.origen==='repaso' && !rb.diferido && rb.creados===1 && b.sh._datos.length===2, JSON.stringify(rb).slice(0,100));
 }
+}
+
+/* ── ✅ 11. Probar antes de implementar (§4fz-b) ──────────────────────────────────────
+   El 23/09 el .gs que se pegó y se implementó dejó a TODO el equipo sin conexión. Volver a
+   la versión anterior arregló el panel, pero el repaso de Kommo siguió parado desde las
+   11:24: los disparadores corren el código GUARDADO, no el implementado. Esta función se
+   corre desde el editor ANTES de implementar y no escribe nada. */
+console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes de implementar ──');
+{
+  const tiene = (r, re) => !!(r && r.lineas && r.lineas.some(l => re.test(l)));
+  const hay = (a) => typeof a.ctx.probarAntesDeImplementar === 'function';
+  const src = fs.readFileSync(GS, 'utf8');
+  chk('existe probarAntesDeImplementar() y va ARRIBA de todo (un pegado cortado la conserva)',
+      src.indexOf('function probarAntesDeImplementar') > 0 && src.indexOf('function probarAntesDeImplementar') < src.indexOf('function jsonOut'));
+  {
+    // A. El archivo entero, con disparadores y un repaso reciente
+    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-2*60000).toISOString(), cola:0, vistos:0, creados:0, error:'' }) };
+    const a = cargar([HDR, fila({id:'p1'}), fila({id:'p2'})], props);
+    if (!hay(a)) chk('A · la prueba existe', false, 'no está en este .gs');
+    else {
+      a.ctx.instalarDisparadores();
+      const hoja0 = JSON.stringify(a.sh._datos), props0 = JSON.stringify(props), tr0 = a.ctx.ScriptApp._triggers.map(t => t.fn).join(',');
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('A · archivo entero, disparadores y repaso al día: «✅ Se puede implementar», sin avisos',
+          r.ok===true && r.malas===0 && r.avisos===0 && /^✅ Se puede implementar\.$/.test(r.veredicto), r.lineas.join(' | '));
+      chk('A · …dice la versión y lee la planilla como el panel (2 filas)', tiene(r, new RegExp(a.ctx.SCRIPT_VERSION)) && tiene(r, /2 filas/), r.lineas.join(' | '));
+      chk('A · …y NO escribe nada: ni la planilla, ni las propiedades, ni los disparadores',
+          JSON.stringify(a.sh._datos)===hoja0 && JSON.stringify(props)===props0 && a.ctx.ScriptApp._triggers.map(t => t.fn).join(',')===tr0);
+    }
+  }
+  {
+    // B. Sin disparadores, el repaso parado desde las 11:24 de Bolivia (lo del 23/09) y una venta en la cola
+    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:'2026-09-23T15:24:05.435Z', cola:0, vistos:0, creados:0, error:'' }), KOMMO_COLA:'["44001"]' };
+    const a = cargar([HDR, fila({id:'p1'})], props);
+    if (!hay(a)) chk('B · la prueba existe', false);
+    else {
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('B · sin disparadores: avisa qué ejecutar (instalarDisparadores) pero no frena la implementación',
+          r.ok===true && r.avisos>=3 && tiene(r, /instalarDisparadores/) && /Se puede implementar \(mirá los ⚠️/.test(r.veredicto), r.lineas.join(' | '));
+      chk('B · …el repaso parado se nombra con la hora de Bolivia (23/09 11:24), como el del incidente', tiene(r, /desde el 23\/09 11:24 \(hora Bolivia\)/), r.lineas.join(' | '));
+      chk('B · …y la venta que espera en la cola', tiene(r, /1 venta\(s\) de Kommo esperando/), r.lineas.join(' | '));
+    }
+  }
+  {
+    // C. El pegado CORTADO justo antes de kommoRepaso, con su disparador instalado (lo que frenaba el repaso)
+    const corte = src.indexOf('\nfunction kommoRepaso(');
+    const a = cargar([HDR, fila({id:'p1'})], {}, corte > 0 ? src.slice(0, corte + 1) : '');
+    if (!hay(a)) chk('C · la prueba existe (aunque el código esté cortado)', false);
+    else {
+      a.ctx.ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('⚠️ C · código cortado: «❌ NO IMPLEMENTAR»', r.ok===false && /^❌ NO IMPLEMENTAR/.test(r.veredicto), r.veredicto);
+      chk('C · …nombra lo que falta (kommoRepaso y la última del archivo, borradorDeLead_)', tiene(r, /Faltan funciones: .*kommoRepaso.*borradorDeLead_/), r.lineas.join(' | '));
+      chk('C · …y que el disparador de kommoRepaso apunta a una función que no está', tiene(r, /disparador de «kommoRepaso» pero esa función no está/), r.lineas.join(' | '));
+      chk('C · …la planilla igual se lee (el panel andaría; lo que se frena son los disparadores)', tiene(r, /se lee como la lee el panel: 1 fila\./), r.lineas.join(' | '));
+    }
+  }
+  {
+    // D. Pegado en el Apps Script de OTRA planilla, y un disparador ajeno que se nombra y no se toca
+    const a = cargar([['Nombre','Teléfono'], ['x','y']], {});
+    if (!hay(a)) chk('D · la prueba existe', false);
+    else {
+      a.ctx.ScriptApp.newTrigger('backupDiario').timeBased().everyDays(1).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('D · en otra planilla (sin la columna «id»): ❌', r.ok===false && tiene(r, /no empieza con la columna «id»/), r.lineas.join(' | '));
+      chk('D · un disparador de otra función que SÍ existe no se marca como roto', !tiene(r, /disparador de «backupDiario»/) && a.ctx.ScriptApp._triggers.length===1, r.lineas.join(' | '));
+    }
+  }
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

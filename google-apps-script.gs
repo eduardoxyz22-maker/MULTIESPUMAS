@@ -2,12 +2,21 @@
  * ============================================================================
  * PEDIDOS MultiEspumas — Backend Google Apps Script
  * ============================================================================
- * Pegá TODO este código en Extensiones > Apps Script de tu Google Sheet,
- * guardá, y Deploy > New deployment > Web app:
- *    - Execute as: Me (tu cuenta)
- *    - Who has access: Anyone
- * Copiá la URL que termina en /exec y pásasela a Claude (o pegala en
- * pedidos.html, variable SHEETS_URL).
+ * CÓMO SE ACTUALIZA (lo de siempre; la implementación ya existe):
+ *   1. Extensiones > Apps Script: clic en el código, Ctrl+A, Supr (tiene que quedar VACÍO),
+ *      pegar TODO este archivo, Ctrl+S. No tiene que salir ningún mensaje rojo.
+ *   2. En la lista de al lado de ▶ Ejecutar elegir «probarAntesDeImplementar» → Ejecutar.
+ *      Abajo tiene que terminar en «✅ Se puede implementar». Con una ❌, NO seguir.
+ *      ⚠️ Lo GUARDADO ya corre en los disparadores automáticos (el repaso de Kommo), aunque
+ *      no se implemente: un pegado roto los frena en el acto (pasó el 23/09, §4fz-b).
+ *   3. Implementar > Administrar implementaciones > ✏️ la de siempre > Versión: «Nueva
+ *      versión» > Implementar. ⚠️ NUNCA «Nueva implementación»: estrena otra dirección /exec
+ *      y el panel deja de encontrar el servidor (§4dm).
+ *   4. Si algo sale mal, volver atrás son DOS cosas: ✏️ > la versión anterior (arregla el
+ *      panel) Y pegar de nuevo el código anterior (arregla los disparadores).
+ * Solo la PRIMERA vez (instalación nueva): Implementar > Nueva implementación > Aplicación
+ * web, «Ejecutar como: Yo», «Quién tiene acceso: Cualquier usuario», y la dirección /exec
+ * va en pedidos.html (variable SHEETS_URL).
  *
  * La hoja "Pedidos" y sus encabezados se crean/actualizan solos.
  * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
@@ -72,9 +81,115 @@ function getSheet() {
 }
 
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
-   este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
-   Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
+   este archivo. OJO: en Apps Script, GUARDAR no publica nada para el panel — hay que hacer
+   Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
+   ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
+   GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
 var SCRIPT_VERSION = '2026-09-23-b';   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+
+/* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
+   elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
+   el «Registro de ejecución» de abajo. NO ESCRIBE NADA: ni la planilla, ni las propiedades,
+   ni los disparadores.
+   Por qué existe: el 23/09 se pegó la versión nueva, se implementó, y TODO el equipo quedó
+   sin conexión. Volver a la versión anterior arregló el panel, pero el repaso automático de
+   Kommo siguió parado horas —desde las 11:24 hasta la noche— porque los DISPARADORES corren
+   el código GUARDADO en el editor, no la versión implementada. Lo que se pega y se guarda
+   ya está andando ahí antes de implementar, y un pegado roto no se nota hasta que alguien
+   mira. Correr cualquier función desde el editor además muestra en rojo un error del archivo
+   y pide los permisos que falten: las dos cosas que el equipo vería como «sin conexión».
+   ⚠️ Va ARRIBA de todo a propósito: si el pegado quedó cortado, esta función igual está y
+   nombra lo que falta. Si ni siquiera aparece en la lista, el pegado está mal. */
+function probarAntesDeImplementar() {
+  var lineas = [], malas = 0, avisos = 0;
+  function bien(t) { lineas.push('✅ ' + t); }
+  function mal(t) { lineas.push('❌ ' + t); malas++; }
+  function ojo(t) { lineas.push('⚠️ ' + t); avisos++; }
+  function motivo(e) { return String((e && e.message) || e); }
+  function horaBolivia(ms) {               // UTC−4 fijo, sin horario de verano (§4fu)
+    var s = new Date(ms - 4 * 3600000).toISOString();
+    return s.slice(8, 10) + '/' + s.slice(5, 7) + ' ' + s.slice(11, 16);
+  }
+  bien('Versión de este código: ' + SCRIPT_VERSION);
+
+  /* 1. ¿Está el archivo ENTERO? Un pegado cortado deja afuera las funciones del final
+        (borradorDeLead_ es la última del archivo). `typeof` no revienta con un nombre que
+        no existe: dice 'undefined'. */
+  var fns = {
+    doGet: typeof doGet, doPost: typeof doPost, doPostCuerpo_: typeof doPostCuerpo_,
+    doSave: typeof doSave, doDelete: typeof doDelete, readAll: typeof readAll,
+    rowToRec_: typeof rowToRec_, recToRow: typeof recToRow, jsonOut: typeof jsonOut,
+    guardarFoto: typeof guardarFoto, borrarFoto: typeof borrarFoto,
+    barrerFotosHuerfanas: typeof barrerFotosHuerfanas, kommoHook: typeof kommoHook,
+    kommoProcesarCola: typeof kommoProcesarCola, kommoRepaso: typeof kommoRepaso,
+    instalarDisparadores: typeof instalarDisparadores, estadoKommo: typeof estadoKommo,
+    borradorDeLead_: typeof borradorDeLead_
+  };
+  var faltan = [], n;
+  for (n in fns) if (fns[n] !== 'function') faltan.push(n);
+  if (faltan.length) mal('Faltan funciones: ' + faltan.join(', ') + '. El código quedó CORTADO o mal pegado: ' +
+                         'volvé a copiarlo entero (la última línea es «}» y justo antes dice «return borrador;»).');
+  else bien('El código está entero: ' + Object.keys(fns).length + ' funciones clave, hasta la última del archivo.');
+
+  /* 2. La planilla, leída como la lee el panel (`list`). Sin `getSheet()`, que agrega los
+        encabezados si faltan: esta prueba no escribe. */
+  if (fns.rowToRec_ === 'function') {
+    try {
+      var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      if (!sh) mal('No encuentro la hoja «' + SHEET_NAME + '»: ¿el código está pegado en el Apps Script de la planilla de pedidos?');
+      else {
+        var vals = sh.getDataRange().getValues(), filas = 0;
+        var primera = vals.length ? String(vals[0][0]) : '';
+        if (!primera && vals.length <= 1) ojo('La hoja «' + SHEET_NAME + '» está vacía: se arma sola con el primer guardado.');
+        else if (primera !== 'id') mal('La hoja «' + SHEET_NAME + '» no empieza con la columna «id»: ¿es la planilla de pedidos?');
+        else {
+          for (var i = 1; i < vals.length; i++) if (vals[i][0]) { rowToRec_(vals[i]); filas++; }
+          bien('La planilla se lee como la lee el panel: ' + filas + (filas === 1 ? ' fila.' : ' filas.'));
+        }
+      }
+    } catch (e) { mal('Leer la planilla falló: ' + motivo(e)); }
+  }
+
+  /* 3. Los disparadores: que estén, y que cada uno llame a una función que EXISTE en este
+        código. Uno que apunta a una función que no está falla cada vez que salta, en
+        silencio (el panel no se entera). Los de otras funciones se nombran y no se tocan. */
+  try {
+    var G = (function () { return this; })();
+    var existe = function (h) { return fns.hasOwnProperty(h) ? fns[h] === 'function' : !!G && typeof G[h] === 'function'; };
+    var tr = ScriptApp.getProjectTriggers(), hay = {};
+    for (var j = 0; j < tr.length; j++) { var h = tr[j].getHandlerFunction(); hay[h] = (hay[h] || 0) + 1; }
+    for (n in hay) if (!existe(n)) mal('Hay un disparador de «' + n + '» pero esa función no está en el código: falla cada vez que salta.');
+    if (!hay.kommoRepaso) ojo('No está el repaso de Kommo cada 5 minutos: ejecutá «instalarDisparadores» una vez.');
+    else if (!hay.barrerFotosHuerfanas) ojo('No está el barrido diario de fotos: ejecutá «instalarDisparadores» una vez.');
+    else bien('Disparadores instalados: repaso de Kommo cada 5 minutos y barrido de fotos de madrugada.');
+  } catch (e) { ojo('No pude mirar los disparadores: ' + motivo(e)); }
+
+  /* 4. El último repaso de Kommo. Recién guardado el código, el próximo sale en hasta 5
+        minutos: esto AVISA, no frena (el panel no depende del repaso). */
+  try {
+    var ult = JSON.parse(prop_('KOMMO_REPASO_ULTIMO') || 'null');
+    var t = ult && Date.parse(ult.ts);
+    if (!t) ojo('El repaso de Kommo todavía no corrió nunca.');
+    else {
+      var min = Math.round((Date.now() - t) / 60000);
+      if (min > 15) ojo('El repaso de Kommo no corre desde el ' + horaBolivia(t) + ' (hora Bolivia), hace ' + min +
+                        ' minutos. Ejecutá «kommoRepaso» una vez y volvé a probar: si sale un error rojo, ese es el problema.');
+      else bien('El repaso de Kommo corrió hace ' + min + ' minutos' + (ult.error ? (' (dijo: ' + ult.error + ')') : '') + '.');
+    }
+  } catch (e) { ojo('No pude leer el último repaso: ' + motivo(e)); }
+
+  /* 5. Ventas de Kommo esperando en la cola del webhook. */
+  try {
+    var cola = kColaLeer_().length;
+    if (cola) ojo(cola + ' venta(s) de Kommo esperando en la cola: ejecutá «kommoRepaso» una vez.');
+  } catch (e) {}
+
+  var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
+                        : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
+  lineas.push(veredicto);
+  if (typeof Logger !== 'undefined') Logger.log(lineas.join('\n'));
+  return { ok: !malas, malas: malas, avisos: avisos, lineas: lineas, veredicto: veredicto };
+}
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.

@@ -113,8 +113,15 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   repone**. El `.gs` 23-b rechaza un borrado sin `rev` de una fila sellada (`actualizar`).
   · Lo que NO queda protegido está en la bitácora §4fz-b («no decir todo protegido»).
   · 🚨 **El 23/09 subir el `.gs` 23-a dejó a TODO el equipo sin conexión** («no hay conexión con
-  Google» en todos a la vez): se volvió a la versión anterior desde ✏️. Al subir el 23-b, mirar
-  «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario», y verificar al toque (§4fz-b).
+  Google» en todos a la vez): se volvió a la versión anterior desde ✏️ (el diálogo NO mostraba
+  «Ejecutar como»/«Quién tiene acceso»: cambió solo la versión). **Causa confirmada**: Ejecuciones
+  decía `Script function not found: kommoRepaso` — el pegado del `.gs` NO entró entero.
+  ⚠️ **Los disparadores (`kommoRepaso` cada 5 min, `kommoProcesarCola`, el barrido de fotos) corren
+  el código GUARDADO en el editor, no la versión implementada**: el repaso de Kommo quedó parado
+  desde las 11:24 aunque el panel ya andaba. **Volver atrás son DOS cosas**: ✏️ → versión anterior
+  Y pegar el código anterior en el editor. **Antes de implementar**, `probarAntesDeImplementar()`
+  desde el editor (arriba de todo en el `.gs` 23-b, solo lectura) tiene que decir «✅ Se puede
+  implementar». Procedimiento completo: cabecera del `.gs` y bitácora §4fz-b «Publicar».
 - **📦 Stock y reposición** (bitácora §4cn, §4co y §4cp): fila del sistema `__stock__` con JSON
   `{c,e,p,a,g,al}` (conteo del almacén de logística, entradas, pedidos a fábrica, uniones,
   existencias de los otros almacenes, qué es cada almacén). La identidad de un producto es
@@ -367,6 +374,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   Desde §4et con leads en la ventana dice «el panel encoló N ids» (lo creado se lee en «último
   repaso del script»), y si la respuesta no trae `origen:'repaso'` la corrida **falla a
   propósito**: `PANEL_URL` apunta a otra implementación o el `.gs` publicado es viejo.
+  Desde §4fz-b también **falla si el «último repaso del script» tiene más de 30 minutos**
+  (`REPASO_PARADO_MIN`; encola igual): el 23/09 las corridas 137 y 138 lo imprimieron parado desde
+  las 11:24 y salieron en verde.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)

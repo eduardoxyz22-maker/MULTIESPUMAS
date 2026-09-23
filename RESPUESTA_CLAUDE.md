@@ -1,8 +1,11 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
 **Para:** el dueño y Codex (revisión).
-**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commit de esta vuelta: `5205ce8`** (código, pruebas y bitácora).
-**Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a` (ver §0).
+**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta: `5205ce8`** (código, pruebas y
+bitácora) **y el del incidente** (§0: `probarAntesDeImplementar`, la alarma del repaso parado y el
+procedimiento de §7; ver «Commit» al final).
+**Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a`. Pero
+el repaso de Kommo del script sigue parado desde las 11:24 (ver §0).
 
 > ⚠️ **Coordinación.** Trabajo en un servidor en la nube: no tengo acceso a `C:\Users\…` ni a OneDrive.
 > Leí lo que me pegaste en el chat: el informe original y la verificación de Codex del 23/09. Este
@@ -14,23 +17,82 @@
 
 ## 0 · Estado de producción y el incidente de hoy
 
-- **Hoy, entre las 11:30 y las 12:30 de Bolivia aproximadamente, todo el equipo quedó sin conexión.**
-  - Pasó después de que el dueño subiera el `.gs` `2026-09-23-a` (el de la primera vuelta).
-  - El dueño y un vendedor veían «no hay conexión con Google». Un pedido quedó en la cola del vendedor
-    y no se perdió.
-  - El registro del respaldo de Kommo de las 08:05 muestra que el servidor contestaba bien, con la
-    versión `2026-09-20-a`.
-- **Cómo se arregló.** Se editó la implementación de siempre (✏️) con la versión anterior,
-  «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario». Volvió a conectar.
-- **La causa no está confirmada.** Le pregunté al dueño qué casilla estaba distinta y todavía no
-  respondió. El cambio de 23-a era chico, en ES5, y pasaba los 194 de `test_servidor.js`. Lo más
-  probable es la configuración de la implementación, no el código.
-- **Por qué parecía falta de internet.** Cuando el Apps Script no deja entrar sin sesión, o se cae al
-  arrancar, Google devuelve una página sin el permiso CORS. Para el navegador eso es igual que no
+### Qué pasó
+- **Hoy, desde las 11:24 de Bolivia hasta cerca de las 12:30, todo el equipo quedó sin conexión.**
+  - Pasó cuando el dueño pegó e implementó el `.gs` `2026-09-23-a` (el de la primera vuelta).
+  - El dueño y un vendedor veían «no hay conexión con Google». Un pedido quedó en la cola del
+    vendedor y no se perdió.
+- **Cómo se arregló el panel:** se editó la implementación de siempre (✏️) y se eligió la versión
+  anterior.
+  - ⚠️ **Corrijo lo que decía antes.** El diálogo **no mostraba** «Ejecutar como» ni «Quién tiene
+    acceso» (dato del dueño), así que lo único que cambió fue la versión.
+  - La causa **no** es la configuración: es **lo que se guardó** como 23-a.
+
+### Lo que dicen los registros (Actions → «Traer ventas de Kommo (respaldo)»)
+
+| Corrida | Hora Bolivia | Versión que contestó | «Último repaso del script» |
+|---|---|---|---|
+| 135 | 02:34 | 2026-09-20-a | 02:34 (al día: corre cada 5 minutos) |
+| 136 | 08:05 | 2026-09-20-a | — (Google cambió el aviso por una lectura, §4fx) |
+| 137 | 12:51 | 2026-09-20-a (ya se había vuelto atrás) | **11:24** |
+| 138 | 15:57 | 2026-09-20-a | **11:24**, y encoló 1 venta que nadie procesa |
+
+### Lo que siguió roto después de volver atrás
+- **El repaso automático de Kommo del script está parado desde las 11:24.** Las ventas que se
+  encolan no entran solas al panel.
+- **Por qué:** en Apps Script, los **disparadores** (`kommoRepaso` cada 5 minutos,
+  `kommoProcesarCola` y el barrido de fotos de las 3 am) corren el código **guardado en el
+  editor**, no la versión implementada.
+  - Volver a la versión anterior arregló el panel, que usa lo implementado.
+  - No arregló los disparadores, que usan lo guardado: lo que se pegó a las 11:24.
+- El repaso se frenó **el minuto** en que se guardó el 23-a, y **sigue** frenado horas después de
+  volver atrás la implementación. Es la mejor pista: lo guardado en el editor no corre (no carga, o
+  le falta la función).
+
+### Qué fue: CONFIRMADO por la pantalla Ejecuciones
+- **Captura del dueño (23/09):** `kommoRepaso` · Basada en el tiempo · 16:29 · 0,457 s ·
+  **Fallida** · `Script function not found: kommoRepaso`.
+- O sea: **el código guardado en el editor no tiene la función `kommoRepaso`.** Lo que quedó guardado
+  como «23-a» está incompleto: el pegado no entró entero. Con eso, el panel también falla: sin
+  `doPost`, o con el archivo roto, Google devuelve una página de error y el navegador lo ve como
+  «sin conexión».
+- El 23-a del repo, tal cual, tiene todas las funciones y contesta `list` en `test_servidor.js`. Su
+  diferencia con 20-a son 33 líneas que no tocan la lectura ni piden permisos nuevos
+  (`git diff ebc3eab d890468 -- google-apps-script.gs`). **El código no era el problema: el pegado
+  sí.**
+- Falta saber **cómo** se cortó el pegado (de dónde se copió y con qué programa se abrió el archivo).
+  Le pregunté al dueño: es lo que hay que evitar al subir la 23-b. `probarAntesDeImplementar`
+  (§5) detecta justo esto, **si se corre**: su prueba C es un pegado cortado antes de `kommoRepaso`.
+
+### Qué se le pidió al dueño
+Nada de esto afecta al equipo: guardar en el editor no cambia lo implementado.
+1. Captura del error de `kommoRepaso` en Ejecuciones.
+2. Pegar de nuevo la 20-a, sacada del raw de `main`, y guardar.
+3. Ejecutar `estadoKommo` y `kommoRepaso` desde el editor.
+4. **No tocar «Implementar».**
+
+### Lo que cambié para que no se repita (§5 y §7)
+- **`.gs` 23-b: `probarAntesDeImplementar()`**, de solo lectura y arriba de todo. Se corre desde el
+  editor antes de implementar y termina en «✅ Se puede implementar» o «❌ NO IMPLEMENTAR».
+- **`traer_kommo.py`:** la corrida sale en **rojo** si el repaso del script tiene más de 30 minutos
+  (y encola igual), así GitHub le avisa al dueño por correo. Hoy las corridas 137 y 138 lo
+  imprimieron y salieron en verde.
+- **§7 reescrito:** pegar → guardar → probar → implementar. Volver atrás son **dos** cosas: la versión
+  y el código del editor.
+
+### Otras cosas
+- **Por qué parecía falta de internet.** Cuando el Apps Script falla al arrancar, o no deja entrar sin
+  sesión, Google devuelve una página sin el permiso CORS, y para el navegador eso es igual que no
   tener red. `motivoDeError` ahora lo dice (ver §5).
-- **Producción ahora:** panel `ebc3eab` + `.gs` `2026-09-20-a`, que es lo que ese panel espera. En
-  esta combinación el stock y el arqueo **se siguen pisando entre dispositivos**, y borrar no mira el
-  sello. Es lo que se corrige acá; hay que publicarlo junto (ver §7).
+- **Visto y sin conclusión.** «Último aviso de Kommo al panel» dice **22/09 19:01 UTC** en todas las
+  corridas del 23: el webhook no avisó nada en todo el día, y las ventas entraron por los repasos.
+  - Puede ser normal: el respaldo filtra por `updated_at`, no por cambio de etapa.
+  - Igual hay que mirarlo en Kommo → Webhooks.
+- **Producción ahora:**
+  - Implementado: panel `ebc3eab` + `.gs` `2026-09-20-a`, que es lo que ese panel espera.
+  - En el editor: lo pegado a las 11:24, hasta que el dueño lo reemplace.
+  - En esta combinación el stock y el arqueo **se siguen pisando entre dispositivos**, y borrar no mira
+    el sello. Es lo que se corrige acá, y hay que publicarlo todo junto (ver §7).
 
 ---
 
@@ -181,6 +243,10 @@ mover el momento de soltar el guardado retenido, porque ahora el borrado lo espe
    anotada entre las dos se da por incluida (igual que antes).
 7. **`mixtoDe` sigue siendo heurística** para los anticipos escritos («~»): es decisión del dueño (§8).
 8. **No se probó contra la planilla real ni en celulares**: todo con datos sintéticos y el `.gs` en Node.
+9. **Un pegado roto frena los disparadores aunque no se implemente** (§0), porque corren lo guardado.
+   - `probarAntesDeImplementar` lo detecta, **si se corre**.
+   - La corrida de GitHub también lo detecta y sale en rojo, pero GitHub la corre cada ~3,5 horas.
+   - Entre una cosa y la otra, el repaso de Kommo puede estar parado sin que nadie lo vea.
 
 ---
 
@@ -203,6 +269,21 @@ mover el momento de soltar el guardado retenido, porque ahora el borrado lo espe
     página.
 - **Stock con la planilla sin cargar:** `renderStock` `:14720` lo avisa y lo que se anote se une al
   conectar.
+- **Después del incidente (§0):**
+  - **`probarAntesDeImplementar()`** (`google-apps-script.gs`, arriba de todo, justo después de
+    `SCRIPT_VERSION`). No escribe nada, y revisa:
+    - la versión;
+    - las 18 funciones clave, hasta la última del archivo (`borradorDeLead_`), para detectar un
+      pegado cortado;
+    - la planilla, leída como `list` y sin `getSheet()`, que agrega encabezados;
+    - que cada disparador apunte a una función que exista; los ajenos se nombran y no se tocan;
+    - el último repaso, en hora de Bolivia, y la cola.
+
+    Una ❌ da «NO IMPLEMENTAR». Los ⚠️ (repaso parado, sin disparadores, cola) avisan y no frenan,
+    porque el panel no depende de ellos. Va arriba para que un pegado cortado la conserve.
+  - **La cabecera del `.gs`** dice el procedimiento de actualización y ya no dice «New deployment».
+  - **`traer_kommo.py`:** `repaso_parado()` + `REPASO_PARADO_MIN=30`. Sale en rojo **al final**,
+    después de encolar. Solo imprime una hora: nada de clientes.
 
 ---
 
@@ -211,19 +292,22 @@ mover el momento de soltar el guardado retenido, porque ahora el borrado lo espe
 | Suite | Resultado | Dientes |
 |---|---|---|
 | `tests/test_concurrencia.js` (**rehecho**, 18 → 50) | **50/50** | `d890468`+23-a: 25 rojos · `ebc3eab`+20-a: 31 · panel nuevo+20-a: 20 · panel nuevo+23-a: 4 |
-| `tests/test_servidor.js` (194 → 201) | **201/201** | 23-a: 7 rojos |
+| `tests/test_servidor.js` (194 → 201 → **214**) | **214/214** | 23-a: 7 rojos · §11 `probarAntesDeImplementar` (13, con un pegado cortado de verdad): 5 rojos contra el 23-b de `5205ce8` |
+| `tests/test_traer.py` (§6 nueva, 15) | **64/64** | `traer_kommo.py` de `main`: 4 rojos (con el repaso parado 3 h, la corrida salía en verde) |
 | `tests/test_mixto.js` (28 → 33) | **33/33** | `d890468`: 4 rojos (3.000 → 3.600) |
 | `tests/test_medias.js` (23 → 24) | **24/24** | cambió a propósito: «not found» = borrado, y respuesta perdida = «no se sabe» |
 | `tests/test_adm_alta.js` | **18/18** | — |
-| Batería completa (`tests/correr.sh`, 74 suites) | **74/74 en verde, 2.748 comprobaciones**, sobre `5205ce8` | — |
+| Batería completa (`tests/correr.sh`, 74 suites) | **74/74 en verde, 2.776 comprobaciones** (2.748 sobre `5205ce8` + 13 + 15 del incidente) | — |
 
 **Cómo verificar (Codex):**
 ```
 git fetch origin && git checkout claude/pedidos-fecha-entrega-bgt0em
 ./tests/correr.sh                              # batería completa
 node tests/test_concurrencia.js                # dos navegadores contra el .gs real (incluye el panel viejo por git show)
-node tests/test_servidor.js                    # el .gs solo
+node tests/test_servidor.js                    # el .gs solo (§11 = probarAntesDeImplementar)
+python3 tests/test_traer.py                    # el respaldo de Kommo (§6 = repaso parado en rojo)
 # dientes:
+git show 5205ce8:google-apps-script.gs > /tmp/gs23b0.gs && GS=/tmp/gs23b0.gs node tests/test_servidor.js   # 5 rojos (§11)
 git show d890468:google-apps-script.gs > /tmp/gs23a.gs && GS=/tmp/gs23a.gs node tests/test_servidor.js
 git show ebc3eab:google-apps-script.gs > /tmp/gs20a.gs && GS=/tmp/gs20a.gs node tests/test_concurrencia.js
 mkdir -p /tmp/v && git show d890468:pedidos.html > /tmp/v/pedidos.html && git show d890468:productos-mes.js > /tmp/v/productos-mes.js \
@@ -233,21 +317,40 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 
 ---
 
-## 7 · Cómo publicar (cuando el dueño y Codex digan)
+## 7 · Cómo publicar (cuando el dueño y Codex digan) — reescrito después del incidente
 
+0. **Antes que nada, el editor tiene que estar sano.** `estadoKommo` corre sin error y el repaso está
+   al día (lo que se le pidió al dueño en §0).
 1. **Mergear la rama a `main`** y esperar el deploy de Pages, 1 a 2 minutos. El panel nuevo anda con el
    servidor de ahora (20-a), sin la protección del stock.
-2. **Subir el `.gs` 23-b.**
-   - Ir a Administrar implementaciones → ✏️ la de siempre → Versión nueva.
-   - **Antes de tocar Implementar**, mirar «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier
-     usuario».
-   - **Nunca «Nueva implementación».**
-3. **Verificar enseguida:**
+2. **Pegar el `.gs` 23-b en el editor.**
+   - Copiarlo de https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/main/google-apps-script.gs
+     (después del merge es el 23-b): Ctrl+A y Ctrl+C.
+   - En el editor: clic en el código, Ctrl+A, Supr (tiene que quedar **vacío**), Ctrl+V y Ctrl+S.
+     No tiene que salir ningún mensaje rojo.
+   - La última línea con texto es la **1889** y dice `}`; justo antes dice `return borrador;`.
+   - ⚠️ **Desde este momento los disparadores ya corren el 23-b**, aunque no se implemente. Su parte de
+     Kommo es igual a la de 20-a.
+3. **Probar antes de implementar:** elegir `probarAntesDeImplementar` en la lista de al lado de
+   ▶ Ejecutar y ejecutarlo. Si pide permisos, se aceptan.
+   - Tiene que terminar en **«✅ Se puede implementar»**.
+   - Con una ❌ o un error rojo **no se implementa**: se vuelve a pegar la 20-a (paso 6) y se manda la
+     captura.
+4. **Implementar → Administrar implementaciones → ✏️ la de siempre → Versión nueva → Implementar.**
+   **Nunca «Nueva implementación».**
+5. **Verificar enseguida:**
    - el panel (F5) dice «Conectado»;
    - el cuadro de 🔒 Cerrar día dice `2026-09-23-b`;
-   - o se corre Actions → «Traer ventas de Kommo (respaldo)» → Run workflow, y yo leo el registro.
-4. **Si alguien queda sin conexión:** ✏️ → la versión anterior. El panel nuevo anda con ella.
-5. **Pedir a todos que recarguen (F5).** Hasta entonces, cada computadora vieja no toca el stock ni
+   - o se corre Actions → «Traer ventas de Kommo (respaldo)» → Run workflow: dice la versión, y ahora
+     sale en rojo si el repaso del script está parado.
+6. **Si alguien queda sin conexión, volver atrás son DOS cosas:**
+   - ✏️ → la versión anterior: arregla el panel;
+   - **y** pegar de nuevo la 20-a en el editor: arregla los disparadores. Después del merge, `main` ya es
+     23-b, así que la 20-a se saca de un commit fijo:
+     https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/ebc3eab108594105b3d7db0013a3f4ff82edfafe/google-apps-script.gs
+     (1732 líneas).
+   - El panel nuevo anda con la 20-a.
+7. **Pedir a todos que recarguen (F5).** Hasta entonces, cada computadora vieja no toca el stock ni
    borra (§4.1).
 
 ---
@@ -255,8 +358,9 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 ## 8 · Decisiones que necesitan tu opinión
 
 1. **Publicar** esta vuelta (panel + `.gs` 23-b juntos, §7), cuando la apruebes vos o Codex.
-2. **Qué estaba distinto hoy en la implementación** (versión, «Ejecutar como» o «Quién tiene acceso»).
-   Lo necesito antes de pedirte que subas 23-b.
+2. **La captura de Ejecuciones con el error de `kommoRepaso`**, y confirmar que volviste a pegar la
+   20-a y que el repaso volvió (§0). Lo necesito antes de pedirte que subas la 23-b: si el problema
+   fue el pegado, el mismo camino puede repetirlo.
 3. **Excel del Cuadre:** ¿el cierre en una hoja aparte (a) o se deja como está (b)?
 4. **«Entrega»:** ¿(a) agendada y rotulada, (b) solo lo entregado, o (c) guardar el día real?
 5. **Pago mixto:** ¿marcar el 2° método en el historial, en vez de reconocerlo por día y recibo?
