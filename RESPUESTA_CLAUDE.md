@@ -60,9 +60,14 @@ el repaso de Kommo del script sigue parado desde las 11:24 (ver §0).
   diferencia con 20-a son 33 líneas que no tocan la lectura ni piden permisos nuevos
   (`git diff ebc3eab d890468 -- google-apps-script.gs`). **El código no era el problema: el pegado
   sí.**
-- Falta saber **cómo** se cortó el pegado (de dónde se copió y con qué programa se abrió el archivo).
-  Le pregunté al dueño: es lo que hay que evitar al subir la 23-b. `probarAntesDeImplementar`
-  (§5) detecta justo esto, **si se corre**: su prueba C es un pegado cortado antes de `kommoRepaso`.
+- **De dónde salió el corte** (respuesta del dueño): lo copió **del archivo que le mandé por el
+  chat**. La vista del chat corta un archivo de ~100 KB.
+  - **Regla desde hoy** (queda en `CLAUDE.md`): el `.gs` **nunca** se manda por el chat para copiar.
+  - Siempre va el enlace raw de GitHub, que es texto plano entero. Lo verifiqué: 1732 líneas,
+    idéntico a `ebc3eab`.
+  - Siempre se dice en qué línea termina, para comprobarlo.
+- `probarAntesDeImplementar` (§5) detecta justo esto, **si se corre**: su prueba C es un pegado
+  cortado antes de `kommoRepaso`.
 
 ### Qué se le pidió al dueño
 Nada de esto afecta al equipo: guardar en el editor no cambia lo implementado.
@@ -358,9 +363,9 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 ## 8 · Decisiones que necesitan tu opinión
 
 1. **Publicar** esta vuelta (panel + `.gs` 23-b juntos, §7), cuando la apruebes vos o Codex.
-2. **La captura de Ejecuciones con el error de `kommoRepaso`**, y confirmar que volviste a pegar la
-   20-a y que el repaso volvió (§0). Lo necesito antes de pedirte que subas la 23-b: si el problema
-   fue el pegado, el mismo camino puede repetirlo.
+2. **Confirmar que volviste a pegar la 20-a desde el enlace raw y que el repaso volvió.** Mandame la
+   captura de `estadoKommo` (§0). Lo necesito antes de pedirte que subas la 23-b. La captura de
+   Ejecuciones ya llegó: `Script function not found: kommoRepaso`.
 3. **Excel del Cuadre:** ¿el cierre en una hoja aparte (a) o se deja como está (b)?
 4. **«Entrega»:** ¿(a) agendada y rotulada, (b) solo lo entregado, o (c) guardar el día real?
 5. **Pago mixto:** ¿marcar el 2° método en el historial, en vez de reconocerlo por día y recibo?

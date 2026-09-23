@@ -7471,8 +7471,11 @@ del repo carga y contesta `list` en `test_servidor.js`, y su diferencia con 20-a
 la lectura ni pide permisos nuevos. **CONFIRMADO** con la captura de Ejecuciones del dueño:
 `kommoRepaso` · Basada en el tiempo · 16:29 · **Fallida** · `Script function not found:
 kommoRepaso`. Lo guardado como «23-a» **no tiene la función**: el pegado no entró entero (el código
-no era el problema; el pegado sí). Falta saber cómo se cortó (de dónde se copió, con qué programa se
-abrió el archivo): se le preguntó. Arreglo pedido (no toca al equipo: guardar no cambia lo
+no era el problema; el pegado sí). **De dónde salió el corte**: el dueño lo copió del archivo que
+le mandé por el chat (`SendUserFile`, «reemplazá todo el código por este»). La vista del chat corta
+un archivo de ~100 KB. 🚫 **Nunca más el `.gs` por el chat para copiar**: siempre el raw de GitHub
+(texto plano entero; verificado el 23/09: 1732 líneas, idéntico a `ebc3eab`), y decir la última
+línea para que lo compruebe. Arreglo pedido (no toca al equipo: guardar no cambia lo
 implementado): pegar la 20-a desde el raw de `main`, comprobar que termina en la línea 1732 con `}`,
 guardar, ejecutar `estadoKommo` y `kommoRepaso` desde el editor, sin Implementar.
 ⚠️ **Lecciones**:

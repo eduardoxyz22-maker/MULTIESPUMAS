@@ -115,7 +115,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   · 🚨 **El 23/09 subir el `.gs` 23-a dejó a TODO el equipo sin conexión** («no hay conexión con
   Google» en todos a la vez): se volvió a la versión anterior desde ✏️ (el diálogo NO mostraba
   «Ejecutar como»/«Quién tiene acceso»: cambió solo la versión). **Causa confirmada**: Ejecuciones
-  decía `Script function not found: kommoRepaso` — el pegado del `.gs` NO entró entero.
+  decía `Script function not found: kommoRepaso` — el pegado del `.gs` NO entró entero. El dueño
+  lo había copiado **del archivo que le mandé por el chat** (`SendUserFile`).
+  🚫 **NUNCA mandarle el `.gs` por el chat para que lo copie**: la vista del chat corta un archivo
+  tan largo (~100 KB). Siempre el enlace **raw de GitHub**, que es texto plano entero
+  (`https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/<rama o commit>/google-apps-script.gs`),
+  y decirle en qué línea y con qué termina (`}`, con `return borrador;` antes) para que lo compruebe.
   ⚠️ **Los disparadores (`kommoRepaso` cada 5 min, `kommoProcesarCola`, el barrido de fotos) corren
   el código GUARDADO en el editor, no la versión implementada**: el repaso de Kommo quedó parado
   desde las 11:24 aunque el panel ya andaba. **Volver atrás son DOS cosas**: ✏️ → versión anterior
