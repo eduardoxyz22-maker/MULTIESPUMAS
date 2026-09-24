@@ -1,9 +1,14 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
 **Para:** el dueño y Codex (revisión).
-**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta: `5205ce8`** (código, pruebas y
-bitácora) **y `9ee9c2e`**, el del incidente (§0: `probarAntesDeImplementar`, la alarma del repaso
-parado y el procedimiento de §7).
+**Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta:**
+- `5205ce8`: código, pruebas y bitácora;
+- `9ee9c2e`: el del incidente (§0): `probarAntesDeImplementar`, la alarma del repaso parado y el
+  procedimiento de §7;
+- `04ab496` y `14dec98`: la revisión con dos agentes antes de publicar (§9).
+  - Arreglan la corrupción del stock y del arqueo con la página vieja y la nueva a la vez.
+  - Agregan el tope de la celda y la medición del stock.
+  - Cambian el orden del procedimiento de §7.
 **Nada de esto está publicado.** `main` sigue en `ebc3eab` y el servidor volvió a `2026-09-20-a`. El
 repaso de Kommo del script estuvo parado de 11:24 a 16:59 y **ya anda** (ver §0).
 
@@ -306,12 +311,13 @@ mover el momento de soltar el guardado retenido, porque ahora el borrado lo espe
 | Suite | Resultado | Dientes |
 |---|---|---|
 | `tests/test_concurrencia.js` (**rehecho**, 18 → 50) | **50/50** | `d890468`+23-a: 25 rojos · `ebc3eab`+20-a: 31 · panel nuevo+20-a: 20 · panel nuevo+23-a: 4 |
-| `tests/test_servidor.js` (194 → 201 → **214**) | **214/214** | 23-a: 7 rojos · §11 `probarAntesDeImplementar` (13, con un pegado cortado de verdad): 5 rojos contra el 23-b de `5205ce8` |
-| `tests/test_traer.py` (§6 nueva, 15) | **64/64** | `traer_kommo.py` de `main`: 4 rojos (con el repaso parado 3 h, la corrida salía en verde) |
+| `tests/test_servidor.js` (194 → 201 → **226**) | **226/226** | 23-a: 7 rojos · §11 `probarAntesDeImplementar` (con un pegado cortado de verdad): 5 rojos contra el 23-b de `5205ce8` y otros 5 contra el de `9ee9c2e` · §12 `celda_llena` |
+| `tests/test_traer.py` (§6 y §7 nuevas) | **68/68** | `traer_kommo.py` de `main`: 4 rojos (con el repaso parado 3 h, la corrida salía en verde); el de `d9f6326`: 4 rojos (repaso roto, ids en el registro) |
+| `tests/test_transicion.js` (**nueva**, §9) | **18/18** | panel de `04ab496`: 11 rojos (Moreno 4, entrada perdida, arqueo revertido, ids repetidos) |
 | `tests/test_mixto.js` (28 → 33) | **33/33** | `d890468`: 4 rojos (3.000 → 3.600) |
 | `tests/test_medias.js` (23 → 24) | **24/24** | cambió a propósito: «not found» = borrado, y respuesta perdida = «no se sabe» |
 | `tests/test_adm_alta.js` | **18/18** | — |
-| Batería completa (`tests/correr.sh`, 74 suites) | **74/74 en verde, 2.776 comprobaciones** (2.748 sobre `5205ce8` + 13 + 15 del incidente) | — |
+| Batería completa (`tests/correr.sh`, 75 suites) | **75/75 en verde, 2.810 comprobaciones** sobre `14dec98` | — |
 
 **Cómo verificar (Codex):**
 ```
@@ -331,51 +337,72 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 
 ---
 
-## 7 · Cómo publicar (cuando el dueño y Codex digan) — reescrito después del incidente
+## 7 · Cómo publicar (cuando el dueño y Codex digan) — reescrito después de la revisión del 24/09
 
-0. **Antes que nada, el editor tiene que estar sano.** `estadoKommo` corre sin error y el repaso está
-   al día (lo que se le pidió al dueño en §0).
-1. **Mergear la rama a `main`** y esperar el deploy de Pages, 1 a 2 minutos. El panel nuevo anda con el
-   servidor de ahora (20-a), sin la protección del stock.
-2. **Pegar el `.gs` 23-b en el editor.**
-   - Copiarlo de este enlace, **fijo a un commit**:
-     https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/9ee9c2e29870af2f8ec1029604e5108809fdd91d/google-apps-script.gs
-     Después, Ctrl+A y Ctrl+C.
-     - Verificado: 1889 líneas, idéntico al de la rama, versión `2026-09-23-b`, con
-       `probarAntesDeImplementar`.
-     - No usar el enlace de `main`: GitHub lo guarda en caché unos 5 minutos, y justo después del
-       merge puede seguir dando la 20-a.
-   - En el editor: clic en el código, Ctrl+A, Supr (tiene que quedar **vacío**), Ctrl+V y Ctrl+S.
-     No tiene que salir ningún mensaje rojo.
-   - La última línea con texto es la **1889** y dice `}`; justo antes dice `return borrador;`.
-   - ⚠️ **Desde este momento los disparadores ya corren el 23-b**, aunque no se implemente. Su parte de
-     Kommo es igual a la de 20-a.
-3. **Probar antes de implementar:** elegir `probarAntesDeImplementar` en la lista de al lado de
-   ▶ Ejecutar y ejecutarlo. Si pide permisos, se aceptan.
+**Cambió el orden.**
+- Primero se pega y se prueba el servidor en el editor, sin implementar: nadie del equipo se entera,
+  y así se mide el stock antes de tocar nada.
+- Después se publica la página y **todos recargan**.
+- Recién ahí se implementa.
+
+Motivo: la revisión (§9) mostró que la página vieja y la nueva abiertas a la vez corrompían el
+stock. Ya está arreglado en el código, pero que nadie quede con la página vieja es la primera
+defensa.
+
+**No publicar a las 10:00 ni a las 17:00 de Bolivia**: a esa hora corre `panel.yml` y un push a
+`main` en ese momento falla.
+
+0. **Dueño: anotar la versión activa.** Implementar → Administrar implementaciones → anotar el número
+   de «Versión» que está activa hoy (la 20-a). **Es a la que se vuelve si algo sale mal.**
+   ⚠️ **Nunca «la anterior» a ciegas**: la del 23/09 quedó guardada en Google y es el pegado roto.
+1. **Dueño: pegar la 23-b en el editor (sin implementar).**
+   - Copiarla de este enlace **fijo a un commit**, con Ctrl+A y Ctrl+C:
+     https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/14dec98a83955ce8f7a7e979fa9bd2bd19b3ad6d/google-apps-script.gs
+     - Verificado: **1956 líneas**, idéntico al de la rama.
+     - No usar el de `main`: se cachea unos 5 minutos. Nunca copiarlo del chat.
+   - En el editor:
+     - a la izquierda, **un solo** archivo `.gs`;
+     - clic en el código, Ctrl+A, Supr (tiene que quedar **vacío**), Ctrl+V y Ctrl+S;
+     - no tiene que salir ningún mensaje rojo;
+     - la última línea es la **1956**: `}`, con `return borrador;` justo antes.
+   - Desde acá los disparadores corren la 23-b, cuya parte de Kommo es igual a la de la 20-a. El
+     panel del equipo sigue con la 20-a implementada.
+2. **Dueño: `probarAntesDeImplementar` → Ejecutar** (si pide permisos, se aceptan).
    - Tiene que terminar en **«✅ Se puede implementar»**.
-   - Con una ❌ o un error rojo **no se implementa**: se vuelve a pegar la 20-a (paso 6) y se manda la
-     captura.
-4. **Implementar → Administrar implementaciones → ✏️ la de siempre → Versión nueva → Implementar.**
-   **Nunca «Nueva implementación».**
-5. **Verificar enseguida** (condición de Codex: conexión, versión y una ejecución automática de
-   Kommo exitosa):
-   - **Conexión:** el panel (F5) dice «Conectado», sin el cartel rojo.
-   - **Versión:** el cuadro de 🔒 Cerrar día dice `2026-09-23-b`. O se corre Actions → «Traer ventas
-     de Kommo (respaldo)» → Run workflow: dice la versión, y ahora sale en rojo si el repaso del
-     script está parado.
-   - **Kommo automático:** esperar 5 minutos **sin** ejecutar `kommoRepaso` a mano. En
-     **Ejecuciones**, la fila más nueva de `kommoRepaso` tiene que decir «Basada en el tiempo» y
-     **«Completada»**, no «Fallida», con una hora posterior al pegado. Es la misma pantalla que
-     mostró el error del 23/09.
-6. **Si alguien queda sin conexión, volver atrás son DOS cosas:**
-   - ✏️ → la versión anterior: arregla el panel;
-   - **y** pegar de nuevo la 20-a en el editor: arregla los disparadores. Después del merge, `main` ya es
-     23-b, así que la 20-a se saca de un commit fijo:
+   - **Mandar la captura: dice cuánto ocupa el stock en su celda.**
+   - Con ❌ o un error rojo: volver a pegar la 20-a y parar. El enlace es
      https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/ebc3eab108594105b3d7db0013a3f4ff82edfafe/google-apps-script.gs
-     (1732 líneas).
-   - El panel nuevo anda con la 20-a.
-7. **Pedir a todos que recarguen (F5).** Hasta entonces, cada computadora vieja no toca el stock ni
-   borra (§4.1).
+     (1732 líneas). Nada más cambió.
+3. **Claude: publicar la página.**
+   - Mirar que `panel.yml` no esté corriendo.
+   - Hacer el merge de la rama a `main` y esperar el deploy de Pages.
+   - Comprobar que la página publicada espera `2026-09-23-b`. Con F5 en el panel, el cuadro de
+     🔒 Cerrar día dice «…la última es `2026-09-23-b`»; la página vieja no lo dice.
+4. **Todos: recargar (F5) en cada computadora y celular, y confirmarlo uno por uno.**
+   - Hasta que el dueño avise, **nadie toca 📦 Stock ni el arqueo del Cuadre**.
+   - Los pedidos y los cobros se cargan normal.
+5. **Dueño: implementar.** Implementar → Administrar implementaciones → ✏️ la de siempre → Versión:
+   «Nueva versión», con **`2026-09-23-b` en «Descripción»** → Implementar. **Nunca «Nueva
+   implementación».**
+6. **Verificar** (condición de Codex: conexión, versión y una ejecución automática de Kommo exitosa):
+   - **Conexión:** el panel (F5) dice «Conectado», sin el cartel rojo.
+   - **Versión:** el cuadro de 🔒 Cerrar día dice `2026-09-23-b` (o Actions → «Traer ventas de Kommo
+     (respaldo)» → Run workflow).
+   - **Kommo automático:** esperar 5 minutos **sin** ejecutar `kommoRepaso` a mano. Después:
+     - `probarAntesDeImplementar` otra vez tiene que dar ✅ «El repaso de Kommo corrió hace N minutos,
+       sin errores»;
+     - en **Ejecuciones**, la fila más nueva de `kommoRepaso` tiene que decir «Basada en el tiempo»
+       → **«Completada»**.
+7. **Recomendado:** volver a subir el Excel de existencias de Moreno con el panel nuevo, para que las
+   fotos de los almacenes queden al día.
+
+**Volver atrás:**
+- **Falla en los pasos 1–2:** se vuelve a pegar la 20-a, y nada más: el panel no cambió.
+- **Varios dispositivos sin conexión después del paso 5** (si es uno solo, primero F5):
+  - ✏️ → la versión **anotada en el paso 0**, que arregla el panel;
+  - **y** volver a pegar la 20-a en el editor, que arregla los disparadores.
+  - El panel nuevo anda con la 20-a si todos recargaron.
+- **Si el que falla es el panel nuevo:** Claude revierte el merge en `main` y todos recargan.
 
 ---
 
@@ -389,6 +416,57 @@ Las rutas de Playwright y Chromium son las de Linux (`/opt/node22/…`, `/opt/pw
 4. **«Entrega»:** ¿(a) agendada y rotulada, (b) solo lo entregado, o (c) guardar el día real?
 5. **Pago mixto:** ¿marcar el 2° método en el historial, en vez de reconocerlo por día y recibo?
 6. Siguen pendientes: MEDIA-4, MEDIA-5 y `PANEL_KEY` (en espera).
+
+---
+
+## 9 · Revisión con dos agentes antes de publicar (24/09, madrugada)
+
+El dueño pidió una revisión más antes de publicar. Dos agentes, cada uno en su copia del repo y
+sin tocar nada:
+- **Agente 1:** revisó lo agregado después de Codex (servidor, alarma y procedimiento).
+- **Agente 2:** revisó la **transición**, con la página vieja y la nueva a la vez contra los dos
+  servidores, y corrió la batería con el reloj corrido a otros días.
+
+Verifiqué cada hallazgo antes de corregirlo.
+
+**Confirmado y arreglado** (`04ab496` y `14dec98`):
+
+| # | Sev. | Hallazgo | Arreglo |
+|---|---|---|---|
+| T1 | ALTA | La página VIEJA reescribe las fotos de almacén sin `rs` ni `t`. Al leerlas, la nueva volvía a restar las recogidas: **Moreno 10 → 7 → 4**, en silencio. Pasaba con el 20-a y también al recargar con el 23-b | `stockLeerDePanelViejo`: una foto sin `rs` trae adentro las recepciones de esa misma fila, que se anotan como ya restadas. `fusFoto` le devuelve la hora a la misma foto |
+| T2 | ALTA | El «Llegaron» de la página vieja (solo sube `q.ru`) se perdía: la **entrada de 2 desaparecía** y la recogida se reabría | `q.ru` mayor que la suma de las recepciones pasa a ser una recepción `legacy:d<n>`: sin resta ni entrada nueva, y la entrada de la vieja queda |
+| T3 | ALTA | Arqueo: al recargar, la cola de la página vieja **pisaba la corrección de otro** (950 → 900) | Una fila sin `_dev` (página vieja) se junta con la regla «viejo»: en lo compartido gana la planilla, se agrega lo que la planilla no tiene, y se avisa |
+| T4 | MEDIA | Una pestaña nueva que anotaba el arqueo **antes** de tener la planilla revertía correcciones con el espejo del navegador, y avisaba en rojo tres veces «no se pudo juntar» | La base es lo que mostró el espejo (`ARQUEO_ESPEJO_TXT`), y `poner` marca `ARQUEO_CARGADO` |
+| T5 | BAJA | Dos entradas iguales (una ya numerada) recibían el mismo id fijo, y la junta dejaba una | `idFijo` salta los ids ya usados |
+| T6 | — | **Tamaño:** el stock va en UNA celda y Google corta en 50.000 letras. Con un stock inventado grande: 48.288 → 53.236 después de un día con el formato nuevo. **El tamaño real no se conoce** | El servidor contesta `celda_llena` sin tocar la hoja (antes: excepción = «sin conexión»). `probarAntesDeImplementar` mide el stock y el arqueo: ⚠️ desde 35.000, ❌ desde 42.000. El panel avisa pasadas las 45.000. **Se mide en el paso 2 de §7, antes de publicar la página** |
+| A1 | ALTA | «Volver a la anterior» en ✏️ caía en el **pegado roto del 23/09**, que quedó guardado como versión | Anotar antes la versión activa y volver a ESA (§7 paso 0, cabecera del `.gs`, `CLAUDE.md`) |
+| A2–A4 | MEDIA/BAJA | La prueba del editor daba ✅ en tres casos: con código viejo mezclado, con un repaso que corre pero falla por dentro, y con disparadores ajenos | Arreglado en `04ab496` (ver el commit) |
+| — | BAJA | «actualizar» salía crudo en Rechazos y contaba como «hay que volver a hacerlo». «Sin conexión» mandaba a revisar «Ejecutar como», que ya se había descartado. Seis carteles enseñaban a publicar sin pegar ni probar | Textos arreglados (`PUBLICAR_PASOS`) |
+| — | MEDIA (pruebas) | `test_concurrencia` se pudría los domingos y entre las 20 y las 24 de Bolivia | «hoy» en hora de Bolivia, y las ventas sembradas en un día abierto |
+
+**Nueva:** `tests/test_transicion.js`. Monta la página vieja (sacada de git) y la nueva contra los dos
+servidores, con 8 escenarios. Resultado: 18/18, y 11 rojos contra el panel de `04ab496`.
+
+**No arreglado, a propósito o pendiente:**
+- **Lo que VE la página vieja con el 23-b:** mensajes verdes que no se guardaron y ningún «recargá».
+  Es código viejo y no se puede cambiar. Se cubre con el paso 4 de §7: todos recargan antes de
+  implementar.
+- **La lista de 18 funciones** de la prueba del editor solo detecta un corte al final del archivo;
+  un hueco en el medio no. Es improbable con el enlace raw, y el guardado con error de sintaxis
+  cubre la mayoría de los cortes.
+- **Pruebas que se van a pudrir a fin de mes**, sin nada roto en el panel:
+  - `test_botones` los días 29 y 30/09;
+  - `test_chofer` y `test_resumen` el 30/09;
+  - `test_cuadre` el 1/10;
+  - `test_ventas_panel` desde octubre (tiene fechas fijas).
+
+  Quedan para después de publicar.
+- **Plausibles, sin probar contra Google:**
+  - una pestaña vieja con el stock congelado puede aplicar marcas ✔/📥/✗ a pedidos;
+  - en el mismo navegador, una pestaña vieja y una nueva a la vez: la vieja reemplaza en la cola la
+    fila de la nueva.
+
+  El paso 4 de §7 cubre los dos.
 
 ---
 

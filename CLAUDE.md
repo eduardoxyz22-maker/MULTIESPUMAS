@@ -124,6 +124,19 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   qué termina (`}`, con `return borrador;` antes) para que lo compruebe.
   ⚠️ **Volver atrás en ✏️ es a la versión ANOTADA antes de implementar, nunca «la anterior» a
   ciegas**: la versión del 23/09 quedó guardada en Google y es el pegado roto.
+  · 🧓 **La página VIEJA y la nueva a la vez** (revisión del 24/09, bitácora §4fz-b): la vieja
+  reescribe el stock sin `rs`/`t` y su «Llegaron» solo sube `q.ru`. **`stockLeerDePanelViejo`** lo
+  reconstruye al leer (foto sin `rs` = recepciones de esa fila ya restadas; `q.ru` de más =
+  recepción `legacy:d<n>`), y **una fila sin `_dev` se junta con la regla «viejo»** (`sisJuntarFila`
+  → `fusionarViejo`: en lo compartido gana la planilla). ⚠️ Toda recepción «legacy» se reconoce con
+  **`stockRecLegacy(r)`**, nunca con `r.id==='legacy'`. El arqueo anotado antes de tener la planilla
+  usa de base el espejo (`ARQUEO_ESPEJO_TXT`). `tests/test_transicion.js` monta la página vieja
+  desde git (`ebc3eab`).
+  · 📏 **El stock va en UNA celda y Google corta en 50.000 letras**: el `.gs` contesta `celda_llena`,
+  `probarAntesDeImplementar` lo mide y el panel avisa pasadas las 45.000. El tamaño real todavía no
+  se midió.
+  · **Publicar = pegar y probar el `.gs` ANTES de publicar la página, todos F5, recién ahí
+  implementar** (bitácora §4fz-b «Publicar»).
   ⚠️ **Los disparadores (`kommoRepaso` cada 5 min, `kommoProcesarCola`, el barrido de fotos) corren
   el código GUARDADO en el editor, no la versión implementada**: el repaso de Kommo quedó parado
   desde las 11:24 aunque el panel ya andaba. **Volver atrás son DOS cosas**: ✏️ → versión anterior

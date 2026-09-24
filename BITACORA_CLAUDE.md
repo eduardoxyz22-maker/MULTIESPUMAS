@@ -7625,30 +7625,68 @@ ayer y todo entra por los repasos (a mirar en Kommo → Webhooks; no urgente).
    anotada entre las dos se da por incluida (igual que antes).
 7. `mixtoDe` sigue siendo una heurística para los anticipos escritos: decisión del dueño.
 
-### Publicar (orden) — reescrito después del incidente
-0. Antes: el editor tiene que estar sano (`estadoKommo` corre sin error y el repaso está al día).
-1. Mergear la rama a `main` y esperar el deploy de Pages (panel nuevo; anda con 20-a, sin la
-   protección del stock).
-2. El dueño pega el `.gs` 23-b: lo copia del raw FIJO a un commit
-   (`…/MULTIESPUMAS/9ee9c2e29870af2f8ec1029604e5108809fdd91d/google-apps-script.gs`, verificado: 1889
-   líneas, idéntico) — NO del de `main`, que GitHub cachea ~5 minutos y justo después del merge puede
-   seguir dando la 20-a —, y en el editor Ctrl+A → Supr (vacío) → Ctrl+V → Ctrl+S, sin mensaje rojo;
-   la última línea es la 1889, `}` con `return borrador;` justo antes. ⚠️ Desde acá los disparadores YA corren el 23-b (su parte de
-   Kommo es igual a la de 20-a).
-3. **`probarAntesDeImplementar` → Ejecutar** (aceptar permisos si los pide). Tiene que terminar en
-   «✅ Se puede implementar». Con una ❌ o un error rojo, no se implementa: se vuelve a pegar la 20-a
-   y se manda la captura.
-4. **Administrar implementaciones → ✏️ la de siempre → Versión nueva → Implementar.** Nunca «Nueva
-   implementación».
-5. Verificar al toque (condición de Codex: conexión, versión y una ejecución AUTOMÁTICA de Kommo
-   exitosa): el panel (F5) dice «Conectado»; el cuadro de 🔒 Cerrar día dice `2026-09-23-b` (o
-   Actions → «Traer ventas de Kommo (respaldo)» → Run workflow, que sale en rojo si el repaso del
-   script está parado); y, 5 minutos después y SIN ejecutar `kommoRepaso` a mano, Ejecuciones muestra
-   la fila más nueva de `kommoRepaso` «Basada en el tiempo» → **«Completada»** (no «Fallida»).
-6. Si alguien queda sin conexión, volver atrás son DOS cosas: ✏️ → la versión anterior (20-a) **y**
-   pegar la 20-a en el editor, desde un commit FIJO (después del merge `main` ya es 23-b):
-   `https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/ebc3eab108594105b3d7db0013a3f4ff82edfafe/google-apps-script.gs`.
-   El panel nuevo anda con 20-a.
+### 🔎 Revisión con dos agentes antes de publicar (24/09, madrugada)
+El dueño pidió «pon agente a revisar». Dos agentes en worktrees aislados: uno sobre lo posterior a
+Codex (servidor, alarma, procedimiento), otro sobre la TRANSICIÓN (página vieja `ebc3eab` y nueva a
+la vez contra el 20-a y el 23-b; batería con libfaketime a otros días). Todo reproducido antes de
+tocar (`scratchpad/adv_a02b/repro_stock.js`). Arreglado en `04ab496` + `14dec98`:
+- **Stock con la página vieja** (ALTA, silencioso): la vieja reescribe las fotos de almacén SIN `rs`
+  ni `t`, y su «Llegaron» solo sube `q.ru` y resta a mano. La nueva volvía a restar (Moreno 10 → 7 →
+  4) y tiraba la entrada de la vieja. **`stockLeerDePanelViejo(d, o)`** (en `leerStock`): `q.ru` >
+  suma de `recs` → recepción `legacy:d<n>` (sin resta ni entrada; `stockRecLegacy` = id que empieza
+  con `legacy`); foto sin `rs` → las recepciones de esa MISMA fila van como ya restadas (una fila
+  nueva siempre trae `rs` en los almacenes con recogidas). `fusFoto` devuelve `t` a la misma foto.
+  `stockAlmPorDefectoDe(S)`: el almacén por defecto del stock que se lee (antes el del global).
+- **Arqueo con la página vieja** (ALTA): su cola pisaba la corrección de otro (950 → 900). Una fila
+  sin `_dev` = página vieja → **`sisJuntarFila`** usa `F.fusionarViejo` = `fusMapa(…,'viejo')`: en lo
+  compartido gana la planilla, lo viejo solo agrega, `FUS_VIEJO_PISADOS` → aviso `sisAvisarViejo`.
+  Stock: `stockFusionar(…,'viejo')` para `a`/`al`.
+- **Arqueo antes de tener la planilla** (MEDIA): base = lo que mostró el espejo
+  (**`ARQUEO_ESPEJO_TXT`**, en `filaArqueo` y en el `list` en vuelo), y el `poner` del arqueo marca
+  `ARQUEO_CARGADO` (antes chocaba 3 veces y avisaba en rojo).
+- **Ids fijos**: `idFijo` salta los ids ya usados en la lista.
+- **Celda de 50.000 letras**: `doSave` contesta **`celda_llena`** sin tocar la hoja (antes
+  excepción = «sin conexión»); `probarAntesDeImplementar` mide `__stock__` y `__arqueo_cuadre__`
+  (`CELDA_AVISO` 35.000 ⚠️, `CELDA_AVISO_ROJO` 42.000 ❌); el panel avisa una vez pasadas las 45.000
+  (`stockAvisarTamano`). ⚠️ **El tamaño real del stock NO se conoce**: un stock inventado de 150
+  productos × 3 fotos daba 48.288 → 53.236 después de un día. Se mide en el paso 2 de «Publicar».
+- La prueba del editor (`04ab496`): versión literal adentro (`ESTA_VERSION`, igual a
+  `SCRIPT_VERSION`, lo compara `test_servidor` §11 E); repaso con error del CÓDIGO → ❌, de afuera →
+  ⚠️; disparador ajeno a una función inexistente → ⚠️. `traer_kommo.py`: rojo también con error del
+  código en el repaso, ids largos tapados en el registro público.
+- Textos: `actualizar` y `celda_llena` en castellano; en Rechazos `actualizar` no cuenta como «hay
+  que volver a hacerlo»; «sin conexión» ya no manda a «Ejecutar como»; `PUBLICAR_PASOS` en los seis
+  carteles.
+- `tests/test_transicion.js` (18; 11 rojos contra `04ab496`); `test_concurrencia` con «hoy» en hora
+  de Bolivia y ventas en día abierto. Batería 75/75, 2.810.
+- **Quedan**: la lista de 18 funciones no ve un hueco en el MEDIO (improbable); pruebas que se
+  pudren a fin de mes (`test_botones` 29–30/09, `test_chofer` y `test_resumen` 30/09, `test_cuadre`
+  1/10, `test_ventas_panel` desde octubre); lo que VE la página vieja con el 23-b (código viejo: se
+  cubre con el paso 4, todos recargan).
+
+### Publicar (orden) — reescrito después de la revisión del 24/09
+**Cambió el orden: el servidor se pega y se prueba ANTES de publicar la página, y todos recargan
+ANTES de implementar.** No mergear a las 10:00 ni a las 17:00 de Bolivia (`panel.yml`).
+0. Dueño: Administrar implementaciones → **anotar el número de la versión activa** (la 20-a). Se
+   vuelve a ESA, nunca a «la anterior» a ciegas (la del 23/09 es el pegado roto).
+1. Dueño: pega la 23-b en el editor SIN implementar, desde el raw FIJO
+   `…/MULTIESPUMAS/14dec98a83955ce8f7a7e979fa9bd2bd19b3ad6d/google-apps-script.gs` (verificado: 1956
+   líneas, idéntico). Un solo `.gs` a la izquierda; Ctrl+A → Supr → Ctrl+V → Ctrl+S; sin rojo; última
+   línea 1956 (`}` con `return borrador;` antes). Los disparadores ya corren la 23-b (Kommo igual).
+2. Dueño: **`probarAntesDeImplementar`** → «✅ Se puede implementar» + captura (dice cuánto ocupa el
+   stock). Con ❌: volver a pegar la 20-a (`…/ebc3eab108594105b3d7db0013a3f4ff82edfafe/…`, 1732
+   líneas) y parar.
+3. Claude: `panel.yml` quieto → merge a `main` → deploy de Pages → la página publicada espera
+   `2026-09-23-b` (🔒 Cerrar día: «…la última es 2026-09-23-b»).
+4. **Todos recargan (F5) y se confirma uno por uno. Nadie toca 📦 Stock ni el arqueo hasta que el
+   dueño avise** (pedidos y cobros, normal).
+5. Dueño: ✏️ la de siempre → Versión nueva, Descripción `2026-09-23-b` → Implementar.
+6. Verificar (Codex): «Conectado»; 🔒 Cerrar día `2026-09-23-b`; 5 minutos después, sin
+   `kommoRepaso` a mano, `probarAntesDeImplementar` ✅ con el repaso al día y sin error, y en
+   Ejecuciones `kommoRepaso` «Basada en el tiempo» → «Completada».
+7. Recomendado: volver a subir el Excel de existencias con el panel nuevo.
+Volver atrás: pasos 1–2 → re-pegar la 20-a; después del 5 (varios sin conexión) → ✏️ la versión
+anotada + re-pegar la 20-a; si falla el panel → Claude revierte el merge y todos recargan.
 
 ## 4fz. El informe de la otra herramienta: el stock que se pisaba y el borrado a ciegas (2026-09-23)
 
