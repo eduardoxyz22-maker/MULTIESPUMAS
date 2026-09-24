@@ -6538,10 +6538,11 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 > y el arqueo se siguen pisando entre dispositivos y borrar no mira el sello.
 > `test_producir` ya no tiene rojos (62/62 desde §4es).
 
-> 🗓️ **`tests/test_noborra.js` se pudre los jueves**: agenda para `D(3)` sin mirar el día de
+> 🗓️ **`tests/test_noborra.js` se pudría los jueves**: agendaba para `D(3)` sin mirar el día de
 > la semana, y cuando hoy + 3 cae domingo el portero lo rechaza (2 checks en rojo el 10/09,
-> también contra `main`). Arreglo: que `D(n)` salte el domingo sin pisar los otros `D(n)` que
-> usa el test. No se tocó porque no es del cambio de §4dr.
+> también contra `main`). ✅ **Arreglado el 24/09** (§4fz-b, antes de publicar la 23-b): la
+> sección 6 usa `DH(3)`, el primer día hábil (lunes a viernes) desde hoy + 3; `D(0)` no se tocó.
+> Medido un jueves: 33/2 → 35/0.
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
 > julio 3 bloques de JavaScript que fallan en silencio («React is not defined» ×3, un
