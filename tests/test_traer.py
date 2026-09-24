@@ -248,5 +248,26 @@ LEADS.update(json.loads(LEADS_ANTES))
 chk("…y sin ventas en la ventana también (antes ese camino terminaba con «nada nuevo» y salía en verde)",
     bool(c10) and "nada nuevo" in s10 and "NO CORRE" in s10, str(c10)[:100])
 
+# 7) Revisión del 24/09 (agente antes de publicar): el repaso que CORRE pero falla adentro.
+#    `kommoRepaso` atrapa sus errores: la hora queda al día y la corrida salía en verde.
+ID_LARGO = "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT"          # tiene la forma de un id de planilla de Google
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": "kEmb_ is not defined"})))
+s11, c11 = correr()
+chk("⚠️ §4fz-b · el repaso al día pero con un error del CÓDIGO: la corrida sale en ROJO (antes: verde)",
+    bool(c11) and "falla con un error del código" in s11 and "kEmb_ is not defined" in s11, str(c11)[:120] + " · " + s11[-200:])
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": "kommo no contestó"})))
+s12, c12 = correr()
+chk("…un error de AFUERA («kommo no contestó») se dice y nombra el token del script, pero no pone la corrida en rojo",
+    c12 == 0 and "error de afuera" in s12 and "KOMMO_TOKEN" in s12, str(c12)[:100] + " · " + s12[-200:])
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": f"Exception: document with id {ID_LARGO} is missing"})))
+s13, c13 = correr()
+chk("⚠️ el registro PÚBLICO no muestra un id largo que venga en el error (el de la planilla)",
+    ID_LARGO not in s13 + str(c13) and "document with id … is missing" in s13, s13[-200:])
+chk("…y el último repaso sale en una línea con sus contadores, no el JSON entero",
+    "cola 0 · vistos 1 · creados 0" in s13 and '"vistos"' not in s13, s13[-240:])
+
 print(f"\n{PASS} bien · {FAIL} mal")
 sys.exit(1 if FAIL else 0)

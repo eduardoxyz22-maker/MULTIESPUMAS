@@ -2,18 +2,30 @@
  * ============================================================================
  * PEDIDOS MultiEspumas — Backend Google Apps Script
  * ============================================================================
- * CÓMO SE ACTUALIZA (lo de siempre; la implementación ya existe):
- *   1. Extensiones > Apps Script: clic en el código, Ctrl+A, Supr (tiene que quedar VACÍO),
- *      pegar TODO este archivo, Ctrl+S. No tiene que salir ningún mensaje rojo.
+ * CÓMO SE ACTUALIZA (lo de siempre; la implementación ya existe). Procedimiento completo, con
+ * los enlaces: bitácora §4fz-b «Publicar».
+ *   0. ANTES de tocar nada: Implementar > Administrar implementaciones, y ANOTAR el número de
+ *      «Versión» que está activa hoy. Es a la que se vuelve si algo sale mal.
+ *   1. Copiar el código del enlace raw de GitHub FIJO A UN COMMIT, nunca desde el chat (corta
+ *      los archivos largos: pasó el 23/09). En Extensiones > Apps Script, a la izquierda tiene
+ *      que haber UN solo archivo .gs: clic en el código, Ctrl+A, Supr (tiene que quedar
+ *      VACÍO), pegar, Ctrl+S. Sin mensaje rojo, y la última línea es la que dice el
+ *      procedimiento («}», con «return borrador;» justo antes).
  *   2. En la lista de al lado de ▶ Ejecutar elegir «probarAntesDeImplementar» → Ejecutar.
- *      Abajo tiene que terminar en «✅ Se puede implementar». Con una ❌, NO seguir.
+ *      Abajo tiene que terminar en «✅ Se puede implementar». Con una ❌, o si la función ni
+ *      aparece en la lista: NO implementar, y volver a pegar el código de la versión anotada.
  *      ⚠️ Lo GUARDADO ya corre en los disparadores automáticos (el repaso de Kommo), aunque
  *      no se implemente: un pegado roto los frena en el acto (pasó el 23/09, §4fz-b).
  *   3. Implementar > Administrar implementaciones > ✏️ la de siempre > Versión: «Nueva
- *      versión» > Implementar. ⚠️ NUNCA «Nueva implementación»: estrena otra dirección /exec
- *      y el panel deja de encontrar el servidor (§4dm).
- *   4. Si algo sale mal, volver atrás son DOS cosas: ✏️ > la versión anterior (arregla el
- *      panel) Y pegar de nuevo el código anterior (arregla los disparadores).
+ *      versión», con la SCRIPT_VERSION de este archivo en «Descripción» > Implementar.
+ *      ⚠️ NUNCA «Nueva implementación»: estrena otra dirección /exec y el panel deja de
+ *      encontrar el servidor (§4dm).
+ *   4. Verificar: el panel (F5) dice «Conectado» y la versión nueva, y a los 5 minutos
+ *      «probarAntesDeImplementar» otra vez: el repaso de Kommo al día y sin error.
+ *   5. Si VARIOS dispositivos quedan sin conexión a la vez (uno solo: primero F5), volver
+ *      atrás son DOS cosas: ✏️ > la versión ANOTADA en el paso 0 (arregla el panel) Y pegar de
+ *      nuevo el código de esa versión (arregla los disparadores). ⚠️ Nunca «la anterior» a
+ *      ciegas: la versión del 23/09 es un pegado roto.
  * Solo la PRIMERA vez (instalación nueva): Implementar > Nueva implementación > Aplicación
  * web, «Ejecutar como: Yo», «Quién tiene acceso: Cualquier usuario», y la dirección /exec
  * va en pedidos.html (variable SHEETS_URL).
@@ -110,7 +122,16 @@ function probarAntesDeImplementar() {
     var s = new Date(ms - 4 * 3600000).toISOString();
     return s.slice(8, 10) + '/' + s.slice(5, 7) + ' ' + s.slice(11, 16);
   }
-  bien('Versión de este código: ' + SCRIPT_VERSION);
+  /* 0. ¿Quedó código VIEJO además del nuevo? Pegar arriba sin borrar, u otro archivo .gs en el
+        proyecto que carga después: las funciones y la SCRIPT_VERSION del viejo le ganan a las
+        nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
+        de esta función a propósito (el viejo no la tiene, no la pisa).
+        ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
+  var ESTA_VERSION = '2026-09-23-b';
+  if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
+                                           '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
+                                           'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
+  else bien('Versión de este código: ' + SCRIPT_VERSION);
 
   /* 1. ¿Está el archivo ENTERO? Un pegado cortado deja afuera las funciones del final
         (borradorDeLead_ es la última del archivo). `typeof` no revienta con un nombre que
@@ -158,7 +179,13 @@ function probarAntesDeImplementar() {
     var existe = function (h) { return fns.hasOwnProperty(h) ? fns[h] === 'function' : !!G && typeof G[h] === 'function'; };
     var tr = ScriptApp.getProjectTriggers(), hay = {};
     for (var j = 0; j < tr.length; j++) { var h = tr[j].getHandlerFunction(); hay[h] = (hay[h] || 0) + 1; }
-    for (n in hay) if (!existe(n)) mal('Hay un disparador de «' + n + '» pero esa función no está en el código: falla cada vez que salta.');
+    for (n in hay) if (!existe(n)) {
+      /* Uno de NUESTROS disparadores sin su función = el pegado está mal (lo del 23/09): frena.
+         Uno de una función que ya no existe en ningún código (quedó de antes) falla solo y no
+         depende de este pegado: se avisa y no frena, porque volver a pegar no lo arregla. */
+      if (fns.hasOwnProperty(n)) mal('Hay un disparador de «' + n + '» pero esa función no está en el código: falla cada vez que salta.');
+      else ojo('Hay un disparador de «' + n + '», una función que ya no existe: falla cada vez que salta. Borralo en Activadores (el reloj de la izquierda).');
+    }
     if (!hay.kommoRepaso) ojo('No está el repaso de Kommo cada 5 minutos: ejecutá «instalarDisparadores» una vez.');
     else if (!hay.barrerFotosHuerfanas) ojo('No está el barrido diario de fotos: ejecutá «instalarDisparadores» una vez.');
     else bien('Disparadores instalados: repaso de Kommo cada 5 minutos y barrido de fotos de madrugada.');
@@ -172,9 +199,18 @@ function probarAntesDeImplementar() {
     if (!t) ojo('El repaso de Kommo todavía no corrió nunca.');
     else {
       var min = Math.round((Date.now() - t) / 60000);
+      /* `kommoRepaso` atrapa sus errores y los anota: Ejecuciones dice «Completada» y la hora está
+         al día aunque adentro haya fallado. Un error del CÓDIGO frena; uno de afuera (Kommo no
+         contestó, candado ocupado) avisa. */
+      var err = String(ult.error || '').slice(0, 120);
       if (min > 15) ojo('El repaso de Kommo no corre desde el ' + horaBolivia(t) + ' (hora Bolivia), hace ' + min +
                         ' minutos. Ejecutá «kommoRepaso» una vez y volvé a probar: si sale un error rojo, ese es el problema.');
-      else bien('El repaso de Kommo corrió hace ' + min + ' minutos' + (ult.error ? (' (dijo: ' + ult.error + ')') : '') + '.');
+      else if (/is not defined|is not a function|Cannot read|ReferenceError|TypeError|SyntaxError/i.test(err))
+        mal('El último repaso de Kommo (hace ' + min + ' minutos) falló con un error del CÓDIGO: «' + err + '». Ejecutá ' +
+            '«kommoRepaso» una vez y volvé a probar: si se repite, el código pegado tiene un problema.');
+      else if (err) ojo('El último repaso de Kommo (hace ' + min + ' minutos) avisó: «' + err + '». Si se repite, mirá el token ' +
+                        'de Kommo (propiedad KOMMO_TOKEN del script: es OTRA copia que el secreto de GitHub).');
+      else bien('El repaso de Kommo corrió hace ' + min + ' minutos, sin errores.');
     }
   } catch (e) { ojo('No pude leer el último repaso: ' + motivo(e)); }
 

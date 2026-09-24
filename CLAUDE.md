@@ -118,9 +118,12 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   decía `Script function not found: kommoRepaso` — el pegado del `.gs` NO entró entero. El dueño
   lo había copiado **del archivo que le mandé por el chat** (`SendUserFile`).
   🚫 **NUNCA mandarle el `.gs` por el chat para que lo copie**: la vista del chat corta un archivo
-  tan largo (~100 KB). Siempre el enlace **raw de GitHub**, que es texto plano entero
-  (`https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/<rama o commit>/google-apps-script.gs`),
-  y decirle en qué línea y con qué termina (`}`, con `return borrador;` antes) para que lo compruebe.
+  tan largo (~100 KB). Siempre el enlace **raw de GitHub FIJO A UN COMMIT**, que es texto plano entero
+  (`https://raw.githubusercontent.com/eduardoxyz22-maker/MULTIESPUMAS/<sha completo>/google-apps-script.gs`;
+  el de una RAMA se cachea 5 minutos y puede dar la versión vieja), y decirle en qué línea y con
+  qué termina (`}`, con `return borrador;` antes) para que lo compruebe.
+  ⚠️ **Volver atrás en ✏️ es a la versión ANOTADA antes de implementar, nunca «la anterior» a
+  ciegas**: la versión del 23/09 quedó guardada en Google y es el pegado roto.
   ⚠️ **Los disparadores (`kommoRepaso` cada 5 min, `kommoProcesarCola`, el barrido de fotos) corren
   el código GUARDADO en el editor, no la versión implementada**: el repaso de Kommo quedó parado
   desde las 11:24 aunque el panel ya andaba. **Volver atrás son DOS cosas**: ✏️ → versión anterior

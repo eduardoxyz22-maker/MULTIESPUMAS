@@ -1080,6 +1080,49 @@ console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes d
       chk('D · un disparador de otra función que SÍ existe no se marca como roto', !tiene(r, /disparador de «backupDiario»/) && a.ctx.ScriptApp._triggers.length===1, r.lineas.join(' | '));
     }
   }
+  /* Revisión del 24/09 (agente antes de publicar): tres huecos por los que la prueba decía ✅. */
+  {
+    // E. Código VIEJO además del nuevo: pegado arriba sin borrar (o un 2° archivo .gs que carga después)
+    const m = src.match(/var ESTA_VERSION = '([^']+)'/);
+    chk('E · el literal de la prueba es igual a SCRIPT_VERSION (si se sube una sin la otra, esto avisa)',
+        !!m && m[1] === (src.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], m ? m[1] : 'no está el literal');
+    const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) },
+                     src + "\nvar SCRIPT_VERSION = '2026-09-20-a';\n");
+    if (!hay(a)) chk('E · la prueba existe', false);
+    else {
+      a.ctx.instalarDisparadores();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('⚠️ E · con la SCRIPT_VERSION de un código viejo cargada después: ❌ (antes: ✅ con el servidor viejo andando)',
+          r.ok===false && tiene(r, /quedó código VIEJO además del nuevo/) && /^❌ NO IMPLEMENTAR/.test(r.veredicto), r.lineas.join(' | '));
+    }
+  }
+  {
+    // F. Un disparador de una función que ya no existe en ningún código: avisa y no frena
+    const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) });
+    if (!hay(a)) chk('F · la prueba existe', false);
+    else {
+      a.ctx.instalarDisparadores();
+      a.ctx.ScriptApp.newTrigger('funcionQueYaNoExiste').timeBased().everyDays(1).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('F · un disparador ajeno a una función inexistente: ⚠️ «borralo en Activadores», pero se puede implementar',
+          r.ok===true && tiene(r, /disparador de «funcionQueYaNoExiste», una función que ya no existe.*Borralo en Activadores/), r.lineas.join(' | '));
+    }
+  }
+  {
+    // G. Un repaso que CORRE pero falla adentro: Ejecuciones dice «Completada» y la hora está al día
+    const prueba = (error) => {
+      const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), cola:0, vistos:0, creados:0, error }) });
+      if (!hay(a)) return null;
+      a.ctx.instalarDisparadores();
+      return a.ctx.probarAntesDeImplementar();
+    };
+    const r1 = prueba('kEmb_ is not defined');
+    chk('⚠️ G · el repaso al día pero con un error del CÓDIGO («kEmb_ is not defined»): ❌ (antes: ✅ «corrió hace 1 minuto»)',
+        !!r1 && r1.ok===false && tiene(r1, /falló con un error del CÓDIGO: «kEmb_ is not defined»/), r1 ? r1.lineas.join(' | ') : 'sin prueba');
+    const r2 = prueba('kommo no contestó');
+    chk('G · un error de AFUERA («kommo no contestó»): ⚠️ que nombra el token del script, y se puede implementar',
+        !!r2 && r2.ok===true && tiene(r2, /avisó: «kommo no contestó».*KOMMO_TOKEN/), r2 ? r2.lineas.join(' | ') : 'sin prueba');
+  }
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

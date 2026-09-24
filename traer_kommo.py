@@ -27,7 +27,7 @@ Repetir no cuesta nada: el panel descarta lo que ya tiene.
     Los secretos (token, clave del webhook, dirección del panel) nunca se imprimen.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-import os, sys, json, time
+import os, re, sys, json, time
 import urllib.request as _rq, urllib.parse as _ps, urllib.error as _er
 from datetime import datetime, timedelta, timezone
 
@@ -122,9 +122,64 @@ def repaso_parado(rep, ahora=None):
     bo = ts - timedelta(hours=4)          # hora de Bolivia: UTC−4 fijo, sin horario de verano (§4fu)
     lapso = f"{minutos // 60} h {minutos % 60} min" if minutos >= 60 else f"{minutos} min"
     return (f"🚨 el repaso automático del script NO CORRE desde el {bo:%d/%m %H:%M} (hora Bolivia), hace {lapso}: "
-            "lo que se encola no entra solo al panel. En Apps Script → Ejecuciones, el error de «kommoRepaso». "
-            "Los disparadores corren el código GUARDADO en el editor, no la versión implementada (§4fz-b): "
-            "pegar de nuevo el código de la versión publicada y ejecutar «probarAntesDeImplementar» o «estadoKommo».")
+            "lo que se encola no entra solo al panel. En Apps Script → Ejecuciones, el error de «kommoRepaso»: "
+            "«Script function not found» = el código GUARDADO en el editor está incompleto (los disparadores corren "
+            "lo guardado, no lo implementado: volver a pegar el de la versión publicada); «autorización» = ejecutar "
+            "«estadoKommo» y aceptar los permisos; ninguna fila = falta el disparador («instalarDisparadores») (§4fz-b).")
+
+
+# Un error del CÓDIGO dentro del repaso (§4fz-b, revisión del 24/09): `kommoRepaso` atrapa sus
+# errores y los anota, así que Ejecuciones dice «Completada» y la hora está al día aunque haya
+# fallado adentro — un pegado al que le falta una función auxiliar pasaba por sano.
+ERROR_DE_CODIGO = re.compile(r"is not defined|is not a function|Cannot read|ReferenceError|TypeError|SyntaxError", re.I)
+
+
+def _repaso_dict(rep):
+    try:
+        d = json.loads(rep) if isinstance(rep, str) else rep
+    except Exception:
+        return None
+    return d if isinstance(d, dict) else None
+
+
+def _sin_ids(txt, tope=120):
+    """Un error de Google puede traer el id de la planilla («document with id …»), y este registro
+    es PÚBLICO: se tapa toda tira de 20 letras o más, y se recorta."""
+    return re.sub(r"[A-Za-z0-9_-]{20,}", "…", str(txt or ""))[:tope]
+
+
+def repaso_resumen(rep):
+    """El último repaso en una línea: hora, contadores y el error sin ids. Antes se imprimía el
+    JSON entero tal cual."""
+    d = _repaso_dict(rep)
+    if d is None:
+        return _sin_ids(rep, 160)
+    partes = [str(d.get("ts") or "?")]
+    partes += [f"{k} {d[k]}" for k in ("cola", "vistos", "creados", "saltados") if k in d]
+    if d.get("error"):
+        partes.append("error: " + _sin_ids(d.get("error")))
+    return " · ".join(partes)
+
+
+def repaso_roto(rep):
+    """La alarma si el último repaso anotó un error del CÓDIGO; si no, None."""
+    err = str((_repaso_dict(rep) or {}).get("error") or "")
+    if not ERROR_DE_CODIGO.search(err):
+        return None
+    return ("🚨 el repaso automático del script CORRE pero falla con un error del código («" + _sin_ids(err) + "»): "
+            "lo que se encola no entra al panel. Suele ser un pegado incompleto del .gs: en el editor, ejecutar "
+            "«probarAntesDeImplementar» (o «estadoKommo») y volver a pegar el código de la versión publicada (§4fz-b).")
+
+
+def repaso_aviso(rep):
+    """Un error de AFUERA (Kommo no contestó, candado ocupado): se dice y no pone la corrida en rojo,
+    porque suele ser pasajero. Si se repite, casi siempre es el token del script."""
+    err = str((_repaso_dict(rep) or {}).get("error") or "")
+    if not err or ERROR_DE_CODIGO.search(err):
+        return None
+    return ("⚠️ el último repaso del script avisó un error de afuera («" + _sin_ids(err) + "»). Si se repite en las "
+            "próximas corridas, mirar el token de Kommo: la propiedad KOMMO_TOKEN del script es OTRA copia que el "
+            "secreto de GitHub, y se renuevan por separado.")
 
 
 def main():
@@ -186,10 +241,11 @@ def main():
     rep = res.get("ultimoRepaso")
     alarma = None
     if rep:
-        print(f"   último repaso del script (cada 5 min): {rep}")
-        alarma = repaso_parado(rep)
-        if alarma:
-            print("   " + alarma)
+        print(f"   último repaso del script (cada 5 min): {repaso_resumen(rep)}")
+        alarma = repaso_parado(rep) or repaso_roto(rep)
+        aviso = None if alarma else repaso_aviso(rep)
+        if alarma or aviso:
+            print("   " + (alarma or aviso))
     elif rep is not None:
         print("   ⚠️ el script todavía no repasa Kommo por su cuenta — correr instalarDisparadores() en Apps Script")
 
@@ -218,8 +274,8 @@ def main():
 
     # 🚨 En ROJO a propósito, y recién al final: los ids ya quedaron avisados (§4fz-b).
     if alarma:
-        sys.exit("✗ El repaso automático del script está parado (ver arriba). La corrida sale en rojo para que "
-                 "llegue el aviso: lo encolado no entra al panel hasta que el script vuelva a correr.")
+        sys.exit("✗ El repaso automático del script está parado o falla (ver arriba). La corrida sale en rojo para "
+                 "que llegue el aviso: lo encolado no entra al panel hasta que el script vuelva a correr bien.")
 
 
 if __name__ == "__main__":
