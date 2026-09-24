@@ -6543,6 +6543,12 @@ de ocho renglones — y el `title` no existe en el celular ni se puede copiar.
 > también contra `main`). ✅ **Arreglado el 24/09** (§4fz-b, antes de publicar la 23-b): la
 > sección 6 usa `DH(3)`, el primer día hábil (lunes a viernes) desde hoy + 3; `D(0)` no se tocó.
 > Medido un jueves: 33/2 → 35/0.
+> 🗓️ **`tests/test_borradores.js` se pudría los jueves y los viernes** (hora UTC, o sea desde las
+> 20:00 de Bolivia del día anterior): la sección 7 convierte el borrador en pedido para `dd(2)` en
+> turno **PM**, y eso cae sábado (sin PM) o domingo (cerrado). El portero lo rechaza con razón y
+> caían 8 checks: **eran «los 8 rojos del 18/09»**, que fue viernes; «pasaron a verde» solo porque
+> después se corrió otro día. ✅ **24/09**: `ddHabil(2)` (primer lunes a viernes desde hoy + 2).
+> Medido un jueves: 87/8 → 95/0. Las otras `dd(1)` de la prueba no guardan por el portero.
 
 > 🧹 **Los dashboards mensuales (`dashboard-*-2026.html`, míos)** arrastran del molde de
 > julio 3 bloques de JavaScript que fallan en silencio («React is not defined» ×3, un
