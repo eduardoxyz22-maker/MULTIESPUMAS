@@ -29,7 +29,13 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 const GS = process.env.GS || path.resolve('google-apps-script.gs');
 const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 const IM = 'IM - PRODUCTOTERMINADO';
-const hoy = (()=>{ const d=new Date(); const m=d.getMonth()+1, dd=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd; })();
+/* «Hoy» en hora de BOLIVIA, como los navegadores de la prueba (`timezoneId: America/La_Paz`): con
+   la hora de la máquina (UTC), entre las 20 y las 24 de Bolivia la prueba y la página vivían en
+   días distintos y salían rojos falsos (revisión del 24/09). */
+const hoy = new Date(Date.now() - 4*3600000).toISOString().slice(0,10);
+/* El día de las ventas sembradas: el portero del servidor cierra el domingo, así que un domingo
+   van al lunes (la prueba salía 41/6 los domingos). */
+const diaVenta = new Date(hoy+'T12:00:00Z').getUTCDay()===0 ? new Date(Date.parse(hoy+'T12:00:00Z')+86400000).toISOString().slice(0,10) : hoy;
 
 /* ── El servidor: el .gs real con un Google de mentira ── */
 function hacerPlanilla(filas){
@@ -88,9 +94,9 @@ function sembrar(S, extra){
     p:[ { id:'rq1', k:'K3|140x190', u:3, tipo:'recogida', de:IM, fab:'', f:hoy, esp:hoy, r:'' } ],
     a:{}, g:{ [IM]:{ f:hoy, hora:'08:00:00', u:{ 'K3|140x190':10 } } }, al:{ [IM]:'otro' }, h:[] }) });
   p({ id:'__arqueo_cuadre__', fecha:'', cliente:'🧮 ARQUEO', rev:0, observaciones:'mes|'+hoy.slice(0,7)+'|Efectivo=900' });
-  p({ id:'V1', fecha:hoy, cliente:'CLIENTE DEBE', vendedor:'Carola Chavez', turno:'AM', saldo:1000, pagado:false, acuenta:0,
+  p({ id:'V1', fecha:diaVenta, cliente:'CLIENTE DEBE', vendedor:'Carola Chavez', turno:'AM', saldo:1000, pagado:false, acuenta:0,
       productos:[{desc:'COLCHON',cant:1,precio:1000}], metodoPago:'', nota:'900', oc:'09-900', rev:0 });
-  p({ id:'V2', fecha:hoy, cliente:'OTRA VENTA', vendedor:'Carola Chavez', turno:'AM', saldo:500, pagado:false, acuenta:0,
+  p({ id:'V2', fecha:diaVenta, cliente:'OTRA VENTA', vendedor:'Carola Chavez', turno:'AM', saldo:500, pagado:false, acuenta:0,
       productos:[{desc:'COLCHON',cant:1,precio:500}], metodoPago:'', nota:'901', oc:'09-901', rev:0 });
   p({ id:'kommo-777', fecha:'', cliente:'VENTA DE KOMMO', vendedor:'Carola Chavez', estado:'Borrador Kommo', saldo:1200, pagado:false,
       productos:[{desc:'COLCHON',cant:1,precio:1200}], metodoPago:'', rev:0 });
@@ -406,9 +412,9 @@ function INIT(){
   await esc('7e. «Descartar» un borrador de Kommo que otra ya completó', async () => {
     const S = servidor(); sembrar(S);
     const A = await abrir(S,'A'), B = await abrir(S,'B');
-    await B.evaluate(async () => { var b=BORRADORES.filter(function(x){ return x.id==='kommo-777'; })[0];
-      var p=JSON.parse(JSON.stringify(b)); p.estado=''; p.fecha=todayStr(); p.turno='AM'; p.zona='Norte'; p.nota='950';
-      BORRADORES=BORRADORES.filter(function(x){ return x.id!=='kommo-777'; }); STATE.unshift(p); persistPedido(p); await quieto(); });
+    await B.evaluate(async (dia) => { var b=BORRADORES.filter(function(x){ return x.id==='kommo-777'; })[0];
+      var p=JSON.parse(JSON.stringify(b)); p.estado=''; p.fecha=dia; p.turno='AM'; p.zona='Norte'; p.nota='950';
+      BORRADORES=BORRADORES.filter(function(x){ return x.id!=='kommo-777'; }); STATE.unshift(p); persistPedido(p); await quieto(); }, diaVenta);
     await A.evaluate(() => { window._toasts=[]; descartarBorrador('kommo-777'); });
     await hasta(() => A.evaluate(() => window._toasts.some(function(t){ return /NO se descartó|No se pudo|no confirmó/.test(t); })) );
     const t = await A.evaluate(() => window._toasts.slice());

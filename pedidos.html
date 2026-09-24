@@ -1957,9 +1957,13 @@ function scriptPendienteHtml(){
       '<span style="font-weight:400">El servidor ya está en <code>'+esc(SERVER_VER)+'</code> y esta página espera <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>.</span></div>';
   return '<div style="margin-top:6px;font-size:.76rem;color:var(--muted)">ℹ️ Hay una versión más nueva del script sin publicar '+
     '(está <code>'+esc(SERVER_VER)+'</code>, la última es <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>). '+
-    'Lo que agrega no toca esto. Cuando quieras tenerla: <b>Extensiones → Apps Script → Implementar → '+
-    'Administrar implementaciones → ✏️ → Versión: Nueva versión → Implementar</b>.</div>';
+    'Lo que agrega no toca esto. Cuando quieras tenerla, en Extensiones → Apps Script: '+PUBLICAR_PASOS+'.</div>';
 }
+/* Cómo se publica el servidor (§4fz-b, después del 23/09: un pegado cortado dejó a todos sin
+   conexión y el repaso de Kommo parado). Una sola vez acá, así los carteles dicen lo mismo. */
+var PUBLICAR_PASOS='<b>pegá el código nuevo ENTERO</b> (del enlace fijo, nunca copiado del chat), ejecutá '+
+  '<b>probarAntesDeImplementar</b> y, recién con «✅ Se puede implementar»: <b>Implementar → Administrar implementaciones → '+
+  '✏️ → Versión: <u>Nueva versión</u> → Implementar</b>';
 /* 🔐 LA CLAVE DEL EQUIPO (§4ce).
    La dirección del script está acá arriba, en una página pública: con ella sola,
    cualquiera podía leer, guardar y borrar la planilla. Ahora el servidor exige una clave
@@ -1975,7 +1979,10 @@ var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, 
    el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
    anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
    de Administración tiene que decir cuál es cuál. */
-function rechazoSeReintentaSolo(err){ return err==='busy'; }
+/* `busy` se reenvía solo. `actualizar` (§4fz-b) es una computadora con la página VIEJA: el stock o
+   el arqueo quedan en SU cola, se reintentan cada 2 minutos (cada intento suma una fila acá) y
+   entran solos, juntados, cuando esa computadora recarga. Tampoco hay que volver a hacerlos. */
+function rechazoSeReintentaSolo(err){ return err==='busy' || err==='actualizar'; }
 /* 🛡️ LA CLAVE DE ADMINISTRACIÓN DEL SERVIDOR (§4cg). La contraseña de Administración vive
    solo en este navegador; el servidor no la ve. Para FORZAR un pedido a un día cerrado o
    un turno lleno, el servidor —cuando tiene la puerta con llave— exige esta segunda clave
@@ -2530,7 +2537,7 @@ function verRechazos(){
 function renderRechazos(R, res, err){
   var cerrar='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;float:right;padding:2px 8px" onclick="document.getElementById(\'rechazos-box\').style.display=\'none\'">✕</button>';
   var caja=function(txt,color){ return '<div style="background:#fff;border:1px solid var(--gray-md);border-left:4px solid '+(color||'var(--red)')+';border-radius:8px;padding:9px 12px;margin:4px 0 8px;font-size:.8rem;line-height:1.45">'+cerrar+txt+'</div>'; };
-  var reimpl='Implementar → Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar';
+  var reimpl=PUBLICAR_PASOS;
   if(!R){
     if(err) return caja('<b>El servidor no contestó</b> — '+esc(motivoDeError(err))+'.');
     if(res&&res.ok) return caja('<b>El servidor todavía no anota los guardados rechazados.</b> Tiene publicada la versión <code>'+esc(SERVER_VER||'?')+'</code> y hace falta la <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>: '+reimpl+'.','#7c4b00');
@@ -2572,9 +2579,9 @@ function renderRechazos(R, res, err){
       var abrir=(r.id && findById(r.id))?(' <a onclick="showPedidoModal(\''+esc(r.id)+'\')" style="text-decoration:underline;cursor:pointer">abrir</a>'):'';
       var solo=rechazoSeReintentaSolo(r.error);
       return '<tr'+(solo?' style="background:#f0fdf4"':'')+'><td style="white-space:nowrap">'+cuando+'</td><td>'+esc(r.quien||'—')+' <span style="color:var(--muted)">'+esc(r.dispositivo)+'</span></td><td>'+que+abrir+'</td><td><b'+(solo?' style="color:#0a6b47"':'')+'>'+esc(rechazoTxt(r.error))+'</b> <span style="color:var(--muted)">('+esc(r.accion)+')</span>'+
-        (solo?'<br><span style="color:#0a6b47;font-size:.92em">🔁 el panel lo reenvió solo</span>':'')+'</td><td style="color:var(--muted)">'+esc(r.detalle||'')+'</td></tr>';
+        (solo?'<br><span style="color:#0a6b47;font-size:.92em">'+(r.error==='actualizar'?'🔄 entra solo cuando esa computadora recargue la página':'🔁 el panel lo reenvió solo')+'</span>':'')+'</td><td style="color:var(--muted)">'+esc(r.detalle||'')+'</td></tr>';
     }).join('')+'</table></div>'+
-    '<div style="font-size:.74rem;color:var(--muted);margin-top:4px">«Lo modificó otra persona antes» = la pantalla de quien guardaba estaba vieja: el panel se recargó y el cambio hay que volver a hacerlo. «Día cerrado» / «turno lleno» / «OC repetida» = el panel lo avisó en el momento y no entró. <b>«El servidor estaba ocupado» no se pierde</b>: vuelve a la cola y se reenvía solo, por eso está en verde.</div>';
+    '<div style="font-size:.74rem;color:var(--muted);margin-top:4px">«Lo modificó otra persona antes» = la pantalla de quien guardaba estaba vieja: el panel se recargó y el cambio hay que volver a hacerlo. «Día cerrado» / «turno lleno» / «OC repetida» = el panel lo avisó en el momento y no entró. <b>«El servidor estaba ocupado» no se pierde</b>: vuelve a la cola y se reenvía solo, por eso está en verde. <b>«Página vieja»</b> tampoco: esa computadora tiene la página de antes; lo suyo espera en su cola y entra al recargar (F5).</div>';
   }
   return caja(h,'var(--red)');
 }
@@ -2608,7 +2615,7 @@ function getlogParams(p){ return (!p||p==='ninguno')?'sin parámetros':p; }
 function renderGetLog(g, res, err){
   var cerrar='<button type="button" class="btn btn-ghost btn-sm" style="width:auto;float:right;padding:2px 8px" onclick="document.getElementById(\'getlog-box\').style.display=\'none\'">✕</button>';
   var caja=function(txt,color){ return '<div style="background:#fff;border:1px solid var(--gray-md);border-left:4px solid '+(color||'var(--teal)')+';border-radius:8px;padding:9px 12px;margin:4px 0 8px;font-size:.8rem;line-height:1.45">'+cerrar+txt+'</div>'; };
-  var reimpl='Implementar → Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar (guardar el código no alcanza)';
+  var reimpl=PUBLICAR_PASOS+' (guardar el código no alcanza)';
   if(!g){
     if(err) return caja('<b>El servidor no contestó</b> — '+esc(motivoDeError(err))+'.','var(--red)');
     if(res&&res.ok) return caja('<b>El servidor todavía no anota quién lo lee por GET.</b> Tiene publicada la versión <code>'+esc(SERVER_VER||'?')+'</code> y hace falta la <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>: '+reimpl+'.','#7c4b00');
@@ -4026,15 +4033,22 @@ function saveArqueoMirror(){ try{ localStorage.setItem(CUADRE_LS, JSON.stringify
 /* §4fz-b: el espejo del NAVEGADOR (`CUADRE_LS`) es para mostrar algo apenas se abre; la memoria con
    la que se guarda es la de ESTA pestaña (`sisCargarPestana`) o la de la planilla. */
 var ARQUEO_CARGADO=false;
+/* (revisión del 24/09) Lo que esta pestaña mostró del espejo ANTES de tener la planilla. Una
+   anotación hecha en ese rato salía sin base y «gana lo de acá» le daba la razón a TODO el espejo
+   viejo: una corrección que otro hizo (Efectivo 900 → 950) volvía a 900. Con esto de base, de la
+   memoria solo gana lo que la persona cambió de verdad. */
+var ARQUEO_ESPEJO_TXT=null;
 function loadArqueoMirror(){
   try{ ARQUEO=JSON.parse(localStorage.getItem(CUADRE_LS)||'{}')||{}; }catch(e){ ARQUEO={}; }
   if(typeof ARQUEO!=='object'||!ARQUEO) ARQUEO={};
+  if(!ARQUEO_CARGADO) ARQUEO_ESPEJO_TXT=textoArqueo(ARQUEO);
 }
 function filaArqueo(){
   var fila=filaSistema(ARQUEO_ID, '🧮 ARQUEO DEL CUADRE — fila del sistema, NO BORRAR', textoArqueo(ARQUEO));
   fila.rev=sisRev(ARQUEO_ID);                  // §4fz: con el sello de la versión sobre la que se trabajó
   fila._base=sisBaseCopia(ARQUEO_ID);          // §4fz-b: y esa versión viaja con la fila, también en la cola
-  if(!ARQUEO_CARGADO){ fila.rev=0; fila._base=null; }   // sin cargar: que choque y se una (como el stock)
+  // Sin cargar: que choque y se junte, con lo que mostró el espejo como base (si había espejo).
+  if(!ARQUEO_CARGADO){ fila.rev=0; fila._base = ARQUEO_ESPEJO_TXT!=null ? { rev:0, obs:ARQUEO_ESPEJO_TXT } : null; }
   fila._dev=pestanaId(); fila._t=Date.now();
   return fila;
 }
@@ -8362,7 +8376,10 @@ function motivoDeError(e){
      y `fetch` falla igual que sin señal. Pasó el 23/09 a TODO el equipo justo después de subir el
      código del servidor, y se arregló en la implementación de siempre (✏️): versión anterior,
      «Ejecutar como: Yo», «Quién tiene acceso: Cualquier usuario». */
-  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com). Si le pasa a TODO el equipo a la vez —sobre todo justo después de subir el código del servidor—, no es internet: en Apps Script → Implementar → Administrar implementaciones → ✏️ la de siempre, revisá «Ejecutar como: Yo» y «Quién tiene acceso: Cualquier usuario», o volvé a la versión anterior';
+  /* (24/09) El consejo de revisar «Ejecutar como» se sacó: el 23/09 la causa fue un pegado cortado
+     del código, y el diálogo ni mostraba esas casillas (§4fz-b). Volver atrás son dos cosas, y lo
+     dice el procedimiento; acá solo lo que sirve para decidir. */
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com). Si le pasa a TODO el equipo a la vez no es internet: es el servidor. Avisá a administración (si se acaba de subir una versión nueva del servidor, hay que volver a la anterior)';
   if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
   return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
@@ -8406,6 +8423,7 @@ function motivoDelServidor(err){
   if(m==='clave') return 'el servidor pide la clave del equipo';
   if(m==='bad json') return 'el servidor no entendió el pedido (bad json)';
   if(m==='actualizar') return 'este panel es más viejo que el servidor y no puede tocar el stock, el arqueo ni borrar. Recargá la página (F5)';
+  if(m==='celda_llena') return 'no entra en la planilla: una celda de Google aguanta 50.000 letras y esto las pasa. Quedó en la cola de este dispositivo (no se perdió). Avisá a administración para achicarlo';
   return 'el servidor contestó: '+m.slice(0,80);
 }
 function refrescarEstado(){
@@ -8525,7 +8543,8 @@ function refreshCupos(){
 function rechazoTxt(err){
   return { conflicto:'lo modificó otra persona antes', dia_cerrado:'el día estaba cerrado', cupos_llenos:'el turno estaba lleno',
            oc_repetida:'el N° de OC ya existía', admin:'faltaba la clave de administración', clave:'faltaba la clave del equipo',
-           busy:'el servidor estaba ocupado' }[err] || err;
+           busy:'el servidor estaba ocupado', actualizar:'página vieja: esa computadora tiene que recargar (F5)',
+           celda_llena:'no entraba en la celda de la planilla (más de 50.000 letras)' }[err] || err;
 }
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
@@ -9239,7 +9258,9 @@ function leerCierresDeLista(lista, esDelServidor){
      vuelo traía la fila vieja (1000), la pantalla decía «sobra Bs 400» y la siguiente
      anotación mandaba el 1000 al servidor: el 600 se deshacía con su propia tecla. */
   if(arq && (!ARQUEO_CARGADO || !filaSistemaEnVuelo(ARQUEO_ID))){
-    if(filaSistemaEnVuelo(ARQUEO_ID)){ SIS_MEM_T[ARQUEO_ID]=Date.now(); ARQUEO=fusMapa(null, ARQUEO, parseArqueo(arq.observaciones), true); }   // §4fz-b: igual que el stock
+    /* §4fz-b: igual que el stock. (24/09) Con lo que mostró el espejo como base: si no, las claves
+       VIEJAS del espejo le ganaban a la planilla (ARQUEO_ESPEJO_TXT). */
+    if(filaSistemaEnVuelo(ARQUEO_ID)){ SIS_MEM_T[ARQUEO_ID]=Date.now(); ARQUEO=fusMapa(parseArqueo(ARQUEO_ESPEJO_TXT||''), ARQUEO, parseArqueo(arq.observaciones), false); }
     else ARQUEO=parseArqueo(arq.observaciones);
     sisBaseAnotar(ARQUEO_ID, arq); ARQUEO_CARGADO=true; saveArqueoMirror(); renderCuadreSiActivo();
   }
@@ -9337,8 +9358,7 @@ function cierreCandadoHtml(){
     '(dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>), '+
     'y esa versión <b>no rechaza</b> los pedidos de un día cerrado.<br>'+
     'Con eso, quien tenga el panel abierto desde antes del cierre <b>igual puede cargar</b> — que es justo lo que '+
-    'pasó el 21/08.<br><b>Cómo se arregla:</b> en la planilla, <b>Extensiones → Apps Script → Implementar → '+
-    'Administrar implementaciones → ✏️ → Versión: <u>Nueva versión</u> → Implementar</b>. '+
+    'pasó el 21/08.<br><b>Cómo se arregla:</b> en la planilla, Extensiones → Apps Script: '+PUBLICAR_PASOS+'. '+
     'Guardar el código NO alcanza.');
 }
 function renderCierreDias(abrir){
@@ -13457,13 +13477,18 @@ function leerStock(p){
       }
       /* §4fz-b: lo que se guardó sin id (antes de esto) recibe uno FIJO, sacado del propio
          contenido: el mismo en todos los dispositivos, así juntar dos copias no lo duplica. Va
-         ANTES de `stockMigrar`, que cambia las claves. Dos renglones iguales son #0 y #1. */
+         ANTES de `stockMigrar`, que cambia las claves. Dos renglones iguales son #0 y #1.
+         ⚠️ (revisión del 24/09) El número salta los ids que YA están en la lista: una entrada que
+         un panel viejo agregaba igualita a otra ya numerada recibía el MISMO id, y la junta dejaba
+         una de las dos. */
       var idFijo=function(lista, campos){
-        var n={};
+        var usados={};
+        lista.forEach(function(x){ if(x && x.id!=null && x.id!=='') usados[String(x.id)]=1; });
         return lista.filter(function(x){ return x && x.k; }).map(function(x){
           if(x.id==null || x.id===''){
-            var b='v:'+campos.map(function(c){ return x[c]==null?'':String(x[c]); }).join('|');
-            var i=n[b]||0; n[b]=i+1; x.id=b+'#'+i;
+            var b='v:'+campos.map(function(c){ return x[c]==null?'':String(x[c]); }).join('|'), i=0;
+            while(usados[b+'#'+i]) i++;
+            x.id=b+'#'+i; usados[x.id]=1;
           }
           return x;
         });
@@ -13479,12 +13504,50 @@ function leerStock(p){
           if(s.rs && typeof s.rs==='object') d.g[nm].rs=s.rs;              // §4fz-b: qué recepciones ya se le restaron
         }
       }
+      stockLeerDePanelViejo(d, o);
     }
   }catch(e){}
   stockOlvidarIndice();
   d=stockMigrar(d);
   stockNormalizarRecepciones(d);                  // §4fz-b: lo derivado de las recepciones, siempre al día
   return d;
+}
+/* 🧓 LO QUE ESCRIBIÓ UN PANEL VIEJO (revisión del 24/09, antes de publicar). La página de antes de
+   §4fz-b no conoce las recepciones con nombre. Guarda `q.recs` tal cual lo leyó, pero cada foto de
+   almacén SIN `rs` ni `t`, y su propio «Llegaron» solo sube `q.ru` y resta a mano. Leído así,
+   stockNormalizarRecepciones volvía a restar lo ya restado (Moreno 10 → 7 → 4 al recargar esa
+   computadora) y tiraba la llegada que anotó el panel viejo (la entrada de 2 desaparecía):
+     · `q.ru` MAYOR que la suma de las recepciones = llegadas del panel viejo: van como recepción
+       `legacy:d<n>`, sin resta ni entrada nueva (el panel viejo ya las hizo; su entrada queda);
+     · una foto SIN `rs` ya tiene adentro todas las recepciones que traía ESTA misma fila (se
+       leyeron juntas de la planilla): se anotan como ya restadas. Una fila nueva SIEMPRE trae
+       `rs` en los almacenes con recogidas (stockNormalizarRecepciones lo pone).
+   El id `legacy:d<n>` es fijo: dos dispositivos que leen la misma fila vieja dan el mismo. */
+function stockRecLegacy(r){ return !!r && String(r.id).indexOf('legacy')===0; }
+function stockAlmPorDefectoDe(S){
+  var g=(S&&S.g)||{}, al=(S&&S.al)||{};
+  var esLog=function(nm){ return normNombre(nm)===normNombre(STOCK_ALM_LOG) || al[nm]==='log'; };
+  var ks=Object.keys(g).filter(function(nm){ return !esLog(nm); });
+  var im=ks.filter(function(nm){ return /^IM\b|INDUSTRIAS MORENO|^MORENO\b/i.test(stockAlmLimpio(nm)); })[0];
+  return im || ks[0] || Object.keys(g)[0];
+}
+function stockLeerDePanelViejo(d, o){
+  (d.p||[]).forEach(function(q){
+    if(!q || !Array.isArray(q.recs)) return;
+    var suma=0; q.recs.forEach(function(r){ suma+=Math.round(Number(r&&r.u)||0); });
+    var dif=Math.round(Number(q.ru)||0)-suma, lid='legacy:d'+dif;
+    if(dif>0 && !q.recs.some(function(r){ return r && r.id===lid; })) q.recs.push({ id:lid, u:dif, f:String(q.r||''), ts:0, se:1 });
+  });
+  var almDef=stockAlmPorDefectoDe(d);
+  Object.keys(d.g||{}).forEach(function(nm){
+    var s=((o&&o.g)||{})[nm]; if(s && s.rs && typeof s.rs==='object') return;
+    var rs={}, hay=false;
+    (d.p||[]).forEach(function(q){
+      if(!q || q.tipo!=='recogida' || !Array.isArray(q.recs) || (q.de||almDef)!==nm) return;
+      q.recs.forEach(function(r){ if(r && !stockRecLegacy(r)){ rs[r.id]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id }; hay=true; } });
+    });
+    if(hay) d.g[nm].rs=rs;
+  });
 }
 /* Las claves guardadas se vuelven a resolver al leer: si el catálogo ahora reconoce un
    nombre que antes no (o alguien unió dos productos), lo contado se junta bajo la clave
@@ -13539,7 +13602,17 @@ function filaStock(){
   if(!STOCK_CARGADO){ fila.rev=0; fila._base=null; }
   fila._dev=pestanaId(); fila._t=Date.now();      // §4fz-b: de qué pestaña salió y cuándo (sisPlegar)
   stockGuardarEspejo();
+  stockAvisarTamano(fila.observaciones.length);
   return fila;
+}
+/* 📏 El stock entero va en UNA celda de la planilla y Google corta en 50.000 letras (revisión del
+   24/09): pasado eso el servidor contesta `celda_llena` y el stock deja de guardarse. Se avisa
+   ANTES, una vez por pestaña, para que se achique con tiempo. */
+var STOCK_TAMANO_AVISO=45000, STOCK_TAMANO_AVISADO=false;
+function stockAvisarTamano(largo){
+  if(largo<=STOCK_TAMANO_AVISO || STOCK_TAMANO_AVISADO) return;
+  STOCK_TAMANO_AVISADO=true;
+  toast('📏 El stock ocupa '+largo+' de las 50.000 letras que aguanta su celda en la planilla: avisá a administración para achicarlo antes de que se llene (lleno, deja de guardarse).','err',15000);
 }
 function guardarStock(){
   var fila=filaStock();
@@ -13627,11 +13700,21 @@ function fusClaves(){
   for(var i=0;i<arguments.length;i++){ var m=arguments[i]; if(m && typeof m==='object') Object.keys(m).forEach(function(k){ o[k]=1; }); }
   return Object.keys(o);
 }
-/* Un mapa: por clave, gana el lado que la tocó (primero este dispositivo). */
+/* Un mapa: por clave, gana el lado que la tocó (primero este dispositivo).
+   🧓 `sinBase==='viejo'` (revisión del 24/09): lo que dejó en la cola un panel VIEJO no trae base
+   ni dice qué tocó, y con «gana lo de acá» su foto vieja pisaba la corrección que otro hizo
+   después (el arqueo volvía de 950 a 900). Ahí gana la planilla en lo que tienen los dos, y lo
+   viejo solo agrega lo que la planilla no tiene; `FUS_VIEJO_PISADOS` cuenta lo que no entró. */
+var FUS_VIEJO_PISADOS=0;
 function fusMapa(b, m, s, sinBase){
   b=b||{}; m=m||{}; s=s||{};
   var out={};
   fusClaves(b, m, s).forEach(function(k){
+    if(sinBase==='viejo'){
+      if(fusTiene(s,k)){ out[k]=s[k]; if(fusTiene(m,k) && fusJ(m[k])!==fusJ(s[k])) FUS_VIEJO_PISADOS++; }
+      else if(fusTiene(m,k)) out[k]=m[k];
+      return;
+    }
     var toco = sinBase ? fusTiene(m,k) : (fusJ(fusTiene(m,k)?m[k]:null)!==fusJ(fusTiene(b,k)?b[k]:null));
     if(toco){ if(fusTiene(m,k)) out[k]=m[k]; }
     else if(fusTiene(s,k)) out[k]=s[k];
@@ -13714,12 +13797,12 @@ function stockNormalizarRecepciones(S){
     var total=Math.round(Number(q.total)||0) || Math.round(Number(q.u)||0);
     q.total=total;
     var ru=0, ultima='', conLegacy=false;
-    q.recs.forEach(function(r){ ru+=Math.round(Number(r.u)||0); if(String(r.f||'')>ultima) ultima=String(r.f||''); if(r && r.id==='legacy') conLegacy=true; });
+    q.recs.forEach(function(r){ ru+=Math.round(Number(r.u)||0); if(String(r.f||'')>ultima) ultima=String(r.f||''); if(stockRecLegacy(r)) conLegacy=true; });
     q.ru=ru;
     var pend=total-ru;
     if(pend>0){ q.u=pend; q.r=''; } else { q.u=total; q.r=q.r||ultima||todayStr(); }
     var quiero={};
-    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && !r.se && stockEntradaVale(S, r.f, r.ts)) quiero[r.id]=r; });
+    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && !r.se && stockEntradaVale(S, r.f, r.ts)) quiero[r.id]=r; });
     /* Las entradas de una recepción vieja (`de:q.id`, sin `rec`) son de la `legacy`: si la junta
        la sacó por repetida, se van con ella. */
     S.e=(S.e||[]).filter(function(x){
@@ -13732,11 +13815,11 @@ function stockNormalizarRecepciones(S){
       S.e.push({ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id });
     });
     if(q.tipo!=='recogida') return;
-    var alm=q.de || stockAlmPorDefecto(), g=(S.g||{})[alm];
+    var alm=q.de || stockAlmPorDefectoDe(S), g=(S.g||{})[alm];       // el de ESTE stock (puede no ser STOCK: una junta)
     if(!g || !g.u) return;
     g.rs=g.rs||{};
     var t=Number(g.t)||0, resta={};
-    q.recs.forEach(function(r){ if(r && r.id!=='legacy' && (Number(r.ts)||0)>t) resta[r.id]=r; });
+    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && (Number(r.ts)||0)>t) resta[r.id]=r; });
     Object.keys(g.rs).forEach(function(rid){
       var x=g.rs[rid]; if(!x || x.q!==q.id || resta[rid]) return;
       g.u[x.k]=(Number(g.u[x.k])||0)+(Number(x.u)||0); delete g.rs[rid];      // la sacó la junta: se devuelve
@@ -13764,17 +13847,22 @@ function fusFoto(b, m, s, sinBase){
      si es una fila vieja de la cola, trae la resta hecha a mano y sin anotar. */
   if(fusIdFoto(m)===fusIdFoto(s)){
     var tm=Number(m.t)||0, ts=Number(s.t)||0;
-    return (tm && ts && ts>tm) ? s : m;
+    if(tm && ts && ts>tm) return s;
+    /* (24/09) La misma foto reescrita por un panel VIEJO llega sin `t` (no lo conoce): es el mismo
+       corte, o sea la misma subida, y se le devuelve la hora. Sin esto se perdía `c.t` y la regla
+       «antes del conteo» volvía a mirar solo la fecha. */
+    if(!tm && ts){ var r=JSON.parse(JSON.stringify(m)); r.t=ts; return r; }
+    return m;
   }
   var km=String(m.f||'')+' '+String(m.hora||''), ks=String(s.f||'')+' '+String(s.hora||'');
   if(km!==ks) return km>ks ? m : s;                                  // gana el corte más nuevo
   return (Number(s.t)||0)>(Number(m.t)||0) ? s : m;                  // mismo día y hora, otro almacén: el último subido
 }
-function stockFusionar(b, m, s){
+function stockFusionar(b, m, s, modo){
   var sinBase=!b; b=b||stockVacio(); m=m||stockVacio(); s=s||stockVacio();
   var out=stockVacio();
-  out.a=fusMapa(b.a, m.a, s.a, sinBase);
-  out.al=fusMapa(b.al, m.al, s.al, sinBase);
+  out.a=fusMapa(b.a, m.a, s.a, modo==='viejo' ? 'viejo' : sinBase);   // 🧓 una fila de panel viejo: ver fusMapa
+  out.al=fusMapa(b.al, m.al, s.al, modo==='viejo' ? 'viejo' : sinBase);
   out.c=fusFoto(b.c, m.c, s.c, sinBase) || stockVacio().c;
   fusClaves(b.g, m.g, s.g).forEach(function(nm){
     var r=fusFoto((b.g||{})[nm], (m.g||{})[nm], (s.g||{})[nm], sinBase);
@@ -13805,6 +13893,7 @@ SIS_FUSION[STOCK_ID]={ nombre:'stock',
   actual:function(){ return STOCK; },
   cargado:function(){ return STOCK_CARGADO; },    // una memoria que nunca se cargó NO es «lo último»: está vacía (E2)
   fusionar:stockFusionar,
+  fusionarViejo:function(m, s){ return stockFusionar(null, m, s, 'viejo'); },
   texto:function(x){ return JSON.stringify(x); },
   poner:function(x){ STOCK=x; STOCK_CARGADO=true; stockOlvidarIndice(); stockGuardarEspejo(); try{ var o=document.getElementById('stock-overlay'); if(o && o.style.display && o.style.display!=='none') renderStock(); }catch(e){} },
   fila:function(){ return filaStock(); } };
@@ -13813,8 +13902,12 @@ SIS_FUSION[ARQUEO_ID]={ nombre:'arqueo',
   actual:function(){ return ARQUEO; },
   cargado:function(){ return ARQUEO_CARGADO; },   // su espejo existe desde antes de §4fz; sin él, la memoria vacía no es el arqueo
   fusionar:function(b, m, s){ return fusMapa(b, m, s, !b); },
+  fusionarViejo:function(m, s){ return fusMapa(null, m, s, 'viejo'); },
   texto:textoArqueo,
-  poner:function(x){ ARQUEO=x; saveArqueoMirror(); renderCuadreSiActivo(); },
+  /* ⚠️ (24/09) `ARQUEO_CARGADO=true`, como el stock: lo que se pone salió de una junta con la
+     planilla. Sin esto, la fila volvía a salir con sello 0, chocaba tres veces y el panel decía
+     en rojo «No se pudo juntar el arqueo». */
+  poner:function(x){ ARQUEO=x; ARQUEO_CARGADO=true; saveArqueoMirror(); renderCuadreSiActivo(); },
   fila:function(){ return filaArqueo(); } };
 /* ¿Esta fila salió de la memoria de ESTA pestaña? (`_dev`, que filaStock/filaArqueo le ponen). Si
    no —otra pestaña, o un panel viejo antes de actualizarse—, lo que tiene no está en esta memoria
@@ -13860,9 +13953,8 @@ function sisFusionarYGuardar(rec, res, opts){
     toast('⚠️ No se pudo juntar el '+F.nombre+' con los cambios de otra persona (tres intentos seguidos). Quedó en la cola de este dispositivo; si el aviso sigue, recargá la página.','err',12000);
     return { ok:false, error:'junta' };         // §4fz-b: NO es un «no» firme: la cola lo reintenta (antes lo tiraba)
   }
-  STOCK_FUS_AVISOS=[];
-  var baseR = rec._base ? F.leer(rec._base.obs) : null;
-  var J = F.fusionar(baseR, F.leer(rec.observaciones), F.leer(res.pedido.observaciones));
+  STOCK_FUS_AVISOS=[]; FUS_VIEJO_PISADOS=0;
+  var J = sisJuntarFila(F, rec, F.leer(res.pedido.observaciones));
   var bm = SIS_BASE && SIS_BASE[id];
   // Con la memoria sin cargar, «lo de acá» no es nada: juntarla sería decir «borré todo» (E2).
   var M = F.cargado() ? F.fusionar(bm ? F.leer(bm.obs) : null, F.actual(), J) : J;
@@ -13870,8 +13962,22 @@ function sisFusionarYGuardar(rec, res, opts){
   F.poner(M);
   var fila=F.fila();                                          // lo junto, con el sello nuevo
   if(SAVE_ULTIMO[id]) SAVE_ULTIMO[id]={ rec:fila, t:Date.now() };   // si hay otro guardado esperando, que mande lo junto
-  sisAvisarRecortes();
+  sisAvisarRecortes(); sisAvisarViejo(F);
   return apiSaveAhora(fila, opts).then(function(r){ if(r && r.ok) SIS_FUSION_N[id]=0; return r; });
+}
+/* El cambio que trae una fila, puesto sobre `S` (lo que hay en la planilla, o la última base
+   conocida). Una fila de este panel trae su base (`_base`) y se junta con ella; una de un panel
+   VIEJO (sin `_dev`: no es de ninguna pestaña de este panel) no dice qué tocó, y se junta con la
+   regla 🧓 de fusMapa: en lo compartido gana la planilla (revisión del 24/09). */
+function sisJuntarFila(F, rec, S){
+  var R=F.leer(rec.observaciones);
+  if(!rec._dev && F.fusionarViejo) return F.fusionarViejo(R, S);
+  return F.fusionar(rec._base ? F.leer(rec._base.obs) : null, R, S);
+}
+function sisAvisarViejo(F){
+  if(FUS_VIEJO_PISADOS>0) toast('⚠️ Lo que había quedado en la cola de la PÁGINA VIEJA tenía '+FUS_VIEJO_PISADOS+' dato'+(FUS_VIEJO_PISADOS===1?'':'s')+
+    ' del '+F.nombre+' distinto'+(FUS_VIEJO_PISADOS===1?'':'s')+' de la planilla: quedó lo de la planilla. Si con la página vieja habías corregido algo, volvé a corregirlo.','err',14000);
+  FUS_VIEJO_PISADOS=0;
 }
 /* 🧺 LO QUE SALE AL SERVIDOR ES LA MEMORIA (§4fz-b). Antes salía la fila tal como se armó, y eso
    dejaba tres agujeros (auditoría del 23/09):
@@ -13888,11 +13994,11 @@ function sisPlegar(rec){
   var id=String(rec&&rec.id||''), F=SIS_FUSION[id];
   if(!F || !F.cargado()) return rec;                          // sin memoria no hay qué mandar en su lugar: va la fila (si choca, se junta)
   if(!sisFilaEnMemoria(rec)){
-    STOCK_FUS_AVISOS=[];
+    STOCK_FUS_AVISOS=[]; FUS_VIEJO_PISADOS=0;
     var bm=SIS_BASE && SIS_BASE[id], B=bm ? F.leer(bm.obs) : null;
-    var J=B ? F.fusionar(rec._base ? F.leer(rec._base.obs) : null, F.leer(rec.observaciones), B) : F.leer(rec.observaciones);
+    var J=B ? sisJuntarFila(F, rec, B) : F.leer(rec.observaciones);
     F.poner(F.fusionar(B, F.actual(), J));
-    sisAvisarRecortes();
+    sisAvisarRecortes(); sisAvisarViejo(F);
   }
   return F.fila();
 }
@@ -18792,14 +18898,14 @@ function revVersionHtml(){
   if(!SERVER_VER) return REV_RESPONDIO
     ? ('<div style="background:#fff;border-left:4px solid var(--red);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.82rem;color:#8a1c24">'+
        '<b>⚠️ Lo que está publicado es una versión vieja.</b> El servidor contestó, pero ni siquiera dice qué versión es — las nuevas sí lo dicen.<br>'+
-       'Ojo con esto: en Apps Script <b>guardar el código NO publica nada</b>. Hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.</div>')
+       'Ojo con esto: en Apps Script <b>guardar el código NO publica nada</b>. Para publicar: '+PUBLICAR_PASOS+'.</div>')
     : ('<div style="background:#fff;border-left:4px solid var(--gray);border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.8rem;color:var(--muted)">'+
        'El servidor no contestó, así que no sé qué versión tiene publicada.</div>');
   var ok=servidorTiene(SCRIPT_GEO_DESDE);   // lo que importa acá es que sepa geocodificar, no que sea la última (§4ee)
   return '<div style="background:#fff;border-left:4px solid '+(ok?'var(--green)':'var(--red)')+';border-radius:8px;padding:9px 12px;margin:8px 0;font-size:.82rem;color:'+(ok?'#0a6b47':'#8a1c24')+'">'+
     (ok ? '<b>✅ El servidor sabe resolver ubicaciones</b> (versión <code>'+esc(SERVER_VER)+'</code>). Lee los códigos <code>5P2Q+PFX</code> y busca por dirección.'+scriptPendienteHtml()
         : '<b>⚠️ El servidor está corriendo una versión vieja</b> (dice <code>'+esc(SERVER_VER)+'</code>, tendría que decir <code>'+esc(SCRIPT_VERSION_ESPERADA)+'</code>).<br>'+
-          'Pasa cuando se pega el código y se GUARDA, pero no se publica. Guardar no publica: hay que hacer <b>Implementar → Administrar implementaciones → ✏️ (lápiz) → Versión: <u>Nueva versión</u> → Implementar</b>.')+
+          'Pasa cuando se pega el código y se GUARDA, pero no se publica. Guardar no publica: '+PUBLICAR_PASOS+'.')+
     '</div>';
 }
 /* Deja las ubicaciones resueltas GUARDADAS dentro del pedido: reemplaza el enlace corto

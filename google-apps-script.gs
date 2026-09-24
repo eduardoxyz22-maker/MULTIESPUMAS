@@ -72,6 +72,8 @@ var REV_COL = HEADERS.indexOf('Revisión') + 1;
 /* Las filas del sistema que tocan VARIAS personas y el panel sabe juntar (§4fz): piden sello
    si el panel lo manda. Las otras (días cerrados, carga) siguen reescribiéndose enteras. */
 var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
+/* 📏 Tope de Google para una celda, y desde cuánto lo avisa probarAntesDeImplementar (24/09). */
+var CELDA_TOPE = 50000, CELDA_AVISO = 35000, CELDA_AVISO_ROJO = 42000;
 /* §4fz-b: desde 2026-09-23-b estas filas las guarda SOLO un panel que sabe juntar (manda
    `juntar`), y borrar una fila sellada exige su sello. A un panel viejo se le contesta
    `actualizar` (tiene que recargar la página) sin tocar la hoja: con su copia pisaba la fila
@@ -154,12 +156,13 @@ function probarAntesDeImplementar() {
 
   /* 2. La planilla, leída como la lee el panel (`list`). Sin `getSheet()`, que agrega los
         encabezados si faltan: esta prueba no escribe. */
+  var vals = null;
   if (fns.rowToRec_ === 'function') {
     try {
       var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
       if (!sh) mal('No encuentro la hoja «' + SHEET_NAME + '»: ¿el código está pegado en el Apps Script de la planilla de pedidos?');
       else {
-        var vals = sh.getDataRange().getValues(), filas = 0;
+        vals = sh.getDataRange().getValues(); var filas = 0;
         var primera = vals.length ? String(vals[0][0]) : '';
         if (!primera && vals.length <= 1) ojo('La hoja «' + SHEET_NAME + '» está vacía: se arma sola con el primer guardado.');
         else if (primera !== 'id') mal('La hoja «' + SHEET_NAME + '» no empieza con la columna «id»: ¿es la planilla de pedidos?');
@@ -219,6 +222,24 @@ function probarAntesDeImplementar() {
     var cola = kColaLeer_().length;
     if (cola) ojo(cola + ' venta(s) de Kommo esperando en la cola: ejecutá «kommoRepaso» una vez.');
   } catch (e) {}
+
+  /* 6. 📏 Cuánto ocupan el stock y el arqueo en su celda (revisión del 24/09). Google aguanta
+        50.000 letras por celda, y la versión de §4fz-b guarda más por cada recepción: con poco
+        lugar, el stock dejaría de guardarse. Se mide ANTES de publicar el panel nuevo. */
+  if (vals && vals.length && String(vals[0][0]) === 'id') {
+    var colObs = HEADERS.indexOf('Observaciones');
+    [['__stock__', 'El stock'], ['__arqueo_cuadre__', 'El arqueo']].forEach(function (par) {
+      for (var i2 = 1; i2 < vals.length; i2++) {
+        if (String(vals[i2][0]) !== par[0]) continue;
+        var largo = String(vals[i2][colObs] || '').length, pct = Math.round(largo * 100 / CELDA_TOPE);
+        var txt = par[1] + ' ocupa ' + largo + ' de las ' + CELDA_TOPE + ' letras de su celda (' + pct + '%)';
+        if (largo > CELDA_AVISO_ROJO) mal(txt + ': con la versión nueva crece y dejaría de entrar. NO implementar: primero hay que achicarlo.');
+        else if (largo > CELDA_AVISO) ojo(txt + ': queda poco lugar. Avisá para achicarlo pronto.');
+        else bien(txt + '.');
+        break;
+      }
+    });
+  }
 
   var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
                         : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
@@ -450,7 +471,7 @@ function getCacheOlvidar_() {
    ========================================================================== */
 var RECHAZOS_HOJA = 'Rechazos';
 var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
-var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1 };
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1 };
 var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
 var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
 
@@ -1118,6 +1139,16 @@ function doSave(p, forzar, juntar) {
   }
   p.rev = Math.max((viejo ? (Number(viejo[REV_COL - 1]) || 0) : 0) + 1, Date.now());
   var row = recToRow(p);
+  /* 📏 UNA CELDA DE GOOGLE AGUANTA 50.000 LETRAS (revisión del 24/09). El stock entero va en UNA
+     celda (Observaciones de `__stock__`) y crece con el uso; pasado el tope, setValues tira una
+     excepción y el panel veía «sin conexión» —sin decir por qué— en cada guardado del stock.
+     Ahora se contesta un «no» claro, sin tocar la hoja, y queda en «Rechazos». */
+  for (var ci = 0; ci < row.length; ci++) {
+    if (typeof row[ci] === 'string' && row[ci].length > CELDA_TOPE) {
+      return jsonOut({ ok:false, error:'celda_llena', version:SCRIPT_VERSION, campo:HEADERS[ci], largo:row[ci].length,
+                       motivo:'«' + HEADERS[ci] + '» tendría ' + row[ci].length + ' letras y la celda aguanta ' + CELDA_TOPE });
+    }
+  }
   getCacheOlvidar_();
   /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
      panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.

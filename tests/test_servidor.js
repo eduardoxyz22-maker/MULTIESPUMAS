@@ -1123,6 +1123,42 @@ console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes d
     chk('G · un error de AFUERA («kommo no contestó»): ⚠️ que nombra el token del script, y se puede implementar',
         !!r2 && r2.ok===true && tiene(r2, /avisó: «kommo no contestó».*KOMMO_TOKEN/), r2 ? r2.lineas.join(' | ') : 'sin prueba');
   }
+  {
+    // H. 📏 Cuánto ocupan el stock y el arqueo en su celda (el tope de Google es 50.000 letras)
+    const HDR30 = HDR.concat(['Revisión']), iObs = HDR.indexOf('Observaciones');
+    const sistema = (id, largo) => { const f = HDR30.map(() => ''); f[0] = id; f[iObs] = 'x'.repeat(largo); return f; };
+    const prueba = (largoStock) => {
+      const a = cargar([HDR30, fila({id:'p1'}), sistema('__stock__', largoStock), sistema('__arqueo_cuadre__', 1200)],
+                       { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) });
+      if (!hay(a)) return null;
+      a.ctx.instalarDisparadores();
+      return a.ctx.probarAntesDeImplementar();
+    };
+    const r1 = prueba(20000), r2 = prueba(36000), r3 = prueba(43000);
+    chk('H · con lugar: ✅ «El stock ocupa 20000 de las 50000 letras de su celda (40%)», y el arqueo también se mide',
+        !!r1 && r1.ok===true && r1.avisos===0 && tiene(r1, /El stock ocupa 20000 de las 50000 letras de su celda \(40%\)/) && tiene(r1, /El arqueo ocupa 1200/), r1 ? r1.lineas.join(' | ') : 'sin prueba');
+    chk('H · con poco lugar (36.000): ⚠️ y se puede implementar', !!r2 && r2.ok===true && tiene(r2, /El stock ocupa 36000.*queda poco lugar/), r2 ? r2.lineas.join(' | ') : 'sin prueba');
+    chk('⚠️ H · casi lleno (43.000): ❌ NO implementar (la versión nueva lo haría crecer y dejaría de guardarse)',
+        !!r3 && r3.ok===false && tiene(r3, /El stock ocupa 43000.*NO implementar/), r3 ? r3.lineas.join(' | ') : 'sin prueba');
+  }
+}
+
+/* ── 📏 12. Una celda de Google aguanta 50.000 letras (revisión del 24/09) ──────────────────────
+   El stock entero va en UNA celda. Pasado el tope, setValues tira una excepción: el panel veía
+   «sin conexión» en cada guardado del stock, sin saber por qué. */
+console.log('\n── 12. Una celda que no entra: «no» claro, sin tocar la hoja ──');
+{
+  const a = cargar([HDR], {});
+  const obs = (n) => '{"c":{"f":"","u":{}},"e":[],"p":[],"a":{},"al":{},"g":{},"h":[],"x":"' + 'y'.repeat(n) + '"}';
+  const r1 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:0, observaciones:obs(49000) } });
+  chk('un stock que entra en la celda se guarda', r1.ok===true && a.sh._datos.length===2, JSON.stringify(r1).slice(0,120));
+  const antes = JSON.stringify(a.sh._datos);
+  const r2 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:r1.pedido.rev, observaciones:obs(50100) } });
+  chk('⚠️ uno que NO entra: «celda_llena» con el campo y el largo (antes: excepción de Google = «sin conexión»)',
+      r2.ok===false && r2.error==='celda_llena' && r2.campo==='Observaciones' && r2.largo>50000, JSON.stringify(r2).slice(0,200));
+  chk('…sin tocar la hoja', JSON.stringify(a.sh._datos)===antes);
+  chk('…y queda anotado en «Rechazos» con el motivo', a.shR._datos.some(f => f.indexOf('celda_llena')>=0 && /aguanta 50000/.test(f.join(' '))),
+      JSON.stringify(a.shR._datos[a.shR._datos.length-1]||[]).slice(0,200));
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
