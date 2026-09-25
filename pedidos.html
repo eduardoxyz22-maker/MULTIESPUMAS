@@ -3315,7 +3315,7 @@ function setContaBase(){
 function contaLista(){
   var modo=segVal('cta-mode')||'mes';
   var q=(document.getElementById('cta-search')||{}).value||'';
-  q=q.trim().toLowerCase();
+  q=sinTildes(q);        // 25/09: «maria perez» no encontraba a «María Pérez» (Administración ya lo hacía, §4ew)
   var amb=contaAmbito();
   // En Mayoristas el desplegable de vendedor está escondido: si quedó con una vendedora
   // puesta de antes, se ignora (si no, filtraba a cero y parecía que no había ventas).
@@ -3329,9 +3329,9 @@ function contaLista(){
     return true;
   });
   if(q) list=list.filter(function(p){
-    var txt=[p.nota,p.oc,p.vendedor,p.cliente,p.celular,p.facturarA,p.nit,p.observaciones,p.metodoPago]
+    var txt=sinTildes([p.nota,p.oc,p.vendedor,p.cliente,p.celular,p.facturarA,p.nit,p.observaciones,p.metodoPago]
       .concat((p.productos||[]).map(function(x){ return [x.desc,x.medida,x.codigo].join(' '); }))
-      .join(' ').toLowerCase();
+      .join(' '));
     return txt.indexOf(q)>=0;
   });
   return list.sort(function(a,b){ return (Number(b.ts)||0)-(Number(a.ts)||0); });   // lo último cargado, arriba

@@ -17,6 +17,7 @@
      6. El monto de una «PAGADA sin monto» que se escribe en el formulario queda con el día de
         la venta (como «💵 Anotar el monto»), no con el de hoy.
      7. El Excel del Cuadre marca los pagos de FLETE, como ya lo hacen la pantalla y el texto.
+     8. «Buscar» de Contabilidad → Ventas no distingue acentos (como Administración y el Cuadre).
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -359,6 +360,23 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('7 · el Excel del Cuadre trae la columna «RECARGO POR ENTREGA», AL FINAL (no se mueve ninguna)', r.iR===r.ult && r.iR===14 && r.cabecera[13]==='EFECTIVO EN MANO DE' && r.cols===15, J({cabecera:r.cabecera, cols:r.cols}));
   chk('7 · …marca SOLO la fila del flete', J(r.marcadas)===J(['CON FLETE']) && r.filas===3, J(r));
   chk('7 · …y lo marcado suma lo mismo que la pantalla y el texto (Bs 120)', r.excel===120 && r.pantalla===120 && /120/.test(r.texto), J({excel:r.excel, pantalla:r.pantalla, texto:r.texto}));
+
+  /* ══ 8 · «BUSCAR» DE CONTABILIDAD → VENTAS, SIN ACENTOS ════════════════════════════════
+     Con «Buscar» la tabla, las tarjetas y el Excel muestran solo lo que coincide (§4fv). Pero
+     comparaba con los acentos puestos: «maria perez» no encontraba a «María Pérez», ni «jose» a
+     «José». El de Administración ya los saca desde §4ew y el del Cuadre también. */
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'B1', nota:'40', oc:'09-040', cliente:'María Pérez', saldo:1000 }),
+            P({ id:'B2', nota:'41', oc:'09-041', cliente:'Jose Gomez', saldo:500 }) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    segSet('cta-mode','mes'); document.getElementById('cta-mes').value=hoy.slice(0,7); setContaModo('mes');
+    var buscar=function(t){ document.getElementById('cta-search').value=t; return contaLista().map(function(p){ return p.id; }).join(','); };
+    var out={ maria:buscar('maria perez'), jose:buscar('josé'), mayus:buscar('PÉREZ') };
+    document.getElementById('cta-search').value='';
+    return out;
+  });
+  chk('8 · «maria perez» encuentra a «María Pérez» (y las tarjetas y el Excel la cuentan)', r.maria==='B1', J(r));
+  chk('8 · …y «josé» a «Jose Gomez», con mayúsculas o sin ellas', r.jose==='B2' && r.mayus==='B1', J(r));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
