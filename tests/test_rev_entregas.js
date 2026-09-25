@@ -12,6 +12,7 @@
    4. 🎧🏪 Cada ATC y cada RPT salían «⚠️ SIN MONTO ANOTADO — preguntar antes de entregar» para el
       chofer (tarjeta, hoja de ruta, WhatsApp, «Entregado», fichas), y «➕ Cobré algo igual»
       anotaba plata que Contabilidad no ve.
+   5. 🎟️ Con un turno forzado de más, tres avisos seguían diciendo «(12/12)» (§4fh).
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev_entregas.js
@@ -267,6 +268,41 @@ const BASE = `
     chk('control: la venta sin monto sí sigue marcada en «Entregado»', /SIN MONTO/.test(r.entregas.deb||''), (r.entregas.deb||'').slice(0,120));
     chk('⚠️ la ficha de Administración de la RPT dice que no se cobra', /no se cobra/i.test(r.fichaRpt) && !/SIN MONTO/.test(r.fichaRpt), r.fichaRpt);
     chk('control: la ficha de una venta sin monto sigue diciendo «SIN MONTO ANOTADO»', /SIN MONTO/.test(r.fichaDeb), r.fichaDeb);
+    await page.close();
+  }
+
+  // ═══ 5. Con un turno forzado de más, los avisos dicen cuántos hay (§4fh) ══════════════
+  console.log('\n── 5. 13 pedidos en un turno de 12: los otros tres avisos también cuentan, no repiten el límite ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var vie='2026-09-25'; STATE=[];
+      for(var i=0;i<13;i++) STATE.push(_P({id:'f'+i, fecha:vie, turno:'AM', cliente:'FORZADO '+i, nroDia:i+1}));
+      STATE.push(_P({id:'tarde', fecha:vie, turno:'PM', cliente:'EL DE LA TARDE'}));
+      STATE.push(_P({id:'otro', fecha:'2026-09-24', turno:'AM', cliente:'OTRO DIA'}));
+      saveMirror();
+      var out={};
+      window._toasts=[]; cambiarTurno('tarde','AM'); out.turno=window._toasts.slice();
+      out.repro=reproAvisos(findById('otro'), vie, 'AM');
+      // el formulario: un pedido NUEVO para el viernes a la mañana
+      showView('form'); resetForm();
+      document.getElementById('f-vendedor').value='Carola Chavez'; applyVendedorLite();
+      document.getElementById('f-cliente').value='NUEVO'; document.getElementById('f-celular').value='70000000';
+      document.getElementById('f-zona').value='Norte'; document.getElementById('f-direccion').value='Av. X'; document.getElementById('f-nota').value='77';
+      document.getElementById('f-fecha').value=vie; segSet('f-turno','AM');
+      var pd=document.querySelector('#f-productos .prod-desc'); if(pd) pd.value='SOFT ICE';
+      var pm=document.querySelector('#f-productos .prod-medida'); if(pm) pm.value='140x190';
+      var pc=document.querySelector('#f-productos .prod-cant'); if(pc) pc.value='1';
+      window._toasts=[]; submitPedido();
+      await new Promise(function(r){ setTimeout(r,300); });
+      out.form=window._toasts.filter(function(t){ return /lleno/.test(t); });
+      out.nuevoEntro=STATE.some(function(p){ return p.cliente==='NUEVO'; });
+      return out;
+    }, BASE);
+    chk('⚠️ pasar un pedido al turno AM ya forzado: el aviso dice «(13/12)», no «(12/12)»', r.turno.some(function(t){ return /\(13\/12\)/.test(t); }) && !r.turno.some(function(t){ return /\(12\/12\)/.test(t); }), J(r.turno));
+    chk('⚠️ 📅 Reprogramar a ese turno: el aviso también cuenta', r.repro.some(function(t){ return /\(13\/12\)/.test(t); }), J(r.repro));
+    chk('⚠️ el formulario que no deja cargar un pedido nuevo también', r.form.some(function(t){ return /\(13\/12\)/.test(t); }) && !r.nuevoEntro, J(r.form));
     await page.close();
   }
 

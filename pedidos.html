@@ -7267,7 +7267,7 @@ function submitPedido(){
   }
   if((_nuevo || _mueveVend) && cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)){
     var lim=limTurno(fechaSel, turnoSel);
-    toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+lim+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');
+    toast('Turno '+turnoSel+' lleno para el '+fmtFecha(fechaSel)+' ('+cuposUsadosTurno(fechaSel, turnoSel)+'/'+lim+'). '+(diaSabado(fechaSel)?'Elegí otra fecha.':'Probá el otro turno u otra fecha.'),'err');   // §4fh (25/09): lo que hay, no el límite dos veces
     renderCupoForm();
     var cf=document.getElementById('cupo-form'); if(cf) cf.scrollIntoView({block:'center'});
     var ft=document.getElementById('f-turno'); if(ft){ ft.classList.add('seg-err'); setTimeout(function(){ ft.classList.remove('seg-err'); },1600); }
@@ -9933,7 +9933,7 @@ function reproAvisos(p, f, t){
   else {
     var lim=limTurno(f,t), usados=cuposUsadosTurno(f,t);
     if(p.fecha===f && normTurno(p.turno)===t) usados--;   // no contarse a sí mismo
-    if(lim>0 && usados>=lim) A.push('El turno '+t+' del '+fmtFecha(f)+' ya está lleno ('+lim+'/'+lim+').');
+    if(lim>0 && usados>=lim) A.push('El turno '+t+' del '+fmtFecha(f)+' ya está lleno ('+usados+'/'+lim+').');   // §4fh (25/09): cuenta, no repite el límite
   }
   return A;
 }
@@ -17581,7 +17581,7 @@ function cambiarTurno(id, turno){
   }
   var usados=cuposUsadosTurno(p.fecha, turno);        // el pedido está en el OTRO turno, no se cuenta acá
   if(usados>=lim){
-    toast('El turno '+turno+' del '+fmtFecha(p.fecha)+' está lleno ('+lim+'/'+lim+'). Reprogramá a otro día.','err');
+    toast('El turno '+turno+' del '+fmtFecha(p.fecha)+' está lleno ('+usados+'/'+lim+'). Reprogramá a otro día.','err');   // cuenta, no el límite dos veces (§4fh, 25/09)
     return;
   }
   /* 🔒 El pedido que YA está en un día cerrado se sigue corrigiendo EN ese día (§4be) — pero
