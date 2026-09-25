@@ -346,27 +346,34 @@ function INIT(){
     const A = await abrir(S);
     const nuevo = (maps) => A.evaluate(async (maps) => {
       window._toasts=[]; window.__ctl.log=[];
+      var n=(window.__nm=(window.__nm||0)+1), nombre='CLIENTE MAPS '+n;   // uno distinto por caso (25/09: ahora varios se guardan)
       showView('form'); await esperar(150); resetForm();
       document.getElementById('f-vendedor').value='Mirian Salazar'; applyVendedorLite();
-      document.getElementById('f-cliente').value='CLIENTE MAPS '+maps.length;
+      document.getElementById('f-cliente').value=nombre;
       document.getElementById('f-celular').value='70000001';
       document.getElementById('f-zona').value='Norte';
-      document.getElementById('f-nota').value='2002';
+      document.getElementById('f-nota').value=String(2000+n);
       document.getElementById('f-fecha').value='2026-09-21';
       document.getElementById('f-maps').value=maps;
       document.querySelector('#f-productos .prod-desc').value='TITANIO LATEX';
       submitPedido(); await esperar(700); await quieto();
-      var p=STATE.filter(function(x){ return x.cliente==='CLIENTE MAPS '+maps.length; })[0];
+      var p=STATE.filter(function(x){ return x.cliente===nombre; })[0];
       var o={ guardados:window.__ctl.log.filter(function(x){ return x.act==='save'; }).length, maps:p?p.maps:null,
               marcado:document.getElementById('f-maps').classList.contains('err'), toasts:window._toasts.slice() };
       try{ closeModal(); }catch(e){}
       return o;
     }, maps);
-    let r = await nuevo('maps.app.goo.gl/xyzABC');
-    chk('⚠️ un enlace sin «https://» NO se guarda vacío en silencio: se frena y se marca el campo', r.guardados===0 && r.marcado && r.maps===null, r);
+    /* 25/09 (revisión de uso diario): lo que pegan de verdad ya no frena — se saca la ubicación de
+       adentro. Frena solo lo que no tiene ninguna (una dirección escrita en ese campo). */
+    let r = await nuevo('Calle Sucre 123, barrio Norte');
+    chk('⚠️ lo que no tiene ninguna ubicación NO se guarda vacío en silencio: se frena y se marca el campo', r.guardados===0 && r.marcado && r.maps===null, r);
     chk('…y se dice qué sirve', r.toasts.some(function(t){ return /Maps/.test(t) && /coordenadas/.test(t); }), r.toasts);
-    r = await nuevo('Mi casa https://maps.app.goo.gl/xyzABC');
-    chk('⚠️ un texto con el enlace adentro tampoco se pierde callado', r.guardados===0 && r.marcado, r);
+    r = await nuevo('maps.app.goo.gl/xyzABC');
+    chk('⚠️ un enlace sin «https://» se guarda como enlace (antes se perdía callado; con el primer arreglo, frenaba)', r.guardados===1 && !r.marcado && r.maps==='https://maps.app.goo.gl/xyzABC', r);
+    r = await nuevo('Heaven Colchones https://maps.app.goo.gl/xyzABC');
+    chk('⚠️ «compartir» desde Maps (el nombre y el enlace en un renglón) guarda el enlace', r.guardados===1 && r.maps==='https://maps.app.goo.gl/xyzABC', r);
+    r = await nuevo("17°46'52.4\"S 63°10'52.4\"W");
+    chk('los grados como los muestra Maps se guardan como coordenadas', r.guardados===1 && r.maps==='https://www.google.com/maps?q=-17.781222,-63.181222', r);
     r = await nuevo('-17.781234, -63.181234');
     chk('las coordenadas se siguen guardando como enlace', r.guardados===1 && r.maps==='https://www.google.com/maps?q=-17.781234,-63.181234', r);
     // editar sin tocar la ubicación

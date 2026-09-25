@@ -13321,7 +13321,7 @@ function quickCobrado(id){
        deshacen SOLO los cobros de la puerta (`cobroDeLaPuerta`, §4fy), como el ↺ del chofer: los
        que se anotan sin recibo ni imagen, que son los del chofer y los de este mismo 💰. */
     var todos=cobrosDe(p).slice(), fuera=todos.filter(cobroDeLaPuerta), quedan=todos.length-fuera.length;
-    if(!fuera.length){ toast('No hay un cobro de la puerta para deshacer: los pagos de esta venta los registró Contabilidad o la tienda (con recibo o imagen). Si hay que corregir uno, es en Contabilidad → ✏️ Corregir.','err',8000); return; }
+    if(!fuera.length){ toast('No hay un cobro de la puerta para deshacer: los pagos de esta venta tienen recibo o comprobante (los registró Contabilidad o la tienda, o se cobraron con foto del QR). Si hay que corregir uno, es en Contabilidad → ✏️ Corregir.','err',8000); return; }   // 25/09: el QR del chofer con foto tampoco es «de la puerta»
     var n=fuera.length, tot=0; fuera.forEach(function(c){ tot=r2(tot+(Number(c.monto)||0)); });
     if((n>1 || quedan) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
                        fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
@@ -18756,11 +18756,25 @@ function plusCodeDeTexto(txt){
 function normalizaUbicacion(txt){
   var t=String(txt||'').trim();
   if(!t) return '';
-  if(/^https?:\/\//i.test(t)) return t;
+  if(/^https?:\/\/\S+$/i.test(t)) return t;        // un enlace solo, como siempre
   var c=coordsSueltas(t);
   if(c) return 'https://www.google.com/maps?q='+c.lat+','+c.lng;
   var pc=plusCodeDeTexto(t);                       // pegaron un Plus Code: "5P2Q+PFX"
   if(pc){ var g=olcCoords(pc); if(g) return 'https://www.google.com/maps?q='+g.lat+','+g.lng; }
+  /* 📍 LO QUE PEGAN DE VERDAD (25/09). Desde que lo que no se entiende FRENA el guardado, frenaba
+     también lo más común: compartir un lugar desde Maps manda el NOMBRE y el enlace («Heaven
+     Colchones https://maps.app.goo.gl/…», el celular junta los dos renglones), WhatsApp agrega «Mi
+     ubicación:», a veces el enlace llega sin «https://», y Maps muestra los grados así:
+     17°46'52.4"S 63°10'52.4"W. Se saca la ubicación de adentro; frena solo si no hay ninguna
+     (una dirección escrita va en «Dirección»). */
+  var limpia=function(u){ return u.replace(/[)\].,;:!?»"'”]+$/,''); };
+  var u=t.match(/https?:\/\/\S+/i);
+  if(u) return limpia(u[0]);
+  var s=t.match(/(?:^|[\s(:])((?:maps\.app\.goo\.gl|goo\.gl\/maps|maps\.google\.[a-z.]{2,6}|(?:www\.)?google\.[a-z.]{2,6}\/maps)\S*)/i);
+  if(s) return 'https://'+limpia(s[1]);
+  var cg=coordsSueltas(t.replace(/°/g,''));        // «-17.78°, -63.18°»
+  if(cg) return 'https://www.google.com/maps?q='+cg.lat+','+cg.lng;
+  if(/°/.test(t)){ var gms=coordsDeLink(t); if(gms) return 'https://www.google.com/maps?q='+gms.lat.toFixed(6)+','+gms.lng.toFixed(6); }
   return null;
 }
 function coordsDeLink(u){
