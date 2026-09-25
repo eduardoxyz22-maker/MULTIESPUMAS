@@ -1790,7 +1790,7 @@ function recogerFabHtml(dia){
 }
 function marcarRecogidoFab(id){
   var p=findById(id); if(!p) return;
-  mergeAtcDatos(p, { rf: todayStr(), rfQ: (getVendedorMem()||'logística'), rfH: horaCorta() });
+  mergeAtcDatos(p, { rf: todayStr(), rfQ: (getVendedorMem()||'logística'), rfH: horaCorta(), rfAuto: '' });   // a mano: destildar el ✅ no lo saca
   persistPedido(p); renderChoferSiActivo(); renderCargaSiActiva();
   var va=document.getElementById('view-atc'); if(va && va.classList.contains('active')) renderAtc();
   toast('Recogido de fábrica ✓ — queda listo para entregar el '+fmtFecha(atcDevProg(p))+' '+atcDevTurno(p),'ok');
@@ -1800,7 +1800,18 @@ function atcAlMarcarEntregado(p){
   var a=p && esATC(p.oc) ? atcDe(p) : null;
   if(!a || !a.pdev || p.fecha!==a.pdev) return;   // se mira el día programado en crudo: con `ent` puesto, destildar tiene que poder reabrirla
   // Si lo entregó, lo recogió de fábrica: se anota solo si nadie lo tildó.
-  mergeAtcDatos(p, p.entregado ? { ent: p.fecha, rf: (a.rf||p.fecha) } : { ent: '' });
+  /* (25/09) …y queda dicho que lo puso el ✅ (`rfAuto`): destildar dejaba ese «recogido»
+     puesto, y un ✅ tocado sin querer apagaba el aviso «🏭 Recoger de fábrica» — la
+     devolución salía sin el producto. Destildar saca solo lo que puso el ✅. */
+  if(p.entregado) mergeAtcDatos(p, { ent: p.fecha, rf: (a.rf||p.fecha), rfAuto: (a.rf ? (a.rfAuto||'') : p.fecha) });
+  else mergeAtcDatos(p, { ent: '', rf: ((a.rfAuto && a.rf===a.rfAuto) ? '' : undefined), rfAuto: '' });
+}
+/* 🔁 (25/09) La ATC que vive en su día de devolución ES el viaje de vuelta: si se mueve (📅
+   Reprogramar, el turno de la ficha de carga), la devolución se mueve con ella. Antes solo
+   «🔁 Cambiar devolución» movía `pdev`: el chofer veía «🎧 ATC» (un recojo), el aviso de
+   fábrica contaba desde el día viejo y su ✅ ya no la cerraba. `antes` = vivía ahí ANTES. */
+function atcSeguirViaje(p, antes){
+  if(antes && p && esATC(p.oc)) mergeAtcDatos(p, { pdev: p.fecha, pturno: normTurno(p.turno) });
 }
 /* El cierre de verdad: el producto de vuelta en manos del cliente. Que producción lo
    devuelva NO cierra la ATC — todavía hay que llevárselo (§4br). */
@@ -7385,6 +7396,8 @@ function submitPedido(){
     _n.com  = segVal('f-atc-comodin')==='SI';
     _n.rnota= document.getElementById('f-atc-rnota').value.trim();
     var _pz=leerPiezasAtc(); for(var _k2 in _pz) _n[_k2]=_pz[_k2];
+    // (25/09) si vivía en su día de devolución, la fecha del formulario ES la de la devolución
+    if(prev && atcEnDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
     setAtcDatos(rec, _n);
   }
 
@@ -9965,8 +9978,10 @@ function reproConfirmar(){
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
+  var _enDev=atcEnDevolucion(p);          // (25/09) la ATC en su devolución se la lleva al día nuevo
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
+  atcSeguirViaje(p, _enDev);
   // Hubo avisos y se confirmaron: el servidor tiene que dejarlo pasar igual.
   persistPedido(p, {forzar: avisos.length>0});
   toast('Reprogramado: '+antes+' → '+fmtFecha(f)+' · '+t+' ✓','ok');
@@ -17557,7 +17572,9 @@ function cambiarTurno(id, turno){
      la clave de administración si el servidor tiene la del equipo puesta. */
   var _forzar=diaCerrado(p.fecha);
   if(_forzar && !asegurarClaveAdmin()) return;
+  var _enDev=atcEnDevolucion(p);          // (25/09) la devolución de una ATC cambia de turno con el viaje
   p.turno=turno;
+  atcSeguirViaje(p, _enDev);
   persistPedido(p, _forzar?{forzar:true}:undefined);
   reabrirFicha(id);
   toast('Pasa al turno '+turno+' ✓ — quedan '+(lim-usados-1)+' cupos','ok');
