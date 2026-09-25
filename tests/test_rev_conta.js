@@ -14,6 +14,8 @@
      4. «Guardar precios y montos» sobre una venta «PAGADA sin monto» no le borra el método ni
         el recibo al adelanto (§4fg: todo lo que reescribe el historial usa `cobrosReales`).
      5. …y cargarle solo el PRECIO de un ítem no la desmarca de pagada.
+     6. El monto de una «PAGADA sin monto» que se escribe en el formulario queda con el día de
+        la venta (como «💵 Anotar el monto»), no con el de hoy.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -292,6 +294,39 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('5 · ⚠️ cargar el precio y guardar NO desmarca de pagada una venta «PAGADA sin monto»', r.P80.pagado===true && r.P80.precio===1500 && /^PAGADO/.test(r.P80.pago), J(r.P80));
   chk('5 · ⚠️ …el pago (con su recibo) sigue en la ficha, y al chofer no le dice «sin monto»', J(r.P80.pagos)===J(['Efectivo REC80']) && /PAGADO/.test(r.P80.ruta), J({pagos:r.P80.pagos, ruta:r.P80.ruta}));
   chk('5 · …lo mismo con un flete cobrado al lado (el flete no se toca)', r.P81.pagado===true && J(r.P81.pagos)===J(['QR BISA REC81','E:Efectivo F81']), J(r.P81));
+
+  /* ══ 6 · EL MONTO DE UNA «PAGADA SIN MONTO» ESCRITO EN EL FORMULARIO ═════════════════
+     Venta de AGOSTO «PAGADA sin monto». En septiembre la vendedora le corrige la dirección; el
+     formulario no deja guardar sin el «MONTO TOTAL COBRADO» (a propósito) y ella escribe 1.500.
+     El pago quedaba fechado HOY: Bs 1.500 cobrados en agosto aparecían en la caja del 16/09 y en
+     el «efectivo por retirar» de la vendedora, que ya los había rendido. «💵 Anotar el monto» de
+     Contabilidad, para lo mismo, usa el día de la venta. */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    var out={}, tsAgo=new Date('2026-08-20T12:00:00').getTime();
+    var pagos=function(id){ return contaPagos(findById(id)).map(function(c){ return (c.anticipo?'ANT ':'')+c.metodo+' '+c.monto+' @'+c.fecha+' '+compsArr(c.comps!=null?c.comps:c.comp).join(','); }); };
+    STATE=[ P({ id:'V1', nota:'90', oc:'08-090', cliente:'VIEJA DE AGOSTO', ts:tsAgo, pagado:true, metodoPago:'Efectivo %REC90',
+                productos:[{desc:'COLCHON',cant:1,precio:1500}] }),
+            P({ id:'V2', nota:'92', oc:'09-092', cliente:'DEBÍA Y PAGÓ HOY', ts:tsAgo, acuenta:0, saldo:1500, metodoPago:'',
+                productos:[{desc:'COLCHON',cant:1,precio:1500}] }) ];
+    RETIROS=[]; releer();
+    // (a) la vieja «PAGADA sin monto»: dirección nueva + el monto que pide el formulario
+    editPedido('V1'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-direccion').value='Calle nueva 123';
+    document.getElementById('f-cobrado').value='1500';
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    out.vieja={ pagos:pagos('V1'), dir:findById('V1').direccion, pagado:findById('V1').pagado };
+    // (b) control: la que DEBÍA y se marca «SÍ, pagado» hoy sigue entrando hoy
+    editPedido('V2'); await new Promise(r=>setTimeout(r,200));
+    segSet('f-pagado','SI'); if(typeof updateMetodoVisibility==='function') updateMetodoVisibility();
+    segSet('f-metodo','Efectivo'); updateMetodoVisibility();
+    FORM_COMPS=['REC92']; document.getElementById('f-cobrado').value='1500';
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    out.debia={ pagos:pagos('V2'), pagado:findById('V2').pagado };
+    return out;
+  });
+  chk('6 · ⚠️ el monto de una «PAGADA sin monto» escrito en el formulario queda con el DÍA DE LA VENTA', J(r.vieja.pagos)===J(['ANT Efectivo 1500 @2026-08-20 REC90']) && r.vieja.dir==='Calle nueva 123' && r.vieja.pagado===true, J(r.vieja));
+  chk('6 · control: la venta que debía y se paga HOY sigue entrando con la fecha de hoy', J(r.debia.pagos)===J(['ANT Efectivo 1500 @2026-09-16 REC92']) && r.debia.pagado===true, J(r.debia));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

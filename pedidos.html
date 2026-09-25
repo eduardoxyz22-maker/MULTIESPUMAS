@@ -7063,9 +7063,13 @@ function submitPedido(){
   var _mixOn = MIXTO && !lite && (_pagSI ? _cobVal>0 : _acuVal>0);
   // §4fr: ¿el adelanto ya era un renglón DEL HISTORIAL (no uno reconstruido de `p.acuenta`)?
   var _antPrev = prev ? (parseCobros(prev.metodoPago).filter(function(c){ return c.anticipo && !esEnvio(c); })[0]||null) : null;
+  /* ⚠️ La venta ya era «PAGADA sin monto» (§4fg, 25/09): el formulario no la deja guardar sin el
+     monto total, y ese monto se fechaba HOY — plata cobrada en agosto caía en la caja del día en
+     que alguien le corrigió la dirección. Entró el día de la venta, como anota «💵 Anotar el monto». */
+  var _diaSI = (prev && prev.pagado && cobrosDe(prev).some(function(c){ return c.sinMonto; })) ? (contaFecha(prev)||todayStr()) : todayStr();
   var _metForm = _mixOn
         ? (function(){
-            var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), dia=todayStr(), nota=document.getElementById('f-nota').value;
+            var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), dia=_pagSI?_diaSI:todayStr(), nota=document.getElementById('f-nota').value;
             /* ⚠️ §4fr TAMBIÉN CON PAGO MIXTO (25/09). Corregir el saldo (o el 2° monto) de una venta con
                adelanto mixto del 28/08 reescribía los DOS renglones con la fecha de HOY: Bs 2.000 se
                mudaban del cuadre de agosto, ya arqueado, al de septiembre. Si el adelanto ya era un
@@ -7081,7 +7085,7 @@ function submitPedido(){
         ? textoCobros([{ anticipo:true,
                          metodo:segVal('f-metodo'),
                          banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),
-                         monto:_cobVal, fecha:todayStr(),
+                         monto:_cobVal, fecha:_diaSI,
                          nota:document.getElementById('f-nota').value,
                          comps:(metodoConComprobante(segVal('f-metodo'))?compsArr(FORM_COMPS):[]) }])
         : (_acuVal>0 && _antPrev)
