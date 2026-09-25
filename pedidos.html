@@ -9473,7 +9473,7 @@ var QUICK_FILTER='';                 // '', 'cobrar','sinchofer','noentregado','
 var SORT_KEY='', SORT_DIR=1;         // orden de columnas (1 asc, -1 desc)
 var QUICK_DEFS=[
   {k:'',            lbl:'Todos',           test:function(p){return true;}},
-  {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado;}},
+  {k:'cobrar',      lbl:'💰 Por cobrar',    test:function(p){return !p.pagado && !noSeCobra(p);}},   // (25/09) ATC/RPT no se cobran (§4fy)
   {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
@@ -9615,7 +9615,7 @@ function renderAdmin(){
   var total=list.length,pagados=0,saldoPend=0,unidades=0;
   var mtd={Efectivo:0,QR:0,Tarjeta:0}, mtdSin=0, entregados=0, verificados=0, est={'En stock':0,'En producción':0,'No hay':0};
   list.forEach(function(p){ if(p.pagado){ pagados++; var _mb=metodoBase(p.metodoPago); if(mtd[_mb]!=null)mtd[_mb]++; else mtdSin++; } else saldoPend+=Number(p.saldo)||0; if(p.entregado)entregados++; if(p.verificado)verificados++; if(est[p.estado]!=null)est[p.estado]++; (p.productos||[]).forEach(function(x){unidades+=Number(x.cant)||0;}); });
-  var pend=total-pagados;
+  var pend=total-pagados-list.filter(function(p){ return !p.pagado && noSeCobra(p); }).length;   // (25/09) sin ATC/RPT, como el chip
   document.getElementById('adm-metrics').innerHTML=
     mc('var(--teal)','Pedidos',total,unidades+' unidades')+
     mc('var(--green)','Pagados',pagados,total?Math.round(pagados/total*100)+'% del total':'—')+

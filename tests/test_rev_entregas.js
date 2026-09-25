@@ -13,6 +13,7 @@
       chofer (tarjeta, hoja de ruta, WhatsApp, «Entregado», fichas), y «➕ Cobré algo igual»
       anotaba plata que Contabilidad no ve.
    5. 🎟️ Con un turno forzado de más, tres avisos seguían diciendo «(12/12)» (§4fh).
+   6. 💰 Administración contaba las ATC y las RPT como «por cobrar» (chip, ficha y resumen).
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev_entregas.js
@@ -303,6 +304,30 @@ const BASE = `
     chk('⚠️ pasar un pedido al turno AM ya forzado: el aviso dice «(13/12)», no «(12/12)»', r.turno.some(function(t){ return /\(13\/12\)/.test(t); }) && !r.turno.some(function(t){ return /\(12\/12\)/.test(t); }), J(r.turno));
     chk('⚠️ 📅 Reprogramar a ese turno: el aviso también cuenta', r.repro.some(function(t){ return /\(13\/12\)/.test(t); }), J(r.repro));
     chk('⚠️ el formulario que no deja cargar un pedido nuevo también', r.form.some(function(t){ return /\(13\/12\)/.test(t); }) && !r.nuevoEntro, J(r.form));
+    await page.close();
+  }
+
+  // ═══ 6. Administración: «por cobrar» no cuenta lo que no se cobra ════════════════════
+  console.log('\n── 6. 💰 Administración: las ATC y las RPT no son «por cobrar» (chip, ficha y resumen) ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var hoy=todayStr();
+      STATE=[ _P({id:'atc', fecha:hoy, oc:'ATC 09-001', cliente:'CLIENTE ATC', productos:[{desc:'SOFT',cant:1,atc:{mot:'Ruido'}}]}),
+              _P({id:'rpt', fecha:hoy, oc:'RPT 09-002', cliente:'Buenos Aires', productos:[{desc:'SOFT',cant:3,rtipo:'Reposición'}]}),
+              _P({id:'deb', fecha:hoy, oc:'09-011', cliente:'DEBE', saldo:700, acuenta:300}),
+              _P({id:'pag', fecha:hoy, oc:'09-012', cliente:'PAGADA', pagado:true, metodoPago:'Efectivo 900 @'+hoy+' #55'}) ];
+      saveMirror();
+      showView('admin'); await new Promise(function(r){ setTimeout(r,150); });
+      segSet('adm-mode','dia'); document.getElementById('adm-dia').value=hoy; QUICK_FILTER=''; renderAdmin();
+      return { mini:RESUMEN_MINI, chip:admBaseList().filter(quickTest('cobrar')).map(function(p){ return p.cliente; }),
+               fichas:(document.getElementById('adm-metrics')||{}).textContent.replace(/\s+/g,' '),
+               metodos:((document.getElementById('adm-metodos')||{}).textContent.match(/Por cobrar: ?\d+/)||[''])[0] };
+    }, BASE);
+    chk('⚠️ el chip «💰 Por cobrar» trae solo la venta que debe (antes también la ATC y la RPT)', J(r.chip)===J(['DEBE']), J(r.chip));
+    chk('⚠️ la ficha «Por cobrar» y el resumen plegado cuentan 1, no 3', /Por cobrar ?1 ?pedidos pendientes/.test(r.fichas) && /1 por cobrar/.test(r.mini) && /Por cobrar: ?1$/.test(r.metodos), J([r.mini, r.metodos]));
+    chk('control: el total de pedidos y los pagados no cambian', /Pedidos4/.test(r.fichas) && /Pagados1/.test(r.fichas) && /^4 pedidos/.test(r.mini), r.fichas.slice(0,90));
     await page.close();
   }
 
