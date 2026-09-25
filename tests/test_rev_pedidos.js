@@ -448,6 +448,36 @@ function INIT(){
         e12.productos.map(x=>({prodF:x.prodF, prodR:x.prodR})));
   });
 
+  // ══ 7. LOS BUSCADORES DE CONTABILIDAD Y ATC, SIN TILDES ═════════════════════════════════
+  await esc('7. «gomez» encuentra a «GÓMEZ» en Contabilidad y en ATC, como en Administración', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'g1', cliente:'JOSÉ GÓMEZ', oc:'09-001', ts:TS('2026-09-15') }));
+    S.guardar(pedido({ id:'g2', cliente:'OTRO CLIENTE', oc:'09-002', ts:TS('2026-09-15'), fecha:'2026-09-18' }));
+    S.guardar(pedido({ id:'g3', cliente:'MARÍA PÉREZ', oc:'ATC 09-001', nota:'', ts:TS('2026-09-15'), fecha:'2026-09-21',
+                       productos:[{desc:'COLCHÓN TITANIO', medida:'140x190', codigo:'CH1129', cant:1, atc:{mot:'Ruido', det:'hace ruido'}}] }));
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      var o={};
+      showView('admin'); await esperar(150);
+      document.getElementById('adm-search').value='gomez';
+      o.admin=admFilter().map(function(p){ return p.id; });
+      showView('conta'); await esperar(200);
+      var cs=document.getElementById('cta-search');
+      ['gomez','GOMEZ','gómez'].forEach(function(q){ cs.value=q; o['conta_'+q]=contaLista().map(function(p){ return p.id; }); });
+      cs.value='';
+      showView('atc'); await esperar(200);
+      var as=document.getElementById('atc-search');
+      ['perez','colchon'].forEach(function(q){ as.value=q; o['atc_'+q]=atcLista().map(function(p){ return p.id; }); });
+      as.value='';
+      return o;
+    });
+    chk('Administración ya lo encontraba (sinTildes, §4ew)', JSON.stringify(r.admin)===JSON.stringify(['g1']), r.admin);
+    chk('⚠️ Contabilidad → Ventas encuentra «JOSÉ GÓMEZ» con «gomez», «GOMEZ» y «gómez» (y el Excel filtrado, que sale de esta lista)',
+        ['gomez','GOMEZ','gómez'].every(q => JSON.stringify(r['conta_'+q])===JSON.stringify(['g1'])), r);
+    chk('⚠️ la matriz de ATC encuentra «MARÍA PÉREZ» con «perez» y el «COLCHÓN» con «colchon»',
+        JSON.stringify(r.atc_perez)===JSON.stringify(['g3']) && JSON.stringify(r.atc_colchon)===JSON.stringify(['g3']), r);
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

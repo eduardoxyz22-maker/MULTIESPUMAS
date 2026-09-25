@@ -10267,7 +10267,7 @@ function atcLista(){
   var mes=(document.getElementById('atc-mes')||{}).value||'';
   var mot=(document.getElementById('atc-motivo')||{}).value||'';
   var est=(document.getElementById('atc-estado')||{}).value||'';
-  var q=String((document.getElementById('atc-search')||{}).value||'').trim().toLowerCase();
+  var q=sinTildes((document.getElementById('atc-search')||{}).value||'');   // sin tildes, como Administración (25/09)
   var list=STATE.filter(function(p){ return esATC(p.oc); });
   /* ⚠️ Corta por cuándo ENTRÓ la ATC, no por la fecha de recojo: la pregunta es
      "qué ATC entraron este mes", y una ATC de agosto que se recoge en septiembre
@@ -10282,9 +10282,9 @@ function atcLista(){
   else if(est==='abiertas')  list=list.filter(function(p){ return atcEstado(p)!=='cerrada'; });
   else if(est)               list=list.filter(function(p){ return atcEstado(p)===est; });
   if(q) list=list.filter(function(p){
-    return [p.oc,p.cliente,p.vendedor,p.celular,prodText(p.productos),
+    return sinTildes([p.oc,p.cliente,p.vendedor,p.celular,prodText(p.productos),
             atcMotivo(p),atcDetalle(p),atcQueSeHizo(p),p.observaciones]
-           .join(' ').toLowerCase().indexOf(q)>=0;
+           .join(' ')).indexOf(q)>=0;
   });
   /* Las más nuevas arriba: lo que entró recién es lo que se está mirando. */
   list.sort(function(a,b){ var x=atcEntro(a), y=atcEntro(b); if(x!==y) return x<y?1:-1; return (b.ts||0)-(a.ts||0); });
