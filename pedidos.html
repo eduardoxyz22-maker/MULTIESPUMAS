@@ -6058,7 +6058,8 @@ function showContaModal(id){
       row('NIT', esc(p.nit)||'—')+
       row('Total de la venta', '<b>'+fmtBs(ventaTotal(p))+'</b>')+
       row('Pagos', contaPagosHtml(p))+
-      row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):'<span class="badge b-green">PAGADO</span>')+
+      // 25/09: saldo 0 sin NADA anotado no es «PAGADO» (el aviso del Cuadre manda acá a completarla).
+      row('Saldo', falta>0.01?('<b style="color:var(--red)">'+fmtBs(falta)+'</b>'):(sinMontoAnotado(p)?badgeSinMonto():'<span class="badge b-green">PAGADO</span>'))+
       /* Siempre visible en Contabilidad: si no hubiera recargo, la fila igual da el botón
          para ponerlo — antes, olvidarse el flete al cargar el pedido no tenía arreglo. */
       row('🚚 Recargo por entrega', envioResumenHtml(p, true))+

@@ -18,6 +18,7 @@
         la venta (como «💵 Anotar el monto»), no con el de hoy.
      7. El Excel del Cuadre marca los pagos de FLETE, como ya lo hacen la pantalla y el texto.
      8. «Buscar» de Contabilidad → Ventas no distingue acentos (como Administración y el Cuadre).
+     9. La ficha de una venta «SIN MONTO ANOTADO» no dice «Saldo: PAGADO».
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -377,6 +378,23 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('8 · «maria perez» encuentra a «María Pérez» (y las tarjetas y el Excel la cuentan)', r.maria==='B1', J(r));
   chk('8 · …y «josé» a «Jose Gomez», con mayúsculas o sin ellas', r.jose==='B2' && r.mayus==='B1', J(r));
+
+  /* ══ 9 · LA FICHA DE UNA VENTA «SIN MONTO ANOTADO» NO DICE «PAGADO» ══════════════════
+     El aviso del Cuadre «venta sin ningún monto anotado… hay que abrirla y completarla» manda a
+     su ficha, y ahí la fila «Saldo» decía «PAGADO» en verde (saldo 0 = pagado, para esa fila):
+     la contadora leía que estaba pagada una venta que nadie cobró. La tabla ya decía bien
+     «⚠️ SIN MONTO ANOTADO». */
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'N1', nota:'95', oc:'09-095', cliente:'NADIE ANOTÓ NADA', pagado:false, saldo:0, acuenta:0, metodoPago:'' }),
+            P({ id:'N2', nota:'96', oc:'09-096', cliente:'PAGADA', pagado:true, metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:900,fecha:hoy,nota:'96',comps:['V96']}]) }) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    var saldo=function(id){ CTA_ULTIMA=''; showContaModal(id);
+      var f=[].slice.call(document.querySelectorAll('#modal-box .dl-row')).map(function(e){ return e.textContent.replace(/\s+/g,' '); })
+              .filter(function(t){ return /^Saldo/.test(t); })[0]||''; closeModal(); return f; };
+    return { nada:saldo('N1'), pagada:saldo('N2') };
+  });
+  chk('9 · la ficha de una venta sin ningún monto NO dice «PAGADO»: dice «SIN MONTO ANOTADO»', !/PAGADO/.test(r.nada.replace('SIN MONTO ANOTADO','')) && /SIN MONTO ANOTADO/.test(r.nada), r.nada);
+  chk('9 · control: la pagada sigue diciendo «PAGADO»', /PAGADO/.test(r.pagada), r.pagada);
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
