@@ -7043,6 +7043,21 @@ function submitPedido(){
     toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
     setSubmitting(false); return;
   }
+  /* 📍 LA UBICACIÓN NO SE PIERDE EN SILENCIO (25/09). `normalizaUbicacion` devuelve null con lo que
+     no entiende («maps.app.goo.gl/…» sin https, un texto con el enlace adentro) y acá se guardaba
+     `maps:''`: la vendedora pegaba la ubicación, veía ✓ y el chofer salía sin ella. Editando otra
+     cosa, un `maps` viejo que no pasa por ahí se BORRABA, y unas coordenadas crudas se reescribían
+     como enlace (a logística le saltaba «MODIFICADO: cambió la ubicación»). Ahora el campo que
+     quedó como estaba se guarda como estaba, y lo que no se entiende se frena y se dice qué sirve
+     (lo mismo que ya decía 📍 Editar ubicación). */
+  var _mapsTxt=String(document.getElementById('f-maps').value||'').trim();
+  var _maps=(prev && _mapsTxt===String(prev.maps||'').trim()) ? (prev.maps||'') : normalizaUbicacion(_mapsTxt);
+  if(!VENTA_TIENDA && _maps===null){
+    markErr('f-maps');
+    toast('📍 No se entiende la «Ubicación de Google Maps»: pegá el enlace (https://…), las coordenadas (-17.749444, -63.104556) o el código (5P2Q+PFX). Si no la tenés, dejala vacía.','err',9000);
+    var _fmp=document.getElementById('f-maps'); if(_fmp){ _fmp.focus(); _fmp.scrollIntoView({block:'center'}); }
+    return;
+  }
 
   /* ⚠️ EDITAR NO LE PUEDE BORRAR EL TRABAJO A LOGÍSTICA.
      `getProductos()` arma la lista DE CERO con lo que hay en el formulario, así que hasta
@@ -7399,7 +7414,7 @@ function submitPedido(){
     turno: _tienda ? '' : segVal('f-turno'),
     zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
     direccion: _tienda ? dirTiendaConSucursal() : document.getElementById('f-direccion').value.trim(),
-    maps: _tienda ? '' : (normalizaUbicacion(document.getElementById('f-maps').value)||''),
+    maps: _tienda ? '' : (_maps||''),
     pagado: segVal('f-pagado')==='SI',
     metodoPago: _metodoPago,
     cobradoBs: _cobVal || (prev?(Number(prev.cobradoBs)||0):0),

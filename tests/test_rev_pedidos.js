@@ -337,6 +337,54 @@ function INIT(){
     chk('…y la de la otra vendedora sigue con su 09-002', S.fila('x2').oc==='09-002');
   });
 
+  // ══ 5. LA UBICACIÓN DE MAPS: LO QUE SE ESCRIBE ES LO QUE QUEDA ══════════════════════════
+  await esc('5. «Ubicación de Google Maps» que el panel no entiende, y editar sin tocarla', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'m1', cliente:'MAPS VIEJO', oc:'09-001', maps:'maps.app.goo.gl/abcDEF123' }));
+    S.guardar(pedido({ id:'m2', cliente:'COORDS CRUDAS REVISADO', oc:'09-002', fecha:'2026-09-18', maps:'-17.781234, -63.181234', verificado:true, estado:'En stock',
+                       productos:[{desc:'TITANIO LATEX', medida:'140x190', codigo:'CH1129', cant:1, precio:3000, chk:'ok'}] }));
+    const A = await abrir(S);
+    const nuevo = (maps) => A.evaluate(async (maps) => {
+      window._toasts=[]; window.__ctl.log=[];
+      showView('form'); await esperar(150); resetForm();
+      document.getElementById('f-vendedor').value='Mirian Salazar'; applyVendedorLite();
+      document.getElementById('f-cliente').value='CLIENTE MAPS '+maps.length;
+      document.getElementById('f-celular').value='70000001';
+      document.getElementById('f-zona').value='Norte';
+      document.getElementById('f-nota').value='2002';
+      document.getElementById('f-fecha').value='2026-09-21';
+      document.getElementById('f-maps').value=maps;
+      document.querySelector('#f-productos .prod-desc').value='TITANIO LATEX';
+      submitPedido(); await esperar(700); await quieto();
+      var p=STATE.filter(function(x){ return x.cliente==='CLIENTE MAPS '+maps.length; })[0];
+      var o={ guardados:window.__ctl.log.filter(function(x){ return x.act==='save'; }).length, maps:p?p.maps:null,
+              marcado:document.getElementById('f-maps').classList.contains('err'), toasts:window._toasts.slice() };
+      try{ closeModal(); }catch(e){}
+      return o;
+    }, maps);
+    let r = await nuevo('maps.app.goo.gl/xyzABC');
+    chk('⚠️ un enlace sin «https://» NO se guarda vacío en silencio: se frena y se marca el campo', r.guardados===0 && r.marcado && r.maps===null, r);
+    chk('…y se dice qué sirve', r.toasts.some(function(t){ return /Maps/.test(t) && /coordenadas/.test(t); }), r.toasts);
+    r = await nuevo('Mi casa https://maps.app.goo.gl/xyzABC');
+    chk('⚠️ un texto con el enlace adentro tampoco se pierde callado', r.guardados===0 && r.marcado, r);
+    r = await nuevo('-17.781234, -63.181234');
+    chk('las coordenadas se siguen guardando como enlace', r.guardados===1 && r.maps==='https://www.google.com/maps?q=-17.781234,-63.181234', r);
+    // editar sin tocar la ubicación
+    const ed = (id) => A.evaluate(async (id) => {
+      window._toasts=[];
+      showView('admin'); await esperar(150); editPedido(id); await esperar(250);
+      document.getElementById('f-obs').value='corregida la observación';
+      submitPedido(); await esperar(600); await quieto(); try{ closeModal(); }catch(e){}
+      return window._toasts.filter(function(t){ return /^err/.test(t); });
+    }, id);
+    await ed('m1');
+    chk('⚠️ editar otra cosa NO le borra la ubicación vieja que el panel no entiende (antes quedaba vacía)', S.fila('m1').maps==='maps.app.goo.gl/abcDEF123' && S.fila('m1').observaciones==='corregida la observación', S.fila('m1').maps);
+    await ed('m2');
+    const m2 = S.fila('m2');
+    chk('⚠️ ni reescribe las coordenadas crudas…', m2.maps==='-17.781234, -63.181234', m2.maps);
+    chk('⚠️ …ni le salta a logística un falso «MODIFICADO: cambió la ubicación»', !(m2.productos[0]||{}).mod && m2.verificado===true, (m2.productos[0]||{}).mod);
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
