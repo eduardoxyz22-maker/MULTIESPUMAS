@@ -2282,6 +2282,13 @@ function mismoContenido(a, b){
    entrado (un «ok» tardío), para que quien llamó lo trate como éxito y no como choque. */
 function rechazoFirme(rec, res){
   if(res.error==='conflicto' && res.pedido && mismoContenido(rec, res.pedido)){
+    /* 🔢 `mismoContenido` saltea la OC a propósito: el servidor pudo haberla RENUMERADO (otra
+       vendedora ya tenía ese número) y esa respuesta fue justo la que se perdió. La fila de la
+       planilla ES este pedido: su OC es la buena, y se avisa como en `aplicarSello` (25/09). Antes
+       el panel se quedaba con la OC de OTRO pedido, la mandaba al grupo en el WhatsApp y el
+       guardado siguiente rebotaba con «oc_repetida» (el PLAUSIBLE de §4fd, reproducido). */
+    var _ocS=cleanOC(res.pedido.oc), _ocL=cleanOC(rec.oc);
+    if(_ocS && _ocL && _ocS!==_ocL && !res.pedido.ocCambiada) res.pedido.ocCambiada={ de:_ocL, a:_ocS, con:'' };
     aplicarSello(rec, res.pedido);                 // ya estaba guardado igual: es un «ok» tardío, no un choque
     setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
     return true;

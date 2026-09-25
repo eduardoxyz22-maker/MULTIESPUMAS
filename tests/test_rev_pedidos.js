@@ -294,6 +294,49 @@ function INIT(){
     chk('⚠️ la imagen que usa OTRO pedido nunca va a la papelera (§4fy); la huérfana de verdad, sí', JSON.stringify(r3)===JSON.stringify(['IMGNUEVA']), r3);
   });
 
+  // ══ 4. LA OC QUE EL SERVIDOR RENUMERÓ, CON LA RESPUESTA PERDIDA ══════════════════════════
+  /* Lo que §4fd dejó como PLAUSIBLE: la bajada de último momento no llega (4 s de tope) y el panel
+     numera con su copia vieja → 09-002, que otra vendedora ya usó. El servidor la pasa a 09-003 y
+     esa respuesta es la que se pierde (el 404 del redirect, §4fa). El reintento choca con su propia
+     fila y es un «ok tardío»… que traía la OC de la planilla y el panel no la miraba. */
+  await esc('4. OC renumerada por el servidor y respuesta perdida', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'x1', cliente:'PRIMERO', oc:'09-001', ts:TS('2026-09-16','08:00') }));
+    const A = await abrir(S);
+    S.guardar(pedido({ id:'x2', cliente:'OTRA VENDEDORA', oc:'09-002', ts:TS('2026-09-16','09:00'), fecha:'2026-09-18' }));   // este dispositivo no la vio
+    const r = await A.evaluate(async () => {
+      __regla({ act:'list', mode:'drop' });           // la bajada de último momento no llega
+      __regla({ act:'save', mode:'lose' });           // el servidor guarda (y renumera) y la respuesta se pierde
+      showView('form'); await esperar(150); resetForm();
+      document.getElementById('f-vendedor').value='Mirian Salazar'; applyVendedorLite();
+      document.getElementById('f-cliente').value='CLIENTE NUEVO';
+      document.getElementById('f-celular').value='70000001';
+      document.getElementById('f-zona').value='Norte';
+      document.getElementById('f-nota').value='2002';
+      document.getElementById('f-fecha').value='2026-09-21';
+      document.querySelector('#f-productos .prod-desc').value='TITANIO LATEX';
+      submitPedido(); await esperar(4500); await quieto();
+      var p=STATE.filter(function(x){ return x.cliente==='CLIENTE NUEVO'; })[0];
+      var modal=(document.getElementById('modal').textContent||'').replace(/\s+/g,' ');
+      try{ closeModal(); }catch(e){}
+      return { id:p&&p.id, oc:p&&p.oc, modal:modal, toasts:window._toasts.slice() };
+    });
+    const srv = S.fila(r.id);
+    chk('el servidor la guardó con el número libre (09-003)', srv && srv.oc==='09-003', srv && srv.oc);
+    chk('⚠️ el panel se queda con la OC de la planilla, no con la de otra vendedora', r.oc==='09-003', r.oc);
+    chk('⚠️ el mensaje para el grupo sale con 09-003, no con 09-002', /OC 09-003/.test(r.modal) && !/OC 09-002/.test(r.modal), r.modal.slice(0,160));
+    chk('…y se avisa que la OC cambió', r.toasts.some(function(t){ return /09-002/.test(t) && /09-003/.test(t); }), r.toasts);
+    const r2 = await A.evaluate(async (id) => {
+      window._toasts=[];
+      showView('admin'); await esperar(150); editPedido(id); await esperar(250);
+      document.getElementById('f-obs').value='llamar antes';
+      submitPedido(); await esperar(600); await quieto(); try{ closeModal(); }catch(e){}
+      return window._toasts.filter(function(t){ return /^err/.test(t); });
+    }, r.id);
+    chk('⚠️ la edición siguiente entra (antes rebotaba con «la OC 09-002 ya la tiene OTRA VENDEDORA»)', S.fila(r.id).observaciones==='llamar antes' && !r2.length, { obs:S.fila(r.id).observaciones, rojos:r2 });
+    chk('…y la de la otra vendedora sigue con su 09-002', S.fila('x2').oc==='09-002');
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
