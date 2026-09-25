@@ -20,6 +20,13 @@ no puede pasar como éxito.
 Se corre solo:  python3 tests/test_traer.py
 """
 import io, json, os, sys, contextlib, urllib.request, urllib.error
+from datetime import datetime, timedelta, timezone
+
+
+def hace(minutos):
+    """Una hora ISO de hace N minutos: el repaso «al día» tiene que ser RELATIVO (§4fz-b da la
+    alarma pasados 30 min, y un fixture con fecha fija se pudre solo con el calendario)."""
+    return (datetime.now(timezone.utc) - timedelta(minutes=minutos)).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 os.environ["KOMMO_TOKEN"]    = "tok_de_mentira_1234567890"
 os.environ["KOMMO_SUBDOMAIN"] = "eanez"
@@ -158,7 +165,7 @@ chk("⚠️ avisa que esos los perdió el webhook", "los perdió el webhook" in 
 RESPUESTA.clear()
 RESPUESTA.update({"ok": True, "version": "2026-09-20-a", "origen": "repaso", "diferido": True, "encolados": 2,
                   "cola": 2, "creados": 0, "ids": [], "ultimoHook": "2026-09-20T12:00:00.000Z",
-                  "ultimoRepaso": json.dumps({"ts": "2026-09-20T11:58:00.000Z", "cola": 0, "vistos": 3, "creados": 0, "error": ""})})
+                  "ultimoRepaso": json.dumps({"ts": hace(2), "cola": 0, "vistos": 3, "creados": 0, "error": ""})})
 s2, c2 = correr()
 chk("⚠️ con la respuesta diferida (§4et) termina bien y dice que el panel encoló los ids",
     c2 == 0 and "encoló 2 ids" in s2, s2[-220:])
@@ -208,6 +215,59 @@ s7, c7 = correr()
 chk("§4fx · un 404 del redirect de Google también se reintenta una vez (corridas 128 y 132)",
     c7 == 0 and AVISOS[0] == 2 and "encoló" in s7, f"avisos={AVISOS[0]} · {str(c7)[:80]}")
 FILA[:] = []
+
+# 6) §4fz-b: el repaso del PROPIO script parado sale en ROJO. El 23/09 estuvo parado desde las
+#    15:24 UTC (11:24 de Bolivia): las corridas 137 y 138 lo imprimieron y salieron en verde.
+ahora = datetime(2026, 9, 23, 19, 57, 47, tzinfo=timezone.utc)
+parado = getattr(traer_kommo, "repaso_parado", None)
+if not parado:
+    chk("§4fz-b · existe repaso_parado()", False, "este traer_kommo.py no mira si el repaso del script está parado")
+else:
+    m = parado(json.dumps({"ts": "2026-09-23T15:24:05.435Z", "cola": 0, "vistos": 0, "creados": 0, "error": ""}), ahora)
+    chk("§4fz-b · el repaso parado del 23/09 (15:24 UTC, visto a las 19:57) da la alarma, con la hora de Bolivia",
+        bool(m) and "desde el 23/09 11:24 (hora Bolivia)" in m and "hace 4 h 33 min" in m, m)
+    chk("…uno de hace 10 minutos no", parado(json.dumps({"ts": "2026-09-23T19:47:47.000Z"}), ahora) is None)
+    chk("…ni uno vacío o ilegible (no se inventa una alarma)",
+        all(parado(x, ahora) is None for x in ("no es json", "{}", "null", "[]", json.dumps({"ts": "ayer"}))))
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(180), "cola": 0, "vistos": 0, "creados": 0, "error": ""})))
+AVISOS[0] = 0
+s8, c8 = correr()
+chk("⚠️ con el repaso del script parado 3 h, la corrida sale en ROJO (GitHub le manda el correo al dueño)",
+    bool(c8) and "repaso automático del script está parado" in str(c8), str(c8)[:140])
+chk("…pero antes encoló los ids igual: la alarma no frena el trabajo", "encoló 2 ids" in s8 and AVISOS[0] == 1, s8[-300:])
+chk("…y el registro dice desde cuándo y qué mirar", "NO CORRE desde el" in s8 and "Ejecuciones" in s8, s8[-400:])
+for k, v in SECRETOS.items():
+    chk(f"⚠️ (repaso parado) NO se filtra el {k}", v not in s8 + str(c8))
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(3), "cola": 0, "vistos": 0, "creados": 0, "error": ""})))
+s9, c9 = correr()
+chk("…con el repaso al día sale en verde, como siempre", c9 == 0 and "NO CORRE" not in s9, str(c9)[:100])
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, diferido=False, encolados=0, ids=[], ultimoRepaso=json.dumps({"ts": hace(90)})))
+LEADS_ANTES = json.dumps(LEADS); LEADS["_embedded"]["leads"] = []
+s10, c10 = correr()
+LEADS.update(json.loads(LEADS_ANTES))
+chk("…y sin ventas en la ventana también (antes ese camino terminaba con «nada nuevo» y salía en verde)",
+    bool(c10) and "nada nuevo" in s10 and "NO CORRE" in s10, str(c10)[:100])
+
+# 7) Revisión del 24/09 (agente antes de publicar): el repaso que CORRE pero falla adentro.
+#    `kommoRepaso` atrapa sus errores: la hora queda al día y la corrida salía en verde.
+ID_LARGO = "1aB2cD3eF4gH5iJ6kL7mN8oP9qR0sT"          # tiene la forma de un id de planilla de Google
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": "kEmb_ is not defined"})))
+s11, c11 = correr()
+chk("⚠️ §4fz-b · el repaso al día pero con un error del CÓDIGO: la corrida sale en ROJO (antes: verde)",
+    bool(c11) and "falla con un error del código" in s11 and "kEmb_ is not defined" in s11, str(c11)[:120] + " · " + s11[-200:])
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": "kommo no contestó"})))
+s12, c12 = correr()
+chk("…un error de AFUERA («kommo no contestó») se dice y nombra el token del script, pero no pone la corrida en rojo",
+    c12 == 0 and "error de afuera" in s12 and "KOMMO_TOKEN" in s12, str(c12)[:100] + " · " + s12[-200:])
+RESPUESTA.clear(); RESPUESTA.update(dict(BUENA, ultimoRepaso=json.dumps({"ts": hace(2), "cola": 0, "vistos": 1, "creados": 0,
+                                                                        "error": f"Exception: document with id {ID_LARGO} is missing"})))
+s13, c13 = correr()
+chk("⚠️ el registro PÚBLICO no muestra un id largo que venga en el error (el de la planilla)",
+    ID_LARGO not in s13 + str(c13) and "document with id … is missing" in s13, s13[-200:])
+chk("…y el último repaso sale en una línea con sus contadores, no el JSON entero",
+    "cola 0 · vistos 1 · creados 0" in s13 and '"vistos"' not in s13, s13[-240:])
 
 print(f"\n{PASS} bien · {FAIL} mal")
 sys.exit(1 if FAIL else 0)

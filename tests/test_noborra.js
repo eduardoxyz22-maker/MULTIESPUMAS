@@ -25,6 +25,9 @@ const path = require('path');
 let PASS=0, FAIL=0;
 const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('· '+e):''); };
 const D=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().slice(0,10);};
+/* Un día hábil (lunes a viernes) a n días o después: el portero rechaza el domingo y el sábado no
+   tiene PM. Con D(3) a secas la prueba se pudría los jueves (hoy + 3 = domingo; bitácora). */
+const DH=(n)=>{ for(let k=n;k<n+7;k++){ const s=D(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if(w>=1&&w<=5) return s; } return D(n); };
 
 (async () => {
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
@@ -192,7 +195,7 @@ const D=(n)=>{const d=new Date();d.setDate(d.getDate()+n);return d.toISOString()
     await new Promise(r=>setTimeout(r,900));
     var g=window._pl.filter(x=>x.cliente==='NUEVO')[0]||{};
     return { existe:!!g.id, fotos:g.fotos, futuro:g.campoDelFuturo, metodoPago:g.metodoPago };
-  }, D(3));
+  }, DH(3));
   chk('el pedido nuevo se guardó', r6.existe===true);
   chk('⚠️ NO heredó las fotos de otro pedido', JSON.stringify(r6.fotos)==='[]', JSON.stringify(r6.fotos));
   chk('⚠️ NO heredó el campo del futuro', r6.futuro===undefined, JSON.stringify(r6.futuro));

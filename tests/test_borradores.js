@@ -24,6 +24,10 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
 
 const HOY = new Date();
 const dd  = (n) => { const d=new Date(HOY); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); };
+/* Un día hábil (lunes a viernes) desde hoy + n: el sábado no tiene PM y el domingo está cerrado.
+   Con dd(2) a secas, la sección 7 (turno PM) daba 8 rojos los jueves y los viernes en hora UTC:
+   eran «los 8 del 18/09», que fue viernes (bitácora). */
+const ddHabil = (n) => { for (let k=n; k<n+7; k++){ const s=dd(k), w=new Date(s+'T12:00:00Z').getUTCDay(); if (w>=1 && w<=5) return s; } return dd(n); };
 const DIA = 86400000;
 
 (async () => {
@@ -214,7 +218,7 @@ const DIA = 86400000;
     document.getElementById('f-zona').value='Norte';
     segSet('f-turno','PM');
     submitPedido();
-  }, dd(2));
+  }, ddHabil(2));
   await page.waitForTimeout(700);
 
   const r7 = await page.evaluate(() => {
@@ -226,7 +230,7 @@ const DIA = 86400000;
   });
   chk('se guardó con el MISMO id (no se duplicó la venta)', r7.cuantos===1, 'copias='+r7.cuantos);
   chk('⚠️ dejó de estar marcado como borrador', !r7.estado || r7.estado.toLowerCase().indexOf('borrador')<0, 'estado="'+r7.estado+'"');
-  chk('ahora tiene fecha de entrega', r7.fecha===dd(2), r7.fecha);
+  chk('ahora tiene fecha de entrega', r7.fecha===ddHabil(2), r7.fecha);
   chk('⚠️ recibió su número del día (no quedó en 0)', Number(r7.nroDia)>0, 'nroDia='+r7.nroDia);
   chk('⚠️ recibió su hora (no quedó en 0)', Number(r7.ts)>0, 'ts='+r7.ts);
   chk('salió de la bandeja de borradores', r7.enBorradores===0);

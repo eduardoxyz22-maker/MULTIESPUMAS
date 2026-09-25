@@ -27,8 +27,9 @@ Repetir no cuesta nada: el panel descarta lo que ya tiene.
     Los secretos (token, clave del webhook, dirección del panel) nunca se imprimen.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
-import os, sys, json, time
+import os, re, sys, json, time
 import urllib.request as _rq, urllib.parse as _ps, urllib.error as _er
+from datetime import datetime, timedelta, timezone
 
 SUBDOMAIN = (os.environ.get("KOMMO_SUBDOMAIN", "") or "").strip() or "eanez"
 BASE_URL  = f"https://{SUBDOMAIN}.kommo.com/api/v4"
@@ -44,6 +45,11 @@ VENTANA_MIN = int(os.environ.get("VENTANA_MIN", str(12 * 60)))
 TOPE = 100         # cuántos leads como mucho por corrida (el panel acepta hasta 100)
 # Cuánto esperar antes del ÚNICO reintento cuando Google no deja pasar el aviso (§4fx).
 ESPERA_REINTENTO = int(os.environ.get("ESPERA_REINTENTO", "8"))
+# 🚨 Cuánto puede faltar el repaso del PROPIO script (cada 5 minutos) antes de dar la alarma
+# (§4fz-b). El 23/09 quedó parado desde las 11:24 de Bolivia hasta la noche: este registro lo
+# imprimía, pero la corrida salía en verde y nadie lo vio. Ahora sale en ROJO, y GitHub le
+# manda el correo al dueño. Los ids se encolan igual; lo que falta es quien los procese.
+REPASO_PARADO_MIN = int(os.environ.get("REPASO_PARADO_MIN", "30"))
 
 
 def api_get(path, params=None, _retry=0):
@@ -99,6 +105,81 @@ def pasajero(res):
     Google (corridas 128 y 132) o un 5xx. Un `busy`, una clave mala o un `ok` ajeno, no."""
     err = str((res or {}).get("error") or "")
     return es_lectura(res) or err == "HTTP 404" or err.startswith("HTTP 5")
+
+
+def repaso_parado(rep, ahora=None):
+    """El aviso si el último repaso del script tiene más de REPASO_PARADO_MIN minutos; si no,
+    None. Sin repaso instalado, vacío o ilegible: None (no se inventa una alarma). Solo dice
+    una hora: el resumen del repaso no trae nombres ni teléfonos (§4eg)."""
+    try:
+        d = json.loads(rep) if isinstance(rep, str) else rep
+        ts = datetime.fromisoformat(str(d.get("ts") or "").replace("Z", "+00:00"))
+        minutos = int(((ahora or datetime.now(timezone.utc)) - ts).total_seconds() // 60)
+    except Exception:
+        return None
+    if minutos <= REPASO_PARADO_MIN:
+        return None
+    bo = ts - timedelta(hours=4)          # hora de Bolivia: UTC−4 fijo, sin horario de verano (§4fu)
+    lapso = f"{minutos // 60} h {minutos % 60} min" if minutos >= 60 else f"{minutos} min"
+    return (f"🚨 el repaso automático del script NO CORRE desde el {bo:%d/%m %H:%M} (hora Bolivia), hace {lapso}: "
+            "lo que se encola no entra solo al panel. En Apps Script → Ejecuciones, el error de «kommoRepaso»: "
+            "«Script function not found» = el código GUARDADO en el editor está incompleto (los disparadores corren "
+            "lo guardado, no lo implementado: volver a pegar el de la versión publicada); «autorización» = ejecutar "
+            "«estadoKommo» y aceptar los permisos; ninguna fila = falta el disparador («instalarDisparadores») (§4fz-b).")
+
+
+# Un error del CÓDIGO dentro del repaso (§4fz-b, revisión del 24/09): `kommoRepaso` atrapa sus
+# errores y los anota, así que Ejecuciones dice «Completada» y la hora está al día aunque haya
+# fallado adentro — un pegado al que le falta una función auxiliar pasaba por sano.
+ERROR_DE_CODIGO = re.compile(r"is not defined|is not a function|Cannot read|ReferenceError|TypeError|SyntaxError", re.I)
+
+
+def _repaso_dict(rep):
+    try:
+        d = json.loads(rep) if isinstance(rep, str) else rep
+    except Exception:
+        return None
+    return d if isinstance(d, dict) else None
+
+
+def _sin_ids(txt, tope=120):
+    """Un error de Google puede traer el id de la planilla («document with id …»), y este registro
+    es PÚBLICO: se tapa toda tira de 20 letras o más, y se recorta."""
+    return re.sub(r"[A-Za-z0-9_-]{20,}", "…", str(txt or ""))[:tope]
+
+
+def repaso_resumen(rep):
+    """El último repaso en una línea: hora, contadores y el error sin ids. Antes se imprimía el
+    JSON entero tal cual."""
+    d = _repaso_dict(rep)
+    if d is None:
+        return _sin_ids(rep, 160)
+    partes = [str(d.get("ts") or "?")]
+    partes += [f"{k} {d[k]}" for k in ("cola", "vistos", "creados", "saltados") if k in d]
+    if d.get("error"):
+        partes.append("error: " + _sin_ids(d.get("error")))
+    return " · ".join(partes)
+
+
+def repaso_roto(rep):
+    """La alarma si el último repaso anotó un error del CÓDIGO; si no, None."""
+    err = str((_repaso_dict(rep) or {}).get("error") or "")
+    if not ERROR_DE_CODIGO.search(err):
+        return None
+    return ("🚨 el repaso automático del script CORRE pero falla con un error del código («" + _sin_ids(err) + "»): "
+            "lo que se encola no entra al panel. Suele ser un pegado incompleto del .gs: en el editor, ejecutar "
+            "«probarAntesDeImplementar» (o «estadoKommo») y volver a pegar el código de la versión publicada (§4fz-b).")
+
+
+def repaso_aviso(rep):
+    """Un error de AFUERA (Kommo no contestó, candado ocupado): se dice y no pone la corrida en rojo,
+    porque suele ser pasajero. Si se repite, casi siempre es el token del script."""
+    err = str((_repaso_dict(rep) or {}).get("error") or "")
+    if not err or ERROR_DE_CODIGO.search(err):
+        return None
+    return ("⚠️ el último repaso del script avisó un error de afuera («" + _sin_ids(err) + "»). Si se repite en las "
+            "próximas corridas, mirar el token de Kommo: la propiedad KOMMO_TOKEN del script es OTRA copia que el "
+            "secreto de GitHub, y se renuevan por separado.")
 
 
 def main():
@@ -158,36 +239,43 @@ def main():
     # 🔎 Y el repaso que hace el PROPIO script cada 5 minutos (§4eg): si está vacío, falta
     # correr instalarDisparadores() en el editor de Apps Script.
     rep = res.get("ultimoRepaso")
+    alarma = None
     if rep:
-        print(f"   último repaso del script (cada 5 min): {rep}")
+        print(f"   último repaso del script (cada 5 min): {repaso_resumen(rep)}")
+        alarma = repaso_parado(rep) or repaso_roto(rep)
+        aviso = None if alarma else repaso_aviso(rep)
+        if alarma or aviso:
+            print("   " + (alarma or aviso))
     elif rep is not None:
         print("   ⚠️ el script todavía no repasa Kommo por su cuenta — correr instalarDisparadores() en Apps Script")
 
     if not ids:
         print("   ✓ nada nuevo. (Es lo normal: el webhook ya los trajo al instante.)")
-        return
-
     # ⚡ Desde §4et el servidor ENCOLA los ids y contesta al instante (antes armaba los
     # borradores acá adentro: con 9 leads este script cortaba a los 90 s mientras el servidor
     # seguía trabajando a ciegas). Lo que creó se lee en el próximo «último repaso del script».
-    if res.get("diferido"):
+    elif res.get("diferido"):
         print(f"   el panel encoló {res.get('encolados', len(ids))} ids (en cola: {res.get('cola', '?')}): "
               "su disparador los procesa en segundos, y el repaso cada 5 minutos los agarra si algo falla")
-        return
-
-    creados = res.get("creados", 0)
-    print(f"   borradores NUEVOS creados: {creados} de {len(ids)}")
-    # Borradores que estaban con el número que pone Kommo («Lead #39357288») y quedaron
-    # con el nombre del cliente. Solo la cantidad: el nombre no se imprime nunca.
-    rep = res.get("reparados", 0)
-    if rep:
-        print(f"   nombres corregidos (venían como «Lead #…»): {rep}")
-    if creados:
-        # Son los que el webhook perdió. Si esto no es casi siempre 0, el webhook no
-        # está andando bien y hay que mirarlo.
-        print("   ⚠️ estos los perdió el webhook — si pasa seguido, revisar el webhook en Kommo")
     else:
-        print("   ✓ todos ya estaban cargados: el webhook está haciendo su trabajo")
+        creados = res.get("creados", 0)
+        print(f"   borradores NUEVOS creados: {creados} de {len(ids)}")
+        # Borradores que estaban con el número que pone Kommo («Lead #39357288») y quedaron
+        # con el nombre del cliente. Solo la cantidad: el nombre no se imprime nunca.
+        reparados = res.get("reparados", 0)
+        if reparados:
+            print(f"   nombres corregidos (venían como «Lead #…»): {reparados}")
+        if creados:
+            # Son los que el webhook perdió. Si esto no es casi siempre 0, el webhook no
+            # está andando bien y hay que mirarlo.
+            print("   ⚠️ estos los perdió el webhook — si pasa seguido, revisar el webhook en Kommo")
+        else:
+            print("   ✓ todos ya estaban cargados: el webhook está haciendo su trabajo")
+
+    # 🚨 En ROJO a propósito, y recién al final: los ids ya quedaron avisados (§4fz-b).
+    if alarma:
+        sys.exit("✗ El repaso automático del script está parado o falla (ver arriba). La corrida sale en rojo para "
+                 "que llegue el aviso: lo encolado no entra al panel hasta que el script vuelva a correr bien.")
 
 
 if __name__ == "__main__":

@@ -114,8 +114,13 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
     segSet('cua-mode','dia'); document.getElementById('cua-dia').value=todayStr(); setCuadreModo('dia');
     return cuadrePagos().length;
   });
+  /* El día 1 el cobro de «ayer» es del mes pasado y el mes tiene lo mismo que el día: ahí solo
+     se puede pedir «no menos» (la prueba se pudría el 1° de cada mes, 25/09). Que abra en «Mes»
+     lo mide igual el primer chequeo. */
+  const ayerEsDelMes = F.ayer.slice(0,7)===F.hoy.slice(0,7);
   chk('⚠️ y abrir en «Mes» muestra MÁS plata que «Día», no menos (el mes contiene al día)',
-      arranque.pagos>soloHoy, 'mes '+arranque.pagos+' pagos · día '+soloHoy);
+      ayerEsDelMes ? arranque.pagos>soloHoy : arranque.pagos>=soloHoy,
+      'mes '+arranque.pagos+' pagos · día '+soloHoy+(ayerEsDelMes?'':' · hoy es día 1'));
 
   // ---------- 1. LO QUE DEFINE LA PANTALLA: corta por la fecha del PAGO ----------
   let r = await cuadrar('dia', F.hoy, '');

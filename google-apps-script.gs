@@ -2,12 +2,33 @@
  * ============================================================================
  * PEDIDOS MultiEspumas — Backend Google Apps Script
  * ============================================================================
- * Pegá TODO este código en Extensiones > Apps Script de tu Google Sheet,
- * guardá, y Deploy > New deployment > Web app:
- *    - Execute as: Me (tu cuenta)
- *    - Who has access: Anyone
- * Copiá la URL que termina en /exec y pásasela a Claude (o pegala en
- * pedidos.html, variable SHEETS_URL).
+ * CÓMO SE ACTUALIZA (lo de siempre; la implementación ya existe). Procedimiento completo, con
+ * los enlaces: bitácora §4fz-b «Publicar».
+ *   0. ANTES de tocar nada: Implementar > Administrar implementaciones, y ANOTAR el número de
+ *      «Versión» que está activa hoy. Es a la que se vuelve si algo sale mal.
+ *   1. Copiar el código del enlace raw de GitHub FIJO A UN COMMIT, nunca desde el chat (corta
+ *      los archivos largos: pasó el 23/09). En Extensiones > Apps Script, a la izquierda tiene
+ *      que haber UN solo archivo .gs: clic en el código, Ctrl+A, Supr (tiene que quedar
+ *      VACÍO), pegar, Ctrl+S. Sin mensaje rojo, y la última línea es la que dice el
+ *      procedimiento («}», con «return borrador;» justo antes).
+ *   2. En la lista de al lado de ▶ Ejecutar elegir «probarAntesDeImplementar» → Ejecutar.
+ *      Abajo tiene que terminar en «✅ Se puede implementar». Con una ❌, o si la función ni
+ *      aparece en la lista: NO implementar, y volver a pegar el código de la versión anotada.
+ *      ⚠️ Lo GUARDADO ya corre en los disparadores automáticos (el repaso de Kommo), aunque
+ *      no se implemente: un pegado roto los frena en el acto (pasó el 23/09, §4fz-b).
+ *   3. Implementar > Administrar implementaciones > ✏️ la de siempre > Versión: «Nueva
+ *      versión», con la SCRIPT_VERSION de este archivo en «Descripción» > Implementar.
+ *      ⚠️ NUNCA «Nueva implementación»: estrena otra dirección /exec y el panel deja de
+ *      encontrar el servidor (§4dm).
+ *   4. Verificar: el panel (F5) dice «Conectado» y la versión nueva, y a los 5 minutos
+ *      «probarAntesDeImplementar» otra vez: el repaso de Kommo al día y sin error.
+ *   5. Si VARIOS dispositivos quedan sin conexión a la vez (uno solo: primero F5), volver
+ *      atrás son DOS cosas: ✏️ > la versión ANOTADA en el paso 0 (arregla el panel) Y pegar de
+ *      nuevo el código de esa versión (arregla los disparadores). ⚠️ Nunca «la anterior» a
+ *      ciegas: la versión del 23/09 es un pegado roto.
+ * Solo la PRIMERA vez (instalación nueva): Implementar > Nueva implementación > Aplicación
+ * web, «Ejecutar como: Yo», «Quién tiene acceso: Cualquier usuario», y la dirección /exec
+ * va en pedidos.html (variable SHEETS_URL).
  *
  * La hoja "Pedidos" y sus encabezados se crean/actualizan solos.
  * Columnas: id | Fecha | N° OC | Vendedor | Cliente | Productos | Celular |
@@ -48,6 +69,15 @@ var HEADERS = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular',
    tal cual lo recibió; si mientras tanto otra persona guardó, los sellos no coinciden y
    el guardado se rechaza en vez de pisar la fila entera (§4ce). */
 var REV_COL = HEADERS.indexOf('Revisión') + 1;
+/* Las filas del sistema que tocan VARIAS personas y el panel sabe juntar (§4fz): piden sello
+   si el panel lo manda. Las otras (días cerrados, carga) siguen reescribiéndose enteras. */
+var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
+/* 📏 Tope de Google para una celda, y desde cuánto lo avisa probarAntesDeImplementar (24/09). */
+var CELDA_TOPE = 50000, CELDA_AVISO = 35000, CELDA_AVISO_ROJO = 42000;
+/* §4fz-b: desde 2026-09-23-b estas filas las guarda SOLO un panel que sabe juntar (manda
+   `juntar`), y borrar una fila sellada exige su sello. A un panel viejo se le contesta
+   `actualizar` (tiene que recargar la página) sin tocar la hoja: con su copia pisaba la fila
+   entera o borraba lo que otro acababa de cambiar (auditoría del 23/09 + Codex). */
 var NRO_COL = HEADERS.indexOf('N° del día') + 1; // N° del día ya NO es la última col (Verificado va después)
 
 function getSheet() {
@@ -65,9 +95,158 @@ function getSheet() {
 }
 
 /* Sello de version: el panel lo muestra para saber si la implementacion publicada es
-   este archivo. OJO: en Apps Script, GUARDAR no publica nada — hay que hacer
-   Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar. */
-var SCRIPT_VERSION = '2026-09-20-a';   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+   este archivo. OJO: en Apps Script, GUARDAR no publica nada para el panel — hay que hacer
+   Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
+   ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
+   GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
+var SCRIPT_VERSION = '2026-09-23-b';   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+
+/* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
+   elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
+   el «Registro de ejecución» de abajo. NO ESCRIBE NADA: ni la planilla, ni las propiedades,
+   ni los disparadores.
+   Por qué existe: el 23/09 se pegó la versión nueva, se implementó, y TODO el equipo quedó
+   sin conexión. Volver a la versión anterior arregló el panel, pero el repaso automático de
+   Kommo siguió parado horas —desde las 11:24 hasta la noche— porque los DISPARADORES corren
+   el código GUARDADO en el editor, no la versión implementada. Lo que se pega y se guarda
+   ya está andando ahí antes de implementar, y un pegado roto no se nota hasta que alguien
+   mira. Correr cualquier función desde el editor además muestra en rojo un error del archivo
+   y pide los permisos que falten: las dos cosas que el equipo vería como «sin conexión».
+   ⚠️ Va ARRIBA de todo a propósito: si el pegado quedó cortado, esta función igual está y
+   nombra lo que falta. Si ni siquiera aparece en la lista, el pegado está mal. */
+function probarAntesDeImplementar() {
+  var lineas = [], malas = 0, avisos = 0;
+  function bien(t) { lineas.push('✅ ' + t); }
+  function mal(t) { lineas.push('❌ ' + t); malas++; }
+  function ojo(t) { lineas.push('⚠️ ' + t); avisos++; }
+  function motivo(e) { return String((e && e.message) || e); }
+  function horaBolivia(ms) {               // UTC−4 fijo, sin horario de verano (§4fu)
+    var s = new Date(ms - 4 * 3600000).toISOString();
+    return s.slice(8, 10) + '/' + s.slice(5, 7) + ' ' + s.slice(11, 16);
+  }
+  /* 0. ¿Quedó código VIEJO además del nuevo? Pegar arriba sin borrar, u otro archivo .gs en el
+        proyecto que carga después: las funciones y la SCRIPT_VERSION del viejo le ganan a las
+        nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
+        de esta función a propósito (el viejo no la tiene, no la pisa).
+        ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
+  var ESTA_VERSION = '2026-09-23-b';
+  if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
+                                           '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
+                                           'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
+  else bien('Versión de este código: ' + SCRIPT_VERSION);
+
+  /* 1. ¿Está el archivo ENTERO? Un pegado cortado deja afuera las funciones del final
+        (borradorDeLead_ es la última del archivo). `typeof` no revienta con un nombre que
+        no existe: dice 'undefined'. */
+  var fns = {
+    doGet: typeof doGet, doPost: typeof doPost, doPostCuerpo_: typeof doPostCuerpo_,
+    doSave: typeof doSave, doDelete: typeof doDelete, readAll: typeof readAll,
+    rowToRec_: typeof rowToRec_, recToRow: typeof recToRow, jsonOut: typeof jsonOut,
+    guardarFoto: typeof guardarFoto, borrarFoto: typeof borrarFoto,
+    barrerFotosHuerfanas: typeof barrerFotosHuerfanas, kommoHook: typeof kommoHook,
+    kommoProcesarCola: typeof kommoProcesarCola, kommoRepaso: typeof kommoRepaso,
+    instalarDisparadores: typeof instalarDisparadores, estadoKommo: typeof estadoKommo,
+    borradorDeLead_: typeof borradorDeLead_
+  };
+  var faltan = [], n;
+  for (n in fns) if (fns[n] !== 'function') faltan.push(n);
+  if (faltan.length) mal('Faltan funciones: ' + faltan.join(', ') + '. El código quedó CORTADO o mal pegado: ' +
+                         'volvé a copiarlo entero (la última línea es «}» y justo antes dice «return borrador;»).');
+  else bien('El código está entero: ' + Object.keys(fns).length + ' funciones clave, hasta la última del archivo.');
+
+  /* 2. La planilla, leída como la lee el panel (`list`). Sin `getSheet()`, que agrega los
+        encabezados si faltan: esta prueba no escribe. */
+  var vals = null;
+  if (fns.rowToRec_ === 'function') {
+    try {
+      var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+      if (!sh) mal('No encuentro la hoja «' + SHEET_NAME + '»: ¿el código está pegado en el Apps Script de la planilla de pedidos?');
+      else {
+        vals = sh.getDataRange().getValues(); var filas = 0;
+        var primera = vals.length ? String(vals[0][0]) : '';
+        if (!primera && vals.length <= 1) ojo('La hoja «' + SHEET_NAME + '» está vacía: se arma sola con el primer guardado.');
+        else if (primera !== 'id') mal('La hoja «' + SHEET_NAME + '» no empieza con la columna «id»: ¿es la planilla de pedidos?');
+        else {
+          for (var i = 1; i < vals.length; i++) if (vals[i][0]) { rowToRec_(vals[i]); filas++; }
+          bien('La planilla se lee como la lee el panel: ' + filas + (filas === 1 ? ' fila.' : ' filas.'));
+        }
+      }
+    } catch (e) { mal('Leer la planilla falló: ' + motivo(e)); }
+  }
+
+  /* 3. Los disparadores: que estén, y que cada uno llame a una función que EXISTE en este
+        código. Uno que apunta a una función que no está falla cada vez que salta, en
+        silencio (el panel no se entera). Los de otras funciones se nombran y no se tocan. */
+  try {
+    var G = (function () { return this; })();
+    var existe = function (h) { return fns.hasOwnProperty(h) ? fns[h] === 'function' : !!G && typeof G[h] === 'function'; };
+    var tr = ScriptApp.getProjectTriggers(), hay = {};
+    for (var j = 0; j < tr.length; j++) { var h = tr[j].getHandlerFunction(); hay[h] = (hay[h] || 0) + 1; }
+    for (n in hay) if (!existe(n)) {
+      /* Uno de NUESTROS disparadores sin su función = el pegado está mal (lo del 23/09): frena.
+         Uno de una función que ya no existe en ningún código (quedó de antes) falla solo y no
+         depende de este pegado: se avisa y no frena, porque volver a pegar no lo arregla. */
+      if (fns.hasOwnProperty(n)) mal('Hay un disparador de «' + n + '» pero esa función no está en el código: falla cada vez que salta.');
+      else ojo('Hay un disparador de «' + n + '», una función que ya no existe: falla cada vez que salta. Borralo en Activadores (el reloj de la izquierda).');
+    }
+    if (!hay.kommoRepaso) ojo('No está el repaso de Kommo cada 5 minutos: ejecutá «instalarDisparadores» una vez.');
+    else if (!hay.barrerFotosHuerfanas) ojo('No está el barrido diario de fotos: ejecutá «instalarDisparadores» una vez.');
+    else bien('Disparadores instalados: repaso de Kommo cada 5 minutos y barrido de fotos de madrugada.');
+  } catch (e) { ojo('No pude mirar los disparadores: ' + motivo(e)); }
+
+  /* 4. El último repaso de Kommo. Recién guardado el código, el próximo sale en hasta 5
+        minutos: esto AVISA, no frena (el panel no depende del repaso). */
+  try {
+    var ult = JSON.parse(prop_('KOMMO_REPASO_ULTIMO') || 'null');
+    var t = ult && Date.parse(ult.ts);
+    if (!t) ojo('El repaso de Kommo todavía no corrió nunca.');
+    else {
+      var min = Math.round((Date.now() - t) / 60000);
+      /* `kommoRepaso` atrapa sus errores y los anota: Ejecuciones dice «Completada» y la hora está
+         al día aunque adentro haya fallado. Un error del CÓDIGO frena; uno de afuera (Kommo no
+         contestó, candado ocupado) avisa. */
+      var err = String(ult.error || '').slice(0, 120);
+      if (min > 15) ojo('El repaso de Kommo no corre desde el ' + horaBolivia(t) + ' (hora Bolivia), hace ' + min +
+                        ' minutos. Ejecutá «kommoRepaso» una vez y volvé a probar: si sale un error rojo, ese es el problema.');
+      else if (/is not defined|is not a function|Cannot read|ReferenceError|TypeError|SyntaxError/i.test(err))
+        mal('El último repaso de Kommo (hace ' + min + ' minutos) falló con un error del CÓDIGO: «' + err + '». Ejecutá ' +
+            '«kommoRepaso» una vez y volvé a probar: si se repite, el código pegado tiene un problema.');
+      else if (err) ojo('El último repaso de Kommo (hace ' + min + ' minutos) avisó: «' + err + '». Si se repite, mirá el token ' +
+                        'de Kommo (propiedad KOMMO_TOKEN del script: es OTRA copia que el secreto de GitHub).');
+      else bien('El repaso de Kommo corrió hace ' + min + ' minutos, sin errores.');
+    }
+  } catch (e) { ojo('No pude leer el último repaso: ' + motivo(e)); }
+
+  /* 5. Ventas de Kommo esperando en la cola del webhook. */
+  try {
+    var cola = kColaLeer_().length;
+    if (cola) ojo(cola + ' venta(s) de Kommo esperando en la cola: ejecutá «kommoRepaso» una vez.');
+  } catch (e) {}
+
+  /* 6. 📏 Cuánto ocupan el stock y el arqueo en su celda (revisión del 24/09). Google aguanta
+        50.000 letras por celda, y la versión de §4fz-b guarda más por cada recepción: con poco
+        lugar, el stock dejaría de guardarse. Se mide ANTES de publicar el panel nuevo. */
+  if (vals && vals.length && String(vals[0][0]) === 'id') {
+    var colObs = HEADERS.indexOf('Observaciones');
+    [['__stock__', 'El stock'], ['__arqueo_cuadre__', 'El arqueo']].forEach(function (par) {
+      for (var i2 = 1; i2 < vals.length; i2++) {
+        if (String(vals[i2][0]) !== par[0]) continue;
+        var largo = String(vals[i2][colObs] || '').length, pct = Math.round(largo * 100 / CELDA_TOPE);
+        var txt = par[1] + ' ocupa ' + largo + ' de las ' + CELDA_TOPE + ' letras de su celda (' + pct + '%)';
+        if (largo > CELDA_AVISO_ROJO) mal(txt + ': con la versión nueva crece y dejaría de entrar. NO implementar: primero hay que achicarlo.');
+        else if (largo > CELDA_AVISO) ojo(txt + ': queda poco lugar. Avisá para achicarlo pronto.');
+        else bien(txt + '.');
+        break;
+      }
+    });
+  }
+
+  var veredicto = malas ? ('❌ NO IMPLEMENTAR: ' + malas + ' problema(s) arriba. Mandá una captura de este registro.')
+                        : ('✅ Se puede implementar' + (avisos ? ' (mirá los ⚠️: no frenan el panel, pero hay que atenderlos).' : '.'));
+  lineas.push(veredicto);
+  if (typeof Logger !== 'undefined') Logger.log(lineas.join('\n'));
+  return { ok: !malas, malas: malas, avisos: avisos, lineas: lineas, veredicto: veredicto };
+}
 
 function jsonOut(obj) {
   // El panel necesita saber si la puerta tiene llave, para avisar en rojo cuando no.
@@ -292,7 +471,7 @@ function getCacheOlvidar_() {
    ========================================================================== */
 var RECHAZOS_HOJA = 'Rechazos';
 var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
-var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1 };
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1 };
 var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
 var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
 
@@ -313,9 +492,10 @@ function rechazoDetalle_(body, o) {
   var d = [];
   if (p.fecha) d.push('fecha ' + p.fecha + (p.turno ? (' ' + p.turno) : ''));
   if (p.oc) d.push('OC ' + p.oc);
-  if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
+  if (o.error === 'conflicto') d.push('rev enviado ' + (p.rev || (body && body.rev) || '—') + ' / rev hoja ' + ((o.pedido && o.pedido.rev) || '—'));
   if (o.error === 'oc_repetida' && o.otro) d.push('la tiene ' + (o.otro.cliente || 'otro pedido'));
   if (o.error === 'cupos_llenos' && o.turno) d.push('turno ' + o.turno + ' lleno');
+  if (o.error === 'actualizar') d.push('panel viejo (de antes del ' + SCRIPT_VERSION + '): esa computadora tiene que recargar la página');
   if (o.motivo) d.push(String(o.motivo));
   if (String(p.id || '').indexOf('__ret_') === 0) d.push('RETIRO DE EFECTIVO ' + (p.acuenta != null ? ('Bs ' + p.acuenta) : ''));
   return d.join(' · ');
@@ -393,6 +573,9 @@ function doPost(e) {
     if (o && o.ok === false && o.error && RECHAZOS_REGISTRAR[o.error]) {
       var body = {}; try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
       var action = body.action || 'save';
+      /* §4fz: el choque del stock o del arqueo lo resuelve el panel solo (junta y reguarda): no
+         es un guardado perdido y anotarlo en «Rechazos» asustaría sin motivo. */
+      if (o.error === 'conflicto' && action === 'save' && body.pedido && SISTEMA_CON_SELLO[String(body.pedido.id)]) return out;
       /* Una clave que falta en un `list` es un dispositivo que todavía no la ingresó y
          refresca cada 2 minutos: anotarlo llenaría la hoja sin decir nada nuevo. La clave
          que falta al GUARDAR sí importa: es un guardado que se quedó en una cola. */
@@ -447,8 +630,8 @@ function doPostCuerpo_(e) {
   var lock = LockService.getScriptLock();
   try { lock.waitLock(30000); } catch (err) { return jsonOut({ ok:false, error:'busy' }); }
   try {
-    if (action === 'delete') return doDelete(body.id);
-    return doSave(body.pedido, !!body.forzar);
+    if (action === 'delete') return doDelete(body.id, body.rev);
+    return doSave(body.pedido, !!body.forzar, !!body.juntar);
   } finally {
     lock.releaseLock();
   }
@@ -869,7 +1052,7 @@ function porteroFecha_(sh, last, ids, p, excluir, asignarNro) {
 /* `forzar` lo manda el panel SOLO cuando quien mueve el pedido tiene la clave de
    administración y confirmó el aviso: es la que arma el camión y puede meterle un bulto
    más a un día cerrado a sabiendas. Para todo lo demás, el portero manda. */
-function doSave(p, forzar) {
+function doSave(p, forzar, juntar) {
   if (!p || !p.id) return jsonOut({ ok:false, error:'no id' });
   // Seguro anti-fecha: la fila de dias cerrados con UN solo dia ("2026-08-24" pelado)
   // Sheets la convertiria en Fecha y nadie la entenderia al releer. Los paneles nuevos ya
@@ -902,7 +1085,20 @@ function doSave(p, forzar) {
        reescriben enteras a propósito y las maneja una sola persona. */
     var revHoja = Number(viejo[REV_COL - 1]) || 0;
     var filaSistema = String(p.id).indexOf('__') === 0;
-    if (revHoja && !filaSistema && (Number(p.rev) || 0) !== revHoja) {
+    /* 🤝 EL STOCK Y EL ARQUEO SÍ PIDEN SELLO (§4fz). No los maneja una sola persona: el stock
+       lo tocan logística, el dueño y quien suba el Excel. Dos dispositivos con la misma copia
+       guardaban los dos con ✓ y el segundo borraba lo del primero (una entrada de 5 unidades
+       desaparecía). Se compara el sello; en conflicto devuelve la fila actual y el panel JUNTA
+       las dos versiones y vuelve a guardar.
+       §4fz-b: en 2026-09-23-a un panel viejo (sin sello) pasaba «para no trabarlo», y ese era
+       justo el que pisaba la fila entera con su copia; y su 2° guardado seguido SÍ llevaba sello,
+       chocaba y lo tiraba (auditoría, #8). Ahora, sobre una fila ya sellada, un panel que no
+       manda `juntar` recibe `actualizar` y no se toca nada: tiene que recargar la página. */
+    var sisSello = filaSistema && SISTEMA_CON_SELLO[String(p.id)];
+    if (sisSello && revHoja && !juntar) {
+      return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
+    }
+    if (revHoja && (!filaSistema || sisSello) && (Number(p.rev) || 0) !== revHoja) {
       return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
     }
   }
@@ -943,6 +1139,16 @@ function doSave(p, forzar) {
   }
   p.rev = Math.max((viejo ? (Number(viejo[REV_COL - 1]) || 0) : 0) + 1, Date.now());
   var row = recToRow(p);
+  /* 📏 UNA CELDA DE GOOGLE AGUANTA 50.000 LETRAS (revisión del 24/09). El stock entero va en UNA
+     celda (Observaciones de `__stock__`) y crece con el uso; pasado el tope, setValues tira una
+     excepción y el panel veía «sin conexión» —sin decir por qué— en cada guardado del stock.
+     Ahora se contesta un «no» claro, sin tocar la hoja, y queda en «Rechazos». */
+  for (var ci = 0; ci < row.length; ci++) {
+    if (typeof row[ci] === 'string' && row[ci].length > CELDA_TOPE) {
+      return jsonOut({ ok:false, error:'celda_llena', version:SCRIPT_VERSION, campo:HEADERS[ci], largo:row[ci].length,
+                       motivo:'«' + HEADERS[ci] + '» tendría ' + row[ci].length + ' letras y la celda aguanta ' + CELDA_TOPE });
+    }
+  }
   getCacheOlvidar_();
   /* 🔍 EL ECO ES LA FILA RELEÍDA (§4eo). Antes se devolvía `p` —el objeto recibido— y el
      panel comparaba lo enviado con lo enviado: una escritura mala en la hoja no se veía.
@@ -955,13 +1161,31 @@ function doSave(p, forzar) {
   return jsonOut({ ok:true, pedido:eco, mode:(foundRow > 0 ? 'update' : 'add') });
 }
 
-function doDelete(id) {
+function doDelete(id, rev) {
   var sh = getSheet();
   var last = sh.getLastRow();
   if (last >= 2) {
     var ids = sh.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < ids.length; i++) {
       if (String(ids[i][0]) === String(id)) {
+        /* 🤝 BORRAR TAMBIÉN MIRA EL SELLO (§4fz). Guardar lo exige desde §4ce, pero borrar
+           mandaba solo el id: con la venta abierta desde antes, alguien confirmaba «Eliminar» y
+           se llevaba el pago que Contabilidad acababa de registrar en otra computadora — la
+           fila que se borraba no era la que había visto (informe del 23/09). El panel manda el
+           sello con el que leyó la fila; si ya no es el de la hoja, NO se borra y se le devuelve
+           la fila actual, igual que un guardado en conflicto.
+           §4fz-b: un borrado SIN sello sobre una fila sellada ya no pasa: es un panel viejo,
+           cacheado, que no sabe mirar si la fila cambió. Se le contesta `actualizar` (recargar la
+           página) sin borrar. Una fila que nunca tuvo sello (de antes de §4ce) se borra como
+           siempre: no hay con qué comparar. */
+        var fila = sh.getRange(i + 2, 1, 1, HEADERS.length).getValues()[0];
+        var revHoja = Number(fila[REV_COL - 1]) || 0;
+        if (revHoja && (rev == null || rev === '')) {
+          return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
+        }
+        if (revHoja && (Number(rev) || 0) !== revHoja) {
+          return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(fila) });
+        }
         sh.deleteRow(i + 2); getCacheOlvidar_();
         /* 📥 Borrar una fila `kommo-<lead>` es DESCARTAR esa venta de Kommo (§4et): se anota
            el lead para que ni el repaso de 5 minutos ni el de GitHub la vuelvan a traer.

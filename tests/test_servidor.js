@@ -28,19 +28,37 @@ const GS = process.env.GS || path.resolve('google-apps-script.gs');
 const CLAVE = 'clave-del-equipo-123';
 
 /* ── Planilla de mentira ─────────────────────────────────────────────────── */
-function hacerPlanilla(filas){
+/* `opts.fechas`: como Sheets, un texto con forma de fecha («2026-08-15», una hora ISO) se vuelve
+   Fecha al escribirlo — el peor caso: sin mirar el formato de texto. `opts.maxFilas`: la hoja
+   tiene ese tope de filas y escribir más abajo revienta, como en Google, hasta `insertRowsAfter`. */
+function hacerPlanilla(filas, opts){
   const datos = filas.map(f => f.slice());
-  return {
-    _datos: datos,
+  let max = (opts && opts.maxFilas) || 0;
+  const conv = (v) => (opts && opts.fechas && typeof v === 'string' && /^\d{4}-\d{2}-\d{2}(T[\d:.]+Z?)?$/.test(v)) ? new Date(v) : v;
+  const tope = (ultima) => { if (max && ultima > max) throw new Error('Las coordenadas están fuera de la hoja (fila ' + ultima + ' de ' + max + ')'); };
+  const col = (letras) => { let n = 0; for (const ch of letras) n = n * 26 + (ch.charCodeAt(0) - 64); return n; };
+  const sh = {
+    _datos: datos, _listas: [],
     getLastRow: () => datos.length,
     getLastColumn: () => (datos[0]||[]).length,
+    getMaxRows: () => max || Math.max(1000, datos.length),
+    insertRowsAfter: (despues, n) => { if (max) max += n; },
     getDataRange: () => ({ getValues: () => datos.map(f => f.slice()) }),
     setFrozenRows: () => {},
-    appendRow: (r) => { datos.push(r.slice()); },
+    appendRow: (r) => { datos.push(r.map(conv)); if (max && datos.length > max) max = datos.length; },
     deleteRow: (n) => { datos.splice(n-1, 1); },
+    /* Varias celdas sueltas de una vez («S2», «AD10»), como `Sheet.getRangeList`. Anota qué
+       celdas se pidieron, para ver que no se escribió de más. */
+    getRangeList: (a1s) => {
+      sh._listas.push(a1s.slice());
+      return { setValue: (v) => a1s.forEach(a1 => {
+        const m = /^([A-Z]+)(\d+)$/.exec(a1); if (!m) throw new Error('A1 inválida: ' + a1);
+        const f = +m[2]; tope(f); if (!datos[f-1]) datos[f-1] = []; datos[f-1][col(m[1])-1] = conv(v);
+      }) };
+    },
     getRange: (fila, col, nFilas, nCols) => ({
       getValue: () => (datos[fila-1]||[])[col-1],
-      setValue: (v) => { if(!datos[fila-1]) datos[fila-1]=[]; datos[fila-1][col-1]=v; },
+      setValue: (v) => { tope(fila); if(!datos[fila-1]) datos[fila-1]=[]; datos[fila-1][col-1]=conv(v); },
       getValues: () => {
         const out=[];
         for(let i=0;i<(nFilas||1);i++){
@@ -50,10 +68,14 @@ function hacerPlanilla(filas){
         }
         return out;
       },
-      setValues: (v) => { for(let i=0;i<v.length;i++) datos[fila-1+i]=v[i].slice(); },
+      /* Escribe en SU rango, desde la columna `col` (25/09: antes reemplazaba la fila entera y una
+         escritura de UNA columna borraba el resto de la fila en la prueba). */
+      setValues: (v) => { tope(fila - 1 + v.length); for(let i=0;i<v.length;i++){ const r=datos[fila-1+i]||(datos[fila-1+i]=[]); for(let j=0;j<v[i].length;j++) r[col-1+j]=conv(v[i][j]); } },
+      setNumberFormat: () => {},
       setFontWeight: () => {}
     })
   };
+  return sh;
 }
 /* ── Drive de mentira: una carpeta de fotos y un archivo AJENO ───────────── */
 function hacerDrive(){
@@ -89,9 +111,14 @@ function hacerScriptApp(){
     deleteTrigger: (t) => { const i = triggers.indexOf(t); if (i >= 0) triggers.splice(i, 1); }
   };
 }
-function cargar(filas, props){
+function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: un pegado cortado)
   const sh = hacerPlanilla(filas), drive = hacerDrive();
   const shR = hacerPlanilla([]);                       // la hoja «Rechazos» (§4el), aparte de la de pedidos
+  /* Hojas que crea un script aparte (25/09: «Respaldo entregados», de herramientas/): con el
+     tope de filas de una hoja nueva bien bajo y convirtiendo fechas, que es el peor caso. */
+  const otras = {};
+  const OTRAS = { 'Respaldo entregados':1 };
+  const cont = { flush: 0 };
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
     put(k, v){ this._m[k] = String(v); },
@@ -99,7 +126,10 @@ function cargar(filas, props){
     remove(k){ delete this._m[k]; } };
   const ctx = {
     console, Date,
-    SpreadsheetApp: { getActiveSpreadsheet: () => ({ getSheetByName: (n) => n==='Rechazos' ? shR : sh, insertSheet: (n) => n==='Rechazos' ? shR : sh }) },
+    SpreadsheetApp: { getActiveSpreadsheet: () => ({
+      getSheetByName: (n) => n==='Rechazos' ? shR : (OTRAS[n] ? (otras[n]||null) : sh),
+      insertSheet: (n) => n==='Rechazos' ? shR : (OTRAS[n] ? (otras[n]=hacerPlanilla([], { fechas:true, maxFilas:3 })) : sh) }),
+      flush: () => { cont.flush++; } },
     PropertiesService: { getScriptProperties: () => ({
       getProperty: (k) => (props && props[k] != null) ? props[k] : null,
       setProperty: (k, v) => { props[k] = v; },
@@ -126,11 +156,11 @@ function cargar(filas, props){
   };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
-  vm.runInContext(fs.readFileSync(GS,'utf8'), ctx);
+  vm.runInContext(fuente != null ? fuente : fs.readFileSync(GS,'utf8'), ctx);
   const leer = (r) => JSON.parse(r._t);
   const post = (body) => leer(ctx.doPost({ postData:{ contents: JSON.stringify(body) }, parameter:{} }));
   const get  = (params) => leer(ctx.doGet({ parameter: params||{} }));
-  return { ctx, sh, shR, drive, post, get, leer };
+  return { ctx, sh, shR, drive, post, get, leer, otras, cont };
 }
 
 const HDR = ['id','Fecha','N° OC','Vendedor','Cliente','Productos','Celular','Turno','Zona',
@@ -281,6 +311,96 @@ console.log('\n── 3. Dos personas sobre el mismo pedido ──');
   cierre.observaciones='🔒 '+JUEVES+' '+MIERCOLES;
   r = a.post(conClave({ action:'save', pedido: cierre }));
   chk('…y la segunda también, sin sello (es una fila del sistema)', r.ok===true, JSON.stringify(r).slice(0,80));
+}
+{
+  /* 🤝 §4fz — EL STOCK Y EL ARQUEO SÍ PIDEN SELLO (informe del 23/09): dos dispositivos con la
+     misma copia guardaban los dos con ✓ y el segundo borraba lo del primero. El panel manda el
+     sello y `juntar`; en conflicto, junta y reguarda (test_concurrencia.js).
+     §4fz-b (`2026-09-23-b`): sobre una fila ya sellada, un panel que NO sabe juntar (no manda
+     `juntar`) recibe `actualizar` y no toca nada. En `2026-09-23-a` pasaba «para no trabarlo»,
+     y era justo el que pisaba la fila entera; su 2° guardado seguido sí llevaba sello, chocaba
+     y el panel viejo lo tiraba (auditoría, #8). */
+  const a = cargar([HDR], { PANEL_KEY: CLAVE });
+  const stk = (obs, rev) => { const o = { id:'__stock__', fecha:'', cliente:'📦 STOCK', observaciones:obs }; if (rev !== undefined) o.rev = rev; return o; };
+  const junta = (pedido) => conClave({ action:'save', pedido:pedido, juntar:1 });
+  let r = a.post(junta(stk('{"e":[]}', 0)));
+  chk('§4fz · la fila del stock entra la primera vez (con rev 0)', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
+  const base = r.pedido.rev;
+  r = a.post(junta(stk('{"e":[{"k":"A","u":5}]}', base)));                   // A: entrada de 5
+  chk('…A guarda su entrada con el sello de la versión que leyó', r.ok===true, JSON.stringify(r).slice(0,80));
+  const deA = r.pedido.rev;
+  r = a.post(junta(stk('{"e":[],"p":[{"id":"q1","k":"B","u":8}]}', base)));   // B: con la copia VIEJA
+  chk('⚠️ §4fz · B, con la copia vieja del stock: RECHAZADO (antes pisaba la entrada de A)', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,80));
+  chk('⚠️ …la entrada de A sigue en la planilla', /"u":5/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), pedido(a.ctx,a.sh,'__stock__').observaciones);
+  chk('…y el rechazo trae la fila actual, para que el panel junte las dos', !!r.pedido && r.pedido.rev===deA && /"u":5/.test(r.pedido.observaciones), JSON.stringify(r.pedido||{}).slice(0,90));
+  chk('…y NO se anota en «Rechazos»: el panel lo resuelve solo', !a.shR._datos.some(f => f[3]==='__stock__'), a.shR._datos.length+' filas');
+  r = a.post(junta(stk('{"e":[{"k":"A","u":5}],"p":[{"id":"q1","k":"B","u":8}]}', deA)));
+  chk('…con el sello nuevo (lo juntado), entra', r.ok===true && /"q1"/.test(pedido(a.ctx,a.sh,'__stock__').observaciones), JSON.stringify(r).slice(0,80));
+  const junto = pedido(a.ctx,a.sh,'__stock__').observaciones, selloJunto = r.pedido.rev;
+  r = a.post(junta(stk('{"e":[]}')));
+  chk('§4fz-b · con `juntar` pero SIN sello sobre una fila sellada: conflicto (no pisa)', r.ok===false && r.error==='conflicto' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  // Un panel VIEJO (cacheado, sin `juntar`): con o sin sello, no toca la fila.
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[]}') }));
+  chk('⚠️ §4fz-b · un panel VIEJO sin sello (el 1er guardado de ebc3eab): `actualizar`, y la fila NO se toca', r.ok===false && r.error==='actualizar' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  r = a.post(conClave({ action:'save', pedido: stk('{"e":[{"k":"Z","u":6}]}', selloJunto) }));
+  chk('⚠️ §4fz-b · un panel VIEJO CON el sello bueno (su 2° guardado seguido, #8): `actualizar`, tampoco pisa', r.ok===false && r.error==='actualizar' && pedido(a.ctx,a.sh,'__stock__').observaciones===junto, JSON.stringify(r).slice(0,80));
+  const anot = a.shR._datos.filter(f => f[2]==='actualizar');
+  chk('…y eso SÍ se anota en «Rechazos» (una computadora con la página vieja), diciendo que hay que recargar', anot.length===2 && /recargar la página/.test(String(anot[0][7])), anot.length?String(anot[0][7]):'no se anotó');
+  const b2 = cargar([HDR], { PANEL_KEY: CLAVE });
+  r = b2.post(conClave({ action:'save', pedido: stk('{"e":[]}') }));
+  chk('§4fz-b · …pero la PRIMERA vez (la fila no existe o nunca se selló) entra igual: no hay nada que pisar', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,80));
+  const arq = { id:'__arqueo_cuadre__', fecha:'', cliente:'🧮 ARQUEO', observaciones:'mes|2026-09|Efectivo=900', rev:0 };
+  r = a.post(junta(arq));
+  const arqRev = r.pedido.rev;
+  arq.observaciones='mes|2026-09|QR BISA=2000'; arq.rev=0;
+  r = a.post(junta(arq));
+  chk('§4fz · el arqueo con un sello viejo también se rechaza (el panel junta)', r.ok===false && r.error==='conflicto' && r.pedido.rev===arqRev, JSON.stringify(r).slice(0,80));
+  arq.rev=arqRev;
+  r = a.post(conClave({ action:'save', pedido: arq }));
+  chk('§4fz-b · …y un panel viejo tampoco lo pisa: `actualizar`', r.ok===false && r.error==='actualizar' && /Efectivo=900/.test(pedido(a.ctx,a.sh,'__arqueo_cuadre__').observaciones), JSON.stringify(r).slice(0,80));
+  const cierre = { id:'__dias_cerrados__', fecha:'', observaciones:'🔒 '+JUEVES, rev:1 };
+  r = a.post(conClave({ action:'save', pedido: cierre })); cierre.observaciones='🔒 '+MIERCOLES;
+  r = a.post(conClave({ action:'save', pedido: cierre }));
+  chk('…pero los días cerrados siguen reescribiéndose enteros, aunque manden sello y no `juntar`', r.ok===true, JSON.stringify(r).slice(0,80));
+}
+{
+  /* 🗑 §4fz — BORRAR TAMBIÉN MIRA EL SELLO (informe del 23/09). Guardar lo exige desde §4ce,
+     pero borrar mandaba solo el id: A tenía abierta la venta que debía Bs 1.000, B registró
+     el pago en otra computadora, y el «Eliminar» de A —con su vista vieja— se llevaba la
+     fila con el pago adentro. */
+  const existe = (a, id) => a.sh._datos.some(f => f[0]===id);
+  const a = cargar([HDR, fila({id:'p1', cli:'JUAN', saldo:1000})], { PANEL_KEY: CLAVE });
+  const b0 = a.post(conClave({ action:'list' })).pedidos[0]; b0.chofer='ANA';
+  const vista = a.post(conClave({ action:'save', pedido:b0 })).pedido;   // la fila, sellada, como la ve A
+  const deB = JSON.parse(JSON.stringify(vista)); deB.saldo=0; deB.pagado=true;
+  const rb = a.post(conClave({ action:'save', pedido:deB }));             // B cobra
+  let r = a.post(conClave({ action:'delete', id:'p1', rev:vista.rev }));  // A confirma «Eliminar» con su vista vieja
+  chk('⚠️ §4fz · borrar con el sello VIEJO (otra persona cobró en el medio): RECHAZADO', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,100));
+  chk('⚠️ …la venta sigue en la planilla, con el pago adentro', existe(a,'p1') && pedido(a.ctx,a.sh,'p1').saldo===0 && pedido(a.ctx,a.sh,'p1').pagado===true);
+  chk('…y el rechazo trae la fila ACTUAL, para que el panel diga qué cambió', !!r.pedido && r.pedido.saldo===0 && r.pedido.rev===rb.pedido.rev, JSON.stringify(r.pedido||{}).slice(0,90));
+  const anotado = a.shR._datos.filter(f => f[1]==='delete' && f[2]==='conflicto');
+  chk('…y queda anotado en «Rechazos» con los dos sellos', anotado.length===1 && /rev enviado \d+ \/ rev hoja \d+/.test(String(anotado[0][7])), anotado.length?String(anotado[0][7]):'no se anotó');
+  r = a.post(conClave({ action:'delete', id:'p1', rev:rb.pedido.rev }));
+  chk('con el sello actual, se borra', r.ok===true && !existe(a,'p1'), JSON.stringify(r));
+}
+{
+  const existe = (a, id) => a.sh._datos.some(f => f[0]===id);
+  /* §4fz-b: un panel VIEJO (cacheado) borra sin sello. En `2026-09-23-a` se lo dejaba «para no
+     trabarlo», y era justo el que se llevaba lo que otro acababa de cobrar sin mirar. Ahora, sobre
+     una fila sellada, recibe `actualizar` (recargar la página) y NO borra. */
+  const a = cargar([HDR, fila({id:'p1'})], { PANEL_KEY: CLAVE });
+  const l = a.post(conClave({ action:'list' })).pedidos[0]; l.chofer='ANA';
+  a.post(conClave({ action:'save', pedido:l }));                           // la fila queda sellada
+  let r = a.post(conClave({ action:'delete', id:'p1' }));
+  chk('⚠️ §4fz-b · un borrado SIN sello (panel viejo) sobre una fila sellada: `actualizar`, y la fila sigue', r.ok===false && r.error==='actualizar' && existe(a,'p1'), JSON.stringify(r));
+  const anot = a.shR._datos.filter(f => f[1]==='delete' && f[2]==='actualizar');
+  chk('…y queda anotado en «Rechazos»', anot.length===1, a.shR._datos.length+' filas');
+  // Una fila de antes, nunca sellada, se borra con o sin sello: no hay con qué comparar.
+  const a2 = cargar([HDR, fila({id:'p2'}), fila({id:'p3'})], { PANEL_KEY: CLAVE });
+  r = a2.post(conClave({ action:'delete', id:'p2', rev:0 }));
+  chk('…una fila de antes (nunca sellada) se borra con rev 0', r.ok===true && !existe(a2,'p2'), JSON.stringify(r));
+  r = a2.post(conClave({ action:'delete', id:'p3' }));
+  chk('…y también sin sello', r.ok===true && !existe(a2,'p3'), JSON.stringify(r));
 }
 
 // ══ 4. 🚪 MOVER PASA POR EL PORTERO ═════════════════════════════════════════
@@ -922,6 +1042,259 @@ const DIA = 86400000, hoyDia = Math.floor(Date.now() / DIA);
   const rb = b.post({ action:'kommoLeads', key:'kk', leads:['44003'] });
   chk('sin disparadores el repaso de GitHub crea en el momento, como antes', rb.ok===true && rb.origen==='repaso' && !rb.diferido && rb.creados===1 && b.sh._datos.length===2, JSON.stringify(rb).slice(0,100));
 }
+}
+
+/* ── ✅ 11. Probar antes de implementar (§4fz-b) ──────────────────────────────────────
+   El 23/09 el .gs que se pegó y se implementó dejó a TODO el equipo sin conexión. Volver a
+   la versión anterior arregló el panel, pero el repaso de Kommo siguió parado desde las
+   11:24: los disparadores corren el código GUARDADO, no el implementado. Esta función se
+   corre desde el editor ANTES de implementar y no escribe nada. */
+console.log('\n── 11. probarAntesDeImplementar: la prueba del editor antes de implementar ──');
+{
+  const tiene = (r, re) => !!(r && r.lineas && r.lineas.some(l => re.test(l)));
+  const hay = (a) => typeof a.ctx.probarAntesDeImplementar === 'function';
+  const src = fs.readFileSync(GS, 'utf8');
+  chk('existe probarAntesDeImplementar() y va ARRIBA de todo (un pegado cortado la conserva)',
+      src.indexOf('function probarAntesDeImplementar') > 0 && src.indexOf('function probarAntesDeImplementar') < src.indexOf('function jsonOut'));
+  {
+    // A. El archivo entero, con disparadores y un repaso reciente
+    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-2*60000).toISOString(), cola:0, vistos:0, creados:0, error:'' }) };
+    const a = cargar([HDR, fila({id:'p1'}), fila({id:'p2'})], props);
+    if (!hay(a)) chk('A · la prueba existe', false, 'no está en este .gs');
+    else {
+      a.ctx.instalarDisparadores();
+      const hoja0 = JSON.stringify(a.sh._datos), props0 = JSON.stringify(props), tr0 = a.ctx.ScriptApp._triggers.map(t => t.fn).join(',');
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('A · archivo entero, disparadores y repaso al día: «✅ Se puede implementar», sin avisos',
+          r.ok===true && r.malas===0 && r.avisos===0 && /^✅ Se puede implementar\.$/.test(r.veredicto), r.lineas.join(' | '));
+      chk('A · …dice la versión y lee la planilla como el panel (2 filas)', tiene(r, new RegExp(a.ctx.SCRIPT_VERSION)) && tiene(r, /2 filas/), r.lineas.join(' | '));
+      chk('A · …y NO escribe nada: ni la planilla, ni las propiedades, ni los disparadores',
+          JSON.stringify(a.sh._datos)===hoja0 && JSON.stringify(props)===props0 && a.ctx.ScriptApp._triggers.map(t => t.fn).join(',')===tr0);
+    }
+  }
+  {
+    // B. Sin disparadores, el repaso parado desde las 11:24 de Bolivia (lo del 23/09) y una venta en la cola
+    const props = { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:'2026-09-23T15:24:05.435Z', cola:0, vistos:0, creados:0, error:'' }), KOMMO_COLA:'["44001"]' };
+    const a = cargar([HDR, fila({id:'p1'})], props);
+    if (!hay(a)) chk('B · la prueba existe', false);
+    else {
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('B · sin disparadores: avisa qué ejecutar (instalarDisparadores) pero no frena la implementación',
+          r.ok===true && r.avisos>=3 && tiene(r, /instalarDisparadores/) && /Se puede implementar \(mirá los ⚠️/.test(r.veredicto), r.lineas.join(' | '));
+      chk('B · …el repaso parado se nombra con la hora de Bolivia (23/09 11:24), como el del incidente', tiene(r, /desde el 23\/09 11:24 \(hora Bolivia\)/), r.lineas.join(' | '));
+      chk('B · …y la venta que espera en la cola', tiene(r, /1 venta\(s\) de Kommo esperando/), r.lineas.join(' | '));
+    }
+  }
+  {
+    // C. El pegado CORTADO justo antes de kommoRepaso, con su disparador instalado (lo que frenaba el repaso)
+    const corte = src.indexOf('\nfunction kommoRepaso(');
+    const a = cargar([HDR, fila({id:'p1'})], {}, corte > 0 ? src.slice(0, corte + 1) : '');
+    if (!hay(a)) chk('C · la prueba existe (aunque el código esté cortado)', false);
+    else {
+      a.ctx.ScriptApp.newTrigger('kommoRepaso').timeBased().everyMinutes(5).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('⚠️ C · código cortado: «❌ NO IMPLEMENTAR»', r.ok===false && /^❌ NO IMPLEMENTAR/.test(r.veredicto), r.veredicto);
+      chk('C · …nombra lo que falta (kommoRepaso y la última del archivo, borradorDeLead_)', tiene(r, /Faltan funciones: .*kommoRepaso.*borradorDeLead_/), r.lineas.join(' | '));
+      chk('C · …y que el disparador de kommoRepaso apunta a una función que no está', tiene(r, /disparador de «kommoRepaso» pero esa función no está/), r.lineas.join(' | '));
+      chk('C · …la planilla igual se lee (el panel andaría; lo que se frena son los disparadores)', tiene(r, /se lee como la lee el panel: 1 fila\./), r.lineas.join(' | '));
+    }
+  }
+  {
+    // D. Pegado en el Apps Script de OTRA planilla, y un disparador ajeno que se nombra y no se toca
+    const a = cargar([['Nombre','Teléfono'], ['x','y']], {});
+    if (!hay(a)) chk('D · la prueba existe', false);
+    else {
+      a.ctx.ScriptApp.newTrigger('backupDiario').timeBased().everyDays(1).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('D · en otra planilla (sin la columna «id»): ❌', r.ok===false && tiene(r, /no empieza con la columna «id»/), r.lineas.join(' | '));
+      chk('D · un disparador de otra función que SÍ existe no se marca como roto', !tiene(r, /disparador de «backupDiario»/) && a.ctx.ScriptApp._triggers.length===1, r.lineas.join(' | '));
+    }
+  }
+  /* Revisión del 24/09 (agente antes de publicar): tres huecos por los que la prueba decía ✅. */
+  {
+    // E. Código VIEJO además del nuevo: pegado arriba sin borrar (o un 2° archivo .gs que carga después)
+    const m = src.match(/var ESTA_VERSION = '([^']+)'/);
+    chk('E · el literal de la prueba es igual a SCRIPT_VERSION (si se sube una sin la otra, esto avisa)',
+        !!m && m[1] === (src.match(/var SCRIPT_VERSION = '([^']+)'/)||[])[1], m ? m[1] : 'no está el literal');
+    const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) },
+                     src + "\nvar SCRIPT_VERSION = '2026-09-20-a';\n");
+    if (!hay(a)) chk('E · la prueba existe', false);
+    else {
+      a.ctx.instalarDisparadores();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('⚠️ E · con la SCRIPT_VERSION de un código viejo cargada después: ❌ (antes: ✅ con el servidor viejo andando)',
+          r.ok===false && tiene(r, /quedó código VIEJO además del nuevo/) && /^❌ NO IMPLEMENTAR/.test(r.veredicto), r.lineas.join(' | '));
+    }
+  }
+  {
+    // F. Un disparador de una función que ya no existe en ningún código: avisa y no frena
+    const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) });
+    if (!hay(a)) chk('F · la prueba existe', false);
+    else {
+      a.ctx.instalarDisparadores();
+      a.ctx.ScriptApp.newTrigger('funcionQueYaNoExiste').timeBased().everyDays(1).create();
+      const r = a.ctx.probarAntesDeImplementar();
+      chk('F · un disparador ajeno a una función inexistente: ⚠️ «borralo en Activadores», pero se puede implementar',
+          r.ok===true && tiene(r, /disparador de «funcionQueYaNoExiste», una función que ya no existe.*Borralo en Activadores/), r.lineas.join(' | '));
+    }
+  }
+  {
+    // G. Un repaso que CORRE pero falla adentro: Ejecuciones dice «Completada» y la hora está al día
+    const prueba = (error) => {
+      const a = cargar([HDR, fila({id:'p1'})], { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), cola:0, vistos:0, creados:0, error }) });
+      if (!hay(a)) return null;
+      a.ctx.instalarDisparadores();
+      return a.ctx.probarAntesDeImplementar();
+    };
+    const r1 = prueba('kEmb_ is not defined');
+    chk('⚠️ G · el repaso al día pero con un error del CÓDIGO («kEmb_ is not defined»): ❌ (antes: ✅ «corrió hace 1 minuto»)',
+        !!r1 && r1.ok===false && tiene(r1, /falló con un error del CÓDIGO: «kEmb_ is not defined»/), r1 ? r1.lineas.join(' | ') : 'sin prueba');
+    const r2 = prueba('kommo no contestó');
+    chk('G · un error de AFUERA («kommo no contestó»): ⚠️ que nombra el token del script, y se puede implementar',
+        !!r2 && r2.ok===true && tiene(r2, /avisó: «kommo no contestó».*KOMMO_TOKEN/), r2 ? r2.lineas.join(' | ') : 'sin prueba');
+  }
+  {
+    // H. 📏 Cuánto ocupan el stock y el arqueo en su celda (el tope de Google es 50.000 letras)
+    const HDR30 = HDR.concat(['Revisión']), iObs = HDR.indexOf('Observaciones');
+    const sistema = (id, largo) => { const f = HDR30.map(() => ''); f[0] = id; f[iObs] = 'x'.repeat(largo); return f; };
+    const prueba = (largoStock) => {
+      const a = cargar([HDR30, fila({id:'p1'}), sistema('__stock__', largoStock), sistema('__arqueo_cuadre__', 1200)],
+                       { KOMMO_REPASO_ULTIMO: JSON.stringify({ ts:new Date(Date.now()-60000).toISOString(), error:'' }) });
+      if (!hay(a)) return null;
+      a.ctx.instalarDisparadores();
+      return a.ctx.probarAntesDeImplementar();
+    };
+    const r1 = prueba(20000), r2 = prueba(36000), r3 = prueba(43000);
+    chk('H · con lugar: ✅ «El stock ocupa 20000 de las 50000 letras de su celda (40%)», y el arqueo también se mide',
+        !!r1 && r1.ok===true && r1.avisos===0 && tiene(r1, /El stock ocupa 20000 de las 50000 letras de su celda \(40%\)/) && tiene(r1, /El arqueo ocupa 1200/), r1 ? r1.lineas.join(' | ') : 'sin prueba');
+    chk('H · con poco lugar (36.000): ⚠️ y se puede implementar', !!r2 && r2.ok===true && tiene(r2, /El stock ocupa 36000.*queda poco lugar/), r2 ? r2.lineas.join(' | ') : 'sin prueba');
+    chk('⚠️ H · casi lleno (43.000): ❌ NO implementar (la versión nueva lo haría crecer y dejaría de guardarse)',
+        !!r3 && r3.ok===false && tiene(r3, /El stock ocupa 43000.*NO implementar/), r3 ? r3.lineas.join(' | ') : 'sin prueba');
+  }
+}
+
+/* ── 📏 12. Una celda de Google aguanta 50.000 letras (revisión del 24/09) ──────────────────────
+   El stock entero va en UNA celda. Pasado el tope, setValues tira una excepción: el panel veía
+   «sin conexión» en cada guardado del stock, sin saber por qué. */
+console.log('\n── 12. Una celda que no entra: «no» claro, sin tocar la hoja ──');
+{
+  const a = cargar([HDR], {});
+  const obs = (n) => '{"c":{"f":"","u":{}},"e":[],"p":[],"a":{},"al":{},"g":{},"h":[],"x":"' + 'y'.repeat(n) + '"}';
+  const r1 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:0, observaciones:obs(49000) } });
+  chk('un stock que entra en la celda se guarda', r1.ok===true && a.sh._datos.length===2, JSON.stringify(r1).slice(0,120));
+  const antes = JSON.stringify(a.sh._datos);
+  const r2 = a.post({ action:'save', juntar:1, pedido:{ id:'__stock__', fecha:'', cliente:'📦 STOCK', rev:r1.pedido.rev, observaciones:obs(50100) } });
+  chk('⚠️ uno que NO entra: «celda_llena» con el campo y el largo (antes: excepción de Google = «sin conexión»)',
+      r2.ok===false && r2.error==='celda_llena' && r2.campo==='Observaciones' && r2.largo>50000, JSON.stringify(r2).slice(0,200));
+  chk('…sin tocar la hoja', JSON.stringify(a.sh._datos)===antes);
+  chk('…y queda anotado en «Rechazos» con el motivo', a.shR._datos.some(f => f.indexOf('celda_llena')>=0 && /aguanta 50000/.test(f.join(' '))),
+      JSON.stringify(a.shR._datos[a.shR._datos.length-1]||[]).slice(0,200));
+}
+
+/* ── 📦 13. Marcar entregados los pedidos de agosto (pedido del dueño, 25/09) ──────────────────
+   «Marca todos los pedidos de agosto entregado por si logística olvidó hacerlo». Va en un archivo
+   APARTE (herramientas/marcar-entregados-agosto.gs) que el dueño agrega al proyecto y corre desde
+   el editor: ver (no toca nada) → marcar (candado, sello nuevo, respaldo) → deshacer. Se prueba
+   con el .gs de esta rama Y con el publicado hoy (20-a, commit ebc3eab): tiene que andar con los dos. */
+console.log('\n── 13. Marcar entregados los pedidos de agosto (archivo aparte) ──');
+{
+  const EXTRA = fs.readFileSync(path.resolve('herramientas/marcar-entregados-agosto.gs'), 'utf8');
+  let gs20a = null;
+  try { gs20a = require('child_process').execSync('git show ebc3eab:google-apps-script.gs', { maxBuffer:64*1024*1024 }).toString(); } catch (e) {}
+  const versiones = [['esta rama', fs.readFileSync(GS,'utf8')]].concat(gs20a ? [['la publicada hoy (20-a)', gs20a]] : []);
+  if (!gs20a) chk('se pudo leer el .gs publicado (ebc3eab) para probar contra él', false, 'git show falló');
+
+  /* ⚠️ Todos los archivos de un proyecto de Apps Script comparten los nombres: uno repetido en el
+     archivo aparte PISARÍA al de Código.gs (los disparadores y el panel correrían el de acá). */
+  const nombres = (src) => new Set([...src.matchAll(/^(?:function\s+([A-Za-z0-9_$]+)|var\s+([A-Za-z0-9_$]+))/gm)].map(m => m[1]||m[2]));
+  const propios = [...nombres(EXTRA)];
+  versiones.forEach(([nom, src]) => {
+    const g = nombres(src), choca = propios.filter(n => g.has(n));
+    chk('ningún nombre del archivo aparte existe en el .gs de ' + nom, choca.length===0, choca.join(', '));
+  });
+
+  const HDR30 = HDR.concat(['Revisión']), iEnt = HDR.indexOf('Entregado'), iEst = HDR.indexOf('Estado stock');
+  const f30 = (o, extra) => { const r = fila(o).concat([o.rev || 1000]); if (extra) extra(r); return r; };
+  const armar = () => [
+    f30({ id:'a1', fecha:new Date(2026,7,5), oc:'08-001', cli:'CLIENTE UNO' }),     // fila 2 · Sheets devuelve la fecha como Date
+    f30({ id:'a2', fecha:'2026-08-20', oc:'RPT 08-003', cli:'MIA PLAZA', rev:2000 }),// fila 3
+    f30({ id:'a3', fecha:'2026-08-12', oc:'08-004', cli:'YA ENTREGADO' }, r => { r[iEnt]='SÍ'; }),
+    f30({ id:'a4', fecha:'2026-08-15', oc:'ATC 08-002', cli:'RECLAMO' }),
+    f30({ id:'a5', fecha:'2026-09-02', oc:'09-001', cli:'SEPTIEMBRE' }),
+    f30({ id:'a6', fecha:'', oc:'', cli:'VENTA DE TIENDA' }),
+    f30({ id:'kommo-1', fecha:'', oc:'', cli:'BORRADOR' }, r => { r[iEst]='Borrador Kommo'; }),
+    f30({ id:'__stock__', fecha:'2026-08-01', oc:'', cli:'📦 STOCK' }),
+    f30({ id:'a7', fecha:'2026-08-28', oc:'08-009', cli:'NO HABIA', rev:9e12 }, r => { r[iEst]='No hay'; }),  // fila 10 · sello «del futuro»
+  ];
+
+  versiones.forEach(([nom, src]) => {
+    console.log('   · con el .gs de ' + nom);
+    const filas = armar();
+    const a = cargar([HDR30].concat(filas), {}, src + '\n' + EXTRA);
+    const f = (id) => a.sh._datos.find(x => x[0]===id);
+    const antes = JSON.stringify(a.sh._datos);
+    const v = a.ctx.verPendientesAgosto();
+    chk('['+nom+'] ver: 3 para marcar (2 OC, una con la fecha como Date, y 1 RPT), 1 ATC aparte, y NO toca nada',
+        v.ok===true && v.marcar===3 && v.porTipo.OC===2 && v.porTipo.RPT===1 && v.atc===1 && JSON.stringify(a.sh._datos)===antes, JSON.stringify(v).slice(0,200));
+    chk('['+nom+'] …la lista dice cuáles, señala el «No hay · reprogramar» y deja la ATC para revisar a mano',
+        v.lineas.some(l => /08-001/.test(l)) && v.lineas.some(l => /RPT 08-003/.test(l)) && v.lineas.some(l => /08-009.*No hay/.test(l)) &&
+        v.noHay===1 && v.lineas.some(l => /ATC.*revisalas a mano/.test(l)) && v.lineas.some(l => /ATC 08-002/.test(l)), v.lineas.join(' | ').slice(0,300));
+
+    const revViejo = { a1:f('a1')[29], a2:f('a2')[29], a7:f('a7')[29] };
+    const m = a.ctx.marcarEntregadosAgosto();
+    chk('['+nom+'] ⚠️ marcar: a1, a2 y a7 quedan «SÍ»', m.ok===true && m.marcados===3 && ['a1','a2','a7'].every(id => f(id)[iEnt]==='SÍ'), JSON.stringify(m).slice(0,160));
+    chk('['+nom+'] …y NADA más cambia: la ATC, septiembre, la venta de tienda, el borrador y el stock siguen en «NO»',
+        ['a4','a5','a6','kommo-1','__stock__'].every(id => f(id)[iEnt]==='NO') && f('a3')[iEnt]==='SÍ');
+    const tocadas = new Set(['1,'+iEnt,'1,29','2,'+iEnt,'2,29','9,'+iEnt,'9,29']);   // [fila de datos, columna]
+    const antesF = JSON.parse(antes), ahora = a.sh._datos;
+    let otras = [];
+    for (let i = 0; i < antesF.length; i++) for (let j = 0; j < 30; j++) {
+      if (tocadas.has(i+','+j)) continue;
+      const x = antesF[i][j], y = ahora[i][j];
+      if (JSON.stringify(x instanceof Date ? x.toISOString() : x) !== JSON.stringify(y instanceof Date ? y.toISOString() : y)) otras.push(i+','+j);
+    }
+    chk('['+nom+'] …ni ninguna otra celda de la hoja (cliente, fecha, sellos de las otras filas)', otras.length===0 && ahora.length===antesF.length, otras.slice(0,5).join(' '));
+    chk('['+nom+'] ⚠️ se escriben SOLO las celdas de esas filas, no la columna entera',
+        JSON.stringify(a.sh._listas)===JSON.stringify([['S2','S3','S10'],['AD2','AD3','AD10']]), JSON.stringify(a.sh._listas));
+    const sello = f('a1')[29];
+    chk('['+nom+'] ⚠️ …con UN sello nuevo, más alto que el de cada fila (también el «del futuro»)',
+        sello===f('a2')[29] && sello===f('a7')[29] && ['a1','a2','a7'].every(id => Number(sello) > Number(revViejo[id])), sello);
+    chk('['+nom+'] …y escrito de verdad antes de soltar el candado (flush)', a.cont.flush >= 1, a.cont.flush);
+    const vieja = a.ctx.rowToRec_(f('a1')); vieja.rev = revViejo.a1; vieja.entregado = false;   // la copia de un panel abierto desde antes
+    const r = a.post({ action:'save', pedido:vieja });
+    chk('['+nom+'] ⚠️ …un panel con la copia VIEJA choca (conflicto) en vez de volver a desmarcarlo', r.ok===false && r.error==='conflicto' && f('a1')[iEnt]==='SÍ', JSON.stringify(r).slice(0,100));
+    const hr = a.otras['Respaldo entregados'];
+    chk('['+nom+'] …el respaldo: una fila por pedido marcado (la hoja nueva creció para que entren)',
+        !!hr && hr._datos.length===4 && hr._datos.slice(1).map(x => x[2]).sort().join(',')==='a1,a2,a7', hr ? JSON.stringify(hr._datos.slice(1)).slice(0,160) : 'sin hoja');
+
+    const m2 = a.ctx.marcarEntregadosAgosto();
+    chk('['+nom+'] marcar otra vez no encuentra nada (ni duplica el respaldo)', m2.marcados===0 && hr._datos.length===4);
+
+    /* Dos tandas: logística desmarca a7 en el panel y se vuelve a marcar. Deshacer va de la última
+       para atrás — con la hora de cada tanda vuelta Fecha por Sheets (el doble lo hace). */
+    f('a7')[iEnt] = 'NO';
+    const t0 = Date.now(); while (Date.now() - t0 < 3) {}             // otra hora para la segunda tanda
+    const m3 = a.ctx.marcarEntregadosAgosto();
+    chk('['+nom+'] una segunda tanda marca solo lo que faltaba (a7)', m3.marcados===1 && f('a7')[iEnt]==='SÍ' && hr._datos.length===5, JSON.stringify(m3).slice(0,120));
+    chk('['+nom+'] (la hora de la tanda quedó como Fecha en el respaldo: el peor caso)', hr._datos[1][0] instanceof Date);
+    const d1 = a.ctx.deshacerEntregadosAgosto();
+    chk('['+nom+'] ⚠️ deshacer: solo la ÚLTIMA tanda (a7 vuelve a «NO», a1 y a2 siguen «SÍ»)',
+        d1.deshechos===1 && f('a7')[iEnt]==='NO' && f('a1')[iEnt]==='SÍ' && f('a2')[iEnt]==='SÍ', JSON.stringify(d1));
+    const d2 = a.ctx.deshacerEntregadosAgosto();
+    chk('['+nom+'] ⚠️ deshacer otra vez: la tanda anterior (a1 y a2); el que ya estaba entregado (a3) no se toca',
+        d2.deshechos===2 && f('a1')[iEnt]==='NO' && f('a2')[iEnt]==='NO' && f('a7')[iEnt]==='NO' && f('a3')[iEnt]==='SÍ', JSON.stringify(d2));
+    chk('['+nom+'] …todo queda anotado como deshecho, y deshacer una vez más no hace nada',
+        hr._datos.slice(1).every(x => /^deshecho /.test(String(x[5]))) && a.ctx.deshacerEntregadosAgosto().deshechos===0);
+  });
+
+  /* Pegado en OTRO proyecto (o con Código.gs cortado): dice qué falta y no toca nada. */
+  const solo = cargar([HDR30].concat(armar()), {}, EXTRA);
+  const antesSolo = JSON.stringify(solo.sh._datos);
+  let rs = null, err = null;
+  try { rs = [solo.ctx.verPendientesAgosto(), solo.ctx.marcarEntregadosAgosto(), solo.ctx.deshacerEntregadosAgosto()]; } catch (e) { err = e.message; }
+  chk('sin Código.gs al lado: no revienta, dice qué falta y no toca nada',
+      !err && rs.every(x => x.ok===false && x.error==='falta' && x.falta.indexOf('rowToRec_')>=0) && JSON.stringify(solo.sh._datos)===antesSolo,
+      err || JSON.stringify(rs && rs[0]).slice(0,160));
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

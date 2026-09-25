@@ -211,23 +211,34 @@ const BASE = `
       RETIROS=[ filaDeRetiro({id:RETIRO_PREF+'1', entrega:'Carola Chavez', retira:'Contabilidad', monto:500, tipo:'Facturado', notas:['1'], fotos:[], fecha:hoy, obs:''}),
                 filaDeRetiro({id:RETIRO_PREF+'2', entrega:'Carola Chavez', retira:'Contabilidad', monto:200, tipo:'Facturado', notas:['2'], fotos:[], fecha:hoy, obs:''}),
                 filaDeRetiro({id:RETIRO_PREF+'3', entrega:'Carola Chavez', retira:'Contabilidad', monto:100, tipo:'Facturado', notas:['3'], fotos:[], fecha:hoy, obs:''}) ];
-      window._toasts=[]; apiDelete=function(){ return Promise.resolve({ok:false, error:'not found'}); };
-      borrarRetiro(RETIRO_PREF+'1'); await new Promise(r=>setTimeout(r,50));
+      /* §4fz-b: borrar un retiro relee la planilla antes (como una venta): la planilla de mentira
+         tiene los tres. «not found» ahora es «ya no estaba» = borrado (sale de la cola antes, así
+         que no vuelve); y una respuesta perdida se reintenta una vez y queda «no se sabe». */
+      var _enPlanilla=JSON.parse(JSON.stringify(RETIROS));
+      apiList=function(){ return Promise.resolve({ok:true, pedidos:JSON.parse(JSON.stringify(_enPlanilla))}); };
+      window._toasts=[]; apiDelete=function(){ return Promise.resolve({ok:false, error:'busy'}); };
+      borrarRetiro(RETIRO_PREF+'1'); await new Promise(r=>setTimeout(r,120));
       var t1=window._toasts.slice();
       window._toasts=[]; apiDelete=function(){ return Promise.reject(new Error('Failed to fetch')); };
-      borrarRetiro(RETIRO_PREF+'2'); await new Promise(r=>setTimeout(r,50));
+      borrarRetiro(RETIRO_PREF+'2'); await new Promise(r=>setTimeout(r,1900));
       var t2=window._toasts.slice();
       window._toasts=[]; apiDelete=function(){ return Promise.resolve({ok:true}); };
-      borrarRetiro(RETIRO_PREF+'3'); await new Promise(r=>setTimeout(r,50));
+      borrarRetiro(RETIRO_PREF+'3'); await new Promise(r=>setTimeout(r,120));
       var t3=window._toasts.slice();
-      return { todos:todos, waEfectivo:txt.split('\n').filter(function(l){ return /Efectivo:/.test(l); })[0], nota:/solo lo de Carola/.test(txt), excel:filaEf, tit:tit, t1:t1, t2:t2, t3:t3 };
+      RETIROS=RETIROS.concat([ filaDeRetiro({id:RETIRO_PREF+'4', entrega:'Carola Chavez', retira:'Contabilidad', monto:50, tipo:'Facturado', notas:['4'], fotos:[], fecha:hoy, obs:''}) ]);
+      _enPlanilla=_enPlanilla.concat([ JSON.parse(JSON.stringify(RETIROS[RETIROS.length-1])) ]);
+      window._toasts=[]; apiDelete=function(){ return Promise.resolve({ok:false, error:'not found'}); };
+      borrarRetiro(RETIRO_PREF+'4'); await new Promise(r=>setTimeout(r,120));
+      var t4=window._toasts.slice();
+      return { todos:todos, waEfectivo:txt.split('\n').filter(function(l){ return /Efectivo:/.test(l); })[0], nota:/solo lo de Carola/.test(txt), excel:filaEf, tit:tit, t1:t1, t2:t2, t3:t3, t4:t4 };
     }, BASE);
     chk('con Todos, el WhatsApp del cuadre compara con el arqueo (1.200 ✅ cuadra)', /1\.200,00/.test(r.todos) && /cuadra/.test(r.todos), r.todos);
     chk('⚠️ con filtro por vendedora, el WhatsApp NO compara el total parcial con el arqueo global (antes: «sobra Bs 600»)', /600,00/.test(r.waEfectivo) && !/sobra|falta/.test(r.waEfectivo) && r.nota===true, r.waEfectivo);
     chk('⚠️ …ni el Excel: la fila de Efectivo va sin contado ni diferencia y el título lo dice', r.excel[7]===600 && (r.excel[8]===''||r.excel[8]==null) && (r.excel[9]===''||r.excel[9]==null) && /solo Carola/.test(r.tit), J(r.excel)+' · '+r.tit);
     chk('⚠️ borrar un retiro mira la respuesta: si el servidor dice que no, lo avisa (antes: «Retiro borrado» y volvía con la lista)', !r.t1.some(function(t){ return /Retiro borrado/.test(t); }) && r.t1.some(function(t){ return /No se pudo borrar el retiro/.test(t); }), J(r.t1));
-    chk('…sin red también avisa, sin error JS', r.t2.some(function(t){ return /Sin conexión/.test(t); }), J(r.t2));
+    chk('…si Google no contesta (dos veces), avisa que no se sabe si se borró, sin error JS (§4fz-b)', r.t2.some(function(t){ return /no confirmó/.test(t); }) && !r.t2.some(function(t){ return /Retiro borrado/.test(t); }), J(r.t2));
     chk('…y con ok dice «Retiro borrado»', r.t3.some(function(t){ return /Retiro borrado/.test(t); }), J(r.t3));
+    chk('§4fz-b · si el servidor dice que ya no estaba, es un borrado (sale de la cola antes: no vuelve)', r.t4.some(function(t){ return /Retiro borrado/.test(t); }), J(r.t4));
     await page.close();
   }
 

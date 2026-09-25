@@ -108,6 +108,66 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     var pg4=p4?contaPagos(p4):[];
     chk('⚠️ adelanto mixto: anticipo Efectivo 1500 + QR BISA 500, saldo 2990, total 4990', !!p4 && pg4.length===2 && pg4[0].anticipo && pg4[0].monto===1500 && pg4[1].metodo==='QR' && pg4[1].monto===500 && Number(p4.saldo)===2990 && ventaTotal(p4)===4990 && p4.pagado===false, p4?(JSON.stringify(pg4.map(function(x){ return [x.metodo,x.monto]; }))+' saldo '+p4.saldo+' total '+ventaTotal(p4)):ult());
 
+    // 4b. §4fz (informe del 23/09): Contabilidad corrige el QR del adelanto mixto, 500 → 700.
+    //     El saldo bajaba bien, pero «A cuenta» quedaba en 2000: dos campos del mismo adelanto
+    //     diciendo cosas distintas, y el formulario arma sus cuentas con ese campo.
+    var corregirQR=function(pid, nuevo, nota){
+      CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(pid);
+      var iQR=-1; contaPagos(findById(pid)).forEach(function(c,j){ if(!c.anticipo && !esEnvio(c) && c.metodo==='QR' && iQR<0) iQR=j; });
+      ctaEditarPago(pid, iQR);
+      document.getElementById('cta-ed-monto').value=String(nuevo);
+      if(nota) document.getElementById('cta-ed-nota').value=nota;
+      ctaGuardarPago(pid, iQR); closeModal();
+      return findById(pid);
+    };
+    var q4=p4 ? corregirQR(p4.id, 700) : null;
+    chk('⚠️ §4fz · corregir el QR del adelanto mixto (500 → 700): el saldo baja a 2790 y «A cuenta» SUBE a 2200',
+        !!q4 && Number(q4.saldo)===2790 && Number(q4.acuenta)===2200 && q4.metodoPago.indexOf('QR BISA 700')>=0, q4?('saldo '+q4.saldo+' · a cuenta '+q4.acuenta):'');
+    chk('  …y el total de la venta no se mueve (4990)', !!q4 && ventaTotal(q4)===4990, q4&&ventaTotal(q4));
+    if(q4){
+      window._pl=[JSON.parse(JSON.stringify(q4))]; resetForm(); editarDesdeMis(q4.id); await new Promise(r=>setTimeout(r,250));
+      var fa=Number(document.getElementById('f-acuenta').value), fs=Number(document.getElementById('f-saldo').value);
+      chk('  …el formulario muestra lo mismo (A cuenta 2200 + saldo 2790 = 4990)', fa===2200 && fs===2790, 'a cuenta '+fa+' · saldo '+fs);
+      window._toasts=[]; document.getElementById('f-direccion').value='Av. Corregida 5'; submitPedido(); await new Promise(r=>setTimeout(r,400));
+      var q4b=findById(q4.id);
+      chk('  …y guardar sin tocar la plata conserva el historial y el total', !!q4b && q4b.metodoPago===q4.metodoPago && ventaTotal(q4b)===4990 && Number(q4b.acuenta)===2200, q4b&&(q4b.metodoPago+' · a cuenta '+q4b.acuenta));
+      // Si la corrección le cambia el recibo, deja de ser parte del adelanto: «A cuenta» vuelve al anticipo solo.
+      var q4c=corregirQR(q4.id, 700, '1999');
+      chk('  …y si le cambian el recibo deja de ser del adelanto: «A cuenta» = 1500, el saldo no se mueve', !!q4c && Number(q4c.acuenta)===1500 && Number(q4c.saldo)===2790 && ventaTotal(q4c)===4990, q4c&&('a cuenta '+q4c.acuenta+' · saldo '+q4c.saldo));
+    }
+
+    // 4c. §4fz-b (auditoría del 23/09, E6): una venta de ANTES del «~» — el adelanto sale de
+    //     `p.acuenta`, con la fecha y el recibo de la venta — y un cobro QR del mismo día y el
+    //     mismo recibo. `mixtoEn` lo tomaba por el 2° método: corregirlo le sumaba el cobro a
+    //     `p.acuenta`, y como ese adelanto se LEE de `p.acuenta`, el total crecía 3000 → 3600.
+    var tsV=Date.now()-3*86400000;
+    var fotoM=function(q){ return q ? ('a cuenta '+q.acuenta+' · total '+ventaTotal(q)+' · cobrado '+contaCobrado(q)+' · saldo '+q.saldo) : '—'; };
+    var corregirM=function(pid, nuevo){
+      CTA_EDIT_I=-1; CTA_EDIT_V=null; showContaModal(pid);
+      var j=-1; contaPagos(findById(pid)).forEach(function(c,k){ if(!c.anticipo && !esEnvio(c) && c.metodo==='QR' && j<0) j=k; });
+      ctaEditarPago(pid, j); document.getElementById('cta-ed-monto').value=String(nuevo);
+      ctaGuardarPago(pid, j); closeModal(); return findById(pid);
+    };
+    var m1={ id:'M1', fecha:F, ts:tsV, cliente:'VENTA VIEJA', vendedor:'Carola Chavez', nota:'900', oc:'09-777', turno:'AM',
+             acuenta:1500, saldo:1000, pagado:false, metodoPago:'QR BISA 500 #900 %IMGQ', productos:[{desc:'COLCHON',cant:1,precio:3000}] };
+    STATE=[m1]; window._pl=[JSON.parse(JSON.stringify(m1))];
+    chk('§4fz-b · (partida) venta vieja: adelanto 1500 sin «~» + QR 500 del mismo recibo — total 3000, cobrado 2000', ventaTotal(m1)===3000 && contaCobrado(m1)===2000 && !mixtoDe(m1), fotoM(m1));
+    var n1=corregirM('M1', 600);
+    chk('⚠️ §4fz-b · corregir ese QR (500 → 600) NO infla la venta: a cuenta 1500, total 3000, cobrado 2100', !!n1 && Number(n1.acuenta)===1500 && ventaTotal(n1)===3000 && contaCobrado(n1)===2100 && Number(n1.saldo)===900, fotoM(n1));
+    chk('  …y después de la corrección tampoco «parece» un pago mixto (el formulario lo restaría del adelanto)', !!n1 && !mixtoDe(n1), n1&&n1.metodoPago);
+    if(n1){
+      window._pl=[JSON.parse(JSON.stringify(n1))]; resetForm(); editarDesdeMis(n1.id); await new Promise(r=>setTimeout(r,250));
+      window._toasts=[]; document.getElementById('f-direccion').value='Av. Corregida 7'; submitPedido(); await new Promise(r=>setTimeout(r,400));
+      var n1b=findById(n1.id);
+      chk('  …y guardarla desde el formulario sin tocar la plata la deja igual (3000 / 2100)', !!n1b && ventaTotal(n1b)===3000 && contaCobrado(n1b)===2100 && Number(n1b.acuenta)===1500, fotoM(n1b));
+    }
+    var dV=contaFecha(m1);
+    var m3={ id:'M3', fecha:F, ts:tsV, cliente:'VENTA EXPLICITA', vendedor:'Carola Chavez', nota:'902', oc:'09-779', turno:'AM',
+             acuenta:1500, saldo:1000, pagado:false, metodoPago:'~Efectivo 1500 @'+dV+' #902 %IMGE + QR BISA 500 #902 %IMGQ3', productos:[{desc:'COLCHON',cant:1,precio:3000}] };
+    STATE=[m3]; window._pl=[JSON.parse(JSON.stringify(m3))];
+    var n3=corregirM('M3', 600);
+    chk('§4fz-b · con el adelanto escrito («~») y un QR viejo sin fecha: corregirlo no lo reclasifica como adelanto (a cuenta 1500, total 3000)', !!n3 && Number(n3.acuenta)===1500 && ventaTotal(n3)===3000 && contaCobrado(n3)===2100, fotoM(n3));
+
     // 5. el cuadre: cada parte en su método (lo que preguntó el dueño)
     var porMetodo={}; contaPagos(p).forEach(function(c){ var k=c.metodo+(c.banco?(' '+c.banco):''); porMetodo[k]=r2((porMetodo[k]||0)+c.monto); });
     chk('⚠️ en las cuentas cada parte va con su método: QR BISA 3000 y Tarjeta 1990', porMetodo['QR BISA']===3000 && porMetodo['Tarjeta']===1990, JSON.stringify(porMetodo));

@@ -519,7 +519,9 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
            P({ id:'M5', nota:'', oc:'RPT 09-005', cliente:'Mia Plaza', acuenta:0, saldo:300, pagado:false, metodoPago:'', productos:[{desc:'A',cant:1,precio:300}] })];
     showPedidoModal('M4'); var ficha=document.getElementById('modal').innerHTML.indexOf('markPaid(')>=0;
     markPaid('M4','Efectivo'); quickCobrado('M5');
-    closeModal(); showView('admin'); renderAdmin();
+    /* «Todo»: los dos van para pasado mañana, que los días 29 y 30 ya es el mes que viene, y con
+       «Mes» la tabla no los mostraba (la prueba se pudría a fin de mes, 24/09). */
+    closeModal(); showView('admin'); segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
     var cuenta=function(re){ return [].slice.call(document.querySelectorAll('button')).filter(function(b){ return re.test(b.getAttribute('onclick')||''); }).length; };
     return { ficha:ficha, filas:cuenta(/quickVerificado\('M[45]'\)/), tabla:cuenta(/quickCobrado\('M[45]'\)/),
              m4:findById('M4').metodoPago, m5:findById('M5').metodoPago, pagado5:findById('M5').pagado, toasts:window._toasts.slice() };
