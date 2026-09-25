@@ -6141,15 +6141,18 @@ function ctaEditHtml(p){
 function ctaRecalc(){
   var box=document.getElementById('cta-edit'); if(!box) return;
   var ins=box.querySelectorAll('.cta-pr'), suma=0, sin=0;
+  /* ⚠️ `parseMonto`, no `parseFloat` (25/09): «1.500» tipeado (así se escribe en Bolivia) queda tal
+     cual en el campo, y `parseFloat` lo leía 1,5 — la venta de 2.500 pasaba a valer 2,50 y «cuadra
+     con los precios». «Registrar pago» y el arqueo ya lo leen con `parseMonto`. */
   for(var i=0;i<ins.length;i++){
-    var pr=parseFloat(ins[i].value)||0, ct=Number(ins[i].getAttribute('data-cant'))||0;
+    var pr=parseMonto(ins[i].value), ct=Number(ins[i].getAttribute('data-cant'))||0;
     var lb=document.getElementById('cta-sub-'+i);
     if(pr>0){ suma+=pr*ct; if(lb){ lb.textContent=fmtBs(r2(pr*ct)); lb.style.color='var(--teal-dk)'; } }
     else { sin++; if(lb){ lb.textContent='sin precio'; lb.style.color='var(--muted)'; lb.style.fontWeight='400'; } }
   }
   suma=r2(suma);
-  var acu=parseFloat((document.getElementById('cta-acuenta')||{}).value)||0;
-  var sal=parseFloat((document.getElementById('cta-saldo')||{}).value)||0;
+  var acu=parseMonto((document.getElementById('cta-acuenta')||{}).value);
+  var sal=parseMonto((document.getElementById('cta-saldo')||{}).value);
   var pagos=Number(box.getAttribute('data-pagos'))||0;
   var total=r2(acu+pagos+sal);
   var s=document.getElementById('cta-sum');
@@ -6171,8 +6174,9 @@ function ctaGuardarMontos(id){
   var p=findById(id); if(!p) return;
   var acuEl=document.getElementById('cta-acuenta'), salEl=document.getElementById('cta-saldo');
   if(!acuEl||!salEl) return;
-  var acu=parseFloat(acuEl.value)||0, sal=parseFloat(salEl.value)||0;
-  if(acu<0||sal<0){ toast('Los montos no pueden ser negativos','err'); return; }
+  // `parseMonto` como en ctaRecalc (25/09): «1.500» es 1.500. Saca el signo, así que el menos se mira en el texto.
+  var acu=parseMonto(acuEl.value), sal=parseMonto(salEl.value);
+  if(montoNegativo(acuEl.value)||montoNegativo(salEl.value)){ toast('Los montos no pueden ser negativos','err'); return; }
   /* ⚠️ EL FRENO QUE FALTABA (§4cb).
      Bajar el adelanto REESCRIBE el historial, y si queda en 0 el anticipo desaparece
      con su recibo y su foto — plata que el contador ya dio por cobrada. Antes esto
@@ -6195,7 +6199,7 @@ function ctaGuardarMontos(id){
   var prods=(p.productos||[]).map(function(x,i){
     var el=document.getElementById('cta-pr-'+i);
     var q={}; for(var k in x) q[k]=x[k];
-    if(el){ var v=parseFloat(el.value); if(isFinite(v)&&v>0) q.precio=r2(v); else delete q.precio; }
+    if(el){ var v=parseMonto(el.value); if(v>0 && !montoNegativo(el.value)) q.precio=r2(v); else delete q.precio; }
     return q;
   });
   p.productos=prods;

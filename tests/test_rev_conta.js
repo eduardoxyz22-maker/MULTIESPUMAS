@@ -20,6 +20,7 @@
      8. «Buscar» de Contabilidad → Ventas no distingue acentos (como Administración y el Cuadre).
      9. La ficha de una venta «SIN MONTO ANOTADO» no dice «Saldo: PAGADO».
     10. En Ventas («Pagos recibidos») y en el Excel de Contabilidad el flete dice que es flete.
+    11. «1.500» tipeado en «Corregir precios y montos» es 1.500 (como en «Registrar pago»), no 1,50.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -418,6 +419,29 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('10 · en el Excel de Contabilidad, el renglón del flete dice que es flete (y el de la venta no)', r.partes.length===2 && !/flete/i.test(r.partes[0]) && /flete/i.test(r.partes[1]), J(r.partes));
   chk('10 · …así PAGOS sin el flete = TOTAL COBRADO, y el flete = RECARGO COBRADO', r.cobrado===1500 && r.recargo===120, J({cobrado:r.cobrado, recargo:r.recargo}));
   chk('10 · …y la tabla («Pagos recibidos») también lo marca', r.celdaFlete===true, J(r.celdaFlete));
+
+  /* ══ 11 · «1.500» TIPEADO EN «CORREGIR PRECIOS Y MONTOS» ES 1.500, NO 1,50 ═══════════════
+     En Bolivia 1.500 se escribe con punto. Tipeado en un campo numérico, el navegador lo deja
+     tal cual («1.500»): «Registrar pago» y el arqueo lo leen con `parseMonto` (1.500), pero esta
+     caja lo leía con `parseFloat` (1,5): A cuenta, Saldo y precios quedaban en Bs 1,50 y la venta
+     de 1.500 pasaba a valer 1,50. Se tipea con el teclado, como la contadora. */
+  await page.evaluate(async () => {
+    STATE=[ P({ id:'K1', nota:'97', oc:'09-097', cliente:'TIPEA CON PUNTO', saldo:0, acuenta:0, metodoPago:'',
+                productos:[{desc:'COLCHON',cant:2}] }) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    CTA_ULTIMA=''; showContaModal('K1');
+  });
+  for (const [sel, txt] of [['#cta-pr-0','1.250'], ['#cta-acuenta','1.000'], ['#cta-saldo','1.500']]) {
+    await page.fill(sel, ''); await page.click(sel); await page.keyboard.type(txt);
+  }
+  r = await page.evaluate(async () => {
+    var aviso=(document.getElementById('cta-tot-aviso')||{}).textContent||'';
+    ctaGuardarMontos('K1');
+    var p=findById('K1');
+    return { precio:prodPrecio(p.productos[0]), acuenta:Number(p.acuenta)||0, saldo:Number(p.saldo)||0, venta:ventaTotal(p), aviso:aviso };
+  });
+  chk('11 · «1.000» y «1.500» tipeados en A cuenta y Saldo son 1.000 y 1.500 (no 1 y 1,50)', r.acuenta===1000 && r.saldo===1500 && r.venta===2500, J(r));
+  chk('11 · …el precio «1.250» es 1.250, y el total en vivo ya lo dice (Bs 2.500,00, cuadra con 2 × 1.250)', r.precio===1250 && /2\.500,00/.test(r.aviso) && /cuadra/.test(r.aviso), J(r));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
