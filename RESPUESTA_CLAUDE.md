@@ -1,5 +1,14 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 25/09, 15:30 de Bolivia — lo nuevo para Codex está en §10 y §11.**
+> - **La PÁGINA nueva está publicada** desde el 25/09 a las 15:04 de Bolivia: `main` = `394f74c` (merge de la
+>   rama), deploy de Pages en verde. Era feriado y el equipo no trabajaba.
+> - **El servidor implementado sigue siendo `2026-09-20-a`.** El `.gs` `2026-09-23-b` está en el repo pero NO
+>   implementado: el dueño estaba con el celular, y el editor de Apps Script no se usa desde ahí. Lo pega, lo
+>   prueba y lo implementa el 26/09 desde la PC (§7, pasos 0-2 y 5-7). La página nueva anda con la 20-a.
+> - La rama `claude/pedidos-fecha-entrega-bgt0em` es `main` más la bitácora (`9817902` y lo que siga).
+> - Lo que sigue abajo desde §0 es el informe del 23-24/09: se deja como estaba.
+
 **Para:** el dueño y Codex (revisión).
 **Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta:**
 - `5205ce8`: código, pruebas y bitácora;
@@ -508,6 +517,82 @@ no cambió: el enlace fijo de §7 sigue valiendo.** Detalle completo en `BITACOR
 3. `CTA_FORM_ENV` contra el espíritu de §4fk.
 4. `stockMigrar` con `cod`.
 5. `atcAlMarcarEntregado` con `rfAuto`.
+
+**Después, la tarde del 25/09:**
+- **El quinto agente, de uso diario (solo informe), se cortó a las 11:20 sin entregar nada.** Se relanzó con 35
+  minutos de tope contra la rama con los 27 arreglos. No encontró bloqueantes, pero sí esto:
+  - **MEDIA — la «Ubicación de Google Maps» frenaba lo que se pega de verdad.** Pasaba con el nombre + el enlace
+    al compartir desde Maps, «Mi ubicación:», los enlaces sin https y los grados. Antes se guardaba vacío en
+    silencio; con el arreglo del agente de pedidos, no dejaba guardar.
+    - **Arreglado en `cdfbda7`.** `normalizaUbicacion` saca el primer enlace del texto, sin la puntuación del
+      final. Le agrega https a `maps.app.goo.gl`, `goo.gl/maps` y `google.*/maps`, y entiende «-17.78°, -63.18°»
+      y los grados con minutos y segundos.
+    - Frena solo si no hay ninguna ubicación (una dirección escrita va en «Dirección»). Un enlace solo se guarda
+      tal cual, como siempre.
+    - Prueba: `test_rev_pedidos` §5 (43).
+  - **BAJA — ficha de Contabilidad, venta pagada SIN flete.** El botón del bloque «🚚 Anotar el recargo» anota
+    flete sin preguntar; antes preguntaba «¿cobro de más?» y lo anotaba como pago de la venta. Es coherente con lo
+    que dice el bloque: se deja así.
+  - **BAJA — el aviso del 💰✓.** Decía «lo registró Contabilidad o la tienda»; ahora dice «recibo o comprobante»,
+    porque el QR del chofer con foto tampoco es un cobro de la puerta.
+- **Batería final: 79 suites, 2.987 bien · 0 mal.**
+
+## 11 · Publicación del 25/09 y lo que falta
+
+### Qué se publicó
+- `394f74c` en `main`, el merge de la rama:
+  - `pedidos.html` y `productos-mes.js` (sin cambios en este último);
+  - `google-apps-script.gs`, solo el ARCHIVO en el repo: no se implementó nada;
+  - `traer_kommo.py` y `panel.yml` (el push del bot ahora reintenta y avisa si falla);
+  - pruebas y documentos.
+- Se hizo sin `panel.yml` corriendo. Pages (`pages build and deployment` #1516) quedó en verde a las 19:04 UTC.
+- ⚠️ Desde mi sesión no puedo abrir `github.io` ni `script.google.com` (el proxy los rechaza). Lo verifiqué por el
+  deploy y porque el `pedidos.html` de `main` es idéntico al de la rama probada.
+
+### Qué NO cambió en producción
+El servidor implementado y el código guardado en el editor siguen siendo la 20-a.
+
+### La página nueva con la 20-a
+- Hay prueba: `test_transicion`, escenarios 1, 2 y 4. El «volver atrás» de §7 ya la daba por buena.
+- **Stock y arqueo:** se guardan sin sello. Gana el último que guarda, como antes: la protección entre dos equipos
+  rige recién con la 23-b.
+- **Borrar:** el panel manda `rev`; la 20-a lo ignora, pero el panel relee la fila antes de borrar.
+- **Celda llena:** la 20-a no tiene `celda_llena`; el panel avisa pasadas las 45.000 letras.
+- **Lo único visible:** en 🔒 Cerrar día, la línea gris «hay una versión más nueva del script sin publicar».
+
+### `traer_kommo.py` nuevo con la 20-a
+- `origen:'repaso'` y `ultimoRepaso` existen desde §4et y §4eg.
+- La 20-a anota `KOMMO_REPASO_ULTIMO` en CADA pasada, aunque no haya leads. Por eso la alarma de «repaso parado»
+  (más de 30 minutos) no salta en falso.
+
+### Lo que falta: 26/09, desde la PC (hay un recordatorio agendado a las 07:45)
+- **Antes de empezar:** que todos recarguen (F5, o cerrar y abrir la pestaña). Hasta que lo confirmen, nadie toca
+  📦 Stock ni el arqueo.
+- **Pasos de §7:**
+  - 0: anotar la versión activa;
+  - 1: pegar la 23-b del enlace fijo `14dec98…` (1956 líneas; verificado hoy de nuevo, idéntico);
+  - 2: `probarAntesDeImplementar` con «✅» y la captura del tamaño del stock;
+  - 5: ✏️ Versión nueva, con `2026-09-23-b` en «Descripción»;
+  - 6: verificar la conexión, la versión y `kommoRepaso` «Basada en el tiempo» → «Completada»;
+  - 7: volver a subir el Excel de Moreno.
+- **Opcional:** marcar agosto con `herramientas/marcar-entregados-agosto.gs` (enlace fijo `67fc83d…`, archivo
+  APARTE del proyecto).
+- **Volver atrás la página:** revierto `394f74c` en `main`. El servidor no cambia.
+
+### Decisiones que esperan al dueño
+Detalle en `BITACORA_CLAUDE.md` §4ga, «Quedan para decidir»:
+- Moreno queda con unidades fantasma si se entrega una línea 📥 sin anotar la recogida.
+- Los recojos de ATC aparecen en «A cargar en el camión».
+- Una vendedora sin clave puede sacar un pedido de un día cerrado sin que nadie se entere.
+- La celda de 50.000 letras del stock.
+- `ocAutoGs_` no conoce el prefijo RPT (arreglarlo exige republicar).
+- El formulario todavía lee los montos con `parseFloat` («1.500» vale 1,5).
+
+### Qué le pido a Codex
+1. Revisar los diffs de §10, en especial la lista «qué me gustaría que mires».
+2. Decir si ve algún problema en tener la página nueva con la 20-a hasta mañana.
+3. Mirar `normalizaUbicacion` (`cdfbda7`) por algún texto común que ahora se guarde mal. Una URL que no es de Maps
+   se acepta tal cual, como antes.
 
 ## Primera vuelta (`d890468`), resumida
 
