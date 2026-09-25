@@ -14248,7 +14248,10 @@ function stockIndiceApretado(){
 function stockClaveInv(k, cod){
   var idx=stockIndiceApretado();
   cod=String(cod||'').trim().toUpperCase();
-  if(cod && idx.cod[cod]) return idx.cod[cod];     // el código gana sobre cualquier nombre
+  /* El código gana sobre cualquier nombre… y sigue la unión a mano (🔗, 25/09): si no, el pedido
+     que trae un código que el catálogo no conoce quedaba en la clave vieja —en 0, «✗ no hay →
+     fabricar»— con el producto al que se unió lleno. */
+  if(cod && idx.cod[cod]) return stockAliasDe(idx.cod[cod]);
   if((STOCK.c.u||{})[k]!=null) return k;
   var p=stockPartes(k);
   var f=idx.full[p.d+'|'+p.m]; if(f) return f;
@@ -15940,6 +15943,14 @@ function guardarStockUnir(k){
   if(u[k]!=null){ u[destino]=(Number(u[destino])||0)+(Number(u[k])||0); delete u[k]; }
   (STOCK.e||[]).forEach(function(x){ if(x&&x.k===k) x.k=destino; });
   (STOCK.p||[]).forEach(function(x){ if(x&&x.k===k) x.k=destino; });
+  /* (25/09) …y lo de los OTROS almacenes también (Moreno, Banzer): quedaba en el renglón viejo
+     hasta la próxima lectura de la fila, y el unido se veía sin eso —la revisión lo mandaba a
+     fabricar—. Con lo que ya se le restó por recogidas (`rs`), para que siga cerrando. */
+  Object.keys(STOCK.g||{}).forEach(function(nm){
+    var s=STOCK.g[nm]||{}, gu=s.u||{};
+    if(gu[k]!=null){ gu[destino]=(Number(gu[destino])||0)+(Number(gu[k])||0); delete gu[k]; }
+    Object.keys(s.rs||{}).forEach(function(r){ if(s.rs[r] && s.rs[r].k===k) s.rs[r].k=destino; });
+  });
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Unidos. Desde ahora se cuentan como uno solo.','ok');
 }

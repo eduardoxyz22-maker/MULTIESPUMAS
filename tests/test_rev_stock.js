@@ -119,6 +119,49 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('🔗 unido a mano al SOMIER NEGRO, al releer se cuentan juntos (3 + 10 = 13): la unión manda', r.unidos===13, r.kN+' → '+r.unidos);
   chk('un conteo viejo SIN códigos se sigue juntando bajo la clave del catálogo (3 + 4 = 7, §4co)', r.eco===7, r.ecoClaves);
 
+  // ══ 2. 🔗 Unir: lo de los otros almacenes y el pedido que trae el código ══
+  console.log('\n── 2. 🔗 Unir un producto con stock en Moreno y un pedido con su código ──');
+  r = await page.evaluate(() => {
+    /* Un producto que el catálogo no conoce (código ZZ0077): 2 acá y 5 en Moreno. El dueño lo une
+       al NUEVO ECO FLEX del catálogo (3 acá). Hay un pedido por nombre (4) y otro que trae el
+       código ZZ0077 (2), los dos por venir. */
+    STOCK=stockVacio(); STOCK_CARGADO=true;
+    var KC=stockClave({desc:'NUEVO ECO FLEX',medida:'140x190',codigo:'CH1332'});
+    var KR=stockClaveCruda({desc:'ECO FLEX PREMIUM 140X190',medida:'140x190'});
+    STOCK.c={ f:todayStr(), hora:'07:00:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.', cod:{'CH1332':KC,'ZZ0077':KR}, t:Date.now()-3600000 };
+    STOCK.c.u[KC]=3; STOCK.c.u[KR]=2;
+    STOCK.g={'IM - PRODUCTOTERMINADO':{ f:todayStr(), u:{}, cod:{'ZZ0077':KR}, t:Date.now()-3600000, rs:{} }};
+    STOCK.g['IM - PRODUCTOTERMINADO'].u[KR]=5;
+    STOCK.al={'IM - PRODUCTOTERMINADO':'otro','PRODUCTOS TERMINADOS FAB.':'log'};
+    STATE=[_P({id:'u1', fecha:_adel(1), productos:[{desc:'ECO FLEX PREMIUM',medida:'140x190',codigo:'',cant:4}]}),
+           _P({id:'u2', fecha:_adel(2), productos:[{desc:'ECO FLEX PREMIUM',medida:'140x190',codigo:'ZZ0077',cant:2}]})];
+    stockOlvidarIndice();
+    var ver=function(){
+      stockOlvidarIndice();
+      var d=stockData(), o=d.lista.filter(function(x){ return x.k===KC; })[0], viejo=d.lista.filter(function(x){ return x.k===KR; })[0];
+      REVSTK_SOLO_VACIOS=true; REVSTK_DIAS='todos';
+      var A=stockAsignar(), l=function(id){ var g=A.pedidos.filter(function(x){ return x.p.id===id; })[0]; return g?g.lineas[0]:null; };
+      return { dep:o&&o.deposito, otros:o&&o.enOtros, comp:o&&o.comp, fab:o&&o.fabricar,
+               viejo:viejo?{dep:viejo.deposito, otros:viejo.enOtros, comp:viejo.comp, fab:viejo.fabricar}:null,
+               u1:l('u1')&&(l('u1').k+' → '+l('u1').ahora), u2:l('u2')&&(l('u2').k+' → '+l('u2').ahora), u2k:l('u2')&&l('u2').k, u2a:l('u2')&&l('u2').ahora };
+    };
+    document.body.insertAdjacentHTML('beforeend','<select id="stk-unir-a"><option value="'+KC.replace(/"/g,'&quot;')+'" selected></option></select>');
+    guardarStockUnir(KR);
+    var el=document.getElementById('stk-unir-a'); if(el) el.remove();
+    var recien=ver();
+    var fila=window._guardadas.filter(function(x){ return x.id===STOCK_ID; }).pop();
+    STOCK=leerStock({observaciones:fila.observaciones});
+    var releido=ver();
+    return { KC:KC, recien:recien, releido:releido };
+  });
+  chk('⚠️ recién unido: el ECO FLEX tiene 5 acá (3 + 2) y los 5 de Moreno pasan con él, no quedan en el renglón viejo',
+      r.recien.dep===5 && r.recien.otros===5 && !(r.recien.viejo && r.recien.viejo.otros), JSON.stringify(r.recien));
+  chk('⚠️ el pedido que trae el código ZZ0077 sigue la unión: es el ECO FLEX y no queda «✗ no hay»',
+      r.recien.u2k===r.KC && r.recien.u2a!=='no' && r.recien.comp===6, r.recien.u2+' · comprometido '+r.recien.comp);
+  chk('⚠️ …y al releer la fila también: nada que fabricar para ese pedido (hay 5 acá y 5 en Moreno)',
+      r.releido.u2k===r.KC && r.releido.u2a!=='no' && r.releido.fab===0 && !(r.releido.viejo && r.releido.viejo.fab),
+      r.releido.u2+' · fabricar '+r.releido.fab+' · renglón viejo '+JSON.stringify(r.releido.viejo));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
