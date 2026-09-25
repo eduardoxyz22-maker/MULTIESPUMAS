@@ -2449,15 +2449,25 @@ function apiBorrarFoto(fotoId){
 function flushPending(){
   if(!CONNECTED) return Promise.resolve();
   var a=getPending(); if(!a.length) return Promise.resolve();
-  var remaining=[];
+  /* ⚠️ DE LA COLA SE SACA SOLO LO QUE SE MANDÓ (25/09). Esto terminaba con `setPending(remaining)`:
+     la cola ENTERA se reemplazaba por la foto del principio menos lo que había salido. Lo que se
+     encolaba MIENTRAS tanto —otro guardado sin señal, con el servidor tardando hasta 30 s por
+     pedido— se borraba sin haberse mandado nunca, y la persona ya había leído «quedó en cola, se
+     manda solo». Ahora sale lo que llegó (o lo que el servidor rechazó en firme) y solo si lo que
+     espera en la cola sigue siendo EXACTAMENTE lo que se mandó. */
+  var listos={};
   return a.reduce(function(chain,rec){
+    var enviado=JSON.stringify(rec);          // antes de mandarlo: `aplicarSello` le cambia el sello
     return chain.then(function(){
       return apiSave(rec).then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
-        if(!res||!res.ok){ if(!(res && RECHAZOS_FIRMES[res.error])) remaining.push(rec); }
-      }, function(){ remaining.push(rec); });
+        if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
+      }, function(){});
     });
-  },Promise.resolve()).then(function(){ setPending(remaining); updateFooter(); });
+  },Promise.resolve()).then(function(){
+    setPending(getPending().filter(function(p){ var e=listos[String(p&&p.id)]; return !(e && JSON.stringify(p)===e); }));
+    updateFooter();
+  });
 }
 
 /* ============================================================================
