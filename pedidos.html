@@ -3060,6 +3060,11 @@ function heredarMarcas(nuevos, viejos){
     if(v.chk==='im' && v.chkDes) x.chkDes=v.chkDes;   // …y el desglose, si quedó repartida
     if(v.enProd) x.enProd=v.enProd;
     if(v.prodEn) x.prodEn=v.prodEn;
+    /* 🏭 …y los dos sellos con que se mide cuánto tarda la fábrica (§4co): el día que se pidió y el
+       que llegó. Corregir la dirección desde el formulario se los borraba (25/09), y con eso la
+       medición de `stockTiemposFabrica` perdía esa muestra. */
+    if(v.prodF)  x.prodF=v.prodF;
+    if(v.prodR)  x.prodR=v.prodR;
     /* 📥 La marca del lead de Kommo (`klead`) no es una revisión: viaja con el pedido aunque
        cambie la cantidad. Sin esto, corregir cualquier cosa del pedido la perdía y el robot
        volvía a traer el borrador (§4es). */

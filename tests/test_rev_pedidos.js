@@ -385,6 +385,69 @@ function INIT(){
     chk('⚠️ …ni le salta a logística un falso «MODIFICADO: cambió la ubicación»', !(m2.productos[0]||{}).mod && m2.verificado===true, (m2.productos[0]||{}).mod);
   });
 
+  // ══ 6. EDITAR SIN TOCAR NADA NO CAMBIA NADA ════════════════════════════════════════════
+  /* Cada forma de pedido que anda por la planilla: se abre con ✏️, se guarda sin tocar nada y la
+     fila tiene que quedar IGUAL, columna por columna (menos el sello). Pasa por `recToRow` y
+     `rowToRec_` del .gs de verdad. Quedan afuera, a propósito, lo que ya tiene su prueba y cambia
+     por diseño: la ATC (el formulario completa sus piezas en `false`), la RPT (el renglón sin tipo
+     toma «Reposición») y la «PAGADA sin monto» (el formulario pide el monto antes de guardar). */
+  await esc('6. Editar sin tocar nada, forma por forma', async () => {
+    const S = servidor();
+    const DIAS = ['2026-09-17','2026-09-18','2026-09-21','2026-09-22','2026-09-23','2026-09-24','2026-09-25'];
+    const CASOS = [
+      pedido({ id:'e01', cliente:'ADELANTO SUELTO', metodoPago:'Efectivo', acuenta:500, saldo:2500 }),
+      pedido({ id:'e02', cliente:'ADELANTO QR DOS IMAGENES', metodoPago:'QR BISA %IMGA1 %IMGA2', acuenta:700, saldo:2300 }),
+      pedido({ id:'e03', cliente:'PAGADO CON HISTORIAL', metodoPago:'~QR BISA 3000 @2026-09-15 #1001 %IMGB1', pagado:true, saldo:0 }),
+      pedido({ id:'e04', cliente:'MIXTO PAGADO', metodoPago:'~Efectivo 2000 @2026-09-15 #1001 + Tarjeta 1000 @2026-09-15 #1001 %IMGC1', pagado:true, saldo:0 }),
+      pedido({ id:'e05', cliente:'ADELANTO Y COBRO', metodoPago:'~Efectivo 500 @2026-09-10 #1001 + QR BISA 2500 @2026-09-15 #1750 %IMGD1', pagado:true, saldo:0, acuenta:500 }),
+      pedido({ id:'e06', cliente:'FLETE PACTADO', metodoPago:'Efectivo + ^50', acuenta:500, saldo:2500 }),
+      pedido({ id:'e07', cliente:'FLETE COBRADO', metodoPago:'~Efectivo 500 @2026-09-10 #1001 + ^Efectivo 50 @2026-09-15 #1001', acuenta:500, saldo:2500 }),
+      pedido({ id:'e08', cliente:'FLETE PARCIAL', metodoPago:'~Efectivo 500 @2026-09-10 #1001 + ^Efectivo 40 @2026-09-15 #1001 + ^60', acuenta:500, saldo:2500 }),
+      pedido({ id:'e09', cliente:'REGISTRADO', metodoPago:'~Efectivo 500 @2026-09-10 #1001 · REGISTRADO', acuenta:500, saldo:2500 }),
+      pedido({ id:'e10', cliente:'CHOFER RECIBIO', metodoPago:'~Efectivo 600 @2026-09-10 #1001 >Luis Pierre', acuenta:600, saldo:2400 }),
+      pedido({ id:'e11', cliente:'SIN PAGO' }),
+      pedido({ id:'e12', cliente:'MARCAS DE LOGISTICA', verificado:true, estado:'En producción',
+               productos:[{desc:'TITANIO LATEX', medida:'140x190', codigo:'CH1129', cant:1, precio:3000, chk:'no', enProd:true, prodEn:'Moreno', prodF:'2026-09-12'},
+                          {desc:'ALMOHADA', medida:'50x70', codigo:'CD1403', cant:2, precio:100, chk:'im', chkDe:'01-05-025  Almacen Distribucion Banzer'},
+                          {desc:'SOMIER ORO', medida:'140x190', codigo:'CH1144', cant:1, precio:900, chk:'ok', enProd:true, prodEn:'Multiespumas', prodF:'2026-09-10', prodR:'2026-09-13'}] }),
+      pedido({ id:'e13', cliente:'MEDIDAS RARAS', productos:[{desc:'COLCHON ESPECIAL', medida:'150x200', codigo:'', cant:1, precio:2000},{desc:'SOMIER', medida:'2 plz', codigo:'', cant:1},{desc:'PILLOW', medida:'160X190', codigo:'', cant:3}] }),
+      pedido({ id:'e14', cliente:'MAPS LINK', maps:'https://maps.app.goo.gl/abcDEF123' }),
+      pedido({ id:'e15', cliente:'MAPS APROX', maps:'https://www.google.com/maps?q=-17.78,-63.18&aprox=1' }),
+      pedido({ id:'e16', cliente:'ENTREGADO CON FOTOS', entregado:true, verificado:true, chofer:'Luis Pierre', vehiculo:'Camión 1', fotos:['FOTO1','FOTO2'], fecha:'2026-09-15', estado:'En stock' }),
+      pedido({ id:'e17', cliente:'VENTA DE TIENDA', fecha:'', turno:'', zona:'TIENDA', direccion:'SALIÓ DE TIENDA · Carmelo', entregado:true, verificado:true,
+               metodoPago:'~Efectivo 3000 @2026-09-15 #1001', pagado:true, saldo:0, nroDia:0 }),
+      pedido({ id:'e18', cliente:'ROHO CLIENTE', vendedor:'ROHO', oc:'R-4455', nota:'', celular:'', saldo:0 }),
+      pedido({ id:'e19', cliente:'EDUARDO CLIENTE', vendedor:'Eduardo Añez', nota:'', celular:'', saldo:0 }),
+      pedido({ id:'e20', cliente:'KLEAD', productos:[{desc:'TITANIO LATEX', medida:'140x190', codigo:'CH1129', cant:1, precio:3000, klead:'555'}] }),
+      pedido({ id:'e21', cliente:'YA MODIFICADO', verificado:true, productos:[{desc:'TITANIO LATEX', medida:'140x190', codigo:'CH1129', cant:1, precio:3000, chk:'ok', mod:{f:'2026-09-15', h:'10:00', q:'Mirian Salazar', d:['➕ X']}}] }),
+      pedido({ id:'e22', cliente:'FECHA PASADA', fecha:'2026-09-10' }),
+      pedido({ id:'e23', cliente:'GARANTIA Y FACTURA', garantia:'JUAN', facturarA:'EMPRESA SRL', nit:'1234567', observaciones:'llamar antes' }),
+      pedido({ id:'e24', cliente:'TURNO PM', turno:'PM' })
+    ];
+    CASOS.forEach((c,i) => { c.oc = c.oc || ('09-'+String(100+i)); if(c.fecha==='2026-09-17') c.fecha=DIAS[i%DIAS.length]; const r=S.guardar(c); if(!r.ok) throw new Error('sembrar '+c.id+' '+JSON.stringify(r)); });
+    const A = await abrir(S);
+    const malos = [];
+    for (const c of CASOS) {
+      const antes = S.filaCruda(c.id);
+      A.__dialogos.length = 0;
+      const t = await A.evaluate(async (id) => {
+        window._toasts=[]; showView('admin'); await esperar(120); editPedido(id); await esperar(200);
+        submitPedido(); await esperar(250); await quieto(); try{ closeModal(); }catch(e){}
+        return window._toasts.filter(function(x){ return /^err/.test(x); });
+      }, c.id);
+      const despues = S.filaCruda(c.id) || [];
+      const dif = [];
+      for (let i=0;i<S.HDR.length-1;i++) if (String(antes[i])!==String(despues[i])) dif.push(S.HDR[i]+': «'+String(antes[i]).slice(0,140)+'» → «'+String(despues[i]).slice(0,140)+'»');
+      if (dif.length || t.length || A.__dialogos.length) malos.push({ id:c.id, cliente:c.cliente, dif:dif, rojos:t, dialogos:A.__dialogos.map(d=>d.slice(0,60)) });
+    }
+    malos.forEach(m => console.log('   · '+m.id+' '+m.cliente+': '+JSON.stringify(m).slice(0,700)));
+    chk('⚠️ las '+CASOS.length+' formas de pedido quedan IGUALES en la planilla, sin avisos ni preguntas', !malos.length, malos.map(m=>m.id+' '+m.cliente).join(', '));
+    const e12 = S.fila('e12');
+    chk('⚠️ en particular, los sellos de fábrica (cuándo se pidió y cuándo llegó) siguen ahí (§4co)',
+        e12.productos[0].prodF==='2026-09-12' && e12.productos[2].prodF==='2026-09-10' && e12.productos[2].prodR==='2026-09-13',
+        e12.productos.map(x=>({prodF:x.prodF, prodR:x.prodR})));
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
