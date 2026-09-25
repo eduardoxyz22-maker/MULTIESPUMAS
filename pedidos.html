@@ -2491,7 +2491,9 @@ function descartarImagenesSinPegar(){
   var ids=imagenesSinPegar(); if(!ids.length) return 0;
   FORM_COMPS=compsArr(FORM_COMPS).filter(function(id){ return ids.indexOf(id)<0; });
   if(typeof FORM_COMPS2!=='undefined') FORM_COMPS2=compsArr(FORM_COMPS2).filter(function(id){ return ids.indexOf(id)<0; });
-  if(CONNECTED) ids.forEach(function(id){ apiBorrarFoto(id).catch(function(){}); });
+  /* Nunca una imagen que algún pedido todavía nombra (§4fy): la regla de `borrarFotoSiNadieLaUsa`. Acá
+     se escapaba y así se iba a la papelera el comprobante de una venta ya guardada (25/09). */
+  if(CONNECTED) ids.forEach(function(id){ if(!fotoEnUso(id)) apiBorrarFoto(fidLimpio(id)).catch(function(){}); });
   toast('🗑️ Se '+(ids.length===1?'borró 1 imagen que no quedó':('borraron '+ids.length+' imágenes que no quedaron'))+' en ningún pedido.','err',6000);
   return ids.length;
 }
@@ -13149,7 +13151,11 @@ function ventaTotal(p){ var a=anticipoDe(p); return r2(objetivoCobro(p) + (a?(Nu
    historial de pagos hay que sacar el método del anticipo, no del texto crudo. */
 function metodoFormulario(rec){
   var t=sinEnvios(sinMarcaReg(rec&&rec.metodoPago));
-  if(!parseCobros(t).length){ var cd=compDeTexto(t); return { metodo:metodoBase(cd.txt), banco:bancoDe(cd.txt), comp:cd.comp }; }
+  /* ⚠️ TODAS las imágenes también acá (25/09): el método SUELTO es como se guarda toda venta nueva
+     con «A cuenta» («QR BISA %CAPTURA %RECIBO») y la «PAGADA sin monto». Con solo `comp`, editarla
+     sin tocar nada perdía la segunda imagen, y `imagenesSinPegar` tomaba la que ya estaba por una
+     recién subida: al salir del formulario preguntaba «¿Salir igual?» y la mandaba a la papelera. */
+  if(!parseCobros(t).length){ var cd=compDeTexto(t); return { metodo:metodoBase(cd.txt), banco:bancoDe(cd.txt), comp:cd.comp, comps:cd.comps }; }
   var c=anticipoDe(rec)||parseCobros(t)[0]||{};
   // ⚠️ TODAS las imágenes (§4em): con solo `comp` el formulario abría con la primera y, al
   // rehacer el historial, las demás desaparecían.

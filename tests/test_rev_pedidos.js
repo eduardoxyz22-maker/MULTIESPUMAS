@@ -251,6 +251,49 @@ function INIT(){
     chk('…y no quedó ni en la bandeja ni repetida', JSON.stringify(r.final)===JSON.stringify(['pedido 2026-09-21 3003']) && r.bandejaFinal.indexOf('kommo-900')<0, r);
   });
 
+  // ══ 3. EL COMPROBANTE DEL ADELANTO GUARDADO COMO MÉTODO SUELTO ══════════════════════════
+  /* Toda venta NUEVA con «A cuenta» se guarda así: `QR BISA %IMG1 %IMG2` (el método suelto, con
+     la captura y el recibo). Y una «PAGADA sin monto»: `Efectivo %IMG`. */
+  await esc('3. Abrir para editar una venta con adelanto (método suelto) y salir, o guardar sin tocar', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'a1', cliente:'ADELANTO CON DOS IMAGENES', oc:'09-001', metodoPago:'QR BISA %IMGA1 %IMGA2', acuenta:700, saldo:2300 }));
+    S.guardar(pedido({ id:'a2', cliente:'PAGADA SIN MONTO', oc:'09-002', metodoPago:'Efectivo %IMGE1', pagado:true, saldo:0, acuenta:0, fecha:'2026-09-18' }));
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      var o={};
+      showView('mis'); await esperar(150);
+      window.__ctl.log=[];
+      editPedido('a1'); await esperar(250);
+      o.form=compsArr(FORM_COMPS);
+      o.sinPegar=imagenesSinPegar();
+      showView('mis'); await esperar(400);                       // se arrepiente: vuelve sin guardar
+      editPedido('a2'); await esperar(250);
+      o.sinPegar2=imagenesSinPegar();
+      showView('mis'); await esperar(400);
+      o.borradas=window.__ctl.log.filter(function(x){ return x.act==='borrarFoto'; }).map(function(x){ return x.id; });
+      return o;
+    });
+    chk('el formulario abre con las DOS imágenes del adelanto (antes solo la primera)', JSON.stringify(r.form)===JSON.stringify(['IMGA1','IMGA2']), r.form);
+    chk('⚠️ las imágenes que la venta YA tenía no cuentan como «subidas y sin pegar»', !r.sinPegar.length && !r.sinPegar2.length, r);
+    chk('⚠️ salir del formulario sin guardar no pregunta ni manda a la papelera el comprobante del pago', !A.__dialogos.length && !r.borradas.length, { dialogos:A.__dialogos.map(d=>d.slice(0,50)), borradas:r.borradas });
+    const r2 = await A.evaluate(async () => {
+      window._toasts=[];
+      editPedido('a1'); await esperar(250); submitPedido(); await esperar(500); await quieto(); try{ closeModal(); }catch(e){}
+      return window._toasts.filter(function(t){ return /^err/.test(t); });
+    });
+    chk('⚠️ guardar sin tocar nada deja las DOS imágenes en la planilla (antes se perdía la segunda)', S.fila('a1').metodoPago==='QR BISA %IMGA1 %IMGA2', S.fila('a1').metodoPago);
+    chk('…sin ningún aviso rojo', !r2.length, r2);
+    // La guarda de fondo: aunque algún camino futuro liste una imagen que un pedido SÍ usa, no se borra.
+    const r3 = await A.evaluate(async () => {
+      showView('form'); await esperar(150); resetForm();
+      FORM_COMPS=['IMGA1','IMGNUEVA'];
+      window.__ctl.log=[];
+      showView('mis'); await esperar(400);
+      return window.__ctl.log.filter(function(x){ return x.act==='borrarFoto'; }).map(function(x){ return x.id; });
+    });
+    chk('⚠️ la imagen que usa OTRO pedido nunca va a la papelera (§4fy); la huérfana de verdad, sí', JSON.stringify(r3)===JSON.stringify(['IMGNUEVA']), r3);
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
