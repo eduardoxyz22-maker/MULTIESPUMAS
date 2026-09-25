@@ -7658,6 +7658,21 @@ movió a la rama antes de empezar. La próxima vez, decirlo en la consigna.
 de dos agentes: quedó uno). Cada prueba nueva se corrió también contra el panel de `50f9d22` (una copia aparte
 con `git worktree`): 11, 29, 28 y 28 rojos. Batería completa: **79 suites, 2.985 bien · 0 mal**.
 
+#### Publicación de la PÁGINA (25/09, 15:04 de Bolivia) — el servidor queda para el 26/09
+
+- El dueño dijo «arrancamos cuando terminen los agentes». El quinto (uso diario) se había cortado a las 11:20 con
+  la interrupción de su mensaje, sin informe: se relanzó con 35 minutos de tope. No encontró nada que bloquee, pero sí
+  que la ubicación de Maps FRENABA lo que pegan de verdad (el nombre + el enlace al compartir, «Mi ubicación:», enlaces
+  sin https, grados) → `normalizaUbicacion` saca el enlace de adentro y frena solo si no hay ninguna (`cdfbda7`).
+- **Desde el celular no se puede usar el editor de Apps Script.** El dueño eligió publicar SOLO la página ahora
+  (la nueva anda con el servidor 20-a: `test_transicion` 1, 2 y 4) y dejar la 23-b para el 26/09 en la PC.
+- Batería antes de publicar: **79 suites, 2.987 bien · 0 mal**. Merge `394f74c` a `main` (19:04 UTC, sin `panel.yml`
+  corriendo), deploy de Pages en verde. ⚠️ Desde la sesión NO se puede abrir `github.io` (el proxy lo rechaza):
+  se verificó por el deploy de Actions y porque `pedidos.html` de `main` es idéntico al de la rama.
+- **Hoy es feriado** (las vendedoras no trabajan): mañana, antes de empezar, TODOS recargan (F5 o cerrar y abrir la
+  pestaña) y hasta confirmarlo nadie toca 📦 Stock ni el arqueo. Recordatorio agendado (send_later) para el 26/09
+  07:45 de Bolivia con los pasos del servidor.
+
 ## 4fz-b. Segunda vuelta: la junta que no cuenta dos veces, el servidor estricto y el incidente del 23/09 (2026-09-23)
 
 > Dos revisiones sobre la primera vuelta (§4fz, `d890468`): un **agente adversarial propio** (14
