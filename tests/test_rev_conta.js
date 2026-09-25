@@ -9,6 +9,8 @@
         botón anota el FLETE, no un «cobro de más» de la venta (regresión de §4fk).
      2. El 💰✓ de la tabla de Administración deshace solo los cobros de la puerta, nunca el QR
         que registró Contabilidad ni el 2° método de un adelanto mixto.
+     3. Corregir desde el formulario una venta con pago MIXTO no le cambia el día al adelanto
+        (lo de §4fr, que cubría solo el adelanto simple).
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -190,6 +192,45 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('2 · el cobro de la puerta SÍ se deshace, como siempre (la venta vuelve a deber 900)', r.q3.cobros.length===0 && r.q3.pagado===false && r.q3.saldo===900, J(r.q3));
   chk('2 · con las dos cosas, se va SOLO el de la puerta (debe 300, el QR queda)', J(r.q4.cobros)===J(['QR 700']) && r.q4.saldo===300 && r.q4.pagado===false, J(r.q4));
   chk('2 · …y el aviso nombra el de la puerta y dice que el otro NO se toca', D.vistos.some(function(t){ return /300/.test(t) && /NO se toca/.test(t); }), D.vistos.join(' | ').slice(0,200));
+
+  /* ══ 3 · CORREGIR UNA VENTA CON PAGO MIXTO DESDE EL FORMULARIO ══════════════════════
+     §4fr hizo que corregir el adelanto desde el formulario conserve su fecha y su recibo… pero
+     solo el adelanto SIMPLE. Con pago mixto (Efectivo 1.500 + QR 500 el 28/08) la vendedora
+     corregía el SALDO el 16/09 y los dos renglones pasaban a «hoy»: Bs 2.000 salían del cuadre de
+     AGOSTO (ya arqueado) y entraban en el de septiembre. */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    var tsAgo=new Date('2026-08-28T12:00:00').getTime();
+    var mixto=function(ant, m2, n){ return textoCobros([{anticipo:true,metodo:'Efectivo',monto:ant,fecha:'2026-08-28',nota:n,comps:['E'+n]},
+                                                        {metodo:'QR',banco:'BISA',monto:m2,fecha:'2026-08-28',nota:n,comps:['Q'+n]}]); };
+    STATE=[ P({ id:'M1', nota:'61', oc:'08-061', cliente:'MIXTO DE AGOSTO', ts:tsAgo, acuenta:2000, saldo:1000,
+                metodoPago:mixto(1500,500,'61'), productos:[{desc:'COLCHON',cant:1,precio:3000}] }),
+            P({ id:'M2', nota:'62', oc:'08-062', cliente:'MIXTO, CAMBIA EL QR', ts:tsAgo, acuenta:2000, saldo:1000,
+                metodoPago:mixto(1500,500,'62'), productos:[{desc:'COLCHON',cant:1,precio:3000}] }) ];
+    RETIROS=[]; releer();
+    var fechas=function(id){ return contaPagos(findById(id)).map(function(c){ return (c.anticipo?'ANT ':'')+c.metodo+' '+c.monto+' @'+c.fecha+' #'+limpiaNota(c.nota); }); };
+    var cuadreMes=function(id, mes){
+      var t=0; contaPagos(findById(id)).forEach(function(c){ if(String(c.fecha).slice(0,7)===mes) t=r2(t+c.monto); }); return t; };
+    var out={};
+    // (a) solo corrige el SALDO
+    editPedido('M1'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-saldo').value='900';
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    var p1=findById('M1');
+    out.a={ pagos:fechas('M1'), agosto:cuadreMes('M1','2026-08'), septiembre:cuadreMes('M1','2026-09'),
+            saldo:Number(p1.saldo)||0, acuenta:Number(p1.acuenta)||0, mixto:!!mixtoDe(p1) };
+    // (b) corrige el monto del 2° método (500 → 600): el 1° pasa a 1.400, la plata sigue siendo de agosto
+    editPedido('M2'); await new Promise(r=>setTimeout(r,200));
+    document.getElementById('f-monto2').value='600';
+    submitPedido(); await new Promise(r=>setTimeout(r,400));
+    var p2=findById('M2');
+    out.b={ pagos:fechas('M2'), agosto:cuadreMes('M2','2026-08'), septiembre:cuadreMes('M2','2026-09'), mixto:!!mixtoDe(p2) };
+    return out;
+  });
+  chk('3 · ⚠️ corregir el SALDO de una venta con pago mixto NO muda el adelanto de día', r.a.pagos.every(function(t){ return /@2026-08-28 #61$/.test(t); }) && r.a.pagos.length===2, J(r.a.pagos));
+  chk('3 · ⚠️ …los Bs 2.000 siguen en el cuadre de AGOSTO (no en septiembre)', r.a.agosto===2000 && r.a.septiembre===0, J({agosto:r.a.agosto, septiembre:r.a.septiembre}));
+  chk('3 · …y la corrección sí entró (saldo 900, A cuenta 2.000, sigue siendo mixto)', r.a.saldo===900 && r.a.acuenta===2000 && r.a.mixto===true, J(r.a));
+  chk('3 · cambiar el monto del 2° método tampoco cambia el día del adelanto', J(r.b.pagos)===J(['ANT Efectivo 1400 @2026-08-28 #62','QR 600 @2026-08-28 #62']) && r.b.agosto===2000 && r.b.mixto===true, J(r.b));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

@@ -7056,10 +7056,16 @@ function submitPedido(){
   var _antPrev = prev ? (parseCobros(prev.metodoPago).filter(function(c){ return c.anticipo && !esEnvio(c); })[0]||null) : null;
   var _metForm = _mixOn
         ? (function(){
-            var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), hoy=todayStr(), nota=document.getElementById('f-nota').value;
+            var base=_pagSI?_cobVal:_acuVal, m2=mixtoMonto2(), dia=todayStr(), nota=document.getElementById('f-nota').value;
+            /* ⚠️ §4fr TAMBIÉN CON PAGO MIXTO (25/09). Corregir el saldo (o el 2° monto) de una venta con
+               adelanto mixto del 28/08 reescribía los DOS renglones con la fecha de HOY: Bs 2.000 se
+               mudaban del cuadre de agosto, ya arqueado, al de septiembre. Si el adelanto ya era un
+               renglón del historial, conserva su día y su recibo (los dos renglones comparten los dos:
+               así los reconoce `mixtoDe`). Con «SÍ, pagado» sigue como siempre, igual que en §4fr. */
+            if(!_pagSI && _antPrev){ dia=_antPrev.fecha||contaFecha(prev)||dia; nota=limpiaNota(_antPrev.nota)||nota; }
             return textoCobros([
-              { anticipo:true, metodo:segVal('f-metodo'),  banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),   monto:r2(base-m2), fecha:hoy, nota:nota, comps:compsArr(FORM_COMPS) },
-              { anticipo:false, metodo:segVal('f-metodo2'), banco:(segVal('f-metodo2')==='QR'?segVal('f-banco2'):''), monto:r2(m2),      fecha:hoy, nota:nota, comps:compsArr(FORM_COMPS2) }
+              { anticipo:true, metodo:segVal('f-metodo'),  banco:(segVal('f-metodo')==='QR'?segVal('f-banco'):''),   monto:r2(base-m2), fecha:dia, nota:nota, comps:compsArr(FORM_COMPS) },
+              { anticipo:false, metodo:segVal('f-metodo2'), banco:(segVal('f-metodo2')==='QR'?segVal('f-banco2'):''), monto:r2(m2),      fecha:dia, nota:nota, comps:compsArr(FORM_COMPS2) }
             ]);
           })()
         : (_pagSI && _cobVal>0)
