@@ -557,6 +557,44 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   chip «Mañana» tiene que usar `proximoDiaEntrega()` o se pone rojo los sábados.
   `tests/test_sabado.js` (reloj clavado).
 
+## 🔎 La revisión con cuatro agentes del 25/09 (§4ga): lo que quedó y hay que respetar
+- **Agosto «entregado»** (pedido del dueño): `herramientas/marcar-entregados-agosto.gs`, archivo APARTE que el
+  dueño agrega al proyecto de Apps Script (➕ → Secuencia de comandos), **nunca adentro de Código.gs**, y corre
+  desde el editor (`verPendientesAgosto` → `marcarEntregadosAgosto` → `deshacerEntregadosAgosto`). Anda con el
+  `.gs` 20-a y con el 23-b (usa `getSheet`, `rowToRec_`, `HEADERS`, `REV_COL`…). ⚠️ **Todos los archivos de un
+  proyecto de Apps Script comparten los nombres**: uno repetido pisaría al de Código.gs. Desde esta sesión NO hay
+  salida a Google (el proxy rechaza `script.google.com`): no se puede escribir la planilla desde acá.
+  `test_servidor.js` §13 lo prueba contra los dos `.gs`.
+- **Plata**: `CTA_FORM_ENV` — el botón de la ficha de Contabilidad hace lo que dice el bloque (venta pagada =
+  bloque del flete); la pregunta de §4fk queda para «💵 Pago» visto y la venta saldada en otro lado. El **💰✓ de
+  Administración solo deshace cobros de la puerta** (`cobroDeLaPuerta`). `aplicarMontos` usa `cobrosReales` +
+  `textoHistorial` (§4fg) y no desmarca una «PAGADA sin monto». El formulario conserva día y recibo del adelanto
+  también en el MIXTO, y fecha el monto de una «PAGADA sin monto» el día de la venta. «Corregir precios y montos»
+  lee con `parseMonto` («1.500» = 1500). ⚠️ El FORMULARIO todavía lee `f-acuenta`/`f-saldo`/`f-cobrado`/
+  `f-envio`/`f-monto2` con `parseFloat` (pendiente, §4ga). Excel del Cuadre: columna «RECARGO POR ENTREGA» al
+  FINAL (no mover las otras).
+- **ATC/RPT en la puerta**: `noSeCobra(p)` va ANTES de `sinMontoAnotado` (tarjeta del chofer, hoja de ruta,
+  fichas); `choCobrarMetodo` se niega. Todo camino que mueva fecha o turno de una ATC que vive en su devolución
+  pasa por **`atcSeguirViaje(p, antes)`** (`antes` = `atcEnDevolucion(p)` medido ANTES de mover). El ✅ marca
+  `rfAuto` y destildar saca solo eso.
+- **La cola**: `flushPending` saca de la cola SOLO lo que se mandó y sigue igual (JSON de antes de mandar).
+  ⚠️ **Nunca volver a `setPending(remaining)`**: pisaba lo que entraba mientras se mandaba. Un borrador de Kommo
+  completado que espera en la cola NO vuelve a la bandeja (`borradorEnColaComoPedido`) y no se puede descartar.
+- **Formulario**: una «Ubicación de Google Maps» que no se entiende FRENA el guardado (vacía es válida; la que no
+  se tocó se guarda como estaba). `metodoFormulario` devuelve `comps` también en el método suelto, y
+  `descartarImagenesSinPegar` no borra una imagen que algún pedido nombra (`fotoEnUso`). `heredarMarcas` pasa
+  `prodF`/`prodR`. El «ok tardío» toma la OC de la fila si el servidor la renumeró.
+- **Stock**: `stockMigrar` NO re-resuelve por nombre las claves de un código que el catálogo no conoce (salen del
+  `cod` de cada foto); 🔗 Unir mueve también `g[..].u` y el `rs` de las recogidas, y `stockClaveInv` sigue la
+  unión. Existencias sin la hora en el nombre: «ya incluye las entregas del día» arranca SIN marcar (§4cn).
+- Pruebas nuevas: `test_rev_conta.js`, `test_rev_entregas.js`, `test_rev_stock.js`, `test_rev_pedidos.js` (todas
+  con reloj clavado). ⚠️ **Una prueba que arma pedidos «para mañana» y mira un filtro de MES se pudre los días 29-30**:
+  mirar en «Todo» o clavar el reloj. ⚠️ Los agentes con `isolation: worktree` arrancan de `main`, no de la rama:
+  decirles que se muevan a la rama antes de empezar.
+- **Esperan al dueño** (§4ga, «Quedan para decidir»): Moreno con unidades fantasma si se entrega una línea 📥 sin
+  anotar la recogida; recojos de ATC en «A cargar»; sacar un pedido de un día cerrado sin clave; la celda de 50.000
+  del stock (podar `STOCK.p` recibidos); `ocAutoGs_` sin RPT (exige republicar).
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +

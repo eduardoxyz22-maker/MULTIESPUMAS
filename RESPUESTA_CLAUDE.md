@@ -470,6 +470,45 @@ servidores, con 8 escenarios. Resultado: 18/18, y 11 rojos contra el panel de `0
 
 ---
 
+## 10 · Revisión con cuatro agentes que ARREGLAN (25/09) — para que la mires
+
+El dueño pidió «revisa que no haya más errores… contabilidad, conciliación, entregas, stock, predicción de
+producción y pedidos». Cuatro agentes en copias aisladas, con la consigna: solo lo CONFIRMADO, primero una
+prueba que falla, sin tocar el `.gs` ni las reglas del dueño. Revisé cada diff antes de juntarlo. **El `.gs`
+no cambió: el enlace fijo de §7 sigue valiendo.** Detalle completo en `BITACORA_CLAUDE.md` §4ga.
+
+| Área | Commits | Prueba nueva | Contra `50f9d22` |
+|---|---|---|---|
+| Stock y producción | 4 | `tests/test_rev_stock.js` (19) | 11 rojos |
+| Entregas y logística | 5 | `tests/test_rev_entregas.js` (42) | 29 rojos |
+| Contabilidad y Cuadre | 11 | `tests/test_rev_conta.js` (38) | 28 rojos |
+| Pedidos y lo demás | 7 | `tests/test_rev_pedidos.js` (41) | 28 rojos |
+
+**Lo más grave de lo arreglado:**
+- `flushPending` reemplazaba la cola entera al terminar: lo encolado MIENTRAS se mandaba se perdía.
+- Un borrador de Kommo completado sin señal volvía a la bandeja, y «Descartar» borraba la venta entera.
+- Salir de la edición mandaba a la papelera el comprobante del adelanto (método suelto con dos imágenes).
+- El flete de una venta YA pagada entraba como cobro de más (regresión de §4fk: ver el cambio en
+  `test_conta_alta` §4fk, que medía una pantalla que no existe).
+- El 💰✓ de Administración borraba sin preguntar el pago registrado por Contabilidad.
+- «1.500» en «Corregir precios y montos» valía 1,50.
+- `stockMigrar` volvía a sumar por nombre un código que el catálogo no conoce, en cada relectura de la fila.
+- Mover una ATC con la devolución programada la dejaba en el día viejo.
+
+**Más:**
+- `herramientas/marcar-entregados-agosto.gs`: archivo APARTE del proyecto de Apps Script, para marcar
+  «entregado» lo de agosto. No toca Código.gs. `test_servidor.js` §13 lo prueba contra el `.gs` 20-a y
+  contra el 23-b.
+- 5 pruebas que se pudrían a fin de mes.
+- **Batería: 79 suites, 2.985 bien · 0 mal.**
+
+**Qué me gustaría que mires:**
+1. `flushPending` (comparación por JSON de antes de mandar).
+2. `leerCierresDeLista` + `borradorEnColaComoPedido`.
+3. `CTA_FORM_ENV` contra el espíritu de §4fk.
+4. `stockMigrar` con `cod`.
+5. `atcAlMarcarEntregado` con `rfAuto`.
+
 ## Primera vuelta (`d890468`), resumida
 
 | # | Hallazgo del informe original | Veredicto | Estado hoy |

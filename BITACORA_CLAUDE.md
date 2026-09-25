@@ -7445,6 +7445,219 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ga. 25/09: pruebas que se pudrían a fin de mes, agosto «entregado» y la revisión con cuatro agentes que arreglan (2026-09-25)
+
+Pedido del dueño: *«Revisa que no haya más errores y cosas que corregir. Pon el agente a trabajar. Y marca
+todos los pedidos de agosto entregado por si logística olvidó hacerlo»*, y después: *«Si no puedes, sigue
+con los agentes revisando y corrigiendo la contabilidad, conciliación, entregas, stock, predicción de
+producción y pedidos y demás»*.
+
+### Cinco pruebas que se pudrían a fin de mes (no eran errores del panel)
+
+- `test_botones` §8b, `test_chofer` §7 y `test_resumen`: arman pedidos para mañana o pasado mañana y miran
+  Administración en «Mes». Los días 29 y 30 esos pedidos ya son del mes que viene y la tabla quedaba vacía
+  («0 pedidos»). Ahora miran en «Todo».
+- `test_cuadre`: pedía que «Mes» muestre MÁS pagos que «Día». El 1° del mes el cobro de «ayer» es del mes
+  pasado y los dos dan lo mismo: ese día se pide «no menos» (que abra en «Mes» lo mide el primer chequeo).
+- `test_ventas_panel` §9: el «60 d» del plan promedia los DOS meses cerrados anteriores, y la prueba tenía
+  la venta clavada en agosto — desde octubre ya no caía en la ventana («sin fila en el plan»). Ahora la venta
+  corregida va al mes pasado y otra, sin entregar, al anterior, relativo a hoy (la sin entregar además
+  asegura la fila del plan aunque el histórico no tenga ese producto el mismo mes del año pasado).
+- Verificadas con el reloj corrido (libfaketime) al 25, 26, 29 y 30/09, 1 y 5/10, 10/11 y 15/01.
+- ⚠️ **Regla para pruebas nuevas**: una prueba que arma pedidos «para mañana» y mira un filtro de MES se
+  pudre los últimos días del mes. Mirar en «Todo» o clavar el reloj (`page.clock.setFixedTime`).
+
+### Agosto «entregado»: un archivo APARTE para el editor (no lo pude hacer desde acá)
+
+- **Desde esta sesión no hay salida a Google**: el proxy de la sesión rechaza `script.google.com` (403 de la
+  política de red de la organización). No se buscó otro camino (ni GitHub Actions: además exigía tocar `main`).
+- `herramientas/marcar-entregados-agosto.gs` — el dueño lo agrega como archivo NUEVO del proyecto (➕ →
+  Secuencia de comandos), **sin tocar Código.gs**, y lo corre desde el editor:
+  `verPendientesAgosto` (no cambia nada) → `marcarEntregadosAgosto` → `deshacerEntregadosAgosto`. Después
+  se borra el archivo. Enlace fijo: `…/67fc83d0a219942a309e36df23f453e11a7dc142/herramientas/marcar-entregados-agosto.gs`
+  (186 líneas, termina en `}` tras `} finally { lock.releaseLock(); }`).
+- **Qué marca**: OC y RPT con fecha de agosto y «Entregado» en NO, también los «🔴 No hay · reprogramar»
+  (señalados en la lista: *«¿salió de verdad?»*). **Qué no**: ATC (marcarlas desde el panel además cierra
+  su seguimiento, `atcAlMarcarEntregado`; se listan aparte), filas `__…`, borradores de Kommo y ventas sin
+  fecha. El panel, al marcar una OC o RPT, solo cambia `entregado` — lo mismo que hace el archivo.
+- **Cómo escribe**: con el candado; SOLO las celdas de esas filas (`getRangeList`, no la columna entera: si
+  alguien borrara una fila a mano en el medio, el daño queda en esas celdas); primero «Entregado» y después
+  el sello (un panel que lea en el medio ve lo nuevo con el sello viejo, choca y relee — al revés lo dejaría
+  guardar encima); UN sello más alto que el de cada fila; `SpreadsheetApp.flush()` antes de soltar el
+  candado. Antes de tocar nada, cada fila va a la hoja «Respaldo entregados» (en texto); deshacer va de la
+  última tanda para atrás aunque Sheets vuelva Fecha la hora de la tanda.
+- **Por qué aparte**: no toca Código.gs (el pegado del 23/09), anda con la versión publicada (20-a) y con la
+  23-b, y el enlace fijo del `.gs` 23-b sigue valiendo. ⚠️ **Todos los archivos de un proyecto de Apps Script
+  comparten los nombres**: uno repetido pisaría al de Código.gs (lo correrían el panel y los disparadores).
+  Por eso todo empieza con «entregas…» o dice «Agosto», y la prueba lo controla contra los dos `.gs`.
+- `test_servidor.js` §13 (37 chequeos, con el `.gs` de la rama Y con el de `ebc3eab`): el doble de la planilla
+  ahora tiene `getRangeList`, tope de filas + `insertRowsAfter`, conversión de fechas y `flush`.
+
+### La revisión con cuatro agentes que arreglan (25/09)
+
+Cuatro agentes en copias aisladas (contabilidad y conciliación · entregas y logística · stock y producción
+· pedidos y lo demás), con la consigna: solo lo CONFIRMADO, primero la prueba que falla, sin tocar el `.gs`
+ni las reglas del dueño, pruebas que no dependan del calendario. Más el de «uso diario» (solo informe).
+⚠️ Las copias (`isolation: worktree`) arrancaron de `main`, no de la rama: el agente de stock lo notó y se
+movió a la rama antes de empezar. La próxima vez, decirlo en la consigna.
+
+#### Stock y producción (`tests/test_rev_stock.js`, 19; contra 50f9d22: 11 rojos)
+
+- **Un código que el catálogo no conoce volvía a sumarse a otro producto al releer la fila** (ALTA,
+  `stockMigrar`). Subir el Excel lo dejaba aparte (§4cy), pero `stockMigrar` corre en CADA lectura de la
+  fila y lo re-resolvía por nombre: «hay 13 somieres negros» (3 + los 10 del CH1297), «49 almohadas», y el
+  pedido con el código CH1297 en 0 → «fabricar». Ahora las claves de un código desconocido (según el mapa de
+  códigos de la foto, `cod`) solo siguen las uniones a mano (🔗).
+- **🔗 Unir dejaba lo de Moreno/Banzer en el renglón viejo** hasta releer la fila, y el pedido que trae el
+  código seguía apuntando a la clave vieja PARA SIEMPRE («✗ no hay → fabricar 2» con 5 acá y 5 en Moreno).
+  `guardarStockUnir` mueve `g[..].u` y el `rs` de las recogidas; `stockClaveInv` hace seguir al código la unión.
+- **El detalle de un producto daba por salida una línea 📥 pendiente** (BAJA, solo el texto): comparaba con
+  «Recoger de Moreno», el texto de antes de §4ey.
+- **Existencias sin la hora en el nombre: la casilla «ya incluye las entregas del día» arrancaba MARCADA**
+  (= no descontarlas) y el consejo decía «dejalo marcado: el panel descuenta esas entregas igual» — lo
+  contrario. Ahora arranca sin marcar, que es lo que decidía §4cn («descontarlas igual, porque no se sabe la
+  hora»), y el consejo lo dice. `test_existencias` marca la casilla a mano (su Excel ya las incluye).
+- Tiempos con 150 productos, 3 almacenes, 100 pedidos a fábrica y 700 pedidos: `renderStock` 45–55 ms,
+  `stockData` 14, `stockAsignar` 20, `stockProducir` 5. Nada que tocar.
+- **Quedan para decidir** (confirmados, sin tocar): (5) una línea «📥 recoger» entregada SIN anotar la
+  recogida deja a Moreno con unidades fantasma; (6) un producto de código desconocido que se agota cae en el
+  parecido del catálogo (exige recordar los crudos de Excel viejos: campo nuevo de `STOCK`, y
+  `stockFusionar`); (7) el filtro «Mañana» de la revisión rompe FIFO. **Plausibles**: (8) la celda de 50.000:
+  con 150 productos y 100 pedidos a fábrica da 44.523 letras — `STOCK.p` guarda los recibidos 120 días y para
+  medir la fábrica se usan los últimos 6 (propuesta: podar); (9) venta de tienda contra el depósito (¿alguna
+  tienda vende del depósito?); (10) subir el Excel borra una llegada anotada entre la hora del reporte y la
+  subida; (11) la tendencia los días 1-3 del mes; (12) depósito sin contar con stock en Moreno.
+
+#### Entregas y logística (`tests/test_rev_entregas.js`, 42, reloj clavado el miércoles 23/09; contra 50f9d22: 29 rojos)
+
+- **Mover una ATC con la devolución programada la dejaba en el día viejo** (ALTA). Solo «🔁 Cambiar
+  devolución» movía `pdev`; con 📅 Reprogramar, el turno de la ficha de carga o ✏️ Editar, el chofer veía
+  «🎧 ATC» (un recojo) en vez de «🔁 devolución», el aviso «🏭 Recoger de fábrica» contaba desde el día viejo
+  y su ✅ del día nuevo no cerraba la ATC nunca. `atcSeguirViaje(p, antes)` mueve `pdev`/`pturno` con la
+  fecha y el turno en `reproConfirmar` y `cambiarTurno`; `submitPedido` hace lo mismo con la fecha del
+  formulario cuando la ATC vivía en su devolución.
+- **Tildar y destildar la devolución apagaba el aviso de fábrica** (MEDIA): el ✅ anota el «recogido de
+  fábrica» y destildar lo dejaba. Ahora el ✅ lo marca como suyo (`rfAuto`, adentro del JSON de productos,
+  sin columna nueva) y destildar saca solo eso; el «✓ Recogido» a mano (`marcarRecogidoFab`) limpia la marca
+  y se conserva. ⚠️ `mergeAtcDatos` saltea los `undefined` a propósito: `rf: undefined` = «no tocar».
+- **Cada ATC y cada RPT eran «⚠️ SIN MONTO — preguntar antes de entregar»** en la tarjeta del chofer, la hoja
+  de ruta (pantalla, impresa y WhatsApp), «Entregado» y las fichas: nacen con pagado NO y saldo 0, así que
+  `sinMontoAnotado` las marcaba a todas. Y «➕ Cobré algo igual» anotaba plata que Contabilidad no ve nunca
+  (`fueraDeConta`). `noSeCobra(p)` va antes de `sinMontoAnotado` y `choCobrarMetodo` se niega con
+  `noSeCobraTxt` — la regla de §4fy («ni una ATC ni una RPT se cobran»), que no había llegado a la puerta.
+  Lo ya anotado se sigue listando.
+- **«Programar devolución» dejaba agendar sábado PM, domingo o un día cerrado**: decía «✓» y el portero del
+  servidor la rechazaba después. El cartel usa `limTurno` y guardar pasa por `reproAvisos` + clave + `forzar`,
+  como 📅 Reprogramar.
+- **Tres avisos más decían «(12/12)» con 13 en el turno** (el toast del formulario, `reproAvisos`,
+  `cambiarTurno`): el mismo error de §4fh. Ahora cuentan.
+- **El chip «💰 Por cobrar» y el resumen de Administración contaban ATC y RPT** («4 pedidos · 3 por cobrar»
+  con una sola venta debiendo).
+- **Quedan para decidir** (confirmados, sin tocar): el producto de un RECOJO de ATC aparece en «A cargar en el
+  camión» y en el TOTAL A CARGAR (¿logística quiere ver ahí lo que vuelve?); una vendedora sin clave puede
+  SACAR su pedido de un día cerrado sin aviso (el portero del panel y el del `.gs` solo miran la fecha de
+  destino: el camión armado pierde un bulto en silencio); la vista «Todos» de carga y ruta incluye ventas de
+  tienda en un bloque «(sin fecha)»; `toggleEntregado`/`toggleVerificado`/`setEstado`/`setProdChk` encolan
+  sin el cartel rojo de `persistPedido` si el guardado falla (no se pierde nada). **Plausibles**:
+  `ubicarPorDireccion` puede contar como «ubicado» uno que chocó; `quitarFoto` borra el archivo de Drive
+  antes de saber si el servidor aceptó.
+- Revisado y bien: celular a 320/360 px; el mismo pedido cuenta igual en cupos, carga, ruta, parte, Excel
+  «Mañana» y Administración (el mapa se aparta a propósito, §4dh); portero del panel = portero del servidor;
+  fechas borde (30/09, sábado 31/10, 31/12 23:30, sábado 02/01/2027).
+
+#### Contabilidad y conciliación (`tests/test_rev_conta.js`, 38, reloj fijo un miércoles de mitad de mes; contra 50f9d22: 28 rojos)
+
+- **El flete de una venta YA PAGADA entraba como cobro de más** (ALTA, regresión de §4fk). En una venta pagada
+  la ficha no tiene selector: el bloque entero dice «🚚 Cobrar el recargo» y el botón «Registrar el cobro del
+  flete», con `CTA_TIPO` en 'pago'. §4fk miraba solo `CTA_TIPO`: preguntaba «¿cobro de MÁS?… usá el botón 🚚»
+  —que no está— y, aceptando, los 150 iban a la venta (saldo −150) y el flete seguía «por cobrar» para el chofer.
+  `showContaModal` anota lo que mostró (`CTA_FORM_ENV`) y `ctaRegistrarPago` le hace caso; la pregunta de §4fk
+  queda para cuando se vio «💵 Pago» y la venta se saldó en otro dispositivo antes del toque. ⚠️ `test_conta_alta`
+  §4fk (a)(b) se reescribió para ESE caso (abre con saldo y se salda «en otro lado»): el viejo medía una
+  pantalla que no existe. Sigue con sus 4 rojos contra la condición vieja.
+- **El 💰✓ de Administración borraba sin preguntar el único pago** (ALTA) — el QR con recibo y captura que
+  registró Contabilidad, o el 2° método de un mixto — y la venta volvía a «DEBE». Ahora deshace SOLO los
+  cobros de la puerta (`cobroDeLaPuerta`, §4fy), como el ↺ del chofer; si no hay, manda a Contabilidad →
+  Corregir; con varios o con pagos registrados al lado, pregunta y nombra qué se va y qué no. `applyPaid` (el
+  mismo 💰) anota sin recibo ni imagen, así que lo suyo se sigue deshaciendo de un toque.
+- **Corregir desde el formulario una venta con pago MIXTO le ponía fecha de hoy a los dos renglones del
+  adelanto** (Bs 2.000 del 28/08 se mudaban del cuadre de agosto, ya arqueado): §4fr en la rama del mixto.
+- **«PAGADA sin monto» (§4fg), tres caminos más**: (a) «Guardar precios y montos» con un «A cuenta» nuevo
+  dejaba el adelanto SIN método — `aplicarMontos` ahora usa `cobrosReales` + `textoHistorial` y el adelanto
+  nuevo toma el método y las imágenes del suelto; (b) cargarle solo el PRECIO de un ítem la desmarcaba de
+  pagada (`yaCobrado` vale 0 apenas se relee la lista) — sigue pagada mientras no se le ponga saldo; (c) el
+  «monto total» que el formulario exige para guardarla quedaba fechado HOY — ahora el día de la venta, como
+  «💵 Anotar el monto».
+- **El Excel del Cuadre no distinguía el flete**: columna nueva «RECARGO POR ENTREGA» AL FINAL (no se mueve
+  ninguna ni se toca MONTO, cuyo SUMA espera al dueño). En Ventas, el renglón del flete dice «🚚 flete» en la
+  tabla y en la columna PAGOS del Excel (PAGOS sumaba 1.620 con TOTAL COBRADO 1.500).
+- **«1.500» tipeado en «✏️ Corregir precios y montos» valía 1,50** (`parseFloat` sobre el campo que Chromium
+  deja tal cual): `ctaRecalc`/`ctaGuardarMontos` leen con `parseMonto` (como «Registrar pago» y el arqueo) y el
+  menos se mira con `montoNegativo`. Los valores que pone el panel van por `r2` (2 decimales como mucho), así
+  que `parseMonto` nunca los toma por miles.
+- Chicos: «Buscar» de Ventas con `sinTildes`; la ficha de una venta sin nada anotado dice «SIN MONTO ANOTADO»
+  y no «Saldo: PAGADO».
+- **Quedan para decidir** (confirmados, sin tocar): el FORMULARIO también lee `f-acuenta`, `f-saldo`,
+  `f-cobrado`, `f-envio` y `f-monto2` con `parseFloat` («1.500» = 1,5) — un solo cambio a `parseMonto` +
+  `montoNegativo` en `submitPedido`; marcar «SÍ, pagado» en el formulario sobre una venta con adelanto de otro
+  día junta todo en un renglón fechado hoy (el aviso lo dice; repartir método e imagen es decisión del dueño).
+  **Plausibles**: el retiro ofrece a Eduardo en «Quién entrega» (doble conteo si hay dos retiros encadenados);
+  efectivo que un chofer cobre en ventas de Eduardo o ROHO no entra al Cuadre; la columna «Recargo entrega»
+  muestra solo el primer flete; «1500,50» en Chromium de escritorio.
+- Revisado y bien: cortes Día/Mes/Todo con reloj fijo (30/11, 01/12, 31/12, 01/01); pantalla = texto = Excel
+  del Cuadre (con y sin filtro por vendedora); COBRADO + SALDO = TOTAL en el Excel de Contabilidad; 17 formas de
+  venta × operaciones que no mueven plata; `fueraDeConta` en todas las listas y en `productos-mes.js`.
+
+#### Pedidos y lo demás (`tests/test_rev_pedidos.js`, 41, monta el `.gs` real con red `drop/lose/hold/tarde`, reloj clavado el 16/09; contra 50f9d22: 28 rojos)
+
+- **La cola BORRABA lo que entraba mientras se mandaba** (ALTA, `flushPending`). Terminaba con
+  `setPending(remaining)`: la cola entera se reemplazaba por la foto del principio menos lo que había salido, y
+  un guardado que fallaba mientras tanto (sin señal, o con el servidor tardando hasta 30 s por pedido) ya había
+  dicho «quedó en cola, se manda solo» y desaparecía sin mandarse. Ahora sale de la cola SOLO lo que llegó (o
+  lo que el servidor rechazó en firme), y solo si lo que espera sigue siendo EXACTAMENTE lo que se mandó (JSON
+  de antes de mandarlo: `aplicarSello` cambia el sello del objeto enviado, no el de la cola).
+- **Un borrador de Kommo completado sin señal se perdía entero con «Descartar»** (ALTA). Con la conversión en
+  la cola, la tarjeta volvía a la bandeja a los 90 s (la planilla todavía tenía el borrador), y «Descartar»
+  sacaba de la cola la venta completada, borraba la fila y anotaba el lead como descartado 60 días (§4et).
+  `afterEnCola` la saca de la bandeja como `after()`; `leerCierresDeLista` no la devuelve mientras la versión
+  completada espere en la cola (`borradorEnColaComoPedido`: pone la de la cola en STATE; `mergePending` no la
+  duplica porque el id ya está); `descartarBorrador` se niega y dice por qué.
+- **Salir de la edición mandaba a la papelera el comprobante del adelanto** (ALTA). En el método SUELTO
+  (`QR BISA %CAPTURA %RECIBO` — como se guarda toda venta nueva con «A cuenta» — y la «PAGADA sin monto»),
+  `metodoFormulario` devolvía solo `comp`: el formulario abría con una imagen, guardar sin tocar perdía la 2ª, y
+  `imagenesSinPegar` tomaba la que ya estaba por una recién subida → «¿Salir igual?» → a la papelera de Drive.
+  Ahora devuelve `comps`, y `descartarImagenesSinPegar` respeta §4fy: nunca borra una imagen que algún pedido
+  nombra (`fotoEnUso`).
+- **La OC renumerada con la respuesta perdida** (MEDIA, el PLAUSIBLE de §4fd, reproducido contra el `.gs`
+  real): el servidor renumeraba 09-002 → 09-003 (`ocCambiada`), la respuesta se perdía (404 del redirect,
+  §4fa), el reintento era un «ok tardío» (`mismoContenido` saltea la OC a propósito) y `aplicarSello` solo copia
+  la OC con `ocCambiada`: el panel se quedaba con la OC de OTRO pedido, la mandaba al grupo y el guardado
+  siguiente rebotaba con `oc_repetida`. Ahora el ok tardío toma la OC de la fila y avisa.
+- **La «Ubicación de Google Maps» se perdía en silencio** (MEDIA): `normalizaUbicacion(...)||''` guardaba vacío
+  lo que no entendía («maps.app.goo.gl/…» sin https) con ✓ verde. Editando otra cosa, un `maps` viejo que no
+  pasa por ahí se BORRABA, y unas coordenadas crudas se reescribían como enlace (falso «MODIFICADO» a
+  logística). Ahora el campo que quedó como estaba se guarda como estaba, y lo que no se entiende FRENA el
+  guardado con el mensaje de 📍 Editar ubicación. Vacío sigue siendo válido (`normalizaUbicacion('')` = '').
+- **Editar borraba `prodF`/`prodR`** (BAJA, `heredarMarcas`): los sellos con que `stockTiemposFabrica` mide cuánto
+  tarda cada fábrica. Y la matriz «editar sin tocar nada»: 24 formas de pedido contra el `.gs` real quedan
+  iguales columna por columna.
+- **Buscadores de Contabilidad y ATC sin tildes** (el de Contabilidad lo arreglaron dos agentes a la vez: quedó
+  uno).
+- **Quedan para decidir** (confirmados, sin tocar): el `.gs` (`ocAutoGs_`/`ocSiguienteGs_`) no conoce el prefijo
+  RPT — una RPT automática que choca se rechaza con `oc_repetida` en vez de renumerarse (no se pierde nada;
+  exige republicar); `mergePending` saca de la pantalla un pedido recién guardado si el `list` salió antes
+  (transitorio); `editPedido` pone AM a un pedido sin turno (los de ROHO); cantidad 0/2.5/-2 y «A cuenta»
+  negativo no se validan. **Plausible**: `persistPedido` dice «quedó en cola» durante los 10 s de `NO_ENCOLAR`.
+- Revisado y bien: las tres series de OC al cruzar mes y año; ida y vuelta por `recToRow`/`rowToRec_` en 24
+  formas; `persistPedido`; borrar lo que solo estaba en la cola; doble toque en Guardar; «Quién vendió qué»,
+  `productos-mes.js`, el buscador de Administración y la primera carga.
+
+#### Cómo se juntó
+
+27 commits (4 + 5 + 11 + 7) con `cherry-pick` sobre la rama; un solo choque (`contaLista`, el mismo `sinTildes`
+de dos agentes: quedó uno). Cada prueba nueva se corrió también contra el panel de `50f9d22` (una copia aparte
+con `git worktree`): 11, 29, 28 y 28 rojos. Batería completa: **79 suites, 2.985 bien · 0 mal**.
+
 ## 4fz-b. Segunda vuelta: la junta que no cuenta dos veces, el servidor estricto y el incidente del 23/09 (2026-09-23)
 
 > Dos revisiones sobre la primera vuelta (§4fz, `d890468`): un **agente adversarial propio** (14
