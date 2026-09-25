@@ -9,6 +9,13 @@
       al producto del catálogo que se les parece → «hay 13 somieres negros», «hay 49 almohadas»
       (los dos ejemplos exactos de §4cy), y el pedido que trae el código CH1297 quedaba en 0 →
       «hay que fabricar». O sea: prometer 10 colchones que no hay, y mandar a fabricar 10 que sí.
+   2. 🔗 UNIR SE LLEVA TODO. Lo de Moreno quedaba en el renglón viejo hasta releer la fila, y el
+      pedido que trae el código desconocido seguía en la clave vieja para siempre: «✗ no hay →
+      fabricar» con el producto unido lleno.
+   3. EL DETALLE DE UN PRODUCTO no dice «se considera salido» de una línea 📥 de días pasados que
+      sigue pendiente (comparaba con el texto viejo «Recoger de Moreno», de antes de §4ey).
+   4. SUBIR EL EXCEL SIN LA HORA EN EL NOMBRE: la casilla «ya incluye las entregas del día» arranca
+      sin marcar (descuenta), que es lo que promete su consejo — arrancaba marcada (no descuenta).
 
    Datos SINTÉTICOS (los nombres son los del almacén que ya están en test_identidad; las
    cantidades, inventadas). Reloj de la página clavado en el 16/09/2026, 10:00 de Bolivia.
@@ -191,6 +198,35 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       pend.length===2 && pend.every(function(t){ return !/se considera salido/.test(t) && /Recoger de/.test(t); }), pend.join(' | '));
   chk('…y lo entregado sigue en el historial como «Entregado»',
       r.sec.some(function(s){ return /Historial/.test(s.tit) && s.filas.some(function(t){ return /Entregado/.test(t); }); }), JSON.stringify(r.sec.map(function(s){ return s.tit; })));
+
+  // ══ 4. «¿Este Excel ya incluye las entregas del día?» cuando no se sabe la hora ══
+  console.log('\n── 4. Excel sin la hora en el nombre: la casilla arranca del lado seguro ──');
+  r = await page.evaluate(() => {
+    /* La hora sale del NOMBRE del archivo (§4cr). Si el archivo se renombró, no hay hora y el
+       texto de la ventana dice «Si no estás seguro, dejalo …: el panel descuenta esas entregas
+       igual y como mucho te pide de más». Marcada, la casilla hace lo CONTRARIO (el Excel «ya las
+       incluye» → no se descuentan): arrancaba marcada, y un Excel de la mañana dejaba el depósito
+       con las entregas del día adentro — la revisión las prometía de nuevo. */
+    var K=stockClave({desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201'});
+    var subir=function(hora){
+      STOCK=stockVacio(); STOCK_CARGADO=true;
+      STATE=[_P({id:'h1', fecha:todayStr(), entregado:true, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2}]})];
+      var items=[{cod:'CH1201', desc:'TITANIO ICE 2.5PLZ 160X190CM', medida:'160x190', cant:5, cat:true, k:K}];
+      EXIST_IMP={ fecha:todayStr(), sinFecha:false, almacen:'PRODUCTOS TERMINADOS FAB.', items:items, total:5, repetidos:0, malos:0, colCant:'G', solo0:true, cods:{CH1201:K}, esLog:true, conocido:true };
+      if(hora) EXIST_IMP.hora=hora;
+      renderImportExist();
+      var cb=document.getElementById('exist-inc'), marcada=!!(cb&&cb.checked);
+      var texto=((document.getElementById('modal-box')||{}).textContent||'').replace(/\s+/g,' ');
+      confirmarImportExist(); stockOlvidarIndice();
+      return { marcada:marcada, deposito:stockDeposito(K), inc:!!STOCK.c.inc, dice:(texto.match(/Si no estás seguro[^.]*\./)||[''])[0] };
+    };
+    return { sinHora:subir(''), manana:subir('08:59:57'), tarde:subir('15:10:00') };
+  });
+  chk('⚠️ sin la hora, la casilla arranca SIN marcar: las entregas de hoy se descuentan (5 del Excel − 2 entregadas = 3)',
+      r.sinHora.marcada===false && r.sinHora.inc===false && r.sinHora.deposito===3, JSON.stringify(r.sinHora));
+  chk('…y el consejo de la ventana dice lo que la casilla hace de verdad', /sin marcar/.test(r.sinHora.dice) && !/dejalo marcado/.test(r.sinHora.dice), r.sinHora.dice);
+  chk('con la hora sigue como siempre: de mañana sin marcar (3), de tarde marcada (5, ya las incluye)',
+      r.manana.marcada===false && r.manana.deposito===3 && r.tarde.marcada===true && r.tarde.deposito===5, JSON.stringify([r.manana, r.tarde]));
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

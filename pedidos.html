@@ -16770,6 +16770,11 @@ function renderImportExist(){
     });
     saltos.sort(function(a,b){ return Math.abs(b.dif)-Math.abs(a.dif); });
   }
+  /* «¿Ya incluye las entregas del día?»: marcada = NO se descuentan. Sin la hora (archivo
+     renombrado) arrancaba MARCADA y el consejo decía «dejalo marcado: el panel descuenta esas
+     entregas igual» — lo contrario de lo que hace. Ahora arranca sin marcar, el lado que no deja
+     sin avisar (§4cn), y el consejo lo dice así (25/09). Con hora, como siempre: la tarde marca. */
+  var incPorDefecto=!!(R.hora && R.hora>='12:00:00');
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📥 Existencias de almacén</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
     '<div style="background:var(--teal-lt);border:1px solid var(--teal-border);border-radius:10px;padding:11px 14px;margin-bottom:12px">'+
@@ -16787,10 +16792,10 @@ function renderImportExist(){
       (R.conocido?'':'<div style="font-size:.78rem;color:var(--amber);margin-top:4px">Es la primera vez que subís este almacén: elegí qué es y el panel lo recuerda.</div>')+
     '</div>'+
     '<div style="background:#f6fbfa;border:1px solid var(--teal-border);border-radius:8px;padding:9px 13px;margin-bottom:10px;font-size:.83rem">'+
-      '<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="exist-inc" '+(R.hora&&R.hora<'12:00:00'?'':'checked')+' style="margin-top:3px">'+
+      '<label style="display:flex;gap:8px;align-items:flex-start;cursor:pointer"><input type="checkbox" id="exist-inc" '+(incPorDefecto?'checked':'')+' style="margin-top:3px">'+
       '<span>Este Excel <b>ya incluye las entregas del '+fmtFecha(R.fecha)+'</b> que están marcadas en el panel.'+
       (R.hora?('<br><span style="color:var(--muted)">El corte es de las <b>'+esc(R.hora)+'</b>'+(R.hora<'12:00:00'?' — a esa hora el camión todavía no salió, así que probablemente NO las incluya.':' — a esa hora ya salió el camión, así que probablemente sí.')+'</span>')
-              :'<br><span style="color:var(--muted)">Si no estás seguro, dejalo marcado: el panel descuenta esas entregas igual y como mucho te pide de más.</span>')+
+              :'<br><span style="color:var(--muted)">Si no estás seguro, dejalo sin marcar: el panel descuenta esas entregas igual y como mucho te pide de más.</span>')+
       '</span></label></div>'+
     (hab?('<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Reemplaza el conteo anterior de este almacén ('+(previo.f?('del '+fmtFecha(previo.f)):'sin fecha')+', '+hab+' productos). Lo que no esté en este archivo queda en cero: el reporte trae todo lo que tiene existencia.</div>')
         :'<div style="font-size:.82rem;color:var(--muted);margin-bottom:10px">Es el primer conteo de este almacén.</div>')+
