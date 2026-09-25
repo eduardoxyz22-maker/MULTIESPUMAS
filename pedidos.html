@@ -13555,7 +13555,20 @@ function stockLeerDePanelViejo(d, o){
    eran dos renglones del mismo conteo. Es idempotente, una clave canónica se resuelve a sí
    misma. */
 function stockMigrar(d){
-  var cl=function(k){ var pa=String(k||'').split('|'); return stockAliasDe(stockClaveAuto({desc:pa[0]||'', medida:pa[1]||''}), d.a); };
+  /* ⚠️ (25/09) La clave que el Excel dejó CRUDA porque su código no está en el catálogo (§4cy:
+     dos códigos son dos productos) NO se vuelve a resolver por nombre. Esto corre en CADA lectura
+     de la fila —otros dispositivos, recargar, el refresco—, y así «CH1297 SOMIER PARRILLA NEGRO»
+     (10) volvía a sumarse al SOMIER NEGRO (3): «hay 13», y el pedido con el código CH1297 en 0.
+     Esas claves solo siguen las uniones a mano (🔗). Se reconocen por el mapa de códigos de la foto. */
+  var crudas={};
+  [d.c].concat(Object.keys(d.g||{}).map(function(nm){ return d.g[nm]; })).forEach(function(s){
+    var cod=(s&&s.cod)||{};
+    Object.keys(cod).forEach(function(c){ if(cod[c] && !CODIGOS[String(c).toUpperCase()]) crudas[cod[c]]=1; });
+  });
+  var cl=function(k){
+    if(crudas[k]) return stockAliasDe(k, d.a);
+    var pa=String(k||'').split('|'); return stockAliasDe(stockClaveAuto({desc:pa[0]||'', medida:pa[1]||''}), d.a);
+  };
   var juntar=function(src){
     var u={};
     Object.keys(src||{}).forEach(function(k){ var v=Number(src[k]); if(!isFinite(v)) return; var nk=cl(k); u[nk]=(u[nk]||0)+v; });
