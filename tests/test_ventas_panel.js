@@ -94,12 +94,23 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     STOCK.a={}; stockOlvidarIndice();
     chk('unir productos a mano (🔗) mueve las unidades a la clave unida', movio, Object.keys(i8).join(', '));
     // 9. el plan del mes y la copia para fábrica usan el resumen corregido
-    STATE=JSON.parse(JSON.stringify(base)); a=JSON.parse(JSON.stringify(A)); a.productos[0].cant=20; upsert(a);
+    /* Relativo a HOY (se pudría desde octubre, 25/09): el «60 d» promedia los DOS meses cerrados
+       anteriores, así que la venta corregida va al mes pasado (m1) y otra de 4, sin entregar, a
+       dos meses atrás (m2). La sin entregar además asegura la fila del plan aunque el histórico
+       no tenga ese producto el mismo mes del año pasado. */
+    var mAct=todayStr().slice(0,7), m1=mesRestar(mAct,1), m2=mesRestar(mAct,2);
+    var tsDe=function(ym,dd){ return new Date(+ym.slice(0,4), +ym.slice(5,7)-1, dd, 10, 0, 0, 0).getTime(); };
+    var E=mk({id:'sE', ts:tsDe(m2,10), fecha:proximoDiaEntrega(), entregado:false, verificado:false,
+              productos:[{desc:'COLCHON SOFT', medida:'140x190', codigo:'COLT0048', cant:4}]});
+    STATE=JSON.parse(JSON.stringify(base)).concat([E]);
+    a=JSON.parse(JSON.stringify(A)); a.ts=tsDe(m1,15); a.fecha=m1+'-16'; a.productos[0].cant=20; upsert(a);
     var d=stockData(), P=stockProducir(d), f=null; P.bloques.forEach(function(Bq){ Bq.filas.forEach(function(x){ if(x.o.k===K) f=x; }); });
     var e60=f&&f.rango&&f.rango.est.filter(function(e){ return e.n==='60 d'; })[0];
-    var H=ventasHistIndex()[K]||{}, MS=P.mes, mAnt=mesRestar(todayStr().slice(0,7),2);
-    var esperado=(20+(H[mAnt]||0))/2*MS.dias/30.4;
-    chk('el plan del mes (60 d) usa las 20 unidades corregidas', !!e60 && Math.abs(e60.v-esperado)<1e-6, e60?(e60.v.toFixed(2)+' esperado '+esperado.toFixed(2)):'sin fila en el plan');
+    var PK=ventasPanelIndex()[K]||{}, H=ventasHistIndex()[K]||{}, MS=P.mes;
+    var de=function(ym){ return PK[ym]!=null ? PK[ym] : (H[ym]||0); };
+    var esperado=(de(m1)+de(m2))/2*MS.dias/30.4;
+    chk('el plan del mes (60 d) usa las 20 unidades corregidas', !!e60 && PK[m1]===20 && Math.abs(e60.v-esperado)<1e-6,
+        e60?(e60.v.toFixed(2)+' esperado '+esperado.toFixed(2)+' · '+m1+' '+PK[m1]+' · '+m2+' '+de(m2)):'sin fila en el plan');
     var P2=stockProducir(d), f2=null; P2.bloques.forEach(function(Bq){ Bq.filas.forEach(function(x){ if(x.o.k===K) f2=x; }); });
     chk('recalcular el plan da lo mismo (una sola pasada por STATE por plan)', f2 && f && f2.mes===f.mes && f2.mesNec===f.mesNec, f?(f.mesNec+' → '+(f2&&f2.mesNec)):'');
     // 10. control

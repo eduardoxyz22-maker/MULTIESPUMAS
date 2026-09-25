@@ -44,7 +44,9 @@ const ARCH = 'file://' + path.resolve('pedidos.html');
       estado:'', entregado:false, verificado:false, vehiculo:'', chofer:'', nroDia:i+1,
       ts:Date.now(), productos:[{desc:'SOFT ICE', medida:'140x190', codigo:'A1', cant:1}] });
     window._pl=JSON.parse(JSON.stringify(STATE)); saveMirror();
-    showView('admin'); renderAdmin();
+    /* «Todo»: los pedidos van para mañana, que el día 30 ya es el mes que viene, y con «Mes» la
+       tabla quedaba vacía y el botón decía «0 pedidos» (la prueba se pudría a fin de mes, 25/09). */
+    showView('admin'); segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin();
     await new Promise(r=>setTimeout(r,200));
   });
 

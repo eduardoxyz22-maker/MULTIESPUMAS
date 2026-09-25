@@ -143,7 +143,9 @@ const bs=n=>'Bs '+Number(n).toFixed(2);
 
   // ---------- 7. lo que cobró llega a Administración y a la rendición ----------
   r = await page.evaluate(async ()=>{
-    showView('admin'); renderAdmin(); await new Promise(x=>setTimeout(x,200));
+    /* «Todo»: «c» va para mañana, que el día 30 ya es el mes que viene, y con «Mes» la rendición
+       no lo sumaba (la prueba se pudría a fin de mes, 24/09). */
+    showView('admin'); segSet('adm-mode','todo'); QUICK_FILTER=''; renderAdmin(); await new Promise(x=>setTimeout(x,200));
     showPedidoModal('a'); await new Promise(x=>setTimeout(x,150));
     var ficha=document.getElementById('modal-box').innerHTML;
     closeModal();
