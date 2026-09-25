@@ -19,6 +19,7 @@
      7. El Excel del Cuadre marca los pagos de FLETE, como ya lo hacen la pantalla y el texto.
      8. «Buscar» de Contabilidad → Ventas no distingue acentos (como Administración y el Cuadre).
      9. La ficha de una venta «SIN MONTO ANOTADO» no dice «Saldo: PAGADO».
+    10. En Ventas («Pagos recibidos») y en el Excel de Contabilidad el flete dice que es flete.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -395,6 +396,28 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('9 · la ficha de una venta sin ningún monto NO dice «PAGADO»: dice «SIN MONTO ANOTADO»', !/PAGADO/.test(r.nada.replace('SIN MONTO ANOTADO','')) && /SIN MONTO ANOTADO/.test(r.nada), r.nada);
   chk('9 · control: la pagada sigue diciendo «PAGADO»', /PAGADO/.test(r.pagada), r.pagada);
+
+  /* ══ 10 · EL FLETE EN «PAGOS RECIBIDOS» DE VENTAS Y EN EL EXCEL DE CONTABILIDAD ═══════════
+     La tabla de Ventas («Pagos recibidos») y la columna PAGOS del Excel del contador listan el
+     flete cobrado al lado de los pagos de la venta, sin decir que es flete: PAGOS sumaba 1.620 y
+     TOTAL COBRADO 1.500, y no había cómo saber cuál de los renglones no es de la venta (la ficha
+     sí lo marca «🚚 RECARGO POR ENTREGA»). */
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'E1', nota:'30', oc:'09-030', cliente:'CON FLETE', pagado:true,
+                metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:1500,fecha:hoy,nota:'30',comps:['V30']},
+                                        {envio:true,metodo:'QR',banco:'BISA',monto:120,fecha:hoy,nota:'31',comps:['F31']}]) }) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    segSet('cta-mode','mes'); document.getElementById('cta-mes').value=hoy.slice(0,7); document.getElementById('cta-search').value=''; setContaModo('mes');
+    var celda=document.getElementById('tbl-conta').textContent;
+    exportConta();
+    var m=window.__XLSX[0].matrix, h=m[0].map(function(c){ return c&&c.v; });
+    var pagos=m[1][h.indexOf('PAGOS (fecha · método · monto · nota)')], cob=m[1][h.indexOf('TOTAL COBRADO (Bs)')], rec=m[1][h.indexOf('RECARGO COBRADO (Bs)')];
+    var partes=String(pagos).split('  |  ');
+    return { partes:partes, cobrado:cob&&cob.v, recargo:rec&&rec.v, celdaFlete:/flete/i.test(celda.split('CON FLETE')[1]||'') };
+  });
+  chk('10 · en el Excel de Contabilidad, el renglón del flete dice que es flete (y el de la venta no)', r.partes.length===2 && !/flete/i.test(r.partes[0]) && /flete/i.test(r.partes[1]), J(r.partes));
+  chk('10 · …así PAGOS sin el flete = TOTAL COBRADO, y el flete = RECARGO COBRADO', r.cobrado===1500 && r.recargo===120, J({cobrado:r.cobrado, recargo:r.recargo}));
+  chk('10 · …y la tabla («Pagos recibidos») también lo marca', r.celdaFlete===true, J(r.celdaFlete));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

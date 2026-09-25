@@ -3877,7 +3877,8 @@ function contaNotaTxt(c){ var n=limpiaNota(c&&c.nota); return n?('nota '+n):'sin
 function contaPagosTxt(p){
   return contaPagos(p).map(function(c){
     return (c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c)+
-           (limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'');
+           (limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'')+
+           (esEnvio(c)?' · 🚚 flete, no es de la venta':'');       // 25/09: si no, PAGOS no cerraba con TOTAL COBRADO
   }).join('  |  ');
 }
 function contaPagosCelda(p){
@@ -3893,6 +3894,7 @@ function contaPagosCelda(p){
       (n?(' <span class="badge b-gray" style="font-size:.62rem">🧾 '+esc(n)+'</span>')
         :' <span style="color:var(--amber);font-size:.72rem">sin nota</span>')+
       recibioBadge(c,true)+
+      (esEnvio(c)?' <span class="badge b-amber" style="font-size:.58rem" title="Recargo por entrega: va aparte de la venta, no se factura">🚚 flete</span>':'')+   // 25/09
       compsArr(c.comps!=null?c.comps:c.comp).map(function(fid,k){ return ' <span title="Ver la imagen '+(k+1)+' del pago" style="cursor:pointer" onclick="event.stopPropagation();window.open(\''+fotoVer(fid)+'\',\'_blank\')">📎</span>'; }).join('')+
     '</div>';
   }).join('');
