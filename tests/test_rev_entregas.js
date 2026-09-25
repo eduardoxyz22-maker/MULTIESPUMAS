@@ -9,6 +9,9 @@
       fábrica» que el ✅ había anotado solo: se apagaba el aviso de ir a buscarla a la fábrica.
    3. 🔁 Programar la devolución el sábado a la tarde, el domingo o en un día cerrado decía «✓» y
       el servidor la rechazaba después como «turno lleno»; el cartel decía «de 12 · de 13» siempre.
+   4. 🎧🏪 Cada ATC y cada RPT salían «⚠️ SIN MONTO ANOTADO — preguntar antes de entregar» para el
+      chofer (tarjeta, hoja de ruta, WhatsApp, «Entregado», fichas), y «➕ Cobré algo igual»
+      anotaba plata que Contabilidad no ve.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev_entregas.js
@@ -207,6 +210,63 @@ const BASE = `
     chk('⚠️ un día CERRADO también', r.cerrado.confirms.length===1 && /CERRADO/.test(r.cerrado.confirms[0]) && r.cerrado.pdev==='', J(r.cerrado));
     chk('control: un jueves con lugar se programa como siempre, sin preguntar y sin forzar',
         r.jueves.confirms.length===0 && r.jueves.pdev==='2026-09-24' && r.jueves.forzar===false && r.jueves.mandado===1, J(r.jueves));
+    await page.close();
+  }
+
+  // ═══ 4. El chofer no cobra una ATC ni una RPT ═══════════════════════════════════════
+  console.log('\n── 4. 🎧🏪 En la puerta: ni una ATC ni una RPT se cobran (§4fy), tampoco con «➕ Cobré algo igual» ──');
+  {
+    const page = await nueva(null, 380);
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var hoy=todayStr();
+      STATE=[ _P({id:'atc', fecha:hoy, oc:'ATC 09-001', cliente:'CLIENTE ATC', productos:[{desc:'SOFT',cant:1,atc:{mot:'Cotización'}}]}),
+              _P({id:'rpt', fecha:hoy, oc:'RPT 09-002', cliente:'Buenos Aires', entregado:true, productos:[{desc:'SOFT',cant:3,rtipo:'Reposición'}]}),
+              /* control: una VENTA a la que nadie le anotó el monto — ahí sí hay que preguntar */
+              _P({id:'deb', fecha:hoy, oc:'09-011', cliente:'CLIENTE DEB', productos:[{desc:'SOFT',cant:1}]}) ];
+      saveMirror();
+      var out={};
+      // lo que le dicen al chofer de la plata: hoja de ruta (pantalla y WhatsApp), «Entregado» y la ficha
+      out.rutaTxt={atc:cobroRutaTxt(findById('atc')).t, rpt:cobroRutaTxt(findById('rpt')).t, deb:cobroRutaTxt(findById('deb')).t};
+      var wa=''; window.open=function(u){ wa=decodeURIComponent(String(u)); return null; }; copyText=function(){};
+      abrirRuta(); setRutaDia('hoy'); out.rutaPantalla=(document.getElementById('ruta-body')||{}).textContent.replace(/\s+/g,' ');
+      rutaWhatsapp(0); closeRuta(); out.rutaWA=wa;
+      ENTREGAS_FECHA=hoy; abrirEntregas();
+      out.entregas={}; [].forEach.call(document.querySelectorAll('#entregas-body .ent-card'), function(c){ var t=c.textContent.replace(/\s+/g,' ');
+        out.entregas[/RPT 09-002/.test(t)?'rpt':/ATC 09-001/.test(t)?'atc':/CLIENTE DEB/.test(t)?'deb':'otro']=t; });
+      closeEntregas();
+      showPedidoModal('rpt'); out.fichaRpt=((document.getElementById('modal-box')||{}).textContent.replace(/\s+/g,' ').match(/Cobro.{0,30}/)||[''])[0]; closeModal();
+      showPedidoModal('deb'); out.fichaDeb=((document.getElementById('modal-box')||{}).textContent.replace(/\s+/g,' ').match(/Cobro.{0,30}/)||[''])[0]; closeModal();
+      // la tarjeta del chofer
+      showView('chofer'); llenarSelectChoferes(); document.getElementById('cho-nombre').value='Luis Pierre'; setChoFiltro('hoy');
+      await new Promise(function(r){ setTimeout(r,150); });
+      var tarj={};
+      [].forEach.call(document.querySelectorAll('#cho-lista .cho-card'), function(c){ var t=c.textContent.replace(/\s+/g,' '); tarj[/CLIENTE ATC/.test(t)?'atc':/Buenos Aires/.test(t)?'rpt':/CLIENTE DEB/.test(t)?'deb':'otro']=t; });
+      out.atcOfrece=/Cobré algo igual/.test(tarj.atc||''); out.rptOfrece=/Cobré algo igual/.test(tarj.rpt||''); out.debOfrece=/Cobré algo igual/.test(tarj.deb||'');
+      out.atcTxt=((tarj.atc||'').match(/Cobrar.{0,70}/)||[''])[0]; out.rptTxt=((tarj.rpt||'').match(/Cobrar.{0,70}/)||[''])[0];
+      // y si igual se llama al cobro (un botón viejo en pantalla)
+      window._toasts=[];
+      choCobrarMetodo('atc','Efectivo'); choCobrarMetodo('rpt','QR');
+      out.atc=findById('atc').metodoPago; out.rpt=findById('rpt').metodoPago; out.avisos=window._toasts.slice();
+      // control: en una venta el chofer sigue pudiendo anotar lo que le dieron
+      choCobrarMetodo('deb','Efectivo'); out.deb=findById('deb').metodoPago;
+      return out;
+    }, BASE);
+    chk('⚠️ la tarjeta de una ATC ya no manda a preguntar por la plata ni ofrece «➕ Cobré algo igual»', r.atcOfrece===false && !/Sin monto anotado/i.test(r.atcTxt) && /no se cobra/i.test(r.atcTxt), r.atcTxt);
+    chk('⚠️ …ni la de una reposición de tienda', r.rptOfrece===false && !/Sin monto anotado/i.test(r.rptTxt), r.rptTxt);
+    chk('⚠️ y si igual se llama al cobro, no se anota nada y se dice por qué (Contabilidad no lo vería nunca)',
+        r.atc==='' && r.rpt==='' && r.avisos.some(function(t){ return /no se cobra/.test(t); }), J([r.atc, r.rpt, r.avisos]));
+    chk('control: en una venta sin monto el chofer sigue viendo el botón y puede anotar lo que le dieron', r.debOfrece===true && /Efectivo 300/.test(r.deb), r.deb);
+    chk('⚠️ la hoja de ruta ya no dice «SIN MONTO ANOTADO — preguntar antes de entregar» en una ATC ni en una RPT',
+        !/SIN MONTO/.test(r.rutaTxt.atc) && !/SIN MONTO/.test(r.rutaTxt.rpt) && /no se cobra/i.test(r.rutaTxt.rpt), J(r.rutaTxt));
+    chk('control: en una VENTA sin monto la hoja de ruta sigue mandando a preguntar', /SIN MONTO ANOTADO/.test(r.rutaTxt.deb), r.rutaTxt.deb);
+    chk('⚠️ …ni en la pantalla de la ruta ni en el WhatsApp para el chofer (salvo la venta sin monto: una sola vez)',
+        (r.rutaPantalla.match(/SIN MONTO/g)||[]).length===1 && (r.rutaWA.match(/SIN MONTO/g)||[]).length===1, J([(r.rutaPantalla.match(/SIN MONTO/g)||[]).length, (r.rutaWA.match(/SIN MONTO/g)||[]).length]));
+    chk('⚠️ «Entregado» no pinta la reposición entregada ni la ATC pendiente como «SIN MONTO ANOTADO»',
+        !!r.entregas.rpt && !/SIN MONTO/.test(r.entregas.rpt) && !!r.entregas.atc && !/SIN MONTO/.test(r.entregas.atc), J([r.entregas.rpt, r.entregas.atc]).slice(0,260));
+    chk('control: la venta sin monto sí sigue marcada en «Entregado»', /SIN MONTO/.test(r.entregas.deb||''), (r.entregas.deb||'').slice(0,120));
+    chk('⚠️ la ficha de Administración de la RPT dice que no se cobra', /no se cobra/i.test(r.fichaRpt) && !/SIN MONTO/.test(r.fichaRpt), r.fichaRpt);
+    chk('control: la ficha de una venta sin monto sigue diciendo «SIN MONTO ANOTADO»', /SIN MONTO/.test(r.fichaDeb), r.fichaDeb);
     await page.close();
   }
 

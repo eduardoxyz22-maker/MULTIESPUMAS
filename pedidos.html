@@ -3368,6 +3368,7 @@ function badgeSinMonto(){ return '<span class="badge b-amber">⚠️ SIN MONTO A
    La usan la hoja de ruta impresa y el mensaje de WhatsApp, para que digan lo mismo. */
 function cobroRutaTxt(p){
   if(p&&p.pagado) return {t:'✅ PAGADO', c:'#2e7d32'};
+  if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32'};   // (25/09)
   if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00'};
   if((Number(p&&p.saldo)||0)<=0.01) return {t:'✅ NADA QUE COBRAR', c:'#2e7d32'};
   return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b'};
@@ -11255,6 +11256,7 @@ function entregaCardHtml(p, dn, pendiente){
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
     : (saldo>0.01 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
                                : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
+       : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
        : sinMontoAnotado(p) ? badgeSinMonto()
                   : '<span class="badge b-gray">Sin saldo</span>');
   var fotos=fotosDe(p);
@@ -11634,6 +11636,10 @@ function cobroDeLaPuerta(c){
 function cobroChoferHtml(p){
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
   var cobros=cobrosVisibles(p);
+  /* 🎧🏪 (25/09) Una ATC o una RPT no se cobran (§4fy): ni «preguntá antes de entregar» ni
+     «➕ Cobré algo igual», que anotaba plata que Contabilidad no ve. Lo ya anotado se lista abajo. */
+  if(noSeCobra(p) && !cobros.length)
+    return '<div class="cho-row"><span class="k">Cobrar</span> <span class="badge b-gray">✅ No se cobra — es '+(esATC(p.oc)?'una ATC':'una reposición de tienda')+'</span></div>';
   // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
   // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
   if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
@@ -11662,7 +11668,7 @@ function cobroChoferHtml(p){
           ? '<button title="Quitar este cobro" onclick="choQuitarCobro(\''+p.id+'\','+i+')">✕</button>'
           : ' <span title="Lo registró Contabilidad o la tienda, con recibo" style="font-size:.72rem;color:var(--muted)">🧾 registrado</span>')+'</span>';
     }).join('')+'</div>'):'';
-  var btns=(falta>0.01 || CHO_COBRO_ABIERTO[p.id])
+  var btns=(!noSeCobra(p) && (falta>0.01 || CHO_COBRO_ABIERTO[p.id]))
     ? ('<div class="cho-cobrar">'+METODOS.map(function(m){
         return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
       }).join('')+'</div>')
@@ -11674,6 +11680,7 @@ function metodoIcono(m){ return m==='Efectivo'?'💵':(m==='QR'?'📱':(m==='Tar
    pero deja seguir: a veces el cliente paga un extra y el chofer tiene que poder anotarlo. */
 function choCobrarMetodo(id, metodo){
   var p=findById(id); if(!p) return;
+  if(noSeCobra(p)){ toast(noSeCobraTxt(p),'err',7000); renderChofer(); return; }   // (25/09) como markPaid/quickCobrado (§4fy)
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
   var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
     'Cliente: '+(p.cliente||'')+'\n'+
@@ -11919,6 +11926,7 @@ function showMisModal(id){
     return prodChkIcon(x)+t;
   }).join('<br>');
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
+           :noSeCobra(p)?'<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT
            :(sinMontoAnotado(p)?badgeSinMonto():('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'));
   var entrega=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+' '+atrasoBadge(p);
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
@@ -17606,6 +17614,7 @@ function showPedidoModal(id){
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var maps=p.maps?('<a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a>'):'';
   var cobro=p.pagado?('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+cobrosResumen(p)):'')+'</span>'+excesoBadge(p))
+           :noSeCobra(p)?'<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
            :(sinMontoAnotado(p)?badgeSinMonto():('<span class="badge b-red">DEBE · '+fmtBs(p.saldo)+'</span>'+((Number(p.acuenta)>0)?(' &nbsp;<span class="badge b-gray">A cuenta '+fmtBs(p.acuenta)+(anticipoDe(p)&&cobroMetodoTxt(anticipoDe(p))?(' · '+esc(cobroMetodoTxt(anticipoDe(p)))):'')+'</span>'):'')));
   var body=row('N° del día', dnum?('<b style="color:var(--teal-dk);font-size:1.1em">#'+dnum+'</b>'):'')+
     row('Fecha de entrega', esc(fmtFecha(p.fecha))+(p.turno?(' · Turno '+esc(p.turno)):''))+
@@ -17694,6 +17703,12 @@ function bancosParaCobrar(p){
   });
   return bs;
 }
+/* 🎧🏪 (25/09) La misma regla para la puerta y las hojas del chofer: una ATC o una RPT no
+   tienen monto que anotar. Nacen con pagado NO y saldo 0, así que `sinMontoAnotado` las
+   marcaba a TODAS «⚠️ SIN MONTO — preguntar antes de entregar» (tarjeta del chofer, hoja de
+   ruta y su WhatsApp, «Entregado», la ficha) y «➕ Cobré algo igual» anotaba plata que
+   Contabilidad no ve nunca. */
+function noSeCobra(p){ return !!p && (esATC(p.oc) || esRPT(p.oc)); }
 function noSeCobraTxt(p){
   return (esATC(p.oc)?'Una ATC es una atención al cliente':'Una reposición de tienda mueve mercadería a una sucursal')+
          ': no es una venta y no se cobra. Contabilidad no la muestra, así que un cobro acá no aparecería en ningún lado.';
