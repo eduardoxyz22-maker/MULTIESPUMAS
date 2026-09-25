@@ -6222,18 +6222,23 @@ function aplicarMontos(p, acu, sal){
      convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
      fecha — plata que después no aparece en los filtros por día ni por mes. */
   if(Math.abs(acu-antesAcu)>0.01){
-    var cobros=cobrosDe(p).map(function(c){
+    /* ⚠️ `cobrosReales`, no `cobrosDe` (§4fg, 25/09): en una venta «PAGADA sin monto» el pago de
+       mentira se escribía como «Efectivo 0 %REC», y el adelanto nuevo nacía SIN método: el recibo
+       quedaba colgado y el pago iba a «sin método anotado», fuera de la caja del Cuadre. Sin
+       adelanto escrito, el nuevo se arma con el método suelto y sus imágenes, como `anticipoDe`. */
+    var cobros=cobrosReales(p).map(function(c){
       var q={}; for(var k in c) q[k]=c[k];
       if(!q.fecha) q.fecha=contaFecha(p);        // que no nazca un pago sin fecha
       return q;
     });
     var env=enviosDe(p), nuevo=null;
     if(acu>0){
+      var _sd=compDeTexto(ant?'':sueltoDe(p));
       nuevo = ant ? JSON.parse(JSON.stringify(ant))
-                  : { metodo:'', banco:'', fecha:contaFecha(p), nota:limpiaNota(p.nota), comp:'' };
+                  : { metodo:(_sd.txt?metodoBase(_sd.txt):''), banco:(_sd.txt?bancoDe(_sd.txt):''), fecha:contaFecha(p), nota:limpiaNota(p.nota), comps:_sd.comps, comp:_sd.comp };
       nuevo.monto=acu; nuevo.anticipo=true;
     }
-    p.metodoPago=conMarcaReg(textoCobros((nuevo?[nuevo]:[]).concat(cobros).concat(env)), regEnSistema(p));
+    p.metodoPago=conMarcaReg(textoHistorial(p, (nuevo?[nuevo]:[]).concat(cobros).concat(env)), regEnSistema(p));
     var t=0; cobros.forEach(function(c){ t+=Number(c.monto)||0; });
     p.cobradoBs=r2(t);
   }

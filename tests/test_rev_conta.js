@@ -11,6 +11,8 @@
         que registró Contabilidad ni el 2° método de un adelanto mixto.
      3. Corregir desde el formulario una venta con pago MIXTO no le cambia el día al adelanto
         (lo de §4fr, que cubría solo el adelanto simple).
+     4. «Guardar precios y montos» sobre una venta «PAGADA sin monto» no le borra el método ni
+        el recibo al adelanto (§4fg: todo lo que reescribe el historial usa `cobrosReales`).
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -231,6 +233,34 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('3 · ⚠️ …los Bs 2.000 siguen en el cuadre de AGOSTO (no en septiembre)', r.a.agosto===2000 && r.a.septiembre===0, J({agosto:r.a.agosto, septiembre:r.a.septiembre}));
   chk('3 · …y la corrección sí entró (saldo 900, A cuenta 2.000, sigue siendo mixto)', r.a.saldo===900 && r.a.acuenta===2000 && r.a.mixto===true, J(r.a));
   chk('3 · cambiar el monto del 2° método tampoco cambia el día del adelanto', J(r.b.pagos)===J(['ANT Efectivo 1400 @2026-08-28 #62','QR 600 @2026-08-28 #62']) && r.b.agosto===2000 && r.b.mixto===true, J(r.b));
+
+  /* ══ 4 · «GUARDAR PRECIOS Y MONTOS» SOBRE UNA VENTA «PAGADA SIN MONTO» (§4fg) ══════════
+     La venta vieja que se marcó PAGADA sin anotar cuánto guarda solo el método suelto con su
+     recibo («Efectivo %REC»). La ficha la muestra con A cuenta 0 y «Total Bs 0»: la contadora
+     pone 1.500 en «A cuenta» y guarda. `aplicarMontos` reescribía el historial con `cobrosDe` —el
+     pago de mentira de §4fg— y armaba el adelanto SIN método: el recibo quedaba colgado, el pago
+     en «sin método anotado» y los Bs 1.500 fuera de la caja del Cuadre. */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    var ayer=dia(-1);
+    STATE=[ P({ id:'S1', nota:'77', oc:'09-077', cliente:'PAGADA SIN MONTO', ts:new Date(ayer+'T12:00:00').getTime(),
+                pagado:true, metodoPago:'Efectivo %REC77', productos:[{desc:'COLCHON',cant:1}] }) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    CTA_ULTIMA=''; showContaModal('S1');
+    document.getElementById('cta-acuenta').value='1500';
+    ctaGuardarMontos('S1');
+    await new Promise(r=>setTimeout(r,60));
+    var p=findById('S1');
+    segSet('cta-tab','cuadre'); setContaTab('cuadre'); document.getElementById('cua-vendedor').value='';
+    segSet('cua-mode','dia'); document.getElementById('cua-dia').value=ayer; setCuadreModo('dia');
+    var formas=cuadrePorForma(cuadrePagos()).map(function(f){ return f.forma+' '+f.monto; });
+    return { pagos:contaPagos(p).map(function(c){ return { met:c.metodo, monto:c.monto, fecha:c.fecha, comps:compsArr(c.comps!=null?c.comps:c.comp), ant:!!c.anticipo }; }),
+             cobrado:contaCobrado(p), venta:ventaTotal(p), pagado:p.pagado, saldo:Number(p.saldo)||0, formas:formas, txt:p.metodoPago };
+  });
+  chk('4 · ⚠️ el adelanto anotado conserva el MÉTODO de la venta (Efectivo, no «sin método»)', r.pagos.length===1 && r.pagos[0].met==='Efectivo' && r.pagos[0].monto===1500, J(r.pagos));
+  chk('4 · ⚠️ …y su RECIBO (la imagen no queda colgada)', r.pagos.length===1 && J(r.pagos[0].comps)===J(['REC77']), J({pagos:r.pagos, txt:r.txt}));
+  chk('4 · ⚠️ …así que en el Cuadre del día entra en la CAJA (Efectivo 1.500)', J(r.formas)===J(['Efectivo 1500']), J(r.formas));
+  chk('4 · …una sola vez: cobrado = total de la venta = 1.500, pagada', r.cobrado===1500 && r.venta===1500 && r.pagado===true && r.saldo===0, J({cobrado:r.cobrado, venta:r.venta, pagado:r.pagado}));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
