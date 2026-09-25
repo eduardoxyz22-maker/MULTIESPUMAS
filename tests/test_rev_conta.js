@@ -7,6 +7,8 @@
 
      1. En una venta YA PAGADA la ficha muestra solo «🚚 Cobrar el recargo por entrega»: su
         botón anota el FLETE, no un «cobro de más» de la venta (regresión de §4fk).
+     2. El 💰✓ de la tabla de Administración deshace solo los cobros de la puerta, nunca el QR
+        que registró Contabilidad ni el 2° método de un adelanto mixto.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -150,6 +152,44 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('1c · §4fk: con «💵 Pago» a la vista y la venta saldada por otro, PREGUNTA antes de anotar', r.sel===2 && D.vistos.some(function(t){ return /ya está pagada/.test(t); }), D.vistos.join(' | ').slice(0,120));
   chk('1c · …y si se dice que NO, no se anota nada (ni cobro ni flete)', r.cobros===1 && r.envios===0, J(r));
   D.confirm=true;
+
+  /* ══ 2 · EL 💰✓ DE LA TABLA DE ADMINISTRACIÓN ═══════════════════════════════════════
+     Sobre una venta pagada, 💰✓ «deshace el cobro». Con UN solo cobro no preguntaba nada, y
+     ese cobro podía ser el QR de Bs 600 que registró Contabilidad con su recibo y su captura,
+     o el 2° método de un adelanto mixto: un toque y la venta volvía a «DEBE», para que el chofer
+     le cobrara de nuevo al cliente. Deshace SOLO los cobros de la puerta (§4fy), como el ↺ del
+     chofer: los que se anotan sin recibo ni imagen (el chofer y el mismo 💰). */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    var ayer=dia(-1);
+    STATE=[
+      P({ id:'Q1', nota:'50', oc:'09-050', cliente:'QR REGISTRADO', acuenta:1000, pagado:true,
+          metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:1000,fecha:ayer,nota:'50',comps:['A1']},
+                                  {metodo:'QR',banco:'BISA',monto:600,fecha:hoy,nota:'1750',comps:['CAP']}]) }),
+      P({ id:'Q2', nota:'51', oc:'09-051', cliente:'MIXTO', acuenta:2000, pagado:true,
+          metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:1500,fecha:ayer,nota:'51',comps:['E1']},
+                                  {metodo:'QR',banco:'BISA',monto:500,fecha:ayer,nota:'51',comps:['Q1']}]) }),
+      P({ id:'Q3', nota:'52', oc:'09-052', cliente:'PUERTA', pagado:true,
+          metodoPago:textoCobros([{metodo:'Efectivo',monto:900,fecha:hoy,recibio:'Luis Pierre'}]) }),
+      P({ id:'Q4', nota:'53', oc:'09-053', cliente:'LAS DOS COSAS', acuenta:500, pagado:true,
+          metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:500,fecha:ayer,nota:'53',comps:['A4']},
+                                  {metodo:'QR',banco:'BISA',monto:700,fecha:hoy,nota:'1760',comps:['CAP4']},
+                                  {metodo:'Efectivo',monto:300,fecha:hoy}]) })
+    ];
+    RETIROS=[]; releer();
+    var foto=function(id){ var p=findById(id); return { pagado:p.pagado, saldo:Number(p.saldo)||0, cobros:cobrosDe(p).map(function(c){ return c.metodo+' '+c.monto; }) }; };
+    var out={};
+    quickCobrado('Q1'); out.q1=foto('Q1');
+    quickCobrado('Q2'); out.q2=foto('Q2');
+    quickCobrado('Q3'); out.q3=foto('Q3');
+    quickCobrado('Q4'); out.q4=foto('Q4');
+    return out;
+  });
+  chk('2 · ⚠️ 💰✓ NO borra el QR que registró Contabilidad (con recibo y captura)', J(r.q1.cobros)===J(['QR 600']) && r.q1.pagado===true && r.q1.saldo===0, J(r.q1));
+  chk('2 · ⚠️ …ni el 2° método de un adelanto mixto', J(r.q2.cobros)===J(['QR 500']) && r.q2.pagado===true && r.q2.saldo===0, J(r.q2));
+  chk('2 · el cobro de la puerta SÍ se deshace, como siempre (la venta vuelve a deber 900)', r.q3.cobros.length===0 && r.q3.pagado===false && r.q3.saldo===900, J(r.q3));
+  chk('2 · con las dos cosas, se va SOLO el de la puerta (debe 300, el QR queda)', J(r.q4.cobros)===J(['QR 700']) && r.q4.saldo===300 && r.q4.pagado===false, J(r.q4));
+  chk('2 · …y el aviso nombra el de la puerta y dice que el otro NO se toca', D.vistos.some(function(t){ return /300/.test(t) && /NO se toca/.test(t); }), D.vistos.join(' | ').slice(0,200));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

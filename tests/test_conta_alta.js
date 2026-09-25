@@ -107,8 +107,9 @@ const J = (o) => JSON.stringify(o);
 
   r = await page.evaluate(async () => {
     // el «deshacer» del chofer no cambia: con un cobro en la entrega, deshacerlo vuelve a deber
+    // (25/09: el de la entrega va SIN recibo, como lo anotan el chofer y el 💰; uno con recibo lo registró Contabilidad)
     STATE=[P({ id:'G1', nota:'520', oc:'09-520', vendedor:'Carola Chavez', cliente:'DESHACER', ts:ts0+2, acuenta:500, saldo:0, pagado:true,
-      metodoPago:textoCobros([{anticipo:true, metodo:'Efectivo', monto:500, fecha:hoy, nota:'520', comps:[]},{metodo:'Efectivo', monto:700, fecha:hoy, nota:'521', comps:[]}]), productos:[{desc:'G',cant:1,precio:1200}] }),
+      metodoPago:textoCobros([{anticipo:true, metodo:'Efectivo', monto:500, fecha:hoy, nota:'520', comps:[]},{metodo:'Efectivo', monto:700, fecha:hoy, comps:[]}]), productos:[{desc:'G',cant:1,precio:1200}] }),
            P({ id:'G2', nota:'530', oc:'09-530', vendedor:'Carola Chavez', cliente:'TODO ADELANTO', ts:ts0+3, acuenta:0, saldo:0, pagado:true,
       metodoPago:'~Efectivo 900 @'+hoy+' #530 %IMG9', productos:[{desc:'G',cant:1,precio:900}] })];
     quickCobrado('G1'); quickCobrado('G2');
@@ -307,7 +308,8 @@ const J = (o) => JSON.stringify(o);
     chk('…el saldo BAJA a 0 y la venta queda pagada (antes el saldo SUBÍA a 600)', r.sumo.saldo===0 && r.sumo.pagado===true, J([r.sumo.saldo, r.sumo.pagado]));
     chk('⚠️ …y el comprobante del pago viejo NO se pierde', r.sumo.conservaComp==='["IMG1"]', r.sumo.conservaComp);
     chk('⚠️ el cobro nuevo nace CON fecha, así que entra al Cuadre del mes', r.sumo.todosConFecha===true && r.sumo.enCuadreMes===1000, J([r.sumo.todosConFecha, r.sumo.enCuadreMes]));
-    chk('⚠️ «deshacer» con 3 pagos registrados PREGUNTA antes de borrarlos', r.deshacer.preguntas===1 && /3 pagos/.test(r.deshacer.texto), J(r.deshacer));
+    // 25/09: deshace solo el de la puerta (la tarjeta sin recibo) y lo dice; los 2 con recibo no se tocan (test_rev_conta §2).
+    chk('⚠️ «deshacer» con 3 pagos registrados PREGUNTA antes de borrarlos', r.deshacer.preguntas===1 && /Tarjeta/.test(r.deshacer.texto) && /otros 2 pagos \(con recibo\) NO se tocan/.test(r.deshacer.texto), J(r.deshacer));
     chk('…y si se dice que no, no se borra ninguno', r.deshacer.quedan===3, J(r.deshacer.quedan));
   }
 

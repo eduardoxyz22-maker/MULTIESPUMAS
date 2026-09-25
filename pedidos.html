@@ -13216,10 +13216,19 @@ function quickCobrado(id){
        cobro único de la puerta, pero con tres pagos registrados —QR con foto, efectivo con
        recibo, tarjeta— un toque se llevaba los tres, sin confirmación y sin deshacer del
        deshacer. El botón está pegado a 📦 y 🚚 en la tabla. */
-    var n=cobrosDe(p).length;
-    if(n>1 && !confirm('Esta venta tiene '+n+' pagos registrados y se van a borrar TODOS.\n\n'+
-                       'Si solo querés corregir uno, cerrá esto y usá Contabilidad → Corregir.\n\n¿Borrar los '+n+'?')) return;
-    aplicarCobros(p, []); toast('Cobro deshecho ✓','ok'); return;
+    /* ⚠️ Y con UN solo cobro no preguntaba nada (25/09): ese cobro podía ser el QR de Bs 600 que
+       registró Contabilidad con su recibo y su captura, o el 2° método de un adelanto mixto, y un
+       toque dejaba la venta en «DEBE» para que el chofer le cobrara de nuevo al cliente. Se
+       deshacen SOLO los cobros de la puerta (`cobroDeLaPuerta`, §4fy), como el ↺ del chofer: los
+       que se anotan sin recibo ni imagen, que son los del chofer y los de este mismo 💰. */
+    var todos=cobrosDe(p).slice(), fuera=todos.filter(cobroDeLaPuerta), quedan=todos.length-fuera.length;
+    if(!fuera.length){ toast('No hay un cobro de la puerta para deshacer: los pagos de esta venta los registró Contabilidad o la tienda (con recibo o imagen). Si hay que corregir uno, es en Contabilidad → ✏️ Corregir.','err',8000); return; }
+    var n=fuera.length, tot=0; fuera.forEach(function(c){ tot=r2(tot+(Number(c.monto)||0)); });
+    if((n>1 || quedan) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
+                       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
+                       '\n\nTotal: '+fmtBs(tot)+
+                       (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
+    aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); })); toast('Cobro deshecho ✓','ok'); return;
   }
   if(esATC(p.oc) || esRPT(p.oc)){ toast(noSeCobraTxt(p),'err',6000); return; }   // §4fy
   if(!applyPaid(p,'Efectivo')){ toast('Esta venta no tiene saldo por cobrar: revisá el monto en Contabilidad','err',6000); return; }
