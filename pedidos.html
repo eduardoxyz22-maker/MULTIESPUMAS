@@ -5513,6 +5513,10 @@ function ctaPagoRecordar(){
 }
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
+/* ⚠️ Lo que MOSTRÓ la ficha (25/09): true = el bloque era el del flete. En una venta ya pagada
+   no hay selector y el bloque ENTERO dice «🚚 Cobrar el recargo»: ahí el flete sí se eligió,
+   aunque `CTA_TIPO` siga en 'pago'. Lo pone `showContaModal`, lo lee `ctaRegistrarPago`. */
+var CTA_FORM_ENV=false;
 function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; CTA_PAGO_V=null; showContaModal(id); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
@@ -6005,6 +6009,7 @@ function showContaModal(id){
      el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
   // Con flete pactado sin cobrar, el bloque abre directo en modo recargo: es lo urgente.
   var esEnv = CTA_TIPO==='envio' || falta<=0.01 || (CTA_TIPO!=='pago' && envioPendiente(p));
+  CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
@@ -6356,12 +6361,20 @@ function ctaRegistrarPago(id){
      COBRADO» y no en lo cobrado de la venta. Ahora al recargo se va SOLO si el usuario lo
      eligió; si no, se pregunta, y el cobro de más queda como cobro de más —que el panel ya
      sabe mostrar («⚠️ Bs 700 de más», `excesoBadge`). */
-  if(CTA_TIPO!=='envio' && falta<=0.01){
+  /* ⚠️ PERO «ELEGIDO» ES LO QUE LA FICHA MOSTRÓ (25/09). En una venta YA PAGADA no hay selector:
+     el bloque entero dice «🚚 Cobrar el recargo por entrega» y el botón «Registrar el cobro del
+     flete», con `CTA_TIPO` en 'pago' sin que nadie lo tocara. Mirando solo `CTA_TIPO`, §4fk
+     preguntaba «¿cobro de MÁS?… usá el botón 🚚» —que no está— y, aceptando, el flete de 150
+     entraba como pago de la venta: saldo −150 y el flete seguía «por cobrar», así que el chofer
+     lo volvía a cobrar. La pregunta queda para cuando se vio «💵 Pago» y la venta se saldó en
+     otro lado antes de tocar el botón. */
+  var _env = CTA_TIPO==='envio' || CTA_FORM_ENV;
+  if(!_env && falta<=0.01){
     if(!confirm('Esta venta ya está pagada: no le falta nada por cobrar.\n\n'+
                 '¿Anotar igual estos '+fmtBs(monto)+' como un cobro de MÁS de la venta?\n\n'+
                 'Si en realidad es el flete, cerrá esto y usá el botón 🚚 Recargo por entrega.')) return;
   }
-  if(CTA_TIPO==='envio'){
+  if(_env){
     /* Si había un flete PACTADO sin cobrar, este cobro lo reemplaza (no se suma encima):
        lo que se está haciendo es justamente reportar que ya se cobró.
        ⚠️ PERO SOLO POR LO QUE SE COBRÓ (§4fe). Antes el `filter(envioYaCobrado)` tiraba el

@@ -388,12 +388,17 @@ const J = (o) => JSON.stringify(o);
       var out={}, conf=[];
       var _cf=window.confirm;
       window.confirm=function(m){ conf.push(String(m)); return true; };
-      // (a) venta PAGADA (saldo 0), contabilidad registra otro pago de 700 con tipo «pago»
+      // (a) contabilidad registra otro pago de 700 con tipo «pago» sobre una venta PAGADA.
+      /* 25/09: «Pago» solo está a la vista si la ficha se abrió CON saldo (en una venta pagada
+         no hay selector y el bloque es el del flete, test_rev_conta §1). Así que se abre con
+         saldo y la venta se salda en otro dispositivo antes del toque, como traería la lista. */
+      var saldarEnOtro=function(id, txt){ var q=findById(id); q.metodoPago=txt; q.acuenta=0; q.saldo=0; q.pagado=true; };
       STATE=[ P({ id:'K1', nota:'800', oc:'09-800', vendedor:'Maria Flores', cliente:'YA PAGADA', ts:ts0+9,
-        acuenta:0, saldo:0, pagado:true, metodoPago:'~Efectivo 1000 @'+hoy+' #800 %V1',
+        acuenta:0, saldo:1000, pagado:false, metodoPago:'',
         productos:[{desc:'A',cant:1,precio:1000}] }) ];
       RETIROS=[]; aConta(); await new Promise(r=>setTimeout(r,30));
       showContaModal('K1');
+      saldarEnOtro('K1', '~Efectivo 1000 @'+hoy+' #800 %V1');
       out.tipo=CTA_TIPO;
       CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['QR1'];
       document.getElementById('cta-pago-monto').value='700';
@@ -407,9 +412,10 @@ const J = (o) => JSON.stringify(o);
       // (b) …y si se dice que NO, no se anota nada
       conf.length=0; window.confirm=function(m){ conf.push(String(m)); return false; };
       STATE=[ P({ id:'K2', nota:'802', oc:'09-802', vendedor:'Maria Flores', cliente:'YA PAGADA 2', ts:ts0+10,
-        acuenta:0, saldo:0, pagado:true, metodoPago:'~Efectivo 1000 @'+hoy+' #802 %V2',
+        acuenta:0, saldo:1000, pagado:false, metodoPago:'',
         productos:[{desc:'A',cant:1,precio:1000}] }) ];
       aConta(); showContaModal('K2');
+      saldarEnOtro('K2', '~Efectivo 1000 @'+hoy+' #802 %V2');
       CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['QR2'];
       document.getElementById('cta-pago-monto').value='700';
       document.getElementById('cta-pago-fecha').value=hoy;
