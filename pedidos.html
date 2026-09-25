@@ -7631,6 +7631,13 @@ function submitPedido(){
      el aviso de la cola lo muestra) y se explica sin ✓ verde (§4eo). */
   function afterEnCola(wasEdit, motivo){
     var _desde=EDIT_DESDE;
+    /* 📥 El borrador de Kommo completado ya es un pedido, aunque espere en la cola: sale de la
+       bandeja como en `after()` (25/09). Si quedaba, decía «le falta la entrega» de una venta ya
+       completada, y «Descartar» se la llevaba entera. */
+    if(borradorDe(rec.id)){
+      BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(rec.id); });
+      saveBorrMirror(); renderBorrSiActivo();
+    }
     EDIT_ID=null; resetForm(); refreshDatalists();
     if(wasEdit) volverDeEdicion(_desde); else showView('mis');
     renderColaAviso();
@@ -8917,6 +8924,13 @@ function borradorDe(id){
   for(var i=0;i<BORRADORES.length;i++) if(String(BORRADORES[i].id)===String(id)) return BORRADORES[i];
   return null;
 }
+/* 📥 ¿Esa venta ya se completó en ESTE dispositivo y espera en la cola? (25/09) Entonces ya no es
+   un borrador: la copia de la planilla todavía lo es solo porque la conversión no llegó. */
+function borradorEnColaComoPedido(id){
+  var a=getPending();
+  for(var i=0;i<a.length;i++) if(a[i] && String(a[i].id)===String(id) && !esBorrador(a[i])) return a[i];
+  return null;
+}
 /* ¿La vendedora que Kommo puso es una de las de la lista del panel? En Kommo se
    llaman «Maria Flores - Buenos Aires» y acá «Maria Flores»: sin sacarle la
    sucursal no le aparecería a nadie. El robot ya manda el nombre limpio, pero si
@@ -9273,6 +9287,10 @@ function leerCierresDeLista(lista, esDelServidor){
          (§4es): si no, el pedido desaparecía de STATE y la tarjeta volvía a la bandeja hasta
          el próximo refresco. Pasado el guardado (90 s), el servidor vuelve a mandar. */
       var _loc=(typeof saveReciente==='function' && saveReciente(p.id)) ? findById(p.id) : null;
+      /* …y lo mismo si la conversión espera en la COLA (25/09): pasados esos 90 s el borrador volvía
+         a la bandeja con la venta completada al lado, y «Descartar» la sacaba de la cola, borraba la
+         fila y anotaba el lead como descartado en Kommo: la venta desaparecía entera. */
+      if(!_loc) _loc=borradorEnColaComoPedido(p.id);
       if(_loc && !esBorrador(_loc)) resto.push(_loc); else borr.push(p);     // no es un pedido todavía (§4ca)
     }
     else resto.push(p);
@@ -10985,6 +11003,14 @@ function completarBorrador(id){
 }
 function descartarBorrador(id){
   var rec=borradorDe(id); if(!rec) return;
+  /* ⚠️ Ya completada y esperando en la cola (25/09): no hay borrador que descartar. `borrarEnServidor`
+     la sacaría de la cola y borraría la fila: la venta se perdía entera. */
+  if(borradorEnColaComoPedido(id)){
+    BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
+    saveBorrMirror(); renderBorrSiActivo();
+    toast('📥 Esa venta ya la completaste: está en la cola de este dispositivo y se manda sola a la planilla. No se descartó nada.','err',9000);
+    return;
+  }
   if(!confirm('¿Descartar la venta de '+(rec.cliente||'—')+' que vino de Kommo?\n\nNo se borra nada en Kommo: solo deja de aparecer acá.')) return;
   var copia=JSON.parse(JSON.stringify(rec));
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });

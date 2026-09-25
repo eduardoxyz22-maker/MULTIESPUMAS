@@ -199,6 +199,58 @@ function INIT(){
     chk('…y la rechazada no pisó lo del otro dispositivo', S.fila('f2').observaciones==='OTRO DISPOSITIVO', S.fila('f2').observaciones);
   });
 
+  // ══ 2. EL BORRADOR DE KOMMO COMPLETADO QUE QUEDÓ EN LA COLA ═════════════════════════════
+  await esc('2. Completar un borrador sin señal, y después tocar «Descartar»', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'kommo-900', cliente:'VENTA DE KOMMO', estado:'Borrador Kommo', fecha:'', turno:'', zona:'', nota:'', nroDia:0 }));
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      showView('mis'); document.getElementById('mis-vendedor').value='Mirian Salazar'; renderMis(); await esperar(150);
+      window.__srvBorrador=JSON.parse(JSON.stringify(borradorDe('kommo-900')));
+      completarBorrador('kommo-900'); await esperar(250);
+      document.getElementById('f-fecha').value='2026-09-21';
+      document.getElementById('f-zona').value='Norte';
+      document.getElementById('f-nota').value='3003';
+      __regla({ act:'save', mode:'drop', n:20 });        // sin señal: no sale nada…
+      __regla({ act:'list', mode:'drop', n:20 });        // …ni se puede releer la planilla
+      submitPedido(); await esperar(7000); await quieto();
+      try{ closeModal(); }catch(e){}
+      var o={ cola:getPending().map(function(x){ return x.id+':'+(x.estado||'pedido'); }),
+              bandeja:BORRADORES.map(function(b){ return b.id; }) };
+      // pasa el rato (más de los 90 s de `saveReciente`), vuelve la lectura pero el guardado sigue sin salir
+      for(var k in SAVE_ULTIMO) SAVE_ULTIMO[k].t -= 100000;
+      window.__ctl.rules=window.__ctl.rules.filter(function(x){ return x.act!=='list'; });
+      await refrescarEstado(); renderMis(); await esperar(150);
+      o.bandeja2=BORRADORES.map(function(b){ return b.id; });
+      o.enState=STATE.filter(function(p){ return p.id==='kommo-900'; }).map(function(p){ return (p.estado||'pedido')+' '+p.fecha+' '+p.nota; });
+      o.tarjeta=/le falta la entrega/.test((document.getElementById('mis-borradores')||{}).textContent||'');
+      // otra pestaña, con la bandeja de antes, todavía muestra la tarjeta: la vendedora toca «Descartar»
+      var srv=JSON.parse(JSON.stringify(window.__srvBorrador));
+      BORRADORES=BORRADORES.filter(function(b){ return b.id!=='kommo-900'; }).concat([srv]);
+      window.__ctl.log=[]; window._toasts=[];
+      descartarBorrador('kommo-900'); await esperar(3000); await quieto();
+      o.colaTrasDescartar=getPending().map(function(x){ return x.id+':'+(x.estado||'pedido'); });
+      o.borrados=window.__ctl.log.filter(function(x){ return x.act==='delete'; }).length;
+      o.aviso=window._toasts.join(' | ');
+      // vuelve la señal
+      window.__ctl.rules=[];
+      await flushPending(); await refrescarEstado(); await quieto();
+      o.final=STATE.filter(function(p){ return p.id==='kommo-900'; }).map(function(p){ return (p.estado||'pedido')+' '+p.fecha+' '+p.nota; });
+      o.bandejaFinal=BORRADORES.map(function(b){ return b.id; });
+      return o;
+    });
+    const f = S.fila('kommo-900');
+    chk('el borrador completado quedó en la cola, como pedido', JSON.stringify(r.cola)===JSON.stringify(['kommo-900:pedido']), r.cola);
+    chk('⚠️ y sale de la bandeja en el momento, como cuando se guarda bien (antes seguía «le falta la entrega»)', r.bandeja.indexOf('kommo-900')<0, r.bandeja);
+    chk('⚠️ pasado el rato, la planilla todavía trae el borrador y NO vuelve a la bandeja mientras la venta espera en la cola', r.bandeja2.indexOf('kommo-900')<0 && !r.tarjeta, { bandeja:r.bandeja2, tarjeta:r.tarjeta });
+    chk('…y la venta completada se sigue viendo como pedido', JSON.stringify(r.enState)===JSON.stringify(['pedido 2026-09-21 3003']), r.enState);
+    chk('⚠️ «Descartar» (desde una bandeja vieja) NO saca la venta de la cola ni la borra de la planilla', JSON.stringify(r.colaTrasDescartar)===JSON.stringify(['kommo-900:pedido']) && r.borrados===0, r);
+    chk('…y dice por qué', /ya la completaste/.test(r.aviso), r.aviso);
+    chk('⚠️ con señal, la venta llega a la planilla completa (fecha, nota, ya no es borrador)', f && f.fecha==='2026-09-21' && f.nota==='3003' && f.estado==='', f && { fecha:f.fecha, nota:f.nota, estado:f.estado });
+    chk('⚠️ …y Kommo NO la tiene anotada como descartada', !S.props().KOMMO_DESCARTADOS, S.props().KOMMO_DESCARTADOS);
+    chk('…y no quedó ni en la bandeja ni repetida', JSON.stringify(r.final)===JSON.stringify(['pedido 2026-09-21 3003']) && r.bandejaFinal.indexOf('kommo-900')<0, r);
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
