@@ -7,6 +7,8 @@
       desde el día viejo y su ✅ del día nuevo ya no cerraba la ATC.
    2. ✅ Tildar y destildar la devolución (un toque sin querer) dejaba puesto el «recogido de
       fábrica» que el ✅ había anotado solo: se apagaba el aviso de ir a buscarla a la fábrica.
+   3. 🔁 Programar la devolución el sábado a la tarde, el domingo o en un día cerrado decía «✓» y
+      el servidor la rechazaba después como «turno lleno»; el cartel decía «de 12 · de 13» siempre.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev_entregas.js
@@ -156,6 +158,55 @@ const BASE = `
     chk('control: el «✓ Recogido» que puso logística a mano sobrevive al ✅ y su vuelta',
         !!r.aMano.rfMano && r.aMano.despues.rf===r.aMano.rfMano && r.aMano.despues.ent==='', J(r.aMano));
     chk('⚠️ lo mismo desde el 🚚 de la tabla de Administración', r.tabla.rf==='' && r.tabla.alertaHoy===true, J(r.tabla));
+    await page.close();
+  }
+
+  // ═══ 3. Programar la devolución respeta los días del camión ══════════════════════════
+  console.log('\n── 3. 🔁 Programar la devolución: sábado solo AM (15), domingo cerrado, día cerrado y turno lleno ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate((base) => {
+      eval(base);
+      STATE=[]; var out={};
+      window._confirms=[]; window._resp=false;
+      confirm=function(m){ window._confirms.push(String(m)); return window._resp; };
+      var recogida=function(id){ STATE=STATE.filter(function(p){ return p.id!==id; });
+        STATE.push(_P({id:id, oc:'ATC 09-1'+id.length, fecha:'2026-09-21', entregado:true, cliente:'CLIENTE '+id,
+          productos:[{desc:'SOFT', cant:1, atc:{mot:'Ruido'}}]})); saveMirror(); };
+      var programar=function(id, f, t){ window._confirms=[]; window._saves=[];
+        abrirProgramarDevAtc(id); document.getElementById('pdev-fecha').value=f; segSet('pdev-turno',t);
+        guardarProgramarDevAtc(id);
+        var p=findById(id), a=atcDe(p)||{}, s=window._saves[window._saves.length-1];
+        return { fecha:p.fecha, pdev:a.pdev||'', confirms:window._confirms.slice(), mandado:window._saves.length, forzar:!!(s&&s.opts&&s.opts.forzar) }; };
+      recogida('s1');
+      abrirProgramarDevAtc('s1');
+      out.txtSabado=abrirProgramarDevAtc._cupos('2026-09-26').replace(/<[^>]+>/g,'');
+      out.txtDomingo=abrirProgramarDevAtc._cupos('2026-09-27').replace(/<[^>]+>/g,'');
+      out.txtJueves=abrirProgramarDevAtc._cupos('2026-09-24').replace(/<[^>]+>/g,'');
+      closeModal();
+      // sábado a la tarde: se avisa, y si dicen que no, no se programa nada
+      out.sabPMno=programar('s1','2026-09-26','PM');
+      // …y si confirman (administración decide, como en 📅 Reprogramar), va con `forzar`
+      window._resp=true; out.sabPMsi=programar('s1','2026-09-26','PM');
+      window._resp=false; recogida('d1'); out.domingo=programar('d1','2026-09-27','AM');
+      DIAS_CERRADOS=['2026-09-25']; recogida('c1'); out.cerrado=programar('c1','2026-09-25','AM');
+      DIAS_CERRADOS=[];
+      // control: un jueves con lugar se programa sin preguntar nada y sin forzar
+      recogida('j1'); out.jueves=programar('j1','2026-09-24','AM');
+      return out;
+    }, BASE);
+    chk('⚠️ el cartel de cupos del SÁBADO dice que entran 15 a la mañana y que no hay tarde (antes «de 12 · PM de 13»)',
+        /de 15/.test(r.txtSabado) && !/de 13/.test(r.txtSabado) && /no hay/i.test(r.txtSabado), r.txtSabado);
+    chk('⚠️ …y el del DOMINGO, que no se entrega', /domingo/i.test(r.txtDomingo) && !/de 12/.test(r.txtDomingo), r.txtDomingo);
+    chk('control: un día hábil sigue diciendo 12 y 13', /de 12/.test(r.txtJueves) && /de 13/.test(r.txtJueves), r.txtJueves);
+    chk('⚠️ programar un SÁBADO PM avisa antes (antes decía «✓ programada» y el servidor lo rechazaba como «turno lleno»)',
+        r.sabPMno.confirms.length===1 && /SÁBADO/.test(r.sabPMno.confirms[0]), J(r.sabPMno.confirms));
+    chk('…y si dicen que no, la ATC queda como estaba y no se manda nada', r.sabPMno.pdev==='' && r.sabPMno.fecha==='2026-09-21' && r.sabPMno.mandado===0, J(r.sabPMno));
+    chk('…y si administración confirma, se programa y va con `forzar` (el portero la dejaría afuera)', r.sabPMsi.pdev==='2026-09-26' && r.sabPMsi.forzar===true, J(r.sabPMsi));
+    chk('⚠️ el DOMINGO también avisa y no programa sin confirmar', r.domingo.confirms.length===1 && /DOMINGO/.test(r.domingo.confirms[0]) && r.domingo.pdev==='', J(r.domingo));
+    chk('⚠️ un día CERRADO también', r.cerrado.confirms.length===1 && /CERRADO/.test(r.cerrado.confirms[0]) && r.cerrado.pdev==='', J(r.cerrado));
+    chk('control: un jueves con lugar se programa como siempre, sin preguntar y sin forzar',
+        r.jueves.confirms.length===0 && r.jueves.pdev==='2026-09-24' && r.jueves.forzar===false && r.jueves.mandado===1, J(r.jueves));
     await page.close();
   }
 

@@ -10455,7 +10455,11 @@ function abrirProgramarDevAtc(id){
     var propio=(atcDevProg(p)===f && p.fecha===f) ? 1 : 0;   // si ya está programada ese día, no se cuenta a sí misma
     var amL=am-(propio&&normTurno(p.turno)==='AM'?1:0), pmL=pm-(propio&&normTurno(p.turno)==='PM'?1:0);
     var c=function(n,max){ return '<b style="color:'+(n>=max?'var(--red)':(n>=max-2?'#b45309':'var(--green)'))+'">'+n+' de '+max+'</b>'; };
-    return '🌅 AM '+c(amL,CUPOS_AM)+' · 🌆 PM '+c(pmL,CUPOS_PM)+' cupos usados el '+fmtFecha(f);
+    /* (25/09) Con los límites de ESE día: decía «de 12 · PM de 13» también el sábado (15 y sin
+       tarde) y el domingo, y el sábado a la tarde parecía libre. */
+    if(diaDomingo(f)) return '🚫 El '+fmtFecha(f)+' es <b>domingo</b>: no se entrega.';
+    var lPM=limTurno(f,'PM');
+    return '🌅 AM '+c(amL,limTurno(f,'AM'))+' · 🌆 PM '+(lPM>0?c(pmL,lPM):'<b>no hay (sábado)</b>')+' cupos usados el '+fmtFecha(f);
   };
   openModal(
     '<div class="modal-h"><h3>🔁 Programar devolución · '+esc(p.cliente||'')+'</h3>'+
@@ -10483,11 +10487,17 @@ function guardarProgramarDevAtc(id){
   if(!f){ toast('Falta el día de la devolución','err'); return; }
   if(f<todayStr()){ toast('La devolución no puede programarse para un día que ya pasó','err'); return; }
   if(atcDevuelta(p) && f<atcDevuelta(p)){ toast('No se le puede devolver antes de que volviera de fábrica ('+fmtFecha(atcDevuelta(p))+')','err'); return; }
+  /* (25/09) Ocupa un cupo como cualquier entrega: domingo, sábado PM, día cerrado o turno lleno
+     AVISAN y se confirman, igual que en 📅 Reprogramar. Antes decía «✓ programada» y el portero
+     del servidor la rechazaba después como «turno lleno» (también el domingo). */
+  var _avisos=reproAvisos(p, f, t);
+  if(_avisos.length && !confirm('⚠️ Ojo:\n\n   • '+_avisos.join('\n   • ')+'\n\n¿Programar la devolución igual?')) return;
+  if(_avisos.length && !asegurarClaveAdmin()) return;
   var a=atcDe(p)||{};
   var rec=a.rec || p.fecha || '';                 // el día del recojo se guarda antes de mover la fecha
   mergeAtcDatos(p, { rec:rec, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
   p.fecha=f; p.turno=t; p.entregado=false;
-  persistPedido(p); closeModal(); renderAtc();
+  persistPedido(p, _avisos.length?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
 }
 function quitarProgramarDevAtc(id){
