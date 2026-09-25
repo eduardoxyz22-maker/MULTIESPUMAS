@@ -162,6 +162,36 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       r.releido.u2k===r.KC && r.releido.u2a!=='no' && r.releido.fab===0 && !(r.releido.viejo && r.releido.viejo.fab),
       r.releido.u2+' · fabricar '+r.releido.fab+' · renglón viejo '+JSON.stringify(r.releido.viejo));
 
+  // ══ 3. El detalle del producto no da por salido lo que falta ir a buscar ══
+  console.log('\n── 3. Detalle de un producto: una línea 📥 de días pasados sigue pendiente ──');
+  r = await page.evaluate(() => {
+    /* Desde §4ey la marca dice DE DÓNDE («Recoger de IM», «Recoger de Banzer») y el detalle seguía
+       preguntando por el texto viejo «Recoger de Moreno»: una línea 📥 con la fecha pasada —que
+       sigue COMPROMETIDA, está en «Vendido sin entregar»— decía «Fecha pasada: se considera salido». */
+    var K=stockClave({desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201'});
+    STOCK=stockVacio(); STOCK_CARGADO=true;
+    STOCK.c={ f:todayStr(), u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.' }; STOCK.c.u[K]=0;
+    STOCK.g={'IM - PRODUCTOTERMINADO':{f:todayStr(),u:{},t:1,rs:{}}}; STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=5;
+    STOCK.al={'IM - PRODUCTOTERMINADO':'otro'};
+    var atras2=(function(){ var d=new Date(); d.setDate(d.getDate()-2); return isoLocal(d); })();
+    STATE=[_P({id:'d1', cliente:'Ana', fecha:atras2, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2,chk:'im'}]}),
+           _P({id:'d2', cliente:'Beto', fecha:atras2, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,chk:'im',chkDe:'Banzer'}]}),
+           _P({id:'d3', cliente:'Caro', fecha:atras2, entregado:true, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1}]})];
+    stockOlvidarIndice();
+    var o=stockData().lista.filter(function(x){ return x.k===K; })[0];
+    abrirStockPedidos(K);
+    var sec=[].slice.call(document.querySelectorAll('#modal-box details')).map(function(d){
+      return { tit:d.querySelector('summary').textContent, filas:[].slice.call(d.querySelectorAll('tbody tr')).map(function(tr){ return tr.textContent.replace(/\s+/g,' '); }) }; });
+    closeModal();
+    return { comp:o.comp, sec:sec };
+  });
+  const pend = (r.sec.filter(function(s){ return /Vendido sin entregar/.test(s.tit); })[0]||{filas:[]}).filas;
+  chk('las dos líneas 📥 de hace 2 días siguen comprometidas (3 unidades)', r.comp===3, r.comp);
+  chk('⚠️ en «Vendido sin entregar» dicen de dónde se recogen, no «Fecha pasada: se considera salido»',
+      pend.length===2 && pend.every(function(t){ return !/se considera salido/.test(t) && /Recoger de/.test(t); }), pend.join(' | '));
+  chk('…y lo entregado sigue en el historial como «Entregado»',
+      r.sec.some(function(s){ return /Historial/.test(s.tit) && s.filas.some(function(t){ return /Entregado/.test(t); }); }), JSON.stringify(r.sec.map(function(s){ return s.tit; })));
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
