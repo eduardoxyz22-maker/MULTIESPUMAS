@@ -16,6 +16,7 @@
      5. …y cargarle solo el PRECIO de un ítem no la desmarca de pagada.
      6. El monto de una «PAGADA sin monto» que se escribe en el formulario queda con el día de
         la venta (como «💵 Anotar el monto»), no con el de hoy.
+     7. El Excel del Cuadre marca los pagos de FLETE, como ya lo hacen la pantalla y el texto.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -327,6 +328,37 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('6 · ⚠️ el monto de una «PAGADA sin monto» escrito en el formulario queda con el DÍA DE LA VENTA', J(r.vieja.pagos)===J(['ANT Efectivo 1500 @2026-08-20 REC90']) && r.vieja.dir==='Calle nueva 123' && r.vieja.pagado===true, J(r.vieja));
   chk('6 · control: la venta que debía y se paga HOY sigue entrando con la fecha de hoy', J(r.debia.pagos)===J(['ANT Efectivo 1500 @2026-09-16 REC92']) && r.debia.pagado===true, J(r.debia));
+
+  /* ══ 7 · EL EXCEL DEL CUADRE SEPARA EL FLETE, COMO LA PANTALLA Y EL TEXTO ═════════════
+     La pantalla marca cada pago de flete con «🚚 RECARGO» y lo suma aparte («🚚 Transporte
+     cobrado»), y el texto dice «De eso, Bs X son recargos por entrega (flete, no es de la venta)».
+     En el Excel la fila del flete era igual a la de un pago de la venta: el contador no tenía cómo
+     saber qué no se factura. La marca va en una columna NUEVA al final: no se mueve ninguna. */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'X1', nota:'30', oc:'09-030', cliente:'CON FLETE', pagado:true, acuenta:0,
+                metodoPago:textoCobros([{anticipo:true,metodo:'Efectivo',monto:1500,fecha:hoy,nota:'30',comps:['V30']},
+                                        {envio:true,metodo:'QR',banco:'BISA',monto:120,fecha:hoy,nota:'31',comps:['F31']}]) }),
+            P({ id:'X2', nota:'32', oc:'09-032', cliente:'SIN FLETE', vendedor:'Maria Flores', pagado:true, acuenta:0,
+                metodoPago:textoCobros([{anticipo:true,metodo:'QR',banco:'BISA',monto:900,fecha:hoy,nota:'32',comps:['V32']}]) }) ];
+    RETIROS=[]; releer();
+    showView('conta'); segSet('cta-tab','cuadre'); setContaTab('cuadre'); await new Promise(r=>setTimeout(r,120));
+    document.getElementById('cua-vendedor').value='';
+    segSet('cua-mode','mes'); document.getElementById('cua-mes').value=hoy.slice(0,7); setCuadreModo('mes');
+    var pantalla=0; cuadrePagos().forEach(function(c){ if(esEnvio(c)) pantalla=r2(pantalla+c.monto); });
+    var texto=cuadreTexto();
+    exportCuadre();
+    var m=window.__XLSX[0].matrix, h=m[0].map(function(c){ return c&&c.v; });
+    var iR=h.indexOf('RECARGO POR ENTREGA'), iM=h.indexOf('MONTO (Bs)'), iC=h.indexOf('CLIENTE');
+    var filas=[]; for(var i=1;i<m.length && m[i] && m[i].length;i++) filas.push(m[i]);
+    var excel=0, marcadas=[];
+    filas.forEach(function(f){ if(iR>=0 && f[iR]){ marcadas.push(f[iC]); excel=r2(excel+((f[iM]&&f[iM].v)||0)); } });
+    return { cabecera:h, iR:iR, ult:h.length-1, pantalla:pantalla, excel:excel, marcadas:marcadas, filas:filas.length,
+             texto:(texto.match(/De eso, \*([^*]+)\*/)||[])[1]||'', cols:window.__XLSX[0].cols.length };
+  });
+  chk('7 · el Excel del Cuadre trae la columna «RECARGO POR ENTREGA», AL FINAL (no se mueve ninguna)', r.iR===r.ult && r.iR===14 && r.cabecera[13]==='EFECTIVO EN MANO DE' && r.cols===15, J({cabecera:r.cabecera, cols:r.cols}));
+  chk('7 · …marca SOLO la fila del flete', J(r.marcadas)===J(['CON FLETE']) && r.filas===3, J(r));
+  chk('7 · …y lo marcado suma lo mismo que la pantalla y el texto (Bs 120)', r.excel===120 && r.pantalla===120 && /120/.test(r.texto), J({excel:r.excel, pantalla:r.pantalla, texto:r.texto}));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

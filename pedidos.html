@@ -4801,12 +4801,16 @@ function exportCuadre(){
   // §4fz: un arqueo contado sin ningún pago detrás también es algo para bajar (la diferencia ENTERA).
   if(!pagos.length && !CIE.huerfanos.length){ toast('No hay pagos para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
-  var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE','EFECTIVO EN MANO DE'].map(function(t){return {v:t,s:H};})];
+  /* ⚠️ «RECARGO POR ENTREGA» (25/09): la pantalla marca cada pago de flete («🚚 RECARGO») y el texto
+     dice cuánto es flete, pero en el Excel esa fila era igual a un pago de la venta y el contador no
+     sabía qué no se factura. Va en una columna NUEVA al FINAL: las que ya se usan no se mueven. */
+  var rows=[['FECHA DEL PAGO','CLIENTE','ENTREGA','N° NOTA DEL PAGO','VENDEDOR','MÉTODO','BANCO','MONTO (Bs)','ANTICIPO','N° NOTA DE LA VENTA','NIT','EN SISTEMA','COMPROBANTE','EFECTIVO EN MANO DE','RECARGO POR ENTREGA'].map(function(t){return {v:t,s:H};})];
   pagos.forEach(function(c){
     rows.push([c.fecha, c.p.cliente||'', tipoVenta(c.p), c.nota||'', c.p.vendedor||'', c.metodo||'', c.banco||'',
                {v:c.monto,t:'n',s:fc}, c.anticipo?'SÍ':'', c.p.nota||'', c.p.nit||'', regEnSistema(c.p)?'SÍ':'NO',
                compsArr(c.comps!=null?c.comps:c.comp).map(fotoVer).join('  |  '),
-               (c.metodo==='Efectivo'?pagoRecibio(c, c.p):'')]);
+               (c.metodo==='Efectivo'?pagoRecibio(c, c.p):''),
+               (esEnvio(c)?'SÍ — flete, no es de la venta':'')]);
   });
   var arqueoOn=CIE.arqueoOn;   // con filtro por vendedora no se compara con la caja (§4ew)
   rows.push([]); rows.push([{v:'CIERRE POR FORMA DE PAGO'+(arqueoOn?'':' (solo '+cuadreVendedor()+' — el arqueo se hace con Todos)'),s:H}]);
@@ -4841,7 +4845,7 @@ function exportCuadre(){
   }
   var pe=cuadrePeriodo();
   var bytes=buildXlsx([{name:'Cuadre',
-    cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20}],
+    cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20},{w:28}],
     matrix:rows}]);
   downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
   toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+(CIE.huerfanos.length?(' + '+CIE.huerfanos.length+' arqueo'+(CIE.huerfanos.length===1?'':'s')+' sin pagos'):'')+' ✓','ok');
