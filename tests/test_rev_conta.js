@@ -13,6 +13,7 @@
         (lo de §4fr, que cubría solo el adelanto simple).
      4. «Guardar precios y montos» sobre una venta «PAGADA sin monto» no le borra el método ni
         el recibo al adelanto (§4fg: todo lo que reescribe el historial usa `cobrosReales`).
+     5. …y cargarle solo el PRECIO de un ítem no la desmarca de pagada.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev_conta.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev_conta.js            */
@@ -261,6 +262,36 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('4 · ⚠️ …y su RECIBO (la imagen no queda colgada)', r.pagos.length===1 && J(r.pagos[0].comps)===J(['REC77']), J({pagos:r.pagos, txt:r.txt}));
   chk('4 · ⚠️ …así que en el Cuadre del día entra en la CAJA (Efectivo 1.500)', J(r.formas)===J(['Efectivo 1500']), J(r.formas));
   chk('4 · …una sola vez: cobrado = total de la venta = 1.500, pagada', r.cobrado===1500 && r.venta===1500 && r.pagado===true && r.saldo===0, J({cobrado:r.cobrado, venta:r.venta, pagado:r.pagado}));
+
+  /* ══ 5 · CARGARLE EL PRECIO A UNA VENTA «PAGADA SIN MONTO» ═══════════════════════════
+     La caja «✏️ Corregir precios y montos» sirve sobre todo para el precio de cada ítem. En una
+     venta vieja «PAGADA sin monto», cargar el precio del colchón y tocar «💾 Guardar» —sin tocar
+     A cuenta ni Saldo— la DESMARCABA de pagada (`pagado = saldo 0 && (adelanto>0 || cobrado>0)`,
+     y el monto de esas ventas no se conoce): el pago desaparecía de la ficha, se iba el botón
+     «💵 Anotar el monto», el Excel pasaba a «SIN MONTO» y al chofer le decía «preguntá antes de
+     entregar» sobre una venta cobrada. */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    var ayer=dia(-1), out={};
+    var mk=function(id, mp){ return P({ id:id, nota:id.slice(1), oc:'09-0'+id.slice(1), cliente:'VIEJA '+id, ts:new Date(ayer+'T12:00:00').getTime(),
+                                         pagado:true, metodoPago:mp, productos:[{desc:'COLCHON',medida:'140x190',cant:1}] }); };
+    STATE=[ mk('P80','Efectivo %REC80'),
+            mk('P81','QR BISA %REC81 + '+textoCobros([{envio:true,metodo:'Efectivo',monto:100,fecha:ayer,nota:'81',comps:['F81']}])) ];
+    RETIROS=[]; releer(); aConta(); await new Promise(r=>setTimeout(r,120));
+    ['P80','P81'].forEach(function(id){
+      CTA_ULTIMA=''; showContaModal(id);
+      document.getElementById('cta-pr-0').value='1500';
+      ctaGuardarMontos(id);
+      var p=findById(id);
+      out[id]={ pagado:p.pagado, precio:prodPrecio(p.productos[0]), pagos:contaPagos(p).map(function(c){ return (c.envio?'E:':'')+cobroMetodoTxt(c)+' '+compsArr(c.comps!=null?c.comps:c.comp).join(','); }),
+                pago:contaPagoTxt(p), ruta:cobroRutaTxt(p).t };
+    });
+    closeModal();
+    return out;
+  });
+  chk('5 · ⚠️ cargar el precio y guardar NO desmarca de pagada una venta «PAGADA sin monto»', r.P80.pagado===true && r.P80.precio===1500 && /^PAGADO/.test(r.P80.pago), J(r.P80));
+  chk('5 · ⚠️ …el pago (con su recibo) sigue en la ficha, y al chofer no le dice «sin monto»', J(r.P80.pagos)===J(['Efectivo REC80']) && /PAGADO/.test(r.P80.ruta), J({pagos:r.P80.pagos, ruta:r.P80.ruta}));
+  chk('5 · …lo mismo con un flete cobrado al lado (el flete no se toca)', r.P81.pagado===true && J(r.P81.pagos)===J(['QR BISA REC81','E:Efectivo F81']), J(r.P81));
 
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();

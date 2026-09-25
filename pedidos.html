@@ -6218,6 +6218,10 @@ function aplicarMontos(p, acu, sal){
   /* Una venta cargada «SÍ, pagado» lleva p.acuenta en 0 a propósito (§4cb): si el adelanto
      no cambió, no se le inventa un «A cuenta». */
   var _pagSinAcu = !!p.pagado && !((Number(p.acuenta)||0)>0.01);
+  /* ⚠️ Una venta «PAGADA sin monto» (§4fg) está pagada aunque no se sepa cuánto (25/09): cargarle
+     solo el PRECIO de un ítem y guardar la desmarcaba (`yaCobrado` vale 0 apenas se relee la lista),
+     el pago desaparecía de la ficha y al chofer le decía «sin monto, preguntá». */
+  var _pagadaSinMonto = !!p.pagado && cobrosDe(p).some(function(c){ return c.sinMonto; });
   /* El ledger SOLO se reescribe si el adelanto cambió de verdad. Reescribirlo de gusto
      convertiría un pago viejo (formato suelto, sin fecha) en un renglón del ledger sin
      fecha — plata que después no aparece en los filtros por día ni por mes. */
@@ -6250,7 +6254,7 @@ function aplicarMontos(p, acu, sal){
      anticipo no hay adelanto: el 2° método queda como lo que es, un cobro más. */
   if(!(_pagSinAcu && Math.abs(acu-antesAcu)<=0.01)) p.acuenta = (acu>0.01) ? r2(acu+mxM) : 0;
   p.saldo=sal;
-  p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0);
+  p.pagado = (sal<=0.01) && (acu>0 || yaCobrado>0 || _pagadaSinMonto);
   persistPedido(p);
 }
 /* Borrar una venta desde Contabilidad. Es para la venta CARGADA DOS VECES (el caso que
