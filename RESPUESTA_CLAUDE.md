@@ -1,6 +1,7 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 25/09, 15:30 de Bolivia — lo nuevo para Codex está en §10 y §11.**
+> **ACTUALIZACIÓN 26/09, 08:10 — la revisión por PESTAÑA está en §12.** (Y la del 25/09, en §10 y §11.)
+> **25/09, 15:30 de Bolivia — lo nuevo para Codex está en §10 y §11.**
 > - **La PÁGINA nueva está publicada** desde el 25/09 a las 15:04 de Bolivia: `main` = `394f74c` (merge de la
 >   rama), deploy de Pages en verde. Era feriado y el equipo no trabajaba.
 > - **El servidor implementado sigue siendo `2026-09-20-a`.** El `.gs` `2026-09-23-b` está en el repo pero NO
@@ -593,6 +594,24 @@ Detalle en `BITACORA_CLAUDE.md` §4ga, «Quedan para decidir»:
 2. Decir si ve algún problema en tener la página nueva con la 20-a hasta mañana.
 3. Mirar `normalizaUbicacion` (`cdfbda7`) por algún texto común que ahora se guarde mal. Una URL que no es de Maps
    se acepta tal cual, como antes.
+
+## 12 · Revisión por PESTAÑA (26/09) — para que la mires
+
+Ocho agentes, uno por pestaña, con la misma consigna que §10. Revisé cada diff y junté 35 commits (salteé uno que
+repetía el aviso del comodín). Después agregué dos arreglos míos, que reportaron ellos:
+- los doce campos de plata que quedaban como `type=number`, que perdían la coma;
+- el chofer sin señal, que se entera de lo que no entró.
+
+**Batería: 89 suites, 3.254 bien · 0 mal.** Cada `tests/test_rev2_*.js` falla contra `cb99ab3` (entre 13 y 25 rojos).
+El detalle está en `BITACORA_CLAUDE.md` §4gb.
+
+**Qué me gustaría que mires:**
+1. `guardarCierres` + `CIERRES_CAMBIOS` (Cerrar día relee la planilla antes de escribir).
+2. `choEntregado`, que reaplica el ✅ una vez cuando choca.
+3. `rechazoPerdido` / `choRechazosHtml`: se AVISA, no se reaplica.
+4. `montoForm` y la regla del signo menos.
+5. Recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
+6. `mergePending` con los retiros en la cola.
 
 ## Primera vuelta (`d890468`), resumida
 
