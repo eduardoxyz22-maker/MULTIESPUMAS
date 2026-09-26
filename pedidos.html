@@ -11359,7 +11359,9 @@ function avisoMisHtml(mine){
 /* Se abre solo una vez por día (por compu) cuando hay pedidos sin stock: es lo urgente. */
 function autoAbrirAvisos(v, mine){
   var q=misPendientes(mine); if(!q.sinStock.length) return;
-  var k='me_aviso_'+String(v).toLowerCase().replace(/\s+/g,'_')+'_'+todayStr();
+  /* (26/09) La clave compara como `mismoVendedor` (sin tildes): con «Carola Chávez» y «Carola Chavez»
+     se abría dos veces el mismo día. Un nombre sin tildes da la misma clave que antes. */
+  var k='me_aviso_'+normNombre(v).replace(/\s+/g,'_')+'_'+todayStr();
   try{ if(localStorage.getItem(k)) return; localStorage.setItem(k,'1'); }catch(e){}
   setTimeout(function(){
     var vw=document.getElementById('view-mis');

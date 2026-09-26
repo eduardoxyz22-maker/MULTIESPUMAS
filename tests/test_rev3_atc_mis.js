@@ -259,6 +259,47 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 4. El aviso diario de Mis pedidos: una vez por día, con o sin tilde ════════════
+  /* La clave del día usaba el nombre crudo: con «Carola Chávez» y «Carola Chavez» (la misma para
+     `mismoVendedor`) el aviso se abría dos veces el mismo día. */
+  console.log('\n── 4. 🔔 El aviso «Avisá a estos clientes» se abre UNA vez por día, se escriba como se escriba el nombre ──');
+  {
+    const page = await nueva(null, 380);
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      Object.keys(localStorage).forEach(function(k){ if(k.indexOf('me_aviso_')===0) localStorage.removeItem(k); });
+      STATE=[ _P({id:'sin1', cliente:'SIN STOCK CAROLA', fecha:'2026-09-24', productos:[{desc:'SOFT', medida:'140x190', cant:1, chk:'no'}]}),
+              _P({id:'sin2', cliente:'SIN STOCK MIRIAN', vendedor:'Mirian Salazar', fecha:'2026-09-24', productos:[{desc:'SOFT', medida:'160x200', cant:1, chk:'no'}]}),
+              _P({id:'sin3', cliente:'SIN STOCK MARIA', vendedor:'Maria Flores', fecha:'2026-09-24', productos:[{desc:'SOFT', medida:'100x190', cant:1, chk:'no'}]}) ];
+      saveMirror();
+      localStorage.setItem('me_aviso_maria_flores_2026-09-23','1');   // la marca que dejó hoy el panel de antes
+      showView('mis'); await new Promise(function(r){ setTimeout(r,200); });
+      var abierto=function(){ var m=document.getElementById('modal'); return !!(m && m.classList.contains('on') && /Avisá a estos clientes/.test(document.getElementById('modal-box').textContent)); };
+      var mirar=async function(nombre){
+        closeModal(); MIS_TODOS=false; MIS_FILTER='todos';
+        document.getElementById('mis-vendedor').value=nombre; renderMis();
+        await new Promise(function(r){ setTimeout(r,500); });
+        var a=abierto(); closeModal(); return a;
+      };
+      var out={};
+      out.primera=await mirar('Carola Chávez');
+      out.sinTilde=await mirar('Carola Chavez');
+      out.mayus=await mirar('CAROLA CHÁVEZ');
+      out.otra=await mirar('Mirian Salazar');
+      out.yaVista=await mirar('Maria Flores');
+      out.claves=Object.keys(localStorage).filter(function(k){ return k.indexOf('me_aviso_')===0; }).sort();
+      return out;
+    }, BASE);
+    chk('punto de partida: la primera vez del día se abre solo', r.primera===true, J(r));
+    chk('⚠️ con «Carola Chavez» (sin tilde) NO se vuelve a abrir el mismo día (antes: otra clave, otra vez)', r.sinTilde===false, J(r));
+    chk('control: …ni con «CAROLA CHÁVEZ» (las mayúsculas ya se ignoraban)', r.mayus===false, J(r));
+    chk('control: otra vendedora sí recibe el suyo', r.otra===true, J(r));
+    chk('control: la marca que dejó hoy el panel de antes (nombre sin tildes) sigue valiendo: publicar no le reabre el aviso', r.yaVista===false, J(r));
+    chk('⚠️ …y queda UNA marca por vendedora y por día, con la misma forma de antes',
+        J(r.claves)===J(['me_aviso_carola_chavez_2026-09-23','me_aviso_maria_flores_2026-09-23','me_aviso_mirian_salazar_2026-09-23']), J(r.claves));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
