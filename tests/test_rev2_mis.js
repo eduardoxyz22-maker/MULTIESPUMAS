@@ -79,6 +79,26 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('la que debe sigue diciendo cuánto', /Bs 1\.500,00 por cobrar/.test(r.debe||''), r.debe);
   chk('⚠️ un «NO HAY» que ya se pidió a fábrica lo dice en la ficha (🏭), como en la ventana', /NO HAY/.test(r.fabrica||'') && /🏭 en producción/.test(r.fabrica||''), r.fabrica);
 
+  // ══ 2. El mensaje de WhatsApp que se pasa al grupo ═════════════════════════
+  console.log('\n── 2. El WhatsApp del pedido ──');
+  r = await page.evaluate(() => ({
+    sinMonto: pedidoText(findById('sinmonto')), atc: pedidoText(findById('atc')),
+    debe: pedidoText(findById('debe')), suelto: pedidoText(findById('suelto')),
+    ruta: cobroRutaTxt(findById('sinmonto')).t
+  }));
+  chk('⚠️ la venta sin monto anotado NO sale «💰 PAGADO» en el mensaje al grupo', !/💰 PAGADO/.test(r.sinMonto), r.sinMonto);
+  chk('…dice que falta el monto y que pregunten, como la hoja de ruta', /SIN MONTO ANOTADO/.test(r.sinMonto) && /SIN MONTO ANOTADO/.test(r.ruta), r.sinMonto);
+  chk('⚠️ una ATC no sale «PAGADO»: no se cobra', !/💰 PAGADO/.test(r.atc) && /NO SE COBRA/.test(r.atc), r.atc);
+  chk('la que debe sigue con «POR COBRAR»', /💰 POR COBRAR: Bs 1\.500,00/.test(r.debe), r.debe);
+  chk('la pagada sigue «PAGADO»', /💰 PAGADO/.test(r.suelto), r.suelto);
+  r = await page.evaluate(() => {
+    showMisModal('sinmonto'); copyPedido('sinmonto');
+    var wa=pedidoText(findById('sinmonto')); closeModal();
+    showWhatsappModal(findById('sinmonto')); var t=(document.getElementById('wa-text')||{}).value||''; closeModal();
+    return { wa:wa, modal:t };
+  });
+  chk('…y el modal «✅ Pedido guardado» (el que sale al guardar) dice lo mismo', /SIN MONTO ANOTADO/.test(r.modal) && !/💰 PAGADO/.test(r.modal), r.modal);
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

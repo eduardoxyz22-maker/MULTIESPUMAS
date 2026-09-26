@@ -13518,6 +13518,11 @@ function findById(id){ for(var i=0;i<STATE.length;i++) if(STATE[i].id===id) retu
       💰 PAGADO (~QR BISA 5690 @2026-08-19 #627 %IMG_A %IMG_B)
    Ilegible, y encima mostraba los IDs de las fotos. */
 function plataLineaWa(p){
+  /* (26/09) Una venta SIN MONTO ANOTADO (no pagada, sin adelanto, sin saldo) salía «💰 PAGADO» en el
+     mensaje que la vendedora pasa al grupo al guardar y desde Mis pedidos, y una ATC también: el que
+     lo lee no cobra. Lo mismo que dicen la hoja de ruta y la tarjeta del chofer (`cobroRutaTxt`). */
+  if(!p.pagado && noSeCobra(p)) return '💰 NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')';
+  if(sinMontoAnotado(p)) return '💰 ⚠️ SIN MONTO ANOTADO — preguntar antes de entregar';
   var pagos=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0; });
   var met=pagos.map(function(c){ return contaMetodoTxt(c)+' '+fmtBs(c.monto); }).join('  +  ');
   var falta=contaFaltaCobrar(p);
