@@ -14,6 +14,10 @@
       cuando se suben los dos (acá y Moreno) el mismo día.
    3. EL DETALLE DE UN PRODUCTO con el depósito en negativo (conteo viejo, §4ds): la cuenta de la
       reposición usa 0 como la tabla, no «− (−5)», que daba 5 unidades de más para fabricar.
+   4. 📥 LLEGÓ UNA RECOGIDA QUE EL EXCEL DE MORENO YA NO TIENE (el reporte se sacó después de
+      cargar la camioneta): antes «No alcanza el saldo del almacén de origen» y la llegada no se
+      podía anotar. Ahora pregunta, suma acá y no le descuenta a Moreno (recepción `nr`), también
+      al releer y cuando un panel viejo reescribe la fila.
 
    Datos SINTÉTICOS. Reloj de la página clavado en el 16/09/2026, 10:00 de Bolivia.
 
@@ -186,6 +190,56 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('el depósito da −5 y la tabla pide 3 (lo vendido sin entregar), no 8', r.dep===-5 && r.pedir===3 && r.fab===3, JSON.stringify(r));
   chk('⚠️ el detalle dice «3 unidades adicionales», lo mismo que la tabla (no 8)', r.adic===3, r.adic);
   chk('⚠️ …y no muestra un depósito negativo: «Acá en fábrica 0»', r.tarjeta==='0' && !/−5|-5/.test(r.saldo), 'tarjeta '+r.tarjeta+' · '+r.saldo);
+
+  // ══ 4. 📥 Llegó una recogida que el último Excel de Moreno ya no tiene ═════
+  console.log('\n── 4. 📥 «Llegó» de una recogida después de subir el Excel de Moreno del día ──');
+  const recogida = async (enMoreno) => {
+    dialogos.length=0;
+    const x = await page.evaluate((enMoreno) => {
+      /* Ayer se programó traer 5 TITANIO de Moreno (tenía 5). Hoy a la mañana la camioneta las
+         cargó y DESPUÉS se subió el Excel de Moreno del día: ya no las tiene (`enMoreno`=0, no
+         figura) — o todavía sí (`enMoreno`=5: el reporte es de antes de cargar). Llegan acá. */
+      var K=stockClave({desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201'}), IM='IM - PRODUCTOTERMINADO';
+      STOCK=stockVacio(); STOCK_CARGADO=true;
+      STOCK.c={ f:todayStr(), hora:'07:00:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.', cod:{CH1201:K}, t:Date.now()-3*3600000 };
+      STOCK.c.u[K]=1;
+      STOCK.al={}; STOCK.al[IM]='otro';
+      STOCK.p=[{ id:'rcX', k:K, u:5, tipo:'recogida', de:IM, fab:'', f:_adel(-1), esp:todayStr(), r:'' }];
+      STOCK.g={}; STOCK.g[IM]={ f:todayStr(), u:{'ORO PRUEBA|140X190':4}, hora:'09:00:00', solo0:true, cod:{}, t:Date.now()-3600000, rs:{} };
+      if(enMoreno) STOCK.g[IM].u[K]=enMoreno;
+      STATE=[_P({id:'r1', fecha:_adel(1), productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:6}]})];
+      stockOlvidarIndice(); window._guardadas=[];
+      abrirStockEntrada();
+      var inp=document.getElementById('stk-rec-rcX'); if(inp) inp.value='5';
+      recibirStockPedido('rcX'); stockOlvidarIndice();
+      var q=STOCK.p.filter(function(z){ return z.id==='rcX'; })[0];
+      var o=stockData().lista.filter(function(z){ return z.k===K; })[0];
+      var ahora={ recibida:!!(q&&q.r), dep:stockDeposito(K), moreno:STOCK.g[IM].u[K], otros:o.enOtros, camino:o.enCamino };
+      // Otro dispositivo relee la fila…
+      var fila=window._guardadas.filter(function(z){ return z.id===STOCK_ID; }).pop();
+      if(!fila) return { ahora:ahora, sinFila:true };
+      STOCK=leerStock({observaciones:fila.observaciones}); stockOlvidarIndice();
+      var relei={ dep:stockDeposito(K), moreno:STOCK.g[IM].u[K] };
+      // …y una computadora con el panel VIEJO la reescribe (sin `rs` ni `t` en las fotos, §4fz-b):
+      var vieja=JSON.parse(fila.observaciones); Object.keys(vieja.g||{}).forEach(function(nm){ delete vieja.g[nm].rs; delete vieja.g[nm].t; });
+      STOCK=leerStock({observaciones:JSON.stringify(vieja)}); stockOlvidarIndice();
+      var viejo={ dep:stockDeposito(K), moreno:STOCK.g[IM].u[K] };
+      return { ahora:ahora, relei:relei, viejo:viejo };
+    }, enMoreno);
+    x.dialogos=dialogos.slice();
+    return x;
+  };
+  r = await recogida(0);
+  chk('⚠️ con el Excel de Moreno que ya no las tiene, la llegada SE PUEDE anotar (pregunta antes)',
+      r.ahora.recibida && r.dialogos.length===1, JSON.stringify(r.ahora)+' · '+(r.dialogos[0]||'(sin pregunta)').slice(0,90));
+  chk('⚠️ …las 5 se suman acá (1 + 5 = 6) y Moreno no queda con nada inventado ni negativo',
+      r.ahora.dep===6 && !(r.ahora.moreno>0) && r.ahora.otros===0 && r.ahora.camino===0, JSON.stringify(r.ahora));
+  chk('⚠️ al releer la fila sigue igual (6 acá, nada en Moreno)', !r.sinFila && r.relei.dep===6 && !(r.relei.moreno>0), JSON.stringify(r.relei));
+  chk('⚠️ si un panel VIEJO reescribe la fila, a Moreno no le vuelven 5 fantasma', !r.sinFila && r.viejo.dep===6 && !(r.viejo.moreno>0), JSON.stringify(r.viejo));
+  r = await recogida(5);
+  chk('con el Excel de Moreno de ANTES de cargar (todavía tiene 5): sin pregunta, se suman acá y se descuentan de allá',
+      r.dialogos.length===0 && r.ahora.recibida && r.ahora.dep===6 && r.ahora.moreno===0 && r.relei.moreno===0 && r.viejo.moreno===0,
+      JSON.stringify([r.ahora, r.relei, r.viejo])+' · diálogos '+r.dialogos.length);
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

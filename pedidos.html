@@ -13698,7 +13698,8 @@ function stockLeerDePanelViejo(d, o){
     var rs={}, hay=false;
     (d.p||[]).forEach(function(q){
       if(!q || q.tipo!=='recogida' || !Array.isArray(q.recs) || (q.de||almDef)!==nm) return;
-      q.recs.forEach(function(r){ if(r && !stockRecLegacy(r)){ rs[r.id]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id }; hay=true; } });
+      // (26/09) Una recepción `nr` nunca se le restó a esa foto: anotarla como restada la DEVOLVÍA después.
+      q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && !r.nr){ rs[r.id]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id }; hay=true; } });
     });
     if(hay) d.g[nm].rs=rs;
   });
@@ -13986,7 +13987,7 @@ function stockNormalizarRecepciones(S){
     if(!g || !g.u) return;
     g.rs=g.rs||{};
     var t=Number(g.t)||0, resta={};
-    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && (Number(r.ts)||0)>t) resta[r.id]=r; });
+    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && !r.nr && (Number(r.ts)||0)>t) resta[r.id]=r; });   // `nr` (26/09): el reporte de allá ya no las tenía
     Object.keys(g.rs).forEach(function(rid){
       var x=g.rs[rid]; if(!x || x.q!==q.id || resta[rid]) return;
       g.u[x.k]=(Number(g.u[x.k])||0)+(Number(x.u)||0); delete g.rs[rid];      // la sacó la junta: se devuelve
@@ -16033,9 +16034,18 @@ function recibirStockPedido(id){
   if(!(u>0)){ toast('Poné cuántas unidades llegaron.','err'); return; }
   if(inp&&inp.disabled)return;
   if(u>Number(q.u)){toast('La recepción supera las '+q.u+' unidades pendientes.','err');return;}
+  var sinResta=false;
   if(q.tipo==='recogida'){
-    var fuente=(STOCK.g||{})[q.de];
-    if(!fuente || !fuente.u || Number(fuente.u[q.k])<u || !isFinite(Number(fuente.u[q.k]))){toast('No alcanza el saldo del almacén de origen. Revisá el corte antes de recibir.','err');return;}
+    /* ⚠️ (26/09) Si el último reporte de allá ya no tiene esas unidades, se sacó DESPUÉS de
+       retirarlas (el Excel de Moreno del día, con la camioneta ya cargada). Antes esto se negaba
+       («No alcanza el saldo del almacén de origen») y la llegada no se podía anotar nunca: los
+       colchones estaban acá y el panel no los veía. Ahora se pregunta, y la recepción va marcada
+       `nr`: se suma acá y NO se le descuenta al almacén (su reporte ya no las tiene). */
+    var alm=q.de || stockAlmPorDefecto(), fuente=(STOCK.g||{})[alm], hayAlla=(fuente&&fuente.u) ? Number(fuente.u[q.k]) : NaN;
+    if(!(isFinite(hayAlla) && hayAlla>=u)){
+      if(!confirm('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+u+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.')) return;
+      sinResta=true;
+    }
   }
   if(inp)inp.disabled=true;
   /* 📦 LA LLEGADA ES UNA RECEPCIÓN CON NOMBRE (§4fz-b). Antes se sumaba la entrada y se restaba
@@ -16048,6 +16058,7 @@ function recibirStockPedido(id){
      panel las cuenta dos veces hasta el próximo Excel de ese almacén (§4cr). */
   q.total=q.total||Number(q.u);
   var rec=stockRecNuevo(u, todayStr());
+  if(sinResta) rec.nr=1;                          // (26/09) no se resta del almacén de origen: ver arriba
   stockRecsDe(q).push(rec);
   stockNormalizarRecepciones(STOCK);
   var pendiente=q.r ? 0 : (Number(q.u)||0);
@@ -16056,7 +16067,7 @@ function recibirStockPedido(id){
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   var dias=stockDias(q.f, todayStr());
   toast('✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
-        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+'Se suman acá'+(movido?' y se descuentan de allá':'')+
+        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+'Se suman acá'+(movido?' y se descuentan de allá':'')+(sinResta?' (allá no se descuentan: su último reporte ya no las tenía)':'')+
         (STOCK.c.f?'':' (falta cargar las existencias de acá una vez)')+'.','ok',7000);
 }
 
