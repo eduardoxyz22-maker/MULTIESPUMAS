@@ -291,6 +291,48 @@ function INIT(){
     chk('⚠️ el retiro «Bs. 5.000.-» es de Bs 5.000 en la pantalla y en la planilla (antes Bs 0,50)', J(r.montos)==='[5000]' && J(r.srv)==='[5000]', r);
   });
 
+  // ══ 2. EL FLETE PACTADO, DICHO IGUAL EN TODOS LADOS ═════════════════════════════════════
+  /* El 26/09 la tarjeta del chofer (a45124b) y el WhatsApp del pedido (6f130ea) empezaron a decir el
+     flete pactado que se cobra en la puerta (§4ai). La HOJA DE RUTA —la que logística imprime y manda
+     por WhatsApp al chofer— seguía diciendo «✅ PAGADO» y «✅ Todo pagado»: con la hoja en la mano,
+     el flete no se cobraba. */
+  await esc('2. La hoja de ruta (pantalla, impresa y WhatsApp) dice el flete pactado como la tarjeta del chofer', async () => {
+    const S = servidor();
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      var hoy=todayStr();
+      var P=function(o){ var b={ turno:'AM', celular:'7', zona:'Norte', direccion:'Calle 1', fecha:hoy, maps:'', observaciones:'', estado:'', entregado:false,
+        vehiculo:'CAMION 1', chofer:'Luis Pierre', nroDia:1, fotos:[], vendedor:'Mirian Salazar', ts:Date.now(), acuenta:0, saldo:0, pagado:false, metodoPago:'', productos:[{desc:'SOFT',cant:1}] };
+        for(var k in o) b[k]=o[k]; return b; };
+      STATE=[ P({ id:'fl', oc:'09-021', nota:'21', cliente:'PAGADA CON FLETE', pagado:true,
+                  metodoPago:textoCobros([{anticipo:true, metodo:'Efectivo', monto:3000, fecha:'2026-09-14', nota:'21', comps:['I1']}, {envio:true, metodo:'', monto:150, fecha:'', nota:'', comps:[]}]) }),
+              P({ id:'sf', oc:'09-022', nota:'22', cliente:'PAGADA SIN FLETE', pagado:true,
+                  metodoPago:textoCobros([{anticipo:true, metodo:'QR', banco:'BISA', monto:2000, fecha:'2026-09-14', nota:'22', comps:['I2']}]) }),
+              P({ id:'db', oc:'09-023', nota:'23', cliente:'DEBE SIN FLETE', chofer:'Pedro Vaca', vehiculo:'CAMION 2', saldo:1000 }),
+              P({ id:'df', oc:'09-024', nota:'24', cliente:'DEBE CON FLETE', chofer:'Pedro Vaca', vehiculo:'CAMION 2', saldo:500, metodoPago:'^80' }) ];
+      saveMirror();
+      var out={};
+      out.tarjeta=cobroChoferHtml(findById('fl')).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+      out.wa=pedidoText(findById('fl'));
+      var wa=''; window.open=function(u){ wa=decodeURIComponent(String(u)); return null; }; copyText=function(){};
+      abrirRuta(); setRutaDia('hoy');
+      var cards=[].map.call(document.querySelectorAll('#ruta-body .ruta-chofer'), function(c){ return c.textContent.replace(/\s+/g,' '); });
+      out.ruta=cards.join(' || ');
+      rutaWhatsapp(0); out.rutaWA=wa; closeRuta();
+      return out;
+    });
+    chk('control · la tarjeta del chofer dice «Cobrar también el flete: Bs 150,00»', /Cobrar también el flete: Bs 150,00/.test(r.tarjeta), r.tarjeta.slice(0,200));
+    chk('control · el WhatsApp del pedido dice «Recargo por entrega: Bs 150,00»', /Recargo por entrega: Bs 150,00/.test(r.wa), r.wa);
+    const paradaFl = (r.ruta.match(/PAGADA CON FLETE.*?(?=2\) |$)/)||[''])[0];
+    const paradaSf = (r.ruta.match(/PAGADA SIN FLETE.*?(?=2\) |\|\||$)/)||[''])[0];
+    chk('⚠️ la hoja de ruta, en la parada, dice el flete que hay que cobrar (antes solo «✅ PAGADO»)', /flete: Bs 150,00/.test(paradaFl), paradaFl);
+    chk('⚠️ …y arriba, en lo que hay que cobrar en el recorrido («A cobrar: Bs 150,00 de flete»; antes nada)', /Luis Pierre.*A cobrar: Bs 150,00 de flete/.test(r.ruta), r.ruta.slice(0,200));
+    chk('⚠️ con venta Y flete por cobrar, las dos cosas por separado («Bs 1.500,00 + Bs 80,00 de flete»)', /Pedro Vaca.*A cobrar: Bs 1\.500,00 \+ Bs 80,00 de flete/.test(r.ruta), r.ruta.slice(r.ruta.indexOf('Pedro')).slice(0,120));
+    chk('⚠️ el WhatsApp de la ruta no dice «✅ Todo pagado» con un flete por cobrar, y lo nombra en la parada',
+        !/Todo pagado/.test(r.rutaWA) && /Bs 150,00 de flete/.test(r.rutaWA) && /PAGADA CON FLETE[\s\S]*flete: Bs 150,00/.test(r.rutaWA), r.rutaWA);
+    chk('control · la parada sin flete no habla de flete', paradaSf && !/flete/.test(paradaSf), paradaSf);
+  });
+
   chk('sin errores JS', errores.length===0, errores);
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
