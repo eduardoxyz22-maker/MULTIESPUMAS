@@ -13609,6 +13609,9 @@ function pedidoText(p){
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
     (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
     noSeCobra(p) ? '✅ No se cobra — es una ATC' : plataLineaWa(p),   // (26/09) decía «💰 PAGADO» (§4fy)
+    /* (26/09) El flete PACTADO se cobra en la puerta (§4ai) y el mensaje no lo decía: una venta
+       pagada con Bs 150 de flete por cobrar salía «💰 PAGADO» a secas y nadie lo cobraba. */
+    envioPendiente(p)?('🚚 Recargo por entrega: '+fmtBs(envioPorCobrar(p))+' — se cobra al entregar, aparte de la venta'):'',
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);

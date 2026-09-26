@@ -198,6 +198,17 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('⚠️ sin señal, «Reintentar ahora» NO dice un «Reintentado» en verde: dice que sigue en la cola', /Sigue sin llegar/.test(r.t1) && /err/.test(r.c1) && r.cola1===1, r.t1+' · '+r.c1);
   chk('con señal dice que llegó, y el cartel se va', /Ya llegó a la planilla/.test(r.t2) && r.cola2===0 && r.aviso2==='', r.t2+' · cola '+r.cola2);
 
+  // ══ 6. El flete pactado va en el mensaje ══════════════════════════════════
+  console.log('\n── 6. El flete en el WhatsApp ──');
+  r = await page.evaluate(() => {
+    var pactado=__P({id:'flete', cliente:'CON FLETE', pagado:true, saldo:0, metodoPago:'Efectivo 3000 @2026-09-15 + ^150'});
+    var cobrado=__P({id:'flete-ok', cliente:'FLETE COBRADO', pagado:true, saldo:0, metodoPago:'Efectivo 3000 @2026-09-15 + ^Efectivo 150 @2026-09-15'});
+    return { pactado:pedidoText(pactado), cobrado:pedidoText(cobrado), sin:pedidoText(__P({saldo:500})) };
+  });
+  chk('⚠️ una venta pagada con flete por cobrar NO dice solo «PAGADO»: el mensaje dice el flete', /🚚 Recargo por entrega: Bs 150,00 — se cobra al entregar/.test(r.pactado), r.pactado);
+  chk('…el flete ya cobrado no se pide de nuevo', !/Recargo por entrega/.test(r.cobrado), r.cobrado);
+  chk('…ni aparece donde no hay flete', !/Recargo por entrega/.test(r.sin), r.sin);
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
