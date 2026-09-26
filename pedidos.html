@@ -11972,9 +11972,31 @@ function choEntregado(id){
      segundo caía en «✓ Entregado»: la entrega volvía a «pendiente» en la planilla sin que el
      chofer lo notara. Marcar sigue siendo un toque. */
   if(p.entregado && !confirm('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.')) return;
-  p.entregado=!p.entregado; atcAlMarcarEntregado(p);
-  persistPedido(p); renderChofer();
-  toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
+  var quiere=!p.entregado, t0=Date.now(), choco=false;
+  /* (26/09) El ✅ es un dato DEL CHOFER, como la foto (§4ew): con el celular bloqueado la copia
+     es de horas atrás, y si en el medio Contabilidad registró el pago el guardado daba
+     `conflicto` y la entrega quedaba SIN marcar — solo un aviso de 9 s que, con el celular en
+     el bolsillo, no ve nadie. Se vuelve a marcar UNA vez sobre la fila del servidor (que
+     `rechazoFirme` ya puso en STATE). La plata NO se reintenta así: ahí el otro pudo haber
+     registrado ese mismo pago. */
+  var marcar=function(q, intento){
+    q.entregado=quiere; atcAlMarcarEntregado(q);
+    return persistPedido(q).then(function(r){
+      if(intento>0 || !(r && r.error==='conflicto')) return r;
+      var s=findById(id); if(!s) return r;
+      choco=true;
+      delete NO_ENCOLAR[id];                         // si el reintento cae sin señal, que quede en la cola
+      return (!!s.entregado===quiere) ? { ok:true } : marcar(s, 1);
+    });
+  };
+  marcar(p, 0).then(function(r){
+    if(!choco || !(r && r.ok)) return;
+    try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().filter(function(x){ return !(x.id===String(id) && x.error==='conflicto' && x.ts>=t0); }))); }catch(e){}
+    renderColaAviso(); renderChoferSiActivo();
+    toast((quiere?'Entregado ✓':'Marcado como NO entregado')+' — otra persona había tocado el pedido; se guardó igual sobre lo nuevo','ok',6000);
+  });
+  renderChofer();
+  toast(quiere?'Entregado ✓':'Marcado como NO entregado','ok');
 }
 function choDeshacerCobro(id){
   var p=findById(id); if(!p) return;

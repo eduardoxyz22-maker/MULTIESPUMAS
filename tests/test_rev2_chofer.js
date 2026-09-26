@@ -3,6 +3,9 @@
    1. ✅ Un DOBLE TOQUE en «Marcar entregado» la dejaba SIN entregar: el primer toque marca y
       repinta la tarjeta, el segundo cae en «✓ Entregado» y la desmarca, sin preguntar. En la
       planilla quedaba «pendiente».
+   2. ✅ Con la copia vieja (celular bloqueado horas, o sin señal para refrescar) y un cambio de
+      otra persona en el medio —Contabilidad registró el QR—, el ✅ daba `conflicto` y la entrega
+      quedaba SIN marcar: solo un aviso de 9 s que el chofer, con el celular en el bolsillo, no ve.
 
    Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia), red cortada,
    servidor simulado con el sello de revisión (`rev`) como el `.gs`, datos sintéticos.
@@ -111,6 +114,65 @@ const BASE = `
     await page.waitForTimeout(400);
     r = await page.evaluate(() => ({ local:findById('d1').entregado, srv:!!SRV.d1.entregado }));
     chk('control: MARCAR no pregunta nada (un toque, como antes)', r.local===true && r.srv===true && D.vistos.length===0, J([r, D.vistos]));
+    await page.close();
+  }
+
+  // ═══ 2. ✅ con la copia vieja y un cambio de otra persona en el medio ═════════════════
+  console.log('\n── 2. ✅ con la copia vieja: el conflicto no deja la entrega sin marcar ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      var hoy=todayStr(), out={};
+      var k1=_P({id:'k1', cliente:'CLIENTE QR', saldo:1000});
+      var k1s=_cp(k1); k1s.rev=4; k1s.saldo=0; k1s.pagado=true; k1s.metodoPago='QR BISA 1000 @'+hoy+' #55 %IMGQR55';   // Contabilidad registró el QR
+      var y1=_P({id:'y1', cliente:'CLIENTE YA', saldo:0, pagado:true, metodoPago:'Efectivo 900 @2026-09-20 #7'});
+      var y1s=_cp(y1); y1s.rev=4; y1s.entregado=true;                                  // logística ya la tildó desde Administración
+      var a1=_P({id:'a1', oc:'ATC 09-001', cliente:'CLIENTE ATC', productos:[{desc:'SOFT',medida:'140x190',cant:1,
+               atc:{mot:'Hundimiento', rec:'2026-09-21', pdev:hoy, pturno:'AM'}}]});
+      var a1s=_cp(a1); a1s.rev=5; a1s.observaciones='Llamar antes de ir';
+      _cargar([k1, y1, a1], [k1s, y1s, a1s]);
+      await _abrirChofer('hoy');
+      STATE=[_cp(k1), _cp(y1), _cp(a1)]; saveMirror(); renderChofer();   // el celular estuvo bloqueado: la copia es la de antes
+      _saves=[];
+      choEntregado('k1'); await new Promise(function(r){ setTimeout(r,500); });
+      out.k1={ local:findById('k1').entregado, srv:!!SRV.k1.entregado, qr:String(SRV.k1.metodoPago).indexOf('IMGQR55')>=0 && SRV.k1.pagado===true,
+               saves:_saves.filter(function(s){ return s.id==='k1'; }).length, ultimo:_toasts[_toasts.length-1],
+               rech:rechazosLocales().filter(function(x){ return x.id==='k1'; }).length, tarjeta:_tarjeta('CLIENTE QR') };
+      choEntregado('y1'); await new Promise(function(r){ setTimeout(r,500); });
+      out.y1={ local:findById('y1').entregado, srv:!!SRV.y1.entregado, saves:_saves.filter(function(s){ return s.id==='y1'; }).length, ultimo:_toasts[_toasts.length-1] };
+      choEntregado('a1'); await new Promise(function(r){ setTimeout(r,500); });
+      var a=atcDe(SRV.a1)||{};
+      out.a1={ srv:!!SRV.a1.entregado, ent:a.ent||'', rf:a.rf||'', obs:SRV.a1.observaciones, hoy:hoy };
+      return out;
+    });
+    chk('⚠️ Contabilidad registró el QR mientras tanto: la entrega igual queda MARCADA (pantalla y planilla)', r.k1.local===true && r.k1.srv===true, J(r.k1));
+    chk('…sobre la fila nueva: el QR con su captura sigue ahí (no se pisa lo del otro)', r.k1.qr===true, J(r.k1));
+    chk('…y el último aviso dice que quedó entregado, no «volvé a hacer tu cambio»', /Entregado/.test(r.k1.ultimo) && !/volvé a hacer/.test(r.k1.ultimo), r.k1.ultimo);
+    chk('…y no queda anotado como «el servidor NO aceptó» en este celular', r.k1.rech===0, J(r.k1.rech));
+    chk('…y la tarjeta lo muestra entregado', /✓ Entregado/.test(r.k1.tarjeta), r.k1.tarjeta.slice(0,120));
+    chk('control: si en la planilla YA estaba entregada, no se vuelve a guardar', r.y1.local===true && r.y1.srv===true && r.y1.saves===1, J(r.y1));
+    chk('⚠️ la devolución de una ATC con conflicto también se cierra (ent y recogido de fábrica en la fila nueva)',
+        r.a1.srv===true && r.a1.ent===r.a1.hoy && r.a1.rf===r.a1.hoy && r.a1.obs==='Llamar antes de ir', J(r.a1));
+    await page.close();
+  }
+
+  // ═══ 2b. …y si en el reintento se corta la señal, queda en la cola ═════════════════════
+  console.log('\n── 2b. ✅ con conflicto y SIN señal en el reintento: queda en la cola ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      var o1=_P({id:'o1', cliente:'CLIENTE SIN SEÑAL', saldo:500});
+      var o1s=_cp(o1); o1s.rev=4; o1s.observaciones='Portón negro';
+      _cargar([o1], [o1s]);
+      await _abrirChofer('hoy');
+      STATE=[_cp(o1)]; saveMirror(); renderChofer();
+      var _post=apiPost, n=0;
+      apiPost=function(pl){ if(pl.action==='save' && ++n>1) return Promise.reject(new Error('Failed to fetch')); return _post(pl); };
+      choEntregado('o1'); await new Promise(function(r){ setTimeout(r,2600); });   // apiSaveAhora reintenta a los 1,5 s
+      var cola=getPending().filter(function(p){ return p.id==='o1'; })[0]||null;
+      return { cola:cola?{entregado:cola.entregado, rev:cola.rev, obs:cola.observaciones}:null, local:findById('o1').entregado };
+    });
+    chk('⚠️ el ✅ espera en la cola (sobre la fila nueva) en vez de perderse', !!r.cola && r.cola.entregado===true && r.cola.rev===4 && r.cola.obs==='Portón negro', J(r));
     await page.close();
   }
 
