@@ -3017,6 +3017,19 @@ function usarTotalProds(){
   toast('Saldo por cobrar: '+fmtBs(r2(t-acu))+' (total '+fmtBs(t)+' − a cuenta '+fmtBs(acu)+')','ok');
 }
 function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
+/* 🔢 LA CANTIDAD ES UN ENTERO DE 1 PARA ARRIBA (26/09). `parseInt(…)||1` guardaba 0 como 1, 2,5
+   como 2, vacía como 1 y dejaba pasar −2: el camión cargaba otra cosa que la tipeada. Devuelve los
+   campos que no sirven (solo de renglones con producto) para frenar y marcarlos, como hace el
+   importador de ROHO (`rohoCant`: «media unidad de un colchón no existe»). */
+function cantidadesMal(){
+  var cards=document.querySelectorAll('#f-productos .prod-card'), mal=[];
+  for(var i=0;i<cards.length;i++){
+    if(!cards[i].querySelector('.prod-desc').value.trim()) continue;
+    var q=cards[i].querySelector('.prod-cant'), t=String(q.value||'').trim(), n=Number(t);
+    if(!t || !(n>=1) || parseInt(t,10)!==n) mal.push(q);
+  }
+  return mal;
+}
 function getProductos(){
   var cards=document.querySelectorAll('#f-productos .prod-card'),out=[],rptForm=(docTipoSel()==='RPT');
   for(var i=0;i<cards.length;i++){
@@ -3024,7 +3037,7 @@ function getProductos(){
     var mSel=cards[i].querySelector('.prod-medida');
     var medida = mSel.value==='Otros' ? cards[i].querySelector('.prod-medida-otro').value.trim() : mSel.value;
     var codigo=cards[i].querySelector('.prod-codigo').value.trim();
-    var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;
+    var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;   // `submitPedido` ya frenó la que no es un entero ≥1 (`cantidadesMal`, 26/09)
     var precio=montoForm(cards[i].querySelector('.prod-precio'));
     if(desc){ var it={desc:desc, medida:medida, codigo:codigo, cant:cant};
       if(precio>0) it.precio=r2(precio);          // sin precio no se guarda la clave: los viejos quedan igual
@@ -7084,6 +7097,13 @@ function submitPedido(){
     if(faltaSuc){ var fs2=document.getElementById('f-rpt-suc'); if(fs2){ fs2.focus(); fs2.scrollIntoView({block:'center'}); } }
     if(faltaMotivo){ var fm=document.getElementById('f-atc-motivo'); if(fm){ fm.focus(); fm.scrollIntoView({block:'center'}); } }
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
+    return;
+  }
+  var _cantMal=cantidadesMal();   // (26/09) 0, 2,5, −2 o vacía: no se inventa otra cantidad
+  if(_cantMal.length){
+    _cantMal.forEach(function(q){ q.classList.add('err'); });
+    toast('🔢 La cantidad tiene que ser un número entero, de 1 para arriba (sin decimales ni signo menos). Corregí la que quedó en rojo.','err');
+    try{ _cantMal[0].focus(); _cantMal[0].scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
   /* 💵 UN MONTO CON SIGNO MENOS NO SE GUARDA (26/09). Con `parseFloat` quedaba «A cuenta −500» o

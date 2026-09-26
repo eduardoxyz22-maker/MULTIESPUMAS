@@ -7,6 +7,8 @@
      1. Los montos se leen como los escribe la gente en Bolivia: «1.500» es 1.500, no 1,50
         (A cuenta, Saldo, Monto total cobrado, segundo método, flete y precio c/u).
      2. Un monto con signo menos frena el guardado (antes se guardaba negativo, o borraba el flete).
+     3. La cantidad tiene que ser un número entero de 1 para arriba: 0 no se vuelve 1, 2,5 no se
+        vuelve 2 y −2 no se guarda.
      4. Editar un pedido con montos con decimales no los multiplica por mil.
 
    ⚠️ Los montos se TIPEAN con el teclado (`page.keyboard.type`), como la vendedora: un campo
@@ -246,6 +248,35 @@ function INIT(){
     await tipear(A, '#f-envio', '-50');
     const g2 = await guardar(A);
     chk('⚠️ Flete «-50» NO se guarda: editando, el flete pactado de 150 se borraba entero', g==='150' && g2.saves===0 && g2.marcados.indexOf('f-envio')>=0 && /\^150\b/.test(S.fila('fp').metodoPago), { antes:g, g2, mp:S.fila('fp').metodoPago });
+  });
+
+  // ══ 3. LA CANTIDAD ES UN ENTERO DE 1 PARA ARRIBA ════════════════════════════════════════
+  await esc('3. Cantidad 0, 2,5, −2 y vacía', async () => {
+    const S = servidor();
+    const A = await abrir(S);
+    const conCant = async (cliente, cant) => {
+      await empezar(A, cliente);
+      await tipear(A, '#f-productos .prod-cant', cant);
+      const g = await guardar(A);
+      return { g, f: S.porCliente(cliente) };
+    };
+    let r = await conCant('CANT CERO', '0');
+    chk('⚠️ cantidad 0 NO se guarda como 1', !r.f && r.g.saves===0, r.f ? r.f.productos : r.g);
+    chk('…se marca la cantidad y se dice por qué', r.g.marcados.some(m=>/prod-cant/.test(m)) && r.g.rojos.some(t=>/cantidad/i.test(t)), r.g);
+    r = await conCant('CANT MEDIA', '2.5');
+    chk('⚠️ cantidad 2.5 NO se guarda como 2', !r.f && r.g.saves===0, r.f ? r.f.productos : r.g);
+    r = await conCant('CANT NEGATIVA', '-2');
+    chk('⚠️ cantidad −2 NO se guarda', !r.f && r.g.saves===0, r.f ? r.f.productos : r.g);
+    r = await conCant('CANT VACIA', '');
+    chk('⚠️ cantidad vacía NO se inventa un 1', !r.f && r.g.saves===0, r.f ? r.f.productos : r.g);
+    r = await conCant('CANT TRES', '3');
+    chk('cantidad 3 se guarda 3, sin avisos', r.f && r.f.productos[0].cant===3 && !r.g.rojos.length, r.f ? r.f.productos : r.g);
+    // un renglón vacío de más (sin producto) no frena por su cantidad
+    await empezar(A, 'RENGLON VACIO');
+    await A.evaluate(() => { addProdRow(); var q=document.querySelectorAll('#f-productos .prod-cant'); q[1].value=''; });
+    const g = await guardar(A);
+    const f = S.porCliente('RENGLON VACIO');
+    chk('un renglón sin producto (vacío) no frena por su cantidad', f && f.productos.length===1 && !g.rojos.length, f ? f.productos : g);
   });
 
   // ══ 4. EDITAR NO MULTIPLICA POR MIL ═════════════════════════════════════════════════════
