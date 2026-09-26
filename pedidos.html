@@ -6172,11 +6172,15 @@ function showContaModal(id){
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
      un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
   if(CTA_ULTIMA!==String(id)){
-    if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length) CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
+    /* ⚠️ Con el TIPO (26/09): un flete en curso con su captura volvía como «💵 Pago» por el saldo entero, y
+       «Registrar pago» anotaba la captura del flete como pago de la venta (saldo 0, el flete «por cobrar»). */
+    if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length){ CTA_PAGO.tipo=CTA_TIPO; CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; } else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
     CTA_ULTIMA=String(id);
     CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[], recibio:''};
-    if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+' esperando que toques «Registrar pago».','ok',6000);
-    CTA_TIPO='pago';
+    CTA_TIPO=(CTA_PAGO_POR_ID[String(id)] && CTA_PAGO.tipo==='envio') ? 'envio' : 'pago';
+    if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+
+      (CTA_TIPO==='envio' ? (' del 🚚 recargo por entrega, esperando que toques «'+(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo')+'».')
+                          : ' esperando que toques «Registrar pago».'),'ok',6000);
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
     CTA_PAGO_V=null; CTA_EDIT_V=null;   // ni lo que se estaba tipeando en la venta anterior

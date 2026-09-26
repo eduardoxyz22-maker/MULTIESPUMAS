@@ -10,6 +10,9 @@
         DISPOSITIVO; el filtro del mes lo lee en hora de Bolivia (§4fu). En un celular con la zona
         mal puesta la venta del 31/08 21:30 salía en agosto… diciendo «2026-09-01 01:30».
      3. «💵 Anotar el monto» tomaba «-1500» como 1.500 (`parseMonto` saca el signo).
+     4. Un pago EN CURSO de flete, con su imagen, se recordaba por venta (§4ep) pero sin el tipo:
+        al volver a esa venta aparecía en «💵 Pago» con el saldo entero de monto, y «Registrar
+        pago» anotaba la captura del flete como pago de la venta.
 
    Red cortada, servidor simulado (la planilla vive en `window.SRV`). Se corre:
        node tests/test_rev3_conta.js
@@ -279,6 +282,50 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     return { sinMonto:!!c.sinMonto, monto:Number(c.monto)||0, fecha:c.fecha, pagado:p.pagado };
   });
   chk('3 · control: «1.500» se anota como 1.500, con la fecha de la venta', r.sinMonto===false && r.monto===1500 && r.pagado===true && !!r.fecha, J(r));
+
+  /* ══ 4 · EL PAGO EN CURSO DE FLETE RECUERDA QUE ERA FLETE ═════════════════════════════════════
+     Venta con saldo 1.000 y flete pactado de 150. La contadora elige «🚚 Recargo por entrega», QR
+     BISA, sube la captura del flete… y antes de registrar abre otra venta. Al volver, la imagen
+     estaba (§4ep) pero el bloque era «💵 Registrar un pago» por Bs 1.000: «Registrar pago» anotaba la
+     captura del flete como pago de la VENTA (saldo 0) y el flete seguía «por cobrar». */
+  r = await page.evaluate(async () => {
+    await aVentas([ P({ id:'F1', nota:'130', oc:'09-130', cliente:'CON FLETE', pagado:false, saldo:1000, metodoPago:textoCobros([{envio:true,metodo:'',monto:150}]) }),
+                    P({ id:'F2', nota:'140', oc:'09-140', cliente:'OTRA VENTA', pagado:false, saldo:800 }) ]);
+    showContaModal('F1');
+    boton('ctaSetTipo', /Recargo/).click();
+    boton('ctaSetMetodo', /^QR$/).click();
+    boton('ctaSetBanco', /BISA/).click();
+    await subir('F1', 'FL1');
+    showContaModal('F2');                                    // abre otra venta (desde la tabla, el cuadre…)
+    showContaModal('F1');                                    // …y vuelve
+    var toast=(document.getElementById('toast')||{}).textContent||'';
+    var reg=boton('ctaRegistrarPago'), m=document.getElementById('cta-pago-monto');
+    var vuelta={ tipo:CTA_TIPO, boton:reg?reg.textContent.trim():'', monto:m?m.value:null, comps:compsArr(CTA_PAGO.comps).join(','), toast:toast };
+    tipear({'cta-pago-nota':'131'});
+    reg.click();
+    await new Promise(function(r){ setTimeout(r,60); });
+    var p=findById('F1'), e=enviosDe(p).filter(envioYaCobrado)[0]||{};
+    return { vuelta:vuelta, env:{monto:e.monto, metodo:e.metodo, banco:e.banco, comps:compsArr(e.comps).join(',')},
+             saldo:Number(p.saldo)||0, cobrado:totalCobrado(p), porCobrar:envioPorCobrar(p) };
+  });
+  chk('4 · al volver a la venta, el pago en curso sigue siendo del FLETE (no «💵 Pago» por el saldo)',
+      r.vuelta.tipo==='envio' && /flete|recargo/i.test(r.vuelta.boton) && r.vuelta.monto==='150' && r.vuelta.comps==='FL1', J(r.vuelta));
+  chk('4 · …y el aviso de la imagen esperando dice que es del flete', /flete|recargo/i.test(r.vuelta.toast), r.vuelta.toast);
+  chk('4 · ⚠️ registrar anota el FLETE (QR BISA 150 con su captura) y la venta sigue debiendo 1.000',
+      r.env.monto===150 && r.env.metodo==='QR' && r.env.banco==='BISA' && r.env.comps==='FL1' && r.saldo===1000 && r.cobrado===0 && r.porCobrar===0, J(r));
+
+  // 4b · Control: el pago en curso de la VENTA sigue volviendo como pago de la venta.
+  r = await page.evaluate(async () => {
+    await aVentas([ P({ id:'F3', nota:'150', oc:'09-150', cliente:'PAGO EN CURSO', pagado:false, saldo:900, metodoPago:textoCobros([{envio:true,metodo:'',monto:100}]) }),
+                    P({ id:'F4', nota:'160', oc:'09-160', cliente:'OTRA MAS', pagado:false, saldo:700 }) ]);
+    showContaModal('F3');
+    await subir('F3', 'PG1');
+    showContaModal('F4'); showContaModal('F3');
+    var reg=boton('ctaRegistrarPago'), m=document.getElementById('cta-pago-monto');
+    return { tipo:CTA_TIPO, boton:reg?reg.textContent.trim():'', monto:m?m.value:null, comps:compsArr(CTA_PAGO.comps).join(',') };
+  });
+  chk('4b · control: el pago en curso de la VENTA vuelve como «Registrar pago» por el saldo, con su imagen',
+      r.tipo==='pago' && /Registrar pago/.test(r.boton) && r.monto==='900' && r.comps==='PG1', J(r));
 
   chk('sin errores JS', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
