@@ -1984,7 +1984,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-23-b';
+var SCRIPT_VERSION_ESPERADA='2026-09-26-a';
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2152,11 +2152,13 @@ function apiSaveAhora(rec, opts){
      (`_base`, `_dev`, `_t`), y le dicen al servidor que saben juntar (`juntar`): el `.gs`
      2026-09-23-b no deja guardar esas filas a un panel que no sepa (`actualizar`). */
   var sis=!!(rec && typeof SIS_FUSION!=='undefined' && SIS_FUSION[String(rec.id)]);
+  // 🔁 (26/09, revisión de Codex) Días cerrados y tildes de la carga, armados por este panel: van con su sello y `juntar` (ver REESCRITAS).
+  var re=!!(opts && opts.juntar && rec && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]);
   if(sis) rec=sisPlegar(rec);
   var envio=rec;
   if(sis){ envio={}; for(var _k in rec){ if(Object.prototype.hasOwnProperty.call(rec,_k) && _k!=='_base' && _k!=='_dev' && _k!=='_t') envio[_k]=rec[_k]; } }
   var payload={action:'save', pedido:envio};
-  if(sis) payload.juntar=1;
+  if(sis || re) payload.juntar=1;
   if(opts && opts.forzar){ payload.forzar=true; if(ADMIN_KEY_LOCAL) payload.adminKey=ADMIN_KEY_LOCAL; }
   /* 🔁 UN TROPIEZO DE GOOGLE SE REINTENTA UNA VEZ (§4fa). El `/exec` no contesta derecho:
      redirige a una dirección TEMPORAL de `script.googleusercontent.com`, propia de esa
@@ -2175,6 +2177,13 @@ function apiSaveAhora(rec, opts){
       if(res && res.ok && res.pedido){
         aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido);   // 🔍 §4en
         if(sis){ sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec); }   // §4fz: lo guardado es la nueva base; §4fz-b: y lo de la cola ya está adentro
+        if(re) reescritaRevAnotar(res.pedido);                              // (26/09) el sello nuevo es la base del próximo guardado
+      }
+      /* 🔁 (26/09) Otra computadora guardó los días cerrados o las tildes después de que esta los leyó (el
+         servidor desde 2026-09-26-a lo mira): se le aplica encima SOLO lo tocado acá y se vuelve a guardar.
+         No es un «no»: no pasa por rechazoFirme (que la anotaría como pedido rechazado). */
+      else if(re && res && res.ok===false && res.error==='conflicto' && res.pedido){
+        return reescritaJuntarYGuardar(rec, res, opts);
       }
       /* 🤝 §4fz: el stock o el arqueo chocaron con lo que guardó otro dispositivo: se juntan
          las dos versiones y se vuelve a guardar. No es un «no»: no pasa por rechazoFirme.
@@ -2300,11 +2309,17 @@ function rechazosLocales(){ try{ var a=JSON.parse(localStorage.getItem(LS_RECHAZ
    ya anotó. null si no se perdió nada de eso. */
 function rechazoPerdido(rec, srv){
   try{
-    var out={}, clave=function(c){ return (normMetodo(c.metodo)||c.metodo||'')+'|'+r2(c.monto); };
+    /* ⚠️ (26/09, revisión de Codex) Cobro por cobro, con la FECHA y quién lo recibió, y cada cobro de la
+       planilla sirve para UNO solo de acá. Antes se comparaba solo «método + monto»: con dos «Efectivo
+       100» de días distintos acá y uno en la planilla, el segundo se daba por guardado y se perdía sin
+       aviso. Un cobro no tiene id propio en `metodoPago`; esto es lo más fino sin cambiar el formato.
+       Si Contabilidad le cambió la fecha, avisa de más: mejor eso que perder plata callado. */
+    var out={}, clave=function(c){ return (normMetodo(c.metodo)||c.metodo||'')+'|'+r2(c.monto)+'|'+String(c.fecha||'')+'|'+limpiaRecibio(c.recibio).toLowerCase(); };
     if(rec && rec.entregado && !(srv && srv.entregado)) out.entregado=true;
-    var ya=cobrosDe(srv||{}).map(clave);
-    var cob=cobrosDe(rec||{}).filter(cobroDeLaPuerta).filter(function(c){ return ya.indexOf(clave(c))<0; })
-      .map(function(c){ return { txt:cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'') }; });
+    var libres={};
+    cobrosDe(srv||{}).forEach(function(c){ if(c && !c.sinMonto){ var k=clave(c); libres[k]=(libres[k]||0)+1; } });
+    var cob=cobrosDe(rec||{}).filter(cobroDeLaPuerta).filter(function(c){ var k=clave(c); if(libres[k]>0){ libres[k]--; return false; } return true; })
+      .map(function(c){ return { txt:cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' del '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'') }; });
     if(cob.length) out.cobros=cob;
     var fs=compsArr(rec&&rec.fotos), fsv=compsArr(srv&&srv.fotos), nf=fs.filter(function(f){ return fsv.indexOf(f)<0; }).length;
     if(nf) out.fotos=nf;
@@ -2332,9 +2347,13 @@ function rechazoResuelto(id, t0, que){
 function rechazoRecordar(rec, res){
   try{
     var a=rechazosLocales(), _r={ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 };
-    if(res.error==='conflicto' && res.pedido){ var _pe=rechazoPerdido(rec, res.pedido); if(_pe) _r.perdio=_pe; }   // (26/09) para el cartel del chofer
+    if(res.error==='conflicto' && res.pedido){ var _pe=rechazoPerdido(rec, res.pedido); if(_pe){ _r.perdio=_pe; _r.chofer=String(rec.chofer||'').trim(); } }   // (26/09) para el cartel del chofer, el de ESE chofer
     a.unshift(_r);
-    localStorage.setItem(LS_RECHAZOS, JSON.stringify(a.slice(0,20)));
+    /* (26/09, revisión de Codex) Lo que se perdió y nadie revisó no se cae por el tope de 20: se guarda
+       aparte hasta «Ya lo revisé» (con su propio tope, para no llenar el celular). */
+    var _q=a.slice(0,20), _extra=0;
+    a.slice(20).forEach(function(x){ if(x && x.perdio && !x.visto && _extra<30){ _q.push(x); _extra++; } });
+    localStorage.setItem(LS_RECHAZOS, JSON.stringify(_q));
   }catch(e){}
   renderColaAviso();
 }
@@ -9644,10 +9663,11 @@ function leerCierresDeLista(lista, esDelServidor){
   else if(stk && sisMasNueva(STOCK_ID, stk)){ STOCK=sisJuntarDeLista(STOCK_ID, stk); stockGuardarEspejo(); }   // §4fz: otro guardó DESPUÉS que nosotros
   else if(!stk && esDelServidor && !STOCK_CARGADO) STOCK_CARGADO=true;   // la planilla no tiene stock todavía: la memoria vacía ES el stock
   // (26/09) Lo tildado acá y todavía sin confirmar manda sobre la fila (antes un refresco entre el toque y el guardado se lo llevaba)
-  if(car){ CARGA_CHK=reescritaAplicar(Object.keys(parseCargaChk(car.observaciones)), reescritaCambios(CARGA_ID, CARGA_CAMBIOS)); saveCargaMirror(); renderCargaSiActiva(); }
+  if(car){ reescritaRevAnotar(car); CARGA_CHK=reescritaAplicar(Object.keys(parseCargaChk(car.observaciones)), reescritaCambios(CARGA_ID, CARGA_CAMBIOS)); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
   if(cie){
+    reescritaRevAnotar(cie);                                   // (26/09) el sello, para el próximo guardado
     var crudoCie=String(cie.observaciones||'').trim();
     var delServidor=crudoCie.split(/[^\d-]+/)
       .filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); }).sort();
@@ -9729,24 +9749,28 @@ function guardarCierres(){
   reescritaColaAlDia(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) la que espera en la cola, al día (ver REESCRITAS)
   CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
   var mandar=function(){
-    var fila=filaCierre(DIAS_CERRADOS);
+    var fila=reescritaConSello(filaCierre(DIAS_CERRADOS));   // (26/09) con el sello con el que se leyó (ver REESCRITA_REV)
     var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
     var cambios=reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) con lo que esperaba en la cola
-    var confirmado=function(ok){
+    var confirmado=function(ok, guardada){
+      /* (26/09) Si el servidor juntó (choque con otra computadora), lo guardado NO es lo que se mandó: se
+         confirma contra la fila que quedó (`guardada`), no contra la que salió de acá. */
+      var g=(guardada && esFilaCierre(guardada)) ? guardada : fila, enG=diasDeFilaCierre(g).sort().join(' ');
       // Lo que ya quedó en la planilla no se vuelve a aplicar: otro puede cambiarlo después.
-      if(ok) reescritaConfirmada(CIERRE_ID, cambios, fila);
+      if(ok) reescritaConfirmada(CIERRE_ID, cambios, g);
       // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
       // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
-      if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
-      if(!ok) reescritaEncolar(fila, CIERRES_CAMBIOS);   // sin confirmar: la cola lo reintenta (rearmado, 26/09) y CIERRES_PEND sigue mandando
+      if(ok && CIERRES_PEND && (CIERRES_PEND.slice().sort().join(' ')===mandado || CIERRES_PEND.slice().sort().join(' ')===enG)) CIERRES_PEND=null;
+      if(!ok) reescritaEncolar(filaCierre(DIAS_CERRADOS), CIERRES_CAMBIOS);   // sin confirmar: la cola lo reintenta (rearmado, 26/09) y CIERRES_PEND sigue mandando
       renderCupoForm(); renderCierreDias();
     };
-    apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); });
+    apiSave(fila, { juntar:true }).then(function(res){ confirmado(!!(res&&res.ok), res&&res.pedido); }, function(){ confirmado(false); });
   };
   if(CONNECTED){
     conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
       if(!(res && res.ok && Array.isArray(res.pedidos))) return;
       var cie=null; res.pedidos.forEach(function(p){ if(esFilaCierre(p)) cie=p; });
+      reescritaRevAnotar(cie);                                  // (26/09)
       var s=reescritaAplicar(diasDeFilaCierre(cie), reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS));
       DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice();
       saveCierresMirror(); renderAdmin(); renderCupoForm(); renderCierreDias();
@@ -10509,6 +10533,31 @@ REESCRITAS[CARGA_ID]={
   listo:function(){}
 };
 function filaCarga(){ return filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK)); }
+/* 🔏 (26/09, revisión de Codex) EL SELLO. Releer antes de escribir achica la carrera pero no la cierra:
+   Codex reprodujo dos computadoras que leen a la vez los días cerrados vacíos y guardan cada una su día,
+   y quedaba UNA sola fecha. Ahora cada guardado de estas filas lleva el sello con el que se leyó la fila
+   (`REESCRITA_REV`) y `juntar`: el servidor desde 2026-09-26-a lo compara bajo su candado y, si otra
+   guardó en el medio, contesta `conflicto` con la fila actual; acá se le aplica encima SOLO lo tocado en
+   esta computadora (`reescritaCambios`) y se vuelve a guardar. Con el 2026-09-23-b el servidor no mira
+   el sello de estas filas y todo sigue como antes (relee y escribe). El sello solo sube (un `list` viejo
+   que llega tarde no lo baja). */
+var REESCRITA_REV={}, REESCRITA_N={};
+function reescritaRevAnotar(fila){
+  if(!fila || fila.id==null || !REESCRITAS[String(fila.id)]) return;
+  var r=Number(fila.rev)||0, id=String(fila.id);
+  if(r>(REESCRITA_REV[id]||0)) REESCRITA_REV[id]=r;
+}
+function reescritaConSello(fila){ fila.rev=REESCRITA_REV[String(fila.id)]||0; return fila; }
+function reescritaJuntarYGuardar(rec, res, opts){
+  var id=String(rec.id), R=REESCRITAS[id];
+  var n=(REESCRITA_N[id]||0)+1; REESCRITA_N[id]=n;
+  if(n>4){ REESCRITA_N[id]=0; return { ok:false, error:'junta' }; }   // no es un «no» firme: el que llamó lo deja en la cola, que lo rearma
+  REESCRITA_REV[id]=Number(res.pedido.rev)||0;                           // la base ahora es la del servidor
+  var fila=R.armar(reescritaAplicar(R.claves(res.pedido), reescritaCambios(id, R.cambios())));
+  fila.rev=REESCRITA_REV[id];
+  if(SAVE_ULTIMO[id]) SAVE_ULTIMO[id]={ rec:fila, t:Date.now() };      // si hay otro guardado esperando, que mande lo junto
+  return apiSaveAhora(fila, opts).then(function(r){ if(r && r.ok) REESCRITA_N[id]=0; return r; });
+}
 function reescritaEnCola(id){ return getPending().filter(function(p){ return p && String(p.id)===String(id); })[0]||null; }
 /* Lo que hay que aplicar: lo que espera en la cola (puede ser de antes de recargar) y encima lo de acá, más nuevo. */
 function reescritaCambios(id, mem){
@@ -10554,13 +10603,14 @@ function mandarReescritaDeCola(rec){
   return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
     if(!(res && res.ok && Array.isArray(res.pedidos))) return null;
     var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===id) srv=p; });
+    reescritaRevAnotar(srv);                                   // (26/09) el sello con el que se leyó
     return R.claves(srv);
   }, function(){ return null; }).then(function(base){
     if(!base) return { ok:false, error:'sin_lectura' };
     var cam=reescritaCambios(id, R.cambios());
     if(!Object.keys(cam).length) return { ok:true };          // ya estaba todo en la planilla
-    var fila=R.armar(reescritaAplicar(base, cam));
-    return apiSave(fila).then(function(r){ if(r && r.ok){ reescritaConfirmada(id, cam, fila); R.listo(fila); } return r; });
+    var fila=reescritaConSello(R.armar(reescritaAplicar(base, cam)));
+    return apiSave(fila, { juntar:true }).then(function(r){ if(r && r.ok){ var g=(r.pedido && String(r.pedido.id)===id) ? r.pedido : fila; reescritaConfirmada(id, cam, g); R.listo(g); } return r; });
   });
 }
 /* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez.
@@ -10573,14 +10623,15 @@ function guardarCargaChk(){
   clearTimeout(_cargaT);
   _cargaT=setTimeout(function(){
     var mandar=function(){
-      var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=filaCarga();
-      apiSave(fila).then(function(res){ if(res&&res.ok) reescritaConfirmada(CARGA_ID, cam, fila); else reescritaEncolar(fila, CARGA_CAMBIOS); },
-                         function(){ reescritaEncolar(fila, CARGA_CAMBIOS); });
+      var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=reescritaConSello(filaCarga());   // (26/09) con el sello con el que se leyó
+      apiSave(fila, { juntar:true }).then(function(res){ if(res&&res.ok) reescritaConfirmada(CARGA_ID, cam, (res.pedido && String(res.pedido.id)===CARGA_ID) ? res.pedido : fila); else reescritaEncolar(filaCarga(), CARGA_CAMBIOS); },
+                         function(){ reescritaEncolar(filaCarga(), CARGA_CAMBIOS); });
     };
     if(CONNECTED){
       conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
         if(!(res && res.ok && Array.isArray(res.pedidos))) return;
         var car=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CARGA_ID) car=p; });
+        reescritaRevAnotar(car);                                // (26/09)
         CARGA_CHK=reescritaAplicar(REESCRITAS[CARGA_ID].claves(car), reescritaCambios(CARGA_ID, CARGA_CAMBIOS));
         saveCargaMirror(); renderCargaSiActiva();
       }, function(){}).then(mandar, mandar);
@@ -11661,22 +11712,40 @@ function llenarSelectChoferes(){
 function renderChoferSiActivo(){ var vw=document.getElementById('view-chofer'); if(vw && vw.classList.contains('active')) renderChofer(); }
 /* 🚚 Lo que el chofer hizo sin señal y NO entró (26/09, `rechazoPerdido`). Últimas 48 h, hasta que
    toque «Ya lo revisé». Es SU dispositivo: lo anotado acá son cambios suyos. */
-function choRechazosHtml(){
-  var r=rechazosLocales().filter(function(x){ return x.perdio && !x.visto && Date.now()-x.ts<48*3600000; });
+/* ⚠️ (26/09, revisión de Codex) Se ve hasta «Ya lo revisé», NO se vence: antes a las 48 h desaparecía
+   sin que nadie lo hubiera visto (un chofer que no abrió el panel el fin de semana). Y cada chofer ve
+   lo SUYO: en un celular compartido, el otro veía lo perdido del primero y «Ya lo revisé» lo marcaba
+   para los dos. En «👑 Ver todos», todos, con el nombre. Los de antes de anotar el chofer, a todos. */
+function choRechazosDe(c, todos){
+  var cn=String(c||'').trim().toLowerCase();
+  return rechazosLocales().filter(function(x){
+    if(!x || !x.perdio || x.visto) return false;
+    if(todos || x.chofer==null) return true;
+    return String(x.chofer||'').trim().toLowerCase()===cn;
+  });
+}
+function choRechazosHtml(c, todos){
+  var r=choRechazosDe(c, todos);
   if(!r.length) return '';
   var li=r.map(function(x){
-    var q=[]; if(x.perdio.entregado) q.push('✅ la entrega: volvé a tocar ✅');
+    var q=[]; if(x.perdio.entregado) q.push(x.perdio.movido
+      ? ('✅ la entrega NO se marcó: mientras tanto otra persona lo pasó '+esc(x.perdio.movido)+'. Si ya lo entregaste, avisale a logística')
+      : '✅ la entrega: volvé a tocar ✅');
     (x.perdio.cobros||[]).forEach(function(c){ q.push('💵 el cobro '+esc(c.txt)+': volvé a anotarlo, o avisale a Contabilidad'); });
     if(x.perdio.fotos) q.push('📷 '+x.perdio.fotos+' foto'+(x.perdio.fotos>1?'s':'')+' de la entrega: volvé a subirla'+(x.perdio.fotos>1?'s':''));
-    return '<li style="margin:3px 0"><b>'+esc(x.cliente||'(sin cliente)')+'</b> — '+q.join(' · ')+'</li>';
+    return '<li style="margin:3px 0"><b>'+esc(x.cliente||'(sin cliente)')+'</b>'+((todos && x.chofer)?(' <span style="font-weight:400">('+esc(x.chofer)+')</span>'):'')+' — '+q.join(' · ')+'</li>';
   }).join('');
   return '<div id="cho-rechazos" style="background:#fdecec;border:2px solid var(--red);border-radius:10px;padding:10px 13px;margin-bottom:12px;color:#8a1c24;font-size:.88rem">'+
-    '<b>⚠️ Esto que hiciste sin señal NO entró</b>: mientras tanto otra persona cambió esos pedidos, y ganó lo de ella.'+
+    (todos ? '<b>⚠️ Esto que los choferes hicieron desde ESTE dispositivo NO entró</b>: mientras tanto otra persona cambió esos pedidos, y ganó lo de ella.'
+           : '<b>⚠️ Esto que hiciste sin señal NO entró</b>: mientras tanto otra persona cambió esos pedidos, y ganó lo de ella.')+
     '<ul style="margin:6px 0 8px 18px;padding:0">'+li+'</ul>'+
     '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--red);color:#8a1c24;font-weight:700" onclick="choRechazosVistos()">Ya lo revisé</button></div>';
 }
 function choRechazosVistos(){
-  try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().map(function(x){ if(x.perdio) x.visto=true; return x; }))); }catch(e){}
+  // (26/09) Solo lo que está a la vista: el del chofer elegido (o todos en «👑 Ver todos»).
+  var sel=document.getElementById('cho-nombre'), c=sel?(sel.value||'').trim():'', todos=CHO_TODOS && UNLOCKED;
+  var ver={}; choRechazosDe(c, todos).forEach(function(x){ ver[x.ts+'|'+x.id]=1; });
+  try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().map(function(x){ if(x && x.perdio && ver[x.ts+'|'+x.id]) x.visto=true; return x; }))); }catch(e){}
   renderChofer();
 }
 function renderChofer(){
@@ -11699,7 +11768,7 @@ function renderChofer(){
     return String(a.zona||'')<String(b.zona||'')?-1:1;
   });
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
-  var recFabHtml=choRechazosHtml()+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo
+  var recFabHtml=choRechazosHtml(c, todos)+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo (el de ESTE chofer)
   var ent=0, porCobrar=0, cobrado=0, fleteF=0;
   list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
   list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
@@ -12337,6 +12406,12 @@ function choEntregado(id){
      chofer lo notara. Marcar sigue siendo un toque. */
   if(p.entregado && !confirm('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.')) return;
   var quiere=!p.entregado, t0=Date.now(), choco=false;
+  /* ⚠️ (26/09, revisión de Codex) EL VIAJE QUE EL CHOFER TOCÓ: el día, y en una ATC si era el recojo o la
+     devolución. El reintento de abajo solo va si la fila del servidor sigue siendo ESE viaje: si en el
+     medio logística lo pasó a otro día (o programó la devolución), el ✅ de hoy caía sobre el viaje del
+     02/10 y lo daba por entregado. Ahí NO se marca: se le dice al chofer, y queda en su cartel. */
+  var viaje={ fecha:String(p.fecha||''), dev:(esATC(p.oc) ? atcViajeDevolucion(p) : false) };
+  var mismoViaje=function(s){ return String(s.fecha||'')===viaje.fecha && (esATC(s.oc) ? atcViajeDevolucion(s) : false)===viaje.dev; };
   /* (26/09) El ✅ es un dato DEL CHOFER, como la foto (§4ew): con el celular bloqueado la copia
      es de horas atrás, y si en el medio Contabilidad registró el pago el guardado daba
      `conflicto` y la entrega quedaba SIN marcar — solo un aviso de 9 s que, con el celular en
@@ -12350,10 +12425,23 @@ function choEntregado(id){
       var s=findById(id); if(!s) return r;
       choco=true;
       delete NO_ENCOLAR[id];                         // si el reintento cae sin señal, que quede en la cola
+      if(!mismoViaje(s)) return { ok:false, error:'otro_viaje', ahora:s };   // (26/09) no se marca otro viaje
       return (!!s.entregado===quiere) ? { ok:true } : marcar(s, 1);
     });
   };
   marcar(p, 0).then(function(r){
+    if(r && r.error==='otro_viaje'){
+      var a=r.ahora, adonde=(String(a.fecha||'')!==viaje.fecha)
+        ? (a.fecha ? ('al '+fmtFecha(a.fecha)) : 'a otro viaje (sin fecha)')
+        : (atcViajeDevolucion(a) ? 'a la devolución' : 'al recojo');
+      // El rechazo del choque ya dice «la entrega no entró»: se le agrega adónde lo pasaron (su cartel lo muestra).
+      try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().map(function(x){
+        if(x && x.id===String(id) && x.error==='conflicto' && x.ts>=t0 && x.perdio && x.perdio.entregado) x.perdio.movido=adonde;
+        return x; }))); }catch(e){}
+      renderColaAviso(); renderChoferSiActivo();
+      toast('⚠️ NO se marcó '+(quiere?'entregado':'como no entregado')+': mientras tanto otra persona pasó este pedido '+adonde+'. Si ya lo entregaste, avisale a logística.','err',12000);
+      return;
+    }
     if(!choco || !(r && r.ok)) return;
     rechazoResuelto(id, t0, 'entregado');            // (26/09) sale el ✅, no el cobro que se perdió con el choque
     renderColaAviso(); renderChoferSiActivo();
@@ -17465,15 +17553,28 @@ function abrirImportExist(){
    «Excel_07092026_08_59_57_almacen_septiembre.xlsx» → 08:59:57. Sirve para saber si el
    corte es de antes o de después de que salieran los camiones (§4cr). */
 function existHoraDeNombre(nombre){
-  var m=String(nombre||'').match(/_(\d{2})(\d{2})(\d{4})_(\d{2})_(\d{2})_(\d{2})/);
+  /* (26/09) También con la fecha entre guiones: el sistema de Moreno ahora bajó el de Banzer como
+     «Excel_26-09-2026_10_30_36_BANZER.xlsx» y la hora del corte no aparecía. */
+  var m=String(nombre||'').match(/_(\d{2})-?(\d{2})-?(\d{4})_(\d{2})_(\d{2})_(\d{2})/);
   return m ? {f:m[3]+'-'+m[2]+'-'+m[1], hora:m[4]+':'+m[5]+':'+m[6]} : null;
+}
+/* (26/09) …y si el nombre no la trae, del PIE del propio reporte: cada página termina con
+   «Fecha : 26/09/2026 10:30:33 - usuario», que es cuándo se sacó. */
+function existHoraDePie(filas){
+  for(var i=(filas||[]).length-1;i>=0;i--){
+    var t=existTxt(filas[i]), m=t.match(/FECHA\s*:\s*(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if(m){ var z=function(s){ return (String(s).length<2?'0':'')+s; };
+      return { f:m[3]+'-'+z(m[2])+'-'+z(m[1]), hora:z(m[4])+':'+m[5]+':'+(m[6]||'00') }; }
+  }
+  return null;
 }
 function onExistArchivo(ev){
   var f=ev.target.files && ev.target.files[0]; if(!f) return;
   toast('Leyendo '+f.name+'…','ok');
   var delNombre=existHoraDeNombre(f.name);
   f.arrayBuffer().then(xlsxDescomprimir).then(function(archivos){
-    var r=existLeer(xlsxHoja(archivos));
+    var _filas=xlsxHoja(archivos), r=existLeer(_filas);
+    if(!delNombre && !r.error) delNombre=existHoraDePie(_filas);   // (26/09) la del pie del reporte
     if(!r.error && delNombre){ r.hora=delNombre.hora; if(delNombre.f===r.fecha) r.horaFiable=true; }
     if(r.error){ toast('❌ '+r.error,'err',9000); return; }
     EXIST_IMP=r; renderImportExist();
@@ -17633,8 +17734,11 @@ function renderImportExist(){
     '</div>'+
     '<div style="margin-bottom:12px"><label class="lb">¿Qué almacén es este?</label>'+
       '<select id="exist-rol" style="width:100%">'+
-        '<option value="log"'+(R.esLog?' selected':'')+'>📦 El de logística — de acá salen los camiones (es «en depósito»)</option>'+
-        '<option value="otro"'+(R.esLog?'':' selected')+'>🏭 Otro (la fábrica) — está, pero hay que ir a traerlo</option>'+
+        /* (26/09) «Otro (la fábrica)» confundía con Banzer —que también es depósito y del que también salen
+           camiones—: el dueño iba a elegir «el de logística», que REEMPLAZA el conteo de «acá en fábrica».
+           El panel tiene UN solo conteo para ese depósito; los demás llevan el suyo aparte. */
+        '<option value="log"'+(R.esLog?' selected':'')+'>📦 El depósito de FÁBRICA (Productos Terminados) — su conteo es «acá en fábrica»</option>'+
+        '<option value="otro"'+(R.esLog?'':' selected')+'>🏪 Otro almacén (Banzer, Moreno…) — lleva su propio conteo, aparte del de fábrica</option>'+
       '</select>'+
       (R.conocido?'':'<div style="font-size:.78rem;color:var(--amber);margin-top:4px">Es la primera vez que subís este almacén: elegí qué es y el panel lo recuerda.</div>')+
     '</div>'+
@@ -17671,6 +17775,12 @@ function renderImportExist(){
 function confirmarImportExist(){
   var R=EXIST_IMP; if(!R){ closeModal(); return; }
   var rol=(document.getElementById('exist-rol')||{}).value||'otro';
+  /* ⚠️ (26/09) Pasar a «depósito de fábrica» un almacén que NO lo es REEMPLAZA el conteo de «acá en fábrica»
+     (de donde salen los camiones) por el suyo. Casi pasa con Banzer: se pregunta antes, nombrando los dos. */
+  if(rol==='log' && !R.esLog && STOCK.c && STOCK.c.alm && normNombre(STOCK.c.alm)!==normNombre(R.almacen) &&
+     !confirm('⚠️ Vas a usar «'+R.almacen+'» como el DEPÓSITO DE FÁBRICA (de donde salen los camiones).\n\n'+
+              'Su conteo REEMPLAZA al de «'+STOCK.c.alm+'»'+(STOCK.c.f?(' del '+fmtFecha(STOCK.c.f)):'')+', y el panel va a creer que eso está a mano para cargar.\n\n'+
+              'Si es otro almacén (Banzer, Moreno), tocá Cancelar y elegí «Otro almacén»: lleva su propio conteo.')) return;
   var cerrarPed=!!(document.getElementById('exist-cerrar-ped')||{}).checked;
   var u={};
   R.items.forEach(function(i){ u[i.k]=(u[i.k]||0)+i.cant; });

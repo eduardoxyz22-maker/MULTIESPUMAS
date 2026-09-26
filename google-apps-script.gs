@@ -72,6 +72,14 @@ var REV_COL = HEADERS.indexOf('Revisión') + 1;
 /* Las filas del sistema que tocan VARIAS personas y el panel sabe juntar (§4fz): piden sello
    si el panel lo manda. Las otras (días cerrados, carga) siguen reescribiéndose enteras. */
 var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
+/* 🔁 (2026-09-26-a, revisión de Codex) Los días cerrados y las tildes de la carga también las reescriben
+   ENTERAS varias computadoras. El panel del 26/09 relee la fila antes de escribir, pero eso achica la
+   carrera y no la cierra: dos que leen a la vez el mismo estado y guardan cada una lo suyo dejaban solo lo
+   del último (un día cerrado se reabría; una tilde se perdía). Un panel que sabe juntarlas manda `juntar`
+   y el sello con el que leyó: si otra guardó en el medio, `conflicto` con la fila actual, y el panel le
+   aplica encima SOLO lo que tocó y vuelve a guardar. Un panel que no manda `juntar` (el de antes del 26/09)
+   sigue como siempre: a estas filas NO se le contesta `actualizar`, para no trabar a nadie. */
+var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1 };
 /* 📏 Tope de Google para una celda, y desde cuánto lo avisa probarAntesDeImplementar (24/09). */
 var CELDA_TOPE = 50000, CELDA_AVISO = 35000, CELDA_AVISO_ROJO = 42000;
 /* §4fz-b: desde 2026-09-23-b estas filas las guarda SOLO un panel que sabe juntar (manda
@@ -99,7 +107,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-09-23-b';   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-26-a';   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -129,7 +137,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-09-23-b';
+  var ESTA_VERSION = '2026-09-26-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -575,7 +583,7 @@ function doPost(e) {
       var action = body.action || 'save';
       /* §4fz: el choque del stock o del arqueo lo resuelve el panel solo (junta y reguarda): no
          es un guardado perdido y anotarlo en «Rechazos» asustaría sin motivo. */
-      if (o.error === 'conflicto' && action === 'save' && body.pedido && SISTEMA_CON_SELLO[String(body.pedido.id)]) return out;
+      if (o.error === 'conflicto' && action === 'save' && body.pedido && (SISTEMA_CON_SELLO[String(body.pedido.id)] || SISTEMA_JUNTA_OPCIONAL[String(body.pedido.id)])) return out;   // (2026-09-26-a) y los días cerrados y la carga
       /* Una clave que falta en un `list` es un dispositivo que todavía no la ingresó y
          refresca cada 2 minutos: anotarlo llenaría la hoja sin decir nada nuevo. La clave
          que falta al GUARDAR sí importa: es un guardado que se quedó en una cola. */
@@ -1095,10 +1103,11 @@ function doSave(p, forzar, juntar) {
        chocaba y lo tiraba (auditoría, #8). Ahora, sobre una fila ya sellada, un panel que no
        manda `juntar` recibe `actualizar` y no se toca nada: tiene que recargar la página. */
     var sisSello = filaSistema && SISTEMA_CON_SELLO[String(p.id)];
+    var juntaSello = filaSistema && !!juntar && !!SISTEMA_JUNTA_OPCIONAL[String(p.id)];   // (2026-09-26-a) ver arriba
     if (sisSello && revHoja && !juntar) {
       return jsonOut({ ok:false, error:'actualizar', version:SCRIPT_VERSION });
     }
-    if (revHoja && (!filaSistema || sisSello) && (Number(p.rev) || 0) !== revHoja) {
+    if (revHoja && (!filaSistema || sisSello || juntaSello) && (Number(p.rev) || 0) !== revHoja) {
       return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
     }
   }
