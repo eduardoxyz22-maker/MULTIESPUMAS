@@ -137,6 +137,43 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('…ni la de un pedido ya entregado grita «Falta la ubicación GPS»', !/Falta la ubicación GPS/.test(r.modalEnt), r.modalEnt.slice(0,120));
   chk('…pero uno que todavía va sí lo pide', /Falta la ubicación GPS/.test(r.modalGps) && /Agregar enlace de ubicación/.test(r.modalGps), r.modalGps.slice(0,120));
 
+  // ══ 4. Completar un borrador de Kommo es un pedido NUEVO ═══════════════════
+  console.log('\n── 4. El borrador de Kommo completado ──');
+  r = await page.evaluate(async () => {
+    CARGA_GEN++; CARGA_ESTADO='ok';
+    CONNECTED=true;
+    var borr=__P({id:'kommo-555', estado:'Borrador Kommo', cliente:'LEAD DE KOMMO', fecha:'', turno:'', oc:'', zona:'', direccion:'', maps:'',
+                  nota:'', saldo:3000, nroDia:0, ts:Date.parse('2026-09-16T08:00:00-04:00'), rev:3});
+    window._pl=[JSON.parse(JSON.stringify(borr))];
+    apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
+    apiSave=function(rec){ var c=JSON.parse(JSON.stringify(rec)); c.rev=(Number(rec.rev)||0)+1; c.nroDia=c.nroDia||1;
+      window._pl=window._pl.filter(function(x){ return x.id!==rec.id; }).concat([c]); return Promise.resolve({ok:true,pedido:c}); };
+    STATE=[]; BORRADORES=[JSON.parse(JSON.stringify(borr))]; saveMirror();
+    setVendedorMem('Carola Chavez'); document.getElementById('mis-vendedor').value='Carola Chavez';
+    showView('mis'); await new Promise(function(r){ setTimeout(r,150); });
+    completarBorrador('kommo-555');
+    document.getElementById('f-fecha').value='2026-09-17';
+    document.getElementById('f-nota').value='9001';
+    document.getElementById('f-zona').value='Norte';
+    document.getElementById('f-direccion').value='Calle 1';
+    segSet('f-turno','AM');
+    var toasts=[], _t=toast; toast=function(m){ toasts.push(String(m)); return _t.apply(this, arguments); };
+    submitPedido();
+    await new Promise(function(r){ setTimeout(r,800); });
+    toast=_t;
+    var mb=document.getElementById('modal-box');
+    var o={ modal: mb?mb.textContent.replace(/\s+/g,' '):'', wa:(document.getElementById('wa-text')||{}).value||'', toasts:toasts.join(' | '),
+            enMis: document.getElementById('view-mis').classList.contains('active'),
+            fila: window._pl.filter(function(x){ return x.id==='kommo-555'; }).map(function(x){ return (x.estado||'')+'|'+x.fecha; })[0] };
+    closeModal(); CONNECTED=false;
+    return o;
+  });
+  chk('se guardó como pedido (con fecha, sin la marca de borrador)', r.fila==='|2026-09-17', r.fila);
+  chk('⚠️ NO dice «no cambió nada de lo que se ve en la lista de entrega» de una entrega recién agendada', !/no cambió nada/.test(r.modal), r.modal.slice(0,200));
+  chk('⚠️ sale el mensaje para pasar al grupo, como todo pedido nuevo', /Pedido guardado/.test(r.modal) && /LEAD DE KOMMO/.test(r.wa), r.modal.slice(0,120));
+  chk('…el aviso dice «Pedido enviado al equipo», no «Cambios guardados»', /Pedido enviado al equipo/.test(r.toasts) && !/Cambios guardados/.test(r.toasts), r.toasts);
+  chk('…y vuelve a Mis pedidos, de donde salió', r.enMis===true);
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

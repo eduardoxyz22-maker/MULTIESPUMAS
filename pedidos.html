@@ -7696,7 +7696,7 @@ function submitPedido(){
       if(res&&res.ok){
         if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
         // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
-        if(!(res.pedido && res.pedido.ocCambiada)) toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');
+        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');   // (26/09) el borrador completado es un pedido NUEVO
         verificarEcoForm(res.pedido, rec, prev);    // 🔍 lo que se vio vs lo que quedó (§4en); si falta algo, pisa el ✓ con el rojo
         flushPending();
       }
@@ -7772,7 +7772,12 @@ function submitPedido(){
        —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
        pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
        confirmación: parecía que el cambio no se había guardado. */
-    if(wasEdit){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
+    /* 📥 (26/09) El borrador de Kommo completado es un pedido NUEVO: salía «✓ Cambios guardados — Se
+       guardó, pero no cambió nada de lo que se ve en la lista de entrega» (sin `prev` no hay diferencia
+       que mostrar), justo con una entrega recién agendada. Vuelve a Mis pedidos y sale el mensaje para
+       el grupo, como cualquier pedido nuevo. */
+    if(wasEdit && !_deBorrador){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
+    if(wasEdit) volverDeEdicion(_desde);
     showWhatsappModal(rec);
   }
 }
