@@ -391,6 +391,46 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('5c · ⚠️ los dos de la venta de agosto también: «4 pagos sin fecha (2 de ventas de otro mes)»',
       /^4 pagos sin fecha/.test(r.txt) && /\(2 de ventas de otro mes\)/.test(r.txt) && r.det.filter(function(t){ return /venta del 20\/08/.test(t); }).length===2, J(r));
 
+  /* ══ 5d · TAB DE UN CAMPO DEL ARQUEO AL SIGUIENTE ═════════════════════════════════════════════
+     La contadora cuenta la caja (Efectivo) y pasa con Tab al extracto del QR. El número se guarda al
+     salir del campo y el cuadre se repinta ENTERO en ese momento, con el foco a mitad de camino: el
+     campo del QR que iba a recibir el foco ya no existía y el foco quedaba en la nada. Lo que tipeaba
+     después no entraba en ningún lado. */
+  await page.evaluate(async () => {
+    await aCuadre([ P({ id:'A1', nota:'70', oc:'09-070', cliente:'EFECTIVO', metodoPago:textoCobros([{metodo:'Efectivo',monto:500,fecha:hoy,nota:'70',comps:['A1']}]) }),
+                    P({ id:'A2', nota:'71', oc:'09-071', cliente:'QR', metodoPago:textoCobros([{metodo:'QR',banco:'BISA',monto:900,fecha:hoy,nota:'71',comps:['A2']}]) }) ]);
+    ARQUEO={}; renderCuadre();
+  });
+  await page.locator('#cua-cierre input.cua-arqueo').first().click();
+  await page.keyboard.type('500');
+  await page.keyboard.press('Tab');
+  await page.waitForTimeout(60);
+  const f1 = await page.evaluate(() => { var ins=[].slice.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'));
+    return { idx:ins.indexOf(document.activeElement), tag:document.activeElement&&document.activeElement.tagName, ocupado:autoOcupado(), arq:cuadreArqueo('Efectivo') }; });
+  await page.keyboard.type('900');
+  await page.keyboard.press('Tab');
+  await page.waitForTimeout(60);
+  const f2 = await page.evaluate(() => ({ ef:cuadreArqueo('Efectivo'), qr:cuadreArqueo('QR BISA'), dif:cuadreCierre().difTotal,
+    vals:[].slice.call(document.querySelectorAll('#cua-cierre input.cua-arqueo')).map(function(i){ return i.value; }) }));
+  chk('5d · con Tab, el foco pasa al campo del QR (el repintado no lo deja en la nada)', f1.idx===1 && f1.arq===500, J(f1));
+  chk('5d · …y el refresco automático lo sigue viendo como «anotando el arqueo»', f1.ocupado==='anotando el arqueo', f1.ocupado);
+  chk('5d · ⚠️ lo que se tipea en el QR entra: 500 y 900 anotados, el cuadre cierra', f2.ef===500 && f2.qr===900 && f2.dif===0 && J(f2.vals)==='["500","900"]', J(f2));
+  // Enter en un campo: el número se guarda y el foco se queda en ese campo.
+  await page.locator('#cua-cierre input.cua-arqueo').nth(1).click();
+  await page.keyboard.press('Control+A'); await page.keyboard.type('950'); await page.keyboard.press('Enter');
+  await page.waitForTimeout(60);
+  const f3 = await page.evaluate(() => { var ins=[].slice.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'));
+    return { idx:ins.indexOf(document.activeElement), qr:cuadreArqueo('QR BISA'), dif:cuadreCierre().difTotal }; });
+  chk('5d · Enter guarda el número (950: sobra 50) y el foco se queda en el campo', f3.idx===1 && f3.qr===950 && f3.dif===50, J(f3));
+  // Con algo escrito en «Buscar», el buscador del detalle (que recupera su foco en cada repintado) no se lo lleva.
+  await page.evaluate(() => { CUA_BUSCA='EFECTIVO'; ARQUEO={}; renderCuadre(); });
+  await page.locator('#cua-cierre input.cua-arqueo').first().click();
+  await page.keyboard.type('500'); await page.keyboard.press('Tab');
+  await page.waitForTimeout(60);
+  const f4 = await page.evaluate(() => { var ins=[].slice.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'));
+    var x={ idx:ins.indexOf(document.activeElement), id:(document.activeElement||{}).id||'', ef:cuadreArqueo('Efectivo') }; CUA_BUSCA=''; renderCuadre(); return x; });
+  chk('5d · con algo en «Buscar», el Tab también deja el foco en el campo del QR (no en el buscador)', f4.idx===1 && f4.ef===500, J(f4));
+
   chk('sin errores JS', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

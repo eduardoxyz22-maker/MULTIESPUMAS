@@ -4200,12 +4200,12 @@ function filaArqueo(){
   fila._dev=pestanaId(); fila._t=Date.now();
   return fila;
 }
-function guardarArqueo(){
+function guardarArqueo(sinPintar){
   saveArqueoMirror();
   var fila=filaArqueo();
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
-  renderCuadre();
+  if(!sinPintar) renderCuadre();
 }
 function cuadreArqueoTodo(){ return ARQUEO; }
 /* 🧮 EL CIERRE POR FORMA DE PAGO, CALCULADO UNA SOLA VEZ (§4fz). La pantalla, el texto de
@@ -4241,10 +4241,17 @@ function cuadreCierre(pagos){
 }
 function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
 function cuadreArqueo(forma){ var v=ARQUEO[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
+/* ⚠️ El repintado va DESPUÉS de que el foco llegue a donde iba (26/09). El `change` salta en el medio del
+   Tab: repintar ahí sacaba de la página el campo que iba a recibir el foco, y el foco quedaba en la nada —
+   lo que la contadora tipeaba en el extracto siguiente no entraba en ningún lado (con Enter, igual). El
+   número se guarda ya; `renderCuadre` le devuelve el foco al campo en que está (ver `_focoArq`). */
+var CUA_ARQ_T=null;
 function setCuadreArqueo(forma, valor){
   var k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
   if(t==='') delete ARQUEO[k]; else ARQUEO[k]=parseMonto(t);
-  guardarArqueo();
+  guardarArqueo(true);
+  if(CUA_ARQ_T) clearTimeout(CUA_ARQ_T);
+  CUA_ARQ_T=setTimeout(function(){ CUA_ARQ_T=null; renderCuadre(); }, 0);
 }
 function limpiarArqueo(){
   var pe=cuadrePeriodo(), pref=pe.modo+'|'+pe.val+'|', n=0;
@@ -4596,6 +4603,9 @@ function alertaDetHtml(det, k){
 }
 function renderCuadre(){
   var box=document.getElementById('cua-metrics'); if(!box) return;
+  // 26/09: el campo del arqueo en que se está tipeando (se le devuelve el foco al final, ver setCuadreArqueo).
+  var _ae=document.activeElement, _focoArq=(_ae && _ae.classList && _ae.classList.contains('cua-arqueo'))
+    ? { f:_ae.getAttribute('data-forma'), v:_ae.value, s:_ae.selectionStart, e:_ae.selectionEnd } : null;
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos);
   var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
   var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
@@ -4709,7 +4719,7 @@ function renderCuadre(){
              `parseMonto` la viera: el extracto «1.500,50» se guardaba como Bs 1,50 y «1500,50» como
              Bs 150.050, y el cuadre decía «falta Bs 1.499». Con texto, `parseMonto` lee las dos formas. */
           '<td style="text-align:right">'+(arqueoOn
-             ? ('<input class="cua-arqueo" type="text" inputmode="decimal" autocomplete="off" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
+             ? ('<input class="cua-arqueo" type="text" inputmode="decimal" autocomplete="off" data-forma="'+esc(f.forma)+'" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
              : '<span style="color:var(--muted);font-size:.78rem">—</span>')+'</td>'+
           '<td style="text-align:right">'+(dif==null?'<span style="color:var(--muted)">—</span>'
              :(dif===0?'<span class="cua-dif-ok">✅ cuadra</span>'
@@ -4819,6 +4829,12 @@ function renderCuadre(){
 
   // ---- y debajo, un renglón por RETIRO de efectivo: la plata que SALIÓ
   renderCuadreDetRetiros();
+  /* 26/09: el foco vuelve al campo del arqueo en que estaba, con lo que tenía escrito. Al final: con algo
+     buscado, el buscador del detalle (arriba) se lo llevaba. */
+  if(_focoArq){
+    var _ni=[].filter.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'), function(x){ return x.getAttribute('data-forma')===_focoArq.f; })[0];
+    if(_ni){ if(_ni.value!==_focoArq.v) _ni.value=_focoArq.v; try{ _ni.focus(); _ni.setSelectionRange(_focoArq.s, _focoArq.e); }catch(e){} }
+  }
 }
 /* 🔎 Qué se busca en cada renglón del detalle: todo lo que la persona ve en la fila.
    El monto se compara con y sin formato ("5500", "5.500,00" y "5500,00" encuentran lo
