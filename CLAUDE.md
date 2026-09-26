@@ -657,6 +657,7 @@ implementado.
 
 ## 🚚 Banzer, depósito del que salen camiones (§4ge, 26/09)
 El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+**Publicado el 26/09 a las 17:15 de Bolivia** (`main` = `39b833c`), sin tocar el servidor (sigue 2026-09-26-a).
 - **Quién es de salida lo dice UNA función, `almEsSalida(nm)`**: el rol elegido al subir el Excel
   (`STOCK.al`: `'sale'` o `'trae'`) manda; con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM/Industrias
   Moreno y el de fábrica nunca son de salida. `RECOGER_EXTRA` quedó vacío.
@@ -677,6 +678,12 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Al publicar, todos F5**: una página vieja lee «✔ Banzer» como «✔ acá» y al corregir el pedido pierde el lugar.
 - `tests/test_banzer_salida.js` (77; 62 rojos contra `e2e613a`). `test_banzer.js` arranca con la configuración de antes
   (`ALM_SALIDA=[]`, `RECOGER_EXTRA=['Banzer']`) para seguir cuidando varios almacenes de ir a buscar.
+- **Revisión del 26/09 a la noche (§4gf)**: `normNombre`, `stockNorm` y `stockAlmLimpio` **recuerdan su resultado**
+  (memo con tope): tienen que seguir siendo PURAS (mismo texto → mismo resultado, sin leer nada de afuera). Con eso la
+  lista de carga de «Todos» con 900 pedidos bajó de ~1 s a 0,16 s. `leerStock` repone `g[nm].inc` desde el historial
+  (`STOCK.h`, mismo almacén/día/hora) cuando una página vieja lo borró. `tests/test_rev_banzer.js` (25).
+- **Orden dentro de los almacenes, confirmado por el dueño (26/09, 19:35)**: «el que la cubre entera» SIGUE antes que
+  Banzer (0 acá, 3 Banzer, 5 IM y un pedido de 4 → los 4 de IM). No cambiarlo sin que lo pida.
 - **Decidido por el dueño (26/09, 17:14)** — no cambiar sin él: una «📥 Banzer» de fecha pasada se da por salida (como
   cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
   cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
