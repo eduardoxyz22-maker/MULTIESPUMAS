@@ -7129,15 +7129,21 @@ function submitPedido(){
       var fcb=document.getElementById('f-cobrado'); fcb.focus(); fcb.scrollIntoView({block:'center'});
       return;
     }
-    if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
-    if(faltaComprobanteForm()){
+    /* (26/09) Banco, comprobante y 2° método se piden SOLO si en el formulario hay un pago. El método
+       elegido (y el mixto) quedaban marcados aunque el bloque se escondiera —el «A cuenta» vuelto a 0—
+       y la venta no se podía guardar: «📎 Falta el comprobante» de un pago que no hay, o «Elegí a qué
+       banco» / «Poné primero el A CUENTA» de algo que ya no se ve. Sin pago no se guarda nada de eso
+       (`_metSuelto` y `_mixOn` ya lo miran). */
+    var _hayPago = segVal('f-pagado')==='SI' || _acu>0;
+    if(_hayPago && segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
+    if(_hayPago && faltaComprobanteForm()){
       // El gato en vez del toast: el aviso suelto se les pasaba de largo.
       memeComprobante(vendedor, segVal('f-metodo'));
       return;
     }
     /* 💳 El segundo método (§4ej): método, monto (mayor a 0 y menor al total), banco si
        es QR, imagen propia, y que no sea el mismo método que el primero. */
-    if(MIXTO){
+    if(MIXTO && _hayPago){
       var _mx2=segVal('f-metodo2'), _mm2=mixtoMonto2(), _mbase=mixtoTotalBase();
       var _irA=function(id){ var e=document.getElementById(id); if(e){ e.classList.add('seg-err'); setTimeout(function(){ e.classList.remove('seg-err'); },1600); e.scrollIntoView({block:'center'}); } };
       if(!_mx2){ toast('Elegí con qué pagó la OTRA parte (segundo método), o quitá el segundo método','err'); _irA('wrap-mixto'); return; }
@@ -8083,6 +8089,14 @@ function pintarDocTipo(limpiar){
     ['f-acuenta','f-saldo','f-cobrado','f-envio'].forEach(function(id){
       var e=document.getElementById(id); if(e) e.value=(id==='f-acuenta'||id==='f-saldo')?'0':'';
     });
+    /* (26/09) …y el método, el 2° método y las imágenes del pago, que viven en el mismo bloque
+       escondido: con una imagen quedaba «Subiste la imagen pero no anotaste ningún pago… quitala»,
+       con el botón para quitarla escondido, y la ATC/RPT no se podía guardar. Las recién subidas
+       van a la papelera como al salir del formulario (nunca una que algún pedido nombra, §4fy).
+       ⚠️ Las que el pedido en edición YA tenía se quedan: sacarlas borraría un pago registrado. */
+    segSet('f-metodo',''); segSet('f-banco','');
+    if(imagenesSinPegar().length) descartarImagenesSinPegar();   // antes que toggleMixto, que suelta FORM_COMPS2
+    if(MIXTO) toggleMixto(false);
     updateMetodoVisibility();
   }
   pintarMotivoAtc(limpiar);

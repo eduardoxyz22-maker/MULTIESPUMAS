@@ -10,9 +10,12 @@
      3. La cantidad tiene que ser un número entero de 1 para arriba: 0 no se vuelve 1, 2,5 no se
         vuelve 2 y −2 no se guarda.
      4. Editar un pedido con montos con decimales no los multiplica por mil.
+     5. Un método elegido y después sin pago (el «A cuenta» vuelto a 0, o la venta pasada a 🎧 ATC /
+        🏪 RPT) ya no traba el guardado con avisos de un bloque escondido.
 
    ⚠️ Los montos se TIPEAN con el teclado (`page.keyboard.type`), como la vendedora: un campo
-   numérico deja «1.500» tal cual y `parseFloat` lo leía 1,5.
+   numérico deja «1.500» tal cual y `parseFloat` lo leía 1,5. La COMA el Chromium de escritorio ni
+   la escribe («1.500,50» queda «1.50050», 1,50): eso no tiene arreglo desde el valor y no se prueba.
    ⚠️ El reloj de la página está CLAVADO en el miércoles 16/09/2026 a las 10 de Bolivia: las
    entregas van al viernes 18/09 y no se pudren con el calendario.
 
@@ -91,7 +94,7 @@ function INIT(){
   window.fetch = function(url, o){
     var body = (o && o.body) || '{}';
     var P = {}; try { P = JSON.parse(body); } catch(e) {}
-    window.__ctl.log.push({ act: P.action || 'save', id: String((P.pedido && P.pedido.id) || P.id || '') });
+    window.__ctl.log.push({ act: P.action || 'save', id: String((P.pedido && P.pedido.id) || P.id || P.fotoId || '') });
     return window.__gs(body).then(function(t){ return { ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(t)); }, text:function(){ return Promise.resolve(t); } }; });
   };
 }
@@ -299,6 +302,48 @@ function INIT(){
       if (id==='d2') chk('⚠️ d2 · un A cuenta viejo con tres decimales (1500.125) NO pasa a 1.500.125', f.acuenta>1500 && f.acuenta<1501 && f.observaciones==='solo la observación', { acuenta:f.acuenta, t, dialogos:A.__dialogos });
       if (id==='d3') chk('d3 · el flete de 50,5 queda en 50,5', /\^50\.5\b/.test(f.metodoPago) && f.observaciones==='solo la observación' && !t.length, { mp:f.metodoPago, t });
     }
+  });
+
+  // ══ 5. EMPEZÓ CON UN PAGO Y SE ARREPINTIÓ ═══════════════════════════════════════════════
+  /* El método elegido (y el pago mixto) quedaban marcados aunque el bloque ya no se viera: sin
+     adelanto, o después de pasar la venta a ATC/RPT, el panel pedía la foto del recibo de un pago
+     que no existe, o el «A cuenta» de un segundo método escondido, y la venta no se podía guardar. */
+  await esc('5. Método elegido y después sin pago (o pasada a ATC/RPT)', async () => {
+    const S = servidor();
+    const A = await abrir(S);
+    const motivoAtc = () => A.evaluate(() => { var s=document.getElementById('f-atc-motivo'); for(var i=0;i<s.options.length;i++){ if(s.options[i].value){ s.value=s.options[i].value; break; } } });
+    // 5a · adelanto con método, y después el adelanto a 0: la venta queda toda por cobrar
+    await empezar(A, 'SE ARREPINTIO DEL ADELANTO', { nota:'2101' });
+    await tipear(A, '#f-acuenta', '500'); await elegir(A, 'f-metodo', 'Efectivo'); await tipear(A, '#f-saldo', '2500');
+    await tipear(A, '#f-acuenta', '0'); await tipear(A, '#f-saldo', '3000');
+    let g = await guardar(A);
+    let f = S.porCliente('SE ARREPINTIO DEL ADELANTO');
+    chk('⚠️ sin adelanto, la venta se guarda toda por cobrar (antes: «📎 Falta el comprobante» de un pago que no hay)', f && f.acuenta===0 && f.saldo===3000 && f.metodoPago==='', f ? { mp:f.metodoPago } : g);
+    // 5b · venta con adelanto en efectivo que resulta ser una ATC
+    await empezar(A, 'ERA UNA ATC', { nota:'2102' });
+    await tipear(A, '#f-acuenta', '500'); await elegir(A, 'f-metodo', 'Efectivo'); await tipear(A, '#f-saldo', '2500');
+    await elegir(A, 'f-doc-tipo', 'ATC'); await motivoAtc();
+    g = await guardar(A);
+    f = S.porCliente('ERA UNA ATC');
+    chk('⚠️ pasada a 🎧 ATC se guarda (antes pedía la foto del recibo con el cobro escondido)', f && /^ATC /.test(f.oc) && f.metodoPago==='' && f.acuenta===0, f ? { oc:f.oc, mp:f.metodoPago } : g);
+    // 5c · venta con pago mixto que resulta ser una RPT
+    await empezar(A, 'X', { nota:'2103' });
+    await tipear(A, '#f-acuenta', '2000'); await elegir(A, 'f-metodo', 'Efectivo'); await tipear(A, '#f-saldo', '1000');
+    await A.evaluate(() => { FORM_COMPS=['IMGMX1']; toggleMixto(true); });
+    await elegir(A, 'f-metodo2', 'Tarjeta'); await tipear(A, '#f-monto2', '500');
+    await A.evaluate(() => { FORM_COMPS2=['IMGMX2']; });
+    await elegir(A, 'f-doc-tipo', 'RPT');
+    const borradas = await A.evaluate(async () => { await esperar(100); return window.__ctl.log.filter(function(x){ return x.act==='borrarFoto'; }).map(function(x){ return x.id; }).sort(); });
+    await A.evaluate(() => { document.getElementById('f-rpt-suc').value='Central'; sucursalElegida(); });
+    g = await guardar(A);
+    f = S.porCliente('Central');
+    chk('⚠️ pasada a 🏪 RPT se guarda (antes: «Poné primero el A CUENTA» del segundo método, escondido)', f && /^RPT /.test(f.oc) && f.metodoPago==='' && f.acuenta===0, f ? { oc:f.oc, mp:f.metodoPago } : g);
+    chk('…y las dos imágenes recién subidas de ese pago van a la papelera, como al salir del formulario', borradas.join(',')==='IMGMX1,IMGMX2', borradas);
+    // 5d · y el camino normal sigue pidiendo el comprobante
+    await empezar(A, 'ADELANTO SIN FOTO', { nota:'2104' });
+    await tipear(A, '#f-acuenta', '500'); await elegir(A, 'f-metodo', 'Efectivo'); await tipear(A, '#f-saldo', '2500');
+    g = await guardar(A);
+    chk('con adelanto de verdad, sin foto del recibo, NO se guarda (sigue el gato)', !S.porCliente('ADELANTO SIN FOTO') && g.saves===0 && /Falta el comprobante/.test(g.modal), g);
   });
 
   chk('sin errores JS', errores.length===0, errores);
