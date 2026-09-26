@@ -1613,7 +1613,7 @@ function atcChip(p){
   if(!esATC(p&&p.oc)) return '';
   var com=atcComodinAviso(p);   // (26/09) el comodín, parpadeando, en la ficha del chofer y la carga
   com=com?(' <span class="badge b-blue b-comodin" title="Si no se recupera al devolverle el suyo, se pierde un colchón">'+esc(com)+'</span>'):'';
-  if(atcEnDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>'+com;
+  if(atcViajeDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>'+com;   // (26/09) también con el ✅
   return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>'+com;
 }
 /* La clase del resaltado, para pegarla donde haga falta. */
@@ -1753,6 +1753,10 @@ function atcQueSeHizo(p){ var a=atcDe(p); return (a&&a.hizo)||''; }
 function atcDevProg(p){ var a=atcDe(p); return (a && a.pdev && !a.ent) ? a.pdev : ''; }
 function atcDevTurno(p){ var a=atcDe(p); return (a&&a.pturno)||''; }
 function atcEnDevolucion(p){ return !!(atcDevProg(p) && p && p.fecha===atcDevProg(p)); }
+/* (26/09) ¿Este viaje es —o fue— el de la devolución? Como `atcEnDevolucion`, pero también con el ✅
+   puesto: `atcDevProg` da vacío apenas hay `ent`, y el chip de la devolución recién entregada volvía a
+   «🎧 ATC» (el de un recojo). Mira el día programado en crudo, como `atcAlMarcarEntregado`. */
+function atcViajeDevolucion(p){ var a=atcDe(p); return !!(a && a.pdev && p && p.fecha===a.pdev); }
 /* (26/09) `rec` vale solo mientras la ATC vive en su devolución (`pdev`): «↺ Quitar la devolución» lo
    dejaba puesto, y si después se movía el recojo con 📅 la matriz seguía en el día viejo y lo daba por
    recogido. Una fila que ya quedó así se lee por su fecha. */
@@ -13717,7 +13721,7 @@ function atcLineaWa(p){
   if(!esATC(p&&p.oc)) return '';
   var L=['🎧 *Atención al cliente* — '+(atcMotivo(p)||'sin motivo anotado')+(atcDetalle(p)?(': '+atcDetalle(p)):'')];
   var pz=atcRecibido(p);
-  if(pz.length && !atcEnDevolucion(p)) L.push('📦 Se le recoge: '+pz.join(' · ')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
+  if(pz.length && !atcViajeDevolucion(p)) L.push('📦 Se le recoge: '+pz.join(' · ')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
   if(atcComodinAviso(p)) L.push(atcComodinAviso(p));
   return L.join('\n');
 }

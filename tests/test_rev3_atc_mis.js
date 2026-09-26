@@ -149,6 +149,48 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 2. El chip de la devolución sigue diciendo «devolución» con el ✅ puesto ═══════════
+  /* Con el ✅ de la devolución el chip volvía de «🔁 ATC · devolución» a «🎧 ATC» (el de un RECOJO),
+     porque `atcDevProg` da vacío apenas hay `ent`; y el WhatsApp del pedido decía «📦 Se le recoge…»
+     de un producto que se le acababa de devolver. */
+  console.log('\n── 2. ✅ La devolución entregada sigue siendo la devolución (chip y WhatsApp) ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[]; var out={};
+      var piezas={r_col:true, r_pat:true};
+      // la devolución es HOY a la tarde; el chofer la entrega
+      _atc('d2','2026-09-21','PM', true, piezas);
+      _programar('d2','2026-09-23','PM');
+      out.antes=_ver('d2');
+      choEntregado('d2');
+      out.entregada=_ver('d2');
+      showView('chofer'); llenarSelectChoferes(); document.getElementById('cho-nombre').value='Luis Pierre'; setChoFiltro('hoy');
+      await new Promise(function(r){ setTimeout(r,150); });
+      var card=[].filter.call(document.querySelectorAll('#cho-lista .cho-card'), function(c){ return c.textContent.indexOf('CLIENTE d2')>=0; })[0];
+      out.tarjeta=card?card.textContent.replace(/\s+/g,' '):'(no está)';
+      out.wa=pedidoText(findById('d2'));
+      // …y si la destildan (confirmando), vuelve a ser la devolución pendiente, como siempre
+      choEntregado('d2');
+      out.destildada=_ver('d2');
+      // control: un RECOJO tildado sigue siendo «🎧 ATC» y su WhatsApp sí dice qué se le recoge
+      _atc('r2','2026-09-23','AM', false, piezas);
+      choEntregado('r2');
+      out.recojo=_ver('r2'); out.waRecojo=pedidoText(findById('r2'));
+      return out;
+    }, BASE);
+    chk('punto de partida: la devolución de hoy dice «🔁 ATC · devolución»', /devolución/.test(r.antes.chip) && r.antes.entregado===false, J(r.antes));
+    chk('⚠️ entregada (✅), el chip SIGUE diciendo «devolución» (antes volvía a «🎧 ATC», el de un recojo)',
+        r.entregada.estado==='cerrada' && r.entregada.entregado===true && /devolución/.test(r.entregada.chip), J(r.entregada));
+    chk('⚠️ …también en la ficha del chofer, junto a «Entregado»', /ATC · devolución/.test(r.tarjeta) && /Entregado/.test(r.tarjeta), r.tarjeta.slice(0,200));
+    chk('⚠️ …y el WhatsApp del pedido no dice «Se le recoge» de lo que se le acaba de devolver', !/Se le recoge/.test(r.wa) && /Atención al cliente/.test(r.wa), r.wa);
+    chk('destildada, vuelve a ser la devolución pendiente (sin cambios)', r.destildada.estado!=='cerrada' && r.destildada.entregado===false && /devolución/.test(r.destildada.chip), J(r.destildada));
+    chk('control: un RECOJO tildado sigue siendo «🎧 ATC», sin «devolución»', r.recojo.entregado===true && /ATC/.test(r.recojo.chip) && !/devolución/.test(r.recojo.chip), J(r.recojo));
+    chk('control: …y su WhatsApp sí dice qué se le recoge', /Se le recoge: Colchón · Patas/.test(r.waRecojo), r.waRecojo);
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
