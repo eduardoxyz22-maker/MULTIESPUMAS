@@ -88,7 +88,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **con el servidor `2026-09-20-a` todavía implementado**: la 23-b la pega, prueba e implementa el dueño desde la PC (RESPUESTA §7 pasos 0-2 y 5-7; hay un recordatorio agendado para el 26/09 a las 07:45). Hasta entonces la protección de stock/arqueo entre dos equipos NO rige (igual que antes) y el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **con el servidor `2026-09-20-a` todavía implementado**: la 23-b la pega, prueba e implementa el dueño desde la PC (RESPUESTA §7 pasos 0-2 y 5-7; el recordatorio del 26/09 ya se disparó). Hasta entonces la protección de stock/arqueo entre dos equipos NO rige (igual que antes) y el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -609,6 +609,32 @@ Eduardo. `tests/test_chofer_efectivo.js`.
 - **Stock**: «Conté a mano» parte de lo calculado para hoy y conserva `c.cod`; una recepción `nr` (el Excel del
   origen ya no la tiene) suma acá sin restar del origen.
 - Pruebas: `tests/test_rev2_*.js` (8), `test_montos_texto.js`, `test_chofer_sin_senal.js`.
+
+## 🔎 La tercera vuelta del 26/09 (§4gc): lo que hay que respetar
+Publicada el 26/09 a las 10:11 de Bolivia (`main` = `a8e3c5e`), junto con §4gb, con el servidor 20-a todavía
+implementado.
+- **`parseMonto` ignora los separadores de las puntas** («Bs. 1.500.-» = 1.500; antes 0,10) y, con separadores
+  repetidos, toma el último como decimal. ⚠️ «.50» vale 50. Un campo de plata de texto deja entrar lo que se pega
+  de WhatsApp: cualquier cambio a `parseMonto` se prueba con esos textos (`test_rev3_plata` §1).
+- **`rechazoResuelto(id, t0, que)`**: un reintento que volvió a poner algo (el ✅, una foto) saca SOLO eso del
+  rechazo; lo demás que se perdió se sigue diciendo. Nunca borrar el rechazo entero.
+- **La recepción `nr` deja una marca en `g[de].rs` con 0 unidades (`nr:1`)**: es lo que frena a una página vieja
+  que no conoce `nr`. No sacarla.
+- **Las filas que se reescriben ENTERAS** (`__dias_cerrados__`, `__carga_chk__`) van por `REESCRITAS`:
+  - se relee la planilla y se aplica solo lo tocado acá (`CIERRES_CAMBIOS`/`CARGA_CAMBIOS`);
+  - en la cola llevan `_cambios`, que no viaja a la planilla;
+  - `flushPending` las rearma con `mandarReescritaDeCola`, y sin lectura NO se mandan;
+  - una fila nueva de ese tipo va ahí, no por `queuePending` a secas.
+- **ATC**: `rec` vale solo mientras hay `pdev`, y «Quitar la devolución» repone `rturno`. `atcViajeDevolucion`
+  (con el ✅ puesto) es para MOSTRAR; lo que mueve la devolución sigue con `atcEnDevolucion`.
+- **«Corregir precios y montos» recuerda lo tipeado** (`ctaMontosRecordar`, igual que `ctaEditRecordar`);
+  cancelar «¿borrar el pago?» repone «A cuenta». **`tsFmt` va en hora de Bolivia.**
+- **Cuadre**: `setCuadreArqueo` guarda enseguida y repinta un instante DESPUÉS. Repintar dentro del `change` le
+  saca el foco al campo siguiente.
+- **Stock**: `stockEntradaVale` manda por hora cuando hay hora de los dos lados, y la entrada que sale de una
+  recepción lleva su `ts`.
+- La hoja de ruta dice el flete pactado (`cobroRutaTxt` → `f`) con las palabras de la tarjeta del chofer.
+- Pruebas: `tests/test_rev3_*.js` (6) y `test_noborra` (el cancelar).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

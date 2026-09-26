@@ -7445,6 +7445,132 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gc. 26/09: la tercera vuelta — lo que rompieron los arreglos, y los pendientes sin decisión del dueño (2026-09-26)
+
+Pedido del dueño (26/09, 07:45, con §4gb terminado y sin publicar): *«Quedan pendientes subidas las correcciones
+del servidor. Pero ¿y lo demás? No deberá haber más errores»*. Seis agentes desde las 08:17:
+- dos buscaron **regresiones** de los 37 arreglos de §4gb: uno en la plata y otro en entregas, ATC,
+  Administración, Mis pedidos y Stock;
+- cuatro arreglaron lo que §4gb dejó **reportado** y no espera al dueño: Administración + hoja de ruta, ATC +
+  Mis pedidos, Contabilidad + Cuadre, y Stock.
+
+El dueño eligió publicar todo junto, con un solo F5. Se publicó el 26/09 a las **10:11 de Bolivia**: `main` =
+`a8e3c5e`, merge de `8de15f9`, con el servidor `2026-09-20-a` todavía implementado. Batería: **95 suites, 3.454
+bien · 0 mal**. Las pruebas nuevas son `tests/test_rev3_{plata,entregas,atc_mis,admin,conta,stock}.js`, y cada
+una falla contra `3da79ab`.
+
+### Regresiones que habían metido los arreglos de §4gb (arregladas)
+- **ALTA — «Bs. 1.500.-» pegado de WhatsApp se guardaba como Bs 0,10** (`test_rev3_plata` §1).
+  - Qué pasaba: con los campos de plata como texto (§4gb), `parseMonto` tomaba el punto de «Bs.» y el «.-» como
+    parte del número. «1.500 Bs.» valía 1,50 y «Bs. 1500», 0,15, sin aviso. Con `type=number` ese texto dejaba
+    el campo vacío y frenaba.
+  - Arreglo: `parseMonto` ignora los separadores de las puntas. Con separadores repetidos, el último es el de
+    los centavos: «1.500.50» y «1,500,50» valen 1.500,50.
+  - ⚠️ «.50» ahora vale 50. Nadie anota medio boliviano así; «0,50» sigue valiendo 0,5.
+- **MEDIA — el ✅ reintentado borraba el aviso del cobro perdido** (`test_rev3_entregas` §1-2).
+  - Qué pasaba: `03ecb0b` borraba el rechazo ENTERO que había anotado `3f88ede`, también «💵 el cobro: volvé a
+    anotarlo».
+  - Arreglo: `rechazoResuelto(id, t0, que)` saca solo lo que el reintento volvió a poner (el ✅ o esa foto).
+    Además, la foto que entra al segundo intento ya no pide «volvé a subirla».
+- **MEDIA, solo en la transición — la recepción `nr` con la página publicada** (`test_rev3_entregas` §3, que
+  monta `394f74c` desde git).
+  - Qué pasaba: la página vieja no conoce `nr`. La restaba con piso 0 y anotaba las unidades enteras en `rs`;
+    al guardar, la nueva se las devolvía y Moreno quedaba con colchones fantasma.
+  - Arreglo: la `nr` va en `g[de].rs` como marca de 0 unidades (`nr:1`). ⚠️ **No sacar esa marca**: es lo que
+    frena a una página vieja.
+- **MEDIA — con «A cuenta» vuelto a 0 y la foto ya subida, no se podía guardar** (`test_rev3_plata` §3).
+  - Qué pasaba: el freno pedía «quitá la imagen» con la imagen escondida.
+  - Arreglo: el freno muestra la tira de imágenes con su ✕ (`renderCompForm(true)`).
+- **MEDIA — cancelar «¿borrar el pago?» dejaba el 0 en «A cuenta»** (mío, `test_noborra`, 4 rojos contra `13bd857`).
+  - Qué pasaba: `test_noborra` salió 32/3 en la batería del conjunto. El aviso dice «cancelá y tocá únicamente el
+    precio», pero el campo seguía con el 0, y desde `ctaMontosRecordar` (abajo) lo tipeado sobrevivía al
+    repintado: guardar el precio volvía a preguntar, y con «Aceptar» se borraba el pago.
+  - Arreglo: cancelar repone lo guardado (`data-def`) y lo dice.
+
+### Pendientes de §4gb, arreglados
+**Hoja de ruta, carga y Administración** (`test_rev3_admin`, 48)
+- **Hoja de ruta con el flete pactado**:
+  - `cobroRutaTxt` devuelve `f`, con las palabras de la tarjeta del chofer;
+  - la venta pagada con flete dice «✅ LA VENTA YA ESTÁ PAGADA», y la cabecera y el WhatsApp suman el flete aparte;
+  - dos agentes lo hicieron: quedó este y se revirtió el otro (`1c35845`);
+  - ⚠️ «Entregado» y el Parte del día tampoco lo nombran (abajo).
+- **Tildes de la Lista de carga, y cierres o tildes hechos sin señal** — el mismo mecanismo que Cerrar día (§4gb):
+  - `CARGA_CAMBIOS` + relectura con tope de 15 s;
+  - `REESCRITAS` define cómo se rearman las dos filas que se reescriben enteras (`__dias_cerrados__` y
+    `__carga_chk__`);
+  - a la cola van con `_cambios` adentro, que no viaja a la planilla, y `flushPending` las rearma con la planilla
+    del momento (`mandarReescritaDeCola`);
+  - sin lectura no se mandan: quedan para el próximo intento;
+  - las demás filas de la cola no cambian, y ⚠️ **nunca `setPending(remaining)`** (§4ga);
+  - una fila de cierre o de carga de un panel viejo (sin `_cambios`) se sigue mandando tal cual: solo pasa en la
+    transición.
+- Los chips 🌅 AM / 🌆 PM cuentan como el cupo: `normTurno`, y lo que no tiene fecha no entra.
+- «Todos» de carga y ruta ya no muestra las ventas de tienda (`esVentaTienda`).
+- El 💰✓ pregunta, con nombre y monto, antes de deshacer un cobro que recibió el chofer (`>Nombre`). Lo que se
+  deshace no cambia (`cobroDeLaPuerta`).
+
+**ATC y Mis pedidos** (`test_rev3_atc_mis`, 38)
+- «↺ Quitar la devolución» vuelve al recojo con su turno y borra `rec`:
+  - `rturno` va dentro del JSON de la ATC;
+  - si ese turno está lleno, va con `forzar` (el recojo ya se hizo, como el día pasado o cerrado de §4ew);
+  - ⚠️ `rec` vale solo mientras hay `pdev` (`atcRecogida`/`atcFueRecogida`).
+- `atcViajeDevolucion(p)` mira `pdev===p.fecha` en crudo: el chip y el WhatsApp de una devolución YA entregada
+  siguen diciendo «🔁 ATC · devolución». Los caminos que MUEVEN la devolución siguen con `atcEnDevolucion`.
+- Un borrador de Kommo completado desde Administración vuelve a Administración.
+- `autoAbrirAvisos` usa `normNombre`: «Chávez» y «Chavez» son la misma clave, y sin tildes es la de antes.
+- `enColaLocal(id)`: la ficha dice «⏳ sin enviar» y la ventana, «no lo pases al grupo todavía».
+
+**Contabilidad y Cuadre** (`test_rev3_conta`, 42)
+- «Corregir precios y montos» recuerda lo tipeado (`ctaMontosRecordar`): solo lo que difiere de `data-def`. Si
+  abajo cambió lo guardado, queda lo guardado y sale un aviso ámbar.
+- `tsFmt` va en hora de Bolivia (ts − 4 h, como `isoDeTsBolivia`). Lo ven «Ingresado», los Excel, la ficha de
+  Administración y el historial del stock.
+- «Anotar el monto» frena el signo menos.
+- El pago en curso de un flete vuelve como flete (`CTA_PAGO.tipo`).
+- Cuadre:
+  - fila TOTAL del efectivo en el Excel;
+  - `cuadrePagos` deja afuera los pagos de monto 0, así que la «PAGADA sin monto» ya no sale con Bs 0 en «Todo»;
+  - `cuadreAlertas` ya no junta dos pagos sin fecha iguales;
+  - con Tab entre campos del arqueo, el foco ya no se pierde: se guarda enseguida y se repinta un instante
+    después, y `renderCuadre` devuelve el foco. ⚠️ No volver a repintar dentro del `change`.
+
+**Stock** (`test_rev3_stock`, 36)
+- `stockEntradaVale` corta por hora cuando hay hora de los dos lados.
+  - Qué pasaba: con el Excel de la tarde que «ya incluye las entregas» (`c.inc`), una llegada anotada DESPUÉS de
+    subirlo no sumaba y `filaStock` la podaba.
+  - La entrada que sale de una recepción lleva la hora de esa recepción.
+- Con «solo las líneas sin marcar» destildada, una línea 📥 toma primero lo pendiente de su recogida programada
+  (`recogidasPor`). Con la casilla marcada no cambia nada.
+- Los «✗ no hay» de días pasados van a su grupo del detalle. La cuenta (`comp`) no cambia.
+- «🏭 Pedí a fábrica» y «📥 Llegó» tienen buscador sobre la tabla y el catálogo entero (sin lo de tienda; para
+  fabricar, sin los descontinuados). Antes, «🚨 PEDIR YA» desde el renglón 61 en adelante abría otro producto.
+
+### Quedan (sin tocar)
+**Confirmados, de bajo impacto:**
+- Mover con 📅, con el turno o con ✏️ una devolución YA entregada deja `pdev` en el día viejo. Arreglo posible:
+  `atcViajeDevolucion` en el `antes` de `atcSeguirViaje`.
+- `choRechazosHtml` no mira qué chofer está elegido: en un celular compartido, uno ve lo perdido del otro.
+- «Entregado» y el Parte del día no nombran el flete pactado sin cobrar.
+- `cobrarFlete`, desde Mis pedidos, reemplaza el pago en curso sin guardarlo por venta.
+- Aceptan un monto negativo como positivo:
+  - `choCobrarMetodo` («-1500»);
+  - el retiro y el arqueo («-500»);
+  - `montoNegativo` no ve «Bs. -500»;
+  - un precio negativo en «Corregir precios y montos» se borra en silencio.
+- `textoCargaChk` no borra las tildes viejas de ventas de tienda.
+- La revisión del stock con la casilla marcada: el botón «🚚 Programar la recogida» de la misma revisión deja la
+  línea en ✗ al volver.
+- La nota `noHayViejo` de la tabla no sale nunca (`test_stock` la fija en 0).
+
+**Plausibles:**
+- Cerrar día con `busy`.
+- El aviso rojo de más con la foto.
+- Una llegada anotada después de subir el Excel pero que entró antes se cuenta dos veces (la regla por hora de
+  §4fz-b).
+- «↺ Borrar lo anotado» del arqueo puede pedir dos clics.
+
+**Esperan al dueño:** RESPUESTA §13.4 y §13.5.
+
 ## 4gb. 26/09: un agente por PESTAÑA — 35 arreglos, la coma de la plata y el chofer sin señal (2026-09-26)
 
 Pedido del dueño (25/09 a la noche, con la página nueva ya publicada): *«¿No hay errores? ¿Después de estas
