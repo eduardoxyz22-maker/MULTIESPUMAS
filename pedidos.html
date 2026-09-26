@@ -2304,6 +2304,24 @@ function rechazoPerdido(rec, srv){
     return (out.entregado || out.cobros || out.fotos) ? out : null;
   }catch(e){ return null; }
 }
+/* (26/09) Lo que un reintento SÍ volvió a poner (el ✅ de `choEntregado`, la foto de `onFotoElegida`)
+   sale del rechazo del primer choque; lo demás que se perdió se sigue diciendo. Antes el ✅ borraba el
+   rechazo ENTERO —también «💵 el cobro: volvé a anotarlo» del efectivo que esperaba en la cola— y la
+   foto no sacaba nada: el cartel pedía «volvé a subirla» de una foto que ya estaba. Sin nada más, se va. */
+function rechazoResuelto(id, t0, que){
+  try{
+    var a=rechazosLocales().filter(function(x){
+      if(!x || x.id!==String(id) || x.error!=='conflicto' || !(x.ts>=t0)) return true;
+      var pe=x.perdio; if(!pe) return false;
+      if(que==='entregado') delete pe.entregado;
+      if(que==='foto' && pe.fotos) pe.fotos--;
+      if(!pe.fotos) delete pe.fotos;
+      if(!(pe.cobros && pe.cobros.length)) delete pe.cobros;
+      return !!(pe.entregado || pe.cobros || pe.fotos);
+    });
+    localStorage.setItem(LS_RECHAZOS, JSON.stringify(a));
+  }catch(e){}
+}
 function rechazoRecordar(rec, res){
   try{
     var a=rechazosLocales(), _r={ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 };
@@ -11894,12 +11912,15 @@ function onFotoElegida(ev){
        ✓» (salía antes de que el servidor contestara). Ahora se pega sobre la copia más nueva
        que haya en STATE, se reintenta UNA vez sobre la fila del servidor si hay conflicto, y
        el «✓» sale recién cuando el servidor dijo que sí. */
+    var t0=Date.now();
     var pegar=function(intento){
       var q=findById(p.id)||p;
       if(fotosDe(q).indexOf(res.fotoId)<0) q.fotos=fotosDe(q).concat([res.fotoId]);
       renderChoferSiActivo(); renderMis();
       return persistPedido(q).then(function(r){
         if(r&&r.ok){
+          // (26/09) entró al segundo intento: que el cartel del chofer no le pida volver a subirla
+          if(intento>0){ rechazoResuelto(q.id, t0, 'foto'); renderColaAviso(); renderChoferSiActivo(); }
           if(document.getElementById('modal').classList.contains('on')) reabrirFicha(q.id);
           toast('Foto guardada ✓','ok'); return;
         }
@@ -12123,7 +12144,7 @@ function choEntregado(id){
   };
   marcar(p, 0).then(function(r){
     if(!choco || !(r && r.ok)) return;
-    try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().filter(function(x){ return !(x.id===String(id) && x.error==='conflicto' && x.ts>=t0); }))); }catch(e){}
+    rechazoResuelto(id, t0, 'entregado');            // (26/09) sale el ✅, no el cobro que se perdió con el choque
     renderColaAviso(); renderChoferSiActivo();
     toast((quiere?'Entregado ✓':'Marcado como NO entregado')+' — otra persona había tocado el pedido; se guardó igual sobre lo nuevo','ok',6000);
   });
