@@ -259,7 +259,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
     si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
     `recogerLista()` arma un botón por almacén en la ficha — IM + los de `STOCK.g` + los de
-    `RECOGER_EXTRA` (hoy `Banzer`), sin repetir; `recogerCorto(x)` es el nombre para un
+    `RECOGER_EXTRA` (hoy vacío: Banzer pasó a `ALM_SALIDA`, §4ge), sin repetir; `recogerCorto(x)` es el nombre para un
     renglón («Moreno», o «IM 3 + BANZER 1») y `recogerLugaresTxt(p)` para el pedido entero.
     `stockAsignar` reparte por almacén (`imAlm`/`tomarIM`) y devuelve el desglose, no un
     nombre. ⚠️ Si `enOtros` trae unidades sin el desglose `otrosAlm`, se cuentan como IM: no
@@ -652,8 +652,33 @@ implementado.
 - **Existencias**: la hora sale del nombre (también con guiones) o del pie (`existHoraDePie`). Hay UN solo depósito
   de fábrica (`STOCK.c`): hacer «log» a otro almacén pregunta antes.
 - **Banzer es depósito de salida** (dueño, 26/09: «salen camiones de Banzer y de Productos Terminados; solo de
-  Moreno hay que ir a traer»; carga separada en dos bloques). En curso (§4gd). Mientras tanto se sube como «Otro».
+  Moreno hay que ir a traer»; carga separada en dos bloques). Hecho en §4ge (ver la sección siguiente).
 - Pruebas: `test_codex26.js`, `test_codex26_cierres.js`, `test_rev4_montos.js`, `test_rev4_atc_flete.js`, `test_servidor.js` §14.
+
+## 🚚 Banzer, depósito del que salen camiones (§4ge, 26/09)
+El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+- **Quién es de salida lo dice UNA función, `almEsSalida(nm)`**: el rol elegido al subir el Excel
+  (`STOCK.al`: `'sale'` o `'trae'`) manda; con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM/Industrias
+  Moreno y el de fábrica nunca son de salida. `RECOGER_EXTRA` quedó vacío.
+- **La marca**: «✔ hay en Banzer» = `chk:'ok'` + `chkDe` (el nombre del stock); partida, `chkDes` (lo de acá con
+  `de:''`). El TIPO de cada parte lo da el lugar, no la letra (`prodPartes`: `aca`/`sale`/`trae`). `prodHay(x)` = se
+  carga (acá o Banzer); `esRecoger(x)` = hay algo que ir a BUSCAR. ⚠️ Nunca volver a `x.chk==='im'` a secas para
+  decir «recoger», ni a `x.chk==='ok'` para decir «hay acá».
+- **Marcas viejas «📥 Banzer»**: se leen como ✔ Banzer sin reescribir la planilla, salvo que tengan una recogida de
+  Banzer anotada (`saleRecogidaViva`): esa sigue como recogida hasta cerrarla (si no, se descontaba dos veces).
+- **Cuentas**: lo entregado desde Banzer baja `STOCK.g[Banzer]` (`salSale`, misma regla de fecha que acá con su propio
+  `g[nm].inc`); lo disponible para cargar es **`stockHaySalir(o)` = acá + Banzer** (proyección, pedir, Qué producir,
+  plata parada). `deposito` sigue siendo solo acá; `enOtros`/«traer» solo lo de ir a buscar.
+- **Revisión automática**: orden del dueño intacto (acá → Banzer → IM, «cubre entera» primero); `tomarIM` con
+  `solo` (true = solo salida). `cambia` compara lugares con tipo (`partesMismosLugares`); la marca vieja → ✔ va
+  como `migra` y no cuenta como «contradice a una persona».
+- **Lista de carga**: «🏭 Cargar en fábrica» (claves de SIEMPRE) y «🏪 Cargar en Banzer» (clave `…|@Banzer`, 4° pedazo
+  de `cargaChkKey`), podadas por `textoCargaChk` como siempre. Chofer, ruta, WhatsApp y Excel: `prodSaleTxt`.
+- **Al publicar, todos F5**: una página vieja lee «✔ Banzer» como «✔ acá» y al corregir el pedido pierde el lugar.
+- `tests/test_banzer_salida.js` (77; 62 rojos contra `e2e613a`). `test_banzer.js` arranca con la configuración de antes
+  (`ALM_SALIDA=[]`, `RECOGER_EXTRA=['Banzer']`) para seguir cuidando varios almacenes de ir a buscar.
+- **Esperan al dueño**: una «📥 Banzer» de fecha pasada ahora se da por salida (como cualquier ✔); ya no se pueden
+  programar recogidas DESDE Banzer; el bloque de Banzer sale bajo el camión de cada pedido (no se asigna aparte).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

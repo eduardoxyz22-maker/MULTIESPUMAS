@@ -7445,6 +7445,42 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ge. 26/09: Banzer es un depósito del que salen camiones (2026-09-26)
+
+**El pedido del dueño.** *«Salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a
+traer»*. Respuestas:
+- a Banzer el camión va «depende del día»: a veces pasa el mismo, a veces sale otro;
+- la lista de carga va separada, «Cargar en fábrica» y «Cargar en Banzer»;
+- el orden del reparto no cambia: acá → Banzer → IM (21/09).
+
+**Qué estaba mal.** El panel trataba a Banzer como a Moreno. Mandaba a «📥 recoger de Banzer», descontaba de ACÁ lo que
+salía de Banzer, y Banzer no bajaba nunca: dos errores de cuenta a la vez.
+
+**Cómo se hizo.**
+- Un primer agente armó la capa de marcas y la prueba; lo cortó el reinicio de la sesión (15:35 UTC) y no se pudo
+  reanudar. Su trabajo quedó en el scratchpad (`banzer_parcial/`).
+- Un segundo agente siguió desde ahí. El límite de uso de la cuenta lo cortó a mitad de camino; se retomó a las 16:40
+  UTC, apenas se reinició.
+- Squash en la rama: `09691ad`. Las reglas que hay que respetar están en CLAUDE.md, «🚚 Banzer, depósito del que
+  salen camiones».
+
+**Pruebas.**
+- `tests/test_banzer_salida.js`: 77 comprobaciones, 62 fallan contra el panel publicado (`e2e613a`).
+- Dos pruebas viejas cambiadas a conciencia:
+  - `test_banzer.js` afirmaba Banzer como recogida. Arranca con la configuración de antes, porque cuida la mecánica de
+    varios almacenes de ir a buscar, que sigue existiendo.
+  - `test_rev_stock.js` §3 usa otro almacén de ir a buscar.
+- `test_rev3_stock` §4e destapó un caso: una «📥 Banzer» vieja sin Excel de Banzer vuelve a esperar la recogida en
+  camino. Se arregló en el panel, no en la prueba.
+
+**Esperan al dueño.**
+- Una «📥 Banzer» de fecha pasada ahora se da por salida, como cualquier ✔. Antes seguía comprometida.
+- Ya no se pueden programar recogidas DESDE Banzer. ¿Hace falta alguna vez traer de Banzer a fábrica?
+- El bloque «Cargar en Banzer» sale bajo el camión de cada pedido. Si otro camión va a Banzer, hoy no hay forma de
+  asignarle solo esa carga.
+
+**Al publicar, todos F5.** Una página vieja lee «✔ Banzer» como «✔ acá», y al corregir el pedido pierde el lugar.
+
 ## 4gd. 26/09: la revisión de Codex — cinco hallazgos, el sello de los días cerrados (.gs 2026-09-26-a) y Banzer (2026-09-26)
 
 **El servidor, desde la PC.** El dueño hizo el procedimiento de §7 sobre la 23-b:
