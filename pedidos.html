@@ -1753,10 +1753,13 @@ function atcQueSeHizo(p){ var a=atcDe(p); return (a&&a.hizo)||''; }
 function atcDevProg(p){ var a=atcDe(p); return (a && a.pdev && !a.ent) ? a.pdev : ''; }
 function atcDevTurno(p){ var a=atcDe(p); return (a&&a.pturno)||''; }
 function atcEnDevolucion(p){ return !!(atcDevProg(p) && p && p.fecha===atcDevProg(p)); }
-function atcRecogida(p){ var a=atcDe(p); return (a&&a.rec) || (p&&p.fecha) || ''; }
+/* (26/09) `rec` vale solo mientras la ATC vive en su devolución (`pdev`): «↺ Quitar la devolución» lo
+   dejaba puesto, y si después se movía el recojo con 📅 la matriz seguía en el día viejo y lo daba por
+   recogido. Una fila que ya quedó así se lee por su fecha. */
+function atcRecogida(p){ var a=atcDe(p); return (a&&a.pdev&&a.rec) || (p&&p.fecha) || ''; }
 function atcFueRecogida(p){
   var a=atcDe(p)||{};
-  if(a.rec) return true;                         // se programó la devolución: el recojo ya pasó
+  if(a.pdev && a.rec) return true;               // se programó la devolución: el recojo ya pasó
   var f=atcRecogida(p);
   return !!((f && f<=todayStr()) || (p&&p.entregado));
 }
@@ -10825,7 +10828,7 @@ function guardarProgramarDevAtc(id){
      lo tildó puede que todavía no haya ido: programar muda la ATC al día de la devolución y el
      viaje de HOY a buscarlo sale de su lista y de la carga. Se pregunta antes. */
   var _a0=atcDe(p)||{};
-  if(!_a0.rec && !p.entregado && (p.fecha||'')>=todayStr() &&
+  if(!_a0.pdev && !p.entregado && (p.fecha||'')>=todayStr() &&
      !confirm('⚠️ El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅.\n\nSi programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.\n\n¿Ya lo recogieron?')) return;
   /* (25/09) Ocupa un cupo como cualquier entrega: domingo, sábado PM, día cerrado o turno lleno
      AVISAN y se confirman, igual que en 📅 Reprogramar. Antes decía «✓ programada» y el portero
@@ -10834,8 +10837,11 @@ function guardarProgramarDevAtc(id){
   if(_avisos.length && !confirm('⚠️ Ojo:\n\n   • '+_avisos.join('\n   • ')+'\n\n¿Programar la devolución igual?')) return;
   if(_avisos.length && !asegurarClaveAdmin()) return;
   var a=atcDe(p)||{};
-  var rec=a.rec || p.fecha || '';                 // el día del recojo se guarda antes de mover la fecha
-  mergeAtcDatos(p, { rec:rec, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
+  /* El día del recojo —y su turno, `rturno` (26/09)— se guardan antes de mover la fecha. Si ya vive en su
+     devolución («Cambiar devolución») se conservan: `p.fecha`/`p.turno` ya son los de la devolución. */
+  var _yaDev=!!(a.pdev && a.rec);
+  var rec=_yaDev ? a.rec : (p.fecha||''), rturno=_yaDev ? (a.rturno||'') : (p.turno||'');
+  mergeAtcDatos(p, { rec:rec, rturno:rturno, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
   p.fecha=f; p.turno=t; p.entregado=false;
   persistPedido(p, _avisos.length?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
@@ -10846,10 +10852,15 @@ function quitarProgramarDevAtc(id){
   /* Vuelve a una fecha que YA PASÓ (o cerrada): no le suma bultos a ningún camión, pero el
      portero del servidor la trataba como un pedido nuevo y contestaba «día cerrado» o «AM
      lleno» — la devolución seguía programada en la planilla (§4ew). Va con `forzar`. */
-  var _dest=a.rec||p.fecha, _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest));
+  /* (26/09) …y con SU turno (`rturno`, guardado al programar): quedaba vacío —AM para los cupos— y el
+     recojo de la tarde contaba en la mañana. Con ese turno lleno también va con `forzar`: el recojo ya se
+     hizo y no le suma un bulto a ningún camión. */
+  var _dest=a.rec||p.fecha, _tur=a.rturno||'';
+  var _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest) || cuposUsadosTurno(_dest,_tur)>=limTurno(_dest,_tur));
   if(_forzar && !asegurarClaveAdmin()) return;
-  p.fecha=_dest; p.turno=''; p.entregado=true;   // vuelve al día del recojo, ya recogido
-  mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'' });
+  p.fecha=_dest; p.turno=_tur; p.entregado=true;   // vuelve al día del recojo, ya recogido
+  // `rec` se va también: la fecha del pedido vuelve a ser el recojo (si quedaba, un 📅 después no se veía).
+  mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'', rec:'', rturno:'' });
   persistPedido(p, _forzar?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Se quitó la devolución programada','ok');
 }
