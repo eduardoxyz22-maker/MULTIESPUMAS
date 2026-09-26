@@ -7473,11 +7473,12 @@ salía de Banzer, y Banzer no bajaba nunca: dos errores de cuenta a la vez.
 - `test_rev3_stock` §4e destapó un caso: una «📥 Banzer» vieja sin Excel de Banzer vuelve a esperar la recogida en
   camino. Se arregló en el panel, no en la prueba.
 
-**Esperan al dueño.**
-- Una «📥 Banzer» de fecha pasada ahora se da por salida, como cualquier ✔. Antes seguía comprometida.
-- Ya no se pueden programar recogidas DESDE Banzer. ¿Hace falta alguna vez traer de Banzer a fábrica?
-- El bloque «Cargar en Banzer» sale bajo el camión de cada pedido. Si otro camión va a Banzer, hoy no hay forma de
-  asignarle solo esa carga.
+**Lo que decidió el dueño (26/09, 13:15, con las capturas a la vista).**
+- Una «📥 Banzer» de fecha pasada se da por salida, como cualquier ✔. Antes seguía comprometida.
+- Nunca se trae mercadería de Banzer a fábrica: sin recogidas desde Banzer.
+- El bloque «Cargar en Banzer» bajo el camión de cada pedido «alcanza por ahora». Asignar otro camión a Banzer queda
+  para cuando lo pida.
+- Publicar ahora, con F5 de todos.
 
 **Al publicar, todos F5.** Una página vieja lee «✔ Banzer» como «✔ acá», y al corregir el pedido pierde el lugar.
 

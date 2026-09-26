@@ -677,8 +677,9 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Al publicar, todos F5**: una página vieja lee «✔ Banzer» como «✔ acá» y al corregir el pedido pierde el lugar.
 - `tests/test_banzer_salida.js` (77; 62 rojos contra `e2e613a`). `test_banzer.js` arranca con la configuración de antes
   (`ALM_SALIDA=[]`, `RECOGER_EXTRA=['Banzer']`) para seguir cuidando varios almacenes de ir a buscar.
-- **Esperan al dueño**: una «📥 Banzer» de fecha pasada ahora se da por salida (como cualquier ✔); ya no se pueden
-  programar recogidas DESDE Banzer; el bloque de Banzer sale bajo el camión de cada pedido (no se asigna aparte).
+- **Decidido por el dueño (26/09, 13:15)** — no cambiar sin él: una «📥 Banzer» de fecha pasada se da por salida (como
+  cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
+  cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
