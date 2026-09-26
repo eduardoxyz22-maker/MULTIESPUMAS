@@ -3497,11 +3497,16 @@ function badgeSinMonto(){ return '<span class="badge b-amber">⚠️ SIN MONTO A
    nada que cobrar, o nadie anotó cuánto era (y entonces tiene que preguntar, no callarse).
    La usan la hoja de ruta impresa y el mensaje de WhatsApp, para que digan lo mismo. */
 function cobroRutaTxt(p){
-  if(p&&p.pagado) return {t:'✅ PAGADO', c:'#2e7d32'};
-  if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32'};   // (25/09)
-  if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00'};
-  if((Number(p&&p.saldo)||0)<=0.01) return {t:'✅ NADA QUE COBRAR', c:'#2e7d32'};
-  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b'};
+  /* 🚚 (26/09) El flete PACTADO se cobra en la puerta (§4ai) y la hoja no lo decía: una venta pagada con
+     flete salía «✅ PAGADO» y el chofer no lo cobraba. `f` lo dice aparte, con las palabras de su tarjeta
+     (`cobroChoferHtml`). ATC y RPT no cambian. */
+  var fleteF=(p && !noSeCobra(p)) ? envioPorCobrar(p) : 0;
+  var f=fleteF>0.01 ? ('🚚 Cobrar también el flete: '+fmtBs(fleteF)+' — aparte de la venta. Avisale a la vendedora, que lo registra con el comprobante.') : '';
+  if(p&&p.pagado) return {t:(f?'✅ LA VENTA YA ESTÁ PAGADA':'✅ PAGADO'), c:'#2e7d32', f:f};
+  if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32', f:''};   // (25/09)
+  if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00', f:f};
+  if((Number(p&&p.saldo)||0)<=0.01) return {t:(f?'✅ NADA QUE COBRAR DE LA VENTA':'✅ NADA QUE COBRAR'), c:'#2e7d32', f:f};
+  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b', f:f};
 }
 /* El renglón "debe Bs X" solo cuando de verdad hay saldo (si es 0 no dice nada). */
 function debeLinea(p){
@@ -19111,18 +19116,20 @@ function renderRuta(){
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
   var html='';
   RUTA_ORDER.forEach(function(k, idx){
-    var stops=RUTA_BYC[k], cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+    var aCobrar=(cobrar>0 || fleteC>0.01);
     var esSin=(k==='Sin chofer');
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
       '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
-      (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
-      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
+      (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
+      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
       var cr=cobroRutaTxt(p);
       var cobro='<span style="color:'+cr.c+';font-weight:700">'+cr.t+'</span>'+
-        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'');
+        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'')+
+        (cr.f?('<br><b style="color:#c0392b">'+esc(cr.f)+'</b>'):'');   // (26/09) el flete pactado (§4ai)
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
@@ -19138,14 +19145,14 @@ function renderRuta(){
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
   var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
-  var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
-  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
+  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), ((cobrar>0 || fleteC>0.01)?('💰 Total a cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
     L.push('   🛏️ '+prodText(p.productos));
     if(atcComodinAviso(p)) L.push('   '+atcComodinAviso(p));   // (26/09)
-    L.push('   '+cobroRutaTxt(p).t);
+    var cr=cobroRutaTxt(p); L.push('   '+cr.t); if(cr.f) L.push('   '+cr.f);   // (26/09) el flete pactado (§4ai)
     if(p.maps) L.push('   🗺️ '+p.maps);
     if(p.observaciones) L.push('   📝 '+p.observaciones);
     L.push('');
