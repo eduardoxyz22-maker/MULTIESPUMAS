@@ -14329,12 +14329,18 @@ function stockNormalizarRecepciones(S){
     var alm=q.de || stockAlmPorDefectoDe(S), g=(S.g||{})[alm];       // el de ESTE stock (puede no ser STOCK: una junta)
     if(!g || !g.u) return;
     g.rs=g.rs||{};
-    var t=Number(g.t)||0, resta={};
-    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && !r.nr && (Number(r.ts)||0)>t) resta[r.id]=r; });   // `nr` (26/09): el reporte de allá ya no las tenía
+    var t=Number(g.t)||0, resta={}, nr={};
+    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && (Number(r.ts)||0)>t){ if(r.nr) nr[r.id]=1; else resta[r.id]=r; } });   // `nr` (26/09): el reporte de allá ya no las tenía
     Object.keys(g.rs).forEach(function(rid){
       var x=g.rs[rid]; if(!x || x.q!==q.id || resta[rid]) return;
+      if(x.nr){ if(!nr[rid]) delete g.rs[rid]; return; }                        // la marca de una `nr` (abajo): no se devuelve nada
       g.u[x.k]=(Number(g.u[x.k])||0)+(Number(x.u)||0); delete g.rs[rid];      // la sacó la junta: se devuelve
     });
+    /* ⚠️ (26/09) La `nr` queda anotada en `rs` con 0 unidades. La página publicada antes de esto no
+       conoce `nr`: sin la marca, al leer le restaba las 5 a Moreno (que según su Excel tenía 2: quedaba
+       en 0) y anotaba 5 como restadas; si guardaba el stock, acá se le devolvían las 5 → Moreno con 3
+       colchones fantasma. Con la marca, la vieja la da por restada y no toca nada. */
+    Object.keys(nr).forEach(function(rid){ if(!g.rs[rid]) g.rs[rid]={ k:q.k, u:0, q:q.id, nr:1 }; });
     Object.keys(resta).forEach(function(rid){
       if(g.rs[rid] || g.u[q.k]==null) return;
       var r=resta[rid];
@@ -16406,7 +16412,7 @@ function recibirStockPedido(id){
   stockNormalizarRecepciones(STOCK);
   var pendiente=q.r ? 0 : (Number(q.u)||0);
   var _g=(STOCK.g||{})[q.de || stockAlmPorDefecto()];
-  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id]);
+  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id] && !_g.rs[rec.id].nr);   // la marca de una `nr` no es una resta (26/09)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   var dias=stockDias(q.f, todayStr());
   toast('✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
