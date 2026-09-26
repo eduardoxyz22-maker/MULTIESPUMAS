@@ -627,7 +627,7 @@ la tercera vuelta terminó (13.3) y todo lo de 13.2 y 13.3 ya está en producci�
 | Pieza | En producción | En la rama |
 |---|---|---|
 | Página (`pedidos.html`, `productos-mes.js`) | **`a8e3c5e`, publicada el 26/09 a las 10:11** (merge de `8de15f9`): todo lo de 13.2 y 13.3 | lo mismo, más esta documentación |
-| Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
+| Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado: **«Versión 30 del 21 sept 2026, 9:41 a.m.»**, anotada por el dueño en el paso 0 (26/09, 10:25). **Es la de volver atrás.** | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
 | Agosto «entregado» | sin correr | `herramientas/marcar-entregados-agosto.gs`, lo corre el dueño desde el editor |
 
 **Lo que falta hoy:**
