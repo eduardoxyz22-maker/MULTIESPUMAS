@@ -7474,6 +7474,8 @@ Banzer. Con 0 acá, 3 en Banzer y 5 en IM, un pedido de 4 sale entero de IM.
 - La ficha de una línea Banzer + IM enciende solo «📥 IM».
 - «Qué producir» dice «sin contar» si acá no tiene Excel pero Banzer sí.
 
+**Publicado el 26/09 a las 19:38 de Bolivia**: `main` = `2c777fe`, Pages 1527 en verde, sin tocar el servidor.
+
 **Batería sobre `ecacd93`:** 100 suites, 3.797 bien · 1 mal. La mala fue `test_borradores` (94/1), y no se repite:
 tres corridas solas, 95/0 cada una. Fue una falla suelta con la máquina cargada.
 

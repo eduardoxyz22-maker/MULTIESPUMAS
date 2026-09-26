@@ -678,7 +678,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Al publicar, todos F5**: una página vieja lee «✔ Banzer» como «✔ acá» y al corregir el pedido pierde el lugar.
 - `tests/test_banzer_salida.js` (77; 62 rojos contra `e2e613a`). `test_banzer.js` arranca con la configuración de antes
   (`ALM_SALIDA=[]`, `RECOGER_EXTRA=['Banzer']`) para seguir cuidando varios almacenes de ir a buscar.
-- **Revisión del 26/09 a la noche (§4gf)**: `normNombre`, `stockNorm` y `stockAlmLimpio` **recuerdan su resultado**
+- **Revisión del 26/09 a la noche (§4gf, publicada 19:38, `2c777fe`)**: `normNombre`, `stockNorm` y `stockAlmLimpio` **recuerdan su resultado**
   (memo con tope): tienen que seguir siendo PURAS (mismo texto → mismo resultado, sin leer nada de afuera). Con eso la
   lista de carga de «Todos» con 900 pedidos bajó de ~1 s a 0,16 s. `leerStock` repone `g[nm].inc` desde el historial
   (`STOCK.h`, mismo almacén/día/hora) cuando una página vieja lo borró. `tests/test_rev_banzer.js` (25).
