@@ -1329,10 +1329,20 @@ var VENDEDORES = ['Juan Pablo Paredes','Fernando Peinado','Mauricio Merida','Car
    "carola  chavez") y aparecía DOS VECES en los desplegables, con los pedidos repartidos
    entre las dos. Todas las comparaciones de vendedor pasan por acá: sin tildes, sin
    mayúsculas y sin espacios de más. También unifica "Eduardo Añez" con "Eduardo Anez". */
+/* \u26a1 (26/09, noche) Es PURA y se llama much\u00edsimo: desde Banzer (\u00a74ge) cada rengl\u00f3n marcado pregunta de qu\u00e9
+   almac\u00e9n sale (`almEsSalida` \u2192 `recogerMismo` \u2192 ac\u00e1), y la lista de carga de \u00abTodos\u00bb con 900 pedidos
+   normalizaba 347.000 textos \u2014 ~1 s en un celular, antes 40 ms. Se recuerda el resultado por texto; el
+   tope evita que la memoria crezca sin fin. */
+var NORM_NOMBRE_MEMO=null, NORM_NOMBRE_N=0;
 function normNombre(v){
-  var t=String(v==null?'':v).replace(/\s+/g,' ').trim();
+  var s=String(v==null?'':v), M=NORM_NOMBRE_MEMO||(NORM_NOMBRE_MEMO=Object.create(null)), r=M[s];
+  if(r!==undefined) return r;
+  var t=s.replace(/\s+/g,' ').trim();
   if(t.normalize) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  return t.toLowerCase();
+  t=t.toLowerCase();
+  if(++NORM_NOMBRE_N>20000){ M=NORM_NOMBRE_MEMO=Object.create(null); NORM_NOMBRE_N=1; }
+  M[s]=t;
+  return t;
 }
 /* Cómo se ESCRIBE ese nombre: si está en la lista oficial, se usa esa forma. */
 function nombreCanonico(v){
@@ -10803,7 +10813,9 @@ function cargaBloquesHtml(list, fecha){
         // Solo se tacha lo que NO hay. Lo de "recoger IM" sí se carga (después de traerlo).
         var ck=cargaChkKey(fecha,k,kk), nNo=o.prodNo[kk]||0, nPr=o.prodProd[kk]||0, todoNo=(nNo>=o.prod[kk]);
         return '<label style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:.9rem'+(todoNo?';opacity:.65':'')+'"><input type="checkbox" style="width:17px;height:17px;flex:none" data-k="'+esc(ck)+'" onchange="setCargaChk(this.getAttribute(\'data-k\'),this.checked)"'+(isCargaChk(ck)?' checked':'')+'> <b style="min-width:34px;color:'+(nNo?'#c0392b':(nPr?'#a67c00':'#0f766e'))+'">'+o.prod[kk]+'×</b> <span'+(todoNo?' style="text-decoration:line-through"':'')+'>'+esc(kk)+'</span>'+(nNo?(' <span style="color:#c0392b;font-weight:700;white-space:nowrap">⛔ '+nNo+' sin stock</span>'):'')+(nPr?(' <span style="color:#a67c00;font-weight:700;white-space:nowrap">📥 '+nPr+' recoger de '+esc(Object.keys(o.prodAlm[kk]||{}).join(' + ')||'IM')+'</span>'):'')+'</label>'; }).join('')
-        : '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>')+'</div>';
+        /* (26/09, noche) Solo si hay un depósito que nombrar: un camión con un pedido SIN productos decía
+           «Nada: todo lo de este camión se carga en .» — como antes de Banzer, queda vacío. */
+        : (o.saleOrden.length ? '<div style="font-size:.84rem;color:#888;padding:2px 0">Nada: todo lo de este camión se carga en '+esc(o.saleOrden.join(' y '))+'.</div>' : ''))+'</div>';
     o.saleOrden.forEach(function(n){
       var sk=Object.keys(o.sale[n]).sort(), tb=0; sk.forEach(function(kk){ tb+=o.sale[n][kk]; });
       html+='<div style="margin-bottom:10px;padding:8px 10px;background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px" data-carga-lugar="'+esc(n)+'"><div class="lb" style="margin-bottom:6px;color:#0369a1">🏪 Cargar en '+esc(n)+' <span style="font-weight:600;text-transform:none">· '+tb+' bulto'+(tb===1?'':'s')+'</span></div>'+
@@ -14510,6 +14522,16 @@ function leerStock(p){
           if(s.inc) d.g[nm].inc=true;                                      // (26/09) Banzer: ¿ya incluye las entregas de ese día?
         }
       }
+      /* 🧓 (26/09, noche) La página de ANTES de Banzer no conoce `g[nm].inc`: al guardar el stock lo borraba, y
+         al subir un Excel de Banzer no lo anotaba (solo servía para el de acá). El historial (`h`) sí guarda lo
+         que se contestó al subirlo, y ella lo conserva. Sin esto, lo entregado desde Banzer el día de un Excel
+         de la tarde se descontaba DOS veces. Se repone del MISMO corte (almacén, día y hora); si ese corte se
+         subió dos veces manda la última respuesta (el historial va del más nuevo al más viejo). */
+      Object.keys(d.g).forEach(function(nm){
+        var s=d.g[nm]; if(s.inc || !s.f) return;
+        var hh=(d.h||[]).filter(function(x){ return x && x.alm===nm && String(x.f||'')===s.f && String(x.hora||'')===s.hora; })[0];
+        if(hh && hh.inc) s.inc=true;
+      });
       stockLeerDePanelViejo(d, o);
     }
   }catch(e){}
@@ -15068,10 +15090,17 @@ function prodAlias(t){
   for(var i=0;i<PROD_ALIAS.length;i++) s=s.replace(PROD_ALIAS[i].de, PROD_ALIAS[i].a);
   return s;
 }
+/* \u26a1 (26/09, noche) Pura y muy llamada (cada rengl\u00f3n de cada pedido pasa por ac\u00e1 para saber qu\u00e9 producto es):
+   se recuerda, como `normNombre`. */
+var STOCK_NORM_MEMO=null, STOCK_NORM_N=0;
 function stockNorm(t){
-  t=String(t==null?'':t).replace(/\s+/g,' ').trim().toUpperCase();
-  if(t.normalize) t=t.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  return t;
+  var s=String(t==null?'':t), M=STOCK_NORM_MEMO||(STOCK_NORM_MEMO=Object.create(null)), r=M[s];
+  if(r!==undefined) return r;
+  r=s.replace(/\s+/g,' ').trim().toUpperCase();
+  if(r.normalize) r=r.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  if(++STOCK_NORM_N>20000){ M=STOCK_NORM_MEMO=Object.create(null); STOCK_NORM_N=1; }
+  M[s]=r;
+  return r;
 }
 /* Las palabras que identifican al producto: sin la medida, sin «2 PLAZAS», sin COLCHON,
    sin el color al final. «COLCHON ECO FLEX 2 PLAZAS 140X190CM FLEX» → {ECO, FLEX}. */
@@ -15893,7 +15922,16 @@ function stockAlmNombre(nm){
   if(/^IM\b|INDUSTRIAS MORENO|^MORENO\b/i.test(t)) return 'Industrias Moreno';
   return t;
 }
-function stockAlmLimpio(nm){ return String(nm||'').replace(/^\s*[\d]+(?:-[\d]+)+\s+/,'').replace(/\s+/g,' ').trim(); }
+/* ⚡ (26/09, noche) Pura y muy llamada (cada comparación de almacenes pasa por acá): se recuerda, como `normNombre`. */
+var ALM_LIMPIO_MEMO=null, ALM_LIMPIO_N=0;
+function stockAlmLimpio(nm){
+  var s=String(nm||''), M=ALM_LIMPIO_MEMO||(ALM_LIMPIO_MEMO=Object.create(null)), r=M[s];
+  if(r!==undefined) return r;
+  r=s.replace(/^\s*[\d]+(?:-[\d]+)+\s+/,'').replace(/\s+/g,' ').trim();
+  if(++ALM_LIMPIO_N>5000){ M=ALM_LIMPIO_MEMO=Object.create(null); ALM_LIMPIO_N=1; }
+  M[s]=r;
+  return r;
+}
 /* Palabras que no distinguen a un almacén de otro. Solo se sacan cuando el nombre no entra
    y hay que recortarlo (§4ey): «Almacen Distribucion Banzer» → «Banzer». */
 /* ⚠️ Acá NO van «PRODUCTOS» ni «TERMINADOS»: sacarlas dejaba el almacén de logística
@@ -17700,7 +17738,9 @@ function abrirStockHistorial(){
         var dif=prev? (x.u-prev.u) : null;
         return '<tr><td><b>'+fmtFecha(x.f)+'</b>'+(x.hora?(' '+esc(x.hora)):'')+
           '<br><span style="color:var(--muted);font-size:.9em">subido '+tsFmt(x.ts)+'</span></td>'+
-          '<td>'+esc(stockAlmNombre(x.alm))+(x.rol==='log'?'':(x.rol==='sale'?' <span style="color:var(--muted)">(también sale camión)</span>':' <span style="color:var(--muted)">(no sale camión)</span>'))+'</td>'+
+          /* (26/09, noche) El Excel de Banzer subido con el diálogo de ANTES quedó anotado 'otro' (no había otra
+             opción) y decía «(no sale camión)»: para 'otro' decide `almEsSalida`, como en todo el panel. */
+          '<td>'+esc(stockAlmNombre(x.alm))+(x.rol==='log'?'':((x.rol==='sale' || (x.rol!=='trae' && almEsSalida(x.alm)))?' <span style="color:var(--muted)">(también sale camión)</span>':' <span style="color:var(--muted)">(no sale camión)</span>'))+'</td>'+
           '<td>'+x.n+'</td><td><b>'+stockUnid(x.u)+'</b>'+
           (dif!=null?('<br><span style="color:'+(dif<0?'var(--red)':'var(--green)')+';font-size:.9em">'+(dif>0?'+':'')+stockUnid(dif)+' contra el anterior</span>'):'')+'</td></tr>';
       }).join('')+'</tbody></table>')
