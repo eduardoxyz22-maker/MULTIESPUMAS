@@ -12,6 +12,8 @@
       volver la señal, se mandaba tal cual: pisaba lo que otra computadora cerró, reabrió o tildó
       mientras tanto. Ahora se rearma con la planilla de ese momento. Las demás filas de la cola
       se mandan igual que siempre.
+   4. 🌅🌆 Los chips AM/PM de Administración no contaban los pedidos SIN turno; el cupo los cuenta
+      como AM (`cuposUsadosTurno`, y el portero del `.gs`).
 
    Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia). Red cortada, servidor simulado, datos
    sintéticos. Se corre:  node tests/test_rev3_admin.js
@@ -288,6 +290,35 @@ const BASE = `
     });
     chk('control: los pedidos de la cola se mandan exactamente como estaban, en orden', r.iguales && J(r.orden)===J(['q1',"__dias_cerrados__",'q2']), J(r.orden));
     chk('control: la fila de cierre de un panel de antes se manda como siempre', r.srv==='2026-10-12' && r.cola===0, 'planilla: '+r.srv);
+    await page.close();
+  }
+
+  // ═══ 4. Chips AM/PM = cupo ══════════════════════════════════════════════════════════
+  console.log('\n── 4. 🌅🌆 Los chips AM/PM cuentan como el cupo ──');
+  {
+    const page = await nueva(MIERCOLES);
+    const r = await page.evaluate(async () => {
+      showView('admin'); await _espera(150);
+      var hoy=todayStr();
+      STATE=[
+        _P({id:'a1', turno:'AM'}), _P({id:'a2', turno:'AM'}),
+        _P({id:'s1', turno:''}), _P({id:'s2', turno:''}),              // sin turno (los de ROHO, por ejemplo)
+        _P({id:'p1', turno:'PM'}),
+        _P({id:'t1', fecha:'', turno:'', zona:'TIENDA', direccion:'SALIÓ DE TIENDA · Central', cliente:'VENTA TIENDA', entregado:true, chofer:'', vehiculo:''})
+      ];
+      saveMirror();
+      var chip=function(lbl){ var b=[].slice.call(document.querySelectorAll('#adm-chips .qchip')).filter(function(x){ return x.textContent.indexOf(lbl)>=0; })[0]; return b?Number(b.querySelector('.n').textContent):-1; };
+      segSet('adm-mode','dia'); document.getElementById('adm-dia').value=hoy; QUICK_FILTER=''; renderAdmin();
+      var dia={ am:chip('AM'), pm:chip('PM'), cupoAM:cuposUsadosTurno(hoy,'AM'), cupoPM:cuposUsadosTurno(hoy,'PM'), cupoTxt:document.getElementById('cupo-admin').textContent };
+      setQuick('am'); dia.filasAM=admFilter().length; setQuick('am');
+      segSet('adm-mode','todo'); renderAdmin();
+      var todo={ am:chip('AM'), pm:chip('PM') };
+      return { dia:dia, todo:todo };
+    });
+    chk('🔴 el chip 🌅 AM cuenta los pedidos sin turno, como el cupo (4 = 2 AM + 2 sin turno)', r.dia.am===r.dia.cupoAM && r.dia.am===4, J(r.dia));
+    chk('  y el 🌆 PM igual que el cupo', r.dia.pm===r.dia.cupoPM && r.dia.pm===1, J(r.dia));
+    chk('🔴 tocar el chip AM muestra esos mismos 4', r.dia.filasAM===4, r.dia.filasAM);
+    chk('  en «Todo», la venta de tienda (sin fecha: no ocupa cupo) no entra en AM', r.todo.am===4 && r.todo.pm===1, J(r.todo));
     await page.close();
   }
 

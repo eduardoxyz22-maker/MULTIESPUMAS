@@ -9912,8 +9912,10 @@ var QUICK_DEFS=[
   {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
-  {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
-  {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
+  /* (26/09) Como el cupo (`cuposUsadosTurno`, §4fh): sin turno cuenta como AM, y sin fecha (venta de tienda) no
+     ocupa lugar. Antes el chip AM no contaba los sin turno (los de ROHO) y no coincidía con el cupo. */
+  {k:'am',          lbl:'🌅 AM',            test:function(p){return !!p.fecha && normTurno(p.turno)==='AM';}},
+  {k:'pm',          lbl:'🌆 PM',            test:function(p){return !!p.fecha && normTurno(p.turno)==='PM';}},
   {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}},
   /* 🏪 §4do — pregunta del dueño: «¿dónde ve logística las reposiciones? ¿o filtran por
      solo reposiciones?». Estaban mezcladas con todo, con su franja ámbar y nada más. */
