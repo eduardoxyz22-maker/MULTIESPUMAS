@@ -7445,6 +7445,43 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ge. 26/09: Banzer es un depósito del que salen camiones (2026-09-26)
+
+**El pedido del dueño.** *«Salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a
+traer»*. Respuestas:
+- a Banzer el camión va «depende del día»: a veces pasa el mismo, a veces sale otro;
+- la lista de carga va separada, «Cargar en fábrica» y «Cargar en Banzer»;
+- el orden del reparto no cambia: acá → Banzer → IM (21/09).
+
+**Qué estaba mal.** El panel trataba a Banzer como a Moreno. Mandaba a «📥 recoger de Banzer», descontaba de ACÁ lo que
+salía de Banzer, y Banzer no bajaba nunca: dos errores de cuenta a la vez.
+
+**Cómo se hizo.**
+- Un primer agente armó la capa de marcas y la prueba; lo cortó el reinicio de la sesión (15:35 UTC) y no se pudo
+  reanudar. Su trabajo quedó en el scratchpad (`banzer_parcial/`).
+- Un segundo agente siguió desde ahí. El límite de uso de la cuenta lo cortó a mitad de camino; se retomó a las 16:40
+  UTC, apenas se reinició.
+- Squash en la rama: `09691ad`. Las reglas que hay que respetar están en CLAUDE.md, «🚚 Banzer, depósito del que
+  salen camiones».
+
+**Pruebas.**
+- `tests/test_banzer_salida.js`: 77 comprobaciones, 62 fallan contra el panel publicado (`e2e613a`).
+- Dos pruebas viejas cambiadas a conciencia:
+  - `test_banzer.js` afirmaba Banzer como recogida. Arranca con la configuración de antes, porque cuida la mecánica de
+    varios almacenes de ir a buscar, que sigue existiendo.
+  - `test_rev_stock.js` §3 usa otro almacén de ir a buscar.
+- `test_rev3_stock` §4e destapó un caso: una «📥 Banzer» vieja sin Excel de Banzer vuelve a esperar la recogida en
+  camino. Se arregló en el panel, no en la prueba.
+
+**Lo que decidió el dueño (26/09, 17:14, con las capturas a la vista).**
+- Una «📥 Banzer» de fecha pasada se da por salida, como cualquier ✔. Antes seguía comprometida.
+- Nunca se trae mercadería de Banzer a fábrica: sin recogidas desde Banzer.
+- El bloque «Cargar en Banzer» bajo el camión de cada pedido «alcanza por ahora». Asignar otro camión a Banzer queda
+  para cuando lo pida.
+- Publicar ahora, con F5 de todos.
+
+**Al publicar, todos F5.** Una página vieja lee «✔ Banzer» como «✔ acá», y al corregir el pedido pierde el lugar.
+
 ## 4gd. 26/09: la revisión de Codex — cinco hallazgos, el sello de los días cerrados (.gs 2026-09-26-a) y Banzer (2026-09-26)
 
 **El servidor, desde la PC.** El dueño hizo el procedimiento de §7 sobre la 23-b:
@@ -7548,6 +7585,21 @@ bloques. Mientras tanto, Banzer se sube como «Otro», que conserva los dos cont
 - mover un pedido entregado sin destildarlo deja el ✅ en el día viejo;
 - «150 200» se acepta como 150.200 (el espacio es separador de miles);
 - «Bs.- 1500» cuenta como negativo.
+
+**Publicación (26/09).** El dueño eligió «Codex ya, Banzer después»: esto sale solo, y Banzer va en otra
+publicación con otro F5.
+- **Página:** `main` = `e2e613a` (merge `--no-ff` de `ea81bb0`, código = `f70311e`), a las **11:27 de Bolivia**.
+  Pages 1522 en verde. `pedidos.html`, `productos-mes.js` y el `.gs` idénticos a la rama.
+- **Servidor `2026-09-26-a`:** implementado por el dueño alrededor de las **11:35**, con el procedimiento de siempre
+  (enlace raw fijo a `ea81bb0…`, 1965 líneas).
+  - `probarAntesDeImplementar` a las 11:29, todo ✅: código entero (18 funciones clave), 1003 filas, disparadores
+    instalados, repaso de Kommo de hace 1 minuto sin errores.
+  - Stock en **22.208 de 50.000 letras (44 %)**; a las 10:15 eran 20.932. Arqueo en 0.
+  - El cuadro de 🔒 Cerrar día dice «El candado está en el servidor (versión 2026-09-26-a)», sin la línea gris.
+- **Volver atrás:** ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; el dueño no pasó el
+  número todavía) Y pegar la 23-b de `14dec98…` (1956 líneas).
+- **Desde ahora rige** la protección entre dos equipos del stock y el arqueo (23-b) y también la de los días
+  cerrados y las tildes de la carga (26-a).
 
 ## 4gc. 26/09: la tercera vuelta — lo que rompieron los arreglos, y los pendientes sin decisión del dueño (2026-09-26)
 

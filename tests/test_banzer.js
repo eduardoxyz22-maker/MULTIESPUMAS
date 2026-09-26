@@ -24,6 +24,14 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
 const J = (o) => JSON.stringify(o);
 
 const BASE = `
+  /* 🚚 (26/09) Desde que el dueño dijo que de Banzer SALEN camiones, Banzer es un depósito de salida
+     («✔ hay en Banzer», tests/test_banzer_salida.js). Este test cuida la mecánica de §4ey: VARIOS
+     almacenes a los que hay que ir a buscar (botones 📥 por almacén, chkDe/chkDes, el orden, IM = Moreno,
+     los nombres largos del reporte). Esa mecánica sigue viva para cualquier almacén de ir a buscar —el
+     diálogo de existencias todavía deja elegir «ir a buscar» para uno—, así que acá se pone la
+     configuración de antes del 26/09: Banzer como almacén de ir a buscar. Contra un panel viejo estas
+     dos líneas no cambian nada (ya era así). */
+  ALM_SALIDA=[]; RECOGER_EXTRA=['Banzer'];
   var c=document.getElementById('conn-form'); if(c) c.style.display='none';
   CONNECTED=true; UNLOCKED=true;
   document.getElementById('admin-lock').style.display='none';

@@ -1,8 +1,10 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 26/09, 11:30 — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §14:** los cinco hallazgos están
-> arreglados con pruebas que fallan antes (en la rama, sin publicar), junto con el `.gs` 2026-09-26-a para los días
-> cerrados y la novedad de Banzer.
+> **ACTUALIZACIÓN 26/09, 11:40 — PUBLICADO E IMPLEMENTADO.** La página con la respuesta a Codex (§14) está en
+> `main` = `e2e613a` desde las 11:27 de Bolivia. El dueño implementó el `.gs` 2026-09-26-a alrededor de las 11:35:
+> probar salió todo ✅ y 🔒 Cerrar día dice «versión 2026-09-26-a». Banzer sale en otra publicación.
+> **26/09, 11:30 — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §14:** los cinco hallazgos están arreglados con
+> pruebas que fallan antes, junto con el `.gs` 2026-09-26-a para los días cerrados y la novedad de Banzer.
 > **26/09, 10:15 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
 > `a8e3c5e`, 26/09 a las 10:11, con la revisión por pestaña y la tercera vuelta. La sección tiene lo que decide el
 > dueño, lo del servidor, lo que queda por arreglar y analizar, y qué le pido a Codex. §13 reemplaza las listas

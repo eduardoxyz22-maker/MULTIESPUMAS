@@ -88,7 +88,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc). **El 26/09 ~10:30 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a; falta su captura de la versión). **La `2026-09-26-a` (§4gd) espera en el repo** (mismo procedimiento; volver = a la versión que se anote ese día). Con la 23-b ya rige la protección de stock/arqueo entre dos equipos; la de días cerrados y carga, recién con la 26-a, y hasta implementarla el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris). **Volver atrás de la 26-a** = ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; falta que el dueño pase el número) Y pegar la 23-b (`14dec98…`, 1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -259,7 +259,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
     si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
     `recogerLista()` arma un botón por almacén en la ficha — IM + los de `STOCK.g` + los de
-    `RECOGER_EXTRA` (hoy `Banzer`), sin repetir; `recogerCorto(x)` es el nombre para un
+    `RECOGER_EXTRA` (hoy vacío: Banzer pasó a `ALM_SALIDA`, §4ge), sin repetir; `recogerCorto(x)` es el nombre para un
     renglón («Moreno», o «IM 3 + BANZER 1») y `recogerLugaresTxt(p)` para el pedido entero.
     `stockAsignar` reparte por almacén (`imAlm`/`tomarIM`) y devuelve el desglose, no un
     nombre. ⚠️ Si `enOtros` trae unidades sin el desglose `otrosAlm`, se cuentan como IM: no
@@ -646,13 +646,40 @@ implementado.
   marca y lo dice (`perdio.movido`).
 - **Días cerrados y tildes de la carga con sello**: cada guardado va con `REESCRITA_REV` (`reescritaConSello`) y
   `{juntar:true}`; ante `conflicto`, `reescritaJuntarYGuardar`. El `.gs` **2026-09-26-a** (`SISTEMA_JUNTA_OPCIONAL`)
-  compara el sello SOLO si llega `juntar`: un panel viejo no se traba. Con la 23-b sigue como antes. ⚠️ Una fila
+  compara el sello SOLO si llega `juntar`: un panel viejo no se traba. Con la 23-b sigue como antes. Página
+  publicada el 26/09 a las 11:27 (`e2e613a`) y servidor 26-a implementado ~11:35. ⚠️ Una fila
   nueva que se reescriba entera va por `REESCRITAS` y este camino. `tests/test_codex26_cierres.js` (el `.gs` real).
 - **Existencias**: la hora sale del nombre (también con guiones) o del pie (`existHoraDePie`). Hay UN solo depósito
   de fábrica (`STOCK.c`): hacer «log» a otro almacén pregunta antes.
 - **Banzer es depósito de salida** (dueño, 26/09: «salen camiones de Banzer y de Productos Terminados; solo de
-  Moreno hay que ir a traer»; carga separada en dos bloques). En curso (§4gd). Mientras tanto se sube como «Otro».
+  Moreno hay que ir a traer»; carga separada en dos bloques). Hecho en §4ge (ver la sección siguiente).
 - Pruebas: `test_codex26.js`, `test_codex26_cierres.js`, `test_rev4_montos.js`, `test_rev4_atc_flete.js`, `test_servidor.js` §14.
+
+## 🚚 Banzer, depósito del que salen camiones (§4ge, 26/09)
+El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+- **Quién es de salida lo dice UNA función, `almEsSalida(nm)`**: el rol elegido al subir el Excel
+  (`STOCK.al`: `'sale'` o `'trae'`) manda; con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM/Industrias
+  Moreno y el de fábrica nunca son de salida. `RECOGER_EXTRA` quedó vacío.
+- **La marca**: «✔ hay en Banzer» = `chk:'ok'` + `chkDe` (el nombre del stock); partida, `chkDes` (lo de acá con
+  `de:''`). El TIPO de cada parte lo da el lugar, no la letra (`prodPartes`: `aca`/`sale`/`trae`). `prodHay(x)` = se
+  carga (acá o Banzer); `esRecoger(x)` = hay algo que ir a BUSCAR. ⚠️ Nunca volver a `x.chk==='im'` a secas para
+  decir «recoger», ni a `x.chk==='ok'` para decir «hay acá».
+- **Marcas viejas «📥 Banzer»**: se leen como ✔ Banzer sin reescribir la planilla, salvo que tengan una recogida de
+  Banzer anotada (`saleRecogidaViva`): esa sigue como recogida hasta cerrarla (si no, se descontaba dos veces).
+- **Cuentas**: lo entregado desde Banzer baja `STOCK.g[Banzer]` (`salSale`, misma regla de fecha que acá con su propio
+  `g[nm].inc`); lo disponible para cargar es **`stockHaySalir(o)` = acá + Banzer** (proyección, pedir, Qué producir,
+  plata parada). `deposito` sigue siendo solo acá; `enOtros`/«traer» solo lo de ir a buscar.
+- **Revisión automática**: orden del dueño intacto (acá → Banzer → IM, «cubre entera» primero); `tomarIM` con
+  `solo` (true = solo salida). `cambia` compara lugares con tipo (`partesMismosLugares`); la marca vieja → ✔ va
+  como `migra` y no cuenta como «contradice a una persona».
+- **Lista de carga**: «🏭 Cargar en fábrica» (claves de SIEMPRE) y «🏪 Cargar en Banzer» (clave `…|@Banzer`, 4° pedazo
+  de `cargaChkKey`), podadas por `textoCargaChk` como siempre. Chofer, ruta, WhatsApp y Excel: `prodSaleTxt`.
+- **Al publicar, todos F5**: una página vieja lee «✔ Banzer» como «✔ acá» y al corregir el pedido pierde el lugar.
+- `tests/test_banzer_salida.js` (77; 62 rojos contra `e2e613a`). `test_banzer.js` arranca con la configuración de antes
+  (`ALM_SALIDA=[]`, `RECOGER_EXTRA=['Banzer']`) para seguir cuidando varios almacenes de ir a buscar.
+- **Decidido por el dueño (26/09, 17:14)** — no cambiar sin él: una «📥 Banzer» de fecha pasada se da por salida (como
+  cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
+  cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
