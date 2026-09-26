@@ -2284,9 +2284,31 @@ function dispositivoId(){
   }catch(e){ return 'X'+String(Date.now()).slice(-5); }
 }
 function rechazosLocales(){ try{ var a=JSON.parse(localStorage.getItem(LS_RECHAZOS)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+/* 🚚 QUÉ SE PERDIÓ DE UN CAMBIO RECHAZADO (26/09). Un chofer sin señal marca ✅ o cobra en la puerta;
+   eso queda en la cola, y si mientras tanto otra persona tocó el pedido, al volver la señal el
+   servidor dice «conflicto» y gana su fila: el ✅ o la plata del chofer se van, y el aviso quedaba en
+   «Mis pedidos», que el chofer no mira. Acá se anota lo que el cambio tenía y la fila no (✅, cobros
+   de la puerta, fotos) para decírselo en SU pantalla (`choRechazosHtml`). No se reaplica solo: sin
+   saber qué era lo viejo, un ✅ «de más» puede ser una copia vieja, y un cobro, uno que Contabilidad
+   ya anotó. null si no se perdió nada de eso. */
+function rechazoPerdido(rec, srv){
+  try{
+    var out={}, clave=function(c){ return (normMetodo(c.metodo)||c.metodo||'')+'|'+r2(c.monto); };
+    if(rec && rec.entregado && !(srv && srv.entregado)) out.entregado=true;
+    var ya=cobrosDe(srv||{}).map(clave);
+    var cob=cobrosDe(rec||{}).filter(cobroDeLaPuerta).filter(function(c){ return ya.indexOf(clave(c))<0; })
+      .map(function(c){ return { txt:cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'') }; });
+    if(cob.length) out.cobros=cob;
+    var fs=compsArr(rec&&rec.fotos), fsv=compsArr(srv&&srv.fotos), nf=fs.filter(function(f){ return fsv.indexOf(f)<0; }).length;
+    if(nf) out.fotos=nf;
+    return (out.entregado || out.cobros || out.fotos) ? out : null;
+  }catch(e){ return null; }
+}
 function rechazoRecordar(rec, res){
   try{
-    var a=rechazosLocales(); a.unshift({ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 });
+    var a=rechazosLocales(), _r={ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 };
+    if(res.error==='conflicto' && res.pedido){ var _pe=rechazoPerdido(rec, res.pedido); if(_pe) _r.perdio=_pe; }   // (26/09) para el cartel del chofer
+    a.unshift(_r);
     localStorage.setItem(LS_RECHAZOS, JSON.stringify(a.slice(0,20)));
   }catch(e){}
   renderColaAviso();
@@ -11408,6 +11430,26 @@ function llenarSelectChoferes(){
   if(actual && list.indexOf(actual)>=0) sel.value=actual;
 }
 function renderChoferSiActivo(){ var vw=document.getElementById('view-chofer'); if(vw && vw.classList.contains('active')) renderChofer(); }
+/* 🚚 Lo que el chofer hizo sin señal y NO entró (26/09, `rechazoPerdido`). Últimas 48 h, hasta que
+   toque «Ya lo revisé». Es SU dispositivo: lo anotado acá son cambios suyos. */
+function choRechazosHtml(){
+  var r=rechazosLocales().filter(function(x){ return x.perdio && !x.visto && Date.now()-x.ts<48*3600000; });
+  if(!r.length) return '';
+  var li=r.map(function(x){
+    var q=[]; if(x.perdio.entregado) q.push('✅ la entrega: volvé a tocar ✅');
+    (x.perdio.cobros||[]).forEach(function(c){ q.push('💵 el cobro '+esc(c.txt)+': volvé a anotarlo, o avisale a Contabilidad'); });
+    if(x.perdio.fotos) q.push('📷 '+x.perdio.fotos+' foto'+(x.perdio.fotos>1?'s':'')+' de la entrega: volvé a subirla'+(x.perdio.fotos>1?'s':''));
+    return '<li style="margin:3px 0"><b>'+esc(x.cliente||'(sin cliente)')+'</b> — '+q.join(' · ')+'</li>';
+  }).join('');
+  return '<div id="cho-rechazos" style="background:#fdecec;border:2px solid var(--red);border-radius:10px;padding:10px 13px;margin-bottom:12px;color:#8a1c24;font-size:.88rem">'+
+    '<b>⚠️ Esto que hiciste sin señal NO entró</b>: mientras tanto otra persona cambió esos pedidos, y ganó lo de ella.'+
+    '<ul style="margin:6px 0 8px 18px;padding:0">'+li+'</ul>'+
+    '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--red);color:#8a1c24;font-weight:700" onclick="choRechazosVistos()">Ya lo revisé</button></div>';
+}
+function choRechazosVistos(){
+  try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().map(function(x){ if(x.perdio) x.visto=true; return x; }))); }catch(e){}
+  renderChofer();
+}
 function renderChofer(){
   var sel=document.getElementById('cho-nombre'); if(!sel) return;
   var c=(sel.value||'').trim();
@@ -11428,7 +11470,7 @@ function renderChofer(){
     return String(a.zona||'')<String(b.zona||'')?-1:1;
   });
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
-  var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());
+  var recFabHtml=choRechazosHtml()+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo
   var ent=0, porCobrar=0, cobrado=0, fleteF=0;
   list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
   list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
