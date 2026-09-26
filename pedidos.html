@@ -10556,9 +10556,18 @@ function parseCargaChk(txt){
 /* Al guardar se tiran las viejas: la celda de la planilla no es infinita. */
 function textoCargaChk(obj){
   var corte=new Date(); corte.setDate(corte.getDate()-CARGA_DIAS_GUARDA); corte=isoLocal(corte);
+  /* (26/09) Una clave SIN fecha solo la arma el bloque «(sin fecha)» de «Todos», y desde que «Todos» no muestra
+     las ventas de tienda (§4gc) sus tildes viejas no las veía ni las podaba nadie: quedaban en la celda para
+     siempre (la poda miraba solo las fechas de más de 10 días). Ahora queda solo si todavía hay en la lista de
+     carga un pedido sin fecha con ese camión y ese producto (el mismo armado que `cargaBloquesHtml`). */
+  var vivas={};
+  STATE.forEach(function(p){
+    if(!p || p.fecha || esVentaTienda(p) || esFilaSistema(p)) return;
+    (p.productos||[]).forEach(function(x){ vivas[cargaChkKey('', vehiculoDe(p)||'Sin vehículo', cargaProdKey(x)||'(sin detalle)')]=1; });
+  });
   return Object.keys(obj||{}).filter(function(k){
     var f=k.split('|')[0];
-    return !/^\d{4}-\d{2}-\d{2}$/.test(f) || f>=corte;
+    return /^\d{4}-\d{2}-\d{2}$/.test(f) ? f>=corte : !!vivas[k];
   }).sort().join(' ; ');
 }
 function saveCargaMirror(){ try{ localStorage.setItem(LS_CARGA, JSON.stringify(CARGA_CHK)); }catch(e){} }

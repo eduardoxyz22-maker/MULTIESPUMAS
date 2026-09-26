@@ -11,6 +11,8 @@
    3. 💵 «Ya cobré el flete — registrarlo» (Mis pedidos) reemplazaba el pago EN CURSO de otra venta sin
       guardarlo por venta: su imagen quedaba huérfana en Drive y el aviso al salir contaba 0. Además lo
       tipeado en esa otra venta (monto y recibo) aparecía en el bloque del flete.
+   4. 📦 Las tildes de la Lista de carga SIN fecha (las de ventas de tienda, de antes de que «Todos» dejara
+      de mostrarlas, §4gc) seguían en la celda para siempre: la poda solo miraba las fechas viejas.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado (la planilla vive en `window.SRV`), datos sintéticos (el repo es público).
@@ -338,6 +340,61 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
         !!r.quedan.v1 && !!r.quedan.v3 && !r.quedan.v2 && r.quedan.alSalir===true, J(r.quedan));
     chk('⚠️ con un pago DE LA VENTA en curso (y su captura) en esa misma venta, la captura no se tira ni pasa al flete: se avisa',
         r.v4.venta==='V4' && r.v4.tipo==='pago' && r.v4.comps==='IMG_V4' && /pago en curso/.test(r.toastV4), J([r.v4, r.toastV4]));
+    await page.close();
+  }
+
+  // ═══ 4. 📦 Las tildes SIN fecha de la Lista de carga se podan al escribir ═══════════════════
+  console.log('\n── 4. 📦 Lista de carga: las tildes viejas sin fecha (ventas de tienda) se podan al escribir ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      var out={};
+      var hoyF=todayStr();
+      var H1=P({ id:'H1', cliente:'CAMION HOY' });
+      var T1=P({ id:'T1', cliente:'VENTA DE TIENDA', fecha:'', turno:'', direccion:'SALIÓ DE TIENDA · Carmelo', zona:'TIENDA', entregado:true, verificado:true,
+                 vehiculo:'', chofer:'', productos:[{desc:'COLCHON TIENDA', medida:'140x190', cant:1}] });
+      var kHoy=cargaChkKey(hoyF, 'Foton nuevo', 'COLCHON SOFT 140x190');
+      var viejas=[ cargaChkKey('', 'Sin vehículo', 'COLCHON TIENDA 140x190'),     // una venta de tienda tildada en «Todos», antes de §4gc
+                   cargaChkKey('', 'Foton nuevo', 'ALMOHADA TIENDA'),
+                   'todos|Foton nuevo|COLCHON SOFT 140x190' ];                    // sin fecha de verdad: no la arma ninguna vista
+      var vieja10=cargaChkKey('2026-09-01', 'Foton nuevo', 'COLCHON SOFT 140x190'); // de más de 10 días: esa ya se podaba
+      await cargar([ H1, T1, filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', viejas.concat([vieja10]).join(' ; ')) ]);
+      out.leidas=Object.keys(CARGA_CHK).sort();
+      out.texto=textoCargaChk(CARGA_CHK);
+      // de punta a punta: el cargador tilda el colchón de HOY y se escribe la fila
+      abrirCarga(); setCargaDia('hoy');
+      var cb=[].filter.call(document.querySelectorAll('#carga-body input[type=checkbox]'), function(x){ return x.getAttribute('data-k')===kHoy; })[0];
+      out.hayTilde=!!cb;
+      if(cb){ cb.checked=true; cb.dispatchEvent(new Event('change')); }
+      await espera(1300);
+      var fila=window.SRV.filter(function(x){ return x.id===CARGA_ID; })[0];
+      out.escrita=fila?fila.observaciones:'(no está)';
+      out.cambios=Object.keys(CARGA_CAMBIOS); out.cola=getPending().length;
+      // control: un pedido SIN fecha que NO es de tienda (dato viejo) sigue en «Todos» y su tilde se guarda
+      var L1=P({ id:'L1', cliente:'VIEJO SIN FECHA', fecha:'', turno:'', productos:[{desc:'ALMOHADA X', medida:'', cant:2}] });
+      STATE.push(L1); window.SRV.push(JSON.parse(JSON.stringify(L1)));
+      var kL1=cargaChkKey('', vehiculoDe(L1)||'Sin vehículo', cargaProdKey(L1.productos[0]));
+      setCargaDia('todos');
+      var cb2=[].filter.call(document.querySelectorAll('#carga-body input[type=checkbox]'), function(x){ return x.getAttribute('data-k')===kL1; })[0];
+      out.hayTildeL1=!!cb2;
+      if(cb2){ cb2.checked=true; cb2.dispatchEvent(new Event('change')); }
+      await espera(1300);
+      fila=window.SRV.filter(function(x){ return x.id===CARGA_ID; })[0];
+      out.escrita2=fila?fila.observaciones:'(no está)';
+      out.cambios2=Object.keys(CARGA_CAMBIOS); out.cola2=getPending().length;
+      out.kHoy=kHoy; out.kL1=kL1; out.viejas=viejas; out.vieja10=vieja10;
+      closeCarga();
+      return out;
+    });
+    chk('punto de partida: la fila trae las tildes viejas sin fecha', r.viejas.every(function(k){ return r.leidas.indexOf(k)>=0; }), J(r.leidas));
+    chk('⚠️ al escribir se podan las tildes SIN fecha que ya no puede tildar nadie (antes quedaban para siempre)',
+        r.viejas.every(function(k){ return r.texto.indexOf(k)<0; }), r.texto);
+    chk('control: la de más de 10 días se sigue podando', r.texto.indexOf(r.vieja10)<0, r.texto);
+    chk('⚠️ de punta a punta: tildar el colchón de hoy escribe SOLO esa tilde en la planilla', r.hayTilde && r.escrita===r.kHoy, J(r.escrita));
+    chk('control: …y el cambio se confirma (no queda nada por mandar ni en la cola)', r.cambios.length===0 && r.cola===0, J([r.cambios, r.cola]));
+    chk('control: la tilde de un pedido SIN fecha que no es de tienda (dato viejo, sale en «Todos») se guarda y se confirma',
+        r.hayTildeL1 && r.escrita2.indexOf(r.kL1)>=0 && r.escrita2.indexOf(r.kHoy)>=0 && r.cambios2.length===0 && r.cola2===0, J([r.escrita2, r.cambios2, r.cola2]));
+    chk('⚠️ …y las viejas de tienda siguen afuera', r.viejas.every(function(k){ return r.escrita2.indexOf(k)<0; }), r.escrita2);
     await page.close();
   }
 
