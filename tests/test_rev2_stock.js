@@ -10,6 +10,8 @@
       (d) Los códigos del Excel (`c.cod`) sobreviven: sin ellos, al releer la fila `stockMigrar`
           volvía a sumar el CH1297 SOMIER PARRILLA NEGRO al SOMIER NEGRO (el arreglo del 25/09,
           deshecho por otro camino).
+   2. 📜 HISTORIAL DE CORTES: «contra el anterior» compara con el anterior DEL MISMO almacén, también
+      cuando se suben los dos (acá y Moreno) el mismo día.
 
    Datos SINTÉTICOS. Reloj de la página clavado en el 16/09/2026, 10:00 de Bolivia.
 
@@ -140,6 +142,24 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     chk('⚠️ lo contado que no entró en la lista NO se pierde: el repuesto sigue con su número',
         r.antes===2 && r.despues===2 && r.n===r.viejos, 'antes '+r.antes+' → después '+r.despues+' · claves '+r.viejos+' → '+r.n);
   }
+
+  // ══ 2. 📜 Historial de cortes ═══════════════════════════════════════════
+  console.log('\n── 2. 📜 Historial: «contra el anterior» del mismo almacén ──');
+  r = await page.evaluate(() => {
+    STOCK=stockVacio(); STOCK_CARGADO=true;
+    var t=Date.now();
+    STOCK.h=[{f:todayStr(),hora:'08:00:00',alm:'PRODUCTOS TERMINADOS FAB.',rol:'log',n:5,u:50,ts:t},
+             {f:todayStr(),hora:'08:10:00',alm:'IM - PRODUCTOTERMINADO',rol:'otro',n:5,u:80,ts:t-1000},
+             {f:_adel(-1),hora:'08:00:00',alm:'PRODUCTOS TERMINADOS FAB.',rol:'log',n:5,u:60,ts:t-86400000},
+             {f:_adel(-1),hora:'08:10:00',alm:'IM - PRODUCTOTERMINADO',rol:'otro',n:5,u:70,ts:t-86401000}];
+    abrirStockHistorial();
+    var filas=[].slice.call(document.querySelectorAll('#modal-box tbody tr')).map(function(tr){ return tr.textContent.replace(/\s+/g,' '); });
+    closeModal(); return filas;
+  });
+  chk('⚠️ el corte de acá de hoy dice «−10 contra el anterior» (60 → 50), aunque el de abajo sea de Moreno',
+      /-10 contra el anterior/.test(r[0]||''), r[0]);
+  chk('⚠️ …y el de Moreno «+10» (70 → 80)', /\+10 contra el anterior/.test(r[1]||''), r[1]);
+  chk('los primeros de cada almacén no comparan con nada', !/contra el anterior/.test(r[2]||'') && !/contra el anterior/.test(r[3]||''), (r[2]||'')+' | '+(r[3]||''));
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

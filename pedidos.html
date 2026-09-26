@@ -16545,7 +16545,9 @@ function abrirStockHistorial(){
     (h.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:9px">Cada vez que se sube un Excel de existencias queda anotado acá. Se guardan los últimos '+STOCK_HIST+'.</p>'+
       '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Corte</th><th>Almacén</th><th>Productos</th><th>Unidades</th></tr></thead><tbody>'+
       h.map(function(x,i){
-        var prev=h[i+1] && h[i+1].alm===x.alm ? h[i+1] : null;
+        /* (26/09) El anterior DEL MISMO almacén, no el renglón de abajo: subiendo el de acá y el de
+           Moreno el mismo día, el de abajo es siempre del otro y «contra el anterior» no salía nunca. */
+        var prev=h.slice(i+1).filter(function(y){ return y && y.alm===x.alm; })[0]||null;
         var dif=prev? (x.u-prev.u) : null;
         return '<tr><td><b>'+fmtFecha(x.f)+'</b>'+(x.hora?(' '+esc(x.hora)):'')+
           '<br><span style="color:var(--muted);font-size:.9em">subido '+tsFmt(x.ts)+'</span></td>'+
