@@ -8741,7 +8741,7 @@ function renderColaAviso(){
     h+='<div style="background:#FEF3E2;border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:10px;padding:10px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00">'+
        '⏳ <b>'+pend.length+' guardado'+(pend.length===1?'':'s')+' de este dispositivo todavía NO '+(pend.length===1?'llegó':'llegaron')+' a la planilla</b> ('+motivo+'). '+
        'Las demás computadoras no lo ven hasta que se mande. No cierres esto sin que diga 0. '+
-       '<a onclick="flushPending().then(function(){ toast(\'Reintentado\',\'ok\'); renderColaAviso(); })" style="text-decoration:underline;cursor:pointer">Reintentar ahora</a>'+
+       '<a onclick="misReintentarCola()" style="text-decoration:underline;cursor:pointer">Reintentar ahora</a>'+
        (CLAVE_RECHAZADA?' · <a onclick="pedirClaveEquipo()" style="text-decoration:underline;cursor:pointer">🔐 Ingresar la clave</a>':'')+
        '<div style="font-size:.76rem;margin-top:4px">'+pend.slice(0,5).map(function(x){ return esc((String(x.id||'').indexOf('__ret_')===0?'💵 retiro de '+(x.vendedor||''):(x.cliente||x.id||''))); }).join(' · ')+(pend.length>5?' …':'')+'</div></div>';
   }
@@ -8752,6 +8752,16 @@ function renderColaAviso(){
        '<a onclick="localStorage.removeItem(LS_RECHAZOS);renderColaAviso()" style="text-decoration:underline;cursor:pointer;font-size:.76rem">Ya los revisé, limpiar</a></div>';
   }
   el.innerHTML=h;
+}
+/* (26/09) «Reintentar ahora» decía «Reintentado» en VERDE aunque no hubiera salido nada (sin señal,
+   servidor caído): el cartel ámbar seguía con el mismo número y el ✓ decía otra cosa. Ahora dice lo
+   que pasó, como el botón del cartel «Quedó en cola» (§4eo). */
+function misReintentarCola(){
+  return flushPending().then(function(){
+    var n=getPending().length;
+    toast(n ? ('⏳ Sigue sin llegar a la planilla: '+n+' en la cola de este dispositivo. Se reintenta solo.') : '✓ Ya llegó a la planilla', n?'err':'ok', n?7000:undefined);
+    renderColaAviso(); if(!n) renderMis();
+  });
 }
 function updateFooter(){
   renderColaAviso();

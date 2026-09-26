@@ -174,6 +174,30 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   chk('…el aviso dice «Pedido enviado al equipo», no «Cambios guardados»', /Pedido enviado al equipo/.test(r.toasts) && !/Cambios guardados/.test(r.toasts), r.toasts);
   chk('…y vuelve a Mis pedidos, de donde salió', r.enMis===true);
 
+  // ══ 5. «Reintentar ahora» de la cola dice lo que pasó ═════════════════════
+  console.log('\n── 5. La cola sin enviar ──');
+  r = await page.evaluate(async () => {
+    CONNECTED=true;
+    var q=__P({id:'en-cola', cliente:'CARGADO SIN SEÑAL'});
+    STATE=[q]; setPending([q]);
+    var falla=true;
+    apiSave=function(rec){ return falla ? Promise.reject(new Error('Failed to fetch')) : Promise.resolve({ok:true, pedido:Object.assign({}, rec, {rev:1})}); };
+    __verMis();
+    var toastTxt=function(){ return document.getElementById('toast').textContent; };
+    var link=function(){ return [].slice.call(document.querySelectorAll('#mis-cola a')).filter(function(a){ return /Reintentar ahora/.test(a.textContent); })[0]; };
+    var o={ aviso:(document.getElementById('mis-cola').textContent||'').replace(/\s+/g,' ') };
+    link().click(); await new Promise(function(r){ setTimeout(r,200); });
+    o.t1=toastTxt(); o.c1=document.getElementById('toast').className; o.cola1=getPending().length;
+    falla=false;
+    link().click(); await new Promise(function(r){ setTimeout(r,200); });
+    o.t2=toastTxt(); o.cola2=getPending().length; o.aviso2=(document.getElementById('mis-cola').textContent||'').trim();
+    CONNECTED=false;
+    return o;
+  });
+  chk('el cartel ámbar dice cuántos no llegaron', /1 guardado de este dispositivo todavía NO llegó/.test(r.aviso), r.aviso.slice(0,120));
+  chk('⚠️ sin señal, «Reintentar ahora» NO dice un «Reintentado» en verde: dice que sigue en la cola', /Sigue sin llegar/.test(r.t1) && /err/.test(r.c1) && r.cola1===1, r.t1+' · '+r.c1);
+  chk('con señal dice que llegó, y el cartel se va', /Ya llegó a la planilla/.test(r.t2) && r.cola2===0 && r.aviso2==='', r.t2+' · cola '+r.cola2);
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
