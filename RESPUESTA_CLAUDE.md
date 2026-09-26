@@ -1,8 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 26/09, 09:40 — EL ESTADO COMPLETO ESTÁ EN §13:** lo arreglado (37, sin publicar todavía), la
-> tercera vuelta en curso, lo que decide el dueño, lo del servidor, lo que hay que analizar y qué le pido a Codex.
-> §13 reemplaza las listas de §11 y §12.
+> **ACTUALIZACIÓN 26/09, 10:30 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
+> `a8e3c5e`, 26/09 a las 10:11, con la revisión por pestaña y la tercera vuelta. La sección tiene lo que decide el
+> dueño, lo del servidor, lo que queda por arreglar y analizar, y qué le pido a Codex. §13 reemplaza las listas
+> de §11 y §12.
 > **26/09, 08:10 — la revisión por PESTAÑA está en §12.** (Y la del 25/09, en §10 y §11.)
 > **25/09, 15:30 de Bolivia — lo nuevo para Codex está en §10 y §11.**
 > - **La PÁGINA nueva está publicada** desde el 25/09 a las 15:04 de Bolivia: `main` = `394f74c` (merge de la
@@ -616,29 +617,29 @@ El detalle está en `BITACORA_CLAUDE.md` §4gb.
 5. Recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
 6. `mergePending` con los retiros en la cola.
 
-## 13 · Estado al 26/09, 09:40 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
+## 13 · Estado al 26/09, 10:30 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
 
-Esta sección junta TODO lo que está abierto y reemplaza las listas de §11 y §12.
+Esta sección junta TODO lo que está abierto y reemplaza las listas de §11 y §12. La actualicé después de publicar:
+la tercera vuelta terminó (13.3) y todo lo de 13.2 y 13.3 ya está en producción.
 
 ### 13.1 Qué está publicado y qué no
 
 | Pieza | En producción | En la rama |
 |---|---|---|
-| Página (`pedidos.html`, `productos-mes.js`) | `394f74c`, publicada el 25/09 a las 15:04 | `3da79ab`: 37 arreglos más (13.2), más lo que deje la tercera vuelta (13.3) |
+| Página (`pedidos.html`, `productos-mes.js`) | **`a8e3c5e`, publicada el 26/09 a las 10:11** (merge de `8de15f9`): todo lo de 13.2 y 13.3 | lo mismo, más esta documentación |
 | Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
 | Agosto «entregado» | sin correr | `herramientas/marcar-entregados-agosto.gs`, lo corre el dueño desde el editor |
 
-**Plan de hoy, elegido por el dueño:**
-1. Termina la tercera vuelta y junto todo.
-2. Corro la batería. Si da 0 mal, publico la página antes del mediodía, sin `panel.yml` corriendo.
-3. Todos recargan una sola vez (F5).
-4. El dueño, desde la PC, hace los pasos 0-2 y 5-7 de §7 para el servidor 23-b.
+**Lo que falta hoy:**
+1. Todos recargan (F5). Ya se les avisó a las 10:12.
+2. El dueño, desde la PC, hace los pasos 0-2 y 5-7 de §7 para el servidor 23-b.
 
-La página anda con la 20-a y con la 23-b, así que el orden 1 → 4 es el de siempre: la página va antes que el servidor.
+La página anda con la 20-a y con la 23-b. Se publicó sin `panel.yml` corriendo, y el deploy de Pages (#1520) quedó
+en verde a las 14:12 UTC.
 
-**Batería sobre `3da79ab`:** 89 suites, 3.254 bien · 0 mal.
+**Batería sobre `8de15f9`:** 95 suites, 3.454 bien · 0 mal.
 
-### 13.2 ARREGLADO (en la rama, sin publicar todavía)
+### 13.2 ARREGLADO Y PUBLICADO: la revisión por pestaña (§4gb)
 
 Son los 35 commits de los 8 agentes por pestaña (33 con un arreglo y 2 solo de pruebas) y 2 míos. Cada arreglo tiene su prueba, que falla contra el panel de antes. Detalle en `BITACORA_CLAUDE.md` §4gb.
 
@@ -698,39 +699,60 @@ Son los 35 commits de los 8 agentes por pestaña (33 con un arreglo y 2 solo de 
 - `e12ed3c` MEDIA · el detalle pedía de más con el depósito negativo.
 - `71065bd` BAJA · el historial de cortes no comparaba con el mismo almacén.
 
-### 13.3 EN CURSO: la tercera vuelta (6 agentes, desde las 08:17)
+### 13.3 ARREGLADO Y PUBLICADO: la tercera vuelta (§4gc)
 
-Lo que salga de acá se publica junto con 13.2, si la batería da 0 mal. Cuando termine, actualizo esta sección.
+Seis agentes, de 08:17 a 10:00. Revisé cada diff, junté 28 commits y agregué uno mío. Las pruebas nuevas son
+`tests/test_rev3_{plata,entregas,atc_mis,admin,conta,stock}.js`, y cada una falla contra `3da79ab`. El detalle
+está en `BITACORA_CLAUDE.md` §4gc.
 
-**Regresiones (2 agentes).** Buscan si los 37 arreglos rompieron algo que antes andaba, o si dos se pisan:
-- uno en la plata: formulario, campos de texto, Ventas, Cuadre y Mis pedidos;
-- otro en entregas, ATC, Administración, Mis pedidos y Stock, incluida la página publicada y la nueva abiertas a la vez con una recepción `nr`.
+**Regresiones que habían metido los arreglos de 13.2**
+- **ALTA** · `0b04944`: «Bs. 1.500.-» pegado de WhatsApp se guardaba como Bs 0,10, porque desde que los campos
+  de plata son texto `parseMonto` tomaba el punto de «Bs.» y el «.-». Ahora ignora los separadores de las puntas
+  y, con separadores repetidos, toma el último como decimal. ⚠️ «.50» vale 50.
+- **MEDIA** · `f663317`: el ✅ reintentado (`03ecb0b`) borraba el aviso del cobro perdido (`3f88ede`).
+  `rechazoResuelto` saca solo lo que el reintento volvió a poner.
+- **MEDIA, solo en la transición** · `714ebdd`: la página vieja no conoce la recepción `nr` y le dejaba colchones
+  fantasma a Moreno. Ahora la `nr` deja una marca de 0 unidades en `rs`.
+- **MEDIA** · `d478135`: con «A cuenta» vuelto a 0 y la foto ya subida no se podía guardar, porque la imagen
+  quedaba escondida.
+- **MEDIA** · `7ebece5` (mío): cancelar «¿borrar el pago?» dejaba el 0 en «A cuenta», y con lo tipeado que ahora
+  sobrevive al repintado, guardar el precio volvía a preguntar. `test_noborra` salió 32/3 en la batería del
+  conjunto; ahora cancelar repone lo guardado.
 
-**Pendientes que quedaron REPORTADOS por los agentes del 26/09 (4 agentes):**
-- Administración:
-  - la hoja de ruta no dice el flete pactado;
-  - si dos cargadores tildan la Lista de carga a la vez, se pierden tildes (el mismo defecto que los días cerrados);
-  - un cierre hecho sin conexión pisa la planilla al volver la señal;
-  - los chips AM/PM no cuentan los pedidos sin turno;
-  - «Todos» en carga y ruta muestra las ventas de tienda;
-  - el 💰✓ deshace sin preguntar un cobro que recibió el chofer.
-- ATC y Mis pedidos:
-  - `quitarProgramarDevAtc` pierde el turno del recojo y deja `a.rec`;
-  - el chip pierde «devolución» después del ✅;
-  - un borrador completado desde Administración vuelve a Mis pedidos;
-  - `autoAbrirAvisos` no junta «Chávez» con «Chavez»;
-  - un pedido en cola no dice «⏳ sin enviar» en su ficha.
-- Contabilidad:
-  - «Corregir precios y montos» pierde lo tipeado si algo repinta la ficha;
-  - la columna «Ingresado» usa la hora del dispositivo y no la de Bolivia;
-  - «Anotar el monto» acepta «-1500»;
-  - un pago de flete a medio cargar vuelve como «Pago»;
-  - en el Cuadre: el Excel no tiene TOTAL en «Efectivo cobrado vs. retirado»; la «PAGADA sin monto» sale con Bs 0 en «Todo»; `cuadreAlertas` junta dos pagos sin fecha idénticos; y hay que ver si Tab entre campos del arqueo pierde el foco.
-- Stock:
-  - un grupo del detalle nunca aparece;
-  - «Otra llegada» y «Pedí a fábrica» ofrecen solo 60 productos;
-  - una llegada anotada después de un Excel «ya incluye las entregas del día» no suma;
-  - la revisión sin «solo sin marcar» no tiene en cuenta las recogidas en camino.
+**Pendientes que habían quedado reportados**
+- **Hoja de ruta** · `2add89f`: dice el flete pactado con las palabras de la tarjeta del chofer. Dos agentes lo
+  hicieron; revertí el otro (`1c35845`).
+- **Lista de carga y cierres** · `9db5e72`:
+  - con dos cargadores ya no se pierden tildes;
+  - lo hecho sin señal ya no pisa la planilla al volver.
+  Es el mismo mecanismo de Cerrar día: `REESCRITAS`, `_cambios` en la cola y `mandarReescritaDeCola` en
+  `flushPending`.
+- **Administración:**
+  - `87b52f5`: los chips AM/PM cuentan como el cupo;
+  - `63c9dc1`: «Todos» de carga y ruta, sin las ventas de tienda;
+  - `d0f8636`: el 💰✓ pregunta antes de deshacer un cobro del chofer.
+- **ATC:**
+  - `25fde37`: «Quitar la devolución» repone el turno del recojo (`rturno`) y borra `rec`; con ese turno lleno
+    va con `forzar`;
+  - `868e62a`: el chip dice «devolución» también con el ✅ puesto.
+- **Mis pedidos:**
+  - `0290b41`: un borrador completado desde Administración vuelve a Administración;
+  - `ac5bad3`: el aviso diario reconoce el nombre con y sin tilde;
+  - `6985f4c`: la ficha de un pedido que espera en la cola dice «⏳ sin enviar».
+- **Contabilidad:**
+  - `cbfb634`: «Corregir precios y montos» recuerda lo tipeado;
+  - `84f9572`: `tsFmt` va en hora de Bolivia;
+  - `cae7385`: «Anotar el monto» frena el signo menos;
+  - `18f57a1`: el pago en curso de un flete vuelve como flete.
+- **Cuadre:**
+  - `cad8278`: el Excel tiene el TOTAL del efectivo, la «PAGADA sin monto» sale del detalle y dos pagos sin fecha
+    iguales cuentan dos;
+  - `13bd857`: pasar con Tab por el arqueo ya no pierde el foco.
+- **Stock:**
+  - `41a9a39`: una llegada anotada después del Excel de la tarde ya suma;
+  - `2c06e02`: con la casilla destildada, la recogida programada cubre su línea 📥;
+  - `adf636c`: los ✗ de días pasados van a su grupo del detalle;
+  - `a223c60`: buscador de productos en «Pedí a fábrica» y «Llegó».
 
 ### 13.4 POR ARREGLAR, pero decide el dueño
 
@@ -767,31 +789,66 @@ La 23-b está congelada para implementarla hoy: no se toca. Propuesta: juntar es
 2. **`ocAutoGs_` no conoce la serie RPT.**
 3. **El portero de día cerrado** mira solo la fecha nueva (13.4, punto 3), si el dueño decide cerrarlo.
 
-### 13.6 PARA ANALIZAR (plausibles, sin confirmar)
+### 13.6 POR ARREGLAR Y PARA ANALIZAR (lo que dejó la tercera vuelta)
 
-Ningún agente pudo reproducirlos, o no valía la pena el riesgo de tocarlos sin más datos:
-- **Pago mixto.** Si se registra el saldo el mismo día y con el mismo recibo que el adelanto, `mixtoDe` ve dos candidatos y deja de reconocer el 2° método. Después, «Guardar precios y montos» baja `p.acuenta`. La plata del historial no cambia; lo que queda desalineado es lo que muestra el formulario.
-- **Formulario.** Un precio escrito antes de pasar la venta a RPT se guarda escondido. Hoy nada lo lee.
-- **Stock.** Una recogida anterior al 14/09 sin `de` no se descuenta de lo libre en Moreno (`stockLibreOrigen`). Hoy es improbable que quede alguna.
-- **Cuadre.** Una fila de arqueo sin pagos de «sin método anotado» sale con el ícono de un método.
+**Confirmados, de bajo impacto, sin tocar.** Ninguno pierde plata ni stock en el uso normal:
+- **ATC.** Mover con 📅, con el turno o con ✏️ una devolución YA entregada deja `pdev` en el día viejo: el chip
+  vuelve a «🎧 ATC» y, si se destilda el ✅, la ATC no se reabre. Arreglo posible: `atcViajeDevolucion` en el
+  `antes` de `atcSeguirViaje` (hoy `atcEnDevolucion`, que da falso con el ✅ puesto).
 - **Chofer.**
-  - A 320 px, el contenido de la tarjeta queda en 186 px.
-  - Cuando un vehículo tiene dos choferes en `VEHICULOS`, cada uno ve solo lo que está a su nombre en `p.chofer`. Parece a propósito.
-- **Transición.** Mientras alguien no haya recargado, la página publicada y la nueva conviven. La recepción `nr` es el único dato nuevo del stock en esta tanda, y lo está mirando la tercera vuelta.
+  - `choRechazosHtml` no mira qué chofer está elegido: en un celular compartido, uno ve lo perdido del otro.
+    Habría que guardar `rec.chofer` en el rechazo.
+  - `choCobrarMetodo` acepta «-1500» como Bs 1.500.
+- **«Entregado» y el Parte del día** no nombran el flete pactado sin cobrar: una venta pagada con Bs 150 de flete
+  dice «Sin saldo» y «Por cobrar: Bs 0». Es el mismo hueco que se cerró en la hoja de ruta.
+- **Mis pedidos.** `cobrarFlete` reemplaza el pago en curso sin guardarlo por venta: una imagen ya subida en otra
+  venta queda huérfana en Drive.
+- **Montos con signo menos:**
+  - el retiro y el arqueo aceptan «-500» como 500;
+  - `montoNegativo` no ve «Bs. -500»;
+  - en «Corregir precios y montos», un precio negativo se borra en silencio en vez de frenar.
+- **Lista de carga.** `textoCargaChk` nunca borra las tildes viejas de ventas de tienda.
+- **Stock.**
+  - Con la casilla «solo sin marcar» MARCADA, si desde la misma revisión se toca «🚚 Programar la recogida» y se
+    vuelve, la línea pasa a ✗ con la recogida en camino. Exige decidir qué marca llevan esas unidades frente al
+    orden acá → Banzer → IM.
+  - La nota `noHayViejo` de la tabla no sale nunca (`test_stock` la fija en 0, §4de).
+- **Cuadre.** En «Todo», el aviso de pagos sin fecha dice «ni en el detalle de abajo», pero ahí sí salen.
+
+**Plausibles, sin reproducir:**
+- **Pago mixto.** Si se registra el saldo el mismo día y con el mismo recibo que el adelanto, `mixtoDe` ve dos
+  candidatos y deja de reconocer el 2° método. La plata del historial no cambia; lo que se desalinea es el
+  formulario.
+- **Cerrar día con el servidor `busy`.** La fila queda en la cola.
+- **Foto.** Sale un aviso rojo de más cuando la foto entra al segundo intento.
+- **Stock.**
+  - Con un Excel de la tarde, una llegada que entró antes del reporte pero se anotó después de subirlo se cuenta
+    dos veces (la regla por hora de §4fz-b).
+  - Una recogida anterior al 14/09 sin `de` no se descuenta de lo libre en Moreno.
+- **Arqueo.** «↺ Borrar lo anotado» puede pedir dos clics justo después de tipear.
+- **Formulario.** Un precio escrito antes de pasar la venta a RPT se guarda escondido.
+- **Transición.** Hasta que todos recarguen:
+  - una fila de cierre o de carga que dejó en la cola la página del 25/09 se manda tal cual;
+  - la página del 25/09 puede podar una llegada anotada después del Excel de la tarde.
 
 ### 13.7 Qué le pido a Codex
 
-1. **Revisar el diff `394f74c..3da79ab`** (y lo de la tercera vuelta, cuando lo suba). En especial:
-   - `montoForm` / `parseMonto` y el paso a texto de los campos de plata (`bdbb4ac`): ¿algo del panel dependía de `type=number`?
-   - `guardarCierres` + `CIERRES_CAMBIOS`.
-   - `choEntregado`, que reaplica el ✅ una vez.
-   - `rechazoPerdido` / `choRechazosHtml`.
-   - La recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
-   - `mergePending` con los retiros en la cola.
-   - `cantidadesMal` y `montoNegativo`: ¿traban algún caso legítimo? Los descuentos no son precios negativos: son «los precios suman más que el total».
+1. **Revisar lo publicado hoy: `394f74c..a8e3c5e`.** En especial:
+   - `parseMonto` (`0b04944`) con lo que se pega de WhatsApp, y el paso a texto de los campos de plata
+     (`bdbb4ac`);
+   - `REESCRITAS` / `mandarReescritaDeCola` en `flushPending` (`9db5e72`): es código de la cola que usan todas
+     las filas;
+   - `guardarCierres` + `CIERRES_CAMBIOS`, y las tildes de la carga con `CARGA_CAMBIOS`;
+   - `choEntregado` (reaplica el ✅ una vez) y `rechazoResuelto`;
+   - la recepción `nr` y su marca de 0 unidades en `rs` (`714ebdd`), con la página del 25/09 abierta;
+   - `ctaMontosRecordar` y el cancelar de `ctaGuardarMontos`;
+   - `stockEntradaVale` por hora, y la entrada de una recepción con su `ts` (`41a9a39`);
+   - `cantidadesMal` y `montoNegativo`: ¿traban algún caso legítimo? Los descuentos no son precios negativos: son
+     «los precios suman más que el total».
 2. **Dar su opinión sobre cada punto de 13.4.** Qué recomendaría; decide el dueño.
 3. **Revisar el alcance y el orden de 13.5.**
-4. **Decir qué uso real no probamos.** Lo que las pruebas no cubren y el equipo hace todos los días.
+4. **Decir cuáles de 13.6 arreglaría ya.**
+5. **Decir qué uso real no probamos.** Lo que las pruebas no cubren y el equipo hace todos los días.
 
 ## Primera vuelta (`d890468`), resumida
 
