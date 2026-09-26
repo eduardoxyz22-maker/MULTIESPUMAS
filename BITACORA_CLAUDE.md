@@ -7445,6 +7445,38 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gf. 26/09, noche: revisión del stock y los almacenes después de Banzer (2026-09-26)
+
+Pedido del dueño: *«pon un agente en stock y almacén a revisar que todo quedó bien»*. Un agente revisó contra lo
+publicado (`39b833c`).
+
+**Quedó bien.** Las cuentas de acá + Banzer + IM, las líneas partidas, las entregas, las fechas pasadas y el «ya
+incluye las entregas del día». ATC, RPT, Eduardo y los productos de tienda no cambiaron su regla. La revisión
+automática: en 8 repartos, lo que muestra es lo que escribe «Aplicar». La carga en dos bloques y los textos del
+chofer. El Excel real de Banzer (solo en el scratchpad): 81 productos, 309 unidades, hora 10:30 del pie. La celda del
+stock crece ~10 letras por almacén.
+
+**Cuatro arreglos** (`ecacd93`; `tests/test_rev_banzer.js`, 25 comprobaciones, 7 rojas contra `39b833c`):
+- **MEDIA, lentitud.** Con 900 pedidos, «Todos» de la carga tardaba ~1 s en un celular (antes de Banzer, 0,04 s):
+  `normNombre` se llamaba 347.000 veces. Ahora `normNombre`, `stockNorm` y `stockAlmLimpio` recuerdan su resultado
+  (tienen que seguir siendo PURAS). Carga 0,16 s; Administración 0,21 s; Stock 0,29 s.
+- **BAJA.** Un camión con un pedido sin productos decía «se carga en .».
+- **BAJA.** Un celular sin F5 que guarda el stock borraba `g[nm].inc`, y lo entregado desde Banzer ese día se
+  descontaba dos veces. `leerStock` lo repone del historial.
+- **BAJA.** El historial decía «(no sale camión)» para el Excel de Banzer subido con el diálogo viejo.
+
+**Decisión del dueño (19:35).** El orden dentro de los almacenes queda como está: «el que la cubre entera» antes que
+Banzer. Con 0 acá, 3 en Banzer y 5 en IM, un pedido de 4 sale entero de IM.
+
+**Quedan para el dueño, sin tocar.**
+- Tres casos de transición con recogidas de Banzer anotadas antes de las 17:15. Se resuelven cerrando o cancelando
+  esas recogidas y marcando ✔ lo que ya está en fábrica; se le dijo.
+- La ficha de una línea Banzer + IM enciende solo «📥 IM».
+- «Qué producir» dice «sin contar» si acá no tiene Excel pero Banzer sí.
+
+**Batería sobre `ecacd93`:** 100 suites, 3.797 bien · 1 mal. La mala fue `test_borradores` (94/1), y no se repite:
+tres corridas solas, 95/0 cada una. Fue una falla suelta con la máquina cargada.
+
 ## 4ge. 26/09: Banzer es un depósito del que salen camiones (2026-09-26)
 
 **El pedido del dueño.** *«Salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a
