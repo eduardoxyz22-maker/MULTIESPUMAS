@@ -300,6 +300,45 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 5. Mis pedidos: el que espera en la cola de este dispositivo lo dice ═══════════
+  /* El cartel de arriba contaba cuántos no llegaron, pero la ficha de cada uno era igual a las
+     demás: nada decía CUÁL no estaba en la planilla (ni en la ventana, de donde se copia al grupo). */
+  console.log('\n── 5. ⏳ Mis pedidos: la ficha de un pedido que todavía no llegó a la planilla dice «sin enviar» ──');
+  {
+    const page = await nueva(null, 380);
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var q=_P({id:'en-cola', cliente:'CARGADO SIN SEÑAL', fecha:'2026-09-24'});
+      var ok=_P({id:'ya-esta', cliente:'YA ESTA EN LA PLANILLA', fecha:'2026-09-24'});
+      STATE=[ok, q]; saveMirror(); setPending([q]);
+      var falla=true;
+      apiSave=function(rec){ return falla ? Promise.reject(new Error('Failed to fetch')) : Promise.resolve({ok:true, pedido:Object.assign({}, rec, {rev:1})}); };
+      showView('mis'); await new Promise(function(r){ setTimeout(r,200); });
+      var ficha=function(id){
+        MIS_TODOS=false; MIS_FILTER='todos'; document.getElementById('mis-vendedor').value='Carola Chavez'; renderMis();
+        var c=[].filter.call(document.querySelectorAll('#mis-lista .cho-card'), function(x){ return (x.getAttribute('onclick')||'').indexOf("'"+id+"'")>=0; })[0];
+        return c ? c.textContent.replace(/\s+/g,' ') : '(no está)';
+      };
+      var out={ cola:ficha('en-cola'), otra:ficha('ya-esta'), cartel:(document.getElementById('mis-cola').textContent||'').replace(/\s+/g,' ') };
+      showMisModal('en-cola'); out.ventana=document.getElementById('modal-box').textContent.replace(/\s+/g,' '); closeModal();
+      showMisModal('ya-esta'); out.ventanaOtra=document.getElementById('modal-box').textContent.replace(/\s+/g,' '); closeModal();
+      out.ancho={doc:document.documentElement.scrollWidth, vista:window.innerWidth};
+      // vuelve la señal: se manda y la ficha deja de decirlo
+      falla=false; await flushPending(); await new Promise(function(r){ setTimeout(r,100); });
+      out.despues=ficha('en-cola'); out.colaDespues=getPending().length;
+      return out;
+    }, BASE);
+    chk('punto de partida: el cartel de arriba cuenta 1 sin llegar', /1 guardado de este dispositivo todavía NO llegó/.test(r.cartel), r.cartel.slice(0,120));
+    chk('⚠️ la ficha del pedido en la cola dice «⏳ sin enviar» (antes era una ficha más)', /⏳ sin enviar/.test(r.cola), r.cola.slice(0,200));
+    chk('…y la de un pedido que ya está en la planilla, no', r.otra!=='(no está)' && !/sin enviar/.test(r.otra), r.otra.slice(0,160));
+    chk('⚠️ la ventana del pedido en la cola avisa que todavía no está en la planilla (y que no lo pase al grupo)',
+        /todavía NO llegó a la planilla/.test(r.ventana) && /grupo/.test(r.ventana), r.ventana.slice(0,240));
+    chk('…y la de un pedido que ya está, no', !/NO llegó a la planilla/.test(r.ventanaOtra), r.ventanaOtra.slice(0,160));
+    chk('en el celular (380 px) la ficha con el aviso no se sale de la pantalla', r.ancho.doc<=r.ancho.vista, J(r.ancho));
+    chk('con señal se manda y la ficha deja de decir «sin enviar»', r.colaDespues===0 && !/sin enviar/.test(r.despues), r.despues.slice(0,160));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

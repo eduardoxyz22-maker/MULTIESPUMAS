@@ -12249,6 +12249,9 @@ function choferTexto(p){
   var vh=vehiculoDe(p);
   return '🚚 <b>'+esc(c)+'</b>'+(vh?(' <span style="color:var(--muted)">· '+esc(vh)+'</span>'):'');
 }
+/* ⏳ (26/09) ¿Espera en la cola de ESTE dispositivo? El cartel de arriba contaba cuántos, pero la ficha
+   era igual a las demás: nada decía CUÁL no está en la planilla (ni en la ventana, de donde se copia). */
+function enColaLocal(id){ var a=getPending(); for(var i=0;i<a.length;i++) if(a[i] && String(a[i].id)===String(id)) return true; return false; }
 /* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
    en el celular, que es donde las vendedoras miran esto. */
 function misCardHtml(p, n, todos){
@@ -12278,6 +12281,7 @@ function misCardHtml(p, n, todos){
         '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(fechaSalida(p)))+   // (26/09) la de tienda, el día que se vendió
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
       docChip(p)+
+      (enColaLocal(p.id)?'<span class="badge b-amber" title="Todavía no llegó a la planilla: está en la cola de este dispositivo y se manda solo">⏳ sin enviar</span>':'')+   // (26/09)
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
@@ -12382,6 +12386,8 @@ function showMisModal(id){
   var entrega=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+' '+atrasoBadge(p);
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
+  // ⏳ (26/09) En la cola de este dispositivo: lo mismo que dice «Quedó en cola» al guardar (§4eo).
+  if(enColaLocal(p.id)) alertas+=alertBox('⏳ <b>Sin enviar:</b> este pedido todavía NO llegó a la planilla. Está en la cola de este dispositivo y se manda solo cuando haya conexión; hasta entonces las demás computadoras no lo ven y <b>no lo pases al grupo todavía</b>.');
   var atr=textoAtraso(p);
   if(atr) alertas+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:var(--red)">⏰ <b>Atrasado '+atr+'.</b> '+(turnoDe(p)?('Era para el turno '+turnoDe(p)+' del '+esc(fmtFecha(p.fecha))+'.'):('Era para el '+esc(fmtFecha(p.fecha))+'.'))+' Preguntá al administrador cómo va.</div>';
   if(esModificado(p)) alertas+=alertBox('⚠️ <b>Lo modificaste después de que el almacén ya lo había revisado.</b> Les quedó el aviso para que revisen el stock de nuevo — el aviso se les saca cuando ellos lo revisan.');
