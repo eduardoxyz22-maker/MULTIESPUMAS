@@ -1813,6 +1813,16 @@ function atcAlMarcarEntregado(p){
 function atcSeguirViaje(p, antes){
   if(antes && p && esATC(p.oc)) mergeAtcDatos(p, { pdev: p.fecha, pturno: normTurno(p.turno) });
 }
+/* ✅ (26/09) Lo contrario de `atcAlMarcarEntregado`: cerrar o reabrir la ATC desde «📦 Anotar
+   avance» (o «↺ Borrar todo») mueve el ✅ del pedido cuando vive en su día de devolución —ese
+   viaje ES el que le lleva el producto al cliente—. Antes quedaba «✅ Entregada» en la pestaña
+   ATC y «⏳ Pendiente · 🎧 ATC» para el chofer y Administración; o al revés, reabierta (hay que
+   ir a buscarla a la fábrica) y «✓ Entregado» en la ficha del chofer: nadie se la llevaba. Sin
+   devolución programada `entregado` es el RECOJO y no se toca. */
+function atcEntregadoComoEnt(p){
+  var a=p && esATC(p.oc) ? atcDe(p) : null;
+  if(a && a.pdev && p.fecha===a.pdev) p.entregado=!!a.ent;
+}
 /* El cierre de verdad: el producto de vuelta en manos del cliente. Que producción lo
    devuelva NO cierra la ATC — todavía hay que llevárselo (§4br). */
 function atcEntregada(p){ var a=atcDe(p); return (a&&a.ent)||''; }
@@ -10569,6 +10579,7 @@ function guardarDevolucionAtc(id){
     devQ: (devSi||entSi) ? (getVendedorMem()||'logística') : '',
     devH: (devSi||entSi) ? horaCorta() : ''
   });
+  atcEntregadoComoEnt(p);
   persistPedido(p); closeModal(); renderAtc();
   toast(entSi ? 'ATC cerrada ✓ — el cliente ya lo tiene'
       : rfSi ? 'Recogido de fábrica ✓ — falta llevárselo al cliente'
@@ -10648,7 +10659,8 @@ function quitarProgramarDevAtc(id){
 /* Deshacer entero, para cuando se anotó en la ATC equivocada. */
 function borrarDevolucionAtc(id){
   var p=findById(id); if(!p) return;
-  mergeAtcDatos(p, { dev:'', hizo:'', rf:'', rfQ:'', rfH:'', ent:'', devQ:'', devH:'' });
+  mergeAtcDatos(p, { dev:'', hizo:'', rf:'', rfQ:'', rfH:'', rfAuto:'', ent:'', devQ:'', devH:'' });
+  atcEntregadoComoEnt(p);
   persistPedido(p); closeModal(); renderAtc();
   toast('Se deshizo la marca','ok');
 }
