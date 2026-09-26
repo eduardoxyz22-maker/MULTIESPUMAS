@@ -12,6 +12,8 @@
           deshecho por otro camino).
    2. 📜 HISTORIAL DE CORTES: «contra el anterior» compara con el anterior DEL MISMO almacén, también
       cuando se suben los dos (acá y Moreno) el mismo día.
+   3. EL DETALLE DE UN PRODUCTO con el depósito en negativo (conteo viejo, §4ds): la cuenta de la
+      reposición usa 0 como la tabla, no «− (−5)», que daba 5 unidades de más para fabricar.
 
    Datos SINTÉTICOS. Reloj de la página clavado en el 16/09/2026, 10:00 de Bolivia.
 
@@ -160,6 +162,30 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
       /-10 contra el anterior/.test(r[0]||''), r[0]);
   chk('⚠️ …y el de Moreno «+10» (70 → 80)', /\+10 contra el anterior/.test(r[1]||''), r[1]);
   chk('los primeros de cada almacén no comparan con nada', !/contra el anterior/.test(r[2]||'') && !/contra el anterior/.test(r[3]||''), (r[2]||'')+' | '+(r[3]||''));
+
+  // ══ 3. El detalle de un producto con el depósito en negativo ═════════════
+  console.log('\n── 3. Detalle de un producto: un depósito negativo cuenta como 0, como en la tabla ──');
+  r = await page.evaluate(() => {
+    /* Contado 3 hace 2 días, salieron 8 (el conteo quedó viejo): el depósito da −5. Hay 3 vendidos
+       sin entregar. La tabla (§4ds) pide 3; el detalle decía «3 − (−5) acá = 8 unidades adicionales». */
+    var K=stockClave({desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201'});
+    STOCK=stockVacio(); STOCK_CARGADO=true;
+    STOCK.c={ f:_adel(-2), hora:'07:00:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.', cod:{CH1201:K}, t:Date.now()-2*86400000 };
+    STOCK.c.u[K]=3;
+    STATE=[_P({id:'n1', fecha:_adel(-1), entregado:true, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:8}]}),
+           _P({id:'n2', fecha:_adel(1), productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:3}]})];
+    stockOlvidarIndice();
+    var o=stockData().lista.filter(function(x){ return x.k===K; })[0];
+    abrirStockPedidos(K);
+    var txt=((document.getElementById('modal-box')||{}).textContent||'').replace(/\s+/g,' ');
+    closeModal();
+    var adic=(txt.match(/= (\d+) unidades adicionales/)||[])[1];
+    return { dep:o.deposito, pedir:o.pedir, fab:o.fabricar, adic:adic!=null?Number(adic):null, saldo:(txt.match(/Saldo después de los pedidos:[^.·]*/)||[''])[0],
+             tarjeta:(txt.match(/Acá en fábrica\s*(-?\d+)/)||[])[1] };
+  });
+  chk('el depósito da −5 y la tabla pide 3 (lo vendido sin entregar), no 8', r.dep===-5 && r.pedir===3 && r.fab===3, JSON.stringify(r));
+  chk('⚠️ el detalle dice «3 unidades adicionales», lo mismo que la tabla (no 8)', r.adic===3, r.adic);
+  chk('⚠️ …y no muestra un depósito negativo: «Acá en fábrica 0»', r.tarjeta==='0' && !/−5|-5/.test(r.saldo), 'tarjeta '+r.tarjeta+' · '+r.saldo);
 
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

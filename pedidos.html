@@ -15057,14 +15057,16 @@ function stockPedidosDetalle(k){
 }
 
 function stockSaldoDetalleHtml(o){
-  var conocido=o.deposito!=null, dep=conocido?o.deposito:0, comp=o.comp||0;
+  /* (26/09) Un depósito NEGATIVO es un conteo viejo, no una deuda (§4ds): cuenta como 0, como en la
+     tabla. Con −5 el detalle decía «3 − (−5) acá = 8 unidades adicionales» y la tabla pedía 3. */
+  var conocido=o.deposito!=null, dep=conocido?Math.max(0,o.deposito):0, comp=o.comp||0;
   var saldo=dep-comp, cobertura=o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir);
   var previsto=o.porDia*cobertura, objetivo=Math.max(comp,previsto);
   var caminoVigente=o.enCamino||0;
   var bruto=conocido?Math.max(0,Math.ceil(objetivo-dep-caminoVigente-1e-9)):0;
   var tarjeta=function(t,v,sub){return '<div style="flex:1 1 145px;padding:12px;background:#fff;border:1px solid var(--gray-md);border-radius:9px"><div style="font-size:.76rem;color:var(--muted)">'+t+'</div><b style="font-size:1.5rem">'+v+'</b><div style="font-size:.75rem">'+sub+'</div></div>';};
   var html='<section style="margin-bottom:16px;padding:14px;background:var(--gray-lt);border-radius:12px"><h3 style="margin-bottom:10px">Saldos de este producto</h3><div style="display:flex;gap:8px;flex-wrap:wrap">'+
-    tarjeta('Acá en fábrica',conocido?stockUnid(dep):'Sin contar','Saldo calculado del inventario')+
+    tarjeta('Acá en fábrica',conocido?stockUnid(dep):'Sin contar',(conocido&&o.deposito<0)?('Se entregaron '+stockUnid(-o.deposito)+' más de lo contado: volvé a contar'):'Saldo calculado del inventario')+
     tarjeta('Libre en Moreno / otros almacenes',stockUnid(o.enOtros||0),'Descontadas las recogidas programadas')+
     tarjeta('En camino',stockUnid(o.enCamino||0),'Pendiente de recepción')+
     tarjeta('Comprometido',stockUnid(comp),'Vendido sin entregar; consume depósito')+'</div>';
