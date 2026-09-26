@@ -99,6 +99,44 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   });
   chk('…y el modal «✅ Pedido guardado» (el que sale al guardar) dice lo mismo', /SIN MONTO ANOTADO/.test(r.modal) && !/💰 PAGADO/.test(r.modal), r.modal);
 
+  // ══ 3. La lista: la venta de tienda y lo que no entra ══════════════════════
+  console.log('\n── 3. La lista entera ──');
+  r = await page.evaluate(() => {
+    STATE=[
+      __P({id:'tienda-hoy', cliente:'VENDIDA HOY EN LA TIENDA', fecha:'', turno:'', zona:'TIENDA', direccion:'SALIÓ DE TIENDA · Central',
+           entregado:true, verificado:true, pagado:true, saldo:0, ts:Date.parse('2026-09-16T09:00:00-04:00'), metodoPago:'Efectivo 500 @2026-09-16', maps:''}),
+      __P({id:'manana', cliente:'PARA MAÑANA', fecha:'2026-09-17'})
+    ];
+    for(var i=0;i<130;i++) STATE.push(__P({id:'viejo'+i, cliente:'VIEJO '+i, fecha:'2026-08-'+String(1+(i%28)).padStart(2,'0'),
+      ts:Date.parse('2026-08-01T10:00:00-04:00')+i*60000, entregado:true}));
+    var v=__verMis(), idx=v.ids.indexOf('tienda-hoy');
+    var o={ n:v.cards.length, total:STATE.length, idx:idx, tienda:v.de('tienda-hoy'), primero:v.ids[0],
+            pie:(document.getElementById('mis-lista').textContent||'').replace(/\s+/g,' ').slice(-160) };
+    var b=[].slice.call(document.querySelectorAll('#mis-lista button')).filter(function(x){ return /Ver \d+ más/.test(x.textContent); })[0];
+    o.hayBoton=!!b;
+    if(b){ b.click(); o.nTras=document.querySelectorAll('#mis-lista .cho-card').length; }
+    // Cambiar de filtro vuelve a arrancar de a 120
+    setMisFiltro('ent'); setMisFiltro('todos');
+    o.nFiltro=document.querySelectorAll('#mis-lista .cho-card').length;
+    showMisModal('tienda-hoy'); o.modalTienda=document.getElementById('modal-box').textContent.replace(/\s+/g,' '); closeModal();
+    STATE.push(__P({id:'ya-entregado', cliente:'YA ENTREGADO SIN GPS', maps:'', entregado:true}));
+    STATE.push(__P({id:'falta-gps', cliente:'FALTA GPS', maps:''}));
+    showMisModal('ya-entregado'); o.modalEnt=document.getElementById('modal-box').textContent.replace(/\s+/g,' '); closeModal();
+    showMisModal('falta-gps'); o.modalGps=document.getElementById('modal-box').textContent.replace(/\s+/g,' '); closeModal();
+    return o;
+  });
+  chk('⚠️ la venta de tienda de HOY aparece en la lista (antes quedaba debajo del corte de 120)', r.idx>=0, 'posición '+r.idx);
+  chk('…arriba, con lo de estos días (va por el día en que salió)', r.idx>=0 && r.idx<=1, 'posición '+r.idx+' · primero: '+r.primero);
+  chk('…y la ficha dice el día de la venta', /16\/09\/2026 · TIENDA/.test(r.tienda||''), r.tienda);
+  chk('se dibujan 120 fichas de 132', r.n===120, r.n+' de '+r.total);
+  chk('⚠️ y se DICE que hay más (antes el corte era callado)', /120 más nuevos de 132/.test(r.pie), r.pie);
+  chk('…con un botón para ver el resto', r.hayBoton===true && r.nTras===132, 'tras tocar: '+r.nTras);
+  chk('al cambiar de filtro vuelve a arrancar de a 120', r.nFiltro===120, r.nFiltro);
+  chk('⚠️ la ficha de una venta de TIENDA no pide la ubicación GPS (no va a ningún lado)', !/Falta la ubicación GPS|Agregar enlace de ubicación/.test(r.modalTienda), r.modalTienda.slice(0,160));
+  chk('…y dice el día en que salió de la tienda, no una «Fecha de entrega» vacía', /Salió de tienda16\/09\/2026/.test(r.modalTienda) && !/Fecha de entrega/.test(r.modalTienda), r.modalTienda.slice(0,120));
+  chk('…ni la de un pedido ya entregado grita «Falta la ubicación GPS»', !/Falta la ubicación GPS/.test(r.modalEnt), r.modalEnt.slice(0,120));
+  chk('…pero uno que todavía va sí lo pide', /Falta la ubicación GPS/.test(r.modalGps) && /Agregar enlace de ubicación/.test(r.modalGps), r.modalGps.slice(0,120));
+
   chk('la página no tiró ningún error de JavaScript', errors.length===0, errors.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

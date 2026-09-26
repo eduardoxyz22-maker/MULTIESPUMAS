@@ -10904,6 +10904,7 @@ function misEstado(k){
 }
 /* Filtro rápido de Mis pedidos: hoy / mañana / todos */
 var MIS_FILTER='todos';
+var MIS_TOPE=120;          // cuántas fichas se dibujan; «Ver más» suma de a 120 (26/09)
 var MIS_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',      test:function(p){ return p.fecha===todayStr(); }},
   {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===proximoDiaEntrega(); }},
@@ -10913,7 +10914,7 @@ var MIS_DEFS=[
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
-function setMisFiltro(k){ MIS_FILTER=k; renderMis(); }
+function setMisFiltro(k){ MIS_FILTER=k; MIS_TOPE=120; renderMis(); }
 function renderMisChips(mine){
   var el=document.getElementById('mis-chips'); if(!el) return;
   el.innerHTML=MIS_DEFS.map(function(d){
@@ -12044,7 +12045,10 @@ function renderMis(){
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
-  mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
+     iba al FONDO de la lista (debajo del pedido más viejo), así que pasados los MIS_TOPE no se veía
+     nunca — ni la que se vendió hoy. Se ordena por el día en que salió. */
+  mine.sort(function(a,b){ var fa=fechaSalida(a)||'', fb=fechaSalida(b)||''; if(fa!==fb) return fa<fb?1:-1; return (b.ts||0)-(a.ts||0); });
   if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
   if(mine.length && !todos) autoAbrirAvisos(v, mine);
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
@@ -12071,7 +12075,12 @@ function renderMis(){
   }
   /* '' y no 'block': el contenedor es una grilla y un display en línea la pisaría */
   empty.style.display='none'; tbl.style.display='';
-  tbl.innerHTML=lista.slice(0,120).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('');
+  /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
+     dijera que faltaban 180. Ahora lo dice y deja ver más. */
+  tbl.innerHTML=lista.slice(0,MIS_TOPE).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('')+
+    (lista.length>MIS_TOPE ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
+      'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
+      '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
 }
 /* Quién lleva el pedido. Se muestra SIEMPRE (aunque no haya chofer): que no aparezca la fila
    no significa "no tiene chofer", significa "no sé", y la vendedora necesita distinguirlo. */
@@ -12107,7 +12116,7 @@ function misCardHtml(p, n, todos){
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
-        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
+        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(fechaSalida(p)))+   // (26/09) la de tienda, el día que se vendió
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
       docChip(p)+
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
@@ -12217,7 +12226,8 @@ function showMisModal(id){
   var atr=textoAtraso(p);
   if(atr) alertas+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:var(--red)">⏰ <b>Atrasado '+atr+'.</b> '+(turnoDe(p)?('Era para el turno '+turnoDe(p)+' del '+esc(fmtFecha(p.fecha))+'.'):('Era para el '+esc(fmtFecha(p.fecha))+'.'))+' Preguntá al administrador cómo va.</div>';
   if(esModificado(p)) alertas+=alertBox('⚠️ <b>Lo modificaste después de que el almacén ya lo había revisado.</b> Les quedó el aviso para que revisen el stock de nuevo — el aviso se les saca cuando ellos lo revisan.');
-  if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
+  // (26/09) Ni a la venta de TIENDA (no hay entrega) ni a lo ya entregado: la ficha le pedía el GPS igual.
+  if(!p.maps && !p.entregado && !esVentaTienda(p)) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
   var choferVal = choferTexto(p);
   /* El vendedor va SIEMPRE, aunque la vendedora esté mirando lo suyo: con "Ver todos"
@@ -12225,7 +12235,8 @@ function showMisModal(id){
   var vendCell = p.vendedor
     ? '<span class="badge b-gray">👤 '+esc(nombreCanonico(p.vendedor)||p.vendedor)+'</span>'
     : '<span class="badge b-red">⚠️ sin vendedor</span>';
-  var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p))+
+  var body=(esVentaTienda(p) ? row('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))   // (26/09) decía «Fecha de entrega» vacía
+                             : row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
     row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
@@ -12241,7 +12252,7 @@ function showMisModal(id){
          '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;width:100%;margin-top:9px" onclick="cobrarFlete(\''+p.id+'\')">💵 Ya cobré el flete — registrarlo</button>'+
        '</div>')
     : '';
-  var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+  var ubicSec=(esVentaTienda(p) && !p.maps) ? '' : '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+   // (26/09) la de tienda no va a ningún lado
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
       ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
