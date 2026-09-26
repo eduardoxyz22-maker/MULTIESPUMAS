@@ -13320,13 +13320,19 @@ function r2(n){ return Math.round((Number(n)||0)*100)/100; }
 function montoNegativo(t){ return /^\s*-/.test(String(t==null?'':t)); }
 function parseMonto(t){
   t=String(t==null?'':t).replace(/[^\d.,]/g,'').trim();
+  /* ⚠️ (26/09) El punto de «Bs.» y el «.-» del final NO son del número. Con los campos de plata ya de
+     texto, «Bs. 1.500.-» pegado de WhatsApp quedaba «.1.500.» y se guardaba Bs 0,10 («Bs. 1500»: 0,15;
+     «1.500 Bs.»: 1,50), sin aviso. Con `type=number` ese «Bs. 1.500.-» dejaba el campo vacío. */
+  t=t.replace(/^[.,]+|[.,]+$/g,'');
   if(!t) return 0;
   if(t.indexOf(',')>=0 && t.indexOf('.')>=0){
     t = (t.lastIndexOf(',')>t.lastIndexOf('.')) ? t.replace(/\./g,'').replace(',','.') : t.replace(/,/g,'');
   }else if(t.indexOf(',')>=0){
-    var pc=t.split(','); t = (pc[pc.length-1].length===3) ? t.replace(/,/g,'') : t.replace(',','.');
+    // (26/09) Con dos comas, la de los centavos es la ÚLTIMA: «1,500,50» valía 1,5.
+    var pc=t.split(','); t = (pc[pc.length-1].length===3) ? t.replace(/,/g,'') : (pc.slice(0,-1).join('')+'.'+pc[pc.length-1]);
   }else if(t.indexOf('.')>=0){
-    var pd=t.split('.'); if(pd[pd.length-1].length===3) t=t.replace(/\./g,'');
+    // (26/09) Igual con dos puntos: «1.500.50» es 1.500,50 (valía 1,5).
+    var pd=t.split('.'); if(pd[pd.length-1].length===3) t=t.replace(/\./g,''); else if(pd.length>2) t=pd.slice(0,-1).join('')+'.'+pd[pd.length-1];
   }
   var n=parseFloat(t);
   return isNaN(n)?0:r2(n);
