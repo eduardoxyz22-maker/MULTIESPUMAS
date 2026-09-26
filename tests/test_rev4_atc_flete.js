@@ -8,6 +8,9 @@
    2. 🚚 El flete PACTADO sin cobrar no aparecía en «Entregado» ni en el Parte del día (pantalla y el
       WhatsApp de las 18:00): una venta pagada con Bs 150 de flete decía «Sin saldo · no queda nada por
       cobrar» y «Por cobrar: Bs 0,00». La tarjeta del chofer y la hoja de ruta ya lo decían (§4gc).
+   3. 💵 «Ya cobré el flete — registrarlo» (Mis pedidos) reemplazaba el pago EN CURSO de otra venta sin
+      guardarlo por venta: su imagen quedaba huérfana en Drive y el aviso al salir contaba 0. Además lo
+      tipeado en esa otra venta (monto y recibo) aparecía en el bloque del flete.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado (la planilla vive en `window.SRV`), datos sintéticos (el repo es público).
@@ -252,6 +255,89 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
     chk('⚠️ con solo la venta pagada y su flete, el parte ya no dice «Bs 0,00» a secas',
         r.parteSolo.pend===0 && /\+ Bs 150,00 de flete/.test(r.parteSolo.body) && /Por cobrar: \*Bs 0,00\* \(0 pedidos\) · \+ Bs 150,00 de flete/.test(r.parteSolo.linea), J(r.parteSolo.linea));
     chk('control: sin flete, el parte no habla de flete', !/flete/i.test(r.parteSin.body) && !/flete/i.test(r.parteSin.linea) && /Bs 500,00/.test(r.parteSin.linea), r.parteSin.linea);
+    await page.close();
+  }
+
+  // ═══ 3. 💵 «Ya cobré el flete» no tira el pago en curso de otra venta ═══════════════════════
+  console.log('\n── 3. 💵 «Ya cobré el flete — registrarlo» (Mis pedidos) guarda el pago en curso de la venta anterior ──');
+  {
+    const page = await nueva();
+    D.confirm=true;
+    const r = await page.evaluate(async () => {
+      await cargar([ P({ id:'V1', nota:'91', oc:'09-091', cliente:'VENTA CON SALDO', pagado:false, saldo:900 }),
+                     P({ id:'V2', nota:'92', oc:'09-092', cliente:'ENTREGADA PAGADA', entregado:true, pagado:true, saldo:0, acuenta:1000, metodoPago:'~Efectivo 1000 @2026-09-20 #92 + ^ 150' }),
+                     P({ id:'V3', nota:'93', oc:'09-093', cliente:'OTRA CON SALDO', pagado:false, saldo:600, metodoPago:'^ 100' }),
+                     P({ id:'V4', nota:'94', oc:'09-094', cliente:'SALDO Y FLETE', pagado:false, saldo:500, metodoPago:'^ 50' }) ]);
+      var out={};
+      var desdeMis=async function(id){
+        showView('mis'); await espera(150);
+        showMisModal(id);
+        var b=[].slice.call(document.querySelectorAll('#modal-box button')).filter(function(x){ return /cobrarFlete/.test(x.getAttribute('onclick')||''); })[0];
+        if(!b) return false;
+        b.click(); await espera(200);
+        return true;
+      };
+      var alSalir=function(){ var ev=new Event('beforeunload',{cancelable:true}); window.dispatchEvent(ev); return ev.defaultPrevented; };
+      var bloque=function(){ var m=document.getElementById('cta-pago-monto'), n=document.getElementById('cta-pago-nota'), reg=boton('ctaRegistrarPago');
+        return { venta:CTA_ULTIMA, tipo:CTA_TIPO, monto:m?m.value:null, nota:n?n.value:null, boton:reg?reg.textContent.trim():'', comps:compsArr(CTA_PAGO.comps).join(',') }; };
+      var guardado=function(id){ var g=CTA_PAGO_POR_ID[id]; return g ? { comps:compsArr(g.comps).join(','), tipo:g.tipo||'' } : null; };
+      // (a) Contabilidad arranca el pago de V1: tipea el monto y el recibo y sube la captura, sin registrar todavía…
+      irAContaDe(findById('V1')); await espera(150);
+      showContaModal('V1');
+      tipear({'cta-pago-monto':'777', 'cta-pago-nota':'555'});
+      await subir('V1','IMG_V1'); await espera(60);
+      out.antes=bloque();
+      closeModal();
+      // …y en el mismo dispositivo la vendedora toca «Ya cobré el flete» de V2 en Mis pedidos
+      out.boton=await desdeMis('V2');
+      out.v2=bloque(); out.guardadoV1=guardado('V1'); out.alSalir=alSalir();
+      // vuelve a V1: la captura sigue ahí, como pago de la venta
+      showContaModal('V1'); out.v1=bloque(); out.toastV1=window._toasts.slice(-1)[0]||'';
+      // (b) un FLETE en curso de otra venta (V3) vuelve como flete
+      showContaModal('V3'); boton('ctaSetTipo', /Recargo/).click();
+      await subir('V3','IMG_V3'); await espera(60); closeModal();
+      await desdeMis('V2');
+      out.guardadoV3=guardado('V3');
+      showContaModal('V3'); out.v3=bloque();
+      // (c) el flete en curso de la MISMA venta (V2, con su captura) sobrevive a tocar el botón otra vez
+      closeModal(); await desdeMis('V2');
+      await subir('V2','IMG_V2'); await espera(60); closeModal();
+      await desdeMis('V2');
+      out.v2otraVez=bloque();
+      // (d) control: se registra el flete como siempre (monto del flete, con su captura) y la venta no cambia
+      tipear({'cta-pago-nota':'92'});
+      var reg=boton('ctaRegistrarPago'); if(reg) reg.click();
+      await espera(150);
+      var p2=findById('V2');
+      out.registrado={ cobrado:envioCobrado(p2), porCobrar:envioPorCobrar(p2), saldo:Number(p2.saldo)||0, pagado:!!p2.pagado,
+                       comps:(enviosDe(p2).filter(envioYaCobrado)[0]||{}).comps };
+      out.quedan={ v1:guardado('V1'), v3:guardado('V3'), v2:guardado('V2'), alSalir:alSalir() };
+      // (e) si ESTA venta tiene un pago DE LA VENTA en curso con su imagen, esa imagen no se muda al flete: se avisa
+      showContaModal('V4'); await subir('V4','IMG_V4'); await espera(60); closeModal();
+      window._toasts=[];
+      await desdeMis('V4');
+      out.v4=bloque(); out.toastV4=window._toasts.slice(-1)[0]||'';
+      return out;
+    });
+    chk('punto de partida: el pago de V1 está en curso, con la captura y lo tipeado', r.antes.venta==='V1' && r.antes.comps==='IMG_V1' && r.antes.monto==='777', J(r.antes));
+    chk('el botón «Ya cobré el flete» abre el bloque del flete de V2', r.boton===true && r.v2.venta==='V2' && r.v2.tipo==='envio' && /flete|recargo/i.test(r.v2.boton), J(r.v2));
+    chk('⚠️ el pago en curso de V1 queda guardado POR VENTA, con su captura y su tipo (antes se perdía: imagen huérfana)',
+        !!r.guardadoV1 && r.guardadoV1.comps==='IMG_V1' && r.guardadoV1.tipo==='pago', J(r.guardadoV1));
+    chk('⚠️ …y el aviso al salir de la página lo cuenta (antes: 0 pendientes, se iba sin preguntar)', r.alSalir===true, J(r.alSalir));
+    chk('⚠️ el bloque del flete de V2 NO trae lo tipeado en V1 (monto 150, recibo vacío; antes 777 y 555)',
+        r.v2.monto==='150' && r.v2.nota==='' && r.v2.comps==='', J(r.v2));
+    chk('⚠️ al volver a V1, la captura sigue ahí como pago de la venta, y el aviso lo dice',
+        r.v1.comps==='IMG_V1' && r.v1.tipo==='pago' && /imagen/.test(r.toastV1) && /Registrar pago/.test(r.toastV1), J([r.v1, r.toastV1]));
+    chk('⚠️ un FLETE en curso de otra venta vuelve como flete, con su captura (§4gc)',
+        !!r.guardadoV3 && r.guardadoV3.tipo==='envio' && r.v3.tipo==='envio' && r.v3.comps==='IMG_V3', J([r.guardadoV3, r.v3]));
+    chk('⚠️ tocar otra vez «Ya cobré el flete» de la MISMA venta no le tira la captura ya subida',
+        r.v2otraVez.venta==='V2' && r.v2otraVez.tipo==='envio' && r.v2otraVez.comps==='IMG_V2', J(r.v2otraVez));
+    chk('control: se registra el flete de Bs 150 con su captura, y la venta sigue pagada y sin saldo',
+        r.registrado.cobrado===150 && r.registrado.porCobrar===0 && r.registrado.saldo===0 && r.registrado.pagado===true && J(r.registrado.comps)===J(['IMG_V2']), J(r.registrado));
+    chk('control: los pagos en curso de V1 y V3 siguen esperando (y el de V2, registrado, ya no)',
+        !!r.quedan.v1 && !!r.quedan.v3 && !r.quedan.v2 && r.quedan.alSalir===true, J(r.quedan));
+    chk('⚠️ con un pago DE LA VENTA en curso (y su captura) en esa misma venta, la captura no se tira ni pasa al flete: se avisa',
+        r.v4.venta==='V4' && r.v4.tipo==='pago' && r.v4.comps==='IMG_V4' && /pago en curso/.test(r.toastV4), J([r.v4, r.toastV4]));
     await page.close();
   }
 

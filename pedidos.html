@@ -4945,11 +4945,19 @@ function renderCuadreDetRetiros(){
    que es donde se piden el monto, la fecha, el recibo y —obligatorio— el comprobante. */
 function cobrarFlete(id){
   closeModal();
-  CTA_ULTIMA=String(id);
-  CTA_PAGO={metodo:'Efectivo', banco:'', comps:[], recibio:''};
-  CTA_TIPO='envio';
   irAContaDe(findById(id));      // la planilla que corresponda: tienda o mayoristas
+  /* (26/09) El cambio de venta lo hace `showContaModal`, como al abrirla desde Contabilidad: guarda el pago EN
+     CURSO de la venta anterior por venta (`CTA_PAGO_POR_ID`, con su tipo, §4gc) y trae el de esta. Antes se
+     reemplazaba acá sin guardarlo: la imagen ya subida en otra venta quedaba huérfana en Drive, el aviso al
+     salir contaba 0, y lo tipeado en la otra venta (monto y recibo) aparecía en el bloque del flete. */
   showContaModal(id);
+  /* …y el bloque pasa al flete. Si esta venta ya tenía un PAGO de la venta en curso con su imagen, esa imagen
+     no es la del flete (§4gc): queda como estaba y se dice. */
+  if(CTA_TIPO!=='envio'){
+    if(compsArr(CTA_PAGO.comps).length && !CTA_FORM_ENV)
+      toast('📎 Esta venta tiene un pago en curso con su imagen: registralo (o quitá la imagen) y después anotá el flete con «🚚 Recargo por entrega».','err',8000);
+    else ctaSetTipo(id,'envio');
+  }
   var mb=document.getElementById('modal-box'); if(mb) setTimeout(function(){ mb.scrollTop=mb.scrollHeight; },120);
 }
 /* Desde el cuadre: abre la ventana de retiros con ese retiro listo para revisar. */
