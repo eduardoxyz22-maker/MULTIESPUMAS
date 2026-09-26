@@ -6,6 +6,10 @@
      1. «✏️ Corregir este pago»: la fecha, el monto y el recibo van ARRIBA del método. Tocar «QR» o
         el banco repintaba la ficha y los volvía a lo viejo: «💾 Guardar» corregía solo el método y el
         pago seguía con la fecha y el monto de antes. Lo mismo con ✅ «Pago registrado en sistema».
+     2. Una venta SIN MONTO ANOTADO (la de Eduardo cargada sin cobro, la que el Cuadre manda a
+        completar) abría SOLO el bloque del flete, y su botón anotaba el pago como RECARGO POR
+        ENTREGA sin preguntar (efecto del arreglo del 25/09 para las ventas YA PAGADAS). Ahora tiene
+        el selector, arranca en «💵 Pago» y dice que primero va el total.
 
    Red cortada, servidor simulado. Se corre:  node tests/test_rev2_ventas.js
    Dientes:   PEDIDOS=/ruta/a/un/pedidos.html/viejo node tests/test_rev2_ventas.js            */
@@ -161,6 +165,91 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('1d · control: abrir OTRO pago muestra lo suyo, no lo tipeado en el primero', r.otro.fecha===r.seis && r.otro.monto==='1000', J(r.otro));
   chk('1d · control: después de «Cancelar» el pago vuelve a abrir con lo guardado', r.denuevo.fecha===r.hoy && r.denuevo.monto==='1000' && r.fecha===r.hoy && r.monto===1000, J(r));
+
+  /* ══ 2 · UNA VENTA SIN MONTO ANOTADO NO MANDA EL PAGO AL FLETE ═════════════════════════════════
+     Eduardo carga la venta a un mayorista sin cobro (su formulario no lo pide): pagado NO, a cuenta
+     0, saldo 0. El mayorista paga Bs 5.000 y Contabilidad abre la ficha en 🏭 Mayoristas. La ficha
+     trataba «sin saldo» como «ya pagada»: mostraba SOLO «🚚 Anotar el recargo por entrega», y desde
+     el 25/09 ese botón anotaba los 5.000 como FLETE sin preguntar — fuera de «Ya ingresó», del
+     saldo y del Excel de la venta, y la venta seguía «SIN MONTO ANOTADO». */
+  D.confirm=true; D.vistos=[];
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'M1', nota:'', oc:'09-101', cliente:'DISTRIBUIDORA SIN MONTO', vendedor:'Eduardo Añez',
+                productos:[{desc:'COLCHON SOFT',medida:'140x190',cant:10}] }) ];
+    releer(); aConta('mayor'); await new Promise(r=>setTimeout(r,150));
+    CTA_ULTIMA=''; showContaModal('M1');
+    var sel=[].slice.call(document.querySelectorAll('#modal-box button')).filter(function(b){ return /ctaSetTipo/.test(b.getAttribute('onclick')||''); }).length;
+    var reg=boton('ctaRegistrarPago'), aviso=document.getElementById('cta-sinmonto-aviso');
+    var txtBoton=reg?reg.textContent.trim():'';
+    // Lo que hacía la persona: llenar el bloque y tocar el botón que había.
+    CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['PM1'];
+    var m=document.getElementById('cta-pago-monto'); if(m) m.value='5000';
+    var n=document.getElementById('cta-pago-nota'); if(n) n.value='900';
+    if(reg) reg.click(); else ctaRegistrarPago('M1');      // sin botón: el camino directo tampoco anota nada
+    await new Promise(r=>setTimeout(r,60));
+    var p=findById('M1');
+    return { sel:sel, boton:txtBoton, aviso:aviso?aviso.textContent:'', envCob:envioCobrado(p), cobrado:contaCobrado(p),
+             txt:p.metodoPago, sinMonto:sinMontoAnotado(p), ficha:(document.getElementById('modal-box')||{}).textContent||'' };
+  });
+  chk('2 · la ficha de una venta SIN MONTO ofrece «💵 Pago / 🚚 Recargo» (no solo el flete)', r.sel===2, 'selector '+r.sel);
+  chk('2 · arranca en «💵 Pago» y dice que primero va el total, en «Corregir precios y montos»',
+      /nadie le anotó cuánto era/.test(r.aviso) && /Corregir precios y montos/.test(r.aviso) && !/Anotar el recargo/.test(r.boton), J({aviso:r.aviso.slice(0,80), boton:r.boton}));
+  chk('2 · ⚠️ el pago del mayorista NO queda anotado como flete (ni como nada: falta el total)',
+      r.envCob===0 && r.cobrado===0 && r.txt==='' && r.sinMonto===true, J({envCob:r.envCob, cobrado:r.cobrado, txt:r.txt}));
+  chk('2 · la ficha sigue diciendo «SIN MONTO ANOTADO» y no «PAGADO» (§9 del 25/09)',
+      /SIN MONTO ANOTADO/.test(r.ficha) && !/PAGADO/.test(r.ficha.replace(/SIN MONTO ANOTADO/g,'')), '');
+
+  // 2b · El camino: el total en «Corregir precios y montos» y después el pago le baja el saldo.
+  r = await page.evaluate(async () => {
+    showContaModal('M1');                                     // (con el panel viejo quedó abierta la ventana del «recargo»)
+    var s=document.getElementById('cta-saldo'); s.value='20000';
+    boton('ctaGuardarMontos').click();
+    await new Promise(r=>setTimeout(r,60));
+    var p=findById('M1');
+    var reg=boton('ctaRegistrarPago'), txtBoton=reg?reg.textContent.trim():'';
+    CTA_PAGO.metodo='QR'; CTA_PAGO.banco='BISA'; CTA_PAGO.comps=['PM1'];
+    document.getElementById('cta-pago-monto').value='5000';
+    document.getElementById('cta-pago-fecha').value=hoy;
+    document.getElementById('cta-pago-nota').value='900';
+    reg.click();
+    await new Promise(r=>setTimeout(r,60));
+    p=findById('M1');
+    return { boton:txtBoton, saldo:Number(p.saldo)||0, cobrado:contaCobrado(p), total:ventaTotal(p), envCob:envioCobrado(p), pagado:p.pagado };
+  });
+  chk('2b · con el total puesto, el bloque vuelve a ser «Registrar pago»', /Registrar pago/.test(r.boton), r.boton);
+  chk('2b · ⚠️ y el pago del mayorista le baja el saldo: 20.000 → 15.000, entró 5.000 de la VENTA',
+      r.saldo===15000 && r.cobrado===5000 && r.total===20000 && r.envCob===0 && r.pagado===false, J(r));
+
+  // 2c · En la venta SIN MONTO el flete se sigue anotando, eligiendo «🚚 Recargo por entrega».
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'M2', nota:'910', oc:'09-110', cliente:'TIENDA SIN MONTO', vendedor:'Maria Flores' }) ];
+    releer(); aConta('ventas'); await new Promise(r=>setTimeout(r,150));
+    CTA_ULTIMA=''; showContaModal('M2');
+    var bt=boton('ctaSetTipo', /Recargo/); if(bt) bt.click();   // (el panel viejo no tenía selector: ya estaba en el flete)
+    var reg=boton('ctaRegistrarPago'), txtBoton=reg?reg.textContent.trim():'';
+    CTA_PAGO.metodo='Efectivo'; CTA_PAGO.comps=['FL2'];
+    document.getElementById('cta-pago-monto').value='120';
+    document.getElementById('cta-pago-fecha').value=hoy;
+    document.getElementById('cta-pago-nota').value='911';
+    reg.click();
+    await new Promise(r=>setTimeout(r,60));
+    var p=findById('M2');
+    return { boton:txtBoton, envCob:envioCobrado(p), cobrado:totalCobrado(p) };
+  });
+  chk('2c · en la venta SIN MONTO, eligiendo «🚚 Recargo» el flete se anota como siempre',
+      /recargo/i.test(r.boton) && r.envCob===120 && r.cobrado===0, J(r));
+
+  // 2d · Control (25/09): una venta YA PAGADA sigue abriendo el bloque del flete, sin selector.
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'M3', nota:'920', oc:'09-120', cliente:'PAGADA DE VERDAD', pagado:true,
+                metodoPago:textoCobros([{anticipo:true,metodo:'QR',banco:'BISA',monto:1500,fecha:hoy,nota:'920',comps:['V3']}]) }) ];
+    releer(); aConta('ventas'); await new Promise(r=>setTimeout(r,150));
+    CTA_ULTIMA=''; showContaModal('M3');
+    var sel=[].slice.call(document.querySelectorAll('#modal-box button')).filter(function(b){ return /ctaSetTipo/.test(b.getAttribute('onclick')||''); }).length;
+    var reg=boton('ctaRegistrarPago');
+    return { sel:sel, boton:reg?reg.textContent.trim():'', aviso:!!document.getElementById('cta-sinmonto-aviso') };
+  });
+  chk('2d · control: en una venta YA PAGADA el bloque sigue siendo el del flete, sin selector', r.sel===0 && /recargo/i.test(r.boton) && !r.aviso, J(r));
 
   chk('sin errores JS', errores.length===0, J(errores.slice(0,3)));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

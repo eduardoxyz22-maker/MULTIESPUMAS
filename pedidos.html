@@ -5598,6 +5598,8 @@ var CTA_TIPO='pago';
    aunque `CTA_TIPO` siga en 'pago'. Lo pone `showContaModal`, lo lee `ctaRegistrarPago`. */
 var CTA_FORM_ENV=false;
 function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; CTA_PAGO_V=null; showContaModal(id); }
+/* Venta SIN MONTO ANOTADO (26/09): el total va primero, en «Corregir precios y montos». */
+function ctaIrAMontos(){ var e=document.getElementById('cta-saldo'); if(!e) return; try{ e.scrollIntoView({block:'center'}); }catch(x){} e.focus(); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
    Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
@@ -6092,16 +6094,30 @@ function showContaModal(id){
      anotar el RECARGO POR ENTREGA (el flete que paga el cliente aparte y que NO le baja
      el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
   // Con flete pactado sin cobrar, el bloque abre directo en modo recargo: es lo urgente.
-  var esEnv = CTA_TIPO==='envio' || falta<=0.01 || (CTA_TIPO!=='pago' && envioPendiente(p));
+  /* ⚠️ «Sin saldo» NO es «ya pagada» cuando nadie anotó cuánto era (26/09): una venta SIN MONTO
+     ANOTADO —la de Eduardo cargada sin cobro, la que el Cuadre manda a completar— abría solo el
+     bloque del flete, y desde §4fk-25/09 su botón anotaba el pago del mayorista como RECARGO POR
+     ENTREGA sin preguntar: fuera de «Ya ingresó», del saldo y del total, y la venta seguía «sin
+     monto». Ahora tiene el selector, arranca en «💵 Pago» y ahí dice que primero va el total. */
+  var _sinM = sinMontoAnotado(p) && !noSeCobra(p);
+  var esEnv = CTA_TIPO==='envio' || (falta<=0.01 && !_sinM) || (CTA_TIPO!=='pago' && envioPendiente(p));
   CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
-  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p))
+  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p) || _sinM)
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
-         (falta>0.01
+         ((falta>0.01 || _sinM)
            ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
            : '')+
+         ((!esEnv && _sinM)
+           ? ('<div id="cta-sinmonto-aviso" style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;font-size:.85rem;color:#7c4b00">'+
+                '<b>💵 A esta venta nadie le anotó cuánto era.</b> Antes de registrar un pago, poné el total en '+
+                '<b>✏️ Corregir precios y montos</b> (acá abajo): el <b>Saldo por cobrar</b> es lo que falta cobrar. '+
+                'Después el pago se registra acá y le baja el saldo.'+
+                '<div style="margin-top:8px"><button type="button" class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--amber-border);color:var(--amber);font-weight:700" onclick="ctaIrAMontos()">✏️ Ir a Corregir precios y montos</button></div>'+
+              '</div>')
+           : (
          '<div class="lb" style="margin-bottom:8px">'+(esEnv
              ? (envioPorCobrar(p)>0.01
                  ? '🚚 Cobrar el recargo por entrega — pactado <b style="color:var(--red)">'+fmtBs(envioPorCobrar(p))+'</b> <span style="font-weight:400;color:var(--muted)">sin cobrar</span>'
@@ -6120,7 +6136,7 @@ function showContaModal(id){
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -6426,6 +6442,11 @@ function ctaSacarComp(id, i){
 function ctaSetBanco(id,b){ ctaPagoRecordar(); CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
+  // 26/09: sin total anotado, «💵 Pago» no va al flete ni a un «cobro de más»: primero el total (ver showContaModal).
+  if(!(CTA_TIPO==='envio' || CTA_FORM_ENV) && sinMontoAnotado(p) && !noSeCobra(p)){
+    toast('A esta venta nadie le anotó cuánto era: poné primero el total en «✏️ Corregir precios y montos» y después registrá el pago.','err',8000);
+    ctaIrAMontos(); return;
+  }
   var _mEl=document.getElementById('cta-pago-monto');
   var monto=montoNegativo(_mEl.value)?0:parseMonto(_mEl.value);
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
