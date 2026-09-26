@@ -501,6 +501,12 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
    Repartir mitad y mitad hacía que el texto de los avisos envolviera de más. */
 .cua-2col{grid-template-columns:1.8fr 1fr}
 @media(max-width:1100px){.cua-2col{grid-template-columns:1fr}}
+/* 26/09: a 360 px la barra «Ventas · Mayoristas · Cuadre y conciliación» medía 385 y corría TODA
+   Contabilidad de costado. En el celular la que no entra baja de renglón, entera (sin cortar palabras).
+   Y a 320 las dos cajas de abajo (avisos y «Por cobrar») no achicaban: una celda de grilla no baja
+   de lo que mide su contenido si no se le dice `min-width:0` (la tabla ya tiene su propio scroll). */
+@media(max-width:560px){#cta-tab{display:flex;flex-wrap:wrap;max-width:100%}#cta-tab button{flex:1 1 auto;padding:10px 12px}}
+.cua-2col>*{min-width:0}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
