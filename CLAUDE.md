@@ -657,6 +657,7 @@ implementado.
 
 ## 🚚 Banzer, depósito del que salen camiones (§4ge, 26/09)
 El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+**Publicado el 26/09 a las 17:15 de Bolivia** (`main` = `39b833c`), sin tocar el servidor (sigue 2026-09-26-a).
 - **Quién es de salida lo dice UNA función, `almEsSalida(nm)`**: el rol elegido al subir el Excel
   (`STOCK.al`: `'sale'` o `'trae'`) manda; con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM/Industrias
   Moreno y el de fábrica nunca son de salida. `RECOGER_EXTRA` quedó vacío.

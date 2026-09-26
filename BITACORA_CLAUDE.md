@@ -7480,6 +7480,9 @@ salía de Banzer, y Banzer no bajaba nunca: dos errores de cuenta a la vez.
   para cuando lo pida.
 - Publicar ahora, con F5 de todos.
 
+**Publicado el 26/09 a las 17:15 de Bolivia**: `main` = `39b833c` (merge `--no-ff` de `1ead5fb` sobre el `307b37c` del
+robot), Pages 1524 en verde, `pedidos.html`, `productos-mes.js` y el `.gs` idénticos a la rama. El servidor no cambia.
+
 **Al publicar, todos F5.** Una página vieja lee «✔ Banzer» como «✔ acá», y al corregir el pedido pierde el lugar.
 
 ## 4gd. 26/09: la revisión de Codex — cinco hallazgos, el sello de los días cerrados (.gs 2026-09-26-a) y Banzer (2026-09-26)
