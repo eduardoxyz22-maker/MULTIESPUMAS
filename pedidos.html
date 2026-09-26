@@ -10642,6 +10642,12 @@ function guardarProgramarDevAtc(id){
   if(!f){ toast('Falta el día de la devolución','err'); return; }
   if(f<todayStr()){ toast('La devolución no puede programarse para un día que ya pasó','err'); return; }
   if(atcDevuelta(p) && f<atcDevuelta(p)){ toast('No se le puede devolver antes de que volviera de fábrica ('+fmtFecha(atcDevuelta(p))+')','err'); return; }
+  /* (26/09) El MISMO día del recojo el botón ya se habilita (la fecha «llegó»), y si el chofer no
+     lo tildó puede que todavía no haya ido: programar muda la ATC al día de la devolución y el
+     viaje de HOY a buscarlo sale de su lista y de la carga. Se pregunta antes. */
+  var _a0=atcDe(p)||{};
+  if(!_a0.rec && !p.entregado && (p.fecha||'')>=todayStr() &&
+     !confirm('⚠️ El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅.\n\nSi programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.\n\n¿Ya lo recogieron?')) return;
   /* (25/09) Ocupa un cupo como cualquier entrega: domingo, sábado PM, día cerrado o turno lleno
      AVISAN y se confirman, igual que en 📅 Reprogramar. Antes decía «✓ programada» y el portero
      del servidor la rechazaba después como «turno lleno» (también el domingo). */

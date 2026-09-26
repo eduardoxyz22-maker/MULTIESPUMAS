@@ -9,6 +9,10 @@
       domicilio —la ficha del chofer, la lista de carga, la hoja de ruta y su WhatsApp— no se
       enteraba ni de llevarlo en el recojo ni de traerlo de vuelta en la devolución; y el mensaje
       al grupo de una ATC nueva no decía el motivo y la anunciaba como «💰 PAGADO».
+   3. 🔁 «Programar devolución» se habilita el MISMO día del recojo (la fecha ya «llegó»), aunque
+      el chofer todavía no haya ido. Programarla a la mañana mudaba la ATC al día de la devolución:
+      el viaje de HOY a buscarlo desaparecía de la ficha del chofer y de la carga, y el día de la
+      devolución iba a llevar un producto que seguía en lo del cliente. Ahora pregunta antes.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev2_atc.js
@@ -204,6 +208,48 @@ const BASE = `
         !/PAGADO/.test(r.grupo) && /No se cobra/i.test(r.grupo) && !/PAGADO/.test(r.grupoSin) && !/comod/i.test(r.grupoSin), r.grupo.split('\n').filter(function(l){ return /💰|cobra/i.test(l); }).join(' | '));
     chk('control: el mensaje de una venta sigue igual («💰 POR COBRAR», sin línea de ATC)',
         /POR COBRAR/.test(r.venta) && !/ATC|comod/i.test(r.venta), r.venta.split('\n').slice(0,2).join(' | '));
+    await page.close();
+  }
+
+  // ═══ 3. Programar la devolución el mismo día del recojo, antes de que el chofer vaya ═══
+  console.log('\n── 3. 🔁 El recojo es HOY y el chofer no lo tildó: programar la devolución pregunta antes ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[]; var out={}, hoy=todayStr();
+      window._confirms=[]; window._resp=false;
+      confirm=function(m){ window._confirms.push(String(m)); return window._resp; };
+      var recojo=function(id, fecha, entregado){ STATE=STATE.filter(function(p){ return p.id!==id; });
+        STATE.push(_P({id:id, oc:'ATC 09-2'+id.length, fecha:fecha, turno:'PM', entregado:!!entregado, cliente:'CLIENTE '+id,
+          productos:[{desc:'SOFT', cant:1, atc:{mot:'Resortes'}}]})); saveMirror(); };
+      var programar=function(id){ window._confirms=[]; window._saves=[];
+        abrirProgramarDevAtc(id); document.getElementById('pdev-fecha').value='2026-09-28'; segSet('pdev-turno','AM');
+        guardarProgramarDevAtc(id);
+        var p=findById(id), a=atcDe(p)||{};
+        return { fecha:p.fecha, pdev:a.pdev||'', confirms:window._confirms.slice(), mandado:window._saves.length,
+                 hoyChofer:STATE.filter(function(q){ return q.fecha===hoy && q.chofer==='Luis Pierre'; }).map(function(q){ return q.id; }) }; };
+      // (a) el recojo es HOY a la tarde y todavía no fue nadie: el botón está habilitado…
+      recojo('h1', hoy, false);
+      verAtc('h1'); out.boton=[].some.call(document.querySelectorAll('#modal-box button'), function(b){ return /Programar devolución/.test(b.textContent) && !b.disabled; }); closeModal();
+      // …y si dicen que NO lo recogieron todavía, no se programa nada y el recojo sigue en el día
+      out.no=programar('h1');
+      // …si confirman que ya lo recogieron, se programa como siempre
+      window._resp=true; out.si=programar('h1'); window._resp=false;
+      // (b) control: el recojo fue AYER — se programa sin preguntar nada
+      recojo('y1', '2026-09-22', false); out.ayer=programar('y1');
+      // (c) control: el recojo es hoy pero el chofer ya lo tildó ✅ — tampoco pregunta
+      recojo('t1', hoy, true); out.tildado=programar('t1');
+      return out;
+    }, BASE);
+    chk('punto de partida: el mismo día del recojo el botón «🔁 Programar devolución» ya está habilitado', r.boton===true, r.boton);
+    chk('⚠️ programar la devolución el día del recojo sin ✅ PREGUNTA si ya lo recogieron (antes lo mudaba sin decir nada)',
+        r.no.confirms.length===1 && /recog/i.test(r.no.confirms[0]) && /HOY/.test(r.no.confirms[0]), J(r.no.confirms));
+    chk('⚠️ …y si dicen que no, el recojo de hoy sigue en la lista del chofer y no se manda nada',
+        r.no.fecha==='2026-09-23' && r.no.pdev==='' && r.no.mandado===0 && r.no.hoyChofer.indexOf('h1')>=0, J(r.no));
+    chk('…si confirman que ya lo recogieron, se programa como siempre', r.si.pdev==='2026-09-28' && r.si.fecha==='2026-09-28' && r.si.mandado===1, J(r.si));
+    chk('control: con el recojo de AYER se programa sin preguntar', r.ayer.confirms.length===0 && r.ayer.pdev==='2026-09-28', J(r.ayer));
+    chk('control: con el recojo de hoy ya tildado ✅ por el chofer, tampoco', r.tildado.confirms.length===0 && r.tildado.pdev==='2026-09-28', J(r.tildado));
     await page.close();
   }
 
