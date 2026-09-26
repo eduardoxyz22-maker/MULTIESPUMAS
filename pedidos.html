@@ -8783,6 +8783,11 @@ function autoOcupado(){
   }
   var v=document.getElementById('visor');
   if(v && v.style.display && v.style.display!=='none') return 'visor';
+  /* 🧮 26/09: tipeando el arqueo. El número se guarda al salir del campo; repintar el cuadre con el
+     campo adentro se llevaba lo tipeado y el foco (y Chromium, al sacar el campo, disparaba su
+     `change` en el medio del repintado: excepción). Se refresca en la próxima vuelta. */
+  var ae=document.activeElement;
+  if(ae && ae.classList && ae.classList.contains('cua-arqueo')) return 'anotando el arqueo';
   return '';
 }
 /* Repinta SOLO la vista que se está mirando, y le devuelve el scroll donde estaba: que
