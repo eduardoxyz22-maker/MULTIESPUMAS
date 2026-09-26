@@ -14111,12 +14111,16 @@ function stockMigrar(d){
 /* ¿Esta entrada suma encima del conteo de acá? Lo anterior al conteo ya está DENTRO de él: por
    fecha, como siempre (`stockDesdeSalidas`), y desde §4fz-b también por hora (`ts` ≤ `c.t`): una
    entrada anotada en otro dispositivo ANTES de que acá se contara llegaba después por la junta y
-   se sumaba dos veces. Sin hora (lo de antes) manda solo la fecha. */
+   se sumaba dos veces. Sin hora (lo de antes) manda solo la fecha.
+   ⚠️ (26/09) Con un Excel de la tarde que «ya incluye las entregas del día» (`c.inc`), lo que llegaba
+   ESE día DESPUÉS de subirlo se cortaba por la fecha: «✅ Sumadas 5» y el depósito igual, porque
+   `filaStock` lo podaba al guardar. Con hora de los dos lados, ese día manda la hora. */
 function stockEntradaVale(S, f, ts){
   var c=(S&&S.c)||{};
   if(!c.f) return true;
-  if(String(f||'')<(c.inc ? stockSumarDias(c.f,1) : c.f)) return false;
-  return !(Number(ts)>0 && Number(c.t)>0 && Number(ts)<=Number(c.t));
+  var conHora=Number(ts)>0 && Number(c.t)>0;
+  if(String(f||'')<((c.inc && !conHora) ? stockSumarDias(c.f,1) : c.f)) return false;
+  return !(conHora && Number(ts)<=Number(c.t));
 }
 function filaStock(){
   stockOlvidarIndice();
@@ -14350,7 +14354,9 @@ function stockNormalizarRecepciones(S){
     var ya={}; S.e.forEach(function(x){ if(x && x.rec) ya[x.id]=1; });
     Object.keys(quiero).forEach(function(rid){
       if(ya[rid]) return; var r=quiero[rid];
-      S.e.push({ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id });
+      var ent={ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id };
+      if(Number(r.ts)>0) ent.ts=Number(r.ts);     // (26/09) con la hora de la recepción: `filaStock` poda mirando solo la entrada
+      S.e.push(ent);
     });
     if(q.tipo!=='recogida') return;
     var alm=q.de || stockAlmPorDefectoDe(S), g=(S.g||{})[alm];       // el de ESTE stock (puede no ser STOCK: una junta)
