@@ -13,6 +13,9 @@
       el chofer todavía no haya ido. Programarla a la mañana mudaba la ATC al día de la devolución:
       el viaje de HOY a buscarlo desaparecía de la ficha del chofer y de la carga, y el día de la
       devolución iba a llevar un producto que seguía en lo del cliente. Ahora pregunta antes.
+   4. 📋 «Copiar» la matriz no copiaba lo que muestra la matriz: sin encabezado (al pegarla en
+      Excel no se sabía qué era cada columna) y sin el «🏭 Recogido de fábrica» ni la devolución
+      programada — copiaba el «listo en fábrica», que desde §4eb es opcional y casi siempre vacío.
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev2_atc.js
@@ -250,6 +253,33 @@ const BASE = `
     chk('…si confirman que ya lo recogieron, se programa como siempre', r.si.pdev==='2026-09-28' && r.si.fecha==='2026-09-28' && r.si.mandado===1, J(r.si));
     chk('control: con el recojo de AYER se programa sin preguntar', r.ayer.confirms.length===0 && r.ayer.pdev==='2026-09-28', J(r.ayer));
     chk('control: con el recojo de hoy ya tildado ✅ por el chofer, tampoco', r.tildado.confirms.length===0 && r.tildado.pdev==='2026-09-28', J(r.tildado));
+    await page.close();
+  }
+
+  // ═══ 4. «📋 Copiar» la matriz copia lo que se ve ═══════════════════════════════════════
+  console.log('\n── 4. 📋 Copiar la matriz: con encabezado, el recogido de fábrica y la devolución programada ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[];
+      _atcConDev('m1','2026-09-28','PM');
+      marcarRecogidoFab('m1');                                   // logística ya lo trajo de la fábrica (hoy)
+      var copiado=''; copyText=function(t){ copiado=t; };
+      showView('atc'); await new Promise(function(r){ setTimeout(r,150); });
+      segSet('atc-mode','todo'); renderAtc(); copiarAtc();
+      var th=[].map.call(document.querySelectorAll('#tbl-atc thead th'), function(x){ return x.textContent.trim(); });
+      return { txt:copiado, th:th };
+    }, BASE);
+    const filas=r.txt.split('\n').filter(function(l){ return /\t/.test(l); });
+    const enc=(filas[0]||'').split('\t'), dato=(filas[1]||'').split('\t');
+    const col=(n)=>dato[enc.indexOf(n)];
+    chk('⚠️ la copia trae una fila de encabezado (antes, pegada en Excel, no se sabía qué era cada columna)',
+        enc[0]==='N° ATC' && enc.indexOf('Motivo')>=0 && enc.length===dato.length, J(enc));
+    chk('control: las columnas de siempre siguen en el mismo lugar (N° ATC, entró, cliente… qué se hizo)',
+        J(enc.slice(0,13))===J(['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica','Al cliente','Días','Qué se hizo']) && dato[0]==='ATC 09-02', J(enc.slice(0,13)));
+    chk('⚠️ trae el «🏭 Recogido de fábrica» que muestra la matriz (antes no estaba)', col('Recogido de fábrica')==='23/09/2026', col('Recogido de fábrica'));
+    chk('⚠️ …y la devolución programada con su turno', col('Devolución programada')==='28/09/2026 PM', col('Devolución programada'));
     await page.close();
   }
 

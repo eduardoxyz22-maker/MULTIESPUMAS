@@ -10774,7 +10774,12 @@ function verAtc(id){
 function copiarAtc(){
   var list=atcLista();
   if(!list.length){ toast('No hay ATC para copiar','err'); return; }
-  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+'\n\n'+
+  /* (26/09) Con encabezado —pegada en Excel no se sabía qué era cada columna— y con lo que la
+     matriz muestra desde §4eb: el «recogido de fábrica» y la devolución programada. Van AL FINAL
+     para no correr las de siempre. */
+  var enc=['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
+           'Al cliente','Días','Qué se hizo','Recogido de fábrica','Devolución programada'];
+  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+'\n\n'+enc.join('\t')+'\n'+
     list.map(function(p){
       var d=atcDias(p);
       return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (p.cliente||''), (p.vendedor||''),
@@ -10783,7 +10788,9 @@ function copiarAtc(){
               (atcRecogida(p)?fmtFecha(atcRecogida(p)):''),
               (atcDevuelta(p)?fmtFecha(atcDevuelta(p)):''),
               (atcEntregada(p)?fmtFecha(atcEntregada(p)):''),
-              (d==null?'':(d+' días')), (atcQueSeHizo(p)||'')].join('\t');
+              (d==null?'':(d+' días')), (atcQueSeHizo(p)||''),
+              (atcRecogidoFab(p)?fmtFecha(atcRecogidoFab(p)):''),
+              (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():'')].join('\t');
     }).join('\n');
   copyText(txt); toast('Matriz de ATC copiada ✓','ok');
 }
