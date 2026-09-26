@@ -11243,8 +11243,12 @@ function renderBorradoresHuerfanos(){
    así el pedido sigue atado a su lead y el robot no lo vuelve a crear. */
 function completarBorrador(id){
   var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
+  /* (26/09) Al guardar se vuelve a donde se tocó «Completar»: el «sin vendedora» vive en Administración
+     y terminaba en Mis pedidos. Reabierto por un choque (ya en el formulario), sigue a donde iba. */
+  var _vf=document.getElementById('view-form'), _va=document.getElementById('view-admin');
+  var _desde=(_vf && _vf.classList.contains('active')) ? EDIT_DESDE : ((_va && _va.classList.contains('active')) ? 'admin' : 'mis');
   showView('form'); resetForm();
-  EDIT_ID=String(rec.id); EDIT_DESDE='mis'; EDIT_REV=(rec.rev!=null)?rec.rev:null;
+  EDIT_ID=String(rec.id); EDIT_DESDE=_desde; EDIT_REV=(rec.rev!=null)?rec.rev:null;
   document.getElementById('edit-banner').classList.add('on');
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value='';
   document.getElementById('f-vendedor').value=vendedorDeBorrador(rec)||rec.vendedor||''; applyVendedorLite();

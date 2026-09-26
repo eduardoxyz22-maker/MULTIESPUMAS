@@ -191,6 +191,74 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 3. Completar un borrador de Kommo desde Administración vuelve a Administración ═══
+  /* `completarBorrador` ponía siempre `EDIT_DESDE='mis'`: el de un borrador «sin vendedora», que solo
+     se ve en ADMINISTRACIÓN, terminaba en «Mis pedidos» (desde a93ca79, con el WhatsApp encima). */
+  console.log('\n── 3. 📥 El borrador «sin vendedora» completado desde Administración vuelve a Administración ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var out={};
+      var borr=function(id, vend, cli){ return _P({id:id, estado:'Borrador Kommo', vendedor:vend, cliente:cli, fecha:'', turno:'', oc:'', zona:'', direccion:'', maps:'',
+                  nota:'', saldo:3000, nroDia:0, ts:Date.parse('2026-09-23T08:00:00-04:00'), rev:3, chofer:'', vehiculo:'', verificado:false,
+                  productos:[{desc:'TITANIO ICE', medida:'160x190', cant:1, precio:3000}]}); };
+      var armar=function(lista){
+        window._pl=JSON.parse(JSON.stringify(lista));
+        apiList=function(){ return Promise.resolve({ok:true,pedidos:JSON.parse(JSON.stringify(window._pl))}); };
+        STATE=[]; BORRADORES=JSON.parse(JSON.stringify(lista)); saveBorrMirror(); saveMirror();
+      };
+      var choques=0, llamadas=0;
+      apiSave=function(rec){
+        llamadas++;
+        if(choques>0){ choques--; var v=window._pl.filter(function(x){ return x.id===rec.id; })[0]; return Promise.resolve({ok:false, error:'conflicto', pedido:JSON.parse(JSON.stringify(v))}); }
+        var c=JSON.parse(JSON.stringify(rec)); c.rev=(Number(rec.rev)||0)+1; c.nroDia=c.nroDia||1;
+        window._pl=window._pl.filter(function(x){ return x.id!==rec.id; }).concat([c]); return Promise.resolve({ok:true,pedido:c}); };
+      var completarDesde=async function(vista, id, conChoque){
+        choques=conChoque?1:0; llamadas=0;
+        showView(vista); await new Promise(function(r){ setTimeout(r,200); });
+        if(vista==='admin') renderAdmin(); else { document.getElementById('mis-vendedor').value='Carola Chavez'; renderMis(); }
+        var caja=document.getElementById(vista==='admin'?'adm-borradores':'mis-borradores');
+        var btn=[].filter.call(caja.querySelectorAll('button'), function(b){ return /Completar la entrega/.test(b.textContent); })[0];
+        if(!btn) return { sinBoton:true, caja:caja.textContent.replace(/\s+/g,' ').slice(0,120) };
+        btn.click();
+        await new Promise(function(r){ setTimeout(r,150); });
+        var llenar=function(){
+          document.getElementById('f-vendedor').value='Carola Chavez'; applyVendedorLite();
+          document.getElementById('f-fecha').value='2026-09-24';
+          document.getElementById('f-nota').value='9'+id.length+'01';
+          document.getElementById('f-zona').value='Norte';
+          document.getElementById('f-direccion').value='Calle 1';
+          segSet('f-turno','AM');
+        };
+        llenar(); submitPedido();
+        await new Promise(function(r){ setTimeout(r,700); });
+        if(conChoque){ llenar(); submitPedido(); await new Promise(function(r){ setTimeout(r,700); }); }   // el formulario se reabrió con lo nuevo
+        var mb=document.getElementById('modal-box');
+        var o={ enAdmin:document.getElementById('view-admin').classList.contains('active'),
+                enMis:document.getElementById('view-mis').classList.contains('active'),
+                modal:mb?mb.textContent.replace(/\s+/g,' ').slice(0,160):'', wa:(document.getElementById('wa-text')||{}).value||'', llamadas:llamadas,
+                fila:window._pl.filter(function(x){ return x.id===id; }).map(function(x){ return (x.estado||'')+'|'+x.fecha; })[0] };
+        closeModal();
+        return o;
+      };
+      armar([borr('kommo-901','Cuenta General','HUERFANO UNO')]);
+      out.admin=await completarDesde('admin','kommo-901', false);
+      armar([borr('kommo-902','Cuenta General','HUERFANO DOS')]);
+      out.adminChoque=await completarDesde('admin','kommo-902', true);
+      armar([borr('kommo-903','Carola Chavez','DE CAROLA')]);
+      out.mis=await completarDesde('mis','kommo-903', false);
+      return out;
+    }, BASE);
+    chk('punto de partida: desde Administración se guarda como pedido nuevo', r.admin.fila==='|2026-09-24', J(r.admin));
+    chk('⚠️ completado desde Administración VUELVE a Administración (antes caía en «Mis pedidos»)', r.admin.enAdmin===true && r.admin.enMis===false, J([r.admin.enAdmin, r.admin.enMis]));
+    chk('…y el mensaje para el grupo sale igual, como con todo pedido nuevo', /Pedido guardado/.test(r.admin.modal) && /HUERFANO UNO/.test(r.admin.wa), r.admin.modal);
+    chk('⚠️ si al guardar chocó (lo tocó otra persona) y se reabre el formulario, igual vuelve a Administración',
+        r.adminChoque.llamadas===2 && r.adminChoque.fila==='|2026-09-24' && r.adminChoque.enAdmin===true && /Pedido guardado/.test(r.adminChoque.modal), J(r.adminChoque));
+    chk('control: completado desde «Mis pedidos» vuelve a Mis pedidos, con el mensaje', r.mis.enMis===true && r.mis.enAdmin===false && /Pedido guardado/.test(r.mis.modal) && /DE CAROLA/.test(r.mis.wa), J(r.mis));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
