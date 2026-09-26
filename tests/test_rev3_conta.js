@@ -9,6 +9,7 @@
      2. La columna «Ingresado», la ficha y el INGRESADO del Excel leían el `ts` con el reloj del
         DISPOSITIVO; el filtro del mes lo lee en hora de Bolivia (§4fu). En un celular con la zona
         mal puesta la venta del 31/08 21:30 salía en agosto… diciendo «2026-09-01 01:30».
+     3. «💵 Anotar el monto» tomaba «-1500» como 1.500 (`parseMonto` saca el signo).
 
    Red cortada, servidor simulado (la planilla vive en `window.SRV`). Se corre:
        node tests/test_rev3_conta.js
@@ -254,6 +255,30 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   chk('2 · …y el INGRESADO del Excel', r.excel==='2026-08-31 21:30', r.excel);
   r = await ING('America/La_Paz');
   chk('2 · control: en una compu bien configurada da lo mismo que antes', r.col==='2026-08-31 21:30' && r.ficha==='2026-08-31 21:30' && r.excel==='2026-08-31 21:30', J(r));
+
+  /* ══ 3 · «💵 ANOTAR EL MONTO» NO TOMA «-1500» COMO 1.500 ══════════════════════════════════════
+     La venta «PAGADA sin monto» (§4fg): el prompt pide cuánto entró. `parseMonto` le saca el signo,
+     así que «-1500» se anotaba como un pago de Bs 1.500. El formulario ya frenaba el menos. */
+  D.promptVal='-1500';
+  r = await page.evaluate(async () => {
+    await aVentas([ P({ id:'S1', nota:'120', oc:'09-120', cliente:'PAGADA SIN MONTO', pagado:true, metodoPago:'Efectivo %S1' }) ]);
+    showContaModal('S1');
+    var b=boton('ctaAnotarMonto'); if(b) b.click();
+    var p=findById('S1'), c=cobrosDe(p)[0]||{};
+    var toast=(document.getElementById('toast')||{}).textContent||'';
+    return { boton:!!b, sinMonto:!!c.sinMonto, monto:Number(c.monto)||0, cobrado:totalCobrado(p), toast:toast };
+  });
+  chk('3 · ⚠️ «-1500» en «💵 Anotar el monto» NO se anota (la venta sigue sin monto)', r.boton && r.sinMonto===true && r.cobrado===0, J(r));
+  chk('3 · …y se dice por qué', /negativ|monto válido/i.test(r.toast), r.toast);
+  D.promptVal='1.500';
+  r = await page.evaluate(async () => {
+    await aVentas([ P({ id:'S1', nota:'120', oc:'09-120', cliente:'PAGADA SIN MONTO', pagado:true, metodoPago:'Efectivo %S1' }) ]);
+    showContaModal('S1');
+    boton('ctaAnotarMonto').click();
+    var p=findById('S1'), c=cobrosDe(p)[0]||{};
+    return { sinMonto:!!c.sinMonto, monto:Number(c.monto)||0, fecha:c.fecha, pagado:p.pagado };
+  });
+  chk('3 · control: «1.500» se anota como 1.500, con la fecha de la venta', r.sinMonto===false && r.monto===1500 && r.pagado===true && !!r.fecha, J(r));
 
   chk('sin errores JS', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

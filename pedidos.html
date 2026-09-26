@@ -6144,6 +6144,8 @@ function ctaAnotarMonto(id, idx){
     'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '');
   if(txt==null) return;
   var monto=parseMonto(txt);
+  // 26/09: `parseMonto` saca el signo y «-1500» se anotaba como un pago de Bs 1.500. El menos FRENA (§4gb).
+  if(montoNegativo(txt)){ toast('El monto no puede ser negativo: poné cuánto entró (ej. 1750)','err'); return; }
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   var otros=0; arr.forEach(function(x,i){ if(i!==idx) otros=r2(otros+(Number(x.monto)||0)); });
   c.monto=monto;
