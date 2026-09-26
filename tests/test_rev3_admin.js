@@ -69,6 +69,15 @@ const BASE = `
     }, window._srv.tardaSave||0); });
   };
   window._espera=function(ms){ return new Promise(function(r){ setTimeout(r, ms); }); };
+  /* Se espera por una CONDICIÓN y no por el reloj: con la máquina cargada, 1 s puede no alcanzar. El reloj de
+     la página está clavado (Date.now no avanza), así que se cuentan vueltas. Sin condición, a los 6 s sigue. */
+  window._hasta=function(cond, ms){ var n=Math.ceil((ms||6000)/25); return new Promise(function(res){ (function mira(){ var ok=false; try{ ok=!!cond(); }catch(e){} if(ok || n--<=0) return res(ok); setTimeout(mira, 25); })(); }); };
+  window._enCola=function(id){ return _hasta(function(){ return getPending().some(function(p){ return p && p.id===id; }); }); };
+  /* Hasta que salga un guardado NUEVO de esa fila (se llama ANTES del toque), y un respiro para su respuesta. */
+  window._otroGuardado=function(id){
+    var cuenta=function(){ return window._srv.saves.filter(function(s){ return s.id===id; }).length; }, n0=cuenta();
+    return _hasta(function(){ return cuenta()>n0; }).then(function(){ return _espera(120); });
+  };
 `;
 
 (async () => {
@@ -149,26 +158,23 @@ const BASE = `
       STATE=[]; saveMirror();
       // a) El otro cargador tildó X; este celular no se enteró (su memoria está vacía) y tilda Y.
       window._srv.carga=K.x; CARGA_CHK={}; saveCargaMirror();
-      setCargaChk(K.y, true);
-      await _espera(1200);
+      var g=_otroGuardado(CARGA_ID); setCargaChk(K.y, true); await g;
       var a={ srv:_cargaSrv(), local:Object.keys(CARGA_CHK).sort().join(' ; ') };
       // b) El otro destildó Z (que este celular todavía ve tildada); este tilda W: Z no vuelve.
       window._srv.carga=[K.x,K.y].join(' ; ');   // el otro sacó Z
       CARGA_CHK={}; CARGA_CHK[K.x]=1; CARGA_CHK[K.y]=1; CARGA_CHK[K.z]=1; saveCargaMirror();
-      setCargaChk(K.w, true);
-      await _espera(1200);
+      g=_otroGuardado(CARGA_ID); setCargaChk(K.w, true); await g;
       var b={ srv:_cargaSrv() };
       // c) Un refresco entre el toque y el guardado no se lleva la tilde recién puesta.
       window._srv.carga=K.x; CARGA_CHK={}; CARGA_CHK[K.x]=1; saveCargaMirror();
-      setCargaChk(K.v, true);
+      g=_otroGuardado(CARGA_ID); setCargaChk(K.v, true);
       await refrescarEstado();                         // el list vuelve con la fila de antes (sin V)
       var enPantalla=!!CARGA_CHK[K.v];
-      await _espera(1200);
+      await g;
       var c={ srv:_cargaSrv(), enPantalla:enPantalla, local:!!CARGA_CHK[K.v] };
       // d) Destildar acá se respeta (y lo del otro queda).
       window._srv.carga=[K.x,K.v,K.u].join(' ; '); CARGA_CHK={}; CARGA_CHK[K.x]=1; CARGA_CHK[K.v]=1; saveCargaMirror();   // U lo tildó el otro
-      setCargaChk(K.v, false);
-      await _espera(1200);
+      g=_otroGuardado(CARGA_ID); setCargaChk(K.v, false); await g;
       var d={ srv:_cargaSrv() };
       return { a:a, b:b, c:c, d:d };
     }, { x:K('X'), y:K('Y'), z:K('Z'), w:K('W'), v:K('V'), u:K('U') });
@@ -181,12 +187,13 @@ const BASE = `
     r = await page.evaluate(async (K) => {
       // e) Tildando varios seguidos sigue yendo UNA sola escritura.
       window._srv.carga=''; CARGA_CHK={}; saveCargaMirror(); window._srv.saves=[];
+      var g=_otroGuardado(CARGA_ID);
       setCargaChk(K.x,true); setCargaChk(K.y,true); setCargaChk(K.z,true);
-      await _espera(1200);
+      await g; await _espera(900);                     // y que no salga un segundo guardado
       var n=window._srv.saves.filter(function(s){ return s.id===CARGA_ID; }).length;
       // f) Sin poder leer la planilla, se guarda igual (como antes).
-      window._srv.listFalla=true; setCargaChk(K.w,true);
-      await _espera(1200); window._srv.listFalla=false;
+      window._srv.listFalla=true; g=_otroGuardado(CARGA_ID); setCargaChk(K.w,true);
+      await g; window._srv.listFalla=false;
       return { n:n, srv:_cargaSrv() };
     }, { x:K('X'), y:K('Y'), z:K('Z'), w:K('W') });
     chk('  tildar tres seguidas sigue siendo una sola escritura', r.n===1, 'escrituras: '+r.n);
@@ -206,7 +213,7 @@ const BASE = `
       if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
       window._srv.saveFalla=true; window._srv.listFalla=true;
       cerrarDia('2026-10-06');
-      await _espera(200);
+      await _enCola(CIERRE_ID);
       var enCola=getPending().filter(function(p){ return p.id===CIERRE_ID; }).length;
       // …mientras tanto la otra computadora reabre el 01/10 y cierra el 07/10.
       window._srv.cierre='🔒 2026-10-07';
@@ -232,7 +239,7 @@ const BASE = `
       if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
       window._srv.saveFalla=true; window._srv.listFalla=true;
       abrirDia('2026-10-01');                                   // sin señal: reabre el 01/10
-      await _espera(200);
+      await _enCola(CIERRE_ID);
       if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};   // «recargó la página»
       CIERRES_PEND=null;
       window._srv.cierre='🔒 2026-10-01 2026-10-08';            // la otra cerró el 08/10
@@ -251,10 +258,11 @@ const BASE = `
       if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
       window._srv.saveFalla=true; window._srv.listFalla=true;
       cerrarDia('2026-10-09');
-      await _espera(200);
+      await _enCola(CIERRE_ID);
       window._srv.saveFalla=false; window._srv.listFalla=false;
+      var g=_otroGuardado(CIERRE_ID);
       abrirDia('2026-10-09');                                   // con señal, antes de la cola
-      await _espera(200);
+      await g;
       var antes=window._diasSrv();
       await flushPending();
       return { antes:antes, srv:window._diasSrv(), cola:getPending().length };
@@ -268,7 +276,7 @@ const BASE = `
       if(typeof CARGA_CAMBIOS!=='undefined') CARGA_CAMBIOS={};
       window._srv.saveFalla=true; window._srv.listFalla=true;
       setCargaChk(K('Y'), true);
-      await _espera(1200);
+      await _enCola(CARGA_ID);
       var enCola=getPending().filter(function(p){ return p.id===CARGA_ID; }).length;
       window._srv.carga=K('X');                                 // el otro tildó X
       window._srv.saveFalla=false; window._srv.listFalla=false;
