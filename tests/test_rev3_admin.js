@@ -16,6 +16,9 @@
       como AM (`cuposUsadosTurno`, y el portero del `.gs`).
    5. 🏪 «Todos» de la Lista de carga y de la Hoja de ruta mostraba las ventas de tienda (en
       «(sin fecha)» y como «⚠️ SIN CHOFER»): la venta de tienda no sube al camión.
+   6. 💰 El 💰✓ de Administración deshacía de un toque el cobro que recibió el CHOFER en la puerta:
+      desaparecía de lo que él tiene que rendir. Ahora pregunta, nombrando al chofer y el monto (lo
+      que se deshace no cambia: `cobroDeLaPuerta`).
 
    Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia). Red cortada, servidor simulado, datos
    sintéticos. Se corre:  node tests/test_rev3_admin.js
@@ -349,6 +352,46 @@ const BASE = `
     chk('  …y cuenta solo lo que sube al camión', /^1 pedidos/.test(r.carga.info) && /CLIENTE CAMION/.test(r.carga.body), r.carga.info);
     chk('🔴 la Hoja de ruta en «Todos» no las pone como «SIN CHOFER (asignar)»', !/SIN CHOFER/.test(r.ruta.body) && !/CLIENTE TIENDA/.test(r.ruta.body), r.ruta.body.slice(0,200));
     chk('  …y cuenta solo lo que sube al camión', /^1 pedidos/.test(r.ruta.info) && /CLIENTE CAMION/.test(r.ruta.body), r.ruta.info);
+    await page.close();
+  }
+
+  // ═══ 6. 💰✓ sobre un cobro que recibió el chofer ═══════════════════════════════════
+  console.log('\n── 6. 💰 Deshacer el cobro que recibió el chofer pregunta antes ──');
+  {
+    const page = await nueva(MIERCOLES);
+    D.confirm=false; D.vistos=[];
+    let r = await page.evaluate(async () => {
+      var hoy=todayStr();
+      STATE=[ _P({id:'Q1', cliente:'COBRO DEL CHOFER', pagado:true, saldo:0, metodoPago:textoCobros([{metodo:'Efectivo',monto:500,fecha:hoy,recibio:'Luis Pierre'}])}) ];
+      saveMirror();
+      quickCobrado('Q1');
+      var p=findById('Q1');
+      return { pagado:p.pagado, cobros:cobrosDe(p).map(function(c){ return c.metodo+' '+c.monto+' '+(c.recibio||''); }) };
+    });
+    const preg = D.vistos.filter(v=>/^confirm/.test(v));
+    chk('🔴 el 💰✓ pregunta antes de deshacer un cobro que recibió el chofer', preg.length===1, J(D.vistos));
+    chk('🔴 …nombrando al chofer y el monto', preg.some(v=>/Luis Pierre/.test(v) && /500,00/.test(v)), J(preg));
+    chk('🔴 diciendo «No» no se toca nada (el cobro sigue en la mano del chofer)', r.pagado===true && J(r.cobros)===J(['Efectivo 500 Luis Pierre']), J(r));
+    D.confirm=true; D.vistos=[];
+    r = await page.evaluate(async () => {
+      quickCobrado('Q1');
+      var p=findById('Q1');
+      return { pagado:p.pagado, saldo:Number(p.saldo)||0, cobros:cobrosDe(p).length };
+    });
+    chk('  diciendo «Sí» se deshace como siempre (la venta vuelve a deber 500)', r.pagado===false && r.saldo===500 && r.cobros===0, J(r));
+    D.confirm=true; D.vistos=[];
+    r = await page.evaluate(async () => {
+      var hoy=todayStr();
+      STATE=[ _P({id:'Q2', cliente:'COBRO DEL 💰', pagado:true, saldo:0, metodoPago:textoCobros([{metodo:'Efectivo',monto:700,fecha:hoy}])}),
+              _P({id:'Q3', cliente:'DOS DE LA PUERTA', pagado:true, saldo:0, metodoPago:textoCobros([{metodo:'Efectivo',monto:300,fecha:hoy,recibio:'Miguel'},{metodo:'Efectivo',monto:200,fecha:hoy}])}) ];
+      saveMirror();
+      quickCobrado('Q2'); var a=findById('Q2');
+      quickCobrado('Q3'); var b=findById('Q3');
+      return { q2:{ pagado:a.pagado, saldo:Number(a.saldo)||0 }, q3:{ pagado:b.pagado, saldo:Number(b.saldo)||0 } };
+    });
+    const pregs = D.vistos.filter(v=>/^confirm/.test(v));
+    chk('control: el cobro del 💰 (sin chofer) se sigue deshaciendo de un toque, sin preguntar', r.q2.pagado===false && r.q2.saldo===700 && !pregs.some(v=>/700/.test(v)), J({r:r.q2, pregs:pregs}));
+    chk('  con dos de la puerta, la pregunta de siempre nombra también al chofer', pregs.some(v=>/300,00/.test(v) && /Miguel/.test(v)) && r.q3.saldo===500, J(pregs));
     await page.close();
   }
 

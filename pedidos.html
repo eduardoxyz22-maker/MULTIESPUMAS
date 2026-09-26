@@ -13870,9 +13870,14 @@ function quickCobrado(id){
     var todos=cobrosDe(p).slice(), fuera=todos.filter(cobroDeLaPuerta), quedan=todos.length-fuera.length;
     if(!fuera.length){ toast('No hay un cobro de la puerta para deshacer: los pagos de esta venta tienen recibo o comprobante (los registró Contabilidad o la tienda, o se cobraron con foto del QR). Si hay que corregir uno, es en Contabilidad → ✏️ Corregir.','err',8000); return; }   // 25/09: el QR del chofer con foto tampoco es «de la puerta»
     var n=fuera.length, tot=0; fuera.forEach(function(c){ tot=r2(tot+(Number(c.monto)||0)); });
-    if((n>1 || quedan) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
-                       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
+    /* 🚚 (26/09) El cobro que recibió el CHOFER (`>Nombre`, §4eq) lo tiene él hasta rendirlo a Contabilidad: deshacerlo de
+       un toque lo sacaba de lo que tiene que rendir. Lo que se deshace no cambia; ahora se pregunta, con su nombre y el monto. */
+    var delChofer=fuera.filter(function(c){ return !!limpiaRecibio(c.recibio); });
+    if((n>1 || quedan || delChofer.length) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
+                       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · 🚚 lo recibió '+limpiaRecibio(c.recibio)):''); }).join('\n')+
                        '\n\nTotal: '+fmtBs(tot)+
+                       (delChofer.length ? ('\n\n🚚 '+delChofer.map(function(c){ return limpiaRecibio(c.recibio)+' recibió '+fmtBs(c.monto); }).join(' · ')+' en la puerta: '+
+                         (delChofer.length===1?'si lo deshacés, deja de figurar en lo que tiene que rendir a Contabilidad.':'si los deshacés, dejan de figurar en lo que tienen que rendir a Contabilidad.')) : '')+
                        (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
     aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); })); toast('Cobro deshecho ✓','ok'); return;
   }
