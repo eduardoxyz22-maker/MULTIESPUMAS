@@ -11351,12 +11351,13 @@ function renderChofer(){
   });
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
   var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());
-  var ent=0, porCobrar=0, cobrado=0;
+  var ent=0, porCobrar=0, cobrado=0, fleteF=0;
   list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
-    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar')+
+    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar'+(fleteF>0.01?(' · + '+fmtBs(fleteF)+' de flete'):''))+
     mc('var(--teal-dk)','Cobrado',fmtBs(cobrado),'ya cobrado');
   if(!list.length){
     cont.innerHTML=recFabHtml; empty.style.display='block';
@@ -11878,6 +11879,13 @@ function cobroChoferHtml(p){
      «➕ Cobré algo igual», que anotaba plata que Contabilidad no ve. Lo ya anotado se lista abajo. */
   if(noSeCobra(p) && !cobros.length)
     return '<div class="cho-row"><span class="k">Cobrar</span> <span class="badge b-gray">✅ No se cobra — es '+(esATC(p.oc)?'una ATC':'una reposición de tienda')+'</span></div>';
+  /* 🚚 (26/09) El flete PACTADO se cobra en la puerta (§4ai) y la tarjeta no lo decía: una venta
+     pagada con flete salía «✅ Ya pagado — no tenés que cobrar». Va aparte de la venta (no le
+     toca el saldo) y no se anota con estos botones: lo registra la vendedora con el comprobante. */
+  var fleteF=noSeCobra(p) ? 0 : envioPorCobrar(p);
+  var flete=fleteF>0.01
+    ? '<div class="cho-row" style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:8px;padding:7px 10px;color:#8a1c24">🚚 <b>Cobrar también el flete: '+fmtBs(fleteF)+'</b> — aparte de la venta. No va con los botones de cobro: avisale a la vendedora, que lo registra con el comprobante.</div>'
+    : '';
   // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
   // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
   if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
@@ -11886,10 +11894,10 @@ function cobroChoferHtml(p){
        está marcada pagada y no hay ningún monto, se lo dice en ámbar: que pregunte
        ANTES de entregar. */
     return '<div class="cho-row"><span class="k">Cobrar</span> '+
-      (p.pagado ? '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>'
+      (p.pagado ? (flete ? '<span class="badge b-green">✅ La venta ya está pagada</span>' : '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>')
        : sinMontoAnotado(p) ? '<span class="badge b-amber">⚠️ Sin monto anotado — preguntá antes de entregar</span>'
        : '<span class="badge b-gray">Sin saldo</span>')+
-      ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>';
+      ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>'+flete;
   }
   var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
     (falta<=0.01
@@ -11911,7 +11919,7 @@ function cobroChoferHtml(p){
         return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
       }).join('')+'</div>')
     : '';
-  return cab+lista+btns;
+  return cab+lista+btns+flete;
 }
 function metodoIcono(m){ return m==='Efectivo'?'💵':(m==='QR'?'📱':(m==='Tarjeta'?'💳':'💰')); }
 /* Suma un cobro. Avisa si con eso se pasa de lo que el vendedor puso que hay que cobrar,
@@ -11920,11 +11928,14 @@ function choCobrarMetodo(id, metodo){
   var p=findById(id); if(!p) return;
   if(noSeCobra(p)){ toast(noSeCobraTxt(p),'err',7000); renderChofer(); return; }   // (25/09) como markPaid/quickCobrado (§4fy)
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
+  var fleteF=envioPorCobrar(p);                    // (26/09) el flete va aparte: que no se anote acá como cobro de la venta
   var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
     'Cliente: '+(p.cliente||'')+'\n'+
     'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
     (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
-    'Falta: '+fmtBs(falta)+'\n\nEscribí el monto:', falta>0?String(falta):'');
+    'Falta: '+fmtBs(falta)+'\n'+
+    (fleteF>0.01?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
+    '\nEscribí el monto:', falta>0?String(falta):'');
   if(txt==null) return;
   var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
@@ -11932,6 +11943,7 @@ function choCobrarMetodo(id, metodo){
     if(!confirm('⚠️ Ojo, te estás pasando.\n\n'+
       'El pedido dice cobrar '+fmtBs(objetivo)+'.\n'+
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
+      (fleteF>0.01?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Tocá Cancelar y anotá solo lo de la venta.\n\n'):'')+
       '¿Lo anoto igual?')) return;
   }
   /* ⚠️ `cobrosDe`, NO `cobrosVisibles` (§4fg): si la venta venía «PAGADA sin monto», el pago

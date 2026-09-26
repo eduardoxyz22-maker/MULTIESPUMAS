@@ -6,8 +6,10 @@
    2. ✅ Con la copia vieja (celular bloqueado horas, o sin señal para refrescar) y un cambio de
       otra persona en el medio —Contabilidad registró el QR—, el ✅ daba `conflicto` y la entrega
       quedaba SIN marcar: solo un aviso de 9 s que el chofer, con el celular en el bolsillo, no ve.
+   3. 🚚 El FLETE pactado («se cobra en la puerta», §4ai) no aparecía en la tarjeta: una venta
+      pagada con flete decía «✅ Ya pagado — no tenés que cobrar».
 
-   Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia), red cortada,
+   Reloj clavado (miércoles 23/09/2026 y sábado 26/09/2026, 10:00 de Bolivia), red cortada,
    servidor simulado con el sello de revisión (`rev`) como el `.gs`, datos sintéticos.
    Se corre:  node tests/test_rev2_chofer.js
    Dientes contra el panel viejo:  PEDIDOS=/ruta/al/viejo.html node tests/test_rev2_chofer.js */
@@ -173,6 +175,59 @@ const BASE = `
       return { cola:cola?{entregado:cola.entregado, rev:cola.rev, obs:cola.observaciones}:null, local:findById('o1').entregado };
     });
     chk('⚠️ el ✅ espera en la cola (sobre la fila nueva) en vez de perderse', !!r.cola && r.cola.entregado===true && r.cola.rev===4 && r.cola.obs==='Portón negro', J(r));
+    await page.close();
+  }
+
+  // ═══ 3. El flete pactado en la tarjeta ═══════════════════════════════════════════════
+  console.log('\n── 3. 🚚 El flete que se cobra en la puerta aparece en la tarjeta ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      _cargar([
+        /* Pagada entera en la tienda (el adelanto cubre todo) y el flete pactado: la tarjeta decía
+           «✅ Ya pagado — no tenés que cobrar». */
+        _P({id:'f1', cliente:'CLIENTE PAGADA', pagado:true, saldo:0, acuenta:1000, metodoPago:'~Efectivo 1000 @2026-09-20 #11 + ^ 150'}),
+        _P({id:'f2', cliente:'CLIENTE SALDO', saldo:1000, metodoPago:'^ 150'}),
+        _P({id:'f3', cliente:'CLIENTE COBRADO', pagado:true, saldo:0, metodoPago:'Efectivo 1000 @2026-09-20 #12 + ^Efectivo 150 @2026-09-20 #12'}),
+        _P({id:'f4', cliente:'CLIENTE NORMAL', saldo:800})
+      ]);
+      await _abrirChofer('hoy');
+      return { f1:_tarjeta('CLIENTE PAGADA'), f2:_tarjeta('CLIENTE SALDO'), f3:_tarjeta('CLIENTE COBRADO'), f4:_tarjeta('CLIENTE NORMAL'),
+               met:document.getElementById('cho-metrics').textContent.replace(/\s+/g,' ') };
+    });
+    chk('⚠️ venta pagada con flete pactado: la tarjeta dice que hay que cobrar el flete (Bs 150)', /flete/i.test(r.f1) && /150,00/.test(r.f1), r.f1);
+    chk('⚠️ …y ya NO dice «no tenés que cobrar»', !/no tenés que cobrar/i.test(r.f1), r.f1);
+    chk('⚠️ venta con saldo y flete: dice las dos cosas (Bs 1.000 de la venta y Bs 150 de flete)', /1\.000,00/.test(r.f2) && /flete/i.test(r.f2) && /150,00/.test(r.f2), r.f2);
+    chk('control: el flete ya cobrado no se vuelve a pedir', !/cobrar el flete/i.test(r.f3) && !/flete: /i.test(r.f3), r.f3);
+    chk('control: una venta sin flete no habla de flete', !/flete/i.test(r.f4), r.f4);
+    chk('las métricas avisan el flete aparte (Bs 300 de los dos), sin mezclarlo con lo de la venta', /Por cobrar ?Bs 1\.800,00/.test(r.met) && /300,00 de flete/.test(r.met), r.met);
+    D.vistos.length=0; D.confirm=false; D.promptVal='1150';
+    await page.evaluate(() => { choCobrarMetodo('f2','Efectivo'); });
+    await page.waitForTimeout(200);
+    D.confirm=true;
+    const r2 = await page.evaluate(() => ({ cobrado:totalCobrado(findById('f2')) }));
+    chk('⚠️ si anota el flete junto con la venta («te estás pasando»), el aviso le dice que eso es el flete', D.vistos.some(v=>/^confirm:[\s\S]*FLETE/.test(v)), J(D.vistos));
+    chk('…y si dice que no, no se anota nada', r2.cobrado===0, J(r2));
+    await page.close();
+  }
+
+  // ═══ 4. El sábado: «Mañana» es el lunes, y todo lo de arriba vale igual ══════════════════
+  console.log('\n── 4. Sábado: la tarjeta del lunes (en «🌅 Mañana») con flete y con conflicto ──');
+  {
+    const page = await nueva(SABADO);
+    const r = await page.evaluate(async () => {
+      var lun=proximoDiaEntrega();
+      var s1=_P({id:'s1', fecha:lun, cliente:'CLIENTE LUNES', pagado:true, saldo:0, metodoPago:'Efectivo 1000 @2026-09-25 #21 + ^ 80'});
+      var s1s=_cp(s1); s1s.rev=4; s1s.observaciones='Timbre 2';
+      _cargar([s1], [s1s]);
+      await _abrirChofer('manana');
+      STATE=[_cp(s1)]; saveMirror(); renderChofer();
+      var tarjeta=_tarjeta('CLIENTE LUNES');
+      choEntregado('s1'); await new Promise(function(r){ setTimeout(r,500); });
+      return { lun:lun, tarjeta:tarjeta, srv:!!SRV.s1.entregado, obs:SRV.s1.observaciones };
+    });
+    chk('el sábado «Mañana» es el lunes 28 y la tarjeta trae el flete (Bs 80)', r.lun==='2026-09-28' && /flete/i.test(r.tarjeta) && /80,00/.test(r.tarjeta), J(r));
+    chk('…y el ✅ con conflicto queda marcado también', r.srv===true && r.obs==='Timbre 2', J(r));
     await page.close();
   }
 
