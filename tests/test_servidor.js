@@ -1297,5 +1297,43 @@ console.log('\n── 13. Marcar entregados los pedidos de agosto (archivo apart
       err || JSON.stringify(rs && rs[0]).slice(0,160));
 }
 
+// ══ 14. 🔁 DÍAS CERRADOS Y TILDES DE LA CARGA CON SELLO (2026-09-26-a, revisión de Codex) ═════
+/* Codex reprodujo dos computadoras que leen a la vez los días cerrados y guardan cada una su día: quedaba
+   una sola fecha. Desde 2026-09-26-a, un panel que manda `juntar` pide sello en estas dos filas; uno que
+   no lo manda (el de antes del 26/09) sigue como siempre. Contra un .gs viejo (GS=…) esta sección falla. */
+console.log('\n── 14. Días cerrados y tildes de la carga: sello si el panel manda `juntar` ──');
+{
+  const a = cargar([HDR], {});
+  const sistema = (id, obs, rev) => ({ id, fecha:'', cliente:'FILA DEL SISTEMA', observaciones:obs, rev: rev||0 });
+  [['__dias_cerrados__', '🔒 2026-10-01', '🔒 2026-10-02'], ['__carga_chk__', '2026-10-01|K1', '2026-10-02|K2']].forEach(([id, obsA, obsB]) => {
+    let r = a.post({ action:'save', pedido: sistema(id, ''), juntar:1 });
+    chk('['+id+'] la primera vez se crea (no hay sello que comparar)', r.ok===true && r.pedido && r.pedido.rev>0, JSON.stringify(r).slice(0,100));
+    const rev1 = r.pedido.rev;
+    // A y B leyeron la fila con rev1. A guarda su cambio:
+    r = a.post({ action:'save', pedido: sistema(id, obsA, rev1), juntar:1 });
+    chk('['+id+'] A guarda con el sello que leyó', r.ok===true && r.pedido.rev>rev1, JSON.stringify(r).slice(0,100));
+    const rev2 = r.pedido.rev;
+    // B guarda el suyo con el sello VIEJO:
+    r = a.post({ action:'save', pedido: sistema(id, obsB, rev1), juntar:1 });
+    chk('['+id+'] ⚠️ B, con el sello viejo y `juntar`: conflicto, y le devuelve la fila de A para juntar',
+        r.ok===false && r.error==='conflicto' && r.pedido && r.pedido.rev===rev2 && String(r.pedido.observaciones)===obsA, JSON.stringify(r).slice(0,140));
+    chk('['+id+'] ⚠️ …y lo de A sigue en la planilla (B no lo pisó)', String(pedido(a.ctx, a.sh, id).observaciones)===obsA, pedido(a.ctx, a.sh, id).observaciones);
+    chk('['+id+'] …el choque NO se anota en «Rechazos» (el panel lo junta solo)', !a.shR._datos.some(f => f.indexOf(id)>=0), a.shR._datos.length+' filas');
+    // B junta y vuelve a guardar con el sello de ahora:
+    r = a.post({ action:'save', pedido: sistema(id, obsA+' '+obsB.replace('🔒 ',''), rev2), juntar:1 });
+    chk('['+id+'] B junta y guarda con el sello nuevo: entra', r.ok===true && r.pedido.rev>rev2, JSON.stringify(r).slice(0,100));
+    // Un panel de ANTES (sin `juntar`) no se traba: guarda como siempre, aunque su sello sea viejo.
+    r = a.post({ action:'save', pedido: sistema(id, obsA, rev1) });
+    chk('['+id+'] un panel de antes del 26/09 (sin `juntar`) guarda como siempre: no se le contesta `actualizar` ni `conflicto`', r.ok===true, JSON.stringify(r).slice(0,100));
+  });
+  // Los pedidos siguen igual: sin sello sobre una fila sellada, conflicto (con o sin `juntar`).
+  const b = cargar([HDR, fila({id:'p1'})], {});
+  const l = b.post({ action:'list' }).pedidos[0]; l.chofer='ANA';
+  let r = b.post({ action:'save', pedido:l });
+  const viejo = JSON.parse(JSON.stringify(l)); viejo.rev=l.rev||0; viejo.chofer='BETO';
+  r = b.post({ action:'save', pedido:viejo, juntar:1 });
+  chk('un pedido común con el sello viejo sigue chocando, mande o no `juntar`', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,100));
+}
+
 console.log('\n'+PASS+' bien · '+FAIL+' mal');
 process.exit(FAIL?1:0);

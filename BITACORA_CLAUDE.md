@@ -7445,6 +7445,110 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gd. 26/09: la revisión de Codex — cinco hallazgos, el sello de los días cerrados (.gs 2026-09-26-a) y Banzer (2026-09-26)
+
+**El servidor, desde la PC.** El dueño hizo el procedimiento de §7 sobre la 23-b:
+- anotó la versión activa: «Versión 30 del 21 sept 2026, 9:41 a.m.», la 20-a, que es la de volver atrás;
+- pegó la 23-b del enlace fijo `14dec98…`;
+- `probarAntesDeImplementar` dio todo ✅. El stock ocupa **20.932 de 50.000 letras (42 %)** y el arqueo, 0. El
+  tamaño de la celda quedó medido: no apura.
+- implementó alrededor de las 10:30, y el panel dice «Conectado».
+
+Falta su captura de la versión (🔒 Cerrar día) y la del repaso de Kommo. Desde acá no se puede correr el workflow de
+Actions (403): la versión la tiene que mirar él.
+
+**La revisión de Codex** (pegada por el dueño) reprodujo cinco problemas con las funciones reales y pidió
+priorizar tres pendientes. Los cinco quedaron con una prueba que falla antes y pasa después.
+
+1. **ALTA · Un cobro perdido no avisaba.** `rechazoPerdido` comparaba «método + monto»: con dos «Efectivo 100»
+   de días distintos acá y uno en la planilla, el segundo se daba por guardado.
+   - Ahora compara cobro por cobro, con clave método|monto|fecha|quién recibió. Cada cobro de la planilla vale por
+     UNO de acá.
+   - Un cobro no tiene id en `metodoPago`; ponérselo cambiaría el formato. Si Contabilidad le cambió la fecha,
+     avisa de más: mejor eso que callar.
+   - `test_codex26.js` §1.
+2. **ALTA · El ✅ reaplicado marcaba el viaje equivocado.** Si logística pasaba el pedido al 02/10 mientras el
+   ✅ de hoy chocaba, `choEntregado` lo reaplicaba sobre la fila nueva.
+   - Ahora solo reaplica sobre el MISMO viaje: el día, y en una ATC `atcViajeDevolucion` (recojo o devolución).
+   - Si cambió, no marca. Se lo dice al chofer con un aviso y en su cartel (`perdio.movido`: «lo pasó al
+     02/10… avisale a logística»).
+   - `test_codex26.js` §2.
+3. **ALTA · Dos computadoras perdían un día cerrado (o una tilde de la carga).** Releer antes de escribir (§4gb,
+   §4gc) achicaba la carrera pero no la cerraba. Codex tenía razón: se resuelve en el servidor.
+   - **Panel:** manda el sello con el que leyó (`REESCRITA_REV`, `reescritaConSello`) y `juntar`. Ante un
+     `conflicto`, `reescritaJuntarYGuardar` aplica sobre la fila del servidor SOLO lo tocado acá y reguarda,
+     hasta 4 veces.
+   - **Servidor `2026-09-26-a`:** `SISTEMA_JUNTA_OPCIONAL` (`__dias_cerrados__`, `__carga_chk__`) compara el
+     sello bajo el candado cuando llega `juntar`. El choque no se anota en «Rechazos».
+   - **Un panel sin `juntar` no se traba:** no hay `actualizar`, a diferencia del stock.
+   - **Con la 23-b todo sigue como antes:** el sello de estas filas no se mira.
+   - Pruebas: `test_codex26_cierres.js` (dos navegadores con el `.gs` real). Da 5 rojos con la página publicada y
+     4 con la 23-b. `test_servidor.js` §14 da 4 rojos con la 23-b.
+4. **MEDIA · El aviso del chofer se vencía a las 48 h.** Además:
+   - lo veía cualquier chofer del mismo celular;
+   - «Ya lo revisé» lo marcaba para todos;
+   - el tope de 20 rechazos lo podía tirar.
+
+   Ahora:
+   - dura hasta «Ya lo revisé» y es de cada chofer (`rec.chofer`, `choRechazosDe`);
+   - en «👑 Ver todos» se ven todos, con el nombre;
+   - al recortar, lo no revisado se guarda aparte (hasta 30).
+
+   `test_codex26.js` §4.
+5. **MEDIA · Un monto mal escrito valía otro número.** «−1500» (el menos de Unicode) y «Bs -1500» valían 1500,
+   «1e3» valía 13, «12abc» valía 12 y «.50» valía 50.
+   - `montoError(t)` mira el texto ENTERO antes de `parseMonto`. `montoNegativo` reconoce los ocho signos menos.
+     `montoFrena` y `montoAviso` hacen el freno.
+   - Frena en los seis campos del formulario, en Registrar pago, Corregir este pago, el flete, Corregir precios y
+     montos (el precio negativo ya no se borra callado), Anotar el monto, el arqueo, el retiro y el cobro del
+     chofer.
+   - Lo que el panel propone va con `r2`.
+   - `parseMonto` no cambió para lo limpio.
+   - `test_rev4_montos.js`: 136 comprobaciones, 111 rojos contra `64fe617`.
+
+**Las prioridades de Codex** (`test_rev4_atc_flete.js`: 57 comprobaciones, 41 rojos contra `64fe617`):
+- **ATC:** mover una devolución YA entregada (📅, turno de la ficha de carga, ✏️) mide `antes` con
+  `atcViajeDevolucion`. Se la lleva con su `pdev`, y destildar la reabre. Esto corrige la regla de §4ga/§4gc que
+  decía `atcEnDevolucion`.
+- **Flete:** «Entregado» y el Parte del día (pantalla y WhatsApp) dicen el flete pactado sin cobrar, aparte de
+  la venta.
+- **«Ya cobré el flete»** (`cobrarFlete`) guarda por venta el pago en curso de la anterior.
+- **`textoCargaChk`** poda las tildes viejas sin fecha.
+- **El aviso de pagos sin fecha** dice la verdad en Día, Mes y Todo.
+
+**Además, del día:**
+- **La hora del corte de existencias** sale del nombre con la fecha entre guiones
+  («Excel_26-09-2026_10_30_36_BANZER.xlsx») o del pie del reporte («Fecha : 26/09/2026 10:30:33»,
+  `existHoraDePie`).
+- **El diálogo de existencias** ya no dice «Otro (la fábrica)». Con ese texto el dueño casi eligió «el de
+  logística» para Banzer, y ese es el ÚNICO depósito de fábrica (`STOCK.c`), así que lo habría reemplazado.
+  Ahora se pregunta antes de hacer depósito de fábrica a otro almacén.
+- **El Excel de Banzer del 26/09** se probó en el scratchpad con el lector del panel, nunca en el repo:
+  - 81 productos y 309 unidades;
+  - 75 del catálogo;
+  - 6 con código que el catálogo no conoce: CH1231, CH1050, CH2522, CA1033, CH20532 y CH1158. Se le ofreció al
+    dueño agregarlos.
+
+**🚚 Banzer es depósito de salida (dueño, 26/09).** Dijo: *«salen camiones de la banzer y de productos terminados
+fábrica; solo de moreno hay que ir a traer»*. Hoy el panel lo trata como Moreno: «📥 recoger de Banzer»,
+recogidas, y lo entregado desde Banzer se descuenta de ACÁ. Son dos errores de cuenta.
+
+Respuestas del dueño:
+- la carga de Banzer «depende del día»: a veces el mismo camión pasa por Banzer y a veces sale otro;
+- la lista de carga va SEPARADA: «Cargar en fábrica» y «Cargar en Banzer».
+
+Un agente lo está haciendo: rol de almacén `'sale'`, «✔ hay en Banzer», cuentas por depósito y carga en dos
+bloques. Mientras tanto, Banzer se sube como «Otro», que conserva los dos conteos.
+
+**Batería sobre `f70311e`: 99 suites, 3.696 bien · 0 mal.**
+
+**Quedan:**
+- los WhatsApp «CIERRE DEL DÍA» y «PEDIDOS DE MAÑANA» (`envioTexto`/`envioPedido`) no nombran el flete pactado
+  (confirmado);
+- mover un pedido entregado sin destildarlo deja el ✅ en el día viejo;
+- «150 200» se acepta como 150.200 (el espacio es separador de miles);
+- «Bs.- 1500» cuenta como negativo.
+
 ## 4gc. 26/09: la tercera vuelta — lo que rompieron los arreglos, y los pendientes sin decisión del dueño (2026-09-26)
 
 Pedido del dueño (26/09, 07:45, con §4gb terminado y sin publicar): *«Quedan pendientes subidas las correcciones

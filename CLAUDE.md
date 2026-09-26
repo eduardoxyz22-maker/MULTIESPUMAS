@@ -88,7 +88,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **con el servidor `2026-09-20-a` todavía implementado**: la 23-b la pega, prueba e implementa el dueño desde la PC (RESPUESTA §7 pasos 0-2 y 5-7; el recordatorio del 26/09 ya se disparó). Hasta entonces la protección de stock/arqueo entre dos equipos NO rige (igual que antes) y el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc). **El 26/09 ~10:30 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a; falta su captura de la versión). **La `2026-09-26-a` (§4gd) espera en el repo** (mismo procedimiento; volver = a la versión que se anote ese día). Con la 23-b ya rige la protección de stock/arqueo entre dos equipos; la de días cerrados y carga, recién con la 26-a, y hasta implementarla el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -575,7 +575,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   FINAL (no mover las otras).
 - **ATC/RPT en la puerta**: `noSeCobra(p)` va ANTES de `sinMontoAnotado` (tarjeta del chofer, hoja de ruta,
   fichas); `choCobrarMetodo` se niega. Todo camino que mueva fecha o turno de una ATC que vive en su devolución
-  pasa por **`atcSeguirViaje(p, antes)`** (`antes` = `atcEnDevolucion(p)` medido ANTES de mover). El ✅ marca
+  pasa por **`atcSeguirViaje(p, antes)`** (`antes` = `atcViajeDevolucion(p)` medido ANTES de mover — §4gd: con `atcEnDevolucion` una devolución ya entregada quedaba en el día viejo). El ✅ marca
   `rfAuto` y destildar saca solo eso.
 - **La cola**: `flushPending` saca de la cola SOLO lo que se mandó y sigue igual (JSON de antes de mandar).
   ⚠️ **Nunca volver a `setPending(remaining)`**: pisaba lo que entraba mientras se mandaba. Un borrador de Kommo
@@ -626,7 +626,7 @@ implementado.
   - `flushPending` las rearma con `mandarReescritaDeCola`, y sin lectura NO se mandan;
   - una fila nueva de ese tipo va ahí, no por `queuePending` a secas.
 - **ATC**: `rec` vale solo mientras hay `pdev`, y «Quitar la devolución» repone `rturno`. `atcViajeDevolucion`
-  (con el ✅ puesto) es para MOSTRAR; lo que mueve la devolución sigue con `atcEnDevolucion`.
+  (con el ✅ puesto) vale para mostrar y, desde §4gd, para el `antes` de lo que MUEVE la devolución.
 - **«Corregir precios y montos» recuerda lo tipeado** (`ctaMontosRecordar`, igual que `ctaEditRecordar`);
   cancelar «¿borrar el pago?» repone «A cuenta». **`tsFmt` va en hora de Bolivia.**
 - **Cuadre**: `setCuadreArqueo` guarda enseguida y repinta un instante DESPUÉS. Repintar dentro del `change` le
@@ -635,6 +635,24 @@ implementado.
   recepción lleva su `ts`.
 - La hoja de ruta dice el flete pactado (`cobroRutaTxt` → `f`) con las palabras de la tarjeta del chofer.
 - Pruebas: `tests/test_rev3_*.js` (6) y `test_noborra` (el cancelar).
+
+## 🔎 La revisión de Codex del 26/09 (§4gd): lo que hay que respetar
+- **Plata tipeada: `montoError(t)` ANTES de `parseMonto`** (el texto entero: «1e3», «12abc», «.50», dos números,
+  cualquier signo menos —`montoNegativo` ve los ocho, también «Bs -1500»—). Un campo de plata NUEVO frena con
+  `montoFrena(el, nombre)`. Lo que se lee de la planilla NO pasa por ahí. Lo que el panel propone en un campo, con `r2`.
+- **`rechazoPerdido`** compara cobro por cobro (método|monto|fecha|quién recibió) y cada cobro de la planilla vale
+  por uno. El cartel del chofer (`choRechazosDe`) no se vence, es de cada chofer y el tope no tira lo no revisado.
+- **`choEntregado` reaplica el ✅ solo sobre el MISMO viaje** (fecha + `atcViajeDevolucion`): si lo movieron, no
+  marca y lo dice (`perdio.movido`).
+- **Días cerrados y tildes de la carga con sello**: cada guardado va con `REESCRITA_REV` (`reescritaConSello`) y
+  `{juntar:true}`; ante `conflicto`, `reescritaJuntarYGuardar`. El `.gs` **2026-09-26-a** (`SISTEMA_JUNTA_OPCIONAL`)
+  compara el sello SOLO si llega `juntar`: un panel viejo no se traba. Con la 23-b sigue como antes. ⚠️ Una fila
+  nueva que se reescriba entera va por `REESCRITAS` y este camino. `tests/test_codex26_cierres.js` (el `.gs` real).
+- **Existencias**: la hora sale del nombre (también con guiones) o del pie (`existHoraDePie`). Hay UN solo depósito
+  de fábrica (`STOCK.c`): hacer «log» a otro almacén pregunta antes.
+- **Banzer es depósito de salida** (dueño, 26/09: «salen camiones de Banzer y de Productos Terminados; solo de
+  Moreno hay que ir a traer»; carga separada en dos bloques). En curso (§4gd). Mientras tanto se sube como «Otro».
+- Pruebas: `test_codex26.js`, `test_codex26_cierres.js`, `test_rev4_montos.js`, `test_rev4_atc_flete.js`, `test_servidor.js` §14.
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

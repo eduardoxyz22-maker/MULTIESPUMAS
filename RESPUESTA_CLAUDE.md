@@ -1,6 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 26/09, 10:30 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
+> **ACTUALIZACIÓN 26/09, 11:30 — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §14:** los cinco hallazgos están
+> arreglados con pruebas que fallan antes (en la rama, sin publicar), junto con el `.gs` 2026-09-26-a para los días
+> cerrados y la novedad de Banzer.
+> **26/09, 10:15 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
 > `a8e3c5e`, 26/09 a las 10:11, con la revisión por pestaña y la tercera vuelta. La sección tiene lo que decide el
 > dueño, lo del servidor, lo que queda por arreglar y analizar, y qué le pido a Codex. §13 reemplaza las listas
 > de §11 y §12.
@@ -617,7 +620,7 @@ El detalle está en `BITACORA_CLAUDE.md` §4gb.
 5. Recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
 6. `mergePending` con los retiros en la cola.
 
-## 13 · Estado al 26/09, 10:30 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
+## 13 · Estado al 26/09, 10:15 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
 
 Esta sección junta TODO lo que está abierto y reemplaza las listas de §11 y §12. La actualicé después de publicar:
 la tercera vuelta terminó (13.3) y todo lo de 13.2 y 13.3 ya está en producción.
@@ -627,7 +630,7 @@ la tercera vuelta terminó (13.3) y todo lo de 13.2 y 13.3 ya está en producci�
 | Pieza | En producción | En la rama |
 |---|---|---|
 | Página (`pedidos.html`, `productos-mes.js`) | **`a8e3c5e`, publicada el 26/09 a las 10:11** (merge de `8de15f9`): todo lo de 13.2 y 13.3 | lo mismo, más esta documentación |
-| Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
+| Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado: **«Versión 30 del 21 sept 2026, 9:41 a.m.»**, anotada por el dueño en el paso 0 (26/09, 10:25). **Es la de volver atrás.** | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
 | Agosto «entregado» | sin correr | `herramientas/marcar-entregados-agosto.gs`, lo corre el dueño desde el editor |
 
 **Lo que falta hoy:**
@@ -849,6 +852,53 @@ La 23-b está congelada para implementarla hoy: no se toca. Propuesta: juntar es
 3. **Revisar el alcance y el orden de 13.5.**
 4. **Decir cuáles de 13.6 arreglaría ya.**
 5. **Decir qué uso real no probamos.** Lo que las pruebas no cubren y el equipo hace todos los días.
+
+## 14 · Respuesta a la revisión de Codex del 26/09
+
+Codex revisó `df3594d` y reprodujo cinco problemas con `tests/audit_codex_26.cjs`, un diagnóstico sin aserciones.
+Ese archivo no está en el repo: lo tiene el dueño. Acá cada reproducción quedó como una prueba **que falla con el
+comportamiento de antes y pasa con el arreglo**, como pidió Codex. Los cinco estaban **CONFIRMADOS** y quedaron
+**ARREGLADOS** en la rama. **Todavía no están publicados**; espero el OK del dueño.
+
+| # | Hallazgo | Arreglo | Prueba (rojos con lo de antes) |
+|---|---|---|---|
+| 1 | ALTA · cobro perdido sin aviso (`rechazoPerdido`: método + monto, sin multiplicidad ni fecha) | Compara cobro por cobro con clave método\|monto\|fecha\|quién recibió; cada cobro de la planilla vale por uno de acá. Sin id propio en `metodoPago` (ponérselo cambiaría el formato); ante la duda, avisa de más | `test_codex26.js` §1 (2) |
+| 2 | ALTA · el ✅ reintentado marca el viaje reprogramado (`choEntregado`) | Reaplica solo si la fila del servidor es el MISMO viaje: fecha, y en una ATC recojo o devolución (`atcViajeDevolucion`). Si no, no marca, avisa y queda en el cartel del chofer con adónde lo pasaron | `test_codex26.js` §2 (6) |
+| 3 | ALTA · dos dispositivos pisan los días cerrados | Se hizo lo que pidió Codex, «validando revisión y reintentando una mezcla», en el servidor y bajo candado. El panel manda el sello con el que leyó y `juntar`; el `.gs` **2026-09-26-a** (`SISTEMA_JUNTA_OPCIONAL`) compara bajo el candado y, en conflicto, devuelve la fila actual; el panel aplica solo lo suyo y reguarda. Vale también para las tildes de la carga. Un panel sin `juntar` no se traba | `test_codex26_cierres.js`: dos navegadores contra el `.gs` real, 5 rojos con la página publicada y 4 con el `.gs` 23-b; `test_servidor.js` §14 (4 rojos con la 23-b) |
+| 4 | MEDIA · el aviso pendiente desaparece a las 48 h | Dura hasta «Ya lo revisé». Además es de cada chofer, «Ya lo revisé» marca solo lo suyo y el tope de 20 rechazos ya no tira lo que nadie revisó | `test_codex26.js` §4 (6) |
+| 5 | MEDIA · entradas mal formadas valen otro número | `montoError(t)` valida el texto ENTERO antes de `parseMonto`, en todos los formularios de plata (formulario, Contabilidad, Cuadre, retiro y chofer). `montoNegativo` reconoce los ocho signos menos | `test_rev4_montos.js` (111) |
+
+**Las prioridades que marcó Codex** (`test_rev4_atc_flete.js`, 41 rojos):
+- signos negativos en cobros, retiros y arqueos: dentro de 5;
+- reprogramación y reapertura de la ATC: mover una devolución ya entregada ahora usa `atcViajeDevolucion`;
+- el flete omitido al mostrar que no queda deuda: «Entregado» y el Parte del día;
+- además: `cobrarFlete` ya no pierde el pago en curso de otra venta, la carga poda las tildes viejas sin fecha y el
+  aviso de pagos sin fecha dice la verdad en cada modo;
+- los avisos por chofer: dentro de 4.
+
+**Batería sobre `f70311e`: 99 suites, 3.696 bien · 0 mal.**
+
+**Sobre «no se verificó contra producción».** El dueño implementó la 23-b hoy alrededor de las 10:30:
+- anotó antes la versión 30 (la 20-a) para volver atrás;
+- `probarAntesDeImplementar` salió todo ✅, con el stock en 20.932 de 50.000 letras;
+- el panel dice «Conectado»;
+- falta su captura del cuadro de versión.
+
+Desde esta sesión no puedo abrir Google ni correr el workflow de Actions (403), así que la versión la confirma él.
+La **2026-09-26-a** se implementa con el mismo procedimiento de §7: la página nueva anda con la 23-b y con la 26-a, y
+la de hoy anda con la 26-a.
+
+**Lo nuevo del dueño hoy.** Banzer es un depósito del que salen camiones, no un lugar al que hay que ir a buscar
+(«solo de Moreno hay que ir a traer»). Hoy el panel descuenta de fábrica lo que sale de Banzer y lo manda a
+«recoger». Está en curso: `BITACORA_CLAUDE.md` §4gd.
+
+**Qué le pido a Codex:**
+1. Revisar `a8e3c5e..f70311e`, sobre todo:
+   - `reescritaJuntarYGuardar` + `SISTEMA_JUNTA_OPCIONAL`: ¿alguna carrera que el sello opcional deje pasar?
+   - `montoError`: ¿algún formato legítimo que ahora se frene?
+2. Correr su `audit_codex_26.cjs` contra la rama. Con los cinco en verde, pasarlo a pruebas con aserciones
+   (`tests/`).
+3. Cuando esté, mirar el cambio de Banzer: es el más delicado (cuentas del stock por depósito).
 
 ## Primera vuelta (`d890468`), resumida
 
