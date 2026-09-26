@@ -6435,7 +6435,16 @@ function ctaGuardarMontos(id){
         'Vos estás poniendo:  '+fmtBs(acu)+'\n\n'+
         (_pierde ? 'Ese pago y su respaldo se borran y la venta vuelve a quedar por cobrar.\n\n'
                  : 'Se reescribe el pago con el monto nuevo.\n\n')+
-        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')) return;
+        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')){
+      /* (26/09) Cancelar deja «A cuenta» como estaba. El aviso dice «cancelá y tocá únicamente el precio»,
+         pero el campo seguía con lo que bajaba el pago: guardar el precio volvía a preguntar. Y desde que
+         lo tipeado sobrevive al repintado (`ctaMontosRecordar`), ni siquiera volver a abrir la venta lo limpiaba. */
+      acuEl.value=acuEl.getAttribute('data-def')||'';
+      if(CTA_MONTOS_V && CTA_MONTOS_V.v) delete CTA_MONTOS_V.v.acu;
+      ctaRecalc();
+      toast('«A cuenta» volvió a lo guardado ('+fmtBs(_montoAnt)+'). Si solo querías corregir un precio, tocá el precio y guardá.','ok',6000);
+      return;
+    }
   }
   // Los precios: se copian los productos para no dejar el pedido a medias si algo falla.
   var prods=(p.productos||[]).map(function(x,i){
