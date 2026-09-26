@@ -1826,7 +1826,9 @@ function atcAlMarcarEntregado(p){
 /* 🔁 (25/09) La ATC que vive en su día de devolución ES el viaje de vuelta: si se mueve (📅
    Reprogramar, el turno de la ficha de carga), la devolución se mueve con ella. Antes solo
    «🔁 Cambiar devolución» movía `pdev`: el chofer veía «🎧 ATC» (un recojo), el aviso de
-   fábrica contaba desde el día viejo y su ✅ ya no la cerraba. `antes` = vivía ahí ANTES. */
+   fábrica contaba desde el día viejo y su ✅ ya no la cerraba. `antes` = vivía ahí ANTES.
+   (26/09) `antes` se mide con `atcViajeDevolucion`, no con `atcEnDevolucion`: con el ✅ puesto esa da
+   falso, la devolución YA entregada se movía sin `pdev` (chip «🎧 ATC») y destildarla no la reabría. */
 function atcSeguirViaje(p, antes){
   if(antes && p && esATC(p.oc)) mergeAtcDatos(p, { pdev: p.fecha, pturno: normTurno(p.turno) });
 }
@@ -7815,7 +7817,8 @@ function submitPedido(){
     _n.rnota= document.getElementById('f-atc-rnota').value.trim();
     var _pz=leerPiezasAtc(); for(var _k2 in _pz) _n[_k2]=_pz[_k2];
     // (25/09) si vivía en su día de devolución, la fecha del formulario ES la de la devolución
-    if(prev && atcEnDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
+    // (26/09) …también con el ✅ puesto (`atcViajeDevolucion`): con `atcEnDevolucion` la entregada quedaba en el día viejo
+    if(prev && atcViajeDevolucion(prev)){ _n.pdev=rec.fecha; _n.pturno=normTurno(rec.turno); }
     setAtcDatos(rec, _n);
   }
 
@@ -10486,7 +10489,7 @@ function reproConfirmar(){
   if(avisos.length && !confirm('⚠️ Ojo:\n\n   • '+avisos.join('\n   • ')+'\n\n¿Reprogramar igual?')) return;
   if(avisos.length && !asegurarClaveAdmin()) return;   // 🛡️ el servidor la va a pedir (§4cg)
   var antes=fmtFecha(p.fecha)+' · '+(normTurno(p.turno)||'—');
-  var _enDev=atcEnDevolucion(p);          // (25/09) la ATC en su devolución se la lleva al día nuevo
+  var _enDev=atcViajeDevolucion(p);       // (25/09) la ATC en su devolución se la lleva al día nuevo — (26/09) también la YA entregada (con el ✅, `atcEnDevolucion` daba falso)
   if(f!==p.fecha){ p.fecha=f; p.nroDia=nextNroDia(f); }
   p.turno=t;
   atcSeguirViaje(p, _enDev);
@@ -18609,7 +18612,7 @@ function cambiarTurno(id, turno){
      la clave de administración si el servidor tiene la del equipo puesta. */
   var _forzar=diaCerrado(p.fecha);
   if(_forzar && !asegurarClaveAdmin()) return;
-  var _enDev=atcEnDevolucion(p);          // (25/09) la devolución de una ATC cambia de turno con el viaje
+  var _enDev=atcViajeDevolucion(p);       // (25/09) la devolución de una ATC cambia de turno con el viaje — (26/09) también la YA entregada
   p.turno=turno;
   atcSeguirViaje(p, _enDev);
   persistPedido(p, _forzar?{forzar:true}:undefined);
