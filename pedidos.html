@@ -9856,7 +9856,9 @@ function renderAdmin(){
       cupoEl.innerHTML='🚫 <b>'+fmtFecha(cdia)+' (domingo)</b> — no se agenda';
     }else if(diaSabado(cdia)){
       cupoEl.className='cupo '+(rAM<=0?'full':(rAM<=3?'warn':'ok'));
-      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'');
+      var uS=cuposUsadosTurno(cdia,'AM');   // (26/09) §4fh también el sábado: 17 en un turno de 15 se veía igual que 15
+      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'')+
+        (uS>lAM?(' · ⚠️ <b>'+(uS-lAM)+'</b> forzado'+(uS-lAM===1?'':'s')+' de más ('+uS+' AM)'):'');
     }else{
       var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
       // §4fh: si administración forzó alguno, el día tiene MÁS de los que entran — y hay que decirlo.

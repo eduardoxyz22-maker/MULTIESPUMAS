@@ -183,6 +183,25 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 3. El cupo de Administración un sábado dice cuántos se forzaron ══════════════════
+  console.log('\n── 3. 🎟️ Sábado con turno forzado de más ──');
+  {
+    const page = await nueva(SABADO);
+    const r = await page.evaluate(async () => {
+      showView('admin'); await new Promise(function(r){ setTimeout(r,150); });
+      STATE=[]; for(var i=0;i<17;i++) STATE.push(_P({id:'s'+i, cliente:'SAB '+i, turno:'AM'}));
+      saveMirror(); segSet('adm-mode','mes'); renderAdmin();
+      var sab=document.getElementById('cupo-admin').textContent;
+      STATE=STATE.slice(0,15); saveMirror(); renderAdmin();
+      var justo=document.getElementById('cupo-admin').textContent;
+      return { hoy:todayStr(), sab:sab, justo:justo };
+    });
+    chk('(el reloj está en sábado)', r.hoy==='2026-09-26', r.hoy);
+    chk('🔴 con 17 en un sábado de 15, el cupo dice que hay 2 forzados de más', /2\s*forzados de más/.test(r.sab) && /17/.test(r.sab), r.sab);
+    chk('  con 15 justos no inventa forzados', !/forzado/.test(r.justo) && /LLENO/.test(r.justo), r.justo);
+    await page.close();
+  }
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
