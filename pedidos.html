@@ -12250,7 +12250,7 @@ function parteData(){
        parte del día (pantalla y WhatsApp), la tarjeta del chofer, la rendición y el reporte
        no. Mismo patrón en seis lugares; §4ew cambió `p.cobradoBs` por `totalCobrado(p)` en
        todos pero dejó la guarda `p.pagado`. */
-    cob+=totalCobrado(p); if(!p.pagado){ pend+=Number(p.saldo)||0; pendN++; }
+    cob+=totalCobrado(p); if(!p.pagado && !noSeCobra(p)){ pend+=Number(p.saldo)||0; pendN++; }   // (26/09) sin ATC/RPT, como el chip «💰 Por cobrar»: decía «(3 pedidos)» con una sola venta debiendo
     if(!vehiculoDe(p)) sinChof++;
   });
   var faltHoy=dh.filter(function(p){ return (p.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;

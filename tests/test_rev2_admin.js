@@ -156,6 +156,33 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 2. El Parte del día no cuenta ATC ni RPT como «por cobrar» ══════════════════════
+  console.log('\n── 2. 📋 Parte del día: por cobrar sin ATC ni RPT ──');
+  {
+    const page = await nueva(MIERCOLES);
+    const r = await page.evaluate(async () => {
+      showView('admin'); await new Promise(function(r){ setTimeout(r,150); });
+      STATE=[
+        _P({id:'v1', cliente:'VENTA QUE DEBE', saldo:500}),
+        _P({id:'v2', cliente:'VENTA PAGADA', pagado:true, saldo:0, metodoPago:'Efectivo 800 @2026-09-23'}),
+        _P({id:'a1', cliente:'CLIENTE ATC', oc:'ATC 09-001'}),
+        _P({id:'r1', cliente:'Mia Plaza', oc:'RPT 09-001'})
+      ];
+      saveMirror(); renderAdmin();
+      abrirParte();
+      var d=parteData(), txt=parteText(), body=document.getElementById('parte-body').textContent;
+      closeParte();
+      var chip=(document.getElementById('adm-chips').textContent.match(/Por cobrar\s*(\d+)/)||[])[1];
+      return { pend:d.pend, pendN:d.pendN, linea:(txt.split('\n').filter(function(l){ return /Por cobrar/.test(l); })[0]||''), body:body, chip:chip };
+    });
+    chk('🔴 el Parte cuenta 1 pedido por cobrar (no las ATC ni las RPT)', r.pendN===1, 'pendN='+r.pendN);
+    chk('  el mensaje de WhatsApp dice «(1 pedido)»', /\(1 pedido\)/.test(r.linea), r.linea);
+    chk('  la ficha de la pantalla dice «1 pedido»', /Por cobrar[^]*Bs 500,00\s*1 pedido(?!s)/.test(r.body), r.body.slice(0,160));
+    chk('  y coincide con el chip «💰 Por cobrar» de la tabla', String(r.pendN)===String(r.chip), 'chip='+r.chip);
+    chk('  el monto sigue siendo el de la venta que debe', r.pend===500, r.pend);
+    await page.close();
+  }
+
   chk('la página no tiró ningún error de JavaScript', errores.length===0, errores.join(' | ').slice(0,300));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
