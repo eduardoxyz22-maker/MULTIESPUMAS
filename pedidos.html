@@ -3296,10 +3296,11 @@ function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disable
    «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
    Es `parseMonto`, como «Registrar pago», el arqueo y «Corregir precios y montos» (§4ga). Lo que pone
    el panel va con `r2` (dos decimales como mucho), así que nunca se toma por miles. Con signo menos
-   vale 0 —como antes, que no pasaba de `>0`—: `submitPedido` frena el campo a la vista. */
+   vale 0 —como antes, que no pasaba de `>0`—: `submitPedido` frena el campo a la vista.
+   (26/09, revisión de Codex) Lo mal escrito también vale 0 (`montoError`: «1e3» sumaba 13 y «12abc», 12). */
 function montoForm(el){
   if(typeof el==='string') el=document.getElementById(el);
-  if(!el || montoNegativo(el.value)) return 0;
+  if(!el || montoError(el.value)) return 0;
   return parseMonto(el.value);
 }
 /* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
@@ -4276,6 +4277,16 @@ function cuadreArqueo(forma){ var v=ARQUEO[cuadreArqueoKey(forma)]; return (v===
 var CUA_ARQ_T=null;
 function setCuadreArqueo(forma, valor){
   var k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
+  /* (26/09, revisión de Codex) «−500» y «Bs -500» se anotaban 500, «1e3» 13 y «.50» 50: el texto se mira
+     ENTERO. Lo mal escrito no se guarda ni pisa lo que ya estaba anotado; el campo queda en rojo con lo
+     tipeado para corregirlo, y no se repinta (repintar lo volvería a lo guardado sin que se note). */
+  var _err=montoError(t);
+  if(_err){
+    var _in=[].slice.call(document.querySelectorAll('input.cua-arqueo')).filter(function(e){ return e.getAttribute('data-forma')===forma; })[0];
+    if(_in) _in.classList.add('err');
+    toast(montoAviso('Arqueo de '+forma, t, _err),'err',8000);
+    return;
+  }
   if(t==='') delete ARQUEO[k]; else ARQUEO[k]=parseMonto(t);
   guardarArqueo(true);
   if(CUA_ARQ_T) clearTimeout(CUA_ARQ_T);
@@ -5313,6 +5324,8 @@ function guardarRetiroForm(){
   });
   if(!r.entrega)      return falla('ret-entrega','Elegí de qué vendedor es el efectivo que se retira');
   if(!r.retira)       return falla('ret-retira','Poné quién retira el efectivo');
+  var _errM=montoError(r.monto);    // (26/09, revisión de Codex) «−500», «Bs -500», «1e3», «.50»: el texto entero
+  if(_errM)           return falla('ret-monto', montoAviso('Monto del retiro', r.monto, _errM));
   if(!(monto>0))      return falla('ret-monto','Poné el monto retirado');
   if(!r.notas.length) return falla('ret-nota-nueva','Anotá al menos un N° de nota — es lo que respalda el retiro');
   var esNuevo=!r.id;
@@ -5359,7 +5372,8 @@ function editarRetiro(id){
   var f=null; for(var k=0;k<RETIROS.length;k++) if(String(RETIROS[k].id)===String(id)){ f=RETIROS[k]; break; }
   if(!f) return;
   var r=retiroDe(f);
-  RET_FORM={ id:r.id, fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:String(r.monto),
+  // r2 (26/09): con más de dos decimales («1500.125») `parseMonto` lo leía 1.500.125 y `montoError` lo frena
+  RET_FORM={ id:r.id, fecha:r.fecha, entrega:r.entrega, retira:r.retira, monto:String(r2(r.monto)),
              notas:r.notas.slice(), tipo:r.tipo, fotos:compsArr(r.fotos), obs:r.obs };
   renderRetiros();
   var box=document.getElementById('ret-form'); if(box) box.scrollIntoView({block:'start'});
@@ -5878,8 +5892,9 @@ function ctaGuardarEnvio(id){
   var p=findById(id); if(!p) return;
   var el=document.getElementById('cta-env-monto'); if(!el) return;
   var txt=String(el.value||'').trim();
+  if(montoFrena(el, 'Flete por cobrar')) return;   // (26/09, revisión de Codex) «−150», «Bs -150», «1e3», «.50»: el texto entero
   var m=txt===''?0:parseMonto(txt);
-  if(montoNegativo(txt) || !(m>=0)){ toast('Poné un monto válido, o 0 para sacar el recargo','err'); el.focus(); return; }
+  if(!(m>=0)){ toast('Poné un monto válido, o 0 para sacar el recargo','err'); el.focus(); return; }
   var antes=envioPorCobrar(p), cob=envioCobrado(p);
   /* Lo YA COBRADO queda intacto: tiene su recibo, su fecha y su comprobante. Lo que se
      reescribe es solo el renglón PACTADO (el que no tiene método). */
@@ -5928,8 +5943,11 @@ function ctaGuardarPago(id, i, igual){
   var f=String(ef.value||'').trim();
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)){ toast('Elegí una fecha válida','err'); ef.focus(); return; }
   if(f>todayStr()){ toast('La fecha no puede ser a futuro: es el día en que YA entró la plata','err'); ef.focus(); return; }
+  // (26/09, revisión de Codex) el texto ENTERO antes de convertirlo: «−1500» y «Bs -1500» se guardaban 1.500, «1e3» 13.
+  // Con el gato tapando la ficha no hay campo que marcar: se mira lo recordado (`em`).
+  if(montoFrena(document.getElementById('cta-ed-monto')||em, 'Monto')) return;
   var monto=parseMonto(em.value);
-  if(montoNegativo(em.value) || !(monto>0)){ toast('Poné cuánto entró (ej. 1750)','err'); em.focus(); return; }
+  if(!(monto>0)){ toast('Poné cuánto entró (ej. 1750)','err'); em.focus(); return; }
   var nota=limpiaNota(en.value);
   if(!nota){ toast('Poné el N° de nota de venta del recibo de este pago','err'); en.classList.add('err'); en.focus(); return; }
   if(CTA_EDIT_M==='QR' && !CTA_EDIT_B){ toast('Elegí a qué banco entró el QR','err'); return; }
@@ -6197,9 +6215,11 @@ function ctaAnotarMonto(id, idx){
   var txt=prompt('💵 ¿Cuánto se cobró?\n\n'+(p.cliente||'—')+(p.nota?('  ·  nota '+p.nota):'')+'\n\n'+
     'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '');
   if(txt==null) return;
-  var monto=parseMonto(txt);
   // 26/09: `parseMonto` saca el signo y «-1500» se anotaba como un pago de Bs 1.500. El menos FRENA (§4gb).
-  if(montoNegativo(txt)){ toast('El monto no puede ser negativo: poné cuánto entró (ej. 1750)','err'); return; }
+  // (26/09, revisión de Codex) y todo lo mal escrito: «−1500», «Bs -1500», «1e3», «12abc», «.50»…
+  var _err=montoError(txt);
+  if(_err){ toast(montoAviso('Monto', txt, _err),'err',8000); return; }
+  var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   var otros=0; arr.forEach(function(x,i){ if(i!==idx) otros=r2(otros+(Number(x.monto)||0)); });
   c.monto=monto;
@@ -6445,8 +6465,21 @@ function ctaGuardarMontos(id){
   var acuEl=document.getElementById('cta-acuenta'), salEl=document.getElementById('cta-saldo');
   if(!acuEl||!salEl) return;
   // `parseMonto` como en ctaRecalc (25/09): «1.500» es 1.500. Saca el signo, así que el menos se mira en el texto.
+  /* (26/09, revisión de Codex) El texto ENTERO, y también en los PRECIOS: un precio con signo menos se
+     borraba en silencio (`delete q.precio`) y uno con «−» (Unicode), «1e3» o «12abc» se guardaba como
+     otro número. Un descuento no se anota como precio negativo: es que los precios suman más que el
+     total, y eso ya lo avisa `ctaRecalc`. */
+  var _malM=[];
+  (p.productos||[]).forEach(function(x,i){ var e=document.getElementById('cta-pr-'+i); if(e) _malM.push({e:e, n:'Precio de '+(x.desc||'—')}); });
+  _malM.push({e:acuEl, n:'A cuenta'}); _malM.push({e:salEl, n:'Saldo por cobrar'});
+  _malM=_malM.filter(function(x){ x.err=montoError(x.e.value); if(!x.err) x.e.classList.remove('err'); return !!x.err; });
+  if(_malM.length){
+    _malM.forEach(function(x){ x.e.classList.add('err'); });
+    toast(montoAviso(_malM[0].n, _malM[0].e.value, _malM[0].err)+(_malM.length>1?(' Hay '+(_malM.length-1)+' más en rojo.'):''),'err',9000);
+    try{ _malM[0].e.focus(); }catch(e){}
+    return;
+  }
   var acu=parseMonto(acuEl.value), sal=parseMonto(salEl.value);
-  if(montoNegativo(acuEl.value)||montoNegativo(salEl.value)){ toast('Los montos no pueden ser negativos','err'); return; }
   /* ⚠️ EL FRENO QUE FALTABA (§4cb).
      Bajar el adelanto REESCRIBE el historial, y si queda en 0 el anticipo desaparece
      con su recibo y su foto — plata que el contador ya dio por cobrada. Antes esto
@@ -6635,7 +6668,9 @@ function ctaRegistrarPago(id){
     ctaIrAMontos(); return;
   }
   var _mEl=document.getElementById('cta-pago-monto');
-  var monto=montoNegativo(_mEl.value)?0:parseMonto(_mEl.value);
+  // (26/09, revisión de Codex) el texto ENTERO: «−1500» y «Bs -1500» se anotaban 1.500, «1e3» 13, «.50» 50.
+  if(montoFrena(_mEl, (CTA_TIPO==='envio' || CTA_FORM_ENV) ? 'Monto del flete' : 'Monto del pago')) return;
+  var monto=parseMonto(_mEl.value);
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
   var nota=limpiaNota((document.getElementById('cta-pago-nota')||{}).value);
   if(!(monto>0)){ toast('Poné el monto del pago','err'); document.getElementById('cta-pago-monto').focus(); return; }
@@ -7270,15 +7305,24 @@ function submitPedido(){
   }
   /* 💵 UN MONTO CON SIGNO MENOS NO SE GUARDA (26/09). Con `parseFloat` quedaba «A cuenta −500» o
      «Saldo −100» en la planilla, y un flete «−50» borraba callado el pactado; `montoForm` (como
-     `parseMonto`) le sacaría el signo. Se frena el campo A LA VISTA, como «Corregir precios y montos». */
-  var _neg=[];
-  ['f-acuenta','f-saldo','f-cobrado','f-monto2','f-envio'].forEach(function(id){ var e=document.getElementById(id); if(e) _neg.push(e); });
-  _neg=_neg.concat(Array.prototype.slice.call(document.querySelectorAll('#f-productos .prod-precio')))
-           .filter(function(e){ return e.offsetParent!==null && montoNegativo(e.value); });
-  if(_neg.length){
-    _neg.forEach(function(e){ e.classList.add('err'); });
-    toast('Los montos no pueden ser negativos: sacale el signo menos al que quedó en rojo.','err');
-    try{ _neg[0].focus(); _neg[0].scrollIntoView({block:'center'}); }catch(e){}
+     `parseMonto`) le sacaría el signo. Se frena el campo A LA VISTA, como «Corregir precios y montos».
+     (26/09, revisión de Codex) Y no solo el menos del teclado: «−1500» (el de Unicode) y «Bs -1500» se
+     guardaban 1.500, «1e3» 13, «12abc» 12, «1500 2000» 15.002.000 y «.50» 50. `montoError` mira el
+     texto ENTERO, y el aviso dice qué campo, qué se tipeó y cómo escribirlo. */
+  var _mal=[];
+  [['f-acuenta','A cuenta'],['f-saldo','Saldo por cobrar'],['f-cobrado','Monto total cobrado'],
+   ['f-monto2','Monto del 2° método'],['f-envio','Recargo por entrega']].forEach(function(x){
+    var e=document.getElementById(x[0]); if(e) _mal.push({e:e, n:x[1]});
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#f-productos .prod-card'), function(card){
+    var e=card.querySelector('.prod-precio'), d=card.querySelector('.prod-desc'), dn=d?d.value.trim():'';
+    if(e) _mal.push({e:e, n:'Precio c/u'+(dn?(' de '+dn):'')});
+  });
+  _mal=_mal.filter(function(x){ if(x.e.offsetParent===null) return false; x.err=montoError(x.e.value); return !!x.err; });
+  if(_mal.length){
+    _mal.forEach(function(x){ x.e.classList.add('err'); });
+    toast(montoAviso(_mal[0].n, _mal[0].e.value, _mal[0].err)+(_mal.length>1?(' Hay '+(_mal.length-1)+' más en rojo.'):''),'err',9000);
+    try{ _mal[0].e.focus(); _mal[0].e.scrollIntoView({block:'center'}); }catch(e){}
     return;
   }
   var _acu=montoForm('f-acuenta');
@@ -12356,8 +12400,11 @@ function choCobrarMetodo(id, metodo){
     (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
     'Falta: '+fmtBs(falta)+'\n'+
     (fleteF>0.01?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
-    '\nEscribí el monto:', falta>0?String(falta):'');
+    '\nEscribí el monto:', falta>0?String(r2(falta)):'');   // r2 (26/09): lo que propone el panel pasa por `montoError`
   if(txt==null) return;
+  // (26/09, revisión de Codex) el texto ENTERO: «-1500» y «−1500» se anotaban como un cobro de 1.500, «1e3» de 13.
+  var _err=montoError(txt);
+  if(_err){ toast(montoAviso('Cobro en '+metodo, txt, _err),'err',8000); return; }
   var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   if(monto>falta+0.01){
@@ -13595,7 +13642,54 @@ function r2(n){ return Math.round((Number(n)||0)*100)/100; }
 /* ⚠️ parseMonto() saca TODO lo que no sea número, así que a "-50" le queda 50. Donde el
    monto lo escribe una persona hay que mirar el texto crudo antes, o un menos de más se
    guardaría en silencio como si fuera positivo. */
-function montoNegativo(t){ return /^\s*-/.test(String(t==null?'':t)); }
+/* (26/09, revisión de Codex) TODOS los signos menos, no solo el «-» del teclado: el «−» de Unicode (el
+   que ponen algunos celulares, o lo pegado de una planilla), las rayas «–» «—» «‒», los guiones «‐» «‑»
+   y los de ancho completo «﹣» «－». Y en cualquier lugar ANTES del número: «Bs -1500» y «Bs. −1.500»
+   pasaban como 1.500. El «.-» de «1.500.-» va DESPUÉS del número: no es un menos. */
+var MONTO_NEG_RE=/^[^0-9]*[\-\u2212\u2013\u2014\u2012\u2010\u2011\uFE63\uFF0D]/;
+function montoNegativo(t){ return MONTO_NEG_RE.test(String(t==null?'':t)); }
+/* 💵 ¿SE ENTIENDE EL MONTO QUE TIPEÓ UNA PERSONA? (26/09, revisión de Codex, hallazgo 5)
+   `parseMonto` arma un número con lo que encuentra: «1e3» valía 13, «12abc» 12, «1500 2000» 15.002.000
+   y «.50» 50, sin ningún aviso. Esto mira el texto ENTERO antes de convertirlo: devuelve '' si está
+   vacío o es un monto limpio y, si no, el motivo para decírselo a la persona (`montoAviso`).
+   Limpio = «Bs»/«Bs.» (cualquier mayúscula) adelante o atrás, el número y el «.-» o «,-» del final
+   («Bs. 1.500.-», como se escribe acá). El número: miles con «.», «,» o espacio, de a tres (el primer
+   grupo sin 0 adelante: «0.500» no es 500), y centavos con «.» o «,», uno o dos. Lo limpio vale lo mismo
+   que antes con `parseMonto` («1.500.50» sigue siendo 1.500,50). Solo para lo que TIPEA una persona:
+   lo que el panel lee de la planilla (el historial, el arqueo guardado) no pasa por acá. */
+var MONTO_LIMPIO_RE=/^(?:bs\.?\s*)?(?:[1-9]\d{0,2}([., ])\d{3}(?:\1\d{3})*|\d+)(?:[.,]\d{1,2})?(?:\s*[.,]-)?(?:\s*bs\.?)?(?:\s*[.,]-)?$/i;
+function montoError(t){
+  var s=String(t==null?'':t).replace(/\s+/g,' ').trim();
+  if(!s) return '';
+  if(montoNegativo(s)) return 'no puede ser negativo — sacale el signo menos';
+  if(MONTO_LIMPIO_RE.test(s)) return '';
+  var como='escribí solo el número, como 1500 o 1.500,50';
+  var r=s.replace(/bs\.?/ig,' ').replace(/\s+/g,' ').trim();      // la moneda no es una letra de más
+  if(/^[.,]\d/.test(r)) return 'poné el 0 adelante (0,50)';
+  if(/[a-zñáéíóúü]/i.test(r)) return 'tiene letras — '+como;
+  var raro=r.match(/[^\d .,]/);
+  if(raro) return 'tiene «'+raro[0]+'» — '+como;
+  if(/\d[.,]? [.,]?\d/.test(r)) return 'hay dos números — escribí uno solo, como 1500 o 1.500,50';
+  if(/[.,]$/.test(r)) return 'termina en «'+r.charAt(r.length-1)+'» — '+como;
+  return 'no se entiende — '+como;
+}
+/* El aviso: qué campo, lo que se tipeó y el motivo («💵 A cuenta «1e3»: tiene letras — …»). */
+function montoAviso(nombre, txt, err){
+  var t=String(txt==null?'':txt).replace(/\s+/g,' ').trim();
+  if(t.length>20) t=t.slice(0,20)+'…';
+  return '💵 '+(nombre?(nombre+' '):'')+'«'+t+'»: '+err+'.';
+}
+/* El freno de UN campo de plata a la vista: si lo tipeado no es un monto limpio, lo marca en rojo, lo
+   dice y devuelve true (quien llama no guarda nada). Si está bien, le saca el rojo de un intento anterior. */
+function montoFrena(el, nombre){
+  if(!el) return false;
+  var err=montoError(el.value);
+  if(!err){ if(el.classList) el.classList.remove('err'); return false; }
+  if(el.classList) el.classList.add('err');
+  toast(montoAviso(nombre, el.value, err),'err',8000);
+  try{ el.focus(); }catch(e){}
+  return true;
+}
 function parseMonto(t){
   t=String(t==null?'':t).replace(/[^\d.,]/g,'').trim();
   /* ⚠️ (26/09) El punto de «Bs.» y el «.-» del final NO son del número. Con los campos de plata ya de
