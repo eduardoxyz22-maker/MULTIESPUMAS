@@ -4593,7 +4593,8 @@ function renderCuadre(){
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
            difTotal===0?'✅ Cuadra':fmtBs(Math.abs(difTotal)),
-           anotadas+' de '+Math.max(formas.length,anotadas)+' forma'+(Math.max(formas.length,anotadas)===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
+           // 26/09: de TODAS las filas del cierre, con las contadas sin pagos (decía «2 de 2» con la Tarjeta sin contar).
+           anotadas+' de '+CIE.filas.length+' forma'+(CIE.filas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
            // §4fo: el arqueo que quedó sin ningún pago detrás se nombra, o no se entiende la diferencia.
            (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
       : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
@@ -4824,7 +4825,10 @@ function cuadreTexto(){
     });
     L.push('', '*TOTAL: '+fmtBs(total)+'*');
     // §4fz: la diferencia TOTAL, como la dice la pantalla (con los arqueos sin pagos adentro).
-    if(CIE.anotadas) L.push(CIE.difTotal===0 ? '✅ El cuadre cierra' : ('⚠️ '+(CIE.difTotal>0?'Sobra ':'Falta ')+fmtBs(Math.abs(CIE.difTotal))+' en total'));
+    /* 26/09: si no se contaron todas las formas, se dice: «✅ El cuadre cierra» a secas, con el QR sin
+       mirar contra el extracto, se lee en el grupo como que se contó todo (la pantalla lo decía). */
+    var _deN=(CIE.anotadas<CIE.filas.length)?(' ('+CIE.anotadas+' de '+CIE.filas.length+' formas contadas)'):'';
+    if(CIE.anotadas) L.push((CIE.difTotal===0 ? '✅ El cuadre cierra' : ('⚠️ '+(CIE.difTotal>0?'Sobra ':'Falta ')+fmtBs(Math.abs(CIE.difTotal))+' en total'))+_deN);
     if(!arqueoOn) L.push('(solo lo de '+v+' — el arqueo contra la caja se hace con Todos)');
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
@@ -4874,7 +4878,7 @@ function exportCuadre(){
     var a=f.arqueo;
     rows.push([f.forma+(f.huerfano?' — contado a mano, SIN pagos en el período':''), '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:f.dif,t:'n',s:fc})]);
   });
-  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)', '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
+  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)'+(CIE.anotadas<CIE.filas.length?(' — '+CIE.anotadas+' de '+CIE.filas.length+' formas contadas'):''), '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
   var E=cuadreEfectivo(), efe=E.filas;
   if(efe.length || E.fuera.length){
