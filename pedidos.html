@@ -16207,8 +16207,58 @@ function copiarProducir(k, h){
   toast('Copiado: producir para '+etq+' ✓','ok');
 }
 /* Los que vale la pena ofrecer en los formularios: con movimiento o ya contados. */
-function stockConMovimiento(d){
-  return d.lista.filter(function(o){ return o.vendidos>0 || o.comp>0 || o.enCamino>0 || (STOCK.c.u||{})[o.k]!=null; }).slice(0,60);
+function stockConMovimiento(d, todos){
+  var l=d.lista.filter(function(o){ return o.vendidos>0 || o.comp>0 || o.enCamino>0 || (STOCK.c.u||{})[o.k]!=null; });
+  return todos ? l : l.slice(0,60);
+}
+/* 🔎 (26/09) «🏭 Pedí a fábrica» y «📥 Llegó» (otra llegada) ofrecían SOLO esos 60: lo que quedaba
+   afuera —o un producto del catálogo que todavía no se movió— no se podía elegir, y «🚨 PEDIR YA»
+   sobre el renglón 61 abría el formulario con OTRO producto puesto. Sin buscar se ven los mismos
+   (una lista de 300 no sirve en el celular); el buscador —el de la tabla, palabra por palabra—
+   mira todo lo de la tabla más el catálogo entero. */
+var STOCK_ELEGIR_TOPE=60, STOCK_ELEGIR={};
+function stockCoincide(o, q){
+  var ws=stockNorm(q).split(' '), t=stockNorm(stockNombre(o)+' '+(o.cod||'')+' '+(o.otros||[]).join(' '));
+  for(var i=0;i<ws.length;i++) if(ws[i] && t.indexOf(ws[i])<0) return false;
+  return true;
+}
+function stockElegibles(d){
+  var visto={}, out=[], cat=[];
+  var poner=function(o){ if(o && o.k && o.k!=='|' && !visto[o.k]){ visto[o.k]=1; out.push(o); } };
+  stockConMovimiento(d, true).forEach(poner);
+  d.lista.forEach(poner);
+  stockCatalogo().forEach(function(c){
+    var x={ codigo:c.code, desc:c.d, medida:c.m }, info=stockInfo(x);
+    if(!info.k || info.k==='|' || visto[info.k] || esTextoDeTienda(info.k)) return;   // 🏪 lo de tienda no va a fábrica (§4cx)
+    visto[info.k]=1;
+    var nom=stockNombreDe(info, x);
+    cat.push({ k:info.k, desc:nom.desc, medida:nom.medida, cod:c.code, otros:[] });
+  });
+  cat.sort(function(a,b){ return stockNombre(a).localeCompare(stockNombre(b)); });
+  return out.concat(cat);
+}
+function stockElegirNotaTxt(E, txt, n, v){
+  if(!stockNorm(txt)) return E.todos.length>E.base.length ? ('Se ven '+E.base.length+' de '+E.todos.length+'. ¿No está? Buscalo arriba: busca en todo el catálogo.') : '';
+  if(!n) return 'Ninguno coincide con «'+String(txt).trim()+'».';
+  return n>v ? (n+' coinciden: se ven los primeros '+v+'. Escribí más para acotar.') : (n+(n===1?' coincide.':' coinciden.'));
+}
+function stockElegirBuscador(pref){
+  return '<input type="search" id="'+pref+'-q" autocomplete="off" placeholder="🔎 buscar producto o código" oninput="stockElegirFiltrar(\''+pref+'\')" style="width:100%;margin-bottom:6px;padding:10px 12px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;background:#fff">';
+}
+function stockElegirNota(pref){
+  var E=STOCK_ELEGIR[pref];
+  return '<div id="'+pref+'-nota" style="font-size:.76rem;color:var(--muted);margin-top:4px">'+(E?esc(stockElegirNotaTxt(E,'',E.base.length,E.base.length)):'')+'</div>';
+}
+function stockElegirFiltrar(pref){
+  var E=STOCK_ELEGIR[pref], sel=document.getElementById(pref+'-k'), q=document.getElementById(pref+'-q'), nota=document.getElementById(pref+'-nota');
+  if(!E || !sel) return;
+  var txt=q ? String(q.value||'') : '', antes=sel.value;
+  var hay=stockNorm(txt) ? E.todos.filter(function(o){ return stockCoincide(o, txt); }) : E.base;
+  var ver=hay.slice(0, STOCK_ELEGIR_TOPE);
+  sel.innerHTML=ver.length ? ver.map(E.op).join('') : '<option value="">Ningún producto coincide</option>';
+  if(ver.some(function(o){ return o.k===antes; })) sel.value=antes;
+  if(sel.value!==antes && sel.onchange) sel.onchange();      // «Pedí a fábrica»: la cantidad sugerida sigue al producto
+  if(nota) nota.textContent=stockElegirNotaTxt(E, txt, hay.length, ver.length);
 }
 
 /* ---- Cargar el conteo del depósito ---- */
@@ -16273,7 +16323,12 @@ function abrirStockPedido(kPre){
   if(kPre && stockDescontinuadoK(kPre)){toast('Descontinuado: solo se venden saldos. No se fabrica.','err');return;}
   var d=stockData(), lista=stockConMovimiento(d).filter(function(o){return !stockDescontinuadoK(o.k);}).map(function(o){return Object.assign({},o,{pedir:o.fabricar});});
   if(!lista.length){ toast('Todavía no hay productos con movimiento.','err'); return; }
-  var ops=lista.map(function(o){ return '<option value="'+esc(o.k)+'"'+(o.k===kPre?' selected':'')+' data-pedir="'+(o.pedir||0)+'">'+esc(stockNombre(o))+(o.pedir?(' — sugerido '+o.pedir):'')+'</option>'; }).join('');
+  // (26/09) El buscador mira todo (tabla + catálogo), y el de «🚨 PEDIR YA» está siempre aunque no entre en los 60.
+  var todos=stockElegibles(d).filter(function(o){return !stockDescontinuadoK(o.k);}).map(function(o){return Object.assign({},o,{pedir:o.fabricar});});
+  if(kPre && !lista.some(function(o){ return o.k===kPre; })) lista=todos.filter(function(o){ return o.k===kPre; }).concat(lista);
+  var opPed=function(o){ return '<option value="'+esc(o.k)+'"'+(o.k===kPre?' selected':'')+' data-pedir="'+(o.pedir||'')+'">'+esc(stockNombre(o))+(o.pedir?(' — sugerido '+o.pedir):'')+'</option>'; };
+  STOCK_ELEGIR['stk-ped']={ base:lista, todos:todos, op:opPed };
+  var ops=lista.map(opPed).join('');
   var fabs=PROD_LUGARES.map(function(L){ var t=d.fabricas.de(L.corto); return '<option value="'+L.corto+'">'+L.corto+' · tarda ~'+t.dias+' día'+(t.dias===1?'':'s')+(t.medido?'':' (sin medir)')+'</option>'; }).join('')+'<option value="">Otra</option>';
   var pre=lista.filter(function(o){ return o.k===kPre; })[0];
   var html='<div class="modal-h" style="background:#075985"><h3>🏭 Pedí a fábrica</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -16281,7 +16336,7 @@ function abrirStockPedido(kPre){
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px"><b>Esto no le avisa a la fábrica</b> — el pedido lo hacés vos por teléfono o WhatsApp, como siempre. '+
       'Acá lo <b>anotás</b>: el producto deja de avisar mientras lo pedido alcance, entra en la cuenta de «se corta el…», y cuando llegue lo marcás en <b>📥 Llegó de fábrica</b> '+
       '(ahí el panel aprende cuánto tarda cada fábrica de verdad).</p>'+
-      '<div><label class="lb">Producto</label><select id="stk-ped-k" style="width:100%" onchange="var o=this.options[this.selectedIndex]; var u=document.getElementById(\'stk-ped-u\'); if(u && o) u.value=o.getAttribute(\'data-pedir\')||\'\';">'+ops+'</select></div>'+
+      '<div><label class="lb">Producto</label>'+stockElegirBuscador('stk-ped')+'<select id="stk-ped-k" style="width:100%" onchange="var o=this.options[this.selectedIndex]; var u=document.getElementById(\'stk-ped-u\'); if(u && o) u.value=o.getAttribute(\'data-pedir\')||\'\';">'+ops+'</select>'+stockElegirNota('stk-ped')+'</div>'+
       '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades pediste?</label>'+
         '<input type="number" min="1" step="1" inputmode="numeric" id="stk-ped-u" placeholder="Ej. 10" value="'+((pre&&pre.pedir)?pre.pedir:'')+'" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">¿A qué fábrica?</label><select id="stk-ped-fab" style="width:100%">'+fabs+'</select></div>'+
@@ -16373,7 +16428,9 @@ function cancelarStockPedido(id){
 function abrirStockEntrada(){
   var d=stockData(), lista=stockConMovimiento(d);
   if(!lista.length && !d.abiertos.length){ toast('Todavía no hay productos con movimiento.','err'); return; }
-  var ops=lista.map(function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; }).join('');
+  var opEnt=function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; };
+  STOCK_ELEGIR['stk-ent']={ base:lista, todos:stockElegibles(d), op:opEnt };   // (26/09) el buscador mira todo el catálogo
+  var ops=lista.map(opEnt).join('');
   var abiertos=d.abiertos.map(function(q){
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--gray-lt);font-size:.84rem">'+
       '<span style="flex:1;min-width:180px"><b>'+esc(q.nombre)+'</b><br><span style="color:var(--muted);font-size:.92em">'+q.u+' pedidas'+(q.fab?(' a '+esc(q.fab)):'')+' el '+fmtFechaCorta(q.f)+' · llegaban ~'+fmtFechaCorta(q.llega)+'</span></span>'+
@@ -16385,7 +16442,7 @@ function abrirStockEntrada(){
       (abiertos ? ('<div style="font-weight:700;font-size:.86rem;margin-bottom:4px">Lo que estaba pedido</div>'+abiertos+
                    '<div style="font-weight:700;font-size:.86rem;margin:14px 0 4px">Otra llegada (sin pedido anotado)</div>') : '')+
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Sumá lo que entró al depósito. Se agrega a lo que ya había contado.</p>'+
-      '<div><label class="lb">Producto</label><select id="stk-ent-k" style="width:100%">'+ops+'</select></div>'+
+      '<div><label class="lb">Producto</label>'+stockElegirBuscador('stk-ent')+'<select id="stk-ent-k" style="width:100%">'+ops+'</select>'+stockElegirNota('stk-ent')+'</div>'+
       '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades llegaron?</label>'+
         '<input type="number" min="1" step="1" inputmode="numeric" id="stk-ent-u" placeholder="Ej. 10" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">¿De qué fábrica? (opcional)</label>'+

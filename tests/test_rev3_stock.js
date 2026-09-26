@@ -5,6 +5,10 @@
       salía NUNCA (`stockSalio` da falso para un ✗, así que caía en «Vendido sin entregar»). Ahora
       esas líneas van a su grupo, y la CUENTA no se mueve (§4de: un «✗ no hay» con la fecha pasada
       sigue comprometido): los dos grupos suman lo que dice la tarjeta «Comprometido».
+   2. «🏭 PEDÍ A FÁBRICA» Y «📥 LLEGÓ» (otra llegada) ofrecían solo 60 productos (`stockConMovimiento`):
+      uno que quedaba afuera, o uno del catálogo que todavía no se movió, no se podía elegir, y
+      «🚨 PEDIR YA» sobre el renglón 61 abría el formulario con OTRO producto puesto. Ahora hay un
+      buscador (el de la tabla) que mira todo el catálogo; sin buscar se ven los mismos 60 de antes.
    3. UNA LLEGADA QUE NO SUMABA: con el Excel de acá de la tarde marcado «ya incluye las entregas del
       día» (`c.inc`), lo que llegaba ese mismo día DESPUÉS de subirlo se descartaba por la fecha (y
       `filaStock` lo podaba al guardar). Con hora de los dos lados (`ts` y `c.t`) manda la hora; una
@@ -117,6 +121,97 @@ const J=x=>JSON.stringify(x);
     return { comp:o.comp, vacio:/No hay pedidos pendientes que consuman stock/.test(txt), grupo:/Sin stock de días pasados/.test(txt) };
   });
   chk('con solo ✗ de días pasados no dice «No hay pedidos pendientes que consuman stock»: están comprometidos', r.comp===2 && !r.vacio, J(r));
+
+  // ══ 2. Pedí a fábrica y «Otra llegada»: cualquier producto del catálogo ═══════════════
+  console.log('\n── 2. 🏭 Pedí a fábrica y 📥 Llegó: se puede elegir cualquiera, con buscador ──');
+  await page.evaluate(() => {
+    /* 66 productos con movimiento, todos «🚨 PEDIR YA» (vendidos para mañana, 0 acá). El orden de la
+       tabla es por urgencia y, a igualdad, por nombre: «ZQX PRUEBA ZZ» queda en el renglón 66. */
+    STOCK=stockVacio(); STOCK_CARGADO=true;
+    STOCK.c={ f:todayStr(), hora:'09:00:00', u:{}, solo0:true, alm:'PRODUCTOS TERMINADOS FAB.', t:Date.now()-8*3600000 };
+    STOCK.al={ 'PRODUCTOS TERMINADOS FAB.':'log' };
+    STATE=[]; var L='ABCDEFGHIJKLMNOPQRSTUVWXY', n=0;
+    for(var i=0;i<L.length && n<65;i++) for(var j=0;j<3 && n<65;j++){
+      STATE.push(_P({id:'z'+n, cliente:'Cli '+n, fecha:_adel(1), productos:[{desc:'ZQX PRUEBA '+L[i]+L[j],medida:'100x190',codigo:'',cant:1}]})); n++;
+    }
+    STATE.push(_P({id:'zz', cliente:'Ultimo', fecha:_adel(1), productos:[{desc:'ZQX PRUEBA ZZ',medida:'100x190',codigo:'',cant:2}]}));
+    stockOlvidarIndice();
+    window._KZ=stockClave({desc:'ZQX PRUEBA ZZ',medida:'100x190'});
+    window._KC=stockClave({codigo:'CH1332'});         // NUEVO ECO FLEX 140x190: del catálogo, sin ningún movimiento
+  });
+  r = await page.evaluate(() => {
+    var d=stockData(), pos=d.lista.map(function(o){ return o.k; }).indexOf(_KZ);
+    return { n:d.lista.length, pos:pos, aviso:(d.lista[pos]||{}).aviso, fab:(d.lista[pos]||{}).fabricar, catEnLista:d.lista.some(function(o){ return o.k===_KC; }) };
+  });
+  chk('el escenario: 66 productos «pedir» y el ZZ en el renglón 66, con «fabricar 2»; el ECO FLEX no está en la tabla',
+      r.n===66 && r.pos===65 && (r.aviso==='urgente'||r.aviso==='pedir') && r.fab===2 && !r.catEnLista, J(r));
+  r = await page.evaluate(() => {
+    abrirStockPedido(_KZ);                            // lo que hace «🚨 PEDIR YA» en ese renglón
+    var sel=document.getElementById('stk-ped-k'), u=document.getElementById('stk-ped-u');
+    var out={ val:sel?sel.value:null, u:u?u.value:null, nOps:sel?sel.options.length:0, buscador:!!document.getElementById('stk-ped-q') };
+    closeModal(); return out;
+  });
+  chk('⚠️ «🚨 PEDIR YA» sobre el renglón 66 abre «Pedí a fábrica» CON ESE producto y su cantidad (antes, el primero de la lista)',
+      r.val===await page.evaluate(() => _KZ) && r.u==='2', J(r));
+  chk('…y sin buscar, la lista sigue corta para el celular (≤ 61: los 60 de siempre + el elegido)', r.nOps>0 && r.nOps<=61, r.nOps);
+  chk('⚠️ «Pedí a fábrica» tiene buscador', r.buscador);
+
+  // (a) Pedí a fábrica de un producto del catálogo que todavía no se movió
+  await page.evaluate(() => { abrirStockPedido(); });
+  const hayBuscadorPed = await page.locator('#stk-ped-q').count();
+  if(hayBuscadorPed) await page.fill('#stk-ped-q', 'eco flex 140');
+  r = await page.evaluate(() => {
+    var sel=document.getElementById('stk-ped-k'); if(!sel){ closeModal(); return { ok:false }; }
+    var vals=[].slice.call(sel.options).map(function(o){ return o.value; });
+    var out={ ok:true, esta:vals.indexOf(_KC)>=0, n:vals.length, todosCoinciden:[].slice.call(sel.options).every(function(o){ return !o.value || /ECO/.test(o.textContent.toUpperCase()); }) };
+    if(out.esta){
+      sel.value=_KC; if(sel.onchange) sel.onchange();
+      document.getElementById('stk-ped-u').value='6';
+      guardarStockPedido();
+    } else closeModal();
+    out.pedido=(STOCK.p||[]).filter(function(q){ return q.k===_KC; }).map(function(q){ return q.u; });
+    out.enTabla=stockData().lista.some(function(o){ return o.k===_KC && o.enCamino===6; });
+    return out;
+  });
+  chk('⚠️ buscando «eco flex 140» aparece el NUEVO ECO FLEX del catálogo (sin movimiento) y se puede anotar el pedido', r.esta && J(r.pedido)==='[6]' && r.enTabla, J(r));
+  chk('…y la lista muestra solo lo que coincide con la búsqueda', r.todosCoinciden && r.n>0 && r.n<=60, r.n);
+
+  // (b) «Otra llegada (sin pedido anotado)» de un producto que no entra en los 60
+  await page.evaluate(() => { abrirStockEntrada(); });
+  const hayBuscadorEnt = await page.locator('#stk-ent-q').count();
+  if(hayBuscadorEnt) await page.fill('#stk-ent-q', 'zqx prueba zz');
+  r = await page.evaluate(() => {
+    var sel=document.getElementById('stk-ent-k'); if(!sel){ closeModal(); return { ok:false }; }
+    var vals=[].slice.call(sel.options).map(function(o){ return o.value; });
+    var out={ esta:vals.indexOf(_KZ)>=0, n:vals.length };
+    if(out.esta){ sel.value=_KZ; document.getElementById('stk-ent-u').value='4'; guardarStockEntrada(); } else closeModal();
+    var o=stockData().lista.filter(function(x){ return x.k===_KZ; })[0]||{};
+    out.dep=o.deposito; out.e=(STOCK.e||[]).filter(function(x){ return x.k===_KZ; }).map(function(x){ return x.u; });
+    return out;
+  });
+  chk('⚠️ «📥 Llegó» → otra llegada: buscando, se elige el renglón 66 y suma 4 acá (antes no estaba en la lista)',
+      hayBuscadorEnt>0 && r.esta && J(r.e)==='[4]' && r.dep===4, J(r));
+  // (c) Buscar también por código, y lo descontinuado no se ofrece para fabricar
+  await page.evaluate(() => { abrirStockPedido(); });
+  if(hayBuscadorPed) await page.fill('#stk-ped-q', 'CH1201');
+  r = await page.evaluate(() => {
+    var sel=document.getElementById('stk-ped-k'), vals=sel?[].slice.call(sel.options).map(function(o){ return o.value; }):[];
+    var K=_K(), out={ codigo:vals.indexOf(K)>=0 };
+    closeModal();
+    var desc=Object.keys(CODIGOS).filter(function(c){ return CODIGOS[c] && CODIGOS[c].x; })[0];
+    out.desc=desc||'';
+    if(desc){
+      abrirStockPedido();
+      var q=document.getElementById('stk-ped-q');
+      if(q){ q.value=desc; q.dispatchEvent(new Event('input')); }
+      var s2=document.getElementById('stk-ped-k');
+      out.descOfrecido=[].slice.call(s2.options).some(function(o){ return o.value===stockClave({codigo:desc}); });
+      closeModal();
+    }
+    return out;
+  });
+  chk('se busca también por código («CH1201» → TITANIO ICE 160x190)', r.codigo, J(r));
+  chk('…y un producto que ya no se fabrica no se ofrece para pedir a fábrica', !r.desc || r.descOfrecido===false, J(r));
 
   // ══ 3. Una llegada después del Excel de la tarde «que ya incluye las entregas del día» ═══
   console.log('\n── 3. Llegada anotada DESPUÉS de subir el Excel de la tarde (c.inc) ──');
