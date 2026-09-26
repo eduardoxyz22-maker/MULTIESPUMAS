@@ -5016,6 +5016,13 @@ function borrarRetiro(id){
        lo rechazaba con un falso «lo corrigió otra persona» (E11). */
     var volverRet=function(x){ RETIROS=RETIROS.filter(function(y){ return String(y.id)!==String(id); }).concat([x]); saveRetirosMirror(); renderRetiros(); renderCuadreSiActivo(); };
     borrarEnServidor(f).then(function(res){
+      /* 26/09: borrado (o sin saber, o con la versión de otro): lo que se guardó en los últimos 90 s
+         ya no es «lo último que tocó la persona». Si no, `mergePending` lo volvía a poner en pantalla
+         —y a restar en el cuadre— con cada refresco de ese rato: parecía que el borrado no anduvo. */
+      if(res.ok || res.incierto || res.conflicto){
+        delete SAVE_ULTIMO[id];
+        if(!res.conflicto){ RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(id); }); saveRetirosMirror(); renderRetiros(); renderCuadreSiActivo(); }
+      }
       if(res.ok){ r.fotos.forEach(function(fid){ apiBorrarFoto(fid).then(function(){},function(){}); }); toast('Retiro borrado','ok'); }
       else if(res.conflicto && res.actual){
         volverRet(res.actual);
@@ -8899,8 +8906,12 @@ function mergePending(serverList){
   // …y los retiros con un guardado en vuelo (el list volvió antes que el «ok») también (§4eo)
   for(var kU in SAVE_ULTIMO){ if(esFilaRetiro(SAVE_ULTIMO[kU].rec) && saveReciente(kU)) pendRet=pendRet.concat([SAVE_ULTIMO[kU].rec]); }
   if(pendRet.length){
-    var idsR={}; RETIROS.forEach(function(r){ idsR[String(r.id)]=1; });
-    pendRet.forEach(function(r){ if(!idsR[String(r.id)]){ RETIROS.push(r); idsR[String(r.id)]=1; } });
+    /* 26/09: y si el servidor ya lo tiene, manda la versión de la cola o del guardado en el aire,
+       como con los pedidos (arriba). Antes solo se agregaban los que FALTABAN: un retiro corregido
+       de 400 a 500 con el servidor ocupado volvía a 400 en el primer refresco y el cuadre decía
+       «le quedan Bs 600» hasta que saliera la cola. */
+    var idsR={}; RETIROS.forEach(function(r, i){ idsR[String(r.id)]=i; });
+    pendRet.forEach(function(r){ var kR=String(r.id); if(idsR[kR]!=null) RETIROS[idsR[kR]]=r; else { idsR[kR]=RETIROS.length; RETIROS.push(r); } });
     saveRetirosMirror(); renderRetirosSiActivo();
   }
   /* ⚠️ Las filas del sistema en cola NO son pedidos (§4ev, §4er MEDIA): la del stock con el
