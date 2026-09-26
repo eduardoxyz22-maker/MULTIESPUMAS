@@ -19112,19 +19112,17 @@ function renderRuta(){
   var html='';
   RUTA_ORDER.forEach(function(k, idx){
     var stops=RUTA_BYC[k], cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
-    var fleteR=rutaFleteTotal(stops), hayCobrar=(cobrar>0 || fleteR>0.01);   // (26/09) el flete pactado también se cobra en la puerta
     var esSin=(k==='Sin chofer');
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
       '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
-      (hayCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+rutaCobrarTxt(cobrar, fleteR)+'</span>'):'')+
-      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(hayCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
+      (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
+      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
       var cr=cobroRutaTxt(p);
       var cobro='<span style="color:'+cr.c+';font-weight:700">'+cr.t+'</span>'+
-        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'')+
-        (rutaFleteTxt(p)?(' <span style="color:#c0392b;font-weight:700">· '+esc(rutaFleteTxt(p))+'</span>'):'');   // (26/09)
+        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'');
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
@@ -19137,26 +19135,17 @@ function renderRuta(){
   });
   document.getElementById('ruta-body').innerHTML=html||'<div style="text-align:center;color:#888;padding:40px">No hay pedidos para este día.</div>';
 }
-/* 🚚 (26/09) El flete PACTADO en la hoja de ruta, como en la tarjeta del chofer (`cobroChoferHtml`) y en
-   el WhatsApp del pedido: se cobra en la puerta, aparte de la venta, y lo registra la vendedora (§4ai).
-   La hoja decía «✅ PAGADO» / «✅ Todo pagado» y con ella en la mano el flete no se cobraba. */
-function rutaFleteTxt(p){ var f=noSeCobra(p)?0:envioPorCobrar(p); return f>0.01 ? ('🚚 Cobrar también el flete: '+fmtBs(f)+' (aparte de la venta)') : ''; }
-function rutaFleteTotal(stops){ var t=0; (stops||[]).forEach(function(p){ if(!noSeCobra(p)) t=r2(t+envioPorCobrar(p)); }); return t; }
-function rutaCobrarTxt(cobrar, flete){ return (cobrar>0?fmtBs(cobrar):'')+(flete>0.01?((cobrar>0?' + ':'')+fmtBs(flete)+' de flete'):''); }
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
   var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
   var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
-  var fleteR=rutaFleteTotal(stops);
-  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''),
-         ((cobrar>0 || fleteR>0.01)?('💰 Total a cobrar: '+rutaCobrarTxt(cobrar, fleteR)):'✅ Todo pagado'), ''];
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
     L.push('   🛏️ '+prodText(p.productos));
     if(atcComodinAviso(p)) L.push('   '+atcComodinAviso(p));   // (26/09)
     L.push('   '+cobroRutaTxt(p).t);
-    if(rutaFleteTxt(p)) L.push('   '+rutaFleteTxt(p));   // (26/09)
     if(p.maps) L.push('   🗺️ '+p.maps);
     if(p.observaciones) L.push('   📝 '+p.observaciones);
     L.push('');
