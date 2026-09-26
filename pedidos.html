@@ -9362,7 +9362,7 @@ function leerCierresDeLista(lista, esDelServidor){
        cada 2 minutos (§4aw) la carrera se perdía seguido. Por eso, mientras el servidor
        no confirme lo que mandamos, manda lo nuestro. */
     if(CIERRES_PEND){
-      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')) CIERRES_PEND=null;  // ya llegó
+      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')){ CIERRES_PEND=null; CIERRES_CAMBIOS={}; }  // ya llegó (26/09: y lo tocado acá ya está adentro)
       else delServidor=CIERRES_PEND.slice().sort();                                          // todavía no
     }
     DIAS_CERRADOS=delServidor;
@@ -9403,32 +9403,61 @@ function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
 /* Lo que esta computadora mandó y el servidor todavía no confirmó. Mientras esté puesto,
    gana sobre lo que traiga la planilla (ver el comentario en leerCierresDeLista). */
 var CIERRES_PEND=null;
+/* 🔒 (26/09) LA FILA SE REESCRIBE ENTERA, ASÍ QUE ANTES SE RELEE. Se mandaba la lista que tenía
+   ESTA computadora, y con dos equipos de administración el que no se había enterado de un cierre
+   del otro (refresca cada 2 min, y nunca con una ventana abierta o en segundo plano) lo BORRABA
+   al cerrar su propio día: el día del otro quedaba abierto para todos y el portero del servidor
+   dejaba entrar pedidos a un camión ya armado. Ahora se lee la planilla justo antes y se le
+   aplica SOLO lo que se tocó acá (`CIERRES_CAMBIOS`: día → true cerrado / false reabierto), hasta
+   que el servidor lo confirma. Si la lectura no contesta, se guarda como antes. */
+var CIERRES_CAMBIOS={};
+function diasDeFilaCierre(cie){
+  var crudo=String((cie&&cie.observaciones)||'').trim();
+  var d=crudo.split(/[^\d-]+/).filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); });
+  if(!d.length && crudo){ var dC=new Date(crudo); if(!isNaN(dC)) d=[isoLocal(dC)]; }   // la celda que Sheets volvió fecha (ver filaCierre)
+  return d;
+}
 function guardarCierres(){
   DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
   saveCierresMirror();
-  var fila=filaCierre(DIAS_CERRADOS);
-  var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
   CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
-  var confirmado=function(ok){
-    // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
-    // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
-    if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
-    if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
-    renderCupoForm(); renderCierreDias();
+  var mandar=function(){
+    var fila=filaCierre(DIAS_CERRADOS);
+    var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
+    var cambios={}; for(var k in CIERRES_CAMBIOS) cambios[k]=CIERRES_CAMBIOS[k];
+    var confirmado=function(ok){
+      // Lo que ya quedó en la planilla no se vuelve a aplicar: otro puede cambiarlo después.
+      if(ok){ for(var kc in cambios) if(CIERRES_CAMBIOS[kc]===cambios[kc]) delete CIERRES_CAMBIOS[kc]; }
+      // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
+      // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
+      if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
+      if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
+      renderCupoForm(); renderCierreDias();
+    };
+    apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); });
   };
-  if(CONNECTED){ apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); }); }
-  else { queuePending(fila); }
+  if(CONNECTED){
+    conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+      if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+      var cie=null; res.pedidos.forEach(function(p){ if(esFilaCierre(p)) cie=p; });
+      var s={}; diasDeFilaCierre(cie).forEach(function(f){ s[f]=1; });
+      for(var k in CIERRES_CAMBIOS){ if(CIERRES_CAMBIOS[k]) s[k]=1; else delete s[k]; }
+      DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice();
+      saveCierresMirror(); renderAdmin(); renderCupoForm(); renderCierreDias();
+    }, function(){}).then(mandar, mandar);
+  }
+  else { queuePending(filaCierre(DIAS_CERRADOS)); }
   renderAdmin(); renderCupoForm(); renderCierreDias();
 }
 function cerrarDia(f){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
   if(diaCerrado(f)) return;
-  DIAS_CERRADOS.push(f); guardarCierres();
+  DIAS_CERRADOS.push(f); CIERRES_CAMBIOS[f]=true; guardarCierres();
   toast('🔒 '+fmtFecha(f)+' cerrado — ya no entran pedidos nuevos para ese día','ok');
 }
 function abrirDia(f){
   var i=DIAS_CERRADOS.indexOf(String(f||'')); if(i<0) return;
-  DIAS_CERRADOS.splice(i,1); guardarCierres();
+  DIAS_CERRADOS.splice(i,1); CIERRES_CAMBIOS[String(f)]=false; guardarCierres();
   toast('🔓 '+fmtFecha(f)+' reabierto','ok');
 }
 function pedidosDelDia(f){ var n=0; for(var i=0;i<STATE.length;i++) if(STATE[i].fecha===f) n++; return n; }
