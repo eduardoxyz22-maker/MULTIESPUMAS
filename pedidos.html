@@ -7270,6 +7270,9 @@ function submitPedido(){
   })();
   if(_compSinPago){
     toast('Subiste la imagen pero no anotaste ningún pago. El comprobante va pegado a un pago: poné cuánto entró en «A cuenta» o marcá «SÍ, pagado». Si todavía no pagó, quitá la imagen y adjuntala después desde Contabilidad al registrar el pago.','err');
+    /* (26/09) Sin pago el bloque del método se esconde y la imagen con él: «quitá la imagen» no tenía
+       dónde tocarse (el «A cuenta» vuelto a 0 con la foto ya subida trababa el guardado, §4gb). */
+    renderCompForm(true);
     var _wc=document.getElementById('wrap-comp');
     if(_wc){ _wc.classList.add('seg-err'); try{ _wc.scrollIntoView({block:'center'}); }catch(e){} }
     var _wp=document.getElementById('f-acuenta'); if(_wp) _wp.classList.add('err');

@@ -10,6 +10,10 @@
         el panel frenaba). Pasa en el formulario, en Contabilidad, en el arqueo y en el retiro.
         Y lo que ya se leía bien («1.500», «1500,50», «1,500.50», el historial que escribe el panel)
         tiene que seguir igual.
+     2. El flete PACTADO: la tarjeta del chofer y el WhatsApp del pedido lo dicen desde el 26/09, pero
+        la hoja de ruta (pantalla, impresa y su WhatsApp) seguía con «✅ PAGADO» / «✅ Todo pagado».
+     3. «A cuenta» vuelto a 0 con la foto del recibo ya subida: el guardado se frena («quitá la
+        imagen») y la imagen quedaba escondida con el bloque del método, sin su ✕.
 
    Planilla: el google-apps-script.gs de verdad en Node (como test_rev2_form.js), o un servidor
    simulado en el Cuadre (como test_rev2_cuadre.js). Reloj CLAVADO el miércoles 16/09/2026.
@@ -331,6 +335,44 @@ function INIT(){
     chk('⚠️ el WhatsApp de la ruta no dice «✅ Todo pagado» con un flete por cobrar, y lo nombra en la parada',
         !/Todo pagado/.test(r.rutaWA) && /Bs 150,00 de flete/.test(r.rutaWA) && /PAGADA CON FLETE[\s\S]*flete: Bs 150,00/.test(r.rutaWA), r.rutaWA);
     chk('control · la parada sin flete no habla de flete', paradaSf && !/flete/.test(paradaSf), paradaSf);
+  });
+
+  // ══ 3. SE ARREPINTIÓ DEL ADELANTO CON LA FOTO YA SUBIDA ═════════════════════════════════
+  /* 360d5b2 (26/09) destrabó «un método elegido y después sin pago»… sin imagen. Con la foto del recibo
+     ya subida (se pide para cualquier pago) y el «A cuenta» vuelto a 0, el guardado se frena con
+     «Subiste la imagen pero no anotaste ningún pago… quitá la imagen», pero la imagen y su ✕ se
+     esconden con el bloque del método: no había cómo quitarla sin volver a poner un adelanto. */
+  await esc('3. «A cuenta» vuelto a 0 con la foto ya subida: la imagen queda a mano para quitarla', async () => {
+    const S = servidor();
+    const A = await abrir(S);
+    await empezar(A, 'SE ARREPINTIO CON FOTO', { nota:'2201' });
+    await tipear(A, '#f-acuenta', '500');
+    await elegir(A, 'f-metodo', 'Efectivo');
+    await tipear(A, '#f-saldo', '2500');
+    await A.evaluate(() => { FORM_COMPS=['IMGARR']; renderCompForm(true); });   // la foto del recibo, ya subida
+    await tipear(A, '#f-acuenta', '0');
+    await tipear(A, '#f-saldo', '3000');
+    let g = await guardar(A);
+    const vis = await A.evaluate(() => {
+      var w=document.getElementById('wrap-comp');
+      return { visible: !!(w && w.offsetParent!==null), quitar: !!(w && w.offsetParent!==null && w.querySelector('button[onclick*="quitarCompForm"]')) };
+    });
+    chk('control · sin pago, con la foto subida, NO se guarda (el comprobante va pegado a un pago)', !S.porCliente('SE ARREPINTIO CON FOTO') && g.saves===0 && g.rojos.some(t=>/Subiste la imagen/.test(t)), g);
+    chk('⚠️ …y la imagen queda A LA VISTA con su ✕ para quitarla (antes quedaba escondida con el bloque del método)', vis.visible && vis.quitar, vis);
+    // la quita y guarda: la venta queda toda por cobrar, sin método ni imagen
+    await A.evaluate(() => { var b=document.querySelector('#wrap-comp button[onclick*="quitarCompForm"]'); if(b) b.click(); });
+    g = await guardar(A);
+    const f = S.porCliente('SE ARREPINTIO CON FOTO');
+    chk('⚠️ quitada la imagen, la venta se guarda toda por cobrar', f && f.acuenta===0 && f.saldo===3000 && f.metodoPago==='', f ? { acuenta:f.acuenta, saldo:f.saldo, mp:f.metodoPago } : g);
+    // control: con el adelanto de verdad y la foto, se guarda como siempre
+    await empezar(A, 'ADELANTO CON FOTO', { nota:'2202' });
+    await tipear(A, '#f-acuenta', '500');
+    await elegir(A, 'f-metodo', 'Efectivo');
+    await tipear(A, '#f-saldo', '2500');
+    await A.evaluate(() => { FORM_COMPS=['IMGOK']; renderCompForm(true); });
+    g = await guardar(A);
+    const f2 = S.porCliente('ADELANTO CON FOTO');
+    chk('control · con el adelanto y su foto se guarda como siempre (Efectivo %IMGOK, 500 + 2.500)', f2 && f2.acuenta===500 && f2.saldo===2500 && /Efectivo %IMGOK/.test(f2.metodoPago), f2 ? f2.metodoPago : g);
   });
 
   chk('sin errores JS', errores.length===0, errores);
