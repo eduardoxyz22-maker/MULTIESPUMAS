@@ -4,6 +4,14 @@
       el chofer no se enteraba de que tenía que cobrar el flete en la puerta (§4ai). La tarjeta del
       chofer ya lo dice (a4fbfe0): la hoja de ruta —pantalla, impresa y WhatsApp— dice lo mismo,
       con las mismas palabras. ATC y RPT no cambian.
+   2. 📦 Las tildes de la Lista de carga se perdían con dos cargadores a la vez: la fila
+      `__carga_chk__` se reescribía ENTERA con lo que tenía ese celular (gana el último, lo del otro
+      desaparece), y un refresco entre el toque y el guardado se llevaba la tilde recién puesta.
+      Ahora, como los días cerrados (7ee6160): se relee la planilla y se aplica solo lo tocado acá.
+   3. 🔒 Un cierre de día (o una tilde) hecho SIN señal quedaba en la cola con la lista vieja y, al
+      volver la señal, se mandaba tal cual: pisaba lo que otra computadora cerró, reabrió o tildó
+      mientras tanto. Ahora se rearma con la planilla de ese momento. Las demás filas de la cola
+      se mandan igual que siempre.
 
    Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia). Red cortada, servidor simulado, datos
    sintéticos. Se corre:  node tests/test_rev3_admin.js
@@ -122,6 +130,164 @@ const BASE = `
     chk('control: el flete ya cobrado no se vuelve a pedir', !/flete/i.test(r.paradas.COBRADO||'x') && /PAGADO/.test(r.ct.f3), r.paradas.COBRADO);
     chk('control: una venta sin flete no habla de flete', !/flete/i.test(r.paradas.NORMAL||'x') && /COBRAR Bs 500,00/.test(r.ct.f4), r.paradas.NORMAL);
     chk('control: la ATC no cambia (no se cobra, ni el flete)', /NO SE COBRA \(ATC\)/.test(r.ct.a1) && !/flete/i.test(r.ct.a1) && !/flete/i.test(r.paradas.ATC||'x'), r.ct.a1);
+    await page.close();
+  }
+
+  // ═══ 2. Las tildes de la carga con dos cargadores ═══════════════════════════════════
+  console.log('\n── 2. 📦 Dos cargadores tildando a la vez: no se pisan ──');
+  {
+    const page = await nueva(MIERCOLES);
+    const K = (p)=>'2026-09-23|Foton nuevo|'+p;
+    let r = await page.evaluate(async (K) => {
+      STATE=[]; saveMirror();
+      // a) El otro cargador tildó X; este celular no se enteró (su memoria está vacía) y tilda Y.
+      window._srv.carga=K.x; CARGA_CHK={}; saveCargaMirror();
+      setCargaChk(K.y, true);
+      await _espera(1200);
+      var a={ srv:_cargaSrv(), local:Object.keys(CARGA_CHK).sort().join(' ; ') };
+      // b) El otro destildó Z (que este celular todavía ve tildada); este tilda W: Z no vuelve.
+      window._srv.carga=[K.x,K.y].join(' ; ');   // el otro sacó Z
+      CARGA_CHK={}; CARGA_CHK[K.x]=1; CARGA_CHK[K.y]=1; CARGA_CHK[K.z]=1; saveCargaMirror();
+      setCargaChk(K.w, true);
+      await _espera(1200);
+      var b={ srv:_cargaSrv() };
+      // c) Un refresco entre el toque y el guardado no se lleva la tilde recién puesta.
+      window._srv.carga=K.x; CARGA_CHK={}; CARGA_CHK[K.x]=1; saveCargaMirror();
+      setCargaChk(K.v, true);
+      await refrescarEstado();                         // el list vuelve con la fila de antes (sin V)
+      var enPantalla=!!CARGA_CHK[K.v];
+      await _espera(1200);
+      var c={ srv:_cargaSrv(), enPantalla:enPantalla, local:!!CARGA_CHK[K.v] };
+      // d) Destildar acá se respeta (y lo del otro queda).
+      window._srv.carga=[K.x,K.v,K.u].join(' ; '); CARGA_CHK={}; CARGA_CHK[K.x]=1; CARGA_CHK[K.v]=1; saveCargaMirror();   // U lo tildó el otro
+      setCargaChk(K.v, false);
+      await _espera(1200);
+      var d={ srv:_cargaSrv() };
+      return { a:a, b:b, c:c, d:d };
+    }, { x:K('X'), y:K('Y'), z:K('Z'), w:K('W'), v:K('V'), u:K('U') });
+    chk('🔴 lo que tildó el otro cargador sigue tildado en la planilla', r.a.srv===[K('X'),K('Y')].join(' ; '), 'planilla: '+r.a.srv);
+    chk('  y este celular ve las dos', r.a.local===[K('X'),K('Y')].join(' ; '), r.a.local);
+    chk('🔴 lo que el otro DESTILDÓ no vuelve a aparecer', r.b.srv===[K('W'),K('X'),K('Y')].join(' ; '), 'planilla: '+r.b.srv);
+    chk('🔴 un refresco entre el toque y el guardado no se lleva la tilde (pantalla)', r.c.enPantalla===true, J(r.c));
+    chk('🔴 …ni de la planilla', r.c.srv===[K('V'),K('X')].join(' ; ') && r.c.local===true, 'planilla: '+r.c.srv);
+    chk('  destildar acá se respeta, y lo que tildó el otro queda', r.d.srv===[K('U'),K('X')].join(' ; '), 'planilla: '+r.d.srv);
+    r = await page.evaluate(async (K) => {
+      // e) Tildando varios seguidos sigue yendo UNA sola escritura.
+      window._srv.carga=''; CARGA_CHK={}; saveCargaMirror(); window._srv.saves=[];
+      setCargaChk(K.x,true); setCargaChk(K.y,true); setCargaChk(K.z,true);
+      await _espera(1200);
+      var n=window._srv.saves.filter(function(s){ return s.id===CARGA_ID; }).length;
+      // f) Sin poder leer la planilla, se guarda igual (como antes).
+      window._srv.listFalla=true; setCargaChk(K.w,true);
+      await _espera(1200); window._srv.listFalla=false;
+      return { n:n, srv:_cargaSrv() };
+    }, { x:K('X'), y:K('Y'), z:K('Z'), w:K('W') });
+    chk('  tildar tres seguidas sigue siendo una sola escritura', r.n===1, 'escrituras: '+r.n);
+    chk('  si la planilla no contesta la lectura, la tilde se guarda igual', /\|W/.test(r.srv), r.srv);
+    await page.close();
+  }
+
+  // ═══ 3. Sin señal: la cola no pisa lo que cambió otra computadora ═══════════════════
+  console.log('\n── 3. 🔒 Un cierre o una tilde hechos sin señal no pisan la planilla al volver ──');
+  {
+    const page = await nueva(MIERCOLES);
+    let r = await page.evaluate(async () => {
+      showView('admin'); await _espera(150); STATE=[]; saveMirror();
+      // a) Este equipo tiene el 01/10 cerrado y se queda sin señal: cierra el 06/10.
+      window._srv.cierre='🔒 2026-10-01';
+      DIAS_CERRADOS=['2026-10-01']; CIERRES_PEND=null; saveCierresMirror();
+      if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
+      window._srv.saveFalla=true; window._srv.listFalla=true;
+      cerrarDia('2026-10-06');
+      await _espera(200);
+      var enCola=getPending().filter(function(p){ return p.id===CIERRE_ID; }).length;
+      // …mientras tanto la otra computadora reabre el 01/10 y cierra el 07/10.
+      window._srv.cierre='🔒 2026-10-07';
+      window._srv.saveFalla=false; window._srv.listFalla=false;
+      await flushPending();
+      var srv=window._diasSrv();
+      await refrescarEstado();
+      return { enCola:enCola, srv:srv, local:DIAS_CERRADOS.join(' '), cola:getPending().length,
+               conCambios:window._srv.saves.some(function(s){ return s._cambios!==undefined; }) };
+    });
+    chk('(sin señal el cierre quedó en la cola)', r.enCola===1, r.enCola);
+    chk('🔴 al volver la señal, el 07/10 que cerró la otra computadora sigue cerrado', /2026-10-07/.test(r.srv), 'planilla: '+r.srv);
+    chk('🔴 …y el 01/10 que la otra reabrió no se vuelve a cerrar', !/2026-10-01/.test(r.srv), 'planilla: '+r.srv);
+    chk('  el 06/10 que se cerró sin señal entró', /2026-10-06/.test(r.srv), 'planilla: '+r.srv);
+    chk('🔴 esta computadora ve lo mismo que la planilla después de refrescar', r.local==='2026-10-06 2026-10-07', 'acá: '+r.local);
+    chk('  la cola quedó vacía', r.cola===0, r.cola);
+    chk('  lo que la cola guarda para sí (_cambios) no viaja a la planilla', r.conCambios===false);
+
+    // b) Con la página recargada en el medio (la memoria se pierde; la cola no).
+    r = await page.evaluate(async () => {
+      window._srv.cierre='🔒 2026-10-01'; window._srv.saves=[];
+      DIAS_CERRADOS=['2026-10-01']; CIERRES_PEND=null; saveCierresMirror();
+      if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
+      window._srv.saveFalla=true; window._srv.listFalla=true;
+      abrirDia('2026-10-01');                                   // sin señal: reabre el 01/10
+      await _espera(200);
+      if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};   // «recargó la página»
+      CIERRES_PEND=null;
+      window._srv.cierre='🔒 2026-10-01 2026-10-08';            // la otra cerró el 08/10
+      window._srv.saveFalla=false; window._srv.listFalla=false;
+      await flushPending();
+      return { srv:window._diasSrv(), cola:getPending().length };
+    });
+    chk('🔴 recargada la página, al volver la señal el 08/10 de la otra sigue cerrado', /2026-10-08/.test(r.srv), 'planilla: '+r.srv);
+    chk('  y el 01/10 que se reabrió sin señal queda abierto', !/2026-10-01/.test(r.srv) && r.cola===0, 'planilla: '+r.srv);
+
+    // c) Sin señal se cerró el 09/10; volvió la señal y, ANTES de que salga la cola, se reabrió el
+    //    09/10 con señal. La cola no lo vuelve a cerrar después.
+    r = await page.evaluate(async () => {
+      window._srv.cierre=''; window._srv.saves=[];
+      DIAS_CERRADOS=[]; CIERRES_PEND=null; saveCierresMirror();
+      if(typeof CIERRES_CAMBIOS!=='undefined') CIERRES_CAMBIOS={};
+      window._srv.saveFalla=true; window._srv.listFalla=true;
+      cerrarDia('2026-10-09');
+      await _espera(200);
+      window._srv.saveFalla=false; window._srv.listFalla=false;
+      abrirDia('2026-10-09');                                   // con señal, antes de la cola
+      await _espera(200);
+      var antes=window._diasSrv();
+      await flushPending();
+      return { antes:antes, srv:window._diasSrv(), cola:getPending().length };
+    });
+    chk('🔴 lo que se reabrió con señal no lo vuelve a cerrar la cola vieja', !/2026-10-09/.test(r.srv) && r.cola===0, 'antes: '+r.antes+' · después: '+r.srv+' · cola: '+r.cola);
+
+    // d) Las tildes de la carga, lo mismo.
+    r = await page.evaluate(async () => {
+      var K=function(p){ return '2026-09-23|Foton nuevo|'+p; };
+      window._srv.carga=''; CARGA_CHK={}; saveCargaMirror();
+      if(typeof CARGA_CAMBIOS!=='undefined') CARGA_CAMBIOS={};
+      window._srv.saveFalla=true; window._srv.listFalla=true;
+      setCargaChk(K('Y'), true);
+      await _espera(1200);
+      var enCola=getPending().filter(function(p){ return p.id===CARGA_ID; }).length;
+      window._srv.carga=K('X');                                 // el otro tildó X
+      window._srv.saveFalla=false; window._srv.listFalla=false;
+      await flushPending();
+      return { enCola:enCola, srv:_cargaSrv(), cola:getPending().length };
+    });
+    chk('(sin señal la tilde quedó en la cola)', r.enCola===1, r.enCola);
+    chk('🔴 al volver la señal, lo que tildó el otro cargador sigue tildado', r.srv==='2026-09-23|Foton nuevo|X ; 2026-09-23|Foton nuevo|Y' && r.cola===0, 'planilla: '+r.srv);
+
+    // e) Control: las demás filas de la cola se mandan tal cual, en orden; y una fila de cierre
+    //    encolada por un panel de antes (sin _cambios) se manda como siempre.
+    r = await page.evaluate(async () => {
+      try{ localStorage.removeItem(LS_PEND); }catch(e){}
+      window._srv.saves=[]; window._srv.cierre='🔒 2026-10-01';
+      var p1=_P({id:'q1', cliente:'EN COLA 1', saldo:300}), p2=_P({id:'q2', cliente:'EN COLA 2', turno:'PM'});
+      queuePending(p1);
+      queuePending(filaCierre(['2026-10-12']));                  // como la dejaba el panel de antes
+      queuePending(p2);
+      var esperado=[JSON.stringify(p1), JSON.stringify(p2)];
+      await flushPending();
+      var mandados=window._srv.saves.filter(function(s){ return s.id==='q1' || s.id==='q2'; }).map(function(s){ return JSON.stringify(s); });
+      return { iguales:J(mandados)===J(esperado), orden:window._srv.saves.map(function(s){ return s.id; }), srv:window._diasSrv(), cola:getPending().length };
+      function J(o){ return JSON.stringify(o); }
+    });
+    chk('control: los pedidos de la cola se mandan exactamente como estaban, en orden', r.iguales && J(r.orden)===J(['q1',"__dias_cerrados__",'q2']), J(r.orden));
+    chk('control: la fila de cierre de un panel de antes se manda como siempre', r.srv==='2026-10-12' && r.cola===0, 'planilla: '+r.srv);
     await page.close();
   }
 

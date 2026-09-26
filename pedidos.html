@@ -2543,7 +2543,11 @@ function flushPending(){
   return a.reduce(function(chain,rec){
     var enviado=JSON.stringify(rec);          // antes de mandarlo: `aplicarSello` le cambia el sello
     return chain.then(function(){
-      return apiSave(rec).then(function(res){
+      /* (26/09) Los días cerrados y las tildes de la carga se reescriben ENTERAS: lo que quedó acá sin señal
+         se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
+         computadora cambió mientras tanto. Las demás filas, como siempre. */
+      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec);
+      return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
         if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
       }, function(){});
@@ -9639,7 +9643,8 @@ function leerCierresDeLista(lista, esDelServidor){
   }
   else if(stk && sisMasNueva(STOCK_ID, stk)){ STOCK=sisJuntarDeLista(STOCK_ID, stk); stockGuardarEspejo(); }   // §4fz: otro guardó DESPUÉS que nosotros
   else if(!stk && esDelServidor && !STOCK_CARGADO) STOCK_CARGADO=true;   // la planilla no tiene stock todavía: la memoria vacía ES el stock
-  if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
+  // (26/09) Lo tildado acá y todavía sin confirmar manda sobre la fila (antes un refresco entre el toque y el guardado se lo llevaba)
+  if(car){ CARGA_CHK=reescritaAplicar(Object.keys(parseCargaChk(car.observaciones)), reescritaCambios(CARGA_ID, CARGA_CAMBIOS)); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
   if(cie){
@@ -9663,7 +9668,7 @@ function leerCierresDeLista(lista, esDelServidor){
        cada 2 minutos (§4aw) la carrera se perdía seguido. Por eso, mientras el servidor
        no confirme lo que mandamos, manda lo nuestro. */
     if(CIERRES_PEND){
-      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')){ CIERRES_PEND=null; CIERRES_CAMBIOS={}; }  // ya llegó (26/09: y lo tocado acá ya está adentro)
+      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')){ CIERRES_PEND=null; reescritaConfirmada(CIERRE_ID, reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS), cie); }  // ya llegó (26/09: y lo tocado acá ya está adentro, también lo de la cola)
       else delServidor=CIERRES_PEND.slice().sort();                                          // todavía no
     }
     DIAS_CERRADOS=delServidor;
@@ -9721,18 +9726,19 @@ function diasDeFilaCierre(cie){
 function guardarCierres(){
   DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
   saveCierresMirror();
+  reescritaColaAlDia(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) la que espera en la cola, al día (ver REESCRITAS)
   CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
   var mandar=function(){
     var fila=filaCierre(DIAS_CERRADOS);
     var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
-    var cambios={}; for(var k in CIERRES_CAMBIOS) cambios[k]=CIERRES_CAMBIOS[k];
+    var cambios=reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) con lo que esperaba en la cola
     var confirmado=function(ok){
       // Lo que ya quedó en la planilla no se vuelve a aplicar: otro puede cambiarlo después.
-      if(ok){ for(var kc in cambios) if(CIERRES_CAMBIOS[kc]===cambios[kc]) delete CIERRES_CAMBIOS[kc]; }
+      if(ok) reescritaConfirmada(CIERRE_ID, cambios, fila);
       // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
       // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
       if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
-      if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
+      if(!ok) reescritaEncolar(fila, CIERRES_CAMBIOS);   // sin confirmar: la cola lo reintenta (rearmado, 26/09) y CIERRES_PEND sigue mandando
       renderCupoForm(); renderCierreDias();
     };
     apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); });
@@ -9741,13 +9747,12 @@ function guardarCierres(){
     conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
       if(!(res && res.ok && Array.isArray(res.pedidos))) return;
       var cie=null; res.pedidos.forEach(function(p){ if(esFilaCierre(p)) cie=p; });
-      var s={}; diasDeFilaCierre(cie).forEach(function(f){ s[f]=1; });
-      for(var k in CIERRES_CAMBIOS){ if(CIERRES_CAMBIOS[k]) s[k]=1; else delete s[k]; }
+      var s=reescritaAplicar(diasDeFilaCierre(cie), reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS));
       DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice();
       saveCierresMirror(); renderAdmin(); renderCupoForm(); renderCierreDias();
     }, function(){}).then(mandar, mandar);
   }
-  else { queuePending(filaCierre(DIAS_CERRADOS)); }
+  else { reescritaEncolar(filaCierre(DIAS_CERRADOS), CIERRES_CAMBIOS); }
   renderAdmin(); renderCupoForm(); renderCierreDias();
 }
 function cerrarDia(f){
@@ -10480,22 +10485,111 @@ function loadCargaMirror(){
 }
 function getCargaChk(){ return CARGA_CHK; }
 function isCargaChk(k){ return !!CARGA_CHK[k]; }
-/* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez. */
+/* 🔁 (26/09) LAS DOS FILAS QUE SE REESCRIBEN ENTERAS —días cerrados y tildes de la carga— las tocan
+   varias computadoras y el servidor no las junta (sin sello, en el 20-a y en el 23-b). Cada guardado
+   relee la planilla y le aplica SOLO lo tocado acá (clave → true puesta / false sacada), como hace
+   `guardarCierres` desde 7ee6160. Sin señal van a la cola con esos cambios adentro (`_cambios`, no
+   viaja) y al volver la señal se rearman igual (`mandarReescritaDeCola`): mandadas tal cual pisaban
+   lo que otra computadora cerró, reabrió o tildó mientras tanto. Las demás filas de la cola, igual. */
+var CARGA_CAMBIOS={};
+var REESCRITAS={};   // id → cómo leer, armar y soltar esa fila
+REESCRITAS[CIERRE_ID]={
+  cambios:function(){ return CIERRES_CAMBIOS; },
+  claves:function(fila){ return diasDeFilaCierre(fila); },
+  armar:function(s){ DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice(); saveCierresMirror(); renderCupoForm(); renderCierreDias(); return filaCierre(DIAS_CERRADOS); },
+  listo:function(fila){ if(CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===diasDeFilaCierre(fila).sort().join(' ')) CIERRES_PEND=null; renderCupoForm(); renderCierreDias(); }
+};
+REESCRITAS[CARGA_ID]={
+  cambios:function(){ return CARGA_CAMBIOS; },
+  claves:function(fila){ return Object.keys(parseCargaChk(fila&&fila.observaciones)); },
+  armar:function(s){ CARGA_CHK=s; saveCargaMirror(); renderCargaSiActiva(); return filaCarga(); },
+  listo:function(){}
+};
+function filaCarga(){ return filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK)); }
+function reescritaEnCola(id){ return getPending().filter(function(p){ return p && String(p.id)===String(id); })[0]||null; }
+/* Lo que hay que aplicar: lo que espera en la cola (puede ser de antes de recargar) y encima lo de acá, más nuevo. */
+function reescritaCambios(id, mem){
+  var q=reescritaEnCola(id), c={}, k;
+  if(q && q._cambios) for(k in q._cambios) c[k]=q._cambios[k];
+  for(k in (mem||{})) c[k]=mem[k];
+  return c;
+}
+function reescritaAplicar(base, cam){ var s={}; (base||[]).forEach(function(x){ s[x]=1; }); for(var k in cam){ if(cam[k]) s[k]=1; else delete s[k]; } return s; }
+/* A la cola con los cambios adentro. Una que ya esperaba de un panel de antes (sin `_cambios`) sigue como siempre. */
+function reescritaEncolar(fila, mem){
+  var q=reescritaEnCola(fila.id);
+  if(q && !q._cambios){ queuePending(fila); return; }
+  var f=Object.assign({}, fila); f._cambios=reescritaCambios(fila.id, mem); queuePending(f);
+}
+/* Lo que se toca acá se anota también en la que espera en la cola: si no, al confirmarse con señal quedaba
+   ahí el valor VIEJO y la cola lo volvía a aplicar después (un día reabierto se cerraba de nuevo). */
+function reescritaColaAlDia(id, mem){
+  var a=getPending(), toca=false;
+  a.forEach(function(p){ if(p && String(p.id)===String(id) && p._cambios){ for(var k in (mem||{})) p._cambios[k]=mem[k]; toca=true; } });
+  if(toca) setPending(a);
+}
+/* Lo que la planilla YA tiene (`fila`, lo mandado o lo leído) no se vuelve a aplicar: otro puede cambiarlo
+   después. Sale de acá si nadie lo volvió a tocar, y de la cola si dice lo mismo; la que queda vacía, sale. */
+function reescritaConfirmada(id, cam, fila){
+  var R=REESCRITAS[String(id)]; if(!R || !fila) return;
+  var en={}; R.claves(fila).forEach(function(k){ en[k]=1; });
+  var mem=R.cambios(), ok={}, k;
+  for(k in cam){ if(!!en[k]===!!cam[k]){ ok[k]=cam[k]; if(mem[k]===cam[k]) delete mem[k]; } }
+  var a=getPending(), toca=false;
+  a=a.filter(function(p){
+    if(!p || String(p.id)!==String(id) || !p._cambios) return true;
+    for(var kc in ok){ if(p._cambios[kc]===ok[kc]){ delete p._cambios[kc]; toca=true; } }
+    if(!Object.keys(p._cambios).length){ toca=true; return false; }
+    return true;
+  });
+  if(toca){ setPending(a); updateFooter(); }
+}
+/* Una de estas filas que esperaba en la cola: se rearma con la planilla de AHORA. Sin poder leerla no se
+   manda (queda para el próximo intento): mandada a ciegas es justo lo que pisaba. */
+function mandarReescritaDeCola(rec){
+  var id=String(rec.id), R=REESCRITAS[id];
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) return null;
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===id) srv=p; });
+    return R.claves(srv);
+  }, function(){ return null; }).then(function(base){
+    if(!base) return { ok:false, error:'sin_lectura' };
+    var cam=reescritaCambios(id, R.cambios());
+    if(!Object.keys(cam).length) return { ok:true };          // ya estaba todo en la planilla
+    var fila=R.armar(reescritaAplicar(base, cam));
+    return apiSave(fila).then(function(r){ if(r && r.ok){ reescritaConfirmada(id, cam, fila); R.listo(fila); } return r; });
+  });
+}
+/* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez.
+   (26/09) Y antes se relee la planilla: con dos cargadores a la vez ganaba el último y lo tildado por el
+   otro desaparecía (lo mismo que los días cerrados, 7ee6160). */
 var _cargaT=null;
 function guardarCargaChk(){
   saveCargaMirror();
+  reescritaColaAlDia(CARGA_ID, CARGA_CAMBIOS);
   clearTimeout(_cargaT);
   _cargaT=setTimeout(function(){
-    var fila=filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK));
-    if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-    else queuePending(fila);
+    var mandar=function(){
+      var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=filaCarga();
+      apiSave(fila).then(function(res){ if(res&&res.ok) reescritaConfirmada(CARGA_ID, cam, fila); else reescritaEncolar(fila, CARGA_CAMBIOS); },
+                         function(){ reescritaEncolar(fila, CARGA_CAMBIOS); });
+    };
+    if(CONNECTED){
+      conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+        if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+        var car=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CARGA_ID) car=p; });
+        CARGA_CHK=reescritaAplicar(REESCRITAS[CARGA_ID].claves(car), reescritaCambios(CARGA_ID, CARGA_CAMBIOS));
+        saveCargaMirror(); renderCargaSiActiva();
+      }, function(){}).then(mandar, mandar);
+    }
+    else reescritaEncolar(filaCarga(), CARGA_CAMBIOS);
   }, 700);
 }
-function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; guardarCargaChk(); }
+function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
 function limpiarCargaChk(){
   if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
-  Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]) delete CARGA_CHK[k]; });
+  Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]){ delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=false; } });
   guardarCargaChk();
   renderCarga(); toast('Tildes borrados para todo el equipo','ok');
 }
