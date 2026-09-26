@@ -5665,6 +5665,7 @@ function ctaPagoRecordar(){
     CTA_PAGO_V=v;
   }
   ctaEditRecordar();                 // 26/09: y lo tipeado en «✏️ Corregir este pago», si está abierto (✅, 📎, ✕… también repintan)
+  ctaMontosRecordar();               // 26/09: y en «✏️ Corregir precios y montos» (el gato del comprobante la tapa)
 }
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
@@ -5794,6 +5795,22 @@ function ctaEditRecordar(){
       n=document.getElementById('cta-ed-nota');
   if(f&&m&&n) CTA_EDIT_V={fecha:f.value, monto:m.value, nota:n.value};   // ver ctaPagoRecordar
 }
+/* ✏️ Lo tipeado en «Corregir precios y montos» (26/09): los precios, el A cuenta y el saldo. El mismo
+   agujero que «Corregir este pago» (940b718): ✅, 📎, ✕, el método del pago nuevo, «💵/🚚», ✏️… repintan
+   la ficha ENTERA, los campos volvían a lo guardado y «💾 Guardar precios y montos» guardaba lo viejo
+   sin decir nada. Se recuerda SOLO lo que alguien tipeó (distinto de `data-def`, como el monto del pago
+   nuevo, §4fy) y con lo que el panel había puesto: si eso cambió abajo (se registró o corrigió un pago
+   y el saldo ya es otro), lo tipeado quedó viejo y `ctaEditHtml` lo dice en vez de volver a ponerlo. */
+var CTA_MONTOS_V=null;
+function ctaMontosRecordar(){
+  var box=document.getElementById('cta-edit'); if(!box) return;     // tapada por otra ventana: queda lo recordado
+  var v={}, ins=box.querySelectorAll('input[data-k]');
+  for(var i=0;i<ins.length;i++){
+    var d=ins[i].getAttribute('data-def')||'';
+    if(String(ins[i].value)!==d) v[ins[i].getAttribute('data-k')]={v:String(ins[i].value), d:d};
+  }
+  CTA_MONTOS_V={id:box.getAttribute('data-id')||'', v:v};
+}
 var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recargo pactado?
 /* ---- Cuánto falta cobrar de FLETE ----
    Solo se podía poner al cargar el pedido. Si el flete cambiaba, o se lo olvidaban, no
@@ -5865,7 +5882,7 @@ function ctaGuardarPago(id, i, igual){
   var recibio=(CTA_EDIT_M==='Efectivo')?limpiaRecibio(CTA_EDIT_R):'';      // §4eq
   /* 🐱 Sin imagen de respaldo: se avisa con el gato, pero NO se traba — ver memeCompConta. */
   if(!igual && !compsArr(c.comps!=null?c.comps:c.comp).length){
-    ctaEditRecordar();
+    ctaEditRecordar(); ctaMontosRecordar();          // 26/09: el gato tapa la ficha; «Corregir precios y montos» también
     memeCompConta(CTA_EDIT_M, {corregir:true, id:id, i:i});
     return;
   }
@@ -6158,6 +6175,12 @@ function showContaModal(id){
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
     CTA_PAGO_V=null; CTA_EDIT_V=null;   // ni lo que se estaba tipeando en la venta anterior
+    CTA_MONTOS_V=null;                  // ni lo de «Corregir precios y montos» (26/09)
+  }else{
+    /* 26/09: repintar la MISMA venta no se lleva lo tipeado en «Corregir precios y montos». Solo con la
+       ficha a la vista: cerrada, lo que quedó en la página no se toma por tipeado (como el pago en curso). */
+    var _mo=document.getElementById('modal');
+    if(_mo && _mo.classList.contains('on')) ctaMontosRecordar();
   }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
@@ -6261,13 +6284,24 @@ function showContaModal(id){
    ------------------------------------------------------------------------- */
 function ctaEditHtml(p){
   var prods=(p.productos||[]);
+  /* 26/09: lo tipeado antes de que otro botón repintara (`ctaMontosRecordar`). Vuelve si lo que el panel
+     había puesto sigue igual; si cambió abajo, quedó viejo: va lo guardado y se avisa (`_viejos`). */
+  var _mv=(CTA_MONTOS_V && CTA_MONTOS_V.id===String(p.id)) ? CTA_MONTOS_V.v : {}, _viejos=[];
+  var mval=function(k, def, nombre){
+    def=String(def); var e=_mv[k]; if(!e) return def;
+    if(e.d===def) return e.v;
+    delete _mv[k];
+    if(parseMonto(e.v)!==parseMonto(def)) _viejos.push('<b>'+nombre+'</b> ('+esc(e.v)+')');   // ya es lo guardado: nada que avisar
+    return def;
+  };
   var filas=prods.map(function(x,i){
+    var _pd=prodPrecio(x)>0?String(r2(prodPrecio(x))):'';
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed var(--gray-lt)">'+
       '<span style="flex:1;min-width:150px;font-size:.83rem">'+esc(x.desc||'—')+
         (x.medida?(' <span style="color:var(--muted)">· '+esc(x.medida)+'</span>'):'')+
         ' <b>× '+esc(x.cant||0)+'</b></span>'+
       '<input type="text" inputmode="decimal" autocomplete="off" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" '+
-        'placeholder="Bs c/u" value="'+(prodPrecio(x)>0?r2(prodPrecio(x)):'')+'" '+
+        'placeholder="Bs c/u" data-k="pr'+i+'" data-def="'+_pd+'" value="'+esc(mval('pr'+i, _pd, 'el precio de '+esc(x.desc||'—')))+'" '+
         'oninput="ctaRecalc()" style="width:100px;text-align:right">'+
       '<span id="cta-sub-'+i+'" style="min-width:96px;text-align:right;font-size:.79rem;font-weight:700"></span>'+
     '</div>';
@@ -6287,16 +6321,20 @@ function ctaEditHtml(p){
   /* 💳 Con pago mixto (§4ej) este campo es SOLO el primer método; el segundo se ve en los
      pagos registrados y `aplicarMontos` lo vuelve a sumar a p.acuenta (§4eu). Se dice. */
   var _mxE=mixtoDe(p), _mxEM=_mxE?r2(Number(_mxE.monto)||0):0;
-  return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+  var _dSal=String(r2(Number(p.saldo)||0)), _vAcu=mval('acu', acuReal, 'A cuenta'), _vSal=mval('sal', _dSal, 'Saldo por cobrar');
+  return '<div id="cta-edit" data-id="'+esc(String(p.id))+'" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
     '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
       '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
+    (_viejos.length?('<div id="cta-montos-viejo" style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:8px 11px;margin-bottom:9px;font-size:.8rem;color:#7c4b00">'+
+      '⚠️ Mientras corregías cambió lo guardado de esta venta (se registró o se corrigió un pago, o la tocó otra persona): lo que habías escrito en '+
+      _viejos.join(', ')+' ya no valía y quedó lo guardado. Revisalo antes de «💾 Guardar precios y montos».</div>'):'')+
     (prods.length?filas:'<div style="color:var(--muted);font-size:.83rem;padding:4px 0">Este pedido no tiene productos cargados.</div>')+
     '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
       '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+(_mxEM?(' · solo el 1er método: el 2° puso '+fmtBs(_mxEM)+' aparte'):'')+')</span></label>'+
-        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-acuenta" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-acuenta" data-k="acu" data-def="'+acuReal+'" value="'+esc(_vAcu)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
-        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-saldo" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-saldo" data-k="sal" data-def="'+_dSal+'" value="'+esc(_vSal)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
     '</div>'+
     (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
     '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
@@ -6375,6 +6413,8 @@ function ctaGuardarMontos(id){
   aplicarMontos(p, acu, sal);
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Guardado — total '+fmtBs(ventaTotal(p))+' · falta cobrar '+fmtBs(Math.max(0,Number(p.saldo)||0)),'ok');
+  // 26/09: lo que estaba en los campos ya se guardó: que el repintado no lo tome por tipeado (ctaMontosRecordar).
+  CTA_MONTOS_V=null; var _bx=document.getElementById('cta-edit'); if(_bx) _bx.removeAttribute('id');
   reabrirFicha(id);
 }
 /* Corrige el ADELANTO y el SALDO sin tocar los pagos ya registrados.
@@ -6667,6 +6707,7 @@ function pagoWaEstado(prom){
 }
 function showPagoWhatsapp(id, i){
   var p=findById(id); if(!p) return;
+  ctaMontosRecordar();              // 26/09: esta ventana tapa la ficha; al volver, «Corregir precios y montos» sigue como estaba
   var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
   var text=pagoTexto(p, c);
   /* ⚠️ Antes esta ventana arrancaba con "Copialo y pegalo en el grupo": se leía como una
@@ -18112,6 +18153,7 @@ function showWhatsappModal(rec, volverA, reenvio){
    TIENDA, que caen justo ahí y solo veían el mensaje una vez, al guardarlas. */
 function ctaWhatsappVenta(id){
   var p=findById(id); if(!p) return;
+  ctaMontosRecordar();              // 26/09: ver showPagoWhatsapp
   showWhatsappModal(p, "showContaModal('"+String(id).replace(/'/g,'')+"')", true);
 }
 
