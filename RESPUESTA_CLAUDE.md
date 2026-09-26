@@ -1,5 +1,18 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 26/09, 09:40 — EL ESTADO COMPLETO ESTÁ EN §13:** lo arreglado (37, sin publicar todavía), la
+> tercera vuelta en curso, lo que decide el dueño, lo del servidor, lo que hay que analizar y qué le pido a Codex.
+> §13 reemplaza las listas de §11 y §12.
+> **26/09, 08:10 — la revisión por PESTAÑA está en §12.** (Y la del 25/09, en §10 y §11.)
+> **25/09, 15:30 de Bolivia — lo nuevo para Codex está en §10 y §11.**
+> - **La PÁGINA nueva está publicada** desde el 25/09 a las 15:04 de Bolivia: `main` = `394f74c` (merge de la
+>   rama), deploy de Pages en verde. Era feriado y el equipo no trabajaba.
+> - **El servidor implementado sigue siendo `2026-09-20-a`.** El `.gs` `2026-09-23-b` está en el repo pero NO
+>   implementado: el dueño estaba con el celular, y el editor de Apps Script no se usa desde ahí. Lo pega, lo
+>   prueba y lo implementa el 26/09 desde la PC (§7, pasos 0-2 y 5-7). La página nueva anda con la 20-a.
+> - La rama `claude/pedidos-fecha-entrega-bgt0em` es `main` más la bitácora (`9817902` y lo que siga).
+> - Lo que sigue abajo desde §0 es el informe del 23-24/09: se deja como estaba.
+
 **Para:** el dueño y Codex (revisión).
 **Rama:** `claude/pedidos-fecha-entrega-bgt0em`. **Commits de esta vuelta:**
 - `5205ce8`: código, pruebas y bitácora;
@@ -508,6 +521,277 @@ no cambió: el enlace fijo de §7 sigue valiendo.** Detalle completo en `BITACOR
 3. `CTA_FORM_ENV` contra el espíritu de §4fk.
 4. `stockMigrar` con `cod`.
 5. `atcAlMarcarEntregado` con `rfAuto`.
+
+**Después, la tarde del 25/09:**
+- **El quinto agente, de uso diario (solo informe), se cortó a las 11:20 sin entregar nada.** Se relanzó con 35
+  minutos de tope contra la rama con los 27 arreglos. No encontró bloqueantes, pero sí esto:
+  - **MEDIA — la «Ubicación de Google Maps» frenaba lo que se pega de verdad.** Pasaba con el nombre + el enlace
+    al compartir desde Maps, «Mi ubicación:», los enlaces sin https y los grados. Antes se guardaba vacío en
+    silencio; con el arreglo del agente de pedidos, no dejaba guardar.
+    - **Arreglado en `cdfbda7`.** `normalizaUbicacion` saca el primer enlace del texto, sin la puntuación del
+      final. Le agrega https a `maps.app.goo.gl`, `goo.gl/maps` y `google.*/maps`, y entiende «-17.78°, -63.18°»
+      y los grados con minutos y segundos.
+    - Frena solo si no hay ninguna ubicación (una dirección escrita va en «Dirección»). Un enlace solo se guarda
+      tal cual, como siempre.
+    - Prueba: `test_rev_pedidos` §5 (43).
+  - **BAJA — ficha de Contabilidad, venta pagada SIN flete.** El botón del bloque «🚚 Anotar el recargo» anota
+    flete sin preguntar; antes preguntaba «¿cobro de más?» y lo anotaba como pago de la venta. Es coherente con lo
+    que dice el bloque: se deja así.
+  - **BAJA — el aviso del 💰✓.** Decía «lo registró Contabilidad o la tienda»; ahora dice «recibo o comprobante»,
+    porque el QR del chofer con foto tampoco es un cobro de la puerta.
+- **Batería final: 79 suites, 2.987 bien · 0 mal.**
+
+## 11 · Publicación del 25/09 y lo que falta
+
+### Qué se publicó
+- `394f74c` en `main`, el merge de la rama:
+  - `pedidos.html` y `productos-mes.js` (sin cambios en este último);
+  - `google-apps-script.gs`, solo el ARCHIVO en el repo: no se implementó nada;
+  - `traer_kommo.py` y `panel.yml` (el push del bot ahora reintenta y avisa si falla);
+  - pruebas y documentos.
+- Se hizo sin `panel.yml` corriendo. Pages (`pages build and deployment` #1516) quedó en verde a las 19:04 UTC.
+- ⚠️ Desde mi sesión no puedo abrir `github.io` ni `script.google.com` (el proxy los rechaza). Lo verifiqué por el
+  deploy y porque el `pedidos.html` de `main` es idéntico al de la rama probada.
+
+### Qué NO cambió en producción
+El servidor implementado y el código guardado en el editor siguen siendo la 20-a.
+
+### La página nueva con la 20-a
+- Hay prueba: `test_transicion`, escenarios 1, 2 y 4. El «volver atrás» de §7 ya la daba por buena.
+- **Stock y arqueo:** se guardan sin sello. Gana el último que guarda, como antes: la protección entre dos equipos
+  rige recién con la 23-b.
+- **Borrar:** el panel manda `rev`; la 20-a lo ignora, pero el panel relee la fila antes de borrar.
+- **Celda llena:** la 20-a no tiene `celda_llena`; el panel avisa pasadas las 45.000 letras.
+- **Lo único visible:** en 🔒 Cerrar día, la línea gris «hay una versión más nueva del script sin publicar».
+
+### `traer_kommo.py` nuevo con la 20-a
+- `origen:'repaso'` y `ultimoRepaso` existen desde §4et y §4eg.
+- La 20-a anota `KOMMO_REPASO_ULTIMO` en CADA pasada, aunque no haya leads. Por eso la alarma de «repaso parado»
+  (más de 30 minutos) no salta en falso.
+
+### Lo que falta: 26/09, desde la PC (hay un recordatorio agendado a las 07:45)
+- **Antes de empezar:** que todos recarguen (F5, o cerrar y abrir la pestaña). Hasta que lo confirmen, nadie toca
+  📦 Stock ni el arqueo.
+- **Pasos de §7:**
+  - 0: anotar la versión activa;
+  - 1: pegar la 23-b del enlace fijo `14dec98…` (1956 líneas; verificado hoy de nuevo, idéntico);
+  - 2: `probarAntesDeImplementar` con «✅» y la captura del tamaño del stock;
+  - 5: ✏️ Versión nueva, con `2026-09-23-b` en «Descripción»;
+  - 6: verificar la conexión, la versión y `kommoRepaso` «Basada en el tiempo» → «Completada»;
+  - 7: volver a subir el Excel de Moreno.
+- **Opcional:** marcar agosto con `herramientas/marcar-entregados-agosto.gs` (enlace fijo `67fc83d…`, archivo
+  APARTE del proyecto).
+- **Volver atrás la página:** revierto `394f74c` en `main`. El servidor no cambia.
+
+### Decisiones que esperan al dueño
+Detalle en `BITACORA_CLAUDE.md` §4ga, «Quedan para decidir»:
+- Moreno queda con unidades fantasma si se entrega una línea 📥 sin anotar la recogida.
+- Los recojos de ATC aparecen en «A cargar en el camión».
+- Una vendedora sin clave puede sacar un pedido de un día cerrado sin que nadie se entere.
+- La celda de 50.000 letras del stock.
+- `ocAutoGs_` no conoce el prefijo RPT (arreglarlo exige republicar).
+- El formulario todavía lee los montos con `parseFloat` («1.500» vale 1,5).
+
+### Qué le pido a Codex
+1. Revisar los diffs de §10, en especial la lista «qué me gustaría que mires».
+2. Decir si ve algún problema en tener la página nueva con la 20-a hasta mañana.
+3. Mirar `normalizaUbicacion` (`cdfbda7`) por algún texto común que ahora se guarde mal. Una URL que no es de Maps
+   se acepta tal cual, como antes.
+
+## 12 · Revisión por PESTAÑA (26/09) — para que la mires
+
+Ocho agentes, uno por pestaña, con la misma consigna que §10. Revisé cada diff y junté 35 commits (salteé uno que
+repetía el aviso del comodín). Después agregué dos arreglos míos, que reportaron ellos:
+- los doce campos de plata que quedaban como `type=number`, que perdían la coma;
+- el chofer sin señal, que se entera de lo que no entró.
+
+**Batería: 89 suites, 3.254 bien · 0 mal.** Cada `tests/test_rev2_*.js` falla contra `cb99ab3` (entre 13 y 25 rojos).
+El detalle está en `BITACORA_CLAUDE.md` §4gb.
+
+**Qué me gustaría que mires:**
+1. `guardarCierres` + `CIERRES_CAMBIOS` (Cerrar día relee la planilla antes de escribir).
+2. `choEntregado`, que reaplica el ✅ una vez cuando choca.
+3. `rechazoPerdido` / `choRechazosHtml`: se AVISA, no se reaplica.
+4. `montoForm` y la regla del signo menos.
+5. Recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
+6. `mergePending` con los retiros en la cola.
+
+## 13 · Estado al 26/09, 09:40 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
+
+Esta sección junta TODO lo que está abierto y reemplaza las listas de §11 y §12.
+
+### 13.1 Qué está publicado y qué no
+
+| Pieza | En producción | En la rama |
+|---|---|---|
+| Página (`pedidos.html`, `productos-mes.js`) | `394f74c`, publicada el 25/09 a las 15:04 | `3da79ab`: 37 arreglos más (13.2), más lo que deje la tercera vuelta (13.3) |
+| Servidor (`google-apps-script.gs`) | `2026-09-20-a` implementado | `2026-09-23-b` en el repo, sin implementar (enlace fijo `14dec98…`) |
+| Agosto «entregado» | sin correr | `herramientas/marcar-entregados-agosto.gs`, lo corre el dueño desde el editor |
+
+**Plan de hoy, elegido por el dueño:**
+1. Termina la tercera vuelta y junto todo.
+2. Corro la batería. Si da 0 mal, publico la página antes del mediodía, sin `panel.yml` corriendo.
+3. Todos recargan una sola vez (F5).
+4. El dueño, desde la PC, hace los pasos 0-2 y 5-7 de §7 para el servidor 23-b.
+
+La página anda con la 20-a y con la 23-b, así que el orden 1 → 4 es el de siempre: la página va antes que el servidor.
+
+**Batería sobre `3da79ab`:** 89 suites, 3.254 bien · 0 mal.
+
+### 13.2 ARREGLADO (en la rama, sin publicar todavía)
+
+Son los 35 commits de los 8 agentes por pestaña (33 con un arreglo y 2 solo de pruebas) y 2 míos. Cada arreglo tiene su prueba, que falla contra el panel de antes. Detalle en `BITACORA_CLAUDE.md` §4gb.
+
+**＋ Nuevo pedido** (`tests/test_rev2_form.js`, 29 · `tests/test_montos_texto.js`, 9)
+- `0cc02c4` ALTA · «1.500» tipeado se guardaba como 1,50 en A cuenta, Saldo, cobrado, flete, 2° método y precio: `montoForm` = `parseMonto` en todas las lecturas. Un monto con signo menos frena el guardado (`montoNegativo`).
+- `255d2a8` MEDIA · cantidad 0, 2,5, −2 o vacía se guardaba distinta: ahora frena (`cantidadesMal`, la misma regla que `rohoCant`).
+- `360d5b2` MEDIA · un método elegido y después sin pago trababa el guardado (pedía un comprobante de un pago que no existe): `_hayPago`. Pasar a ATC o RPT limpia el método, el mixto y las imágenes nuevas.
+- `bdbb4ac` ALTA (mío) · con `type="number"`, Chromium tira la coma antes de que el panel la vea: «1500,50» valía Bs 150.050 y «1.500,50», Bs 1,50. Los doce campos de plata del formulario y de Contabilidad pasan a texto con `inputmode="decimal"`.
+
+**📋 Mis pedidos** (`tests/test_rev2_mis.js`, 39)
+- `ccec65e` la ficha:
+  - mostraba el historial de pagos crudo, con los ids de las imágenes;
+  - decía «Sin saldo» a la venta sin monto y a las ATC/RPT;
+  - no mostraba el 🏭.
+- `bf50e9f` el WhatsApp ponía «💰 PAGADO» a una venta sin monto anotado y a una ATC.
+- `38b02aa` la venta de tienda:
+  - caía al fondo y el tope de 120 la escondía sin avisar;
+  - su ficha pedía GPS.
+- `4463e52` un borrador de Kommo completado decía «no cambió nada» y no ofrecía el WhatsApp.
+- `560e869` «Reintentar ahora» decía «Reintentado» aunque no saliera nada.
+- `6f130ea` el WhatsApp no nombraba el flete pactado que se cobra en la puerta.
+
+**🚚 Chofer** (`tests/test_rev2_chofer.js`, 28 · `tests/test_chofer_sin_senal.js`, 8)
+- `9531ee2` ALTA · un doble toque en ✅ desmarcaba la entrega: desmarcar ahora pregunta.
+- `03ecb0b` ALTA · el ✅ con la copia vieja chocaba (`conflicto`) y la entrega quedaba sin marcar. Ahora se reaplica una vez sobre la fila del servidor; la plata no se reaplica así.
+- `a45124b` MEDIA · el flete pactado no aparecía en la tarjeta.
+- `5b69a15` BAJA · a 320 px, el botón «📷 Foto de la entrega» quedaba ilegible.
+- `3f88ede` ALTA (mío; lo reportó el agente) · sin señal, un ✅, un cobro o una foto en cola que chocaba se descartaba y el chofer no se enteraba. Ahora ve un cartel rojo en SU pantalla hasta tocar «Ya lo revisé». No se reaplica solo, a propósito.
+
+**💰 Contabilidad → Ventas** (`tests/test_rev2_ventas.js`, 20)
+- `420b1f6` ALTA · «✏️ Corregir este pago» perdía la fecha, el monto y el recibo al elegir el método.
+- `d25bf05` MEDIA · regresión del 25/09 (`CTA_FORM_ENV`): una venta SIN MONTO ANOTADO mandaba el pago al flete.
+- `2c8de76` MEDIA · Productos del mes contaba una «PAGADA sin monto» como Bs 0 conocido (`productos-mes.js?v=20260926a`).
+
+**🧮 Cuadre** (`tests/test_rev2_cuadre.js`, 55)
+- `0088f9f` ALTA-MEDIA · el arqueo y los retiros perdían la coma (lo mismo que `bdbb4ac`).
+- `68d25e2` MEDIA · un retiro corregido en la cola volvía al monto viejo, y uno borrado reaparecía.
+- `49e5e76` el Excel no bajaba con solo retiros; filtrado por vendedora, ahora lo dice en el nombre.
+- `404fb96` «N de M formas anotadas» no contaba el arqueo sin pagos, y el texto decía «cierra» con formas sin contar.
+- `cc1bedf` Contabilidad se corría de costado a 360 y 320 px.
+- `67a7cc6` el refresco automático sacaba el foco del arqueo mientras se tipeaba.
+
+**🎧 ATC** (`tests/test_rev2_atc.js`, 35)
+- `33ada34` ALTA · cerrar o reabrir desde «Anotar avance» no movía el ✅ de la devolución (`atcEntregadoComoEnt`).
+- `6c783fa` MEDIA · el comodín no llegaba al chofer, la carga, la hoja de ruta ni el grupo, y el grupo decía «PAGADO».
+- `b14affa` MEDIA · programar la devolución el día del recojo borraba el viaje de hoy: ahora pregunta si ya se recogió.
+- `4e1be08` BAJA · «📋 Copiar» salía sin encabezado.
+
+**🔒 Administración** (`tests/test_rev2_admin.js`, 22)
+- `e749c32` MEDIA · con dos computadoras, un día cerrado se reabría solo: `guardarCierres` relee la planilla y aplica `CIERRES_CAMBIOS`.
+- `33a352f` BAJA · el Parte del día contaba ATC/RPT como «por cobrar».
+- `5efd152` BAJA · el sábado no decía cuántos se forzaron de más.
+
+**📦 Stock** (`tests/test_rev2_stock.js`, 22)
+- `512374d` ALTA · «📋 Conté a mano» volvía al corte viejo con fecha de hoy y perdía `c.cod`.
+- `8b4fc72` MEDIA · una recogida que el Excel de Moreno ya no tenía no se podía dar por llegada: recepción `nr`.
+- `e12ed3c` MEDIA · el detalle pedía de más con el depósito negativo.
+- `71065bd` BAJA · el historial de cortes no comparaba con el mismo almacén.
+
+### 13.3 EN CURSO: la tercera vuelta (6 agentes, desde las 08:17)
+
+Lo que salga de acá se publica junto con 13.2, si la batería da 0 mal. Cuando termine, actualizo esta sección.
+
+**Regresiones (2 agentes).** Buscan si los 37 arreglos rompieron algo que antes andaba, o si dos se pisan:
+- uno en la plata: formulario, campos de texto, Ventas, Cuadre y Mis pedidos;
+- otro en entregas, ATC, Administración, Mis pedidos y Stock, incluida la página publicada y la nueva abiertas a la vez con una recepción `nr`.
+
+**Pendientes que quedaron REPORTADOS por los agentes del 26/09 (4 agentes):**
+- Administración:
+  - la hoja de ruta no dice el flete pactado;
+  - si dos cargadores tildan la Lista de carga a la vez, se pierden tildes (el mismo defecto que los días cerrados);
+  - un cierre hecho sin conexión pisa la planilla al volver la señal;
+  - los chips AM/PM no cuentan los pedidos sin turno;
+  - «Todos» en carga y ruta muestra las ventas de tienda;
+  - el 💰✓ deshace sin preguntar un cobro que recibió el chofer.
+- ATC y Mis pedidos:
+  - `quitarProgramarDevAtc` pierde el turno del recojo y deja `a.rec`;
+  - el chip pierde «devolución» después del ✅;
+  - un borrador completado desde Administración vuelve a Mis pedidos;
+  - `autoAbrirAvisos` no junta «Chávez» con «Chavez»;
+  - un pedido en cola no dice «⏳ sin enviar» en su ficha.
+- Contabilidad:
+  - «Corregir precios y montos» pierde lo tipeado si algo repinta la ficha;
+  - la columna «Ingresado» usa la hora del dispositivo y no la de Bolivia;
+  - «Anotar el monto» acepta «-1500»;
+  - un pago de flete a medio cargar vuelve como «Pago»;
+  - en el Cuadre: el Excel no tiene TOTAL en «Efectivo cobrado vs. retirado»; la «PAGADA sin monto» sale con Bs 0 en «Todo»; `cuadreAlertas` junta dos pagos sin fecha idénticos; y hay que ver si Tab entre campos del arqueo pierde el foco.
+- Stock:
+  - un grupo del detalle nunca aparece;
+  - «Otra llegada» y «Pedí a fábrica» ofrecen solo 60 productos;
+  - una llegada anotada después de un Excel «ya incluye las entregas del día» no suma;
+  - la revisión sin «solo sin marcar» no tiene en cuenta las recogidas en camino.
+
+### 13.4 POR ARREGLAR, pero decide el dueño
+
+No son errores de programación: arreglarlos cambia una regla o cómo trabaja el equipo. Nadie los toca hasta que el dueño decida.
+1. **«Qué producir» y la tabla de stock pueden pedir cantidades distintas.** El cuadro de 7 días (`o.fabricar`) puede decir «producir 3» en un producto que la tabla marca «🚚 Ya pedido», «✓ alcanza» o «📦 Pedido único». Pasa cuando la reserva de rotación pide más de lo que hay antes de fábrica + margen. Además, «📋 Copiar pedido a fábrica» no lo incluye.
+2. **El producto de un recojo de ATC entra en «A cargar»** y en el TOTAL A CARGAR.
+3. **Una vendedora sin clave puede sacar su pedido de un día cerrado.** El panel y el servidor miran solo la fecha nueva, no la que deja. Arreglarlo exige también el `.gs`.
+4. **El stock va en una celda que Google corta en 50.000 letras.** La salida sería podar `STOCK.p` recibidos. El tamaño real lo mide hoy `probarAntesDeImplementar`.
+5. **Moreno puede quedar con unidades de más o de menos:**
+   - de más, si se entrega una línea 📥 sin anotar la recogida;
+   - de menos, si el Excel de Moreno se sacó después de cargar la camioneta. No hay forma de saber la hora del retiro.
+6. **«Productos más entregados» cuenta las ATC** (`prodRankData`). §4cx solo las sacó del stock.
+7. **«Qué se hizo» de una ATC** solo se anota con el paso opcional «Listo en fábrica» (§4eb).
+8. **Mis pedidos, «Hoy» y «Este mes»:** cuentan por fecha de ENTREGA aunque «Hoy» dice «pedidos cargados», y las ventas de tienda nunca cuentan ahí.
+9. **`avisoClienteText`** le escribe «Heaven Colchones» también al cliente de una venta Sueña.
+10. **📍 «Ubicación guardada ✓»** sale antes de que conteste el servidor. Si falla, queda en la cola sin cartel rojo; no se pierde nada.
+11. **El cobro por QR del chofer se guarda sin banco** y cae suelto en el Cierre por forma de pago (el BAJA-1 de §4fy).
+12. **§4fy:**
+    - MEDIA-4: el 💵 de Administración deja el efectivo en la vendedora aunque haya cobrado el chofer;
+    - MEDIA-5: un cobro nuevo sobre una venta ya ✅ no avisa.
+13. **Cuadre:**
+    - «Entrega» corta por la fecha PROGRAMADA (no hay campo con el día real);
+    - el `SUMA` de la columna MONTO del Excel;
+    - los retiros con Eduardo como quien entrega;
+    - el efectivo que un chofer cobra en ventas de Eduardo o de ROHO.
+14. **«Recoger de fábrica»:** la línea «🛏️ traer el comodín» va en el viaje a FÁBRICA, pero el comodín está en la casa del cliente. El texto es de §4eb.
+
+### 13.5 POR ARREGLAR en el servidor (exige republicar el `.gs`)
+
+La 23-b está congelada para implementarla hoy: no se toca. Propuesta: juntar esto en una versión siguiente, DESPUÉS de que la 23-b esté implementada y estable, con el mismo procedimiento de §7.
+1. **Borrador de Kommo con la OC repetida** (`google-apps-script.gs:1131`). Si la OC automática choca, contesta `oc_repetida` en vez de renumerar como con un pedido nuevo, porque la fila del borrador ya existe (`foundRow` ≠ −1).
+   - La vendedora ve «Verificá el número» sobre un campo que no puede editar. Al reintentar, el panel toma el número libre: no se pierde nada.
+   - Arreglo propuesto: tratar la fila «Borrador Kommo» como nueva para renumerar. Reproducido con los dos `.gs`.
+2. **`ocAutoGs_` no conoce la serie RPT.**
+3. **El portero de día cerrado** mira solo la fecha nueva (13.4, punto 3), si el dueño decide cerrarlo.
+
+### 13.6 PARA ANALIZAR (plausibles, sin confirmar)
+
+Ningún agente pudo reproducirlos, o no valía la pena el riesgo de tocarlos sin más datos:
+- **Pago mixto.** Si se registra el saldo el mismo día y con el mismo recibo que el adelanto, `mixtoDe` ve dos candidatos y deja de reconocer el 2° método. Después, «Guardar precios y montos» baja `p.acuenta`. La plata del historial no cambia; lo que queda desalineado es lo que muestra el formulario.
+- **Formulario.** Un precio escrito antes de pasar la venta a RPT se guarda escondido. Hoy nada lo lee.
+- **Stock.** Una recogida anterior al 14/09 sin `de` no se descuenta de lo libre en Moreno (`stockLibreOrigen`). Hoy es improbable que quede alguna.
+- **Cuadre.** Una fila de arqueo sin pagos de «sin método anotado» sale con el ícono de un método.
+- **Chofer.**
+  - A 320 px, el contenido de la tarjeta queda en 186 px.
+  - Cuando un vehículo tiene dos choferes en `VEHICULOS`, cada uno ve solo lo que está a su nombre en `p.chofer`. Parece a propósito.
+- **Transición.** Mientras alguien no haya recargado, la página publicada y la nueva conviven. La recepción `nr` es el único dato nuevo del stock en esta tanda, y lo está mirando la tercera vuelta.
+
+### 13.7 Qué le pido a Codex
+
+1. **Revisar el diff `394f74c..3da79ab`** (y lo de la tercera vuelta, cuando lo suba). En especial:
+   - `montoForm` / `parseMonto` y el paso a texto de los campos de plata (`bdbb4ac`): ¿algo del panel dependía de `type=number`?
+   - `guardarCierres` + `CIERRES_CAMBIOS`.
+   - `choEntregado`, que reaplica el ✅ una vez.
+   - `rechazoPerdido` / `choRechazosHtml`.
+   - La recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
+   - `mergePending` con los retiros en la cola.
+   - `cantidadesMal` y `montoNegativo`: ¿traban algún caso legítimo? Los descuentos no son precios negativos: son «los precios suman más que el total».
+2. **Dar su opinión sobre cada punto de 13.4.** Qué recomendaría; decide el dueño.
+3. **Revisar el alcance y el orden de 13.5.**
+4. **Decir qué uso real no probamos.** Lo que las pruebas no cubren y el equipo hace todos los días.
 
 ## Primera vuelta (`d890468`), resumida
 

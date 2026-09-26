@@ -329,7 +329,9 @@ tbody tr:hover{background:var(--teal-lt)}
 .visor-nav:hover{background:rgba(255,255,255,.28)}
 .foto button{position:absolute;top:-6px;right:-6px;border:none;background:var(--red);color:#fff;width:22px;height:22px;border-radius:50%;font:inherit;font-size:.72rem;line-height:1;cursor:pointer;padding:0;box-shadow:0 1px 4px rgba(0,0,0,.28)}
 .foto button:active{transform:scale(.92)}
-.cho-btn.foto{border-color:var(--teal-border);color:var(--teal-dk)}
+/* (26/09) `line-height` propio: el botón también lleva la clase `.foto` (la de las miniaturas, con
+   line-height:0) y a 320 px «📷 Foto de la entrega» parte en dos renglones encimados, en 28 px. */
+.cho-btn.foto{border-color:var(--teal-border);color:var(--teal-dk);line-height:inherit}
 .cho-btn.foto:hover{background:var(--teal-lt)}
 .cho-mini{border:1px solid var(--gray-md);background:#fff;color:var(--muted);border-radius:var(--r-pill);padding:3px 11px;font:inherit;font-size:.76rem;font-weight:700;cursor:pointer;margin-left:4px}
 .cho-mini:hover{border-color:var(--teal-border);color:var(--teal-dk);background:var(--teal-lt)}
@@ -469,7 +471,7 @@ th.sortable:hover{color:var(--teal-dk)}
 .subtabs button{padding:10px 18px;font-size:.84rem}
 .cua-box{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);box-shadow:var(--sh-card);padding:16px 18px;margin-bottom:18px}
 .cua-t{font-size:.68rem;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px}
-input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-size:.85rem;padding:6px 9px;display:inline-block}
+input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;padding:6px 9px;display:inline-block}
 .cua-dif-ok{color:var(--green);font-weight:800}
 .cua-dif-mal{color:var(--red);font-weight:800}
 .cua-alerta{display:flex;gap:9px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--gray-lt);font-size:.83rem}
@@ -501,6 +503,12 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
    Repartir mitad y mitad hacía que el texto de los avisos envolviera de más. */
 .cua-2col{grid-template-columns:1.8fr 1fr}
 @media(max-width:1100px){.cua-2col{grid-template-columns:1fr}}
+/* 26/09: a 360 px la barra «Ventas · Mayoristas · Cuadre y conciliación» medía 385 y corría TODA
+   Contabilidad de costado. En el celular la que no entra baja de renglón, entera (sin cortar palabras).
+   Y a 320 las dos cajas de abajo (avisos y «Por cobrar») no achicaban: una celda de grilla no baja
+   de lo que mide su contenido si no se le dice `min-width:0` (la tabla ya tiene su propio scroll). */
+@media(max-width:560px){#cta-tab{display:flex;flex-wrap:wrap;max-width:100%}#cta-tab button{flex:1 1 auto;padding:10px 12px}}
+.cua-2col>*{min-width:0}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
@@ -769,11 +777,11 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
       <div class="grid2" id="wrap-nopago">
         <div class="field">
           <label class="lb">A cuenta <span class="hint">(adelanto)</span></label>
-          <div class="num-money"><input type="number" id="f-acuenta" min="0" step="0.01" value="0"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-acuenta" value="0"></div>
         </div>
         <div class="field">
           <label class="lb" id="lbl-saldo">Saldo por cobrar</label>
-          <div class="num-money"><input type="number" id="f-saldo" min="0" step="0.01" value="0"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-saldo" value="0"></div>
         </div>
       </div>
 
@@ -788,14 +796,14 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 
       <div class="field" id="wrap-cobrado" style="display:none">
         <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">cuánto entró por esta venta</span></label>
-        <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
+        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-cobrado" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
       </div>
 
       <!-- ⚠️ El flete NO depende de cómo se pagó la mercadería: se cobra igual aunque la
            venta quede toda por cobrar. Por eso este campo está SIEMPRE visible. -->
       <div class="field" id="wrap-envio">
         <label class="lb">🚚 Recargo por entrega <span class="hint">opcional — el flete que paga el cliente APARTE. No baja el saldo ni se factura</span></label>
-        <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
+        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-envio" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
         <div id="f-envio-pend" style="display:none;margin-top:6px;font-size:.78rem;color:var(--amber);font-weight:700">⏳ Queda <b>por cobrar</b>: se cobra al entregar y hay que registrarlo con su comprobante.</div>
         <div id="wrap-envio-cob" style="display:none;margin-top:8px">
           <label class="lb">¿Ya cobraste el flete?</label>
@@ -831,7 +839,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
         </div>
         <div class="field">
           <label class="lb">¿Cuánto pagó con este método? <span class="req">*</span> <span class="hint" id="f-monto2-hint"></span></label>
-          <div class="num-money"><input type="number" id="f-monto2" min="0" step="0.01" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
         </div>
         <div class="field" id="wrap-banco2" style="display:none">
           <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
@@ -1300,7 +1308,7 @@ input.cua-arqueo[type=number]{width:130px;max-width:130px;text-align:right;font-
 .pm-tabla table{width:100%;min-width:850px}.pm-tabla th,.pm-tabla td{padding:10px;white-space:normal!important}.pm-tabla tfoot{font-weight:bold;background:#e8f5f2}
 @media(max-width:650px){.pm-resumen{grid-template-columns:repeat(2,minmax(0,1fr))}.pm-body{padding:12px}.pm-resumen strong{font-size:1.1rem}}
 </style>
-<script src="productos-mes.js?v=20260923a"></script>
+<script src="productos-mes.js?v=20260926a"></script>
 <script>
 /* ============================================================================
    PEDIDOS — MultiEspumas. Formulario + Google Sheets + panel administración.
@@ -1603,8 +1611,10 @@ function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
    ningún estado de stock, así que se distingue del rojo de "falta" de un vistazo. */
 function atcChip(p){
   if(!esATC(p&&p.oc)) return '';
-  if(atcEnDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>';
-  return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>';
+  var com=atcComodinAviso(p);   // (26/09) el comodín, parpadeando, en la ficha del chofer y la carga
+  com=com?(' <span class="badge b-blue b-comodin" title="Si no se recupera al devolverle el suyo, se pierde un colchón">'+esc(com)+'</span>'):'';
+  if(atcViajeDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>'+com;   // (26/09) también con el ✅
+  return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>'+com;
 }
 /* La clase del resaltado, para pegarla donde haga falta. */
 function atcCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : ''; }
@@ -1743,10 +1753,17 @@ function atcQueSeHizo(p){ var a=atcDe(p); return (a&&a.hizo)||''; }
 function atcDevProg(p){ var a=atcDe(p); return (a && a.pdev && !a.ent) ? a.pdev : ''; }
 function atcDevTurno(p){ var a=atcDe(p); return (a&&a.pturno)||''; }
 function atcEnDevolucion(p){ return !!(atcDevProg(p) && p && p.fecha===atcDevProg(p)); }
-function atcRecogida(p){ var a=atcDe(p); return (a&&a.rec) || (p&&p.fecha) || ''; }
+/* (26/09) ¿Este viaje es —o fue— el de la devolución? Como `atcEnDevolucion`, pero también con el ✅
+   puesto: `atcDevProg` da vacío apenas hay `ent`, y el chip de la devolución recién entregada volvía a
+   «🎧 ATC» (el de un recojo). Mira el día programado en crudo, como `atcAlMarcarEntregado`. */
+function atcViajeDevolucion(p){ var a=atcDe(p); return !!(a && a.pdev && p && p.fecha===a.pdev); }
+/* (26/09) `rec` vale solo mientras la ATC vive en su devolución (`pdev`): «↺ Quitar la devolución» lo
+   dejaba puesto, y si después se movía el recojo con 📅 la matriz seguía en el día viejo y lo daba por
+   recogido. Una fila que ya quedó así se lee por su fecha. */
+function atcRecogida(p){ var a=atcDe(p); return (a&&a.pdev&&a.rec) || (p&&p.fecha) || ''; }
 function atcFueRecogida(p){
   var a=atcDe(p)||{};
-  if(a.rec) return true;                         // se programó la devolución: el recojo ya pasó
+  if(a.pdev && a.rec) return true;               // se programó la devolución: el recojo ya pasó
   var f=atcRecogida(p);
   return !!((f && f<=todayStr()) || (p&&p.entregado));
 }
@@ -1813,6 +1830,16 @@ function atcAlMarcarEntregado(p){
 function atcSeguirViaje(p, antes){
   if(antes && p && esATC(p.oc)) mergeAtcDatos(p, { pdev: p.fecha, pturno: normTurno(p.turno) });
 }
+/* ✅ (26/09) Lo contrario de `atcAlMarcarEntregado`: cerrar o reabrir la ATC desde «📦 Anotar
+   avance» (o «↺ Borrar todo») mueve el ✅ del pedido cuando vive en su día de devolución —ese
+   viaje ES el que le lleva el producto al cliente—. Antes quedaba «✅ Entregada» en la pestaña
+   ATC y «⏳ Pendiente · 🎧 ATC» para el chofer y Administración; o al revés, reabierta (hay que
+   ir a buscarla a la fábrica) y «✓ Entregado» en la ficha del chofer: nadie se la llevaba. Sin
+   devolución programada `entregado` es el RECOJO y no se toca. */
+function atcEntregadoComoEnt(p){
+  var a=p && esATC(p.oc) ? atcDe(p) : null;
+  if(a && a.pdev && p.fecha===a.pdev) p.entregado=!!a.ent;
+}
 /* El cierre de verdad: el producto de vuelta en manos del cliente. Que producción lo
    devuelva NO cierra la ATC — todavía hay que llevárselo (§4br). */
 function atcEntregada(p){ var a=atcDe(p); return (a&&a.ent)||''; }
@@ -1824,6 +1851,16 @@ function atcEntregada(p){ var a=atcDe(p); return (a&&a.ent)||''; }
    Quedan dos cosas al cargar y una lista al recoger. */
 function atcFechaCompra(p){ var a=atcDe(p); return (a&&a.fcom)||''; }
 function atcComodin(p){ var a=atcDe(p); return !!(atcDe(p)||{}).com; }
+/* 🛏️ (26/09) Qué hacer con el comodín en ESTE viaje, para el que va al domicilio. Antes solo se
+   veía en la pestaña ATC: la ficha del chofer, la carga y la hoja de ruta no lo decían, y el
+   «LLEVAR COMODIN» que antes escribían a mano en la nota ahora es un botón del formulario. En el
+   recojo se le deja; en la devolución se trae de vuelta. Cerrada, o con el recojo ya pasado: nada. */
+function atcComodinAviso(p){
+  if(!p || !esATC(p.oc) || !atcComodin(p) || atcEntregada(p)) return '';
+  if(atcEnDevolucion(p)) return '🛏️ Traer de vuelta el COMODÍN';
+  if(!atcDevProg(p) && !p.entregado && (p.fecha||'')>=todayStr()) return '🛏️ Llevar el COMODÍN (se le deja al cliente)';
+  return '';
+}
 /* Cuánto hace que lo compró, en palabras. Es lo que decide si hay garantía, y en los datos
    reales aparece todo el tiempo ("COMPRO 2024-TIENE GARANTIA"). */
 function antiguedadTxt(desde, hasta){
@@ -2254,9 +2291,49 @@ function dispositivoId(){
   }catch(e){ return 'X'+String(Date.now()).slice(-5); }
 }
 function rechazosLocales(){ try{ var a=JSON.parse(localStorage.getItem(LS_RECHAZOS)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+/* 🚚 QUÉ SE PERDIÓ DE UN CAMBIO RECHAZADO (26/09). Un chofer sin señal marca ✅ o cobra en la puerta;
+   eso queda en la cola, y si mientras tanto otra persona tocó el pedido, al volver la señal el
+   servidor dice «conflicto» y gana su fila: el ✅ o la plata del chofer se van, y el aviso quedaba en
+   «Mis pedidos», que el chofer no mira. Acá se anota lo que el cambio tenía y la fila no (✅, cobros
+   de la puerta, fotos) para decírselo en SU pantalla (`choRechazosHtml`). No se reaplica solo: sin
+   saber qué era lo viejo, un ✅ «de más» puede ser una copia vieja, y un cobro, uno que Contabilidad
+   ya anotó. null si no se perdió nada de eso. */
+function rechazoPerdido(rec, srv){
+  try{
+    var out={}, clave=function(c){ return (normMetodo(c.metodo)||c.metodo||'')+'|'+r2(c.monto); };
+    if(rec && rec.entregado && !(srv && srv.entregado)) out.entregado=true;
+    var ya=cobrosDe(srv||{}).map(clave);
+    var cob=cobrosDe(rec||{}).filter(cobroDeLaPuerta).filter(function(c){ return ya.indexOf(clave(c))<0; })
+      .map(function(c){ return { txt:cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(limpiaRecibio(c.recibio)?(' · recibió '+limpiaRecibio(c.recibio)):'') }; });
+    if(cob.length) out.cobros=cob;
+    var fs=compsArr(rec&&rec.fotos), fsv=compsArr(srv&&srv.fotos), nf=fs.filter(function(f){ return fsv.indexOf(f)<0; }).length;
+    if(nf) out.fotos=nf;
+    return (out.entregado || out.cobros || out.fotos) ? out : null;
+  }catch(e){ return null; }
+}
+/* (26/09) Lo que un reintento SÍ volvió a poner (el ✅ de `choEntregado`, la foto de `onFotoElegida`)
+   sale del rechazo del primer choque; lo demás que se perdió se sigue diciendo. Antes el ✅ borraba el
+   rechazo ENTERO —también «💵 el cobro: volvé a anotarlo» del efectivo que esperaba en la cola— y la
+   foto no sacaba nada: el cartel pedía «volvé a subirla» de una foto que ya estaba. Sin nada más, se va. */
+function rechazoResuelto(id, t0, que){
+  try{
+    var a=rechazosLocales().filter(function(x){
+      if(!x || x.id!==String(id) || x.error!=='conflicto' || !(x.ts>=t0)) return true;
+      var pe=x.perdio; if(!pe) return false;
+      if(que==='entregado') delete pe.entregado;
+      if(que==='foto' && pe.fotos) pe.fotos--;
+      if(!pe.fotos) delete pe.fotos;
+      if(!(pe.cobros && pe.cobros.length)) delete pe.cobros;
+      return !!(pe.entregado || pe.cobros || pe.fotos);
+    });
+    localStorage.setItem(LS_RECHAZOS, JSON.stringify(a));
+  }catch(e){}
+}
 function rechazoRecordar(rec, res){
   try{
-    var a=rechazosLocales(); a.unshift({ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 });
+    var a=rechazosLocales(), _r={ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 };
+    if(res.error==='conflicto' && res.pedido){ var _pe=rechazoPerdido(rec, res.pedido); if(_pe) _r.perdio=_pe; }   // (26/09) para el cartel del chofer
+    a.unshift(_r);
     localStorage.setItem(LS_RECHAZOS, JSON.stringify(a.slice(0,20)));
   }catch(e){}
   renderColaAviso();
@@ -2466,7 +2543,11 @@ function flushPending(){
   return a.reduce(function(chain,rec){
     var enviado=JSON.stringify(rec);          // antes de mandarlo: `aplicarSello` le cambia el sello
     return chain.then(function(){
-      return apiSave(rec).then(function(res){
+      /* (26/09) Los días cerrados y las tildes de la carga se reescriben ENTERAS: lo que quedó acá sin señal
+         se rearma con la planilla de ahora (`mandarReescritaDeCola`); mandado tal cual pisaba lo que otra
+         computadora cambió mientras tanto. Las demás filas, como siempre. */
+      var envio=(rec && rec._cambios && typeof REESCRITAS!=='undefined' && REESCRITAS[String(rec.id)]) ? mandarReescritaDeCola(rec) : apiSave(rec);
+      return envio.then(function(res){
         // Un «no» firme (conflicto, cupos, día cerrado, OC) sale de la cola: reintentarlo no sirve.
         if((res && res.ok) || (res && RECHAZOS_FIRMES[res.error])) listos[String(rec.id)]=enviado;
       }, function(){});
@@ -2861,7 +2942,10 @@ var NOMBRES = {}, NOMBRES_LISTA = [];
   }
   NOMBRES_LISTA.sort();
 })();
-function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+/* ⚠️ En hora de BOLIVIA, no la del dispositivo (26/09): `ts` es un instante guardado, y el filtro del mes
+   ya lo lee así (`isoDeTsBolivia`, §4fu). Con la zona mal puesta, la venta del 31/08 a las 21:30 salía
+   en el listado de agosto diciendo «2026-09-01 01:30» (columna «Ingresado», la ficha y los Excel). */
+function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts-4*3600000); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getUTCFullYear()+'-'+z(d.getUTCMonth()+1)+'-'+z(d.getUTCDate())+' '+z(d.getUTCHours())+':'+z(d.getUTCMinutes()); }
 function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
@@ -2894,9 +2978,11 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   // están mal. El subtotal se muestra abajo para que se vea qué está cobrando.
   var pW=document.createElement('div'); pW.className='prod-precio-w';
   var pL=document.createElement('div'); pL.className='mini-lb'; pL.textContent='Precio c/u';
-  var pIn=document.createElement('input'); pIn.type='number'; pIn.className='prod-precio';
-  pIn.min='0'; pIn.step='0.01'; pIn.placeholder='Bs'; pIn.autocomplete='off';
-  if(Number(precio)>0) pIn.value=r2(precio);
+  /* 💵 Texto con teclado numérico, no `type=number` (26/09): Chromium tiraba la coma antes de que
+     `montoForm` viera el valor, y «1.500,50» quedaba 1.50050. Igual en todos los campos de plata. */
+  var pIn=document.createElement('input'); pIn.type='text'; pIn.setAttribute('inputmode','decimal'); pIn.className='prod-precio';
+  pIn.placeholder='Bs'; pIn.autocomplete='off';
+  if(Number(precio)>0) pIn.value=r2(precio);   // r2: con dos decimales como mucho, `montoForm` nunca lo lee como miles
   pW.appendChild(pL); pW.appendChild(pIn);
   sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW); sub.appendChild(pW);
   /* 🏪 Los dos datos que el formato de reposición pide POR RENGLÓN (§4dk): si es una
@@ -2912,7 +2998,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   rW.appendChild(rtL); rW.appendChild(rtS); rW.appendChild(roL); rW.appendChild(roIn);
   var tot=document.createElement('div'); tot.className='prod-sub-tot';
   function pintarSub(){
-    var pr=parseFloat(pIn.value)||0, ct=parseInt(q.value,10)||0;
+    var pr=montoForm(pIn), ct=parseInt(q.value,10)||0;
     if(pr>0){ tot.className='prod-sub-tot'; tot.textContent='× '+ct+' = '+fmtBs(r2(pr*ct)); }
     else { tot.className='prod-sub-tot vacio'; tot.textContent='sin precio'; }
     pintarTotalProds();
@@ -2959,7 +3045,7 @@ function pintarTotalProds(){
   var cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
     var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
-    var pr=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    var pr=montoForm(cards[i].querySelector('.prod-precio'));
     var ct=parseInt(cards[i].querySelector('.prod-cant').value,10)||0;
     if(pr>0){ t+=pr*ct; con++; } else sin++;
   }
@@ -2976,17 +3062,30 @@ function usarTotalProds(){
   var t=0, cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
     var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
-    t+=(parseFloat(cards[i].querySelector('.prod-precio').value)||0)*(parseInt(cards[i].querySelector('.prod-cant').value,10)||0);
+    t+=montoForm(cards[i].querySelector('.prod-precio'))*(parseInt(cards[i].querySelector('.prod-cant').value,10)||0);
   }
   t=r2(t);
   if(segVal('f-pagado')==='SI'){ toast('El pedido está marcado como PAGADO: no hay saldo que llenar','err'); return; }
-  var acu=parseFloat(document.getElementById('f-acuenta').value)||0;
+  var acu=montoForm('f-acuenta');
   if(acu>t){ toast('Lo que ya pagó ('+fmtBs(acu)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
   document.getElementById('f-saldo').value=r2(t-acu);
   updateMetodoVisibility();
   toast('Saldo por cobrar: '+fmtBs(r2(t-acu))+' (total '+fmtBs(t)+' − a cuenta '+fmtBs(acu)+')','ok');
 }
 function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
+/* 🔢 LA CANTIDAD ES UN ENTERO DE 1 PARA ARRIBA (26/09). `parseInt(…)||1` guardaba 0 como 1, 2,5
+   como 2, vacía como 1 y dejaba pasar −2: el camión cargaba otra cosa que la tipeada. Devuelve los
+   campos que no sirven (solo de renglones con producto) para frenar y marcarlos, como hace el
+   importador de ROHO (`rohoCant`: «media unidad de un colchón no existe»). */
+function cantidadesMal(){
+  var cards=document.querySelectorAll('#f-productos .prod-card'), mal=[];
+  for(var i=0;i<cards.length;i++){
+    if(!cards[i].querySelector('.prod-desc').value.trim()) continue;
+    var q=cards[i].querySelector('.prod-cant'), t=String(q.value||'').trim(), n=Number(t);
+    if(!t || !(n>=1) || parseInt(t,10)!==n) mal.push(q);
+  }
+  return mal;
+}
 function getProductos(){
   var cards=document.querySelectorAll('#f-productos .prod-card'),out=[],rptForm=(docTipoSel()==='RPT');
   for(var i=0;i<cards.length;i++){
@@ -2994,8 +3093,8 @@ function getProductos(){
     var mSel=cards[i].querySelector('.prod-medida');
     var medida = mSel.value==='Otros' ? cards[i].querySelector('.prod-medida-otro').value.trim() : mSel.value;
     var codigo=cards[i].querySelector('.prod-codigo').value.trim();
-    var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;
-    var precio=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;   // `submitPedido` ya frenó la que no es un entero ≥1 (`cantidadesMal`, 26/09)
+    var precio=montoForm(cards[i].querySelector('.prod-precio'));
     if(desc){ var it={desc:desc, medida:medida, codigo:codigo, cant:cant};
       if(precio>0) it.precio=r2(precio);          // sin precio no se guarda la clave: los viejos quedan igual
       /* 🏪 Solo en una reposición (§4dk), y con la misma convención que el precio: si no
@@ -3173,10 +3272,21 @@ var EDIT_DESDE='admin';
 function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+/* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
+   con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
+   «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
+   Es `parseMonto`, como «Registrar pago», el arqueo y «Corregir precios y montos» (§4ga). Lo que pone
+   el panel va con `r2` (dos decimales como mucho), así que nunca se toma por miles. Con signo menos
+   vale 0 —como antes, que no pasaba de `>0`—: `submitPedido` frena el campo a la vista. */
+function montoForm(el){
+  if(typeof el==='string') el=document.getElementById(el);
+  if(!el || montoNegativo(el.value)) return 0;
+  return parseMonto(el.value);
+}
 /* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
 function updateMetodoVisibility(){
   var pagado = segVal('f-pagado')==='SI';
-  var acuenta = parseFloat(document.getElementById('f-acuenta').value)||0;
+  var acuenta = montoForm('f-acuenta');
   var show = pagado || (acuenta>0);
   document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
   if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'+mixtoBtnHtml(); }
@@ -3391,11 +3501,16 @@ function badgeSinMonto(){ return '<span class="badge b-amber">⚠️ SIN MONTO A
    nada que cobrar, o nadie anotó cuánto era (y entonces tiene que preguntar, no callarse).
    La usan la hoja de ruta impresa y el mensaje de WhatsApp, para que digan lo mismo. */
 function cobroRutaTxt(p){
-  if(p&&p.pagado) return {t:'✅ PAGADO', c:'#2e7d32'};
-  if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32'};   // (25/09)
-  if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00'};
-  if((Number(p&&p.saldo)||0)<=0.01) return {t:'✅ NADA QUE COBRAR', c:'#2e7d32'};
-  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b'};
+  /* 🚚 (26/09) El flete PACTADO se cobra en la puerta (§4ai) y la hoja no lo decía: una venta pagada con
+     flete salía «✅ PAGADO» y el chofer no lo cobraba. `f` lo dice aparte, con las palabras de su tarjeta
+     (`cobroChoferHtml`). ATC y RPT no cambian. */
+  var fleteF=(p && !noSeCobra(p)) ? envioPorCobrar(p) : 0;
+  var f=fleteF>0.01 ? ('🚚 Cobrar también el flete: '+fmtBs(fleteF)+' — aparte de la venta. Avisale a la vendedora, que lo registra con el comprobante.') : '';
+  if(p&&p.pagado) return {t:(f?'✅ LA VENTA YA ESTÁ PAGADA':'✅ PAGADO'), c:'#2e7d32', f:f};
+  if(noSeCobra(p)) return {t:'✅ NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')', c:'#2e7d32', f:''};   // (25/09)
+  if(sinMontoAnotado(p)) return {t:'⚠️ SIN MONTO ANOTADO — preguntar antes de entregar', c:'#c47f00', f:f};
+  if((Number(p&&p.saldo)||0)<=0.01) return {t:(f?'✅ NADA QUE COBRAR DE LA VENTA':'✅ NADA QUE COBRAR'), c:'#2e7d32', f:f};
+  return {t:'💰 COBRAR '+fmtBs(p.saldo), c:'#c0392b', f:f};
 }
 /* El renglón "debe Bs X" solo cuando de verdad hay saldo (si es 0 no dice nada). */
 function debeLinea(p){
@@ -3852,7 +3967,7 @@ function envioResumenHtml(p, editable){
     '<div style="margin-top:7px;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px">'+
       '<div class="lb" style="margin-bottom:6px">✏️ ¿Cuánto falta cobrar de flete?</div>'+
       '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">'+
-        '<input type="number" id="cta-env-monto" step="0.01" min="0" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-env-monto" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
         '<button class="btn btn-primary btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaGuardarEnvio('"+String(p.id)+"')")+'">Guardar</button>'+
         '<button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaEditarEnvio('"+String(p.id)+"',0)")+'">Cancelar</button>'+
       '</div>'+
@@ -4011,6 +4126,10 @@ function cuadrePagos(){
     if(!cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
+      /* 26/09: un pago SIN MONTO no es un pago. Es el de la venta «PAGADA sin monto» (§4fg): sin fecha, así que
+         en «Todo» entraba al detalle con Bs 0 (pantalla y Excel) y a «Efectivo (N pagos)», mientras el aviso
+         dice «por eso no salen en el detalle de abajo». Ahora pantalla, texto y Excel dicen lo mismo. */
+      if(!((Number(c.monto)||0)>0)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
                  monto:Number(c.monto)||0, nota:limpiaNota(c.nota), recibio:limpiaRecibio(c.recibio),
                  comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''),
@@ -4090,12 +4209,12 @@ function filaArqueo(){
   fila._dev=pestanaId(); fila._t=Date.now();
   return fila;
 }
-function guardarArqueo(){
+function guardarArqueo(sinPintar){
   saveArqueoMirror();
   var fila=filaArqueo();
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
-  renderCuadre();
+  if(!sinPintar) renderCuadre();
 }
 function cuadreArqueoTodo(){ return ARQUEO; }
 /* 🧮 EL CIERRE POR FORMA DE PAGO, CALCULADO UNA SOLA VEZ (§4fz). La pantalla, el texto de
@@ -4131,10 +4250,17 @@ function cuadreCierre(pagos){
 }
 function cuadreArqueoKey(forma){ var pe=cuadrePeriodo(); return pe.modo+'|'+pe.val+'|'+forma; }
 function cuadreArqueo(forma){ var v=ARQUEO[cuadreArqueoKey(forma)]; return (v===''||v==null)?null:Number(v); }
+/* ⚠️ El repintado va DESPUÉS de que el foco llegue a donde iba (26/09). El `change` salta en el medio del
+   Tab: repintar ahí sacaba de la página el campo que iba a recibir el foco, y el foco quedaba en la nada —
+   lo que la contadora tipeaba en el extracto siguiente no entraba en ningún lado (con Enter, igual). El
+   número se guarda ya; `renderCuadre` le devuelve el foco al campo en que está (ver `_focoArq`). */
+var CUA_ARQ_T=null;
 function setCuadreArqueo(forma, valor){
   var k=cuadreArqueoKey(forma), t=String(valor==null?'':valor).trim();
   if(t==='') delete ARQUEO[k]; else ARQUEO[k]=parseMonto(t);
-  guardarArqueo();
+  guardarArqueo(true);
+  if(CUA_ARQ_T) clearTimeout(CUA_ARQ_T);
+  CUA_ARQ_T=setTimeout(function(){ CUA_ARQ_T=null; renderCuadre(); }, 0);
 }
 function limpiarArqueo(){
   var pe=cuadrePeriodo(), pref=pe.modo+'|'+pe.val+'|', n=0;
@@ -4256,16 +4382,16 @@ function cuadreAlertas(pagos){
      alguien volvía al mes de la venta o elegía «Todo». Es justo la forma del bug de §4fd: el
      botón 💰 creaba cobros sin fecha, y se lo toca cuando el cliente paga DESPUÉS, o sea sobre
      ventas de meses anteriores. Un pago sin fecha hay que verlo desde cualquier período. */
-  var _yaSF={}, _sfFuera=0;
-  sinFecha.forEach(function(x){ _yaSF[x.p.id+'|'+x.c.monto+'|'+limpiaNota(x.c.nota)]=1; });
+  /* ⚠️ (26/09) Sin juntar por «venta|monto|nota»: dos cobros de Bs 500 sin fecha ni recibo de la MISMA venta
+     (el 💰 de §4fd los dejaba así) quedaban en uno — el aviso decía «1 pago sin fecha» y se arreglaba uno
+     solo. No hay nada que no contar dos veces: el bucle de arriba mira las ventas del período y este, las otras. */
+  var _sfFuera=0;
   STATE.forEach(function(p){
     if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     if(enPeriodoCuadre(contaFecha(p), pe)) return;              // esas ya las miró el bucle de arriba
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0) || c.fecha) return;
-      var _k=p.id+'|'+c.monto+'|'+limpiaNota(c.nota);
-      if(_yaSF[_k]) return;
-      _yaSF[_k]=1; _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
+      _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
     });
   });
   if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo'+(_sfFuera?(' ('+_sfFuera+' de ven'+(_sfFuera===1?'ta':'tas')+' de otro mes)'):''), det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+(x.fuera?(' · venta del '+fmtFechaCorta(contaFecha(x.p))):''), id:x.p.id}; })});
@@ -4486,6 +4612,9 @@ function alertaDetHtml(det, k){
 }
 function renderCuadre(){
   var box=document.getElementById('cua-metrics'); if(!box) return;
+  // 26/09: el campo del arqueo en que se está tipeando (se le devuelve el foco al final, ver setCuadreArqueo).
+  var _ae=document.activeElement, _focoArq=(_ae && _ae.classList && _ae.classList.contains('cua-arqueo'))
+    ? { f:_ae.getAttribute('data-forma'), v:_ae.value, s:_ae.selectionStart, e:_ae.selectionEnd } : null;
   var pagos=cuadrePagos(), formas=cuadrePorForma(pagos);
   var total=0; pagos.forEach(function(c){ total=r2(total+c.monto); });
   var ventas={}; pagos.forEach(function(c){ ventas[c.p.id]=1; });
@@ -4571,7 +4700,8 @@ function renderCuadre(){
       ? mc(difTotal===0?'var(--green)':'var(--red)',
            difTotal===0?'El cuadre cierra':(difTotal<0?'Falta plata':'Sobra plata'),
            difTotal===0?'✅ Cuadra':fmtBs(Math.abs(difTotal)),
-           anotadas+' de '+Math.max(formas.length,anotadas)+' forma'+(Math.max(formas.length,anotadas)===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
+           // 26/09: de TODAS las filas del cierre, con las contadas sin pagos (decía «2 de 2» con la Tarjeta sin contar).
+           anotadas+' de '+CIE.filas.length+' forma'+(CIE.filas.length===1?'':'s')+' anotada'+(anotadas===1?'':'s')+
            // §4fo: el arqueo que quedó sin ningún pago detrás se nombra, o no se entiende la diferencia.
            (arqHuerfanos.length?(' · ⚠️ '+arqHuerfanos.map(function(h){ return esc(h.forma)+' '+fmtBs(h.monto); }).join(' + ')+' contado'+(arqHuerfanos.length===1?'':'s')+' a mano sin ningún pago detrás'):''))
       : mc('var(--amber)','Por cobrar',fmtBs(pendTotal),
@@ -4594,8 +4724,11 @@ function renderCuadre(){
           (f.huerfano?'<div style="font-size:.7rem;color:#7c4b00">⚠️ contado a mano, sin ningún pago de esta forma en el período</div>':'')+'</td>'+
           '<td style="text-align:right">'+f.n+'</td>'+
           '<td style="text-align:right"><b>'+fmtBs(f.monto)+'</b></td>'+
+          /* 26/09: `type="text"` a propósito. Con `type="number"` Chromium tiraba la coma antes de que
+             `parseMonto` la viera: el extracto «1.500,50» se guardaba como Bs 1,50 y «1500,50» como
+             Bs 150.050, y el cuadre decía «falta Bs 1.499». Con texto, `parseMonto` lee las dos formas. */
           '<td style="text-align:right">'+(arqueoOn
-             ? ('<input class="cua-arqueo" type="number" step="0.01" inputmode="decimal" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
+             ? ('<input class="cua-arqueo" type="text" inputmode="decimal" autocomplete="off" data-forma="'+esc(f.forma)+'" value="'+(a==null?'':a)+'" placeholder="'+(f.efectivo?'contado':'extracto')+'" onchange="setCuadreArqueo('+JSON.stringify(f.forma).replace(/"/g,'&quot;')+',this.value)">')
              : '<span style="color:var(--muted);font-size:.78rem">—</span>')+'</td>'+
           '<td style="text-align:right">'+(dif==null?'<span style="color:var(--muted)">—</span>'
              :(dif===0?'<span class="cua-dif-ok">✅ cuadra</span>'
@@ -4705,6 +4838,12 @@ function renderCuadre(){
 
   // ---- y debajo, un renglón por RETIRO de efectivo: la plata que SALIÓ
   renderCuadreDetRetiros();
+  /* 26/09: el foco vuelve al campo del arqueo en que estaba, con lo que tenía escrito. Al final: con algo
+     buscado, el buscador del detalle (arriba) se lo llevaba. */
+  if(_focoArq){
+    var _ni=[].filter.call(document.querySelectorAll('#cua-cierre input.cua-arqueo'), function(x){ return x.getAttribute('data-forma')===_focoArq.f; })[0];
+    if(_ni){ if(_ni.value!==_focoArq.v) _ni.value=_focoArq.v; try{ _ni.focus(); _ni.setSelectionRange(_focoArq.s, _focoArq.e); }catch(e){} }
+  }
 }
 /* 🔎 Qué se busca en cada renglón del detalle: todo lo que la persona ve en la fila.
    El monto se compara con y sin formato ("5500", "5.500,00" y "5500,00" encuentran lo
@@ -4799,7 +4938,10 @@ function cuadreTexto(){
     });
     L.push('', '*TOTAL: '+fmtBs(total)+'*');
     // §4fz: la diferencia TOTAL, como la dice la pantalla (con los arqueos sin pagos adentro).
-    if(CIE.anotadas) L.push(CIE.difTotal===0 ? '✅ El cuadre cierra' : ('⚠️ '+(CIE.difTotal>0?'Sobra ':'Falta ')+fmtBs(Math.abs(CIE.difTotal))+' en total'));
+    /* 26/09: si no se contaron todas las formas, se dice: «✅ El cuadre cierra» a secas, con el QR sin
+       mirar contra el extracto, se lee en el grupo como que se contó todo (la pantalla lo decía). */
+    var _deN=(CIE.anotadas<CIE.filas.length)?(' ('+CIE.anotadas+' de '+CIE.filas.length+' formas contadas)'):'';
+    if(CIE.anotadas) L.push((CIE.difTotal===0 ? '✅ El cuadre cierra' : ('⚠️ '+(CIE.difTotal>0?'Sobra ':'Falta ')+fmtBs(Math.abs(CIE.difTotal))+' en total'))+_deN);
     if(!arqueoOn) L.push('(solo lo de '+v+' — el arqueo contra la caja se hace con Todos)');
   }
   // ¿se recogió todo el efectivo? Es lo primero que preguntan al cerrar el día.
@@ -4825,7 +4967,10 @@ function copiarCuadre(){ copyText(cuadreTexto()); }
 function exportCuadre(){
   var pagos=cuadrePagos(), CIE=cuadreCierre(pagos);
   // §4fz: un arqueo contado sin ningún pago detrás también es algo para bajar (la diferencia ENTERA).
-  if(!pagos.length && !CIE.huerfanos.length){ toast('No hay pagos para exportar en este período','err'); return; }
+  /* 26/09: …y un RETIRO también. El día que se pasa a recoger el efectivo no entra ningún pago:
+     la pantalla y el texto mostraban el retiro y el Excel decía «No hay pagos para exportar». */
+  var _rets=retirosDe(cuadrePeriodo(), cuadreVendedor());
+  if(!pagos.length && !CIE.huerfanos.length && !_rets.length){ toast('No hay pagos ni retiros para exportar en este período','err'); return; }
   var H=1, fc={numFmt:'#,##0.00'};
   /* ⚠️ «RECARGO POR ENTREGA» (25/09): la pantalla marca cada pago de flete («🚚 RECARGO») y el texto
      dice cuánto es flete, pero en el Excel esa fila era igual a un pago de la venta y el contador no
@@ -4846,7 +4991,7 @@ function exportCuadre(){
     var a=f.arqueo;
     rows.push([f.forma+(f.huerfano?' — contado a mano, SIN pagos en el período':''), '', '', '', '', '', f.n, {v:f.monto,t:'n',s:fc}, (a==null?'':{v:a,t:'n',s:fc}), (a==null?'':{v:f.dif,t:'n',s:fc})]);
   });
-  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)', '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
+  if(CIE.anotadas) rows.push(['DIFERENCIA TOTAL (contado − panel)'+(CIE.anotadas<CIE.filas.length?(' — '+CIE.anotadas+' de '+CIE.filas.length+' formas contadas'):''), '', '', '', '', '', '', '', '', {v:CIE.difTotal,t:'n',s:fc}]);
   // ---- efectivo cobrado vs. retirado, para saber si se recogió todo
   var E=cuadreEfectivo(), efe=E.filas;
   if(efe.length || E.fuera.length){
@@ -4856,6 +5001,12 @@ function exportCuadre(){
       rows.push([o.nombre, o.chofer?'SÍ':'', {v:o.cobrado,t:'n',s:fc}, {v:o.fac,t:'n',s:fc},
                  {v:o.nofac,t:'n',s:fc}, {v:o.ret,t:'n',s:fc}, {v:o.falta,t:'n',s:fc}]);
     });
+    // 26/09: la fila TOTAL que la pantalla ya tiene (el contador la sumaba a mano). Lo de «fuera» va abajo, sin sumar, como allá.
+    if(efe.length){
+      var _tE={c:0, f:0, n:0, r:0, q:0};
+      efe.forEach(function(o){ _tE.c=r2(_tE.c+o.cobrado); _tE.f=r2(_tE.f+o.fac); _tE.n=r2(_tE.n+o.nofac); _tE.r=r2(_tE.r+o.ret); _tE.q=r2(_tE.q+o.falta); });
+      rows.push(['TOTAL', '', {v:_tE.c,t:'n',s:fc}, {v:_tE.f,t:'n',s:fc}, {v:_tE.n,t:'n',s:fc}, {v:_tE.r,t:'n',s:fc}, {v:_tE.q,t:'n',s:fc}]);
+    }
     // Con filtro por vendedora: lo que de SUS ventas recibió un chofer (no está en su mano).
     E.fuera.forEach(function(f){ rows.push([f.nombre+' (chofer, ver en Todos)', 'SÍ', {v:f.monto,t:'n',s:fc}]); });
   }
@@ -4873,8 +5024,12 @@ function exportCuadre(){
   var bytes=buildXlsx([{name:'Cuadre',
     cols:[{w:14},{w:26},{w:19},{w:18},{w:18},{w:12},{w:12},{w:16},{w:10},{w:16},{w:12},{w:11},{w:44},{w:20},{w:28}],
     matrix:rows}]);
-  downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-  toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+(CIE.huerfanos.length?(' + '+CIE.huerfanos.length+' arqueo'+(CIE.huerfanos.length===1?'':'s')+' sin pagos'):'')+' ✓','ok');
+  /* 26/09: con filtro por vendedora el nombre lo dice, como el Excel de Ventas: antes se llamaba
+     igual que el del equipo entero y el segundo que se bajaba se confundía con el primero. */
+  var _vA=(cuadreVendedor()||'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  downloadBlob(bytes,'cuadre-'+(pe.val||'todo')+(_vA?('-'+_vA):'')+'.xlsx','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  toast('Excel del cuadre descargado — '+pagos.length+(pagos.length===1?' pago':' pagos')+(CIE.huerfanos.length?(' + '+CIE.huerfanos.length+' arqueo'+(CIE.huerfanos.length===1?'':'s')+' sin pagos'):'')+
+        (rets.length?(' · '+rets.length+' retiro'+(rets.length===1?'':'s')):'')+' ✓','ok');
 }
 /* ============================================================================
    💵 RETIROS DE EFECTIVO — cuánto efectivo se le recogió a cada vendedor
@@ -4991,6 +5146,13 @@ function borrarRetiro(id){
        lo rechazaba con un falso «lo corrigió otra persona» (E11). */
     var volverRet=function(x){ RETIROS=RETIROS.filter(function(y){ return String(y.id)!==String(id); }).concat([x]); saveRetirosMirror(); renderRetiros(); renderCuadreSiActivo(); };
     borrarEnServidor(f).then(function(res){
+      /* 26/09: borrado (o sin saber, o con la versión de otro): lo que se guardó en los últimos 90 s
+         ya no es «lo último que tocó la persona». Si no, `mergePending` lo volvía a poner en pantalla
+         —y a restar en el cuadre— con cada refresco de ese rato: parecía que el borrado no anduvo. */
+      if(res.ok || res.incierto || res.conflicto){
+        delete SAVE_ULTIMO[id];
+        if(!res.conflicto){ RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(id); }); saveRetirosMirror(); renderRetiros(); renderCuadreSiActivo(); }
+      }
       if(res.ok){ r.fotos.forEach(function(fid){ apiBorrarFoto(fid).then(function(){},function(){}); }); toast('Retiro borrado','ok'); }
       else if(res.conflicto && res.actual){
         volverRet(res.actual);
@@ -5122,7 +5284,7 @@ function retQuitarFoto(i){
 /* ---- Guardar el que se está cargando ---- */
 function guardarRetiroForm(){
   var r=retLeerForm();
-  var monto=parseMonto(r.monto);
+  var monto=parseMonto(r.monto);    // 26/09: el campo es de texto: con `type=number` «5.000,50» llegaba como 5,00
   var falla=function(id, msg){
     var e=document.getElementById(id); if(e){ e.classList.add('err'); e.focus(); e.scrollIntoView({block:'center'}); }
     toast(msg,'err'); return false;
@@ -5220,7 +5382,7 @@ function renderRetiros(){
         '<div class="field"><label class="lb">Fecha del retiro</label><input type="date" id="ret-fecha" value="'+esc(R.fecha)+'"></div>'+
         '<div class="field" style="min-width:180px"><label class="lb">Quién ENTREGA <span class="req">*</span> <span class="hint">vendedor o chofer</span></label><select id="ret-entrega" onchange="retEntregaCambio()"></select></div>'+
         '<div class="field" style="min-width:170px"><label class="lb">Quién RETIRA <span class="req">*</span> <span class="hint">un chofer rinde a Contabilidad</span></label><input type="text" id="ret-retira" value="'+esc(R.retira)+'" autocomplete="off"></div>'+
-        '<div class="field" style="min-width:130px"><label class="lb">Monto <span class="req">*</span></label><div class="num-money"><input type="number" id="ret-monto" min="0" step="0.01" value="'+esc(R.monto)+'" placeholder="Ej. 5000"></div></div>'+
+        '<div class="field" style="min-width:130px"><label class="lb">Monto <span class="req">*</span></label><div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="ret-monto" value="'+esc(R.monto)+'" placeholder="Ej. 5000"></div></div>'+
       '</div>'+
       '<div class="field" style="margin-bottom:10px">'+
         '<label class="lb">N° de notas que cubre este retiro <span class="req">*</span> <span class="hint">podés anotar varias</span></label>'+
@@ -5455,7 +5617,7 @@ function contaPagosHtml(p){
           '<div style="flex:1;min-width:130px"><label class="lb">¿Qué día entró?</label>'+
             '<input type="date" id="cta-ed-fecha" value="'+esc(_ev.fecha!=null?_ev.fecha:(c.fecha||contaFecha(p)||todayStr()))+'" max="'+todayStr()+'" style="width:100%"></div>'+
           '<div style="flex:1;min-width:100px"><label class="lb">Monto</label>'+
-            '<input type="number" id="cta-ed-monto" step="0.01" min="0" value="'+esc(_ev.monto!=null?_ev.monto:((Number(c.monto)||0)>0?r2(c.monto):''))+'" placeholder="Bs" style="width:100%"></div>'+
+            '<input type="text" inputmode="decimal" autocomplete="off" id="cta-ed-monto" value="'+esc(_ev.monto!=null?_ev.monto:((Number(c.monto)||0)>0?r2(c.monto):''))+'" placeholder="Bs" style="width:100%"></div>'+
           '<div style="flex:1;min-width:110px"><label class="lb">N° nota de venta</label>'+
             '<input type="text" id="cta-ed-nota" value="'+esc(_ev.nota!=null?_ev.nota:limpiaNota(c.nota))+'" placeholder="del recibo" autocomplete="off" style="width:100%"></div>'+
         '</div>'+
@@ -5540,6 +5702,8 @@ function ctaPagoRecordar(){
     if(String(m.value)!==String(m.getAttribute('data-def')||'')) v.monto=m.value;
     CTA_PAGO_V=v;
   }
+  ctaEditRecordar();                 // 26/09: y lo tipeado en «✏️ Corregir este pago», si está abierto (✅, 📎, ✕… también repintan)
+  ctaMontosRecordar();               // 26/09: y en «✏️ Corregir precios y montos» (el gato del comprobante la tapa)
 }
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
@@ -5548,6 +5712,8 @@ var CTA_TIPO='pago';
    aunque `CTA_TIPO` siga en 'pago'. Lo pone `showContaModal`, lo lee `ctaRegistrarPago`. */
 var CTA_FORM_ENV=false;
 function ctaSetTipo(id,t){ CTA_TIPO=(t==='envio')?'envio':'pago'; CTA_PAGO_V=null; showContaModal(id); }
+/* Venta SIN MONTO ANOTADO (26/09): el total va primero, en «Corregir precios y montos». */
+function ctaIrAMontos(){ var e=document.getElementById('cta-saldo'); if(!e) return; try{ e.scrollIntoView({block:'center'}); }catch(x){} e.focus(); }
 /* ---- Comprobante del pago (la captura del QR) ----
    Sube a Drive por el MISMO canal que las fotos de entrega (`action:'foto'` del Apps
    Script, que ya está publicado), así que no hubo que tocar nada en Google. Lo que se
@@ -5667,6 +5833,22 @@ function ctaEditRecordar(){
       n=document.getElementById('cta-ed-nota');
   if(f&&m&&n) CTA_EDIT_V={fecha:f.value, monto:m.value, nota:n.value};   // ver ctaPagoRecordar
 }
+/* ✏️ Lo tipeado en «Corregir precios y montos» (26/09): los precios, el A cuenta y el saldo. El mismo
+   agujero que «Corregir este pago» (940b718): ✅, 📎, ✕, el método del pago nuevo, «💵/🚚», ✏️… repintan
+   la ficha ENTERA, los campos volvían a lo guardado y «💾 Guardar precios y montos» guardaba lo viejo
+   sin decir nada. Se recuerda SOLO lo que alguien tipeó (distinto de `data-def`, como el monto del pago
+   nuevo, §4fy) y con lo que el panel había puesto: si eso cambió abajo (se registró o corrigió un pago
+   y el saldo ya es otro), lo tipeado quedó viejo y `ctaEditHtml` lo dice en vez de volver a ponerlo. */
+var CTA_MONTOS_V=null;
+function ctaMontosRecordar(){
+  var box=document.getElementById('cta-edit'); if(!box) return;     // tapada por otra ventana: queda lo recordado
+  var v={}, ins=box.querySelectorAll('input[data-k]');
+  for(var i=0;i<ins.length;i++){
+    var d=ins[i].getAttribute('data-def')||'';
+    if(String(ins[i].value)!==d) v[ins[i].getAttribute('data-k')]={v:String(ins[i].value), d:d};
+  }
+  CTA_MONTOS_V={id:box.getAttribute('data-id')||'', v:v};
+}
 var CTA_ENV_EDIT=false;                   // ¿está abierto el editor del recargo pactado?
 /* ---- Cuánto falta cobrar de FLETE ----
    Solo se podía poner al cargar el pedido. Si el flete cambiaba, o se lo olvidaban, no
@@ -5702,8 +5884,12 @@ function ctaEditarPago(id, i){
   CTA_EDIT_R=limpiaRecibio(c.recibio);
   showContaModal(id);
 }
-function ctaEditMetodo(id,m){ CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
-function ctaEditBanco(id,b){ CTA_EDIT_B=b; showContaModal(id); }
+/* ⚠️ ctaEditRecordar() ANTES de repintar (26/09): la fecha, el monto y el recibo van ARRIBA del
+   método, así que se llenan primero; tocar «QR» o el banco repintaba la ficha y los volvía a lo
+   viejo, y «💾 Guardar» corregía solo el método — el pago del sábado seguía con la fecha de antes.
+   Lo mismo que §4fy arregló en el bloque de «Registrar pago» y ctaEditRecibio ya hacía. */
+function ctaEditMetodo(id,m){ ctaEditRecordar(); CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
+function ctaEditBanco(id,b){ ctaEditRecordar(); CTA_EDIT_B=b; showContaModal(id); }
 /* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
    existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
 function ctaEdVal(id, k){
@@ -5734,7 +5920,7 @@ function ctaGuardarPago(id, i, igual){
   var recibio=(CTA_EDIT_M==='Efectivo')?limpiaRecibio(CTA_EDIT_R):'';      // §4eq
   /* 🐱 Sin imagen de respaldo: se avisa con el gato, pero NO se traba — ver memeCompConta. */
   if(!igual && !compsArr(c.comps!=null?c.comps:c.comp).length){
-    ctaEditRecordar();
+    ctaEditRecordar(); ctaMontosRecordar();          // 26/09: el gato tapa la ficha; «Corregir precios y montos» también
     memeCompConta(CTA_EDIT_M, {corregir:true, id:id, i:i});
     return;
   }
@@ -5993,6 +6179,8 @@ function ctaAnotarMonto(id, idx){
     'Esta venta quedó marcada PAGADA pero nunca se anotó el monto.\nEscribí cuánto entró (en Bs):', '');
   if(txt==null) return;
   var monto=parseMonto(txt);
+  // 26/09: `parseMonto` saca el signo y «-1500» se anotaba como un pago de Bs 1.500. El menos FRENA (§4gb).
+  if(montoNegativo(txt)){ toast('El monto no puede ser negativo: poné cuánto entró (ej. 1750)','err'); return; }
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
   var otros=0; arr.forEach(function(x,i){ if(i!==idx) otros=r2(otros+(Number(x.monto)||0)); });
   c.monto=monto;
@@ -6019,14 +6207,24 @@ function showContaModal(id){
   /* Al pasar a OTRA venta se arranca de cero: si no, la imagen que se había elegido para
      un pago y el modo (pago / recargo) se arrastraban a la venta siguiente. */
   if(CTA_ULTIMA!==String(id)){
-    if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length) CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
+    /* ⚠️ Con el TIPO (26/09): un flete en curso con su captura volvía como «💵 Pago» por el saldo entero, y
+       «Registrar pago» anotaba la captura del flete como pago de la venta (saldo 0, el flete «por cobrar»). */
+    if(CTA_ULTIMA && CTA_PAGO && compsArr(CTA_PAGO.comps).length){ CTA_PAGO.tipo=CTA_TIPO; CTA_PAGO_POR_ID[CTA_ULTIMA]=CTA_PAGO; } else if(CTA_ULTIMA) delete CTA_PAGO_POR_ID[CTA_ULTIMA];
     CTA_ULTIMA=String(id);
     CTA_PAGO=CTA_PAGO_POR_ID[String(id)] || {metodo:'Efectivo', banco:'', comps:[], recibio:''};
-    if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+' esperando que toques «Registrar pago».','ok',6000);
-    CTA_TIPO='pago';
+    CTA_TIPO=(CTA_PAGO_POR_ID[String(id)] && CTA_PAGO.tipo==='envio') ? 'envio' : 'pago';
+    if(CTA_PAGO_POR_ID[String(id)]) toast('📎 Esta venta tiene '+compsArr(CTA_PAGO.comps).length+' imagen'+(compsArr(CTA_PAGO.comps).length===1?'':'es')+' subida'+(compsArr(CTA_PAGO.comps).length===1?'':'s')+
+      (CTA_TIPO==='envio' ? (' del 🚚 recargo por entrega, esperando que toques «'+(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo')+'».')
+                          : ' esperando que toques «Registrar pago».'),'ok',6000);
     CTA_EDIT_I=-1;                  // que el editor de pago no quede abierto en otra venta
     CTA_ENV_EDIT=false;             // ni el del flete
     CTA_PAGO_V=null; CTA_EDIT_V=null;   // ni lo que se estaba tipeando en la venta anterior
+    CTA_MONTOS_V=null;                  // ni lo de «Corregir precios y montos» (26/09)
+  }else{
+    /* 26/09: repintar la MISMA venta no se lleva lo tipeado en «Corregir precios y montos». Solo con la
+       ficha a la vista: cerrada, lo que quedó en la página no se toma por tipeado (como el pago en curso). */
+    var _mo=document.getElementById('modal');
+    if(_mo && _mo.classList.contains('on')) ctaMontosRecordar();
   }
   function row(k,v){ return (v!=null&&v!=='')?('<div class="dl-row"><div class="dl-k">'+k+'</div><div class="dl-v">'+v+'</div></div>'):''; }
   var falta=Number(p.saldo)||0, reg=regEnSistema(p);
@@ -6038,23 +6236,37 @@ function showContaModal(id){
      anotar el RECARGO POR ENTREGA (el flete que paga el cliente aparte y que NO le baja
      el saldo ni se factura). Sin saldo pendiente el bloque igual aparece, en modo recargo. */
   // Con flete pactado sin cobrar, el bloque abre directo en modo recargo: es lo urgente.
-  var esEnv = CTA_TIPO==='envio' || falta<=0.01 || (CTA_TIPO!=='pago' && envioPendiente(p));
+  /* ⚠️ «Sin saldo» NO es «ya pagada» cuando nadie anotó cuánto era (26/09): una venta SIN MONTO
+     ANOTADO —la de Eduardo cargada sin cobro, la que el Cuadre manda a completar— abría solo el
+     bloque del flete, y desde §4fk-25/09 su botón anotaba el pago del mayorista como RECARGO POR
+     ENTREGA sin preguntar: fuera de «Ya ingresó», del saldo y del total, y la venta seguía «sin
+     monto». Ahora tiene el selector, arranca en «💵 Pago» y ahí dice que primero va el total. */
+  var _sinM = sinMontoAnotado(p) && !noSeCobra(p);
+  var esEnv = CTA_TIPO==='envio' || (falta<=0.01 && !_sinM) || (CTA_TIPO!=='pago' && envioPendiente(p));
   CTA_FORM_ENV = esEnv;             // 25/09: el botón hace lo que dice el bloque (ver ctaRegistrarPago)
   var _pv = CTA_PAGO_V || {};
   var tb=function(t,txt){ return '<button type="button" class="btn btn-sm" style="'+((CTA_TIPO==='envio')===(t==='envio')?'background:var(--teal);color:#fff':'background:#fff;border:1px solid var(--gray-md);color:var(--muted)')+'" onclick="ctaSetTipo(\''+p.id+'\',\''+t+'\')">'+txt+'</button>'; };
   var yaEnv=envioTotal(p);
-  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p))
+  var formPago = (falta>0.01 || !yaEnv || envioPendiente(p) || _sinM)
     ? ('<div style="background:var(--gray-lt);border-radius:10px;padding:12px 14px;margin-top:14px">'+
-         (falta>0.01
+         ((falta>0.01 || _sinM)
            ? ('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px">'+tb('pago','💵 Pago de la venta')+tb('envio','🚚 Recargo por entrega')+'</div>')
            : '')+
+         ((!esEnv && _sinM)
+           ? ('<div id="cta-sinmonto-aviso" style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px;font-size:.85rem;color:#7c4b00">'+
+                '<b>💵 A esta venta nadie le anotó cuánto era.</b> Antes de registrar un pago, poné el total en '+
+                '<b>✏️ Corregir precios y montos</b> (acá abajo): el <b>Saldo por cobrar</b> es lo que falta cobrar. '+
+                'Después el pago se registra acá y le baja el saldo.'+
+                '<div style="margin-top:8px"><button type="button" class="btn btn-sm" style="width:auto;background:#fff;border:1px solid var(--amber-border);color:var(--amber);font-weight:700" onclick="ctaIrAMontos()">✏️ Ir a Corregir precios y montos</button></div>'+
+              '</div>')
+           : (
          '<div class="lb" style="margin-bottom:8px">'+(esEnv
              ? (envioPorCobrar(p)>0.01
                  ? '🚚 Cobrar el recargo por entrega — pactado <b style="color:var(--red)">'+fmtBs(envioPorCobrar(p))+'</b> <span style="font-weight:400;color:var(--muted)">sin cobrar</span>'
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -6066,7 +6278,7 @@ function showContaModal(id){
               compTiraHtml(CTA_PAGO.comps, 'ctaSacarCompIdx.bind(null,'+JSON.stringify(p.id)+')', 'ctaAdjuntar('+JSON.stringify(p.id)+')',
                 'Hasta '+COMP_MAX+' imágenes: '+nombreComprobante(CTA_PAGO.metodo)+' y el <b>recibo</b> que le diste al cliente. <b>Al menos una es obligatoria.</b>')+
             '</div>') : '')+
-         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'+
+         '<button class="btn btn-primary btn-sm" style="width:100%;margin-top:11px" onclick="ctaRegistrarPago(\''+p.id+'\')">➕ '+(esEnv?(envioPorCobrar(p)>0.01?'Registrar el cobro del flete':'Anotar el recargo'):'Registrar pago')+'</button>'))+
        '</div>')
     : '<div style="background:var(--green-lt);border:1px solid var(--green-border);border-radius:10px;padding:11px 14px;margin-top:14px;color:var(--green);font-weight:700;text-align:center">✅ Sin saldo pendiente</div>';
   var html='<div class="modal-h"'+(reg?' style="background:var(--green)"':'')+'><h3>🧾 '+esc(p.cliente||'Venta')+(p.nota?(' · Nota '+esc(p.nota)):'')+'</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -6116,13 +6328,24 @@ function showContaModal(id){
    ------------------------------------------------------------------------- */
 function ctaEditHtml(p){
   var prods=(p.productos||[]);
+  /* 26/09: lo tipeado antes de que otro botón repintara (`ctaMontosRecordar`). Vuelve si lo que el panel
+     había puesto sigue igual; si cambió abajo, quedó viejo: va lo guardado y se avisa (`_viejos`). */
+  var _mv=(CTA_MONTOS_V && CTA_MONTOS_V.id===String(p.id)) ? CTA_MONTOS_V.v : {}, _viejos=[];
+  var mval=function(k, def, nombre){
+    def=String(def); var e=_mv[k]; if(!e) return def;
+    if(e.d===def) return e.v;
+    delete _mv[k];
+    if(parseMonto(e.v)!==parseMonto(def)) _viejos.push('<b>'+nombre+'</b> ('+esc(e.v)+')');   // ya es lo guardado: nada que avisar
+    return def;
+  };
   var filas=prods.map(function(x,i){
+    var _pd=prodPrecio(x)>0?String(r2(prodPrecio(x))):'';
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:5px 0;border-bottom:1px dashed var(--gray-lt)">'+
       '<span style="flex:1;min-width:150px;font-size:.83rem">'+esc(x.desc||'—')+
         (x.medida?(' <span style="color:var(--muted)">· '+esc(x.medida)+'</span>'):'')+
         ' <b>× '+esc(x.cant||0)+'</b></span>'+
-      '<input type="number" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" min="0" step="0.01" '+
-        'placeholder="Bs c/u" value="'+(prodPrecio(x)>0?r2(prodPrecio(x)):'')+'" '+
+      '<input type="text" inputmode="decimal" autocomplete="off" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" '+
+        'placeholder="Bs c/u" data-k="pr'+i+'" data-def="'+_pd+'" value="'+esc(mval('pr'+i, _pd, 'el precio de '+esc(x.desc||'—')))+'" '+
         'oninput="ctaRecalc()" style="width:100px;text-align:right">'+
       '<span id="cta-sub-'+i+'" style="min-width:96px;text-align:right;font-size:.79rem;font-weight:700"></span>'+
     '</div>';
@@ -6142,16 +6365,20 @@ function ctaEditHtml(p){
   /* 💳 Con pago mixto (§4ej) este campo es SOLO el primer método; el segundo se ve en los
      pagos registrados y `aplicarMontos` lo vuelve a sumar a p.acuenta (§4eu). Se dice. */
   var _mxE=mixtoDe(p), _mxEM=_mxE?r2(Number(_mxE.monto)||0):0;
-  return '<div id="cta-edit" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
+  var _dSal=String(r2(Number(p.saldo)||0)), _vAcu=mval('acu', acuReal, 'A cuenta'), _vSal=mval('sal', _dSal, 'Saldo por cobrar');
+  return '<div id="cta-edit" data-id="'+esc(String(p.id))+'" data-pagos="'+r2(pagos)+'" data-acu-ant="'+acuReal+'" data-comps-ant="'+compsAnt+'" style="background:#fff;border:1px solid var(--teal-border);border-radius:10px;padding:12px 14px;margin-top:14px">'+
     '<div class="lb" style="margin-bottom:9px">✏️ Corregir precios y montos '+
       '<span style="font-weight:400;color:var(--muted)">— el precio de cada ítem y lo que falta cobrar</span></div>'+
+    (_viejos.length?('<div id="cta-montos-viejo" style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:8px 11px;margin-bottom:9px;font-size:.8rem;color:#7c4b00">'+
+      '⚠️ Mientras corregías cambió lo guardado de esta venta (se registró o se corrigió un pago, o la tocó otra persona): lo que habías escrito en '+
+      _viejos.join(', ')+' ya no valía y quedó lo guardado. Revisalo antes de «💾 Guardar precios y montos».</div>'):'')+
     (prods.length?filas:'<div style="color:var(--muted);font-size:.83rem;padding:4px 0">Este pedido no tiene productos cargados.</div>')+
     '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
       '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+(_mxEM?(' · solo el 1er método: el 2° puso '+fmtBs(_mxEM)+' aparte'):'')+')</span></label>'+
-        '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-acuenta" data-k="acu" data-def="'+acuReal+'" value="'+esc(_vAcu)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
-        '<input type="number" id="cta-saldo" min="0" step="0.01" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-saldo" data-k="sal" data-def="'+_dSal+'" value="'+esc(_vSal)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
     '</div>'+
     (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
     '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
@@ -6217,7 +6444,16 @@ function ctaGuardarMontos(id){
         'Vos estás poniendo:  '+fmtBs(acu)+'\n\n'+
         (_pierde ? 'Ese pago y su respaldo se borran y la venta vuelve a quedar por cobrar.\n\n'
                  : 'Se reescribe el pago con el monto nuevo.\n\n')+
-        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')) return;
+        'Si solo querías corregir un PRECIO, cancelá y tocá únicamente el precio.\n\n¿Guardar igual?')){
+      /* (26/09) Cancelar deja «A cuenta» como estaba. El aviso dice «cancelá y tocá únicamente el precio»,
+         pero el campo seguía con lo que bajaba el pago: guardar el precio volvía a preguntar. Y desde que
+         lo tipeado sobrevive al repintado (`ctaMontosRecordar`), ni siquiera volver a abrir la venta lo limpiaba. */
+      acuEl.value=acuEl.getAttribute('data-def')||'';
+      if(CTA_MONTOS_V && CTA_MONTOS_V.v) delete CTA_MONTOS_V.v.acu;
+      ctaRecalc();
+      toast('«A cuenta» volvió a lo guardado ('+fmtBs(_montoAnt)+'). Si solo querías corregir un precio, tocá el precio y guardá.','ok',6000);
+      return;
+    }
   }
   // Los precios: se copian los productos para no dejar el pedido a medias si algo falla.
   var prods=(p.productos||[]).map(function(x,i){
@@ -6230,6 +6466,8 @@ function ctaGuardarMontos(id){
   aplicarMontos(p, acu, sal);
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Guardado — total '+fmtBs(ventaTotal(p))+' · falta cobrar '+fmtBs(Math.max(0,Number(p.saldo)||0)),'ok');
+  // 26/09: lo que estaba en los campos ya se guardó: que el repintado no lo tome por tipeado (ctaMontosRecordar).
+  CTA_MONTOS_V=null; var _bx=document.getElementById('cta-edit'); if(_bx) _bx.removeAttribute('id');
   reabrirFicha(id);
 }
 /* Corrige el ADELANTO y el SALDO sin tocar los pagos ya registrados.
@@ -6372,6 +6610,11 @@ function ctaSacarComp(id, i){
 function ctaSetBanco(id,b){ ctaPagoRecordar(); CTA_PAGO.banco=b; showContaModal(id); }
 function ctaRegistrarPago(id){
   var p=findById(id); if(!p) return;
+  // 26/09: sin total anotado, «💵 Pago» no va al flete ni a un «cobro de más»: primero el total (ver showContaModal).
+  if(!(CTA_TIPO==='envio' || CTA_FORM_ENV) && sinMontoAnotado(p) && !noSeCobra(p)){
+    toast('A esta venta nadie le anotó cuánto era: poné primero el total en «✏️ Corregir precios y montos» y después registrá el pago.','err',8000);
+    ctaIrAMontos(); return;
+  }
   var _mEl=document.getElementById('cta-pago-monto');
   var monto=montoNegativo(_mEl.value)?0:parseMonto(_mEl.value);
   var fecha=document.getElementById('cta-pago-fecha').value||todayStr();
@@ -6517,6 +6760,7 @@ function pagoWaEstado(prom){
 }
 function showPagoWhatsapp(id, i){
   var p=findById(id); if(!p) return;
+  ctaMontosRecordar();              // 26/09: esta ventana tapa la ficha; al volver, «Corregir precios y montos» sigue como estaba
   var c=contaPagos(p)[i]; if(!c){ showContaModal(id); return; }
   var text=pagoTexto(p, c);
   /* ⚠️ Antes esta ventana arrancaba con "Copialo y pegalo en el grupo": se leía como una
@@ -6722,7 +6966,7 @@ function renderCompForm(pide){
 function pintarEnvioCobrado(){
   var el=document.getElementById('f-envio'), w=document.getElementById('wrap-envio-cob');
   if(!el||!w) return;
-  var hay=(parseFloat(el.value)||0)>0;
+  var hay=montoForm(el)>0;
   /* "Sí, ya lo cobré" necesita un método y un comprobante, y esos salen del cobro de la
      venta. Si la venta va toda por cobrar, el flete solo puede quedar PACTADO. */
   var wm=document.getElementById('wrap-metodo');
@@ -6772,10 +7016,9 @@ function toggleMixto(on){
 }
 /* Sobre qué total se reparte: lo cobrado (pagado) o el adelanto (a cuenta). */
 function mixtoTotalBase(){
-  return (segVal('f-pagado')==='SI') ? (parseFloat((document.getElementById('f-cobrado')||{}).value)||0)
-                                     : (parseFloat((document.getElementById('f-acuenta')||{}).value)||0);
+  return (segVal('f-pagado')==='SI') ? montoForm('f-cobrado') : montoForm('f-acuenta');   // «1.500» = 1.500 (26/09)
 }
-function mixtoMonto2(){ return parseFloat((document.getElementById('f-monto2')||{}).value)||0; }
+function mixtoMonto2(){ return montoForm('f-monto2'); }
 function renderBancos2(){
   var box=document.getElementById('f-banco2'); if(!box) return;
   var v=(document.getElementById('f-vendedor')||{}).value||'';
@@ -6999,25 +7242,51 @@ function submitPedido(){
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
     return;
   }
-  var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
+  var _cantMal=cantidadesMal();   // (26/09) 0, 2,5, −2 o vacía: no se inventa otra cantidad
+  if(_cantMal.length){
+    _cantMal.forEach(function(q){ q.classList.add('err'); });
+    toast('🔢 La cantidad tiene que ser un número entero, de 1 para arriba (sin decimales ni signo menos). Corregí la que quedó en rojo.','err');
+    try{ _cantMal[0].focus(); _cantMal[0].scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
+  /* 💵 UN MONTO CON SIGNO MENOS NO SE GUARDA (26/09). Con `parseFloat` quedaba «A cuenta −500» o
+     «Saldo −100» en la planilla, y un flete «−50» borraba callado el pactado; `montoForm` (como
+     `parseMonto`) le sacaría el signo. Se frena el campo A LA VISTA, como «Corregir precios y montos». */
+  var _neg=[];
+  ['f-acuenta','f-saldo','f-cobrado','f-monto2','f-envio'].forEach(function(id){ var e=document.getElementById(id); if(e) _neg.push(e); });
+  _neg=_neg.concat(Array.prototype.slice.call(document.querySelectorAll('#f-productos .prod-precio')))
+           .filter(function(e){ return e.offsetParent!==null && montoNegativo(e.value); });
+  if(_neg.length){
+    _neg.forEach(function(e){ e.classList.add('err'); });
+    toast('Los montos no pueden ser negativos: sacale el signo menos al que quedó en rojo.','err');
+    try{ _neg[0].focus(); _neg[0].scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
+  var _acu=montoForm('f-acuenta');
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
     // Mismo orden que en pantalla: método → monto → banco → comprobante.
-    if(segVal('f-pagado')==='SI' && !(parseFloat(document.getElementById('f-cobrado').value)>0)){
+    if(segVal('f-pagado')==='SI' && !(montoForm('f-cobrado')>0)){
       markErr('f-cobrado');
       toast('Poné el MONTO TOTAL COBRADO de esta venta','err');
       var fcb=document.getElementById('f-cobrado'); fcb.focus(); fcb.scrollIntoView({block:'center'});
       return;
     }
-    if(segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
-    if(faltaComprobanteForm()){
+    /* (26/09) Banco, comprobante y 2° método se piden SOLO si en el formulario hay un pago. El método
+       elegido (y el mixto) quedaban marcados aunque el bloque se escondiera —el «A cuenta» vuelto a 0—
+       y la venta no se podía guardar: «📎 Falta el comprobante» de un pago que no hay, o «Elegí a qué
+       banco» / «Poné primero el A CUENTA» de algo que ya no se ve. Sin pago no se guarda nada de eso
+       (`_metSuelto` y `_mixOn` ya lo miran). */
+    var _hayPago = segVal('f-pagado')==='SI' || _acu>0;
+    if(_hayPago && segVal('f-metodo')==='QR' && !segVal('f-banco')){ toast('Elegí a qué banco entró el QR ('+bancosDeVendedor(vendedor).join(' o ')+')','err'); var wb=document.getElementById('wrap-banco'); if(wb){ wb.classList.add('seg-err'); setTimeout(function(){ wb.classList.remove('seg-err'); },1600); wb.scrollIntoView({block:'center'}); } return; }
+    if(_hayPago && faltaComprobanteForm()){
       // El gato en vez del toast: el aviso suelto se les pasaba de largo.
       memeComprobante(vendedor, segVal('f-metodo'));
       return;
     }
     /* 💳 El segundo método (§4ej): método, monto (mayor a 0 y menor al total), banco si
        es QR, imagen propia, y que no sea el mismo método que el primero. */
-    if(MIXTO){
+    if(MIXTO && _hayPago){
       var _mx2=segVal('f-metodo2'), _mm2=mixtoMonto2(), _mbase=mixtoTotalBase();
       var _irA=function(id){ var e=document.getElementById(id); if(e){ e.classList.add('seg-err'); setTimeout(function(){ e.classList.remove('seg-err'); },1600); e.scrollIntoView({block:'center'}); } };
       if(!_mx2){ toast('Elegí con qué pagó la OTRA parte (segundo método), o quitá el segundo método','err'); _irA('wrap-mixto'); return; }
@@ -7029,7 +7298,7 @@ function submitPedido(){
     }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
-    if(segVal('f-pagado')!=='SI' && _acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+    if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
   }
 
   var isEdit=!!EDIT_ID;
@@ -7079,8 +7348,8 @@ function submitPedido(){
   var _compSinPago=false;
   var _pagSI  = segVal('f-pagado')==='SI';
   var _acuVal = _pagSI?0:_acu;
-  var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
-  var _cobVal = _pagSI ? (parseFloat(document.getElementById('f-cobrado').value)||0) : 0;
+  var _salVal = _pagSI?0:montoForm('f-saldo');
+  var _cobVal = _pagSI ? montoForm('f-cobrado') : 0;
   /* ⚠️ EL COMPROBANTE VA PEGADO A UN PAGO — sin pago no tiene dónde guardarse.
      Antes, si la vendedora adjuntaba la imagen pero dejaba el pedido SIN pago (ni "a
      cuenta" ni "pagado"), la imagen se subía a Drive y el ID se tiraba en silencio: ella
@@ -7088,13 +7357,16 @@ function submitPedido(){
      se frena y se le dice qué hacer. El recargo por entrega ya cobrado también la usa. */
   (function(){
     if(!compsArr(FORM_COMPS).length) return;
-    var _env=parseFloat((document.getElementById('f-envio')||{}).value)||0;
+    var _env=montoForm('f-envio');
     var _envCob=_env>0 && segVal('f-envio-cob')==='SI';
     if(_pagSI || _acuVal>0 || _envCob) return;                 // hay dónde guardarla
     _compSinPago=true;
   })();
   if(_compSinPago){
     toast('Subiste la imagen pero no anotaste ningún pago. El comprobante va pegado a un pago: poné cuánto entró en «A cuenta» o marcá «SÍ, pagado». Si todavía no pagó, quitá la imagen y adjuntala después desde Contabilidad al registrar el pago.','err');
+    /* (26/09) Sin pago el bloque del método se esconde y la imagen con él: «quitá la imagen» no tenía
+       dónde tocarse (el «A cuenta» vuelto a 0 con la foto ya subida trababa el guardado, §4gb). */
+    renderCompForm(true);
     var _wc=document.getElementById('wrap-comp');
     if(_wc){ _wc.classList.add('seg-err'); try{ _wc.scrollIntoView({block:'center'}); }catch(e){} }
     var _wp=document.getElementById('f-acuenta'); if(_wp) _wp.classList.add('err');
@@ -7177,8 +7449,8 @@ function submitPedido(){
          String(_mxPrev.banco||'')!==(segVal('f-metodo2')==='QR'?segVal('f-banco2'):'') ||
          compsArr(_mxPrev.comps!=null?_mxPrev.comps:_mxPrev.comp).join(',')!==compsArr(FORM_COMPS2).join(','))));
   var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
-                    ((Number(prev.acuenta)||0)===_acuVal &&
-                     (Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+                    (r2(Number(prev.acuenta)||0)===_acuVal &&     // r2: el formulario los muestra con 2 decimales (26/09)
+                     r2(Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
   if(_tieneHist && !_plataIgual &&
      !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
               contaPagos(prev).map(function(c){
@@ -7222,7 +7494,7 @@ function submitPedido(){
   var _cancelarEnvio=false;
   (function(){
     var el=document.getElementById('f-envio'); if(!el) return;
-    var monto=parseFloat(el.value)||0;
+    var monto=montoForm(el);
     var prevEnv = prev ? enviosDe(prev) : [];
     if(!(monto>0) && !prevEnv.length) return;                 // no hay recargo ni lo hubo
     var base=sinEnvios(sinMarcaReg(_metodoPago));
@@ -7619,7 +7891,7 @@ function submitPedido(){
       if(res&&res.ok){
         if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
         // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
-        if(!(res.pedido && res.pedido.ocCambiada)) toast(isEdit?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');
+        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');   // (26/09) el borrador completado es un pedido NUEVO
         verificarEcoForm(res.pedido, rec, prev);    // 🔍 lo que se vio vs lo que quedó (§4en); si falta algo, pisa el ✓ con el rojo
         flushPending();
       }
@@ -7695,7 +7967,12 @@ function submitPedido(){
        —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
        pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
        confirmación: parecía que el cambio no se había guardado. */
-    if(wasEdit){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
+    /* 📥 (26/09) El borrador de Kommo completado es un pedido NUEVO: salía «✓ Cambios guardados — Se
+       guardó, pero no cambió nada de lo que se ve en la lista de entrega» (sin `prev` no hay diferencia
+       que mostrar), justo con una entrega recién agendada. Vuelve a Mis pedidos y sale el mensaje para
+       el grupo, como cualquier pedido nuevo. */
+    if(wasEdit && !_deBorrador){ volverDeEdicion(_desde); confirmEdicionModal(rec, _cam); return; }
+    if(wasEdit) volverDeEdicion(_desde);
     showWhatsappModal(rec);
   }
 }
@@ -7958,6 +8235,14 @@ function pintarDocTipo(limpiar){
     ['f-acuenta','f-saldo','f-cobrado','f-envio'].forEach(function(id){
       var e=document.getElementById(id); if(e) e.value=(id==='f-acuenta'||id==='f-saldo')?'0':'';
     });
+    /* (26/09) …y el método, el 2° método y las imágenes del pago, que viven en el mismo bloque
+       escondido: con una imagen quedaba «Subiste la imagen pero no anotaste ningún pago… quitala»,
+       con el botón para quitarla escondido, y la ATC/RPT no se podía guardar. Las recién subidas
+       van a la papelera como al salir del formulario (nunca una que algún pedido nombra, §4fy).
+       ⚠️ Las que el pedido en edición YA tenía se quedan: sacarlas borraría un pago registrado. */
+    segSet('f-metodo',''); segSet('f-banco','');
+    if(imagenesSinPegar().length) descartarImagenesSinPegar();   // antes que toggleMixto, que suelta FORM_COMPS2
+    if(MIXTO) toggleMixto(false);
     updateMetodoVisibility();
   }
   pintarMotivoAtc(limpiar);
@@ -8100,13 +8385,14 @@ function editPedido(id){
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-maps').value=rec.maps||'';
   segSet('f-pagado',rec.pagado?'SI':'NO');
-  document.getElementById('f-saldo').value=rec.saldo||0;
-  document.getElementById('f-acuenta').value=rec.acuenta||0;
+  /* r2 (26/09): `montoForm` lee «1500.125» como miles; con dos decimales como mucho, nunca. */
+  document.getElementById('f-saldo').value=r2(rec.saldo);
+  document.getElementById('f-acuenta').value=r2(rec.acuenta);
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
   var _cb=document.getElementById('f-cobrado');
-  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
+  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||''); }
   var _ce=document.getElementById('f-envio');
-  if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
+  if(_ce){ var _e=r2(envioTotal(rec)); _ce.value=_e>0?_e:''; }
   /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
      método (§4eu): `pintarEnvioCobrado` lo fuerza a «NO» si el método no está a la vista, y
      acá todavía no lo está. Así, un flete cobrado ENTERO abría en «NO» y guardar el pedido sin
@@ -8142,7 +8428,7 @@ function editPedido(id){
   if(_mx){
     var _a2=anticipoDe(rec);
     if(_cb && _a2 && rec.pagado) _cb.value=r2((Number(_a2.monto)||0)+(Number(_mx.monto)||0));
-    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=_mx.monto;
+    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=r2(_mx.monto);
     segSet('f-metodo2', _mx.metodo||'');
   }
   pintarMixto();
@@ -8659,7 +8945,7 @@ function renderColaAviso(){
     h+='<div style="background:#FEF3E2;border:1px solid #FCD34D;border-left:4px solid var(--amber);border-radius:10px;padding:10px 13px;margin-bottom:10px;font-size:.83rem;color:#7c4b00">'+
        '⏳ <b>'+pend.length+' guardado'+(pend.length===1?'':'s')+' de este dispositivo todavía NO '+(pend.length===1?'llegó':'llegaron')+' a la planilla</b> ('+motivo+'). '+
        'Las demás computadoras no lo ven hasta que se mande. No cierres esto sin que diga 0. '+
-       '<a onclick="flushPending().then(function(){ toast(\'Reintentado\',\'ok\'); renderColaAviso(); })" style="text-decoration:underline;cursor:pointer">Reintentar ahora</a>'+
+       '<a onclick="misReintentarCola()" style="text-decoration:underline;cursor:pointer">Reintentar ahora</a>'+
        (CLAVE_RECHAZADA?' · <a onclick="pedirClaveEquipo()" style="text-decoration:underline;cursor:pointer">🔐 Ingresar la clave</a>':'')+
        '<div style="font-size:.76rem;margin-top:4px">'+pend.slice(0,5).map(function(x){ return esc((String(x.id||'').indexOf('__ret_')===0?'💵 retiro de '+(x.vendedor||''):(x.cliente||x.id||''))); }).join(' · ')+(pend.length>5?' …':'')+'</div></div>';
   }
@@ -8670,6 +8956,16 @@ function renderColaAviso(){
        '<a onclick="localStorage.removeItem(LS_RECHAZOS);renderColaAviso()" style="text-decoration:underline;cursor:pointer;font-size:.76rem">Ya los revisé, limpiar</a></div>';
   }
   el.innerHTML=h;
+}
+/* (26/09) «Reintentar ahora» decía «Reintentado» en VERDE aunque no hubiera salido nada (sin señal,
+   servidor caído): el cartel ámbar seguía con el mismo número y el ✓ decía otra cosa. Ahora dice lo
+   que pasó, como el botón del cartel «Quedó en cola» (§4eo). */
+function misReintentarCola(){
+  return flushPending().then(function(){
+    var n=getPending().length;
+    toast(n ? ('⏳ Sigue sin llegar a la planilla: '+n+' en la cola de este dispositivo. Se reintenta solo.') : '✓ Ya llegó a la planilla', n?'err':'ok', n?7000:undefined);
+    renderColaAviso(); if(!n) renderMis();
+  });
 }
 function updateFooter(){
   renderColaAviso();
@@ -8734,6 +9030,11 @@ function autoOcupado(){
   }
   var v=document.getElementById('visor');
   if(v && v.style.display && v.style.display!=='none') return 'visor';
+  /* 🧮 26/09: tipeando el arqueo. El número se guarda al salir del campo; repintar el cuadre con el
+     campo adentro se llevaba lo tipeado y el foco (y Chromium, al sacar el campo, disparaba su
+     `change` en el medio del repintado: excepción). Se refresca en la próxima vuelta. */
+  var ae=document.activeElement;
+  if(ae && ae.classList && ae.classList.contains('cua-arqueo')) return 'anotando el arqueo';
   return '';
 }
 /* Repinta SOLO la vista que se está mirando, y le devuelve el scroll donde estaba: que
@@ -8874,8 +9175,12 @@ function mergePending(serverList){
   // …y los retiros con un guardado en vuelo (el list volvió antes que el «ok») también (§4eo)
   for(var kU in SAVE_ULTIMO){ if(esFilaRetiro(SAVE_ULTIMO[kU].rec) && saveReciente(kU)) pendRet=pendRet.concat([SAVE_ULTIMO[kU].rec]); }
   if(pendRet.length){
-    var idsR={}; RETIROS.forEach(function(r){ idsR[String(r.id)]=1; });
-    pendRet.forEach(function(r){ if(!idsR[String(r.id)]){ RETIROS.push(r); idsR[String(r.id)]=1; } });
+    /* 26/09: y si el servidor ya lo tiene, manda la versión de la cola o del guardado en el aire,
+       como con los pedidos (arriba). Antes solo se agregaban los que FALTABAN: un retiro corregido
+       de 400 a 500 con el servidor ocupado volvía a 400 en el primer refresco y el cuadre decía
+       «le quedan Bs 600» hasta que saliera la cola. */
+    var idsR={}; RETIROS.forEach(function(r, i){ idsR[String(r.id)]=i; });
+    pendRet.forEach(function(r){ var kR=String(r.id); if(idsR[kR]!=null) RETIROS[idsR[kR]]=r; else { idsR[kR]=RETIROS.length; RETIROS.push(r); } });
     saveRetirosMirror(); renderRetirosSiActivo();
   }
   /* ⚠️ Las filas del sistema en cola NO son pedidos (§4ev, §4er MEDIA): la del stock con el
@@ -9338,7 +9643,8 @@ function leerCierresDeLista(lista, esDelServidor){
   }
   else if(stk && sisMasNueva(STOCK_ID, stk)){ STOCK=sisJuntarDeLista(STOCK_ID, stk); stockGuardarEspejo(); }   // §4fz: otro guardó DESPUÉS que nosotros
   else if(!stk && esDelServidor && !STOCK_CARGADO) STOCK_CARGADO=true;   // la planilla no tiene stock todavía: la memoria vacía ES el stock
-  if(car){ CARGA_CHK=parseCargaChk(car.observaciones); saveCargaMirror(); renderCargaSiActiva(); }
+  // (26/09) Lo tildado acá y todavía sin confirmar manda sobre la fila (antes un refresco entre el toque y el guardado se lo llevaba)
+  if(car){ CARGA_CHK=reescritaAplicar(Object.keys(parseCargaChk(car.observaciones)), reescritaCambios(CARGA_ID, CARGA_CAMBIOS)); saveCargaMirror(); renderCargaSiActiva(); }
   RETIROS=rets; saveRetirosMirror(); renderRetirosSiActivo();
   BORRADORES=borr; saveBorrMirror(); renderBorrSiActivo();
   if(cie){
@@ -9362,7 +9668,7 @@ function leerCierresDeLista(lista, esDelServidor){
        cada 2 minutos (§4aw) la carrera se perdía seguido. Por eso, mientras el servidor
        no confirme lo que mandamos, manda lo nuestro. */
     if(CIERRES_PEND){
-      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')) CIERRES_PEND=null;  // ya llegó
+      if(delServidor.join(' ')===CIERRES_PEND.slice().sort().join(' ')){ CIERRES_PEND=null; reescritaConfirmada(CIERRE_ID, reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS), cie); }  // ya llegó (26/09: y lo tocado acá ya está adentro, también lo de la cola)
       else delServidor=CIERRES_PEND.slice().sort();                                          // todavía no
     }
     DIAS_CERRADOS=delServidor;
@@ -9403,32 +9709,61 @@ function diaCerrado(f){ return DIAS_CERRADOS.indexOf(String(f||''))>=0; }
 /* Lo que esta computadora mandó y el servidor todavía no confirmó. Mientras esté puesto,
    gana sobre lo que traiga la planilla (ver el comentario en leerCierresDeLista). */
 var CIERRES_PEND=null;
+/* 🔒 (26/09) LA FILA SE REESCRIBE ENTERA, ASÍ QUE ANTES SE RELEE. Se mandaba la lista que tenía
+   ESTA computadora, y con dos equipos de administración el que no se había enterado de un cierre
+   del otro (refresca cada 2 min, y nunca con una ventana abierta o en segundo plano) lo BORRABA
+   al cerrar su propio día: el día del otro quedaba abierto para todos y el portero del servidor
+   dejaba entrar pedidos a un camión ya armado. Ahora se lee la planilla justo antes y se le
+   aplica SOLO lo que se tocó acá (`CIERRES_CAMBIOS`: día → true cerrado / false reabierto), hasta
+   que el servidor lo confirma. Si la lectura no contesta, se guarda como antes. */
+var CIERRES_CAMBIOS={};
+function diasDeFilaCierre(cie){
+  var crudo=String((cie&&cie.observaciones)||'').trim();
+  var d=crudo.split(/[^\d-]+/).filter(function(s){ return /^\d{4}-\d{2}-\d{2}$/.test(s); });
+  if(!d.length && crudo){ var dC=new Date(crudo); if(!isNaN(dC)) d=[isoLocal(dC)]; }   // la celda que Sheets volvió fecha (ver filaCierre)
+  return d;
+}
 function guardarCierres(){
   DIAS_CERRADOS=DIAS_CERRADOS.filter(function(f,i,a){ return a.indexOf(f)===i; }).sort();
   saveCierresMirror();
-  var fila=filaCierre(DIAS_CERRADOS);
-  var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
+  reescritaColaAlDia(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) la que espera en la cola, al día (ver REESCRITAS)
   CIERRES_PEND=DIAS_CERRADOS.slice();          // desde acá, lo nuestro manda
-  var confirmado=function(ok){
-    // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
-    // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
-    if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
-    if(!ok) queuePending(fila);                // sin confirmar: la cola lo reintenta y CIERRES_PEND sigue mandando
-    renderCupoForm(); renderCierreDias();
+  var mandar=function(){
+    var fila=filaCierre(DIAS_CERRADOS);
+    var mandado=DIAS_CERRADOS.slice().sort().join(' ');   // lo que ESTE guardado lleva
+    var cambios=reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS);   // (26/09) con lo que esperaba en la cola
+    var confirmado=function(ok){
+      // Lo que ya quedó en la planilla no se vuelve a aplicar: otro puede cambiarlo después.
+      if(ok) reescritaConfirmada(CIERRE_ID, cambios, fila);
+      // Solo se suelta si nadie volvió a cerrar o reabrir mientras tanto.
+      // (Se compara contra la lista de días, no contra el texto de la fila: ese lleva prefijo.)
+      if(ok && CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===mandado) CIERRES_PEND=null;
+      if(!ok) reescritaEncolar(fila, CIERRES_CAMBIOS);   // sin confirmar: la cola lo reintenta (rearmado, 26/09) y CIERRES_PEND sigue mandando
+      renderCupoForm(); renderCierreDias();
+    };
+    apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); });
   };
-  if(CONNECTED){ apiSave(fila).then(function(res){ confirmado(!!(res&&res.ok)); }, function(){ confirmado(false); }); }
-  else { queuePending(fila); }
+  if(CONNECTED){
+    conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+      if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+      var cie=null; res.pedidos.forEach(function(p){ if(esFilaCierre(p)) cie=p; });
+      var s=reescritaAplicar(diasDeFilaCierre(cie), reescritaCambios(CIERRE_ID, CIERRES_CAMBIOS));
+      DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice();
+      saveCierresMirror(); renderAdmin(); renderCupoForm(); renderCierreDias();
+    }, function(){}).then(mandar, mandar);
+  }
+  else { reescritaEncolar(filaCierre(DIAS_CERRADOS), CIERRES_CAMBIOS); }
   renderAdmin(); renderCupoForm(); renderCierreDias();
 }
 function cerrarDia(f){
   if(!/^\d{4}-\d{2}-\d{2}$/.test(f)) return;
   if(diaCerrado(f)) return;
-  DIAS_CERRADOS.push(f); guardarCierres();
+  DIAS_CERRADOS.push(f); CIERRES_CAMBIOS[f]=true; guardarCierres();
   toast('🔒 '+fmtFecha(f)+' cerrado — ya no entran pedidos nuevos para ese día','ok');
 }
 function abrirDia(f){
   var i=DIAS_CERRADOS.indexOf(String(f||'')); if(i<0) return;
-  DIAS_CERRADOS.splice(i,1); guardarCierres();
+  DIAS_CERRADOS.splice(i,1); CIERRES_CAMBIOS[String(f)]=false; guardarCierres();
   toast('🔓 '+fmtFecha(f)+' reabierto','ok');
 }
 function pedidosDelDia(f){ var n=0; for(var i=0;i<STATE.length;i++) if(STATE[i].fecha===f) n++; return n; }
@@ -9577,8 +9912,10 @@ var QUICK_DEFS=[
   {k:'sinchofer',   lbl:'🚚 Sin chofer',    test:function(p){return !(p.chofer||p.vehiculo);}},
   {k:'noentregado', lbl:'📦 No entregados', test:function(p){return !p.entregado;}},
   {k:'porverif',    lbl:'🔎 Por verificar', test:function(p){return !p.verificado && !p.entregado;}},
-  {k:'am',          lbl:'🌅 AM',            test:function(p){return p.turno==='AM';}},
-  {k:'pm',          lbl:'🌆 PM',            test:function(p){return p.turno==='PM';}},
+  /* (26/09) Como el cupo (`cuposUsadosTurno`, §4fh): sin turno cuenta como AM, y sin fecha (venta de tienda) no
+     ocupa lugar. Antes el chip AM no contaba los sin turno (los de ROHO) y no coincidía con el cupo. */
+  {k:'am',          lbl:'🌅 AM',            test:function(p){return !!p.fecha && normTurno(p.turno)==='AM';}},
+  {k:'pm',          lbl:'🌆 PM',            test:function(p){return !!p.fecha && normTurno(p.turno)==='PM';}},
   {k:'especial',    lbl:'🔵 Especiales',    test:function(p){return hasEspecial(p)||has50x70(p);}},
   /* 🏪 §4do — pregunta del dueño: «¿dónde ve logística las reposiciones? ¿o filtran por
      solo reposiciones?». Estaban mezcladas con todo, con su franja ámbar y nada más. */
@@ -9827,7 +10164,9 @@ function renderAdmin(){
       cupoEl.innerHTML='🚫 <b>'+fmtFecha(cdia)+' (domingo)</b> — no se agenda';
     }else if(diaSabado(cdia)){
       cupoEl.className='cupo '+(rAM<=0?'full':(rAM<=3?'warn':'ok'));
-      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'');
+      var uS=cuposUsadosTurno(cdia,'AM');   // (26/09) §4fh también el sábado: 17 en un turno de 15 se veía igual que 15
+      cupoEl.innerHTML='🎟️ <b>Sábado</b> '+fmtFecha(cdia)+' — 🌅 AM: <b>'+rAM+'</b>/15 libres · <span style="opacity:.75">sin PM</span>'+(rAM<=0?' — <b>LLENO</b>':'')+
+        (uS>lAM?(' · ⚠️ <b>'+(uS-lAM)+'</b> forzado'+(uS-lAM===1?'':'s')+' de más ('+uS+' AM)'):'');
     }else{
       var full=(rAM<=0&&rPM<=0), pocos=(rAM<=3||rPM<=3);
       // §4fh: si administración forzó alguno, el día tiene MÁS de los que entran — y hay que decirlo.
@@ -10093,7 +10432,8 @@ function reproConfirmar(){
    Lista de carga por camión (picking) — qué productos suben a cada vehículo
    ========================================================================== */
 var CARGA_DIA='hoy';   // arranca en HOY: es la carga/salida que se controla en el día
-function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
+/* (26/09) La venta de tienda no sube al camión: en «Todos» salía en un bloque «(sin fecha)». */
+function cargaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p)) return false; if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
 /* Si la lista de carga está abierta, refrescarla al cambiar algo desde la ficha del pedido */
 function cargaAbierta(){ var ov=document.getElementById('carga-overlay'); return !!(ov && ov.style.display==='flex'); }
@@ -10148,22 +10488,111 @@ function loadCargaMirror(){
 }
 function getCargaChk(){ return CARGA_CHK; }
 function isCargaChk(k){ return !!CARGA_CHK[k]; }
-/* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez. */
+/* 🔁 (26/09) LAS DOS FILAS QUE SE REESCRIBEN ENTERAS —días cerrados y tildes de la carga— las tocan
+   varias computadoras y el servidor no las junta (sin sello, en el 20-a y en el 23-b). Cada guardado
+   relee la planilla y le aplica SOLO lo tocado acá (clave → true puesta / false sacada), como hace
+   `guardarCierres` desde 7ee6160. Sin señal van a la cola con esos cambios adentro (`_cambios`, no
+   viaja) y al volver la señal se rearman igual (`mandarReescritaDeCola`): mandadas tal cual pisaban
+   lo que otra computadora cerró, reabrió o tildó mientras tanto. Las demás filas de la cola, igual. */
+var CARGA_CAMBIOS={};
+var REESCRITAS={};   // id → cómo leer, armar y soltar esa fila
+REESCRITAS[CIERRE_ID]={
+  cambios:function(){ return CIERRES_CAMBIOS; },
+  claves:function(fila){ return diasDeFilaCierre(fila); },
+  armar:function(s){ DIAS_CERRADOS=Object.keys(s).sort(); CIERRES_PEND=DIAS_CERRADOS.slice(); saveCierresMirror(); renderCupoForm(); renderCierreDias(); return filaCierre(DIAS_CERRADOS); },
+  listo:function(fila){ if(CIERRES_PEND && CIERRES_PEND.slice().sort().join(' ')===diasDeFilaCierre(fila).sort().join(' ')) CIERRES_PEND=null; renderCupoForm(); renderCierreDias(); }
+};
+REESCRITAS[CARGA_ID]={
+  cambios:function(){ return CARGA_CAMBIOS; },
+  claves:function(fila){ return Object.keys(parseCargaChk(fila&&fila.observaciones)); },
+  armar:function(s){ CARGA_CHK=s; saveCargaMirror(); renderCargaSiActiva(); return filaCarga(); },
+  listo:function(){}
+};
+function filaCarga(){ return filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK)); }
+function reescritaEnCola(id){ return getPending().filter(function(p){ return p && String(p.id)===String(id); })[0]||null; }
+/* Lo que hay que aplicar: lo que espera en la cola (puede ser de antes de recargar) y encima lo de acá, más nuevo. */
+function reescritaCambios(id, mem){
+  var q=reescritaEnCola(id), c={}, k;
+  if(q && q._cambios) for(k in q._cambios) c[k]=q._cambios[k];
+  for(k in (mem||{})) c[k]=mem[k];
+  return c;
+}
+function reescritaAplicar(base, cam){ var s={}; (base||[]).forEach(function(x){ s[x]=1; }); for(var k in cam){ if(cam[k]) s[k]=1; else delete s[k]; } return s; }
+/* A la cola con los cambios adentro. Una que ya esperaba de un panel de antes (sin `_cambios`) sigue como siempre. */
+function reescritaEncolar(fila, mem){
+  var q=reescritaEnCola(fila.id);
+  if(q && !q._cambios){ queuePending(fila); return; }
+  var f=Object.assign({}, fila); f._cambios=reescritaCambios(fila.id, mem); queuePending(f);
+}
+/* Lo que se toca acá se anota también en la que espera en la cola: si no, al confirmarse con señal quedaba
+   ahí el valor VIEJO y la cola lo volvía a aplicar después (un día reabierto se cerraba de nuevo). */
+function reescritaColaAlDia(id, mem){
+  var a=getPending(), toca=false;
+  a.forEach(function(p){ if(p && String(p.id)===String(id) && p._cambios){ for(var k in (mem||{})) p._cambios[k]=mem[k]; toca=true; } });
+  if(toca) setPending(a);
+}
+/* Lo que la planilla YA tiene (`fila`, lo mandado o lo leído) no se vuelve a aplicar: otro puede cambiarlo
+   después. Sale de acá si nadie lo volvió a tocar, y de la cola si dice lo mismo; la que queda vacía, sale. */
+function reescritaConfirmada(id, cam, fila){
+  var R=REESCRITAS[String(id)]; if(!R || !fila) return;
+  var en={}; R.claves(fila).forEach(function(k){ en[k]=1; });
+  var mem=R.cambios(), ok={}, k;
+  for(k in cam){ if(!!en[k]===!!cam[k]){ ok[k]=cam[k]; if(mem[k]===cam[k]) delete mem[k]; } }
+  var a=getPending(), toca=false;
+  a=a.filter(function(p){
+    if(!p || String(p.id)!==String(id) || !p._cambios) return true;
+    for(var kc in ok){ if(p._cambios[kc]===ok[kc]){ delete p._cambios[kc]; toca=true; } }
+    if(!Object.keys(p._cambios).length){ toca=true; return false; }
+    return true;
+  });
+  if(toca){ setPending(a); updateFooter(); }
+}
+/* Una de estas filas que esperaba en la cola: se rearma con la planilla de AHORA. Sin poder leerla no se
+   manda (queda para el próximo intento): mandada a ciegas es justo lo que pisaba. */
+function mandarReescritaDeCola(rec){
+  var id=String(rec.id), R=REESCRITAS[id];
+  return conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+    if(!(res && res.ok && Array.isArray(res.pedidos))) return null;
+    var srv=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===id) srv=p; });
+    return R.claves(srv);
+  }, function(){ return null; }).then(function(base){
+    if(!base) return { ok:false, error:'sin_lectura' };
+    var cam=reescritaCambios(id, R.cambios());
+    if(!Object.keys(cam).length) return { ok:true };          // ya estaba todo en la planilla
+    var fila=R.armar(reescritaAplicar(base, cam));
+    return apiSave(fila).then(function(r){ if(r && r.ok){ reescritaConfirmada(id, cam, fila); R.listo(fila); } return r; });
+  });
+}
+/* Se manda con un respiro: tildando varios seguidos va UNA sola escritura, no diez.
+   (26/09) Y antes se relee la planilla: con dos cargadores a la vez ganaba el último y lo tildado por el
+   otro desaparecía (lo mismo que los días cerrados, 7ee6160). */
 var _cargaT=null;
 function guardarCargaChk(){
   saveCargaMirror();
+  reescritaColaAlDia(CARGA_ID, CARGA_CAMBIOS);
   clearTimeout(_cargaT);
   _cargaT=setTimeout(function(){
-    var fila=filaSistema(CARGA_ID, '📦 TILDES DE LA LISTA DE CARGA — fila del sistema, NO BORRAR', textoCargaChk(CARGA_CHK));
-    if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
-    else queuePending(fila);
+    var mandar=function(){
+      var cam=reescritaCambios(CARGA_ID, CARGA_CAMBIOS), fila=filaCarga();
+      apiSave(fila).then(function(res){ if(res&&res.ok) reescritaConfirmada(CARGA_ID, cam, fila); else reescritaEncolar(fila, CARGA_CAMBIOS); },
+                         function(){ reescritaEncolar(fila, CARGA_CAMBIOS); });
+    };
+    if(CONNECTED){
+      conTopeDuro(apiList(), 15000, 'tardo_datos').then(function(res){
+        if(!(res && res.ok && Array.isArray(res.pedidos))) return;
+        var car=null; res.pedidos.forEach(function(p){ if(p && String(p.id)===CARGA_ID) car=p; });
+        CARGA_CHK=reescritaAplicar(REESCRITAS[CARGA_ID].claves(car), reescritaCambios(CARGA_ID, CARGA_CAMBIOS));
+        saveCargaMirror(); renderCargaSiActiva();
+      }, function(){}).then(mandar, mandar);
+    }
+    else reescritaEncolar(filaCarga(), CARGA_CAMBIOS);
   }, 700);
 }
-function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; guardarCargaChk(); }
+function setCargaChk(k,on){ if(on) CARGA_CHK[k]=1; else delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=!!on; guardarCargaChk(); }
 function limpiarCargaChk(){
   if(!confirm('¿Destildar todo lo cargado de esta vista?\n\nSe destilda para TODO el equipo, no solo en esta computadora.')) return;
   var fechas={}; cargaLista().forEach(function(p){ fechas[p.fecha||'']=1; });
-  Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]) delete CARGA_CHK[k]; });
+  Object.keys(CARGA_CHK).forEach(function(k){ if(fechas[k.split('|')[0]]){ delete CARGA_CHK[k]; CARGA_CAMBIOS[k]=false; } });
   guardarCargaChk();
   renderCarga(); toast('Tildes borrados para todo el equipo','ok');
 }
@@ -10538,6 +10967,7 @@ function guardarDevolucionAtc(id){
     devQ: (devSi||entSi) ? (getVendedorMem()||'logística') : '',
     devH: (devSi||entSi) ? horaCorta() : ''
   });
+  atcEntregadoComoEnt(p);
   persistPedido(p); closeModal(); renderAtc();
   toast(entSi ? 'ATC cerrada ✓ — el cliente ya lo tiene'
       : rfSi ? 'Recogido de fábrica ✓ — falta llevárselo al cliente'
@@ -10588,6 +11018,12 @@ function guardarProgramarDevAtc(id){
   if(!f){ toast('Falta el día de la devolución','err'); return; }
   if(f<todayStr()){ toast('La devolución no puede programarse para un día que ya pasó','err'); return; }
   if(atcDevuelta(p) && f<atcDevuelta(p)){ toast('No se le puede devolver antes de que volviera de fábrica ('+fmtFecha(atcDevuelta(p))+')','err'); return; }
+  /* (26/09) El MISMO día del recojo el botón ya se habilita (la fecha «llegó»), y si el chofer no
+     lo tildó puede que todavía no haya ido: programar muda la ATC al día de la devolución y el
+     viaje de HOY a buscarlo sale de su lista y de la carga. Se pregunta antes. */
+  var _a0=atcDe(p)||{};
+  if(!_a0.pdev && !p.entregado && (p.fecha||'')>=todayStr() &&
+     !confirm('⚠️ El recojo de esta ATC es HOY ('+fmtFecha(p.fecha)+') y el chofer todavía no lo marcó ✅.\n\nSi programás la devolución ahora, el viaje de hoy a buscarlo SALE de la lista del chofer y de la carga.\n\n¿Ya lo recogieron?')) return;
   /* (25/09) Ocupa un cupo como cualquier entrega: domingo, sábado PM, día cerrado o turno lleno
      AVISAN y se confirman, igual que en 📅 Reprogramar. Antes decía «✓ programada» y el portero
      del servidor la rechazaba después como «turno lleno» (también el domingo). */
@@ -10595,8 +11031,11 @@ function guardarProgramarDevAtc(id){
   if(_avisos.length && !confirm('⚠️ Ojo:\n\n   • '+_avisos.join('\n   • ')+'\n\n¿Programar la devolución igual?')) return;
   if(_avisos.length && !asegurarClaveAdmin()) return;
   var a=atcDe(p)||{};
-  var rec=a.rec || p.fecha || '';                 // el día del recojo se guarda antes de mover la fecha
-  mergeAtcDatos(p, { rec:rec, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
+  /* El día del recojo —y su turno, `rturno` (26/09)— se guardan antes de mover la fecha. Si ya vive en su
+     devolución («Cambiar devolución») se conservan: `p.fecha`/`p.turno` ya son los de la devolución. */
+  var _yaDev=!!(a.pdev && a.rec);
+  var rec=_yaDev ? a.rec : (p.fecha||''), rturno=_yaDev ? (a.rturno||'') : (p.turno||'');
+  mergeAtcDatos(p, { rec:rec, rturno:rturno, pdev:f, pturno:t, pdevQ:(getVendedorMem()||'logística'), pdevH:horaCorta() });
   p.fecha=f; p.turno=t; p.entregado=false;
   persistPedido(p, _avisos.length?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Devolución programada para el '+fmtFecha(f)+' '+t+' ✓ — ocupa un cupo ese día','ok');
@@ -10607,17 +11046,23 @@ function quitarProgramarDevAtc(id){
   /* Vuelve a una fecha que YA PASÓ (o cerrada): no le suma bultos a ningún camión, pero el
      portero del servidor la trataba como un pedido nuevo y contestaba «día cerrado» o «AM
      lleno» — la devolución seguía programada en la planilla (§4ew). Va con `forzar`. */
-  var _dest=a.rec||p.fecha, _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest));
+  /* (26/09) …y con SU turno (`rturno`, guardado al programar): quedaba vacío —AM para los cupos— y el
+     recojo de la tarde contaba en la mañana. Con ese turno lleno también va con `forzar`: el recojo ya se
+     hizo y no le suma un bulto a ningún camión. */
+  var _dest=a.rec||p.fecha, _tur=a.rturno||'';
+  var _forzar=!!_dest && (_dest<todayStr() || diaCerrado(_dest) || cuposUsadosTurno(_dest,_tur)>=limTurno(_dest,_tur));
   if(_forzar && !asegurarClaveAdmin()) return;
-  p.fecha=_dest; p.turno=''; p.entregado=true;   // vuelve al día del recojo, ya recogido
-  mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'' });
+  p.fecha=_dest; p.turno=_tur; p.entregado=true;   // vuelve al día del recojo, ya recogido
+  // `rec` se va también: la fecha del pedido vuelve a ser el recojo (si quedaba, un 📅 después no se veía).
+  mergeAtcDatos(p, { pdev:'', pturno:'', pdevQ:'', pdevH:'', rec:'', rturno:'' });
   persistPedido(p, _forzar?{forzar:true}:undefined); closeModal(); renderAtc();
   toast('Se quitó la devolución programada','ok');
 }
 /* Deshacer entero, para cuando se anotó en la ATC equivocada. */
 function borrarDevolucionAtc(id){
   var p=findById(id); if(!p) return;
-  mergeAtcDatos(p, { dev:'', hizo:'', rf:'', rfQ:'', rfH:'', ent:'', devQ:'', devH:'' });
+  mergeAtcDatos(p, { dev:'', hizo:'', rf:'', rfQ:'', rfH:'', rfAuto:'', ent:'', devQ:'', devH:'' });
+  atcEntregadoComoEnt(p);
   persistPedido(p); closeModal(); renderAtc();
   toast('Se deshizo la marca','ok');
 }
@@ -10713,7 +11158,12 @@ function verAtc(id){
 function copiarAtc(){
   var list=atcLista();
   if(!list.length){ toast('No hay ATC para copiar','err'); return; }
-  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+'\n\n'+
+  /* (26/09) Con encabezado —pegada en Excel no se sabía qué era cada columna— y con lo que la
+     matriz muestra desde §4eb: el «recogido de fábrica» y la devolución programada. Van AL FINAL
+     para no correr las de siempre. */
+  var enc=['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica',
+           'Al cliente','Días','Qué se hizo','Recogido de fábrica','Devolución programada'];
+  var txt='🎧 ATC — '+list.length+' atencion'+(list.length===1?'':'es')+'\n\n'+enc.join('\t')+'\n'+
     list.map(function(p){
       var d=atcDias(p);
       return [ocEtiq(p.oc), fmtFecha(atcEntro(p)), (p.cliente||''), (p.vendedor||''),
@@ -10722,7 +11172,9 @@ function copiarAtc(){
               (atcRecogida(p)?fmtFecha(atcRecogida(p)):''),
               (atcDevuelta(p)?fmtFecha(atcDevuelta(p)):''),
               (atcEntregada(p)?fmtFecha(atcEntregada(p)):''),
-              (d==null?'':(d+' días')), (atcQueSeHizo(p)||'')].join('\t');
+              (d==null?'':(d+' días')), (atcQueSeHizo(p)||''),
+              (atcRecogidoFab(p)?fmtFecha(atcRecogidoFab(p)):''),
+              (atcDevProg(p)?(fmtFecha(atcDevProg(p))+' '+atcDevTurno(p)).trim():'')].join('\t');
     }).join('\n');
   copyText(txt); toast('Matriz de ATC copiada ✓','ok');
 }
@@ -10772,6 +11224,7 @@ function misEstado(k){
 }
 /* Filtro rápido de Mis pedidos: hoy / mañana / todos */
 var MIS_FILTER='todos';
+var MIS_TOPE=120;          // cuántas fichas se dibujan; «Ver más» suma de a 120 (26/09)
 var MIS_DEFS=[
   {k:'hoy',    lbl:'📅 Hoy',      test:function(p){ return p.fecha===todayStr(); }},
   {k:'manana', lbl:'🌅 Mañana',   test:function(p){ return p.fecha===proximoDiaEntrega(); }},
@@ -10781,7 +11234,7 @@ var MIS_DEFS=[
   {k:'todos',  lbl:'📋 Todos',    test:function(){ return true; }}
 ];
 function misTest(k){ for(var i=0;i<MIS_DEFS.length;i++) if(MIS_DEFS[i].k===k) return MIS_DEFS[i].test; return function(){return true;}; }
-function setMisFiltro(k){ MIS_FILTER=k; renderMis(); }
+function setMisFiltro(k){ MIS_FILTER=k; MIS_TOPE=120; renderMis(); }
 function renderMisChips(mine){
   var el=document.getElementById('mis-chips'); if(!el) return;
   el.innerHTML=MIS_DEFS.map(function(d){
@@ -10980,8 +11433,12 @@ function renderBorradoresHuerfanos(){
    así el pedido sigue atado a su lead y el robot no lo vuelve a crear. */
 function completarBorrador(id){
   var rec=borradorDe(id); if(!rec){ toast('Ese borrador ya no está.','err'); return; }
+  /* (26/09) Al guardar se vuelve a donde se tocó «Completar»: el «sin vendedora» vive en Administración
+     y terminaba en Mis pedidos. Reabierto por un choque (ya en el formulario), sigue a donde iba. */
+  var _vf=document.getElementById('view-form'), _va=document.getElementById('view-admin');
+  var _desde=(_vf && _vf.classList.contains('active')) ? EDIT_DESDE : ((_va && _va.classList.contains('active')) ? 'admin' : 'mis');
   showView('form'); resetForm();
-  EDIT_ID=String(rec.id); EDIT_DESDE='mis'; EDIT_REV=(rec.rev!=null)?rec.rev:null;
+  EDIT_ID=String(rec.id); EDIT_DESDE=_desde; EDIT_REV=(rec.rev!=null)?rec.rev:null;
   document.getElementById('edit-banner').classList.add('on');
   var _fe=document.getElementById('f-fecha'); _fe.removeAttribute('min'); _fe.value='';
   document.getElementById('f-vendedor').value=vendedorDeBorrador(rec)||rec.vendedor||''; applyVendedorLite();
@@ -11023,7 +11480,7 @@ function completarBorrador(id){
   /* El monto que Kommo trae es el de la venta, no un cobro: entra como saldo por cobrar
      y la vendedora lo corrige si ya cobró algo. */
   var monto=Number(rec.saldo)||0;
-  if(monto){ document.getElementById('f-saldo').value=String(monto); }
+  if(monto){ document.getElementById('f-saldo').value=String(r2(monto)); }   // r2: ver `montoForm` (26/09)
   pintarDocTipo(); renderCupoForm(); refreshDatalists();
   var ff=document.getElementById('f-fecha'); if(ff) try{ ff.focus(); }catch(e){}
   toast(_lleno.length
@@ -11092,7 +11549,9 @@ function avisoMisHtml(mine){
 /* Se abre solo una vez por día (por compu) cuando hay pedidos sin stock: es lo urgente. */
 function autoAbrirAvisos(v, mine){
   var q=misPendientes(mine); if(!q.sinStock.length) return;
-  var k='me_aviso_'+String(v).toLowerCase().replace(/\s+/g,'_')+'_'+todayStr();
+  /* (26/09) La clave compara como `mismoVendedor` (sin tildes): con «Carola Chávez» y «Carola Chavez»
+     se abría dos veces el mismo día. Un nombre sin tildes da la misma clave que antes. */
+  var k='me_aviso_'+normNombre(v).replace(/\s+/g,'_')+'_'+todayStr();
   try{ if(localStorage.getItem(k)) return; localStorage.setItem(k,'1'); }catch(e){}
   setTimeout(function(){
     var vw=document.getElementById('view-mis');
@@ -11200,6 +11659,26 @@ function llenarSelectChoferes(){
   if(actual && list.indexOf(actual)>=0) sel.value=actual;
 }
 function renderChoferSiActivo(){ var vw=document.getElementById('view-chofer'); if(vw && vw.classList.contains('active')) renderChofer(); }
+/* 🚚 Lo que el chofer hizo sin señal y NO entró (26/09, `rechazoPerdido`). Últimas 48 h, hasta que
+   toque «Ya lo revisé». Es SU dispositivo: lo anotado acá son cambios suyos. */
+function choRechazosHtml(){
+  var r=rechazosLocales().filter(function(x){ return x.perdio && !x.visto && Date.now()-x.ts<48*3600000; });
+  if(!r.length) return '';
+  var li=r.map(function(x){
+    var q=[]; if(x.perdio.entregado) q.push('✅ la entrega: volvé a tocar ✅');
+    (x.perdio.cobros||[]).forEach(function(c){ q.push('💵 el cobro '+esc(c.txt)+': volvé a anotarlo, o avisale a Contabilidad'); });
+    if(x.perdio.fotos) q.push('📷 '+x.perdio.fotos+' foto'+(x.perdio.fotos>1?'s':'')+' de la entrega: volvé a subirla'+(x.perdio.fotos>1?'s':''));
+    return '<li style="margin:3px 0"><b>'+esc(x.cliente||'(sin cliente)')+'</b> — '+q.join(' · ')+'</li>';
+  }).join('');
+  return '<div id="cho-rechazos" style="background:#fdecec;border:2px solid var(--red);border-radius:10px;padding:10px 13px;margin-bottom:12px;color:#8a1c24;font-size:.88rem">'+
+    '<b>⚠️ Esto que hiciste sin señal NO entró</b>: mientras tanto otra persona cambió esos pedidos, y ganó lo de ella.'+
+    '<ul style="margin:6px 0 8px 18px;padding:0">'+li+'</ul>'+
+    '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--red);color:#8a1c24;font-weight:700" onclick="choRechazosVistos()">Ya lo revisé</button></div>';
+}
+function choRechazosVistos(){
+  try{ localStorage.setItem(LS_RECHAZOS, JSON.stringify(rechazosLocales().map(function(x){ if(x.perdio) x.visto=true; return x; }))); }catch(e){}
+  renderChofer();
+}
 function renderChofer(){
   var sel=document.getElementById('cho-nombre'); if(!sel) return;
   var c=(sel.value||'').trim();
@@ -11220,13 +11699,14 @@ function renderChofer(){
     return String(a.zona||'')<String(b.zona||'')?-1:1;
   });
   /* 🏭 Lo que hay que ir a buscar a la fábrica (ATC con devolución programada), arriba de las entregas. */
-  var recFabHtml=recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());
-  var ent=0, porCobrar=0, cobrado=0;
+  var recFabHtml=choRechazosHtml()+recogerFabHtml(CHO_FILTER==='manana' ? proximoDiaEntrega() : todayStr());   // (26/09) lo que no entró, arriba de todo
+  var ent=0, porCobrar=0, cobrado=0, fleteF=0;
   list.forEach(function(p){ if(p.entregado)ent++; cobrado+=totalCobrado(p); if(!p.pagado) porCobrar+=Number(p.saldo)||0; });   // §4fs
+  list.forEach(function(p){ if(!noSeCobra(p)) fleteF=r2(fleteF+envioPorCobrar(p)); });   // (26/09) el flete, aparte: no es de la venta
   box.innerHTML=
     mc('var(--teal)','Entregas',list.length, todos?'de todos los choferes':'asignadas a vos')+
     mc('var(--green)','Entregadas',ent,list.length?Math.round(ent/list.length*100)+'% listo':'—')+
-    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar')+
+    mc('var(--red)','Por cobrar',fmtBs(porCobrar),'te falta cobrar'+(fleteF>0.01?(' · + '+fmtBs(fleteF)+' de flete'):''))+
     mc('var(--teal-dk)','Cobrado',fmtBs(cobrado),'ya cobrado');
   if(!list.length){
     cont.innerHTML=recFabHtml; empty.style.display='block';
@@ -11643,12 +12123,15 @@ function onFotoElegida(ev){
        ✓» (salía antes de que el servidor contestara). Ahora se pega sobre la copia más nueva
        que haya en STATE, se reintenta UNA vez sobre la fila del servidor si hay conflicto, y
        el «✓» sale recién cuando el servidor dijo que sí. */
+    var t0=Date.now();
     var pegar=function(intento){
       var q=findById(p.id)||p;
       if(fotosDe(q).indexOf(res.fotoId)<0) q.fotos=fotosDe(q).concat([res.fotoId]);
       renderChoferSiActivo(); renderMis();
       return persistPedido(q).then(function(r){
         if(r&&r.ok){
+          // (26/09) entró al segundo intento: que el cartel del chofer no le pida volver a subirla
+          if(intento>0){ rechazoResuelto(q.id, t0, 'foto'); renderColaAviso(); renderChoferSiActivo(); }
           if(document.getElementById('modal').classList.contains('on')) reabrirFicha(q.id);
           toast('Foto guardada ✓','ok'); return;
         }
@@ -11748,6 +12231,13 @@ function cobroChoferHtml(p){
      «➕ Cobré algo igual», que anotaba plata que Contabilidad no ve. Lo ya anotado se lista abajo. */
   if(noSeCobra(p) && !cobros.length)
     return '<div class="cho-row"><span class="k">Cobrar</span> <span class="badge b-gray">✅ No se cobra — es '+(esATC(p.oc)?'una ATC':'una reposición de tienda')+'</span></div>';
+  /* 🚚 (26/09) El flete PACTADO se cobra en la puerta (§4ai) y la tarjeta no lo decía: una venta
+     pagada con flete salía «✅ Ya pagado — no tenés que cobrar». Va aparte de la venta (no le
+     toca el saldo) y no se anota con estos botones: lo registra la vendedora con el comprobante. */
+  var fleteF=noSeCobra(p) ? 0 : envioPorCobrar(p);
+  var flete=fleteF>0.01
+    ? '<div class="cho-row" style="background:var(--red-lt);border:1px solid var(--red-border);border-radius:8px;padding:7px 10px;color:#8a1c24">🚚 <b>Cobrar también el flete: '+fmtBs(fleteF)+'</b> — aparte de la venta. No va con los botones de cobro: avisale a la vendedora, que lo registra con el comprobante.</div>'
+    : '';
   // NADA QUE COBRAR: o el cliente ya pagó en la tienda, o el pedido no tiene saldo.
   // Igual se deja registrar un cobro a mano (pasa con el flete, o si el cliente suma algo).
   if(objetivo<=0.01 && !cobros.length && !CHO_COBRO_ABIERTO[p.id]){
@@ -11756,10 +12246,10 @@ function cobroChoferHtml(p){
        está marcada pagada y no hay ningún monto, se lo dice en ámbar: que pregunte
        ANTES de entregar. */
     return '<div class="cho-row"><span class="k">Cobrar</span> '+
-      (p.pagado ? '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>'
+      (p.pagado ? (flete ? '<span class="badge b-green">✅ La venta ya está pagada</span>' : '<span class="badge b-green">✅ Ya pagado — no tenés que cobrar</span>')
        : sinMontoAnotado(p) ? '<span class="badge b-amber">⚠️ Sin monto anotado — preguntá antes de entregar</span>'
        : '<span class="badge b-gray">Sin saldo</span>')+
-      ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>';
+      ' <button class="cho-mini" onclick="choMostrarCobro(\''+p.id+'\')">➕ Cobré algo igual</button></div>'+flete;
   }
   var cab='<div class="cho-row"><span class="k">Cobrar</span> '+
     (falta<=0.01
@@ -11781,7 +12271,7 @@ function cobroChoferHtml(p){
         return '<button class="cho-pay '+m.toLowerCase()+'" onclick="choCobrarMetodo(\''+p.id+'\',\''+m+'\')">'+metodoIcono(m)+' '+m+'</button>';
       }).join('')+'</div>')
     : '';
-  return cab+lista+btns;
+  return cab+lista+btns+flete;
 }
 function metodoIcono(m){ return m==='Efectivo'?'💵':(m==='QR'?'📱':(m==='Tarjeta'?'💳':'💰')); }
 /* Suma un cobro. Avisa si con eso se pasa de lo que el vendedor puso que hay que cobrar,
@@ -11790,11 +12280,14 @@ function choCobrarMetodo(id, metodo){
   var p=findById(id); if(!p) return;
   if(noSeCobra(p)){ toast(noSeCobraTxt(p),'err',7000); renderChofer(); return; }   // (25/09) como markPaid/quickCobrado (§4fy)
   var objetivo=objetivoCobro(p), cobrado=totalCobrado(p), falta=Number(p.saldo)||0;
+  var fleteF=envioPorCobrar(p);                    // (26/09) el flete va aparte: que no se anote acá como cobro de la venta
   var txt=prompt('💰 ¿Cuánto cobraste en '+metodo+'?\n\n'+
     'Cliente: '+(p.cliente||'')+'\n'+
     'El pedido dice cobrar: '+fmtBs(objetivo)+'\n'+
     (cobrado>0?('Ya entraron: '+fmtBs(cobrado)+'\n'):'')+
-    'Falta: '+fmtBs(falta)+'\n\nEscribí el monto:', falta>0?String(falta):'');
+    'Falta: '+fmtBs(falta)+'\n'+
+    (fleteF>0.01?('🚚 El flete ('+fmtBs(fleteF)+') va aparte: no lo sumes acá.\n'):'')+
+    '\nEscribí el monto:', falta>0?String(falta):'');
   if(txt==null) return;
   var monto=parseMonto(txt);
   if(!(monto>0)){ toast('Poné un monto válido (ej. 1750)','err'); return; }
@@ -11802,6 +12295,7 @@ function choCobrarMetodo(id, metodo){
     if(!confirm('⚠️ Ojo, te estás pasando.\n\n'+
       'El pedido dice cobrar '+fmtBs(objetivo)+'.\n'+
       'Con este cobro juntarías '+fmtBs(cobrado+monto)+' — son '+fmtBs(monto-falta)+' de más.\n\n'+
+      (fleteF>0.01?('🚚 Si lo de más es el FLETE ('+fmtBs(fleteF)+'), no lo anotes acá: lo registra la vendedora con el comprobante. Tocá Cancelar y anotá solo lo de la venta.\n\n'):'')+
       '¿Lo anoto igual?')) return;
   }
   /* ⚠️ `cobrosDe`, NO `cobrosVisibles` (§4fg): si la venta venía «PAGADA sin monto», el pago
@@ -11838,9 +12332,35 @@ function choQuitarCobro(id, idx){
 }
 function choEntregado(id){
   var p=findById(id); if(!p) return;
-  p.entregado=!p.entregado; atcAlMarcarEntregado(p);
-  persistPedido(p); renderChofer();
-  toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
+  /* (26/09) Destildar PREGUNTA. Con un doble toque la tarjeta se repintaba entre los dos y el
+     segundo caía en «✓ Entregado»: la entrega volvía a «pendiente» en la planilla sin que el
+     chofer lo notara. Marcar sigue siendo un toque. */
+  if(p.entregado && !confirm('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.')) return;
+  var quiere=!p.entregado, t0=Date.now(), choco=false;
+  /* (26/09) El ✅ es un dato DEL CHOFER, como la foto (§4ew): con el celular bloqueado la copia
+     es de horas atrás, y si en el medio Contabilidad registró el pago el guardado daba
+     `conflicto` y la entrega quedaba SIN marcar — solo un aviso de 9 s que, con el celular en
+     el bolsillo, no ve nadie. Se vuelve a marcar UNA vez sobre la fila del servidor (que
+     `rechazoFirme` ya puso en STATE). La plata NO se reintenta así: ahí el otro pudo haber
+     registrado ese mismo pago. */
+  var marcar=function(q, intento){
+    q.entregado=quiere; atcAlMarcarEntregado(q);
+    return persistPedido(q).then(function(r){
+      if(intento>0 || !(r && r.error==='conflicto')) return r;
+      var s=findById(id); if(!s) return r;
+      choco=true;
+      delete NO_ENCOLAR[id];                         // si el reintento cae sin señal, que quede en la cola
+      return (!!s.entregado===quiere) ? { ok:true } : marcar(s, 1);
+    });
+  };
+  marcar(p, 0).then(function(r){
+    if(!choco || !(r && r.ok)) return;
+    rechazoResuelto(id, t0, 'entregado');            // (26/09) sale el ✅, no el cobro que se perdió con el choque
+    renderColaAviso(); renderChoferSiActivo();
+    toast((quiere?'Entregado ✓':'Marcado como NO entregado')+' — otra persona había tocado el pedido; se guardó igual sobre lo nuevo','ok',6000);
+  });
+  renderChofer();
+  toast(quiere?'Entregado ✓':'Marcado como NO entregado','ok');
 }
 function choDeshacerCobro(id){
   var p=findById(id); if(!p) return;
@@ -11874,7 +12394,10 @@ function renderMis(){
   renderBorradoresMis();                            // 📥 lo de Kommo va arriba de todo (§4ca)
   if(!v && !todos){ box.innerHTML=''; if(av) av.innerHTML=''; if(chips) chips.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Elegí tu nombre para ver tus pedidos.'; return; }
   var mine=todos ? STATE.slice() : STATE.filter(function(p){ return mismoVendedor(p.vendedor, v); });
-  mine.sort(function(a,b){ if(a.fecha!==b.fecha) return a.fecha<b.fecha?1:-1; return (b.ts||0)-(a.ts||0); });
+  /* (26/09) Por `fechaSalida` y no por `p.fecha`: la venta de TIENDA no tiene fecha de entrega y se
+     iba al FONDO de la lista (debajo del pedido más viejo), así que pasados los MIS_TOPE no se veía
+     nunca — ni la que se vendió hoy. Se ordena por el día en que salió. */
+  mine.sort(function(a,b){ var fa=fechaSalida(a)||'', fb=fechaSalida(b)||''; if(fa!==fb) return fa<fb?1:-1; return (b.ts||0)-(a.ts||0); });
   if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
   if(mine.length && !todos) autoAbrirAvisos(v, mine);
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
@@ -11901,7 +12424,12 @@ function renderMis(){
   }
   /* '' y no 'block': el contenedor es una grilla y un display en línea la pisaría */
   empty.style.display='none'; tbl.style.display='';
-  tbl.innerHTML=lista.slice(0,120).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('');
+  /* (26/09) El corte en 120 era callado: el chip decía «📋 Todos 300» y abajo no había nada que
+     dijera que faltaban 180. Ahora lo dice y deja ver más. */
+  tbl.innerHTML=lista.slice(0,MIS_TOPE).map(function(p,i){ return misCardHtml(p, i+1, todos); }).join('')+
+    (lista.length>MIS_TOPE ? ('<div style="grid-column:1/-1;text-align:center;font-size:.85rem;color:var(--muted);padding:8px 0">'+
+      'Se ven los '+MIS_TOPE+' más nuevos de '+lista.length+'. '+
+      '<button class="btn btn-ghost btn-sm" style="width:auto" onclick="MIS_TOPE+=120;renderMis()">Ver '+Math.min(120, lista.length-MIS_TOPE)+' más</button></div>') : '');
 }
 /* Quién lleva el pedido. Se muestra SIEMPRE (aunque no haya chofer): que no aparezca la fila
    no significa "no tiene chofer", significa "no sé", y la vendedora necesita distinguirlo. */
@@ -11911,6 +12439,9 @@ function choferTexto(p){
   var vh=vehiculoDe(p);
   return '🚚 <b>'+esc(c)+'</b>'+(vh?(' <span style="color:var(--muted)">· '+esc(vh)+'</span>'):'');
 }
+/* ⏳ (26/09) ¿Espera en la cola de ESTE dispositivo? El cartel de arriba contaba cuántos, pero la ficha
+   era igual a las demás: nada decía CUÁL no está en la planilla (ni en la ventana, de donde se copia). */
+function enColaLocal(id){ var a=getPending(); for(var i=0;i<a.length;i++) if(a[i] && String(a[i].id)===String(id)) return true; return false; }
 /* Tarjeta de "Mis pedidos", con la misma pinta que las del chofer: se lee de un vistazo
    en el celular, que es donde las vendedoras miran esto. */
 function misCardHtml(p, n, todos){
@@ -11918,23 +12449,29 @@ function misCardHtml(p, n, todos){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
     else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de '+esc(recogerCorto(x))+'</span>';
-    else if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
+    // (26/09) `if` y no `else if`, como la ficha: un «NO HAY» ya pedido a fábrica no decía el 🏭
+    if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
     return t;
   }).join('<br>');
-  var falta=Number(p.saldo)||0, cob=cobrosVisibles(p);
+  var falta=Number(p.saldo)||0, cob=cobrosVisibles(p), _res=(!cob.length && p.pagado) ? cobrosResumen(p) : '';
+  /* (26/09) Lo mismo que dice la ficha (`showMisModal`): `p.metodoPago` crudo mostraba el historial
+     con los IDs de las imágenes («PAGADO · Efectivo %1AbC…», «~QR BISA 2000 @… #939 %…»), y la venta
+     SIN MONTO ANOTADO y las ATC/RPT decían «Sin saldo», que se lee como «no hay nada que cobrar». */
   var cobro = cob.length
     ? ((falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">falta · </span>')
                    : '<span class="badge b-green">PAGADO</span> ')+cobrosResumen(p)+excesoBadge(p))
-    : (p.pagado ? ('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>')
+    : (p.pagado ? ('<span class="badge b-green">PAGADO'+(_res?(' · '+_res):'')+'</span>')
+      : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'
       : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
-                    : '<span class="badge b-gray">Sin saldo</span>'));
+                    : sinMontoAnotado(p) ? badgeSinMonto() : '<span class="badge b-gray">Sin saldo</span>'));
   return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
       '<div style="flex:1;min-width:120px"><div class="cho-cli">'+esc(p.cliente||'—')+'</div>'+
-        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(p.fecha))+
+        '<div style="font-size:.78rem;color:var(--muted)">'+esc(fmtFecha(fechaSalida(p)))+   // (26/09) la de tienda, el día que se vendió
           (p.zona?(' · '+esc(p.zona)):'')+(p.oc?(' · '+esc(ocEtiq(p.oc))):'')+'</div></div>'+
       docChip(p)+
+      (enColaLocal(p.id)?'<span class="badge b-amber" title="Todavía no llegó a la planilla: está en la cola de este dispositivo y se manda solo">⏳ sin enviar</span>':'')+   // (26/09)
       (todos?('<span class="badge b-gray">👤 '+esc(p.vendedor||'—')+'</span>'):'')+
       turnoBadge(p)+
       (p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+
@@ -12039,10 +12576,13 @@ function showMisModal(id){
   var entrega=(p.entregado?'<span class="badge b-green">🚚 Entregado</span>':'<span class="badge b-red">⏳ No entregado</span>')+' '+atrasoBadge(p);
   var alertBox=function(t){ return '<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-left:4px solid var(--amber);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:#7c4b00">'+t+'</div>'; };
   var alertas='';
+  // ⏳ (26/09) En la cola de este dispositivo: lo mismo que dice «Quedó en cola» al guardar (§4eo).
+  if(enColaLocal(p.id)) alertas+=alertBox('⏳ <b>Sin enviar:</b> este pedido todavía NO llegó a la planilla. Está en la cola de este dispositivo y se manda solo cuando haya conexión; hasta entonces las demás computadoras no lo ven y <b>no lo pases al grupo todavía</b>.');
   var atr=textoAtraso(p);
   if(atr) alertas+='<div style="background:var(--red-lt);border:1px solid var(--red-border);border-left:4px solid var(--red);border-radius:8px;padding:10px 13px;margin-bottom:10px;font-size:.85rem;color:var(--red)">⏰ <b>Atrasado '+atr+'.</b> '+(turnoDe(p)?('Era para el turno '+turnoDe(p)+' del '+esc(fmtFecha(p.fecha))+'.'):('Era para el '+esc(fmtFecha(p.fecha))+'.'))+' Preguntá al administrador cómo va.</div>';
   if(esModificado(p)) alertas+=alertBox('⚠️ <b>Lo modificaste después de que el almacén ya lo había revisado.</b> Les quedó el aviso para que revisen el stock de nuevo — el aviso se les saca cuando ellos lo revisan.');
-  if(!p.maps) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
+  // (26/09) Ni a la venta de TIENDA (no hay entrega) ni a lo ya entregado: la ficha le pedía el GPS igual.
+  if(!p.maps && !p.entregado && !esVentaTienda(p)) alertas+=alertBox('⚠️ <b>Falta la ubicación GPS.</b> Agregala abajo para que el chofer llegue sin problemas.');
   if(!(p.direccion&&String(p.direccion).trim())) alertas+=alertBox('⚠️ <b>Falta la dirección escrita.</b> Avisá al administrador si hace falta corregirla.');
   var choferVal = choferTexto(p);
   /* El vendedor va SIEMPRE, aunque la vendedora esté mirando lo suyo: con "Ver todos"
@@ -12050,7 +12590,8 @@ function showMisModal(id){
   var vendCell = p.vendedor
     ? '<span class="badge b-gray">👤 '+esc(nombreCanonico(p.vendedor)||p.vendedor)+'</span>'
     : '<span class="badge b-red">⚠️ sin vendedor</span>';
-  var body=row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p))+
+  var body=(esVentaTienda(p) ? row('Salió de tienda', esc(fmtFecha(fechaSalida(p)))+' '+badgeTienda(p))   // (26/09) decía «Fecha de entrega» vacía
+                             : row('Fecha de entrega', esc(fmtFecha(p.fecha))+' '+turnoBadge(p)))+
     row('Vendedor', vendCell)+
     row('Cliente', '<b>'+esc(p.cliente)+'</b>')+row('Celular', esc(p.celular))+
     row('Productos', prod)+row('Zona', esc(p.zona))+row('Dirección', esc(p.direccion))+
@@ -12066,7 +12607,7 @@ function showMisModal(id){
          '<button class="btn btn-sm" style="background:var(--red);color:#fff;font-weight:700;width:100%;margin-top:9px" onclick="cobrarFlete(\''+p.id+'\')">💵 Ya cobré el flete — registrarlo</button>'+
        '</div>')
     : '';
-  var ubicSec='<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+
+  var ubicSec=(esVentaTienda(p) && !p.maps) ? '' : '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--gray-lt)">'+   // (26/09) la de tienda no va a ningún lado
     '<div class="lb" style="margin-bottom:8px">📍 Ubicación GPS (Google Maps)</div>'+
     (p.maps
       ? '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><a class="maplink" href="'+esc(p.maps)+'" target="_blank" rel="noopener">📍 Abrir en Maps</a><button class="btn btn-sm" style="background:var(--teal);color:#fff" onclick="editarUbicacionMis(\''+p.id+'\')">✏️ Cambiar ubicación</button></div>'
@@ -12221,7 +12762,7 @@ function parteData(){
        parte del día (pantalla y WhatsApp), la tarjeta del chofer, la rendición y el reporte
        no. Mismo patrón en seis lugares; §4ew cambió `p.cobradoBs` por `totalCobrado(p)` en
        todos pero dejó la guarda `p.pagado`. */
-    cob+=totalCobrado(p); if(!p.pagado){ pend+=Number(p.saldo)||0; pendN++; }
+    cob+=totalCobrado(p); if(!p.pagado && !noSeCobra(p)){ pend+=Number(p.saldo)||0; pendN++; }   // (26/09) sin ATC/RPT, como el chip «💰 Por cobrar»: decía «(3 pedidos)» con una sola venta debiendo
     if(!vehiculoDe(p)) sinChof++;
   });
   var faltHoy=dh.filter(function(p){ return (p.productos||[]).some(function(x){ return x.chk==='no'; }); }).length;
@@ -12969,13 +13510,19 @@ function r2(n){ return Math.round((Number(n)||0)*100)/100; }
 function montoNegativo(t){ return /^\s*-/.test(String(t==null?'':t)); }
 function parseMonto(t){
   t=String(t==null?'':t).replace(/[^\d.,]/g,'').trim();
+  /* ⚠️ (26/09) El punto de «Bs.» y el «.-» del final NO son del número. Con los campos de plata ya de
+     texto, «Bs. 1.500.-» pegado de WhatsApp quedaba «.1.500.» y se guardaba Bs 0,10 («Bs. 1500»: 0,15;
+     «1.500 Bs.»: 1,50), sin aviso. Con `type=number` ese «Bs. 1.500.-» dejaba el campo vacío. */
+  t=t.replace(/^[.,]+|[.,]+$/g,'');
   if(!t) return 0;
   if(t.indexOf(',')>=0 && t.indexOf('.')>=0){
     t = (t.lastIndexOf(',')>t.lastIndexOf('.')) ? t.replace(/\./g,'').replace(',','.') : t.replace(/,/g,'');
   }else if(t.indexOf(',')>=0){
-    var pc=t.split(','); t = (pc[pc.length-1].length===3) ? t.replace(/,/g,'') : t.replace(',','.');
+    // (26/09) Con dos comas, la de los centavos es la ÚLTIMA: «1,500,50» valía 1,5.
+    var pc=t.split(','); t = (pc[pc.length-1].length===3) ? t.replace(/,/g,'') : (pc.slice(0,-1).join('')+'.'+pc[pc.length-1]);
   }else if(t.indexOf('.')>=0){
-    var pd=t.split('.'); if(pd[pd.length-1].length===3) t=t.replace(/\./g,'');
+    // (26/09) Igual con dos puntos: «1.500.50» es 1.500,50 (valía 1,5).
+    var pd=t.split('.'); if(pd[pd.length-1].length===3) t=t.replace(/\./g,''); else if(pd.length>2) t=pd.slice(0,-1).join('')+'.'+pd[pd.length-1];
   }
   var n=parseFloat(t);
   return isNaN(n)?0:r2(n);
@@ -13323,9 +13870,14 @@ function quickCobrado(id){
     var todos=cobrosDe(p).slice(), fuera=todos.filter(cobroDeLaPuerta), quedan=todos.length-fuera.length;
     if(!fuera.length){ toast('No hay un cobro de la puerta para deshacer: los pagos de esta venta tienen recibo o comprobante (los registró Contabilidad o la tienda, o se cobraron con foto del QR). Si hay que corregir uno, es en Contabilidad → ✏️ Corregir.','err',8000); return; }   // 25/09: el QR del chofer con foto tampoco es «de la puerta»
     var n=fuera.length, tot=0; fuera.forEach(function(c){ tot=r2(tot+(Number(c.monto)||0)); });
-    if((n>1 || quedan) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
-                       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):''); }).join('\n')+
+    /* 🚚 (26/09) El cobro que recibió el CHOFER (`>Nombre`, §4eq) lo tiene él hasta rendirlo a Contabilidad: deshacerlo de
+       un toque lo sacaba de lo que tiene que rendir. Lo que se deshace no cambia; ahora se pregunta, con su nombre y el monto. */
+    var delChofer=fuera.filter(function(c){ return !!limpiaRecibio(c.recibio); });
+    if((n>1 || quedan || delChofer.length) && !confirm('¿Deshacer '+(n===1?'el cobro':('los '+n+' cobros'))+' de la puerta de '+(p.cliente||'esta venta')+'?\n\n'+
+                       fuera.map(function(c){ return '   • '+cobroMetodoTxt(c)+' '+fmtBs(c.monto)+(c.fecha?(' · '+fmtFechaCorta(c.fecha)):'')+(limpiaRecibio(c.recibio)?(' · 🚚 lo recibió '+limpiaRecibio(c.recibio)):''); }).join('\n')+
                        '\n\nTotal: '+fmtBs(tot)+
+                       (delChofer.length ? ('\n\n🚚 '+delChofer.map(function(c){ return limpiaRecibio(c.recibio)+' recibió '+fmtBs(c.monto); }).join(' · ')+' en la puerta: '+
+                         (delChofer.length===1?'si lo deshacés, deja de figurar en lo que tiene que rendir a Contabilidad.':'si los deshacés, dejan de figurar en lo que tienen que rendir a Contabilidad.')) : '')+
                        (quedan ? ('\n\n'+(quedan===1?'El otro pago (con recibo) NO se toca.':('Los otros '+quedan+' pagos (con recibo) NO se tocan.'))) : ''))) return;
     aplicarCobros(p, todos.filter(function(c){ return !cobroDeLaPuerta(c); })); toast('Cobro deshecho ✓','ok'); return;
   }
@@ -13343,6 +13895,11 @@ function findById(id){ for(var i=0;i<STATE.length;i++) if(STATE[i].id===id) retu
       💰 PAGADO (~QR BISA 5690 @2026-08-19 #627 %IMG_A %IMG_B)
    Ilegible, y encima mostraba los IDs de las fotos. */
 function plataLineaWa(p){
+  /* (26/09) Una venta SIN MONTO ANOTADO (no pagada, sin adelanto, sin saldo) salía «💰 PAGADO» en el
+     mensaje que la vendedora pasa al grupo al guardar y desde Mis pedidos, y una ATC también: el que
+     lo lee no cobra. Lo mismo que dicen la hoja de ruta y la tarjeta del chofer (`cobroRutaTxt`). */
+  if(!p.pagado && noSeCobra(p)) return '💰 NO SE COBRA ('+(esATC(p.oc)?'ATC':'reposición de tienda')+')';
+  if(sinMontoAnotado(p)) return '💰 ⚠️ SIN MONTO ANOTADO — preguntar antes de entregar';
   var pagos=contaPagos(p).filter(function(c){ return !esEnvio(c) && (Number(c.monto)||0)>0; });
   var met=pagos.map(function(c){ return contaMetodoTxt(c)+' '+fmtBs(c.monto); }).join('  +  ');
   var falta=contaFaltaCobrar(p);
@@ -13371,6 +13928,16 @@ function rptText(p){
     '⏳ '+RPT_AVISO
   ].filter(Boolean).join('\n');
 }
+/* 🎧 (26/09) Lo de la ATC en el mensaje al grupo: por qué se genera, qué se le recoge y el
+   comodín. Salía como un pedido cualquiera, sin el motivo (el que pegaban en Trello, §4bq). */
+function atcLineaWa(p){
+  if(!esATC(p&&p.oc)) return '';
+  var L=['🎧 *Atención al cliente* — '+(atcMotivo(p)||'sin motivo anotado')+(atcDetalle(p)?(': '+atcDetalle(p)):'')];
+  var pz=atcRecibido(p);
+  if(pz.length && !atcViajeDevolucion(p)) L.push('📦 Se le recoge: '+pz.join(' · ')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
+  if(atcComodinAviso(p)) L.push(atcComodinAviso(p));
+  return L.join('\n');
+}
 function pedidoText(p){
   if(esRPT(p&&p.oc)) return rptText(p);
   var prod=(p.productos||[]).map(function(x){
@@ -13385,13 +13952,17 @@ function pedidoText(p){
                      : ('📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):'')),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
+    atcLineaWa(p),
     // En la venta de tienda la dirección es "SALIÓ DE TIENDA": repetiría la línea de arriba.
     esVentaTienda(p) ? '' : ('📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||'')),
     p.maps?('🗺️ '+p.maps):'',
     p.observaciones?('📝 '+p.observaciones):'',
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
     (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
-    plataLineaWa(p),
+    noSeCobra(p) ? '✅ No se cobra — es una ATC' : plataLineaWa(p),   // (26/09) decía «💰 PAGADO» (§4fy)
+    /* (26/09) El flete PACTADO se cobra en la puerta (§4ai) y el mensaje no lo decía: una venta
+       pagada con Bs 150 de flete por cobrar salía «💰 PAGADO» a secas y nadie lo cobraba. */
+    envioPendiente(p)?('🚚 Recargo por entrega: '+fmtBs(envioPorCobrar(p))+' — se cobra al entregar, aparte de la venta'):'',
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
@@ -13698,7 +14269,8 @@ function stockLeerDePanelViejo(d, o){
     var rs={}, hay=false;
     (d.p||[]).forEach(function(q){
       if(!q || q.tipo!=='recogida' || !Array.isArray(q.recs) || (q.de||almDef)!==nm) return;
-      q.recs.forEach(function(r){ if(r && !stockRecLegacy(r)){ rs[r.id]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id }; hay=true; } });
+      // (26/09) Una recepción `nr` nunca se le restó a esa foto: anotarla como restada la DEVOLVÍA después.
+      q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && !r.nr){ rs[r.id]={ k:q.k, u:Math.round(Number(r.u)||0), q:q.id }; hay=true; } });
     });
     if(hay) d.g[nm].rs=rs;
   });
@@ -13740,12 +14312,16 @@ function stockMigrar(d){
 /* ¿Esta entrada suma encima del conteo de acá? Lo anterior al conteo ya está DENTRO de él: por
    fecha, como siempre (`stockDesdeSalidas`), y desde §4fz-b también por hora (`ts` ≤ `c.t`): una
    entrada anotada en otro dispositivo ANTES de que acá se contara llegaba después por la junta y
-   se sumaba dos veces. Sin hora (lo de antes) manda solo la fecha. */
+   se sumaba dos veces. Sin hora (lo de antes) manda solo la fecha.
+   ⚠️ (26/09) Con un Excel de la tarde que «ya incluye las entregas del día» (`c.inc`), lo que llegaba
+   ESE día DESPUÉS de subirlo se cortaba por la fecha: «✅ Sumadas 5» y el depósito igual, porque
+   `filaStock` lo podaba al guardar. Con hora de los dos lados, ese día manda la hora. */
 function stockEntradaVale(S, f, ts){
   var c=(S&&S.c)||{};
   if(!c.f) return true;
-  if(String(f||'')<(c.inc ? stockSumarDias(c.f,1) : c.f)) return false;
-  return !(Number(ts)>0 && Number(c.t)>0 && Number(ts)<=Number(c.t));
+  var conHora=Number(ts)>0 && Number(c.t)>0;
+  if(String(f||'')<((c.inc && !conHora) ? stockSumarDias(c.f,1) : c.f)) return false;
+  return !(conHora && Number(ts)<=Number(c.t));
 }
 function filaStock(){
   stockOlvidarIndice();
@@ -13979,18 +14555,26 @@ function stockNormalizarRecepciones(S){
     var ya={}; S.e.forEach(function(x){ if(x && x.rec) ya[x.id]=1; });
     Object.keys(quiero).forEach(function(rid){
       if(ya[rid]) return; var r=quiero[rid];
-      S.e.push({ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id });
+      var ent={ id:rid, rec:1, f:String(r.f||todayStr()), k:q.k, u:Math.round(Number(r.u)||0), fab:stockFabNorm(q.fab), de:q.id };
+      if(Number(r.ts)>0) ent.ts=Number(r.ts);     // (26/09) con la hora de la recepción: `filaStock` poda mirando solo la entrada
+      S.e.push(ent);
     });
     if(q.tipo!=='recogida') return;
     var alm=q.de || stockAlmPorDefectoDe(S), g=(S.g||{})[alm];       // el de ESTE stock (puede no ser STOCK: una junta)
     if(!g || !g.u) return;
     g.rs=g.rs||{};
-    var t=Number(g.t)||0, resta={};
-    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && (Number(r.ts)||0)>t) resta[r.id]=r; });
+    var t=Number(g.t)||0, resta={}, nr={};
+    q.recs.forEach(function(r){ if(r && !stockRecLegacy(r) && (Number(r.ts)||0)>t){ if(r.nr) nr[r.id]=1; else resta[r.id]=r; } });   // `nr` (26/09): el reporte de allá ya no las tenía
     Object.keys(g.rs).forEach(function(rid){
       var x=g.rs[rid]; if(!x || x.q!==q.id || resta[rid]) return;
+      if(x.nr){ if(!nr[rid]) delete g.rs[rid]; return; }                        // la marca de una `nr` (abajo): no se devuelve nada
       g.u[x.k]=(Number(g.u[x.k])||0)+(Number(x.u)||0); delete g.rs[rid];      // la sacó la junta: se devuelve
     });
+    /* ⚠️ (26/09) La `nr` queda anotada en `rs` con 0 unidades. La página publicada antes de esto no
+       conoce `nr`: sin la marca, al leer le restaba las 5 a Moreno (que según su Excel tenía 2: quedaba
+       en 0) y anotaba 5 como restadas; si guardaba el stock, acá se le devolvían las 5 → Moreno con 3
+       colchones fantasma. Con la marca, la vieja la da por restada y no toca nada. */
+    Object.keys(nr).forEach(function(rid){ if(!g.rs[rid]) g.rs[rid]={ k:q.k, u:0, q:q.id, nr:1 }; });
     Object.keys(resta).forEach(function(rid){
       if(g.rs[rid] || g.u[q.k]==null) return;
       var r=resta[rid];
@@ -15041,8 +15625,10 @@ function stockPedidosDetalle(k){
       var n=Number(x.cant)||0;
       if(!n || esProdDeTienda(x) || stockClave(x)!==k) return;
       var salio=stockSalio(p,x), fs=fechaSalida(p), grupo;
-      if(!salio) grupo=enProduccion(x)?'produccion':'pendientes';
-      else if(!p.entregado && !esVentaTienda(p) && x.chk==='no' && !enProduccion(x)) grupo='atrasados';
+      /* (26/09) El «✗ no hay» de un día que ya pasó va a SU grupo. `stockSalio` da falso para un ✗ (no
+         salió, y sigue comprometido: §4de), así que caía en «Vendido sin entregar» y este grupo —que
+         lo buscaba entre lo «salido»— no aparecía nunca. La cuenta no cambia: el título lo dice. */
+      if(!salio) grupo=enProduccion(x)?'produccion':((x.chk==='no' && p.fecha && p.fecha<hoy)?'atrasados':'pendientes');
       else if(fs>=desde && fs<=hoy) grupo='historico';
       if(!grupo) return;
       if(!por[grupo]) por[grupo]={p:p,u:0,marcas:[]};
@@ -15057,14 +15643,16 @@ function stockPedidosDetalle(k){
 }
 
 function stockSaldoDetalleHtml(o){
-  var conocido=o.deposito!=null, dep=conocido?o.deposito:0, comp=o.comp||0;
+  /* (26/09) Un depósito NEGATIVO es un conteo viejo, no una deuda (§4ds): cuenta como 0, como en la
+     tabla. Con −5 el detalle decía «3 − (−5) acá = 8 unidades adicionales» y la tabla pedía 3. */
+  var conocido=o.deposito!=null, dep=conocido?Math.max(0,o.deposito):0, comp=o.comp||0;
   var saldo=dep-comp, cobertura=o.lead+o.margen+(o.cubrir==null?STOCK_CUBRIR:o.cubrir);
   var previsto=o.porDia*cobertura, objetivo=Math.max(comp,previsto);
   var caminoVigente=o.enCamino||0;
   var bruto=conocido?Math.max(0,Math.ceil(objetivo-dep-caminoVigente-1e-9)):0;
   var tarjeta=function(t,v,sub){return '<div style="flex:1 1 145px;padding:12px;background:#fff;border:1px solid var(--gray-md);border-radius:9px"><div style="font-size:.76rem;color:var(--muted)">'+t+'</div><b style="font-size:1.5rem">'+v+'</b><div style="font-size:.75rem">'+sub+'</div></div>';};
   var html='<section style="margin-bottom:16px;padding:14px;background:var(--gray-lt);border-radius:12px"><h3 style="margin-bottom:10px">Saldos de este producto</h3><div style="display:flex;gap:8px;flex-wrap:wrap">'+
-    tarjeta('Acá en fábrica',conocido?stockUnid(dep):'Sin contar','Saldo calculado del inventario')+
+    tarjeta('Acá en fábrica',conocido?stockUnid(dep):'Sin contar',(conocido&&o.deposito<0)?('Se entregaron '+stockUnid(-o.deposito)+' más de lo contado: volvé a contar'):'Saldo calculado del inventario')+
     tarjeta('Libre en Moreno / otros almacenes',stockUnid(o.enOtros||0),'Descontadas las recogidas programadas')+
     tarjeta('En camino',stockUnid(o.enCamino||0),'Pendiente de recepción')+
     tarjeta('Comprometido',stockUnid(comp),'Vendido sin entregar; consume depósito')+'</div>';
@@ -15109,8 +15697,8 @@ function abrirStockPedidos(k){
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
     '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
-  if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
-  [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
+  if(!grupos.pendientes.length && !grupos.atrasados.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
+  [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar · también consumen depósito (entran en «Comprometido»)'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
     var ls=grupos[g[0]];if(!ls.length)return;
     var u=ls.reduce(function(n,r){return n+r.u;},0);
     html+='<details '+(g[0]==='historico'?'':'open')+' style="margin:14px 0"><summary><b>'+g[1]+' · '+u+' unidades en '+ls.length+' pedidos</b></summary>'+tabla(ls)+'</details>';
@@ -15820,8 +16408,58 @@ function copiarProducir(k, h){
   toast('Copiado: producir para '+etq+' ✓','ok');
 }
 /* Los que vale la pena ofrecer en los formularios: con movimiento o ya contados. */
-function stockConMovimiento(d){
-  return d.lista.filter(function(o){ return o.vendidos>0 || o.comp>0 || o.enCamino>0 || (STOCK.c.u||{})[o.k]!=null; }).slice(0,60);
+function stockConMovimiento(d, todos){
+  var l=d.lista.filter(function(o){ return o.vendidos>0 || o.comp>0 || o.enCamino>0 || (STOCK.c.u||{})[o.k]!=null; });
+  return todos ? l : l.slice(0,60);
+}
+/* 🔎 (26/09) «🏭 Pedí a fábrica» y «📥 Llegó» (otra llegada) ofrecían SOLO esos 60: lo que quedaba
+   afuera —o un producto del catálogo que todavía no se movió— no se podía elegir, y «🚨 PEDIR YA»
+   sobre el renglón 61 abría el formulario con OTRO producto puesto. Sin buscar se ven los mismos
+   (una lista de 300 no sirve en el celular); el buscador —el de la tabla, palabra por palabra—
+   mira todo lo de la tabla más el catálogo entero. */
+var STOCK_ELEGIR_TOPE=60, STOCK_ELEGIR={};
+function stockCoincide(o, q){
+  var ws=stockNorm(q).split(' '), t=stockNorm(stockNombre(o)+' '+(o.cod||'')+' '+(o.otros||[]).join(' '));
+  for(var i=0;i<ws.length;i++) if(ws[i] && t.indexOf(ws[i])<0) return false;
+  return true;
+}
+function stockElegibles(d){
+  var visto={}, out=[], cat=[];
+  var poner=function(o){ if(o && o.k && o.k!=='|' && !visto[o.k]){ visto[o.k]=1; out.push(o); } };
+  stockConMovimiento(d, true).forEach(poner);
+  d.lista.forEach(poner);
+  stockCatalogo().forEach(function(c){
+    var x={ codigo:c.code, desc:c.d, medida:c.m }, info=stockInfo(x);
+    if(!info.k || info.k==='|' || visto[info.k] || esTextoDeTienda(info.k)) return;   // 🏪 lo de tienda no va a fábrica (§4cx)
+    visto[info.k]=1;
+    var nom=stockNombreDe(info, x);
+    cat.push({ k:info.k, desc:nom.desc, medida:nom.medida, cod:c.code, otros:[] });
+  });
+  cat.sort(function(a,b){ return stockNombre(a).localeCompare(stockNombre(b)); });
+  return out.concat(cat);
+}
+function stockElegirNotaTxt(E, txt, n, v){
+  if(!stockNorm(txt)) return E.todos.length>E.base.length ? ('Se ven '+E.base.length+' de '+E.todos.length+'. ¿No está? Buscalo arriba: busca en todo el catálogo.') : '';
+  if(!n) return 'Ninguno coincide con «'+String(txt).trim()+'».';
+  return n>v ? (n+' coinciden: se ven los primeros '+v+'. Escribí más para acotar.') : (n+(n===1?' coincide.':' coinciden.'));
+}
+function stockElegirBuscador(pref){
+  return '<input type="search" id="'+pref+'-q" autocomplete="off" placeholder="🔎 buscar producto o código" oninput="stockElegirFiltrar(\''+pref+'\')" style="width:100%;margin-bottom:6px;padding:10px 12px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.9rem;background:#fff">';
+}
+function stockElegirNota(pref){
+  var E=STOCK_ELEGIR[pref];
+  return '<div id="'+pref+'-nota" style="font-size:.76rem;color:var(--muted);margin-top:4px">'+(E?esc(stockElegirNotaTxt(E,'',E.base.length,E.base.length)):'')+'</div>';
+}
+function stockElegirFiltrar(pref){
+  var E=STOCK_ELEGIR[pref], sel=document.getElementById(pref+'-k'), q=document.getElementById(pref+'-q'), nota=document.getElementById(pref+'-nota');
+  if(!E || !sel) return;
+  var txt=q ? String(q.value||'') : '', antes=sel.value;
+  var hay=stockNorm(txt) ? E.todos.filter(function(o){ return stockCoincide(o, txt); }) : E.base;
+  var ver=hay.slice(0, STOCK_ELEGIR_TOPE);
+  sel.innerHTML=ver.length ? ver.map(E.op).join('') : '<option value="">Ningún producto coincide</option>';
+  if(ver.some(function(o){ return o.k===antes; })) sel.value=antes;
+  if(sel.value!==antes && sel.onchange) sel.onchange();      // «Pedí a fábrica»: la cantidad sugerida sigue al producto
+  if(nota) nota.textContent=stockElegirNotaTxt(E, txt, hay.length, ver.length);
 }
 
 /* ---- Cargar el conteo del depósito ---- */
@@ -15831,13 +16469,17 @@ function abrirStockConteo(){
      los 15 que mueven sí. Los ya contados vienen con su número puesto. */
   var lista=stockConMovimiento(d);
   var filas=lista.map(function(o,i){
-    var v=(STOCK.c.u||{})[o.k];
+    /* ⚠️ (26/09) El número puesto es lo que el panel calcula que hay HOY, no el del último corte:
+       con el Excel de hace 3 días (TITANIO 10, salieron 6 → hay 4), dejar el renglón sin tocar
+       guardaba 10 con fecha de hoy y el panel prometía 6 colchones que no están. */
+    var v=(o.deposito!=null) ? Math.max(0, o.deposito) : null;
     return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">se venden '+stockNum(o.porDia)+' por día</span>'):'')+'</td>'+
-      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
+      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
   }).join('');
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📋 Conté el depósito</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Anotá cuántas unidades hay <b>hoy</b> de cada uno. Lo que dejes vacío queda sin contar y no se avisa por ese producto. '+
+      'Los que ya tienen número vienen con lo que el panel calcula que hay hoy: si no los contaste, dejalos así. '+
       'Desde este conteo, el panel descuenta solo lo que se va entregando y suma lo que llega de fábrica.</p>'+
       (lista.length?('<div style="max-height:52vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px"><table class="roho-tabla stk-tabla" style="min-width:0"><tbody>'+filas+'</tbody></table></div>')
                    :'<div style="color:var(--muted);padding:14px">Todavía no hay productos con movimiento para contar.</div>')+
@@ -15848,14 +16490,27 @@ function abrirStockConteo(){
   openModal(html, true);
 }
 function guardarStockConteo(){
-  var u={}, n=0;
+  var u={}, n=0, hoy=todayStr(), vistos={};
+  /* (26/09) Lo que NO se tocó no se mueve. El conteo nuevo es de hoy y descuenta las entregas de
+     hoy (§4cn), así que el número del panel se guarda con esas entregas sumadas: queda igual. */
+  var quieto=function(k, hay){ return Math.max(0, Number(hay)||0) + stockSalidas(k, hoy, ''); };
   [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).forEach(function(el){
+    var k=el.getAttribute('data-k'); vistos[k]=1;
     var t=String(el.value||'').trim(); if(t==='') return;
-    var v=Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
-    u[el.getAttribute('data-k')]=v; n++;
+    var def=String(el.getAttribute('data-def')||'');
+    var v=(def!=='' && Math.abs(Number(t)-Number(def))<1e-9) ? quieto(k, def) : Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
+    u[k]=v; n++;
   });
   if(!n){ toast('No anotaste ninguna cantidad.','err'); return; }
-  STOCK.c={ f:todayStr(), u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* (26/09) Lo contado antes que no entró en la lista (muestra 60) seguía siendo un dato: se
+     perdía entero y quedaba «sin contar». Pasa igual que lo que no se tocó. */
+  var viejo=STOCK.c||{}, dep={};
+  stockData().lista.forEach(function(o){ dep[o.k]=o.deposito; });
+  Object.keys(viejo.u||{}).forEach(function(k){ if(!vistos[k] && u[k]==null && dep[k]!=null) u[k]=quieto(k, dep[k]); });
+  STOCK.c={ f:hoy, u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* (26/09) Los códigos del último Excel dicen QUÉ es cada renglón (§4cy): sin ellos, al releer la
+     fila `stockMigrar` volvía a sumar el CH1297 (10) al SOMIER NEGRO (2) → «hay 12». */
+  if(viejo.cod && typeof viejo.cod==='object' && Object.keys(viejo.cod).length) STOCK.c.cod=viejo.cod;
   STOCK.e=[];                       // el conteo de hoy ya incluye todo lo que llegó antes (lo pedido y no llegado sigue en camino)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Conteo guardado: '+n+' producto'+(n===1?'':'s')+'. Desde acá el panel lleva la cuenta solo.','ok',6000);
@@ -15869,7 +16524,12 @@ function abrirStockPedido(kPre){
   if(kPre && stockDescontinuadoK(kPre)){toast('Descontinuado: solo se venden saldos. No se fabrica.','err');return;}
   var d=stockData(), lista=stockConMovimiento(d).filter(function(o){return !stockDescontinuadoK(o.k);}).map(function(o){return Object.assign({},o,{pedir:o.fabricar});});
   if(!lista.length){ toast('Todavía no hay productos con movimiento.','err'); return; }
-  var ops=lista.map(function(o){ return '<option value="'+esc(o.k)+'"'+(o.k===kPre?' selected':'')+' data-pedir="'+(o.pedir||0)+'">'+esc(stockNombre(o))+(o.pedir?(' — sugerido '+o.pedir):'')+'</option>'; }).join('');
+  // (26/09) El buscador mira todo (tabla + catálogo), y el de «🚨 PEDIR YA» está siempre aunque no entre en los 60.
+  var todos=stockElegibles(d).filter(function(o){return !stockDescontinuadoK(o.k);}).map(function(o){return Object.assign({},o,{pedir:o.fabricar});});
+  if(kPre && !lista.some(function(o){ return o.k===kPre; })) lista=todos.filter(function(o){ return o.k===kPre; }).concat(lista);
+  var opPed=function(o){ return '<option value="'+esc(o.k)+'"'+(o.k===kPre?' selected':'')+' data-pedir="'+(o.pedir||'')+'">'+esc(stockNombre(o))+(o.pedir?(' — sugerido '+o.pedir):'')+'</option>'; };
+  STOCK_ELEGIR['stk-ped']={ base:lista, todos:todos, op:opPed };
+  var ops=lista.map(opPed).join('');
   var fabs=PROD_LUGARES.map(function(L){ var t=d.fabricas.de(L.corto); return '<option value="'+L.corto+'">'+L.corto+' · tarda ~'+t.dias+' día'+(t.dias===1?'':'s')+(t.medido?'':' (sin medir)')+'</option>'; }).join('')+'<option value="">Otra</option>';
   var pre=lista.filter(function(o){ return o.k===kPre; })[0];
   var html='<div class="modal-h" style="background:#075985"><h3>🏭 Pedí a fábrica</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
@@ -15877,7 +16537,7 @@ function abrirStockPedido(kPre){
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px"><b>Esto no le avisa a la fábrica</b> — el pedido lo hacés vos por teléfono o WhatsApp, como siempre. '+
       'Acá lo <b>anotás</b>: el producto deja de avisar mientras lo pedido alcance, entra en la cuenta de «se corta el…», y cuando llegue lo marcás en <b>📥 Llegó de fábrica</b> '+
       '(ahí el panel aprende cuánto tarda cada fábrica de verdad).</p>'+
-      '<div><label class="lb">Producto</label><select id="stk-ped-k" style="width:100%" onchange="var o=this.options[this.selectedIndex]; var u=document.getElementById(\'stk-ped-u\'); if(u && o) u.value=o.getAttribute(\'data-pedir\')||\'\';">'+ops+'</select></div>'+
+      '<div><label class="lb">Producto</label>'+stockElegirBuscador('stk-ped')+'<select id="stk-ped-k" style="width:100%" onchange="var o=this.options[this.selectedIndex]; var u=document.getElementById(\'stk-ped-u\'); if(u && o) u.value=o.getAttribute(\'data-pedir\')||\'\';">'+ops+'</select>'+stockElegirNota('stk-ped')+'</div>'+
       '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades pediste?</label>'+
         '<input type="number" min="1" step="1" inputmode="numeric" id="stk-ped-u" placeholder="Ej. 10" value="'+((pre&&pre.pedir)?pre.pedir:'')+'" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">¿A qué fábrica?</label><select id="stk-ped-fab" style="width:100%">'+fabs+'</select></div>'+
@@ -15969,7 +16629,9 @@ function cancelarStockPedido(id){
 function abrirStockEntrada(){
   var d=stockData(), lista=stockConMovimiento(d);
   if(!lista.length && !d.abiertos.length){ toast('Todavía no hay productos con movimiento.','err'); return; }
-  var ops=lista.map(function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; }).join('');
+  var opEnt=function(o){ return '<option value="'+esc(o.k)+'">'+esc(stockNombre(o))+'</option>'; };
+  STOCK_ELEGIR['stk-ent']={ base:lista, todos:stockElegibles(d), op:opEnt };   // (26/09) el buscador mira todo el catálogo
+  var ops=lista.map(opEnt).join('');
   var abiertos=d.abiertos.map(function(q){
     return '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:7px 0;border-bottom:1px solid var(--gray-lt);font-size:.84rem">'+
       '<span style="flex:1;min-width:180px"><b>'+esc(q.nombre)+'</b><br><span style="color:var(--muted);font-size:.92em">'+q.u+' pedidas'+(q.fab?(' a '+esc(q.fab)):'')+' el '+fmtFechaCorta(q.f)+' · llegaban ~'+fmtFechaCorta(q.llega)+'</span></span>'+
@@ -15981,7 +16643,7 @@ function abrirStockEntrada(){
       (abiertos ? ('<div style="font-weight:700;font-size:.86rem;margin-bottom:4px">Lo que estaba pedido</div>'+abiertos+
                    '<div style="font-weight:700;font-size:.86rem;margin:14px 0 4px">Otra llegada (sin pedido anotado)</div>') : '')+
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Sumá lo que entró al depósito. Se agrega a lo que ya había contado.</p>'+
-      '<div><label class="lb">Producto</label><select id="stk-ent-k" style="width:100%">'+ops+'</select></div>'+
+      '<div><label class="lb">Producto</label>'+stockElegirBuscador('stk-ent')+'<select id="stk-ent-k" style="width:100%">'+ops+'</select>'+stockElegirNota('stk-ent')+'</div>'+
       '<div style="margin-top:10px"><label class="lb">¿Cuántas unidades llegaron?</label>'+
         '<input type="number" min="1" step="1" inputmode="numeric" id="stk-ent-u" placeholder="Ej. 10" style="width:100%"></div>'+
       '<div style="margin-top:10px"><label class="lb">¿De qué fábrica? (opcional)</label>'+
@@ -16014,9 +16676,18 @@ function recibirStockPedido(id){
   if(!(u>0)){ toast('Poné cuántas unidades llegaron.','err'); return; }
   if(inp&&inp.disabled)return;
   if(u>Number(q.u)){toast('La recepción supera las '+q.u+' unidades pendientes.','err');return;}
+  var sinResta=false;
   if(q.tipo==='recogida'){
-    var fuente=(STOCK.g||{})[q.de];
-    if(!fuente || !fuente.u || Number(fuente.u[q.k])<u || !isFinite(Number(fuente.u[q.k]))){toast('No alcanza el saldo del almacén de origen. Revisá el corte antes de recibir.','err');return;}
+    /* ⚠️ (26/09) Si el último reporte de allá ya no tiene esas unidades, se sacó DESPUÉS de
+       retirarlas (el Excel de Moreno del día, con la camioneta ya cargada). Antes esto se negaba
+       («No alcanza el saldo del almacén de origen») y la llegada no se podía anotar nunca: los
+       colchones estaban acá y el panel no los veía. Ahora se pregunta, y la recepción va marcada
+       `nr`: se suma acá y NO se le descuenta al almacén (su reporte ya no las tiene). */
+    var alm=q.de || stockAlmPorDefecto(), fuente=(STOCK.g||{})[alm], hayAlla=(fuente&&fuente.u) ? Number(fuente.u[q.k]) : NaN;
+    if(!(isFinite(hayAlla) && hayAlla>=u)){
+      if(!confirm('El último reporte de '+stockAlmCorto(alm||'Moreno')+' tiene '+stockUnid(isFinite(hayAlla)?hayAlla:0)+' de este producto, no '+u+': lo más probable es que se sacó DESPUÉS de retirarlas.\n\n¿Llegaron igual? Se suman acá y a '+stockAlmCorto(alm||'Moreno')+' no se le descuenta nada.')) return;
+      sinResta=true;
+    }
   }
   if(inp)inp.disabled=true;
   /* 📦 LA LLEGADA ES UNA RECEPCIÓN CON NOMBRE (§4fz-b). Antes se sumaba la entrada y se restaba
@@ -16029,15 +16700,16 @@ function recibirStockPedido(id){
      panel las cuenta dos veces hasta el próximo Excel de ese almacén (§4cr). */
   q.total=q.total||Number(q.u);
   var rec=stockRecNuevo(u, todayStr());
+  if(sinResta) rec.nr=1;                          // (26/09) no se resta del almacén de origen: ver arriba
   stockRecsDe(q).push(rec);
   stockNormalizarRecepciones(STOCK);
   var pendiente=q.r ? 0 : (Number(q.u)||0);
   var _g=(STOCK.g||{})[q.de || stockAlmPorDefecto()];
-  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id]);
+  var movido=!!(q.tipo==='recogida' && _g && _g.rs && _g.rs[rec.id] && !_g.rs[rec.id].nr);   // la marca de una `nr` no es una resta (26/09)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   var dias=stockDias(q.f, todayStr());
   toast('✅ Llegaron '+u+(q.tipo==='recogida'?(' de '+stockAlmCorto(q.de||'Moreno')):(q.fab?(' de '+stockFabNorm(q.fab)):''))+
-        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+'Se suman acá'+(movido?' y se descuentan de allá':'')+
+        ' en '+dias+' día'+(dias===1?'':'s')+'. '+(pendiente>0?('Quedan '+pendiente+' pendientes. '):'Recepción completa. ')+'Se suman acá'+(movido?' y se descuentan de allá':'')+(sinResta?' (allá no se descuentan: su último reporte ya no las tenía)':'')+
         (STOCK.c.f?'':' (falta cargar las existencias de acá una vez)')+'.','ok',7000);
 }
 
@@ -16172,7 +16844,7 @@ function revStkPedidos(todos){
 }
 /* El reparto. Devuelve, por pedido, qué habría que marcar en cada línea y por qué. */
 function stockAsignar(){
-  var d=stockData(), dep={}, im={}, imAlm={}, info={}, recogidas={}, encargados={};
+  var d=stockData(), dep={}, im={}, imAlm={}, info={}, recogidas={}, recogidasPor={}, encargados={};
   d.lista.forEach(function(o){
     info[o.k]=o;
     dep[o.k]= (o.deposito==null) ? null : Math.max(0, o.deposito);
@@ -16186,6 +16858,9 @@ function stockAsignar(){
        (IM): nunca se pierde stock por no saber de dónde sale. */
     if(!imAlm[o.k].length && im[o.k]>0) imAlm[o.k]=[{ alm:'', u:im[o.k] }];
     recogidas[o.k]=(o.pedidos||[]).reduce(function(n,q){return n+(q.tipo==='recogida'?Number(q.u)||0:0);},0);
+    // (26/09) …y de qué almacén viene cada una: la usa la revisión de TODO (más abajo, `prog`).
+    recogidasPor[o.k]=(o.pedidos||[]).filter(function(q){ return q.tipo==='recogida' && Number(q.u)>0; })
+                                     .map(function(q){ return { alm:q.de||stockAlmPorDefecto()||'', u:Number(q.u)||0 }; });
     encargados[o.k]=o.enCamino||0;
   });
   /* Toma `n` unidades de los otros almacenes y dice DE CUÁL salieron: primero el que ya
@@ -16291,7 +16966,13 @@ function stockAsignar(){
         lineas.push({i:i, k:k, nom:nomS, cant:c, antes:antes, ahora:'', sinContar:true});
         return;
       }
-      var deDep=Math.min(dep[k]||0, c), resto=c-deDep;
+      /* 🚚 (26/09) Con «Tocar solo las líneas sin marcar» DESTILDADA, una línea 📥 cuya recogida ya
+         está programada no encontraba esas unidades —ya no están libres en Moreno
+         (`stockLibreOrigen` las descuenta) ni llegaron acá— y se proponía ✗ no hay con la camioneta
+         en camino. La recogida programada la cubre primero, como en la primera vuelta (arriba). */
+      var prog=0, progPor=[];
+      if(!REVSTK_SOLO_VACIOS && antes==='im') (recogidasPor[k]||[]).forEach(function(e){ var t=Math.min(e.u, c-prog); if(t>0){ prog+=t; progPor.push({ alm:e.alm, u:t }); } });
+      var deDep=Math.min(dep[k]||0, c-prog), resto=c-prog-deDep;
       /* Se MIRA cuánto habría en los otros almacenes y de cuál; se descuenta más abajo, y
          solo si la línea se cubre entera (una línea a medias no reserva nada). */
       // Solo es preferencia si YA estaba marcado; si no, que salga del que la cubra entera.
@@ -16306,20 +16987,29 @@ function stockAsignar(){
       /* Lo que HABRÍA de cada lado aunque no alcance: es lo que le sirve a quien mira
          («de 4: 1 acá, 2 en Moreno, 1 hay que fabricar»). La idea es de la versión de
          ChatGPT, que lo desglosaba y la mía decía solo «no hay» (§4cr). */
-      var hayDep=deDep, hayIM=deIM, aFabricar=falta>0?falta:0;
-      if(falta>0){ ahora='no'; deDep=0; deIM=0; almIM=''; porIM=[]; }  // no alcanza: no se reserva nada
-      else if(deIM>0) ahora='im';
+      var hayDep=deDep, hayIM=deIM, hayProg=prog, aFabricar=falta>0?falta:0;
+      if(falta>0){ ahora='no'; deDep=0; deIM=0; almIM=''; porIM=[]; prog=0; }  // no alcanza: no se reserva nada (tampoco la recogida)
+      else if(deIM>0 || prog>0) ahora='im';
       else ahora='ok';
       dep[k]=(dep[k]||0)-deDep;
       /* Recién acá se reserva. Mismos argumentos que la mirada (`deIM===resto` cuando
          alcanza) → mismo reparto: lo que se muestra es exactamente lo que se descuenta. */
       if(deIM>0){ porIM=tomarIM(k, deIM, prefX, true).por; almIM=(porIM.length?porIM[0].alm:''); im[k]=(im[k]||0)-deIM; }
+      // (26/09) …y la recogida queda para esta línea: el lugar es de donde viene la camioneta.
+      var porLinea=porIM;
+      if(prog>0){
+        var _p=prog; (recogidasPor[k]||[]).forEach(function(e){ var t=Math.min(e.u,_p); if(t>0){ e.u-=t; _p-=t; } });
+        recogidas[k]=Math.max(0,(recogidas[k]||0)-prog); encargados[k]=Math.max(0,(encargados[k]||0)-prog);
+        var _j={}; porLinea=[];
+        progPor.concat(porIM).forEach(function(e){ var kk=recogerClave(e.alm); if(!_j[kk]){ _j[kk]={ alm:e.alm, u:0 }; porLinea.push(_j[kk]); } _j[kk].u+=e.u; });
+        porLinea.sort(function(a,b){ return b.u-a.u; }); almIM=porLinea[0].alm;
+      }
       if(ahora==='ok') tot.ok++; else if(ahora==='im') tot.im++; else tot.no++;
       /* 🛑 Lo que no alcanza de un producto discontinuado queda ✗ igual (no hay), pero NO va a
          la lista de fábrica: no lo hacen más. Va a su propia lista, para avisar (§4cz). */
       var desc=stockDescontinuadoK(k);
       if(ahora==='no' && desc) tot.descont++;
-      if(ahora!=='ok'){
+      if(ahora!=='ok' && (ahora!=='im' || deIM>0)){       // (26/09) lo que ya viene en la recogida no se va a buscar de nuevo
         var reg=(ahora==='im'?imPorProd:(desc?descPorProd:faltaPorProd));
         if(!reg[k]) reg[k]={k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cod:o.cod||x.codigo||'', u:0, ped:[], alm:{}};
         /* ⚠️ De IM se traen las unidades que salen de IM, NO las del pedido entero: si de 4
@@ -16336,14 +17026,14 @@ function stockAsignar(){
       /* ⚠️ Cambiar de ALMACÉN también es un cambio. Mirando solo la marca, la tabla proponía
          «recoger de Moreno» sobre una línea marcada en Banzer y Aplicar no tocaba nada: la
          propuesta se mostraba y no se aplicaba nunca. */
-      var cambia=(antes!==ahora) || (ahora==='im' && !recogerMismosLugares(porIM, recogerPartes(x)));
+      var cambia=(antes!==ahora) || (ahora==='im' && !recogerMismosLugares(porLinea, recogerPartes(x)));
       if(cambia) tot.cambian++;
       // Contradice a una persona: había un tilde puesto a mano y decía otra cosa.
       var contra=(cambia && antes!=='');
       if(contra) tot.contra++;
-      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almPor:porIM, hayIMPor:hayIMPor,
+      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almPor:porLinea, hayIMPor:hayIMPor,
                    almAntes:(antes==='im'?recogerDe(x):''), almAntesPor:(antes==='im'?recogerPartes(x):null),
-                   deDep:deDep, deIM:deIM, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
+                   deDep:deDep, deIM:deIM+prog, prog:hayProg, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
     });
     if(lineas.length) pedidos.push({p:p, lineas:lineas, firma:JSON.stringify(p)});
   });
@@ -16384,6 +17074,7 @@ function stockAsignar(){
 function revStkDesglose(l){
   var t=[];
   if(l.hayDep) t.push(l.hayDep+' acá');
+  if(l.prog)   t.push(l.prog+' ya en camino (recogida programada)');     // (26/09)
   if(l.hayIM)  t.push(l.hayIM+' recoger de '+recogerPorTxt(l.hayIMPor));
   if(l.falta)  t.push('<b>'+l.falta+(l.descont?' no hay — y ya no se fabrica':' hay que fabricar')+'</b>');
   return t.length?('de '+l.cant+': '+t.join(' · ')):'no hay nada';
@@ -16460,7 +17151,7 @@ function renderStockRevisar(){
                «hay 2 acá», que es el dato con el que quien mira decide si le cree. */
             '<td>'+esc(l.nom)+' <b>× '+l.cant+'</b>'+
               (l.ahora==='ok'?('<br><span style="color:#0a6b47;font-size:.88em">'+(l.hayDep>=l.cant?('hay '+l.hayDep+' acá en fábrica'):(l.hayDep+' acá'))+'</span>'):'')+
-              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de '+esc(recogerPorTxt(l.almPor))+'</span>'):'')+
+              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de '+esc(recogerPorTxt(l.almPor))+(l.prog?(' ('+l.prog+' ya en la recogida programada)'):'')+'</span>'):'')+
               (l.ahora==='no'?('<br><span style="color:var(--red);font-size:.88em">'+revStkDesglose(l)+'</span>'):'')+'</td>'+
             '<td>'+revStkMarca(l.antes, l.almAntesPor)+'</td>'+
             '<td>'+revStkMarca(l.ahora, l.almPor)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+'</td></tr>';
@@ -16528,7 +17219,9 @@ function abrirStockHistorial(){
     (h.length?('<p style="font-size:.83rem;color:var(--muted);margin-bottom:9px">Cada vez que se sube un Excel de existencias queda anotado acá. Se guardan los últimos '+STOCK_HIST+'.</p>'+
       '<table class="roho-tabla stk-tabla" style="min-width:0"><thead><tr><th>Corte</th><th>Almacén</th><th>Productos</th><th>Unidades</th></tr></thead><tbody>'+
       h.map(function(x,i){
-        var prev=h[i+1] && h[i+1].alm===x.alm ? h[i+1] : null;
+        /* (26/09) El anterior DEL MISMO almacén, no el renglón de abajo: subiendo el de acá y el de
+           Moreno el mismo día, el de abajo es siempre del otro y «contra el anterior» no salía nunca. */
+        var prev=h.slice(i+1).filter(function(y){ return y && y.alm===x.alm; })[0]||null;
         var dif=prev? (x.u-prev.u) : null;
         return '<tr><td><b>'+fmtFecha(x.f)+'</b>'+(x.hora?(' '+esc(x.hora)):'')+
           '<br><span style="color:var(--muted);font-size:.9em">subido '+tsFmt(x.ts)+'</span></td>'+
@@ -17611,6 +18304,7 @@ function showWhatsappModal(rec, volverA, reenvio){
    TIENDA, que caen justo ahí y solo veían el mensaje una vez, al guardarlas. */
 function ctaWhatsappVenta(id){
   var p=findById(id); if(!p) return;
+  ctaMontosRecordar();              // 26/09: ver showPagoWhatsapp
   showWhatsappModal(p, "showContaModal('"+String(id).replace(/'/g,'')+"')", true);
 }
 
@@ -18510,7 +19204,8 @@ function downloadBlob(bytes,filename,mime){
   setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
 var RUTA_DIA='manana', RUTA_ORDER=[], RUTA_BYC={};
-function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
+/* (26/09) La venta de tienda no sube al camión: en «Todos» salía como «⚠️ SIN CHOFER (asignar)». */
+function rutaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p)) return false; if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirRuta(){ document.getElementById('ruta-overlay').style.display='flex'; renderRuta(); }
 function closeRuta(){ var ov=document.getElementById('ruta-overlay'); if(ov) ov.style.display='none'; }
 function setRutaDia(d){ RUTA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('ruta-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderRuta(); }
@@ -18524,22 +19219,25 @@ function renderRuta(){
   document.getElementById('ruta-info').textContent=list.length+' pedidos · '+RUTA_ORDER.filter(function(k){return k!=='Sin chofer';}).length+' choferes · '+diaLbl;
   var html='';
   RUTA_ORDER.forEach(function(k, idx){
-    var stops=RUTA_BYC[k], cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
+    var stops=RUTA_BYC[k], cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+    var aCobrar=(cobrar>0 || fleteC>0.01);
     var esSin=(k==='Sin chofer');
     html+='<div class="ruta-chofer" style="background:#fff;border-radius:10px;padding:14px 16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,.08)'+(esSin?';border:2px solid #f0a020':'')+'">';
     html+='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;border-bottom:2px solid #eee;padding-bottom:8px;margin-bottom:10px">'+
       '<b style="font-size:1.05rem;color:'+(esSin?'#c47f00':'#00877f')+'">'+(esSin?'⚠️ SIN CHOFER (asignar)':'🚚 '+esc(k))+'</b>'+
       '<span style="font-size:.8rem;color:#666">'+stops.length+' paradas · '+diaLbl+'</span>'+
-      (cobrar>0?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+'</span>'):'')+
-      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(cobrar>0?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
+      (aCobrar?('<span style="margin-left:auto;font-weight:700;color:#c0392b">A cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')+'</span>'):'')+
+      (esSin?'':('<button class="btn btn-sm no-print" style="background:#25D366;color:#fff;font-weight:700'+(aCobrar?'':';margin-left:auto')+'" onclick="rutaWhatsapp('+idx+')">📲 WhatsApp</button>'))+'</div>';
     stops.forEach(function(p,i){
       var cr=cobroRutaTxt(p);
       var cobro='<span style="color:'+cr.c+';font-weight:700">'+cr.t+'</span>'+
-        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'');
+        (Number(p.acuenta)>0?(' <span style="color:#888">(a cuenta '+fmtBs(p.acuenta)+')</span>'):'')+
+        (cr.f?('<br><b style="color:#c0392b">'+esc(cr.f)+'</b>'):'');   // (26/09) el flete pactado (§4ai)
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
-        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+cobro+
+        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+
+        (atcComodinAviso(p)?('<b class="b-comodin" style="color:#1d4ed8">'+esc(atcComodinAviso(p))+'</b><br>'):'')+cobro+   // (26/09)
         (p.maps?(' &nbsp;·&nbsp; <a href="'+esc(p.maps)+'" target="_blank" rel="noopener">🗺️ Maps</a>'):'')+
         (p.observaciones?('<br><span style="color:#a05a00">📝 '+esc(p.observaciones)+'</span>'):'')+'</div>';
     });
@@ -18550,13 +19248,14 @@ function renderRuta(){
 function rutaWhatsapp(idx){
   var k=RUTA_ORDER[idx]; if(!k) return; var stops=RUTA_BYC[k]||[];
   var diaLbl=RUTA_DIA==='hoy'?fmtFecha(todayStr()):RUTA_DIA==='manana'?fmtFecha(proximoDiaEntrega()):'';
-  var cobrar=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; });
-  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), (cobrar>0?('💰 Total a cobrar: '+fmtBs(cobrar)):'✅ Todo pagado'), ''];
+  var cobrar=0, fleteC=0; stops.forEach(function(p){ if(!p.pagado) cobrar+=Number(p.saldo)||0; if(!noSeCobra(p)) fleteC=r2(fleteC+envioPorCobrar(p)); });   // (26/09) el flete, aparte
+  var L=['🚚 *RUTA '+k+'*'+(diaLbl?(' — entrega '+diaLbl):''), ((cobrar>0 || fleteC>0.01)?('💰 Total a cobrar: '+fmtBs(cobrar)+(fleteC>0.01?(' · + '+fmtBs(fleteC)+' de flete'):'')):'✅ Todo pagado'), ''];
   stops.forEach(function(p,i){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
     L.push('   🛏️ '+prodText(p.productos));
-    L.push('   '+cobroRutaTxt(p).t);
+    if(atcComodinAviso(p)) L.push('   '+atcComodinAviso(p));   // (26/09)
+    var cr=cobroRutaTxt(p); L.push('   '+cr.t); if(cr.f) L.push('   '+cr.f);   // (26/09) el flete pactado (§4ai)
     if(p.maps) L.push('   🗺️ '+p.maps);
     if(p.observaciones) L.push('   📝 '+p.observaciones);
     L.push('');

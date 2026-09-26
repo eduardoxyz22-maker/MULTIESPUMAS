@@ -7445,6 +7445,85 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gb. 26/09: un agente por PESTAÑA — 35 arreglos, la coma de la plata y el chofer sin señal (2026-09-26)
+
+Pedido del dueño (25/09 a la noche, con la página nueva ya publicada): *«¿No hay errores? ¿Después de estas
+correcciones? Pon 1 agente por cada pestaña a revisar. Debe quedar perfecto»*.
+
+Ocho agentes, uno por pestaña: ＋ Nuevo pedido · 📋 Mis pedidos · 🚚 Chofer · 🧾 Contabilidad (Ventas y
+Mayoristas) · 🧮 Cuadre · 🎧 ATC · 🔒 Administración · 📦 Stock (la pantalla entera que sale de Administración).
+Misma consigna que §4ga, con la copia llevada a la rama primero (`git reset --hard origin/<rama>`). El
+contenedor se reinició con los ocho terminados: las copias (`.claude/worktrees/`) y los informes sobrevivieron.
+Revisé cada diff, junté 35 commits (uno salteado, abajo) y la batería quedó en **89 suites, 3.254 bien · 0 mal**.
+Cada prueba nueva (`tests/test_rev2_*.js`) falla contra la página publicada (`cb99ab3`): 13 a 25 rojos cada una.
+
+### Lo que arreglaron (lo más importante)
+- **Formulario** (`test_rev2_form`, 29): `montoForm` = `parseMonto` en TODAS las lecturas de plata del formulario
+  (A cuenta, Saldo, Monto cobrado, 2° método, flete, precio c/u, «Los ítems suman», «Usar como total»):
+  «1.500» se guardaba 1,50. Lo que el panel escribe en esos campos va con `r2`. Un signo menos en un campo a la
+  vista FRENA (antes: «A cuenta −500» en la planilla, y un flete «−50» borraba el pactado). `cantidadesMal()`:
+  la cantidad es un entero ≥1 (0/vacía se guardaba 1, 2,5 → 2, −2 → −2), como `rohoCant`. Banco, comprobante y
+  2° método se piden solo si hay pago (`_hayPago`): un método elegido y después sin pago TRABABA el guardado;
+  al pasar a ATC/RPT, `pintarDocTipo` limpia también el método, el mixto y las imágenes recién subidas.
+- **Mis pedidos** (`test_rev2_mis`, 39): la ficha usa `cobrosResumen` (imprimía el historial crudo con IDs de
+  imágenes), `noSeCobra` y `badgeSinMonto`; el WhatsApp del pedido ya no dice «💰 PAGADO» a una venta sin monto
+  ni a una ATC (`plataLineaWa`) y nombra el flete pactado que se cobra en la puerta; la lista ordena por
+  `fechaSalida` (la venta de tienda caía al fondo y con el tope de 120 no se veía nunca; ahora «Ver más» con
+  `MIS_TOPE`); completar un borrador de Kommo abre «Pedido guardado» con el WhatsApp; «Reintentar ahora» dice si
+  llegó.
+- **Chofer** (`test_rev2_chofer`, 28): desmarcar ✅ PREGUNTA (un doble toque desmarcaba la entrega); el ✅ que
+  choca con la copia vieja se vuelve a aplicar UNA vez sobre la fila del servidor (como la foto, §4ew; la plata
+  no); el flete pactado aparece en la tarjeta («cobrar también el flete… avisale a la vendedora, que lo
+  registra» — el chofer NO lo anota, §4ah/§4ai); el botón de la foto legible a 320 px.
+- **Ventas** (`test_rev2_ventas`, 20): «✏️ Corregir este pago» perdía fecha, monto y recibo al elegir el método
+  (`ctaEditMetodo`/`ctaEditBanco` sin `ctaEditRecordar`); una venta SIN MONTO ANOTADO mandaba el pago al flete
+  (regresión de `CTA_FORM_ENV`, §4ga: ahora tiene el selector y arranca en «💵 Pago», que pide el total
+  primero); Productos del mes contaba una «PAGADA sin monto» como Bs 0 conocido (`?v=20260926a`).
+- **Cuadre** (`test_rev2_cuadre`, 55): el arqueo y el retiro son texto con `inputmode="decimal"` (con
+  `type=number` Chromium tira la coma: «1.500,50» valía 1,50 y «1500,50», 150.050); un retiro corregido en la
+  cola ya no vuelve al monto viejo y uno borrado no reaparece (`mergePending`, `borrarRetiro`); el Excel baja
+  con solo retiros y lleva el nombre de la vendedora; «N de M formas» cuenta el arqueo sin pagos; Contabilidad
+  no se corre de costado a 360/320 px; el refresco no se lleva el arqueo que se tipea (`autoOcupado`).
+- **ATC** (`test_rev2_atc`, 35): cerrar o reabrir desde «📦 Anotar avance» mueve el ✅ de la devolución
+  (`atcEntregadoComoEnt`); el comodín llega a la ficha del chofer, la carga, la hoja de ruta y el grupo
+  (`atcComodinAviso` en `atcChip`); programar la devolución el mismo día del recojo pregunta si ya lo
+  recogieron (el recojo desaparecía del camión de hoy); «📋 Copiar» con encabezado y dos columnas al final.
+- **Administración** (`test_rev2_admin`, 22): **Cerrar día relee la planilla antes de reescribir**
+  `__dias_cerrados__` y aplica solo lo tocado acá (`CIERRES_CAMBIOS`): con dos computadoras, un día cerrado se
+  reabría solo y el servidor dejaba entrar pedidos a un camión armado; el Parte del día sin ATC/RPT en «por
+  cobrar»; el cupo del sábado dice cuántos se forzaron de más.
+- **Stock** (`test_rev2_stock`, 22): «📋 Conté a mano» arranca cada renglón con lo calculado para HOY (no con el
+  corte viejo), conserva `c.cod` (si no, el CH1297 volvía a sumarse al SOMIER NEGRO, deshaciendo §4ga) y lo
+  contado fuera de la lista de 60; una recogida que el Excel de Moreno del día ya no tiene se puede dar por
+  llegada (recepción `nr`: suma acá y no resta del origen; va dentro de `q.recs`, así que `stockFusionar` no
+  cambia); el detalle cuenta un depósito negativo como 0 como la tabla; el historial compara con el anterior
+  del MISMO almacén.
+
+### Lo que hice yo al juntar
+- **Salteado `37f4a1b`** (chofer, comodín en la tarjeta): el agente de ATC hizo lo mismo por `atcChip` y en más
+  lugares; los dos juntos lo mostraban dos veces.
+- **Un choque** en `pedidoText` (WhatsApp): quedaron los dos cambios (`noSeCobra` de ATC + la línea del flete de
+  Mis pedidos). `test_rev2_mis` acepta «No se cobra» con cualquier mayúscula.
+- **La coma en los otros doce campos de plata** (lo reportó el del Cuadre): A cuenta, Saldo, Monto cobrado,
+  flete, 2° método y precio c/u del formulario; Registrar pago, Corregir este pago, el flete y Corregir precios
+  y montos de Contabilidad → texto con `inputmode="decimal"` (todos ya se leían con `parseMonto`/`montoForm`).
+  Los de cantidades del stock siguen numéricos (enteros). `tests/test_montos_texto.js` (9, tipeando).
+- **El chofer sin señal se entera de lo que no entró** (el ALTA que el del Chofer dejó reportado): sin señal, el
+  ✅ y el cobro quedan en la cola; si otra persona toca el pedido, al volver la señal gana su fila y lo del
+  chofer se iba sin aviso (el rechazo quedaba en Mis pedidos, que el chofer no mira). `rechazoRecordar` anota
+  `perdio` (`rechazoPerdido`: ✅, cobros de la puerta, fotos) y `choRechazosHtml` lo muestra arriba de la
+  pestaña Chofer hasta «Ya lo revisé». ⚠️ **No se reaplica solo, a propósito**: sin la versión de antes, un ✅
+  «de más» puede ser una copia vieja y un cobro, uno que Contabilidad ya anotó. `tests/test_chofer_sin_senal.js` (8).
+
+### Quedan para decidir (confirmados, sin tocar)
+- El cuadro «Qué producir» puede decir «producir 3» en un producto que la tabla marca «🚚 Ya pedido» o «📦 Pedido
+  único» (dos verdades; decide el dueño).
+- Las tildes de la Lista de carga tienen el mismo defecto que tenían los días cerrados (dos cargadores a la vez).
+- `quitarProgramarDevAtc` pierde el turno del recojo; «Productos más entregados» cuenta ATC; las métricas «Hoy»
+  y «Este mes» de Mis pedidos cuentan por fecha de ENTREGA aunque digan «cargados».
+- Del servidor (exigen republicar): completar un borrador de Kommo cuya OC choca contesta `oc_repetida` en vez
+  de renumerar (`foundRow` ya existe); `ocAutoGs_` sin RPT (§4ga).
+
 ## 4ga. 25/09: pruebas que se pudrían a fin de mes, agosto «entregado» y la revisión con cuatro agentes que arreglan (2026-09-25)
 
 Pedido del dueño: *«Revisa que no haya más errores y cosas que corregir. Pon el agente a trabajar. Y marca
@@ -7657,6 +7736,21 @@ movió a la rama antes de empezar. La próxima vez, decirlo en la consigna.
 27 commits (4 + 5 + 11 + 7) con `cherry-pick` sobre la rama; un solo choque (`contaLista`, el mismo `sinTildes`
 de dos agentes: quedó uno). Cada prueba nueva se corrió también contra el panel de `50f9d22` (una copia aparte
 con `git worktree`): 11, 29, 28 y 28 rojos. Batería completa: **79 suites, 2.985 bien · 0 mal**.
+
+#### Publicación de la PÁGINA (25/09, 15:04 de Bolivia) — el servidor queda para el 26/09
+
+- El dueño dijo «arrancamos cuando terminen los agentes». El quinto (uso diario) se había cortado a las 11:20 con
+  la interrupción de su mensaje, sin informe: se relanzó con 35 minutos de tope. No encontró nada que bloquee, pero sí
+  que la ubicación de Maps FRENABA lo que pegan de verdad (el nombre + el enlace al compartir, «Mi ubicación:», enlaces
+  sin https, grados) → `normalizaUbicacion` saca el enlace de adentro y frena solo si no hay ninguna (`cdfbda7`).
+- **Desde el celular no se puede usar el editor de Apps Script.** El dueño eligió publicar SOLO la página ahora
+  (la nueva anda con el servidor 20-a: `test_transicion` 1, 2 y 4) y dejar la 23-b para el 26/09 en la PC.
+- Batería antes de publicar: **79 suites, 2.987 bien · 0 mal**. Merge `394f74c` a `main` (19:04 UTC, sin `panel.yml`
+  corriendo), deploy de Pages en verde. ⚠️ Desde la sesión NO se puede abrir `github.io` (el proxy lo rechaza):
+  se verificó por el deploy de Actions y porque `pedidos.html` de `main` es idéntico al de la rama.
+- **Hoy es feriado** (las vendedoras no trabajan): mañana, antes de empezar, TODOS recargan (F5 o cerrar y abrir la
+  pestaña) y hasta confirmarlo nadie toca 📦 Stock ni el arqueo. Recordatorio agendado (send_later) para el 26/09
+  07:45 de Bolivia con los pasos del servidor.
 
 ## 4fz-b. Segunda vuelta: la junta que no cuenta dos veces, el servidor estricto y el incidente del 23/09 (2026-09-23)
 

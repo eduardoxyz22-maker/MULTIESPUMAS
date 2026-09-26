@@ -35,7 +35,7 @@ const DH=(n)=>{ for(let k=n;k<n+7;k++){ const s=D(k), w=new Date(s+'T12:00:00Z')
   const errors=[]; page.on('pageerror',e=>errors.push(e.message));
   let ACEPTAR=true; const dialogs=[];
   page.on('dialog', d => { dialogs.push(d.message()); ACEPTAR ? d.accept() : d.dismiss(); });
-  await page.goto('file://' + path.resolve('pedidos.html'), { waitUntil:'load' });
+  await page.goto('file://' + (process.env.PEDIDOS || path.resolve('pedidos.html')), { waitUntil:'load' });
   await page.waitForTimeout(300);
 
   /* Un pedido igual al de la captura: Bs 16.920 marcados PAGADO desde el formulario
@@ -106,7 +106,8 @@ const DH=(n)=>{ for(let k=n;k<n+7;k++){ const s=D(k), w=new Date(s+'T12:00:00Z')
     ctaGuardarMontos('X1');
     await new Promise(r=>setTimeout(r,300));
     var p=STATE.filter(x=>x.id==='X1')[0], a=anticipoDe(p);
-    return { anticipo:a?Number(a.monto):0, comps:a?compsArr(a.comps).length:0, pagado:p.pagado };
+    return { anticipo:a?Number(a.monto):0, comps:a?compsArr(a.comps).length:0, pagado:p.pagado,
+             acuCampo:(document.getElementById('cta-acuenta')||{}).value };
   });
   chk('⚠️ pregunta antes de borrar un pago registrado', dialogs.length>0, 'ventanas='+dialogs.length);
   chk('…y le dice cuánta plata se va', /16\.920/.test(dialogs[0]||''), (dialogs[0]||'').slice(0,90));
@@ -115,6 +116,9 @@ const DH=(n)=>{ for(let k=n;k<n+7;k++){ const s=D(k), w=new Date(s+'T12:00:00Z')
   chk('⚠️ al CANCELAR, el pago sigue entero', r2.anticipo===16920, 'Bs '+r2.anticipo);
   chk('…y sus recibos también', r2.comps===2, r2.comps);
   chk('…y la venta sigue figurando pagada', r2.pagado===true);
+  // (26/09) El aviso dice «cancelá y tocá únicamente el precio»: el campo tiene que volver a lo guardado.
+  // Si quedaba en 0, guardar el precio volvía a preguntar (y desde §4gc lo tipeado sobrevive al repintado).
+  chk('⚠️ al CANCELAR, «A cuenta» vuelve a lo guardado (no queda el 0)', Number(r2.acuCampo)===16920, r2.acuCampo);
 
   // ══ 3. Corregir SOLO un precio no toca la plata ════════════════════════════
   console.log('\n── 3. Corregir solo un precio ──');

@@ -88,7 +88,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **en la rama, sin publicar**; producción sigue en `ebc3eab` + `2026-09-20-a`). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **con el servidor `2026-09-20-a` todavía implementado**: la 23-b la pega, prueba e implementa el dueño desde la PC (RESPUESTA §7 pasos 0-2 y 5-7; hay un recordatorio agendado para el 26/09 a las 07:45). Hasta entonces la protección de stock/arqueo entre dos equipos NO rige (igual que antes) y el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -594,6 +594,21 @@ Eduardo. `tests/test_chofer_efectivo.js`.
 - **Esperan al dueño** (§4ga, «Quedan para decidir»): Moreno con unidades fantasma si se entrega una línea 📥 sin
   anotar la recogida; recojos de ATC en «A cargar»; sacar un pedido de un día cerrado sin clave; la celda de 50.000
   del stock (podar `STOCK.p` recibidos); `ocAutoGs_` sin RPT (exige republicar).
+
+## 🔎 La revisión por pestaña del 26/09 (§4gb): lo que hay que respetar
+- **Plata tipeada**: todo campo de plata es `type="text" inputmode="decimal"` (con `type=number` Chromium tira
+  la coma: «1500,50» valía 150.050) y se lee con `parseMonto` (`montoForm` en el formulario); el signo menos se
+  mira con `montoNegativo` y FRENA. Lo que el panel escribe en esos campos va con `r2`. Un campo de plata NUEVO
+  va igual. Cantidades: enteros ≥1 (`cantidadesMal`).
+- **Chofer**: desmarcar ✅ pregunta; el ✅ que choca se reaplica una vez (la plata no); el flete pactado se ve en
+  la tarjeta pero lo registra la vendedora (§4ai). **Sin señal**: `rechazoPerdido` anota qué se perdió en un
+  conflicto y `choRechazosHtml` se lo dice al chofer hasta «Ya lo revisé» — no se reaplica solo, a propósito.
+- **Cerrar día relee la planilla** antes de reescribir `__dias_cerrados__` y aplica solo `CIERRES_CAMBIOS`.
+- **ATC**: cerrar/reabrir desde «Anotar avance» mueve el ✅ si vive en su devolución (`atcEntregadoComoEnt`); el
+  comodín va en `atcChip`/`atcComodinAviso` (un solo lugar).
+- **Stock**: «Conté a mano» parte de lo calculado para hoy y conserva `c.cod`; una recepción `nr` (el Excel del
+  origen ya no la tiene) suma acá sin restar del origen.
+- Pruebas: `tests/test_rev2_*.js` (8), `test_montos_texto.js`, `test_chofer_sin_senal.js`.
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
