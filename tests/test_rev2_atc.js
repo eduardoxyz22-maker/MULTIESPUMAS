@@ -5,6 +5,10 @@
       y Administración «⏳ Pendiente» con el chip «🎧 ATC» (el de un RECOJO). Y al revés: «↺ Borrar
       todo» (o destildar el paso) sobre una devolución que el chofer ya había tildado la reabría
       —«🏭 Recoger de fábrica»— pero la ficha del chofer seguía «✓ Entregado»: nadie la llevaba.
+   2. 🛏️ El COMODÍN («¿Se le deja comodín? Sí») solo se veía en la pestaña ATC. El que va al
+      domicilio —la ficha del chofer, la lista de carga, la hoja de ruta y su WhatsApp— no se
+      enteraba ni de llevarlo en el recojo ni de traerlo de vuelta en la devolución; y el mensaje
+      al grupo de una ATC nueva no decía el motivo y la anunciaba como «💰 PAGADO».
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev2_atc.js
@@ -139,6 +143,67 @@ const BASE = `
         J([r.vieja, r.viejaReabierta]));
     chk('control: anotar «Listo en fábrica» no entrega la devolución del lunes',
         r.soloListo.estado==='programada' && r.soloListo.entregado===false, J(r.soloListo));
+    await page.close();
+  }
+
+  // ═══ 2. El comodín llega a quien va al domicilio ════════════════════════════════════
+  console.log('\n── 2. 🛏️ El comodín en la ficha del chofer, la carga, la hoja de ruta y el mensaje al grupo ──');
+  {
+    const page = await nueva(null, 380);
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      var hoy=todayStr(); STATE=[];
+      // un RECOJO de hoy con comodín, una DEVOLUCIÓN de hoy con comodín, y dos de control
+      STATE.push(_P({id:'rc', oc:'ATC 09-011', fecha:hoy, cliente:'CLIENTE rc',
+        productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento', det:'hundido al medio', com:true, r_col:true, r_pat:true}}]}));
+      _atcConDev('dv', hoy, 'PM', {com:true});
+      STATE.push(_P({id:'sc', oc:'ATC 09-013', fecha:hoy, cliente:'CLIENTE sc',
+        productos:[{desc:'SOFT', cant:1, atc:{mot:'Ruido'}}]}));
+      _atcConDev('ce', hoy, 'AM', {com:true}); choEntregado('ce');   // ya se la devolvieron: no hay nada que traer
+      saveMirror();
+      var txt=function(el){ return el?el.textContent.replace(/\\s+/g,' '):''; };
+      var out={};
+      // la ficha del chofer
+      showView('chofer'); llenarSelectChoferes(); document.getElementById('cho-nombre').value='Luis Pierre'; setChoFiltro('hoy');
+      await new Promise(function(r){ setTimeout(r,150); });
+      out.cho={};
+      [].forEach.call(document.querySelectorAll('#cho-lista .cho-card'), function(c){ var t=txt(c);
+        var k=/CLIENTE rc/.test(t)?'rc':/CLIENTE dv/.test(t)?'dv':/CLIENTE sc/.test(t)?'sc':/CLIENTE ce/.test(t)?'ce':'otro';
+        out.cho[k]={t:t, parpadea:!!c.querySelector('.b-comodin')}; });
+      out.ancho={doc:document.documentElement.scrollWidth, vista:window.innerWidth};
+      // la lista de carga
+      abrirCarga(); setCargaDia('hoy');
+      out.carga={};
+      [].forEach.call(document.querySelectorAll('#carga-body .carga-stop'), function(c){ var t=txt(c);
+        out.carga[/CLIENTE rc/.test(t)?'rc':/CLIENTE dv/.test(t)?'dv':/CLIENTE sc/.test(t)?'sc':/CLIENTE ce/.test(t)?'ce':'otro']=t; });
+      closeCarga();
+      // la hoja de ruta, en pantalla y por WhatsApp
+      var wa=''; window.open=function(u){ wa=decodeURIComponent(String(u)); return null; }; copyText=function(){};
+      abrirRuta(); setRutaDia('hoy'); out.ruta=txt(document.getElementById('ruta-body'));
+      rutaWhatsapp(0); closeRuta(); out.rutaWA=wa;
+      // el mensaje al grupo de la ATC nueva
+      out.grupo=pedidoText(findById('rc')); out.grupoSin=pedidoText(findById('sc'));
+      out.venta=pedidoText(_P({id:'v', oc:'09-050', cliente:'VENTA', saldo:500, productos:[{desc:'SOFT',cant:1}]}));
+      return out;
+    }, BASE);
+    const trozo=(t,re)=>((t||'').match(re)||[''])[0];
+    chk('⚠️ la ficha del chofer del RECOJO le dice que lleve el comodín, y parpadea',
+        /COMOD[IÍ]N/i.test(r.cho.rc&&r.cho.rc.t) && /llevar/i.test(r.cho.rc&&r.cho.rc.t) && r.cho.rc.parpadea===true, trozo(r.cho.rc&&r.cho.rc.t,/.{0,40}COMOD.{0,30}/i)||(r.cho.rc&&r.cho.rc.t||'').slice(0,120));
+    chk('⚠️ la de la DEVOLUCIÓN, que lo traiga de vuelta',
+        /traer/i.test(r.cho.dv&&r.cho.dv.t) && /COMOD[IÍ]N/i.test(r.cho.dv&&r.cho.dv.t) && r.cho.dv.parpadea===true, trozo(r.cho.dv&&r.cho.dv.t,/.{0,40}COMOD.{0,30}/i)||(r.cho.dv&&r.cho.dv.t||'').slice(0,120));
+    chk('en el celular (380 px) la ficha con el aviso no se sale de la pantalla', r.ancho.doc<=r.ancho.vista, J(r.ancho));
+    chk('control: sin comodín, o ya devuelta, la ficha no dice nada del comodín',
+        !/comod/i.test(r.cho.sc&&r.cho.sc.t) && !/comod/i.test(r.cho.ce&&r.cho.ce.t) && r.cho.sc && r.cho.ce, J([!!r.cho.sc, !!r.cho.ce]));
+    chk('⚠️ en la lista de carga (la parada) también',
+        /COMOD[IÍ]N/i.test(r.carga.rc) && /COMOD[IÍ]N/i.test(r.carga.dv) && !/comod/i.test(r.carga.sc||'x') && !/comod/i.test(r.carga.ce||'x'), J(r.carga).slice(0,300));
+    chk('⚠️ en la hoja de ruta y en su WhatsApp',
+        (r.ruta.match(/COMOD[IÍ]N/gi)||[]).length===2 && (r.rutaWA.match(/COMOD[IÍ]N/gi)||[]).length===2, trozo(r.rutaWA,/.{0,60}COMOD.{0,40}/i)||r.rutaWA.slice(0,200));
+    chk('⚠️ el mensaje al grupo de la ATC dice el motivo, qué se le recoge y el comodín',
+        /Hundimiento/.test(r.grupo) && /hundido al medio/.test(r.grupo) && /Colchón/.test(r.grupo) && /Patas/.test(r.grupo) && /COMOD[IÍ]N/i.test(r.grupo), r.grupo);
+    chk('⚠️ …y no la anuncia como «💰 PAGADO»: una ATC no se cobra',
+        !/PAGADO/.test(r.grupo) && /No se cobra/i.test(r.grupo) && !/PAGADO/.test(r.grupoSin) && !/comod/i.test(r.grupoSin), r.grupo.split('\n').filter(function(l){ return /💰|cobra/i.test(l); }).join(' | '));
+    chk('control: el mensaje de una venta sigue igual («💰 POR COBRAR», sin línea de ATC)',
+        /POR COBRAR/.test(r.venta) && !/ATC|comod/i.test(r.venta), r.venta.split('\n').slice(0,2).join(' | '));
     await page.close();
   }
 

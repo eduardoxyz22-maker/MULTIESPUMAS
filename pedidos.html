@@ -1603,8 +1603,10 @@ function ocAuto(oc){ return /^\d{2}-\d{3,}$/.test(ocSinPre(oc)); }
    ningún estado de stock, así que se distingue del rojo de "falta" de un vistazo. */
 function atcChip(p){
   if(!esATC(p&&p.oc)) return '';
-  if(atcEnDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>';
-  return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>';
+  var com=atcComodinAviso(p);   // (26/09) el comodín, parpadeando, en la ficha del chofer y la carga
+  com=com?(' <span class="badge b-blue b-comodin" title="Si no se recupera al devolverle el suyo, se pierde un colchón">'+esc(com)+'</span>'):'';
+  if(atcEnDevolucion(p)) return '<span class="badge b-atc" title="Atención al cliente — este viaje es para DEVOLVERLE el producto al cliente">🔁 ATC · devolución</span>'+com;
+  return '<span class="badge b-atc" title="Atención al cliente — es un servicio, no una venta">🎧 ATC</span>'+com;
 }
 /* La clase del resaltado, para pegarla donde haga falta. */
 function atcCls(p, cls){ return esATC(p&&p.oc) ? (cls||'atc') : ''; }
@@ -1834,6 +1836,16 @@ function atcEntregada(p){ var a=atcDe(p); return (a&&a.ent)||''; }
    Quedan dos cosas al cargar y una lista al recoger. */
 function atcFechaCompra(p){ var a=atcDe(p); return (a&&a.fcom)||''; }
 function atcComodin(p){ var a=atcDe(p); return !!(atcDe(p)||{}).com; }
+/* 🛏️ (26/09) Qué hacer con el comodín en ESTE viaje, para el que va al domicilio. Antes solo se
+   veía en la pestaña ATC: la ficha del chofer, la carga y la hoja de ruta no lo decían, y el
+   «LLEVAR COMODIN» que antes escribían a mano en la nota ahora es un botón del formulario. En el
+   recojo se le deja; en la devolución se trae de vuelta. Cerrada, o con el recojo ya pasado: nada. */
+function atcComodinAviso(p){
+  if(!p || !esATC(p.oc) || !atcComodin(p) || atcEntregada(p)) return '';
+  if(atcEnDevolucion(p)) return '🛏️ Traer de vuelta el COMODÍN';
+  if(!atcDevProg(p) && !p.entregado && (p.fecha||'')>=todayStr()) return '🛏️ Llevar el COMODÍN (se le deja al cliente)';
+  return '';
+}
 /* Cuánto hace que lo compró, en palabras. Es lo que decide si hay garantía, y en los datos
    reales aparece todo el tiempo ("COMPRO 2024-TIENE GARANTIA"). */
 function antiguedadTxt(desde, hasta){
@@ -13414,6 +13426,16 @@ function rptText(p){
     '⏳ '+RPT_AVISO
   ].filter(Boolean).join('\n');
 }
+/* 🎧 (26/09) Lo de la ATC en el mensaje al grupo: por qué se genera, qué se le recoge y el
+   comodín. Salía como un pedido cualquiera, sin el motivo (el que pegaban en Trello, §4bq). */
+function atcLineaWa(p){
+  if(!esATC(p&&p.oc)) return '';
+  var L=['🎧 *Atención al cliente* — '+(atcMotivo(p)||'sin motivo anotado')+(atcDetalle(p)?(': '+atcDetalle(p)):'')];
+  var pz=atcRecibido(p);
+  if(pz.length && !atcEnDevolucion(p)) L.push('📦 Se le recoge: '+pz.join(' · ')+(atcRecibidoNota(p)?(' ('+atcRecibidoNota(p)+')'):''));
+  if(atcComodinAviso(p)) L.push(atcComodinAviso(p));
+  return L.join('\n');
+}
 function pedidoText(p){
   if(esRPT(p&&p.oc)) return rptText(p);
   var prod=(p.productos||[]).map(function(x){
@@ -13428,13 +13450,14 @@ function pedidoText(p){
                      : ('📅 Entrega: '+fmtFecha(p.fecha)+(p.turno?('  ·  Turno '+p.turno):'')),
     '👤 '+(p.cliente||'')+(p.celular?('   📞 '+p.celular):''),
     '🛏️ Productos:', prod,
+    atcLineaWa(p),
     // En la venta de tienda la dirección es "SALIÓ DE TIENDA": repetiría la línea de arriba.
     esVentaTienda(p) ? '' : ('📍 '+(p.zona?(p.zona+' — '):'')+(p.direccion||'')),
     p.maps?('🗺️ '+p.maps):'',
     p.observaciones?('📝 '+p.observaciones):'',
     p.garantia?('🛡️ Garantía a: '+p.garantia):'',
     (p.facturarA||p.nit)?('🧾 Facturar a: '+(p.facturarA||'—')+(p.nit?('  NIT '+p.nit):'')):'',
-    plataLineaWa(p),
+    noSeCobra(p) ? '✅ No se cobra — es una ATC' : plataLineaWa(p),   // (26/09) decía «💰 PAGADO» (§4fy)
     (p.vehiculo||p.chofer)?('🚛 '+(p.vehiculo||'')+(p.chofer?(' · '+p.chofer):'')):'',
     '🧑‍💼 Vendedor: '+(p.vendedor||'')
   ].filter(Boolean);
@@ -18614,7 +18637,8 @@ function renderRuta(){
       html+='<div style="padding:8px 0;border-bottom:1px dashed #eee;font-size:.9rem">'+
         '<b>'+(i+1)+') '+esc(p.cliente||'—')+'</b>'+(p.celular?(' &nbsp;📞 '+esc(p.celular)):'')+(p.turno?(' &nbsp;<span style="background:#eef;padding:1px 6px;border-radius:8px;font-size:.75rem">'+esc(p.turno)+'</span>'):'')+'<br>'+
         '<span style="color:#444">📍 '+esc(p.direccion||'—')+(p.zona?(' <span style="color:#888">('+esc(p.zona)+')</span>'):'')+'</span><br>'+
-        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+cobro+
+        '<span style="color:#444">🛏️ '+esc(prodText(p.productos))+'</span><br>'+
+        (atcComodinAviso(p)?('<b class="b-comodin" style="color:#1d4ed8">'+esc(atcComodinAviso(p))+'</b><br>'):'')+cobro+   // (26/09)
         (p.maps?(' &nbsp;·&nbsp; <a href="'+esc(p.maps)+'" target="_blank" rel="noopener">🗺️ Maps</a>'):'')+
         (p.observaciones?('<br><span style="color:#a05a00">📝 '+esc(p.observaciones)+'</span>'):'')+'</div>';
     });
@@ -18631,6 +18655,7 @@ function rutaWhatsapp(idx){
     L.push((i+1)+') *'+(p.cliente||'—')+'*'+(p.celular?('  📞 '+p.celular):'')+(p.turno?('  ['+p.turno+']'):''));
     L.push('   📍 '+(p.direccion||'—')+(p.zona?('  ('+p.zona+')'):''));
     L.push('   🛏️ '+prodText(p.productos));
+    if(atcComodinAviso(p)) L.push('   '+atcComodinAviso(p));   // (26/09)
     L.push('   '+cobroRutaTxt(p).t);
     if(p.maps) L.push('   🗺️ '+p.maps);
     if(p.observaciones) L.push('   📝 '+p.observaciones);
