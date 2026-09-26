@@ -777,11 +777,11 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
       <div class="grid2" id="wrap-nopago">
         <div class="field">
           <label class="lb">A cuenta <span class="hint">(adelanto)</span></label>
-          <div class="num-money"><input type="number" id="f-acuenta" min="0" step="0.01" value="0"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-acuenta" value="0"></div>
         </div>
         <div class="field">
           <label class="lb" id="lbl-saldo">Saldo por cobrar</label>
-          <div class="num-money"><input type="number" id="f-saldo" min="0" step="0.01" value="0"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-saldo" value="0"></div>
         </div>
       </div>
 
@@ -796,14 +796,14 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 
       <div class="field" id="wrap-cobrado" style="display:none">
         <label class="lb">Monto total cobrado <span class="req">*</span> <span class="hint">cuánto entró por esta venta</span></label>
-        <div class="num-money"><input type="number" id="f-cobrado" min="0" step="0.01" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
+        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-cobrado" placeholder="Ej. 5000" oninput="pintarMixto()"></div>
       </div>
 
       <!-- ⚠️ El flete NO depende de cómo se pagó la mercadería: se cobra igual aunque la
            venta quede toda por cobrar. Por eso este campo está SIEMPRE visible. -->
       <div class="field" id="wrap-envio">
         <label class="lb">🚚 Recargo por entrega <span class="hint">opcional — el flete que paga el cliente APARTE. No baja el saldo ni se factura</span></label>
-        <div class="num-money"><input type="number" id="f-envio" min="0" step="0.01" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
+        <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-envio" placeholder="Ej. 150" oninput="pintarEnvioCobrado()"></div>
         <div id="f-envio-pend" style="display:none;margin-top:6px;font-size:.78rem;color:var(--amber);font-weight:700">⏳ Queda <b>por cobrar</b>: se cobra al entregar y hay que registrarlo con su comprobante.</div>
         <div id="wrap-envio-cob" style="display:none;margin-top:8px">
           <label class="lb">¿Ya cobraste el flete?</label>
@@ -839,7 +839,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
         </div>
         <div class="field">
           <label class="lb">¿Cuánto pagó con este método? <span class="req">*</span> <span class="hint" id="f-monto2-hint"></span></label>
-          <div class="num-money"><input type="number" id="f-monto2" min="0" step="0.01" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
+          <div class="num-money"><input type="text" inputmode="decimal" autocomplete="off" id="f-monto2" placeholder="Ej. 1990" oninput="pintarMixto()"></div>
         </div>
         <div class="field" id="wrap-banco2" style="display:none">
           <label class="lb">¿A qué banco entró el QR? <span class="req">*</span></label>
@@ -2924,8 +2924,10 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   // están mal. El subtotal se muestra abajo para que se vea qué está cobrando.
   var pW=document.createElement('div'); pW.className='prod-precio-w';
   var pL=document.createElement('div'); pL.className='mini-lb'; pL.textContent='Precio c/u';
-  var pIn=document.createElement('input'); pIn.type='number'; pIn.className='prod-precio';
-  pIn.min='0'; pIn.step='0.01'; pIn.placeholder='Bs'; pIn.autocomplete='off';
+  /* 💵 Texto con teclado numérico, no `type=number` (26/09): Chromium tiraba la coma antes de que
+     `montoForm` viera el valor, y «1.500,50» quedaba 1.50050. Igual en todos los campos de plata. */
+  var pIn=document.createElement('input'); pIn.type='text'; pIn.setAttribute('inputmode','decimal'); pIn.className='prod-precio';
+  pIn.placeholder='Bs'; pIn.autocomplete='off';
   if(Number(precio)>0) pIn.value=r2(precio);   // r2: con dos decimales como mucho, `montoForm` nunca lo lee como miles
   pW.appendChild(pL); pW.appendChild(pIn);
   sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW); sub.appendChild(pW);
@@ -3906,7 +3908,7 @@ function envioResumenHtml(p, editable){
     '<div style="margin-top:7px;background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:8px;padding:10px 12px">'+
       '<div class="lb" style="margin-bottom:6px">✏️ ¿Cuánto falta cobrar de flete?</div>'+
       '<div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">'+
-        '<input type="number" id="cta-env-monto" step="0.01" min="0" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-env-monto" value="'+(falta>0.01?r2(falta):'')+'" placeholder="ej. 150" style="flex:1;min-width:110px">'+
         '<button class="btn btn-primary btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaGuardarEnvio('"+String(p.id)+"')")+'">Guardar</button>'+
         '<button class="btn btn-ghost btn-sm" style="width:auto;padding:8px 14px" onclick="'+esc("ctaEditarEnvio('"+String(p.id)+"',0)")+'">Cancelar</button>'+
       '</div>'+
@@ -5530,7 +5532,7 @@ function contaPagosHtml(p){
           '<div style="flex:1;min-width:130px"><label class="lb">¿Qué día entró?</label>'+
             '<input type="date" id="cta-ed-fecha" value="'+esc(_ev.fecha!=null?_ev.fecha:(c.fecha||contaFecha(p)||todayStr()))+'" max="'+todayStr()+'" style="width:100%"></div>'+
           '<div style="flex:1;min-width:100px"><label class="lb">Monto</label>'+
-            '<input type="number" id="cta-ed-monto" step="0.01" min="0" value="'+esc(_ev.monto!=null?_ev.monto:((Number(c.monto)||0)>0?r2(c.monto):''))+'" placeholder="Bs" style="width:100%"></div>'+
+            '<input type="text" inputmode="decimal" autocomplete="off" id="cta-ed-monto" value="'+esc(_ev.monto!=null?_ev.monto:((Number(c.monto)||0)>0?r2(c.monto):''))+'" placeholder="Bs" style="width:100%"></div>'+
           '<div style="flex:1;min-width:110px"><label class="lb">N° nota de venta</label>'+
             '<input type="text" id="cta-ed-nota" value="'+esc(_ev.nota!=null?_ev.nota:limpiaNota(c.nota))+'" placeholder="del recibo" autocomplete="off" style="width:100%"></div>'+
         '</div>'+
@@ -6150,7 +6152,7 @@ function showContaModal(id){
                  : '🚚 Anotar el recargo por entrega <span style="font-weight:400;color:var(--muted)">— el flete que paga el cliente aparte; no le baja el saldo ni se factura</span>')
              : '💵 Registrar un pago — falta <b style="color:var(--red)">'+fmtBs(falta)+'</b>')+'</div>'+
          '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">'+
-           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="number" id="cta-pago-monto" step="0.01" min="0" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
+           '<div style="flex:1;min-width:110px"><label class="lb">Monto</label><input type="text" inputmode="decimal" autocomplete="off" id="cta-pago-monto" data-def="'+esc(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta))+'" value="'+esc(_pv.monto!=null?_pv.monto:(esEnv?(envioPorCobrar(p)>0.01?r2(envioPorCobrar(p)):''):r2(falta)))+'" placeholder="'+(esEnv?'ej. 150':'')+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">Fecha'+(esEnv?' del cobro':' del pago')+'</label><input type="date" id="cta-pago-fecha" value="'+esc(_pv.fecha!=null?_pv.fecha:todayStr())+'" style="width:100%"></div>'+
            '<div style="flex:1;min-width:130px"><label class="lb">N° nota de venta <span style="color:var(--red)">*</span> <span style="font-weight:400;color:var(--muted)">del recibo</span></label><input type="text" id="cta-pago-nota" value="'+esc(_pv.nota||'')+'" placeholder="ej. 980" autocomplete="off" oninput="this.classList.remove(\'err\')" style="width:100%"></div>'+
          '</div>'+
@@ -6217,7 +6219,7 @@ function ctaEditHtml(p){
       '<span style="flex:1;min-width:150px;font-size:.83rem">'+esc(x.desc||'—')+
         (x.medida?(' <span style="color:var(--muted)">· '+esc(x.medida)+'</span>'):'')+
         ' <b>× '+esc(x.cant||0)+'</b></span>'+
-      '<input type="number" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" min="0" step="0.01" '+
+      '<input type="text" inputmode="decimal" autocomplete="off" class="cta-pr" id="cta-pr-'+i+'" data-cant="'+esc(x.cant||0)+'" '+
         'placeholder="Bs c/u" value="'+(prodPrecio(x)>0?r2(prodPrecio(x)):'')+'" '+
         'oninput="ctaRecalc()" style="width:100px;text-align:right">'+
       '<span id="cta-sub-'+i+'" style="min-width:96px;text-align:right;font-size:.79rem;font-weight:700"></span>'+
@@ -6245,9 +6247,9 @@ function ctaEditHtml(p){
     '<div id="cta-sum" style="text-align:right;margin:8px 0 11px;font-size:.83rem"></div>'+
     '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
       '<div style="flex:1;min-width:120px"><label class="lb">A cuenta <span style="font-weight:400;color:var(--muted)">(adelanto'+(compsAnt?' · con recibo':'')+(_mxEM?(' · solo el 1er método: el 2° puso '+fmtBs(_mxEM)+' aparte'):'')+')</span></label>'+
-        '<input type="number" id="cta-acuenta" min="0" step="0.01" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-acuenta" value="'+acuReal+'" oninput="ctaRecalc()" style="width:100%"></div>'+
       '<div style="flex:1;min-width:120px"><label class="lb">Saldo por cobrar</label>'+
-        '<input type="number" id="cta-saldo" min="0" step="0.01" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
+        '<input type="text" inputmode="decimal" autocomplete="off" id="cta-saldo" value="'+r2(Number(p.saldo)||0)+'" oninput="ctaRecalc()" style="width:100%"></div>'+
     '</div>'+
     (pagos>0.01?('<div style="margin-top:7px;font-size:.78rem;color:var(--muted)">➕ Ya hay '+fmtBs(pagos)+' en pagos registrados (con su recibo y su foto). Eso no se toca desde acá.</div>'):'')+
     '<div id="cta-tot-aviso" style="margin-top:9px;font-size:.83rem"></div>'+
