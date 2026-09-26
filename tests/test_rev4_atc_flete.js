@@ -5,6 +5,9 @@
       ✏️ Editar) dejaba `pdev` en el día viejo: el chip volvía a «🎧 ATC» (el de un recojo) y, si después
       se destildaba el ✅, la ATC no se reabría — «✅ Entregada» en la pestaña ATC y «⏳ Pendiente» para
       el chofer. El `antes` de `atcSeguirViaje` salía de `atcEnDevolucion`, que da falso con el ✅ puesto.
+   2. 🚚 El flete PACTADO sin cobrar no aparecía en «Entregado» ni en el Parte del día (pantalla y el
+      WhatsApp de las 18:00): una venta pagada con Bs 150 de flete decía «Sin saldo · no queda nada por
+      cobrar» y «Por cobrar: Bs 0,00». La tarjeta del chofer y la hoja de ruta ya lo decían (§4gc).
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado (la planilla vive en `window.SRV`), datos sintéticos (el repo es público).
@@ -180,6 +183,75 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
         r.sinEntregar.fecha==='2026-09-29' && r.sinEntregar.pdev==='2026-09-29' && r.sinEntregar.pturno==='PM', J(r.sinEntregar));
     chk('control: «↺ Quitar la devolución» vuelve al recojo del lunes 21 AM, ya recogido, sin devolución',
         r.quitada.fecha==='2026-09-21' && r.quitada.turno==='AM' && r.quitada.entregado===true && r.quitada.pdev==='', J(r.quitada));
+    await page.close();
+  }
+
+  // ═══ 2. 🚚 «Entregado» y el Parte del día nombran el flete pactado sin cobrar ═══════════════
+  console.log('\n── 2. 🚚 «Entregado» y el Parte del día dicen el flete pactado aparte, como la tarjeta del chofer ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      var out={};
+      var filas=[
+        /* Pagada entera con el adelanto, entregada, y Bs 150 de flete pactado: «Sin saldo · no queda nada por cobrar». */
+        P({ id:'E1', cliente:'CLIENTE PAGADA', entregado:true, pagado:true, saldo:0, acuenta:1000, metodoPago:'~Efectivo 1000 @2026-09-20 #11 + ^ 150' }),
+        P({ id:'E2', cliente:'CLIENTE CON SALDO', pagado:false, saldo:1000, metodoPago:'^ 150', vehiculo:'', chofer:'' }),
+        P({ id:'E3', cliente:'CLIENTE YA COBRADO', entregado:true, pagado:true, saldo:0, metodoPago:'Efectivo 1000 @2026-09-20 #12 + ^Efectivo 150 @2026-09-23 #12' }),
+        P({ id:'E4', cliente:'CLIENTE NORMAL', entregado:true, pagado:true, saldo:0, acuenta:800, metodoPago:'~Efectivo 800 @2026-09-20 #13' }),
+        P({ id:'E5', cliente:'CLIENTE ATC', oc:'ATC 09-005', entregado:true, metodoPago:'^ 100', productos:[{desc:'SOFT', medida:'140x190', cant:1, atc:{mot:'Hundimiento'}}] }),
+        P({ id:'Y1', cliente:'AYER PAGADA', fecha:'2026-09-22', entregado:true, pagado:true, saldo:0, acuenta:900, metodoPago:'~Efectivo 900 @2026-09-20 #14 + ^ 80' })
+      ];
+      await cargar(filas);
+      var tarjeta=function(cli){ var c=[].filter.call(document.querySelectorAll('#entregas-body .ent-card'), function(x){ return x.textContent.indexOf(cli)>=0; })[0]; return txt(c); };
+      var porCobrar=function(){ var m=[].filter.call(document.querySelectorAll('#entregas-body .mc'), function(x){ return /Por cobrar/.test(x.textContent); })[0]; return txt(m); };
+      ENTREGAS_FECHA=todayStr(); abrirEntregas();
+      out.hoy={ pc:porCobrar(), e1:tarjeta('CLIENTE PAGADA'), e2:tarjeta('CLIENTE CON SALDO'), e3:tarjeta('CLIENTE YA COBRADO'),
+                e4:tarjeta('CLIENTE NORMAL'), e5:tarjeta('CLIENTE ATC'),
+                falta:txt(document.querySelector('#entregas-body .ent-falta .ent-sub-h')), texto:entregasTexto() };
+      // un día con UNA sola entrega, pagada, y el flete sin cobrar
+      setEntregasFecha('2026-09-22');
+      out.ayer={ pc:porCobrar(), y1:tarjeta('AYER PAGADA'), texto:entregasTexto() };
+      closeEntregas();
+      // El Parte del día (pantalla y el WhatsApp de las 18:00)
+      var d=parteData(); abrirParte();
+      out.parte={ pend:d.pend, pendN:d.pendN, card:txt([].filter.call(document.querySelectorAll('#parte-body div'), function(x){ return /^Por cobrar/i.test(x.textContent.trim()) && x.children.length===3; })[0]),
+                  linea:(parteText().split('\n').filter(function(l){ return /Por cobrar/.test(l); })[0]||'') };
+      closeParte();
+      // Parte de un día con solo la venta pagada y su flete
+      await cargar([ filas[0], filas[3] ]);
+      d=parteData(); abrirParte();
+      out.parteSolo={ pend:d.pend, pendN:d.pendN, body:txt(document.getElementById('parte-body')), linea:(parteText().split('\n').filter(function(l){ return /Por cobrar/.test(l); })[0]||'') };
+      closeParte();
+      // control: sin flete, el parte no habla de flete
+      await cargar([ filas[3], P({ id:'E6', cliente:'DEBE NORMAL', saldo:500 }) ]);
+      d=parteData(); abrirParte();
+      out.parteSin={ body:txt(document.getElementById('parte-body')), linea:(parteText().split('\n').filter(function(l){ return /Por cobrar/.test(l); })[0]||'') };
+      closeParte();
+      return out;
+    });
+    const frase=/Cobrar también el flete: Bs 150,00 — aparte de la venta/;
+    chk('⚠️ «Entregado»: la venta PAGADA y entregada con flete dice el flete, con las palabras de la tarjeta del chofer (antes «Sin saldo» a secas)',
+        frase.test(r.hoy.e1), r.hoy.e1.slice(0,260));
+    chk('⚠️ …y su marca dice que lo que no tiene saldo es la VENTA', /Sin saldo de la venta/.test(r.hoy.e1), r.hoy.e1.slice(0,160));
+    chk('⚠️ la venta con saldo y sin entregar dice las dos cosas (Bs 1.000 de la venta y el flete)',
+        /Por cobrar · Bs 1\.000,00/.test(r.hoy.e2) && frase.test(r.hoy.e2), r.hoy.e2.slice(0,260));
+    chk('⚠️ la ficha «Por cobrar» suma el flete APARTE sin cambiar el número de la venta (Bs 1.000 + Bs 300 de flete)',
+        /Por cobrarBs 1\.000,00/.test(r.hoy.pc) && /\+ Bs 300,00 de flete/.test(r.hoy.pc), r.hoy.pc);
+    chk('⚠️ …y el renglón «falta entregar» del camión también (a cobrar + flete)', /a cobrar Bs 1\.000,00/.test(r.hoy.falta) && /\+ Bs 150,00 de flete/.test(r.hoy.falta), r.hoy.falta);
+    chk('⚠️ un día con solo la venta pagada y su flete: «Bs 0,00» de la venta y «+ Bs 80,00 de flete» (antes «no queda nada por cobrar»)',
+        /Por cobrarBs 0,00/.test(r.ayer.pc) && /\+ Bs 80,00 de flete/.test(r.ayer.pc) && !/no queda nada por cobrar/.test(r.ayer.pc), r.ayer.pc);
+    chk('⚠️ …y su tarjeta lo dice', /Cobrar también el flete: Bs 80,00/.test(r.ayer.y1), r.ayer.y1.slice(0,200));
+    chk('⚠️ el texto para copiar de «Entregado» también lo dice (el total y en la entrega)',
+        /Por cobrar: Bs 0,00 · \+ Bs 80,00 de flete/.test(r.ayer.texto) && /AYER PAGADA.*de flete/.test(r.ayer.texto), r.ayer.texto);
+    chk('control: el flete ya cobrado no se vuelve a pedir', !/Cobrar también el flete/.test(r.hoy.e3), r.hoy.e3.slice(0,200));
+    chk('control: una venta sin flete sigue «Sin saldo», sin hablar de flete', /Sin saldo/.test(r.hoy.e4) && !/flete/i.test(r.hoy.e4), r.hoy.e4.slice(0,200));
+    chk('control: la ATC no cambia («No se cobra», ni el flete)', /No se cobra/.test(r.hoy.e5) && !/flete/i.test(r.hoy.e5), r.hoy.e5.slice(0,200));
+    chk('⚠️ Parte del día: «Por cobrar» sigue siendo lo de la venta (Bs 1.000, 1 pedido) y suma el flete aparte (+ Bs 300)',
+        r.parte.pend===1000 && r.parte.pendN===1 && /Bs 1\.000,00/.test(r.parte.card) && /\+ Bs 300,00 de flete/.test(r.parte.card), J(r.parte));
+    chk('⚠️ …y el WhatsApp de las 18:00 igual', /Por cobrar: \*Bs 1\.000,00\* \(1 pedido\) · \+ Bs 300,00 de flete/.test(r.parte.linea), r.parte.linea);
+    chk('⚠️ con solo la venta pagada y su flete, el parte ya no dice «Bs 0,00» a secas',
+        r.parteSolo.pend===0 && /\+ Bs 150,00 de flete/.test(r.parteSolo.body) && /Por cobrar: \*Bs 0,00\* \(0 pedidos\) · \+ Bs 150,00 de flete/.test(r.parteSolo.linea), J(r.parteSolo.linea));
+    chk('control: sin flete, el parte no habla de flete', !/flete/i.test(r.parteSin.body) && !/flete/i.test(r.parteSin.linea) && /Bs 500,00/.test(r.parteSin.linea), r.parteSin.linea);
     await page.close();
   }
 

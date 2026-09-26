@@ -11901,12 +11901,13 @@ function agruparPorCamion(list){
   (list||[]).forEach(function(p){
     var v=(vehiculoDe(p)||'').trim(), c=String(p.chofer||'').trim();
     var k=(v||c)?((v||'Sin vehículo')+' · '+(c||'sin chofer')):SIN_CAMION;
-    if(!grupos[k]){ grupos[k]={k:k, list:[], unid:0, cobrado:0, porCobrar:0, porMetodo:{}, fotos:0}; orden.push(k); }
+    if(!grupos[k]){ grupos[k]={k:k, list:[], unid:0, cobrado:0, porCobrar:0, flete:0, porMetodo:{}, fotos:0}; orden.push(k); }
     var g=grupos[k];
     g.list.push(p);
     (p.productos||[]).forEach(function(x){ g.unid+=Number(x.cant)||0; });
     g.fotos+=fotosDe(p).length;
     var sal=Number(p.saldo)||0; if(sal>0.01) g.porCobrar+=sal;
+    if(!noSeCobra(p)) g.flete=r2(g.flete+envioPorCobrar(p));   // (26/09) el flete pactado, aparte de la venta (§4ai)
     cobrosVisibles(p).forEach(function(cb){
       g.cobrado+=Number(cb.monto)||0;
       g.porMetodo[cb.metodo]=(g.porMetodo[cb.metodo]||0)+(Number(cb.monto)||0);
@@ -11929,7 +11930,11 @@ function entregasDatos(fecha){
   //   · porCobrarTotal  = todo lo que falta cobrar ese día (entregado o no)
   //   · porCobrarSalio  = lo que YA SALIÓ y volvió sin cobrar → eso es lo que hay que reclamar
   var tot={ n:hechos.length, total:delDia.length, unid:0, cobrado:0, porMetodo:{}, fotos:0, sinFoto:0,
-            porCobrarTotal:0, porCobrarSalio:0, porCobrarFalta:0, nSinCobrar:0 };
+            porCobrarTotal:0, porCobrarSalio:0, porCobrarFalta:0, nSinCobrar:0, flete:0 };
+  /* 🚚 (26/09) El flete PACTADO sin cobrar va aparte (§4ai), como en la tarjeta del chofer y la hoja de ruta: no
+     es de la venta y no toca `porCobrar*`. Antes «Entregado» no lo nombraba: una venta pagada con Bs 150 de flete
+     decía «Sin saldo · no queda nada por cobrar». ATC y RPT no se cobran. */
+  delDia.forEach(function(p){ if(!noSeCobra(p)) tot.flete=r2(tot.flete+envioPorCobrar(p)); });
   hechos.forEach(function(p){
     (p.productos||[]).forEach(function(x){ tot.unid+=Number(x.cant)||0; });
     var f=fotosDe(p).length; tot.fotos+=f; if(!f) tot.sinFoto++;
@@ -11956,13 +11961,14 @@ function entregaCardHtml(p, dn, pendiente){
   }).join('<br>');
   var cob=cobrosVisibles(p);
   var saldo=Number(p.saldo)||0;
+  var fleteTxt=cobroRutaTxt(p).f;   // (26/09) el flete pactado, con las palabras de la hoja de ruta y la tarjeta del chofer
   // Ojo: "SIN COBRAR" en rojo solo si YA SE ENTREGÓ. Si todavía no salió, es un saldo normal.
   var cobTxt = cob.length ? (cobrosResumen(p)+excesoBadge(p))
     : (saldo>0.01 ? (pendiente ? ('<span class="badge b-amber">Por cobrar · '+fmtBs(saldo)+'</span>')
                                : ('<span class="badge b-red">SIN COBRAR · '+fmtBs(saldo)+'</span>'))
        : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'      // (25/09) ATC/RPT: no es «sin monto»
        : sinMontoAnotado(p) ? badgeSinMonto()
-                  : '<span class="badge b-gray">Sin saldo</span>');
+                  : '<span class="badge b-gray">Sin saldo'+(fleteTxt?' de la venta':'')+'</span>');
   var fotos=fotosDe(p);
   return '<div class="ent-card '+docCls(p)+'">'+
     '<div class="ent-top">'+
@@ -11974,6 +11980,7 @@ function entregaCardHtml(p, dn, pendiente){
       '<span style="margin-left:auto">'+cobTxt+'</span>'+
     '</div>'+
     '<div class="ent-prod">'+prod+'</div>'+
+    (fleteTxt?('<div style="font-size:.82rem;color:#c0392b;font-weight:700;margin-top:4px">'+esc(fleteTxt)+'</div>'):'')+
     (p.direccion?('<div class="ent-dir">📍 '+esc(p.direccion)+'</div>'):'')+
     (fotos.length ? fotosHtml(p, false)
                   : '<div class="ent-sinfoto">📷 sin foto de la entrega</div>')+
@@ -11989,12 +11996,13 @@ function renderEntregas(){
     mc('var(--green)','Entregados',t.n, t.total?('de '+t.total+' del día'):'no hay pedidos ese día')+
     mc('var(--teal-dk)','Unidades',t.unid,'productos entregados')+
     mc('var(--teal)','Cobrado',fmtBs(t.cobrado), metodosHtml(t.porMetodo)?'':'sin cobros anotados')+
-    mc(t.porCobrarTotal?'var(--red)':'var(--gray)','Por cobrar',fmtBs(t.porCobrarTotal),
-       t.porCobrarTotal
+    mc((t.porCobrarTotal||t.flete>0.01)?'var(--red)':'var(--gray)','Por cobrar',fmtBs(t.porCobrarTotal),
+       (t.porCobrarTotal
          ? ((t.porCobrarSalio?(fmtBs(t.porCobrarSalio)+' ya entregado'):'')+
             (t.porCobrarSalio&&t.porCobrarFalta?' · ':'')+
             (t.porCobrarFalta?(fmtBs(t.porCobrarFalta)+' sin entregar'):''))
-         : 'no queda nada por cobrar')+
+         : (t.flete>0.01?'nada de la venta':'no queda nada por cobrar'))+
+       (t.flete>0.01?(' · + '+fmtBs(t.flete)+' de flete'):''))+   // (26/09) el flete, aparte (como la hoja de ruta)
   '</div>'+
   (metodosHtml(t.porMetodo)?('<div style="margin:0 0 12px">'+metodosHtml(t.porMetodo)+'</div>'):'')+
   (t.porCobrarSalio?('<div class="callout-rojo">💸 <b>'+t.nSinCobrar+'</b> '+(t.nSinCobrar===1?'entrega salió y volvió SIN COBRAR':'entregas salieron y volvieron SIN COBRAR')+': <b>'+fmtBs(t.porCobrarSalio)+'</b>. Es lo primero que hay que reclamar.</div>'):'')+
@@ -12028,7 +12036,7 @@ function renderEntregas(){
         return '<div class="ent-sub'+(sin?' sin':'')+'">'+
           '<div class="ent-sub-h'+(sin?' sin':'')+'">'+(sin?'⚠️ Sin camión asignado':('🚛 '+esc(k)))+
             '<span style="margin-left:auto;font-weight:700">'+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+' · '+g.unid+' u.'+
-            (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+'</span></div>'+
+            (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.01?(' · + '+fmtBs(g.flete)+' de flete'):'')+'</span></div>'+
           g.list.map(function(p){ return entregaCardHtml(p, dn[p.id], true); }).join('')+
         '</div>';
       }).join('')+
@@ -12041,8 +12049,11 @@ function entregasTexto(){
   var f=ENTREGAS_FECHA||todayStr(), d=entregasDatos(f), dn=dayNumMap(), t=d.tot;
   var L=['🚚 ENTREGAS '+fmtFecha(f), t.n+' de '+t.total+' entregados · '+t.unid+' unidades · cobrado '+fmtBs(t.cobrado)];
   Object.keys(t.porMetodo).forEach(function(m){ L.push('   '+m+': '+fmtBs(t.porMetodo[m])); });
-  if(t.porCobrarTotal) L.push('Por cobrar: '+fmtBs(t.porCobrarTotal)+
-    (t.porCobrarSalio?('  (⚠️ '+fmtBs(t.porCobrarSalio)+' ya entregado sin cobrar)'):''));
+  /* (26/09) El flete pactado sin cobrar, aparte y con las palabras de la hoja de ruta: «+ Bs X de flete». */
+  var fleteDe=function(p){ var f=noSeCobra(p)?0:envioPorCobrar(p); return f>0.01?('  🚚 + '+fmtBs(f)+' de flete'):''; };
+  if(t.porCobrarTotal || t.flete>0.01) L.push('Por cobrar: '+fmtBs(t.porCobrarTotal)+
+    (t.porCobrarSalio?('  (⚠️ '+fmtBs(t.porCobrarSalio)+' ya entregado sin cobrar)'):'')+
+    (t.flete>0.01?(' · + '+fmtBs(t.flete)+' de flete'):''));
   d.orden.forEach(function(k){
     var g=d.grupos[k];
     L.push('', '🚛 '+k+'  ('+g.list.length+(g.list.length===1?' entrega':' entregas')+' · '+fmtBs(g.cobrado)+')');
@@ -12050,7 +12061,7 @@ function entregasTexto(){
       var cob=cobrosVisibles(p);
       L.push('   '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.oc?(ocEtiq(p.oc)+' · '):'')+(p.cliente||'')+
         (cob.length?('  → '+cob.map(function(c){ return c.metodo+' '+fmtBs(c.monto); }).join(' + ')):
-          ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+
+          ((Number(p.saldo)||0)>0.01?('  → SIN COBRAR '+fmtBs(p.saldo)):''))+fleteDe(p)+
         (fotosDe(p).length?'  📷':''));
     });
   });
@@ -12059,9 +12070,9 @@ function entregasTexto(){
     d.pend.orden.forEach(function(k){
       var g=d.pend.grupos[k];
       L.push('  '+(k===SIN_CAMION?'⚠️ Sin camión asignado':('🚛 '+k))+'  ('+g.list.length+' '+(g.list.length===1?'pedido':'pedidos')+
-        (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+')');
+        (g.porCobrar?(' · a cobrar '+fmtBs(g.porCobrar)):'')+(g.flete>0.01?(' · + '+fmtBs(g.flete)+' de flete'):'')+')');
       g.list.forEach(function(p){ L.push('     '+(dn[p.id]?('#'+dn[p.id]+' '):'')+(p.cliente||'')+(p.zona?(' · '+p.zona):'')+
-        (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')); });
+        (((Number(p.saldo)||0)>0.01)?('  → cobrar '+fmtBs(p.saldo)):'')+fleteDe(p)); });
     });
   }
   return L.join('\n');
@@ -12891,9 +12902,12 @@ function parteData(){
   var hoy=todayStr(), man=proximoDiaEntrega();
   var dh=STATE.filter(function(p){ return p.fecha===hoy; });
   var dm=STATE.filter(function(p){ return p.fecha===man; });
-  var ent=0, cob=0, pend=0, pendN=0, sinChof=0, sinGps=0, noVerif=0;
+  var ent=0, cob=0, pend=0, pendN=0, sinChof=0, sinGps=0, noVerif=0, flete=0;
   dh.forEach(function(p){
     if(p.entregado) ent++;
+    /* 🚚 (26/09) El flete pactado sin cobrar, APARTE de «Por cobrar» (§4ai): una venta pagada con Bs 150 de flete
+       decía «Por cobrar: Bs 0,00» en la pantalla y en el WhatsApp de las 18:00. ATC y RPT no se cobran. */
+    if(!noSeCobra(p)) flete=r2(flete+envioPorCobrar(p));
     /* ⚠️ Lo cobrado se suma SIEMPRE, no solo en las ventas saldadas (§4fs). Con
        `if(p.pagado) cob+=… else pend+=…`, una entrega de Bs 1.000 donde el cliente dio 400 en
        la puerta y quedó debiendo 600 aportaba Bs 0 a «Cobrado»: el Cuadre veía los 400, el
@@ -12908,7 +12922,7 @@ function parteData(){
   dm.forEach(function(p){ if(normTurno(p.turno)==='PM') pm++; else am++; if(!p.maps) sinGps++; if(!p.verificado) noVerif++; });
   var byCh={};
   dh.forEach(function(p){ var c=String(p.chofer||'').trim(); if(!c) return; if(!byCh[c])byCh[c]={n:0,ent:0,cob:0}; byCh[c].n++; if(p.entregado)byCh[c].ent++; byCh[c].cob+=totalCobrado(p); });   // §4fs
-  return {hoy:hoy, man:man, nHoy:dh.length, ent:ent, cob:cob, pend:pend, pendN:pendN, sinChof:sinChof, faltHoy:faltHoy,
+  return {hoy:hoy, man:man, nHoy:dh.length, ent:ent, cob:cob, pend:pend, pendN:pendN, flete:flete, sinChof:sinChof, faltHoy:faltHoy,
           nMan:dm.length, am:am, pm:pm, sinGps:sinGps, noVerif:noVerif, byCh:byCh};
 }
 function renderParte(){
@@ -12922,7 +12936,7 @@ function renderParte(){
       '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">'+
         card('#0f766e','Entregados',d.ent+' / '+d.nHoy, d.nHoy?Math.round(d.ent/d.nHoy*100)+'% del día':'sin pedidos')+
         card('#16a34a','Cobrado hoy',fmtBs(d.cob),'de las entregas')+
-        card('#dc2626','Por cobrar',fmtBs(d.pend),d.pendN+' pedido'+(d.pendN===1?'':'s'))+
+        card('#dc2626','Por cobrar',fmtBs(d.pend),d.pendN+' pedido'+(d.pendN===1?'':'s')+(d.flete>0.01?(' · + '+fmtBs(d.flete)+' de flete'):''))+   // (26/09) el flete, aparte
         card('#b45309','Con faltante',d.faltHoy,'productos sin stock')+
       '</div>'+
       (d.sinChof?('<div style="margin-top:10px;color:#c47f00;font-weight:700;font-size:.88rem">⚠️ '+d.sinChof+' pedido'+(d.sinChof===1?'':'s')+' de hoy sin vehículo asignado</div>'):'')+
@@ -12941,7 +12955,7 @@ function parteText(){
   var L=['📋 *PARTE DEL DÍA* — '+fmtFecha(d.hoy)+' · '+hhmmBolivia()+(esCierre()?' (cierre)':''),'',
     '📦 Entregados: *'+d.ent+' de '+d.nHoy+'*',
     '💰 Cobrado hoy: *'+fmtBs(d.cob)+'*',
-    '⏳ Por cobrar: *'+fmtBs(d.pend)+'* ('+d.pendN+' pedido'+(d.pendN===1?'':'s')+')'];
+    '⏳ Por cobrar: *'+fmtBs(d.pend)+'* ('+d.pendN+' pedido'+(d.pendN===1?'':'s')+')'+(d.flete>0.01?(' · + '+fmtBs(d.flete)+' de flete'):'')];   // (26/09) el flete, aparte
   if(d.faltHoy) L.push('⛔ Con faltante de stock: *'+d.faltHoy+'*');
   if(d.sinChof) L.push('⚠️ Sin vehículo asignado: *'+d.sinChof+'*');
   L.push('');
