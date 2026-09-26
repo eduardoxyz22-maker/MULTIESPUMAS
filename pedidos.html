@@ -15424,8 +15424,10 @@ function stockPedidosDetalle(k){
       var n=Number(x.cant)||0;
       if(!n || esProdDeTienda(x) || stockClave(x)!==k) return;
       var salio=stockSalio(p,x), fs=fechaSalida(p), grupo;
-      if(!salio) grupo=enProduccion(x)?'produccion':'pendientes';
-      else if(!p.entregado && !esVentaTienda(p) && x.chk==='no' && !enProduccion(x)) grupo='atrasados';
+      /* (26/09) El «✗ no hay» de un día que ya pasó va a SU grupo. `stockSalio` da falso para un ✗ (no
+         salió, y sigue comprometido: §4de), así que caía en «Vendido sin entregar» y este grupo —que
+         lo buscaba entre lo «salido»— no aparecía nunca. La cuenta no cambia: el título lo dice. */
+      if(!salio) grupo=enProduccion(x)?'produccion':((x.chk==='no' && p.fecha && p.fecha<hoy)?'atrasados':'pendientes');
       else if(fs>=desde && fs<=hoy) grupo='historico';
       if(!grupo) return;
       if(!por[grupo]) por[grupo]={p:p,u:0,marcas:[]};
@@ -15494,8 +15496,8 @@ function abrirStockPedidos(k){
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
     '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
-  if(!grupos.pendientes.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
-  [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
+  if(!grupos.pendientes.length && !grupos.atrasados.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
+  [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar · también consumen depósito (entran en «Comprometido»)'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
     var ls=grupos[g[0]];if(!ls.length)return;
     var u=ls.reduce(function(n,r){return n+r.u;},0);
     html+='<details '+(g[0]==='historico'?'':'open')+' style="margin:14px 0"><summary><b>'+g[1]+' · '+u+' unidades en '+ls.length+' pedidos</b></summary>'+tabla(ls)+'</details>';

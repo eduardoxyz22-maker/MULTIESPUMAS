@@ -1,6 +1,10 @@
 /* 📦 TERCERA REVISIÓN DEL STOCK (26/09): lo que quedó REPORTADO y sin tocar en 📦 Stock y reposición.
 
    Lo que este test cuida:
+   1. EL DETALLE DE UN PRODUCTO: el grupo «Sin stock de días pasados · pendientes de reprogramar» no
+      salía NUNCA (`stockSalio` da falso para un ✗, así que caía en «Vendido sin entregar»). Ahora
+      esas líneas van a su grupo, y la CUENTA no se mueve (§4de: un «✗ no hay» con la fecha pasada
+      sigue comprometido): los dos grupos suman lo que dice la tarjeta «Comprometido».
    3. UNA LLEGADA QUE NO SUMABA: con el Excel de acá de la tarde marcado «ya incluye las entregas del
       día» (`c.inc`), lo que llegaba ese mismo día DESPUÉS de subirlo se descartaba por la fecha (y
       `filaStock` lo podaba al guardar). Con hora de los dos lados (`ts` y `c.t`) manda la hora; una
@@ -65,6 +69,54 @@ const J=x=>JSON.stringify(x);
       stockOlvidarIndice();
     };
   });
+
+  // ══ 1. El detalle: «Sin stock de días pasados · pendientes de reprogramar» ═══════════
+  console.log('\n── 1. Detalle de un producto: los ✗ de días pasados van a su grupo, y la cuenta no cambia ──');
+  let r = await page.evaluate(() => {
+    _stockAca(2);
+    var K=_K();
+    STATE=[_P({id:'nh1', cliente:'Ana',   fecha:_adel(-2), estado:'No hay', productos:_tit(1,{chk:'no'})}),   // ✗ de días pasados
+           _P({id:'nh2', cliente:'Beto',  fecha:_adel(-1), estado:'No hay', productos:_tit(2,{chk:'no'})}),   // ✗ de días pasados
+           _P({id:'pen', cliente:'Caro',  fecha:_adel(1),  productos:_tit(3)}),                               // sin marcar, para mañana
+           _P({id:'nhF', cliente:'Dani',  fecha:_adel(2),  productos:_tit(1,{chk:'no'})}),                    // ✗ pero todavía no es su día
+           _P({id:'imV', cliente:'Eva',   fecha:_adel(-1), productos:_tit(1,{chk:'im'})}),                    // 📥 de ayer: hay, en Moreno
+           _P({id:'ent', cliente:'Fede',  fecha:_adel(-3), entregado:true, productos:_tit(1)})];
+    stockOlvidarIndice();
+    var o=stockData().lista.filter(function(x){ return x.k===K; })[0];
+    var G=stockPedidosDetalle(K);
+    var ids=function(g){ return (G[g]||[]).map(function(e){ return e.p.id; }).sort(); };
+    var suma=function(g){ return (G[g]||[]).reduce(function(n,e){ return n+e.u; },0); };
+    abrirStockPedidos(K);
+    var sec=[].slice.call(document.querySelectorAll('#modal-box details')).map(function(d){
+      return { tit:d.querySelector('summary').textContent.replace(/\s+/g,' '), filas:[].slice.call(d.querySelectorAll('tbody tr')).map(function(tr){ return tr.textContent.replace(/\s+/g,' '); }) }; });
+    var txt=(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ');
+    closeModal();
+    return { comp:o.comp, noHay:o.noHay, atr:ids('atrasados'), pen:ids('pendientes'), his:ids('historico'), uAtr:suma('atrasados'), uPen:suma('pendientes'),
+             sec:sec, tarjeta:(txt.match(/Comprometido\s*(\d+)/)||[])[1], vacio:/No hay pedidos pendientes que consuman stock/.test(txt) };
+  });
+  chk('⚠️ la cuenta no cambia: los 2 ✗ de días pasados siguen COMPROMETIDOS (1+2 + 3 + 1 + 1 = 8, §4de)', r.comp===8 && r.tarjeta==='8', r.comp+' · tarjeta '+r.tarjeta);
+  chk('⚠️ los ✗ de días pasados van a «Sin stock de días pasados · pendientes de reprogramar» (antes ese grupo no salía nunca)',
+      J(r.atr)===J(['nh1','nh2']) && r.uAtr===3, J(r.atr)+' · '+r.uAtr);
+  const secAtr=r.sec.filter(s=>/Sin stock de días pasados/.test(s.tit))[0];
+  chk('…y el grupo se ve en la pantalla, con los dos pedidos', !!secAtr && secAtr.filas.length===2 && /Ana/.test(secAtr.filas.join('|')) && /Beto/.test(secAtr.filas.join('|')), J(r.sec.map(s=>s.tit)));
+  chk('…y dice que siguen dentro de «Comprometido» (si no, «Vendido sin entregar» no cierra con la tarjeta)', !!secAtr && /Comprometido/.test(secAtr.tit), secAtr?secAtr.tit:'');
+  chk('en «Vendido sin entregar» queda el resto: el de mañana, el ✗ que todavía no es de días pasados y el 📥 de ayer',
+      J(r.pen)===J(['imV','nhF','pen']) && r.uPen===5, J(r.pen)+' · '+r.uPen);
+  chk('⚠️ los dos grupos suman lo comprometido (3 + 5 = 8)', r.uAtr+r.uPen===r.comp, (r.uAtr+r.uPen)+' vs '+r.comp);
+  chk('…y lo entregado sigue en el historial', J(r.his)===J(['ent']), J(r.his));
+  r = await page.evaluate(() => {
+    // Solo ✗ de días pasados: NO puede decir «No hay pedidos pendientes que consuman stock» — consumen.
+    _stockAca(0);
+    var K=_K();
+    STATE=[_P({id:'nh1', cliente:'Ana', fecha:_adel(-2), estado:'No hay', productos:_tit(2,{chk:'no'})})];
+    stockOlvidarIndice();
+    var o=stockData().lista.filter(function(x){ return x.k===K; })[0];
+    abrirStockPedidos(K);
+    var txt=(document.getElementById('modal-box').textContent||'').replace(/\s+/g,' ');
+    closeModal();
+    return { comp:o.comp, vacio:/No hay pedidos pendientes que consuman stock/.test(txt), grupo:/Sin stock de días pasados/.test(txt) };
+  });
+  chk('con solo ✗ de días pasados no dice «No hay pedidos pendientes que consuman stock»: están comprometidos', r.comp===2 && !r.vacio, J(r));
 
   // ══ 3. Una llegada después del Excel de la tarde «que ya incluye las entregas del día» ═══
   console.log('\n── 3. Llegada anotada DESPUÉS de subir el Excel de la tarde (c.inc) ──');
