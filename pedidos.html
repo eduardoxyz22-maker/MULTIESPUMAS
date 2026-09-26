@@ -4426,7 +4426,17 @@ function cuadreAlertas(pagos){
       _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
     });
   });
-  if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo'+(_sfFuera?(' ('+_sfFuera+' de ven'+(_sfFuera===1?'ta':'tas')+' de otro mes)'):''), det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+(x.fuera?(' · venta del '+fmtFechaCorta(contaFecha(x.p))):''), id:x.p.id}; })});
+  /* (26/09) Que diga la verdad en cada modo, sin cambiar qué pagos entran (`enPeriodoCuadre`): en «Todo» los pagos
+     sin fecha SÍ salen en el detalle de abajo y suman —a propósito: si no, eran invisibles— y el aviso decía que
+     no; y en «Día» la venta de otro período es de otro DÍA (decía «de otro mes» con una venta del mismo mes). */
+  if(sinFecha.length){
+    var _sf1=(sinFecha.length===1);
+    var _sfTxt=(pe.modo==='todo')
+      ? (' — acá, en «Todo», '+(_sf1?'sale':'salen')+' en el detalle de abajo y '+(_sf1?'suma':'suman')+', pero <b>no '+(_sf1?'entra':'entran')+' en el cuadre de ningún día ni mes</b>: anotale'+(_sf1?'':'s')+' el día en que entró la plata')
+      : ((_sfFuera?(' ('+_sfFuera+' de ven'+(_sfFuera===1?'ta':'tas')+' de otro '+(pe.modo==='dia'?'día':'mes')+')'):'')+
+         ' — <b>no '+(_sf1?'entra':'entran')+' en el cuadre de ningún día ni mes</b> ni en el detalle de abajo: solo se '+(_sf1?'ve':'ven')+' en «Todo»');
+    A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(_sf1?'':'s')+' sin fecha'+_sfTxt, det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+(x.fuera?(' · venta del '+fmtFechaCorta(contaFecha(x.p))):''), id:x.p.id}; })});
+  }
   if(sinMonto.length) A.push({k:'sinmonto', sev:'datos', ico:'💸', txt:'<b>'+sinMonto.length+'</b> venta'+(sinMonto.length===1?'':'s')+' marcada'+(sinMonto.length===1?'':'s')+' <b>PAGADA sin anotar el monto</b> — no se sabe cuánto ni cuándo entró, <b>por eso no salen en el detalle de abajo</b>', det:sinMonto.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   if(sinNada.length) A.push({k:'sinnada', sev:'datos', ico:'❓', txt:'<b>'+sinNada.length+'</b> venta'+(sinNada.length===1?'':'s')+' <b>sin ningún monto anotado</b> — ni pagada, ni a cuenta, ni saldo. <b>No se sabe cuánto vale ni si el cliente pagó</b>: hay que abrirla y completarla antes de entregar', det:sinNada.map(function(p){ return {txt:(p.cliente||'—')+(p.nota?(' · nota '+p.nota):''), id:p.id}; })});
   /* El flete se cobra en la puerta y es lo que más se olvida de reportar: si queda sin

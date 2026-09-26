@@ -13,6 +13,8 @@
       tipeado en esa otra venta (monto y recibo) aparecía en el bloque del flete.
    4. 📦 Las tildes de la Lista de carga SIN fecha (las de ventas de tienda, de antes de que «Todos» dejara
       de mostrarlas, §4gc) seguían en la celda para siempre: la poda solo miraba las fechas viejas.
+   5. 🧮 El aviso de pagos sin fecha del Cuadre decía en «Todo» que «no entran en ningún cuadre ni en el
+      detalle de abajo», y en «Todo» sí salen en el detalle (a propósito: si no, eran invisibles).
 
    Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
    Red cortada, servidor simulado (la planilla vive en `window.SRV`), datos sintéticos (el repo es público).
@@ -395,6 +397,44 @@ const MIERCOLES = '2026-09-23T10:00:00-04:00';
     chk('control: la tilde de un pedido SIN fecha que no es de tienda (dato viejo, sale en «Todos») se guarda y se confirma',
         r.hayTildeL1 && r.escrita2.indexOf(r.kL1)>=0 && r.escrita2.indexOf(r.kHoy)>=0 && r.cambios2.length===0 && r.cola2===0, J([r.escrita2, r.cambios2, r.cola2]));
     chk('⚠️ …y las viejas de tienda siguen afuera', r.viejas.every(function(k){ return r.escrita2.indexOf(k)<0; }), r.escrita2);
+    await page.close();
+  }
+
+  // ═══ 5. 🧮 El aviso de pagos sin fecha dice la verdad en cada modo ═══════════════════════════
+  console.log('\n── 5. 🧮 Cuadre: el aviso de pagos sin fecha dice la verdad en «Día», «Mes» y «Todo» ──');
+  {
+    const page = await nueva();
+    const r = await page.evaluate(async () => {
+      var filas=[ P({ id:'S1', nota:'80', oc:'09-080', cliente:'PAGO SIN FECHA', pagado:true, saldo:0, metodoPago:'Efectivo 500 #80 %S1' }),
+                  P({ id:'S2', nota:'81', oc:'09-081', cliente:'PAGO CON FECHA', pagado:true, saldo:0, metodoPago:textoCobros([{metodo:'Efectivo',monto:700,fecha:todayStr(),nota:'81',comps:['S2']}]) }) ];
+      var mirar=async function(modo){
+        await cargar(filas);
+        showView('conta'); segSet('cta-tab','cuadre'); setContaTab('cuadre');
+        await espera(120);
+        document.getElementById('cua-vendedor').value='';
+        segSet('cua-mode', modo);
+        if(modo==='mes') document.getElementById('cua-mes').value=todayStr().slice(0,7);
+        if(modo==='dia') document.getElementById('cua-dia').value=todayStr();
+        setCuadreModo(modo);
+        var al=cuadreAlertas(cuadrePagos()).filter(function(a){ return a.k==='sinfecha'; })[0];
+        return { aviso:al?al.txt.replace(/<[^>]+>/g,''):'', pantalla:txt(document.getElementById('cua-alertas')),
+                 enDetalle:/PAGO SIN FECHA/.test(txt(document.getElementById('cua-detalle'))), n:cuadrePagos().length,
+                 wa:(cuadreTexto().split('\n').filter(function(l){ return /sin fecha/.test(l); })[0]||'') };
+      };
+      return { dia:await mirar('dia'), mes:await mirar('mes'), todo:await mirar('todo') };
+    });
+    chk('control: en «Día» y «Mes» el pago sin fecha NO sale en el detalle; en «Todo» SÍ (no cambia qué entra)',
+        r.dia.enDetalle===false && r.mes.enDetalle===false && r.todo.enDetalle===true && r.dia.n===1 && r.mes.n===1 && r.todo.n===2, J([r.dia.n, r.mes.n, r.todo.n]));
+    chk('en «Mes» el aviso dice que no entra en el cuadre del mes ni en el detalle, y dónde verlo',
+        /^1 pago sin fecha/.test(r.mes.aviso) && /no entran? en el cuadre de ningún día ni mes/.test(r.mes.aviso) && /ni en el detalle de abajo/.test(r.mes.aviso) && /«Todo»/.test(r.mes.aviso), r.mes.aviso);
+    chk('…y en «Día», lo mismo', /no entran? en el cuadre de ningún día ni mes/.test(r.dia.aviso) && /ni en el detalle de abajo/.test(r.dia.aviso), r.dia.aviso);
+    chk('⚠️ en «Día», la venta del 20/09 es «de otro día», no «de otro mes» (es de septiembre)',
+        /\(1 de venta de otro día\)/.test(r.dia.aviso) && !/otro mes/.test(r.dia.aviso), r.dia.aviso);
+    chk('⚠️ en «Todo» ya no dice que no sale en el detalle de abajo (ahí sí sale)',
+        /^1 pago sin fecha/.test(r.todo.aviso) && !/ni en el detalle de abajo/.test(r.todo.aviso) && !/no entran? en ningún cuadre/.test(r.todo.aviso), r.todo.aviso);
+    chk('⚠️ …dice que en «Todo» sí sale en el detalle y suma, y que no entra en el cuadre de ningún día ni mes',
+        /sale[n]? en el detalle de abajo/.test(r.todo.aviso) && /no entran? en el cuadre de ningún día ni mes/.test(r.todo.aviso), r.todo.aviso);
+    chk('⚠️ …y lo mismo en la pantalla y en el texto para WhatsApp', /sale[n]? en el detalle de abajo/.test(r.todo.pantalla) && /sale[n]? en el detalle de abajo/.test(r.todo.wa) && !/ni en el detalle/.test(r.todo.wa), r.todo.wa);
     await page.close();
   }
 
