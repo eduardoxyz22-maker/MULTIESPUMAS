@@ -13,6 +13,11 @@
      4. Un pago EN CURSO de flete, con su imagen, se recordaba por venta (§4ep) pero sin el tipo:
         al volver a esa venta aparecía en «💵 Pago» con el saldo entero de monto, y «Registrar
         pago» anotaba la captura del flete como pago de la venta.
+     5. Cuadre: (a) el Excel no tenía la fila TOTAL de «Efectivo cobrado vs. retirado»; (b) en
+        «Todo», una venta «PAGADA sin monto» salía en el detalle con Bs 0 (pantalla y Excel) y se
+        contaba en «N pagos», aunque el aviso dice que no sale ahí; (c) dos pagos sin fecha
+        iguales de la misma venta de otro mes se contaban como uno; (d) pasar con Tab de un campo
+        del arqueo al siguiente dejaba el foco en la nada: lo que se tipeaba no entraba.
 
    Red cortada, servidor simulado (la planilla vive en `window.SRV`). Se corre:
        node tests/test_rev3_conta.js
@@ -326,6 +331,65 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('4b · control: el pago en curso de la VENTA vuelve como «Registrar pago» por el saldo, con su imagen',
       r.tipo==='pago' && /Registrar pago/.test(r.boton) && r.monto==='900' && r.comps==='PG1', J(r));
+
+  /* ══ 5a · EL EXCEL DEL CUADRE TRAE EL TOTAL DE «EFECTIVO COBRADO VS. RETIRADO» ═════════════════
+     La pantalla tiene la fila TOTAL (cobrado, retirado facturado / no facturado, retirado, en la
+     mano); el Excel terminaba en la última persona y el contador sumaba a mano. */
+  r = await page.evaluate(async () => {
+    await aCuadre([ P({ id:'E1', nota:'10', oc:'09-010', cliente:'EFECTIVO CAROLA', metodoPago:textoCobros([{metodo:'Efectivo',monto:1000,fecha:hoy,nota:'10',comps:['E1']}]) }),
+                    P({ id:'E2', nota:'20', oc:'09-020', cliente:'EFECTIVO MARIA', vendedor:'Maria Flores', metodoPago:textoCobros([{metodo:'Efectivo',monto:500,fecha:hoy,nota:'20',comps:['E2']}]) }),
+                    P({ id:'E3', nota:'30', oc:'09-030', cliente:'COBRO CHOFER', metodoPago:textoCobros([{metodo:'Efectivo',monto:200,fecha:hoy,nota:'30',recibio:'Luis Pierre',comps:['E3']}]) }),
+                    R({ id:'__ret_e1__', monto:600, notas:['10'], tipo:'Facturado' }),
+                    R({ id:'__ret_e2__', entrega:'Maria Flores', monto:100, notas:['20'], tipo:'No facturado' }) ]);
+    var celdas=[].slice.call(document.querySelectorAll('#cua-retiros tr')).filter(function(tr){ return /^\s*TOTAL/.test(tr.textContent); })
+                  .map(function(tr){ return [].slice.call(tr.querySelectorAll('td')).map(function(td){ return td.textContent.trim(); }); })[0]||[];
+    exportCuadre();
+    var m=window.__XLSX[0].matrix, ini=-1, tot=null;
+    for(var i=0;i<m.length;i++){ var c0=m[i]&&m[i][0]; var t=(c0&&typeof c0==='object')?c0.v:c0; if(t==='EFECTIVO COBRADO VS. RETIRADO') ini=i; }
+    if(ini>=0) for(var j=ini+1;j<m.length && m[j] && m[j].length;j++){ var t0=m[j][0]; t0=(t0&&typeof t0==='object')?t0.v:t0; if(/^TOTAL/.test(String(t0))) tot=m[j].map(function(c){ return (c&&typeof c==='object')?c.v:c; }); }
+    return { pantalla:celdas, excel:tot, ini:ini };
+  });
+  chk('5a · control: la pantalla tiene la fila TOTAL (1.700 cobrado · 600 fact. · 100 no fact. · 700 retirado)',
+      r.pantalla.length>=6 && /1\.700,00/.test(r.pantalla[1]) && /600,00/.test(r.pantalla[2]) && /100,00/.test(r.pantalla[3]) && /700,00/.test(r.pantalla[4]), J(r.pantalla));
+  chk('5a · ⚠️ el Excel también: TOTAL 1.700 · 600 · 100 · 700 · 1.000 en la mano', !!r.excel && r.excel[2]===1700 && r.excel[3]===600 && r.excel[4]===100 && r.excel[5]===700 && r.excel[6]===1000, J(r.excel));
+
+  /* ══ 5b · EN «TODO», UNA «PAGADA SIN MONTO» NO ES UN PAGO DE Bs 0 ═════════════════════════════
+     El aviso dice «no se sabe cuánto ni cuándo entró, por eso no salen en el detalle de abajo»; en
+     «Todo» el pago fabricado (sin fecha, Bs 0) sí salía en el detalle y en el Excel, y el cierre
+     decía «Efectivo (2 pagos)» con uno solo de verdad. El texto no lo listaba: tres versiones. */
+  r = await page.evaluate(async () => {
+    await aCuadre([ P({ id:'T1', nota:'40', oc:'09-040', cliente:'PAGADA SIN MONTO', metodoPago:'Efectivo %T1' }),
+                    P({ id:'T2', nota:'50', oc:'09-050', cliente:'PAGADA DE VERDAD', metodoPago:textoCobros([{metodo:'Efectivo',monto:1000,fecha:hoy,nota:'50',comps:['T2']}]) }) ], 'todo');
+    var det=(document.getElementById('cua-detalle')||{}).textContent||'';
+    var cierre=[].slice.call(document.querySelectorAll('#cua-cierre tbody tr')).map(function(tr){
+      return [].slice.call(tr.querySelectorAll('td')).map(function(td){ return td.textContent.replace(/\s+/g,' ').trim(); }).join('|'); });
+    var al=cuadreAlertas(cuadrePagos()).filter(function(a){ return a.k==='sinmonto'; })[0];
+    var txt=cuadreTexto();
+    exportCuadre();
+    var m=window.__XLSX[0].matrix, filas=[];
+    for(var i=1;i<m.length && m[i] && m[i].length;i++) filas.push(String((m[i][1]&&m[i][1].v)||m[i][1]));
+    return { enDetalle:/PAGADA SIN MONTO/.test(det), cierre:cierre, aviso:al?al.txt.replace(/<[^>]+>/g,''):'', avisoDet:al?al.det.map(function(d){ return d.txt; }):[],
+             texto:txt.split('\n').filter(function(l){ return /Efectivo:/.test(l); })[0]||'', excel:filas, n:cuadrePagos().length };
+  });
+  chk('5b · control: el aviso nombra la venta «PAGADA sin monto» y dice que no sale en el detalle', /no salen en el detalle/.test(r.aviso) && /PAGADA SIN MONTO/.test(J(r.avisoDet)), r.aviso.slice(0,90));
+  chk('5b · ⚠️ …y en «Todo» NO sale en el detalle de la pantalla (antes: un renglón de Bs 0)', r.enDetalle===false && r.n===1, J({enDetalle:r.enDetalle, n:r.n}));
+  chk('5b · ⚠️ …ni en el Excel', J(r.excel)==='["PAGADA DE VERDAD"]', J(r.excel));
+  chk('5b · ⚠️ el cierre dice «Efectivo · 1 pago» en la pantalla y en el texto (no 2 con uno de Bs 0)',
+      /Efectivo\|1\|Bs\s1\.000,00/.test(r.cierre[0]||'') && /\(1 pago\)/.test(r.texto), J({cierre:r.cierre[0], texto:r.texto}));
+
+  /* ══ 5c · DOS PAGOS SIN FECHA IGUALES NO SE CUENTAN COMO UNO ═════════════════════════════════
+     Una venta de agosto con dos cobros de Bs 500 en efectivo sin fecha ni recibo (el 💰 de §4fd los
+     dejaba así). Mirando septiembre, §4fn los busca en TODAS las ventas… y los juntaba por
+     «venta|monto|nota»: el aviso decía «1 pago sin fecha» y listaba uno. Arreglaban uno y listo. */
+  r = await page.evaluate(async () => {
+    await aCuadre([ P({ id:'D1', nota:'60', oc:'08-060', cliente:'DOS SIN FECHA', ts:tsDe('2026-08-20'), metodoPago:'Efectivo 500 + Efectivo 500' }),
+                    P({ id:'D2', nota:'61', oc:'09-061', cliente:'DOS SIN FECHA DEL MES', metodoPago:'QR BISA 300 + QR BISA 300' }) ]);
+    var al=cuadreAlertas(cuadrePagos()).filter(function(a){ return a.k==='sinfecha'; })[0];
+    return { txt:al?al.txt.replace(/<[^>]+>/g,''):'', det:al?al.det.map(function(d){ return d.txt; }):[] };
+  });
+  chk('5c · control: los dos de una venta DEL MES se cuentan los dos', r.det.filter(function(t){ return /DEL MES/.test(t); }).length===2, J(r.det));
+  chk('5c · ⚠️ los dos de la venta de agosto también: «4 pagos sin fecha (2 de ventas de otro mes)»',
+      /^4 pagos sin fecha/.test(r.txt) && /\(2 de ventas de otro mes\)/.test(r.txt) && r.det.filter(function(t){ return /venta del 20\/08/.test(t); }).length===2, J(r));
 
   chk('sin errores JS', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

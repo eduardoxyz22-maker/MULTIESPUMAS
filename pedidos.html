@@ -4117,6 +4117,10 @@ function cuadrePagos(){
     if(!cuadreEsDe(p, vend)) return;
     contaPagos(p).forEach(function(c){
       if(!enPeriodoCuadre(c.fecha, pe)) return;
+      /* 26/09: un pago SIN MONTO no es un pago. Es el de la venta «PAGADA sin monto» (§4fg): sin fecha, así que
+         en «Todo» entraba al detalle con Bs 0 (pantalla y Excel) y a «Efectivo (N pagos)», mientras el aviso
+         dice «por eso no salen en el detalle de abajo». Ahora pantalla, texto y Excel dicen lo mismo. */
+      if(!((Number(c.monto)||0)>0)) return;
       out.push({ p:p, fecha:c.fecha, metodo:c.metodo||'', banco:c.banco||'',
                  monto:Number(c.monto)||0, nota:limpiaNota(c.nota), recibio:limpiaRecibio(c.recibio),
                  comps:compsArr(c.comps!=null?c.comps:c.comp), comp:String(c.comp||''),
@@ -4362,16 +4366,16 @@ function cuadreAlertas(pagos){
      alguien volvía al mes de la venta o elegía «Todo». Es justo la forma del bug de §4fd: el
      botón 💰 creaba cobros sin fecha, y se lo toca cuando el cliente paga DESPUÉS, o sea sobre
      ventas de meses anteriores. Un pago sin fecha hay que verlo desde cualquier período. */
-  var _yaSF={}, _sfFuera=0;
-  sinFecha.forEach(function(x){ _yaSF[x.p.id+'|'+x.c.monto+'|'+limpiaNota(x.c.nota)]=1; });
+  /* ⚠️ (26/09) Sin juntar por «venta|monto|nota»: dos cobros de Bs 500 sin fecha ni recibo de la MISMA venta
+     (el 💰 de §4fd los dejaba así) quedaban en uno — el aviso decía «1 pago sin fecha» y se arreglaba uno
+     solo. No hay nada que no contar dos veces: el bucle de arriba mira las ventas del período y este, las otras. */
+  var _sfFuera=0;
   STATE.forEach(function(p){
     if(fueraDeConta(p) || !cuadreEsDe(p, vend)) return;
     if(enPeriodoCuadre(contaFecha(p), pe)) return;              // esas ya las miró el bucle de arriba
     contaPagos(p).forEach(function(c){
       if(!((Number(c.monto)||0)>0) || c.fecha) return;
-      var _k=p.id+'|'+c.monto+'|'+limpiaNota(c.nota);
-      if(_yaSF[_k]) return;
-      _yaSF[_k]=1; _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
+      _sfFuera++; sinFecha.push({p:p, c:c, fuera:true});
     });
   });
   if(sinFecha.length) A.push({k:'sinfecha', sev:'datos', ico:'📅', txt:'<b>'+sinFecha.length+'</b> pago'+(sinFecha.length===1?'':'s')+' sin fecha — <b>no entran en ningún cuadre</b> ni en el detalle de abajo'+(_sfFuera?(' ('+_sfFuera+' de ven'+(_sfFuera===1?'ta':'tas')+' de otro mes)'):''), det:sinFecha.map(function(x){ return {txt:(x.p.cliente||'—')+' · '+fmtBs(x.c.monto)+(x.fuera?(' · venta del '+fmtFechaCorta(contaFecha(x.p))):''), id:x.p.id}; })});
@@ -4972,6 +4976,12 @@ function exportCuadre(){
       rows.push([o.nombre, o.chofer?'SÍ':'', {v:o.cobrado,t:'n',s:fc}, {v:o.fac,t:'n',s:fc},
                  {v:o.nofac,t:'n',s:fc}, {v:o.ret,t:'n',s:fc}, {v:o.falta,t:'n',s:fc}]);
     });
+    // 26/09: la fila TOTAL que la pantalla ya tiene (el contador la sumaba a mano). Lo de «fuera» va abajo, sin sumar, como allá.
+    if(efe.length){
+      var _tE={c:0, f:0, n:0, r:0, q:0};
+      efe.forEach(function(o){ _tE.c=r2(_tE.c+o.cobrado); _tE.f=r2(_tE.f+o.fac); _tE.n=r2(_tE.n+o.nofac); _tE.r=r2(_tE.r+o.ret); _tE.q=r2(_tE.q+o.falta); });
+      rows.push(['TOTAL', '', {v:_tE.c,t:'n',s:fc}, {v:_tE.f,t:'n',s:fc}, {v:_tE.n,t:'n',s:fc}, {v:_tE.r,t:'n',s:fc}, {v:_tE.q,t:'n',s:fc}]);
+    }
     // Con filtro por vendedora: lo que de SUS ventas recibió un chofer (no está en su mano).
     E.fuera.forEach(function(f){ rows.push([f.nombre+' (chofer, ver en Todos)', 'SÍ', {v:f.monto,t:'n',s:fc}]); });
   }
