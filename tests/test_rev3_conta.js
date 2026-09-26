@@ -6,6 +6,9 @@
      1. «✏️ Corregir precios y montos» perdía lo tipeado (precios, A cuenta y saldo) si otro botón
         repintaba la ficha antes de «💾 Guardar»: ✅, el método o el banco del pago nuevo, «💵 Pago /
         🚚 Recargo», abrir ✏️ Corregir un pago, 📲… y «Guardar» guardaba lo viejo sin decir nada.
+     2. La columna «Ingresado», la ficha y el INGRESADO del Excel leían el `ts` con el reloj del
+        DISPOSITIVO; el filtro del mes lo lee en hora de Bolivia (§4fu). En un celular con la zona
+        mal puesta la venta del 31/08 21:30 salía en agosto… diciendo «2026-09-01 01:30».
 
    Red cortada, servidor simulado (la planilla vive en `window.SRV`). Se corre:
        node tests/test_rev3_conta.js
@@ -218,6 +221,39 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('1d · control: lo tipeado en una venta no aparece en OTRA', r.otra.pr0==='' && r.otra.sal==='500', J(r.otra));
   chk('1d · control: y al volver a la primera arranca de lo guardado', r.vuelta.pr0==='' && r.vuelta.sal==='1000', J(r.vuelta));
+
+  /* ══ 2 · «INGRESADO» EN HORA DE BOLIVIA, COMO EL FILTRO (§4fu) ════════════════════════════════
+     Venta cargada el 31/08 a las 21:30 de Bolivia (= 01/09 01:30 UTC), mirada desde una compu con la
+     zona en UTC. El filtro la pone en AGOSTO (bien), pero la columna, la ficha y el Excel decían
+     «2026-09-01 01:30»: una venta «de septiembre» en el listado de agosto. */
+  const ING = async (tz) => {
+    const pg = await nueva('2026-09-16T15:00:00Z', tz);
+    const x = await pg.evaluate(async () => {
+      await aVentas([ P({ id:'I1', nota:'31', oc:'08-031', cliente:'A LAS NUEVE Y MEDIA', ts:Date.UTC(2026,8,1,1,30,0), fecha:'2026-09-02' }),
+                      P({ id:'I2', nota:'32', oc:'09-032', cliente:'DE SEPTIEMBRE', ts:Date.UTC(2026,8,10,16,0,0) }) ], '2026-08');
+      var fila=[].slice.call(document.querySelectorAll('#tbl-conta tbody tr')).filter(function(tr){ return /A LAS NUEVE/.test(tr.textContent); })[0];
+      var col=fila?fila.querySelector('td').textContent.trim():'';
+      var agosto=contaLista().map(function(p){ return p.id; });
+      showContaModal('I1');
+      var ficha=((document.getElementById('modal-box')||{}).textContent||'').match(/Ingresado\s*([0-9:\- ]+)/);
+      closeModal();
+      exportConta();
+      var m=window.__XLSX&&window.__XLSX[0].matrix, c=m&&m[1]&&m[1][0];
+      var excel=(c&&typeof c==='object')?String(c.v):String(c||'');
+      document.getElementById('cta-mes').value='2026-09'; renderConta();
+      var sept=contaLista().map(function(p){ return p.id; });
+      return { col:col, ficha:ficha?ficha[1].trim():'', excel:excel, agosto:agosto, sept:sept };
+    });
+    await pg.context().close();
+    return x;
+  };
+  r = await ING('UTC');
+  chk('2 · (compu en UTC) el filtro pone la venta del 31/08 21:30 en agosto, no en septiembre', J(r.agosto)==='["I1"]' && J(r.sept)==='["I2"]', J({ago:r.agosto, sep:r.sept}));
+  chk('2 · ⚠️ …y la columna «Ingresado» dice 2026-08-31 21:30 (no 2026-09-01 01:30)', r.col==='2026-08-31 21:30', r.col);
+  chk('2 · …la ficha también', r.ficha==='2026-08-31 21:30', r.ficha);
+  chk('2 · …y el INGRESADO del Excel', r.excel==='2026-08-31 21:30', r.excel);
+  r = await ING('America/La_Paz');
+  chk('2 · control: en una compu bien configurada da lo mismo que antes', r.col==='2026-08-31 21:30' && r.ficha==='2026-08-31 21:30' && r.excel==='2026-08-31 21:30', J(r));
 
   chk('sin errores JS', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

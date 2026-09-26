@@ -2938,7 +2938,10 @@ var NOMBRES = {}, NOMBRES_LISTA = [];
   }
   NOMBRES_LISTA.sort();
 })();
-function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate())+' '+z(d.getHours())+':'+z(d.getMinutes()); }
+/* ⚠️ En hora de BOLIVIA, no la del dispositivo (26/09): `ts` es un instante guardado, y el filtro del mes
+   ya lo lee así (`isoDeTsBolivia`, §4fu). Con la zona mal puesta, la venta del 31/08 a las 21:30 salía
+   en el listado de agosto diciendo «2026-09-01 01:30» (columna «Ingresado», la ficha y los Excel). */
+function tsFmt(ts){ ts=Number(ts); if(!ts) return ''; var d=new Date(ts-4*3600000); if(isNaN(d.getTime())) return ''; var z=function(n){return (n<10?'0':'')+n;}; return d.getUTCFullYear()+'-'+z(d.getUTCMonth()+1)+'-'+z(d.getUTCDate())+' '+z(d.getUTCHours())+':'+z(d.getUTCMinutes()); }
 function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var box=document.getElementById('f-productos');
   var card=document.createElement('div'); card.className='prod-card';
