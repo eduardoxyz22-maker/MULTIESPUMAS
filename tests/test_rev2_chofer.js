@@ -231,6 +231,26 @@ const BASE = `
     await page.close();
   }
 
+  // ═══ 5. Pantalla de 320 px: el botón de la foto se lee ════════════════════════════════
+  console.log('\n── 5. 320 px: «📷 Foto de la entrega» no queda con los renglones encimados ──');
+  for (const ancho of [320, 360]) {
+    const page = await nueva();
+    await page.setViewportSize({ width:ancho, height:800 });
+    const r = await page.evaluate(async () => {
+      _cargar([_P({id:'w1', cliente:'CLIENTE ANGOSTO', saldo:500, maps:'https://www.google.com/maps?q=-17.78,-63.18', celular:'70011122'})]);
+      await _abrirChofer('hoy');
+      var b=document.querySelector('#cho-lista .cho-btn.foto'), rb=b.getBoundingClientRect();
+      var rg=document.createRange(); rg.selectNodeContents(b);
+      var lineas=[].slice.call(rg.getClientRects()).map(function(x){ return Math.round(x.top); }).filter(function(v,i,a){ return a.indexOf(v)===i; });
+      var rt=rg.getBoundingClientRect();
+      return { alto:Math.round(rb.height), lineas:lineas.length, adentro: rt.top>=rb.top-0.5 && rt.bottom<=rb.bottom+0.5,
+               ancho:document.documentElement.scrollWidth, vista:document.documentElement.clientWidth };
+    });
+    chk('a '+ancho+' px el botón de la foto tiene el alto de su texto (antes: 28 px y, a 320, dos renglones encimados)', r.adentro===true && r.alto>=36, J(r));
+    chk('…y la pantalla no se corre de costado', r.ancho<=r.vista, J(r));
+    await page.close();
+  }
+
   chk('sin errores JS', errores.length===0, J(errores.slice(0,3)));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();
