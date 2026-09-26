@@ -16584,7 +16584,7 @@ function revStkPedidos(todos){
 }
 /* El reparto. Devuelve, por pedido, qué habría que marcar en cada línea y por qué. */
 function stockAsignar(){
-  var d=stockData(), dep={}, im={}, imAlm={}, info={}, recogidas={}, encargados={};
+  var d=stockData(), dep={}, im={}, imAlm={}, info={}, recogidas={}, recogidasPor={}, encargados={};
   d.lista.forEach(function(o){
     info[o.k]=o;
     dep[o.k]= (o.deposito==null) ? null : Math.max(0, o.deposito);
@@ -16598,6 +16598,9 @@ function stockAsignar(){
        (IM): nunca se pierde stock por no saber de dónde sale. */
     if(!imAlm[o.k].length && im[o.k]>0) imAlm[o.k]=[{ alm:'', u:im[o.k] }];
     recogidas[o.k]=(o.pedidos||[]).reduce(function(n,q){return n+(q.tipo==='recogida'?Number(q.u)||0:0);},0);
+    // (26/09) …y de qué almacén viene cada una: la usa la revisión de TODO (más abajo, `prog`).
+    recogidasPor[o.k]=(o.pedidos||[]).filter(function(q){ return q.tipo==='recogida' && Number(q.u)>0; })
+                                     .map(function(q){ return { alm:q.de||stockAlmPorDefecto()||'', u:Number(q.u)||0 }; });
     encargados[o.k]=o.enCamino||0;
   });
   /* Toma `n` unidades de los otros almacenes y dice DE CUÁL salieron: primero el que ya
@@ -16703,7 +16706,13 @@ function stockAsignar(){
         lineas.push({i:i, k:k, nom:nomS, cant:c, antes:antes, ahora:'', sinContar:true});
         return;
       }
-      var deDep=Math.min(dep[k]||0, c), resto=c-deDep;
+      /* 🚚 (26/09) Con «Tocar solo las líneas sin marcar» DESTILDADA, una línea 📥 cuya recogida ya
+         está programada no encontraba esas unidades —ya no están libres en Moreno
+         (`stockLibreOrigen` las descuenta) ni llegaron acá— y se proponía ✗ no hay con la camioneta
+         en camino. La recogida programada la cubre primero, como en la primera vuelta (arriba). */
+      var prog=0, progPor=[];
+      if(!REVSTK_SOLO_VACIOS && antes==='im') (recogidasPor[k]||[]).forEach(function(e){ var t=Math.min(e.u, c-prog); if(t>0){ prog+=t; progPor.push({ alm:e.alm, u:t }); } });
+      var deDep=Math.min(dep[k]||0, c-prog), resto=c-prog-deDep;
       /* Se MIRA cuánto habría en los otros almacenes y de cuál; se descuenta más abajo, y
          solo si la línea se cubre entera (una línea a medias no reserva nada). */
       // Solo es preferencia si YA estaba marcado; si no, que salga del que la cubra entera.
@@ -16718,20 +16727,29 @@ function stockAsignar(){
       /* Lo que HABRÍA de cada lado aunque no alcance: es lo que le sirve a quien mira
          («de 4: 1 acá, 2 en Moreno, 1 hay que fabricar»). La idea es de la versión de
          ChatGPT, que lo desglosaba y la mía decía solo «no hay» (§4cr). */
-      var hayDep=deDep, hayIM=deIM, aFabricar=falta>0?falta:0;
-      if(falta>0){ ahora='no'; deDep=0; deIM=0; almIM=''; porIM=[]; }  // no alcanza: no se reserva nada
-      else if(deIM>0) ahora='im';
+      var hayDep=deDep, hayIM=deIM, hayProg=prog, aFabricar=falta>0?falta:0;
+      if(falta>0){ ahora='no'; deDep=0; deIM=0; almIM=''; porIM=[]; prog=0; }  // no alcanza: no se reserva nada (tampoco la recogida)
+      else if(deIM>0 || prog>0) ahora='im';
       else ahora='ok';
       dep[k]=(dep[k]||0)-deDep;
       /* Recién acá se reserva. Mismos argumentos que la mirada (`deIM===resto` cuando
          alcanza) → mismo reparto: lo que se muestra es exactamente lo que se descuenta. */
       if(deIM>0){ porIM=tomarIM(k, deIM, prefX, true).por; almIM=(porIM.length?porIM[0].alm:''); im[k]=(im[k]||0)-deIM; }
+      // (26/09) …y la recogida queda para esta línea: el lugar es de donde viene la camioneta.
+      var porLinea=porIM;
+      if(prog>0){
+        var _p=prog; (recogidasPor[k]||[]).forEach(function(e){ var t=Math.min(e.u,_p); if(t>0){ e.u-=t; _p-=t; } });
+        recogidas[k]=Math.max(0,(recogidas[k]||0)-prog); encargados[k]=Math.max(0,(encargados[k]||0)-prog);
+        var _j={}; porLinea=[];
+        progPor.concat(porIM).forEach(function(e){ var kk=recogerClave(e.alm); if(!_j[kk]){ _j[kk]={ alm:e.alm, u:0 }; porLinea.push(_j[kk]); } _j[kk].u+=e.u; });
+        porLinea.sort(function(a,b){ return b.u-a.u; }); almIM=porLinea[0].alm;
+      }
       if(ahora==='ok') tot.ok++; else if(ahora==='im') tot.im++; else tot.no++;
       /* 🛑 Lo que no alcanza de un producto discontinuado queda ✗ igual (no hay), pero NO va a
          la lista de fábrica: no lo hacen más. Va a su propia lista, para avisar (§4cz). */
       var desc=stockDescontinuadoK(k);
       if(ahora==='no' && desc) tot.descont++;
-      if(ahora!=='ok'){
+      if(ahora!=='ok' && (ahora!=='im' || deIM>0)){       // (26/09) lo que ya viene en la recogida no se va a buscar de nuevo
         var reg=(ahora==='im'?imPorProd:(desc?descPorProd:faltaPorProd));
         if(!reg[k]) reg[k]={k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cod:o.cod||x.codigo||'', u:0, ped:[], alm:{}};
         /* ⚠️ De IM se traen las unidades que salen de IM, NO las del pedido entero: si de 4
@@ -16748,14 +16766,14 @@ function stockAsignar(){
       /* ⚠️ Cambiar de ALMACÉN también es un cambio. Mirando solo la marca, la tabla proponía
          «recoger de Moreno» sobre una línea marcada en Banzer y Aplicar no tocaba nada: la
          propuesta se mostraba y no se aplicaba nunca. */
-      var cambia=(antes!==ahora) || (ahora==='im' && !recogerMismosLugares(porIM, recogerPartes(x)));
+      var cambia=(antes!==ahora) || (ahora==='im' && !recogerMismosLugares(porLinea, recogerPartes(x)));
       if(cambia) tot.cambian++;
       // Contradice a una persona: había un tilde puesto a mano y decía otra cosa.
       var contra=(cambia && antes!=='');
       if(contra) tot.contra++;
-      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almPor:porIM, hayIMPor:hayIMPor,
+      lineas.push({i:i, k:k, nom:(o.desc?stockNombre(o):(x.desc||'')), cant:c, antes:antes, ahora:ahora, alm:almIM, almPor:porLinea, hayIMPor:hayIMPor,
                    almAntes:(antes==='im'?recogerDe(x):''), almAntesPor:(antes==='im'?recogerPartes(x):null),
-                   deDep:deDep, deIM:deIM, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
+                   deDep:deDep, deIM:deIM+prog, prog:hayProg, falta:aFabricar, hayDep:hayDep, hayIM:hayIM, cambia:cambia, contra:contra, descont:desc});
     });
     if(lineas.length) pedidos.push({p:p, lineas:lineas, firma:JSON.stringify(p)});
   });
@@ -16796,6 +16814,7 @@ function stockAsignar(){
 function revStkDesglose(l){
   var t=[];
   if(l.hayDep) t.push(l.hayDep+' acá');
+  if(l.prog)   t.push(l.prog+' ya en camino (recogida programada)');     // (26/09)
   if(l.hayIM)  t.push(l.hayIM+' recoger de '+recogerPorTxt(l.hayIMPor));
   if(l.falta)  t.push('<b>'+l.falta+(l.descont?' no hay — y ya no se fabrica':' hay que fabricar')+'</b>');
   return t.length?('de '+l.cant+': '+t.join(' · ')):'no hay nada';
@@ -16872,7 +16891,7 @@ function renderStockRevisar(){
                «hay 2 acá», que es el dato con el que quien mira decide si le cree. */
             '<td>'+esc(l.nom)+' <b>× '+l.cant+'</b>'+
               (l.ahora==='ok'?('<br><span style="color:#0a6b47;font-size:.88em">'+(l.hayDep>=l.cant?('hay '+l.hayDep+' acá en fábrica'):(l.hayDep+' acá'))+'</span>'):'')+
-              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de '+esc(recogerPorTxt(l.almPor))+'</span>'):'')+
+              (l.ahora==='im'?('<br><span style="color:#a67c00;font-size:.88em">'+(l.deDep?(l.deDep+' de acá + '):'')+l.deIM+' a recoger de '+esc(recogerPorTxt(l.almPor))+(l.prog?(' ('+l.prog+' ya en la recogida programada)'):'')+'</span>'):'')+
               (l.ahora==='no'?('<br><span style="color:var(--red);font-size:.88em">'+revStkDesglose(l)+'</span>'):'')+'</td>'+
             '<td>'+revStkMarca(l.antes, l.almAntesPor)+'</td>'+
             '<td>'+revStkMarca(l.ahora, l.almPor)+(l.contra?'<br><span style="color:#7c4b00;font-size:.8em">⚠️ cambia lo marcado a mano</span>':'')+'</td></tr>';

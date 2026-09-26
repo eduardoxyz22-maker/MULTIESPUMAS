@@ -5,6 +5,10 @@
       día» (`c.inc`), lo que llegaba ese mismo día DESPUÉS de subirlo se descartaba por la fecha (y
       `filaStock` lo podaba al guardar). Con hora de los dos lados (`ts` y `c.t`) manda la hora; una
       entrada vieja sin hora queda como antes.
+   4. LA REVISIÓN CON «TOCAR SOLO LAS LÍNEAS SIN MARCAR» DESTILDADA: una línea 📥 cuya recogida ya
+      está programada (`STOCK.p`, la camioneta en camino) no encontraba esas unidades —ya no están en
+      Moreno ni llegaron acá— y la pasaba a ✗ no hay. Ahora la recogida programada la cubre primero,
+      como en la primera vuelta de la revisión normal.
 
    Datos SINTÉTICOS. Reloj de la página clavado en el miércoles 16/09/2026, 18:30 de Bolivia.
 
@@ -119,6 +123,90 @@ const J=x=>JSON.stringify(x);
   chk('sin «ya incluye»: igual que antes (después vale, antes no, sin hora vale, de ayer no)',
       r.sinIncDesp===true && r.sinIncAntes===false && r.sinIncSinTs===true && r.sinIncAyer===false, J(r));
   chk('un corte sin hora (de un panel viejo) sigue mandando por la fecha, y sin corte vale todo', r.corteSinHora===false && r.sinCorte===true, J(r));
+
+  // ══ 4. La revisión con «Tocar solo las líneas sin marcar» destildada ═════════════════
+  console.log('\n── 4. Revisión de todo: una línea 📥 con la recogida ya programada no pasa a ✗ ──');
+  await page.evaluate(() => {
+    window._IM='IM - PRODUCTOTERMINADO';
+    /* Acá 0. Moreno tenía `enMoreno`; se programó traer `prog` (la camioneta va mañana temprano).
+       Los pedidos: `lineas` = [{id, u, chk, chkDe, dias}]. */
+    window._rev=function(enMoreno, prog, lineas){
+      _stockAca(0);
+      var K=_K();
+      STOCK.g={}; STOCK.g[_IM]={ f:todayStr(), u:{}, hora:'08:00:00', solo0:true, cod:{}, t:Date.now()-6*3600000, rs:{} };
+      STOCK.g[_IM].u[K]=enMoreno;
+      STOCK.al[_IM]='otro';
+      STOCK.p=prog ? [{ id:'rc1', k:K, u:prog, tipo:'recogida', de:_IM, fab:'', f:todayStr(), esp:_adel(1), r:'' }] : [];
+      STATE=lineas.map(function(l){
+        var x={ chk:l.chk||'' }; if(l.chkDe) x.chkDe=l.chkDe;
+        return _P({ id:l.id, cliente:'Cli '+l.id, fecha:_adel(l.dias||1), productos:_tit(l.u, x) });
+      });
+      stockOlvidarIndice();
+      REVSTK_DIAS='todos';
+    };
+    window._plan=function(R){
+      var por={}; REVSTK=R;                          // revStkCambios() mira la propuesta guardada
+      R.pedidos.forEach(function(g){ por[g.p.id]=g.lineas.map(function(l){ return { antes:l.antes, ahora:l.ahora, cambia:!!l.cambia, contra:!!l.contra, deIM:l.deIM, alm:recogerPorTxt(l.almPor), desg:(l.ahora==='no'?revStkDesglose(l):'') }; })[0]; });
+      return { por:por, cambios:revStkCambios().map(function(g){ return g.p.id; }), no:R.tot.no, im:R.tot.im,
+               faltan:R.faltan.map(function(o){ return o.u; }), traer:R.traerIM.map(function(o){ return o.u; }) };
+    };
+  });
+  r = await page.evaluate(() => {
+    _rev(3, 3, [{ id:'a', u:3, chk:'im' }]);
+    var out={};
+    REVSTK_SOLO_VACIOS=true; out.solo=_plan(stockAsignar());
+    REVSTK_SOLO_VACIOS=false; out.todo=_plan(stockAsignar());
+    REVSTK_SOLO_VACIOS=true;
+    return out;
+  });
+  chk('con la casilla marcada (lo normal) la línea 📥 se conserva: la recogida la cubre', r.solo.cambios.length===0 && r.solo.no===0, J(r.solo));
+  chk('⚠️ destildada, la línea 📥 con su recogida en camino NO pasa a ✗ no hay (antes: «estaba 📥, queda ✗»)',
+      r.todo.por.a && r.todo.por.a.ahora==='im' && !r.todo.por.a.cambia && r.todo.cambios.length===0 && r.todo.no===0, J(r.todo));
+  chk('…y no pide fabricar ni ir a buscar de nuevo lo que ya viene', r.todo.faltan.length===0 && r.todo.traer.length===0, J(r.todo));
+
+  r = await page.evaluate(async () => {
+    // Lo mismo apretando los botones: abrir, destildar, Aplicar.
+    _rev(3, 3, [{ id:'a', u:3, chk:'im' }]);
+    showView('admin'); await new Promise(function(res){ setTimeout(res,150); });
+    _rev(3, 3, [{ id:'a', u:3, chk:'im' }]);
+    abrirStockRevisar(); revStkSoloVacios();
+    var boton=document.querySelector('[onclick="aplicarStockRevisar()"]');
+    if(boton) aplicarStockRevisar(); else closeModal();
+    await new Promise(function(res){ setTimeout(res,400); });
+    var av=document.getElementById('revstk-avance'); if(av) av.remove();
+    REVSTK_SOLO_VACIOS=true;
+    return { boton:!!boton, chk:findById('a').productos[0].chk, estado:findById('a').estado||'' };
+  });
+  chk('⚠️ apretando «Aplicar» con la casilla destildada, el pedido sigue 📥 (antes quedaba ✗ «No hay» con la camioneta en camino)',
+      r.chk==='im', J(r));
+
+  r = await page.evaluate(() => {
+    var out={};
+    // (b) La recogida cubre 2 de 3 y en Moreno queda 1 libre: 📥 entera, y a buscar solo 1.
+    _rev(3, 2, [{ id:'a', u:3, chk:'im' }]);
+    REVSTK_SOLO_VACIOS=false; out.parcial=_plan(stockAsignar());
+    // (c) Dos pedidos: el 📥 (con su recogida de 2) y uno nuevo que entra en los 2 que quedan en Moreno.
+    _rev(4, 2, [{ id:'a', u:2, chk:'im', dias:1 }, { id:'b', u:2, dias:2 }]);
+    REVSTK_SOLO_VACIOS=false; out.dos=_plan(stockAsignar());
+    REVSTK_SOLO_VACIOS=true;  out.dosSolo=_plan(stockAsignar());
+    // (d) No alcanza: la recogida trae 3 y el pedido es de 4 → ✗, pero dice que 3 vienen en camino, y fabricar 1.
+    _rev(3, 3, [{ id:'a', u:4, chk:'im' }]);
+    REVSTK_SOLO_VACIOS=false; out.falta=_plan(stockAsignar());
+    // (e) La marca dice Banzer y la recogida viene de IM: la línea pasa a decir IM (de ahí sale la camioneta).
+    _rev(3, 3, [{ id:'a', u:3, chk:'im', chkDe:'Banzer' }]);
+    REVSTK_SOLO_VACIOS=false; out.lugar=_plan(stockAsignar());
+    REVSTK_SOLO_VACIOS=true;
+    return out;
+  });
+  chk('recogida de 2 + 1 libre en Moreno: la línea de 3 sigue 📥 y a buscar queda solo 1 (no 3)',
+      r.parcial.por.a.ahora==='im' && !r.parcial.por.a.cambia && r.parcial.por.a.deIM===3 && J(r.parcial.traer)==='[1]' && r.parcial.no===0, J(r.parcial));
+  chk('⚠️ dos pedidos: el 📥 se queda con SU recogida y el nuevo se lleva los 2 libres de Moreno (antes: el nuevo quedaba ✗)',
+      r.dos.por.a.ahora==='im' && !r.dos.por.a.cambia && r.dos.por.b.ahora==='im' && r.dos.no===0 && r.dos.faltan.length===0, J(r.dos));
+  chk('…que es lo mismo que propone la revisión normal (casilla marcada)', r.dosSolo.por.b && r.dosSolo.por.b.ahora==='im', J(r.dosSolo));
+  chk('si la recogida no alcanza: ✗ (una línea a medias no reserva), fabricar 1, y el porqué nombra lo que viene en camino',
+      r.falta.por.a.ahora==='no' && J(r.falta.faltan)==='[1]' && /3 [^·]*camino/.test(r.falta.por.a.desg), J(r.falta));
+  chk('la marca decía Banzer y la recogida viene de IM: se propone IM (el lugar de donde sale la camioneta)',
+      r.lugar.por.a.ahora==='im' && r.lugar.por.a.cambia && r.lugar.por.a.alm==='IM', J(r.lugar));
 
   chk('sin errores de JavaScript', errores.length===0, errores.slice(0,3).join(' | '));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
