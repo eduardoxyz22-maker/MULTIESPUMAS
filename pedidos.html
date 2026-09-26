@@ -2926,7 +2926,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var pL=document.createElement('div'); pL.className='mini-lb'; pL.textContent='Precio c/u';
   var pIn=document.createElement('input'); pIn.type='number'; pIn.className='prod-precio';
   pIn.min='0'; pIn.step='0.01'; pIn.placeholder='Bs'; pIn.autocomplete='off';
-  if(Number(precio)>0) pIn.value=r2(precio);
+  if(Number(precio)>0) pIn.value=r2(precio);   // r2: con dos decimales como mucho, `montoForm` nunca lo lee como miles
   pW.appendChild(pL); pW.appendChild(pIn);
   sub.appendChild(mW); sub.appendChild(cW); sub.appendChild(qW); sub.appendChild(pW);
   /* 🏪 Los dos datos que el formato de reposición pide POR RENGLÓN (§4dk): si es una
@@ -2942,7 +2942,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   rW.appendChild(rtL); rW.appendChild(rtS); rW.appendChild(roL); rW.appendChild(roIn);
   var tot=document.createElement('div'); tot.className='prod-sub-tot';
   function pintarSub(){
-    var pr=parseFloat(pIn.value)||0, ct=parseInt(q.value,10)||0;
+    var pr=montoForm(pIn), ct=parseInt(q.value,10)||0;
     if(pr>0){ tot.className='prod-sub-tot'; tot.textContent='× '+ct+' = '+fmtBs(r2(pr*ct)); }
     else { tot.className='prod-sub-tot vacio'; tot.textContent='sin precio'; }
     pintarTotalProds();
@@ -2989,7 +2989,7 @@ function pintarTotalProds(){
   var cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
     var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
-    var pr=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    var pr=montoForm(cards[i].querySelector('.prod-precio'));
     var ct=parseInt(cards[i].querySelector('.prod-cant').value,10)||0;
     if(pr>0){ t+=pr*ct; con++; } else sin++;
   }
@@ -3006,11 +3006,11 @@ function usarTotalProds(){
   var t=0, cards=document.querySelectorAll('#f-productos .prod-card');
   for(var i=0;i<cards.length;i++){
     var d=cards[i].querySelector('.prod-desc'); if(!d||!d.value.trim()) continue;
-    t+=(parseFloat(cards[i].querySelector('.prod-precio').value)||0)*(parseInt(cards[i].querySelector('.prod-cant').value,10)||0);
+    t+=montoForm(cards[i].querySelector('.prod-precio'))*(parseInt(cards[i].querySelector('.prod-cant').value,10)||0);
   }
   t=r2(t);
   if(segVal('f-pagado')==='SI'){ toast('El pedido está marcado como PAGADO: no hay saldo que llenar','err'); return; }
-  var acu=parseFloat(document.getElementById('f-acuenta').value)||0;
+  var acu=montoForm('f-acuenta');
   if(acu>t){ toast('Lo que ya pagó ('+fmtBs(acu)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
   document.getElementById('f-saldo').value=r2(t-acu);
   updateMetodoVisibility();
@@ -3025,7 +3025,7 @@ function getProductos(){
     var medida = mSel.value==='Otros' ? cards[i].querySelector('.prod-medida-otro').value.trim() : mSel.value;
     var codigo=cards[i].querySelector('.prod-codigo').value.trim();
     var cant=parseInt(cards[i].querySelector('.prod-cant').value,10)||1;
-    var precio=parseFloat(cards[i].querySelector('.prod-precio').value)||0;
+    var precio=montoForm(cards[i].querySelector('.prod-precio'));
     if(desc){ var it={desc:desc, medida:medida, codigo:codigo, cant:cant};
       if(precio>0) it.precio=r2(precio);          // sin precio no se guarda la clave: los viejos quedan igual
       /* 🏪 Solo en una reposición (§4dk), y con la misma convención que el precio: si no
@@ -3203,10 +3203,21 @@ var EDIT_DESDE='admin';
 function clearErr(){ var els=document.querySelectorAll('.err'); for(var i=0;i<els.length;i++) els[i].classList.remove('err'); }
 function markErr(id){ document.getElementById(id).classList.add('err'); }
 function setSubmitting(on){ var b=document.getElementById('f-submit'); b.disabled=on; if(on) b.innerHTML='<span class="spin"></span> Enviando…'; else b.textContent=EDIT_ID?'Guardar cambios':'Guardar pedido'; }
+/* 💵 LOS MONTOS DEL FORMULARIO SE LEEN COMO LOS ESCRIBE LA GENTE (26/09). En Bolivia 1.500 se escribe
+   con punto y el campo numérico lo deja tal cual («1.500»): `parseFloat` lo leía 1,5, y una venta con
+   «A cuenta 1.500» llegaba a la planilla con Bs 1,50 (el pago mixto, el flete y el precio c/u, igual).
+   Es `parseMonto`, como «Registrar pago», el arqueo y «Corregir precios y montos» (§4ga). Lo que pone
+   el panel va con `r2` (dos decimales como mucho), así que nunca se toma por miles. Con signo menos
+   vale 0 —como antes, que no pasaba de `>0`—: `submitPedido` frena el campo a la vista. */
+function montoForm(el){
+  if(typeof el==='string') el=document.getElementById(el);
+  if(!el || montoNegativo(el.value)) return 0;
+  return parseMonto(el.value);
+}
 /* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
 function updateMetodoVisibility(){
   var pagado = segVal('f-pagado')==='SI';
-  var acuenta = parseFloat(document.getElementById('f-acuenta').value)||0;
+  var acuenta = montoForm('f-acuenta');
   var show = pagado || (acuenta>0);
   document.getElementById('wrap-metodo').style.display = show ? 'block' : 'none';
   if(show){ var lb=document.querySelector('#wrap-metodo .lb'); if(lb) lb.innerHTML=(pagado?'¿Con qué pagó?':'¿Con qué pagó el adelanto (a cuenta)?')+' <span class="req">*</span>'+mixtoBtnHtml(); }
@@ -6799,7 +6810,7 @@ function renderCompForm(pide){
 function pintarEnvioCobrado(){
   var el=document.getElementById('f-envio'), w=document.getElementById('wrap-envio-cob');
   if(!el||!w) return;
-  var hay=(parseFloat(el.value)||0)>0;
+  var hay=montoForm(el)>0;
   /* "Sí, ya lo cobré" necesita un método y un comprobante, y esos salen del cobro de la
      venta. Si la venta va toda por cobrar, el flete solo puede quedar PACTADO. */
   var wm=document.getElementById('wrap-metodo');
@@ -6849,10 +6860,9 @@ function toggleMixto(on){
 }
 /* Sobre qué total se reparte: lo cobrado (pagado) o el adelanto (a cuenta). */
 function mixtoTotalBase(){
-  return (segVal('f-pagado')==='SI') ? (parseFloat((document.getElementById('f-cobrado')||{}).value)||0)
-                                     : (parseFloat((document.getElementById('f-acuenta')||{}).value)||0);
+  return (segVal('f-pagado')==='SI') ? montoForm('f-cobrado') : montoForm('f-acuenta');   // «1.500» = 1.500 (26/09)
 }
-function mixtoMonto2(){ return parseFloat((document.getElementById('f-monto2')||{}).value)||0; }
+function mixtoMonto2(){ return montoForm('f-monto2'); }
 function renderBancos2(){
   var box=document.getElementById('f-banco2'); if(!box) return;
   var v=(document.getElementById('f-vendedor')||{}).value||'';
@@ -7076,11 +7086,24 @@ function submitPedido(){
     if(faltaOcRoho){ var fo0=document.getElementById('f-oc'); if(fo0){ fo0.focus(); fo0.scrollIntoView({block:'center'}); } }
     return;
   }
-  var _acu=(parseFloat(document.getElementById('f-acuenta').value)||0);
+  /* 💵 UN MONTO CON SIGNO MENOS NO SE GUARDA (26/09). Con `parseFloat` quedaba «A cuenta −500» o
+     «Saldo −100» en la planilla, y un flete «−50» borraba callado el pactado; `montoForm` (como
+     `parseMonto`) le sacaría el signo. Se frena el campo A LA VISTA, como «Corregir precios y montos». */
+  var _neg=[];
+  ['f-acuenta','f-saldo','f-cobrado','f-monto2','f-envio'].forEach(function(id){ var e=document.getElementById(id); if(e) _neg.push(e); });
+  _neg=_neg.concat(Array.prototype.slice.call(document.querySelectorAll('#f-productos .prod-precio')))
+           .filter(function(e){ return e.offsetParent!==null && montoNegativo(e.value); });
+  if(_neg.length){
+    _neg.forEach(function(e){ e.classList.add('err'); });
+    toast('Los montos no pueden ser negativos: sacale el signo menos al que quedó en rojo.','err');
+    try{ _neg[0].focus(); _neg[0].scrollIntoView({block:'center'}); }catch(e){}
+    return;
+  }
+  var _acu=montoForm('f-acuenta');
   if(!lite){
     if((segVal('f-pagado')==='SI' || _acu>0) && !segVal('f-metodo')){ toast('Elegí con qué pagó (Efectivo / QR / Tarjeta)','err'); document.getElementById('wrap-metodo').scrollIntoView({block:'center'}); return; }
     // Mismo orden que en pantalla: método → monto → banco → comprobante.
-    if(segVal('f-pagado')==='SI' && !(parseFloat(document.getElementById('f-cobrado').value)>0)){
+    if(segVal('f-pagado')==='SI' && !(montoForm('f-cobrado')>0)){
       markErr('f-cobrado');
       toast('Poné el MONTO TOTAL COBRADO de esta venta','err');
       var fcb=document.getElementById('f-cobrado'); fcb.focus(); fcb.scrollIntoView({block:'center'});
@@ -7106,7 +7129,7 @@ function submitPedido(){
     }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
-    if(segVal('f-pagado')!=='SI' && _acu>0 && (parseFloat(document.getElementById('f-saldo').value)||0)<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+    if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
   }
 
   var isEdit=!!EDIT_ID;
@@ -7156,8 +7179,8 @@ function submitPedido(){
   var _compSinPago=false;
   var _pagSI  = segVal('f-pagado')==='SI';
   var _acuVal = _pagSI?0:_acu;
-  var _salVal = _pagSI?0:(parseFloat(document.getElementById('f-saldo').value)||0);
-  var _cobVal = _pagSI ? (parseFloat(document.getElementById('f-cobrado').value)||0) : 0;
+  var _salVal = _pagSI?0:montoForm('f-saldo');
+  var _cobVal = _pagSI ? montoForm('f-cobrado') : 0;
   /* ⚠️ EL COMPROBANTE VA PEGADO A UN PAGO — sin pago no tiene dónde guardarse.
      Antes, si la vendedora adjuntaba la imagen pero dejaba el pedido SIN pago (ni "a
      cuenta" ni "pagado"), la imagen se subía a Drive y el ID se tiraba en silencio: ella
@@ -7165,7 +7188,7 @@ function submitPedido(){
      se frena y se le dice qué hacer. El recargo por entrega ya cobrado también la usa. */
   (function(){
     if(!compsArr(FORM_COMPS).length) return;
-    var _env=parseFloat((document.getElementById('f-envio')||{}).value)||0;
+    var _env=montoForm('f-envio');
     var _envCob=_env>0 && segVal('f-envio-cob')==='SI';
     if(_pagSI || _acuVal>0 || _envCob) return;                 // hay dónde guardarla
     _compSinPago=true;
@@ -7254,8 +7277,8 @@ function submitPedido(){
          String(_mxPrev.banco||'')!==(segVal('f-metodo2')==='QR'?segVal('f-banco2'):'') ||
          compsArr(_mxPrev.comps!=null?_mxPrev.comps:_mxPrev.comp).join(',')!==compsArr(FORM_COMPS2).join(','))));
   var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
-                    ((Number(prev.acuenta)||0)===_acuVal &&
-                     (Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+                    (r2(Number(prev.acuenta)||0)===_acuVal &&     // r2: el formulario los muestra con 2 decimales (26/09)
+                     r2(Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
   if(_tieneHist && !_plataIgual &&
      !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
               contaPagos(prev).map(function(c){
@@ -7299,7 +7322,7 @@ function submitPedido(){
   var _cancelarEnvio=false;
   (function(){
     var el=document.getElementById('f-envio'); if(!el) return;
-    var monto=parseFloat(el.value)||0;
+    var monto=montoForm(el);
     var prevEnv = prev ? enviosDe(prev) : [];
     if(!(monto>0) && !prevEnv.length) return;                 // no hay recargo ni lo hubo
     var base=sinEnvios(sinMarcaReg(_metodoPago));
@@ -8182,13 +8205,14 @@ function editPedido(id){
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-maps').value=rec.maps||'';
   segSet('f-pagado',rec.pagado?'SI':'NO');
-  document.getElementById('f-saldo').value=rec.saldo||0;
-  document.getElementById('f-acuenta').value=rec.acuenta||0;
+  /* r2 (26/09): `montoForm` lee «1500.125» como miles; con dos decimales como mucho, nunca. */
+  document.getElementById('f-saldo').value=r2(rec.saldo);
+  document.getElementById('f-acuenta').value=r2(rec.acuenta);
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
   var _cb=document.getElementById('f-cobrado');
-  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? _a.monto : (Number(rec.cobradoBs)||''); }
+  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||''); }
   var _ce=document.getElementById('f-envio');
-  if(_ce){ var _e=envioTotal(rec); _ce.value=_e>0?_e:''; }
+  if(_ce){ var _e=r2(envioTotal(rec)); _ce.value=_e>0?_e:''; }
   /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
      método (§4eu): `pintarEnvioCobrado` lo fuerza a «NO» si el método no está a la vista, y
      acá todavía no lo está. Así, un flete cobrado ENTERO abría en «NO» y guardar el pedido sin
@@ -8224,7 +8248,7 @@ function editPedido(id){
   if(_mx){
     var _a2=anticipoDe(rec);
     if(_cb && _a2 && rec.pagado) _cb.value=r2((Number(_a2.monto)||0)+(Number(_mx.monto)||0));
-    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=_mx.monto;
+    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=r2(_mx.monto);
     segSet('f-metodo2', _mx.metodo||'');
   }
   pintarMixto();
@@ -11171,7 +11195,7 @@ function completarBorrador(id){
   /* El monto que Kommo trae es el de la venta, no un cobro: entra como saldo por cobrar
      y la vendedora lo corrige si ya cobró algo. */
   var monto=Number(rec.saldo)||0;
-  if(monto){ document.getElementById('f-saldo').value=String(monto); }
+  if(monto){ document.getElementById('f-saldo').value=String(r2(monto)); }   // r2: ver `montoForm` (26/09)
   pintarDocTipo(); renderCupoForm(); refreshDatalists();
   var ff=document.getElementById('f-fecha'); if(ff) try{ ff.focus(); }catch(e){}
   toast(_lleno.length
