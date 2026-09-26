@@ -88,7 +88,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc). **El 26/09 ~10:30 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a; falta su captura de la versión). **La `2026-09-26-a` (§4gd) espera en el repo** (mismo procedimiento; volver = a la versión que se anote ese día). Con la 23-b ya rige la protección de stock/arqueo entre dos equipos; la de días cerrados y carga, recién con la 26-a, y hasta implementarla el cuadro de 🔒 Cerrar día muestra la línea gris «hay una versión más nueva del script sin publicar»). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris). **Volver atrás de la 26-a** = ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; falta que el dueño pase el número) Y pegar la 23-b (`14dec98…`, 1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -646,7 +646,8 @@ implementado.
   marca y lo dice (`perdio.movido`).
 - **Días cerrados y tildes de la carga con sello**: cada guardado va con `REESCRITA_REV` (`reescritaConSello`) y
   `{juntar:true}`; ante `conflicto`, `reescritaJuntarYGuardar`. El `.gs` **2026-09-26-a** (`SISTEMA_JUNTA_OPCIONAL`)
-  compara el sello SOLO si llega `juntar`: un panel viejo no se traba. Con la 23-b sigue como antes. ⚠️ Una fila
+  compara el sello SOLO si llega `juntar`: un panel viejo no se traba. Con la 23-b sigue como antes. Página
+  publicada el 26/09 a las 11:27 (`e2e613a`) y servidor 26-a implementado ~11:35. ⚠️ Una fila
   nueva que se reescriba entera va por `REESCRITAS` y este camino. `tests/test_codex26_cierres.js` (el `.gs` real).
 - **Existencias**: la hora sale del nombre (también con guiones) o del pie (`existHoraDePie`). Hay UN solo depósito
   de fábrica (`STOCK.c`): hacer «log» a otro almacén pregunta antes.

@@ -7549,6 +7549,21 @@ bloques. Mientras tanto, Banzer se sube como «Otro», que conserva los dos cont
 - «150 200» se acepta como 150.200 (el espacio es separador de miles);
 - «Bs.- 1500» cuenta como negativo.
 
+**Publicación (26/09).** El dueño eligió «Codex ya, Banzer después»: esto sale solo, y Banzer va en otra
+publicación con otro F5.
+- **Página:** `main` = `e2e613a` (merge `--no-ff` de `ea81bb0`, código = `f70311e`), a las **11:27 de Bolivia**.
+  Pages 1522 en verde. `pedidos.html`, `productos-mes.js` y el `.gs` idénticos a la rama.
+- **Servidor `2026-09-26-a`:** implementado por el dueño alrededor de las **11:35**, con el procedimiento de siempre
+  (enlace raw fijo a `ea81bb0…`, 1965 líneas).
+  - `probarAntesDeImplementar` a las 11:29, todo ✅: código entero (18 funciones clave), 1003 filas, disparadores
+    instalados, repaso de Kommo de hace 1 minuto sin errores.
+  - Stock en **22.208 de 50.000 letras (44 %)**; a las 10:15 eran 20.932. Arqueo en 0.
+  - El cuadro de 🔒 Cerrar día dice «El candado está en el servidor (versión 2026-09-26-a)», sin la línea gris.
+- **Volver atrás:** ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; el dueño no pasó el
+  número todavía) Y pegar la 23-b de `14dec98…` (1956 líneas).
+- **Desde ahora rige** la protección entre dos equipos del stock y el arqueo (23-b) y también la de los días
+  cerrados y las tildes de la carga (26-a).
+
 ## 4gc. 26/09: la tercera vuelta — lo que rompieron los arreglos, y los pendientes sin decisión del dueño (2026-09-26)
 
 Pedido del dueño (26/09, 07:45, con §4gb terminado y sin publicar): *«Quedan pendientes subidas las correcciones
