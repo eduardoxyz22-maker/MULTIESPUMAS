@@ -17,7 +17,9 @@
       Excel no se sabía qué era cada columna) y sin el «🏭 Recogido de fábrica» ni la devolución
       programada — copiaba el «listo en fábrica», que desde §4eb es opcional y casi siempre vacío.
 
-   Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia: las fechas no se pudren.
+   5. (control, sin arreglo) el aviso «🏭 Recoger de fábrica» con el reloj en un sábado.
+
+   Reloj clavado en el miércoles 23/09/2026 10:00 de Bolivia (§5: el sábado 26): las fechas no se pudren.
    Red cortada, servidor simulado, datos sintéticos. Se corre:  node tests/test_rev2_atc.js
    Dientes contra el panel viejo:  PEDIDOS=/ruta/al/viejo.html node tests/test_rev2_atc.js */
 const { chromium } = require('/opt/node22/lib/node_modules/playwright');
@@ -280,6 +282,27 @@ const BASE = `
         J(enc.slice(0,13))===J(['N° ATC','Entró','Cliente','Vendedora','Producto','Motivo','Detalle','Estado','Recojo','Listo en fábrica','Al cliente','Días','Qué se hizo']) && dato[0]==='ATC 09-02', J(enc.slice(0,13)));
     chk('⚠️ trae el «🏭 Recogido de fábrica» que muestra la matriz (antes no estaba)', col('Recogido de fábrica')==='23/09/2026', col('Recogido de fábrica'));
     chk('⚠️ …y la devolución programada con su turno', col('Devolución programada')==='28/09/2026 PM', col('Devolución programada'));
+    await page.close();
+  }
+
+  // ═══ 5. Control: el aviso «🏭 Recoger de fábrica» un SÁBADO (2 días hábiles, el sábado cuenta) ═══
+  console.log('\n── 5. Control: «🏭 Recoger de fábrica» con el reloj en un sábado (§4eb) ──');
+  {
+    const page = await nueva('2026-09-26T09:00:00-04:00');
+    const r = await page.evaluate(async (base) => {
+      eval(base);
+      STATE=[]; var out={};
+      ['2026-09-28','2026-09-29','2026-09-30'].forEach(function(f, i){
+        var id='s'+i; _atcConDev(id, f, 'AM', {com:true});
+        var p=findById(id); out[f]={desde:atcRecogerFabDesde(p), hoy:atcRecogerFabPend(p, todayStr()), estado:atcEstado(p)};
+      });
+      out.bloque=recogerFabHtml(todayStr()).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+      return out;
+    }, BASE);
+    chk('lunes 28 → desde el viernes 25 (sáb + vie): hoy sábado ya suena', r['2026-09-28'].desde==='2026-09-25' && r['2026-09-28'].hoy===true && r['2026-09-28'].estado==='recogerfab', J(r['2026-09-28']));
+    chk('martes 29 → desde el sábado 26 (el domingo no cuenta): suena hoy', r['2026-09-29'].desde==='2026-09-26' && r['2026-09-29'].hoy===true, J(r['2026-09-29']));
+    chk('miércoles 30 → desde el lunes 28: hoy todavía no', r['2026-09-30'].desde==='2026-09-28' && r['2026-09-30'].hoy===false && r['2026-09-30'].estado==='programada', J(r['2026-09-30']));
+    chk('el bloque de logística lista las dos que suenan, con su día de entrega', /Recoger de fábrica · 2/.test(r.bloque) && /28\/09/.test(r.bloque) && /29\/09/.test(r.bloque) && !/30\/09/.test(r.bloque), r.bloque.slice(0,200));
     await page.close();
   }
 
