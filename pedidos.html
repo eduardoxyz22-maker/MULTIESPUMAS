@@ -11968,6 +11968,10 @@ function choQuitarCobro(id, idx){
 }
 function choEntregado(id){
   var p=findById(id); if(!p) return;
+  /* (26/09) Destildar PREGUNTA. Con un doble toque la tarjeta se repintaba entre los dos y el
+     segundo caía en «✓ Entregado»: la entrega volvía a «pendiente» en la planilla sin que el
+     chofer lo notara. Marcar sigue siendo un toque. */
+  if(p.entregado && !confirm('¿Marcar la entrega de '+(p.cliente||'este pedido')+' como NO entregada?\n\nSi ya la dejaste, tocá Cancelar.')) return;
   p.entregado=!p.entregado; atcAlMarcarEntregado(p);
   persistPedido(p); renderChofer();
   toast(p.entregado?'Entregado ✓':'Marcado como NO entregado','ok');
