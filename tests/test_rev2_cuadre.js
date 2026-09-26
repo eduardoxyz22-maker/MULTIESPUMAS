@@ -14,7 +14,8 @@
      5. «N de M formas anotadas» cuenta también el arqueo sin pagos, y el texto y el Excel dicen
         cuando la diferencia es de ALGUNAS formas (no «✅ El cuadre cierra» a secas).
      6. En un celular de 360 px (y de 320) la pantalla del cuadre no se corre de costado.
-     7. El refresco automático no se lleva el arqueo que se está tipeando.
+     7. El refresco automático no le saca el foco al arqueo que se está tipeando (ni tira una
+        excepción a mitad del repintado).
      8. Invariantes con el reloj clavado el último día del año y el 1° de enero: la suma de los
         días da el mes, ningún pago aparece dos veces ni falta, pantalla = texto = Excel, y ATC,
         RPT y Eduardo quedan afuera.
@@ -300,7 +301,7 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
       return { t1:t1, t2:t2, txt:txt, dif:dif?String(dif[0].v!=null?dif[0].v:dif[0]):'' };
     });
     chk('5 · ⚠️ con el efectivo sin pagos: «2 de 3 formas anotadas» (no «2 de 2»)', /2 de 3 formas anotadas/.test(r.t1), (r.t1.match(/\d+ de \d+ formas?[^·]*/)||[''])[0]);
-    chk('5 · solo el QR anotado: la tarjeta dice «1 de 2»', /1 de 2 formas anotadas/.test(r.t2), (r.t2.match(/\d+ de \d+ formas?[^·]*/)||[''])[0]);
+    chk('5 · solo el QR anotado: la tarjeta dice «1 de 2»', /1 de 2 formas anotada\b/.test(r.t2), (r.t2.match(/\d+ de \d+ formas?[^·]*/)||[''])[0]);
     chk('5 · ⚠️ …y el texto no dice «El cuadre cierra» a secas: dice que es 1 de 2 formas', /El cuadre cierra.*1 de 2 formas/.test(r.txt), (r.txt.match(/.*cierra.*/)||[''])[0]);
     chk('5 · …el Excel también', /1 de 2 formas/.test(r.dif), r.dif);
     r = await page.evaluate(() => {
@@ -336,7 +337,8 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   // ══ 7 · EL REFRESCO AUTOMÁTICO NO SE LLEVA EL ARQUEO QUE SE ESTÁ TIPEANDO ════════════════
   /* La contadora tiene el extracto en papel y va tipeando; el número se guarda al salir del
      campo. Si justo pasan los 2 minutos del refresco, `renderCuadre` rehacía la tabla con el
-     campo adentro: lo tipeado desaparecía sin guardarse y el foco se perdía. */
+     campo adentro: el foco se perdía (lo que seguía tipeando no iba a ningún lado) y el
+     repintado se cortaba a la mitad con una excepción. */
   {
     const page = await nueva('2026-09-16T15:00:00Z');
     await page.evaluate(async () => {
