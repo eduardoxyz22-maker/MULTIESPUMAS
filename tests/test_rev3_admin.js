@@ -14,6 +14,8 @@
       se mandan igual que siempre.
    4. 🌅🌆 Los chips AM/PM de Administración no contaban los pedidos SIN turno; el cupo los cuenta
       como AM (`cuposUsadosTurno`, y el portero del `.gs`).
+   5. 🏪 «Todos» de la Lista de carga y de la Hoja de ruta mostraba las ventas de tienda (en
+      «(sin fecha)» y como «⚠️ SIN CHOFER»): la venta de tienda no sube al camión.
 
    Reloj clavado (miércoles 23/09/2026, 10:00 de Bolivia). Red cortada, servidor simulado, datos
    sintéticos. Se corre:  node tests/test_rev3_admin.js
@@ -319,6 +321,34 @@ const BASE = `
     chk('  y el 🌆 PM igual que el cupo', r.dia.pm===r.dia.cupoPM && r.dia.pm===1, J(r.dia));
     chk('🔴 tocar el chip AM muestra esos mismos 4', r.dia.filasAM===4, r.dia.filasAM);
     chk('  en «Todo», la venta de tienda (sin fecha: no ocupa cupo) no entra en AM', r.todo.am===4 && r.todo.pm===1, J(r.todo));
+    await page.close();
+  }
+
+  // ═══ 5. «Todos» de carga y ruta sin ventas de tienda ════════════════════════════════
+  console.log('\n── 5. 🏪 «Todos» de la carga y de la ruta no muestran ventas de tienda ──');
+  {
+    const page = await nueva(MIERCOLES);
+    const r = await page.evaluate(async () => {
+      STATE=[
+        _P({id:'v1', cliente:'CLIENTE CAMION', productos:[{desc:'SOFT',medida:'140x190',cant:1}]}),
+        _P({id:'t1', fecha:'', turno:'', zona:'TIENDA', direccion:'SALIÓ DE TIENDA · Central', cliente:'CLIENTE TIENDA', entregado:true, chofer:'', vehiculo:'',
+            pagado:true, metodoPago:'Efectivo 900 @2026-09-22 #77', productos:[{desc:'MEMORY',medida:'160x200',cant:1}]}),
+        _P({id:'t2', fecha:'', turno:'', zona:'Tienda', direccion:'Salio de tienda', cliente:'CLIENTE TIENDA VIEJA', entregado:true, chofer:'', vehiculo:''})
+      ];
+      saveMirror();
+      var txt=function(id){ return String((document.getElementById(id)||{}).textContent||'').replace(/\s+/g,' '); };
+      abrirCarga(); setCargaDia('todos');
+      var carga={ body:txt('carga-body'), info:txt('carga-info') };
+      closeCarga();
+      abrirRuta(); setRutaDia('todos');
+      var ruta={ body:txt('ruta-body'), info:txt('ruta-info') };
+      closeRuta();
+      return { carga:carga, ruta:ruta };
+    });
+    chk('🔴 la Lista de carga en «Todos» ya no tiene el bloque «(sin fecha)» de las ventas de tienda', !/sin fecha/.test(r.carga.body) && !/TIENDA/.test(r.carga.body), r.carga.body.slice(0,200));
+    chk('  …y cuenta solo lo que sube al camión', /^1 pedidos/.test(r.carga.info) && /CLIENTE CAMION/.test(r.carga.body), r.carga.info);
+    chk('🔴 la Hoja de ruta en «Todos» no las pone como «SIN CHOFER (asignar)»', !/SIN CHOFER/.test(r.ruta.body) && !/CLIENTE TIENDA/.test(r.ruta.body), r.ruta.body.slice(0,200));
+    chk('  …y cuenta solo lo que sube al camión', /^1 pedidos/.test(r.ruta.info) && /CLIENTE CAMION/.test(r.ruta.body), r.ruta.info);
     await page.close();
   }
 

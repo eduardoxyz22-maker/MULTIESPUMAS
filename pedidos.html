@@ -10432,7 +10432,8 @@ function reproConfirmar(){
    Lista de carga por camión (picking) — qué productos suben a cada vehículo
    ========================================================================== */
 var CARGA_DIA='hoy';   // arranca en HOY: es la carga/salida que se controla en el día
-function cargaLista(){ return STATE.filter(function(p){ if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
+/* (26/09) La venta de tienda no sube al camión: en «Todos» salía en un bloque «(sin fecha)». */
+function cargaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p)) return false; if(CARGA_DIA==='hoy') return p.fecha===todayStr(); if(CARGA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirCarga(){ document.getElementById('carga-overlay').style.display='flex'; renderCarga(); }
 /* Si la lista de carga está abierta, refrescarla al cambiar algo desde la ficha del pedido */
 function cargaAbierta(){ var ov=document.getElementById('carga-overlay'); return !!(ov && ov.style.display==='flex'); }
@@ -19198,7 +19199,8 @@ function downloadBlob(bytes,filename,mime){
   setTimeout(function(){URL.revokeObjectURL(url);},1500);
 }
 var RUTA_DIA='manana', RUTA_ORDER=[], RUTA_BYC={};
-function rutaLista(){ return STATE.filter(function(p){ if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
+/* (26/09) La venta de tienda no sube al camión: en «Todos» salía como «⚠️ SIN CHOFER (asignar)». */
+function rutaLista(){ return STATE.filter(function(p){ if(esVentaTienda(p)) return false; if(RUTA_DIA==='hoy') return p.fecha===todayStr(); if(RUTA_DIA==='manana') return p.fecha===proximoDiaEntrega(); return true; }); }
 function abrirRuta(){ document.getElementById('ruta-overlay').style.display='flex'; renderRuta(); }
 function closeRuta(){ var ov=document.getElementById('ruta-overlay'); if(ov) ov.style.display='none'; }
 function setRutaDia(d){ RUTA_DIA=d; ['hoy','manana','todos'].forEach(function(x){ var b=document.getElementById('ruta-dia-'+x); if(b){ var on=(x===d); b.style.background=on?'#fff':'transparent'; b.style.color=on?'#00877f':'#fff'; } }); renderRuta(); }
