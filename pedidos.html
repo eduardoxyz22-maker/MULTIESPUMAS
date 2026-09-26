@@ -5589,6 +5589,7 @@ function ctaPagoRecordar(){
     if(String(m.value)!==String(m.getAttribute('data-def')||'')) v.monto=m.value;
     CTA_PAGO_V=v;
   }
+  ctaEditRecordar();                 // 26/09: y lo tipeado en «✏️ Corregir este pago», si está abierto (✅, 📎, ✕… también repintan)
 }
 /* Qué se está por anotar en la ficha: el pago de la venta o el recargo por entrega. */
 var CTA_TIPO='pago';
@@ -5751,8 +5752,12 @@ function ctaEditarPago(id, i){
   CTA_EDIT_R=limpiaRecibio(c.recibio);
   showContaModal(id);
 }
-function ctaEditMetodo(id,m){ CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
-function ctaEditBanco(id,b){ CTA_EDIT_B=b; showContaModal(id); }
+/* ⚠️ ctaEditRecordar() ANTES de repintar (26/09): la fecha, el monto y el recibo van ARRIBA del
+   método, así que se llenan primero; tocar «QR» o el banco repintaba la ficha y los volvía a lo
+   viejo, y «💾 Guardar» corregía solo el método — el pago del sábado seguía con la fecha de antes.
+   Lo mismo que §4fy arregló en el bloque de «Registrar pago» y ctaEditRecibio ya hacía. */
+function ctaEditMetodo(id,m){ ctaEditRecordar(); CTA_EDIT_M=m; if(m!=='QR') CTA_EDIT_B=''; if(m!=='Efectivo') CTA_EDIT_R=''; showContaModal(id); }
+function ctaEditBanco(id,b){ ctaEditRecordar(); CTA_EDIT_B=b; showContaModal(id); }
 /* Los campos del editor. Cuando el gato del comprobante tapa la ficha los inputs ya no
    existen, así que se cae a lo que quedó recordado en CTA_EDIT_V. */
 function ctaEdVal(id, k){
