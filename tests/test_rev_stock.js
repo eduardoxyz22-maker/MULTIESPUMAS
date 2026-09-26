@@ -181,8 +181,12 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
     STOCK.g={'IM - PRODUCTOTERMINADO':{f:todayStr(),u:{},t:1,rs:{}}}; STOCK.g['IM - PRODUCTOTERMINADO'].u[K]=5;
     STOCK.al={'IM - PRODUCTOTERMINADO':'otro'};
     var atras2=(function(){ var d=new Date(); d.setDate(d.getDate()-2); return isoLocal(d); })();
+    /* (26/09) d2 decía «📥 Banzer». Desde que Banzer es depósito de salida esa marca se lee «✔ hay en
+       Banzer» y, como todo ✔ con la fecha pasada, se da por salida (tests/test_banzer_salida.js §2 y §8).
+       Lo que cuida esta sección es que el detalle reconozca «Recoger de <cualquier almacén>», así que d2
+       pasa a otro almacén de ir a buscar. */
     STATE=[_P({id:'d1', cliente:'Ana', fecha:atras2, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:2,chk:'im'}]}),
-           _P({id:'d2', cliente:'Beto', fecha:atras2, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,chk:'im',chkDe:'Banzer'}]}),
+           _P({id:'d2', cliente:'Beto', fecha:atras2, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1,chk:'im',chkDe:'Deposito Norte'}]}),
            _P({id:'d3', cliente:'Caro', fecha:atras2, entregado:true, productos:[{desc:'TITANIO ICE',medida:'160x190',codigo:'CH1201',cant:1}]})];
     stockOlvidarIndice();
     var o=stockData().lista.filter(function(x){ return x.k===K; })[0];
