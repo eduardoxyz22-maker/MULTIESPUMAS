@@ -15831,13 +15831,17 @@ function abrirStockConteo(){
      los 15 que mueven sí. Los ya contados vienen con su número puesto. */
   var lista=stockConMovimiento(d);
   var filas=lista.map(function(o,i){
-    var v=(STOCK.c.u||{})[o.k];
+    /* ⚠️ (26/09) El número puesto es lo que el panel calcula que hay HOY, no el del último corte:
+       con el Excel de hace 3 días (TITANIO 10, salieron 6 → hay 4), dejar el renglón sin tocar
+       guardaba 10 con fecha de hoy y el panel prometía 6 colchones que no están. */
+    var v=(o.deposito!=null) ? Math.max(0, o.deposito) : null;
     return '<tr><td><b>'+esc(stockNombre(o))+'</b>'+(o.porDia>0?('<br><span style="color:var(--muted);font-size:.92em">se venden '+stockNum(o.porDia)+' por día</span>'):'')+'</td>'+
-      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
+      '<td style="width:120px"><input type="number" min="0" step="1" inputmode="numeric" id="stk-'+i+'" data-k="'+esc(o.k)+'" data-def="'+(v!=null?esc(String(v)):'')+'" value="'+(v!=null?esc(String(v)):'')+'" placeholder="—" style="width:100%"></td></tr>';
   }).join('');
   var html='<div class="modal-h" style="background:#7c2d12"><h3>📋 Conté el depósito</h3><button class="modal-x" onclick="closeModal()">✕</button></div>'+
     '<div class="modal-b">'+
       '<p style="font-size:.83rem;color:var(--muted);margin-bottom:10px">Anotá cuántas unidades hay <b>hoy</b> de cada uno. Lo que dejes vacío queda sin contar y no se avisa por ese producto. '+
+      'Los que ya tienen número vienen con lo que el panel calcula que hay hoy: si no los contaste, dejalos así. '+
       'Desde este conteo, el panel descuenta solo lo que se va entregando y suma lo que llega de fábrica.</p>'+
       (lista.length?('<div style="max-height:52vh;overflow:auto;border:1px solid var(--gray-md);border-radius:8px"><table class="roho-tabla stk-tabla" style="min-width:0"><tbody>'+filas+'</tbody></table></div>')
                    :'<div style="color:var(--muted);padding:14px">Todavía no hay productos con movimiento para contar.</div>')+
@@ -15848,14 +15852,27 @@ function abrirStockConteo(){
   openModal(html, true);
 }
 function guardarStockConteo(){
-  var u={}, n=0;
+  var u={}, n=0, hoy=todayStr(), vistos={};
+  /* (26/09) Lo que NO se tocó no se mueve. El conteo nuevo es de hoy y descuenta las entregas de
+     hoy (§4cn), así que el número del panel se guarda con esas entregas sumadas: queda igual. */
+  var quieto=function(k, hay){ return Math.max(0, Number(hay)||0) + stockSalidas(k, hoy, ''); };
   [].slice.call(document.querySelectorAll('#modal-box input[id^="stk-"]')).forEach(function(el){
+    var k=el.getAttribute('data-k'); vistos[k]=1;
     var t=String(el.value||'').trim(); if(t==='') return;
-    var v=Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
-    u[el.getAttribute('data-k')]=v; n++;
+    var def=String(el.getAttribute('data-def')||'');
+    var v=(def!=='' && Math.abs(Number(t)-Number(def))<1e-9) ? quieto(k, def) : Math.max(0, Math.round(Number(t))); if(!isFinite(v)) return;
+    u[k]=v; n++;
   });
   if(!n){ toast('No anotaste ninguna cantidad.','err'); return; }
-  STOCK.c={ f:todayStr(), u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* (26/09) Lo contado antes que no entró en la lista (muestra 60) seguía siendo un dato: se
+     perdía entero y quedaba «sin contar». Pasa igual que lo que no se tocó. */
+  var viejo=STOCK.c||{}, dep={};
+  stockData().lista.forEach(function(o){ dep[o.k]=o.deposito; });
+  Object.keys(viejo.u||{}).forEach(function(k){ if(!vistos[k] && u[k]==null && dep[k]!=null) u[k]=quieto(k, dep[k]); });
+  STOCK.c={ f:hoy, u:u, t:Date.now() };   // §4fz-b: `t` = lo anotado antes de esta hora ya está contado
+  /* (26/09) Los códigos del último Excel dicen QUÉ es cada renglón (§4cy): sin ellos, al releer la
+     fila `stockMigrar` volvía a sumar el CH1297 (10) al SOMIER NEGRO (2) → «hay 12». */
+  if(viejo.cod && typeof viejo.cod==='object' && Object.keys(viejo.cod).length) STOCK.c.cod=viejo.cod;
   STOCK.e=[];                       // el conteo de hoy ya incluye todo lo que llegó antes (lo pedido y no llegado sigue en camino)
   guardarStock(); closeModal(); renderStock(); renderAdmin();
   toast('✅ Conteo guardado: '+n+' producto'+(n===1?'':'s')+'. Desde acá el panel lleva la cuenta solo.','ok',6000);
