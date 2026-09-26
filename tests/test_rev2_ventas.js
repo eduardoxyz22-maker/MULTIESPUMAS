@@ -251,6 +251,29 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
   });
   chk('2d · control: en una venta YA PAGADA el bloque sigue siendo el del flete, sin selector', r.sel===0 && /recargo/i.test(r.boton) && !r.aviso, J(r));
 
+  /* ══ 3 · 📦 PRODUCTOS DEL MES: UNA «PAGADA SIN MONTO» NO ES UNA VENTA DE Bs 0 ═══════════════════
+     La venta marcada PAGADA sin anotar cuánto (§4fg: su monto vivía en `cobradoBs`, que no viaja en
+     la planilla) entraba al reporte con total CONOCIDO de Bs 0: «Importe total vendido» salía
+     completo, sin el «Incompleto» de §4fw, y la conciliación la mostraba como un «ajuste sin
+     distribuir» de −Bs 1.500 — un descuento que nadie hizo. */
+  r = await page.evaluate(async () => {
+    STATE=[ P({ id:'Q1', nota:'301', oc:'09-301', cliente:'CON MONTO', acuenta:1000, saldo:500, metodoPago:'QR BISA %Q1' }),
+            P({ id:'Q2', nota:'302', oc:'09-302', cliente:'PAGADA SIN MONTO', pagado:true, metodoPago:'Efectivo %Q2' }) ];
+    releer(); aConta('ventas'); await new Promise(r=>setTimeout(r,150));
+    segSet('cta-mode','mes'); setContaModo('mes');
+    document.getElementById('cta-mes').value=hoy.slice(0,7);
+    await abrirProductosMes();
+    var R=PM_REPORTE||{}, aj=(R.ajustes||[]).filter(function(a){ return a.nota==='302'; })[0]||{};
+    var txt=(document.getElementById('pm-body')||{}).textContent||'';
+    pmCerrar();
+    return { total:R.total, conocido:R.totalConocido, aj:{total:aj.total, dif:aj.diferencia, motivo:aj.motivo},
+             incompleto:/Incompleto/.test(txt), aviso:(R.avisos||[]).filter(function(a){ return /sin monto/.test(a); })[0]||'' };
+  });
+  chk('3 · ⚠️ con una «PAGADA sin monto» el importe del mes sale «Incompleto» (no Bs 1.500 completo)',
+      r.total===null && r.conocido===1500 && r.incompleto===true && /1 pedidos sin monto/.test(r.aviso), J(r));
+  chk('3 · …y la conciliación la pone como «Total de venta sin dato», no como un ajuste de −Bs 1.500',
+      r.aj.total===null && r.aj.dif===null && /sin dato/.test(r.aj.motivo||''), J(r.aj));
+
   chk('sin errores JS', errores.length===0, J(errores.slice(0,3)));
   console.log('\n'+PASS+' bien · '+FAIL+' mal');
   await browser.close();

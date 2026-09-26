@@ -7,6 +7,8 @@ function pmNumero(v){return v!==null&&v!==undefined&&String(v).trim()!==''&&isFi
 function pmFecha(p,base){return base==='entrega'?(fechaSalida(p)||contaFecha(p)):contaFecha(p);}
 function pmMesTexto(m){return new Date(m+'-15T12:00:00').toLocaleDateString('es-BO',{month:'long',year:'numeric'});}
 function pmMonto(n){return n==null?'Sin dato':fmtBs(n);}
+/* Marcada PAGADA sin que nadie anotara cuánto: su monto vivía en `cobradoBs`, que no viaja en la planilla. */
+function pmPagadaSinMonto(p){return !!(p&&p.pagado)&&!(ventaTotal(p)>0.01);}
 function pmCantidad(n){return n==null?'Sin dato':Number(n).toLocaleString('es-BO',{maximumFractionDigits:6});}
 function pmCalcular(lista,cfg,pendientes){
   var vistos=Object.create(null), repetidos=0;
@@ -20,7 +22,8 @@ function pmCalcular(lista,cfg,pendientes){
   var unidades=0,sinCantidad=0,sinPrecio=0,sinProductos=0,totalPedidos=0,sinTotal=0,conocido=0;
   pedidos.forEach(function(p,pi){
     var id=String(p.id||('sin-id-'+pi)), nota=p.nota||p.oc||id;
-    var total=sinMontoAnotado(p)?null:ventaTotal(p);
+    // 26/09: la «PAGADA sin monto» (§4fg) tampoco tiene total: valía Bs 0 conocido y salía como un «ajuste» de −precio.
+    var total=(sinMontoAnotado(p)||pmPagadaSinMonto(p))?null:ventaTotal(p);
     if(total==null)sinTotal++;else totalPedidos=r2(totalPedidos+total);
     var prods=Array.isArray(p.productos)?p.productos:[], suma=0, incompleto=!prods.length;
     if(!prods.length)sinProductos++;
