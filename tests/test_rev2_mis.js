@@ -88,7 +88,9 @@ const RELOJ = '2026-09-16T10:00:00-04:00';           // miércoles, 10 de la ma�
   }));
   chk('⚠️ la venta sin monto anotado NO sale «💰 PAGADO» en el mensaje al grupo', !/💰 PAGADO/.test(r.sinMonto), r.sinMonto);
   chk('…dice que falta el monto y que pregunten, como la hoja de ruta', /SIN MONTO ANOTADO/.test(r.sinMonto) && /SIN MONTO ANOTADO/.test(r.ruta), r.sinMonto);
-  chk('⚠️ una ATC no sale «PAGADO»: no se cobra', !/💰 PAGADO/.test(r.atc) && /NO SE COBRA/.test(r.atc), r.atc);
+  /* 26/09, al juntar: para una ATC el mensaje lo arma `pedidoText` con «✅ No se cobra — es una ATC» (arreglo
+     del agente de ATC); `plataLineaWa` dice «NO SE COBRA» para la RPT. Las dos formas valen. */
+  chk('⚠️ una ATC no sale «PAGADO»: no se cobra', !/💰 PAGADO/.test(r.atc) && /no se cobra/i.test(r.atc), r.atc);
   chk('la que debe sigue con «POR COBRAR»', /💰 POR COBRAR: Bs 1\.500,00/.test(r.debe), r.debe);
   chk('la pagada sigue «PAGADO»', /💰 PAGADO/.test(r.suelto), r.suelto);
   r = await page.evaluate(() => {
