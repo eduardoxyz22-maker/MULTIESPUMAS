@@ -1,6 +1,6 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 26/09, 10:30 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
+> **ACTUALIZACIÓN 26/09, 10:15 — EL ESTADO COMPLETO ESTÁ EN §13.** Todo lo arreglado ya está PUBLICADO: `main` =
 > `a8e3c5e`, 26/09 a las 10:11, con la revisión por pestaña y la tercera vuelta. La sección tiene lo que decide el
 > dueño, lo del servidor, lo que queda por arreglar y analizar, y qué le pido a Codex. §13 reemplaza las listas
 > de §11 y §12.
@@ -617,7 +617,7 @@ El detalle está en `BITACORA_CLAUDE.md` §4gb.
 5. Recepción `nr` en `stockNormalizarRecepciones` / `stockLeerDePanelViejo`.
 6. `mergePending` con los retiros en la cola.
 
-## 13 · Estado al 26/09, 10:30 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
+## 13 · Estado al 26/09, 10:15 de Bolivia: lo arreglado, lo que falta y lo que hay que analizar
 
 Esta sección junta TODO lo que está abierto y reemplaza las listas de §11 y §12. La actualicé después de publicar:
 la tercera vuelta terminó (13.3) y todo lo de 13.2 y 13.3 ya está en producción.
