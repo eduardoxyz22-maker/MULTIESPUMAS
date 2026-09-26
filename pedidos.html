@@ -12088,16 +12088,21 @@ function misCardHtml(p, n, todos){
     var t=esc(x.desc)+(x.medida?(' · '+esc(x.medida)):'')+' <b>× '+esc(x.cant)+'</b>';
     if(x.chk==='no')       t='<span style="color:var(--red);font-weight:700">'+t+' — NO HAY</span>';
     else if(esRecoger(x))  t=t+' <span style="color:#a67c00;font-weight:700">📥 recoger de '+esc(recogerCorto(x))+'</span>';
-    else if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
+    // (26/09) `if` y no `else if`, como la ficha: un «NO HAY» ya pedido a fábrica no decía el 🏭
+    if(enProduccion(x)) t=t+' <span style="color:#a67c00;font-weight:700">🏭 en producción'+esc(prodLugarTxt(x))+'</span>';
     return t;
   }).join('<br>');
-  var falta=Number(p.saldo)||0, cob=cobrosVisibles(p);
+  var falta=Number(p.saldo)||0, cob=cobrosVisibles(p), _res=(!cob.length && p.pagado) ? cobrosResumen(p) : '';
+  /* (26/09) Lo mismo que dice la ficha (`showMisModal`): `p.metodoPago` crudo mostraba el historial
+     con los IDs de las imágenes («PAGADO · Efectivo %1AbC…», «~QR BISA 2000 @… #939 %…»), y la venta
+     SIN MONTO ANOTADO y las ATC/RPT decían «Sin saldo», que se lee como «no hay nada que cobrar». */
   var cobro = cob.length
     ? ((falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">falta · </span>')
                    : '<span class="badge b-green">PAGADO</span> ')+cobrosResumen(p)+excesoBadge(p))
-    : (p.pagado ? ('<span class="badge b-green">PAGADO'+(p.metodoPago?(' · '+esc(p.metodoPago)):'')+'</span>')
+    : (p.pagado ? ('<span class="badge b-green">PAGADO'+(_res?(' · '+_res):'')+'</span>')
+      : noSeCobra(p) ? '<span class="badge b-gray">No se cobra</span>'
       : (falta>0.01 ? ('<b style="color:var(--red);font-size:1.05rem">'+fmtBs(falta)+'</b> <span style="color:var(--muted);font-size:.8rem">por cobrar</span>')
-                    : '<span class="badge b-gray">Sin saldo</span>'));
+                    : sinMontoAnotado(p) ? badgeSinMonto() : '<span class="badge b-gray">Sin saldo</span>'));
   return '<div class="cho-card'+(p.entregado?' hecho':'')+' '+docCls(p)+'" style="cursor:pointer" onclick="showMisModal(\''+p.id+'\')">'+
     '<div class="cho-top">'+
       '<div class="cho-n"'+(p.entregado?' style="background:var(--gray)"':'')+'>'+n+'</div>'+
