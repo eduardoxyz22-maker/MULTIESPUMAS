@@ -7445,6 +7445,31 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gh. 26-27/09: las dos decisiones de plata del dueño en el formulario (2026-09-27)
+
+El dueño decidió el 26/09 a las 20:37, con las opciones a la vista:
+- corregir el precio de una venta con pagos registrados CONSERVA los pagos;
+- «SÍ, pagado» al editar deja el adelanto en su día y anota el resto HOY como un cobro nuevo.
+
+Un agente lo hizo: `7e5c5b8`, en la rama `8194622`. Las reglas están en CLAUDE.md, §4gg «Decidido por el dueño… hecho en
+§4gh». Además arregló cinco huecos que dejaban esos cambios:
+- «SÍ, pagado» proponía 3.200 en una venta de 3.000 con adelanto mixto;
+- «Usar como total» no descontaba los cobros registrados;
+- no se podía guardar con saldo 0 teniendo cobros aparte;
+- la imagen de un pago ya registrado frenaba el guardado de una venta sin adelanto (no se le podía corregir ni la
+  dirección);
+- SÍ y después NO dejaba «A cuenta» y «Saldo» en 0 (era uno de los BAJA de §4gg).
+
+**Lo que van a notar las vendedoras.** Con «SÍ, pagado» sobre una venta con adelanto, el formulario pide la imagen del
+pago del resto (QR o tarjeta), igual que Contabilidad. El cobro nuevo lleva de recibo el N° de nota de la venta.
+
+**Queda.** En una venta YA pagada, cambiar desde el formulario el reparto del pago mixto sigue rehaciendo el pago con
+fecha de hoy. Pregunta antes, como siempre: la decisión del dueño no cubre este caso.
+
+**Pruebas.**
+- `tests/test_rev6_plata_form.js`: 52 comprobaciones, 42 rojas contra `e1e207b` (las otras 10 son controles).
+- `test_rev5_pedidos` 8a exigía un solo renglón de hoy; se cambió a conciencia.
+
 ## 4gg. 26/09, noche: revisión de Pedidos a fondo (2026-09-26)
 
 El dueño, molesto: *«¿No que no había errores? Llevás 3 días con agentes, decís que no hay más errores y aparecen más.
@@ -7468,6 +7493,9 @@ aparece queda con su prueba vigilando. Un agente revisó el uso diario de Pedido
    guardaba el monto, y aparecía un falso «¿borrar el historial?».
 8. **ALTA. «SÍ, pagado» proponía el adelanto como total**: la venta de Bs 3.000 quedaba pagada por 500.
 
+**Publicado el 26/09 a las 20:40 de Bolivia**: `main` = `caef927`, Pages 1528 en verde, sin tocar el servidor.
+Batería sobre `e1e207b`: 102 suites, 3.848 bien · 0 mal.
+
 **Decisiones del dueño (20:37).** Salen en la publicación siguiente, con sus pruebas:
 - corregir el PRECIO de una venta con pagos registrados CONSERVA los pagos;
 - «SÍ, pagado» al editar deja el adelanto en su día y anota el resto hoy como cobro nuevo.
@@ -7477,7 +7505,7 @@ aparece queda con su prueba vigilando. Un agente revisó el uso diario de Pedido
 - En Mis pedidos, «Hoy · pedidos cargados» cuenta las entregas de hoy, y «Este mes» no cuenta las ventas de tienda.
 - Editar un pedido sin turno lo guarda como AM.
 - Al activar el pago mixto pueden aparecer datos de una edición anterior.
-- Tocar SÍ y después NO deja «A cuenta» y «Saldo» en 0.
+- ~~Tocar SÍ y después NO deja «A cuenta» y «Saldo» en 0~~ (arreglado en §4gh).
 
 ## 4gf. 26/09, noche: revisión del stock y los almacenes después de Banzer (2026-09-26)
 

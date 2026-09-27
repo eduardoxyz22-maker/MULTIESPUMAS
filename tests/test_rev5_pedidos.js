@@ -320,9 +320,13 @@ function INIT(){
     await A.evaluate(async () => { showView('mis'); await esperar(150); editPedido('h1'); await esperar(250); });
     let visto = await tocarSi();
     chk('⚠️ al tocar «SÍ, pagado» el monto cobrado propone el TOTAL (3.000), no el adelanto (500)', visto==='3000', visto);
-    await A.evaluate(async () => { submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){} });
+    /* (27/09, decisión del dueño del 26/09 20:37) Lo que faltaba entra como un cobro NUEVO de hoy, con su imagen (la que se
+       ve es la del adelanto), y el adelanto queda en su día. Antes esto exigía `~Efectivo 3000` en un solo renglón de hoy:
+       el adelanto del 15/09 se mudaba al cuadre del 16/09 (ver test_rev6_plata_form.js). */
+    await A.evaluate(async () => { FORM_COMPS=FORM_COMPS.concat(['IMGA2']); submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){} });
     const h1=S.fila('h1');
-    chk('⚠️ …y guardando así la venta queda pagada por Bs 3.000 (antes: pagada por 500 y los 2.500 perdidos)', /^~Efectivo 3000 /.test(h1.metodoPago) && h1.pagado===true, h1.metodoPago);
+    chk('⚠️ …y guardando así la venta queda pagada por Bs 3.000 (antes: pagada por 500 y los 2.500 perdidos): el adelanto en su día + 2.500 de hoy',
+        h1.metodoPago==='~Efectivo 500 @2026-09-15 #1001 %IMGA + Efectivo 2500 @2026-09-16 #1001 %IMGA2' && h1.pagado===true && Number(h1.acuenta)===500, h1.metodoPago);
     // b · la que ya tenía un cobro registrado aparte (que «A cuenta» y «Saldo» no muestran)
     await A.evaluate(async () => { showView('mis'); await esperar(150); editPedido('h2'); await esperar(250); });
     visto = await tocarSi();

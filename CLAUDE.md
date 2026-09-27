@@ -688,7 +688,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
   cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
 
-## 🔎 La revisión de Pedidos del 26/09 a la noche (§4gg): lo que hay que respetar
+## 🔎 La revisión de Pedidos del 26/09 a la noche (§4gg, publicada 20:40, `caef927`): lo que hay que respetar
 - **Un pago YA REGISTRADO no se cambia callado desde el formulario**: `EDIT_PLATA0` guarda cómo se veía la plata al
   abrir la edición; si con los montos iguales se tocó el método, el banco o el «Monto total cobrado», `submitPedido`
   pregunta y dice que se corrige en Contabilidad → ✏️ Corregir este pago (los pagos quedan como están).
@@ -702,9 +702,21 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Lecturas tardías**: `BORRADO_AQUI` (90 s) impide que una lectura vieja devuelva lo recién borrado (pedidos y
   borradores de Kommo), y `mergePending` conserva lo guardado acá hace menos de 90 s que la lectura todavía no trae.
 - **RPT**: `sucursalElegida` reemplaza zona/dirección/pin que puso OTRA sucursal de la lista; lo escrito a mano se respeta.
-- **Decidido por el dueño (26/09, 20:37), para la próxima publicación**: (1) corregir el PRECIO de una venta con pagos
-  registrados CONSERVA esos pagos (cambia precio y saldo); (2) «SÍ, pagado» al editar deja el adelanto en SU día y
-  anota el resto como cobro nuevo de hoy.
+- **Decidido por el dueño (26/09, 20:37) y hecho en §4gh (`8194622`)**:
+  · **A. Corregir el PRECIO conserva los pagos** (`_soloPrecio`): quedan tal cual (fecha, recibo, `>chofer`, imágenes,
+  adelanto, mixto, flete) y el saldo y «pagado» se recalculan como `aplicarCobros` (saldo 0 = pagada; negativo =
+  cobrada de más). Si cambió «A cuenta», se corrige SOLO el adelanto (`_rehaceAdel`, §4fr) y los otros cobros quedan.
+  «¿Borrar el historial?» se pregunta solo si de verdad se va un pago (`_seBorran`). `_rehaceTodo` queda solo para
+  cambiar el reparto del mixto de una venta YA pagada.
+  · **B. «SÍ, pagado» al editar una venta con pagos sin saldar** (`pagoRestoPrev`): lo ya cobrado queda en su día (el
+  adelanto suelto pasa a renglón con el día y el recibo de la venta) y lo que faltaba entra HOY como cobro nuevo, con el
+  método/banco/imagen NUEVA del formulario (`faltaComprobanteForm` la pide como Contabilidad; las imágenes de pagos ya
+  registrados no cuentan, `imgsPagoDe`). `p.acuenta` sigue siendo el adelanto. Menos que lo ya cobrado → pregunta y
+  queda cobrada de más. El adelanto pagado con dos métodos no se toca desde acá (manda a Contabilidad).
+  · `cobradoFueraDeAcuenta(p)` = lo cobrado fuera de «A cuenta» (sin el 2° método del mixto, que ya está en `acuenta`):
+  lo usan «Usar como total», `pagadoSugerirTotal` y el saldo 0 con cobros aparte. Tocar SÍ y después NO repone «A
+  cuenta» y «Saldo» (`PAGO_NO_VISTO`). Una venta pagada reabre con TODO lo que entró en «Monto total cobrado».
+  · `tests/test_rev6_plata_form.js` (52; 42 rojas contra `e1e207b`). `test_rev5_pedidos` 8a cambió a conciencia.
 - `tests/test_rev5_pedidos.js` (49; 30 rojas contra `2c777fe`).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
