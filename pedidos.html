@@ -132,6 +132,20 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 @media(max-width:520px){ .prod-rpt{grid-template-columns:1fr} }
 .prod-sub-tot{margin-top:7px;text-align:right;font-size:.76rem;font-weight:700;color:var(--teal-dk);min-height:1em}
 .prod-sub-tot.vacio{color:var(--muted);font-weight:600}
+/* 🧾 ¿Hay para vender? El cuadrito del saldo debajo de cada producto (§4gj, 27/09). */
+.prod-saldo{margin-top:9px;border:1px solid var(--gray-md);border-left-width:4px;border-radius:var(--r-sm);padding:8px 11px;font-size:.78rem;line-height:1.4;background:var(--gray-lt);color:var(--muted);overflow-wrap:anywhere}
+.prod-saldo[hidden]{display:none !important}
+.prod-saldo.ps-verde{background:var(--green-lt);border-color:var(--green-border);border-left-color:var(--green);color:#0b5a3a}
+.prod-saldo.ps-ambar{background:var(--amber-lt);border-color:var(--amber-border);border-left-color:var(--amber);color:#7c4b00}
+.prod-saldo.ps-rojo{background:var(--red-lt);border-color:var(--red-border);border-left-color:var(--red);color:#8a1c24}
+.prod-saldo .ps-t{font-weight:800;font-size:.84rem;line-height:1.35}
+.prod-saldo .ps-n{margin-top:3px;color:var(--text)}
+.prod-saldo .ps-n b{font-size:1.05em}
+.prod-saldo .ps-f,.prod-saldo .ps-w{margin-top:5px;font-weight:700;color:#7c4b00;background:#fff7e0;border:1px solid var(--amber-border);border-radius:6px;padding:4px 8px}
+.prod-saldo .ps-f{color:#8a1c24;background:#fff;border-color:var(--red-border)}
+.prod-saldo .ps-c{margin-top:4px;display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;font-size:.7rem;color:var(--muted)}
+.prod-saldo .ps-c span{flex:1 1 180px}
+.prod-saldo .ps-act{flex:none;margin-left:auto;padding:5px 10px;min-height:30px;border:1px solid var(--gray-md);border-radius:var(--r-pill);background:#fff;font:inherit;font-size:.72rem;font-weight:700;color:var(--teal-dk);cursor:pointer}
 .prod-card select.prod-medida{width:100%;padding:10px 11px;border:1px solid var(--gray-md);border-radius:var(--r-md);font:inherit;font-size:.86rem;background:#fff;color:var(--text)}
 .prod-card .prod-cant{text-align:center}
 .prod-medida-otro{margin-top:8px}
@@ -1550,7 +1564,9 @@ function loadMirror(){
   loadCierresMirror(); loadArqueoMirror(); loadRetirosMirror(); loadCargaMirror(); loadBorrMirror();
   sisCargarPestana();   // §4fz-b: el stock, el arqueo y la versión del servidor sobre la que trabaja ESTA pestaña
 }
-function saveMirror(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
+/* 🧾 (27/09) Cada vez que cambia la lista (o el stock) el saldo del formulario se vuelve a calcular (`saldoDatos`, §4gj). */
+var SALDO_GEN=0;
+function saveMirror(){ SALDO_GEN++; try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} }
 function uid(){ return 'p'+Date.now().toString(36)+Math.floor(Math.random()*1e6).toString(36); }
 function upsert(rec){ for(var i=0;i<STATE.length;i++){ if(STATE[i].id===rec.id){ STATE[i]=rec; return; } } STATE.unshift(rec); }
 
@@ -2658,7 +2674,7 @@ function showViewAhora(v){
   /* El formulario de carga se queda angosto (es para celular); todo lo demás
      son tablas y listas: se estiran a lo ancho de la pantalla */
   document.body.classList.toggle('ancha', v!=='form');
-  if(v==='form') refrescarSiHaceRato();   // por si administración cerró un día recién
+  if(v==='form'){ refrescarSiHaceRato(); saldoAvisosProgramar(); }   // por si administración cerró un día recién · 🧾 el saldo (§4gj)
   if(v==='conta') refreshConta();
   if(v==='atc') refreshAtc();
   if(v==='admin' && UNLOCKED) loadFromServer(false);
@@ -2998,7 +3014,7 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var top=document.createElement('div'); top.className='prod-top';
   var d=document.createElement('input'); d.type='text'; d.className='prod-desc'; d.placeholder='Producto (ej. Colchón Pillow Top)'; d.autocomplete='off'; d.setAttribute('list','dl-productos'); if(desc)d.value=desc;
   var del=document.createElement('button'); del.type='button'; del.className='prod-del'; del.textContent='×'; del.title='Quitar';
-  del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); pintarTotalProds(); });
+  del.addEventListener('click',function(){ card.remove(); refreshDelButtons(); pintarTotalProds(); saldoAvisosProgramar(); });
   top.appendChild(d); top.appendChild(del);
   // sub: medida | código | cantidad
   var sub=document.createElement('div'); sub.className='prod-sub';
@@ -3069,8 +3085,14 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
     cIn.value=hit.code; d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Escrito a mano y sin elegir de la lista: se revisa al salir del campo.
   d.addEventListener('blur',function(){ rechazarCombo(d.value, d, cIn); });
-  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(rW); card.appendChild(tot);
+  /* 🧾 (27/09) ¿Hay para vender? El cuadrito del saldo va AL FINAL del renglón (§4gj): aparece recién con el producto
+     completo y se actualiza solo (con un respiro, `saldoAvisosProgramar`) — nunca toca los campos ni el foco. */
+  var sal=document.createElement('div'); sal.className='prod-saldo'; sal.hidden=true;
+  [d, cIn, otro, q].forEach(function(e){ e.addEventListener('input', saldoAvisosProgramar); });
+  d.addEventListener('change', saldoAvisosProgramar); mSel.addEventListener('change', saldoAvisosProgramar);
+  card.appendChild(top); card.appendChild(sub); card.appendChild(otro); card.appendChild(rW); card.appendChild(tot); card.appendChild(sal);
   box.appendChild(card); refreshDelButtons(); pintarTotalProds(); pintarProdRpt();
+  saldoAvisosProgramar();                     // al abrir un pedido para editarlo, los renglones ya vienen completos
 }
 /* Muestra/esconde lo que es propio de cada tipo en TODOS los renglones a la vez: en una
    reposición no hay precio (no se está vendiendo) y sí hay tipo y observación. */
@@ -8116,7 +8138,12 @@ function submitPedido(){
   /* También corre cuando una vendedora MUEVE la entrega: su copia del panel puede ser
      de hace horas y el día de destino haberse cerrado (o llenado) en el medio. */
   var _mirarCierre = !_tienda && (!isEdit || _mueveVend) && !diaCerrado(rec.fecha);
-  if(CONNECTED && (_ocAuto || _mirarCierre)){
+  /* 🧾 (27/09) ¿HAY SALDO? SE PREGUNTA CON LO ÚLTIMO (§4gj). Si algún producto quedó sin saldo libre (o la fecha es
+     antes de lo posible), la pregunta sale DESPUÉS de esta misma bajada de la planilla: el dueño, *«logística carga el
+     corte a las 9 y hasta las 3 ya ingresaron 9 pedidos»* — el cuadrito puede ser de hace un rato, la pregunta no.
+     Editando solo si cambió un producto o su cantidad (o la fecha), para eso también se baja la planilla. */
+  var _mirarSaldo = saldoHayQueMirar(prev, isEdit, _deBorrador);
+  if(CONNECTED && (_ocAuto || _mirarCierre || _mirarSaldo)){
     setSubmitting(true);
     conTope(refrescarEstado(), 4000).then(function(){
       setSubmitting(false);
@@ -8148,11 +8175,13 @@ function submitPedido(){
          (~1 segundo). Si la red no contesta en 4 segundos se guarda igual con el número
          provisorio: mejor una OC a corregir que una vendedora que no puede trabajar —
          y para eso está el aviso de repetidas en Administración. */
+      if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;   // 🧾 con la planilla recién bajada (ver arriba)
       if(_ocAuto) rec.oc = nextOcMes(null, docTipoSel());
       guardarYa();
     });
     return;
   }
+  if(!saldoConfirmarAlGuardar(prev, isEdit, _deBorrador)) return;       // 🧾 sin conexión: con lo que hay
   guardarYa();
 
   function guardarYa(){
@@ -8505,6 +8534,7 @@ function pintarModoTienda(){
   if(VENTA_TIENDA) llenarTiendaSuc();
   var b=document.getElementById('f-submit');
   if(b && !b.disabled) b.textContent = VENTA_TIENDA ? 'Registrar venta de tienda' : (EDIT_ID?'Guardar cambios':'Guardar pedido');
+  saldoAvisosProgramar();                     // 🧾 la venta de tienda no lleva el cuadrito del saldo: no hay entrega (§4gj)
 }
 function abrirVentaTienda(){
   EDIT_ID=null;
@@ -8578,6 +8608,7 @@ function pintarDocTipo(limpiar){
   }
   pintarMotivoAtc(limpiar);
   pintarRpt(limpiar);
+  saldoAvisosProgramar();                     // 🧾 una ATC no lleva el cuadrito del saldo (§4gj)
 }
 /* 🏪 El bloque de la reposición: sucursal de destino en vez de cliente, y afuera todo lo
    que es de una venta a una persona (celular, garantía, factura, precios). */
@@ -9200,19 +9231,29 @@ function motivoDelServidor(err){
   if(m==='celda_llena') return 'no entra en la planilla: una celda de Google aguanta 50.000 letras y esto las pasa. Quedó en la cola de este dispositivo (no se perdió). Avisá a administración para achicarlo';
   return 'el servidor contestó: '+m.slice(0,80);
 }
+/* 🧾 (27/09) La lectura que está en camino: el cuadrito del saldo la espera en vez de pedir otra (`saldoLeer`, §4gj). */
+var REFRESCO_EN_VUELO=null;
 function refrescarEstado(){
   if(!CONNECTED) return Promise.resolve(false);
+  var p=refrescarEstadoYa();
+  REFRESCO_EN_VUELO=p;
+  p.then(function(){ if(REFRESCO_EN_VUELO===p) REFRESCO_EN_VUELO=null; });
+  return p;
+}
+function refrescarEstadoYa(){
   return conTopeDuro(apiList(), CARGA_TOPE, 'tardo_datos').then(function(res){
     if(res&&res.ok&&Array.isArray(res.pedidos)){
       STATE=mergePending(res.pedidos); saveMirror(); updateStats();
       ULTIMO_REFRESCO=Date.now(); ULTIMO_ERROR='';
       cargaEstado('ok');
+      saldoTrasLectura();                        // 🧾 (27/09) el saldo debajo de cada producto, con lo recién leído (§4gj)
       return true;
     }
     ULTIMO_ERROR=(res&&res.error)?motivoDelServidor(res.error):'respuesta inesperada del servidor';
     if(!STATE.length) cargaEstado('error');      // una pantalla en 0 nunca se queda sin explicación
+    saldoTrasLectura();                          // …y si no se pudo leer, que el cuadrito lo diga
     return false;
-  }).catch(function(e){ ULTIMO_ERROR=motivoDeError(e); if(!STATE.length) cargaEstado('error'); return false; });
+  }).catch(function(e){ ULTIMO_ERROR=motivoDeError(e); if(!STATE.length) cargaEstado('error'); saldoTrasLectura(); return false; });
 }
 
 /* ============================================================================
@@ -14975,6 +15016,7 @@ function stockAvisarTamano(largo){
   toast('📏 El stock ocupa '+largo+' de las 50.000 letras que aguanta su celda en la planilla: avisá a administración para achicarlo antes de que se llene (lleno, deja de guardarse).','err',15000);
 }
 function guardarStock(){
+  SALDO_GEN++;                                  // (27/09) ver `saldoDatos` (§4gj)
   var fila=filaStock();
   if(CONNECTED){ apiSave(fila).then(function(res){ if(!(res&&res.ok)) queuePending(fila); }, function(){ queuePending(fila); }); }
   else queuePending(fila);
@@ -15004,6 +15046,7 @@ function pestanaId(){
   return PESTANA_ID;
 }
 function sisPestanaGuardar(){
+  SALDO_GEN++;                                  // (27/09) cambió el stock: el saldo del formulario se recalcula (§4gj)
   try{ sessionStorage.setItem(SS_SIS, JSON.stringify({ stock:STOCK_CARGADO?STOCK:null, arqueo:ARQUEO_CARGADO?ARQUEO:null, base:SIS_BASE||{} })); }catch(e){}
 }
 function stockGuardarEspejo(){ sisPestanaGuardar(); }
@@ -15925,7 +15968,10 @@ function stockLibreOrigen(k,alm){
   return Math.max(0,n);
 }
 
-function stockData(){
+/* `extra` (27/09, opcional): claves que tienen que salir en la lista aunque nada las mueva — el
+   aviso de saldo del formulario pregunta por un producto del catálogo que nunca se vendió ni figura
+   en ningún Excel, y la respuesta tiene que salir de ESTA misma cuenta (§4gj). Sin `extra`, igual que siempre. */
+function stockData(extra){
   var hoy=todayStr(), desde=diasAtras(STOCK_VENTANA-1), conteo=STOCK.c.f||'', desdeSal=stockDesdeSalidas();
   var desde30=diasAtras(STOCK_VENTANA_MES-1);   // la ventana larga, solo para el plan del mes que viene (§4dr)
   var T=stockTiemposFabrica();
@@ -15935,7 +15981,8 @@ function stockData(){
       vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
-      enSale:0, salePor:{}, salSale:{}, confSale:{} }; }   // (26/09) los depósitos de salida (Banzer), aparte
+      enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
+      enRecogida:0 }; }                                      // (27/09) lo que una recogida programada ya sacó de su almacén (§4gj)
     return g[k];
   };
   var meter=function(x){
@@ -16030,6 +16077,10 @@ function stockData(){
     Object.keys(s.u||{}).forEach(function(k){
       if(esTextoDeTienda(k)) return;        // 🏪 la misma puerta de atrás que el conteo (§4cx)
       var v=stockLibreOrigen(k,nm);
+      /* 🧾 (27/09) Lo que la recogida programada le restó a este almacén (lo que decía su Excel menos lo libre)
+         va en camino a fábrica: sigue existiendo, y el saldo del formulario lo suma (`enRecogida`, §4gj).
+         Exactamente lo restado —ni más ni menos—, así nunca se cuenta dos veces. No cambia ninguna otra cuenta. */
+      var bruto=Number((s.u||{})[k]); if(isFinite(bruto) && bruto>v) grupo(k).enRecogida+=bruto-v;
       if(sale){ if(g[k]) v-=(g[k].salSale[nm]||0); if(!(v>0)) return; var os=grupo(k); os.enSale+=v; os.salePor[nm]=(os.salePor[nm]||0)+v; return; }
       if(!(v>0)) return;
       var o=grupo(k); o.enOtros+=v; o.otrosAlm[nm]=(o.otrosAlm[nm]||0)+v;
@@ -16039,6 +16090,7 @@ function stockData(){
      Menos los de tienda: el Excel del almacén trae protectores y sábanas, y si se listan
      acá vuelven a la tabla por la puerta de atrás (§4cx). */
   Object.keys(STOCK.c.u||{}).forEach(function(k){ if(!esTextoDeTienda(k)) grupo(k); });
+  (extra||[]).forEach(function(k){ if(k && k!=='|' && !esTextoDeTienda(k)) grupo(k); });   // (27/09) ver arriba
   var lista=Object.keys(g).map(function(k){
     var o=g[k];
     /* ⚠️ EL RITMO SOLO EXISTE SI HAY ROTACIÓN. Dos condiciones, las dos del dueño, y las dos
@@ -16290,6 +16342,372 @@ function stockCuantoPedir(o){
   return Math.max(0,falta);
 }
 function stockEnDias(n){ return n===0 ? 'hoy' : n===1 ? 'mañana' : ('en '+n+' días'); }
+
+/* ============================================================================
+   🧾 ¿HAY PARA VENDER? EL SALDO DEBAJO DE CADA PRODUCTO DEL PEDIDO (§4gj, dueño 27/09)
+   *«Los vendedores no saben cuál es el stock de fábrica y no saben a veces qué vender o si deben
+   decirle al cliente cuánto esperar.»* Primero se pensó una pestaña aparte con buscador; el dueño
+   eligió otra cosa: *«que aparezca un mensaje cada vez que carguen su pedido y coloquen el
+   producto… "disponible, puedes programar", o "no hay el producto, dile al cliente que espere tres
+   días, debemos mandar a producir"»* — un cuadrito de color debajo de cada renglón, y una pregunta
+   al guardar si algo quedó sin saldo. Y lo que no se negocia: *«tenés que tomar en cuenta lo que ya
+   está pendiente de entrega con los saldos de almacén»*.
+
+   ⚠️ UNA SOLA CUENTA. Todo sale de `stockData()` —la de la tabla de Stock y reposición—, calculada
+   UNA vez por lectura (`saldoDatos`) y reusada en cada renglón y en cada tecla:
+     · En almacén = acá en fábrica (sin negativos, §4ds) + Banzer (`stockHaySalir`) + Moreno
+       (`enOtros`) + lo que una recogida ya le sacó a Moreno y viene en camino (`enRecogida`), todo
+       ya descontado lo entregado desde cada corte;
+     · Pendientes de entrega = `comp` (vendido y sin entregar, de todos). Lo 🏭 hecho a pedido para
+       un cliente no está ahí y NO es saldo libre;
+     · Libres = en almacén − pendientes. Lo pendiente sale primero de acá y de Banzer (el orden del
+       dueño, §4ey): «a mano» = acá + Banzer − pendientes, y lo que sigue es Moreno;
+     · En producción = lo pedido a fábrica que no llegó (`pedidos` sin las recogidas), con su `llega`.
+   Pregunta por la CANTIDAD del pedido (dos renglones del mismo producto se suman) y, al editar, el
+   propio pedido NO se cuenta: es la misma cuenta sobre la lista sin él (sus unidades vuelven a lo
+   libre y, si tenía fecha pasada, lo que se había dado por salido vuelve al almacén).
+   El día que se ofrece es el primero con cupo (`cuposUsadosTurno`/`limTurno`: sin domingo, sábado
+   solo AM, sin días cerrados) desde que el producto puede estar: a mano, `proximoDiaEntrega()`; de
+   Moreno, un día más (`STOCK_DIAS_RECOGIDA`); en producción, el día después de que llega; sin nada,
+   el día después de lo que tarda la fábrica (`lead`). «Esperá ~X días» es hasta ese día.
+   🔄 El dueño: *«eso debe actualizarse constantemente… así el vendedor está seguro de que al cargar
+   el producto le aparece la información correcta y real»*. Cada lectura de la planilla repinta los
+   cuadritos (`saldoTrasLectura`); completar un producto con la última lectura de hace más de un
+   minuto pide una nueva (como mucho una por minuto por dispositivo: trae la planilla entera); y hay
+   un «🔄 Actualizar» en cada cuadrito. Se dice de cuándo es el corte y la consulta, y en ámbar si no
+   es confiable (corte que no es de hoy, sin conexión).
+   ⚠️ SOLO AVISA: nada de esto frena el guardado. La pregunta al guardar usa la lectura que
+   `submitPedido` hace justo antes (la de los cupos).
+   ⚠️ NO VA en una ATC (reparaciones), en una venta de tienda (no hay entrega), en un pedido ya
+   entregado ni en los productos de tienda (`esProdDeTienda`). Sí en OC y RPT, para todo el equipo,
+   sin la clave de Administración.
+   ============================================================================ */
+var SALDO_CACHE=null;            // { firma, d:stockData(), porK:{clave:fila} }
+var SALDO_EXTRA={};              // claves del catálogo que nada mueve y el formulario preguntó (`stockData(extra)`)
+var SALDO_TIMER=null;
+var SALDO_LEYENDO=null;          // la lectura que pidió un cuadrito, mientras está en camino
+var SALDO_LECTURA_T=0;           // cuándo pidió un cuadrito la última (tope: una por minuto por dispositivo)
+var SALDO_LECTURA_MS=60000;      // una lectura buena más vieja que esto se renueva al completar un producto
+var SALDO_ESPERA_MS=6000;        // cuánto se espera esa lectura antes de contestar con lo que hay
+var SALDO_VIEJA_MS=10*60000;     // una consulta más vieja que esto se avisa en ámbar
+var SALDO_DIAS_CUPO=60;          // hasta dónde se busca un día con cupo
+var SALDO_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+
+/* La foto del stock para el formulario: `stockData()` UNA vez por lectura (cambia `SALDO_GEN`, ver `saveMirror`). */
+function saldoDatos(sinId){
+  var extra=Object.keys(SALDO_EXTRA);
+  var firma=[SALDO_GEN, STATE.length, sinId||'', todayStr(), extra.length].join('|');
+  if(SALDO_CACHE && SALDO_CACHE.firma===firma) return SALDO_CACHE;
+  var st=STATE, d;
+  /* Editando, el propio pedido no se cuenta: la MISMA cuenta sobre la lista sin él. `stockData` es
+     sincrónica y lee la lista global: se le presta un instante y se devuelve pase lo que pase. */
+  try{ if(sinId) STATE=st.filter(function(p){ return !(p && String(p.id)===String(sinId)); }); d=stockData(extra); }
+  finally{ STATE=st; }
+  var porK={}; d.lista.forEach(function(o){ porK[o.k]=o; });
+  SALDO_CACHE={ firma:firma, d:d, porK:porK };
+  return SALDO_CACHE;
+}
+function saldoSinId(){ return (EDIT_ID && findById(EDIT_ID)) ? EDIT_ID : ''; }
+function saldoFechaForm(){ if(VENTA_TIENDA) return ''; var e=document.getElementById('f-fecha'); return e ? String(e.value||'') : ''; }
+function saldoAvisoActivo(){
+  if(VENTA_TIENDA || docTipoSel()==='ATC') return false;
+  var p=EDIT_ID ? findById(EDIT_ID) : null;
+  return !(p && p.entregado);                 // ya salió: no hay nada que programar
+}
+function saldoHayStock(){ return !!(STOCK.c && STOCK.c.f) || Object.keys(STOCK.g||{}).length>0; }
+function saldoMax(a,b){ return a>b ? a : b; }
+
+/* Los renglones del formulario, con su clave de stock y la cantidad TOTAL de ese producto en el pedido. */
+function saldoFilasForm(){
+  var cards=document.querySelectorAll('#f-productos .prod-card'), filas=[], tot={}, nro={}, activo=saldoAvisoActivo();
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i], box=c.querySelector('.prod-saldo'); if(!box) continue;
+    var desc=String((c.querySelector('.prod-desc')||{}).value||'').trim();
+    var ms=c.querySelector('.prod-medida'), mo=c.querySelector('.prod-medida-otro');
+    var medida=ms ? (ms.value==='Otros' ? String((mo||{}).value||'').trim() : String(ms.value||'')) : '';
+    var codigo=String((c.querySelector('.prod-codigo')||{}).value||'').trim();
+    var qt=String((c.querySelector('.prod-cant')||{}).value||'').trim(), cant=Number(qt);
+    var cat=CODIGOS[codigo.toUpperCase()], x={ desc:desc, medida:medida, codigo:codigo, cant:cant };
+    /* Completo = producto + medida (o un código del catálogo que no lleva medida) + una cantidad entera de 1 para
+       arriba. A medio escribir no se dice nada: un «TITAN» no es «no hay». */
+    var completo=activo && !!desc && !!(medida || (cat && !cat.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
+                 !esProdDeTienda(x) && !esCombo(desc);
+    var f={ card:c, box:box, x:x, completo:completo, k:'', cat:false, total:0, nRen:0 };
+    if(completo){
+      var inf=stockInfo(x); f.k=inf.k; f.cat=!!inf.cat;
+      if(!f.k || f.k==='|') f.completo=false;
+      else { tot[f.k]=(tot[f.k]||0)+cant; nro[f.k]=(nro[f.k]||0)+1; }
+    }
+    filas.push(f);
+  }
+  filas.forEach(function(f){ if(f.completo){ f.total=tot[f.k]; f.nRen=nro[f.k]; } });
+  return filas;
+}
+
+/* El veredicto para UN producto y una cantidad (`idEditado`: el pedido que se edita, que no se cuenta). */
+function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
+  var hoy=todayStr(), cant=Math.max(1, Number(cantidad)||1);
+  var v={ k:clave, cant:cant, tipo:'sin', color:'gris', sinLibre:false, sinId:idEditado||'' };
+  if(!STOCK_CARGADO){ v.tipo=(CONNECTED && CARGA_ESTADO!=='error') ? 'cargando' : 'sin'; return v; }
+  var S=saldoDatos(idEditado), o=S.porK[clave];
+  /* Un producto del catálogo que nunca se vendió ni figura en ningún Excel: se le pregunta a la MISMA cuenta. */
+  if(!o && enCatalogo && clave && clave!=='|' && !SALDO_EXTRA[clave]){ SALDO_EXTRA[clave]=1; S=saldoDatos(idEditado); o=S.porK[clave]; }
+  if(!o){ v.desconocido=true; return v; }
+  var mano=stockHaySalir(o);                  // acá + Banzer: de ahí sale el camión. null = sin contar
+  v.pend=o.comp||0; v.aca=(o.deposito==null) ? null : Math.max(0, o.deposito); v.banzer=o.enSale||0;
+  v.moreno=o.enOtros||0; v.recogida=o.enRecogida||0; v.descont=!!o.descont; v.lead=o.lead||STOCK_DIAS_FABRICA;
+  v.hayBanzer=S.d.saleAlm.length>0; v.hayMoreno=S.d.otrosAlm.length>0; v.variosMoreno=S.d.otrosAlm.length>1;
+  var fab=(o.pedidos||[]).filter(function(q){ return q && q.tipo!=='recogida' && Number(q.u)>0; });   // ya vienen por fecha de llegada
+  v.prod=fab.reduce(function(s,q){ return s+(Number(q.u)||0); }, 0);
+  if(mano==null){ v.tipo='sincontar'; return v; }
+  v.alm=mano+v.moreno+v.recogida;
+  v.libres=v.alm-v.pend;                      // puede dar negativo: hay más vendido que lo que hay
+  var disp='';
+  if(mano-v.pend>=cant){ v.tipo='hay'; v.color='verde'; disp=hoy; }
+  else if(v.libres>=cant){ v.tipo='moreno'; v.color='ambar'; disp=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA); }
+  else {
+    v.sinLibre=true;
+    /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido. */
+    var falta=cant-v.libres, cum=0;
+    for(var i=0;i<fab.length;i++){ cum+=Number(fab[i].u)||0; if(cum>=falta-1e-9){ v.llega=fab[i].llega||stockSumarDias(hoy, v.lead); break; } }
+    if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
+    else if(v.descont){ v.tipo='nofab'; v.color='rojo'; }
+    else { v.tipo='pedir'; v.color='rojo'; disp=stockSumarDias(hoy, v.lead); }
+  }
+  v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
+  if(disp){
+    var min=(v.tipo==='hay') ? proximoDiaEntrega() : saldoMax(proximoDiaEntrega(), stockSumarDias(disp,1));
+    var c=saldoDiaConCupo(min, idEditado);
+    v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+    if(v.tipo!=='hay' && fechaElegida && fechaElegida<min) v.fechaCorta=fechaElegida;
+  }
+  return v;
+}
+/* El primer día desde `desde` con algún turno libre: las MISMAS reglas que el formulario y el portero del servidor. */
+function saldoDiaConCupo(desde, sinId){
+  var yo=sinId ? findById(sinId) : null, f=desde;
+  for(var i=0;i<SALDO_DIAS_CUPO;i++, f=stockSumarDias(f,1)){
+    if(diaDomingo(f) || diaCerrado(f)) continue;
+    var t=['AM','PM'].filter(function(tu){
+      var lim=limTurno(f,tu); if(!(lim>0)) return false;
+      var u=cuposUsadosTurno(f,tu);
+      if(yo && yo.fecha===f && normTurno(yo.turno)===tu) u--;   // editando, su propio lugar es suyo
+      return u<lim;
+    });
+    if(t.length) return { f:f, turnos:t };
+  }
+  return { f:desde, turnos:[] };
+}
+
+/* ---- Los textos ---- */
+function saldoDiaTxt(iso){ return SALDO_DIA_SEM[dowDe(iso)]+' '+fmtFechaCorta(iso); }
+function saldoDesdeTxt(v){
+  if(!v || !v.desde) return '';
+  var t=(v.desde===tomorrowStr()) ? ('desde mañana, '+saldoDiaTxt(v.desde)) : ('desde el '+saldoDiaTxt(v.desde));
+  var tu=v.turnos||[];
+  if(tu.length===1) t+=diaSabado(v.desde) ? ' (sábado: solo AM)' : (' (solo queda turno '+tu[0]+')');
+  return t;
+}
+function saldoDiasTxt(n){ return '~'+n+' día'+(n===1?'':'s'); }
+function saldoNombre(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }
+function saldoTitulo(v){
+  var dc=v.descont ? (' · ya no se fabrica: quedan '+stockUnid(Math.max(0,v.libres))) : '';
+  var trae=STOCK_DIAS_RECOGIDA+' día'+(STOCK_DIAS_RECOGIDA===1?'':'s');
+  switch(v.tipo){
+    case 'hay':    return '✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc;
+    case 'moreno': return '📥 HAY EN MORENO · se trae en '+trae+': programá '+saldoDesdeTxt(v)+dc;
+    /* ⏳ y 🏭 no repiten el día: si la fecha elegida es antes de lo posible, la línea roja de abajo lo dice («programá desde…»). */
+    case 'prod':   return '⏳ EN PRODUCCIÓN · decile al cliente que espere '+saldoDiasTxt(v.espera)+' (llega el '+fmtFechaCorta(v.llega)+')'+
+                          (v.atrasada ? ' — la llegada está atrasada: confirmala con logística' : '');
+    case 'pedir':  return '🏭 NO HAY · decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)';
+    case 'nofab':  return '🛑 YA NO SE FABRICA · '+(v.libres>0 ? ('quedan '+stockUnid(v.libres)+' y el pedido lleva '+v.cant) : 'no queda ninguno')+': no se puede vender, ofrecé otro modelo';
+    case 'cargando': return '⏳ Cargando el saldo del almacén…';
+    case 'leyendo':  return '🔄 Consultando saldo…';
+    default: return 'Sin saldo cargado: consultá con logística';
+  }
+}
+function saldoNumerosHtml(v){
+  var h=[];
+  if(v.alm!=null) h.push('En almacén <b>'+stockUnid(v.alm)+'</b>');
+  if(v.pend!=null) h.push('Pendientes de entrega <b>'+stockUnid(v.pend)+'</b>'+(v.sinId ? ' (sin este pedido)' : ''));
+  if(v.alm!=null){
+    if(v.libres>=v.cant) h.push('Libres <b>'+stockUnid(v.libres)+'</b>');
+    else { if(v.libres>0) h.push('Libres <b>'+stockUnid(v.libres)+'</b>'); h.push('Faltan <b>'+stockUnid(v.faltan)+'</b>'); }
+  }
+  if(v.prod>0) h.push('En producción <b>'+stockUnid(v.prod)+'</b>');
+  if(v.nRen>1) h.push('este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)');
+  return h.join(' · ');
+}
+function saldoCorteTxt(){
+  var c=STOCK.c||{}; if(!c.f) return '';
+  var hoy=todayStr(), h=String(c.hora||'').slice(0,5);
+  var dia=(c.f===hoy) ? 'de hoy' : ((c.f===stockSumarDias(hoy,-1)) ? 'de ayer' : ('del '+fmtFechaCorta(c.f)));
+  return 'Saldo al corte '+dia+(h?(' '+h):'')+', ya descontado lo entregado';
+}
+function saldoHaceTxt(ms){ var m=Math.floor(ms/60000); return m<1 ? 'menos de 1 min' : (m<60 ? (m+' min') : (Math.floor(m/60)+' h')); }
+function saldoConsultadoTxt(){
+  if(!CONNECTED || !ULTIMO_REFRESCO) return '';
+  var ms=Date.now()-ULTIMO_REFRESCO;
+  return 'consultado '+(ms<60000 ? 'recién' : ('hace '+saldoHaceTxt(ms)));
+}
+function saldoDetalleTxt(v){
+  var p=[];
+  if(v.alm!=null){
+    var d='acá '+(v.aca==null ? 'sin contar' : stockUnid(v.aca))+
+          ' · Banzer '+(v.hayBanzer||v.banzer ? stockUnid(v.banzer) : '—')+
+          ' · '+(v.variosMoreno ? 'Moreno y otros ' : 'Moreno ')+(v.hayMoreno||v.moreno ? stockUnid(v.moreno) : '—');
+    if(v.recogida>0) d+=' (+'+stockUnid(v.recogida)+' en camino de Moreno)';
+    p.push(d);
+  }
+  var c=saldoCorteTxt(); if(c) p.push(c);
+  var q=saldoConsultadoTxt(); if(q) p.push(q);
+  return p.join(' · ');
+}
+/* En ámbar, cuando lo que se ve NO es confiable: el corte no es de hoy, o no hay conexión (o hace mucho que no se lee). */
+function saldoAvisos(){
+  var out=[], c=STOCK.c||{}, hoy=todayStr();
+  if(c.f && c.f<hoy) out.push('⚠️ El último corte es del '+fmtFechaCorta(c.f)+': pedile a logística que suba el de hoy');
+  if(CONNECTED){
+    var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR), ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : null;
+    if(falla) out.push('⚠️ Sin conexión'+(ms==null ? ' con la planilla' : (' desde hace '+saldoHaceTxt(ms)))+': el saldo puede no estar al día');
+    else if(ms!=null && ms>SALDO_VIEJA_MS) out.push('⚠️ El saldo se consultó hace '+saldoHaceTxt(ms)+': puede no estar al día — tocá 🔄 Actualizar');
+  }
+  return out;
+}
+function saldoCajaHtml(v){
+  var h='<div class="ps-t">'+esc(saldoTitulo(v))+'</div>';
+  if(v.tipo==='cargando' || v.tipo==='leyendo') return h;
+  var n=saldoNumerosHtml(v); if(n) h+='<div class="ps-n">'+n+'</div>';
+  if(v.desconocido) h+='<div class="ps-n">No encuentro este producto en el saldo del almacén: revisá el nombre y la medida.</div>';
+  if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
+  saldoAvisos().forEach(function(a){ h+='<div class="ps-w">'+esc(a)+'</div>'; });
+  h+='<div class="ps-c"><span>'+esc(saldoDetalleTxt(v))+'</span>'+
+     (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
+  return h;
+}
+/* Solo se toca el cuadrito (nunca un campo ni el foco), y solo si cambió lo que dice. */
+function saldoCajaPintar(box, v){
+  var cls='prod-saldo ps-'+(v.color||'gris'), html=saldoCajaHtml(v);
+  if(box.hidden) box.hidden=false;
+  if(box.className!==cls) box.className=cls;
+  if(box._html!==html){ box.innerHTML=html; box._html=html; }
+  box._v=v;
+}
+function saldoCajaOcultar(box){
+  if(!box.hidden) box.hidden=true;
+  if(box._html){ box.innerHTML=''; box._html=''; }
+  box._v=null; box._firma='';
+}
+
+/* ---- Cuándo se pinta y cuándo se lee ---- */
+function saldoAvisosProgramar(){
+  if(SALDO_TIMER) clearTimeout(SALDO_TIMER);
+  SALDO_TIMER=setTimeout(saldoAvisosPintar, 300);
+}
+function saldoHayQueLeer(){
+  if(!CONNECTED || !STOCK_CARGADO) return false;
+  if(SALDO_LEYENDO || REFRESCO_EN_VUELO) return true;
+  var ahora=Date.now();
+  return (ahora-ULTIMO_REFRESCO>=SALDO_LECTURA_MS) && (ahora-SALDO_LECTURA_T>=SALDO_LECTURA_MS);
+}
+function saldoLeer(forzar){
+  if(!CONNECTED) return Promise.resolve(false);
+  if(SALDO_LEYENDO) return SALDO_LEYENDO;
+  if(!forzar && !saldoHayQueLeer()) return Promise.resolve(false);
+  /* Una lectura que ya va en camino (entrar al formulario después de un minuto, el refresco de cada 2 minutos) sirve
+     igual: no se pide otra — trae la planilla entera. Solo la que pide el cuadrito cuenta para el tope de una por minuto. */
+  var lect=REFRESCO_EN_VUELO;
+  if(!lect){ SALDO_LECTURA_T=Date.now(); lect=refrescarEstado(); }
+  var p=SALDO_LEYENDO=conTope(lect, SALDO_ESPERA_MS).then(function(ok){ if(SALDO_LEYENDO===p) SALDO_LEYENDO=null; return ok; });
+  return p;
+}
+function saldoAvisosPintar(){
+  SALDO_TIMER=null;
+  var filas; try{ filas=saldoFilasForm(); }catch(e){ return; }
+  var nuevas=filas.filter(function(f){ return f.completo && f.box._firma!==(f.k+'|'+f.total); });
+  if(nuevas.length && saldoHayQueLeer()){
+    nuevas.forEach(function(f){ saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); });
+    saldoLeer(false).then(function(){ saldoAvisosPintarYa(); });
+    return;
+  }
+  saldoAvisosPintarYa(filas);
+}
+function saldoAvisosPintarYa(filas){
+  try{
+    filas=filas || saldoFilasForm();
+    var sinId=saldoSinId(), fecha=saldoFechaForm();
+    filas.forEach(function(f){
+      if(!f.completo){ saldoCajaOcultar(f.box); return; }
+      var v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat);
+      v.nRen=f.nRen;
+      saldoCajaPintar(f.box, v);
+      f.box._firma=f.k+'|'+f.total;
+    });
+  }catch(e){ /* el cuadrito nunca rompe el formulario */ }
+}
+/* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta. */
+function saldoActualizar(){
+  try{ saldoFilasForm().forEach(function(f){ if(f.completo) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
+  return saldoLeer(true).then(function(){ saldoAvisosPintarYa(); });
+}
+/* Lo llama `refrescarEstado` con cada lectura (buena o no): con el formulario a la vista, se repintan SOLO los cuadritos. */
+function saldoTrasLectura(){
+  /* ⚠️ Corre ADENTRO de `refrescarEstado`: si tirara un error, una lectura buena contaría como fallida. Nunca tira. */
+  try{
+    var vf=document.getElementById('view-form');
+    if(!vf || !vf.classList.contains('active') || SALDO_TIMER) return;   // con un repintado en espera, ese ya usa lo nuevo
+    saldoAvisosPintarYa();
+  }catch(e){}
+}
+
+/* ---- Al guardar ---- */
+/* Qué renglones hay que mirar: en un pedido nuevo, todos; editando, solo el producto nuevo o con MÁS unidades
+   (corregir la dirección de una venta ya revisada no pregunta nada) — y todos si se movió la fecha. */
+function saldoFilasAGuardar(prev, isEdit, deBorrador){
+  if(!STOCK_CARGADO || !saldoAvisoActivo()) return [];
+  var edita=!!(isEdit && prev && !deBorrador), prevQ={}, mueve=false;
+  if(edita){
+    (prev.productos||[]).forEach(function(x){ if(!x || esProdDeTienda(x)) return; var k=stockClave(x); prevQ[k]=(prevQ[k]||0)+(Number(x.cant)||0); });
+    mueve=String(prev.fecha||'')!==saldoFechaForm();
+  }
+  var vistos={}, out=[];
+  saldoFilasForm().forEach(function(f){
+    if(!f.completo || vistos[f.k]) return; vistos[f.k]=1;
+    var cambia=!edita || f.total>(prevQ[f.k]||0);
+    if(cambia || mueve) out.push({ f:f, cambia:cambia });
+  });
+  return out;
+}
+/* ¿Hace falta leer la planilla antes de guardar para poder preguntar con lo último? */
+function saldoHayQueMirar(prev, isEdit, deBorrador){
+  try{ return saldoHayStock() && saldoFilasAGuardar(prev, isEdit, deBorrador).length>0; }catch(e){ return false; }
+}
+function saldoAlertaTxt(v){
+  var f='no hay saldo libre (faltan '+stockUnid(v.faltan)+').';
+  if(v.tipo==='prod')  return f+' Está en producción: llega el '+fmtFechaCorta(v.llega)+', el cliente espera '+saldoDiasTxt(v.espera)+'.';
+  if(v.tipo==='pedir') return f+' Hay que mandar a producir (avisá a logística): el cliente espera '+saldoDiasTxt(v.espera)+'.';
+  if(v.tipo==='nofab') return 'ya no se fabrica y no alcanza'+(v.libres>0 ? (' (quedan '+stockUnid(v.libres)+')') : ' (no queda ninguno)')+'.';
+  return f;
+}
+/* true = guardar. Pregunta solo si algún producto quedó SIN saldo libre o la fecha es antes de lo posible. */
+function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
+  var filas; try{ filas=saldoFilasAGuardar(prev, isEdit, deBorrador); }catch(e){ return true; }
+  if(!filas.length) return true;
+  var sinId=saldoSinId(), fecha=saldoFechaForm(), lineas=[], primero=null;
+  filas.forEach(function(r){
+    var f=r.f, v, t='';
+    try{ v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat); }catch(e){ return; }
+    if(r.cambia && v.sinLibre) t=saldoAlertaTxt(v);
+    if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
+    if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
+  });
+  saldoAvisosPintarYa();                       // que el cuadrito diga lo mismo que la pregunta
+  if(!lineas.length) return true;
+  var si=confirm('⚠️ ANTES DE GUARDAR, MIRÁ EL SALDO:\n\n'+lineas.join('\n\n')+
+                 '\n\n¿Le avisaste al cliente cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
+  if(!si && primero){ try{ primero.scrollIntoView({block:'center'}); }catch(e){} }
+  return si;
+}
 
 /* ---- El aviso en Administración: solo lo que hay que hacer, y nada más ---- */
 function renderStockAviso(){
@@ -21127,6 +21545,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('adm-dia').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('adm-mes').addEventListener('change',function(){ if(UNLOCKED){ admTopeReset(); renderAdmin(); } });
   document.getElementById('f-fecha').addEventListener('change',renderCupoForm);
+  document.getElementById('f-fecha').addEventListener('change',saldoAvisosProgramar);   // 🧾 «para esa fecha no llega» (§4gj)
   document.getElementById('f-acuenta').addEventListener('input',updateMetodoVisibility);
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') closeModal(); });
   refreshDatalists();
