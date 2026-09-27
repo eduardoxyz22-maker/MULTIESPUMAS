@@ -688,7 +688,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
   cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
 
-## 🔎 La revisión de Pedidos del 26/09 a la noche (§4gg): lo que hay que respetar
+## 🔎 La revisión de Pedidos del 26/09 a la noche (§4gg, publicada 20:40, `caef927`): lo que hay que respetar
 - **Un pago YA REGISTRADO no se cambia callado desde el formulario**: `EDIT_PLATA0` guarda cómo se veía la plata al
   abrir la edición; si con los montos iguales se tocó el método, el banco o el «Monto total cobrado», `submitPedido`
   pregunta y dice que se corrige en Contabilidad → ✏️ Corregir este pago (los pagos quedan como están).

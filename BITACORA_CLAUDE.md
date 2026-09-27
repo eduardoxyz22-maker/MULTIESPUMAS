@@ -7468,6 +7468,9 @@ aparece queda con su prueba vigilando. Un agente revisó el uso diario de Pedido
    guardaba el monto, y aparecía un falso «¿borrar el historial?».
 8. **ALTA. «SÍ, pagado» proponía el adelanto como total**: la venta de Bs 3.000 quedaba pagada por 500.
 
+**Publicado el 26/09 a las 20:40 de Bolivia**: `main` = `caef927`, Pages 1528 en verde, sin tocar el servidor.
+Batería sobre `e1e207b`: 102 suites, 3.848 bien · 0 mal.
+
 **Decisiones del dueño (20:37).** Salen en la publicación siguiente, con sus pruebas:
 - corregir el PRECIO de una venta con pagos registrados CONSERVA los pagos;
 - «SÍ, pagado» al editar deja el adelanto en su día y anota el resto hoy como cobro nuevo.
