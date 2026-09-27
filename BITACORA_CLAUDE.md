@@ -7445,6 +7445,35 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gj. 27/09: el saldo del almacén debajo de cada producto del formulario (2026-09-27)
+
+**El pedido fue cambiando en la misma mañana, y quedó así:**
+1. *«Los vendedores no saben cuál es el stock… una pestaña de "saldo de almacén" con los 3 almacenes, buscador, que se
+   actualice con los cortes y descuente entregas y pendientes.»*
+2. *«Mejor un buscador: colocar el código y aparece el producto, 3 pendientes, 1 en producción, "pedí a tu cliente que
+   espere 72 horas", o "podés programar para tal día".»*
+3. *«¿Y no hay manera que en vez de crear una nueva pestaña… aparezca un mensaje cada vez que carguen su pedido y
+   coloquen el producto?»* Con el ejemplo de ALMOHADA 50×70 CD1403, y el recordatorio *«tenés que tomar en cuenta lo que
+   ya está pendiente de entrega con los saldos de almacén»*.
+4. Para el aviso eligió **«Cuadrito + alerta al guardar»**.
+5. *«Debe actualizarse constantemente… logística carga el corte a las 9 y hasta las 3 ya ingresaron 9 pedidos.»*
+
+**Lo que se hizo.** Un agente lo armó, con los cambios de rumbo pasados por mensaje: `9c7437b`. Las reglas están en
+CLAUDE.md, «📦 El saldo debajo de cada producto del formulario».
+
+**Decisiones del dueño (27/09).**
+- La línea roja «para esa fecha no llega: programá desde…» se queda.
+- Publicar apenas pasen las pruebas.
+- Quedó como está, sin preguntarle:
+  - los «~X días» son días reales hasta el primer día con cupo, en vez de «72 horas» fijas;
+  - «Libres» incluye Moreno;
+  - lo de Moreno se ofrece desde el día siguiente a traerlo;
+  - un producto que no está en el catálogo ni en ningún Excel sale gris;
+  - una edición que cambia productos también relee la planilla antes de guardar.
+
+**Pruebas.** `tests/test_saldo_almacen.js`: 83 comprobaciones, 73 rojas contra `bd5dde3`. Incluye el caso del dueño con
+dos vendedores contra el `.gs` real: después de los 9 pedidos de A, B ve «10 · 9 · 1 libre».
+
 ## 4gi. 26/09, noche: «Nuevo pedido» y «Mis pedidos» desde el celular (2026-09-27)
 
 El dueño: *«¿Y pedidos, esa pestaña está bien? Poné un agente»*. Esas pestañas ya se habían revisado en §4gg, así que el
@@ -7477,7 +7506,9 @@ teclado numérico y se guarda lo que se ve.
   - los detalles de la venta de tienda.
 
 **Pruebas.** `tests/test_rev7_celular.js`: 35 comprobaciones, 20 rojas contra `13d00ee`. La batería sobre `a819011` dio
-104 suites, 3.933 bien · 0 mal.
+104 suites, 3.933 bien · 0 mal, y sobre `77e1dc9`, 3.935 bien · 0 mal.
+
+**Publicado el 26/09 a las 23:14 de Bolivia**: `main` = `bd5dde3`, Pages 1530 en verde, sin tocar el servidor.
 
 ## 4gh. 26-27/09: las dos decisiones de plata del dueño en el formulario (2026-09-27)
 
