@@ -7477,7 +7477,9 @@ teclado numérico y se guarda lo que se ve.
   - los detalles de la venta de tienda.
 
 **Pruebas.** `tests/test_rev7_celular.js`: 35 comprobaciones, 20 rojas contra `13d00ee`. La batería sobre `a819011` dio
-104 suites, 3.933 bien · 0 mal.
+104 suites, 3.933 bien · 0 mal, y sobre `77e1dc9`, 3.935 bien · 0 mal.
+
+**Publicado el 26/09 a las 23:14 de Bolivia**: `main` = `bd5dde3`, Pages 1530 en verde, sin tocar el servidor.
 
 ## 4gh. 26-27/09: las dos decisiones de plata del dueño en el formulario (2026-09-27)
 

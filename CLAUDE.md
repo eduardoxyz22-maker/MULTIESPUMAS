@@ -719,7 +719,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   · `tests/test_rev6_plata_form.js` (52; 42 rojas contra `e1e207b`). `test_rev5_pedidos` 8a cambió a conciencia.
 - `tests/test_rev5_pedidos.js` (49; 30 rojas contra `2c777fe`).
 
-## 📱 Pedidos desde el celular (§4gi, 26/09 a la noche): lo que hay que respetar
+## 📱 Pedidos desde el celular (§4gi, publicado 26/09 23:14, `bd5dde3`): lo que hay que respetar
 - **«＋ Nuevo pedido» con una edición abandonada** (`tabNuevoPedido`): si hay `EDIT_ID` y la persona no está en el
   formulario, se pregunta; Aceptar = `resetForm()` y pedido NUEVO. Antes el formulario seguía siendo la edición y el
   pedido nuevo PISABA la venta anterior en la planilla (ALTA). La pestaña no vuelve a `showView('form')` a secas.
