@@ -3296,6 +3296,11 @@ var EDIT_ID=null;
    guardar: la pantalla se refresca sola cada 2 minutos y traería el sello nuevo — con
    los valores VIEJOS que siguen en el formulario. */
 var EDIT_REV=null;
+/* 💵 (26/09, revisión de Pedidos) CÓMO SE VEÍA LA PLATA AL ABRIR LA EDICIÓN: «¿Pagado?», el monto
+   cobrado, el método y el banco tal como los puso `editPedido`. Sirve para saber si la persona TOCÓ el
+   pago de una venta que ya tiene sus pagos registrados (ver `submitPedido`): sin esto, cambiar el monto
+   o el método de una venta cobrada decía «Cambios guardados ✓» y la planilla seguía con lo de antes. */
+var EDIT_PLATA0=null;
 /* ⚠️ DE DÓNDE SALIÓ LA EDICIÓN (§4bl).
    `after()` terminaba SIEMPRE en `showView('admin')` porque editar era cosa de
    administración. Desde que las vendedoras editan sus pedidos (§4bc), guardar las
@@ -7531,7 +7536,10 @@ function submitPedido(){
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
      que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
      pedido ya venía pagado, se conservan el anticipo y el historial. */
-  var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)===0;
+  /* (26/09, revisión de Pedidos) Saldo 0 O MENOS: una venta a la que le cobraron de más queda pagada con saldo
+     negativo (`aplicarCobros`, «hay que verlo»). Con `===0` corregirle la dirección preguntaba «¿borrar el
+     historial?» y, si la vendedora decía que sí, se perdían los cobros registrados. */
+  var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)<=0.009;
   /* 💳 ¿Cambió el pago mixto? (§4ej) Agregar o quitar el segundo método, o cambiarle el
      monto, el método, el banco o las imágenes, no mueve el TOTAL cobrado — y «la plata está
      igual» lo dejaba pasar conservando el historial viejo. Se compara el segundo pago. */
@@ -7546,6 +7554,26 @@ function submitPedido(){
   var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
                     (r2(Number(prev.acuenta)||0)===_acuVal &&     // r2: el formulario los muestra con 2 decimales (26/09)
                      r2(Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+  /* 💵 (26/09, revisión de Pedidos) EL PAGO YA REGISTRADO NO SE CAMBIA CALLADO. Con los montos iguales,
+     el historial se conserva tal cual (`_plataIgual`) — y eso se llevaba puesto lo que la persona SÍ
+     cambió en el bloque del pago: el «Monto total cobrado» de una venta pagada (3.000 → 3.500), el método
+     (Efectivo → QR) o el banco. Decía «Cambios guardados ✓» y la planilla, Contabilidad y el Cuadre
+     seguían con lo de antes. Reescribir ese pago desde acá le cambiaría la fecha, el recibo y quién tiene
+     la plata; por eso se dice dónde se corrige (lo mismo que el flete cobrado, §4eu) y se pregunta si se
+     guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0). */
+  var _p0=(isEdit && prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
+  var _tocoPago = !!(_p0 && _tieneHist && _plataIgual && (_pagSI || _acuVal>0) && (
+        segVal('f-metodo')!==_p0.metodo ||
+        (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
+        (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
+  if(_tocoPago &&
+     !confirm('💵 Los pagos de esta venta ya están registrados:\n\n'+
+              contaPagos(prev).map(function(c){
+                return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
+              }).join('\n')+
+              '\n\nEl monto y el método de un pago ya registrado NO se cambian desde este formulario (se perdería su fecha, su recibo y quién tiene la plata). '+
+              'Si alguno está mal, corregilo en Contabilidad → ✏️ Corregir este pago.\n\n'+
+              '¿Guardar igual lo demás del pedido? Los pagos quedan como están.')) return;
   if(_tieneHist && !_plataIgual &&
      !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
               contaPagos(prev).map(function(c){
@@ -7765,6 +7793,14 @@ function submitPedido(){
      ROHO queda afuera: ahí el N° es el que manda el cliente y no se le toca nada (§4bq). */
   var _tipoDoc=docTipoSel();
   if(!esRoho(vendedor) && _tipoDoc!=='OC' && ocSel && ocTipoDe(ocSel)!==_tipoDoc) ocSel=ocPrefijo(_tipoDoc)+ocSinPre(ocSel);
+  /* 📄 (26/09, revisión de Pedidos) …Y AL REVÉS: una ATC o una RPT que al editarla se pasa a 📄 OC. El número
+     seguía con su «ATC »/«RPT » adelante, así que se guardaba como ATC aunque el formulario dijera OC y se le
+     hubiera puesto nota y saldo: una venta de verdad que Contabilidad y el Cuadre no veían nunca
+     (`fueraDeConta`). Si el número era del panel, la venta toma el próximo de la serie de las OC de su mes
+     (el mismo de la ATC chocaría con la venta que ya lo tiene); uno escrito a mano solo pierde el prefijo. */
+  else if(!esRoho(vendedor) && _tipoDoc==='OC' && ocSel && ocTipoDe(ocSel)!=='OC'){
+    ocSel = (isEdit && prev && ocAuto(ocSel) && ocAutoActivo(contaFecha(prev))) ? nextOcMes(contaFecha(prev), 'OC') : ocSinPre(ocSel);
+  }
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -7872,7 +7908,11 @@ function submitPedido(){
     }
   }
 
-  setVendedorMem(vendedor); // recordar quién soy en esta compu
+  /* Recordar quién soy en esta compu… solo al CARGAR un pedido. (26/09, revisión de Pedidos) Editando, el
+     vendedor es el DEL PEDIDO, no el de quien corrige: logística le arreglaba la dirección a una venta de
+     Carola y esa computadora pasaba a ser «Carola» — el próximo pedido nuevo ya salía a su nombre. Si
+     alguien sí cambia el vendedor a mano, el campo lo recuerda al tipearlo (`oninput`). */
+  if(!isEdit) setVendedorMem(vendedor);
 
   /* ⚠️ ÚLTIMA MIRADA A LA PLANILLA ANTES DE GUARDAR
      El cierre de un día vive en la planilla y NO hay aviso automático: una compu con
@@ -8401,7 +8441,7 @@ function pintarAntiguedadAtc(){
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
 function resetForm(){
-  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin';
+  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
@@ -8485,8 +8525,13 @@ function editPedido(id){
   document.getElementById('f-saldo').value=r2(rec.saldo);
   document.getElementById('f-acuenta').value=r2(rec.acuenta);
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
+  /* 💵 (26/09, revisión de Pedidos) Una venta cobrada SIN adelanto —la que se pagó en la entrega (el chofer)
+     o desde Contabilidad— no tiene anticipo, y `cobradoBs` no viaja en la planilla: el campo abría VACÍO y
+     el formulario no dejaba guardar ni la dirección («Poné el MONTO TOTAL COBRADO»). Lo que se muestra es
+     lo que ya entró por la venta, como en su ficha (`contaCobrado`). */
   var _cb=document.getElementById('f-cobrado');
-  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||''); }
+  if(_cb){ var _a=anticipoDe(rec), _yaCob=rec.pagado?contaCobrado(rec):0;
+    _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||(_yaCob>0?r2(_yaCob):'')); }
   var _ce=document.getElementById('f-envio');
   if(_ce){ var _e=r2(envioTotal(rec)); _ce.value=_e>0?_e:''; }
   /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
@@ -8529,6 +8574,8 @@ function editPedido(id){
   }
   pintarMixto();
   if(_mx) segSet('f-banco2', _mx.banco||'');
+  // 💵 La plata tal como quedó a la vista (ver EDIT_PLATA0).
+  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), metodo:segVal('f-metodo'), banco:segVal('f-banco') };
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
