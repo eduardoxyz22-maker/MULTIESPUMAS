@@ -719,6 +719,24 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   · `tests/test_rev6_plata_form.js` (52; 42 rojas contra `e1e207b`). `test_rev5_pedidos` 8a cambió a conciencia.
 - `tests/test_rev5_pedidos.js` (49; 30 rojas contra `2c777fe`).
 
+## 📱 Pedidos desde el celular (§4gi, 26/09 a la noche): lo que hay que respetar
+- **«＋ Nuevo pedido» con una edición abandonada** (`tabNuevoPedido`): si hay `EDIT_ID` y la persona no está en el
+  formulario, se pregunta; Aceptar = `resetForm()` y pedido NUEVO. Antes el formulario seguía siendo la edición y el
+  pedido nuevo PISABA la venta anterior en la planilla (ALTA). La pestaña no vuelve a `showView('form')` a secas.
+- **Avisos (`toast`)**: `width:max-content; max-width:min(90vw,640px); pointer-events:none` (solo texto) y duran lo que
+  lleva leerlos (`toastMs`: 50 ms por letra, entre 2,8 y 12 s). No volver a `left:50%` sin ancho: en 390 px era una
+  columna de 195 que tapaba Guardar.
+- **Editar**: una venta de tienda vuelve a donde se abrió (no a Contabilidad) y «Cancelar» del cartel de tienda también;
+  un pedido SIN turno sigue sin turno (`turnoDe`, `#f-turno-hint`); el 2° método del mixto se escribe SIEMPRE (vacío si
+  no hay), para que no aparezca el de la edición anterior.
+- **Mis pedidos** (dueño, 26/09): los números cuentan por la fecha de ENTREGA y el cartel lo dice («pedidos que se
+  entregan hoy», «se entregan este mes», «saldo de lo que se entrega este mes»); las ventas de tienda no entran. Los
+  botones de filtro (`#mis-chips`) van JUSTO ARRIBA de `#mis-lista`, debajo de los números.
+- `tests/test_rev7_celular.js` (35; 20 rojas contra `13d00ee`), viewport 390×844 con toques.
+- **Pendientes (el dueño no los eligió)**: encabezado fijo alto en el celular; abrir ✏️ Editar de otra venta borra sin
+  avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
+  comprobantes (22 px) y «📎 abrir imagen» (18 px) son chicos para el dedo.
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +

@@ -7445,6 +7445,40 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gi. 26/09, noche: «Nuevo pedido» y «Mis pedidos» desde el celular (2026-09-27)
+
+El dueño: *«¿Y pedidos, esa pestaña está bien? Poné un agente»*. Esas pestañas ya se habían revisado en §4gg, así que el
+agente las usó como una vendedora, **en un celular** (390 y 360 px, con toques), y terminó los 4 detalles que quedaban
+(`a819011`).
+
+**Lo que encontró.**
+1. **ALTA. «＋ Nuevo pedido» pisaba otra venta.** Se abría ✏️ Editar, se salía por la pestaña sin «Cancelar edición» y,
+   más tarde, «＋ Nuevo pedido» seguía siendo esa edición. El cliente nuevo reemplazaba a la venta anterior en la
+   planilla, con su OC. Ahora `tabNuevoPedido` pregunta.
+2. **MEDIA. Los avisos no se leían en el celular.** Salían como una columna de 195 px de ancho y hasta 358 de alto,
+   tapaban Guardar y duraban 2,8 s con 234 letras.
+3. **BAJA. Los cuatro de §4gg:**
+   - la venta de tienda corregida terminaba en Contabilidad con el mensaje de venta nueva;
+   - los contadores de Mis pedidos;
+   - un pedido sin turno se guardaba como AM;
+   - el pago mixto traía datos de otra edición.
+
+Lo demás en el celular anda bien: nada se sale de la pantalla, los botones se pueden tocar, los campos de plata abren el
+teclado numérico y se guarda lo que se ve.
+
+**Decisiones del dueño (26/09, ~22:30).**
+- Los contadores cuentan por **ENTREGA**, como antes, y el cartel lo dice. El agente los había pasado al día de carga;
+  se volvió atrás en `77e1dc9`.
+- De las mejoras propuestas para el celular eligió solo una: **los botones de filtro, justo arriba de la lista**.
+- Quedan sin hacer, porque no los eligió:
+  - el encabezado alto;
+  - el aviso antes de perder un pedido a medio escribir al abrir otra edición;
+  - los botones chicos;
+  - los detalles de la venta de tienda.
+
+**Pruebas.** `tests/test_rev7_celular.js`: 35 comprobaciones, 20 rojas contra `13d00ee`. La batería sobre `a819011` dio
+104 suites, 3.933 bien · 0 mal.
+
 ## 4gh. 26-27/09: las dos decisiones de plata del dueño en el formulario (2026-09-27)
 
 El dueño decidió el 26/09 a las 20:37, con las opciones a la vista:
@@ -7504,7 +7538,7 @@ Batería sobre `e1e207b`: 102 suites, 3.848 bien · 0 mal.
 - «SÍ, pagado» al editar deja el adelanto en su día y anota el resto hoy como cobro nuevo.
 
 **Quedan (BAJA), sin tocar.**
-- Editar una venta de tienda termina en Contabilidad con el mensaje de pedido nuevo.
+- ~~Editar una venta de tienda termina en Contabilidad con el mensaje de pedido nuevo~~ (§4gi).
 - En Mis pedidos, «Hoy · pedidos cargados» cuenta las entregas de hoy, y «Este mes» no cuenta las ventas de tienda.
 - Editar un pedido sin turno lo guarda como AM.
 - Al activar el pago mixto pueden aparecer datos de una edición anterior.
