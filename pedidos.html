@@ -3104,10 +3104,13 @@ function usarTotalProds(){
   t=r2(t);
   if(segVal('f-pagado')==='SI'){ toast('El pedido está marcado como PAGADO: no hay saldo que llenar','err'); return; }
   var acu=montoForm('f-acuenta');
-  if(acu>t){ toast('Lo que ya pagó ('+fmtBs(acu)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
-  document.getElementById('f-saldo').value=r2(t-acu);
+  /* (27/09) Corregir el precio CONSERVA los pagos ya registrados (decisión del dueño): lo cobrado aparte —que «A cuenta» no
+     muestra— también se descuenta. Sin esto, una venta con un QR de 1.000 registrado pasaba a «deber» 1.000 de más. */
+  var _pv=EDIT_ID?findById(EDIT_ID):null, otros=_pv?cobradoFueraDeAcuenta(_pv):0, ya=r2(acu+otros);
+  if(ya>t){ toast('Lo que ya pagó ('+fmtBs(ya)+') es más que la suma de los ítems ('+fmtBs(t)+'). Revisá los precios.','err'); return; }
+  document.getElementById('f-saldo').value=r2(t-ya);
   updateMetodoVisibility();
-  toast('Saldo por cobrar: '+fmtBs(r2(t-acu))+' (total '+fmtBs(t)+' − a cuenta '+fmtBs(acu)+')','ok');
+  toast('Saldo por cobrar: '+fmtBs(r2(t-ya))+' (total '+fmtBs(t)+' − a cuenta '+fmtBs(acu)+(otros>0.009?(' − ya cobrado aparte '+fmtBs(otros)):'')+')','ok');
 }
 function refreshDelButtons(){ var cards=document.querySelectorAll('#f-productos .prod-card'); for(var i=0;i<cards.length;i++) cards[i].querySelector('.prod-del').disabled=(cards.length<=1); }
 /* 🔢 LA CANTIDAD ES UN ENTERO DE 1 PARA ARRIBA (26/09). `parseInt(…)||1` guardaba 0 como 1, 2,5
@@ -3307,6 +3310,10 @@ var EDIT_REV=null;
    pago de una venta que ya tiene sus pagos registrados (ver `submitPedido`): sin esto, cambiar el monto
    o el método de una venta cobrada decía «Cambios guardados ✓» y la planilla seguía con lo de antes. */
 var EDIT_PLATA0=null;
+/* 💵 (27/09) «A cuenta» y «Saldo» como estaban antes de tocar «SÍ, pagado» (que los pone en 0). Volver a «NO» los repone:
+   antes quedaban en 0 (§4gg, «Quedan (BAJA)») y, desde que corregir el precio conserva los pagos, guardar así dejaba PAGADA
+   una venta que debía —el saldo desaparecía sin preguntar—. */
+var PAGO_NO_VISTO=null;
 /* ⚠️ DE DÓNDE SALIÓ LA EDICIÓN (§4bl).
    `after()` terminaba SIEMPRE en `showView('admin')` porque editar era cosa de
    administración. Desde que las vendedoras editan sus pedidos (§4bc), guardar las
@@ -3334,10 +3341,34 @@ function montoForm(el){
    los 2.500 desaparecían de Contabilidad y del Cuadre, con «Cambios guardados ✓». Ahora el campo propone el
    total —lo que dicen «A cuenta» y «Saldo» antes de borrarse, más lo ya cobrado de la venta, que esos campos no
    muestran—, siempre que esté vacío o siga con lo que puso el panel. Lo tipeado a mano no se toca. */
+/* 💵 (27/09) LO QUE ENTRÓ POR LA VENTA FUERA DE «A CUENTA»: los cobros registrados (Contabilidad, el chofer), que el
+   formulario no muestra. El 2° método del pago mixto NO va: `p.acuenta` ya es TODO el adelanto (§4eu), y sumándolo otra vez
+   «SÍ, pagado» proponía Bs 3.200 para una venta de 3.000 con 300 + 200 a cuenta. */
+function cobradoFueraDeAcuenta(p){
+  if(!p) return 0;
+  var mx=mixtoDe(p), dentro=(mx && (Number(p.acuenta)||0)>0.01) ? (Number(mx.monto)||0) : 0;
+  return r2(totalCobrado(p)-dentro);
+}
+/* 💵 (27/09, decisión del dueño del 26/09 20:37) «SÍ, PAGADO» SOBRE UNA VENTA QUE YA TENÍA PAGOS Y NO ESTABA SALDADA. Lo que ya
+   entró queda como está —el adelanto en SU día (escrito, o el suelto tal como lo arma `anticipoDe`: día y recibo de la venta),
+   el 2° método del mixto y los cobros registrados— y lo que faltaba entra HOY como un cobro nuevo: lo mismo que registrar el
+   pago del saldo en Contabilidad (`ctaRegistrarPago`). Antes todo quedaba en un solo renglón con fecha de hoy: el adelanto se
+   mudaba del cuadre de su día al de hoy y un QR registrado aparte se perdía. Devuelve lo ya registrado (`ya` = cuánto entró)
+   si el formulario está en ese caso, y null si no. ATC y RPT no se cobran; un borrador de Kommo no está en STATE. */
+function pagoRestoPrev(){
+  if(!EDIT_ID || segVal('f-pagado')!=='SI' || docTipoSel()!=='OC') return null;
+  var prev=findById(EDIT_ID);
+  if(!prev || prev.pagado || noSeCobra(prev)) return null;
+  var ant=anticipoDe(prev), cobros=cobrosReales(prev);
+  if(!ant && !cobros.length) return null;
+  var ya=ant?(Number(ant.monto)||0):0;
+  cobros.forEach(function(c){ ya+=Number(c.monto)||0; });
+  return { prev:prev, ant:ant, cobros:cobros, ya:r2(ya), mx:mixtoDe(prev) };
+}
 function pagadoSugerirTotal(){
   var cb=document.getElementById('f-cobrado'); if(!cb) return;
   var prev=EDIT_ID?findById(EDIT_ID):null;
-  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?totalCobrado(prev):0));
+  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?cobradoFueraDeAcuenta(prev):0));
   if(!(tot>0)) return;
   var delPanel=!!(EDIT_PLATA0 && EDIT_PLATA0.pagado!=='SI' && r2(montoForm(cb))===EDIT_PLATA0.cobrado);
   if(!cb.value.trim() || delPanel){ cb.value=r2(tot); if(typeof pintarMixto==='function') pintarMixto(); }
@@ -7127,6 +7158,10 @@ function toggleMixto(on){
 }
 /* Sobre qué total se reparte: lo cobrado (pagado) o el adelanto (a cuenta). */
 function mixtoTotalBase(){
+  /* (27/09) «SÍ, pagado» sobre una venta que ya tenía pagos (`pagoRestoPrev`): se reparte lo que entra AHORA (el total menos
+     lo ya registrado). Si el bloque muestra el pago mixto del ADELANTO —ya registrado—, lo que describe es ese adelanto. */
+  var rb=pagoRestoPrev();
+  if(rb) return rb.mx ? r2(Number(rb.prev.acuenta)||0) : r2(montoForm('f-cobrado')-rb.ya);
   return (segVal('f-pagado')==='SI') ? montoForm('f-cobrado') : montoForm('f-acuenta');   // «1.500» = 1.500 (26/09)
 }
 function mixtoMonto2(){ return montoForm('f-monto2'); }
@@ -7195,6 +7230,13 @@ function mixtoEn(a, cobros, p){
    está cargando o cambiando ahora (si ya venía con pago y sin imagen, se lo deja pasar). */
 function faltaComprobanteForm(){
   if(!metodoConComprobante(segVal('f-metodo'))) return false;
+  /* (27/09) «SÍ, pagado» sobre una venta con pagos (`pagoRestoPrev`): lo que faltaba entra como un pago NUEVO, y un pago
+     nuevo lleva su imagen (en Contabilidad también es obligatoria). Las que el formulario ya muestra son del adelanto. */
+  var rb=pagoRestoPrev();
+  if(rb && r2(montoForm('f-cobrado')-rb.ya)>0.009){
+    var ya=imgsPagoDe(rb.prev);
+    return !compsArr(FORM_COMPS).some(function(id){ return ya.indexOf(fidLimpio(id))<0; });
+  }
   if(compsArr(FORM_COMPS).length) return false;
   if(!EDIT_ID) return true;
   var orig=findById(EDIT_ID); if(!orig) return true;
@@ -7406,19 +7448,25 @@ function submitPedido(){
     }
     /* 💳 El segundo método (§4ej): método, monto (mayor a 0 y menor al total), banco si
        es QR, imagen propia, y que no sea el mismo método que el primero. */
-    if(MIXTO && _hayPago){
+    /* (27/09) «SÍ, pagado» con el ADELANTO ya pagado con dos métodos (`pagoRestoPrev().mx`): el bloque muestra ese pago,
+       que ya está registrado y no se reparte de nuevo. Sin tocarlo no hay nada que revisar; tocado, frena más abajo. */
+    var _rbV=MIXTO ? pagoRestoPrev() : null;
+    if(MIXTO && _hayPago && !(_rbV && _rbV.mx)){
       var _mx2=segVal('f-metodo2'), _mm2=mixtoMonto2(), _mbase=mixtoTotalBase();
       var _irA=function(id){ var e=document.getElementById(id); if(e){ e.classList.add('seg-err'); setTimeout(function(){ e.classList.remove('seg-err'); },1600); e.scrollIntoView({block:'center'}); } };
       if(!_mx2){ toast('Elegí con qué pagó la OTRA parte (segundo método), o quitá el segundo método','err'); _irA('wrap-mixto'); return; }
-      if(!(_mbase>0)){ toast(segVal('f-pagado')==='SI' ? 'Poné primero el MONTO TOTAL COBRADO: el segundo pago es una parte de eso' : 'Poné primero el A CUENTA: el segundo pago es una parte de eso','err'); _irA('wrap-mixto'); return; }
-      if(!(_mm2>0) || _mm2>=_mbase-0.009){ markErr('f-monto2'); toast('El segundo pago tiene que ser mayor a 0 y menor a '+fmtBs(_mbase)+' (el total). El resto queda con el primer método.','err'); var _fmm=document.getElementById('f-monto2'); _fmm.focus(); _fmm.scrollIntoView({block:'center'}); return; }
+      if(!(_mbase>0)){ toast(_rbV ? ('Con lo ya cobrado ('+fmtBs(_rbV.ya)+') no falta cobrar nada: quitá el segundo método') : segVal('f-pagado')==='SI' ? 'Poné primero el MONTO TOTAL COBRADO: el segundo pago es una parte de eso' : 'Poné primero el A CUENTA: el segundo pago es una parte de eso','err'); _irA('wrap-mixto'); return; }
+      if(!(_mm2>0) || _mm2>=_mbase-0.009){ markErr('f-monto2'); toast('El segundo pago tiene que ser mayor a 0 y menor a '+fmtBs(_mbase)+(_rbV?' (lo que faltaba cobrar: ya habían entrado '+fmtBs(_rbV.ya)+')':' (el total)')+'. El resto queda con el primer método.','err'); var _fmm=document.getElementById('f-monto2'); _fmm.focus(); _fmm.scrollIntoView({block:'center'}); return; }
       if(_mx2==='QR' && !segVal('f-banco2')){ toast('Elegí a qué banco entró el QR del segundo pago','err'); _irA('wrap-banco2'); return; }
       if(_mx2===segVal('f-metodo') && (_mx2!=='QR' || segVal('f-banco2')===segVal('f-banco'))){ toast('El segundo método es igual al primero. Si pagó todo con '+_mx2+', quitá el segundo método.','err'); _irA('wrap-mixto'); return; }
       if(!compsArr(FORM_COMPS2).length){ toast('Falta la imagen del SEGUNDO pago: '+nombreComprobante(_mx2),'err'); _irA('wrap-comp2'); return; }
     }
     // Si está marcado PAGADO no hay saldo que pedir: el "a cuenta" ya quedó cubierto.
     // (Sin este `!==SI` no se podía volver a guardar un pedido con anticipo ya cobrado.)
-    if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
+    /* (27/09) …salvo que la venta ya tenga cobros registrados aparte: corregido el precio (decisión del dueño), saldo 0 es que
+       ya está todo cobrado, y la venta queda pagada como en Contabilidad. */
+    var _cobAparte = EDIT_ID ? cobradoFueraDeAcuenta(findById(EDIT_ID)) : 0;
+    if(segVal('f-pagado')!=='SI' && _acu>0 && montoForm('f-saldo')<=0 && !(_cobAparte>0.009)){ markErr('f-saldo'); toast('Hay pago a cuenta: poné el saldo por cobrar','err'); document.getElementById('f-saldo').focus(); document.getElementById('f-saldo').scrollIntoView({block:'center'}); return; }
   }
 
   var isEdit=!!EDIT_ID;
@@ -7463,8 +7511,11 @@ function submitPedido(){
   /* ---- El historial de pagos comparte campo con el método ----
      Si el pedido ya tiene pagos anotados (con su fecha y su n° de nota) y el vendedor
      NO tocó ningún número de plata, se conserva TAL CUAL: reescribirlo con el método
-     suelto le borraría a contabilidad todo el historial. Si sí cambió los montos, se
-     rehace desde el formulario, pero avisando antes. */
+     suelto le borraría a contabilidad todo el historial.
+     (27/09, decisión del dueño del 26/09 20:37) Y si SÍ cambió los montos, los pagos ya
+     registrados TAMPOCO se borran: corregir el precio cambia el saldo (`_soloPrecio`),
+     corregir «A cuenta» corrige solo el adelanto (`_rehaceAdel`, §4fr) y «SÍ, pagado» anota
+     lo que faltaba como un cobro de hoy (`_rb`, ver `pagoRestoPrev`). */
   var _compSinPago=false;
   var _pagSI  = segVal('f-pagado')==='SI';
   var _acuVal = _pagSI?0:_acu;
@@ -7476,7 +7527,11 @@ function submitPedido(){
      la veía en pantalla, guardaba, y en Contabilidad no aparecía nunca. En vez de perderla
      se frena y se le dice qué hacer. El recargo por entrega ya cobrado también la usa. */
   (function(){
-    if(!compsArr(FORM_COMPS).length) return;
+    /* (27/09) Solo las imágenes NUEVAS: las que el formulario trae de un pago ya registrado ya están pegadas a ese pago. Una
+       venta sin adelanto con un cobro registrado (el formulario muestra la imagen de ese cobro) no dejaba corregir ni la
+       dirección ni el precio, y la única salida era quitarle la imagen al pago registrado. */
+    var _yaPeg = prev ? imgsPagoDe(prev) : [];
+    if(!compsArr(FORM_COMPS).filter(function(id){ return _yaPeg.indexOf(fidLimpio(id))<0; }).length) return;
     var _env=montoForm('f-envio');
     var _envCob=_env>0 && segVal('f-envio-cob')==='SI';
     if(_pagSI || _acuVal>0 || _envCob) return;                 // hay dónde guardarla
@@ -7579,33 +7634,131 @@ function submitPedido(){
   var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
                     (r2(Number(prev.acuenta)||0)===_acuVal &&     // r2: el formulario los muestra con 2 decimales (26/09)
                      r2(Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+  /* 💵 A. (27/09, decisión del dueño del 26/09 20:37) CORREGIR EL PRECIO CONSERVA LOS PAGOS. Cambió el saldo (el precio) y no
+     el adelanto: antes se preguntaba «¿borrar el historial?» y el historial se rehacía SOLO con el adelanto — un QR de Bs 1.000
+     registrado en Contabilidad desaparecía. Ahora los pagos quedan tal cual (fecha, recibo, `>chofer`, imágenes, el 2° método
+     del mixto) y el saldo y «pagado» se recalculan como en Contabilidad (`aplicarCobros`: saldo 0 = pagada). */
+  var _soloPrecio = _tieneHist && !_plataIgual && !_pagSI && !_mixCambio && r2(Number(prev.acuenta)||0)===_acuVal;
+  /* …y si cambió «A cuenta», se corrige SOLO el adelanto (§4fr: su día, su recibo, quién tiene la plata) y los otros cobros
+     registrados —que el formulario ni muestra— quedan como están. */
+  var _rehaceAdel = _tieneHist && !_plataIgual && !_soloPrecio && !_pagSI;
+  /* 💵 B. «SÍ, pagado» sobre una venta con pagos y sin saldar: el adelanto queda en SU día y lo que faltaba entra HOY como un
+     cobro nuevo (ver `pagoRestoPrev`). */
+  var _rb = (_pagSI && isEdit && prev && !_deBorrador) ? pagoRestoPrev() : null;
   /* 💵 (26/09, revisión de Pedidos) EL PAGO YA REGISTRADO NO SE CAMBIA CALLADO. Con los montos iguales,
      el historial se conserva tal cual (`_plataIgual`) — y eso se llevaba puesto lo que la persona SÍ
      cambió en el bloque del pago: el «Monto total cobrado» de una venta pagada (3.000 → 3.500), el método
      (Efectivo → QR) o el banco. Decía «Cambios guardados ✓» y la planilla, Contabilidad y el Cuadre
      seguían con lo de antes. Reescribir ese pago desde acá le cambiaría la fecha, el recibo y quién tiene
      la plata; por eso se dice dónde se corrige (lo mismo que el flete cobrado, §4eu) y se pregunta si se
-     guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0). */
+     guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0).
+     (27/09) Lo mismo cuando cambió solo el precio (`_soloPrecio`): los pagos quedan como están. */
   var _p0=(isEdit && prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
-  var _tocoPago = !!(_p0 && _tieneHist && _plataIgual && (_pagSI || _acuVal>0) && (
+  var _tocoPago = !!(_p0 && _tieneHist && (_plataIgual || _soloPrecio) && (_pagSI || _acuVal>0) && (
         segVal('f-metodo')!==_p0.metodo ||
         (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
         (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
+  var _lineaPago=function(c){ return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c); };
   if(_tocoPago &&
      !confirm('💵 Los pagos de esta venta ya están registrados:\n\n'+
-              contaPagos(prev).map(function(c){
-                return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
-              }).join('\n')+
+              contaPagos(prev).map(_lineaPago).join('\n')+
               '\n\nEl monto y el método de un pago ya registrado NO se cambian desde este formulario (se perdería su fecha, su recibo y quién tiene la plata). '+
               'Si alguno está mal, corregilo en Contabilidad → ✏️ Corregir este pago.\n\n'+
               '¿Guardar igual lo demás del pedido? Los pagos quedan como están.')) return;
-  if(_tieneHist && !_plataIgual &&
+  /* B con el adelanto pagado con dos métodos: el bloque del 2° método MUESTRA ese pago, ya registrado. Tocarlo acá no dice si se
+     quiso corregir el adelanto o repartir lo que falta, y ninguna de las dos cosas se adivina con plata. */
+  if(_rb && _rb.mx && _mixCambio){
+    toast('💳 El adelanto de esta venta ya está registrado con dos métodos ('+contaMetodoTxt(anticipoDe(prev)||{})+' + '+contaMetodoTxt(_rb.mx)+' '+fmtBs(_rb.mx.monto)+
+          ') y no se cambia desde acá. Dejá el segundo método como estaba —lo que faltaba se anota con el método de arriba— o corregí el adelanto en Contabilidad → ✏️ Corregir este pago.','err',12000);
+    var _wmx=document.getElementById('wrap-mixto'); if(_wmx){ try{ _wmx.scrollIntoView({block:'center'}); }catch(e){} }
+    return;
+  }
+  var _faltaB = _rb ? r2(_cobVal-_rb.ya) : 0;
+  // (lite no pasa por la validación de arriba) sin el total no se sabe cuánto faltaba, y un cobro sin método no existe
+  if(_rb && !(_cobVal>0)){ markErr('f-cobrado'); toast('Poné el MONTO TOTAL COBRADO de esta venta (ya habían entrado '+fmtBs(_rb.ya)+')','err'); var _fcbB=document.getElementById('f-cobrado'); if(_fcbB){ try{ _fcbB.focus(); _fcbB.scrollIntoView({block:'center'}); }catch(e){} } return; }
+  if(_rb && _faltaB>0.009 && !segVal('f-metodo')){
+    toast('Elegí con qué pagó lo que faltaba (Efectivo / QR / Tarjeta)','err');
+    var _wmt=document.getElementById('wrap-metodo'); if(_wmt){ try{ _wmt.scrollIntoView({block:'center'}); }catch(e){} }
+    return;
+  }
+  if(_rb && _faltaB<-0.009 &&
+     !confirm('⚠️ Por esta venta ya entraron '+fmtBs(_rb.ya)+' y el total que pusiste es '+fmtBs(_cobVal)+':\n\n'+
+              contaPagos(prev).filter(function(c){ return !esEnvio(c); }).map(_lineaPago).join('\n')+
+              '\n\nLos pagos registrados NO se tocan: la venta queda cobrada de MÁS por '+fmtBs(-_faltaB)+' y eso hay que verlo en Contabilidad.\n\n¿Guardar igual?')) return;
+  /* Lo que el adelanto rehecho SÍ borra —el adelanto entero si «A cuenta» queda en 0, o el renglón del 2° método si se lo
+     quitó—: eso se pregunta, con lo que se va. Corregir un monto no borra nada y no se pregunta. */
+  var _cobPrevR = prev ? cobrosReales(prev) : [];
+  var _mxPrevR = _mxPrev ? mixtoEn(anticipoEscrito(prev), _cobPrevR, prev) : null;
+  var _cobOtros = _cobPrevR.filter(function(c){ return c!==_mxPrevR; });   // los cobros que NO son parte del adelanto
+  var _seBorran = [];
+  if(_rehaceAdel){
+    if(_antPrev && !(_acuVal>0)) _seBorran.push(_antPrev);
+    if(_mxPrevR && !(_acuVal>0 && _mixOn)) _seBorran.push(_mxPrevR);
+  }
+  if(_seBorran.length &&
+     !confirm('⚠️ Se va a BORRAR '+(_seBorran.length===1?'este pago ya registrado':'estos pagos ya registrados')+':\n\n'+
+              _seBorran.map(_lineaPago).join('\n')+
+              (_cobOtros.length?'\n\nLos otros pagos quedan como están.':'')+'\n\n¿Guardar igual?')) return;
+  /* Lo que queda del camino de antes: una venta YA pagada a la que se le cambia el reparto del pago mixto. Ahí el formulario
+     rehace el pago entero, y se avisa. */
+  var _rehaceTodo = _tieneHist && !_plataIgual && !_soloPrecio && !_rehaceAdel && !_rb;
+  if(_rehaceTodo &&
      !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
-              contaPagos(prev).map(function(c){
-                return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
-              }).join('\n')+
+              contaPagos(prev).map(_lineaPago).join('\n')+
               '\n\nAl cambiar los montos ese historial se borra.\n¿Guardar igual?')) return;
-  var _metodoPago = _plataIgual ? prev.metodoPago : _metForm;
+  var _metodoPago, _pagadoFin=null, _acuFin=null, _saldoFin=null, _avisoPlata='';
+  var _sumaM=function(l){ var t=0; (l||[]).forEach(function(c){ t+=Number(c.monto)||0; }); return r2(t); };
+  if(_plataIgual || _soloPrecio){
+    _metodoPago = prev.metodoPago;
+    if(_soloPrecio){
+      var _antA=anticipoDe(prev);
+      _acuFin=Number(prev.acuenta)||0; _saldoFin=_salVal;
+      _pagadoFin=_salVal<=0.009 && (_sumaM(_cobPrevR)>0.009 || (_antA && (Number(_antA.monto)||0)>0.009));
+      _avisoPlata='los pagos ya registrados quedan como estaban'+(_pagadoFin?' y la venta queda PAGADA':(' · falta cobrar '+fmtBs(_salVal)));
+    }
+  }else if(_rb){
+    /* Lo registrado, tal cual (el adelanto suelto pasa a renglón con el día y el recibo de la venta, como lo escribe
+       `aplicarCobros`), y al final lo de HOY con el método, el banco y las imágenes NUEVAS del formulario. Las que el
+       formulario ya mostraba son de los pagos de antes y se quedan con ellos. */
+    var _hoyB=todayStr(), _notaB=document.getElementById('f-nota').value, _imgPrevB=imgsPagoDe(prev);
+    var _nuevasB=compsArr(FORM_COMPS).filter(function(id){ return _imgPrevB.indexOf(fidLimpio(id))<0; });
+    var _met1=segVal('f-metodo'), _nuevos=[];
+    if(_faltaB>0.009){
+      var _m2B=(_mixOn && !_rb.mx) ? r2(mixtoMonto2()) : 0;    // «➕ Pagó con dos métodos» para lo que faltaba
+      _nuevos.push({ metodo:_met1, banco:(_met1==='QR'?segVal('f-banco'):''), monto:r2(_faltaB-_m2B), fecha:_hoyB, nota:_notaB,
+                     comps:(metodoConComprobante(_met1)?_nuevasB:[]) });
+      if(_m2B>0) _nuevos.push({ metodo:segVal('f-metodo2'), banco:(segVal('f-metodo2')==='QR'?segVal('f-banco2'):''), monto:_m2B,
+                                fecha:_hoyB, nota:_notaB, comps:compsArr(FORM_COMPS2) });
+    }
+    var _antB=_rb.ant ? JSON.parse(JSON.stringify(_rb.ant)) : null, _cobB=JSON.parse(JSON.stringify(_rb.cobros));
+    if(!_nuevos.length && _nuevasB.length){                    // sin cobro nuevo: la imagen va al pago que se veía (§4em)
+      var _dB=_antB || _cobB[0];
+      if(_dB){ _dB.comps=compsArr(compsArr(_dB.comps!=null?_dB.comps:_dB.comp).concat(_nuevasB)); _dB.comp=_dB.comps[0]||''; }
+    }
+    _metodoPago=textoCobros((_antB?[_antB]:[]).concat(_cobB).concat(_nuevos));
+    var _sumN=_sumaM(_nuevos);
+    _acuFin=Number(prev.acuenta)||0;                            // el adelanto sigue siendo el adelanto (§4eu), no 0
+    _saldoFin=r2(_cobVal-_rb.ya-_sumN);                         // negativo = cobrada de más («hay que verlo»)
+    _pagadoFin=_saldoFin<=0.009 && (_sumaM(_cobB.concat(_nuevos))>0.009 || (_antB && (Number(_antB.monto)||0)>0.009));
+    _avisoPlata = _nuevos.length ? ('lo que ya había entrado queda en su día y se anotó '+(_nuevos.length===1?'un cobro':'dos cobros')+' de hoy por '+fmtBs(_sumN))
+                : (_saldoFin<-0.009 ? ('queda cobrada de MÁS por '+fmtBs(-_saldoFin)+': hay que verlo en Contabilidad') : 'ya estaba todo cobrado: no se agregó ningún pago');
+  }else if(_rehaceAdel){
+    var _adelTxt=_metForm;
+    /* Sin adelanto escrito (la venta solo tenía cobros), uno NUEVO va como renglón, con el día y el recibo de la venta como
+       lo arma `anticipoDe`: el método suelto al lado de un historial no lo lee nadie. */
+    if(_acuVal>0 && !_antPrev && !_mixOn && _cobOtros.length){
+      var _imgPrevA=imgsPagoDe(prev), _mA=segVal('f-metodo');
+      _adelTxt=textoCobros([{ anticipo:true, metodo:_mA, banco:(_mA==='QR'?segVal('f-banco'):''), monto:_acuVal,
+        fecha:contaFecha(prev)||todayStr(), nota:document.getElementById('f-nota').value,
+        comps:(metodoConComprobante(_mA)?compsArr(FORM_COMPS).filter(function(id){ return _imgPrevA.indexOf(fidLimpio(id))<0; }):[]) }]);
+    }
+    _metodoPago=[_adelTxt, textoCobros(_cobOtros)].filter(function(x){ return !!String(x||'').trim(); }).join(' + ');
+    _acuFin=_acuVal; _saldoFin=_salVal;
+    _pagadoFin=_salVal<=0.009 && (_acuVal>0.009 || _sumaM(_cobOtros)>0.009);
+    if(_cobOtros.length) _avisoPlata='los otros pagos registrados quedan como estaban';
+  }else{
+    _metodoPago = _metForm;
+  }
   /* ⚠️ LA MARCA «REGISTRADO» NO SE PIERDE AL GUARDAR DESDE EL FORMULARIO (§4fy). `_metForm` se
      arma sin ella, y solo el bloque del flete (más abajo) la reponía — que sale antes si el
      pedido no tiene flete. Una venta con «A cuenta» (el formato de TODA venta nueva con
@@ -7619,8 +7772,8 @@ function submitPedido(){
      historial se conserva tal cual (arriba: `_plataIgual`) — y con él se tiraban las
      imágenes recién subidas al formulario: «Imagen lista ✓», «Cambios guardados ✓», y en
      la planilla nada. Ahora las nuevas se pegan al adelanto (el pago de la venta), que es
-     donde el formulario las muestra. */
-  if(_plataIgual && prev){
+     donde el formulario las muestra. (27/09) Lo mismo si solo cambió el precio (`_soloPrecio`). */
+  if((_plataIgual || _soloPrecio) && prev){
     var _cPrev=compsArr(metodoFormulario(prev).comps), _cNow=compsArr(FORM_COMPS);
     var _nuevas=_cNow.filter(function(id){ return _cPrev.indexOf(id)<0; });
     var _quitadas=_cPrev.filter(function(id){ return _cNow.indexOf(id)<0; });
@@ -7848,11 +8001,12 @@ function submitPedido(){
     zona: _tienda ? ZONA_TIENDA : document.getElementById('f-zona').value.trim(),
     direccion: _tienda ? dirTiendaConSucursal() : document.getElementById('f-direccion').value.trim(),
     maps: _tienda ? '' : (_maps||''),
-    pagado: segVal('f-pagado')==='SI',
+    // (27/09) Con los pagos registrados conservados, «pagado», «A cuenta» y el saldo salen de la cuenta de arriba (como `aplicarCobros`).
+    pagado: (_pagadoFin!=null) ? _pagadoFin : (segVal('f-pagado')==='SI'),
     metodoPago: _metodoPago,
     cobradoBs: _cobVal || (prev?(Number(prev.cobradoBs)||0):0),
-    acuenta: _plataIgual ? (Number(prev.acuenta)||0) : _acuVal,
-    saldo:   _plataIgual ? (Number(prev.saldo)||0)   : _salVal,
+    acuenta: (_acuFin!=null) ? _acuFin : (_plataIgual ? (Number(prev.acuenta)||0) : _acuVal),
+    saldo:   (_saldoFin!=null) ? _saldoFin : (_plataIgual ? (Number(prev.saldo)||0) : _salVal),
     observaciones: document.getElementById('f-obs').value.trim(),
     garantia: document.getElementById('f-garantia').value.trim(),
     facturarA: document.getElementById('f-facturar').value.trim(),
@@ -8052,7 +8206,7 @@ function submitPedido(){
       if(res&&res.ok){
         if(res.pedido&&res.pedido.nroDia){ rec.nroDia=res.pedido.nroDia; upsert(rec); saveMirror(); if(UNLOCKED) renderAdmin(); }
         // Si el servidor le cambió la OC, `aplicarSello` ya lo avisó (9 s): no taparlo con el ✓.
-        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?'Cambios guardados ✓':'Pedido enviado al equipo ✓','ok');   // (26/09) el borrador completado es un pedido NUEVO
+        if(!(res.pedido && res.pedido.ocCambiada)) toast((isEdit && !_deBorrador)?('Cambios guardados ✓'+(_avisoPlata?(' — '+_avisoPlata):'')):'Pedido enviado al equipo ✓','ok',_avisoPlata?7000:undefined);   // (26/09) el borrador completado es un pedido NUEVO · (27/09) qué pasó con la plata
         verificarEcoForm(res.pedido, rec, prev);    // 🔍 lo que se vio vs lo que quedó (§4en); si falta algo, pisa el ✓ con el rojo
         flushPending();
       }
@@ -8480,7 +8634,7 @@ function pintarAntiguedadAtc(){
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
 function resetForm(){
-  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null;
+  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null; PAGO_NO_VISTO=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
@@ -8531,7 +8685,7 @@ function resetForm(){
 function editPedido(id){
   var rec=null; for(var i=0;i<STATE.length;i++) if(STATE[i].id===id){ rec=STATE[i]; break; }
   if(!rec) return;
-  EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null;
+  EDIT_ID=id; EDIT_REV=(rec.rev!=null)?rec.rev:null; PAGO_NO_VISTO=null;
   // Una venta de tienda se edita como venta de tienda: sin los campos del camión.
   VENTA_TIENDA=esVentaTienda(rec); pintarModoTienda();
   if(VENTA_TIENDA){ var _ts=document.getElementById('f-tienda-suc'); if(_ts) _ts.value=sucursalDeVenta(rec)||''; }
@@ -8569,8 +8723,10 @@ function editPedido(id){
      el formulario no dejaba guardar ni la dirección («Poné el MONTO TOTAL COBRADO»). Lo que se muestra es
      lo que ya entró por la venta, como en su ficha (`contaCobrado`). */
   var _cb=document.getElementById('f-cobrado');
+  /* (27/09) Pagada con adelanto Y cobros (lo que deja «SÍ, pagado» desde que el adelanto queda en su día): el campo decía solo
+     el adelanto —«Monto total cobrado: 500» en una venta de 3.000 pagada entera—. Pagada, dice todo lo que entró. */
   if(_cb){ var _a=anticipoDe(rec), _yaCob=rec.pagado?contaCobrado(rec):0;
-    _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||(_yaCob>0?r2(_yaCob):'')); }
+    _cb.value = (_yaCob>0) ? r2(_yaCob) : ((_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||'')); }
   var _ce=document.getElementById('f-envio');
   if(_ce){ var _e=r2(envioTotal(rec)); _ce.value=_e>0?_e:''; }
   /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
@@ -8607,7 +8763,7 @@ function editPedido(id){
   MIXTO=!!_mx; FORM_COMPS2=_mx?compsArr(_mx.comps!=null?_mx.comps:_mx.comp):[]; BANCO_EXTRA2=_mx?(_mx.banco||''):'';
   if(_mx){
     var _a2=anticipoDe(rec);
-    if(_cb && _a2 && rec.pagado) _cb.value=r2((Number(_a2.monto)||0)+(Number(_mx.monto)||0));
+    if(_cb && _a2 && rec.pagado) _cb.value=r2(Math.max((Number(_a2.monto)||0)+(Number(_mx.monto)||0), contaCobrado(rec)));   // (27/09) con otros cobros, todo lo que entró
     var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=r2(_mx.monto);
     segSet('f-metodo2', _mx.metodo||'');
   }
@@ -20871,8 +21027,16 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
-    if(val==='SI'){ pagadoSugerirTotal(); wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
-    else { wn.style.display=''; }
+    var fs=document.getElementById('f-saldo'), fa=document.getElementById('f-acuenta');
+    if(val==='SI'){
+      if(wn.style.display!=='none') PAGO_NO_VISTO={ acu:fa.value, sal:fs.value };   // venía de «NO»: lo que se veía (ver PAGO_NO_VISTO)
+      pagadoSugerirTotal(); wn.style.display='none'; fs.value='0'; fa.value='0';
+    }
+    else {
+      wn.style.display='';
+      if(PAGO_NO_VISTO && !montoForm(fa) && !montoForm(fs)){ fa.value=PAGO_NO_VISTO.acu; fs.value=PAGO_NO_VISTO.sal; }
+      PAGO_NO_VISTO=null;
+    }
     updateMetodoVisibility();
   });
   initSeg('f-metodo',updateBancoVisibility);
