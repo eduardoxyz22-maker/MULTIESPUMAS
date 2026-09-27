@@ -737,7 +737,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
   comprobantes (22 px) y «📎 abrir imagen» (18 px) son chicos para el dedo.
 
-## 📦 El saldo debajo de cada producto del formulario (§4gj, 27/09): lo que hay que respetar
+## 📦 El saldo debajo de cada producto del formulario (§4gj, publicado 27/09 11:16, `fecb3c6`): lo que hay que respetar
 El dueño: *«los vendedores no saben cuál es el stock… que coloquen el código y les aparezca el producto, cuántos hay
 pendientes de entrega, cuánto hay de saldo en almacén y si deben pedir a producción, informar al cliente que debe esperar
 o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en vez de pestaña, un aviso en el formulario**.

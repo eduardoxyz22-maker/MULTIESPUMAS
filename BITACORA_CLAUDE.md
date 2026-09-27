@@ -7474,6 +7474,9 @@ CLAUDE.md, «📦 El saldo debajo de cada producto del formulario».
 **Pruebas.** `tests/test_saldo_almacen.js`: 83 comprobaciones, 73 rojas contra `bd5dde3`. Incluye el caso del dueño con
 dos vendedores contra el `.gs` real: después de los 9 pedidos de A, B ve «10 · 9 · 1 libre».
 
+**Publicado el 27/09 a las 11:16 de Bolivia**: `main` = `fecb3c6`, Pages 1531 en verde, sin tocar el servidor.
+Batería sobre `9c7437b`: 105 suites, 4.018 bien · 0 mal.
+
 ## 4gi. 26/09, noche: «Nuevo pedido» y «Mis pedidos» desde el celular (2026-09-27)
 
 El dueño: *«¿Y pedidos, esa pestaña está bien? Poné un agente»*. Esas pestañas ya se habían revisado en §4gg, así que el
