@@ -521,12 +521,23 @@ function INIT_DOS(vend){
     _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500); out.antes=_caja(0);
     _SRV.stock=_stock({ aca:{ TIT:7 } }); var n0=_lecturas;
     var b=document.querySelector('#f-productos .prod-saldo .ps-act'); out.hayBoton=!!b;
-    if(b) b.click(); await _esperar(500); out.despues=_caja(0); out.lecturas=_lecturas-n0;
+    if(b) b.click(); await _esperar(500); out.fresca=_caja(0); out.lFresca=_lecturas-n0; out.toast=document.getElementById('toast').textContent;
     return out;
   });
   chk('🔄 el cuadrito tiene su botón «Actualizar»', r.hayBoton===true && /🔄 Actualizar/.test((r.antes||{}).txt||''), [r.hayBoton, r.__error]);
-  chk('…que lee la planilla YA (aunque la última lectura sea fresca) y repinta: de 4 pasa a 7', r.lecturas===1 && /En almacén 7/.test((r.despues||{}).txt||'') && /En almacén 4/.test((r.antes||{}).txt||''),
-      [r.lecturas, r.antes && r.antes.txt, r.despues && r.despues.txt]);
+  /* (27/09, a conciencia) El dueño pidió un mínimo de 15 s entre lecturas del botón: con la lectura de recién no se lee de
+     nuevo (antes leía en cada toque). Pasados los 15 s, lee ya, como antes. `tests/test_rev8_saldo.js` §8. */
+  chk('…con la lectura de recién (menos de 15 s) NO vuelve a leer: «El saldo ya está al día: se leyó hace 1 s»',
+      r.lFresca===0 && /En almacén 4/.test((r.fresca||{}).txt||'') && /El saldo ya está al día: se leyó hace 1 s/.test(r.toast||''), [r.lFresca, r.toast, r.fresca && r.fresca.txt]);
+  await page.clock.setFixedTime(new Date(Date.parse(RELOJ)+16000));      // pasan 16 segundos
+  r = await ev(async () => {
+    var n0=_lecturas, b=document.querySelector('#f-productos .prod-saldo .ps-act');
+    if(b) b.click(); await _esperar(500);
+    return { despues:_caja(0), lecturas:_lecturas-n0 };
+  });
+  await page.clock.setFixedTime(new Date(RELOJ));
+  chk('…pasados 15 s lee la planilla YA (aunque la lectura automática sea de hace menos de un minuto) y repinta: de 4 pasa a 7',
+      r.lecturas===1 && /En almacén 7/.test((r.despues||{}).txt||''), [r.lecturas, r.despues && r.despues.txt, r.__error]);
 
   r = await ev(async () => {
     var out={};

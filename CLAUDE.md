@@ -780,9 +780,14 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 Lo que ya se fabrica para ESTE pedido** (`enProduccion`, misma `prodClave` y MISMA cantidad, como
   `heredarMarcas`): «SE FABRICA PARA ESTE PEDIDO (pedido el…, llega ~…)», o verde si llegó.
   · Una ATC que al editarla pasa a OC se mira entera (`stockCuenta(prev)`); en una RPT la pregunta dice «a la sucursal».
-  · `tests/test_rev8_saldo.js` (36; 23 rojas contra `fecb3c6`). **Esperan al dueño**: borrar solo el código en una
-  medida especial; contar borradores de Kommo; mínimo entre toques de 🔄; el filtro viejo «🔵 Especiales»
-  (`hasEspecial`) que marca «160X190CM».
+  · **Decidido por el dueño (27/09)**: (1) el código de la medida estándar en una medida especial **se borra solo**
+  (`codigoEspecialBorrar`: al salir del campo «Otros» y al empezar `submitPedido`), con aviso. ⚠️ NUNCA en un renglón
+  ya guardado tal cual: lo de logística lo sigue por `prodClave` (`heredarMarcas`) y se perdería — ahí el cuadrito
+  sigue diciendo «borralo». (2) Los borradores de Kommo **no** cuentan como pendientes. (3) **🔄 Actualizar: una lectura
+  cada 15 s como mucho** (`SALDO_BOTON_MS`; con la última lectura fallida, lee igual).
+  · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
+  Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
+  · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

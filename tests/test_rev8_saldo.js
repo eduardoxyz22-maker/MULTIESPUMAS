@@ -19,6 +19,13 @@
       el 22/09, llega ~25/09)», y la línea roja cuenta desde esa llegada.
    4. Una ATC que al editarla pasa a 📄 OC: sus productos ahora salen del stock, y al guardar no se preguntaba nada.
    5. En una RPT la pregunta dice «¿Le avisaste a la sucursal…?» (no «al cliente»).
+   Y las decisiones del dueño del 27/09 (cada una falla contra `89512b1`, la versión de arriba sin ellas):
+   6. 📐 «Borrarlo solo»: el código de la medida estándar en un renglón de medida especial se borra al salir del campo
+      «Otros» (y al guardar, por si fue con Enter). Un pedido YA guardado así no se toca: lo de logística lo sigue por
+      `prodClave` (`heredarMarcas`) — ahí el cuadrito sigue diciendo «borralo».
+   7. 🏭 va antes que 📐: la medida especial que logística ya mandó a fabricar PARA ese pedido dice cuándo llega.
+   8. ⏱️ 🔄 Actualizar: como mucho una lectura cada 15 s (con la última lectura fallida, lee igual).
+   9. 🔵 El filtro «Especiales» (y el celeste de la fila) no marca «160X190CM» ni «1,60 x 1,90».
 
    Datos SINTÉTICOS (el repo es público). Reloj clavado en el miércoles 23/09/2026, 15:00 de Bolivia.
    Se corre:  node tests/test_rev8_saldo.js   (desde la raíz del repo)
@@ -338,6 +345,125 @@ function PREPARAR(){
   });
   chk('🏪 en una RPT sin saldo la pregunta dice «¿Le avisaste a la sucursal cuánto tiene que esperar?»',
       page.__dialogos.length===1 && /¿Le avisaste a la sucursal cuánto tiene que esperar\?/.test(page.__dialogos[0]) && r.guardados===0, [page.__dialogos, r]);
+
+  // ═══ 6. 📐 LAS DECISIONES DEL DUEÑO (27/09): el código de la medida estándar se borra solo ════════════
+  console.log('\n── 6. 📐 El código de la medida estándar en una medida especial se borra solo (dueño, 27/09) ──');
+  reset();
+  r = await ev(async () => {
+    var out={};
+    await _escenario(_stock({ aca:{ TIT:4 } }), []);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 });             // de la lista: TITANIO ICE 160x190
+    _renglon(0, { otra:'150x200' }); out.mientras=_caja(0).cod;      // escribiendo (input): todavía no se toca
+    var c=document.querySelectorAll('#f-productos .prod-card')[0];
+    c.querySelector('.prod-medida-otro').dispatchEvent(new Event('change', { bubbles:true })); await _esperar(500);
+    out.cod=c.querySelector('.prod-codigo').value; out.toast=document.getElementById('toast').textContent; out.caja=_caja(0);
+    var sale=async function(o){
+      _nuevo(); _renglon(0, o); var k=document.querySelectorAll('#f-productos .prod-card')[0];
+      k.querySelector('.prod-medida-otro').dispatchEvent(new Event('change', { bubbles:true })); await _esperar(300);
+      return k.querySelector('.prod-codigo').value;
+    };
+    out.cm=await sale({ codigo:'CH1201', otra:'160X190CM', cant:1 });   // estándar escrita distinto
+    out.bir=await sale({ codigo:'CH2172', otra:'160x200', cant:1 });    // SOMIER BiRELAX «ESPECIAL»: su código es PARA medida especial
+    return out;
+  });
+  chk('📐 mientras escribe «150x200» (letra por letra) el código no se toca', r.mientras==='CH1201', [r.mientras, r.__error]);
+  chk('📐 al salir del campo «Otros 150x200», el código CH1201 (del 160x190) se BORRA SOLO', r.cod==='', [r.cod, r.__error]);
+  chk('…y lo dice: «📐 Borré el código CH1201: es del TITANIO ICE 160x190, y esta es una medida especial (se fabrica a pedido).»',
+      /📐 Borré el código CH1201: es del TITANIO ICE 160x190, y esta es una medida especial \(se fabrica a pedido\)\./.test(r.toast||''), r.toast);
+  chk('…el cuadrito queda en azul «MEDIDA ESPECIAL», ya sin «borralo»',
+      r.caja && /ps-azul/.test(r.caja.cls) && /MEDIDA ESPECIAL · se fabrica a pedido/.test(r.caja.txt) && !/borralo/.test(r.caja.txt), r.caja && [r.caja.cls, r.caja.txt]);
+  chk('(control) «160X190CM» es la medida estándar escrita distinto: el código CH1201 queda', r.cm==='CH1201', r.cm);
+  chk('(control) el código del catálogo PARA medida especial (CH2172, SOMIER BiRELAX «ESPECIAL») queda', r.bir==='CH2172', r.bir);
+
+  reset();
+  r = await ev(async () => {
+    var out={};
+    await _escenario(_stock({ aca:{ TIT:4 } }), []);
+    /* Guardar sin salir del campo (Enter): solo `input`, nunca `change`. */
+    _nuevo(); _llenarDatos('CLIENTE ENTER'); _renglon(0, { codigo:'CH1201', otra:'150x200', cant:1 }); _fecha('2026-09-30'); await _esperar(500);
+    await _guardar();
+    var p=window._SRV.pedidos.filter(function(q){ return q.cliente==='CLIENTE ENTER'; })[0];
+    out.prod=p && p.productos && p.productos[0];
+    return out;
+  });
+  chk('📐 guardado sin salir del campo (Enter): se guarda SIN el código del 160x190 («TITANIO ICE · 150x200 · sin código»)',
+      r.prod && r.prod.codigo==='' && r.prod.medida==='150x200' && r.prod.desc==='TITANIO ICE', [r.prod, r.__error]);
+  chk('…y la pregunta al guardar ya no dice «borralo» (ya se borró)',
+      page.__dialogos.length===1 && /TITANIO ICE 150x200: medida especial: se fabrica a pedido/.test(page.__dialogos[0]) && !/borralo/.test(page.__dialogos[0]), page.__dialogos);
+
+  reset();
+  r = await ev(async () => {
+    var out={};
+    var viejo=_P({ id:'espv', cliente:'CLIENTE ESP VIEJO', fecha:_d(9), productos:[ _linea('TIT', 1, { medida:'150x200', enProd:true, prodEn:'Moreno', prodF:_d(-1), chk:'no' }) ] });
+    await _escenario(_stock({ aca:{ TIT:4 } }), [viejo]);
+    _nuevo(); editPedido('espv'); await _esperar(600); out.caja=_caja(0);
+    document.getElementById('f-direccion').value='Calle vieja 9';
+    await _guardar();
+    var p=window._SRV.pedidos.filter(function(q){ return q.id==='espv'; })[0];
+    out.prod=p && p.productos && p.productos[0]; out.dir=p && p.direccion;
+    return out;
+  });
+  chk('(control) un pedido YA GUARDADO con ese código no se toca al corregir la dirección: el código y lo de logística (🏭 Moreno) quedan',
+      r.prod && r.prod.codigo==='CH1201' && r.prod.enProd===true && r.prod.prodEn==='Moreno' && r.dir==='Calle vieja 9', [r.prod, r.dir, r.__error]);
+  chk('…y ahí el cuadrito sigue avisando «borralo»', r.caja && /El código CH1201 es del TITANIO ICE 160x190: borralo/.test(r.caja.txt), r.caja && r.caja.txt);
+
+  // ═══ 7. 🏭 ANTES QUE 📐: la medida especial que ya se mandó a fabricar para ESTE pedido ═══════════════
+  console.log('\n── 7. 🏭 La medida especial ya pedida a fábrica para este pedido dice cuándo llega ──');
+  reset();
+  r = await ev(async () => {
+    var out={};
+    var pe=_P({ id:'espf', cliente:'CLIENTE ESP FAB', fecha:_d(7), productos:[ _linea('TIT', 1, { medida:'150x200', codigo:'', enProd:true, prodEn:'Moreno', prodF:_d(-1), chk:'no' }) ] });
+    await _escenario(_stock({ aca:{ TIT:4 } }), [pe]);
+    _nuevo(); editPedido('espf'); await _esperar(600); out.edit=_caja(0);
+    _fecha(_d(1)); await _esperar(450); out.movida=_caja(0);
+    _fecha(_d(7)); _renglon(0, { cant:2 }); await _esperar(500); out.dos=_caja(0);
+    return out;
+  });
+  chk('🏭 editando un pedido con su TITANIO ICE 150x200 ya pedido a fábrica: «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido el 22/09, llega ~25/09)», no «esperá ~5 días»',
+      r.edit && /🏭 SE FABRICA PARA ESTE PEDIDO en Moreno \(pedido el 22\/09, llega ~25\/09\)/.test(r.edit.txt) && !/MEDIDA ESPECIAL/.test(r.edit.txt), r.edit && [r.edit.cls, r.edit.txt, r.__error]);
+  chk('…y la línea roja cuenta desde esa llegada: «Para el jueves 24/09 no llega: programá desde el sábado 26/09»',
+      r.movida && /Para el jueves 24\/09 no llega: programá desde el sábado 26\/09/.test(r.movida.txt), r.movida && r.movida.txt);
+  chk('(control) con 2 unidades ya no es la línea que se pidió: vuelve a «📐 MEDIDA ESPECIAL · se fabrica a pedido»',
+      r.dos && /MEDIDA ESPECIAL · se fabrica a pedido/.test(r.dos.txt) && !/SE FABRICA PARA ESTE PEDIDO/.test(r.dos.txt), r.dos && r.dos.txt);
+
+  // ═══ 8. ⏱️ 🔄 ACTUALIZAR: como mucho una lectura cada 15 s (dueño, 27/09) ═══════════════════════════
+  console.log('\n── 8. ⏱️ 🔄 Actualizar: una lectura cada 15 s como mucho ──');
+  r = await ev(async () => {
+    /* Mientras lee, el cuadrito dice «Consultando…» sin botón: el toque que no lo encuentra no hace nada (como en la pantalla). */
+    var out={}, boton=function(){ return document.querySelector('#f-productos .prod-saldo .ps-act') || { click:function(){} }; };
+    await _escenario(_stock({ aca:{ TIT:4 } }), []);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500);
+    window._SRV.stock=_stock({ aca:{ TIT:7 } });
+    var n0=_lecturas; boton().click(); boton().click(); boton().click(); await _esperar(400);
+    out.l1=_lecturas-n0; out.t1=document.getElementById('toast').textContent; out.c1=_caja(0);
+    ULTIMO_ERROR='sin_red';                                          // la última lectura falló: se quiere reintentar
+    n0=_lecturas; boton().click(); await _esperar(400); out.l2=_lecturas-n0; out.c2=_caja(0);
+    return out;
+  });
+  chk('⏱️ tres toques con la lectura de recién: NINGUNA lectura más (cada una trae la planilla entera)', r.l1===0 && r.c1 && /En almacén 4/.test(r.c1.txt), [r.l1, r.c1 && r.c1.txt, r.__error]);
+  chk('…y lo dice: «✅ El saldo ya está al día: se leyó hace 1 s. Se puede volver a leer en 15 s.»',
+      /✅ El saldo ya está al día: se leyó hace 1 s\. Se puede volver a leer en 15 s\./.test(r.t1||''), r.t1);
+  chk('…pero si la última lectura FALLÓ, lee igual aunque sea de recién: de 4 pasa a 7', r.l2===1 && r.c2 && /En almacén 7/.test(r.c2.txt), [r.l2, r.c2 && r.c2.txt]);
+  await page.clock.setFixedTime(new Date(Date.parse(RELOJ)+16000));      // pasan 16 segundos
+  r = await ev(async () => {
+    window._SRV.stock=_stock({ aca:{ TIT:9 } });
+    var n0=_lecturas; document.querySelector('#f-productos .prod-saldo .ps-act').click(); await _esperar(400);
+    return { l:_lecturas-n0, c:_caja(0) };
+  });
+  await page.clock.setFixedTime(new Date(RELOJ));
+  chk('…pasados 15 s, el botón lee: de 7 pasa a 9', r.l===1 && r.c && /En almacén 9/.test(r.c.txt), [r.l, r.c && r.c.txt, r.__error]);
+
+  // ═══ 9. 🔵 «ESPECIALES» (y el celeste de la fila): una medida estándar escrita distinto no lo es ════════════
+  console.log('\n── 9. 🔵 El filtro «Especiales» no marca «160X190CM» ──');
+  r = await ev(async () => {
+    var P=function(m){ return { productos:[{ desc:'TITANIO ICE', medida:m, codigo:'', cant:1 }] }; };
+    return { cm:hasEspecial(P('160X190CM')), met:hasEspecial(P('1,60 x 1,90')), esp:hasEspecial(P('150x200')), std:hasEspecial(P('160x190')),
+             kCm:rowKind(P('160X190CM')), kEsp:rowKind(P('150x200')),
+             filtro:QUICK_DEFS.filter(function(q){ return q.k==='especial'; })[0].test(P('160X190CM')) };
+  });
+  chk('🔵 «160X190CM» y «1,60 x 1,90» son la medida estándar: ni «Especiales» ni fila celeste (antes sí)',
+      r.cm===false && r.met===false && r.kCm!=='especial' && r.filtro===false, [r, r.__error]);
+  chk('(control) «150x200» sigue siendo especial (celeste), y «160x190» no', r.esp===true && r.std===false && r.kEsp==='especial', r);
 
   chk('ningún error de JavaScript en la página', errores.length===0, errores.slice(0,5));
   await browser.close();

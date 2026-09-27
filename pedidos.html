@@ -2985,7 +2985,9 @@ function esMedidaConocida(m){
   return false;
 }
 // Un pedido tiene medida ESPECIAL si algún producto trae una medida no estándar (opción "Otros").
-function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && !esMedidaConocida(m)) return true; } return false; }
+/* (27/09) Una medida estándar escrita distinto («160X190CM», «1,60 x 1,90») NO es especial: `saldoMedidaCanon` la lleva a
+   «160x190». Antes el filtro «🔵 Especiales» y el color celeste de la fila las marcaban. */
+function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && !esMedidaConocida(m) && !esMedidaConocida(saldoMedidaCanon(m))) return true; } return false; }
 // Un pedido lleva medida 50x70 si algún producto tiene esa medida (resalte naranja claro).
 function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ if(normMedida(pr[i].medida)==='50x70') return true; } return false; }
 // Tabla de codigos -> producto + medida (autollenado). Generada desde el Excel de la empresa.
@@ -3072,6 +3074,10 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
   mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
+  /* 📐 (27/09, el dueño: «borrarlo solo») Una MEDIDA ESPECIAL escrita en «Otros» sobre el código que dejó la lista —el de la
+     medida estándar: CH1201 = TITANIO ICE 160x190—: el código se borra, como en el importador de Kommo. Al salir del campo
+     (`change`), no letra por letra: «160x19…» todavía no es especial. */
+  otro.addEventListener('change',function(){ codigoEspecialBorrar([card], EDIT_ID ? findById(EDIT_ID) : null); });
   // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
   cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase();
     var hit=CODIGOS[code];
@@ -7389,6 +7395,9 @@ function onCompFormElegido(ev){
 
 function submitPedido(){
   clearErr();
+  /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
+     guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
+  try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
   var vendedor=document.getElementById('f-vendedor').value.trim();
   /* 🏪 En una reposición el «cliente» es la SUCURSAL de destino, y se escribe en su propio
      campo (§4dk): el de cliente está escondido y traería lo que quedó de antes. */
@@ -16474,6 +16483,38 @@ function saldoCodigoOtro(x){
   }
   return null;
 }
+/* 📐 El código de la medida ESTÁNDAR pegado a un renglón de medida especial (el dueño, 27/09: «borrarlo solo»): qué es ese
+   código, o null. No cuenta un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL»), uno sin medida, uno que
+   el catálogo no conoce ni un renglón sin nombre (borrarlo lo dejaría sin producto). */
+function saldoCodigoDeEstandar(x){
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod];
+  if(!cat || !cat.m || normMedida(cat.m)==='especial' || !String((x&&x.desc)||'').trim()) return null;
+  if(saldoMismaMedida(cat.m, x.medida) || !saldoMedidaEspecial(x)) return null;
+  return { code:cod, d:cat.d, m:cat.m };
+}
+/* Lo borra de los renglones del formulario (`cards`, o todos). `prev` = el pedido que se edita: un renglón que ya estaba
+   guardado TAL CUAL no se toca, porque lo que puso logística (✔, 🏭, las fechas de fábrica) lo sigue por `prodClave`
+   (`heredarMarcas`); en ese el cuadrito sigue diciendo «borralo». Devuelve cuántos borró. */
+function codigoEspecialBorrar(cards, prev){
+  var viejos={}, borrados=[];
+  ((prev&&prev.productos)||[]).forEach(function(x){ if(x) viejos[prodClave(x)]=1; });
+  var lista=cards || document.querySelectorAll('#f-productos .prod-card');
+  for(var i=0;i<lista.length;i++){
+    var c=lista[i], cIn=c.querySelector('.prod-codigo'), ms=c.querySelector('.prod-medida'), mo=c.querySelector('.prod-medida-otro'), d=c.querySelector('.prod-desc');
+    if(!cIn || !ms || !mo || !d || ms.value!=='Otros') continue;
+    var x={ desc:String(d.value||'').trim(), medida:String(mo.value||'').trim(), codigo:String(cIn.value||'').trim() };
+    if(viejos[prodClave(x)]) continue;
+    var e=saldoCodigoDeEstandar(x); if(!e) continue;
+    cIn.value=''; borrados.push(e);
+  }
+  if(borrados.length){
+    toast(borrados.length===1
+      ? ('📐 Borré el código '+borrados[0].code+': es del '+saldoCodNombre(borrados[0])+', y esta es una medida especial (se fabrica a pedido).')
+      : ('📐 Borré '+borrados.length+' códigos de medida estándar en renglones de medida especial ('+borrados.map(function(e){ return e.code; }).join(', ')+').'), 'ok');
+    saldoAvisosProgramar();
+  }
+  return borrados.length;
+}
 /* Los códigos del catálogo de ese producto en esa medida (para decir cuál es el bueno). */
 function saldoCodigosDe(d, medida){
   var nd=stockNorm(d), out=[];
@@ -16493,10 +16534,12 @@ function saldoClasificar(f, prevPorClave, esPrev){
   f.esp=saldoMedidaEspecial(x);
   f.codOtro=saldoCodigoOtro(x);
   var pv=esPrev ? x : (prevPorClave ? prevPorClave[prodClave(x)] : null);
-  f.fab=(!f.esp && !f.codOtro && pv && enProduccion(pv) && (esPrev || (Number(pv.cant)||0)===(Number(x.cant)||0))) ? pv : null;
-  f.g = f.esp ? ('esp|'+stockNorm(x.desc)+'|'+saldoMedidaCanon(x.medida))
+  /* 🏭 va ANTES que 📐 (27/09): una medida especial es justo lo que logística manda a fabricar, y la ya pedida para este
+     pedido dice cuándo llega (no «esperá ~X días» contados desde hoy, con una línea roja que no corresponde). */
+  f.fab=(!f.codOtro && pv && enProduccion(pv) && (esPrev || (Number(pv.cant)||0)===(Number(x.cant)||0))) ? pv : null;
+  f.g = f.fab ? ('fab|'+prodClave(x))
+      : f.esp ? ('esp|'+stockNorm(x.desc)+'|'+saldoMedidaCanon(x.medida))
       : f.codOtro ? ('cod|'+prodClave(x))
-      : f.fab ? ('fab|'+prodClave(x))
       : f.k;
   return f;
 }
@@ -16588,9 +16631,9 @@ function saldoDiaConCupo(desde, sinId){
 /* El veredicto de UN renglón (rev8): 📐 · 🏷️ · 🏭 no salen del saldo del almacén; lo demás, `saldoVeredicto`. */
 function saldoVeredictoFila(f, sinId, fecha){
   var v;
-  if(f.esp) v=saldoVeredictoEspecial(f, sinId, fecha);
+  if(f.fab) v=saldoVeredictoFab(f, sinId, fecha);
+  else if(f.esp) v=saldoVeredictoEspecial(f, sinId, fecha);
   else if(f.codOtro) v={ k:f.k, cant:f.total, tipo:'codigo', color:'ambar', sinLibre:false, sinId:sinId||'', cod:f.codOtro, x:f.x };
-  else if(f.fab) v=saldoVeredictoFab(f, sinId, fecha);
   else v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat);
   v.nRen=f.nRen;
   return v;
@@ -16819,8 +16862,20 @@ function saldoAvisosPintarYa(filas){
     });
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
-/* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta. */
+/* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta.
+   ⏱️ (el dueño, 27/09) Pero no más de una vez cada 15 s: cada toque trae la planilla ENTERA y el servidor atiende a todo el
+   equipo. Con una lectura buena de hace menos, repinta y dice de cuándo es. Con la última lectura fallida sí vuelve a leer
+   (es lo que se quiere reintentar), y una lectura en camino se comparte (`saldoLeer`). */
+var SALDO_BOTON_MS=15000;
 function saldoActualizar(){
+  var ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : -1;
+  var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR);
+  if(!SALDO_LEYENDO && !REFRESCO_EN_VUELO && !falla && ms>=0 && ms<SALDO_BOTON_MS){
+    saldoAvisosPintarYa();
+    toast('✅ El saldo ya está al día: se leyó hace '+Math.max(1, Math.round(ms/1000))+' s. Se puede volver a leer en '+
+          Math.max(1, Math.ceil((SALDO_BOTON_MS-ms)/1000))+' s.', 'ok');
+    return Promise.resolve(false);
+  }
   try{ saldoFilasForm().forEach(function(f){ if(saldoDelAlmacen(f)) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
   return saldoLeer(true).then(function(){ saldoAvisosPintarYa(); });
 }

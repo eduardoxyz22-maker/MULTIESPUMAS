@@ -7494,14 +7494,28 @@ pintado, 1–3 ms por tecla; sin errores de consola ni desborde en 360 px.
 **Pruebas.** `tests/test_rev8_saldo.js`: 36 comprobaciones, 23 rojas contra `fecb3c6` (reloj clavado en el miércoles
 23/09/2026). Batería sobre `89512b1`: 106 suites, 4.054 bien · 0 mal.
 
-**Quedan para que decida el dueño:**
-- ¿Borrar solo el código de la medida estándar cuando la medida es especial (como el importador de Kommo)? Hoy el
-  cuadrito y la pregunta avisan, pero si la vendedora no lo borra la pestaña Stock lo cuenta como un 160x190.
-- ¿Contar los borradores de Kommo como pendientes antes de completarlos? Hoy no: todavía no son pedidos.
-- ¿Un mínimo entre toques de 🔄 Actualizar (por ejemplo 15 s)? Hoy cinco toques seguidos hacen una sola lectura, pero
-  uno cada 1,5 s hace una lectura por toque.
-- El filtro viejo «🔵 Especiales» (`hasEspecial` → `esMedidaConocida`) todavía marca «160X190CM» como especial. Es
-  anterior a esta revisión; se arregla con una línea (`saldoMedidaCanon`).
+**Lo que decidió el dueño (27/09, con las fotos de antes y ahora) y cómo quedó:**
+- **«Borrarlo solo»**: el código de la medida estándar en un renglón de medida especial se borra solo
+  (`codigoEspecialBorrar` + `saldoCodigoDeEstandar`), con un aviso «📐 Borré el código CH1201: es del TITANIO ICE
+  160x190, y esta es una medida especial (se fabrica a pedido)». Cuándo: al SALIR del campo «Otros» (`change`: letra por
+  letra, «160x19…» todavía no es especial) y al empezar `submitPedido` (por si se guardó con Enter). No se borra: una
+  medida estándar escrita distinto, un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL»), un código
+  que el catálogo no conoce, un renglón sin nombre, ni **un renglón ya guardado tal cual** — lo que puso logística (✔,
+  🏭, las fechas de fábrica) lo sigue por `prodClave` (`heredarMarcas`), y borrarle el código se lo sacaba. Ahí el
+  cuadrito sigue diciendo «borralo».
+- **Borradores de Kommo: no se cuentan** hasta completarlos (como estaba).
+- **🔄 Actualizar: una lectura cada 15 s como mucho** (`SALDO_BOTON_MS`): con una lectura buena de hace menos, repinta
+  y dice «✅ El saldo ya está al día: se leyó hace N s. Se puede volver a leer en M s.». Con la última lectura fallida
+  lee igual (es lo que se quiere reintentar).
+- **Publicar** apenas pasen las pruebas.
+- Y sin preguntarle, dos que salieron al hacerlo:
+  - **🏭 va antes que 📐** (`saldoClasificar`): una medida especial es justo lo que logística manda a fabricar, y la ya
+    pedida para ESE pedido decía «esperá ~X días» contados desde hoy, con una línea roja que no correspondía. Ahora dice
+    «🏭 SE FABRICA PARA ESTE PEDIDO… llega ~DD/MM». Con otra cantidad vuelve a 📐.
+  - **El filtro «🔵 Especiales»** y el celeste de la fila (`hasEspecial`, también en el Excel) ya no marcan «160X190CM»
+    ni «1,60 x 1,90» (`saldoMedidaCanon`).
+- `test_rev8_saldo.js` §6-9 (19 más: 55 en total; 10 rojas contra `89512b1`). `test_saldo_almacen` cambió a conciencia
+  el 🔄: con la lectura de recién no lee, pasados 15 s sí (84; 1 roja contra `89512b1`).
 
 ## 4gj. 27/09: el saldo del almacén debajo de cada producto del formulario (2026-09-27)
 
