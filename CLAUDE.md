@@ -764,6 +764,25 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
 - **Ventana que queda** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
   servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos.
 - `tests/test_saldo_almacen.js` (83; 73 rojas contra `bd5dde3`), con el caso de dos vendedores contra el `.gs` real.
+- **La revisión del 27/09 (§4gk, `8550355`+`89512b1`)** — tres renglones que NO salen del saldo del almacén, y a los que
+  el cuadrito contestaba con el saldo de otro colchón. `saldoClasificar` les pone su grupo `f.g` (`esp|`/`cod|`/`fab|`),
+  que es con lo que se suman y comparan (también el pedido guardado en `saldoFilasAGuardar`); solo `saldoDelAlmacen(f)`
+  pide lectura:
+  · **📐 Medida especial** (`saldoMedidaEspecial`, dueño: *«¿y qué pasa cuando es medida especial?»*): se fabrica a
+  pedido, NUNCA sale del stock → azul «📐 MEDIDA ESPECIAL · se fabrica a pedido: ~X días» (fábrica del modelo,
+  `saldoLeadModelo`, + 1 día, al primer día con cupo), sin números de almacén; con el código de la medida estándar
+  pegado, avisa «borralo». ⚠️ NO es especial una medida estándar escrita distinto (`saldoMedidaCanon`: «160X190CM»,
+  «2 plazas», «1,60 x 1,90»), un producto del catálogo en su propia medida, ni lo que algún Excel tiene con ese nombre y
+  medida. Un producto desconocido en medida no estándar es especial (no gris).
+  · **🏷️ Código de otra medida u otro producto** (`saldoCodigoOtro`): el stock identifica POR EL CÓDIGO, y la lista lo
+  deja puesto aunque después se cambie la medida → ámbar «EL CÓDIGO ES DE OTRA MEDIDA… El de 140x190 es CH1220» y
+  pregunta al guardar. «Otro producto» solo si el nombre es claramente otro del catálogo y no contiene al del código.
+  · **🏭 Lo que ya se fabrica para ESTE pedido** (`enProduccion`, misma `prodClave` y MISMA cantidad, como
+  `heredarMarcas`): «SE FABRICA PARA ESTE PEDIDO (pedido el…, llega ~…)», o verde si llegó.
+  · Una ATC que al editarla pasa a OC se mira entera (`stockCuenta(prev)`); en una RPT la pregunta dice «a la sucursal».
+  · `tests/test_rev8_saldo.js` (36; 23 rojas contra `fecb3c6`). **Esperan al dueño**: borrar solo el código en una
+  medida especial; contar borradores de Kommo; mínimo entre toques de 🔄; el filtro viejo «🔵 Especiales»
+  (`hasEspecial`) que marca «160X190CM».
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
