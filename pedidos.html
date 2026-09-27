@@ -177,7 +177,13 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .edit-banner.on{display:flex}
 .edit-banner b{color:var(--amber)}
 
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:7000;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--black);color:#fff;padding:14px 26px;border-radius:var(--r-pill);font-size:.86rem;font-weight:600;box-shadow:0 8px 30px rgba(0,0,0,.3);z-index:7000;transition:transform .35s var(--ease);display:flex;align-items:center;gap:10px;max-width:90vw;text-align:center;
+  /* (27/09, revisión en el celular) Con `left:50%` y sin ancho, el aviso NUNCA pasaba de media pantalla: en un celular de
+     390 px era una columna de 195 (143 de texto) y el aviso largo, 18 renglones y 358 px de alto encima del formulario,
+     tapando el botón Guardar. `max-content` lo deja crecer hasta el 90 % y `pointer-events:none` no tapa lo de abajo (solo
+     lleva texto: no hay nada que tocarle). En la compu, hasta 640 px como antes (era media pantalla). */
+  width:max-content;max-width:min(90vw,640px);pointer-events:none}
+@media(max-width:560px){.toast{padding:12px 16px;border-radius:14px}}
 .toast.show{transform:translateX(-50%) translateY(0)}
 .toast.ok{background:#0f766e}
 .toast.err{background:var(--red)}
@@ -566,7 +572,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 </div>
 
 <div class="nav">
-  <button id="tab-form" class="active" onclick="showView('form')">＋ Nuevo pedido</button>
+  <button id="tab-form" class="active" onclick="tabNuevoPedido()">＋ Nuevo pedido</button>
   <button id="tab-mis" onclick="showView('mis')">📋 Mis pedidos</button>
   <button id="tab-chofer" onclick="showView('chofer')">🚚 Chofer</button>
   <button id="tab-conta" onclick="showView('conta')">🧾 Contabilidad</button>
@@ -717,7 +723,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 
       <div class="grid2">
         <div class="field solo-entrega">
-          <label class="lb">Turno de entrega</label>
+          <label class="lb">Turno de entrega <span class="hint" id="f-turno-hint"></span></label>
           <div class="seg" id="f-turno">
             <button type="button" data-val="AM" class="active">🌅 AM</button>
             <button type="button" data-val="PM">🌆 PM</button>
@@ -1051,8 +1057,10 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
       <div id="mis-cola"></div>
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
-      <div class="qchips" id="mis-chips"></div>
       <div class="metrics" id="mis-metrics"></div>
+      <!-- 📱 (26/09, dueño) Los botones de filtro van JUSTO ARRIBA de la lista: en el celular, con los cuatro números en
+           el medio, tocar «📅 Hoy» cambiaba una lista que quedaba mucho más abajo, fuera de la pantalla. -->
+      <div class="qchips" id="mis-chips"></div>
       <div id="mis-lista"></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
     </div>
@@ -8277,7 +8285,10 @@ function submitPedido(){
        derecho a Contabilidad —el razonamiento era "no hay camión al que avisarle"— pero
        la vendedora igual tiene que pasar la venta, así que se quedaba sin el botón de
        copiar. Se le muestra el mensaje y, al cerrarlo, cae en Contabilidad como antes. */
-    if(_tienda){ irAContaDe(rec); showWhatsappModal(rec); return; }
+    /* (27/09, revisión en el celular) …pero solo la venta de tienda NUEVA. CORREGIR una (desde Mis pedidos) también caía
+       acá: terminaba en Contabilidad, con «✅ Pedido guardado» y el mensaje de una venta nueva para pasar al grupo — como
+       si hubiera cargado otra. Una edición vuelve a donde estaba y dice qué cambió, como cualquier pedido. */
+    if(_tienda && !(wasEdit && !_deBorrador)){ irAContaDe(rec); showWhatsappModal(rec); return; }
     /* ⚠️ Volver a DONDE ESTABA, no a Administración. Antes iba siempre a `showView('admin')`
        —porque editar era cosa de administración— y desde §4bc una vendedora que corregía su
        pedido terminaba en la pantalla del candado pidiéndole la contraseña, sin ninguna
@@ -8502,7 +8513,12 @@ function abrirVentaTienda(){
   var fc=document.getElementById('f-cliente'); if(fc){ fc.focus(); fc.scrollIntoView({block:'center'}); }
 }
 function cancelarVentaTienda(){
-  VENTA_TIENDA=false; resetForm(); pintarModoTienda(); showView('conta'); setContaTab(contaTab());
+  /* (27/09, revisión en el celular) Corrigiendo una venta de tienda (abierta desde Mis pedidos) este «Cancelar» del cartel
+     también llevaba a Contabilidad: vuelve a donde se abrió la edición, como «Cancelar edición». */
+  var _desde = EDIT_ID ? EDIT_DESDE : null;
+  VENTA_TIENDA=false; resetForm(); pintarModoTienda();
+  if(_desde){ volverDeEdicion(_desde); return; }
+  showView('conta'); setContaTab(contaTab());
 }
 /* El N° de OC se genera solo (correlativo del mes). Se deja escribir a mano solo en
    ROHO —donde el número lo manda el cliente— y al EDITAR, para poder corregirlo. */
@@ -8655,6 +8671,7 @@ function resetForm(){
   addProdRow();
   document.getElementById('f-celular').value='';
   segSet('f-turno','AM');
+  var _tHint0=document.getElementById('f-turno-hint'); if(_tHint0) _tHint0.textContent='';
   document.getElementById('f-zona').value='';
   document.getElementById('f-direccion').value='';
   document.getElementById('f-maps').value='';
@@ -8709,7 +8726,11 @@ function editPedido(id){
   var box=document.getElementById('f-productos'); box.innerHTML='';
   if(rec.productos&&rec.productos.length){ for(i=0;i<rec.productos.length;i++){ var pr=rec.productos[i]; addProdRow(pr.desc,pr.medida,pr.codigo,pr.cant,pr.precio,pr.rtipo,pr.robs); } } else addProdRow();
   document.getElementById('f-celular').value=rec.celular||'';
-  segSet('f-turno',rec.turno||'AM');
+  /* (27/09, revisión en el celular) SIN TURNO sigue sin turno: `rec.turno||'AM'` dejaba marcado «AM» y guardar la dirección
+     le ponía turno AM a un pedido que nadie eligió (la ficha pasaba de «🕗 Sin turno» a «🌅 AM» y el atraso se medía a las 13
+     en vez de al final del día). Sin botón marcado se guarda vacío, como estaba; el cupo lo cuenta igual que antes (`normTurno`). */
+  segSet('f-turno', turnoDe(rec));
+  var _tHint=document.getElementById('f-turno-hint'); if(_tHint) _tHint.textContent = turnoDe(rec) ? '' : '🕗 este pedido no tiene turno — elegí uno solo si corresponde';
   document.getElementById('f-zona').value=rec.zona||'';
   document.getElementById('f-direccion').value=rec.direccion||'';
   document.getElementById('f-maps').value=rec.maps||'';
@@ -8761,11 +8782,15 @@ function editPedido(id){
      una parte). Mismo orden que arriba: primero se pinta el bloque, después el banco. */
   var _mx=mixtoDe(rec);
   MIXTO=!!_mx; FORM_COMPS2=_mx?compsArr(_mx.comps!=null?_mx.comps:_mx.comp):[]; BANCO_EXTRA2=_mx?(_mx.banco||''):'';
+  /* (27/09, revisión en el celular) El 2° método se escribe SIEMPRE, también vacío: sin mixto quedaban el monto, el método y
+     el banco del pedido que se editó ANTES (abierto y dejado por la pestaña), y al tocar «➕ Pagó con dos métodos» aparecían
+     «Tarjeta 300» de otra venta, listos para guardarse en esta. */
+  var _fm2=document.getElementById('f-monto2'); if(_fm2){ _fm2.value=_mx?r2(_mx.monto):''; _fm2.classList.remove('err'); }
+  segSet('f-metodo2', _mx?(_mx.metodo||''):'');
+  segSet('f-banco2', '');
   if(_mx){
     var _a2=anticipoDe(rec);
     if(_cb && _a2 && rec.pagado) _cb.value=r2(Math.max((Number(_a2.monto)||0)+(Number(_mx.monto)||0), contaCobrado(rec)));   // (27/09) con otros cobros, todo lo que entró
-    var _fm2=document.getElementById('f-monto2'); if(_fm2) _fm2.value=r2(_mx.monto);
-    segSet('f-metodo2', _mx.metodo||'');
   }
   pintarMixto();
   if(_mx) segSet('f-banco2', _mx.banco||'');
@@ -8777,6 +8802,26 @@ function editPedido(id){
   showView('form'); window.scrollTo(0,0);
 }
 function cancelEdit(){ resetForm(); }
+/* ✏️ (27/09, revisión en el celular) «＋ NUEVO PEDIDO» CON UNA EDICIÓN QUE QUEDÓ ABIERTA. La vendedora abre ✏️ Editar, se
+   arrepiente y vuelve a Mis pedidos con la pestaña (sin «Cancelar edición»); más tarde toca «＋ Nuevo pedido» para cargar
+   otra venta y el formulario seguía siendo la EDICIÓN de la anterior: escribía el cliente nuevo encima, «Guardar cambios», y
+   la venta anterior desaparecía de la planilla, reemplazada por la nueva con su OC (reproducido en el celular). La pestaña se
+   llama «Nuevo pedido»: si hay una edición sin guardar se pregunta, y Aceptar arranca un pedido nuevo (la venta anterior queda
+   como estaba en la planilla). Estando ya en el formulario no se pregunta nada: el cartel «✏️ Editando» está a la vista. */
+function tabNuevoPedido(){
+  var enForm=document.getElementById('view-form').classList.contains('active');
+  if(EDIT_ID && !enForm){
+    var p=findById(EDIT_ID) || ((typeof borradorDe==='function') ? borradorDe(EDIT_ID) : null);
+    var quien=p ? ((p.cliente||'sin nombre')+(p.oc?(' ('+ocEtiq(p.oc)+')'):'')) : 'otro pedido';
+    if(confirm('✏️ Estabas editando el pedido de '+quien+' y NO lo guardaste.\n\n'+
+               '• Aceptar: ese pedido queda como estaba y empezás un pedido NUEVO.\n'+
+               '• Cancelar: volvés a esa edición.')){
+      showView('form'); resetForm(); window.scrollTo(0,0);
+      return;
+    }
+  }
+  showView('form');
+}
 /* A qué pantalla se vuelve después de guardar una edición. Nadie tiene que caer nunca en
    el candado: si no está la clave puesta, se vuelve a «Mis pedidos». */
 function volverDeEdicion(desde){
@@ -8804,7 +8849,7 @@ function confirmEdicionModal(rec, cambios){
         ? ('<div style="background:var(--gray-lt);border-radius:9px;padding:10px 13px;font-size:.85rem">'+
              '<div style="font-weight:700;margin-bottom:5px">Qué cambió</div>'+
              cambios.map(function(t){ return '<div>'+esc(t)+'</div>'; }).join('')+'</div>')
-        : '<div style="font-size:.85rem;color:var(--muted)">Se guardó, pero no cambió nada de lo que se ve en la lista de entrega.</div>')+
+        : '<div style="font-size:.85rem;color:var(--muted)">'+(esVentaTienda(rec) ? 'Se guardó.' : 'Se guardó, pero no cambió nada de lo que se ve en la lista de entrega.')+'</div>')+
       (m ? ('<div style="background:var(--amber-lt);border:1px solid var(--amber-border);border-radius:9px;padding:10px 13px;margin-top:10px;font-size:.83rem;color:#7c4b00">'+
               '📦 <b>Al almacén le llegó el aviso</b> de que este pedido se modificó, para que revisen el stock de nuevo.</div>') : '')+
       '<div class="modal-actions" style="margin-top:14px">'+
@@ -9447,8 +9492,12 @@ var _toastT=null;
 function toast(msg,kind,ms){
   var el=document.getElementById('toast');
   el.textContent=msg; el.className='toast show'+(kind?(' '+kind):'');
-  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.className='toast'; }, ms||2800);
+  /* (27/09, revisión en el celular) Sin tiempo propio, el aviso duraba 2,8 s sea cual sea su largo: «Subiste la imagen pero
+     no anotaste ningún pago…» (234 letras) se iba antes de terminar de leerlo. Ahora dura lo que lleva leerlo (≈ 50 ms por
+     letra, entre 2,8 y 12 s). Los que ya dicen su tiempo quedan igual. */
+  clearTimeout(_toastT); _toastT=setTimeout(function(){ el.className='toast'; }, ms||toastMs(msg));
 }
+function toastMs(msg){ return Math.min(12000, Math.max(2800, String(msg==null?'':msg).length*50)); }
 
 /* ============================================================================
    Admin: desbloqueo + carga desde servidor
@@ -12900,12 +12949,16 @@ function renderMis(){
   mine.sort(function(a,b){ var fa=fechaSalida(a)||'', fb=fechaSalida(b)||''; if(fa!==fb) return fa<fb?1:-1; return (b.ts||0)-(a.ts||0); });
   if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
   if(mine.length && !todos) autoAbrirAvisos(v, mine);
+  /* (26/09, decisión del dueño) Los números cuentan por la fecha de ENTREGA, como siempre, y ahora el cartel lo DICE: decía
+     «pedidos cargados» y «Hoy» daba 0 con cinco pedidos cargados hoy para mañana. La revisión en el celular los había pasado
+     al día de carga; el dueño eligió la entrega y cambiar el nombre. Las ventas de tienda (sin fecha de entrega) no entran en
+     «Hoy», «Este mes» ni «Por cobrar», como siempre. Los chips (📅 Hoy, 🌅 Mañana…) también filtran por la entrega. */
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
   mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
-    mc('var(--teal)','Hoy',nHoy, todos?'de todo el equipo':'pedidos cargados')+
-    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades')+
-    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
+    mc('var(--teal)','Hoy',nHoy, todos?'se entregan hoy (todo el equipo)':'pedidos que se entregan hoy')+
+    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades · se entregan este mes')+
+    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   renderMisChips(mine); acomodarFichas();
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }
@@ -21024,7 +21077,7 @@ document.addEventListener('DOMContentLoaded',function(){
   mostrarBotonesTodos();
   document.addEventListener('keydown', visorTeclas);
   initConnUI();
-  initSeg('f-turno',renderCupoForm);
+  initSeg('f-turno',function(){ var h=document.getElementById('f-turno-hint'); if(h) h.textContent=''; renderCupoForm(); });   // (27/09) eligió turno: el «no tiene turno» se va
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
     var fs=document.getElementById('f-saldo'), fa=document.getElementById('f-acuenta');
