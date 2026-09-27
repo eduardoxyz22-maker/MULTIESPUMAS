@@ -737,6 +737,34 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
   comprobantes (22 px) y «📎 abrir imagen» (18 px) son chicos para el dedo.
 
+## 📦 El saldo debajo de cada producto del formulario (§4gj, 27/09): lo que hay que respetar
+El dueño: *«los vendedores no saben cuál es el stock… que coloquen el código y les aparezca el producto, cuántos hay
+pendientes de entrega, cuánto hay de saldo en almacén y si deben pedir a producción, informar al cliente que debe esperar
+o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en vez de pestaña, un aviso en el formulario**.
+- **Un cuadrito debajo de cada producto** (nuevo y al editar; OC y RPT, nunca ATC, venta de tienda, entregados ni
+  productos de tienda) cuando el renglón está completo: ✅ DISPONIBLE (programar desde el primer día con cupo) · 📥 HAY
+  EN MORENO (se trae en 1 día) · ⏳ EN PRODUCCIÓN (esperar ~X días, llega el DD/MM) · 🏭 NO HAY (mandar a producir,
+  esperar ~X días) · gris «Sin saldo cargado». Abajo «En almacén · Pendientes de entrega · Libres/Faltan», el reparto
+  acá · Banzer · Moreno y de qué corte y consulta es. **Libre = saldo en almacén − pendientes de entrega** (la
+  cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
+- **UNA sola cuenta**: todo sale de `stockData()` (`saldoDatos`/`SALDO_CACHE`, una vez por lectura) y de
+  `saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo)`. `stockData` ganó `enRecogida` y un argumento
+  opcional para productos del catálogo que no están en ningún Excel (sin él, da lo mismo que antes).
+- **~X días** = los días REALES hasta el primer día de entrega con cupo (salta domingo, días cerrados y turnos llenos),
+  no un número fijo. **La línea roja** «Para el <fecha elegida> no llega: programá desde…» se queda (dueño, 27/09): solo
+  avisa, no frena.
+- **Siempre al día** (el dueño: el corte se sube a las 9 y a las 15 ya entraron 9 pedidos de otros): los cuadritos se
+  repintan con cada lectura; al completar un producto, si la última lectura buena tiene más de 1 minuto se pide otra
+  (tope: una por minuto por dispositivo, `SALDO_LECTURA_MS`); botón 🔄 Actualizar; ámbar si el corte de acá no es de hoy
+  («pedile a logística que suba el de hoy») o si no hay conexión.
+- **Al guardar** (`submitPedido`), si algún producto quedó sin saldo libre o la fecha es antes de lo posible, un `confirm`
+  con la lista; Aceptar guarda igual (nunca frena la venta). Usa la planilla recién leída (la última lectura de antes de
+  guardar, la de cupos; una edición que cambia productos también lee). Al editar pregunta solo si cambió un producto, su
+  cantidad o la fecha.
+- **Ventana que queda** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
+  servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos.
+- `tests/test_saldo_almacen.js` (83; 73 rojas contra `bd5dde3`), con el caso de dos vendedores contra el `.gs` real.
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +
