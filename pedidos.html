@@ -2137,6 +2137,12 @@ var SAVE_EN_ESPERA={};  // id → promesa del guardado que espera turno (lleva l
    marcar. Ahora manda el objeto que la persona tocó, con el último sello conocido. */
 var SAVE_ULTIMO={}; var SAVE_REV={};
 function saveReciente(id){ var u=SAVE_ULTIMO[id]; return !!(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (u && Date.now()-u.t<90000)); }
+/* 🗑 (26/09, revisión de Pedidos) LO QUE SE ACABA DE BORRAR ACÁ, lo mismo que `saveReciente` pero al revés: una
+   lectura que salió ANTES del borrado (la vuelta automática) volvía con la fila todavía adentro y el pedido
+   reaparecía en pantalla. Editarlo ahí lo volvía a CREAR en la planilla (el servidor no lo encuentra y lo da
+   por nuevo). Mientras dura (90 s) `mergePending` no lo trae; si el borrado no salió, `volver` lo saca. */
+var BORRADO_AQUI={};
+function borradoAqui(id){ var t=BORRADO_AQUI[String(id)]; return !!(t && Date.now()-t<90000); }
 function apiSave(rec, opts){
   var id=rec&&rec.id;
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
@@ -8415,8 +8421,22 @@ function llenarSucursales(){
 function sucursalElegida(){
   var v=(document.getElementById('f-rpt-suc')||{}).value||'';
   var s=sucursalDe(v); if(!s) return;
-  var poner=function(id, val){ var e=document.getElementById(id); if(e && !e.value.trim() && val) e.value=val; };
-  poner('f-zona', s.z); poner('f-direccion', s.d); poner('f-maps', s.m);
+  /* 🏪 (26/09, revisión de Pedidos) …pero lo que puso OTRA sucursal sí se cambia. Si se elegía «Mia Plaza» y se
+     corregía a «Mutualista» (o se editaba una RPT de Charcas para mandarla a Buenos Aires), la zona y el pin
+     quedaban los de la primera: el camión llevaba la reposición a la tienda equivocada. Se reemplaza lo que
+     está vacío o lo que es exactamente el dato de otra sucursal de la lista; lo escrito a mano se respeta. */
+  var deOtra=function(campo, act){
+    for(var i=0;i<SUCURSALES.length;i++){ var x=SUCURSALES[i], xv=String(x[campo]||'').trim();
+      if(x!==s && xv && (campo==='z' ? normNombre(xv)===normNombre(act) : xv===act)) return true; }
+    return false;
+  };
+  var poner=function(id, campo){
+    var e=document.getElementById(id); if(!e) return;
+    var act=e.value.trim(), val=s[campo]||'';
+    if(!act){ if(val) e.value=val; }
+    else if(act!==val && deOtra(campo, act)) e.value=val;
+  };
+  poner('f-zona','z'); poner('f-direccion','d'); poner('f-maps','m');
 }
 /* 🎧 El bloque del motivo solo tiene sentido en una ATC (§4bq). */
 function pintarMotivoAtc(limpiar){
@@ -8628,6 +8648,7 @@ function realDelete(id){
   var loc=findById(id), copia=loc?JSON.parse(JSON.stringify(loc)):null;
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
+  BORRADO_AQUI[String(id)]=Date.now();      // (26/09) una lectura vieja no lo vuelve a poner (ver `borradoAqui`)
   // Refrescar TODO: si no, el pedido borrado seguía apareciendo en la lista de carga,
   // en Mis pedidos, en el panel del chofer, en el mapa y —desde que se puede borrar
   // desde ahí— en la tabla de Contabilidad y en el Cuadre.
@@ -8640,9 +8661,10 @@ function realDelete(id){
   toast('Eliminando… (primero se mira que nadie la haya cambiado)','ok');
   /* §4fz: se borra en el servidor SOLO si la fila sigue siendo la que se vio. Si no, vuelve
      a la pantalla con lo nuevo y se dice qué cambió: la persona decide de nuevo. */
-  var volver=function(rec){ if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
+  var volver=function(rec){ delete BORRADO_AQUI[String(id)]; if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
   return borrarEnServidor(copia||{id:id}).then(function(r){
     if(r.ok){ toast('Pedido eliminado ✓','ok'); return r; }
+    if(r.incierto) delete BORRADO_AQUI[String(id)];   // «si sigue en la planilla, vuelve sola»: que vuelva
     if(r.conflicto){
       volver(r.actual);
       toast('⚠️ NO se borró: '+((r.actual&&r.actual.cliente)||(copia&&copia.cliente)||'esta venta')+' cambió desde que la abriste — '+queCambioTxt(copia, r.actual)+
@@ -9292,6 +9314,7 @@ function cleanOC(v){
   return s;
 }
 function mergePending(serverList){
+  serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
@@ -9309,6 +9332,18 @@ function mergePending(serverList){
   });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
   var pend=pendTodos.filter(function(p){return !ids[p.id];});
+  /* ⏳ (26/09, revisión de Pedidos) …Y EL PEDIDO NUEVO QUE ESA LECTURA TODAVÍA NO TRAE. La vuelta automática
+     (cada 30 s en Mis pedidos) o la bajada de 4 s que hace `submitPedido` salen ANTES de guardar y, si Google
+     tarda, vuelven DESPUÉS del «Pedido enviado al equipo ✓» con la planilla de antes: el pedido recién
+     cargado desaparecía de la pantalla (y de los cupos) hasta la lectura siguiente, y la vendedora que no lo
+     veía lo volvía a cargar. Lo guardado hace menos de 90 s que sigue en ESTE dispositivo se queda; uno que
+     se borró o que el servidor rechazó ya no está en STATE (ni en SAVE_ULTIMO) y no vuelve. */
+  var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
+  for(var kS in SAVE_ULTIMO){
+    if(ids[kS] || enCola[kS] || !saveReciente(kS)) continue;
+    var locS=findById(kS);
+    if(locS && !esFilaSistema(locS) && !esBorrador(locS)){ serverList.push(locS); ids[kS]=1; }
+  }
   /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
      solo lo que vino del servidor; un retiro que quedó en la cola (sin señal, sin clave,
      servidor ocupado) desaparecía de la ventana de retiros en el primer refresco aunque
@@ -9730,10 +9765,12 @@ function borrEsLaMisma(idBorr, idPed){
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
   saveBorrMirror(); renderBorrSiActivo();
   // §4fz: el borrador se borra solo si sigue siendo el que se vio (otra lo pudo haber completado).
+  if(CONNECTED){ BORRADO_AQUI[String(idBorr)]=Date.now(); }   // (26/09) ver `borradoAqui`
   if(CONNECTED) borrarEnServidor(_copiaB).then(function(r){
+    if(!(r && r.ok)) delete BORRADO_AQUI[String(idBorr)];
     if(r && r.conflicto){ toast('⚠️ El borrador de Kommo no se borró: '+queCambioTxt(_copiaB, r.actual)+'. Revisá que no quede la venta dos veces.','err',10000);
       try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} }
-  }, function(){});
+  }, function(){ delete BORRADO_AQUI[String(idBorr)]; });
   toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
 }
 
@@ -11735,12 +11772,14 @@ function descartarBorrador(id){
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
   saveBorrMirror(); renderBorrSiActivo();
   if(CONNECTED){
+    BORRADO_AQUI[String(id)]=Date.now();    // (26/09) una lectura vieja no la devuelve a la bandeja (ver `borradoAqui`)
     /* §4fz: un borrador que otra vendedora YA completó es un pedido con el MISMO id (§4es):
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
-    var volverBorr=function(){ BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
+    var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
     borrarEnServidor(copia).then(function(r){
       if(r.ok) return;
+      delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
         toast('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
         try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){}

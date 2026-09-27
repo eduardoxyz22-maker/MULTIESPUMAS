@@ -307,6 +307,129 @@ function INIT(){
     chk('(control) cargar un pedido nuevo sigue recordando quién lo cargó', r.trasNuevo==='Maria Flores', r.trasNuevo);
   });
 
+
+  // ══ 4. UNA LECTURA QUE VUELVE TARDE NO SE LLEVA EL PEDIDO RECIÉN CARGADO ══════════════════
+  /* La vuelta automática (o la bajada de 4 s de `submitPedido`) sale antes de guardar y vuelve después, con
+     la planilla de antes: el pedido nuevo desaparecía de la pantalla y de los cupos hasta la lectura
+     siguiente — y la vendedora que no lo veía lo volvía a cargar. */
+  await esc('4. Una lectura que vuelve tarde, justo después de guardar un pedido nuevo', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'l1', cliente:'YA ESTABA', oc:'09-001', ts:TS('2026-09-10'), fecha:'2026-09-21' }));
+    const A = await abrir(S);
+    const cargar = async (nombre) => A.evaluate(async (nombre) => {
+      showView('form'); await esperar(150); resetForm();
+      document.getElementById('f-vendedor').value='Mirian Salazar'; applyVendedorLite();
+      document.getElementById('f-cliente').value=nombre;
+      document.getElementById('f-celular').value='70000001';
+      document.getElementById('f-zona').value='Norte';
+      document.getElementById('f-nota').value='2002';
+      document.getElementById('f-fecha').value='2026-09-21';
+      document.querySelector('#f-productos .prod-desc').value='TITANIO LATEX';
+      document.getElementById('f-saldo').value='3000';
+      submitPedido(); await esperar(1500); await quieto(); try{ closeModal(); }catch(e){}
+      var p=STATE.filter(function(x){ return x.cliente===nombre; })[0];
+      return p ? p.id : null;
+    }, nombre);
+    const r = await A.evaluate(async () => {
+      __regla({ act:'list', mode:'tarde', name:'L1' });
+      window.__viejo=refrescarEstado();          // sale ANTES de guardar
+      await esperar(100); return true;
+    });
+    const id = await cargar('RECIEN CARGADO');
+    const r2 = await A.evaluate(async (id) => {
+      var o={ antes:!!findById(id), cupoAntes:cuposUsadosTurno('2026-09-21','AM') };
+      __soltar('L1'); await window.__viejo; await esperar(200);
+      o.despues=!!findById(id); o.cupoDespues=cuposUsadosTurno('2026-09-21','AM');
+      return o;
+    }, id);
+    chk('el pedido nuevo llegó a la planilla', !!(id && S.fila(id)), id);
+    chk('⚠️ la lectura que salió ANTES de guardar no lo borra de la pantalla (antes desaparecía hasta la próxima)', r2.antes && r2.despues, r2);
+    chk('⚠️ …ni de los cupos del día', r2.cupoAntes===2 && r2.cupoDespues===2, r2);
+  });
+
+  // ══ 5. …NI TRAE DE VUELTA LO QUE SE ACABA DE ELIMINAR ════════════════════════════════════
+  /* Al revés: la lectura salió con la venta todavía adentro y volvió después de «Pedido eliminado ✓». La
+     venta reaparecía en pantalla, y editarla la volvía a CREAR en la planilla (el servidor no la encuentra
+     y la toma por nueva). Lo mismo el borrador de Kommo descartado: volvía a la bandeja. */
+  await esc('5. Una lectura vieja no trae de vuelta lo que se acaba de eliminar', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'z1', cliente:'A ELIMINAR', oc:'09-001', ts:TS('2026-09-10') }));
+    S.guardar(pedido({ id:'z2', cliente:'NO SE PUEDE ELIMINAR', oc:'09-002', ts:TS('2026-09-10'), fecha:'2026-09-18' }));
+    S.guardar(pedido({ id:'kommo-777', cliente:'BORRADOR A DESCARTAR', estado:'Borrador Kommo', fecha:'', turno:'', zona:'', nota:'', nroDia:0 }));
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      var o={};
+      __regla({ act:'list', mode:'tarde', name:'L1' });
+      var viejo=refrescarEstado(); await esperar(100);      // sale con z1 todavía adentro
+      realDelete('z1'); await esperar(1500); await quieto();
+      __soltar('L1'); await viejo; await esperar(200);
+      o.z1=!!findById('z1');
+      // editar lo que quedó en pantalla (✏️ desde la ficha abierta) es lo que la volvía a crear
+      if(findById('z1')){ EDIT_DESDE='admin'; editPedido('z1'); await esperar(250); document.getElementById('f-obs').value='editada después de borrar'; submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){} }
+      // el borrador descartado
+      showView('mis'); document.getElementById('mis-vendedor').value='Mirian Salazar'; renderMis(); await esperar(150);
+      __regla({ act:'list', mode:'tarde', name:'L2' });
+      var viejo2=refrescarEstado(); await esperar(100);
+      descartarBorrador('kommo-777'); await esperar(1500); await quieto();
+      __soltar('L2'); await viejo2; await esperar(200);
+      o.borr=BORRADORES.map(function(b){ return b.id; });
+      // control: si el servidor NO borra (sin señal), vuelve a la pantalla como siempre
+      __regla({ act:'list', mode:'drop', n:3 }); __regla({ act:'delete', mode:'drop', n:3 });
+      realDelete('z2'); await esperar(4500); await quieto();
+      window.__ctl.rules=[];
+      o.z2=!!findById('z2');
+      await refrescarEstado(); await esperar(100);
+      o.z2b=!!findById('z2');
+      return o;
+    });
+    chk('⚠️ la venta eliminada no reaparece con la lectura que salió antes (antes volvía a la pantalla)', r.z1===false, r);
+    chk('⚠️ …y no se vuelve a crear en la planilla', !S.fila('z1'), S.fila('z1') && S.fila('z1').observaciones);
+    chk('⚠️ el borrador de Kommo descartado no vuelve a la bandeja con la lectura vieja', r.borr.indexOf('kommo-777')<0 && !S.fila('kommo-777'), r.borr);
+    chk('(control) si Google no confirma el borrado (sin señal), la venta vuelve sola con la lectura siguiente, como decía el aviso', r.z2b===true && !!S.fila('z2'), r);
+  });
+
+
+  // ══ 6. RPT: CORREGIR LA SUCURSAL DE DESTINO ══════════════════════════════════════════════
+  /* Elegir una sucursal completa la zona y el pin (§4dn) sin pisar lo escrito. Pero lo que había puesto OTRA
+     sucursal también contaba como «escrito»: elegir Mia Plaza y corregir a Mutualista (o editar una RPT de
+     Charcas para mandarla a Buenos Aires) dejaba la zona y el pin de la primera — el camión iba a la tienda
+     equivocada. */
+  await esc('6. RPT: corregir la sucursal de destino', async () => {
+    const S = servidor();
+    const PIN = { charcas:'https://www.google.com/maps?q=-17.78004506388288,-63.17633322858442',
+                  ba:'https://www.google.com/maps?q=-17.780648363028185,-63.18369352382509',
+                  mia:'https://www.google.com/maps?q=-17.770160793680894,-63.17008791821695',
+                  mutu:'https://www.google.com/maps?q=-17.765770114394787,-63.16208746136678' };
+    S.guardar(pedido({ id:'r1', cliente:'Charcas', oc:'RPT 09-001', nota:'', saldo:0, fecha:'2026-09-18', zona:'Centro', direccion:'', celular:'',
+      maps:PIN.charcas, productos:[{desc:'TITANIO LATEX', medida:'140x190', codigo:'CH1129', cant:1, rtipo:'Reposición'}] }));
+    const A = await abrir(S);
+    const r = await A.evaluate(async () => {
+      var o={}, suc=document.getElementById('f-rpt-suc');
+      var elegir=function(n){ suc.value=n; suc.dispatchEvent(new Event('input')); return { z:document.getElementById('f-zona').value, m:document.getElementById('f-maps').value, d:document.getElementById('f-direccion').value }; };
+      showView('form'); await esperar(150); resetForm();
+      segSet('f-doc-tipo','RPT'); setDocTipo();
+      o.mia=elegir('Mia Plaza');
+      o.mutu=elegir('Mutualista');
+      o.roho=elegir('Tiendas Roho');
+      // lo escrito a mano se respeta
+      resetForm(); segSet('f-doc-tipo','RPT'); setDocTipo();
+      document.getElementById('f-zona').value='Equipetrol'; document.getElementById('f-maps').value='https://www.google.com/maps?q=-17.1,-63.1';
+      document.getElementById('f-direccion').value='Galería X, local 5';
+      o.aMano=elegir('Carmelo');
+      // editar la RPT de Charcas y mandarla a Buenos Aires
+      editPedido('r1'); await esperar(250);
+      o.edit=elegir('Buenos Aires');
+      submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){}
+      return o;
+    });
+    chk('elegir Mia Plaza completa su zona y su pin', r.mia.z==='Mia Plaza' && r.mia.m===PIN.mia, r.mia);
+    chk('⚠️ corregir a Mutualista cambia la zona y el pin (antes quedaban los de Mia Plaza)', r.mutu.z==='Mutualista' && r.mutu.m===PIN.mutu, r.mutu);
+    chk('⚠️ …y pasar a Tiendas Roho (sin pin, a propósito) saca el pin de la otra tienda', r.roho.z==='Norte' && r.roho.m==='', r.roho);
+    chk('(control) lo escrito a mano (zona, pin y dirección) no se pisa', r.aMano.z==='Equipetrol' && r.aMano.m==='https://www.google.com/maps?q=-17.1,-63.1' && r.aMano.d==='Galería X, local 5', r.aMano);
+    const f=S.fila('r1');
+    chk('⚠️ la RPT de Charcas corregida a Buenos Aires se guarda con el pin de Buenos Aires (antes, el de Charcas)', f.cliente==='Buenos Aires' && f.maps===PIN.ba && f.zona==='Centro', { cliente:f.cliente, maps:f.maps, zona:f.zona });
+  });
+
   chk('sin errores de JavaScript en la página', !errores.length, errores.slice(0,3).join(' | '));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

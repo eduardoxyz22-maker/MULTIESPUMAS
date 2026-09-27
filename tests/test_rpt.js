@@ -231,16 +231,24 @@ const chk=(l,c,e)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, e!=null?('
   chk('⚠️ …y todas caen en Santa Cruz (un signo cambiado las mandaría a otro continente)',
       conUbic.every(function(x){ return x.lat>-18.1 && x.lat<-17.4 && x.lng>-63.5 && x.lng<-62.9; }),
       conUbic.map(function(x){return x.n+' '+x.lat.toFixed(4)+','+x.lng.toFixed(4);}).join(' | '));
+  /* (26/09, revisión de Pedidos) Antes esta prueba pedía que pasar de Carmelo a Charcas DEJARA el pin de
+     Carmelo: la regla «no pisa lo escrito» contaba como escrito lo que había puesto la otra tienda, y la
+     reposición de Charcas salía con el camión a Carmelo. La regla sigue para lo escrito A MANO; el pin (y la
+     zona) que puso otra sucursal de la lista ahora se cambia (test_rev5_pedidos.js §6). */
   const puestas = await page.evaluate(() => {
     showView('form'); resetForm(); segSet('f-doc-tipo','RPT'); setDocTipo();
     document.getElementById('f-rpt-suc').value='Carmelo'; sucursalElegida();
     var puso=(document.getElementById('f-maps')||{}).value;
-    // …y no pisa una ubicación ya escrita
     document.getElementById('f-rpt-suc').value='Charcas'; sucursalElegida();
-    return { puso:puso, tras:(document.getElementById('f-maps')||{}).value };
+    var cambio=(document.getElementById('f-maps')||{}).value;
+    // …y no pisa una ubicación escrita a mano
+    document.getElementById('f-maps').value='https://www.google.com/maps?q=-17.7,-63.1';
+    document.getElementById('f-rpt-suc').value='Central'; sucursalElegida();
+    return { puso:puso, cambio:cambio, tras:(document.getElementById('f-maps')||{}).value };
   });
   chk('elegir la tienda pone su ubicación sola', /-17\.79174/.test(puestas.puso), puestas.puso);
-  chk('…y cambiar de tienda NO pisa la ubicación ya puesta', puestas.tras===puestas.puso, puestas.tras);
+  chk('…cambiar de tienda cambia la ubicación que había puesto la otra (Carmelo → Charcas)', /-17\.78004/.test(puestas.cambio), puestas.cambio);
+  chk('…y NO pisa una ubicación escrita a mano', puestas.tras==='https://www.google.com/maps?q=-17.7,-63.1', puestas.tras);
 
   chk('volviendo a OC vuelve todo a su lugar',
       form.vuelta.rpt===false && form.vuelta.cli===true && form.vuelta.nota===true && form.vuelta.lineaPrecio===true,
