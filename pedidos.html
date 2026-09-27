@@ -16665,7 +16665,7 @@ function saldoCodBienTxt(v){
 }
 /* 📐 con el código de la medida estándar pegado: ese código es OTRO colchón. */
 function saldoCodEspecialTxt(c){
-  return '⚠️ El código '+c.code+' es del '+saldoCodNombre(c)+': borralo de este renglón — una medida especial no lleva el código de otra medida (el almacén sacaría ese colchón).';
+  return '⚠️ El código '+c.code+' es del '+saldoCodNombre(c)+': borralo de este renglón, o el almacén saca ese colchón.';
 }
 function saldoTitulo(v){
   var dc=v.descont ? (' · ya no se fabrica: quedan '+stockUnid(Math.max(0,v.libres))) : '';
