@@ -7445,6 +7445,40 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gg. 26/09, noche: revisión de Pedidos a fondo (2026-09-26)
+
+El dueño, molesto: *«¿No que no había errores? Llevás 3 días con agentes, decís que no hay más errores y aparecen más.
+¿En pedidos no hay más? Poné agente»*. Se le dijo la verdad: no se puede prometer cero errores; sí, que cada uno que
+aparece queda con su prueba vigilando. Un agente revisó el uso diario de Pedidos contra lo publicado (`2c777fe`).
+
+**Ocho errores, todos arreglados** (`084b94c`, `cbc0106`, `e1e207b`; `tests/test_rev5_pedidos.js`, 49 comprobaciones,
+30 rojas contra `2c777fe`):
+1. **ALTA. Venta ya cobrada editada desde el formulario.**
+   - Abría el «Monto total cobrado» vacío y no dejaba guardar ni la dirección.
+   - Si se cambiaba el método, el banco o el monto, decía «Cambios guardados ✓» sin cambiar nada.
+   - Con saldo negativo, corregir la dirección ofrecía borrar el historial, y se perdía un QR de Bs 2.700.
+2. **ALTA. Una ATC o RPT pasada a OC seguía siendo ATC**: una venta que Contabilidad no veía.
+3. **MEDIA. Editar el pedido de otra vendedora** cambiaba el vendedor recordado de la compu.
+4. **MEDIA. Una lectura tardía** borraba de la pantalla (y de los cupos) el pedido recién cargado.
+5. **MEDIA. Una lectura vieja devolvía una venta recién eliminada**, y editarla la recreaba. Lo mismo con el borrador
+   de Kommo descartado.
+6. **ALTA. RPT: al corregir la sucursal quedaban la zona y el pin de la anterior.** `test_rpt` exigía lo viejo y se
+   cambió a conciencia.
+7. **ALTA. El flete contaba como historial**: cambios del adelanto ignorados, la «PAGADA sin monto» con flete no
+   guardaba el monto, y aparecía un falso «¿borrar el historial?».
+8. **ALTA. «SÍ, pagado» proponía el adelanto como total**: la venta de Bs 3.000 quedaba pagada por 500.
+
+**Decisiones del dueño (20:37).** Salen en la publicación siguiente, con sus pruebas:
+- corregir el PRECIO de una venta con pagos registrados CONSERVA los pagos;
+- «SÍ, pagado» al editar deja el adelanto en su día y anota el resto hoy como cobro nuevo.
+
+**Quedan (BAJA), sin tocar.**
+- Editar una venta de tienda termina en Contabilidad con el mensaje de pedido nuevo.
+- En Mis pedidos, «Hoy · pedidos cargados» cuenta las entregas de hoy, y «Este mes» no cuenta las ventas de tienda.
+- Editar un pedido sin turno lo guarda como AM.
+- Al activar el pago mixto pueden aparecer datos de una edición anterior.
+- Tocar SÍ y después NO deja «A cuenta» y «Saldo» en 0.
+
 ## 4gf. 26/09, noche: revisión del stock y los almacenes después de Banzer (2026-09-26)
 
 Pedido del dueño: *«pon un agente en stock y almacén a revisar que todo quedó bien»*. Un agente revisó contra lo
@@ -7473,6 +7507,8 @@ Banzer. Con 0 acá, 3 en Banzer y 5 en IM, un pedido de 4 sale entero de IM.
   esas recogidas y marcando ✔ lo que ya está en fábrica; se le dijo.
 - La ficha de una línea Banzer + IM enciende solo «📥 IM».
 - «Qué producir» dice «sin contar» si acá no tiene Excel pero Banzer sí.
+
+**Publicado el 26/09 a las 19:38 de Bolivia**: `main` = `2c777fe`, Pages 1527 en verde, sin tocar el servidor.
 
 **Batería sobre `ecacd93`:** 100 suites, 3.797 bien · 1 mal. La mala fue `test_borradores` (94/1), y no se repite:
 tres corridas solas, 95/0 cada una. Fue una falla suelta con la máquina cargada.

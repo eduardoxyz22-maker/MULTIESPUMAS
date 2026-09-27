@@ -2137,6 +2137,12 @@ var SAVE_EN_ESPERA={};  // id → promesa del guardado que espera turno (lleva l
    marcar. Ahora manda el objeto que la persona tocó, con el último sello conocido. */
 var SAVE_ULTIMO={}; var SAVE_REV={};
 function saveReciente(id){ var u=SAVE_ULTIMO[id]; return !!(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (u && Date.now()-u.t<90000)); }
+/* 🗑 (26/09, revisión de Pedidos) LO QUE SE ACABA DE BORRAR ACÁ, lo mismo que `saveReciente` pero al revés: una
+   lectura que salió ANTES del borrado (la vuelta automática) volvía con la fila todavía adentro y el pedido
+   reaparecía en pantalla. Editarlo ahí lo volvía a CREAR en la planilla (el servidor no lo encuentra y lo da
+   por nuevo). Mientras dura (90 s) `mergePending` no lo trae; si el borrado no salió, `volver` lo saca. */
+var BORRADO_AQUI={};
+function borradoAqui(id){ var t=BORRADO_AQUI[String(id)]; return !!(t && Date.now()-t<90000); }
 function apiSave(rec, opts){
   var id=rec&&rec.id;
   if(id) SAVE_ULTIMO[id]={rec:rec, t:Date.now()};      // lo último que tocó la persona (§4eo)
@@ -3296,6 +3302,11 @@ var EDIT_ID=null;
    guardar: la pantalla se refresca sola cada 2 minutos y traería el sello nuevo — con
    los valores VIEJOS que siguen en el formulario. */
 var EDIT_REV=null;
+/* 💵 (26/09, revisión de Pedidos) CÓMO SE VEÍA LA PLATA AL ABRIR LA EDICIÓN: «¿Pagado?», el monto
+   cobrado, el método y el banco tal como los puso `editPedido`. Sirve para saber si la persona TOCÓ el
+   pago de una venta que ya tiene sus pagos registrados (ver `submitPedido`): sin esto, cambiar el monto
+   o el método de una venta cobrada decía «Cambios guardados ✓» y la planilla seguía con lo de antes. */
+var EDIT_PLATA0=null;
 /* ⚠️ DE DÓNDE SALIÓ LA EDICIÓN (§4bl).
    `after()` terminaba SIEMPRE en `showView('admin')` porque editar era cosa de
    administración. Desde que las vendedoras editan sus pedidos (§4bc), guardar las
@@ -3316,6 +3327,20 @@ function montoForm(el){
   if(typeof el==='string') el=document.getElementById(el);
   if(!el || montoError(el.value)) return 0;
   return parseMonto(el.value);
+}
+/* 💵 (26/09, revisión de Pedidos) «SÍ, PAGADO» = PAGÓ TODO. Al tocarlo, «A cuenta» y «Saldo» se ponen en 0 y
+   aparece «Monto total cobrado»… que en una venta con adelanto abría con EL ADELANTO (lo que `editPedido` pone
+   ahí). Guardando sin mirarlo, la venta de Bs 3.000 (500 a cuenta + 2.500 de saldo) quedaba pagada por Bs 500:
+   los 2.500 desaparecían de Contabilidad y del Cuadre, con «Cambios guardados ✓». Ahora el campo propone el
+   total —lo que dicen «A cuenta» y «Saldo» antes de borrarse, más lo ya cobrado de la venta, que esos campos no
+   muestran—, siempre que esté vacío o siga con lo que puso el panel. Lo tipeado a mano no se toca. */
+function pagadoSugerirTotal(){
+  var cb=document.getElementById('f-cobrado'); if(!cb) return;
+  var prev=EDIT_ID?findById(EDIT_ID):null;
+  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?totalCobrado(prev):0));
+  if(!(tot>0)) return;
+  var delPanel=!!(EDIT_PLATA0 && EDIT_PLATA0.pagado!=='SI' && r2(montoForm(cb))===EDIT_PLATA0.cobrado);
+  if(!cb.value.trim() || delPanel){ cb.value=r2(tot); if(typeof pintarMixto==='function') pintarMixto(); }
 }
 /* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
 function updateMetodoVisibility(){
@@ -7527,11 +7552,19 @@ function submitPedido(){
               comps:(metodoConComprobante(_met)?compsArr(FORM_COMPS):[]) }]);
           })()
         : _metSuelto;
-  var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
+  /* (26/09, revisión de Pedidos) Historial = el adelanto o algún cobro de la VENTA. El flete (`^…`) no cuenta: el
+     bloque del recargo (más abajo) lo vuelve a escribir tal cual desde el pedido anterior. Contándolo, una venta
+     con el adelanto SUELTO («Efectivo %IMG», el formato de toda venta nueva) y el flete cobrado no dejaba
+     corregir el método del adelanto (se ignoraba callado), tomaba como «ya registrado» el pago de una «PAGADA
+     sin monto» (el monto que pide el formulario no se guardaba) y preguntaba «¿borrar el historial?» por nada. */
+  var _tieneHist = !!(prev && parseCobros(prev.metodoPago).filter(function(c){ return !esEnvio(c); }).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
      que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
      pedido ya venía pagado, se conservan el anticipo y el historial. */
-  var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)===0;
+  /* (26/09, revisión de Pedidos) Saldo 0 O MENOS: una venta a la que le cobraron de más queda pagada con saldo
+     negativo (`aplicarCobros`, «hay que verlo»). Con `===0` corregirle la dirección preguntaba «¿borrar el
+     historial?» y, si la vendedora decía que sí, se perdían los cobros registrados. */
+  var _seguiaPagado = _tieneHist && _pagSI && !!prev.pagado && (Number(prev.saldo)||0)<=0.009;
   /* 💳 ¿Cambió el pago mixto? (§4ej) Agregar o quitar el segundo método, o cambiarle el
      monto, el método, el banco o las imágenes, no mueve el TOTAL cobrado — y «la plata está
      igual» lo dejaba pasar conservando el historial viejo. Se compara el segundo pago. */
@@ -7546,6 +7579,26 @@ function submitPedido(){
   var _plataIgual = _tieneHist && !_mixCambio && ( _seguiaPagado ||
                     (r2(Number(prev.acuenta)||0)===_acuVal &&     // r2: el formulario los muestra con 2 decimales (26/09)
                      r2(Number(prev.saldo)||0)===_salVal && !!prev.pagado===_pagSI) );
+  /* 💵 (26/09, revisión de Pedidos) EL PAGO YA REGISTRADO NO SE CAMBIA CALLADO. Con los montos iguales,
+     el historial se conserva tal cual (`_plataIgual`) — y eso se llevaba puesto lo que la persona SÍ
+     cambió en el bloque del pago: el «Monto total cobrado» de una venta pagada (3.000 → 3.500), el método
+     (Efectivo → QR) o el banco. Decía «Cambios guardados ✓» y la planilla, Contabilidad y el Cuadre
+     seguían con lo de antes. Reescribir ese pago desde acá le cambiaría la fecha, el recibo y quién tiene
+     la plata; por eso se dice dónde se corrige (lo mismo que el flete cobrado, §4eu) y se pregunta si se
+     guarda igual el resto. Solo mira lo que `editPedido` dejó a la vista (EDIT_PLATA0). */
+  var _p0=(isEdit && prev && EDIT_PLATA0 && EDIT_PLATA0.id===String(prev.id)) ? EDIT_PLATA0 : null;
+  var _tocoPago = !!(_p0 && _tieneHist && _plataIgual && (_pagSI || _acuVal>0) && (
+        segVal('f-metodo')!==_p0.metodo ||
+        (segVal('f-metodo')==='QR' && segVal('f-banco')!==_p0.banco) ||
+        (_pagSI && _p0.pagado==='SI' && r2(montoForm('f-cobrado'))!==_p0.cobrado)));
+  if(_tocoPago &&
+     !confirm('💵 Los pagos de esta venta ya están registrados:\n\n'+
+              contaPagos(prev).map(function(c){
+                return '   • '+(c.fecha?fmtFecha(c.fecha):'sin fecha')+' · '+contaMetodoTxt(c)+' · '+contaMontoTxt(c)+' · '+contaNotaTxt(c);
+              }).join('\n')+
+              '\n\nEl monto y el método de un pago ya registrado NO se cambian desde este formulario (se perdería su fecha, su recibo y quién tiene la plata). '+
+              'Si alguno está mal, corregilo en Contabilidad → ✏️ Corregir este pago.\n\n'+
+              '¿Guardar igual lo demás del pedido? Los pagos quedan como están.')) return;
   if(_tieneHist && !_plataIgual &&
      !confirm('⚠️ Este pedido ya tiene pagos registrados en Contabilidad:\n\n'+
               contaPagos(prev).map(function(c){
@@ -7765,6 +7818,14 @@ function submitPedido(){
      ROHO queda afuera: ahí el N° es el que manda el cliente y no se le toca nada (§4bq). */
   var _tipoDoc=docTipoSel();
   if(!esRoho(vendedor) && _tipoDoc!=='OC' && ocSel && ocTipoDe(ocSel)!==_tipoDoc) ocSel=ocPrefijo(_tipoDoc)+ocSinPre(ocSel);
+  /* 📄 (26/09, revisión de Pedidos) …Y AL REVÉS: una ATC o una RPT que al editarla se pasa a 📄 OC. El número
+     seguía con su «ATC »/«RPT » adelante, así que se guardaba como ATC aunque el formulario dijera OC y se le
+     hubiera puesto nota y saldo: una venta de verdad que Contabilidad y el Cuadre no veían nunca
+     (`fueraDeConta`). Si el número era del panel, la venta toma el próximo de la serie de las OC de su mes
+     (el mismo de la ATC chocaría con la venta que ya lo tiene); uno escrito a mano solo pierde el prefijo. */
+  else if(!esRoho(vendedor) && _tipoDoc==='OC' && ocSel && ocTipoDe(ocSel)!=='OC'){
+    ocSel = (isEdit && prev && ocAuto(ocSel) && ocAutoActivo(contaFecha(prev))) ? nextOcMes(contaFecha(prev), 'OC') : ocSinPre(ocSel);
+  }
   if(esRoho(vendedor) && ocSel){
     var dup=ocRepetidaRoho(ocSel, EDIT_ID);
     if(dup){
@@ -7872,7 +7933,11 @@ function submitPedido(){
     }
   }
 
-  setVendedorMem(vendedor); // recordar quién soy en esta compu
+  /* Recordar quién soy en esta compu… solo al CARGAR un pedido. (26/09, revisión de Pedidos) Editando, el
+     vendedor es el DEL PEDIDO, no el de quien corrige: logística le arreglaba la dirección a una venta de
+     Carola y esa computadora pasaba a ser «Carola» — el próximo pedido nuevo ya salía a su nombre. Si
+     alguien sí cambia el vendedor a mano, el campo lo recuerda al tipearlo (`oninput`). */
+  if(!isEdit) setVendedorMem(vendedor);
 
   /* ⚠️ ÚLTIMA MIRADA A LA PLANILLA ANTES DE GUARDAR
      El cierre de un día vive en la planilla y NO hay aviso automático: una compu con
@@ -8375,8 +8440,22 @@ function llenarSucursales(){
 function sucursalElegida(){
   var v=(document.getElementById('f-rpt-suc')||{}).value||'';
   var s=sucursalDe(v); if(!s) return;
-  var poner=function(id, val){ var e=document.getElementById(id); if(e && !e.value.trim() && val) e.value=val; };
-  poner('f-zona', s.z); poner('f-direccion', s.d); poner('f-maps', s.m);
+  /* 🏪 (26/09, revisión de Pedidos) …pero lo que puso OTRA sucursal sí se cambia. Si se elegía «Mia Plaza» y se
+     corregía a «Mutualista» (o se editaba una RPT de Charcas para mandarla a Buenos Aires), la zona y el pin
+     quedaban los de la primera: el camión llevaba la reposición a la tienda equivocada. Se reemplaza lo que
+     está vacío o lo que es exactamente el dato de otra sucursal de la lista; lo escrito a mano se respeta. */
+  var deOtra=function(campo, act){
+    for(var i=0;i<SUCURSALES.length;i++){ var x=SUCURSALES[i], xv=String(x[campo]||'').trim();
+      if(x!==s && xv && (campo==='z' ? normNombre(xv)===normNombre(act) : xv===act)) return true; }
+    return false;
+  };
+  var poner=function(id, campo){
+    var e=document.getElementById(id); if(!e) return;
+    var act=e.value.trim(), val=s[campo]||'';
+    if(!act){ if(val) e.value=val; }
+    else if(act!==val && deOtra(campo, act)) e.value=val;
+  };
+  poner('f-zona','z'); poner('f-direccion','d'); poner('f-maps','m');
 }
 /* 🎧 El bloque del motivo solo tiene sentido en una ATC (§4bq). */
 function pintarMotivoAtc(limpiar){
@@ -8401,7 +8480,7 @@ function pintarAntiguedadAtc(){
   el.innerHTML='<span style="color:var(--muted)">📅 '+esc(antiguedadTxt(f))+'</span>';
 }
 function resetForm(){
-  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin';
+  EDIT_ID=null; EDIT_REV=null; EDIT_DESDE='admin'; EDIT_PLATA0=null;
   BANCO_EXTRA='';                             // era del pedido que se estaba editando
   document.getElementById('edit-banner').classList.remove('on');
   var _ff=document.getElementById('f-fecha'); _ff.min=tomorrowStr(); _ff.value=tomorrowStr();
@@ -8485,8 +8564,13 @@ function editPedido(id){
   document.getElementById('f-saldo').value=r2(rec.saldo);
   document.getElementById('f-acuenta').value=r2(rec.acuenta);
   // Al editar, el monto sale del historial de pagos (o del que quedó en memoria).
+  /* 💵 (26/09, revisión de Pedidos) Una venta cobrada SIN adelanto —la que se pagó en la entrega (el chofer)
+     o desde Contabilidad— no tiene anticipo, y `cobradoBs` no viaja en la planilla: el campo abría VACÍO y
+     el formulario no dejaba guardar ni la dirección («Poné el MONTO TOTAL COBRADO»). Lo que se muestra es
+     lo que ya entró por la venta, como en su ficha (`contaCobrado`). */
   var _cb=document.getElementById('f-cobrado');
-  if(_cb){ var _a=anticipoDe(rec); _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||''); }
+  if(_cb){ var _a=anticipoDe(rec), _yaCob=rec.pagado?contaCobrado(rec):0;
+    _cb.value = (_a&&_a.monto>0) ? r2(_a.monto) : (r2(rec.cobradoBs)||(_yaCob>0?r2(_yaCob):'')); }
   var _ce=document.getElementById('f-envio');
   if(_ce){ var _e=r2(envioTotal(rec)); _ce.value=_e>0?_e:''; }
   /* ⚠️ El «¿ya lo cobraste?» del flete se marca MÁS ABAJO, después de mostrar el bloque del
@@ -8529,6 +8613,8 @@ function editPedido(id){
   }
   pintarMixto();
   if(_mx) segSet('f-banco2', _mx.banco||'');
+  // 💵 La plata tal como quedó a la vista (ver EDIT_PLATA0).
+  EDIT_PLATA0={ id:String(rec.id), pagado:segVal('f-pagado'), cobrado:r2(montoForm('f-cobrado')), metodo:segVal('f-metodo'), banco:segVal('f-banco') };
   document.getElementById('edit-oc').textContent=rec.oc?('N° '+rec.oc):('de '+(rec.cliente||''));
   document.getElementById('edit-banner').classList.add('on');
   document.getElementById('f-submit').textContent='Guardar cambios';
@@ -8581,6 +8667,7 @@ function realDelete(id){
   var loc=findById(id), copia=loc?JSON.parse(JSON.stringify(loc)):null;
   STATE=STATE.filter(function(p){return p.id!==id;});
   setPending(getPending().filter(function(p){return p.id!==id;}));
+  BORRADO_AQUI[String(id)]=Date.now();      // (26/09) una lectura vieja no lo vuelve a poner (ver `borradoAqui`)
   // Refrescar TODO: si no, el pedido borrado seguía apareciendo en la lista de carga,
   // en Mis pedidos, en el panel del chofer, en el mapa y —desde que se puede borrar
   // desde ahí— en la tabla de Contabilidad y en el Cuadre.
@@ -8593,9 +8680,10 @@ function realDelete(id){
   toast('Eliminando… (primero se mira que nadie la haya cambiado)','ok');
   /* §4fz: se borra en el servidor SOLO si la fila sigue siendo la que se vio. Si no, vuelve
      a la pantalla con lo nuevo y se dice qué cambió: la persona decide de nuevo. */
-  var volver=function(rec){ if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
+  var volver=function(rec){ delete BORRADO_AQUI[String(id)]; if(!rec) return; rec.oc=cleanOC(rec.oc); upsert(rec); repintar(); };
   return borrarEnServidor(copia||{id:id}).then(function(r){
     if(r.ok){ toast('Pedido eliminado ✓','ok'); return r; }
+    if(r.incierto) delete BORRADO_AQUI[String(id)];   // «si sigue en la planilla, vuelve sola»: que vuelva
     if(r.conflicto){
       volver(r.actual);
       toast('⚠️ NO se borró: '+((r.actual&&r.actual.cliente)||(copia&&copia.cliente)||'esta venta')+' cambió desde que la abriste — '+queCambioTxt(copia, r.actual)+
@@ -9245,6 +9333,7 @@ function cleanOC(v){
   return s;
 }
 function mergePending(serverList){
+  serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
   /* ⚠️ UN `list` QUE VUELVE TARDE NO PISA LO QUE SE ACABA DE TOCAR (§4eo). La consulta sale,
@@ -9262,6 +9351,18 @@ function mergePending(serverList){
   });
   var ids={}; serverList.forEach(function(p){ids[p.id]=1;});
   var pend=pendTodos.filter(function(p){return !ids[p.id];});
+  /* ⏳ (26/09, revisión de Pedidos) …Y EL PEDIDO NUEVO QUE ESA LECTURA TODAVÍA NO TRAE. La vuelta automática
+     (cada 30 s en Mis pedidos) o la bajada de 4 s que hace `submitPedido` salen ANTES de guardar y, si Google
+     tarda, vuelven DESPUÉS del «Pedido enviado al equipo ✓» con la planilla de antes: el pedido recién
+     cargado desaparecía de la pantalla (y de los cupos) hasta la lectura siguiente, y la vendedora que no lo
+     veía lo volvía a cargar. Lo guardado hace menos de 90 s que sigue en ESTE dispositivo se queda; uno que
+     se borró o que el servidor rechazó ya no está en STATE (ni en SAVE_ULTIMO) y no vuelve. */
+  var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
+  for(var kS in SAVE_ULTIMO){
+    if(ids[kS] || enCola[kS] || !saveReciente(kS)) continue;
+    var locS=findById(kS);
+    if(locS && !esFilaSistema(locS) && !esBorrador(locS)){ serverList.push(locS); ids[kS]=1; }
+  }
   /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
      solo lo que vino del servidor; un retiro que quedó en la cola (sin señal, sin clave,
      servidor ocupado) desaparecía de la ventana de retiros en el primer refresco aunque
@@ -9683,10 +9784,12 @@ function borrEsLaMisma(idBorr, idPed){
   BORRADORES=BORRADORES.filter(function(x){ return String(x.id)!==String(idBorr); });
   saveBorrMirror(); renderBorrSiActivo();
   // §4fz: el borrador se borra solo si sigue siendo el que se vio (otra lo pudo haber completado).
+  if(CONNECTED){ BORRADO_AQUI[String(idBorr)]=Date.now(); }   // (26/09) ver `borradoAqui`
   if(CONNECTED) borrarEnServidor(_copiaB).then(function(r){
+    if(!(r && r.ok)) delete BORRADO_AQUI[String(idBorr)];
     if(r && r.conflicto){ toast('⚠️ El borrador de Kommo no se borró: '+queCambioTxt(_copiaB, r.actual)+'. Revisá que no quede la venta dos veces.','err',10000);
       try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){} }
-  }, function(){});
+  }, function(){ delete BORRADO_AQUI[String(idBorr)]; });
   toast('Listo: quedó una sola venta, la que ya tenías cargada.','ok', 4500);
 }
 
@@ -11688,12 +11791,14 @@ function descartarBorrador(id){
   BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); });
   saveBorrMirror(); renderBorrSiActivo();
   if(CONNECTED){
+    BORRADO_AQUI[String(id)]=Date.now();    // (26/09) una lectura vieja no la devuelve a la bandeja (ver `borradoAqui`)
     /* §4fz: un borrador que otra vendedora YA completó es un pedido con el MISMO id (§4es):
        descartarlo desde una bandeja vieja borraba la venta y además la anotaba como
        descartada en Kommo. Se mira antes, y el borrado va con el sello. */
-    var volverBorr=function(){ BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
+    var volverBorr=function(){ delete BORRADO_AQUI[String(id)]; BORRADORES=BORRADORES.filter(function(p){ return String(p.id)!==String(id); }).concat([copia]); saveBorrMirror(); renderBorrSiActivo(); };
     borrarEnServidor(copia).then(function(r){
       if(r.ok) return;
+      delete BORRADO_AQUI[String(id)];      // no se borró (o no se sabe): lo que diga la planilla manda
       if(r.conflicto){
         toast('⚠️ NO se descartó: '+queCambioTxt(copia, r.actual)+'. Se recargó la lista.','err',10000);
         try{ refrescarEstado().then(function(){ autoRepintar(); updateFooter(); renderBorrSiActivo(); }, function(){}); }catch(e){}
@@ -20766,7 +20871,7 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
-    if(val==='SI'){ wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
+    if(val==='SI'){ pagadoSugerirTotal(); wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
     else { wn.style.display=''; }
     updateMetodoVisibility();
   });
