@@ -3328,6 +3328,20 @@ function montoForm(el){
   if(!el || montoError(el.value)) return 0;
   return parseMonto(el.value);
 }
+/* 💵 (26/09, revisión de Pedidos) «SÍ, PAGADO» = PAGÓ TODO. Al tocarlo, «A cuenta» y «Saldo» se ponen en 0 y
+   aparece «Monto total cobrado»… que en una venta con adelanto abría con EL ADELANTO (lo que `editPedido` pone
+   ahí). Guardando sin mirarlo, la venta de Bs 3.000 (500 a cuenta + 2.500 de saldo) quedaba pagada por Bs 500:
+   los 2.500 desaparecían de Contabilidad y del Cuadre, con «Cambios guardados ✓». Ahora el campo propone el
+   total —lo que dicen «A cuenta» y «Saldo» antes de borrarse, más lo ya cobrado de la venta, que esos campos no
+   muestran—, siempre que esté vacío o siga con lo que puso el panel. Lo tipeado a mano no se toca. */
+function pagadoSugerirTotal(){
+  var cb=document.getElementById('f-cobrado'); if(!cb) return;
+  var prev=EDIT_ID?findById(EDIT_ID):null;
+  var tot=r2(montoForm('f-acuenta')+montoForm('f-saldo')+(prev?totalCobrado(prev):0));
+  if(!(tot>0)) return;
+  var delPanel=!!(EDIT_PLATA0 && EDIT_PLATA0.pagado!=='SI' && r2(montoForm(cb))===EDIT_PLATA0.cobrado);
+  if(!cb.value.trim() || delPanel){ cb.value=r2(tot); if(typeof pintarMixto==='function') pintarMixto(); }
+}
 /* Muestra el selector de método cuando está PAGADO o cuando hay un monto "a cuenta" (adelanto). */
 function updateMetodoVisibility(){
   var pagado = segVal('f-pagado')==='SI';
@@ -7538,7 +7552,12 @@ function submitPedido(){
               comps:(metodoConComprobante(_met)?compsArr(FORM_COMPS):[]) }]);
           })()
         : _metSuelto;
-  var _tieneHist = !!(prev && parseCobros(prev.metodoPago).length);
+  /* (26/09, revisión de Pedidos) Historial = el adelanto o algún cobro de la VENTA. El flete (`^…`) no cuenta: el
+     bloque del recargo (más abajo) lo vuelve a escribir tal cual desde el pedido anterior. Contándolo, una venta
+     con el adelanto SUELTO («Efectivo %IMG», el formato de toda venta nueva) y el flete cobrado no dejaba
+     corregir el método del adelanto (se ignoraba callado), tomaba como «ya registrado» el pago de una «PAGADA
+     sin monto» (el monto que pide el formulario no se guardaba) y preguntaba «¿borrar el historial?» por nada. */
+  var _tieneHist = !!(prev && parseCobros(prev.metodoPago).filter(function(c){ return !esEnvio(c); }).length);
   /* Al guardar como PAGADO el formulario manda siempre "a cuenta 0". Eso NO significa
      que el vendedor haya borrado el anticipo: es cómo funciona el formulario. Si el
      pedido ya venía pagado, se conservan el anticipo y el historial. */
@@ -20852,7 +20871,7 @@ document.addEventListener('DOMContentLoaded',function(){
   initSeg('f-turno',renderCupoForm);
   initSeg('f-pagado',function(val){
     var wn=document.getElementById('wrap-nopago');
-    if(val==='SI'){ wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
+    if(val==='SI'){ pagadoSugerirTotal(); wn.style.display='none'; document.getElementById('f-saldo').value='0'; document.getElementById('f-acuenta').value='0'; }
     else { wn.style.display=''; }
     updateMetodoVisibility();
   });

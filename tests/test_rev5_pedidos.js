@@ -271,6 +271,82 @@ function INIT(){
   });
 
 
+  // ══ 7. EL FLETE NO ES «HISTORIAL DE PAGOS» DE LA VENTA ═══════════════════════════════════
+  /* El formulario conserva el historial tal cual cuando no se tocó la plata. Pero contaba el renglón del
+     flete (`^…`) como historial: una venta con el adelanto SUELTO (el formato de toda venta nueva) y el
+     flete ya cobrado no dejaba corregir el método del adelanto (se ignoraba callado), una «PAGADA sin monto»
+     con flete no guardaba el monto que el formulario obliga a poner, y cambiar el adelanto preguntaba
+     «¿borrar el historial?» cuando no se borraba nada (el flete se reescribe igual). */
+  await esc('7. Adelanto suelto con el flete cobrado', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'g1', cliente:'SUELTO Y FLETE', oc:'09-001', metodoPago:'Efectivo %IMGA + ^Efectivo 100 @2026-09-15 #1001 %IMGA', acuenta:500, saldo:2500 }));
+    S.guardar(pedido({ id:'g2', cliente:'SIN MONTO Y FLETE', oc:'09-002', fecha:'2026-09-18', ts:TS('2026-08-20'),
+      metodoPago:'Efectivo %IMGB + ^Efectivo 100 @2026-09-15 #1002 %IMGB', pagado:true, acuenta:0, saldo:0 }));
+    S.guardar(pedido({ id:'g3', cliente:'SUELTO Y FLETE 2', oc:'09-003', fecha:'2026-09-18', metodoPago:'Efectivo %IMGC + ^Efectivo 100 @2026-09-15 #1003 %IMGC', acuenta:500, saldo:2500 }));
+    S.guardar(pedido({ id:'g4', cliente:'SUELTO Y FLETE PACTADO', oc:'09-004', fecha:'2026-09-21', metodoPago:'QR BISA %IMGD + ^150', acuenta:700, saldo:2300 }));
+    const A = await abrir(S);
+    A.__dialogos.length=0;
+    let r = await editar(A, 'g1', function(){ segSet('f-metodo','QR'); updateBancoVisibility(); segSet('f-banco','BISA'); });
+    chk('⚠️ el método del adelanto suelto se corrige aunque la venta tenga el flete cobrado (antes seguía en Efectivo)', S.fila('g1').metodoPago.indexOf('QR BISA %IMGA')===0 && !A.__dialogos.length && !r.rojos.length, { pago:S.fila('g1').metodoPago, dialogos:A.__dialogos.map(d=>d.slice(0,60)) });
+    chk('…y el flete cobrado queda como estaba (método, fecha, recibo e imagen)', /\^Efectivo 100 @2026-09-15 #1001 %IMGA$/.test(S.fila('g1').metodoPago), S.fila('g1').metodoPago);
+    A.__dialogos.length=0;
+    r = await editar(A, 'g2', function(){ document.getElementById('f-cobrado').value='3000'; document.getElementById('f-direccion').value='nueva'; });
+    const g2 = S.fila('g2');
+    chk('⚠️ la «PAGADA sin monto» con flete guarda el monto que el formulario pide, con el día de la venta (antes seguía sin monto)',
+        /^~Efectivo 3000 @2026-08-20 /.test(g2.metodoPago) && /%IMGB/.test(g2.metodoPago.split('+')[0]) && g2.pagado===true && g2.direccion==='nueva', g2.metodoPago);
+    chk('…y el flete sigue ahí', /\+ \^Efectivo 100 @2026-09-15 #1002 %IMGB$/.test(g2.metodoPago), g2.metodoPago);
+    A.__dialogos.length=0;
+    r = await editar(A, 'g3', function(){ document.getElementById('f-acuenta').value='600'; document.getElementById('f-saldo').value='2400'; });
+    chk('⚠️ corregir el adelanto suelto no pregunta «¿borrar el historial?» por el flete (no se borra nada)', !A.__dialogos.length && Number(S.fila('g3').acuenta)===600 && /\^Efectivo 100 @2026-09-15 #1003 %IMGC$/.test(S.fila('g3').metodoPago), { dialogos:A.__dialogos.map(d=>d.slice(0,60)), pago:S.fila('g3').metodoPago });
+    A.__dialogos.length=0;
+    r = await editar(A, 'g4', function(){ document.getElementById('f-obs').value='sin tocar la plata'; });
+    chk('(control) con el flete PACTADO, editar otra cosa deja la plata igual', S.fila('g4').metodoPago==='QR BISA %IMGD + ^150' && Number(S.fila('g4').acuenta)===700 && !A.__dialogos.length, S.fila('g4').metodoPago);
+  });
+
+
+  // ══ 8. «SÍ, PAGADO» PROPONE EL TOTAL DE LA VENTA ══════════════════════════════════════════
+  /* Una venta de Bs 3.000 con 500 a cuenta: el cliente paga el resto y la vendedora la abre y toca «SÍ, pagado».
+     «A cuenta» y «Saldo» se borran y aparece «Monto total cobrado»… con 500 (el adelanto, que `editPedido` deja
+     ahí). Guardando sin mirarlo quedaba PAGADA por Bs 500: los 2.500 desaparecían de Contabilidad y del Cuadre. */
+  await esc('8. «SÍ, pagado» propone el total de la venta', async () => {
+    const S = servidor();
+    S.guardar(pedido({ id:'h1', cliente:'ADELANTO SUELTO', oc:'09-001', metodoPago:'Efectivo %IMGA', acuenta:500, saldo:2500 }));
+    S.guardar(pedido({ id:'h2', cliente:'ADELANTO Y UN COBRO', oc:'09-002', fecha:'2026-09-18',
+      metodoPago:'~Efectivo 500 @2026-09-10 #1002 %IMGB + QR BISA 1000 @2026-09-14 #1750 %IMGQ', acuenta:500, saldo:1500 }));
+    const A = await abrir(S);
+    const tocarSi = () => A.evaluate(async () => { document.querySelector('#f-pagado button[data-val="SI"]').click(); await esperar(30); return document.getElementById('f-cobrado').value; });
+    const tocarNo = () => A.evaluate(async () => { document.querySelector('#f-pagado button[data-val="NO"]').click(); await esperar(30); return true; });
+    // a · la venta con el adelanto suelto
+    await A.evaluate(async () => { showView('mis'); await esperar(150); editPedido('h1'); await esperar(250); });
+    let visto = await tocarSi();
+    chk('⚠️ al tocar «SÍ, pagado» el monto cobrado propone el TOTAL (3.000), no el adelanto (500)', visto==='3000', visto);
+    await A.evaluate(async () => { submitPedido(); await esperar(700); await quieto(); try{ closeModal(); }catch(e){} });
+    const h1=S.fila('h1');
+    chk('⚠️ …y guardando así la venta queda pagada por Bs 3.000 (antes: pagada por 500 y los 2.500 perdidos)', /^~Efectivo 3000 /.test(h1.metodoPago) && h1.pagado===true, h1.metodoPago);
+    // b · la que ya tenía un cobro registrado aparte (que «A cuenta» y «Saldo» no muestran)
+    await A.evaluate(async () => { showView('mis'); await esperar(150); editPedido('h2'); await esperar(250); });
+    visto = await tocarSi();
+    chk('⚠️ con un cobro ya registrado, el total cuenta también ese cobro (500 + 1.000 + 1.500 = 3.000)', visto==='3000', visto);
+    // c · lo tipeado a mano no se pisa al ir y volver
+    await A.evaluate(async () => { document.getElementById('f-cobrado').value='2950'; });
+    await tocarNo(); visto = await tocarSi();
+    chk('(control) lo que se tipea en «Monto total cobrado» no se pisa al tocar NO y SÍ otra vez', visto==='2950', visto);
+    await A.evaluate(async () => { showView('mis'); await esperar(150); resetForm(); });
+    // d · pedido nuevo: el precio se tipeó en «Saldo» y después se tocó «SÍ, pagado»
+    const r = await A.evaluate(async () => {
+      showView('form'); await esperar(150); resetForm();
+      document.getElementById('f-saldo').value='2800';
+      document.querySelector('#f-pagado button[data-val="SI"]').click(); await esperar(30);
+      var a=document.getElementById('f-cobrado').value;
+      resetForm();
+      document.querySelector('#f-pagado button[data-val="SI"]').click(); await esperar(30);
+      return { conPrecio:a, sinPrecio:document.getElementById('f-cobrado').value };
+    });
+    chk('pedido nuevo: lo tipeado en «Saldo» pasa a «Monto total cobrado» al tocar «SÍ, pagado»', r.conPrecio==='2800', r);
+    chk('(control) pedido nuevo sin precio: el monto cobrado sigue vacío (se tipea, como siempre)', r.sinPrecio==='', r);
+  });
+
+
   // ══ 3. EL NOMBRE RECORDADO DE LA COMPUTADORA ═════════════════════════════════════════════
   /* `submitPedido` recordaba SIEMPRE al vendedor del pedido como «quién soy en esta compu». Logística le
      corregía la dirección a una venta de Carola desde Administración, y en esa computadora el próximo pedido
