@@ -1057,8 +1057,10 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
       <div id="mis-cola"></div>
       <div id="mis-borradores"></div>
       <div id="mis-ubic-aviso"></div>
-      <div class="qchips" id="mis-chips"></div>
       <div class="metrics" id="mis-metrics"></div>
+      <!-- 📱 (26/09, dueño) Los botones de filtro van JUSTO ARRIBA de la lista: en el celular, con los cuatro números en
+           el medio, tocar «📅 Hoy» cambiaba una lista que quedaba mucho más abajo, fuera de la pantalla. -->
+      <div class="qchips" id="mis-chips"></div>
       <div id="mis-lista"></div>
       <div id="mis-empty" class="empty">Elegí tu nombre para ver tus pedidos.</div>
     </div>
@@ -12947,17 +12949,16 @@ function renderMis(){
   mine.sort(function(a,b){ var fa=fechaSalida(a)||'', fb=fechaSalida(b)||''; if(fa!==fb) return fa<fb?1:-1; return (b.ts||0)-(a.ts||0); });
   if(av) av.innerHTML = (mine.length && !todos) ? avisoMisHtml(mine) : '';
   if(mine.length && !todos) autoAbrirAvisos(v, mine);
-  /* (27/09, revisión en el celular) Los números dicen «pedidos cargados»: cuentan por el día en que se CARGÓ el pedido
-     (`contaFecha`, en hora de Bolivia), como «📝 Ingreso» —lo de siempre— en Contabilidad. Contaban por la fecha de ENTREGA:
-     «Hoy · pedidos cargados» decía 0 con cinco pedidos cargados hoy para mañana, y «Este mes» dejaba afuera las ventas de
-     tienda (no tienen fecha de entrega). «Por cobrar (mes)» va sobre los mismos pedidos que «Este mes». Los chips de abajo
-     (📅 Hoy, 🌅 Mañana…) siguen siendo la ENTREGA: filtran la lista de lo que sale. */
+  /* (26/09, decisión del dueño) Los números cuentan por la fecha de ENTREGA, como siempre, y ahora el cartel lo DICE: decía
+     «pedidos cargados» y «Hoy» daba 0 con cinco pedidos cargados hoy para mañana. La revisión en el celular los había pasado
+     al día de carga; el dueño eligió la entrega y cambiar el nombre. Las ventas de tienda (sin fecha de entrega) no entran en
+     «Hoy», «Este mes» ni «Por cobrar», como siempre. Los chips (📅 Hoy, 🌅 Mañana…) también filtran por la entrega. */
   var hoy=todayStr(), mes=hoy.slice(0,7), nHoy=0,nMes=0,uMes=0,pend=0;
-  mine.forEach(function(p){ var fc=String(contaFecha(p)||''); if(fc===hoy)nHoy++; if(fc.slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
+  mine.forEach(function(p){ if(p.fecha===hoy)nHoy++; if((p.fecha||'').slice(0,7)===mes){ nMes++; (p.productos||[]).forEach(function(x){uMes+=Number(x.cant)||0;}); if(!p.pagado)pend+=Number(p.saldo)||0; } });
   box.innerHTML=
-    mc('var(--teal)','Hoy',nHoy, todos?'cargados hoy por todo el equipo':'pedidos cargados')+
-    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades · cargados este mes')+
-    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de tus pedidos (mes)')+
+    mc('var(--teal)','Hoy',nHoy, todos?'se entregan hoy (todo el equipo)':'pedidos que se entregan hoy')+
+    mc('var(--teal-dk)','Este mes',nMes,uMes+' unidades · se entregan este mes')+
+    mc('var(--red)','Por cobrar',fmtBs(pend),'saldo de lo que se entrega este mes')+
     mc('var(--green)','Total cargados',mine.length,'histórico');
   renderMisChips(mine); acomodarFichas();
   if(!mine.length){ tbl.innerHTML=''; tbl.style.display='none'; empty.style.display='block'; empty.textContent='Todavía no tenés pedidos cargados con ese nombre.'; return; }

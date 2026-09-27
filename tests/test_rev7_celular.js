@@ -266,9 +266,10 @@ function INIT(vend){
   });
 
   // ══ 4. LOS NÚMEROS DE ARRIBA DE MIS PEDIDOS ═════════════════════════════════════════════════
-  /* «Hoy · pedidos cargados» contaba las ENTREGAS de hoy (un pedido cargado hoy para mañana no sumaba) y «Este mes» dejaba
-     afuera las ventas de tienda (no tienen fecha de entrega). Ahora los tres cuentan por el día en que se CARGÓ, como
-     «📝 Ingreso» en Contabilidad; los chips de abajo siguen filtrando por la ENTREGA. */
+  /* «Hoy · pedidos cargados» contaba las ENTREGAS de hoy (un pedido cargado hoy para mañana no sumaba): el cartel no decía lo
+     que contaba. El dueño (26/09) eligió seguir contando por la ENTREGA y cambiar el nombre: «pedidos que se entregan hoy»,
+     «se entregan este mes». Las ventas de tienda (sin fecha de entrega) no entran, como siempre. Y los chips van justo arriba
+     de la lista (en el celular, la lista que cambian quedaba lejos, debajo de los cuatro números). */
   await esc('4. Los contadores de Mis pedidos', async () => {
     const S = servidor();
     S.guardar(pedido({ id:'c1', cliente:'SE ENTREGA HOY', oc:'09-001', fecha:'2026-09-16', ts:TS('2026-09-14'), saldo:1000 }));
@@ -288,12 +289,20 @@ function INIT(vend){
       return { m:out, chips:chips };
     });
     const hoy=r.m['Hoy']||{}, mes=r.m['Este mes']||{}, pc=r.m['Por cobrar']||{};
-    chk('⚠️ «Hoy · pedidos cargados» cuenta lo que se CARGÓ hoy: el de mañana y la venta de tienda (antes 1: el que se entrega hoy)', hoy.v==='2', hoy);
-    chk('⚠️ «Este mes» cuenta lo cargado en septiembre, con la venta de tienda y el de octubre (antes 3, sin la de tienda)', mes.v==='4', mes);
-    chk('⚠️ …y sus unidades (1 + 2 + 1 + 1)', /^5 unidades/.test(mes.sub||''), mes.sub);
-    chk('⚠️ «Por cobrar (mes)» es el saldo de esos mismos pedidos (1.000 + 2.000 + 700; antes 3.500 con el de agosto)', /3\.700,00/.test(pc.v||''), pc);
+    chk('«Hoy» cuenta lo que se ENTREGA hoy (1), y el cartel lo dice', hoy.v==='1' && /se entregan hoy/.test(hoy.sub||''), hoy);
+    chk('⚠️ …el cartel ya no dice «pedidos cargados» (contaba entregas)', !/cargados/.test(hoy.sub||''), hoy.sub);
+    chk('«Este mes» cuenta lo que se entrega en septiembre (3: sin la venta de tienda ni el de octubre), y lo dice', mes.v==='3' && /se entregan este mes/.test(mes.sub||''), mes);
+    chk('…y sus unidades (1 + 2 + 1)', /^4 unidades/.test(mes.sub||''), mes.sub);
+    chk('«Por cobrar» es el saldo de lo que se entrega este mes (1.000 + 2.000 + 500) y lo dice', /3\.500,00/.test(pc.v||'') && /se entrega este mes/.test(pc.sub||''), pc);
     chk('(control) «Total cargados» sigue siendo todo lo suyo, sin lo de otra vendedora', (r.m['Total cargados']||{}).v==='5', r.m['Total cargados']);
     chk('(control) los chips siguen filtrando por la ENTREGA: 📅 Hoy 1 · 🌅 Mañana 1', r.chips['📅 Hoy']===1 && r.chips['🌅 Mañana']===1, r.chips);
+    // 📱 los chips, justo arriba de la lista (en el celular la lista que cambian quedaba lejos, debajo de los cuatro números)
+    const pos = await A.evaluate(() => {
+      var ch=document.getElementById('mis-chips'), li=document.getElementById('mis-lista');
+      var a=ch.getBoundingClientRect(), b=li.getBoundingClientRect();
+      return { sig:(ch.nextElementSibling||{}).id||'', gap:Math.round(b.top-a.bottom) };
+    });
+    chk('⚠️ los botones de filtro están JUSTO ARRIBA de la lista (antes: los cuatro números en el medio)', pos.sig==='mis-lista' && pos.gap>=0 && pos.gap<60, pos);
   });
 
   // ══ 5. EDITAR UN PEDIDO SIN TURNO ═══════════════════════════════════════════════════════════
