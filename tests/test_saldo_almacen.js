@@ -247,8 +247,9 @@ function INIT_DOS(vend){
     _nuevo(); _renglon(0, { codigo:'CH1775', cant:1 }); await _esperar(500); out.oro=_caja(0); out.tOro=_tabla('ORO');
     _nuevo(); _renglon(0, { codigo:'CH1075', cant:1 }); await _esperar(500); out.jun=_caja(0); out.tJun=_tabla('JUN');
     _nuevo(); _renglon(0, { codigo:'CH1212', cant:1 }); await _esperar(500); out.som=_caja(0); out.tSom=_tabla('SOM');
-    _nuevo(); _renglon(0, { desc:'SOMIER ARTESANAL DE PINO', medida:'Otros', cant:1 });
-    var o=document.querySelector('#f-productos .prod-medida-otro'); o.value='150x190'; o.dispatchEvent(new Event('input')); await _esperar(500); out.raro=_caja(0);
+    /* (rev8, a conciencia) Con una medida ESTÁNDAR: «Otros 150x190» ahora es 📐 medida especial (el dueño: se fabrica a
+       pedido, nunca sale del stock — `tests/test_rev8_saldo.js`). Lo que cuida esto sigue igual: un producto que nadie conoce. */
+    _nuevo(); _renglon(0, { desc:'SOMIER ARTESANAL DE PINO', medida:'140x190', cant:1 }); await _esperar(500); out.raro=_caja(0);
     return out;
   });
   const T=r;
