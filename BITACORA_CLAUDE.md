@@ -7517,6 +7517,13 @@ pintado, 1–3 ms por tecla; sin errores de consola ni desborde en 360 px.
 - `test_rev8_saldo.js` §6-9 (19 más: 55 en total; 10 rojas contra `89512b1`). `test_saldo_almacen` cambió a conciencia
   el 🔄: con la lectura de recién no lee, pasados 15 s sí (84; 1 roja contra `89512b1`).
 
+**Publicado el 27/09 a las 12:58 de Bolivia**: `main` = `2040720`, sin tocar el servidor (sigue 2026-09-26-a). Batería
+sobre `baa7e81`: 106 suites, 4.074 bien · 0 mal. ⚠️ La corrida anterior dio 7 rojas en `test_ubic` (6) y
+`test_rev2_cuadre` (1), dos pestañas que este cambio no toca: solas pasaron 4 veces seguidas y otra con carga, y la
+batería siguiente salió entera en verde (misma cuenta total). `test_ubic` mide un «servidor lento a propósito» con
+relojes de verdad: con 4 suites en paralelo puede perder la carrera. Para ver el detalle de una falla así, correr una
+copia de `correr.sh` que guarde la salida de cada suite con ✗ (la batería solo guarda el resumen).
+
 ## 4gj. 27/09: el saldo del almacén debajo de cada producto del formulario (2026-09-27)
 
 **El pedido fue cambiando en la misma mañana, y quedó así:**

@@ -764,7 +764,7 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
 - **Ventana que queda** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
   servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos.
 - `tests/test_saldo_almacen.js` (83; 73 rojas contra `bd5dde3`), con el caso de dos vendedores contra el `.gs` real.
-- **La revisión del 27/09 (§4gk, `8550355`+`89512b1`)** — tres renglones que NO salen del saldo del almacén, y a los que
+- **La revisión del 27/09 (§4gk, `8550355`+`89512b1`+`baa7e81`, publicada 12:58, `2040720`)** — tres renglones que NO salen del saldo del almacén, y a los que
   el cuadrito contestaba con el saldo de otro colchón. `saldoClasificar` les pone su grupo `f.g` (`esp|`/`cod|`/`fab|`),
   que es con lo que se suman y comparan (también el pedido guardado en `saldoFilasAGuardar`); solo `saldoDelAlmacen(f)`
   pide lectura:
