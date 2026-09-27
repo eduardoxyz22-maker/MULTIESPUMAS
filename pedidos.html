@@ -138,6 +138,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
 .prod-saldo.ps-verde{background:var(--green-lt);border-color:var(--green-border);border-left-color:var(--green);color:#0b5a3a}
 .prod-saldo.ps-ambar{background:var(--amber-lt);border-color:var(--amber-border);border-left-color:var(--amber);color:#7c4b00}
 .prod-saldo.ps-rojo{background:var(--red-lt);border-color:var(--red-border);border-left-color:var(--red);color:#8a1c24}
+/* 📐 La medida especial en su propio color (rev8, 27/09): no es «no hay», es «se hace a pedido». El azul de «🔵 Especiales». */
+.prod-saldo.ps-azul{background:#e8effd;border-color:#bfd0f7;border-left-color:#1d4ed8;color:#1e3a8a}
 .prod-saldo .ps-t{font-weight:800;font-size:.84rem;line-height:1.35}
 .prod-saldo .ps-n{margin-top:3px;color:var(--text)}
 .prod-saldo .ps-n b{font-size:1.05em}
@@ -2983,7 +2985,9 @@ function esMedidaConocida(m){
   return false;
 }
 // Un pedido tiene medida ESPECIAL si algún producto trae una medida no estándar (opción "Otros").
-function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && !esMedidaConocida(m)) return true; } return false; }
+/* (27/09) Una medida estándar escrita distinto («160X190CM», «1,60 x 1,90») NO es especial: `saldoMedidaCanon` la lleva a
+   «160x190». Antes el filtro «🔵 Especiales» y el color celeste de la fila las marcaban. */
+function hasEspecial(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ var m=String(pr[i].medida||'').trim(); if(m && !esMedidaConocida(m) && !esMedidaConocida(saldoMedidaCanon(m))) return true; } return false; }
 // Un pedido lleva medida 50x70 si algún producto tiene esa medida (resalte naranja claro).
 function has50x70(p){ var pr=(p&&p.productos)||[]; for(var i=0;i<pr.length;i++){ if(normMedida(pr[i].medida)==='50x70') return true; } return false; }
 // Tabla de codigos -> producto + medida (autollenado). Generada desde el Excel de la empresa.
@@ -3070,6 +3074,10 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
   var otro=document.createElement('input'); otro.type='text'; otro.className='prod-medida-otro'; otro.placeholder='Escribí la medida'; otro.autocomplete='off';
   otro.style.display=(medida&&!isKnown)?'block':'none'; if(medida&&!isKnown)otro.value=medida;
   mSel.addEventListener('change',function(){ otro.style.display=(mSel.value==='Otros')?'block':'none'; if(mSel.value!=='Otros')otro.value=''; });
+  /* 📐 (27/09, el dueño: «borrarlo solo») Una MEDIDA ESPECIAL escrita en «Otros» sobre el código que dejó la lista —el de la
+     medida estándar: CH1201 = TITANIO ICE 160x190—: el código se borra, como en el importador de Kommo. Al salir del campo
+     (`change`), no letra por letra: «160x19…» todavía no es especial. */
+  otro.addEventListener('change',function(){ codigoEspecialBorrar([card], EDIT_ID ? findById(EDIT_ID) : null); });
   // Autollenado por codigo: al escribir/pegar un codigo conocido, completa producto y medida.
   cIn.addEventListener('input',function(){ var code=cIn.value.trim().toUpperCase();
     var hit=CODIGOS[code];
@@ -7387,6 +7395,9 @@ function onCompFormElegido(ev){
 
 function submitPedido(){
   clearErr();
+  /* 📐 (27/09, el dueño) El código de la medida estándar en un renglón de medida especial se borra también acá, por si se
+     guardó sin salir del campo (Enter). Solo en un renglón nuevo o cambiado: el guardado tal cual conserva lo de logística. */
+  try{ codigoEspecialBorrar(null, EDIT_ID ? findById(EDIT_ID) : null); }catch(e){}
   var vendedor=document.getElementById('f-vendedor').value.trim();
   /* 🏪 En una reposición el «cliente» es la SUCURSAL de destino, y se escribe en su propio
      campo (§4dk): el de cliente está escondido y traería lo que quedó de antes. */
@@ -16417,9 +16428,128 @@ function saldoAvisoActivo(){
 function saldoHayStock(){ return !!(STOCK.c && STOCK.c.f) || Object.keys(STOCK.g||{}).length>0; }
 function saldoMax(a,b){ return a>b ? a : b; }
 
+/* ---- 📐 Medida especial · 🏷️ código de otra medida · 🏭 lo que ya se fabrica para ESTE pedido (rev8, 27/09) ----
+   Tres renglones que NO salen del saldo del almacén, y a los que el cuadrito les contestaba con el saldo de otro:
+     · 📐 una MEDIDA ESPECIAL («Otros» + «150x200»). El dueño: *«¿y qué pasa cuando es medida especial?»*. Con el código
+       del catálogo que dejó la lista (CH1201 = TITANIO ICE 160x190), `stockInfo` va por el código y el cuadrito decía
+       «✅ DISPONIBLE · En almacén 4» — el stock del 160x190, prometiendo algo que no existe; sin código salía gris
+       «revisá el nombre y la medida». Un colchón a medida se fabrica a pedido y NUNCA sale del stock (como en el
+       importador de Kommo, `buscaCatalogo` → 'medida-especial');
+     · 🏷️ el CÓDIGO de otra medida u otro producto: se elige de la lista (llena el código) y después se cambia la medida
+       o el nombre, y el código queda. El stock identifica por el código: el cuadrito daba el saldo de OTRO colchón;
+     · 🏭 editando, la línea que logística ya mandó a fabricar PARA ESTE pedido (`enProduccion`): `stockData` la cuenta
+       aparte (`aFab`), así que el cuadrito decía «🏭 NO HAY · hay que mandar a producir (avisá a logística)» de un
+       colchón que ya se está haciendo para ese cliente — la vendedora podía pedirlo dos veces. */
+/* La medida como «NNNxNNN», se escriba como se escriba: «160X190CM», «160 x 190 cm», «2 plazas», «1,60 x 1,90». */
+function saldoMedidaCanon(m){
+  var t=normMedida(m); if(!t || esMedidaConocida(t)) return t;
+  var d=medidaDeTexto(m); if(d) return normMedida(d);
+  var mt=t.replace(/m/g,'').match(/^(\d)[.,](\d{1,2})[x*](\d)[.,](\d{1,2})$/);          // en metros: «1,60x1,90»
+  if(mt) return (+(mt[1]+(mt[2]+'0').slice(0,2)))+'x'+(+(mt[3]+(mt[4]+'0').slice(0,2)));
+  return t;
+}
+function saldoMismaMedida(a, b){
+  if(normMedida(a)===normMedida(b)) return true;
+  var ca=saldoMedidaCanon(a); return !!ca && ca===saldoMedidaCanon(b);
+}
+/* 📐 ¿Es una MEDIDA ESPECIAL? Solo lo que de verdad lo es:
+     · una medida estándar escrita distinto («160X190», «160 x 190», «2 plazas», «1,60 x 1,90») NO;
+     · un producto del catálogo que se vende en ESA medida (cuna 65x100, colchoneta 68x89, almohada 50x90…) tampoco;
+     · ni lo que algún Excel del almacén tiene con ese nombre y esa medida (el Excel es la verdad de lo que existe). */
+function saldoMedidaEspecial(x){
+  var m=String((x&&x.medida)||'').trim(); if(!m) return false;
+  var can=saldoMedidaCanon(m);
+  if(esMedidaConocida(m) || esMedidaConocida(can)) return false;
+  var cat=CODIGOS[String((x&&x.codigo)||'').trim().toUpperCase()];
+  if(cat && cat.m && saldoMismaMedida(cat.m, m)) return false;              // el código ES de esta medida
+  var c=stockEnCatalogo({ desc:x.desc, medida:can });                       // sin el código: ¿este producto en esta medida?
+  if(c && c.m && saldoMismaMedida(c.m, can)) return false;
+  if(stockHayEnInventario(stockInfo({ desc:x.desc, medida:can }).k) || stockHayEnInventario(stockInfo({ desc:x.desc, medida:m }).k)) return false;
+  return true;
+}
+/* 🏷️ ¿El código es de OTRA medida u OTRO producto? Devuelve qué es ese código (y cuál sería el bueno), o null.
+   Lo de otro producto va con cuidado —el nombre se busca en el catálogo sin el código—: solo si el nombre es CLARAMENTE
+   otro producto del catálogo y no contiene el del código (un «TITANIO ICE PLUS» contiene al «TITANIO ICE»). */
+function saldoCodigoOtro(x){
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod]; if(!cat) return null;
+  var med=String((x&&x.medida)||'').trim();
+  if(normMedida(cat.m)==='especial') return null;      // un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL») va con cualquiera
+  if(cat.m && med && !saldoMismaMedida(cat.m, med)) return { code:cod, d:cat.d, m:cat.m, por:'medida', bien:saldoCodigosDe(cat.d, med) };
+  var n=stockEnCatalogo({ desc:x.desc, medida:med });
+  if(n && n.por==='nombre' && stockNorm(n.d)!==stockNorm(cat.d)){
+    var tc=stockTokens(cat.d).set, td=stockTokens(x.desc).set, todas=true;
+    for(var w in tc){ if(!td[w]){ todas=false; break; } }
+    if(!todas) return { code:cod, d:cat.d, m:cat.m, por:'producto', bien:(n.code ? [n.code] : []), otro:n.d+(n.m?(' '+n.m):'') };
+  }
+  return null;
+}
+/* 📐 El código de la medida ESTÁNDAR pegado a un renglón de medida especial (el dueño, 27/09: «borrarlo solo»): qué es ese
+   código, o null. No cuenta un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL»), uno sin medida, uno que
+   el catálogo no conoce ni un renglón sin nombre (borrarlo lo dejaría sin producto). */
+function saldoCodigoDeEstandar(x){
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod];
+  if(!cat || !cat.m || normMedida(cat.m)==='especial' || !String((x&&x.desc)||'').trim()) return null;
+  if(saldoMismaMedida(cat.m, x.medida) || !saldoMedidaEspecial(x)) return null;
+  return { code:cod, d:cat.d, m:cat.m };
+}
+/* Lo borra de los renglones del formulario (`cards`, o todos). `prev` = el pedido que se edita: un renglón que ya estaba
+   guardado TAL CUAL no se toca, porque lo que puso logística (✔, 🏭, las fechas de fábrica) lo sigue por `prodClave`
+   (`heredarMarcas`); en ese el cuadrito sigue diciendo «borralo». Devuelve cuántos borró. */
+function codigoEspecialBorrar(cards, prev){
+  var viejos={}, borrados=[];
+  ((prev&&prev.productos)||[]).forEach(function(x){ if(x) viejos[prodClave(x)]=1; });
+  var lista=cards || document.querySelectorAll('#f-productos .prod-card');
+  for(var i=0;i<lista.length;i++){
+    var c=lista[i], cIn=c.querySelector('.prod-codigo'), ms=c.querySelector('.prod-medida'), mo=c.querySelector('.prod-medida-otro'), d=c.querySelector('.prod-desc');
+    if(!cIn || !ms || !mo || !d || ms.value!=='Otros') continue;
+    var x={ desc:String(d.value||'').trim(), medida:String(mo.value||'').trim(), codigo:String(cIn.value||'').trim() };
+    if(viejos[prodClave(x)]) continue;
+    var e=saldoCodigoDeEstandar(x); if(!e) continue;
+    cIn.value=''; borrados.push(e);
+  }
+  if(borrados.length){
+    toast(borrados.length===1
+      ? ('📐 Borré el código '+borrados[0].code+': es del '+saldoCodNombre(borrados[0])+', y esta es una medida especial (se fabrica a pedido).')
+      : ('📐 Borré '+borrados.length+' códigos de medida estándar en renglones de medida especial ('+borrados.map(function(e){ return e.code; }).join(', ')+').'), 'ok');
+    saldoAvisosProgramar();
+  }
+  return borrados.length;
+}
+/* Los códigos del catálogo de ese producto en esa medida (para decir cuál es el bueno). */
+function saldoCodigosDe(d, medida){
+  var nd=stockNorm(d), out=[];
+  Object.keys(CODIGOS).forEach(function(k){ var c=CODIGOS[k]; if(stockNorm(c.d)===nd && c.m && saldoMismaMedida(c.m, medida)) out.push(k); });
+  return out;
+}
+/* Los productos del pedido que se EDITA, por `prodClave` (el último gana), igual que `heredarMarcas`: la marca 🏭 se
+   hereda al guardar solo si el renglón queda con la MISMA cantidad; si la cambia, vuelve a salir del almacén. */
+function saldoPrevPorClave(){
+  var out={}, id=saldoSinId(), p=id ? findById(id) : null;
+  ((p&&p.productos)||[]).forEach(function(x){ if(x) out[prodClave(x)]=x; });
+  return out;
+}
+/* Qué es el renglón (📐 · 🏷️ · 🏭 · del almacén) y con quién se suma (`g`). `esPrev`: una línea del pedido guardado. */
+function saldoClasificar(f, prevPorClave, esPrev){
+  var x=f.x;
+  f.esp=saldoMedidaEspecial(x);
+  f.codOtro=saldoCodigoOtro(x);
+  var pv=esPrev ? x : (prevPorClave ? prevPorClave[prodClave(x)] : null);
+  /* 🏭 va ANTES que 📐 (27/09): una medida especial es justo lo que logística manda a fabricar, y la ya pedida para este
+     pedido dice cuándo llega (no «esperá ~X días» contados desde hoy, con una línea roja que no corresponde). */
+  f.fab=(!f.codOtro && pv && enProduccion(pv) && (esPrev || (Number(pv.cant)||0)===(Number(x.cant)||0))) ? pv : null;
+  f.g = f.fab ? ('fab|'+prodClave(x))
+      : f.esp ? ('esp|'+stockNorm(x.desc)+'|'+saldoMedidaCanon(x.medida))
+      : f.codOtro ? ('cod|'+prodClave(x))
+      : f.k;
+  return f;
+}
+/* ¿El renglón sale del saldo del almacén? (los otros no piden lectura ni muestran «Consultando…») */
+function saldoDelAlmacen(f){ return !!(f && f.completo && !f.esp && !f.codOtro && !f.fab); }
+
 /* Los renglones del formulario, con su clave de stock y la cantidad TOTAL de ese producto en el pedido. */
 function saldoFilasForm(){
   var cards=document.querySelectorAll('#f-productos .prod-card'), filas=[], tot={}, nro={}, activo=saldoAvisoActivo();
+  var prevPorClave=activo ? saldoPrevPorClave() : {};
   for(var i=0;i<cards.length;i++){
     var c=cards[i], box=c.querySelector('.prod-saldo'); if(!box) continue;
     var desc=String((c.querySelector('.prod-desc')||{}).value||'').trim();
@@ -16432,15 +16562,15 @@ function saldoFilasForm(){
        arriba. A medio escribir no se dice nada: un «TITAN» no es «no hay». */
     var completo=activo && !!desc && !!(medida || (cat && !cat.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
                  !esProdDeTienda(x) && !esCombo(desc);
-    var f={ card:c, box:box, x:x, completo:completo, k:'', cat:false, total:0, nRen:0 };
+    var f={ card:c, box:box, x:x, completo:completo, k:'', g:'', cat:false, total:0, nRen:0 };
     if(completo){
       var inf=stockInfo(x); f.k=inf.k; f.cat=!!inf.cat;
       if(!f.k || f.k==='|') f.completo=false;
-      else { tot[f.k]=(tot[f.k]||0)+cant; nro[f.k]=(nro[f.k]||0)+1; }
+      else { saldoClasificar(f, prevPorClave); tot[f.g]=(tot[f.g]||0)+cant; nro[f.g]=(nro[f.g]||0)+1; }
     }
     filas.push(f);
   }
-  filas.forEach(function(f){ if(f.completo){ f.total=tot[f.k]; f.nRen=nro[f.k]; } });
+  filas.forEach(function(f){ if(f.completo){ f.total=tot[f.g]; f.nRen=nro[f.g]; } });
   return filas;
 }
 
@@ -16498,6 +16628,65 @@ function saldoDiaConCupo(desde, sinId){
   }
   return { f:desde, turnos:[] };
 }
+/* El veredicto de UN renglón (rev8): 📐 · 🏷️ · 🏭 no salen del saldo del almacén; lo demás, `saldoVeredicto`. */
+function saldoVeredictoFila(f, sinId, fecha){
+  var v;
+  if(f.fab) v=saldoVeredictoFab(f, sinId, fecha);
+  else if(f.esp) v=saldoVeredictoEspecial(f, sinId, fecha);
+  else if(f.codOtro) v={ k:f.k, cant:f.total, tipo:'codigo', color:'ambar', sinLibre:false, sinId:sinId||'', cod:f.codOtro, x:f.x };
+  else v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat);
+  v.nRen=f.nRen;
+  return v;
+}
+/* Lo que tarda la fábrica (`stockTiemposFabrica`): de la foto de esta lectura si el stock está, si no se mide ahora. */
+function saldoTiempos(sinId){ return STOCK_CARGADO ? saldoDatos(sinId).d.fabricas : stockTiemposFabrica(); }
+/* 📐 Lo que tarda la fábrica en hacer ESE modelo: el de su medida estándar (por el código, o por el nombre en el catálogo)
+   si se conoce; si no, lo que usa el panel (lo medido de todas las fábricas, o `STOCK_DIAS_FABRICA`). */
+function saldoLeadModelo(x, sinId){
+  var S=STOCK_CARGADO ? saldoDatos(sinId) : null, T=S ? S.d.fabricas : stockTiemposFabrica();
+  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod], base=null;
+  if(cat) base={ desc:cat.d, medida:cat.m, codigo:cod };
+  else { var c=stockEnCatalogo({ desc:x&&x.desc, medida:'' }); if(c && c.code) base={ desc:c.d, medida:(CODIGOS[c.code]||{}).m||'', codigo:c.code }; }
+  var o=(S && base) ? S.porK[stockInfo(base).k] : null;
+  /* Sin fábrica conocida en esa medida (o sin código: el catálogo da UNA de sus medidas), cualquier otra medida del MISMO
+     modelo que la tenga: la fábrica es la del modelo, no la de la medida. */
+  if(S && !(o && o.fab)){
+    var nd=stockNorm(base ? base.desc : (x&&x.desc));
+    S.d.lista.some(function(g){ if(g && g.fab && stockNorm(g.desc)===nd){ o=g; return true; } return false; });
+  }
+  if(o && o.lead>0) return o.lead;
+  return (T && T.de) ? T.de((o && o.fab) || '').dias : STOCK_DIAS_FABRICA;
+}
+/* 📐 MEDIDA ESPECIAL: se fabrica a pedido. La espera es la de «hay que mandar a producir» (fábrica + el día de entrega, en
+   días reales y con cupo), sin números de almacén ni «libres». Si la fecha elegida es antes, la línea roja. */
+function saldoVeredictoEspecial(f, sinId, fecha){
+  var hoy=todayStr(), v={ k:f.k, cant:f.total, tipo:'especial', color:'azul', sinLibre:true, sinId:sinId||'', cod:f.codOtro||null, x:f.x };
+  v.lead=saldoLeadModelo(f.x, sinId);
+  var min=saldoMax(proximoDiaEntrega(), stockSumarDias(hoy, v.lead+1));
+  var c=saldoDiaConCupo(min, sinId);
+  v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+  if(fecha && fecha<min) v.fechaCorta=fecha;
+  return v;
+}
+/* 🏭 La línea que logística ya mandó a fabricar para ESTE pedido: llega cuando la fábrica termina (el día que se pidió +
+   lo que tarda ESA fábrica), o ya llegó (`prodR`, o ✔ hay). No sale del saldo del almacén. */
+function saldoVeredictoFab(f, sinId, fecha){
+  var hoy=todayStr(), x=f.fab, min='';
+  var v={ k:f.k, cant:f.total, tipo:'fabcli', color:'ambar', sinLibre:false, sinId:sinId||'', lugar:prodDondeSePide(x), pedidoF:String(x.prodF||'') };
+  if(x.prodR || x.chk==='ok'){ v.yaLlego=true; v.llego=String(x.prodR||''); v.color='verde'; min=proximoDiaEntrega(); }
+  else if(v.pedidoF){
+    var T=saldoTiempos(sinId);
+    v.llega=stockSumarDias(v.pedidoF, (T && T.de) ? T.de(v.lugar).dias : STOCK_DIAS_FABRICA);
+    v.atrasada=(v.llega<hoy);
+    min=saldoMax(proximoDiaEntrega(), stockSumarDias(saldoMax(v.llega, hoy), 1));
+  }
+  if(min){
+    var c=saldoDiaConCupo(min, sinId);
+    v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+    if(!v.yaLlego && fecha && fecha<min) v.fechaCorta=fecha;
+  }
+  return v;
+}
 
 /* ---- Los textos ---- */
 function saldoDiaTxt(iso){ return SALDO_DIA_SEM[dowDe(iso)]+' '+fmtFechaCorta(iso); }
@@ -16510,6 +16699,17 @@ function saldoDesdeTxt(v){
 }
 function saldoDiasTxt(n){ return '~'+n+' día'+(n===1?'':'s'); }
 function saldoNombre(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }
+function saldoCodNombre(c){ return String((c&&c.d)||'')+((c&&c.m)?(' '+c.m):''); }
+/* 🏷️ Cuál sería el código bueno (o que no hay), para el renglón con el código de otro. */
+function saldoCodBienTxt(v){
+  var c=v.cod||{}, x=v.x||{}, b=c.bien||[];
+  if(c.por==='medida') return b.length ? ('El de '+x.medida+' es '+b.slice(0,2).join(' o ')+'.') : ('En el catálogo no hay '+c.d+' en '+x.medida+': si es a medida, borrá el código.');
+  return b.length ? ('El de '+(c.otro||saldoNombre(x))+' es '+b[0]+'.') : '';
+}
+/* 📐 con el código de la medida estándar pegado: ese código es OTRO colchón. */
+function saldoCodEspecialTxt(c){
+  return '⚠️ El código '+c.code+' es del '+saldoCodNombre(c)+': borralo de este renglón, o el almacén saca ese colchón.';
+}
 function saldoTitulo(v){
   var dc=v.descont ? (' · ya no se fabrica: quedan '+stockUnid(Math.max(0,v.libres))) : '';
   var trae=STOCK_DIAS_RECOGIDA+' día'+(STOCK_DIAS_RECOGIDA===1?'':'s');
@@ -16521,6 +16721,15 @@ function saldoTitulo(v){
                           (v.atrasada ? ' — la llegada está atrasada: confirmala con logística' : '');
     case 'pedir':  return '🏭 NO HAY · decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)';
     case 'nofab':  return '🛑 YA NO SE FABRICA · '+(v.libres>0 ? ('quedan '+stockUnid(v.libres)+' y el pedido lleva '+v.cant) : 'no queda ninguno')+': no se puede vender, ofrecé otro modelo';
+    /* (rev8) Los tres que no salen del saldo del almacén. */
+    case 'especial': return '📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere '+saldoDiasTxt(v.espera);
+    case 'codigo':   return '⚠️ EL CÓDIGO ES DE '+(v.cod.por==='medida' ? 'OTRA MEDIDA' : 'OTRO PRODUCTO')+' · '+v.cod.code+' es '+saldoCodNombre(v.cod)+
+                            ': corregí el código o '+(v.cod.por==='medida' ? 'la medida' : 'el producto')+' para ver el saldo';
+    case 'fabcli':   return v.yaLlego
+      ? ('🏭 HECHO PARA ESTE PEDIDO · ya llegó de fábrica'+(v.llego ? (' el '+fmtFechaCorta(v.llego)) : '')+': no sale del saldo del almacén')
+      : ('🏭 SE FABRICA PARA ESTE PEDIDO'+(v.lugar ? (' en '+v.lugar) : '')+
+         (v.pedidoF ? (' (pedido el '+fmtFechaCorta(v.pedidoF)+(v.llega ? (', llega ~'+fmtFechaCorta(v.llega)) : '')+')') : ' (preguntá a logística cuándo llega)')+
+         ': no sale del saldo del almacén'+(v.atrasada ? ' — la llegada está atrasada: confirmala con logística' : ''));
     case 'cargando': return '⏳ Cargando el saldo del almacén…';
     case 'leyendo':  return '🔄 Consultando saldo…';
     default: return 'Sin saldo cargado: consultá con logística';
@@ -16577,6 +16786,14 @@ function saldoAvisos(){
 function saldoCajaHtml(v){
   var h='<div class="ps-t">'+esc(saldoTitulo(v))+'</div>';
   if(v.tipo==='cargando' || v.tipo==='leyendo') return h;
+  /* 📐 🏷️ 🏭 (rev8) No salen del saldo del almacén: sin números de almacén, ni «libres», ni corte. */
+  if(v.tipo==='especial' || v.tipo==='codigo' || v.tipo==='fabcli'){
+    if(v.tipo==='codigo'){ var bien=saldoCodBienTxt(v); if(bien) h+='<div class="ps-n">'+esc(bien)+'</div>'; }
+    if(v.tipo==='especial' && v.cod) h+='<div class="ps-w">'+esc(saldoCodEspecialTxt(v.cod))+'</div>';
+    if(v.nRen>1) h+='<div class="ps-n">Este pedido lleva <b>'+stockUnid(v.cant)+'</b> (en '+v.nRen+' renglones)</div>';
+    if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
+    return h;
+  }
   var n=saldoNumerosHtml(v); if(n) h+='<div class="ps-n">'+n+'</div>';
   if(v.desconocido) h+='<div class="ps-n">No encuentro este producto en el saldo del almacén: revisá el nombre y la medida.</div>';
   if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
@@ -16624,8 +16841,10 @@ function saldoLeer(forzar){
 function saldoAvisosPintar(){
   SALDO_TIMER=null;
   var filas; try{ filas=saldoFilasForm(); }catch(e){ return; }
-  var nuevas=filas.filter(function(f){ return f.completo && f.box._firma!==(f.k+'|'+f.total); });
+  /* Solo lo que sale del saldo del almacén pide una lectura; 📐 🏷️ 🏭 (rev8) se contestan ya, sin «Consultando…». */
+  var nuevas=filas.filter(function(f){ return saldoDelAlmacen(f) && f.box._firma!==(f.g+'|'+f.total); });
   if(nuevas.length && saldoHayQueLeer()){
+    saldoAvisosPintarYa(filas.filter(function(f){ return nuevas.indexOf(f)<0; }));
     nuevas.forEach(function(f){ saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); });
     saldoLeer(false).then(function(){ saldoAvisosPintarYa(); });
     return;
@@ -16638,16 +16857,26 @@ function saldoAvisosPintarYa(filas){
     var sinId=saldoSinId(), fecha=saldoFechaForm();
     filas.forEach(function(f){
       if(!f.completo){ saldoCajaOcultar(f.box); return; }
-      var v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat);
-      v.nRen=f.nRen;
-      saldoCajaPintar(f.box, v);
-      f.box._firma=f.k+'|'+f.total;
+      saldoCajaPintar(f.box, saldoVeredictoFila(f, sinId, fecha));
+      f.box._firma=f.g+'|'+f.total;
     });
   }catch(e){ /* el cuadrito nunca rompe el formulario */ }
 }
-/* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta. */
+/* 🔄 del cuadrito: lee la planilla ya (sin el tope de una por minuto) y repinta.
+   ⏱️ (el dueño, 27/09) Pero no más de una vez cada 15 s: cada toque trae la planilla ENTERA y el servidor atiende a todo el
+   equipo. Con una lectura buena de hace menos, repinta y dice de cuándo es. Con la última lectura fallida sí vuelve a leer
+   (es lo que se quiere reintentar), y una lectura en camino se comparte (`saldoLeer`). */
+var SALDO_BOTON_MS=15000;
 function saldoActualizar(){
-  try{ saldoFilasForm().forEach(function(f){ if(f.completo) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
+  var ms=ULTIMO_REFRESCO ? (Date.now()-ULTIMO_REFRESCO) : -1;
+  var falla=(CARGA_ESTADO==='error' || CARGA_ESTADO==='reintento' || !!ULTIMO_ERROR);
+  if(!SALDO_LEYENDO && !REFRESCO_EN_VUELO && !falla && ms>=0 && ms<SALDO_BOTON_MS){
+    saldoAvisosPintarYa();
+    toast('✅ El saldo ya está al día: se leyó hace '+Math.max(1, Math.round(ms/1000))+' s. Se puede volver a leer en '+
+          Math.max(1, Math.ceil((SALDO_BOTON_MS-ms)/1000))+' s.', 'ok');
+    return Promise.resolve(false);
+  }
+  try{ saldoFilasForm().forEach(function(f){ if(saldoDelAlmacen(f)) saldoCajaPintar(f.box, { tipo:'leyendo', color:'gris' }); }); }catch(e){}
   return saldoLeer(true).then(function(){ saldoAvisosPintarYa(); });
 }
 /* Lo llama `refrescarEstado` con cada lectura (buena o no): con el formulario a la vista, se repintan SOLO los cuadritos. */
@@ -16664,25 +16893,37 @@ function saldoTrasLectura(){
 /* Qué renglones hay que mirar: en un pedido nuevo, todos; editando, solo el producto nuevo o con MÁS unidades
    (corregir la dirección de una venta ya revisada no pregunta nada) — y todos si se movió la fecha. */
 function saldoFilasAGuardar(prev, isEdit, deBorrador){
-  if(!STOCK_CARGADO || !saldoAvisoActivo()) return [];
-  var edita=!!(isEdit && prev && !deBorrador), prevQ={}, mueve=false;
+  if(!saldoAvisoActivo()) return [];
+  /* (rev8) Una ATC que al editarla pasa a 📄 OC (§4gg) no estaba en el stock (`stockCuenta`): lo que lleva ahora SÍ sale del
+     almacén, así que se mira todo, como un pedido nuevo. Antes «no cambió la cantidad» y no se preguntaba nada. */
+  var edita=!!(isEdit && prev && !deBorrador && stockCuenta(prev)), prevQ={}, mueve=false;
   if(edita){
-    (prev.productos||[]).forEach(function(x){ if(!x || esProdDeTienda(x)) return; var k=stockClave(x); prevQ[k]=(prevQ[k]||0)+(Number(x.cant)||0); });
+    (prev.productos||[]).forEach(function(x){
+      if(!x || esProdDeTienda(x)) return;
+      var g=saldoClasificar({ x:x, k:stockClave(x) }, null, true).g;       // el mismo grupo que su renglón del formulario
+      prevQ[g]=(prevQ[g]||0)+(Number(x.cant)||0);
+    });
     mueve=String(prev.fecha||'')!==saldoFechaForm();
   }
   var vistos={}, out=[];
   saldoFilasForm().forEach(function(f){
-    if(!f.completo || vistos[f.k]) return; vistos[f.k]=1;
-    var cambia=!edita || f.total>(prevQ[f.k]||0);
+    if(!f.completo || vistos[f.g]) return; vistos[f.g]=1;
+    if(!STOCK_CARGADO && saldoDelAlmacen(f)) return;                       // sin el stock, solo lo que no depende de él
+    var cambia=!edita || f.total>(prevQ[f.g]||0);
     if(cambia || mueve) out.push({ f:f, cambia:cambia });
   });
   return out;
 }
-/* ¿Hace falta leer la planilla antes de guardar para poder preguntar con lo último? */
+/* ¿Hace falta leer la planilla antes de guardar para poder preguntar con lo último? (📐 y 🏭 también: el día con cupo) */
 function saldoHayQueMirar(prev, isEdit, deBorrador){
-  try{ return saldoHayStock() && saldoFilasAGuardar(prev, isEdit, deBorrador).length>0; }catch(e){ return false; }
+  try{ return saldoFilasAGuardar(prev, isEdit, deBorrador).some(function(r){ return r.f.esp || r.f.fab || (!r.f.codOtro && saldoHayStock()); }); }catch(e){ return false; }
 }
 function saldoAlertaTxt(v){
+  /* (rev8) 📐 y 🏷️: lo que el dueño pidió que diga la pregunta. */
+  if(v.tipo==='especial') return 'medida especial: se fabrica a pedido, '+saldoDiasTxt(v.espera)+' (decile al cliente que espere).'+
+                                 (v.cod ? (' ⚠️ El código '+v.cod.code+' es del '+saldoCodNombre(v.cod)+': borralo del renglón.') : '');
+  if(v.tipo==='codigo')   return 'el código '+v.cod.code+' es de '+saldoCodNombre(v.cod)+', no de lo que dice el renglón: corregí el código o '+
+                                 (v.cod.por==='medida' ? 'la medida' : 'el producto')+'. '+saldoCodBienTxt(v);
   var f='no hay saldo libre (faltan '+stockUnid(v.faltan)+').';
   if(v.tipo==='prod')  return f+' Está en producción: llega el '+fmtFechaCorta(v.llega)+', el cliente espera '+saldoDiasTxt(v.espera)+'.';
   if(v.tipo==='pedir') return f+' Hay que mandar a producir (avisá a logística): el cliente espera '+saldoDiasTxt(v.espera)+'.';
@@ -16696,15 +16937,16 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
   var sinId=saldoSinId(), fecha=saldoFechaForm(), lineas=[], primero=null;
   filas.forEach(function(r){
     var f=r.f, v, t='';
-    try{ v=saldoVeredicto(f.k, f.total, sinId, fecha, f.cat); }catch(e){ return; }
-    if(r.cambia && v.sinLibre) t=saldoAlertaTxt(v);
+    try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
+    if(r.cambia && (v.sinLibre || v.tipo==='codigo')) t=saldoAlertaTxt(v);
     if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
     if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
   });
   saldoAvisosPintarYa();                       // que el cuadrito diga lo mismo que la pregunta
   if(!lineas.length) return true;
+  var aQuien=(docTipoSel()==='RPT') ? 'a la sucursal' : 'al cliente';     // (rev8) en una RPT el «cliente» es la tienda
   var si=confirm('⚠️ ANTES DE GUARDAR, MIRÁ EL SALDO:\n\n'+lineas.join('\n\n')+
-                 '\n\n¿Le avisaste al cliente cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
+                 '\n\n¿Le avisaste '+aQuien+' cuánto tiene que esperar?\n\n• Aceptar: guardar el pedido igual.\n• Cancelar: volver al pedido sin guardar.');
   if(!si && primero){ try{ primero.scrollIntoView({block:'center'}); }catch(e){} }
   return si;
 }

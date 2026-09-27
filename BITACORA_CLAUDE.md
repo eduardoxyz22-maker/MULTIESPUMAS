@@ -7445,6 +7445,78 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gk. 27/09: la revisión del cuadrito del saldo — la medida especial y el código de otra medida (2026-09-27)
+
+El dueño, apenas publicado §4gj: *«Después ponés un agente a revisar que no haya errores en pedidos y este nuevo
+método»*, y enseguida: *«¿Y qué pasa cuando es medida especial?»*. Un agente revisó el cuadrito y Pedidos contra lo
+publicado (`fecb3c6`) y encontró cinco errores, todos arreglados (`8550355`, `89512b1`):
+
+1. **ALTA · la medida especial prometía stock que no existe.** Con «Otros» + «150x200» y el código que deja la lista
+   (CH1201 = TITANIO ICE **160x190**), `stockInfo` va por el código y el cuadrito decía «✅ DISPONIBLE · En almacén 4»:
+   el saldo del 160x190. Sin código salía gris («revisá el nombre y la medida»). Un colchón a medida **se fabrica a
+   pedido y nunca sale del stock** (igual que el importador de Kommo, `buscaCatalogo` → `'medida-especial'`). Ahora:
+   azul **«📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~X días»**, sin números de almacén.
+   X = lo que tarda la fábrica de ESE modelo (`saldoLeadModelo`: el de su medida estándar, o cualquier medida del mismo
+   modelo con fábrica conocida; si no, `STOCK_DIAS_FABRICA`) + 1 día, llevado al primer día con cupo. Línea roja si la
+   fecha elegida es antes. Si el renglón conserva el código de la medida estándar, avisa «borralo de este renglón, o el
+   almacén saca ese colchón». En la pregunta al guardar: «medida especial: se fabrica a pedido, ~X días».
+   **No es especial** (`saldoMedidaEspecial`): una medida estándar escrita distinto («160X190CM», «160 x 190»,
+   «2 plazas», «1,60 x 1,90» → `saldoMedidaCanon`); un producto del catálogo en su propia medida (la cuna 65x100); lo que
+   algún Excel del almacén tiene con ese nombre y esa medida (`stockHayEnInventario`).
+   ⚠️ Decidido por el agente: un producto que nadie conoce en una medida NO estándar ahora es 📐 especial, no gris. Por
+   eso el ejemplo «producto desconocido» de `test_saldo_almacen` pasó a una medida estándar (a conciencia).
+2. **ALTA · el código de otra medida.** Se elige TITANIO ICE 160x190 de la lista (llena CH1201) y después se cambia la
+   medida a 140x190: el código queda y el stock va por el código, así que decía «✅ DISPONIBLE» con los 4 del 160x190
+   cuando del 140x190 no hay ninguno. Ahora (`saldoCodigoOtro`): ámbar «⚠️ EL CÓDIGO ES DE OTRA MEDIDA · CH1201 es
+   TITANIO ICE 160x190… El de 140x190 es CH1220», y pregunta al guardar. «Otro producto» solo cuando el nombre es
+   CLARAMENTE otro del catálogo y no contiene al del código («TITANIO ICE PLUS» contiene a «TITANIO ICE»: no avisa). Un
+   código del catálogo para medida «ESPECIAL» (SOMIER BiRELAX) va con cualquier medida.
+3. **MEDIA · lo que ya se fabrica para ESE pedido.** Editando un pedido con una línea que logística ya mandó a fabricar
+   para ese cliente (`enProduccion`), `stockData` la cuenta aparte y el cuadrito decía «🏭 NO HAY · hay que mandar a
+   producir (avisá a logística)»: la vendedora podía pedirla dos veces. Ahora «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno
+   (pedido el 22/09, llega ~25/09)», o verde si ya llegó. Solo con la MISMA `prodClave` y la MISMA cantidad (la regla de
+   `heredarMarcas`): si cambia la cantidad, vuelve a salir del almacén.
+4. **BAJA · una ATC que al editarla pasa a 📄 OC** (§4gg) no preguntaba nada al guardar: la ATC no contaba en el stock
+   (`stockCuenta`) y ahora sí. Se mira todo, como un pedido nuevo.
+5. **BAJA · en una RPT** la pregunta dice «¿Le avisaste **a la sucursal**…?».
+
+**Cómo quedó por dentro.** `saldoClasificar` le pone a cada renglón su grupo `f.g` (`esp|…`, `cod|…`, `fab|…` o la
+clave de stock): los renglones se suman por grupo, y `saldoFilasAGuardar` clasifica el pedido guardado con el mismo
+grupo. Solo lo que sale del almacén (`saldoDelAlmacen`) pide lectura y muestra «Consultando…»; 📐 🏷️ 🏭 se contestan
+enseguida. `stockData()` da exactamente lo mismo que antes de §4gj (comparado contra `bd5dde3`).
+
+**Verificado por el agente:** Banzer, Moreno, recogidas en camino, discontinuados, Eduardo y RPT en pendientes, conteo
+negativo, dos renglones del mismo producto, cantidad 0 o cambiada; el pedido editado no se cuenta a sí mismo; días
+(miércoles, viernes, sábado, fin de mes) iguales al formulario y al servidor; la pregunta no se duplica con cupo lleno,
+día cerrado ni fecha pasada; Cancelar no guarda. Con 900 pedidos y el celular 4 veces más lento: 33–67 ms el primer
+pintado, 1–3 ms por tecla; sin errores de consola ni desborde en 360 px.
+
+**Pruebas.** `tests/test_rev8_saldo.js`: 36 comprobaciones, 23 rojas contra `fecb3c6` (reloj clavado en el miércoles
+23/09/2026). Batería sobre `89512b1`: 106 suites, 4.054 bien · 0 mal.
+
+**Lo que decidió el dueño (27/09, con las fotos de antes y ahora) y cómo quedó:**
+- **«Borrarlo solo»**: el código de la medida estándar en un renglón de medida especial se borra solo
+  (`codigoEspecialBorrar` + `saldoCodigoDeEstandar`), con un aviso «📐 Borré el código CH1201: es del TITANIO ICE
+  160x190, y esta es una medida especial (se fabrica a pedido)». Cuándo: al SALIR del campo «Otros» (`change`: letra por
+  letra, «160x19…» todavía no es especial) y al empezar `submitPedido` (por si se guardó con Enter). No se borra: una
+  medida estándar escrita distinto, un código del catálogo PARA medida especial (SOMIER BiRELAX «ESPECIAL»), un código
+  que el catálogo no conoce, un renglón sin nombre, ni **un renglón ya guardado tal cual** — lo que puso logística (✔,
+  🏭, las fechas de fábrica) lo sigue por `prodClave` (`heredarMarcas`), y borrarle el código se lo sacaba. Ahí el
+  cuadrito sigue diciendo «borralo».
+- **Borradores de Kommo: no se cuentan** hasta completarlos (como estaba).
+- **🔄 Actualizar: una lectura cada 15 s como mucho** (`SALDO_BOTON_MS`): con una lectura buena de hace menos, repinta
+  y dice «✅ El saldo ya está al día: se leyó hace N s. Se puede volver a leer en M s.». Con la última lectura fallida
+  lee igual (es lo que se quiere reintentar).
+- **Publicar** apenas pasen las pruebas.
+- Y sin preguntarle, dos que salieron al hacerlo:
+  - **🏭 va antes que 📐** (`saldoClasificar`): una medida especial es justo lo que logística manda a fabricar, y la ya
+    pedida para ESE pedido decía «esperá ~X días» contados desde hoy, con una línea roja que no correspondía. Ahora dice
+    «🏭 SE FABRICA PARA ESTE PEDIDO… llega ~DD/MM». Con otra cantidad vuelve a 📐.
+  - **El filtro «🔵 Especiales»** y el celeste de la fila (`hasEspecial`, también en el Excel) ya no marcan «160X190CM»
+    ni «1,60 x 1,90» (`saldoMedidaCanon`).
+- `test_rev8_saldo.js` §6-9 (19 más: 55 en total; 10 rojas contra `89512b1`). `test_saldo_almacen` cambió a conciencia
+  el 🔄: con la lectura de recién no lee, pasados 15 s sí (84; 1 roja contra `89512b1`).
+
 ## 4gj. 27/09: el saldo del almacén debajo de cada producto del formulario (2026-09-27)
 
 **El pedido fue cambiando en la misma mañana, y quedó así:**
@@ -7473,6 +7545,9 @@ CLAUDE.md, «📦 El saldo debajo de cada producto del formulario».
 
 **Pruebas.** `tests/test_saldo_almacen.js`: 83 comprobaciones, 73 rojas contra `bd5dde3`. Incluye el caso del dueño con
 dos vendedores contra el `.gs` real: después de los 9 pedidos de A, B ve «10 · 9 · 1 libre».
+
+**Publicado el 27/09 a las 11:16 de Bolivia**: `main` = `fecb3c6`, Pages 1531 en verde, sin tocar el servidor.
+Batería sobre `9c7437b`: 105 suites, 4.018 bien · 0 mal.
 
 ## 4gi. 26/09, noche: «Nuevo pedido» y «Mis pedidos» desde el celular (2026-09-27)
 

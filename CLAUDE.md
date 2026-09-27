@@ -737,7 +737,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   avisar un pedido NUEVO a medio escribir; la venta de tienda dice «Chofer: Sin asignar» y «Sin turno»; la ✕ de
   comprobantes (22 px) y «📎 abrir imagen» (18 px) son chicos para el dedo.
 
-## 📦 El saldo debajo de cada producto del formulario (§4gj, 27/09): lo que hay que respetar
+## 📦 El saldo debajo de cada producto del formulario (§4gj, publicado 27/09 11:16, `fecb3c6`): lo que hay que respetar
 El dueño: *«los vendedores no saben cuál es el stock… que coloquen el código y les aparezca el producto, cuántos hay
 pendientes de entrega, cuánto hay de saldo en almacén y si deben pedir a producción, informar al cliente que debe esperar
 o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en vez de pestaña, un aviso en el formulario**.
@@ -764,6 +764,30 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
 - **Ventana que queda** (dicha al dueño): dos que guardan la última unidad en los mismos 1-3 s la venden dos veces (el
   servidor no revisa stock); la lectura siguiente muestra «Faltan» a todos.
 - `tests/test_saldo_almacen.js` (83; 73 rojas contra `bd5dde3`), con el caso de dos vendedores contra el `.gs` real.
+- **La revisión del 27/09 (§4gk, `8550355`+`89512b1`)** — tres renglones que NO salen del saldo del almacén, y a los que
+  el cuadrito contestaba con el saldo de otro colchón. `saldoClasificar` les pone su grupo `f.g` (`esp|`/`cod|`/`fab|`),
+  que es con lo que se suman y comparan (también el pedido guardado en `saldoFilasAGuardar`); solo `saldoDelAlmacen(f)`
+  pide lectura:
+  · **📐 Medida especial** (`saldoMedidaEspecial`, dueño: *«¿y qué pasa cuando es medida especial?»*): se fabrica a
+  pedido, NUNCA sale del stock → azul «📐 MEDIDA ESPECIAL · se fabrica a pedido: ~X días» (fábrica del modelo,
+  `saldoLeadModelo`, + 1 día, al primer día con cupo), sin números de almacén; con el código de la medida estándar
+  pegado, avisa «borralo». ⚠️ NO es especial una medida estándar escrita distinto (`saldoMedidaCanon`: «160X190CM»,
+  «2 plazas», «1,60 x 1,90»), un producto del catálogo en su propia medida, ni lo que algún Excel tiene con ese nombre y
+  medida. Un producto desconocido en medida no estándar es especial (no gris).
+  · **🏷️ Código de otra medida u otro producto** (`saldoCodigoOtro`): el stock identifica POR EL CÓDIGO, y la lista lo
+  deja puesto aunque después se cambie la medida → ámbar «EL CÓDIGO ES DE OTRA MEDIDA… El de 140x190 es CH1220» y
+  pregunta al guardar. «Otro producto» solo si el nombre es claramente otro del catálogo y no contiene al del código.
+  · **🏭 Lo que ya se fabrica para ESTE pedido** (`enProduccion`, misma `prodClave` y MISMA cantidad, como
+  `heredarMarcas`): «SE FABRICA PARA ESTE PEDIDO (pedido el…, llega ~…)», o verde si llegó.
+  · Una ATC que al editarla pasa a OC se mira entera (`stockCuenta(prev)`); en una RPT la pregunta dice «a la sucursal».
+  · **Decidido por el dueño (27/09)**: (1) el código de la medida estándar en una medida especial **se borra solo**
+  (`codigoEspecialBorrar`: al salir del campo «Otros» y al empezar `submitPedido`), con aviso. ⚠️ NUNCA en un renglón
+  ya guardado tal cual: lo de logística lo sigue por `prodClave` (`heredarMarcas`) y se perdería — ahí el cuadrito
+  sigue diciendo «borralo». (2) Los borradores de Kommo **no** cuentan como pendientes. (3) **🔄 Actualizar: una lectura
+  cada 15 s como mucho** (`SALDO_BOTON_MS`; con la última lectura fallida, lee igual).
+  · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
+  Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
+  · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
