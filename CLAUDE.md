@@ -702,7 +702,7 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
 - **Lecturas tardías**: `BORRADO_AQUI` (90 s) impide que una lectura vieja devuelva lo recién borrado (pedidos y
   borradores de Kommo), y `mergePending` conserva lo guardado acá hace menos de 90 s que la lectura todavía no trae.
 - **RPT**: `sucursalElegida` reemplaza zona/dirección/pin que puso OTRA sucursal de la lista; lo escrito a mano se respeta.
-- **Decidido por el dueño (26/09, 20:37) y hecho en §4gh (`8194622`)**:
+- **Decidido por el dueño (26/09, 20:37) y hecho en §4gh (`8194622`, publicado 21:21, `13d00ee`)**:
   · **A. Corregir el PRECIO conserva los pagos** (`_soloPrecio`): quedan tal cual (fecha, recibo, `>chofer`, imágenes,
   adelanto, mixto, flete) y el saldo y «pagado» se recalculan como `aplicarCobros` (saldo 0 = pagada; negativo =
   cobrada de más). Si cambió «A cuenta», se corrige SOLO el adelanto (`_rehaceAdel`, §4fr) y los otros cobros quedan.

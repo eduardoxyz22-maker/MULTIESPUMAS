@@ -7466,6 +7466,9 @@ pago del resto (QR o tarjeta), igual que Contabilidad. El cobro nuevo lleva de r
 **Queda.** En una venta YA pagada, cambiar desde el formulario el reparto del pago mixto sigue rehaciendo el pago con
 fecha de hoy. Pregunta antes, como siempre: la decisión del dueño no cubre este caso.
 
+**Publicado el 26/09 a las 21:21 de Bolivia**: `main` = `13d00ee`, Pages 1529 en verde, sin tocar el servidor.
+Batería sobre `8194622`: 103 suites, 3.900 bien · 0 mal.
+
 **Pruebas.**
 - `tests/test_rev6_plata_form.js`: 52 comprobaciones, 42 rojas contra `e1e207b` (las otras 10 son controles).
 - `test_rev5_pedidos` 8a exigía un solo renglón de hoy; se cambió a conciencia.
