@@ -688,6 +688,25 @@ El dueño: *«salen camiones de la banzer y de productos terminados fábrica; so
   cualquier ✔); NUNCA se trae de Banzer a fábrica (sin recogidas desde Banzer); el bloque de Banzer va bajo el camión de
   cada pedido («así alcanza por ahora»; asignar otro camión a Banzer queda para cuando lo pida).
 
+## 🔎 La revisión de Pedidos del 26/09 a la noche (§4gg): lo que hay que respetar
+- **Un pago YA REGISTRADO no se cambia callado desde el formulario**: `EDIT_PLATA0` guarda cómo se veía la plata al
+  abrir la edición; si con los montos iguales se tocó el método, el banco o el «Monto total cobrado», `submitPedido`
+  pregunta y dice que se corrige en Contabilidad → ✏️ Corregir este pago (los pagos quedan como están).
+- **`_tieneHist` no cuenta el flete** (`esEnvio`): el bloque del recargo lo reescribe aparte. Y una venta con saldo
+  NEGATIVO (cobrada de más) sigue «pagada» (`<=0.009`), sin preguntar «¿borrar el historial?».
+- **Una venta cobrada sin adelanto** abre el «Monto total cobrado» con `contaCobrado(rec)` (no vacío).
+- **«SÍ, pagado» propone el TOTAL** (`pagadoSugerirTotal`: a cuenta + saldo + lo ya cobrado), nunca el adelanto; lo
+  tipeado a mano no se toca.
+- **ATC/RPT → OC al editar**: toma el próximo número de las OC de su mes (`nextOcMes`) si el número era del panel.
+- **Editar no cambia el vendedor recordado de la compu** (`setVendedorMem` solo en pedidos nuevos).
+- **Lecturas tardías**: `BORRADO_AQUI` (90 s) impide que una lectura vieja devuelva lo recién borrado (pedidos y
+  borradores de Kommo), y `mergePending` conserva lo guardado acá hace menos de 90 s que la lectura todavía no trae.
+- **RPT**: `sucursalElegida` reemplaza zona/dirección/pin que puso OTRA sucursal de la lista; lo escrito a mano se respeta.
+- **Decidido por el dueño (26/09, 20:37), para la próxima publicación**: (1) corregir el PRECIO de una venta con pagos
+  registrados CONSERVA esos pagos (cambia precio y saldo); (2) «SÍ, pagado» al editar deja el adelanto en SU día y
+  anota el resto como cobro nuevo de hoy.
+- `tests/test_rev5_pedidos.js` (49; 30 rojas contra `2c777fe`).
+
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra
 el que tenga cualquiera, sin acentos: «bahía» = «BAHIA») + **vendedor** (desplegable: Todos +
