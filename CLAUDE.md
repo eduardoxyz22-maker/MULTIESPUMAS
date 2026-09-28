@@ -791,6 +791,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
+**SIN PUBLICAR** (el dueño, 28/09: «Esperar»; el `.gs` 28-a y el stock en el servidor, «más adelante»). La rama ya difiere
+de `main` (`2040720`) en la página: cualquier publicación nueva lleva estos arreglos.
 Codex revisó el informe §15 (`2040720`) y trajo `tests/test_codex28.cjs` (sus 8 comprobaciones, intactas; solo se le
 agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hallazgos se arreglaron:
 - **¿Manda la copia de acá o la de la lectura? Lo dice UNA función, `localManda(id, loc, srv, n0, enCola)`** (pedidos y

@@ -7504,6 +7504,10 @@ arreglados con pruebas que fallan antes:
 - Batería: 108 suites, 4.116 bien · 0 mal. La primera corrida dio 7 rojas en `test_servidor` §11: el literal
   `ESTA_VERSION` de `probarAntesDeImplementar` seguía en 26-a (el dueño hubiera visto «quedó código VIEJO» al probar).
 
+**Decisión del dueño (28/09):** la página queda en la rama **sin publicar** («Esperar»); el `.gs` 2026-09-28-a, «más
+adelante»; validar el stock en el servidor, «más adelante». ⚠️ La rama (`7f4a74e`) ya difiere de `main` en la página: la
+próxima publicación lleva estos arreglos, y la página espera la 28-a (línea gris en «Cerrar día» hasta implementarla).
+
 **Lo que Codex recomendó y NO se hizo (decisión del dueño):** validar el stock en el servidor al guardar (reservar la
 última unidad bajo el candado). Codex coincide en no bloquear la venta sin stock y pide, antes, definir en el servidor
 las MISMAS reglas que `stockData`. Es un cambio grande del `.gs`.
