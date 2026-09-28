@@ -847,10 +847,14 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
 - **No hay caché que migrar**: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura.
 - ⚠️ **El histórico del sistema (`VENTAS_HIST`) no dice vendedor ni cliente** y trae todas las ventas: no se separa
   nada ahí. El cartel de «Qué producir» lo dice.
-- **Esperan al dueño**:
-  - los umbrales miran el PRODUCTO, no la compra: 8 de Multicenter + 10 del equipo pasaron el TITANIO de `media` a `alta`;
-  - el plan del mes que viene (60 d / 90 d) no tiene umbral de entregas para nadie: una compra única de 40 de Eduardo a
-    Multicenter en agosto sube octubre de 9 a 24 si el producto rota por el equipo.
+- **Decidido por el dueño (28/09)**: las compras grandes y sueltas de Multicenter **no se cargan al panel** («para no
+  entorpecer los pedidos regulares»), así que **NO se agregó ningún tope** al plan del mes (60 d / 90 d no tienen umbral
+  de entregas para nadie: una compra única de 40 en agosto subía octubre de 9 a 24). Se le avisó que así el panel no
+  aparta ni descuenta esas unidades hasta el Excel siguiente, y que «Qué producir» no las pide.
+  - Propuesto y sin respuesta: cargarlas con la marca «PEDIDO ÚNICO» en el cliente → pedido único (aparta stock, no es
+    demanda).
+  - Dicho y no es un error: los umbrales miran el PRODUCTO, no la compra. 8 de Multicenter + 10 del equipo pasaron el
+    TITANIO de `media` a `alta`.
 - Pruebas:
   - `tests/test_eduardo_multicenter.js`: 29 comprobaciones, 17 rojas contra `2040720`. Abre la página publicada desde
     git (`ANTES=<sha>`) con los mismos pedidos, así que «lo que no cambia» se compara literal.

@@ -1146,6 +1146,11 @@ cartel de «Qué producir» lo dice.
    propias 3 entregas del producto en la ventana de 90 días. El costo: si Multicenter compra una vez por mes, en 90
    días tiene 3 entregas y cuenta; si compra menos seguido, no cuenta.
 
+**Decisión del dueño (28/09):** las compras grandes y sueltas de Multicenter no se cargan al panel, para no entorpecer
+los pedidos regulares. Por eso no hay tope nuevo en el código. Se le avisó que esas unidades, si salen de un depósito
+contado, el panel no las aparta ni las descuenta hasta el Excel de existencias siguiente, y que «Qué producir» no las
+pide. Quedó propuesta, sin respuesta, una marca en el cliente («PEDIDO ÚNICO») para cargarlas como pedido único.
+
 **Archivos:**
 - `pedidos.html`: la regla, dos contadores para los textos, los textos y los comentarios.
 - `tests/test_eduardo_multicenter.js` (nueva).

@@ -7533,6 +7533,19 @@ O sea: 60 d, 90 d y la tendencia mezclan meses del panel (equipo + Eduardo a Mul
    estimaciones amortigua pero no alcanza: en ese caso suben 60 d (8,7 → 29,1) y 90 d (12,2 → 25,8), y la mediana
    salta a la tendencia (24), que ya estaba alta.
 
+**Decisión del dueño (28/09, después del informe):** *«las compras de 40 de Multicenter no las subiré al panel para
+no entorpecer los pedidos regulares, creo que sería mejor»*. No se agrega ningún tope nuevo al plan del mes: las
+compras grandes y sueltas de Multicenter quedan FUERA del panel, y el plan sale de los pedidos regulares. Se le avisó
+lo que cuesta no cargarlas:
+1. Si esas unidades salen de un depósito contado (acá, Banzer, Moreno), el panel no se entera hasta el Excel de
+   existencias siguiente. Mientras tanto las ve libres: el cuadrito del saldo dice «disponible» y la revisión
+   automática puede asignarlas a pedidos regulares. Si la compra se cierra días antes de entregarla, tampoco las
+   aparta.
+2. Si hay que fabricarlas, «Qué producir» no las pide.
+
+Propuesto y sin respuesta: cargarlas con una marca en el cliente («PEDIDO ÚNICO») que las vuelva pedido único. Así
+apartan y descuentan stock y van al camión, pero no son demanda.
+
 **Pruebas:**
 - `tests/test_eduardo_multicenter.js` (nueva). Abre la página nueva y la publicada `2040720` con los MISMOS
   pedidos sintéticos, y cubre las 7 validaciones del dueño más la compra grande sola, los textos y el ejemplo.
