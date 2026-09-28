@@ -7499,6 +7499,9 @@ y que el sábado se trabaja medio día.
   entre semana antes de las 17:00 (10:00 o 15:00), así que no cambian.
   ⚠️ Una prueba NUEVA del cuadrito tiene que clavar el reloj: sin eso, después de las 17:00 da otros días.
 
+**Batería sobre `5ff8112`: 111 suites, 4.203 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+En la rama, esperando el OK del dueño para publicar.
+
 ## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
 
 - **15:16 — el pedido.** *«pasame para instalarla»*, con una captura de 🔒 Cerrar día: «El candado está en el servidor
