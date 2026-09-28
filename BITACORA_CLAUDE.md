@@ -7445,7 +7445,232 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — SIN PUBLICAR
+## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — EN LA RAMA, SIN PUBLICAR
+
+**Lo que vio el dueño.** La tabla de §4gq con su ejemplo, el lunes 28/09 a las 16:25 y a las 18:15:
+- Moreno: desde el miércoles 30/09 → desde el jueves 01/10.
+- Fabricar: ~4 días (viernes 02/10) → ~5 días (sábado 03/10).
+
+**Lo que dijo:**
+- *«Si hay que ir a recoger, da igual si son las 18 o las 11 o las 15, porque se cargó lunes, se recoge martes, se entrega
+  miércoles.»*
+- *«Lo que sí hay que fabricar, si entra lunes a las 18, sería para entregar viernes o sábado. ¿Por qué 5 días? Si el pedido
+  entró lunes a las 18, se manda a producir martes a las 8 am. Debería salir en 48 horas, y las otras 24 son para recoger y
+  entregar… ¿o no es así?»*
+
+**Por qué decía 5 días.**
+- El panel usaba `STOCK_DIAS_FABRICA`=3 como lo que tarda la fábrica hasta que el colchón está en el almacén. El dueño había
+  dicho «2 a 3 días» el 07/09 (§4cn) y se tomó 3.
+- Encima, el cuadrito sumaba 1 día para entregar: martes + 3 = viernes en el almacén → sábado al cliente.
+- Con sus 48 h: martes y miércoles se fabrica, el jueves sale y se recoge, el viernes se entrega.
+- Lo de Moreno en §4gq salió de leer como Moreno su frase del mediodía (*«no es lo mismo un pedido que entra 18:00 del lunes:
+  no llega a entregarse miércoles, sería jueves»*): era el único caso que daba miércoles. Ahora aclaró que ahí la hora no
+  importa.
+
+**Lo que cambió.** Solo el cuadrito del formulario y la pregunta al guardar.
+- 📥 **Moreno:** `saldoDiaRecoge()` es el día hábil siguiente (`STOCK_DIAS_RECOGIDA` días hábiles), a cualquier hora, y se
+  entrega desde el día siguiente a la recogida. Lo mismo para lo que sigue en Moreno en `saldoEntradas`.
+  - Si la recogida no es mañana, el cuadrito dice qué día: el sábado a cualquier hora, «logística lo recoge el lunes 05/10:
+    programá desde el martes 06/10».
+  - Antes de §4gq, el sábado prometía el lunes, como si se recogiera el domingo.
+- 🏭 **Fabricar:** `DIAS_PRODUCCION`=2 días hábiles y `saldoSaleDeFabrica(desde)`.
+  - Lo que hay que fabricar arranca `diaArranque()` (la hora de corte de §4gq sigue).
+  - Sale 2 días hábiles después; ese día se recoge, y se entrega desde el siguiente.
+- **La misma regla** para 📐 medida especial, ⏳ lo ya pedido a fábrica (desde `q.f`) y 🏭 lo que se fabrica para ESE pedido
+  (desde `prodF`). Con la regla solo en «hay que fabricar», el lunes a las 18:15 se prometía el viernes; el martes, con el
+  pedido a fábrica anotado, el ⏳ prometía el sábado para la misma tanda.
+- **La cuenta, a la vista** (`saldoArrancaTxt`):
+  - «🏭 Se manda a producir hoy, sale de fábrica el miércoles 30/09 (48 h) y ese día se recoge.»
+  - «🕔 Ya pasaron las 17:00: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»
+  - Así la pregunta «¿por qué X días?» se contesta sola, también para las vendedoras.
+
+**⚠️ Lo que el cuadrito dejó de usar.** Ni lo que tarda la fábrica «medido» (`stockTiemposFabrica`) ni `saldoLeadModelo`
+(§4gk). Se borraron `saldoLeadModelo` y `saldoTiempos`. Tres motivos:
+1. Es la regla que dictó el dueño.
+2. Lo medido mezcla «hasta que llegó» (✔ hay, o «Llegaron») con «hasta que se entregó»: una línea 🏭 entregada sin pasar por
+   ✔ hay se mide hasta la entrega.
+3. La promesa no cambia sola con cada llegada.
+
+Si un día la fábrica tarda otra cosa, se cambia `DIAS_PRODUCCION`.
+
+**NO cambia la pantalla de stock:** el aviso de cuándo pedir, cuánto pedir, «Qué producir» y «llegan el…». Sigue con lo medido,
+o con `STOCK_DIAS_FABRICA`=3.
+- En la regla del dueño, esos 3 días son las 48 h más el día en que se recoge: hasta que se puede ENTREGAR, que es lo que ese
+  aviso tiene que cubrir.
+- Cambiar el 3 movería las cantidades a pedir, y eso no lo pidió.
+- Consecuencia a la vista: un pedido a fábrica del martes dice «llegan el viernes» en Stock y «llega el jueves» en el cuadrito.
+
+**Su ejemplo, con el panel ya cambiado** (lunes 28/09):
+
+| | 16:25 | 18:15 |
+|---|---|---|
+| 📥 Hay en Moreno | desde el miércoles 30/09 | desde el miércoles 30/09 (no cambia) |
+| 🏭 Hay que fabricar | ~3 días (jueves 01/10) | ~4 días (viernes 02/10) |
+| ✅ Hay a mano | desde mañana | desde mañana (no cambia) |
+
+**Pruebas:**
+- `tests/test_corte_horario.js`, reescrita: 35. Contra `7fe7551` da 11 bien y 24 mal; contra `275b031` (§4gq), 17 bien y 18 mal.
+- `test_saldo_almacen`: cuatro comprobaciones pasaron a las 48 h.
+- `test_rev8_saldo`: nueve comprobaciones pasaron a las 48 h. La de «📐 los ~X días son los de ESE modelo» ahora dice lo
+  contrario, a propósito.
+
+**Batería sobre `e825f51`: 112 suites, 4.236 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+En la rama, junto con §4gq y §4gr, esperando el OK del dueño para publicar.
+
+## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
+
+**El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
+"recargo por entrega"?»*: esa ficha mostraba solo el bloque del flete porque la venta ya no tenía saldo. Después vio la otra
+cara: *«¿y cómo borro los recargos por entrega? Porque no eran recargos por entrega sino pagos»*. Las vendedoras anotaban
+cobros de la venta en «🚚 Recargo por entrega». Aceptó la propuesta con *«sí, hacelo y mostrame»*.
+
+**Lo que había.**
+- Un recargo **pactado** (sin cobrar) se saca con «✏️ Cambiar lo que falta cobrar» → 0, o borrándolo en el formulario. Eso
+  sigue igual.
+- Uno **cobrado** solo tenía «🗑 Quitar el recargo» (`ctaBorrarEnvio`). Ese botón se lleva la foto del recibo
+  (`borrarFotoSiNadieLaUsa`) y la plata desaparece de la venta: había que volver a cargarla a mano en «💵 Registrar un pago».
+
+**Lo nuevo: `ctaEnvioAPago(id, e)`, el botón «↩️ Era un pago de la venta».**
+- Aparece en cada recargo **ya cobrado** de «PAGOS», en la ficha de Contabilidad.
+- No aparece en los pagos de la venta, ni en un recargo pactado, ni en una ATC o RPT (`noSeCobra`).
+- Pasa ESE renglón a los cobros de la venta tal cual: fecha, monto, método, banco, nota, `>quién recibió` y fotos. Ninguna
+  foto va a la papelera.
+- **El total de la venta no cambia:** `aplicarCobros` con el objetivo de antes (`objetivoCobro`) baja el saldo en lo que entró.
+- **Si la venta ya figuraba pagada**, queda «cobrada de más» (`excesoCobro`). La pregunta y el aviso lo dicen: el total
+  estaba corto y se corrige en «✏️ Corregir precios y montos».
+- **Si está registrada en el sistema contable**, la pregunta pide avisarle a Contabilidad. La marca REGISTRADO sigue.
+- **Un solo guardado.** El renglón sale de los recargos en memoria y `aplicarCobros` relee el anticipo y los recargos que
+  quedan. `e` es la posición en `enviosDe(p)` (`ctaIdxEnvio`: [pactado, cobrado] apunta al cobrado).
+- **Venta «PAGADA sin monto» (§4fg):** se pasa `cobrosDe` (con el pago de mentira) para que `aplicarCobros` le mude las fotos
+  del método suelto al pago nuevo. No nace un renglón de Bs 0.
+- Cierra el editor de otro pago que esté abierto (`CTA_EDIT_I=-1`): los renglones cambian de lugar.
+
+**Lo que se le mostró al dueño:** dos capturas de la ficha, con una venta inventada. Antes: 11.500 de adelanto + un «recargo»
+de 7.950, saldo 7.950. Después: los dos en «PAGOS», la venta PAGADA y sin recargo.
+
+**Pruebas:** `tests/test_envio_a_pago.js` (28). Contra `7fe7551` da 8 bien y 20 mal: las 8 son cancelar, ATC/RPT y sin
+errores, que tienen que dar igual.
+
+**Queda (dicho al dueño):** hoy no hay cómo BORRAR un pago de la venta ya registrado. «✏️ Corregir» no acepta monto 0, y ni
+el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un «🗑 Borrar este pago» si hace falta.
+
+**Batería sobre `275b031`: 112 suites, 4.231 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+Es la de §4gq más `test_envio_a_pago` (28). En la rama, junto con §4gq, esperando el OK del dueño para publicar.
+
+## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
+
+> ⚠️ **Corregido esa misma noche en §4gs:** Moreno NO mira la hora, y lo que se fabrica sale a las 48 h (no «3 días + 1»).
+> Lo de abajo sobre Moreno y los «~5 días» queda como historia.
+
+**La pregunta del dueño** (15:40): *«¿qué pasa si hoy tenemos un ICE en inventario, el 1er vendedor lo pone para el
+sábado, el 2do para el miércoles y el 3er para mañana? ¿El panel lo aparta para el 1ro, o define por fecha?»*
+
+**Cómo es hoy (no cambia):**
+- El cuadrito del formulario cuenta lo vendido y sin entregar **sin mirar fechas**: el primero que GUARDA ve ✅; los que
+  cargan después ven «🏭 NO HAY» (y al guardar, la pregunta de siempre).
+- Si dos guardan en los mismos segundos, pasan los dos sin aviso: el servidor no revisa el stock.
+- Quién se lleva el colchón lo decide la **revisión automática de logística**, por **fecha de entrega** (la más cercana
+  primero), respetando lo que ya está marcado (`REVSTK_SOLO_VACIOS`, tildado por defecto). Nada se marca solo: Aplicar.
+
+**Lo que se propuso y el dueño DESCARTÓ** — no volver a proponerlo sin que lo pida:
+- una sola regla para el cuadrito y para logística: *«el colchón va al que entrega primero, pero nunca a costa de dejar tarde
+  a uno que ya vendió»*;
+- cuatro estados en el cuadrito: ✅ HAY · queda para vos / ✅ HAY POR AHORA / 🏭 SE FABRICA / ⛔ NO LLEGA;
+- guardar en cada renglón lo que se le dijo al vendedor, y avisarle en «Mis pedidos» si cambia.
+
+Se simuló con sus tres ventas (en el scratchpad, `sim_reparto*.js`, no en el repo). En el camino dio dos datos que quedan:
+*«es importante decirle al vendedor que se va a fabricar, no que hay: pueden surgir retrasos»*, y para pasarle el colchón a
+una venta más urgente *«justo alcanza»* (sin margen). Después cortó: *«creo que es mucho kilombo, sería mejor que lo decida
+logística»*.
+
+**Lo que SÍ pidió, y está hecho:** *«solo tomá en cuenta, como está ahora, los días de producción tomando en cuenta la hora que
+entra el pedido: no es lo mismo un pedido que entra a las 18:00 del lunes; no llega a entregarse el miércoles, sería el jueves,
+considerando que pasa al siguiente día hábil laboral»*. Antes había dicho: *«logística y producción solo trabajan hasta las 17»*,
+y que el sábado se trabaja medio día.
+- **`diaArranque()`**: hoy, si es día hábil y todavía no pasó el corte; si no, el siguiente día hábil (`sigDiaHabil`).
+  - El corte es `HORA_CORTE`=17 de lunes a viernes y `HORA_CORTE_SABADO`=12 el sábado.
+  - No son hábiles el domingo ni los `FERIADOS` (nacionales + 24/09, cargados hasta fin de 2027). ⚠️ Revisar la lista cada año.
+  - La hora es la del dispositivo, como `todayStr()`.
+- **Se corre SOLO el día en que se empieza.** Los días de producción se cuentan igual que antes (`lead` y
+  `STOCK_DIAS_RECOGIDA`, días corridos): el dueño dijo «como está ahora».
+- **Dónde:**
+  - 📥 HAY EN MORENO (`saldoVeredicto`, y `saldoEntradas` para lo que sigue en Moreno);
+  - 🏭 NO HAY (hay que fabricar), y la llegada de un pedido a fábrica que no trae fecha;
+  - 📐 MEDIDA ESPECIAL.
+- **No cambia:**
+  - ✅ DISPONIBLE (lo que está a mano sale igual «desde mañana»);
+  - ⏳ en producción y 🚚 recogida programada, que tienen su fecha;
+  - la revisión de logística, «Qué producir», la proyección y los carteles de stock.
+- **El texto:** cuando empieza otro día, el cuadrito y la pregunta al guardar dicen por qué (`saldoArrancaTxt`):
+  - «🕔 Ya pasaron las 17:00: logística y producción lo empiezan el martes 29/09.»;
+  - «🕔 El sábado se trabaja hasta las 12:00: …»;
+  - «🕔 Hoy es domingo: …»;
+  - «🕔 Hoy es feriado (Todos Santos): …».
+- **Su ejemplo, con el panel real** (lunes 28/09, 18:15):
+  - Moreno: «programá desde el jueves 01/10» (a las 16:25, el miércoles 30/09).
+  - Fabricar: ~5 días, desde el sábado 03/10 (a las 16:25, ~4 días, el viernes 02/10).
+- **Pruebas:** `tests/test_corte_horario.js` (30). Contra `7fe7551` da 9 bien y 21 mal: las 21 son las que dependen de la
+  hora; las 9 son antes del corte y los controles, que tienen que dar igual. Las otras pruebas del cuadrito clavan el reloj
+  entre semana antes de las 17:00 (10:00 o 15:00), así que no cambian.
+  ⚠️ Una prueba NUEVA del cuadrito tiene que clavar el reloj: sin eso, después de las 17:00 da otros días.
+
+**Batería sobre `5ff8112`: 111 suites, 4.203 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+En la rama, esperando el OK del dueño para publicar.
+
+## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
+
+- **15:16 — el pedido.** *«pasame para instalarla»*, con una captura de 🔒 Cerrar día: «El candado está en el servidor
+  (versión 2026-09-26-a)», sin línea gris. Era una pestaña abierta antes de las 15:02: la página `2040720` esperaba la
+  26-a y con esa versión no dibuja nada. Con la página nueva (F5) aparece la línea gris «está 2026-09-26-a, la última
+  es 2026-09-28-a».
+- **Lo que se verificó antes de mandarle los pasos:**
+  - el `.gs` 28-a cambia 18 líneas contra la 26-a: el `borrado` de `doSave`, `filaFijaSistema_`, `borrado` en
+    `RECHAZOS_REGISTRAR` y las versiones;
+  - `test_servidor.js` da 276/276, con §13 (el archivo de agosto no choca con ningún nombre);
+  - una página `2040720` sin F5 deja el `borrado` en la cola (no está en sus `RECHAZOS_FIRMES`) y lo reintenta. El
+    servidor no toca la hoja y lo anota en Rechazos; con F5 la página nueva lo saca de la cola y lo dice. No se
+    pierde nada.
+- **Los enlaces:**
+  - para instalar, el raw fijo a `7fe755136f10c9c6fc6f028cab29ccc31977c174`: 1980 líneas, termina en `}` con
+    `return borrador;` antes;
+  - para volver atrás, el de `ea81bb01dc704ec47f26147aea0634a9b851639f`: la 26-a, 1965 líneas. Es el mismo que usó el
+    26/09, y el código es idéntico en `e2e613a` y `2040720`.
+- **15:21 — `probarAntesDeImplementar`, todo ✅:**
+  - versión 2026-09-28-a;
+  - código entero (18 funciones clave);
+  - 1063 filas;
+  - disparadores instalados;
+  - repaso de Kommo de hace 2 minutos, sin errores;
+  - **stock 22.642 de 50.000 letras (45 %)**: el 26/09 a las 11:35 eran 22.208;
+  - arqueo en 0.
+- **Versión para volver atrás: 33** («Versión 33 del 26 sept 2026, 11:30 a.m.», la 26-a). Volver atrás = ✏️ → 33
+  **Y** pegar la 26-a de `ea81bb0…`.
+- **~15:24 — implementada.** El dueño: *«listo, ya implementé»* (✏️ → Nueva versión, descripción `2026-09-28-a`).
+  Desde acá no se puede comprobar: el proxy no deja llegar a Google, la última corrida del respaldo de Kommo (167) fue
+  a las 14:45, antes de implementar, y `actions_run_trigger` sigue sin permiso (§4ds).
+- **15:27 — comprobado.** Captura del dueño, después de F5: 🔒 Cerrar día dice *«✅ El candado está en el servidor
+  (versión 2026-09-28-a). Aunque una vendedora tenga el panel abierto desde antes, el servidor le va a rechazar el
+  pedido. No se puede saltear.»*, **sin la línea gris**: el `/exec` de siempre ya contesta con la 28-a.
+- **La segunda `probarAntesDeImplementar` no hace falta.** Lo de Kommo no pasa por el control nuevo: `doSave` solo se
+  llama desde `doPost` (el guardado del panel), y los borradores de Kommo se escriben con `appendRow`. El código de
+  Kommo es el mismo que en la 26-a, y el pegado ya se había comprobado entero a las 15:21.
+- **Decidido por el dueño (28/09, 15:35): los textos de `borrado` quedan como están.**
+  - Se le ofreció arreglar dos cosas:
+    - el cartel del chofer dice «otra persona cambió esos pedidos», pide «volvé a tocar ✅» y «volvé a subirla» de un
+      pedido que ya no está en su lista, y no dice «entregá esa plata a Contabilidad»;
+    - el formulario de la vendedora queda abierto sobre un id que ya no existe.
+  - Su respuesta: *«SI PERO LOS CHOFERES HASTA HOY NO MARCAN nada -.- dejemos mientrsa como esta todo.»*
+  - **Los choferes todavía no usan el panel para marcar ✅ ni cobros.** Lo que depende de eso (cobros de la puerta,
+    chofer sin señal, sus carteles) no es prioridad mientras siga así. No volver a proponer estos textos hasta que
+    los choferes marquen en el panel.
+
+## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
+
+**Publicado el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`: la rama `bf934bb` unida sobre los tableros del robot,
+que quedaron como estaban), con el OK del dueño: *«aprobado todo»*. Van juntos §4gl, §4gm, §4gn y §4go. El servidor sigue
+en **2026-09-26-a**: la página espera la 28-a y «Cerrar día» muestra la línea gris hasta implementarla. Todos F5. El
+`.gs` 28-a va después, con todos ya recargados (enlace raw fijo al commit, nunca por el chat). Pages: corrida 1538 en
+verde a las 15:03.
 
 El dueño trajo la revisión de Codex de la rama en `5b39386`. Codex repitió las pruebas: 81 comprobaciones en cuatro
 suites, con el servidor 28-a y con el 26-a.
@@ -7489,7 +7714,7 @@ suites, con el servidor 28-a y con el 26-a.
 
 **Batería sobre esta vuelta: 110 suites, 4.173 bien · 0 mal.** Lista para publicar cuando el dueño diga.
 
-## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — SIN PUBLICAR
+## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — PUBLICADA (§4go)
 
 El dueño: *«dame el informe para codex y revisa y aviso para publicar»*. Dos agentes revisaron lo que la rama tiene y
 `main` no. Uno miró §4gm (Eduardo → Multicenter); el otro, §4gl (los arreglos de Codex) con el servidor que está
@@ -7576,7 +7801,7 @@ se arregló con pruebas.
 Al publicar hay que hacer lo mismo que en `2040720`: unir la rama sobre `main` con los commits del robot incluidos
 (tableros de Kommo) y que todos hagan F5. El `.gs` 28-a va después, con todos ya recargados (punto 2).
 
-## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — SIN PUBLICAR
+## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — PUBLICADA (§4go)
 
 El dueño (10:49): *«Necesito que la proyección de stock incluya las ventas de Eduardo a Multicenter, conservando las
 demás reglas actuales»*, con la regla exacta: Eduardo → Multicenter entra al histórico y a la demanda; Eduardo → otros

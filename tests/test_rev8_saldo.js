@@ -16,7 +16,8 @@
       ninguno. Ahora dice que el código es de otra medida y cuál es el bueno (CH1220); al guardar, pregunta.
    3. 🏭 EDITANDO una línea que logística ya mandó a fabricar PARA ESE pedido: decía «🏭 NO HAY · hay que mandar a producir
       (avisá a logística)» — la vendedora podía pedirlo dos veces. Ahora: «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido
-      el 22/09, llega ~25/09)», y la línea roja cuenta desde esa llegada.
+      el 22/09, llega ~24/09)», y la línea roja cuenta desde esa llegada. (§4gs, 28/09: sale 48 h hábiles después de pedido;
+      antes, con los 3 días de fábrica, «llega ~25/09».)
    4. Una ATC que al editarla pasa a 📄 OC: sus productos ahora salen del stock, y al guardar no se preguntaba nada.
    5. En una RPT la pregunta dice «¿Le avisaste a la sucursal…?» (no «al cliente»).
    Y las decisiones del dueño del 27/09 (cada una falla contra `89512b1`, la versión de arriba sin ellas):
@@ -156,29 +157,29 @@ function PREPARAR(){
   });
   chk('📐 TITANIO ICE · Otros «150x200» · CH1201 (el código de la estándar): NO dice «✅ DISPONIBLE» con el stock del 160x190',
       r.conCod && !r.conCod.hidden && !/DISPONIBLE/.test(r.conCod.txt) && !/En almacén/.test(r.conCod.txt), r.conCod && [r.conCod.cls, r.conCod.txt, r.__error]);
-  chk('…dice, en AZUL, «📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~5 días» (3 de fábrica + el día de entrega: el domingo no, el lunes 28)',
-      r.conCod && /ps-azul/.test(r.conCod.cls) && /📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~5 días/.test(r.conCod.txt), r.conCod && [r.conCod.cls, r.conCod.txt]);
+  chk('…dice, en AZUL, «📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~3 días» (§4gs: se manda a producir hoy, sale el viernes 25 a las 48 h, se entrega el sábado 26)',
+      r.conCod && /ps-azul/.test(r.conCod.cls) && /📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~3 días/.test(r.conCod.txt), r.conCod && [r.conCod.cls, r.conCod.txt]);
   chk('…sin números de almacén ni «libres»', r.conCod && !/Libres|Faltan|Pendientes de entrega|Saldo al corte/.test(r.conCod.txt), r.conCod && r.conCod.txt);
   chk('…y avisa que ese código es del 160x190 y hay que borrarlo (el almacén sacaría ese colchón)',
       r.conCod && /El código CH1201 es del TITANIO ICE 160x190: borralo de este renglón/.test(r.conCod.txt), r.conCod && r.conCod.txt);
-  chk('…con la entrega para mañana (jueves 24), la línea roja: «Para el jueves 24/09 no llega: programá desde el lunes 28/09»',
-      r.conCod && /Para el jueves 24\/09 no llega: programá desde el lunes 28\/09/.test(r.conCod.txt), r.conCod && r.conCod.txt);
+  chk('…con la entrega para mañana (jueves 24), la línea roja: «Para el jueves 24/09 no llega: programá desde el sábado 26/09»',
+      r.conCod && /Para el jueves 24\/09 no llega: programá desde el sábado 26\/09 \(sábado: solo AM\)/.test(r.conCod.txt), r.conCod && r.conCod.txt);
   chk('📐 sin código (TITANIO ICE · Otros «150x200»): también azul «MEDIDA ESPECIAL», no el gris «revisá el nombre y la medida»',
       r.sinCod && /ps-azul/.test(r.sinCod.cls) && /MEDIDA ESPECIAL/.test(r.sinCod.txt) && !/No encuentro este producto/.test(r.sinCod.txt), r.sinCod && [r.sinCod.cls, r.sinCod.txt]);
   chk('…con una fecha posible (miércoles 30) la línea roja se va', r.fechaBien && /MEDIDA ESPECIAL/.test(r.fechaBien.txt) && !/no llega/.test(r.fechaBien.txt), r.fechaBien && r.fechaBien.txt);
 
   r = await ev(async () => {
     var out={};
-    /* Lo que tarda la fábrica de ESE modelo: TITANIO ICE se hizo por última vez en MORENO, que tardó 6 días; el PILLOW
-       en Multiespumas tardó 2. La mediana general (4) no es la del modelo. */
+    /* Lo que MIDIÓ el panel: TITANIO ICE se hizo por última vez en MORENO, que tardó 6 días; el PILLOW en Multiespumas
+       tardó 2. Hasta el 28/09 el cuadrito usaba eso («~7 días»); desde §4gs sigue la regla del dueño: 48 h hábiles. */
     var p=[ { id:'pa', k:K.TIT, u:3, total:3, tipo:'fabrica', fab:'MORENO', f:_d(-12), r:_d(-6) },
             { id:'pb', k:K.PIL, u:2, total:2, tipo:'fabrica', fab:'MULTI',  f:_d(-5),  r:_d(-3) } ];
     await _escenario(_stock({ aca:{ TIT:4 }, p:p }), []);
     _nuevo(); _renglon(0, { desc:'TITANIO ICE', otra:'150x200', cant:1 }); await _esperar(500); out.tit=_caja(0);
     return out;
   });
-  chk('📐 los «~X días» son los de ESE modelo: TITANIO ICE sale de Moreno, que tardó 6 días → «~7 días» (el miércoles 30)',
-      r.tit && /MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~7 días/.test(r.tit.txt) && /programá desde el miércoles 30\/09/.test(r.tit.txt), r.tit && [r.tit.txt, r.__error]);
+  chk('📐 (§4gs) ya NO usa lo que tardó la fábrica medido (Moreno, 6 días → «~7 días»): la regla del dueño, 48 h → «~3 días», desde el sábado 26',
+      r.tit && /MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere ~3 días/.test(r.tit.txt) && /programá desde el sábado 26\/09/.test(r.tit.txt), r.tit && [r.tit.txt, r.__error]);
 
   r = await ev(async () => {
     var out={};
@@ -214,8 +215,8 @@ function PREPARAR(){
     out.guardados=_enServidor('CLIENTE ESPECIAL'); out.sigue=document.getElementById('f-cliente').value;
     return out;
   });
-  chk('📐 al guardar pregunta, y la pregunta dice «TITANIO ICE 150x200: medida especial: se fabrica a pedido, ~5 días»',
-      page.__dialogos.length===1 && /TITANIO ICE 150x200: medida especial: se fabrica a pedido, ~5 días/.test(page.__dialogos[0]), [page.__dialogos, r.__error]);
+  chk('📐 al guardar pregunta, y la pregunta dice «TITANIO ICE 150x200: medida especial: se fabrica a pedido, ~3 días»',
+      page.__dialogos.length===1 && /TITANIO ICE 150x200: medida especial: se fabrica a pedido, ~3 días/.test(page.__dialogos[0]), [page.__dialogos, r.__error]);
   chk('…y como se aceptó, se guardó igual (se avisa, no se frena la venta)', r.guardados===1, r);
   reset(); page.__respuestas.push(false);
   r = await ev(async () => {
@@ -279,10 +280,10 @@ function PREPARAR(){
   });
   chk('🏭 editando un pedido con su ORO BI RELAX ya pedido a fábrica PARA ÉL: NO dice «NO HAY · hay que mandar a producir»',
       r.edit && !r.edit.hidden && !/NO HAY|mandar a producir/.test(r.edit.txt), r.edit && [r.edit.cls, r.edit.txt, r.__error]);
-  chk('…dice «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido el 22/09, llega ~25/09): no sale del saldo del almacén»',
-      r.edit && /🏭 SE FABRICA PARA ESTE PEDIDO en Moreno \(pedido el 22\/09, llega ~25\/09\): no sale del saldo del almacén/.test(r.edit.txt), r.edit && r.edit.txt);
-  chk('…y si se mueve la entrega a mañana, la línea roja cuenta desde ESA llegada: «programá desde el sábado 26/09» (no «el lunes 28», como si se pidiera hoy)',
-      r.movida && /Para el jueves 24\/09 no llega: programá desde el sábado 26\/09/.test(r.movida.txt), r.movida && r.movida.txt);
+  chk('…dice «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido el 22/09, llega ~24/09): no sale del saldo del almacén» (§4gs: sale a las 48 h)',
+      r.edit && /🏭 SE FABRICA PARA ESTE PEDIDO en Moreno \(pedido el 22\/09, llega ~24\/09\): no sale del saldo del almacén/.test(r.edit.txt), r.edit && r.edit.txt);
+  chk('…y si se mueve la entrega a mañana, la línea roja cuenta desde ESA llegada: «programá desde el viernes 25/09» (no «el sábado 26», como si se pidiera hoy)',
+      r.movida && /Para el jueves 24\/09 no llega: programá desde el viernes 25\/09/.test(r.movida.txt), r.movida && r.movida.txt);
   chk('🏭 si ya llegó de fábrica (✔ hay): verde «🏭 HECHO PARA ESTE PEDIDO · ya llegó de fábrica el 23/09»',
       r.llego && /ps-verde/.test(r.llego.cls) && /HECHO PARA ESTE PEDIDO · ya llegó de fábrica el 23\/09/.test(r.llego.txt), r.llego && [r.llego.cls, r.llego.txt]);
 
@@ -294,8 +295,8 @@ function PREPARAR(){
     await _guardar(); out.fecha=((window._SRV.pedidos.filter(function(p){ return p.id==='fab1'; })[0])||{}).fecha;
     return out;
   });
-  chk('🏭 …y al guardar esa fecha, la pregunta dice lo mismo («Para el jueves 24/09 no llega: programá desde el sábado 26/09»), no «hay que mandar a producir»',
-      page.__dialogos.length===1 && /ORO BI RELAX 180x190: Para el jueves 24\/09 no llega: programá desde el sábado 26\/09/.test(page.__dialogos[0]) && !/mandar a producir/.test(page.__dialogos[0]),
+  chk('🏭 …y al guardar esa fecha, la pregunta dice lo mismo («Para el jueves 24/09 no llega: programá desde el viernes 25/09»), no «hay que mandar a producir»',
+      page.__dialogos.length===1 && /ORO BI RELAX 180x190: Para el jueves 24\/09 no llega: programá desde el viernes 25\/09/.test(page.__dialogos[0]) && !/mandar a producir/.test(page.__dialogos[0]),
       [page.__dialogos, r]);
 
   reset();
@@ -419,10 +420,10 @@ function PREPARAR(){
     _fecha(_d(7)); _renglon(0, { cant:2 }); await _esperar(500); out.dos=_caja(0);
     return out;
   });
-  chk('🏭 editando un pedido con su TITANIO ICE 150x200 ya pedido a fábrica: «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido el 22/09, llega ~25/09)», no «esperá ~5 días»',
-      r.edit && /🏭 SE FABRICA PARA ESTE PEDIDO en Moreno \(pedido el 22\/09, llega ~25\/09\)/.test(r.edit.txt) && !/MEDIDA ESPECIAL/.test(r.edit.txt), r.edit && [r.edit.cls, r.edit.txt, r.__error]);
-  chk('…y la línea roja cuenta desde esa llegada: «Para el jueves 24/09 no llega: programá desde el sábado 26/09»',
-      r.movida && /Para el jueves 24\/09 no llega: programá desde el sábado 26\/09/.test(r.movida.txt), r.movida && r.movida.txt);
+  chk('🏭 editando un pedido con su TITANIO ICE 150x200 ya pedido a fábrica: «🏭 SE FABRICA PARA ESTE PEDIDO en Moreno (pedido el 22/09, llega ~24/09)», no «esperá ~3 días»',
+      r.edit && /🏭 SE FABRICA PARA ESTE PEDIDO en Moreno \(pedido el 22\/09, llega ~24\/09\)/.test(r.edit.txt) && !/MEDIDA ESPECIAL/.test(r.edit.txt), r.edit && [r.edit.cls, r.edit.txt, r.__error]);
+  chk('…y la línea roja cuenta desde esa llegada: «Para el jueves 24/09 no llega: programá desde el viernes 25/09»',
+      r.movida && /Para el jueves 24\/09 no llega: programá desde el viernes 25\/09/.test(r.movida.txt), r.movida && r.movida.txt);
   chk('(control) con 2 unidades ya no es la línea que se pidió: vuelve a «📐 MEDIDA ESPECIAL · se fabrica a pedido»',
       r.dos && /MEDIDA ESPECIAL · se fabrica a pedido/.test(r.dos.txt) && !/SE FABRICA PARA ESTE PEDIDO/.test(r.dos.txt), r.dos && r.dos.txt);
 

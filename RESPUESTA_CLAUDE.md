@@ -1,5 +1,10 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09, ~15:24 de Bolivia — SERVIDOR 2026-09-28-a IMPLEMENTADO** (`borrado`). `probarAntesDeImplementar`
+> dio todo ✅ a las 15:21 y 🔒 Cerrar día dice «versión 2026-09-28-a» sin la línea gris. Para volver atrás: ✏️ → versión
+> 33 (la 26-a) y pegar la 26-a de `ea81bb0`.
+> **ACTUALIZACIÓN 28/09, 15:02 de Bolivia — PUBLICADO.** La página con §16–§19 está en `main` = `7fe7551` (con tu OK
+> a §19 vía el dueño). El servidor sigue en 2026-09-26-a; la 28-a va después, con todos recargados.
 > **ACTUALIZACIÓN 28/09, más tarde — RESPUESTA A TU REVISIÓN DEL §18: §19.** Una sola lectura ya no alcanza para decir
 > «lo borraron» (sospecha + relectura); los avisos no invitan a cargar de nuevo; Multicenter va en el Cliente.
 > **ACTUALIZACIÓN 28/09, noche — ANTES DE PUBLICAR: §18.** Qué se publica (§16 + §17 + lo que encontró mi revisión,
@@ -1221,7 +1226,8 @@ el servidor nuevo está en §16 («Qué cubre cada mitad»).
    vieja.
 2. **BAJA, anotados para antes de implementar la 28-a:**
    - con equipos todavía en `2040720`, su cola reintenta `borrado` para siempre (F5 lo cura);
-   - los textos de `borrado` en el cartel del chofer y en el formulario;
+   - los textos de `borrado` en el cartel del chofer y en el formulario. **Quedan como están**, por decisión del dueño
+     del 28/09: los choferes todavía no marcan ✅ ni cobros en el panel;
    - la 28-a no protege filas nunca selladas (`rev` 0).
 3. **§17, todo BAJA, arreglado:**
    - una consignación de Eduardo a Multicenter mal escrita («MULTICENTER CONSIGNADO») contaba como demanda. Ahora

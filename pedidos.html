@@ -5774,6 +5774,10 @@ function contaPagosHtml(p){
            (cs.length<COMP_MAX
              ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaEnvioAdjuntar(\''+pid+'\','+ctaIdxEnvio(p,i)+')">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar comprobante')+'</button>'
              : '')+
+           /* ↩️ (28/09) Un cobro anotado como recargo que en realidad era un pago de la venta: pasa a los pagos tal cual. */
+           ((envioYaCobrado(c) && !noSeCobra(p))
+             ? '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--teal-border);color:var(--teal-dk);font-size:.76rem;padding:4px 10px;width:auto;font-weight:700" title="Si este cobro era un pago de la venta y no un flete: lo pasa a los pagos, con su fecha, nota y fotos" onclick="ctaEnvioAPago(\''+pid+'\','+ctaIdxEnvio(p,i)+')">↩️ Era un pago de la venta</button>'
+             : '')+
            '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaBorrarEnvio(\''+pid+'\')">🗑 Quitar el recargo</button>'+
          '</div>')
       : '';
@@ -6277,6 +6281,50 @@ function ctaBorrarEnvio(id){
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Recargo por entrega quitado','ok');
   showContaModal(id);
+}
+/* ↩️ ERA UN PAGO DE LA VENTA, NO UN RECARGO (dueño, 28/09: *«¿cómo borro los recargos por entrega? No eran recargos por
+   entrega sino pagos»*). Las vendedoras anotaban cobros de la venta en «🚚 Recargo por entrega». «🗑 Quitar el recargo» se
+   lleva la foto del recibo y la plata desaparece de la venta: había que volver a cargarla a mano. Esto pasa ESE renglón —ya
+   cobrado— a los pagos de la venta en un toque, tal cual: la misma fecha, monto, método, banco, nota, quién la recibió y
+   fotos (ninguna va a la papelera). El total de la venta no cambia: baja lo que falta cobrar (`aplicarCobros`, con el
+   objetivo de antes). Si la venta ya estaba pagada queda «cobrada de más», y se dice: el total estaba corto y se corrige en
+   «✏️ Corregir precios y montos».
+   Solo un recargo YA COBRADO: uno pactado no es plata que entró — ese se saca con «✏️ Cambiar lo que falta cobrar» → 0.
+   `e` es la posición en `enviosDe(p)` (`ctaIdxEnvio`: trae también los pactados). */
+function ctaEnvioAPago(id, e){
+  var p=findById(id); if(!p) return;
+  var ae=enviosDe(p); e=Number(e);
+  if(!(e>=0 && e<ae.length) || !envioYaCobrado(ae[e])) return;
+  var c=ae[e], monto=r2(Number(c.monto)||0); if(!(monto>0)) return;
+  var saldoAntes=r2(Number(p.saldo)||0), saldoDesp=r2(saldoAntes-monto);
+  var n=limpiaNota(c.nota), rec=limpiaRecibio(c.recibio), cs=compsArr(c.comps!=null?c.comps:c.comp);
+  if(!confirm('↩️ ¿Este cobro era un PAGO DE LA VENTA y no un recargo por entrega?\n\n'+
+      cobroMetodoTxt(c)+' '+fmtBs(monto)+(c.fecha?(' · '+fmtFecha(c.fecha)):'')+(n?(' · nota '+n):'')+(rec?(' · recibió '+rec):'')+
+      (cs.length?(' · '+cs.length+(cs.length===1?' foto':' fotos')):'')+'\n\n'+
+      'Pasa a los pagos de la venta tal cual: la misma fecha, nota, método'+(rec?', quién la recibió':'')+' y fotos. '+
+      'Deja de figurar como recargo por entrega.\n\n'+
+      (saldoAntes>0.009 ? ('Lo que falta cobrar de la venta: '+fmtBs(saldoAntes)+' → '+fmtBs(Math.max(0,saldoDesp))+'.')
+                        : 'La venta ya figuraba pagada.')+
+      (saldoDesp<-0.009 ? ('\n\n⚠️ La venta queda cobrada de MÁS por '+fmtBs(-saldoDesp)+': el total de la venta estaba corto. '+
+                           'Corregilo después en «✏️ Corregir precios y montos».') : '')+
+      (regEnSistema(p) ? '\n\n🧾 Esta venta ya está registrada en el sistema contable: avisale a Contabilidad del cambio.' : ''))) return;
+  ctaPagoRecordar();                               // §4fy: un pago a medio cargar no se pierde con el repintado
+  CTA_EDIT_I=-1; CTA_EDIT_V=null;                  // los renglones cambian de lugar: que no quede abierto el editor de otro
+  var objetivo=objetivoCobro(p);                   // lo que la venta tenía que cobrar: no cambia
+  var cobros=cobrosDe(p).slice();                  // con el pago «sin monto» si lo hay: `aplicarCobros` le muda las fotos (§4fg)
+  var nuevo={ metodo:c.metodo, banco:c.banco||'', monto:monto, fecha:c.fecha||'', nota:c.nota||'', recibio:c.recibio||'',
+              comps:cs.slice(), comp:cs[0]||'' };
+  /* El renglón sale de los recargos EN MEMORIA y `aplicarCobros` guarda UNA sola vez: relee de `p` el anticipo y los recargos
+     que quedan, escribe los cobros con el nuevo al final, y recalcula el saldo y «pagado». */
+  var ant=anticipoDe(p), resto=ae.filter(function(_,k){ return k!==e; });
+  p.metodoPago=conMarcaReg(textoHistorial(p, (ant?[ant]:[]).concat(cobrosReales(p)).concat(resto)), regEnSistema(p));
+  var pr=aplicarCobros(p, cobros.concat([nuevo]), objetivo);
+  renderCuadreSiActivo(); renderContaSiActiva();
+  toast('↩️ Pasó a los pagos de la venta: '+cobroMetodoTxt(c)+' '+fmtBs(monto)+
+        (saldoDesp<-0.009 ? (' · ⚠️ queda cobrada de más por '+fmtBs(-saldoDesp)+': corregí el total en «Corregir precios y montos»')
+                          : (' · falta cobrar '+fmtBs(Math.max(0,saldoDesp)))), saldoDesp<-0.009 ? 'err' : 'ok', 9000);
+  showContaModal(id);
+  return pr;
 }
 /* Reescribe SOLO los recargos, dejando intactos el anticipo y los cobros de la venta. */
 /* ---- 📎 Las imágenes del ANTICIPO ----
@@ -16531,8 +16579,9 @@ function stockEnDias(n){ return n===0 ? 'hoy' : n===1 ? 'mañana' : ('en '+n+' d
    libre y, si tenía fecha pasada, lo que se había dado por salido vuelve al almacén).
    El día que se ofrece es el primero con cupo (`cuposUsadosTurno`/`limTurno`: sin domingo, sábado
    solo AM, sin días cerrados) desde que el producto puede estar: a mano, `proximoDiaEntrega()`; de
-   Moreno, un día más (`STOCK_DIAS_RECOGIDA`); en producción, el día después de que llega; sin nada,
-   el día después de lo que tarda la fábrica (`lead`). «Esperá ~X días» es hasta ese día.
+   Moreno, el día después de que se recoge (el día hábil siguiente, `saldoDiaRecoge`); en producción o
+   sin nada, el día después de que sale de fábrica (48 h hábiles, `saldoSaleDeFabrica`, §4gs).
+   «Esperá ~X días» es hasta ese día.
    🔄 El dueño: *«eso debe actualizarse constantemente… así el vendedor está seguro de que al cargar
    el producto le aparece la información correcta y real»*. Cada lectura de la planilla repinta los
    cuadritos (`saldoTrasLectura`); completar un producto con la última lectura de hace más de un
@@ -16555,6 +16604,60 @@ var SALDO_ESPERA_MS=6000;        // cuánto se espera esa lectura antes de conte
 var SALDO_VIEJA_MS=10*60000;     // una consulta más vieja que esto se avisa en ámbar
 var SALDO_DIAS_CUPO=60;          // hasta dónde se busca un día con cupo
 var SALDO_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+/* 🕔 LA HORA EN QUE ENTRA EL PEDIDO (dueño, 28/09). *«Logística y producción solo trabajan hasta las 17: si entra un pedido,
+   la producción se inicia recién el siguiente día hábil… no es lo mismo un pedido que entra a las 18:00 del lunes: no llega
+   a entregarse el miércoles, sería el jueves»*. Y el sábado se trabaja medio día (corte a las 12).
+   Todo lo que alguien tiene que HACER para un pedido —fabricarlo, ir a buscarlo a Moreno, una medida especial— empieza HOY si
+   es día hábil y todavía no pasó el corte; si no, el SIGUIENTE día hábil (`diaArranque`). Los días de producción se cuentan
+   igual que antes (`lead`, `STOCK_DIAS_RECOGIDA`): lo único que se corre es el día en que se empieza.
+   NO cambia lo que ya está a mano (✅ DISPONIBLE), ni lo que ya tiene su fecha (⏳ en producción, 🚚 recogida programada), ni
+   quién se lleva el stock: eso lo decide logística (dueño, 28/09: *«es mucho kilombo, sería mejor que lo decida logística»*).
+   ⚠️ La hora es la del dispositivo, como `todayStr()` (en Bolivia son la misma).
+   🔁 (28/09, segunda vuelta) El dueño, al ver la tabla con su ejemplo: *«si hay que ir a recoger da igual si son las 18 o las
+   11 o las 15: se cargó lunes, se recoge martes, se entrega miércoles»* y *«se manda a producir martes a las 8 am, debería
+   salir en 48 horas y las otras 24 son para recoger y entregar»* (el panel decía ~5 días: 3 de fábrica + 1 para entregar).
+   · 📥 MORENO no mira la hora: logística lo recoge el día hábil siguiente (`saldoDiaRecoge`) y se entrega desde el otro.
+   · 🏭 FABRICAR —y 📐 medida especial, ⏳ lo que ya se pidió a fábrica y 🏭 lo que se fabrica para ESE pedido— sale
+     `DIAS_PRODUCCION` días hábiles después de que arranca (`saldoSaleDeFabrica`), ese día se recoge y se entrega desde el
+     siguiente. Solo lo que arranca AHORA mira la hora (`diaArranque`). Lunes 18:00 → martes → sale el jueves → viernes.
+   ⚠️ Ya no usa lo que tarda la fábrica «medido» ni los 3 días de `STOCK_DIAS_FABRICA`: esos siguen en la pantalla de stock
+   para avisar cuándo pedir, y ahí 3 días = las 48 h + el día en que se recoge (hasta que se puede entregar). */
+var DIAS_PRODUCCION=2;           // «debería salir en 48 horas» (dueño, 28/09): días hábiles desde que arranca la fábrica
+var HORA_CORTE=17;               // lunes a viernes: lo que entra desde las 17:00 empieza el siguiente día hábil
+var HORA_CORTE_SABADO=12;        // el sábado se trabaja hasta el mediodía
+/* Feriados: no trabajan ni logística ni producción. Los nacionales y el 24 de septiembre (Santa Cruz).
+   ⚠️ Revisar cada año (Carnaval, Viernes Santo y Corpus Christi cambian de fecha; un feriado en domingo pasa al lunes). */
+var FERIADOS={
+  '2026-11-02':'Todos Santos', '2026-12-25':'Navidad',
+  '2027-01-01':'Año Nuevo', '2027-01-22':'Día del Estado Plurinacional', '2027-02-08':'Carnaval', '2027-02-09':'Carnaval',
+  '2027-03-26':'Viernes Santo', '2027-05-01':'Día del Trabajo', '2027-05-27':'Corpus Christi', '2027-06-21':'Año Nuevo Andino',
+  '2027-08-06':'Día de la Independencia', '2027-09-24':'Día de Santa Cruz', '2027-11-02':'Todos Santos', '2027-12-25':'Navidad'
+};
+function diaHabil(f){ return !!f && !diaDomingo(f) && !FERIADOS[f]; }
+function sigDiaHabil(f){ var d=stockSumarDias(f,1); for(var n=0; n<30 && !diaHabil(d); n++) d=stockSumarDias(d,1); return d; }
+function diaHabilMas(f, n){ for(var i=0; i<n; i++) f=sigDiaHabil(f); return f; }
+/* 📥 El día en que logística recoge en Moreno lo que se pide hoy: el día hábil siguiente, a cualquier hora. */
+function saldoDiaRecoge(){ return diaHabilMas(todayStr(), STOCK_DIAS_RECOGIDA); }
+/* 🏭 El día en que sale de la fábrica (y se recoge) lo que arrancó `desde`. */
+function saldoSaleDeFabrica(desde){ return diaHabilMas(desde, DIAS_PRODUCCION); }
+/* El día en que logística y producción EMPIEZAN con lo que se pide ahora. */
+function diaArranque(){
+  var ahora=new Date(), hoy=isoLocal(ahora), h=ahora.getHours()+ahora.getMinutes()/60;
+  var corte=diaSabado(hoy) ? HORA_CORTE_SABADO : HORA_CORTE;
+  return (diaHabil(hoy) && h<corte) ? hoy : sigDiaHabil(hoy);
+}
+/* Cómo se cuenta lo que hay que fabricar, para el cuadrito y la pregunta al guardar: qué día se manda a producir (y por qué,
+   si no es hoy) y qué día sale de fábrica. (28/09) El dueño preguntó «¿por qué 5 días?»: la cuenta queda a la vista. */
+function saldoArrancaTxt(v){
+  if(!v || !v.arranca) return '';
+  var hoy=todayStr(), fab=v.sale ? (', sale de fábrica el '+saldoDiaTxt(v.sale)+' ('+(DIAS_PRODUCCION*24)+' h) y ese día se recoge') : '';
+  if(v.arranca===hoy) return fab ? ('🏭 Se manda a producir hoy'+fab+'.') : '';
+  var por = FERIADOS[hoy] ? ('Hoy es feriado ('+FERIADOS[hoy]+')')
+          : diaDomingo(hoy) ? 'Hoy es domingo'
+          : diaSabado(hoy) ? ('El sábado se trabaja hasta las '+HORA_CORTE_SABADO+':00')
+          : ('Ya pasaron las '+HORA_CORTE+':00');
+  return '🕔 '+por+': se manda a producir el '+saldoDiaTxt(v.arranca)+fab+'.';
+}
 
 /* La foto del stock para el formulario: `stockData()` UNA vez por lectura (cambia `SALDO_GEN`, ver `saveMirror`). */
 function saldoDatos(sinId){
@@ -16737,7 +16840,7 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
   if(!o){ v.desconocido=true; return v; }
   var mano=stockHaySalir(o);                  // acá + Banzer: de ahí sale el camión. null = sin contar
   v.pend=o.comp||0; v.aca=(o.deposito==null) ? null : Math.max(0, o.deposito); v.banzer=o.enSale||0;
-  v.moreno=o.enOtros||0; v.recogida=o.enRecogida||0; v.descont=!!o.descont; v.lead=o.lead||STOCK_DIAS_FABRICA;
+  v.moreno=o.enOtros||0; v.recogida=o.enRecogida||0; v.descont=!!o.descont;
   v.hayBanzer=S.d.saleAlm.length>0; v.hayMoreno=S.d.otrosAlm.length>0; v.variosMoreno=S.d.otrosAlm.length>1;
   var fab=(o.pedidos||[]).filter(function(q){ return q && q.tipo!=='recogida' && Number(q.u)>0; });   // ya vienen por fecha de llegada
   v.prod=fab.reduce(function(s,q){ return s+(Number(q.u)||0); }, 0);
@@ -16754,16 +16857,23 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
     var ent=saldoEntradas(v, o, hoy), need=v.pend+cant-mano, cum=0, e=null;
     for(var j=0;j<ent.length;j++){ cum+=ent[j].u; if(cum>=need-1e-9){ e=ent[j]; break; } }
     if(e && e.rec){ v.tipo='recogida'; v.color='ambar'; v.llega=e.llega; v.atrasada=e.atrasada; v.recDe=e.de; disp=e.disp; }
-    else { v.tipo='moreno'; v.color='ambar'; disp=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA); }
+    // 📥 (28/09) no mira la hora (dueño: «se cargó lunes, se recoge martes, se entrega miércoles»): se recoge el día hábil siguiente
+    else { v.tipo='moreno'; v.color='ambar'; v.recoge=saldoDiaRecoge(); disp=v.recoge; }
   }
   else {
     v.sinLibre=true;
-    /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido. */
+    /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido.
+       🏭 (28/09) Cada pedido a fábrica sale `DIAS_PRODUCCION` días hábiles después del día en que se pidió (la regla del
+       dueño, la misma de «hay que mandar a producir»): si no, el día que logística lo pide la promesa se corría un día. */
     var falta=cant-v.libres, cum=0;
-    for(var i=0;i<fab.length;i++){ cum+=Number(fab[i].u)||0; if(cum>=falta-1e-9){ v.llega=fab[i].llega||stockSumarDias(hoy, v.lead); break; } }
+    var fabS=fab.map(function(q){ return { u:Number(q.u)||0, llega:q.f ? saldoSaleDeFabrica(q.f) : q.llega }; })
+                .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); });
+    for(var i=0;i<fabS.length;i++){ cum+=fabS[i].u; if(cum>=falta-1e-9){ v.llega=fabS[i].llega||saldoSaleDeFabrica(diaArranque()); break; } }
     if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
     else if(v.descont){ v.tipo='nofab'; v.color='rojo'; }
-    else { v.tipo='pedir'; v.color='rojo'; disp=stockSumarDias(hoy, v.lead); }
+    /* 🏭 (28/09) «se manda a producir martes a las 8, debería salir en 48 horas y las otras 24 son para recoger y entregar»:
+       la fábrica arranca `diaArranque()` (la hora de corte), sale `DIAS_PRODUCCION` días hábiles después y ese día se recoge. */
+    else { v.tipo='pedir'; v.color='rojo'; v.arranca=diaArranque(); v.sale=saldoSaleDeFabrica(v.arranca); disp=v.sale; }
   }
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
   if(disp){
@@ -16778,7 +16888,8 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
    reparte entre las recogidas pendientes por fecha, sin pasarse de lo que trae cada una: el total es el MISMO de antes
    y nada se cuenta dos veces. Lo que sobre (una recogida sin fecha a la vista) va como lo de Moreno. */
 function saldoEntradas(v, o, hoy){
-  var out=[], traer=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA), queda=Number(v.recogida)||0;
+  // 📥 (28/09) lo que sigue en Moreno se recoge el día hábil siguiente, a cualquier hora (`saldoDiaRecoge`)
+  var out=[], traer=saldoDiaRecoge(), queda=Number(v.recogida)||0;
   if(v.moreno>0) out.push({ u:v.moreno, disp:traer });
   (o.pedidos||[]).filter(function(q){ return q && q.tipo==='recogida' && Number(q.u)>0; })
     .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); })
@@ -16826,44 +16937,26 @@ function saldoVeredictoFila(f, sinId, fecha){
   v.nRen=f.nRen;
   return v;
 }
-/* Lo que tarda la fábrica (`stockTiemposFabrica`): de la foto de esta lectura si el stock está, si no se mide ahora. */
-function saldoTiempos(sinId){ return STOCK_CARGADO ? saldoDatos(sinId).d.fabricas : stockTiemposFabrica(); }
-/* 📐 Lo que tarda la fábrica en hacer ESE modelo: el de su medida estándar (por el código, o por el nombre en el catálogo)
-   si se conoce; si no, lo que usa el panel (lo medido de todas las fábricas, o `STOCK_DIAS_FABRICA`). */
-function saldoLeadModelo(x, sinId){
-  var S=STOCK_CARGADO ? saldoDatos(sinId) : null, T=S ? S.d.fabricas : stockTiemposFabrica();
-  var cod=String((x&&x.codigo)||'').trim().toUpperCase(), cat=CODIGOS[cod], base=null;
-  if(cat) base={ desc:cat.d, medida:cat.m, codigo:cod };
-  else { var c=stockEnCatalogo({ desc:x&&x.desc, medida:'' }); if(c && c.code) base={ desc:c.d, medida:(CODIGOS[c.code]||{}).m||'', codigo:c.code }; }
-  var o=(S && base) ? S.porK[stockInfo(base).k] : null;
-  /* Sin fábrica conocida en esa medida (o sin código: el catálogo da UNA de sus medidas), cualquier otra medida del MISMO
-     modelo que la tenga: la fábrica es la del modelo, no la de la medida. */
-  if(S && !(o && o.fab)){
-    var nd=stockNorm(base ? base.desc : (x&&x.desc));
-    S.d.lista.some(function(g){ if(g && g.fab && stockNorm(g.desc)===nd){ o=g; return true; } return false; });
-  }
-  if(o && o.lead>0) return o.lead;
-  return (T && T.de) ? T.de((o && o.fab) || '').dias : STOCK_DIAS_FABRICA;
-}
-/* 📐 MEDIDA ESPECIAL: se fabrica a pedido. La espera es la de «hay que mandar a producir» (fábrica + el día de entrega, en
-   días reales y con cupo), sin números de almacén ni «libres». Si la fecha elegida es antes, la línea roja. */
+/* 📐 MEDIDA ESPECIAL: se fabrica a pedido. La espera es la de «hay que mandar a producir» (la regla del dueño: 48 h desde que
+   arranca, se recoge el día que sale y se entrega desde el siguiente, en días reales y con cupo), sin números de almacén ni
+   «libres». Si la fecha elegida es antes, la línea roja. (28/09) Antes usaba lo que tarda la fábrica del modelo (medido, o 3). */
 function saldoVeredictoEspecial(f, sinId, fecha){
   var hoy=todayStr(), v={ k:f.k, cant:f.total, tipo:'especial', color:'azul', sinLibre:true, sinId:sinId||'', cod:f.codOtro||null, x:f.x };
-  v.lead=saldoLeadModelo(f.x, sinId);
-  var min=saldoMax(proximoDiaEntrega(), stockSumarDias(hoy, v.lead+1));
+  v.arranca=diaArranque();                     // 🕔 (28/09) la fábrica empieza el día hábil en que trabaja producción
+  v.sale=saldoSaleDeFabrica(v.arranca);        // …y sale 48 h (2 días hábiles) después: ese día se recoge
+  var min=saldoMax(proximoDiaEntrega(), stockSumarDias(v.sale, 1));
   saldoPonerDia(v, min, sinId);                // (28/09) sin cupo en 60 días no promete ninguno
   if(fecha && fecha<min) v.fechaCorta=fecha;
   return v;
 }
-/* 🏭 La línea que logística ya mandó a fabricar para ESTE pedido: llega cuando la fábrica termina (el día que se pidió +
-   lo que tarda ESA fábrica), o ya llegó (`prodR`, o ✔ hay). No sale del saldo del almacén. */
+/* 🏭 La línea que logística ya mandó a fabricar para ESTE pedido: llega cuando sale de fábrica (el día que se pidió + las
+   48 h del dueño, `saldoSaleDeFabrica`: ese día se recoge), o ya llegó (`prodR`, o ✔ hay). No sale del saldo del almacén. */
 function saldoVeredictoFab(f, sinId, fecha){
   var hoy=todayStr(), x=f.fab, min='';
   var v={ k:f.k, cant:f.total, tipo:'fabcli', color:'ambar', sinLibre:false, sinId:sinId||'', lugar:prodDondeSePide(x), pedidoF:String(x.prodF||'') };
   if(x.prodR || x.chk==='ok'){ v.yaLlego=true; v.llego=String(x.prodR||''); v.color='verde'; min=proximoDiaEntrega(); }
   else if(v.pedidoF){
-    var T=saldoTiempos(sinId);
-    v.llega=stockSumarDias(v.pedidoF, (T && T.de) ? T.de(v.lugar).dias : STOCK_DIAS_FABRICA);
+    v.llega=saldoSaleDeFabrica(v.pedidoF);
     v.atrasada=(v.llega<hoy);
     min=saldoMax(proximoDiaEntrega(), stockSumarDias(saldoMax(v.llega, hoy), 1));
   }
@@ -16907,7 +17000,9 @@ function saldoTitulo(v){
   var sc=' · ⚠️ SIN CUPO: '+saldoSinCupoTxt();       // (28/09) ningún turno libre en 60 días: no se promete un día
   switch(v.tipo){
     case 'hay':    return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
-    case 'moreno': return '📥 HAY EN MORENO · se trae en '+trae+(v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc;
+    /* 📥 (28/09) Se recoge el día hábil siguiente: si no es mañana (sábado, domingo, feriado), se dice qué día. */
+    case 'moreno': return '📥 HAY EN MORENO · '+((!v.recoge || v.recoge===stockSumarDias(todayStr(), STOCK_DIAS_RECOGIDA)) ? ('se trae en '+trae) : ('logística lo recoge el '+saldoDiaTxt(v.recoge)))+
+                          (v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc;
     /* 🚚 (28/09, revisión de Codex) Lo que ya va en una recogida programada llega el día que eligió logística, no «en 1 día».
        Si se puede adelantar, lo confirma logística: no se promete. */
     case 'recogida': return v.atrasada
@@ -16983,6 +17078,7 @@ function saldoAvisos(){
 function saldoCajaHtml(v){
   var h='<div class="ps-t">'+esc(saldoTitulo(v))+'</div>';
   if(v.tipo==='cargando' || v.tipo==='leyendo') return h;
+  var ar=saldoArrancaTxt(v); if(ar) h+='<div class="ps-n">'+esc(ar)+'</div>';   // 🕔 (28/09) por qué empieza otro día
   /* 📐 🏷️ 🏭 (rev8) No salen del saldo del almacén: sin números de almacén, ni «libres», ni corte. */
   if(v.tipo==='especial' || v.tipo==='codigo' || v.tipo==='fabcli'){
     if(v.tipo==='codigo'){ var bien=saldoCodBienTxt(v); if(bien) h+='<div class="ps-n">'+esc(bien)+'</div>'; }
@@ -17137,6 +17233,7 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
     try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
     if(r.cambia && (v.sinLibre || v.tipo==='codigo')) t=saldoAlertaTxt(v);
     if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
+    if(t){ var ar=saldoArrancaTxt(v); if(ar) t+=' '+ar; }                   // 🕔 (28/09) por qué empieza otro día
     if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
   });
   saldoAvisosPintarYa();                       // que el cuadrito diga lo mismo que la pregunta

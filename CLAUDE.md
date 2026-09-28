@@ -89,7 +89,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris). **Volver atrás de la 26-a** = ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; falta que el dueño pase el número) Y pegar la 23-b (`14dec98…`, 1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris) **y el 28/09 ~15:24 la `2026-09-28-a`** (§4gp: probar ✅, stock 22.642/50.000 = 45 %; Cerrar día dice «versión 2026-09-28-a» sin línea gris). **Volver atrás de la 28-a** = ✏️ a la **versión 33** (la 26-a) Y pegar la 26-a (`ea81bb0…`, 1965 líneas); de la 26-a, a la 23-b de esa mañana (número sin pasar) Y pegar `14dec98…` (1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -196,7 +196,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     suyo vendido y sin entregar sí se cubre. ⚠️ Esta regla dio la vuelta entera tres veces
     entre el 07 y el 09/09 (el comentario de `STOCK_VENTAS_MIN` guarda la historia con las
     frases textuales): **no tocar ninguna de las dos mitades sin que el dueño lo pida**.
-    🏬 **La única excepción, pedida por el dueño el 28/09 (§4gm, SIN PUBLICAR): las ventas de Eduardo A
+    🏬 **La única excepción, pedida por el dueño el 28/09 (§4gm, publicada 28/09 15:02, `7fe7551`): las ventas de Eduardo A
     MULTICENTER sí cuentan** como las del equipo (`stockEduardoMulticenter`), con los mismos umbrales.
     Eduardo a cualquier otro cliente sigue afuera. Ver «🏬 Eduardo a Multicenter» más abajo.
     `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo (+ Eduardo a Multicenter). `o.rotacion`: `baja` (<3
@@ -258,8 +258,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **Recogida cerrada desde el Excel** (§4ev): `confirmarImportExist` resta lo pendiente de
     `STOCK.g[de].u[k]` como «Llegaron»; si no, Moreno se cuenta dos veces.
   - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
-    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice). Desde §4gm (28/09, sin
-    publicar): **con** las ventas de Eduardo a Multicenter, que ya no son `stockPedidoUnico`.
+    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice). Desde §4gm (28/09, publicada 15:02): **con** las ventas de Eduardo a Multicenter, que ya no son `stockPedidoUnico`.
   - **📥 De qué almacén se va a buscar** (§4ey): la marca del producto es `x.chk='im'` +
     **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
     si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
@@ -459,6 +458,17 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   nombra el total, lista los renglones y junta TODAS las fotos. `tests/test_conta_alta.js`.
   ⚠️ En un test, registrar un pago desde la ficha exige **`CTA_PAGO.comps`**: sin imagen,
   `ctaRegistrarPago` se planta y abre el gato de comprobantes — el pago no se registra.
+- **↩️ «Era un pago de la venta»** (§4gr, 28/09, EN LA RAMA, sin publicar). El dueño: *«no eran recargos por entrega
+  sino pagos»*.
+  - `ctaEnvioAPago(id, e)` pasa un recargo **ya cobrado** a los cobros de la venta tal cual: fecha, monto, método, banco,
+    nota, `>quién recibió` y fotos, sin mandar ninguna foto a la papelera.
+  - Usa `aplicarCobros` con el objetivo de antes, así que el total de la venta no cambia y baja el saldo. Hace un solo
+    guardado.
+  - Si la venta ya figuraba pagada queda «cobrada de más», y se dice.
+  - Le pasa `cobrosDe`, no `cobrosReales`: en una «PAGADA sin monto», las fotos del método suelto se mudan al pago nuevo.
+  - No aparece en un recargo pactado, ni en una ATC o RPT.
+  - `tests/test_envio_a_pago.js` (28; 20 rojas contra `7fe7551`).
+  - ⚠️ Todavía NO hay cómo borrar un pago de la venta ya registrado: «Corregir» exige monto > 0.
 - **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen
   renglón —el campo guarda el método suelto, `Efectivo %IMG`— y `cobrosDe` fabrica uno con el
   monto de **`p.cobradoBs`**, que NO viaja en la planilla (vale 0 apenas se relee la lista).
@@ -793,10 +803,35 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
+- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, 28/09, EN LA RAMA, sin publicar).
+  - **📥 Moreno NO mira la hora** (dueño: *«da igual si son las 18 o las 11 o las 15: se cargó lunes, se recoge martes, se
+    entrega miércoles»*): se recoge el día hábil siguiente (`saldoDiaRecoge`) y se entrega desde el otro. Si la recogida no
+    es mañana (sábado, víspera de feriado), el cuadrito dice qué día: «logística lo recoge el lunes 05/10».
+  - **🏭 Lo que hay que fabricar** arranca hoy si es día hábil y antes del corte (`HORA_CORTE`=17; el sábado
+    `HORA_CORTE_SABADO`=12); si no, el siguiente día hábil (`diaArranque`). No son hábiles el domingo ni los `FERIADOS`
+    (lista hasta fin de 2027; revisar cada año).
+  - **Sale `DIAS_PRODUCCION`=2 días hábiles después** (dueño: *«debería salir en 48 horas y las otras 24 son para recoger y
+    entregar»*, `saldoSaleDeFabrica`). Ese día se recoge y se entrega desde el siguiente: lunes 18:00 → viernes.
+  - La misma regla vale para 📐 medida especial, ⏳ lo ya pedido a fábrica (desde `q.f`) y 🏭 lo que se fabrica para ESE
+    pedido (desde `prodF`). Si no, la promesa se corría un día el día que logística pedía a fábrica.
+  - ⚠️ **El cuadrito ya no usa el tiempo de fábrica medido ni `STOCK_DIAS_FABRICA`** (`saldoLeadModelo` y `saldoTiempos`
+    se borraron). La pantalla de stock sí los usa, sin cambios: ahí los 3 días son las 48 h más el día en que se recoge,
+    o sea hasta que se puede entregar. Por eso un pedido a fábrica puede decir «llegan el viernes» en Stock y «llega el
+    jueves» en el cuadrito. Cambiar el 3 movería las cantidades a pedir, y eso el dueño no lo pidió.
+  - El ✅ de lo que está a mano y el 🚚 de una recogida programada no cambian.
+  - El cuadrito y la pregunta al guardar dicen la cuenta (`saldoArrancaTxt`): «🕔 Ya pasaron las 17:00: se manda a
+    producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»
+  - Prueba: `tests/test_corte_horario.js` (35; 24 rojas contra `7fe7551`, 18 contra `275b031`).
+  - ⚠️ Una prueba nueva del cuadrito tiene que clavar el reloj antes de las 17:00: si no, da otros días según la hora a la
+    que se corra.
+  - **Quién se lleva el stock lo decide logística** (dueño, 28/09: *«es mucho kilombo»*). Se propuso y se **descartó** una
+    regla única, «al que entrega primero sin dejar tarde a uno que ya vendió», con los estados HAY POR AHORA / SE FABRICA y
+    un aviso en «Mis pedidos». No volver a proponerla sin que la pida (bitácora §4gq).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
-**SIN PUBLICAR** (el dueño, 28/09: «Esperar»; el `.gs` 28-a y el stock en el servidor, «más adelante»). La rama ya difiere
-de `main` (`2040720`) en la página: cualquier publicación nueva lleva estos arreglos.
+**PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
+todo»), con el servidor 2026-09-26-a. **El `.gs` 28-a se implementó ese mismo día ~15:24** (§4gp). El stock en el
+servidor, «más adelante».
 Codex revisó el informe §15 (`2040720`) y trajo `tests/test_codex28.cjs` (sus 8 comprobaciones, intactas; solo se le
 agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hallazgos se arreglaron:
 - **¿Manda la copia de acá o la de la lectura? Lo dice UNA función, `localManda(id, loc, srv, n0, enCola)`** (pedidos y
@@ -822,13 +857,13 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   no volver a «hacelo como pedido nuevo».
 - **`submitPedido` no guarda un pedido que la lectura de justo antes ya no trae** (lo borraron mientras estaba abierto):
   `guardarYa` lo recreaba.
-- **Servidor `.gs` 2026-09-28-a** (en el repo; **implementarlo lo decide el dueño**, con el procedimiento de siempre y
-  la página publicada ANTES): un guardado CON sello de una fila que no existe → `borrado`, sin tocar la hoja. Excepto las
-  filas fijas del sistema (`filaFijaSistema_`: `__…` salvo `__ret_…`). El panel lo trata como «no» firme
-  (`RECHAZOS_FIRMES`): fuera de la pantalla y de la cola, a los rechazos con lo que se perdió, y aviso. ⚠️ Sin el `.gs`
-  28-a, una corrección sin relectura, una ficha abierta, la cola sin señal o una pestaña vieja todavía recrean un pedido
-  borrado (como antes). La página espera la 28-a (`SCRIPT_VERSION_ESPERADA`): hasta implementarla, «Cerrar día» muestra
-  la línea gris.
+- **Servidor `.gs` 2026-09-28-a — IMPLEMENTADO el 28/09 ~15:24** (§4gp: probar ✅ a las 15:21, 1063 filas, stock
+  22.642/50.000 = 45 %; 🔒 Cerrar día dice «versión 2026-09-28-a» sin línea gris): un guardado CON sello de una fila que
+  no existe → `borrado`, sin tocar la hoja. Excepto las filas fijas del sistema (`filaFijaSistema_`: `__…` salvo
+  `__ret_…`). El panel lo trata como «no» firme (`RECHAZOS_FIRMES`): fuera de la pantalla y de la cola, a los rechazos
+  con lo que se perdió, y aviso. Una página vieja (`2040720`, sin F5) deja el `borrado` en su cola y lo reintenta sin
+  tocar la hoja; con F5, la nueva lo saca. **Volver atrás = ✏️ a la versión 33** («26 sept 2026, 11:30» = la 26-a)
+  **Y** pegar la 26-a del enlace fijo a `ea81bb0…` (1965 líneas).
 - **Saldo**: lo que va en una recogida programada llega el día de ESA recogida (`saldoEntradas`: Moreno sin programar en
   `STOCK_DIAS_RECOGIDA`, cada recogida con su `llega`, repartiendo `enRecogida` sin pasarse) → «🚚 VIENE DE MORENO ·
   logística lo trae el…». Sin cupo en `SALDO_DIAS_CUPO` días no se promete ningún día (`saldoDiaConCupo` → `sinCupo`,
@@ -837,16 +872,18 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   caché de antes de un guardado, sacaba de la pantalla lo recién guardado con «lo borraron» y NO guardaba su
   corrección. **Resuelto en la página (§4gn) con la ventana de `LECTURA_VIEJA_MS`** (arriba). El arreglo de fondo sigue
   siendo que el servidor diga en la respuesta de dónde y de cuándo es su lectura (otra versión del `.gs`).
-- **Antes de implementar la 28-a** (§4gn): todos con F5 (una página `2040720` reintenta `borrado` para siempre desde su
-  cola), y revisar los textos de `borrado` (el cartel del chofer habla de «otra persona cambió»; el formulario queda
-  abierto sobre un id que ya no existe). La 28-a no protege filas nunca selladas (`rev` 0).
+- **Los textos de `borrado` quedan como están** (dueño, 28/09, §4gp: *«los choferes hasta hoy no marcan nada…
+  dejemos mientras como está todo»*). El cartel del chofer dice «otra persona cambió» y pide rehacer ✅ y la foto de
+  un pedido que ya no está. El formulario queda abierto sobre un id que ya no existe. **Los choferes todavía no marcan
+  ✅ ni cobros en el panel**: no volver a proponerlo hasta que lo hagan. La 28-a no protege filas nunca selladas
+  (`rev` 0).
 - Pruebas: `test_codex28.cjs` (8), `test_codex28_flujos.js` (23; 13 rojas con página 2040720 + `.gs` 26-a; con la página
   nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
 - **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas
   que `stockData` en el `.gs`).
 
 ## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
-**SIN PUBLICAR** (el dueño pidió implementar y probar, no publicar). Está en la misma rama que §4gl.
+**PUBLICADA el 28/09 a las 15:02** (`7fe7551`), junto con §4gl, §4gn y §4go.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;
