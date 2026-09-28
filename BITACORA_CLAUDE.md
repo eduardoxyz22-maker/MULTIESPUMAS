@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a
+## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
 
 - **15:16 — el pedido.** *«pasame para instalarla»*, con una captura de 🔒 Cerrar día: «El candado está en el servidor
   (versión 2026-09-26-a)», sin línea gris. Era una pestaña abierta antes de las 15:02: la página `2040720` esperaba la
@@ -7476,8 +7476,12 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **~15:24 — implementada.** El dueño: *«listo, ya implementé»* (✏️ → Nueva versión, descripción `2026-09-28-a`).
   Desde acá no se puede comprobar: el proxy no deja llegar a Google, la última corrida del respaldo de Kommo (167) fue
   a las 14:45, antes de implementar, y `actions_run_trigger` sigue sin permiso (§4ds).
-- **Falta:** la captura de Cerrar día con «versión 2026-09-28-a» sin línea gris, y `probarAntesDeImplementar` a los
-  5 minutos (repaso de Kommo al día).
+- **15:27 — comprobado.** Captura del dueño, después de F5: 🔒 Cerrar día dice *«✅ El candado está en el servidor
+  (versión 2026-09-28-a). Aunque una vendedora tenga el panel abierto desde antes, el servidor le va a rechazar el
+  pedido. No se puede saltear.»*, **sin la línea gris**: el `/exec` de siempre ya contesta con la 28-a.
+- **Falta:** `probarAntesDeImplementar` a los 5 minutos (repaso de Kommo al día y sin errores).
+- **Queda ofrecido, sin respuesta:** los textos de `borrado` (§4gn: el cartel del chofer dice «otra persona cambió
+  esos pedidos»; el formulario queda abierto sobre un id que ya no existe). Exige publicar la página.
 
 ## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
 

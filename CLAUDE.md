@@ -89,7 +89,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris). **Volver atrás de la 26-a** = ✏️ a la versión de la 23-b de esa mañana (descripción `2026-09-23-b`; falta que el dueño pase el número) Y pegar la 23-b (`14dec98…`, 1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris) **y el 28/09 ~15:24 la `2026-09-28-a`** (§4gp: probar ✅, stock 22.642/50.000 = 45 %; Cerrar día dice «versión 2026-09-28-a» sin línea gris). **Volver atrás de la 28-a** = ✏️ a la **versión 33** (la 26-a) Y pegar la 26-a (`ea81bb0…`, 1965 líneas); de la 26-a, a la 23-b de esa mañana (número sin pasar) Y pegar `14dec98…` (1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -795,7 +795,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
-todo»), con el servidor **2026-09-26-a** todavía implementado. El `.gs` 28-a y el stock en el servidor, «más adelante».
+todo»), con el servidor 2026-09-26-a. **El `.gs` 28-a se implementó ese mismo día ~15:24** (§4gp). El stock en el
+servidor, «más adelante».
 Codex revisó el informe §15 (`2040720`) y trajo `tests/test_codex28.cjs` (sus 8 comprobaciones, intactas; solo se le
 agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hallazgos se arreglaron:
 - **¿Manda la copia de acá o la de la lectura? Lo dice UNA función, `localManda(id, loc, srv, n0, enCola)`** (pedidos y
@@ -821,15 +822,13 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   no volver a «hacelo como pedido nuevo».
 - **`submitPedido` no guarda un pedido que la lectura de justo antes ya no trae** (lo borraron mientras estaba abierto):
   `guardarYa` lo recreaba.
-- **Servidor `.gs` 2026-09-28-a** (en el repo; **implementarlo lo decide el dueño**, con el procedimiento de siempre y
-  la página publicada ANTES): un guardado CON sello de una fila que no existe → `borrado`, sin tocar la hoja. Excepto las
-  filas fijas del sistema (`filaFijaSistema_`: `__…` salvo `__ret_…`). El panel lo trata como «no» firme
-  (`RECHAZOS_FIRMES`): fuera de la pantalla y de la cola, a los rechazos con lo que se perdió, y aviso. ⚠️ Sin el `.gs`
-  28-a, una corrección sin relectura, una ficha abierta, la cola sin señal o una pestaña vieja todavía recrean un pedido
-  borrado (como antes). La página espera la 28-a (`SCRIPT_VERSION_ESPERADA`): hasta implementarla, «Cerrar día» muestra
-  la línea gris. **28/09 15:21: pegada en el editor y probada, todo ✅** (1063 filas, stock 22.642/50.000 = 45 %).
-  **Volver atrás = ✏️ a la versión 33** («26 sept 2026, 11:30» = la 26-a) **Y** pegar la 26-a del enlace fijo a
-  `ea81bb0…` (1965 líneas). **Implementada ~15:24** (el dueño lo dijo; la comprobación, en la bitácora §4gp).
+- **Servidor `.gs` 2026-09-28-a — IMPLEMENTADO el 28/09 ~15:24** (§4gp: probar ✅ a las 15:21, 1063 filas, stock
+  22.642/50.000 = 45 %; 🔒 Cerrar día dice «versión 2026-09-28-a» sin línea gris): un guardado CON sello de una fila que
+  no existe → `borrado`, sin tocar la hoja. Excepto las filas fijas del sistema (`filaFijaSistema_`: `__…` salvo
+  `__ret_…`). El panel lo trata como «no» firme (`RECHAZOS_FIRMES`): fuera de la pantalla y de la cola, a los rechazos
+  con lo que se perdió, y aviso. Una página vieja (`2040720`, sin F5) deja el `borrado` en su cola y lo reintenta sin
+  tocar la hoja; con F5, la nueva lo saca. **Volver atrás = ✏️ a la versión 33** («26 sept 2026, 11:30» = la 26-a)
+  **Y** pegar la 26-a del enlace fijo a `ea81bb0…` (1965 líneas).
 - **Saldo**: lo que va en una recogida programada llega el día de ESA recogida (`saldoEntradas`: Moreno sin programar en
   `STOCK_DIAS_RECOGIDA`, cada recogida con su `llega`, repartiendo `enRecogida` sin pasarse) → «🚚 VIENE DE MORENO ·
   logística lo trae el…». Sin cupo en `SALDO_DIAS_CUPO` días no se promete ningún día (`saldoDiaConCupo` → `sinCupo`,
@@ -838,9 +837,9 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   caché de antes de un guardado, sacaba de la pantalla lo recién guardado con «lo borraron» y NO guardaba su
   corrección. **Resuelto en la página (§4gn) con la ventana de `LECTURA_VIEJA_MS`** (arriba). El arreglo de fondo sigue
   siendo que el servidor diga en la respuesta de dónde y de cuándo es su lectura (otra versión del `.gs`).
-- **Antes de implementar la 28-a** (§4gn): todos con F5 (una página `2040720` reintenta `borrado` para siempre desde su
-  cola), y revisar los textos de `borrado` (el cartel del chofer habla de «otra persona cambió»; el formulario queda
-  abierto sobre un id que ya no existe). La 28-a no protege filas nunca selladas (`rev` 0).
+- **Quedan los textos de `borrado`** (§4gn; ofrecido al dueño el 28/09, sin respuesta): el cartel del chofer habla de
+  «otra persona cambió»; el formulario queda abierto sobre un id que ya no existe. La 28-a no protege filas nunca
+  selladas (`rev` 0).
 - Pruebas: `test_codex28.cjs` (8), `test_codex28_flujos.js` (23; 13 rojas con página 2040720 + `.gs` 26-a; con la página
   nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
 - **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas

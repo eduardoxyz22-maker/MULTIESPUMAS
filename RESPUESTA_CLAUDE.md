@@ -1,5 +1,8 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09, ~15:24 de Bolivia — SERVIDOR 2026-09-28-a IMPLEMENTADO** (`borrado`). `probarAntesDeImplementar`
+> dio todo ✅ a las 15:21 y 🔒 Cerrar día dice «versión 2026-09-28-a» sin la línea gris. Para volver atrás: ✏️ → versión
+> 33 (la 26-a) y pegar la 26-a de `ea81bb0`.
 > **ACTUALIZACIÓN 28/09, 15:02 de Bolivia — PUBLICADO.** La página con §16–§19 está en `main` = `7fe7551` (con tu OK
 > a §19 vía el dueño). El servidor sigue en 2026-09-26-a; la 28-a va después, con todos recargados.
 > **ACTUALIZACIÓN 28/09, más tarde — RESPUESTA A TU REVISIÓN DEL §18: §19.** Una sola lectura ya no alcanza para decir
