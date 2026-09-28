@@ -332,10 +332,13 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
         var b=e.getBoundingClientRect(); return b.width>0 && b.right>window.innerWidth+1 && !e.closest('.tw');
       }).map(function(e){ return e.tagName+'#'+e.id+' '+Math.round(e.getBoundingClientRect().right); });
       return { sw:document.documentElement.scrollWidth, iw:window.innerWidth, fuera:fuera.slice(0,4),
-               tabs:[].slice.call(document.querySelectorAll('#cta-tab button')).map(function(b){ return Math.round(b.getBoundingClientRect().width); }) };
+               /* (28/09, §4gt) La cuarta, «📈 Proyección del mes», solo aparece con la contraseña de Administración. */
+               tabs:[].slice.call(document.querySelectorAll('#cta-tab button')).filter(function(b){ return b.style.display!=='none'; }).map(function(b){ return Math.round(b.getBoundingClientRect().width); }),
+               proyOculta:(function(b){ return !!b && b.style.display==='none'; })(document.getElementById('cta-tab-proy')) };
     });
     chk('6 · a '+ancho+' px el cuadre no se corre de costado', r.sw<=r.iw && !r.fuera.length, J(r));
-    chk('6 · …y las tres sub-pestañas se ven y se pueden tocar (≥ 44 px de ancho)', r.tabs.length===3 && r.tabs.every(function(w){ return w>=44; }), J(r.tabs));
+    chk('6 · …y las tres sub-pestañas a la vista se pueden tocar (≥ 44 px de ancho); la cuarta (📈) está escondida sin la contraseña',
+        r.tabs.length===3 && r.tabs.every(function(w){ return w>=44; }) && r.proyOculta, J([r.tabs, r.proyOculta]));
     await page.context().close();
   }
 

@@ -7502,6 +7502,11 @@ quedan aparte, como en el bosquejo (no contestó la pregunta; se deja como lo vi
 - un mes cerrado, un mes que no empezó y los primeros días;
 - 820, 1180 y 390 px: sin scroll de costado y sin montos cortados.
 
+**Batería sobre `ffa3420`: 113 suites, 4.269 bien · 3 mal.** Las 3 eran dos pruebas que contaban los botones de Contabilidad
+y esperaban exactamente tres: `test_mayorista` («TRES pestañas») y `test_rev2_cuadre` §6 (el ancho de la cuarta, escondida,
+daba 0). Se cambiaron a conciencia: tres pestañas A LA VISTA y la cuarta escondida sin la contraseña. Quedaron 37/0 y 55/0,
+así que el total es **4.272 bien · 0 mal**. La página no cambió desde la batería.
+
 ## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — PUBLICADA 28/09 18:28 (`bf19fc8`)
 
 > **Publicada el 28/09 a las 18:28 de Bolivia** (`main` = `bf19fc8`, junto con §4gq y §4gr; el dueño: «hazlo»). Sin tocar

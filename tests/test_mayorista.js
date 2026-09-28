@@ -64,9 +64,11 @@ const chk=(l,c,extra)=>{ c?PASS++:FAIL++; console.log((c?'✓':'✗'), l, extra!
 
   // ---------- 1. la pestaña existe ----------
   let r = await page.evaluate(()=>{
-    return [].slice.call(document.querySelectorAll('#cta-tab button')).map(function(b){ return b.dataset.val+':'+b.textContent.trim(); });
+    return [].slice.call(document.querySelectorAll('#cta-tab button')).map(function(b){ return b.dataset.val+':'+b.textContent.trim()+(b.style.display==='none'?' (oculta)':''); });
   });
-  chk('Contabilidad tiene TRES pestañas', r.length===3, r.join(' | '));
+  /* (28/09, §4gt) Hay una cuarta, «📈 Proyección del mes», que solo aparece con la contraseña de Administración. */
+  chk('Contabilidad tiene TRES pestañas a la vista (la cuarta, 📈 Proyección del mes, solo con la contraseña de Administración)',
+      r.filter(function(x){ return !/\(oculta\)$/.test(x); }).length===3 && r.length===4 && /^proy:.*\(oculta\)$/.test(r[3]), r.join(' | '));
   chk('  y la nueva es la de mayoristas', /mayor:.*Mayoristas/.test(r.join(' | ')), r.join(' | '));
 
   // ---------- 2. "Ventas" sigue igual que siempre ----------
