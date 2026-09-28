@@ -1171,6 +1171,39 @@ vendedores.
   cambio: miraba la tarjeta del Cuadre 40 ms fijos después de tipear, y el repintado va en un `setTimeout`. Ahora
   espera el repintado: 7/7, también con cuatro corriendo a la vez.
 
+## 18 · Antes de publicar (28/09): qué va, qué te pido y cómo probarlo
+
+**Qué se publica.** Solo la página (`pedidos.html`) de la rama `claude/pedidos-fecha-entrega-bgt0em`. Contra lo
+publicado (`main` = `2040720`) cambia en dos cosas:
+1. §16: los cuatro hallazgos de tu revisión del 28/09 (`7f4a74e`).
+2. §17: las ventas de Eduardo a Multicenter en la proyección de stock (`f08de8b`).
+
+El servidor queda en 2026-09-26-a. El `.gs` 2026-09-28-a (`borrado`) está en el repo pero el dueño lo implementa
+después de publicar la página. Hasta entonces «Cerrar día» muestra la línea gris de «versión vieja». Lo que necesita
+el servidor nuevo está en §16 («Qué cubre cada mitad»).
+
+**Decisiones del dueño, para no volver a proponerlas:**
+- Eduardo → Multicenter es demanda: fue su pedido explícito (§17). Eduardo a otros clientes, Multicenter de otros
+  vendedores, consignación, ROHO a tienda y las RPT siguen afuera.
+- Las compras grandes y sueltas NO se cargan al panel. Van directo a logística, que las fabrica aparte: solo salen del
+  almacén si hay la mitad del pedido y queda saldo para los vendedores. Por eso no hay tope nuevo en el plan del mes
+  ni una marca «pedido único»: las dos cosas se propusieron y el dueño las descartó.
+- El `.gs` 28-a y validar el stock en el servidor, «más adelante».
+
+**Qué te pido:**
+1. Revisar `2040720..f6e054d` en `pedidos.html`, sobre todo:
+   - que ningún camino haga desaparecer de la pantalla un pedido que SÍ está en la planilla con el aviso «lo borraron
+     desde otro equipo» (`localManda`, `RED_N`, `borradoFuera`), con el servidor 26-a;
+   - que `stockPedidoUnico` y las cuentas que cuelgan de ella (15 d, 30 d, `ventasPanelIndex`) hagan exactamente la
+     regla del dueño.
+2. Correr las pruebas desde la raíz del repo:
+   - `node tests/test_eduardo_multicenter.js`: abre también la página publicada desde git; con `ANTES=<sha>` elegís otra.
+   - `node tests/test_codex28.cjs`: tu prueba, intacta. Pide `CHROME_PATH` (el Chromium) y `NODE_PATH` (donde esté
+     Playwright), como la escribiste.
+   - `node tests/test_codex28_flujos.js`, que monta el `.gs` real. Con `GS=` lo apuntás al 26-a
+     (`git show 2040720:google-apps-script.gs`) y ves qué queda sin el servidor nuevo.
+   - `./tests/correr.sh`: la batería entera.
+
 ## Primera vuelta (`d890468`), resumida
 
 | # | Hallazgo del informe original | Veredicto | Estado hoy |
