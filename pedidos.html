@@ -1172,7 +1172,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
           </div>
         </div>
         <div id="pry-nota"></div>
-        <div class="metrics" id="pry-metrics"></div>
+        <div class="metrics" id="pry-metrics" data-min="300"></div>
         <div id="pry-vendedores"></div>
         <div id="pry-como"></div>
       </div>
@@ -14978,7 +14978,10 @@ function acomodarFichas(){
     if(!n){ b.style.gridTemplateColumns=''; continue; }
     var w=b.clientWidth||0;
     if(!w) continue;                       // está escondido: no se puede medir, se deja el CSS
-    var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(FICHA_MIN+FICHA_GAP))));
+    /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
+       y a 230 px en el iPad salían cortados («Bs 684.39…»). */
+    var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;
+    var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(fmin+FICHA_GAP))));
     var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
     for(var c=max-1;c>=1;c--){
       var f=Math.ceil(n/c), h=f*c-n;

@@ -828,6 +828,24 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
     regla única, «al que entrega primero sin dejar tarde a uno que ya vendió», con los estados HAY POR AHORA / SE FABRICA y
     un aviso en «Mis pedidos». No volver a proponerla sin que la pida (bitácora §4gq).
 
+## 📈 Proyección del mes (§4gt, 28/09): lo que hay que respetar
+El dueño: *«que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin
+de mes… no me interesa el efectivo ingresado sino el vendido en el período»*. Lo usa en un **iPad Air** (820 px parado).
+- **Solo con la contraseña de Administración**: la pestaña `data-val="proy"` de Contabilidad la muestra
+  `mostrarBotonesTodos` con `UNLOCKED`; sin clave, `setContaTab`/`renderProyeccion` vuelven a Ventas. Todo repintado de
+  Contabilidad pasa por `contaRepintar()`.
+- **Lo VENDIDO, no lo cobrado**: `ventaTotal` por la fecha de `fechaSalida` (la entrega agendada), igual que Ventas →
+  🚚 Entrega agendada; `test_proyeccion` §3 compara los dos números. Equipo = `fueraDeConta(p,'tienda')`, marca por
+  vendedor (`marcaDe`, §4bl), mayoristas aparte (no se suman al equipo). Sin ATC, RPT ni ROHO.
+- **Proyección por vendedor** (las marcas y los totales son la suma): hasta hoy + máx(agendado de mañana a fin de mes,
+  ritmo × días hábiles que quedan); ritmo = hasta hoy ÷ días hábiles que pasaron (lunes a sábado sin `FERIADOS`).
+  ⚠️ «Hasta hoy» es por la fecha AGENDADA: no mira `p.entregado` (los choferes no marcan, §4gp).
+- Lo vendido va con centavos (como Ventas); la proyección y el ritmo, en Bs enteros (`fmtBs0`).
+- ⚠️ Las fichas de esta pestaña piden 300 px (`data-min` en `#pry-metrics`, que `acomodarFichas` respeta): con 230 los
+  totales de seis cifras salían cortados en el iPad. La lista por vendedor es lista y no tabla: en 390 px una tabla
+  escondía la proyección.
+- `tests/test_proyeccion.js` (36; 31 rojas contra `bf19fc8`).
+
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
 todo»), con el servidor 2026-09-26-a. **El `.gs` 28-a se implementó ese mismo día ~15:24** (§4gp). El stock en el

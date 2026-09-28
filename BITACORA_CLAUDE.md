@@ -7445,7 +7445,7 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — BOSQUEJO EN LA RAMA
+## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — APROBADA, POR PUBLICAR
 
 **El pedido del dueño** (con una captura de Contabilidad → Ventas por entrega agendada):
 - *«me varía con lo de cuadre y conciliación»*: el Cuadre cuenta la plata que ENTRÓ, por fecha de pago; Ventas por entrega
@@ -7480,8 +7480,27 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   - Proyección y ritmo en Bs enteros (`fmtBs0`); lo vendido, con centavos, igual que en Ventas.
 - **Se le mostró** con capturas de celular (ventas inventadas, «hoy» = viernes 18/09).
 
-**Falta, si lo aprueba:** prueba con dientes, la batería y publicar. Las pruebas de Contabilidad pasan igual:
-`test_conta_alta` 53, `test_cuadre_alta` 35, `test_rev_conta` 38, `test_rev7_celular` 35, `test_botones` 50, `test_medias` 24.
+Las pruebas de Contabilidad pasaron igual: `test_conta_alta` 53, `test_cuadre_alta` 35, `test_rev_conta` 38,
+`test_rev7_celular` 35, `test_botones` 50, `test_medias` 24.
+
+**El dueño:** *«uso iPad Air M3, así que sí se verá, no celular. Me gusta el bosquejo, publica y lo veo.»* Los mayoristas
+quedan aparte, como en el bosquejo (no contestó la pregunta; se deja como lo vio y le gustó).
+
+**Arreglado antes de publicar — el iPad:**
+- A 820 px (el iPad Air parado) las fichas salían de a tres, de ~230 px, y los totales del mes, de seis cifras, salían
+  cortados («Bs 684.39…»).
+- `acomodarFichas` ahora acepta un ancho mínimo por caja (`data-min`), y `#pry-metrics` pide 300. Quedan de a dos en el
+  iPad parado y de a tres acostado. Las otras cajas siguen con `FICHA_MIN`=230.
+
+**Prueba:** `tests/test_proyeccion.js`, 36 comprobaciones. Contra `bf19fc8` da 5 bien y 31 mal, y contra el bosquejo
+`a6660ef`, 35 bien y 1 mal (la del iPad). Cubre:
+- la pestaña solo con la contraseña, con `tryUnlock` de verdad;
+- las cuentas con el reloj en el viernes 18/09: la venta cargada en agosto y entregada en septiembre entra, la de octubre
+  no, la venta de tienda cuenta por el día en que se cargó, no entran ATC, RPT ni ROHO, y los mayoristas van aparte;
+- que lo vendido es EXACTAMENTE lo de Ventas → 🚚 Entrega agendada;
+- lo que se ve en pantalla;
+- un mes cerrado, un mes que no empezó y los primeros días;
+- 820, 1180 y 390 px: sin scroll de costado y sin montos cortados.
 
 ## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — PUBLICADA 28/09 18:28 (`bf19fc8`)
 
