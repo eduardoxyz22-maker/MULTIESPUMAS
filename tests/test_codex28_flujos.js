@@ -166,9 +166,16 @@ function INIT(){
      pedido confirmado hace menos de `LECTURA_VIEJA_MS` que la lectura no trae se CONSERVA: puede ser la copia vieja de
      20 s de `doGet` (ver `test_lectura_vieja.js`). Se corre para atrás el momento en que A lo confirmó, como si hubiera
      pasado un minuto. Una página sin esa regla (la de antes) no tiene nada que correr. */
-  const pasaElTiempo = (P, id) => P.evaluate((id) => {
+  /* 🔁 (revisión de Codex a §18) …y pasada la ventana, la PRIMERA lectura que no lo trae es solo una sospecha: se relee, y
+     la que se pide `BORRADO_CONFIRMA_MS` después lo confirma. Se hace esa primera lectura y se corre la sospecha para
+     atrás; la lectura siguiente de la prueba es la que lo confirma. */
+  const pasaElTiempo = (P, id) => P.evaluate(async (id) => {
     if(typeof LECTURA_VIEJA_MS==='undefined') return;
     var u=SAVE_ULTIMO[id]; if(u && u.okT!=null) u.okT-=LECTURA_VIEJA_MS+1000;
+    if(typeof BORRADO_CONFIRMA_MS==='undefined') return;
+    await refrescarEstado(); await esperar(100);
+    u=SAVE_ULTIMO[id]; if(u && u.faltaT!=null) u.faltaT-=BORRADO_CONFIRMA_MS+1000;
+    if(BORRADO_CONFIRMA_T){ clearTimeout(BORRADO_CONFIRMA_T); BORRADO_CONFIRMA_T=null; }
   }, id);
 
   // ══ 1. A CARGA UN PEDIDO, B LO BORRA, A RELEE ══════════════════════════════════════════════════════════

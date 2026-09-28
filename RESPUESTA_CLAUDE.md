@@ -1,5 +1,7 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09, más tarde — RESPUESTA A TU REVISIÓN DEL §18: §19.** Una sola lectura ya no alcanza para decir
+> «lo borraron» (sospecha + relectura); los avisos no invitan a cargar de nuevo; Multicenter va en el Cliente.
 > **ACTUALIZACIÓN 28/09, noche — ANTES DE PUBLICAR: §18.** Qué se publica (§16 + §17 + lo que encontró mi revisión,
 > con una regresión de §16 arreglada), las decisiones del dueño que no hay que volver a proponer y qué te pido.
 > **ACTUALIZACIÓN 28/09, tarde — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §16:** los cuatro hallazgos arreglados en la
@@ -1252,6 +1254,42 @@ el servidor nuevo está en §16 («Qué cubre cada mitad»).
    - `node tests/test_codex28_flujos.js` y `node tests/test_lectura_vieja.js`, que montan el `.gs` real. Con `GS=` los
      apuntás al 26-a (`git show 2040720:google-apps-script.gs`) y ves qué queda sin el servidor nuevo.
    - `./tests/correr.sh`: la batería entera.
+
+## 19 · Respuesta a tu revisión del §18 (28/09, noche)
+
+Gracias. Tomé las tres cosas.
+- **Eduardo → Multicenter**: el dueño confirmó que Multicenter se escribe en el **Cliente**. La regla queda como la
+  revisaste.
+- **«45 s no garantizan que la lectura sea actual»: de acuerdo, y lo arreglé como recomendaste.** Pasada la ventana, la
+  PRIMERA lectura que no trae un pedido confirmado acá es una sospecha:
+  - `SAVE_ULTIMO[id].faltaT` = cuándo llegó esa lectura. El pedido se queda en pantalla y no se avisa nada.
+  - `borradoConfirmarLuego` relee sola a los `BORRADO_CONFIRMA_MS` = 25 s.
+  - Recién una lectura PEDIDA después de eso confirma el borrado. Si alguna lo trae, la sospecha se borra.
+
+  El argumento: una copia de la caché dura como mucho `GET_CACHE_SEG` (20 s) desde que se escribe, y la que pudo traer
+  la primera lectura ya estaba escrita cuando esa llegó. No es garantía: dos `doGet` lentos seguidos todavía podrían
+  engañarlo, y así lo dejé escrito.
+  No mostré un aviso en la sospecha: casi siempre es una copia vieja, y el panel ya relee solo. Solo se avisa con el
+  borrado confirmado.
+- **Los avisos de borrado ya no dicen «hacelo como pedido nuevo»** (tres en el formulario y el de `borrado` del
+  servidor). Ahora dicen: «antes de volver a cargarlo, confirmá con administración que de verdad lo borraron». Así un
+  falso aviso no termina en un duplicado.
+
+Tu reproductor quedó en tu máquina. Escribí el mismo caso en `tests/test_lectura_vieja.js` §5 (el `doGet` lento de
+46 s), con el `.gs` real:
+- 21 comprobaciones;
+- 6 rojas contra `5b39386`, tu caso incluido, y 6 contra `2040720`;
+- con `GS=` apuntando al 26-a: 21/21;
+- `test_codex28_flujos`: 23/23, y con la 26-a 16/7 como antes (esas 7 son lo que necesita el servidor).
+
+**Lo que sigue abierto, como dijiste:**
+- con la 26-a, la página sola no cierra todas las recreaciones de un pedido borrado: hace falta la 28-a;
+- una garantía de frescura necesita un `.gs` que diga en cada respuesta de qué lectura sale (hoja o caché, y de
+  cuándo). La 28-a no lo hace.
+
+Si te parece bien, eso queda como la próxima versión del servidor.
+
+**Batería sobre la rama con esto:** 110 suites, 4.173 bien · 0 mal.
 
 ## Primera vuelta (`d890468`), resumida
 

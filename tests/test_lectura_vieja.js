@@ -16,8 +16,11 @@
    2. su corrección enseguida (con la relectura de antes de guardar) se guarda;
    3. un retiro de plata recién guardado tampoco desaparece;
    4. un borrado DE VERDAD: dentro de la ventana no se da por borrado (a propósito: no se distingue de la copia vieja);
-      pasada la ventana, la lectura siguiente lo saca y lo dice;
-   5. la ventana cubre la caché del servidor (`GET_CACHE_SEG`) más lo que tarda en leer la hoja.
+      pasada la ventana, la primera lectura que no lo trae es solo una SOSPECHA (se relee sola) y la que se pide
+      `BORRADO_CONFIRMA_MS` después lo saca y lo dice (revisión de Codex a §18);
+   5. el caso de Codex: un `doGet` LENTO deja su copia vieja en la caché tarde, y la lectura de 46 s después la trae. Con
+      la ventana sola lo daba por borrado; con la sospecha, la lectura que confirma ya es fresca y el pedido se queda;
+   6. la ventana y la confirmación cubren la caché del servidor (`GET_CACHE_SEG`) más lo que tarda en leer la hoja.
 
    El panel de verdad contra el google-apps-script.gs de verdad (en Node, con una planilla de mentira), como
    test_codex28_flujos.js. Reloj CLAVADO en el miércoles 16/09/2026 a las 10 de Bolivia.
@@ -211,7 +214,7 @@ function INIT(){
   });
 
   // ══ 4. UN BORRADO DE VERDAD ═══════════════════════════════════════════════════════════════════════════════
-  await esc('4. Un borrado de verdad: dentro de la ventana no se sabe; pasada la ventana, se detecta', async () => {
+  await esc('4. Un borrado de verdad: dentro de la ventana no se sabe; pasada, una lectura sospecha y la otra confirma', async () => {
     const S = servidor(); const A = await abrir(S);
     const id = await cargar(A, 'BORRADO DE VERDAD');
     const f0 = S.fila(id);
@@ -225,19 +228,51 @@ function INIT(){
       var u=SAVE_ULTIMO[id]; if(u && u.okT!=null) u.okT-=LECTURA_VIEJA_MS+1000;
       return LECTURA_VIEJA_MS;
     }, id);
+    const sosp = await releer(A, id, false);
+    const re = await A.evaluate(() => (typeof BORRADO_CONFIRMA_T!=='undefined') && !!BORRADO_CONFIRMA_T);
+    chk('🔁 pasada la ventana, la PRIMERA lectura que no lo trae es solo una sospecha: sigue en pantalla, sin aviso…',
+        vent!=null && sosp.enPantalla===true && sosp.avisos.length===0, sosp);
+    chk('…y se agenda sola otra lectura para confirmarlo', re===true, re);
+    await A.evaluate((id) => {                           // pasan los 25 s de la confirmación
+      if(typeof BORRADO_CONFIRMA_MS==='undefined') return;   // una página sin la confirmación (las de antes)
+      var u=SAVE_ULTIMO[id]; if(u && u.faltaT!=null) u.faltaT-=BORRADO_CONFIRMA_MS+1000;
+      if(BORRADO_CONFIRMA_T){ clearTimeout(BORRADO_CONFIRMA_T); BORRADO_CONFIRMA_T=null; }
+    }, id);
     const fuera = await releer(A, id, false);
-    chk('🗑 pasada la ventana, la lectura siguiente lo saca de la pantalla…', vent!=null && fuera.enPantalla===false, { vent, fuera });
+    chk('🗑 la lectura que confirma lo saca de la pantalla…', fuera.enPantalla===false, fuera);
     chk('…y lo dice: «ya no está en la planilla: lo borraron desde otro equipo»', fuera.avisos.length===1, fuera.avisos);
   });
 
-  // ══ 5. LA VENTANA ALCANZA ═════════════════════════════════════════════════════════════════════════════════
-  await esc('5. La ventana cubre la caché del servidor y lo que tarda en leer la hoja', async () => {
+  // ══ 5. LA COPIA VIEJA DE UN `doGet` LENTO (el caso de Codex) ════════════════════════════════════════════
+  await esc('5. Un doGet LENTO deja la copia vieja tarde: la lectura de 46 s después no alcanza para borrar', async () => {
+    const S = servidor(); const A = await abrir(S);
+    const vieja = S.foto();                              // un doGet empezó a leer ANTES del guardado…
+    const id = await cargar(A, 'DOGET LENTO');
+    await A.evaluate((id) => { var u=SAVE_ULTIMO[id]; if(u && u.okT!=null) u.okT-=46000; }, id);   // …pasaron 46 s
+    S.ctx.getCacheGuardar_(vieja);                       // …y recién ahora terminó y dejó su copia vieja en la caché
+    const r1 = await releer(A, id, true);                // la lectura del panel, convertida en GET: la copia vieja
+    chk('(partida) la planilla lo tiene y la caché no', !!S.fila(id) && !JSON.parse(S.get()).pedidos.some(p => p.id===id));
+    chk('🔁 la lectura con la copia vieja, 46 s después: sigue en pantalla y sin «lo borraron» (Codex: antes lo borraba)',
+        r1.enPantalla===true && r1.avisos.length===0, r1);
+    S.ctx.getCacheOlvidar_();                            // la copia vence (20 s)…
+    await A.evaluate((id) => { if(typeof BORRADO_CONFIRMA_MS==='undefined') return;
+      var u=SAVE_ULTIMO[id]; if(u && u.faltaT!=null) u.faltaT-=BORRADO_CONFIRMA_MS+1000;
+      if(BORRADO_CONFIRMA_T){ clearTimeout(BORRADO_CONFIRMA_T); BORRADO_CONFIRMA_T=null; } }, id);
+    const r2 = await releer(A, id, true);                // …y la lectura que confirma (también por GET) ya es fresca
+    const sos = await A.evaluate((id) => { var u=(typeof SAVE_ULTIMO!=='undefined') ? SAVE_ULTIMO[id] : null; return u ? (u.faltaT==null) : null; }, id);
+    chk('…la lectura que confirma lo trae: sigue en pantalla, sin aviso, y la sospecha se borra', r2.enPantalla===true && r2.avisos.length===0 && sos===true, { r2, sos });
+  });
+
+  // ══ 6. LA VENTANA ALCANZA ═════════════════════════════════════════════════════════════════════════════════
+  await esc('6. La ventana cubre la caché del servidor y lo que tarda en leer la hoja', async () => {
     const S = servidor(); const A = await abrir(S);
     const v = await A.evaluate(() => (typeof LECTURA_VIEJA_MS==='undefined') ? null : LECTURA_VIEJA_MS);
     const seg = Number(S.ctx.GET_CACHE_SEG);
     /* `doGet` tarda 3-5 s en leer la hoja entera (§4du). Si alguien sube `GET_CACHE_SEG`, esto avisa que la ventana del
        panel también tiene que subir. */
     chk('LECTURA_VIEJA_MS ≥ GET_CACHE_SEG + 10 s', v!=null && seg>0 && v >= (seg+10)*1000, { LECTURA_VIEJA_MS:v, GET_CACHE_SEG:seg });
+    const c = await A.evaluate(() => (typeof BORRADO_CONFIRMA_MS==='undefined') ? null : BORRADO_CONFIRMA_MS);
+    chk('BORRADO_CONFIRMA_MS ≥ GET_CACHE_SEG + 5 s (la segunda lectura no puede ser la misma copia)', c!=null && c >= (seg+5)*1000, { BORRADO_CONFIRMA_MS:c, GET_CACHE_SEG:seg });
   });
 
   chk('ningún error de JavaScript en las páginas', errores.length===0, errores.slice(0,5));

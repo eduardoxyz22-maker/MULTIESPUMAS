@@ -7445,6 +7445,50 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — SIN PUBLICAR
+
+El dueño trajo la revisión de Codex de la rama en `5b39386`. Codex repitió las pruebas: 81 comprobaciones en cuatro
+suites, con el servidor 28-a y con el 26-a.
+- **Eduardo → Multicenter: conforme.** Y el dueño contestó la pregunta de §4gn: **Multicenter se escribe en el
+  CLIENTE** (no en «Facturar a»). La regla mira el cliente: queda así.
+- **Hallazgo: 45 s no garantizan que la lectura sea actual.** La ventana de §4gn supone cuánto tarda, como mucho, un
+  `doGet`, y el código no fija ni verifica ese máximo. Codex lo reprodujo con el `.gs` 26-a real (su
+  `tests/test_codex_cache_lenta.cjs`, que quedó en su máquina, no en el repo):
+  1. la foto de la planilla se toma antes de cargar el pedido;
+  2. el pedido se guarda y se confirma;
+  3. el `doGet` viejo termina tarde y deja su foto en la caché;
+  4. la lectura siguiente se pide 46 s después de la confirmación;
+  5. `mergePending` saca el pedido y avisa «lo borraron» con el pedido en la hoja.
+
+  Codex recomendó: no afirmar un borrado a partir de UNA respuesta cuya frescura no se puede demostrar; dejar la copia
+  «pendiente de verificar» y reconsultar. Subir los 45 s solo corre el límite, y la garantía de verdad es que el
+  servidor diga de cuándo es su lectura.
+- **Arreglo (página)**: pasada la ventana, la PRIMERA lectura que no trae un pedido confirmado acá es una **sospecha**.
+  - `SAVE_ULTIMO[id].faltaT` = cuándo llegó esa lectura. El pedido se queda en pantalla, sin aviso, y
+    `borradoConfirmarLuego` relee sola a los `BORRADO_CONFIRMA_MS` (25 s).
+  - Solo si una lectura PEDIDA después de eso tampoco lo trae, `borradoFuera`. Si alguna lo trae, la sospecha se borra.
+  - Por qué alcanza: una copia de la caché dura como mucho `GET_CACHE_SEG` (20 s) desde que se escribe, y la que pudo
+    traer la primera lectura ya estaba escrita cuando esa llegó. La segunda no puede ser esa misma copia.
+  - **No es garantía**: dos `doGet` lentos seguidos todavía podrían engañarlo. Se dice así, sin «todo cerrado».
+- **Los avisos de borrado ya no dicen «si hay que cargarlo, hacelo como pedido nuevo»** (tres en el formulario y el de
+  `borrado` del servidor). Ahora dicen: «antes de volver a cargarlo, confirmá con administración que de verdad lo
+  borraron». Si alguna vez es un falso aviso, así no termina en un duplicado.
+- **Pruebas**:
+  - `tests/test_lectura_vieja.js`, ahora 21:
+    - §4: un borrado de verdad pide dos lecturas;
+    - §5: el caso de Codex, el `doGet` lento de 46 s;
+    - §6: `BORRADO_CONFIRMA_MS ≥ GET_CACHE_SEG + 5 s`.
+
+    Da **6 rojas contra `5b39386`**, el caso de Codex incluido, y 6 contra `2040720`.
+  - `test_codex28_flujos`: `pasaElTiempo` hace la lectura de la sospecha. 23/23, y con la 26-a 16/7, como antes: esas
+    7 son lo que necesita el servidor.
+- **Lo que sigue abierto (dicho a Codex y al dueño)**:
+  - con la 26-a, la página sola no cierra todas las recreaciones de un pedido borrado: hace falta la 28-a;
+  - para una garantía de frescura, un `.gs` futuro tiene que decir en cada respuesta de qué lectura sale (hoja o
+    caché, y de cuándo). La 28-a no lo hace.
+
+**Batería sobre esta vuelta: 110 suites, 4.173 bien · 0 mal.** Lista para publicar cuando el dueño diga.
+
 ## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — SIN PUBLICAR
 
 El dueño: *«dame el informe para codex y revisa y aviso para publicar»*. Dos agentes revisaron lo que la rama tiene y

@@ -811,8 +811,15 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   con los servidores 26-a y 28-a esa copia tiene la misma forma que una lectura buena. Se mide con `relojMs()` (solo
   avanza): `apiList` → `_pedidaT`, `aplicarSello` → `okT`, `localManda(…, tPed)`. Sin esa ventana, un pedido recién
   cargado salía de la pantalla con «lo borraron» y su corrección no se guardaba (invitaba a un duplicado).
-  `LECTURA_VIEJA_MS` tiene que ser ≥ `GET_CACHE_SEG` + 10 s (`test_lectura_vieja` §5 lo mide). En una prueba donde otro
+  `LECTURA_VIEJA_MS` tiene que ser ≥ `GET_CACHE_SEG` + 10 s (`test_lectura_vieja` §6 lo mide). En una prueba donde otro
   equipo borra en el mismo segundo, correr para atrás el `okT` (`pasaElTiempo` en `test_codex28_flujos`).
+  🔁 **Y pasada la ventana, UNA lectura tampoco alcanza** (revisión de Codex de §18, §4go): un `doGet` lento deja su
+  copia vieja más tarde. La primera ausencia es una SOSPECHA (`u.faltaT` = cuándo llegó; el pedido se queda, sin aviso) y
+  `borradoConfirmarLuego` relee sola a los `BORRADO_CONFIRMA_MS` = 25 s (≥ `GET_CACHE_SEG` + 5 s). Recién una lectura
+  pedida después la confirma (`borradoFuera`), y una que lo trae borra la sospecha. **No es garantía** (dos `doGet`
+  lentos seguidos): la garantía es que el servidor diga de cuándo es su lectura, y la 28-a no lo dice.
+  Los avisos de borrado **no invitan a cargarlo de nuevo** («confirmá con administración que de verdad lo borraron»):
+  no volver a «hacelo como pedido nuevo».
 - **`submitPedido` no guarda un pedido que la lectura de justo antes ya no trae** (lo borraron mientras estaba abierto):
   `guardarYa` lo recreaba.
 - **Servidor `.gs` 2026-09-28-a** (en el repo; **implementarlo lo decide el dueño**, con el procedimiento de siempre y
@@ -861,8 +868,8 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   «CONSIGNACI…» (`stockEsConsignacion`), sin cambios. `stockPuntual` usa las mismas funciones de identidad:
   `STOCK_PUNTUAL` ya no existe.
 - **Quién fue el pedido único, en palabras**: `stockUnicoQuien(o)`. No volver a escribir «Lo vendió Eduardo:» a secas.
-- **Sin confirmar**: si en los pedidos de Eduardo a Multicenter «MULTICENTER» va en el cliente o en «Facturar a». La
-  regla mira el cliente, como la exclusión de siempre. Se le preguntó al dueño.
+- **Confirmado por el dueño (28/09)**: en los pedidos de Eduardo a Multicenter, «MULTICENTER» va en el **cliente** (no en
+  «Facturar a»). La regla mira el cliente, como la exclusión de siempre. Codex revisó §4gm y dio conforme (§4go).
 - **No hay caché que migrar**: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura.
 - ⚠️ **El histórico del sistema (`VENTAS_HIST`) no dice vendedor ni cliente** y trae todas las ventas: no se separa
   nada ahí. El cartel de «Qué producir» lo dice.

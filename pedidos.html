@@ -2489,7 +2489,7 @@ function rechazoFirme(rec, res){
     var m={cupos_llenos:'el turno '+(res.turno||'')+' del '+fmtFecha(res.fecha)+' está lleno',
            dia_cerrado:'el '+fmtFecha(res.fecha)+' está cerrado',
            oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido'),
-           borrado:(String(rec.id||'').indexOf('__ret_')===0 ? 'ese retiro' : 'ese pedido')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja), y el servidor no lo vuelve a crear. Si hay que cargarlo, hacelo de nuevo',
+           borrado:(String(rec.id||'').indexOf('__ret_')===0 ? 'ese retiro' : 'ese pedido')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja), y el servidor no lo vuelve a crear. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron',
            admin:(res.motivo==='sin_clave'
              ? 'el servidor no tiene ADMIN_KEY configurada, así que nadie puede forzar un día cerrado o un turno lleno. Reabrí el día desde 🔒 Cerrar día, o configurá ADMIN_KEY en Apps Script'
              : 'la clave de administración no es la del servidor')}[res.error]||res.error;
@@ -7553,7 +7553,7 @@ function submitPedido(){
      lo escribe tal cual. Se frena antes. El borrador de Kommo es la excepción: nace ahora. */
   if(isEdit && !prev && !_deBorrador){
     /* 🗑 (28/09, revisión de Codex) Si lo borraron desde otro equipo, se dice eso: volver a cargarlo es un pedido NUEVO. */
-    if(BORRADO_FUERA[String(EDIT_ID)]) toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Si hay que cargarlo, hacelo como pedido nuevo.','err',12000);
+    if(BORRADO_FUERA[String(EDIT_ID)]) toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
     else toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
     setSubmitting(false); return;
   }
@@ -8195,7 +8195,7 @@ function submitPedido(){
          sigue igual y se guarda como siempre. */
       if(isEdit && !_deBorrador && prev && !findById(prev.id)){
         if(!BORRADO_FUERA[String(prev.id)]) BORRADO_FUERA[String(prev.id)]={ t:Date.now(), cliente:String(prev.cliente||'') };
-        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Si hay que cargarlo, hacelo como pedido nuevo.','err',12000);
+        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
         return;
       }
       if(_mirarCierre && diaCerrado(rec.fecha)){
@@ -8267,7 +8267,7 @@ function submitPedido(){
         STATE=STATE.filter(function(p){ return p.id!==rec.id; });
         if(typeof BORRADORES!=='undefined') BORRADORES=BORRADORES.filter(function(b){ return String(b.id)!==String(rec.id); });
         saveMirror(); updateStats(); if(UNLOCKED) renderAdmin(); renderCupoForm();
-        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Si hay que cargarlo, hacelo como pedido nuevo.','err',12000);
+        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
         return;
       }
       /* 🔢 Escribió a mano un N° de OC que ya tiene otro pedido (ROHO, o tipeado). */
@@ -9652,14 +9652,29 @@ function cleanOC(v){
    ⏱️ (28/09, 2ª revisión) Salvo que la lectura se haya pedido a menos de `LECTURA_VIEJA_MS` de la confirmación
    (`_pedidaT` contra `okT`): puede ser la copia de 20 s de `doGet`, de antes del guardado (ver `apiList`). Una lista sin
    esas marcas (una prueba que llama a `mergePending` directo) cuenta como pedida después de todo y sin copia vieja. */
+/* 🔁 (28/09, revisión de Codex a §18) …y pasada esa ventana, UNA lectura que no lo trae TAMPOCO alcanza: un `doGet` lento
+   (más de ~25 s) deja su copia vieja en la caché más tarde, y la ventana solo corre el límite. La primera ausencia es una
+   SOSPECHA (`u.faltaT`): el pedido se queda en pantalla, sin aviso, y se relee solo `BORRADO_CONFIRMA_MS` después. Recién
+   si una lectura pedida después de eso tampoco lo trae, se da por borrado. Una copia de la caché dura como mucho
+   `GET_CACHE_SEG` (20 s) desde que se escribe, y la que pudo traer la primera lectura se escribió antes de que esa llegara
+   (`faltaT` es cuándo llegó): la segunda ya no puede ser esa. Reduce el falso «lo borraron», no lo hace imposible (dos
+   `doGet` lentos seguidos); la garantía de verdad es que el servidor diga de cuándo es su lectura. */
+var BORRADO_CONFIRMA_MS=25000, BORRADO_CONFIRMA_T=null;
+function borradoConfirmarLuego(){
+  if(BORRADO_CONFIRMA_T) return;
+  BORRADO_CONFIRMA_T=setTimeout(function(){ BORRADO_CONFIRMA_T=null; try{ refrescarEstado(); }catch(e){} }, BORRADO_CONFIRMA_MS+1000);
+}
 function localManda(id, loc, srv, n0, enCola, tPed){
   if(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (enCola && enCola[id])) return true;
   var u=SAVE_ULTIMO[id];
   if(!u || !(Date.now()-u.t<90000)) return false;
   var revLoc=Math.max(Number(loc && loc.rev)||0, Number(SAVE_REV[id])||0);
-  if(srv) return (Number(srv.rev)||0)<=revLoc;
+  if(srv){ delete u.faltaT; return (Number(srv.rev)||0)<=revLoc; }                  // la lectura lo trae: no falta nada
   if(Number(n0)<((u.okN!=null) ? Number(u.okN) : -Infinity)) return true;          // pedida antes: lectura atrasada
-  return tPed!=null && u.okT!=null && (Number(tPed)-Number(u.okT))<LECTURA_VIEJA_MS; // pedida enseguida: puede ser la copia vieja
+  if(tPed==null) return false;                                                        // lista sin marcas (una prueba): fresca
+  if(u.okT!=null && (Number(tPed)-Number(u.okT))<LECTURA_VIEJA_MS) return true;      // pedida enseguida: puede ser la copia vieja
+  if(u.faltaT==null){ u.faltaT=relojMs(); borradoConfirmarLuego(); return true; }     // la 1ª ausencia: sospecha, se relee sola
+  return (Number(tPed)-Number(u.faltaT))<BORRADO_CONFIRMA_MS;                         // otra lectura, pedida después: borrado
 }
 /* 🗑 (28/09) Lo que la planilla dejó de tener después de un guardado confirmado acá: se avisa UNA vez, y el formulario
    que lo tenía abierto dice por qué no se puede guardar (`submitPedido`). */
