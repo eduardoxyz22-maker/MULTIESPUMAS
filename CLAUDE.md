@@ -458,7 +458,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   nombra el total, lista los renglones y junta TODAS las fotos. `tests/test_conta_alta.js`.
   ⚠️ En un test, registrar un pago desde la ficha exige **`CTA_PAGO.comps`**: sin imagen,
   `ctaRegistrarPago` se planta y abre el gato de comprobantes — el pago no se registra.
-- **↩️ «Era un pago de la venta»** (§4gr, 28/09, EN LA RAMA, sin publicar). El dueño: *«no eran recargos por entrega
+- **↩️ «Era un pago de la venta»** (§4gr, **publicada el 28/09 a las 18:28**, `bf19fc8`). El dueño: *«no eran recargos por entrega
   sino pagos»*.
   - `ctaEnvioAPago(id, e)` pasa un recargo **ya cobrado** a los cobros de la venta tal cual: fecha, monto, método, banco,
     nota, `>quién recibió` y fotos, sin mandar ninguna foto a la papelera.
@@ -803,7 +803,7 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
-- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, 28/09, EN LA RAMA, sin publicar).
+- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, **publicadas el 28/09 a las 18:28**, `bf19fc8`).
   - **📥 Moreno NO mira la hora** (dueño: *«da igual si son las 18 o las 11 o las 15: se cargó lunes, se recoge martes, se
     entrega miércoles»*): se recoge el día hábil siguiente (`saldoDiaRecoge`) y se entrega desde el otro. Si la recogida no
     es mañana (sábado, víspera de feriado), el cuadrito dice qué día: «logística lo recoge el lunes 05/10».
@@ -827,6 +827,24 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   - **Quién se lleva el stock lo decide logística** (dueño, 28/09: *«es mucho kilombo»*). Se propuso y se **descartó** una
     regla única, «al que entrega primero sin dejar tarde a uno que ya vendió», con los estados HAY POR AHORA / SE FABRICA y
     un aviso en «Mis pedidos». No volver a proponerla sin que la pida (bitácora §4gq).
+
+## 📈 Proyección del mes (§4gt, 28/09): lo que hay que respetar
+El dueño: *«que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin
+de mes… no me interesa el efectivo ingresado sino el vendido en el período»*. Lo usa en un **iPad Air** (820 px parado).
+- **Solo con la contraseña de Administración**: la pestaña `data-val="proy"` de Contabilidad la muestra
+  `mostrarBotonesTodos` con `UNLOCKED`; sin clave, `setContaTab`/`renderProyeccion` vuelven a Ventas. Todo repintado de
+  Contabilidad pasa por `contaRepintar()`.
+- **Lo VENDIDO, no lo cobrado**: `ventaTotal` por la fecha de `fechaSalida` (la entrega agendada), igual que Ventas →
+  🚚 Entrega agendada; `test_proyeccion` §3 compara los dos números. Equipo = `fueraDeConta(p,'tienda')`, marca por
+  vendedor (`marcaDe`, §4bl), mayoristas aparte (no se suman al equipo). Sin ATC, RPT ni ROHO.
+- **Proyección por vendedor** (las marcas y los totales son la suma): hasta hoy + máx(agendado de mañana a fin de mes,
+  ritmo × días hábiles que quedan); ritmo = hasta hoy ÷ días hábiles que pasaron (lunes a sábado sin `FERIADOS`).
+  ⚠️ «Hasta hoy» es por la fecha AGENDADA: no mira `p.entregado` (los choferes no marcan, §4gp).
+- Lo vendido va con centavos (como Ventas); la proyección y el ritmo, en Bs enteros (`fmtBs0`).
+- ⚠️ Las fichas de esta pestaña piden 300 px (`data-min` en `#pry-metrics`, que `acomodarFichas` respeta): con 230 los
+  totales de seis cifras salían cortados en el iPad. La lista por vendedor es lista y no tabla: en 390 px una tabla
+  escondía la proyección.
+- `tests/test_proyeccion.js` (36; 31 rojas contra `bf19fc8`).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado

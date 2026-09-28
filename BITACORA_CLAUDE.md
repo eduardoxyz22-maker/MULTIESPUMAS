@@ -7445,7 +7445,72 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — EN LA RAMA, SIN PUBLICAR
+## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — APROBADA, POR PUBLICAR
+
+**El pedido del dueño** (con una captura de Contabilidad → Ventas por entrega agendada):
+- *«me varía con lo de cuadre y conciliación»*: el Cuadre cuenta la plata que ENTRÓ, por fecha de pago; Ventas por entrega
+  agendada cuenta lo VENDIDO, por la fecha de la entrega. Son números distintos a propósito.
+- *«crea una pestaña al lado de cuadre y conciliación que solo se habilite cuando se coloca la contraseña de administrador
+  en el panel de administración»*.
+- *«que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin de mes
+  según cómo vienen las ventas… ojo, no me interesa el efectivo ingresado sino el vendido en el período»*. Lo vendido es
+  por entrega agendada: una venta pagada un mes y entregada el siguiente cuenta en el mes de la entrega.
+- *«arma el bosquejo como quedaría y me muestras, sigo desde el cel»*.
+
+**Lo armado (en la rama, SIN publicar, sin prueba propia todavía):**
+- Pestaña `data-val="proy"` («📈 Proyección del mes»). `mostrarBotonesTodos` la muestra solo con `UNLOCKED`, y
+  `setContaTab` / `renderProyeccion` vuelven a Ventas si no hay clave. Todo pasa por `contaRepintar()`.
+- `proyeccionMes(ym)`:
+  - Suma `ventaTotal` por la fecha de `fechaSalida` (la entrega agendada, como Ventas → 🚚 Entrega agendada).
+  - El equipo va como en Ventas (`fueraDeConta(p,'tienda')`). La marca sale por vendedor (`marcaDe`, §4bl).
+  - Los mayoristas (`fueraDeConta(p,'mayor')`) van aparte.
+  - Quedan afuera las ATC, las RPT y ROHO.
+- **Proyección**, por vendedor; las marcas y el total son la suma:
+  - A = lo que tiene entrega hasta hoy.
+  - B = lo agendado de mañana a fin de mes.
+  - proyección = A + máx(B, A ÷ días hábiles que pasaron × días hábiles que quedan).
+  - Días hábiles = lunes a sábado sin feriados.
+  - No mira `p.entregado`: los choferes todavía no marcan.
+  - Un mes que ya pasó muestra «Cerró el mes»; uno que no empezó muestra solo lo agendado.
+- **Pantalla:**
+  - Fichas: vendido, proyección, Sueña, Heaven, sin marca y mayoristas.
+  - Lista por vendedor agrupada por marca, con lo vendido y la proyección en violeta. Es lista y no tabla: en 390 px una
+    tabla de cuatro columnas escondía la proyección.
+  - Cuadro «❓ Cómo se cuenta».
+  - Proyección y ritmo en Bs enteros (`fmtBs0`); lo vendido, con centavos, igual que en Ventas.
+- **Se le mostró** con capturas de celular (ventas inventadas, «hoy» = viernes 18/09).
+
+Las pruebas de Contabilidad pasaron igual: `test_conta_alta` 53, `test_cuadre_alta` 35, `test_rev_conta` 38,
+`test_rev7_celular` 35, `test_botones` 50, `test_medias` 24.
+
+**El dueño:** *«uso iPad Air M3, así que sí se verá, no celular. Me gusta el bosquejo, publica y lo veo.»* Los mayoristas
+quedan aparte, como en el bosquejo (no contestó la pregunta; se deja como lo vio y le gustó).
+
+**Arreglado antes de publicar — el iPad:**
+- A 820 px (el iPad Air parado) las fichas salían de a tres, de ~230 px, y los totales del mes, de seis cifras, salían
+  cortados («Bs 684.39…»).
+- `acomodarFichas` ahora acepta un ancho mínimo por caja (`data-min`), y `#pry-metrics` pide 300. Quedan de a dos en el
+  iPad parado y de a tres acostado. Las otras cajas siguen con `FICHA_MIN`=230.
+
+**Prueba:** `tests/test_proyeccion.js`, 36 comprobaciones. Contra `bf19fc8` da 5 bien y 31 mal, y contra el bosquejo
+`a6660ef`, 35 bien y 1 mal (la del iPad). Cubre:
+- la pestaña solo con la contraseña, con `tryUnlock` de verdad;
+- las cuentas con el reloj en el viernes 18/09: la venta cargada en agosto y entregada en septiembre entra, la de octubre
+  no, la venta de tienda cuenta por el día en que se cargó, no entran ATC, RPT ni ROHO, y los mayoristas van aparte;
+- que lo vendido es EXACTAMENTE lo de Ventas → 🚚 Entrega agendada;
+- lo que se ve en pantalla;
+- un mes cerrado, un mes que no empezó y los primeros días;
+- 820, 1180 y 390 px: sin scroll de costado y sin montos cortados.
+
+**Batería sobre `ffa3420`: 113 suites, 4.269 bien · 3 mal.** Las 3 eran dos pruebas que contaban los botones de Contabilidad
+y esperaban exactamente tres: `test_mayorista` («TRES pestañas») y `test_rev2_cuadre` §6 (el ancho de la cuarta, escondida,
+daba 0). Se cambiaron a conciencia: tres pestañas A LA VISTA y la cuarta escondida sin la contraseña. Quedaron 37/0 y 55/0,
+así que el total es **4.272 bien · 0 mal**. La página no cambió desde la batería.
+
+## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — PUBLICADA 28/09 18:28 (`bf19fc8`)
+
+> **Publicada el 28/09 a las 18:28 de Bolivia** (`main` = `bf19fc8`, junto con §4gq y §4gr; el dueño: «hazlo»). Sin tocar
+> el servidor (sigue el `.gs` 2026-09-28-a). No había ninguna corrida del panel en curso ni en cola. Todos F5.
 
 **Lo que vio el dueño.** La tabla de §4gq con su ejemplo, el lunes 28/09 a las 16:25 y a las 18:15:
 - Moreno: desde el miércoles 30/09 → desde el jueves 01/10.
@@ -7515,9 +7580,9 @@ o con `STOCK_DIAS_FABRICA`=3.
   contrario, a propósito.
 
 **Batería sobre `e825f51`: 112 suites, 4.236 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-En la rama, junto con §4gq y §4gr, esperando el OK del dueño para publicar.
+Publicada el 28/09 a las 18:28 (`bf19fc8`), junto con §4gq y §4gr.
 
-## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
+## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — PUBLICADA 28/09 18:28 (`bf19fc8`)
 
 **El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
 "recargo por entrega"?»*: esa ficha mostraba solo el bloque del flete porque la venta ya no tenía saldo. Después vio la otra
@@ -7555,9 +7620,9 @@ errores, que tienen que dar igual.
 el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un «🗑 Borrar este pago» si hace falta.
 
 **Batería sobre `275b031`: 112 suites, 4.231 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-Es la de §4gq más `test_envio_a_pago` (28). En la rama, junto con §4gq, esperando el OK del dueño para publicar.
+Es la de §4gq más `test_envio_a_pago` (28). Publicada el 28/09 a las 18:28 (`bf19fc8`), con §4gq y §4gs.
 
-## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
+## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — PUBLICADA 28/09 18:28 (`bf19fc8`), con §4gs
 
 > ⚠️ **Corregido esa misma noche en §4gs:** Moreno NO mira la hora, y lo que se fabrica sale a las 48 h (no «3 días + 1»).
 > Lo de abajo sobre Moreno y los «~5 días» queda como historia.
@@ -7615,7 +7680,7 @@ y que el sábado se trabaja medio día.
   ⚠️ Una prueba NUEVA del cuadrito tiene que clavar el reloj: sin eso, después de las 17:00 da otros días.
 
 **Batería sobre `5ff8112`: 111 suites, 4.203 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-En la rama, esperando el OK del dueño para publicar.
+Publicada el 28/09 a las 18:28 (`bf19fc8`), con la corrección de §4gs.
 
 ## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
 
