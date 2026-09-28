@@ -803,15 +803,25 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
-- **🕔 La hora en que entra el pedido** (§4gq, 28/09, EN LA RAMA, sin publicar).
-  - Lo que alguien tiene que HACER —fabricar, ir a buscar a Moreno, una medida especial— empieza hoy si es día hábil y
-    antes del corte: `HORA_CORTE`=17, y el sábado `HORA_CORTE_SABADO`=12.
-  - Si no, empieza el siguiente día hábil (`diaArranque`). No son hábiles el domingo ni los `FERIADOS` (lista hasta fin de
-    2027; revisar cada año).
-  - Los días de producción se cuentan como antes: solo se corre el día en que se empieza. El ✅ de lo que está a mano, el ⏳
-    y el 🚚 no cambian.
-  - El cuadrito y la pregunta al guardar dicen por qué (`saldoArrancaTxt`).
-  - Prueba: `tests/test_corte_horario.js` (30; 21 rojas contra `7fe7551`).
+- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, 28/09, EN LA RAMA, sin publicar).
+  - **📥 Moreno NO mira la hora** (dueño: *«da igual si son las 18 o las 11 o las 15: se cargó lunes, se recoge martes, se
+    entrega miércoles»*): se recoge el día hábil siguiente (`saldoDiaRecoge`) y se entrega desde el otro. Si la recogida no
+    es mañana (sábado, víspera de feriado), el cuadrito dice qué día: «logística lo recoge el lunes 05/10».
+  - **🏭 Lo que hay que fabricar** arranca hoy si es día hábil y antes del corte (`HORA_CORTE`=17; el sábado
+    `HORA_CORTE_SABADO`=12); si no, el siguiente día hábil (`diaArranque`). No son hábiles el domingo ni los `FERIADOS`
+    (lista hasta fin de 2027; revisar cada año).
+  - **Sale `DIAS_PRODUCCION`=2 días hábiles después** (dueño: *«debería salir en 48 horas y las otras 24 son para recoger y
+    entregar»*, `saldoSaleDeFabrica`). Ese día se recoge y se entrega desde el siguiente: lunes 18:00 → viernes.
+  - La misma regla vale para 📐 medida especial, ⏳ lo ya pedido a fábrica (desde `q.f`) y 🏭 lo que se fabrica para ESE
+    pedido (desde `prodF`). Si no, la promesa se corría un día el día que logística pedía a fábrica.
+  - ⚠️ **El cuadrito ya no usa el tiempo de fábrica medido ni `STOCK_DIAS_FABRICA`** (`saldoLeadModelo` y `saldoTiempos`
+    se borraron). La pantalla de stock sí los usa, sin cambios: ahí los 3 días son las 48 h más el día en que se recoge,
+    o sea hasta que se puede entregar. Por eso un pedido a fábrica puede decir «llegan el viernes» en Stock y «llega el
+    jueves» en el cuadrito. Cambiar el 3 movería las cantidades a pedir, y eso el dueño no lo pidió.
+  - El ✅ de lo que está a mano y el 🚚 de una recogida programada no cambian.
+  - El cuadrito y la pregunta al guardar dicen la cuenta (`saldoArrancaTxt`): «🕔 Ya pasaron las 17:00: se manda a
+    producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»
+  - Prueba: `tests/test_corte_horario.js` (35; 24 rojas contra `7fe7551`, 18 contra `275b031`).
   - ⚠️ Una prueba nueva del cuadrito tiene que clavar el reloj antes de las 17:00: si no, da otros días según la hora a la
     que se corra.
   - **Quién se lleva el stock lo decide logística** (dueño, 28/09: *«es mucho kilombo»*). Se propuso y se **descartó** una

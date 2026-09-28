@@ -7445,6 +7445,75 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — EN LA RAMA, SIN PUBLICAR
+
+**Lo que vio el dueño.** La tabla de §4gq con su ejemplo, el lunes 28/09 a las 16:25 y a las 18:15:
+- Moreno: desde el miércoles 30/09 → desde el jueves 01/10.
+- Fabricar: ~4 días (viernes 02/10) → ~5 días (sábado 03/10).
+
+**Lo que dijo:**
+- *«Si hay que ir a recoger, da igual si son las 18 o las 11 o las 15, porque se cargó lunes, se recoge martes, se entrega
+  miércoles.»*
+- *«Lo que sí hay que fabricar, si entra lunes a las 18, sería para entregar viernes o sábado. ¿Por qué 5 días? Si el pedido
+  entró lunes a las 18, se manda a producir martes a las 8 am. Debería salir en 48 horas, y las otras 24 son para recoger y
+  entregar… ¿o no es así?»*
+
+**Por qué decía 5 días.**
+- El panel usaba `STOCK_DIAS_FABRICA`=3 como lo que tarda la fábrica hasta que el colchón está en el almacén. El dueño había
+  dicho «2 a 3 días» el 07/09 (§4cn) y se tomó 3.
+- Encima, el cuadrito sumaba 1 día para entregar: martes + 3 = viernes en el almacén → sábado al cliente.
+- Con sus 48 h: martes y miércoles se fabrica, el jueves sale y se recoge, el viernes se entrega.
+- Lo de Moreno en §4gq salió de leer como Moreno su frase del mediodía (*«no es lo mismo un pedido que entra 18:00 del lunes:
+  no llega a entregarse miércoles, sería jueves»*): era el único caso que daba miércoles. Ahora aclaró que ahí la hora no
+  importa.
+
+**Lo que cambió.** Solo el cuadrito del formulario y la pregunta al guardar.
+- 📥 **Moreno:** `saldoDiaRecoge()` es el día hábil siguiente (`STOCK_DIAS_RECOGIDA` días hábiles), a cualquier hora, y se
+  entrega desde el día siguiente a la recogida. Lo mismo para lo que sigue en Moreno en `saldoEntradas`.
+  - Si la recogida no es mañana, el cuadrito dice qué día: el sábado a cualquier hora, «logística lo recoge el lunes 05/10:
+    programá desde el martes 06/10».
+  - Antes de §4gq, el sábado prometía el lunes, como si se recogiera el domingo.
+- 🏭 **Fabricar:** `DIAS_PRODUCCION`=2 días hábiles y `saldoSaleDeFabrica(desde)`.
+  - Lo que hay que fabricar arranca `diaArranque()` (la hora de corte de §4gq sigue).
+  - Sale 2 días hábiles después; ese día se recoge, y se entrega desde el siguiente.
+- **La misma regla** para 📐 medida especial, ⏳ lo ya pedido a fábrica (desde `q.f`) y 🏭 lo que se fabrica para ESE pedido
+  (desde `prodF`). Con la regla solo en «hay que fabricar», el lunes a las 18:15 se prometía el viernes; el martes, con el
+  pedido a fábrica anotado, el ⏳ prometía el sábado para la misma tanda.
+- **La cuenta, a la vista** (`saldoArrancaTxt`):
+  - «🏭 Se manda a producir hoy, sale de fábrica el miércoles 30/09 (48 h) y ese día se recoge.»
+  - «🕔 Ya pasaron las 17:00: se manda a producir el martes 29/09, sale de fábrica el jueves 01/10 (48 h) y ese día se recoge.»
+  - Así la pregunta «¿por qué X días?» se contesta sola, también para las vendedoras.
+
+**⚠️ Lo que el cuadrito dejó de usar.** Ni lo que tarda la fábrica «medido» (`stockTiemposFabrica`) ni `saldoLeadModelo`
+(§4gk). Se borraron `saldoLeadModelo` y `saldoTiempos`. Tres motivos:
+1. Es la regla que dictó el dueño.
+2. Lo medido mezcla «hasta que llegó» (✔ hay, o «Llegaron») con «hasta que se entregó»: una línea 🏭 entregada sin pasar por
+   ✔ hay se mide hasta la entrega.
+3. La promesa no cambia sola con cada llegada.
+
+Si un día la fábrica tarda otra cosa, se cambia `DIAS_PRODUCCION`.
+
+**NO cambia la pantalla de stock:** el aviso de cuándo pedir, cuánto pedir, «Qué producir» y «llegan el…». Sigue con lo medido,
+o con `STOCK_DIAS_FABRICA`=3.
+- En la regla del dueño, esos 3 días son las 48 h más el día en que se recoge: hasta que se puede ENTREGAR, que es lo que ese
+  aviso tiene que cubrir.
+- Cambiar el 3 movería las cantidades a pedir, y eso no lo pidió.
+- Consecuencia a la vista: un pedido a fábrica del martes dice «llegan el viernes» en Stock y «llega el jueves» en el cuadrito.
+
+**Su ejemplo, con el panel ya cambiado** (lunes 28/09):
+
+| | 16:25 | 18:15 |
+|---|---|---|
+| 📥 Hay en Moreno | desde el miércoles 30/09 | desde el miércoles 30/09 (no cambia) |
+| 🏭 Hay que fabricar | ~3 días (jueves 01/10) | ~4 días (viernes 02/10) |
+| ✅ Hay a mano | desde mañana | desde mañana (no cambia) |
+
+**Pruebas:**
+- `tests/test_corte_horario.js`, reescrita: 35. Contra `7fe7551` da 11 bien y 24 mal; contra `275b031` (§4gq), 17 bien y 18 mal.
+- `test_saldo_almacen`: cuatro comprobaciones pasaron a las 48 h.
+- `test_rev8_saldo`: nueve comprobaciones pasaron a las 48 h. La de «📐 los ~X días son los de ESE modelo» ahora dice lo
+  contrario, a propósito.
+
 ## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
 
 **El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
@@ -7486,6 +7555,9 @@ el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un 
 Es la de §4gq más `test_envio_a_pago` (28). En la rama, junto con §4gq, esperando el OK del dueño para publicar.
 
 ## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
+
+> ⚠️ **Corregido esa misma noche en §4gs:** Moreno NO mira la hora, y lo que se fabrica sale a las 48 h (no «3 días + 1»).
+> Lo de abajo sobre Moreno y los «~5 días» queda como historia.
 
 **La pregunta del dueño** (15:40): *«¿qué pasa si hoy tenemos un ICE en inventario, el 1er vendedor lo pone para el
 sábado, el 2do para el miércoles y el 3er para mañana? ¿El panel lo aparta para el 1ro, o define por fecha?»*

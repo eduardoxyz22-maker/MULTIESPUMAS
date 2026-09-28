@@ -24,7 +24,8 @@
        actualizado»*.
 
    Datos SINTÉTICOS (el repo es público). Reloj clavado en el miércoles 23/09/2026, 15:00 de Bolivia (día hábil:
-   «mañana» es el jueves 24; la fábrica tarda 3 días si no se midió).
+   «mañana» es el jueves 24). Lo que hay que fabricar sale 48 h hábiles después de que arranca, ese día se recoge y se
+   entrega desde el siguiente (dueño, 28/09, §4gs; antes: 3 días de fábrica + 1).
 
    Se corre:  node tests/test_saldo_almacen.js   (desde la raíz del repo)
    Dientes contra el panel publicado:  PEDIDOS=/ruta/a/pedidos_viejo.html node tests/test_saldo_almacen.js */
@@ -263,12 +264,13 @@ function INIT_DOS(vend){
   chk('📥 ALMOHADA 50x70 (solo 5 en Moreno): cuadrito ÁMBAR «HAY EN MORENO · se trae en 1 día: programá desde el viernes 25/09»',
       T.alm && /ps-ambar/.test(T.alm.cls) && /HAY EN MORENO · se trae en 1 día: programá desde el viernes 25\/09/.test(T.alm.txt), T.alm && [T.alm.cls, T.alm.txt]);
   chk('…«En almacén 5 · Pendientes de entrega 0 · Libres 5», igual que la tabla', /En almacén 5 · Pendientes de entrega 0 · Libres 5/.test((T.alm||{}).txt||'') && T.tAlm && T.tAlm.alm===5, [(T.alm||{}).txt, T.tAlm]);
-  chk('⏳ PILLOW PEDIC 140x190 (acá 1, 3 pendientes, 6 en producción): ÁMBAR «EN PRODUCCIÓN · decile al cliente que espere ~3 días (llega el 25/09)»',
-      T.pil && /ps-ambar/.test(T.pil.cls) && /EN PRODUCCIÓN · decile al cliente que espere ~3 días \(llega el 25\/09\)/.test(T.pil.txt) && /programá desde el sábado 26\/09 \(sábado: solo AM\)/.test(T.pil.txt), T.pil && [T.pil.cls, T.pil.txt]);
+  chk('⏳ PILLOW PEDIC 140x190 (acá 1, 3 pendientes, 6 en producción, pedidos el martes 22): ÁMBAR «EN PRODUCCIÓN · decile al cliente que espere ~2 días (llega el 24/09)» — sale a las 48 h (§4gs)',
+      T.pil && /ps-ambar/.test(T.pil.cls) && /EN PRODUCCIÓN · decile al cliente que espere ~2 días \(llega el 24\/09\)/.test(T.pil.txt) && /programá desde el viernes 25\/09/.test(T.pil.txt), T.pil && [T.pil.cls, T.pil.txt]);
   chk('…«En almacén 1 · Pendientes de entrega 3 · Faltan 3 · En producción 6»', /En almacén 1 · Pendientes de entrega 3 · Faltan 3 · En producción 6/.test((T.pil||{}).txt||''), (T.pil||{}).txt);
-  chk('🏭 ORO BI RELAX 180x190 (no hay en ningún lado): ROJO «NO HAY · decile al cliente que espere ~5 días: hay que mandar a producir (avisá a logística)»',
-      T.oro && /ps-rojo/.test(T.oro.cls) && /NO HAY · decile al cliente que espere ~5 días: hay que mandar a producir \(avisá a logística\)/.test(T.oro.txt), T.oro && [T.oro.cls, T.oro.txt]);
-  chk('…3 días de fábrica (sábado 26) + el día de entrega: el domingo no se entrega, así que el lunes 28/09 (~5 días)', /programá desde el lunes 28\/09/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
+  chk('🏭 ORO BI RELAX 180x190 (no hay en ningún lado): ROJO «NO HAY · decile al cliente que espere ~3 días: hay que mandar a producir (avisá a logística)»',
+      T.oro && /ps-rojo/.test(T.oro.cls) && /NO HAY · decile al cliente que espere ~3 días: hay que mandar a producir \(avisá a logística\)/.test(T.oro.txt), T.oro && [T.oro.cls, T.oro.txt]);
+  chk('…se manda a producir hoy (antes de las 17), sale el viernes 25/09 (48 h) y ese día se recoge: «programá desde el sábado 26/09 (sábado: solo AM)»',
+      /🏭 Se manda a producir hoy, sale de fábrica el viernes 25\/09 \(48 h\) y ese día se recoge\./.test((T.oro||{}).txt||'') && /programá desde el sábado 26\/09 \(sábado: solo AM\)/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
   chk('…«En almacén 0 · Pendientes de entrega 1 · Faltan 2»', /En almacén 0 · Pendientes de entrega 1 · Faltan 2/.test((T.oro||{}).txt||''), (T.oro||{}).txt);
   chk('🛑 ESPECIAL JUNIOR (ya no se fabrica), con 2 acá: VERDE y dice «ya no se fabrica: quedan 2»',
       T.jun && /ps-verde/.test(T.jun.cls) && /ya no se fabrica: quedan 2/.test(T.jun.txt), T.jun && [T.jun.cls, T.jun.txt]);
@@ -396,7 +398,7 @@ function INIT_DOS(vend){
   });
   const dlgNo = page.__dialogos.slice();
   chk('🏭 guardando un producto que no hay, pregunta ANTES de guardar, nombrando el producto, lo que falta y la espera',
-      dlgNo.length===1 && /ORO BI RELAX 180x190: no hay saldo libre \(faltan 2\)/.test(dlgNo[0]) && /espera ~5 días/.test(dlgNo[0]) && /Le avisaste al cliente/.test(dlgNo[0]), dlgNo.map(d => d.slice(0,300)));
+      dlgNo.length===1 && /ORO BI RELAX 180x190: no hay saldo libre \(faltan 2\)/.test(dlgNo[0]) && /espera ~3 días/.test(dlgNo[0]) && /Le avisaste al cliente/.test(dlgNo[0]), dlgNo.map(d => d.slice(0,300)));
   chk('…y «Cancelar» vuelve al formulario SIN guardar (el pedido sigue escrito)', r.cancelado===0 && r.sigue==='SIN SALDO', [r, r.__error]);
   page.__dialogos.length=0; page.__respuestas=[true];
   r = await ev(async () => { var n0=_saves.length; await _guardar(); await _esperar(300); var g=_saves.slice(n0).filter(function(s){ return s.cliente==='SIN SALDO'; });
