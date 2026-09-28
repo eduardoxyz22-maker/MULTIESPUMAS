@@ -1079,6 +1079,91 @@ El arreglo de fondo es que el servidor informe la hora de su lectura en la respu
 2. Correr `tests/test_codex28.cjs` y `tests/test_codex28_flujos.js` contra la rama, y con `GS=` apuntando al `.gs` 26-a para
    ver qué queda sin el servidor nuevo.
 
+## 17 · Eduardo → Multicenter en la proyección de stock (28/09) — hecho y probado, SIN publicar
+
+El dueño pidió que la proyección de stock incluya las ventas de Eduardo a Multicenter y que las demás reglas no
+cambien. Está en la rama `claude/pedidos-fecha-entrega-bgt0em`, junto con §16 (que tampoco está publicada).
+Detalle en `BITACORA_CLAUDE.md` §4gm.
+
+**La regla.** No se sacó ninguna de las dos exclusiones: se agregó una excepción explícita, en el orden pedido.
+`stockPedidoUnico(p)` evalúa, en este orden:
+1. `esRPT` → `true`;
+2. `stockEduardoMulticenter(p)` → `false`;
+3. `stockPuntual(p)` → `true`;
+4. `stockEsEduardo(p)`.
+
+Las identidades se definen UNA vez y las usan la exclusión y la excepción:
+- `stockEsMulticenter`: la palabra entera «MULTICENTER» en `normNombre(cliente)`. No hay id de cliente: el pedido no lo
+  trae y Kommo tampoco lo manda. Los tableros de ventas del repo (mayo a agosto) lo escriben «MULTICENTER» o
+  «Multicenter» y nada más. «multi» a secas, «MULTI CENTER» y «MULTICENTRO» NO cuentan.
+- `stockEsConsignacion`: manda también sobre Multicenter.
+- `stockEsEduardo`: la prueba de siempre.
+
+| Lo que pidió el dueño | Dónde | Prueba (`tests/test_eduardo_multicenter.js`) |
+|---|---|---|
+| Eduardo → Multicenter entra al ritmo de 15 d, a los 30 d, al índice mensual, a 60/90 d y a la tendencia | todo pasa por `stockPedidoUnico`: `stockData` (15 d y 30 d) y `ventasPanelIndex` (→ `stockRangoMes`) | §1: +8 en 15 d, +14 en 30 d, agosto +18 y septiembre +8 en el índice; 7 d, 15 d y octubre suben |
+| Eduardo → otros clientes, afuera | paso 4 | §2 (y §6 al cambiar el cliente) |
+| Multicenter de otro vendedor, sin cambios | paso 3, `stockPuntual` intacto | §3 (y §6 al cambiar el vendedor) |
+| Consignación y los otros puntuales, afuera | `stockEsConsignacion` gana; paso 3 | §0 y §2 |
+| RPT: no es venta, sigue en «Qué va a pedir cada tienda» y no se suma a «Qué producir» | paso 1; `stockTiendas` sin tocar | §4 |
+| Lo pendiente compromete una sola vez | `comp` como siempre, con `max(comp, ritmo)` | §5: el pendiente solo de 5 con 2 en depósito da «pedir 3» |
+| Cambiar cantidad, cliente o vendedor recalcula todo, índices incluidos | no hay caché de la regla: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura | §6, también el cuadrito del saldo |
+| Las demás ventas del equipo no cambian | — | §7: sin Eduardo → Multicenter, cada número es IGUAL al de `2040720` con los mismos pedidos |
+| Mismos umbrales | `STOCK_VENTAS_MIN`, `alta` sin tocar | 40 en UNA entrega: `baja`, sin ritmo, «pedir 0» |
+
+**Ejemplo** (TITANIO ICE 160x190, acá 3 · Moreno 2, los mismos pedidos, reloj el 10/09/2026):
+
+| | antes (`2040720`) | después | aporte de Multicenter |
+|---|---|---|---|
+| 15 d: unidades · entregas | 10 · 5 | 18 · 6 | 8 en 1 entrega |
+| rotación · por día | media · 0,667 | alta · 1,2 | pasa el umbral de `alta` (≥15 en ≥2 tramos) |
+| margen · reserva (días) | 2 · 3 | 4 · 7 | |
+| pedir (recoger · fabricar) | 3 (2 · 1) | 14 (2 · 12) | |
+| «Qué producir»: 7 d · 15 d · octubre | 1 · 9 · 15 | 12 · 22 · 22 | |
+| 30 d: unidades · entregas | 18 · 9 | 32 · 11 | 14 en 2 entregas |
+| índice agosto · septiembre | 14 · 10 | 32 · 18 | +18 · +8 |
+| estimaciones de octubre | 30 d 18,6 · 60 d 12,7 · 90 d 15 · oct-25 8 · tendencia 24 | 30 d 33,1 · 60 d 21,9 · 90 d 21,1 · oct-25 8 · tendencia 24 | la tendencia no se mueve: ya estaba en el tope ×3 |
+
+**Límites reales del histórico.** `VENTAS_HIST` (el consolidado del sistema, ene-25 a jul-26) trae unidades por
+producto y por mes. No dice vendedor ni cliente, y trae TODAS las ventas del sistema. Ahí no se puede separar a
+Multicenter, y no se inventó ninguna separación. Lo usan:
+- «mismo mes del año pasado»;
+- el divisor de la tendencia;
+- los meses de antes de 2026-08 en 60 d y 90 d. Al 28/09, 60 d = agosto (panel) + julio (sistema).
+
+Esas estimaciones ya mezclaban «solo el equipo» con «todo»; con Multicenter adentro, la diferencia se achica. El
+cartel de «Qué producir» lo dice.
+
+**Dos efectos que el dueño tiene que decidir** (no los resolví solo porque serían reglas nuevas):
+1. **Los umbrales miran el producto, no la compra.** Las ventas de Multicenter se suman a las del equipo antes de
+   medir `media`/`alta`. En el ejemplo, 8 de Multicenter llevan el producto de `media` a `alta`, y la reserva sube de
+   3 a 7 días.
+2. **El plan del mes que viene no tiene umbral de entregas, para nadie.** 60 d y 90 d promedian meses enteros del
+   índice. Con el producto rotando por el equipo, una compra ÚNICA de 40 de Eduardo a Multicenter en agosto sube
+   «producir en octubre» de 9 a 24 (`test_adm_alta` §3). La mediana no alcanza: 60 d pasa de 8,7 a 29,1, 90 d de
+   12,2 a 25,8, y la mediana salta a la tendencia (24). Con una venta grande del equipo pasa lo mismo desde siempre.
+   Si el dueño no lo quiere, la opción más simple es que en el índice mensual Multicenter cuente solo con sus
+   propias 3 entregas del producto en la ventana de 90 días. El costo: si Multicenter compra una vez por mes, en 90
+   días tiene 3 entregas y cuenta; si compra menos seguido, no cuenta.
+
+**Archivos:**
+- `pedidos.html`: la regla, dos contadores para los textos, los textos y los comentarios.
+- `tests/test_eduardo_multicenter.js` (nueva).
+- `tests/test_adm_alta.js` §3, cambiada a conciencia: la venta de 40 de Eduardo pasó a otro cliente, y se agregó el
+  caso de Multicenter y el texto nuevo de la cabecera.
+- `BITACORA_CLAUDE.md` §4gm, `CLAUDE.md` y este informe.
+
+**Pruebas:**
+- `test_eduardo_multicenter.js`: 29 bien. Contra `2040720` (`PEDIDOS=`): 17 rojas, y ahí pasan las de «lo que no
+  cambia».
+- `test_adm_alta.js`: 19 bien.
+- Las 20 de stock, sin tocarlas: `test_producir`, `test_rotacion`, `test_rpt`, `test_ventas_panel`, `test_banzer`,
+  `test_banzer_salida`, `test_rev_banzer`, `test_stock`, `test_revstock`, `test_rev_stock`, `test_rev2_stock`,
+  `test_rev3_stock`, `test_saldo_almacen`, `test_rev8_saldo`, `test_consaldo` y las cinco `.cjs`.
+- Batería completa: 109 suites, 4.145 bien · 1 mal. La roja fue `test_rev2_cuadre`, intermitente y anterior a este
+  cambio: miraba la tarjeta del Cuadre 40 ms fijos después de tipear, y el repintado va en un `setTimeout`. Ahora
+  espera el repintado: 7/7, también con cuatro corriendo a la vez.
+
 ## Primera vuelta (`d890468`), resumida
 
 | # | Hallazgo del informe original | Veredicto | Estado hoy |

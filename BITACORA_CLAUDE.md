@@ -7445,6 +7445,109 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — SIN PUBLICAR
+
+El dueño (10:49): *«Necesito que la proyección de stock incluya las ventas de Eduardo a Multicenter, conservando las
+demás reglas actuales»*, con la regla exacta: Eduardo → Multicenter entra al histórico y a la demanda; Eduardo → otros
+clientes sigue afuera; Multicenter de otro vendedor, sin cambios; consignación y los otros puntuales, afuera; las RPT no
+son ventas, siguen en «Qué va a pedir cada tienda» y eso no se suma a «Qué producir»; lo pendiente compromete una sola
+vez; **«mantén los umbrales actuales de rotación: incluir estas ventas no significa convertir una compra grande aislada
+en demanda recurrente automáticamente»**. Pidió implementar y probar, **no publicar**. Después: *«¿y la de 7 días?»*.
+
+**La regla, en un solo lugar** (`stockPedidoUnico`, en este orden):
+1. una RPT nunca es venta (`esRPT`);
+2. **Eduardo → Multicenter es demanda** (`stockEduardoMulticenter` → `false`);
+3. `stockPuntual` sin cambios: Multicenter de otro vendedor, consignación, ROHO a «TIENDA n»;
+4. las otras ventas de Eduardo, afuera.
+
+Las identidades se definen UNA vez y las usan la exclusión y la excepción:
+- `stockEsMulticenter(p)`: la PALABRA ENTERA «MULTICENTER» en `normNombre(p.cliente)`, la misma regla que ya usaba
+  `STOCK_PUNTUAL`. No hay id de cliente: el pedido no lo trae y Kommo tampoco lo manda. Los tableros de ventas del
+  repo (mayo a agosto) lo escriben siempre «MULTICENTER»/«Multicenter», y aparece todos los meses.
+  ⚠️ «MULTI CENTER», «MULTICENTRO» o «multi» a secas NO son Multicenter, a propósito: el dueño pidió no usar
+  coincidencias amplias (MULTIESPUMAS).
+- `stockEsConsignacion(p)`: manda siempre, también sobre Multicenter.
+- `stockEsEduardo(p)`: la palabra «eduardo» en el vendedor, la prueba de siempre.
+
+**Dónde entra** (todo pasa por `stockPedidoUnico`, no hubo que tocar cada cuenta):
+- el ritmo de 15 días (`vendidosRotacion`, `nVentasRotacion`, `sem`), que da rotación, margen, reserva, 🚨 pedir /
+  recoger / fabricar y la columna **7 días** de «Qué producir» (`o.fabricar`);
+- los 30 días (`v30`, `n30`, `porDiaMes`) → la estimación «30 d» y «el mes»;
+- `ventasPanelIndex` → «60 d», «90 d» y la tendencia;
+- el cuadrito del saldo del formulario (`saldoDatos` → `stockData`) y el mensaje a fábrica.
+
+`vendidosEduMc`/`v30EduMc` cuentan cuánto de eso es Multicenter, solo para los textos.
+
+**Qué no cambia:**
+- lo pendiente (`comp`) se cubría y se sigue cubriendo una vez: `max(comp, ritmo)`;
+- `porDiaTodo` (plata parada) ya contaba todo;
+- `stockTiendas`: la RPT sigue en `r` y la venta de tienda en `v`, y no se suma a «Qué producir»;
+- **los umbrales**: `STOCK_VENTAS_MIN`=3 entregas distintas, `alta` con ≥15 unidades en ≥2 tramos.
+
+**Cachés:** ninguna guarda la regla vieja. `ventasPanelIndex` se arma de cero cada vez (§4ec) y `SALDO_CACHE` se
+renueva con cada lectura (`SALDO_GEN`). Todo sale de los pedidos en cada lectura, así que las ventas ya cargadas
+entran solas con el F5: no hay nada que migrar.
+
+**Textos:**
+- la cabecera de «Qué producir»: «Sale de los pedidos del panel: ventas del equipo + ventas de Eduardo a Multicenter;
+  sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni
+  reposiciones de tienda (RPT)… Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni
+  cliente: ahí están todas las ventas.»;
+- las líneas de 15 d y 30 d de cada fila («· 8 de Eduardo a Multicenter»);
+- la tabla de stock («Equipo: … (incluye N de Eduardo a Multicenter)»);
+- «Base de rotación»;
+- la etiqueta de la estimación de 30 d.
+
+**⚠️ Límite del histórico (no se inventó ninguna separación):** `VENTAS_HIST` (el «CONSOLIDADO ROTACION PRODUCTOS
+MULTIESPUMAS.xlsx», ene-25 a jul-26) tiene código, descripción, medida y unidades por mes. **No dice vendedor ni
+cliente** y trae TODAS las ventas del sistema (Eduardo, Multicenter, ROHO, consignación). Ahí no se puede ni sacar
+ni agregar a Multicenter. Lo usan:
+- «mismo mes del año pasado»;
+- el divisor de la tendencia (`H[apAct]`);
+- los meses de antes de 2026-08 en 60 d / 90 d. Al 28/09, 60 d = agosto (panel) + julio (sistema), y 90 d =
+  agosto + julio + junio.
+
+O sea: 60 d, 90 d y la tendencia mezclan meses del panel (equipo + Eduardo a Multicenter) con meses del sistema
+(todo). La mezcla ya existía antes con «solo el equipo»; con Multicenter adentro, la diferencia se achica.
+
+**Números (prueba, TITANIO ICE 160x190, acá 3 · Moreno 2, los mismos pedidos, reloj el 10/09):**
+
+| | antes (`2040720`) | después |
+|---|---|---|
+| 15 d: unidades · entregas | 10 · 5 | 18 · 6 (8 de Multicenter) |
+| rotación · por día | media · 0,667 | **alta** · 1,2 |
+| margen · reserva (días) | 2 · 3 | 4 · 7 |
+| pedir (recoger · fabricar) | 3 (2 · 1) | 14 (2 · 12) |
+| «Qué producir»: 7 d · 15 d · octubre | 1 · 9 · 15 | 12 · 22 · 22 |
+| 30 d: unidades · entregas · por día | 18 · 9 · 0,6 | 32 · 11 · 1,067 (14 de Multicenter) |
+| índice agosto · septiembre | 14 · 10 | 32 · 18 |
+
+**Dos efectos para que decida el dueño** (se le dijeron; los umbrales son los de siempre):
+1. **Los umbrales miran el producto, no la compra.** Las 8 de Multicenter se suman a las del equipo, y con 18
+   unidades en 2 tramos el TITANIO pasa de `media` a `alta` (reserva de 3 a 7 días). Sola, una compra grande no arma
+   ritmo: 40 en UNA entrega queda en `baja`, sin ritmo, y no pide nada (probado).
+2. **El plan del mes que viene no tiene umbral de entregas, para nadie.** Nunca lo tuvo: 60 d y 90 d promedian meses
+   enteros. Con el producto rotando por el equipo, una compra única de 40 de Eduardo a Multicenter en agosto sube
+   «producir en octubre» de 9 a 24 (`test_adm_alta` §3). Lo mismo pasa con una venta grande del equipo. Es el caso
+   de §4ev, que ahora vale para Multicenter porque el dueño lo pidió en el índice. La mediana de las cinco
+   estimaciones amortigua pero no alcanza: en ese caso suben 60 d (8,7 → 29,1) y 90 d (12,2 → 25,8), y la mediana
+   salta a la tendencia (24), que ya estaba alta.
+
+**Pruebas:**
+- `tests/test_eduardo_multicenter.js` (nueva). Abre la página nueva y la publicada `2040720` con los MISMOS
+  pedidos sintéticos, y cubre las 7 validaciones del dueño más la compra grande sola, los textos y el ejemplo.
+  29 bien; **17 rojas** contra `2040720`, y ahí pasan las de «lo que no cambia».
+- `tests/test_adm_alta.js` §3, cambiada a conciencia: la venta de 40 de Eduardo pasó a «CLIENTE MAYORISTA» (sigue
+  afuera), `conEduMc` es la excepción (índice 6 → 46, octubre 9 → 24) y la cabecera tiene el texto nuevo.
+- Las 20 pruebas de stock (`test_producir`, `test_rotacion`, `test_rpt`, `test_ventas_panel`, `test_banzer*`,
+  `test_stock*`, `test_saldo_almacen`, `test_rev8_saldo`, `test_circuito.cjs`…) quedan en verde sin tocarlas.
+- Batería completa: 109 suites, 4.145 bien · 1 mal. La roja fue `test_rev2_cuadre` («con el extracto 1.500,50 el
+  cuadre CIERRA (pantalla)»), intermitente y de antes: ya había salido en la batería de §4gl. La cuenta daba 0, pero
+  la tarjeta todavía no se había repintado: el Cuadre repinta con un `setTimeout` de 0 (`CUA_ARQ_T`, §4gc) y la prueba
+  miraba a los 40 ms fijos. Ahora espera el repintado (hasta 2 s): 7/7, cuatro de ellas corriendo a la vez.
+
+**Estado:** en la rama `claude/pedidos-fecha-entrega-bgt0em`, **sin publicar**, junto con §4gl (tampoco publicada).
+
 ## 4gl. 28/09: la revisión de Codex del informe §15 — un pedido borrado que volvía, y tres más (2026-09-28)
 
 El dueño le pasó a Codex (ChatGPT) el informe §15 y trajo su respuesta con una prueba, `tests/test_codex28.cjs` (5

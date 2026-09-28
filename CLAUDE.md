@@ -196,7 +196,10 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     suyo vendido y sin entregar sí se cubre. ⚠️ Esta regla dio la vuelta entera tres veces
     entre el 07 y el 09/09 (el comentario de `STOCK_VENTAS_MIN` guarda la historia con las
     frases textuales): **no tocar ninguna de las dos mitades sin que el dueño lo pida**.
-    `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo. `o.rotacion`: `baja` (<3
+    🏬 **La única excepción, pedida por el dueño el 28/09 (§4gm, SIN PUBLICAR): las ventas de Eduardo A
+    MULTICENTER sí cuentan** como las del equipo (`stockEduardoMulticenter`), con los mismos umbrales.
+    Eduardo a cualquier otro cliente sigue afuera. Ver «🏬 Eduardo a Multicenter» más abajo.
+    `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo (+ Eduardo a Multicenter). `o.rotacion`: `baja` (<3
     entregas del equipo) no estima ningún ritmo, `porDia`=0, margen=0, `cubrir`=0 — aviso
     📦 `unico` (UN solo aviso; el cartel agrega «· Eduardo» cuando `stockSoloEduardo`).
     `media` (≥3 entregas, poco volumen) sí estima, margen FIJO (`STOCK_COLCHON`), `cubrir`=3.
@@ -255,7 +258,8 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **Recogida cerrada desde el Excel** (§4ev): `confirmarImportExist` resta lo pendiente de
     `STOCK.g[de].u[k]` como «Llegaron»; si no, Moreno se cuenta dos veces.
   - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
-    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice).
+    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice). Desde §4gm (28/09, sin
+    publicar): **con** las ventas de Eduardo a Multicenter, que ya no son `stockPedidoUnico`.
   - **📥 De qué almacén se va a buscar** (§4ey): la marca del producto es `x.chk='im'` +
     **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
     si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
@@ -822,6 +826,35 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
 - **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas
   que `stockData` en el `.gs`).
+
+## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
+**SIN PUBLICAR** (el dueño pidió implementar y probar, no publicar). Está en la misma rama que §4gl.
+- **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
+  1. RPT → nunca es venta;
+  2. **`stockEduardoMulticenter(p)` → es demanda**;
+  3. `stockPuntual` (Multicenter de OTRO vendedor, consignación, ROHO a «TIENDA n») → afuera;
+  4. las otras ventas de Eduardo → afuera.
+
+  No sacar ninguna de las dos exclusiones: la excepción es SOLO la combinación.
+- **Identidades, definidas una vez y usadas por la exclusión y por la excepción**:
+  - `stockEsMulticenter`: la palabra entera «MULTICENTER» en `normNombre(cliente)`. No hay id de cliente. Nunca «multi»
+    a secas: traería a MULTIESPUMAS. «MULTI CENTER» y «MULTICENTRO» quedan afuera a propósito (no están verificadas).
+  - `stockEsConsignacion`: manda sobre Multicenter.
+  - `stockEsEduardo`: la palabra «eduardo» en el vendedor.
+- **Entra en todo lo que proyecta**, porque todo pasa por `stockPedidoUnico`: el ritmo de 15 días (→ rotación, reserva,
+  pedir y la columna **7 días** de «Qué producir»), los 30 días, `ventasPanelIndex` (60 d / 90 d / tendencia) y el
+  saldo del formulario. `vendidosEduMc`/`v30EduMc` son solo para los textos. **Los umbrales no cambiaron.**
+- **No hay caché que migrar**: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura.
+- ⚠️ **El histórico del sistema (`VENTAS_HIST`) no dice vendedor ni cliente** y trae todas las ventas: no se separa
+  nada ahí. El cartel de «Qué producir» lo dice.
+- **Esperan al dueño**:
+  - los umbrales miran el PRODUCTO, no la compra: 8 de Multicenter + 10 del equipo pasaron el TITANIO de `media` a `alta`;
+  - el plan del mes que viene (60 d / 90 d) no tiene umbral de entregas para nadie: una compra única de 40 de Eduardo a
+    Multicenter en agosto sube octubre de 9 a 24 si el producto rota por el equipo.
+- Pruebas:
+  - `tests/test_eduardo_multicenter.js`: 29 comprobaciones, 17 rojas contra `2040720`. Abre la página publicada desde
+    git (`ANTES=<sha>`) con los mismos pedidos, así que «lo que no cambia» se compara literal.
+  - `test_adm_alta` §3 se cambió a conciencia.
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

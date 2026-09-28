@@ -14783,7 +14783,9 @@ window.addEventListener('resize', function(){
      · ROTACIÓN     → DOS condiciones, y las dos tienen que cumplirse (§4dj): (1) al menos
                       `STOCK_VENTAS_MIN` (3) ENTREGAS distintas —no unidades— en la ventana,
                       y (2) los pedidos de EDUARDO no cuentan (`stockPedidoUnico`): son
-                      puntuales suyos, se cubre lo que vendió y nada más. `baja` (<3
+                      puntuales suyos, se cubre lo que vendió y nada más — SALVO los que le
+                      vende a MULTICENTER, que desde el 28/09 son demanda como los del equipo
+                      (`stockEduardoMulticenter`, mismos umbrales). `baja` (<3
                       entregas del equipo) no estima ningún ritmo — el caso del dueño: 45
                       colchones en UNA venta mayorista no son «3 por día», son un pedido
                       puntual (aviso `unico`; el cartel agrega «· Eduardo» si fue todo
@@ -14852,6 +14854,10 @@ var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para l
      *"el morfeo solo tiene una única entrega y está mandado a pedir, creí que ya teníamos
      bien definido cuándo pedir fabricar"*. → LAS DOS CONDICIONES JUNTAS, que es lo que dijo
      siempre: ≥3 entregas del equipo Y los pedidos de Eduardo afuera. Es la regla de hoy.
+   · 28/09 — el dueño: *"que la proyección de stock incluya las ventas de Eduardo a Multicenter,
+     conservando las demás reglas"*; *"Eduardo → otros clientes: mantener la exclusión"* y
+     *"mantén los umbrales actuales de rotación"* → UNA excepción, `stockEduardoMulticenter`
+     (§4gm): esas ventas cuentan como las del equipo, con este mismo mínimo de entregas.
    Con menos de 3 entregas distintas no se estima ningún ritmo: se cubre lo que está VENDIDO
    Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más. */
 var STOCK_VENTAS_MIN=3;
@@ -16029,6 +16035,24 @@ function stockEsperado(q, T){
    Se cubre lo vendido y sin entregar, pero no arman ritmo ni reserva. */
 var STOCK_PUNTUAL=/\bMULTICENTER\b|\bCONSIGNACI/i;
 var STOCK_ROHO_TIENDA=/\bTIENDA\s*\d\b/i;
+/* 🏬 QUIÉN ES MULTICENTER Y QUIÉN ES EDUARDO — una sola definición de cada uno, para que la exclusión y la excepción
+   (abajo) nunca digan cosas distintas del mismo pedido.
+   · MULTICENTER: el pedido no trae un id de cliente (ni Kommo lo manda), así que va por el NOMBRE del cliente, con
+     `normNombre` (sin tildes, sin mayúsculas, espacios de más fuera) y la PALABRA ENTERA «multicenter» — la única forma
+     que aparece en los datos reales (los tableros de ventas de mayo a agosto: «MULTICENTER»). Nunca «multi» a secas:
+     traería a MULTIESPUMAS o a cualquier «multi…». Es la misma regla que ya usaba `STOCK_PUNTUAL`.
+   · CONSIGNACIÓN: mercadería dejada en el cliente, no vendida. Manda siempre, también sobre Multicenter.
+   · EDUARDO: la misma prueba de siempre (la palabra «eduardo» en el vendedor, con `normNombre`). */
+var STOCK_MULTICENTER=/\bMULTICENTER\b/i, STOCK_CONSIGNACION=/\bCONSIGNACI/i;
+function stockEsMulticenter(p){ return !!p && STOCK_MULTICENTER.test(normNombre(p.cliente||'')); }
+function stockEsConsignacion(p){ return !!p && STOCK_CONSIGNACION.test(normNombre(p.cliente||'')); }
+function stockEsEduardo(p){ return !!p && /(^|\s)EDUARDO(\s|$)/i.test(normNombre(p.vendedor||'')); }
+/* 🏬 (dueño, 28/09) LAS VENTAS DE EDUARDO A MULTICENTER SÍ SON DEMANDA: entran al ritmo de 15 y 30 días y al índice
+   mensual, como las del equipo. Excepción EXPLÍCITA para esa combinación y nada más: Eduardo a otros clientes sigue
+   afuera, Multicenter vendido por otro vendedor sigue siendo un pedido puntual, la consignación sigue afuera y una RPT
+   nunca es venta (se mira primero, en `stockPedidoUnico`). Los umbrales de rotación NO cambian: una compra grande sola
+   es UNA entrega y no arma ritmo (hacen falta `STOCK_VENTAS_MIN` entregas distintas). */
+function stockEduardoMulticenter(p){ return !!p && !esRPT(p.oc) && stockEsEduardo(p) && stockEsMulticenter(p) && !stockEsConsignacion(p); }
 function stockPuntual(p){
   if(!p) return false;
   var cli=normNombre(p.cliente||'');
@@ -16036,9 +16060,10 @@ function stockPuntual(p){
   return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(cli);
 }
 function stockPedidoUnico(p){
-  if(esRPT(p&&p.oc)) return true;
-  if(stockPuntual(p)) return true;
-  return /(^|\s)EDUARDO(\s|$)/i.test(normNombre((p&&p.vendedor)||''));
+  if(esRPT(p&&p.oc)) return true;               // 1. una reposición de tienda nunca es venta
+  if(stockEduardoMulticenter(p)) return false;  // 2. Eduardo → Multicenter: demanda (dueño, 28/09)
+  if(stockPuntual(p)) return true;              // 3. Multicenter de otro vendedor, consignación, ROHO a tienda
+  return stockEsEduardo(p);                     // 4. las otras ventas de Eduardo
 }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
    «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
@@ -16068,7 +16093,7 @@ function stockData(extra){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
       enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
@@ -16101,12 +16126,13 @@ function stockData(extra){
         o.vendidos+=c;
         if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
+          if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
           if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
 
         if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
       }
-      /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo, sin Eduardo
-         ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
+      /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo + Eduardo a Multicenter (28/09), sin sus
+         otras ventas, puntuales ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
          se piensa por mes, no por quincena. */
       /* Por FECHA DE VENTA (§4dv): lo que se vendió a fin de mes para entregar el mes que
          viene se vendió este mes. El sistema de facturación lo cuenta así, y el plan del
@@ -16114,6 +16140,7 @@ function stockData(extra){
       var fv=contaFecha(p)||fs;
       if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
         o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
+        if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
@@ -16192,6 +16219,9 @@ function stockData(extra){
             en UNA entrega) marcado «🚨 PEDIR YA · pedí 8».
          2. LOS PEDIDOS DE EDUARDO NO CUENTAN (`stockPedidoUnico` → `vendidosUnicos`): son
             puntuales suyos. Se cubre lo que él vendió y sin entregar, nada más.
+            🏬 SALVO LOS DE EDUARDO A MULTICENTER (dueño, 28/09): esos sí son demanda y entran acá como una
+            entrega más (`stockEduardoMulticenter`; `vendidosEduMc` dice cuántas unidades son). Con los MISMOS
+            umbrales: una compra grande sola de Multicenter es una entrega y no arma ritmo.
        `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo. `porDiaReal` es la
        cuenta cruda del equipo (se muestra); `porDia` es la que usan la proyección y el
        «cuánto pedir», y vale CERO con rotación `baja`. `porDiaTodo` cuenta todo lo que salió
@@ -17202,7 +17232,7 @@ function abrirStockPedidos(k){
   if(stockCariocaDescontinuado(k)) html+='<p style="padding:12px;background:#fff4d6;color:#7c4b00"><b>Descontinuado · solo saldos de almacén.</b> Línea de reemplazo: Essential, Confort Plus y Premier Deluxe. Confirmar modelo y medida con ventas; no se sustituyen automáticamente los pedidos.</p>';
   if(o) html+=stockSaldoDetalleHtml(o);
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
-  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
+  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
     '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
@@ -17342,7 +17372,9 @@ function renderStock(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
-          (o.vendidosUnicos?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')+
+          ((o.vendidosUnicos||o.vendidosEduMc)?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+
+            (o.vendidosEduMc?(' (incluye '+o.vendidosEduMc+' de Eduardo a Multicenter)'):'')+   // 🏬 (28/09)
+            (o.vendidosUnicos?(' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
           ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?(stockUnicoEtq(o)+': pedido único'):'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
@@ -17514,7 +17546,7 @@ function copiarStock(){
      · *"separado sueña y heaven porque heaven se produce en IM y sueña en fábrica
        productos terminados"* → un bloque por fábrica. Y *"descartando las ventas puntuales,
        como las mías"* → la MISMA regla de rotación de siempre (§4dj): equipo, sin Eduardo
-       ni reposiciones, 3+ entregas.
+       ni reposiciones, 3+ entregas. (28/09, §4gm: + las ventas de Eduardo A MULTICENTER.)
    Y la cuenta del mes con sus palabras: *"si en septiembre se vendieron 70 soft, en
    octubre necesitaríamos el 70% por lo menos para la primera quincena"*: el mes que viene
    entero al ritmo de los últimos 30 días, menos lo que va a quedar el día 1, y de eso el
@@ -17623,7 +17655,8 @@ function ventasPanelIndex(){
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
     /* ⚠️ Sin los pedidos únicos (§4ev): Eduardo, MULTICENTER/consignación, ROHO a tienda y
-       las reposiciones. Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
+       las reposiciones — 🏬 salvo Eduardo a Multicenter, que desde el 28/09 SÍ entra (`stockEduardoMulticenter`,
+       la misma excepción que el ritmo de 15 y 30 días). Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
        con una venta única de 40 de Eduardo en agosto, «producir en octubre» subía de 9 a 24
        por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
     if(!stockCuenta(p) || stockPedidoUnico(p)) return;
@@ -17642,7 +17675,7 @@ function mesNombreCorto(ym){ return MESES_ES[+ym.slice(5,7)-1].slice(0,3)+'-'+ym
 /* 🎯 EL RANGO DEL PLAN DEL MES (§4du, dueño 11/09: «rango en vez de un número; producir
    sobre el probable, nunca sobre el máximo»). Varias estimaciones de lo que se va a vender
    el mes que viene, cada una con su historia:
-     · 30 d  → el ritmo del equipo de los últimos 30 días (lo que ya usaba el plan);
+     · 30 d  → el ritmo del equipo (+ Eduardo a Multicenter, 28/09) de los últimos 30 días (lo que ya usaba el plan);
      · 60 d / 90 d → el promedio de los últimos 2 y 3 meses cerrados (histórico + panel);
      · año pasado → el mismo mes del año anterior, tal cual;
      · tendencia → el año pasado, corregido por cómo viene este mes contra el mismo del año anterior.
@@ -17653,7 +17686,7 @@ function stockRangoMes(o, MS, PI){
   var H=ventasHistIndex()[o.k]||{}, P=(PI||ventasPanelIndex())[o.k]||{};   // PI: el resumen armado una vez por plan (§4ec)
   var de=function(ym){ return (P[ym]!=null) ? P[ym] : (H[ym]||0); };
   var est=[];
-  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo, últimos 30 días'});
+  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo + Eduardo a Multicenter, últimos 30 días'});
   var m1=mesRestar(actual,1), m2=mesRestar(actual,2), m3=mesRestar(actual,3);
   var hay1=(P[m1]!=null||H[m1]!=null), hay2=(P[m2]!=null||H[m2]!=null), hay3=(P[m3]!=null||H[m3]!=null);
   var f=MS.dias/30.4;
@@ -17764,7 +17797,8 @@ function renderProducir(d){
       '<span style="font-size:.78rem;color:var(--muted)">'+conAlgo+' producto'+(conAlgo===1?'':'s')+' con algo que producir · '+R.cubiertos+' cubierto'+(R.cubiertos===1?'':'s')+(R.sinContar?(' · '+R.sinContar+' sin contar'):'')+'</span>'+
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo, pedidos puntuales ni reposiciones de tienda; productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT). Productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
+      'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
       '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       '<b>'+esc(MS.nombre)+'</b> es un <b>rango</b>: lo que dan los últimos 30, 60 y 90 días, el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
@@ -17795,7 +17829,7 @@ function renderProducir(d){
           '<td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?('<br><span style="color:var(--muted);font-size:.9em">cód '+esc(o.cod)+'</span>'):'')+
             (b.por==='fabrica'?('<br><span style="color:#7c4b00;font-size:.8em">acá por la última vez que se pidió a '+esc(b.fab)+'</span>'):(B.k==='otros'&&b.marca==='roho'?'<br><span style="color:#7c4b00;font-size:.8em">línea que vende ROHO</span>':''))+'</td>'+
           '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
-            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
+            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+(o.vendidosEduMc?(' · '+o.vendidosEduMc+' de Eduardo a Multicenter'):'')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.v30EduMc?(' · '+o.v30EduMc+' de Eduardo a Multicenter'):'')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
           '<td><b>'+stockUnid(f.hay)+'</b><br><span style="color:var(--muted);font-size:.88em">'+stockUnid(Math.max(0,o.deposito||0))+' acá'+(o.enSale?(' · '+stockUnid(o.enSale)+' '+esc(saleAlmTxt(o))):'')+(o.enOtros?(' · '+stockUnid(o.enOtros)+' Moreno'):'')+(o.enCamino?(' · '+stockUnid(o.enCamino)+' en camino'):'')+(o.comp?('<br>'+stockUnid(o.comp)+' vendidos sin entregar'):'')+'</span></td>'+
           '<td>'+producirCubreTxt(f)+'</td>'+
           '<td>'+num(f.sem,true)+'</td>'+
