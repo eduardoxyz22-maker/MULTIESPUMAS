@@ -792,6 +792,20 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
+- **🕔 La hora en que entra el pedido** (§4gq, 28/09, EN LA RAMA, sin publicar).
+  - Lo que alguien tiene que HACER —fabricar, ir a buscar a Moreno, una medida especial— empieza hoy si es día hábil y
+    antes del corte: `HORA_CORTE`=17, y el sábado `HORA_CORTE_SABADO`=12.
+  - Si no, empieza el siguiente día hábil (`diaArranque`). No son hábiles el domingo ni los `FERIADOS` (lista hasta fin de
+    2027; revisar cada año).
+  - Los días de producción se cuentan como antes: solo se corre el día en que se empieza. El ✅ de lo que está a mano, el ⏳
+    y el 🚚 no cambian.
+  - El cuadrito y la pregunta al guardar dicen por qué (`saldoArrancaTxt`).
+  - Prueba: `tests/test_corte_horario.js` (30; 21 rojas contra `7fe7551`).
+  - ⚠️ Una prueba nueva del cuadrito tiene que clavar el reloj antes de las 17:00: si no, da otros días según la hora a la
+    que se corra.
+  - **Quién se lleva el stock lo decide logística** (dueño, 28/09: *«es mucho kilombo»*). Se propuso y se **descartó** una
+    regla única, «al que entrega primero sin dejar tarde a uno que ya vendió», con los estados HAY POR AHORA / SE FABRICA y
+    un aviso en «Mis pedidos». No volver a proponerla sin que la pida (bitácora §4gq).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado

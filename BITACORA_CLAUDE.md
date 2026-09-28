@@ -7445,6 +7445,60 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
+
+**La pregunta del dueño** (15:40): *«¿qué pasa si hoy tenemos un ICE en inventario, el 1er vendedor lo pone para el
+sábado, el 2do para el miércoles y el 3er para mañana? ¿El panel lo aparta para el 1ro, o define por fecha?»*
+
+**Cómo es hoy (no cambia):**
+- El cuadrito del formulario cuenta lo vendido y sin entregar **sin mirar fechas**: el primero que GUARDA ve ✅; los que
+  cargan después ven «🏭 NO HAY» (y al guardar, la pregunta de siempre).
+- Si dos guardan en los mismos segundos, pasan los dos sin aviso: el servidor no revisa el stock.
+- Quién se lleva el colchón lo decide la **revisión automática de logística**, por **fecha de entrega** (la más cercana
+  primero), respetando lo que ya está marcado (`REVSTK_SOLO_VACIOS`, tildado por defecto). Nada se marca solo: Aplicar.
+
+**Lo que se propuso y el dueño DESCARTÓ** — no volver a proponerlo sin que lo pida:
+- una sola regla para el cuadrito y para logística: *«el colchón va al que entrega primero, pero nunca a costa de dejar tarde
+  a uno que ya vendió»*;
+- cuatro estados en el cuadrito: ✅ HAY · queda para vos / ✅ HAY POR AHORA / 🏭 SE FABRICA / ⛔ NO LLEGA;
+- guardar en cada renglón lo que se le dijo al vendedor, y avisarle en «Mis pedidos» si cambia.
+
+Se simuló con sus tres ventas (en el scratchpad, `sim_reparto*.js`, no en el repo). En el camino dio dos datos que quedan:
+*«es importante decirle al vendedor que se va a fabricar, no que hay: pueden surgir retrasos»*, y para pasarle el colchón a
+una venta más urgente *«justo alcanza»* (sin margen). Después cortó: *«creo que es mucho kilombo, sería mejor que lo decida
+logística»*.
+
+**Lo que SÍ pidió, y está hecho:** *«solo tomá en cuenta, como está ahora, los días de producción tomando en cuenta la hora que
+entra el pedido: no es lo mismo un pedido que entra a las 18:00 del lunes; no llega a entregarse el miércoles, sería el jueves,
+considerando que pasa al siguiente día hábil laboral»*. Antes había dicho: *«logística y producción solo trabajan hasta las 17»*,
+y que el sábado se trabaja medio día.
+- **`diaArranque()`**: hoy, si es día hábil y todavía no pasó el corte; si no, el siguiente día hábil (`sigDiaHabil`).
+  - El corte es `HORA_CORTE`=17 de lunes a viernes y `HORA_CORTE_SABADO`=12 el sábado.
+  - No son hábiles el domingo ni los `FERIADOS` (nacionales + 24/09, cargados hasta fin de 2027). ⚠️ Revisar la lista cada año.
+  - La hora es la del dispositivo, como `todayStr()`.
+- **Se corre SOLO el día en que se empieza.** Los días de producción se cuentan igual que antes (`lead` y
+  `STOCK_DIAS_RECOGIDA`, días corridos): el dueño dijo «como está ahora».
+- **Dónde:**
+  - 📥 HAY EN MORENO (`saldoVeredicto`, y `saldoEntradas` para lo que sigue en Moreno);
+  - 🏭 NO HAY (hay que fabricar), y la llegada de un pedido a fábrica que no trae fecha;
+  - 📐 MEDIDA ESPECIAL.
+- **No cambia:**
+  - ✅ DISPONIBLE (lo que está a mano sale igual «desde mañana»);
+  - ⏳ en producción y 🚚 recogida programada, que tienen su fecha;
+  - la revisión de logística, «Qué producir», la proyección y los carteles de stock.
+- **El texto:** cuando empieza otro día, el cuadrito y la pregunta al guardar dicen por qué (`saldoArrancaTxt`):
+  - «🕔 Ya pasaron las 17:00: logística y producción lo empiezan el martes 29/09.»;
+  - «🕔 El sábado se trabaja hasta las 12:00: …»;
+  - «🕔 Hoy es domingo: …»;
+  - «🕔 Hoy es feriado (Todos Santos): …».
+- **Su ejemplo, con el panel real** (lunes 28/09, 18:15):
+  - Moreno: «programá desde el jueves 01/10» (a las 16:25, el miércoles 30/09).
+  - Fabricar: ~5 días, desde el sábado 03/10 (a las 16:25, ~4 días, el viernes 02/10).
+- **Pruebas:** `tests/test_corte_horario.js` (30). Contra `7fe7551` da 9 bien y 21 mal: las 21 son las que dependen de la
+  hora; las 9 son antes del corte y los controles, que tienen que dar igual. Las otras pruebas del cuadrito clavan el reloj
+  entre semana antes de las 17:00 (10:00 o 15:00), así que no cambian.
+  ⚠️ Una prueba NUEVA del cuadrito tiene que clavar el reloj: sin eso, después de las 17:00 da otros días.
+
 ## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
 
 - **15:16 — el pedido.** *«pasame para instalarla»*, con una captura de 🔒 Cerrar día: «El candado está en el servidor

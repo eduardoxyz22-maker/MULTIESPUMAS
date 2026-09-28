@@ -16555,6 +16555,42 @@ var SALDO_ESPERA_MS=6000;        // cuánto se espera esa lectura antes de conte
 var SALDO_VIEJA_MS=10*60000;     // una consulta más vieja que esto se avisa en ámbar
 var SALDO_DIAS_CUPO=60;          // hasta dónde se busca un día con cupo
 var SALDO_DIA_SEM=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+/* 🕔 LA HORA EN QUE ENTRA EL PEDIDO (dueño, 28/09). *«Logística y producción solo trabajan hasta las 17: si entra un pedido,
+   la producción se inicia recién el siguiente día hábil… no es lo mismo un pedido que entra a las 18:00 del lunes: no llega
+   a entregarse el miércoles, sería el jueves»*. Y el sábado se trabaja medio día (corte a las 12).
+   Todo lo que alguien tiene que HACER para un pedido —fabricarlo, ir a buscarlo a Moreno, una medida especial— empieza HOY si
+   es día hábil y todavía no pasó el corte; si no, el SIGUIENTE día hábil (`diaArranque`). Los días de producción se cuentan
+   igual que antes (`lead`, `STOCK_DIAS_RECOGIDA`): lo único que se corre es el día en que se empieza.
+   NO cambia lo que ya está a mano (✅ DISPONIBLE), ni lo que ya tiene su fecha (⏳ en producción, 🚚 recogida programada), ni
+   quién se lleva el stock: eso lo decide logística (dueño, 28/09: *«es mucho kilombo, sería mejor que lo decida logística»*).
+   ⚠️ La hora es la del dispositivo, como `todayStr()` (en Bolivia son la misma). */
+var HORA_CORTE=17;               // lunes a viernes: lo que entra desde las 17:00 empieza el siguiente día hábil
+var HORA_CORTE_SABADO=12;        // el sábado se trabaja hasta el mediodía
+/* Feriados: no trabajan ni logística ni producción. Los nacionales y el 24 de septiembre (Santa Cruz).
+   ⚠️ Revisar cada año (Carnaval, Viernes Santo y Corpus Christi cambian de fecha; un feriado en domingo pasa al lunes). */
+var FERIADOS={
+  '2026-11-02':'Todos Santos', '2026-12-25':'Navidad',
+  '2027-01-01':'Año Nuevo', '2027-01-22':'Día del Estado Plurinacional', '2027-02-08':'Carnaval', '2027-02-09':'Carnaval',
+  '2027-03-26':'Viernes Santo', '2027-05-01':'Día del Trabajo', '2027-05-27':'Corpus Christi', '2027-06-21':'Año Nuevo Andino',
+  '2027-08-06':'Día de la Independencia', '2027-09-24':'Día de Santa Cruz', '2027-11-02':'Todos Santos', '2027-12-25':'Navidad'
+};
+function diaHabil(f){ return !!f && !diaDomingo(f) && !FERIADOS[f]; }
+function sigDiaHabil(f){ var d=stockSumarDias(f,1); for(var n=0; n<30 && !diaHabil(d); n++) d=stockSumarDias(d,1); return d; }
+/* El día en que logística y producción EMPIEZAN con lo que se pide ahora. */
+function diaArranque(){
+  var ahora=new Date(), hoy=isoLocal(ahora), h=ahora.getHours()+ahora.getMinutes()/60;
+  var corte=diaSabado(hoy) ? HORA_CORTE_SABADO : HORA_CORTE;
+  return (diaHabil(hoy) && h<corte) ? hoy : sigDiaHabil(hoy);
+}
+/* Por qué empieza otro día, para el cuadrito y la pregunta al guardar. Vacío si empieza hoy. */
+function saldoArrancaTxt(v){
+  var hoy=todayStr(); if(!v || !v.arranca || v.arranca===hoy) return '';
+  var por = FERIADOS[hoy] ? ('Hoy es feriado ('+FERIADOS[hoy]+')')
+          : diaDomingo(hoy) ? 'Hoy es domingo'
+          : diaSabado(hoy) ? ('El sábado se trabaja hasta las '+HORA_CORTE_SABADO+':00')
+          : ('Ya pasaron las '+HORA_CORTE+':00');
+  return '🕔 '+por+': logística y producción lo empiezan el '+saldoDiaTxt(v.arranca)+'.';
+}
 
 /* La foto del stock para el formulario: `stockData()` UNA vez por lectura (cambia `SALDO_GEN`, ver `saveMirror`). */
 function saldoDatos(sinId){
@@ -16754,16 +16790,18 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
     var ent=saldoEntradas(v, o, hoy), need=v.pend+cant-mano, cum=0, e=null;
     for(var j=0;j<ent.length;j++){ cum+=ent[j].u; if(cum>=need-1e-9){ e=ent[j]; break; } }
     if(e && e.rec){ v.tipo='recogida'; v.color='ambar'; v.llega=e.llega; v.atrasada=e.atrasada; v.recDe=e.de; disp=e.disp; }
-    else { v.tipo='moreno'; v.color='ambar'; disp=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA); }
+    // 🕔 (28/09) ir a buscarlo empieza el día hábil en que trabaja logística (`diaArranque`), no «hoy» a cualquier hora
+    else { v.tipo='moreno'; v.color='ambar'; v.arranca=diaArranque(); disp=stockSumarDias(v.arranca, STOCK_DIAS_RECOGIDA); }
   }
   else {
     v.sinLibre=true;
     /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido. */
     var falta=cant-v.libres, cum=0;
-    for(var i=0;i<fab.length;i++){ cum+=Number(fab[i].u)||0; if(cum>=falta-1e-9){ v.llega=fab[i].llega||stockSumarDias(hoy, v.lead); break; } }
+    for(var i=0;i<fab.length;i++){ cum+=Number(fab[i].u)||0; if(cum>=falta-1e-9){ v.llega=fab[i].llega||stockSumarDias(diaArranque(), v.lead); break; } }
     if(v.llega){ v.tipo='prod'; v.color='ambar'; v.atrasada=(v.llega<hoy); disp=saldoMax(v.llega, hoy); }
     else if(v.descont){ v.tipo='nofab'; v.color='rojo'; }
-    else { v.tipo='pedir'; v.color='rojo'; disp=stockSumarDias(hoy, v.lead); }
+    // 🕔 (28/09) la fábrica empieza el día hábil en que trabaja producción (`diaArranque`); los días que tarda, como siempre
+    else { v.tipo='pedir'; v.color='rojo'; v.arranca=diaArranque(); disp=stockSumarDias(v.arranca, v.lead); }
   }
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
   if(disp){
@@ -16778,7 +16816,8 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
    reparte entre las recogidas pendientes por fecha, sin pasarse de lo que trae cada una: el total es el MISMO de antes
    y nada se cuenta dos veces. Lo que sobre (una recogida sin fecha a la vista) va como lo de Moreno. */
 function saldoEntradas(v, o, hoy){
-  var out=[], traer=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA), queda=Number(v.recogida)||0;
+  // 🕔 (28/09) lo que sigue en Moreno se va a buscar el día hábil en que trabaja logística (`diaArranque`)
+  var out=[], traer=stockSumarDias(diaArranque(), STOCK_DIAS_RECOGIDA), queda=Number(v.recogida)||0;
   if(v.moreno>0) out.push({ u:v.moreno, disp:traer });
   (o.pedidos||[]).filter(function(q){ return q && q.tipo==='recogida' && Number(q.u)>0; })
     .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); })
@@ -16850,7 +16889,8 @@ function saldoLeadModelo(x, sinId){
 function saldoVeredictoEspecial(f, sinId, fecha){
   var hoy=todayStr(), v={ k:f.k, cant:f.total, tipo:'especial', color:'azul', sinLibre:true, sinId:sinId||'', cod:f.codOtro||null, x:f.x };
   v.lead=saldoLeadModelo(f.x, sinId);
-  var min=saldoMax(proximoDiaEntrega(), stockSumarDias(hoy, v.lead+1));
+  v.arranca=diaArranque();                     // 🕔 (28/09) la fábrica empieza el día hábil en que trabaja producción
+  var min=saldoMax(proximoDiaEntrega(), stockSumarDias(v.arranca, v.lead+1));
   saldoPonerDia(v, min, sinId);                // (28/09) sin cupo en 60 días no promete ninguno
   if(fecha && fecha<min) v.fechaCorta=fecha;
   return v;
@@ -16983,6 +17023,7 @@ function saldoAvisos(){
 function saldoCajaHtml(v){
   var h='<div class="ps-t">'+esc(saldoTitulo(v))+'</div>';
   if(v.tipo==='cargando' || v.tipo==='leyendo') return h;
+  var ar=saldoArrancaTxt(v); if(ar) h+='<div class="ps-n">'+esc(ar)+'</div>';   // 🕔 (28/09) por qué empieza otro día
   /* 📐 🏷️ 🏭 (rev8) No salen del saldo del almacén: sin números de almacén, ni «libres», ni corte. */
   if(v.tipo==='especial' || v.tipo==='codigo' || v.tipo==='fabcli'){
     if(v.tipo==='codigo'){ var bien=saldoCodBienTxt(v); if(bien) h+='<div class="ps-n">'+esc(bien)+'</div>'; }
@@ -17137,6 +17178,7 @@ function saldoConfirmarAlGuardar(prev, isEdit, deBorrador){
     try{ v=saldoVeredictoFila(f, sinId, fecha); }catch(e){ return; }
     if(r.cambia && (v.sinLibre || v.tipo==='codigo')) t=saldoAlertaTxt(v);
     if(v.fechaCorta) t+=(t?' ':'')+'Para el '+saldoDiaTxt(v.fechaCorta)+' no llega: programá '+saldoDesdeTxt(v)+'.';
+    if(t){ var ar=saldoArrancaTxt(v); if(ar) t+=' '+ar; }                   // 🕔 (28/09) por qué empieza otro día
     if(t){ lineas.push('• '+saldoNombre(f.x)+(f.total>1 ? (' ×'+f.total) : '')+': '+t); if(!primero) primero=f.box; }
   });
   saldoAvisosPintarYa();                       // que el cuadrito diga lo mismo que la pregunta
