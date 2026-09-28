@@ -7445,7 +7445,11 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — APROBADA, POR PUBLICAR
+## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — PUBLICADA 28/09 19:14 (`6146f6d`)
+
+> **Publicada el 28/09 a las 19:14 de Bolivia** (`main` = `6146f6d`; el dueño: «me gusta el bosquejo, publica y lo veo»). Sin tocar el
+> servidor (sigue el `.gs` 2026-09-28-a). No había ninguna corrida del panel en curso ni en cola. Todos F5; la pestaña
+> aparece recién después de poner la contraseña en Administración.
 
 **El pedido del dueño** (con una captura de Contabilidad → Ventas por entrega agendada):
 - *«me varía con lo de cuadre y conciliación»*: el Cuadre cuenta la plata que ENTRÓ, por fecha de pago; Ventas por entrega

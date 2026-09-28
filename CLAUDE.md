@@ -828,7 +828,7 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
     regla única, «al que entrega primero sin dejar tarde a uno que ya vendió», con los estados HAY POR AHORA / SE FABRICA y
     un aviso en «Mis pedidos». No volver a proponerla sin que la pida (bitácora §4gq).
 
-## 📈 Proyección del mes (§4gt, 28/09): lo que hay que respetar
+## 📈 Proyección del mes (§4gt, publicada 28/09 19:14, `6146f6d`): lo que hay que respetar
 El dueño: *«que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin
 de mes… no me interesa el efectivo ingresado sino el vendido en el período»*. Lo usa en un **iPad Air** (820 px parado).
 - **Solo con la contraseña de Administración**: la pestaña `data-val="proy"` de Contabilidad la muestra
