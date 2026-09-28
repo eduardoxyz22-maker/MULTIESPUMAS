@@ -7479,9 +7479,18 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **15:27 — comprobado.** Captura del dueño, después de F5: 🔒 Cerrar día dice *«✅ El candado está en el servidor
   (versión 2026-09-28-a). Aunque una vendedora tenga el panel abierto desde antes, el servidor le va a rechazar el
   pedido. No se puede saltear.»*, **sin la línea gris**: el `/exec` de siempre ya contesta con la 28-a.
-- **Falta:** `probarAntesDeImplementar` a los 5 minutos (repaso de Kommo al día y sin errores).
-- **Queda ofrecido, sin respuesta:** los textos de `borrado` (§4gn: el cartel del chofer dice «otra persona cambió
-  esos pedidos»; el formulario queda abierto sobre un id que ya no existe). Exige publicar la página.
+- **La segunda `probarAntesDeImplementar` no hace falta.** Lo de Kommo no pasa por el control nuevo: `doSave` solo se
+  llama desde `doPost` (el guardado del panel), y los borradores de Kommo se escriben con `appendRow`. El código de
+  Kommo es el mismo que en la 26-a, y el pegado ya se había comprobado entero a las 15:21.
+- **Decidido por el dueño (28/09, 15:35): los textos de `borrado` quedan como están.**
+  - Se le ofreció arreglar dos cosas:
+    - el cartel del chofer dice «otra persona cambió esos pedidos», pide «volvé a tocar ✅» y «volvé a subirla» de un
+      pedido que ya no está en su lista, y no dice «entregá esa plata a Contabilidad»;
+    - el formulario de la vendedora queda abierto sobre un id que ya no existe.
+  - Su respuesta: *«SI PERO LOS CHOFERES HASTA HOY NO MARCAN nada -.- dejemos mientrsa como esta todo.»*
+  - **Los choferes todavía no usan el panel para marcar ✅ ni cobros.** Lo que depende de eso (cobros de la puerta,
+    chofer sin señal, sus carteles) no es prioridad mientras siga así. No volver a proponer estos textos hasta que
+    los choferes marquen en el panel.
 
 ## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
 

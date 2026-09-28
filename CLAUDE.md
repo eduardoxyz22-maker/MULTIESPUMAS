@@ -837,9 +837,11 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   caché de antes de un guardado, sacaba de la pantalla lo recién guardado con «lo borraron» y NO guardaba su
   corrección. **Resuelto en la página (§4gn) con la ventana de `LECTURA_VIEJA_MS`** (arriba). El arreglo de fondo sigue
   siendo que el servidor diga en la respuesta de dónde y de cuándo es su lectura (otra versión del `.gs`).
-- **Quedan los textos de `borrado`** (§4gn; ofrecido al dueño el 28/09, sin respuesta): el cartel del chofer habla de
-  «otra persona cambió»; el formulario queda abierto sobre un id que ya no existe. La 28-a no protege filas nunca
-  selladas (`rev` 0).
+- **Los textos de `borrado` quedan como están** (dueño, 28/09, §4gp: *«los choferes hasta hoy no marcan nada…
+  dejemos mientras como está todo»*). El cartel del chofer dice «otra persona cambió» y pide rehacer ✅ y la foto de
+  un pedido que ya no está. El formulario queda abierto sobre un id que ya no existe. **Los choferes todavía no marcan
+  ✅ ni cobros en el panel**: no volver a proponerlo hasta que lo hagan. La 28-a no protege filas nunca selladas
+  (`rev` 0).
 - Pruebas: `test_codex28.cjs` (8), `test_codex28_flujos.js` (23; 13 rojas con página 2040720 + `.gs` 26-a; con la página
   nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
 - **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas

@@ -1226,7 +1226,8 @@ el servidor nuevo está en §16 («Qué cubre cada mitad»).
    vieja.
 2. **BAJA, anotados para antes de implementar la 28-a:**
    - con equipos todavía en `2040720`, su cola reintenta `borrado` para siempre (F5 lo cura);
-   - los textos de `borrado` en el cartel del chofer y en el formulario;
+   - los textos de `borrado` en el cartel del chofer y en el formulario. **Quedan como están**, por decisión del dueño
+     del 28/09: los choferes todavía no marcan ✅ ni cobros en el panel;
    - la 28-a no protege filas nunca selladas (`rev` 0).
 3. **§17, todo BAJA, arreglado:**
    - una consignación de Eduardo a Multicenter mal escrita («MULTICENTER CONSIGNADO») contaba como demanda. Ahora
