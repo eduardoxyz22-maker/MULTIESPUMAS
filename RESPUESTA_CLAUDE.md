@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09 — LO NUEVO ESTÁ EN §15.** Siete publicaciones de la página desde §14 (26/09 17:15 → 27/09
+> 12:58, `main` = `2040720`): Banzer como depósito de salida, revisión del stock, de Pedidos, de la plata en el
+> formulario, del celular y el saldo del almacén debajo de cada producto. El servidor sigue siendo 2026-09-26-a.
+> §15.6 dice qué le pido a Codex.
 > **ACTUALIZACIÓN 26/09, 11:40 — PUBLICADO E IMPLEMENTADO.** La página con la respuesta a Codex (§14) está en
 > `main` = `e2e613a` desde las 11:27 de Bolivia. El dueño implementó el `.gs` 2026-09-26-a alrededor de las 11:35:
 > probar salió todo ✅ y 🔒 Cerrar día dice «versión 2026-09-26-a». Banzer sale en otra publicación.
@@ -901,6 +905,123 @@ la de hoy anda con la 26-a.
 2. Correr su `audit_codex_26.cjs` contra la rama. Con los cinco en verde, pasarlo a pruebas con aserciones
    (`tests/`).
 3. Cuando esté, mirar el cambio de Banzer: es el más delicado (cuentas del stock por depósito).
+
+## 15 · Lo publicado desde §14 (26/09 17:15 → 27/09 12:58) — para que lo revises
+
+**Estado al 28/09.** La página en producción es `main` = **`2040720`** (27/09, 12:58 de Bolivia, Pages 1532 en verde).
+El servidor sigue siendo el **`.gs` 2026-09-26-a**: nada de esta sección lo tocó. Son siete publicaciones, todas
+con el OK del dueño y con la batería completa en verde antes de salir. Cada arreglo tiene una prueba que falla con
+la versión anterior. Para volver atrás, el volver de cada una es la anterior de la tabla.
+
+| Publicado (Bolivia) | `main` | Qué | Prueba (rojas con lo de antes) | Batería |
+|---|---|---|---|---|
+| 26/09 17:15 | `39b833c` | **Banzer es un depósito del que salen camiones** (§4ge). Antes el panel lo trataba como un lugar al que hay que ir a buscar | `test_banzer_salida.js` 77 (62 contra `e2e613a`) | 100 suites, 3.773 · 0 |
+| 26/09 19:38 | `2c777fe` | Revisión del stock y los almacenes después de Banzer (§4gf) | `test_rev_banzer.js` 25 | 100 suites, 3.797 · 1 suelta¹ |
+| 26/09 20:40 | `caef927` | Revisión de Pedidos a fondo (§4gg) | `test_rev5_pedidos.js` 49 (30 contra `2c777fe`) | 102 suites, 3.848 · 0 |
+| 26/09 21:21 | `13d00ee` | Dos decisiones de plata del dueño en el formulario (§4gh) | `test_rev6_plata_form.js` 52 (42 contra `e1e207b`) | 103 suites, 3.900 · 0 |
+| 26/09 23:14 | `bd5dde3` | «Nuevo pedido» y «Mis pedidos» desde el celular (§4gi) | `test_rev7_celular.js` 35 (20 contra `13d00ee`) | 104 suites, 3.935 · 0 |
+| 27/09 11:16 | `fecb3c6` | **El saldo del almacén debajo de cada producto del formulario** (§4gj) | `test_saldo_almacen.js` 83 (73 contra `bd5dde3`) | 105 suites, 4.018 · 0 |
+| 27/09 12:58 | `2040720` | Revisión de ese saldo: medida especial y código de otra medida (§4gk) | `test_rev8_saldo.js` 55 (23 contra `fecb3c6`, 10 más contra `89512b1`) | 106 suites, 4.074 · 0² |
+
+¹ `test_borradores` 94/1 con la máquina cargada; solo, 95/0 tres veces.
+² La corrida anterior dio 7 rojas en `test_ubic` (6) y `test_rev2_cuadre` (1), dos pestañas que el cambio no toca:
+solas pasaron 5 veces y la batería siguiente salió entera en verde. `test_ubic` mide un «servidor lento a propósito»
+con relojes de verdad, y con 4 suites en paralelo puede perder la carrera.
+
+### 15.1 · Banzer, depósito de salida (§4ge, §4gf)
+El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+- **Quién es de salida lo dice una sola función, `almEsSalida(nm)`**: manda el rol elegido al subir el Excel
+  (`STOCK.al`: `'sale'`/`'trae'`); con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM nunca es de salida.
+- **La marca**: «✔ hay en Banzer» = `chk:'ok'` + `chkDe`; partida, `chkDes`. El tipo de cada parte lo da el lugar
+  (`prodPartes`: `aca`/`sale`/`trae`). `prodHay(x)` = se carga; `esRecoger(x)` = hay algo que ir a buscar.
+- **Cuentas**: lo entregado desde Banzer baja `STOCK.g[Banzer]` (`salSale`, con su propio `g[nm].inc`); lo
+  disponible para cargar es `stockHaySalir(o)` = acá + Banzer. El orden del dueño no cambió: acá → Banzer → IM, y
+  «el que la cubre entera» primero (confirmado por él a las 19:35).
+- **Transición**: las marcas viejas «📥 Banzer» se leen como ✔ Banzer sin reescribir la planilla, salvo las que
+  tienen una recogida de Banzer anotada (`saleRecogidaViva`), que siguen como recogida hasta cerrarla.
+- **Lista de carga** en dos bloques: «🏭 Cargar en fábrica» y «🏪 Cargar en Banzer» (clave `…|@Banzer`).
+- §4gf: `normNombre`, `stockNorm` y `stockAlmLimpio` recuerdan su resultado (memo con tope). La lista de carga de
+  «Todos» con 900 pedidos bajó de ~1 s a 0,16 s. **Tienen que seguir siendo puras.** `leerStock` repone `g[nm].inc`
+  desde el historial cuando una página vieja lo borró.
+
+### 15.2 · Pedidos y plata en el formulario (§4gg, §4gh)
+- **Un pago ya registrado no se cambia callado desde el formulario** (`EDIT_PLATA0`): si con los montos iguales se
+  tocó el método, el banco o el «Monto total cobrado», pregunta y manda a Contabilidad.
+- **Corregir el PRECIO conserva los pagos** (decisión del dueño, `_soloPrecio`): fecha, recibo, `>chofer`,
+  imágenes, adelanto, mixto y flete quedan; el saldo y «pagado» se recalculan como `aplicarCobros`. Si cambió «A
+  cuenta», se corrige solo el adelanto (`_rehaceAdel`). «¿Borrar el historial?» se pregunta solo si de verdad se va
+  un pago (`_seBorran`).
+- **«SÍ, pagado» al editar una venta con pagos** (decisión del dueño, `pagoRestoPrev`): lo ya cobrado queda en su
+  día y lo que faltaba entra HOY como cobro nuevo, con su imagen si es QR o tarjeta.
+- `cobradoFueraDeAcuenta(p)`, `pagadoSugerirTotal`, `PAGO_NO_VISTO` (tocar SÍ y después NO repone los montos).
+- **Lecturas tardías**: `BORRADO_AQUI` (90 s) impide que una lectura vieja devuelva lo recién borrado, y
+  `mergePending` conserva lo guardado acá hace menos de 90 s que la lectura todavía no trae.
+- ATC/RPT → OC toma el número de las OC de su mes; editar no cambia el vendedor recordado; en una RPT, elegir otra
+  sucursal reemplaza lo que puso la anterior.
+
+### 15.3 · Desde el celular (§4gi)
+- **ALTA arreglada**: «＋ Nuevo pedido» con una edición abandonada seguía siendo esa edición, y el pedido nuevo
+  **pisaba la venta anterior** en la planilla. Ahora `tabNuevoPedido` pregunta y arranca uno nuevo.
+- Los avisos (`toast`) usan el ancho de la pantalla, no tapan Guardar y duran lo que lleva leerlos (`toastMs`).
+- Mis pedidos cuenta por la fecha de ENTREGA (decisión del dueño) y los filtros van justo arriba de la lista.
+
+### 15.4 · El saldo debajo de cada producto (§4gj, §4gk) — lo más nuevo
+El dueño pidió que la vendedora, al cargar un producto, vea si hay y qué decirle al cliente. Primero pidió una
+pestaña y después, en vez de eso, un aviso en el formulario.
+- **Un cuadrito debajo de cada producto** (OC y RPT; nunca ATC, venta de tienda, entregados ni productos de
+  tienda): ✅ disponible · 📥 hay en Moreno (1 día) · ⏳ en producción (llega el DD/MM) · 🏭 no hay (mandar a
+  producir). Debajo, «En almacén · Pendientes de entrega · Libres/Faltan», con **libre = saldo en almacén −
+  pendientes de entrega** (al editar, el propio pedido no se cuenta).
+- **Una sola cuenta**: todo sale de `stockData()`, la misma de Stock y reposición (`saldoDatos`/`SALDO_CACHE`, una
+  vez por lectura), y de `saldoVeredicto`. `stockData` ganó `enRecogida` y un argumento opcional para productos del
+  catálogo que no están en ningún Excel; sin él da lo mismo que antes (comparado contra `bd5dde3`).
+- **Los «~X días»** son días reales hasta el primer día de entrega con cupo; sin cupo, domingo y días cerrados se
+  saltan. Si la fecha elegida es antes, una línea roja (solo avisa).
+- **Siempre al día**: se repinta con cada lectura; al completar un producto con la última lectura de más de un
+  minuto, lee de nuevo (tope: una por minuto por dispositivo); 🔄 Actualizar, **como mucho una vez cada 15 s**
+  (decisión del dueño; con la última lectura fallida lee igual).
+- **Al guardar**, si algo no tiene saldo libre o la fecha es antes de lo posible, un `confirm` con la planilla
+  recién leída. Aceptar guarda igual: nunca frena la venta.
+- **La revisión (§4gk)** encontró cinco errores. Los tres primeros eran renglones que no salen del saldo y a los que
+  el cuadrito contestaba con el saldo de OTRO colchón:
+  - 📐 **Medida especial** («Otros 150x200»): antes decía «✅ DISPONIBLE» con el stock del 160x190. Ahora, en azul,
+    «se fabrica a pedido: ~X días». El código de la medida estándar se **borra solo** (decisión del dueño) al salir
+    del campo y al guardar. ⚠️ **Nunca en un renglón ya guardado tal cual**: lo de logística lo sigue por
+    `prodClave` (`heredarMarcas`) y se perdería; ahí el cuadrito avisa «borralo».
+  - 🏷️ **Código de otra medida** (se elige 160x190 y se cambia a 140x190): avisa y dice cuál es el bueno.
+  - 🏭 **Lo ya mandado a fabricar para ESE pedido** dice cuándo llega, en vez de «no hay, mandá a producir».
+  - Una ATC que pasa a OC pregunta al guardar.
+  - En una RPT, la pregunta habla de la sucursal.
+  - Además, el filtro «🔵 Especiales» ya no marca «160X190CM».
+- **Ventana que queda, dicha al dueño**: dos vendedoras que guardan la última unidad en los mismos 1-3 s la venden
+  dos veces, porque el servidor no revisa stock. La lectura siguiente les muestra «Faltan» a las dos.
+
+### 15.5 · Lo que espera al dueño (no se tocó)
+- **Celular**: encabezado alto; aviso antes de perder un pedido nuevo a medio escribir al abrir otra edición; botones
+  chicos (✕ de comprobantes 22 px, «📎 abrir imagen» 18 px); detalles de la venta de tienda.
+- **Banzer**: cerrar o cancelar las recogidas de Banzer anotadas antes del 26/09 a las 17:15; la ficha de una línea
+  Banzer + IM enciende solo «📥 IM»; «Qué producir» dice «sin contar» si acá no hay Excel pero Banzer sí.
+- **Saldo**: al cambiar a otra medida NORMAL, poner solo el código correcto (hoy solo avisa); cuántos cortes
+  guarda el historial (hoy 14 en total, entre todos los almacenes).
+- De antes (§4ga, §4fy): Moreno con unidades fantasma si se entrega una línea 📥 sin anotar la recogida; recojos de
+  ATC en «A cargar»; sacar un pedido de un día cerrado sin clave; la celda de 50.000 letras del stock; `ocAutoGs_`
+  sin RPT; MEDIA-4 y MEDIA-5; el `SUMA` de MONTO en el Excel del Cuadre; «Entrega» es la fecha agendada.
+- El número de la versión 23-b en Google, para poder volver atrás de la 26-a.
+
+### 15.6 · Qué le pido a Codex
+1. **Revisar `e2e613a..2040720`** (solo `pedidos.html` y las pruebas; el `.gs` no cambió). Lo más delicado:
+   - **Banzer** (`almEsSalida`, `prodPartes`, `stockAsignar` con `tomarIM(solo)`, `salSale`, `stockHaySalir`): ¿alguna
+     unidad que se cuente dos veces o se pierda entre acá, Banzer e IM, sobre todo con marcas de la página vieja?
+   - **Los memos** (`normNombre`, `stockNorm`, `stockAlmLimpio`): ¿alguno depende de algo que no sea su texto?
+   - **El formulario de plata** (`_soloPrecio`, `_rehaceAdel`, `pagoRestoPrev`, `EDIT_PLATA0`): ¿algún camino que
+     borre o duplique un pago ya registrado?
+   - **`BORRADO_AQUI` y `mergePending` a 90 s**: ¿una carrera con OTRO dispositivo que borre o cambie lo mismo?
+   - **El saldo** (`saldoVeredicto`, `saldoClasificar`, `codigoEspecialBorrar`): ¿algún renglón que muestre el
+     saldo de otro producto, o que pierda lo de logística al guardar?
+2. Correr su auditoría contra `2040720` y pasar a `tests/` lo que encuentre, con pruebas que fallen antes del
+   arreglo, como en §14.
+3. Opinar sobre la ventana de §15.4: ¿vale la pena que el servidor revise el stock al guardar? Eso exige republicar
+   el `.gs`.
 
 ## Primera vuelta (`d890468`), resumida
 
