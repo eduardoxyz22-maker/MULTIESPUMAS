@@ -458,7 +458,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   nombra el total, lista los renglones y junta TODAS las fotos. `tests/test_conta_alta.js`.
   ⚠️ En un test, registrar un pago desde la ficha exige **`CTA_PAGO.comps`**: sin imagen,
   `ctaRegistrarPago` se planta y abre el gato de comprobantes — el pago no se registra.
-- **↩️ «Era un pago de la venta»** (§4gr, 28/09, EN LA RAMA, sin publicar). El dueño: *«no eran recargos por entrega
+- **↩️ «Era un pago de la venta»** (§4gr, **publicada el 28/09 a las 18:28**, `bf19fc8`). El dueño: *«no eran recargos por entrega
   sino pagos»*.
   - `ctaEnvioAPago(id, e)` pasa un recargo **ya cobrado** a los cobros de la venta tal cual: fecha, monto, método, banco,
     nota, `>quién recibió` y fotos, sin mandar ninguna foto a la papelera.
@@ -803,7 +803,7 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
-- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, 28/09, EN LA RAMA, sin publicar).
+- **🕔 La hora en que entra el pedido, y las 48 h de fábrica** (§4gq → **§4gs**, **publicadas el 28/09 a las 18:28**, `bf19fc8`).
   - **📥 Moreno NO mira la hora** (dueño: *«da igual si son las 18 o las 11 o las 15: se cargó lunes, se recoge martes, se
     entrega miércoles»*): se recoge el día hábil siguiente (`saldoDiaRecoge`) y se entrega desde el otro. Si la recogida no
     es mañana (sábado, víspera de feriado), el cuadrito dice qué día: «logística lo recoge el lunes 05/10».

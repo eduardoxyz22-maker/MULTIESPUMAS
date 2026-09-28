@@ -7445,7 +7445,10 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — EN LA RAMA, SIN PUBLICAR
+## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — PUBLICADA 28/09 18:28 (`bf19fc8`)
+
+> **Publicada el 28/09 a las 18:28 de Bolivia** (`main` = `bf19fc8`, junto con §4gq y §4gr; el dueño: «hazlo»). Sin tocar
+> el servidor (sigue el `.gs` 2026-09-28-a). No había ninguna corrida del panel en curso ni en cola. Todos F5.
 
 **Lo que vio el dueño.** La tabla de §4gq con su ejemplo, el lunes 28/09 a las 16:25 y a las 18:15:
 - Moreno: desde el miércoles 30/09 → desde el jueves 01/10.
@@ -7515,9 +7518,9 @@ o con `STOCK_DIAS_FABRICA`=3.
   contrario, a propósito.
 
 **Batería sobre `e825f51`: 112 suites, 4.236 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-En la rama, junto con §4gq y §4gr, esperando el OK del dueño para publicar.
+Publicada el 28/09 a las 18:28 (`bf19fc8`), junto con §4gq y §4gr.
 
-## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
+## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — PUBLICADA 28/09 18:28 (`bf19fc8`)
 
 **El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
 "recargo por entrega"?»*: esa ficha mostraba solo el bloque del flete porque la venta ya no tenía saldo. Después vio la otra
@@ -7555,9 +7558,9 @@ errores, que tienen que dar igual.
 el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un «🗑 Borrar este pago» si hace falta.
 
 **Batería sobre `275b031`: 112 suites, 4.231 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-Es la de §4gq más `test_envio_a_pago` (28). En la rama, junto con §4gq, esperando el OK del dueño para publicar.
+Es la de §4gq más `test_envio_a_pago` (28). Publicada el 28/09 a las 18:28 (`bf19fc8`), con §4gq y §4gs.
 
-## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
+## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — PUBLICADA 28/09 18:28 (`bf19fc8`), con §4gs
 
 > ⚠️ **Corregido esa misma noche en §4gs:** Moreno NO mira la hora, y lo que se fabrica sale a las 48 h (no «3 días + 1»).
 > Lo de abajo sobre Moreno y los «~5 días» queda como historia.
@@ -7615,7 +7618,7 @@ y que el sábado se trabaja medio día.
   ⚠️ Una prueba NUEVA del cuadrito tiene que clavar el reloj: sin eso, después de las 17:00 da otros días.
 
 **Batería sobre `5ff8112`: 111 suites, 4.203 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
-En la rama, esperando el OK del dueño para publicar.
+Publicada el 28/09 a las 18:28 (`bf19fc8`), con la corrección de §4gs.
 
 ## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a — IMPLEMENTADO
 
