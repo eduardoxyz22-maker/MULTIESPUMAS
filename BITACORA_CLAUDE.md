@@ -7473,8 +7473,11 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   - arqueo en 0.
 - **Versión para volver atrás: 33** («Versión 33 del 26 sept 2026, 11:30 a.m.», la 26-a). Volver atrás = ✏️ → 33
   **Y** pegar la 26-a de `ea81bb0…`.
-- **Falta:** que el dueño implemente (✏️ → Nueva versión, descripción `2026-09-28-a`) y la captura de Cerrar día con
-  «versión 2026-09-28-a», sin línea gris.
+- **~15:24 — implementada.** El dueño: *«listo, ya implementé»* (✏️ → Nueva versión, descripción `2026-09-28-a`).
+  Desde acá no se puede comprobar: el proxy no deja llegar a Google, la última corrida del respaldo de Kommo (167) fue
+  a las 14:45, antes de implementar, y `actions_run_trigger` sigue sin permiso (§4ds).
+- **Falta:** la captura de Cerrar día con «versión 2026-09-28-a» sin línea gris, y `probarAntesDeImplementar` a los
+  5 minutos (repaso de Kommo al día).
 
 ## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
 

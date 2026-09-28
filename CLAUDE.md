@@ -829,7 +829,7 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   borrado (como antes). La página espera la 28-a (`SCRIPT_VERSION_ESPERADA`): hasta implementarla, «Cerrar día» muestra
   la línea gris. **28/09 15:21: pegada en el editor y probada, todo ✅** (1063 filas, stock 22.642/50.000 = 45 %).
   **Volver atrás = ✏️ a la versión 33** («26 sept 2026, 11:30» = la 26-a) **Y** pegar la 26-a del enlace fijo a
-  `ea81bb0…` (1965 líneas). Estado de la implementación: bitácora §4gp.
+  `ea81bb0…` (1965 líneas). **Implementada ~15:24** (el dueño lo dijo; la comprobación, en la bitácora §4gp).
 - **Saldo**: lo que va en una recogida programada llega el día de ESA recogida (`saldoEntradas`: Moreno sin programar en
   `STOCK_DIAS_RECOGIDA`, cada recogida con su `llega`, repartiendo `enRecogida` sin pasarse) → «🚚 VIENE DE MORENO ·
   logística lo trae el…». Sin cupo en `SALDO_DIAS_CUPO` días no se promete ningún día (`saldoDiaConCupo` → `sinCupo`,
