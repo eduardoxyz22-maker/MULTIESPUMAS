@@ -7450,7 +7450,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 **Publicado el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`: la rama `bf934bb` unida sobre los tableros del robot,
 que quedaron como estaban), con el OK del dueño: *«aprobado todo»*. Van juntos §4gl, §4gm, §4gn y §4go. El servidor sigue
 en **2026-09-26-a**: la página espera la 28-a y «Cerrar día» muestra la línea gris hasta implementarla. Todos F5. El
-`.gs` 28-a va después, con todos ya recargados (enlace raw fijo al commit, nunca por el chat).
+`.gs` 28-a va después, con todos ya recargados (enlace raw fijo al commit, nunca por el chat). Pages: corrida 1538 en
+verde a las 15:03.
 
 El dueño trajo la revisión de Codex de la rama en `5b39386`. Codex repitió las pruebas: 81 comprobaciones en cuatro
 suites, con el servidor 28-a y con el 26-a.
