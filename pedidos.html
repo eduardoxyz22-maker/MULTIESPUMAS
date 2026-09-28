@@ -5774,6 +5774,10 @@ function contaPagosHtml(p){
            (cs.length<COMP_MAX
              ? '<button class="btn btn-sm" style="background:#fff;border:1px dashed var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaEnvioAdjuntar(\''+pid+'\','+ctaIdxEnvio(p,i)+')">📎 '+(cs.length?'Agregar otra imagen':'Adjuntar comprobante')+'</button>'
              : '')+
+           /* ↩️ (28/09) Un cobro anotado como recargo que en realidad era un pago de la venta: pasa a los pagos tal cual. */
+           ((envioYaCobrado(c) && !noSeCobra(p))
+             ? '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--teal-border);color:var(--teal-dk);font-size:.76rem;padding:4px 10px;width:auto;font-weight:700" title="Si este cobro era un pago de la venta y no un flete: lo pasa a los pagos, con su fecha, nota y fotos" onclick="ctaEnvioAPago(\''+pid+'\','+ctaIdxEnvio(p,i)+')">↩️ Era un pago de la venta</button>'
+             : '')+
            '<button class="btn btn-sm" style="background:#fff;border:1px solid var(--gray-md);color:var(--muted);font-size:.76rem;padding:4px 10px;width:auto" onclick="ctaBorrarEnvio(\''+pid+'\')">🗑 Quitar el recargo</button>'+
          '</div>')
       : '';
@@ -6277,6 +6281,50 @@ function ctaBorrarEnvio(id){
   renderCuadreSiActivo(); renderContaSiActiva();
   toast('Recargo por entrega quitado','ok');
   showContaModal(id);
+}
+/* ↩️ ERA UN PAGO DE LA VENTA, NO UN RECARGO (dueño, 28/09: *«¿cómo borro los recargos por entrega? No eran recargos por
+   entrega sino pagos»*). Las vendedoras anotaban cobros de la venta en «🚚 Recargo por entrega». «🗑 Quitar el recargo» se
+   lleva la foto del recibo y la plata desaparece de la venta: había que volver a cargarla a mano. Esto pasa ESE renglón —ya
+   cobrado— a los pagos de la venta en un toque, tal cual: la misma fecha, monto, método, banco, nota, quién la recibió y
+   fotos (ninguna va a la papelera). El total de la venta no cambia: baja lo que falta cobrar (`aplicarCobros`, con el
+   objetivo de antes). Si la venta ya estaba pagada queda «cobrada de más», y se dice: el total estaba corto y se corrige en
+   «✏️ Corregir precios y montos».
+   Solo un recargo YA COBRADO: uno pactado no es plata que entró — ese se saca con «✏️ Cambiar lo que falta cobrar» → 0.
+   `e` es la posición en `enviosDe(p)` (`ctaIdxEnvio`: trae también los pactados). */
+function ctaEnvioAPago(id, e){
+  var p=findById(id); if(!p) return;
+  var ae=enviosDe(p); e=Number(e);
+  if(!(e>=0 && e<ae.length) || !envioYaCobrado(ae[e])) return;
+  var c=ae[e], monto=r2(Number(c.monto)||0); if(!(monto>0)) return;
+  var saldoAntes=r2(Number(p.saldo)||0), saldoDesp=r2(saldoAntes-monto);
+  var n=limpiaNota(c.nota), rec=limpiaRecibio(c.recibio), cs=compsArr(c.comps!=null?c.comps:c.comp);
+  if(!confirm('↩️ ¿Este cobro era un PAGO DE LA VENTA y no un recargo por entrega?\n\n'+
+      cobroMetodoTxt(c)+' '+fmtBs(monto)+(c.fecha?(' · '+fmtFecha(c.fecha)):'')+(n?(' · nota '+n):'')+(rec?(' · recibió '+rec):'')+
+      (cs.length?(' · '+cs.length+(cs.length===1?' foto':' fotos')):'')+'\n\n'+
+      'Pasa a los pagos de la venta tal cual: la misma fecha, nota, método'+(rec?', quién la recibió':'')+' y fotos. '+
+      'Deja de figurar como recargo por entrega.\n\n'+
+      (saldoAntes>0.009 ? ('Lo que falta cobrar de la venta: '+fmtBs(saldoAntes)+' → '+fmtBs(Math.max(0,saldoDesp))+'.')
+                        : 'La venta ya figuraba pagada.')+
+      (saldoDesp<-0.009 ? ('\n\n⚠️ La venta queda cobrada de MÁS por '+fmtBs(-saldoDesp)+': el total de la venta estaba corto. '+
+                           'Corregilo después en «✏️ Corregir precios y montos».') : '')+
+      (regEnSistema(p) ? '\n\n🧾 Esta venta ya está registrada en el sistema contable: avisale a Contabilidad del cambio.' : ''))) return;
+  ctaPagoRecordar();                               // §4fy: un pago a medio cargar no se pierde con el repintado
+  CTA_EDIT_I=-1; CTA_EDIT_V=null;                  // los renglones cambian de lugar: que no quede abierto el editor de otro
+  var objetivo=objetivoCobro(p);                   // lo que la venta tenía que cobrar: no cambia
+  var cobros=cobrosDe(p).slice();                  // con el pago «sin monto» si lo hay: `aplicarCobros` le muda las fotos (§4fg)
+  var nuevo={ metodo:c.metodo, banco:c.banco||'', monto:monto, fecha:c.fecha||'', nota:c.nota||'', recibio:c.recibio||'',
+              comps:cs.slice(), comp:cs[0]||'' };
+  /* El renglón sale de los recargos EN MEMORIA y `aplicarCobros` guarda UNA sola vez: relee de `p` el anticipo y los recargos
+     que quedan, escribe los cobros con el nuevo al final, y recalcula el saldo y «pagado». */
+  var ant=anticipoDe(p), resto=ae.filter(function(_,k){ return k!==e; });
+  p.metodoPago=conMarcaReg(textoHistorial(p, (ant?[ant]:[]).concat(cobrosReales(p)).concat(resto)), regEnSistema(p));
+  var pr=aplicarCobros(p, cobros.concat([nuevo]), objetivo);
+  renderCuadreSiActivo(); renderContaSiActiva();
+  toast('↩️ Pasó a los pagos de la venta: '+cobroMetodoTxt(c)+' '+fmtBs(monto)+
+        (saldoDesp<-0.009 ? (' · ⚠️ queda cobrada de más por '+fmtBs(-saldoDesp)+': corregí el total en «Corregir precios y montos»')
+                          : (' · falta cobrar '+fmtBs(Math.max(0,saldoDesp)))), saldoDesp<-0.009 ? 'err' : 'ok', 9000);
+  showContaModal(id);
+  return pr;
 }
 /* Reescribe SOLO los recargos, dejando intactos el anticipo y los cobros de la venta. */
 /* ---- 📎 Las imágenes del ANTICIPO ----

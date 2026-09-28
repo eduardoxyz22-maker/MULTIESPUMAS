@@ -7445,6 +7445,43 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
+
+**El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
+"recargo por entrega"?»*: esa ficha mostraba solo el bloque del flete porque la venta ya no tenía saldo. Después vio la otra
+cara: *«¿y cómo borro los recargos por entrega? Porque no eran recargos por entrega sino pagos»*. Las vendedoras anotaban
+cobros de la venta en «🚚 Recargo por entrega». Aceptó la propuesta con *«sí, hacelo y mostrame»*.
+
+**Lo que había.**
+- Un recargo **pactado** (sin cobrar) se saca con «✏️ Cambiar lo que falta cobrar» → 0, o borrándolo en el formulario. Eso
+  sigue igual.
+- Uno **cobrado** solo tenía «🗑 Quitar el recargo» (`ctaBorrarEnvio`). Ese botón se lleva la foto del recibo
+  (`borrarFotoSiNadieLaUsa`) y la plata desaparece de la venta: había que volver a cargarla a mano en «💵 Registrar un pago».
+
+**Lo nuevo: `ctaEnvioAPago(id, e)`, el botón «↩️ Era un pago de la venta».**
+- Aparece en cada recargo **ya cobrado** de «PAGOS», en la ficha de Contabilidad.
+- No aparece en los pagos de la venta, ni en un recargo pactado, ni en una ATC o RPT (`noSeCobra`).
+- Pasa ESE renglón a los cobros de la venta tal cual: fecha, monto, método, banco, nota, `>quién recibió` y fotos. Ninguna
+  foto va a la papelera.
+- **El total de la venta no cambia:** `aplicarCobros` con el objetivo de antes (`objetivoCobro`) baja el saldo en lo que entró.
+- **Si la venta ya figuraba pagada**, queda «cobrada de más» (`excesoCobro`). La pregunta y el aviso lo dicen: el total
+  estaba corto y se corrige en «✏️ Corregir precios y montos».
+- **Si está registrada en el sistema contable**, la pregunta pide avisarle a Contabilidad. La marca REGISTRADO sigue.
+- **Un solo guardado.** El renglón sale de los recargos en memoria y `aplicarCobros` relee el anticipo y los recargos que
+  quedan. `e` es la posición en `enviosDe(p)` (`ctaIdxEnvio`: [pactado, cobrado] apunta al cobrado).
+- **Venta «PAGADA sin monto» (§4fg):** se pasa `cobrosDe` (con el pago de mentira) para que `aplicarCobros` le mude las fotos
+  del método suelto al pago nuevo. No nace un renglón de Bs 0.
+- Cierra el editor de otro pago que esté abierto (`CTA_EDIT_I=-1`): los renglones cambian de lugar.
+
+**Lo que se le mostró al dueño:** dos capturas de la ficha, con una venta inventada. Antes: 11.500 de adelanto + un «recargo»
+de 7.950, saldo 7.950. Después: los dos en «PAGOS», la venta PAGADA y sin recargo.
+
+**Pruebas:** `tests/test_envio_a_pago.js` (28). Contra `7fe7551` da 8 bien y 20 mal: las 8 son cancelar, ATC/RPT y sin
+errores, que tienen que dar igual.
+
+**Queda (dicho al dueño):** hoy no hay cómo BORRAR un pago de la venta ya registrado. «✏️ Corregir» no acepta monto 0, y ni
+el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un «🗑 Borrar este pago» si hace falta.
+
 ## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
 
 **La pregunta del dueño** (15:40): *«¿qué pasa si hoy tenemos un ICE en inventario, el 1er vendedor lo pone para el

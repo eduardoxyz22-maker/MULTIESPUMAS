@@ -458,6 +458,17 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   nombra el total, lista los renglones y junta TODAS las fotos. `tests/test_conta_alta.js`.
   ⚠️ En un test, registrar un pago desde la ficha exige **`CTA_PAGO.comps`**: sin imagen,
   `ctaRegistrarPago` se planta y abre el gato de comprobantes — el pago no se registra.
+- **↩️ «Era un pago de la venta»** (§4gr, 28/09, EN LA RAMA, sin publicar). El dueño: *«no eran recargos por entrega
+  sino pagos»*.
+  - `ctaEnvioAPago(id, e)` pasa un recargo **ya cobrado** a los cobros de la venta tal cual: fecha, monto, método, banco,
+    nota, `>quién recibió` y fotos, sin mandar ninguna foto a la papelera.
+  - Usa `aplicarCobros` con el objetivo de antes, así que el total de la venta no cambia y baja el saldo. Hace un solo
+    guardado.
+  - Si la venta ya figuraba pagada queda «cobrada de más», y se dice.
+  - Le pasa `cobrosDe`, no `cobrosReales`: en una «PAGADA sin monto», las fotos del método suelto se mudan al pago nuevo.
+  - No aparece en un recargo pactado, ni en una ATC o RPT.
+  - `tests/test_envio_a_pago.js` (28; 20 rojas contra `7fe7551`).
+  - ⚠️ Todavía NO hay cómo borrar un pago de la venta ya registrado: «Corregir» exige monto > 0.
 - **🧾 El pago de MENTIRA de una venta «PAGADA sin monto»** (§4fg): esas ventas no tienen
   renglón —el campo guarda el método suelto, `Efectivo %IMG`— y `cobrosDe` fabrica uno con el
   monto de **`p.cobradoBs`**, que NO viaja en la planilla (vale 0 apenas se relee la lista).
