@@ -7445,6 +7445,44 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — BOSQUEJO EN LA RAMA
+
+**El pedido del dueño** (con una captura de Contabilidad → Ventas por entrega agendada):
+- *«me varía con lo de cuadre y conciliación»*: el Cuadre cuenta la plata que ENTRÓ, por fecha de pago; Ventas por entrega
+  agendada cuenta lo VENDIDO, por la fecha de la entrega. Son números distintos a propósito.
+- *«crea una pestaña al lado de cuadre y conciliación que solo se habilite cuando se coloca la contraseña de administrador
+  en el panel de administración»*.
+- *«que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin de mes
+  según cómo vienen las ventas… ojo, no me interesa el efectivo ingresado sino el vendido en el período»*. Lo vendido es
+  por entrega agendada: una venta pagada un mes y entregada el siguiente cuenta en el mes de la entrega.
+- *«arma el bosquejo como quedaría y me muestras, sigo desde el cel»*.
+
+**Lo armado (en la rama, SIN publicar, sin prueba propia todavía):**
+- Pestaña `data-val="proy"` («📈 Proyección del mes»). `mostrarBotonesTodos` la muestra solo con `UNLOCKED`, y
+  `setContaTab` / `renderProyeccion` vuelven a Ventas si no hay clave. Todo pasa por `contaRepintar()`.
+- `proyeccionMes(ym)`:
+  - Suma `ventaTotal` por la fecha de `fechaSalida` (la entrega agendada, como Ventas → 🚚 Entrega agendada).
+  - El equipo va como en Ventas (`fueraDeConta(p,'tienda')`). La marca sale por vendedor (`marcaDe`, §4bl).
+  - Los mayoristas (`fueraDeConta(p,'mayor')`) van aparte.
+  - Quedan afuera las ATC, las RPT y ROHO.
+- **Proyección**, por vendedor; las marcas y el total son la suma:
+  - A = lo que tiene entrega hasta hoy.
+  - B = lo agendado de mañana a fin de mes.
+  - proyección = A + máx(B, A ÷ días hábiles que pasaron × días hábiles que quedan).
+  - Días hábiles = lunes a sábado sin feriados.
+  - No mira `p.entregado`: los choferes todavía no marcan.
+  - Un mes que ya pasó muestra «Cerró el mes»; uno que no empezó muestra solo lo agendado.
+- **Pantalla:**
+  - Fichas: vendido, proyección, Sueña, Heaven, sin marca y mayoristas.
+  - Lista por vendedor agrupada por marca, con lo vendido y la proyección en violeta. Es lista y no tabla: en 390 px una
+    tabla de cuatro columnas escondía la proyección.
+  - Cuadro «❓ Cómo se cuenta».
+  - Proyección y ritmo en Bs enteros (`fmtBs0`); lo vendido, con centavos, igual que en Ventas.
+- **Se le mostró** con capturas de celular (ventas inventadas, «hoy» = viernes 18/09).
+
+**Falta, si lo aprueba:** prueba con dientes, la batería y publicar. Las pruebas de Contabilidad pasan igual:
+`test_conta_alta` 53, `test_cuadre_alta` 35, `test_rev_conta` 38, `test_rev7_celular` 35, `test_botones` 50, `test_medias` 24.
+
 ## 4gs. 28/09, noche: Moreno no mira la hora, y lo que se fabrica sale a las 48 h — PUBLICADA 28/09 18:28 (`bf19fc8`)
 
 > **Publicada el 28/09 a las 18:28 de Bolivia** (`main` = `bf19fc8`, junto con §4gq y §4gr; el dueño: «hazlo»). Sin tocar

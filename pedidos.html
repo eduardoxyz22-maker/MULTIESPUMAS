@@ -531,6 +531,15 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
    de lo que mide su contenido si no se le dice `min-width:0` (la tabla ya tiene su propio scroll). */
 @media(max-width:560px){#cta-tab{display:flex;flex-wrap:wrap;max-width:100%}#cta-tab button{flex:1 1 auto;padding:10px 12px}}
 .cua-2col>*{min-width:0}
+/* 📈 Proyección del mes (28/09): la lista por vendedor. Lista y no tabla para que en el celular se vea la proyección. */
+.pry-grupo{border:1px solid var(--gray-md);border-left-width:4px;border-radius:10px;margin-bottom:12px;overflow:hidden}
+.pry-gh{display:flex;justify-content:space-between;align-items:baseline;gap:4px 10px;flex-wrap:wrap;background:var(--gray-lt);padding:8px 12px;font-size:.84rem}
+.pry-fila{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:8px 12px;border-top:1px solid var(--gray-md);font-size:.84rem}
+.pry-fila small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px;font-weight:400}
+.pry-q{min-width:0}
+.pry-n{text-align:right;white-space:nowrap}
+.pry-p{color:#6d28d9 !important;font-weight:700 !important}
+.pry-total{border:1px solid var(--teal);border-left-width:4px;border-radius:10px;background:#f0fdfa;margin-bottom:12px}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
@@ -1147,6 +1156,25 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
         <button type="button" data-val="ventas" class="active">📋 Ventas</button>
         <button type="button" data-val="mayor">🏭 Mayoristas</button>
         <button type="button" data-val="cuadre">🧮 Cuadre y conciliación</button>
+        <!-- 📈 Solo con la contraseña de Administración (dueño, 28/09): `mostrarBotonesTodos` la muestra al desbloquear. -->
+        <button type="button" data-val="proy" id="cta-tab-proy" style="display:none">📈 Proyección del mes</button>
+      </div>
+
+      <!-- ---- 📈 PROYECCIÓN DEL MES: lo VENDIDO por fecha de entrega agendada (no lo cobrado) ---- -->
+      <div id="cta-pane-proy" style="display:none">
+        <div class="filters">
+          <div class="field">
+            <label class="lb">Mes <span style="font-weight:400;color:var(--muted)">por fecha de entrega AGENDADA</span></label>
+            <input type="month" id="pry-mes" onchange="renderProyeccion()">
+          </div>
+          <div class="field">
+            <button class="btn btn-ghost btn-sm" onclick="refreshConta()">🔄 Actualizar</button>
+          </div>
+        </div>
+        <div id="pry-nota"></div>
+        <div class="metrics" id="pry-metrics"></div>
+        <div id="pry-vendedores"></div>
+        <div id="pry-como"></div>
       </div>
 
       <!-- ---- CUADRE: la plata que ENTRÓ, por fecha de pago ---- -->
@@ -3934,8 +3962,9 @@ function refreshConta(){
   var dd=document.getElementById('cta-dia'); if(dd && !dd.value) dd.value=todayStr();
   var cd=document.getElementById('cua-dia'); if(cd && !cd.value) cd.value=todayStr();
   var cm=document.getElementById('cua-mes'); if(cm && !cm.value) cm.value=todayStr().slice(0,7);
+  var pm=document.getElementById('pry-mes'); if(pm && !pm.value) pm.value=todayStr().slice(0,7);
   llenarSelectContaVendedor();
-  var pinta=function(){ llenarSelectContaVendedor(); if(contaTab()==='cuadre') renderCuadre(); else renderConta(); };
+  var pinta=function(){ llenarSelectContaVendedor(); contaRepintar(); };
   if(!CONNECTED){ pinta(); return; }
   apiList().then(function(res){ if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); } pinta(); })
            .catch(pinta);
@@ -4197,7 +4226,131 @@ function contaPagosCelda(p){
 }
 function renderContaSiActiva(){
   var v=document.getElementById('view-conta'); if(!v || !v.classList.contains('active')) return;
-  if(contaTab()==='cuadre') renderCuadre(); else renderConta();
+  contaRepintar();
+}
+/* La pestaña de Contabilidad que está a la vista, repintada. */
+function contaRepintar(){
+  var t=contaTab();
+  if(t==='cuadre') renderCuadre(); else if(t==='proy') renderProyeccion(); else renderConta();
+}
+
+/* ============================================================================
+   📈 PROYECCIÓN DEL MES (dueño, 28/09) — solo con la contraseña de Administración.
+   *«Que me muestre el total vendido en el período de cada vendedor, el total de cada marca y una proyección a fin
+   de mes según cómo vienen las ventas… no me interesa el efectivo ingresado sino el vendido en el período»*.
+   · Cuenta lo VENDIDO, nunca lo cobrado: cada venta vale `ventaTotal` (lo mismo que «Vendido en el período») y cae en
+     el mes de su entrega AGENDADA (`fechaSalida`), igual que Ventas → 🚚 Entrega agendada. Una venta pagada en agosto
+     que se entrega en septiembre es de septiembre. Si logística la reprograma, se muda de mes (como en Ventas).
+   · Quién entra: el equipo de tiendas como en Ventas (`fueraDeConta(p,'tienda')`: sin ATC, RPT, ROHO ni Eduardo), con
+     la marca por vendedor (`marcaDe`, §4bl). Los mayoristas (`fueraDeConta(p,'mayor')`) van aparte y no se mezclan.
+   · La proyección se hace por vendedor, y las marcas y los totales son la suma (así la tabla cierra):
+       lo que tiene entrega hasta hoy (A)
+     + lo que falta del mes: lo YA agendado de mañana a fin de mes (B), o lo que da el ritmo si es más
+       (A ÷ días hábiles que pasaron × días hábiles que quedan).
+     Días hábiles = lunes a sábado sin feriados (`diaHabil`). ⚠️ «Hasta hoy» es por la fecha AGENDADA: los choferes
+     todavía no marcan ✅ (§4gp), así que no se mira `p.entregado`.
+   · Un mes que ya pasó no se proyecta (cerró en A); uno que no empezó muestra solo lo agendado.
+   ========================================================================== */
+/* La proyección y el ritmo son estimaciones: van en Bs enteros. Lo vendido, con centavos, igual que en Ventas. */
+function fmtBs0(n){ return 'Bs '+Math.round(Number(n)||0).toLocaleString('es-BO'); }
+function pryFinDeMes(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7), d=new Date(Date.UTC(y, m, 0)).getUTCDate(); return ym+'-'+(d<10?'0':'')+d; }
+function pryHabiles(desde, hasta){ var n=0, f=desde; for(var i=0; i<40 && f<=hasta; i++, f=stockSumarDias(f,1)) if(diaHabil(f)) n++; return n; }
+function proyeccionMes(ym){
+  var hoy=todayStr(), ini=ym+'-01', fin=pryFinDeMes(ym);
+  var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
+  var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
+  var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
+  var filas={};
+  STATE.forEach(function(p){
+    var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
+    if(!amb) return;
+    var f=fechaSalida(p); if(!f || f.slice(0,7)!==ym) return;
+    var v=nombreCanonico(p.vendedor)||'(sin vendedor)', k=amb+'|'+(normNombre(v)||v);
+    var r=filas[k]||(filas[k]={ vendedor:v, amb:amb, marca:(amb==='tienda' ? marcaDe(v) : ''), n:0, a:0, b:0, sinMonto:0 });
+    var bs=ventaTotal(p);
+    r.n++; if(!(bs>0.009)) r.sinMonto++;
+    if(f<=hoy) r.a=r2(r.a+bs); else r.b=r2(r.b+bs);
+  });
+  var lista=Object.keys(filas).map(function(k){
+    var r=filas[k];
+    r.vendido=r2(r.a+r.b);
+    r.ritmo = dt>0 ? r.a/dt : 0;
+    r.proy = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+    return r;
+  }).sort(function(x,y){ return y.vendido-x.vendido || x.vendedor.localeCompare(y.vendedor,'es'); });
+  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, sinMonto:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
+  var tienda=lista.filter(function(r){ return r.amb==='tienda'; }), mayor=lista.filter(function(r){ return r.amb==='mayor'; });
+  var marcas=MARCAS.map(function(g){ var rs=tienda.filter(function(r){ return r.marca===g.k; }); return { g:g, filas:rs, tot:suma(rs) }; });
+  var sinMarca=tienda.filter(function(r){ return !r.marca; });
+  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:suma(sinMarca) },
+           equipo:suma(tienda), mayor:{ filas:mayor, tot:suma(mayor) } };
+}
+function renderProyeccion(){
+  var box=document.getElementById('pry-metrics'); if(!box) return;
+  if(!UNLOCKED){ segSet('cta-tab','ventas'); setContaTab('ventas'); return; }
+  var inp=document.getElementById('pry-mes'); if(inp && !inp.value) inp.value=todayStr().slice(0,7);
+  var R=proyeccionMes((inp && inp.value) || todayStr().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
+  var pc=function(bs){ return E.vendido>0.009 ? Math.round(bs/E.vendido*100)+'%' : '—'; };
+  var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
+  var proyLbl = R.estado==='cerrado' ? 'Cerró el mes' : '📈 Proyección al cierre';
+  var proySub = R.estado==='cerrado' ? ('el mes terminó: es lo vendido con entrega en '+mes)
+              : R.estado==='futuro' ? ('todavía no empezó: es lo que ya está agendado ('+R.dr+' días hábiles)')
+              : ('si sigue el ritmo de '+fmtBs0(E.ritmo)+' por día hábil · faltan '+R.dr+' día'+(R.dr===1?'':'s')+' hábil'+(R.dr===1?'':'es'));
+  var conProy=(R.estado!=='cerrado');
+  var h=mc('var(--teal)','Vendido en '+esc(mes), fmtBs(E.vendido),
+           nV(E.n)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
+        mc('#7c3aed', proyLbl, R.estado==='cerrado' ? fmtBs(E.vendido) : fmtBs0(E.proy), proySub);
+  R.marcas.forEach(function(m){
+    h+=mc(m.g.col, m.g.ico+' '+m.g.lbl, fmtBs(m.tot.vendido),
+          (m.tot.n ? (nV(m.tot.n)+' · '+pc(m.tot.vendido)+' del equipo') : 'sin ventas en el mes')+
+          (conProy ? (' · 📈 proyección '+fmtBs0(m.tot.proy)) : ''), m.g.txt);
+  });
+  if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' de vendedores que no están en ninguna marca');
+  if(R.mayor.filas.length) h+=mc('#1d6fb8','🏭 Mayoristas', fmtBs(R.mayor.tot.vendido),
+          nV(R.mayor.tot.n)+' de '+esc(mayoristasTxt())+' · aparte del equipo'+(conProy ? (' · 📈 proyección '+fmtBs0(R.mayor.tot.proy)) : ''));
+  box.innerHTML=h; acomodarFichas();
+
+  var avisos=[];
+  if(R.estado==='curso' && R.dt<5) avisos.push('⏳ Van '+R.dt+' día'+(R.dt===1?'':'s')+' hábil'+(R.dt===1?'':'es')+' del mes: la proyección todavía se mueve mucho.');
+  var sm=E.sinMonto+R.mayor.tot.sinMonto;
+  if(sm) avisos.push('⚠️ '+nV(sm)+' sin monto anotado no '+(sm===1?'suma':'suman')+' nada: '+(sm===1?'completala':'completalas')+' en Ventas.');
+  document.getElementById('pry-nota').innerHTML=avisos.map(function(t){
+    return '<div style="background:#fffbeb;border:1px solid #fcd34d;border-left:4px solid var(--amber);border-radius:9px;padding:9px 13px;margin-bottom:12px;font-size:.82rem;color:#7c4b00">'+esc(t)+'</div>';
+  }).join('');
+
+  /* Una lista y no una tabla: en el celular una tabla de cuatro columnas escondía la proyección detrás del scroll. */
+  var filaHtml=function(r){
+    var det=[nV(r.n)];
+    if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
+    if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
+    if(r.sinMonto) det.push(r.sinMonto+' sin monto');
+    return '<div class="pry-fila"><div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
+           '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div></div>';
+  };
+  var grupo=function(ico, nombre, color, g){
+    if(!g.filas.length) return '';
+    return '<div class="pry-grupo" style="border-left-color:'+color+'"><div class="pry-gh"><b>'+ico+' '+esc(nombre)+'</b>'+
+           '<span><b>'+fmtBs(g.tot.vendido)+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+fmtBs0(g.tot.proy)+'</b>') : '')+'</span></div>'+
+           g.filas.map(filaHtml).join('')+'</div>';
+  };
+  var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n))+'</small></div>'+
+            '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
+  document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
+    (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).</div>' : '')+
+    (E.n || R.mayor.filas.length
+      ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m); }).join('')+
+        grupo('⚠️','Sin marca','var(--amber)', R.sinMarca)+total+
+        grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor)
+      : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>')+'</div>';
+
+  document.getElementById('pry-como').innerHTML='<div class="cua-box"><div class="cua-t">❓ Cómo se cuenta</div>'+
+    '<div style="font-size:.8rem;line-height:1.55;color:var(--text)">'+
+    '• Es lo <b>VENDIDO</b>, no lo cobrado: cada venta vale su total y cuenta en el mes de su <b>entrega agendada</b>, igual que Ventas → 🚚 Entrega agendada. Una venta pagada en agosto que se entrega en septiembre es de septiembre.<br>'+
+    '• <b>Proyección</b> = lo que tiene entrega hasta hoy + lo que falta del mes. Lo que falta: lo que ya está agendado de mañana a fin de mes, o lo que da el ritmo si es más.<br>'+
+    '• <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados). Se calcula por vendedor y se suma.<br>'+
+    '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
+    '• Si logística reprograma una entrega, la venta se muda de mes.'+
+    '</div></div>';
 }
 
 /* ============================================================================
@@ -4209,12 +4362,15 @@ function renderContaSiActiva(){
    ========================================================================== */
 function contaTab(){ return segVal('cta-tab')||'ventas'; }
 function setContaTab(t){
+  // 📈 (28/09) La proyección es solo con la contraseña de Administración: sin ella, vuelve a Ventas.
+  if(t==='proy' && !UNLOCKED){ t='ventas'; segSet('cta-tab','ventas'); }
   // "Ventas" y "Mayoristas" son la MISMA pantalla con distinta gente adentro:
   // comparten el panel para no duplicar tabla, ficha, pagos ni Excel.
-  document.getElementById('cta-pane-ventas').style.display=(t==='cuadre')?'none':'block';
+  document.getElementById('cta-pane-ventas').style.display=(t==='cuadre'||t==='proy')?'none':'block';
   document.getElementById('cta-pane-cuadre').style.display=(t==='cuadre')?'block':'none';
+  var pp=document.getElementById('cta-pane-proy'); if(pp) pp.style.display=(t==='proy')?'block':'none';
   pintarAmbitoConta(t==='mayor');
-  if(t==='cuadre') renderCuadre(); else renderConta();
+  contaRepintar();
 }
 /* Lo poquito que cambia entre una planilla y la otra. */
 function pintarAmbitoConta(mayor){
@@ -12325,6 +12481,9 @@ function mostrarBotonesTodos(){
   var a=document.getElementById('mis-todos-wrap'), b=document.getElementById('cho-todos-wrap');
   if(a) a.style.display = UNLOCKED ? '' : 'none';
   if(b) b.style.display = UNLOCKED ? '' : 'none';
+  // 📈 (28/09) La pestaña «Proyección del mes» de Contabilidad, solo con la contraseña de Administración.
+  var py=document.getElementById('cta-tab-proy'); if(py) py.style.display = UNLOCKED ? '' : 'none';
+  if(!UNLOCKED && contaTab()==='proy'){ segSet('cta-tab','ventas'); setContaTab('ventas'); }
   if(!UNLOCKED){ MIS_TODOS=false; CHO_TODOS=false; }
   pintarBotonTodos('mis-todos-btn', MIS_TODOS);
   pintarBotonTodos('cho-todos-btn', CHO_TODOS);
