@@ -7445,7 +7445,12 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — SIN PUBLICAR
+## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
+
+**Publicado el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`: la rama `bf934bb` unida sobre los tableros del robot,
+que quedaron como estaban), con el OK del dueño: *«aprobado todo»*. Van juntos §4gl, §4gm, §4gn y §4go. El servidor sigue
+en **2026-09-26-a**: la página espera la 28-a y «Cerrar día» muestra la línea gris hasta implementarla. Todos F5. El
+`.gs` 28-a va después, con todos ya recargados (enlace raw fijo al commit, nunca por el chat).
 
 El dueño trajo la revisión de Codex de la rama en `5b39386`. Codex repitió las pruebas: 81 comprobaciones en cuatro
 suites, con el servidor 28-a y con el 26-a.
@@ -7489,7 +7494,7 @@ suites, con el servidor 28-a y con el 26-a.
 
 **Batería sobre esta vuelta: 110 suites, 4.173 bien · 0 mal.** Lista para publicar cuando el dueño diga.
 
-## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — SIN PUBLICAR
+## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — PUBLICADA (§4go)
 
 El dueño: *«dame el informe para codex y revisa y aviso para publicar»*. Dos agentes revisaron lo que la rama tiene y
 `main` no. Uno miró §4gm (Eduardo → Multicenter); el otro, §4gl (los arreglos de Codex) con el servidor que está
@@ -7576,7 +7581,7 @@ se arregló con pruebas.
 Al publicar hay que hacer lo mismo que en `2040720`: unir la rama sobre `main` con los commits del robot incluidos
 (tableros de Kommo) y que todos hagan F5. El `.gs` 28-a va después, con todos ya recargados (punto 2).
 
-## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — SIN PUBLICAR
+## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — PUBLICADA (§4go)
 
 El dueño (10:49): *«Necesito que la proyección de stock incluya las ventas de Eduardo a Multicenter, conservando las
 demás reglas actuales»*, con la regla exacta: Eduardo → Multicenter entra al histórico y a la demanda; Eduardo → otros

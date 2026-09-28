@@ -196,7 +196,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     suyo vendido y sin entregar sí se cubre. ⚠️ Esta regla dio la vuelta entera tres veces
     entre el 07 y el 09/09 (el comentario de `STOCK_VENTAS_MIN` guarda la historia con las
     frases textuales): **no tocar ninguna de las dos mitades sin que el dueño lo pida**.
-    🏬 **La única excepción, pedida por el dueño el 28/09 (§4gm, SIN PUBLICAR): las ventas de Eduardo A
+    🏬 **La única excepción, pedida por el dueño el 28/09 (§4gm, publicada 28/09 15:02, `7fe7551`): las ventas de Eduardo A
     MULTICENTER sí cuentan** como las del equipo (`stockEduardoMulticenter`), con los mismos umbrales.
     Eduardo a cualquier otro cliente sigue afuera. Ver «🏬 Eduardo a Multicenter» más abajo.
     `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo (+ Eduardo a Multicenter). `o.rotacion`: `baja` (<3
@@ -258,8 +258,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   - **Recogida cerrada desde el Excel** (§4ev): `confirmarImportExist` resta lo pendiente de
     `STOCK.g[de].u[k]` como «Llegaron»; si no, Moreno se cuenta dos veces.
   - **`ventasPanelIndex` sin `stockPedidoUnico`** (§4ev): la historia mensual del plan del mes
-    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice). Desde §4gm (28/09, sin
-    publicar): **con** las ventas de Eduardo a Multicenter, que ya no son `stockPedidoUnico`.
+    va sin Eduardo, puntuales ni RPT (regla de §4dj; el cartel del cuadro lo dice). Desde §4gm (28/09, publicada 15:02): **con** las ventas de Eduardo a Multicenter, que ya no son `stockPedidoUnico`.
   - **📥 De qué almacén se va a buscar** (§4ey): la marca del producto es `x.chk='im'` +
     **`x.chkDe`** con el almacén (vacío = IM, el de siempre: nada de lo viejo se migra) y,
     si la línea salió de DOS almacenes, **`x.chkDes`** = `[{de,u}]` con el desglose.
@@ -795,8 +794,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
-**SIN PUBLICAR** (el dueño, 28/09: «Esperar»; el `.gs` 28-a y el stock en el servidor, «más adelante»). La rama ya difiere
-de `main` (`2040720`) en la página: cualquier publicación nueva lleva estos arreglos.
+**PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
+todo»), con el servidor **2026-09-26-a** todavía implementado. El `.gs` 28-a y el stock en el servidor, «más adelante».
 Codex revisó el informe §15 (`2040720`) y trajo `tests/test_codex28.cjs` (sus 8 comprobaciones, intactas; solo se le
 agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hallazgos se arreglaron:
 - **¿Manda la copia de acá o la de la lectura? Lo dice UNA función, `localManda(id, loc, srv, n0, enCola)`** (pedidos y
@@ -846,7 +845,7 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   que `stockData` en el `.gs`).
 
 ## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
-**SIN PUBLICAR** (el dueño pidió implementar y probar, no publicar). Está en la misma rama que §4gl.
+**PUBLICADA el 28/09 a las 15:02** (`7fe7551`), junto con §4gl, §4gn y §4go.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;
