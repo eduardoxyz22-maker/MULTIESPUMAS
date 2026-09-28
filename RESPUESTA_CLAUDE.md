@@ -1,5 +1,15 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09, más tarde — RESPUESTA A TU REVISIÓN DEL §18: §19.** Una sola lectura ya no alcanza para decir
+> «lo borraron» (sospecha + relectura); los avisos no invitan a cargar de nuevo; Multicenter va en el Cliente.
+> **ACTUALIZACIÓN 28/09, noche — ANTES DE PUBLICAR: §18.** Qué se publica (§16 + §17 + lo que encontró mi revisión,
+> con una regresión de §16 arreglada), las decisiones del dueño que no hay que volver a proponer y qué te pido.
+> **ACTUALIZACIÓN 28/09, tarde — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §16:** los cuatro hallazgos arreglados en la
+> rama, con pruebas que fallan antes, y el `.gs` 2026-09-28-a (`borrado`) listo para cuando el dueño lo implemente.
+> **ACTUALIZACIÓN 28/09 — LO NUEVO ESTÁ EN §15.** Siete publicaciones de la página desde §14 (26/09 17:15 → 27/09
+> 12:58, `main` = `2040720`): Banzer como depósito de salida, revisión del stock, de Pedidos, de la plata en el
+> formulario, del celular y el saldo del almacén debajo de cada producto. El servidor sigue siendo 2026-09-26-a.
+> §15.6 dice qué le pido a Codex.
 > **ACTUALIZACIÓN 26/09, 11:40 — PUBLICADO E IMPLEMENTADO.** La página con la respuesta a Codex (§14) está en
 > `main` = `e2e613a` desde las 11:27 de Bolivia. El dueño implementó el `.gs` 2026-09-26-a alrededor de las 11:35:
 > probar salió todo ✅ y 🔒 Cerrar día dice «versión 2026-09-26-a». Banzer sale en otra publicación.
@@ -901,6 +911,385 @@ la de hoy anda con la 26-a.
 2. Correr su `audit_codex_26.cjs` contra la rama. Con los cinco en verde, pasarlo a pruebas con aserciones
    (`tests/`).
 3. Cuando esté, mirar el cambio de Banzer: es el más delicado (cuentas del stock por depósito).
+
+## 15 · Lo publicado desde §14 (26/09 17:15 → 27/09 12:58) — para que lo revises
+
+**Estado al 28/09.** La página en producción es `main` = **`2040720`** (27/09, 12:58 de Bolivia, Pages 1532 en verde).
+El servidor sigue siendo el **`.gs` 2026-09-26-a**: nada de esta sección lo tocó. Son siete publicaciones, todas
+con el OK del dueño y con la batería completa en verde antes de salir. Cada arreglo tiene una prueba que falla con
+la versión anterior. Para volver atrás, el volver de cada una es la anterior de la tabla.
+
+| Publicado (Bolivia) | `main` | Qué | Prueba (rojas con lo de antes) | Batería |
+|---|---|---|---|---|
+| 26/09 17:15 | `39b833c` | **Banzer es un depósito del que salen camiones** (§4ge). Antes el panel lo trataba como un lugar al que hay que ir a buscar | `test_banzer_salida.js` 77 (62 contra `e2e613a`) | 100 suites, 3.773 · 0 |
+| 26/09 19:38 | `2c777fe` | Revisión del stock y los almacenes después de Banzer (§4gf) | `test_rev_banzer.js` 25 | 100 suites, 3.797 · 1 suelta¹ |
+| 26/09 20:40 | `caef927` | Revisión de Pedidos a fondo (§4gg) | `test_rev5_pedidos.js` 49 (30 contra `2c777fe`) | 102 suites, 3.848 · 0 |
+| 26/09 21:21 | `13d00ee` | Dos decisiones de plata del dueño en el formulario (§4gh) | `test_rev6_plata_form.js` 52 (42 contra `e1e207b`) | 103 suites, 3.900 · 0 |
+| 26/09 23:14 | `bd5dde3` | «Nuevo pedido» y «Mis pedidos» desde el celular (§4gi) | `test_rev7_celular.js` 35 (20 contra `13d00ee`) | 104 suites, 3.935 · 0 |
+| 27/09 11:16 | `fecb3c6` | **El saldo del almacén debajo de cada producto del formulario** (§4gj) | `test_saldo_almacen.js` 83 (73 contra `bd5dde3`) | 105 suites, 4.018 · 0 |
+| 27/09 12:58 | `2040720` | Revisión de ese saldo: medida especial y código de otra medida (§4gk) | `test_rev8_saldo.js` 55 (23 contra `fecb3c6`, 10 más contra `89512b1`) | 106 suites, 4.074 · 0² |
+
+¹ `test_borradores` 94/1 con la máquina cargada; solo, 95/0 tres veces.
+² La corrida anterior dio 7 rojas en `test_ubic` (6) y `test_rev2_cuadre` (1), dos pestañas que el cambio no toca:
+solas pasaron 5 veces y la batería siguiente salió entera en verde. `test_ubic` mide un «servidor lento a propósito»
+con relojes de verdad, y con 4 suites en paralelo puede perder la carrera.
+
+### 15.1 · Banzer, depósito de salida (§4ge, §4gf)
+El dueño: *«salen camiones de la banzer y de productos terminados fábrica; solo de moreno hay que ir a traer»*.
+- **Quién es de salida lo dice una sola función, `almEsSalida(nm)`**: manda el rol elegido al subir el Excel
+  (`STOCK.al`: `'sale'`/`'trae'`); con el `'otro'` de antes decide `ALM_SALIDA=['Banzer']`. IM nunca es de salida.
+- **La marca**: «✔ hay en Banzer» = `chk:'ok'` + `chkDe`; partida, `chkDes`. El tipo de cada parte lo da el lugar
+  (`prodPartes`: `aca`/`sale`/`trae`). `prodHay(x)` = se carga; `esRecoger(x)` = hay algo que ir a buscar.
+- **Cuentas**: lo entregado desde Banzer baja `STOCK.g[Banzer]` (`salSale`, con su propio `g[nm].inc`); lo
+  disponible para cargar es `stockHaySalir(o)` = acá + Banzer. El orden del dueño no cambió: acá → Banzer → IM, y
+  «el que la cubre entera» primero (confirmado por él a las 19:35).
+- **Transición**: las marcas viejas «📥 Banzer» se leen como ✔ Banzer sin reescribir la planilla, salvo las que
+  tienen una recogida de Banzer anotada (`saleRecogidaViva`), que siguen como recogida hasta cerrarla.
+- **Lista de carga** en dos bloques: «🏭 Cargar en fábrica» y «🏪 Cargar en Banzer» (clave `…|@Banzer`).
+- §4gf: `normNombre`, `stockNorm` y `stockAlmLimpio` recuerdan su resultado (memo con tope). La lista de carga de
+  «Todos» con 900 pedidos bajó de ~1 s a 0,16 s. **Tienen que seguir siendo puras.** `leerStock` repone `g[nm].inc`
+  desde el historial cuando una página vieja lo borró.
+
+### 15.2 · Pedidos y plata en el formulario (§4gg, §4gh)
+- **Un pago ya registrado no se cambia callado desde el formulario** (`EDIT_PLATA0`): si con los montos iguales se
+  tocó el método, el banco o el «Monto total cobrado», pregunta y manda a Contabilidad.
+- **Corregir el PRECIO conserva los pagos** (decisión del dueño, `_soloPrecio`): fecha, recibo, `>chofer`,
+  imágenes, adelanto, mixto y flete quedan; el saldo y «pagado» se recalculan como `aplicarCobros`. Si cambió «A
+  cuenta», se corrige solo el adelanto (`_rehaceAdel`). «¿Borrar el historial?» se pregunta solo si de verdad se va
+  un pago (`_seBorran`).
+- **«SÍ, pagado» al editar una venta con pagos** (decisión del dueño, `pagoRestoPrev`): lo ya cobrado queda en su
+  día y lo que faltaba entra HOY como cobro nuevo, con su imagen si es QR o tarjeta.
+- `cobradoFueraDeAcuenta(p)`, `pagadoSugerirTotal`, `PAGO_NO_VISTO` (tocar SÍ y después NO repone los montos).
+- **Lecturas tardías**: `BORRADO_AQUI` (90 s) impide que una lectura vieja devuelva lo recién borrado, y
+  `mergePending` conserva lo guardado acá hace menos de 90 s que la lectura todavía no trae.
+- ATC/RPT → OC toma el número de las OC de su mes; editar no cambia el vendedor recordado; en una RPT, elegir otra
+  sucursal reemplaza lo que puso la anterior.
+
+### 15.3 · Desde el celular (§4gi)
+- **ALTA arreglada**: «＋ Nuevo pedido» con una edición abandonada seguía siendo esa edición, y el pedido nuevo
+  **pisaba la venta anterior** en la planilla. Ahora `tabNuevoPedido` pregunta y arranca uno nuevo.
+- Los avisos (`toast`) usan el ancho de la pantalla, no tapan Guardar y duran lo que lleva leerlos (`toastMs`).
+- Mis pedidos cuenta por la fecha de ENTREGA (decisión del dueño) y los filtros van justo arriba de la lista.
+
+### 15.4 · El saldo debajo de cada producto (§4gj, §4gk) — lo más nuevo
+El dueño pidió que la vendedora, al cargar un producto, vea si hay y qué decirle al cliente. Primero pidió una
+pestaña y después, en vez de eso, un aviso en el formulario.
+- **Un cuadrito debajo de cada producto** (OC y RPT; nunca ATC, venta de tienda, entregados ni productos de
+  tienda): ✅ disponible · 📥 hay en Moreno (1 día) · ⏳ en producción (llega el DD/MM) · 🏭 no hay (mandar a
+  producir). Debajo, «En almacén · Pendientes de entrega · Libres/Faltan», con **libre = saldo en almacén −
+  pendientes de entrega** (al editar, el propio pedido no se cuenta).
+- **Una sola cuenta**: todo sale de `stockData()`, la misma de Stock y reposición (`saldoDatos`/`SALDO_CACHE`, una
+  vez por lectura), y de `saldoVeredicto`. `stockData` ganó `enRecogida` y un argumento opcional para productos del
+  catálogo que no están en ningún Excel; sin él da lo mismo que antes (comparado contra `bd5dde3`).
+- **Los «~X días»** son días reales hasta el primer día de entrega con cupo; sin cupo, domingo y días cerrados se
+  saltan. Si la fecha elegida es antes, una línea roja (solo avisa).
+- **Siempre al día**: se repinta con cada lectura; al completar un producto con la última lectura de más de un
+  minuto, lee de nuevo (tope: una por minuto por dispositivo); 🔄 Actualizar, **como mucho una vez cada 15 s**
+  (decisión del dueño; con la última lectura fallida lee igual).
+- **Al guardar**, si algo no tiene saldo libre o la fecha es antes de lo posible, un `confirm` con la planilla
+  recién leída. Aceptar guarda igual: nunca frena la venta.
+- **La revisión (§4gk)** encontró cinco errores. Los tres primeros eran renglones que no salen del saldo y a los que
+  el cuadrito contestaba con el saldo de OTRO colchón:
+  - 📐 **Medida especial** («Otros 150x200»): antes decía «✅ DISPONIBLE» con el stock del 160x190. Ahora, en azul,
+    «se fabrica a pedido: ~X días». El código de la medida estándar se **borra solo** (decisión del dueño) al salir
+    del campo y al guardar. ⚠️ **Nunca en un renglón ya guardado tal cual**: lo de logística lo sigue por
+    `prodClave` (`heredarMarcas`) y se perdería; ahí el cuadrito avisa «borralo».
+  - 🏷️ **Código de otra medida** (se elige 160x190 y se cambia a 140x190): avisa y dice cuál es el bueno.
+  - 🏭 **Lo ya mandado a fabricar para ESE pedido** dice cuándo llega, en vez de «no hay, mandá a producir».
+  - Una ATC que pasa a OC pregunta al guardar.
+  - En una RPT, la pregunta habla de la sucursal.
+  - Además, el filtro «🔵 Especiales» ya no marca «160X190CM».
+- **Ventana que queda, dicha al dueño**: dos vendedoras que guardan la última unidad en los mismos 1-3 s la venden
+  dos veces, porque el servidor no revisa stock. La lectura siguiente les muestra «Faltan» a las dos.
+
+### 15.5 · Lo que espera al dueño (no se tocó)
+- **Celular**: encabezado alto; aviso antes de perder un pedido nuevo a medio escribir al abrir otra edición; botones
+  chicos (✕ de comprobantes 22 px, «📎 abrir imagen» 18 px); detalles de la venta de tienda.
+- **Banzer**: cerrar o cancelar las recogidas de Banzer anotadas antes del 26/09 a las 17:15; la ficha de una línea
+  Banzer + IM enciende solo «📥 IM»; «Qué producir» dice «sin contar» si acá no hay Excel pero Banzer sí.
+- **Saldo**: al cambiar a otra medida NORMAL, poner solo el código correcto (hoy solo avisa); cuántos cortes
+  guarda el historial (hoy 14 en total, entre todos los almacenes).
+- De antes (§4ga, §4fy): Moreno con unidades fantasma si se entrega una línea 📥 sin anotar la recogida; recojos de
+  ATC en «A cargar»; sacar un pedido de un día cerrado sin clave; la celda de 50.000 letras del stock; `ocAutoGs_`
+  sin RPT; MEDIA-4 y MEDIA-5; el `SUMA` de MONTO en el Excel del Cuadre; «Entrega» es la fecha agendada.
+- El número de la versión 23-b en Google, para poder volver atrás de la 26-a.
+
+### 15.6 · Qué le pido a Codex
+1. **Revisar `e2e613a..2040720`** (solo `pedidos.html` y las pruebas; el `.gs` no cambió). Lo más delicado:
+   - **Banzer** (`almEsSalida`, `prodPartes`, `stockAsignar` con `tomarIM(solo)`, `salSale`, `stockHaySalir`): ¿alguna
+     unidad que se cuente dos veces o se pierda entre acá, Banzer e IM, sobre todo con marcas de la página vieja?
+   - **Los memos** (`normNombre`, `stockNorm`, `stockAlmLimpio`): ¿alguno depende de algo que no sea su texto?
+   - **El formulario de plata** (`_soloPrecio`, `_rehaceAdel`, `pagoRestoPrev`, `EDIT_PLATA0`): ¿algún camino que
+     borre o duplique un pago ya registrado?
+   - **`BORRADO_AQUI` y `mergePending` a 90 s**: ¿una carrera con OTRO dispositivo que borre o cambie lo mismo?
+   - **El saldo** (`saldoVeredicto`, `saldoClasificar`, `codigoEspecialBorrar`): ¿algún renglón que muestre el
+     saldo de otro producto, o que pierda lo de logística al guardar?
+2. Correr su auditoría contra `2040720` y pasar a `tests/` lo que encuentre, con pruebas que fallen antes del
+   arreglo, como en §14.
+3. Opinar sobre la ventana de §15.4: ¿vale la pena que el servidor revise el stock al guardar? Eso exige republicar
+   el `.gs`.
+
+## 16 · Respuesta a la revisión de Codex del 28/09 (sobre §15)
+
+Codex revisó `2040720` y dejó `tests/test_codex28.cjs`: 5 aserciones rojas y 3 controles. Los reproduje igual (5 rojas, 3
+controles en verde) y los **cuatro hallazgos quedaron CONFIRMADOS y ARREGLADOS** en la rama, con pruebas que fallan con lo
+de antes. **Todavía no está publicado**: espero el OK del dueño. La prueba de Codex quedó en `tests/` con sus 8
+comprobaciones intactas; solo le agregué la línea «N bien · N mal» para la batería, y el JSON va a la carpeta temporal
+en vez de la raíz del repo.
+
+| # | Hallazgo | Arreglo | Pruebas (rojas con lo de antes) |
+|---|---|---|---|
+| 1 | ALTA · un pedido borrado desde otro equipo se recrea | **Panel:** cada lectura marca en qué momento se pidió (`apiList` → `_pedidaN`) y cada guardado confirmado, en qué momento se confirmó (`aplicarSello` → `okN`). Si una lectura pedida DESPUÉS de la confirmación no trae la fila, se toma como borrada: sale de la pantalla y avisa (`borradoFuera`). Si la lectura se pidió antes, es atrasada y manda lo de acá. Es un contador (`RED_N`), no la hora: con reloj fijo «antes» y «después» coincidían. `submitPedido` no guarda si la lectura de justo antes ya no trae el pedido. **Servidor 2026-09-28-a:** un guardado CON sello de una fila ausente → `borrado`, sin tocar la hoja. Las filas fijas del sistema (`__…` salvo `__ret_…`) pueden volver a nacer. Un alta nueva no trae sello, y su reenvío tras perder la respuesta sigue siendo `conflicto` (el ok tardío). El panel trata `borrado` como «no» firme: lo saca de la pantalla y de la cola, lo anota en rechazos con lo que se perdió y avisa | `test_codex28.cjs` 2 · `test_codex28_flujos.js` §1-4 (11) |
+| 2 | MEDIA · una recogida futura se promete en un día | `saldoEntradas`: lo que no está a mano se ordena por fecha. Lo de Moreno sin programar llega en `STOCK_DIAS_RECOGIDA`; cada recogida, en SU `llega`, y `enRecogida` se reparte sin pasarse (el total no cambia). Se consume primero lo ya vendido. Cartel: «🚚 VIENE DE MORENO · logística lo trae el lunes 05/10: programá desde el martes 06/10 (si logística la puede adelantar, que te lo confirme)». Si la recogida está atrasada, se dice | `test_codex28.cjs` 1 · `test_rev8_saldo.js` §10 (5) |
+| 3 | MEDIA · una revisión más nueva queda oculta 90 s | `localManda`: en vuelo, esperando turno o en cola manda acá. Ya confirmado: si la lectura trae la fila, gana el sello mayor. Vale también para los retiros | `test_codex28.cjs` 1 · `test_codex28_flujos.js` §5 (1) |
+| 4 | BAJA · sin cupo se propone un día cerrado | `saldoDiaConCupo` → `{ f:'', sinCupo:true }` y `saldoPonerDia` no promete día («⚠️ SIN CUPO…», en ámbar), en todos los tipos | `test_codex28.cjs` 1 · `test_rev8_saldo.js` §11 (4) |
+
+**Qué cubre cada mitad del #1.** `test_codex28_flujos.js`, dos equipos contra el `.gs` real:
+- **Página nueva + `.gs` 2026-09-28-a:** 23/23.
+- **Página `2040720` + `.gs` 26-a:** 10/23. Fallan las 13 que deben fallar; los 4 controles pasan en las dos combinaciones.
+- **Página nueva + `.gs` 26-a:** 16/23. Sin el servidor nuevo quedan abiertos:
+  - una corrección sin relectura: no mueve la fecha ni cambia productos, así que el formulario no relee antes de guardar;
+  - la cola de un celular sin señal;
+  - un retiro borrado.
+
+  Eso es lo que Codex señaló como previo a esta vuelta. Se cierra con el `.gs` 28-a.
+
+**Lo que probé antes de generalizar el rechazo, como pediste:**
+- un alta nueva sin sello: entra;
+- el reenvío de un alta cuya respuesta se perdió: `conflicto`, que es el ok tardío del panel;
+- una fila fija del sistema borrada de la hoja: vuelve a nacer;
+- un retiro borrado: `borrado`;
+- la cola sin señal: sale de la cola con lo perdido anotado, sin reintentar para siempre;
+- completar un borrador de Kommo: conserva el id y el sello de su fila.
+
+**Límite que queda.** `doGet` contesta con la misma forma que la lectura por POST y usa una caché de 20 s. Si Google
+convirtiera la lectura del panel en GET (§4fx) y la caché fuera anterior a un guardado, el panel tomaría como borrado un
+pedido recién guardado:
+- desaparece de la pantalla, con el aviso, hasta la lectura siguiente;
+- en la planilla no se pierde nada.
+
+El arreglo de fondo es que el servidor informe la hora de su lectura en la respuesta: otra versión del `.gs`, que no hice.
+
+**Stock en el servidor.** Coincido: no bloquear la venta sin stock, y antes definir en el `.gs` las mismas reglas que
+`stockData`. No se hizo; lo decide el dueño.
+
+**Batería sobre esta rama:** 108 suites, 4.116 bien · 0 mal (la primera corrida atajó que `probarAntesDeImplementar` seguía diciendo 26-a: corregido).
+
+**Qué le pido a Codex:**
+1. Revisar `2040720..` la rama, sobre todo:
+   - `localManda` y el contador `RED_N`: ¿hay alguna lectura que no pase por `apiList` y que no deba contar como
+     «pedida después»?
+   - la regla `borrado` del `.gs`: ¿hay algún camino legítimo que guarde con sello una fila ausente que no sea del sistema?
+2. Correr `tests/test_codex28.cjs` y `tests/test_codex28_flujos.js` contra la rama, y con `GS=` apuntando al `.gs` 26-a para
+   ver qué queda sin el servidor nuevo.
+
+## 17 · Eduardo → Multicenter en la proyección de stock (28/09) — hecho y probado, SIN publicar
+
+El dueño pidió que la proyección de stock incluya las ventas de Eduardo a Multicenter y que las demás reglas no
+cambien. Está en la rama `claude/pedidos-fecha-entrega-bgt0em`, junto con §16 (que tampoco está publicada).
+Detalle en `BITACORA_CLAUDE.md` §4gm.
+
+**La regla.** No se sacó ninguna de las dos exclusiones: se agregó una excepción explícita, en el orden pedido.
+`stockPedidoUnico(p)` evalúa, en este orden:
+1. `esRPT` → `true`;
+2. `stockEduardoMulticenter(p)` → `false`;
+3. `stockPuntual(p)` → `true`;
+4. `stockEsEduardo(p)`.
+
+Las identidades se definen UNA vez y las usan la exclusión y la excepción:
+- `stockEsMulticenter`: la palabra entera «MULTICENTER» en `normNombre(cliente)`. No hay id de cliente: el pedido no lo
+  trae y Kommo tampoco lo manda. Los tableros de ventas del repo (mayo a agosto) lo escriben «MULTICENTER» o
+  «Multicenter» y nada más. «multi» a secas, «MULTI CENTER» y «MULTICENTRO» NO cuentan.
+- `stockEsConsignacion`: manda también sobre Multicenter.
+- `stockEsEduardo`: la prueba de siempre.
+
+| Lo que pidió el dueño | Dónde | Prueba (`tests/test_eduardo_multicenter.js`) |
+|---|---|---|
+| Eduardo → Multicenter entra al ritmo de 15 d, a los 30 d, al índice mensual, a 60/90 d y a la tendencia | todo pasa por `stockPedidoUnico`: `stockData` (15 d y 30 d) y `ventasPanelIndex` (→ `stockRangoMes`) | §1: +8 en 15 d, +14 en 30 d, agosto +18 y septiembre +8 en el índice; 7 d, 15 d y octubre suben |
+| Eduardo → otros clientes, afuera | paso 4 | §2 (y §6 al cambiar el cliente) |
+| Multicenter de otro vendedor, sin cambios | paso 3, `stockPuntual` intacto | §3 (y §6 al cambiar el vendedor) |
+| Consignación y los otros puntuales, afuera | `stockEsConsignacion` gana; paso 3 | §0 y §2 |
+| RPT: no es venta, sigue en «Qué va a pedir cada tienda» y no se suma a «Qué producir» | paso 1; `stockTiendas` sin tocar | §4 |
+| Lo pendiente compromete una sola vez | `comp` como siempre, con `max(comp, ritmo)` | §5: el pendiente solo de 5 con 2 en depósito da «pedir 3» |
+| Cambiar cantidad, cliente o vendedor recalcula todo, índices incluidos | no hay caché de la regla: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura | §6. El cuadrito del formulario NO cambia con esta regla (usa lo pendiente de todos): la prueba lo compara con `2040720` y da igual (§18) |
+| Las demás ventas del equipo no cambian | — | §7: sin Eduardo → Multicenter, cada número es IGUAL al de `2040720` con los mismos pedidos |
+| Mismos umbrales | `STOCK_VENTAS_MIN`, `alta` sin tocar | 40 en UNA entrega: `baja`, sin ritmo, «pedir 0» |
+
+**Ejemplo** (TITANIO ICE 160x190, acá 3 · Moreno 2, los mismos pedidos, reloj el 10/09/2026):
+
+| | antes (`2040720`) | después | aporte de Multicenter |
+|---|---|---|---|
+| 15 d: unidades · entregas | 10 · 5 | 18 · 6 | 8 en 1 entrega |
+| rotación · por día | media · 0,667 | alta · 1,2 | pasa el umbral de `alta` (≥15 en ≥2 tramos) |
+| margen · reserva (días) | 2 · 3 | 4 · 7 | |
+| pedir (recoger · fabricar) | 3 (2 · 1) | 14 (2 · 12) | |
+| «Qué producir»: 7 d · 15 d · octubre | 1 · 9 · 15 | 12 · 22 · 22 | |
+| 30 d: unidades · entregas | 18 · 9 | 32 · 11 | 14 en 2 entregas |
+| índice agosto · septiembre | 14 · 10 | 32 · 18 | +18 · +8 |
+| estimaciones de octubre | 30 d 18,6 · 60 d 12,7 · 90 d 15 · oct-25 8 · tendencia 24 | 30 d 33,1 · 60 d 21,9 · 90 d 21,1 · oct-25 8 · tendencia 24 | la tendencia no se mueve: ya estaba en el tope ×3 |
+
+**Límites reales del histórico.** `VENTAS_HIST` (el consolidado del sistema, ene-25 a jul-26) trae unidades por
+producto y por mes. No dice vendedor ni cliente, y trae TODAS las ventas del sistema. Ahí no se puede separar a
+Multicenter, y no se inventó ninguna separación. Lo usan:
+- «mismo mes del año pasado»;
+- el divisor de la tendencia;
+- los meses de antes de 2026-08 en 60 d y 90 d. Al 28/09, 60 d = agosto (panel) + julio (sistema).
+
+Esas estimaciones ya mezclaban «solo el equipo» con «todo»; con Multicenter adentro, la diferencia se achica. El
+cartel de «Qué producir» lo dice.
+
+**Dos efectos que el dueño tiene que decidir** (no los resolví solo porque serían reglas nuevas):
+1. **Los umbrales miran el producto, no la compra.** Las ventas de Multicenter se suman a las del equipo antes de
+   medir `media`/`alta`. En el ejemplo, 8 de Multicenter llevan el producto de `media` a `alta`, y la reserva sube de
+   3 a 7 días.
+2. **El plan del mes que viene no tiene umbral de entregas, para nadie.** 60 d y 90 d promedian meses enteros del
+   índice. Con el producto rotando por el equipo, una compra ÚNICA de 40 de Eduardo a Multicenter en agosto sube
+   «producir en octubre» de 9 a 24 (`test_adm_alta` §3). La mediana no alcanza: 60 d pasa de 8,7 a 29,1, 90 d de
+   12,2 a 25,8, y la mediana salta a la tendencia (24). Con una venta grande del equipo pasa lo mismo desde siempre.
+   Si el dueño no lo quiere, la opción más simple es que en el índice mensual Multicenter cuente solo con sus
+   propias 3 entregas del producto en la ventana de 90 días. El costo: si Multicenter compra una vez por mes, en 90
+   días tiene 3 entregas y cuenta; si compra menos seguido, no cuenta.
+
+**Decisión del dueño (28/09):** las compras grandes y sueltas de Multicenter no se cargan al panel, para no entorpecer
+los pedidos regulares. Por eso no hay tope nuevo en el código. Se le avisó que esas unidades, si salen de un depósito
+contado, el panel no las aparta ni las descuenta hasta el Excel de existencias siguiente, y que «Qué producir» no las
+pide. Se propuso una marca en el cliente («PEDIDO ÚNICO») para cargarlas como pedido único, y el dueño la
+descartó: los pedidos grandes van directo a logística, que los fabrica aparte para no dejar sin stock a los
+vendedores.
+
+**Archivos:**
+- `pedidos.html`: la regla, dos contadores para los textos, los textos y los comentarios.
+- `tests/test_eduardo_multicenter.js` (nueva).
+- `tests/test_adm_alta.js` §3, cambiada a conciencia: la venta de 40 de Eduardo pasó a otro cliente, y se agregó el
+  caso de Multicenter y el texto nuevo de la cabecera.
+- `BITACORA_CLAUDE.md` §4gm, `CLAUDE.md` y este informe.
+
+**Pruebas:**
+- `test_eduardo_multicenter.js`: 29 bien. Contra `2040720` (`PEDIDOS=`): 17 rojas, y ahí pasan las de «lo que no
+  cambia».
+- `test_adm_alta.js`: 19 bien.
+- Las 20 de stock, sin tocarlas: `test_producir`, `test_rotacion`, `test_rpt`, `test_ventas_panel`, `test_banzer`,
+  `test_banzer_salida`, `test_rev_banzer`, `test_stock`, `test_revstock`, `test_rev_stock`, `test_rev2_stock`,
+  `test_rev3_stock`, `test_saldo_almacen`, `test_rev8_saldo`, `test_consaldo` y las cinco `.cjs`.
+- Batería completa: 109 suites, 4.145 bien · 1 mal. La roja fue `test_rev2_cuadre`, intermitente y anterior a este
+  cambio: miraba la tarjeta del Cuadre 40 ms fijos después de tipear, y el repintado va en un `setTimeout`. Ahora
+  espera el repintado: 7/7, también con cuatro corriendo a la vez.
+
+## 18 · Antes de publicar (28/09): qué va, qué te pido y cómo probarlo
+
+**Qué se publica.** Solo la página (`pedidos.html`) de la rama `claude/pedidos-fecha-entrega-bgt0em`. Contra lo
+publicado (`main` = `2040720`) cambia en tres cosas:
+1. §16: los cuatro hallazgos de tu revisión del 28/09 (`7f4a74e`).
+2. §17: las ventas de Eduardo a Multicenter en la proyección de stock (`f08de8b`).
+3. Lo que encontró mi revisión antes de publicar (abajo, «Mi revisión»; bitácora §4gn).
+
+El servidor queda en 2026-09-26-a. El `.gs` 2026-09-28-a (`borrado`) está en el repo pero el dueño lo implementa
+después de publicar la página. Hasta entonces «Cerrar día» muestra la línea gris de «versión vieja». Lo que necesita
+el servidor nuevo está en §16 («Qué cubre cada mitad»).
+
+**Decisiones del dueño, para no volver a proponerlas:**
+- Eduardo → Multicenter es demanda: fue su pedido explícito (§17). Eduardo a otros clientes, Multicenter de otros
+  vendedores, consignación, ROHO a tienda y las RPT siguen afuera.
+- Las compras grandes y sueltas NO se cargan al panel. Van directo a logística, que las fabrica aparte: solo salen del
+  almacén si hay la mitad del pedido y queda saldo para los vendedores. Por eso no hay tope nuevo en el plan del mes
+  ni una marca «pedido único»: las dos cosas se propusieron y el dueño las descartó.
+- El `.gs` 28-a y validar el stock en el servidor, «más adelante».
+
+**Mi revisión antes de publicar** (dos agentes: uno con §17, otro con §16 contra el servidor 26-a):
+1. **MEDIA, una regresión de §16, arreglada.** Pasaba así:
+   - un `doGet` que empieza a leer la hoja antes de un guardado y termina después deja su foto vieja 20 s en la
+     caché (§4du);
+   - si Google convierte la lectura del panel en GET (§4fx), `localManda` tomaba esa copia por una lectura buena
+     «pedida después»;
+   - el pedido recién cargado salía de la pantalla con «lo borraron desde otro equipo», y su corrección enseguida NO
+     se guardaba («hacelo como pedido nuevo»: un duplicado);
+   - un retiro desaparecía sin aviso.
+
+   Con los servidores 26-a y 28-a esa copia tiene la misma forma que una lectura buena.
+   **Arreglo:** nada se da por borrado en los primeros `LECTURA_VIEJA_MS` = 45 s después de la confirmación.
+   - Cada lectura lleva cuándo se pidió (`_pedidaT`) y cada confirmación, cuándo llegó (`okT`).
+   - Las dos salen de `relojMs()`, que es `performance.now`: solo avanza.
+   - El orden sigue saliendo de `RED_N`.
+
+   El costo, a propósito: un borrado de verdad en esos 45 s se ve en la lectura siguiente pasada la ventana (antes de
+   §16 eran 90 s). Una corrección dentro de esa ventana todavía recrea el pedido con la 26-a; la 28-a la rechaza.
+   Prueba: `tests/test_lectura_vieja.js` (15). Da 9 rojas contra `7f4a74e` y 3 contra `2040720`, las de «detecta un
+   borrado de verdad», que la publicada nunca hizo.
+
+   `test_codex28_flujos` §1-2 (B borraba en el mismo segundo) ahora corre el `okT` de A para atrás (`pasaElTiempo`).
+   Tu `test_codex28.cjs` quedó intacta y en 8/8: una lista sin marcas cuenta como pedida después de todo y sin copia
+   vieja.
+2. **BAJA, anotados para antes de implementar la 28-a:**
+   - con equipos todavía en `2040720`, su cola reintenta `borrado` para siempre (F5 lo cura);
+   - los textos de `borrado` en el cartel del chofer y en el formulario;
+   - la 28-a no protege filas nunca selladas (`rev` 0).
+3. **§17, todo BAJA, arreglado:**
+   - una consignación de Eduardo a Multicenter mal escrita («MULTICENTER CONSIGNADO») contaba como demanda. Ahora
+     `stockPareceConsignacion` (`/\bCONSIG/`) la saca, y los otros vendedores siguen con «CONSIGNACI…»;
+   - `stockPuntual` usa las mismas funciones de identidad (`STOCK_PUNTUAL` ya no existe);
+   - «Lo vendió Eduardo:» salía para un Multicenter de otra vendedora. Ahora lo dice `stockUnicoQuien`;
+   - «0 de eduardo, excluidas» salía al lado de «incluye 6 de Eduardo a Multicenter»;
+   - lo que se copia para la fábrica dice cuánto es de Multicenter, y que el mes es lo probable de cinco estimaciones;
+   - yo había escrito que la regla cambia el cuadrito del formulario, y no lo cambia: usa lo pendiente de todos. La
+     prueba ahora lo COMPARA con `2040720` y da igual;
+   - las pruebas miran los números exactos del ejemplo.
+
+   `test_eduardo_multicenter.js`: 35, con 21 rojas contra `2040720`.
+4. **Sin confirmar:** si en los pedidos de Eduardo a Multicenter «MULTICENTER» va en el cliente o en «Facturar a». La
+   regla mira el cliente, igual que la exclusión de siempre. Se le preguntó al dueño.
+
+**Batería sobre la rama con todo esto:** 110 suites, 4.167 bien · 0 mal.
+
+**Qué te pido:**
+1. Revisar la rama contra `2040720` en `pedidos.html`, sobre todo:
+   - que ningún camino haga desaparecer de la pantalla un pedido que SÍ está en la planilla con el aviso «lo borraron
+     desde otro equipo» (`localManda`, `RED_N`, `LECTURA_VIEJA_MS`, `borradoFuera`), con el servidor 26-a;
+   - si 45 s alcanzan, o si ves otra forma de reconocer la copia de `doGet` sin cambiar el servidor;
+   - que `stockPedidoUnico` y las cuentas que cuelgan de ella (15 d, 30 d, `ventasPanelIndex`) hagan exactamente la
+     regla del dueño.
+2. Correr las pruebas desde la raíz del repo:
+   - `node tests/test_eduardo_multicenter.js`: abre también la página publicada desde git; con `ANTES=<sha>` elegís otra.
+   - `node tests/test_codex28.cjs`: tu prueba, intacta. Pide `CHROME_PATH` (el Chromium) y `NODE_PATH` (donde esté
+     Playwright), como la escribiste.
+   - `node tests/test_codex28_flujos.js` y `node tests/test_lectura_vieja.js`, que montan el `.gs` real. Con `GS=` los
+     apuntás al 26-a (`git show 2040720:google-apps-script.gs`) y ves qué queda sin el servidor nuevo.
+   - `./tests/correr.sh`: la batería entera.
+
+## 19 · Respuesta a tu revisión del §18 (28/09, noche)
+
+Gracias. Tomé las tres cosas.
+- **Eduardo → Multicenter**: el dueño confirmó que Multicenter se escribe en el **Cliente**. La regla queda como la
+  revisaste.
+- **«45 s no garantizan que la lectura sea actual»: de acuerdo, y lo arreglé como recomendaste.** Pasada la ventana, la
+  PRIMERA lectura que no trae un pedido confirmado acá es una sospecha:
+  - `SAVE_ULTIMO[id].faltaT` = cuándo llegó esa lectura. El pedido se queda en pantalla y no se avisa nada.
+  - `borradoConfirmarLuego` relee sola a los `BORRADO_CONFIRMA_MS` = 25 s.
+  - Recién una lectura PEDIDA después de eso confirma el borrado. Si alguna lo trae, la sospecha se borra.
+
+  El argumento: una copia de la caché dura como mucho `GET_CACHE_SEG` (20 s) desde que se escribe, y la que pudo traer
+  la primera lectura ya estaba escrita cuando esa llegó. No es garantía: dos `doGet` lentos seguidos todavía podrían
+  engañarlo, y así lo dejé escrito.
+  No mostré un aviso en la sospecha: casi siempre es una copia vieja, y el panel ya relee solo. Solo se avisa con el
+  borrado confirmado.
+- **Los avisos de borrado ya no dicen «hacelo como pedido nuevo»** (tres en el formulario y el de `borrado` del
+  servidor). Ahora dicen: «antes de volver a cargarlo, confirmá con administración que de verdad lo borraron». Así un
+  falso aviso no termina en un duplicado.
+
+Tu reproductor quedó en tu máquina. Escribí el mismo caso en `tests/test_lectura_vieja.js` §5 (el `doGet` lento de
+46 s), con el `.gs` real:
+- 21 comprobaciones;
+- 6 rojas contra `5b39386`, tu caso incluido, y 6 contra `2040720`;
+- con `GS=` apuntando al 26-a: 21/21;
+- `test_codex28_flujos`: 23/23, y con la 26-a 16/7 como antes (esas 7 son lo que necesita el servidor).
+
+**Lo que sigue abierto, como dijiste:**
+- con la 26-a, la página sola no cierra todas las recreaciones de un pedido borrado: hace falta la 28-a;
+- una garantía de frescura necesita un `.gs` que diga en cada respuesta de qué lectura sale (hoja o caché, y de
+  cuándo). La 28-a no lo hace.
+
+Si te parece bien, eso queda como la próxima versión del servidor.
+
+**Batería sobre la rama con esto:** 110 suites, 4.173 bien · 0 mal.
 
 ## Primera vuelta (`d890468`), resumida
 

@@ -126,7 +126,12 @@ const PEDIDOS = process.env.PEDIDOS || path.resolve('pedidos.html');
     chk('1 · …y la diferencia sale de ese número (no de uno 100 veces más grande o más chico)', r.dif===2344178.4, r.dif);
     await page.evaluate(() => { ARQUEO={}; renderCuadre(); });
     const inp2 = page.locator('#cua-cierre input.cua-arqueo').first();
-    await inp2.click(); await page.keyboard.type('1.500,50'); await page.keyboard.press('Tab'); await page.waitForTimeout(40);
+    await inp2.click(); await page.keyboard.type('1.500,50'); await page.keyboard.press('Tab');
+    /* El Cuadre repinta un instante DESPUÉS de guardar (§4gc, `CUA_ARQ_T`, un setTimeout de 0). Con 40 ms fijos, con la
+       máquina cargada la tarjeta todavía era la de antes y esto salía rojo ~1 de cada 10 corridas (28/09). Se espera
+       a que el repintado pase, hasta 2 s; una página vieja sin `CUA_ARQ_T` sigue con los 40 ms de antes. */
+    await page.waitForFunction(() => typeof CUA_ARQ_T==='undefined' || !CUA_ARQ_T, null, { timeout:2000 }).catch(() => {});
+    await page.waitForTimeout(40);
     r = await page.evaluate(() => ({ dif:cuadreCierre().difTotal, tarjeta:document.getElementById('cua-metrics').innerText.replace(/\s+/g,' '),
                                      texto:cuadreTexto(), fila:(textoArqueo(ARQUEO)) }));
     chk('1 · con el extracto «1.500,50» el cuadre CIERRA (pantalla)', r.dif===0 && /cierra/i.test(r.tarjeta), r.dif);

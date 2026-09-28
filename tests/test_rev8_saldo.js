@@ -465,6 +465,59 @@ function PREPARAR(){
       r.cm===false && r.met===false && r.kCm!=='especial' && r.filtro===false, [r, r.__error]);
   chk('(control) «150x200» sigue siendo especial (celeste), y «160x190» no', r.esp===true && r.std===false && r.kEsp==='especial', r);
 
+  // ═══ 10. 🚚 LA RECOGIDA PROGRAMADA LLEGA EL DÍA DE LA RECOGIDA (revisión de Codex del 28/09) ═══════════════
+  console.log('\n── 10. 🚚 Lo que viene en una recogida programada se promete para ESE día, no «en 1 día» ──');
+  reset();
+  r = await ev(async () => {
+    var out={}, rec=function(u, f, esp){ return { id:'rq'+u+esp, k:K.TIT, u:u, tipo:'recogida', de:IMN, fab:'', f:f, esp:esp, r:'' }; };
+    // Acá 0 y Moreno 5, pero las 5 ya van en una recogida para el lunes 05/10.
+    await _escenario(_stock({ aca:{ TIT:0 }, im:{ TIT:5 }, p:[ rec(5, todayStr(), '2026-10-05') ] }), []);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); _fecha('2026-09-25'); await _esperar(500); out.fut=_caja(0);
+    // Moreno 7 y la recogida se lleva 5: quedan 2 para traer ya. Una unidad sale de ahí; tres necesitan la recogida.
+    await _escenario(_stock({ aca:{ TIT:0 }, im:{ TIT:7 }, p:[ rec(5, todayStr(), '2026-10-05') ] }), []);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500); out.uno=_caja(0);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:3 }); await _esperar(500); out.tres=_caja(0);
+    // Una recogida que era para el lunes 21/09 y no se marcó como llegada.
+    await _escenario(_stock({ aca:{ TIT:0 }, im:{ TIT:5 }, p:[ rec(5, '2026-09-19', '2026-09-21') ] }), []);
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500); out.atr=_caja(0);
+    return out;
+  });
+  chk('🚚 las 5 van en una recogida para el lunes 05/10: NO dice «se trae en 1 día · programá desde el viernes 25/09»',
+      r.fut && !/se trae en 1 día/.test(r.fut.txt) && !/programá desde el viernes 25\/09/.test(r.fut.txt), r.fut && [r.fut.txt, r.__error]);
+  chk('…dice «🚚 VIENE DE MORENO · logística lo trae el lunes 05/10: programá desde el martes 06/10» (y que un adelanto lo confirma logística)',
+      r.fut && /🚚 VIENE DE MORENO · logística lo trae el lunes 05\/10: programá desde el martes 06\/10 \(si logística la puede adelantar, que te lo confirme\)/.test(r.fut.txt), r.fut && r.fut.txt);
+  chk('…y con la entrega para el viernes 25/09, la línea roja: «Para el viernes 25/09 no llega: programá desde el martes 06/10»',
+      r.fut && /Para el viernes 25\/09 no llega: programá desde el martes 06\/10/.test(r.fut.txt), r.fut && r.fut.txt);
+  chk('(control) el total es el de siempre: «En almacén 5 · … Libres 5» y «+5 en camino de Moreno» (nada contado dos veces)',
+      r.fut && /En almacén 5/.test(r.fut.txt) && /Libres 5/.test(r.fut.txt) && /\+5 en camino de Moreno/.test(r.fut.txt), r.fut && r.fut.txt);
+  chk('(control) con 2 libres en Moreno, UNA unidad sigue siendo «📥 HAY EN MORENO · se trae en 1 día»',
+      r.uno && /📥 HAY EN MORENO · se trae en 1 día: programá desde el viernes 25\/09/.test(r.uno.txt), r.uno && r.uno.txt);
+  chk('🚚 …pero TRES necesitan la recogida: «logística lo trae el lunes 05/10»', r.tres && /🚚 VIENE DE MORENO · logística lo trae el lunes 05\/10/.test(r.tres.txt), r.tres && r.tres.txt);
+  chk('🚚 una recogida que era para el lunes 21/09 y no llegó: «la recogida era para el lunes 21/09 y todavía no llegó: confirmala con logística»',
+      r.atr && /la recogida era para el lunes 21\/09 y todavía no llegó: confirmala con logística/.test(r.atr.txt), r.atr && r.atr.txt);
+
+  // ═══ 11. 📅 SIN CUPO EN 60 DÍAS NO SE PROMETE UN DÍA CERRADO (revisión de Codex del 28/09) ════════════════
+  console.log('\n── 11. 📅 Sin ningún turno libre en 60 días, no se promete ningún día ──');
+  reset();
+  r = await ev(async () => {
+    var out={};
+    await _escenario(_stock({ aca:{ TIT:5 } }), []);
+    var ini=proximoDiaEntrega(), dias=[]; for(var i=0;i<65;i++) dias.push(stockSumarDias(ini,i));
+    var antes=DIAS_CERRADOS; DIAS_CERRADOS=dias;
+    _nuevo(); _renglon(0, { codigo:'CH1201', cant:1 }); await _esperar(500); out.hay=_caja(0);
+    _renglon(0, { codigo:'CH1220', cant:1 }); await _esperar(500); out.pedir=_caja(0);       // del 140x190 no hay: «mandar a producir»
+    _renglon(0, { desc:'TITANIO ICE', otra:'150x200', cant:1 }); await _esperar(500); out.esp=_caja(0);
+    DIAS_CERRADOS=antes;
+    return out;
+  });
+  chk('📅 con 5 en almacén y los próximos 65 días cerrados: NO dice «DISPONIBLE · podés programar desde mañana»',
+      r.hay && !/DISPONIBLE · podés programar/.test(r.hay.txt), r.hay && [r.hay.cls, r.hay.txt, r.__error]);
+  chk('…dice «✅ HAY EN ALMACÉN · ⚠️ SIN CUPO: no queda ningún turno de entrega libre en los próximos 60 días…», en ámbar',
+      r.hay && /ps-ambar/.test(r.hay.cls) && /✅ HAY EN ALMACÉN · ⚠️ SIN CUPO: no queda ningún turno de entrega libre en los próximos 60 días: consultá con logística/.test(r.hay.txt), r.hay && [r.hay.cls, r.hay.txt]);
+  chk('…y lo mismo cuando hay que mandar a producir (sin «~null días» ni un día cerrado)',
+      r.pedir && /🏭 NO HAY · hay que mandar a producir \(avisá a logística\) · ⚠️ SIN CUPO/.test(r.pedir.txt) && !/null|undefined|NaN/.test(r.pedir.txt), r.pedir && r.pedir.txt);
+  chk('…y en una medida especial', r.esp && /📐 MEDIDA ESPECIAL · se fabrica a pedido · ⚠️ SIN CUPO/.test(r.esp.txt) && !/null|undefined|NaN/.test(r.esp.txt), r.esp && r.esp.txt);
+
   chk('ningún error de JavaScript en la página', errores.length===0, errores.slice(0,5));
   await browser.close();
   console.log('\n'+PASS+' bien · '+FAIL+' mal');

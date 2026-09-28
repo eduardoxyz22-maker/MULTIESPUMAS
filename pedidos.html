@@ -2022,7 +2022,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-26-a';
+var SCRIPT_VERSION_ESPERADA='2026-09-28-a';   // (28/09) `borrado`: no se vuelve a crear un pedido que borraron desde otro equipo
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2060,7 +2060,9 @@ var CLAVE_EQUIPO=''; try{ CLAVE_EQUIPO=localStorage.getItem(LS_CLAVE)||''; }catc
 var SERVER_AUTH='';          // '' todavía no sé · 'abierto' (sin clave configurada) · 'clave'
 var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
-var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1};
+/* 🗑 `borrado` (28/09, .gs 2026-09-28-a): se guardó con sello una fila que ya no está — la borraron desde otro lado. Es un «no»
+   definitivo: reintentarlo no la trae de vuelta, y volver a crearla es un pedido nuevo, a propósito. */
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1};
 /* «El servidor estaba ocupado» NO es un guardado perdido: al no estar en `RECHAZOS_FIRMES`,
    el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
    anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
@@ -2143,7 +2145,31 @@ function apiPost(payload){
       return j;
     });
 }
-function apiList(){ return apiPost({action:'list'}); }
+/* 🗑 (28/09, revisión de Codex) Cada lectura lleva EN QUÉ MOMENTO se pidió (`_pedidaN`, sin viajar ni verse): `mergePending`
+   lo compara con el momento en que el servidor confirmó un guardado de acá (`SAVE_ULTIMO[id].okN`). Pedida después, la
+   planilla ya tiene ese guardado: si no lo trae, lo borraron desde otro equipo. Pedida antes, es una lectura atrasada.
+   ⚠️ Es un CONTADOR que solo sube (`RED_N`), no la hora: con el reloj quieto de las pruebas —o uno que el celular
+   corrige solo— dos momentos distintos podían dar la misma hora y confundir «antes» con «después». */
+var RED_N=0;
+/* ⏱️ (28/09, 2ª revisión) …pero «pedida después» no alcanza para decir «lo borraron»: si Google convierte la lectura en
+   un GET (§4fx), `doGet` contesta de su caché de 20 s (§4du), y un `doGet` que empezó a leer la hoja ANTES de un guardado
+   puede dejar ahí la planilla de antes. Con los servidores 26-a y 28-a esa copia es igual a una lectura buena (misma
+   forma): no hay cómo distinguirla. Un pedido confirmado acá hace menos de `LECTURA_VIEJA_MS` que la lectura no trae
+   NO se da por borrado (se queda en pantalla y se puede corregir); pasado ese tiempo, sí. 45 s = los 20 de la caché +
+   lo que tarda un `doGet` en leer la hoja entera (3-5 s, hasta más con el servidor cargado) + margen.
+   El tiempo se mide con `relojMs` (solo avanza: no lo mueve el celular al corregir la hora). */
+var LECTURA_VIEJA_MS=45000;
+function relojMs(){ try{ if(window.performance && typeof performance.now==='function') return performance.now(); }catch(e){} return Date.now(); }
+function apiList(){
+  var n0=++RED_N, t0=relojMs();
+  return apiPost({action:'list'}).then(function(j){
+    if(j && Array.isArray(j.pedidos)){ try{
+      Object.defineProperty(j.pedidos, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true });
+      Object.defineProperty(j.pedidos, '_pedidaT', { value:t0, enumerable:false, configurable:true, writable:true });
+    }catch(e){} }
+    return j;
+  });
+}
 /* `opts.forzar`: solo cuando quien tiene la clave de administración confirmó mover un
    pedido a un día cerrado o a un turno lleno. El servidor lo respeta; a nadie más. */
 /* ⚠️ UN GUARDADO A LA VEZ POR PEDIDO (§4dq). Cada toque a ✔/✗/IM/MORENO/MULTI mandaba
@@ -2327,6 +2353,7 @@ function aplicarSello(rec, srv){
     if(srv.ocCambiada && srv.oc) o.oc=srv.oc;
   });
   if(srv.rev!=null) SAVE_REV[rec.id]=srv.rev;
+  if(SAVE_ULTIMO[rec.id]){ SAVE_ULTIMO[rec.id].okN=++RED_N; SAVE_ULTIMO[rec.id].okT=relojMs(); }   // (28/09) en qué momento lo confirmó el servidor (ver `apiList`)
   saveMirror(); if(ret) saveRetirosMirror();
   if(srv.ocCambiada) toast('🔢 La OC '+srv.ocCambiada.de+' ya la había usado '+(srv.ocCambiada.con||'otra persona')+' hace un instante: este pedido quedó con la OC '+srv.ocCambiada.a+'.','err',9000);
 }
@@ -2391,7 +2418,7 @@ function rechazoResuelto(id, t0, que){
 function rechazoRecordar(rec, res){
   try{
     var a=rechazosLocales(), _r={ ts:Date.now(), id:String(rec.id||''), cliente:String(rec.cliente||''), error:String(res.error||''), retiro:String(rec.id||'').indexOf('__ret_')===0 };
-    if(res.error==='conflicto' && res.pedido){ var _pe=rechazoPerdido(rec, res.pedido); if(_pe){ _r.perdio=_pe; _r.chofer=String(rec.chofer||'').trim(); } }   // (26/09) para el cartel del chofer, el de ESE chofer
+    if((res.error==='conflicto' && res.pedido) || res.error==='borrado'){ var _pe=rechazoPerdido(rec, res.error==='borrado' ? {} : res.pedido); if(_pe){ _r.perdio=_pe; _r.chofer=String(rec.chofer||'').trim(); } }   // (28/09) de una fila borrada se perdió todo lo de acá   // (26/09) para el cartel del chofer, el de ESE chofer
     a.unshift(_r);
     /* (26/09, revisión de Codex) Lo que se perdió y nadie revisó no se cae por el tope de 20: se guarda
        aparte hasta «Ya lo revisé» (con su propio tope, para no llenar el celular). */
@@ -2458,9 +2485,11 @@ function rechazoFirme(rec, res){
   }else{
     // Una clave de administración que el servidor rechazó no sirve: que la vuelva a pedir.
     if(res.error==='admin' && res.motivo==='clave_mal'){ ADMIN_KEY_LOCAL=''; try{ localStorage.removeItem(LS_ADMIN_KEY); }catch(e){} }
+    if(res.error==='borrado' && !BORRADO_FUERA[String(rec.id)]) BORRADO_FUERA[String(rec.id)]={ t:Date.now(), cliente:String(rec.cliente||'') };   // (28/09) el formulario lo dice así
     var m={cupos_llenos:'el turno '+(res.turno||'')+' del '+fmtFecha(res.fecha)+' está lleno',
            dia_cerrado:'el '+fmtFecha(res.fecha)+' está cerrado',
            oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido'),
+           borrado:(String(rec.id||'').indexOf('__ret_')===0 ? 'ese retiro' : 'ese pedido')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja), y el servidor no lo vuelve a crear. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron',
            admin:(res.motivo==='sin_clave'
              ? 'el servidor no tiene ADMIN_KEY configurada, así que nadie puede forzar un día cerrado o un turno lleno. Reabrí el día desde 🔒 Cerrar día, o configurá ADMIN_KEY en Apps Script'
              : 'la clave de administración no es la del servidor')}[res.error]||res.error;
@@ -7523,7 +7552,9 @@ function submitPedido(){
      `rec` se arma con fotos vacías, sin chofer, sin marcas de stock, sin ATC… y el servidor
      lo escribe tal cual. Se frena antes. El borrador de Kommo es la excepción: nace ahora. */
   if(isEdit && !prev && !_deBorrador){
-    toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
+    /* 🗑 (28/09, revisión de Codex) Si lo borraron desde otro equipo, se dice eso: volver a cargarlo es un pedido NUEVO. */
+    if(BORRADO_FUERA[String(EDIT_ID)]) toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
+    else toast('El pedido que estabas editando ya no está en este dispositivo (se recargó la lista). Volvé a abrirlo desde Mis pedidos y hacé el cambio de nuevo.','err',9000);
     setSubmitting(false); return;
   }
   /* 📍 LA UBICACIÓN NO SE PIERDE EN SILENCIO (25/09). `normalizaUbicacion` devuelve null con lo que
@@ -8158,6 +8189,15 @@ function submitPedido(){
     setSubmitting(true);
     conTope(refrescarEstado(), 4000).then(function(){
       setSubmitting(false);
+      /* 🗑 (28/09, revisión de Codex) Esta misma lectura puede mostrar que el pedido que se edita YA NO ESTÁ: lo borraron desde
+         otro equipo mientras estaba abierto. No se guarda: `guardarYa` lo volvía a poner en pantalla y, con el servidor de
+         antes de 2026-09-28-a, lo CREABA de nuevo en la planilla con la copia de antes. Si la lectura no llegó (4 s), STATE
+         sigue igual y se guarda como siempre. */
+      if(isEdit && !_deBorrador && prev && !findById(prev.id)){
+        if(!BORRADO_FUERA[String(prev.id)]) BORRADO_FUERA[String(prev.id)]={ t:Date.now(), cliente:String(prev.cliente||'') };
+        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
+        return;
+      }
       if(_mirarCierre && diaCerrado(rec.fecha)){
         toast('🔒 El '+fmtFecha(rec.fecha)+' se acaba de CERRAR — administración armó ese camión. Elegí otra fecha de entrega.','err');
         var fx=document.getElementById('f-fecha'); if(fx){ fx.classList.add('err'); fx.focus(); fx.scrollIntoView({block:'center'}); }
@@ -8219,6 +8259,15 @@ function submitPedido(){
          para que lo que se corrija sea sobre lo actual y no pise nada. */
       if(res && res.error==='conflicto'){
         if(borradorDe(rec.id)) completarBorrador(rec.id); else editPedido(rec.id);
+        return;
+      }
+      /* 🗑 (28/09, .gs 2026-09-28-a) Lo borraron desde otro equipo después de que se abrió: el servidor no lo vuelve a crear
+         con la copia de antes. Sale de la pantalla y se dice; cargarlo otra vez es un pedido nuevo. */
+      if(res && res.error==='borrado'){
+        STATE=STATE.filter(function(p){ return p.id!==rec.id; });
+        if(typeof BORRADORES!=='undefined') BORRADORES=BORRADORES.filter(function(b){ return String(b.id)!==String(rec.id); });
+        saveMirror(); updateStats(); if(UNLOCKED) renderAdmin(); renderCupoForm();
+        toast('🗑 Este pedido lo borraron desde otro equipo mientras lo tenías abierto: tu cambio NO se guardó. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron: si fue a propósito, no va de nuevo.','err',12000);
         return;
       }
       /* 🔢 Escribió a mano un N° de OC que ya tiene otro pedido (ROHO, o tipeado). */
@@ -9239,6 +9288,7 @@ function motivoDelServidor(err){
   if(m==='clave') return 'el servidor pide la clave del equipo';
   if(m==='bad json') return 'el servidor no entendió el pedido (bad json)';
   if(m==='actualizar') return 'este panel es más viejo que el servidor y no puede tocar el stock, el arqueo ni borrar. Recargá la página (F5)';
+  if(m==='borrado') return 'ese pedido ya no está en la planilla: lo borraron desde otro equipo (o en la hoja) y el servidor no lo vuelve a crear';
   if(m==='celda_llena') return 'no entra en la planilla: una celda de Google aguanta 50.000 letras y esto las pasa. Quedó en la cola de este dispositivo (no se perdió). Avisá a administración para achicarlo';
   return 'el servidor contestó: '+m.slice(0,80);
 }
@@ -9370,7 +9420,8 @@ function rechazoTxt(err){
   return { conflicto:'lo modificó otra persona antes', dia_cerrado:'el día estaba cerrado', cupos_llenos:'el turno estaba lleno',
            oc_repetida:'el N° de OC ya existía', admin:'faltaba la clave de administración', clave:'faltaba la clave del equipo',
            busy:'el servidor estaba ocupado', actualizar:'página vieja: esa computadora tiene que recargar (F5)',
-           celda_llena:'no entraba en la celda de la planilla (más de 50.000 letras)' }[err] || err;
+           celda_llena:'no entraba en la celda de la planilla (más de 50.000 letras)',
+           borrado:'lo habían borrado desde otro equipo (no se volvió a crear)' }[err] || err;
 }
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
@@ -9589,7 +9640,57 @@ function cleanOC(v){
   if(/^[A-Za-z]{3}\s+[A-Za-z]{3}\s+\d{1,2}\s+\d{4}\b/.test(s)) return '';
   return s;
 }
+/* 🤝 (28/09, revisión de Codex) ¿La copia de ACÁ manda sobre lo que trajo la lectura? Antes bastaba un guardado de hace
+   menos de 90 s (`saveReciente`), y eso tapaba dos cosas que SÍ pasaron en la planilla:
+   · una revisión MÁS NUEVA que guardó otro equipo después (se veía la de acá hasta que vencieran los 90 s);
+   · un BORRADO desde otro equipo: el pedido volvía a la pantalla, y editarlo lo volvía a crear en la planilla.
+   Ahora manda acá solo lo que la planilla todavía NO puede tener:
+   · un guardado en vuelo, esperando turno o en la cola (como siempre);
+   · uno confirmado: si la lectura trae la fila, gana el sello MAYOR (la de acá si la otra es igual o más vieja: lectura
+     atrasada); si no la trae, acá solo si la lectura se PIDIÓ antes de la confirmación (`apiList` → `_pedidaN`). Pedida
+     después, la planilla ya lo tenía y no lo trae: lo borraron desde otro lado.
+   ⏱️ (28/09, 2ª revisión) Salvo que la lectura se haya pedido a menos de `LECTURA_VIEJA_MS` de la confirmación
+   (`_pedidaT` contra `okT`): puede ser la copia de 20 s de `doGet`, de antes del guardado (ver `apiList`). Una lista sin
+   esas marcas (una prueba que llama a `mergePending` directo) cuenta como pedida después de todo y sin copia vieja. */
+/* 🔁 (28/09, revisión de Codex a §18) …y pasada esa ventana, UNA lectura que no lo trae TAMPOCO alcanza: un `doGet` lento
+   (más de ~25 s) deja su copia vieja en la caché más tarde, y la ventana solo corre el límite. La primera ausencia es una
+   SOSPECHA (`u.faltaT`): el pedido se queda en pantalla, sin aviso, y se relee solo `BORRADO_CONFIRMA_MS` después. Recién
+   si una lectura pedida después de eso tampoco lo trae, se da por borrado. Una copia de la caché dura como mucho
+   `GET_CACHE_SEG` (20 s) desde que se escribe, y la que pudo traer la primera lectura se escribió antes de que esa llegara
+   (`faltaT` es cuándo llegó): la segunda ya no puede ser esa. Reduce el falso «lo borraron», no lo hace imposible (dos
+   `doGet` lentos seguidos); la garantía de verdad es que el servidor diga de cuándo es su lectura. */
+var BORRADO_CONFIRMA_MS=25000, BORRADO_CONFIRMA_T=null;
+function borradoConfirmarLuego(){
+  if(BORRADO_CONFIRMA_T) return;
+  BORRADO_CONFIRMA_T=setTimeout(function(){ BORRADO_CONFIRMA_T=null; try{ refrescarEstado(); }catch(e){} }, BORRADO_CONFIRMA_MS+1000);
+}
+function localManda(id, loc, srv, n0, enCola, tPed){
+  if(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (enCola && enCola[id])) return true;
+  var u=SAVE_ULTIMO[id];
+  if(!u || !(Date.now()-u.t<90000)) return false;
+  var revLoc=Math.max(Number(loc && loc.rev)||0, Number(SAVE_REV[id])||0);
+  if(srv){ delete u.faltaT; return (Number(srv.rev)||0)<=revLoc; }                  // la lectura lo trae: no falta nada
+  if(Number(n0)<((u.okN!=null) ? Number(u.okN) : -Infinity)) return true;          // pedida antes: lectura atrasada
+  if(tPed==null) return false;                                                        // lista sin marcas (una prueba): fresca
+  if(u.okT!=null && (Number(tPed)-Number(u.okT))<LECTURA_VIEJA_MS) return true;      // pedida enseguida: puede ser la copia vieja
+  if(u.faltaT==null){ u.faltaT=relojMs(); borradoConfirmarLuego(); return true; }     // la 1ª ausencia: sospecha, se relee sola
+  return (Number(tPed)-Number(u.faltaT))<BORRADO_CONFIRMA_MS;                         // otra lectura, pedida después: borrado
+}
+/* 🗑 (28/09) Lo que la planilla dejó de tener después de un guardado confirmado acá: se avisa UNA vez, y el formulario
+   que lo tenía abierto dice por qué no se puede guardar (`submitPedido`). */
+var BORRADO_FUERA={};
+function borradoFuera(loc){
+  var id=String((loc&&loc.id)||''); if(!id) return;
+  delete SAVE_ULTIMO[id]; delete SAVE_REV[id];
+  if(BORRADO_FUERA[id]) return;
+  BORRADO_FUERA[id]={ t:Date.now(), cliente:String(loc.cliente||'') };
+  try{ toast('🗑 El pedido de '+(loc.cliente||'sin nombre')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja).','err',9000); }catch(e){}
+}
 function mergePending(serverList){
+  /* (28/09) En qué momento se pidió esta lectura (`apiList`). Sin la marca —una prueba que llama directo— cuenta como
+     pedida ahora: después de todo lo ya confirmado. */
+  var t0=(serverList && serverList._pedidaN!=null) ? Number(serverList._pedidaN) : Infinity;
+  var tPed=(serverList && serverList._pedidaT!=null) ? Number(serverList._pedidaT) : null;   // (28/09, 2ª revisión) ver `localManda`
   serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
@@ -9600,9 +9701,10 @@ function mergePending(serverList){
      vuelo, en espera o de hace menos de 90 s, y para los que esperan en la cola, manda la
      copia LOCAL. Cuando el servidor conteste, `aplicarSello` la actualiza. */
   var pendTodos=getPending();
+  var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
   serverList=serverList.map(function(s){
     var id=s&&s.id; if(!id) return s;
-    if(saveReciente(id)){ var local=findById(id); if(local) return local; }
+    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed)) return local; }   // (28/09) una más nueva de la planilla gana
     for(var i=0;i<pendTodos.length;i++) if(pendTodos[i].id===id) return pendTodos[i];
     return s;
   });
@@ -9614,11 +9716,14 @@ function mergePending(serverList){
      cargado desaparecía de la pantalla (y de los cupos) hasta la lectura siguiente, y la vendedora que no lo
      veía lo volvía a cargar. Lo guardado hace menos de 90 s que sigue en ESTE dispositivo se queda; uno que
      se borró o que el servidor rechazó ya no está en STATE (ni en SAVE_ULTIMO) y no vuelve. */
-  var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
   for(var kS in SAVE_ULTIMO){
     if(ids[kS] || enCola[kS] || !saveReciente(kS)) continue;
     var locS=findById(kS);
-    if(locS && !esFilaSistema(locS) && !esBorrador(locS)){ serverList.push(locS); ids[kS]=1; }
+    if(!locS || esFilaSistema(locS) || esBorrador(locS)) continue;
+    /* (28/09, revisión de Codex) …solo si esta lectura salió ANTES de que el servidor lo confirmara. Si salió después y no
+       lo trae, lo borraron desde otro equipo: conservarlo lo volvía a crear en la planilla al editarlo. */
+    if(localManda(kS, locS, null, t0, enCola, tPed)){ serverList.push(locS); ids[kS]=1; }
+    else borradoFuera(locS);
   }
   /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
      solo lo que vino del servidor; un retiro que quedó en la cola (sin señal, sin clave,
@@ -9627,7 +9732,13 @@ function mergePending(serverList){
      ningún lado. Se vuelve a sumar hasta que se mande. */
   var pendRet=pend.filter(esFilaRetiro);
   // …y los retiros con un guardado en vuelo (el list volvió antes que el «ok») también (§4eo)
-  for(var kU in SAVE_ULTIMO){ if(esFilaRetiro(SAVE_ULTIMO[kU].rec) && saveReciente(kU)) pendRet=pendRet.concat([SAVE_ULTIMO[kU].rec]); }
+  /* (28/09) Con la misma regla que los pedidos (`localManda`): un retiro corregido o borrado desde otro equipo no se tapa. */
+  for(var kU in SAVE_ULTIMO){
+    var rU=SAVE_ULTIMO[kU].rec;
+    if(!esFilaRetiro(rU) || !saveReciente(kU)) continue;
+    var sU=null; for(var iR=0;iR<RETIROS.length;iR++){ if(String(RETIROS[iR].id)===String(kU)){ sU=RETIROS[iR]; break; } }
+    if(localManda(kU, rU, sU, t0, enCola, tPed)) pendRet=pendRet.concat([rU]);
+  }
   if(pendRet.length){
     /* 26/09: y si el servidor ya lo tiene, manda la versión de la cola o del guardado en el aire,
        como con los pedidos (arriba). Antes solo se agregaban los que FALTABAN: un retiro corregido
@@ -14704,7 +14815,9 @@ window.addEventListener('resize', function(){
      · ROTACIÓN     → DOS condiciones, y las dos tienen que cumplirse (§4dj): (1) al menos
                       `STOCK_VENTAS_MIN` (3) ENTREGAS distintas —no unidades— en la ventana,
                       y (2) los pedidos de EDUARDO no cuentan (`stockPedidoUnico`): son
-                      puntuales suyos, se cubre lo que vendió y nada más. `baja` (<3
+                      puntuales suyos, se cubre lo que vendió y nada más — SALVO los que le
+                      vende a MULTICENTER, que desde el 28/09 son demanda como los del equipo
+                      (`stockEduardoMulticenter`, mismos umbrales). `baja` (<3
                       entregas del equipo) no estima ningún ritmo — el caso del dueño: 45
                       colchones en UNA venta mayorista no son «3 por día», son un pedido
                       puntual (aviso `unico`; el cartel agrega «· Eduardo» si fue todo
@@ -14773,6 +14886,10 @@ var PRODUCIR_1RA=0.7;         // qué parte del mes tiene que estar hecha para l
      *"el morfeo solo tiene una única entrega y está mandado a pedir, creí que ya teníamos
      bien definido cuándo pedir fabricar"*. → LAS DOS CONDICIONES JUNTAS, que es lo que dijo
      siempre: ≥3 entregas del equipo Y los pedidos de Eduardo afuera. Es la regla de hoy.
+   · 28/09 — el dueño: *"que la proyección de stock incluya las ventas de Eduardo a Multicenter,
+     conservando las demás reglas"*; *"Eduardo → otros clientes: mantener la exclusión"* y
+     *"mantén los umbrales actuales de rotación"* → UNA excepción, `stockEduardoMulticenter`
+     (§4gm): esas ventas cuentan como las del equipo, con este mismo mínimo de entregas.
    Con menos de 3 entregas distintas no se estima ningún ritmo: se cubre lo que está VENDIDO
    Y SIN ENTREGAR (eso es real y hay que tenerlo) y nada más. */
 var STOCK_VENTAS_MIN=3;
@@ -15948,18 +16065,39 @@ function stockEsperado(q, T){
      una persona y una ubicación, no «TIENDA n»);
    · MULTICENTER y CONSIGNACIÓN «no entran en la rotación, son pedidos puntuales».
    Se cubre lo vendido y sin entregar, pero no arman ritmo ni reserva. */
-var STOCK_PUNTUAL=/\bMULTICENTER\b|\bCONSIGNACI/i;
 var STOCK_ROHO_TIENDA=/\bTIENDA\s*\d\b/i;
+/* 🏬 QUIÉN ES MULTICENTER Y QUIÉN ES EDUARDO — una sola definición de cada uno, para que la exclusión y la excepción
+   (abajo) nunca digan cosas distintas del mismo pedido.
+   · MULTICENTER: el pedido no trae un id de cliente (ni Kommo lo manda), así que va por el NOMBRE del cliente, con
+     `normNombre` (sin tildes, sin mayúsculas, espacios de más fuera) y la PALABRA ENTERA «multicenter» — la única forma
+     que aparece en los datos reales (los tableros de ventas de mayo a agosto: «MULTICENTER»). Nunca «multi» a secas:
+     traería a MULTIESPUMAS o a cualquier «multi…». `stockPuntual` usa ESTA misma función.
+   · CONSIGNACIÓN: mercadería dejada en el cliente, no vendida. Manda siempre, también sobre Multicenter. Para los
+     puntuales de siempre es «CONSIGNACI…» (`stockEsConsignacion`, sin cambios); para la excepción de Eduardo a
+     Multicenter alcanza con que PAREZCA consignación (`stockPareceConsignacion`: «CONSIGNADO», «CONSIG.»): ante la duda
+     queda afuera, como estaba antes del 28/09 (2ª revisión).
+   · EDUARDO: la misma prueba de siempre (la palabra «eduardo» en el vendedor, con `normNombre`). */
+var STOCK_MULTICENTER=/\bMULTICENTER\b/i, STOCK_CONSIGNACION=/\bCONSIGNACI/i, STOCK_CONSIG_AMPLIA=/\bCONSIG/i;
+function stockEsMulticenter(p){ return !!p && STOCK_MULTICENTER.test(normNombre(p.cliente||'')); }
+function stockEsConsignacion(p){ return !!p && STOCK_CONSIGNACION.test(normNombre(p.cliente||'')); }
+function stockPareceConsignacion(p){ return !!p && STOCK_CONSIG_AMPLIA.test(normNombre(p.cliente||'')); }
+function stockEsEduardo(p){ return !!p && /(^|\s)EDUARDO(\s|$)/i.test(normNombre(p.vendedor||'')); }
+/* 🏬 (dueño, 28/09) LAS VENTAS DE EDUARDO A MULTICENTER SÍ SON DEMANDA: entran al ritmo de 15 y 30 días y al índice
+   mensual, como las del equipo. Excepción EXPLÍCITA para esa combinación y nada más: Eduardo a otros clientes sigue
+   afuera, Multicenter vendido por otro vendedor sigue siendo un pedido puntual, la consignación sigue afuera y una RPT
+   nunca es venta (se mira primero, en `stockPedidoUnico`). Los umbrales de rotación NO cambian: una compra grande sola
+   es UNA entrega y no arma ritmo (hacen falta `STOCK_VENTAS_MIN` entregas distintas). */
+function stockEduardoMulticenter(p){ return !!p && !esRPT(p.oc) && stockEsEduardo(p) && stockEsMulticenter(p) && !stockPareceConsignacion(p); }
 function stockPuntual(p){
   if(!p) return false;
-  var cli=normNombre(p.cliente||'');
-  if(STOCK_PUNTUAL.test(cli)) return true;
-  return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(cli);
+  if(stockEsMulticenter(p) || stockEsConsignacion(p)) return true;   // las MISMAS definiciones que la excepción (arriba)
+  return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(normNombre(p.cliente||''));
 }
 function stockPedidoUnico(p){
-  if(esRPT(p&&p.oc)) return true;
-  if(stockPuntual(p)) return true;
-  return /(^|\s)EDUARDO(\s|$)/i.test(normNombre((p&&p.vendedor)||''));
+  if(esRPT(p&&p.oc)) return true;               // 1. una reposición de tienda nunca es venta
+  if(stockEduardoMulticenter(p)) return false;  // 2. Eduardo → Multicenter: demanda (dueño, 28/09)
+  if(stockPuntual(p)) return true;              // 3. Multicenter de otro vendedor, consignación, ROHO a tienda
+  return stockEsEduardo(p);                     // 4. las otras ventas de Eduardo
 }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
    «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
@@ -15971,6 +16109,15 @@ function stockUnicoEtq(o){
   var rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt-pun;
   var l=[]; if(edu>0) l.push('Eduardo'); if(rpt>0) l.push('reposición de tienda'); if(pun>0) l.push('pedido puntual');
   return l.length ? l.join(' y ') : 'Eduardo';
+}
+/* …y lo mismo en una frase, para el cartel del aviso `unico` (28/09, 2ª revisión): decía «Lo vendió Eduardo:» también
+   cuando lo único vendido era un Multicenter de otra vendedora, una consignación o ROHO a tienda. */
+function stockUnicoQuien(o){
+  var u=(o&&o.vendidosUnicos)||0, rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=u-rpt-pun;
+  if(rpt>=u) return 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.';
+  if(edu>0 && !pun && !rpt) return 'Lo vendió Eduardo:';
+  if(pun>0 && !(edu>0) && !rpt) return 'Fue un pedido puntual (Multicenter de otro vendedor, consignación o ROHO a tienda):';
+  return 'Lo vendido fue pedido único ('+stockUnicoEtq(o)+'):';
 }
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
@@ -15989,7 +16136,7 @@ function stockData(extra){
   var g={};
   var grupo=function(k){
     if(!g[k]){ var pa=k.split('|'); g[k]={ k:k, desc:pa[0]||k, medida:pa[1]||'', cod:'', nativo:false, cat:false, otros:[],
-      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
+      vendidos:0, vendidosRotacion:0, vendidosUnicos:0, vendidosRpt:0, vendidosPunt:0, vendidosEduMc:0, v30EduMc:0, nVentas:0, nVentasRotacion:0, ventasRotacion:{}, ventas:{}, sem:[0,0,0], comp:0, compPor:{}, compPronto:0, atrasados:0, aFab:0, noHay:0, noHayF:'', noHayViejo:0,
       v30:0, n30:0, ventas30:{},
       salidas:0, confirmadoAqui:0, enCamino:0, pedidos:[], fabUlt:{f:'',fab:''}, enOtros:0, otrosAlm:{},
       enSale:0, salePor:{}, salSale:{}, confSale:{},        // (26/09) los depósitos de salida (Banzer), aparte
@@ -16022,12 +16169,13 @@ function stockData(extra){
         o.vendidos+=c;
         if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
+          if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
           if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
 
         if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
       }
-      /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo, sin Eduardo
-         ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
+      /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo + Eduardo a Multicenter (28/09), sin sus
+         otras ventas, puntuales ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
          se piensa por mes, no por quincena. */
       /* Por FECHA DE VENTA (§4dv): lo que se vendió a fin de mes para entregar el mes que
          viene se vendió este mes. El sistema de facturación lo cuenta así, y el plan del
@@ -16035,6 +16183,7 @@ function stockData(extra){
       var fv=contaFecha(p)||fs;
       if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
         o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
+        if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
       // ✗ no hay en un pedido sin entregar: se vendió y no había. Se mira aunque la fecha
@@ -16113,6 +16262,9 @@ function stockData(extra){
             en UNA entrega) marcado «🚨 PEDIR YA · pedí 8».
          2. LOS PEDIDOS DE EDUARDO NO CUENTAN (`stockPedidoUnico` → `vendidosUnicos`): son
             puntuales suyos. Se cubre lo que él vendió y sin entregar, nada más.
+            🏬 SALVO LOS DE EDUARDO A MULTICENTER (dueño, 28/09): esos sí son demanda y entran acá como una
+            entrega más (`stockEduardoMulticenter`; `vendidosEduMc` dice cuántas unidades son). Con los MISMOS
+            umbrales: una compra grande sola de Multicenter es una entrega y no arma ritmo.
        `vendidosRotacion`/`nVentasRotacion`/`sem` son solo del equipo. `porDiaReal` es la
        cuenta cruda del equipo (se muestra); `porDia` es la que usan la proyección y el
        «cuánto pedir», y vale CERO con rotación `baja`. `porDiaTodo` cuenta todo lo que salió
@@ -16594,7 +16746,16 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
   v.libres=v.alm-v.pend;                      // puede dar negativo: hay más vendido que lo que hay
   var disp='';
   if(mano-v.pend>=cant){ v.tipo='hay'; v.color='verde'; disp=hoy; }
-  else if(v.libres>=cant){ v.tipo='moreno'; v.color='ambar'; disp=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA); }
+  else if(v.libres>=cant){
+    /* 🚚 (28/09, revisión de Codex) Lo que no está a mano llega en fechas DISTINTAS: lo que sigue en Moreno se trae en
+       `STOCK_DIAS_RECOGIDA`, pero lo que ya va en una recogida PROGRAMADA llega el día de esa recogida (el que eligió
+       logística). Antes todo era «se trae en 1 día»: con la recogida para el 05/10, el 23/09 decía «programá desde el
+       viernes 25». Se consume por fecha: primero lo ya vendido (`pend`), después este pedido. */
+    var ent=saldoEntradas(v, o, hoy), need=v.pend+cant-mano, cum=0, e=null;
+    for(var j=0;j<ent.length;j++){ cum+=ent[j].u; if(cum>=need-1e-9){ e=ent[j]; break; } }
+    if(e && e.rec){ v.tipo='recogida'; v.color='ambar'; v.llega=e.llega; v.atrasada=e.atrasada; v.recDe=e.de; disp=e.disp; }
+    else { v.tipo='moreno'; v.color='ambar'; disp=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA); }
+  }
   else {
     v.sinLibre=true;
     /* Lo que viene de fábrica cubre primero lo que ya está vendido (lo que falta), y recién después este pedido. */
@@ -16607,13 +16768,40 @@ function saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo){
   v.faltan=(v.libres<cant) ? (cant-v.libres) : 0;
   if(disp){
     var min=(v.tipo==='hay') ? proximoDiaEntrega() : saldoMax(proximoDiaEntrega(), stockSumarDias(disp,1));
-    var c=saldoDiaConCupo(min, idEditado);
-    v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+    saldoPonerDia(v, min, idEditado);
     if(v.tipo!=='hay' && fechaElegida && fechaElegida<min) v.fechaCorta=fechaElegida;
   }
   return v;
 }
-/* El primer día desde `desde` con algún turno libre: las MISMAS reglas que el formulario y el portero del servidor. */
+/* 🚚 (28/09) Lo que NO está a mano, por el día en que llega a fábrica: lo que sigue en Moreno (se trae en
+   `STOCK_DIAS_RECOGIDA`) y cada recogida programada con SU fecha (`llega` = la que eligió logística). `enRecogida` se
+   reparte entre las recogidas pendientes por fecha, sin pasarse de lo que trae cada una: el total es el MISMO de antes
+   y nada se cuenta dos veces. Lo que sobre (una recogida sin fecha a la vista) va como lo de Moreno. */
+function saldoEntradas(v, o, hoy){
+  var out=[], traer=stockSumarDias(hoy, STOCK_DIAS_RECOGIDA), queda=Number(v.recogida)||0;
+  if(v.moreno>0) out.push({ u:v.moreno, disp:traer });
+  (o.pedidos||[]).filter(function(q){ return q && q.tipo==='recogida' && Number(q.u)>0; })
+    .sort(function(a,b){ var x=String(a.llega||''), y=String(b.llega||''); return x<y ? -1 : (x>y ? 1 : 0); })
+    .forEach(function(q){
+      var u=Math.min(Number(q.u)||0, queda); if(!(u>0)) return;
+      queda-=u;
+      var ll=String(q.llega||'')||traer;
+      out.push({ u:u, rec:true, llega:ll, atrasada:(ll<hoy), disp:saldoMax(ll, hoy), de:q.de||'' });
+    });
+  if(queda>0) out.push({ u:queda, disp:traer });
+  return out.sort(function(a,b){ return a.disp<b.disp ? -1 : (a.disp>b.disp ? 1 : 0); });
+}
+/* 📅 El día que se promete y cuánto espera el cliente. (28/09, revisión de Codex) Si en `SALDO_DIAS_CUPO` días no hay
+   ningún turno libre, NO se promete ninguno (`sinCupo`): antes se devolvía el primer día igual, cerrado o lleno, y el
+   cuadrito decía «podés programar desde mañana» con mañana cerrado. */
+function saldoPonerDia(v, min, sinId){
+  var c=saldoDiaConCupo(min, sinId);
+  v.minimo=min; v.desde=c.f; v.turnos=c.turnos;
+  if(c.sinCupo){ v.sinCupo=true; v.espera=null; if(v.color==='verde') v.color='ambar'; }   // «hay» sin día para entregar no es verde
+  else v.espera=Math.max(1, stockDias(todayStr(), c.f));
+}
+/* El primer día desde `desde` con algún turno libre: las MISMAS reglas que el formulario y el portero del servidor.
+   Sin ninguno en `SALDO_DIAS_CUPO` días: `{ f:'', sinCupo:true }` — nunca un día cerrado o lleno como si sirviera. */
 function saldoDiaConCupo(desde, sinId){
   var yo=sinId ? findById(sinId) : null, f=desde;
   for(var i=0;i<SALDO_DIAS_CUPO;i++, f=stockSumarDias(f,1)){
@@ -16626,7 +16814,7 @@ function saldoDiaConCupo(desde, sinId){
     });
     if(t.length) return { f:f, turnos:t };
   }
-  return { f:desde, turnos:[] };
+  return { f:'', turnos:[], sinCupo:true };
 }
 /* El veredicto de UN renglón (rev8): 📐 · 🏷️ · 🏭 no salen del saldo del almacén; lo demás, `saldoVeredicto`. */
 function saldoVeredictoFila(f, sinId, fecha){
@@ -16663,8 +16851,7 @@ function saldoVeredictoEspecial(f, sinId, fecha){
   var hoy=todayStr(), v={ k:f.k, cant:f.total, tipo:'especial', color:'azul', sinLibre:true, sinId:sinId||'', cod:f.codOtro||null, x:f.x };
   v.lead=saldoLeadModelo(f.x, sinId);
   var min=saldoMax(proximoDiaEntrega(), stockSumarDias(hoy, v.lead+1));
-  var c=saldoDiaConCupo(min, sinId);
-  v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+  saldoPonerDia(v, min, sinId);                // (28/09) sin cupo en 60 días no promete ninguno
   if(fecha && fecha<min) v.fechaCorta=fecha;
   return v;
 }
@@ -16681,8 +16868,7 @@ function saldoVeredictoFab(f, sinId, fecha){
     min=saldoMax(proximoDiaEntrega(), stockSumarDias(saldoMax(v.llega, hoy), 1));
   }
   if(min){
-    var c=saldoDiaConCupo(min, sinId);
-    v.minimo=min; v.desde=c.f; v.turnos=c.turnos; v.espera=Math.max(1, stockDias(hoy, c.f));
+    saldoPonerDia(v, min, sinId);
     if(!v.yaLlego && fecha && fecha<min) v.fechaCorta=fecha;
   }
   return v;
@@ -16690,14 +16876,19 @@ function saldoVeredictoFab(f, sinId, fecha){
 
 /* ---- Los textos ---- */
 function saldoDiaTxt(iso){ return SALDO_DIA_SEM[dowDe(iso)]+' '+fmtFechaCorta(iso); }
+/* (28/09) Sin ningún turno libre en `SALDO_DIAS_CUPO` días no se promete un día: se dice eso. */
+function saldoSinCupoTxt(){ return 'no queda ningún turno de entrega libre en los próximos '+SALDO_DIAS_CUPO+' días: consultá con logística antes de prometer una fecha'; }
 function saldoDesdeTxt(v){
+  if(v && v.sinCupo) return 'cuando haya cupo ('+saldoSinCupoTxt()+')';
   if(!v || !v.desde) return '';
   var t=(v.desde===tomorrowStr()) ? ('desde mañana, '+saldoDiaTxt(v.desde)) : ('desde el '+saldoDiaTxt(v.desde));
   var tu=v.turnos||[];
   if(tu.length===1) t+=diaSabado(v.desde) ? ' (sábado: solo AM)' : (' (solo queda turno '+tu[0]+')');
   return t;
 }
-function saldoDiasTxt(n){ return '~'+n+' día'+(n===1?'':'s'); }
+function saldoDiasTxt(n){ return (n==null) ? ('hasta que haya cupo ('+saldoSinCupoTxt()+')') : ('~'+n+' día'+(n===1?'':'s')); }
+/* 🚚 De qué almacén viene la recogida («MORENO» si es IM, o el nombre corto del otro). */
+function saldoRecDeTxt(v){ return (recogerCanon(v&&v.recDe) ? stockAlmCorto(v.recDe) : 'Moreno').toUpperCase(); }
 function saldoNombre(x){ return String((x&&x.desc)||'').trim()+((x&&x.medida)?(' '+x.medida):''); }
 function saldoCodNombre(c){ return String((c&&c.d)||'')+((c&&c.m)?(' '+c.m):''); }
 /* 🏷️ Cuál sería el código bueno (o que no hay), para el renglón con el código de otro. */
@@ -16713,16 +16904,22 @@ function saldoCodEspecialTxt(c){
 function saldoTitulo(v){
   var dc=v.descont ? (' · ya no se fabrica: quedan '+stockUnid(Math.max(0,v.libres))) : '';
   var trae=STOCK_DIAS_RECOGIDA+' día'+(STOCK_DIAS_RECOGIDA===1?'':'s');
+  var sc=' · ⚠️ SIN CUPO: '+saldoSinCupoTxt();       // (28/09) ningún turno libre en 60 días: no se promete un día
   switch(v.tipo){
-    case 'hay':    return '✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc;
-    case 'moreno': return '📥 HAY EN MORENO · se trae en '+trae+': programá '+saldoDesdeTxt(v)+dc;
+    case 'hay':    return v.sinCupo ? ('✅ HAY EN ALMACÉN'+dc+sc) : ('✅ DISPONIBLE · podés programar '+saldoDesdeTxt(v)+dc);
+    case 'moreno': return '📥 HAY EN MORENO · se trae en '+trae+(v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)))+dc;
+    /* 🚚 (28/09, revisión de Codex) Lo que ya va en una recogida programada llega el día que eligió logística, no «en 1 día».
+       Si se puede adelantar, lo confirma logística: no se promete. */
+    case 'recogida': return v.atrasada
+      ? ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · la recogida era para el '+saldoDiaTxt(v.llega)+' y todavía no llegó: confirmala con logística'+(v.sinCupo ? sc : (' · programá '+saldoDesdeTxt(v)))+dc)
+      : ('🚚 VIENE DE '+saldoRecDeTxt(v)+' · logística lo trae el '+saldoDiaTxt(v.llega)+(v.sinCupo ? sc : (': programá '+saldoDesdeTxt(v)+' (si logística la puede adelantar, que te lo confirme)'))+dc);
     /* ⏳ y 🏭 no repiten el día: si la fecha elegida es antes de lo posible, la línea roja de abajo lo dice («programá desde…»). */
-    case 'prod':   return '⏳ EN PRODUCCIÓN · decile al cliente que espere '+saldoDiasTxt(v.espera)+' (llega el '+fmtFechaCorta(v.llega)+')'+
+    case 'prod':   return '⏳ EN PRODUCCIÓN · '+(v.sinCupo ? ('llega el '+fmtFechaCorta(v.llega)+sc) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+' (llega el '+fmtFechaCorta(v.llega)+')'))+
                           (v.atrasada ? ' — la llegada está atrasada: confirmala con logística' : '');
-    case 'pedir':  return '🏭 NO HAY · decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)';
+    case 'pedir':  return '🏭 NO HAY · '+(v.sinCupo ? ('hay que mandar a producir (avisá a logística)'+sc) : ('decile al cliente que espere '+saldoDiasTxt(v.espera)+': hay que mandar a producir (avisá a logística)'));
     case 'nofab':  return '🛑 YA NO SE FABRICA · '+(v.libres>0 ? ('quedan '+stockUnid(v.libres)+' y el pedido lleva '+v.cant) : 'no queda ninguno')+': no se puede vender, ofrecé otro modelo';
     /* (rev8) Los tres que no salen del saldo del almacén. */
-    case 'especial': return '📐 MEDIDA ESPECIAL · se fabrica a pedido: decile al cliente que espere '+saldoDiasTxt(v.espera);
+    case 'especial': return '📐 MEDIDA ESPECIAL · se fabrica a pedido'+(v.sinCupo ? sc : (': decile al cliente que espere '+saldoDiasTxt(v.espera)));
     case 'codigo':   return '⚠️ EL CÓDIGO ES DE '+(v.cod.por==='medida' ? 'OTRA MEDIDA' : 'OTRO PRODUCTO')+' · '+v.cod.code+' es '+saldoCodNombre(v.cod)+
                             ': corregí el código o '+(v.cod.por==='medida' ? 'la medida' : 'el producto')+' para ver el saldo';
     case 'fabcli':   return v.yaLlego
@@ -17078,9 +17275,11 @@ function abrirStockPedidos(k){
   if(stockCariocaDescontinuado(k)) html+='<p style="padding:12px;background:#fff4d6;color:#7c4b00"><b>Descontinuado · solo saldos de almacén.</b> Línea de reemplazo: Essential, Confort Plus y Premier Deluxe. Confirmar modelo y medida con ventas; no se sustituyen automáticamente los pedidos.</p>';
   if(o) html+=stockSaldoDetalleHtml(o);
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
-  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
+  if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
-    '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
+    /* (28/09, 2ª revisión) Sin pedidos únicos no se dice nada: decía «0 de eduardo, excluidas» al lado de «incluye 6 de
+       Eduardo a Multicenter». Y «Eduardo» va con mayúscula. */
+    (o.vendidosUnicos ? ('; '+stockUnid(o.vendidosUnicos)+' de '+stockUnicoEtq(o)+', excluidas de la reserva') : '')+'. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length && !grupos.atrasados.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
   [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar · también consumen depósito (entran en «Comprometido»)'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
@@ -17191,7 +17390,7 @@ function renderStock(){
     /* Solo la CONSECUENCIA (§4dc): el dato («15 en 15 días · 1 entrega») ya está dos líneas
        más arriba, en la misma fila. Y de quién es, si es de Eduardo (§4dj). */
     if(o.aviso==='unico') return chico(stockSoloEduardo(o)
-      ? ((o.vendidosRpt>=o.vendidosUnicos ? 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.' : 'Lo vendió Eduardo:')+' se cubre lo comprometido, sin reserva por las dudas.')
+      ? (stockUnicoQuien(o)+' se cubre lo comprometido, sin reserva por las dudas.')
       : 'Es un pedido puntual, no una venta que se repita: no se repone por las dudas. Si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
     if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(stockHaySalir(o)||0)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
@@ -17218,7 +17417,9 @@ function renderStock(){
         '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
           '<br><span style="color:var(--muted);font-size:.92em">'+o.vendidos+' en '+STOCK_VENTANA+' días'+
           (o.nVentas?(' · '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')):'')+
-          (o.vendidosUnicos?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')+
+          ((o.vendidosUnicos||o.vendidosEduMc)?('<br>Equipo: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+
+            (o.vendidosEduMc?(' (incluye '+o.vendidosEduMc+' de Eduardo a Multicenter)'):'')+   // 🏬 (28/09)
+            (o.vendidosUnicos?(' · '+stockUnicoEtq(o)+': '+o.vendidosUnicos+' (no cuentan para la reserva)'):'')):'')+
           (o.rota&&o.vendidos>=STOCK_VENTA_MIN?(' · '+stockVentaTxt(o)):'')+
           ('<br><b style="color:#7c4b00">'+(o.rotacion==='baja'?(stockSoloEduardo(o)?(stockUnicoEtq(o)+': pedido único'):'Poca rotación: solo pedidos confirmados'):o.rotacion==='media'?'Rotación media: reserva de 3 días':'Rotación alta: reserva de 7 días')+'</b>')+
           '</span></td>'+
@@ -17364,7 +17565,7 @@ function copiarStock(){
          (o.enSale?(' + '+stockSaleTxt(o)):'')+       // (26/09) Banzer
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
-         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día')
+         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':''))
                  : (stockSoloEduardo(o) ? (', '+stockUnicoEtq(o)+': pedido único')
                     : o.vendidosRotacion>0 ? (', pedido puntual — '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s'))
                                            : ', es para un pedido puntual'))+
@@ -17390,7 +17591,7 @@ function copiarStock(){
      · *"separado sueña y heaven porque heaven se produce en IM y sueña en fábrica
        productos terminados"* → un bloque por fábrica. Y *"descartando las ventas puntuales,
        como las mías"* → la MISMA regla de rotación de siempre (§4dj): equipo, sin Eduardo
-       ni reposiciones, 3+ entregas.
+       ni reposiciones, 3+ entregas. (28/09, §4gm: + las ventas de Eduardo A MULTICENTER.)
    Y la cuenta del mes con sus palabras: *"si en septiembre se vendieron 70 soft, en
    octubre necesitaríamos el 70% por lo menos para la primera quincena"*: el mes que viene
    entero al ritmo de los últimos 30 días, menos lo que va a quedar el día 1, y de eso el
@@ -17499,7 +17700,8 @@ function ventasPanelIndex(){
   var idx={}, desde='2026-08';
   STATE.forEach(function(p){
     /* ⚠️ Sin los pedidos únicos (§4ev): Eduardo, MULTICENTER/consignación, ROHO a tienda y
-       las reposiciones. Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
+       las reposiciones — 🏬 salvo Eduardo a Multicenter, que desde el 28/09 SÍ entra (`stockEduardoMulticenter`,
+       la misma excepción que el ritmo de 15 y 30 días). Es la regla del dueño de §4dj y lo que dice el cartel del cuadro;
        con una venta única de 40 de Eduardo en agosto, «producir en octubre» subía de 9 a 24
        por las estimaciones de 60 d / 90 d / tendencia, con el mismo ritmo de 30 días. */
     if(!stockCuenta(p) || stockPedidoUnico(p)) return;
@@ -17518,7 +17720,7 @@ function mesNombreCorto(ym){ return MESES_ES[+ym.slice(5,7)-1].slice(0,3)+'-'+ym
 /* 🎯 EL RANGO DEL PLAN DEL MES (§4du, dueño 11/09: «rango en vez de un número; producir
    sobre el probable, nunca sobre el máximo»). Varias estimaciones de lo que se va a vender
    el mes que viene, cada una con su historia:
-     · 30 d  → el ritmo del equipo de los últimos 30 días (lo que ya usaba el plan);
+     · 30 d  → el ritmo del equipo (+ Eduardo a Multicenter, 28/09) de los últimos 30 días (lo que ya usaba el plan);
      · 60 d / 90 d → el promedio de los últimos 2 y 3 meses cerrados (histórico + panel);
      · año pasado → el mismo mes del año anterior, tal cual;
      · tendencia → el año pasado, corregido por cómo viene este mes contra el mismo del año anterior.
@@ -17529,7 +17731,7 @@ function stockRangoMes(o, MS, PI){
   var H=ventasHistIndex()[o.k]||{}, P=(PI||ventasPanelIndex())[o.k]||{};   // PI: el resumen armado una vez por plan (§4ec)
   var de=function(ym){ return (P[ym]!=null) ? P[ym] : (H[ym]||0); };
   var est=[];
-  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo, últimos 30 días'});
+  if(o.porDiaMes>0) est.push({n:'30 d', v:o.porDiaMes*MS.dias, t:'ritmo del equipo + Eduardo a Multicenter, últimos 30 días'});
   var m1=mesRestar(actual,1), m2=mesRestar(actual,2), m3=mesRestar(actual,3);
   var hay1=(P[m1]!=null||H[m1]!=null), hay2=(P[m2]!=null||H[m2]!=null), hay3=(P[m3]!=null||H[m3]!=null);
   var f=MS.dias/30.4;
@@ -17640,7 +17842,8 @@ function renderProducir(d){
       '<span style="font-size:.78rem;color:var(--muted)">'+conAlgo+' producto'+(conAlgo===1?'':'s')+' con algo que producir · '+R.cubiertos+' cubierto'+(R.cubiertos===1?'':'s')+(R.sinContar?(' · '+R.sinContar+' sin contar'):'')+'</span>'+
       '<button class="btn btn-ghost btn-sm" style="margin-left:auto;padding:2px 8px;font-size:.72rem" onclick="producirVerTodo()">'+(PRODUCIR_VER_TODO?'Ver solo lo que hay que producir':'Ver también los cubiertos')+'</button>'+
     '</div>'+
-    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: ritmo del equipo, sin Eduardo, pedidos puntuales ni reposiciones de tienda; productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
+    '<div style="font-size:.8rem;color:var(--muted);margin-bottom:10px;line-height:1.45">Sale de los pedidos del panel: <b>ventas del equipo + ventas de Eduardo a Multicenter</b>; sin otras ventas puntuales (las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda) ni reposiciones de tienda (RPT). Productos con '+STOCK_VENTAS_MIN+'+ entregas, algo vendido sin entregar, o ventas el mismo mes del año pasado. '+
+      'Los meses de antes de agosto 2026 salen del sistema de ventas, que no dice vendedor ni cliente: ahí están <b>todas</b> las ventas. '+
       '<b>Hay</b> suma lo de acá, lo de los otros almacenes y lo en camino. <b>7 días</b> es lo mismo que 🚨 PEDIR YA / 🏭 Pedir esta semana de la tabla de abajo; <b>15 días</b> lo incluye. '+
       '<b>'+esc(MS.nombre)+'</b> es un <b>rango</b>: lo que dan los últimos 30, 60 y 90 días, el mismo mes del año pasado y la tendencia de este mes contra el anterior. Se produce sobre el <b>probable</b> (la mediana), nunca sobre el máximo; el mínimo y el máximo van entre paréntesis para saber cuánto puede moverse. Se descuenta lo que va a quedar el '+fmtFechaCorta(MS.ini)+'; el '+Math.round(PRODUCIR_1RA*100)+'% tiene que estar hecho para la 1ª quincena. '+
       'En el pie de cada bloque, <b>tocá una medida</b> para ver qué modelos la componen.</div>';
@@ -17671,7 +17874,7 @@ function renderProducir(d){
           '<td><b>'+esc(stockNombre(o))+'</b>'+(o.cod?('<br><span style="color:var(--muted);font-size:.9em">cód '+esc(o.cod)+'</span>'):'')+
             (b.por==='fabrica'?('<br><span style="color:#7c4b00;font-size:.8em">acá por la última vez que se pidió a '+esc(b.fab)+'</span>'):(B.k==='otros'&&b.marca==='roho'?'<br><span style="color:#7c4b00;font-size:.8em">línea que vende ROHO</span>':''))+'</td>'+
           '<td>'+(o.porDia>0?('<b>'+stockNum(o.porDia)+'</b>'):'<span style="color:var(--muted)">—</span>')+
-            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
+            '<br><span style="color:var(--muted);font-size:.88em">'+STOCK_VENTANA+' d: '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s')+(o.vendidosEduMc?(' · '+o.vendidosEduMc+' de Eduardo a Multicenter'):'')+'<br>'+STOCK_VENTANA_MES+' d: '+o.v30+' en '+o.n30+' entrega'+(o.n30===1?'':'s')+(o.v30EduMc?(' · '+o.v30EduMc+' de Eduardo a Multicenter'):'')+(o.porDiaMes>0?(' · '+stockNum(o.porDiaMes)+'/día'):' · sin ritmo')+'</span></td>'+
           '<td><b>'+stockUnid(f.hay)+'</b><br><span style="color:var(--muted);font-size:.88em">'+stockUnid(Math.max(0,o.deposito||0))+' acá'+(o.enSale?(' · '+stockUnid(o.enSale)+' '+esc(saleAlmTxt(o))):'')+(o.enOtros?(' · '+stockUnid(o.enOtros)+' Moreno'):'')+(o.enCamino?(' · '+stockUnid(o.enCamino)+' en camino'):'')+(o.comp?('<br>'+stockUnid(o.comp)+' vendidos sin entregar'):'')+'</span></td>'+
           '<td>'+producirCubreTxt(f)+'</td>'+
           '<td>'+num(f.sem,true)+'</td>'+
@@ -17807,10 +18010,13 @@ function copiarProducir(k, h){
     t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+f[col]+
        (col==='mes'?(' — 1ª quincena '+f.mes1+' · 2ª quincena '+f.mes2):'')+
        ' — hay '+stockUnid(f.hay)+(o.comp?(', '+stockUnid(o.comp)+' vendidos sin entregar'):'')+
-       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'):(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'):''))+'\n';
+       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'+(o.v30EduMc?(' ('+o.v30EduMc+' de Eduardo a Multicenter)'):''))
+                                    :(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':'')):''))+'\n';
   });
   t+='\nTotal: '+tot+(tot===1?' unidad':' unidades')+' · por medida: '+Object.keys(porMed).sort().map(function(m){ return m+' '+porMed[m]; }).join(' · ');
-  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Cuenta con lo vendido en los últimos '+STOCK_VENTANA_MES+' días, sin pedidos puntuales.';
+  /* (28/09, 2ª revisión) Decía «cuenta con lo vendido en los últimos 30 días, sin pedidos puntuales»: el número es lo
+     PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
+  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Es lo probable entre los últimos '+STOCK_VENTANA_MES+', 60 y 90 días, el mismo mes del año pasado y la tendencia: ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda.';
   else t+='\nCubre lo vendido sin entregar y lo que tarda la fábrica + margen + '+(col==='sem'?'la semana':(PRODUCIR_QUINCENA+' días'))+' de venta, menos lo que hay acá, en Moreno y en camino.';
   copyText(t);
   toast('Copiado: producir para '+etq+' ✓','ok');

@@ -197,7 +197,9 @@ const BASE = `
   }
 
   // ═══ 3. El plan del mes sin Eduardo ni pedidos puntuales ═══════════════════════
-  console.log('\n── 3. «Qué producir» no cuenta a Eduardo ni a los pedidos puntuales ──');
+  /* (28/09, §4gm) El dueño pidió que las ventas de Eduardo A MULTICENTER sí entren: `conEdu` pasó a Eduardo → otro
+     cliente (sigue afuera) y `conEduMc` es la excepción, que ahora SÍ suma al índice del mes. Lo demás, igual. */
+  console.log('\n── 3. «Qué producir» no cuenta a Eduardo (salvo a Multicenter) ni a los pedidos puntuales ──');
   {
     const page = await nueva();
     const r = await page.evaluate((base) => {
@@ -215,17 +217,23 @@ const BASE = `
         return { mes:f&&f.mes, mesNec:f&&f.mesNec, est:f&&f.rango?f.rango.est.map(function(e){ return e.n+'='+Math.round(e.v*10)/10; }):null, v30:o.v30, porDiaMes:o.porDiaMes, idx:(ventasPanelIndex()[K]||{})['2026-08']||0 };
       };
       var sin=armar([]);
-      var conEdu=armar([ window._P({id:'edu', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'MULTICENTER', productos:H(40)}) ]);
+      var conEdu=armar([ window._P({id:'edu', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'CLIENTE MAYORISTA', productos:H(40)}) ]);
+      var conEduMc=armar([ window._P({id:'edumc', fecha:'2026-08-20', ts:ago, vendedor:'Eduardo Añez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conPunt=armar([ window._P({id:'mc', fecha:'2026-08-20', ts:ago, vendedor:'Carola Chavez', cliente:'MULTICENTER', productos:H(40)}) ]);
       var conRpt=armar([ window._P({id:'rpt', fecha:'2026-08-20', ts:ago, oc:'RPT 08-001', cliente:'Charcas', productos:H(40)}) ]);
       abrirStock(); var el=document.getElementById('producir'); var cabecera=el?el.textContent.replace(/\s+/g,' '):''; closeStock();
-      return { sin:sin, conEdu:conEdu, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,420) };
+      return { sin:sin, conEdu:conEdu, conEduMc:conEduMc, conPunt:conPunt, conRpt:conRpt, cabecera:cabecera.slice(0,520) };
     }, BASE);
     chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6 && r.sin.mes>0, J(r.sin));
-    chk('⚠️ una venta única de 40 de EDUARDO en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo: '+J(r.conEdu));
-    chk('…ni un pedido PUNTUAL (MULTICENTER) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
+    chk('⚠️ una venta única de 40 de EDUARDO a otro cliente en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo: '+J(r.conEdu));
+    /* Números exactos: una compra única de 40 en agosto lleva octubre de 9 a 24 (60 d 8,7 → 29,1 · 90 d 12,2 → 25,8, y la
+       mediana salta a la tendencia). Por eso el dueño NO carga al panel las compras grandes y sueltas (§4gm). */
+    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40) y al plan del mes (octubre 9 → 24), pero no al ritmo de 30 días (es de antes de la ventana)',
+        r.conEduMc.idx===46 && r.sin.mesNec===9 && r.conEduMc.mesNec===24 && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
+    chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
-    chk('la cabecera del cuadro dice la verdad: sin Eduardo, puntuales ni reposiciones, y qué productos entran', /sin Eduardo, pedidos puntuales ni reposiciones/.test(r.cabecera) && /mismo mes del año pasado/.test(r.cabecera), r.cabecera.slice(0,240));
+    chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',
+        /ventas del equipo \+ ventas de Eduardo a Multicenter/.test(r.cabecera) && /sin otras ventas puntuales/.test(r.cabecera) && /reposiciones de tienda \(RPT\)/.test(r.cabecera) && /mismo mes del año pasado/.test(r.cabecera), r.cabecera.slice(0,320));
     await page.close();
   }
 
