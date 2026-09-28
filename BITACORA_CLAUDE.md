@@ -7514,6 +7514,9 @@ o con `STOCK_DIAS_FABRICA`=3.
 - `test_rev8_saldo`: nueve comprobaciones pasaron a las 48 h. La de «📐 los ~X días son los de ESE modelo» ahora dice lo
   contrario, a propósito.
 
+**Batería sobre `e825f51`: 112 suites, 4.236 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+En la rama, junto con §4gq y §4gr, esperando el OK del dueño para publicar.
+
 ## 4gr. 28/09, tarde: «↩️ Era un pago de la venta» — un recargo por entrega que era un pago — EN LA RAMA, SIN PUBLICAR
 
 **El pedido del dueño.** Primero preguntó *«¿cómo registra múltiples pagos en diferentes fechas un vendedor si ahí dice
