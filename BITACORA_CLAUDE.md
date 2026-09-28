@@ -7445,6 +7445,37 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gp. 28/09, tarde: el dueño instala el servidor 2026-09-28-a
+
+- **15:16 — el pedido.** *«pasame para instalarla»*, con una captura de 🔒 Cerrar día: «El candado está en el servidor
+  (versión 2026-09-26-a)», sin línea gris. Era una pestaña abierta antes de las 15:02: la página `2040720` esperaba la
+  26-a y con esa versión no dibuja nada. Con la página nueva (F5) aparece la línea gris «está 2026-09-26-a, la última
+  es 2026-09-28-a».
+- **Lo que se verificó antes de mandarle los pasos:**
+  - el `.gs` 28-a cambia 18 líneas contra la 26-a: el `borrado` de `doSave`, `filaFijaSistema_`, `borrado` en
+    `RECHAZOS_REGISTRAR` y las versiones;
+  - `test_servidor.js` da 276/276, con §13 (el archivo de agosto no choca con ningún nombre);
+  - una página `2040720` sin F5 deja el `borrado` en la cola (no está en sus `RECHAZOS_FIRMES`) y lo reintenta. El
+    servidor no toca la hoja y lo anota en Rechazos; con F5 la página nueva lo saca de la cola y lo dice. No se
+    pierde nada.
+- **Los enlaces:**
+  - para instalar, el raw fijo a `7fe755136f10c9c6fc6f028cab29ccc31977c174`: 1980 líneas, termina en `}` con
+    `return borrador;` antes;
+  - para volver atrás, el de `ea81bb01dc704ec47f26147aea0634a9b851639f`: la 26-a, 1965 líneas. Es el mismo que usó el
+    26/09, y el código es idéntico en `e2e613a` y `2040720`.
+- **15:21 — `probarAntesDeImplementar`, todo ✅:**
+  - versión 2026-09-28-a;
+  - código entero (18 funciones clave);
+  - 1063 filas;
+  - disparadores instalados;
+  - repaso de Kommo de hace 2 minutos, sin errores;
+  - **stock 22.642 de 50.000 letras (45 %)**: el 26/09 a las 11:35 eran 22.208;
+  - arqueo en 0.
+- **Versión para volver atrás: 33** («Versión 33 del 26 sept 2026, 11:30 a.m.», la 26-a). Volver atrás = ✏️ → 33
+  **Y** pegar la 26-a de `ea81bb0…`.
+- **Falta:** que el dueño implemente (✏️ → Nueva versión, descripción `2026-09-28-a`) y la captura de Cerrar día con
+  «versión 2026-09-28-a», sin línea gris.
+
 ## 4go. 28/09, noche: la revisión de Codex del §18 — una sola lectura no alcanza para decir «lo borraron» — PUBLICADA
 
 **Publicado el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`: la rama `bf934bb` unida sobre los tableros del robot,
