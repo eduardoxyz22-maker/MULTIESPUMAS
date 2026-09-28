@@ -80,6 +80,10 @@ var SISTEMA_CON_SELLO = { '__stock__':1, '__arqueo_cuadre__':1 };
    aplica encima SOLO lo que tocó y vuelve a guardar. Un panel que no manda `juntar` (el de antes del 26/09)
    sigue como siempre: a estas filas NO se le contesta `actualizar`, para no trabar a nadie. */
 var SISTEMA_JUNTA_OPCIONAL = { '__dias_cerrados__':1, '__carga_chk__':1 };
+/* 🗑 (2026-09-28-a) Las filas FIJAS del sistema: todo `__…` salvo los retiros (`__ret_…`, que son plata de una
+   persona). Se reescriben enteras y, si alguien las borra de la hoja, tienen que poder volver a nacer: a ellas no
+   les toca el `borrado` de doSave. */
+function filaFijaSistema_(id) { var s = String(id || ''); return s.indexOf('__') === 0 && s.indexOf('__ret_') !== 0; }
 /* 📏 Tope de Google para una celda, y desde cuánto lo avisa probarAntesDeImplementar (24/09). */
 var CELDA_TOPE = 50000, CELDA_AVISO = 35000, CELDA_AVISO_ROJO = 42000;
 /* §4fz-b: desde 2026-09-23-b estas filas las guarda SOLO un panel que sabe juntar (manda
@@ -107,7 +111,7 @@ function getSheet() {
    Implementar -> Administrar implementaciones -> ✏️ -> Nueva version -> Implementar.
    ⚠️ Pero los DISPARADORES (kommoRepaso, kommoProcesarCola, barrerFotosHuerfanas) corren lo
    GUARDADO, no lo implementado: ver probarAntesDeImplementar() justo abajo. */
-var SCRIPT_VERSION = '2026-09-26-a';   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
+var SCRIPT_VERSION = '2026-09-28-a';   // ⬅️ un guardado CON SELLO de un pedido que ya no está (lo borraron) se rechaza con `borrado`: no se vuelve a crear con la copia de antes (revisión de Codex del 28/09)   // ⬅️ los días cerrados y las tildes de la carga piden sello si el panel manda `juntar` (revisión de Codex del 26/09)   // ⬅️ el stock y el arqueo solo los guarda un panel que sabe juntar, y borrar una fila sellada exige su sello (`actualizar` si no) (§4fz-b)   // ⬅️ borrar mira el sello (doDelete con rev) y el stock y el arqueo piden sello si el panel lo manda (§4fz)   // ⬅️ Kommo: descartar se respeta (KOMMO_DESCARTADOS), nombres se reparan fuera del candado, repaso de GitHub encola, busy no vacía la cola, catálogo por catalog_id (§4et)   // ⬅️ barrido diario de fotos huérfanas + nombre con dueño (§4ep)   // ⬅️ el eco del guardado es la fila RELEÍDA de la hoja (§4eo)   // ⬅️ registro de guardados rechazados + latidos de la cola (§4el); el dispositivo lo manda el panel   // ⬅️ webhook de Kommo contesta al instante y encola; repaso cada 5 min dentro del script (§4eg)   // ⬅️ quién lee por GET, visible sin Cloud Logging + GET_CERRADO (§4dv); caché de GET (§4du); candado sin lecturas ni Kommo (§4dt)
 
 /* ✅ PROBAR ANTES DE IMPLEMENTAR (§4fz-b, incidente del 23/09). Se corre desde el editor:
    elegir «probarAntesDeImplementar» en la lista de al lado de ▶ Ejecutar → Ejecutar, y leer
@@ -137,7 +141,7 @@ function probarAntesDeImplementar() {
         nuevas, y todo lo de abajo daría ✅ con el servidor viejo andando. El literal vive ADENTRO
         de esta función a propósito (el viejo no la tiene, no la pisa).
         ⚠️ Tiene que ser igual a SCRIPT_VERSION: test_servidor.js §11 lo compara. */
-  var ESTA_VERSION = '2026-09-26-a';
+  var ESTA_VERSION = '2026-09-28-a';
   if (SCRIPT_VERSION !== ESTA_VERSION) mal('La versión cargada es «' + SCRIPT_VERSION + '» y este código es la «' + ESTA_VERSION +
                                            '»: quedó código VIEJO además del nuevo (pegado arriba sin borrar, u otro archivo .gs en ' +
                                            'el proyecto). Dejá un solo archivo .gs, borrá todo y pegá de nuevo.');
@@ -479,7 +483,7 @@ function getCacheOlvidar_() {
    ========================================================================== */
 var RECHAZOS_HOJA = 'Rechazos';
 var RECHAZOS_HEADERS = ['Fecha', 'Acción', 'Motivo', 'Id', 'Cliente', 'Vendedor', 'Quién guardaba', 'Detalle', 'Dispositivo'];
-var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1 };
+var RECHAZOS_REGISTRAR = { conflicto:1, dia_cerrado:1, cupos_llenos:1, oc_repetida:1, admin:1, clave:1, busy:1, 'bad json':1, 'no id':1, drive:1, 'sin datos':1, 'foto no es imagen':1, actualizar:1, celda_llena:1, borrado:1 };
 var RECHAZOS_MAX = 2000;          // filas como mucho en la hoja; después se borran las más viejas
 var LATIDOS_MAX = 40;             // dispositivos con cola que se recuerdan
 
@@ -1110,6 +1114,17 @@ function doSave(p, forzar, juntar) {
     if (revHoja && (!filaSistema || sisSello || juntaSello) && (Number(p.rev) || 0) !== revHoja) {
       return jsonOut({ ok:false, error:'conflicto', version:SCRIPT_VERSION, pedido: rowToRec_(viejo) });
     }
+  }
+  /* 🗑 UN GUARDADO CON SELLO DE UNA FILA QUE YA NO ESTÁ (2026-09-28-a, revisión de Codex del 28/09). El panel manda
+     el sello con el que leyó la fila; si la fila no existe, la borraron (otra computadora, o a mano en la hoja) DESPUÉS
+     de que ese panel la leyó. Antes se agregaba como nueva: la venta borrada volvía a la planilla con la copia de antes
+     (una ficha abierta, la cola de un celular sin señal, una pestaña vieja). Ahora se contesta `borrado` sin tocar
+     nada; volver a cargarla es un pedido NUEVO, a propósito.
+     · Un pedido nuevo no trae sello: entra como siempre. Si se perdió la respuesta de su alta y la cola lo reenvía,
+       tampoco trae sello (el panel lo anota recién con la respuesta) y la fila ya existe: sigue siendo el «ok tardío».
+     · Las filas fijas del sistema (`filaFijaSistema_`) pueden volver a nacer. Los retiros no: son plata. */
+  if (foundRow < 0 && (Number(p.rev) || 0) > 0 && !filaFijaSistema_(p.id)) {
+    return jsonOut({ ok:false, error:'borrado', version:SCRIPT_VERSION, id:String(p.id) });
   }
   // PORTERO DE DÍAS CERRADOS Y CUPOS. Administración cierra una fecha cuando ese camión ya
   // está armado (fila __dias_cerrados__ de esta hoja). Se revisa ACÁ y no solo en el panel

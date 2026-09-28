@@ -36,8 +36,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   no configurarla hasta que él lo pida.** Con `PANEL_KEY` puesta, forzar un día cerrado exige además
   `ADMIN_KEY` (bitácora §4cg). Kommo usa `KOMMO_HOOK_KEY` aparte.
   Ninguna clave va en el código ni en commits. Detalles y orden de despliegue: bitácora §4ce.
-- Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`
-  y `SCRIPT_VERSION_ESPERADA` juntos.
+- Cambios al `.gs` NO se publican solos: el dueño hace Implementar → Nueva versión. Subir `SCRIPT_VERSION`,
+  `SCRIPT_VERSION_ESPERADA` (página) y `ESTA_VERSION` (adentro de `probarAntesDeImplementar`) juntos: `test_servidor` §11
+  compara la primera con la última (el 28/09 lo atajó).
 - **🔒 El candado del servidor: qué SÍ y qué NO** (§4dt, `2026-09-10-a`). `doPost` toma
   `LockService` con `waitLock(30000)` — necesario para **guardar** y **borrar**, veneno para
   todo lo demás, porque el panel entero espera. Quedaron **fuera** del candado, a propósito:
@@ -788,6 +789,37 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   · **🏭 va antes que 📐**: la medida especial ya mandada a fabricar para ESE pedido dice cuándo llega. Y «🔵
   Especiales»/el celeste de la fila (`hasEspecial`) no marcan una medida estándar escrita distinto (`saldoMedidaCanon`).
   · `tests/test_rev8_saldo.js` (55; §1-5 rojas contra `fecb3c6`, §6-9 contra `89512b1`).
+
+## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
+Codex revisó el informe §15 (`2040720`) y trajo `tests/test_codex28.cjs` (sus 8 comprobaciones, intactas; solo se le
+agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hallazgos se arreglaron:
+- **¿Manda la copia de acá o la de la lectura? Lo dice UNA función, `localManda(id, loc, srv, n0, enCola)`** (pedidos y
+  retiros en `mergePending`): en vuelo, esperando turno o en la cola → acá; confirmado → si la lectura trae la fila, el
+  sello MAYOR; si no la trae, acá solo si la lectura se pidió ANTES de la confirmación (atrasada). Pedida después, lo
+  borraron desde otro lado: `borradoFuera` lo saca y avisa una vez (`BORRADO_FUERA`).
+  ⚠️ «Antes/después» es un **contador** (`RED_N`: `apiList` → `_pedidaN`, `aplicarSello` → `SAVE_ULTIMO[id].okN`),
+  **nunca la hora**: con el reloj quieto de las pruebas daban igual y se confundían. Una lista sin marca (una prueba que
+  llama a `mergePending` directo) cuenta como pedida después de todo.
+- **`submitPedido` no guarda un pedido que la lectura de justo antes ya no trae** (lo borraron mientras estaba abierto):
+  `guardarYa` lo recreaba.
+- **Servidor `.gs` 2026-09-28-a** (en el repo; **implementarlo lo decide el dueño**, con el procedimiento de siempre y
+  la página publicada ANTES): un guardado CON sello de una fila que no existe → `borrado`, sin tocar la hoja. Excepto las
+  filas fijas del sistema (`filaFijaSistema_`: `__…` salvo `__ret_…`). El panel lo trata como «no» firme
+  (`RECHAZOS_FIRMES`): fuera de la pantalla y de la cola, a los rechazos con lo que se perdió, y aviso. ⚠️ Sin el `.gs`
+  28-a, una corrección sin relectura, una ficha abierta, la cola sin señal o una pestaña vieja todavía recrean un pedido
+  borrado (como antes). La página espera la 28-a (`SCRIPT_VERSION_ESPERADA`): hasta implementarla, «Cerrar día» muestra
+  la línea gris.
+- **Saldo**: lo que va en una recogida programada llega el día de ESA recogida (`saldoEntradas`: Moreno sin programar en
+  `STOCK_DIAS_RECOGIDA`, cada recogida con su `llega`, repartiendo `enRecogida` sin pasarse) → «🚚 VIENE DE MORENO ·
+  logística lo trae el…». Sin cupo en `SALDO_DIAS_CUPO` días no se promete ningún día (`saldoDiaConCupo` → `sinCupo`,
+  `saldoPonerDia`): «⚠️ SIN CUPO…», en ámbar. Todo lo que calcule un día prometido pasa por `saldoPonerDia`.
+- ⚠️ `doGet` contesta igual que la lectura por POST y sale de una caché de 20 s: si Google convirtiera la lectura en GET
+  con una caché de antes de un guardado, lo recién guardado podría desaparecer de la pantalla hasta la lectura siguiente
+  (con el aviso de borrado). No se pierde nada. El arreglo de fondo es que el servidor diga la hora de su lectura.
+- Pruebas: `test_codex28.cjs` (8), `test_codex28_flujos.js` (23; 13 rojas con página 2040720 + `.gs` 26-a; con la página
+  nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
+- **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas
+  que `stockData` en el `.gs`).
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF
 Administración → **🔎 Quién vendió qué** (§4db → §4df): productos (separados por coma, entra

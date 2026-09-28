@@ -7445,6 +7445,69 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gl. 28/09: la revisión de Codex del informe §15 — un pedido borrado que volvía, y tres más (2026-09-28)
+
+El dueño le pasó a Codex (ChatGPT) el informe §15 y trajo su respuesta con una prueba, `tests/test_codex28.cjs` (5
+aserciones rojas y 3 controles contra `2040720`). Se reprodujeron los cuatro hallazgos tal cual, y los cuatro quedaron
+arreglados con pruebas que fallan antes:
+
+1. **ALTA · un pedido borrado desde otro equipo volvía.** `mergePending` conservaba 90 s todo lo guardado acá que la
+   lectura no traía (§4gg), sin distinguir una lectura **atrasada** de un **borrado**; y el servidor, si la fila no
+   estaba, la agregaba aunque llegara con sello. Editar esa copia la volvía a CREAR en la planilla.
+   - **Panel**: cada lectura lleva en qué momento se pidió (`apiList` → `_pedidaN`) y cada guardado confirmado, en qué
+     momento se confirmó (`aplicarSello` → `SAVE_ULTIMO[id].okN`). Pedida después de la confirmación, la planilla ya lo
+     tenía: si no lo trae, lo borraron → sale de la pantalla y avisa una vez (`borradoFuera`, `BORRADO_FUERA`). Pedida
+     antes, es atrasada y manda lo de acá (como en §4gg).
+     ⚠️ **Es un CONTADOR (`RED_N`), no la hora.** La primera versión usaba `Date.now()` y con el reloj quieto de las
+     pruebas (y un celular que corrige la hora solo) «antes» y «después» daban el mismo milisegundo: `test_rev5_pedidos`
+     §4 lo hubiera roto.
+   - `submitPedido`: la lectura de justo antes de guardar puede mostrar que el pedido que se edita ya no está → **no
+     guarda** y dice «lo borraron desde otro equipo mientras lo tenías abierto». Antes `guardarYa` lo volvía a poner y,
+     con el servidor 26-a, lo recreaba.
+   - **Servidor `.gs` 2026-09-28-a** (en el repo, SIN implementar): un guardado CON sello de una fila que no existe se
+     rechaza con `borrado` (sin tocar la hoja; queda en «Rechazos»). No cuenta para las filas fijas del sistema
+     (`filaFijaSistema_`: todo `__…` salvo los retiros `__ret_…`, que son plata), que pueden volver a nacer; un pedido
+     nuevo no trae sello, y el reenvío de un alta cuya respuesta se perdió sigue siendo `conflicto` (el «ok tardío»).
+     El panel conoce `borrado` (`RECHAZOS_FIRMES`): lo saca de la pantalla y de la cola, lo anota en sus rechazos con lo
+     que se perdió (`rechazoPerdido(rec, {})`: el ✅, los cobros, las fotos, para el cartel del chofer) y avisa.
+   - **Qué cubre cada mitad** (`test_codex28_flujos.js` con la página nueva y el servidor 26-a: 16/7): el panel solo ya
+     cierra lo que reprodujo Codex (la lectura y la edición con relectura). Una corrección **sin** relectura (no mueve la
+     fecha ni cambia productos), una ficha abierta, la cola de un celular sin señal o una pestaña vieja **necesitan el
+     `.gs` 28-a**: con la 26-a lo siguen recreando, igual que antes de esta vuelta.
+   - ⚠️ **Límite que queda**: `doGet` contesta con la misma forma que la lectura por POST y sale de una caché de 20 s
+     (§4du). Si Google convirtiera la lectura del panel en GET (§4fx) y la caché fuera de antes de un guardado, un pedido
+     recién guardado podría desaparecer de la pantalla hasta la lectura siguiente (con el aviso). No se pierde nada en
+     la planilla. Se resolvería con la hora de lectura del servidor en la respuesta (otra versión del `.gs`).
+2. **MEDIA · una recogida para el 05/10 se prometía «en 1 día».** `saldoVeredicto` sumaba lo que va en una recogida
+   programada (`enRecogida`) a Moreno y prometía el plazo genérico. Ahora `saldoEntradas` ordena por fecha lo que no
+   está a mano: lo que sigue en Moreno (se trae en `STOCK_DIAS_RECOGIDA`) y cada recogida con SU fecha (`llega` = la
+   que eligió logística); `enRecogida` se reparte entre las recogidas pendientes sin pasarse, así que el total no
+   cambia. Se consume por fecha, primero lo ya vendido. Cartel nuevo: «🚚 VIENE DE MORENO · logística lo trae el lunes
+   05/10: programá desde el martes 06/10 (si logística la puede adelantar, que te lo confirme)», y si ya pasó la fecha,
+   «la recogida era para el… y todavía no llegó: confirmala con logística».
+3. **MEDIA · una revisión más nueva se tapaba 90 s.** `localManda(id, loc, srv, n0, enCola)`: un guardado en vuelo,
+   esperando turno o en la cola manda acá (como siempre); uno ya confirmado, si la lectura trae la fila, gana el sello
+   MAYOR (la de acá si la otra es igual o más vieja). También para los retiros.
+4. **BAJA · sin cupo en 60 días se prometía un día cerrado.** `saldoDiaConCupo` devuelve `{ f:'', sinCupo:true }` y
+   `saldoPonerDia` no promete ningún día: «✅ HAY EN ALMACÉN · ⚠️ SIN CUPO: no queda ningún turno de entrega libre en
+   los próximos 60 días: consultá con logística antes de prometer una fecha», en ámbar. Lo mismo en ⏳ 🏭 📐 🚚.
+
+**Pruebas.**
+- `tests/test_codex28.cjs` (la de Codex; solo se le agregó la línea «N bien · N mal» y el JSON va a la carpeta
+  temporal): 8/8.
+- `tests/test_codex28_flujos.js` (nueva): dos equipos contra el `.gs` real, formulario, borrado, cola sin señal, revisión
+  más nueva y lectura atrasada. 23; **13 rojas** contra la página `2040720` con el servidor 26-a; los 4 controles pasan en
+  las dos versiones.
+- `tests/test_rev8_saldo.js` §10-11: la recogida con fecha y el sin cupo, como los ve la vendedora. 66; **9 rojas** contra
+  `2040720`.
+- `test_saldo_almacen` sigue en 84.
+- Batería: 108 suites, 4.116 bien · 0 mal. La primera corrida dio 7 rojas en `test_servidor` §11: el literal
+  `ESTA_VERSION` de `probarAntesDeImplementar` seguía en 26-a (el dueño hubiera visto «quedó código VIEJO» al probar).
+
+**Lo que Codex recomendó y NO se hizo (decisión del dueño):** validar el stock en el servidor al guardar (reservar la
+última unidad bajo el candado). Codex coincide en no bloquear la venta sin stock y pide, antes, definir en el servidor
+las MISMAS reglas que `stockData`. Es un cambio grande del `.gs`.
+
 ## 4gk. 27/09: la revisión del cuadrito del saldo — la medida especial y el código de otra medida (2026-09-27)
 
 El dueño, apenas publicado §4gj: *«Después ponés un agente a revisar que no haya errores en pedidos y este nuevo
