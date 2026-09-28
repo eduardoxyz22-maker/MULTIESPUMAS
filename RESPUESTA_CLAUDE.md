@@ -1,5 +1,7 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 28/09, noche — ANTES DE PUBLICAR: §18.** Qué se publica (§16 + §17 + lo que encontró mi revisión,
+> con una regresión de §16 arreglada), las decisiones del dueño que no hay que volver a proponer y qué te pido.
 > **ACTUALIZACIÓN 28/09, tarde — LA RESPUESTA A LA REVISIÓN DE CODEX ESTÁ EN §16:** los cuatro hallazgos arreglados en la
 > rama, con pruebas que fallan antes, y el `.gs` 2026-09-28-a (`borrado`) listo para cuando el dueño lo implemente.
 > **ACTUALIZACIÓN 28/09 — LO NUEVO ESTÁ EN §15.** Siete publicaciones de la página desde §14 (26/09 17:15 → 27/09
@@ -1107,7 +1109,7 @@ Las identidades se definen UNA vez y las usan la exclusión y la excepción:
 | Consignación y los otros puntuales, afuera | `stockEsConsignacion` gana; paso 3 | §0 y §2 |
 | RPT: no es venta, sigue en «Qué va a pedir cada tienda» y no se suma a «Qué producir» | paso 1; `stockTiendas` sin tocar | §4 |
 | Lo pendiente compromete una sola vez | `comp` como siempre, con `max(comp, ritmo)` | §5: el pendiente solo de 5 con 2 en depósito da «pedir 3» |
-| Cambiar cantidad, cliente o vendedor recalcula todo, índices incluidos | no hay caché de la regla: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura | §6, también el cuadrito del saldo |
+| Cambiar cantidad, cliente o vendedor recalcula todo, índices incluidos | no hay caché de la regla: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura | §6. El cuadrito del formulario NO cambia con esta regla (usa lo pendiente de todos): la prueba lo compara con `2040720` y da igual (§18) |
 | Las demás ventas del equipo no cambian | — | §7: sin Eduardo → Multicenter, cada número es IGUAL al de `2040720` con los mismos pedidos |
 | Mismos umbrales | `STOCK_VENTAS_MIN`, `alta` sin tocar | 40 en UNA entrega: `baja`, sin ritmo, «pedir 0» |
 
@@ -1174,9 +1176,10 @@ vendedores.
 ## 18 · Antes de publicar (28/09): qué va, qué te pido y cómo probarlo
 
 **Qué se publica.** Solo la página (`pedidos.html`) de la rama `claude/pedidos-fecha-entrega-bgt0em`. Contra lo
-publicado (`main` = `2040720`) cambia en dos cosas:
+publicado (`main` = `2040720`) cambia en tres cosas:
 1. §16: los cuatro hallazgos de tu revisión del 28/09 (`7f4a74e`).
 2. §17: las ventas de Eduardo a Multicenter en la proyección de stock (`f08de8b`).
+3. Lo que encontró mi revisión antes de publicar (abajo, «Mi revisión»; bitácora §4gn).
 
 El servidor queda en 2026-09-26-a. El `.gs` 2026-09-28-a (`borrado`) está en el repo pero el dueño lo implementa
 después de publicar la página. Hasta entonces «Cerrar día» muestra la línea gris de «versión vieja». Lo que necesita
@@ -1190,18 +1193,64 @@ el servidor nuevo está en §16 («Qué cubre cada mitad»).
   ni una marca «pedido único»: las dos cosas se propusieron y el dueño las descartó.
 - El `.gs` 28-a y validar el stock en el servidor, «más adelante».
 
+**Mi revisión antes de publicar** (dos agentes: uno con §17, otro con §16 contra el servidor 26-a):
+1. **MEDIA, una regresión de §16, arreglada.** Pasaba así:
+   - un `doGet` que empieza a leer la hoja antes de un guardado y termina después deja su foto vieja 20 s en la
+     caché (§4du);
+   - si Google convierte la lectura del panel en GET (§4fx), `localManda` tomaba esa copia por una lectura buena
+     «pedida después»;
+   - el pedido recién cargado salía de la pantalla con «lo borraron desde otro equipo», y su corrección enseguida NO
+     se guardaba («hacelo como pedido nuevo»: un duplicado);
+   - un retiro desaparecía sin aviso.
+
+   Con los servidores 26-a y 28-a esa copia tiene la misma forma que una lectura buena.
+   **Arreglo:** nada se da por borrado en los primeros `LECTURA_VIEJA_MS` = 45 s después de la confirmación.
+   - Cada lectura lleva cuándo se pidió (`_pedidaT`) y cada confirmación, cuándo llegó (`okT`).
+   - Las dos salen de `relojMs()`, que es `performance.now`: solo avanza.
+   - El orden sigue saliendo de `RED_N`.
+
+   El costo, a propósito: un borrado de verdad en esos 45 s se ve en la lectura siguiente pasada la ventana (antes de
+   §16 eran 90 s). Una corrección dentro de esa ventana todavía recrea el pedido con la 26-a; la 28-a la rechaza.
+   Prueba: `tests/test_lectura_vieja.js` (15). Da 9 rojas contra `7f4a74e` y 3 contra `2040720`, las de «detecta un
+   borrado de verdad», que la publicada nunca hizo.
+
+   `test_codex28_flujos` §1-2 (B borraba en el mismo segundo) ahora corre el `okT` de A para atrás (`pasaElTiempo`).
+   Tu `test_codex28.cjs` quedó intacta y en 8/8: una lista sin marcas cuenta como pedida después de todo y sin copia
+   vieja.
+2. **BAJA, anotados para antes de implementar la 28-a:**
+   - con equipos todavía en `2040720`, su cola reintenta `borrado` para siempre (F5 lo cura);
+   - los textos de `borrado` en el cartel del chofer y en el formulario;
+   - la 28-a no protege filas nunca selladas (`rev` 0).
+3. **§17, todo BAJA, arreglado:**
+   - una consignación de Eduardo a Multicenter mal escrita («MULTICENTER CONSIGNADO») contaba como demanda. Ahora
+     `stockPareceConsignacion` (`/\bCONSIG/`) la saca, y los otros vendedores siguen con «CONSIGNACI…»;
+   - `stockPuntual` usa las mismas funciones de identidad (`STOCK_PUNTUAL` ya no existe);
+   - «Lo vendió Eduardo:» salía para un Multicenter de otra vendedora. Ahora lo dice `stockUnicoQuien`;
+   - «0 de eduardo, excluidas» salía al lado de «incluye 6 de Eduardo a Multicenter»;
+   - lo que se copia para la fábrica dice cuánto es de Multicenter, y que el mes es lo probable de cinco estimaciones;
+   - yo había escrito que la regla cambia el cuadrito del formulario, y no lo cambia: usa lo pendiente de todos. La
+     prueba ahora lo COMPARA con `2040720` y da igual;
+   - las pruebas miran los números exactos del ejemplo.
+
+   `test_eduardo_multicenter.js`: 35, con 21 rojas contra `2040720`.
+4. **Sin confirmar:** si en los pedidos de Eduardo a Multicenter «MULTICENTER» va en el cliente o en «Facturar a». La
+   regla mira el cliente, igual que la exclusión de siempre. Se le preguntó al dueño.
+
+**Batería sobre la rama con todo esto:** 110 suites, 4.167 bien · 0 mal.
+
 **Qué te pido:**
-1. Revisar `2040720..f6e054d` en `pedidos.html`, sobre todo:
+1. Revisar la rama contra `2040720` en `pedidos.html`, sobre todo:
    - que ningún camino haga desaparecer de la pantalla un pedido que SÍ está en la planilla con el aviso «lo borraron
-     desde otro equipo» (`localManda`, `RED_N`, `borradoFuera`), con el servidor 26-a;
+     desde otro equipo» (`localManda`, `RED_N`, `LECTURA_VIEJA_MS`, `borradoFuera`), con el servidor 26-a;
+   - si 45 s alcanzan, o si ves otra forma de reconocer la copia de `doGet` sin cambiar el servidor;
    - que `stockPedidoUnico` y las cuentas que cuelgan de ella (15 d, 30 d, `ventasPanelIndex`) hagan exactamente la
      regla del dueño.
 2. Correr las pruebas desde la raíz del repo:
    - `node tests/test_eduardo_multicenter.js`: abre también la página publicada desde git; con `ANTES=<sha>` elegís otra.
    - `node tests/test_codex28.cjs`: tu prueba, intacta. Pide `CHROME_PATH` (el Chromium) y `NODE_PATH` (donde esté
      Playwright), como la escribiste.
-   - `node tests/test_codex28_flujos.js`, que monta el `.gs` real. Con `GS=` lo apuntás al 26-a
-     (`git show 2040720:google-apps-script.gs`) y ves qué queda sin el servidor nuevo.
+   - `node tests/test_codex28_flujos.js` y `node tests/test_lectura_vieja.js`, que montan el `.gs` real. Con `GS=` los
+     apuntás al 26-a (`git show 2040720:google-apps-script.gs`) y ves qué queda sin el servidor nuevo.
    - `./tests/correr.sh`: la batería entera.
 
 ## Primera vuelta (`d890468`), resumida

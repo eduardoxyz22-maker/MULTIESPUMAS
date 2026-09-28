@@ -226,8 +226,10 @@ const BASE = `
     }, BASE);
     chk('el equipo solo: agosto en el índice del panel = 6 (3 entregas de 2)', r.sin.idx===6 && r.sin.mes>0, J(r.sin));
     chk('⚠️ una venta única de 40 de EDUARDO a otro cliente en agosto no cambia «producir el mes que viene» (antes subía de 9 a 24)', r.conEdu.idx===6 && r.conEdu.mes===r.sin.mes && r.conEdu.mesNec===r.sin.mesNec && r.conEdu.v30===r.sin.v30, 'sin: '+J(r.sin)+' · con Eduardo: '+J(r.conEdu));
-    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40) y al plan del mes, pero no al ritmo de 30 días (es de antes de la ventana)',
-        r.conEduMc.idx===46 && r.conEduMc.mesNec>r.sin.mesNec && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
+    /* Números exactos: una compra única de 40 en agosto lleva octubre de 9 a 24 (60 d 8,7 → 29,1 · 90 d 12,2 → 25,8, y la
+       mediana salta a la tendencia). Por eso el dueño NO carga al panel las compras grandes y sueltas (§4gm). */
+    chk('🏬 la de EDUARDO A MULTICENTER sí entra al índice de agosto (6 + 40) y al plan del mes (octubre 9 → 24), pero no al ritmo de 30 días (es de antes de la ventana)',
+        r.conEduMc.idx===46 && r.sin.mesNec===9 && r.conEduMc.mesNec===24 && r.conEduMc.v30===r.sin.v30 && r.conEduMc.porDiaMes===r.sin.porDiaMes, 'sin: '+J(r.sin)+' · con Eduardo → Multicenter: '+J(r.conEduMc));
     chk('…ni un pedido PUNTUAL (MULTICENTER de otro vendedor) del equipo', r.conPunt.idx===6 && r.conPunt.mes===r.sin.mes, 'con puntual: '+J(r.conPunt));
     chk('…ni una reposición de tienda', r.conRpt.idx===6 && r.conRpt.mes===r.sin.mes, 'con RPT: '+J(r.conRpt));
     chk('la cabecera del cuadro dice la verdad: equipo + Eduardo a Multicenter, sin otras puntuales ni RPT, y qué productos entran',

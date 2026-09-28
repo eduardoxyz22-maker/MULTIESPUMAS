@@ -2151,10 +2151,22 @@ function apiPost(payload){
    ⚠️ Es un CONTADOR que solo sube (`RED_N`), no la hora: con el reloj quieto de las pruebas —o uno que el celular
    corrige solo— dos momentos distintos podían dar la misma hora y confundir «antes» con «después». */
 var RED_N=0;
+/* ⏱️ (28/09, 2ª revisión) …pero «pedida después» no alcanza para decir «lo borraron»: si Google convierte la lectura en
+   un GET (§4fx), `doGet` contesta de su caché de 20 s (§4du), y un `doGet` que empezó a leer la hoja ANTES de un guardado
+   puede dejar ahí la planilla de antes. Con los servidores 26-a y 28-a esa copia es igual a una lectura buena (misma
+   forma): no hay cómo distinguirla. Un pedido confirmado acá hace menos de `LECTURA_VIEJA_MS` que la lectura no trae
+   NO se da por borrado (se queda en pantalla y se puede corregir); pasado ese tiempo, sí. 45 s = los 20 de la caché +
+   lo que tarda un `doGet` en leer la hoja entera (3-5 s, hasta más con el servidor cargado) + margen.
+   El tiempo se mide con `relojMs` (solo avanza: no lo mueve el celular al corregir la hora). */
+var LECTURA_VIEJA_MS=45000;
+function relojMs(){ try{ if(window.performance && typeof performance.now==='function') return performance.now(); }catch(e){} return Date.now(); }
 function apiList(){
-  var n0=++RED_N;
+  var n0=++RED_N, t0=relojMs();
   return apiPost({action:'list'}).then(function(j){
-    if(j && Array.isArray(j.pedidos)){ try{ Object.defineProperty(j.pedidos, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true }); }catch(e){} }
+    if(j && Array.isArray(j.pedidos)){ try{
+      Object.defineProperty(j.pedidos, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true });
+      Object.defineProperty(j.pedidos, '_pedidaT', { value:t0, enumerable:false, configurable:true, writable:true });
+    }catch(e){} }
     return j;
   });
 }
@@ -2341,7 +2353,7 @@ function aplicarSello(rec, srv){
     if(srv.ocCambiada && srv.oc) o.oc=srv.oc;
   });
   if(srv.rev!=null) SAVE_REV[rec.id]=srv.rev;
-  if(SAVE_ULTIMO[rec.id]) SAVE_ULTIMO[rec.id].okN=++RED_N;   // (28/09) en qué momento lo confirmó el servidor (ver `apiList`)
+  if(SAVE_ULTIMO[rec.id]){ SAVE_ULTIMO[rec.id].okN=++RED_N; SAVE_ULTIMO[rec.id].okT=relojMs(); }   // (28/09) en qué momento lo confirmó el servidor (ver `apiList`)
   saveMirror(); if(ret) saveRetirosMirror();
   if(srv.ocCambiada) toast('🔢 La OC '+srv.ocCambiada.de+' ya la había usado '+(srv.ocCambiada.con||'otra persona')+' hace un instante: este pedido quedó con la OC '+srv.ocCambiada.a+'.','err',9000);
 }
@@ -9636,14 +9648,18 @@ function cleanOC(v){
    · un guardado en vuelo, esperando turno o en la cola (como siempre);
    · uno confirmado: si la lectura trae la fila, gana el sello MAYOR (la de acá si la otra es igual o más vieja: lectura
      atrasada); si no la trae, acá solo si la lectura se PIDIÓ antes de la confirmación (`apiList` → `_pedidaN`). Pedida
-     después, la planilla ya lo tenía y no lo trae: lo borraron desde otro lado. */
-function localManda(id, loc, srv, n0, enCola){
+     después, la planilla ya lo tenía y no lo trae: lo borraron desde otro lado.
+   ⏱️ (28/09, 2ª revisión) Salvo que la lectura se haya pedido a menos de `LECTURA_VIEJA_MS` de la confirmación
+   (`_pedidaT` contra `okT`): puede ser la copia de 20 s de `doGet`, de antes del guardado (ver `apiList`). Una lista sin
+   esas marcas (una prueba que llama a `mergePending` directo) cuenta como pedida después de todo y sin copia vieja. */
+function localManda(id, loc, srv, n0, enCola, tPed){
   if(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (enCola && enCola[id])) return true;
   var u=SAVE_ULTIMO[id];
   if(!u || !(Date.now()-u.t<90000)) return false;
   var revLoc=Math.max(Number(loc && loc.rev)||0, Number(SAVE_REV[id])||0);
   if(srv) return (Number(srv.rev)||0)<=revLoc;
-  return Number(n0)<((u.okN!=null) ? Number(u.okN) : -Infinity);
+  if(Number(n0)<((u.okN!=null) ? Number(u.okN) : -Infinity)) return true;          // pedida antes: lectura atrasada
+  return tPed!=null && u.okT!=null && (Number(tPed)-Number(u.okT))<LECTURA_VIEJA_MS; // pedida enseguida: puede ser la copia vieja
 }
 /* 🗑 (28/09) Lo que la planilla dejó de tener después de un guardado confirmado acá: se avisa UNA vez, y el formulario
    que lo tenía abierto dice por qué no se puede guardar (`submitPedido`). */
@@ -9659,6 +9675,7 @@ function mergePending(serverList){
   /* (28/09) En qué momento se pidió esta lectura (`apiList`). Sin la marca —una prueba que llama directo— cuenta como
      pedida ahora: después de todo lo ya confirmado. */
   var t0=(serverList && serverList._pedidaN!=null) ? Number(serverList._pedidaN) : Infinity;
+  var tPed=(serverList && serverList._pedidaT!=null) ? Number(serverList._pedidaT) : null;   // (28/09, 2ª revisión) ver `localManda`
   serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
@@ -9672,7 +9689,7 @@ function mergePending(serverList){
   var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
   serverList=serverList.map(function(s){
     var id=s&&s.id; if(!id) return s;
-    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola)) return local; }   // (28/09) una más nueva de la planilla gana
+    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed)) return local; }   // (28/09) una más nueva de la planilla gana
     for(var i=0;i<pendTodos.length;i++) if(pendTodos[i].id===id) return pendTodos[i];
     return s;
   });
@@ -9690,7 +9707,7 @@ function mergePending(serverList){
     if(!locS || esFilaSistema(locS) || esBorrador(locS)) continue;
     /* (28/09, revisión de Codex) …solo si esta lectura salió ANTES de que el servidor lo confirmara. Si salió después y no
        lo trae, lo borraron desde otro equipo: conservarlo lo volvía a crear en la planilla al editarlo. */
-    if(localManda(kS, locS, null, t0, enCola)){ serverList.push(locS); ids[kS]=1; }
+    if(localManda(kS, locS, null, t0, enCola, tPed)){ serverList.push(locS); ids[kS]=1; }
     else borradoFuera(locS);
   }
   /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
@@ -9705,7 +9722,7 @@ function mergePending(serverList){
     var rU=SAVE_ULTIMO[kU].rec;
     if(!esFilaRetiro(rU) || !saveReciente(kU)) continue;
     var sU=null; for(var iR=0;iR<RETIROS.length;iR++){ if(String(RETIROS[iR].id)===String(kU)){ sU=RETIROS[iR]; break; } }
-    if(localManda(kU, rU, sU, t0, enCola)) pendRet=pendRet.concat([rU]);
+    if(localManda(kU, rU, sU, t0, enCola, tPed)) pendRet=pendRet.concat([rU]);
   }
   if(pendRet.length){
     /* 26/09: y si el servidor ya lo tiene, manda la versión de la cola o del guardado en el aire,
@@ -16033,31 +16050,33 @@ function stockEsperado(q, T){
      una persona y una ubicación, no «TIENDA n»);
    · MULTICENTER y CONSIGNACIÓN «no entran en la rotación, son pedidos puntuales».
    Se cubre lo vendido y sin entregar, pero no arman ritmo ni reserva. */
-var STOCK_PUNTUAL=/\bMULTICENTER\b|\bCONSIGNACI/i;
 var STOCK_ROHO_TIENDA=/\bTIENDA\s*\d\b/i;
 /* 🏬 QUIÉN ES MULTICENTER Y QUIÉN ES EDUARDO — una sola definición de cada uno, para que la exclusión y la excepción
    (abajo) nunca digan cosas distintas del mismo pedido.
    · MULTICENTER: el pedido no trae un id de cliente (ni Kommo lo manda), así que va por el NOMBRE del cliente, con
      `normNombre` (sin tildes, sin mayúsculas, espacios de más fuera) y la PALABRA ENTERA «multicenter» — la única forma
      que aparece en los datos reales (los tableros de ventas de mayo a agosto: «MULTICENTER»). Nunca «multi» a secas:
-     traería a MULTIESPUMAS o a cualquier «multi…». Es la misma regla que ya usaba `STOCK_PUNTUAL`.
-   · CONSIGNACIÓN: mercadería dejada en el cliente, no vendida. Manda siempre, también sobre Multicenter.
+     traería a MULTIESPUMAS o a cualquier «multi…». `stockPuntual` usa ESTA misma función.
+   · CONSIGNACIÓN: mercadería dejada en el cliente, no vendida. Manda siempre, también sobre Multicenter. Para los
+     puntuales de siempre es «CONSIGNACI…» (`stockEsConsignacion`, sin cambios); para la excepción de Eduardo a
+     Multicenter alcanza con que PAREZCA consignación (`stockPareceConsignacion`: «CONSIGNADO», «CONSIG.»): ante la duda
+     queda afuera, como estaba antes del 28/09 (2ª revisión).
    · EDUARDO: la misma prueba de siempre (la palabra «eduardo» en el vendedor, con `normNombre`). */
-var STOCK_MULTICENTER=/\bMULTICENTER\b/i, STOCK_CONSIGNACION=/\bCONSIGNACI/i;
+var STOCK_MULTICENTER=/\bMULTICENTER\b/i, STOCK_CONSIGNACION=/\bCONSIGNACI/i, STOCK_CONSIG_AMPLIA=/\bCONSIG/i;
 function stockEsMulticenter(p){ return !!p && STOCK_MULTICENTER.test(normNombre(p.cliente||'')); }
 function stockEsConsignacion(p){ return !!p && STOCK_CONSIGNACION.test(normNombre(p.cliente||'')); }
+function stockPareceConsignacion(p){ return !!p && STOCK_CONSIG_AMPLIA.test(normNombre(p.cliente||'')); }
 function stockEsEduardo(p){ return !!p && /(^|\s)EDUARDO(\s|$)/i.test(normNombre(p.vendedor||'')); }
 /* 🏬 (dueño, 28/09) LAS VENTAS DE EDUARDO A MULTICENTER SÍ SON DEMANDA: entran al ritmo de 15 y 30 días y al índice
    mensual, como las del equipo. Excepción EXPLÍCITA para esa combinación y nada más: Eduardo a otros clientes sigue
    afuera, Multicenter vendido por otro vendedor sigue siendo un pedido puntual, la consignación sigue afuera y una RPT
    nunca es venta (se mira primero, en `stockPedidoUnico`). Los umbrales de rotación NO cambian: una compra grande sola
    es UNA entrega y no arma ritmo (hacen falta `STOCK_VENTAS_MIN` entregas distintas). */
-function stockEduardoMulticenter(p){ return !!p && !esRPT(p.oc) && stockEsEduardo(p) && stockEsMulticenter(p) && !stockEsConsignacion(p); }
+function stockEduardoMulticenter(p){ return !!p && !esRPT(p.oc) && stockEsEduardo(p) && stockEsMulticenter(p) && !stockPareceConsignacion(p); }
 function stockPuntual(p){
   if(!p) return false;
-  var cli=normNombre(p.cliente||'');
-  if(STOCK_PUNTUAL.test(cli)) return true;
-  return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(cli);
+  if(stockEsMulticenter(p) || stockEsConsignacion(p)) return true;   // las MISMAS definiciones que la excepción (arriba)
+  return esRoho(p.vendedor) && STOCK_ROHO_TIENDA.test(normNombre(p.cliente||''));
 }
 function stockPedidoUnico(p){
   if(esRPT(p&&p.oc)) return true;               // 1. una reposición de tienda nunca es venta
@@ -16075,6 +16094,15 @@ function stockUnicoEtq(o){
   var rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=((o&&o.vendidosUnicos)||0)-rpt-pun;
   var l=[]; if(edu>0) l.push('Eduardo'); if(rpt>0) l.push('reposición de tienda'); if(pun>0) l.push('pedido puntual');
   return l.length ? l.join(' y ') : 'Eduardo';
+}
+/* …y lo mismo en una frase, para el cartel del aviso `unico` (28/09, 2ª revisión): decía «Lo vendió Eduardo:» también
+   cuando lo único vendido era un Multicenter de otra vendedora, una consignación o ROHO a tienda. */
+function stockUnicoQuien(o){
+  var u=(o&&o.vendidosUnicos)||0, rpt=(o&&o.vendidosRpt)||0, pun=(o&&o.vendidosPunt)||0, edu=u-rpt-pun;
+  if(rpt>=u) return 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.';
+  if(edu>0 && !pun && !rpt) return 'Lo vendió Eduardo:';
+  if(pun>0 && !(edu>0) && !rpt) return 'Fue un pedido puntual (Multicenter de otro vendedor, consignación o ROHO a tienda):';
+  return 'Lo vendido fue pedido único ('+stockUnicoEtq(o)+'):';
 }
 function stockLibreOrigen(k,alm){
   var corte=(STOCK.g||{})[alm], n=corte&&corte.u?Number(corte.u[k]):NaN;
@@ -17234,7 +17262,9 @@ function abrirStockPedidos(k){
   if(o) html+='<p style="padding:10px;background:var(--teal-lt)"><b>Reposición:</b> '+(o.revisarStock?'reposición provisional de '+stockUnid(o.pedir)+' unidades; confirmar la diferencia entre marcas e inventario.':o.rotacion==='baja'?'poca rotación; sin reserva adicional. Solo faltantes de pedidos confirmados.':o.rotacion==='media'?'rotación media; plazo de fábrica + 2 días de margen + 3 días de reserva.':'rotación alta y sostenida; plazo de fábrica + margen de variación + 7 días de reserva.')+'</p>';
   if(o) html+='<p><b>Base de rotación:</b> '+stockUnid(o.vendidosRotacion||0)+' unidades del equipo'+(o.vendidosEduMc?(' (incluye '+stockUnid(o.vendidosEduMc)+' de Eduardo a Multicenter)'):'')+' en '+(o.nVentasRotacion||0)+' entrega'+((o.nVentasRotacion||0)===1?'':'s')+' en '+STOCK_VENTANA+' días'+
     ((o.nVentasRotacion||0)<STOCK_VENTAS_MIN ? (' — hacen falta <b>'+STOCK_VENTAS_MIN+' entregas distintas</b> para hablar de rotación, así que no se estima ningún ritmo') : '')+
-    '; '+stockUnid(o.vendidosUnicos||0)+' de '+stockUnicoEtq(o).toLowerCase()+', excluidas de la reserva. Lo pendiente de entregar sí se cubre.</p>';
+    /* (28/09, 2ª revisión) Sin pedidos únicos no se dice nada: decía «0 de eduardo, excluidas» al lado de «incluye 6 de
+       Eduardo a Multicenter». Y «Eduardo» va con mayúscula. */
+    (o.vendidosUnicos ? ('; '+stockUnid(o.vendidosUnicos)+' de '+stockUnicoEtq(o)+', excluidas de la reserva') : '')+'. Lo pendiente de entregar sí se cubre.</p>';
   html+='<p>Las cantidades corresponden solamente a este producto. Pulsá <b>Ver pedido</b> para abrir la ficha completa.</p>';
   if(!grupos.pendientes.length && !grupos.atrasados.length) html+='<p style="padding:12px;background:var(--teal-lt)"><b>No hay pedidos pendientes que consuman stock del depósito.</b> La recomendación de reposición puede venir de la previsión de ventas.</p>';
   [['pendientes','Vendido sin entregar · consume depósito'],['produccion','Pedidos a fábrica para clientes · separados del depósito'],['atrasados','Sin stock de días pasados · pendientes de reprogramar · también consumen depósito (entran en «Comprometido»)'],['historico','Historial de los últimos '+STOCK_VENTANA+' días']].forEach(function(g){
@@ -17345,7 +17375,7 @@ function renderStock(){
     /* Solo la CONSECUENCIA (§4dc): el dato («15 en 15 días · 1 entrega») ya está dos líneas
        más arriba, en la misma fila. Y de quién es, si es de Eduardo (§4dj). */
     if(o.aviso==='unico') return chico(stockSoloEduardo(o)
-      ? ((o.vendidosRpt>=o.vendidosUnicos ? 'Fue reposición de tienda: la mercadería cambió de lugar, no se vendió.' : 'Lo vendió Eduardo:')+' se cubre lo comprometido, sin reserva por las dudas.')
+      ? (stockUnicoQuien(o)+' se cubre lo comprometido, sin reserva por las dudas.')
       : 'Es un pedido puntual, no una venta que se repita: no se repone por las dudas. Si vuelven a pedir, se pide contra ese pedido.','#7c4b00');
     if(o.aviso==='sobra'){ var ms=stockMesesSobra(o); return chico((ms!=null ? ('hay para ~'+stockNum(ms,1)+' meses') : ('hay '+stockUnid(stockHaySalir(o)||0)+' y no se entregó ninguno en '+STOCK_VENTANA+' días'))+(o.descont?' · ya no se fabrica: vender lo que queda':'')+((!o.rota&&o.vendidos>0)?(' · lo vendido salió en '+o.nVentas+' entrega'+(o.nVentas===1?'':'s')+': no es rotación, no se repone'):''),'#5b21b6'); }
     if(o.aviso==='sincontar') return chico('contá el depósito para que avise');
@@ -17520,7 +17550,7 @@ function copiarStock(){
          (o.enSale?(' + '+stockSaleTxt(o)):'')+       // (26/09) Banzer
          (o.enCamino?(' + '+stockUnid(o.enCamino)+' en camino'):'')+
          (o.enOtros?(' + '+stockOtrosTxt(o)):'')+
-         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día')
+         (o.rota ? (', se venden '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':''))
                  : (stockSoloEduardo(o) ? (', '+stockUnicoEtq(o)+': pedido único')
                     : o.vendidosRotacion>0 ? (', pedido puntual — '+o.vendidosRotacion+' en '+o.nVentasRotacion+' entrega'+(o.nVentasRotacion===1?'':'s'))
                                            : ', es para un pedido puntual'))+
@@ -17965,10 +17995,13 @@ function copiarProducir(k, h){
     t+='• '+stockNombre(o)+(o.cod?(' (cód '+o.cod+')'):'')+': '+f[col]+
        (col==='mes'?(' — 1ª quincena '+f.mes1+' · 2ª quincena '+f.mes2):'')+
        ' — hay '+stockUnid(f.hay)+(o.comp?(', '+stockUnid(o.comp)+' vendidos sin entregar'):'')+
-       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'):(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'):''))+'\n';
+       ((col==='mes'&&o.porDiaMes>0)?(', vende '+o.v30+' en '+STOCK_VENTANA_MES+' días'+(o.v30EduMc?(' ('+o.v30EduMc+' de Eduardo a Multicenter)'):''))
+                                    :(o.porDia>0?(', vende '+stockNum(o.porDia)+' por día'+(o.vendidosEduMc?' (con Eduardo a Multicenter)':'')):''))+'\n';
   });
   t+='\nTotal: '+tot+(tot===1?' unidad':' unidades')+' · por medida: '+Object.keys(porMed).sort().map(function(m){ return m+' '+porMed[m]; }).join(' · ');
-  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Cuenta con lo vendido en los últimos '+STOCK_VENTANA_MES+' días, sin pedidos puntuales.';
+  /* (28/09, 2ª revisión) Decía «cuenta con lo vendido en los últimos 30 días, sin pedidos puntuales»: el número es lo
+     PROBABLE entre cinco estimaciones (§4du), y desde §4gm cuenta a Eduardo a Multicenter. */
+  if(col==='mes') t+='\nEl '+Math.round(PRODUCIR_1RA*100)+'% para la 1ª quincena. Es lo probable entre los últimos '+STOCK_VENTANA_MES+', 60 y 90 días, el mismo mes del año pasado y la tendencia: ventas del equipo y de Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda.';
   else t+='\nCubre lo vendido sin entregar y lo que tarda la fábrica + margen + '+(col==='sem'?'la semana':(PRODUCIR_QUINCENA+' días'))+' de venta, menos lo que hay acá, en Moreno y en camino.';
   copyText(t);
   toast('Copiado: producir para '+etq+' ✓','ok');

@@ -113,6 +113,8 @@ function NUMEROS(k){
     var casos=[
       ['Eduardo Añez','MULTICENTER',true], ['EDUARDO ANEZ','Multicenter S.R.L.',true], ['  eduardo  añez ',' multicenter ',true], ['Eduardo','MULTICENTER',true],
       ['Eduardo Añez','MULTICENTER CONSIGNACIÓN',false], ['Eduardo Añez','CONSIGNACION MULTICENTER',false],
+      // (28/09, 2ª revisión) una consignación escrita de otra forma también queda afuera, como antes
+      ['Eduardo Añez','MULTICENTER CONSIGNADO',false], ['Eduardo Añez','MULTICENTER (CONSIG.)',false],
       ['Eduardo Añez','MULTIESPUMAS',false], ['Eduardo Añez','MULTI CENTRO',false], ['Eduardo Añez','MULTICENTRO',false], ['Eduardo Añez','MULTI',false],
       ['Eduardo Añez','CLIENTE MAYORISTA',false], ['Carola Chavez','MULTICENTER',false], ['ROHO','MULTICENTER',false],
       ['Eduardo Añez','MULTICENTER',false,'RPT 09-001']
@@ -122,6 +124,14 @@ function NUMEROS(k){
   const malQuien = quien.filter(q => !q.ok);
   chk('Eduardo (cualquier forma de escribirlo) → MULTICENTER (palabra entera) es la excepción; consignación, «multi…», otro cliente, otro vendedor y una RPT no',
       malQuien.length===0, malQuien.map(q => q.caso+' dio '+q.got).join(' · '));
+  /* «Pedido puntual» y «pedido único» dan IGUAL que antes para todo lo que no es la excepción: la consignación de los
+     otros vendedores sigue siendo «CONSIGNACI…» (la forma amplia es solo para no meter una consignación de Eduardo). */
+  const casosIg = [['Carola Chavez','MULTICENTER'],['Carola Chavez','CLIENTE CONSIGNADO'],['Carola Chavez','CONSIGNACION X'],['ROHO','TIENDA 1'],
+                   ['ROHO','Juan Perez'],['Carola Chavez','MULTIESPUMAS'],['Eduardo Añez','MULTICENTER CONSIGNADO'],['Eduardo Añez','CLIENTE MAYORISTA']];
+  const igual = (P) => P.evaluate((c) => c.map(function(x){ var p={ vendedor:x[0], cliente:x[1], oc:'' }; return [stockPuntual(p), stockPedidoUnico(p)]; }), casosIg);
+  const igN = await igual(NUEVA), igV = await igual(VIEJA);
+  chk('«pedido puntual» y «pedido único» dan igual que en la página publicada fuera de la excepción (también «CLIENTE CONSIGNADO» de Carola)',
+      JSON.stringify(igN)===JSON.stringify(igV), { nueva:igN, antes:igV });
 
   // ═══ Los escenarios ═══════════════════════════════════════════════════════════════════════════════════════
   const base = { rpt:true };
@@ -138,9 +148,16 @@ function NUMEROS(k){
       nMc.T.v30===nBase.T.v30+14 && nMc.T.n30===nBase.T.n30+2 && nMc.T.v30EduMc===14, { base:[nBase.T.v30, nBase.T.n30], con:[nMc.T.v30, nMc.T.n30, nMc.T.v30EduMc] });
   chk('índice mensual del panel (60 d / 90 d / tendencia): agosto +18 (la del 06/08 y la del 23/08) y septiembre +8 (la del 06/09)',
       nMc.T.ago===nBase.T.ago+18 && nMc.T.sep===nBase.T.sep+8, { base:[nBase.T.ago, nBase.T.sep], con:[nMc.T.ago, nMc.T.sep] });
-  chk('7 días de «Qué producir» = lo de la tabla de stock, y sube con la demanda de Multicenter',
-      nMc.T.sem===nMc.T.fabricar && nMc.T.pedir>nBase.T.pedir, { base:[nBase.T.pedir, nBase.T.sem], con:[nMc.T.pedir, nMc.T.sem] });
-  chk('15 días y el mes de octubre también suben', nMc.T.quin>nBase.T.quin && nMc.T.mesNec>nBase.T.mesNec, { base:[nBase.T.quin, nBase.T.mesNec], con:[nMc.T.quin, nMc.T.mesNec] });
+  /* Los números exactos del ejemplo del informe (reloj clavado): si cambian, cambió una regla — mirarlo a conciencia. */
+  chk('rotación media → ALTA (18 unidades en 2 tramos): margen 2 → 4 días, reserva 3 → 7',
+      nBase.T.rotacion==='media' && nBase.T.margen===2 && nBase.T.cubrir===3 && nMc.T.rotacion==='alta' && nMc.T.margen===4 && nMc.T.cubrir===7,
+      { base:[nBase.T.rotacion, nBase.T.margen, nBase.T.cubrir], con:[nMc.T.rotacion, nMc.T.margen, nMc.T.cubrir] });
+  chk('7 días de «Qué producir» 1 → 12 = fabricar de la tabla; pedir 3 → 14 (recoger 2 de Moreno + fabricar 12)',
+      nBase.T.sem===1 && nBase.T.pedir===3 && nBase.T.recoger===2 && nMc.T.sem===12 && nMc.T.pedir===14 && nMc.T.recoger===2 && nMc.T.fabricar===12,
+      { base:[nBase.T.pedir, nBase.T.recoger, nBase.T.sem], con:[nMc.T.pedir, nMc.T.recoger, nMc.T.fabricar, nMc.T.sem] });
+  chk('15 días 9 → 22 y octubre 15 → 22 (rango 8–24 → 8–34)',
+      nBase.T.quin===9 && nMc.T.quin===22 && nBase.T.mesNec===15 && nMc.T.mesNec===22 && nBase.T.mesMax===24 && nMc.T.mesMax===34,
+      { base:[nBase.T.quin, nBase.T.mesNec, nBase.T.mesMin, nBase.T.mesMax], con:[nMc.T.quin, nMc.T.mesNec, nMc.T.mesMin, nMc.T.mesMax] });
   // En la publicada esas ventas SÍ se veían, pero solo en los carteles de «no cuentan» (únicos de Eduardo y puntuales):
   // ningún número de la proyección se movía. Se comparan solo los de la proyección.
   const PROY = ['vendidosRotacion','nVentasRotacion','rotacion','porDia','v30','n30','porDiaMes','comp','pedir','recoger','fabricar','margen','cubrir',
@@ -228,7 +245,18 @@ function NUMEROS(k){
   });
   const c = cambios;
   chk('cantidad 8 → 3: el ritmo de 15 días, los 30 días y septiembre bajan 5', c.cant.rot===c.ini.rot-5 && c.cant.eduMc===3 && c.cant.v30===c.ini.v30-5 && c.cant.sep===c.ini.sep-5, c);
-  chk('…y el saldo del formulario (su caché por lectura) también lo ve', c.saldoCant===c.saldoIni-5, [c.saldoIni, c.saldoCant]);
+  /* (28/09, 2ª revisión) La caché del formulario (`saldoDatos`, una foto de `stockData` por lectura) se rehace con la
+     corrección. Lo que VE la vendedora en el cuadrito no cambia con esta regla (ver abajo): esto solo mide que la foto
+     no quede vieja. */
+  chk('…y la caché del formulario se rehace con la corrección (no queda una foto vieja)', c.saldoCant===c.saldoIni-5, [c.saldoIni, c.saldoCant]);
+  /* El cuadrito del saldo usa lo pendiente de TODOS, los almacenes y la fábrica; nunca el ritmo ni `stockPedidoUnico`.
+     Lo pendiente de Eduardo (a Multicenter o a quien sea) ya contaba antes: con los mismos pedidos da IGUAL. */
+  const cuadrito = (P) => P.evaluate(() => {
+    var K=ESCENARIO({ rpt:true, mc:true, pend:true }); STOCK_CARGADO=true; if(typeof SALDO_GEN!=='undefined') SALDO_GEN++;
+    return [1,4,9].map(function(n){ var v=saldoVeredicto(K.KT, n, '', '', true); return [n, v.tipo, v.alm, v.pend, v.libres, v.faltan].join('|'); });
+  });
+  const cuN = await cuadrito(NUEVA), cuV = await cuadrito(VIEJA);
+  chk('el cuadrito del formulario da lo mismo que en la página publicada (lo pendiente de Eduardo ya contaba)', JSON.stringify(cuN)===JSON.stringify(cuV), { nueva:cuN, antes:cuV });
   chk('cliente → otro: sale de la demanda y pasa a «únicos» de Eduardo', c.cliente.rot===c.ini.rot-8 && c.cliente.eduMc===0 && c.cliente.sep===c.ini.sep-8 && c.cliente.unicos===c.ini.unicos+3, c.cliente);
   chk('vendedor → Carola (Multicenter de otro vendedor): pedido puntual, como siempre', c.vendedor.rot===c.ini.rot-8 && c.vendedor.punt===c.ini.punt+3 && c.vendedor.sep===c.ini.sep-8, c.vendedor);
   chk('de vuelta a Eduardo → Multicenter (3): vuelve a entrar', c.vuelta.rot===c.ini.rot-5 && c.vuelta.eduMc===3 && c.vuelta.sep===c.ini.sep-5, c.vuelta);
@@ -244,6 +272,36 @@ function NUMEROS(k){
       /ventas del equipo \+ ventas de Eduardo a Multicenter; sin otras ventas puntuales \(las demás de Eduardo, Multicenter de otros vendedores, consignación, ROHO a tienda\) ni reposiciones de tienda \(RPT\)/.test(txt.cab) && /no dice vendedor ni cliente/.test(txt.cab), txt.cab);
   chk('la fila del TITANIO ICE dice cuánto es de Multicenter (15 d: 8 · 30 d: 14)', /8 de Eduardo a Multicenter/.test(txt.fila) && /14 de Eduardo a Multicenter/.test(txt.fila), txt.fila.slice(0,300));
   chk('la tabla de stock: «Equipo: … (incluye 8 de Eduardo a Multicenter)»', txt.tabla===true, txt.tabla);
+  /* (28/09, 2ª revisión) Tres textos que se contradecían o decían de más. */
+  const txt2 = await NUEVA.evaluate(() => {
+    var hoy=todayStr(), K=null, out={};
+    var P=function(id, d, v, c, u){ return { id:id, fecha:stockSumarDias(hoy,-d), oc:'', vendedor:v, cliente:c, entregado:true, verificado:true,
+      ts:Date.parse(stockSumarDias(hoy,-d)+'T12:00:00-04:00'), productos:[{desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761', cant:u}] }; };
+    var k=stockClave({desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761'});
+    var armar=function(lista){ STATE=lista; STOCK=stockVacio(); STOCK.c={ f:hoy, hora:'09:00', u:{}, solo0:true }; STOCK.c.u[k]=1; stockOlvidarIndice(); };
+    // (a) solo Eduardo → Multicenter, 3 entregas: sin pedidos únicos, la «Base de rotación» no dice «0 de eduardo»
+    armar([P('a1',2,'Eduardo Añez','MULTICENTER',2), P('a2',5,'Eduardo Añez','MULTICENTER',2), P('a3',8,'Eduardo Añez','MULTICENTER',2)]);
+    abrirStock(); abrirStockPedidos(k);
+    out.base=((document.body.textContent||'').replace(/\s+/g,' ').match(/Base de rotación:[^.]*\.[^.]*\./)||[''])[0];   // el detalle no va en #stock-body
+    closeStock();
+    // (b) solo Carola → MULTICENTER (pedido puntual): el cartel no dice «Lo vendió Eduardo»
+    armar([P('b1',2,'Carola Chavez','MULTICENTER',7)]);
+    abrirStock(); out.fila=(document.getElementById('stock-body').textContent||'').replace(/\s+/g,' ');
+    closeStock();
+    // (c) lo que se copia para la fábrica («el mes»): cuánto es de Multicenter y de dónde sale el número
+    ESCENARIO({ rpt:true, mc:true });
+    var R=stockProducir(stockData()), B=R.bloques.filter(function(b){ return b.filas.some(function(f){ return /TITANIO ICE/.test(f.o.desc); }); })[0];
+    var copiado=''; var _c=copyText; copyText=function(t){ copiado=t; }; var _t=toast; toast=function(){};
+    try{ copiarProducir(B.k, 'mes'); } finally { copyText=_c; toast=_t; }
+    out.copia=copiado;
+    return out;
+  });
+  chk('«Base de rotación» sin pedidos únicos no dice «0 de eduardo, excluidas»', /incluye 6 de Eduardo a Multicenter/.test(txt2.base) && !/\b0 de /.test(txt2.base) && !/eduardo, excluidas/.test(txt2.base), txt2.base);
+  chk('una venta de Carola a Multicenter no dice «Lo vendió Eduardo» (es un pedido puntual)',
+      !/Lo vendió Eduardo/.test(txt2.fila) && /pedido puntual/i.test(txt2.fila), (txt2.fila.match(/[^.]*pedido puntual[^.]*/i)||[txt2.fila.slice(0,200)])[0]);
+  chk('lo que se copia para la fábrica dice cuánto es de Eduardo a Multicenter y que el mes es lo probable de cinco estimaciones',
+      /14 de Eduardo a Multicenter/.test(txt2.copia) && /lo probable entre los últimos 30, 60 y 90 días/.test(txt2.copia) && /Eduardo a Multicenter, sin otras ventas puntuales ni reposiciones de tienda/.test(txt2.copia),
+      txt2.copia.slice(0,500));
 
   // ═══ El ejemplo de antes y después ════════════════════════════════════════════════════════════════════════
   console.log('\n── Ejemplo: TITANIO ICE 160x190 (acá 3 · Moreno 2), los mismos pedidos, antes y después ──');

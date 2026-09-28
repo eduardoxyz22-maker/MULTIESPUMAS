@@ -7445,6 +7445,93 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gn. 28/09: la revisión antes de publicar — la copia vieja de `doGet` y los textos de §4gm (2026-09-28) — SIN PUBLICAR
+
+El dueño: *«dame el informe para codex y revisa y aviso para publicar»*. Dos agentes revisaron lo que la rama tiene y
+`main` no. Uno miró §4gm (Eduardo → Multicenter); el otro, §4gl (los arreglos de Codex) con el servidor que está
+implementado hoy (26-a), porque la página se publica ANTES que el `.gs` 28-a. Todo lo que encontraron se verificó y
+se arregló con pruebas.
+
+### 1. MEDIA · regresión de §4gl: la copia vieja de 20 s de `doGet` borraba de la pantalla un pedido que SÍ existe
+- **Cómo pasaba:**
+  - un `doGet` (el lector de afuera de §4du, o cualquier POST que Google convierte, §4fx) empieza a leer la hoja
+    ANTES de un guardado y termina DESPUÉS, cuando `getCacheOlvidar_` ya corrió;
+  - su foto de antes queda 20 s en la caché;
+  - si en esos 20 s Google convierte el `list` del panel en GET, la página de §4gl lo tomaba por una lectura buena
+    «pedida después» de la confirmación (`localManda`);
+  - el pedido nuevo salía de la pantalla con «lo borraron desde otro equipo»;
+  - si la vendedora lo corregía enseguida (mover la fecha relee), «tu cambio NO se guardó… hacelo como pedido
+    nuevo»: una invitación a cargar un duplicado;
+  - un retiro de plata desaparecía igual, sin aviso.
+- La página publicada (`2040720`) no lo tenía: conservaba 90 s todo lo guardado acá. El revisor lo reprodujo con el
+  `.gs` real: 3 fallas con la página nueva, 0 con la publicada y 0 con `GET_CERRADO=1`.
+- ⚠️ Con los servidores 26-a y 28-a esa copia tiene la MISMA forma que una lectura buena (`{ok, version, pedidos}`):
+  la página no puede distinguirla.
+- **Arreglo en la página**: un pedido (o retiro) confirmado acá hace menos de **`LECTURA_VIEJA_MS` = 45 s** que la
+  lectura no trae se CONSERVA. Pasado ese tiempo, un borrado de verdad se detecta como en §4gl.
+  - 45 s = los 20 de `GET_CACHE_SEG` + lo que tarda un `doGet` en leer la hoja (3-5 s, §4du) + margen.
+  - Cada lectura lleva cuándo se pidió (`apiList` → `_pedidaT`) y cada confirmación, cuándo llegó
+    (`aplicarSello` → `SAVE_ULTIMO[id].okT`).
+  - Las dos marcas salen de **`relojMs()`** (`performance.now`: solo avanza; el celular que corrige la hora no la
+    mueve). El ORDEN sigue saliendo del contador `RED_N`.
+  - `localManda(id, loc, srv, n0, enCola, tPed)`. Una lista sin esas marcas (una prueba que llama a `mergePending`
+    directo) cuenta como pedida después de todo y sin copia vieja: `test_codex28.cjs` queda intacta.
+- **Lo que cuesta, a propósito**: si otro equipo borra un pedido en los primeros 45 s después de que este lo guardó,
+  este no se entera hasta la lectura siguiente pasada la ventana (antes de §4gl eran 90 s). Si en esa ventana lo
+  corrige, con el servidor 26-a lo vuelve a crear, como antes de §4gl. El `.gs` 28-a lo rechaza con `borrado`.
+- **Opcional (lo decide el dueño)**: `GET_CERRADO=1` en Propiedades del script cierra la puerta GET sin
+  reimplementar. La página ya no depende de eso. Antes de cerrarla, mirar 📡 ¿Quién lee la planilla?
+- **Pruebas**:
+  - `tests/test_lectura_vieja.js` (15, nueva, a partir del guion del revisor): pedido nuevo, corrección enseguida,
+    retiro, un borrado de verdad antes y después de la ventana, y que `LECTURA_VIEJA_MS ≥ GET_CACHE_SEG + 10 s`.
+    Da **9 rojas** contra la página `7f4a74e` y **3** contra `2040720` (las de «detecta un borrado de verdad», que la
+    publicada nunca hizo). Con el servidor 26-a: 15/15.
+  - `test_codex28_flujos.js` §1-2: B borraba en el mismo segundo del guardado de A. Ahora `pasaElTiempo` corre para
+    atrás el `okT` de A, como si hubiera pasado un minuto.
+
+### 2. Los otros hallazgos del revisor de §4gl (BAJA, anotados)
+- **Implementar la 28-a con equipos todavía en `2040720`**: esa página no conoce `borrado`, y su cola lo reintenta
+  para siempre (una fila nueva en «Rechazos» por intento). F5 lo cura. → **Implementar la 28-a recién cuando todos
+  hayan recargado**, que ya es el procedimiento.
+- **Solo con la 28-a, los textos de `borrado`**:
+  - el cartel del chofer dice «otra persona cambió esos pedidos… volvé a tocar ✅» sobre un pedido que ya no existe;
+  - el formulario queda abierto sobre un id que ya no existe (se podría ofrecer «guardar como nuevo»).
+  - Pendiente para antes de implementar la 28-a.
+- **Hueco de la 28-a (no es regresión)**: la regla exige `rev>0`. Una fila nunca sellada (anterior a §4ce, o un
+  borrador de Kommo) todavía se recrea desde una copia vieja.
+- En `test_codex28.cjs` (la de Codex, intacta) hay dos puntos débiles: `mergePending([])` sin marcas, y una
+  comprobación que pasa en vacío. Lo que no cubre, lo cubren `test_codex28_flujos` y `test_lectura_vieja`.
+
+### 3. Los hallazgos del revisor de §4gm (todos BAJA, arreglados)
+- **Una consignación de Eduardo a Multicenter mal escrita («MULTICENTER CONSIGNADO», «(CONSIG.)») contaba como
+  demanda.** La excepción ahora usa `stockPareceConsignacion` (`/\bCONSIG/`): ante la duda queda afuera, como antes.
+  Los puntuales de los OTROS vendedores siguen con «CONSIGNACI…» (`stockEsConsignacion`), sin cambios.
+- **Multicenter se definía en dos lugares** (`STOCK_PUNTUAL` copiaba la expresión). Ahora `stockPuntual` usa
+  `stockEsMulticenter`/`stockEsConsignacion` y `STOCK_PUNTUAL` no existe más.
+- **«Lo vendió Eduardo:»** salía también cuando lo único vendido era un Multicenter de otra vendedora, una
+  consignación o ROHO a tienda (venía de antes). Ahora `stockUnicoQuien(o)` dice quién fue.
+- **«0 de eduardo, excluidas»** salía al lado de «incluye 6 de Eduardo a Multicenter». Sin pedidos únicos, la «Base
+  de rotación» ya no lo dice, y «Eduardo» va con mayúscula.
+- **Lo que se copia para la fábrica** (`copiarProducir`, `copiarStock`) ahora dice cuánto es de Eduardo a
+  Multicenter. El cierre del mes dice lo que es: lo probable entre 30, 60 y 90 días, el mismo mes del año pasado y la
+  tendencia. Antes decía «lo vendido en 30 días».
+- **Yo había escrito que la regla cambia el cuadrito del formulario, y no lo cambia.** El cuadrito usa lo pendiente
+  de TODOS, los almacenes y la fábrica, nunca el ritmo ni `stockPedidoUnico`. Lo pendiente de Eduardo ya contaba.
+  Corregido en `CLAUDE.md`, en §4gm y en el informe. La prueba ahora COMPARA el cuadrito con la página publicada:
+  da igual.
+- **Las pruebas solo miraban que los números subieran.** Ahora comparan los números exactos del ejemplo:
+  - rotación media → alta y reserva 3 → 7;
+  - 7 días 1 → 12 y pedir 3 → 14;
+  - 15 días 9 → 22 y octubre 15 → 22;
+  - en `test_adm_alta`, octubre 9 → 24.
+- **No se pudo verificar**: si en los pedidos de Eduardo a Multicenter «MULTICENTER» va en el cliente o en
+  «Facturar a». La regla mira el cliente, igual que la exclusión de siempre. Se le preguntó al dueño.
+- `tests/test_eduardo_multicenter.js`: 35. Da **21 rojas** contra `2040720`, entre ellas los tres textos nuevos.
+
+**Batería sobre esta vuelta: 110 suites, 4.167 bien · 0 mal.** Listo para publicar la página cuando el dueño diga.
+Al publicar hay que hacer lo mismo que en `2040720`: unir la rama sobre `main` con los commits del robot incluidos
+(tableros de Kommo) y que todos hagan F5. El `.gs` 28-a va después, con todos ya recargados (punto 2).
+
 ## 4gm. 28/09: las ventas de Eduardo A MULTICENTER entran a la proyección de stock (2026-09-28) — SIN PUBLICAR
 
 El dueño (10:49): *«Necesito que la proyección de stock incluya las ventas de Eduardo a Multicenter, conservando las
@@ -7474,7 +7561,10 @@ Las identidades se definen UNA vez y las usan la exclusión y la excepción:
   recoger / fabricar y la columna **7 días** de «Qué producir» (`o.fabricar`);
 - los 30 días (`v30`, `n30`, `porDiaMes`) → la estimación «30 d» y «el mes»;
 - `ventasPanelIndex` → «60 d», «90 d» y la tendencia;
-- el cuadrito del saldo del formulario (`saldoDatos` → `stockData`) y el mensaje a fábrica.
+- el mensaje a fábrica (`copiarStock`, `copiarProducir`).
+
+⚠️ **Corrección de §4gn**: acá decía que también entraba al cuadrito del saldo del formulario, y NO. El cuadrito usa lo
+pendiente de todos (`comp`), los almacenes y la fábrica, nunca el ritmo ni `stockPedidoUnico`. Da igual que antes.
 
 `vendidosEduMc`/`v30EduMc` cuentan cuánto de eso es Multicenter, solo para los textos.
 

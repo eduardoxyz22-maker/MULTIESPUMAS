@@ -806,6 +806,13 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   ⚠️ «Antes/después» es un **contador** (`RED_N`: `apiList` → `_pedidaN`, `aplicarSello` → `SAVE_ULTIMO[id].okN`),
   **nunca la hora**: con el reloj quieto de las pruebas daban igual y se confundían. Una lista sin marca (una prueba que
   llama a `mergePending` directo) cuenta como pedida después de todo.
+  ⏱️ **Y NADA SE DA POR BORRADO EN LOS PRIMEROS `LECTURA_VIEJA_MS` = 45 s** después de la confirmación (§4gn): si Google
+  convierte la lectura en GET (§4fx), `doGet` contesta su caché de 20 s (§4du), que puede ser de ANTES del guardado, y
+  con los servidores 26-a y 28-a esa copia tiene la misma forma que una lectura buena. Se mide con `relojMs()` (solo
+  avanza): `apiList` → `_pedidaT`, `aplicarSello` → `okT`, `localManda(…, tPed)`. Sin esa ventana, un pedido recién
+  cargado salía de la pantalla con «lo borraron» y su corrección no se guardaba (invitaba a un duplicado).
+  `LECTURA_VIEJA_MS` tiene que ser ≥ `GET_CACHE_SEG` + 10 s (`test_lectura_vieja` §5 lo mide). En una prueba donde otro
+  equipo borra en el mismo segundo, correr para atrás el `okT` (`pasaElTiempo` en `test_codex28_flujos`).
 - **`submitPedido` no guarda un pedido que la lectura de justo antes ya no trae** (lo borraron mientras estaba abierto):
   `guardarYa` lo recreaba.
 - **Servidor `.gs` 2026-09-28-a** (en el repo; **implementarlo lo decide el dueño**, con el procedimiento de siempre y
@@ -819,9 +826,13 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   `STOCK_DIAS_RECOGIDA`, cada recogida con su `llega`, repartiendo `enRecogida` sin pasarse) → «🚚 VIENE DE MORENO ·
   logística lo trae el…». Sin cupo en `SALDO_DIAS_CUPO` días no se promete ningún día (`saldoDiaConCupo` → `sinCupo`,
   `saldoPonerDia`): «⚠️ SIN CUPO…», en ámbar. Todo lo que calcule un día prometido pasa por `saldoPonerDia`.
-- ⚠️ `doGet` contesta igual que la lectura por POST y sale de una caché de 20 s: si Google convirtiera la lectura en GET
-  con una caché de antes de un guardado, lo recién guardado podría desaparecer de la pantalla hasta la lectura siguiente
-  (con el aviso de borrado). No se pierde nada. El arreglo de fondo es que el servidor diga la hora de su lectura.
+- ⚠️ `doGet` contesta igual que la lectura por POST y sale de una caché de 20 s. La primera versión de §4gl, con una
+  caché de antes de un guardado, sacaba de la pantalla lo recién guardado con «lo borraron» y NO guardaba su
+  corrección. **Resuelto en la página (§4gn) con la ventana de `LECTURA_VIEJA_MS`** (arriba). El arreglo de fondo sigue
+  siendo que el servidor diga en la respuesta de dónde y de cuándo es su lectura (otra versión del `.gs`).
+- **Antes de implementar la 28-a** (§4gn): todos con F5 (una página `2040720` reintenta `borrado` para siempre desde su
+  cola), y revisar los textos de `borrado` (el cartel del chofer habla de «otra persona cambió»; el formulario queda
+  abierto sobre un id que ya no existe). La 28-a no protege filas nunca selladas (`rev` 0).
 - Pruebas: `test_codex28.cjs` (8), `test_codex28_flujos.js` (23; 13 rojas con página 2040720 + `.gs` 26-a; con la página
   nueva y el `.gs` 26-a, 7 rojas = lo que necesita el servidor), `test_rev8_saldo.js` §10-11.
 - **Espera al dueño**: validar el stock en el servidor al guardar (Codex: no bloquear la venta; antes, las mismas reglas
@@ -842,8 +853,16 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   - `stockEsConsignacion`: manda sobre Multicenter.
   - `stockEsEduardo`: la palabra «eduardo» en el vendedor.
 - **Entra en todo lo que proyecta**, porque todo pasa por `stockPedidoUnico`: el ritmo de 15 días (→ rotación, reserva,
-  pedir y la columna **7 días** de «Qué producir»), los 30 días, `ventasPanelIndex` (60 d / 90 d / tendencia) y el
-  saldo del formulario. `vendidosEduMc`/`v30EduMc` son solo para los textos. **Los umbrales no cambiaron.**
+  pedir y la columna **7 días** de «Qué producir»), los 30 días, `ventasPanelIndex` (60 d / 90 d / tendencia) y lo que se
+  copia para la fábrica. `vendidosEduMc`/`v30EduMc` son solo para los textos. **Los umbrales no cambiaron.**
+  ⚠️ El cuadrito del saldo del formulario NO cambia: usa lo pendiente de todos (`comp`), nunca el ritmo (§4gn).
+- **La consignación, dos medidas a propósito** (§4gn): la excepción descarta lo que PAREZCA consignación
+  (`stockPareceConsignacion`, `/\bCONSIG/`: «CONSIGNADO», «CONSIG.»), y los puntuales de los otros vendedores siguen con
+  «CONSIGNACI…» (`stockEsConsignacion`), sin cambios. `stockPuntual` usa las mismas funciones de identidad:
+  `STOCK_PUNTUAL` ya no existe.
+- **Quién fue el pedido único, en palabras**: `stockUnicoQuien(o)`. No volver a escribir «Lo vendió Eduardo:» a secas.
+- **Sin confirmar**: si en los pedidos de Eduardo a Multicenter «MULTICENTER» va en el cliente o en «Facturar a». La
+  regla mira el cliente, como la exclusión de siempre. Se le preguntó al dueño.
 - **No hay caché que migrar**: el índice se arma de cero y `SALDO_CACHE` se renueva con cada lectura.
 - ⚠️ **El histórico del sistema (`VENTAS_HIST`) no dice vendedor ni cliente** y trae todas las ventas: no se separa
   nada ahí. El cartel de «Qué producir» lo dice.
@@ -857,8 +876,9 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
   - Dicho y no es un error: los umbrales miran el PRODUCTO, no la compra. 8 de Multicenter + 10 del equipo pasaron el
     TITANIO de `media` a `alta`.
 - Pruebas:
-  - `tests/test_eduardo_multicenter.js`: 29 comprobaciones, 17 rojas contra `2040720`. Abre la página publicada desde
-    git (`ANTES=<sha>`) con los mismos pedidos, así que «lo que no cambia» se compara literal.
+  - `tests/test_eduardo_multicenter.js`: 35 comprobaciones, 21 rojas contra `2040720`, con los números exactos del
+    ejemplo. Abre la página publicada desde git (`ANTES=<sha>`) con los mismos pedidos, así que «lo que no cambia» (y
+    el cuadrito del formulario) se compara literal.
   - `test_adm_alta` §3 se cambió a conciencia.
 
 ## Quién vendió qué (buscar por producto) y sacar un PDF

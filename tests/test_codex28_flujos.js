@@ -162,6 +162,14 @@ function INIT(){
     realDelete(id); await esperar(1500); await quieto();
     return !findById(id);
   }, id);
+  /* ⏱️ (28/09, 2ª revisión) En la vida real B borra un rato después del guardado de A; acá pasa en el mismo segundo. Un
+     pedido confirmado hace menos de `LECTURA_VIEJA_MS` que la lectura no trae se CONSERVA: puede ser la copia vieja de
+     20 s de `doGet` (ver `test_lectura_vieja.js`). Se corre para atrás el momento en que A lo confirmó, como si hubiera
+     pasado un minuto. Una página sin esa regla (la de antes) no tiene nada que correr. */
+  const pasaElTiempo = (P, id) => P.evaluate((id) => {
+    if(typeof LECTURA_VIEJA_MS==='undefined') return;
+    var u=SAVE_ULTIMO[id]; if(u && u.okT!=null) u.okT-=LECTURA_VIEJA_MS+1000;
+  }, id);
 
   // ══ 1. A CARGA UN PEDIDO, B LO BORRA, A RELEE ══════════════════════════════════════════════════════════
   await esc('1. A carga un pedido y B lo borra: la lectura siguiente de A ya no lo muestra', async () => {
@@ -171,6 +179,7 @@ function INIT(){
     chk('(partida) el pedido llegó a la planilla', !!(id && S.fila(id)), id);
     const bOk = await borrarDesde(B, id);
     chk('(partida) B lo borró de la planilla', bOk && !S.fila(id), bOk);
+    await pasaElTiempo(A, id);
     const r = await A.evaluate(async (id) => {
       window._toasts=[]; await refrescarEstado(); await esperar(150);
       return { sigue:!!findById(id), avisos:window._toasts.filter(function(t){ return /ya no está en la planilla/.test(t); }) };
@@ -187,6 +196,7 @@ function INIT(){
     const id = await cargar(A, 'EDITANDO EN A');
     await A.evaluate(async (id) => { showView('mis'); await esperar(150); editPedido(id); await esperar(300); }, id);
     await borrarDesde(B, id);
+    await pasaElTiempo(A, id);
     const r = await A.evaluate(async () => {
       window._toasts=[]; window.__ctl.log=[];
       UNLOCKED=false;                                                  // A es la vendedora (sin la clave de administración)…
