@@ -7482,6 +7482,9 @@ errores, que tienen que dar igual.
 **Queda (dicho al dueño):** hoy no hay cómo BORRAR un pago de la venta ya registrado. «✏️ Corregir» no acepta monto 0, y ni
 el formulario ni «Corregir precios y montos» tocan los cobros. Se ofreció un «🗑 Borrar este pago» si hace falta.
 
+**Batería sobre `275b031`: 112 suites, 4.231 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+Es la de §4gq más `test_envio_a_pago` (28). En la rama, junto con §4gq, esperando el OK del dueño para publicar.
+
 ## 4gq. 28/09, tarde: la hora en que entra el pedido (corte 17:00; sábado 12:00) — EN LA RAMA, SIN PUBLICAR
 
 **La pregunta del dueño** (15:40): *«¿qué pasa si hoy tenemos un ICE en inventario, el 1er vendedor lo pone para el
