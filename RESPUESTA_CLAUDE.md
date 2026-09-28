@@ -1149,7 +1149,9 @@ cartel de «Qué producir» lo dice.
 **Decisión del dueño (28/09):** las compras grandes y sueltas de Multicenter no se cargan al panel, para no entorpecer
 los pedidos regulares. Por eso no hay tope nuevo en el código. Se le avisó que esas unidades, si salen de un depósito
 contado, el panel no las aparta ni las descuenta hasta el Excel de existencias siguiente, y que «Qué producir» no las
-pide. Quedó propuesta, sin respuesta, una marca en el cliente («PEDIDO ÚNICO») para cargarlas como pedido único.
+pide. Se propuso una marca en el cliente («PEDIDO ÚNICO») para cargarlas como pedido único, y el dueño la
+descartó: los pedidos grandes van directo a logística, que los fabrica aparte para no dejar sin stock a los
+vendedores.
 
 **Archivos:**
 - `pedidos.html`: la regla, dos contadores para los textos, los textos y los comentarios.

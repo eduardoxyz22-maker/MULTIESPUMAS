@@ -7543,8 +7543,12 @@ lo que cuesta no cargarlas:
    aparta.
 2. Si hay que fabricarlas, «Qué producir» no las pide.
 
-Propuesto y sin respuesta: cargarlas con una marca en el cliente («PEDIDO ÚNICO») que las vuelva pedido único. Así
-apartan y descuentan stock y van al camión, pero no son demanda.
+Se propuso cargarlas con una marca en el cliente («PEDIDO ÚNICO») que las volviera pedido único. **El dueño lo
+descartó** (28/09): *«los pedidos grandes se los mando directo a logística, no entran por el panel, para no
+entorpecer las rotaciones… no nos compliquemos»*. Explicó cómo funcionan: *«los pedidos de Eduardo que son grandes
+normalmente no se sacan del almacén, se fabrican para no perjudicar a los vendedores, salvo que haya un 50% de stock
+del pedido grande y permita dejar un saldo a los vendedores»*. Lo decide logística, fuera del panel.
+⚠️ **No volver a proponer la marca ni una regla del 50 % en el panel.** No se tocó código.
 
 **Pruebas:**
 - `tests/test_eduardo_multicenter.js` (nueva). Abre la página nueva y la publicada `2040720` con los MISMOS
