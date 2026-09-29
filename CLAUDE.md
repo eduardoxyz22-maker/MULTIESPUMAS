@@ -844,7 +844,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
 - ⚠️ Las fichas de esta pestaña piden 300 px (`data-min` en `#pry-metrics`, que `acomodarFichas` respeta): con 230 los
   totales de seis cifras salían cortados en el iPad. La lista por vendedor es lista y no tabla: en 390 px una tabla
   escondía la proyección.
-- **🔁 La curva de cada marca (§4gu, SIN PUBLICAR)**. El dueño: *«¿qué fórmula o algoritmo… algo realmente preciso?… en
+- **🔁 La curva de cada marca (§4gu, publicada 29/09 00:24, `a904137`)**. El dueño: *«¿qué fórmula o algoritmo… algo realmente preciso?… en
   agosto los últimos dos, tres días se facturó 80.000 o 150.000… Heaven; Sueña es distinto… probar con agosto»*.
   - `pryCurva`/`pryCurvaF`/`pryAlDia`: faltando r días hábiles para el cierre, qué parte `f` de lo que vendieron los
     meses cerrados (desde `PRY_PRIMER_MES`='2026-08') ya estaba vendida (`contaFecha`). Alineados por días hábiles.
@@ -859,6 +859,9 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     llenando y qué días de la semana se vende más.
   - ⚠️ Los feriados de 2026 ya pasados (06/08, 25/09) NO están en `FERIADOS` a propósito (pruebas del cuadrito entregan
     esos días): acá cuentan como hábiles.
+  - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
+    NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
+    Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
 - `tests/test_proyeccion.js` (95: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar

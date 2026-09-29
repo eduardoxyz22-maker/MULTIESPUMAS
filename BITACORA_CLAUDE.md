@@ -7445,7 +7445,24 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — SIN PUBLICAR
+## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
+
+> **Publicada el 29/09 a las 00:24 de Bolivia** (`main` = `a904137`). Sin tocar el servidor (sigue el `.gs` 2026-09-28-a).
+> No había ninguna corrida en curso ni en cola. Solo cambia la pestaña 📈 de Contabilidad (con la contraseña): a las
+> vendedoras no les cambia nada.
+>
+> **El OK del dueño**, después de ver las capturas con ventas inventadas y de preguntar qué tan exacta puede ser: *«si es
+> como la venías desarrollando, sin ver los meses anteriores que te pasé, sí, promueve. Veo que no sirven de mucho aún;
+> mejor armar algo limpio con los datos del panel»*.
+> - **Sus meses anteriores NO se cargan.** Mandó capturas de su Excel de métricas (ventas mensuales por vendedor, abril a
+>   agosto, Heaven y Sueña). Se analizaron en el scratchpad y **no van al repo** (es público). Lo que mostraron: el mes
+>   varía mucho de uno a otro (más que el 6 % que él busca), y el «promedio de los meses anteriores» erra bastante al
+>   arrancar el mes. Decidió seguir solo con lo que guarda el panel.
+> - **Metas:** *«por marca, y varía cada mes»*. No hay nada hecho todavía; se le propuso cargarla en esta pestaña con el
+>   seguimiento semanal «a esta altura contra los meses anteriores».
+> - **Julio tuvo una campaña parecida a la de septiembre.** Ojo al leer la prueba del 1/10: agosto (sin campaña) se prueba
+>   con la curva de septiembre (con campaña) y al revés. Propuesto y NO hecho: marcar los meses con campaña para comparar
+>   campaña con campaña.
 
 **Las preguntas del dueño** (después de ver §4gt publicada):
 - *«¿Cómo calculás la proyección? ¿Qué parámetros tomás? ¿Tomás en cuenta MoM? ¿Ticket promedio o qué?»* — Se le
