@@ -7478,6 +7478,9 @@ las unidades subían por almohadas de campaña. Es el caso que la columna de col
 «Comparar con», mes cerrado, agosto sin comparación, anchos). 7 textos de §4-14 cambiaron a conciencia (dicen las
 unidades). Contra lo publicado (`a904137`): 88 bien · 26 mal.
 
+**Batería sobre `6ced156`: 113 suites, 4.350 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+Esperando el OK del dueño para publicar.
+
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 
 > **Publicada el 29/09 a las 00:24 de Bolivia** (`main` = `a904137`). Sin tocar el servidor (sigue el `.gs` 2026-09-28-a).
