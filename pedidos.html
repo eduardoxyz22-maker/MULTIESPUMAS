@@ -17944,7 +17944,9 @@ function saldoConsultadoTxt(){
 function saldoDetalleTxt(v){
   var p=[];
   if(v.alm!=null){
-    var d='acá '+(v.aca==null ? 'sin contar' : stockUnid(v.aca))+
+    /* «PTF» (productos terminados fábrica), no «acá» (dueño, 29/09): el cuadrito lo leen los vendedores desde SUS tiendas,
+       y para ellos «acá» es la tienda. Es el mismo depósito que logística llama «acá en fábrica». */
+    var d='PTF '+(v.aca==null ? 'sin contar' : stockUnid(v.aca))+
           ' · Banzer '+(v.hayBanzer||v.banzer ? stockUnid(v.banzer) : '—')+
           ' · '+(v.variosMoreno ? 'Moreno y otros ' : 'Moreno ')+(v.hayMoreno||v.moreno ? stockUnid(v.moreno) : '—');
     if(v.recogida>0) d+=' (+'+stockUnid(v.recogida)+' en camino de Moreno)';
@@ -17981,7 +17983,7 @@ function saldoCajaHtml(v){
   if(v.desconocido) h+='<div class="ps-n">No encuentro este producto en el saldo del almacén: revisá el nombre y la medida.</div>';
   if(v.fechaCorta) h+='<div class="ps-f">⚠️ Para el '+esc(saldoDiaTxt(v.fechaCorta))+' no llega: programá '+esc(saldoDesdeTxt(v))+'</div>';
   saldoAvisos().forEach(function(a){ h+='<div class="ps-w">'+esc(a)+'</div>'; });
-  h+='<div class="ps-c"><span>'+esc(saldoDetalleTxt(v))+'</span>'+
+  h+='<div class="ps-c"><span title="PTF = productos terminados fábrica (de ahí salen los camiones)">'+esc(saldoDetalleTxt(v))+'</span>'+
      (CONNECTED ? '<button type="button" class="ps-act" onclick="saldoActualizar()" title="Volver a leer la planilla ahora">🔄 Actualizar</button>' : '')+'</div>';
   return h;
 }

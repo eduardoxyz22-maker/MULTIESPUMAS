@@ -259,8 +259,9 @@ function INIT_DOS(vend){
   chk('…con los números: «En almacén 6 · Pendientes de entrega 1 · Libres 5»', /En almacén 6 · Pendientes de entrega 1 · Libres 5/.test((T.tit||{}).txt||''), (T.tit||{}).txt);
   chk('…y son los de la tabla de Stock (`stockData()`): almacén = acá + Banzer + Moreno, pendientes = vendido sin entregar',
       !!(T.tit && T.tit.v && T.tTit && T.tit.v.alm===T.tTit.alm && T.tit.v.pend===T.tTit.comp && T.tTit.alm===6 && T.tTit.comp===1), [T.tit && T.tit.v && [T.tit.v.alm, T.tit.v.pend], T.tTit]);
-  chk('…el desglose chico: «acá 4 · Banzer 2 · Moreno 0» y de cuándo es el corte («Saldo al corte de hoy 08:30»)',
-      /acá 4 · Banzer 2 · Moreno 0/.test((T.tit||{}).txt||'') && /Saldo al corte de hoy 08:30, ya descontado lo entregado/.test((T.tit||{}).txt||''), (T.tit||{}).txt);
+  /* (29/09) «PTF», no «acá»: los vendedores lo leen desde sus tiendas (dueño). */
+  chk('…el desglose chico: «PTF 4 · Banzer 2 · Moreno 0» y de cuándo es el corte («Saldo al corte de hoy 08:30»)',
+      /PTF 4 · Banzer 2 · Moreno 0/.test((T.tit||{}).txt||'') && !/acá \d/.test((T.tit||{}).txt||'') && /Saldo al corte de hoy 08:30, ya descontado lo entregado/.test((T.tit||{}).txt||''), (T.tit||{}).txt);
   chk('📥 ALMOHADA 50x70 (solo 5 en Moreno): cuadrito ÁMBAR «HAY EN MORENO · se trae en 1 día: programá desde el viernes 25/09»',
       T.alm && /ps-ambar/.test(T.alm.cls) && /HAY EN MORENO · se trae en 1 día: programá desde el viernes 25\/09/.test(T.alm.txt), T.alm && [T.alm.cls, T.alm.txt]);
   chk('…«En almacén 5 · Pendientes de entrega 0 · Libres 5», igual que la tabla', /En almacén 5 · Pendientes de entrega 0 · Libres 5/.test((T.alm||{}).txt||'') && T.tAlm && T.tAlm.alm===5, [(T.alm||{}).txt, T.tAlm]);

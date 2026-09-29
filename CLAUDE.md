@@ -760,7 +760,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   productos de tienda) cuando el renglón está completo: ✅ DISPONIBLE (programar desde el primer día con cupo) · 📥 HAY
   EN MORENO (se trae en 1 día) · ⏳ EN PRODUCCIÓN (esperar ~X días, llega el DD/MM) · 🏭 NO HAY (mandar a producir,
   esperar ~X días) · gris «Sin saldo cargado». Abajo «En almacén · Pendientes de entrega · Libres/Faltan», el reparto
-  acá · Banzer · Moreno y de qué corte y consulta es. **Libre = saldo en almacén − pendientes de entrega** (la
+  **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
+  29/09, §4gz): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
 - **UNA sola cuenta**: todo sale de `stockData()` (`saldoDatos`/`SALDO_CACHE`, una vez por lectura) y de
   `saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo)`. `stockData` ganó `enRecogida` y un argumento
@@ -892,7 +893,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
-## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, EN LA RAMA, SIN PUBLICAR)
+## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, PUBLICADA 29/09 10:02, `72aa862`)
 Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en
 feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO sube el Excel de Moreno después de cargar
 (M2 no pasa). Multicenter: *«a veces hasta 4 pedidos en el mismo día para su bodega»* → cuentan como UNA entrega (ver
@@ -981,7 +982,7 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
 
 ## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02** (`7fe7551`), junto con §4gl, §4gn y §4go.
-- **🏬 Varios pedidos de Multicenter el MISMO día son UNA entrega** (dueño, 29/09, §4gy): *«hace pedidos por unidades, a
+- **🏬 Varios pedidos de Multicenter el MISMO día son UNA entrega** (dueño, 29/09, §4gy, publicada 29/09 10:02, `72aa862`): *«hace pedidos por unidades, a
   veces hasta 4 pedidos en el mismo día para su bodega»*. `stockEntregaClave(p, f)` usa la fecha como clave de la
   entrega para Eduardo → Multicenter (`nVentasRotacion`, `nVentas`, `n30`); lo demás sigue por pedido. Las unidades se
   suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
