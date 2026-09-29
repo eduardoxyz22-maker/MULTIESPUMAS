@@ -7445,7 +7445,12 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gz. 29/09, mañana: el cuadrito dice «PTF», no «acá» — EN LA RAMA
+## 4gz. 29/09, mañana: el cuadrito dice «PTF», no «acá» — PUBLICADA 29/09 11:43 (`f722163`)
+
+> **Publicada el 29/09 a las 11:43 de Bolivia** (`main` = `f722163`), con el OK del dueño (*«hazlo»*). No había ninguna
+> corrida en curso ni en cola, y Pages desplegó bien a las 11:44 (corrida 36592415702). Pruebas del cuadrito:
+> `test_saldo_almacen` (84), `test_rev8_saldo` (66) y `test_corte_horario` (35), todas en verde. Son las tres que leen
+> el cuadrito.
 
 **El pedido**, con una captura del cuadrito («acá 6 · Banzer 3 · Moreno 0»): *«dice acá; los vendedores al meter sus
 pedidos no están en "acá", están en sus tiendas: debería decirles PTF (productos terminados fábrica). Banzer y Moreno están
