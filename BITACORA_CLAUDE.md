@@ -7445,7 +7445,12 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gy. 29/09: los arreglos de la revisión de §4gx — feriados, el mixto falso, «a esta altura» a la misma hora y el retiro borrado (EN LA RAMA, SIN PUBLICAR)
+## 4gy. 29/09: los arreglos de la revisión de §4gx — feriados, el mixto falso, «a esta altura» a la misma hora y el retiro borrado — PUBLICADA 29/09 10:02 (`72aa862`)
+
+> **Publicada el 29/09 a las 10:02 de Bolivia** (`main` = `72aa862`), con Multicenter (una entrega por día, abajo). OK del
+> dueño: *«publicas»*. Sin tocar el servidor (sigue el `.gs` 2026-09-28-a). No había ninguna corrida en curso ni en cola.
+> Pages desplegó bien a las 10:03 (corrida 36579653220). **Batería sobre `34ecbab`: 116 suites, 4.440 bien · 0 mal.**
+> ⚠️ Todos tienen que apretar F5: una página vieja no sabe de feriados, y el servidor tampoco (ver A1).
 
 **Las respuestas del dueño** a las preguntas de §4gx:
 - *«No sale en feriados, arreglá el 2, 3 y 4»*. O sea A1 (el camión no sale en feriados), A2, A3 y A4.

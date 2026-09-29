@@ -1,6 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
-> **ACTUALIZACIÓN 29/09, tarde — §21: A1-A4 ARREGLADOS EN LA RAMA, SIN PUBLICAR.** El dueño contestó (*«No sale en
+> **ACTUALIZACIÓN 29/09, 10:02 de Bolivia — §21 PUBLICADO** (`main` = `72aa862`, con el OK del dueño), junto con
+> Multicenter: los pedidos del mismo día son una entrega. Servidor sin cambios (2026-09-28-a). Batería: 116 suites,
+> 4.440 bien · 0 mal.
+> **ACTUALIZACIÓN 29/09 — §21: A1-A4 ARREGLADOS.** El dueño contestó (*«No sale en
 > feriados, arreglá el 2, 3 y 4»*) y pidió los arreglos antes de tu opinión. Feriados sin camión, el mixto falso, «a esta
 > altura» a la misma hora y el retiro borrado, con pruebas que fallan contra `040e1df`. Dos cosas quedan para la próxima
 > versión del `.gs`.
@@ -1618,7 +1621,7 @@ dispositivo está en otra zona.
   - `renderProyeccion` tarda 21-35 ms con 1.500 ventas;
   - no hay scroll de costado a 820, 1180 y 390.
 
-## 21 · Los arreglos de A1-A4 (29/09) — en la rama, SIN publicar
+## 21 · Los arreglos de A1-A4 (29/09) — PUBLICADOS 29/09 10:02 (`72aa862`)
 
 El dueño contestó y pidió los arreglos antes de tu opinión: *«No sale en feriados, arreglá el 2, 3 y 4»*.
 - El 6 y el 7/08 fueron feriado.
@@ -1628,8 +1631,8 @@ El dueño contestó y pidió los arreglos antes de tu opinión: *«No sale en fe
   UNA entrega para la rotación (`stockEntregaClave`: 15 días por fecha de salida, 30 días por fecha de venta). Las
   unidades se suman igual y los umbrales no cambian. Prueba: `test_eduardo_multicenter` §8, con 4 rojas contra `040e1df`.
 
-Lo hecho está en la rama `claude/pedidos-fecha-entrega-bgt0em` (bitácora §4gy). Se publica recién con su OK. Si algo de
-esto no te cierra, todavía se puede cambiar.
+Lo hecho está publicado desde el 29/09 a las 10:02 (`main` = `72aa862`, bitácora §4gy). Si algo no te cierra, se cambia
+en la próxima vuelta.
 
 **A1 · Feriados.**
 - `feriadoDe(f)` lee `FERIADOS`. `limTurno` da 0 en feriado, y `proximoDiaEntrega()` y `saldoDiaConCupo` los saltean.
