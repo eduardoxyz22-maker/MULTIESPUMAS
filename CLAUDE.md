@@ -763,7 +763,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
   29/09, §4gz, publicada 11:43, `f722163`): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
-- **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha): al
+- **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha, publicada
+  29/09 17:19, `2207922`): al
   escribirlo, `productoDeAlmacen(code)` completa el nombre y la medida. La medida sale de la clave del Excel. El nombre
   sale de `VENTAS_HIST` sin la medida si ese código está ahí y coincide; si no, de la clave. Un aviso dice «no está en la
   lista de precios… poné el precio a mano».

@@ -7445,7 +7445,11 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — EN LA RAMA
+## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — PUBLICADA 29/09 17:19 (`2207922`)
+
+> **Publicada el 29/09 a las 17:19 de Bolivia** (`main` = `2207922`), con el OK del dueño (*«publicá lo que había
+> pendiente»*). No había ninguna corrida en curso ni en cola: la programada de las 17:00 todavía no había arrancado.
+> Pages desplegó bien a las 17:20 (corrida 36632546483). Batería sobre `4b194bd`: 117 suites, 4.453 bien · 0 mal.
 
 **El pedido**, con una captura del celular (código «Ch1158», sin producto ni medida, y sin cuadrito): *«¿Qué pasa si ponen
 un código que no está en lista de precios y sí en almacén? Ejemplo: puse ese código que no está en lista de precio pero sí
