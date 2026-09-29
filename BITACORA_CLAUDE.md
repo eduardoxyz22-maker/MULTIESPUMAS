@@ -7485,7 +7485,10 @@ Esperando el OK del dueño para publicar.
 almohadas, solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas,
 etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respaldares y tenía aparte los colchones):
 - **Unidad = colchón** (también colchoneta y colchón de cuna) **o somier**, con su cantidad. Un **combo** cuenta como un
-  colchón y un somier (⚠️ se le pregunta al dueño si está bien así). La tabla de «A esta altura» tiene ahora Unidades,
+  colchón y un somier. **Confirmado por el dueño**: *«hay combos que llevan colchón, somier, almohadas y sábanas o mantas:
+  solo se cuenta el colchón y el somier. Pero los vendedores no cargan combos, cargan producto por producto»*. Cargado
+  producto por producto da lo mismo (cada renglón por su lado): colchón + somier + 2 almohadas + sábanas + manta = 2
+  unidades, con código y escrito a mano (`test_proyeccion` §15). La tabla de «A esta altura» tiene ahora Unidades,
   Colchones y Somieres, cada una con su diferencia.
 - **No cuentan**: lo de tienda de siempre (`esProdDeTienda`: protectores, sábanas, mantas, frazadas, cubrecamas, edredones,
   MDF, «VARIOS», «RECOGER…») y `PRY_NO_UNIDAD`: almohadas, almohadones, almohadillas, cojines, respaldares, respaldos,
@@ -7504,7 +7507,37 @@ etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respal
   SILICONADA, RESPALDAR PRAG.).
 - La tabla, con siete columnas, no entraba en el iPad parado (695 px en 675): relleno de 7 px en `#pry-altura` y el
   encabezado puede partirse. Queda 653 px con montos de siete cifras.
-- `tests/test_proyeccion.js`: 117 (§15 con los renglones escritos a mano y los combos).
+- `tests/test_proyeccion.js`: 118 (§15 con los renglones escritos a mano, los combos y el combo cargado producto por
+  producto). Contra lo publicado (`a904137`): 88 bien · 30 mal; contra la primera versión (`33c876c`): 11 rojas, las de
+  la regla nueva.
+- **Batería sobre `550e975`: 113 suites, 4.353 bien · 0 mal.**
+
+## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — SIN PUBLICAR
+
+**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
+Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+
+**Lo hecho (`pedidos.html`):**
+- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
+  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
+- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
+  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
+- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
+  - Con una vendedora elegida, solo la de su marca y sin el %.
+  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
+  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
+- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
+  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
+  fila; en el celular, una.
+- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
+  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
+  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
+- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
+
+**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
+en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
+búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
+(`a904137`): 4 bien · 18 mal.
 
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 
