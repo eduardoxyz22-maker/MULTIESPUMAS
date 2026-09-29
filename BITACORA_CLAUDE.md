@@ -7468,7 +7468,8 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   - Administración sí lo mueve, con `forzar` (`_forzar` incluye `feriadoDe`).
 - **Los carteles lo dicen**: cupos del formulario (`renderCupoForm`), cupo de Administración, semana de ocupación
   («🚫 Feriado — Navidad», con «—» en vez de «0/0»), avisos de 📅 Reprogramar (`reproAvisos`, que también usa la devolución
-  de una ATC) y el texto de cupos de la devolución.
+  de una ATC), el texto de cupos de la devolución, el cambio de turno de un pedido que quedó en un feriado
+  (`cambiarTurno`: «reprogramalo») y los avisos del importador de ROHO (sus fechas vienen de su Excel).
 - ⚠️ **El portero del `.gs` (`porteroFecha_`) NO conoce los feriados.** Una página vieja, sin F5, todavía puede guardar
   una entrega en feriado. Queda para la próxima versión del servidor.
 - ⚠️ **`FERIADOS` sigue siendo solo para adelante** (desde el 02/11/2026). Los que ya pasaron van aparte (ver abajo).
@@ -7527,14 +7528,16 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   dueño es combo = colchón + somier) y CUNA sola.
 
 ### Pruebas
-- `tests/test_rev29_dias.js` (25; 20 rojas contra `040e1df`): cupos y «mañana» en feriado, los seis cuadritos (Navidad,
+- `tests/test_rev29_dias.js` (26; 21 rojas contra `040e1df`): cupos y «mañana» en feriado, los seis cuadritos (Navidad,
   Año Nuevo, Todos Santos tras un domingo, Carnaval 2027), el formulario (nuevo, mover, corregir uno que ya estaba,
-  Administración con `forzar`) y los carteles.
+  Administración con `forzar`), los carteles y el cambio de turno.
 - `tests/test_rev29_pedidos.js` (25; 15 rojas contra `040e1df`): A2 de punta a punta con el formulario, Contabilidad y el
   `.gs` real; las cuentas del mixto con la página sola; y A4 con dos equipos, la cola y dos correcciones seguidas.
 - `tests/test_proyeccion.js` (126; 8 rojas contra `040e1df`): unidades con «S/SOMIER», A3 a la misma hora y §18 de los
   días hábiles.
 - Las pruebas de los agentes (`rev29/…` en el scratchpad) dan todo en verde con el arreglo.
+- **Batería sobre `f69931b`: 116 suites, 4.434 bien · 0 mal.** Después se agregaron los textos de `cambiarTurno` y ROHO, y
+  se volvieron a correr `test_rev29_dias` (26), `test_roho` (90), `test_cupos` (23), `test_medias` (24) y `test_sabado` (14): en verde.
 
 ### Lo que sigue pendiente de §4gx
 M1 y M3-M8, y las otras BAJA (RESPUESTA §20.3). Nada de eso se tocó.

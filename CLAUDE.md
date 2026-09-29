@@ -900,7 +900,8 @@ feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO 
   - `limTurno` da 0 (como el domingo), y `proximoDiaEntrega()` y `saldoDiaConCupo` los saltean.
   - El formulario no guarda un pedido NUEVO para un feriado, ni deja que una vendedora MUEVA uno a un feriado (aviso).
   - Uno que ya estaba en un feriado se corrige igual, y Administración lo mueve con `forzar`.
-  - Los carteles de cupos lo dicen: formulario, Administración, semana de ocupación, 📅 Reprogramar y devolución de ATC.
+  - Lo dicen los carteles de cupos (formulario, Administración, semana de ocupación, 📅 Reprogramar, devolución de ATC),
+    el cambio de turno y los avisos del importador de ROHO.
   - ⚠️ El portero del `.gs` NO conoce los feriados: una página vieja (sin F5) todavía puede guardar uno. Queda para la
     próxima versión del servidor.
 - **Pago mixto (A2)**: `mixtoMismoMetodo(c, a)`: el 2° método nunca es el mismo método (y banco, si es QR) que el
@@ -918,7 +919,7 @@ feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO 
 - **Unidades (BAJA, regresión mía de §4gv)**: `PRY_SIN` saca «S/SOMIER», «SIN SOMIER» y «S/ COLCHON» antes de partir
   el renglón. `PRY_ES_SOMIER` acepta SOMMIER y BOX SPRING, y `PRY_NO_UNIDAD` suma servicios, muebles y errores de tipeo.
 - Pruebas (rojas contra `040e1df`):
-  - `tests/test_rev29_dias.js`: 25, 20 rojas;
+  - `tests/test_rev29_dias.js`: 26, 21 rojas;
   - `tests/test_rev29_pedidos.js`: 25, 15 rojas;
   - `test_proyeccion.js`: 126, 8 rojas.
 - **Pendientes** (§20.3): M1, M3-M8 y las otras BAJA.

@@ -20766,6 +20766,7 @@ function renderImportRoho(){
   var avisosDia=Object.keys(porDia).sort().map(function(f){
     var lim=limTurno(f,ROHO_TURNO), usados=cuposUsadosTurno(f,ROHO_TURNO), libre=Math.max(0,lim-usados);
     var n=porDia[f];
+    if(feriadoDe(f)) return '<b>'+fmtFecha(f)+'</b>: es feriado ('+esc(feriadoDe(f))+') y el camión no sale · '+n+' pedidos';   // §4gy
     if(ROHO_TURNO==='repartir'){
       var libreT=Math.max(0,limTurno(f,'AM')-cuposUsadosTurno(f,'AM'))+Math.max(0,limTurno(f,'PM')-cuposUsadosTurno(f,'PM'));
       return n>libreT ? ('<b>'+fmtFecha(f)+'</b>: '+n+' pedidos y quedan '+libreT+' cupos en todo el día') : '';
@@ -21116,7 +21117,8 @@ function cambiarTurno(id, turno){
   if(normTurno(p.turno)===turno) return;              // ya está en ese turno
   var lim=limTurno(p.fecha, turno);
   if(lim<=0){
-    toast(diaSabado(p.fecha) ? 'Los sábados solo hay turno AM.' : 'Ese día no tiene turno '+turno+'.','err');
+    toast(feriadoDe(p.fecha) ? ('El '+fmtFecha(p.fecha)+' es feriado ('+feriadoDe(p.fecha)+'): el camión no sale. Reprogramalo a otro día.')   // §4gy
+          : diaSabado(p.fecha) ? 'Los sábados solo hay turno AM.' : 'Ese día no tiene turno '+turno+'.','err');
     return;
   }
   var usados=cuposUsadosTurno(p.fecha, turno);        // el pedido está en el OTRO turno, no se cuenta acá

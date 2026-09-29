@@ -1665,11 +1665,11 @@ regla más) y no por la letra en el renglón.
 palabras que no cuentan.
 
 **Pruebas nuevas** (rojas contra lo publicado, `040e1df`):
-- `test_rev29_dias.js`: 25, 20 rojas;
+- `test_rev29_dias.js`: 26, 21 rojas;
 - `test_rev29_pedidos.js`: 25, 15 rojas, con el `.gs` real;
 - `test_proyeccion.js`: 126, 8 rojas.
 
-Los reproductores de los agentes para A1-A4 dan todo en verde.
+Los reproductores de los agentes para A1-A4 dan todo en verde. **Batería: 116 suites, 4.434 bien · 0 mal.**
 
 **Sigue pendiente:** M1, M3-M8 y las otras BAJA de §20.3. Para la próxima versión del `.gs` se juntan tres cosas: los
 feriados en el portero, el sello de los retiros y la respuesta que diga de qué lectura sale (M1, M8).

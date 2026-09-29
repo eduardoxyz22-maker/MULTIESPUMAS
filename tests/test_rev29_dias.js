@@ -13,7 +13,7 @@
       tampoco (sin la clave de Administración). Uno que YA estaba en un feriado se sigue pudiendo corregir, y
       Administración lo puede mover a un feriado (va con `forzar`, como el domingo).
    4. Lo que se ve: el cartel de cupos del formulario, el de Administración, la semana de ocupación, los avisos de
-      📅 Reprogramar y los cupos del encabezado.
+      📅 Reprogramar, los cupos del encabezado y el cambio de turno de un pedido que quedó en un feriado.
 
    Reloj CLAVADO en cada parte (diciembre de 2026, noviembre de 2026 y febrero de 2027): la regla depende del día.
    Se corre:  node tests/test_rev29_dias.js          (desde la raíz del repo)
@@ -241,6 +241,13 @@ function PREPARAR(){
   await reloj('2026-12-24T10:00:00-04:00');
   const est = await ev(async () => { await refrescarEstado(); updateStats(); return (document.getElementById('stat-hoy-l')||{}).innerText||''; });
   chk('4d. el jueves 24/12 el encabezado muestra los cupos del sábado 26/12 (solo AM)', /sábado 26\/12/i.test(est) && /solo AM/i.test(est), est);
+  await reloj('2026-12-22T10:00:00-04:00');
+  const ct = await ev(async () => {
+    await _escenario(_stockTodo({}), [ _P({ id:'pnav2', fecha:'2026-12-25', turno:'AM', cliente:'YA EN NAVIDAD 2', oc:'12-802' }) ]);
+    window._toasts=[]; cambiarTurno('pnav2','PM');
+    return window._toasts.slice(-1)[0]||'';
+  });
+  chk('4e. cambiar de turno un pedido que quedó en un feriado dice que es feriado y que hay que reprogramarlo', /feriado \(Navidad\)/.test(ct||'') && /Reprogramalo/.test(ct||''), ct);
 
   chk('ningún error de JavaScript', errores.length===0, errores.slice(0,3));
   await browser.close();
