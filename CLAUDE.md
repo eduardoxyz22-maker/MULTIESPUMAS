@@ -761,8 +761,20 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   EN MORENO (se trae en 1 día) · ⏳ EN PRODUCCIÓN (esperar ~X días, llega el DD/MM) · 🏭 NO HAY (mandar a producir,
   esperar ~X días) · gris «Sin saldo cargado». Abajo «En almacén · Pendientes de entrega · Libres/Faltan», el reparto
   **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
-  29/09, §4gz): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
+  29/09, §4gz, publicada 11:43, `f722163`): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
+- **🏷️ Un código que NO está en la lista de precios pero SÍ en el Excel de un almacén** (dueño, 29/09, §4ha): al
+  escribirlo, `productoDeAlmacen(code)` completa el nombre y la medida. La medida sale de la clave del Excel. El nombre
+  sale de `VENTAS_HIST` sin la medida si ese código está ahí y coincide; si no, de la clave. Un aviso dice «no está en la
+  lista de precios… poné el precio a mano».
+  - Aparece el cuadrito, también sin medida.
+  - La medida del Excel no es 📐.
+  - Si el código se escribió antes de que llegara el saldo, `prodCodigosDelAlmacen` lo completa en `saldoTrasLectura`.
+  - ⚠️ **`stockIndiceApretado` y `ventasHistIndex` se rehacen cuando `STOCK` es OTRO objeto** (`_de`/`VENTAS_HIST_DE`).
+    Antes `leerStock` los olvidaba ANTES de migrar y se volvían a armar con el stock viejo: un código de un Excel recién
+    subido no se encontraba hasta la otra lectura. Quien cambie el stock EN EL LUGAR (sin asignar otro objeto) sigue
+    llamando a `stockOlvidarIndice()`.
+  - `tests/test_codigo_almacen.js` (13).
 - **UNA sola cuenta**: todo sale de `stockData()` (`saldoDatos`/`SALDO_CACHE`, una vez por lectura) y de
   `saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo)`. `stockData` ganó `enRecogida` y un argumento
   opcional para productos del catálogo que no están en ningún Excel (sin él, da lo mismo que antes).
