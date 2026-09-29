@@ -7445,6 +7445,49 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gx. 29/09, madrugada: revisión con cuatro agentes de lo hecho el 28 y 29/09 — NADA ARREGLADO TODAVÍA
+
+**El pedido.** *«Agente a revisar todo lo que hicimos ayer y hoy en stock, pedidos, días y proyección. Me das el informe
+para Codex cuando terminen»*.
+
+**Cómo.** Cuatro agentes en paralelo (stock, pedidos, días, proyección), solo lectura, con escenarios propios con datos
+inventados: el panel real en Chromium y el `.gs` real en Node. Los scripts quedaron en el scratchpad de la sesión, fuera
+del repo. Volví a correr los reproductores de los hallazgos ALTA y de los MEDIA principales, y dan lo que dicen. Todas
+las pruebas existentes de las cuatro áreas pasan.
+
+**El informe completo, con dónde, cómo se reproduce y el arreglo propuesto, es `RESPUESTA_CLAUDE.md` §20.** En corto:
+- **ALTA:**
+  - **A1:** el cuadrito promete entregas en feriados (25/12, 01/01, 02/11, Carnaval): `saldoDiaConCupo` no mira
+    `FERIADOS`.
+  - **A2:** «↩️ Era un pago de la venta» fabrica un pago mixto falso cuando el flete se cobró en el mismo formulario
+    (mismo día y recibo que el pago). Después no se puede corregir ni la dirección, y seguir el aviso muda la plata de
+    día o infla el total.
+  - **A3:** «A esta altura» y la curva comparan lo cargado hasta ahora con el día entero del otro mes. El % cambia con
+    la hora a la que se mira: 1 % a las 09:30 y 7 % a las 20:00; el día 2, de 2 % a 25 %.
+  - **A4 (previo):** un retiro borrado vuelve a la planilla cuando otro equipo lo corrige, porque los retiros se mandan
+    sin `rev`.
+- **MEDIA:**
+  - **M1:** falso «lo borraron» en `submitPedido` con la copia vieja de `doGet`.
+  - **M2:** el Excel de Moreno subido después de cargar la camioneta deja al cuadrito en «NO HAY».
+  - **M3:** ⏳/🏭 cuentan las 48 h desde un día no hábil.
+  - **M4:** una recogida programada en domingo o feriado se toma tal cual.
+  - **M5:** `FERIADOS` se acaba en 2027 sin aviso.
+  - **M6:** una marca sin ventas en el mes proyecta y la lista no cierra.
+  - **M7:** la hora de corte usa el reloj del dispositivo.
+  - **M8 (previo):** «Pedido eliminado ✓» sin borrar, con la copia vieja.
+- **BAJA:** unidades mal contadas en textos raros, entre ellos «S/SOMIER», que suma un somier por el «/» de
+  `PRY_PEDAZOS`: regresión mía de §4gv. Además: días 29-31 contra febrero, textos, y el repintado que cierra «Semana por
+  semana».
+- **Fuera de lo revisado:** la contraseña de Administración por defecto está escrita en un comentario de `pedidos.html`
+  (repo público). No se repite en ningún informe.
+
+**Preguntas al dueño:**
+- ¿Sale el camión en feriados?
+- ¿Multicenter se carga por sucursal (varios pedidos el mismo día)?
+- ¿Logística sube el Excel de Moreno después de cargar?
+- ¿El 07/08/2026 fue feriado (viernes puente del DS 5521)?
+- ¿En qué orden quiere los arreglos?
+
 ## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — PUBLICADA 29/09 01:10 (`040e1df`)
 
 > **Publicada el 29/09 a las 01:10 de Bolivia** (`main` = `040e1df`), junto con §4gv. Sin tocar el servidor (sigue el

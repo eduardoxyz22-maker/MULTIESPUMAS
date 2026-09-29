@@ -891,6 +891,17 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
+## 🔎 La revisión con cuatro agentes del 29/09 (§4gx): hallazgos PENDIENTES, nada arreglado
+Informe completo en `RESPUESTA_CLAUDE.md` §20 (para Codex y el dueño). Antes de tocar estas áreas, leerlo:
+- **A1:** el cuadrito promete entregas en feriados (`saldoDiaConCupo` no mira `FERIADOS`; `limTurno` da cupo). Espera
+  que el dueño confirme si el camión sale en feriados.
+- **A2:** «↩️ Era un pago de la venta» + flete del mismo día y recibo = pago mixto falso (`mixtoEn`).
+- **A3:** «A esta altura» y la curva cortan el otro mes al día entero y el mes en curso a la hora actual (`pryAcum`,
+  `pryCurvaF`).
+- **A4:** un retiro se guarda sin `rev`, así que un retiro borrado vuelve.
+- **M1-M8** y las BAJA, en §20.3. Una BAJA es regresión mía de §4gv: el «/» de `PRY_PEDAZOS` parte «S/SOMIER» y suma
+  un somier.
+
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
 todo»), con el servidor 2026-09-26-a. **El `.gs` 28-a se implementó ese mismo día ~15:24** (§4gp). El stock en el
