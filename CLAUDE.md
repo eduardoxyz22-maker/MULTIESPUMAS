@@ -862,7 +862,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
     NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
     Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
-- **📊 A esta altura y 📦 unidades (§4gv, SIN PUBLICAR)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
+- **📊 A esta altura y 📦 unidades (§4gv, publicada 29/09 01:10, `040e1df`)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
   anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
   - **Unidad = colchón (también colchoneta y colchón de cuna) o somier**, con su cantidad (dueño: *«quitá las almohadas,
     solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas, etc.»*).
@@ -882,7 +882,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     `#pry-altura` (`test_proyeccion` §17 lo mide).
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
-- **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, SIN PUBLICAR)**. El dueño: *«falta la ficha de Sueña y de
+- **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
   Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
   - `renderContaMarcas` (caja `#cta-marcas`, debajo de `#cta-metrics`): lo vendido de cada marca sobre la MISMA lista que
     «Vendido en el período» (`contaLista`: corte, período, vendedor y búsqueda). Marcas + «Sin marca» = lo de arriba.

@@ -7445,7 +7445,41 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — SIN PUBLICAR
+## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — PUBLICADA 29/09 01:10 (`040e1df`)
+
+> **Publicada el 29/09 a las 01:10 de Bolivia** (`main` = `040e1df`), junto con §4gv. Sin tocar el servidor (sigue el
+> `.gs` 2026-09-28-a). No había ninguna corrida en curso ni en cola. El OK del dueño, después de ver las capturas: *«ok,
+> lo publicás cuando acabes y me avisás»*. **Batería sobre `644e2ab`: 114 suites, 4.376 bien · 0 mal.**
+
+**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
+Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+
+**Lo hecho (`pedidos.html`):**
+- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
+  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
+- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
+  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
+- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
+  - Con una vendedora elegida, solo la de su marca y sin el %.
+  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
+  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
+- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
+  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
+  fila; en el celular, una.
+- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
+  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
+  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
+- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
+
+**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
+en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
+búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
+(`a904137`): 4 bien · 18 mal.
+
+## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — PUBLICADA 29/09 01:10 (`040e1df`)
+
+> **Publicada el 29/09 a las 01:10 de Bolivia** (`main` = `040e1df`), junto con §4gw y con la segunda vuelta de las
+> unidades (solo colchones y somieres). Sin tocar el servidor. Lo de «Esperando el OK del dueño» de abajo quedó atrás.
 
 **El pedido.** Después de §4gu se le ofreció la meta por marca con dos cosas: cuánto falta para la meta, y «cada semana,
 cómo vas contra los meses anteriores a la misma altura». Contestó: *«la opción 2 me parece. Y también unidades, tanto de
@@ -7511,33 +7545,6 @@ etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respal
   producto). Contra lo publicado (`a904137`): 88 bien · 30 mal; contra la primera versión (`33c876c`): 11 rojas, las de
   la regla nueva.
 - **Batería sobre `550e975`: 113 suites, 4.353 bien · 0 mal.**
-
-## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — SIN PUBLICAR
-
-**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
-Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
-
-**Lo hecho (`pedidos.html`):**
-- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
-  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
-- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
-  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
-- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
-  - Con una vendedora elegida, solo la de su marca y sin el %.
-  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
-  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
-- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
-  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
-  fila; en el celular, una.
-- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
-  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
-  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
-- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
-
-**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
-en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
-búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
-(`a904137`): 4 bien · 18 mal.
 
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 
