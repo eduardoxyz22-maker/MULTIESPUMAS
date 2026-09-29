@@ -837,14 +837,29 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
 - **Lo VENDIDO, no lo cobrado**: `ventaTotal` por la fecha de `fechaSalida` (la entrega agendada), igual que Ventas →
   🚚 Entrega agendada; `test_proyeccion` §3 compara los dos números. Equipo = `fueraDeConta(p,'tienda')`, marca por
   vendedor (`marcaDe`, §4bl), mayoristas aparte (no se suman al equipo). Sin ATC, RPT ni ROHO.
-- **Proyección por vendedor** (las marcas y los totales son la suma): hasta hoy + máx(agendado de mañana a fin de mes,
-  ritmo × días hábiles que quedan); ritmo = hasta hoy ÷ días hábiles que pasaron (lunes a sábado sin `FERIADOS`).
-  ⚠️ «Hasta hoy» es por la fecha AGENDADA: no mira `p.entregado` (los choferes no marcan, §4gp).
+- **El ritmo** (§4gt), por vendedor: hasta hoy + máx(agendado de mañana a fin de mes, ritmo × días hábiles que quedan);
+  ritmo = hasta hoy ÷ días hábiles que pasaron (lunes a sábado sin `FERIADOS`). ⚠️ «Hasta hoy» es por la fecha AGENDADA:
+  no mira `p.entregado` (los choferes no marcan, §4gp).
 - Lo vendido va con centavos (como Ventas); la proyección y el ritmo, en Bs enteros (`fmtBs0`).
 - ⚠️ Las fichas de esta pestaña piden 300 px (`data-min` en `#pry-metrics`, que `acomodarFichas` respeta): con 230 los
   totales de seis cifras salían cortados en el iPad. La lista por vendedor es lista y no tabla: en 390 px una tabla
   escondía la proyección.
-- `tests/test_proyeccion.js` (36; 31 rojas contra `bf19fc8`).
+- **🔁 La curva de cada marca (§4gu, SIN PUBLICAR)**. El dueño: *«¿qué fórmula o algoritmo… algo realmente preciso?… en
+  agosto los últimos dos, tres días se facturó 80.000 o 150.000… Heaven; Sueña es distinto… probar con agosto»*.
+  - `pryCurva`/`pryCurvaF`/`pryAlDia`: faltando r días hábiles para el cierre, qué parte `f` de lo que vendieron los
+    meses cerrados (desde `PRY_PRIMER_MES`='2026-08') ya estaba vendida (`contaFecha`). Alineados por días hábiles.
+  - `pryMezcla`: (1) K ÷ f y (2) K + (1 − f) × promedio de los meses cerrados; la (1) pesa **f²**. ⚠️ No volver a la
+    división sola (a principio de mes se dispara) ni a pesar con f (en f = 0 contaba K dos veces).
+  - Se calcula por MARCA y cada vendedor lleva la proporción de su marca. Sin marca y mayoristas: ritmo. Menos de
+    `PRY_MIN_VENTAS`=20 ventas de la marca en los meses cerrados: ritmo.
+  - 🧪 `pryPrueba`: cada mes a los días 5/10/15/20/25, faltando 3 y la víspera del cierre, con lo vendido ESE día; la curva
+    de un mes sale de los OTROS meses cerrados. 🏁 `pryErrores`: con dos meses cerrados, cada marca va con la forma que
+    menos se equivocó; el ritmo, aunque gane, desde el `PRY_DIAS_RITMO`=5° día hábil.
+  - 📅 `pryPatron`: lo entregado cada día, los últimos 3 días hábiles (y cuánto ya estaba vendido antes), cómo se fue
+    llenando y qué días de la semana se vende más.
+  - ⚠️ Los feriados de 2026 ya pasados (06/08, 25/09) NO están en `FERIADOS` a propósito (pruebas del cuadrito entregan
+    esos días): acá cuentan como hábiles.
+- `tests/test_proyeccion.js` (95: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
