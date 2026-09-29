@@ -7445,6 +7445,45 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4ha. 29/09, tarde: un código que no está en la lista de precios pero sí en el almacén — EN LA RAMA
+
+**El pedido**, con una captura del celular (código «Ch1158», sin producto ni medida, y sin cuadrito): *«¿Qué pasa si ponen
+un código que no está en lista de precios y sí en almacén? Ejemplo: puse ese código que no está en lista de precio pero sí
+en almacén; no se autocompleta ni marca disponible.»* Ch1158 = SOMIER PLATA 200X200: está en el histórico del sistema y en
+el Excel del almacén, pero no en `CODIGOS`.
+
+**Por qué no andaba.**
+1. El renglón solo se completaba con `CODIGOS`. Sin producto ni medida no estaba «completo», así que no había cuadrito.
+2. Un bug de fondo: el índice de códigos del almacén (`stockIndiceApretado`, §4cv) quedaba armado con el stock VIEJO
+   después de una lectura. `leerStock` lo olvidaba ANTES de migrar, y la migración lo volvía a armar con el `STOCK`
+   global, que todavía era el anterior. Se arreglaba solo con la lectura siguiente (1-2 minutos), pero:
+   - en un equipo que recién abre el panel, los primeros minutos buscaba códigos en la copia vieja o en nada;
+   - un Excel recién subido no se encontraba por código hasta la otra lectura.
+
+**Lo que se hizo.**
+- **`productoDeAlmacen(code)`**: para un código que `CODIGOS` no tiene y el índice del almacén sí, devuelve `{d, m, k}`.
+  - La medida sale de la clave del Excel.
+  - El nombre sale del histórico del sistema (`VENTAS_HIST`, sin la medida: `nombreSinMedida`) si ese código está ahí y
+    dice lo mismo que la clave. Si no, sale de la clave: «SOMIER PLATA», «ALMOHADA HEAVEN CELESTE».
+- **Al escribir el código** (también en minúscula), el renglón se completa como con la lista de precios, y un aviso dice:
+  «📦 CH1158 no está en la lista de precios, pero sí en el almacén: SOMIER PLATA 200x200. Poné el precio a mano.» El
+  precio queda vacío.
+- **Completo** (`saldoFilasForm`) acepta un producto del almacén sin medida, como un código del catálogo sin medida.
+- **`saldoMedidaEspecial`**: una medida que no es de la lista (150x200) no es 📐 si el código es de ese producto del
+  almacén en esa medida.
+- **`prodCodigosDelAlmacen()`** en `saldoTrasLectura`: un renglón con el código escrito antes de que llegara el saldo
+  (equipo sin copia) se completa cuando llega la lectura, si todavía no tiene nombre.
+- **El índice es del stock de ahora**: `stockIndiceApretado` se rehace cuando `STOCK` es otro objeto (`_de`), y
+  `ventasHistIndex` también (`VENTAS_HIST_DE`). Cubre todas las formas de asignar el stock (lectura, junta, pestaña).
+- Lo de siempre no cambia:
+  - un código de la lista de precios completa como antes;
+  - un código que no está en ningún lado no hace nada;
+  - la identidad sigue siendo por código (§4cv): el pedido guardado con «Ch1158» cuenta como pendiente de ESE producto
+    del almacén.
+
+**Prueba:** `tests/test_codigo_almacen.js` (13 comprobaciones; 9 fallan contra `f722163`): PTF, Moreno, sin medida,
+150x200, guardar, la lectura tardía y el índice después de un Excel nuevo (CA9). **Batería: 117 suites, 4.453 bien · 0 mal.**
+
 ## 4gz. 29/09, mañana: el cuadrito dice «PTF», no «acá» — PUBLICADA 29/09 11:43 (`f722163`)
 
 > **Publicada el 29/09 a las 11:43 de Bolivia** (`main` = `f722163`), con el OK del dueño (*«hazlo»*). No había ninguna

@@ -3184,7 +3184,15 @@ function addProdRow(desc,medida,codigo,cant,precio,rtipo,robs){
     // Primero se resuelve el código: si ya se sabe qué combo es, el aviso lo nombra.
     // Recién si no resuelve (lo están escribiendo) alcanza con que empiece con CMB.
     if(hit && rechazarCombo(hit.d+(hit.m?(' '+hit.m):''), d, cIn)) return;
-    if(!hit){ if(esCodigoCombo(code)) rechazarCombo(code, d, cIn); return; }
+    if(!hit){
+      if(esCodigoCombo(code)){ rechazarCombo(code, d, cIn); return; }
+      /* 🏷️ (29/09) No está en la lista de precios: si está en el Excel de algún almacén, el producto sale de ahí
+         (`productoDeAlmacen`) y el cuadrito ya puede decir si hay. El precio lo pone la vendedora. */
+      var alm=productoDeAlmacen(code); if(!alm) return;
+      if(rechazarCombo(alm.d+(alm.m?(' '+alm.m):''), d, cIn)) return;
+      hit={ d:alm.d, m:alm.m };
+      toast('📦 '+code+' no está en la lista de precios, pero sí en el almacén: '+alm.d+(alm.m?(' '+alm.m):'')+'. Poné el precio a mano.','ok');
+    }
     d.value=hit.d; var m=(hit.m||'').trim(); if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; } });
   // Elegir por NOMBRE (lista emergente): al elegir un 'NOMBRE MEDIDA', llena codigo y medida.
   d.addEventListener('input',function(){ var etiqueta=d.value.trim();
@@ -16672,8 +16680,12 @@ function stockPartes(k){
   return { d:stockApretar(d), m:stockApretar(normMedida(m)) };
 }
 function stockIndiceApretado(){
-  if(STOCK_APRET) return STOCK_APRET;
-  STOCK_APRET={full:{}, desc:{}, cod:{}};
+  /* (29/09) El índice es del STOCK de AHORA: si una lectura reemplazó el objeto (`STOCK=leerStock(…)`), se rehace. `leerStock`
+     lo olvidaba ANTES de migrar, la migración lo volvía a armar con el stock VIEJO (el global todavía era ese) y quedaba así
+     hasta el próximo guardado del stock, que en el equipo de una vendedora no pasa nunca: el código de un Excel recién subido
+     no se encontraba (§4cv), y un código que no está en la lista de precios no completaba el renglón ni daba el saldo. */
+  if(STOCK_APRET && STOCK_APRET._de===STOCK) return STOCK_APRET;
+  STOCK_APRET={full:{}, desc:{}, cod:{}, _de:STOCK};
   var meter=function(s){
     Object.keys((s||{}).u||{}).forEach(function(k){
       var p=stockPartes(k), f=p.d+'|'+p.m;
@@ -16718,6 +16730,57 @@ function stockClaveInv(k, cod){
   return m.length===1 ? m[0].k : k;
 }
 function stockOlvidarIndice(){ STOCK_APRET=null; VENTAS_HIST_IDX=null; }
+/* 🏷️ (29/09, el dueño) UN CÓDIGO QUE NO ESTÁ EN LA LISTA DE PRECIOS PERO SÍ EN EL ALMACÉN. *«¿Qué pasa si ponen un código que
+   no está en lista de precios y sí en almacén? … no se autocompleta ni marca disponible.»* El formulario completaba solo con
+   `CODIGOS`, y sin producto ni medida el renglón no estaba completo: ni nombre ni cuadrito del saldo. Pero el Excel de cada
+   almacén guarda sus códigos (`cod`: código → clave, §4cv), así que el producto sale de ahí:
+     · la medida, de la clave;
+     · el nombre, del histórico del sistema (`VENTAS_HIST`, el nombre de siempre, sin la medida) si ese código está y dice
+       lo mismo que la clave; si no, el de la clave (sin la medida ni el relleno: «SOMIER PLATA»).
+   Sin precio: no está en la lista, lo pone la vendedora. Los códigos de `CODIGOS` siguen como siempre. */
+var VENTAS_HIST_COD=null;
+function ventasHistPorCodigo(){
+  if(VENTAS_HIST_COD) return VENTAS_HIST_COD;
+  var o={};
+  ((typeof VENTAS_HIST!=='undefined' && VENTAS_HIST && VENTAS_HIST.filas) || []).forEach(function(f){
+    var c=String((f&&f[0])||'').trim().toUpperCase(); if(c && !o[c]) o[c]={ n:String(f[1]||''), m:String(f[2]||'') };
+  });
+  return (VENTAS_HIST_COD=o);
+}
+/* «TITANIO ICE  2.0PLZ 140X190CM» → «TITANIO ICE»: el nombre para el renglón, sin la medida (va en su campo). */
+function nombreSinMedida(t){
+  return String(t||'')
+    .replace(/\d{2,3}\s*[X×✕✖*]\s*\d{2,3}(\s*[X×✕✖*]\s*\d+)?\s*(CM)?/gi,' ')
+    .replace(/(^|\s)\d(?:[.,]\d)?\s*(?:PLZ|PLAZAS?)\b\.?/gi,' ')
+    .replace(/\s+/g,' ').trim();
+}
+/* El producto de un código que la lista de precios no tiene y el almacén sí: `{d, m, k, code}`, o null. */
+function productoDeAlmacen(code){
+  code=String(code||'').trim().toUpperCase();
+  if(!code || CODIGOS[code] || typeof STOCK==='undefined' || !STOCK) return null;
+  var k; try{ k=stockIndiceApretado().cod[code]; }catch(e){ return null; }
+  if(!k) return null;
+  k=stockAliasDe(k);
+  var pa=String(k).split('|'), m=normMedida(pa[1]||''), h=ventasHistPorCodigo()[code], d='';
+  if(h){ var hn=nombreSinMedida(h.n); if(hn && stockClaveCruda({ desc:hn, medida:m }).split('|')[0]===String(pa[0]||'')) d=hn; }
+  if(!d) d=String(pa[0]||'').trim();
+  if(!d) return null;
+  return { d:d, m:m, k:k, code:code };
+}
+/* Los renglones que tienen un código del almacén y todavía no tienen nombre (se escribió el código antes de que llegara el
+   saldo, en un equipo sin copia guardada): se completan cuando llega la lectura. Devuelve cuántos. */
+function prodCodigosDelAlmacen(){
+  var cards=document.querySelectorAll('#f-productos .prod-card'), n=0;
+  for(var i=0;i<cards.length;i++){
+    var c=cards[i], d=c.querySelector('.prod-desc'), cIn=c.querySelector('.prod-codigo'), mSel=c.querySelector('.prod-medida'), otro=c.querySelector('.prod-medida-otro');
+    if(!d || !cIn || !mSel || !otro || String(d.value||'').trim()) continue;
+    var alm=productoDeAlmacen(cIn.value); if(!alm || esCombo(alm.d)) continue;
+    d.value=alm.d; var m=alm.m;
+    if(!m){ } else if(MEDIDAS.indexOf(m)>=0){ mSel.value=m; otro.style.display='none'; otro.value=''; } else { mSel.value='Otros'; otro.style.display='block'; otro.value=m; }
+    n++;
+  }
+  return n;
+}
 /* 🏷️ EL NOMBRE «CRUDO» DE UN PRODUCTO QUE NO ESTÁ EN EL CATÁLOGO (§4cy): las palabras del
    nombre sin la medida, sin «2,5 PLZ», sin el relleno (COLCHON, CM, NUEVO…) y sin el color
    colgado con guion, más la medida aparte. «COLCHON TITANIO ICE 140X200» y «TITANIO ICE
@@ -17607,6 +17670,8 @@ function saldoMedidaEspecial(x){
   if(esMedidaConocida(m) || esMedidaConocida(can)) return false;
   var cat=CODIGOS[String((x&&x.codigo)||'').trim().toUpperCase()];
   if(cat && cat.m && saldoMismaMedida(cat.m, m)) return false;              // el código ES de esta medida
+  var alm=cat ? null : productoDeAlmacen(x&&x.codigo);                      // (29/09) …o es de un producto del almacén en esta medida
+  if(alm && alm.m && saldoMismaMedida(alm.m, m)) return false;
   var c=stockEnCatalogo({ desc:x.desc, medida:can });                       // sin el código: ¿este producto en esta medida?
   if(c && c.m && saldoMismaMedida(c.m, can)) return false;
   if(stockHayEnInventario(stockInfo({ desc:x.desc, medida:can }).k) || stockHayEnInventario(stockInfo({ desc:x.desc, medida:m }).k)) return false;
@@ -17703,9 +17768,10 @@ function saldoFilasForm(){
     var codigo=String((c.querySelector('.prod-codigo')||{}).value||'').trim();
     var qt=String((c.querySelector('.prod-cant')||{}).value||'').trim(), cant=Number(qt);
     var cat=CODIGOS[codigo.toUpperCase()], x={ desc:desc, medida:medida, codigo:codigo, cant:cant };
-    /* Completo = producto + medida (o un código del catálogo que no lleva medida) + una cantidad entera de 1 para
-       arriba. A medio escribir no se dice nada: un «TITAN» no es «no hay». */
-    var completo=activo && !!desc && !!(medida || (cat && !cat.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
+    var alm=(!cat && codigo) ? productoDeAlmacen(codigo) : null;   // 🏷️ (29/09) un código del almacén que la lista no tiene
+    /* Completo = producto + medida (o un código del catálogo o del almacén que no lleva medida) + una cantidad entera de 1
+       para arriba. A medio escribir no se dice nada: un «TITAN» no es «no hay». */
+    var completo=activo && !!desc && !!(medida || (cat && !cat.m) || (alm && !alm.m)) && qt!=='' && cant>=1 && Math.floor(cant)===cant &&
                  !esProdDeTienda(x) && !esCombo(desc);
     var f={ card:c, box:box, x:x, completo:completo, k:'', g:'', cat:false, total:0, nRen:0 };
     if(completo){
@@ -18069,7 +18135,9 @@ function saldoTrasLectura(){
   /* ⚠️ Corre ADENTRO de `refrescarEstado`: si tirara un error, una lectura buena contaría como fallida. Nunca tira. */
   try{
     var vf=document.getElementById('view-form');
-    if(!vf || !vf.classList.contains('active') || SALDO_TIMER) return;   // con un repintado en espera, ese ya usa lo nuevo
+    if(!vf || !vf.classList.contains('active')) return;
+    prodCodigosDelAlmacen();                                  // 🏷️ (29/09) un código del almacén escrito antes de tener el saldo
+    if(SALDO_TIMER) return;                                   // con un repintado en espera, ese ya usa lo nuevo
     saldoAvisosPintarYa();
   }catch(e){}
 }
@@ -18666,9 +18734,10 @@ function stockCompHasta(o, hasta, desde){
   return t;
 }
 /* Índice del histórico: clave del panel → {AAAA-MM: unidades}. Una vez por sesión. */
-var VENTAS_HIST_IDX=null;
+var VENTAS_HIST_IDX=null, VENTAS_HIST_DE=null;
 function ventasHistIndex(){
-  if(VENTAS_HIST_IDX) return VENTAS_HIST_IDX;
+  if(VENTAS_HIST_IDX && VENTAS_HIST_DE===STOCK) return VENTAS_HIST_IDX;   // (29/09) del stock de ahora, como `stockIndiceApretado`
+  VENTAS_HIST_DE=STOCK;
   var idx={}, M=VENTAS_HIST.meses;
   VENTAS_HIST.filas.forEach(function(f){
     var k; try{ k=stockInfo({desc:f[1], medida:f[2], codigo:f[0]}).k; }catch(e){ return; }
