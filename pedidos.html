@@ -15606,17 +15606,31 @@ function acomodarFichas(){
     /* (29/09, §4gw) Una caja puede ir con las MISMAS columnas que otra (`data-como`): las fichas de cada marca de Ventas,
        del mismo ancho que las de arriba y alineadas con ellas. La otra viene antes en la página, así que ya se acomodó. */
     var como=b.getAttribute('data-como'), ref=como && document.getElementById(como);
-    if(ref && ref.style.gridTemplateColumns && ref.clientWidth){ b.style.gridTemplateColumns=ref.style.gridTemplateColumns; continue; }
-    /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
-       y a 230 px en el iPad salían cortados («Bs 684.39…»). */
-    var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;
-    var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(fmin+FICHA_GAP))));
-    var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
-    for(var c=max-1;c>=1;c--){
-      var f=Math.ceil(n/c), h=f*c-n;
-      if(f<filas || (f===filas && h<huecos)){ mejor=c; filas=f; huecos=h; }
+    if(ref && ref.style.gridTemplateColumns && ref.clientWidth) b.style.gridTemplateColumns=ref.style.gridTemplateColumns;
+    else{
+      /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
+         y a 230 px en el iPad salían cortados («Bs 684.39…»). */
+      var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;
+      var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(fmin+FICHA_GAP))));
+      var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
+      for(var c=max-1;c>=1;c--){
+        var f=Math.ceil(n/c), h=f*c-n;
+        if(f<filas || (f===filas && h<huecos)){ mejor=c; filas=f; huecos=h; }
+      }
+      b.style.gridTemplateColumns='repeat('+mejor+',minmax(0,1fr))';
     }
-    b.style.gridTemplateColumns='repeat('+mejor+',minmax(0,1fr))';
+    fichasMontoEntero(b);
+  }
+}
+/* (29/09, §4gw) Un monto que no entra en su ficha («Bs 1.101.680,00» en el iPad, o lo de «Todo») se achica hasta entrar,
+   en vez de salir cortado con «…». Solo el que no entra: los demás quedan como siempre. */
+function fichasMontoEntero(b){
+  var vals=b.querySelectorAll('.mc-val');
+  for(var j=0;j<vals.length;j++){
+    var v=vals[j]; v.style.fontSize='';
+    if(v.scrollWidth<=v.clientWidth+1) continue;
+    var fs=parseFloat(getComputedStyle(v).fontSize)||27, k=0;
+    while(v.scrollWidth>v.clientWidth+1 && k++<10){ fs*=0.92; v.style.fontSize=fs.toFixed(1)+'px'; }
   }
 }
 /* Al cambiar el tamaño de la ventana hay que recalcular, pero sin hacerlo en cada píxel. */

@@ -160,6 +160,8 @@ function PREPARAR(){
 
   // ═══ 7. En el iPad y en el celular ════════════════════════════════════════════════════════════
   console.log('\n── 7. En el iPad (acostado y parado) y en el celular ──');
+  /* Un mes de más de un millón: «Bs 1.101.68…» salía cortado en las fichas de arriba en el iPad. */
+  await ev(() => { var p=FIX()[3]; p.id='grande'; p.saldo=1234567.89; STATE.push(p); });
   for (const w of [1180, 820, 390]) {
     await page.setViewportSize({ width:w, height:900 });
     await page.waitForTimeout(200);
@@ -167,12 +169,17 @@ function PREPARAR(){
       VER('entrega','mes','2026-09');
       var a=document.querySelectorAll('#cta-metrics .mc'), b=document.querySelectorAll('#cta-marcas .mc');
       var ra=a[0].getBoundingClientRect(), rb=b[0].getBoundingClientRect(), rUlt=a[a.length-1].getBoundingClientRect();
+      var corta=function(sel){ return [].slice.call(document.querySelectorAll(sel)).filter(function(e){ return e.scrollWidth>e.clientWidth+1; }).map(function(e){ return e.innerText; }); };
       return { sw:document.documentElement.scrollWidth, iw:window.innerWidth, anchoArriba:Math.round(ra.width), anchoMarca:Math.round(rb.width),
                izqArriba:Math.round(ra.left), izqMarca:Math.round(rb.left), debajo:rb.top>=rUlt.bottom, hueco:Math.round(rb.top-rUlt.bottom),
-               cortado:[].slice.call(document.querySelectorAll('#cta-marcas .mc-val')).some(function(e){ return e.scrollWidth>e.clientWidth+1; }) };
+               cortados:corta('#cta-metrics .mc-val, #cta-marcas .mc-val'), vendido:a[0].querySelector('.mc-val').innerText,
+               letra:parseFloat(getComputedStyle(a[0].querySelector('.mc-val')).fontSize), letraChica:parseFloat(getComputedStyle(a[3].querySelector('.mc-val')).fontSize) };
     });
-    chk('a '+w+' px: las fichas de marca van debajo, del mismo ancho y alineadas con las de arriba, sin montos cortados ni scroll de costado',
-        r.sw<=r.iw && r.debajo && r.hueco>=8 && r.hueco<=16 && Math.abs(r.anchoArriba-r.anchoMarca)<=1 && Math.abs(r.izqArriba-r.izqMarca)<=1 && !r.cortado, r);
+    chk('a '+w+' px: las fichas de marca van debajo, del mismo ancho y alineadas con las de arriba, sin scroll de costado',
+        r.sw<=r.iw && r.debajo && r.hueco>=8 && r.hueco<=16 && Math.abs(r.anchoArriba-r.anchoMarca)<=1 && Math.abs(r.izqArriba-r.izqMarca)<=1, r);
+    /* A 1180 las fichas miden 261 px y el monto no entra: se achica ese solo. A 820 (dos por fila) y en el celular entra. */
+    chk('a '+w+' px: «Bs 1.255.567,89» entra entero'+(w===1180 ? ' (se achica solo ese; el «6» de «Por cargar» queda igual)' : ', sin achicarse'),
+        r.cortados && r.cortados.length===0 && r.vendido==='Bs 1.255.567,89' && (w===1180 ? r.letra<r.letraChica : r.letra===r.letraChica), r);
   }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
