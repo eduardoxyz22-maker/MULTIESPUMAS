@@ -17023,6 +17023,13 @@ function stockPedidoUnico(p){
   if(stockPuntual(p)) return true;              // 3. Multicenter de otro vendedor, consignación, ROHO a tienda
   return stockEsEduardo(p);                     // 4. las otras ventas de Eduardo
 }
+/* 🏬 (dueño, 29/09) QUÉ ES UNA ENTREGA para contar la rotación. *«Multicenter hace pedidos y todos son a su bodega, pero
+   hace pedidos por unidades: a veces hasta 4 pedidos en el mismo día para su bodega.»* Esos pedidos del MISMO día son UNA
+   entrega, no cuatro: si no, una sola compra partida en 4 pedidos pasaba el umbral de `STOCK_VENTAS_MIN` (3 entregas
+   distintas) y armaba un ritmo que no existe. Las unidades se suman igual; solo cambia cuántas entregas son.
+   `f` es la fecha de la ventana que se cuenta (la de salida para los 15 días, la de venta para los 30). Los demás
+   pedidos siguen contando uno por uno, como siempre. */
+function stockEntregaClave(p, f){ return stockEduardoMulticenter(p) ? ('mc|'+(f||'')) : String(p.id); }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
    «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
 function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendidosUnicos>0; }
@@ -17091,12 +17098,13 @@ function stockData(extra){
       // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
       if(fs>=desde && fs<=hoy){
         o.vendidos+=c;
+        var ek=stockEntregaClave(p, fs);          // 🏬 (29/09) los pedidos de Multicenter del mismo día son UNA entrega
         if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
-          if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
+          if(!o.ventasRotacion[ek]){o.ventasRotacion[ek]=1;o.nVentasRotacion++;}}
 
-        if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
+        if(!o.ventas[ek]){ o.ventas[ek]=1; o.nVentas++; }
       }
       /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo + Eduardo a Multicenter (28/09), sin sus
          otras ventas, puntuales ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
@@ -17106,7 +17114,8 @@ function stockData(extra){
          mes tiene que cuadrar con él. La rotación de 15 días sigue por fecha de salida. */
       var fv=contaFecha(p)||fs;
       if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
-        o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
+        var ek30=stockEntregaClave(p, fv);        // 🏬 (29/09) ver `stockEntregaClave`
+        o.v30+=c; if(!o.ventas30[ek30]){ o.ventas30[ek30]=1; o.n30++; }
         if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));

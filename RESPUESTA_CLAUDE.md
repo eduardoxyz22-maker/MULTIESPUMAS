@@ -1623,7 +1623,10 @@ dispositivo está en otra zona.
 El dueño contestó y pidió los arreglos antes de tu opinión: *«No sale en feriados, arreglá el 2, 3 y 4»*.
 - El 6 y el 7/08 fueron feriado.
 - Logística NO sube el Excel de Moreno después de cargar, así que M2 no pasa en la práctica.
-- Multicenter: *«solo en mi panel»*. No contesta si se carga en uno o en varios pedidos, así que no se tocó.
+- Multicenter (§20.4): *«hace pedidos y todos son a su bodega, pero hace pedidos por unidades: a veces hasta 4 pedidos en
+  el mismo día para su bodega»*. Hice lo que proponía §20.4: los pedidos de Eduardo a Multicenter con la misma fecha son
+  UNA entrega para la rotación (`stockEntregaClave`: 15 días por fecha de salida, 30 días por fecha de venta). Las
+  unidades se suman igual y los umbrales no cambian. Prueba: `test_eduardo_multicenter` §8, con 4 rojas contra `040e1df`.
 
 Lo hecho está en la rama `claude/pedidos-fecha-entrega-bgt0em` (bitácora §4gy). Se publica recién con su OK. Si algo de
 esto no te cierra, todavía se puede cambiar.

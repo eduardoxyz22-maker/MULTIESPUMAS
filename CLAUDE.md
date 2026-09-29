@@ -895,7 +895,8 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
 ## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, EN LA RAMA, SIN PUBLICAR)
 Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en
 feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO sube el Excel de Moreno después de cargar
-(M2 no pasa); Multicenter: *«solo en mi panel»* (no se tocó nada).
+(M2 no pasa). Multicenter: *«a veces hasta 4 pedidos en el mismo día para su bodega»* → cuentan como UNA entrega (ver
+«🏬 Eduardo a Multicenter»).
 - **🚫 El camión no sale en feriados (A1)**: `feriadoDe(f)` lee `FERIADOS`.
   - `limTurno` da 0 (como el domingo), y `proximoDiaEntrega()` y `saldoDiaConCupo` los saltean.
   - El formulario no guarda un pedido NUEVO para un feriado, ni deja que una vendedora MUEVA uno a un feriado (aviso).
@@ -980,6 +981,10 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
 
 ## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02** (`7fe7551`), junto con §4gl, §4gn y §4go.
+- **🏬 Varios pedidos de Multicenter el MISMO día son UNA entrega** (dueño, 29/09, §4gy): *«hace pedidos por unidades, a
+  veces hasta 4 pedidos en el mismo día para su bodega»*. `stockEntregaClave(p, f)` usa la fecha como clave de la
+  entrega para Eduardo → Multicenter (`nVentasRotacion`, `nVentas`, `n30`); lo demás sigue por pedido. Las unidades se
+  suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;

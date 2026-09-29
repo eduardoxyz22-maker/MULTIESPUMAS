@@ -229,6 +229,39 @@ function NUMEROS(k){
   chk('40 en UNA entrega a Multicenter: cuenta como venta del equipo, pero es 1 entrega → rotación baja, sin ritmo ni reserva, no pide nada',
       grande.vendidosRotacion===40 && grande.nVentasRotacion===1 && grande.rotacion==='baja' && grande.porDia===0 && grande.porDiaMes===0 && grande.pedir===0, grande);
 
+  // ═══ 8. Varios pedidos de Multicenter el MISMO día son UNA entrega (dueño, 29/09) ═════════════════════════
+  /* *«Multicenter hace pedidos y todos son a su bodega, pero hace pedidos por unidades: a veces hasta 4 pedidos en el
+     mismo día para su bodega.»* Contados uno por uno, una sola compra partida en 4 pedidos pasaba el umbral de 3 entregas
+     distintas y armaba un ritmo que no existe. Dientes: PEDIDOS=<página 040e1df> (ahí cada pedido es una entrega). */
+  console.log('\n── 8. Multicenter: varios pedidos el MISMO día a su bodega son UNA entrega (dueño, 29/09) ──');
+  const mismoDia = await NUEVA.evaluate(() => {
+    var hoy=todayStr(), k=stockClave({desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761'});
+    var P=function(id, d, v, c, u){ var f=stockSumarDias(hoy,-d); return { id:id, fecha:f, oc:'', vendedor:v, cliente:c, entregado:true, verificado:true,
+      ts:Date.parse(f+'T12:00:00-04:00'), productos:[{desc:'ORO BI RELAX', medida:'140x190', codigo:'CH1761', cant:u}] }; };
+    var ver=function(lista){ STATE=lista; STOCK=stockVacio(); STOCK.c={ f:hoy, hora:'09:00', u:{}, solo0:true }; STOCK.c.u[k]=2; stockOlvidarIndice();
+      var o=stockData().lista.filter(function(x){ return x.k===k; })[0];
+      return { u:o.vendidosRotacion, n:o.nVentasRotacion, nTodas:o.nVentas, rot:o.rotacion, porDia:Math.round(o.porDia*1000)/1000,
+               v30:o.v30, n30:o.n30, porDiaMes:Math.round(o.porDiaMes*1000)/1000, pedir:o.pedir }; };
+    var MC=function(id, d){ return P(id, d, 'Eduardo Añez', 'MULTICENTER', 2); };
+    return {
+      mismo:ver([MC('m1',3), MC('m2',3), P('m3',3,'EDUARDO AÑEZ','Multicenter S.R.L.',2), MC('m4',3)]),   // 4 pedidos de 2, el mismo día
+      tresDias:ver([MC('d1',2), MC('d2',2), MC('d3',5), MC('d4',8)]),                                    // los mismos, en 3 días distintos
+      conEquipo:ver([P('e1',6,'Carola Chavez','CLIENTE',2), MC('m1',3), MC('m2',3), MC('m3',3), MC('m4',3)]),
+      equipo:ver([P('t1',3,'Carola Chavez','CLIENTE A',2), P('t2',3,'Maria Flores','CLIENTE B',2), P('t3',3,'Mirian Salazar','CLIENTE C',2)])
+    };
+  });
+  const md = mismoDia;
+  chk('8a. 4 pedidos de 2 a Multicenter el mismo día: 8 unidades en UNA entrega (15 y 30 días)',
+      md.mismo.u===8 && md.mismo.n===1 && md.mismo.nTodas===1 && md.mismo.v30===8 && md.mismo.n30===1, md.mismo);
+  chk('8b. …así que es rotación baja: sin ritmo ni reserva, y no pide nada a fábrica',
+      md.mismo.rot==='baja' && md.mismo.porDia===0 && md.mismo.porDiaMes===0 && md.mismo.pedir===0, md.mismo);
+  chk('8c. los mismos pedidos en 3 días distintos son 3 entregas: rotación media, con ritmo (como siempre)',
+      md.tresDias.n===3 && md.tresDias.rot==='media' && md.tresDias.porDia>0, md.tresDias);
+  chk('8d. una entrega del equipo + los 4 de Multicenter del mismo día = 2 entregas: todavía sin rotación',
+      md.conEquipo.n===2 && md.conEquipo.rot==='baja', md.conEquipo);
+  chk('8e. tres clientes del equipo el mismo día siguen siendo 3 entregas (la regla es solo para Multicenter)',
+      md.equipo.n===3 && md.equipo.rot==='media', md.equipo);
+
   // ═══ 6. Cambiar cantidad, cliente o vendedor recalcula ════════════════════════════════════════════════════
   console.log('\n── 6. Cambiar cantidad, cliente o vendedor recalcula todo, también el índice del mes y la caché del formulario ──');
   const cambios = await NUEVA.evaluate(() => {

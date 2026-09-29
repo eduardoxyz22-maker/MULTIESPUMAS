@@ -7539,6 +7539,23 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
 - **Batería sobre `f69931b`: 116 suites, 4.434 bien · 0 mal.** Después se agregaron los textos de `cambiarTurno` y ROHO, y
   se volvieron a correr `test_rev29_dias` (26), `test_roho` (90), `test_cupos` (23), `test_medias` (24) y `test_sabado` (14): en verde.
 
+### 🏬 Multicenter: varios pedidos el mismo día son UNA entrega (dueño, 29/09, tarde)
+El dueño contestó la pregunta de §20.4: *«Multicenter hace pedidos y todos son a su bodega, pero hace pedidos por unidades:
+a veces hasta 4 pedidos en el mismo día para su bodega.»*
+- **El problema:** la rotación cuenta entregas distintas (§4dj), y contaba una por PEDIDO (`p.id`). Una sola compra de
+  Multicenter partida en 4 pedidos del mismo día pasaba el umbral de 3 y armaba un ritmo que no existe.
+  - Ejemplo: 4 pedidos de 2 el mismo día y 2 en depósito. Antes daba rotación media y «pedir 3».
+  - Ahora es una entrega: rotación baja, no pide nada.
+- **`stockEntregaClave(p, f)`**: para Eduardo → Multicenter la clave de la entrega es la FECHA (`'mc|'+f`); para todo lo
+  demás, el pedido. La usan `nVentasRotacion` y `nVentas` (15 días, por fecha de salida) y `n30` (30 días, por fecha de
+  venta). Las unidades se suman igual.
+- **Lo que NO cambia:**
+  - los umbrales;
+  - las dos mitades de la regla de §4dj;
+  - lo del equipo: tres clientes el mismo día siguen siendo tres entregas;
+  - los mismos pedidos de Multicenter en tres días distintos siguen siendo tres entregas.
+- Prueba: `test_eduardo_multicenter.js` §8 (40; 4 rojas contra `040e1df`).
+
 ### Lo que sigue pendiente de §4gx
 M1 y M3-M8, y las otras BAJA (RESPUESTA §20.3). Nada de eso se tocó.
 
