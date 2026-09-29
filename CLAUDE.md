@@ -760,7 +760,8 @@ o si pueden agendar directamente»*. Primero pidió una pestaña; después, **en
   productos de tienda) cuando el renglón está completo: ✅ DISPONIBLE (programar desde el primer día con cupo) · 📥 HAY
   EN MORENO (se trae en 1 día) · ⏳ EN PRODUCCIÓN (esperar ~X días, llega el DD/MM) · 🏭 NO HAY (mandar a producir,
   esperar ~X días) · gris «Sin saldo cargado». Abajo «En almacén · Pendientes de entrega · Libres/Faltan», el reparto
-  acá · Banzer · Moreno y de qué corte y consulta es. **Libre = saldo en almacén − pendientes de entrega** (la
+  **PTF** · Banzer · Moreno y de qué corte y consulta es. ⚠️ «PTF» (productos terminados fábrica), NO «acá» (dueño,
+  29/09, §4gz): los vendedores lo leen desde sus tiendas. **Libre = saldo en almacén − pendientes de entrega** (la
   cantidad del renglón; dos renglones del mismo producto se suman; al editar, el propio pedido no se cuenta).
 - **UNA sola cuenta**: todo sale de `stockData()` (`saldoDatos`/`SALDO_CACHE`, una vez por lectura) y de
   `saldoVeredicto(clave, cantidad, idEditado, fechaElegida, enCatalogo)`. `stockData` ganó `enRecogida` y un argumento

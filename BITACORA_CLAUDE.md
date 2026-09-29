@@ -7445,6 +7445,17 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gz. 29/09, mañana: el cuadrito dice «PTF», no «acá» — EN LA RAMA
+
+**El pedido**, con una captura del cuadrito («acá 6 · Banzer 3 · Moreno 0»): *«dice acá; los vendedores al meter sus
+pedidos no están en "acá", están en sus tiendas: debería decirles PTF (productos terminados fábrica). Banzer y Moreno están
+ok.»*
+- `saldoDetalleTxt` dice **«PTF 6 · Banzer 3 · Moreno 0»** («PTF sin contar» si no hay conteo). El renglón lleva un `title`
+  con «PTF = productos terminados fábrica (de ahí salen los camiones)».
+- Solo el cuadrito del formulario, que es lo que ven los vendedores. La pantalla de stock de logística sigue diciendo
+  «acá en fábrica»: es el mismo depósito.
+- `test_saldo_almacen` espera «PTF 4 · Banzer 2 · Moreno 0» y que no quede ningún «acá N».
+
 ## 4gy. 29/09: los arreglos de la revisión de §4gx — feriados, el mixto falso, «a esta altura» a la misma hora y el retiro borrado — PUBLICADA 29/09 10:02 (`72aa862`)
 
 > **Publicada el 29/09 a las 10:02 de Bolivia** (`main` = `72aa862`), con Multicenter (una entrega por día, abajo). OK del
