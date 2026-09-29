@@ -7445,7 +7445,88 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — APROBADA, POR PUBLICAR
+## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — SIN PUBLICAR
+
+**Las preguntas del dueño** (después de ver §4gt publicada):
+- *«¿Cómo calculás la proyección? ¿Qué parámetros tomás? ¿Tomás en cuenta MoM? ¿Ticket promedio o qué?»* — Se le
+  explicó el ritmo de §4gt: no usa MoM ni ticket promedio.
+- *«¿Tomás en cuenta lo pendiente de entrega, lo que está agendado hasta el último día del mes? Y usando tu razonamiento,
+  ¿qué fórmula o algoritmo podemos usar para calcular la proyección, identificando patrones de días de ventas altas,
+  bajas, y algo realmente preciso en lo posible?»* — Sí: lo agendado es la B de §4gt. Se le propuso la curva y probarla.
+- *«Creo que en agosto los últimos dos, tres días se facturó 80.000 o 150.000, no recuerdo, y hablamos solo de ventas de
+  Heaven; Sueña es distinto. Ya me agrada tu idea de calcular y probar con agosto.»*
+
+**El problema del ritmo.** Reparte parejo lo de hasta hoy y no ve el empujón de fin de mes: si Heaven vende el 30 % del mes
+en los últimos 3 días, el ritmo se queda corto todo el mes y recién lo agarra con lo agendado de los últimos días.
+
+**Lo hecho (`pedidos.html`, pestaña 📈 de Contabilidad; nada del servidor):**
+- **La curva de cada marca** (`pryCurva`, `pryCurvaF`, `pryAlDia`): de los meses cerrados (desde `PRY_PRIMER_MES`='2026-08',
+  julio empezó a fines de mes), faltando r días hábiles para el cierre, qué parte `f` de lo que el mes terminó vendiendo
+  ya estaba VENDIDA (`contaFecha` = el `ts` de cuando se cargó; entrega dentro del mes por `fechaSalida`, como §4gt). Los
+  meses se alinean por días hábiles hasta el cierre (agosto de 2026 terminó un lunes y septiembre un miércoles).
+- **La proyección de la marca** (`pryMezcla`), con K = lo ya vendido para el mes (entregado + agendado):
+  - (1) si sigue en la misma proporción: K ÷ f;
+  - (2) lo vendido + lo que en los meses cerrados entró desde esta altura hasta el cierre: K + (1 − f) × su promedio;
+  - la (1) pesa **f²** y la (2) el resto.
+  - ⚠️ **Por qué no la división sola** (lo primero que se armó): con ventas inventadas, el 05/09 la (1) decía Bs 859.211 para
+    un mes que cerró cerca de 590.000 (a principio de mes f es chica y dividir por ella agranda cualquier ruido). La (2)
+    sola no ve que un mes venga más fuerte o más flojo. **Por qué f² y no f**: con f, el peso por la (1) da f × K/f = K
+    siempre, y en f = 0 la cuenta sumaba K dos veces (2K + promedio); con f² en f = 0 no queda nada de la (1).
+  - Cada vendedor lleva la proporción de su marca (su vendido × proyección ÷ vendido de la marca): las marcas suman. La
+    ficha de la marca es la cuenta de la marca (puede diferir de la suma en centavos).
+  - Los **sin marca** y los **mayoristas** siguen con el ritmo (sin curva propia; los mayoristas son pocas compras y grandes).
+  - Con menos de `PRY_MIN_VENTAS`=20 ventas de la marca en los meses cerrados, va el ritmo.
+- **🧪 La prueba** (`pryPrueba`, cuadro «¿Qué tan bien proyecta?»): cada mes se rehace los días 5, 10, 15, 20 y 25, faltando
+  3 días hábiles y la víspera del último, con lo que estaba vendido ESE día; el ritmo (por vendedor, como la pantalla) y la
+  curva, que para un mes sale de los OTROS meses cerrados (con la suya acertaría siempre). Error de cada una contra cómo
+  terminó, y el promedio. Del mes en curso, solo las fechas que ya pasaron y sin error («se ve cuando cierre»).
+- **🏁 Elige la prueba** (`pryErrores`): con dos meses cerrados o más, cada marca va con la forma que menos se equivocó
+  (promedio en las mismas fechas, últimos `PRY_MESES_PRUEBA`=6 meses, al menos `PRY_MIN_PARES`=5 fechas). Con ventas
+  inventadas: una marca con empujón de fin de mes (como Heaven) → curva 4-5 %, ritmo 27-39 %; una que vende parejo → ritmo
+  4-10 %, curva 12-17 %. Ninguna gana siempre, y el dueño dijo que Heaven y Sueña son distintas.
+  - ⚠️ **El ritmo, aunque gane, recién desde el 5° día hábil** (`PRY_DIAS_RITMO`): la prueba empieza a medir el día 5, y el
+    1° hábil el ritmo de Sueña (inventada) daba 204.000 para un mes de ~326.000.
+  - Con un solo mes cerrado (hoy, 29/09: solo agosto) no hay contra qué probar la curva: va la curva, el aviso lo dice y la
+    comparación aparece sola cuando cierre septiembre.
+- **📅 Cómo se vendió el mes elegido** (`pryPatron`), por marca: lo entregado cada día (barras; en oscuro los últimos 3 días
+  hábiles; más claro lo agendado), **los últimos 3 días hábiles con cuánto de eso ya estaba vendido antes y cuánto se vendió
+  esos mismos días** (la pregunta de los 80.000 o 150.000), cómo se fue llenando (días 10 y 20, faltando 3 y la víspera) y
+  qué días de la semana se vende más (promedio por día, por el día en que se cargó, en los meses cerrados).
+- Debajo de cada marca, la cuenta entera, para seguirla con la calculadora: «(1) Bs 515.040 ÷ 87,1 % = 591.049; (2) Bs
+  515.040 + Bs 77.160 = 592.200; la (1) pesa 75,9 % y la (2) 24,1 % → Bs 591.326».
+- Arreglos chicos: «falta 1 día hábil» / «Va 1 día hábil» (decía «faltan 1», «Van 1»).
+
+**⚠️ Lo que NO se hizo, a propósito:**
+- Los feriados de 2026 que ya pasaron (06/08 y el de Santa Cruz del 25/09) NO se agregaron a `FERIADOS`: varias pruebas
+  del cuadrito entregan esos días. En la proyección cuentan como hábiles; mueve la alineación un día en esos tramos.
+- MoM, ticket promedio y estacionalidad: con dos meses no hay historia para eso. Se ofreció MoM al dueño y no contestó.
+- La curva ve cada venta de un mes cerrado con su entrega FINAL (el panel no guarda las reprogramaciones).
+
+**Lo que va a ver el dueño hoy (29/09, con sus datos):** la proyección de septiembre con la curva de agosto (casi igual al
+ritmo: falta 1 día hábil), el aviso de «un solo mes», agosto probado solo con el ritmo y septiembre con la curva de agosto
+(sin error hasta que cierre). Eligiendo agosto arriba, el 📅 con sus últimos 3 días hábiles de verdad. **Desde el 1/10**
+aparecen los errores de las dos formas en agosto y septiembre, y cada marca elige.
+
+**Pruebas:** `tests/test_proyeccion.js`, de 36 a 95 comprobaciones (§7-14 nuevas, con un historial inventado de agosto y
+septiembre hecho a mano: `FIX2`, y `FIX3` con una Sueña pareja para que gane el ritmo). Todos los números esperados se
+calcularon a mano antes de correr. Contra lo publicado (`6146f6d`): 37 bien · 58 mal (pasan §1-6 y «sin errores»).
+
+**Batería sobre `4cec55a`: 113 suites, 4.331 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+
+**⚠️ Se armó OTRA fórmula que la propuesta, y por qué.** Lo que se le propuso al dueño antes de su «me agrada tu idea de
+calcular y probar con agosto» era: ritmo por vendedor por fecha de VENTA × factor del día de la semana × la parte que se
+entrega antes de fin de mes, sin las ventas grandes, con un rango, y «principio/quincena/fin de mes» recién con 3 meses de
+historia. Su dato de Heaven (el empujón de los últimos días) es justo lo que esa fórmula dejaba para después, y la curva lo
+ve con un mes. Del plan quedaron: la prueba contra agosto (adentro del panel), los días altos y bajos (📅, se muestran pero
+no entran en la cuenta). Quedaron afuera: el rango, sacar las ventas grandes del ritmo, MoM y ticket promedio.
+**Se le prometió «te muestro cuánto le erraba antes de publicarla»**: la prueba con SUS números solo corre en su panel
+(desde acá no hay acceso a la planilla), así que se le mostró con ventas inventadas y se le pidió el OK para publicar.
+
+## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — PUBLICADA 28/09 19:14 (`6146f6d`)
+
+> **Publicada el 28/09 a las 19:14 de Bolivia** (`main` = `6146f6d`; el dueño: «me gusta el bosquejo, publica y lo veo»). Sin tocar el
+> servidor (sigue el `.gs` 2026-09-28-a). No había ninguna corrida del panel en curso ni en cola. Todos F5; la pestaña
+> aparece recién después de poner la contraseña en Administración.
 
 **El pedido del dueño** (con una captura de Contabilidad → Ventas por entrega agendada):
 - *«me varía con lo de cuadre y conciliación»*: el Cuadre cuenta la plata que ENTRÓ, por fecha de pago; Ventas por entrega

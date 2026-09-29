@@ -540,6 +540,31 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-n{text-align:right;white-space:nowrap}
 .pry-p{color:#6d28d9 !important;font-weight:700 !important}
 .pry-total{border:1px solid var(--teal);border-left-width:4px;border-radius:10px;background:#f0fdfa;margin-bottom:12px}
+/* 📈 (29/09, §4gu) Cómo se proyectó cada grupo, la prueba con los meses cerrados y el patrón del mes. */
+.pry-pie{padding:7px 12px 9px;border-top:1px solid var(--gray-md);font-size:.74rem;color:var(--muted);line-height:1.45}
+.pry-cuerpo{padding:2px 12px 10px}
+.pry-linea{font-size:.78rem;line-height:1.5;margin:10px 0 4px;color:var(--text)}
+.pry-intro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:-4px 0 12px}
+.pry-gana{background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #7c3aed;border-radius:9px;padding:9px 13px;margin-bottom:14px;font-size:.8rem;line-height:1.5;color:#3b0764}
+.pry-gana>div+div{margin-top:4px}
+.pry-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pry-tabla{width:100%;border-collapse:collapse;font-size:.78rem}
+.pry-tabla th,.pry-tabla td{padding:6px 10px;border-top:1px solid var(--gray-md);text-align:right;white-space:nowrap;vertical-align:top}
+.pry-tabla th:first-child,.pry-tabla td:first-child{text-align:left}
+.pry-tabla th{font-size:.62rem;position:static}   /* el encabezado negro de todas las tablas del panel, sin quedar pegado arriba */
+.pry-tabla td small{display:block;font-size:.68rem;color:var(--muted);font-weight:600}
+.pry-tabla tfoot td{font-weight:700;background:var(--gray-lt)}
+.pry-tabla small.pry-ok{color:#15803d}
+.pry-tabla small.pry-reg{color:#b45309}
+.pry-tabla small.pry-mal{color:#b91c1c}
+.pry-barras{display:flex;align-items:flex-end;gap:2px;height:90px;border-bottom:1px solid var(--gray-md)}
+.pry-barras>div{flex:1 1 0;min-width:0;border-radius:2px 2px 0 0}
+.pry-dias{display:flex;gap:2px;font-size:.58rem;color:var(--muted);margin-bottom:4px}
+.pry-dias>span{flex:1 1 0;min-width:0;text-align:center}
+.pry-sem{display:grid;grid-template-columns:34px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:.76rem;margin:3px 0}
+.pry-sem>div{height:10px;background:var(--gray-lt);border-radius:5px;overflow:hidden}
+.pry-sem>div>i{display:block;height:100%;border-radius:5px}
+.pry-sem>b{min-width:74px;text-align:right}
 .metodos-line{background:var(--gray-lt);border:1px solid var(--gray-md);border-radius:var(--r-md);padding:9px 14px;margin-bottom:18px;font-size:.76rem;color:var(--muted)}
 .metodos-line b{color:var(--text)}
 
@@ -1174,6 +1199,9 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
         <div id="pry-vendedores"></div>
+        <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
+        <div id="pry-prueba"></div>
+        <div id="pry-patron"></div>
         <div id="pry-como"></div>
       </div>
 
@@ -4250,40 +4278,245 @@ function contaRepintar(){
      Días hábiles = lunes a sábado sin feriados (`diaHabil`). ⚠️ «Hasta hoy» es por la fecha AGENDADA: los choferes
      todavía no marcan ✅ (§4gp), así que no se mira `p.entregado`.
    · Un mes que ya pasó no se proyecta (cerró en A); uno que no empezó muestra solo lo agendado.
+
+   🔁 (29/09, §4gu) LA CURVA DE CADA MARCA. El dueño preguntó *«¿qué fórmula o algoritmo podemos usar… identificando
+   patrones de días de ventas altas, bajas, y algo realmente preciso?»* y contó *«en agosto, los últimos dos, tres días se
+   facturó 80.000 o 150.000… hablamos solo de ventas de Heaven, Sueña es distinto… me agrada tu idea de calcular y probar
+   con agosto»*. El ritmo reparte parejo y no ve ese empujón de fin de mes.
+   · La CURVA mira cómo se llenaron los meses cerrados: faltando r días hábiles para el cierre, qué parte `f` de lo que el
+     mes terminó vendiendo ya estaba VENDIDA (cargada en el panel, con cualquier entrega dentro del mes). Los meses se
+     alinean por días hábiles hasta el cierre (`pryAlDia`), no por fecha: agosto de 2026 terminó un lunes y septiembre un
+     miércoles. Con eso, dos cuentas del total del mes (`pryMezcla`), con K = lo ya vendido para el mes:
+       (1) si sigue en la misma proporción: K ÷ f;
+       (2) lo vendido + lo que en los meses cerrados entró desde esta altura hasta el cierre: K + (1 − f) × su promedio.
+     La (1) pesa f², la (2) el resto. ⚠️ No es un capricho: la (1) sola, a principio de mes, divide por una parte chica y se
+     dispara (con ventas inventadas, el 05/09 decía Bs 859.000 para un mes que cerró cerca de 590.000); la (2) sola no ve
+     que este mes venga más fuerte o más flojo. Con f² el peso de la (1) crece a medida que el mes se llena, y en f = 0 no
+     queda nada de ella (con f a secas, f × K/f = K no se va nunca). Se descartó la división sola por eso (§4gu).
+   · Una curva por marca (Heaven y Sueña se llenan distinto), con su promedio. Se calcula para la marca entera y cada
+     vendedor lleva la misma proporción (su vendido × proyección de la marca ÷ vendido de la marca), así las marcas suman.
+     Los SIN MARCA y los MAYORISTAS siguen con el ritmo: no tienen una curva propia, y los mayoristas son pocas compras y
+     grandes.
+   · Solo meses ENTEROS en el panel, desde `PRY_PRIMER_MES` (julio empezó a fines de mes). Si la marca no tiene
+     `PRY_MIN_VENTAS` ventas en esos meses, va el ritmo.
+   · 🏁 ELIGE LA PRUEBA: con dos meses cerrados o más, cada marca va con la forma que MENOS se equivocó en la prueba
+     (`pryErrores`: el promedio del error en las mismas fechas, de los últimos `PRY_MESES_PRUEBA` meses cerrados, con al
+     menos `PRY_MIN_PARES` fechas). Con ventas inventadas, en una marca con empujón de fin de mes la curva se equivocó
+     4-5 % y el ritmo 27-39 %; en una que vende parejo, el ritmo 4-10 % y la curva 12-17 %. Ninguna gana siempre, y el
+     dueño dijo que Heaven y Sueña son distintas. Con un solo mes cerrado no hay contra qué probar: va la curva. Y el
+     ritmo, aunque gane, recién desde el día hábil `PRY_DIAS_RITMO` del mes (antes no hay de dónde sacarlo).
+   · «Vendida el día X» = `contaFecha` (el `ts` de cuando se cargó, en hora de Bolivia; al editar no cambia). Un mes
+     cerrado se ve con la entrega FINAL de cada venta: lo que se reprogramó a otro mes no está en su curva (el panel no
+     guarda la historia de las reprogramaciones).
+   · 🧪 `pryPrueba` rehace un mes a distintas fechas con lo que estaba vendido ese día y compara las dos formas contra
+     cómo terminó. La curva de un mes sale de los OTROS meses cerrados: con la suya acertaría siempre.
+   · 📅 `pryPatron`: cuánto se entregó cada día, los últimos 3 días hábiles (y cuánto de eso ya estaba vendido antes),
+     cómo se fue llenando el mes y qué días de la semana se carga más.
+   ⚠️ Los feriados de 2026 que ya pasaron (06/08, 25/09) NO están en `FERIADOS` (varias pruebas del cuadrito entregan
+     esos días): acá cuentan como hábiles. Mueve la cuenta un día en esos tramos, nada más.
    ========================================================================== */
 /* La proyección y el ritmo son estimaciones: van en Bs enteros. Lo vendido, con centavos, igual que en Ventas. */
 function fmtBs0(n){ return 'Bs '+Math.round(Number(n)||0).toLocaleString('es-BO'); }
 function pryFinDeMes(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7), d=new Date(Date.UTC(y, m, 0)).getUTCDate(); return ym+'-'+(d<10?'0':'')+d; }
 function pryHabiles(desde, hasta){ var n=0, f=desde; for(var i=0; i<40 && f<=hasta; i++, f=stockSumarDias(f,1)) if(diaHabil(f)) n++; return n; }
+var PRY_PRIMER_MES='2026-08';   // el primer mes ENTERO en el panel: se empezó a usar a fines de julio (§4d)
+var PRY_MIN_VENTAS=20;          // con menos ventas de la marca en los meses cerrados, la curva no es de fiar → ritmo
+var PRY_MESES_PRUEBA=6;         // 🧪 con cuántos meses cerrados (los últimos) se comparan el ritmo y la curva
+var PRY_MIN_PARES=5;            // fechas con las dos cuentas que hacen falta para elegir entre ellas
+var PRY_DIAS_RITMO=5;           // el ritmo, aunque gane la prueba, recién desde el 5° día hábil: la prueba empieza a medir el día 5, y
+                                // con 1-4 días no hay ritmo (con ventas inventadas, el 1° hábil daba 204.000 para un mes de ~326.000)
+function pryMesSig(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7)+1; if(m>12){ m=1; y++; } return y+'-'+(m<10?'0':'')+m; }
+function pryMesCorto(ym){ return MESES_ES[+String(ym).slice(5,7)-1]||String(ym); }
+function pryMesesTxt(ms){ var n=(ms||[]).map(pryMesCorto); return n.length<2 ? (n[0]||'') : n.slice(0,-1).join(', ')+' y '+n[n.length-1]; }
+function pryDiaTxt(d){ var w=dowDe(d); return (w>=0 ? DIAS_SEM[w].slice(0,3)+' ' : '')+fmtFechaCorta(d); }
+function pryDiasHabTxt(n){ return n+' día'+(n===1?'':'s')+' hábil'+(n===1?'':'es'); }
+/* «falta 1 día hábil» / «faltan 3 días hábiles»; y en pasado, «faltaba» / «faltaban». */
+function pryFaltanTxt(n, antes){ return (antes ? (n===1 ? 'faltaba ' : 'faltaban ') : (n===1 ? 'falta ' : 'faltan '))+pryDiasHabTxt(n); }
+function pryPct(x){ return (Math.round((Number(x)||0)*1000)/10).toLocaleString('es-BO')+'%'; }
+/* Los meses cerrados que sirven de historia: desde `PRY_PRIMER_MES` hasta el anterior al de hoy. */
+function pryMesesCerrados(hoy){
+  var out=[], cur=String(hoy||'').slice(0,7);
+  for(var ym=PRY_PRIMER_MES, i=0; i<120 && ym<cur; i++, ym=pryMesSig(ym)) out.push(ym);
+  return out;
+}
+/* Hasta qué día se mira lo vendido cuando faltan `r` días hábiles para el cierre de `ym`: el anterior al r-ésimo día
+   hábil contando desde el final (con el domingo de por medio, si cae ahí). r=0 → el último día del mes. Con más días
+   que los hábiles del mes, sigue para atrás en el mes anterior (lo vendido antes de empezar). */
+function pryAlDia(ym, r){
+  var d=pryFinDeMes(ym); if(!(r>0)) return d;
+  for(var n=0, i=0; i<400; i++, d=stockSumarDias(d,-1)) if(diaHabil(d) && ++n===r) return stockSumarDias(d,-1);
+  return d;
+}
+/* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
+   cargó y el monto. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
+function pryVentas(){
+  var out=[];
+  STATE.forEach(function(p){
+    var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
+    if(!amb) return;
+    var f=fechaSalida(p); if(!f) return;
+    var v=nombreCanonico(p.vendedor)||'(sin vendedor)';
+    out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (marcaDe(v)||'sin')), v:v, vk:amb+'|'+(normNombre(v)||v),
+               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p) });
+  });
+  return out;
+}
+/* La curva de la marca `g` ('heaven' | 'suena') con los meses dados, y lo que vendieron en promedio (`prom`). */
+function pryCurva(V, g, meses){
+  var por={}, T=0, n=0;
+  (meses||[]).forEach(function(m){ por[m]=[]; });
+  V.forEach(function(x){
+    if(!por[x.ym] || x.amb!=='tienda' || x.g!==g) return;
+    por[x.ym].push(x); T+=x.bs; n++;
+  });
+  var ms=(meses||[]).filter(function(m){ return por[m].length; });
+  return { g:g, meses:ms, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
+}
+/* Qué parte de lo que vendieron esos meses ya estaba vendida faltando `r` días hábiles para su cierre (suma sobre suma:
+   el mes más grande pesa más). */
+function pryCurvaF(c, r){
+  if(!c || !c.ok) return 0;
+  var K=0;
+  c.meses.forEach(function(m){ var d=pryAlDia(m, r); c.por[m].forEach(function(x){ if(x.reg<=d) K+=x.bs; }); });
+  return K/c.T;
+}
+/* Las dos cuentas del total del mes y cómo se mezclan (ver la cabecera): K = lo ya vendido para el mes, f = la parte que
+   suele estar vendida a esta altura, prom = lo que vendieron en promedio los meses cerrados. */
+function pryMezcla(K, f, prom){
+  var p1 = f>0 ? K/f : 0, p2 = K+(1-f)*prom, w = f*f;
+  return { p1:p1, p2:p2, w:w, proy:(w*p1+(1-w)*p2) };
+}
 function proyeccionMes(ym){
   var hoy=todayStr(), ini=ym+'-01', fin=pryFinDeMes(ym);
   var estado = hoy<ini ? 'futuro' : (hoy>fin ? 'cerrado' : 'curso');
   var dt = estado==='futuro' ? 0 : pryHabiles(ini, estado==='cerrado' ? fin : hoy);
   var dr = estado==='curso' ? pryHabiles(stockSumarDias(hoy,1), fin) : (estado==='futuro' ? pryHabiles(ini, fin) : 0);
+  var V=pryVentas(), hist=pryMesesCerrados(hoy), metodos={};
+  /* 🧪 La prueba, una sola vez por pantalla: los últimos meses cerrados (para elegir) y el que está en curso (para ver). */
+  var curYm=hoy.slice(0,7), pruebas={};
+  hist.slice(-PRY_MESES_PRUEBA).concat(curYm>=PRY_PRIMER_MES ? [curYm] : []).forEach(function(m){ pruebas[m]=pryPrueba(V, m, hist, hoy); });
+  var errores=pryErrores(pruebas);
   var filas={};
-  STATE.forEach(function(p){
-    var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
-    if(!amb) return;
-    var f=fechaSalida(p); if(!f || f.slice(0,7)!==ym) return;
-    var v=nombreCanonico(p.vendedor)||'(sin vendedor)', k=amb+'|'+(normNombre(v)||v);
-    var r=filas[k]||(filas[k]={ vendedor:v, amb:amb, marca:(amb==='tienda' ? marcaDe(v) : ''), n:0, a:0, b:0, sinMonto:0 });
-    var bs=ventaTotal(p);
-    r.n++; if(!(bs>0.009)) r.sinMonto++;
-    if(f<=hoy) r.a=r2(r.a+bs); else r.b=r2(r.b+bs);
+  V.forEach(function(x){
+    if(x.ym!==ym) return;
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0 });
+    r.n++; if(!(x.bs>0.009)) r.sinMonto++;
+    if(x.f<=hoy) r.a=r2(r.a+x.bs); else r.b=r2(r.b+x.bs);
+  });
+  /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
+     la marca ENTERA (K = lo que vendió la marca este mes), y cada vendedor lleva la misma proporción; salvo que en la
+     prueba el ritmo se haya equivocado menos. */
+  ['suena','heaven','sin','mayor'].forEach(function(g){
+    var o={ m:'ritmo', f:0, meses:[], porque:'' };
+    if(estado==='curso'){
+      if(g==='mayor' || g==='sin') o.porque=g;
+      else{
+        var c=pryCurva(V, g, hist);
+        if(!c.ok) o.porque='historia';
+        else{
+          var K=0; Object.keys(filas).forEach(function(k){ if(filas[k].g===g) K+=r2(filas[k].a+filas[k].b); });
+          var f=pryCurvaF(c, dr), z=pryMezcla(K, f, c.prom), e=errores[g];
+          o={ m:'curva', f:f, meses:c.meses, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
+          if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
+        }
+      }
+    }
+    metodos[g]=o;
   });
   var lista=Object.keys(filas).map(function(k){
-    var r=filas[k];
+    var r=filas[k], mt=metodos[r.g];
     r.vendido=r2(r.a+r.b);
     r.ritmo = dt>0 ? r.a/dt : 0;
-    r.proy = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+    r.proyRitmo = estado==='cerrado' ? r.vendido : r2(r.a + Math.max(r.b, r.ritmo*dr));
+    r.metodo=mt.m;
+    r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
     return r;
   }).sort(function(x,y){ return y.vendido-x.vendido || x.vendedor.localeCompare(y.vendedor,'es'); });
-  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, sinMonto:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
+  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
   var tienda=lista.filter(function(r){ return r.amb==='tienda'; }), mayor=lista.filter(function(r){ return r.amb==='mayor'; });
-  var marcas=MARCAS.map(function(g){ var rs=tienda.filter(function(r){ return r.marca===g.k; }); return { g:g, filas:rs, tot:suma(rs) }; });
-  var sinMarca=tienda.filter(function(r){ return !r.marca; });
-  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:suma(sinMarca) },
-           equipo:suma(tienda), mayor:{ filas:mayor, tot:suma(mayor) } };
+  var marcas=MARCAS.map(function(g){
+    var rs=tienda.filter(function(r){ return r.marca===g.k; }), t=suma(rs), mt=metodos[g.k];
+    /* La marca es la cuenta de la marca (la suma de los vendedores puede diferir en centavos por el redondeo). */
+    if(estado==='curso' && mt.m==='curva') t.proy=mt.proy;
+    return { g:g, filas:rs, tot:t };
+  });
+  var sinMarca=tienda.filter(function(r){ return !r.marca; }), sinTot=suma(sinMarca), equipo=suma(tienda);
+  equipo.proy=r2(marcas.reduce(function(s,m){ return s+m.tot.proy; }, 0)+sinTot.proy);
+  return { ym:ym, hoy:hoy, estado:estado, dt:dt, dr:dr, marcas:marcas, sinMarca:{ filas:sinMarca, tot:sinTot },
+           equipo:equipo, mayor:{ filas:mayor, tot:suma(mayor) }, metodos:metodos, hist:hist, V:V, pruebas:pruebas, errores:errores };
+}
+/* Cuánto se equivocó cada forma en los meses CERRADOS de la prueba, marca por marca: el promedio del error (sin signo)
+   solo en las fechas en que están las dos, para compararlas en las mismas fechas. */
+function pryErrores(pruebas){
+  var out={};
+  MARCAS.forEach(function(g){ out[g.k]={ r:0, c:0, n:0, meses:[] }; });
+  Object.keys(pruebas).sort().forEach(function(m){
+    var P=pruebas[m]; if(!P.cerrado) return;
+    MARCAS.forEach(function(g){
+      var k=g.k, T=P.tot[k], o=out[k], usado=false;
+      if(!(T>0.009)) return;
+      P.filas.forEach(function(f){
+        var s=f.s[k]; if(s.curva==null) return;
+        o.r+=Math.abs(s.ritmo-T)/T; o.c+=Math.abs(s.curva-T)/T; o.n++; usado=true;
+      });
+      if(usado) o.meses.push(m);
+    });
+  });
+  Object.keys(out).forEach(function(k){ var o=out[k]; if(o.n){ o.r/=o.n; o.c/=o.n; } });
+  return out;
+}
+/* 🧪 Qué habría dicho cada forma de proyectar en `ym`, en distintas fechas, con lo que estaba vendido ESE día: el ritmo
+   (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los OTROS meses cerrados, curva y
+   promedio. Días 5, 10, 15, 20 y 25, faltando 3 días hábiles y la víspera del último. Del mes en curso, solo las fechas
+   que ya pasaron. */
+function pryPrueba(V, ym, hist, hoy){
+  var ini=ym+'-01', fin=pryFinDeMes(ym), cerrado=(fin<hoy);
+  var fechas=[5,10,15,20,25].map(function(d){ return ym+'-'+(d<10?'0':'')+d; }).concat([pryAlDia(ym,3), pryAlDia(ym,1)]);
+  fechas=fechas.filter(function(d,i){ return d>=ini && d<=fin && d<hoy && fechas.indexOf(d)===i; }).sort();
+  var otros=hist.filter(function(m){ return m!==ym; });
+  var cur={ suena:pryCurva(V,'suena',otros), heaven:pryCurva(V,'heaven',otros) };
+  var tot={ suena:0, heaven:0 };
+  V.forEach(function(x){ if(x.ym===ym && cur[x.g]) tot[x.g]+=x.bs; });
+  var filas=fechas.map(function(d){
+    var dt=pryHabiles(ini,d), dr=pryHabiles(stockSumarDias(d,1),fin), porV={}, s={};
+    V.forEach(function(x){
+      if(x.ym!==ym || !cur[x.g] || x.reg>d) return;
+      var o=porV[x.vk]||(porV[x.vk]={ g:x.g, a:0, b:0 });
+      if(x.f<=d) o.a+=x.bs; else o.b+=x.bs;
+    });
+    Object.keys(cur).forEach(function(g){ s[g]={ K:0, ritmo:0 }; });
+    Object.keys(porV).forEach(function(k){ var o=porV[k], t=s[o.g]; t.K+=o.a+o.b; t.ritmo+=o.a+Math.max(o.b, dt>0 ? o.a/dt*dr : 0); });
+    Object.keys(cur).forEach(function(g){
+      var f=pryCurvaF(cur[g], dr);
+      s[g].f=f; s[g].curva = cur[g].ok ? pryMezcla(s[g].K, f, cur[g].prom).proy : null;
+    });
+    return { d:d, dr:dr, s:s };
+  });
+  /* `falta` cuenta como la ficha de arriba: los días hábiles DESPUÉS de hoy. */
+  return { ym:ym, cerrado:cerrado, filas:filas, tot:tot, cur:cur, hoyYm:String(hoy).slice(0,7),
+           falta:(cerrado ? 0 : pryHabiles(stockSumarDias(hoy,1), fin)) };
+}
+/* 📅 Cómo se vendió `ym` en la marca `g`: lo entregado cada día, los últimos 3 días hábiles (y cuánto de eso ya estaba
+   vendido antes), cómo se fue llenando, y qué días de la semana se carga más (en los meses cerrados). */
+function pryPatron(V, ym, g, hist, hoy){
+  var fin=pryFinDeMes(ym), cerrado=(fin<hoy), dias={}, T=0, d, i;
+  V.forEach(function(x){ if(x.ym===ym && x.g===g){ dias[x.f]=(dias[x.f]||0)+x.bs; T+=x.bs; } });
+  var ult=[]; for(d=fin, i=0; i<40 && ult.length<3; i++, d=stockSumarDias(d,-1)) if(diaHabil(d)) ult.unshift(d);
+  var fin3={ total:0, antes:0, dias:ult.map(function(u){ return { d:u, bs:(dias[u]||0) }; }) };
+  V.forEach(function(x){ if(x.ym===ym && x.g===g && ult.indexOf(x.f)>=0){ fin3.total+=x.bs; if(x.reg<ult[0]) fin3.antes+=x.bs; } });
+  var cortes=[ym+'-10', ym+'-20', pryAlDia(ym,3), pryAlDia(ym,1)];
+  var llen=cortes.filter(function(c,k){ return cortes.indexOf(c)===k; }).sort().map(function(c){
+    var K=0; V.forEach(function(x){ if(x.ym===ym && x.g===g && x.reg<=c) K+=x.bs; });
+    return { d:c, K:K, pc:(T>0.009 ? K/T : 0) };
+  });
+  var sem=[0,0,0,0,0,0,0], cnt=[0,0,0,0,0,0,0];
+  if(hist.length){
+    var d0=hist[0]+'-01', d1=pryFinDeMes(hist[hist.length-1]);
+    for(d=d0, i=0; i<1500 && d<=d1; i++, d=stockSumarDias(d,1)) cnt[dowDe(d)]++;
+    V.forEach(function(x){ if(x.g===g && x.reg>=d0 && x.reg<=d1){ var w=dowDe(x.reg); if(w>=0) sem[w]+=x.bs; } });
+  }
+  return { ym:ym, g:g, cerrado:cerrado, T:T, dias:dias, ult:ult, fin3:fin3, llen:llen,
+           sem:sem.map(function(s,k){ return cnt[k] ? s/cnt[k] : 0; }), semMeses:hist.slice() };
 }
 function renderProyeccion(){
   var box=document.getElementById('pry-metrics'); if(!box) return;
@@ -4295,15 +4528,17 @@ function renderProyeccion(){
   var proyLbl = R.estado==='cerrado' ? 'Cerró el mes' : '📈 Proyección al cierre';
   var proySub = R.estado==='cerrado' ? ('el mes terminó: es lo vendido con entrega en '+mes)
               : R.estado==='futuro' ? ('todavía no empezó: es lo que ya está agendado ('+R.dr+' días hábiles)')
-              : ('si sigue el ritmo de '+fmtBs0(E.ritmo)+' por día hábil · faltan '+R.dr+' día'+(R.dr===1?'':'s')+' hábil'+(R.dr===1?'':'es'));
-  var conProy=(R.estado!=='cerrado');
+              : (pryComoTxt(R)+' · '+pryFaltanTxt(R.dr));
+  var conProy=(R.estado!=='cerrado'), curso=(R.estado==='curso');
   var h=mc('var(--teal)','Vendido en '+esc(mes), fmtBs(E.vendido),
            nV(E.n)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
-        mc('#7c3aed', proyLbl, R.estado==='cerrado' ? fmtBs(E.vendido) : fmtBs0(E.proy), proySub);
+        mc('#7c3aed', proyLbl, R.estado==='cerrado' ? fmtBs(E.vendido) : fmtBs0(E.proy), esc(proySub));
   R.marcas.forEach(function(m){
+    var mt=R.metodos[m.g.k];
     h+=mc(m.g.col, m.g.ico+' '+m.g.lbl, fmtBs(m.tot.vendido),
           (m.tot.n ? (nV(m.tot.n)+' · '+pc(m.tot.vendido)+' del equipo') : 'sin ventas en el mes')+
-          (conProy ? (' · 📈 proyección '+fmtBs0(m.tot.proy)) : ''), m.g.txt);
+          (conProy ? (' · 📈 proyección '+fmtBs0(m.tot.proy)) : '')+
+          ((curso && m.tot.n && mt.m==='curva') ? (' · en '+esc(pryMesesTxt(mt.meses))+', a esta altura, ya estaba vendido el '+pryPct(mt.f)) : ''), m.g.txt);
   });
   if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' de vendedores que no están en ninguna marca');
   if(R.mayor.filas.length) h+=mc('#1d6fb8','🏭 Mayoristas', fmtBs(R.mayor.tot.vendido),
@@ -4311,7 +4546,15 @@ function renderProyeccion(){
   box.innerHTML=h; acomodarFichas();
 
   var avisos=[];
-  if(R.estado==='curso' && R.dt<5) avisos.push('⏳ Van '+R.dt+' día'+(R.dt===1?'':'s')+' hábil'+(R.dt===1?'':'es')+' del mes: la proyección todavía se mueve mucho.');
+  if(R.estado==='curso' && R.dt<5) avisos.push('⏳ '+(R.dt===1 ? 'Va ' : 'Van ')+pryDiasHabTxt(R.dt)+' del mes: la proyección todavía se mueve mucho.');
+  /* Con un solo mes de historia, la curva es la de ESE mes: si fue raro (una promoción), la proyección lo copia. */
+  var uno=R.marcas.filter(function(m){ var mt=R.metodos[m.g.k]; return m.tot.n && mt.m==='curva' && mt.meses.length===1; });
+  if(curso && uno.length){
+    var ums=[]; uno.forEach(function(m){ R.metodos[m.g.k].meses.forEach(function(x){ if(ums.indexOf(x)<0) ums.push(x); }); });
+    avisos.push('📈 La curva de '+uno.map(function(m){ return m.g.lbl; }).join(' y ')+' sale de un solo mes ('+pryMesesTxt(ums.sort())+
+      '): si ese mes fue raro, la proyección lo copia. Cuando cierre '+pryMesCorto(R.hoy.slice(0,7))+', el panel la compara con el ritmo y usa, en cada marca, '+
+      'la que menos se equivocó (abajo, «🧪 ¿Qué tan bien proyecta?»).');
+  }
   var sm=E.sinMonto+R.mayor.tot.sinMonto;
   if(sm) avisos.push('⚠️ '+nV(sm)+' sin monto anotado no '+(sm===1?'suma':'suman')+' nada: '+(sm===1?'completala':'completalas')+' en Ventas.');
   document.getElementById('pry-nota').innerHTML=avisos.map(function(t){
@@ -4327,30 +4570,193 @@ function renderProyeccion(){
     return '<div class="pry-fila"><div class="pry-q"><b>'+esc(r.vendedor)+'</b><small>'+esc(det.join(' · '))+'</small></div>'+
            '<div class="pry-n"><b>'+fmtBs(r.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(r.proy)+'</small>') : '')+'</div></div>';
   };
-  var grupo=function(ico, nombre, color, g){
+  /* Abajo de cada grupo, con qué se proyectó y la cuenta entera (§4gu), para que se pueda seguir con la calculadora. */
+  var metodoPie=function(k, nombre, g){
+    if(!curso) return '';
+    var mt=R.metodos[k], t;
+    if(mt.m==='curva'){
+      var ms=pryMesesTxt(mt.meses), uno=(mt.meses.length===1);
+      t='📈 Faltando '+pryDiasHabTxt(R.dr)+' para el cierre, en '+ms+' ya estaba vendido el '+pryPct(mt.f)+' del mes. Dos cuentas: '+
+        '(1) si sigue en esa proporción, '+(mt.f>0 ? (fmtBs0(mt.K)+' ÷ '+pryPct(mt.f)+' = '+fmtBs0(mt.p1)) : 'no se puede: a esta altura no había nada vendido')+'; '+
+        '(2) lo vendido más lo que en '+(uno ? ms : 'esos meses')+' entró desde esta altura hasta el cierre ('+pryPct(1-mt.f)+' de '+fmtBs0(mt.prom)+
+        (uno ? ', lo que vendió' : ', lo que vendieron en promedio')+'): '+fmtBs0(mt.K)+' + '+fmtBs0((1-mt.f)*mt.prom)+' = '+fmtBs0(mt.p2)+'. '+
+        'La (1) pesa '+pryPct(mt.w)+' —más cuanto más avanzado está el mes— y la (2), '+pryPct(1-mt.w)+' → '+fmtBs0(mt.proy)+'.'+
+        ((mt.err && mt.err.n>=PRY_MIN_PARES)
+          ? (' En la prueba con '+pryMesesTxt(mt.err.meses)+', la curva se equivocó '+Math.round(mt.err.c*100)+'% en promedio y el ritmo '+Math.round(mt.err.r*100)+'%'+
+             (mt.err.r<mt.err.c ? ('; el ritmo va desde el '+PRY_DIAS_RITMO+'° día hábil del mes: antes, con tan pocos días, no hay ritmo.') : '.'))
+          : ' Todavía no se pudo comparar con el ritmo: hace falta otro mes cerrado.');
+    }
+    else if(mt.porque==='prueba') t='📈 Con el ritmo: en la prueba con '+pryMesesTxt(mt.err.meses)+' se equivocó menos ('+Math.round(mt.err.r*100)+'% en promedio, contra '+
+      Math.round(mt.err.c*100)+'% de la curva).';
+    else if(mt.porque==='mayor') t='📈 Con el ritmo: son pocas compras y grandes, y una curva con eso no dice nada.';
+    else if(mt.porque==='sin') t='📈 Con el ritmo: no están en ninguna marca, así que no tienen una curva propia.';
+    else t='📈 Con el ritmo: todavía no hay un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas de '+nombre+' para armar su curva.';
+    return '<div class="pry-pie">'+esc(t)+'</div>';
+  };
+  var grupo=function(ico, nombre, color, g, k){
     if(!g.filas.length) return '';
     return '<div class="pry-grupo" style="border-left-color:'+color+'"><div class="pry-gh"><b>'+ico+' '+esc(nombre)+'</b>'+
            '<span><b>'+fmtBs(g.tot.vendido)+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+fmtBs0(g.tot.proy)+'</b>') : '')+'</span></div>'+
-           g.filas.map(filaHtml).join('')+'</div>';
+           g.filas.map(filaHtml).join('')+metodoPie(k, nombre, g)+'</div>';
   };
   var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n))+'</small></div>'+
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
     (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).</div>' : '')+
     (E.n || R.mayor.filas.length
-      ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m); }).join('')+
-        grupo('⚠️','Sin marca','var(--amber)', R.sinMarca)+total+
-        grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor)
+      ? R.marcas.map(function(m){ return grupo(m.g.ico, m.g.lbl, m.g.col, m, m.g.k); }).join('')+
+        grupo('⚠️','Sin marca','var(--amber)', R.sinMarca, 'sin')+total+
+        grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor, 'mayor')
       : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>')+'</div>';
+
+  document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
+  document.getElementById('pry-patron').innerHTML=pryPatronHtml(R);
 
   document.getElementById('pry-como').innerHTML='<div class="cua-box"><div class="cua-t">❓ Cómo se cuenta</div>'+
     '<div style="font-size:.8rem;line-height:1.55;color:var(--text)">'+
     '• Es lo <b>VENDIDO</b>, no lo cobrado: cada venta vale su total y cuenta en el mes de su <b>entrega agendada</b>, igual que Ventas → 🚚 Entrega agendada. Una venta pagada en agosto que se entrega en septiembre es de septiembre.<br>'+
-    '• <b>Proyección</b> = lo que tiene entrega hasta hoy + lo que falta del mes. Lo que falta: lo que ya está agendado de mañana a fin de mes, o lo que da el ritmo si es más.<br>'+
-    '• <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados). Se calcula por vendedor y se suma.<br>'+
+    '• <b>📈 Proyección, con la curva de cada marca</b>: se mira cómo se llenaron los meses cerrados — a la misma altura (los mismos días hábiles antes del cierre), qué parte de lo que terminaron vendiendo ya estaba vendida. Con eso, dos cuentas con lo ya vendido para el mes (lo entregado y lo agendado): (1) si sigue en esa proporción, lo vendido ÷ esa parte; (2) lo vendido más lo que en esos meses entró desde esta altura hasta el cierre. Al principio del mes pesa más la (2) y al final, la (1): así entra el empujón de fin de mes, y un principio de mes flojo o fuerte no dispara el número. Heaven y Sueña tienen cada una su curva, y cada vendedor lleva la proporción de su marca.<br>'+
+    '• <b>🏁 Elige la prueba</b>: con dos meses cerrados o más, cada marca va con la forma (la curva o el ritmo) que menos se equivocó en «🧪 ¿Qué tan bien proyecta?». Con un solo mes cerrado, va la curva. El ritmo, aunque gane, recién desde el '+PRY_DIAS_RITMO+'° día hábil del mes.<br>'+
+    '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor.<br>'+
+    '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
     '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
-    '• Si logística reprograma una entrega, la venta se muda de mes.'+
+    '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
     '</div></div>';
+}
+/* Con qué se proyectó el equipo, en una línea (la ficha «📈 Proyección al cierre»). Si todo va con el ritmo, el texto de
+   siempre (§4gt). */
+function pryComoTxt(R){
+  var gs=R.marcas.filter(function(m){ return m.filas.length; }).map(function(m){ return { lbl:m.g.lbl, mt:R.metodos[m.g.k] }; });
+  var cur=gs.filter(function(x){ return x.mt.m==='curva'; });
+  if(!cur.length) return 'si sigue el ritmo de '+fmtBs0(R.equipo.ritmo)+' por día hábil';
+  if(cur.length===gs.length){
+    var ms=[]; cur.forEach(function(x){ x.mt.meses.forEach(function(m){ if(ms.indexOf(m)<0) ms.push(m); }); });
+    return 'según cómo se '+(ms.length>1 ? 'llenaron ' : 'llenó ')+pryMesesTxt(ms.sort())+(gs.length>1 ? ', cada marca con su curva' : '');
+  }
+  return gs.map(function(x){ return x.lbl+(x.mt.m==='curva' ? ' con la curva' : ' con el ritmo'); }).join(', ');
+}
+/* El error de una proyección contra cómo terminó el mes, en chiquito y con color: ≤10 % verde, ≤25 % ámbar, más, rojo. */
+function pryErrHtml(e){
+  if(e==null || !isFinite(e)) return '';
+  var a=Math.abs(e), cls = a<=0.1 ? 'pry-ok' : (a<=0.25 ? 'pry-reg' : 'pry-mal');
+  return '<small class="'+cls+'">'+(Math.round(e*100)===0 ? '' : (e>0 ? '+' : '−'))+Math.round(a*100)+'%</small>';
+}
+/* 🧪 La prueba: los dos últimos meses cerrados y el que está en curso (solo lo que ya pasó), una tabla por marca. */
+function pryPruebaHtml(R){
+  var hoy=R.hoy, cur=hoy.slice(0,7), meses=R.hist.slice(-2);
+  if(cur>=PRY_PRIMER_MES) meses.push(cur);
+  var h='';
+  meses.forEach(function(ym){
+    var P=R.pruebas[ym] || pryPrueba(R.V, ym, R.hist, hoy);
+    if(!P.filas.length) return;
+    MARCAS.forEach(function(g){
+      var k=g.k, T=P.tot[k];
+      if(!(T>0.009)) return;
+      h+=pryPruebaMarca(P, g);
+    });
+  });
+  return '<div class="cua-box"><div class="cua-t">🧪 ¿Qué tan bien proyecta? — la prueba con los meses que ya pasaron</div>'+
+    '<div class="pry-intro">Para cada mes, lo que habría dicho cada forma de proyectar en distintas fechas, con lo que estaba vendido <b>ese</b> día, '+
+    'contra cómo terminó. <b>El ritmo</b> es la forma de antes; <b>la curva</b>, la de ahora. La curva de un mes se arma con los <b>otros</b> meses cerrados, '+
+    'nunca con él mismo (con la suya acertaría siempre).</div>'+pryGanaHtml(R)+
+    (h || '<div class="empty" style="padding:12px 0">Todavía no hay fechas para probar.</div>')+'</div>';
+}
+/* Quién ganó, marca por marca, y con qué va el mes en curso (la elección de `proyeccionMes`). */
+function pryGanaHtml(R){
+  var cur=R.hoy.slice(0,7), lin=[];
+  MARCAS.forEach(function(g){
+    var e=R.errores && R.errores[g.k];
+    if(!e || e.n<PRY_MIN_PARES) return;
+    lin.push(g.ico+' <b>'+esc(g.lbl)+'</b>: en '+esc(pryMesesTxt(e.meses))+', el ritmo se equivocó '+Math.round(e.r*100)+'% en promedio y la curva '+
+             Math.round(e.c*100)+'% → '+esc(mesNombre(cur))+' va con <b>'+(e.r<e.c ? 'el ritmo' : 'la curva')+'</b>'+
+             (e.r<e.c ? ' (desde el '+PRY_DIAS_RITMO+'° día hábil; antes, con la curva)' : '')+'.');
+  });
+  if(!lin.length) lin.push('Todavía no se pueden comparar: la curva de un mes se prueba con <b>otro</b> mes cerrado, así que hacen falta dos. '+
+                           'Hasta entonces va la curva, y la comparación aparece sola cuando cierre '+esc(pryMesCorto(cur))+'.');
+  return '<div class="pry-gana">'+lin.map(function(t){ return '<div>'+t+'</div>'; }).join('')+'</div>';
+}
+function pryPruebaMarca(P, g){
+  var k=g.k, T=P.tot[k], c=P.cur[k], sR=0, sC=0, nR=0, nC=0;
+  var err=function(v){ return (P.cerrado && T>0.009 && v!=null) ? (v-T)/T : null; };
+  var filas=P.filas.map(function(f){
+    var s=f.s[k], eR=err(s.ritmo), eC=err(s.curva);
+    if(eR!=null){ sR+=Math.abs(eR); nR++; }
+    if(eC!=null){ sC+=Math.abs(eC); nC++; }
+    return '<tr><td>'+esc(pryDiaTxt(f.d))+'<small>'+pryFaltanTxt(f.dr, true)+'</small></td>'+
+      '<td>'+fmtBs0(s.K)+'</td>'+
+      '<td>'+fmtBs0(s.ritmo)+pryErrHtml(eR)+'</td>'+
+      '<td>'+(s.curva==null ? '—' : (fmtBs0(s.curva)+pryErrHtml(eC)))+'</td></tr>';
+  }).join('');
+  var der = P.cerrado ? ('terminó en <b>'+fmtBs0(T)+'</b>') : ('va en <b>'+fmtBs0(T)+'</b> · '+pryFaltanTxt(P.falta));
+  var pie=[];
+  if(!c.ok) pie.push('La curva para '+pryMesCorto(P.ym)+' se arma con otro mes cerrado, y todavía no hay uno con al menos '+PRY_MIN_VENTAS+' ventas de '+g.lbl+'.'+
+                     ((P.cerrado && P.hoyYm>P.ym) ? ' Se va a poder probar cuando cierre '+pryMesCorto(P.hoyYm)+'.' : ''));
+  else pie.push('La curva para '+pryMesCorto(P.ym)+' sale de '+pryMesesTxt(c.meses)+(c.meses.length>1 ? ' (y lo que vendieron en promedio, Bs ' : ' (y lo que vendió, Bs ')+
+                Math.round(c.prom).toLocaleString('es-BO')+').');
+  if(!P.cerrado) pie.push('El error se ve cuando cierre el mes: hoy cualquier comparación quedaría corta.');
+  var foot = (P.cerrado && (nR || nC)) ? ('<tfoot><tr><td colspan="2">Se equivocó, en promedio</td><td>'+(nR ? Math.round(sR/nR*100)+'%' : '—')+'</td><td>'+(nC ? Math.round(sC/nC*100)+'%' : '—')+'</td></tr></tfoot>') : '';
+  return '<div class="pry-grupo pry-prueba" data-ym="'+esc(P.ym)+'" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'">'+
+    '<div class="pry-gh"><b>'+g.ico+' '+esc(g.lbl)+' — '+esc(mesNombre(P.ym))+'</b><span>'+der+'</span></div>'+
+    '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th>El día</th><th>Ya vendido</th><th>El ritmo decía</th><th>La curva decía</th></tr></thead>'+
+    '<tbody>'+filas+'</tbody>'+foot+'</table></div>'+
+    '<div class="pry-pie">'+esc(pie.join(' '))+'</div></div>';
+}
+/* 📅 Cómo se vendió el mes elegido, por marca. */
+function pryPatronHtml(R){
+  var h='';
+  MARCAS.forEach(function(g){
+    var P=pryPatron(R.V, R.ym, g.k, R.hist, R.hoy);
+    var hay=P.T>0.009, haySem=P.sem.some(function(x){ return x>0.009; });
+    if(!hay && !haySem) return;
+    h+='<div class="pry-grupo pry-patron" data-g="'+esc(g.k)+'" style="border-left-color:'+g.col+'">'+
+       '<div class="pry-gh"><b>'+g.ico+' '+esc(g.lbl)+'</b><span><b>'+fmtBs0(P.T)+'</b> '+(P.cerrado ? 'en el mes' : (R.estado==='futuro' ? 'agendado' : 'hasta ahora'))+'</span></div>'+
+       '<div class="pry-cuerpo">'+(hay ? pryBarras(P, g, R.hoy) : '')+pryFinDeMesHtml(P)+prySemanaHtml(P, g)+'</div></div>';
+  });
+  if(!h) return '';
+  return '<div class="cua-box"><div class="cua-t">📅 Cómo '+(R.estado==='cerrado' ? 'se vendió' : 'se viene vendiendo')+' — '+esc(mesNombre(R.ym))+'</div>'+h+'</div>';
+}
+/* Una barra por día con lo que se entregó (entrega agendada). En oscuro, los últimos 3 días hábiles de un mes cerrado; más
+   claro, lo que todavía está agendado. */
+function pryBarras(P, g, hoy){
+  var ini=P.ym+'-01', fin=pryFinDeMes(P.ym), max=0, d, i, bars=[], labs=[];
+  for(d=ini, i=0; i<31 && d<=fin; i++, d=stockSumarDias(d,1)) max=Math.max(max, P.dias[d]||0);
+  if(!(max>0.009)) return '';
+  for(d=ini, i=0; i<31 && d<=fin; i++, d=stockSumarDias(d,1)){
+    var v=P.dias[d]||0, alto=(v>0.009 ? Math.max(2, Math.round(v/max*86)) : 0), n=+d.slice(8);
+    var ult=(P.cerrado && P.ult.indexOf(d)>=0), fut=(d>hoy);
+    bars.push('<div title="'+esc(pryDiaTxt(d)+': '+fmtBs0(v))+'" style="height:'+alto+'px;background:'+(ult ? g.txt : g.col)+(fut ? ';opacity:.4' : '')+'"></div>');
+    labs.push('<span>'+((n===1 || n%5===0 || d===fin) ? n : '')+'</span>');
+  }
+  var dia=null, fut=false;
+  Object.keys(P.dias).forEach(function(x){ if(!dia || P.dias[x]>P.dias[dia]) dia=x; if(x>hoy && P.dias[x]>0.009) fut=true; });
+  return '<div class="pry-linea"><b>Lo que se entregó cada día</b> (entrega agendada)'+(P.cerrado ? ' · en oscuro, los últimos 3 días hábiles' : '')+
+    (fut ? ' · más claro, lo que todavía está agendado' : '')+
+    (dia ? ' · el día más alto: '+esc(pryDiaTxt(dia))+', '+fmtBs0(P.dias[dia]) : '')+'</div>'+
+    '<div class="pry-barras">'+bars.join('')+'</div><div class="pry-dias">'+labs.join('')+'</div>';
+}
+/* Los últimos 3 días hábiles y cómo se fue llenando el mes: solo de un mes cerrado. */
+function pryFinDeMesHtml(P){
+  if(!P.cerrado || !(P.T>0.009)) return '';
+  var f3=P.fin3, h='<div class="pry-linea pry-fin3"><b>Los últimos 3 días hábiles</b> — '+
+    f3.dias.map(function(x){ return esc(pryDiaTxt(x.d))+': '+fmtBs0(x.bs); }).join(' · ')+
+    ' → <b>'+fmtBs0(f3.total)+'</b>, el '+pryPct(f3.total/P.T)+' del mes.';
+  if(f3.total>0.009) h+=' De eso, '+fmtBs0(f3.antes)+' ya estaba vendido (agendado) antes del '+esc(fmtFechaCorta(f3.dias[0].d))+
+    ' y '+fmtBs0(f3.total-f3.antes)+' se vendió esos mismos días.';
+  h+='</div><div class="pry-linea pry-llen"><b>Cómo se fue llenando</b> — de lo que terminó vendiendo el mes, '+
+    P.llen.map(function(x){ return 'el '+esc(fmtFechaCorta(x.d))+' ya estaba vendido el '+pryPct(x.pc); }).join(' · ')+'.</div>';
+  return h;
+}
+/* Qué días de la semana se vende más: promedio por día, por el día en que se cargó la venta, en los meses cerrados. */
+function prySemanaHtml(P, g){
+  var max=Math.max.apply(null, P.sem);
+  if(!(max>0.009)) return '';
+  var orden=[1,2,3,4,5,6,0], mas=orden[0], menos=orden[0];
+  orden.forEach(function(w){ if(P.sem[w]>P.sem[mas]) mas=w; if(w!==0 && P.sem[w]<P.sem[menos]) menos=w; });
+  return '<div class="pry-linea pry-semtxt"><b>Qué días se vende más</b> — promedio por día, por el día en que se cargó la venta ('+esc(pryMesesTxt(P.semMeses))+
+    '). El que más: <b>'+DIAS_SEM[mas]+'</b>; el que menos (de lunes a sábado): <b>'+DIAS_SEM[menos]+'</b>.</div>'+
+    orden.map(function(w){
+      return '<div class="pry-sem"><span>'+DIAS_SEM[w].slice(0,3)+'</span><div><i style="width:'+Math.round(P.sem[w]/max*100)+'%;background:'+g.col+'"></i></div><b>'+fmtBs0(P.sem[w])+'</b></div>';
+    }).join('');
 }
 
 /* ============================================================================
