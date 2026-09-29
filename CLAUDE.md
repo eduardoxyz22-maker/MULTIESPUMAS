@@ -864,13 +864,22 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
 - **📊 A esta altura y 📦 unidades (§4gv, SIN PUBLICAR)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
   anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
-  - `pryUnidadesDe`/`pryTipoProd`: productos con su cantidad, sin `esProdDeTienda` (como el stock); colchones aparte (un
-    combo = un colchón). El código del catálogo manda sobre el nombre escrito.
+  - **Unidad = colchón (también colchoneta y colchón de cuna) o somier**, con su cantidad (dueño: *«quitá las almohadas,
+    solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas, etc.»*).
+    Un combo = un colchón y un somier. `pryUnidadesDe` → `{u, c, s}`; `pryTipoProd` → `colchon|somier|combo|''`. El código
+    del catálogo manda sobre el nombre escrito.
+  - ⚠️ El colchón se reconoce por DESCARTE (como el stock, §4cx): lo que no cuenta es `esProdDeTienda` + `PRY_NO_UNIDAD`
+    (accesorios, muebles, servicios). Un accesorio nuevo que aparezca contado como colchón va a esa lista.
+  - En lo escrito a mano manda la PRIMERA palabra que dice qué es («PROTECTOR DE COLCHON» no cuenta), y un renglón con
+    varias cosas va por pedazos (`PRY_PEDAZOS`): el primero es colchón si no dice otra cosa, los demás solo si dicen
+    COLCHON/SOMIER («COLCHON TITANIO + 2 ALMOHADAS» = 1 colchón).
   - `pryAltura`/`pryAcum`: lo vendido para el mes cargado hasta el MISMO DÍA del mes, contra otro mes («Comparar con», por
     defecto el anterior, `PRY_CMP`); por marca y equipo; semana por semana por el día en que se cargó; un mes cerrado se
     compara entero.
   - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
-- `tests/test_proyeccion.js` (114: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
+  - La tabla de cada marca tiene siete columnas y tiene que entrar en el iPad parado (820 px): relleno de 7 px en
+    `#pry-altura` (`test_proyeccion` §17 lo mide).
+- `tests/test_proyeccion.js` (117: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar

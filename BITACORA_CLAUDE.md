@@ -7481,6 +7481,31 @@ unidades). Contra lo publicado (`a904137`): 88 bien · 26 mal.
 **Batería sobre `6ced156`: 113 suites, 4.350 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
 Esperando el OK del dueño para publicar.
 
+**Segunda vuelta: las unidades son solo colchones y somieres** (`550e975`). Al ver las capturas, el dueño: *«quitá las
+almohadas, solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas,
+etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respaldares y tenía aparte los colchones):
+- **Unidad = colchón** (también colchoneta y colchón de cuna) **o somier**, con su cantidad. Un **combo** cuenta como un
+  colchón y un somier (⚠️ se le pregunta al dueño si está bien así). La tabla de «A esta altura» tiene ahora Unidades,
+  Colchones y Somieres, cada una con su diferencia.
+- **No cuentan**: lo de tienda de siempre (`esProdDeTienda`: protectores, sábanas, mantas, frazadas, cubrecamas, edredones,
+  MDF, «VARIOS», «RECOGER…») y `PRY_NO_UNIDAD`: almohadas, almohadones, almohadillas, cojines, respaldares, respaldos,
+  cabeceras, pieceras, patas, forros, fundas, armazones, veladores, toppers, plumones, acolchados, cobertores, colchas,
+  cortinas, toallas, alfombras, muebles (sofá, sillón, baúl, mesa, cama), espuma, planchas, retazos, telas, y servicios
+  (envío, flete, transporte, instalación, armado, descuento, regalo).
+- ⚠️ **El colchón se sigue reconociendo por DESCARTE** (§4cx: el catálogo casi nunca dice COLCHON). Si aparece un accesorio
+  nuevo que se cuenta como colchón, va a `PRY_NO_UNIDAD`.
+- **Lo escrito a mano** (`pryPedazoTipo`): manda la PRIMERA palabra que dice qué es («PROTECTOR DE COLCHON», «PATAS PARA
+  SOMIER» y «FORRO COLCHON PILLOW PEDIC» no cuentan; «COLCHON DE REGALO» sí). Un renglón con varias cosas se mira por
+  pedazos (`PRY_PEDAZOS`: «+», «,», «;», «/», «C/», «CON», «MAS», «Y»): el primero es un colchón si no dice otra cosa; los que
+  siguen cuentan solo si dicen COLCHON o SOMIER. Sin eso, «COLCHON TITANIO + 2 ALMOHADAS» —el renglón típico de una
+  campaña de almohadas de regalo— no contaba el colchón. «COMBO DE SÁBANAS» / «COMBO ALMOHADAS» no cuentan.
+- Todo el catálogo `CODIGOS` se clasificó igual con código y escrito a mano: 36 nombres de colchones (con COLCHONETA
+  CAMPING y COLCHON CUNA), 13 de somieres, 20 combos, y 5 que no cuentan (ALM/HEAVEN, ALM/NASA, ALMOHADA, ALMOHADA FIBRA
+  SILICONADA, RESPALDAR PRAG.).
+- La tabla, con siete columnas, no entraba en el iPad parado (695 px en 675): relleno de 7 px en `#pry-altura` y el
+  encabezado puede partirse. Queda 653 px con montos de siete cifras.
+- `tests/test_proyeccion.js`: 117 (§15 con los renglones escritos a mano y los combos).
+
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 
 > **Publicada el 29/09 a las 00:24 de Bolivia** (`main` = `a904137`). Sin tocar el servidor (sigue el `.gs` 2026-09-28-a).
