@@ -220,6 +220,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    queden PAREJAS (10 → 5+5, no 8+2). Esto de acá es el respaldo por si el JS no llega. */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:22px}
 @media(max-width:640px){.metrics{grid-template-columns:1fr}}
+.metrics.cta-marcas{margin-top:-10px}          /* las fichas de cada marca, pegadas a las de arriba (12 px, como entre fichas) */
+.metrics.cta-marcas:empty{display:none}
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -1321,6 +1323,7 @@ details.pry-sem-det>summary{cursor:pointer;font-size:.78rem;font-weight:700;colo
       </div>
       <div id="cta-banner" style="display:none"></div>
       <div class="metrics" id="cta-metrics"></div>
+      <div class="metrics cta-marcas" id="cta-marcas" data-como="cta-metrics"></div>
       <div class="metodos-line" id="cta-resumen"></div>
       <div class="tw tw-tall"><table id="tbl-conta"></table></div>
       <div id="cta-empty" class="empty">No hay pedidos en este período.</div>
@@ -4064,7 +4067,38 @@ function renderContaMetrics(list, vSel){
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
+  renderContaMarcas(list, vSel, vendido);
   acomodarFichas();
+}
+/* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
+   Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+   · Sale de la MISMA lista que «Vendido en el período» (`contaLista`): el mismo corte (ingreso o entrega agendada), el
+     período, el vendedor y la búsqueda. Las marcas + «Sin marca» suman lo vendido de arriba.
+   · Cada una: ventas, unidades (colchones y somieres, `pryUnidadesDe`, §4gv) y qué parte de lo vendido es.
+   · Con una vendedora elegida, solo la ficha de su marca (sin el %, que sería 100). En Mayoristas no hay: no tienen marca.
+   · Van del mismo ancho que las de arriba (`data-como` en `acomodarFichas`). */
+function renderContaMarcas(list, vSel, vendido){
+  var box=document.getElementById('cta-marcas'); if(!box) return;
+  if(contaAmbito()==='mayor'){ box.innerHTML=''; return; }
+  var M={}, sin={ bs:0, n:0, u:0 };
+  MARCAS.forEach(function(g){ M[g.k]={ bs:0, n:0, u:0 }; });
+  (list||[]).forEach(function(p){
+    var d=M[marcaDe(p.vendedor)]||sin;
+    d.bs=r2(d.bs+ventaTotal(p)); d.n++; d.u+=pryUnidadesDe(p).u;
+  });
+  var suya = vSel ? marcaDe(vSel) : '';
+  var sub=function(d){
+    return d.n+' venta'+(d.n===1?'':'s')+' · '+d.u+' unidad'+(d.u===1?'':'es')+
+           ((!vSel && vendido>0.009) ? (' · '+Math.round(d.bs/vendido*100)+'% de lo vendido') : '');
+  };
+  var out='';
+  MARCAS.forEach(function(g){
+    if(vSel && g.k!==suya) return;
+    var d=M[g.k];
+    out+=mc(g.col, g.ico+' '+esc(g.lbl), fmtBs(d.bs), d.n ? sub(d) : 'sin ventas en el período', g.txt);
+  });
+  if(sin.n && !suya) out+=mc('var(--amber)', '⚠️ Sin marca', fmtBs(sin.bs), sub(sin)+' — de vendedores que no están en ninguna marca');
+  box.innerHTML=out;
 }
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
@@ -4551,7 +4585,7 @@ function pryErrores(pruebas){
    · Semana por semana: lo vendido para el mes según el día en que se cargó. Semanas por día del mes (1-7, 8-14…), no de
      lunes a domingo: así se comparan entre meses.
    · Por marca (sus metas son por marca, §4gu) y el equipo entero; sin mayoristas.
-   · Unidades y colchones: `pryUnidadesDe` (sin accesorios de tienda; un combo es un colchón).
+   · Unidades: `pryUnidadesDe` (colchones y somieres; un combo es uno de cada).
    ========================================================================== */
 var PRY_CMP='', PRY_CMP_DE='';   // el mes elegido en «Comparar con», y para qué mes se eligió
 var PRY_TRAMOS=['Antes del 1°','Del 1 al 7','Del 8 al 14','Del 15 al 21','Del 22 al 28','Del 29 al fin','Después del fin'];
@@ -15569,6 +15603,10 @@ function acomodarFichas(){
     if(!n){ b.style.gridTemplateColumns=''; continue; }
     var w=b.clientWidth||0;
     if(!w) continue;                       // está escondido: no se puede medir, se deja el CSS
+    /* (29/09, §4gw) Una caja puede ir con las MISMAS columnas que otra (`data-como`): las fichas de cada marca de Ventas,
+       del mismo ancho que las de arriba y alineadas con ellas. La otra viene antes en la página, así que ya se acomodó. */
+    var como=b.getAttribute('data-como'), ref=como && document.getElementById(como);
+    if(ref && ref.style.gridTemplateColumns && ref.clientWidth){ b.style.gridTemplateColumns=ref.style.gridTemplateColumns; continue; }
     /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
        y a 230 px en el iPad salían cortados («Bs 684.39…»). */
     var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;

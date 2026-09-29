@@ -510,11 +510,16 @@ function PREPARAR(){
                 comboAlm:t({desc:'COMBO ALMOHADAS NASA',cant:1}), comboLibre:t({desc:'COMBO ORTOPEDICO SUEÑA',cant:1}), ortoDC:t({desc:'ESPECIAL ORTOPEDICO D/C',cant:1}) };
     var venta={ productos:[{desc:'TITANIO LATEX',medida:'140x190',cant:2},{desc:'ALMOHADA',medida:'50x70',cant:2},{desc:'PROTECTOR',medida:'140x190',cant:1}] };
     var combo={ productos:[{codigo:'CMBSE002',desc:'COMBO SUEÑA ESSENTIAL',medida:'140x190',cant:1},{desc:'SOMIER SUEÑA',medida:'140x190',cant:1}] };
+    /* El dueño: «hay combos que llevan colchón, somier, almohadas y sábanas o mantas: solo se cuenta el colchón y el somier.
+       Pero los vendedores no cargan combos, cargan producto por producto». */
+    var suelto={ productos:[{codigo:'CH1129',desc:'TITANIO LATEX',cant:1},{codigo:'CH1149',desc:'SOMIER TITANIO LATEX',cant:1},{codigo:'CH1195',desc:'ALM/NASA',cant:2},
+                            {desc:'JUEGO DE SABANAS',cant:1},{desc:'MANTA POLAR',cant:1}] };
+    var sueltoTxt={ productos:[{desc:'TITANIO LATEX',cant:1},{desc:'SOMIER TITANIO LATEX',cant:1},{desc:'ALMOHADA NASA',cant:2},{desc:'SABANAS 2 PLAZAS',cant:1},{desc:'MANTA',cant:1}] };
     STATE=FIX2();
     var p=V('Maria Flores','2026-10-16',9000); p.productos=venta.productos; p.ts=new Date('2026-10-13T10:00:00-04:00').getTime(); STATE.push(p);
     document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
     var R=proyeccionMes('2026-10'), mf=R.marcas[1].filas.filter(function(x){ return mismoVendedor(x.vendedor,'Maria Flores'); })[0];
-    return { casos:casos, uv:pryUnidadesDe(venta), uc:pryUnidadesDe(combo), mf:mf, hea:R.marcas[1].tot, vend:_txt('pry-vendedores'), met:_txt('pry-metrics'), como:_txt('pry-como') };
+    return { casos:casos, uv:pryUnidadesDe(venta), uc:pryUnidadesDe(combo), us:pryUnidadesDe(suelto), ust:pryUnidadesDe(sueltoTxt), mf:mf, hea:R.marcas[1].tot, vend:_txt('pry-vendedores'), met:_txt('pry-metrics'), como:_txt('pry-como') };
   });
   chk('cuentan: TITANIO, COLCHON CUNA y COLCHONETA (colchones) y el código CH1149 (somier, aunque el renglón diga otra cosa)',
       r.casos && r.casos.titanio==='colchon' && r.casos.cuna==='colchon' && r.casos.colchoneta==='colchon' && r.casos.cod==='somier', [r.casos, r.__error]);
@@ -528,6 +533,8 @@ function PREPARAR(){
       r.casos && r.casos.cyS==='combo' && r.casos.somPatas==='somier' && r.casos.protEnvio==='' && r.casos.envio==='' && r.casos.topper==='', r.casos);
   chk('una venta de 2 colchones + 2 almohadas + 1 protector = 2 unidades (2 colchones); un combo + un somier = 3 (1 colchón y 2 somieres)',
       r.uv && r.uv.u===2 && r.uv.c===2 && r.uv.s===0 && r.uc && r.uc.u===3 && r.uc.c===1 && r.uc.s===2, [r.uv, r.uc]);
+  chk('el combo cargado producto por producto (colchón + somier + 2 almohadas + sábanas + manta) = 2 unidades: 1 colchón y 1 somier, con código y escrito a mano',
+      r.us && r.us.u===2 && r.us.c===1 && r.us.s===1 && r.ust && r.ust.u===2 && r.ust.c===1 && r.ust.s===1, [r.us, r.ust]);
   chk('Maria Flores: 11 ventas y 12 unidades (10 + 2), todas colchones; Heaven igual',
       r.mf && r.mf.n===11 && r.mf.u===12 && r.mf.c===12 && r.mf.s===0 && r.hea && r.hea.u===12 && r.hea.c===12, [r.mf, r.hea]);
   chk('en pantalla: «11 ventas · 12 unidades» en Maria y en la ficha de Heaven; el cuadro de abajo dice qué es una unidad',
