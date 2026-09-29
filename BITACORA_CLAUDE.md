@@ -7509,7 +7509,18 @@ aparecen los errores de las dos formas en agosto y septiembre, y cada marca elig
 
 **Pruebas:** `tests/test_proyeccion.js`, de 36 a 95 comprobaciones (§7-14 nuevas, con un historial inventado de agosto y
 septiembre hecho a mano: `FIX2`, y `FIX3` con una Sueña pareja para que gane el ritmo). Todos los números esperados se
-calcularon a mano antes de correr. Contra lo publicado (`6146f6d`) pasan las 36 de §1-6 y fallan las nuevas.
+calcularon a mano antes de correr. Contra lo publicado (`6146f6d`): 37 bien · 58 mal (pasan §1-6 y «sin errores»).
+
+**Batería sobre `4cec55a`: 113 suites, 4.331 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+
+**⚠️ Se armó OTRA fórmula que la propuesta, y por qué.** Lo que se le propuso al dueño antes de su «me agrada tu idea de
+calcular y probar con agosto» era: ritmo por vendedor por fecha de VENTA × factor del día de la semana × la parte que se
+entrega antes de fin de mes, sin las ventas grandes, con un rango, y «principio/quincena/fin de mes» recién con 3 meses de
+historia. Su dato de Heaven (el empujón de los últimos días) es justo lo que esa fórmula dejaba para después, y la curva lo
+ve con un mes. Del plan quedaron: la prueba contra agosto (adentro del panel), los días altos y bajos (📅, se muestran pero
+no entran en la cuenta). Quedaron afuera: el rango, sacar las ventas grandes del ritmo, MoM y ticket promedio.
+**Se le prometió «te muestro cuánto le erraba antes de publicarla»**: la prueba con SUS números solo corre en su panel
+(desde acá no hay acceso a la planilla), así que se le mostró con ventas inventadas y se le pidió el OK para publicar.
 
 ## 4gt. 28/09, noche: «📈 Proyección del mes» en Contabilidad, solo con la contraseña de Administración — PUBLICADA 28/09 19:14 (`6146f6d`)
 
