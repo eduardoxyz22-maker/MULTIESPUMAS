@@ -862,7 +862,16 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
     NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
     Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
-- `tests/test_proyeccion.js` (95: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`).
+- **📊 A esta altura y 📦 unidades (§4gv, SIN PUBLICAR)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
+  anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
+  - `pryUnidadesDe`/`pryTipoProd`: productos con su cantidad, sin `esProdDeTienda` (como el stock); colchones aparte (un
+    combo = un colchón). El código del catálogo manda sobre el nombre escrito.
+  - `pryAltura`/`pryAcum`: lo vendido para el mes cargado hasta el MISMO DÍA del mes, contra otro mes («Comparar con», por
+    defecto el anterior, `PRY_CMP`); por marca y equipo; semana por semana por el día en que se cargó; un mes cerrado se
+    compara entero.
+  - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
+- `tests/test_proyeccion.js` (114: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
+  §15-17 de §4gv).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado

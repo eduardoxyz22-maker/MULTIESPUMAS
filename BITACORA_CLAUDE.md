@@ -7445,6 +7445,39 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — SIN PUBLICAR
+
+**El pedido.** Después de §4gu se le ofreció la meta por marca con dos cosas: cuánto falta para la meta, y «cada semana,
+cómo vas contra los meses anteriores a la misma altura». Contestó: *«la opción 2 me parece. Y también unidades, tanto de
+Sueña como de Heaven: puede que entre menos plata pero subió el número de unidades vendidas, y eso es bueno, y son cosas a
+ver»*. La meta queda para cuando la pida (dijo que es por marca y cambia cada mes).
+
+**Lo hecho (solo la pestaña 📈, `pedidos.html`):**
+- **📦 Unidades** (`pryTipoProd`, `pryUnidadesDe`): cada producto de la venta con su cantidad —colchones, somieres,
+  almohadas, respaldares, combos— sin lo que no es un producto de fábrica (`esProdDeTienda`: protectores, sábanas, mantas,
+  «VARIOS», «RECOGER…»), igual que el stock. Aparte los **colchones** (un combo cuenta como un colchón): si una campaña
+  regala almohadas, las unidades suben sin un colchón más. El tipo sale del nombre del catálogo si hay código (el código
+  manda), si no del nombre escrito, con plurales y los alias (`prodAlias`: «ALM/NASA»).
+  - Van en las fichas («N ventas · U unidades»), en cada vendedor y en el total.
+- **📊 A esta altura** (`pryAltura`, `pryAcum`, `pryAlturaHtml`, arriba de la lista por vendedor):
+  - lo VENDIDO para el mes (entrega agendada en el mes, como toda la pestaña) y cargado hasta el mismo día del mes, contra
+    otro mes al mismo día (hoy 29/09 contra lo cargado al 29/08);
+  - por defecto el mes anterior; «Comparar con» deja elegir cualquier mes entero del panel (por ejemplo, uno con campaña);
+  - por marca y el equipo, sin mayoristas: una línea por cada uno («Heaven: 42% abajo en plata (…) y 11% arriba en
+    unidades (…)») y una tabla por marca: vendido, ventas, unidades, colchones, Bs por unidad, la diferencia y el otro mes
+    entero;
+  - 📅 semana por semana (se abre): lo vendido para el mes por el día en que se cargó, antes del 1°, 1-7, 8-14, 15-21, 22-28
+    y del 29 al fin (por día del mes, no de lunes a domingo, para poder comparar meses); la semana en curso dice «(va)»;
+  - un mes que ya cerró se compara ENTERO con el otro; agosto no tiene con qué (julio no está entero en el panel).
+- En «❓ Cómo se cuenta», qué es una unidad y qué es «a esta altura».
+
+**Con ventas inventadas** (captura al dueño): Heaven 42 % abajo en plata y 11 % arriba en unidades, pero −33 % en colchones:
+las unidades subían por almohadas de campaña. Es el caso que la columna de colchones tiene que mostrar.
+
+**Pruebas:** `tests/test_proyeccion.js`, de 95 a 114 (§15-17 nuevas: tipos y unidades, «a esta altura» con números a mano,
+«Comparar con», mes cerrado, agosto sin comparación, anchos). 7 textos de §4-14 cambiaron a conciencia (dicen las
+unidades). Contra lo publicado (`a904137`): 88 bien · 26 mal.
+
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 
 > **Publicada el 29/09 a las 00:24 de Bolivia** (`main` = `a904137`). Sin tocar el servidor (sigue el `.gs` 2026-09-28-a).
