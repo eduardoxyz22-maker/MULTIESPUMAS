@@ -420,7 +420,7 @@ retiro lista a los choferes en su grupo y pone «Quién retira» = **Contabilida
 Eduardo. `tests/test_chofer_efectivo.js`.
 
 ## 🎟️ Cupos del camión (§4fh)
-- Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM, domingo cerrado).
+- Son **dos bolsas por día**: 12 en 🌅 AM y 13 en 🌆 PM (sábado 15 y solo AM; domingo y feriados cerrados, §4gy).
   `cuposUsadosTurno(fecha,turno)` y el portero del `.gs` (`porteroFecha_`) cuentan **igual**:
   todas las filas de esa fecha **y ese turno**, entregadas incluidas. **Mover un pedido de AM
   no libera lugar en PM.** Lo que va con **fecha vacía a propósito** —ventas de tienda, retiros
@@ -565,7 +565,7 @@ Eduardo. `tests/test_chofer_efectivo.js`.
   `max(0,deposito)+…`; buscador con `sinTildes()`.
   ⚠️ En un test, `showView(...)` dispara un refresco con la foto de STATE de ese momento:
   esperar ~120 ms antes de armar el fixture o el `list` tardío lo pisa.
-- **«Mañana» de entrega = `proximoDiaEntrega()`** (§4ex): mañana, y si es domingo, el lunes.
+- **«Mañana» de entrega = `proximoDiaEntrega()`** (§4ex): mañana, saltando domingos y (§4gy) feriados.
   Va en todo lo que mira el camión (chofer, carga, ruta, mapa, faltantes, parte, WhatsApp,
   Excel, estadísticas); el formulario, «Cerrar día», la recogida de Moreno y el importador de
   ROHO siguen con `tomorrowStr()`. Un test que arme un pedido «para mañana» y lo espere en el
@@ -857,12 +857,13 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     menos se equivocó; el ritmo, aunque gane, desde el `PRY_DIAS_RITMO`=5° día hábil.
   - 📅 `pryPatron`: lo entregado cada día, los últimos 3 días hábiles (y cuánto ya estaba vendido antes), cómo se fue
     llenando y qué días de la semana se vende más.
-  - ⚠️ Los feriados de 2026 ya pasados (06/08, 25/09) NO están en `FERIADOS` a propósito (pruebas del cuadrito entregan
-    esos días): acá cuentan como hábiles.
+  - ⚠️ Los feriados de 2026 ya pasados (06/08, 07/08 —confirmado por el dueño— y 25/09) van en **`FERIADOS_PASADOS`**,
+    que usa SOLO la proyección (`pryDiaHabil`: `pryHabiles`, `pryAlDia`, `pryPatron`; §4gy). No van en `FERIADOS` a
+    propósito: las entregas no miran atrás y las pruebas del cuadrito entregan esos días.
   - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
     NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
     Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
-- **📊 A esta altura y 📦 unidades (§4gv, SIN PUBLICAR)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
+- **📊 A esta altura y 📦 unidades (§4gv, publicada 29/09 01:10, `040e1df`)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
   anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
   - **Unidad = colchón (también colchoneta y colchón de cuna) o somier**, con su cantidad (dueño: *«quitá las almohadas,
     solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas, etc.»*).
@@ -874,15 +875,15 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - En lo escrito a mano manda la PRIMERA palabra que dice qué es («PROTECTOR DE COLCHON» no cuenta), y un renglón con
     varias cosas va por pedazos (`PRY_PEDAZOS`): el primero es colchón si no dice otra cosa, los demás solo si dicen
     COLCHON/SOMIER («COLCHON TITANIO + 2 ALMOHADAS» = 1 colchón).
-  - `pryAltura`/`pryAcum`: lo vendido para el mes cargado hasta el MISMO DÍA del mes, contra otro mes («Comparar con», por
-    defecto el anterior, `PRY_CMP`); por marca y equipo; semana por semana por el día en que se cargó; un mes cerrado se
-    compara entero.
+  - `pryAltura`/`pryAcum`: lo vendido para el mes cargado hasta el MISMO DÍA del mes y a la MISMA HORA (§4gy), contra
+    otro mes («Comparar con», por defecto el anterior, `PRY_CMP`); por marca y equipo; semana por semana por el día en
+    que se cargó; un mes cerrado se compara entero.
   - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
   - La tabla de cada marca tiene siete columnas y tiene que entrar en el iPad parado (820 px): relleno de 7 px en
     `#pry-altura` (`test_proyeccion` §17 lo mide).
 - `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
   §15-17 de §4gv).
-- **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, SIN PUBLICAR)**. El dueño: *«falta la ficha de Sueña y de
+- **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, publicada 29/09 01:10, `040e1df`)**. El dueño: *«falta la ficha de Sueña y de
   Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
   - `renderContaMarcas` (caja `#cta-marcas`, debajo de `#cta-metrics`): lo vendido de cada marca sobre la MISMA lista que
     «Vendido en el período» (`contaLista`: corte, período, vendedor y búsqueda). Marcas + «Sin marca» = lo de arriba.
@@ -890,6 +891,39 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - `acomodarFichas`: `data-como="<id>"` copia las columnas de otra caja (las fichas de marca, alineadas con las de
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
+
+## 🔎 La revisión con cuatro agentes del 29/09 (§4gx) y sus arreglos (§4gy, EN LA RAMA, SIN PUBLICAR)
+Informe completo en `RESPUESTA_CLAUDE.md` §20 (hallazgos) y §21 (arreglos). Respuestas del dueño (29/09): *«No sale en
+feriados, arreglá el 2, 3 y 4»*; el 6 y el 7/08 fueron feriado; logística NO sube el Excel de Moreno después de cargar
+(M2 no pasa). Multicenter: *«a veces hasta 4 pedidos en el mismo día para su bodega»* → cuentan como UNA entrega (ver
+«🏬 Eduardo a Multicenter»).
+- **🚫 El camión no sale en feriados (A1)**: `feriadoDe(f)` lee `FERIADOS`.
+  - `limTurno` da 0 (como el domingo), y `proximoDiaEntrega()` y `saldoDiaConCupo` los saltean.
+  - El formulario no guarda un pedido NUEVO para un feriado, ni deja que una vendedora MUEVA uno a un feriado (aviso).
+  - Uno que ya estaba en un feriado se corrige igual, y Administración lo mueve con `forzar`.
+  - Lo dicen los carteles de cupos (formulario, Administración, semana de ocupación, 📅 Reprogramar, devolución de ATC),
+    el cambio de turno y los avisos del importador de ROHO.
+  - ⚠️ El portero del `.gs` NO conoce los feriados: una página vieja (sin F5) todavía puede guardar uno. Queda para la
+    próxima versión del servidor.
+- **Pago mixto (A2)**: `mixtoMismoMetodo(c, a)`: el 2° método nunca es el mismo método (y banco, si es QR) que el
+  anticipo; el formulario no lo deja. Con varios candidatos del mismo día y recibo, vale el que CIERRA el «A cuenta».
+  ⚠️ Ambigüedad que queda: en una «SÍ, pagado» (A cuenta 0), un pago de OTRO método del mismo día y recibo se lee como
+  mixto. No se distingue de uno de verdad, y los montos igual cierran.
+- **«A esta altura» y la curva, a la misma hora (A3)**:
+  - `pryVentas` guarda `m` (minutos del día en Bolivia, `pryMinBo(ts)`), y `pryCargadaAl(x, d, min)` dice si la venta ya
+    estaba cargada.
+  - `pryAcum(V, ym, dia, min)` y `pryCurvaF(c, r, min)` cortan el otro mes al mismo día y a la misma hora de ahora.
+  - La prueba (🧪) sigue con días enteros. Un mes más corto entra entero, y el texto lo dice.
+- **Retiros con sello (A4)**: corregir un retiro manda `rev` (el de la lista o `SAVE_REV`). Con la 28-a, uno borrado
+  desde otro equipo contesta `borrado` y no vuelve, tampoco desde la cola. ⚠️ Si dos equipos corrigen el MISMO retiro a la
+  vez, gana el último: el `.gs` no compara el sello de las filas `__ret_`. Queda para la próxima versión del servidor.
+- **Unidades (BAJA, regresión mía de §4gv)**: `PRY_SIN` saca «S/SOMIER», «SIN SOMIER» y «S/ COLCHON» antes de partir
+  el renglón. `PRY_ES_SOMIER` acepta SOMMIER y BOX SPRING, y `PRY_NO_UNIDAD` suma servicios, muebles y errores de tipeo.
+- Pruebas (rojas contra `040e1df`):
+  - `tests/test_rev29_dias.js`: 26, 21 rojas;
+  - `tests/test_rev29_pedidos.js`: 25, 15 rojas;
+  - `test_proyeccion.js`: 126, 8 rojas.
+- **Pendientes** (§20.3): M1, M3-M8 y las otras BAJA.
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado
@@ -947,6 +981,10 @@ agregó la línea de resumen y el JSON va a la carpeta temporal). Los cuatro hal
 
 ## 🏬 Eduardo a Multicenter en la proyección de stock (§4gm, 28/09): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02** (`7fe7551`), junto con §4gl, §4gn y §4go.
+- **🏬 Varios pedidos de Multicenter el MISMO día son UNA entrega** (dueño, 29/09, §4gy): *«hace pedidos por unidades, a
+  veces hasta 4 pedidos en el mismo día para su bodega»*. `stockEntregaClave(p, f)` usa la fecha como clave de la
+  entrega para Eduardo → Multicenter (`nVentasRotacion`, `nVentas`, `n30`); lo demás sigue por pedido. Las unidades se
+  suman igual, y los umbrales no cambian. `test_eduardo_multicenter` §8.
 - **La regla vive en UN lugar, `stockPedidoUnico`, y en este orden**:
   1. RPT → nunca es venta;
   2. **`stockEduardoMulticenter(p)` → es demanda**;

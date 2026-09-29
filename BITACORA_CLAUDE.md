@@ -7445,7 +7445,198 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — SIN PUBLICAR
+## 4gy. 29/09: los arreglos de la revisión de §4gx — feriados, el mixto falso, «a esta altura» a la misma hora y el retiro borrado (EN LA RAMA, SIN PUBLICAR)
+
+**Las respuestas del dueño** a las preguntas de §4gx:
+- *«No sale en feriados, arreglá el 2, 3 y 4»*. O sea A1 (el camión no sale en feriados), A2, A3 y A4.
+- *«Si 6 y 7 fue feriado»*: el 06/08 y el 07/08/2026 fueron feriado.
+- Logística NO sube el Excel de Moreno después de cargar la camioneta: M2 no pasa en la práctica. No se tocó.
+- Multicenter: *«solo en mi panel»*. No contesta si se carga en uno o en varios pedidos; no se tocó nada.
+- Nada se publica sin su OK.
+
+### A1 · El camión no sale en feriados
+- **`feriadoDe(f)`** (al lado de `limTurno`): el nombre del feriado o `''`. Lee `FERIADOS` con `typeof`, porque la lista está
+  más abajo en la página.
+- **`limTurno` da 0** en feriado, como el domingo. Con eso el cupo, el cuadrito (`saldoDiaConCupo`, que además lo saltea
+  explícito) y el portero del panel dicen lo mismo.
+- **`proximoDiaEntrega()` saltea domingos Y feriados** (tope de 30 días). El jueves 24/12 el «mañana» del chofer, la carga,
+  la ruta, el mapa, el WhatsApp y los cupos del encabezado son los del sábado 26/12.
+- **El formulario**, con las mismas reglas que el domingo:
+  - un pedido NUEVO para un feriado no se guarda: «🚫 El 25/12/2026 es FERIADO (Navidad): no hay entregas. Elegí otra fecha.»;
+  - una vendedora que MUEVE un pedido a un feriado, tampoco;
+  - uno que YA estaba en un feriado (cargado por una página vieja) se sigue pudiendo corregir sin mover la fecha;
+  - Administración sí lo mueve, con `forzar` (`_forzar` incluye `feriadoDe`).
+- **Los carteles lo dicen**: cupos del formulario (`renderCupoForm`), cupo de Administración, semana de ocupación
+  («🚫 Feriado — Navidad», con «—» en vez de «0/0»), avisos de 📅 Reprogramar (`reproAvisos`, que también usa la devolución
+  de una ATC), el texto de cupos de la devolución, el cambio de turno de un pedido que quedó en un feriado
+  (`cambiarTurno`: «reprogramalo») y los avisos del importador de ROHO (sus fechas vienen de su Excel).
+- ⚠️ **El portero del `.gs` (`porteroFecha_`) NO conoce los feriados.** Una página vieja, sin F5, todavía puede guardar
+  una entrega en feriado. Queda para la próxima versión del servidor.
+- ⚠️ **`FERIADOS` sigue siendo solo para adelante** (desde el 02/11/2026). Los que ya pasaron van aparte (ver abajo).
+
+### A2 · «↩️ Era un pago de la venta» ya no fabrica un pago mixto
+- **`mixtoMismoMetodo(c, a)`**: el 2° método del mixto nunca es el mismo método que el anticipo (ni el mismo banco, si es
+  QR). Es la misma regla con la que el formulario frena («El segundo método es igual al primero»). El flete que
+  `_cobrarAhora` cobra junto con la venta lleva el MISMO método, día y recibo, así que ya no se confunde.
+- **`mixtoEn` con varios candidatos** del mismo día y recibo: vale el que CIERRA el «A cuenta» con el anticipo, como lo
+  escribe el formulario. Antes, con dos, devolvía `null` y un mixto de verdad dejaba de reconocerse (y «SÍ, pagado»
+  proponía 3.500 para una venta de 3.000). En una venta «SÍ, pagado» (A cuenta 0, §4cb) no hay con qué elegir: vale
+  solo si es uno.
+- ⚠️ **Queda una ambigüedad, a propósito:** en una «SÍ, pagado», un pago de OTRO método del mismo día y recibo se lee
+  como el 2° método. No se distingue de un mixto de verdad, y los montos igual cierran (es plata que entró ese día con
+  ese recibo). No se agregó el aviso en `ctaEnvioAPago` que proponía §20: con la regla nueva, los casos del informe ya
+  no cambian el mixto.
+- Si algún día hace falta que no se adivine más, la salida es marcar el 2° método en el propio renglón (una letra, como
+  el `^` del flete). Se lo pregunté a Codex en §20.5.
+
+### A3 · «A esta altura» y la curva, a la misma hora
+- `pryVentas` guarda `m`: los minutos del día en Bolivia en que se cargó la venta (`pryMinBo(ts)`, UTC−4 fija como
+  `isoDeTsBolivia`; sin `ts`, al final del día).
+- **`pryCargadaAl(x, d, min)`**: ¿estaba cargada el día `d` a los `min` minutos? Sin `min`, el día entero.
+- `pryAcum(V, ym, dia, min)` y `pryCurvaF(c, r, min)` cortan el otro mes (o la historia) al mismo día Y a la misma hora
+  de ahora. Antes el otro mes entraba con el día entero: el mismo mes daba «1 % arriba» a las 09:30 y «7 % arriba» a las
+  20:00.
+- La prueba (🧪 `pryPrueba`) sigue con días enteros: ahí los dos lados son días ya cerrados.
+- Si el otro mes era más corto (febrero contra un 30), entra entero y el texto lo dice («tenía 28 días y a esta altura ya
+  había cerrado»).
+- El texto de arriba: «…cargado hasta ahora, contra lo que tenía septiembre de 2026 al día 14 a las 15:00.»
+
+### A4 · Un retiro borrado desde otro equipo ya no vuelve
+- `guardarRetiroForm`, al CORREGIR un retiro, manda el sello con el que se vio (`rev` de la lista o `SAVE_REV`, el mayor).
+  Con la 28-a, si otro equipo lo borró, el servidor contesta `borrado` y no lo vuelve a crear. Lo mismo desde la cola de
+  un celular sin señal.
+- Ante `borrado`, el retiro sale de la lista de ese equipo (deja de restar en su cuadre) y el aviso dice que la
+  corrección NO se guardó y que lo confirme con administración antes de cargarlo de nuevo.
+- ⚠️ **Lo que NO arregla:** dos equipos corrigiendo el MISMO retiro a la vez. Gana el último, porque el `.gs` no compara
+  el sello de las filas `__ret_…` (`filaSistema` las deja afuera del control). Queda para la próxima versión del servidor.
+
+### Los feriados que ya pasaron, para la proyección
+- **`FERIADOS_PASADOS`** = 06/08 (Independencia), 07/08 (puente, confirmado por el dueño) y 25/09 (Santa Cruz, nadie trabajó).
+- **`pryDiaHabil(f)`** = `diaHabil` y no está en esa lista. La usan SOLO `pryHabiles`, `pryAlDia` y `pryPatron`: agosto tuvo
+  24 días hábiles, septiembre 25 y octubre 27.
+- No van en `FERIADOS` a propósito. Lo probé y se rompían `test_rev8_saldo`, `test_saldo_almacen` y 31 de
+  `test_proyeccion`: las entregas no miran atrás y esas pruebas clavan el reloj en esos días. En `test_proyeccion`, las
+  secciones hechas a mano con días hábiles vacían `FERIADOS_PASADOS` en su `PREPARAR`, y §18 prueba la lista de verdad.
+
+### Unidades (la BAJA que era regresión mía de §4gv)
+- **`PRY_SIN`** saca «S/SOMIER», «SIN SOMIER», «S/ COLCHON» antes de partir el renglón en pedazos. El «/» lo partía y
+  el pedazo «SOMIER» sumaba un somier que no hay.
+- `PRY_ES_SOMIER` acepta «SOMMIER» y «BOX SPRING».
+- `PRY_NO_UNIDAD` suma servicios, muebles y errores de tipeo: TRASLADO, MANO DE OBRA, ENTREGA, RECARGO, CAMAROTE, LITERA,
+  CATRE, NORDICO, CAJONERA, PLATAFORMA, ESPALDAR, RUEDA, DORMITORIO, ALMOADA, ALM, PROTETOR.
+- Se dejaron como estaban, porque son ambiguos: BASE, BASE CAMA, PILLOW TOP, «COMBO COLCHON + ALMOHADA» (la regla del
+  dueño es combo = colchón + somier) y CUNA sola.
+
+### Pruebas
+- `tests/test_rev29_dias.js` (26; 21 rojas contra `040e1df`): cupos y «mañana» en feriado, los seis cuadritos (Navidad,
+  Año Nuevo, Todos Santos tras un domingo, Carnaval 2027), el formulario (nuevo, mover, corregir uno que ya estaba,
+  Administración con `forzar`), los carteles y el cambio de turno.
+- `tests/test_rev29_pedidos.js` (25; 15 rojas contra `040e1df`): A2 de punta a punta con el formulario, Contabilidad y el
+  `.gs` real; las cuentas del mixto con la página sola; y A4 con dos equipos, la cola y dos correcciones seguidas.
+- `tests/test_proyeccion.js` (126; 8 rojas contra `040e1df`): unidades con «S/SOMIER», A3 a la misma hora y §18 de los
+  días hábiles.
+- Las pruebas de los agentes (`rev29/…` en el scratchpad) dan todo en verde con el arreglo.
+- **Batería sobre `f69931b`: 116 suites, 4.434 bien · 0 mal.** Después se agregaron los textos de `cambiarTurno` y ROHO, y
+  se volvieron a correr `test_rev29_dias` (26), `test_roho` (90), `test_cupos` (23), `test_medias` (24) y `test_sabado` (14): en verde.
+
+### 🏬 Multicenter: varios pedidos el mismo día son UNA entrega (dueño, 29/09, tarde)
+El dueño contestó la pregunta de §20.4: *«Multicenter hace pedidos y todos son a su bodega, pero hace pedidos por unidades:
+a veces hasta 4 pedidos en el mismo día para su bodega.»*
+- **El problema:** la rotación cuenta entregas distintas (§4dj), y contaba una por PEDIDO (`p.id`). Una sola compra de
+  Multicenter partida en 4 pedidos del mismo día pasaba el umbral de 3 y armaba un ritmo que no existe.
+  - Ejemplo: 4 pedidos de 2 el mismo día y 2 en depósito. Antes daba rotación media y «pedir 3».
+  - Ahora es una entrega: rotación baja, no pide nada.
+- **`stockEntregaClave(p, f)`**: para Eduardo → Multicenter la clave de la entrega es la FECHA (`'mc|'+f`); para todo lo
+  demás, el pedido. La usan `nVentasRotacion` y `nVentas` (15 días, por fecha de salida) y `n30` (30 días, por fecha de
+  venta). Las unidades se suman igual.
+- **Lo que NO cambia:**
+  - los umbrales;
+  - las dos mitades de la regla de §4dj;
+  - lo del equipo: tres clientes el mismo día siguen siendo tres entregas;
+  - los mismos pedidos de Multicenter en tres días distintos siguen siendo tres entregas.
+- Prueba: `test_eduardo_multicenter.js` §8 (40; 4 rojas contra `040e1df`).
+
+### Lo que sigue pendiente de §4gx
+M1 y M3-M8, y las otras BAJA (RESPUESTA §20.3). Nada de eso se tocó.
+
+## 4gx. 29/09, madrugada: revisión con cuatro agentes de lo hecho el 28 y 29/09 — NADA ARREGLADO TODAVÍA
+
+**El pedido.** *«Agente a revisar todo lo que hicimos ayer y hoy en stock, pedidos, días y proyección. Me das el informe
+para Codex cuando terminen»*.
+
+**Cómo.** Cuatro agentes en paralelo (stock, pedidos, días, proyección), solo lectura, con escenarios propios con datos
+inventados: el panel real en Chromium y el `.gs` real en Node. Los scripts quedaron en el scratchpad de la sesión, fuera
+del repo. Volví a correr los reproductores de los hallazgos ALTA y de los MEDIA principales, y dan lo que dicen. Todas
+las pruebas existentes de las cuatro áreas pasan.
+
+**El informe completo, con dónde, cómo se reproduce y el arreglo propuesto, es `RESPUESTA_CLAUDE.md` §20.** En corto:
+- **ALTA:**
+  - **A1:** el cuadrito promete entregas en feriados (25/12, 01/01, 02/11, Carnaval): `saldoDiaConCupo` no mira
+    `FERIADOS`.
+  - **A2:** «↩️ Era un pago de la venta» fabrica un pago mixto falso cuando el flete se cobró en el mismo formulario
+    (mismo día y recibo que el pago). Después no se puede corregir ni la dirección, y seguir el aviso muda la plata de
+    día o infla el total.
+  - **A3:** «A esta altura» y la curva comparan lo cargado hasta ahora con el día entero del otro mes. El % cambia con
+    la hora a la que se mira: 1 % a las 09:30 y 7 % a las 20:00; el día 2, de 2 % a 25 %.
+  - **A4 (previo):** un retiro borrado vuelve a la planilla cuando otro equipo lo corrige, porque los retiros se mandan
+    sin `rev`.
+- **MEDIA:**
+  - **M1:** falso «lo borraron» en `submitPedido` con la copia vieja de `doGet`.
+  - **M2:** el Excel de Moreno subido después de cargar la camioneta deja al cuadrito en «NO HAY».
+  - **M3:** ⏳/🏭 cuentan las 48 h desde un día no hábil.
+  - **M4:** una recogida programada en domingo o feriado se toma tal cual.
+  - **M5:** `FERIADOS` se acaba en 2027 sin aviso.
+  - **M6:** una marca sin ventas en el mes proyecta y la lista no cierra.
+  - **M7:** la hora de corte usa el reloj del dispositivo.
+  - **M8 (previo):** «Pedido eliminado ✓» sin borrar, con la copia vieja.
+- **BAJA:** unidades mal contadas en textos raros, entre ellos «S/SOMIER», que suma un somier por el «/» de
+  `PRY_PEDAZOS`: regresión mía de §4gv. Además: días 29-31 contra febrero, textos, y el repintado que cierra «Semana por
+  semana».
+- **Fuera de lo revisado:** la contraseña de Administración por defecto está escrita en un comentario de `pedidos.html`
+  (repo público). No se repite en ningún informe.
+
+**Preguntas al dueño:**
+- ¿Sale el camión en feriados?
+- ¿Multicenter se carga por sucursal (varios pedidos el mismo día)?
+- ¿Logística sube el Excel de Moreno después de cargar?
+- ¿El 07/08/2026 fue feriado (viernes puente del DS 5521)?
+- ¿En qué orden quiere los arreglos?
+
+## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — PUBLICADA 29/09 01:10 (`040e1df`)
+
+> **Publicada el 29/09 a las 01:10 de Bolivia** (`main` = `040e1df`), junto con §4gv. Sin tocar el servidor (sigue el
+> `.gs` 2026-09-28-a). No había ninguna corrida en curso ni en cola. El OK del dueño, después de ver las capturas: *«ok,
+> lo publicás cuando acabes y me avisás»*. **Batería sobre `644e2ab`: 114 suites, 4.376 bien · 0 mal.**
+
+**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
+Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+
+**Lo hecho (`pedidos.html`):**
+- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
+  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
+- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
+  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
+- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
+  - Con una vendedora elegida, solo la de su marca y sin el %.
+  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
+  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
+- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
+  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
+  fila; en el celular, una.
+- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
+  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
+  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
+- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
+
+**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
+en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
+búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
+(`a904137`): 4 bien · 18 mal.
+
+## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — PUBLICADA 29/09 01:10 (`040e1df`)
+
+> **Publicada el 29/09 a las 01:10 de Bolivia** (`main` = `040e1df`), junto con §4gw y con la segunda vuelta de las
+> unidades (solo colchones y somieres). Sin tocar el servidor. Lo de «Esperando el OK del dueño» de abajo quedó atrás.
 
 **El pedido.** Después de §4gu se le ofreció la meta por marca con dos cosas: cuánto falta para la meta, y «cada semana,
 cómo vas contra los meses anteriores a la misma altura». Contestó: *«la opción 2 me parece. Y también unidades, tanto de
@@ -7511,33 +7702,6 @@ etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respal
   producto). Contra lo publicado (`a904137`): 88 bien · 30 mal; contra la primera versión (`33c876c`): 11 rojas, las de
   la regla nueva.
 - **Batería sobre `550e975`: 113 suites, 4.353 bien · 0 mal.**
-
-## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — SIN PUBLICAR
-
-**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
-Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
-
-**Lo hecho (`pedidos.html`):**
-- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
-  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
-- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
-  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
-- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
-  - Con una vendedora elegida, solo la de su marca y sin el %.
-  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
-  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
-- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
-  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
-  fila; en el celular, una.
-- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
-  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
-  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
-- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
-
-**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
-en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
-búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
-(`a904137`): 4 bien · 18 mal.
 
 ## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
 

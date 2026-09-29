@@ -1672,7 +1672,7 @@ function tomorrowStr(){ var d=new Date(); d.setDate(d.getDate()+1); return isoLo
    LUNES: el chofer, la lista de carga, la hoja de ruta, el mapa, los faltantes, el parte y el
    WhatsApp «pedidos de mañana» miraban el domingo y decían «no hay entregas». Los días
    cerrados por Administración NO se saltean: ese camión existe, solo que ya está armado. */
-function proximoDiaEntrega(){ var d=new Date(); d.setDate(d.getDate()+1); while(d.getDay()===0) d.setDate(d.getDate()+1); return isoLocal(d); }
+function proximoDiaEntrega(){ var d=new Date(); d.setDate(d.getDate()+1); for(var n=0; n<30 && (d.getDay()===0 || feriadoDe(isoLocal(d))); n++) d.setDate(d.getDate()+1); return isoLocal(d); }   // §4gy: ni domingo ni feriado
 function isoLocal(d){ var m=(d.getMonth()+1),day=d.getDate(); return d.getFullYear()+'-'+(m<10?'0':'')+m+'-'+(day<10?'0':'')+day; }
 /* Muestra la fecha como día/mes/año (guarda internamente ISO AAAA-MM-DD). */
 function fmtFecha(iso){ var m=String(iso||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m?(m[3]+'/'+m[2]+'/'+m[1]):String(iso||''); }
@@ -4321,7 +4321,7 @@ function contaRepintar(){
        lo que tiene entrega hasta hoy (A)
      + lo que falta del mes: lo YA agendado de mañana a fin de mes (B), o lo que da el ritmo si es más
        (A ÷ días hábiles que pasaron × días hábiles que quedan).
-     Días hábiles = lunes a sábado sin feriados (`diaHabil`). ⚠️ «Hasta hoy» es por la fecha AGENDADA: los choferes
+     Días hábiles = lunes a sábado sin feriados (`pryDiaHabil`: también los que ya pasaron, `FERIADOS_PASADOS`). ⚠️ «Hasta hoy» es por la fecha AGENDADA: los choferes
      todavía no marcan ✅ (§4gp), así que no se mira `p.entregado`.
    · Un mes que ya pasó no se proyecta (cerró en A); uno que no empezó muestra solo lo agendado.
 
@@ -4364,7 +4364,7 @@ function contaRepintar(){
 /* La proyección y el ritmo son estimaciones: van en Bs enteros. Lo vendido, con centavos, igual que en Ventas. */
 function fmtBs0(n){ return 'Bs '+Math.round(Number(n)||0).toLocaleString('es-BO'); }
 function pryFinDeMes(ym){ var y=+ym.slice(0,4), m=+ym.slice(5,7), d=new Date(Date.UTC(y, m, 0)).getUTCDate(); return ym+'-'+(d<10?'0':'')+d; }
-function pryHabiles(desde, hasta){ var n=0, f=desde; for(var i=0; i<40 && f<=hasta; i++, f=stockSumarDias(f,1)) if(diaHabil(f)) n++; return n; }
+function pryHabiles(desde, hasta){ var n=0, f=desde; for(var i=0; i<40 && f<=hasta; i++, f=stockSumarDias(f,1)) if(pryDiaHabil(f)) n++; return n; }
 var PRY_PRIMER_MES='2026-08';   // el primer mes ENTERO en el panel: se empezó a usar a fines de julio (§4d)
 var PRY_MIN_VENTAS=20;          // con menos ventas de la marca en los meses cerrados, la curva no es de fiar → ritmo
 var PRY_MESES_PRUEBA=6;         // 🧪 con cuántos meses cerrados (los últimos) se comparan el ritmo y la curva
@@ -4390,7 +4390,7 @@ function pryMesesCerrados(hoy){
    que los hábiles del mes, sigue para atrás en el mes anterior (lo vendido antes de empezar). */
 function pryAlDia(ym, r){
   var d=pryFinDeMes(ym); if(!(r>0)) return d;
-  for(var n=0, i=0; i<400; i++, d=stockSumarDias(d,-1)) if(diaHabil(d) && ++n===r) return stockSumarDias(d,-1);
+  for(var n=0, i=0; i<400; i++, d=stockSumarDias(d,-1)) if(pryDiaHabil(d) && ++n===r) return stockSumarDias(d,-1);
   return d;
 }
 /* 📦 (29/09, §4gv) LAS UNIDADES. El dueño: *«también unidades, tanto de Sueña como de Heaven: puede que entre menos plata
@@ -4412,8 +4412,14 @@ function pryAlDia(ym, r){
 var PRY_NO_UNIDAD=new RegExp('\\b(ALMOHADAS?|ALMOHADON(ES)?|ALMOHADILLAS?|COJIN(ES)?|RESPALDAR(ES)?|RESPALDOS?|CABECERAS?|PIECERAS?|'+
   'PATAS?|PATITAS?|FORROS?|FUNDAS?|ARMAZON(ES)?|VELADOR(ES)?|TOPPERS?|PLUMON(ES)?|DUVETS?|ACOLCHADOS?|COBERTOR(ES)?|COLCHAS?|'+
   'CUBREPIES?|CORTINAS?|TOALLAS?|ALFOMBRAS?|PUFFS?|SOFAS?|SILLON(ES)?|BAUL(ES)?|MESAS?|CAMAS?|ESPUMAS?|ESPONJAS?|PLANCHAS?|'+
-  'RETAZOS?|TELAS?|MDF|ENVIOS?|FLETES?|TRANSPORTES?|DELIVERY|INSTALACION(ES)?|ARMADO|SERVICIOS?|DESCUENTOS?|REGALOS?)\\b');
-var PRY_ES_COLCHON=/\b(COLCHON(ES)?|COLCHONETAS?)\b/, PRY_ES_SOMIER=/\bSOMIER(ES|S)?\b/, PRY_ES_COMBO=/\bCOMBOS?\b/;
+  'RETAZOS?|TELAS?|MDF|ENVIOS?|FLETES?|TRANSPORTES?|DELIVERY|INSTALACION(ES)?|ARMADO|SERVICIOS?|DESCUENTOS?|REGALOS?|'+
+  /* (29/09, revisión) servicios, muebles y errores de tipeo que la vendedora puede escribir en un renglón */
+  'TRASLADOS?|MANO\\s+DE\\s+OBRA|ENTREGAS?|RECARGOS?|CAMAROTES?|LITERAS?|CATRES?|NORDICOS?|CAJONERAS?|PLATAFORMAS?|'+
+  'ESPALDAR(ES)?|RUEDAS?|DORMITORIOS?|ALMOADAS?|ALM|PROTETOR(ES)?)\\b');
+var PRY_ES_COLCHON=/\b(COLCHON(ES)?|COLCHONETAS?)\b/, PRY_ES_SOMIER=/\b(SOM+IER(ES|S)?|BOX\s*SPRINGS?)\b/, PRY_ES_COMBO=/\bCOMBOS?\b/;
+/* «S/SOMIER», «SIN SOMIER», «S/ COLCHON»: lo que el renglón dice que NO lleva. Se saca antes de mirar los pedazos (el «/» parte
+   el renglón y «SOMIER» sumaba un somier que no hay: revisión del 29/09). */
+var PRY_SIN=/(?:\bS\/\s*|\bSIN\s+)(?:COLCHON(?:ES)?|COLCHONETAS?|SOM+IER(?:ES|S)?)\b/g;
 var PRY_PEDAZOS=/\s*(?:\+|,|;|\/|\bC\/|\bCON\b|\bMAS\b|\bY\b)\s*/;
 /* Qué es un pedazo de texto: la primera palabra que lo dice ('colchon' | 'somier' | 'combo' | 'no'), o '' si ninguna. */
 function pryPedazoTipo(s){
@@ -4430,7 +4436,7 @@ function pryTipoProd(x){
   if(!x) return '';
   var cod=String(x.codigo||'').trim().toUpperCase(), enCat=!!(cod && CODIGOS[cod]);
   if(enCat) return (function(t){ return t==='no' ? '' : (t || 'colchon'); })(pryPedazoTipo(prodAlias(stockNorm(CODIGOS[cod].d))));
-  var s=prodAlias(stockNorm(x.desc));
+  var s=prodAlias(stockNorm(x.desc)).replace(PRY_SIN, ' ');
   if(!s || PROD_NO_STOCK.test(s)) return '';                           // «VARIOS», «RECOGER…», tapizado: no son ventas de un producto
   var c=false, so=false;
   s.split(PRY_PEDAZOS).filter(function(p){ return /[A-Z]/.test(p); }).forEach(function(p, i){
@@ -4461,12 +4467,20 @@ function pryVentas(){
     var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
     if(!amb) return;
     var f=fechaSalida(p); if(!f) return;
-    var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p);
+    var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p), ts=Number(p.ts)||0;
+    /* `m` = a qué hora (minutos del día, en Bolivia) se cargó: sin `ts`, al final del día (§4gy). */
     out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (marcaDe(v)||'sin')), v:v, vk:amb+'|'+(normNombre(v)||v),
-               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
+               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), m:(ts ? pryMinBo(ts) : 1440), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
   });
   return out;
 }
+/* (29/09, §4gy) Los minutos del día en Bolivia (UTC−4 fija, como `isoDeTsBolivia`). «A esta altura» y la curva comparan lo
+   cargado HASTA AHORA con lo que el otro mes tenía cargado al mismo día Y A LA MISMA HORA. Antes el otro mes entraba con el
+   día entero, y el mismo mes daba «1% arriba» a las 09:30 y «7% arriba» a las 20:00 (revisión del 29/09, A3). */
+function pryMinBo(t){ var d=new Date(Number(t)-4*3600000); return isNaN(d.getTime()) ? 1440 : d.getUTCHours()*60+d.getUTCMinutes(); }
+function pryHoraTxt(min){ var h=Math.floor(min/60), mm=min%60; return (h<10?'0':'')+h+':'+(mm<10?'0':'')+mm; }
+/* ¿La venta `x` ya estaba cargada el día `d` a los `min` minutos? Sin `min`, cuenta el día entero. */
+function pryCargadaAl(x, d, min){ return x.reg<d || (x.reg===d && (min==null || x.m<=min)); }
 /* La curva de la marca `g` ('heaven' | 'suena') con los meses dados, y lo que vendieron en promedio (`prom`). */
 function pryCurva(V, g, meses){
   var por={}, T=0, n=0;
@@ -4479,11 +4493,12 @@ function pryCurva(V, g, meses){
   return { g:g, meses:ms, por:por, T:T, n:n, prom:(ms.length ? T/ms.length : 0), ok:(n>=PRY_MIN_VENTAS && T>0.009) };
 }
 /* Qué parte de lo que vendieron esos meses ya estaba vendida faltando `r` días hábiles para su cierre (suma sobre suma:
-   el mes más grande pesa más). */
-function pryCurvaF(c, r){
+   el mes más grande pesa más). Con `min`, ese día cuenta hasta esa hora (la de ahora, en el mes en curso: §4gy); sin él,
+   el día entero (la prueba, que mira días ya cerrados de los dos lados). */
+function pryCurvaF(c, r, min){
   if(!c || !c.ok) return 0;
   var K=0;
-  c.meses.forEach(function(m){ var d=pryAlDia(m, r); c.por[m].forEach(function(x){ if(x.reg<=d) K+=x.bs; }); });
+  c.meses.forEach(function(m){ var d=pryAlDia(m, r); c.por[m].forEach(function(x){ if(pryCargadaAl(x, d, min)) K+=x.bs; }); });
   return K/c.T;
 }
 /* Las dos cuentas del total del mes y cómo se mezclan (ver la cabecera): K = lo ya vendido para el mes, f = la parte que
@@ -4522,7 +4537,7 @@ function proyeccionMes(ym){
         if(!c.ok) o.porque='historia';
         else{
           var K=0; Object.keys(filas).forEach(function(k){ if(filas[k].g===g) K+=r2(filas[k].a+filas[k].b); });
-          var f=pryCurvaF(c, dr), z=pryMezcla(K, f, c.prom), e=errores[g];
+          var f=pryCurvaF(c, dr, pryMinBo(Date.now())), z=pryMezcla(K, f, c.prom), e=errores[g];
           o={ m:'curva', f:f, meses:c.meses, prom:c.prom, K:r2(K), p1:z.p1, p2:z.p2, w:z.w, proy:r2(z.proy), porque:'', err:e };
           if(e && e.n>=PRY_MIN_PARES && e.r<e.c && dt>=PRY_DIAS_RITMO) o={ m:'ritmo', f:f, meses:c.meses, porque:'prueba', err:e };
         }
@@ -4596,13 +4611,14 @@ function pryTramo(reg, ym){
   return d<=7 ? 1 : (d<=14 ? 2 : (d<=21 ? 3 : (d<=28 ? 4 : 5)));
 }
 /* Lo vendido para `ym` (equipo de tiendas, por marca y en total) cargado hasta el día `dia` del mes (0 = todo), con sus semanas. */
-function pryAcum(V, ym, dia){
+function pryAcum(V, ym, dia, min){
   var fin=pryFinDeMes(ym), dd=Math.min(dia||99, +fin.slice(8,10)), lim = dia ? ym+'-'+(dd<10?'0':'')+dd : '';
+  if(dia && dia>dd) min=null;             // el otro mes ya terminó antes de ese día: entra entero (§4gy)
   var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, s:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
   var o={ equipo:nuevo() };
   MARCAS.forEach(function(g){ o[g.k]=nuevo(); });
   V.forEach(function(x){
-    if(x.ym!==ym || x.amb!=='tienda' || (lim && x.reg>lim)) return;
+    if(x.ym!==ym || x.amb!=='tienda' || (lim && !pryCargadaAl(x, lim, min))) return;
     var tr=pryTramo(x.reg, ym);
     [o.equipo, o[x.g]].forEach(function(t){
       if(!t) return;
@@ -4619,7 +4635,13 @@ function pryAltura(R){
   if(PRY_CMP_DE!==ym){ PRY_CMP_DE=ym; PRY_CMP=''; }
   var cmp = (PRY_CMP && ops.indexOf(PRY_CMP)>=0) ? PRY_CMP : (ops.length ? ops[ops.length-1] : '');
   var dia = curso ? +R.hoy.slice(8,10) : 0, A={ ym:ym, cmp:cmp, ops:ops, dia:dia, curso:curso, act:pryAcum(R.V, ym, 0) };
-  if(cmp){ A.ant=pryAcum(R.V, cmp, dia); A.antEntero=pryAcum(R.V, cmp, 0); }
+  /* El otro mes, al mismo día Y a la misma hora de ahora (en Bolivia): el mes en curso trae lo cargado hasta este momento. */
+  A.min = curso ? pryMinBo(Date.now()) : null;
+  A.hora = A.min!=null ? pryHoraTxt(A.min) : '';
+  if(cmp){
+    A.enteroAntes = curso && dia > +pryFinDeMes(cmp).slice(8,10);   // el otro mes era más corto: ya había cerrado
+    A.ant=pryAcum(R.V, cmp, dia, A.min); A.antEntero=pryAcum(R.V, cmp, 0);
+  }
   return A;
 }
 /* «14 % arriba» / «8 % abajo» / «igual»; sin nada del otro lado, «—». */
@@ -4648,8 +4670,12 @@ function pryAlturaHtml(R){
     var a=A.act[k], b=A.ant[k];
     return pryVaTxt(a.bs, b.bs)+' en plata ('+fmtBs0(a.bs)+' contra '+fmtBs0(b.bs)+') y '+pryVaTxt(a.u, b.u)+' en unidades ('+a.u+' contra '+b.u+').';
   };
-  var h='<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta el mismo día'+(A.curso ? '' : ' (el mes entero)')+
-        ', contra '+esc(mesNombre(A.cmp))+(A.curso ? (' al día '+Math.min(A.dia, +pryFinDeMes(A.cmp).slice(8,10))) : ' entero')+'.</div>'+sel+
+  /* §4gy: el otro mes, al mismo día y a la misma hora; si era más corto (febrero contra un 30), entero, y se dice. */
+  var cmpTxt = !A.curso ? ' entero'
+             : (A.enteroAntes ? (' entero: tenía '+(+pryFinDeMes(A.cmp).slice(8,10))+' días y a esta altura ya había cerrado')
+                              : (' al día '+A.dia+' a las '+A.hora));
+  var h='<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta '+(A.curso ? 'ahora' : 'el final (el mes entero)')+
+        ', contra lo que tenía '+esc(mesNombre(A.cmp))+cmpTxt+'.</div>'+sel+
         '<div class="pry-gana">'+['equipo'].concat(MARCAS.map(function(g){ return g.k; })).filter(function(k){ return A.act[k].n || A.ant[k].n; }).map(function(k){
           var g=MARCAS.filter(function(x){ return x.k===k; })[0];
           return '<div>'+(g ? (g.ico+' <b>'+esc(g.lbl)+'</b>') : '👥 <b>Todo el equipo</b>')+': '+esc(linea(k))+'</div>';
@@ -4716,7 +4742,7 @@ function pryPrueba(V, ym, hist, hoy){
 function pryPatron(V, ym, g, hist, hoy){
   var fin=pryFinDeMes(ym), cerrado=(fin<hoy), dias={}, T=0, d, i;
   V.forEach(function(x){ if(x.ym===ym && x.g===g){ dias[x.f]=(dias[x.f]||0)+x.bs; T+=x.bs; } });
-  var ult=[]; for(d=fin, i=0; i<40 && ult.length<3; i++, d=stockSumarDias(d,-1)) if(diaHabil(d)) ult.unshift(d);
+  var ult=[]; for(d=fin, i=0; i<40 && ult.length<3; i++, d=stockSumarDias(d,-1)) if(pryDiaHabil(d)) ult.unshift(d);
   var fin3={ total:0, antes:0, dias:ult.map(function(u){ return { d:u, bs:(dias[u]||0) }; }) };
   V.forEach(function(x){ if(x.ym===ym && x.g===g && ult.indexOf(x.f)>=0){ fin3.total+=x.bs; if(x.reg<ult[0]) fin3.antes+=x.bs; } });
   var cortes=[ym+'-10', ym+'-20', pryAlDia(ym,3), pryAlDia(ym,1)];
@@ -4838,7 +4864,7 @@ function renderProyeccion(){
     '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
     '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
     '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
-    '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta el mismo día, contra otro mes al mismo día (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
+    '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta ahora, contra lo que otro mes tenía cargado al mismo día y a la misma hora (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
     '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
     '</div></div>';
 }
@@ -6279,6 +6305,14 @@ function guardarRetiroForm(){
   }
   var fila=filaDeRetiro({ id: r.id || (RETIRO_PREF+uid()+'__'), fecha:r.fecha, entrega:r.entrega,
                           retira:r.retira, monto:monto, notas:r.notas, tipo:r.tipo, fotos:r.fotos, obs:r.obs });
+  /* (29/09, §4gy) Corregir un retiro manda el SELLO con el que se vio (el de la lista o el último guardado acá). Sin él, el
+     servidor no puede saber que otro equipo lo borró mientras tanto, y la corrección lo volvía a crear en la planilla: el
+     efectivo se restaba otra vez en el cuadre (revisión del 29/09, A4). Con el sello, la 2026-09-28-a contesta `borrado`. */
+  if(!esNuevo){
+    var _prevR=null; for(var _k=0;_k<RETIROS.length;_k++){ if(String(RETIROS[_k].id)===String(fila.id)){ _prevR=RETIROS[_k]; break; } }
+    var _revR=Math.max(Number(_prevR && _prevR.rev)||0, Number(SAVE_REV[fila.id])||0);
+    if(_revR>0) fila.rev=_revR;
+  }
   var guardando=persistRetiro(fila);
   RET_FORM=retFormVacio();
   RET_FORM.retira=r.retira;          // quien retira suele ser el mismo: se deja puesto
@@ -6295,6 +6329,11 @@ function guardarRetiroForm(){
     if(res && res.ok){
       toast((esNuevo?('Retiro de '+fmtBs(monto)+' guardado en la planilla ✓'):'Retiro actualizado en la planilla ✓')+
             (cambioMes?(' · la ventana pasó a '+mesNombreCorto(mesRet)+' para que lo veas'):''),'ok', cambioMes?7000:undefined);
+    }else if(res && res.error==='borrado'){
+      /* Lo borraron desde otro equipo: no se vuelve a crear, y deja de figurar acá (y de restar en el cuadre). */
+      RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(fila.id); }); saveRetirosMirror();
+      toast('❌ Ese retiro lo BORRARON desde otro equipo mientras lo corregías: tu corrección NO se guardó y el retiro no se vuelve a crear. '+
+            'Si de verdad hay que anotarlo, confirmalo con administración antes de cargarlo de nuevo.','err',12000);
     }else if(res && RECHAZOS_FIRMES[res.error]){
       toast('❌ El servidor NO aceptó el retiro ('+res.error+'). Revisá la lista: no quedó guardado.','err',9000);
     }else{
@@ -8108,16 +8147,29 @@ function mixtoDe(p){ return mixtoEn(anticipoEscrito(p), cobrosDe(p), p); }
    vieja cuyo anticipo recién se escribió con «~» (corrigiendo un cobro, E6) quedaba con un cobro
    del mismo día y recibo que «parecía» el 2° método, y el formulario lo habría restado del
    adelanto al guardar. */
+/* (29/09, §4gy) El 2° método del mixto NUNCA es el mismo método (y banco, si es QR) que el primero: el formulario no lo deja
+   («El segundo método es igual al primero»). Un cobro así, del mismo día y recibo, es otra cosa: el flete que el formulario
+   cobró junto con la venta (`_cobrarAhora` lo escribe con el MISMO método, día y recibo) y que «↩️ Era un pago de la venta»
+   pasó a los pagos. Tomarlo por el 2° método hacía de una venta «SÍ, pagado» un mixto falso: el formulario ya no dejaba
+   corregir ni la dirección, y seguir su aviso mudaba la plata de día (revisión del 29/09, A2). */
+function mixtoMismoMetodo(c, a){
+  var mc=String((c&&c.metodo)||'').trim().toUpperCase(), ma=String((a&&a.metodo)||'').trim().toUpperCase();
+  if(!mc || !ma || mc!==ma) return false;
+  return mc!=='QR' || String(c.banco||'').trim().toUpperCase()===String(a.banco||'').trim().toUpperCase();
+}
 function mixtoEn(a, cobros, p){
   if(!a || !a.fecha) return null;
-  var cs=(cobros||[]).filter(function(c){ return c && !esEnvio(c) && c.fecha===a.fecha && limpiaNota(c.nota)===limpiaNota(a.nota) && (Number(c.monto)||0)>0; });
-  if(cs.length!==1) return null;
-  if(p){
-    var acu=Number(p.acuenta)||0;
-    var cierra=Math.abs(acu-((Number(a.monto)||0)+(Number(cs[0].monto)||0)))<0.01;
-    if(!cierra && !(p.pagado && acu<0.01)) return null;
-  }
-  return cs[0];
+  var cs=(cobros||[]).filter(function(c){ return c && !esEnvio(c) && c.fecha===a.fecha && limpiaNota(c.nota)===limpiaNota(a.nota) &&
+                                                   (Number(c.monto)||0)>0 && !mixtoMismoMetodo(c, a); });
+  if(!cs.length) return null;
+  if(!p) return cs.length===1 ? cs[0] : null;
+  /* Con varios del mismo día y recibo (un mixto de verdad y un flete pasado a pago, con otro método), el 2° método es el
+     que CIERRA el «A cuenta» con el anticipo, como lo escribe el formulario. En una venta «SÍ, pagado» (A cuenta 0, §4cb)
+     no hay con qué elegir: vale solo si es uno. */
+  var acu=Number(p.acuenta)||0, aM=Number(a.monto)||0;
+  var cierran=cs.filter(function(c){ return Math.abs(acu-(aM+(Number(c.monto)||0)))<0.01; });
+  if(cierran.length) return cierran.length===1 ? cierran[0] : null;
+  return (cs.length===1 && p.pagado && acu<0.01) ? cs[0] : null;
 }
 /* ¿Hay que frenar el guardado por falta de imagen?
    ⚠️ Los pedidos VIEJOS en efectivo no tienen ninguna (antes no se pedía) y son casi todos.
@@ -8802,6 +8854,11 @@ function submitPedido(){
     var feD=document.getElementById('f-fecha'); feD.classList.add('err'); feD.focus(); feD.scrollIntoView({block:'center'});
     return;
   }
+  if((_nuevo || (!UNLOCKED && _mueveFecha)) && feriadoDe(fechaSel)){                 // §4gy: el camión no sale en feriados
+    toast('🚫 El '+fmtFecha(fechaSel)+' es FERIADO ('+feriadoDe(fechaSel)+'): no hay entregas. Elegí otra fecha.','err');
+    var feF=document.getElementById('f-fecha'); feF.classList.add('err'); feF.focus(); feF.scrollIntoView({block:'center'});
+    return;
+  }
   if((_nuevo || _mueveVend) && diaSabado(fechaSel) && turnoSel==='PM'){
     toast('Los SÁBADOS solo hay turno AM. Cambiá a AM o elegí otra fecha.','err');
     var ftS=document.getElementById('f-turno'); if(ftS){ ftS.classList.add('seg-err'); setTimeout(function(){ ftS.classList.remove('seg-err'); },1600); ftS.scrollIntoView({block:'center'}); }
@@ -8833,7 +8890,7 @@ function submitPedido(){
      del servidor rechazaría (cerrado, domingo, sábado PM, turno lleno). Mover a un día
      normal no fuerza nada y no pide ninguna clave. */
   _forzar = !!(isEdit && UNLOCKED && (_mueveFecha || _mueveTurno) &&
-             (diaCerrado(fechaSel) || diaDomingo(fechaSel) || (diaSabado(fechaSel) && turnoSel==='PM') ||
+             (diaCerrado(fechaSel) || diaDomingo(fechaSel) || feriadoDe(fechaSel) || (diaSabado(fechaSel) && turnoSel==='PM') ||
               cuposUsadosTurno(fechaSel, turnoSel) >= limTurno(fechaSel, turnoSel)));
   if(_forzar && !asegurarClaveAdmin()) return;
   }
@@ -9888,7 +9945,10 @@ function cupoTurno(t){ return normTurno(t)==='PM' ? CUPOS_PM : CUPOS_AM; }
 function dowDe(fecha){ var m=String(fecha||'').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(+m[1], +m[2]-1, +m[3]).getDay() : -1; }
 function diaDomingo(fecha){ return dowDe(fecha)===0; }
 function diaSabado(fecha){ return dowDe(fecha)===6; }
-function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0) return 0; if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
+/* (29/09, §4gy) El camión no sale en feriados (dueño: «no sale en feriados»): sin cupo, como el domingo. `FERIADOS` está más
+   abajo en la página: se pregunta con `typeof` por si algo lo llama antes de que se lea esa línea. */
+function feriadoDe(f){ return (typeof FERIADOS!=='undefined' && FERIADOS && FERIADOS[f]) || ''; }
+function limTurno(fecha, turno){ var d=dowDe(fecha); turno=normTurno(turno); if(d===0 || feriadoDe(fecha)) return 0; if(d===6) return turno==='AM'?15:0; return turno==='PM'?CUPOS_PM:CUPOS_AM; }
 function cuposUsados(fecha){ var n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha) n++; } return n; }
 function cuposUsadosTurno(fecha,turno){ var t=normTurno(turno),n=0; for(var i=0;i<STATE.length;i++){ if(STATE[i].fecha===fecha && normTurno(STATE[i].turno)===t) n++; } return n; }
 /* ---- Turno y atraso ----
@@ -9948,6 +10008,11 @@ function renderCupoForm(){
   if(diaDomingo(fecha)){
     el.className='cupo full';
     el.innerHTML='🚫 <b>No se agenda los DOMINGOS.</b> Elegí otra fecha para este pedido.'+_ed;
+    return;
+  }
+  if(feriadoDe(fecha)){
+    el.className='cupo full';
+    el.innerHTML='🚫 <b>El '+fmtFecha(fecha)+' es feriado ('+esc(feriadoDe(fecha))+'):</b> el camión no sale. Elegí otra fecha para este pedido.'+_ed;
     return;
   }
   if(diaSabado(fecha)){
@@ -11563,6 +11628,9 @@ function renderAdmin(){
     if(diaDomingo(cdia)){
       cupoEl.className='cupo full';
       cupoEl.innerHTML='🚫 <b>'+fmtFecha(cdia)+' (domingo)</b> — no se agenda';
+    }else if(feriadoDe(cdia)){
+      cupoEl.className='cupo full';
+      cupoEl.innerHTML='🚫 <b>'+fmtFecha(cdia)+' (feriado: '+esc(feriadoDe(cdia))+')</b> — el camión no sale';
     }else if(diaSabado(cdia)){
       cupoEl.className='cupo '+(rAM<=0?'full':(rAM<=3?'warn':'ok'));
       var uS=cuposUsadosTurno(cdia,'AM');   // (26/09) §4fh también el sábado: 17 en un turno de 15 se veía igual que 15
@@ -11708,11 +11776,12 @@ function renderOcupacion(){
   for(var i=0;i<7;i++){
     var d=new Date(base.getFullYear(),base.getMonth(),base.getDate()+i);
     var f=isoLocal(d), lAM=limTurno(f,'AM'), lPM=limTurno(f,'PM');
-    var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f);
-    rows+='<div class="occ-row"'+(dom?' style="opacity:.6"':'')+'>'+
+    var uAM=cuposUsadosTurno(f,'AM'), uPM=cuposUsadosTurno(f,'PM'), tot=uAM+uPM, totLim=lAM+lPM, dom=diaDomingo(f), fer=feriadoDe(f);
+    rows+='<div class="occ-row"'+((dom||fer)?' style="opacity:.6"':'')+'>'+
       '<span style="width:74px;flex:none;font-weight:700;color:var(--text);font-size:.8rem">'+fmtFechaCorta(f)+' <span style="color:var(--muted);font-weight:600">'+diaSemanaCorto(d)+'</span></span>'+
-      (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>' : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
-      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+(dom?'—':(tot+'/'+totLim))+'</span></div>';
+      (dom ? '<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Domingo — cerrado</span>'
+           : fer ? ('<span style="flex:2;font-size:.78rem;color:var(--muted)">🚫 Feriado — '+esc(fer)+'</span>') : (occBar('🌅',uAM,lAM)+occBar('🌆',uPM,lPM)))+
+      '<span style="width:52px;flex:none;text-align:right;font-size:.74rem;font-weight:700;color:'+((totLim>0&&tot>=totLim)?'var(--red)':'var(--muted)')+'">'+((dom||(fer&&!tot))?'—':(tot+'/'+totLim))+'</span></div>';
   }
   el.innerHTML=rows;
 }
@@ -11769,6 +11838,7 @@ function reproAvisos(p, f, t){
   if(diaCerrado(f)) A.push('El '+fmtFecha(f)+' está CERRADO (el camión de ese día ya está armado).');
   if(f<todayStr()) A.push('Es una fecha que YA PASÓ ('+fmtFecha(f)+').');
   if(diaDomingo(f)) A.push('Es DOMINGO: normalmente no se entrega.');
+  else if(feriadoDe(f)) A.push('Es FERIADO ('+feriadoDe(f)+'): el camión no sale.');
   else if(diaSabado(f) && t==='PM') A.push('Es SÁBADO y los sábados solo hay turno AM.');
   else {
     var lim=limTurno(f,t), usados=cuposUsadosTurno(f,t);
@@ -12475,6 +12545,7 @@ function abrirProgramarDevAtc(id){
     /* (25/09) Con los límites de ESE día: decía «de 12 · PM de 13» también el sábado (15 y sin
        tarde) y el domingo, y el sábado a la tarde parecía libre. */
     if(diaDomingo(f)) return '🚫 El '+fmtFecha(f)+' es <b>domingo</b>: no se entrega.';
+    if(feriadoDe(f)) return '🚫 El '+fmtFecha(f)+' es <b>feriado</b> ('+esc(feriadoDe(f))+'): no se entrega.';
     var lPM=limTurno(f,'PM');
     return '🌅 AM '+c(amL,limTurno(f,'AM'))+' · 🌆 PM '+(lPM>0?c(pmL,lPM):'<b>no hay (sábado)</b>')+' cupos usados el '+fmtFecha(f);
   };
@@ -16952,6 +17023,13 @@ function stockPedidoUnico(p){
   if(stockPuntual(p)) return true;              // 3. Multicenter de otro vendedor, consignación, ROHO a tienda
   return stockEsEduardo(p);                     // 4. las otras ventas de Eduardo
 }
+/* 🏬 (dueño, 29/09) QUÉ ES UNA ENTREGA para contar la rotación. *«Multicenter hace pedidos y todos son a su bodega, pero
+   hace pedidos por unidades: a veces hasta 4 pedidos en el mismo día para su bodega.»* Esos pedidos del MISMO día son UNA
+   entrega, no cuatro: si no, una sola compra partida en 4 pedidos pasaba el umbral de `STOCK_VENTAS_MIN` (3 entregas
+   distintas) y armaba un ritmo que no existe. Las unidades se suman igual; solo cambia cuántas entregas son.
+   `f` es la fecha de la ventana que se cuenta (la de salida para los 15 días, la de venta para los 30). Los demás
+   pedidos siguen contando uno por uno, como siempre. */
+function stockEntregaClave(p, f){ return stockEduardoMulticenter(p) ? ('mc|'+(f||'')) : String(p.id); }
 /* ¿Lo vendido en la ventana fue TODO de Eduardo? Solo para que el cartel diga de quién es:
    «pedido único» de Eduardo o «pedido único» del equipo (menos de 3 entregas) — §4dj. */
 function stockSoloEduardo(o){ return !!o && !(o.vendidosRotacion>0) && o.vendidosUnicos>0; }
@@ -17020,12 +17098,13 @@ function stockData(extra){
       // 45 en una venta no es lo mismo que 45 en veinte, y el ritmo solo existe en el segundo caso.
       if(fs>=desde && fs<=hoy){
         o.vendidos+=c;
+        var ek=stockEntregaClave(p, fs);          // 🏬 (29/09) los pedidos de Multicenter del mismo día son UNA entrega
         if(stockPedidoUnico(p)){ o.vendidosUnicos+=c; if(esRPT(p.oc)) o.vendidosRpt+=c; else if(stockPuntual(p)) o.vendidosPunt+=c; }
         else {o.vendidosRotacion+=c; o.sem[Math.min(2, Math.max(0, Math.floor(stockDias(fs,hoy)/5)))]+=c;
           if(stockEduardoMulticenter(p)) o.vendidosEduMc+=c;   // 🏬 (28/09) cuánto de eso es Eduardo → Multicenter
-          if(!o.ventasRotacion[p.id]){o.ventasRotacion[p.id]=1;o.nVentasRotacion++;}}
+          if(!o.ventasRotacion[ek]){o.ventasRotacion[ek]=1;o.nVentasRotacion++;}}
 
-        if(!o.ventas[p.id]){ o.ventas[p.id]=1; o.nVentas++; }
+        if(!o.ventas[ek]){ o.ventas[ek]=1; o.nVentas++; }
       }
       /* La ventana de 30 días del plan del mes (§4dr): mismas reglas —equipo + Eduardo a Multicenter (28/09), sin sus
          otras ventas, puntuales ni reposiciones— pero más larga, porque «si en septiembre se vendieron 70 soft…»
@@ -17035,7 +17114,8 @@ function stockData(extra){
          mes tiene que cuadrar con él. La rotación de 15 días sigue por fecha de salida. */
       var fv=contaFecha(p)||fs;
       if(fv>=desde30 && fv<=hoy && !stockPedidoUnico(p)){
-        o.v30+=c; if(!o.ventas30[p.id]){ o.ventas30[p.id]=1; o.n30++; }
+        var ek30=stockEntregaClave(p, fv);        // 🏬 (29/09) ver `stockEntregaClave`
+        o.v30+=c; if(!o.ventas30[ek30]){ o.ventas30[ek30]=1; o.n30++; }
         if(stockEduardoMulticenter(p)) o.v30EduMc+=c;          // 🏬 (28/09)
       }
       if(hecho) ultFab(o, x.prodF||fs, prodDondeSePide(x));
@@ -17438,7 +17518,12 @@ var FERIADOS={
   '2027-03-26':'Viernes Santo', '2027-05-01':'Día del Trabajo', '2027-05-27':'Corpus Christi', '2027-06-21':'Año Nuevo Andino',
   '2027-08-06':'Día de la Independencia', '2027-09-24':'Día de Santa Cruz', '2027-11-02':'Todos Santos', '2027-12-25':'Navidad'
 };
+/* (29/09, §4gy) Los feriados de 2026 que YA PASARON, solo para la proyección (los días hábiles de cada mes cerrado): el dueño
+   confirmó el 6 y el 7/08 (el 7, puente del DS 5521), y el 25/09 no trabajó nadie (Santa Cruz). Van aparte y no en `FERIADOS`
+   porque nada de entregas mira atrás, y las pruebas del cuadrito clavan el reloj en esos días de septiembre. */
+var FERIADOS_PASADOS={ '2026-08-06':'Día de la Independencia', '2026-08-07':'Feriado puente', '2026-09-25':'Día de Santa Cruz' };
 function diaHabil(f){ return !!f && !diaDomingo(f) && !FERIADOS[f]; }
+function pryDiaHabil(f){ return diaHabil(f) && !FERIADOS_PASADOS[f]; }
 function sigDiaHabil(f){ var d=stockSumarDias(f,1); for(var n=0; n<30 && !diaHabil(d); n++) d=stockSumarDias(d,1); return d; }
 function diaHabilMas(f, n){ for(var i=0; i<n; i++) f=sigDiaHabil(f); return f; }
 /* 📥 El día en que logística recoge en Moreno lo que se pide hoy: el día hábil siguiente, a cualquier hora. */
@@ -17721,7 +17806,7 @@ function saldoPonerDia(v, min, sinId){
 function saldoDiaConCupo(desde, sinId){
   var yo=sinId ? findById(sinId) : null, f=desde;
   for(var i=0;i<SALDO_DIAS_CUPO;i++, f=stockSumarDias(f,1)){
-    if(diaDomingo(f) || diaCerrado(f)) continue;
+    if(diaDomingo(f) || feriadoDe(f) || diaCerrado(f)) continue;       // §4gy: ni en feriado
     var t=['AM','PM'].filter(function(tu){
       var lim=limTurno(f,tu); if(!(lim>0)) return false;
       var u=cuposUsadosTurno(f,tu);
@@ -20690,6 +20775,7 @@ function renderImportRoho(){
   var avisosDia=Object.keys(porDia).sort().map(function(f){
     var lim=limTurno(f,ROHO_TURNO), usados=cuposUsadosTurno(f,ROHO_TURNO), libre=Math.max(0,lim-usados);
     var n=porDia[f];
+    if(feriadoDe(f)) return '<b>'+fmtFecha(f)+'</b>: es feriado ('+esc(feriadoDe(f))+') y el camión no sale · '+n+' pedidos';   // §4gy
     if(ROHO_TURNO==='repartir'){
       var libreT=Math.max(0,limTurno(f,'AM')-cuposUsadosTurno(f,'AM'))+Math.max(0,limTurno(f,'PM')-cuposUsadosTurno(f,'PM'));
       return n>libreT ? ('<b>'+fmtFecha(f)+'</b>: '+n+' pedidos y quedan '+libreT+' cupos en todo el día') : '';
@@ -21040,7 +21126,8 @@ function cambiarTurno(id, turno){
   if(normTurno(p.turno)===turno) return;              // ya está en ese turno
   var lim=limTurno(p.fecha, turno);
   if(lim<=0){
-    toast(diaSabado(p.fecha) ? 'Los sábados solo hay turno AM.' : 'Ese día no tiene turno '+turno+'.','err');
+    toast(feriadoDe(p.fecha) ? ('El '+fmtFecha(p.fecha)+' es feriado ('+feriadoDe(p.fecha)+'): el camión no sale. Reprogramalo a otro día.')   // §4gy
+          : diaSabado(p.fecha) ? 'Los sábados solo hay turno AM.' : 'Ese día no tiene turno '+turno+'.','err');
     return;
   }
   var usados=cuposUsadosTurno(p.fecha, turno);        // el pedido está en el OTRO turno, no se cuenta acá

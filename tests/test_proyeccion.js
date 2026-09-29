@@ -70,6 +70,10 @@ function PREPARAR(){
   if(typeof MIS_TIMER!=='undefined' && MIS_TIMER) clearInterval(MIS_TIMER);
   try{ cargaBanner(); }catch(e){}
   loadFromServer=function(){};            // desbloquear no lee la planilla en la prueba
+  /* (29/09, §4gy) Las cuentas a mano de §2-17 se hicieron con agosto y septiembre SIN feriados: acá se sacan los que ya
+     pasaron (6 y 7/08, 25/09) y el calendario de verdad se prueba aparte, en §18. */
+  window._FPR = (typeof FERIADOS_PASADOS!=='undefined') ? FERIADOS_PASADOS : null;
+  if(window._FPR) FERIADOS_PASADOS={};
   var n=0;
   /* Una venta: `bs` es su total (queda como saldo), `fecha` la entrega agendada, `ts` cuándo se cargó. */
   window.V=function(vend, fecha, bs, o){
@@ -507,7 +511,11 @@ function PREPARAR(){
                 conAlm:t({desc:'COLCHON TITANIO + 2 ALMOHADAS',cant:1}), cBarra:t({desc:'TITANIO LATEX C/2 ALMOHADAS DE REGALO',cant:1}), cyS:t({desc:'Colchón y somier titanio',cant:1}),
                 almYcuna:t({desc:'2 ALMOHADAS + COLCHON CUNA',cant:1}), regalo:t({desc:'COLCHON DE REGALO',cant:1}), somPatas:t({desc:'SOMIER + PATAS',cant:1}),
                 protEnvio:t({desc:'PROTECTOR + ENVIO',cant:1}), envio:t({desc:'ENVIO',cant:1}), topper:t({desc:'TOPPER VISCOLASTICO',cant:1}),
-                comboAlm:t({desc:'COMBO ALMOHADAS NASA',cant:1}), comboLibre:t({desc:'COMBO ORTOPEDICO SUEÑA',cant:1}), ortoDC:t({desc:'ESPECIAL ORTOPEDICO D/C',cant:1}) };
+                comboAlm:t({desc:'COMBO ALMOHADAS NASA',cant:1}), comboLibre:t({desc:'COMBO ORTOPEDICO SUEÑA',cant:1}), ortoDC:t({desc:'ESPECIAL ORTOPEDICO D/C',cant:1}),
+                /* (29/09, revisión) «sin somier», «sommier», servicios y muebles escritos a mano */
+                sinSom:t({desc:'COLCHON TITANIO S/SOMIER',cant:1}), sinSom2:t({desc:'colchon sin somier',cant:1}), sommier:t({desc:'SOMMIER 140X190',cant:1}),
+                cSommier:t({desc:'Colchon + sommier',cant:1}), boxSpring:t({desc:'BOX SPRING 2 PLAZAS',cant:1}), traslado:t({desc:'TRASLADO',cant:1}),
+                manoObra:t({desc:'MANO DE OBRA',cant:1}), camarote:t({desc:'CAMAROTE',cant:1}), almNasa:t({desc:'ALM NASA',cant:2}), dormitorio:t({desc:'JUEGO DE DORMITORIO',cant:1}) };
     var venta={ productos:[{desc:'TITANIO LATEX',medida:'140x190',cant:2},{desc:'ALMOHADA',medida:'50x70',cant:2},{desc:'PROTECTOR',medida:'140x190',cant:1}] };
     var combo={ productos:[{codigo:'CMBSE002',desc:'COMBO SUEÑA ESSENTIAL',medida:'140x190',cant:1},{desc:'SOMIER SUEÑA',medida:'140x190',cant:1}] };
     /* El dueño: «hay combos que llevan colchón, somier, almohadas y sábanas o mantas: solo se cuenta el colchón y el somier.
@@ -531,6 +539,10 @@ function PREPARAR(){
       r.casos && r.casos.conAlm==='colchon' && r.casos.cBarra==='colchon' && r.casos.almYcuna==='colchon' && r.casos.regalo==='colchon' && r.casos.ortoDC==='colchon', r.casos);
   chk('…«Colchón y somier titanio» es colchón + somier, «SOMIER + PATAS» un somier; «PROTECTOR + ENVIO», «ENVIO» y «TOPPER VISCOLASTICO» no cuentan',
       r.casos && r.casos.cyS==='combo' && r.casos.somPatas==='somier' && r.casos.protEnvio==='' && r.casos.envio==='' && r.casos.topper==='', r.casos);
+  chk('«COLCHON TITANIO S/SOMIER» y «colchon sin somier» son solo un colchón; «SOMMIER» y «BOX SPRING» son somier; «Colchon + sommier», los dos',
+      r.casos && r.casos.sinSom==='colchon' && r.casos.sinSom2==='colchon' && r.casos.sommier==='somier' && r.casos.boxSpring==='somier' && r.casos.cSommier==='combo', r.casos);
+  chk('no cuentan: TRASLADO, MANO DE OBRA, CAMAROTE, «ALM NASA» ni «JUEGO DE DORMITORIO»',
+      r.casos && r.casos.traslado==='' && r.casos.manoObra==='' && r.casos.camarote==='' && r.casos.almNasa==='' && r.casos.dormitorio==='', r.casos);
   chk('una venta de 2 colchones + 2 almohadas + 1 protector = 2 unidades (2 colchones); un combo + un somier = 3 (1 colchón y 2 somieres)',
       r.uv && r.uv.u===2 && r.uv.c===2 && r.uv.s===0 && r.uc && r.uc.u===3 && r.uc.c===1 && r.uc.s===2, [r.uv, r.uc]);
   chk('el combo cargado producto por producto (colchón + somier + 2 almohadas + sábanas + manta) = 2 unidades: 1 colchón y 1 somier, con código y escrito a mano',
@@ -575,7 +587,7 @@ function PREPARAR(){
   chk('Sueña 40.000 y 8 contra 80.000 y 16; el equipo 71.340 y 19 contra 164.000 y 30 (con el sin marca)',
       r.aS && r.aS.bs===40000 && r.aS.u===8 && r.bS.bs===80000 && r.bS.u===16 && r.aE.bs===71340 && r.aE.u===19 && r.bE.bs===164000 && r.bE.u===30, [r.aS, r.bS, r.aE, r.bE]);
   chk('arriba del todo: «Heaven: 64% abajo en plata (Bs 30.000 contra Bs 84.000) y 29% abajo en unidades (10 contra 14)», y lo mismo para Sueña y el equipo',
-      /📊 A ESTA ALTURA — OCTUBRE DE 2026 AL DÍA 14/i.test(r.txt) && /contra septiembre de 2026 al día 14/.test(r.txt) &&
+      /📊 A ESTA ALTURA — OCTUBRE DE 2026 AL DÍA 14/i.test(r.txt) && /cargado hasta ahora, contra lo que tenía septiembre de 2026 al día 14 a las 15:00\./.test(r.txt) &&
       /Heaven: 64% abajo en plata \(Bs 30\.000 contra Bs 84\.000\) y 29% abajo en unidades \(10 contra 14\)\./.test(r.txt) &&
       /Sueña: 50% abajo en plata \(Bs 40\.000 contra Bs 80\.000\) y 50% abajo en unidades \(8 contra 16\)\./.test(r.txt) &&
       /Todo el equipo: \d+% abajo en plata \(Bs 71\.340 contra Bs 164\.000\) y 37% abajo en unidades \(19 contra 30\)\./.test(r.txt), r.txt);
@@ -591,6 +603,33 @@ function PREPARAR(){
       /Diferencia \+100% 0% 0% 0% — \+100%/.test(r.sepH) && !/entero Bs/.test(r.sepH), [r.sep, r.sepH]);
   chk('agosto no tiene con qué compararse (julio no está entero en el panel) y lo dice', /Todavía no hay un mes entero antes de agosto en el panel para comparar/.test(r.ago), r.ago);
 
+  /* (29/09, §4gy) A la MISMA HORA: el mes en curso trae lo cargado hasta ahora, así que el otro mes entra al mismo día y a la
+     misma hora de Bolivia. Antes entraba con el día entero y el mismo mes daba «1% arriba» a las 09:30 y «7%» a las 20:00. */
+  const horaFix = (hora) => ev((hora) => {
+    STATE=FIX2(); PRY_CMP=''; PRY_CMP_DE='';
+    var mk=function(id, reg, hh, bs){ return { id:id, oc:'10-9'+id, nota:'9'+id, vendedor:'Maria Flores', cliente:'CLIENTE HORA '+id, fecha:'2026-09-20', turno:'AM',
+      productos:[{desc:'COLCHON',medida:'140x190',cant:1}], saldo:bs, acuenta:0, pagado:false, metodoPago:'', entregado:false,
+      ts:new Date(reg+'T'+hh+':00-04:00').getTime(), fotos:[] }; };
+    STATE.push(mk('h1','2026-09-14','10:00',1000), mk('h2','2026-09-14','12:00',1000));
+    document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
+    var A=pryAltura(proyeccionMes('2026-10')), V=pryVentas(), c=pryCurva(V, 'heaven', ['2026-09']), r=0;
+    for(var i=1;i<=26;i++) if(pryAlDia('2026-09', i)==='2026-09-14'){ r=i; break; }
+    return { bH:A.ant.heaven.bs, hora:A.hora, intro:_txt('pry-altura'), r:r, T:c.T,
+             f11:pryCurvaF(c, r, 660), f13:pryCurvaF(c, r, 780), fDia:pryCurvaF(c, r),
+             corto:pryAcum(V, '2026-09', 31, 600).heaven.bs, entero:pryAcum(V, '2026-09', 0).heaven.bs };
+  }, hora);
+  await reloj('2026-10-14T11:00:00-04:00');
+  r = await horaFix();
+  chk('a las 11:00, septiembre entra al día 14 hasta las 11:00: la venta de las 10:00 sí y la de las 12:00 no (Bs 85.000), y lo dice',
+      r.bH===85000 && r.hora==='11:00' && /contra lo que tenía septiembre de 2026 al día 14 a las 11:00\./.test(r.intro), [r.bH, r.hora, r.intro && r.intro.slice(0,200), r.__error]);
+  chk('…la curva también: a las 11:00 cuenta 1.000 menos de ese día que a las 13:00, y sin hora cuenta el día entero',
+      r.r>0 && Math.abs((r.f13-r.f11)*r.T-1000)<0.01 && Math.abs(r.fDia-r.f13)<1e-9, r);
+  chk('un mes más corto (septiembre, 30 días) contra el día 31 entra ENTERO, sin cortar por hora', r.corto===r.entero && r.entero>0, [r.corto, r.entero]);
+  await reloj('2026-10-14T13:00:00-04:00');
+  r = await horaFix();
+  chk('…y a las 13:00, las dos (Bs 86.000)', r.bH===86000 && r.hora==='13:00', [r.bH, r.hora]);
+  await reloj('2026-10-14T15:00:00-04:00');
+
   // ═══ 17. 📊 En el iPad y en el celular ════════════════════════════════════════════════════════
   console.log('\n── 17. 📊 El cuadro en el iPad y en el celular ──');
   for (const w of [820, 1180, 390]) {
@@ -603,6 +642,18 @@ function PREPARAR(){
         tablas:document.querySelectorAll('#pry-altura .pry-tabla').length }; });
     chk('a '+w+' px: sin scroll de costado'+(w>=820 ? ' y las tablas de «A esta altura» entran enteras' : ''), r.sw<=r.iw && r.tablas>=4 && (w<820 || r.anchas===0), r);
   }
+
+  // ═══ 18. 📅 Los feriados que ya pasaron (29/09, §4gy) ══════════════════════════════════════════
+  console.log('\n── 18. Los feriados que ya pasaron: 6 y 7/08 y 25/09 cuentan para la proyección, no para las entregas ──');
+  r = await ev(() => {
+    var real=window._FPR, antes=FERIADOS_PASADOS; if(real) FERIADOS_PASADOS=real;
+    var out={ hay:!!real, ago:pryHabiles('2026-08-01','2026-08-31'), sep:pryHabiles('2026-09-01','2026-09-30'), oct:pryHabiles('2026-10-01','2026-10-31'),
+              ago7:pryAlDia('2026-08', 18), cupo25:limTurno('2026-09-25','AM') };
+    FERIADOS_PASADOS=antes;
+    return out;
+  });
+  chk('agosto de 2026 tuvo 24 días hábiles (sin el 6 y el 7), septiembre 25 (sin el 25) y octubre 27', r.hay && r.ago===24 && r.sep===25 && r.oct===27, r);
+  chk('…y las entregas no miran atrás: el cupo del 25/09 no cambia (el cuadrito y los cupos usan `FERIADOS`, que es para adelante)', r.cupo25===12, r);
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
