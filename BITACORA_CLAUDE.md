@@ -7445,6 +7445,100 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4gy. 29/09: los arreglos de la revisión de §4gx — feriados, el mixto falso, «a esta altura» a la misma hora y el retiro borrado (EN LA RAMA, SIN PUBLICAR)
+
+**Las respuestas del dueño** a las preguntas de §4gx:
+- *«No sale en feriados, arreglá el 2, 3 y 4»*. O sea A1 (el camión no sale en feriados), A2, A3 y A4.
+- *«Si 6 y 7 fue feriado»*: el 06/08 y el 07/08/2026 fueron feriado.
+- Logística NO sube el Excel de Moreno después de cargar la camioneta: M2 no pasa en la práctica. No se tocó.
+- Multicenter: *«solo en mi panel»*. No contesta si se carga en uno o en varios pedidos; no se tocó nada.
+- Nada se publica sin su OK.
+
+### A1 · El camión no sale en feriados
+- **`feriadoDe(f)`** (al lado de `limTurno`): el nombre del feriado o `''`. Lee `FERIADOS` con `typeof`, porque la lista está
+  más abajo en la página.
+- **`limTurno` da 0** en feriado, como el domingo. Con eso el cupo, el cuadrito (`saldoDiaConCupo`, que además lo saltea
+  explícito) y el portero del panel dicen lo mismo.
+- **`proximoDiaEntrega()` saltea domingos Y feriados** (tope de 30 días). El jueves 24/12 el «mañana» del chofer, la carga,
+  la ruta, el mapa, el WhatsApp y los cupos del encabezado son los del sábado 26/12.
+- **El formulario**, con las mismas reglas que el domingo:
+  - un pedido NUEVO para un feriado no se guarda: «🚫 El 25/12/2026 es FERIADO (Navidad): no hay entregas. Elegí otra fecha.»;
+  - una vendedora que MUEVE un pedido a un feriado, tampoco;
+  - uno que YA estaba en un feriado (cargado por una página vieja) se sigue pudiendo corregir sin mover la fecha;
+  - Administración sí lo mueve, con `forzar` (`_forzar` incluye `feriadoDe`).
+- **Los carteles lo dicen**: cupos del formulario (`renderCupoForm`), cupo de Administración, semana de ocupación
+  («🚫 Feriado — Navidad», con «—» en vez de «0/0»), avisos de 📅 Reprogramar (`reproAvisos`, que también usa la devolución
+  de una ATC) y el texto de cupos de la devolución.
+- ⚠️ **El portero del `.gs` (`porteroFecha_`) NO conoce los feriados.** Una página vieja, sin F5, todavía puede guardar
+  una entrega en feriado. Queda para la próxima versión del servidor.
+- ⚠️ **`FERIADOS` sigue siendo solo para adelante** (desde el 02/11/2026). Los que ya pasaron van aparte (ver abajo).
+
+### A2 · «↩️ Era un pago de la venta» ya no fabrica un pago mixto
+- **`mixtoMismoMetodo(c, a)`**: el 2° método del mixto nunca es el mismo método que el anticipo (ni el mismo banco, si es
+  QR). Es la misma regla con la que el formulario frena («El segundo método es igual al primero»). El flete que
+  `_cobrarAhora` cobra junto con la venta lleva el MISMO método, día y recibo, así que ya no se confunde.
+- **`mixtoEn` con varios candidatos** del mismo día y recibo: vale el que CIERRA el «A cuenta» con el anticipo, como lo
+  escribe el formulario. Antes, con dos, devolvía `null` y un mixto de verdad dejaba de reconocerse (y «SÍ, pagado»
+  proponía 3.500 para una venta de 3.000). En una venta «SÍ, pagado» (A cuenta 0, §4cb) no hay con qué elegir: vale
+  solo si es uno.
+- ⚠️ **Queda una ambigüedad, a propósito:** en una «SÍ, pagado», un pago de OTRO método del mismo día y recibo se lee
+  como el 2° método. No se distingue de un mixto de verdad, y los montos igual cierran (es plata que entró ese día con
+  ese recibo). No se agregó el aviso en `ctaEnvioAPago` que proponía §20: con la regla nueva, los casos del informe ya
+  no cambian el mixto.
+- Si algún día hace falta que no se adivine más, la salida es marcar el 2° método en el propio renglón (una letra, como
+  el `^` del flete). Se lo pregunté a Codex en §20.5.
+
+### A3 · «A esta altura» y la curva, a la misma hora
+- `pryVentas` guarda `m`: los minutos del día en Bolivia en que se cargó la venta (`pryMinBo(ts)`, UTC−4 fija como
+  `isoDeTsBolivia`; sin `ts`, al final del día).
+- **`pryCargadaAl(x, d, min)`**: ¿estaba cargada el día `d` a los `min` minutos? Sin `min`, el día entero.
+- `pryAcum(V, ym, dia, min)` y `pryCurvaF(c, r, min)` cortan el otro mes (o la historia) al mismo día Y a la misma hora
+  de ahora. Antes el otro mes entraba con el día entero: el mismo mes daba «1 % arriba» a las 09:30 y «7 % arriba» a las
+  20:00.
+- La prueba (🧪 `pryPrueba`) sigue con días enteros: ahí los dos lados son días ya cerrados.
+- Si el otro mes era más corto (febrero contra un 30), entra entero y el texto lo dice («tenía 28 días y a esta altura ya
+  había cerrado»).
+- El texto de arriba: «…cargado hasta ahora, contra lo que tenía septiembre de 2026 al día 14 a las 15:00.»
+
+### A4 · Un retiro borrado desde otro equipo ya no vuelve
+- `guardarRetiroForm`, al CORREGIR un retiro, manda el sello con el que se vio (`rev` de la lista o `SAVE_REV`, el mayor).
+  Con la 28-a, si otro equipo lo borró, el servidor contesta `borrado` y no lo vuelve a crear. Lo mismo desde la cola de
+  un celular sin señal.
+- Ante `borrado`, el retiro sale de la lista de ese equipo (deja de restar en su cuadre) y el aviso dice que la
+  corrección NO se guardó y que lo confirme con administración antes de cargarlo de nuevo.
+- ⚠️ **Lo que NO arregla:** dos equipos corrigiendo el MISMO retiro a la vez. Gana el último, porque el `.gs` no compara
+  el sello de las filas `__ret_…` (`filaSistema` las deja afuera del control). Queda para la próxima versión del servidor.
+
+### Los feriados que ya pasaron, para la proyección
+- **`FERIADOS_PASADOS`** = 06/08 (Independencia), 07/08 (puente, confirmado por el dueño) y 25/09 (Santa Cruz, nadie trabajó).
+- **`pryDiaHabil(f)`** = `diaHabil` y no está en esa lista. La usan SOLO `pryHabiles`, `pryAlDia` y `pryPatron`: agosto tuvo
+  24 días hábiles, septiembre 25 y octubre 27.
+- No van en `FERIADOS` a propósito. Lo probé y se rompían `test_rev8_saldo`, `test_saldo_almacen` y 31 de
+  `test_proyeccion`: las entregas no miran atrás y esas pruebas clavan el reloj en esos días. En `test_proyeccion`, las
+  secciones hechas a mano con días hábiles vacían `FERIADOS_PASADOS` en su `PREPARAR`, y §18 prueba la lista de verdad.
+
+### Unidades (la BAJA que era regresión mía de §4gv)
+- **`PRY_SIN`** saca «S/SOMIER», «SIN SOMIER», «S/ COLCHON» antes de partir el renglón en pedazos. El «/» lo partía y
+  el pedazo «SOMIER» sumaba un somier que no hay.
+- `PRY_ES_SOMIER` acepta «SOMMIER» y «BOX SPRING».
+- `PRY_NO_UNIDAD` suma servicios, muebles y errores de tipeo: TRASLADO, MANO DE OBRA, ENTREGA, RECARGO, CAMAROTE, LITERA,
+  CATRE, NORDICO, CAJONERA, PLATAFORMA, ESPALDAR, RUEDA, DORMITORIO, ALMOADA, ALM, PROTETOR.
+- Se dejaron como estaban, porque son ambiguos: BASE, BASE CAMA, PILLOW TOP, «COMBO COLCHON + ALMOHADA» (la regla del
+  dueño es combo = colchón + somier) y CUNA sola.
+
+### Pruebas
+- `tests/test_rev29_dias.js` (25; 20 rojas contra `040e1df`): cupos y «mañana» en feriado, los seis cuadritos (Navidad,
+  Año Nuevo, Todos Santos tras un domingo, Carnaval 2027), el formulario (nuevo, mover, corregir uno que ya estaba,
+  Administración con `forzar`) y los carteles.
+- `tests/test_rev29_pedidos.js` (25; 15 rojas contra `040e1df`): A2 de punta a punta con el formulario, Contabilidad y el
+  `.gs` real; las cuentas del mixto con la página sola; y A4 con dos equipos, la cola y dos correcciones seguidas.
+- `tests/test_proyeccion.js` (126; 8 rojas contra `040e1df`): unidades con «S/SOMIER», A3 a la misma hora y §18 de los
+  días hábiles.
+- Las pruebas de los agentes (`rev29/…` en el scratchpad) dan todo en verde con el arreglo.
+
+### Lo que sigue pendiente de §4gx
+M1 y M3-M8, y las otras BAJA (RESPUESTA §20.3). Nada de eso se tocó.
+
 ## 4gx. 29/09, madrugada: revisión con cuatro agentes de lo hecho el 28 y 29/09 — NADA ARREGLADO TODAVÍA
 
 **El pedido.** *«Agente a revisar todo lo que hicimos ayer y hoy en stock, pedidos, días y proyección. Me das el informe

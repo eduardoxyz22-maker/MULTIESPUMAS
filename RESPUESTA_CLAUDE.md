@@ -1,5 +1,9 @@
 # RESPUESTA DE CLAUDE — Informe de errores MULTIESPUMAS, segunda vuelta (23/09/2026)
 
+> **ACTUALIZACIÓN 29/09, tarde — §21: A1-A4 ARREGLADOS EN LA RAMA, SIN PUBLICAR.** El dueño contestó (*«No sale en
+> feriados, arreglá el 2, 3 y 4»*) y pidió los arreglos antes de tu opinión. Feriados sin camión, el mixto falso, «a esta
+> altura» a la misma hora y el retiro borrado, con pruebas que fallan contra `040e1df`. Dos cosas quedan para la próxima
+> versión del `.gs`.
 > **ACTUALIZACIÓN 29/09, madrugada — LO NUEVO ESTÁ EN §20.** Cuatro publicaciones de la página desde §19 (28/09 18:28 →
 > 29/09 01:10, `main` = `040e1df`), y una revisión con cuatro agentes de todo lo hecho el 28 y 29/09 (stock, pedidos,
 > días y proyección): 4 hallazgos ALTA, 8 MEDIA y varios BAJA, todos reproducidos y **nada arreglado todavía**. §20.5
@@ -1613,6 +1617,62 @@ dispositivo está en otra zona.
   - las fichas de marca suman «Vendido en el período» en todos los cortes;
   - `renderProyeccion` tarda 21-35 ms con 1.500 ventas;
   - no hay scroll de costado a 820, 1180 y 390.
+
+## 21 · Los arreglos de A1-A4 (29/09) — en la rama, SIN publicar
+
+El dueño contestó y pidió los arreglos antes de tu opinión: *«No sale en feriados, arreglá el 2, 3 y 4»*.
+- El 6 y el 7/08 fueron feriado.
+- Logística NO sube el Excel de Moreno después de cargar, así que M2 no pasa en la práctica.
+- Multicenter: *«solo en mi panel»*. No contesta si se carga en uno o en varios pedidos, así que no se tocó.
+
+Lo hecho está en la rama `claude/pedidos-fecha-entrega-bgt0em` (bitácora §4gy). Se publica recién con su OK. Si algo de
+esto no te cierra, todavía se puede cambiar.
+
+**A1 · Feriados.**
+- `feriadoDe(f)` lee `FERIADOS`. `limTurno` da 0 en feriado, y `proximoDiaEntrega()` y `saldoDiaConCupo` los saltean.
+- El formulario frena un pedido nuevo o una fecha movida a un feriado, con las reglas del domingo. Administración pasa
+  con `forzar`, y lo que ya estaba en un feriado se corrige igual.
+- Los carteles de cupos lo dicen.
+- ⚠️ **Pendiente del servidor:** el portero del `.gs` no conoce los feriados. Una página sin F5 todavía puede guardar uno.
+- Los feriados que ya pasaron (06/08, 07/08, 25/09) van en `FERIADOS_PASADOS`, que usa solo la proyección
+  (`pryDiaHabil`). En `FERIADOS` rompían las pruebas del cuadrito que clavan el reloj en esos días, y las entregas no
+  miran atrás.
+
+**A2 · El mixto falso.** De las dos opciones que te planteé en §20.5, fui por la primera (seguir adivinando, con una
+regla más) y no por la letra en el renglón.
+- `mixtoMismoMetodo(c, a)` descarta los candidatos con el mismo método que el anticipo (y el mismo banco, si es QR). Es
+  la regla del formulario.
+- Con varios candidatos, vale el que cierra el «A cuenta».
+- No agregué el aviso en `ctaEnvioAPago`: con la regla nueva, los casos del informe no cambian el mixto.
+- Queda una ambigüedad: en una «SÍ, pagado», un pago de OTRO método del mismo día y recibo se lee como el 2° método. No
+  se distingue de un mixto de verdad, y los montos cierran igual.
+- Si preferís la letra, se puede hacer después sin tocar los datos viejos.
+
+**A3 · A la misma hora.**
+- `pryVentas` guarda los minutos del día en Bolivia (`pryMinBo(ts)`), y `pryAcum`/`pryCurvaF` cortan el otro mes al
+  mismo día y a la misma hora de ahora.
+- La prueba (🧪) sigue con días enteros.
+- Un mes más corto entra entero, y el texto lo dice.
+
+**A4 · El retiro borrado.**
+- Corregir un retiro manda `rev` (el de la lista o `SAVE_REV`), y con la 28-a ya contesta `borrado`, también desde la
+  cola.
+- El retiro sale de la lista de ese equipo, con aviso.
+- ⚠️ **Pendiente del servidor:** dos correcciones simultáneas del mismo retiro. Gana la última, porque el `.gs` no compara
+  el sello de `__ret_…`.
+
+**La BAJA de unidades («S/SOMIER»)**, que era regresión mía, también quedó arreglada: `PRY_SIN`, SOMMIER, BOX SPRING y más
+palabras que no cuentan.
+
+**Pruebas nuevas** (rojas contra lo publicado, `040e1df`):
+- `test_rev29_dias.js`: 25, 20 rojas;
+- `test_rev29_pedidos.js`: 25, 15 rojas, con el `.gs` real;
+- `test_proyeccion.js`: 126, 8 rojas.
+
+Los reproductores de los agentes para A1-A4 dan todo en verde.
+
+**Sigue pendiente:** M1, M3-M8 y las otras BAJA de §20.3. Para la próxima versión del `.gs` se juntan tres cosas: los
+feriados en el portero, el sello de los retiros y la respuesta que diga de qué lectura sale (M1, M8).
 
 ## Primera vuelta (`d890468`), resumida
 
