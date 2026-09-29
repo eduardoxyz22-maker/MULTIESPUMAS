@@ -844,7 +844,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
 - ⚠️ Las fichas de esta pestaña piden 300 px (`data-min` en `#pry-metrics`, que `acomodarFichas` respeta): con 230 los
   totales de seis cifras salían cortados en el iPad. La lista por vendedor es lista y no tabla: en 390 px una tabla
   escondía la proyección.
-- **🔁 La curva de cada marca (§4gu, SIN PUBLICAR)**. El dueño: *«¿qué fórmula o algoritmo… algo realmente preciso?… en
+- **🔁 La curva de cada marca (§4gu, publicada 29/09 00:24, `a904137`)**. El dueño: *«¿qué fórmula o algoritmo… algo realmente preciso?… en
   agosto los últimos dos, tres días se facturó 80.000 o 150.000… Heaven; Sueña es distinto… probar con agosto»*.
   - `pryCurva`/`pryCurvaF`/`pryAlDia`: faltando r días hábiles para el cierre, qué parte `f` de lo que vendieron los
     meses cerrados (desde `PRY_PRIMER_MES`='2026-08') ya estaba vendida (`contaFecha`). Alineados por días hábiles.
@@ -859,7 +859,37 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     llenando y qué días de la semana se vende más.
   - ⚠️ Los feriados de 2026 ya pasados (06/08, 25/09) NO están en `FERIADOS` a propósito (pruebas del cuadrito entregan
     esos días): acá cuentan como hábiles.
-- `tests/test_proyeccion.js` (95: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`).
+  - **Decidido por el dueño (29/09)**: solo con los datos del panel. Sus montos de meses anteriores (Excel por vendedor)
+    NO se cargan, y nunca van al repo. Las metas son **por marca y cambian cada mes** (todavía no hay dónde cargarlas).
+    Julio y septiembre tuvieron campaña: la prueba del 1/10 compara un mes sin campaña con uno con campaña.
+- **📊 A esta altura y 📦 unidades (§4gv, SIN PUBLICAR)**. El dueño: *«la opción 2 [cada semana, cómo vas contra los meses
+  anteriores a la misma altura]… y también unidades: puede que entre menos plata pero subió el número de unidades»*.
+  - **Unidad = colchón (también colchoneta y colchón de cuna) o somier**, con su cantidad (dueño: *«quitá las almohadas,
+    solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas, etc.»*).
+    Un combo = un colchón y un somier (confirmado por el dueño; igual *«los vendedores no cargan combos, cargan producto
+    por producto»*: cada renglón cuenta por su lado). `pryUnidadesDe` → `{u, c, s}`; `pryTipoProd` → `colchon|somier|combo|''`. El código
+    del catálogo manda sobre el nombre escrito.
+  - ⚠️ El colchón se reconoce por DESCARTE (como el stock, §4cx): lo que no cuenta es `esProdDeTienda` + `PRY_NO_UNIDAD`
+    (accesorios, muebles, servicios). Un accesorio nuevo que aparezca contado como colchón va a esa lista.
+  - En lo escrito a mano manda la PRIMERA palabra que dice qué es («PROTECTOR DE COLCHON» no cuenta), y un renglón con
+    varias cosas va por pedazos (`PRY_PEDAZOS`): el primero es colchón si no dice otra cosa, los demás solo si dicen
+    COLCHON/SOMIER («COLCHON TITANIO + 2 ALMOHADAS» = 1 colchón).
+  - `pryAltura`/`pryAcum`: lo vendido para el mes cargado hasta el MISMO DÍA del mes, contra otro mes («Comparar con», por
+    defecto el anterior, `PRY_CMP`); por marca y equipo; semana por semana por el día en que se cargó; un mes cerrado se
+    compara entero.
+  - La meta por marca NO está hecha: el dueño eligió esto antes (la meta es por marca y cambia cada mes).
+  - La tabla de cada marca tiene siete columnas y tiene que entrar en el iPad parado (820 px): relleno de 7 px en
+    `#pry-altura` (`test_proyeccion` §17 lo mide).
+- `tests/test_proyeccion.js` (118: §1-6 de §4gt, §7-14 de la curva con historiales inventados a mano `FIX2`/`FIX3`,
+  §15-17 de §4gv).
+- **🛏️💚 Fichas de cada marca en Contabilidad → Ventas (§4gw, SIN PUBLICAR)**. El dueño: *«falta la ficha de Sueña y de
+  Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+  - `renderContaMarcas` (caja `#cta-marcas`, debajo de `#cta-metrics`): lo vendido de cada marca sobre la MISMA lista que
+    «Vendido en el período» (`contaLista`: corte, período, vendedor y búsqueda). Marcas + «Sin marca» = lo de arriba.
+    Ventas · unidades (§4gv) · % de lo vendido. Con una vendedora, solo su marca. En Mayoristas, nada.
+  - `acomodarFichas`: `data-como="<id>"` copia las columnas de otra caja (las fichas de marca, alineadas con las de
+    arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
+  - `tests/test_ventas_marcas.js` (22).
 
 ## 🔎 La revisión de Codex del 28/09 (§4gl): lo que hay que respetar
 **PUBLICADA el 28/09 a las 15:02 de Bolivia** (`main` = `7fe7551`, junto con §4gm, §4gn y §4go; el dueño: «aprobado

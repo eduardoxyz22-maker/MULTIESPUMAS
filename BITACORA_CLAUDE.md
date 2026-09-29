@@ -7445,7 +7445,118 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
-## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — SIN PUBLICAR
+## 4gv. 29/09, madrugada: «A esta altura» contra otro mes al mismo día, y las unidades de cada marca — SIN PUBLICAR
+
+**El pedido.** Después de §4gu se le ofreció la meta por marca con dos cosas: cuánto falta para la meta, y «cada semana,
+cómo vas contra los meses anteriores a la misma altura». Contestó: *«la opción 2 me parece. Y también unidades, tanto de
+Sueña como de Heaven: puede que entre menos plata pero subió el número de unidades vendidas, y eso es bueno, y son cosas a
+ver»*. La meta queda para cuando la pida (dijo que es por marca y cambia cada mes).
+
+**Lo hecho (solo la pestaña 📈, `pedidos.html`):**
+- **📦 Unidades** (`pryTipoProd`, `pryUnidadesDe`): cada producto de la venta con su cantidad —colchones, somieres,
+  almohadas, respaldares, combos— sin lo que no es un producto de fábrica (`esProdDeTienda`: protectores, sábanas, mantas,
+  «VARIOS», «RECOGER…»), igual que el stock. Aparte los **colchones** (un combo cuenta como un colchón): si una campaña
+  regala almohadas, las unidades suben sin un colchón más. El tipo sale del nombre del catálogo si hay código (el código
+  manda), si no del nombre escrito, con plurales y los alias (`prodAlias`: «ALM/NASA»).
+  - Van en las fichas («N ventas · U unidades»), en cada vendedor y en el total.
+- **📊 A esta altura** (`pryAltura`, `pryAcum`, `pryAlturaHtml`, arriba de la lista por vendedor):
+  - lo VENDIDO para el mes (entrega agendada en el mes, como toda la pestaña) y cargado hasta el mismo día del mes, contra
+    otro mes al mismo día (hoy 29/09 contra lo cargado al 29/08);
+  - por defecto el mes anterior; «Comparar con» deja elegir cualquier mes entero del panel (por ejemplo, uno con campaña);
+  - por marca y el equipo, sin mayoristas: una línea por cada uno («Heaven: 42% abajo en plata (…) y 11% arriba en
+    unidades (…)») y una tabla por marca: vendido, ventas, unidades, colchones, Bs por unidad, la diferencia y el otro mes
+    entero;
+  - 📅 semana por semana (se abre): lo vendido para el mes por el día en que se cargó, antes del 1°, 1-7, 8-14, 15-21, 22-28
+    y del 29 al fin (por día del mes, no de lunes a domingo, para poder comparar meses); la semana en curso dice «(va)»;
+  - un mes que ya cerró se compara ENTERO con el otro; agosto no tiene con qué (julio no está entero en el panel).
+- En «❓ Cómo se cuenta», qué es una unidad y qué es «a esta altura».
+
+**Con ventas inventadas** (captura al dueño): Heaven 42 % abajo en plata y 11 % arriba en unidades, pero −33 % en colchones:
+las unidades subían por almohadas de campaña. Es el caso que la columna de colchones tiene que mostrar.
+
+**Pruebas:** `tests/test_proyeccion.js`, de 95 a 114 (§15-17 nuevas: tipos y unidades, «a esta altura» con números a mano,
+«Comparar con», mes cerrado, agosto sin comparación, anchos). 7 textos de §4-14 cambiaron a conciencia (dicen las
+unidades). Contra lo publicado (`a904137`): 88 bien · 26 mal.
+
+**Batería sobre `6ced156`: 113 suites, 4.350 bien · 0 mal** (`test_stock_detalle` dice «ok (sin resumen)», como siempre).
+Esperando el OK del dueño para publicar.
+
+**Segunda vuelta: las unidades son solo colchones y somieres** (`550e975`). Al ver las capturas, el dueño: *«quitá las
+almohadas, solo nos interesa colchones y somier y colchonetas o colchones de bebé, no mantas, sábanas, almohadas, patas,
+etc.»*. Reemplaza la primera versión de arriba (que contaba almohadas y respaldares y tenía aparte los colchones):
+- **Unidad = colchón** (también colchoneta y colchón de cuna) **o somier**, con su cantidad. Un **combo** cuenta como un
+  colchón y un somier. **Confirmado por el dueño**: *«hay combos que llevan colchón, somier, almohadas y sábanas o mantas:
+  solo se cuenta el colchón y el somier. Pero los vendedores no cargan combos, cargan producto por producto»*. Cargado
+  producto por producto da lo mismo (cada renglón por su lado): colchón + somier + 2 almohadas + sábanas + manta = 2
+  unidades, con código y escrito a mano (`test_proyeccion` §15). La tabla de «A esta altura» tiene ahora Unidades,
+  Colchones y Somieres, cada una con su diferencia.
+- **No cuentan**: lo de tienda de siempre (`esProdDeTienda`: protectores, sábanas, mantas, frazadas, cubrecamas, edredones,
+  MDF, «VARIOS», «RECOGER…») y `PRY_NO_UNIDAD`: almohadas, almohadones, almohadillas, cojines, respaldares, respaldos,
+  cabeceras, pieceras, patas, forros, fundas, armazones, veladores, toppers, plumones, acolchados, cobertores, colchas,
+  cortinas, toallas, alfombras, muebles (sofá, sillón, baúl, mesa, cama), espuma, planchas, retazos, telas, y servicios
+  (envío, flete, transporte, instalación, armado, descuento, regalo).
+- ⚠️ **El colchón se sigue reconociendo por DESCARTE** (§4cx: el catálogo casi nunca dice COLCHON). Si aparece un accesorio
+  nuevo que se cuenta como colchón, va a `PRY_NO_UNIDAD`.
+- **Lo escrito a mano** (`pryPedazoTipo`): manda la PRIMERA palabra que dice qué es («PROTECTOR DE COLCHON», «PATAS PARA
+  SOMIER» y «FORRO COLCHON PILLOW PEDIC» no cuentan; «COLCHON DE REGALO» sí). Un renglón con varias cosas se mira por
+  pedazos (`PRY_PEDAZOS`: «+», «,», «;», «/», «C/», «CON», «MAS», «Y»): el primero es un colchón si no dice otra cosa; los que
+  siguen cuentan solo si dicen COLCHON o SOMIER. Sin eso, «COLCHON TITANIO + 2 ALMOHADAS» —el renglón típico de una
+  campaña de almohadas de regalo— no contaba el colchón. «COMBO DE SÁBANAS» / «COMBO ALMOHADAS» no cuentan.
+- Todo el catálogo `CODIGOS` se clasificó igual con código y escrito a mano: 36 nombres de colchones (con COLCHONETA
+  CAMPING y COLCHON CUNA), 13 de somieres, 20 combos, y 5 que no cuentan (ALM/HEAVEN, ALM/NASA, ALMOHADA, ALMOHADA FIBRA
+  SILICONADA, RESPALDAR PRAG.).
+- La tabla, con siete columnas, no entraba en el iPad parado (695 px en 675): relleno de 7 px en `#pry-altura` y el
+  encabezado puede partirse. Queda 653 px con montos de siete cifras.
+- `tests/test_proyeccion.js`: 118 (§15 con los renglones escritos a mano, los combos y el combo cargado producto por
+  producto). Contra lo publicado (`a904137`): 88 bien · 30 mal; contra la primera versión (`33c876c`): 11 rojas, las de
+  la regla nueva.
+- **Batería sobre `550e975`: 113 suites, 4.353 bien · 0 mal.**
+
+## 4gw. 29/09: Contabilidad → Ventas, las fichas de Sueña y Heaven — SIN PUBLICAR
+
+**El pedido.** Con una captura de Ventas → 🚚 Entrega agendada → agosto: *«adicional, ahí falta la ficha de Sueña y de
+Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+
+**Lo hecho (`pedidos.html`):**
+- **`renderContaMarcas`**, llamada desde `renderContaMetrics`: una caja nueva `#cta-marcas` debajo de las cuatro fichas
+  de siempre, con **lo vendido de cada marca** (`ventaTotal`, `marcaDe`).
+- Sale de la **MISMA lista** que «Vendido en el período» (`contaLista`): el mismo corte (📝 ingreso o 🚚 entrega agendada),
+  el período (día, mes, todo), el vendedor y la búsqueda. Las marcas + «⚠️ Sin marca» suman lo de arriba.
+- Cada ficha: «N ventas · U unidades · X% de lo vendido» (unidades = colchones y somieres, §4gv).
+  - Con una vendedora elegida, solo la de su marca y sin el %.
+  - «Sin marca» solo si hay algún vendedor que no está en ninguna.
+  - En 🏭 Mayoristas no hay fichas de marca (la caja queda vacía y se esconde).
+- **Del mismo ancho y alineadas con las de arriba**: `acomodarFichas` acepta `data-como="cta-metrics"` y copia las
+  columnas de esa caja. A 1180 px Sueña va debajo de «Vendido en el período» y Heaven de «Ya ingresó»; a 820, dos por
+  fila; en el celular, una.
+- **Un monto que no entra se achica** (`fichasMontoEntero`, en `acomodarFichas`, para TODAS las cajas de fichas): con
+  ventas inventadas de más de un millón, «Bs 1.101.680,00» salía «Bs 1.101.68…» en el iPad acostado (fichas de 261 px).
+  Se achica la letra solo del que no entra (hasta 10 pasos de 8 %); los demás quedan igual.
+- Por entrega agendada da los mismos números que la pestaña 📈 Proyección (`test_ventas_marcas` §6).
+
+**Pruebas:** `tests/test_ventas_marcas.js` (22, nuevo): ingreso contra entrega (la venta cargada en agosto que se entrega
+en septiembre, la de septiembre que se entrega en octubre, la venta de tienda), la suma en seis cortes, vendedora y
+búsqueda, Mayoristas, Proyección, y el ancho a 1180/820/390 con un mes de Bs 1.255.567,89. Contra lo publicado
+(`a904137`): 4 bien · 18 mal.
+
+## 4gu. 29/09: la proyección con la curva de cada marca, la prueba con los meses cerrados y cómo se vendió cada mes — PUBLICADA 29/09 00:24 (`a904137`)
+
+> **Publicada el 29/09 a las 00:24 de Bolivia** (`main` = `a904137`). Sin tocar el servidor (sigue el `.gs` 2026-09-28-a).
+> No había ninguna corrida en curso ni en cola. Solo cambia la pestaña 📈 de Contabilidad (con la contraseña): a las
+> vendedoras no les cambia nada.
+>
+> **El OK del dueño**, después de ver las capturas con ventas inventadas y de preguntar qué tan exacta puede ser: *«si es
+> como la venías desarrollando, sin ver los meses anteriores que te pasé, sí, promueve. Veo que no sirven de mucho aún;
+> mejor armar algo limpio con los datos del panel»*.
+> - **Sus meses anteriores NO se cargan.** Mandó capturas de su Excel de métricas (ventas mensuales por vendedor, abril a
+>   agosto, Heaven y Sueña). Se analizaron en el scratchpad y **no van al repo** (es público). Lo que mostraron: el mes
+>   varía mucho de uno a otro (más que el 6 % que él busca), y el «promedio de los meses anteriores» erra bastante al
+>   arrancar el mes. Decidió seguir solo con lo que guarda el panel.
+> - **Metas:** *«por marca, y varía cada mes»*. No hay nada hecho todavía; se le propuso cargarla en esta pestaña con el
+>   seguimiento semanal «a esta altura contra los meses anteriores».
+> - **Julio tuvo una campaña parecida a la de septiembre.** Ojo al leer la prueba del 1/10: agosto (sin campaña) se prueba
+>   con la curva de septiembre (con campaña) y al revés. Propuesto y NO hecho: marcar los meses con campaña para comparar
+>   campaña con campaña.
 
 **Las preguntas del dueño** (después de ver §4gt publicada):
 - *«¿Cómo calculás la proyección? ¿Qué parámetros tomás? ¿Tomás en cuenta MoM? ¿Ticket promedio o qué?»* — Se le

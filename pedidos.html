@@ -220,6 +220,8 @@ input.err,textarea.err{border-color:var(--red);box-shadow:0 0 0 3px var(--red-lt
    queden PAREJAS (10 → 5+5, no 8+2). Esto de acá es el respaldo por si el JS no llega. */
 .metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-bottom:22px}
 @media(max-width:640px){.metrics{grid-template-columns:1fr}}
+.metrics.cta-marcas{margin-top:-10px}          /* las fichas de cada marca, pegadas a las de arriba (12 px, como entre fichas) */
+.metrics.cta-marcas:empty{display:none}
 .mc{background:#fff;border:1px solid var(--gray-md);border-radius:var(--r-lg);padding:16px 18px;position:relative;box-shadow:var(--sh-card);overflow:hidden}
 .mc-bar{position:absolute;left:0;top:0;bottom:0;width:5px}
 .mc-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -547,6 +549,16 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-intro{font-size:.78rem;line-height:1.5;color:var(--muted);margin:-4px 0 12px}
 .pry-gana{background:#f5f3ff;border:1px solid #ddd6fe;border-left:4px solid #7c3aed;border-radius:9px;padding:9px 13px;margin-bottom:14px;font-size:.8rem;line-height:1.5;color:#3b0764}
 .pry-gana>div+div{margin-top:4px}
+.pry-cmp{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted);margin:0 0 12px}
+.pry-cmp select{font-size:.82rem;padding:6px 8px;border:1px solid var(--gray-md);border-radius:8px;background:#fff}
+.pry-dif{font-weight:700}
+.pry-va{color:var(--muted);font-size:.7rem;font-weight:600}
+.pry-tabla tr.pry-sub td{color:var(--muted);font-size:.74rem}
+.pry-tabla tr.pry-fin td{border-top:2px solid var(--gray-md)}
+#pry-altura .pry-tabla th,#pry-altura .pry-tabla td{padding:6px 7px}   /* siete columnas: tienen que entrar en el iPad parado (820 px) */
+#pry-altura .pry-tabla th{white-space:normal}
+details.pry-sem-det{margin-top:8px}
+details.pry-sem-det>summary{cursor:pointer;font-size:.78rem;font-weight:700;color:var(--teal-dk);padding:4px 0}
 .pry-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .pry-tabla{width:100%;border-collapse:collapse;font-size:.78rem}
 .pry-tabla th,.pry-tabla td{padding:6px 10px;border-top:1px solid var(--gray-md);text-align:right;white-space:nowrap;vertical-align:top}
@@ -1198,6 +1210,8 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
         </div>
         <div id="pry-nota"></div>
         <div class="metrics" id="pry-metrics" data-min="300"></div>
+        <!-- 📊 (29/09, §4gv) A esta altura: el mes contra otro mes al mismo día, en plata y en unidades. -->
+        <div id="pry-altura"></div>
         <div id="pry-vendedores"></div>
         <!-- 🧪 y 📅 (29/09, §4gu): la prueba con los meses cerrados y cómo se vendió el mes elegido. -->
         <div id="pry-prueba"></div>
@@ -1309,6 +1323,7 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
       </div>
       <div id="cta-banner" style="display:none"></div>
       <div class="metrics" id="cta-metrics"></div>
+      <div class="metrics cta-marcas" id="cta-marcas" data-como="cta-metrics"></div>
       <div class="metodos-line" id="cta-resumen"></div>
       <div class="tw tw-tall"><table id="tbl-conta"></table></div>
       <div id="cta-empty" class="empty">No hay pedidos en este período.</div>
@@ -4052,7 +4067,38 @@ function renderContaMetrics(list, vSel){
        porCargar>0?String(porCargar):'✅ Todo',
        porCargar>0 ? ('de '+n+' venta'+(n===1?'':'s')+' — contabilidad todavía no las registró')
                    : ('las '+n+' están registradas'));
+  renderContaMarcas(list, vSel, vendido);
   acomodarFichas();
+}
+/* 🛏️💚 (29/09, §4gw) LO VENDIDO DE CADA MARCA, debajo de las fichas de arriba. El dueño: *«falta la ficha de Sueña y de
+   Heaven, sus montos, que se ajuste si se elige ingreso o entrega agendada»*.
+   · Sale de la MISMA lista que «Vendido en el período» (`contaLista`): el mismo corte (ingreso o entrega agendada), el
+     período, el vendedor y la búsqueda. Las marcas + «Sin marca» suman lo vendido de arriba.
+   · Cada una: ventas, unidades (colchones y somieres, `pryUnidadesDe`, §4gv) y qué parte de lo vendido es.
+   · Con una vendedora elegida, solo la ficha de su marca (sin el %, que sería 100). En Mayoristas no hay: no tienen marca.
+   · Van del mismo ancho que las de arriba (`data-como` en `acomodarFichas`). */
+function renderContaMarcas(list, vSel, vendido){
+  var box=document.getElementById('cta-marcas'); if(!box) return;
+  if(contaAmbito()==='mayor'){ box.innerHTML=''; return; }
+  var M={}, sin={ bs:0, n:0, u:0 };
+  MARCAS.forEach(function(g){ M[g.k]={ bs:0, n:0, u:0 }; });
+  (list||[]).forEach(function(p){
+    var d=M[marcaDe(p.vendedor)]||sin;
+    d.bs=r2(d.bs+ventaTotal(p)); d.n++; d.u+=pryUnidadesDe(p).u;
+  });
+  var suya = vSel ? marcaDe(vSel) : '';
+  var sub=function(d){
+    return d.n+' venta'+(d.n===1?'':'s')+' · '+d.u+' unidad'+(d.u===1?'':'es')+
+           ((!vSel && vendido>0.009) ? (' · '+Math.round(d.bs/vendido*100)+'% de lo vendido') : '');
+  };
+  var out='';
+  MARCAS.forEach(function(g){
+    if(vSel && g.k!==suya) return;
+    var d=M[g.k];
+    out+=mc(g.col, g.ico+' '+esc(g.lbl), fmtBs(d.bs), d.n ? sub(d) : 'sin ventas en el período', g.txt);
+  });
+  if(sin.n && !suya) out+=mc('var(--amber)', '⚠️ Sin marca', fmtBs(sin.bs), sub(sin)+' — de vendedores que no están en ninguna marca');
+  box.innerHTML=out;
 }
 function renderConta(){
   var tbl=document.getElementById('tbl-conta'); if(!tbl) return;
@@ -4347,17 +4393,77 @@ function pryAlDia(ym, r){
   for(var n=0, i=0; i<400; i++, d=stockSumarDias(d,-1)) if(diaHabil(d) && ++n===r) return stockSumarDias(d,-1);
   return d;
 }
+/* 📦 (29/09, §4gv) LAS UNIDADES. El dueño: *«también unidades, tanto de Sueña como de Heaven: puede que entre menos plata
+   pero subió el número de unidades vendidas, y eso es bueno»*, y al ver el bosquejo: *«quitá las almohadas: solo nos
+   interesan colchones y somier, y colchonetas o colchones de bebé; no mantas, sábanas, almohadas, patas, etc.»*.
+   · Unidad = COLCHÓN (también colchoneta y colchón de cuna/bebé) o SOMIER, con su cantidad. Nada más: ni almohadas, ni
+     respaldares o cabeceras, ni patas, forros o fundas, ni lo que se entrega en tienda (`esProdDeTienda`: protectores,
+     sábanas, mantas, «VARIOS», «RECOGER…»).
+   · ⚠️ El colchón se reconoce por DESCARTE, como en el stock (§4cx): el catálogo casi nunca dice COLCHON (TITANIO LATEX,
+     PILLOW PEDIC). Lo que no es somier ni está en la lista de lo que NO cuenta (`PRY_NO_UNIDAD`), es un colchón. Si aparece
+     un accesorio nuevo que se cuenta como colchón, va a esa lista.
+   · Un COMBO cuenta como un colchón y un somier (los combos de Sueña vienen en colores: la base).
+   · El tipo sale del nombre del CATÁLOGO si el renglón tiene código (el código manda, como en el stock); si no, del nombre
+     escrito, con plurales y los alias del catálogo («ALM/NASA»).
+   · En lo escrito a mano manda la PRIMERA palabra que dice qué es: «PROTECTOR DE COLCHON» y «PATAS PARA SOMIER» no cuentan,
+     «COLCHON DE REGALO» sí. Y un renglón con varias cosas («TITANIO + 2 ALMOHADAS», «COLCHON Y SOMIER», «… C/2
+     ALMOHADAS») se mira por pedazos: el primero es un colchón si no dice otra cosa; los que siguen cuentan solo si dicen
+     COLCHON o SOMIER. Así el colchón no se pierde por las almohadas de regalo del mismo renglón. */
+var PRY_NO_UNIDAD=new RegExp('\\b(ALMOHADAS?|ALMOHADON(ES)?|ALMOHADILLAS?|COJIN(ES)?|RESPALDAR(ES)?|RESPALDOS?|CABECERAS?|PIECERAS?|'+
+  'PATAS?|PATITAS?|FORROS?|FUNDAS?|ARMAZON(ES)?|VELADOR(ES)?|TOPPERS?|PLUMON(ES)?|DUVETS?|ACOLCHADOS?|COBERTOR(ES)?|COLCHAS?|'+
+  'CUBREPIES?|CORTINAS?|TOALLAS?|ALFOMBRAS?|PUFFS?|SOFAS?|SILLON(ES)?|BAUL(ES)?|MESAS?|CAMAS?|ESPUMAS?|ESPONJAS?|PLANCHAS?|'+
+  'RETAZOS?|TELAS?|MDF|ENVIOS?|FLETES?|TRANSPORTES?|DELIVERY|INSTALACION(ES)?|ARMADO|SERVICIOS?|DESCUENTOS?|REGALOS?)\\b');
+var PRY_ES_COLCHON=/\b(COLCHON(ES)?|COLCHONETAS?)\b/, PRY_ES_SOMIER=/\bSOMIER(ES|S)?\b/, PRY_ES_COMBO=/\bCOMBOS?\b/;
+var PRY_PEDAZOS=/\s*(?:\+|,|;|\/|\bC\/|\bCON\b|\bMAS\b|\bY\b)\s*/;
+/* Qué es un pedazo de texto: la primera palabra que lo dice ('colchon' | 'somier' | 'combo' | 'no'), o '' si ninguna. */
+function pryPedazoTipo(s){
+  var m=null;
+  [['colchon',PRY_ES_COLCHON],['somier',PRY_ES_SOMIER],['combo',PRY_ES_COMBO],['no',PRY_NO_UNIDAD],['no',PROD_TIENDA]].forEach(function(a){
+    var r=a[1].exec(s); if(r && (!m || r.index<m.i)) m={ t:a[0], i:r.index };
+  });
+  if(!m) return '';
+  /* «COMBO DE SÁBANAS», «COMBO ALMOHADAS»: combo de accesorios. «COMBO ORTOPEDICO», «COMBO COLCHON»: colchón y somier. */
+  if(m.t==='combo' && (PRY_NO_UNIDAD.test(s) || PROD_TIENDA.test(s)) && !PRY_ES_COLCHON.test(s) && !PRY_ES_SOMIER.test(s)) return 'no';
+  return m.t;
+}
+function pryTipoProd(x){
+  if(!x) return '';
+  var cod=String(x.codigo||'').trim().toUpperCase(), enCat=!!(cod && CODIGOS[cod]);
+  if(enCat) return (function(t){ return t==='no' ? '' : (t || 'colchon'); })(pryPedazoTipo(prodAlias(stockNorm(CODIGOS[cod].d))));
+  var s=prodAlias(stockNorm(x.desc));
+  if(!s || PROD_NO_STOCK.test(s)) return '';                           // «VARIOS», «RECOGER…», tapizado: no son ventas de un producto
+  var c=false, so=false;
+  s.split(PRY_PEDAZOS).filter(function(p){ return /[A-Z]/.test(p); }).forEach(function(p, i){
+    var t=pryPedazoTipo(p);
+    if(!t && i===0) t='colchon';                                       // el colchón se reconoce por descarte (TITANIO LATEX)
+    if(t==='colchon' || t==='combo') c=true;
+    if(t==='somier' || t==='combo') so=true;
+  });
+  return c && so ? 'combo' : (c ? 'colchon' : (so ? 'somier' : ''));
+}
+/* Unidades de una venta: u = colchones + somieres; c = colchones; s = somieres. */
+function pryUnidadesDe(p){
+  var o={ u:0, c:0, s:0 };
+  ((p&&p.productos)||[]).forEach(function(x){
+    var t=pryTipoProd(x), n=Number(x&&x.cant)||0;
+    if(!t || !(n>0)) return;
+    if(t==='colchon' || t==='combo') o.c+=n;
+    if(t==='somier' || t==='combo') o.s+=n;
+  });
+  o.u=o.c+o.s;
+  return o;
+}
 /* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
-   cargó y el monto. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
+   cargó, el monto y las unidades. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
 function pryVentas(){
   var out=[];
   STATE.forEach(function(p){
     var amb = !fueraDeConta(p,'tienda') ? 'tienda' : (!fueraDeConta(p,'mayor') ? 'mayor' : '');
     if(!amb) return;
     var f=fechaSalida(p); if(!f) return;
-    var v=nombreCanonico(p.vendedor)||'(sin vendedor)';
+    var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p);
     out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (marcaDe(v)||'sin')), v:v, vk:amb+'|'+(normNombre(v)||v),
-               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p) });
+               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
   });
   return out;
 }
@@ -4399,8 +4505,9 @@ function proyeccionMes(ym){
   var filas={};
   V.forEach(function(x){
     if(x.ym!==ym) return;
-    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0 });
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0 });
     r.n++; if(!(x.bs>0.009)) r.sinMonto++;
+    r.u+=x.u; r.c+=x.c; r.s+=x.s;
     if(x.f<=hoy) r.a=r2(r.a+x.bs); else r.b=r2(r.b+x.bs);
   });
   /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
@@ -4432,7 +4539,7 @@ function proyeccionMes(ym){
     r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
     return r;
   }).sort(function(x,y){ return y.vendido-x.vendido || x.vendedor.localeCompare(y.vendedor,'es'); });
-  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
+  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0, u:0, c:0, s:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.u+=r.u; s.c+=r.c; s.s+=r.s; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
   var tienda=lista.filter(function(r){ return r.amb==='tienda'; }), mayor=lista.filter(function(r){ return r.amb==='mayor'; });
   var marcas=MARCAS.map(function(g){
     var rs=tienda.filter(function(r){ return r.marca===g.k; }), t=suma(rs), mt=metodos[g.k];
@@ -4464,6 +4571,114 @@ function pryErrores(pruebas){
   });
   Object.keys(out).forEach(function(k){ var o=out[k]; if(o.n){ o.r/=o.n; o.c/=o.n; } });
   return out;
+}
+/* ============================================================================
+   📊 (29/09, §4gv) A ESTA ALTURA — cómo va el mes contra otro mes, al mismo día, en plata y en unidades.
+   El dueño eligió *«la opción 2»*: cada semana, cómo va el mes contra los meses anteriores a la misma altura (*«el 10 de
+   cada mes ya debemos tener una idea, o cada semana, para ajustar las campañas y promos»*), y también en UNIDADES (*«puede
+   que entre menos plata pero subió el número de unidades vendidas, y eso es bueno»*).
+   · «A esta altura» = lo VENDIDO para el mes (entrega agendada en el mes, como toda la pestaña) y cargado hasta el mismo
+     día del mes: hoy 29/09 contra lo que agosto tenía cargado al 29/08. Lo que se vendió antes de que empiece el mes
+     (agendado para el mes) cuenta en los dos.
+   · Contra el mes que elija en «Comparar con»; por defecto, el anterior. Solo meses enteros en el panel (desde
+     `PRY_PRIMER_MES`). Un mes que ya cerró se compara ENTERO.
+   · Semana por semana: lo vendido para el mes según el día en que se cargó. Semanas por día del mes (1-7, 8-14…), no de
+     lunes a domingo: así se comparan entre meses.
+   · Por marca (sus metas son por marca, §4gu) y el equipo entero; sin mayoristas.
+   · Unidades: `pryUnidadesDe` (colchones y somieres; un combo es uno de cada).
+   ========================================================================== */
+var PRY_CMP='', PRY_CMP_DE='';   // el mes elegido en «Comparar con», y para qué mes se eligió
+var PRY_TRAMOS=['Antes del 1°','Del 1 al 7','Del 8 al 14','Del 15 al 21','Del 22 al 28','Del 29 al fin','Después del fin'];
+function pryTramo(reg, ym){
+  if(reg<ym+'-01') return 0;
+  if(reg>pryFinDeMes(ym)) return 6;
+  var d=+reg.slice(8,10);
+  return d<=7 ? 1 : (d<=14 ? 2 : (d<=21 ? 3 : (d<=28 ? 4 : 5)));
+}
+/* Lo vendido para `ym` (equipo de tiendas, por marca y en total) cargado hasta el día `dia` del mes (0 = todo), con sus semanas. */
+function pryAcum(V, ym, dia){
+  var fin=pryFinDeMes(ym), dd=Math.min(dia||99, +fin.slice(8,10)), lim = dia ? ym+'-'+(dd<10?'0':'')+dd : '';
+  var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, s:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
+  var o={ equipo:nuevo() };
+  MARCAS.forEach(function(g){ o[g.k]=nuevo(); });
+  V.forEach(function(x){
+    if(x.ym!==ym || x.amb!=='tienda' || (lim && x.reg>lim)) return;
+    var tr=pryTramo(x.reg, ym);
+    [o.equipo, o[x.g]].forEach(function(t){
+      if(!t) return;
+      t.bs+=x.bs; t.n++; if(x.bs>0.009) t.nm++; t.u+=x.u; t.c+=x.c; t.s+=x.s;
+      t.sem[tr].bs+=x.bs; t.sem[tr].u+=x.u;
+    });
+  });
+  return o;
+}
+/* El mes elegido contra el de «Comparar con»: al mismo día si está en curso, entero si ya cerró. */
+function pryAltura(R){
+  if(R.estado==='futuro') return null;
+  var ym=R.ym, curso=(R.estado==='curso'), ops=R.hist.filter(function(m){ return m<ym; });
+  if(PRY_CMP_DE!==ym){ PRY_CMP_DE=ym; PRY_CMP=''; }
+  var cmp = (PRY_CMP && ops.indexOf(PRY_CMP)>=0) ? PRY_CMP : (ops.length ? ops[ops.length-1] : '');
+  var dia = curso ? +R.hoy.slice(8,10) : 0, A={ ym:ym, cmp:cmp, ops:ops, dia:dia, curso:curso, act:pryAcum(R.V, ym, 0) };
+  if(cmp){ A.ant=pryAcum(R.V, cmp, dia); A.antEntero=pryAcum(R.V, cmp, 0); }
+  return A;
+}
+/* «14 % arriba» / «8 % abajo» / «igual»; sin nada del otro lado, «—». */
+function pryVaTxt(x, y){
+  if(!(y>0.009)) return x>0.009 ? 'sin nada que comparar' : 'igual';
+  var p=Math.round((x/y-1)*100);
+  return p===0 ? 'igual' : (Math.abs(p)+'% '+(p>0 ? 'arriba' : 'abajo'));
+}
+function pryDifPct(x, y){
+  if(!(y>0.009)) return '—';
+  var p=Math.round((x/y-1)*100);
+  return '<span class="pry-dif" style="color:'+(p>0 ? '#15803d' : (p<0 ? '#b91c1c' : 'var(--muted)'))+'">'+(p>0 ? '+' : (p<0 ? '−' : ''))+Math.abs(p)+'%</span>';
+}
+function pryPorUnidad(t){ return t.u>0 ? fmtBs0(t.bs/t.u) : '—'; }
+function pryAlturaHtml(R){
+  var A=pryAltura(R); if(!A) return '';
+  var mes=pryMesCorto(A.ym), cm=A.cmp ? pryMesCorto(A.cmp) : '';
+  var tit = A.curso ? ('📊 A esta altura — '+mesNombre(A.ym)+' al día '+A.dia) : ('📊 El mes entero — '+mesNombre(A.ym));
+  var sel = A.ops.length>1 ? ('<label class="pry-cmp">Comparar con <select id="pry-cmp" onchange="PRY_CMP=this.value;renderProyeccion()">'+
+            A.ops.slice().reverse().map(function(m){ return '<option value="'+m+'"'+(m===A.cmp ? ' selected' : '')+'>'+esc(mesNombre(m))+'</option>'; }).join('')+
+            '</select></label>') : '';
+  if(!A.cmp) return '<div class="cua-box" id="pry-altura-box"><div class="cua-t">'+esc(tit)+'</div><div class="pry-intro" style="margin:0">Todavía no hay un mes '+
+    'entero antes de '+esc(mes)+' en el panel para comparar: se empezó a usar a fines de julio.</div></div>';
+  var hasta = A.curso ? (' al día '+A.dia) : '';
+  var linea=function(k){
+    var a=A.act[k], b=A.ant[k];
+    return pryVaTxt(a.bs, b.bs)+' en plata ('+fmtBs0(a.bs)+' contra '+fmtBs0(b.bs)+') y '+pryVaTxt(a.u, b.u)+' en unidades ('+a.u+' contra '+b.u+').';
+  };
+  var h='<div class="pry-intro">Lo vendido para el mes (entregado y agendado) y cargado hasta el mismo día'+(A.curso ? '' : ' (el mes entero)')+
+        ', contra '+esc(mesNombre(A.cmp))+(A.curso ? (' al día '+Math.min(A.dia, +pryFinDeMes(A.cmp).slice(8,10))) : ' entero')+'.</div>'+sel+
+        '<div class="pry-gana">'+['equipo'].concat(MARCAS.map(function(g){ return g.k; })).filter(function(k){ return A.act[k].n || A.ant[k].n; }).map(function(k){
+          var g=MARCAS.filter(function(x){ return x.k===k; })[0];
+          return '<div>'+(g ? (g.ico+' <b>'+esc(g.lbl)+'</b>') : '👥 <b>Todo el equipo</b>')+': '+esc(linea(k))+'</div>';
+        }).join('')+'</div>';
+  MARCAS.forEach(function(g){
+    var k=g.k, a=A.act[k], b=A.ant[k], e=A.antEntero[k];
+    if(!(a.n || b.n || e.n)) return;
+    var fila=function(lbl, t, cls){ return '<tr'+(cls ? ' class="'+cls+'"' : '')+'><td>'+esc(lbl)+'</td><td>'+fmtBs0(t.bs)+'</td><td>'+t.n+'</td><td>'+t.u+'</td><td>'+t.c+'</td><td>'+t.s+'</td><td>'+pryPorUnidad(t)+'</td></tr>'; };
+    var dif='<tr class="pry-fin"><td>Diferencia</td><td>'+pryDifPct(a.bs, b.bs)+'</td><td>'+pryDifPct(a.n, b.n)+'</td><td>'+pryDifPct(a.u, b.u)+'</td><td>'+pryDifPct(a.c, b.c)+'</td><td>'+pryDifPct(a.s, b.s)+'</td><td>'+
+            pryDifPct(a.u>0 ? a.bs/a.u : 0, b.u>0 ? b.bs/b.u : 0)+'</td></tr>';
+    var semanas='', hoyTr = A.curso ? pryTramo(R.hoy, A.ym) : 7;
+    for(var i=0;i<7;i++){
+      var sa=a.sem[i], sb=e.sem[i], fut=(A.curso && i>hoyTr && i<6);
+      if(!(sa.bs>0.009 || sa.u || sb.bs>0.009 || sb.u) && !fut) continue;
+      if(i===6 && !(sa.bs>0.009 || sb.bs>0.009)) continue;
+      semanas+='<tr><td>'+esc(PRY_TRAMOS[i])+(A.curso && i===hoyTr ? ' <span class="pry-va">(va)</span>' : '')+'</td>'+
+        '<td>'+(fut ? '—' : fmtBs0(sa.bs))+'</td><td>'+(fut ? '—' : sa.u)+'</td><td>'+fmtBs0(sb.bs)+'</td><td>'+sb.u+'</td></tr>';
+    }
+    h+='<div class="pry-grupo pry-altura" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'"><div class="pry-gh"><b>'+g.ico+' '+esc(g.lbl)+'</b>'+
+       '<span>'+esc(pryVaTxt(a.bs, b.bs))+' en plata · '+esc(pryVaTxt(a.u, b.u))+' en unidades</span></div>'+
+       '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th><th>Vendido</th><th>Ventas</th><th>Unidades</th><th>Colchones</th><th>Somieres</th><th>Bs por unidad</th></tr></thead><tbody>'+
+       fila(mes.charAt(0).toUpperCase()+mes.slice(1)+hasta, a)+fila(cm.charAt(0).toUpperCase()+cm.slice(1)+(A.curso ? (' al día '+Math.min(A.dia, +pryFinDeMes(A.cmp).slice(8,10))) : ''), b)+dif+
+       (A.curso ? fila(cm.charAt(0).toUpperCase()+cm.slice(1)+' entero', e, 'pry-sub') : '')+
+       '</tbody></table></div>'+
+       (semanas ? ('<details class="pry-sem-det"><summary>📅 Semana por semana (por el día en que se cargó la venta)</summary><div class="pry-scroll"><table class="pry-tabla">'+
+         '<thead><tr><th></th><th>'+esc(mes)+'</th><th>u.</th><th>'+esc(cm)+(A.curso ? ' entero' : '')+'</th><th>u.</th></tr></thead><tbody>'+semanas+'</tbody></table></div></details>') : '')+
+       '</div>';
+  });
+  return '<div class="cua-box" id="pry-altura-box"><div class="cua-t">'+esc(tit)+'</div>'+h+'</div>';
 }
 /* 🧪 Qué habría dicho cada forma de proyectar en `ym`, en distintas fechas, con lo que estaba vendido ESE día: el ritmo
    (por vendedor, como la pantalla) y la curva (con la mezcla de `pryMezcla`) armada con los OTROS meses cerrados, curva y
@@ -4525,24 +4740,25 @@ function renderProyeccion(){
   var R=proyeccionMes((inp && inp.value) || todayStr().slice(0,7)), E=R.equipo, mes=mesNombre(R.ym);
   var pc=function(bs){ return E.vendido>0.009 ? Math.round(bs/E.vendido*100)+'%' : '—'; };
   var nV=function(n){ return n+' venta'+(n===1?'':'s'); };
+  var nU=function(u){ return u+' unidad'+(u===1?'':'es'); };   // §4gv
   var proyLbl = R.estado==='cerrado' ? 'Cerró el mes' : '📈 Proyección al cierre';
   var proySub = R.estado==='cerrado' ? ('el mes terminó: es lo vendido con entrega en '+mes)
               : R.estado==='futuro' ? ('todavía no empezó: es lo que ya está agendado ('+R.dr+' días hábiles)')
               : (pryComoTxt(R)+' · '+pryFaltanTxt(R.dr));
   var conProy=(R.estado!=='cerrado'), curso=(R.estado==='curso');
   var h=mc('var(--teal)','Vendido en '+esc(mes), fmtBs(E.vendido),
-           nV(E.n)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
+           nV(E.n)+' · '+nU(E.u)+' del equipo de tiendas'+(R.estado==='curso' ? (' · con entrega hasta hoy '+fmtBs(E.a)+' + agendado '+fmtBs(E.b)) : ''))+
         mc('#7c3aed', proyLbl, R.estado==='cerrado' ? fmtBs(E.vendido) : fmtBs0(E.proy), esc(proySub));
   R.marcas.forEach(function(m){
     var mt=R.metodos[m.g.k];
     h+=mc(m.g.col, m.g.ico+' '+m.g.lbl, fmtBs(m.tot.vendido),
-          (m.tot.n ? (nV(m.tot.n)+' · '+pc(m.tot.vendido)+' del equipo') : 'sin ventas en el mes')+
+          (m.tot.n ? (nV(m.tot.n)+' · '+nU(m.tot.u)+' · '+pc(m.tot.vendido)+' del equipo') : 'sin ventas en el mes')+
           (conProy ? (' · 📈 proyección '+fmtBs0(m.tot.proy)) : '')+
           ((curso && m.tot.n && mt.m==='curva') ? (' · en '+esc(pryMesesTxt(mt.meses))+', a esta altura, ya estaba vendido el '+pryPct(mt.f)) : ''), m.g.txt);
   });
-  if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' de vendedores que no están en ninguna marca');
+  if(R.sinMarca.filas.length) h+=mc('var(--amber)','⚠️ Sin marca', fmtBs(R.sinMarca.tot.vendido), nV(R.sinMarca.tot.n)+' · '+nU(R.sinMarca.tot.u)+' de vendedores que no están en ninguna marca');
   if(R.mayor.filas.length) h+=mc('#1d6fb8','🏭 Mayoristas', fmtBs(R.mayor.tot.vendido),
-          nV(R.mayor.tot.n)+' de '+esc(mayoristasTxt())+' · aparte del equipo'+(conProy ? (' · 📈 proyección '+fmtBs0(R.mayor.tot.proy)) : ''));
+          nV(R.mayor.tot.n)+' · '+nU(R.mayor.tot.u)+' de '+esc(mayoristasTxt())+' · aparte del equipo'+(conProy ? (' · 📈 proyección '+fmtBs0(R.mayor.tot.proy)) : ''));
   box.innerHTML=h; acomodarFichas();
 
   var avisos=[];
@@ -4563,7 +4779,7 @@ function renderProyeccion(){
 
   /* Una lista y no una tabla: en el celular una tabla de cuatro columnas escondía la proyección detrás del scroll. */
   var filaHtml=function(r){
-    var det=[nV(r.n)];
+    var det=[nV(r.n), nU(r.u)];
     if(r.amb==='tienda') det.push(pc(r.vendido)+' del equipo');
     if(R.estado==='curso' && r.b>0.009) det.push('agendado '+fmtBs(r.b));
     if(r.sinMonto) det.push(r.sinMonto+' sin monto');
@@ -4599,7 +4815,7 @@ function renderProyeccion(){
            '<span><b>'+fmtBs(g.tot.vendido)+'</b>'+(conProy ? (' · <b class="pry-p">📈 '+fmtBs0(g.tot.proy)+'</b>') : '')+'</span></div>'+
            g.filas.map(filaHtml).join('')+metodoPie(k, nombre, g)+'</div>';
   };
-  var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n))+'</small></div>'+
+  var total='<div class="pry-fila pry-total"><div class="pry-q"><b>TOTAL EQUIPO</b><small>'+esc(nV(E.n)+' · '+nU(E.u))+'</small></div>'+
             '<div class="pry-n"><b>'+fmtBs(E.vendido)+'</b>'+(conProy ? ('<small class="pry-p">📈 '+fmtBs0(E.proy)+'</small>') : '')+'</div></div>';
   document.getElementById('pry-vendedores').innerHTML='<div class="cua-box"><div class="cua-t">👤 Por vendedor — '+esc(mes)+'</div>'+
     (conProy ? '<div style="font-size:.74rem;color:var(--muted);margin:-6px 0 10px">A la derecha: lo vendido y, en violeta, la proyección al cierre (📈).</div>' : '')+
@@ -4609,6 +4825,7 @@ function renderProyeccion(){
         grupo('🏭','Mayoristas (aparte del equipo)','#1d6fb8', R.mayor, 'mayor')
       : '<div class="empty" style="padding:16px 0">No hay ventas con entrega en '+esc(mes)+'.</div>')+'</div>';
 
+  document.getElementById('pry-altura').innerHTML=pryAlturaHtml(R);
   document.getElementById('pry-prueba').innerHTML=pryPruebaHtml(R);
   document.getElementById('pry-patron').innerHTML=pryPatronHtml(R);
 
@@ -4620,6 +4837,8 @@ function renderProyeccion(){
     '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor.<br>'+
     '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
     '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
+    '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
+    '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta el mismo día, contra otro mes al mismo día (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
     '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
     '</div></div>';
 }
@@ -15384,16 +15603,34 @@ function acomodarFichas(){
     if(!n){ b.style.gridTemplateColumns=''; continue; }
     var w=b.clientWidth||0;
     if(!w) continue;                       // está escondido: no se puede medir, se deja el CSS
-    /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
-       y a 230 px en el iPad salían cortados («Bs 684.39…»). */
-    var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;
-    var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(fmin+FICHA_GAP))));
-    var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
-    for(var c=max-1;c>=1;c--){
-      var f=Math.ceil(n/c), h=f*c-n;
-      if(f<filas || (f===filas && h<huecos)){ mejor=c; filas=f; huecos=h; }
+    /* (29/09, §4gw) Una caja puede ir con las MISMAS columnas que otra (`data-como`): las fichas de cada marca de Ventas,
+       del mismo ancho que las de arriba y alineadas con ellas. La otra viene antes en la página, así que ya se acomodó. */
+    var como=b.getAttribute('data-como'), ref=como && document.getElementById(como);
+    if(ref && ref.style.gridTemplateColumns && ref.clientWidth) b.style.gridTemplateColumns=ref.style.gridTemplateColumns;
+    else{
+      /* (28/09) Una caja puede pedir fichas más anchas (`data-min`): los totales del mes de «📈 Proyección» tienen seis cifras,
+         y a 230 px en el iPad salían cortados («Bs 684.39…»). */
+      var fmin=Number(b.getAttribute('data-min'))||FICHA_MIN;
+      var max=Math.max(1, Math.min(n, Math.floor((w+FICHA_GAP)/(fmin+FICHA_GAP))));
+      var mejor=max, filas=Math.ceil(n/max), huecos=filas*max-n;
+      for(var c=max-1;c>=1;c--){
+        var f=Math.ceil(n/c), h=f*c-n;
+        if(f<filas || (f===filas && h<huecos)){ mejor=c; filas=f; huecos=h; }
+      }
+      b.style.gridTemplateColumns='repeat('+mejor+',minmax(0,1fr))';
     }
-    b.style.gridTemplateColumns='repeat('+mejor+',minmax(0,1fr))';
+    fichasMontoEntero(b);
+  }
+}
+/* (29/09, §4gw) Un monto que no entra en su ficha («Bs 1.101.680,00» en el iPad, o lo de «Todo») se achica hasta entrar,
+   en vez de salir cortado con «…». Solo el que no entra: los demás quedan como siempre. */
+function fichasMontoEntero(b){
+  var vals=b.querySelectorAll('.mc-val');
+  for(var j=0;j<vals.length;j++){
+    var v=vals[j]; v.style.fontSize='';
+    if(v.scrollWidth<=v.clientWidth+1) continue;
+    var fs=parseFloat(getComputedStyle(v).fontSize)||27, k=0;
+    while(v.scrollWidth>v.clientWidth+1 && k++<10){ fs*=0.92; v.style.fontSize=fs.toFixed(1)+'px'; }
   }
 }
 /* Al cambiar el tamaño de la ventana hay que recalcular, pero sin hacerlo en cada píxel. */

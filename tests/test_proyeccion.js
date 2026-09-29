@@ -41,6 +41,18 @@
        promedio de los meses cerrados tira para otro lado) → Sueña va con el ritmo y Heaven sigue con la curva; la ficha,
        el pie de la marca y el resumen de la prueba lo dicen.
 
+   📊 (29/09, §4gv) «La opción 2»: cómo va el mes contra otro mes AL MISMO DÍA, y en UNIDADES (*«puede que entre menos plata
+   pero subió el número de unidades vendidas, y eso es bueno»*).
+   15. Las unidades (el dueño, al ver el bosquejo: *«quitá las almohadas: solo colchones y somier, y colchonetas o colchones
+       de bebé; no mantas, sábanas, almohadas, patas, etc.»*): colchones (con colchonetas y de cuna) y somieres, con su
+       cantidad; afuera almohadas («2 ALMOHADAS», «ALM/NASA»), respaldares, patas, forros, protectores, sábanas y «VARIOS»;
+       el código del catálogo manda; un combo es un colchón y un somier (el del catálogo, o escrito con COLCHON/SOMIER),
+       y un «COMBO DE SÁBANAS» no cuenta.
+   16. A esta altura (miércoles 14/10): octubre contra septiembre al día 14, por marca y el equipo, con la diferencia, el
+       mes anterior entero y semana por semana; «Comparar con» agosto; un mes cerrado se compara entero (septiembre
+       contra agosto: el doble de plata con las mismas unidades); agosto no tiene con qué.
+   17. En el iPad las tablas entran enteras, y en el celular no hay scroll de costado.
+
    Datos SINTÉTICOS (el repo es público). Reloj clavado, hora de Bolivia.
    Se corre:  node tests/test_proyeccion.js   (desde la raíz del repo)
    Dientes:   PEDIDOS=/ruta/a/pedidos_6146f6d.html node tests/test_proyeccion.js   (§1-6 pasan; §7-13, no) */
@@ -210,17 +222,17 @@ function PREPARAR(){
     return { vis:_visible('cta-pane-proy'), ventasVis:_visible('cta-pane-ventas'), met:_txt('pry-metrics'), vend:_txt('pry-vendedores'), nota:_txt('pry-nota'), como:_txt('pry-como') };
   });
   chk('la pestaña muestra su panel (y no el de Ventas)', r.vis && !r.ventasVis, r);
-  chk('ficha «Vendido en septiembre de 2026» Bs 48.000,00 con lo de hasta hoy y lo agendado', /VENDIDO EN SEPTIEMBRE DE 2026 Bs 48\.000,00 10 ventas del equipo de tiendas · con entrega hasta hoy Bs 35\.000,00 \+ agendado Bs 13\.000,00/i.test(r.met), r.met);
+  chk('ficha «Vendido en septiembre de 2026» Bs 48.000,00 con lo de hasta hoy y lo agendado', /VENDIDO EN SEPTIEMBRE DE 2026 Bs 48\.000,00 10 ventas · 10 unidades del equipo de tiendas · con entrega hasta hoy Bs 35\.000,00 \+ agendado Bs 13\.000,00/i.test(r.met), r.met);
   chk('ficha «📈 Proyección al cierre» Bs 64.625, con el ritmo y los días que faltan', /PROYECCIÓN AL CIERRE Bs 64\.625 si sigue el ritmo de Bs 2\.188 por día hábil · faltan 10 días hábiles/i.test(r.met), r.met);
   chk('fichas de marca: Sueña Bs 39.000,00 (81 % · proyección Bs 50.000) y Heaven Bs 8.000,00 (17 % · proyección Bs 13.000)',
-      /SUEÑA Bs 39\.000,00 \d+ ventas · 81% del equipo · 📈 proyección Bs 50\.000/i.test(r.met) && /HEAVEN Bs 8\.000,00 2 ventas · 17% del equipo · 📈 proyección Bs 13\.000/i.test(r.met), r.met);
+      /SUEÑA Bs 39\.000,00 \d+ ventas · \d+ unidades · 81% del equipo · 📈 proyección Bs 50\.000/i.test(r.met) && /HEAVEN Bs 8\.000,00 2 ventas · 2 unidades · 17% del equipo · 📈 proyección Bs 13\.000/i.test(r.met), r.met);
   chk('fichas «Sin marca» y «🏭 Mayoristas» (aparte del equipo, con su proyección)',
-      /SIN MARCA Bs 1\.000,00/i.test(r.met) && /MAYORISTAS Bs 25\.000,00 2 ventas de Eduardo Añez · aparte del equipo · 📈 proyección Bs 32\.500/i.test(r.met), r.met);
+      /SIN MARCA Bs 1\.000,00/i.test(r.met) && /MAYORISTAS Bs 25\.000,00 2 ventas · 2 unidades de Eduardo Añez · aparte del equipo · 📈 proyección Bs 32\.500/i.test(r.met), r.met);
   chk('lista por vendedor: Mauricio Merida Bs 28.000,00 con «agendado Bs 4.000,00» y 📈 Bs 39.000',
-      /Mauricio Merida 5 ventas · 58% del equipo · agendado Bs 4\.000,00 Bs 28\.000,00 📈 Bs 39\.000/.test(r.vend), r.vend);
+      /Mauricio Merida 5 ventas · 5 unidades · 58% del equipo · agendado Bs 4\.000,00 Bs 28\.000,00 📈 Bs 39\.000/.test(r.vend), r.vend);
   chk('…agrupada por marca, con el TOTAL EQUIPO y los mayoristas aparte, abajo',
       /Sueña Bs 39\.000,00 · 📈 Bs 50\.000/.test(r.vend) && /Heaven Bs 8\.000,00 · 📈 Bs 13\.000/.test(r.vend) &&
-      /TOTAL EQUIPO 10 ventas Bs 48\.000,00 📈 Bs 64\.625/.test(r.vend) && /Mayoristas \(aparte del equipo\) Bs 25\.000,00 · 📈 Bs 32\.500 Eduardo Añez/.test(r.vend) &&
+      /TOTAL EQUIPO 10 ventas · 10 unidades Bs 48\.000,00 📈 Bs 64\.625/.test(r.vend) && /Mayoristas \(aparte del equipo\) Bs 25\.000,00 · 📈 Bs 32\.500 Eduardo Añez/.test(r.vend) &&
       r.vend.indexOf('TOTAL EQUIPO') < r.vend.indexOf('Mayoristas'), r.vend);
   chk('ni la ATC, ni la RPT, ni ROHO aparecen en la lista', !/ROHO|Carola Chavez/.test(r.vend), r.vend);
   chk('aviso: «1 venta sin monto anotado no suma nada: completala en Ventas»', /1 venta sin monto anotado no suma nada: completala en Ventas/.test(r.nota), r.nota);
@@ -300,8 +312,8 @@ function PREPARAR(){
   chk('ficha «📈 Proyección al cierre» Bs 116.855 «según cómo se llenaron agosto y septiembre, cada marca con su curva»',
       /PROYECCIÓN AL CIERRE Bs 116\.855 según cómo se llenaron agosto y septiembre, cada marca con su curva · faltan 15 días hábiles/i.test(r.met), r.met);
   chk('cada marca dice su parte: Sueña «ya estaba vendido el 80%», Heaven «el 60%»',
-      /SUEÑA Bs 40\.000,00 8 ventas · 56% del equipo · 📈 proyección Bs 53\.600 · en agosto y septiembre, a esta altura, ya estaba vendido el 80%/i.test(r.met) &&
-      /HEAVEN Bs 30\.000,00 10 ventas · 42% del equipo · 📈 proyección Bs 60\.240 · en agosto y septiembre, a esta altura, ya estaba vendido el 60%/i.test(r.met), r.met);
+      /SUEÑA Bs 40\.000,00 8 ventas · 8 unidades · 56% del equipo · 📈 proyección Bs 53\.600 · en agosto y septiembre, a esta altura, ya estaba vendido el 80%/i.test(r.met) &&
+      /HEAVEN Bs 30\.000,00 10 ventas · 10 unidades · 42% del equipo · 📈 proyección Bs 60\.240 · en agosto y septiembre, a esta altura, ya estaba vendido el 60%/i.test(r.met), r.met);
   chk('debajo de Heaven, la cuenta entera: las dos cuentas, cuánto pesa cada una y el resultado',
       /📈 Faltando 15 días hábiles para el cierre, en agosto y septiembre ya estaba vendido el 60% del mes\. Dos cuentas: \(1\) si sigue en esa proporción, Bs 30\.000 ÷ 60% = Bs 50\.000; \(2\) lo vendido más lo que en esos meses entró desde esta altura hasta el cierre \(40% de Bs 90\.000, lo que vendieron en promedio\): Bs 30\.000 \+ Bs 36\.000 = Bs 66\.000\. La \(1\) pesa 36% —más cuanto más avanzado está el mes— y la \(2\), 64% → Bs 60\.240\./.test(r.vend), r.vend);
   chk('…y cómo le fue en la prueba: «la curva se equivocó 17% en promedio y el ritmo 36%»',
@@ -461,7 +473,7 @@ function PREPARAR(){
       r.mau && r.mau.metodo==='ritmo' && r.mau.proy===90000 && r.sue.proy===90000 && r.met.heaven.m==='curva' && r.hea.proy===60240 && r.E.proy===153255, [r.mau, r.sue, r.hea, r.E]);
   chk('la ficha dice «Sueña con el ritmo, Heaven con la curva», y la de Sueña no dice «a esta altura»',
       /PROYECCIÓN AL CIERRE Bs 153\.255 Sueña con el ritmo, Heaven con la curva · faltan 15 días hábiles/i.test(r.metTxt) &&
-      /SUEÑA Bs 40\.000,00 8 ventas · \d+% del equipo · 📈 proyección Bs 90\.000 💚/i.test(r.metTxt), r.metTxt);
+      /SUEÑA Bs 40\.000,00 8 ventas · 8 unidades · \d+% del equipo · 📈 proyección Bs 90\.000 💚/i.test(r.metTxt), r.metTxt);
   chk('debajo de Sueña: «Con el ritmo: en la prueba con agosto y septiembre se equivocó menos (0% en promedio, contra 22% de la curva)»',
       /📈 Con el ritmo: en la prueba con agosto y septiembre se equivocó menos \(0% en promedio, contra 22% de la curva\)\./.test(r.vend), r.vend);
   chk('el resumen de la prueba: Sueña va con el ritmo y Heaven con la curva',
@@ -480,6 +492,117 @@ function PREPARAR(){
   chk('…pero el 02/10 (van 2 días hábiles) Sueña va con la curva igual: con tan pocos días no hay ritmo',
       r.dt===2 && r.met && r.met.suena.m==='curva' && r.met.suena.err.r<r.met.suena.err.c && Math.round(r.sue.proy)===116368 &&
       /el ritmo va desde el 5° día hábil del mes: antes, con tan pocos días, no hay ritmo\./.test(r.vend), [r.dt, r.met && r.met.suena, r.sue, r.__error]);
+
+  // ═══ 15. 📦 Las unidades ═════════════════════════════════════════════════════════════════════
+  console.log('\n── 15. 📦 Las unidades ──');
+  await reloj('2026-10-14T15:00:00-04:00');
+  r = await ev(() => {
+    var t=function(x){ return pryTipoProd(x); };
+    var casos={ titanio:t({desc:'TITANIO LATEX',cant:2}), almo:t({desc:'2 ALMOHADAS',cant:2}), nasa:t({desc:'ALM/NASA',cant:1}),
+                cod:t({codigo:'CH1149',desc:'lo que sea',cant:1}), prot:t({desc:'PROTECTOR DE COLCHON',cant:1}),
+                comboCat:t({codigo:'CMBSE002',desc:'combo',cant:1}), comboTxt:t({desc:'COMBO COLCHON + SOMIER + 2 ALMOHADAS',cant:1}), comboSab:t({desc:'COMBO DE SABANAS',cant:1}),
+                resp:t({desc:'RESPALDAR PRAG.',cant:1}), varios:t({desc:'VARIOS',cant:1}), sab:t({desc:'JUEGO DE SABANAS',cant:1}),
+                patas:t({desc:'PATAS PARA SOMIER',cant:4}), cuna:t({desc:'COLCHON CUNA',cant:1}), colchoneta:t({desc:'COLCHONETA',cant:1}), forro:t({desc:'FORRO COLCHON PILLOW PEDIC',cant:1}),
+                /* renglones escritos a mano con varias cosas */
+                conAlm:t({desc:'COLCHON TITANIO + 2 ALMOHADAS',cant:1}), cBarra:t({desc:'TITANIO LATEX C/2 ALMOHADAS DE REGALO',cant:1}), cyS:t({desc:'Colchón y somier titanio',cant:1}),
+                almYcuna:t({desc:'2 ALMOHADAS + COLCHON CUNA',cant:1}), regalo:t({desc:'COLCHON DE REGALO',cant:1}), somPatas:t({desc:'SOMIER + PATAS',cant:1}),
+                protEnvio:t({desc:'PROTECTOR + ENVIO',cant:1}), envio:t({desc:'ENVIO',cant:1}), topper:t({desc:'TOPPER VISCOLASTICO',cant:1}),
+                comboAlm:t({desc:'COMBO ALMOHADAS NASA',cant:1}), comboLibre:t({desc:'COMBO ORTOPEDICO SUEÑA',cant:1}), ortoDC:t({desc:'ESPECIAL ORTOPEDICO D/C',cant:1}) };
+    var venta={ productos:[{desc:'TITANIO LATEX',medida:'140x190',cant:2},{desc:'ALMOHADA',medida:'50x70',cant:2},{desc:'PROTECTOR',medida:'140x190',cant:1}] };
+    var combo={ productos:[{codigo:'CMBSE002',desc:'COMBO SUEÑA ESSENTIAL',medida:'140x190',cant:1},{desc:'SOMIER SUEÑA',medida:'140x190',cant:1}] };
+    /* El dueño: «hay combos que llevan colchón, somier, almohadas y sábanas o mantas: solo se cuenta el colchón y el somier.
+       Pero los vendedores no cargan combos, cargan producto por producto». */
+    var suelto={ productos:[{codigo:'CH1129',desc:'TITANIO LATEX',cant:1},{codigo:'CH1149',desc:'SOMIER TITANIO LATEX',cant:1},{codigo:'CH1195',desc:'ALM/NASA',cant:2},
+                            {desc:'JUEGO DE SABANAS',cant:1},{desc:'MANTA POLAR',cant:1}] };
+    var sueltoTxt={ productos:[{desc:'TITANIO LATEX',cant:1},{desc:'SOMIER TITANIO LATEX',cant:1},{desc:'ALMOHADA NASA',cant:2},{desc:'SABANAS 2 PLAZAS',cant:1},{desc:'MANTA',cant:1}] };
+    STATE=FIX2();
+    var p=V('Maria Flores','2026-10-16',9000); p.productos=venta.productos; p.ts=new Date('2026-10-13T10:00:00-04:00').getTime(); STATE.push(p);
+    document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
+    var R=proyeccionMes('2026-10'), mf=R.marcas[1].filas.filter(function(x){ return mismoVendedor(x.vendedor,'Maria Flores'); })[0];
+    return { casos:casos, uv:pryUnidadesDe(venta), uc:pryUnidadesDe(combo), us:pryUnidadesDe(suelto), ust:pryUnidadesDe(sueltoTxt), mf:mf, hea:R.marcas[1].tot, vend:_txt('pry-vendedores'), met:_txt('pry-metrics'), como:_txt('pry-como') };
+  });
+  chk('cuentan: TITANIO, COLCHON CUNA y COLCHONETA (colchones) y el código CH1149 (somier, aunque el renglón diga otra cosa)',
+      r.casos && r.casos.titanio==='colchon' && r.casos.cuna==='colchon' && r.casos.colchoneta==='colchon' && r.casos.cod==='somier', [r.casos, r.__error]);
+  chk('NO cuentan: «2 ALMOHADAS», «ALM/NASA», el respaldar, las patas, el forro, el protector, las sábanas y «VARIOS»',
+      r.casos && r.casos.almo==='' && r.casos.nasa==='' && r.casos.resp==='' && r.casos.patas==='' && r.casos.forro==='' && r.casos.prot==='' && r.casos.sab==='' && r.casos.varios==='', r.casos);
+  chk('combos: el del catálogo, «COMBO ORTOPEDICO SUEÑA» escrito y «COMBO COLCHON + SOMIER + 2 ALMOHADAS» son colchón + somier; «COMBO DE SABANAS» y «COMBO ALMOHADAS NASA» no cuentan',
+      r.casos && r.casos.comboCat==='combo' && r.casos.comboLibre==='combo' && r.casos.comboTxt==='combo' && r.casos.comboSab==='' && r.casos.comboAlm==='', r.casos);
+  chk('escrito a mano con varias cosas: el colchón no se pierde por las almohadas («COLCHON TITANIO + 2 ALMOHADAS», «TITANIO LATEX C/2 ALMOHADAS DE REGALO», «2 ALMOHADAS + COLCHON CUNA», «COLCHON DE REGALO», «ESPECIAL ORTOPEDICO D/C»)',
+      r.casos && r.casos.conAlm==='colchon' && r.casos.cBarra==='colchon' && r.casos.almYcuna==='colchon' && r.casos.regalo==='colchon' && r.casos.ortoDC==='colchon', r.casos);
+  chk('…«Colchón y somier titanio» es colchón + somier, «SOMIER + PATAS» un somier; «PROTECTOR + ENVIO», «ENVIO» y «TOPPER VISCOLASTICO» no cuentan',
+      r.casos && r.casos.cyS==='combo' && r.casos.somPatas==='somier' && r.casos.protEnvio==='' && r.casos.envio==='' && r.casos.topper==='', r.casos);
+  chk('una venta de 2 colchones + 2 almohadas + 1 protector = 2 unidades (2 colchones); un combo + un somier = 3 (1 colchón y 2 somieres)',
+      r.uv && r.uv.u===2 && r.uv.c===2 && r.uv.s===0 && r.uc && r.uc.u===3 && r.uc.c===1 && r.uc.s===2, [r.uv, r.uc]);
+  chk('el combo cargado producto por producto (colchón + somier + 2 almohadas + sábanas + manta) = 2 unidades: 1 colchón y 1 somier, con código y escrito a mano',
+      r.us && r.us.u===2 && r.us.c===1 && r.us.s===1 && r.ust && r.ust.u===2 && r.ust.c===1 && r.ust.s===1, [r.us, r.ust]);
+  chk('Maria Flores: 11 ventas y 12 unidades (10 + 2), todas colchones; Heaven igual',
+      r.mf && r.mf.n===11 && r.mf.u===12 && r.mf.c===12 && r.mf.s===0 && r.hea && r.hea.u===12 && r.hea.c===12, [r.mf, r.hea]);
+  chk('en pantalla: «11 ventas · 12 unidades» en Maria y en la ficha de Heaven; el cuadro de abajo dice qué es una unidad',
+      /Maria Flores 11 ventas · 12 unidades · /.test(r.vend) && /HEAVEN Bs 39\.000,00 11 ventas · 12 unidades · /i.test(r.met) &&
+      /Unidades: colchones \(también colchonetas y colchones de bebé\) y somieres/.test(r.como) && /No cuentan almohadas, respaldares, patas/.test(r.como) &&
+      /Un combo cuenta como un colchón y un somier/.test(r.como), [r.vend, r.met, r.como]);
+
+  // ═══ 16. 📊 A esta altura ═════════════════════════════════════════════════════════════════════
+  console.log('\n── 16. 📊 A esta altura ──');
+  r = await ev(() => {
+    STATE=FIX2(); PRY_CMP=''; PRY_CMP_DE='';
+    document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
+    var R=proyeccionMes('2026-10'), A=pryAltura(R);
+    var box=function(){ return _txt('pry-altura'); };
+    var bl=function(g){ var e=document.querySelector('#pry-altura .pry-altura[data-g="'+g+'"]'); return e ? e.innerText.replace(/\s+/g,' ').trim() : ''; };
+    var semH=function(){ var e=document.querySelector('#pry-altura .pry-altura[data-g="heaven"] details'); if(e) e.open=true; return e ? e.innerText.replace(/\s+/g,' ').trim() : ''; };
+    var out={ cmp:A.cmp, dia:A.dia, ops:A.ops, aH:A.act.heaven, bH:A.ant.heaven, eH:A.antEntero.heaven, aS:A.act.suena, bS:A.ant.suena, aE:A.act.equipo, bE:A.ant.equipo,
+              txt:box(), hea:bl('heaven'), semH:semH(), sel:!!document.getElementById('pry-cmp'),
+              orden:[].slice.call(document.querySelectorAll('#pry-altura, #pry-vendedores')).map(function(e){ return e.id; }),
+              antesDeVend:document.getElementById('pry-altura').compareDocumentPosition(document.getElementById('pry-vendedores'))===4 };
+    /* Comparar con agosto */
+    var s=document.getElementById('pry-cmp'); if(s){ s.value='2026-08'; s.dispatchEvent(new Event('change')); }
+    out.conAgo=bl('heaven'); out.cmpAgo=PRY_CMP;
+    /* Un mes cerrado: septiembre entero contra agosto entero */
+    document.getElementById('pry-mes').value='2026-09'; renderProyeccion(); out.sep=box(); out.sepH=bl('heaven');
+    /* Agosto no tiene con qué compararse */
+    document.getElementById('pry-mes').value='2026-08'; renderProyeccion(); out.ago=box();
+    document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
+    return out;
+  });
+  chk('octubre al día 14 contra septiembre al día 14 (por defecto, el mes anterior); se puede elegir entre agosto y septiembre',
+      r.cmp==='2026-09' && r.dia===14 && JSON.stringify(r.ops)==='["2026-08","2026-09"]' && r.sel, [r.cmp, r.dia, r.ops, r.sel, r.__error]);
+  chk('Heaven: octubre lleva Bs 30.000 en 10 ventas y 10 unidades; septiembre al día 14 llevaba Bs 84.000, 14 y 14; septiembre entero, Bs 120.000 y 20',
+      r.aH && r.aH.bs===30000 && r.aH.n===10 && r.aH.u===10 && r.bH.bs===84000 && r.bH.n===14 && r.bH.u===14 && r.eH.bs===120000 && r.eH.u===20, [r.aH, r.bH, r.eH]);
+  chk('semanas de Heaven: octubre 18.000 (6 u.) del 1 al 7 y 12.000 (4) del 8 al 14; septiembre 48.000 (8), 36.000 (6) y 36.000 (6) del 22 al 28',
+      r.aH && r.aH.sem[1].bs===18000 && r.aH.sem[1].u===6 && r.aH.sem[2].bs===12000 && r.aH.sem[2].u===4 &&
+      r.eH.sem[1].bs===48000 && r.eH.sem[2].bs===36000 && r.eH.sem[4].bs===36000 && r.eH.sem[4].u===6, [r.aH && r.aH.sem, r.eH && r.eH.sem]);
+  chk('Sueña 40.000 y 8 contra 80.000 y 16; el equipo 71.340 y 19 contra 164.000 y 30 (con el sin marca)',
+      r.aS && r.aS.bs===40000 && r.aS.u===8 && r.bS.bs===80000 && r.bS.u===16 && r.aE.bs===71340 && r.aE.u===19 && r.bE.bs===164000 && r.bE.u===30, [r.aS, r.bS, r.aE, r.bE]);
+  chk('arriba del todo: «Heaven: 64% abajo en plata (Bs 30.000 contra Bs 84.000) y 29% abajo en unidades (10 contra 14)», y lo mismo para Sueña y el equipo',
+      /📊 A ESTA ALTURA — OCTUBRE DE 2026 AL DÍA 14/i.test(r.txt) && /contra septiembre de 2026 al día 14/.test(r.txt) &&
+      /Heaven: 64% abajo en plata \(Bs 30\.000 contra Bs 84\.000\) y 29% abajo en unidades \(10 contra 14\)\./.test(r.txt) &&
+      /Sueña: 50% abajo en plata \(Bs 40\.000 contra Bs 80\.000\) y 50% abajo en unidades \(8 contra 16\)\./.test(r.txt) &&
+      /Todo el equipo: \d+% abajo en plata \(Bs 71\.340 contra Bs 164\.000\) y 37% abajo en unidades \(19 contra 30\)\./.test(r.txt), r.txt);
+  chk('la tabla de Heaven: octubre, septiembre al día 14, la diferencia (−64%, −29%, −29%, −29%, sin somieres, −50% por unidad) y septiembre entero',
+      /Octubre al día 14 Bs 30\.000 10 10 10 0 Bs 3\.000 Septiembre al día 14 Bs 84\.000 14 14 14 0 Bs 6\.000 Diferencia −64% −29% −29% −29% — −50% Septiembre entero Bs 120\.000 20 20 20 0 Bs 6\.000/.test(r.hea), r.hea);
+  chk('semana por semana (se abre): la semana en curso dice «(va)», y las que no llegaron van con «—»',
+      /Del 1 al 7 Bs 18\.000 6 Bs 48\.000 8/.test(r.semH) && /Del 8 al 14 \(va\) Bs 12\.000 4 Bs 36\.000 6/.test(r.semH) && /Del 22 al 28 — — Bs 36\.000 6/.test(r.semH), r.semH);
+  chk('el cuadro va arriba de la lista por vendedor', r.antesDeVend, r.orden);
+  chk('«Comparar con» agosto: octubre va 25% arriba en plata y en unidades (30.000 y 10 contra 24.000 y 8)',
+      r.cmpAgo==='2026-08' && /25% arriba en plata · 25% arriba en unidades/.test(r.conAgo) && /Agosto al día 14 Bs 24\.000 8 8 8 0 Bs 3\.000/.test(r.conAgo), r.conAgo);
+  chk('un mes cerrado se compara ENTERO: septiembre contra agosto → Heaven el doble de plata con las mismas unidades (Bs por unidad +100%)',
+      /📊 EL MES ENTERO — SEPTIEMBRE DE 2026/i.test(r.sep) && /Heaven: 100% arriba en plata \(Bs 120\.000 contra Bs 60\.000\) y igual en unidades \(20 contra 20\)\./.test(r.sep) &&
+      /Diferencia \+100% 0% 0% 0% — \+100%/.test(r.sepH) && !/entero Bs/.test(r.sepH), [r.sep, r.sepH]);
+  chk('agosto no tiene con qué compararse (julio no está entero en el panel) y lo dice', /Todavía no hay un mes entero antes de agosto en el panel para comparar/.test(r.ago), r.ago);
+
+  // ═══ 17. 📊 En el iPad y en el celular ════════════════════════════════════════════════════════
+  console.log('\n── 17. 📊 El cuadro en el iPad y en el celular ──');
+  for (const w of [820, 1180, 390]) {
+    await page.setViewportSize({ width:w, height:1000 });
+    await page.waitForTimeout(150);
+    r = await ev(() => { STATE=FIX2(); PRY_CMP=''; document.getElementById('pry-mes').value='2026-10'; renderProyeccion(); acomodarFichas();
+      [].slice.call(document.querySelectorAll('#pry-altura details')).forEach(function(d){ d.open=true; });
+      return { sw:document.documentElement.scrollWidth, iw:window.innerWidth,
+        anchas:[].slice.call(document.querySelectorAll('#pry-altura .pry-scroll')).filter(function(e){ return e.scrollWidth>e.clientWidth+1; }).length,
+        tablas:document.querySelectorAll('#pry-altura .pry-tabla').length }; });
+    chk('a '+w+' px: sin scroll de costado'+(w>=820 ? ' y las tablas de «A esta altura» entran enteras' : ''), r.sw<=r.iw && r.tablas>=4 && (w<820 || r.anchas===0), r);
+  }
 
   chk('sin errores de la página', errores.length===0, errores.slice(0,3));
   await browser.close();
