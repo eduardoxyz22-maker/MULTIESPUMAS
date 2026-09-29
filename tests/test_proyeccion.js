@@ -43,8 +43,11 @@
 
    📊 (29/09, §4gv) «La opción 2»: cómo va el mes contra otro mes AL MISMO DÍA, y en UNIDADES (*«puede que entre menos plata
    pero subió el número de unidades vendidas, y eso es bueno»*).
-   15. Las unidades: colchones, somieres, almohadas, respaldares y combos con su cantidad; sin protectores, sábanas ni
-       «VARIOS»; el código del catálogo manda; «2 ALMOHADAS» y «ALM/NASA» son almohadas; un combo es un colchón.
+   15. Las unidades (el dueño, al ver el bosquejo: *«quitá las almohadas: solo colchones y somier, y colchonetas o colchones
+       de bebé; no mantas, sábanas, almohadas, patas, etc.»*): colchones (con colchonetas y de cuna) y somieres, con su
+       cantidad; afuera almohadas («2 ALMOHADAS», «ALM/NASA»), respaldares, patas, forros, protectores, sábanas y «VARIOS»;
+       el código del catálogo manda; un combo es un colchón y un somier (el del catálogo, o escrito con COLCHON/SOMIER),
+       y un «COMBO DE SÁBANAS» no cuenta.
    16. A esta altura (miércoles 14/10): octubre contra septiembre al día 14, por marca y el equipo, con la diferencia, el
        mes anterior entero y semana por semana; «Comparar con» agosto; un mes cerrado se compara entero (septiembre
        contra agosto: el doble de plata con las mismas unidades); agosto no tiene con qué.
@@ -496,26 +499,41 @@ function PREPARAR(){
   r = await ev(() => {
     var t=function(x){ return pryTipoProd(x); };
     var casos={ titanio:t({desc:'TITANIO LATEX',cant:2}), almo:t({desc:'2 ALMOHADAS',cant:2}), nasa:t({desc:'ALM/NASA',cant:1}),
-                cod:t({codigo:'CH1149',desc:'lo que sea',cant:1}), prot:t({desc:'PROTECTOR DE COLCHON',cant:1}), combo:t({desc:'COMBO SUEÑA ESSENTIAL',cant:1}),
-                resp:t({desc:'RESPALDAR PRAG.',cant:1}), varios:t({desc:'VARIOS',cant:1}), sab:t({desc:'JUEGO DE SABANAS',cant:1}) };
+                cod:t({codigo:'CH1149',desc:'lo que sea',cant:1}), prot:t({desc:'PROTECTOR DE COLCHON',cant:1}),
+                comboCat:t({codigo:'CMBSE002',desc:'combo',cant:1}), comboTxt:t({desc:'COMBO COLCHON + SOMIER + 2 ALMOHADAS',cant:1}), comboSab:t({desc:'COMBO DE SABANAS',cant:1}),
+                resp:t({desc:'RESPALDAR PRAG.',cant:1}), varios:t({desc:'VARIOS',cant:1}), sab:t({desc:'JUEGO DE SABANAS',cant:1}),
+                patas:t({desc:'PATAS PARA SOMIER',cant:4}), cuna:t({desc:'COLCHON CUNA',cant:1}), colchoneta:t({desc:'COLCHONETA',cant:1}), forro:t({desc:'FORRO COLCHON PILLOW PEDIC',cant:1}),
+                /* renglones escritos a mano con varias cosas */
+                conAlm:t({desc:'COLCHON TITANIO + 2 ALMOHADAS',cant:1}), cBarra:t({desc:'TITANIO LATEX C/2 ALMOHADAS DE REGALO',cant:1}), cyS:t({desc:'Colchón y somier titanio',cant:1}),
+                almYcuna:t({desc:'2 ALMOHADAS + COLCHON CUNA',cant:1}), regalo:t({desc:'COLCHON DE REGALO',cant:1}), somPatas:t({desc:'SOMIER + PATAS',cant:1}),
+                protEnvio:t({desc:'PROTECTOR + ENVIO',cant:1}), envio:t({desc:'ENVIO',cant:1}), topper:t({desc:'TOPPER VISCOLASTICO',cant:1}),
+                comboAlm:t({desc:'COMBO ALMOHADAS NASA',cant:1}), comboLibre:t({desc:'COMBO ORTOPEDICO SUEÑA',cant:1}), ortoDC:t({desc:'ESPECIAL ORTOPEDICO D/C',cant:1}) };
     var venta={ productos:[{desc:'TITANIO LATEX',medida:'140x190',cant:2},{desc:'ALMOHADA',medida:'50x70',cant:2},{desc:'PROTECTOR',medida:'140x190',cant:1}] };
-    var combo={ productos:[{desc:'COMBO SUEÑA ESSENTIAL',medida:'140x190',cant:1},{desc:'SOMIER SUEÑA',medida:'140x190',cant:1}] };
+    var combo={ productos:[{codigo:'CMBSE002',desc:'COMBO SUEÑA ESSENTIAL',medida:'140x190',cant:1},{desc:'SOMIER SUEÑA',medida:'140x190',cant:1}] };
     STATE=FIX2();
     var p=V('Maria Flores','2026-10-16',9000); p.productos=venta.productos; p.ts=new Date('2026-10-13T10:00:00-04:00').getTime(); STATE.push(p);
     document.getElementById('pry-mes').value='2026-10'; renderProyeccion();
     var R=proyeccionMes('2026-10'), mf=R.marcas[1].filas.filter(function(x){ return mismoVendedor(x.vendedor,'Maria Flores'); })[0];
     return { casos:casos, uv:pryUnidadesDe(venta), uc:pryUnidadesDe(combo), mf:mf, hea:R.marcas[1].tot, vend:_txt('pry-vendedores'), met:_txt('pry-metrics'), como:_txt('pry-como') };
   });
-  chk('tipos: TITANIO = colchón · «2 ALMOHADAS» y «ALM/NASA» = almohada · el código CH1149 manda (somier) · COMBO · RESPALDAR',
-      r.casos && r.casos.titanio==='colchon' && r.casos.almo==='almohada' && r.casos.nasa==='almohada' && r.casos.cod==='somier' && r.casos.combo==='combo' && r.casos.resp==='respaldar', [r.casos, r.__error]);
-  chk('no son unidades: el protector, las sábanas y «VARIOS» (como en el stock)', r.casos && r.casos.prot==='' && r.casos.sab==='' && r.casos.varios==='', r.casos);
-  chk('una venta de 2 colchones + 2 almohadas + 1 protector = 4 unidades, 2 colchones; un combo + un somier = 2 unidades, 1 colchón',
-      r.uv && r.uv.u===4 && r.uv.c===2 && r.uc && r.uc.u===2 && r.uc.c===1, [r.uv, r.uc]);
-  chk('Maria Flores: 11 ventas y 14 unidades (10 + 4), 12 colchones (10 + 2); Heaven igual',
-      r.mf && r.mf.n===11 && r.mf.u===14 && r.mf.c===12 && r.hea && r.hea.u===14 && r.hea.c===12, [r.mf, r.hea]);
-  chk('en pantalla: «11 ventas · 14 unidades» en Maria y en la ficha de Heaven; el cuadro de abajo dice qué es una unidad',
-      /Maria Flores 11 ventas · 14 unidades · /.test(r.vend) && /HEAVEN Bs 39\.000,00 11 ventas · 14 unidades · /i.test(r.met) &&
-      /Unidades: los productos de cada venta con su cantidad/.test(r.como) && /un combo cuenta como un colchón/.test(r.como), [r.vend, r.met]);
+  chk('cuentan: TITANIO, COLCHON CUNA y COLCHONETA (colchones) y el código CH1149 (somier, aunque el renglón diga otra cosa)',
+      r.casos && r.casos.titanio==='colchon' && r.casos.cuna==='colchon' && r.casos.colchoneta==='colchon' && r.casos.cod==='somier', [r.casos, r.__error]);
+  chk('NO cuentan: «2 ALMOHADAS», «ALM/NASA», el respaldar, las patas, el forro, el protector, las sábanas y «VARIOS»',
+      r.casos && r.casos.almo==='' && r.casos.nasa==='' && r.casos.resp==='' && r.casos.patas==='' && r.casos.forro==='' && r.casos.prot==='' && r.casos.sab==='' && r.casos.varios==='', r.casos);
+  chk('combos: el del catálogo, «COMBO ORTOPEDICO SUEÑA» escrito y «COMBO COLCHON + SOMIER + 2 ALMOHADAS» son colchón + somier; «COMBO DE SABANAS» y «COMBO ALMOHADAS NASA» no cuentan',
+      r.casos && r.casos.comboCat==='combo' && r.casos.comboLibre==='combo' && r.casos.comboTxt==='combo' && r.casos.comboSab==='' && r.casos.comboAlm==='', r.casos);
+  chk('escrito a mano con varias cosas: el colchón no se pierde por las almohadas («COLCHON TITANIO + 2 ALMOHADAS», «TITANIO LATEX C/2 ALMOHADAS DE REGALO», «2 ALMOHADAS + COLCHON CUNA», «COLCHON DE REGALO», «ESPECIAL ORTOPEDICO D/C»)',
+      r.casos && r.casos.conAlm==='colchon' && r.casos.cBarra==='colchon' && r.casos.almYcuna==='colchon' && r.casos.regalo==='colchon' && r.casos.ortoDC==='colchon', r.casos);
+  chk('…«Colchón y somier titanio» es colchón + somier, «SOMIER + PATAS» un somier; «PROTECTOR + ENVIO», «ENVIO» y «TOPPER VISCOLASTICO» no cuentan',
+      r.casos && r.casos.cyS==='combo' && r.casos.somPatas==='somier' && r.casos.protEnvio==='' && r.casos.envio==='' && r.casos.topper==='', r.casos);
+  chk('una venta de 2 colchones + 2 almohadas + 1 protector = 2 unidades (2 colchones); un combo + un somier = 3 (1 colchón y 2 somieres)',
+      r.uv && r.uv.u===2 && r.uv.c===2 && r.uv.s===0 && r.uc && r.uc.u===3 && r.uc.c===1 && r.uc.s===2, [r.uv, r.uc]);
+  chk('Maria Flores: 11 ventas y 12 unidades (10 + 2), todas colchones; Heaven igual',
+      r.mf && r.mf.n===11 && r.mf.u===12 && r.mf.c===12 && r.mf.s===0 && r.hea && r.hea.u===12 && r.hea.c===12, [r.mf, r.hea]);
+  chk('en pantalla: «11 ventas · 12 unidades» en Maria y en la ficha de Heaven; el cuadro de abajo dice qué es una unidad',
+      /Maria Flores 11 ventas · 12 unidades · /.test(r.vend) && /HEAVEN Bs 39\.000,00 11 ventas · 12 unidades · /i.test(r.met) &&
+      /Unidades: colchones \(también colchonetas y colchones de bebé\) y somieres/.test(r.como) && /No cuentan almohadas, respaldares, patas/.test(r.como) &&
+      /Un combo cuenta como un colchón y un somier/.test(r.como), [r.vend, r.met, r.como]);
 
   // ═══ 16. 📊 A esta altura ═════════════════════════════════════════════════════════════════════
   console.log('\n── 16. 📊 A esta altura ──');
@@ -554,16 +572,16 @@ function PREPARAR(){
       /Heaven: 64% abajo en plata \(Bs 30\.000 contra Bs 84\.000\) y 29% abajo en unidades \(10 contra 14\)\./.test(r.txt) &&
       /Sueña: 50% abajo en plata \(Bs 40\.000 contra Bs 80\.000\) y 50% abajo en unidades \(8 contra 16\)\./.test(r.txt) &&
       /Todo el equipo: \d+% abajo en plata \(Bs 71\.340 contra Bs 164\.000\) y 37% abajo en unidades \(19 contra 30\)\./.test(r.txt), r.txt);
-  chk('la tabla de Heaven: octubre, septiembre al día 14, la diferencia (−64%, −29%, −29%, −29%, −50% por unidad) y septiembre entero',
-      /Octubre al día 14 Bs 30\.000 10 10 10 Bs 3\.000 Septiembre al día 14 Bs 84\.000 14 14 14 Bs 6\.000 Diferencia −64% −29% −29% −29% −50% Septiembre entero Bs 120\.000 20 20 20 Bs 6\.000/.test(r.hea), r.hea);
+  chk('la tabla de Heaven: octubre, septiembre al día 14, la diferencia (−64%, −29%, −29%, −29%, sin somieres, −50% por unidad) y septiembre entero',
+      /Octubre al día 14 Bs 30\.000 10 10 10 0 Bs 3\.000 Septiembre al día 14 Bs 84\.000 14 14 14 0 Bs 6\.000 Diferencia −64% −29% −29% −29% — −50% Septiembre entero Bs 120\.000 20 20 20 0 Bs 6\.000/.test(r.hea), r.hea);
   chk('semana por semana (se abre): la semana en curso dice «(va)», y las que no llegaron van con «—»',
       /Del 1 al 7 Bs 18\.000 6 Bs 48\.000 8/.test(r.semH) && /Del 8 al 14 \(va\) Bs 12\.000 4 Bs 36\.000 6/.test(r.semH) && /Del 22 al 28 — — Bs 36\.000 6/.test(r.semH), r.semH);
   chk('el cuadro va arriba de la lista por vendedor', r.antesDeVend, r.orden);
   chk('«Comparar con» agosto: octubre va 25% arriba en plata y en unidades (30.000 y 10 contra 24.000 y 8)',
-      r.cmpAgo==='2026-08' && /25% arriba en plata · 25% arriba en unidades/.test(r.conAgo) && /Agosto al día 14 Bs 24\.000 8 8 8 Bs 3\.000/.test(r.conAgo), r.conAgo);
+      r.cmpAgo==='2026-08' && /25% arriba en plata · 25% arriba en unidades/.test(r.conAgo) && /Agosto al día 14 Bs 24\.000 8 8 8 0 Bs 3\.000/.test(r.conAgo), r.conAgo);
   chk('un mes cerrado se compara ENTERO: septiembre contra agosto → Heaven el doble de plata con las mismas unidades (Bs por unidad +100%)',
       /📊 EL MES ENTERO — SEPTIEMBRE DE 2026/i.test(r.sep) && /Heaven: 100% arriba en plata \(Bs 120\.000 contra Bs 60\.000\) y igual en unidades \(20 contra 20\)\./.test(r.sep) &&
-      /Diferencia \+100% 0% 0% 0% \+100%/.test(r.sepH) && !/entero Bs/.test(r.sepH), [r.sep, r.sepH]);
+      /Diferencia \+100% 0% 0% 0% — \+100%/.test(r.sepH) && !/entero Bs/.test(r.sepH), [r.sep, r.sepH]);
   chk('agosto no tiene con qué compararse (julio no está entero en el panel) y lo dice', /Todavía no hay un mes entero antes de agosto en el panel para comparar/.test(r.ago), r.ago);
 
   // ═══ 17. 📊 En el iPad y en el celular ════════════════════════════════════════════════════════

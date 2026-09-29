@@ -553,6 +553,8 @@ input.cua-arqueo{width:130px;max-width:130px;text-align:right;font-size:.85rem;p
 .pry-va{color:var(--muted);font-size:.7rem;font-weight:600}
 .pry-tabla tr.pry-sub td{color:var(--muted);font-size:.74rem}
 .pry-tabla tr.pry-fin td{border-top:2px solid var(--gray-md)}
+#pry-altura .pry-tabla th,#pry-altura .pry-tabla td{padding:6px 7px}   /* siete columnas: tienen que entrar en el iPad parado (820 px) */
+#pry-altura .pry-tabla th{white-space:normal}
 details.pry-sem-det{margin-top:8px}
 details.pry-sem-det>summary{cursor:pointer;font-size:.78rem;font-weight:700;color:var(--teal-dk);padding:4px 0}
 .pry-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -4358,33 +4360,64 @@ function pryAlDia(ym, r){
   return d;
 }
 /* 📦 (29/09, §4gv) LAS UNIDADES. El dueño: *«también unidades, tanto de Sueña como de Heaven: puede que entre menos plata
-   pero subió el número de unidades vendidas, y eso es bueno»*.
-   · Una unidad es un producto de la venta con su cantidad: colchones, somieres, almohadas, respaldares, combos. NO cuentan
-     los accesorios que se entregan en tienda ni lo que no es un producto (`esProdDeTienda`: protectores, sábanas, mantas,
-     «VARIOS», «RECOGER…»), igual que en el stock (§4cx, §4ds).
-   · Aparte, los COLCHONES (un combo cuenta como un colchón): si una campaña regala almohadas, las unidades suben sin que
-     se venda un colchón más, y así se ve.
+   pero subió el número de unidades vendidas, y eso es bueno»*, y al ver el bosquejo: *«quitá las almohadas: solo nos
+   interesan colchones y somier, y colchonetas o colchones de bebé; no mantas, sábanas, almohadas, patas, etc.»*.
+   · Unidad = COLCHÓN (también colchoneta y colchón de cuna/bebé) o SOMIER, con su cantidad. Nada más: ni almohadas, ni
+     respaldares o cabeceras, ni patas, forros o fundas, ni lo que se entrega en tienda (`esProdDeTienda`: protectores,
+     sábanas, mantas, «VARIOS», «RECOGER…»).
+   · ⚠️ El colchón se reconoce por DESCARTE, como en el stock (§4cx): el catálogo casi nunca dice COLCHON (TITANIO LATEX,
+     PILLOW PEDIC). Lo que no es somier ni está en la lista de lo que NO cuenta (`PRY_NO_UNIDAD`), es un colchón. Si aparece
+     un accesorio nuevo que se cuenta como colchón, va a esa lista.
+   · Un COMBO cuenta como un colchón y un somier (los combos de Sueña vienen en colores: la base).
    · El tipo sale del nombre del CATÁLOGO si el renglón tiene código (el código manda, como en el stock); si no, del nombre
-     escrito, con plurales («2 ALMOHADAS») y los alias del catálogo («ALM/NASA»). */
-function pryTipoProd(x){
-  if(!x || esProdDeTienda(x)) return '';
-  var cod=String(x.codigo||'').trim().toUpperCase();
-  var s=prodAlias(stockNorm((cod && CODIGOS[cod]) ? CODIGOS[cod].d : x.desc));
-  if(/\bCOMBOS?\b/.test(s)) return 'combo';
-  if(/\bALMOHADAS?\b/.test(s)) return 'almohada';
-  if(/\bSOMIER(ES|S)?\b/.test(s)) return 'somier';
-  if(/\b(RESPALDAR(ES)?|CABECERAS?)\b/.test(s)) return 'respaldar';
-  if(/\b(COLCHONETAS?|FORROS?|FUNDAS?|ARMAZON(ES)?)\b/.test(s)) return 'otro';
-  return 'colchon';
+     escrito, con plurales y los alias del catálogo («ALM/NASA»).
+   · En lo escrito a mano manda la PRIMERA palabra que dice qué es: «PROTECTOR DE COLCHON» y «PATAS PARA SOMIER» no cuentan,
+     «COLCHON DE REGALO» sí. Y un renglón con varias cosas («TITANIO + 2 ALMOHADAS», «COLCHON Y SOMIER», «… C/2
+     ALMOHADAS») se mira por pedazos: el primero es un colchón si no dice otra cosa; los que siguen cuentan solo si dicen
+     COLCHON o SOMIER. Así el colchón no se pierde por las almohadas de regalo del mismo renglón. */
+var PRY_NO_UNIDAD=new RegExp('\\b(ALMOHADAS?|ALMOHADON(ES)?|ALMOHADILLAS?|COJIN(ES)?|RESPALDAR(ES)?|RESPALDOS?|CABECERAS?|PIECERAS?|'+
+  'PATAS?|PATITAS?|FORROS?|FUNDAS?|ARMAZON(ES)?|VELADOR(ES)?|TOPPERS?|PLUMON(ES)?|DUVETS?|ACOLCHADOS?|COBERTOR(ES)?|COLCHAS?|'+
+  'CUBREPIES?|CORTINAS?|TOALLAS?|ALFOMBRAS?|PUFFS?|SOFAS?|SILLON(ES)?|BAUL(ES)?|MESAS?|CAMAS?|ESPUMAS?|ESPONJAS?|PLANCHAS?|'+
+  'RETAZOS?|TELAS?|MDF|ENVIOS?|FLETES?|TRANSPORTES?|DELIVERY|INSTALACION(ES)?|ARMADO|SERVICIOS?|DESCUENTOS?|REGALOS?)\\b');
+var PRY_ES_COLCHON=/\b(COLCHON(ES)?|COLCHONETAS?)\b/, PRY_ES_SOMIER=/\bSOMIER(ES|S)?\b/, PRY_ES_COMBO=/\bCOMBOS?\b/;
+var PRY_PEDAZOS=/\s*(?:\+|,|;|\/|\bC\/|\bCON\b|\bMAS\b|\bY\b)\s*/;
+/* Qué es un pedazo de texto: la primera palabra que lo dice ('colchon' | 'somier' | 'combo' | 'no'), o '' si ninguna. */
+function pryPedazoTipo(s){
+  var m=null;
+  [['colchon',PRY_ES_COLCHON],['somier',PRY_ES_SOMIER],['combo',PRY_ES_COMBO],['no',PRY_NO_UNIDAD],['no',PROD_TIENDA]].forEach(function(a){
+    var r=a[1].exec(s); if(r && (!m || r.index<m.i)) m={ t:a[0], i:r.index };
+  });
+  if(!m) return '';
+  /* «COMBO DE SÁBANAS», «COMBO ALMOHADAS»: combo de accesorios. «COMBO ORTOPEDICO», «COMBO COLCHON»: colchón y somier. */
+  if(m.t==='combo' && (PRY_NO_UNIDAD.test(s) || PROD_TIENDA.test(s)) && !PRY_ES_COLCHON.test(s) && !PRY_ES_SOMIER.test(s)) return 'no';
+  return m.t;
 }
+function pryTipoProd(x){
+  if(!x) return '';
+  var cod=String(x.codigo||'').trim().toUpperCase(), enCat=!!(cod && CODIGOS[cod]);
+  if(enCat) return (function(t){ return t==='no' ? '' : (t || 'colchon'); })(pryPedazoTipo(prodAlias(stockNorm(CODIGOS[cod].d))));
+  var s=prodAlias(stockNorm(x.desc));
+  if(!s || PROD_NO_STOCK.test(s)) return '';                           // «VARIOS», «RECOGER…», tapizado: no son ventas de un producto
+  var c=false, so=false;
+  s.split(PRY_PEDAZOS).filter(function(p){ return /[A-Z]/.test(p); }).forEach(function(p, i){
+    var t=pryPedazoTipo(p);
+    if(!t && i===0) t='colchon';                                       // el colchón se reconoce por descarte (TITANIO LATEX)
+    if(t==='colchon' || t==='combo') c=true;
+    if(t==='somier' || t==='combo') so=true;
+  });
+  return c && so ? 'combo' : (c ? 'colchon' : (so ? 'somier' : ''));
+}
+/* Unidades de una venta: u = colchones + somieres; c = colchones; s = somieres. */
 function pryUnidadesDe(p){
-  var u=0, c=0;
+  var o={ u:0, c:0, s:0 };
   ((p&&p.productos)||[]).forEach(function(x){
     var t=pryTipoProd(x), n=Number(x&&x.cant)||0;
     if(!t || !(n>0)) return;
-    u+=n; if(t==='colchon' || t==='combo') c+=n;
+    if(t==='colchon' || t==='combo') o.c+=n;
+    if(t==='somier' || t==='combo') o.s+=n;
   });
-  return { u:u, c:c };
+  o.u=o.c+o.s;
+  return o;
 }
 /* Todas las ventas que cuentan, en una pasada: grupo (la marca, 'sin' o 'mayor'), vendedor, entrega, el día en que se
    cargó, el monto y las unidades. La misma puerta que Ventas: `fueraDeConta` (sin ATC, RPT ni ROHO) y la entrega agendada. */
@@ -4396,7 +4429,7 @@ function pryVentas(){
     var f=fechaSalida(p); if(!f) return;
     var v=nombreCanonico(p.vendedor)||'(sin vendedor)', uc=pryUnidadesDe(p);
     out.push({ amb:amb, g:(amb==='mayor' ? 'mayor' : (marcaDe(v)||'sin')), v:v, vk:amb+'|'+(normNombre(v)||v),
-               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p), u:uc.u, c:uc.c });
+               f:f, ym:f.slice(0,7), reg:(contaFecha(p)||f), bs:ventaTotal(p), u:uc.u, c:uc.c, s:uc.s });
   });
   return out;
 }
@@ -4438,9 +4471,9 @@ function proyeccionMes(ym){
   var filas={};
   V.forEach(function(x){
     if(x.ym!==ym) return;
-    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0 });
+    var r=filas[x.vk]||(filas[x.vk]={ vendedor:x.v, amb:x.amb, g:x.g, marca:((x.g==='heaven'||x.g==='suena') ? x.g : ''), n:0, a:0, b:0, sinMonto:0, u:0, c:0, s:0 });
     r.n++; if(!(x.bs>0.009)) r.sinMonto++;
-    r.u+=x.u; r.c+=x.c;
+    r.u+=x.u; r.c+=x.c; r.s+=x.s;
     if(x.f<=hoy) r.a=r2(r.a+x.bs); else r.b=r2(r.b+x.bs);
   });
   /* Con qué se proyecta cada grupo (`porque` dice por qué va con el ritmo). Una marca con historia va con su curva, para
@@ -4472,7 +4505,7 @@ function proyeccionMes(ym){
     r.proy = (estado==='curso' && mt.m==='curva') ? (mt.K>0.009 ? r2(r.vendido*mt.proy/mt.K) : 0) : r.proyRitmo;
     return r;
   }).sort(function(x,y){ return y.vendido-x.vendido || x.vendedor.localeCompare(y.vendedor,'es'); });
-  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0, u:0, c:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.u+=r.u; s.c+=r.c; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
+  var suma=function(rs){ var s={ n:0, a:0, b:0, vendido:0, proy:0, proyRitmo:0, sinMonto:0, u:0, c:0, s:0 }; rs.forEach(function(r){ s.n+=r.n; s.sinMonto+=r.sinMonto; s.u+=r.u; s.c+=r.c; s.s+=r.s; s.a=r2(s.a+r.a); s.b=r2(s.b+r.b); s.vendido=r2(s.vendido+r.vendido); s.proy=r2(s.proy+r.proy); s.proyRitmo=r2(s.proyRitmo+r.proyRitmo); }); s.ritmo = dt>0 ? s.a/dt : 0; return s; };
   var tienda=lista.filter(function(r){ return r.amb==='tienda'; }), mayor=lista.filter(function(r){ return r.amb==='mayor'; });
   var marcas=MARCAS.map(function(g){
     var rs=tienda.filter(function(r){ return r.marca===g.k; }), t=suma(rs), mt=metodos[g.k];
@@ -4531,7 +4564,7 @@ function pryTramo(reg, ym){
 /* Lo vendido para `ym` (equipo de tiendas, por marca y en total) cargado hasta el día `dia` del mes (0 = todo), con sus semanas. */
 function pryAcum(V, ym, dia){
   var fin=pryFinDeMes(ym), dd=Math.min(dia||99, +fin.slice(8,10)), lim = dia ? ym+'-'+(dd<10?'0':'')+dd : '';
-  var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
+  var nuevo=function(){ var t={ bs:0, n:0, nm:0, u:0, c:0, s:0, sem:[] }; for(var i=0;i<7;i++) t.sem.push({ bs:0, u:0 }); return t; };
   var o={ equipo:nuevo() };
   MARCAS.forEach(function(g){ o[g.k]=nuevo(); });
   V.forEach(function(x){
@@ -4539,7 +4572,7 @@ function pryAcum(V, ym, dia){
     var tr=pryTramo(x.reg, ym);
     [o.equipo, o[x.g]].forEach(function(t){
       if(!t) return;
-      t.bs+=x.bs; t.n++; if(x.bs>0.009) t.nm++; t.u+=x.u; t.c+=x.c;
+      t.bs+=x.bs; t.n++; if(x.bs>0.009) t.nm++; t.u+=x.u; t.c+=x.c; t.s+=x.s;
       t.sem[tr].bs+=x.bs; t.sem[tr].u+=x.u;
     });
   });
@@ -4590,8 +4623,8 @@ function pryAlturaHtml(R){
   MARCAS.forEach(function(g){
     var k=g.k, a=A.act[k], b=A.ant[k], e=A.antEntero[k];
     if(!(a.n || b.n || e.n)) return;
-    var fila=function(lbl, t, cls){ return '<tr'+(cls ? ' class="'+cls+'"' : '')+'><td>'+esc(lbl)+'</td><td>'+fmtBs0(t.bs)+'</td><td>'+t.n+'</td><td>'+t.u+'</td><td>'+t.c+'</td><td>'+pryPorUnidad(t)+'</td></tr>'; };
-    var dif='<tr class="pry-fin"><td>Diferencia</td><td>'+pryDifPct(a.bs, b.bs)+'</td><td>'+pryDifPct(a.n, b.n)+'</td><td>'+pryDifPct(a.u, b.u)+'</td><td>'+pryDifPct(a.c, b.c)+'</td><td>'+
+    var fila=function(lbl, t, cls){ return '<tr'+(cls ? ' class="'+cls+'"' : '')+'><td>'+esc(lbl)+'</td><td>'+fmtBs0(t.bs)+'</td><td>'+t.n+'</td><td>'+t.u+'</td><td>'+t.c+'</td><td>'+t.s+'</td><td>'+pryPorUnidad(t)+'</td></tr>'; };
+    var dif='<tr class="pry-fin"><td>Diferencia</td><td>'+pryDifPct(a.bs, b.bs)+'</td><td>'+pryDifPct(a.n, b.n)+'</td><td>'+pryDifPct(a.u, b.u)+'</td><td>'+pryDifPct(a.c, b.c)+'</td><td>'+pryDifPct(a.s, b.s)+'</td><td>'+
             pryDifPct(a.u>0 ? a.bs/a.u : 0, b.u>0 ? b.bs/b.u : 0)+'</td></tr>';
     var semanas='', hoyTr = A.curso ? pryTramo(R.hoy, A.ym) : 7;
     for(var i=0;i<7;i++){
@@ -4603,7 +4636,7 @@ function pryAlturaHtml(R){
     }
     h+='<div class="pry-grupo pry-altura" data-g="'+esc(k)+'" style="border-left-color:'+g.col+'"><div class="pry-gh"><b>'+g.ico+' '+esc(g.lbl)+'</b>'+
        '<span>'+esc(pryVaTxt(a.bs, b.bs))+' en plata · '+esc(pryVaTxt(a.u, b.u))+' en unidades</span></div>'+
-       '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th><th>Vendido</th><th>Ventas</th><th>Unidades</th><th>Colchones</th><th>Bs por unidad</th></tr></thead><tbody>'+
+       '<div class="pry-scroll"><table class="pry-tabla"><thead><tr><th></th><th>Vendido</th><th>Ventas</th><th>Unidades</th><th>Colchones</th><th>Somieres</th><th>Bs por unidad</th></tr></thead><tbody>'+
        fila(mes.charAt(0).toUpperCase()+mes.slice(1)+hasta, a)+fila(cm.charAt(0).toUpperCase()+cm.slice(1)+(A.curso ? (' al día '+Math.min(A.dia, +pryFinDeMes(A.cmp).slice(8,10))) : ''), b)+dif+
        (A.curso ? fila(cm.charAt(0).toUpperCase()+cm.slice(1)+' entero', e, 'pry-sub') : '')+
        '</tbody></table></div>'+
@@ -4770,7 +4803,7 @@ function renderProyeccion(){
     '• <b>Con el ritmo</b> cuando la marca todavía no tiene un mes cerrado con al menos '+PRY_MIN_VENTAS+' ventas, y siempre los mayoristas y los que no están en ninguna marca: lo que tiene entrega hasta hoy + lo que falta del mes, que es lo ya agendado de mañana a fin de mes, o lo que da el ritmo si es más. <b>Ritmo</b> = lo de hasta hoy ÷ los días hábiles que pasaron (lunes a sábado, sin feriados), por vendedor.<br>'+
     '• Los meses cerrados cuentan desde '+esc(mesNombre(PRY_PRIMER_MES))+' (el panel se empezó a usar a fines de julio).<br>'+
     '• No entran las ATC ni las reposiciones de tienda (no son ventas), ni ROHO. Los mayoristas van aparte.<br>'+
-    '• <b>📦 Unidades</b>: los productos de cada venta con su cantidad (colchones, somieres, almohadas, respaldares, combos), sin los accesorios que se entregan en tienda (protectores, sábanas, mantas). Aparte, los <b>colchones</b>: un combo cuenta como un colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata, y si las unidades suben por colchones o por almohadas regaladas.<br>'+
+    '• <b>📦 Unidades</b>: colchones (también colchonetas y colchones de bebé) y somieres, con su cantidad. No cuentan almohadas, respaldares, patas, protectores, sábanas, mantas ni otros accesorios. Un combo cuenta como un colchón y un somier. Si un renglón escrito a mano dice «colchón + 2 almohadas», cuenta el colchón. Así se ve si sube lo vendido en unidades aunque entre menos plata.<br>'+
     '• <b>📊 A esta altura</b>: lo vendido para el mes y cargado hasta el mismo día, contra otro mes al mismo día (por defecto, el anterior; se puede elegir otro, por ejemplo uno con campaña). Un mes que ya cerró se compara entero. Semana por semana va por el día en que se cargó la venta.<br>'+
     '• Si logística reprograma una entrega, la venta se muda de mes. De un mes cerrado, la curva ve cada venta con su entrega final: lo que se reprogramó a otro mes no está en la curva del mes de antes.'+
     '</div></div>';
