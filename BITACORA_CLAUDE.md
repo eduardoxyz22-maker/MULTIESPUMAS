@@ -7551,7 +7551,7 @@ decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo i
   la PRIMERA lectura).
 - `herramientas/diagnostico_lectura.py`: hace también la lectura comprimida y la de lo cambiado, y rehace la cuenta de
   control (la misma cuenta en Python). Con el 28-a dice «el servidor no la comprimió».
-- Batería: ver RESPUESTA §24.
+- Batería (después de la revisión, `4a950cc`): **124/124 suites en verde, 4.661 comprobaciones.**
 
 ### La revisión independiente (antes de pasarle el `.gs` al dueño)
 Un agente revisor con el diff de `2c36ff0`, reproduciendo cada cosa con el `.gs` y la página de verdad (scripts en el

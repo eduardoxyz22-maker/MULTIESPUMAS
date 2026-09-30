@@ -2130,7 +2130,11 @@ Ninguna grave. Una media y dos chicas, arregladas antes de pasártelo:
   enlace fijo a `4ded824…`, 1980 líneas). El panel nuevo funciona igual con el servidor de antes (lee entero, como hoy).
 
 ### 24.5 · Batería
-- (se completa al terminar la corrida)
+- `./tests/correr.sh` después de los arreglos de la revisión: **124 de 124 suites en verde, 4.661 comprobaciones**
+  (revisada con el filtro que mira todas las formas de falla).
+- El «Diagnóstico de la lectura del panel» corrió solo al subir sus cambios (contra el servidor de hoy): 1.101 filas, 905.577
+  bytes, «el servidor NO la comprimió (versión 2026-09-28-a)» — lo esperado hasta que implementes. La primera lectura tardó
+  18 s y las siguientes 2-4 s: Google lento al arrancar, como siempre.
 
 ## Primera vuelta (`d890468`), resumida
 
