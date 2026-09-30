@@ -33,8 +33,12 @@ def _sin_etiquetas(html, tope=400):
     return t[:tope]
 
 
-def pedir(nombre, url, cuerpo=None):
+def pedir(nombre, url, cuerpo=None, comprimido=False):
     hdr = {"Origin": ORIGEN, "User-Agent": "Mozilla/5.0 (diagnostico-panel)"}
+    if comprimido:
+        # Como un navegador: todos mandan «Accept-Encoding: gzip». Si Google comprime, lo que viaja
+        # por la red es mucho menos que lo que ocupa la planilla.
+        hdr["Accept-Encoding"] = "gzip"
     if cuerpo is not None:
         hdr["Content-Type"] = "text/plain;charset=utf-8"
     req = _rq.Request(url, data=(json.dumps(cuerpo).encode("utf-8") if cuerpo is not None else None),
@@ -46,8 +50,14 @@ def pedir(nombre, url, cuerpo=None):
             crudo = r.read()
             seg = time.time() - t0
             host = re.sub(r"^https?://([^/]+)/.*$", r"\1", r.geturl())
-            print(f"   HTTP {r.status} en {seg:.1f} s · terminó en {host} · {len(crudo):,} bytes".replace(",", "."))
+            enc = r.headers.get("Content-Encoding")
+            print(f"   HTTP {r.status} en {seg:.1f} s · terminó en {host} · viajaron {len(crudo):,} bytes".replace(",", ".") +
+                  (f" (comprimido: {enc})" if enc else " (sin comprimir)"))
             print(f"   tipo: {r.headers.get('Content-Type')} · permiso CORS: {r.headers.get('Access-Control-Allow-Origin')!r}")
+            if enc and "gzip" in enc.lower():
+                import gzip
+                crudo = gzip.decompress(crudo)
+                print(f"   descomprimido: {len(crudo):,} bytes".replace(",", "."))
             return crudo
     except _er.HTTPError as e:
         seg = time.time() - t0
@@ -97,10 +107,11 @@ def url_de_la_pagina():
         return ""
 
 
-def leer(nombre, base):
+def leer(nombre, base, comprimido=True):
     sep = "&" if "?" in base else "?"
     crudo = pedir(nombre, base + sep + "_=" + str(int(time.time() * 1000)),
-                  {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []})
+                  {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []},
+                  comprimido=comprimido)
     contar(crudo)
 
 
@@ -113,8 +124,8 @@ def main():
     # 1) La lectura del panel, idéntica a la del navegador (apiPost/apiList de pedidos.html), con la
     #    dirección que tiene escrita la página publicada.
     if pagina:
-        leer("lectura con la dirección de la PÁGINA (POST list)", pagina)
-        leer("otra vez, con la dirección de la PÁGINA", pagina)
+        leer("lectura con la dirección de la PÁGINA (POST list), como un navegador (acepta gzip)", pagina)
+        leer("otra vez, SIN aceptar gzip (para comparar el tamaño)", pagina, comprimido=False)
     # 2) Con la del secreto (la que usa el respaldo de Kommo), si es otra.
     if PANEL_URL and PANEL_URL != pagina:
         leer("lectura con la dirección del SECRETO (POST list)", PANEL_URL)
