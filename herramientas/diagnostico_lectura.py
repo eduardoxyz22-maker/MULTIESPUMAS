@@ -86,22 +86,40 @@ def contar(crudo):
                 print(f"   {i}: {n:,} letras".replace(",", "."))
 
 
+def url_de_la_pagina():
+    """La dirección que tiene escrita pedidos.html (`var SHEETS_URL = '…'`): es la que usa el
+       navegador. Puede no ser la misma que el secreto PANEL_URL del respaldo."""
+    try:
+        with open("pedidos.html", encoding="utf-8") as f:
+            m = re.search(r"var SHEETS_URL\s*=\s*'([^']+)'", f.read())
+        return m.group(1).strip() if m else ""
+    except Exception:
+        return ""
+
+
+def leer(nombre, base):
+    sep = "&" if "?" in base else "?"
+    crudo = pedir(nombre, base + sep + "_=" + str(int(time.time() * 1000)),
+                  {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []})
+    contar(crudo)
+
+
 def main():
-    if not PANEL_URL:
-        print("❌ Falta el secreto PANEL_URL")
+    pagina = url_de_la_pagina()
+    if not PANEL_URL and not pagina:
+        print("❌ Falta el secreto PANEL_URL y no encontré la dirección en pedidos.html")
         sys.exit(1)
-    sep = "&" if "?" in PANEL_URL else "?"
-    # 1) La lectura del panel, idéntica a la del navegador (apiPost/apiList de pedidos.html).
-    crudo = pedir("lectura del panel (POST list)", PANEL_URL + sep + "_=" + str(int(time.time() * 1000)),
-                  {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []})
-    contar(crudo)
-    # 2) Otra vez, por si la primera despertó al script.
-    crudo = pedir("lectura del panel, segunda vez", PANEL_URL + sep + "_=" + str(int(time.time() * 1000)),
-                  {"action": "list", "quien": "", "dispositivo": "diagnostico-github", "cola": 0, "colaIds": []})
-    contar(crudo)
+    print(f"dirección del secreto PANEL_URL y la de pedidos.html: {'LA MISMA' if PANEL_URL == pagina else 'DISTINTAS'}")
+    # 1) La lectura del panel, idéntica a la del navegador (apiPost/apiList de pedidos.html), con la
+    #    dirección que tiene escrita la página publicada.
+    if pagina:
+        leer("lectura con la dirección de la PÁGINA (POST list)", pagina)
+        leer("otra vez, con la dirección de la PÁGINA", pagina)
+    # 2) Con la del secreto (la que usa el respaldo de Kommo), si es otra.
+    if PANEL_URL and PANEL_URL != pagina:
+        leer("lectura con la dirección del SECRETO (POST list)", PANEL_URL)
     # 3) La puerta GET (doGet), la misma dirección sin cuerpo.
-    crudo = pedir("puerta GET (doGet)", PANEL_URL)
-    contar(crudo)
+    contar(pedir("puerta GET (doGet) de la página", pagina or PANEL_URL))
 
 
 if __name__ == "__main__":
