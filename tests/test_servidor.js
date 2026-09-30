@@ -99,6 +99,21 @@ function hacerDrive(){
   };
 }
 
+/* (30/09, §4he) Lo que el .gs usa de `Utilities` para comprimir la lectura, con gzip de Node. */
+function hacerUtilities(){
+  const zlib = require('zlib');
+  const conSigno = (buf) => Array.from(buf).map(x => x > 127 ? x - 256 : x);
+  const aBuf = (d) => Buffer.isBuffer(d) ? d : (Array.isArray(d) ? Buffer.from(d.map(x => x < 0 ? x + 256 : x)) : Buffer.from(String(d), 'utf8'));
+  const blob = (buf, tipo) => ({ _b: buf, getBytes(){ return conSigno(this._b); }, getDataAsString(){ return this._b.toString('utf8'); }, getContentType(){ return tipo || ''; } });
+  return {
+    formatDate: (d) => String(d),
+    newBlob: (d, tipo) => blob(aBuf(d), tipo),
+    gzip: (b) => blob(zlib.gzipSync(b._b), 'application/x-gzip'),
+    ungzip: (b) => blob(zlib.gunzipSync(b._b)),
+    base64Encode: (d) => aBuf(d).toString('base64'),
+    base64Decode: (s) => conSigno(Buffer.from(String(s), 'base64'))
+  };
+}
 function hacerScriptApp(){
   const triggers = [];
   const crear = (fn, tipo, v) => { const t = { fn, tipo, v, getHandlerFunction: () => fn }; triggers.push(t); return t; };
@@ -117,7 +132,7 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
   /* Hojas que crea un script aparte (25/09: «Respaldo entregados», de herramientas/): con el
      tope de filas de una hoja nueva bien bajo y convirtiendo fechas, que es el peor caso. */
   const otras = {};
-  const OTRAS = { 'Respaldo entregados':1 };
+  const OTRAS = { 'Respaldo entregados':1, 'Borrados':1 };   // (30/09, §4he) «Borrados»: la anota doDelete
   const cont = { flush: 0 };
   const cache = { _m: {},
     get(k){ return Object.prototype.hasOwnProperty.call(this._m, k) ? this._m[k] : null; },
@@ -147,7 +162,9 @@ function cargar(filas, props, fuente){   // `fuente`: otro texto del .gs (§11: 
     CacheService: { getScriptCache: () => cache },
     ContentService: { MimeType:{JSON:'json'}, createTextOutput: (t) => ({ _t:t, setMimeType(){ return this; } }) },
     DriveApp: drive,
-    Utilities: { formatDate: (d)=>String(d), base64Decode: () => [], newBlob: () => ({}) },
+    /* (30/09, §4he) `Utilities` de verdad para la lectura comprimida: blobs en UTF-8, gzip de Node y base64 con los bytes
+       CON SIGNO de Java (como `getBytes()` en Google). `base64Decode` decodifica de verdad: las fotos lo reemplazan igual. */
+    Utilities: hacerUtilities(),
     /* `getTemporaryActiveUserKey` (§4dv): la marca del navegador que el .gs recorta a 6 letras. */
     Session: { getScriptTimeZone: () => 'America/La_Paz', getTemporaryActiveUserKey: () => 'ABCDEFGHIJKLMNOP' },
     /* Los disparadores de tiempo (§4eg): una lista en memoria. `after` y `everyMinutes`
@@ -922,7 +939,11 @@ const DIA = 86400000, hoyDia = Math.floor(Date.now() / DIA);
     return null; });
   const r1 = hook10(a)({ k:'kk', 'leads[status][0][id]':'44001', 'leads[status][0][status_id]':'103450711' });
   chk('el webhook crea el borrador kommo-44001', r1.creados===1 && a.sh._datos.length===2 && a.sh._datos[1][0]==='kommo-44001', JSON.stringify(r1).slice(0,80));
-  const d = a.post(conClave({ action:'delete', id:'kommo-44001' }));
+  /* (30/09, §4he) Desde 2026-09-30-a el borrador NACE sellado (la lectura de lo cambiado lo necesita para verlo llegar), así
+     que se descarta como lo hace el panel: con el sello que trae la lista (`borrarEnServidor`). Sin sello, `actualizar`. */
+  const revB = (a.post(conClave({ action:'list' })).pedidos.find(p => p.id==='kommo-44001') || {}).rev;
+  if (/2026-09-30|2026-1\d/.test(a.ctx.SCRIPT_VERSION)) chk('el borrador nace sellado', Number(revB) > 0, revB);
+  const d = a.post(conClave({ action:'delete', id:'kommo-44001', rev:revB }));
   const memo = JSON.parse(props.KOMMO_DESCARTADOS || '{}');
   chk('⚠️ la vendedora lo descarta: la fila se va y el lead queda anotado en KOMMO_DESCARTADOS (con el día)', d.ok===true && a.sh._datos.length===1 && memo['44001']===hoyDia, props.KOMMO_DESCARTADOS);
   const n0 = red.length;
@@ -1333,6 +1354,184 @@ console.log('\n── 14. Días cerrados y tildes de la carga: sello si el panel
   const viejo = JSON.parse(JSON.stringify(l)); viejo.rev=l.rev||0; viejo.chofer='BETO';
   r = b.post({ action:'save', pedido:viejo, juntar:1 });
   chk('un pedido común con el sello viejo sigue chocando, mande o no `juntar`', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,100));
+}
+
+/* ══ 15-19. EL SERVIDOR 2026-09-30-a (bitácora §4he) ══════════════════════════════════════════════════════════════
+   Feriados en el portero, la huella igual a la de la página, la lectura con hora / comprimida / de lo cambiado, los
+   borrados anotados, los retiros con sello y los borradores de Kommo que nacen sellados. Los marcados ⚠️ fallan contra el
+   .gs 2026-09-28-a (`GS=… node tests/test_servidor.js`). */
+const HDR30 = HDR.concat(['Revisión']);
+const iREV = HDR30.indexOf('Revisión');
+/* Una fila con sello (30 columnas). */
+function filaS(o, rev){ const f = fila(o); f.push(rev == null ? 0 : rev); return f; }
+const listar = (a, extra) => a.post(Object.assign({ action:'list' }, extra || {}));
+const nuevo = (o) => Object.assign({ id:'n1', fecha:'2026-10-26', turno:'AM', oc:'', vendedor:'Carola Chavez', cliente:'NUEVO', productos:[{desc:'COLCHON',medida:'',codigo:'',cant:1}],
+  celular:'', zona:'Norte', direccion:'x', maps:'', pagado:false, saldo:100, ts:Date.now(), metodoPago:'', observaciones:'', estado:'', entregado:false,
+  vehiculo:'', chofer:'', garantia:'', nota:'', acuenta:0, facturarA:'', nit:'', nroDia:0, verificado:false, fotos:[] }, o || {});
+
+console.log('\n── 15. Feriados: el portero no deja entregar (2026-09-30-a) ──');
+{
+  // a. La misma lista que la página
+  const ph = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
+  const mP = ph.match(/var FERIADOS=(\{[\s\S]*?\});/), mG = fs.readFileSync(GS, 'utf8').match(/var FERIADOS_GS = (\{[\s\S]*?\});/);
+  const evalObj = (t) => { try { return vm.runInNewContext('(' + t + ')'); } catch (e) { return null; } };
+  const fP = mP ? evalObj(mP[1]) : null, fG = mG ? evalObj(mG[1]) : null;
+  const orden = (o) => JSON.stringify(Object.keys(o || {}).sort().map(k => [k, o[k]]));
+  chk('⚠️ a. el .gs tiene los feriados (FERIADOS_GS) y son LOS MISMOS que los de pedidos.html (fecha y nombre)',
+      !!fP && !!fG && orden(fP) === orden(fG) && Object.keys(fG).length >= 10, fG ? (Object.keys(fG).length + ' en el .gs · ' + Object.keys(fP||{}).length + ' en la página') : 'no está FERIADOS_GS');
+  // b. Un pedido NUEVO para un feriado
+  const a = cargar([HDR30, filaS({ id:'p1', fecha:'2026-10-30', turno:'AM', nro:1 }, 111)], {});
+  const antes = JSON.stringify(a.sh._datos);
+  let r = a.post({ action:'save', pedido: nuevo({ id:'n1', fecha:'2026-11-02' }) });
+  chk('⚠️ b. un pedido NUEVO para el 02/11 (lunes, Todos Santos): «feriado» con el nombre, y la hoja no se toca',
+      r.ok===false && r.error==='feriado' && r.fecha==='2026-11-02' && r.nombre==='Todos Santos' && JSON.stringify(a.sh._datos)===antes, JSON.stringify(r).slice(0,160));
+  chk('b. …y queda en «Rechazos» con el motivo', a.shR._datos.some(f => f[2]==='feriado' && /Todos Santos/.test(String(f[7]))), JSON.stringify(a.shR._datos.slice(-1)).slice(0,200));
+  // c. Mover uno existente a un feriado: sin forzar no; con forzar (Administración) sí, con su N° del día nuevo
+  const l = listar(a).pedidos.find(p => p.id==='p1');
+  const mov = JSON.parse(JSON.stringify(l)); mov.fecha = '2026-11-02';
+  r = a.post({ action:'save', pedido: mov });
+  chk('⚠️ c. moverlo a un feriado sin forzar: «feriado»', r.ok===false && r.error==='feriado', JSON.stringify(r).slice(0,120));
+  r = a.post({ action:'save', pedido: mov, forzar:true });
+  chk('c. con `forzar` (Administración) entra, como a un día cerrado, y toma el N° 1 del día nuevo', r.ok===true && r.pedido.fecha==='2026-11-02' && r.pedido.nroDia===1, JSON.stringify(r).slice(0,160));
+  // e. Uno que YA está en el feriado se corrige ahí mismo (no se mueve: el portero no mira)
+  const ya = JSON.parse(JSON.stringify(r.pedido)); ya.saldo = 777;
+  r = a.post({ action:'save', pedido: ya });
+  chk('e. uno que ya estaba en el feriado se corrige en el lugar (el precio), sin «feriado»', r.ok===true && r.pedido.saldo===777, JSON.stringify(r).slice(0,120));
+  // d. (arreglo de paso) Mover FORZADO a un día CERRADO le da el N° del día nuevo: antes se quedaba con el de su día viejo
+  const DIA = '2026-10-28', HOYO = '2026-10-27';
+  const cie = HDR30.map(() => ''); cie[0] = '__dias_cerrados__'; cie[HDR.indexOf('Observaciones')] = '🔒 ' + DIA; cie[iREV] = 5;
+  const b = cargar([HDR30, filaS({ id:'d1', fecha:DIA, nro:1 }, 11), filaS({ id:'d2', fecha:DIA, nro:2 }, 12), filaS({ id:'x1', fecha:HOYO, nro:9 }, 13), cie], {});
+  const x1 = listar(b).pedidos.find(p => p.id==='x1'); x1.fecha = DIA;
+  r = b.post({ action:'save', pedido: x1, forzar:true });
+  chk('⚠️ d. mover FORZADO a un día cerrado: entra y toma el N° 3 de ese día (antes se quedaba con el 9 de su día viejo)', r.ok===true && r.pedido.fecha===DIA && r.pedido.nroDia===3, JSON.stringify(r).slice(0,160));
+}
+
+console.log('\n── 16. La cuenta de control: la misma en la página y en el servidor ──');
+{
+  const ph = fs.readFileSync(path.resolve('pedidos.html'), 'utf8');
+  const m = ph.match(/function huellaFila\(id, rev\)\{[\s\S]*?\n\}/);
+  const a = cargar([HDR30], {});
+  if (!m || typeof a.ctx.huellaFila_ !== 'function') chk('⚠️ la página tiene huellaFila y el .gs huellaFila_', false, (!m ? 'falta en la página ' : '') + (typeof a.ctx.huellaFila_));
+  else {
+    const pag = vm.runInNewContext('(' + m[0] + ')');
+    const casos = [['p1', 1790000000000], ['__ret_abc__', 1], ['kommo-39357288', 0], ['__stock__', 1790782315561], ['ñandú', 42]];
+    for (let i = 0; i < 200; i++) casos.push(['p' + Math.random().toString(36).slice(2, 12), Math.floor(Math.random() * 2e12)]);
+    const malos = casos.filter(c => pag(c[0], c[1]) !== a.ctx.huellaFila_(c[0], c[1]));
+    chk('⚠️ 205 filas de muestra: el número de control de la página es IGUAL al del servidor, fila por fila', malos.length===0, JSON.stringify(malos.slice(0,3)));
+    chk('…y es un entero de 32 bits (no pasa de 2^32)', casos.every(c => { const h = pag(c[0], c[1]); return h >= 0 && h < 4294967296 && Math.floor(h)===h; }));
+    chk('…y cambia si cambia el sello', pag('p1', 1790000000000) !== pag('p1', 1790000000001));
+  }
+}
+
+console.log('\n── 17. La lectura: con hora, comprimida y solo lo cambiado ──');
+{
+  const largo = 'COLCHON HEAVEN TITANIO LATEX ÑANDÚ 🔒 '.repeat(20);
+  const filas = [HDR30];
+  for (let i = 1; i <= 80; i++) { const f = filaS({ id:'p'+i, fecha:'2026-10-2'+(i%9), cli:'CLIENTA Ñ '+i, obs:largo, nro:i }, Date.now() - 3600000 - i); filas.push(f); }
+  const a = cargar(filas, {});
+  const t0 = Date.now(); const L = listar(a); const t1 = Date.now();
+  chk('⚠️ a. la lectura dice de cuándo es (`ahora`, tomada antes de leer), cuántas filas (`n`) y su cuenta de control (`huella`)',
+      L.ok===true && L.ahora>=t0 && L.ahora<=t1 && L.n===80 && L.pedidos.length===80 && typeof L.huella==='number', JSON.stringify({ ahora:L.ahora, n:L.n, huella:L.huella }));
+  chk('a. …la huella es la suma de las filas', L.huella === (a.ctx.huellaDeRecs_ ? a.ctx.huellaDeRecs_(L.pedidos) : -1));
+  // b. Comprimida
+  const Z = listar(a, { z:1 });
+  let abierta = null; try { abierta = JSON.parse(require('zlib').gunzipSync(Buffer.from(Z.d || '', 'base64')).toString('utf8')); } catch (e) {}
+  chk('⚠️ b. con `z` y una planilla grande: va comprimida (gzip + base64) y pesa varias veces menos',
+      Z.ok===true && Z.z==='gzip64' && typeof Z.d==='string' && Z.d.length*3 < JSON.stringify(L).length && Z.version===a.ctx.SCRIPT_VERSION, JSON.stringify({ z:Z.z, d:(Z.d||'').length, plana:JSON.stringify(L).length }));
+  chk('b. …abierta es la MISMA lista, con los acentos y emojis intactos, y la marca `zc`',
+      !!abierta && abierta.zc==='ñ🔒€' && JSON.stringify(abierta.pedidos)===JSON.stringify(L.pedidos) && abierta.n===80, abierta ? abierta.zc : 'no abre');
+  const chica = cargar([HDR30, filaS({ id:'p1' }, 5)], {});
+  const Zc = listar(chica, { z:1 });
+  chk('b. con una planilla chica (menos de 20.000 letras) no vale la pena: va sin comprimir', Zc.ok===true && !Zc.z && Array.isArray(Zc.pedidos), JSON.stringify(Zc).slice(0,80));
+  const sinZ = cargar(filas, {}); sinZ.ctx.Utilities = { formatDate: (d)=>String(d), newBlob: () => ({}) };
+  const Zs = listar(sinZ, { z:1 });
+  chk('b. si este Google no escribe en UTF-8 (o no tiene gzip), sin comprimir: nunca se queda sin contestar', Zs.ok===true && !Zs.z && Zs.pedidos.length===80, JSON.stringify(Zs).slice(0,80));
+  // c. Solo lo cambiado
+  const A0 = L.ahora;
+  const p2 = listar(a).pedidos.find(p => p.id==='p2'); p2.chofer = 'Luis Pierre';
+  let r = a.post({ action:'save', pedido:p2 });
+  const rev3 = listar(a).pedidos.find(p => p.id==='p3').rev;
+  const d3 = a.post({ action:'delete', id:'p3', rev:rev3, quien:'Mirian Salazar', dispositivo:'DEV123' });
+  const D = listar(a, { desde:A0 });
+  const E = listar(a);
+  chk('⚠️ c. con `desde`: solo la fila cambiada (p2) y el borrado (p3), con la hora del borrado',
+      D.ok===true && D.delta===true && D.desde===A0 && D.pedidos.length===1 && D.pedidos[0].id==='p2' && D.pedidos[0].chofer==='Luis Pierre' &&
+      Array.isArray(D.borrados) && D.borrados.length===1 && D.borrados[0][0]==='p3' && D.borrados[0][1]>=A0, JSON.stringify({ n:D.pedidos && D.pedidos.map(p => p.id), b:D.borrados }));
+  chk('c. …con la MISMA cuenta de control que una lectura entera hecha después (n y huella)', D.n===E.n && D.huella===E.huella && E.n===79, JSON.stringify({ D:[D.n, D.huella], E:[E.n, E.huella] }));
+  chk('c. el guardado y el borrado dicen cuándo quedaron escritos (`ahora`), y el guardado la versión', r.ok===true && r.ahora>=r.pedido.rev && r.version===a.ctx.SCRIPT_VERSION && d3.ok===true && d3.ahora>0, JSON.stringify({ ahora:r.ahora, rev:r.pedido.rev, d3 }));
+  // una fila guardada 2 minutos ANTES de `desde` entra igual (el margen de 5 minutos: un guardado que corría mientras se leía)
+  a.sh._datos.find(f => f[0]==='p10')[iREV] = A0 - 2*60000;
+  const D2 = listar(a, { desde:A0 });
+  chk('c. una fila sellada 2 minutos antes de `desde` también viene (margen de 5 minutos)', D2.delta===true && D2.pedidos.some(p => p.id==='p10'), JSON.stringify(D2.pedidos.map(p => p.id)));
+  // d. `desde` más viejo de lo que se recuerdan los borrados: entera
+  const Dv = listar(a, { desde: Date.now() - 49*3600000 });
+  chk('d. con `desde` de hace más de 48 horas: la planilla entera (los borrados de entonces ya no se recuerdan)', Dv.ok===true && !Dv.delta && Dv.pedidos.length===79, JSON.stringify({ delta:Dv.delta, n:Dv.pedidos.length }));
+  // e. el tope de la memoria de borrados: 150, y lo que se olvidó obliga a leer entera
+  const b = cargar([HDR30], {});
+  for (let i = 0; i < 160; i++) { b.sh._datos.push(filaS({ id:'b'+i }, 1000 + i)); }
+  const Lb = listar(b);
+  for (let i = 0; i < 160; i++) b.post({ action:'delete', id:'b'+i, rev:1000 + i });
+  const memo = JSON.parse(b.ctx.PropertiesService.getScriptProperties().getProperty('BORRADOS_RECIENTES') || '{}');
+  chk('e. la memoria de borrados guarda los últimos 150 y entra en una propiedad (9 KB)', memo.b && memo.b.length===150 && memo.desde>0 && JSON.stringify(memo).length < 9000, JSON.stringify({ n:memo.b && memo.b.length, desde:memo.desde, largo:JSON.stringify(memo).length }));
+  const Db = listar(b, { desde: Lb.ahora });
+  chk('e. …y una lectura `desde` antes de lo olvidado va entera (sin borrados de menos)', Db.ok===true && !Db.delta && Db.pedidos.length===0, JSON.stringify({ delta:Db.delta, n:Db.pedidos.length }));
+  // f. muchas filas cambiadas: entera
+  const c = cargar([HDR30], {});
+  for (let i = 0; i < 50; i++) c.sh._datos.push(filaS({ id:'c'+i }, Date.now()));
+  const Dc = listar(c, { desde: Date.now() - 60000 });
+  chk('f. con más de 40 filas cambiadas: la planilla entera (una sola lectura de la hoja)', Dc.ok===true && !Dc.delta && Dc.pedidos.length===50, JSON.stringify({ delta:Dc.delta, n:Dc.pedidos.length }));
+  // g. doGet también dice de cuándo es (la copia de su caché)
+  const g0 = Date.now(); const G = a.get({});
+  chk('⚠️ g. el GET (y su caché de 20 s) dice de cuándo es la lectura', G.ok===true && G.ahora>=g0 && G.n===G.pedidos.length, JSON.stringify({ ahora:G.ahora, n:G.n }));
+  // h. La hoja «Borrados»
+  const hb = a.otras['Borrados'];
+  chk('⚠️ h. borrar deja una fila en la hoja «Borrados»: qué, de quién era, quién lo borró y desde qué equipo (sin celular ni dirección)',
+      !!hb && hb._datos[0][0]==='Fecha' && hb._datos[0][1]==='Id' && hb._datos.some(f => f[1]==='p3' && f[2]==='CLIENTA Ñ 3' && f[3]==='Carola Chavez' && f[6]==='Mirian Salazar' && f[7]==='DEV123' && !f.some(v => v==='70111222')),
+      hb ? JSON.stringify(hb._datos.slice(0,2)).slice(0,300) : 'no hay hoja');
+  // …y si «Borrados» fuera OTRA hoja (renombrada a mano), no se escribe ahí
+  const gd = cargar([HDR30, filaS({ id:'z1' }, 7)], {});
+  const origGet = gd.ctx.SpreadsheetApp.getActiveSpreadsheet;
+  gd.ctx.SpreadsheetApp.getActiveSpreadsheet = () => { const ss = origGet(); return Object.assign({}, ss, { getSheetByName: (n) => n==='Borrados' ? gd.sh : ss.getSheetByName(n) }); };
+  gd.post({ action:'delete', id:'z1', rev:7 });
+  chk('h. si la hoja que se llama «Borrados» no es la suya (otros encabezados), no escribe nada ahí', gd.sh._datos.length===1 && gd.sh._datos[0][0]==='id', JSON.stringify(gd.sh._datos).slice(0,120));
+}
+
+console.log('\n── 18. Los retiros piden sello ──');
+{
+  const a = cargar([HDR30], {});
+  const ret = (monto, rev) => ({ id:'__ret_r1__', fecha:'', turno:'', vendedor:'Carola Chavez', productos:[], cliente:'💵 RETIRO', celular:'', zona:'FACTURADO',
+    direccion:'', maps:'', pagado:false, saldo:0, ts:Date.now(), metodoPago:'', observaciones:'', estado:'', entregado:false, vehiculo:'', chofer:'Contabilidad',
+    garantia:'', nota:'1', acuenta:monto, facturarA:'', nit:'', nroDia:0, verificado:false, fotos:[], rev:rev });
+  let r = a.post({ action:'save', pedido: ret(400) });
+  chk('a. un retiro NUEVO (sin sello) entra como siempre', r.ok===true && r.pedido.rev>0, JSON.stringify(r).slice(0,100));
+  const rev1 = r.pedido.rev;
+  r = a.post({ action:'save', pedido: ret(450, rev1) });
+  chk('b. corregido con el sello con el que se vio: entra', r.ok===true && r.pedido.acuenta===450, JSON.stringify(r).slice(0,100));
+  const rev2 = r.pedido.rev;
+  r = a.post({ action:'save', pedido: ret(500, rev1) });
+  chk('⚠️ c. con el sello VIEJO (otro equipo lo corrigió en el medio): «conflicto» con la fila actual, y la planilla sigue en 450',
+      r.ok===false && r.error==='conflicto' && r.pedido && r.pedido.acuenta===450 && r.pedido.rev===rev2 && r.ahora>0 && pedido(a.ctx, a.sh, '__ret_r1__').acuenta===450, JSON.stringify(r).slice(0,160));
+  chk('c. …y ese choque SÍ queda en «Rechazos» (es plata que no entró)', a.shR._datos.some(f => f[3]==='__ret_r1__' && f[2]==='conflicto' && /RETIRO/.test(String(f[7]))), JSON.stringify(a.shR._datos.slice(-1)).slice(0,160));
+  r = a.post({ action:'save', pedido: ret(600) });
+  chk('⚠️ d. sin sello sobre un retiro ya sellado: «conflicto» (antes pisaba la fila)', r.ok===false && r.error==='conflicto' && pedido(a.ctx, a.sh, '__ret_r1__').acuenta===450, JSON.stringify(r).slice(0,100));
+  r = a.post({ action:'delete', id:'__ret_r1__', rev:rev1 });
+  chk('e. borrarlo con el sello viejo tampoco pasa (esto ya era así desde §4fz)', r.ok===false && r.error==='conflicto', JSON.stringify(r).slice(0,100));
+}
+
+console.log('\n── 19. Los borradores de Kommo nacen sellados; la corrección del nombre no toca el sello ──');
+{
+  const a = cargar([HDR30], {});
+  if (typeof a.ctx.repararNombreAplicar_ !== 'function') chk('está repararNombreAplicar_', false);
+  else {
+    const BORR = filaS({ id:'kommo-777', cli:'Lead #777', fecha:'', turno:'' }, 1790000000000); BORR[HDR.indexOf('Estado stock')] = 'Borrador Kommo';
+    a.sh._datos.push(BORR);
+    const ok = a.ctx.repararNombreAplicar_(a.sh, { id:'777', nombre:'JUANA PÉREZ' });
+    const f = pedido(a.ctx, a.sh, 'kommo-777');
+    chk('la corrección del nombre escribe el cliente y NO cambia el sello (quien lo tenía abierto para completarlo no choca)', ok===true && f.cliente==='JUANA PÉREZ' && f.rev===1790000000000, JSON.stringify({ ok, cli:f.cliente, rev:f.rev }));
+    const comp = JSON.parse(JSON.stringify(f)); comp.fecha = '2026-10-26'; comp.turno = 'AM'; comp.estado = ''; comp.rev = 1790000000000;
+    const r = a.post({ action:'save', pedido: comp });
+    chk('completarlo con el sello que trajo la lista entra (como lo hace el panel: EDIT_REV)', r.ok===true && r.pedido.fecha==='2026-10-26', JSON.stringify(r).slice(0,120));
+  }
 }
 
 console.log('\n'+PASS+' bien · '+FAIL+' mal');

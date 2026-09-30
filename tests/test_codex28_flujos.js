@@ -186,9 +186,13 @@ function INIT(){
     chk('(partida) el pedido llegó a la planilla', !!(id && S.fila(id)), id);
     const bOk = await borrarDesde(B, id);
     chk('(partida) B lo borró de la planilla', bOk && !S.fila(id), bOk);
+    /* (30/09, §4he) Los avisos se juntan desde ANTES de `pasaElTiempo`: con el servidor 2026-09-30-a la lectura dice de
+       cuándo es, y si ya pasó un par de segundos desde el guardado, el borrado se ve en la PRIMERA lectura (la de
+       `pasaElTiempo`), sin sospecha. Sin la hora (servidor de antes), en la que confirma. Un aviso, en los dos casos. */
+    await A.evaluate(() => { window._toasts=[]; });
     await pasaElTiempo(A, id);
     const r = await A.evaluate(async (id) => {
-      window._toasts=[]; await refrescarEstado(); await esperar(150);
+      await refrescarEstado(); await esperar(150);
       return { sigue:!!findById(id), avisos:window._toasts.filter(function(t){ return /ya no está en la planilla/.test(t); }) };
     }, id);
     chk('🗑 la lectura siguiente de A (pedida después de su guardado) ya no lo muestra (antes lo conservaba 90 s)', r.sigue===false, r);

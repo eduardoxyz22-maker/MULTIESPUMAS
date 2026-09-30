@@ -87,7 +87,11 @@ function servidor(){
   return { ctx, sh, post, get, foto, fila, borrar };
 }
 
-function INIT(){
+/* (30/09, §4he) `sinHora`: las respuestas pierden `ahora`/`huella`/`n` en el camino, como las de un servidor de antes del
+   2026-09-30-a. Así esta prueba sigue cuidando lo que el panel hace SIN la hora de Google (la ventana y la sospecha), que es lo
+   que corre mientras el servidor nuevo no esté implementado, o si se vuelve atrás. Con la hora, lo nuevo (ver el 4). */
+function INIT(sinHora){
+  window.__sinHora = !!sinHora;
   window.__ctl = { rules: [], log: [] };
   window.__regla = function(r){ r.n = r.n || 1; window.__ctl.rules.push(r); };
   window.esperar = function(ms){ return new Promise(function(r){ setTimeout(r, ms||0); }); };
@@ -96,7 +100,9 @@ function INIT(){
     var body = (o && o.body) || '{}', P = {}; try { P = JSON.parse(body); } catch(e) {}
     var act = P.action || 'save';
     window.__ctl.log.push({ act: act, id: String((P.pedido && P.pedido.id) || P.id || '') });
-    var resp = function(t){ return { ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(t)); }, text:function(){ return Promise.resolve(t); } }; };
+    var resp = function(t){
+      if(window.__sinHora){ try{ var j0=JSON.parse(t); delete j0.ahora; delete j0.huella; delete j0.n; t=JSON.stringify(j0); }catch(e){} }
+      return { ok:true, status:200, json:function(){ return Promise.resolve(JSON.parse(t)); }, text:function(){ return Promise.resolve(t); } }; };
     var rule = null;
     for (var i=0;i<window.__ctl.rules.length;i++){ var r = window.__ctl.rules[i]; if (r.n > 0 && r.act === act) { rule = r; r.n--; break; } }
     if (rule && rule.mode === 'get') return window.__gsGet().then(resp);          // Google contestó con doGet
@@ -108,12 +114,13 @@ function INIT(){
   const browser = await chromium.launch({ executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args:['--no-sandbox'] });
   const errores = [];
   let contextos = [];
+  let SIN_HORA = false;                                   // (30/09) la vuelta de las pruebas: con o sin la hora de Google
   const abrir = async (S) => {
     const context = await browser.newContext({ viewport:{width:1300,height:900}, timezoneId:'America/La_Paz' });
     contextos.push(context);
     await context.exposeFunction('__gs', (b) => S.post(b));
     await context.exposeFunction('__gsGet', () => S.get());
-    await context.addInitScript(INIT);
+    await context.addInitScript(INIT, SIN_HORA);
     await context.route(/^https?:/, r => r.abort());
     const page = await context.newPage();
     page.on('pageerror', e => errores.push(e.message));
@@ -159,8 +166,13 @@ function INIT(){
     return { enPantalla:!!findById(a.id), avisos:window._toasts.filter(function(t){ return /ya no está en la planilla|borraron desde otro equipo/.test(t); }) };
   }, { id:id, get:!!get });
 
+  /* (30/09, §4he) Dos vueltas: con el servidor nuevo (dice la hora de cada lectura y de cada guardado) y como con un servidor
+     de antes (sin la hora: la ventana y la sospecha, que siguen hasta que se implemente el nuevo, o si se vuelve atrás). */
+  for (const modo of [false, true]) {
+  SIN_HORA = modo;
+  const TAG = modo ? ' [sin la hora de Google, como un servidor de antes]' : ' [servidor 2026-09-30-a, con la hora]';
   // ══ 1. PEDIDO NUEVO + LA LECTURA SIGUIENTE ES LA COPIA VIEJA ══════════════════════════════════════════════
-  await esc('1. Pedido nuevo, y la lectura siguiente es la copia de 20 s de antes del guardado', async () => {
+  await esc('1. Pedido nuevo, y la lectura siguiente es la copia de 20 s de antes del guardado'+TAG, async () => {
     const S = servidor(); const A = await abrir(S);
     const vieja = S.foto();                              // un doGet (de afuera) leyó la hoja ANTES del guardado…
     const id = await cargar(A, 'RECIEN CARGADO');
@@ -173,7 +185,7 @@ function INIT(){
   });
 
   // ══ 2. LA CORRIGE ENSEGUIDA (MUEVE LA FECHA → RELEE ANTES DE GUARDAR) ════════════════════════════════════
-  await esc('2. Lo corrige enseguida y la relectura de antes de guardar es la copia vieja', async () => {
+  await esc('2. Lo corrige enseguida y la relectura de antes de guardar es la copia vieja'+TAG, async () => {
     const S = servidor(); const A = await abrir(S);
     const vieja = S.foto();
     const id = await cargar(A, 'EDITADO ENSEGUIDA');
@@ -195,7 +207,7 @@ function INIT(){
   });
 
   // ══ 3. UN RETIRO DE PLATA RECIÉN GUARDADO ════════════════════════════════════════════════════════════════
-  await esc('3. Un retiro recién guardado y la lectura siguiente es la copia vieja', async () => {
+  await esc('3. Un retiro recién guardado y la lectura siguiente es la copia vieja'+TAG, async () => {
     const S = servidor(); const A = await abrir(S);
     const vieja = S.foto();
     const r0 = await A.evaluate(async () => {
@@ -214,12 +226,25 @@ function INIT(){
   });
 
   // ══ 4. UN BORRADO DE VERDAD ═══════════════════════════════════════════════════════════════════════════════
-  await esc('4. Un borrado de verdad: dentro de la ventana no se sabe; pasada, una lectura sospecha y la otra confirma', async () => {
+  await esc('4. Un borrado de verdad'+(SIN_HORA ? ': dentro de la ventana no se sabe; pasada, una lectura sospecha y la otra confirma' : ': la hora de Google dice si la lectura ya lo tenía')+TAG, async () => {
     const S = servidor(); const A = await abrir(S);
     const id = await cargar(A, 'BORRADO DE VERDAD');
     const f0 = S.fila(id);
     const d = S.borrar(id, f0 && f0.rev);                // otro equipo lo borra (con su sello)
     chk('(partida) otro equipo lo borró de la planilla', !!(d && d.ok) && !S.fila(id), d);
+    if (!SIN_HORA) {
+      /* (30/09, §4he) Con el servidor 2026-09-30-a: la lectura dice de cuándo es y el guardado cuándo quedó escrito (hora
+         de Google). Se corre esa hora del guardado para no depender de cuánto tarda la prueba. */
+      const horaGuardado = (ms) => A.evaluate((a) => { var u=SAVE_ULTIMO[a.id]; if(u) u.okAhora=a.ms; return !!u; }, { id:id, ms:ms });
+      await horaGuardado(Date.now() + 10000);            // la lectura es ANTERIOR al guardado (una copia vieja, o relojes corridos)
+      const dentro = await releer(A, id, false);
+      chk('⏱️ una lectura ANTERIOR al guardado (según la hora de Google) lo conserva, sin aviso', dentro.enPantalla===true && dentro.avisos.length===0, dentro);
+      await horaGuardado(Date.now() - 10000);            // la lectura es POSTERIOR al guardado: si no lo trae, lo borraron
+      const fuera = await releer(A, id, false);
+      const re = await A.evaluate(() => (typeof BORRADO_CONFIRMA_T!=='undefined') && !!BORRADO_CONFIRMA_T);
+      chk('🗑 la primera lectura POSTERIOR lo saca de la pantalla y lo dice, sin sospecha ni segunda lectura', fuera.enPantalla===false && fuera.avisos.length===1 && re===false, { fuera, re });
+      return;
+    }
     const dentro = await releer(A, id, false);           // una lectura BUENA (POST), enseguida
     chk('⏱️ dentro de la ventana se conserva y no se avisa (no se distingue de la copia vieja: es a propósito)',
         dentro.enPantalla===true && dentro.avisos.length===0, dentro);
@@ -244,7 +269,7 @@ function INIT(){
   });
 
   // ══ 5. LA COPIA VIEJA DE UN `doGet` LENTO (el caso de Codex) ════════════════════════════════════════════
-  await esc('5. Un doGet LENTO deja la copia vieja tarde: la lectura de 46 s después no alcanza para borrar', async () => {
+  await esc('5. Un doGet LENTO deja la copia vieja tarde: la lectura de 46 s después no alcanza para borrar'+TAG, async () => {
     const S = servidor(); const A = await abrir(S);
     const vieja = S.foto();                              // un doGet empezó a leer ANTES del guardado…
     const id = await cargar(A, 'DOGET LENTO');
@@ -262,6 +287,8 @@ function INIT(){
     const sos = await A.evaluate((id) => { var u=(typeof SAVE_ULTIMO!=='undefined') ? SAVE_ULTIMO[id] : null; return u ? (u.faltaT==null) : null; }, id);
     chk('…la lectura que confirma lo trae: sigue en pantalla, sin aviso, y la sospecha se borra', r2.enPantalla===true && r2.avisos.length===0 && sos===true, { r2, sos });
   });
+
+  }
 
   // ══ 6. LA VENTANA ALCANZA ═════════════════════════════════════════════════════════════════════════════════
   await esc('6. La ventana cubre la caché del servidor y lo que tarda en leer la hoja', async () => {

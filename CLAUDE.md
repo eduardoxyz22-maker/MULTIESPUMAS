@@ -408,8 +408,9 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   lectura que el navegador y dice código, tiempo, tamaño, CORS y filas, sin datos de clientes. El 29/09 22:31-22:39: 200 en
   2-3 s, 901 KB **sin comprimir** (Google no comprime aunque se pida gzip), y a las 22:36 una lectura tardó 59 s también
   desde GitHub: Google lento a ratos. «Nunca se pudo leer la planilla en este dispositivo» = desde que se abrió la página
-  (`ULTIMO_REFRESCO` vive en memoria). Propuesto (el dueño lo ve el 30/09): cartel que no culpe a la versión, lectura
-  comprimida y lectura de lo cambiado (diseño en §4hb).
+  (`ULTIMO_REFRESCO` vive en memoria). **Hecho en §4he (30/09, en la rama)**: el cartel ya no culpa a la versión y dice
+  «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
+  diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
 ## 💵 Efectivo: quién tiene la plata (§4eq)
 Cada cobro en efectivo puede decir **quién lo recibió**: la vendedora (sin marca, todo lo viejo)
@@ -913,6 +914,33 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
   - `acomodarFichas`: `data-como="<id>"` copia las columnas de otra caja (las fichas de marca, alineadas con las de
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
+
+## 📦 Servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado (§4he) — EN LA RAMA, sin publicar
+El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el aviso «día sin camión»; el servidor nuevo lo implementa
+él; la conexión (cartel, comprimida, de lo cambiado) la hice yo. Detalle en bitácora §4he y RESPUESTA §24. Lo que hay que respetar:
+- **La lectura** (`apiList`): pide `z:1` (si hay `DecompressionStream`) y `desde` (si hay copia `LISTA_BASE` de menos de 15 min).
+  A quien la pide le llega SIEMPRE la planilla entera (rearmada: `listaDeBase`), con `_ahora` = hora de Google de la copia.
+  La copia guarda TEXTO por fila, no objetos (quien recibe la lista la toca). La cuenta de control (`n` + `huella`) que no da →
+  lectura entera en el acto. ⚠️ `huellaFila` (página), `huellaFila_` (.gs) y `huella_fila` (diagnóstico en Python) son LA MISMA
+  cuenta: `test_servidor` §16 compara las dos primeras. Si se toca una, van las tres.
+- **Con `_ahora` y `okAhora` (servidor nuevo) `localManda` compara, no adivina**; sin ellos, la ventana (`LECTURA_VIEJA_MS`) y la
+  sospecha (`BORRADO_CONFIRMA_MS`) de siempre, que siguen para el servidor de antes. `test_lectura_vieja` corre las dos vueltas.
+- **Todo lo que escriba la hoja tiene que dejar sello** (si no, la de lo cambiado no lo ve): los borradores de Kommo nacen con
+  `rev`. La corrección del nombre del borrador (`repararNombreAplicar_`) NO toca el sello a propósito (no hacer chocar a quien lo
+  completa): llega con la lectura entera. **Todo borrado pasa por `doDelete`** (anota en `BORRADOS_RECIENTES` y en la hoja
+  «Borrados»); una fila borrada a mano hace fallar la cuenta y se lee entera.
+- **Retiros con sello**: el `.gs` compara el `rev` de `__ret_…`. El panel manda el sello con que se abrió ✏️ (`RET_FORM.rev`) o
+  uno guardado desde acá (`SAVE_REV`), **nunca el de la lista de ahora** (pisaría la corrección de otro). El `conflicto` de un
+  retiro va a `RETIROS`, no a `STATE`.
+- **Feriados**: `FERIADOS_GS` (.gs) = `FERIADOS` (página), fecha y nombre (`test_servidor` §15a). Un feriado nuevo va en los dos.
+  `feriado` es un «no» firme (`RECHAZOS_FIRMES`); con `forzar` Administración lo mueve igual.
+- `zOk_()` / la marca `zc` («ñ🔒€»): si Google no escribe en UTF-8, no se comprime; si la marca no llega bien, el panel descarta
+  la comprimida y lee sin comprimir. Nunca se muestra una lectura con letras cambiadas.
+- Pruebas: `test_lectura_delta.js` (24), `test_retiro_feriado.js` (11), `test_servidor.js` §15-§19. Su `Utilities` es de verdad
+  (gzip de Node, bytes con signo): los otros arneses siguen con el de mentira y ahí el `.gs` contesta sin comprimir.
+- **Publicar**: el dueño anota la versión activa (la del 28/09), pega el `.gs` del enlace fijo y corre `probarAntesDeImplementar`;
+  con su OK se publica la página y todos F5; recién ahí ✏️ Nueva versión. Volver atrás = ✏️ a la anotada Y pegar la 28-a
+  (enlace fijo a `4ded824…`, 1980 líneas).
 
 ## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd) — PUBLICADA 30/09 10:52 (`4ded824`)
 Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El dueño: *«hazlo todo»*. Lo que hay que respetar:

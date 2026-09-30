@@ -2095,7 +2095,7 @@ function dayNumMap(){ var byF={},map={},i,f; for(i=0;i<STATE.length;i++){ var p=
 /* Version del Apps Script que hay PUBLICADA (no la guardada). El servidor la manda en cada
    respuesta; sirve para saber si el "Implementar → Nueva versión" realmente se hizo. */
 var SERVER_VER='';
-var SCRIPT_VERSION_ESPERADA='2026-09-28-a';   // (28/09) `borrado`: no se vuelve a crear un pedido que borraron desde otro equipo
+var SCRIPT_VERSION_ESPERADA='2026-09-30-a';   // (30/09, §4he) la lectura con hora, comprimida y de lo cambiado; retiros con sello; feriados en el portero · (28/09) `borrado`
 /* ⚠️ «VERSIÓN DISTINTA» NO ES «CANDADO ROTO» (§4ee). Los avisos de abajo comparaban lo
    publicado con SCRIPT_VERSION_ESPERADA y ante CUALQUIER diferencia gritaban en rojo que el
    servidor no rechaza los días cerrados — con el `2026-09-10-b` publicado, que sí los
@@ -2135,7 +2135,7 @@ var CLAVE_RECHAZADA=false;   // la última llamada volvió con «clave»
 var NO_ENCOLAR={};           // id → cuándo el servidor dio un «no» firme (ver queuePending)
 /* 🗑 `borrado` (28/09, .gs 2026-09-28-a): se guardó con sello una fila que ya no está — la borraron desde otro lado. Es un «no»
    definitivo: reintentarlo no la trae de vuelta, y volver a crearla es un pedido nuevo, a propósito. */
-var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1};
+var RECHAZOS_FIRMES={conflicto:1, cupos_llenos:1, dia_cerrado:1, oc_repetida:1, admin:1, borrado:1, feriado:1};   // (30/09) `feriado`: el portero del .gs 2026-09-30-a
 /* «El servidor estaba ocupado» NO es un guardado perdido: al no estar en `RECHAZOS_FIRMES`,
    el panel lo devuelve a la cola y lo reenvía solo hasta que entra. El servidor igual lo
    anota en su lista de rechazos (registra todo lo que contestó que no), así que la pantalla
@@ -2233,13 +2233,141 @@ var RED_N=0;
    El tiempo se mide con `relojMs` (solo avanza: no lo mueve el celular al corregir la hora). */
 var LECTURA_VIEJA_MS=45000;
 function relojMs(){ try{ if(window.performance && typeof performance.now==='function') return performance.now(); }catch(e){} return Date.now(); }
-function apiList(){
+/* ============================================================================
+   📦 LA LECTURA: DE CUÁNDO ES, COMPRIMIDA Y SOLO LO CAMBIADO (30/09, §4he; el diseño, §4hb)
+   El 29/09 a la noche el panel no conectaba: Google tardaba a ratos y cada equipo bajaba la planilla ENTERA (900 KB sin
+   comprimir: Google no comprime aunque el navegador lo pida) cada 2 minutos. Con el servidor 2026-09-30-a:
+   · la lectura viaja COMPRIMIDA (`z`: ~7 veces menos). Se abre con `DecompressionStream` (iPad/iPhone con iOS 16.4 o más,
+     Chrome, Edge); sin eso, o si algo no cierra (la marca `zc`), se pide sin comprimir, como siempre;
+   · después de la primera, se pide SOLO LO CAMBIADO (`desde`): las filas con sello nuevo y lo borrado, más la cuenta de
+     control (`n` filas y `huella`). El panel la rehace con su copia (`LISTA_BASE`) y, si no da lo mismo, pide la entera.
+     Entera también al abrir y cada `LISTA_COMPLETA_MS` (15 min): una corrección escrita A MANO en la hoja no cambia el
+     sello, y la lectura de lo cambiado no la ve;
+   · cada lectura dice DE CUÁNDO ES (`ahora`, reloj de Google) y cada guardado, cuándo quedó escrito: `localManda` ya no
+     adivina si una lectura es vieja (§4gl/§4gn/§4go), lo compara.
+   A los que piden la lista no les cambia nada: reciben la planilla ENTERA, igual que antes (rearmada de la copia más lo
+   cambiado). Con un servidor de antes todo esto queda apagado solo: no contesta `ahora` ni `huella`. */
+var LISTA_BASE=null;             // { ahora, t, filas:{id:{txt, rev}}, orden:[ids] }: lo último que mandó el servidor, tal cual
+var LISTA_COMPLETA_MS=15*60000;  // cada cuánto se lee entera aunque ande la de lo cambiado
+var LISTA_Z_FALLO=false;         // la comprimida falló una vez en esta pestaña: de acá en más, sin comprimir
+var LISTA_DELTA_FALLAS=0;        // cuentas de control que no dieron, seguidas
+var LISTA_DELTA_PAUSA=0;         // (relojMs) hasta cuándo no se pide lo cambiado, después de dos cuentas que no dieron
+var MARGEN_RELOJ_MS=2000;        // relojes de dos máquinas de Google: lo que puede haber entre una y otra
+var Z_CHECK='\u00f1\uD83D\uDD12\u20ac';   // «ñ🔒€»: la misma marca que manda el servidor adentro de la comprimida
+var LS_LECTURA_T='ME_LECTURA_T_V1';       // cuándo fue la última lectura buena en este dispositivo (para el cartel)
+function listaZPuede(){ return !LISTA_Z_FALLO && typeof DecompressionStream==='function' && typeof atob==='function' && typeof Response==='function' && typeof Blob==='function'; }
+function listaDeltaPuede(){
+  var B=LISTA_BASE;
+  /* Los dos relojes: `relojMs` no lo mueve el celular al corregir la hora, pero en algunos no avanza mientras duerme. */
+  return !!(B && B.ahora>0 && (relojMs()-B.t)<LISTA_COMPLETA_MS && Math.abs(Date.now()-B.tw)<LISTA_COMPLETA_MS &&
+            !(LISTA_DELTA_PAUSA && relojMs()<LISTA_DELTA_PAUSA));
+}
+/* La MISMA cuenta que `huellaFila_` del servidor (FNV-1a de 32 bits sobre «id:sello», escrita con sumas y corrimientos):
+   test_servidor.js §16 compara las dos. */
+function huellaFila(id, rev){
+  var s=String(id)+':'+String(Number(rev)||0), h=2166136261;
+  for(var i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h+(h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24))>>>0; }
+  return h;
+}
+function listaHuella(filas, orden){ var h=0; for(var i=0;i<orden.length;i++) h=(h+huellaFila(orden[i], filas[orden[i]].rev))%4294967296; return h; }
+/* La planilla entera, rearmada de la copia: objetos NUEVOS cada vez (quien la recibe la puede tocar). */
+function listaDeBase(){
+  var B=LISTA_BASE; if(!B) return null;
+  var partes=[]; for(var i=0;i<B.orden.length;i++) partes.push(B.filas[B.orden[i]].txt);
+  return JSON.parse('['+partes.join(',')+']');
+}
+/* Una lectura ENTERA con `ahora` y `huella` (servidor nuevo): es la copia de acá en más. Sin eso (servidor de antes), no
+   hay copia y todo sigue como siempre. Si ya hay una copia MÁS NUEVA (llegó antes otra lectura), se queda esa. */
+function listaTomarEntera(j){
+  var ah=Number(j.ahora)||0;
+  if(!(ah>0) || j.huella==null){ LISTA_BASE=null; return j.pedidos; }
+  if(LISTA_BASE && LISTA_BASE.ahora>ah) return listaDeBase();
+  var B={ ahora:ah, t:relojMs(), tw:Date.now(), filas:{}, orden:[] }, dup=false;
+  j.pedidos.forEach(function(p){
+    var id=String((p&&p.id)||''); if(!id) return;
+    if(B.filas[id]) dup=true; else B.orden.push(id);
+    B.filas[id]={ txt:JSON.stringify(p), rev:Number(p.rev)||0 };
+  });
+  /* Dos filas con el mismo id (una copiada a mano en la hoja), o una cuenta que ya no da con la lectura entera: la lectura
+     de lo cambiado no sirve para esta planilla. Se lee siempre entera, como antes. */
+  if(dup || B.orden.length!==Number(j.n) || listaHuella(B.filas, B.orden)!==Number(j.huella)){ LISTA_BASE=null; return j.pedidos; }
+  LISTA_BASE=B;             // (las fallas seguidas se cuentan hasta que una de lo cambiado dé bien: ver apiList)
+  return j.pedidos;
+}
+/* Lo cambiado, sobre la copia. null = la cuenta de control no da: hay que leer entera. */
+function listaAplicarDelta(j){
+  var B=LISTA_BASE, ah=Number(j.ahora)||0;
+  if(!B || !(ah>0)) return null;
+  if(ah<B.ahora) return listaDeBase();                    // llegó tarde: la copia ya es más nueva que esta respuesta
+  var filas={}, k; for(k in B.filas) filas[k]=B.filas[k];
+  var orden=B.orden.slice(), fuera={}, hayFuera=false;
+  (j.borrados||[]).forEach(function(b){
+    var id=String((b&&b[0])||''), ms=Number(b&&b[1])||0;
+    if(filas[id] && !(filas[id].rev>ms)){ delete filas[id]; fuera[id]=1; hayFuera=true; }   // uno vuelto a crear después del borrado se queda
+  });
+  if(hayFuera) orden=orden.filter(function(id){ return !fuera[id]; });
+  (j.pedidos||[]).forEach(function(p){
+    var id=String((p&&p.id)||''); if(!id) return;
+    var r=Number(p.rev)||0;
+    if(filas[id]){ if(r<filas[id].rev) return; } else orden.push(id);
+    filas[id]={ txt:JSON.stringify(p), rev:r };
+  });
+  if(orden.length!==Number(j.n) || listaHuella(filas, orden)!==Number(j.huella)) return null;
+  LISTA_BASE={ ahora:ah, t:B.t, tw:B.tw, filas:filas, orden:orden };
+  LISTA_DELTA_FALLAS=0;
+  return listaDeBase();
+}
+/* Abre la comprimida (`z:'gzip64'`): base64 → gzip → texto → JSON, y mira la marca. Una respuesta sin comprimir pasa tal cual. */
+function listaAbrir(j){
+  if(!(j && j.z==='gzip64' && typeof j.d==='string')) return Promise.resolve(j);
+  return Promise.resolve().then(function(){
+    var bin=atob(j.d), u=new Uint8Array(bin.length);
+    for(var i=0;i<bin.length;i++) u[i]=bin.charCodeAt(i);
+    var flujo=(new Blob([u])).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Response(flujo).text();
+  }).then(function(txt){
+    var o=JSON.parse(txt);
+    if(!o || o.zc!==Z_CHECK || !Array.isArray(o.pedidos)) throw new Error('z_marca');
+    if(o.auth==null && j.auth) o.auth=j.auth;
+    if(o.adminAuth==null && j.adminAuth) o.adminAuth=j.adminAuth;
+    return o;
+  });
+}
+/* `opts.entera`: pedir la planilla entera aunque ande la de lo cambiado. */
+function apiList(opts){
+  opts=opts||{};
   var n0=++RED_N, t0=relojMs();
-  return apiPost({action:'list'}).then(function(j){
-    if(j && Array.isArray(j.pedidos)){ try{
-      Object.defineProperty(j.pedidos, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true });
-      Object.defineProperty(j.pedidos, '_pedidaT', { value:t0, enumerable:false, configurable:true, writable:true });
-    }catch(e){} }
+  var pl={action:'list'}, pideZ=listaZPuede(), pideDelta=!opts.entera && listaDeltaPuede();
+  if(pideZ) pl.z=1;
+  if(pideDelta) pl.desde=LISTA_BASE.ahora;
+  return apiPost(pl).then(function(j){
+    return listaAbrir(j).then(null, function(){
+      /* No se pudo abrir (un navegador que no sabe, o algo raro en el camino): en esta pestaña, sin comprimir. */
+      LISTA_Z_FALLO=true;
+      return { _otraVez:true };
+    });
+  }).then(function(j){
+    if(j && j._otraVez) return apiList(opts);
+    if(!(j && j.ok && Array.isArray(j.pedidos))) return j;
+    var lista;
+    if(j.delta){
+      lista=listaAplicarDelta(j);
+      if(!lista){
+        /* La cuenta de control no dio: se lee entera. Dos veces seguidas = algo de esta planilla que la de lo cambiado no
+           entiende (una fila editada a mano, por ejemplo): se deja de pedirla 30 minutos. */
+        if(++LISTA_DELTA_FALLAS>=2){ LISTA_DELTA_PAUSA=relojMs()+30*60000; LISTA_DELTA_FALLAS=0; }
+        return apiList({entera:true});
+      }
+    } else lista=listaTomarEntera(j);
+    j.pedidos=lista;
+    try{
+      Object.defineProperty(lista, '_pedidaN', { value:n0, enumerable:false, configurable:true, writable:true });
+      Object.defineProperty(lista, '_pedidaT', { value:t0, enumerable:false, configurable:true, writable:true });
+      /* De cuándo es lo que trae (reloj de Google): el de la copia, que puede ser más nueva que esta respuesta. */
+      var ahS=LISTA_BASE ? LISTA_BASE.ahora : (Number(j.ahora)||null);
+      if(ahS) Object.defineProperty(lista, '_ahora', { value:ahS, enumerable:false, configurable:true, writable:true });
+    }catch(e){}
+    try{ localStorage.setItem(LS_LECTURA_T, String(Date.now())); }catch(e){}
     return j;
   });
 }
@@ -2318,7 +2446,7 @@ function apiSaveAhora(rec, opts){
   var pedir=function(){
     return apiPost(payload).then(function(res){
       if(res && res.ok && res.pedido){
-        aplicarSello(rec, res.pedido); verificarEco(rec, res.pedido);   // 🔍 §4en
+        aplicarSello(rec, res.pedido, res.ahora); verificarEco(rec, res.pedido);   // 🔍 §4en · (30/09) cuándo quedó escrito
         if(sis){ sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec); }   // §4fz: lo guardado es la nueva base; §4fz-b: y lo de la cola ya está adentro
         if(re) reescritaRevAnotar(res.pedido);                              // (26/09) el sello nuevo es la base del próximo guardado
       }
@@ -2334,7 +2462,7 @@ function apiSaveAhora(rec, opts){
          que entró y cuya respuesta se perdió (§4fa): un ok tardío, no un choque. */
       else if(sis && res && res.ok===false && res.error==='conflicto' && res.pedido){
         if(String(res.pedido.observaciones||'')===String(envio.observaciones||'')){
-          aplicarSello(rec, res.pedido); sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec);
+          aplicarSello(rec, res.pedido, res.ahora); sisBaseAnotar(rec.id, res.pedido); sisColaLimpiar(rec);
           return { ok:true, pedido:res.pedido, tardio:true };
         }
         return sisFusionarYGuardar(rec, res, opts);
@@ -2413,7 +2541,9 @@ function verificarEcoForm(srv, rec, prev){
     ecoAvisar(rec, faltan, 'formulario');
   }catch(e){}
 }
-function aplicarSello(rec, srv){
+/* `ahora` (30/09, §4he): cuándo quedó escrito, con el reloj de Google (el servidor 2026-09-30-a lo manda en cada guardado).
+   `localManda` lo compara con el `ahora` de cada lectura para saber si esa lectura ya lo tiene. */
+function aplicarSello(rec, srv, ahora){
   /* §4fz-b (E11): también la copia de RETIROS. Un retiro que salió de la cola quedaba sin sello en
      esa lista, y borrarlo mandaba `rev 0`: un falso «lo corrigió otra persona». */
   var ret=null;
@@ -2427,6 +2557,7 @@ function aplicarSello(rec, srv){
   });
   if(srv.rev!=null) SAVE_REV[rec.id]=srv.rev;
   if(SAVE_ULTIMO[rec.id]){ SAVE_ULTIMO[rec.id].okN=++RED_N; SAVE_ULTIMO[rec.id].okT=relojMs(); }   // (28/09) en qué momento lo confirmó el servidor (ver `apiList`)
+  if(SAVE_ULTIMO[rec.id]){ if(Number(ahora)>0) SAVE_ULTIMO[rec.id].okAhora=Number(ahora); else delete SAVE_ULTIMO[rec.id].okAhora; }   // (30/09) con el reloj de Google
   saveMirror(); if(ret) saveRetirosMirror();
   if(srv.ocCambiada) toast('🔢 La OC '+srv.ocCambiada.de+' ya la había usado '+(srv.ocCambiada.con||'otra persona')+' hace un instante: este pedido quedó con la OC '+srv.ocCambiada.a+'.','err',9000);
 }
@@ -2529,7 +2660,7 @@ function rechazoFirme(rec, res){
        guardado siguiente rebotaba con «oc_repetida» (el PLAUSIBLE de §4fd, reproducido). */
     var _ocS=cleanOC(res.pedido.oc), _ocL=cleanOC(rec.oc);
     if(_ocS && _ocL && _ocS!==_ocL && !res.pedido.ocCambiada) res.pedido.ocCambiada={ de:_ocL, a:_ocS, con:'' };
-    aplicarSello(rec, res.pedido);                 // ya estaba guardado igual: es un «ok» tardío, no un choque
+    aplicarSello(rec, res.pedido, res.ahora);      // ya estaba guardado igual: es un «ok» tardío, no un choque
     setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
     return true;
   }
@@ -2542,6 +2673,23 @@ function rechazoFirme(rec, res){
      era el rojo de test_conflicto «vuelve a su fecha de antes»). */
   delete SAVE_ULTIMO[rec.id]; delete SAVE_REV[rec.id];
   setPending(getPending().filter(function(p){ return p.id!==rec.id; }));
+  if(res.error==='conflicto' && esFilaRetiro(rec)){
+    /* 💵 (30/09, §4he) Desde el servidor 2026-09-30-a los retiros piden sello: otra computadora corrigió este retiro después
+       de que acá se lo vio. La versión de la planilla va a la lista de RETIROS —no a los pedidos: ahí se dibujaba como una
+       venta— y se dice con palabras de retiro. */
+    var actR=res.pedido;
+    if(actR && actR.id){
+      var iR=-1; for(var _iR=0;_iR<RETIROS.length;_iR++){ if(String(RETIROS[_iR].id)===String(actR.id)){ iR=_iR; break; } }
+      if(iR>=0) RETIROS[iR]=actR; else RETIROS.push(actR);
+      saveRetirosMirror();
+    }
+    var rrR=retiroDe(actR||rec);
+    toast('⚠️ El retiro de '+fmtBs(rrR.monto)+' de '+(rrR.entrega||'—')+' lo corrigió otra persona hace un momento: tu cambio NO se guardó. '+
+          'Quedó en pantalla como está en la planilla — revisalo y, si hace falta, volvé a corregirlo.','err',12000);
+    try{ renderRetirosSiActivo(); renderCuadreSiActivo(); }catch(e){}
+    updateFooter();
+    return;
+  }
   if(res.error==='conflicto'){
     var actual=res.pedido;
     if(actual && actual.id){
@@ -2561,6 +2709,7 @@ function rechazoFirme(rec, res){
     if(res.error==='borrado' && !BORRADO_FUERA[String(rec.id)]) BORRADO_FUERA[String(rec.id)]={ t:Date.now(), cliente:String(rec.cliente||'') };   // (28/09) el formulario lo dice así
     var m={cupos_llenos:'el turno '+(res.turno||'')+' del '+fmtFecha(res.fecha)+' está lleno',
            dia_cerrado:'el '+fmtFecha(res.fecha)+' está cerrado',
+           feriado:'el '+fmtFecha(res.fecha)+' es feriado'+(res.nombre?(' ('+res.nombre+')'):'')+' y el camión no sale',   // (30/09) el portero del servidor 2026-09-30-a
            oc_repetida:'la OC '+(res.oc||'')+' ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido'),
            borrado:(String(rec.id||'').indexOf('__ret_')===0 ? 'ese retiro' : 'ese pedido')+' ya no está en la planilla: lo borraron desde otro equipo (o en la hoja), y el servidor no lo vuelve a crear. Antes de volver a cargarlo, confirmá con administración que de verdad lo borraron',
            admin:(res.motivo==='sin_clave'
@@ -2943,7 +3092,16 @@ function renderGetLog(g, res, err){
    stock parecen al día. De ahí salió *«moví un pedido y no liberó el cupo»* — el pedido se
    había movido, pero el número era de una lectura vieja. */
 function desdeCuandoLaCopia(){
-  if(!ULTIMO_REFRESCO) return ' <b>Nunca se pudo leer la planilla en este dispositivo.</b>';
+  /* (30/09, §4he) «Nunca se pudo leer la planilla en este dispositivo» mentía: `ULTIMO_REFRESCO` vive en memoria y quiere
+     decir «desde que se abrió la página» (§4hb). Ahora se dice eso, y cuándo fue la última lectura buena de este
+     dispositivo (`LS_LECTURA_T`, la anota `apiList`), que es de cuándo es la copia que se está viendo. */
+  if(!ULTIMO_REFRESCO){
+    var tL=0; try{ tL=Number(localStorage.getItem(LS_LECTURA_T))||0; }catch(e){}
+    if(!tL) return ' <b>Todavía no se pudo leer la planilla desde que abriste la página.</b>';
+    var dL=new Date(tL), zL=function(n){ return (n<10?'0':'')+n; };
+    return ' <b>Todavía no se pudo leer la planilla desde que abriste la página</b> (la copia de este dispositivo es de la última lectura buena: '+
+           esc(fmtFechaCorta(isoLocal(dL)))+' a las '+zL(dL.getHours())+':'+zL(dL.getMinutes())+').';
+  }
   var m=Math.floor((Date.now()-ULTIMO_REFRESCO)/60000);
   if(m<1) return ' (leída hace menos de un minuto)';
   if(m<60) return ' (leída hace <b>'+m+'</b> min)';
@@ -3025,7 +3183,7 @@ function pedirClaveEquipo(){
   CLAVE_RECHAZADA=false; renderConnEstado();
   if(!CONNECTED) return;
   toast('Clave guardada en este dispositivo. Probando…','ok');
-  flushPending().then(apiList).then(function(res){
+  flushPending().then(function(){ return apiList(); }).then(function(res){   // (30/09) sin pasarle lo que devuelve la cola como opciones
     if(res&&res.ok&&Array.isArray(res.pedidos)){ STATE=mergePending(res.pedidos); saveMirror(); updateStats(); autoRepintar(); updateFooter(); }
     if(!CLAVE_RECHAZADA) toast('✅ Conectado con la clave del equipo','ok');
   }).catch(function(){ if(CLAVE_RECHAZADA) toast('❌ Esa clave no es. Pedila de nuevo.','err',6000); });
@@ -6402,8 +6560,12 @@ function guardarRetiroForm(){
       RET_FORM=retFormVacio(); renderRetiros();
       return false;
     }
-    /* …y el sello es el que se VIO al abrir ✏️ (`RET_FORM.rev`), o uno más nuevo de acá: el de la lista pudo cambiar después. */
-    var _revR=Math.max(Number(r.rev)||0, Number(_prevR && _prevR.rev)||0, Number(SAVE_REV[fila.id])||0);
+    /* …y el sello es el que se VIO al abrir ✏️ (`RET_FORM.rev`), o uno más nuevo guardado DESDE ACÁ (`SAVE_REV`).
+       ⚠️ (30/09, §4he) Nunca el de la lista de ahora: si otra computadora lo corrigió mientras estaba abierto, la lista ya
+       trae SU sello, y mandarlo pisaba esa corrección sin aviso. El servidor 2026-09-30-a compara el sello de los retiros y
+       contesta `conflicto` (lo maneja `rechazoFirme`). El de la lista, solo si ✏️ no anotó ninguno. */
+    var _revR=Math.max(Number(r.rev)||0, Number(SAVE_REV[fila.id])||0);
+    if(r.rev==null) _revR=Math.max(_revR, Number(_prevR && _prevR.rev)||0);
     if(_revR>0) fila.rev=_revR;
   }
   var guardando=persistRetiro(fila);
@@ -6427,6 +6589,9 @@ function guardarRetiroForm(){
       RETIROS=RETIROS.filter(function(x){ return String(x.id)!==String(fila.id); }); saveRetirosMirror();
       toast('❌ Ese retiro lo BORRARON desde otro equipo mientras lo corregías: tu corrección NO se guardó y el retiro no se vuelve a crear. '+
             'Si de verdad hay que anotarlo, confirmalo con administración antes de cargarlo de nuevo.','err',12000);
+    }else if(res && res.error==='conflicto'){
+      /* (30/09, §4he) Otra computadora lo corrigió mientras estaba abierto: `rechazoFirme` ya lo dijo y dejó en la lista la
+         versión de la planilla. Acá no se tapa ese aviso con uno genérico. */
     }else if(res && RECHAZOS_FIRMES[res.error]){
       toast('❌ El servidor NO aceptó el retiro ('+res.error+'). Revisá la lista: no quedó guardado.','err',9000);
     }else{
@@ -9309,6 +9474,15 @@ function submitPedido(){
         var fz=document.getElementById('f-fecha'); if(fz){ fz.classList.add('err'); fz.focus(); fz.scrollIntoView({block:'center'}); }
         return;
       }
+      /* 🚫 (30/09) El portero del servidor 2026-09-30-a conoce los feriados. Este formulario ya no deja elegir uno (§4gy):
+         llega por una lista de feriados distinta entre la página y el servidor, y se dice igual que el día cerrado. */
+      if(res && res.error==='feriado'){
+        if(prev) upsert(prev); else STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();
+        toast('🚫 El '+fmtFecha(rec.fecha)+' es FERIADO'+(res.nombre?(' ('+res.nombre+')'):'')+': el camión no sale. Elegí otra fecha de entrega.','err',9000);
+        renderCupoForm();
+        var fzF=document.getElementById('f-fecha'); if(fzF){ fzF.classList.add('err'); fzF.focus(); fzF.scrollIntoView({block:'center'}); }
+        return;
+      }
       if(res && res.error==='cupos_llenos'){
         // El servidor rechazó: el turno/día se llenó (otro cargó al mismo tiempo). Revertir y dejar el form intacto.
         if(prev) upsert(prev); else STATE=STATE.filter(function(p){return p.id!==rec.id;}); saveMirror(); updateStats(); if(UNLOCKED) renderAdmin();   // §4eo
@@ -10276,7 +10450,11 @@ function motivoDeError(e){
   /* (24/09) El consejo de revisar «Ejecutar como» se sacó: el 23/09 la causa fue un pegado cortado
      del código, y el diálogo ni mostraba esas casillas (§4fz-b). Volver atrás son dos cosas, y lo
      dice el procedimiento; acá solo lo que sirve para decidir. */
-  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios corta script.google.com). Si le pasa a TODO el equipo a la vez no es internet: es el servidor. Avisá a administración (si se acaba de subir una versión nueva del servidor, hay que volver a la anterior)';
+  /* (30/09, §4he) Ya no dice «es el servidor… volvé a la versión anterior»: el 29/09 a la noche el servidor andaba (le
+     contestaba bien a GitHub a la misma hora) y ese texto hizo sospechar de lo recién publicado. Era Google, que a ratos
+     tarda en contestar o en entregar la respuesta (§4hb). Si alguna vez un servidor nuevo deja a todos sin conexión, el
+     procedimiento para volver atrás está en la cabecera del .gs y en la bitácora (§4fz-b «Publicar»). */
+  if(/Failed to fetch|NetworkError|Load failed|network|aborted/i.test(m)) return 'no hay conexión con Google (sin internet, o esta red o un bloqueador de anuncios cortan script.google.com), o Google tardó en entregar la respuesta (pasa a ratos). Se vuelve a intentar solo; lo que guardes queda en este dispositivo y se manda cuando conecte';
   if(/JSON|Unexpected token|Unexpected end/i.test(m)) return 'Google devolvió una página en vez de los datos (suele ser momentáneo)';
   return m ? ('error: '+m.slice(0,80)) : 'el servidor no respondió';
 }
@@ -10322,6 +10500,7 @@ function motivoDelServidor(err){
   if(m==='actualizar') return 'este panel es más viejo que el servidor y no puede tocar el stock, el arqueo ni borrar. Recargá la página (F5)';
   if(m==='borrado') return 'ese pedido ya no está en la planilla: lo borraron desde otro equipo (o en la hoja) y el servidor no lo vuelve a crear';
   if(m==='celda_llena') return 'no entra en la planilla: una celda de Google aguanta 50.000 letras y esto las pasa. Quedó en la cola de este dispositivo (no se perdió). Avisá a administración para achicarlo';
+  if(m==='feriado') return 'ese día es feriado y el camión no sale: elegí otra fecha';
   return 'el servidor contestó: '+m.slice(0,80);
 }
 /* 🧾 (27/09) La lectura que está en camino: el cuadrito del saldo la espera en vez de pedir otra (`saldoLeer`, §4gj). */
@@ -10453,7 +10632,8 @@ function rechazoTxt(err){
            oc_repetida:'el N° de OC ya existía', admin:'faltaba la clave de administración', clave:'faltaba la clave del equipo',
            busy:'el servidor estaba ocupado', actualizar:'página vieja: esa computadora tiene que recargar (F5)',
            celda_llena:'no entraba en la celda de la planilla (más de 50.000 letras)',
-           borrado:'lo habían borrado desde otro equipo (no se volvió a crear)' }[err] || err;
+           borrado:'lo habían borrado desde otro equipo (no se volvió a crear)',
+           feriado:'era para un feriado (el camión no sale)' }[err] || err;
 }
 function renderColaAviso(){
   var el=document.getElementById('mis-cola'); if(!el) return;
@@ -10696,12 +10876,18 @@ function borradoConfirmarLuego(){
   if(BORRADO_CONFIRMA_T) return;
   BORRADO_CONFIRMA_T=setTimeout(function(){ BORRADO_CONFIRMA_T=null; try{ refrescarEstado(); }catch(e){} }, BORRADO_CONFIRMA_MS+1000);
 }
-function localManda(id, loc, srv, n0, enCola, tPed){
+/* ⏱️ (30/09, §4he) Con el servidor 2026-09-30-a no hace falta nada de lo de arriba: la lectura dice de cuándo es
+   (`ahoraSrv`, reloj de Google, ANTES de leer la hoja) y el guardado, cuándo quedó escrito (`okAhora`, DESPUÉS de releer
+   la fila). Una lectura posterior al guardado lo tiene adentro: si no lo trae, lo borraron — en el acto, sin sospecha ni
+   segunda lectura. Una anterior es vieja (la copia de 20 s de `doGet` incluida): manda lo de acá. `MARGEN_RELOJ_MS` cubre
+   la diferencia entre los relojes de dos máquinas de Google. Sin esos dos datos (servidor de antes), lo de siempre. */
+function localManda(id, loc, srv, n0, enCola, tPed, ahoraSrv){
   if(SAVE_EN_VUELO[id] || SAVE_EN_ESPERA[id] || (enCola && enCola[id])) return true;
   var u=SAVE_ULTIMO[id];
   if(!u || !(Date.now()-u.t<90000)) return false;
   var revLoc=Math.max(Number(loc && loc.rev)||0, Number(SAVE_REV[id])||0);
   if(srv){ delete u.faltaT; return (Number(srv.rev)||0)<=revLoc; }                  // la lectura lo trae: no falta nada
+  if(ahoraSrv!=null && u.okAhora!=null) return Number(ahoraSrv) < Number(u.okAhora)+MARGEN_RELOJ_MS;   // (30/09) se compara, no se adivina
   if(Number(n0)<((u.okN!=null) ? Number(u.okN) : -Infinity)) return true;          // pedida antes: lectura atrasada
   if(tPed==null) return false;                                                        // lista sin marcas (una prueba): fresca
   if(u.okT!=null && (Number(tPed)-Number(u.okT))<LECTURA_VIEJA_MS) return true;      // pedida enseguida: puede ser la copia vieja
@@ -10723,6 +10909,7 @@ function mergePending(serverList){
      pedida ahora: después de todo lo ya confirmado. */
   var t0=(serverList && serverList._pedidaN!=null) ? Number(serverList._pedidaN) : Infinity;
   var tPed=(serverList && serverList._pedidaT!=null) ? Number(serverList._pedidaT) : null;   // (28/09, 2ª revisión) ver `localManda`
+  var ahS=(serverList && serverList._ahora!=null) ? Number(serverList._ahora) : null;         // (30/09, §4he) de cuándo es, con el reloj de Google
   serverList=(serverList||[]).filter(function(p){ return !(p && borradoAqui(p.id)); });   // (26/09) lo recién borrado acá no vuelve con una lectura vieja
   serverList=leerCierresDeLista(serverList, true);   // la fila de días cerrados NO es un pedido
   serverList.forEach(function(p){ if(p) p.oc=cleanOC(p.oc); });
@@ -10736,7 +10923,7 @@ function mergePending(serverList){
   var enCola={}; pendTodos.forEach(function(p){ if(p) enCola[p.id]=1; });
   serverList=serverList.map(function(s){
     var id=s&&s.id; if(!id) return s;
-    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed)) return local; }   // (28/09) una más nueva de la planilla gana
+    if(saveReciente(id)){ var local=findById(id); if(local && localManda(id, local, s, t0, enCola, tPed, ahS)) return local; }   // (28/09) una más nueva de la planilla gana
     for(var i=0;i<pendTodos.length;i++) if(pendTodos[i].id===id) return pendTodos[i];
     return s;
   });
@@ -10754,7 +10941,7 @@ function mergePending(serverList){
     if(!locS || esFilaSistema(locS) || esBorrador(locS)) continue;
     /* (28/09, revisión de Codex) …solo si esta lectura salió ANTES de que el servidor lo confirmara. Si salió después y no
        lo trae, lo borraron desde otro equipo: conservarlo lo volvía a crear en la planilla al editarlo. */
-    if(localManda(kS, locS, null, t0, enCola, tPed)){ serverList.push(locS); ids[kS]=1; }
+    if(localManda(kS, locS, null, t0, enCola, tPed, ahS)){ serverList.push(locS); ids[kS]=1; }
     else borradoFuera(locS);
   }
   /* 💵 LOS RETIROS EN COLA TAMBIÉN (§4ek). `leerCierresDeLista` acaba de dejar en RETIROS
@@ -10769,7 +10956,7 @@ function mergePending(serverList){
     var rU=SAVE_ULTIMO[kU].rec;
     if(!esFilaRetiro(rU) || !saveReciente(kU)) continue;
     var sU=null; for(var iR=0;iR<RETIROS.length;iR++){ if(String(RETIROS[iR].id)===String(kU)){ sU=RETIROS[iR]; break; } }
-    if(localManda(kU, rU, sU, t0, enCola, tPed)) pendRet=pendRet.concat([rU]);
+    if(localManda(kU, rU, sU, t0, enCola, tPed, ahS)) pendRet=pendRet.concat([rU]);
   }
   if(pendRet.length){
     /* 26/09: y si el servidor ya lo tiene, manda la versión de la cola o del guardado en el aire,
@@ -21256,6 +21443,7 @@ function confirmarImportRoho(){
         fallos.push({oc:p.oc, motivo:
           e==='cupos_llenos' ? ('el turno '+(res.turno||'')+' del '+fmtFecha(p.fecha)+' está lleno') :
           e==='dia_cerrado'  ? ('el '+fmtFecha(p.fecha)+' está cerrado') :
+          e==='feriado'      ? ('el '+fmtFecha(p.fecha)+' es feriado'+(res.nombre?(' ('+res.nombre+')'):'')+' y el camión no sale: cargalo con otra fecha') :   // (30/09) portero del .gs 2026-09-30-a
           e==='oc_repetida'  ? ('esa nota ya la tiene '+((res.otro&&res.otro.cliente)||'otro pedido')) :
           (e||'el servidor no lo aceptó')});
       }

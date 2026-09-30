@@ -7445,6 +7445,122 @@ Nada de §4er queda pendiente salvo lo anotado a propósito: BAJA 9 de Contabili
 fallback de `cobrosDe`, §4eu) y el «mes sin ventas = sin dato» del plan (§4ev), los dos a
 decisión del dueño. El `.gs` `2026-09-20-a` sigue esperando que el dueño lo implemente (§4et).
 
+## 4he. 30/09, tarde: servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado — EN LA RAMA, sin publicar
+
+> El dueño, a las tres propuestas del 30/09 (después de publicar §4hd): *«1 no / 2 ok lo hago. / 3 hazlo»*.
+> (1) El aviso «día sin camión» NO se amplía (la limitación de la revisión de §23 queda como está). (2) El servidor nuevo lo
+> implementa ÉL: sello de los retiros, feriados en el portero y una lectura que diga de cuándo es. (3) La conexión: el cartel,
+> la lectura comprimida y la de lo cambiado (diseño en §4hb). (2) y (3) van en UNA sola versión del `.gs`, para implementar
+> una vez. Para el dueño y para Codex: **RESPUESTA_CLAUDE.md §24**.
+
+### El servidor `2026-09-30-a` (`google-apps-script.gs`)
+- **💵 Los retiros piden sello**: `doSave` compara el `rev` también en las filas `__ret_…` (`filaRetiro`). Otro equipo lo
+  corrigió después de verlo → `conflicto` con la fila actual (y SÍ va a «Rechazos»: es plata que no entró). Un retiro nuevo
+  no trae sello y entra como siempre; uno sin sello sobre una fila sellada, `conflicto`, como un pedido (§4cg).
+- **🚫 Feriados en el portero**: `FERIADOS_GS` (la MISMA lista que `FERIADOS` de la página: `test_servidor` §15a las
+  compara, fecha y nombre) y `feriadoGs_`. `porteroFecha_` contesta `{error:'feriado', fecha, nombre}` a un pedido NUEVO o
+  MOVIDO sin `forzar` (queda en «Rechazos»). Con `forzar` (Administración) se mueve igual, como a un día cerrado. Uno que
+  ya estaba en el feriado se corrige en el lugar (no pasa por el portero).
+  · De paso: `porteroFecha_(…, sinFreno)`. El camino FORZADO a otro día cortaba en «día cerrado»/«turno lleno» ANTES de
+    asignar el N° del día y el pedido quedaba con el de su día viejo; ahora toma el del día nuevo (§15d).
+- **⏱️ Las lecturas dicen de cuándo son**: `list` y `doGet` (también la copia de su caché de 20 s) traen `ahora` (reloj
+  de Google, tomado ANTES de leer la hoja), `n` (filas) y `huella` (la cuenta de control). Cada guardado, borrado,
+  `conflicto` y `borrado` trae `ahora` (tomado DESPUÉS de escribir y releer). El guardado bueno trae además `version`.
+- **🗜️ Comprimida** (`z:1`): `listaResponder_` → `Utilities.gzip` + base64 → `{ok, version, z:'gzip64', d, largo}`, con la
+  marca `zc` = «ñ🔒€» adentro. Solo si pasa de `Z_MIN` (20.000 letras) y si `zOk_()`: este Google escribe el texto en UTF-8
+  (`newBlob('ñ🔒€').getBytes()` = 9 bytes). Si algo falla al comprimir, sale sin comprimir.
+- **🔁 Solo lo cambiado** (`desde`): `leerCambiado_` lee DOS columnas angostas (id y Revisión: alcanzan para `n` y `huella`)
+  y después solo las filas con `rev > desde − DELTA_MARGEN_MS` (5 min: un guardado que corría mientras se leía), las
+  cercanas de una vez (`DELTA_HUECO`). Devuelve `{delta:true, desde, ahora, n, huella, pedidos:[cambiadas], borrados:[[id, hora]]}`.
+  Va ENTERA si: más de `DELTA_MAX_FILAS` (40) cambiadas, más de `DELTA_MAX_GRUPOS` (8) lecturas, `desde` de hace más de
+  48 h, o un corte anterior a lo que la memoria de borrados ya olvidó (`log.desde`).
+  ⚠️ Sin candado, como toda lectura (§4dt): si se agrega o se borra una fila entre las dos columnas, la cuenta no le da al
+  panel y el panel lee entera. Nunca queda una copia mal armada.
+- **🗑 Los borrados se anotan** (`borradoAnotar_`, adentro del candado de `doDelete`): (1) la propiedad
+  `BORRADOS_RECIENTES` = `{desde, b:[[id, hora]…]}` (48 h, tope 150, entra en 9 KB), para la de lo cambiado; (2) la hoja
+  **«Borrados»** (Fecha, Id, Cliente, Vendedor, Entrega, N° OC, Quién borró, Dispositivo, Hora) para que el dueño vea qué
+  se borró y desde qué equipo (sin celular ni dirección; tope 2.000 filas). ⚠️ `hojaBorrados_` solo escribe en una hoja
+  cuyos encabezados son ESOS (en las pruebas, `getSheetByName` devuelve la de pedidos para cualquier nombre).
+- **📥 Los borradores de Kommo nacen sellados** (`rev = Date.now()` en `kommoProcesarObj_` y `crearBorradorDeLead_`): si no,
+  la de lo cambiado no los veía llegar. `repararNombreAplicar_` sigue SIN tocar el sello, a propósito: quien ya tenía el
+  borrador abierto para completarlo no choca (y no pierde lo que escribió); el nombre nuevo llega con la lectura ENTERA.
+  El panel completa y descarta con el sello que trae la lista (`EDIT_REV`, `borrarEnServidor`): anda igual con la página
+  publicada. `test_servidor` §10A cambió a conciencia: descarta con el sello, como el panel.
+- **`probarAntesDeImplementar`**: 7 = la comprimida con la planilla de VERDAD (comprime, abre con `Utilities.ungzip` y
+  compara el texto entero; dice cuántas veces menos pesa); 8 = los feriados por venir. Las dos AVISAN, no frenan (sin
+  comprimir el panel lee como hoy). Y las funciones nuevas entran en la lista de «el código está entero».
+
+### La página
+- **`apiList(opts)`** (sección «📦 LA LECTURA…» junto a `apiPost`): pide `z:1` si hay `DecompressionStream` (iOS 16.4+,
+  Chrome, Edge) y `desde` si hay copia (`LISTA_BASE`) de menos de `LISTA_COMPLETA_MS` (15 min, mirando `relojMs` Y
+  `Date.now`). `listaAbrir` abre la comprimida y mira la marca: si falla, `LISTA_Z_FALLO` y se pide sin comprimir (en esa
+  pestaña, de ahí en más). `listaTomarEntera` guarda la copia fila por fila (texto JSON, no los objetos: quien recibe la
+  lista la toca); con ids repetidos o una cuenta que no da, sin copia (como antes). `listaAplicarDelta` aplica borrados (no
+  el de una fila vuelta a crear después) y filas (no una más vieja que la de la copia) sobre una COPIA de la copia, y si la
+  cuenta de control no da, `null` → se lee entera. Dos cuentas seguidas que no dan → 30 min sin pedir lo cambiado.
+  A quien la pide le llega la planilla ENTERA de siempre (rearmada con `listaDeBase`), con `_pedidaN`, `_pedidaT` y
+  **`_ahora`** (la hora de Google de la copia). Con el servidor 28-a no hay `ahora` ni `huella`: todo queda apagado solo.
+- **`localManda(…, ahoraSrv)`**: con `_ahora` de la lectura y `okAhora` del guardado (lo anota `aplicarSello(rec, srv,
+  ahora)`), una lectura POSTERIOR al guardado (`ahora ≥ okAhora + MARGEN_RELOJ_MS`, 2 s) que no trae el pedido → borrado,
+  en el acto; una ANTERIOR (la copia vieja de `doGet`) → manda lo de acá. Sin esos datos, la ventana y la sospecha de
+  siempre (§4gn/§4go), que siguen para el servidor de antes.
+- **Retiros**: `guardarRetiroForm` manda el sello con que se abrió ✏️ (`RET_FORM.rev`) o uno guardado desde acá
+  (`SAVE_REV`) — **nunca el de la lista de ahora**: si otro equipo lo corrigió mientras estaba abierto, la lista ya trae SU
+  sello y mandarlo lo pisaba. `rechazoFirme` con un `conflicto` de retiro deja la versión de la planilla en `RETIROS` (no en
+  los pedidos: ahí se dibujaba como una venta) y lo dice con palabras de retiro; `guardarRetiroForm` no lo tapa.
+- **Feriados**: `feriado` en `RECHAZOS_FIRMES` (no se encola), `rechazoTxt`, `motivoDelServidor`, el mensaje de
+  `rechazoFirme`, el formulario (revierte, marca la fecha y dice cuál feriado) y el importador de ROHO («cargalo con otra
+  fecha»).
+- **El cartel (§4hb)**: `motivoDeError` para un `fetch` que no llegó ya NO dice «si le pasa a todo el equipo es el servidor…
+  volvé a la versión anterior» (el 29/09 hizo sospechar de lo recién publicado); dice que no llegó la respuesta de Google,
+  que a veces tarda, y que se reintenta solo. `desdeCuandoLaCopia`: «Todavía no se pudo leer la planilla desde que abriste
+  la página» (antes «Nunca se pudo leer… en este dispositivo») + de cuándo es la copia (`LS_LECTURA_T`, la anota `apiList`).
+- `SCRIPT_VERSION_ESPERADA` = `2026-09-30-a`. `pedirClaveEquipo` llama a `apiList()` sin pasarle lo que devuelve la cola.
+
+### La transición (se puede publicar la página ANTES de implementar el servidor, como pide el procedimiento)
+- **Página nueva + servidor 28-a**: pide `z`/`desde`, el servidor los ignora: lectura entera como hoy, sin copia; `_ahora`
+  no está → la ventana y la sospecha de siempre. Los retiros mandan el sello con que se abrieron: el 28-a no lo compara
+  (solo `borrado`). `test_lectura_delta` §9.
+- **Página vieja (`4ded824`) + servidor nuevo**: lee entera (no pide `z` ni `desde`) y guarda igual (§10). Lo que NO tiene:
+  un `conflicto` de retiro lo metía en la lista de pedidos hasta la lectura siguiente, y manda el sello de la lista (o sea,
+  todavía puede pisar un retiro corregido por otro). Un `feriado` en el formulario dice «❌ El servidor NO aceptó el pedido
+  (feriado)» y no se encola; por `persistPedido` se encolaría, pero la página publicada ya no manda feriados sin `forzar`
+  (§4gy). **Todos F5** igual.
+- **Guardar el código nuevo sin implementarlo** (paso 2 del procedimiento) ya cambia los disparadores: los borradores de
+  Kommo nacen sellados desde ese momento. Con el servidor 28-a implementado y la página publicada eso anda (completar y
+  descartar mandan el sello de la lista).
+
+### Pruebas
+- `tests/test_servidor.js` §15-§19 (+35; **21 rojas contra el `.gs` 28-a**) y su `Utilities` de mentira pasa a ser de
+  verdad (UTF-8, gzip de Node, bytes con signo como `getBytes()`); `Borrados` en las hojas aparte del arnés.
+- `tests/test_lectura_delta.js` (nueva, 24): el panel real contra el `.gs` real con gzip de verdad. **13 rojas contra la
+  página publicada, 11 contra el `.gs` 28-a.**
+- `tests/test_retiro_feriado.js` (nueva, 11): **4 rojas contra la página, 5 contra el `.gs`.**
+- `tests/test_lectura_vieja.js`: dos vueltas (con la hora y «sin la hora, como un servidor de antes», que quita `ahora` en el
+  camino): la ventana y la sospecha se siguen probando, y el 4 con la hora prueba lo nuevo (36).
+- `tests/test_codex28_flujos.js` §1: los avisos se juntan desde antes de `pasaElTiempo` (con la hora, el borrado se ve en
+  la PRIMERA lectura).
+- `herramientas/diagnostico_lectura.py`: hace también la lectura comprimida y la de lo cambiado, y rehace la cuenta de
+  control (la misma cuenta en Python). Con el 28-a dice «el servidor no la comprimió».
+- Batería: ver RESPUESTA §24.
+
+### Lo que esto NO arregla (dicho al dueño)
+- Si Google tarda en CORRER el script (los 59 s del 29/09), esto no lo evita: hace que la respuesta sea chica y llegue.
+- Una corrección escrita A MANO en la hoja (o una fila borrada a mano) se ve con la lectura entera: al abrir y cada 15 min.
+  Una fila borrada a mano hace fallar la cuenta y fuerza la entera en el acto.
+- El nombre reparado de un borrador de Kommo («Lead #123» → el cliente) llega con la lectura entera (hasta 15 min).
+- Una página sin F5 todavía puede pisar un retiro corregido por otro equipo (manda el sello de la lista).
+- ROHO en un feriado: el importador lo dice y no lo carga; hay que cargarlo con otra fecha.
+
+### Publicar (el dueño implementa el servidor; la página, con su OK)
+0. Anotar el número de versión activa hoy (la del 28/09; «volver atrás» es a ESA y pegar la 28-a del enlace fijo a
+   `4ded824…`, 1980 líneas).
+1. Pegar el `.gs` nuevo del enlace fijo al commit (nunca del chat), Ctrl+S, `probarAntesDeImplementar` → «✅ Se puede
+   implementar» (con la línea de la comprimida y la de los feriados).
+2. Publicar la página (con el OK del dueño) → todos F5.
+3. ✏️ → Nueva versión → Implementar. Verificar: 🔒 Cerrar día dice «versión 2026-09-30-a» sin la línea gris, y el
+   «Diagnóstico de la lectura del panel» (Actions, a mano) muestra la comprimida y la de lo cambiado con la cuenta «da ✅».
+
 ## 4hd. 30/09: los 24 hallazgos de §4hc, arreglados — PUBLICADA 30/09 10:52 (`4ded824`)
 
 > El dueño: *«hazlo todo»*, a la propuesta de arreglar primero las 5 ALTA y Multicenter, después las otras, cada una con su

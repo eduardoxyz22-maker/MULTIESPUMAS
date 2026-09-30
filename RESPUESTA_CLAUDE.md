@@ -2059,6 +2059,62 @@ El dueño: *«hazlo todo»*. Cada arreglo lleva su prueba, y cada prueba se corr
   acá en adelante, la celda del stock en 25.437 de 50.000 letras (el 28/09 eran 22.642), y la primera lectura tardó 29 s
   (las siguientes, 2-4 s).
 
+## 24 · El servidor nuevo (`2026-09-30-a`) y la lectura más liviana (30/09) — en la rama, sin publicar
+
+Tus respuestas a las tres propuestas: *«1 no / 2 ok lo hago. / 3 hazlo»*. El aviso de «día sin camión» queda como está; el
+servidor nuevo lo implementás vos; la conexión la hice yo. Las dos cosas del servidor van en UNA sola versión, así
+implementás una vez. Bitácora §4he (lo técnico).
+
+### 24.1 · Qué cambia para el equipo
+| | Antes | Ahora |
+|---|---|---|
+| Leer la planilla | Cada equipo bajaba la planilla ENTERA (unos 900 KB) cada 2 minutos. Con Google lento, era lo que no llegaba | La primera lectura va comprimida (unas 7 veces menos). Las siguientes traen solo lo que cambió desde la anterior (unas pocas filas), y cada 15 minutos entera de nuevo |
+| ¿Llegó todo? | — | Cada lectura trae una cuenta de control (cuántas filas y un número hecho con todas). El panel la rehace con lo que tiene: si no da igual, lee la planilla entera en el acto |
+| «Lo borraron desde otro equipo» | El panel lo deducía: esperaba, sospechaba, volvía a leer 25 s después | La planilla dice de cuándo es cada lectura y cuándo quedó escrito cada guardado: el panel compara y lo sabe en la primera lectura. Una copia vieja de Google no saca nada de la pantalla |
+| Dos equipos corrigen el mismo retiro | Ganaba el último, sin aviso | El segundo recibe «lo corrigió otra persona: tu cambio NO se guardó» y ve el retiro como quedó |
+| Un pedido para un feriado | El servidor lo aceptaba (el freno era solo de la página: una página vieja, o el importador de ROHO, lo cargaba) | El servidor dice «es feriado (Todos Santos): el camión no sale». Administración lo puede mover igual con su clave, como a un día cerrado |
+| Qué se borró | No quedaba rastro | Hoja nueva «Borrados» en la planilla: qué se borró, de quién era, cuándo, quién y desde qué equipo (sin celulares ni direcciones) |
+| El cartel sin conexión | Decía «si le pasa a todo el equipo es el servidor… volvé a la versión anterior» y «Nunca se pudo leer la planilla en este dispositivo» | Dice que no llegó la respuesta de Google (a veces tarda) y que reintenta solo, y «todavía no se pudo leer desde que abriste la página», con la hora de la última lectura buena |
+| Mover a la fuerza a un día cerrado | El pedido se quedaba con el N° del día viejo | Toma el N° del día nuevo |
+
+### 24.2 · Lo que esto NO arregla
+- Si Google tarda en CORRER el programa (los 59 segundos del 29/09), esto no lo evita: hace que lo que viaja sea chico.
+- Una corrección escrita a mano directamente en la hoja se ve con la lectura entera (al abrir y cada 15 minutos).
+- El nombre que se le corrige a un borrador de Kommo («Lead #123» → el cliente) también llega con la lectura entera.
+- Una compu sin F5 todavía puede pisar un retiro corregido por otra: solo la página nueva lo evita. **Todos F5.**
+- ROHO con fecha de feriado: el importador lo dice y no lo carga; hay que cargarlo con otra fecha.
+
+### 24.3 · Las pruebas
+- `test_servidor.js`: 35 comprobaciones nuevas del servidor (feriados, la cuenta de control igual a la de la página, la
+  lectura con hora / comprimida / de lo cambiado, los borrados anotados, los retiros con sello, los borradores de Kommo);
+  **21 fallan contra el servidor de hoy (28-a)**.
+- `test_lectura_delta.js` (nueva, 24): el panel de verdad contra el servidor de verdad, con compresión de verdad. **13 fallan
+  contra la página publicada y 11 contra el servidor de hoy.** Incluye: la página nueva con el servidor de hoy anda como
+  siempre, y la página de hoy con el servidor nuevo también (se puede implementar antes de que todos hagan F5).
+- `test_retiro_feriado.js` (nueva, 11): el retiro corregido por dos y el feriado desde el formulario. **4 fallan contra la
+  página publicada y 5 contra el servidor de hoy.**
+- `test_lectura_vieja.js` ahora corre dos veces: con la hora del servidor nuevo y sin ella (como el de hoy).
+- Batería completa: ver 24.5.
+
+### 24.4 · Cómo implementarlo (lo hacés vos) — el orden importa
+0. **Antes de tocar nada**: Implementar → Administrar implementaciones, y anotá el número de «Versión» activa (la del 28/09).
+   Es a la que se vuelve si algo sale mal.
+1. Copiá el código del **enlace fijo** que te paso en el chat (nunca del chat mismo). En Apps Script: clic en el código,
+   Ctrl+A, Supr (tiene que quedar VACÍO), pegar, Ctrl+S. Tiene que terminar en «}» con «return borrador;» justo antes.
+2. Elegí **probarAntesDeImplementar** → Ejecutar. Tiene que terminar en «✅ Se puede implementar». Van a aparecer dos
+   líneas nuevas: «La lectura viaja comprimida: … veces menos» y «El portero no deja entregar en feriados: 14 por venir».
+   Con una ❌: NO implementar, y volver a pegar el código de la versión anotada.
+3. Avisame y publico la página (con tu OK). **Todos F5.**
+4. Implementar → Administrar implementaciones → ✏️ la de siempre → Versión: **Nueva versión** → Implementar. ⚠️ Nunca
+   «Nueva implementación».
+5. Verificá: 🔒 Cerrar día dice «versión 2026-09-30-a» sin la línea gris. Y en GitHub → Actions → «Diagnóstico de la lectura
+   del panel» → Run workflow: tiene que decir que la lectura viajó comprimida y que la de lo cambiado «da ✅».
+- **Volver atrás** son DOS cosas: ✏️ → la versión anotada en el paso 0, **y** pegar de nuevo el código de esa versión (el del
+  enlace fijo a `4ded824…`, 1980 líneas). El panel nuevo funciona igual con el servidor de antes (lee entero, como hoy).
+
+### 24.5 · Batería
+- (se completa al terminar la corrida)
+
 ## Primera vuelta (`d890468`), resumida
 
 | # | Hallazgo del informe original | Veredicto | Estado hoy |
