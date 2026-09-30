@@ -89,7 +89,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
     Nunca valores de parámetros (pueden ser claves). Sección 9 de `test_servidor.js` +
     `tests/test_getlog.js`.
 - **🤝 Dos dispositivos a la vez: stock, arqueo y borrar** (§4fz → **§4fz-b**, `.gs` `2026-09-23-b`,
-  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris) **y el 28/09 ~15:24 la `2026-09-28-a`** (§4gp: probar ✅, stock 22.642/50.000 = 45 %; Cerrar día dice «versión 2026-09-28-a» sin línea gris). **Volver atrás de la 28-a** = ✏️ a la **versión 33** (la 26-a) Y pegar la 26-a (`ea81bb0…`, 1965 líneas); de la 26-a, a la 23-b de esa mañana (número sin pasar) Y pegar `14dec98…` (1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
+  **la PÁGINA se publicó el 25/09 a las 15:04 de Bolivia** (`394f74c`, feriado, con el equipo sin trabajar) **y otra vez el 26/09 a las 10:11** (`a8e3c5e`: §4gb + §4gc) **y a las 11:27** (`e2e613a`: §4gd). **El 26/09 ~10:15 el dueño implementó la 23-b** (probar ✅, stock 20.932/50.000; versión anotada para volver: **30**, la 20-a) **y ~11:35 la `2026-09-26-a`** (probar ✅, stock 22.208/50.000 = 44 %; 🔒 Cerrar día dice «versión 2026-09-26-a» sin línea gris) **y el 28/09 ~15:24 la `2026-09-28-a`** (§4gp: probar ✅, stock 22.642/50.000 = 45 %; Cerrar día dice «versión 2026-09-28-a» sin línea gris) **y el 30/09 entre las 12:35 y las 12:44 la `2026-09-30-a`** (§4he: probar ✅, stock 22.638/50.000 = 45 %; el diagnóstico de las 12:46 la leyó comprimida y con lo cambiado, las dos cuentas «da ✅»; la página, 12:46). **Volver atrás de la 30-a** = ✏️ a la **versión 34** (la 28-a) Y pegar la 28-a (`4ded824…`, 1980 líneas). **Volver atrás de la 28-a** = ✏️ a la **versión 33** (la 26-a) Y pegar la 26-a (`ea81bb0…`, 1965 líneas); de la 26-a, a la 23-b de esa mañana (número sin pasar) Y pegar `14dec98…` (1956 líneas). Rige la protección entre dos equipos del stock/arqueo y de los días cerrados/carga). `tests/test_concurrencia.js`
   (50) monta el `.gs` real + navegadores con reglas `lose/drop/busy/hold`, recargas y pestañas.
   · **`__stock__` y `__arqueo_cuadre__`**: el servidor 23-b solo las guarda con `juntar:1` y el sello
   (sin `juntar` → `actualizar`, sin tocar la hoja). El panel manda SIEMPRE la memoria (`sisPlegar`),
@@ -408,7 +408,7 @@ Meses cerrados: botón **Historial** → `panel_YYYY_MM.html`.
   lectura que el navegador y dice código, tiempo, tamaño, CORS y filas, sin datos de clientes. El 29/09 22:31-22:39: 200 en
   2-3 s, 901 KB **sin comprimir** (Google no comprime aunque se pida gzip), y a las 22:36 una lectura tardó 59 s también
   desde GitHub: Google lento a ratos. «Nunca se pudo leer la planilla en este dispositivo» = desde que se abrió la página
-  (`ULTIMO_REFRESCO` vive en memoria). **Hecho en §4he (30/09, en la rama)**: el cartel ya no culpa a la versión y dice
+  (`ULTIMO_REFRESCO` vive en memoria). **Hecho en §4he (página publicada el 30/09 a las 12:46, `3606980`)**: el cartel ya no culpa a la versión y dice
   «desde que abriste la página», la lectura va comprimida y solo con lo cambiado (con el `.gs` 2026-09-30-a). El
   diagnóstico también hace esas dos lecturas y rehace la cuenta de control.
 
@@ -915,7 +915,7 @@ de mes… no me interesa el efectivo ingresado sino el vendido en el período»*
     arriba), y `fichasMontoEntero` achica la letra SOLO del monto que no entra (antes «Bs 1.101.68…»), en todas las cajas.
   - `tests/test_ventas_marcas.js` (22).
 
-## 📦 Servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado (§4he) — EN LA RAMA, sin publicar
+## 📦 Servidor `2026-09-30-a` y la lectura con hora, comprimida y de lo cambiado (§4he) — PUBLICADO 30/09: servidor ~12:40 (lo implementó el dueño), página 12:46 (`3606980`)
 El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el aviso «día sin camión»; el servidor nuevo lo implementa
 él; la conexión (cartel, comprimida, de lo cambiado) la hice yo. Detalle en bitácora §4he y RESPUESTA §24. Lo que hay que respetar:
 - **La lectura** (`apiList`): pide `z:1` (si hay `DecompressionStream`) y `desde` (si hay copia `LISTA_BASE` de menos de 15 min).
@@ -941,9 +941,15 @@ El dueño (30/09): *«1 no / 2 ok lo hago. / 3 hazlo»* — no se amplía el avi
   la comprimida y lee sin comprimir. Nunca se muestra una lectura con letras cambiadas.
 - Pruebas: `test_lectura_delta.js` (29), `test_retiro_feriado.js` (16), `test_servidor.js` §15-§20. Su `Utilities` es de verdad
   (gzip de Node, bytes con signo): los otros arneses siguen con el de mentira y ahí el `.gs` contesta sin comprimir.
-- **Publicar**: el dueño anota la versión activa (la del 28/09), pega el `.gs` del enlace fijo y corre `probarAntesDeImplementar`;
-  con su OK se publica la página y todos F5; recién ahí ✏️ Nueva versión. Volver atrás = ✏️ a la anotada Y pegar la 28-a
-  (enlace fijo a `4ded824…`, 1980 líneas).
+- **Publicado el 30/09** (bitácora §4he «Publicación»): el dueño pegó el `.gs`, probar dio ✅ y lo implementó ANTES de que se
+  publicara la página (probado que anda: `test_lectura_delta` §10); la página salió a las 12:46. El diagnóstico de las 12:46:
+  versión 2026-09-30-a, la comprimida viaja **260 KB en vez de 911 KB (~3,5 veces menos, no 7 como estimé)** y la de lo
+  cambiado **1 KB**, las dos cuentas «da ✅». Volver atrás = ✏️ a la **versión 34** Y pegar la 28-a (enlace fijo a
+  `4ded824…`, 1980 líneas). ⚠️ Los comentarios «~7 veces menos» de `pedidos.html` y del `.gs` quedaron así: se corrigen con
+  el próximo cambio de cada uno (tocar el `.gs` ahora lo haría distinto del implementado).
+  · El arqueo: probar mide SOLO la celda «Observaciones», que es donde vive (`filaArqueo` → `filaSistema`): 0 letras = vacío.
+  El diagnóstico mide la fila ENTERA en JSON (496 = los nombres de los campos + el título «🧮 ARQUEO DEL CUADRE…» en
+  `cliente`; una fila de sistema vacía da ~460 más el título). Dicen lo mismo: no es una pérdida.
 
 ## 🔧 Los 24 arreglos de la revisión en TRES niveles (§4hc → §4hd) — PUBLICADA 30/09 10:52 (`4ded824`)
 Hallazgos en `RESPUESTA_CLAUDE.md` §22, arreglos en §23 y bitácora §4hd. El dueño: *«hazlo todo»*. Lo que hay que respetar:
