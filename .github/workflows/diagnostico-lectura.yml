@@ -1,0 +1,30 @@
+name: Diagnóstico de la lectura del panel
+
+# 🩺 Hace la MISMA lectura que el navegador (`list`) y dice qué contestó Google: datos, una
+# página de error o nada. El respaldo de Kommo no sirve para esto: usa otra acción, que el
+# servidor atiende antes que todo lo demás (29/09, bitácora §4hb).
+#
+# ⚠️ El repositorio es PÚBLICO y este registro también: el script no imprime ningún dato de
+#    clientes (solo códigos, tamaños, tiempos y el texto del error de Google).
+on:
+  workflow_dispatch:            # a mano: Actions → «Diagnóstico de la lectura del panel» → Run workflow
+  push:
+    paths:
+      - 'herramientas/diagnostico_lectura.py'
+      - '.github/workflows/diagnostico-lectura.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  leer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Pedir la planilla como el navegador
+        env:
+          PANEL_URL: ${{ secrets.PANEL_URL }}
+        run: python herramientas/diagnostico_lectura.py
